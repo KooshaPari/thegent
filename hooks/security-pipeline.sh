@@ -7,8 +7,10 @@
 set -euo pipefail
 
 # --- Ultra-fast cache check BEFORE common.sh ---
+# Cache git HEAD once to avoid repeated git calls throughout hook
+readonly _GIT_HEAD_SHA="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
-_CACHE_KEY="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
+_CACHE_KEY="$_GIT_HEAD_SHA"
 _CACHE_FILE="${_CACHE_DIR}/security-pipeline-${_CACHE_KEY}.result"
 _CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -f "$_CACHE_FILE" ]]; then
@@ -77,9 +79,8 @@ is_python=false; is_node=false; is_go=false; is_rust=false
 [[ -f "$PROJECT_DIR/Cargo.toml" ]] && is_rust=true
 
 # --- Cache check — skip if HEAD unchanged ---
-_sec_head_sha="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo none)}"
-_sec_cache_key=$(printf '%s\0%s' "$HOOK_NAME" "$_sec_head_sha" | shasum -a 256 | cut -d' ' -f1)
-unset _sec_head_sha
+# Use cached git HEAD value from above (readonly _GIT_HEAD_SHA) to avoid second git call
+_sec_cache_key=$(printf '%s\0%s' "$HOOK_NAME" "$_GIT_HEAD_SHA" | shasum -a 256 | cut -d' ' -f1)
 _sec_ttl="${HOOK_CACHE_TTL:-600}"
 if hook_cache_check "$_sec_cache_key" "$_sec_ttl"; then
     _sec_output=$(hook_cache_read "$_sec_cache_key")
@@ -96,16 +97,15 @@ fi
 
 # ---------- Collect changed files ----------
 declare -a CHANGED_FILES=()
-while IFS= read -r fpath; do
-  [[ -z "$fpath" ]] && continue
-  CHANGED_FILES+=("$fpath")
-done < <(get_changed_files)
+mapfile -t CHANGED_FILES < <(get_changed_files | grep -v '^$')
 
 # Fallback to hook_shared_changed_files if no session log
 if [[ ${#CHANGED_FILES[@]} -eq 0 ]]; then
-  while IFS= read -r fpath; do
-    [[ -n "$fpath" && -f "$PROJECT_DIR/$fpath" ]] && CHANGED_FILES+=("$PROJECT_DIR/$fpath")
-  done < <(hook_shared_changed_files 2>/dev/null)
+  declare -a _fallback_files=()
+  mapfile -t _fallback_files < <(hook_shared_changed_files 2>/dev/null | grep -v '^$')
+  for fpath in "${_fallback_files[@]}"; do
+    [[ -f "$PROJECT_DIR/$fpath" ]] && CHANGED_FILES+=("$PROJECT_DIR/$fpath")
+  done
 fi
 
 has_changed_files=true
@@ -127,9 +127,7 @@ printf '%s\n' "${CHANGED_FILES[@]}" > "$tmpdir/changed_files.list" 2>/dev/null |
 _load_changed_files() {
   CHANGED_FILES=()
   if [[ -f "$tmpdir/changed_files.list" ]]; then
-    while IFS= read -r fpath; do
-      [[ -n "$fpath" ]] && CHANGED_FILES+=("$fpath")
-    done < "$tmpdir/changed_files.list"
+    mapfile -t CHANGED_FILES < <(grep -v '^$' "$tmpdir/changed_files.list")
   fi
   has_changed_files=true
   [[ ${#CHANGED_FILES[@]} -eq 0 ]] && has_changed_files=false
@@ -149,9 +147,7 @@ layer1_secrets() {
     if [[ -n "$gitleaks_out" ]]; then
       c=$(echo "$gitleaks_out" | grep -c "Finding:" 2>/dev/null || echo "0")
       count=$((count + c))
-      while IFS= read -r line; do
-        echo "[HIGH] secrets: $line" >> "$findings_file"
-      done < <(echo "$gitleaks_out" | grep -E "^(Finding|File|Line)" 2>/dev/null | head -20)
+      echo "$gitleaks_out" | grep -E "^(Finding|File|Line)" 2>/dev/null | head -20 | sed 's/^/[HIGH] secrets: /' >> "$findings_file"
     fi
   fi
 
@@ -173,12 +169,9 @@ layer1_secrets() {
       for pat in "${secret_patterns[@]}"; do
         matches=$(PAT="$pat" perl -ne 'print "$.: $_" if /$ENV{PAT}/i' "$fpath" 2>/dev/null | head -5) || true
         if [[ -n "$matches" ]]; then
-          while IFS= read -r match; do
-            lineno=$(echo "$match" | cut -d: -f1)
-            rel_path="${fpath#"$PROJECT_DIR"/}"
-            echo "[HIGH] secrets: Possible secret in $rel_path:$lineno" >> "$findings_file"
-            count=$((count + 1))
-          done <<< "$matches"
+          rel_path="${fpath#"$PROJECT_DIR"/}"
+          echo "$matches" | sed 's/^\([0-9]*\):.*/[HIGH] secrets: Possible secret in '"$rel_path"':\1/' >> "$findings_file"
+          count=$((count + $(echo "$matches" | wc -l)))
         fi
       done
     done
@@ -188,12 +181,9 @@ layer1_secrets() {
       [[ "$fpath" =~ \.(lock|lockb|png|jpg|gif|ico|woff|ttf|eot|svg|pdf|md)$ ]] && continue
       ip_matches=$(perl -ne 'print "$.: $_" if /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/ && !/127\.0\.0\.1|0\.0\.0\.0|localhost|255\.255\.\d+\.\d+|192\.168\.|10\.\d+\.|172\.(1[6-9]|2[0-9]|3[01])\./' "$fpath" 2>/dev/null | head -5) || true
       if [[ -n "$ip_matches" ]]; then
-        while IFS= read -r match; do
-          lineno=$(echo "$match" | cut -d: -f1)
-          rel_path="${fpath#"$PROJECT_DIR"/}"
-          echo "[MEDIUM] secrets: Hardcoded IP in $rel_path:$lineno" >> "$findings_file"
-          count=$((count + 1))
-        done <<< "$ip_matches"
+        rel_path="${fpath#"$PROJECT_DIR"/}"
+        echo "$ip_matches" | sed 's/^\([0-9]*\):.*/[MEDIUM] secrets: Hardcoded IP in '"$rel_path"':\1/' >> "$findings_file"
+        count=$((count + $(echo "$ip_matches" | wc -l)))
       fi
     done
   fi
@@ -221,9 +211,7 @@ layer2_sast() {
       semgrep_out=$(run_with_timeout 20 semgrep --config=auto --quiet "${CHANGED_FILES[@]}" 2>/dev/null) || { echo "SECURITY-PIPELINE: semgrep failed ($?)" >&2; true; }
       if [[ -n "$semgrep_out" ]]; then
         count=$(echo "$semgrep_out" | grep -cE "^[[:space:]]*(error|warning)" 2>/dev/null || echo "0")
-        echo "$semgrep_out" | head -20 | while IFS= read -r line; do
-          echo "[MEDIUM] sast: $line"
-        done > "$subtmp/semgrep.findings"
+        echo "$semgrep_out" | head -20 | sed 's/^/[MEDIUM] sast: /' > "$subtmp/semgrep.findings"
       fi
       echo "$count" > "$subtmp/semgrep.count"
     ) &
@@ -237,9 +225,7 @@ layer2_sast() {
       bandit_out=$(run_with_timeout 15 bandit -r "$PROJECT_DIR" -q 2>/dev/null) || { echo "SECURITY-PIPELINE: bandit failed ($?)" >&2; true; }
       if [[ -n "$bandit_out" ]]; then
         count=$(echo "$bandit_out" | grep -cE "^>>" 2>/dev/null || echo "0")
-        echo "$bandit_out" | grep -E "^>>" | head -10 | while IFS= read -r line; do
-          echo "[MEDIUM] sast/bandit: $line"
-        done > "$subtmp/bandit.findings"
+        echo "$bandit_out" | grep -E "^>>" | head -10 | sed 's/^/[MEDIUM] sast\/bandit: /' > "$subtmp/bandit.findings"
       fi
       echo "$count" > "$subtmp/bandit.count"
     ) &
@@ -253,9 +239,7 @@ layer2_sast() {
       gosec_out=$(cd "$PROJECT_DIR" && run_with_timeout 15 gosec ./... 2>/dev/null) || { echo "SECURITY-PIPELINE: gosec failed ($?)" >&2; true; }
       if [[ -n "$gosec_out" ]]; then
         count=$(echo "$gosec_out" | grep -cE "^\[" 2>/dev/null || echo "0")
-        echo "$gosec_out" | grep -E "^\[" | head -10 | while IFS= read -r line; do
-          echo "[MEDIUM] sast/gosec: $line"
-        done > "$subtmp/gosec.findings"
+        echo "$gosec_out" | grep -E "^\[" | head -10 | sed 's/^/[MEDIUM] sast\/gosec: /' > "$subtmp/gosec.findings"
       fi
       echo "$count" > "$subtmp/gosec.count"
     ) &
@@ -296,9 +280,7 @@ layer3_deps() {
       if [[ -n "$audit_out" ]]; then
         count=$(echo "$audit_out" | grep -cE "^Name" 2>/dev/null || echo "0")
         [[ $count -gt 0 ]] && count=$((count - 1))
-        echo "$audit_out" | grep -vE "^(Name|---)" | head -10 | while IFS= read -r line; do
-          echo "[HIGH] deps/pip-audit: $line"
-        done > "$subtmp/pip-audit.findings"
+        echo "$audit_out" | grep -vE "^(Name|---)" | head -10 | sed 's/^/[HIGH] deps\/pip-audit: /' > "$subtmp/pip-audit.findings"
       fi
       echo "$count" > "$subtmp/pip-audit.count"
     ) &
@@ -339,9 +321,7 @@ layer3_deps() {
       vuln_out=$(cd "$PROJECT_DIR" && run_with_timeout 15 govulncheck ./... 2>/dev/null) || { echo "SECURITY-PIPELINE: govulncheck failed ($?)" >&2; true; }
       if [[ -n "$vuln_out" ]] && echo "$vuln_out" | grep -qE "^Vulnerability" 2>/dev/null; then
         count=$(echo "$vuln_out" | grep -cE "^Vulnerability" 2>/dev/null || echo "0")
-        echo "$vuln_out" | grep -E "^Vulnerability" | head -10 | while IFS= read -r line; do
-          echo "[HIGH] deps/govulncheck: $line"
-        done > "$subtmp/govulncheck.findings"
+        echo "$vuln_out" | grep -E "^Vulnerability" | head -10 | sed 's/^/[HIGH] deps\/govulncheck: /' > "$subtmp/govulncheck.findings"
       fi
       echo "$count" > "$subtmp/govulncheck.count"
     ) &
@@ -355,9 +335,7 @@ layer3_deps() {
       audit_out=$(cd "$PROJECT_DIR" && run_with_timeout 15 cargo audit 2>/dev/null) || { echo "SECURITY-PIPELINE: cargo audit failed ($?)" >&2; true; }
       if echo "$audit_out" | grep -qE "^(error|warning)\[" 2>/dev/null; then
         count=$(echo "$audit_out" | grep -cE "^(error|warning)\[" 2>/dev/null || echo "0")
-        echo "$audit_out" | grep -E "^(error|warning)\[" | head -10 | while IFS= read -r line; do
-          echo "[HIGH] deps/cargo-audit: $line"
-        done > "$subtmp/cargo-audit.findings"
+        echo "$audit_out" | grep -E "^(error|warning)\[" | head -10 | sed 's/^/[HIGH] deps\/cargo-audit: /' > "$subtmp/cargo-audit.findings"
       fi
       echo "$count" > "$subtmp/cargo-audit.count"
     ) &
@@ -398,9 +376,7 @@ layer4_infra() {
     done
     # Only fall back to find if no common names matched
     if [[ ${#dockerfiles[@]} -eq 0 ]]; then
-      while IFS= read -r df; do
-        dockerfiles+=("$df")
-      done < <(find "$PROJECT_DIR" -maxdepth 2 -name "Dockerfile*" -type f 2>/dev/null)
+      mapfile -t dockerfiles < <(find "$PROJECT_DIR" -maxdepth 2 -name "Dockerfile*" -type f 2>/dev/null)
     fi
     if [[ ${#dockerfiles[@]} -gt 0 ]]; then
       ran=true
@@ -411,9 +387,7 @@ layer4_infra() {
           hadolint_out=$(run_with_timeout 10 hadolint "$df" 2>/dev/null) || { echo "SECURITY-PIPELINE: hadolint failed ($?)" >&2; true; }
           if [[ -n "$hadolint_out" ]]; then
             count=$(echo "$hadolint_out" | wc -l | tr -d ' ')
-            echo "$hadolint_out" | head -10 | while IFS= read -r line; do
-              echo "[MEDIUM] infra/hadolint: $line"
-            done > "$subtmp/hadolint-$i.findings"
+            echo "$hadolint_out" | head -10 | sed 's/^/[MEDIUM] infra\/hadolint: /' > "$subtmp/hadolint-$i.findings"
           fi
           echo "$count" > "$subtmp/hadolint-$i.count"
         ) &
@@ -442,9 +416,7 @@ layer4_infra() {
         tfsec_out=$(cd "$PROJECT_DIR" && run_with_timeout 15 tfsec --no-color 2>/dev/null) || { echo "SECURITY-PIPELINE: tfsec failed ($?)" >&2; true; }
         if [[ -n "$tfsec_out" ]]; then
           count=$(echo "$tfsec_out" | grep -cE "^Result" 2>/dev/null || echo "0")
-          echo "$tfsec_out" | grep -E "^Result" | head -10 | while IFS= read -r line; do
-            echo "[HIGH] infra/tfsec: $line"
-          done > "$subtmp/tfsec.findings"
+          echo "$tfsec_out" | grep -E "^Result" | head -10 | sed 's/^/[HIGH] infra\/tfsec: /' > "$subtmp/tfsec.findings"
         fi
         echo "$count" > "$subtmp/tfsec.count"
       ) &
@@ -459,9 +431,7 @@ layer4_infra() {
       trivy_out=$(cd "$PROJECT_DIR" && run_with_timeout 15 trivy config . --severity HIGH,CRITICAL 2>/dev/null) || { echo "SECURITY-PIPELINE: trivy failed ($?)" >&2; true; }
       if [[ -n "$trivy_out" ]] && echo "$trivy_out" | grep -qE "(HIGH|CRITICAL)" 2>/dev/null; then
         count=$(echo "$trivy_out" | grep -cE "(HIGH|CRITICAL)" 2>/dev/null || echo "0")
-        echo "$trivy_out" | grep -E "(HIGH|CRITICAL)" | head -10 | while IFS= read -r line; do
-          echo "[HIGH] infra/trivy: $line"
-        done > "$subtmp/trivy.findings"
+        echo "$trivy_out" | grep -E "(HIGH|CRITICAL)" | head -10 | sed 's/^/[HIGH] infra\/trivy: /' > "$subtmp/trivy.findings"
       fi
       echo "$count" > "$subtmp/trivy.count"
     ) &
@@ -526,12 +496,18 @@ layer5_supply_chain() {
             if [[ "$vuln_count" -gt 0 ]] 2>/dev/null; then
               count=$vuln_count
               lockfile_name="${lockfile##*/}"
-              echo "$osv_out" | $JQ_CMD -c '.results[]?.packages[]?.vulnerabilities[]?' 2>/dev/null | head -20 | while IFS= read -r vuln_line; do
-                cve_id=$(echo "$vuln_line" | $JQ_CMD -r '.id // "unknown"' 2>/dev/null || echo "unknown")
-                pkg_name=$(echo "$vuln_line" | $JQ_CMD -r '.package.name // "unknown"' 2>/dev/null || echo "unknown")
-                pkg_ver=$(echo "$vuln_line" | $JQ_CMD -r '.package.version // "unknown"' 2>/dev/null || echo "unknown")
-                echo "[HIGH] dependency: $cve_id in $pkg_name@$pkg_ver ($lockfile_name)"
-              done > "$subtmp/osv-$i.findings"
+              declare -a osv_findings=()
+              mapfile -t osv_findings < <(
+                echo "$osv_out" | $JQ_CMD -c '.results[]?.packages[]?.vulnerabilities[]?' 2>/dev/null | head -20
+              )
+              {
+                for vuln_line in "${osv_findings[@]}"; do
+                  cve_id=$(echo "$vuln_line" | $JQ_CMD -r '.id // "unknown"' 2>/dev/null || echo "unknown")
+                  pkg_name=$(echo "$vuln_line" | $JQ_CMD -r '.package.name // "unknown"' 2>/dev/null || echo "unknown")
+                  pkg_ver=$(echo "$vuln_line" | $JQ_CMD -r '.package.version // "unknown"' 2>/dev/null || echo "unknown")
+                  echo "[HIGH] dependency: $cve_id in $pkg_name@$pkg_ver ($lockfile_name)"
+                done
+              } > "$subtmp/osv-$i.findings"
             fi
           fi
           echo "$count" > "$subtmp/osv-$i.count"
@@ -550,12 +526,18 @@ layer5_supply_chain() {
       if [[ -n "$opengrep_out" ]]; then
         count=$(echo "$opengrep_out" | $JQ_CMD '.results | length' 2>/dev/null || echo "0")
         if [[ "$count" -gt 0 ]] 2>/dev/null; then
-          echo "$opengrep_out" | $JQ_CMD -c '.results[]?' 2>/dev/null | head -20 | while IFS= read -r result_line; do
+          declare -a og_findings=()
+        mapfile -t og_findings < <(
+          echo "$opengrep_out" | $JQ_CMD -c '.results[]?' 2>/dev/null | head -20
+        )
+        {
+          for result_line in "${og_findings[@]}"; do
             check_id=$(echo "$result_line" | $JQ_CMD -r '.check_id // "unknown"' 2>/dev/null || echo "unknown")
             og_path=$(echo "$result_line" | $JQ_CMD -r '.path // "unknown"' 2>/dev/null || echo "unknown")
             og_line=$(echo "$result_line" | $JQ_CMD -r '.start.line // "?"' 2>/dev/null || echo "?")
             echo "[MEDIUM] sast/opengrep: $check_id in $og_path:$og_line"
-          done > "$subtmp/opengrep.findings"
+          done
+        } > "$subtmp/opengrep.findings"
         fi
       fi
       echo "$count" > "$subtmp/opengrep.count"
@@ -616,9 +598,8 @@ declare -a FINDINGS=()
 for layer_num in 1 2 3 4 5; do
   findings_file="$tmpdir/layer${layer_num}.findings"
   if [[ -f "$findings_file" ]] && [[ -s "$findings_file" ]]; then
-    while IFS= read -r line; do
-      [[ -n "$line" ]] && FINDINGS+=("$line")
-    done < "$findings_file"
+    mapfile -t temp_findings < <(grep -v '^$' "$findings_file")
+    FINDINGS+=("${temp_findings[@]}")
   fi
 done
 

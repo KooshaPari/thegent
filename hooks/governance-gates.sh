@@ -15,8 +15,10 @@
 set -euo pipefail
 
 # --- Ultra-fast cache check BEFORE common.sh (saves ~400ms on cache hit) ---
+# Cache git HEAD once to avoid repeated git calls throughout hook
+readonly _GIT_HEAD_SHA="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
-_CACHE_KEY="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
+_CACHE_KEY="$_GIT_HEAD_SHA"
 _CACHE_FILE="${_CACHE_DIR}/governance-gates-${_CACHE_KEY}.result"
 _CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -f "$_CACHE_FILE" ]]; then
@@ -33,7 +35,8 @@ hook_init
 read_quality_config
 
 # --- Cache check with full key (post common.sh, for precision) ---
-_head_sha="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo none)}"
+# Use cached git HEAD value from above (readonly _GIT_HEAD_SHA) to avoid second git call
+_head_sha="${_GIT_HEAD_SHA}"
 _qc_mtime="0"; [[ -f "$QUALITY_CONFIG" ]] && _qc_mtime="$(stat -f '%m' "$QUALITY_CONFIG" 2>/dev/null || stat -c '%Y' "$QUALITY_CONFIG" 2>/dev/null || echo 0)"
 _qs_mtime="0"; [[ -f "$QA_STATE" ]] && _qs_mtime="$(stat -f '%m' "$QA_STATE" 2>/dev/null || stat -c '%Y' "$QA_STATE" 2>/dev/null || echo 0)"
 _cache_key=$(printf '%s\0%s\0%s\0%s' "$HOOK_NAME" "$_head_sha" "$_qc_mtime" "$_qs_mtime" | shasum -a 256 | cut -d' ' -f1)
