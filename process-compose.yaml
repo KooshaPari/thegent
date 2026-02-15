@@ -1,0 +1,80 @@
+# thegent MCP + CLIProxyAPIPlus proxy — process-compose
+#
+# Usage:
+#   process-compose -f process-compose.yaml up        # Start MCP + proxy
+#   process-compose -f process-compose.yaml down      # Stop all
+#   process-compose -f process-compose.yaml ps        # Status
+#   process-compose -f process-compose.yaml logs -f   # Follow logs
+#
+# Or: thegent mcp up / thegent mcp down
+#
+# Ports: MCP 3847, proxy 8317 (Codex/antigravity/minimax/glm)
+#
+# Proxy binary: cli-proxy-api-plus from PATH, or set THGENT_CLIPROXY_BINARY.
+# For local fork: THGENT_CLIPROXY_BINARY=../CLIProxyAPIPlus-fork/cli-proxy-api-plus
+# (build first: cd CLIProxyAPIPlus-fork && go build -o cli-proxy-api-plus ./cmd/server)
+
+version: "0.5"
+
+log_location: .process-compose/process-compose.log
+log_level: info
+
+environment:
+  - PYTHONUNBUFFERED=1
+  - THGENT_MCP_HOST=127.0.0.1
+  - THGENT_MCP_PORT=3847
+  - THGENT_CLIPROXY_PORT=8317
+
+processes:
+  mcp:
+    command: python
+    args:
+      - -m
+      - thegent.main
+      - serve
+      - --host=127.0.0.1
+      - --port=3847
+    working_dir: .
+    availability:
+      restart: on_failure
+      max_restarts: 5
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 3847
+        path: /health
+      initial_delay_seconds: 3
+      period_seconds: 5
+      timeout_seconds: 3
+      success_threshold: 1
+      failure_threshold: 3
+    is_daemon: true
+    log_location: .process-compose/logs/mcp.log
+    log_length: 2000
+
+  proxy:
+    command: python
+    args:
+      - scripts/start_proxy.py
+    working_dir: .
+    environment:
+      - PYTHONPATH=./src
+      - THGENT_CLIPROXY_PORT=8317
+    availability:
+      restart: on_failure
+      max_restarts: 5
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 8317
+        path: /
+      initial_delay_seconds: 5
+      period_seconds: 5
+      timeout_seconds: 3
+      success_threshold: 1
+      failure_threshold: 3
+    is_daemon: true
+    log_location: .process-compose/logs/proxy.log
+    log_length: 2000

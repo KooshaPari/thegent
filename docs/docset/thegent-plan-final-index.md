@@ -1,0 +1,513 @@
+# Thegent Orchestration Final Plan Index
+## Unified Master Entry Point
+
+**Status:** Finalized master index (v4 -- unified crosslinked docset complete)
+**Date:** 2026-02-14
+**Purpose:** Single entry point for all thegent orchestration planning documentation. Provides document map, crosslinks, agent quick-starts, phase execution flows, and status summary.
+
+---
+
+## Quick Navigation
+
+- **Just starting?** → Read [Document Map](#document-map) below, then jump to the phase guide for your work area.
+- **Implementing a work package?** → See [Haiku Agent Quick Start](#haiku-agent-quick-start) for pre-reading.
+- **Executing a phase?** → See [Phase Execution Guide](#phase-execution-guide) for ordered operations.
+- **Checking status?** → See [Status Dashboard Summary](#status-dashboard-summary).
+
+---
+
+## 1. Document Map
+
+Complete docset with descriptions, purposes, and when to use each.
+
+| File | Purpose | When to Use | Key Content |
+|------|---------|------------|-------------|
+| **thegent-wbs-final.md** | Work breakdown structure; phases, work packages, acceptance gates, ownership | Planning work, assigning WPs, tracking phase exits | 7 phases, 64 WPs, ownership map, gate definitions |
+| **thegent-dag-final.md** | Execution DAG; orchestration flow, control loops, safety gates, failure paths | Implementing orchestration flow, validating routing, understanding decision trees | Core DAG (A0→A18), recovery loops, event flows, SLA targets |
+| **thegent-prd-final.md** | Product requirements; goals, personas, FRs, NFRs, APIs, events, rollout KPIs | Designing features, defining acceptance criteria, understanding product strategy | 42 FRs, 16 NFRs, 7 event types, KPI framework (TRAFFIC 10-metric) |
+| **thegent-research-validation-2026-02-14.md** | Validation against task-tool and zen-mcp-server; gaps identified, depth recommendations | Understanding state-of-the-art patterns, validating design choices | 18 validated design patterns, high-impact gaps, architectural transfers |
+| **thegent-kush-docs-deep-dive-2026-02-14.md** | Cross-project pattern analysis (zen, task-tool, crun, pheno-sdk); transferable patterns | Learning from adjacent systems, avoiding known failure modes | 40+ transferable patterns, control-plane architecture, XML contracts |
+| **thegent-mega-research-synthesis-2026-02-14.md** | Comprehensive synthesis of 18 research agents; codebase analysis + industry SOTA | Deep technical research, understanding rationale behind decisions | 114 patterns across 9 domains, 15 anti-patterns, 22 leverage points, 12 integration points |
+| **thegent-gaps-and-discovery-2026-02-14.md** | Identified gaps (23 required, 12 optional→required, 18 optimizations); discovery tasks | Finding what's missing, prioritizing follow-up work, discovery sprint planning | Gap taxonomy by category, priority matrix, discovery task specs |
+| **thegent-patterns-enhancement-synthesis.md** | 114 patterns review; implementation detail gaps, optimization opportunities, UX blindspots | Enhancing pattern library, addressing implementation detail, improving ergonomics | 38 enhancement items (24 new patterns, 14 detail gaps), cross-pattern dependencies |
+| **thegent-cross-analysis-matrix-2026-02-14.md** | System-to-system comparison (thegent, task-tool, zen, crun, pheno-sdk) | Understanding architectural relationships, identifying transfer opportunities | 5-system comparison, design transfer matrix, contract evolution |
+| **thegent-implementation-log-2026-02-14.md** | Runtime output parsing hardening + model contract normalization; completed chunks | Understanding what's been implemented, avoiding rework | Chunk 173 (parsing), Chunk 174 (routing contract), implementation notes |
+| **thegent-cli-single-source-of-truth-audit-2026-02-14.md** | CLI entry point audit; ensures no hidden features, all capabilities reachable via CLI | Verifying implementation follows design, auditing CLI completeness | Entry points audit, script audit, CLI vs legacy command comparison |
+| **thegent-orchestration-optimization-prd.md** | Legacy monolith PRD (historical context only); source of truth before splitting | Understanding original requirements, tracing lineage of decisions | Original problem statement, working notes, comprehensive requirements |
+| **PRD_TEST_PLAN_MATRIX.md** | Maps FRs to test types and acceptance criteria; test gate definitions | Writing tests, understanding what needs to pass, test coverage planning | 12+ FR→test mappings, test location references, acceptance criteria |
+| **DAG_NODE_TO_SERVICE_CONTRACT_CHECKLIST.md** | DAG nodes mapped to service contracts and invariants | Implementing DAG nodes, validating service contracts, testing orchestration | 12 core nodes, invariants, implementation references, CLI/MCP mappings |
+| **WBS_TO_ISSUE_IMPORT_MATRIX.md** | WBS work packages mapped to issue/ticket IDs for tracking | Importing into project management, tracking WP status | Phase 0-6 issue mappings, status flags |
+| **PATTERNS.md** | Standalone pattern catalog; 114 patterns across 9 domains with implementation recipes | Implementing patterns, finding implementation guidance, understanding dependencies | 114 patterns (P-001..P-114), domain summaries, priority ranking, dependency graph |
+| **RISKS_AND_ANTIPATTERNS.md** | 15 anti-patterns, 12 integration risks, 32-item risk register, robustness/intuition guides | Avoiding known pitfalls, risk assessment, design reviews, robustness planning | AP-001..015, MAST 14-mode taxonomy, risk register, design principles |
+| **IMPLEMENTATION_STATUS.md** | Implementation tracker; per-WP status, FR/NFR coverage, dependency chain, blockers | Checking implementation progress, finding next work, tracking blockers | 72 WP status, FR/NFR matrices, critical path, next actions |
+| **OPTIMIZATION_POLISH_ADDENDUM.md** | 73 optimization items across 9 domains + engineering excellence + hardening checklists | Polish and hardening pass, UX improvements, performance tuning, security review | Per-domain optimization items, robustness checklist, performance guide |
+| **FASTMCP_INTEGRATION.md** | FastMCP 3.0 consolidated reference; Context API, middleware, storage, telemetry, deployment | Implementing FastMCP integration, configuring middleware, setting up telemetry | Context API map, middleware stack, storage backends, deployment config |
+
+---
+
+## 2. Crosslink Matrix
+
+Shows which documents reference which others. Use to navigate related content.
+
+| Source → | thegent-wbs-final.md | thegent-dag-final.md | thegent-prd-final.md | validation | kush-deep-dive | mega-synthesis | gaps | patterns | cross-analysis | impl-log | cli-audit | orchestration-prd | prd-test-plan | dag-contracts | wbs-issues |
+|-----------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **thegent-wbs-final.md** | self | ✓ | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | ✓ | — | ✓ | ✓ |
+| **thegent-dag-final.md** | ✓ | self | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| **thegent-prd-final.md** | ✓ | ✓ | self | ✓ | — | ✓ | ✓ | — | — | — | — | ✓ | ✓ | — | — |
+| **research-validation** | — | ✓ | ✓ | self | ✓ | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — |
+| **kush-deep-dive** | — | ✓ | ✓ | ✓ | self | ✓ | ✓ | — | ✓ | — | — | — | — | — | — |
+| **mega-synthesis** | ✓ | ✓ | ✓ | ✓ | ✓ | self | ✓ | ✓ | ✓ | — | — | — | — | — | — |
+| **gaps-discovery** | ✓ | — | ✓ | — | — | ✓ | self | ✓ | — | — | — | — | — | — | — |
+| **patterns-enhancement** | — | ✓ | — | — | — | ✓ | ✓ | self | — | — | — | — | — | — | — |
+| **cross-analysis-matrix** | — | ✓ | — | ✓ | ✓ | ✓ | — | — | self | — | — | — | — | — | — |
+| **implementation-log** | ✓ | ✓ | — | — | — | — | — | — | — | self | ✓ | — | — | — | — |
+| **cli-single-source-audit** | — | ✓ | — | — | — | — | — | — | — | ✓ | self | — | — | ✓ | — |
+| **orchestration-prd** | ✓ | ✓ | ✓ | — | — | — | — | — | — | — | — | self | ✓ | — | — |
+| **prd-test-plan-matrix** | — | ✓ | ✓ | — | — | — | — | — | — | — | — | — | self | — | — |
+| **dag-contracts-checklist** | ✓ | ✓ | — | — | — | — | — | — | — | ✓ | ✓ | — | — | self | — |
+| **wbs-issues-matrix** | ✓ | — | — | — | — | — | — | — | — | — | — | — | — | — | self |
+
+**Key:** ✓ = referenced; — = not referenced; self = document references itself
+
+---
+
+## 3. Haiku Agent Quick Start
+
+For each work package, which documents to read before implementing. Minimal reading path for fast iteration.
+
+### Phase 0: Foundation and Baseline
+
+| WP | Title | Core Read | Supporting | Tests | Risks |
+|-----|-------|-----------|-----------|-------|-------|
+| WP-0001 | Baseline telemetry and run IDs | WBS (WP-0001 section) | PRD (FR-001..004) | prd-test-plan (FR-001) | gaps (C1, C2) |
+| WP-0002 | Canonical schemas | WBS (WP-0002) | PRD (FR-002); kush-deep-dive (Z-02) | prd-test-plan (FR-002) | patterns (P-001..012) |
+| WP-0003 | Planner dependency graph | WBS (WP-0003) | DAG (A4); mega-synthesis (§1.3) | prd-test-plan (FR-003) | cross-analysis (C-01) |
+| WP-0004 | Risk/confidence scoring | WBS (WP-0004) | PRD (FR-005); DAG (A1) | prd-test-plan (FR-004) | gaps (R1..R3) |
+| WP-0005 | Operating model + ownership | WBS (WP-0005) | orchestration-prd (§4) | — | gaps (O1) |
+
+### Phase 1: Core Routing and Deterministic Execution
+
+| WP | Title | Core Read | Supporting | Tests | Risks |
+|-----|-------|-----------|-----------|-------|-------|
+| WP-0101 | Provider-agnostic routing | DAG (A5, A8) | PRD (FR-010..015); patterns (P-050..065) | prd-test-plan (FR-010) | kush-deep-dive (Z-03) |
+| WP-0102 | Idempotent envelope | DAG (A10); PRD (FR-008) | impl-log (Chunk 173) | prd-test-plan (FR-008) | gaps (I1, I2) |
+| WP-0103 | Evidence collection mandatory | DAG (A11); PRD (FR-011) | prd-test-plan (FR-011) | prd-test-plan | patterns (P-080..090) |
+| WP-0104 | Policy pre-check | DAG (A6); PRD (FR-006) | kush-deep-dive (Z-04) | prd-test-plan (FR-006) | gaps (P1..P4) |
+| WP-0105 | Integrity + regression gate | DAG (A13); PRD (FR-012) | validation (§3.1) | prd-test-plan (FR-012) | patterns (P-100..105) |
+
+### Phase 2: Reliability and Recovery
+
+| WP | Title | Core Read | Supporting | Tests | Risks |
+|-----|-------|-----------|-----------|-------|-------|
+| WP-0201 | Retry logic by failure class | DAG (recovery loops) | mega-synthesis (§2.1) | prd-test-plan (FR-018..020) | gaps (RE1..RE5) |
+| WP-0202 | Circuit breaker patterns | PRD (FR-021); patterns (P-110..125) | cross-analysis (C-02) | prd-test-plan (FR-021) | patterns-enhancement |
+| WP-0203 | Checkpoint + rollback | DAG (A15); PRD (FR-022) | validation (§3.2) | prd-test-plan (FR-022) | gaps (RB1..RB3) |
+| WP-0204 | Recovery playbook dispatch | PRD (FR-023); patterns (P-130..140) | mega-synthesis (§2.3) | prd-test-plan (FR-023) | — |
+| WP-0205 | Human oversight escalation | DAG (A9); PRD (FR-024) | kush-deep-dive (Z-05) | prd-test-plan (FR-024) | gaps (HO1..HO2) |
+
+### Phase 3: Governance and Security
+
+| WP | Title | Core Read | Supporting | Tests | Risks |
+|-----|-------|-----------|-----------|-------|-------|
+| WP-0301 | Policy engine integration | PRD (FR-025..027) | validation (§3.3) | prd-test-plan (FR-025..027) | cross-analysis (C-03) |
+| WP-0302 | Audit event immutability | PRD (FR-028); patterns (P-075..080) | mega-synthesis (§3.1) | prd-test-plan (FR-028) | gaps (AU1..AU3) |
+| WP-0303 | Signed action artifacts | PRD (FR-029); DAG (A18) | kush-deep-dive (Z-06) | prd-test-plan (FR-029) | patterns (P-085) |
+| WP-0304 | Override controls + expiry | PRD (FR-030); patterns (P-060) | validation (§3.4) | prd-test-plan (FR-030) | gaps (OV1) |
+| WP-0305 | Evidence retention + compliance | PRD (FR-031); orchestration-prd (§5) | — | prd-test-plan (FR-031) | patterns-enhancement |
+
+### Phase 4: Human-Centric UX
+
+| WP | Title | Core Read | Supporting | Tests | Risks |
+|-----|-------|-----------|-----------|-------|-------|
+| WP-0401 | Operator dashboard | PRD (FR-032..034) | mega-synthesis (§4.1) | prd-test-plan (FR-032..034) | kush-deep-dive (Z-07) |
+| WP-0402 | Runbook and recovery guidance | PRD (FR-035) | patterns (P-150..160) | prd-test-plan (FR-035) | gaps (UX1..UX3) |
+| WP-0403 | Clear failure messages | PRD (FR-036); patterns (P-040) | mega-synthesis (§4.2) | prd-test-plan (FR-036) | — |
+| WP-0404 | Context preservation across shifts | PRD (FR-037) | DAG (continuity flow) | prd-test-plan (FR-037) | gaps (CS1) |
+
+### Phase 5: Adaptive Scale and Continuity
+
+| WP | Title | Core Read | Supporting | Tests | Risks |
+|-----|-------|-----------|-----------|-------|-------|
+| WP-0501 | Load shedding and lane routing | PRD (FR-038..040); DAG (A8) | mega-synthesis (§5.1) | prd-test-plan (FR-038..040) | patterns-enhancement |
+| WP-0502 | Continuity automation | PRD (FR-041..042) | validation (§4) | prd-test-plan (FR-041..042) | gaps (CA1..CA2) |
+| WP-0503 | Graceful degradation | PRD (FR-043) | patterns (P-180..190) | prd-test-plan (FR-043) | cross-analysis (C-04) |
+
+### Phase 6: Enterprise Readiness
+
+| WP | Title | Core Read | Supporting | Tests | Risks |
+|-----|-------|-----------|-----------|-------|-------|
+| WP-0601 | Rollout enablement | WBS (Phase 6) | orchestration-prd (§7) | — | gaps (EN1..EN3) |
+| WP-0602 | Training and documentation | WBS (Phase 6) | mega-synthesis (§6) | — | — |
+| WP-0603 | Program closure + audit | WBS (§completion) | — | — | gaps (CL1) |
+
+### Cross-Cutting (WP-Y series)
+
+| WP | Title | Core Read | Supporting | Tests | Risks |
+|-----|-------|-----------|-----------|-------|-------|
+| WP-Y001 | Observability instrumentation | PRD (FR-044..046) | mega-synthesis (§3.2) | prd-test-plan (FR-044..046) | patterns (P-200..210) |
+| WP-Y002 | Error taxonomy normalization | PRD (FR-047); mega-synthesis (§2.1) | validation (§3.5) | prd-test-plan (FR-047) | — |
+| WP-Y003 | Contract evolution support | patterns (P-001..020) | validation (§2); kush-deep-dive (Z-02) | prd-test-plan (FR-048) | patterns-enhancement |
+| WP-Y004 | Integration testing framework | PRD (FR-049); prd-test-plan | mega-synthesis (§1) | prd-test-plan (FR-049) | gaps (IT1..IT3) |
+| WP-Y005 | Chaos and resilience testing | patterns (P-195..205) | mega-synthesis (§5.2) | prd-test-plan (FR-050) | — |
+| WP-Y006 | Performance baseline + regression | PRD (FR-051); patterns (P-210..220) | mega-synthesis (§3.3) | prd-test-plan (FR-051) | patterns-enhancement |
+| WP-Y007 | Security scanning automation | patterns (P-225..235) | validation (§3.6) | prd-test-plan (FR-052) | cross-analysis (C-05) |
+| WP-Y008 | Documentation automation | WBS; PRD | mega-synthesis (§6.1) | — | gaps (DA1) |
+
+---
+
+## 4. Phase Execution Guide
+
+For each phase, the ordered sequence of operations (read → plan → implement → test → verify).
+
+### Phase 0: Foundation and Baseline
+
+**Duration:** ~2 weeks (agent-led)
+**Entry criteria:** Program kickoff
+**Exit criteria:** Ownership map signed off; baseline schemas committed; telemetry running
+
+**Execution sequence:**
+
+1. **Read & Plan (Days 1-2)**
+   - Read: WBS (Phase 0 section); orchestration-prd (§1-4)
+   - Read: WBS (ownership map); PRD (personas, goals)
+   - Planning decision: confirm ownership for each WP-000x
+   - Output: Phase 0 implementation plan (who, when, dependencies)
+
+2. **Implement (Days 3-10)**
+   - **WP-0001** (telemetry): impl-log (Chunk 173); cli-audit; prd (FR-001)
+   - **WP-0002** (schemas): PRD (FR-002); patterns (P-001..012); kush-deep-dive (Z-02)
+   - **WP-0003** (DAG norm): DAG (A4); mega-synthesis (§1.3)
+   - **WP-0004** (risk/confidence): PRD (FR-005); DAG (A1)
+   - **WP-0005** (operating model): WBS; orchestration-prd (§4)
+
+3. **Test (Days 11-12)**
+   - Run: prd-test-plan (Phase 0 test gates)
+   - Verify: FR-001..005 acceptance criteria met
+   - Run: cli-audit (ensure no hidden features)
+
+4. **Verify & Sign-off (Day 13)**
+   - Engineering sign-off: all WPs complete, tests pass
+   - Governance sign-off: ownership map, audit trail ready
+   - Record: completion timestamp, owner sign-off in WBS
+
+---
+
+### Phase 1: Core Routing and Deterministic Execution
+
+**Duration:** ~3 weeks
+**Entry criteria:** Phase 0 exit signed off
+**Exit criteria:** Routing engine passes canary; deterministic tests green
+
+**Execution sequence:**
+
+1. **Read & Plan (Days 1-3)**
+   - Read: DAG (A0→A10); PRD (FR-010..015); validation (§2)
+   - Read: patterns (P-050..065); kush-deep-dive (Z-03, Z-04)
+   - Planning decision: routing strategy (weighted vs. latency-optimized); lane model
+   - Output: Phase 1 implementation roadmap
+
+2. **Implement (Days 4-18)**
+   - **WP-0101** (routing): DAG (A5, A8); patterns (P-050..065); impl-log (routing contract)
+   - **WP-0102** (idempotent): DAG (A10); impl-log (Chunk 173); patterns (P-040..045)
+   - **WP-0103** (evidence): DAG (A11); patterns (P-080..090)
+   - **WP-0104** (policy): DAG (A6); kush-deep-dive (Z-04); patterns (P-055..060)
+   - **WP-0105** (integrity): DAG (A13); validation (§3.1); patterns (P-100..105)
+
+3. **Test (Days 19-20)**
+   - Run: prd-test-plan (Phase 1 gates: FR-010..015)
+   - Run: DAG determinism tests (same input → same route)
+   - Run: integration tests (routing + evidence + policy together)
+
+4. **Canary & Verify (Day 21)**
+   - Deploy to canary; monitor SLA metrics (TRAFFIC framework)
+   - Verify: routing latency, policy rejection rate, evidence completeness
+   - Sign-off: Phase 1 ready for prod rollout
+
+---
+
+### Phase 2: Reliability and Recovery
+
+**Duration:** ~3 weeks
+**Entry criteria:** Phase 1 canary stable
+**Exit criteria:** Recovery playbook tested; rollback verified
+
+**Execution sequence:**
+
+1. **Read & Plan (Days 1-3)**
+   - Read: DAG (recovery loops); PRD (FR-018..024); mega-synthesis (§2)
+   - Read: patterns (P-110..140); validation (§3.2)
+   - Planning decision: retry strategy (exponential backoff vs. jitter); circuit breaker thresholds
+   - Output: Reliability roadmap (what fails, how we recover, where humans intervene)
+
+2. **Implement (Days 4-18)**
+   - **WP-0201** (retry): DAG (recovery loops); mega-synthesis (§2.1); patterns (P-110..125)
+   - **WP-0202** (circuit breaker): patterns (P-125..135); cross-analysis (C-02)
+   - **WP-0203** (checkpoint + rollback): DAG (A15); validation (§3.2); patterns (P-140..145)
+   - **WP-0204** (recovery playbook): PRD (FR-023); patterns (P-130..140)
+   - **WP-0205** (human oversight): DAG (A9); kush-deep-dive (Z-05)
+
+3. **Test (Days 19-20)**
+   - Run: prd-test-plan (Phase 2 gates: FR-018..024)
+   - Run: chaos tests (inject failures, verify recovery)
+   - Run: rollback tests (verify state restoration)
+
+4. **Verify (Day 21)**
+   - Verify: recovery latency SLAs met
+   - Verify: no state corruption on rollback
+   - Sign-off: Phase 2 ready
+
+---
+
+### Phase 3: Governance and Security
+
+**Duration:** ~2 weeks
+**Entry criteria:** Phase 2 complete
+**Exit criteria:** Audit trail immutable; policy engine integrated
+
+**Execution sequence:**
+
+1. **Read & Plan (Days 1-2)**
+   - Read: PRD (FR-025..031); DAG (A6, A18); validation (§3.3)
+   - Read: patterns (P-075..085); mega-synthesis (§3)
+   - Planning decision: policy provider integration; audit event schema
+   - Output: Governance roadmap
+
+2. **Implement (Days 3-12)**
+   - **WP-0301** (policy): PRD (FR-025..027); validation (§3.3)
+   - **WP-0302** (audit immutability): patterns (P-075..080); mega-synthesis (§3.1)
+   - **WP-0303** (signed artifacts): DAG (A18); kush-deep-dive (Z-06)
+   - **WP-0304** (override controls): patterns (P-060); validation (§3.4)
+   - **WP-0305** (retention): orchestration-prd (§5)
+
+3. **Test (Days 13-14)**
+   - Run: prd-test-plan (Phase 3 gates: FR-025..031)
+   - Run: audit trail integrity tests (hash chain, immutability)
+
+4. **Verify (Day 15)**
+   - Verify: policy integration with real provider
+   - Verify: audit compliance (retention, signing)
+   - Sign-off: Phase 3 ready
+
+---
+
+### Phase 4: Human-Centric UX
+
+**Duration:** ~2 weeks
+**Entry criteria:** Phase 3 complete
+**Exit criteria:** Dashboard deployed; runbooks tested
+
+**Execution sequence:**
+
+1. **Read & Plan (Days 1-2)**
+   - Read: PRD (FR-032..037); mega-synthesis (§4); kush-deep-dive (Z-07)
+   - Planning decision: dashboard stack, runbook format, notification channels
+   - Output: UX roadmap
+
+2. **Implement (Days 3-12)**
+   - **WP-0401** (dashboard): PRD (FR-032..034); mega-synthesis (§4.1)
+   - **WP-0402** (runbooks): patterns (P-150..160)
+   - **WP-0403** (messages): patterns (P-040); mega-synthesis (§4.2)
+   - **WP-0404** (context preservation): DAG (continuity); PRD (FR-037)
+
+3. **Test (Days 13-14)**
+   - Run: prd-test-plan (Phase 4 gates: FR-032..037)
+   - User acceptance testing (operators use dashboard, follow runbooks)
+
+4. **Verify (Day 15)**
+   - Verify: operator confidence metrics (surveys, usability tests)
+   - Sign-off: Phase 4 ready
+
+---
+
+### Phase 5: Adaptive Scale and Continuity
+
+**Duration:** ~2 weeks
+**Entry criteria:** Phase 4 complete
+**Exit criteria:** Load shedding active; continuity automation tested
+
+**Execution sequence:**
+
+1. **Read & Plan (Days 1-2)**
+   - Read: PRD (FR-038..043); mega-synthesis (§5); validation (§4)
+   - Planning decision: lane model, load thresholds, continuity SLAs
+   - Output: Scale roadmap
+
+2. **Implement (Days 3-12)**
+   - **WP-0501** (load shedding): DAG (A8); patterns (P-180..190)
+   - **WP-0502** (continuity): PRD (FR-041..042); validation (§4)
+   - **WP-0503** (graceful degradation): patterns (P-190..200)
+
+3. **Test (Days 13-14)**
+   - Run: prd-test-plan (Phase 5 gates: FR-038..043)
+   - Run: load tests (verify lane switching, graceful degradation)
+
+4. **Verify (Day 15)**
+   - Verify: burst capacity handled; no cascading failures
+   - Verify: continuity SLAs met (shift, interruption recovery)
+   - Sign-off: Phase 5 ready
+
+---
+
+### Phase 6: Enterprise Readiness and Closure
+
+**Duration:** ~1 week
+**Entry criteria:** Phase 5 complete; all gates passing
+**Exit criteria:** Go/no-go decision made; program closed
+
+**Execution sequence:**
+
+1. **Read & Plan (Day 1)**
+   - Read: WBS (Phase 6); orchestration-prd (§7); mega-synthesis (§6)
+   - Planning decision: rollout schedule, training plan, closure criteria
+
+2. **Implement (Days 2-4)**
+   - **WP-0601** (rollout): enablement, runbooks, go-live playbook
+   - **WP-0602** (training): documentation, operator certification
+   - **WP-0603** (closure): program audit, lessons learned
+
+3. **Final Verify (Days 5-7)**
+   - Full system audit (all docs, all tests, all gates)
+   - Final governance sign-off
+   - Program closure decision
+
+---
+
+## 5. Status Dashboard Summary
+
+**Last updated:** 2026-02-14
+**Overall program status:** Planning complete; execution-ready
+
+See **`docs/docset/IMPLEMENTATION_STATUS.md`** (when available) for detailed per-WP tracking.
+
+### High-Level Summary
+
+| Phase | WPs | Planned | In-Progress | Complete | Blocked |
+|-------|-----|---------|-------------|----------|---------|
+| **Phase 0** | 5 | — | — | 3 (WP-0001, 0002, 0003) | — |
+| **Phase 1** | 5 | 5 | — | — | — |
+| **Phase 2** | 5 | 5 | — | — | — |
+| **Phase 3** | 5 | 5 | — | — | — |
+| **Phase 4** | 4 | 4 | — | — | — |
+| **Phase 5** | 3 | 3 | — | — | — |
+| **Phase X** (Cross-cut) | 8 | 8 | — | — | — |
+| **Phase 6** | 3 | 3 | — | — | — |
+| **TOTAL** | 38 | 33 | — | 3 | — |
+
+### Key Metrics (from PRD)
+
+**Functional Requirements:** 42 FRs defined
+**Non-Functional Requirements:** 16 NFRs defined
+**Pattern Library:** 114 patterns across 9 domains
+**Anti-Patterns Documented:** 15 with prevention strategies
+**Integration Points:** 12 with risk mitigations
+**Failure Modes:** 14-class MAST taxonomy
+**KPI Framework:** 10-metric TRAFFIC model
+
+### Critical Path
+
+1. **Phase 0** (Foundation) → must complete before Phase 1
+2. **Phase 1** (Routing) → must canary stable before Phase 2
+3. **Phase 2** (Reliability) → parallelizable with Phase 3
+4. **Phase 3** (Governance) → required before Phase 6 rollout
+5. **Phase 4** (UX) + **Phase 5** (Scale) → can execute in parallel after Phase 2
+6. **Phase 6** (Closure) → final gate
+
+---
+
+## 6. Complete File List
+
+All docset files with relative paths:
+
+```
+docs/docset/
+├── thegent-plan-final-index.md                          (THIS FILE -- master index)
+├── thegent-wbs-final.md                                  (work breakdown structure)
+├── thegent-dag-final.md                                  (execution DAG)
+├── thegent-prd-final.md                                  (product requirements)
+├── thegent-research-validation-2026-02-14.md             (validation against adjacent systems)
+├── thegent-kush-docs-deep-dive-2026-02-14.md             (cross-project pattern analysis)
+├── thegent-mega-research-synthesis-2026-02-14.md         (comprehensive research synthesis)
+├── thegent-gaps-and-discovery-2026-02-14.md              (gaps and follow-up work)
+├── thegent-patterns-enhancement-synthesis.md             (pattern library enhancements)
+├── thegent-cross-analysis-matrix-2026-02-14.md           (system-to-system comparison)
+├── thegent-implementation-log-2026-02-14.md              (implementation progress log)
+├── thegent-cli-single-source-of-truth-audit-2026-02-14.md (CLI entry point audit)
+├── thegent-orchestration-optimization-prd.md             (legacy monolith PRD -- historical context)
+├── PRD_TEST_PLAN_MATRIX.md                               (FR→test mapping)
+├── DAG_NODE_TO_SERVICE_CONTRACT_CHECKLIST.md             (DAG node service contracts)
+├── DAG_NODE_SERVICE_CONTRACT_CHECKLIST.md                (older version, see above)
+└── WBS_TO_ISSUE_IMPORT_MATRIX.md                         (WP→issue mapping)
+```
+
+---
+
+## 7. Navigation Tips
+
+### For Planning & Prioritization
+
+1. Start with **WBS** to understand work structure and phases
+2. Review **DAG** to understand orchestration logic and gates
+3. Check **PRD** for functional/non-functional requirements
+4. Use **WBS_TO_ISSUE_IMPORT_MATRIX** to map to project management tools
+
+### For Implementation
+
+1. Find your WP in the **Haiku Agent Quick Start** section (§3 above)
+2. Read the "Core Read" documents for that WP
+3. Skim "Supporting" documents for context
+4. Check **prd-test-plan-matrix** for acceptance criteria
+5. Reference **dag-contracts-checklist** if implementing DAG nodes
+
+### For Validation & Testing
+
+1. Use **prd-test-plan-matrix** to find test requirements for each FR
+2. Reference **dag-contracts-checklist** for contract invariants
+3. Check **patterns** and **mega-synthesis** for edge cases and failure modes
+4. Read **gaps-and-discovery** for known issues and workarounds
+
+### For Understanding Design Rationale
+
+1. Read **mega-research-synthesis** for why patterns were chosen
+2. Read **research-validation** for design trade-offs
+3. Read **kush-deep-dive** for transferable patterns from adjacent systems
+4. Check **cross-analysis-matrix** for architectural relationships
+
+### For Troubleshooting
+
+1. Check **gaps-and-discovery** for known issues
+2. Read **patterns-enhancement** for implementation detail gaps
+3. Consult **mega-synthesis** (§2) for failure mode taxonomy
+4. Review **validation** for design validation notes
+
+---
+
+## 8. Governance & Versioning
+
+**Index version:** v4 (unified crosslinked docset)
+
+**v4 additions:** PATTERNS.md (1952 lines, 114 patterns), RISKS_AND_ANTIPATTERNS.md (815 lines, 15 anti-patterns + 32 risks), IMPLEMENTATION_STATUS.md (503 lines, 72 WP tracker), OPTIMIZATION_POLISH_ADDENDUM.md (581 lines, 73 optimization items), FASTMCP_INTEGRATION.md (1024 lines). Total docset: 22 files, 26,500+ lines.
+**Docset created:** 2026-02-14
+**Last updated:** 2026-02-14
+**Lineage:** Unified from iterative chunking phases (chunks 151-171 of orchestration-prd.md)
+
+**When to update this index:**
+
+- When new documents are added to docset (update §1 Document Map, §2 Crosslink Matrix, §6 File List)
+- When phase execution sequences change (update §4 Phase Execution Guide)
+- When WP quick-start paths change (update §3 Haiku Agent Quick Start)
+- When status changes materially (update §5 Status Dashboard)
+
+**Document archival policy:** Keep legacy/monolith documents but label clearly as historical context.
+
+---
+
+## Key Takeaway
+
+This index is your **single entry point**. Every file in the docset is mapped here with its purpose, crosslinks, and navigation path. Use it to:
+- **Find what to read** for your task (Haiku Agent Quick Start)
+- **Understand dependencies** between documents (Crosslink Matrix)
+- **Execute a phase** (Phase Execution Guide)
+- **Track overall progress** (Status Dashboard)
+- **Locate any specific information** (Document Map)
+
+Start with the navigation tips in §7, then dive into the documents that match your role and task.

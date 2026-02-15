@@ -1,0 +1,81 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "args": [
+        "@playwright/mcp@latest"
+      ],
+      "autoApprove": [
+        "browser_close",
+        "browser_resize",
+        "browser_console_messages",
+        "browser_handle_dialog",
+        "browser_file_upload",
+        "browser_install",
+        "browser_press_key",
+        "browser_navigate",
+        "browser_navigate_back",
+        "browser_navigate_forward",
+        "browser_network_requests",
+        "browser_pdf_save",
+        "browser_take_screenshot",
+        "browser_snapshot",
+        "browser_click",
+        "browser_drag",
+        "browser_hover",
+        "browser_type",
+        "browser_select_option",
+        "browser_tab_list",
+        "browser_tab_new",
+        "browser_tab_select",
+        "browser_tab_close",
+        "browser_generate_playwright_test",
+        "browser_wait_for"
+      ],
+      "command": "npx",
+      "disabled": false,
+      "timeout": 60,
+      "transportType": "stdio"
+    },
+    "server-sequential-thinking": {
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "autoApprove": [
+        "sequentialthinking"
+      ],
+      "command": "npx",
+      "disabled": false,
+      "timeout": 60,
+      "transportType": "stdio"
+    },
+    "octocode": {
+      "command": "npx",
+      "args": [
+        "octocode-mcp@latest"
+      ]
+    },
+    "software-planning-mcp": {
+      "args": [
+        "/Users/kooshapari/Documents/Cline/MCP/Software-planning-mcp/build/index.js"
+      ],
+      "autoApprove": [
+        "start_planning",
+        "save_plan",
+        "add_todo",
+        "remove_todo",
+        "get_todos",
+        "update_todo_status"
+      ],
+      "command": "node",
+      "disabled": false,
+      "timeout": 60,
+      "transportType": "stdio"
+    },
+    "next-devtools": {
+      "command": "npx -y next-devtools-mcp@latest",
+      "env": {},
+      "args": []
+    }
+  }
+}

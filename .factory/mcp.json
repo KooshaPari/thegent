@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "software-planning-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "/Users/kooshapari/Documents/Cline/MCP/Software-planning-mcp/build/index.js"
+      ],
+      "disabled": false
+    },
+    "octocode": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": [
+        "octocode-mcp"
+      ],
+      "disabled": false
+    }
+  }
+}

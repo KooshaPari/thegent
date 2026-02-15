@@ -1,0 +1,78 @@
+{
+	"custom_models": [
+        {
+     "model_display_name": "Cursor Auto",
+     "model": "cursor-auto",
+     "base_url": "http://localhost:8317",
+     "api_key": "dummy-not-used",
+     "provider": "cursor-agent"
+   },
+		 {
+      "model_display_name": "CC: Haiku 4.5",
+      "model": "claude-haiku-4-5-20251001",
+      "base_url": "http://localhost:8317",
+      "api_key": "dummy-not-used",
+      "provider": "anthropic"
+    },
+    {
+      "model_display_name": "CC: Sonnet 4.5",
+      "model": "claude-sonnet-4-5-20250929",
+      "base_url": "http://localhost:8317",
+      "api_key": "dummy-not-used",
+      "provider": "anthropic"
+    },
+    {
+      "model_display_name": "CC: Sonnet 4.5 (Think)",
+      "model": "claude-sonnet-4-5-20250929-thinking-4000",
+      "base_url": "http://localhost:8317",
+      "api_key": "dummy-not-used",
+      "provider": "anthropic"
+    },
+    {
+      "model_display_name": "GPT-5.3 Codex",
+      "model": "gpt-5.3-codex",
+      "base_url": "http://localhost:8317/v1",
+      "api_key": "dummy-not-used",
+      "provider": "openai"
+    },
+	{
+      "model_display_name": "Gemini 3 Pro",
+      "model": "gemini-3-pro-preview",
+      "base_url": "http://localhost:8317/v1",
+      "api_key": "dummy-not-used",
+      "provider": "generic-chat-completion-api"
+    },
+    {
+      "model_display_name": "Gemini 3 Flash",
+      "model": "gemini-3-flash",
+      "base_url": "http://localhost:8317/v1",
+      "api_key": "dummy-not-used",
+      "provider": "generic-chat-completion-api"
+    },
+		{
+			"model_display_name": "Minimax M2.5",
+			"model": "MiniMax-M2.5",
+			"base_url": "https://api.minimax.io/v1",
+			"api_key": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJHcm91cE5hbWUiOiJLb29zaGEgUGFyaWRlaHBvdXIiLCJVc2VyTmFtZSI6IlBoZW5vdHlwZSIsIkFjY291bnQiOiIiLCJTdWJqZWN0SUQiOiIxOTkzNjE5Mzc0MDQ0MzUyNTE1IiwiUGhvbmUiOiIiLCJHcm91cElEIjoiMTk5MzYxOTM3NDA0MDE2MjMwNyIsIlBhZ2VOYW1lIjoiIiwiTWFpbCI6Imtvb3NoYXBhcmlAZ21haWwuY29tIiwiQ3JlYXRlVGltZSI6IjIwMjUtMTEtMjYgMTc6NTU6NDgiLCJUb2tlblR5cGUiOjQsImlzcyI6Im1pbmltYXgifQ.yfIh5E1Qlo3YXfMopXMeLbcHLnq-pmCey-sVmpUVXEd6pTZUCA1d5aWpOsisG9LwENko11wHLJ9ALbReQT0fuA6tjkz859zZiByH8wE6zSvR7KH5YW8yk6495s8Zj7rhy_VsIlFa9RrchEEDu5x6kjBPK99BGdp2-z9YPvhkPLLl1-q7anLuKElX4-twbQpPHdTeAaqwv3X7i1T7FJe33TdZeuVv0luclWVF2ka3P9AV0LyCJNbAVbK28Nyuxzo5E0ZkVjLXU1pBH_l9qQ8Lbu5gjqyyzKxgyA2TuIgtlRQOJjo8WiLCDk-w1zU6RlR4MbWtiXim32_FvOmNotpTWA",
+			"provider": "generic-chat-completion-api",
+			"max_tokens": 90000
+		},
+		{
+			"model_display_name": "GLM 4.6 [Cerebras]",
+			"model": "zai-glm-5",
+			"base_url": "https://api.cerebras.ai/v1",
+			"api_key": "csk-4hwfvkr9d9w4rxhpec9j548986vtp64hh26k3p9wv9hfcf4h",
+			"provider": "generic-chat-completion-api",
+			"max_tokens": 32000
+		},
+		 {
+      "model_display_name": "GLM-4.6 [Z.AI]",
+      "model": "GLM-5",
+      "base_url": "https://api.z.ai/api/coding/paas/v4",
+      "api_key": "5e2846f86ce44280ac469d58697d2d6b.qbZBP0n9AgfA2Yfr",
+      "provider": "generic-chat-completion-api",
+      "max_tokens": 131072
+    }
+
+	]
+}

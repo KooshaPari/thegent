@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "thegent"
+version = "0.1.0"
+description = "Unified agent orchestration CLI for Factory skills and droids"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+    "typer>=0.21.1",
+    "rich>=14.3.1",
+    "pydantic>=2.12.5",
+    "pydantic-settings>=2.12.0",
+    "python-dotenv>=1.2.1",
+    "tenacity>=9.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+]
+mcp = [
+    "fastmcp>=3.0.0rc1",
+    "fastmcp[tasks]>=3.0.0rc1",
+]
+
+[project.scripts]
+thegent = "thegent.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/thegent"]
+
+[tool.uv]
+managed = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests that call real agents (deselect with -m 'not integration')",
+    "e2e: marks end-to-end CLI tests",
+    "slow: marks slow tests (deselect with -m 'not slow')",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore:ImportError while loading.*logfire-plugin:UserWarning",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "PIE"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+ignore_missing_imports = true  # tenacity, fastmcp, key_value lack stubs
