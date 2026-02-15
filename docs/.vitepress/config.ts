@@ -40,8 +40,8 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Architecture', link: '/ARCHITECTURE_LAYERS.md' },
-      { text: 'Guides', link: '/docs/guides/' },
-      { text: 'Reference', link: '/docs/reference/' },
+      { text: 'Guides', link: '/guides/' },
+      { text: 'Reference', link: '/reference/' },
     ],
 
     sidebar: {
@@ -63,14 +63,23 @@ export default defineConfig({
           text: 'Testing',
           items: [
             { text: 'Cross-Project Links', link: '/cross-links-test.md' },
+            { text: 'Callouts', link: '/test-callouts.md' },
           ]
         }
       ],
-      '/docs/guides/': [
+      '/guides/': [
         {
           text: 'Guides',
           items: [
-            { text: 'Overview', link: '/docs/guides/' },
+            { text: 'Overview', link: '/guides/' },
+          ]
+        }
+      ],
+      '/reference/': [
+        {
+          text: 'Reference',
+          items: [
+            { text: 'Overview', link: '/reference/' },
           ]
         }
       ]
