@@ -93,12 +93,31 @@ git_any_in_dirs() {
 
 # Get the current HEAD SHA
 # Usage: HEAD_SHA=$(git_current_head)
+# Cached version: Returns readonly _GIT_HEAD_SHA if available
 git_current_head() {
-    git rev-parse HEAD 2>/dev/null
+    # Use cached value if available (set by hook initialization)
+    if [[ -n "${_GIT_HEAD_SHA:-}" ]]; then
+      echo "$_GIT_HEAD_SHA"
+    else
+      git rev-parse HEAD 2>/dev/null
+    fi
 }
 
 # Check if in a git repository
 # Usage: in_git_repo && echo "yes"
+# Cached version: Returns readonly _GIT_IS_REPO if available (caches result)
 in_git_repo() {
-    git rev-parse --is-inside-work-tree 2>/dev/null
+    # Use cached result if available
+    if [[ -n "${_GIT_IS_REPO_CACHED:-}" ]]; then
+      [[ "$_GIT_IS_REPO_CACHED" == "true" ]]
+      return
+    fi
+    # Otherwise check and cache for future use
+    if git rev-parse --is-inside-work-tree 2>/dev/null > /dev/null; then
+      readonly _GIT_IS_REPO_CACHED="true"
+      return 0
+    else
+      readonly _GIT_IS_REPO_CACHED="false"
+      return 1
+    fi
 }

@@ -6,8 +6,10 @@
 set -euo pipefail
 
 # --- Ultra-fast cache check BEFORE common.sh ---
+# Cache git HEAD once to avoid repeated git calls throughout hook
+readonly _GIT_HEAD_SHA="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
-_CACHE_KEY="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
+_CACHE_KEY="$_GIT_HEAD_SHA"
 _CACHE_FILE="${_CACHE_DIR}/quality-gate-${_CACHE_KEY}.result"
 _CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -f "$_CACHE_FILE" ]]; then
@@ -64,8 +66,8 @@ CHANGED_EXTENSIONS=""
 while IFS= read -r fpath; do
   [[ -z "$fpath" ]] && continue
   ALL_FILES+=("$fpath")
-  local_ext="$(file_ext "$fpath")"
-  local_base="$(file_basename "$fpath")"
+  local_ext="${fpath##*.}"
+  local_base="${fpath##*/}"
   CHANGED_EXTENSIONS+="$local_ext "
   case "$local_ext" in
     py) PY_FILES+=("$fpath") ;;

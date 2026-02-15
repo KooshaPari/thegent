@@ -110,10 +110,10 @@ if [[ -f "${BASH_SOURCE[0]%/*}/procs-wrapper.sh" ]]; then
   source "${BASH_SOURCE[0]%/*}/procs-wrapper.sh"
 fi
 
-# sort_unique: use huniq if available, else sort -u
+# sort_unique: always sort and unique. Use huniq for unique if available, but must sort for comm compatibility.
 sort_unique() {
   if [[ -n "${HUNIQ_CMD:-}" ]]; then
-    "$HUNIQ_CMD"
+    "$HUNIQ_CMD" | sort
   else
     sort -u
   fi
@@ -159,7 +159,12 @@ hook_init() {
     PROJECT_DIR="${CWD:-}"
   fi
   if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+    # Cache git rev-parse --show-toplevel result to avoid repeated calls
+    PROJECT_DIR="${_CACHED_GIT_TOPLEVEL:-}"
+    if [[ -z "$PROJECT_DIR" ]]; then
+      PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+      readonly _CACHED_GIT_TOPLEVEL="$PROJECT_DIR"
+    fi
   fi
   # If empty/root and we are in the hooks dir, check symlink vs real path
   if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
@@ -287,7 +292,12 @@ hook_init_full() {
     PROJECT_DIR="${CWD:-}"
   fi
   if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+    # Cache git rev-parse --show-toplevel result to avoid repeated calls
+    PROJECT_DIR="${_CACHED_GIT_TOPLEVEL:-}"
+    if [[ -z "$PROJECT_DIR" ]]; then
+      PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+      readonly _CACHED_GIT_TOPLEVEL="$PROJECT_DIR"
+    fi
   fi
   if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
     if [[ "${BASH_SOURCE[0]}" == *".claude/hooks"* ]]; then
@@ -531,7 +541,12 @@ hook_cache_key() {
     local hook_name="$1"
     local changed_files head_sha
     # Use dispatcher-precomputed values if available (saves ~63ms per hook)
-    head_sha="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo none)}"
+    # Use cached git HEAD value if available to avoid repeated git calls
+    if [[ -n "${_GIT_HEAD_SHA:-}" ]]; then
+      head_sha="$_GIT_HEAD_SHA"
+    else
+      head_sha="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo none)}"
+    fi
     changed_files="${CHANGED_FILES_SORTED:-$(git diff --name-only HEAD 2>/dev/null | sort)}"
     printf '%s\0%s\0%s' "$hook_name" "$head_sha" "$changed_files" | shasum -a 256 | cut -d' ' -f1
 }

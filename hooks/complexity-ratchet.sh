@@ -28,6 +28,7 @@ else
 fi
 
 HOOK_NAME="COMPLEXITY-RATCHET"
+export HOOK_NAME
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
 
@@ -86,6 +87,7 @@ _load_baseline() {
 # Returns: cyclomatic file_lines (tab-separated)
 _get_baseline() {
   local file_key="$1"
+  # shellcheck disable=SC2016
   $JQ_CMD -r --arg f "$file_key" \
     '[(.files[$f].cyclomatic // 0), (.files[$f].file_lines // 0)] | @tsv' \
     <<< "$_baseline_content" 2>/dev/null || printf '0\t0'
@@ -97,6 +99,7 @@ _get_baseline() {
 _get_baselines_batch() {
   local files_json
   files_json=$(printf '%s\n' "$@" | $JQ_CMD -Rsc 'split("\n") | map(select(. != ""))')
+  # shellcheck disable=SC2016
   $JQ_CMD -r --argjson keys "$files_json" '
     . as $root |
     $keys[] |
@@ -119,7 +122,7 @@ measure_file() {
   local file="$1"
   local max_func_lines="$2"
   local ext
-  ext="$(file_ext "$file")"
+  ext="${file##*.}"
 
   case "$ext" in
     py)
@@ -601,7 +604,7 @@ measure_files_batch() {
 
 # ---------- Mode: single file (PostToolUse) ----------
 if [[ -n "$FILE_PATH" ]] && [[ -f "$FILE_PATH" ]]; then
-  EXT="$(file_ext "$FILE_PATH")"
+  EXT="${FILE_PATH##*.}"
   case "$EXT" in
     py|sh|bash|ts|tsx|js|jsx|go|rs|rb|php|java|kt|swift) ;;
     *) exit 0 ;;
@@ -610,7 +613,7 @@ if [[ -n "$FILE_PATH" ]] && [[ -f "$FILE_PATH" ]]; then
     */node_modules/*|*/.git/*|*/vendor/*|*/__pycache__/*|*/.venv/*|*/dist/*|*/build/*) exit 0 ;;
   esac
 
-  BASENAME="$(file_basename "$FILE_PATH")"
+  BASENAME="${FILE_PATH##*/}"
   # Single awk pass measures all metrics (was 4 separate function calls)
   METRICS=$(measure_file "$FILE_PATH" "$MAX_FUNCTION_LINES")
   IFS=':' read -r FILE_LINES CYCLOMATIC COGNITIVE NESTING LONG_FUNCS <<< "$METRICS"
@@ -649,6 +652,8 @@ if [[ -n "$FILE_PATH" ]] && [[ -f "$FILE_PATH" ]]; then
   fi
 
   # Update ratchet baseline: single jq write (in-memory -> file)
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  # shellcheck disable=SC2016
   $JQ_CMD --arg f "$FILE_PATH" \
      --argjson fl "$FILE_LINES" \
      --argjson cc "$CYCLOMATIC" \
@@ -710,7 +715,7 @@ while IFS= read -r rel_file; do
     coverage-cache/*|coverage/*|*.min.js|*.min.css|node_modules/*|vendor/*|__pycache__/*|.venv/*|dist/*|build/*|out/*|target/*) continue ;;
   esac
 
-  EXT="$(file_ext "$rel_file")"
+  EXT="${rel_file##*.}"
   case "$EXT" in
     py|sh|bash|ts|tsx|js|jsx|go|rs|rb|java|kt) ;;
     *) continue ;;
@@ -732,6 +737,7 @@ done
 
 # Batch-read all baselines in a single jq call (was: 1 jq call per file)
 declare -A PREV_CC_MAP=()
+# shellcheck disable=SC2034
 declare -A PREV_LINES_MAP=()
 
 while IFS=$'\t' read -r bkey bcc bfl; do
