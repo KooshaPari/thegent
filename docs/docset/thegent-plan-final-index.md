@@ -60,6 +60,13 @@ Complete docset with descriptions, purposes, and when to use each.
 | **thegent-phase10-12-compact-execution-dashboard.md** | Compact one-page execution dashboard for phases 10–12 | Running day-to-day execution with risk scoring and actionable rows | Dashboard schema, readiness scoring, blocker routing, rollout readiness alerts |
 | **thegent-phase10-12-policy-as-code-and-automation-contract.md** | Policy-as-code contract for deterministic phase 10–12 control | Enforcing gates, transitions, drift remediation, and rollback safety via machine-evaluable policy | DSL policy model, rule evaluation pipeline, governance exception handling |
 | **thegent-phase10-12-orchestrator-tooling-stack.md** | Orchestrator tooling stack for phase 10–12 automation | Multi-tool coordination architecture for policy-driven execution | Event bus model, connector contracts, concurrency model, rollback and drift handling |
+| **thegent-phase3-6-crosswave-bridge-and-continuity-plan.md** | Cross-wave continuity playbook from phases 3–6 to 10–12 | Preserving contract, safety, evidence, and governance continuity during expansion | Continuity matrix, risk controls, migration schedule, lane-based child-agent routing |
+| **thegent-phase3-6-closure-acceptance-contract-schema.md** | Closure acceptance contract for phase 3–6 WPs | Deterministic machine validation for phase transitions and continuity handoff | Required fields, decision matrix, validation pseudocode, schema enforcement |
+| **thegent-phase3-6-closure-acceptance-pack-template.md** | Operational closure pack template for phase 3–6 WPs | Standardized signoff and evidence format before phase handoff | Evidence/test/signoff checklist, rollback readiness, exception flow |
+| **thegent-phase3-6-closure-validator-automation-package.md** | Automated validator package for phase 3–6 closure | CI hooks, commands, and ticket integration for deterministic gate enforcement | Validation pipeline, batch checks, crosswave controls, issue-board event mapping |
+| **thegent-phase3-6-closure-validator-schema-v1.json** | Versioned JSON schema for phase 3–6 closure packs | Machine-validation contract for pack and evidence payloads | Canonical schema fields, constraints, pass/fail severity model |
+| **thegent-phase3-6-closure-validator-event-and-waiver-contract-v1.md** | Event + waiver contract for closure validation automation | Canonical event payloads for result/waiver/override handling | Event types, payload schema, waiver lifecycle, severity mapping |
+| **thegent-phase3-6-closure-validator-runtime-cli-and-adapter-playbook.md** | Runtime CLI and adapter playbook for phase 3–6 closure validation | Command contracts, adapter mappings, strictness rollout, CI and performance targets | CLI command grammar, external connector integration, security hardening, implementation chunk plan |
 | **thegent-phase10-12-issue-board-seed.json** | Machine-readable import seed for tracker automation | Bulk creating tickets in issue trackers with DoR/DoD | JSON schema with bundle mapping, tests, artifacts, gates |
 | **thegent-phase10-12-implementation-issue-queue.md** | Concrete implementation issue queue for phases 10–12 | Creating and sequencing issue tickets for execution | WP-level issue IDs, owner mapping, test tie-ins |
 | **thegent-phase10-12-closure-readiness-pack-template.md** | Closure handoff template and finality requirements | Final readout before production completion | Evidence scoring, residual risk matrix, signoff package |
@@ -504,6 +511,13 @@ docs/docset/
 ├── thegent-phase10-12-compact-execution-dashboard.md
 ├── thegent-phase10-12-policy-as-code-and-automation-contract.md
 ├── thegent-phase10-12-orchestrator-tooling-stack.md
+├── thegent-phase3-6-crosswave-bridge-and-continuity-plan.md
+├── thegent-phase3-6-closure-acceptance-contract-schema.md
+├── thegent-phase3-6-closure-acceptance-pack-template.md
+├── thegent-phase3-6-closure-validator-automation-package.md
+├── thegent-phase3-6-closure-validator-schema-v1.json
+├── thegent-phase3-6-closure-validator-event-and-waiver-contract-v1.md
+├── thegent-phase3-6-closure-validator-runtime-cli-and-adapter-playbook.md
 ├── thegent-phase10-12-issue-board-seed.json
 ├── thegent-phase10-12-implementation-issue-queue.md
 ├── thegent-phase10-12-closure-readiness-pack-template.md
@@ -584,7 +598,7 @@ docs/docset/
 **Index version:** v5 (unified crosslinked docset)
 
 **v4 additions:** PATTERNS.md (1952 lines, 114 patterns), RISKS_AND_ANTIPATTERNS.md (815 lines, 15 anti-patterns + 32 risks), IMPLEMENTATION_STATUS.md (503 lines, 72 WP tracker), OPTIMIZATION_POLISH_ADDENDUM.md (581 lines, 73 optimization items), FASTMCP_INTEGRATION.md (1024 lines).  
-**v5 additions:** E2E plans, remaining-gap deep dives, Phase 10–12 implementation issue/launch/queue artifacts, policy-as-code automation contract, orchestrator tooling stack, phase-13+ proposal. Total docset: 41 files, 41 root doc entries.
+**v5 additions:** E2E plans, remaining-gap deep dives, Phase 10–12 implementation issue/launch/queue artifacts, policy-as-code automation contract, orchestrator tooling stack, crosswave continuity bridge, phase-3–6 closure acceptance schema/template, closure validator automation package, closure validator schema/event/runtime CLI+adapter contracts, phase-13+ proposal. Total docset: 48 files, 48 root doc entries.
 **Docset created:** 2026-02-14
 **Last updated:** 2026-02-15
 **Lineage:** Unified from iterative chunking phases (chunks 151-171 of orchestration-prd.md)
