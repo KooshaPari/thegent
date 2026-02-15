@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { crossProjectLinks } from './plugins/cross-project-links'
 
 export default defineConfig({
   title: 'thegent',
@@ -6,7 +7,34 @@ export default defineConfig({
   appearance: true,
   lastUpdated: true,
 
-  srcDir: 'docs',
+  // Exclude problematic directories from the build
+  ignore: [
+    'docset/',
+    'plans/',
+    'research/',
+    'docset',
+    'plans',
+    'research',
+  ],
+
+  // Disable dead link check (links are external or cross-project)
+  ignoreDeadLinks: true,
+
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: undefined
+        }
+      }
+    }
+  },
+
+  markdown: {
+    config: (md) => {
+      md.use(crossProjectLinks)
+    }
+  },
 
   themeConfig: {
     nav: [
@@ -30,6 +58,12 @@ export default defineConfig({
             { text: 'Layers', link: '/ARCHITECTURE_LAYERS.md' },
             { text: 'Orchestration', link: '/ORCHESTRATION.md' },
           ]
+        },
+        {
+          text: 'Testing',
+          items: [
+            { text: 'Cross-Project Links', link: '/cross-links-test.md' },
+          ]
         }
       ],
       '/docs/guides/': [
@@ -51,14 +85,4 @@ export default defineConfig({
     outDir: '../docs-dist',
     assetsDir: 'assets',
   },
-
-  vite: {
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks: undefined
-        }
-      }
-    }
-  }
 })
