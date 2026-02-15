@@ -10,13 +10,14 @@ set -euo pipefail
 
 # --- Ultra-fast cache check BEFORE common.sh (Stop mode only) ---
 # When FILE_PATH is not set, this is a Stop invocation
+_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -z "${FILE_PATH:-}" ]]; then
   _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
   _CACHE_KEY="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
   _CACHE_FILE="${_CACHE_DIR}/spec-verifier-${_CACHE_KEY}.result"
   if [[ -f "$_CACHE_FILE" ]]; then
     _age=$(( $(date +%s) - $(stat -f '%m' "$_CACHE_FILE" 2>/dev/null || stat -c '%Y' "$_CACHE_FILE" 2>/dev/null || echo 0) ))
-    if (( _age < 120 )); then
+    if (( _age < _CACHE_TTL )); then
       cat "$_CACHE_FILE"
       exit 0
     fi
@@ -29,6 +30,13 @@ hook_init
 
 # Stderr message on unexpected failure (set -e)
 trap 'echo "SPEC-VERIFIER FAIL: unexpected error at line $LINENO" >&2' ERR
+
+# --- P1 optimization: Skip in Stop mode if no FR/test files changed ---
+# Only run if FR files or test files were modified (spec verification relevant)
+if [[ -z "${FILE_PATH:-}" ]] && ! hook_should_run "check" '(FUNCTIONAL_REQUIREMENTS|test|spec|.*_test|.*\.test\.)'; then
+  echo "SPEC-VERIFIER: skipped (no FR or test files changed)"
+  exit 0
+fi
 
 RESULTS_FILE="$HOME/.claude/.spec-verification.json"
 
@@ -122,6 +130,7 @@ if [[ "$MODE" == "single" ]]; then
   if [[ "$IS_TEST" == "true" ]]; then
     if ! grep -m 1 -qE 'FR-[A-Z]+-[0-9]+' "$FILE_PATH" 2>/dev/null; then
       FINDINGS+=("TRACEABILITY: Test file '${BASENAME}' has no FR reference tag (e.g., @trace FR-XXX-NNN)")
+      emit_feedback "suggestion" "spec-verification" "Test file '${BASENAME}' has no FR reference tag" "SPEC-MISSING-TAG" "Add an @trace FR-XXX-NNN tag to this test file to link it to a functional requirement."
     fi
   fi
 
@@ -135,6 +144,7 @@ if [[ "$MODE" == "single" ]]; then
         while IFS= read -r fr_id; do
           [[ -z "$fr_id" ]] && continue
           FINDINGS+=("INVALID FR: '${BASENAME}' references '${fr_id}' which is not in FUNCTIONAL_REQUIREMENTS.md")
+          emit_feedback "warning" "spec-verification" "'${BASENAME}' references invalid FR: ${fr_id}" "SPEC-INVALID-FR" "Check FUNCTIONAL_REQUIREMENTS.md for valid FR IDs and correct the reference in '${BASENAME}'."
         done <<< "$INVALID_FRS"
       fi
     fi
@@ -164,6 +174,7 @@ if [[ "$MODE" == "single" ]]; then
           while IFS= read -r test_fr; do
             [[ -z "$test_fr" ]] && continue
             FINDINGS+=("ORPHANED TEST: Tests reference '${test_fr}' but it no longer exists in FUNCTIONAL_REQUIREMENTS.md")
+            emit_feedback "warning" "spec-verification" "Tests reference orphaned FR: ${test_fr}" "SPEC-ORPHANED-TEST" "Remove the reference to '${test_fr}' or update the spec to include it."
           done <<< "$ORPHANED_FRS"
         fi
       fi

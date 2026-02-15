@@ -3,18 +3,20 @@
 import pytest
 
 from thegent.orchestration_modes import (
-    MultiAgentMode,
     MODE_CATALOG,
+    MultiAgentMode,
     get_mode,
     list_modes,
     suggest_mode,
 )
 
 
+@pytest.mark.unit
 class TestMultiAgentModeCatalog:
     """Tests for multi-agent mode catalog."""
 
     def test_catalog_has_three_modes(self) -> None:
+        # @trace FR-OPS-002
         """Catalog contains sequential_delegation, parallel_consensus, review_loop."""
         modes = [e.mode for e in MODE_CATALOG]
         assert MultiAgentMode.SEQUENTIAL_DELEGATION in modes
@@ -23,6 +25,7 @@ class TestMultiAgentModeCatalog:
         assert len(MODE_CATALOG) == 3
 
     def test_list_modes_returns_list_of_dicts(self) -> None:
+        # @trace FR-OPS-002
         """list_modes returns list with mode, description, phases, use_case, risk_profile."""
         data = list_modes()
         assert len(data) == 3
@@ -35,6 +38,7 @@ class TestMultiAgentModeCatalog:
             assert "selection_hint" in item
 
     def test_get_mode_returns_entry(self) -> None:
+        # @trace FR-OPS-002
         """get_mode returns ModeEntry for valid mode."""
         entry = get_mode("sequential_delegation")
         assert entry is not None
@@ -42,17 +46,21 @@ class TestMultiAgentModeCatalog:
         assert "specialization" in entry.description
 
     def test_get_mode_returns_none_for_invalid(self) -> None:
+        # @trace FR-OPS-002
         """get_mode returns None for invalid mode."""
         assert get_mode("invalid_mode") is None
 
     def test_suggest_mode_low_confidence_returns_parallel_consensus(self) -> None:
+        # @trace FR-OPS-003
         """Low confidence suggests parallel_consensus."""
         assert suggest_mode(confidence=0.3) == MultiAgentMode.PARALLEL_CONSENSUS
 
     def test_suggest_mode_high_risk_returns_review_loop(self) -> None:
+        # @trace FR-OPS-003
         """High risk (non-critical) suggests review_loop."""
         assert suggest_mode(risk="high", urgency="normal") == MultiAgentMode.REVIEW_LOOP
 
     def test_suggest_mode_default_returns_sequential_delegation(self) -> None:
+        # @trace FR-OPS-003
         """Default suggests sequential_delegation."""
         assert suggest_mode(confidence=0.8) == MultiAgentMode.SEQUENTIAL_DELEGATION

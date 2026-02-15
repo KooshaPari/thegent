@@ -90,9 +90,7 @@ class DroidRunner(AgentRunner):
 
         droid_content = droid_path.read_text()
         combined = f"{droid_content.rstrip()}\n\n---\nUser request: {prompt}"
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".md", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(combined)
             tmp_path = f.name
 
@@ -109,6 +107,7 @@ class DroidRunner(AgentRunner):
 
             proc = subprocess.run(
                 cmd,
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=timeout + 5,
@@ -201,6 +200,7 @@ class CodexRunner(AgentRunner):
         try:
             proc = subprocess.run(
                 cmd,
+                check=False,
                 input=combined,
                 capture_output=True,
                 text=True,
@@ -287,6 +287,7 @@ class CustomCliRunner(AgentRunner):
         try:
             proc = subprocess.run(
                 cmd,
+                check=False,
                 input=combined,
                 capture_output=True,
                 text=True,

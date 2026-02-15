@@ -37,6 +37,7 @@ POSTTOOL_HOOKS=(
   qa-evidence-recorder.sh
   qa-policy-test.sh
   post-edit-checker.sh
+  agent-antipattern-detector.sh
   async-test-runner.sh
   speculative-stop-prewarmer.sh
 )

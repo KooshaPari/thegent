@@ -1,8 +1,479 @@
 {
   "version": "1.0",
-  "generated_at": "2026-02-15T02:18:40Z",
+  "generated_at": "2026-02-15T12:39:35Z",
   "project_dir": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
-  "items": [],
+  "items": [
+    {
+      "id": "Functional",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-004",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-005",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-006",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-007",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-008",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-009",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-010",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-011",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-012",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-AGT-013",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-004",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-005",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-006",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-007",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-008",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-009",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-010",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-011",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-012",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CTR-013",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-GOV",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-GOV-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-GOV-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-GOV-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-GOV-004",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-GOV-005",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-GOV-006",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-GOV-007",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE-004",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE-005",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE-006",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE-007",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE-008",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE-009",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXE-010",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MOD",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MOD-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MOD-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MOD-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MOD-004",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MOD-005",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MOD-006",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-PLN",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-PLN-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-PLN-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-PLN-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CLI",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CLI-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CLI-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CLI-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CLI-004",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CLI-005",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MCP",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MCP-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MCP-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MCP-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-MCP-004",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CFG",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CFG-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CFG-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CFG-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CFG-004",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CFG-005",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-CFG-006",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-OPS",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-OPS-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-OPS-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-OPS-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-INS",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-INS-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-INS-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-INS-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-INS-004",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-OUT",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-OUT-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-OUT-002",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-OUT-003",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-OUT-004",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-OUT-005",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXIT",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    },
+    {
+      "id": "FR-EXIT-001",
+      "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/FUNCTIONAL_REQUIREMENTS.md",
+      "state": "draft"
+    }
+  ],
   "dag": {
     "nodes": [],
     "edges": []

@@ -1,0 +1,147 @@
+version: '3'
+
+vars:
+  PYTHONPATH: 
+    sh: pwd
+  THGENT_LOG_DIR: .process-compose/logs
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true
+
+  setup:
+    desc: "Initial setup: install deps and config"
+    cmds:
+      - brew bundle check || brew bundle
+      - uv sync
+      - cp -n .env.example .env || true
+      - python scripts/ensure-cliproxy-config.py
+    sources:
+      - Brewfile
+      - pyproject.toml
+    generates:
+      - .venv/bin/python
+      - .env
+
+  dev:
+    desc: "Start MCP + Proxy via process-compose (TUI)"
+    cmds:
+      - process-compose up
+
+  dev:bg:
+    desc: "Start MCP + Proxy in background"
+    cmds:
+      - process-compose up -d
+
+  dev:down:
+    desc: "Stop all services"
+    cmds:
+      - process-compose down
+
+  dev:logs:
+    desc: "Follow service logs"
+    cmds:
+      - process-compose logs -f
+
+  test:
+    desc: "Run all tests (parallel)"
+    cmds:
+      - uv run pytest -n auto --cov=src/thegent --cov-report=term-missing --cov-fail-under=80
+
+  test:unit:
+    desc: "Run unit tests"
+    cmds:
+      - uv run pytest -m unit
+
+  test:pyramid:
+    desc: "Validate test pyramid distribution"
+    cmds:
+      - bash scripts/test-pyramid-validator.sh
+
+  lint:
+    desc: "Run all linters"
+    cmds:
+      - task: lint:python
+      - task: lint:type
+      - task: lint:dead-code
+      - task: lint:shell
+      - task: lint:arch
+
+  lint:python:
+    desc: "Python linting (ruff)"
+    cmds:
+      - uv run ruff check . --output-format=grouped
+      - uv run ruff format --check .
+
+  lint:type:
+    desc: "Fast static type checking (ty + zuban)"
+    cmds:
+      - uv run ty check src/
+      - zuban check src/
+
+  lint:strict:
+    desc: "Strict type checking (basedpyright + mypy) - recommended for CI/commit"
+    cmds:
+      - uv run basedpyright src/
+      - uv run mypy src/
+
+  lint:dead-code:
+    desc: "Dead code detection (vulture)"
+    cmds:
+      - uv run vulture src/thegent --min-confidence 80
+
+  lint:shell:
+    desc: "Shell script linting"
+    cmds:
+      - shellcheck hooks/*.sh scripts/*.sh
+
+  lint:arch:
+    desc: "Architectural boundary check"
+    cmds:
+      - uv run python scripts/check_boundaries.py
+      - uv run tach check
+
+  format:
+    desc: "Format all code"
+    cmds:
+      - uv run ruff format .
+      - uv run ruff check --fix .
+
+  typecheck:
+    desc: "Run type checker"
+    cmds:
+      - task: lint:type
+
+  security:
+    desc: "Run security checks"
+    cmds:
+      - uv run ruff check --select S src/
+
+  lint:antipatterns:
+    desc: "Scan for agent anti-patterns (custom retry, wrong logging, hardcoded providers)"
+    cmds:
+      - bash -c 'find src/ -name "*.py" -not -path "*/test*" -not -name "conftest.py" | while read f; do FILE_PATH="$f" TOOL_CONTENT="$(cat "$f")" bash hooks/agent-antipattern-detector.sh; done'
+
+  quality:
+    desc: "Run full quality gate"
+    cmds:
+      - task: lint
+      - task: lint:strict
+      - task: test
+      - task: test:pyramid
+      - bash scripts/traceability-validator.sh
+      - bash scripts/dx-audit.sh
+
+  clean:
+    desc: "Clean all build artifacts and caches"
+    cmds:
+      - rm -rf .venv/
+      - rm -rf .pytest_cache/
+      - rm -rf .ruff_cache/
+      - rm -rf .mypy_cache/
+      - rm -rf .ty_cache/
+      - rm -rf .basedpyright_cache/
+      - rm -rf .process-compose/
+      - find . -type d -name "__pycache__" -exec rm -rf {} +

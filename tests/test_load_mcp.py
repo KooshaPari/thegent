@@ -7,19 +7,20 @@ from __future__ import annotations
 
 import concurrent.futures
 import time
-from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from thegent.cli_impl import list_models_impl, ps_impl
 
 
+@pytest.mark.integration
 class TestConcurrentPs:
     """50 concurrent ps_impl: no deadlock, completes within reasonable time."""
 
     def test_concurrent_ps_impl_no_deadlock(self) -> None:
+        # @trace FR-MCP-001
         """50 concurrent ps_impl calls complete without deadlock."""
+
         def call_ps() -> list:
             return ps_impl()
 
@@ -32,7 +33,9 @@ class TestConcurrentPs:
             assert isinstance(r, list)
 
     def test_concurrent_ps_completes_under_2s_p95(self) -> None:
+        # @trace FR-MCP-001
         """50 concurrent ps_impl calls complete; p95 latency under 2s."""
+
         def call_ps() -> tuple[float, list]:
             start = time.perf_counter()
             r = ps_impl()
@@ -48,11 +51,14 @@ class TestConcurrentPs:
         assert p95 < 2.0
 
 
+@pytest.mark.integration
 class TestConcurrentListModels:
     """Concurrent list_models_impl: cache hits, no OOM."""
 
     def test_concurrent_list_models_no_deadlock(self) -> None:
+        # @trace FR-MCP-001
         """30 concurrent list_models_impl calls complete."""
+
         def call_list() -> dict:
             return list_models_impl(use_scraped=False)
 

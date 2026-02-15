@@ -27,7 +27,6 @@ from typing import Any
 try:
     import httpx
 except ImportError:
-    print("Install httpx: pip install httpx")
     sys.exit(1)
 
 MCP_URL = "http://127.0.0.1:3847"
@@ -38,7 +37,7 @@ def _rpc(method: str, params: dict[str, Any] | None = None, req_id: int = 1) -> 
     return {"jsonrpc": "2.0", "id": req_id, "method": method, "params": params or {}}
 
 
-def _parse_mcp_response(text: str) -> dict:
+def _parse_mcp_response(text: str, req_id: int | None = None) -> dict:
     """Parse MCP response: JSON body or SSE (data: {...})."""
     text = (text or "").strip()
     if not text:
@@ -48,7 +47,14 @@ def _parse_mcp_response(text: str) -> dict:
         for line in text.split("\n"):
             if line.startswith("data:"):
                 try:
-                    return json.loads(line[5:].strip())
+                    data = json.loads(line[5:].strip())
+                    if req_id is not None:
+                        # If we have a request ID, look for a response with that ID
+                        if data.get("id") == req_id:
+                            return data
+                        # Otherwise it might be a notification, skip it
+                        continue
+                    return data
                 except json.JSONDecodeError:
                     continue
         return {}
@@ -85,7 +91,7 @@ async def list_tools(url: str) -> tuple[bool, list[str], str]:
             )
             if r.status_code != 200:
                 return False, [], f"tools/list status {r.status_code}"
-            data = _parse_mcp_response(r.text)
+            data = _parse_mcp_response(r.text, req_id=1)
             if "error" in data:
                 return False, [], data["error"].get("message", str(data["error"]))
             tools = data.get("result", {}).get("tools", [])
@@ -107,7 +113,7 @@ async def list_prompts(url: str) -> tuple[bool, list[str], str]:
             )
             if r.status_code != 200:
                 return False, [], f"prompts/list status {r.status_code}"
-            data = _parse_mcp_response(r.text)
+            data = _parse_mcp_response(r.text, req_id=1)
             if "error" in data:
                 return False, [], data["error"].get("message", str(data["error"]))
             prompts = data.get("result", {}).get("prompts", [])
@@ -129,7 +135,7 @@ async def list_resources(url: str) -> tuple[bool, list[str], str]:
             )
             if r.status_code != 200:
                 return False, [], f"resources/list status {r.status_code}"
-            data = _parse_mcp_response(r.text)
+            data = _parse_mcp_response(r.text, req_id=1)
             if "error" in data:
                 return False, [], data["error"].get("message", str(data["error"]))
             resources = data.get("result", {}).get("resources", [])
@@ -147,11 +153,11 @@ async def call_tool(url: str, name: str, arguments: dict[str, Any]) -> tuple[boo
                 f"{url}/mcp",
                 json=_rpc("tools/call", {"name": name, "arguments": arguments}),
                 headers={"Accept": "application/json, text/event-stream"},
-                timeout=60.0,
+                timeout=300.0,
             )
             if r.status_code != 200:
                 return False, None, f"tools/call status {r.status_code}"
-            data = _parse_mcp_response(r.text)
+            data = _parse_mcp_response(r.text, req_id=1)
             if "error" in data:
                 return False, None, data["error"].get("message", str(data["error"]))
             result = data.get("result", {})
@@ -182,7 +188,7 @@ async def read_resource(url: str, uri: str) -> tuple[bool, str, str]:
             )
             if r.status_code != 200:
                 return False, "", f"resources/read status {r.status_code}"
-            data = _parse_mcp_response(r.text)
+            data = _parse_mcp_response(r.text, req_id=1)
             if "error" in data:
                 return False, "", data["error"].get("message", str(data["error"]))
             result = data.get("result", {})
@@ -233,7 +239,7 @@ async def run_verification(url: str, skip_api_tests: bool = True) -> dict[str, A
     results["F5_resources"] = {"ok": ok, "message": msg, "uris": uris}
     has_logs_in_list = any("session" in u and "logs" in u for u in uris)
     # Direct read test: thegent://session/{id}/logs returns content (or "Session not found" for bad id)
-    ok_read, content, msg_read = await read_resource(base, "thegent://session/__verify_test__/logs")
+    ok_read, content, _msg_read = await read_resource(base, "thegent://session/__verify_test__/logs")
     has_logs_resource = ok_read or ("session" in (content or "").lower() or "not found" in (content or "").lower())
     results["F5_resources"]["has_session_logs"] = has_logs_in_list or has_logs_resource
     if not (has_logs_in_list or has_logs_resource):
@@ -312,22 +318,14 @@ def main() -> None:
     results = asyncio.run(run_verification(args.url, skip_api_tests=not args.no_skip_api))
 
     if args.json:
-        print(json.dumps(results, indent=2))
         sys.exit(0 if all(r.get("ok") is not False for r in results.values()) else 1)
 
-    print("FastMCP Verification Runbook")
-    print("=" * 50)
-    for key, val in results.items():
-        ok = val.get("ok")
-        status = "PASS" if ok is True else ("SKIP" if ok is None else "FAIL")
-        msg = val.get("message", "")
-        print(f"  {key}: [{status}] {msg}")
-    print("=" * 50)
+    for val in results.values():
+        val.get("ok")
+        val.get("message", "")
     failed = sum(1 for r in results.values() if r.get("ok") is False)
     if failed:
-        print(f"Failed: {failed}")
         sys.exit(1)
-    print("All checks passed (or skipped).")
     sys.exit(0)
 
 

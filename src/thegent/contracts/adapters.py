@@ -7,8 +7,7 @@ CanonicalStructuredMessage for orchestration pipelines.
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
-from thegent.contracts.csm import CanonicalStructuredMessage, CSMStatus, CSMPhase
-from thegent.contracts.parser import extract_tags
+from thegent.contracts.csm import CanonicalStructuredMessage, CSMPhase, CSMStatus
 from thegent.contracts.validation import validate_csm
 
 
@@ -51,7 +50,7 @@ class OutputAdapter(Protocol):
 class XMLOutputAdapter:
     """Base adapter for XML-structured agent outputs."""
 
-    def __init__(self, provider_name: str):
+    def __init__(self, provider_name: str) -> None:
         self._provider = provider_name
 
     @property
@@ -60,21 +59,16 @@ class XMLOutputAdapter:
 
     def normalize(self, raw: str | dict[str, Any], context: dict[str, Any] | None = None) -> AdapterResult:
         from thegent.contracts.parser import IncrementalXMLParser
+
         parser = IncrementalXMLParser()
         text = raw if isinstance(raw, str) else str(raw.get("stdout", raw.get("content", "")))
         tags = parser.parse(text)
-        normalized_tags = {
-            str(k).upper().replace("-", "_"): v
-            for k, v in tags.items()
-        }
-        
+        normalized_tags = {str(k).upper().replace("-", "_"): v for k, v in tags.items()}
+
         parse_errors = []
         if not normalized_tags:
             partial = parser.get_partial_state(text)
-            if partial["open_tag"]:
-                parse_errors = ["parse_truncated"]
-            else:
-                parse_errors = ["no_xml_tags_detected"]
+            parse_errors = ["parse_truncated"] if partial["open_tag"] else ["no_xml_tags_detected"]
 
             return AdapterResult(
                 csm=CanonicalStructuredMessage(
@@ -88,7 +82,7 @@ class XMLOutputAdapter:
                 parse_errors=parse_errors,
                 source_provider=self._provider,
             )
-        
+
         # Mapping common tags to CSM (case-insensitive keys from extract_tags)
         # Handle both snake_case (impl) and PascalCase (docs) and UPPERCASE (standard)
         def get_tag(*aliases: str) -> str:
@@ -109,7 +103,7 @@ class XMLOutputAdapter:
             "cancelled": CSMStatus.CANCELLED,
             "skipped": CSMStatus.CANCELLED,
         }
-        
+
         progress_val = get_tag("PROGRESS", "TASK_PROGRESS", "PERCENT_COMPLETE").rstrip("%")
         try:
             progress = float(progress_val) / 100.0 if float(progress_val) > 1.0 else float(progress_val)
@@ -125,21 +119,18 @@ class XMLOutputAdapter:
             summary=get_tag("SUMMARY", "TASK_SUMMARY", "TASK_UPDATE", "TASKUPDATE"),
             actions_completed=get_tag("ACTIONS_COMPLETED").split("\n") if get_tag("ACTIONS_COMPLETED") else [],
             issues=get_tag("ISSUES", "TASK_ISSUES").split("\n") if get_tag("ISSUES", "TASK_ISSUES") else [],
-            next_steps=get_tag("NEXT_STEPS", "TASK_NEXT_STEPS").split("\n") if get_tag("NEXT_STEPS", "TASK_NEXT_STEPS") else [],
+            next_steps=get_tag("NEXT_STEPS", "TASK_NEXT_STEPS").split("\n")
+            if get_tag("NEXT_STEPS", "TASK_NEXT_STEPS")
+            else [],
             source_contract="xml-tags",
             raw_payload=normalized_tags,
         )
-        
+
         issues = validate_csm(csm)
         # If we had to guess many fields, reduce confidence
         confidence = 1.0 if not issues else 0.7
-        
-        return AdapterResult(
-            csm=csm,
-            confidence=confidence,
-            parse_errors=issues,
-            source_provider=self._provider
-        )
+
+        return AdapterResult(csm=csm, confidence=confidence, parse_errors=issues, source_provider=self._provider)
 
 
 class GenericOutputAdapter:
@@ -235,6 +226,7 @@ def normalize_output(
 
     if not allow_fallback:
         from thegent.contracts.validation import SemanticValidationError
+
         raise SemanticValidationError(f"Normalization failed for {provider} and fallback is disabled.")
 
     # Fallback: minimal CSM from plain text
@@ -242,7 +234,7 @@ def normalize_output(
 
     text = raw if isinstance(raw, str) else str(raw.get("stdout", raw.get("content", str(raw))))
     summary = extract_condensed(text)
-    
+
     return AdapterResult(
         csm=CanonicalStructuredMessage(
             task_id=(context or {}).get("task_id", ""),
@@ -260,4 +252,5 @@ def normalize_output(
 
 
 import logging
+
 _log = logging.getLogger(__name__)

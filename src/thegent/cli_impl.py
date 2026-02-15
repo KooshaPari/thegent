@@ -15,10 +15,14 @@ import subprocess
 import sys
 import time
 import uuid
-from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, cast
+
+from rich.console import Console
+
+console = Console()
 
 import typer
 
@@ -26,6 +30,9 @@ import typer
 # Mission-Critical Rigor (G-FM-04): Use stat-based markers for cache invalidation.
 _CWD_CACHE: dict[str, tuple[Path | None, float, float]] = {}
 _CWD_CACHE_TTL = 10.0  # seconds
+
+import contextlib
+import hashlib
 
 from thegent.agents import (
     get_fallback_agents,
@@ -38,11 +45,8 @@ from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.registry import AGENT_LABELS
 from thegent.agents.resilience import is_usage_limit
 from thegent.config import ThegentSettings
-from thegent.execution import RunMeta, RunRegistry
 from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
-
-import getpass
-import hashlib
+from thegent.execution import RunMeta, RunRegistry
 
 # Approximate seconds per tool call for budget injection (~2.3s * N tool calls ≈ timeout)
 SECONDS_PER_TOOL_CALL = 2.3
@@ -72,10 +76,7 @@ def _resolve_cwd(cd: Path | None) -> Path | None:
 
     # Use absolute path string as cache key; for auto-inference include cwd so tests don't cross-pollute
     try:
-        if cd is not None:
-            cache_key = str(cd.expanduser().resolve())
-        else:
-            cache_key = f"none:{Path.cwd()}"
+        cache_key = str(cd.expanduser().resolve()) if cd is not None else f"none:{Path.cwd()}"
     except Exception:
         cache_key = str(cd) if cd else f"none:{Path.cwd()}"
 
@@ -95,11 +96,7 @@ def _resolve_cwd(cd: Path | None) -> Path | None:
         cwd = Path.cwd()
 
         # Check for project indicators
-        if (cwd / ".git").exists():
-            resolved_p = cwd
-        elif (cwd / ".factory").exists():
-            resolved_p = cwd
-        elif (cwd / "pyproject.toml").exists():
+        if (cwd / ".git").exists() or (cwd / ".factory").exists() or (cwd / "pyproject.toml").exists():
             resolved_p = cwd
         elif (cwd.parent / ".factory").exists():
             resolved_p = cwd.parent
@@ -231,10 +228,11 @@ def _session_paths(base: Path, session_id: str) -> dict[str, Path]:
     }
 
 
-def _new_session_id(agent: str, owner: str) -> str:
+def _new_session_id(agent: str | None, owner: str) -> str:
     now = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     digest = hashlib.sha1(f"{time.time_ns()}:{os.getpid()}:{owner}".encode()).hexdigest()[:8]
-    return f"{now}-{agent}-p{os.getpid()}-{digest}"
+    agent_tag = agent if agent else "any"
+    return f"{now}-{agent_tag}-p{os.getpid()}-{digest}"
 
 
 def _is_pid_running(pid: int) -> bool:
@@ -327,10 +325,8 @@ def _run_background_session_observer(
             pass
     _save_session_meta(path, payload)
     if rc_path:
-        try:
+        with contextlib.suppress(OSError):
             Path(rc_path).write_text(f"{exit_code}\n", encoding="utf-8")
-        except OSError:
-            pass
 
 
 def _load_prior_session_output(
@@ -432,7 +428,19 @@ def _parse_dag_full(path: Path) -> DagDocument:
         tasks=tasks,
         before_table=before_table,
         after_table=after_table,
-        table_headers=headers or ["id", "agent", "prompt", "depends_on", "status", "evidence", "retry_count", "max_retries", "quorum", "confidence"],
+        table_headers=headers
+        or [
+            "id",
+            "agent",
+            "prompt",
+            "depends_on",
+            "status",
+            "evidence",
+            "retry_count",
+            "max_retries",
+            "quorum",
+            "confidence",
+        ],
     )
 
 
@@ -457,6 +465,7 @@ def _atomic_write(path: Path, content: str, backup: bool = False) -> None:
     """Write content atomically. Optional backup before overwrite."""
     if backup and path.exists():
         import shutil
+
         shutil.copy2(path, path.with_suffix(path.suffix + ".bak"))
     tmp = path.with_suffix(path.suffix + ".tmp")
     with tmp.open("w", encoding="utf-8") as f:
@@ -521,8 +530,7 @@ def _check_dag_cycles(tasks: list[dict[str, str]]) -> list[str]:
                     return cycle
             elif dep in rec_stack:
                 idx = path.index(dep)
-                cycle = path[idx:] + [dep]
-                return cycle
+                return [*path[idx:], dep]
         path.pop()
         rec_stack.discard(node)
         return None
@@ -613,9 +621,9 @@ def _ensure_evidence_header(doc: DagDocument) -> None:
         # Insert evidence after status if possible
         if "status" in doc.table_headers:
             idx = doc.table_headers.index("status")
-            doc.table_headers = list(doc.table_headers[:idx+1]) + ["evidence"] + list(doc.table_headers[idx+1:])
+            doc.table_headers = [*list(doc.table_headers[: idx + 1]), "evidence", *list(doc.table_headers[idx + 1 :])]
         else:
-            doc.table_headers = list(doc.table_headers) + ["evidence"]
+            doc.table_headers = [*list(doc.table_headers), "evidence"]
 
 
 def _ensure_contract_version_header(doc: DagDocument) -> None:
@@ -625,9 +633,13 @@ def _ensure_contract_version_header(doc: DagDocument) -> None:
     if "contract_version" not in doc.table_headers and any(t.get("contract_version") for t in doc.tasks):
         if "status" in doc.table_headers:
             idx = doc.table_headers.index("status")
-            doc.table_headers = list(doc.table_headers[:idx+1]) + ["contract_version"] + list(doc.table_headers[idx+1:])
+            doc.table_headers = [
+                *list(doc.table_headers[: idx + 1]),
+                "contract_version",
+                *list(doc.table_headers[idx + 1 :]),
+            ]
         else:
-            doc.table_headers = list(doc.table_headers) + ["contract_version"]
+            doc.table_headers = [*list(doc.table_headers), "contract_version"]
 
 
 def _dag_update_task(
@@ -701,9 +713,11 @@ def _resolve_prompt(task_id: str, prompt: str, cwd: Path) -> str:
         if path.exists():
             return path.read_text(encoding="utf-8")
     return prompt
-from thegent.operations import Operation, list_operations
-from thegent.orchestration_modes import MultiAgentMode
+
+
 from thegent.models.catalog import ROUTE_SCHEMA_VERSION
+from thegent.operations import Operation
+from thegent.orchestration_modes import MultiAgentMode
 from thegent.output_parser import OUTPUT_PARSER_SCHEMA_VERSION, extract_condensed
 
 # Elicitation messages for MCP tools when cwd/owner are ambiguous
@@ -716,14 +730,405 @@ HEALTH_PAYLOAD_TYPES = (
     "session_contract_health_trend",
 )
 OBSERVE_SUMMARY_SCHEMA_VERSION = "observe-summary-schema-v1"
-OBSERVE_SUMMARY_PAYLOAD_TYPES = (
-    "observe_summary",
-)
+OBSERVE_SUMMARY_PAYLOAD_TYPES = ("observe_summary",)
 HEALTH_POLICY_PROFILES: dict[str, dict[str, Any]] = {
     "strict_ci": {"strict": True, "min_healthy_ratio": 1.0},
     "warn_only": {"strict": False, "min_healthy_ratio": 0.0},
     "prod_release": {"strict": True, "min_healthy_ratio": 0.98},
 }
+
+
+def _hash_observe_summary_payload(payload: dict[str, Any]) -> dict[str, str]:
+    """Return a stable hash for an observe-summary payload."""
+    payload_for_hash = {
+        key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
+    }
+    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":"))
+    return {"algorithm": "sha256", "value": hashlib.sha256(body.encode("utf-8")).hexdigest()}
+
+
+def _build_observe_summary_trend_scope(
+    *,
+    provider: str | None,
+    drift_window: int,
+    structural_budget_pct: float,
+    semantic_budget_pct: float,
+    limit: int,
+    top_escalations: int,
+) -> dict[str, Any]:
+    return {
+        "payload_type": "observe_summary",
+        "provider": provider,
+        "drift_window": int(drift_window),
+        "structural_budget_pct": float(structural_budget_pct),
+        "semantic_budget_pct": float(semantic_budget_pct),
+        "limit": int(limit),
+        "top_escalations": int(top_escalations),
+    }
+
+
+def _hash_observe_summary_trend_scope(scope_key: dict[str, Any]) -> str:
+    scope_key_json = json.dumps(scope_key, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(scope_key_json.encode("utf-8")).hexdigest()
+
+
+def _parse_observe_summary_timestamp(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value))
+    except ValueError:
+        value = str(value).replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError:
+            return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
+
+
+def _parse_observe_summary_env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return float(default)
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return float(default)
+    return value
+
+
+def _parse_observe_summary_env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return int(default)
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return int(default)
+    return value
+
+
+def _observe_summary_freshness_bucket(
+    freshness_seconds: int | None,
+    *,
+    fresh_seconds: int,
+    warm_seconds: int,
+    stale_seconds: int,
+) -> str:
+    if freshness_seconds is None:
+        return "unknown"
+    if freshness_seconds < 0:
+        return "future"
+    if freshness_seconds <= fresh_seconds:
+        return "fresh"
+    if freshness_seconds <= warm_seconds:
+        return "warm"
+    if freshness_seconds <= stale_seconds:
+        return "stale"
+    return "critical"
+
+
+def _load_observe_summary_snapshots(
+    scope_signature: str,
+    scope_key_json: str,
+    limit: int,
+) -> list[dict[str, Any]]:
+    path = _health_snapshot_log_path()
+    if not path.exists():
+        return []
+    snapshots: list[dict[str, Any]] = []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    for line in reversed(lines):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if rec.get("record_type") != "observe_summary_snapshot":
+            continue
+        if rec.get("trend_scope_signature") == scope_signature or rec.get("scope_signature") == scope_signature:
+            pass
+        elif rec.get("scope_key_json") != scope_key_json:
+            continue
+        snapshots.append(rec)
+        if len(snapshots) >= limit:
+            break
+    return snapshots
+
+
+def _classify_observe_summary_trend_health(
+    *,
+    enabled: bool,
+    baseline_available: bool,
+    trend_snapshot_coverage_pct: float | None,
+    trend_snapshot_deficit: int,
+    trend_snapshot_invalid_timestamps: int,
+    trend_snapshot_freshness_bucket: str,
+    trend_snapshot_gap_count: int,
+    trend_sampling_mode: str,
+) -> dict[str, Any]:
+    policy: dict[str, Any] = {
+        "healthy_threshold": _parse_observe_summary_env_int("THGENT_OBSERVE_SUMMARY_TREND_HEALTH_GOOD_THRESHOLD", 95),
+        "warning_threshold": _parse_observe_summary_env_int(
+            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_WARNING_THRESHOLD", 80
+        ),
+        "degraded_threshold": _parse_observe_summary_env_int(
+            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_DEGRADED_THRESHOLD", 50
+        ),
+        "min_coverage_pct": _parse_observe_summary_env_float(
+            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_MIN_COVERAGE_PCT", 80.0
+        ),
+        "max_invalid_timestamps": _parse_observe_summary_env_int(
+            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_MAX_INVALID_TIMESTAMPS", 0
+        ),
+        "coverage_penalty_per_pct": _parse_observe_summary_env_float(
+            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_COVERAGE_PENALTY_PER_PCT", 1.25
+        ),
+        "deficit_penalty_per_missing_sample": _parse_observe_summary_env_float(
+            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_DEFICIT_PENALTY_PER_MISSING_SAMPLE", 15
+        ),
+        "invalid_timestamp_penalty_per_event": _parse_observe_summary_env_float(
+            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_INVALID_TIMESTAMP_PENALTY_PER_EVENT", 12
+        ),
+        "stale_penalty": _parse_observe_summary_env_float("THGENT_OBSERVE_SUMMARY_TREND_HEALTH_STALE_PENALTY", 8),
+        "critical_penalty": _parse_observe_summary_env_float(
+            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_CRITICAL_PENALTY", 20
+        ),
+        "unknown_or_future_penalty": _parse_observe_summary_env_float(
+            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_UNKNOWN_OR_FUTURE_PENALTY", 30
+        ),
+        "gap_penalty": _parse_observe_summary_env_float("THGENT_OBSERVE_SUMMARY_TREND_HEALTH_GAP_PENALTY", 10),
+        "missing_baseline_penalty": _parse_observe_summary_env_float(
+            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_MISSING_BASELINE_PENALTY", 45
+        ),
+    }
+    policy_signature = hashlib.sha256(
+        json.dumps(policy, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+    if not enabled:
+        recommendations = [
+            "Enable trend sampling with --trend-samples >= 2 to produce trend quality signals.",
+            f"Use trend-sampling mode: {trend_sampling_mode}.",
+        ]
+        return {
+            "trend_snapshot_health": "disabled",
+            "trend_snapshot_health_score": None,
+            "trend_snapshot_health_breakdown": {
+                "policy_signature": policy_signature,
+                "policy": policy,
+                "reason": "trend_disabled",
+                "trend_sampling_mode": trend_sampling_mode,
+                "enabled": False,
+                "recommendations": recommendations,
+                "penalties": {
+                    "enabled": 0,
+                    "baseline": 0,
+                    "coverage": 0,
+                    "deficit": 0,
+                    "invalid_timestamps": 0,
+                    "freshness": 0,
+                    "gap": 0,
+                },
+            },
+            "trend_snapshot_recommendations": recommendations,
+        }
+
+    penalties: dict[str, float] = {
+        "coverage": 0.0,
+        "deficit": 0.0,
+        "invalid_timestamps": 0.0,
+        "freshness": 0.0,
+        "gap": 0.0,
+        "baseline": 0.0,
+    }
+    coverage_shortfall = 0.0
+    if trend_snapshot_coverage_pct is None:
+        coverage_shortfall = 0.0
+        penalties["coverage"] = 0.0
+    elif trend_snapshot_coverage_pct < policy["min_coverage_pct"]:
+        coverage_shortfall = policy["min_coverage_pct"] - trend_snapshot_coverage_pct
+        penalties["coverage"] = round(coverage_shortfall * policy["coverage_penalty_per_pct"], 6)
+
+    if trend_snapshot_deficit > 0:
+        penalties["deficit"] = trend_snapshot_deficit * policy["deficit_penalty_per_missing_sample"]
+
+    if trend_snapshot_invalid_timestamps > policy["max_invalid_timestamps"]:
+        penalties["invalid_timestamps"] = (
+            trend_snapshot_invalid_timestamps * policy["invalid_timestamp_penalty_per_event"]
+        )
+
+    if trend_snapshot_freshness_bucket == "stale":
+        penalties["freshness"] = policy["stale_penalty"]
+    elif trend_snapshot_freshness_bucket == "critical":
+        penalties["freshness"] = policy["critical_penalty"]
+    elif trend_snapshot_freshness_bucket in {"future", "unknown"}:
+        penalties["freshness"] = policy["unknown_or_future_penalty"]
+
+    penalties["gap"] = trend_snapshot_gap_count * policy["gap_penalty"]
+    if not baseline_available:
+        penalties["baseline"] = policy["missing_baseline_penalty"]
+
+    score = 100.0 - sum(penalties.values())
+    score = max(0.0, min(100.0, score))
+    health = "critical"
+    if score >= policy["healthy_threshold"]:
+        health = "good"
+    elif score >= policy["warning_threshold"]:
+        health = "warning"
+    elif score >= policy["degraded_threshold"]:
+        health = "degraded"
+
+    recommendations: list[str] = []
+    if coverage_shortfall > 0:
+        recommendations.append(
+            "Increase capture coverage by reducing trend sample window or lowering requested samples."
+        )
+    if trend_snapshot_deficit > 0:
+        recommendations.append("Trend history is incomplete; expected samples were not all available.")
+    if trend_snapshot_invalid_timestamps > policy["max_invalid_timestamps"]:
+        recommendations.append("Snapshot contains invalid/missing timestamps; normalize capture time format.")
+    if trend_snapshot_freshness_bucket in {"stale", "critical"}:
+        recommendations.append("Trend freshness is degraded; capture cadence may be too low.")
+    if trend_snapshot_gap_count > 0:
+        recommendations.append("Snapshot gaps detected; verify persistence and scheduler cadence.")
+    if not baseline_available:
+        recommendations.append("No baseline snapshot available; next run may enable full delta reporting.")
+    if not recommendations:
+        recommendations.append("Trend quality is healthy.")
+
+    return {
+        "trend_snapshot_health": health,
+        "trend_snapshot_health_score": round(score),
+        "trend_snapshot_health_breakdown": {
+            "policy_signature": policy_signature,
+            "policy": policy,
+            "healthy_threshold": policy["healthy_threshold"],
+            "warning_threshold": policy["warning_threshold"],
+            "degraded_threshold": policy["degraded_threshold"],
+            "coverage": {
+                "coverage_pct": trend_snapshot_coverage_pct,
+                "coverage_shortfall_pct": coverage_shortfall,
+                "coverage_penalty": penalties["coverage"],
+                "min_coverage_pct": policy["min_coverage_pct"],
+            },
+            "deficit": {
+                "trend_snapshot_deficit": trend_snapshot_deficit,
+                "penalty_per_missing": policy["deficit_penalty_per_missing_sample"],
+                "deficit_penalty": penalties["deficit"],
+            },
+            "invalid_timestamps": {
+                "count": trend_snapshot_invalid_timestamps,
+                "max_allowed": policy["max_invalid_timestamps"],
+                "penalty_per_event": policy["invalid_timestamp_penalty_per_event"],
+                "invalid_timestamp_penalty": penalties["invalid_timestamps"],
+            },
+            "freshness": {
+                "bucket": trend_snapshot_freshness_bucket,
+                "penalty": penalties["freshness"],
+            },
+            "gap": {
+                "gap_count": trend_snapshot_gap_count,
+                "penalty_per_gap": policy["gap_penalty"],
+                "gap_penalty": penalties["gap"],
+            },
+            "baseline": {
+                "baseline_available": baseline_available,
+                "baseline_penalty": penalties["baseline"],
+                "missing_baseline_penalty": policy["missing_baseline_penalty"],
+            },
+            "trend_sampling_mode": trend_sampling_mode,
+            "enabled": enabled,
+            "score": round(score),
+            "recommendations": recommendations,
+            "penalties": {
+                "coverage_penalty": penalties["coverage"],
+                "deficit_penalty": penalties["deficit"],
+                "invalid_timestamps_penalty": penalties["invalid_timestamps"],
+                "freshness_penalty": penalties["freshness"],
+                "gap_penalty": penalties["gap"],
+                "baseline_penalty": penalties["baseline"],
+            },
+        },
+        "trend_snapshot_recommendations": recommendations,
+    }
+
+
+def _append_observe_summary_snapshot(
+    payload: dict[str, Any],
+    trend_scope_key: dict[str, Any],
+    trend_scope_signature: str,
+    scope_key_json: str,
+    trend_snapshot_ids: list[str],
+    trend_summary: dict[str, Any],
+) -> None:
+    record = {
+        "record_type": "observe_summary_snapshot",
+        "captured_at_utc": payload.get("generated_at_utc", ""),
+        "scope_key": trend_scope_key,
+        "scope_key_json": scope_key_json,
+        "scope_signature": trend_scope_signature,
+        "trend_scope_signature": trend_scope_signature,
+        "trend_previous_samples_requested": trend_summary.get("trend_previous_samples_requested", 0),
+        "trend_snapshot_expected_count": trend_summary.get("trend_snapshot_expected_count", 0),
+        "trend_snapshot_deficit": trend_summary.get("trend_snapshot_deficit", 0),
+        "trend_snapshot_interval_seconds_avg": trend_summary.get("trend_snapshot_interval_seconds_avg"),
+        "trend_snapshot_interval_seconds_min": trend_summary.get("trend_snapshot_interval_seconds_min"),
+        "trend_snapshot_interval_seconds_max": trend_summary.get("trend_snapshot_interval_seconds_max"),
+        "trend_snapshot_gap_count": trend_summary.get("trend_snapshot_gap_count", 0),
+        "trend_snapshot_invalid_timestamps": trend_summary.get("trend_snapshot_invalid_timestamps", 0),
+        "trend_snapshot_coverage_pct": trend_summary.get("trend_snapshot_coverage_pct"),
+        "trend_snapshot_freshness_bucket": trend_summary.get("trend_snapshot_freshness_bucket", "unknown"),
+        "trend_snapshot_freshness_seconds": trend_summary.get("trend_snapshot_freshness_seconds"),
+        "trend_snapshot_health": trend_summary.get("trend_snapshot_health", "disabled"),
+        "trend_snapshot_health_score": trend_summary.get("trend_snapshot_health_score"),
+        "trend_snapshot_recommendations": trend_summary.get("trend_snapshot_recommendations", []),
+        "trend_snapshot_health_breakdown": trend_summary.get("trend_snapshot_health_breakdown", {}),
+        "trend_snapshot_ids": trend_snapshot_ids,
+        "trend_snapshot_ids_csv": trend_summary.get("trend_snapshot_ids_csv", ""),
+        "trend_snapshot_ids_hash": trend_summary.get("trend_snapshot_ids_hash", ""),
+        "trend_snapshot_window_seconds": trend_summary.get("trend_snapshot_window_seconds"),
+        "trend_sampling_mode": trend_summary.get("trend_sampling_mode", "disabled"),
+        "trend_enabled": trend_summary.get("enabled", False),
+        "schema_version": payload.get("payload_schema_version", OBSERVE_SUMMARY_SCHEMA_VERSION),
+        "payload_type": "observe_summary",
+        "status": payload.get("status", ""),
+        "total_events": payload.get("kpis", {}).get("total_events", 0),
+        "fallback_rate": payload.get("kpis", {}).get("fallback_rate", 0.0),
+        "success_rate": payload.get("kpis", {}).get("success_rate", 0.0),
+        "avg_confidence": payload.get("kpis", {}).get("avg_confidence", 0.0),
+        "structural_drift_pct": payload.get("kpis", {}).get("structural_drift_pct", 0.0),
+        "semantic_drift_pct": payload.get("kpis", {}).get("semantic_drift_pct", 0.0),
+        "drift_structural_rate_pct": payload.get("drift", {}).get("structural_rate_pct", 0.0),
+        "drift_semantic_rate_pct": payload.get("drift", {}).get("semantic_rate_pct", 0.0),
+        "backlog_count": payload.get("escalation", {}).get("backlog_count", 0),
+        "past_sla_count": payload.get("escalation", {}).get("past_sla_count", 0),
+        "provider": payload.get("generated_query", {}).get("provider", None),
+        "drift_window": payload.get("generated_query", {}).get("drift_window", 0),
+        "structural_budget_pct": payload.get("generated_query", {}).get("structural_budget_pct", 0.0),
+        "semantic_budget_pct": payload.get("generated_query", {}).get("semantic_budget_pct", 0.0),
+        "top_escalations": payload.get("generated_query", {}).get("top_escalations", 0),
+        "limit": payload.get("generated_query", {}).get("limit", 0),
+        "trend_samples_requested": payload.get("generated_query", {}).get("trend_samples", 0),
+        "trend_effective_samples": trend_summary.get("trend_effective_samples", 0),
+        "trend_scope_payload_type": trend_scope_key.get("payload_type", "observe_summary"),
+    }
+
+    path = _health_snapshot_log_path()
+    try:
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(record, sort_keys=True))
+            fh.write("\n")
+    except OSError:
+        return
+    _compact_health_snapshot_log()
 
 
 def get_server_meta_impl() -> dict[str, Any]:
@@ -736,7 +1141,7 @@ def get_server_meta_impl() -> dict[str, Any]:
         "health_payload_types": list(HEALTH_PAYLOAD_TYPES),
         "observe_summary_payload_schema_version": OBSERVE_SUMMARY_SCHEMA_VERSION,
         "observe_summary_payload_types": list(OBSERVE_SUMMARY_PAYLOAD_TYPES),
-        "health_policy_profiles": sorted(list(HEALTH_POLICY_PROFILES.keys())),
+        "health_policy_profiles": sorted(HEALTH_POLICY_PROFILES.keys()),
         "output_parser_schema_version": OUTPUT_PARSER_SCHEMA_VERSION,
         "route_schema_version": ROUTE_SCHEMA_VERSION,
         "contract_schema_version": CONTRACT_SCHEMA_VERSION,
@@ -748,9 +1153,7 @@ def get_server_meta_impl() -> dict[str, Any]:
 def _hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     """Return a stable hash for a health payload while ignoring timestamp/signature fields."""
     payload_for_hash = {
-        key: value
-        for key, value in payload.items()
-        if key not in {"generated_at_utc", "payload_signature"}
+        key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
     body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":"))
     import hashlib
@@ -776,10 +1179,8 @@ def _resolve_health_policy(
             threshold = float(selected["min_healthy_ratio"])
         else:
             profile_exists = False
-    if threshold < 0.0:
-        threshold = 0.0
-    if threshold > 1.0:
-        threshold = 1.0
+    threshold = max(threshold, 0.0)
+    threshold = min(threshold, 1.0)
     return {
         "profile": profile,
         "profile_exists": profile_exists,
@@ -790,10 +1191,7 @@ def _resolve_health_policy(
 
 def _health_snapshot_log_path() -> Path:
     raw = os.environ.get("THGENT_HEALTH_SNAPSHOT_PATH", "").strip()
-    if raw:
-        path = Path(raw).expanduser()
-    else:
-        path = Path.home() / ".thegent" / "health-snapshots.jsonl"
+    path = Path(raw).expanduser() if raw else Path.home() / ".thegent" / "health-snapshots.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -848,7 +1246,7 @@ def _coerce_issue_types(value: Any) -> list[str]:
     if value is None:
         return []
     if isinstance(value, dict):
-        return [str(v) for v in value.keys()]
+        return [str(v) for v in value]
     if isinstance(value, (list, tuple, set)):
         return [str(v) for v in value]
     return [str(value)]
@@ -881,7 +1279,7 @@ def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) 
     path = _health_snapshot_log_path()
     issue_types: list[str] = []
     if payload.get("payload_type") == "session_contract_health_report":
-        issue_types = sorted([str(k) for k in (payload.get("issue_counts") or {}).keys()])
+        issue_types = sorted([str(k) for k in (payload.get("issue_counts") or {})])
     else:
         seen: set[str] = set()
         for row in payload.get("blocked_sessions", []) or []:
@@ -913,6 +1311,7 @@ def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) 
         return
     _compact_health_snapshot_log()
 
+
 def escalate_add_impl(
     run_id: str,
     reason: str,
@@ -920,13 +1319,97 @@ def escalate_add_impl(
     owner: str | None = None,
     agent: str | None = None,
     lane: str = "standard",
+    priority: int = 0,
 ) -> None:
     """WP-3008: Add a blocked run to the escalation queue."""
     from thegent.execution import EscalationQueue
+
     settings = ThegentSettings()
     session_dir = Path(settings.session_dir).expanduser().resolve()
     queue = EscalationQueue(session_dir)
-    queue.add(run_id=run_id, reason=reason, sla_minutes=sla_minutes, owner=owner, agent=agent, lane=lane)
+    queue.add(
+        run_id=run_id,
+        reason=reason,
+        sla_minutes=sla_minutes,
+        owner=owner,
+        agent=agent,
+        lane=lane,
+        priority=priority,
+    )
+
+
+def escalate_approve_impl(run_id: str) -> bool:
+    """WP-3008: Approve an escalation, marking it as approved in the queue (G-GP-05)."""
+    from thegent.execution import EscalationQueue
+
+    settings = ThegentSettings()
+    session_dir = Path(settings.session_dir).expanduser().resolve()
+    queue = EscalationQueue(session_dir)
+    return queue.resolve(run_id=run_id, resolution="approved")
+
+
+def update_calibration_impl() -> dict[str, Any]:
+    """G-GP-09: Recalculate and persist calibration factors for all agents."""
+    from thegent.execution import CalibrationRegistry, RunRegistry
+
+    settings = ThegentSettings()
+    session_dir = Path(settings.session_dir).expanduser().resolve()
+    registry = RunRegistry(session_dir)
+    cal = CalibrationRegistry(session_dir)
+
+    if not registry.registry_path.exists():
+        return {}
+
+    # 1. Identify all agents
+    agents = set()
+    with registry.registry_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                data = json.loads(line)
+                a = data.get("agent")
+                if a:
+                    agents.add(a)
+            except Exception:
+                continue
+
+    # 2. Recalculate for each agent
+    results = {}
+    for agent in agents:
+        # We temporarily bypass the cache by manually calculating
+        relevant_runs = []
+        runs: dict[str, dict[str, Any]] = {}
+
+        with registry.registry_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    data = json.loads(line)
+                    rid = data.get("run_id")
+                    if not rid:
+                        continue
+                    if data.get("event") == "finish":
+                        if rid in runs:
+                            runs[rid].update(data)
+                    elif data.get("event") == "feedback":
+                        if rid in runs:
+                            runs[rid]["feedback_score"] = data.get("feedback_score")
+                    elif data.get("agent") == agent:
+                        runs[rid] = data
+                except Exception:
+                    continue
+
+        relevant_runs = [r for r in runs.values() if r.get("feedback_score") is not None]
+        if not relevant_runs:
+            continue
+
+        avg_feedback = sum(float(r["feedback_score"]) for r in relevant_runs) / len(relevant_runs)
+        avg_confidence = sum(float(r.get("confidence") or 0.5) for r in relevant_runs) / len(relevant_runs)
+
+        if avg_confidence > 0:
+            factor = min(2.0, max(0.5, avg_feedback / avg_confidence))
+            cal.update_agent(agent, factor, sample_size=len(relevant_runs))
+            results[agent] = {"factor": factor, "samples": len(relevant_runs)}
+
+    return results
 
 
 def sweep_impl(
@@ -959,8 +1442,9 @@ def sweep_impl(
     past_sla_items = queue.list_pending(past_sla_only=True, limit=100)
 
     # G-GP-05 P2: SLA breach alert when past-SLA items exist
-    if past_sla_items and os.environ.get("THGENT_ESCALATION_SLA_BREACH_ALERT", "").lower() in ("1", "true", "yes"):
+    if past_sla_items and settings.escalation_sla_breach_alert:
         import logging
+
         _sweep_log = logging.getLogger(__name__)
         _sweep_log.warning(
             "Escalation SLA breach: %d item(s) past SLA. Run: thegent govern escalate list --past-sla",
@@ -977,11 +1461,15 @@ def sweep_impl(
     if include_audit and audit_result and audit_result.get("status") not in ("passed", "empty"):
         has_issues = True
 
+    # G-GP-09: Update trust score calibration
+    cal_results = update_calibration_impl()
+
     return {
         "drift_issues": drift_issues,
         "drift_budget": budget,
         "past_sla_count": len(past_sla_items),
         "past_sla_items": past_sla_items,
+        "calibration": cal_results,
         "audit": audit_result,
         "pass": not has_issues,
     }
@@ -994,6 +1482,7 @@ def observe_summary_impl(
     semantic_budget_pct: float = 10.0,
     provider: str | None = None,
     top_escalations: int = 10,
+    trend_samples: int | Any = 0,
 ) -> dict[str, Any]:
     """FR-X08: Unified observability summary aggregating KPIs, drift, escalation."""
     from thegent.contracts.telemetry import ContractTelemetry
@@ -1032,7 +1521,7 @@ def observe_summary_impl(
         except ValueError:
             if value.endswith("Z"):
                 try:
-                    parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+                    parsed = datetime.fromisoformat(value)
                 except ValueError:
                     return None
             else:
@@ -1064,7 +1553,7 @@ def observe_summary_impl(
         overdue = now - escalate_by
         overdue_seconds = overdue.total_seconds()
         blocked_to_now = now - blocked_at if blocked_at is not None else None
-        delta = {
+        return {
             "run_id": item.get("run_id"),
             "owner": item.get("owner"),
             "agent": item.get("agent"),
@@ -1077,11 +1566,8 @@ def observe_summary_impl(
             "escalate_by_utc": item.get("escalate_by_utc"),
             "minutes_overdue": round(overdue_seconds / 60.0, 2) if overdue_seconds > 0 else 0.0,
             "minutes_remaining": round(-overdue_seconds / 60.0, 2) if overdue_seconds <= 0 else 0.0,
-            "blocked_to_now_seconds": round(blocked_to_now.total_seconds(), 2)
-            if blocked_to_now is not None
-            else None,
+            "blocked_to_now_seconds": round(blocked_to_now.total_seconds(), 2) if blocked_to_now is not None else None,
         }
-        return delta
 
     escalation_rows = sorted(
         (_to_sla_delta(item) for item in pending),
@@ -1091,10 +1577,192 @@ def observe_summary_impl(
             row.get("blocked_at_utc") or "",
         ),
     )
-    top_rows = escalation_rows[:max(0, top_escalations)]
+    top_rows = escalation_rows[: max(0, top_escalations)]
     past_sla_count = len(past_sla)
 
-    return {
+    try:
+        trend_samples_requested = int(trend_samples)
+    except (TypeError, ValueError):
+        trend_samples_requested = 0
+    trend_samples_requested = max(trend_samples_requested, 0)
+
+    trend_effective_samples = trend_samples_requested if trend_samples_requested > 1 else 0
+    trend_sampling_mode = "enabled" if trend_effective_samples > 0 else "disabled"
+    trend_previous_samples_requested = max(0, trend_effective_samples - 1)
+    trend_scope_key = _build_observe_summary_trend_scope(
+        provider=provider,
+        drift_window=drift_window,
+        structural_budget_pct=structural_budget_pct,
+        semantic_budget_pct=semantic_budget_pct,
+        limit=limit,
+        top_escalations=top_escalations,
+    )
+    trend_scope_signature = _hash_observe_summary_trend_scope(trend_scope_key)
+    trend_scope_key_json = json.dumps(trend_scope_key, sort_keys=True, separators=(",", ":"))
+    trend_records: list[dict[str, Any]] = []
+    if trend_previous_samples_requested:
+        trend_records = _load_observe_summary_snapshots(
+            trend_scope_signature,
+            trend_scope_key_json,
+            trend_previous_samples_requested,
+        )
+
+    trend_snapshot_ids = [
+        str((record or {}).get("captured_at_utc", ""))
+        for record in trend_records
+        if str((record or {}).get("captured_at_utc", ""))
+    ]
+    trend_snapshot_ids_csv = ", ".join(trend_snapshot_ids)
+    trend_snapshot_ids_hash = hashlib.sha256(trend_snapshot_ids_csv.encode("utf-8")).hexdigest()
+
+    baseline_snapshot = trend_records[-1] if trend_records else None
+    baseline_available = bool(trend_previous_samples_requested > 0 and trend_records)
+    baseline_captured_at_utc = baseline_snapshot.get("captured_at_utc") if baseline_snapshot else None
+    trend_snapshot_expected_count = trend_previous_samples_requested
+    trend_snapshot_deficit = max(0, trend_snapshot_expected_count - len(trend_records))
+    trend_snapshot_invalid_timestamps = 0
+    parsed_snapshot_timestamps: list[datetime] = []
+    for record in trend_records:
+        parsed = _parse_observe_summary_timestamp(record.get("captured_at_utc"))
+        if parsed is None:
+            trend_snapshot_invalid_timestamps += 1
+            continue
+        parsed_snapshot_timestamps.append(parsed)
+
+    trend_snapshot_interval_seconds_avg = None
+    trend_snapshot_interval_seconds_min = None
+    trend_snapshot_interval_seconds_max = None
+    trend_snapshot_gap_count = 0
+    trend_snapshot_window_seconds = None
+    trend_snapshot_coverage_pct = None
+
+    if trend_snapshot_expected_count > 0:
+        trend_snapshot_coverage_pct = round((len(trend_records) / trend_snapshot_expected_count) * 100.0, 6)
+
+    if len(parsed_snapshot_timestamps) >= 2:
+        ordered = sorted(parsed_snapshot_timestamps)
+        diffs: list[int] = []
+        for idx in range(1, len(ordered)):
+            diffs.append(int((ordered[idx] - ordered[idx - 1]).total_seconds()))
+        if diffs:
+            trend_snapshot_interval_seconds_avg = int(sum(diffs) / len(diffs))
+            trend_snapshot_interval_seconds_min = min(diffs)
+            trend_snapshot_interval_seconds_max = max(diffs)
+            trend_snapshot_gap_count = len(diffs)
+            trend_snapshot_window_seconds = int((ordered[-1] - ordered[0]).total_seconds())
+
+    latest_snapshot = trend_records[0] if trend_records else None
+    trend_snapshot_freshness_seconds = None
+    if latest_snapshot:
+        latest_ts = _parse_observe_summary_timestamp(latest_snapshot.get("captured_at_utc"))
+        if latest_ts is not None:
+            trend_snapshot_freshness_seconds = int((now - latest_ts).total_seconds())
+    trend_snapshot_freshness_bucket = _observe_summary_freshness_bucket(
+        trend_snapshot_freshness_seconds,
+        fresh_seconds=3600,
+        warm_seconds=21600,
+        stale_seconds=86400,
+    )
+
+    def _delta(current: Any, baseline_value: Any) -> Any:
+        if not baseline_available:
+            return None
+        if current is None or baseline_value is None:
+            return None
+        try:
+            return float(current) - float(baseline_value)
+        except (TypeError, ValueError):
+            return None
+
+    baseline_kpis: dict[str, Any] = {}
+    if baseline_snapshot:
+        baseline_kpis = {
+            "total_events": baseline_snapshot.get("total_events"),
+            "fallback_rate": baseline_snapshot.get("fallback_rate"),
+            "success_rate": baseline_snapshot.get("success_rate"),
+            "avg_confidence": baseline_snapshot.get("avg_confidence"),
+            "structural_drift_pct": baseline_snapshot.get("structural_drift_pct"),
+            "semantic_drift_pct": baseline_snapshot.get("semantic_drift_pct"),
+        }
+        baseline_drifts = {
+            "structural_rate_pct": baseline_snapshot.get("drift_structural_rate_pct"),
+            "semantic_rate_pct": baseline_snapshot.get("drift_semantic_rate_pct"),
+        }
+        baseline_escalation = {
+            "backlog_count": baseline_snapshot.get("backlog_count"),
+            "past_sla_count": baseline_snapshot.get("past_sla_count"),
+        }
+    else:
+        baseline_drifts = {}
+        baseline_escalation = {}
+
+    trend_health = _classify_observe_summary_trend_health(
+        enabled=trend_sampling_mode == "enabled",
+        baseline_available=baseline_available,
+        trend_snapshot_coverage_pct=trend_snapshot_coverage_pct,
+        trend_snapshot_deficit=trend_snapshot_deficit,
+        trend_snapshot_invalid_timestamps=trend_snapshot_invalid_timestamps,
+        trend_snapshot_freshness_bucket=trend_snapshot_freshness_bucket,
+        trend_snapshot_gap_count=trend_snapshot_gap_count,
+        trend_sampling_mode=trend_sampling_mode,
+    )
+
+    total_events = float(kpis.get("total", 0.0))
+    fallback_rate = float(kpis.get("fallback_rate", 0.0))
+    success_rate = float(kpis.get("success_rate", 0.0))
+    avg_confidence = float(kpis.get("avg_confidence", 0.0))
+    structural_drift_pct = float(kpis.get("structural_drift_pct", 0.0))
+    semantic_drift_pct = float(kpis.get("semantic_drift_pct", 0.0))
+    drift_structural_rate_pct = float(budget.get("structural_rate_pct", 0.0))
+    drift_semantic_rate_pct = float(budget.get("semantic_rate_pct", 0.0))
+
+    trend_snapshot_recommendations = trend_health.get("trend_snapshot_recommendations", [])
+    trend_summary = {
+        "enabled": trend_sampling_mode == "enabled",
+        "trend_sampling_mode": trend_sampling_mode,
+        "trend_samples_requested": trend_samples_requested,
+        "trend_effective_samples": trend_effective_samples,
+        "history_sample_count": len(trend_records),
+        "trend_previous_samples_requested": trend_previous_samples_requested,
+        "trend_snapshot_expected_count": trend_snapshot_expected_count,
+        "trend_snapshot_deficit": trend_snapshot_deficit,
+        "trend_snapshot_interval_seconds_avg": trend_snapshot_interval_seconds_avg,
+        "trend_snapshot_interval_seconds_min": trend_snapshot_interval_seconds_min,
+        "trend_snapshot_interval_seconds_max": trend_snapshot_interval_seconds_max,
+        "trend_snapshot_gap_count": trend_snapshot_gap_count,
+        "trend_snapshot_invalid_timestamps": trend_snapshot_invalid_timestamps,
+        "trend_snapshot_coverage_pct": trend_snapshot_coverage_pct,
+        "trend_snapshot_freshness_seconds": trend_snapshot_freshness_seconds,
+        "trend_snapshot_freshness_bucket": trend_snapshot_freshness_bucket,
+        "trend_snapshot_ids": trend_snapshot_ids,
+        "trend_snapshot_ids_csv": trend_snapshot_ids_csv,
+        "trend_snapshot_ids_hash": trend_snapshot_ids_hash,
+        "trend_snapshot_window_seconds": trend_snapshot_window_seconds,
+        "baseline_available": baseline_available,
+        "baseline_captured_at_utc": baseline_captured_at_utc,
+        "trend_snapshot_health": trend_health.get("trend_snapshot_health"),
+        "trend_snapshot_health_score": trend_health.get("trend_snapshot_health_score"),
+        "trend_snapshot_health_breakdown": trend_health.get("trend_snapshot_health_breakdown", {}),
+        "trend_snapshot_recommendations": trend_snapshot_recommendations,
+        "trend_snapshot_recommendation_count": len(trend_snapshot_recommendations),
+        "trend_snapshot_recommendations_csv": ", ".join(trend_snapshot_recommendations),
+        "total_events_delta": _delta(total_events, baseline_kpis.get("total_events")),
+        "fallback_rate_delta": _delta(fallback_rate, baseline_kpis.get("fallback_rate")),
+        "success_rate_delta": _delta(success_rate, baseline_kpis.get("success_rate")),
+        "avg_confidence_delta": _delta(avg_confidence, baseline_kpis.get("avg_confidence")),
+        "structural_drift_pct_delta": _delta(structural_drift_pct, baseline_kpis.get("structural_drift_pct")),
+        "semantic_drift_pct_delta": _delta(semantic_drift_pct, baseline_kpis.get("semantic_drift_pct")),
+        "drift_structural_rate_pct_delta": _delta(
+            drift_structural_rate_pct, baseline_drifts.get("structural_rate_pct")
+        ),
+        "drift_semantic_rate_pct_delta": _delta(drift_semantic_rate_pct, baseline_drifts.get("semantic_rate_pct")),
+        "backlog_count_delta": _delta(len(pending), baseline_escalation.get("backlog_count")),
+        "past_sla_count_delta": _delta(past_sla_count, baseline_escalation.get("past_sla_count")),
+        "scope_signature": trend_scope_signature,
+        "scope_key_json": trend_scope_key_json,
+    }
+
+    payload = {
         "kpis": {
             "total_events": kpis.get("total", 0),
             "fallback_rate": kpis.get("fallback_rate", 0.0),
@@ -1121,14 +1789,22 @@ def observe_summary_impl(
         },
         "payload_type": "observe_summary",
         "payload_schema_version": OBSERVE_SUMMARY_SCHEMA_VERSION,
+        "generated_at_utc": now.isoformat(),
+        "generated_query": {
+            "limit": limit,
+            "drift_window": drift_window,
+            "structural_budget_pct": structural_budget_pct,
+            "semantic_budget_pct": semantic_budget_pct,
+            "provider": provider,
+            "top_escalations": top_escalations,
+            "trend_samples": trend_samples_requested,
+            "trend_scope_signature": trend_scope_signature,
+        },
+        "trend_summary": trend_summary,
         "alerts": [
             alert
             for alert in [
-                (
-                    f"Escalation backlog critical: {past_sla_count} past-SLA"
-                    if past_sla_count
-                    else ""
-                ),
+                (f"Escalation backlog critical: {past_sla_count} past-SLA" if past_sla_count else ""),
                 (
                     f"Contract drift over budget: structural={budget.get('structural_rate_pct', 0.0)}% "
                     f"(budget {budget.get('structural_budget_pct', structural_budget_pct)}%), "
@@ -1142,11 +1818,18 @@ def observe_summary_impl(
         ],
         "status": "critical" if past_sla_count or not budget.get("within_budget", True) else "healthy",
     }
+    payload["payload_signature"] = _hash_observe_summary_payload(payload)
+
+    _append_observe_summary_snapshot(
+        payload, trend_scope_key, trend_scope_signature, trend_scope_key_json, trend_snapshot_ids, trend_summary
+    )
+    return payload
 
 
 def escalate_list_impl(past_sla_only: bool = False, limit: int = 50) -> list[dict[str, Any]]:
     """WP-3008: List escalation queue items (blocked runs with SLA)."""
     from thegent.execution import EscalationQueue
+
     settings = ThegentSettings()
     session_dir = settings.session_dir.expanduser().resolve()
     queue = EscalationQueue(session_dir)
@@ -1156,6 +1839,7 @@ def escalate_list_impl(past_sla_only: bool = False, limit: int = 50) -> list[dic
 def escalate_resolve_impl(run_id: str, resolution: str = "resolved") -> bool:
     """WP-3008: Mark an escalation item as resolved."""
     from thegent.execution import EscalationQueue
+
     settings = ThegentSettings()
     session_dir = settings.session_dir.expanduser().resolve()
     queue = EscalationQueue(session_dir)
@@ -1166,20 +1850,20 @@ def get_data_protection_status_impl() -> dict[str, Any]:
     """Return status of data protection and privacy controls (WP-3006)."""
     settings = ThegentSettings()
     session_dir = settings.session_dir.expanduser().resolve()
-    
+
     perms_ok = False
     if session_dir.exists():
         mode = os.stat(session_dir).st_mode
         # Check if only owner has access (0700 or 0755 is debatable, but 0700 is stricter)
-        perms_ok = (oct(mode & 0o777) == "0o700")
+        perms_ok = oct(mode & 0o777) == "0o700"
 
     return {
         "session_dir": str(session_dir),
         "session_dir_exists": session_dir.exists(),
         "permissions_restricted": perms_ok,
-        "masking_enabled": True, # Hardcoded as we do masking in logs
-        "encryption_at_rest": False, # Local filesystem encryption depends on OS
-        "pii_scanning_enabled": False, # Future enhancement
+        "masking_enabled": True,  # Hardcoded as we do masking in logs
+        "encryption_at_rest": False,  # Local filesystem encryption depends on OS
+        "pii_scanning_enabled": False,  # Future enhancement
         "retention_policy_days": settings.retention_days_sessions,
         "retention_registry_days": settings.retention_days_registry,
         "retention_health_days": settings.retention_days_health,
@@ -1216,6 +1900,7 @@ def run_impl(
     if agent is None and model:
         from thegent.models import normalize_model_id
         from thegent.models.catalog import ModelCatalog, resolve_route
+
         model_id = normalize_model_id(model)
         route = resolve_route(model_id, provider_hint=provider)
         if route is None:
@@ -1230,29 +1915,27 @@ def run_impl(
             }
         agent = route[0]
     agent = resolve_agent(agent or "")
-    
+
     # WP-X1/V7: Contract Migration & Version Negotiation
     from thegent.contracts.migration import MigrationController
     from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
-    
+
     migrator = MigrationController()
     requested_version = contract_version or CONTRACT_SCHEMA_VERSION
     mig_res = migrator.evaluate_version("csm", requested_version)
-    
+
     if not mig_res["allowed"]:
         return {
             "error": f"Contract version rejected: {mig_res['reason']}",
             "exit_code": 1,
             "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
         }
-    
+
     if mig_res["status"] == "deprecated":
         # We allow it but should log/warn (CLI will print it via run_cmd if we pass it)
         pass
 
-    effective_timeout = (
-        max(timeout, settings.default_timeout_claude) if agent == "claude" else timeout
-    )
+    effective_timeout = max(timeout, settings.default_timeout_claude) if agent == "claude" else timeout
 
     prompt = _inject_time_constraint(prompt, effective_timeout, summary_mode=not full)
 
@@ -1264,8 +1947,9 @@ def run_impl(
     if os.environ.get("THGENT_INPUT_GUARDRAILS_ENABLED", "").lower() in ("1", "true", "yes"):
         try:
             from thegent.governance.input_guardrails import _guardrails_from_env
+
             guardrails = _guardrails_from_env()
-            gr = guardrails.check(prompt=prompt, agent=agent, model=model, cwd=cwd)
+            gr = guardrails.check(prompt=prompt, agent=agent or "", model=model, cwd=cwd)
             if not gr.passed:
                 return {
                     "error": f"Input guardrail failed ({gr.rail_id}): {gr.reason}",
@@ -1278,17 +1962,24 @@ def run_impl(
 
     # Registry integration
     registry = RunRegistry(settings.session_dir)
-    from thegent.execution import Auditor, CircuitBreakerRegistry, OverrideRegistry, PolicyEngine, TrustBoundaryValidator
+    from thegent.execution import (
+        Auditor,
+        CircuitBreakerRegistry,
+        OverrideRegistry,
+        PolicyEngine,
+        TrustBoundaryValidator,
+    )
+
     circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
     trust_boundary = TrustBoundaryValidator(settings.session_dir)
     override_registry = OverrideRegistry(settings.session_dir)
     policy_engine = PolicyEngine(settings)
     auditor = Auditor(registry.registry_path)
-    
+
     effective_owner = owner or _default_owner_tag(cwd)
     run_meta = RunMeta(
         run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
-        agent=agent,
+        agent=agent or "unknown",
         model=model,
         mode=mode,
         prompt=prompt,
@@ -1300,20 +1991,18 @@ def run_impl(
         confidence=confidence,
         override_reason=override_reason,
         override_by=effective_owner if override_reason else None,
-        domain_tag=domain,
+        domain_tag=domain or settings.default_domain_tag,
         contract_version=requested_version,
     )
 
     # WP-3001: Policy Evaluation
     pol_res, pol_reason = policy_engine.evaluate(run_meta, registry)
-    
+
     # WP-3003: Overrides with TTL (revalidation on expiry)
     if pol_res == "deny":
         if override_reason:
             console.print(f"[bold yellow]Policy OVERRIDE applied:[/bold yellow] {override_reason}")
-            override_registry.record(
-                effective_owner, override_reason, settings.override_ttl_seconds
-            )
+            override_registry.record(effective_owner, override_reason, settings.override_ttl_seconds)
             pol_res = "allow"
             pol_reason = f"Overridden: {pol_reason}"
         elif override_registry.has_unexpired(effective_owner):
@@ -1323,7 +2012,7 @@ def run_impl(
 
     run_meta.policy_result = pol_res
     run_meta.policy_reason = pol_reason
-    
+
     # WP-3002: Signing
     run_meta.signature = auditor.sign_run(run_meta)
 
@@ -1347,47 +2036,69 @@ def run_impl(
             error_class="policy_violation",
         )
         return {"error": f"Policy Violation: {pol_reason}", "exit_code": 1}
-    elif pol_res == "warn":
+
+    # G-GP-05: HITL Pause Flow
+    if pol_res == "pause":
+        from thegent.execution import CheckpointRegistry
+
+        registry.register_start(run_meta)
+        registry.register_pause(run_meta.run_id, reason=pol_reason)
+
+        ckpt_registry = CheckpointRegistry(settings.session_dir)
+        ckpt_registry.create_checkpoint(
+            reason=f"HITL Pause: {pol_reason}",
+            dag_content=run_meta.model_dump_json(),
+            owner=run_meta.owner,
+        )
+
+        escalate_add_impl(
+            run_id=run_meta.run_id,
+            reason=f"HITL Pause: {pol_reason}",
+            sla_minutes=settings.escalation_sla_minutes,
+            owner=run_meta.owner,
+            agent=run_meta.agent,
+            lane=run_meta.lane,
+            priority=1,  # High priority for HITL
+        )
+        return {
+            "error": f"HITL PAUSE: {pol_reason}. Escalated for approval.",
+            "exit_code": 0,
+            "status": "paused",
+            "run_id": run_meta.run_id,
+        }
+
+    if pol_res == "warn":
         console.print(f"[yellow]Policy Warning: {pol_reason}[/yellow]")
 
     registry.register_start(run_meta)
     start_time = time.time()
 
     use_stream = not full
-    run_kwargs_base: dict = {
-        "prompt": prompt,
-        "cwd": cwd,
-        "mode": mode,
-        "timeout": effective_timeout,
-        "use_stream": use_stream,
-        "live_output": False,
-    }
 
-    agents_to_try: list[str] = [agent]
+    agents_to_try: list[str] = [agent] if agent else []
     if model:
         from thegent.models import ModelCatalog, normalize_model_id
+
         model_id = normalize_model_id(model)
         routes = ModelCatalog.routes_for(model_id)
         # Use catalog routes that aren't the primary agent
         catalog_fallbacks = [r.provider for r in routes if r.provider != agent]
         agents_to_try.extend(catalog_fallbacks)
-        
-    provider_fallbacks = get_fallback_agents(agent)
+
+    provider_fallbacks = get_fallback_agents(agent or "unknown")
     for pf in provider_fallbacks:
         if pf not in agents_to_try:
             agents_to_try.append(pf)
 
     result = None
-    last_stderr = ""
     exit_code = 1
     status = "failed"
     error_class = None
-    rationale = None
 
     # WP-X6: Fallback Control Plane
     from thegent.agents.state_machine import FallbackStateMachine
-    from thegent.contracts.telemetry import ContractTelemetry, rank_providers_by_parser_quality
     from thegent.contracts.policy import FallbackPolicy
+    from thegent.contracts.telemetry import ContractTelemetry, rank_providers_by_parser_quality
 
     telemetry = ContractTelemetry(settings.session_dir)
     # G-CA-02 B2: Parser-quality routing - order providers by confidence/fallback rate
@@ -1408,7 +2119,7 @@ def run_impl(
         max_retries_per_provider=3,
     )
 
-    def runner_factory(agent_name: str) -> Optional[AgentRunner]:
+    def runner_factory(agent_name: str) -> AgentRunner | None:
         # G-GP-04: Skip providers with open circuit
         if circuit_breaker.is_open(agent_name):
             _log.warning("Circuit open for %s; skipping", agent_name)
@@ -1416,11 +2127,11 @@ def run_impl(
         runner = get_runner(agent_name)
         if runner is None:
             return None
-        
+
         # Wrap runner.run to inject agent_model
         original_run = runner.run
         agent_model = _resolve_agent_model(agent_name, model, mode, settings)
-        
+
         def wrapped_run(**kwargs) -> RunResult:
             if agent_model:
                 kwargs["agent_model"] = agent_model
@@ -1428,13 +2139,13 @@ def run_impl(
             if res.exit_code != 0:
                 circuit_breaker.record_failure(agent_name)
             return res
-            
+
         # Create a proxy object that satisfies AgentRunner
         @dataclass
-        class RunnerProxy:
+        class RunnerProxy(AgentRunner):
             def run(self, **kwargs) -> RunResult:
                 return wrapped_run(**kwargs)
-        
+
         return RunnerProxy()
 
     result, norm_res = fsm.run(
@@ -1445,7 +2156,7 @@ def run_impl(
         timeout=effective_timeout,
         use_stream=use_stream,
     )
-    
+
     status = fsm.state.status
     if status == "success":
         exit_code = 0
@@ -1475,12 +2186,13 @@ def run_impl(
             error_class = "usage_limit"
         elif result.exit_code != 0:
             error_class = "api_error"
-    
+
     duration = time.time() - start_time
     cost_usd = None
     if os.environ.get("THGENT_COST_TRACKING", "").lower() in ("1", "true", "yes"):
         try:
             from thegent.governance.cost import CostEstimator
+
             est = CostEstimator()
             cost_usd = est.estimate(
                 model=run_meta.model,
@@ -1513,9 +2225,9 @@ def run_impl(
     stderr = result.stderr or ""
     stdout = result.stdout or ""
     csm = norm_res.csm if norm_res else None
-    
+
     # WP-X7: Contract Telemetry (already recorded in FSM)
-    
+
     if use_stream:
         # Backward compat: stdout is the summary from CSM or extract_condensed
         stdout = csm.summary if csm else extract_condensed(stdout)
@@ -1527,20 +2239,20 @@ def run_impl(
         "timed_out": result.timed_out,
         "run_id": run_meta.run_id,
     }
-    if csm:
+    if csm and norm_res:
         payload["csm"] = csm.to_dict()
         payload["normalization_confidence"] = norm_res.confidence
 
     if include_contract:
         payload["route_contract"] = route_contract
         payload["route_request"] = route_request
-    
+
     return payload
 
 
 def bg_impl(
     *,
-    agent: str,
+    agent: str | None,
     prompt: str,
     cd: Path | None,
     mode: str,
@@ -1557,6 +2269,8 @@ def bg_impl(
     routing: str | None = None,
     failover: bool = False,
     run_id: str | None = None,
+    lane: str | None = None,
+    confidence: float | None = None,
     contract_version: str | None = None,
     domain: str | None = None,
 ) -> dict[str, Any]:
@@ -1564,16 +2278,16 @@ def bg_impl(
     Start a background run. Returns dict with keys: session_id, log_path, owner.
     """
     settings = ThegentSettings()
-    agent = resolve_agent(agent)
-    
+    agent = resolve_agent(agent) or "unknown"
+
     # WP-X1/V7: Contract Migration & Version Negotiation
     from thegent.contracts.migration import MigrationController
     from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
-    
+
     migrator = MigrationController()
     requested_version = contract_version or CONTRACT_SCHEMA_VERSION
     mig_res = migrator.evaluate_version("csm", requested_version)
-    
+
     if not mig_res["allowed"]:
         return {
             "error": f"Contract version rejected: {mig_res['reason']}",
@@ -1581,14 +2295,12 @@ def bg_impl(
             "session_id": "failed",
         }
 
-    effective_timeout = (
-        max(timeout, settings.default_timeout_claude) if agent == "claude" else timeout
-    )
+    effective_timeout = max(timeout, settings.default_timeout_claude) if agent == "claude" else timeout
     cwd = _resolve_cwd(cd)
     if cwd is None:
         return {"error": "Ambiguous cwd. Provide --cd /path explicitly.", "exit_code": 1}
 
-    full = True if not full else full
+    full = full if full else True
 
     effective_prompt = prompt
     if continue_from:
@@ -1604,6 +2316,13 @@ def bg_impl(
     # Registry integration
     registry = RunRegistry(settings.session_dir)
     effective_run_id = run_id or f"run_{uuid.uuid4().hex[:8]}"
+
+    from thegent.execution import Auditor, PolicyEngine
+
+    auditor = Auditor(registry.registry_path)
+    policy_engine = PolicyEngine(settings)
+    effective_owner = owner or _default_owner_tag(cwd)
+
     run_meta = RunMeta(
         run_id=effective_run_id,
         correlation_id=session_id,
@@ -1616,9 +2335,67 @@ def bg_impl(
         is_background=True,
         route_contract=route_contract,
         route_request=route_request,
-        domain_tag=domain,
+        domain_tag=domain or settings.default_domain_tag,
+        lane=lane or "standard",
+        confidence=confidence,
         contract_version=requested_version,
     )
+
+    # G-GP-05: Policy pre-check for background runs
+    pol_res, pol_reason = policy_engine.evaluate(run_meta, registry)
+    run_meta.policy_result = pol_res
+    run_meta.policy_reason = pol_reason
+    run_meta.signature = auditor.sign_run(run_meta)
+
+    if pol_res == "deny":
+        escalate_add_impl(
+            run_id=run_meta.run_id,
+            reason=pol_reason,
+            sla_minutes=settings.escalation_sla_minutes,
+            owner=run_meta.owner,
+            agent=run_meta.agent,
+            lane=run_meta.lane,
+        )
+        registry.register_start(run_meta)
+        registry.register_end(
+            run_id=run_meta.run_id,
+            exit_code=1,
+            status="failed",
+            ended_at_utc=datetime.now(UTC).isoformat(),
+            duration_s=0.0,
+            error_class="policy_violation",
+        )
+        return {"error": f"Policy Violation: {pol_reason}", "exit_code": 1}
+
+    if pol_res == "pause":
+        from thegent.execution import CheckpointRegistry
+
+        registry.register_start(run_meta)
+        registry.register_pause(run_meta.run_id, reason=pol_reason)
+
+        ckpt_registry = CheckpointRegistry(settings.session_dir)
+        ckpt_registry.create_checkpoint(
+            reason=f"HITL Pause (bg): {pol_reason}",
+            dag_content=run_meta.model_dump_json(),
+            owner=run_meta.owner,
+        )
+
+        escalate_add_impl(
+            run_id=run_meta.run_id,
+            reason=f"HITL Pause (bg): {pol_reason}",
+            sla_minutes=settings.escalation_sla_minutes,
+            owner=run_meta.owner,
+            agent=run_meta.agent,
+            lane=run_meta.lane,
+            priority=1,
+        )
+        return {
+            "error": f"HITL PAUSE: {pol_reason}",
+            "session_id": session_id,
+            "status": "paused",
+            "run_id": run_meta.run_id,
+        }
+
     registry.register_start(run_meta)
 
     cmd: list[str] = [sys.executable, "-m", "thegent.main", "run"]
@@ -1635,16 +2412,24 @@ def bg_impl(
         cmd.extend(["--contract-version", requested_version])
     if domain:
         cmd.extend(["--domain", domain])
-    
+
     # Pass run_id to the background process so it can close the registry entry correctly
     cmd.extend(["--run-id", effective_run_id])
-    
+
     cmd.append(effective_prompt)
-    cmd.append(agent)
+    if agent:
+        cmd.append(agent)
 
     stdout_handle = p["stdout"].open("wb")
     stderr_handle = p["stderr"].open("wb")
-    env = os.environ.copy()
+
+    # G-GP-08: Sandbox environment filtering
+    if os.environ.get("THGENT_SANDBOX_ENV_FILTER", "").lower() in ("1", "true", "yes"):
+        allowlist = settings.sandbox_env_allowlist
+        env = {k: v for k, v in os.environ.items() if k in allowlist or k.startswith("THGENT_")}
+    else:
+        env = os.environ.copy()
+
     env["PYTHONUNBUFFERED"] = "1"
     env.update(
         {
@@ -1722,10 +2507,7 @@ def ps_impl(
     own = owner or _default_owner_tag()
     base = settings.session_dir.expanduser().resolve()
     rows: list[dict[str, Any]] = []
-    if all:
-        scope_dirs = [p for p in sorted(base.glob("*")) if p.is_dir()]
-    else:
-        scope_dirs = _session_scope_dirs(base, own)
+    scope_dirs = [p for p in sorted(base.glob("*")) if p.is_dir()] if all else _session_scope_dirs(base, own)
 
     meta_files: list[Path] = []
     for scope_dir in scope_dirs:
@@ -1771,6 +2553,7 @@ def list_session_contracts_impl(
     """
     Return sessions with route-request/route-contract metadata and contract quality signal.
     """
+
     def _alignment_issues(
         route_request: dict[str, Any] | None,
         route_contract: dict[str, Any] | None,
@@ -1781,28 +2564,16 @@ def list_session_contracts_impl(
         issues: list[str] = []
         requested_provider = route_request.get("requested_provider_hint")
         contract_provider = route_contract.get("provider")
-        if (
-            requested_provider is not None
-            and contract_provider is not None
-            and requested_provider != contract_provider
-        ):
+        if requested_provider is not None and contract_provider is not None and requested_provider != contract_provider:
             issues.append("misalign:provider_hint")
 
         requested_alias = route_request.get("resolved_model_alias") or route_request.get("resolved_alias")
         contract_alias = route_contract.get("model_alias")
-        if (
-            requested_alias is not None
-            and contract_alias is not None
-            and requested_alias != contract_alias
-        ):
+        if requested_alias is not None and contract_alias is not None and requested_alias != contract_alias:
             issues.append("misalign:resolved_alias")
 
         resolved_agent = route_request.get("resolved_agent")
-        if (
-            resolved_agent is not None
-            and contract_provider is not None
-            and resolved_agent != contract_provider
-        ):
+        if resolved_agent is not None and contract_provider is not None and resolved_agent != contract_provider:
             issues.append("misalign:resolved_agent")
 
         return issues
@@ -1819,14 +2590,14 @@ def list_session_contracts_impl(
         contract_present = contract_obj is not None
 
         contract_issues: list[str] = []
-        if contract_present:
+        if contract_obj is not None:
             required_contract_fields = ("provider", "model_alias", "backend_type", "priority")
             for key in required_contract_fields:
                 if contract_obj.get(key) is None:
                     contract_issues.append(f"missing_contract:{key}")
             if contract_obj.get("schema_version") is None:
                 contract_issues.append("missing_contract:schema_version")
-        if request_present:
+        if request_obj is not None:
             if not request_obj.get("requested_model"):
                 contract_issues.append("missing_request:requested_model")
             if request_obj.get("policy") not in {"prefer_direct", "prefer_proxy", "failover"}:
@@ -1871,14 +2642,14 @@ def list_session_contracts_impl(
                 "contract_health": contract_health,
                 "strict_checks_enabled": strict,
                 "contract_issues": contract_issues,
-                "requested_model": request_obj.get("requested_model") if request_present else None,
+                "requested_model": request_obj.get("requested_model") if request_obj is not None else None,
                 "requested_provider_hint": request_obj.get("requested_provider_hint")
-                if request_present
+                if request_obj is not None
                 else None,
                 "resolved_model_alias": (request_obj.get("resolved_model_alias") or request_obj.get("resolved_alias"))
-                if request_present
+                if request_obj is not None
                 else None,
-                "policy": request_obj.get("policy") if request_present else None,
+                "policy": request_obj.get("policy") if request_obj is not None else None,
             }
         )
 
@@ -1922,6 +2693,21 @@ def session_contract_audit_impl(
     if summary_only:
         return {"rows": [], "summary": summary}
     return {"rows": rows, "summary": summary}
+
+
+def purge_impl(dry_run: bool = True) -> dict[str, int]:
+    """WP-3006: Tiered retention purge implementation (G-GP-07)."""
+    from thegent.config import ThegentSettings
+    from thegent.execution import RunRegistry
+
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+
+    # Use structured settings for retention
+    default_days = settings.retention_days_registry
+    by_domain = settings.retention_by_domain
+
+    return registry.purge_expired(default_days=default_days, by_domain=by_domain, dry_run=dry_run)
 
 
 def session_contract_health_gate_impl(
@@ -1979,8 +2765,7 @@ def session_contract_health_gate_impl(
     blockers = [
         {
             **row,
-            "issues": sorted(_coerce_issue_types(row.get("issues", [])),
-                            key=str),
+            "issues": sorted(_coerce_issue_types(row.get("issues", [])), key=str),
         }
         for row in blockers
     ]
@@ -2018,26 +2803,20 @@ def session_contract_health_gate_impl(
     }
     scope_key = _health_scope_key(payload)
     previous = _load_previous_health_snapshot(scope_key)
-    previous_ratio = (
-        float(previous.get("blocked_ratio", payload["blocked_ratio"]))
-        if previous is not None
-        else payload["blocked_ratio"]
-    )
-    previous_count = (
-        int(previous.get("blocked_count", payload["blocked_count"]))
-        if previous is not None
-        else payload["blocked_count"]
-    )
-    previous_issue_types = set(
-        _coerce_issue_types((previous or {}).get("issue_types", []))
-    )
+
+    cur_ratio = float(payload.get("blocked_ratio", 0.0))
+    cur_count = int(payload.get("blocked_count", 0))
+
+    previous_ratio = float(previous.get("blocked_ratio", cur_ratio)) if previous is not None else cur_ratio
+    previous_count = int(previous.get("blocked_count", cur_count)) if previous is not None else cur_count
+    previous_issue_types = set(_coerce_issue_types((previous or {}).get("issue_types", [])))
     current_issue_types: set[str] = set()
     for row in blockers:
         current_issue_types.update(_coerce_issue_types(row.get("issues", [])))
 
     baseline_pass = True
     if no_worse_than_baseline and previous is not None:
-        baseline_pass = payload["blocked_ratio"] <= (previous_ratio + tolerance)
+        baseline_pass = cur_ratio <= (previous_ratio + tolerance)
 
     final_pass = ratio_pass and baseline_pass
     reason_codes: list[str] = []
@@ -2066,20 +2845,16 @@ def session_contract_health_gate_impl(
                 "baseline_available": previous is not None,
                 "pass": baseline_pass if no_worse_than_baseline and previous is not None else True,
                 "baseline_blocked_ratio": previous_ratio if previous is not None else None,
-                "current_blocked_ratio": payload["blocked_ratio"],
-                "blocked_ratio_delta": (
-                    payload["blocked_ratio"] - previous_ratio if previous is not None else None
-                ),
+                "current_blocked_ratio": cur_ratio,
+                "blocked_ratio_delta": (cur_ratio - previous_ratio if previous is not None else None),
             },
         ],
         "final_pass": final_pass,
     }
     payload["trend_summary"] = {
         "baseline_available": previous is not None,
-        "blocked_ratio_delta": (
-            payload["blocked_ratio"] - previous_ratio if previous is not None else None
-        ),
-        "blocked_count_delta": payload["blocked_count"] - previous_count if previous is not None else None,
+        "blocked_ratio_delta": (cur_ratio - previous_ratio if previous is not None else None),
+        "blocked_count_delta": cur_count - previous_count if previous is not None else None,
         "new_issue_types": sorted(current_issue_types - previous_issue_types),
         "resolved_issue_types": sorted(previous_issue_types - current_issue_types),
     }
@@ -2137,8 +2912,7 @@ def session_contract_health_report_impl(
     max_blocked = top_blocked
     if max_blocked is None:
         max_blocked = 25
-    if max_blocked < 0:
-        max_blocked = 0
+    max_blocked = max(max_blocked, 0)
 
     policy = _resolve_health_policy(policy_profile, strict, 1.0)
     effective_strict = bool(policy["strict"])
@@ -2215,10 +2989,7 @@ def session_contract_health_report_impl(
         row.setdefault("error", row.get("error", 0))
         row.setdefault("healthy", row.get("healthy", 0))
 
-    owner_breakdown = {
-        owner_key: owner_breakdown[owner_key]
-        for owner_key in sorted(owner_breakdown, key=str.lower)
-    }
+    owner_breakdown = {owner_key: owner_breakdown[owner_key] for owner_key in sorted(owner_breakdown, key=str.lower)}
 
     blocked_rows_sorted = sorted(
         blocked_rows,
@@ -2267,24 +3038,19 @@ def session_contract_health_report_impl(
     }
     scope_key = _health_scope_key(payload)
     previous = _load_previous_health_snapshot(scope_key)
-    previous_ratio = (
-        float(previous.get("blocked_ratio", payload["blocked_ratio"]))
-        if previous is not None
-        else payload["blocked_ratio"]
-    )
-    previous_count = (
-        int(previous.get("blocked_count", payload["blocked_count"]))
-        if previous is not None
-        else payload["blocked_count"]
-    )
+    cur_ratio = float(payload.get("blocked_ratio", 0.0))
+    cur_count = int(payload.get("blocked_count", 0))
+
+    previous_ratio = float(previous.get("blocked_ratio", cur_ratio)) if previous is not None else cur_ratio
+    previous_count = int(previous.get("blocked_count", cur_count)) if previous is not None else cur_count
     previous_issue_counts = previous.get("issue_counts", {}) if previous is not None else {}
-    previous_issue_types = set([str(i) for i in previous_issue_counts.keys()])
-    current_issue_types = set([str(i) for i in issue_counts.keys()])
+    previous_issue_types = {str(i) for i in previous_issue_counts}
+    current_issue_types = {str(i) for i in issue_counts}
     max_blocked_ratio = 1.0 - float(policy["min_healthy_ratio"])
-    ratio_pass = payload["blocked_ratio"] <= max_blocked_ratio
+    ratio_pass = cur_ratio <= max_blocked_ratio
     baseline_pass = True
     if no_worse_than_baseline and previous is not None:
-        baseline_pass = payload["blocked_ratio"] <= (previous_ratio + tolerance)
+        baseline_pass = cur_ratio <= (previous_ratio + tolerance)
     final_pass = ratio_pass and baseline_pass
     reason_codes: list[str] = []
     if not ratio_pass:
@@ -2303,7 +3069,7 @@ def session_contract_health_report_impl(
             {
                 "id": "max_blocked_ratio_by_profile",
                 "pass": ratio_pass,
-                "actual_blocked_ratio": payload["blocked_ratio"],
+                "actual_blocked_ratio": cur_ratio,
                 "max_blocked_ratio": max_blocked_ratio,
             },
             {
@@ -2312,20 +3078,16 @@ def session_contract_health_report_impl(
                 "baseline_available": previous is not None,
                 "pass": baseline_pass if no_worse_than_baseline and previous is not None else True,
                 "baseline_blocked_ratio": previous_ratio if previous is not None else None,
-                "current_blocked_ratio": payload["blocked_ratio"],
-                "blocked_ratio_delta": (
-                    payload["blocked_ratio"] - previous_ratio if previous is not None else None
-                ),
+                "current_blocked_ratio": cur_ratio,
+                "blocked_ratio_delta": (cur_ratio - previous_ratio if previous is not None else None),
             },
         ],
         "final_pass": final_pass,
     }
     payload["trend_summary"] = {
         "baseline_available": previous is not None,
-        "blocked_ratio_delta": (
-            payload["blocked_ratio"] - previous_ratio if previous is not None else None
-        ),
-        "blocked_count_delta": payload["blocked_count"] - previous_count if previous is not None else None,
+        "blocked_ratio_delta": (cur_ratio - previous_ratio if previous is not None else None),
+        "blocked_count_delta": cur_count - previous_count if previous is not None else None,
         "new_issue_types": sorted(current_issue_types - previous_issue_types),
         "resolved_issue_types": sorted(previous_issue_types - current_issue_types),
     }
@@ -2361,19 +3123,21 @@ def session_contract_health_trend_impl(
             f"Unsupported payload_type '{payload_type}'. Choose one of: {', '.join(HEALTH_PAYLOAD_TYPES)}."
         )
     policy = _resolve_health_policy(policy_profile, strict, min_healthy_ratio)
+    gen_query: dict[str, Any] = {
+        "owner": owner,
+        "all": all,
+        "strict": policy["strict"],
+    }
+    if payload_type == "session_contract_health_gate":
+        gen_query["min_healthy_ratio"] = policy["min_healthy_ratio"]
+    else:
+        gen_query["top_blocked"] = int(top_blocked)
+
     scope_payload: dict[str, Any] = {
         "payload_type": payload_type,
         "policy_profile": policy["profile"],
-        "generated_query": {
-            "owner": owner,
-            "all": all,
-            "strict": policy["strict"],
-        },
+        "generated_query": gen_query,
     }
-    if payload_type == "session_contract_health_gate":
-        scope_payload["generated_query"]["min_healthy_ratio"] = policy["min_healthy_ratio"]
-    else:
-        scope_payload["generated_query"]["top_blocked"] = int(top_blocked)
     scope_key = _health_scope_key(scope_payload)
 
     max_items = max(1, int(limit))
@@ -2412,8 +3176,8 @@ def session_contract_health_trend_impl(
         latest_ts_raw = (latest or {}).get("captured_at_utc", "")
         oldest_ts_raw = (oldest or {}).get("captured_at_utc", "")
         try:
-            latest_ts = datetime.fromisoformat(str(latest_ts_raw).replace("Z", "+00:00"))
-            oldest_ts = datetime.fromisoformat(str(oldest_ts_raw).replace("Z", "+00:00"))
+            latest_ts = datetime.fromisoformat(str(latest_ts_raw))
+            oldest_ts = datetime.fromisoformat(str(oldest_ts_raw))
             snapshot_window_seconds = int((latest_ts - oldest_ts).total_seconds())
         except (TypeError, ValueError):
             snapshot_window_seconds = None
@@ -2424,7 +3188,7 @@ def session_contract_health_trend_impl(
         if not ts_raw:
             continue
         try:
-            parsed_ts.append(datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00")))
+            parsed_ts.append(datetime.fromisoformat(str(ts_raw)))
         except (TypeError, ValueError):
             continue
     if len(parsed_ts) > 1:
@@ -2435,18 +3199,14 @@ def session_contract_health_trend_impl(
         if diffs:
             snapshot_interval_seconds_avg = int(sum(diffs) / len(diffs))
     snapshot_ids_csv = ", ".join(
-        [
-            str((s or {}).get("captured_at_utc", ""))
-            for s in snapshots
-            if (s or {}).get("captured_at_utc", "")
-        ]
+        [str((s or {}).get("captured_at_utc", "")) for s in snapshots if (s or {}).get("captured_at_utc", "")]
     )
     generated_at = datetime.now(UTC)
     snapshot_freshness_seconds = None
     if latest is not None:
         latest_ts_raw = (latest or {}).get("captured_at_utc", "")
         try:
-            latest_ts = datetime.fromisoformat(str(latest_ts_raw).replace("Z", "+00:00"))
+            latest_ts = datetime.fromisoformat(str(latest_ts_raw))
             snapshot_freshness_seconds = int((generated_at - latest_ts).total_seconds())
         except (TypeError, ValueError):
             snapshot_freshness_seconds = None
@@ -2466,9 +3226,9 @@ def session_contract_health_trend_impl(
     if len(blocked_ratios) > 1:
         mean_ratio = sum(blocked_ratios) / len(blocked_ratios)
         variance = sum((r - mean_ratio) ** 2 for r in blocked_ratios) / len(blocked_ratios)
-        snapshot_health_volatility = round(variance ** 0.5, 6)
+        snapshot_health_volatility = round(variance**0.5, 6)
 
-    payload = {
+    payload: dict[str, Any] = {
         "schema_version": HEALTH_PAYLOAD_SCHEMA_VERSION,
         "payload_type": "session_contract_health_trend",
         "schema_compat_mode": "compat",
@@ -2496,9 +3256,7 @@ def session_contract_health_trend_impl(
         "snapshot_issue_churn_count": snapshot_issue_churn_count,
         "snapshot_issue_churn_hash": hashlib.sha256(str(snapshot_issue_churn_count).encode("utf-8")).hexdigest(),
         "snapshot_health_volatility": snapshot_health_volatility,
-        "snapshot_health_volatility_hash": hashlib.sha256(
-            str(snapshot_health_volatility).encode("utf-8")
-        ).hexdigest(),
+        "snapshot_health_volatility_hash": hashlib.sha256(str(snapshot_health_volatility).encode("utf-8")).hexdigest(),
         "limit": max_items,
         "latest": latest,
         "latest_status": (latest or {}).get("status", ""),
@@ -2507,12 +3265,8 @@ def session_contract_health_trend_impl(
         "latest_blocked_ratio": (latest or {}).get("blocked_ratio", None),
         "latest_blocked_count": (latest or {}).get("blocked_count", None),
         "latest_issue_types_count": len(_coerce_issue_types((latest or {}).get("issue_types", []))),
-        "latest_issue_types_json": json.dumps(
-            _coerce_issue_types((latest or {}).get("issue_types", []))
-        ),
-        "latest_issue_types_csv": ", ".join(
-            str(v) for v in _coerce_issue_types((latest or {}).get("issue_types", []))
-        ),
+        "latest_issue_types_json": json.dumps(_coerce_issue_types((latest or {}).get("issue_types", []))),
+        "latest_issue_types_csv": ", ".join(str(v) for v in _coerce_issue_types((latest or {}).get("issue_types", []))),
         "latest_issue_types_hash": hashlib.sha256(
             json.dumps(_coerce_issue_types((latest or {}).get("issue_types", []))).encode("utf-8")
         ).hexdigest(),
@@ -2545,7 +3299,9 @@ def session_contract_health_trend_impl(
             },
         },
     }
-    payload["compat_aliases_count"] = len((payload.get("compat") or {}).get("aliases", {}))
+    compat = cast("dict[str, Any]", payload.get("compat", {}))
+    compat_aliases = cast("dict[str, str]", compat.get("aliases", {}))
+    payload["compat_aliases_count"] = len(compat_aliases)
     payload["payload_signature"] = _hash_health_payload(payload)
     return payload
 
@@ -2557,6 +3313,7 @@ def status_impl(
     """
     Get status of a background session.
     """
+
     def _resolve_exit_code(payload: dict[str, Any], rc_path: Path, is_running: bool) -> int | None:
         if is_running:
             return None
@@ -2705,9 +3462,8 @@ def stop_impl(session_id: str, force: bool = False) -> dict[str, Any]:
         if force:
             os.killpg(pid, signal.SIGKILL)
             return {"session_id": session_id, "status": "stopped_force"}
-        else:
-            os.killpg(pid, signal.SIGTERM)
-            return {"session_id": session_id, "status": "stopped"}
+        os.killpg(pid, signal.SIGTERM)
+        return {"session_id": session_id, "status": "stopped"}
     except OSError as e:
         return {"session_id": session_id, "status": "error", "error": str(e)}
 
@@ -2729,7 +3485,7 @@ def events_impl(run_id: str | None = None, limit: int = 100) -> list[dict[str, A
     registry_path = settings.session_dir / "run_registry.jsonl"
     if not registry_path.exists():
         return []
-    
+
     events: list[dict[str, Any]] = []
     with registry_path.open("r", encoding="utf-8") as f:
         for line in f:
@@ -2740,7 +3496,7 @@ def events_impl(run_id: str | None = None, limit: int = 100) -> list[dict[str, A
                 events.append(data)
             except Exception:
                 continue
-    
+
     return events[-limit:]
 
 
@@ -2760,10 +3516,7 @@ def list_agents_impl() -> list[dict[str, str]]:
         "cursor-agent": "Direct",
         "cursor-api": "cursor-api",
     }
-    return [
-        {"name": AGENT_LABELS.get(n, n), "backend": backends.get(n, "Direct")}
-        for n in agents
-    ]
+    return [{"name": AGENT_LABELS.get(n, n), "backend": backends.get(n, "Direct")} for n in agents]
 
 
 def list_droids_impl(cd: Path | None = None) -> list[str]:
@@ -2805,7 +3558,17 @@ def list_models_impl(
         view = ModelCatalog.to_catalog_view(use_scraped=use_scraped)
         return dict(view.by_model)
 
-    all_providers = ["minimax", "glm", "cursor-agent", "cursor-api", "gemini", "copilot", "claude", "codex", "antigravity"]
+    all_providers = [
+        "minimax",
+        "glm",
+        "cursor-agent",
+        "cursor-api",
+        "gemini",
+        "copilot",
+        "claude",
+        "codex",
+        "antigravity",
+    ]
     providers = [provider] if provider else all_providers
     settings = ThegentSettings()
     result: dict[str, list[str]] = {}
@@ -2852,6 +3615,7 @@ def dag_list_impl(cd: Path | None = None) -> dict[str, Any]:
 def session_meta_impl(session_id: str) -> dict[str, Any]:
     """Get full session metadata. Returns meta dict or error."""
     import typer
+
     settings = ThegentSettings()
     try:
         meta_path = _find_session_meta(settings, session_id)

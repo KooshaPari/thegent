@@ -15,6 +15,11 @@
         "octocode-mcp"
       ],
       "disabled": false
+    },
+    "thegent": {
+      "url": "http://127.0.0.1:3847/mcp",
+      "transport": "http",
+      "description": "Thegent agent orchestration (run, bg, ps, logs, dag, etc.)"
     }
   }
 }

@@ -7,6 +7,7 @@ import subprocess
 import threading
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any, cast
 
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
@@ -134,13 +135,16 @@ class DirectAgentRunner(AgentRunner):
                 return self._run_live(cmd, cwd, timeout, stdin_input, on_stdout, on_stderr)
             return self._run_capture(cmd, cwd, timeout, stdin_input)
         except FileNotFoundError:
-            env_hint = "THGENT_CURSOR_AGENT_CMD" if self._cli_name == "cursor-agent" else f"THGENT_{self._cli_name.upper().replace('-', '_')}_CMD"
+            env_hint = (
+                "THGENT_CURSOR_AGENT_CMD"
+                if self._cli_name == "cursor-agent"
+                else f"THGENT_{self._cli_name.upper().replace('-', '_')}_CMD"
+            )
             return RunResult(
                 exit_code=1,
                 stdout="",
                 stderr=(
-                    f"{self._cli_name} not found. Install and add to PATH, or set "
-                    f"{env_hint}=/path/to/{self._cli_name}"
+                    f"{self._cli_name} not found. Install and add to PATH, or set {env_hint}=/path/to/{self._cli_name}"
                 ),
                 timed_out=False,
             )
@@ -250,7 +254,7 @@ class DirectAgentRunner(AgentRunner):
             kwargs["input"] = stdin_input
         else:
             kwargs["stdin"] = subprocess.DEVNULL
-        proc = subprocess.run(cmd, **kwargs)
+        proc = subprocess.run(cmd, check=False, **cast("Any", kwargs))
         result = RunResult(
             exit_code=proc.returncode,
             stdout=_strip_ansi(proc.stdout),

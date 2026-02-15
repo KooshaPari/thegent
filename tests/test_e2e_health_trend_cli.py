@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import json
 
+import pytest
 from typer.testing import CliRunner
 
 from thegent.main import app
 
-
 runner = CliRunner()
 
 
+@pytest.mark.e2e
 class TestHealthTrendCLI:
     def test_health_trend_json_empty_scope(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         snapshot_path = tmp_path / "health-snapshots.jsonl"
         result = runner.invoke(
             app,
@@ -40,6 +42,7 @@ class TestHealthTrendCLI:
         assert payload["compat"]["aliases"]["scope.owner"] == "scope_owner"
 
     def test_health_trend_rich_output_has_generated_timestamp(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         result = runner.invoke(
             app,
             [
@@ -58,6 +61,7 @@ class TestHealthTrendCLI:
         assert "compat_aliases_count=" in result.stdout
 
     def test_health_trend_md_output(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         result = runner.invoke(
             app,
             [
@@ -86,6 +90,7 @@ class TestHealthTrendCLI:
         assert "scope_policy_profile" in result.stdout
 
     def test_health_trend_export_json(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         out = tmp_path / "trend.json"
         result = runner.invoke(
             app,
@@ -112,6 +117,7 @@ class TestHealthTrendCLI:
         assert payload["compat"]["aliases"]["scope.policy_profile"] == "scope_policy_profile"
 
     def test_health_trend_export_csv(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         out = tmp_path / "trend.csv"
         result = runner.invoke(
             app,
@@ -142,6 +148,7 @@ class TestHealthTrendCLI:
         assert "latest_issue_types_count" in text
 
     def test_health_trend_export_md(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         out = tmp_path / "trend.md"
         result = runner.invoke(
             app,
@@ -176,6 +183,7 @@ class TestHealthTrendCLI:
         assert "scope_policy_profile" in text
 
     def test_health_trend_export_jsonl(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         out = tmp_path / "trend.jsonl"
         result = runner.invoke(
             app,
@@ -216,6 +224,7 @@ class TestHealthTrendCLI:
             assert "compat_aliases" in second
 
     def test_health_trend_export_refuses_overwrite_without_flag(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         out = tmp_path / "trend.json"
         out.write_text("{}", encoding="utf-8")
         result = runner.invoke(
@@ -236,6 +245,7 @@ class TestHealthTrendCLI:
         assert "already exists" in result.stdout
 
     def test_health_trend_export_invalid_format_fails(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         out = tmp_path / "trend.out"
         result = runner.invoke(
             app,
@@ -255,8 +265,10 @@ class TestHealthTrendCLI:
         assert "Unsupported --export-format" in result.stdout
 
 
+@pytest.mark.e2e
 class TestHealthPolicyFlagsCLI:
     def test_health_gate_policy_flags_json(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         result = runner.invoke(
             app,
             [
@@ -277,6 +289,7 @@ class TestHealthPolicyFlagsCLI:
         assert payload["policy_evaluation"]["enforce_no_worse_than_baseline"] is True
 
     def test_health_report_policy_flags_json(self, tmp_path) -> None:
+        # @trace FR-CLI-001
         result = runner.invoke(
             app,
             [

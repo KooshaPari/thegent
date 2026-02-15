@@ -213,22 +213,45 @@
 
 | ID | Item | Status | Notes |
 |----|------|--------|-------|
-| F2 | `thegent_run` with gemini/cursor-agent | [ ] | Requires API key; run `scripts/verify-fastmcp.py --no-skip-api` |
-| F3 | `thegent_bg` / `thegent_ps` | [ ] | Requires API key |
-| F4 | Progress updates during long run | [ ] | Manual verification |
+| F2 | `thegent_run` with gemini/cursor-agent | ✅ Done | Verified via `verify-fastmcp.py --no-skip-api` |
+| F3 | `thegent_bg` / `thegent_ps` | ✅ Done | Verified via `verify-fastmcp.py --no-skip-api` |
+| F4 | Progress updates during long run | ✅ Done | Verified via `verify-fastmcp.py` during `thegent_run` (104s run) |
 | F19 | Icons/UX hints for tools | Not implemented | Optional |
 
 ---
 
-## 8. Summary: Remaining Work by Priority
+## 8. Summary: Remaining Work (All Completed)
 
-| Priority | Items | Effort |
-|----------|-------|--------|
-| **P0** | XA1 (canonical schema package) | 1–2 days |
-| **P1** | FR-X01, XA3, XA4 (version negotiation, partial-commit, task metadata) | 2–4 days |
-| **P2** | FR-X08, XK3, XK4, WP-3006, WP-3008, WP-0002, WP-0005, WP-6007 | 4–8 days |
-| **Manual** | F2, F3, F4 (FastMCP with API keys) | — |
-| **Optional** | F19 (icons) | — |
+| ID | Item | Status |
+|----|------|--------|
+| XA1 | Canonical schema package `contracts/csm/v1` | ✅ Done |
+| FR-X01 | Contract version negotiation protocol | ✅ Done |
+| XA3 | Streaming parser partial-commit safety | ✅ Done |
+| XA4 | Contract version in task metadata | ✅ Done |
+| FR-X08 | Unified observability summary (`observe summary`) | ✅ Done |
+| XK3 | Contract authority publication (CI sync) | ✅ Done |
+| XK4 | CI architecture boundary checks | ✅ Done |
+| WP-3006 | Tiered storage (`archive --tier hot|cold`) | ✅ Done |
+| WP-3008 | Escalation SLA queue | ✅ Done |
+| WP-0002 | Canonical event schemas | ✅ Done |
+| WP-3004 | WORM-style audit trail logic | ✅ Done |
+| WP-0005 | Program operating model doc | ✅ Done |
+| WP-6007 | Post-launch playbook | ✅ Done |
+| F2-F4 | FastMCP API e2e verification | ✅ Done |
+
+---
+
+## 9. Verification Results (F2, F3, F4)
+
+| Aspect | Status | Evidence |
+|--------|--------|----------|
+| **F2 thegent_run** | ✅ Pass | 104s run with gemini successfully returned output |
+| **F3 thegent_bg** | ✅ Pass | session_id returned, background process started, registry updated |
+| **F3 thegent_ps** | ✅ Pass | background session appeared in list |
+| **F4 Progress** | ✅ Pass | `ctx.report_progress` and `ctx.close_sse_stream` confirmed in log during long run |
+| **F5 logs** | ✅ Pass | `thegent://session/{id}/logs` returned background process output |
+
+Verified on 2026-02-15 using `scripts/verify-fastmcp.py --no-skip-api`.
 
 ---
 

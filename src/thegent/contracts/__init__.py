@@ -7,6 +7,17 @@ Provides:
 - ChunkEvent, EvidenceEvent, PolicyEvent: canonical event schemas (WP-0002)
 """
 
+from thegent.contracts.adapters import (
+    ADAPTER_REGISTRY,
+    AdapterResult,
+    OutputAdapter,
+    normalize_output,
+)
+from thegent.contracts.csm import (
+    CanonicalStructuredMessage,
+    CSMPhase,
+    CSMStatus,
+)
 from thegent.contracts.events import ChunkEvent, EvidenceEvent, PolicyEvent
 from thegent.contracts.registry import (
     CONTRACT_SCHEMA_VERSION,
@@ -14,31 +25,20 @@ from thegent.contracts.registry import (
     ContractVersion,
     get_registry,
 )
-from thegent.contracts.csm import (
-    CanonicalStructuredMessage,
-    CSMStatus,
-    CSMPhase,
-)
-from thegent.contracts.adapters import (
-    OutputAdapter,
-    AdapterResult,
-    ADAPTER_REGISTRY,
-    normalize_output,
-)
 
 __all__ = [
+    "ADAPTER_REGISTRY",
     "CONTRACT_SCHEMA_VERSION",
+    "AdapterResult",
+    "CSMPhase",
+    "CSMStatus",
+    "CanonicalStructuredMessage",
+    "ChunkEvent",
     "ContractRegistry",
     "ContractVersion",
-    "get_registry",
-    "CanonicalStructuredMessage",
-    "CSMStatus",
-    "CSMPhase",
-    "OutputAdapter",
-    "AdapterResult",
-    "ADAPTER_REGISTRY",
-    "normalize_output",
-    "ChunkEvent",
     "EvidenceEvent",
+    "OutputAdapter",
     "PolicyEvent",
+    "get_registry",
+    "normalize_output",
 ]

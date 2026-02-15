@@ -2,9 +2,10 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
-use std::io::Read;
+use std::io::{BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -118,6 +119,49 @@ fn resolve_hooks_dir() -> PathBuf {
     // 3. Fallback: ~/.claude/hooks/
     let home = env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
     PathBuf::from(format!("{home}/.claude/hooks"))
+}
+
+// ---------------------------------------------------------------------------
+// Read skip hooks from .claude.qa-local.json
+// ---------------------------------------------------------------------------
+
+fn get_skip_hooks(project_dir: &str) -> Vec<String> {
+    let qa_config_path = format!("{}/.claude/qa-local.json", project_dir);
+    let path = Path::new(&qa_config_path);
+    if !path.exists() {
+        return Vec::new();
+    }
+
+    match fs::read_to_string(path) {
+        Ok(content) => {
+            match serde_json::from_str::<serde_json::Value>(&content) {
+                Ok(json) => {
+                    let mut skip_list = Vec::new();
+                    if let Some(hooks) = json.get("hooks").and_then(|h| h.get("skip")) {
+                        if let Some(arr) = hooks.as_array() {
+                            for item in arr {
+                                if let Some(s) = item.as_str() {
+                                    skip_list.push(s.to_string());
+                                }
+                            }
+                        }
+                    }
+                    skip_list
+                }
+                Err(_) => Vec::new(),
+            }
+        }
+        Err(_) => Vec::new(),
+    }
+}
+
+fn should_skip_hook(hook_name: &str, skip_list: &[String]) -> bool {
+    // Hook name comes as "foo.sh", skip list has "foo" or "foo.sh"
+    let hook_base = hook_name.trim_end_matches(".sh");
+    skip_list.iter().any(|s| {
+        let skip_base = s.trim_end_matches(".sh");
+        skip_base == hook_base
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -266,7 +310,196 @@ struct HookResult {
 }
 
 // ---------------------------------------------------------------------------
-// Run a single hook
+// Run a single hook with output-based (idle) timeout
+// Monitors stdout/stderr in real-time and resets idle timer on each output
+// ---------------------------------------------------------------------------
+
+fn run_hook_with_idle_timeout(
+    hooks_dir: &Path,
+    hook_name: &str,
+    extra_args: &[&str],
+    env_map: &HashMap<String, String>,
+    temp_path: &Path,
+    idle_timeout: Duration,
+    max_timeout: Duration,
+) -> HookResult {
+    let script = hooks_dir.join(hook_name);
+    if !script.exists() {
+        return HookResult {
+            name: hook_name.into(),
+            rc: 0,
+            stdout: String::new(),
+            stderr: String::new(),
+        };
+    }
+
+    let stdin_file = match fs::File::open(temp_path) {
+        Ok(f) => f,
+        Err(e) => {
+            return HookResult {
+                name: hook_name.into(),
+                rc: 1,
+                stdout: String::new(),
+                stderr: format!("failed to open temp file: {e}"),
+            };
+        }
+    };
+
+    let mut cmd = Command::new("bash");
+    cmd.arg(&script);
+
+    for arg in extra_args {
+        cmd.arg(arg);
+    }
+
+    cmd.stdin(Stdio::from(stdin_file))
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    for (k, v) in env_map {
+        cmd.env(k, v);
+    }
+
+    if let Some(project_dir) = env_map.get("PROJECT_DIR") {
+        if !project_dir.is_empty() && Path::new(project_dir).is_dir() {
+            cmd.current_dir(project_dir);
+        }
+    }
+
+    let mut child = match cmd.spawn() {
+        Ok(c) => c,
+        Err(e) => {
+            return HookResult {
+                name: hook_name.into(),
+                rc: 1,
+                stdout: String::new(),
+                stderr: format!("failed to spawn hook: {e}"),
+            };
+        }
+    };
+
+    // Shared state between output reader threads and the main loop
+    let last_output = Arc::new(Mutex::new(Instant::now()));
+    let stdout_done = Arc::new(AtomicBool::new(false));
+    let stderr_done = Arc::new(AtomicBool::new(false));
+    let stdout_buf = Arc::new(Mutex::new(Vec::new()));
+    let stderr_buf = Arc::new(Mutex::new(Vec::new()));
+
+    // Spawn thread to read stdout in real-time
+    let last_out = Arc::clone(&last_output);
+    let stdout_done_flag = Arc::clone(&stdout_done);
+    let stdout_buffer = Arc::clone(&stdout_buf);
+    if let Some(stdout) = child.stdout.take() {
+        let reader = BufReader::new(stdout);
+        thread::spawn(move || {
+            for line in reader.lines() {
+                if let Ok(line) = line {
+                    let _ = stdout_buffer.lock().unwrap().write_all(line.as_bytes());
+                    let _ = stdout_buffer.lock().unwrap().write_all(b"\n");
+                    *last_out.lock().unwrap() = Instant::now();
+                }
+            }
+            stdout_done_flag.store(true, Ordering::SeqCst);
+        });
+    }
+
+    // Spawn thread to read stderr in real-time
+    let last_err = Arc::clone(&last_output);
+    let stderr_done_flag = Arc::clone(&stderr_done);
+    let stderr_buffer = Arc::clone(&stderr_buf);
+    if let Some(stderr) = child.stderr.take() {
+        let reader = BufReader::new(stderr);
+        thread::spawn(move || {
+            for line in reader.lines() {
+                if let Ok(line) = line {
+                    let _ = stderr_buffer.lock().unwrap().write_all(line.as_bytes());
+                    let _ = stderr_buffer.lock().unwrap().write_all(b"\n");
+                    *last_err.lock().unwrap() = Instant::now();
+                }
+            }
+            stderr_done_flag.store(true, Ordering::SeqCst);
+        });
+    }
+
+    let start = Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                // Process finished - wait for output readers to complete
+                thread::sleep(Duration::from_millis(50));
+                return HookResult {
+                    name: hook_name.into(),
+                    rc: status.code().unwrap_or(1),
+                    stdout: String::from_utf8_lossy(&stdout_buf.lock().unwrap()).into_owned(),
+                    stderr: String::from_utf8_lossy(&stderr_buf.lock().unwrap()).into_owned(),
+                };
+            }
+            Ok(None) => {
+                let elapsed = start.elapsed();
+                let idle = last_output.lock().unwrap().elapsed();
+
+                // Check absolute max timeout first
+                if elapsed >= max_timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return HookResult {
+                        name: hook_name.into(),
+                        rc: 124,
+                        stdout: String::new(),
+                        stderr: format!(
+                            "{hook_name}: absolute timeout after {}s",
+                            max_timeout.as_secs()
+                        ),
+                    };
+                }
+
+                // Check idle timeout - kill if no output for X seconds
+                if idle >= idle_timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return HookResult {
+                        name: hook_name.into(),
+                        rc: 124,
+                        stdout: String::from_utf8_lossy(&stdout_buf.lock().unwrap()).into_owned(),
+                        stderr: format!(
+                            "{hook_name}: idle timeout after {}s of no output",
+                            idle_timeout.as_secs()
+                        ),
+                    };
+                }
+
+                // Both streams done and no more coming - process must have exited
+                if stdout_done.load(Ordering::SeqCst) && stderr_done.load(Ordering::SeqCst) {
+                    // Give a moment for any remaining output
+                    thread::sleep(Duration::from_millis(50));
+                    return HookResult {
+                        name: hook_name.into(),
+                        rc: child
+                            .wait()
+                            .ok()
+                            .and_then(|s| s.code())
+                            .unwrap_or(1),
+                        stdout: String::from_utf8_lossy(&stdout_buf.lock().unwrap()).into_owned(),
+                        stderr: String::from_utf8_lossy(&stderr_buf.lock().unwrap()).into_owned(),
+                    };
+                }
+
+                thread::sleep(Duration::from_millis(50));
+            }
+            Err(e) => {
+                return HookResult {
+                    name: hook_name.into(),
+                    rc: 1,
+                    stdout: String::new(),
+                    stderr: format!("wait error: {e}"),
+                };
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Run a single hook (legacy time-based timeout)
 // ---------------------------------------------------------------------------
 
 fn run_hook(
@@ -692,6 +925,49 @@ fn run_parallel(
 }
 
 // ---------------------------------------------------------------------------
+// Run hooks in parallel with output-based (idle) timeout
+// ---------------------------------------------------------------------------
+
+fn run_parallel_with_idle_timeout(
+    hooks: &[(&str, &[&str])],
+    hooks_dir: &Path,
+    env_map: &HashMap<String, String>,
+    temp_path: &Path,
+    idle_timeout: Duration,
+    max_timeout: Duration,
+) -> Vec<HookResult> {
+    let env_arc = Arc::new(env_map.clone());
+    let hooks_dir_arc = Arc::new(hooks_dir.to_path_buf());
+    let temp_path_arc = Arc::new(temp_path.to_path_buf());
+    let results: Arc<Mutex<Vec<HookResult>>> = Arc::new(Mutex::new(Vec::new()));
+
+    let mut handles = Vec::new();
+
+    for (hook, args) in hooks {
+        let hook_name = hook.to_string();
+        let args_owned: Vec<String> = args.iter().map(|a| a.to_string()).collect();
+        let env_c = Arc::clone(&env_arc);
+        let hdir = Arc::clone(&hooks_dir_arc);
+        let tpath = Arc::clone(&temp_path_arc);
+        let res = Arc::clone(&results);
+
+        let handle = thread::spawn(move || {
+            let args_refs: Vec<&str> = args_owned.iter().map(|s| s.as_str()).collect();
+            let result =
+                run_hook_with_idle_timeout(&hdir, &hook_name, &args_refs, &env_c, &tpath, idle_timeout, max_timeout);
+            res.lock().unwrap().push(result);
+        });
+        handles.push(handle);
+    }
+
+    for h in handles {
+        let _ = h.join();
+    }
+
+    Arc::try_unwrap(results).unwrap().into_inner().unwrap()
+}
+
+// ---------------------------------------------------------------------------
 // Run a single hook, advisory (subagentstart, subagentstop, sessionend,
 // taskcompleted). Always returns 0.
 // ---------------------------------------------------------------------------
@@ -843,22 +1119,43 @@ fn main() -> ExitCode {
                 ("stop-reconcile.sh", &[]),
                 ("task-completion-verifier.sh", &[]),
             ];
-            let timeout = Duration::from_secs(30);
-            let results = run_parallel(
+
+            // Filter out skipped hooks
+            let project_dir = env_map.get("PROJECT_DIR").cloned().unwrap_or_default();
+            let skip_list = get_skip_hooks(&project_dir);
+            let hooks: Vec<(&str, &[&str])> = hooks
+                .into_iter()
+                .filter(|(name, _)| !should_skip_hook(name, &skip_list))
+                .collect();
+
+            // Print skip notifications
+            for name in skip_list.iter() {
+                eprintln!("SKIP_HOOKS: skipping {}.sh", name);
+            }
+
+            // Output-based (idle) timeout: kill if no output for 180s (3 min)
+            // This allows long-running hooks (tests, security scans) to complete
+            // as long as they produce some output periodically
+            // Absolute max timeout: kill after 600s (10 min) regardless
+            let idle_timeout = Duration::from_secs(180);
+            let max_timeout = Duration::from_secs(600);
+            let results = run_parallel_with_idle_timeout(
                 &hooks,
                 &hooks_dir,
                 &env_map,
                 &temp_file.path,
-                Some(timeout),
+                idle_timeout,
+                max_timeout,
             );
 
             let mut max_rc: i32 = 0;
             let mut failures = Vec::new();
             for r in &results {
-                if !r.stdout.is_empty() {
-                    eprint!("{}", r.stdout);
-                }
+                // Only print output on failure (not on success)
                 if r.rc != 0 {
+                    if !r.stdout.is_empty() {
+                        eprint!("{}", r.stdout);
+                    }
                     failures.push(format!("{}(rc={})", r.name, r.rc));
                     if !r.stderr.is_empty() {
                         eprint!("{}", r.stderr);
@@ -868,6 +1165,8 @@ fn main() -> ExitCode {
                     max_rc = r.rc;
                 }
             }
+            // Only print failure summary if there are actual failures
+            // Silent on complete success (no output when all hooks pass)
             if !failures.is_empty() {
                 eprintln!(
                     "STOP DISPATCHER: non-zero from: {}",

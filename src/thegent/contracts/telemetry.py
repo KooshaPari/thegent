@@ -8,7 +8,7 @@ schema.drift.semantic events per G-RV-07.
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 # Drift event types for alerting (G-RV-07)
 EVENT_NORMALIZATION = "normalization"
@@ -19,7 +19,7 @@ EVENT_SCHEMA_DRIFT_SEMANTIC = "schema.drift.semantic"
 class ContractTelemetry:
     """Tracks contract normalization events and drift."""
 
-    def __init__(self, session_dir: Path):
+    def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
         self.telemetry_path = session_dir / "contract_telemetry.jsonl"
 
@@ -30,9 +30,9 @@ class ContractTelemetry:
         contract: str,
         confidence: float,
         success: bool,
-        errors: Optional[list[str]] = None,
+        errors: list[str] | None = None,
         event_type: str = EVENT_NORMALIZATION,
-    ):
+    ) -> None:
         """Record a normalization event. Use event_type for drift classification."""
         self.session_dir.mkdir(parents=True, exist_ok=True)
         event = {
@@ -54,14 +54,10 @@ class ContractTelemetry:
         provider: str,
         contract: str,
         drift_type: Literal["structural", "semantic"],
-        details: Optional[dict[str, Any]] = None,
-    ):
+        details: dict[str, Any] | None = None,
+    ) -> None:
         """Emit a schema drift event for alerting (G-RV-07)."""
-        event_type = (
-            EVENT_SCHEMA_DRIFT_STRUCTURAL
-            if drift_type == "structural"
-            else EVENT_SCHEMA_DRIFT_SEMANTIC
-        )
+        event_type = EVENT_SCHEMA_DRIFT_STRUCTURAL if drift_type == "structural" else EVENT_SCHEMA_DRIFT_SEMANTIC
         self.session_dir.mkdir(parents=True, exist_ok=True)
         drift_event = {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -102,18 +98,11 @@ class ContractTelemetry:
                     continue
         recent = events[-limit:]
         total = len(recent)
-        structural_count = sum(
-            1 for e in recent if e.get("event_type") == EVENT_SCHEMA_DRIFT_STRUCTURAL
-        )
-        semantic_count = sum(
-            1 for e in recent if e.get("event_type") == EVENT_SCHEMA_DRIFT_SEMANTIC
-        )
+        structural_count = sum(1 for e in recent if e.get("event_type") == EVENT_SCHEMA_DRIFT_STRUCTURAL)
+        semantic_count = sum(1 for e in recent if e.get("event_type") == EVENT_SCHEMA_DRIFT_SEMANTIC)
         structural_rate = (structural_count / total * 100.0) if total else 0.0
         semantic_rate = (semantic_count / total * 100.0) if total else 0.0
-        within = (
-            structural_rate <= structural_budget_pct
-            and semantic_rate <= semantic_budget_pct
-        )
+        within = structural_rate <= structural_budget_pct and semantic_rate <= semantic_budget_pct
         return {
             "within_budget": within,
             "structural_rate_pct": round(structural_rate, 2),
@@ -122,7 +111,7 @@ class ContractTelemetry:
             "semantic_budget_pct": semantic_budget_pct,
         }
 
-    def get_stats(self, limit: int = 100, provider: Optional[str] = None) -> dict[str, Any]:
+    def get_stats(self, limit: int = 100, provider: str | None = None) -> dict[str, Any]:
         """Calculate statistics on recent normalization events."""
         if not self.telemetry_path.exists():
             return {"total": 0, "success_rate": 0.0, "fallback_rate": 0.0, "avg_confidence": 0.0}
@@ -163,8 +152,8 @@ class ContractTelemetry:
             if val not in groups:
                 groups[val] = []
             groups[val].append(conf)
-        
-        return {k: sum(v)/len(v) for k, v in groups.items()}
+
+        return {k: sum(v) / len(v) for k, v in groups.items()}
 
     def get_fallback_kpis(
         self,
@@ -200,11 +189,7 @@ class ContractTelemetry:
 
         provider_filter = (provider or "").strip().lower()
         if provider_filter:
-            recent = [
-                event
-                for event in recent
-                if str(event.get("provider", "")).strip().lower() == provider_filter
-            ]
+            recent = [event for event in recent if str(event.get("provider", "")).strip().lower() == provider_filter]
 
         total = len(recent)
         fallbacks = sum(1 for e in recent if e.get("contract") == "fallback-plain")
@@ -245,7 +230,7 @@ class ContractTelemetry:
 
     def detect_drift(self, window_size: int = 50, drift_threshold: float = 0.15) -> list[str]:
         """Detect significant drift in contract performance by comparing recent to historical.
-        
+
         Analyzes fallback rate and confidence score drops.
         """
         if not self.telemetry_path.exists():
@@ -258,12 +243,12 @@ class ContractTelemetry:
                     all_events.append(json.loads(line))
                 except Exception:
                     continue
-        
+
         if len(all_events) < window_size * 2:
             return []
 
         recent = all_events[-window_size:]
-        historical = all_events[:-window_size][-window_size*2:] # middle slice
+        historical = all_events[:-window_size][-window_size * 2 :]  # middle slice
 
         def get_metrics(evs):
             tot = len(evs)
@@ -281,7 +266,7 @@ class ContractTelemetry:
             issues.append(f"Significant drop in normalization confidence: {h_cf:.2f} -> {r_cf:.2f}")
 
         # Provider-specific drift
-        providers = set(e.get("provider") for e in recent)
+        providers = {e.get("provider") for e in recent}
         for p in providers:
             r_p = [e for e in recent if e.get("provider") == p]
             h_p = [e for e in all_events[:-window_size] if e.get("provider") == p]

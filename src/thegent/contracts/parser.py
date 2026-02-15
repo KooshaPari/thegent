@@ -5,27 +5,23 @@ dictionary, and provides error classification for malformed XML.
 """
 
 import re
-from typing import Any, Optional
+from typing import Any
 
 
 class XMLParseError(Exception):
     """Base class for XML parsing errors."""
-    pass
 
 
 class MalformedTagError(XMLParseError):
     """Raised when a tag is structurally invalid."""
-    pass
 
 
 class TruncatedParseError(XMLParseError):
     """Raised when output is truncated with unclosed tags (streaming)."""
-    pass
 
 
 class InvalidTagError(XMLParseError):
     """Raised when a tag name is disallowed or invalid."""
-    pass
 
 
 # Strict error class codes for downstream routing/fallback
@@ -37,12 +33,12 @@ PARSE_MALFORMED = "parse_malformed"
 
 class IncrementalXMLParser:
     """Parser for incremental/streaming XML extraction.
-    
+
     Supports extracting tags like <TAG_NAME>Content</TAG_NAME> and handling
     partial tags during streaming.
     """
 
-    def __init__(self, allowed_tags: Optional[list[str]] = None, case_sensitive: bool = False):
+    def __init__(self, allowed_tags: list[str] | None = None, case_sensitive: bool = False) -> None:
         self.allowed_tags = allowed_tags
         self.case_sensitive = case_sensitive
         flags = 0 if case_sensitive else re.IGNORECASE
@@ -54,7 +50,7 @@ class IncrementalXMLParser:
 
     def parse(self, text: str) -> dict[str, str]:
         """Parse all balanced tags from the text.
-        
+
         Returns:
             Dictionary of tag_name -> content. If multiple instances of same tag,
             the last one wins (standard agent behavior). Keys are normalized to UPPERCASE
@@ -65,31 +61,31 @@ class IncrementalXMLParser:
             tag_name = match.group(1)
             if not self.case_sensitive:
                 tag_name = tag_name.upper()
-                
+
             content = match.group(2).strip()
-            
+
             if self.allowed_tags:
                 allowed = [t.upper() for t in self.allowed_tags] if not self.case_sensitive else self.allowed_tags
                 if tag_name not in allowed:
                     continue
-                
+
             results[tag_name] = content
-            
+
         return results
 
     def get_partial_state(self, text: str) -> dict[str, Any]:
         """Detect any unclosed tags or partial tag starts at the end of the text (for streaming)."""
         flags = 0 if self.case_sensitive else re.IGNORECASE
-        
+
         # 1. Check for a trailing partial tag like "<STATU" or "<STATUS" (no >)
         # Match < at the end followed by some alpha-numeric chars
         partial_tag_match = re.search(r"<([A-Z0-9_]*)$", text, flags)
         if partial_tag_match:
             return {
-                "open_tag": None, 
-                "partial_content": "", 
+                "open_tag": None,
+                "partial_content": "",
                 "incomplete_tag": partial_tag_match.group(1),
-                "is_truncated": True
+                "is_truncated": True,
             }
 
         # 2. Check for unclosed balanced tags
@@ -112,7 +108,7 @@ class IncrementalXMLParser:
                 if not self.case_sensitive:
                     tag_name = tag_name.upper()
                 stack.append(tag_name)
-        
+
         if stack:
             last_tag = stack[-1]
             # Extract content from last start tag to end of string
@@ -121,18 +117,18 @@ class IncrementalXMLParser:
                 match = list(re.finditer(f"<{last_tag}>", text, re.IGNORECASE))
                 if match:
                     last_start = match[-1].start()
-                    content = text[last_start + len(last_tag) + 2:]
+                    content = text[last_start + len(last_tag) + 2 :]
                     return {"open_tag": last_tag, "partial_content": content, "is_truncated": True}
             else:
                 last_start = text.rfind(f"<{last_tag}>")
                 if last_start != -1:
-                    content = text[last_start + len(last_tag) + 2:]
+                    content = text[last_start + len(last_tag) + 2 :]
                     return {"open_tag": last_tag, "partial_content": content, "is_truncated": True}
-            
+
         return {"open_tag": None, "partial_content": "", "is_truncated": False}
 
 
-def extract_tags(text: str, tags: Optional[list[str]] = None) -> dict[str, str]:
+def extract_tags(text: str, tags: list[str] | None = None) -> dict[str, str]:
     """Helper function for quick tag extraction."""
     parser = IncrementalXMLParser(allowed_tags=tags)
     return parser.parse(text)

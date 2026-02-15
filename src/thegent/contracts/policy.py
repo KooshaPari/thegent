@@ -5,7 +5,7 @@ to plain text extraction should be flagged or blocked.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -23,10 +23,10 @@ def evaluate_fallback(
     confidence: float,
     is_fallback: bool,
     policy: FallbackPolicy,
-    stats: Optional[dict[str, Any]] = None,
+    stats: dict[str, Any] | None = None,
 ) -> list[str]:
     """Evaluate if a normalization result violates fallback policies.
-    
+
     Returns:
         List of policy violation strings. Empty if valid.
     """
@@ -50,6 +50,6 @@ def evaluate_fallback(
 
     # 4. Fallback Allowed Check
     if is_fallback and not policy.allow_plain_fallback:
-        issues.append(f"Plain text fallback is disabled by policy.")
+        issues.append("Plain text fallback is disabled by policy.")
 
     return issues

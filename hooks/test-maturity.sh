@@ -5,13 +5,14 @@
 set -uo pipefail
 
 # Ultra-fast cache check — before sourcing anything.
-# Uses HEAD_SHA pre-computed by stop-dispatcher. 2-min TTL as safety net.
+# Uses HEAD_SHA pre-computed by stop-dispatcher. 10-min TTL for better reuse.
 _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
+_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -n "${HEAD_SHA:-}" ]]; then
   _CACHE_FILE="${_CACHE_DIR}/test-maturity-${HEAD_SHA}.result"
   if [[ -f "$_CACHE_FILE" ]]; then
     _age=$(( $(date +%s) - $(stat -f '%m' "$_CACHE_FILE" 2>/dev/null || stat -c '%Y' "$_CACHE_FILE" 2>/dev/null || echo 0) ))
-    if (( _age < 120 )); then
+    if (( _age < _CACHE_TTL )); then
       cat "$_CACHE_FILE"
       exit 0
     fi
@@ -26,6 +27,16 @@ hook_init
 
 # Prevent infinite loops
 [[ "${STOP_ACTIVE:-false}" == "true" ]] && exit 0
+
+# Output immediately to prevent idle timeout
+echo "TEST-MATURITY: starting..." >&2
+
+# --- P0 optimization: Skip if no test files changed ---
+# Run expensive test-maturity scans only if test files were modified
+if ! test_files_changed; then
+  echo "TEST-MATURITY: skipped (no test files changed)"
+  exit 0
+fi
 
 RESULTS_FILE="$HOME/.claude/.test-maturity.json"
 

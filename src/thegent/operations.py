@@ -43,14 +43,33 @@ OPERATION_MAP: list[OperationEntry] = [
     OperationEntry(Operation.ORCHESTRATE, "dag cancel", "Cancel DAG task", None),
     # Govern
     OperationEntry(Operation.GOVERN, "policy show", "Show active governance policies", None),
-    OperationEntry(Operation.GOVERN, "session-contracts", "Audit session routing contract metadata", "thegent_session_contracts"),
-    OperationEntry(Operation.GOVERN, "session-contract-health-gate", "Evaluate session contract health gate", "thegent_session_contract_health_gate"),
-    OperationEntry(Operation.GOVERN, "session-contract-health-report", "Session contract health report", "thegent_session_contract_health_report"),
-    OperationEntry(Operation.GOVERN, "session-contract-health-trend", "Session contract health trend", "thegent_session_contract_health_trend"),
+    OperationEntry(
+        Operation.GOVERN, "session-contracts", "Audit session routing contract metadata", "thegent_session_contracts"
+    ),
+    OperationEntry(
+        Operation.GOVERN,
+        "session-contract-health-gate",
+        "Evaluate session contract health gate",
+        "thegent_session_contract_health_gate",
+    ),
+    OperationEntry(
+        Operation.GOVERN,
+        "session-contract-health-report",
+        "Session contract health report",
+        "thegent_session_contract_health_report",
+    ),
+    OperationEntry(
+        Operation.GOVERN,
+        "session-contract-health-trend",
+        "Session contract health trend",
+        "thegent_session_contract_health_trend",
+    ),
     OperationEntry(Operation.GOVERN, "history verify", "Verify run registry integrity", None),
     OperationEntry(Operation.GOVERN, "closure-pack", "Generate closure pack", None),
     # Recover
-    OperationEntry(Operation.RECOVER, "dag recover", "Recovery actions (retry-failed, clear-stuck, reset-retries)", None),
+    OperationEntry(
+        Operation.RECOVER, "dag recover", "Recovery actions (retry-failed, clear-stuck, reset-retries)", None
+    ),
     OperationEntry(Operation.RECOVER, "dag rollback", "Rollback to checkpoint", None),
     OperationEntry(Operation.RECOVER, "dag reconcile", "Reconcile stuck DAG tasks", None),
     OperationEntry(Operation.RECOVER, "stop", "Stop background session", "thegent_stop"),
@@ -95,7 +114,6 @@ def list_operations() -> dict[str, list[dict[str, Any]]]:
     for op in Operation:
         entries = get_operations_by_type(op)
         result[op.value] = [
-            {"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool}
-            for e in entries
+            {"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries
         ]
     return result

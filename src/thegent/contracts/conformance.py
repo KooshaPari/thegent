@@ -5,10 +5,9 @@ and handle edge cases/malformed input gracefully. Supports optional drift
 alarm checks via ContractTelemetry.
 """
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
-from dataclasses import dataclass
 
 from thegent.contracts.adapters import normalize_output
 from thegent.contracts.csm import CSMStatus
@@ -26,7 +25,7 @@ class ConformanceTest:
 
 def _build_conformance_tests() -> list[ConformanceTest]:
     """Build the full conformance test suite."""
-    tests = [
+    return [
         ConformanceTest(
             name="XML Basic (Gemini)",
             provider="gemini",
@@ -79,7 +78,6 @@ def _build_conformance_tests() -> list[ConformanceTest]:
             min_confidence=0.9,
         ),
     ]
-    return tests
 
 
 def run_conformance_suite(
@@ -113,13 +111,15 @@ def run_conformance_suite(
         if success:
             passed += 1
 
-        results.append({
-            "name": t.name,
-            "provider": t.provider,
-            "success": success,
-            "issues": issues,
-            "confidence": res.confidence,
-        })
+        results.append(
+            {
+                "name": t.name,
+                "provider": t.provider,
+                "success": success,
+                "issues": issues,
+                "confidence": res.confidence,
+            }
+        )
 
     report: dict[str, Any] = {
         "total": len(tests),

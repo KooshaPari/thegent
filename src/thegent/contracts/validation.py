@@ -3,23 +3,20 @@
 Enforces invariants and cross-tag logic for CanonicalStructuredMessage (CSM).
 """
 
-from typing import Any, Optional
 from thegent.contracts.csm import CanonicalStructuredMessage, CSMPhase, CSMStatus
 
 
 class SemanticValidationError(Exception):
     """Raised when a CSM fails semantic validation."""
-    pass
 
 
 class InvariantViolation(SemanticValidationError):
     """Raised when a specific invariant is violated."""
-    pass
 
 
 def validate_csm(csm: CanonicalStructuredMessage) -> list[str]:
     """Perform semantic validation on a CSM.
-    
+
     Returns:
         List of validation issue strings. Empty if valid.
     """
@@ -46,7 +43,12 @@ def validate_csm(csm: CanonicalStructuredMessage) -> list[str]:
         issues.append("Phase is REVIEWER but decision_reason_code is missing")
     if csm.phase == CSMPhase.PLANNER and csm.status == CSMStatus.COMPLETED and not csm.objective:
         issues.append("Phase is PLANNER and COMPLETED but objective is empty")
-    if csm.phase == CSMPhase.OPERATOR and csm.status == CSMStatus.COMPLETED and not csm.actions_completed and not csm.summary:
+    if (
+        csm.phase == CSMPhase.OPERATOR
+        and csm.status == CSMStatus.COMPLETED
+        and not csm.actions_completed
+        and not csm.summary
+    ):
         issues.append("Phase is OPERATOR and COMPLETED but actions_completed and summary are empty")
 
     return issues

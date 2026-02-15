@@ -13,28 +13,34 @@
 
 import deal
 
+
 # Example: function with precondition and postcondition
 @deal.pre(lambda x: x > 0, message="x must be positive")
 @deal.post(lambda result: result >= 0, message="result must be non-negative")
 def square_root(x: float) -> float:
-    return x ** 0.5
+    return x**0.5
+
 
 # Example: state transition contract
 @deal.ensure(lambda old, new: new >= old, message="balance must not decrease on deposit")
 def deposit(balance: float, amount: float) -> float:
     return balance + amount
 
+
 # Example: explicit exception contract
 @deal.raises(ValueError, TypeError)
 def parse_config(raw: str) -> dict:
     if not raw:
-        raise ValueError("empty config")
+        msg = "empty config"
+        raise ValueError(msg)
     return {"parsed": True}
+
 
 # Example: side-effect declaration (pure function)
 @deal.has()  # no side effects allowed
 def add(a: int, b: int) -> int:
     return a + b
+
 
 # Run static verification: python -m deal lint mymodule.py
 # Run property testing: python -m deal test mymodule.py

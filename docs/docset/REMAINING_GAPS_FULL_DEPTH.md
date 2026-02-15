@@ -40,15 +40,13 @@
 
 ---
 
-### XA4: Contract Version in Task Metadata (P1)
+### XA4: Contract Version in Task Metadata (P1) ✅ DONE
 
 | Aspect | Status | Notes |
 |--------|--------|------|
 | **Requirement** | RunMeta, WBS, DAG nodes carry contract_version |
-| **Current** | --contract-version on run/bg; passed to MigrationController; RunMeta does not store it |
-| **Gap** | RunMeta lacks contract_version field; DAG task schema lacks it |
-| **Implementation** | Add contract_version to RunMeta; optional: add to DAG task schema |
-| **Effort** | 0.5 day |
+| **Current** | Added `contract_version` to `RunMeta`; wired into `run_impl` and `bg_impl`. |
+| **Conclusion** | Implemented. |
 
 ---
 
@@ -67,29 +65,25 @@
 
 ## 2. Observability (FR-X08)
 
-### FR-X08: Unified Observability Dashboard (P2)
+### FR-X08: Unified Observability Dashboard (P2) ✅ DONE
 
 | Aspect | Status | Notes |
 |--------|--------|------|
 | **Requirement** | Single view aggregating parse quality, fallback, drift |
-| **Current** | observe kpis, observe drift, closure_pack telemetry; metrics scattered |
-| **Gap** | No `observe summary` aggregating all |
-| **Implementation** | Add `thegent observe summary` — calls get_fallback_kpis + get_drift_budget_status + escalate list count |
-| **Effort** | 0.5 day |
+| **Current** | `thegent observe summary` aggregates KPIs, drift status, and escalation queue. |
+| **Conclusion** | Implemented. |
 
 ---
 
 ## 3. Event Schemas (WP-0002)
 
-### WP-0002: Canonical Schemas for Chunk/Evidence/Policy Events (P2)
+### WP-0002: Canonical Schemas for Chunk/Evidence/Policy Events (P2) ✅ DONE
 
 | Aspect | Status | Notes |
 |--------|--------|------|
 | **Requirement** | Formal Pydantic/JSON Schema for audit events |
-| **Current** | Run registry uses ad-hoc dicts (finish, feedback, pause, etc.) |
-| **Gap** | No ChunkEvent, EvidenceEvent, PolicyEvent schemas |
-| **Implementation** | Add `contracts/events.py` with ChunkEvent, EvidenceEvent, PolicyEvent |
-| **Effort** | 1 day |
+| **Current** | Added `ChunkEvent`, `EvidenceEvent`, `PolicyEvent` in `contracts/events.py`. |
+| **Conclusion** | Implemented. |
 
 ---
 

@@ -1,7 +1,7 @@
 # WBS-to-Issue Import Matrix
 
 **Status:** Baseline  
-**Date:** 2026-02-14  
+**Date:** 2026-02-15  
 **Source:** `docs/docset/thegent-wbs-final.md`
 
 ---
@@ -114,8 +114,100 @@ Maps work packages from the final WBS to issue/ticket identifiers for execution 
 
 ---
 
+## Phase 7: Convergence and Predictive Reliability
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-7001 | Contract capability negotiation protocol | — | Planned |
+| WP-7002 | Contract namespace registry and negotiation metadata | — | Planned |
+| WP-7003 | Canonical parser state machine for streaming/chunks | — | Planned |
+| WP-7004 | Partial-state commit guard and recovery protocol | — | Planned |
+| WP-7005 | Semantic validator policy layer | — | Planned |
+| WP-7006 | Adapter conformance suite v1 (4 providers) | — | Planned |
+| WP-7007 | Fallback confidence scoring and downgrade path | — | Planned |
+| WP-7008 | Dual-read / dual-write migration controller | — | Planned |
+| WP-7009 | Contract health dashboard and trend alerting | — | Planned |
+| WP-7010 | Contract drift remediation policy hooks | — | Planned |
+
+## Phase 8: Predictive Reliability and Load Intelligence
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-8001 | Plan graph extraction for risk simulation | — | Planned |
+| WP-8002 | Monte Carlo / PERT uncertainty engine integration | — | Planned |
+| WP-8003 | Bottleneck and contention analyzer | — | Planned |
+| WP-8004 | Reschedule recommendation service | — | Planned |
+| WP-8005 | Predictive continuity risk model | — | Planned |
+| WP-8006 | Surge watcher and preemptive safe-mode control | — | Planned |
+| WP-8007 | Adaptive routing budget guard | — | Planned |
+| WP-8008 | Simulation-backed runbook authoring | — | Planned |
+| WP-8009 | Intervention automation policy | — | Planned |
+| WP-8010 | Forecast accuracy audit and calibration | — | Planned |
+
+## Phase 9: Productized Operations and Ecosystem Extension
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-9001 | Unified operations surface (operation protocol v1) | — | Planned |
+| WP-9002 | Explainability stack (summary/detail/trace) | — | Planned |
+| WP-9003 | Replay and sandbox environment isolation | — | Planned |
+| WP-9004 | Continuity handoff enforcement in workflow | — | Planned |
+| WP-9005 | Universal tool adapter layer | — | Planned |
+| WP-9006 | Decision replay and what-if simulation | — | Planned |
+| WP-9007 | Confidence governance and escalation thresholds | — | Planned |
+| WP-9008 | Operator safety controls and fallback UI | — | Planned |
+| WP-9009 | Evidence continuity and audit linkage | — | Planned |
+| WP-9010 | Documentation and training package for phase 7–9 | — | Planned |
+
+## Phase 10: Adaptive Interface and Tool Ecosystem Convergence
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-10001 | Operation envelope schema v2 | THEGENT-WP-10001 | Planned |
+| WP-10002 | Capability registry service | THEGENT-WP-10002 | Planned |
+| WP-10003 | Dispatch graph implementation | THEGENT-WP-10003 | Planned |
+| WP-10004 | Adapter admission and trust policy | THEGENT-WP-10004 | Planned |
+| WP-10005 | Endpoint consolidation and aliases | THEGENT-WP-10005 | Planned |
+| WP-10006 | Unknown-operation migration UX | THEGENT-WP-10006 | Planned |
+| WP-10007 | Dispatch traceability and audit context | THEGENT-WP-10007 | Planned |
+| WP-10008 | Plugin lifecycle and conformance checks | THEGENT-WP-10008 | Planned |
+| WP-10009 | Backward-compatible API evolution controls | THEGENT-WP-10009 | Planned |
+| WP-10010 | Cross-phase operations operator documentation | THEGENT-WP-10010 | Planned |
+
+## Phase 11: Autonomous Optimization and Predictive Resilience
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-11001 | SLO regulator loop controller | THEGENT-WP-11001 | Planned |
+| WP-11002 | Forecasting engine hardening | THEGENT-WP-11002 | Planned |
+| WP-11003 | Predictor confidence calibration | THEGENT-WP-11003 | Planned |
+| WP-11004 | Preemption and saturation avoidance policies | THEGENT-WP-11004 | Planned |
+| WP-11005 | Self-healing recommendation engine | THEGENT-WP-11005 | Planned |
+| WP-11006 | Adaptive task shaping | THEGENT-WP-11006 | Planned |
+| WP-11007 | Continuity risk predictor | THEGENT-WP-11007 | Planned |
+| WP-11008 | Learning loop and policy guardrails | THEGENT-WP-11008 | Planned |
+| WP-11009 | Safe-mode action governance | THEGENT-WP-11009 | Planned |
+| WP-11010 | Forecast and control evidence pack | THEGENT-WP-11010 | Planned |
+
+## Phase 12: Enterprise-Grade Intuition, Explainability, and Hardening
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-12001 | Explainability contract implementation | THEGENT-WP-12001 | Planned |
+| WP-12002 | Escalation fatigue and noise control | THEGENT-WP-12002 | Planned |
+| WP-12003 | Replay sandbox hardening | THEGENT-WP-12003 | Planned |
+| WP-12004 | What-if simulation and branch governance | THEGENT-WP-12004 | Planned |
+| WP-12005 | Handoff confidence and continuity envelope | THEGENT-WP-12005 | Planned |
+| WP-12006 | Evidence graph and export bundling | THEGENT-WP-12006 | Planned |
+| WP-12007 | Persona profiles and access constraints | THEGENT-WP-12007 | Planned |
+| WP-12008 | Operational learning assets | THEGENT-WP-12008 | Planned |
+| WP-12009 | Automation of release docs packaging | THEGENT-WP-12009 | Planned |
+| WP-12010 | Phase 10–12 closure and handoff note | THEGENT-WP-12010 | Planned |
+
+---
+
 ## Import Notes
 
-- **Issue ID**: Populate when importing into GitHub Issues, Jira, Linear, etc.
-- **Status**: Done = implemented; Pending = not yet implemented.
-- Use WP ID as prefix for issue keys (e.g. `THGENT-WP-3006`).
+- **Issue ID**: Use the `THEGENT-WP-####` pre-mapped key convention when importing into GitHub Issues, Jira, Linear, etc.
+- **Status**: Done = implemented; Planned = ready for execution; Pending = blocked or partially complete.
+- Use WP ID as prefix for issue keys (e.g. `THEGENT-WP-3006`).

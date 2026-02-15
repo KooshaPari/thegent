@@ -172,20 +172,14 @@ def _extract_from_jsonl(stdout: str) -> str | None:
         if isinstance(item, dict):
             item_type = item.get("type")
             item_content = item.get("content") or item.get("message")
-            if item_type == "message" and item_content:
-                extracted = _coerce_text(item_content)
-                if extracted:
-                    content = extracted
-            elif item_content and item_type != "error":
+            if (item_type == "message" and item_content) or (item_content and item_type != "error"):
                 extracted = _coerce_text(item_content)
                 if extracted:
                     content = extracted
         final = obj.get("finalText")
         if msg_type == "completion" and final is not None:
             final_text = _coerce_text(final)
-        elif msg_type == "message" and role == "assistant" and content:
-            last_content = content if isinstance(content, str) else str(content)
-        elif content:
+        elif (msg_type == "message" and role == "assistant" and content) or content:
             last_content = content if isinstance(content, str) else str(content)
     return (final_text or last_content) if saw_jsonl else None
 

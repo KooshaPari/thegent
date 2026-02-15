@@ -1,0 +1,168 @@
+# Thegent Phase 10–12 Hard-Stop, Rollback, and Stability Matrix
+
+**Status:** Finalized operational safety matrix  
+**Date:** 2026-02-15  
+**Scope:** All work in Bundle B–F with explicit hard-stop levels, auto-response, and closure recovery.
+
+This matrix is intended for immediate use during execution. It expands the existing kill-switch definitions in:
+- `thegent-phase10-12-execution-workboard.md`
+- `thegent-phase10-12-execution-bundles-playbook.md`
+- `thegent-phase10-12-implementation-ticket-templates.md`
+
+---
+
+## 1) Hard-stop taxonomy
+
+| Level | Trigger severity | Action |
+|---|---|---|
+| **L0 – Informational** | Non-blocking drift or soft quality decline | Record and continue; review at next sync |
+| **L1 – Watch** | Temporary threshold crossing with recovery evidence | Delay release of next WP in same bundle until verified |
+| **L2 – Containment** | Reproducible functional regression or safety ambiguity | Freeze bundle movement; keep feature flag state stable; hold merges outside current bundle |
+| **L3 – Stopline** | Confirmed correctness/safety break in runtime-affecting path | Immediate rollback/disablement of flagged feature, move parent ticket to Blockers, and escalate to gate owner |
+
+## 2) Global hard-stop matrix
+
+Apply in order. If multiple rows trigger, apply the most severe action and aggregate.
+
+| ID | Hard-stop condition | Immediate action | Owner | Re-check requirement | Unlock condition |
+|---|---|---|---|---|---|
+| H0 | `phase10.interface_v2` changed without signed G10 pre-check | Revert flag, stop PR merges affecting WP-10xx runtime | Platform lead | 2 independent dispatch parity runs | Signed G10 precondition + revalidated schema |
+| H1 | Any CLI/MCP output mismatch for identical input and identical state | Pause dispatch-related WPs, set `phase10.interface_v2` OFF | Runtime lead | Determinism smoke test passes with fixed fixture set | `TestDispatchDeterminism` green in two environments |
+| H2 | `policy_version` or `policy_digest` missing from dispatch trace | Attach `WP-10007` evidence as blocker; prevent G11 entry | Governance | Schema and trace contract test pass | Contract test + immutable trace sample + checksum |
+| H3 | Unknown operation accepted in critical lane without migration suggestions | Create hotfix blocker on current bundle | Core runtime | Verify unknown-op path emits migration hint in both interfaces | `TestUnknownOperationFlow` + dual interface check |
+| H4 | Trust admission admits untrusted adapter into critical lane | Force trust policy deny mode | Security + Platform | Conformance tests and canary dry-run pass | Policy rule set validated + conformance evidence |
+| H5 | Oscillation > threshold for 2 consecutive windows | Disable `phase11.autotune`, engage static control baseline | SRE + Control lead | Anti-oscillation test + 10-minute soak stability | Oscillation resets and control delta below floor |
+| H6 | Calibration confidence fall below floor without pause behavior | Auto-enter safe-mode for high-risk lanes only | SRE | Verify pause signal produced for each low-confidence decision | Confidence recovered + `WP-11008` guard active |
+| H7 | Replay writes observed outside execute mode | Force `phase12.hardening` OFF, lock replay endpoints read-only | Core runtime + Governance | Replay mutation tests pass in negative matrix | Execute-mode gate re-approved and test proves no writes |
+| H8 | Evidence manifest absent for runtime-affecting PR | Block merge and move ticket to Blockers | Delivery lead | PR check attached manifest + sha256 + policy digest | PR check + manifest hash attached |
+| H9 | Evidence manifest tampering / missing checksum | Freeze artifact upload and require regeneration | Compliance | Artifact verification test + signed index check | New manifest regenerated and validated |
+| H10 | Persona policy bypass on fallback path | Disable adaptive shaping/continuation path; keep persona guard mandatory | Security + Product | Persona policy tests pass for fallback code path | Rewritten policy evaluation path + regression tests |
+| H11 | G10, G11, or G12 evidence gate missing at bundle boundary | Hold `Ready for Gate` transition | Gate owner | Gate artifacts complete and validated | Signed gate review + checklist acceptance |
+| H12 | Rollback token missing from runtime-affecting WP | Create rollback backlog and prevent PR merge | Gate owner | Ticket body and manifest include token | Rollback tokens provisioned for affected WP set |
+
+## 3) Bundle B hard-stop matrix (Phase 10)
+
+Applies only to WPs `WP-10001` through `WP-10010`.
+
+| WP group | Trigger | Stop condition | Response sequence |
+|---|---|---|---|
+| 10001/10003 | Deterministic mismatch in canonical route hash | L2 | Pause WP-10003, run 3 deterministic reruns, capture evidence to `artifacts/phase10/chunk_a/dispatch_path_hash_examples.ndjson` |
+| 10004/10008 | trust rule changed but denies normal non-critical lane incorrectly | L1 (if recoverable) / L2 (if critical path affected) | Compare rule set with last-known good manifest; restore last approved policy JSON and run conformance smoke |
+| 10005 | alias map diverges between CLI and MCP | L2 | Freeze interface changes; block WP-10005 and downstream dependencies until parity restored |
+| 10007 | traceability rows become mutable | L3 | Set trust+dispatch to fail-closed for critical operations; perform data recovery rollback if persisted bad rows exist |
+| 10009/10010 | compatibility matrix output differs from execution behavior | L2 | Hold docs and API migrations. Restore safe compatibility branch until matrix & behavior align |
+
+## 4) Bundle C/D hard-stop matrix (Phase 11)
+
+Applies to WPs `WP-11001` through `WP-11010`.
+
+| WP group | Trigger | Stop condition | Response sequence |
+|---|---|---|---|
+| 11001 | control loop oscillation persists after one damping cycle | L2 | Disable `phase11.autotune`, reduce controller gain, apply static SLO baseline |
+| 11002/11003 | forecast drift spikes > two windows + low confidence | L1 | Pause new control recommendations, hold adaptation until calibrated |
+| 11004 | preemption causes lane starvation or throughput collapse | L2 | Re-enable conservative saturation policy; require manual override for preemption |
+| 11005 | recommendation engine emits top action without rollback evidence | L1 | Gate recommendation action path until `rollback_token` and owner attribution are mandatory |
+| 11006/11007 | continuity predictor confidence drops below threshold at shift boundary | L2 | Force task shaping off, require pre-shift operator confirmation before continuing |
+| 11008/11009 | learning loop updates without explicit policy evidence | L3 | Revert policy-related deltas; freeze auto-learning; require policy owner signoff before replay |
+| 11010 | evidence pack not reproducible from source artifacts | L2 | Stop gate progression, rerun capture from canonical seed, invalidate affected G11 evidence |
+
+## 5) Bundle E/F hard-stop matrix (Phase 12)
+
+Applies to WPs `WP-12001` through `WP-12010`.
+
+| WP group | Trigger | Stop condition | Response sequence |
+|---|---|---|---|
+| 12001 | explainability contract mismatch across summary/detail/trace | L2 | Disable explainability writes from runtime, keep read path only until contract rebuild |
+| 12002 | fatigue suppression masks critical alerts | L1 | Remove suppression threshold overrides, replay high-priority alert stream |
+| 12003/12004 | replay mutation or unauthorized branch merge | L3 | Disable replay execute path, purge bad branch metadata, reconstruct from known good manifest |
+| 12005 | handoff confidence below policy threshold in critical shift | L2 | Hold continuity handoff; require manual handoff acknowledgment and confidence re-check |
+| 12006 | evidence graph has dangling edges or unresolved nodes | L2 | Pause release-pack compiler; run graph completeness repair job and verify with `evidence_schema.json` |
+| 12007/12008 | persona constraints not enforced in fallback | L3 | Force persona policy hard failure and block progression to WP-12010 |
+| 12009 | release pack checksum instability | L1 | Rebuild packaging toolchain from clean workspace and rerun determinism checks |
+
+## 6) Rollback contract and recovery ladder
+
+Every rollback must include:
+
+1. **Root-cause timestamped note** with trigger ID and metric snapshot.
+2. **Feature-flag action** (disable/restore) with `owner`, `approved_by`, `time_window`.
+3. **Rollback evidence** with:
+   - `wp_id`
+   - `artifact_before`
+   - `artifact_after`
+   - `run_id`
+   - `evidence_manifest_id`
+4. **Post-rollback containment** check:
+   - Did alerts/replay/trace remain operationally available?
+   - Did queue latency and error rates recover into SLO band?
+
+Recovery pattern by level:
+
+- `L1`: runbook-only; no external announcement required unless repeated >2 times in 24h.
+- `L2`: release note + affected owners + temporary CAP freeze.
+- `L3`: incident record and emergency release note at org level, then controlled thaw after two independent validations.
+
+## 7) Gate-specific stopline triggers
+
+### G10 stopline
+- Any runtime acceptance gap in `WP-10007` trace audit or `WP-10003` route determinism.
+- Any new dispatch path missing `dispatch_path_hash`.
+- Any unknown operation path not carrying migration hint fields.
+
+### G11 stopline
+- `TestForecastLoopIntegration` fails in canary with confidence floor bypassed.
+- Hysteresis failure in more than one control lane.
+- Learning parameter writes without `policy_signed_change`.
+
+### G12 stopline
+- Replay mutation outside execute mode.
+- Evidence pack export mismatch between two repeated runs.
+- Handoff gate bypass in critical continuity context.
+
+## 8) Incident severity scoring rubric (decision helper)
+
+| Symptom score | Criteria |
+|---|---|
+| **1** | cosmetic output variance, no user-impacting behavior |
+| **3** | intermittent failures in non-critical path, recoverable by manual rerun |
+| **5** | repeated non-determinism or one-lane control misfire |
+| **8** | user-affecting routing/policy misenforcement or alert suppression |
+| **10** | integrity or mutation breach, or trust policy violation |
+
+Escalation is `severity >= 8` for immediate L3 stopline.
+
+## 9) Daily execution guardrail checklist
+
+- [ ] All required feature flags align with active gate stage.
+- [ ] No ticket in `In Review` missing rollback token.
+- [ ] No blocker remains without owner, ETA, and rollback path.
+- [ ] Evidence manifests in all modified WP have matching checksum recorded.
+- [ ] Test pass matrix updated for modified WPs.
+- [ ] Next-day risk watchlist published with owners.
+
+## 10) Evidence format for hard-stop events
+
+Record each event in `artifacts/phaseX/hard_stop_events.ndjson` (one JSON object per line) using:
+
+```json
+{
+  "event_id": "hs-<short>",
+  "timestamp_utc": "2026-02-15T00:00:00Z",
+  "hard_stop_id": "H5",
+  "wp_id": "WP-11001",
+  "bundle_id": "phase11_bundle_c",
+  "severity": 8,
+  "metric_snapshot": {},
+  "trigger_signal": "oscillation_rate > threshold",
+  "action_taken": ["disable-phase11-autotune", "notify-sre-lead"],
+  "rollback_token": "rt-phase11-c-11001",
+  "recovery_state": "pending"
+}
+```
+
+## 11) Next-steps after hard-stop recovery
+
+1. Run dedicated revalidation test for the affected WP only.
+2. Produce a short root-cause analysis and update dependency lock.
+3. Re-open the WP with `Ready` once unlock criteria pass.
+4. For L2/L3, require two-person signoff before moving past `Bundle QA`.

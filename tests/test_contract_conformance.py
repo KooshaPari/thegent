@@ -5,20 +5,20 @@ and produces semantically valid CanonicalStructuredMessage (CSM) objects.
 """
 
 import pytest
-from typing import Any
 
 from thegent.contracts import (
     ADAPTER_REGISTRY,
-    OutputAdapter,
     AdapterResult,
     CSMStatus,
+    OutputAdapter,
     normalize_output,
 )
 from thegent.contracts.validation import validate_csm
 
 
 @pytest.mark.parametrize("provider", list(ADAPTER_REGISTRY.keys()))
-def test_adapter_registration(provider: str):
+def test_adapter_registration(provider: str) -> None:
+    # @trace FR-CTR-012
     """Every registered provider has an adapter."""
     adapter = ADAPTER_REGISTRY[provider]
     assert isinstance(adapter, OutputAdapter)
@@ -26,7 +26,8 @@ def test_adapter_registration(provider: str):
 
 
 @pytest.mark.parametrize("provider", list(ADAPTER_REGISTRY.keys()))
-def test_adapter_normalize_plain_text(provider: str):
+def test_adapter_normalize_plain_text(provider: str) -> None:
+    # @trace FR-CTR-012
     """Adapters should handle plain text gracefully (even if they expect XML)."""
     raw = "Just some plain text without tags."
     res = normalize_output(provider, raw)
@@ -36,7 +37,8 @@ def test_adapter_normalize_plain_text(provider: str):
 
 
 @pytest.mark.parametrize("provider", ["copilot", "gemini", "claude", "codex", "cursor", "cursor-agent", "antigravity"])
-def test_xml_adapter_valid_tags(provider: str):
+def test_xml_adapter_valid_tags(provider: str) -> None:
+    # @trace FR-CTR-012
     """XML adapters should extract standard tags correctly."""
     raw = """
     <SUMMARY>Task completed successfully.</SUMMARY>
@@ -53,14 +55,15 @@ def test_xml_adapter_valid_tags(provider: str):
     assert not res.parse_errors
 
 
-def test_xml_adapter_partial_tags():
+def test_xml_adapter_partial_tags() -> None:
+    # @trace FR-CTR-012
     """XML adapters should handle partial/missing tags with lower confidence."""
     provider = "claude"
     raw = "<SUMMARY>Incomplete"
     res = normalize_output(provider, raw)
     # XMLOutputAdapter uses extract_tags which currently only handles balanced tags.
     # So SUMMARY will be missing in csm, and it will fall back to extract_condensed if allow_fallback=True.
-    # Wait, normalize_output calls adapter.normalize. 
+    # Wait, normalize_output calls adapter.normalize.
     # XMLOutputAdapter.normalize calls extract_tags(text).
     # If no balanced tags, tags will be empty.
     # CSM status will be PENDING (default).
@@ -69,7 +72,8 @@ def test_xml_adapter_partial_tags():
 
 
 @pytest.mark.parametrize("provider", ["minimax", "cliproxy"])
-def test_generic_adapter_conformance(provider: str):
+def test_generic_adapter_conformance(provider: str) -> None:
+    # @trace FR-CTR-012
     """Generic adapters should produce valid CSMs with limited metadata."""
     raw = "Detailed output from a generic provider."
     res = normalize_output(provider, raw)
@@ -79,10 +83,11 @@ def test_generic_adapter_conformance(provider: str):
     assert res.confidence == 0.7
 
 
-def test_task_tool_mismatch_conformance():
+def test_task_tool_mismatch_conformance() -> None:
+    # @trace FR-CTR-012
     """Test that XMLOutputAdapter handles both PascalCase (docs) and snake_case (impl) variants."""
     provider = "codex"
-    
+
     # PascalCase (docs)
     raw_pascal = """
     <TaskUpdate>Implementing feature X</TaskUpdate>

@@ -9,9 +9,10 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # Default $ per 1k tokens (input, output) - placeholder values
 _DEFAULT_PRICING: dict[str, tuple[float, float]] = {
@@ -68,6 +69,32 @@ class CostAggregator:
                         if data.get("event") == "finish" and data.get("cost_usd") is not None:
                             ts = data.get("ended_at_utc", data.get("timestamp", ""))[:10]
                             if ts == today:
+                                total += float(data["cost_usd"])
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+        return total
+
+    def get_mtd_total(self) -> float:
+        """Sum cost_usd for all runs this month. G-GP-06 Phase 4."""
+        registry_path = self.session_dir / "run_registry.jsonl"
+        if not registry_path.exists():
+            return 0.0
+
+        now = datetime.now(UTC)
+        current_month = f"{now.year}-{now.month:02d}"
+        total = 0.0
+        try:
+            with registry_path.open("r", encoding="utf-8") as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        data = json.loads(line)
+                        if data.get("event") == "finish" and data.get("cost_usd") is not None:
+                            ts = data.get("ended_at_utc", data.get("timestamp", ""))
+                            if ts and ts.startswith(current_month):
                                 total += float(data["cost_usd"])
                     except Exception:
                         continue

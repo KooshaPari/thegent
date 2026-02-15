@@ -18,9 +18,10 @@ set -euo pipefail
 _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
 _CACHE_KEY="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 _CACHE_FILE="${_CACHE_DIR}/governance-gates-${_CACHE_KEY}.result"
+_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -f "$_CACHE_FILE" ]]; then
   _age=$(( $(date +%s) - $(stat -f '%m' "$_CACHE_FILE" 2>/dev/null || stat -c '%Y' "$_CACHE_FILE" 2>/dev/null || echo 0) ))
-  if (( _age < 120 )); then
+  if (( _age < _CACHE_TTL )); then
     cat "$_CACHE_FILE"
     exit 0
   fi
@@ -37,7 +38,8 @@ _qc_mtime="0"; [[ -f "$QUALITY_CONFIG" ]] && _qc_mtime="$(stat -f '%m' "$QUALITY
 _qs_mtime="0"; [[ -f "$QA_STATE" ]] && _qs_mtime="$(stat -f '%m' "$QA_STATE" 2>/dev/null || stat -c '%Y' "$QA_STATE" 2>/dev/null || echo 0)"
 _cache_key=$(printf '%s\0%s\0%s\0%s' "$HOOK_NAME" "$_head_sha" "$_qc_mtime" "$_qs_mtime" | shasum -a 256 | cut -d' ' -f1)
 unset _head_sha _qc_mtime _qs_mtime
-if hook_cache_check "$_cache_key" 120; then
+_gg_ttl="${HOOK_CACHE_TTL:-600}"
+if hook_cache_check "$_cache_key" "$_gg_ttl"; then
     hook_cache_read "$_cache_key"
     _cached_rc=$?
     # Also write to ultra-fast cache for next time

@@ -2,7 +2,7 @@
 
 **Goal:** Cover all remaining CLI surfaces and option combinations in full depth.
 
-**Status:** Chunk 288 (24 tests), Chunk 289 (4 tests), Chunk 290 (6 tests), Chunk 291 (3 tests), and Chunk 292 (7 tests) implemented. Remaining gaps below.
+**Status:** Chunks 288, 289, 290, 291, 292, and 293 are implemented. Remaining gaps below.
 
 ---
 
@@ -45,6 +45,14 @@
 - TestPlanAnalyzeAllOverlays (2): plan analyze --pert --resources --continuity, with --format json
 - TestGovernConformanceFormatJson (1): govern conformance --format json
 
+## Chunk 293 — Implemented ✅
+
+- `observe_summary` trend-plumbing hardening in CLI, MCP tool/resource, and parity tests
+- Unit test: `test_unit_cli.py::TestObserveSummaryImpl::test_observe_summary_impl_trend_samples_controls_query_and_summary`
+- Unit test: `test_unit_mcp.py::TestObserveSummaryMCPContracts` (2 tests)
+- Unit test: `test_unit_mcp.py::TestMCPObserveSummaryContract::test_observe_summary_resource_returns_json_payload`
+- E2E test: `TestObserveSummaryCustom::test_observe_summary_trend_samples_rich_exposes_projection`
+
 ---
 
 ## Gap Audit (All Implemented ✅)
@@ -53,26 +61,23 @@
 - `govern data-protection` — exits 0
 - `govern data-protection --format json` — JSON output
 
-### 2. Plan Analyze Deep Options (3 → 6 tests)
-- `plan analyze --resources` — resource contention overlay
-- `plan analyze --continuity` — continuity risk overlay
-- `plan analyze --format json` — JSON output
+### 2. Plan Analyze Deep Options — Implemented ✅ (Chunks 288, 290, 291, 292)
+- `plan analyze --resources`, `--continuity`, `--format json`, `--pert`, combined overlays
 
-### 3. Observe Drift Deep Options (1 → 4 tests)
-- `observe drift --format json` — JSON output
-- `observe drift --structural-budget 10 --semantic-budget 15` — custom budgets
+### 3. Observe Drift Deep Options — Implemented ✅ (Chunk 288)
+- `observe drift --format json`, `--structural-budget`, `--semantic-budget`
 
-### 4. Govern Conformance --check-drift (2 → 3 tests)
-- `govern conformance --check-drift` — with empty session dir (deterministic)
+### 4. Govern Conformance — Implemented ✅ (Chunks 288, 292)
+- `govern conformance --check-drift`, `--format json`
 
 ### 5. Plan/Dag List Format JSON — Implemented ✅ (Chunk 289)
 - `plan list --format json` — JSON output
 - `dag list --format json` — JSON output
 
-### 6. History Events --run-id (1 → 2 tests)
+### 6. History Events --run-id — Implemented ✅ (Chunk 288)
 - `history events --run-id <fake>` — exits 0 with empty (no match)
 
-### 7. MCP Service Help (0 tests)
+### 7. MCP Service Help — Implemented ✅ (Chunk 288)
 - `mcp service --help` — exits 0
 
 ### 8. Govern Closure-Pack With DAG (already in TestClosurePack)
@@ -81,27 +86,29 @@
 ### 9. Serve Help (already in TestLoginServeHelp)
 - Already covered
 
-### 10. Archive --domain (0 tests)
+### 10. Archive --domain — Implemented ✅ (Chunk 288)
 - `archive --domain test --days 1` — optional filter
 
-### 11. Operations All Filters (partial → full)
-- `operations --operation orchestrate` (have govern, observe, plan)
-- `operations --operation recover` (missing)
+### 11. Operations All Filters — Implemented ✅ (Chunks 288, 291)
+- `operations --operation orchestrate`, `recover`, `govern`, `observe`, `plan`, `--format json`
 
-### 12. Observe Trend Deep Options (1 → 3 tests)
-- `observe trend --payload-type session_contract_health_gate`
-- `observe trend --format json`
-- `observe trend --all` or `--owner X`
+### 12. Observe Trend Deep Options — Implemented ✅ (Chunk 288)
+- `observe trend --payload-type`, `--format json`, `--all`, `--owner`
 
-### 13. Migration task-tool, zen (1 → 3 tests)
-- `govern migration task-tool task-tool-18`
-- `govern migration zen zen-rich-v1`
+### 13. Migration task-tool, zen — Implemented ✅ (Chunk 288)
+- `govern migration task-tool task-tool-18`, `govern migration zen zen-rich-v1`
 
 ### 14. Dag/Plan Format Options — Implemented ✅ (Chunk 289)
 - `dag status --format json`
 - `plan status --format json` (alias)
 - `dag ready --format json` (Chunk 288)
 - `plan ready --format json` (Chunk 288)
+
+### 15. Observe Summary Trend Wiring — Implemented ✅
+- `observe summary --trend-samples` now forwarded through CLI → `observe_summary_impl` (main + MCP)
+- MCP observe summary resource/tool now include trend samples and trend meta in response metadata
+- Completed: rich-format end-to-end coverage now asserts `trend_samples_requested`, `trend_effective_samples`,
+  and query payload visibility in human-readable output.
 
 ---
 

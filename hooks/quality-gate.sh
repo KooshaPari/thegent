@@ -9,9 +9,10 @@ set -euo pipefail
 _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
 _CACHE_KEY="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 _CACHE_FILE="${_CACHE_DIR}/quality-gate-${_CACHE_KEY}.result"
+_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -f "$_CACHE_FILE" ]]; then
   _age=$(( $(date +%s) - $(stat -f '%m' "$_CACHE_FILE" 2>/dev/null || stat -c '%Y' "$_CACHE_FILE" 2>/dev/null || echo 0) ))
-  if (( _age < 120 )); then
+  if (( _age < _CACHE_TTL )); then
     cat "$_CACHE_FILE"
     exit 0
   fi
@@ -24,6 +25,13 @@ hook_init
 # Prevent infinite loops
 [[ "${STOP_ACTIVE:-false}" == "true" ]] && exit 0
 
+# --- P1 optimization: Skip if no quality-relevant files changed ---
+# Only run if code/config files were modified
+if ! any_source_changed; then
+  echo "QUALITY-GATE: skipped (no source files changed)"
+  exit 0
+fi
+
 # No changes tracked — skip
 [[ ! -f "$CHANGE_LOG" ]] && exit 0
 
@@ -31,7 +39,8 @@ hook_init
 _cache_extra=$(hook_file_hash_cache "$QUALITY_CONFIG" 2>/dev/null || echo "")
 _cache_key=$(hook_cache_key "$HOOK_NAME")
 _cache_key=$(printf '%s\0%s' "$_cache_key" "$_cache_extra" | shasum -a 256 | cut -d' ' -f1)
-if hook_cache_check "$_cache_key" 120; then
+_qg_ttl="${HOOK_CACHE_TTL:-600}"
+if hook_cache_check "$_cache_key" "$_qg_ttl"; then
     hook_cache_read "$_cache_key" | tee "$_CACHE_FILE" 2>/dev/null
     _cached_rc=$?
     if [[ "$_cached_rc" -ne 0 ]]; then

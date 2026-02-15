@@ -7,9 +7,10 @@ set -euo pipefail
 _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
 _CACHE_KEY="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 _CACHE_FILE="${_CACHE_DIR}/supply-chain-${_CACHE_KEY}.result"
+_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -f "$_CACHE_FILE" ]]; then
   _age=$(( $(date +%s) - $(stat -f '%m' "$_CACHE_FILE" 2>/dev/null || stat -c '%Y' "$_CACHE_FILE" 2>/dev/null || echo 0) ))
-  if (( _age < 120 )); then
+  if (( _age < _CACHE_TTL )); then
     cat "$_CACHE_FILE"
     exit 0
   fi
@@ -21,7 +22,8 @@ hook_init
 
 # --- Cache check — skip if unchanged within TTL ---
 _sc_cache_key="${HOOK_NAME}_${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo none)}"
-if hook_cache_check "$_sc_cache_key" 300; then
+_sc_ttl="${HOOK_CACHE_TTL:-600}"
+if hook_cache_check "$_sc_cache_key" "$_sc_ttl"; then
   hook_cache_read "$_sc_cache_key" | tee "$_CACHE_FILE" 2>/dev/null
   _cached_rc=$?
   if [[ "$_cached_rc" -ne 0 ]]; then

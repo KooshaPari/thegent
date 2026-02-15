@@ -1,0 +1,107 @@
+# Thegent Phase 10–12 PRD↔WBS Finalization Cross-Map
+
+**Status:** Finalization draft for implementation transfer  
+**Date:** 2026-02-15  
+**Scope:** Cross-reference finalization map for PRD FR/NFR to WBS WP and execution artifacts, plus remaining delta tasks.
+
+## 1) Purpose
+
+This map validates finalization completeness for phase 10–12 so PRD-level requirements are traceable to:
+
+- WBS work packages (`WP-10001` to `WP-12010`),
+- test classes in the readiness pack,
+- issue IDs from `WBS_TO_ISSUE_IMPORT_MATRIX.md`.
+
+## 2) FR–WP coverage matrix (10–12)
+
+| PRD FR | WBS WP | Primary tests | Evidence | Issue ID |
+|---|---|---|---|---|
+| FR-069: Operation envelope v2 | WP-10001 | TestOperationEnvelopeV2Schema | `artifacts/phase10/operation_envelope_v2.ndjson` | THEGENT-WP-10001 |
+| FR-070: Canonical capability registry | WP-10001, WP-10002 | TestCapabilityRegistryService | `artifacts/phase10/capability_registry_service.ndjson` | THEGENT-WP-10001, THEGENT-WP-10002 |
+| FR-071: Endpoint consolidation | WP-10003, WP-10005 | TestOperationSurfaceConsolidation | `artifacts/phase10/operation_coverage_matrix.ndjson` | THEGENT-WP-10003, THEGENT-WP-10005 |
+| FR-072: Deterministic dispatch tracing | WP-10003, WP-10007 | TestDispatchDeterminism, TestDispatchTraceEvent | `artifacts/phase10/dispatch_trace_schema.ndjson` | THEGENT-WP-10003, THEGENT-WP-10007 |
+| FR-073: Typed plugin extension | WP-10008 | TestAdapterConformanceLifecycle | `artifacts/phase10/plugin_conformance_reports.ndjson` | THEGENT-WP-10008 |
+| FR-074: Operation-level compatibility policy | WP-10006, WP-10009 | TestCompatibilityMatrixPolicy, TestCompatibilityCrossPhase | `artifacts/phase10/compatibility_matrix.ndjson` | THEGENT-WP-10006, THEGENT-WP-10009 |
+| FR-075: Contract drift budget by operation class | WP-10007, WP-10009 | TestPolicyDigestConsistency | `artifacts/phase10/dispatch_trace_schema.ndjson` | THEGENT-WP-10007, THEGENT-WP-10009 |
+| FR-076: Closed-loop SLO regulator | WP-11001 | TestSLORegulator | `artifacts/phase11/slo_regulator_events.ndjson` | THEGENT-WP-11001 |
+| FR-077: Forecast calibration and drift | WP-11002, WP-11003 | TestForecastEngineRun, TestCalibrationDrift | `artifacts/phase11/forecast_quality.ndjson` | THEGENT-WP-11002, THEGENT-WP-11003 |
+| FR-078: Preemption policy | WP-11004 | TestPreemptiveSaturationPolicy | `artifacts/phase11/preemption_policy_events.ndjson` | THEGENT-WP-11004 |
+| FR-079: Self-heal recommendations | WP-11005 | TestSelfHealRecommendation | `artifacts/phase11/self_heal_recommendations.ndjson` | THEGENT-WP-11005 |
+| FR-080: Adaptive task shaping | WP-11006 | TestAdaptiveTaskShaping | `artifacts/phase11/adaptive_shaping.ndjson` | THEGENT-WP-11006 |
+| FR-081: Predictive continuity preservation | WP-11007 | TestContinuityRiskPredictor | `artifacts/phase11/continuity_risk.ndjson` | THEGENT-WP-11007 |
+| FR-082: Feedback learning loop | WP-11008 | TestLearningLoopGovernance | `artifacts/phase11/learning_loop.ndjson` | THEGENT-WP-11008 |
+| FR-083: Explainability as API contract | WP-12001 | TestExplainabilityContract | `artifacts/phase12/explainability_bundle.ndjson` | THEGENT-WP-12001 |
+| FR-084: Fatigue and escalation control | WP-12002 | TestFatigueControlRules | `artifacts/phase12/fatigue_controls.ndjson` | THEGENT-WP-12002 |
+| FR-085: Deterministic replay and what-if | WP-12003, WP-12004 | TestReplaySandboxMutationGuard, TestWhatIfBranchEngine | `artifacts/phase12/replay_safety.ndjson` | THEGENT-WP-12003, THEGENT-WP-12004 |
+| FR-086: Human escalation quality floor | WP-12005, WP-11001, WP-12007 | TestHandoffConfidenceGate, TestPersonaProfiles | `artifacts/phase12/handoff_continuity.ndjson` | THEGENT-WP-12005, THEGENT-WP-12007 |
+| FR-087: Unified evidence graph | WP-12006 | TestEvidenceGraphPackaging | `artifacts/phase12/evidence_graph.ndjson` | THEGENT-WP-12006 |
+| FR-088: Compliance-ready packaging | WP-12009 | TestReleasePackCompiler | `artifacts/phase12/release_pack_summary.ndjson` | THEGENT-WP-12009 |
+| FR-089: Cross-team personas | WP-12007 | TestPersonaProfiles | `artifacts/phase12/persona_profiles.ndjson` | THEGENT-WP-12007 |
+| FR-090: PRD/WBS/test compiler | WP-12009, WP-12010 | TestReleasePackCompiler, TestPhase10to12Finality | `artifacts/phase12/release_pack_summary.ndjson`, `artifacts/phase12/phase10_12_finality_bundle.md` | THEGENT-WP-12009, THEGENT-WP-12010 |
+
+## 3) NFR mapping and hardening targets
+
+| NFR | Coverage WP | Validation | Current status |
+|---|---|---|---|
+| NFR-029 Interface discovery latency | WP-10002 | BenchmarkDispatchDeterminismP95 | Planned (requires Bundle B validation) |
+| NFR-030 Dispatch determinism | WP-10003 | TestDispatchDeterminism | Planned |
+| NFR-031 Compatibility clarity | WP-10006/10009 | TestCompatibilityMatrixPolicy | Planned |
+| NFR-032 Security boundary clarity | WP-10004 | TestAdapterTrustPolicy | Planned |
+| NFR-033 Prediction responsiveness | WP-11002 | BenchmarkForecastLatency | Planned |
+| NFR-034 Stability | WP-11001 | LoadStepResponseChaosSpec | Planned |
+| NFR-035 Governance traceability | WP-11001, WP-11005 | TestActionReasoningCompleteness | Planned |
+| NFR-036 Rollback safety | WP-11005, WP-11008 | TestControlRollbackLatency | Planned |
+| NFR-037 Explainability latency | WP-12001 | TestExplainabilityContract | Planned |
+| NFR-038 Escalation evidence quality | WP-12001, WP-12005, WP-12007 | TestEscalationEvidenceCompleteness | Planned |
+| NFR-039 Replay safety | WP-12003 | TestReplayMutationProperty | Planned |
+| NFR-040 Packaging reproducibility | WP-12009 | TestReleasePackDeterministicBuild | Planned |
+
+## 4) Finalization delta vs current issue matrix
+
+- As of this chunk, all phase 10–12 WPs are present in `WBS_TO_ISSUE_IMPORT_MATRIX.md` with status `Planned`.
+- Missing finalization step: all rows should transition:
+  1. `Planned` → `In Progress` at first bundle execution,
+  2. then → `Done` only after signed gate/evidence lock.
+- Outstanding delta tasks:
+  - Attach issue IDs to every WBS artifact in planning docs where only IDs are now inferred.
+  - Ensure each WP row references a concrete artifact manifest path.
+  - Add risk/review owner in matrix for `pending` hardening edges.
+
+## 5) Phase 10/11/12 milestone cross-check
+
+### Gate preconditions
+
+- G10 cannot pass while `WP-10004` or `WP-10007` are not evidence-closed.
+- G11 cannot pass while `WP-11006` or `WP-11009` remain open for policy control risk.
+- G12 cannot pass while `WP-12006` or `WP-12009` lack reproducible checksums.
+
+### Closure dependency chain
+
+- `WP-12010` must be blocked until all of:
+  - `WP-10001..12010` evidence manifests complete,
+  - G10/G11/G12 checks recorded,
+  - artifact export reproducible.
+
+## 6) Recommended implementation order override
+
+- Keep `WBS` order for dependency integrity, but operationally sequence by bundle lock:
+  - `Bundle B → Bundle C → Bundle D → Bundle E → Bundle F`.
+- This sequence is valid because it satisfies all hard blockers listed in PRD mapping and control flow.
+
+## 7) Recommended documentation maintenance
+
+After each WP moves to `Done`, update:
+
+1. `WBS_TO_ISSUE_IMPORT_MATRIX.md`: Issue status + evidence id.
+2. `thegent-phase10-12-implementation-issue-queue.md`: add completed evidence path and test result references.
+3. `thegent-plan-final-index.md`: keep doc map and references current.
+4. `thegent-phase10-12-test-readiness-pack.md`: mark required checks complete.
+
+## 8) Residual finalization checklist
+
+- [ ] All FRs FR-069..FR-090 linked to completed evidence manifests.
+- [ ] All NFRs validated against actual latency/replay/rollback metrics.
+- [ ] All gates include sign-off timestamp and reviewer identity.
+- [ ] Finality artifact and residual risks list generated for WP-12010.
+- [ ] Deterministic export command successfully rebuilt from clean git state.
+

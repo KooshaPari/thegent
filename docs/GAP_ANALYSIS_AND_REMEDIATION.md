@@ -183,15 +183,15 @@ Research is complete. Implementation mapping to WP-3001–WP-3008 exists. Gaps:
 
 | ID | Item | Status | Remediation |
 |----|------|--------|-------------|
-| G-GP-01 | **OPA integration** | Partial | PolicyEngine Phase 1; `docs/governance/OPA_INTEGRATION_DESIGN.md`; OPA client stub when THGENT_OPA_URL set; fallback allow/deny. |
-| G-GP-02 | **NeMo Guardrails** | Partial | `src/thegent/governance/input_guardrails.py`; THGENT_INPUT_GUARDRAILS_ENABLED; wire before PolicyEngine. |
+| G-GP-01 | **OPA integration** | Done | PolicyEngine delegates to OPA when THGENT_OPA_URL set; fallback allow/deny config; unit tested. |
+| G-GP-02 | **NeMo Guardrails** | Done | `src/thegent/governance/input_guardrails.py` wired into PolicyEngine; THGENT_INPUT_GUARDRAILS_ENABLED. |
 | G-GP-03 | **Audit trail hash chain** | Done | RunRegistry prev_hash/hash; Auditor.verify_registry. |
-| G-GP-04 | **Circuit breakers** | Partial | CircuitBreakerRegistry; per-agent; verify per-subsystem. |
-| G-GP-05 | **HITL patterns** | Partial | Override with reason; `docs/governance/HITL_DESIGN.md`; escalation SLA, checkpoint phases. |
-| G-GP-06 | **Cost governance** | Partial | Design + scaffold: `src/thegent/governance/cost.py`; RunRegistry cost_usd; THGENT_COST_TRACKING. |
-| G-GP-07 | **Compliance evidence** | Partial | closure_pack, history verify; `docs/governance/RETENTION_POLICY_DESIGN.md`. |
-| G-GP-08 | **Sandboxing** | Design | `docs/governance/SANDBOXING_DESIGN.md`; env_filter, Docker, Firecracker phases. |
-| G-GP-09 | **Trust scoring** | Partial | trust_score_threshold, feedback; calibration TBD. |
+| G-GP-04 | **Circuit breakers** | Done | CircuitBreakerRegistry wired into PolicyEngine; configurable threshold/window/recovery. |
+| G-GP-05 | **HITL patterns** | Partial | Override with reason; `docs/governance/HITL_DESIGN.md`; SLA alert in sweep_impl. |
+| G-GP-06 | **Cost governance** | Done | `src/thegent/governance/cost.py` get_mtd_total; PolicyEngine budget check; unit tested. |
+| G-GP-07 | **Compliance evidence** | Done | closure_pack, history verify; `RunRegistry.purge_expired`; `thegent govern purge` CLI. |
+| G-GP-08 | **Sandboxing** | Done | `sandbox_env_allowlist` config; environment filtering in bg_impl via THGENT_SANDBOX_ENV_FILTER. |
+| G-GP-09 | **Trust scoring** | Done | trust_score_threshold, feedback; calibration factor in PolicyEngine. |
 
 ### Required Actions
 
@@ -326,7 +326,7 @@ Research is complete. Implementation mapping to WP-3001–WP-3008 exists. Gaps:
 | G-CA-01 | Native Python Cursor API client | P4; cursor-api server acceptable for now |
 | G-FM-04 | Wire icons to tools | Blocked: FastMCP API not yet supports icon param |
 | G-FM-05 | Chaos/load/timeout test implementation | Done — test_chaos_mcp.py, test_load_mcp.py |
-| G-GP-01/02/06/08 | OPA, NeMo, cost, sandbox implementation | NeMo scaffold done; cost scaffold done; OPA/sandbox design only |
+| G-GP-01/02/06/08 | OPA, NeMo, cost, sandbox implementation | Done | Implemented and verified in Phase 1 remediations. |
 
 ---
 

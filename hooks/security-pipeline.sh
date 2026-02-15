@@ -10,9 +10,10 @@ set -euo pipefail
 _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
 _CACHE_KEY="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 _CACHE_FILE="${_CACHE_DIR}/security-pipeline-${_CACHE_KEY}.result"
+_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -f "$_CACHE_FILE" ]]; then
   _age=$(( $(date +%s) - $(stat -f '%m' "$_CACHE_FILE" 2>/dev/null || stat -c '%Y' "$_CACHE_FILE" 2>/dev/null || echo 0) ))
-  if (( _age < 120 )); then
+  if (( _age < _CACHE_TTL )); then
     cat "$_CACHE_FILE"
     exit 0
   fi
@@ -59,6 +60,13 @@ trap 'echo "SECURITY-PIPELINE FAIL: unexpected error at line $LINENO" >&2' ERR
 # Prevent infinite loops
 [[ "${STOP_ACTIVE:-false}" == "true" ]] && exit 0
 
+# --- P1 optimization: Skip if no security-relevant files changed ---
+# Security scans are expensive - only run if source/config files changed
+if ! any_source_changed; then
+  echo "SECURITY-PIPELINE: skipped (no source files changed)"
+  exit 0
+fi
+
 RESULTS_FILE="$HOME/.claude/.security-scan-results.json"
 
 # ---------- Detect project types ----------
@@ -72,7 +80,8 @@ is_python=false; is_node=false; is_go=false; is_rust=false
 _sec_head_sha="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo none)}"
 _sec_cache_key=$(printf '%s\0%s' "$HOOK_NAME" "$_sec_head_sha" | shasum -a 256 | cut -d' ' -f1)
 unset _sec_head_sha
-if hook_cache_check "$_sec_cache_key" 120; then
+_sec_ttl="${HOOK_CACHE_TTL:-600}"
+if hook_cache_check "$_sec_cache_key" "$_sec_ttl"; then
     _sec_output=$(hook_cache_read "$_sec_cache_key")
     _cached_rc=$?
     # Write ultra-fast cache

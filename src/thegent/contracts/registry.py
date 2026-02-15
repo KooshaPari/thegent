@@ -4,8 +4,7 @@ Provides single source of truth for structured output contracts across
 task-tool (18-tag), Zen rich protocol, and thegent provider outputs.
 """
 
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 # Contract schema version for thegent orchestration contracts
 CONTRACT_SCHEMA_VERSION = "csm-v1"

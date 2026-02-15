@@ -1,0 +1,336 @@
+# Thegent Phase 10–12 Implementation Issue Queue
+
+**Status:** Ready for implementation creation
+**Date:** 2026-02-15
+**Scope:** Concrete implementation ticketing for WP-10001 through WP-12010
+
+## 1) Issue ID and ownership convention
+
+- **Issue key format:** `THEGENT-WP-####` where `####` is the WP ID numeric suffix.
+- **Epic:** `EPIC-10-12` (Operator-grade convergence, optimization, explainability).
+- **Primary labels:** `phase-10-12`, `agent-work`, `control`, `release-gate`.
+- **Default gate precondition tags:** `requires-g10`, `requires-g11`, `requires-g12`.
+
+## 2) Execution order (by chunk)
+
+- **Chunk A:** WP-10001, WP-10002, WP-10003, WP-10006
+- **Chunk B:** WP-10004, WP-10005, WP-10007, WP-10008, WP-10009, WP-10010
+- **Chunk C:** WP-11001, WP-11002, WP-11003, WP-11004, WP-11005
+- **Chunk D:** WP-11006, WP-11007, WP-11008, WP-11009, WP-11010
+- **Chunk E:** WP-12001, WP-12002, WP-12003, WP-12004, WP-12005, WP-12006
+- **Chunk F:** WP-12007, WP-12008, WP-12009, WP-12010
+
+## 3) Phase 10 issue queue
+
+### WP-10001: Operation envelope schema v2
+- **Issue:** `THEGENT-WP-10001`  
+- **Title:** Implement canonical operation envelope v2 across CLI/MCP
+- **Owner:** Platform lead + Contract architecture
+- **Dependencies:** `WP-9001`, `WP-0002`, `thegent-prd-final.md` FR-069
+- **Acceptance:** Equivalent operation envelope and `idempotency_key` across interfaces with deterministic validation errors
+- **Tests:** `TestOperationEnvelopeV2Schema`
+- **Artifact:** `artifacts/phase10/operation_envelope_v2.ndjson`
+- **Gate:** `requires-g10-pre`
+
+### WP-10002: Capability registry service
+- **Issue:** `THEGENT-WP-10002`  
+- **Title:** Build capability registry service with trust, versioning, and regions
+- **Owner:** Platform lead
+- **Dependencies:** `WP-10001`
+- **Acceptance:** `/capabilities` returns versioned schema and trust levels; unsupported capability combos blocked in critical lanes
+- **Tests:** `TestCapabilityRegistryService`
+- **Artifact:** `artifacts/phase10/capability_registry_service.ndjson`
+- **Gate:** `requires-g10-pre`
+
+### WP-10003: Dispatch graph implementation
+- **Issue:** `THEGENT-WP-10003`  
+- **Title:** Implement deterministic dispatch graph resolution from registry policies
+- **Owner:** Core runtime
+- **Dependencies:** `WP-10001`, `WP-10002`
+- **Acceptance:** 100 deterministic route checks pass for identical input+state; same route hash emitted
+- **Tests:** `TestDispatchDeterminism`, `TestEnvelopeToDispatchEndToEnd`
+- **Artifact:** `artifacts/phase10/dispatch_graph_pathing.ndjson`
+- **Gate:** `requires-g10`
+
+### WP-10004: Adapter admission and trust policy
+- **Issue:** `THEGENT-WP-10004`  
+- **Title:** Add adapter trust gate with deny-by-default critical lane policy
+- **Owner:** Security and governance
+- **Dependencies:** `WP-10002`
+- **Acceptance:** Untrusted providers cannot reach critical lanes; policy rationale in trace
+- **Tests:** `TestAdapterTrustPolicy`, `TestCompatibilityCrossPhase`
+- **Artifact:** `artifacts/phase10/adapter_trust_gate.ndjson`
+- **Gate:** `requires-g10`
+
+### WP-10005: Endpoint consolidation and aliases
+- **Issue:** `THEGENT-WP-10005`  
+- **Title:** Consolidate CLI/MCP operation entry points into enumerated operation set
+- **Owner:** Platform/API
+- **Dependencies:** `WP-10003`
+- **Acceptance:** CLI and MCP operations parity with alias map and deterministic routing
+- **Tests:** `TestOperationSurfaceConsolidation`, `TestOperationsDocsGeneration`
+- **Artifact:** `artifacts/phase10/operation_coverage_matrix.ndjson`
+- **Gate:** `requires-g10`
+
+### WP-10006: Unknown-operation migration UX
+- **Issue:** `THEGENT-WP-10006`  
+- **Title:** Return actionable migration hints for unsupported operations
+- **Owner:** UX + Core runtime
+- **Dependencies:** `WP-10003`
+- **Acceptance:** Every unknown op returns migration alternative + suggested version
+- **Tests:** `TestMigrationHintRenderer`, `TestUnknownOperationFlow`
+- **Artifact:** `artifacts/phase10/unknown_operation_hints.ndjson`
+- **Gate:** `requires-g10-pre`
+
+### WP-10007: Dispatch traceability and audit context
+- **Issue:** `THEGENT-WP-10007`  
+- **Title:** Add traceability metadata and immutable dispatch audit events
+- **Owner:** Governance/compliance
+- **Dependencies:** `WP-10003`, `WP-10004`, `WP-10005`
+- **Acceptance:** Dispatch trace includes `dispatch_path`, `policy_version`, `policy_digest`, and evidence references
+- **Tests:** `TestDispatchTraceEvent`, `TestPolicyDigestConsistency`
+- **Artifact:** `artifacts/phase10/dispatch_trace_schema.ndjson`
+- **Gate:** `requires-g10`
+
+### WP-10008: Plugin lifecycle and conformance checks
+- **Issue:** `THEGENT-WP-10008`  
+- **Title:** Implement adapter registry lifecycle with conformance gating
+- **Owner:** Platform architecture
+- **Dependencies:** `WP-10002`, `WP-10007`
+- **Acceptance:** Plugins fail open only in non-critical contexts until conformance passes
+- **Tests:** `TestAdapterConformanceLifecycle`, `TestAdapterLifecycleRun`
+- **Artifact:** `artifacts/phase10/plugin_conformance_reports.ndjson`
+- **Gate:** `requires-g10`
+
+### WP-10009: Backward-compatible API evolution controls
+- **Issue:** `THEGENT-WP-10009`  
+- **Title:** Add operation compatibility matrix, migration CLI, and explicit compatibility errors
+- **Owner:** API/Docs
+- **Dependencies:** `WP-10001`, `WP-10003`
+- **Acceptance:** Incompatible operation versions blocked with structured migration instructions
+- **Tests:** `TestCompatibilityMatrixPolicy`, `TestCompatibilityCrossPhase`
+- **Artifact:** `artifacts/phase10/compatibility_matrix.ndjson`
+- **Gate:** `requires-g10`
+
+### WP-10010: Cross-phase operations operator documentation
+- **Issue:** `THEGENT-WP-10010`  
+- **Title:** Publish operation guide with examples and migration playbook
+- **Owner:** Documentation
+- **Dependencies:** `WP-10003`, `WP-10005`, `WP-10009`
+- **Acceptance:** Operator can execute each operation from docs and reproduce evidence output
+- **Tests:** `TestOperationsDocsGeneration`
+- **Artifact:** `artifacts/phase10/operations_ops_guide.ndjson`
+- **Gate:** `requires-g10`
+
+## 4) Phase 11 issue queue
+
+### WP-11001: SLO regulator loop controller
+- **Issue:** `THEGENT-WP-11001`  
+- **Title:** Implement anti-oscillation closed-loop SLO controller
+- **Owner:** SRE + Operations
+- **Dependencies:** `WP-10003`, `WP-10007`
+- **Acceptance:** Loop control with bounded actions and no critical-lane oscillation spikes
+- **Tests:** `TestSLORegulator`, `LoadStepResponseChaosSpec`
+- **Artifact:** `artifacts/phase11/slo_regulator_events.ndjson`
+- **Gate:** `requires-g10` then `requires-g11-pre`
+
+### WP-11002: Forecasting engine hardening
+- **Issue:** `THEGENT-WP-11002`  
+- **Title:** Build forecast engine with confidence outputs and SLA risk bands
+- **Owner:** Data/Planning
+- **Dependencies:** `WP-11001`
+- **Acceptance:** p50/p80/p95 forecasts available under load with bounded variance
+- **Tests:** `TestForecastEngineRun`, `BenchmarkForecastLatency`
+- **Artifact:** `artifacts/phase11/forecast_quality.ndjson`
+- **Gate:** `requires-g11-pre`
+
+### WP-11003: Predictor confidence calibration
+- **Issue:** `THEGENT-WP-11003`  
+- **Title:** Add calibration monitor and confidence threshold enforcement
+- **Owner:** QA + Governance
+- **Dependencies:** `WP-11002`
+- **Acceptance:** Confidence drift triggers auto-pause; confidence calibration surface visible
+- **Tests:** `TestCalibrationDrift`, `TestCalibrationDriftProperty`
+- **Artifact:** `artifacts/phase11/calibration_drift.ndjson`
+- **Gate:** `requires-g11-pre`
+
+### WP-11004: Preemption and saturation avoidance policies
+- **Issue:** `THEGENT-WP-11004`  
+- **Title:** Implement saturation avoidance and provider preemption guardrails
+- **Owner:** Core routing
+- **Dependencies:** `WP-11001`, `WP-11002`
+- **Acceptance:** Preemption decisions reduce predicted saturation without service collapse
+- **Tests:** `TestPreemptiveSaturationPolicy`, `BenchmarkSLOControllerThroughput`
+- **Artifact:** `artifacts/phase11/preemption_policy_events.ndjson`
+- **Gate:** `requires-g11`
+
+### WP-11005: Self-healing recommendation engine
+- **Issue:** `THEGENT-WP-11005`  
+- **Title:** Add ranked recommendation engine with owner/rollback metadata
+- **Owner:** Governance/Product
+- **Dependencies:** `WP-11003`, `WP-11004`
+- **Acceptance:** Top-3 recommendations include assumptions and rollback instructions
+- **Tests:** `TestSelfHealRecommendation`, `TestSelfHealControlFlow`
+- **Artifact:** `artifacts/phase11/self_heal_recommendations.ndjson`
+- **Gate:** `requires-g11`
+
+### WP-11006: Adaptive task shaping
+- **Issue:** `THEGENT-WP-11006`  
+- **Title:** Add task split/merge shaping engine with audit trail
+- **Owner:** Orchestration runtime
+- **Dependencies:** `WP-11004`, `WP-11005`
+- **Acceptance:** Tasks only reshape under approved risk + queue thresholds with trace
+- **Tests:** `TestAdaptiveTaskShaping`, `TestTaskShapingPolicy`
+- **Artifact:** `artifacts/phase11/adaptive_shaping.ndjson`
+- **Gate:** `requires-g11`
+
+### WP-11007: Continuity risk predictor
+- **Issue:** `THEGENT-WP-11007`  
+- **Title:** Predictive continuity risk and pre-shift checkpoint enforcement
+- **Owner:** Product + SRE
+- **Dependencies:** `WP-11006`
+- **Acceptance:** Shift/freeze windows trigger pre-shift continuity checks and owner handoff reminders
+- **Tests:** `TestContinuityRiskPredictor`, `TestReshapeUnderSurge`
+- **Artifact:** `artifacts/phase11/continuity_risk.ndjson`
+- **Gate:** `requires-g11`
+
+### WP-11008: Learning loop and policy guardrails
+- **Issue:** `THEGENT-WP-11008`  
+- **Title:** Add policy-governed control-learning loop and rollback manifests
+- **Owner:** Governance
+- **Dependencies:** `WP-11003`, `WP-11007`
+- **Acceptance:** No automatic parameter change without policy approval and audit object
+- **Tests:** `TestLearningLoopGovernance`, `TestPolicySignedChangeManifest`
+- **Artifact:** `artifacts/phase11/learning_loop.ndjson`
+- **Gate:** `requires-g11`
+
+### WP-11009: Safe-mode action governance
+- **Issue:** `THEGENT-WP-11009`  
+- **Title:** Implement safe-mode policy and emergency reversion workflow
+- **Owner:** Security
+- **Dependencies:** `WP-11008`
+- **Acceptance:** Safe-mode entry and exit are policy-bound, reversible, and auditable
+- **Tests:** `TestSafeModeGovernance`, `TestSafeModeReentry`, `TestControlRollbackLatency`
+- **Artifact:** `artifacts/phase11/safe_mode_governance.ndjson`
+- **Gate:** `requires-g11`
+
+### WP-11010: Forecast and control evidence pack
+- **Issue:** `THEGENT-WP-11010`  
+- **Title:** Compile phase 11 evidence package and G11 readiness artifacts
+- **Owner:** QA + Docs
+- **Dependencies:** `WP-11001`, `WP-11002`, `WP-11005`, `WP-11008`, `WP-11009`
+- **Acceptance:** Reproducible G11 evidence pack covering stability, drift, and control actions
+- **Tests:** `TestEvidencePackEmit11`
+- **Artifact:** `artifacts/phase11/g11_readiness_pack.ndjson`
+- **Gate:** `requires-g11`
+
+## 5) Phase 12 issue queue
+
+### WP-12001: Explainability contract implementation
+- **Issue:** `THEGENT-WP-12001`  
+- **Title:** Implement explainability schema contract across summary/detail/trace
+- **Owner:** Product + UX
+- **Dependencies:** `WP-11010`
+- **Acceptance:** Single schema generates deterministic explainability objects
+- **Tests:** `TestExplainabilityContract`, `TestExplainabilityReplayIntegration`
+- **Artifact:** `artifacts/phase12/explainability_bundle.ndjson`
+- **Gate:** `requires-g11`
+
+### WP-12002: Escalation fatigue and noise control
+- **Issue:** `THEGENT-WP-12002`  
+- **Title:** Add escalation fatigue scoring and suppression controls
+- **Owner:** SRE
+- **Dependencies:** `WP-12001`
+- **Acceptance:** Non-blocking noise reduced while preserving critical alerts
+- **Tests:** `TestFatigueControlRules`, `TestFatigueSuppressionAccuracy`
+- **Artifact:** `artifacts/phase12/fatigue_controls.ndjson`
+- **Gate:** `requires-g11`
+
+### WP-12003: Replay sandbox hardening
+- **Issue:** `THEGENT-WP-12003`  
+- **Title:** Enforce immutable replay by default and explicit execute mode
+- **Owner:** Core runtime
+- **Dependencies:** `WP-12001`
+- **Acceptance:** Replay writes are blocked unless explicit execute mode is asserted
+- **Tests:** `TestReplaySandboxMutationGuard`, `TestReplayMutationProperty`
+- **Artifact:** `artifacts/phase12/replay_safety.ndjson`
+- **Gate:** `requires-g12-pre`
+
+### WP-12004: What-if simulation and branch governance
+- **Issue:** `THEGENT-WP-12004`  
+- **Title:** Implement what-if branching and approval workflow for scenario simulation
+- **Owner:** Product + Governance
+- **Dependencies:** `WP-12003`
+- **Acceptance:** Operators can compare branches with complete decision trail and rollback option
+- **Tests:** `TestWhatIfBranchEngine`, `TestHandoffReplayReadiness`
+- **Artifact:** `artifacts/phase12/what_if_branching.ndjson`
+- **Gate:** `requires-g12-pre`
+
+### WP-12005: Handoff confidence and continuity envelope
+- **Issue:** `THEGENT-WP-12005`  
+- **Title:** Add confidence gate and continuity checkpoints on handoff
+- **Owner:** Governance + UX
+- **Dependencies:** `WP-12003`, `WP-12004`
+- **Acceptance:** Continuity handoff requires explicit confirmation and confidence threshold
+- **Tests:** `TestHandoffConfidenceGate`, `TestHandoffReplayReadiness`
+- **Artifact:** `artifacts/phase12/handoff_continuity.ndjson`
+- **Gate:** `requires-g12`
+
+### WP-12006: Evidence graph and export bundling
+- **Issue:** `THEGENT-WP-12006`  
+- **Title:** Build evidence graph packer with complete manifest indexing
+- **Owner:** Compliance
+- **Dependencies:** `WP-12005`
+- **Acceptance:** Evidence graph has no dangling edges and validates schema at export
+- **Tests:** `TestEvidenceGraphPackaging`, `TestEvidenceGraphCompleteness`
+- **Artifact:** `artifacts/phase12/evidence_graph.ndjson`
+- **Gate:** `requires-g12`
+
+### WP-12007: Persona profiles and access constraints
+- **Issue:** `THEGENT-WP-12007`  
+- **Title:** Introduce role/persona action boundaries and operator profile defaults
+- **Owner:** Product + Security
+- **Dependencies:** `WP-12005`
+- **Acceptance:** Persona policy applies consistently with denial for restricted actions
+- **Tests:** `TestPersonaProfiles`, `TestPersonaConstraintCoverage`
+- **Artifact:** `artifacts/phase12/persona_profiles.ndjson`
+- **Gate:** `requires-g12`
+
+### WP-12008: Operational learning assets
+- **Issue:** `THEGENT-WP-12008`  
+- **Title:** Generate operational runbooks and anti-fatigue coaching cards
+- **Owner:** Documentation
+- **Dependencies:** `WP-12007`
+- **Acceptance:** New operator can complete onboarding and continuation drill with updated assets
+- **Tests:** `TestLearningAssetGeneration`
+- **Artifact:** `artifacts/phase12/operational_learning_assets.ndjson`
+- **Gate:** `requires-g12`
+
+### WP-12009: Automation of release docs packaging
+- **Issue:** `THEGENT-WP-12009`  
+- **Title:** Implement one-command release artifact packaging from manifest sources
+- **Owner:** Documentation/Automation
+- **Dependencies:** `WP-12006`, `WP-12008`
+- **Acceptance:** PRD/WBS/test/artifacts export includes manifest + checksum
+- **Tests:** `TestReleasePackCompiler`, `TestReleasePackDeterministicBuild`
+- **Artifact:** `artifacts/phase12/release_pack_summary.ndjson`
+- **Gate:** `requires-g12`
+
+### WP-12010: Phase 10–12 closure and handoff note
+- **Issue:** `THEGENT-WP-12010`  
+- **Title:** Produce final phase 10–12 closure summary and signed handoff note
+- **Owner:** Program lead
+- **Dependencies:** `WP-12009`, `WP-11010`, gates `G10`, `G11`, `G12`
+- **Acceptance:** Signed finality note with evidence inventory and owner signoff
+- **Tests:** `TestPhase10to12Finality`, `TestPersonaAndReadinessGate`
+- **Artifact:** `artifacts/phase12/phase10_12_finality_bundle.md`
+- **Gate:** `requires-g12`
+
+## 6) Issue dependencies and PR linkage strategy
+
+- All phase 10 issues block all phase 11 issue transitions that depend on their artifacts (`WP-10007` and `WP-11001` dependencies).
+- Phase 11 evidence issues (especially `WP-11010`) are hard blockers for phase 12 issue start.
+- Phase 12 evidence gate issues (`WP-12006`, `WP-12009`, `WP-12010`) are mandatory for final signoff and production enablement.
+
+- Link each issue to evidence artifacts via `evidence_manifest_id`.
+- Require gate checklist checkbox updates before moving WPs to "In Review" status.

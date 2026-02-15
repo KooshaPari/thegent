@@ -1,0 +1,65 @@
+# Hook Execution Configuration
+# This file defines smart execution rules for hooks based on file changes.
+# Hooks will only run if relevant files have been modified.
+
+# Global settings
+settings:
+  # Cache TTL in seconds (default: 600s = 10 min)
+  cache_ttl: 600
+  # Enable smart skip (default: true)
+  smart_skip: true
+
+# Hook-specific configuration
+hooks:
+  # Test maturity hook - only run if test files changed
+  test-maturity:
+    run_if: "(test|spec|tests|.*_test\\.|.*\\.test\\.)"
+    timeout: 300
+    description: "Assess project test maturity (only if test files changed)"
+
+  # Task completion verifier - only run if source files changed
+  task-completion:
+    run_if: "\\.(py|rs|go|ts|js|sh|bash)$"
+    timeout: 120
+    description: "Verify task completion quality (only if source files changed)"
+
+  # Quality gate - run on changed files only
+  quality-gate:
+    scope: changed
+    timeout: 300
+    description: "Run quality checks on changed files"
+
+  # Security pipeline - run on changed + full lockfile checks
+  security-pipeline:
+    scope: changed
+    timeout: 600
+    description: "Security scanning (changed files + lockfiles)"
+
+  # Complexity ratchet - only run on changed files
+  complexity-ratchet:
+    scope: changed
+    timeout: 120
+    description: "Check complexity on changed files only"
+
+  # Spec verifier - skip unless FR file changed
+  spec-verifier:
+    run_if: "FUNCTIONAL_REQUIREMENTS\\.md$"
+    timeout: 60
+    description: "Verify spec-test linkage (only if FR file changed)"
+
+  # Stop reconcile - always run (coordinates all hooks)
+  stop-reconcile:
+    scope: all
+    timeout: 60
+    description: "Coordinate stop hooks"
+
+# File patterns for change detection
+patterns:
+  test_files:
+    - "(test|spec|tests|.*_test\\.|.*\\.test\\.)"
+  source_files:
+    - "\\.(py|rs|go|ts|js|tsx|jsx|sh|bash)$"
+  docs_files:
+    - "\\.(md|txt|rst)$"
+  config_files:
+    - "\\.(json|yaml|yml|toml|ini|cfg)$"

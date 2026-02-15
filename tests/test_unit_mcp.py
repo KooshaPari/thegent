@@ -1,14 +1,16 @@
 """Unit tests for MCP server tools, resources, and cli_impl."""
 
 import getpass
-import json
 import hashlib
+import json
 import os
 import socket
 import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from thegent.cli import _scope_key
 from thegent.cli_impl import (
@@ -21,26 +23,28 @@ from thegent.cli_impl import (
     status_impl,
 )
 from thegent.mcp_server import (
+    resource_observe_summary,
     resource_session_contract_health_trend,
+    thegent_observe_summary,
     thegent_session_contract_health_gate,
     thegent_session_contract_health_report,
     thegent_session_contract_health_trend,
-    resource_observe_summary,
-    thegent_observe_summary,
 )
 
 
 class _Proc:
     """Simple fake process object."""
 
-    def __init__(self, pid: int):
+    def __init__(self, pid: int) -> None:
         self.pid = pid
 
 
+@pytest.mark.unit
 class TestCLIImplListAgents:
     """Tests for list_agents_impl (used by thegent://agents resource)."""
 
     def test_returns_agents_list(self) -> None:
+        # @trace FR-MCP-001
         """list_agents_impl returns list of {name, backend}."""
         agents = list_agents_impl()
         assert isinstance(agents, list)
@@ -52,20 +56,24 @@ class TestCLIImplListAgents:
         assert "glm" in names
 
 
+@pytest.mark.unit
 class TestCLIImplSessionMeta:
     """Tests for session_meta_impl."""
 
     def test_session_meta_nonexistent_returns_error(self) -> None:
+        # @trace FR-MCP-001
         """Nonexistent session returns error dict."""
         result = session_meta_impl("nonexistent-session-id-xyz")
         assert isinstance(result, dict)
         assert "error" in result or "session_id" in result
 
 
+@pytest.mark.unit
 class TestCLIImplDagRaw:
     """Tests for dag_raw_impl."""
 
     def test_dag_raw_no_dag_returns_message(self, tmp_path: Path) -> None:
+        # @trace FR-MCP-001
         """When no .factory/dag-session.md, returns error message."""
         with patch("thegent.cli_impl._resolve_cwd", return_value=tmp_path):
             result = dag_raw_impl(cd=tmp_path)
@@ -73,6 +81,7 @@ class TestCLIImplDagRaw:
         assert "dag" in result.lower() or "not found" in result.lower() or len(result) >= 0
 
     def test_dag_raw_with_dag_returns_markdown(self, tmp_path: Path) -> None:
+        # @trace FR-MCP-001
         """When .factory/dag-session.md exists, returns content."""
         factory_dir = tmp_path / ".factory"
         factory_dir.mkdir()
@@ -84,6 +93,7 @@ class TestCLIImplDagRaw:
         assert "task a" in result
 
 
+@pytest.mark.unit
 class TestDagPertReadOnly:
     """Validate basic PERT-style DAG with read-only tasks works."""
 
@@ -100,6 +110,7 @@ owner: test
 """
 
     def test_dag_list_impl_parses_pert_tasks(self, tmp_path: Path) -> None:
+        # @trace FR-MCP-001
         """dag_list_impl parses PERT-style DAG with dependencies."""
         factory_dir = tmp_path / ".factory"
         factory_dir.mkdir()
@@ -118,6 +129,7 @@ owner: test
         assert tasks[2].get("depends_on") == "T2"
 
     def test_dag_list_impl_accepts_cursor_label(self, tmp_path: Path) -> None:
+        # @trace FR-MCP-001
         """DAG with agent label 'cursor' parses (resolves to cursor-agent)."""
         factory_dir = tmp_path / ".factory"
         factory_dir.mkdir()
@@ -138,10 +150,12 @@ project: label-test
         assert result["tasks"][0].get("agent") == "cursor"
 
 
+@pytest.mark.unit
 class TestMCPMetaContract:
     """Tests for MCP meta contract (health payload schema discoverability)."""
 
     def test_get_server_meta_impl_includes_health_payload_schema(self) -> None:
+        # @trace FR-MCP-001
         """get_server_meta_impl returns health_payload_schema_version and health_payload_types."""
         from thegent.cli_impl import get_server_meta_impl
 
@@ -163,10 +177,12 @@ class TestMCPMetaContract:
         assert meta["contract_schema_version"] == "csm-v1"
 
 
+@pytest.mark.unit
 class TestMCPToolOutputFormat:
     """Verify MCP tool output format (JSON) matches cli_impl."""
 
     def test_list_agents_json_format(self) -> None:
+        # @trace FR-MCP-001
         """list_agents_impl serialized to JSON matches MCP tool contract."""
         agents = list_agents_impl()
         result = json.dumps(agents)
@@ -175,31 +191,117 @@ class TestMCPToolOutputFormat:
         assert all("name" in item and "backend" in item for item in data)
 
 
+@pytest.mark.unit
+class TestObserveSummaryMCPContracts:
+    """Verify observe-summary MCP signatures and trend parameters."""
+
+    def test_observe_summary_resource_forwards_trend_samples(self) -> None:
+        # @trace FR-MCP-010
+        payload = {
+            "payload_type": "observe_summary",
+            "payload_schema_version": "observe-summary-schema-v1",
+            "generated_query": {"trend_samples": 4},
+            "trend_summary": {"enabled": True},
+            "kpis": {"total_events": 1, "fallback_rate": 0.0, "success_rate": 1.0, "avg_confidence": 1.0},
+            "drift": {"within_budget": True, "structural_rate_pct": 0.0, "semantic_rate_pct": 0.0},
+            "escalation": {"backlog_count": 0, "past_sla_count": 0},
+            "status": "healthy",
+            "alerts": [],
+        }
+        captured: dict[str, object] = {}
+
+        def _fake_impl(**kwargs: object) -> dict[str, object]:
+            captured.update(kwargs)
+            return payload
+
+        with patch("thegent.mcp_server.observe_summary_impl", side_effect=_fake_impl):
+            raw = resource_observe_summary(
+                limit=25,
+                drift_window=9,
+                structural_budget_pct=5.0,
+                semantic_budget_pct=8.0,
+                provider="gemini",
+                trend_samples=4,
+                top_escalations=3,
+            )
+        data = json.loads(raw)
+        assert data["generated_query"]["trend_samples"] == 4
+        assert captured["trend_samples"] == 4
+        assert captured["provider"] == "gemini"
+        assert captured["top_escalations"] == 3
+
+    def test_observe_summary_tool_includes_trend_meta(self) -> None:
+        # @trace FR-MCP-010
+        payload = {
+            "payload_type": "observe_summary",
+            "payload_schema_version": "observe-summary-schema-v1",
+            "generated_query": {"trend_samples": 2},
+            "trend_summary": {"enabled": True},
+            "kpis": {
+                "total_events": 1,
+                "fallback_rate": 0.0,
+                "success_rate": 1.0,
+                "avg_confidence": 1.0,
+            },
+            "drift": {
+                "within_budget": True,
+                "structural_rate_pct": 0.0,
+                "semantic_rate_pct": 0.0,
+                "structural_budget_pct": 5.0,
+                "semantic_budget_pct": 8.0,
+            },
+            "escalation": {
+                "backlog_count": 3,
+                "past_sla_count": 1,
+                "top_escalations_count": 3,
+            },
+            "status": "healthy",
+            "alerts": [],
+        }
+        with patch("thegent.mcp_server.observe_summary_impl", return_value=payload):
+            result = thegent_observe_summary(
+                limit=25,
+                drift_window=9,
+                structural_budget_pct=5.0,
+                semantic_budget_pct=8.0,
+                provider="gemini",
+                trend_samples=2,
+                top_escalations=3,
+            )
+        assert result.meta["trend_samples_requested"] == 2
+        assert result.meta["trend_enabled"] is True
+        assert result.meta["top_escalations_requested"] == 3
+
+
+@pytest.mark.unit
 class TestCLIImplBackground:
     """Tests for mcp_impl background lifecycle and status parity."""
 
     def test_bg_impl_launches_direct_subprocess_and_records_metadata(self, tmp_path: Path) -> None:
+        # @trace FR-MCP-001
         """bg_impl starts a direct child process and writes session metadata."""
         session_dir = tmp_path / "sessions"
 
-        with patch("thegent.cli_impl._resolve_cwd", return_value=tmp_path):
-            with patch.dict(
+        with (
+            patch("thegent.cli_impl._resolve_cwd", return_value=tmp_path),
+            patch.dict(
                 os.environ,
                 {"THGENT_SESSION_DIR": str(session_dir)},
-            ):
-                with patch("thegent.cli_impl.subprocess.Popen") as popen:
-                    popen.return_value = _Proc(pid=43210)
-                    result = bg_impl(
-                        agent="cursor-agent",
-                        prompt="hello world",
-                        cd=tmp_path,
-                        mode="write",
-                        timeout=120,
-                        full=True,
-                        droid=None,
-                        model=None,
-                        owner=None,
-                    )
+            ),
+            patch("thegent.cli_impl.subprocess.Popen") as popen,
+        ):
+            popen.return_value = _Proc(pid=43210)
+            result = bg_impl(
+                agent="cursor-agent",
+                prompt="hello world",
+                cd=tmp_path,
+                mode="write",
+                timeout=120,
+                full=True,
+                droid=None,
+                model=None,
+                owner=None,
+            )
 
         assert "session_id" in result
         assert "owner" in result
@@ -224,6 +326,7 @@ class TestCLIImplBackground:
         assert env["THGENT_OWNER_TAG"] == result["owner"]
 
     def test_ps_impl_uses_rc_status(self, tmp_path: Path) -> None:
+        # @trace FR-MCP-001
         """ps_impl resolves completion status from rc file and metadata."""
         owner = f"{getpass.getuser()}:{tmp_path.name}:manual"
         session_dir = tmp_path / "sessions"
@@ -248,6 +351,7 @@ class TestCLIImplBackground:
         assert rows[0]["status"] == "exited:3"
 
     def test_status_impl_returns_richer_payload(self, tmp_path: Path) -> None:
+        # @trace FR-MCP-001
         """status_impl includes host/mode/path/timeout metadata."""
         owner = f"{getpass.getuser()}:{tmp_path.name}:manual"
         session_dir = tmp_path / "sessions"
@@ -295,10 +399,12 @@ class TestCLIImplBackground:
         assert status["paths"]["rc"].endswith(".rc")
 
 
+@pytest.mark.unit
 class TestMCPHealthPolicyTrendContract:
     """Unit tests for MCP health gate/report/trend tool metadata and payload shape."""
 
     def test_health_gate_tool_meta_includes_policy_and_counts(self) -> None:
+        # @trace FR-MCP-002
         payload = {
             "schema_version": "health-schema-v1",
             "payload_type": "session_contract_health_gate",
@@ -322,6 +428,7 @@ class TestMCPHealthPolicyTrendContract:
         assert result.meta["blocked_count"] == 1
 
     def test_health_report_tool_meta_includes_policy_and_counts(self) -> None:
+        # @trace FR-MCP-002
         payload = {
             "schema_version": "health-schema-v1",
             "payload_type": "session_contract_health_report",
@@ -344,6 +451,7 @@ class TestMCPHealthPolicyTrendContract:
         assert result.meta["blocked_count"] == 0
 
     def test_health_trend_tool_returns_meta_and_payload(self) -> None:
+        # @trace FR-MCP-002
         payload = {
             "schema_version": "health-schema-v1",
             "payload_type": "session_contract_health_trend",
@@ -462,6 +570,7 @@ class TestMCPHealthPolicyTrendContract:
         assert result.meta["compat_aliases_count"] == 7
 
     def test_health_trend_tool_fallback_for_missing_volatility_fields(self) -> None:
+        # @trace FR-MCP-002
         payload = {
             "schema_version": "health-schema-v1",
             "schema_compat_mode": "compat",
@@ -516,6 +625,7 @@ class TestMCPHealthPolicyTrendContract:
         assert result.meta["snapshot_health_volatility_hash"] == expected_hash
 
     def test_health_trend_tool_normalizes_malformed_latest_issue_types(self) -> None:
+        # @trace FR-MCP-002
         payload = {
             "schema_version": "health-schema-v1",
             "schema_compat_mode": "compat",
@@ -567,9 +677,7 @@ class TestMCPHealthPolicyTrendContract:
             "snapshots": [],
         }
         expected_latest_issue_types_json = json.dumps(["abc"])
-        expected_latest_issue_types_hash = hashlib.sha256(
-            expected_latest_issue_types_json.encode("utf-8")
-        ).hexdigest()
+        expected_latest_issue_types_hash = hashlib.sha256(expected_latest_issue_types_json.encode("utf-8")).hexdigest()
         with patch("thegent.mcp_server.session_contract_health_trend_impl", return_value=payload):
             result = thegent_session_contract_health_trend(payload_type="session_contract_health_report")
         assert result.meta["latest_issue_types_count"] == 1
@@ -578,6 +686,7 @@ class TestMCPHealthPolicyTrendContract:
         assert result.meta["latest_issue_types_hash"] == expected_latest_issue_types_hash
 
     def test_health_trend_resource_returns_json_payload(self) -> None:
+        # @trace FR-MCP-002
         payload = {
             "schema_version": "health-schema-v1",
             "payload_type": "session_contract_health_trend",
@@ -594,13 +703,17 @@ class TestMCPHealthPolicyTrendContract:
         assert data["snapshot_count"] == 2
 
 
+@pytest.mark.unit
 class TestMCPObserveSummaryContract:
     """Unit tests for MCP observe summary tool/resource parity."""
 
     def test_observe_summary_tool_returns_payload_and_meta(self) -> None:
         payload = {
             "status": "critical",
-            "alerts": ["Escalation backlog critical: 2 past-SLA", "Contract drift over budget: structural=8.0% (budget 4.0%), semantic=0.0% (budget 10.0%)"],
+            "alerts": [
+                "Escalation backlog critical: 2 past-SLA",
+                "Contract drift over budget: structural=8.0% (budget 4.0%), semantic=0.0% (budget 10.0%)",
+            ],
             "kpis": {
                 "total_events": 100,
                 "fallback_rate": 0.11,
@@ -620,6 +733,10 @@ class TestMCPObserveSummaryContract:
                 "provider": "gemini",
                 "top_escalations_count": 2,
             },
+            "trend_summary": {"enabled": False},
+            "generated_query": {"trend_samples": 0},
+            "payload_type": "observe_summary",
+            "payload_schema_version": "observe-summary-schema-v1",
         }
         with patch("thegent.mcp_server.observe_summary_impl", return_value=payload):
             result = thegent_observe_summary(
@@ -630,7 +747,15 @@ class TestMCPObserveSummaryContract:
                 provider="gemini",
                 top_escalations=2,
             )
-        body = json.loads(result.content) if isinstance(result.content, str) else {}
+
+        # Handle both list of content objects (FastMCP) and raw strings (legacy)
+        content_str = ""
+        if isinstance(result.content, list) and len(result.content) > 0:
+            content_str = getattr(result.content[0], "text", str(result.content[0]))
+        elif isinstance(result.content, str):
+            content_str = result.content
+
+        body = json.loads(content_str) if content_str else {}
         assert body["status"] == "critical"
         assert body["escalation"]["provider"] == "gemini"
         assert result.meta["status"] == "critical"
@@ -642,6 +767,8 @@ class TestMCPObserveSummaryContract:
         assert result.meta["top_escalations_requested"] == 2
         assert result.meta["drift_structural_budget_pct"] == 4.0
         assert result.meta["provider"] == "gemini"
+        assert result.meta["trend_enabled"] is False
+        assert result.meta["trend_samples_requested"] == 0
 
     def test_observe_summary_resource_returns_json_payload(self) -> None:
         payload = {
@@ -650,10 +777,15 @@ class TestMCPObserveSummaryContract:
             "kpis": {"total_events": 12},
             "drift": {"within_budget": True},
             "escalation": {"backlog_count": 0, "past_sla_count": 0},
+            "trend_summary": {"enabled": False},
+            "generated_query": {"trend_samples": 3},
+            "payload_type": "observe_summary",
+            "payload_schema_version": "observe-summary-schema-v1",
         }
         with patch("thegent.mcp_server.observe_summary_impl", return_value=payload):
-            raw = resource_observe_summary(limit=100, drift_window=30, provider="cursor")
+            raw = resource_observe_summary(limit=100, drift_window=30, provider="cursor", trend_samples=3)
         data = json.loads(raw)
         assert data["status"] == "healthy"
         assert data["drift"]["within_budget"] is True
-        assert data["escalation"]["provider"] is None
+        assert data["trend_summary"]["enabled"] is False
+        assert data["generated_query"]["trend_samples"] == 3

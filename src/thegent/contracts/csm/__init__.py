@@ -9,4 +9,4 @@ from thegent.contracts.csm.v1 import (
     CSMStatus,
 )
 
-__all__ = ["CanonicalStructuredMessage", "CSMStatus", "CSMPhase"]
+__all__ = ["CSMPhase", "CSMStatus", "CanonicalStructuredMessage"]

@@ -102,7 +102,15 @@ class ThegentSettings(BaseSettings):
     )
     retention_by_domain: dict[str, int] = Field(
         default_factory=dict,
-        description="Per-domain retention days (WP-3006); THGENT_RETENTION_BY_DOMAIN JSON e.g. {\"gdpr\":365,\"soc2\":2555}",
+        description='Per-domain retention days (WP-3006); THGENT_RETENTION_BY_DOMAIN JSON e.g. {"gdpr":365,"soc2":2555}',
+    )
+    default_domain_tag: str | None = Field(
+        default=None,
+        description="Default domain tag for runs if not specified (G-GP-07)",
+    )
+    retention_policy: str | None = Field(
+        default=None,
+        description="Retention policy string (WP-3006); format: default:30,domain1:10",
     )
 
     @field_validator("retention_by_domain", mode="before")
@@ -165,7 +173,7 @@ class ThegentSettings(BaseSettings):
 
     def validate_setup(self) -> None:
         """ROB-013: Configuration validation on startup (fail-fast).
-        
+
         Ensures directories exist and critical settings are sane.
         """
         # Ensure session directory is writable
@@ -180,8 +188,9 @@ class ThegentSettings(BaseSettings):
 
         # Validate timeouts
         if self.default_timeout_claude < self.default_timeout:
-             # Mission-Critical Rigor: adjust instead of failing if possible, or warn
-             pass
+            # Mission-Critical Rigor: adjust instead of failing if possible, or warn
+            pass
+
     retention_days_health: int = Field(
         default=90,
         ge=7,
@@ -252,6 +261,32 @@ class ThegentSettings(BaseSettings):
         le=1440,
         description="Default SLA in minutes for escalation queue when policy denies (WP-3008)",
     )
+    escalation_sla_breach_alert: bool = Field(
+        default=True,
+        description="Enable SLA breach alerts in sweep (G-GP-05)",
+    )
+    hitl_enabled: bool = Field(
+        default=False,
+        description="Enable human-in-the-loop (HITL) checkpoints (G-GP-05)",
+    )
+    hitl_checkpoints: list[str] = Field(
+        default_factory=lambda: ["pre_execution"],
+        description="List of checkpoints where HITL should pause: pre_execution, post_execution",
+    )
+    mcp_auth_mode: str = Field(
+        default="none",
+        description="MCP server auth mode: none | bearer (G-FM-01)",
+    )
+    mcp_bearer_tokens: str = Field(
+        default="",
+        description="Comma-separated bearer tokens for MCP server auth (THGENT_MCP_BEARER_TOKENS)",
+    )
+    max_task_retries: int = Field(
+        default=3,
+        ge=0,
+        le=10,
+        description="Maximum retries for a DAG task before escalation (G-GP-05)",
+    )
 
     # G-GP-01: OPA integration (optional Phase 2)
     opa_url: str = Field(
@@ -269,21 +304,47 @@ class ThegentSettings(BaseSettings):
         description="If OPA unreachable: allow (True) or deny (False) (THGENT_OPA_FALLBACK_ALLOW)",
     )
 
-    normalization_policy_allow_fallback: bool = Field(
+    # G-GP-08: Sandboxing (optional Phase 2)
+    sandbox_env_allowlist: list[str] = Field(
+        default_factory=lambda: ["PATH", "HOME", "LANG", "USER", "TERM", "PYTHONUNBUFFERED"],
+        description="Environment variables allowed in the agent sandbox (THGENT_SANDBOX_ENV_ALLOWLIST)",
+    )
+
+    @field_validator("sandbox_env_allowlist", mode="before")
+    @classmethod
+    def _parse_env_allowlist(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [s.strip() for s in v.split(",") if s.strip()]
+        if isinstance(v, list):
+            return [str(s) for s in v]
+        return ["PATH", "HOME", "LANG", "USER", "TERM", "PYTHONUNBUFFERED"]
+
+    # G-GP-02: Input Guardrails
+    input_guardrails_enabled: bool = Field(
+        default=False,
+        description="Enable input guardrails (prompt length, blocklist, agent/cwd allowlist) (THGENT_INPUT_GUARDRAILS_ENABLED)",
+    )
+
+    # G-GP-04: Circuit Breakers
+    circuit_breaker_enabled: bool = Field(
         default=True,
-        description="Allow falling back to plain text extraction (THGENT_NORMALIZATION_POLICY_ALLOW_FALLBACK)",
+        description="Enable circuit breakers for agents and models (THGENT_CIRCUIT_BREAKER_ENABLED)",
     )
-    normalization_policy_min_confidence: float = Field(
-        default=0.4,
-        description="Minimum confidence required for normalized output (THGENT_NORMALIZATION_POLICY_MIN_CONFIDENCE)",
+    circuit_breaker_threshold: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Number of failures before circuit opens (THGENT_CIRCUIT_BREAKER_THRESHOLD)",
     )
-    normalization_policy_max_fallback_rate: float = Field(
-        default=0.3,
-        description="Max allowed fallback rate (THGENT_NORMALIZATION_POLICY_MAX_FALLBACK_RATE)",
+    circuit_breaker_window_s: int = Field(
+        default=300,
+        ge=10,
+        description="Window in seconds for counting failures (THGENT_CIRCUIT_BREAKER_WINDOW_S)",
     )
-    normalization_policy_strict_providers: str = Field(
-        default="",
-        description="Comma-separated providers that MUST produce structured output (THGENT_NORMALIZATION_POLICY_STRICT_PROVIDERS)",
+    circuit_breaker_recovery_s: int = Field(
+        default=60,
+        ge=0,
+        description="Seconds before half-open (trial) (THGENT_CIRCUIT_BREAKER_RECOVERY_S)",
     )
 
     # Contract canary rollout (G-RV-08, docs/contracts/UPGRADE_PLAYBOOK.md)
@@ -299,7 +360,15 @@ class ThegentSettings(BaseSettings):
     )
 
     # Parser-quality routing (G-CA-02 B2)
-    routing_parser_quality_enabled: bool = Field(
-        default=True,
-        description="Order providers by parser quality (confidence, fallback rate); THGENT_ROUTING_PARSER_QUALITY_ENABLED",
+    shutdown_wait_s: int = Field(
+        default=0,
+        ge=0,
+        le=60,
+        description="Seconds to wait for in-flight requests during MCP server shutdown (G-OP-10)",
+    )
+    shutdown_wait_active_s: int = Field(
+        default=0,
+        ge=0,
+        le=120,
+        description="Seconds to poll for active background runs during MCP server shutdown (G-OP-10)",
     )
