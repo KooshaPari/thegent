@@ -89,7 +89,9 @@ def classify_failure(result: RunResult) -> FailureKind:
         return FailureKind.USAGE_LIMIT
     # Then rate limit or transient
     if any(re.search(p, text, re.IGNORECASE) for p in _RETRYABLE_PATTERNS):
-        return FailureKind.RATE_LIMIT if "429" in text or "rate" in text or "too many" in text else FailureKind.TRANSIENT
+        return (
+            FailureKind.RATE_LIMIT if "429" in text or "rate" in text or "too many" in text else FailureKind.TRANSIENT
+        )
     return FailureKind.UNKNOWN
 
 

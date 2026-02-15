@@ -1,0 +1,375 @@
+# Thegent Phase 10–12 Policy-as-Code and Automation Contract
+
+**Status:** Execution-ready design artifact  
+**Date:** 2026-02-15  
+**Scope:** Unifies phase gates, hard-stop handling, board transitions, and drift remediation into deterministic policy with machine-enforced contracts.
+
+## 1) Purpose
+
+This contract transforms governance rules into executable policy, reducing ambiguous human interpretation and improving consistent execution across:
+
+- `G10`, `G11`, `G12` gate transitions
+- hard-stop and rollback triggers
+- issue tracker transitions
+- evidence and artifact validation
+- role-based permissions and approvals
+- release-readiness handoff integrity
+
+## 2) Source contract set (required)
+
+Use these files as policy primitives:
+
+1. `thegent-phase10-12-prd-wbs-dag-ticket-validation.md`
+2. `thegent-phase10-12-hard-stop-and-rollback-matrix.md`
+3. `thegent-phase10-12-drift-reconciliation-playbook.md`
+4. `thegent-phase10-12-compact-execution-dashboard.md`
+5. `thegent-phase10-12-execution-workboard.md`
+6. `thegent-phase10-12-issue-board-automation.md`
+7. `thegent-phase10-12-closure-readiness-pack-template.md`
+8. `thegent-phase10-12-prd-wbs-crossmap-finalization.md`
+
+## 3) Policy model
+
+### 3.1 Core state machine
+
+```text
+PENDING -> READY -> ACTIVE -> RUNNING -> HOLD -> WAIT_DRIFT -> WAIT_GATE_LOCK -> READY_FOR_GATE -> PASS -> CLOSED
+                                \-> BLOCKED -> HOLD
+```
+
+Allowed transitions are phase and role constrained.
+
+### 3.2 Role capability matrix
+
+| Role | Can transition to | Restricted actions |
+|---|---|---|
+| platform_lead | READY_FOR_GATE, HOLD, READY, WAIT_DRIFT | cannot close without gate signatures |
+| governance_lead | PASS, WAIT_GATE_LOCK, HOLD | cannot edit WBS source |
+| qa_lead | READY_FOR_GATE, WAIT_GATE_LOCK | cannot force release lock bypass |
+| security_lead | HOLD, BLOCKED, WAIT_GATE_LOCK | none |
+| incident_owner | HOLD, WAIT_GATE_LOCK, RUNNING -> BLOCKED | can only rollback in defined windows |
+
+### 3.3 Policy decision inputs
+
+- `wp_id`
+- `phase`
+- `bundle`
+- `current_state`
+- `dependency_state`
+- `hard_stop_level`
+- `drift_class` (`none`, `identity`, `lifecycle`, `dependency`, `evidence`, `governance`)
+- `required_checks` (list)
+- `owner_state` (`active`, `idle`, `unavailable`)
+- `feature_flags`
+- `artifact_validity`
+
+## 4) Canonical policy DSL
+
+This DSL is intentionally simple and portable:
+
+```yaml
+policy_id: phase10_12_runtime_v1
+scope:
+  phases: [10, 11, 12]
+  bundles:
+    - phase10_bundle_b
+    - phase11_bundle_c
+    - phase11_bundle_d
+    - phase12_bundle_e
+    - phase12_bundle_f
+rules:
+  - id: rule_block_hard_stop
+    when:
+      any:
+        - hard_stop_level: ["L2", "L3"]
+    deny:
+      - to_state: RUNNING
+      - to_state: READY_FOR_GATE
+    effect:
+      to_state: HOLD
+      reason: hard_stop_active
+      mandatory_tags:
+        - rollback_ready
+
+  - id: rule_g10_pass
+    when:
+      and:
+        - phase: 10
+        - state: READY_FOR_GATE
+        - all:
+            - wp_coverage: "all_phase10_complete"
+            - tests: "required_phase10_passed"
+            - checksums: "phase10_artifacts_verified"
+    allow:
+      - to_state: PASS
+    actions:
+      - emit_gate_lock: "G10"
+      - require_signoff:
+          roles: [platform_lead, qa_lead, governance_lead]
+
+  - id: rule_drift_guard
+    when:
+      any:
+        - drift_class: "identity|dependency|governance"
+      and:
+        - drift_severity: "P0|P1"
+    deny:
+      - to_state: PASS
+      - to_state: READY_FOR_GATE
+    actions:
+      - set_state: WAIT_DRIFT
+      - force_owner_comment: "drift_remediation_required"
+
+  - id: rule_bundle_preconditions
+    when:
+      and:
+        - phase: 11
+        - bundle: phase11_bundle_c
+        - bundle_dependency: "phase10_bundle_b_done != true"
+    deny:
+      - to_state: ACTIVE
+      - to_state: RUNNING
+    actions:
+      - set_state: HOLD
+      - set_blocker: "bundle_precondition_missing"
+```
+
+## 5) Deterministic gate contracts
+
+### 5.1 G10 contract
+
+- Block condition:
+  - any identity/lifecycle/dependency drift unresolved
+  - any hard-stop L2/L3 in phase10 scope
+  - any unresolved rollback token on runtime-affecting WPs
+- Pass condition:
+  - `WP-10001..WP-10010` complete
+  - evidence pack and checksums verified
+  - required tests in stable state
+
+### 5.2 G11 contract
+
+- Block condition:
+  - unresolved G10 lock token
+  - phase11 bundle C/D drift P0/P1
+  - adaptive feature flag in canary override missing
+- Pass condition:
+  - `WP-11001..WP-11010` complete with evidence and drift-free crosswalk
+  - control signal confidence floor satisfied
+
+### 5.3 G12 contract
+
+- Block condition:
+  - unresolved phase12 closure blockers
+  - replay safety evidence incomplete
+  - unresolved finality token on any mandatory WP
+- Pass condition:
+  - closure template complete and reviewed
+  - evidence graphs validated and signed
+  - all release checks and post-gate smoke pass
+
+## 6) Board policy enforcement
+
+### 6.1 Column transitions
+
+`Planned -> Ready -> In Progress -> In Review -> Bundle QA -> Ready for Gate -> Done`
+
+Policy denies:
+
+- `Done` unless evidence valid + rollback token + DoD checks all passed.
+- `Ready for Gate` if drift state is active.
+- transition from `Ready` to `Done` without full DoR.
+
+### 6.2 Hard-stop override policy
+
+- Hard-stop active -> all transitions to `In Progress`/`In Review` for runtime-affecting WPs denied.
+- Non-runtime doc-only WPs may continue only if:
+  - no safety hard-stop (`S`) class active
+  - owner explicitly approves "docs_continue"
+- `rollback_token` required to resume after hold.
+
+## 7) Automation policy handlers
+
+### 7.1 Event triggers
+
+1. `policy_check_requested`
+2. `ticket_updated`
+3. `artifact_updated`
+4. `test_run_completed`
+5. `drift_detected`
+6. `hard_stop_raised`
+7. `gate_ready`
+
+### 7.2 Handler map
+
+| Event | Handler | Outcome |
+|---|---|---|
+| `ticket_updated` | `state_transition_guard` | apply policy and reject invalid transitions |
+| `artifact_updated` | `evidence_verifier` | refresh evidence status and dependency confidence |
+| `test_run_completed` | `required_test_enforcer` | recompute gate readiness |
+| `drift_detected` | `drift_guard` | set row state WAIT_DRIFT + blocker owner |
+| `hard_stop_raised` | `kill_switch` | set HOLD, notify owner, attach runbook id |
+| `gate_ready` | `gate_lock_enforcer` | inject lock token and schedule signoff |
+
+## 8) Policy evaluation sequence
+
+For each state change request, evaluate in strict order:
+
+1. Hard-stop evaluator
+2. Dependency evaluator
+3. Drift evaluator
+4. Gate-lock evaluator
+5. Role + permission evaluator
+6. Owner availability evaluator
+7. Evidence validator
+8. Transition applier
+
+If any step fails, emit:
+
+- `policy_violation_code`
+- `required_fixes`
+- `required_owner`
+- `target_time`
+
+## 9) Error and exception paths
+
+### 9.1 False-positive blockers
+
+1. classify as `DRIFT_FALSE_POSITIVE` with evidence artifact.
+2. require governance lead + security lead dual-review.
+3. set temporary waiver token `WEXPIRE=<timestamp>`.
+4. auto-clear if:
+   - review complete
+   - no recurrence in 2 validation cycles
+
+### 9.2 Emergency bypass
+
+Bys-level bypass requires:
+
+- explicit command with correlation ID
+- governance signature + platform signature
+- reason code (`INCIDENT`, `DATA_CORRUPTION`, `SAFETY_TEST_HOLD`)
+- auto-expiry (1h) unless renewed
+
+## 10) Suggested schema contracts
+
+### 10.1 Policy decision event
+
+```json
+{
+  "decision_id": "policy-decision-uuid",
+  "timestamp": "2026-02-15T00:00:00Z",
+  "wp_id": "WP-11004",
+  "requested_transition": {
+    "from": "In Review",
+    "to": "Bundle QA"
+  },
+  "result": "denied",
+  "codes": ["hard_stop_active", "dependency_missing"],
+  "blockers": [
+    {
+      "code": "HS-L2",
+      "owner": "platform-lead",
+      "resolve_by": "2026-02-16T00:00:00Z"
+    }
+  ],
+  "policy_version": "phase10_12_runtime_v1",
+  "source": "issue_board_automation"
+}
+```
+
+### 10.2 Evidence contract snippet
+
+```json
+{
+  "artifact_id": "artifacts/phase11/forecast_calibration.ndjson",
+  "wp_id": "WP-11002",
+  "kind": "required_test_evidence",
+  "sha256": "string",
+  "created_at": "2026-02-15T00:00:00Z",
+  "valid_until": "2026-02-18T00:00:00Z",
+  "verified_by": ["qa_lead"],
+  "verified": true
+}
+```
+
+## 11) Policy-as-code anti-corruption layers
+
+- no raw ticket text parsing in transition engine
+- no board-state assumptions without source-of-truth verification
+- no unchecked branch for feature flags
+- no manual state mutation without event envelope
+- no unversioned policy file changes in active gate runs
+
+## 12) Cross-entity integration
+
+### 12.1 GitHub workflow integration
+
+- workflow emits policy decision events on pull request to:
+  - `thegent-phase10-12-issue-board-seed.json`
+  - `thegent-phase10-12-execution-workboard.md` updates
+  - release notes
+- policy fails hard when:
+  - issue-board schema changes without tests
+  - gate lock tokens missing
+  - rollout artifacts stale > 48h
+
+### 12.2 CLI integration
+
+- CLI commands:
+  - `thegent policy check --wp <id>`
+  - `thegent policy dry-run --file <seed>`
+  - `thegent policy enforce --bundle <bundle> --phase <10|11|12>`
+- command output should be machine-readable (`--json`) and include decision trace.
+
+## 13) Implementation phases for this contract
+
+### Phase A (now)
+
+- codify policy DSL in repo as versioned YAML
+- bind to local validation for seed, queue, and issue status transitions
+
+### Phase B (next)
+
+- integrate rule engine with issue-board automation runtime
+- add webhook-to-policy event adapter
+
+### Phase C (post-gate)
+
+- expose governance dashboard feed and trend chart of decision outcomes
+- enable per-phase policy templates and migration path
+
+## 14) Metrics and quality bar
+
+Success criteria for this artifact:
+
+- policy evaluation pass ratio > 98% for non-override actions
+- median policy decision latency < 2s
+- hard-stop response in < 5 min (to HOLD state + notification)
+- 0 unauthorized PASS transitions during active hard-stop
+
+## 15) Practical audit queries
+
+Run these queries after each gate boundary:
+
+1. Which WPs attempted transition to `READY_FOR_GATE` but were denied?
+2. Which WPs have active drift class unresolved for > 24h?
+3. Which bundles have repeated hard-stop events without remediation closure?
+4. Which WPs have stale evidence > 48h while in `Bundle QA` or above?
+5. Which gates rely on single-role approvals only?
+
+## 16) Migration and versioning
+
+- policy version format: `phase10_12_<slug>_v{major}.{minor}`
+- any major version increment requires:
+  - migration note
+  - update crosswalk docs
+  - test case refresh
+  - signoff by platform and governance leads
+
+## 17) Exit criteria
+
+- policy engine evaluates every transition request and records a reason code.
+- hard-stop, drift, and gate lock policies are enforced uniformly.
+- board transitions cannot bypass contract checks.
+- closure runbook references this contract for final release checks.

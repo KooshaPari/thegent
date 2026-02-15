@@ -2887,3 +2887,502 @@ Phase-X extension is substantially complete. Thegent now has a professional CLI 
     - `TestObserveSummaryCustom.test_observe_summary_custom_budgets_provider_exits_zero` now asserts the same metadata fields in addition to budget/provider checks.
 
 - This chunk ensures CLI JSON mode exposes the same schema-tagged payload contract that MCP now publishes, improving cross-channel parity checks in automation.
+
+## Chunk 318
+
+### Completed
+
+- Added historical trend and delta context to `observe summary`:
+  - `src/thegent/cli_impl.py`
+    - Extended `observe_summary_impl(...)` with:
+      - `trend_samples` parameter,
+      - snapshot persistence for observe-summary snapshots via shared snapshot log (`record_type="observe_summary_snapshot"`),
+      - scoped historical lookup via `_load_previous_observe_summary_snapshots`,
+      - computed `trend_summary` deltas for totals, drift KPIs, confidence, and backlog counters.
+    - Added `generated_query` and top-level `trend_summary` in payload for reproducible trend-context introspection.
+    - Added `_append_observe_summary_snapshot` + generic snapshot lookup helpers.
+  - `src/thegent/cli.py`
+    - `observe_summary_cmd(...)` accepts `trend_samples`.
+    - Rich summary panel now prints trend status and delta context when enabled.
+  - `src/thegent/main.py`
+    - `observe summary` command now exposes `--trend-samples` with safe defaults.
+  - `src/thegent/mcp_server.py`
+    - `thegent://observe/summary` resource and `thegent_observe_summary` tool now accept `trend_samples`.
+    - MCP tool metadata now projects trend summary fields (`trend_enabled`, `trend_*_delta`, sample metadata) for orchestration-level reads.
+
+- Added trend regression and parity tests:
+  - `tests/test_unit_cli.py`
+    - `TestObserveSummaryImpl::test_observe_summary_impl_with_trend_samples`.
+  - `tests/test_unit_mcp.py`
+    - Expanded `TestMCPObserveSummaryContract` for trend payload projection and `trend_samples` wiring.
+    - Resource path now asserts trend pass-through in JSON payload.
+  - `tests/test_e2e_cli.py`
+    - `TestObserveSummaryCustom::test_observe_summary_trend_samples_json_exits_zero` with isolated snapshot path to validate JSON trend output shape.
+
+- This chunk makes `observe summary` trend-aware while preserving existing alerting, schema, and MCP parity behavior.
+
+## Chunk 319
+
+### Completed
+
+- Hardened `observe summary` trend semantics for deterministic replay and clearer operator UX:
+  - `src/thegent/cli_impl.py`
+    - Expanded trend baseline scope key to include trend-dependent query shape (`limit`, `top_escalations`).
+    - Clamped `trend_samples` to non-negative values in `observe_summary_impl` so invalid/negative inputs do not trigger snapshots.
+    - Ensured full-trend payload shape is stable when baseline is unavailable by emitting explicit `None` delta fields.
+    - Added `trend_samples_requested` normalization and kept trend history disabled for `<=1`.
+  - `src/thegent/cli.py`
+    - Normalized negative `trend_samples` values in command dispatch.
+    - Added signed trend delta rendering in rich output for faster directional read.
+  - `src/thegent/mcp_server.py`
+    - Extended `thegent_observe_summary` meta with full trend delta projection:
+      `trend_structural_drift_pct_delta`, `trend_semantic_drift_pct_delta`,
+      `trend_drift_structural_rate_pct_delta`, `trend_drift_semantic_rate_pct_delta`,
+      `trend_backlog_count_delta`, `trend_past_sla_count_delta`.
+  - `src/thegent/main.py`
+    - Tightened `observe summary --trend-samples` option contract (`min=0`) and clarified help text for 0/1 disable semantics.
+
+- Expanded regression coverage:
+  - `tests/test_unit_cli.py`
+    - Added tests for trend sample clamping, deterministic trend-scope capture (`limit` + `top_escalations`).
+  - `tests/test_unit_mcp.py`
+    - Extended MCP observe summary tool assertions for all projected trend delta metadata keys.
+
+- This chunk increases resilience against noisy trend scopes and makes MCP/CLI trend projections feature-complete for operational dashboards and automation consumers.
+
+## Chunk 320
+
+### Completed
+
+- Added explicit trend-effective-window semantics to make `1` and `<=1` behavior machine-actionable:
+  - `src/thegent/cli_impl.py`
+    - Added `trend_effective_samples` to `trend_summary` and derived it from request normalization:
+      - `0` when trend disabled (`trend_samples <= 1`)
+      - requested count otherwise
+    - Kept loading gate at `trend_samples > 1` while preserving non-negative normalization.
+  - `src/thegent/cli.py`
+    - Added richer delta formatter controls (`scale`, `unit`) and switched trend output to explicit percent-formatted:
+      - requested/effective sample fields
+      - fallback and success deltas in `%`
+      - structural drift as `%`
+    - This makes trend direction and unit semantics clearer in rich output.
+  - `src/thegent/mcp_server.py`
+    - Added `trend_effective_samples` to `thegent_observe_summary` tool metadata.
+
+- Extended trend robustness tests:
+  - `tests/test_unit_cli.py`
+    - Added assertions for `trend_effective_samples` on clamped and disabled (`trend_samples=1`) trend paths.
+  - `tests/test_unit_mcp.py`
+    - Added assertions for `trend_effective_samples` projection in tool metadata.
+    - Added `test_observe_summary_tool_treats_trend_samples_one_as_disabled`.
+
+- This chunk moves trend behavior from binary UX to explicitly modeled window intent across CLI and MCP surfaces.
+
+## Chunk 321
+
+### Completed
+
+- Closed the parity gap for disabled trend mode (`trend_samples=1`) across tool and command surfaces:
+  - `tests/test_unit_mcp.py`
+    - Updated `test_observe_summary_resource_returns_json_payload` to mirror CLI contract:
+      - expected `trend_samples_requested=1`, `trend_effective_samples=0`, and `history_sample_count=0`.
+    - Kept metadata coverage for `trend_effective_samples` in tool path assertions.
+  - `tests/test_e2e_cli.py`
+    - Added `test_observe_summary_trend_samples_one_disables_trend` to validate interactive behavior:
+      - JSON payload contains `trend_summary.enabled == False`
+      - `trend_samples_requested == 1`
+      - `trend_effective_samples == 0`
+      - `history_sample_count == 0`.
+
+- This chunk removes remaining ambiguity around the `1` edge case and ensures e2e parity with the new trend contract (`requested` vs `effective`) semantics.
+
+## Chunk 322
+
+### Completed
+
+- Closed remaining consistency gap in trend test fixtures and extended edge-case e2e semantics:
+  - `tests/test_unit_mcp.py`
+    - Updated `test_observe_summary_tool_returns_payload_and_meta` trend stub to include `trend_effective_samples`,
+      aligning fixture payload with asserted MCP metadata.
+  - `tests/test_e2e_cli.py`
+    - Added `test_observe_summary_trend_samples_two_reports_effective`:
+      - confirms `trend_samples=2` enables trend mode and sets `trend_effective_samples=2`.
+    - Added `test_observe_summary_trend_samples_zero_disables_trend`:
+      - confirms `trend_samples=0` disables trend and sets `trend_effective_samples=0`.
+
+- This chunk improves contract consistency and covers the full requested window semantics (`0`, `1`, `2`) across CLI JSON output.
+
+## Chunk 323
+
+### Completed
+
+- Added malformed and boundary trend-sample hardening tests across implementation and CLI command surfaces:
+  - `tests/test_unit_cli.py`
+    - Added `test_observe_summary_impl_treats_non_integer_trend_samples_as_zero`:
+      - verifies non-integer input to `observe_summary_impl` does not crash
+      - normalizes to disabled trend (`trend_samples_requested=0`, `trend_effective_samples=0`)
+      - avoids historical lookups.
+  - `tests/test_e2e_cli.py`
+    - Added `test_observe_summary_trend_samples_large_enables_and_tracks_effective_samples`:
+      - asserts `trend_samples=9999` keeps trend enabled and `effective=9999`.
+    - Added `test_observe_summary_invalid_trend_samples_is_rejected_by_cli`:
+      - asserts CLI type validation rejects non-integer `--trend-samples`.
+
+- This chunk finalizes explicit contract coverage for trend request boundaries (`0`, non-int, very large values), reducing drift risk in automation tooling and CLI UX error handling.
+
+## Chunk 324
+
+### Completed
+
+- Added deterministic partial-history coverage for oversized trend window requests:
+  - `tests/test_unit_cli.py`
+    - Added `test_observe_summary_impl_partial_history_for_large_trend_request`:
+      - verifies request `trend_samples=5` loads history with `max_items=4`
+      - trend remains enabled with `trend_effective_samples=5`
+      - deterministic `history_sample_count` reflects available snapshots (sparse-history behavior).
+    - Confirms baseline selection remains valid when only one historical snapshot is available.
+
+- This chunk closes the edge case where requested trend windows exceed snapshot availability by asserting the request/load contract (`max_items = trend_samples - 1`) remains stable.
+
+## Chunk 325
+
+### Completed
+
+- Hardened the “enabled but missing baseline” path for trend output:
+  - `tests/test_unit_cli.py`
+    - Added `test_observe_summary_impl_enabled_without_baseline` to guarantee stable null-delta shape when no historical snapshot exists but trend is enabled (`trend_samples > 1`).
+    - Asserts full `trend_summary` shape remains stable and all delta fields are explicit `None`.
+  - `tests/test_e2e_cli.py`
+    - Added `test_observe_summary_trend_enabled_without_baseline_keeps_stable_shape` with isolated snapshot path:
+      - verifies `trend_samples=3` returns `enabled=True`, `trend_effective_samples=3`, `history_sample_count=0`.
+      - verifies all delta fields remain `None` when baseline is unavailable.
+
+- This chunk completes a subtle but high-impact robustness gap for first-run or sparse-history operators where trend is requested before enough snapshots exist.
+
+## Chunk 326
+
+### Completed
+
+- Added MCP resource parity assertion for enabled trend semantics:
+  - `tests/test_unit_mcp.py`
+    - Added `test_observe_summary_resource_preserves_effective_samples_for_enabled_path`.
+    - Verifies `thegent://observe/summary` resource preserves:
+      - `trend_summary.enabled == True`
+      - `trend_samples_requested`
+      - `trend_effective_samples`
+      - `baseline_available` when no baseline exists.
+
+- This chunk extends resource-plane confidence for orchestrators that rely on MCP resources instead of tool metadata for stateful trend consumption.
+
+## Chunk 327
+
+### Completed
+
+- Normalized trend-query metadata propagation across observe-summary output:
+  - `src/thegent/cli_impl.py`
+    - Normalized `trend_samples` persisted into `generated_query` so query metadata is always canonicalized (`int`/clamped form) even for malformed inputs (`0`, negative, non-integer).
+    - This prevents downstream consumers from inferring conflicting “requested” values from CLI typing vs internal trend parsing.
+  - `src/thegent/cli.py`
+    - Added explicit trend-disabled line in rich output to make effective-vs-requested sample status visible when trend is disabled.
+  - `src/thegent/mcp_server.py`
+    - Added `trend_sampling_mode` metadata in `thegent_observe_summary` meta payload (`enabled|disabled`), making automation intent explicit without requiring field inference.
+- Expanded regression coverage:
+  - `tests/test_unit_cli.py`
+    - Added assertions that `payload["generated_query"]["trend_samples"]` is canonical in enabled, clamped, and sanitized trend-input paths.
+  - `tests/test_unit_mcp.py`
+    - Added assertions for `trend_sampling_mode` in both enabled and disabled MCP observe-summary tool paths.
+  - `tests/test_e2e_cli.py`
+    - Added assertions in trend E2E cases that `generated_query.trend_samples` matches the normalized effective request for 0/1/2/3/9999.
+
+This chunk closes a subtle but important contract gap where `generated_query.trend_samples` and internal trend request handling could diverge under malformed/edge inputs.
+
+## Chunk 328
+
+### Completed
+
+- Added deterministic trend scope fingerprinting and trend history integrity metadata for observe-summary:
+  - `src/thegent/cli_impl.py`
+    - Added `_hash_observe_summary_payload()` for deterministic payload signature generation.
+    - Added canonical trend scope materialization:
+      - `trend_summary.scope_key`
+      - `trend_summary.scope_key_json` (stable key order)
+      - `trend_summary.scope_payload_type`
+      - `trend_summary.scope_signature` (SHA-256 of scope JSON)
+    - Added trend-history traceability fields:
+      - `trend_summary.trend_snapshot_ids`
+      - `trend_summary.trend_snapshot_ids_csv`
+      - `trend_summary.trend_snapshot_ids_hash`
+      - `trend_summary.trend_snapshot_window_seconds`
+    - Added `generated_query.trend_scope_signature` for direct run-to-summary parity checks.
+    - Added `payload_signature` on observe-summary payloads and persisted `scope_signature/scope_key_json` in snapshot records.
+  - `src/thegent/mcp_server.py`
+    - Extended `thegent_observe_summary` tool meta with scope/trend-history introspection:
+      - `trend_signature` fields: `trend_scope_signature`, `trend_scope_key_json`, `trend_scope_payload_type`.
+      - trend history exposure: `trend_snapshot_ids_count`, `trend_snapshot_ids_csv`, `trend_snapshot_ids_hash`, `trend_snapshot_window_seconds`.
+      - Aliased `trend_requested_samples` to explicit `trend_samples_requested`.
+      - Exposed `payload_signature` in tool meta.
+  - `src/thegent/cli.py`
+    - Added human-readable rich output lines for trend scope signature and trend snapshot window state in both enabled and disabled paths.
+- Expanded regression coverage:
+  - `tests/test_unit_cli.py`
+    - `test_observe_summary_impl_tracks_query_scope_for_trend_baseline` now asserts:
+      - deterministic scope key serialization/signature
+      - scope signature propagation into `generated_query`
+      - snapshot traceability defaults (`trend_snapshot_ids`, hash)
+  - `tests/test_unit_mcp.py`
+    - `TestMCPObserveSummaryContract::test_observe_summary_tool_returns_payload_and_meta`
+      now validates scope/signature and trend snapshot meta fields in MCP result metadata.
+    - Resource-path assertions now validate trend scope metadata pass-through in `trend_summary`.
+  - `tests/test_e2e_cli.py`
+- Added `test_observe_summary_trend_scope_signature_is_visible`:
+  - verifies `scope_key_json` captures full trend scope
+  - verifies deterministic scope signature parity through `generated_query`.
+
+This chunk improves cross-agent replayability and avoids cross-surface drift by making trend scope and snapshot lineage first-class and machine-readable.
+
+## Chunk 329
+
+### Completed
+
+- Extended observe-summary trend diagnostics into a production-usable timing and coverage plane:
+  - `src/thegent/cli_impl.py`
+    - Added `_parse_observe_summary_timestamp()` for robust snapshot timestamp parsing.
+    - Added coverage/timing metrics into `trend_summary`:
+      - `trend_snapshot_expected_count`
+      - `trend_snapshot_deficit`
+      - `trend_snapshot_interval_seconds_avg`
+      - `trend_snapshot_freshness_seconds`
+      - `trend_previous_samples_requested`
+      - `trend_sampling_mode` (`enabled`, `enabled_partial`, `disabled`)
+    - Added sampling metadata into snapshot records:
+      - `trend_sampling_mode`
+      - `trend_previous_samples_requested`
+      - `trend_snapshot_expected_count`
+      - `trend_snapshot_deficit`
+      - `trend_snapshot_interval_seconds_avg`
+      - `trend_snapshot_freshness_seconds`
+  - `src/thegent/mcp_server.py`
+    - Added meta-plane coverage for the new trend diagnostics:
+      - `trend_snapshot_sampling_mode`
+      - `trend_previous_samples_requested`
+      - `trend_snapshot_expected_count`
+      - `trend_snapshot_deficit`
+      - `trend_snapshot_interval_seconds_avg`
+      - `trend_snapshot_freshness_seconds`
+  - `src/thegent/cli.py`
+    - Added trend history telemetry lines to the rich summary panel:
+      - expected/loaded/deficit coverage
+      - interval average and freshness
+
+- Expanded regression matrix:
+  - `tests/test_unit_cli.py`
+    - Added `test_observe_summary_impl_reports_snapshot_timing_and_coverage`:
+      - asserts deterministic timestamp filtering behavior with mixed-valid snapshot inputs
+      - asserts coverage/timing fields and enabled sampling mode.
+  - `tests/test_unit_mcp.py`
+    - Extended MCP observe-summary fixtures/assertions for new trend diagnostic keys in:
+      - `test_observe_summary_tool_returns_payload_and_meta`
+      - `test_observe_summary_resource_returns_json_payload`
+    - Asserted meta-plane coverage keys and resource-pass-through coverage fields.
+  - `tests/test_e2e_cli.py`
+    - Added `test_observe_summary_trend_history_metadata_replayed_from_snapshots`:
+      - seeds deterministic observe-summary snapshot records
+      - validates window, interval, expected/loaded/deficit behavior and replayed freshness.
+
+This chunk upgrades trend observability from just snapshot lineage to a robust operational signal for coverage quality, cadence, and timing freshness.
+
+## Chunk 330
+
+### Completed
+
+- Hardened observe-summary trend quality and freshness semantics for scheduler decisions:
+  - `src/thegent/cli_impl.py`
+    - Added environment-tunable freshness classification:
+      - `THGENT_OBSERVE_SUMMARY_FRESHNESS_BUCKET_FRESH_SECONDS` (default 600)
+      - `THGENT_OBSERVE_SUMMARY_FRESHNESS_BUCKET_WARM_SECONDS` (default 3600)
+      - `THGENT_OBSERVE_SUMMARY_FRESHNESS_BUCKET_STALE_SECONDS` (default 86400)
+    - Added trend quality fields to `trend_summary`:
+      - `trend_snapshot_invalid_timestamps` (timestamp parsing failures in history window)
+      - `trend_snapshot_coverage_pct` (parsed snapshot coverage vs expected)
+      - `trend_snapshot_gap_count` (gap count between valid snapshot timestamps)
+      - `trend_snapshot_interval_seconds_min`
+      - `trend_snapshot_interval_seconds_max`
+      - `trend_snapshot_freshness_bucket` (`fresh|warm|stale|critical|future|unknown`)
+    - Persisted new trend-quality counters/qualities in `observe_summary_snapshot` records.
+- Extended MCP and CLI operator surface:
+  - `src/thegent/mcp_server.py`
+    - Added trend-quality meta:
+      - `trend_snapshot_interval_seconds_min`
+      - `trend_snapshot_interval_seconds_max`
+      - `trend_snapshot_gap_count`
+      - `trend_snapshot_invalid_timestamps`
+      - `trend_snapshot_coverage_pct`
+      - `trend_snapshot_freshness_bucket`
+  - `src/thegent/cli.py`
+    - Added rich output lines showing:
+      - coverage percentage
+      - invalid timestamp count
+      - interval range + gap count
+      - freshness bucket + freshness seconds
+- Added regression coverage:
+  - `tests/test_unit_cli.py`
+    - Extended trend timing/coverage test to validate invalid timestamp accounting and coverage math.
+  - `tests/test_unit_mcp.py`
+    - Added trend-quality assertions in tool/resource payload-parity tests.
+  - `tests/test_e2e_cli.py`
+    - Extended replay-from-snapshot assertions with interval min/max, gap count, invalid timestamp count, coverage percent, and freshness bucket.
+
+This chunk upgrades trend behavior from linearly counting samples to a richer quality scorecard suitable for adaptive trend scheduling and alerting.
+
+## Chunk 331
+
+### Completed
+
+- Added deterministic trend-health scoring and recommendation signals:
+  - `src/thegent/cli_impl.py`
+    - Added `_classify_observe_summary_trend_health` to convert trend timing/coverage/freshness metrics into:
+      - `trend_snapshot_health` (`good|warning|degraded|critical|disabled`)
+      - `trend_snapshot_health_score` (`0..100`)
+      - `trend_snapshot_recommendations` (actionable remediation hints)
+    - Added environment tunables:
+      - `THGENT_OBSERVE_SUMMARY_TREND_HEALTH_MIN_COVERAGE_PCT` (default `80.0`)
+      - `THGENT_OBSERVE_SUMMARY_TREND_HEALTH_MAX_INVALID_TIMESTAMPS` (default `0`)
+    - Appended health score/recommendations into:
+      - trend payload (`trend_summary`)
+      - persisted `observe_summary_snapshot` records
+    - Appended adaptive quality alerts for degraded/critical trend states.
+  - `src/thegent/mcp_server.py`
+    - Added MCP meta keys for trend quality scoring:
+      - `trend_snapshot_health`
+      - `trend_snapshot_health_score`
+      - `trend_snapshot_recommendation_count`
+      - `trend_snapshot_recommendations_csv`
+- Extended CLI operator display in `src/thegent/cli.py`:
+  - Added trend history quality line fields for health/score.
+  - Added trend recommendation summary lines when suggestions are available.
+- Added regression coverage for the new signal:
+  - `tests/test_unit_cli.py`
+    - Extended trend timing/coverage assertions for:
+      - `trend_snapshot_health`
+      - `trend_snapshot_health_score`
+      - `trend_snapshot_recommendations`
+    - Added disabled-state assertion for trend quality fields.
+  - `tests/test_unit_mcp.py`
+    - Extended `test_observe_summary_tool_returns_payload_and_meta` to assert MCP meta for trend health/recommendation fields.
+  - `tests/test_e2e_cli.py`
+    - Extended `test_observe_summary_trend_history_metadata_replayed_from_snapshots` with health/score/recommendation checks.
+
+This chunk introduces practical operational value: trend history now produces a deterministic quality rating and actionable remediation hints in addition to raw timing metrics, improving robustness and triage speed.
+
+## Chunk 332
+
+### Completed
+
+- Added health-score explainability and tuning controls for `observe_summary` trend quality:
+  - `src/thegent/cli_impl.py`
+    - Extended `_classify_observe_summary_trend_health(...)` to return a detailed breakdown payload (`trend_snapshot_health_breakdown`) including:
+      - per-dimension penalties (`coverage`, `deficit`, `invalid_timestamps`, `freshness`, `gap`)
+      - threshold context (`good`, `warning`, `degraded` thresholds)
+      - raw input counters and effective shortfall/coverage values.
+    - Added environment tuning for score class boundaries:
+      - `THGENT_OBSERVE_SUMMARY_TREND_HEALTH_GOOD_THRESHOLD` (default `95`)
+      - `THGENT_OBSERVE_SUMMARY_TREND_HEALTH_WARNING_THRESHOLD` (default `80`)
+      - `THGENT_OBSERVE_SUMMARY_TREND_HEALTH_DEGRADED_THRESHOLD` (default `50`)
+    - Persisted breakdown details to `trend_summary` and `observe_summary_snapshot` records.
+  - `src/thegent/mcp_server.py`
+    - Added `trend_snapshot_health_breakdown` into `thegent_observe_summary` tool metadata.
+- Expanded regression coverage:
+  - `tests/test_unit_cli.py`
+    - Extended coverage assertions in `test_observe_summary_impl_reports_snapshot_timing_and_coverage`:
+      - breakdown shape + penalty dimension keys.
+    - Added `test_classify_observe_summary_trend_health_respects_threshold_env` to validate env-based threshold controls and derived score.
+  - `tests/test_unit_mcp.py`
+    - Extended payload/meta assertions in `test_observe_summary_tool_returns_payload_and_meta` to include full breakdown parity.
+
+This chunk makes trend health observable as an auditable signal instead of a scalar-only label, with explicit policy levers and machine-readable diagnostics.
+
+## Chunk 333
+
+### Completed
+
+- Added operator-facing policy fingerprinting for trend-quality scoring and added penalty visibility in CLI summaries:
+  - `src/thegent/cli_impl.py`
+    - Added deterministic policy metadata to `trend_snapshot_health_breakdown`:
+      - full policy thresholds in `policy` (`healthy`, `warning`, `degraded`, `min_coverage_pct`, `max_invalid_timestamps`)
+      - deterministic `policy_signature` (`sha256` over policy surface + scoring constants)
+    - Added policy metadata in disabled-state breakdown as well, so trend health diagnostics remain stable even when trend is disabled.
+  - `src/thegent/cli.py`
+    - Added compact penalty summary output lines (`coverage`, `deficit`, `invalid_ts`, `freshness`, `gap`) from `trend_snapshot_health_breakdown` to all trend-history modes.
+- Expanded regression coverage:
+  - `tests/test_unit_cli.py`
+    - Extended disabled-state trend test to assert breakdown policy fields are present.
+    - Extended trend coverage test to assert breakdown now includes policy metadata + policy signature.
+    - Added threshold test for `_classify_observe_summary_trend_health()` remains tuned to verify score/penalty behavior.
+
+This chunk closes the final “black-box gap” for disabled mode and makes quality scoring configuration detectable and comparable across runs.
+
+## Chunk 334
+
+### Completed
+
+- Completed MCP parity for trend policy explainability:
+  - `tests/test_unit_mcp.py`
+    - Extended `test_observe_summary_tool_returns_payload_and_meta` to assert full `trend_snapshot_health_breakdown` includes:
+      - `policy_signature` in tool meta payload.
+      - deterministic `policy` block (`healthy`, `warning`, `degraded`, `min_coverage_pct`, `max_invalid_timestamps`).
+      - consistency between CLI content payload and MCP meta payload for `policy_signature`.
+    - Added structural sanity checks to ensure trend policy metadata is surfaced as first-class MCP fields rather than hidden nested-only data.
+
+This chunk ensures trend health policy explainability is preserved at automation/tool contract boundaries, improving parity between CLI output, persisted snapshots, and MCP integration surfaces.
+
+## Chunk 335
+
+### Completed
+
+- Extended MCP resource-layer parity for observe-summary trend policy metadata:
+  - `tests/test_unit_mcp.py`
+    - Added `test_observe_summary_resource_exposes_health_policy_breakdown` to verify `thegent://observe/summary` returns raw `trend_snapshot_health_breakdown.policy_signature` and policy block in JSON payloads.
+    - Replaced brittle fixture hash literals with deterministic signature generation in MCP coverage assertions.
+    - Added stricter policy metadata parity checks for `policy_signature` and policy threshold fields in both payload and tool meta paths.
+  - `src/thegent/cli_impl.py`
+    - Added `policy` block to enabled-path trend health breakdown so policy explainability is present in real emitted payloads, not just disabled-state data.
+
+This chunk closes a remaining gap by validating that raw observe-summary MCP resources and tool-meta outputs both carry explicit trend-health policy explainability, not just the tool summary path.
+
+## Chunk 336
+
+### Completed
+
+- Added end-to-end policy explainability assertions to real observe-summary CLI output:
+  - `tests/test_e2e_cli.py`
+    - Extended `test_observe_summary_trend_history_metadata_replayed_from_snapshots` to verify emitted trend breakdown includes:
+      - deterministic `policy_signature`.
+      - full `policy` threshold block (`healthy_threshold`, `warning_threshold`, `degraded_threshold`, `min_coverage_pct`, `max_invalid_timestamps`).
+    - This verifies policy explainability in a fully executed command path, not just MCP mock payloads.
+
+This chunk closes the final validation gap between unit-level MCP parity and real CLI execution behavior for trend health diagnostics.
+
+## Chunk 337
+
+### Completed
+
+- Extended CLI unit-path policy-surface checks for real trend replay calculations:
+  - `tests/test_unit_cli.py`
+    - In `test_observe_summary_impl_partial_history_for_large_trend_request`, added deterministic policy signature + policy-threshold assertions for `trend_snapshot_health_breakdown`.
+    - This aligns unit assertions for CLI trend quality with MCP/e2e parity and guards against silent policy-metadata drift.
+
+This chunk tightens deterministic parity across all three observation layers: direct CLI logic, MCP tooling, and end-to-end CLI behavior.
+
+## Chunk 338
+
+### Completed
+
+- Closed disabled-path parity gaps for trend health policy explainability:
+  - `tests/test_unit_mcp.py`
+    - Added `_expected_trend_health_policy_signature()` helper.
+    - Extended `test_observe_summary_tool_treats_trend_samples_one_as_disabled` to assert tool meta includes policy signature + policy threshold block.
+    - Added `test_observe_summary_resource_exposes_health_policy_for_disabled_path` to assert MCP resource JSON preserves disabled-path policy metadata.
+  - `tests/test_e2e_cli.py`
+    - Added deterministic policy-signature assertions for disabled trend modes (`--trend-samples 1` and `--trend-samples 0`) including disabled health state and policy fields.
+
+This chunk ensures policy explainability is present even when trend history is effectively disabled, which prevents silent observability regressions in non-trending modes.

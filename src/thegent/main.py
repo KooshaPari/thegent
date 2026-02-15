@@ -1,72 +1,107 @@
 """Thegent CLI entry point (subcommand-only)."""
 
+import json
+import sys
 from pathlib import Path
 
 import typer
 
 from thegent.cli import (
-    data_protection_cmd,
-    escalate_add_cmd,
-    escalate_list_cmd,
-    escalate_resolve_cmd,
-    sweep_cmd,
-    modes_cmd,
-    operations_cmd,
+    archive_cmd,
+    audit_verify_cmd,
+    benchmark_cmd,
     bg_cmd,
     cliproxy_login_cmd,
+    closure_pack_cmd,
+    cockpit_cmd,
+    contracts_conformance_cmd,
+    contracts_registry_cmd,
     dag_add_cmd,
     dag_cancel_cmd,
+    dag_checkpoint_cmd,
+    dag_checkpoints_cmd,
     dag_list_cmd,
+    dag_probe_cmd,
     dag_ready_cmd,
+    dag_reconcile_cmd,
+    dag_recover_cmd,
     dag_remove_cmd,
+    dag_rollback_cmd,
     dag_run_cmd,
     dag_status_cmd,
     dag_sync_cmd,
     dag_update_cmd,
     dag_validate_cmd,
-    dag_checkpoint_cmd,
-    dag_rollback_cmd,
-    dag_checkpoints_cmd,
-    dag_recover_cmd,
-    dag_probe_cmd,
-    plan_analyze_cmd,
+    data_protection_cmd,
+    drift_cmd,
+    escalate_add_cmd,
+    escalate_approve_cmd,
+    escalate_list_cmd,
+    escalate_resolve_cmd,
+    feedback_cmd,
+    history_cmd,
     inspect_cmd,
     list_agents_cmd,
     list_droids_cmd,
     list_models_cmd,
+    logs_cmd,
+    migration_cmd,
+    modes_cmd,
+    operations_cmd,
+    pause_cmd,
+    plan_analyze_cmd,
+    policy_show_cmd,
+    ps_cmd,
+    purge_cmd,
+    resolve_model_route_cmd,
+    resume_cmd,
+    run_cmd,
     session_contract_health_gate_cmd,
     session_contract_health_report_cmd,
     session_contract_health_trend_cmd,
-    logs_cmd,
     session_contracts_cmd,
-    ps_cmd,
-    resolve_model_route_cmd,
-    run_cmd,
     status_cmd,
     stop_cmd,
+    sweep_cmd,
     wait_cmd,
-    history_cmd,
-    audit_verify_cmd,
-    policy_show_cmd,
-    pause_cmd,
-    resume_cmd,
-    contracts_registry_cmd,
-    contracts_conformance_cmd,
-    migration_cmd,
-    drift_cmd,
-    cockpit_cmd,
-    feedback_cmd,
-    dag_reconcile_cmd,
-    archive_cmd,
-    benchmark_cmd,
-    closure_pack_cmd,
 )
+
+
+def init_cmd(
+    url: str = typer.Option(None, "--url", "-u", help="MCP server URL (default: http://127.0.0.1:3847/mcp)"),
+    cli: bool = typer.Option(
+        False, "--cli", help="Non-interactive, agent-friendly setup (smart mode, all detected targets)"
+    ),
+) -> None:
+    """Initialize thegent: configure MCP clients and background services."""
+    from rich.console import Console
+
+    from thegent.install import run_install, run_wizard
+
+    if cli:
+        console = Console()
+        console.print("[bold cyan]thegent init --cli[/bold cyan] (non-interactive)")
+        run_install(
+            target="all",
+            mode="smart",
+            install_service=True,
+            verbose=True,
+            url=url,
+        )
+        console.print("\n[bold green]Init complete.[/bold green]")
+        return
+
+    # Default to interactive wizard
+    run_wizard(url=url)
+
 
 app = typer.Typer(
     name="thegent",
     help="Unified agent orchestration CLI for Factory skills and droids",
     no_args_is_help=True,
 )
+
+app.command("init")(init_cmd)
 
 orchestrate_app = typer.Typer(help="Agent execution and session management")
 govern_app = typer.Typer(help="Governance, policy, and compliance")
@@ -94,13 +129,19 @@ def run(
     model: str | None = typer.Option(None, "--model", "-M", help="Model override or model-first (when agent omitted)"),
     provider: str | None = typer.Option(None, "--provider", "-P", help="Provider override for model-first routing"),
     failover: bool = typer.Option(False, "--failover", help="On failure, try next route (model-first only)"),
-    routing: str | None = typer.Option(None, "--routing", "-R", help="Routing policy: prefer_direct | prefer_proxy (default from config)"),
-    include_contract: bool = typer.Option(False, "--include-contract", help="Print resolved model route contract metadata in output"),
+    routing: str | None = typer.Option(
+        None, "--routing", "-R", help="Routing policy: prefer_direct | prefer_proxy (default from config)"
+    ),
+    include_contract: bool = typer.Option(
+        False, "--include-contract", help="Print resolved model route contract metadata in output"
+    ),
     run_id: str | None = typer.Option(None, "--run-id", help="Explicit run ID for registry correlation"),
     lane: str = typer.Option("standard", "--lane", help="Execution lane: standard, critical, recovery"),
     confidence: float | None = typer.Option(None, "--confidence", help="Task confidence score (0.0-1.0)"),
     override: str | None = typer.Option(None, "--override", help="Policy override reason code"),
-    contract_version: str | None = typer.Option(None, "--contract-version", help="Contract schema version (default: current)"),
+    contract_version: str | None = typer.Option(
+        None, "--contract-version", help="Contract schema version (default: current)"
+    ),
     domain: str | None = typer.Option(None, "--domain", help="Domain tag for tiered retention (WP-3006)"),
 ) -> None:
     """Run a foreground agent invocation. Use -M <model> without agent for model-first routing."""
@@ -139,23 +180,37 @@ def bg(
     owner: str | None = typer.Option(None, "--owner", help="Session owner tag (default: <user>:<cwd-name>)"),
     model: str | None = typer.Option(None, "--model", "-M", help="Model override or model-first"),
     provider: str | None = typer.Option(None, "--provider", "-P", help="Provider override for model-first routing"),
-    routing: str | None = typer.Option(None, "--routing", "-R", help="Routing policy: prefer_direct | prefer_proxy (default from config)"),
+    routing: str | None = typer.Option(
+        None, "--routing", "-R", help="Routing policy: prefer_direct | prefer_proxy (default from config)"
+    ),
     failover: bool = typer.Option(False, "--failover", help="On failure, try next route (model-first only)"),
     format: str | None = typer.Option(
         None,
         "--format",
         help="Output format: json | rich (default) | md (agent-friendly)",
     ),
-    include_contract: bool = typer.Option(False, "--include-contract", help="Include resolved route contract metadata in output"),
-    continuation: str | None = typer.Option(None, "--continuation", "-C", help="Prior session id(s) to continue from (comma-separated)"),
-    continuation_stderr: bool = typer.Option(False, "--continuation-stderr", help="Include stderr from prior session(s)"),
+    include_contract: bool = typer.Option(
+        False, "--include-contract", help="Include resolved route contract metadata in output"
+    ),
+    continuation: str | None = typer.Option(
+        None, "--continuation", "-C", help="Prior session id(s) to continue from (comma-separated)"
+    ),
+    continuation_stderr: bool = typer.Option(
+        False, "--continuation-stderr", help="Include stderr from prior session(s)"
+    ),
     run_id: str | None = typer.Option(None, "--run-id", help="Explicit run ID for registry correlation"),
     lane: str = typer.Option("standard", "--lane", help="Execution lane: standard, critical, recovery"),
-    idempotency_token: str | None = typer.Option(None, "--idempotency-token", help="Deterministic token to prevent duplicate runs"),
+    idempotency_token: str | None = typer.Option(
+        None, "--idempotency-token", help="Deterministic token to prevent duplicate runs"
+    ),
     confidence: float | None = typer.Option(None, "--confidence", help="Task confidence score (0.0-1.0)"),
-    arbitration: str | None = typer.Option(None, "--arbitration", help="Arbitration role: leader | follower | consensus"),
+    arbitration: str | None = typer.Option(
+        None, "--arbitration", help="Arbitration role: leader | follower | consensus"
+    ),
     override: str | None = typer.Option(None, "--override", help="Policy override reason code"),
-    contract_version: str | None = typer.Option(None, "--contract-version", help="Contract schema version (default: current)"),
+    contract_version: str | None = typer.Option(
+        None, "--contract-version", help="Contract schema version (default: current)"
+    ),
     domain: str | None = typer.Option(None, "--domain", help="Domain tag for tiered retention (WP-3006)"),
 ) -> None:
     """Start a background run and register a session."""
@@ -235,6 +290,7 @@ def history_events(
 ) -> None:
     """List raw telemetry events."""
     from thegent.cli import events_cmd
+
     events_cmd(run_id=run_id, limit=limit, format=format)
 
 
@@ -296,6 +352,40 @@ def govern_escalate_resolve(
     escalate_resolve_cmd(run_id=run_id, resolution=resolution)
 
 
+@escalate_app.command("approve")
+def govern_escalate_approve(
+    run_id: str = typer.Argument(..., help="Run ID to approve"),
+) -> None:
+    """Approve an escalation, recording an override for the owner (G-GP-05)."""
+    escalate_approve_cmd(run_id=run_id)
+
+
+@govern_app.command("calibrate")
+def govern_calibrate() -> None:
+    """Recalculate trust score calibration factors for all agents (G-GP-09)."""
+    from rich.console import Console
+    from rich.table import Table
+
+    from thegent.cli_impl import update_calibration_impl
+
+    console = Console()
+    results = update_calibration_impl()
+    if not results:
+        console.print("[dim]No runs with feedback found for calibration.[/dim]")
+        return
+
+    table = Table(title="Agent Calibration Factors")
+    table.add_column("Agent")
+    table.add_column("Factor", justify="right")
+    table.add_column("Samples", justify="right")
+
+    for agent, res in sorted(results.items()):
+        table.add_row(agent, f"{res['factor']:.3f}", str(res["samples"]))
+
+    console.print(table)
+    console.print("[green]Calibration factors persisted.[/green]")
+
+
 @govern_app.command("sweep")
 def govern_sweep(
     drift_window: int = typer.Option(50, "--drift-window", "-w", help="Window size for drift detection"),
@@ -304,6 +394,14 @@ def govern_sweep(
 ) -> None:
     """WP-3005: Policy drift sweep - drift detection, budget check, past-SLA escalations (cron-ready)."""
     sweep_cmd(drift_window=drift_window, include_audit=include_audit, format=format)
+
+
+@govern_app.command("purge")
+def govern_purge(
+    dry_run: bool = typer.Option(True, "--dry-run/--no-dry-run", help="If true, only show what would be purged"),
+) -> None:
+    """WP-3006: Tiered retention purge (G-GP-07)."""
+    purge_cmd(dry_run=dry_run)
 
 
 @govern_app.command("data-protection")
@@ -357,17 +455,24 @@ def observe_summary(
         help="Allowed semantic drift percentage before budget alert",
     ),
     provider: str | None = typer.Option(None, "--provider", help="Filter summary to a specific provider"),
+    trend_samples: int = typer.Option(
+        0,
+        "--trend-samples",
+        help="Enable historical trend sampling with up to N latest runs (2+ enables trend mode)",
+    ),
     top_escalations: int = typer.Option(10, "--top-escalations", help="Escalations to show in panel"),
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
 ) -> None:
     """FR-X08: Unified observability summary (KPIs, drift, escalation)."""
     from thegent.cli import observe_summary_cmd
+
     observe_summary_cmd(
         limit=limit,
         drift_window=drift_window,
         structural_budget=structural_budget,
         semantic_budget=semantic_budget,
         provider=provider,
+        trend_samples=trend_samples,
         top_escalations=top_escalations,
         format=format,
     )
@@ -379,10 +484,11 @@ def observe_kpis(
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
 ) -> None:
     """Show fallback KPIs for dashboard/alerting (G-CA-02 B3)."""
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.config import ThegentSettings
     from rich.console import Console
     from rich.table import Table
+
+    from thegent.config import ThegentSettings
+    from thegent.contracts.telemetry import ContractTelemetry
 
     settings = ThegentSettings()
     console = Console()
@@ -390,8 +496,7 @@ def observe_kpis(
     kpis = ct.get_fallback_kpis(limit=limit)
 
     if format == "json":
-        import json
-        console.print(json.dumps(kpis, indent=2))
+        sys.stdout.write(json.dumps(kpis) + "\n")
         return
 
     table = Table(title=f"Fallback KPIs (last {limit} events)")
@@ -480,7 +585,9 @@ def feedback(
 @app.command("archive")
 @observe_app.command("archive")
 def archive(
-    days: int | None = typer.Option(None, "--days", "-d", help="Override retention days (default: THGENT_RETENTION_DAYS_SESSIONS)"),
+    days: int | None = typer.Option(
+        None, "--days", "-d", help="Override retention days (default: THGENT_RETENTION_DAYS_SESSIONS)"
+    ),
     domain: str | None = typer.Option(None, "--domain", help="Filter by domain tag (WP-3006)"),
     tier: str | None = typer.Option(None, "--tier", "-t", help="Storage tier: hot (30d) | cold (365d)"),
 ) -> None:
@@ -491,7 +598,9 @@ def archive(
 @app.command("operations")
 def operations(
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
-    operation: str | None = typer.Option(None, "--operation", "-o", help="Filter by operation: orchestrate | govern | recover | observe | plan"),
+    operation: str | None = typer.Option(
+        None, "--operation", "-o", help="Filter by operation: orchestrate | govern | recover | observe | plan"
+    ),
 ) -> None:
     """List universal operation taxonomy (orchestrate, govern, recover, observe, plan)."""
     operations_cmd(format=format, operation=operation)
@@ -500,7 +609,9 @@ def operations(
 @app.command("modes")
 def modes(
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
-    mode: str | None = typer.Option(None, "--mode", "-m", help="Filter by mode: sequential_delegation | parallel_consensus | review_loop"),
+    mode: str | None = typer.Option(
+        None, "--mode", "-m", help="Filter by mode: sequential_delegation | parallel_consensus | review_loop"
+    ),
 ) -> None:
     """List multi-agent orchestration modes (G-KD-04)."""
     modes_cmd(format=format, mode=mode)
@@ -536,6 +647,7 @@ def history_legacy(
     """List execution run history (sync and background)."""
     if events:
         from thegent.cli import events_cmd
+
         events_cmd(run_id=run_id, limit=limit, format=format)
     else:
         history_cmd(limit=limit, format=format)
@@ -552,7 +664,9 @@ def ps(
         "-f",
         help="Output format: json | rich (default) | md (agent-friendly)",
     ),
-    include_contract: bool = typer.Option(False, "--include-contract", help="Include resolved route contract metadata in list payload"),
+    include_contract: bool = typer.Option(
+        False, "--include-contract", help="Include resolved route contract metadata in list payload"
+    ),
 ) -> None:
     """List registered background sessions."""
     ps_cmd(
@@ -569,7 +683,9 @@ def ps(
 def status(
     session_id: str = typer.Argument(..., help="Session id"),
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: json or rich"),
-    include_contract: bool = typer.Option(False, "--include-contract", help="Include resolved route contract metadata in output"),
+    include_contract: bool = typer.Option(
+        False, "--include-contract", help="Include resolved route contract metadata in output"
+    ),
 ) -> None:
     """Show one session status."""
     status_cmd(session_id=session_id, format=format, include_contract=include_contract)
@@ -584,7 +700,9 @@ def inspect(
     tail: int = typer.Option(50, "--tail", "-n", help="Log lines per session"),
     stderr: bool = typer.Option(False, "--stderr", help="Show stderr instead of stdout"),
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: json or rich"),
-    include_contract: bool = typer.Option(False, "--include-contract", help="Include resolved route contract metadata in status payload"),
+    include_contract: bool = typer.Option(
+        False, "--include-contract", help="Include resolved route contract metadata in status payload"
+    ),
 ) -> None:
     """Show status and logs for one or more sessions. No shell loop needed."""
     inspect_cmd(
@@ -603,7 +721,9 @@ def session_contracts(
     all_sessions: bool = typer.Option(False, "--all", help="Audit sessions for all owners"),
     owner: str | None = typer.Option(None, "--owner", help="Filter by owner"),
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default) | md"),
-    missing_only: bool = typer.Option(False, "--missing-only", help="Show only sessions with incomplete/missing contract metadata"),
+    missing_only: bool = typer.Option(
+        False, "--missing-only", help="Show only sessions with incomplete/missing contract metadata"
+    ),
     summary_only: bool = typer.Option(False, "--summary-only", help="Return summary only"),
     strict: bool = typer.Option(False, "--strict", help="Enable strict contract/provider/alias alignment checks"),
 ) -> None:
@@ -865,7 +985,9 @@ def list_models(
     provider: str | None = typer.Argument(None, help="Optional provider filter"),
     by_model: bool = typer.Option(False, "--by-model", help="Unified view: model -> providers (routing)"),
     refresh: bool = typer.Option(False, "--refresh", help="Bypass cache, re-scrape providers"),
-    include_contract: bool = typer.Option(False, "--include-contract", help="Include structured route contract in output"),
+    include_contract: bool = typer.Option(
+        False, "--include-contract", help="Include structured route contract in output"
+    ),
 ) -> None:
     """List known models (optionally filtered by provider)."""
     list_models_cmd(
@@ -880,7 +1002,9 @@ def list_models(
 def resolve_model_route(
     model: str = typer.Argument(..., help="Model identifier (alias or canonical model ID)"),
     provider: str | None = typer.Option(None, "--provider", "-P", help="Optional provider hint"),
-    policy: str = typer.Option("prefer_direct", "--policy", help="Routing policy: prefer_direct, prefer_proxy, failover"),
+    policy: str = typer.Option(
+        "prefer_direct", "--policy", help="Routing policy: prefer_direct, prefer_proxy, failover"
+    ),
 ) -> None:
     """Resolve a model to a concrete provider+alias route."""
     resolve_model_route_cmd(model=model, provider=provider, policy=policy)
@@ -992,7 +1116,9 @@ def dag_add(
     contract_version: str | None = typer.Option(None, "--contract-version", help="Contract schema version (XA4)"),
 ) -> None:
     """Add a task to the DAG."""
-    dag_add_cmd(task_id=task_id, agent=agent, prompt=prompt, cd=cd, depends_on=depends_on, contract_version=contract_version)
+    dag_add_cmd(
+        task_id=task_id, agent=agent, prompt=prompt, cd=cd, depends_on=depends_on, contract_version=contract_version
+    )
 
 
 @dag_app.command("update")
@@ -1000,14 +1126,24 @@ def dag_add(
 def dag_update(
     task_id: str = typer.Argument(..., help="Task ID to update"),
     cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
-    status: str | None = typer.Option(None, "--status", "-s", help="Set status: pending|running|done|failed|cancelled|skipped"),
+    status: str | None = typer.Option(
+        None, "--status", "-s", help="Set status: pending|running|done|failed|cancelled|skipped"
+    ),
     prompt: str | None = typer.Option(None, "--prompt", "-p", help="Update prompt"),
     agent: str | None = typer.Option(None, "--agent", "-a", help="Update agent"),
     depends_on: str | None = typer.Option(None, "--depends-on", help="Update depends_on (comma-separated)"),
     contract_version: str | None = typer.Option(None, "--contract-version", help="Contract schema version (XA4)"),
 ) -> None:
     """Update a task in the DAG."""
-    dag_update_cmd(task_id=task_id, cd=cd, status=status, prompt=prompt, agent=agent, depends_on=depends_on, contract_version=contract_version)
+    dag_update_cmd(
+        task_id=task_id,
+        cd=cd,
+        status=status,
+        prompt=prompt,
+        agent=agent,
+        depends_on=depends_on,
+        contract_version=contract_version,
+    )
 
 
 @dag_app.command("remove")
@@ -1049,10 +1185,20 @@ def dag_run(
     max_parallel: int | None = typer.Option(None, "--max-parallel", help="Max parallel spawns"),
     lane: str | None = typer.Option(None, "--lane", help="Force all tasks into this lane"),
     check_drift: bool = typer.Option(False, "--check-drift", help="Block run if contract drift detected (XC2)"),
-    contract_version: str | None = typer.Option(None, "--contract-version", help="Contract schema version (XA4; overrides task-level)"),
+    contract_version: str | None = typer.Option(
+        None, "--contract-version", help="Contract schema version (XA4; overrides task-level)"
+    ),
 ) -> None:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
-    dag_run_cmd(cd=cd, dry_run=dry_run, task=task, max_parallel=max_parallel, lane=lane, check_drift=check_drift, contract_version=contract_version)
+    dag_run_cmd(
+        cd=cd,
+        dry_run=dry_run,
+        task=task,
+        max_parallel=max_parallel,
+        lane=lane,
+        check_drift=check_drift,
+        contract_version=contract_version,
+    )
 
 
 @dag_app.command("status")
@@ -1074,6 +1220,7 @@ def dag_sync(
 ) -> None:
     """Update task status from session exit (running -> done/failed)."""
     import time
+
     while True:
         dag_sync_cmd(cd=cd)
         if not watch:
@@ -1154,7 +1301,9 @@ def mcp_install(
         help="Client: cursor, claude-code, codex, claude-desktop, droid, or all",
     ),
     url: str | None = typer.Option(None, "--url", "-u", help="MCP URL (default: http://127.0.0.1:3847/mcp)"),
-    workspace: Path | None = typer.Option(None, "--workspace", "-d", help="Workspace dir for cursor (writes .cursor/mcp.json)"),
+    workspace: Path | None = typer.Option(
+        None, "--workspace", "-d", help="Workspace dir for cursor (writes .cursor/mcp.json)"
+    ),
 ) -> None:
     """Add thegent to MCP config for Cursor, Claude Code, Codex, or Claude Desktop."""
     from thegent.config import ThegentSettings
@@ -1162,10 +1311,7 @@ def mcp_install(
 
     settings = ThegentSettings()
     mcp_url = url or _get_mcp_url(settings)
-    if client == "all":
-        clients = ["cursor", "claude-code", "codex", "claude-desktop", "droid"]
-    else:
-        clients = [client]
+    clients = ["cursor", "claude-code", "codex", "claude-desktop", "droid"] if client == "all" else [client]
     from rich.console import Console
 
     console = Console()
@@ -1181,9 +1327,9 @@ def mcp_install(
 @mcp_app.command("up")
 def mcp_up_cmd() -> None:
     """Start MCP + proxy via process-compose (bundled mode)."""
-    from thegent.mcp_manage import mcp_up
-
     from rich.console import Console
+
+    from thegent.mcp_manage import mcp_up
 
     console = Console()
     ok, msg = mcp_up()
@@ -1198,9 +1344,9 @@ def mcp_up_cmd() -> None:
 @mcp_app.command("down")
 def mcp_down_cmd() -> None:
     """Stop MCP + proxy (process-compose)."""
-    from thegent.mcp_manage import mcp_down
-
     from rich.console import Console
+
+    from thegent.mcp_manage import mcp_down
 
     console = Console()
     ok, msg = mcp_down()
@@ -1272,6 +1418,7 @@ def serve(
         from thegent.mcp_server import run
     except ImportError:
         from rich.console import Console
+
         Console().print("[red]fastmcp not installed. Run: pip install thegent[mcp][/red]")
         raise typer.Exit(1)
     run(host=host, port=port)
@@ -1279,23 +1426,43 @@ def serve(
 
 @app.command("install")
 def install_cmd(
-    target: str = typer.Option("both", "--target", "-t", help="Target: claude|factory|both (default: both)"),
-    editable: bool = typer.Option(False, "--editable", "-e", help="Symlink install instead of copy (bi-directional sync)"),
+    target: str = typer.Option(
+        "all", "--target", "-t", help="Target: claude-code|claude-desktop|cursor|codex|droid|all (default: all)"
+    ),
+    editable: bool = typer.Option(
+        False, "--editable", "-e", help="Symlink install instead of copy (bi-directional sync)"
+    ),
     force: bool = typer.Option(False, "--force", "-f", help="Overwrite all files (no merge)"),
+    undo: bool = typer.Option(False, "--undo", help="Undo previous installation using manifest"),
+    interactive: bool = typer.Option(
+        False, "--interactive", "-i", help="Ask before overwriting files with local changes"
+    ),
+    wizard: bool = typer.Option(False, "--wizard", "-w", help="Run interactive installation wizard"),
+    service: bool = typer.Option(False, "--service", help="Install background MCP service (launchd on macOS)"),
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Show what would happen without making changes"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed progress"),
+    url: str = typer.Option(None, "--url", "-u", help="MCP server URL (default: http://127.0.0.1:3847/mcp)"),
 ) -> None:
-    """Install and synchronize Claude Code configuration to ~/.claude and ~/.factory."""
+    """Managed installation of thegent components and MCP configuration."""
     from rich.console import Console
 
-    from thegent.install import run_install
+    from thegent.install import run_install, run_wizard
+
+    if wizard:
+        run_wizard(url=url)
+        return
 
     local_console = Console()
-    mode = "editable" if editable else ("force" if force else "smart")
+    if undo:
+        mode = "undo"
+    elif interactive:
+        mode = "interactive"
+    else:
+        mode = "editable" if editable else ("force" if force else "smart")
 
-    local_console.print("[bold]=== thegent install ===")
-    local_console.print(f"Target: {target}")
-    local_console.print(f"Mode: {mode}")
+    local_console.print(f"[bold]=== thegent install ({mode}) ===[/bold]")
+    if not undo:
+        local_console.print(f"Target: {target}")
     if dry_run:
         local_console.print("[yellow]Dry run: no changes will be made[/yellow]")
     local_console.print()
@@ -1305,15 +1472,23 @@ def install_cmd(
         mode=mode,
         dry_run=dry_run,
         verbose=verbose,
+        url=url,
+        install_service=service,
     )
 
     local_console.print()
-    local_console.print("[bold]Results:")
-    local_console.print(f"  Copied:    {counts['copied']}")
-    local_console.print(f"  Skipped:   {counts['skipped']}")
-    local_console.print(f"  Conflicts: {counts['conflicts']}")
-    if counts["errors"] > 0:
-        local_console.print(f"  [red]Errors:    {counts['errors']}[/red]")
+    local_console.print("[bold]Results:[/bold]")
+    if mode == "undo":
+        local_console.print(f"  Removed:   {counts.get('removed', 0)}")
+        local_console.print(f"  Restored:  {counts.get('restored', 0)}")
+        local_console.print(f"  Reverted:  {counts.get('reverted', 0)}")
+    else:
+        local_console.print(f"  Copied/Linked: {counts['copied']}")
+        local_console.print(f"  Skipped:       {counts['skipped']}")
+        local_console.print(f"  Conflicts:     {counts['conflicts']}")
+
+    if counts.get("errors", 0) > 0:
+        local_console.print(f"  [red]Errors:        {counts['errors']}[/red]")
 
 
 if __name__ == "__main__":

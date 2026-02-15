@@ -1,0 +1,42 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "subject": [
+    {
+      "name": ".",
+      "digest": {
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    }
+  ],
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://github.com/kush/sharecli/build-type/bash",
+      "externalParameters": {
+        "git_ref": "main",
+        "project_dir": "."
+      },
+      "internalParameters": {
+        "git_sha": "14123fd1cb0a5ebf26cec78c0a00c363d6eb846d"
+      },
+      "resolvedDependencies": [
+        {
+          "uri": "unknown",
+          "digest": {
+            "gitSha": "14123fd1cb0a5ebf26cec78c0a00c363d6eb846d"
+          }
+        }
+      ]
+    },
+    "runDetails": {
+      "builder": {
+        "id": "https://github.com/kush/sharecli/builder/qa-attestation-builder"
+      },
+      "metadata": {
+        "invocationId": "session-28391-1771140383",
+        "startedOn": "2026-02-14T23:26:20Z",
+        "finishedOn": "2026-02-15T07:26:23Z"
+      }
+    }
+  }
+}

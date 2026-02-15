@@ -106,13 +106,30 @@ class CanonicalStructuredMessage:
             decision_reason_code=data.get("decision_reason_code", ""),
             schema_version=data.get("schema_version", "csm-v1"),
             source_contract=data.get("source_contract", ""),
-            raw_payload={k: v for k, v in data.items() if k not in {
-                "task_id", "run_id", "chunk_id", "status", "phase", "progress",
-                "objective", "summary", "actions_completed", "issues", "next_steps",
-                "evidence_set_hash", "policy_gate_id", "decision_reason_code",
-                "schema_version", "source_contract",
-            }},
+            raw_payload={
+                k: v
+                for k, v in data.items()
+                if k
+                not in {
+                    "task_id",
+                    "run_id",
+                    "chunk_id",
+                    "status",
+                    "phase",
+                    "progress",
+                    "objective",
+                    "summary",
+                    "actions_completed",
+                    "issues",
+                    "next_steps",
+                    "evidence_set_hash",
+                    "policy_gate_id",
+                    "decision_reason_code",
+                    "schema_version",
+                    "source_contract",
+                }
+            },
         )
 
 
-__all__ = ["CanonicalStructuredMessage", "CSMStatus", "CSMPhase"]
+__all__ = ["CSMPhase", "CSMStatus", "CanonicalStructuredMessage"]

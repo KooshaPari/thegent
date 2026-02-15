@@ -29,9 +29,7 @@ def _is_proxy_unavailable(result: dict, agent: str) -> bool:
     if agent not in _PROXY_AGENTS:
         return False
     stderr = result.get("stderr", "") or ""
-    return bool(
-        re.search(r"404|502|unknown provider|/v1/responses", stderr, re.IGNORECASE)
-    )
+    return bool(re.search(r"404|502|unknown provider|/v1/responses", stderr, re.IGNORECASE))
 
 
 def _is_cursor_api_unavailable(result: dict, agent: str) -> bool:
@@ -60,7 +58,6 @@ def _is_service_unavailable(result: dict, agent: str) -> bool:
     )
 
 
-
 # Minimal prompt: read-only, fast, low token cost
 TRIVIAL_PROMPT = "Output only the number 1. Nothing else."
 
@@ -72,6 +69,7 @@ class TestAgentSyncAsyncSuccess:
     """Each agent returns exit_code 0 for both sync and async run_impl."""
 
     def test_sync_returns_success(self, agent: str, project_root: Path) -> None:
+        # @trace FR-AGT-001
         """run_impl (sync) returns exit_code 0 for agent."""
         if not _runner_available(agent):
             pytest.skip(f"Runner not available for {agent}")
@@ -100,17 +98,14 @@ class TestAgentSyncAsyncSuccess:
                 f"{result.get('stderr', '')[:200]}"
             )
         if _is_service_unavailable(result, agent):
-            pytest.skip(
-                f"agent {agent} currently unavailable in this environment: "
-                f"{result.get('stderr', '')[:200]}"
-            )
+            pytest.skip(f"agent {agent} currently unavailable in this environment: {result.get('stderr', '')[:200]}")
 
         assert result.get("exit_code") == 0, (
-            f"agent={agent} exit_code={result.get('exit_code')} "
-            f"stderr={result.get('stderr', '')[:500]}"
+            f"agent={agent} exit_code={result.get('exit_code')} stderr={result.get('stderr', '')[:500]}"
         )
 
     def test_async_returns_success(self, agent: str, project_root: Path) -> None:
+        # @trace FR-AGT-001
         """asyncio.to_thread(run_impl) returns exit_code 0 for agent."""
         if not _runner_available(agent):
             pytest.skip(f"Runner not available for {agent}")
@@ -145,12 +140,8 @@ class TestAgentSyncAsyncSuccess:
                 f"{result.get('stderr', '')[:200]}"
             )
         if _is_service_unavailable(result, agent):
-            pytest.skip(
-                f"agent {agent} currently unavailable in this environment: "
-                f"{result.get('stderr', '')[:200]}"
-            )
+            pytest.skip(f"agent {agent} currently unavailable in this environment: {result.get('stderr', '')[:200]}")
 
         assert result.get("exit_code") == 0, (
-            f"agent={agent} exit_code={result.get('exit_code')} "
-            f"stderr={result.get('stderr', '')[:500]}"
+            f"agent={agent} exit_code={result.get('exit_code')} stderr={result.get('stderr', '')[:500]}"
         )

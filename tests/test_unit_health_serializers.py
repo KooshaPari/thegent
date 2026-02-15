@@ -1,9 +1,11 @@
 """Unit tests for health gate/report serializers."""
 
 import csv
+import hashlib
 import io
 import json
-import hashlib
+
+import pytest
 
 from thegent.cli import (
     _serialize_health_gate_csv,
@@ -167,10 +169,12 @@ def _trend_fixture() -> dict:
     }
 
 
+@pytest.mark.unit
 class TestHealthGateSerializers:
     """Tests for gate CSV, JSONL, and MD serializers."""
 
     def test_gate_csv_has_summary_and_blocked_rows(self) -> None:
+        # @trace FR-CTR-013
         gate = _gate_fixture(blocked_count=1)
         out = _serialize_health_gate_csv(gate)
         rows = list(csv.reader(io.StringIO(out)))
@@ -181,6 +185,7 @@ class TestHealthGateSerializers:
             assert rows[2][4] == "blocked_session"
 
     def test_gate_csv_blocked_row_has_query_context(self) -> None:
+        # @trace FR-CTR-013
         gate = _gate_fixture(blocked_count=1)
         out = _serialize_health_gate_csv(gate)
         rows = list(csv.reader(io.StringIO(out)))
@@ -192,6 +197,7 @@ class TestHealthGateSerializers:
         assert blocked_row[strict_idx] == "True"
 
     def test_gate_jsonl_blocked_row_has_generated_query(self) -> None:
+        # @trace FR-CTR-013
         gate = _gate_fixture(blocked_count=1)
         out = _serialize_health_gate_jsonl(gate)
         lines = [l for l in out.strip().split("\n") if l]
@@ -203,6 +209,7 @@ class TestHealthGateSerializers:
         assert blocked["generated_query"].get("strict") is True
 
     def test_gate_jsonl_summary_first(self) -> None:
+        # @trace FR-CTR-013
         gate = _gate_fixture(blocked_count=1)
         out = _serialize_health_gate_jsonl(gate)
         first = json.loads(out.split("\n")[0])
@@ -210,6 +217,7 @@ class TestHealthGateSerializers:
         assert first["payload_type"] == "session_contract_health_gate"
 
     def test_gate_md_has_schema_and_status(self) -> None:
+        # @trace FR-CTR-013
         gate = _gate_fixture(blocked_count=1)
         out = _serialize_health_gate_md(gate)
         assert "health-schema-v1" in out
@@ -218,10 +226,12 @@ class TestHealthGateSerializers:
         assert "generated_query" in out
 
 
+@pytest.mark.unit
 class TestHealthReportSerializers:
     """Tests for report CSV, JSONL, and MD serializers."""
 
     def test_report_csv_has_summary_and_blocked_rows(self) -> None:
+        # @trace FR-CTR-013
         report = _report_fixture(blocked_count=1)
         out = _serialize_health_report_csv(report)
         rows = list(csv.reader(io.StringIO(out)))
@@ -232,6 +242,7 @@ class TestHealthReportSerializers:
             assert rows[2][record_idx] == "blocked_session"
 
     def test_report_csv_blocked_row_has_query_context(self) -> None:
+        # @trace FR-CTR-013
         report = _report_fixture(blocked_count=1)
         out = _serialize_health_report_csv(report)
         rows = list(csv.reader(io.StringIO(out)))
@@ -242,6 +253,7 @@ class TestHealthReportSerializers:
         assert blocked_row[gq_owner_idx] == "alice"
 
     def test_report_jsonl_blocked_row_has_query_context(self) -> None:
+        # @trace FR-CTR-013
         report = _report_fixture(blocked_count=1)
         out = _serialize_health_report_jsonl(report)
         lines = [l for l in out.strip().split("\n") if l]
@@ -253,6 +265,7 @@ class TestHealthReportSerializers:
         assert blocked["generated_query"].get("strict") is True
 
     def test_report_jsonl_summary_first(self) -> None:
+        # @trace FR-CTR-013
         report = _report_fixture(blocked_count=1)
         out = _serialize_health_report_jsonl(report)
         first = json.loads(out.split("\n")[0])
@@ -260,6 +273,7 @@ class TestHealthReportSerializers:
         assert first["payload_type"] == "session_contract_health_report"
 
     def test_report_md_has_schema_and_status(self) -> None:
+        # @trace FR-CTR-013
         report = _report_fixture(blocked_count=1)
         out = _serialize_health_report_md(report)
         assert "health-schema-v1" in out or "schema_version" in out
@@ -267,10 +281,12 @@ class TestHealthReportSerializers:
         assert "status" in out or "blocked" in out
 
 
+@pytest.mark.unit
 class TestHealthSerializerEdgeCases:
     """Edge cases: empty blocked, no payload_signature."""
 
     def test_gate_jsonl_empty_blocked_sessions(self) -> None:
+        # @trace FR-CTR-013
         gate = _gate_fixture(blocked_count=0)
         gate["blocked_sessions"] = []
         out = _serialize_health_gate_jsonl(gate)
@@ -279,6 +295,7 @@ class TestHealthSerializerEdgeCases:
         assert json.loads(lines[0])["record_type"] == "summary"
 
     def test_report_jsonl_empty_top_blocked(self) -> None:
+        # @trace FR-CTR-013
         report = _report_fixture(blocked_count=0)
         report["top_blocked"] = []
         out = _serialize_health_report_jsonl(report)
@@ -287,6 +304,7 @@ class TestHealthSerializerEdgeCases:
         assert json.loads(lines[0])["record_type"] == "summary"
 
     def test_gate_csv_handles_missing_payload_signature(self) -> None:
+        # @trace FR-CTR-013
         gate = _gate_fixture(blocked_count=0)
         del gate["payload_signature"]
         out = _serialize_health_gate_csv(gate)
@@ -294,8 +312,10 @@ class TestHealthSerializerEdgeCases:
         assert len(out) > 0
 
 
+@pytest.mark.unit
 class TestHealthTrendSerializers:
     def test_trend_md_has_core_fields(self) -> None:
+        # @trace FR-CTR-013
         trend = _trend_fixture()
         trend["scope_payload_type"] = "top-level-payload-type"
         trend["scope_key_json"] = "top-level-scope-key-json"
@@ -377,6 +397,7 @@ class TestHealthTrendSerializers:
         assert "scope_policy_profile" in out
 
     def test_trend_md_uses_fallback_volatility_hash_when_missing(self) -> None:
+        # @trace FR-CTR-013
         trend = _trend_fixture()
         trend.pop("snapshot_health_volatility", None)
         trend.pop("snapshot_health_volatility_hash", None)
@@ -388,6 +409,7 @@ class TestHealthTrendSerializers:
         assert expected_hash in out
 
     def test_trend_serializers_normalize_malformed_issue_types(self) -> None:
+        # @trace FR-CTR-013
         trend = _trend_fixture()
         trend["latest"]["issue_types"] = "abc"
         trend["snapshots"][0]["issue_types"] = {"left": 1, "right": 2}
@@ -420,6 +442,7 @@ class TestHealthTrendSerializers:
         assert second["issue_types"] == {"left": 1, "right": 2}
 
     def test_trend_csv_summary_and_snapshot_rows(self) -> None:
+        # @trace FR-CTR-013
         trend = _trend_fixture()
         trend["scope_payload_type"] = "top-level-payload-type"
         trend["scope_key_json"] = "top-level-scope-key-json"
@@ -572,6 +595,7 @@ class TestHealthTrendSerializers:
         assert rows[2][count_idx] == "8"
 
     def test_trend_csv_defaults_empty_compat_when_missing(self) -> None:
+        # @trace FR-CTR-013
         trend = _trend_fixture()
         trend["snapshots"] = []
         trend.pop("compat", None)
@@ -587,6 +611,7 @@ class TestHealthTrendSerializers:
         assert rows[1][compat_aliases_count_idx] == "0"
 
     def test_trend_csv_fallback_hash_when_volatility_missing(self) -> None:
+        # @trace FR-CTR-013
         trend = _trend_fixture()
         trend.pop("snapshot_health_volatility", None)
         trend.pop("snapshot_health_volatility_hash", None)
@@ -602,6 +627,7 @@ class TestHealthTrendSerializers:
         assert rows[2][snapshot_health_volatility_hash_idx] == expected_hash
 
     def test_trend_jsonl_summary_first_and_snapshot_next(self) -> None:
+        # @trace FR-CTR-013
         trend = _trend_fixture()
         trend["scope_payload_type"] = "top-level-payload-type"
         trend["scope_key_json"] = "top-level-scope-key-json"
@@ -716,6 +742,7 @@ class TestHealthTrendSerializers:
         assert "scope_policy_profile" in second
 
     def test_trend_jsonl_fallback_hash_when_volatility_missing(self) -> None:
+        # @trace FR-CTR-013
         trend = _trend_fixture()
         trend.pop("snapshot_health_volatility", None)
         trend.pop("snapshot_health_volatility_hash", None)
@@ -730,6 +757,7 @@ class TestHealthTrendSerializers:
         assert second["snapshot_health_volatility_hash"] == expected_hash
 
     def test_trend_jsonl_defaults_empty_compat_and_no_snapshots(self) -> None:
+        # @trace FR-CTR-013
         trend = _trend_fixture()
         trend["snapshots"] = []
         trend.pop("compat", None)

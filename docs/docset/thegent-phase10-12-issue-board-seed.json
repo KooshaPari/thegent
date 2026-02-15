@@ -1,0 +1,806 @@
+{
+  "metadata": {
+    "name": "thegent-phase10-12-workboard-seed",
+    "generated_on": "2026-02-15",
+    "version": "1.0.0",
+    "mode": "phase10-12_bundle_b_to_f",
+    "scope": "Issue/PRD/WBS aligned execution seed",
+    "feature_flags": {
+      "phase10_interface_v2": false,
+      "phase11_autotune": false,
+      "phase12_hardening": false
+    },
+    "tracker_fields": [
+      "title",
+      "status",
+      "issue_type",
+      "assignee",
+      "bundle",
+      "phase",
+      "labels",
+      "dependencies",
+      "evidence_manifest",
+      "required_tests",
+      "required_artifacts",
+      "gate_preconditions",
+      "rollback_token",
+      "dor_checks",
+      "dod_checks"
+    ]
+  },
+  "board_columns": [
+    "Backlog",
+    "Ready",
+    "In Progress",
+    "In Review",
+    "Blockers",
+    "Bundle QA",
+    "Ready for Gate",
+    "Done"
+  ],
+  "bundles": {
+    "phase10_bundle_b": {
+      "name": "Trust and conformance",
+      "start_condition": [
+        "Chunk A evidence artifacts signed",
+        "WP-10003 must be green",
+        "Dispatch parity smoke test passing"
+      ],
+      "entry_gate": ["requires-g10-pre"],
+      "ticket_scope": ["WP-10004", "WP-10005", "WP-10006", "WP-10007", "WP-10008", "WP-10009", "WP-10010"],
+      "required_flags": ["phase10_interface_v2"],
+      "kill_switch": "phase10_interface_v2"
+    },
+    "phase11_bundle_c": {
+      "name": "Predictive control baseline",
+      "start_condition": [
+        "Bundle B done",
+        "G10 readiness note present",
+        "Dispatch traces include policy_version and policy_digest"
+      ],
+      "entry_gate": ["requires-g10", "requires-g11-pre"],
+      "ticket_scope": ["WP-11001", "WP-11002", "WP-11003", "WP-11004", "WP-11005"],
+      "required_flags": ["phase11_autotune"],
+      "kill_switch": "phase11_autotune"
+    },
+    "phase11_bundle_d": {
+      "name": "Controlled adaptation and governance hardening",
+      "start_condition": [
+        "Bundle C precheck complete",
+        "G11 draft readiness in place"
+      ],
+      "entry_gate": ["requires-g11-pre"],
+      "ticket_scope": ["WP-11006", "WP-11007", "WP-11008", "WP-11009", "WP-11010"],
+      "required_flags": ["phase11_autotune"],
+      "kill_switch": "phase11_autotune"
+    },
+    "phase12_bundle_e": {
+      "name": "Explainability and replay hardening",
+      "start_condition": [
+        "Bundle D and G11 evidence pack in place"
+      ],
+      "entry_gate": ["requires-g11", "requires-g12-pre"],
+      "ticket_scope": ["WP-12001", "WP-12002", "WP-12003", "WP-12004", "WP-12005", "WP-12006"],
+      "required_flags": ["phase12_hardening"],
+      "kill_switch": "phase12_hardening"
+    },
+    "phase12_bundle_f": {
+      "name": "Persona, packaging, closure",
+      "start_condition": [
+        "Bundle E precheck green",
+        "G10/G11/G12 evidence matrix draft prepared"
+      ],
+      "entry_gate": ["requires-g11", "requires-g12", "requires-closure"],
+      "ticket_scope": ["WP-12007", "WP-12008", "WP-12009", "WP-12010"],
+      "required_flags": ["phase12_hardening"],
+      "kill_switch": "phase12_hardening"
+    }
+  },
+  "tickets": [
+    {
+      "issue_key": "THEGENT-WP-10004",
+      "title": "Adapter admission and trust policy",
+      "wp_id": "WP-10004",
+      "status": "Planned",
+      "assignee": "Security + Governance",
+      "bundle": "phase10_bundle_b",
+      "phase": "10",
+      "labels": ["phase-10-12", "bundle-b", "release-gate", "requires-g10-pre"],
+      "dependencies": ["WP-10002"],
+      "required_tests": ["TestAdapterTrustPolicy"],
+      "required_artifacts": [
+        "artifacts/phase10/chunk_b/adapter_trust_gate.ndjson",
+        "artifacts/phase10/chunk_b/chunk_b_signoff.md"
+      ],
+      "gate_preconditions": ["requires-g10-pre"],
+      "dor_checks": [
+        "Chunk A envelope + dispatch baseline complete",
+        "Capability registry available for trust metadata",
+        "Kill-switch location documented"
+      ],
+      "dod_checks": [
+        "Untrusted adapter blocked for critical lane",
+        "policy rationale emitted in dispatch trace",
+        "bundle manifest checksum attached"
+      ],
+      "rollback_token": "rt-phase10-b-10004"
+    },
+    {
+      "issue_key": "THEGENT-WP-10005",
+      "title": "Endpoint consolidation and aliases",
+      "wp_id": "WP-10005",
+      "status": "Planned",
+      "assignee": "Platform/API",
+      "bundle": "phase10_bundle_b",
+      "phase": "10",
+      "labels": ["phase-10-12", "bundle-b", "release-gate", "requires-g10-pre"],
+      "dependencies": ["WP-10003"],
+      "required_tests": ["TestOperationSurfaceConsolidation"],
+      "required_artifacts": [
+        "artifacts/phase10/chunk_b/operation_coverage_matrix.ndjson",
+        "artifacts/phase10/chunk_b/compatibility_alias_report.ndjson"
+      ],
+      "gate_preconditions": ["requires-g10-pre", "WP-10003"],
+      "dor_checks": [
+        "Dispatch parity baseline green",
+        "CLI and MCP operation inventory captured"
+      ],
+      "dod_checks": [
+        "No interface operation mismatch",
+        "Alias precedence and fallback behavior deterministic"
+      ],
+      "rollback_token": "rt-phase10-b-10005"
+    },
+    {
+      "issue_key": "THEGENT-WP-10006",
+      "title": "Unknown-operation migration UX",
+      "wp_id": "WP-10006",
+      "status": "Planned",
+      "assignee": "UX + Core runtime",
+      "bundle": "phase10_bundle_b",
+      "phase": "10",
+      "labels": ["phase-10-12", "bundle-b", "release-gate", "requires-g10-pre"],
+      "dependencies": ["WP-10003"],
+      "required_tests": ["TestMigrationHintRenderer", "TestUnknownOperationFlow"],
+      "required_artifacts": [
+        "artifacts/phase10/chunk_b/unknown_operation_hints.ndjson",
+        "artifacts/phase10/chunk_b/migration_hints_storybook.md"
+      ],
+      "gate_preconditions": ["requires-g10-pre", "WP-10003"],
+      "dor_checks": [
+        "Unknown-op capture path enabled in both interfaces",
+        "error schema includes operation and version fields"
+      ],
+      "dod_checks": [
+        "Every unknown operation includes migration suggestion",
+        "Suggestions include version/operation alternatives"
+      ],
+      "rollback_token": "rt-phase10-b-10006"
+    },
+    {
+      "issue_key": "THEGENT-WP-10007",
+      "title": "Dispatch traceability and audit context",
+      "wp_id": "WP-10007",
+      "status": "Planned",
+      "assignee": "Governance",
+      "bundle": "phase10_bundle_b",
+      "phase": "10",
+      "labels": ["phase-10-12", "bundle-b", "release-gate", "requires-g10"],
+      "dependencies": ["WP-10003", "WP-10004", "WP-10005"],
+      "required_tests": ["TestDispatchTraceEvent", "TestPolicyDigestConsistency"],
+      "required_artifacts": [
+        "artifacts/phase10/chunk_b/dispatch_trace_schema.ndjson",
+        "artifacts/phase10/chunk_b/dispatch_trace_readiness.ndjson"
+      ],
+      "gate_preconditions": ["requires-g10"],
+      "dor_checks": [
+        "Policy/digest fields available in dispatch emitter",
+        "Trace retrieval endpoint returns immutable rows"
+      ],
+      "dod_checks": [
+        "Trace includes policy_version and dispatch_path_hash",
+        "No mutable updates to dispatch rows"
+      ],
+      "rollback_token": "rt-phase10-b-10007"
+    },
+    {
+      "issue_key": "THEGENT-WP-10008",
+      "title": "Plugin lifecycle and conformance checks",
+      "wp_id": "WP-10008",
+      "status": "Planned",
+      "assignee": "Platform Architecture",
+      "bundle": "phase10_bundle_b",
+      "phase": "10",
+      "labels": ["phase-10-12", "bundle-b", "release-gate", "requires-g10"],
+      "dependencies": ["WP-10002", "WP-10007"],
+      "required_tests": ["TestAdapterConformanceLifecycle", "TestAdapterLifecycleRun"],
+      "required_artifacts": [
+        "artifacts/phase10/chunk_b/plugin_conformance_reports.ndjson",
+        "artifacts/phase10/chunk_b/chunk_b_signoff.md"
+      ],
+      "gate_preconditions": ["requires-g10"],
+      "dor_checks": [
+        "Adapter registration endpoint emits conformance status",
+        "Sandbox for non-critical lanes validated"
+      ],
+      "dod_checks": [
+        "Nonconformant adapters never activated in critical lane",
+        "Conformance evidence immutable and signed"
+      ],
+      "rollback_token": "rt-phase10-b-10008"
+    },
+    {
+      "issue_key": "THEGENT-WP-10009",
+      "title": "Backward-compatible API evolution controls",
+      "wp_id": "WP-10009",
+      "status": "Planned",
+      "assignee": "API + Docs",
+      "bundle": "phase10_bundle_b",
+      "phase": "10",
+      "labels": ["phase-10-12", "bundle-b", "release-gate", "requires-g10"],
+      "dependencies": ["WP-10001", "WP-10003"],
+      "required_tests": ["TestCompatibilityMatrixPolicy", "TestCompatibilityCrossPhase"],
+      "required_artifacts": [
+        "artifacts/phase10/chunk_b/compatibility_matrix.ndjson",
+        "artifacts/phase10/chunk_b/compatibility_cli_report.md"
+      ],
+      "gate_preconditions": ["requires-g10"],
+      "dor_checks": [
+        "Compatibility version mapping is defined",
+        "Migration CLI stub exists and dry-run validated"
+      ],
+      "dod_checks": [
+        "Incompatible versions blocked with explicit guidance",
+        "Matrix includes supported/unsupported ranges"
+      ],
+      "rollback_token": "rt-phase10-b-10009"
+    },
+    {
+      "issue_key": "THEGENT-WP-10010",
+      "title": "Cross-phase operations operator documentation",
+      "wp_id": "WP-10010",
+      "status": "Planned",
+      "assignee": "Documentation",
+      "bundle": "phase10_bundle_b",
+      "phase": "10",
+      "labels": ["phase-10-12", "bundle-b", "release-gate", "requires-g10"],
+      "dependencies": ["WP-10003", "WP-10005", "WP-10009"],
+      "required_tests": ["TestOperationsDocsGeneration"],
+      "required_artifacts": [
+        "artifacts/phase10/chunk_b/operations_ops_guide.ndjson",
+        "artifacts/phase10/chunk_b/operations_docs_contract_check.json"
+      ],
+      "gate_preconditions": ["requires-g10"],
+      "dor_checks": [
+        "Ops guide generation command exists",
+        "Doc examples linked to artifact IDs"
+      ],
+      "dod_checks": [
+        "All operations executable from docs in one session",
+        "Guide includes migration and fallback for unknown ops"
+      ],
+      "rollback_token": "rt-phase10-b-10010"
+    },
+    {
+      "issue_key": "THEGENT-WP-11001",
+      "title": "SLO regulator loop controller",
+      "wp_id": "WP-11001",
+      "status": "Planned",
+      "assignee": "SRE + Operations",
+      "bundle": "phase11_bundle_c",
+      "phase": "11",
+      "labels": ["phase-10-12", "bundle-c", "release-gate", "requires-g11-pre"],
+      "dependencies": ["WP-10003", "WP-10007"],
+      "required_tests": ["TestSLORegulator", "LoadStepResponseChaosSpec"],
+      "required_artifacts": [
+        "artifacts/phase11/chunk_c/slo_regulator_events.ndjson",
+        "artifacts/phase11/chunk_c/regulator_tuning_log.ndjson"
+      ],
+      "gate_preconditions": ["requires-g10", "requires-g11-pre"],
+      "dor_checks": [
+        "Bundle B evidence locks complete",
+        "Control override paths documented"
+      ],
+      "dod_checks": [
+        "No unstable loop events above threshold",
+        "Every control action includes rollback_vector"
+      ],
+      "rollback_token": "rt-phase11-c-11001"
+    },
+    {
+      "issue_key": "THEGENT-WP-11002",
+      "title": "Forecasting engine hardening",
+      "wp_id": "WP-11002",
+      "status": "Planned",
+      "assignee": "Data/Planning",
+      "bundle": "phase11_bundle_c",
+      "phase": "11",
+      "labels": ["phase-10-12", "bundle-c", "release-gate", "requires-g11-pre"],
+      "dependencies": ["WP-11001"],
+      "required_tests": ["TestForecastEngineRun", "BenchmarkForecastLatency"],
+      "required_artifacts": [
+        "artifacts/phase11/chunk_c/forecast_quality.ndjson",
+        "artifacts/phase11/chunk_c/forecast_drift_log.ndjson"
+      ],
+      "gate_preconditions": ["requires-g11-pre"],
+      "dor_checks": [
+        "Controller event stream includes confidence context",
+        "Forecast latency budget configured"
+      ],
+      "dod_checks": [
+        "p50/p80/p95 generated for standard plans",
+        "Forecast output schema passes contract check"
+      ],
+      "rollback_token": "rt-phase11-c-11002"
+    },
+    {
+      "issue_key": "THEGENT-WP-11003",
+      "title": "Predictor confidence calibration",
+      "wp_id": "WP-11003",
+      "status": "Planned",
+      "assignee": "QA + Governance",
+      "bundle": "phase11_bundle_c",
+      "phase": "11",
+      "labels": ["phase-10-12", "bundle-c", "release-gate", "requires-g11-pre"],
+      "dependencies": ["WP-11002"],
+      "required_tests": ["TestCalibrationDrift", "TestCalibrationDriftProperty"],
+      "required_artifacts": [
+        "artifacts/phase11/chunk_c/calibration_drift.ndjson",
+        "artifacts/phase11/chunk_c/calibration_report.md"
+      ],
+      "gate_preconditions": ["requires-g11-pre"],
+      "dor_checks": [
+        "Forecast confidence values are consumed by control planner",
+        "Pause thresholds defined and testable"
+      ],
+      "dod_checks": [
+        "Calibration drift auto-pauses unsafe optimization",
+        "No control action without confidence gate"
+      ],
+      "rollback_token": "rt-phase11-c-11003"
+    },
+    {
+      "issue_key": "THEGENT-WP-11004",
+      "title": "Preemption and saturation avoidance policies",
+      "wp_id": "WP-11004",
+      "status": "Planned",
+      "assignee": "Core routing",
+      "bundle": "phase11_bundle_c",
+      "phase": "11",
+      "labels": ["phase-10-12", "bundle-c", "release-gate", "requires-g11-pre"],
+      "dependencies": ["WP-11001", "WP-11002"],
+      "required_tests": ["TestPreemptiveSaturationPolicy", "BenchmarkSLOControllerThroughput"],
+      "required_artifacts": [
+        "artifacts/phase11/chunk_c/preemption_policy_events.ndjson",
+        "artifacts/phase11/chunk_c/saturation_guard_log.ndjson"
+      ],
+      "gate_preconditions": ["requires-g11-pre"],
+      "dor_checks": [
+        "Saturation thresholds and rollback limits configured",
+        "Preemption policy has explainable inputs"
+      ],
+      "dod_checks": [
+        "Avoided saturation events show bounded impact",
+        "No critical service collapse under stress"
+      ],
+      "rollback_token": "rt-phase11-c-11004"
+    },
+    {
+      "issue_key": "THEGENT-WP-11005",
+      "title": "Self-healing recommendation engine",
+      "wp_id": "WP-11005",
+      "status": "Planned",
+      "assignee": "Governance + Product",
+      "bundle": "phase11_bundle_c",
+      "phase": "11",
+      "labels": ["phase-10-12", "bundle-c", "release-gate", "requires-g11-pre"],
+      "dependencies": ["WP-11003", "WP-11004"],
+      "required_tests": ["TestSelfHealRecommendation", "TestSelfHealControlFlow"],
+      "required_artifacts": [
+        "artifacts/phase11/chunk_c/self_heal_recommendations.ndjson",
+        "artifacts/phase11/chunk_c/recommendation_rationale.ndjson"
+      ],
+      "gate_preconditions": ["requires-g11-pre"],
+      "dor_checks": [
+        "Recommendation scoring model versioned",
+        "Approval workflow wired for recommendations"
+      ],
+      "dod_checks": [
+        "Top-3 recommendations include rationale + owner + rollback",
+        "No auto-apply without policy approval"
+      ],
+      "rollback_token": "rt-phase11-c-11005"
+    },
+    {
+      "issue_key": "THEGENT-WP-12001",
+      "title": "Explainability contract implementation",
+      "wp_id": "WP-12001",
+      "status": "Planned",
+      "assignee": "Product + UX",
+      "bundle": "phase12_bundle_e",
+      "phase": "12",
+      "labels": ["phase-10-12", "bundle-e", "release-gate", "requires-g12-pre"],
+      "dependencies": ["WP-11010"],
+      "required_tests": ["TestExplainabilityContract", "TestExplainabilityReplayIntegration"],
+      "required_artifacts": [
+        "artifacts/phase12/chunk_e/explanation_contract_examples.ndjson",
+        "artifacts/phase12/chunk_e/explainability_consistency_report.md"
+      ],
+      "gate_preconditions": ["requires-g12-pre"],
+      "dor_checks": [
+        "Single explainability schema ID exists",
+        "Summary/detail/trace pathways share schema ids"
+      ],
+      "dod_checks": [
+        "Explainability output deterministic under same trace",
+        "Consistency report generated and signed"
+      ],
+      "rollback_token": "rt-phase12-e-12001"
+    },
+    {
+      "issue_key": "THEGENT-WP-12002",
+      "title": "Escalation fatigue and noise control",
+      "wp_id": "WP-12002",
+      "status": "Planned",
+      "assignee": "SRE",
+      "bundle": "phase12_bundle_e",
+      "phase": "12",
+      "labels": ["phase-10-12", "bundle-e", "release-gate", "requires-g12-pre"],
+      "dependencies": ["WP-12001"],
+      "required_tests": ["TestFatigueControlRules", "TestFatigueSuppressionAccuracy"],
+      "required_artifacts": [
+        "artifacts/phase12/chunk_e/fatigue_controls.ndjson",
+        "artifacts/phase12/chunk_e/fatigue_impact_report.md"
+      ],
+      "gate_preconditions": ["requires-g12-pre", "WP-12001"],
+      "dor_checks": [
+        "Fatigue thresholds and ceilings configured",
+        "Critical alert paths excluded from suppression"
+      ],
+      "dod_checks": [
+        "Noise metrics improve without masking priority events",
+        "Suppression actions are reversible"
+      ],
+      "rollback_token": "rt-phase12-e-12002"
+    },
+    {
+      "issue_key": "THEGENT-WP-12003",
+      "title": "Replay sandbox hardening",
+      "wp_id": "WP-12003",
+      "status": "Planned",
+      "assignee": "Core runtime",
+      "bundle": "phase12_bundle_e",
+      "phase": "12",
+      "labels": ["phase-10-12", "bundle-e", "release-gate", "requires-g12-pre"],
+      "dependencies": ["WP-12001"],
+      "required_tests": ["TestReplaySandboxMutationGuard", "TestReplayMutationProperty"],
+      "required_artifacts": [
+        "artifacts/phase12/chunk_e/replay_safety.ndjson",
+        "artifacts/phase12/chunk_e/replay_mutation_report.md"
+      ],
+      "gate_preconditions": ["requires-g12-pre", "WP-12001"],
+      "dor_checks": [
+        "Replay execute-mode flag present and tested",
+        "Read-only default validated in smoke checks"
+      ],
+      "dod_checks": [
+        "No mutation events in default replay",
+        "Audit events created for blocked writes"
+      ],
+      "rollback_token": "rt-phase12-e-12003"
+    },
+    {
+      "issue_key": "THEGENT-WP-12004",
+      "title": "What-if simulation and branch governance",
+      "wp_id": "WP-12004",
+      "status": "Planned",
+      "assignee": "Product + Governance",
+      "bundle": "phase12_bundle_e",
+      "phase": "12",
+      "labels": ["phase-10-12", "bundle-e", "release-gate", "requires-g12-pre"],
+      "dependencies": ["WP-12003"],
+      "required_tests": ["TestWhatIfBranchEngine", "TestHandoffReplayReadiness"],
+      "required_artifacts": [
+        "artifacts/phase12/chunk_e/what_if_branching.ndjson",
+        "artifacts/phase12/chunk_e/branch_approval_trace.ndjson"
+      ],
+      "gate_preconditions": ["requires-g12-pre", "WP-12003"],
+      "dor_checks": [
+        "Replay branch endpoint supports deterministic seed",
+        "Branch approval path documented"
+      ],
+      "dod_checks": [
+        "Same input yields same branch result",
+        "Branch outcomes captured in evidence manifest"
+      ],
+      "rollback_token": "rt-phase12-e-12004"
+    },
+    {
+      "issue_key": "THEGENT-WP-12005",
+      "title": "Handoff confidence and continuity envelope",
+      "wp_id": "WP-12005",
+      "status": "Planned",
+      "assignee": "Governance + UX",
+      "bundle": "phase12_bundle_e",
+      "phase": "12",
+      "labels": ["phase-10-12", "bundle-e", "release-gate", "requires-g12-pre"],
+      "dependencies": ["WP-12003", "WP-12004"],
+      "required_tests": ["TestHandoffConfidenceGate"],
+      "required_artifacts": [
+        "artifacts/phase12/chunk_e/handoff_continuity.ndjson",
+        "artifacts/phase12/chunk_e/handoff_confirmation_log.ndjson"
+      ],
+      "gate_preconditions": ["requires-g12-pre", "WP-12003", "WP-12004"],
+      "dor_checks": [
+        "Handoff confidence threshold configured",
+        "Continuity snapshot required for critical handoff"
+      ],
+      "dod_checks": [
+        "No critical handoff without explicit confirm",
+        "Continuity edge recorded in evidence graph"
+      ],
+      "rollback_token": "rt-phase12-e-12005"
+    },
+    {
+      "issue_key": "THEGENT-WP-12006",
+      "title": "Evidence graph and export bundling",
+      "wp_id": "WP-12006",
+      "status": "Planned",
+      "assignee": "Compliance",
+      "bundle": "phase12_bundle_e",
+      "phase": "12",
+      "labels": ["phase-10-12", "bundle-e", "release-gate", "requires-g12-pre"],
+      "dependencies": ["WP-12005"],
+      "required_tests": ["TestEvidenceGraphPackaging", "TestEvidenceGraphCompleteness", "TestEvidencePackagingFlow"],
+      "required_artifacts": [
+        "artifacts/phase12/chunk_e/evidence_graph.ndjson",
+        "artifacts/phase12/chunk_e/evidence_bundling_report.md"
+      ],
+      "gate_preconditions": ["requires-g12-pre", "WP-12005"],
+      "dor_checks": [
+        "Evidence graph includes WP criticality edges",
+        "Export command outputs manifest manifest_id"
+      ],
+      "dod_checks": [
+        "No dangling edges in critical-action trace",
+        "Pack run is checksum reproducible"
+      ],
+      "rollback_token": "rt-phase12-e-12006"
+    },
+    {
+      "issue_key": "THEGENT-WP-12007",
+      "title": "Persona profiles and access constraints",
+      "wp_id": "WP-12007",
+      "status": "Planned",
+      "assignee": "Product + Security",
+      "bundle": "phase12_bundle_f",
+      "phase": "12",
+      "labels": ["phase-10-12", "bundle-f", "release-gate", "requires-g12-pre"],
+      "dependencies": ["WP-12005"],
+      "required_tests": ["TestPersonaProfiles"],
+      "required_artifacts": [
+        "artifacts/phase12/chunk_f/persona_profiles.ndjson",
+        "artifacts/phase12/chunk_f/persona_access_matrix.json"
+      ],
+      "gate_preconditions": ["requires-g12-pre", "WP-12005"],
+      "dor_checks": [
+        "Persona catalog includes SRE/Product/Security",
+        "Default matrix and override policy defined"
+      ],
+      "dod_checks": [
+        "Persona constraints enforced at action boundary",
+        "Persona default and override behavior deterministic"
+      ],
+      "rollback_token": "rt-phase12-f-12007"
+    },
+    {
+      "issue_key": "THEGENT-WP-12008",
+      "title": "Operational learning assets",
+      "wp_id": "WP-12008",
+      "status": "Planned",
+      "assignee": "Documentation",
+      "bundle": "phase12_bundle_f",
+      "phase": "12",
+      "labels": ["phase-10-12", "bundle-f", "release-gate", "requires-g12-pre"],
+      "dependencies": ["WP-12007"],
+      "required_tests": ["TestLearningAssetGeneration"],
+      "required_artifacts": [
+        "artifacts/phase12/chunk_f/operational_learning_assets.ndjson",
+        "artifacts/phase12/chunk_f/continuity_drill_report.md"
+      ],
+      "gate_preconditions": ["requires-g12-pre", "WP-12007"],
+      "dor_checks": [
+        "Runbook and coaching asset templates prepared",
+        "Assets have versions and owners"
+      ],
+      "dod_checks": [
+        "Continuity drill script passes with assets",
+        "Assets include anti-fatigue coaching"
+      ],
+      "rollback_token": "rt-phase12-f-12008"
+    },
+    {
+      "issue_key": "THEGENT-WP-12009",
+      "title": "Automation of release docs packaging",
+      "wp_id": "WP-12009",
+      "status": "Planned",
+      "assignee": "Documentation/Automation",
+      "bundle": "phase12_bundle_f",
+      "phase": "12",
+      "labels": ["phase-10-12", "bundle-f", "release-gate", "requires-g12"],
+      "dependencies": ["WP-12006", "WP-12008"],
+      "required_tests": ["TestReleasePackCompiler", "TestReleasePackDeterministicBuild", "TestEvidencePackagingFlow"],
+      "required_artifacts": [
+        "artifacts/phase12/chunk_f/release_pack_summary.ndjson",
+        "artifacts/phase12/chunk_f/release_pack_manifest.ndjson",
+        "artifacts/phase12/chunk_f/release_pack_determinism.md"
+      ],
+      "gate_preconditions": ["requires-g12", "WP-12006", "WP-12008"],
+      "dor_checks": [
+        "One-command compile path tested",
+        "Manifest includes all PRD/WBS/test artifacts"
+      ],
+      "dod_checks": [
+        "Release output is deterministic across two runs",
+        "Release output includes checksum and signoff note path"
+      ],
+      "rollback_token": "rt-phase12-f-12009"
+    },
+    {
+      "issue_key": "THEGENT-WP-12010",
+      "title": "Phase 10–12 closure and handoff note",
+      "wp_id": "WP-12010",
+      "status": "Planned",
+      "assignee": "Program lead",
+      "bundle": "phase12_bundle_f",
+      "phase": "12",
+      "labels": ["phase-10-12", "bundle-f", "release-gate", "requires-g12"],
+      "dependencies": ["WP-12009", "WP-11010"],
+      "required_tests": ["TestPhase10to12Finality", "TestPersonaAndReadinessGate"],
+      "required_artifacts": [
+        "artifacts/phase12/chunk_f/phase10_12_finality_bundle.md",
+        "artifacts/phase12/chunk_f/closure_residual_risk_log.md"
+      ],
+      "gate_preconditions": ["requires-g10", "requires-g11", "requires-g12"],
+      "dor_checks": [
+        "All gate notes linked and signed",
+        "Evidence manifest coverage verified"
+      ],
+      "dod_checks": [
+        "Finality artifact includes owners + residual risks + evidence index",
+        "No WP-12007 to WP-12010 blockers in import matrix"
+      ],
+      "rollback_token": "rt-phase12-f-12010"
+    },
+    {
+      "issue_key": "THEGENT-WP-11006",
+      "title": "Adaptive task shaping",
+      "wp_id": "WP-11006",
+      "status": "Planned",
+      "assignee": "Orchestration runtime",
+      "bundle": "phase11_bundle_d",
+      "phase": "11",
+      "labels": ["phase-10-12", "bundle-d", "release-gate", "requires-g11-pre"],
+      "dependencies": ["WP-11004", "WP-11005"],
+      "required_tests": ["TestAdaptiveTaskShaping", "TestTaskShapingPolicy"],
+      "required_artifacts": [
+        "artifacts/phase11/chunk_d/adaptive_shaping.ndjson",
+        "artifacts/phase11/chunk_d/task_shaping_risk_log.ndjson"
+      ],
+      "gate_preconditions": ["requires-g11-pre", "WP-11004", "WP-11005"],
+      "dor_checks": [
+        "Shaping thresholds and risk policy finalized",
+        "Reversal action path defined"
+      ],
+      "dod_checks": [
+        "Shaping actions have owner rationale",
+        "Risk and reason persisted in control trace"
+      ],
+      "rollback_token": "rt-phase11-d-11006"
+    },
+    {
+      "issue_key": "THEGENT-WP-11007",
+      "title": "Continuity risk predictor",
+      "wp_id": "WP-11007",
+      "status": "Planned",
+      "assignee": "Product + SRE",
+      "bundle": "phase11_bundle_d",
+      "phase": "11",
+      "labels": ["phase-10-12", "bundle-d", "release-gate", "requires-g11-pre"],
+      "dependencies": ["WP-11006"],
+      "required_tests": ["TestContinuityRiskPredictor", "TestReshapeUnderSurge"],
+      "required_artifacts": [
+        "artifacts/phase11/chunk_d/continuity_predictions.ndjson",
+        "artifacts/phase11/chunk_d/continuity_false_positive_review.md"
+      ],
+      "gate_preconditions": ["requires-g11-pre", "WP-11006"],
+      "dor_checks": [
+        "Shift/freeze calendar imported",
+        "Continuity snapshot includes handoff and age"
+      ],
+      "dod_checks": [
+        "Continuity warnings appear before predicted break windows",
+        "Prediction trace captured and signed"
+      ],
+      "rollback_token": "rt-phase11-d-11007"
+    },
+    {
+      "issue_key": "THEGENT-WP-11008",
+      "title": "Learning loop and policy guardrails",
+      "wp_id": "WP-11008",
+      "status": "Planned",
+      "assignee": "Governance",
+      "bundle": "phase11_bundle_d",
+      "phase": "11",
+      "labels": ["phase-10-12", "bundle-d", "release-gate", "requires-g11-pre"],
+      "dependencies": ["WP-11003", "WP-11007"],
+      "required_tests": ["TestLearningLoopGovernance", "TestPolicySignedChangeManifest"],
+      "required_artifacts": [
+        "artifacts/phase11/chunk_d/learning_loop.ndjson",
+        "artifacts/phase11/chunk_d/policy_change_manifest.ndjson"
+      ],
+      "gate_preconditions": ["requires-g11-pre", "WP-11007", "WP-11003"],
+      "dor_checks": [
+        "Policy approval workflow implemented",
+        "Policy change manifest schema in place"
+      ],
+      "dod_checks": [
+        "No auto parameter change without owner signoff",
+        "Rollback metadata attached to learning events"
+      ],
+      "rollback_token": "rt-phase11-d-11008"
+    },
+    {
+      "issue_key": "THEGENT-WP-11009",
+      "title": "Safe-mode action governance",
+      "wp_id": "WP-11009",
+      "status": "Planned",
+      "assignee": "Security",
+      "bundle": "phase11_bundle_d",
+      "phase": "11",
+      "labels": ["phase-10-12", "bundle-d", "release-gate", "requires-g11-pre"],
+      "dependencies": ["WP-11008"],
+      "required_tests": ["TestSafeModeGovernance", "TestSafeModeReentry", "TestControlRollbackLatency"],
+      "required_artifacts": [
+        "artifacts/phase11/chunk_d/safe_mode_governance.ndjson",
+        "artifacts/phase11/chunk_d/safe_mode_drill_report.md"
+      ],
+      "gate_preconditions": ["requires-g11-pre", "WP-11008"],
+      "dor_checks": [
+        "Safe-mode lifecycle states defined",
+        "Safe-mode expiry and revalidation rules implemented"
+      ],
+      "dod_checks": [
+        "Safe-mode transitions reversible and auditable",
+        "Re-entry test covers event continuity"
+      ],
+      "rollback_token": "rt-phase11-d-11009"
+    },
+    {
+      "issue_key": "THEGENT-WP-11010",
+      "title": "Forecast and control evidence pack",
+      "wp_id": "WP-11010",
+      "status": "Planned",
+      "assignee": "QA + Docs",
+      "bundle": "phase11_bundle_d",
+      "phase": "11",
+      "labels": ["phase-10-12", "bundle-d", "release-gate", "requires-g11"],
+      "dependencies": ["WP-11001", "WP-11002", "WP-11005", "WP-11008", "WP-11009"],
+      "required_tests": ["TestEvidencePackEmit11"],
+      "required_artifacts": [
+        "artifacts/phase11/chunk_d/g11_readiness_pack.ndjson",
+        "artifacts/phase11/chunk_d/g11_gate_evidence.ndjson"
+      ],
+      "gate_preconditions": ["requires-g11", "WP-11001", "WP-11002", "WP-11005", "WP-11008", "WP-11009"],
+      "dor_checks": [
+        "Control evidence sources are complete",
+        "G11 narrative and reproducibility instructions included"
+      ],
+      "dod_checks": [
+        "Evidence pack includes manifests and manifest checksums",
+        "All required control artifacts are linked by WP"
+      ],
+      "rollback_token": "rt-phase11-d-11010"
+    }
+  ]
+}

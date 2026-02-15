@@ -72,6 +72,13 @@ else
   mv "$_TOOL_CACHE_FILE.$$" "$_TOOL_CACHE_FILE" 2>/dev/null || true
 fi
 
+# --- Git caching with gitoxide support (Phase 3.5) ---
+# Source git cache functions - provides git_cached() for 5-20x git speedup
+if [[ -f "${BASH_SOURCE[0]%/*}/git-cache.sh" ]]; then
+  # shellcheck disable=SC1090
+  source "${BASH_SOURCE[0]%/*}/git-cache.sh"
+fi
+
 # sort_unique: use huniq if available, else sort -u
 sort_unique() {
   if [[ -n "${HUNIQ_CMD:-}" ]]; then
@@ -324,6 +331,11 @@ tool_available() {
   echo "$result"
 }
 
+# Alias for tool_available (used by security-pipeline.sh)
+_has_tool() {
+  tool_available "$1"
+}
+
 # --- Run with timeout ---
 run_with_timeout() {
   local secs="$1"; shift
@@ -439,6 +451,22 @@ write_fail_report() {
   local g; g="$(_json_escape "$gate_name")"
   printf '{"generated_at":"%s","gate":"%s","status":"fail","pass":false,"error_count":%d,"errors":%s}\n' \
     "$now" "$g" "$error_count" "$errors_json" > "$report_path"
+}
+
+# --- Feedback & Nudging ---
+# Emits a structured feedback JSON block that thegent output parser can detect.
+# Usage: emit_feedback <level> <scope> <message> [code] [suggestion]
+# Levels: success, info, suggestion, warning, error
+emit_feedback() {
+  local level="$1" scope="$2" msg="$3" code="${4:-}" suggest="${5:-}"
+  local l; l="$(_json_escape "$level")"
+  local s; s="$(_json_escape "$scope")"
+  local m; m="$(_json_escape "$msg")"
+  local c; c="$(_json_escape "$code")"
+  local sug; sug="$(_json_escape "$suggest")"
+  
+  printf '\n{"type":"feedback","level":"%s","scope":"%s","message":"%s","code":"%s","suggestion":"%s"}\n' \
+    "$l" "$s" "$m" "$c" "$sug"
 }
 
 # --- State helpers ---
@@ -770,3 +798,114 @@ hook_shared_fr_index() {
     fi
     cat "$shared_file"
 }
+
+# ============================================================================
+# Skip Hooks Logic
+# ============================================================================
+# Allow skipping hooks via SKIP_HOOKS env var (comma-separated, e.g., "test-maturity,security-pipeline")
+# Also reads from .claude/qa-local.json if exists.
+
+# Read skip hooks from .claude/qa-local.json if not already loaded
+_hook_load_skip_hooks() {
+    [[ -n "${_SKIP_HOOKS_LOADED:-}" ]] && return 0
+    _SKIP_HOOKS_LOADED=1
+
+    local qa_local="${PROJECT_DIR}/.claude/qa-local.json"
+    if [[ -f "$qa_local" ]] && command -v jq >/dev/null 2>&1; then
+        local skip_json
+        skip_json=$(jq -r '.hooks.skip[]?' "$qa_local" 2>/dev/null | tr '\n' ',' | sed 's/,$//')
+        if [[ -n "$skip_json" ]]; then
+            export SKIP_HOOKS="${SKIP_HOOKS:-$skip_json}"
+        fi
+    fi
+}
+
+# Check if a hook should be skipped
+# Usage: hook_should_skip "hook-name" (without .sh extension)
+hook_should_skip() {
+    local hook_name="$1"
+    local skip_list="${SKIP_HOOKS:-}"
+    [[ -z "$skip_list" ]] && return 1
+    # Match with or without .sh suffix
+    local hook_base="${hook_name%.sh}"
+    # Convert comma-separated list to pattern for matching
+    [[ ",${skip_list}," == *",${hook_base},"* ]] && return 0
+    return 1
+}
+
+# ============================================================================
+# Hook Execution Control: Smart File-Based Execution
+# ============================================================================
+
+# Increased cache TTL: 600s (10 min) instead of 120s (2 min)
+# This reduces redundant work across hook invocations
+export HOOK_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
+
+# Check if hook should run based on file changes
+# Usage: hook_should_run "hook-name" "file-pattern"
+# Returns 0 (success) if hook should run, 1 (failure) if should skip
+# If no files changed, returns 0 (run for safety)
+# Phase 3.5: Uses git_cached() for gitoxide + caching (5-20x speedup)
+hook_should_run() {
+    local hook_name="${1:-unknown}" pattern="${2:-}"
+
+    # Get changed files - prefer CHANGED_FILES from dispatcher, fallback to git with caching
+    local changed_files=""
+
+    # Priority 1: Use dispatcher-provided CHANGED_FILES (already computed, no git needed)
+    if [[ -n "${CHANGED_FILES:-}" ]]; then
+        changed_files="${CHANGED_FILES}"
+    # Priority 2: Only call git if dispatcher didn't provide CHANGED_FILES
+    # AND we're in a git repo. Uses git_cached() for gitoxide + caching support.
+    elif in_git_repo >/dev/null 2>&1; then
+        # CRITICAL: Git command must timeout to avoid hanging for 180s
+        # Use git_cached() for:
+        #   - gitoxide (gix) support: 5-20x faster than canonical git
+        #   - File-based caching: 60s TTL + FS event invalidation
+        #   - Graceful fallback to canonical git if gitoxide unavailable
+        if type git_cached &>/dev/null; then
+            changed_files="$(git_cached diff --name-only HEAD 2>/dev/null || true)"
+        elif command -v timeout >/dev/null 2>&1; then
+            # Fallback: use original timeout-based git (for systems without git-cache.sh sourced)
+            changed_files="$(timeout 5 git diff --name-only HEAD 2>/dev/null || true)"
+        else
+            # Last resort: try git without timeout (shouldn't happen with dispatcher)
+            changed_files="$(git diff --name-only HEAD 2>/dev/null || true)"
+        fi
+    fi
+
+    # If no changes detected, run hook (safer default - assume first run)
+    [[ -z "$changed_files" ]] && return 0
+
+    # If no pattern specified, run for any change
+    [[ -z "$pattern" ]] && return 0
+
+    # Check if any changed file matches the pattern
+    echo "$changed_files" | grep -qE "$pattern"
+}
+
+# Quick check if ANY source files changed (for expensive hooks)
+# Usage: any_source_changed && run_expensive_hook
+any_source_changed() {
+    hook_should_run "check" '\.(py|rs|go|ts|js|tsx|jsx|sh|bash)$'
+}
+
+# Check if test files specifically changed
+# Usage: test_files_changed && run_test_maturity
+test_files_changed() {
+    hook_should_run "check" '(test|spec|tests|.*_test\.|.*\.test\.)'
+}
+
+# Check if docs specifically changed
+# Usage: docs_changed && run_docs_hooks
+docs_changed() {
+    hook_should_run "check" '\.(md|txt|rst)$'
+}
+
+# ============================================================================
+# Timeout Configuration
+# ============================================================================
+# Activity timeout: kill hook if no output for this many seconds
+# Max timeout: absolute maximum time before killing regardless of output
+export HOOK_IDLE_TIMEOUT="${HOOK_IDLE_TIMEOUT:-180}"
+export HOOK_MAX_TIMEOUT="${HOOK_MAX_TIMEOUT:-600}"

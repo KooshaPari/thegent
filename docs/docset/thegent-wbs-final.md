@@ -1,7 +1,7 @@
 # Thegent Final WBS (Comprehensive)
 
 Status: Finalized with Phase X Contract Hardening & WP-Y Cross-Cutting Enhancements
-Date: 2026-02-14
+Date: 2026-02-15
 Version: 2.0 (Updated with synthesis findings)
 
 ## Scope
@@ -10,9 +10,10 @@ This WBS defines the execution structure for thegent orchestration optimization 
 - 7 original phases (0, 1, 2, 3, 4, 5, 6) with 8 WPs each (56 base WPs)
 - 1 new Phase X: Contract and Adapter Hardening (8 WPs)
 - 8 cross-cutting WP-Y enhancements distributed across phases
+- 3 post-closure phases (Phase 10, 11, 12) with 30 WPs
 - Complete dependency chains, pattern references, and acceptance criteria per WP
 
-Total: 72 work packages across 8 phases.
+Total: 102 work packages across 11 named phases + cross-cutting work.
 
 ## Planning Assumptions
 
@@ -33,6 +34,9 @@ Total: 72 work packages across 8 phases.
 - **Phase 4:** Human-Centered UX and Explainability (WP-4001..4008, WP-Y7)
 - **Phase 5:** Adaptive Scale and Continuity Automation (WP-5001..5008, WP-Y4, WP-Y8)
 - **Phase 6:** Enterprise Readiness and Launch Closure (WP-6001..6008)
+- **Phase 10:** Adaptive Interface and Ecosystem Convergence (WP-10001..10010)
+- **Phase 11:** Autonomous Reliability Optimization and Predictive Resilience (WP-11001..11010)
+- **Phase 12:** Enterprise-Grade Intuition, Explainability, and Hardening (WP-12001..12010)
 
 ---
 
@@ -243,6 +247,92 @@ This phase gates all Phase 1+ work. Contract normalization must complete before 
 
 ---
 
+### Phase 10: Adaptive Interface and Tool Ecosystem Convergence
+
+This phase stabilizes operation envelopes, registries, and adapter semantics before autonomous controls.
+
+| WP | Description | Status | Acceptance Criteria | FR Map | Pattern Map | Depends On |
+|----|-------------|--------|-------------------|--------|-----------|------------|
+| **WP-10001** | Operation envelope schema v2 | Not Started | Uniform schema validated across CLI and MCP; compatible mode + drift-safe defaults | FR-069 | TBD | WP-9001 |
+| **WP-10002** | Capability registry service | Not Started | Registry returns stable capabilities, trust metadata, and version constraints under 60ms p95 | FR-070 | TBD | WP-10001 |
+| **WP-10003** | Dispatch graph implementation | Not Started | Deterministic operation resolution and policy-aware routing under repeated runs | FR-071 | TBD | WP-10001, WP-10002 |
+| **WP-10004** | Adapter admission and trust policy | Not Started | Low-trust adapters blocked on critical lanes; deny rules enforced | FR-073 | TBD | WP-10002 |
+| **WP-10005** | Endpoint consolidation and aliases | Not Started | CLI and MCP operation surface parity; alias mapping with deterministic fallback | FR-071 | TBD | WP-10003 |
+| **WP-10006** | Unknown-operation migration UX | Not Started | Every unsupported operation returns migration alternative and alternative operation suggestions | FR-074, FR-075 | TBD | WP-10003 |
+| **WP-10007** | Dispatch traceability and audit context | Not Started | Dispatch trace stores `dispatch_path`, `rule_reason`, `policy_version` | FR-072 | TBD | WP-10003 |
+| **WP-10008** | Plugin lifecycle and conformance checks | Not Started | Plugins require conformance pass before activation; unsafe plugins quarantined | FR-073 | TBD | WP-10002, WP-10007 |
+| **WP-10009** | Backward-compatible API evolution controls | Not Started | Compatibility matrix + migration path for breaking schema changes | FR-074 | TBD | WP-10001, WP-10005 |
+| **WP-10010** | Cross-phase operations operator documentation | Not Started | One canonical operations guide supports all major operations | FR-069 | TBD | WP-10003, WP-10005 |
+
+**Interdependencies within Phase 10:**
+- WP-10001 -> WP-10002 -> WP-10003.
+- WP-10003 -> WP-10005, WP-10006, WP-10007.
+- WP-10002 -> WP-10004, WP-10008.
+- WP-10001 + WP-10007 -> WP-10009.
+- WP-10003 + WP-10005 -> WP-10010.
+
+**Critical Gate G10:** Registry-first deterministic dispatch and migration clarity.
+
+---
+
+### Phase 11: Autonomous Optimization and Predictive Resilience
+
+This phase introduces closed-loop optimization controls with governance guardrails and stability constraints.
+
+| WP | Description | Status | Acceptance Criteria | FR Map | Pattern Map | Depends On |
+|----|-------------|--------|-------------------|--------|-----------|------------|
+| **WP-11001** | SLO regulator loop controller | Not Started | Stable control updates with anti-oscillation guarantees | FR-076 | TBD | WP-10003, WP-10007 |
+| **WP-11002** | Forecasting engine hardening | Not Started | Forecast quality for standard plans produced with bounded latency | FR-077 | TBD | WP-11001 |
+| **WP-11003** | Predictor confidence calibration | Not Started | Miscalibration triggers controlled pause; calibration dashboard available | FR-077 | TBD | WP-11002 |
+| **WP-11004** | Preemption and saturation avoidance policies | Not Started | Saturation risk reduced with bounded provider preemption and rollback assumptions | FR-078 | TBD | WP-11001, WP-11002 |
+| **WP-11005** | Self-healing recommendation engine | Not Started | Top-3 recommendations include assumptions and rollback metadata | FR-079 | TBD | WP-11003 |
+| **WP-11006** | Adaptive task shaping | Not Started | Dynamic split/merge only with policy justification and owner traceability | FR-080 | TBD | WP-11004 |
+| **WP-11007** | Continuity risk predictor | Not Started | Continuity risk alerts before predicted shift or stall events | FR-081 | TBD | WP-11006 |
+| **WP-11008** | Learning loop and policy guardrails | Not Started | Parameter updates only with policy approval; rollback manifest emitted | FR-082 | TBD | WP-11003, WP-10007 |
+| **WP-11009** | Safe-mode action governance | Not Started | Safe-mode actions require explicit owner and auto-expire | FR-036 | TBD | WP-11008 |
+| **WP-11010** | Forecast and control evidence pack | Not Started | G11 evidence pack generated and reproducible | FR-077, FR-079, FR-081 | TBD | WP-11001, WP-11002, WP-11005 |
+
+**Interdependencies within Phase 11:**
+- WP-11001 depends on dispatch traceability from WP-10003 and WP-10007.
+- WP-11002 and WP-11003 gate forecast quality controls and calibration.
+- WP-11004 and WP-11005 follow forecasting + calibration decisions.
+- WP-11006 and WP-11007 provide continuity-safe adaptation actions.
+- WP-11008 + WP-11009 enforce owner-approved learning updates.
+- WP-11010 closes Phase 11 with control evidence.
+
+**Critical Gate G11:** Predictive control runs safely under policy with reproducible evidence.
+
+---
+
+### Phase 12: Enterprise-Grade Intuition, Explainability, and Hardening
+
+This phase hardens replay, escalation, explainability, and release packaging.
+
+| WP | Description | Status | Acceptance Criteria | FR Map | Pattern Map | Depends On |
+|----|-------------|--------|-------------------|--------|-----------|------------|
+| **WP-12001** | Explainability contract implementation | Not Started | Summary/detail/trace schemas align across all major decision streams | FR-083 | TBD | WP-11010, WP-9002 |
+| **WP-12002** | Escalation fatigue and noise control | Not Started | Noise suppression reduces non-critical churn while preserving critical visibility | FR-084 | TBD | WP-12001 |
+| **WP-12003** | Replay sandbox hardening | Not Started | Replay never writes state outside explicit execute mode | FR-085 | TBD | WP-12001 |
+| **WP-12004** | What-if simulation and branch governance | Not Started | Replays branch deterministically with pre-flight simulation checks | FR-085 | TBD | WP-12003 |
+| **WP-12005** | Handoff confidence and continuity envelope | Not Started | Continuity handoff requires explicit confirmation and complete evidence bundle | FR-087, FR-086 | TBD | WP-12003 |
+| **WP-12006** | Evidence graph and export bundling | Not Started | Evidence graph has closed-loop links and deterministic manifest export | FR-088 | TBD | WP-12005, WP-10007 |
+| **WP-12007** | Persona profiles and access constraints | Not Started | Role-based action limits and defaults enforced per persona | FR-089 | TBD | WP-12005 |
+| **WP-12008** | Operational learning assets | Not Started | New operator can complete drill with generated coaching assets | FR-090 | TBD | WP-12007 |
+| **WP-12009** | Automation of release docs packaging | Not Started | One-command packaging of PRD/WBS/test artifacts with checksums | FR-090 | TBD | WP-12006, WP-12008 |
+| **WP-12010** | Phase 10–12 closure and handoff note | Not Started | Finality evidence and owner approvals compiled for sign-off | FR-090 | TBD | WP-12009 |
+
+**Interdependencies within Phase 12:**
+- WP-12001 requires WP-11010 and interface explainability baseline from WP-9002.
+- WP-12003 hardens replay safety before branching (WP-12004).
+- WP-12005 requires replay guardrails and continuity baseline.
+- WP-12006 requires evidence graph completeness from WP-12005 and dispatch audit trace.
+- WP-12007 drives persona controls used by WP-12008.
+- WP-12010 only after all WPs in 12 and Gates G10–G11 evidence are complete.
+
+**Critical Gate G12:** Replay-safe explainability and deterministic release packaging.
+
+---
+
 ## Dependencies: Complete Dependency Chain
 
 ### Foundation to Deterministic Routing:
@@ -421,6 +511,40 @@ WP-6002 (compliance) + WP-6003 (SLO cert) + WP-6004 (runbook) + WP-6005 (KPI bas
 WP-6008 (formal closure)
 ```
 
+### Interface Convergence and Control:
+```
+WP-9001 (operations protocol v1)
+    ↓
+WP-10001 (operation envelope v2) + WP-10002 (capability registry)
+    ↓
+WP-10003 (deterministic dispatch graph)
+    ↓
+WP-10007 (dispatch trace context)
+    ↓
+WP-10004 (adapter trust) + WP-10008 (adapter conformance lifecycle)
+    ↓
+WP-11001 (SLO regulator)
+    ↓
+WP-12003 (replay sandbox hardening)
+    ↓
+WP-12006 (evidence graph packaging)
+    ↓
+WP-12010 (phase 10-12 closure)
+```
+
+### Predictive and Explainability Escalation:
+```
+WP-11001 (SLO regulator)
+    ↓
+WP-11002 (forecasting) + WP-11003 (calibration)
+    ↓
+WP-11004 (preemption) + WP-11005 (self-heal recommendations)
+    ↓
+WP-12001 (explainability contract) + WP-12004 (what-if branch governance)
+    ↓
+WP-12006 (evidence bundling) + WP-12009 (release pack compiler)
+```
+
 ---
 
 ## Milestones and Gates
@@ -435,6 +559,9 @@ WP-6008 (formal closure)
 | **M4** | UX cockpit + TRAFFIC dashboard + continuity adoption | Gate E | WP-4001..4008, WP-Y7 | M-9w |
 | **M5** | Adaptive scale + cost optimization + provider scoring stable | Gate F | WP-5001..5008, WP-Y4, WP-Y8 | M-11w |
 | **M6** | Enterprise launch readiness approved | Gate G | WP-6001..6008 | M-13w |
+| **M10** | Deterministic dispatch and operation compatibility | Gate G10 | WP-10001..10010 | M-15w |
+| **M11** | Predictive control and policy-aware self-heal | Gate G11 | WP-11001..11010 | M-17w |
+| **M12** | Explainability and release hardening | Gate G12 | WP-12001..12010 | M-19w |
 
 ---
 
@@ -515,17 +642,41 @@ WP-6008 (formal closure)
 - [ ] WP-6008 complete: closure memo signed; successor roadmap drafted.
 - **Approval:** Executive sponsor + All domain leads.
 
+### Gate G10: Interface Determinism and Migration Safety
+- [ ] WP-10001 complete: operation envelopes validated across CLI and MCP.
+- [ ] WP-10002 complete: capability registry returns stable version and trust metadata.
+- [ ] WP-10003 complete: dispatch path deterministic across repeated invocations.
+- [ ] WP-10006 complete: unknown operations return structured migration guidance.
+- [ ] WP-10007 complete: dispatch trace fields persisted and queryable.
+- **Approval:** Platform lead + Governance/Ops.
+
+### Gate G11: Predictive Control and Safe Optimization
+- [ ] WP-11001 complete: control loop stable under anti-oscillation constraints.
+- [ ] WP-11002 complete: forecast quality telemetry valid for standard plans.
+- [ ] WP-11003 complete: calibration controls pause unsafe auto-adjustments.
+- [ ] WP-11005 complete: recommendations include owner and rollback assumptions.
+- [ ] WP-11010 complete: G11 evidence pack reproducible.
+- **Approval:** SRE + Governance + Product.
+
+### Gate G12: Explainability, Replay Safety, and Deterministic Packaging
+- [ ] WP-12001 complete: explainability summary/detail/trace contract stable.
+- [ ] WP-12003 complete: replay remains read-only unless execute mode enabled.
+- [ ] WP-12006 complete: evidence packaging produces deterministic manifest.
+- [ ] WP-12009 complete: PRD/WBS/test pack compile pass.
+- [ ] WP-12010 complete: final closure inventory and approvals complete.
+- **Approval:** Executive sponsor + Product/Ops + Compliance.
+
 ---
 
 ## RACI Model
 
-| Role | Phase 0 | Phase X | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Phase 5 | Phase 6 |
-|------|---------|---------|---------|---------|---------|---------|---------|---------|
-| **Engineering** | R/A | R/A | R/A | R/A | C | C | R/A | C |
-| **Platform/SRE** | C | C | C | R/A | C | C | R/A | R/A |
-| **Governance/Compliance** | C | R/A | C | C | R/A | C | C | R/A |
-| **Product/Ops** | C | C | C | C | C | R/A | C | A |
-| **QA/Testing** | C | C | R/A | R/A | C | C | R/A | R/A |
+| Role | Phase 0 | Phase X | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Phase 5 | Phase 6 | Phase 10 | Phase 11 | Phase 12 |
+|------|---------|---------|---------|---------|---------|---------|---------|---------|----------|----------|----------|
+| **Engineering** | R/A | R/A | R/A | R/A | C | C | R/A | C | R/A | R/A | R/A |
+| **Platform/SRE** | C | C | C | R/A | C | C | R/A | R/A | R/A | C | R/A |
+| **Governance/Compliance** | C | R/A | C | C | R/A | C | C | R/A | R/A | R/A | R/A |
+| **Product/Ops** | C | C | C | C | C | R/A | C | A | C | C | R/A |
+| **QA/Testing** | C | C | R/A | R/A | C | C | R/A | R/A | C | R/A | R/A |
 
 **Legend:** R=Responsible (does the work), A=Accountable (final authority), C=Consulted (provides input).
 
@@ -569,7 +720,7 @@ WP-6008 (formal closure)
 ## Closure Criteria
 
 - [x] All phases planned with signed acceptance gates.
-- [ ] All 72 work packages tracked with implementation status.
+- [ ] All 102 work packages tracked with implementation status.
 - [ ] Phase 0 baseline complete + OTel instrumentation (M0).
 - [ ] Phase X contract normalization complete (MX) and gates Phase 1.
 - [ ] Phase 1 routing + multi-agent modes in canary (M1).
@@ -578,6 +729,9 @@ WP-6008 (formal closure)
 - [ ] Phase 4 UX cockpit + TRAFFIC dashboard live (M4).
 - [ ] Phase 5 adaptive scale stable under production-like load (M5).
 - [ ] Phase 6 enterprise launch readiness approved (M6).
+- [ ] Phase 10 interface convergence complete (M10).
+- [ ] Phase 11 predictive controls hardened (M11).
+- [ ] Phase 12 explainability and final packaging complete (M12).
 - [ ] No unresolved critical risk without documented acceptance.
 - [ ] Two stable release cycles post-launch with < 5% incident rate.
 - [ ] Complete transfer package for long-term ownership.
@@ -630,7 +784,7 @@ Status codes used in WP descriptions:
 - **Unclear**: Artifact status unknown; requires verification.
 - **Not Started**: Artifact planning complete; implementation not yet begun.
 
-All status determinations as of 2026-02-14 per `thegent-gaps-and-discovery-2026-02-14.md`.
+All status determinations as of 2026-02-15 per `thegent-gaps-and-discovery-2026-02-14.md`.
 
 ---
 
@@ -643,6 +797,9 @@ All status determinations as of 2026-02-14 per `thegent-gaps-and-discovery-2026-
 - `thegent-kush-docs-deep-dive-2026-02-14.md` - Kush docs architecture analysis.
 - `thegent-mega-research-synthesis-2026-02-14.md` - Comprehensive synthesis with 100+ patterns.
 - `thegent-gaps-and-discovery-2026-02-14.md` - Implementation gaps and discovery tasks.
+- `thegent-wbs-phase7-9.md` - Post-closure work decomposition for phases 7–9.
+- `thegent-dag-phase7-9-extension.md` - Phase 7–9 DAG dependencies and control flow.
+- `thegent-wbs-phase10-12.md` - Phase 10–12 WBS extension with sequencing and dependencies.
 - `thegent-plan-final-index.md` - Index of all plan artifacts and relationships.
 - `thegent-implementation-log-2026-02-14.md` - Log of completed implementations.
 
@@ -660,13 +817,13 @@ All status determinations as of 2026-02-14 per `thegent-gaps-and-discovery-2026-
 | Phase 4 | 9 | 55-80 | 2-3 | 15-22 min |
 | Phase 5 | 10 | 60-90 | 3-4 | 18-25 min |
 | Phase 6 | 8 | 40-60 | 2-3 | 12-18 min |
-| **Total** | **70** | **440-655** | **20-29** | **126-187 min** |
+| **Total** | **102** | **680-1040** | **32-47** | **175-270 min** |
 
-(WP-0001..0005 + WP-X1..X8 + WP-1001..1008 + WP-2001..2008 + WP-3001..3008 + WP-4001..4008 + WP-5001..5008 + WP-6001..6008 + WP-Y1..Y8 = 72 total WPs)
+(WP-0001..0005 + WP-X1..X8 + WP-1001..1008 + WP-2001..2008 + WP-3001..3008 + WP-4001..4008 + WP-5001..5008 + WP-6001..6008 + WP-Y1..Y8 + WP-7001..7010 + WP-8001..8010 + WP-9001..9010 + WP-10001..10010 + WP-11001..11010 + WP-12001..12010 = 102 total WPs)
 
 ---
 
 **End of WBS Document**
 
-Last Updated: 2026-02-14
-Next Review: Upon M0 completion
+Last Updated: 2026-02-15
+Next Review: Upon M10 completion

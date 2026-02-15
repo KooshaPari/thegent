@@ -55,6 +55,7 @@ def _run_with_retry(
     """Run codex subprocess; raises TransientAgentError on retryable failure."""
     proc = subprocess.run(
         cmd,
+        check=False,
         input=prompt,
         capture_output=True,
         text=True,
@@ -138,10 +139,7 @@ class CursorApiRunner(AgentRunner):
             return RunResult(
                 exit_code=1,
                 stdout="",
-                stderr=(
-                    "codex CLI not found. Install: npm i -g @openai/codex\n"
-                    "Or add codex to PATH."
-                ),
+                stderr=("codex CLI not found. Install: npm i -g @openai/codex\nOr add codex to PATH."),
                 timed_out=False,
             )
         except subprocess.TimeoutExpired:

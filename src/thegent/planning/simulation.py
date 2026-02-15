@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-
 # --- D1: PERT ---
+
 
 @dataclass
 class PERTNode:
@@ -54,6 +54,7 @@ def pert_forward_pass(nodes: list[PERTNode]) -> dict[str, PERTResult]:
 
 # --- D2: Resource contention ---
 
+
 @dataclass
 class ResourceProfile:
     """Resource capacity definition."""
@@ -96,6 +97,7 @@ def simulate_resource_contention(
 
 
 # --- D3: Continuity risk ---
+
 
 @dataclass
 class ContinuityRiskInput:

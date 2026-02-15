@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Ensure CLIProxyAPIPlus config exists. Run before starting proxy in process-compose.
 Uses direct Python modules (no shell wrapping)."""
+
 import sys
 from pathlib import Path
 
@@ -16,11 +17,9 @@ from thegent.config import ThegentSettings
 def main() -> int:
     try:
         settings = ThegentSettings()
-        config_path = _ensure_config(settings)
-        print(f"Config ready: {config_path}")
+        _ensure_config(settings)
         return 0
-    except Exception as e:
-        print(f"ensure-cliproxy-config: {e}", file=sys.stderr)
+    except Exception:
         return 1
 
 

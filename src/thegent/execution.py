@@ -1,5 +1,6 @@
 """Execution run metadata and registry for thegent orchestration."""
 
+import contextlib
 import hashlib
 import json
 import logging
@@ -11,7 +12,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -31,48 +32,48 @@ class RunMeta(BaseModel):
     """Metadata for a single agent/droid execution run."""
 
     run_id: str = Field(default_factory=lambda: f"run_{uuid.uuid4().hex[:8]}")
-    correlation_id: Optional[str] = None
+    correlation_id: str | None = None
     agent: str
-    model: Optional[str] = None
+    model: str | None = None
     mode: str = "write"
     prompt: str
     cwd: str
     owner: str
     started_at_utc: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
-    ended_at_utc: Optional[str] = None
-    duration_s: Optional[float] = None
-    exit_code: Optional[int] = None
+    ended_at_utc: str | None = None
+    duration_s: float | None = None
+    exit_code: int | None = None
     status: str = "started"  # started, running, completed, failed, timed_out
-    error_class: Optional[str] = None  # usage_limit, timeout, logic_error, api_error
-    signature: Optional[str] = None
-    policy_result: Optional[str] = None  # allow, deny, warn
-    policy_reason: Optional[str] = None
-    override_reason: Optional[str] = None
-    override_by: Optional[str] = None
-    rationale: Optional[str] = None  # WP-4002/4007: Full explanation
-    feedback_score: Optional[float] = None  # WP-4008
-    feedback_note: Optional[str] = None
+    error_class: str | None = None  # usage_limit, timeout, logic_error, api_error
+    signature: str | None = None
+    policy_result: str | None = None  # allow, deny, warn
+    policy_reason: str | None = None
+    override_reason: str | None = None
+    override_by: str | None = None
+    rationale: str | None = None  # WP-4002/4007: Full explanation
+    feedback_score: float | None = None  # WP-4008
+    feedback_note: str | None = None
     host: str = Field(default_factory=socket.gethostname)
     pid: int = Field(default_factory=os.getpid)
     is_background: bool = False
     lane: str = "standard"  # standard, critical, recovery
-    idempotency_token: Optional[str] = None
-    confidence: Optional[float] = None
-    arbitration: Optional[str] = None  # leader, follower, consensus
-    
+    idempotency_token: str | None = None
+    confidence: float | None = None
+    arbitration: str | None = None  # leader, follower, consensus
+
     # Audit trail chaining (WP-3004)
-    prev_hash: Optional[str] = None
-    hash: Optional[str] = None
-    
+    prev_hash: str | None = None
+    hash: str | None = None
+
     # Optional routing contract context
-    route_contract: Optional[dict[str, Any]] = None
-    route_request: Optional[dict[str, Any]] = None
+    route_contract: dict[str, Any] | None = None
+    route_request: dict[str, Any] | None = None
 
     # WP-3006: Compliance evidence retention — domain tagging for tiered retention
-    domain_tag: Optional[str] = None  # e.g. project-id, compliance-domain, lane
+    domain_tag: str | None = None  # e.g. project-id, compliance-domain, lane
 
     # XA4: Contract version in task/run metadata for negotiation
-    contract_version: Optional[str] = None
+    contract_version: str | None = None
 
 
 class CheckpointMeta(BaseModel):
@@ -86,17 +87,49 @@ class CheckpointMeta(BaseModel):
     owner: str
 
 
+class CalibrationRegistry:
+    """WP-4008: Persists calibration factors and curves for agents (G-GP-09)."""
+
+    def __init__(self, session_dir: Path) -> None:
+        self.session_dir = session_dir
+        self.path = session_dir / "calibration_registry.json"
+
+    def get_factor(self, agent: str) -> float:
+        """Return the persisted calibration factor for an agent."""
+        if not self.path.exists():
+            return 1.0
+        try:
+            data = json.loads(self.path.read_text(encoding="utf-8"))
+            return data.get(agent, {}).get("factor", 1.0)
+        except Exception:
+            return 1.0
+
+    def update_agent(self, agent: str, factor: float, sample_size: int) -> None:
+        """Persist a new calibration factor for an agent."""
+        data = {}
+        if self.path.exists():
+            with contextlib.suppress(Exception):
+                data = json.loads(self.path.read_text(encoding="utf-8"))
+        data[agent] = {
+            "factor": factor,
+            "sample_size": sample_size,
+            "updated_at_utc": datetime.now(UTC).isoformat(),
+        }
+        self.session_dir.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
 class RunRegistry:
     """Manages persistence and retrieval of execution runs."""
 
     SCHEMA_VERSION = 1
 
-    def __init__(self, session_dir: Path):
+    def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
         self.registry_path = session_dir / "run_registry.jsonl"
         self._ensure_version_marker()
 
-    def _ensure_version_marker(self):
+    def _ensure_version_marker(self) -> None:
         """Write a version marker if the file is new."""
         if not self.registry_path.exists():
             self.session_dir.mkdir(parents=True, exist_ok=True)
@@ -109,11 +142,11 @@ class RunRegistry:
             with self.registry_path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(marker) + "\n")
 
-    def _get_last_hash(self) -> Optional[str]:
+    def _get_last_hash(self) -> str | None:
         """Return the hash of the last record in the registry."""
         if not self.registry_path.exists():
             return None
-        
+
         try:
             with self.registry_path.open("r", encoding="utf-8") as f:
                 last_line = None
@@ -135,7 +168,7 @@ class RunRegistry:
         body = json.dumps(d, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(body.encode()).hexdigest()
 
-    def register_start(self, run: RunMeta):
+    def register_start(self, run: RunMeta) -> None:
         """Record the start of a run with hash chaining."""
         self.session_dir.mkdir(parents=True, exist_ok=True)
         run.prev_hash = self._get_last_hash()
@@ -151,9 +184,9 @@ class RunRegistry:
         status: str,
         ended_at_utc: str,
         duration_s: float,
-        error_class: Optional[str] = None,
-        cost_usd: Optional[float] = None,
-    ):
+        error_class: str | None = None,
+        cost_usd: float | None = None,
+    ) -> None:
         """Update a run with completion metadata and hash chaining. G-GP-06: cost_usd optional."""
         event = {
             "run_id": run_id,
@@ -172,7 +205,7 @@ class RunRegistry:
         with self.registry_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event) + "\n")
 
-    def register_feedback(self, run_id: str, score: float, note: Optional[str] = None):
+    def register_feedback(self, run_id: str, score: float, note: str | None = None) -> None:
         """Record operator feedback for a run with hash chaining."""
         timestamp = datetime.now(UTC).isoformat()
         event = {
@@ -191,7 +224,7 @@ class RunRegistry:
         self,
         run_id: str,
         reason: str,
-        continuity_snapshot: Optional[dict[str, Any]] = None,
+        continuity_snapshot: dict[str, Any] | None = None,
     ) -> None:
         """Record run pause for state-aware orchestration (G-KD-03)."""
         timestamp = datetime.now(UTC).isoformat()
@@ -222,11 +255,11 @@ class RunRegistry:
         with self.registry_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event) + "\n")
 
-    def get_run_state(self, run_id: str) -> Optional[RunState]:
+    def get_run_state(self, run_id: str) -> RunState | None:
         """Return current run state from registry events (G-KD-03)."""
         if not self.registry_path.exists():
             return None
-        state: Optional[RunState] = None
+        state: RunState | None = None
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
                 try:
@@ -234,7 +267,7 @@ class RunRegistry:
                     if data.get("run_id") != run_id:
                         continue
                     ev = data.get("event")
-                    if ev == "start":
+                    if ev is None and data.get("status") == "started":
                         state = RunState.RUNNING
                     elif ev == "finish":
                         status = data.get("status", "")
@@ -251,7 +284,7 @@ class RunRegistry:
         """List recent runs by parsing the registry."""
         if not self.registry_path.exists():
             return []
-        
+
         runs: dict[str, dict[str, Any]] = {}
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
@@ -267,21 +300,17 @@ class RunRegistry:
                         runs[rid] = data
                 except Exception:
                     continue
-        
+
         # Sort by started_at_utc desc
-        sorted_runs = sorted(
-            runs.values(), 
-            key=lambda x: x.get("started_at_utc", ""), 
-            reverse=True
-        )
+        sorted_runs = sorted(runs.values(), key=lambda x: x.get("started_at_utc", ""), reverse=True)
         return sorted_runs[:limit]
 
-    def find_by_token(self, token: str) -> Optional[dict[str, Any]]:
+    def find_by_token(self, token: str) -> dict[str, Any] | None:
         """Find the most recent run with a given idempotency token."""
         if not self.registry_path.exists():
             return None
-        
-        best: Optional[dict[str, Any]] = None
+
+        best: dict[str, Any] | None = None
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
                 try:
@@ -294,57 +323,127 @@ class RunRegistry:
                         elif data.get("event") == "feedback":
                             if best and best.get("run_id") == rid:
                                 best["feedback_score"] = data.get("feedback_score")
-                        else:
-                            # Start event: if we don't have this run or it's newer, use it
-                            if not best or data.get("started_at_utc", "") >= best.get("started_at_utc", ""):
-                                best = data
+                        # Start event: if we don't have this run or it's newer, use it
+                        elif not best or data.get("started_at_utc", "") >= best.get("started_at_utc", ""):
+                            best = data
                 except Exception:
                     continue
         return best
 
     def get_calibration_factor(self, agent: str) -> float:
-        """Calculate calibration factor (avg feedback / avg confidence) for an agent."""
+        """
+        Calculate calibration factor (avg feedback / avg confidence) for an agent.
+        G-GP-09: Checks CalibrationRegistry first for persisted factor.
+        """
+        cal = CalibrationRegistry(self.session_dir)
+        factor = cal.get_factor(agent)
+        if factor != 1.0:
+            return factor
+
         if not self.registry_path.exists():
             return 1.0
-        
+
         relevant_runs = []
         runs: dict[str, dict[str, Any]] = {}
-        
+
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
                 try:
                     data = json.loads(line)
                     rid = data.get("run_id")
-                    if not rid: continue
-                    
+                    if not rid:
+                        continue
+
                     if data.get("event") == "finish":
-                        if rid in runs: runs[rid].update(data)
+                        if rid in runs:
+                            runs[rid].update(data)
                     elif data.get("event") == "feedback":
-                        if rid in runs: runs[rid]["feedback_score"] = data.get("feedback_score")
-                    else:
-                        if data.get("agent") == agent:
-                            runs[rid] = data
+                        if rid in runs:
+                            runs[rid]["feedback_score"] = data.get("feedback_score")
+                    elif data.get("agent") == agent:
+                        runs[rid] = data
                 except Exception:
                     continue
-        
+
         relevant_runs = [r for r in runs.values() if r.get("feedback_score") is not None]
         if not relevant_runs:
             return 1.0
-        
+
         avg_feedback = sum(float(r["feedback_score"]) for r in relevant_runs) / len(relevant_runs)
         avg_confidence = sum(float(r.get("confidence") or 0.5) for r in relevant_runs) / len(relevant_runs)
-        
+
         if avg_confidence == 0:
             return 1.0
-        
+
         # Calibration factor: if we are overconfident (conf > feedback), factor < 1.0
         return min(2.0, max(0.5, avg_feedback / avg_confidence))
+
+    def purge_expired(
+        self,
+        default_days: int,
+        by_domain: dict[str, int],
+        dry_run: bool = True,
+    ) -> dict[str, int]:
+        """
+        WP-3006: Tiered retention purge (G-GP-07).
+        Removes records exceeding retention period. Returns counts of kept/purged.
+        """
+        if not self.registry_path.exists():
+            return {"kept": 0, "purged": 0}
+
+        now = datetime.now(UTC)
+        run_domains: dict[str, str] = {}
+        kept_lines = []
+        purged_count = 0
+
+        # First pass: map run_id to domain_tag from start events
+        with self.registry_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    data = json.loads(line)
+                    rid = data.get("run_id")
+                    domain = data.get("domain_tag")
+                    if rid and domain:
+                        run_domains[rid] = domain
+                except Exception:
+                    continue
+
+        # Second pass: filter records
+        with self.registry_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    data = json.loads(line)
+                    ts_str = data.get("timestamp") or data.get("started_at_utc")
+                    if not ts_str:
+                        kept_lines.append(line)
+                        continue
+
+                    ts = datetime.fromisoformat(ts_str)
+                    if ts.tzinfo is None:
+                        ts = ts.replace(tzinfo=UTC)
+
+                    rid = data.get("run_id")
+                    domain = run_domains.get(rid) if rid else data.get("domain_tag")
+                    days = by_domain.get(domain, default_days) if domain else default_days
+
+                    if (now - ts).days > days:
+                        purged_count += 1
+                        continue
+
+                    kept_lines.append(line)
+                except Exception:
+                    kept_lines.append(line)
+
+        if not dry_run and purged_count > 0:
+            self.registry_path.write_text("".join(kept_lines), encoding="utf-8")
+
+        return {"kept": len(kept_lines), "purged": purged_count}
 
 
 class CheckpointRegistry:
     """Manages persistence and retrieval of state checkpoints."""
 
-    def __init__(self, session_dir: Path):
+    def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
         self.registry_path = session_dir / "checkpoint_registry.jsonl"
 
@@ -365,7 +464,7 @@ class CheckpointRegistry:
         """List recent checkpoints."""
         if not self.registry_path.exists():
             return []
-        
+
         ckpts = []
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
@@ -373,14 +472,14 @@ class CheckpointRegistry:
                     ckpts.append(json.loads(line))
                 except Exception:
                     continue
-        
+
         return sorted(ckpts, key=lambda x: x.get("created_at_utc", ""), reverse=True)[:limit]
 
-    def get_checkpoint(self, checkpoint_id: str) -> Optional[dict[str, Any]]:
+    def get_checkpoint(self, checkpoint_id: str) -> dict[str, Any] | None:
         """Retrieve a specific checkpoint."""
         if not self.registry_path.exists():
             return None
-        
+
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
                 try:
@@ -395,7 +494,7 @@ class CheckpointRegistry:
 class PolicyEngine:
     """Evaluates execution requests against governance policies."""
 
-    def __init__(self, settings: Any):
+    def __init__(self, settings: Any) -> None:
         self.settings = settings
 
     def _query_opa(self, run: RunMeta) -> tuple[str, str] | None:
@@ -426,7 +525,8 @@ class PolicyEngine:
             )
             with urllib.request.urlopen(req, timeout=timeout_s) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-            result = data.get("result") or {}
+            raw: object = data.get("result") or {}
+            result: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
             allow = result.get("allow", False)
             reason = result.get("reason", "OPA decision")
             return ("allow", reason) if allow else ("deny", reason)
@@ -434,12 +534,34 @@ class PolicyEngine:
             _log.warning("OPA query failed (%s): %s", url, e)
             return None
 
-    def evaluate(self, run: RunMeta, registry: Optional[RunRegistry] = None) -> tuple[str, str]:
+    def evaluate(self, run: RunMeta, registry: RunRegistry | None = None) -> tuple[str, str]:
         """
         Evaluate a run against active policies.
         Returns (result, reason) where result is 'allow', 'deny', or 'warn'.
         G-GP-01: When THGENT_OPA_URL is set, delegates to OPA first; falls back to Python logic on failure.
         """
+        # G-GP-02: Input Guardrails (NeMo-style)
+        if getattr(self.settings, "input_guardrails_enabled", False):
+            from thegent.governance.input_guardrails import _guardrails_from_env
+
+            rails = _guardrails_from_env()
+            res = rails.check(prompt=run.prompt, agent=run.agent, model=run.model, cwd=run.cwd)
+            if not res.passed:
+                return "deny", f"Input guardrail '{res.rail_id}' failed: {res.reason}. {res.remediation}"
+
+        # Policy 0: Circuit Breakers (G-KD-05 / G-GP-04)
+        if getattr(self.settings, "circuit_breaker_enabled", True):
+            cb = CircuitBreakerRegistry(
+                self.settings.session_dir,
+                threshold=getattr(self.settings, "circuit_breaker_threshold", 5),
+                window_s=getattr(self.settings, "circuit_breaker_window_s", 300),
+                recovery_s=getattr(self.settings, "circuit_breaker_recovery_s", 60),
+            )
+            if cb.is_open(run.agent, category="agent"):
+                return "deny", f"Circuit breaker is OPEN for agent '{run.agent}'. Repeated failures detected."
+            if run.model and cb.is_open(run.model, category="model"):
+                return "deny", f"Circuit breaker is OPEN for model '{run.model}'. Repeated failures detected."
+
         opa_url = (getattr(self.settings, "opa_url", None) or "").strip()
         if opa_url:
             opa_result = self._query_opa(run)
@@ -451,13 +573,12 @@ class PolicyEngine:
             return "deny", "OPA unreachable; fallback deny per config (set THGENT_OPA_FALLBACK_ALLOW=1 to allow)"
 
         env = self.settings.environment.lower()
-        
+
         # WP-0004/WP-4008: Trust Score Calibration
         # Adjust confidence based on historical performance if registry provided
         if registry and run.confidence is not None:
             cal_factor = registry.get_calibration_factor(run.agent)
             if cal_factor != 1.0:
-                old_conf = run.confidence
                 run.confidence = min(1.0, max(0.0, run.confidence * cal_factor))
                 # We don't return here, we just adjust and continue to other checks
 
@@ -485,6 +606,10 @@ class PolicyEngine:
 
         # Policy 3: Warn if no confidence score provided for recovery/critical
         if run.lane in ("recovery", "critical") and run.confidence is None:
+            if getattr(self.settings, "hitl_enabled", False) and "pre_execution" in getattr(
+                self.settings, "hitl_checkpoints", []
+            ):
+                return "pause", f"{run.lane.capitalize()} action requires HITL approval due to missing confidence."
             return "warn", f"{run.lane.capitalize()} actions should ideally carry a confidence score."
 
         # Policy 4: Trust Score Gate for Production
@@ -492,7 +617,20 @@ class PolicyEngine:
             threshold = self.settings.trust_score_threshold
             conf = run.confidence if run.confidence is not None else 0.5
             if conf < threshold:
-                return "deny", f"Production environment requires trust score >= {threshold} (current: {conf}). Provide --override to proceed."
+                return (
+                    "deny",
+                    f"Production environment requires trust score >= {threshold} (current: {conf}). Provide --override to proceed.",
+                )
+
+        # Policy 5: Cost Budget Enforcement (G-GP-06)
+        if getattr(self.settings, "cost_tracking_enabled", False):
+            from thegent.governance.cost import CostAggregator
+
+            agg = CostAggregator(self.settings.session_dir)
+            mtd_total = agg.get_mtd_total()
+            cost_budget = float(getattr(self.settings, "cost_budget_mtd", 100.0))
+            if mtd_total >= cost_budget:
+                return "deny", f"Monthly budget exceeded (${mtd_total:.2f} >= ${cost_budget:.2f})."
 
         return "allow", "All policies passed."
 
@@ -500,7 +638,7 @@ class PolicyEngine:
 class TrustBoundaryValidator:
     """WP-3007: Validates environment transitions (e.g. staging→production)."""
 
-    def __init__(self, session_dir: Path):
+    def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
         self.state_path = session_dir / "env_transition_state.json"
 
@@ -543,7 +681,7 @@ class TrustBoundaryValidator:
 class Auditor:
     """Provides integrity verification for the run registry."""
 
-    def __init__(self, registry_path: Path):
+    def __init__(self, registry_path: Path) -> None:
         self.registry_path = registry_path
 
     def sign_run(self, run: RunMeta) -> str:
@@ -570,13 +708,15 @@ class Auditor:
                 try:
                     data = json.loads(line)
                     rid = data.get("run_id", "unknown")
-                    
+
                     # 1. Verify Hash Chain
                     prev_hash = data.get("prev_hash")
                     if prev_hash != last_hash:
                         chain_broken = True
-                        issues.append(f"Line {i+1}: Chain broken for {rid}. Expected prev_hash {last_hash}, got {prev_hash}")
-                    
+                        issues.append(
+                            f"Line {i + 1}: Chain broken for {rid}. Expected prev_hash {last_hash}, got {prev_hash}"
+                        )
+
                     # 2. Verify Record Hash
                     stored_hash = data.get("hash")
                     if stored_hash:
@@ -586,14 +726,14 @@ class Auditor:
                         expected_hash = hashlib.sha256(body.encode()).hexdigest()
                         if stored_hash != expected_hash:
                             corrupt += 1
-                            issues.append(f"Line {i+1}: Hash mismatch for record {rid}")
+                            issues.append(f"Line {i + 1}: Hash mismatch for record {rid}")
                         else:
                             valid += 1
                     else:
                         # Legacy record or missing hash
-                        issues.append(f"Line {i+1}: Missing hash for record {rid}")
+                        issues.append(f"Line {i + 1}: Missing hash for record {rid}")
                         corrupt += 1
-                    
+
                     # 3. Verify Signature if present (legacy or extra security)
                     stored_sig = data.get("signature")
                     if stored_sig and data.get("event") != "finish":
@@ -603,12 +743,12 @@ class Auditor:
                             # We don't increment corrupt again if already mismatched by hash
                             if stored_hash == expected_hash:
                                 corrupt += 1
-                                issues.append(f"Line {i+1}: Signature mismatch for {rid}")
-                    
+                                issues.append(f"Line {i + 1}: Signature mismatch for {rid}")
+
                     last_hash = stored_hash
                 except Exception as e:
                     corrupt += 1
-                    issues.append(f"Line {i+1}: JSON decode error: {e}")
+                    issues.append(f"Line {i + 1}: JSON decode error: {e}")
 
         return {
             "status": "passed" if (corrupt == 0 and not chain_broken) else "failed",
@@ -622,14 +762,14 @@ class Auditor:
 class CircuitBreakerRegistry:
     """Tracks failures and manages circuit states for models/agents."""
 
-    def __init__(self, session_dir: Path, threshold: int = 5, window_s: int = 300, recovery_s: int = 60):
+    def __init__(self, session_dir: Path, threshold: int = 5, window_s: int = 300, recovery_s: int = 60) -> None:
         self.session_dir = session_dir
         self.registry_path = session_dir / "circuit_breakers.jsonl"
         self.threshold = threshold
         self.window_s = window_s
         self.recovery_s = recovery_s
 
-    def record_failure(self, target: str, category: str = "agent"):
+    def record_failure(self, target: str, category: str = "agent") -> None:
         """Record a failure for a target in a specific category."""
         self.session_dir.mkdir(parents=True, exist_ok=True)
         event = {
@@ -645,16 +785,20 @@ class CircuitBreakerRegistry:
         """Check if the circuit for a target in a category is open (blocked)."""
         if not self.registry_path.exists():
             return False
-        
+
         now = datetime.now(UTC)
         failures = 0
         last_failure = None
-        
+
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
                 try:
                     data = json.loads(line)
-                    if data.get("target") == target and data.get("category", "agent") == category and data.get("event") == "failure":
+                    if (
+                        data.get("target") == target
+                        and data.get("category", "agent") == category
+                        and data.get("event") == "failure"
+                    ):
                         ts = datetime.fromisoformat(data.get("timestamp"))
                         if (now - ts).total_seconds() < self.window_s:
                             failures += 1
@@ -662,7 +806,7 @@ class CircuitBreakerRegistry:
                                 last_failure = ts
                 except Exception:
                     continue
-        
+
         if failures >= self.threshold:
             # Check if we should enter half-open (recovery)
             if last_failure and (now - last_failure).total_seconds() > self.recovery_s:
@@ -674,7 +818,7 @@ class CircuitBreakerRegistry:
 class OverrideRegistry:
     """Stores policy overrides with TTL. WP-3003: revalidation on expiry."""
 
-    def __init__(self, session_dir: Path):
+    def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
         self.registry_path = session_dir / "override_registry.jsonl"
 
@@ -720,7 +864,7 @@ class OverrideRegistry:
 class EscalationQueue:
     """WP-3008: Governance queue for blocked decisions with SLA tracking."""
 
-    def __init__(self, session_dir: Path):
+    def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
         self.queue_path = session_dir / "escalation_queue.jsonl"
 

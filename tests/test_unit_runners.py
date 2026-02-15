@@ -3,17 +3,19 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from thegent.agents.codex_proxy import CodexProxyRunner
 from thegent.agents.direct_agents import DirectAgentRunner
 
 
+@pytest.mark.unit
 class TestDirectAgentRunner:
     """Tests for DirectAgentRunner."""
 
     @patch("thegent.agents.direct_agents.subprocess.run")
-    def test_run_invokes_gemini_cli(
-        self, mock_run: MagicMock, project_root: Path
-    ) -> None:
+    def test_run_invokes_gemini_cli(self, mock_run: MagicMock, project_root: Path) -> None:
+        # @trace FR-AGT-002
         """Run invokes gemini CLI with correct args."""
         mock_run.return_value = MagicMock(
             returncode=0,
@@ -38,9 +40,8 @@ class TestDirectAgentRunner:
         assert "--output-format" in cmd or "stream-json" in cmd
 
     @patch("thegent.agents.direct_agents.subprocess.run")
-    def test_run_invokes_cursor_with_workspace(
-        self, mock_run: MagicMock, project_root: Path
-    ) -> None:
+    def test_run_invokes_cursor_with_workspace(self, mock_run: MagicMock, project_root: Path) -> None:
+        # @trace FR-AGT-002
         """Run invokes cursor with --workspace when cwd provided."""
         mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
 
@@ -60,6 +61,7 @@ class TestDirectAgentRunner:
 
     @patch("thegent.agents.direct_agents.subprocess.run")
     def test_strips_ansi(self, mock_run: MagicMock) -> None:
+        # @trace FR-AGT-003
         """ANSI escape sequences are stripped from output."""
         mock_run.return_value = MagicMock(
             returncode=0,
@@ -74,6 +76,7 @@ class TestDirectAgentRunner:
 
     @patch("thegent.agents.direct_agents.subprocess.run")
     def test_file_not_found_returns_helpful_error(self, mock_run: MagicMock) -> None:
+        # @trace FR-AGT-010
         """When CLI not found, returns helpful stderr."""
         mock_run.side_effect = FileNotFoundError
 
@@ -83,6 +86,7 @@ class TestDirectAgentRunner:
         assert "not found" in result.stderr
 
 
+@pytest.mark.unit
 class TestCodexProxyRunner:
     """Tests for CodexProxyRunner (codex via CLIProxyAPIPlus)."""
 
@@ -94,6 +98,7 @@ class TestCodexProxyRunner:
         mock_ensure: MagicMock,
         project_root: Path,
     ) -> None:
+        # @trace FR-AGT-001
         """Run invokes codex exec with OPENAI_BASE_URL and OPENAI_API_KEY set."""
         mock_ensure.return_value = "http://127.0.0.1:8317/v1"
         mock_run.return_value = MagicMock(
@@ -122,9 +127,8 @@ class TestCodexProxyRunner:
         assert call_kw["input"] == "test"
 
     @patch("thegent.agents.codex_proxy.ensure_proxy_running")
-    def test_run_proxy_unavailable_returns_error(
-        self, mock_ensure: MagicMock
-    ) -> None:
+    def test_run_proxy_unavailable_returns_error(self, mock_ensure: MagicMock) -> None:
+        # @trace FR-AGT-010
         """When proxy cannot start, returns exit_code 1 with error message."""
         mock_ensure.side_effect = FileNotFoundError("cli-proxy-api-plus not found")
 
@@ -134,7 +138,6 @@ class TestCodexProxyRunner:
         assert result.exit_code == 1
         assert "not found" in result.stderr
 
-
     @patch("thegent.agents.codex_proxy.ensure_proxy_running")
     @patch("thegent.agents.codex_proxy.subprocess.run")
     def test_run_minimax_glm_use_proxy(
@@ -143,6 +146,7 @@ class TestCodexProxyRunner:
         mock_ensure: MagicMock,
         project_root: Path,
     ) -> None:
+        # @trace FR-AGT-001
         """minimax and glm use CodexProxyRunner (same backend as antigravity)."""
         mock_ensure.return_value = "http://127.0.0.1:8317/v1"
         mock_run.return_value = MagicMock(

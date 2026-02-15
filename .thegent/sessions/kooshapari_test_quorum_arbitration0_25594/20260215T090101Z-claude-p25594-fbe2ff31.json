@@ -1,0 +1,42 @@
+{
+  "agent": "claude",
+  "command": [
+    "/Users/kooshapari/miniforge3/bin/python",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/pytest-of-kooshapari/pytest-666/test_quorum_arbitration0",
+    "-m",
+    "write",
+    "-t",
+    "300",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_fb94626a",
+    "Do something",
+    "claude"
+  ],
+  "cwd": "/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/pytest-of-kooshapari/pytest-666/test_quorum_arbitration0",
+  "host": "MacBookPro.lan1",
+  "launcher_pid": 25594,
+  "launcher_ppid": 25593,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:test_quorum_arbitration0:25594",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_test_quorum_arbitration0_25594/20260215T090101Z-claude-p25594-fbe2ff31.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_test_quorum_arbitration0_25594/20260215T090101Z-claude-p25594-fbe2ff31.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_test_quorum_arbitration0_25594/20260215T090101Z-claude-p25594-fbe2ff31.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_test_quorum_arbitration0_25594/20260215T090101Z-claude-p25594-fbe2ff31.stdout.log"
+  },
+  "pid": 26172,
+  "prompt": "Do something",
+  "session_id": "20260215T090101Z-claude-p25594-fbe2ff31",
+  "started_at_utc": "2026-02-15T09:01:01.612315+00:00",
+  "status": "running",
+  "timeout_hint_s": 300,
+  "version": 1
+}

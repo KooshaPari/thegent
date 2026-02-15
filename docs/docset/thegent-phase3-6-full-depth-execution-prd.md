@@ -1,0 +1,1413 @@
+# Thegent — Phase 3–6 Full-Depth Execution Chunk
+
+**Purpose:** Expand remaining execution planning for governance, UX, scale, and enterprise readiness into implementable wave plans, with practical controls and acceptance criteria.
+
+**Status:** Draft planning chunk (additive to `thegent-wbs-final.md`, `thegent-prd-final.md`)
+
+**Date:** 2026-02-15
+
+**Scope:** Phases 3, 4, 5, and 6 from WBS + PRD implementation sequencing, including cross-project design transfers from `task-tool`, `zen-mcp-server`, and `crun`.
+
+---
+
+## 0) Operating assumptions for this chunk
+
+1. **Contract baseline is mandatory.** Phase 3 and later assumes `WP-X7` and `WP-X8` controls are stable or in a canary-safe state.
+2. **No broad scope creep.** Every item below maps to a named WP and PRD FR.
+3. **Policy first, then polish.** Security and governance gates must be hardened before UX and scale are exposed broadly.
+4. **Canary-only for risky changes.** Any cross-run, persistence, or routing control change runs on canary before full rollout.
+5. **No hidden defaults.** Any new control has explicit defaults, explicit override paths, and explicit telemetry.
+6. **Human actionability over feature density.** Each control has a clear operator outcome and recovery path.
+
+---
+
+## 1) Cross-project transfer layer (phase 3+ relevance)
+
+### 1.1 task-tool transfer points (high-value for phase 3–6)
+
+- The phase contract in task-tool (`planner -> operator -> reviewer`) maps directly to the `WP-3004` audit/evidence gate model and `WP-4004/4007` traceability goals.
+- Canonical tag discipline (`task_graph` + snake_case tags) reinforces:
+  - strict phase transition contracts for policy and audit (`WP-1004`, `WP-3001`)
+  - deterministic serialization for continuity snapshots (`WP-4006`, `WP-6007`)
+- Versioning discipline (`task-tool-18`) informs:
+  - migration windows for schema evolution (`WP-X8`, `WP-3007`, `WP-6006`)
+
+### 1.2 zen transfer points (high-value for phase 4–6)
+
+- Operation-based tool design (`zen.code`, `zen.project`, `zen.workflow`, `zen.ai`) maps into thegent’s:
+  - policy/admin actions (`govern`/`observe`/`operations`)
+  - runbook and escalation actions (`WP-3008`, `WP-4003`, `WP-6004`)
+- `ctx.sample / ctx.elicit / ctx.get_state / ctx.report_progress` patterns suggest:
+  - richer operator experiences in Phase 4 and 6 (`WP-4001`, `WP-4005`, `WP-6004`, `WP-6008`)
+  - persistent context around continuity handoff (`WP-4006`, `WP-5006`)
+- Progress telemetry inside tasks gives a strong model for interruption suppression and fatigue control (`WP-4004`, `WP-6007`).
+
+### 1.3 crun transfer points (high-value for phase 5+)
+
+- PERT simulation patterns from crun (`pert_forward_pass`, `pert_backward_pass`, confidence bands) inform:
+  - adaptive continuity planning and rollout simulation (`WP-5008`, `WP-6008`)
+- Planning validation logic in crun (`BusinessRuleValidator`, `ConsistencyValidator`) maps to:
+  - policy + evidence linting and policy drift tests (`WP-2007`, `WP-3005`)
+- Hexagonal boundary discipline informs:
+  - architecture-enforcement CI (`WP-100?` hardening tasks + `WP-Y6` instrumentation boundary)
+
+---
+
+## 2) Phase 3 — Governance and Security (WP-3001..3008 + WP-Y5)
+
+### 2.1 Phase objective
+
+Deliver policy-led deterministic control of critical operations with auditable evidence, recoverable governance decisions, and escalation behavior that is strict by default and recoverable by design.
+
+### 2.2 Phase exit: M3 (Go/No-Go)
+
+- No critical-lane action without policy evaluation.
+- All critical operations either denied, approved, or escalated with reason + evidence.
+- Immutable trail created for each promotion and override.
+- SLA for escalation queue start < 15 min in canary.
+
+### 2.3 Execution waves
+
+#### Wave 1 (Day 1–4) — Policy and gate infrastructure
+
+- **WP-3001**: OPA/Rego policy pre-check with ABAC expressions.
+  - Introduce explicit policy evaluation path before execution start for all critical run envelopes.
+  - Ensure policy context includes `risk_score`, `domain`, `urgency`, `owner`, `lane`.
+  - Add policy cache with short TTL and explicit negative cache invalidation on rule mutation.
+  - Emit policy events: `governance.policy.decision`, `governance.policy.denied`, `governance.policy.escalated`.
+
+- **WP-3007**: Trust boundary checks and environment transitions.
+  - Classify environments (`dev`, `staging`, `prod`) with explicit token validation policy per boundary.
+  - Add explicit boundary gate for MCP and privileged operations.
+  - Fail closed when target environment policy is unknown.
+
+- **WP-3005**: Drift detection and sweep automation baseline.
+  - Add policy snapshot hash generation (source of truth + effective policy hash).
+  - Add periodic policy reconcile against OPAL/remote baseline.
+  - On drift, emit `policy_drift_detected`, auto-open governance issue, hold critical lane if severity high.
+
+#### Wave 2 (Day 5–9) — Evidence and override controls
+
+- **WP-3002**: Signed artifacts and artifact verification.
+  - Add deterministic artifact envelope: `artifact_id`, `artifact_payload_hash`, `signature`, `signing_key_id`, `policy_version`.
+  - Validate signatures before critical actions and log verify failures with correlation ID.
+
+- **WP-3003**: Override path with TTL/revalidation.
+  - Explicit override reason taxonomy.
+  - TTL (default 4h) and explicit re-justification on expiry.
+  - For any override, attach policy exception rationale + approver + audit signature.
+
+- **WP-3004**: Immutable audit trail with causal ordering.
+  - Add Lamport/happens-before fields (`lamport`, `causal_parent`).
+  - Ensure every mutation event writes append-only record and never rewrites older records.
+  - Expose query filters by actor/time/risk+policy decision.
+
+#### Wave 3 (Day 10–15) — Operations and human oversight integration
+
+- **WP-3008**: Escalation SLA operations.
+  - Escalation queue model: owner, reason, severity, deadline, continuity snapshot, last_touch.
+  - Dispatch by priority with auto-escalation.
+  - Export queue view with age, sla_breach, and reopen reason.
+
+- **WP-Y5**: Hierarchical prompt orchestration (platform/domain/workflow/step).
+  - Build inheritance resolver with explicit override precedence.
+  - Persist prompt hierarchy applied per run for post-mortem replay.
+
+### 2.4 Phase 3 detailed acceptance matrix
+
+| WP | Required artifacts | Must pass | Failure behavior |
+|---|---|---|---|
+| WP-3001 | Policy engine bootstrap, policy cache stats, denial reason format | Blocked critical lane on deny | Policy errors must be explicit with required fields |
+| WP-3002 | Signed action schema + verifier | Verification enforced for critical actions | Block action, emit verify-failed event |
+| WP-3003 | Override record + expiry scheduler | Expired override cannot be reused | Revalidate required before resume |
+| WP-3004 | Immutable log + causal query API | Append-only invariant maintained | Reject mutation attempts with explicit error |
+| WP-3005 | Drift check + sweep runbook | Policy drift auto-detected + actioned | Critical operations paused if unresolved |
+| WP-3007 | Boundary gate matrix + auth check + trace | Non-compliant boundary transitions blocked | Emit boundary_violated event |
+| WP-3008 | Queue + SLA report | Escalation latency tracked and alerted | Non-empty queue not silently ignored |
+| WP-Y5 | Prompt inheritance resolver | 4-tier stack visible in run trace | Missing/invalid prompt layer denies execution |
+
+### 2.5 Phase 3 risks + controls
+
+- **Risk:** Policy engine false negatives.  
+  **Control:** Canary policy mode + dry-run simulation before hard enablement.
+- **Risk:** Override abuse by high-privileged tokens.  
+  **Control:** Reason taxonomy + approver signature + mandatory expiry.
+- **Risk:** Audit trail tampering.  
+  **Control:** Hash chaining + strict write-once + periodic integrity check.
+
+---
+
+## 3) Phase 4 — Human-Centered UX and Explainability (WP-4001..4008 + WP-Y7)
+
+### 3.1 Phase objective
+
+Provide operator control, understanding, and recovery UX that is reliable under interruption and low-friction under normal flow.
+
+### 3.2 Execution principle
+
+- **Fast path first:** operators should complete common actions under 5 taps/commands.
+- **Deep drilldown on demand:** full detail is available but hidden by default.
+- **No surprises:** every action has preconditions + undo/rollback notes.
+
+### 3.3 Execution waves
+
+#### Wave 1 (Day 1–5) — Cockpit + explanation primitives
+
+- **WP-4001**: Operator cockpit and autonomy controls.
+  - 4-pane command center: Queue, Roster, Events, Details.
+  - Autonomy dial with explicit modes (`assist`, `advisory`, `autonomy_guarded`, `autonomy_strict`).
+  - Every pane entry includes action state and stale-state marker.
+
+- **WP-4005**: State freshness checks.
+  - All displays show last refresh age and `state_stale` flags.
+  - For stale state, disable state-mutating actions and demand refresh/re-sync.
+
+- **WP-4002**: Progressive explanations.
+  - Tier 1 concise: what happened and why.
+  - Tier 2 detail: evidence, policy, and routing context.
+  - Tier 3 trace: full causal chain with timestamps.
+
+#### Wave 2 (Day 6–10) — Recovery safety and continuity
+
+- **WP-4003**: One-click safe fallback.
+  - Always expose Pause, Rollback, Escalate for active sessions.
+  - Pause should freeze, Rollback restores checkpoint (or nearest safe checkpoint), Escalate creates high-priority governance ticket.
+
+- **WP-4004**: Interruption taxonomy and fatigue controls.
+  - Centralized interruption categories with noise suppression windows.
+  - Dedup and severity gating to avoid alert storms.
+
+- **WP-4006**: Continuity handoff summary.
+  - Auto-generated handoff with `run_id`, open blockers, evidence gaps, next steps.
+  - Incoming-owner confirmation required for critical/handoff-sensitive runs.
+
+#### Wave 3 (Day 11–14) — Decision quality and operator learning
+
+- **WP-4007**: Decision replay & pre-flight simulation.
+  - What-if branch simulation at decision node.
+  - Pre-flight simulation runs policy + routing + cost + risk check on candidate change.
+
+- **WP-4008**: Calibration loops.
+  - Track confidence vs actual outcomes per operator mode.
+  - Maintain calibration curve and drift alerts.
+
+- **WP-Y7**: TRAFFIC dashboard.
+  - 10 KPI panels with target lines and actionable incident links.
+  - Trend chart 7d / 30d + top-change-attribution insights.
+
+### 3.4 Phase 4 acceptance matrix
+
+| WP | UX behavior requirement | Hard pass criteria |
+|---|---|---|
+| WP-4001 | 4-pane visibility within one action from `observe`/`plan` command | No hidden menus for core controls |
+| WP-4002 | 3-tier explanation available without switching toolsets | Tier 1 always visible, Tier2+ interactive |
+| WP-4003 | Recovery action set available for active run | Rollback selects checkpoint explicitly |
+| WP-4004 | Interruption rate is bounded | Dedup and ceiling enforced by severity thresholds |
+| WP-4005 | Freshness markers across all displays | stale state blocks unsafe mutation |
+| WP-4006 | Shift handoff required on ownership change for critical run | Incoming confirmation required |
+| WP-4007 | Replay path reproduces visible causal chain | Deterministic branching in simulator |
+| WP-4008 | Calibration improves or maintains approval alignment | Approval accuracy trend non-degrading |
+| WP-Y7 | KPI dashboard includes all 10 TRAFFIC metrics | Targets + alert lines present |
+
+### 3.5 UX implementation guardrails
+
+- Avoid overloaded dashboards: one panel per operator intent.
+- Never show numeric metrics without action.
+- Every alert must include next-action and owning team.
+- Keep defaults safe (`assist`, conservative fail policies).
+
+---
+
+## 4) Phase 5 — Adaptive Scale and Continuity (WP-5001..5008 + WP-Y4 + WP-Y8)
+
+### 4.1 Phase objective
+
+Increase throughput under volatility while preserving route quality and continuity integrity.
+
+### 4.2 Execution waves
+
+#### Wave 1 (Day 1–6) — Capacity and quality control
+
+- **WP-5001**: Adaptive concurrency + pre-rate-limit controls.
+  - Compute capacity from queue depth + provider error budgets.
+  - Preemptively slowdown at threshold (`>=70%` saturation).
+  - Speculative execution as opt-in fallback for low-latency workloads only.
+
+- **WP-5002**: Burst classification and safe-mode.
+  - Define thresholds: normal/spike/surge.
+  - Automatic surge mode: reduce max concurrency, disable non-critical features, enforce queue backpressure.
+
+- **WP-5003**: Cost-aware routing baseline.
+  - Baseline route scoring with quality floor and budget cap.
+  - Expose routing rationale fields for post-incident attribution.
+
+#### Wave 2 (Day 7–12) — Continuity and durability under load
+
+- **WP-5004**: Non-critical deferral.
+  - Deferral reasons must include expected ETA and recovery condition.
+  - Requeue by priority and age to avoid starvation.
+
+- **WP-5005**: Long-running continuity watchdog.
+  - Heartbeat every 30s and auto-reconnect/resume within 5 minutes.
+  - Hard checks on session metadata integrity before resume.
+
+- **WP-5006**: Handoff integrity + ownership transfer.
+  - Validate continuity snapshot completeness before handoff completion.
+  - Required ownership confirmation + continuity checksum.
+
+#### Wave 3 (Day 13–19) — Resilience and optimization
+
+- **WP-Y4**: Cost tracking and optimization service.
+  - Per-run/per-domain/per-provider cost metrics.
+  - Alert at 80/100% budget.
+  - Track cost-per-quality and cost-per-success.
+
+- **WP-Y8**: Provider scoring and learning.
+  - Daily score model on `(provider, prompt_class, quality)`.
+  - Use scores for routing and speculative settings.
+
+- **WP-5007**: Sustained load chaos validation.
+  - Drill at 10x sustained load with fault patterns (timeout/partition/malformed output).
+  - Validate recovery SLA and rollback path.
+
+- **WP-5008**: Load-aware recommendation tuning.
+  - Feedback loop updates route policy with constrained learning rates.
+  - Add anti-overfit guardrail and manual rollback on KPI regression.
+
+### 4.3 Scale exit criteria
+
+- Queue wait, provider saturation, rollback and handoff metrics stable under synthetic 10x scenario.
+- No regression in `Routing Accuracy` and `Cost` beyond policy tolerance.
+- Continuity snapshot integrity validated across ownership transitions under load.
+
+### 4.4 Scale risks and fail-safe posture
+
+- **Cold-start scoring risk:** apply fallback baseline weights until minimum historical rows exist.
+- **Speculative overuse risk:** keep speculation disabled when confidence or budget confidence is low.
+- **Deferral starvation risk:** enforce fairness window and max wait with priority boost for aging tasks.
+
+---
+
+## 5) Phase 6 — Enterprise Readiness and Closure (WP-6001..6008)
+
+### 5.1 Phase objective
+
+Execute full-system readiness, compliance, and closure with deterministic rollback and operational handoff.
+
+### 5.2 Execution waves
+
+#### Wave 1 (Day 1–2) — Closure foundation
+
+- **WP-6001**: End-to-end rehearsal.
+  - Full scenario script: planning, policy, execute, rollback, continuity shift, observe summary.
+  - Capture objective evidence set and gaps.
+
+- **WP-6002**: Compliance package.
+  - Aggregate audit, policy, risk, and governance evidence.
+  - Include explicit pass/fail mapping to FRs and governance signoff list.
+
+- **WP-6004**: Runbook + on-call readiness.
+  - Integrate escalation matrix, recovery playbooks, and decommission links.
+  - Validate runbooks by tabletop and simulation.
+
+#### Wave 2 (Day 3–5) — Resilience and observability closure
+
+- **WP-6003**: Reliability + SLO certification.
+  - Run regression and rollback drills; require 3 consecutive clean runs.
+  - Include network partition and policy rollback cases.
+
+- **WP-6005**: KPI baselines and alert rules.
+  - Establish and lock baseline windows for TRAFFIC.
+  - Publish alert routing and ack SLA.
+
+- **WP-6006**: Decommission/sunset controls.
+- Remove temporary controls introduced during hardening.
+- Keep migration fallback path preserved for one release.
+
+#### Wave 3 (Day 6–7) — Stabilization + transfer
+
+- **WP-6007**: Post-launch observation and rollback reserve.
+  - 28-day observation reserve plan with severity-to-operator mapping.
+  - Define rollback ownership and triggers.
+
+- **WP-6008**: Formal closure and roadmap continuity.
+  - Final closure memo includes:
+    - signed compliance evidence
+    - residual debt
+    - successor roadmap with phase boundaries
+  - Transfer ownership and maintenance responsibilities.
+
+### 5.3 Closure acceptance checklist
+
+- All Phase 1–5 WPs in required maturity state per dependencies.
+- Full compliance package approved by governance + security stakeholders.
+- Launch gates and rollback reserve signed by operations.
+
+---
+
+## 6) Cross-Phase PRD translation (Phases 3–6)
+
+This section turns phase work into concrete PRD execution slices.
+
+### 6.1 Phase 3 → PRD mapping
+
+| PRD FR | Execution target | WPs | Primary evidence |
+|---|---|---|---|
+| FR-022 | Policy pre-check | WP-3001 | Policy denial/allow logs + evidence IDs |
+| FR-023 | Mandatory evidence collection | WP-1005, WP-3004 | Gate proofs per action |
+| FR-024 | Override and rollback control | WP-3003 | TTL override events + revalidation proofs |
+| FR-025 | Governance drift and sweep | WP-3005 | Drift report + reconcile actions |
+| FR-026 | Retention by compliance domain | WP-3006 | Domain retention assertions |
+| FR-027 | Trust boundary and security checks | WP-3007 | Boundary deny traces + auth audit |
+| FR-028 | Escalation governance | WP-3008 | Escalation SLAs and continuity snapshots |
+| FR-042 | Prompt orchestration hierarchy | WP-Y5 | Inheritance and override audit |
+
+### 6.2 Phase 4 → PRD mapping
+
+| PRD FR | Execution target | WPs | Primary evidence |
+|---|---|---|---|
+| FR-029 | Operator cockpit summary | WP-4001 | 4-pane UI + autonomy mode log |
+| FR-030 | Explanation tiers | WP-4002 | Tiered display audit + response latency |
+| FR-031 | Safe fallback options | WP-4003 | Pause/Rollback/Escalate behavior tests |
+| FR-032 | Interruption taxonomy | WP-4004 | Alert dedup and incident correlation |
+| FR-033 | State freshness | WP-4005 | Staleness checks in all mutation paths |
+| FR-034 | Continuity handoff | WP-4006 | Handoff confirmation artifacts |
+| FR-035 | Decision replay | WP-4007 | Reproducible replay trace |
+| FR-036 | Confidence calibration | WP-4008, WP-Y7 | Calibration trend and threshold tuning |
+
+### 6.3 Phase 5 → PRD mapping
+
+| PRD FR | Execution target | WPs | Primary evidence |
+|---|---|---|---|
+| FR-037 | Adaptive concurrency and capacity | WP-5001 | Saturation controls and queue behavior |
+| FR-038 | Burst/load classification | WP-5002 | Burst event + safe mode traces |
+| FR-039 | Cost-aware routing and budget enforcement | WP-5003, WP-Y4 | Cost metrics + routing rationale |
+| FR-040 | Non-critical deferral + resume | WP-5004 | Deferred task SLAs |
+| FR-041 | Continuity watchdog/ownership | WP-5005, WP-5006 | Watchdog and handoff integrity |
+| FR-042 | Handoff + prompt hierarchy continuity | WP-5006, WP-Y5 | Ownership transition with integrity checks |
+| FR-044 | Load-aware tuning and scoring | WP-5008, WP-Y8 | Tuning reports + controlled rollback |
+
+### 6.4 Phase 6 → PRD mapping
+
+| PRD FR | Execution target | WPs | Primary evidence |
+|---|---|---|---|
+| FR-045 | Dress rehearsal readiness | WP-6001 | Full scenario logs + closure note |
+| FR-046 | Compliance/security signoff | WP-6002 | Signed compliance bundle |
+| FR-047 | SLO certification | WP-6003 | SLO reports + rollback drills |
+| FR-048 | Runbook and on-call completeness | WP-6004 | Runbook test evidence |
+| FR-049 | KPI baselines | WP-6005 | Baseline + alert configuration |
+| FR-050 | Decommission plan | WP-6006 | Sunsetting checklist + migration record |
+| FR-051 | Post-launch observation | WP-6007 | Observation and rollback reserve SOP |
+| FR-052 | Formal closure and successor roadmap | WP-6008 | Closure memo + handover plan |
+
+---
+
+## 7) Multi-layer execution governance (recommended)
+
+### 7.1 Weekly rhythm for Phases 3–6
+
+1. **Monday:** governance policy/data-plane review.
+2. **Wednesday:** chaos + load + escalation simulation.
+3. **Friday:** closure readiness check + canary metrics + signoff for next week.
+
+### 7.2 Definition of done (all phases)
+
+For any WP to move from "In Progress" to "Done":
+
+- Functional tests covering normal and failure path pass.
+- Negative-path test exists and fails safely.
+- Failure-mode telemetry is emitted and documented.
+- Human operator workflow documented in one page.
+- Rollback tested or simulated where applicable.
+
+### 7.3 Blocking rules
+
+- Phase 4 cannot start broad rollout until M3 gate is signed.
+- Phase 5 cannot move to load drills until Phase 4 continuity and dashboard data quality are stable.
+- Phase 6 signoff requires M5 success plus governance package continuity.
+
+---
+
+## 8) Chunk continuation template (use in next prompt)
+
+When continuing this plan, append with this structure:
+
+1. `## Phase X Deepening — WP-by-WP execution narratives`
+2. `### WP-...` sections with:
+   - concrete command/API behavior
+   - validation artifacts (file/test names)
+   - anti-regression safeguards
+3. `### Data-model changes`
+4. `### Operator UX deltas`
+5. `### Rollout + rollback`
+
+This keeps future chunks additive and directly mergeable.
+
+---
+
+## 9) Source-to-Implementation Trace
+
+- `thegent-wbs-final.md` (WBS and dependency graph)
+- `thegent-prd-final.md` (FR/NFR and phase map)
+- `thegent-plan-final-index.md` (navigation)
+- `thegent-kush-docs-deep-dive-2026-02-14.md` (cross-project transfer insights)
+- `thegent-cross-analysis-matrix-2026-02-14.md` (design contrast and transfer recommendations)
+- `thegent-mega-research-synthesis-2026-02-14.md` (patterns and anti-patterns)
+- `thegent-gaps-and-discovery-2026-02-14.md` (status + remaining risk profile)
+
+---
+
+## 10) Next 2–3 Phases Deep Implementation Pack (Phase 3, 4, 5)
+
+This section is the requested continuation chunk for the next 2–3 phases.
+
+### Phase 3 Deepening — Governance and Security (WP-3001..3008, WP-Y5)
+
+#### WP-3001: Policy pre-check and gate evaluation (OPA/Rego + ABAC)
+
+**Execution intent**
+- Block all critical and privileged operations through policy gates before execution.
+- Keep policy decisions deterministic and traceable.
+
+**Implementation steps**
+- Add a policy decision façade with inputs: `operation`, `resource`, `actor`, `lane`, `risk_score`, `domain`, `urgency`, `run_id`.
+- Normalize all policy decisions to a canonical event envelope:
+  - `policy_id`
+  - `policy_version`
+  - `decision` (`APPROVED`/`BLOCKED`/`ESCALATED`)
+  - `reason_code`
+  - `policy_input_fingerprint`
+- Add deny path for every critical action with explicit remediation message.
+- Add policy cache with:
+  - TTL
+  - versioned cache key
+  - `x-policy-cache-version` in observability context.
+
+**Acceptance**
+- 100% of critical run and governance paths include policy evaluation.
+- Any stale policy artifact automatically invalidates cache and triggers re-evaluation.
+- Deny reasons are machine-readable.
+
+**Rollback**
+- If policy evaluation path fails unexpectedly, revert to safe mode:
+  - allow only non-mutating operations
+  - all mutating operations blocked with explicit manual approval requirement.
+
+---
+
+#### WP-3002: Signed action artifacts
+
+**Execution intent**
+- Ensure critical actions are bound to signature-verifiable artifacts.
+
+**Implementation steps**
+- Define signing envelope per action:
+  - `artifact_payload` canonical JSON
+  - `payload_hash` (`sha256`)
+  - `signature`
+  - `signer_id`
+  - `signature_ts`
+- Add strict verification guard before execution:
+  - verify hash integrity
+  - verify signature validity
+  - verify signer authorization.
+- Write verification result into audit trail with correlation to `policy_decision`.
+
+**Acceptance**
+- Every critical action requires a valid signature.
+- Invalid/missing signatures produce hard fail with audit event.
+
+**Rollback**
+- Signature verification can be temporarily degraded to `monitor-only` only in canary mode with dual-write to both fail and allow decision logs.
+
+---
+
+#### WP-3003: Override path controls
+
+**Execution intent**
+- Permit temporary policy override with bounded risk.
+
+**Implementation steps**
+- Introduce override model:
+  - `override_id`
+  - `actor_id`
+  - `reason_code`
+  - `expiry_ts`
+  - `scope` (`run`, `lane`, `owner`, `global`)
+  - `justification`
+- TTL enforcement at policy gate, not at command boundary.
+- Add periodic sweeper job to expire overrides and re-run policy where needed.
+
+**Acceptance**
+- Expired override auto-harvested and blocked without operator intervention.
+- Override usage visible in escalation and audit feeds.
+
+---
+
+#### WP-3004: Immutable audit trail and causal ordering
+
+**Execution intent**
+- Make governance and execution decisions forensically inspectable.
+
+**Implementation steps**
+- Add immutable event writer with:
+  - append-only store
+  - `event_id`
+  - `causal_parent` / `lamport`
+- Add query filter by `time`, `actor`, `resource`, `action`, `policy_decision`, `risk_tier`.
+- Add integrity checker that can re-run hash chain verification.
+
+**Acceptance**
+- No in-place mutation path for audit entries.
+- Hash-chain verification reports 100% pass in canary.
+
+---
+
+#### WP-3005: Policy drift and sweep automation
+
+**Execution intent**
+- Detect drift and ensure active policy set is convergent.
+
+**Implementation steps**
+- Add policy snapshot generator with deterministic hash.
+- Add scheduled drift check:
+  - local policy hash vs remote canonical hash
+  - mismatch emits `policy_drift_detected`.
+- Add `govern sweep --dry-run` and `govern sweep --apply`.
+
+**Acceptance**
+- Drift check runs without critical flow mutation.
+- Critical lanes halt on unresolved high-severity drift.
+
+---
+
+#### WP-3006: Compliance retention by domain
+
+**Execution intent**
+- Preserve compliance evidence by domain and retention policy.
+
+**Implementation steps**
+- Add domain tagging in run/session/session contracts.
+- Enforce retention policy resolution:
+  - `domain->retention_days`
+  - `domain->storage_tier`
+- Add verify pass that reports expired vs preserved artifact counts.
+
+**Acceptance**
+- No retention policy exception without override.
+- Compliance report export works by domain/time window.
+
+---
+
+#### WP-3007: Trust boundary checks
+
+**Execution intent**
+- Prevent unsafe cross-boundary operations.
+
+**Implementation steps**
+- Add environment profile constraints on operation entry.
+- Add boundary matrix:
+  - allowed operation by env role
+  - allowed toolset by env
+  - allowed actor class.
+- Add explicit failure mode for boundary violation.
+
+**Acceptance**
+- Boundary violations produce `boundary_blocked` with explicit code.
+- Unknown boundary profile defaults to deny.
+
+---
+
+#### WP-3008: Escalation SLA queue
+
+**Execution intent**
+- Operationalize governance handoff and owner pressure under failure.
+
+**Implementation steps**
+- Add escalation queue fields:
+  - `severity`, `owner`, `created_at`, `deadline`, `last_touched`, `age_bucket`
+- Add SLA state machine:
+  - `OPEN` -> `ACKED` -> `RESOLVED`/`ESCALATED`
+- Add reporting:
+  - median SLA latency
+  - SLA breach count
+  - aging buckets.
+
+**Acceptance**
+- Every high-severity exception enters escalation queue unless manual closure path is explicit.
+
+---
+
+#### WP-Y5: Hierarchical prompt orchestration
+
+**Execution intent**
+- Enable controlled prompt composition with traceable override semantics.
+
+**Implementation steps**
+- Implement ordered prompt stack:
+  - `platform` <- `domain` <- `workflow` <- `step`
+- Add explicit override precedence rules and validation.
+- Record resolved prompt stack in run metadata for replay.
+
+**Acceptance**
+- Missing required layer causes deterministic fallback or blocking, not implicit behavior.
+
+---
+
+### Phase 4 Deepening — Human-Centered UX (WP-4001..4008, WP-Y7)
+
+#### WP-4001: Operator cockpit with autonomy gradient
+
+**Execution intent**
+- Reduce operator cognitive load while preserving control.
+
+**Implementation steps**
+- Build a stable operator entry command path:
+ - `observe summary` includes queue/alerts/continuity markers
+ - mode selector (`assist`/`advisory`/`autonomy`/`manual`)
+ - visible fallback commands (`pause`, `rollback`, `escalate`).
+- Add command-level affordances:
+  - action requires, and shows, current preconditions.
+
+**Acceptance**
+- In standard mode, all safe operations are one command from fresh state.
+- Autonomy changes require explicit confirm in elevated mode.
+
+---
+
+#### WP-4002: Progressive explanation tiers
+
+**Execution intent**
+- Make system decisions immediately understandable.
+
+**Implementation steps**
+- Provide explanation modes:
+  - concise summary
+  - medium with evidence and policy link
+  - full trace mode.
+- Keep action buttons stable across tiers.
+
+**Acceptance**
+- Any policy-blocking event includes at least concise + medium explanation.
+
+---
+
+#### WP-4003: One-click fallback controls
+
+**Execution intent**
+- Provide deterministic recovery entry points.
+
+**Execution steps**
+- Add global short command set for active sessions:
+  - `pause`
+  - `rollback --checkpoint <id>`
+  - `escalate --run-id`
+- Add run validation before rollback:
+  - checkpoint exists
+  - checkpoint owner match / authority check
+  - post-rollback validation.
+
+**Acceptance**
+- Rollback returns run to valid checkpoint within bounded time and with clear diff preview.
+
+---
+
+#### WP-4004: Interruption fatigue controls
+
+**Execution intent**
+- Reduce unnecessary interruptions with meaningful deduplication.
+
+**Implementation steps**
+- Add interruption taxonomy:
+  - low/medium/high severity buckets.
+- Add dedup windows and repeat suppression.
+- Add rate caps per operator and severity gating.
+
+**Acceptance**
+- Alert noise decreases without increasing unresolved severity backlog.
+
+---
+
+#### WP-4005: State freshness and stale prevention
+
+**Execution intent**
+- Prevent action on stale context.
+
+**Implementation steps**
+- All mutable views include `last_updated_at` and `data_ttl_age`.
+- Add stale-guard middleware:
+  - stale state disables mutating actions
+  - action requires explicit refresh token.
+
+**Acceptance**
+- No destructive action can execute on stale view state.
+
+---
+
+#### WP-4006: Continuity handoff summaries
+
+**Execution intent**
+- Make ownership transitions reliable and auditable.
+
+**Implementation steps**
+- Auto-generate handoff snapshot:
+  - state summary
+  - open risks/blockers
+  - evidence gaps
+  - recommended next actions.
+- Require acknowledgement from incoming owner (for critical lanes).
+
+**Acceptance**
+- Shift handoff blocked when required acknowledgement is missing.
+
+---
+
+#### WP-4007: Decision replay and simulation
+
+**Execution intent**
+- Let operators validate “what-if” and reproduce decision paths.
+
+**Implementation steps**
+- Add replay graph with branch/fork controls.
+- Add pre-flight simulator for:
+  - policy
+  - routing
+  - cost
+  - risk.
+
+**Acceptance**
+- Replay path replicates deterministic events for historical rerun.
+
+---
+
+#### WP-4008: Confidence/risk calibration
+
+**Execution intent**
+- Improve model/action trust calibration over time.
+
+**Implementation steps**
+- Capture `(confidence, actual_outcome)` pairs.
+- Build calibration curves by:
+  - domain
+  - operation type
+  - operator mode.
+- Feed into routing/decision confidence thresholds.
+
+**Acceptance**
+- Calibration trend is non-degrading over windowed periods.
+
+---
+
+#### WP-Y7: TRAFFIC dashboard maturity
+
+**Execution intent**
+- Deliver measurable system health visibility.
+
+**Implementation steps**
+- Surface 10 KPIs with targets and trend views.
+- Include incident links from KPI drop alerts.
+- Add actionability: each KPI breach offers runbook pointer.
+
+**Acceptance**
+- Operators can resolve KPI breach through documented runbook path.
+
+---
+
+### Phase 5 Deepening — Adaptive Scale and Continuity (WP-5001..5008, WP-Y4, WP-Y8)
+
+#### WP-5001: Adaptive concurrency and proactive guardrails
+
+**Execution intent**
+- Increase capacity without unbounded risk.
+
+**Implementation steps**
+- Compute effective concurrency:
+  - base concurrency
+  - safety multiplier
+  - error-rate damping factor.
+- Enforce saturation thresholds and proactive slow-down at 70%.
+- Add speculative toggle with quality and budget gates.
+
+**Acceptance**
+- Peak load has bounded saturation and no cascading queue blowout.
+
+---
+
+#### WP-5002: Burst handling and safe-mode
+
+**Execution intent**
+- Keep service quality under spikes.
+
+**Implementation steps**
+- Add burst classifier with time-window deltas.
+- Safe-mode policy:
+  - reduce optional features
+  - throttle non-critical operations
+  - enforce backpressure.
+
+**Acceptance**
+- Burst events do not breach critical lane SLA.
+
+---
+
+#### WP-5003: Cost-aware routing
+
+**Execution intent**
+- Route with quality and budget constraints.
+
+**Implementation steps**
+- Extend routing score function:
+  - quality floor
+  - cost ceiling
+  - reliability and latency.
+- Emit routing rationale for each expensive decision.
+
+**Acceptance**
+- Cost overruns are attributable by task and run.
+
+---
+
+#### WP-5004: Non-critical deferral
+
+**Execution intent**
+- Prefer stability while preserving throughput.
+
+**Implementation steps**
+- Add defer states for non-critical tasks with ETA.
+- Ensure ordered replay by priority + aging.
+
+**Acceptance**
+- Deferral does not starve business-critical flow.
+
+---
+
+#### WP-5005: Long-running continuity watchdog
+
+**Execution intent**
+- Keep sessions recoverable after long-running interruption.
+
+**Implementation steps**
+- Add heartbeat loop with heartbeat id and sequence.
+- On missing heartbeat:
+  - soft retry resume
+  - hard escalate if timeout persists.
+
+**Acceptance**
+- Resume under timeout SLA after interruption.
+
+---
+
+#### WP-5006: Handoff integrity
+
+**Execution intent**
+- Ensure ownership transfer is complete and verifyable.
+
+**Implementation steps**
+- Validate continuity snapshot integrity hash before resumption.
+- Block handoff with incomplete snapshot + unresolved blockers.
+
+**Acceptance**
+- Invalid handoff does not proceed.
+
+---
+
+#### WP-5007: Load resilience drills
+
+**Execution intent**
+- Validate system under prolonged stress.
+
+**Implementation steps**
+- Define drill profile:
+  - 10x load
+  - provider jitter/timeouts
+  - malformed output injections.
+- Validate full recovery sequence and rollback.
+
+**Acceptance**
+- Load drills achieve rollback and recovery SLOs with evidence logs.
+
+---
+
+#### WP-5008: Load-aware tuning
+
+**Execution intent**
+- Close the control loop for routing quality over time.
+
+**Implementation steps**
+- Track tuning inputs:
+  - saturation
+  - cost
+  - routing success
+  - quality outcomes.
+- Apply bounded updates to avoid oscillation.
+
+**Acceptance**
+- Tuning improves or maintains KPIs with no destabilization.
+
+---
+
+#### WP-Y4: Cost tracking and optimization service
+
+**Execution intent**
+- Add operational cost observability and actionability.
+
+**Implementation steps**
+- Capture per-run provider cost with timestamps.
+- Emit budget threshold events at 80% and 100%.
+- Produce per-task and per-domain cost-quality reports.
+
+**Acceptance**
+- Cost budgets can be reviewed with root-cause by routing decision.
+
+---
+
+#### WP-Y8: Provider scoring and learning
+
+**Execution intent**
+- Adapt route choices continuously and safely.
+
+**Implementation steps**
+- Build daily score recompute with confidence weighting.
+- Inputs include prompt class and execution quality.
+- Add kill-switch for scoring model and fallback baseline.
+
+**Acceptance**
+- Scoring improves routing precision without quality regression.
+
+---
+
+## 11) Practical release cadence for the next 2–3 phases
+
+Use this for execution sequencing of the chunk:
+
+1. **Week 1–2:** Complete Phase 3 waves and harden rollback/override paths.
+2. **Week 3–4:** Complete UX Phase 4 base and safety controls, then run operator acceptance.
+3. **Week 5–6:** Implement Phase 5 adaptation and continuity baseline, then start load drills.
+4. **Week 7:** Cross-cutting validation:
+   - policy+UX+scale integration
+   - PRD mapping checks for FR-022..042
+   - readiness decision for Phase 6 handoff.
+
+Exit condition for this chunk:
+- Phase 3 done
+- Phase 4 partial cockpit-safe baseline available for operators
+- Phase 5 core scaling controls (5001, 5002, 5003, 5005) proven in canary
+
+---
+
+## 12) If you want next chunk now (phase completion)
+
+The next natural chunk after this is:
+- **Phase 6 deepening** (`WP-6001` → `WP-6008`) with:
+  - closure artifact matrix
+  - compliance signoff playbook
+  - production readiness checklist in testable form
+
+---
+
+## 13) Finish Chunk: Phase 6 Enterprise Readiness and Closure (WP-6001..6008)
+
+This is the closing execution chunk for Phase 6. It is additive and designed to be immediately actionable.
+
+### 13.1 WP-6001 — End-to-end dress rehearsal with integrated systems
+
+**Execution intent**
+- Verify the full operational lifecycle from ingest to completion under realistic scenarios.
+
+**Implementation steps**
+- Build a rehearsal harness script with scenario matrix:
+  - governance-denied path -> override -> re-run
+  - policy-drift path -> sweep -> recover
+  - checkpoint/rollback path
+  - continuity handoff at shift boundary
+  - observe summary with drift/fallback metrics.
+- Force all critical lanes at least once.
+- Emit a deterministic rehearsal report with:
+  - scenario ID
+  - start/end state
+  - pass/fail matrix
+  - blocking defects with owner and severity.
+
+**Pass criteria**
+- All required scenario paths complete with no data integrity issues.
+- No unresolved high/critical failures after two-pass reruns.
+
+**Rollback mode**
+- If any critical path fails in rehearsal, disable rollout and keep production on canary-only for affected path.
+
+---
+
+### 13.2 WP-6002 — Security and compliance signoff package
+
+**Execution intent**
+- Create a defensible evidence bundle for external/internal compliance review.
+
+**Implementation steps**
+- Compile:
+  - policy decision logs + policy hash snapshots
+  - immutable audit trail verification
+  - DRY-run and live override usage evidence
+  - retention/domain evidence matrix.
+- Include control mapping:
+  - framework mapping (e.g., SOC2, GDPR, EU AI Act controls if applicable).
+- Add reviewer workflow:
+  - review checklist
+  - reviewer signatures
+  - comments and open exception tracker.
+
+**Pass criteria**
+- Signed package exists with no open critical control gaps.
+- Exceptions recorded with explicit remediation plan.
+
+---
+
+### 13.3 WP-6003 — Reliability and SLO certification
+
+**Execution intent**
+- Prove stability characteristics before broad production confidence.
+
+**Implementation steps**
+- Define SLO profile:
+  - p95/p99 latency targets
+  - failure recovery time targets
+  - rollback completion targets.
+- Run certification suite:
+  - recovery drill
+  - checkpoint rollback drill
+  - policy rollback drill
+  - repeated-failure drill.
+- Require 3 green runs minimum for certification closure.
+
+**Pass criteria**
+- All certification cases pass on last 3 runs.
+- Drift from baseline within approved tolerance.
+
+---
+
+### 13.4 WP-6004 — Runbook finalization and on-call readiness
+
+**Execution intent**
+- Ensure on-call can operate failures without tribal knowledge dependence.
+
+**Implementation steps**
+- Finalize runbook sections:
+  - common failures and triage
+  - policy override and recovery
+  - escalation matrix
+  - rollback playbook
+  - incident closure template.
+- Include deep links:
+  - relevant logs
+  - escalation queue entry
+  - continuity snapshot view.
+- Add tabletop + simulation acceptance.
+
+**Pass criteria**
+- One simulation per runbook flow completed.
+- New operator can execute one non-trivial drill from guide alone.
+
+---
+
+### 13.5 WP-6005 — KPI baselines and alert thresholding
+
+**Execution intent**
+- Establish production-ready observability baseline and actionable thresholds.
+
+**Implementation steps**
+- Freeze initial baseline window for TRAFFIC KPIs.
+- Set threshold bands:
+  - warning
+  - critical
+  - blackout/lockdown triggers.
+- Define alert ownership and response SLA per band.
+- Add alert-to-runbook wiring.
+
+**Pass criteria**
+- Threshold events route to correct owner path.
+- No alerting dead-end: every alert has runbook/action.
+
+---
+
+### 13.6 WP-6006 — Decommission/sunset plan for temporary controls
+
+**Execution intent**
+- Remove temporary hardening controls once permanent controls are stable.
+
+**Implementation steps**
+- Produce:
+  - control inventory (temporary vs permanent)
+  - dependency map
+  - sunset date
+  - rollback alternative while sunsetting.
+- Stage removals in phases with compatibility checks.
+
+**Pass criteria**
+- Temporary controls either removed or explicitly retained with justification.
+- Sunsetting introduces no critical regression in canary.
+
+---
+
+### 13.7 WP-6007 — Post-launch observation and rollback reserve
+
+**Execution intent**
+- Provide 28-day stabilization behavior with clear incident control.
+
+**Implementation steps**
+- Define reserve policy:
+  - rollback reserve triggers
+  - decision thresholds for major rollback
+  - severity map and response times.
+- Publish incident severity playbook with:
+  - containment
+  - rollback decision tree
+  - communication cadence.
+
+**Pass criteria**
+- Severity path resolves to owner/action within defined SLA.
+- Rollback reserve tested with at least one synthetic event per severity tier.
+
+---
+
+### 13.8 WP-6008 — Formal closure and successor roadmap
+
+**Execution intent**
+- Convert completion into sustained governance and ownership transfer.
+
+**Implementation steps**
+- Produce closure memo:
+  - what was completed
+  - what is intentionally deferred
+  - residual risk register
+  - handoff owners.
+- Publish successor roadmap with:
+  - next milestones
+  - capability ownership
+  - dependency preconditions.
+
+**Pass criteria**
+- Closure memo signed by technical + governance stakeholders.
+- Successor roadmap accepted by operating model owner.
+
+---
+
+## 14) Phase 6 PRD mapping and evidence artifacts
+
+| WP | FRs | Required artifact | Evidence location |
+|---|---|---|---|
+| WP-6001 | FR-045 | rehearsal report + scenario replay traces | `docs/REHEARSAL_REPORT.md`, test/rehearsal logs |
+| WP-6002 | FR-046 | compliance bundle | security/compliance folder + checklist |
+| WP-6003 | FR-047 | SLO certification record | certification matrix + drill logs |
+| WP-6004 | FR-048 | signed runbook | `RUNBOOK.md` + on-call simulation logs |
+| WP-6005 | FR-049 | KPI baseline document | TRAFFIC dashboard config + alert routes |
+| WP-6006 | FR-050 | decommission plan + dependency map | `DECOMMISSIONING_PLAN.md` or successor doc |
+| WP-6007 | FR-051 | post-launch playbook | incident/reserve SOP + rollback drills |
+| WP-6008 | FR-052 | closure memo + roadmap | governance archive + handoff package |
+
+---
+
+## 15) Phase 6 hardening checks (practical go/no-go)
+
+### 15.1 Launch go/no-go gates (mandatory)
+- **Gate A (stability):** 3/3 SLO certification runs pass.
+- **Gate B (safety):** emergency rollback path proven under synthetic incident.
+- **Gate C (governance):** compliance signoff complete with no unresolved critical exceptions.
+- **Gate D (operations):** runbook simulation acceptance signed by on-call lead.
+- **Gate E (scale readiness):** load baseline still valid after final cutover.
+
+If any gate fails:
+- freeze non-essential rollout
+- hold at phase boundary
+- execute rollback reserve playbook
+- reopen closure checklist and rerun affected WPs.
+
+### 15.2 Go-live rollout sequence
+1. Canary enablement for non-critical 10% traffic.
+2. Expand to all non-critical lanes.
+3. Expand to critical lane after two stable windows.
+4. Execute closeout review and finalize closure memo.
+
+---
+
+## 16) Failure-mode table for Phase 6
+
+| Failure | Symptom | Trigger | Mitigation |
+|---|---|---|---|
+| Audit bundle incomplete | Compliance review fails | Missing control evidence | Pause go-live, collect missing artifacts, rerun gate |
+| Runbook unexecutable | Drill cannot be followed | Missing ownership or links | Patch runbook with command/owners; rerun simulation |
+| KPI blind spot | Alert no action path | Missing alert routing | Add runbook mapping + ownership assignment |
+| Rollback delay | Incident recovery exceeds SLA | Saturation or broken checkpoint | Activate rollback reserve; reduce lane load; restore from last checkpoint |
+| Stale governance assumptions | New exception not in policy | Outdated drift baseline | Run policy sweep; regenerate control snapshots |
+
+---
+
+## 17) Final 1-week closure plan (recommended)
+
+### Day 1: closure evidence consolidation
+- Build artifact index for all 8 WPs.
+- Close remaining exception trackers.
+
+### Day 2: signoff routing + simulation
+- Conduct final runbook/on-call simulation.
+- Present compliance and reliability packets to reviewers.
+
+### Day 3: canary closeout and decision
+- Execute Gate A–E in order.
+- Decide if full rollout proceeds or controlled delay is needed.
+
+### Day 4–5: release and post-launch reserve
+- Final launch with rollback reserve active.
+- 24-hour monitoring window with manual stand-by.
+
+### Day 7: closure declaration
+- Publish closure memo and roadmap handoff.
+- Archive release state and update ownership map.
+
+---
+
+## 18) Next action
+
+If you want the next chunk, request:  
+`continue next`  
+and I will generate **cross-phase closure QA pack** (test names, ownership table, and document-by-document verification checklist) to make this execution-ready as a near-final PRD-to-implementation cut.
+
+---
+
+## 19) Cross-Phase Closure QA Pack (Final Readiness Bundle)
+
+### 19.1 QA objective
+
+Validate that execution from Phase 3 to Phase 6 is complete, reviewable, and release-safe, with evidence mapped to:
+- Work package completion
+- PRD FR coverage
+- Test coverage
+- Documentation consistency
+- Governance and operational signoff
+
+---
+
+### 19.2 Test command matrix (copy-ready)
+
+#### A) Unit + validation
+
+| Area | Suggested test files | Test classes / focus | Scope |
+|---|---|---|---|
+| Governance policies | `tests/test_policies.py`, `tests/test_governance.py` | `TestPolicyDecisionFacade`, `TestPolicyOverrides`, `TestTrustBoundaries` | WP-3001, WP-3003, WP-3007 |
+| Signed artifacts | `tests/test_signing.py` | `TestSignedArtifactValidation`, `TestCriticalActionGuard` | WP-3002 |
+| Audit and immutability | `tests/test_audit.py`, `tests/test_evidence.py` | `TestAppendOnlyAudit`, `TestCausalOrdering`, `TestIntegrityRecheck` | WP-3004 |
+| Drift and sweep | `tests/test_governance_sweep.py` | `TestPolicyDriftDetection`, `TestAutoPauseOnDrift` | WP-3005 |
+| Escalation queue + UX semantics | `tests/test_escalation.py`, `tests/test_cli.py` | `TestEscalationSla`, `TestEscalationDelivery` | WP-3008 |
+| Prompt hierarchy | `tests/test_prompt_orchestration.py` | `TestPromptLayerInheritance`, `TestPromptOverridePrecedence` | WP-Y5 |
+
+#### B) E2E and integration
+
+| Area | Suggested test files | Test classes / focus | Scope |
+|---|---|---|---|
+| Phase 3 command flows | `tests/test_e2e_cli.py` | `TestGovernPolicyFlow`, `TestEscalationFlow`, `TestOverrideFlow` | WP-3001..3008 |
+| Phase 4 operator workflows | `tests/test_e2e_cli.py`, `tests/test_cli_views.py` | `TestOperatorCockpit`, `TestFallbackActions`, `TestContinuityHandoff` | WP-4001..4008 |
+| Phase 5 scale / continuity | `tests/test_scale.py`, `tests/test_continuity.py` | `TestConcurrencyAdaptive`, `TestBurstSafeMode`, `TestWatchdogResume` | WP-5001..5008 |
+| Dress rehearsal path | `tests/test_rehearsal.py` | `TestDressRehearsal`, `TestReadinessArtifacts` | WP-6001 |
+
+#### C) Chaos + performance + reliability
+
+| Area | Suggested test files | Test classes / focus | Scope |
+|---|---|---|---|
+| Reliability chaos | `tests/test_chaos.py` | `TestTimeoutPartition`, `TestMalformedOutput`, `TestRecoveryPlaybooks` | WP-2006, WP-2007, WP-5007 |
+| Recovery and rollback | `tests/test_recovery.py` | `TestCheckpointRestore`, `TestRollbackSla`, `TestDLQReplay` | WP-2001..2008 |
+| Capacity/perf | `tests/test_perf.py` | `TestConcurrencyProfile`, `TestFallbackRate`, `TestLatencyBudget` | WP-5001, WP-5002, WP-5003 |
+
+#### D) Compliance / governance artifacts
+
+| Area | Suggested test files | Test classes / focus | Scope |
+|---|---|---|---|
+| Compliance evidence | `tests/test_governance_evidence.py` | `TestEvidenceCompleteness`, `TestRetentionPolicyByDomain` | WP-3006 |
+| Incident and rollback readiness | `tests/test_incidents.py` | `TestKPIThresholdRouting`, `TestRollbackReserve`, `TestSeverityEscalation` | WP-6003, WP-6005, WP-6007 |
+
+---
+
+### 19.3 Ownership matrix for Phase 6 closure
+
+| Role | Responsibilities | Primary WPs | Evidence artifacts |
+|---|---|---|---|
+| Governance lead | Policy, boundaries, audit, escalation | WP-3001, WP-3002, WP-3003, WP-3004, WP-3005, WP-3007, WP-3008 | policy snapshots, audit exports, escalation SLA report |
+| Core engineering lead | Routing, concurrency, continuity, rollback | WP-5001, WP-5002, WP-5003, WP-5004, WP-5005, WP-5006, WP-5008 | load drill logs, routing traces, continuity snapshots |
+| Reliability/ops lead | Recovery, SLO, runbook, drills | WP-2001..2008, WP-5007, WP-6001, WP-6003 | recovery drill logs, SLO cert records, rehearsal report |
+| Platform/UX lead | Cockpit, fallback UX, explanations, dashboards | WP-4001, WP-4002, WP-4003, WP-4004, WP-4005, WP-4006, WP-4007, WP-4008, WP-Y7 | operator acceptance notes, TRAFFIC dashboard baseline exports |
+| Security/compliance lead | Signoff package, domain controls, decommission | WP-6002, WP-6004, WP-6005, WP-6006, WP-6007, WP-6008 | signed compliance bundle, closure memo, decommission plan |
+
+---
+
+### 19.4 Document-by-document verification checklist
+
+Use this checklist before closure signing:
+
+- `thegent-wbs-final.md`
+  - [ ] Cross-phase WPs exist for 3,4,5,6.
+  - [ ] Dependency prerequisites in tables still valid.
+  - [ ] Gate conditions (M3/M4/M5/M6) are still current.
+
+- `thegent-prd-final.md`
+  - [ ] FR-022..FR-052 status and acceptance remain represented in implementation references.
+  - [ ] Event taxonomy aligns with governance/xp/continuity decisions.
+  - [ ] Phase mapping for PRD sections is still coherent.
+
+- `thegent-plan-final-index.md`
+  - [ ] This new closure doc is referenced in document map/file list.
+  - [ ] Navigation paths still point to current phase guidance.
+
+- `thegent-phase3-6-full-depth-execution-prd.md`
+  - [ ] All closure acceptance gates are explicit and mapped to WPs.
+  - [ ] Cross-phase traceability tables are populated.
+  - [ ] Rollback/rehearsal sections include non-optional criteria.
+
+- `PRD_TEST_PLAN_MATRIX.md`
+  - [ ] Closure-relevant FRs include explicit test mapping.
+  - [ ] Phase 6 artifacts and acceptance tests are documented.
+
+- `thegent-implementation-log-*.md`
+  - [ ] New closure-phase evidence appears in implementation tracker.
+  - [ ] Any newly changed contracts or major policy files are logged.
+
+- `IMPLEMENTATION_STATUS.md`
+  - [ ] Phases 3/4/5/6 status are synchronized with closure outcome.
+  - [ ] Blocker list includes only post-closure known/accepted residuals.
+
+---
+
+### 19.5 Evidence bundle index (closure package)
+
+Required output files/folders:
+- `docs/closure/PHASE6_READINESS_REPORT.md`
+- `docs/closure/GOVERNANCE_COMPLIANCE_BUNDLE.md`
+- `docs/closure/ROLLBACK_RESERVE_PLAN.md`
+- `docs/closure/POST_LAUNCH_28DAY_OBSERVATION.md`
+- `docs/closure/SLO_CERTIFICATION_MATRIX.md`
+- `docs/closure/DR_REHEARSAL_REPORT.md`
+- `docs/closure/KPI_BASELINES.json`
+- `artifacts/closure/closure_summary.ndjson`
+
+Each file should include:
+- timestamp
+- owners
+- test IDs executed
+- pass/fail
+- remediation items with owners and due dates
+
+---
+
+### 19.6 Final closeout acceptance
+
+- All phases have deterministic closeout evidence files.
+- No critical blocker remains open without explicit exception and owner.
+- All gates A–E in Section 15 are passed.
+- Launch can proceed only after:
+  - Governance signoff
+  - Security/compliance signoff
+  - Operations readiness signoff
+
+---
+
+### 19.7 Next command
+
+If you want the actual implementation-ready artifacts (ready-to-create files), request:
+`generate closure files`
+and I will output concrete skeletons for each `docs/closure/*.md` and `artifacts/closure/*.ndjson` package.

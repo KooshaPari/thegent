@@ -63,15 +63,9 @@ def install_to_cursor(
     workspace: Path | None = None,
 ) -> bool:
     """Add thegent to Cursor MCP config. Prefers workspace .cursor/mcp.json if present."""
-    if workspace:
-        config_path = workspace.resolve() / ".cursor" / "mcp.json"
-    else:
-        config_path = Path.home() / ".cursor" / "mcp.json"
+    config_path = workspace.resolve() / ".cursor" / "mcp.json" if workspace else Path.home() / ".cursor" / "mcp.json"
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    if config_path.exists():
-        config = json.loads(config_path.read_text())
-    else:
-        config = {"mcpServers": {}}
+    config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
     config = _ensure_mcp_servers(config)
     config["mcpServers"]["thegent"] = _remote_config(url)
     config_path.write_text(json.dumps(config, indent=2))
@@ -81,10 +75,7 @@ def install_to_cursor(
 def install_to_claude_code(url: str = DEFAULT_MCP_URL) -> bool:
     """Add thegent to Claude Code config (~/.claude.json)."""
     config_path = Path.home() / ".claude.json"
-    if config_path.exists():
-        config = json.loads(config_path.read_text())
-    else:
-        config = {}
+    config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {}
     if "mcpServers" not in config:
         config["mcpServers"] = {}
     config["mcpServers"]["thegent"] = _remote_config(url)
@@ -96,10 +87,7 @@ def install_to_codex(url: str = DEFAULT_MCP_URL) -> bool:
     """Add thegent to Codex MCP config."""
     config_path = Path.home() / ".codex" / "mcp.json"
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    if config_path.exists():
-        config = json.loads(config_path.read_text())
-    else:
-        config = {"mcpServers": {}}
+    config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
     config = _ensure_mcp_servers(config)
     config["mcpServers"]["thegent"] = _remote_config(url)
     config_path.write_text(json.dumps(config, indent=2))
@@ -111,10 +99,7 @@ def install_to_claude_desktop(url: str = DEFAULT_MCP_URL) -> bool:
     config_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
     if not config_path.parent.exists():
         return False
-    if config_path.exists():
-        config = json.loads(config_path.read_text())
-    else:
-        config = {}
+    config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {}
     if "mcpServers" not in config:
         config["mcpServers"] = {}
     config["mcpServers"]["thegent"] = _remote_config(url)
@@ -127,10 +112,7 @@ def install_to_droid(url: str, workspace: Path | None = None) -> bool:
     base = (workspace or Path.cwd()).resolve()
     config_path = base / ".factory" / "mcp.json"
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    if config_path.exists():
-        config = json.loads(config_path.read_text())
-    else:
-        config = {"mcpServers": {}}
+    config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
     config = _ensure_mcp_servers(config)
     config["mcpServers"]["thegent"] = _remote_config(url)
     config_path.write_text(json.dumps(config, indent=2))
@@ -173,6 +155,7 @@ def install_to_client(
 
 # --- Service management (launchd on macOS) ---
 
+
 def _launchd_plist_path() -> Path:
     return Path.home() / "Library" / "LaunchAgents" / "com.thegent.mcp.plist"
 
@@ -190,6 +173,7 @@ def _python_exe() -> str:
 def _thegent_serve_cmd() -> list[str]:
     """Command to run thegent serve. Prefer sys.executable so launchd uses same Python as CLI."""
     import sys
+
     python = sys.executable
     if not python or not Path(python).exists():
         python = _python_exe()
@@ -237,7 +221,7 @@ def service_uninstall() -> tuple[bool, str]:
     if platform.system() != "Darwin":
         return False, "launchd only on macOS"
     plist_path = _launchd_plist_path()
-    subprocess.run(["launchctl", "unload", str(plist_path)], capture_output=True)
+    subprocess.run(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
     if plist_path.exists():
         plist_path.unlink()
     return True, "Uninstalled"
@@ -261,7 +245,7 @@ def service_stop() -> tuple[bool, str]:
     plist_path = _launchd_plist_path()
     if not plist_path.exists():
         return False, "Service not installed"
-    subprocess.run(["launchctl", "unload", str(plist_path)], capture_output=True)
+    subprocess.run(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
     return True, "Stopped"
 
 
@@ -271,6 +255,7 @@ def service_status(settings: ThegentSettings | None = None) -> tuple[bool, str]:
     url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
     try:
         import urllib.request
+
         req = urllib.request.Request(url, method="GET")
         with urllib.request.urlopen(req, timeout=2) as resp:
             if resp.status == 200:
@@ -280,6 +265,7 @@ def service_status(settings: ThegentSettings | None = None) -> tuple[bool, str]:
     if platform.system() == "Darwin":
         result = subprocess.run(
             ["launchctl", "list", "com.thegent.mcp"],
+            check=False,
             capture_output=True,
             text=True,
         )
@@ -290,10 +276,12 @@ def service_status(settings: ThegentSettings | None = None) -> tuple[bool, str]:
 
 # --- Process-compose (MCP + proxy bundled) ---
 
+
 def _process_compose_path() -> Path | None:
     """Path to process-compose.yaml in thegent project."""
     try:
         import thegent
+
         # thegent.__file__ = .../thegent/src/thegent/__init__.py -> parent.parent = project root
         pkg = Path(thegent.__file__).resolve().parent
         root = pkg.parent.parent  # src -> thegent project root
@@ -313,6 +301,7 @@ def mcp_up() -> tuple[bool, str]:
         return False, "process-compose not installed. Install: brew install process-compose"
     result = subprocess.run(
         [proc, "-f", str(pc), "up", "-D"],
+        check=False,
         cwd=pc.parent,
         capture_output=True,
         text=True,
@@ -333,6 +322,7 @@ def mcp_down() -> tuple[bool, str]:
     # down connects to running server; must run from project dir
     result = subprocess.run(
         [proc, "down"],
+        check=False,
         cwd=pc.parent,
         capture_output=True,
         text=True,

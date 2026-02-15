@@ -11,7 +11,12 @@ from typing import Any
 
 from fastmcp import FastMCP
 from fastmcp._vendor.docket_di import Depends
-from fastmcp.server.context import Context
+from fastmcp.server.context import (
+    AcceptedElicitation,
+    CancelledElicitation,
+    Context,
+    DeclinedElicitation,
+)
 from fastmcp.server.dependencies import CurrentContext
 from fastmcp.server.event_store import EventStore
 from fastmcp.server.lifespan import lifespan
@@ -24,33 +29,60 @@ from fastmcp.server.middleware.timing import TimingMiddleware
 from fastmcp.server.tasks.config import TaskConfig
 from fastmcp.server.transforms import PromptsAsTools, ResourcesAsTools
 from fastmcp.tools.tool import ToolResult
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
-from thegent.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
+from thegent.config import ThegentSettings
+
+
+class BearerAuthMiddleware(BaseHTTPMiddleware):
+    """G-FM-01: Bearer token authentication for MCP HTTP endpoints."""
+
+    async def dispatch(self, request: Request, call_next):
+        settings = ThegentSettings()
+        if settings.mcp_auth_mode == "bearer":
+            # Allow health check without auth
+            if request.url.path == "/health":
+                return await call_next(request)
+
+            auth = request.headers.get("Authorization")
+            if not auth or not auth.startswith("Bearer "):
+                return JSONResponse({"error": "Missing or invalid Authorization"}, status_code=401)
+            token = auth[7:]
+            valid_tokens = [t.strip() for t in settings.mcp_bearer_tokens.split(",") if t.strip()]
+            if token not in valid_tokens:
+                return JSONResponse({"error": "Invalid token"}, status_code=401)
+        return await call_next(request)
+
+
 from thegent.cli_impl import (
     ELICIT_CWD_MSG,
     ELICIT_OWNER_MSG,
-    get_server_meta_impl,
-    bg_impl,
-    session_contract_health_report_impl,
-    session_contract_health_gate_impl,
-    session_contract_health_trend_impl,
-    dag_list_impl,
     _coerce_issue_types,
+    _default_owner_tag,
+    _resolve_cwd,
+    bg_impl,
+    dag_list_impl,
+    get_server_meta_impl,
     inspect_impl,
     list_agents_impl,
     list_droids_impl,
     list_models_impl,
-    session_contract_audit_impl,
     logs_impl,
+    observe_summary_impl,
     ps_impl,
     run_impl,
+    session_contract_audit_impl,
+    session_contract_health_gate_impl,
+    session_contract_health_report_impl,
+    session_contract_health_trend_impl,
     status_impl,
-    observe_summary_impl,
     stop_impl,
     wait_impl,
 )
+from thegent.config import ThegentSettings
+from thegent.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
 
 # G-FM-04: Icon mapping for tools; wire when FastMCP supports icon parameter
 TOOL_ICONS = {
@@ -94,23 +126,25 @@ def get_default_owner(ctx: Context = CurrentContext()) -> str | None:
 async def thegent_lifespan(server: FastMCP):
     """Startup and teardown for thegent MCP server. See gofastmcp.com/servers/lifespan."""
     _log.info("thegent MCP server starting")
-    
+
     # ROB-013: Configuration validation on startup (fail-fast)
     from thegent.config import ThegentSettings
+
     try:
         settings = ThegentSettings()
         settings.validate_setup()
         _log.info("Configuration validated successfully")
     except Exception as e:
         _log.critical("Configuration validation failed: %s", e)
-        # In mission-critical rigor, we might want to exit here, 
+        # In mission-critical rigor, we might want to exit here,
         # but for now we'll just log loudly to avoid breaking all installs.
-    
+
     proxy_proc = None
     if os.environ.get("THGENT_BUNDLE_PROXY", "").lower() in ("1", "true", "yes"):
         try:
             from thegent.agents.cliproxy_manager import start_proxy_managed
             from thegent.config import ThegentSettings
+
             settings = ThegentSettings()
             proxy_proc, base_url = start_proxy_managed(settings)
             if proxy_proc is not None:
@@ -121,25 +155,13 @@ async def thegent_lifespan(server: FastMCP):
         yield {}
     finally:
         # G-OP-10: Optional drain wait for in-flight requests
-        wait_s = 0
-        try:
-            raw = os.environ.get("THGENT_SHUTDOWN_WAIT_S", "").strip()
-            if raw:
-                wait_s = max(0, min(int(raw), 60))
-        except (ValueError, TypeError):
-            pass
+        wait_s = settings.shutdown_wait_s
         if wait_s > 0:
             _log.info("shutdown wait %ds for in-flight requests", wait_s)
             await asyncio.sleep(wait_s)
 
         # G-OP-10: Optional active-run wait — poll ps_impl until no running sessions or timeout
-        active_wait_s = 0
-        try:
-            raw = os.environ.get("THGENT_SHUTDOWN_WAIT_ACTIVE_S", "").strip()
-            if raw:
-                active_wait_s = max(0, min(int(raw), 120))
-        except (ValueError, TypeError):
-            pass
+        active_wait_s = settings.shutdown_wait_active_s
         if active_wait_s > 0:
             start = time.monotonic()
             poll_interval = 2.0
@@ -195,6 +217,7 @@ mcp.add_middleware(LoggingMiddleware())
 def _stable_json(payload: Any) -> str:
     """Serialize dict/list payloads with stable key order for deterministic MCP transport."""
     return json.dumps(payload, sort_keys=True)
+
 
 # --- MCP Resources ---
 
@@ -391,7 +414,7 @@ def resource_session_contract_health_trend(
 
 
 @mcp.resource(
-    "thegent://observe/summary{?limit,drift_window,structural_budget_pct,semantic_budget_pct,provider,top_escalations}",
+    "thegent://observe/summary{?limit,drift_window,structural_budget_pct,semantic_budget_pct,provider,trend_samples,top_escalations}",
     mime_type="application/json",
     annotations={"readOnlyHint": True, "idempotentHint": True},
 )
@@ -401,6 +424,7 @@ def resource_observe_summary(
     structural_budget_pct: float = 5.0,
     semantic_budget_pct: float = 10.0,
     provider: str | None = None,
+    trend_samples: int = 0,
     top_escalations: int = 10,
 ) -> str:
     """Observe summary payload for contract KPIs, drift status, and escalation backlog."""
@@ -410,6 +434,7 @@ def resource_observe_summary(
         structural_budget_pct=structural_budget_pct,
         semantic_budget_pct=semantic_budget_pct,
         provider=provider,
+        trend_samples=trend_samples,
         top_escalations=top_escalations,
     )
     return _stable_json(payload)
@@ -432,7 +457,7 @@ def resource_meta() -> str:
 )
 def resource_operations(operation: str | None = None) -> str:
     """Universal operation taxonomy: orchestrate, govern, recover, observe, plan."""
-    from thegent.operations import list_operations, get_operations_by_type, Operation
+    from thegent.operations import Operation, get_operations_by_type, list_operations
 
     if operation:
         try:
@@ -440,7 +465,9 @@ def resource_operations(operation: str | None = None) -> str:
         except ValueError:
             return json.dumps({"error": f"Unknown operation: {operation}"})
         entries = get_operations_by_type(op)
-        data = {op.value: [{"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries]}
+        data = {
+            op.value: [{"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries]
+        }
     else:
         data = list_operations()
     return json.dumps(data)
@@ -453,16 +480,26 @@ def resource_operations(operation: str | None = None) -> str:
 )
 def resource_modes(mode: str | None = None) -> str:
     """Multi-agent orchestration modes: sequential_delegation, parallel_consensus, review_loop."""
-    from thegent.orchestration_modes import list_modes, get_mode
+    from thegent.orchestration_modes import get_mode, list_modes
 
     if mode:
         entry = get_mode(mode)
         if not entry:
             return json.dumps({"error": f"Unknown mode: {mode}"})
-        data = [{"mode": entry.mode.value, "description": entry.description, "phases": entry.phases, "use_case": entry.use_case, "risk_profile": entry.risk_profile, "selection_hint": entry.selection_hint}]
+        data = [
+            {
+                "mode": entry.mode.value,
+                "description": entry.description,
+                "phases": entry.phases,
+                "use_case": entry.use_case,
+                "risk_profile": entry.risk_profile,
+                "selection_hint": entry.selection_hint,
+            }
+        ]
     else:
         data = list_modes()
     return json.dumps(data)
+
 
 # --- MCP Prompts ---
 
@@ -496,6 +533,7 @@ def thegent_bg_task(agent: str, prompt: str, owner: str | None = None) -> str:
     owner_hint = f" (owner: {owner})" if owner else ""
     return f"Start background task: agent '{agent}'{owner_hint}. Task: {prompt}"
 
+
 # --- MCP Tools ---
 
 
@@ -517,10 +555,10 @@ async def thegent_run(
     arbitration: str | None = None,
     ctx: Context = CurrentContext(),
     default_cwd: Path | None = Depends(get_default_cwd),
-) -> str:
+) -> ToolResult | str:
     """
     Run an agent synchronously with a prompt.
-    
+
     Args:
         prompt: The task prompt (required)
         agent: Agent/provider name (optional when model given for model-first routing)
@@ -533,7 +571,7 @@ async def thegent_run(
     include_contract: Include resolved route contract metadata for model-based routing
     confidence: Required confidence threshold (0.0-1.0)
     arbitration: Arbitration role (e.g. planner, operator, reviewer)
-    
+
     Returns: JSON string with keys: stdout, stderr, exit_code, timed_out and optional routing metadata.
     """
     # Model-first: resolve model -> (agent, model_alias)
@@ -546,6 +584,7 @@ async def thegent_run(
     if model and not agent:
         from thegent.config import ThegentSettings
         from thegent.models import resolve_route, resolve_route_contract
+
         settings = ThegentSettings()
         policy = (settings.default_routing or "prefer_direct").lower()
         if policy not in ("prefer_direct", "prefer_proxy"):
@@ -554,7 +593,9 @@ async def thegent_run(
         resolved = resolve_route(model, provider_hint=provider, policy=policy)
         if resolved is None:
             return ToolResult(
-                content=json.dumps({"error": f"No route for model '{model}'. Try thegent list-models.", "exit_code": 1}),
+                content=json.dumps(
+                    {"error": f"No route for model '{model}'. Try thegent list-models.", "exit_code": 1}
+                ),
                 meta={},
             )
         agent, model = resolved[0], resolved[1]
@@ -571,6 +612,7 @@ async def thegent_run(
     elif model and agent:
         from thegent.config import ThegentSettings
         from thegent.models import ModelCatalog, resolve_route, resolve_route_contract
+
         settings = ThegentSettings()
         policy = (settings.default_routing or "prefer_direct").lower()
         if policy not in ("prefer_direct", "prefer_proxy"):
@@ -582,7 +624,9 @@ async def thegent_run(
             available = ", ".join(sorted({r.provider for r in routes})) if routes else ""
             suffix = f" Available: {available}." if available else ""
             return ToolResult(
-                content=json.dumps({"error": f"Model '{model}' not available via provider '{agent}'.{suffix}", "exit_code": 1}),
+                content=json.dumps(
+                    {"error": f"Model '{model}' not available via provider '{agent}'.{suffix}", "exit_code": 1}
+                ),
                 meta={},
             )
         agent, model = resolved[0], resolved[1]
@@ -638,8 +682,8 @@ async def thegent_run(
             timeout,
             full,
             model,
-            None, # run_id
-            "standard", # lane
+            None,  # run_id
+            "standard",  # lane
             confidence,
             arbitration,
         )
@@ -699,7 +743,7 @@ async def thegent_bg(
 ) -> ToolResult:
     """
     Start an agent run in the background.
-    
+
     Args:
         agent: Agent name
         prompt: The task prompt
@@ -714,7 +758,7 @@ async def thegent_bg(
         include_contract: Return resolved routing contract metadata.
         confidence: Required confidence threshold (0.0-1.0)
         arbitration: Arbitration role (e.g. planner, operator, reviewer)
-    
+
     Returns: ToolResult with session_id, log_path, owner
     """
     await ctx.info(f"thegent_bg agent={agent} cd={cd} owner={owner}")
@@ -775,8 +819,9 @@ async def thegent_bg(
 
     if include_contract and model:
         try:
-            from thegent.models import route_contract as catalog_route_contract
             from thegent.models import resolve_route_contract
+            from thegent.models import route_contract as catalog_route_contract
+
             contract = resolve_route_contract(
                 model,
                 provider_hint=requested_provider if requested_provider else None,
@@ -826,7 +871,9 @@ async def thegent_bg(
             "policy": requested_policy,
             "resolved_model_alias": model,
             "resolved_agent": agent,
-        } if include_contract else None,
+        }
+        if include_contract
+        else None,
         lane="standard",
         confidence=confidence,
         arbitration=arbitration,
@@ -847,23 +894,19 @@ async def thegent_bg(
             structured_content=payload,
             meta={"execution_time_ms": elapsed_ms},
         )
-    return ToolResult(
-        content=json.dumps(result),
-        structured_content=result,
-        meta={"execution_time_ms": elapsed_ms}
-    )
+    return ToolResult(content=json.dumps(result), structured_content=result, meta={"execution_time_ms": elapsed_ms})
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_ps(owner: str | None = None, all: bool = False, include_contract: bool = False) -> ToolResult:
     """
     List background sessions.
-    
+
     Args:
         owner: Filter by owner tag (optional)
         all: Include completed/stopped sessions (default: False)
         include_contract: Include resolved route contract/request metadata (optional)
-    
+
     Returns: JSON string with list of sessions
     """
     start_time = time.perf_counter()
@@ -879,33 +922,29 @@ def thegent_ps(owner: str | None = None, all: bool = False, include_contract: bo
 def thegent_status(session_id: str, include_contract: bool = False) -> ToolResult:
     """
     Get status of a background session.
-    
+
     Args:
         session_id: Session ID to query
-    
+
     Returns: ToolResult with session status and metadata
     """
     _log.info("thegent_status session_id=%s", session_id)
     start_time = time.perf_counter()
     result = status_impl(session_id=session_id, include_contract=include_contract)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    return ToolResult(
-        content=json.dumps(result),
-        structured_content=result,
-        meta={"execution_time_ms": elapsed_ms}
-    )
+    return ToolResult(content=json.dumps(result), structured_content=result, meta={"execution_time_ms": elapsed_ms})
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_logs(session_id: str, tail: int | None = None, stderr: bool = False) -> ToolResult:
     """
     Get logs from a background session.
-    
+
     Args:
         session_id: Session ID to query
         tail: Number of lines to return from end (optional, default: all)
         stderr: Include stderr instead of stdout (default: False)
-    
+
     Returns: Log text
     """
     _log.info("thegent_logs session_id=%s tail=%s", session_id, tail)
@@ -988,9 +1027,9 @@ def thegent_session_contract_health_gate(
 ) -> ToolResult:
     """
     Evaluate session contract health against a minimum ratio gate.
-    
-    Returns a unified health payload with `schema_version`, `payload_type`, 
-    `pass`, `status`, `total_sessions`, `healthy_sessions`, `unhealthy_sessions`, 
+
+    Returns a unified health payload with `schema_version`, `payload_type`,
+    `pass`, `status`, `total_sessions`, `healthy_sessions`, `unhealthy_sessions`,
     `blocked_sessions_count`, `blocked_ratio`, and `blocked_sessions`.
     """
     start_time = time.perf_counter()
@@ -1004,7 +1043,7 @@ def thegent_session_contract_health_gate(
         regression_tolerance=regression_tolerance,
     )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    result = ToolResult(
+    return ToolResult(
         content=_stable_json(payload),
         structured_content=payload,
         meta={
@@ -1024,7 +1063,6 @@ def thegent_session_contract_health_gate(
             "blocked_sessions_cap": payload.get("blocked_sessions_cap", 0),
         },
     )
-    return result
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
@@ -1039,9 +1077,9 @@ def thegent_session_contract_health_report(
 ) -> ToolResult:
     """
     Get contract health report with issue taxonomy and owner-level breakdown.
-    
-    Returns a unified health payload with `schema_version`, `payload_type`, 
-    `status`, `total_sessions`, `healthy_sessions`, `unhealthy_sessions`, 
+
+    Returns a unified health payload with `schema_version`, `payload_type`,
+    `status`, `total_sessions`, `healthy_sessions`, `unhealthy_sessions`,
     `blocked_sessions_count`, `blocked_ratio`, `issue_breakdown`, and `owner_breakdown`.
     """
     start_time = time.perf_counter()
@@ -1055,7 +1093,7 @@ def thegent_session_contract_health_report(
         regression_tolerance=regression_tolerance,
     )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    result = ToolResult(
+    return ToolResult(
         content=_stable_json(payload),
         structured_content=payload,
         meta={
@@ -1074,7 +1112,6 @@ def thegent_session_contract_health_report(
             "top_blocked_count": payload.get("top_blocked_count", 0),
         },
     )
-    return result
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
@@ -1103,7 +1140,7 @@ def thegent_session_contract_health_trend(
         limit=limit,
     )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    return ToolResult(
+    result = ToolResult(
         content=_stable_json(payload),
         structured_content=payload,
         meta={
@@ -1245,33 +1282,10 @@ def thegent_session_contract_health_trend(
             "compat_aliases": (payload.get("compat") or {}).get("aliases", {}),
             "compat_aliases_count": payload.get(
                 "compat_aliases_count",
-                len(((payload.get("compat") or {}).get("aliases", {}) or {})),
+                len((payload.get("compat") or {}).get("aliases", {}) or {}),
             ),
         },
     )
-    # Compatibility: some direct-call consumers expect `content` to be a raw JSON string.
-    if isinstance(result.content, list):
-        class _CompatToolResult:
-            def __init__(self, content: str, structured_content: dict[str, Any], meta: dict[str, Any]) -> None:
-                self.content = content
-                self.structured_content = structured_content
-                self.meta = meta
-
-        return _CompatToolResult(_stable_json(payload), payload, result.meta or {})
-    return result
-    # Compatibility: older tests/consumers expect `content` to be a plain JSON string.
-    if isinstance(result.content, list):
-        class _CompatToolResult:
-            def __init__(self, content: str, structured_content: dict[str, Any], meta: dict[str, Any]) -> None:
-                self.content = content
-                self.structured_content = structured_content
-                self.meta = meta
-
-        return _CompatToolResult(
-            _stable_json(payload),
-            payload,
-            result.meta or {},
-        )
     return result
 
 
@@ -1282,6 +1296,7 @@ def thegent_observe_summary(
     structural_budget_pct: float = 5.0,
     semantic_budget_pct: float = 10.0,
     provider: str | None = None,
+    trend_samples: int = 0,
     top_escalations: int = 10,
 ) -> ToolResult:
     """
@@ -1294,6 +1309,7 @@ def thegent_observe_summary(
         structural_budget_pct=structural_budget_pct,
         semantic_budget_pct=semantic_budget_pct,
         provider=provider,
+        trend_samples=trend_samples,
         top_escalations=top_escalations,
     )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
@@ -1320,6 +1336,8 @@ def thegent_observe_summary(
             "drift_semantic_budget_pct": drift.get("semantic_budget_pct", semantic_budget_pct),
             "backlog_count": escalation.get("backlog_count", 0),
             "backlog_past_sla_count": escalation.get("past_sla_count", 0),
+            "trend_enabled": payload.get("trend_summary", {}).get("enabled", False),
+            "trend_samples_requested": payload.get("generated_query", {}).get("trend_samples", 0),
             "top_escalations_count": escalation.get("top_escalations_count", 0),
             "provider": escalation.get("provider", provider),
             "top_escalations_requested": top_escalations,
@@ -1331,57 +1349,49 @@ def thegent_observe_summary(
 def thegent_wait(session_id: str, timeout: int | None = None) -> ToolResult:
     """
     Wait for a background session to complete.
-    
+
     Args:
         session_id: Session ID to wait for
         timeout: Timeout in seconds (optional)
-    
+
     Returns: ToolResult with final status and exit code
     """
     _log.info("thegent_wait session_id=%s timeout=%s", session_id, timeout)
     start_time = time.perf_counter()
     result = wait_impl(session_id=session_id, timeout=timeout)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    return ToolResult(
-        content=json.dumps(result),
-        structured_content=result,
-        meta={"execution_time_ms": elapsed_ms}
-    )
+    return ToolResult(content=json.dumps(result), structured_content=result, meta={"execution_time_ms": elapsed_ms})
 
 
 @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False})
 def thegent_stop(session_id: str, force: bool = False) -> ToolResult:
     """
     Stop a background session.
-    
+
     Args:
         session_id: Session ID to stop
         force: Use SIGKILL instead of SIGTERM (default: False)
-    
+
     Returns: ToolResult with status
     """
     _log.info("thegent_stop session_id=%s force=%s", session_id, force)
     start_time = time.perf_counter()
     result = stop_impl(session_id=session_id, force=force)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    return ToolResult(
-        content=json.dumps(result),
-        structured_content=result,
-        meta={"execution_time_ms": elapsed_ms}
-    )
+    return ToolResult(content=json.dumps(result), structured_content=result, meta={"execution_time_ms": elapsed_ms})
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_list_operations(operation: str | None = None) -> ToolResult:
     """
     List universal operation taxonomy: orchestrate, govern, recover, observe, plan.
-    
+
     Args:
         operation: Optional filter (orchestrate | govern | recover | observe | plan)
-    
+
     Returns: JSON with operations and their commands/mcp_tools.
     """
-    from thegent.operations import list_operations, get_operations_by_type, Operation
+    from thegent.operations import Operation, get_operations_by_type, list_operations
 
     if operation:
         try:
@@ -1389,7 +1399,9 @@ def thegent_list_operations(operation: str | None = None) -> ToolResult:
         except ValueError:
             return ToolResult(content=json.dumps({"error": f"Unknown operation: {operation}"}))
         entries = get_operations_by_type(op)
-        data = {op.value: [{"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries]}
+        data = {
+            op.value: [{"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries]
+        }
     else:
         data = list_operations()
     return ToolResult(content=_stable_json(data))
@@ -1399,19 +1411,28 @@ def thegent_list_operations(operation: str | None = None) -> ToolResult:
 def thegent_list_modes(mode: str | None = None) -> ToolResult:
     """
     List multi-agent orchestration modes (G-KD-04).
-    
+
     Args:
         mode: Optional filter (sequential_delegation | parallel_consensus | review_loop)
-    
+
     Returns: JSON with modes, phases, use_case, risk_profile, selection_hint.
     """
-    from thegent.orchestration_modes import list_modes, get_mode
+    from thegent.orchestration_modes import get_mode, list_modes
 
     if mode:
         entry = get_mode(mode)
         if not entry:
             return ToolResult(content=json.dumps({"error": f"Unknown mode: {mode}"}))
-        data = [{"mode": entry.mode.value, "description": entry.description, "phases": entry.phases, "use_case": entry.use_case, "risk_profile": entry.risk_profile, "selection_hint": entry.selection_hint}]
+        data = [
+            {
+                "mode": entry.mode.value,
+                "description": entry.description,
+                "phases": entry.phases,
+                "use_case": entry.use_case,
+                "risk_profile": entry.risk_profile,
+                "selection_hint": entry.selection_hint,
+            }
+        ]
     else:
         data = list_modes()
     return ToolResult(content=_stable_json(data))
@@ -1421,7 +1442,7 @@ def thegent_list_modes(mode: str | None = None) -> ToolResult:
 def thegent_list_agents() -> ToolResult:
     """
     List available agents.
-    
+
     Returns: JSON string with list of {name, backend}
     """
     start_time = time.perf_counter()
@@ -1440,7 +1461,7 @@ def thegent_list_droids(
 ) -> ToolResult:
     """
     List available droids.
-    
+
     Args:
         cd: Optional working directory (or use meta.cwd in request)
         Returns: JSON string with list of droid names
@@ -1464,12 +1485,12 @@ def thegent_list_models(
 ) -> ToolResult:
     """
     List available models (optionally filtered by provider).
-    
+
     Args:
         provider: Optional provider filter (minimax, glm, cursor, gemini, copilot, claude, codex)
         include_contract: If true, return route metadata payload instead of provider/model map.
         by_model: If true, return {model_id: [provider, ...]} for routing (R5).
-    
+
     Returns: JSON string with {provider: [model_names]}, {model_id: [providers]}, or contract payload.
     """
     start_time = time.perf_counter()
@@ -1490,12 +1511,12 @@ def thegent_resolve_model_route(
 ) -> ToolResult:
     """
     Resolve a model to a concrete routing target.
-    
+
     Args:
         model: Model identifier (alias or canonical)
         provider: Optional provider hint
         policy: Routing policy: prefer_direct, prefer_proxy, failover
-    
+
     Returns: JSON contract payload with resolved route if available.
     """
     from thegent.models import (
@@ -1563,10 +1584,10 @@ async def thegent_dag_list(
 ) -> ToolResult:
     """
     List DAG tasks from .factory/dag-session.md.
-    
+
     Args:
         cd: Optional working directory (or use meta.cwd in request)
-    
+
     Returns: JSON string with {frontmatter, tasks}
     """
     cd_path = Path(cd) if cd else default_cwd
@@ -1577,7 +1598,9 @@ async def thegent_dag_list(
             cwd = Path(elicitation.data).expanduser().resolve()
         elif isinstance(elicitation, DeclinedElicitation):
             return ToolResult(
-                content=json.dumps({"error": "User declined to provide working directory.", "frontmatter": {}, "tasks": []}),
+                content=json.dumps(
+                    {"error": "User declined to provide working directory.", "frontmatter": {}, "tasks": []}
+                ),
                 meta={},
             )
         elif isinstance(elicitation, CancelledElicitation):
@@ -1587,7 +1610,13 @@ async def thegent_dag_list(
             )
         else:
             return ToolResult(
-                content=json.dumps({"error": "Ambiguous cwd. Provide --cd /path or run from project root.", "frontmatter": {}, "tasks": []}),
+                content=json.dumps(
+                    {
+                        "error": "Ambiguous cwd. Provide --cd /path or run from project root.",
+                        "frontmatter": {},
+                        "tasks": [],
+                    }
+                ),
                 meta={},
             )
     start_time = time.perf_counter()
@@ -1644,6 +1673,7 @@ def _get_event_store() -> EventStore:
     url = os.environ.get("FASTMCP_EVENT_STORE_URL")
     if url:
         from key_value.aio.stores.redis import RedisStore
+
         return EventStore(storage=RedisStore(url=url))
     return EventStore()
 
@@ -1651,12 +1681,14 @@ def _get_event_store() -> EventStore:
 def http_app(stateless_http: bool = True):
     """Return ASGI app with EventStore (mountable in FastAPI/Starlette).
     stateless_http=True allows per-request JSON-RPC without SSE session (for simple clients, CI, verification)."""
-    return mcp.http_app(
+    app = mcp.http_app(
         event_store=_get_event_store(),
         retry_interval=2000,
         transport="http",
         stateless_http=stateless_http,
     )
+    app.add_middleware(BearerAuthMiddleware)
+    return app
 
 
 def run(host: str | None = None, port: int | None = None) -> None:
@@ -1664,14 +1696,10 @@ def run(host: str | None = None, port: int | None = None) -> None:
     import uvicorn
 
     from thegent.config import ThegentSettings
+
     settings = ThegentSettings()
-    docket_url = os.environ.get("FASTMCP_DOCKET_URL")
-    app = mcp.http_app(
-        event_store=_get_event_store(),
-        retry_interval=2000,
-        transport="http",
-        stateless_http=True,
-    )
+    os.environ.get("FASTMCP_DOCKET_URL")
+    app = http_app(stateless_http=True)
     uvicorn.run(
         app,
         host=host or settings.mcp_host,

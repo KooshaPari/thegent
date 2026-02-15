@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Any
 
 import yaml
 
@@ -62,7 +62,8 @@ def _ensure_config(settings: ThegentSettings) -> Path:
 
     if config_path.exists():
         try:
-            config = yaml.safe_load(config_path.read_text()) or {}
+            raw = yaml.safe_load(config_path.read_text())
+            config: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
         except Exception:
             config = {}
     else:
@@ -71,7 +72,7 @@ def _ensure_config(settings: ThegentSettings) -> Path:
     config.setdefault("port", settings.cliproxy_port)
     config.setdefault("auth-dir", str(auth_dir))
 
-    config_path.write_text(yaml.dump(config, default_flow_style=False, sort_keys=False))
+    config_path.write_text(str(yaml.dump(config, default_flow_style=False, sort_keys=False)))
     return config_path
 
 
@@ -110,9 +111,7 @@ def _start_proxy_and_wait(
         if _is_proxy_reachable(base_url):
             return proc
         if proc.poll() is not None:
-            raise RuntimeError(
-                f"CLIProxyAPIPlus exited with code {proc.returncode}. Check config at {config_path}"
-            )
+            raise RuntimeError(f"CLIProxyAPIPlus exited with code {proc.returncode}. Check config at {config_path}")
     proc.kill()
     raise RuntimeError(
         f"CLIProxyAPIPlus did not become ready within {_PROXY_READY_TIMEOUT}s. "
@@ -138,7 +137,7 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
     return base_url
 
 
-def start_proxy_managed(settings: ThegentSettings) -> tuple[Optional[subprocess.Popen[bytes]], str]:
+def start_proxy_managed(settings: ThegentSettings) -> tuple[subprocess.Popen[bytes] | None, str]:
     """
     Start proxy and return (proc, base_url) for lifecycle management.
     Caller must terminate proc on shutdown. Skips if proxy already reachable (proc=None).
@@ -185,10 +184,7 @@ def run_login(settings: ThegentSettings, provider: str) -> int:
     All providers (including roo, kilo) use CLIProxyAPIPlus flags; logic lives in Go.
     """
     if provider not in _LOGIN_FLAGS:
-        raise ValueError(
-            f"Unknown provider: {provider}. "
-            f"Supported: {', '.join(sorted(_LOGIN_FLAGS))}"
-        )
+        raise ValueError(f"Unknown provider: {provider}. Supported: {', '.join(sorted(_LOGIN_FLAGS))}")
 
     binary = _resolve_binary(settings)
     if not _binary_available(binary):
@@ -197,6 +193,7 @@ def run_login(settings: ThegentSettings, provider: str) -> int:
     flag = _LOGIN_FLAGS[provider]
     proc = subprocess.run(
         [binary, "-config", str(config_path), flag],
+        check=False,
         env=os.environ.copy(),
     )
     return proc.returncode

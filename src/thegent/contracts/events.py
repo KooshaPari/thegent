@@ -4,14 +4,14 @@ Provides formal Pydantic models for chunk, evidence, and policy events
 used in run registry, telemetry, and compliance evidence retention.
 """
 
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class ChunkEvent(BaseModel):
@@ -39,7 +39,7 @@ class EvidenceEvent(BaseModel):
     task_id: str = ""
     evidence_id: str = ""  # session_id or artifact id
     evidence_type: str = "session"  # session, artifact, hash
-    hash_value: Optional[str] = None
+    hash_value: str | None = None
     timestamp_utc: str = Field(default_factory=_utc_now)
     schema_version: str = "evidence-v1"
 
@@ -53,7 +53,7 @@ class PolicyEvent(BaseModel):
     run_id: str = ""
     decision: str = "allow"  # allow, deny, warn
     reason: str = ""
-    policy_id: Optional[str] = None
+    policy_id: str | None = None
     override_applied: bool = False
     timestamp_utc: str = Field(default_factory=_utc_now)
     schema_version: str = "policy-v1"

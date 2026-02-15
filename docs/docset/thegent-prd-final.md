@@ -1,8 +1,8 @@
 # Thegent Production Orchestration PRD (Final)
 
 **Status:** Finalized comprehensive PRD
-**Date:** 2026-02-14
-**Scope:** Complete synthesis of 18 research agents (codebase + industry SOTA) with 42 FRs, 16 NFRs, 114 patterns, MAST taxonomy, TRAFFIC KPIs, and 7-phase roadmap.
+**Date:** 2026-02-15
+**Scope:** Complete synthesis of 18 research agents (codebase + industry SOTA) with 64 FRs, 28 NFRs, 114 patterns, MAST taxonomy, TRAFFIC KPIs, and 11-phase roadmap.
 
 ---
 
@@ -528,13 +528,13 @@ Total wall-clock: 126-187 min (20-29 parallel subagent batches)
 
 All of the following must be satisfied before production release:
 
-- **Gates A, A+, B, C, D, E, F, G** all passed with documented evidence
+- **Gates A, A+, B, C, D, E, F, G, G10, G11, G12** all passed with documented evidence
 - **Critical incidents** recover within defined SLA in live drills (no sim)
 - **Governance and compliance signoff** complete (legal, security, audit)
 - **KPI thresholds met** in two stable release cycles (canary + shadow)
 - **Deterministic replay** test suite passes on 1000+ runs (100% consistency)
-- **All FRs 1-24 + all new FRs 25-42** demonstrated in production behavior
-- **All NFRs 1-8 + all new NFRs 9-16** measured within 5% of target
+- **All FRs 1-24 + FR-025..FR-042 + FR-069..FR-090** demonstrated in production behavior
+- **All NFRs 1-16 + NFR-029..NFR-040** measured within 5% of target
 - **Policy bypass and signature tamper tests** pass
 - **Burst load simulations** validate adaptive cap correctness
 - **Shift handoff continuity drills** pass (snapshots created, confirmed, no stale ownership)
@@ -609,6 +609,7 @@ Success metrics for the first 90 days of production:
 - **DAG Dependencies:** `thegent-dag-final.md` (phase dependency graph + critical paths)
 - **Research Synthesis:** `thegent-mega-research-synthesis-2026-02-14.md` (114 patterns, codebase exploration, SOTA research)
 - **Orchestration Reference:** `thegent-orchestration-optimization-prd.md` (legacy monolith PRD for historical context)
+- **Phase 10–12 Extension:** `thegent-phase10-12-optimal-design-prd.md` (optimization depth and productization)
 - **Pattern Catalog:** All 114 transferable patterns cross-referenced in mega-synthesis Part 5
 
 ---
@@ -640,9 +641,68 @@ Success metrics for the first 90 days of production:
 5. **Governance Automation:** OPA/Rego + OPAL distribution + EU AI Act tagging enable compliance without manual overhead
 6. **Continuous Learning:** Provider scoring, calibration curves, and chaos drills ensure system adapts to production reality
 
+## 20. Phase 10–12 PRD Addendum (Optimization Depth and Productization)
+
+### 20.1 New Functional Requirements
+
+| FR ID | Requirement | Acceptance Criteria | WP Mapping |
+|---|---|---|---|
+| FR-069 | Operation schema v2 with transport-agnostic envelopes | CLI/MCP/SDK use equivalent `operation`, `target`, `inputs`, `policy_context`, `expected_output_contract`, `idempotency_key` | WP-10001 |
+| FR-070 | Canonical capability registry for all providers and tools | `list_capabilities` returns stable capabilities, support levels, region constraints, and versions; mismatch surfaced before invocation | WP-10002 |
+| FR-071 | Endpoint consolidation to parameterized commands | `orchestrate`, `govern`, `observe`, `replay`, `plan`, `recover` accept operation enums and deterministic dispatch | WP-10003 |
+| FR-072 | Deterministic dispatch tracing | Dispatch decisions include `dispatch_path`, `rule_reason`, `latency_budget_ms`, and policy reason | WP-10007 |
+| FR-073 | Plugin-safe extension layer with typed adapters | Adapters register through conformance checks before activation | WP-10004, WP-10008 |
+| FR-074 | Operation-level compatibility policy | Unknown operation on supported adapter returns explicit migration/error + alternatives | WP-10006, WP-10009 |
+| FR-075 | Contract drift budget by operation class | Auto-gates when operation class drift exceeds threshold | WP-10002, WP-10003 |
+| FR-076 | Closed-loop SLO regulator | Non-critical throughput auto-adjusted with no critical-lane oscillation >1/min | WP-11001 |
+| FR-077 | Prediction confidence calibration and drift response | Forecast engine pauses non-deterministic optimization when confidence drops | WP-11002, WP-11003 |
+| FR-078 | Multi-provider preemption policy | Auto-avoid saturation using forecast window and token burn-rate | WP-11004 |
+| FR-079 | Policy-aware self-healing suggestions | Auto-generated remediation suggestions include confidence and rollback assumptions | WP-11005 |
+| FR-080 | Adaptive task shaping | Tasks split/merge dynamically when risk+queue thresholds exceed policy bounds | WP-11006 |
+| FR-081 | Predictive continuity preservation | Pre-shift continuity checkpoints and ownership freshness are enforced | WP-11007 |
+| FR-082 | Feedback learning loop | Control parameters update only with policy approval and audit record | WP-11008 |
+| FR-083 | Explainability as API contract | Event summary/detail/trace exposed from one stable schema | WP-12001 |
+| FR-084 | On-call readiness and fatigue control | Incident-noise controls prevent non-blocking churn while preserving critical alerts | WP-12002 |
+| FR-085 | Deterministic replay + what-if simulation | Replay branching works without mutating state | WP-12003, WP-12004 |
+| FR-086 | Human escalation quality floor | Escalations require confidence delta and evidence thresholds before closure | WP-12005 |
+| FR-087 | Unified operations evidence graph | End-to-end evidence links run/task/policy/adapter/operator actions | WP-12006 |
+| FR-088 | Compliance-ready artifact packaging | One-command export includes all artifacts plus digest chain and manifest | WP-12009 |
+| FR-089 | Cross-team operational personas | Persona defaults per SRE, Policy, Product, Security with action limits | WP-12007 |
+| FR-090 | Platform documentation compiler | Docs from schema/events/policies compiled into PRD/WBS/test bundles | WP-12009 |
+
+### 20.2 New Non-Functional Requirements
+
+| NFR ID | Requirement | Target |
+|---|---|---|
+| NFR-029 | Interface discovery latency | ≤ 60ms p95 |
+| NFR-030 | Dispatch determinism | 100% deterministic across 100 runs |
+| NFR-031 | Compatibility error clarity | Unsupported operations return machine-actionable migration guidance |
+| NFR-032 | Security boundary clarity | Adapter trust levels prevent critical-lane untrusted execution |
+| NFR-033 | Prediction responsiveness | p95 risk forecast available within 120ms for standard plans |
+| NFR-034 | Stability | No control action unless signal confidence ≥ 0.75 |
+| NFR-035 | Governance traceability | Every optimization action includes owner, rationale, rollback vector |
+| NFR-036 | Rollback safety | Auto-control change reversible within one execute/undo cycle |
+| NFR-037 | Explainability latency | Summary ≤ 200ms, detail ≤ 500ms, trace ≤ 1200ms |
+| NFR-038 | Escalation quality | 99% escalations include evidence and confidence rationale |
+| NFR-039 | Replay safety | Replay never writes state unless execute mode set |
+| NFR-040 | Packaging reproducibility | Artifact build reproducibly from git state and manifest digest |
+
+### 20.3 New Phase Gates
+
+- **G10:** Registry-first deterministic dispatch and compatibility policy for all canary operations.
+- **G11:** Forecast quality and self-heal action control under policy-approved guardrails.
+- **G12:** Explainability/replay/evidence-packaging safety with deterministic closure export.
+
+### 20.4 References
+
+- `thegent-phase10-12-optimal-design-prd.md`
+- `thegent-wbs-phase10-12.md`
+- `thegent-dag-phase10-12-extension.md`
+- `thegent-phase10-12-test-readiness-pack.md`
+
 ---
 
-## 20. Known Risks and Mitigations
+## 21. Known Risks and Mitigations
 
 | Risk | Impact | Probability | Mitigation |
 |------|--------|-------------|-----------|
@@ -656,15 +716,15 @@ Success metrics for the first 90 days of production:
 
 ---
 
-## 21. Document Metadata
+## 22. Document Metadata
 
 - **Version:** 2.0 (Comprehensive Rewrite)
-- **Synthesis Date:** 2026-02-14
+- **Synthesis Date:** 2026-02-15
 - **Research Basis:** 18 research agents (11 codebase explorations + 7 industry research streams)
 - **Total Patterns Extracted:** 114 (organized across 9 domains)
-- **Total Work Packages:** 64 (8 phases including new Phase X)
-- **Total Functional Requirements:** 42 (24 original + 18 new)
-- **Total Non-Functional Requirements:** 16 (8 original + 8 new)
+- **Total Work Packages:** 102 (Phases 0..6, X, and 10..12)
+- **Total Functional Requirements:** 64 (FR-001..FR-042 + FR-069..FR-090)
+- **Total Non-Functional Requirements:** 28 (NFR-001..NFR-016 + NFR-029..NFR-040)
 - **Total Test Categories:** 14 (225-320 estimated new tests)
 - **Estimated Implementation Effort:** 440-655 tool calls, 126-187 min wall clock (20-29 parallel subagent batches)
 - **Critical Leverage Points:** 22 ranked by impact and implementation order (Rank 1-22)

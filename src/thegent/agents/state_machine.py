@@ -4,24 +4,23 @@ Manages the lifecycle of a task run across multiple providers and retry attempts
 enforcing fallback policies and semantic validation gates.
 """
 
-import time
 import logging
+import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
-from typing import Any, Optional, Protocol, Union
+from typing import Any
 
-from thegent.agents.base import RunResult, AgentRunner
-from thegent.contracts.adapters import normalize_output, AdapterResult
+from thegent.agents.base import RunResult
+from thegent.agents.resilience import FailureKind, classify_failure
+from thegent.contracts.adapters import AdapterResult, normalize_output
 from thegent.contracts.policy import FallbackPolicy, evaluate_fallback
-from thegent.contracts.validation import validate_csm
-from thegent.agents.resilience import classify_failure, FailureKind
 from thegent.contracts.telemetry import (
-    ContractTelemetry,
     EVENT_NORMALIZATION,
     EVENT_SCHEMA_DRIFT_SEMANTIC,
     EVENT_SCHEMA_DRIFT_STRUCTURAL,
+    ContractTelemetry,
 )
+from thegent.contracts.validation import validate_csm
 
 _log = logging.getLogger(__name__)
 
@@ -32,15 +31,15 @@ class OrchestrationState:
 
     agent: str
     run_id: str
-    model: Optional[str] = None
+    model: str | None = None
     attempt: int = 0
     provider_index: int = 0
     providers_tried: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     start_time: float = field(default_factory=time.time)
     status: str = "pending"  # pending, running, success, failed, fallback
-    last_result: Optional[RunResult] = None
-    last_normalization: Optional[AdapterResult] = None
+    last_result: RunResult | None = None
+    last_normalization: AdapterResult | None = None
     policy_issues: list[str] = field(default_factory=list)
     semantic_issues: list[str] = field(default_factory=list)
 
@@ -51,12 +50,12 @@ class FallbackStateMachine:
     def __init__(
         self,
         providers: list[str],
-        run_id: Optional[str] = None,
-        policy: Optional[FallbackPolicy] = None,
-        telemetry: Optional[ContractTelemetry] = None,
+        run_id: str | None = None,
+        policy: FallbackPolicy | None = None,
+        telemetry: ContractTelemetry | None = None,
         max_retries_per_provider: int = 3,
         retry_delay_base: float = 2.0,
-    ):
+    ) -> None:
         self.providers = providers
         self.run_id = run_id or f"run_{uuid.uuid4().hex[:8]}"
         self.policy = policy or FallbackPolicy()
@@ -72,9 +71,9 @@ class FallbackStateMachine:
         self,
         runner_factory: Any,  # Callable[[str], Optional[AgentRunner]]
         prompt: str,
-        model: Optional[str] = None,
-        **run_kwargs
-    ) -> tuple[RunResult, Optional[AdapterResult]]:
+        model: str | None = None,
+        **run_kwargs,
+    ) -> tuple[RunResult, AdapterResult | None]:
         """Execute the orchestration loop."""
         if not self.providers:
             raise ValueError("No providers specified for orchestration.")
@@ -135,7 +134,7 @@ class FallbackStateMachine:
                 norm_res = normalize_output(
                     current_agent,
                     {"stdout": result.stdout, "stderr": result.stderr, "exit_code": result.exit_code},
-                    context={"run_id": self.run_id}
+                    context={"run_id": self.run_id},
                 )
                 self.state.last_normalization = norm_res
 
@@ -145,13 +144,13 @@ class FallbackStateMachine:
                     _log.warning("Semantic validation failed for %s: %s", current_agent, semantic_issues)
 
                 # 5. Fallback Policy Evaluation
-                is_fallback = (norm_res.csm.source_contract == "fallback-plain")
+                is_fallback = norm_res.csm.source_contract == "fallback-plain"
                 policy_violations = evaluate_fallback(
                     provider=current_agent,
                     confidence=norm_res.confidence,
                     is_fallback=is_fallback,
                     policy=self.policy,
-                    stats=stats
+                    stats=stats,
                 )
                 self.state.policy_issues = policy_violations
 
@@ -162,14 +161,20 @@ class FallbackStateMachine:
                     if norm_res.parse_errors:
                         event_type = EVENT_SCHEMA_DRIFT_STRUCTURAL
                         self.telemetry.emit_drift_event(
-                            self.run_id, current_agent, norm_res.csm.source_contract,
-                            "structural", {"parse_errors": norm_res.parse_errors},
+                            self.run_id,
+                            current_agent,
+                            norm_res.csm.source_contract,
+                            "structural",
+                            {"parse_errors": norm_res.parse_errors},
                         )
                     elif semantic_issues:
                         event_type = EVENT_SCHEMA_DRIFT_SEMANTIC
                         self.telemetry.emit_drift_event(
-                            self.run_id, current_agent, norm_res.csm.source_contract,
-                            "semantic", {"semantic_issues": semantic_issues},
+                            self.run_id,
+                            current_agent,
+                            norm_res.csm.source_contract,
+                            "semantic",
+                            {"semantic_issues": semantic_issues},
                         )
                     else:
                         event_type = EVENT_NORMALIZATION
@@ -192,17 +197,15 @@ class FallbackStateMachine:
                     _log.info("Violations found and fallbacks available. Moving to next provider.")
                     self.state.errors.append(f"Policy/Semantic violation ({current_agent})")
                     break
-                else:
-                    # No more providers. Accept if not a hard block.
-                    hard_block = any("disabled" in v or "strict" in v for v in policy_violations)
-                    if not hard_block:
-                        _log.info("No more providers. Accepting output despite violations.")
-                        self.state.status = "success"
-                        return result, norm_res
-                    else:
-                        self.state.status = "failed"
-                        self.state.errors.append("Policy blocked all available providers.")
-                        return result, norm_res
+                # No more providers. Accept if not a hard block.
+                hard_block = any("disabled" in v or "strict" in v for v in policy_violations)
+                if not hard_block:
+                    _log.info("No more providers. Accepting output despite violations.")
+                    self.state.status = "success"
+                    return result, norm_res
+                self.state.status = "failed"
+                self.state.errors.append("Policy blocked all available providers.")
+                return result, norm_res
 
             self.state.provider_index += 1
             self.state.status = "fallback"

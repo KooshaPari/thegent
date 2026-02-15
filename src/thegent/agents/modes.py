@@ -4,8 +4,9 @@ Defines coordination patterns for multi-agent workflows (FR-032).
 """
 
 from enum import Enum
-from typing import Any, Optional
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel
 
 
 class ExecutionMode(str, Enum):
@@ -63,7 +64,7 @@ MODE_CATALOG: dict[ExecutionMode, ModeCapability] = {
 }
 
 
-def get_mode_capability(mode: str) -> Optional[ModeCapability]:
+def get_mode_capability(mode: str) -> ModeCapability | None:
     """Get capability metadata for a mode string."""
     try:
         m = ExecutionMode(mode)

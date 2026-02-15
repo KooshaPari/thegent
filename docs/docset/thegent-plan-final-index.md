@@ -1,8 +1,8 @@
 # Thegent Orchestration Final Plan Index
 ## Unified Master Entry Point
 
-**Status:** Finalized master index (v4 -- unified crosslinked docset complete)
-**Date:** 2026-02-14
+**Status:** Finalized master index (v5 -- unified crosslinked docset complete)
+**Date:** 2026-02-15
 **Purpose:** Single entry point for all thegent orchestration planning documentation. Provides document map, crosslinks, agent quick-starts, phase execution flows, and status summary.
 
 ---
@@ -22,21 +22,60 @@ Complete docset with descriptions, purposes, and when to use each.
 
 | File | Purpose | When to Use | Key Content |
 |------|---------|------------|-------------|
-| **thegent-wbs-final.md** | Work breakdown structure; phases, work packages, acceptance gates, ownership | Planning work, assigning WPs, tracking phase exits | 7 phases, 64 WPs, ownership map, gate definitions |
+| **thegent-wbs-final.md** | Work breakdown structure; phases, work packages, acceptance gates, ownership | Planning work, assigning WPs, tracking phase exits | 11 named phases, 102 WPs, ownership map, gate definitions |
 | **thegent-dag-final.md** | Execution DAG; orchestration flow, control loops, safety gates, failure paths | Implementing orchestration flow, validating routing, understanding decision trees | Core DAG (A0→A18), recovery loops, event flows, SLA targets |
-| **thegent-prd-final.md** | Product requirements; goals, personas, FRs, NFRs, APIs, events, rollout KPIs | Designing features, defining acceptance criteria, understanding product strategy | 42 FRs, 16 NFRs, 7 event types, KPI framework (TRAFFIC 10-metric) |
+| **thegent-prd-final.md** | Product requirements; goals, personas, FRs, NFRs, APIs, events, rollout KPIs | Designing features, defining acceptance criteria, understanding product strategy | 64 FRs, 28 NFRs, 7 event types, KPI framework (TRAFFIC 10-metric) |
 | **thegent-research-validation-2026-02-14.md** | Validation against task-tool and zen-mcp-server; gaps identified, depth recommendations | Understanding state-of-the-art patterns, validating design choices | 18 validated design patterns, high-impact gaps, architectural transfers |
 | **thegent-kush-docs-deep-dive-2026-02-14.md** | Cross-project pattern analysis (zen, task-tool, crun, pheno-sdk); transferable patterns | Learning from adjacent systems, avoiding known failure modes | 40+ transferable patterns, control-plane architecture, XML contracts |
 | **thegent-mega-research-synthesis-2026-02-14.md** | Comprehensive synthesis of 18 research agents; codebase analysis + industry SOTA | Deep technical research, understanding rationale behind decisions | 114 patterns across 9 domains, 15 anti-patterns, 22 leverage points, 12 integration points |
 | **thegent-gaps-and-discovery-2026-02-14.md** | Identified gaps (23 required, 12 optional→required, 18 optimizations); discovery tasks | Finding what's missing, prioritizing follow-up work, discovery sprint planning | Gap taxonomy by category, priority matrix, discovery task specs |
 | **thegent-patterns-enhancement-synthesis.md** | 114 patterns review; implementation detail gaps, optimization opportunities, UX blindspots | Enhancing pattern library, addressing implementation detail, improving ergonomics | 38 enhancement items (24 new patterns, 14 detail gaps), cross-pattern dependencies |
 | **thegent-cross-analysis-matrix-2026-02-14.md** | System-to-system comparison (thegent, task-tool, zen, crun, pheno-sdk) | Understanding architectural relationships, identifying transfer opportunities | 5-system comparison, design transfer matrix, contract evolution |
+| **thegent-phase3-6-full-depth-execution-prd.md** | Expanded Phase 3–6 execution blueprint and PRD-to-WBS operational cut | Planning/implementation of governance, UX, scale, closure | Phase objectives, wave plan, cross-phase acceptance matrix |
+| **thegent-phase7-9-next-wave-prd.md** | Next-wave PRD for contract convergence, predictive reliability, and operation productization | Implementing post-closure enhancements | FR-053..FR-068, 3-phase execution sequence |
+| **thegent-wbs-phase7-9.md** | Work breakdown structure for phases 7–9 | Assigning and sequencing post-closure work | WP-7001..WP-7010, WP-8001..WP-8010, WP-9001..WP-9010 |
+| **thegent-dag-phase7-9-extension.md** | DAG graph extension for phases 7–9 control flow | Mapping execution dependencies and failure handling | New nodes, gates, recovery loops, schema contract map |
+| **thegent-phase7-9-test-readiness-pack.md** | Concrete test and readiness pack for Phases 7–9 | Implementing next chunked delivery with gate checks | FR/WP mapping, unit/integration suite, evidence artifacts |
+| **thegent-phase10-12-optimal-design-prd.md** | PRD requirements for optimization-depth and productization (Phases 10–12) | Designing robust, practical upgrades and autonomous resilience | FR-069..FR-090, gates G10–G12, implementation chunk plan |
+| **thegent-wbs-phase10-12.md** | WBS extension for phases 10–12 | Assigning operational sequence for interface convergence, prediction, and explainability hardening | WP-10001..WP-12010, dependencies, ownership, timeline |
+| **thegent-dag-phase10-12-extension.md** | DAG extension for phases 10–12 | Expresses adaptive control and replay hardening execution dependencies | New nodes, gates G10–G12, deterministic recovery branches |
+| **thegent-phase10-12-test-readiness-pack.md** | Test and readiness pack for phases 10–12 | Practical chunk testing and evidence artifacts for gates G10–G12 | Unit/integration matrices, artifacts, gate checklists |
+| **thegent-phase10-12-implementation-chunk-plan.md** | Implementation chunk plan for phases 10–12 | Executable sequencing, chunk boundaries, entry/exit criteria | Chunk A–G sequence, gate preconditions, evidence requirements |
+| **thegent-phase10-12-execution-bundles-playbook.md** | Dependency-locked bundle execution guide for chunks B–F | Ticket-ready sequencing and inter-bundle control | Bundle entry/exit criteria, rollbacks, acceptance matrix |
+| **thegent-phase10-12-implementation-ticket-templates.md** | Ready-to-use ticket templates for WP-level execution | Creating issue fields, evidence links, and DoD in one place | Ticket schema, per-WP acceptance, artifact obligations, bundle labels |
+| **thegent-phase10-12-execution-workboard.md** | Operational workboard, DoR/DoD, risk register, and gate runbook | Running Bundle B–F safely in tracker workflow | Column model, dependency locks, kill-switch playbook |
+| **thegent-phase10-12-bundle-b-sprint-playbook.md** | Concrete sprint playbook for trust/conformance bundle | Day-by-day execution, PR checks, and failure matrix | Bundle B sequencing, rollback paths, signoff package |
+| **thegent-phase11-control-and-adaptation-sprint-playbook.md** | Phase 11 sprint playbook for control and adaptation bundles | Bundle C and D execution planning | Bundle C/D sequencing, test flow, hard-stop matrix |
+| **thegent-phase12-explainability-and-closure-sprint-playbook.md** | Phase 12 sprint playbook for hardening and closure | Bundle E and F execution planning | Explainability/replay hardening and closure playbook |
+| **thegent-phase10-12-issue-board-import-notes.md** | Tracker import and field mapping guide | Converting JSON seed into GitHub/Jira/Linear | Import mapping, payload template, validation checklist |
+| **thegent-phase10-12-execution-synthesis-playbook.md** | End-to-end execution synthesis across WBS/DAG/PRD/test/workboard for phases 10–12 | Keeping phase dependencies and gates coherent across all artifacts | Dependency chain, wave sequencing, artifact topology, governance contract |
+| **thegent-phase10-12-bundle-signoff-and-handoff-packages.md** | Bundle-level signoff packages and handoff contracts for B/F | Enforcing execution closure at each bundle boundary | Technical/gov/safety continuity locks, role signoff schema, bundle transition matrix |
+| **thegent-phase10-12-release-readiness-and-delta-pack.md** | Release-readiness delta pack for PRD/WBS finalization and final handoff | Bridging remaining PRD finalization gaps to WBS/test/ticket closure | Critical deltas, mandatory artifact list, migration-safe release pack, handoff gates |
+| **thegent-phase10-12-master-traceability-ledger.md** | Master executable ledger for phase 10–12 traceability | One authoritative WBS↔PRD↔DAG↔ticket↔gate map | 34 WP rows, FR/NFR mapping, dependency matrix, status controls |
+| **thegent-phase10-12-prd-wbs-dag-ticket-validation.md** | PRD-WBS-DAG-ticket validation contract and automated crosswalk checks | Performing mandatory phase 10–12 readiness validation before gates and handoff | Tuple coverage matrix, schema contracts, validation pseudocode, phase lock checks |
+| **thegent-phase10-12-issue-board-automation.md** | Automated import and board synchronization playbook | End-to-end ticket import and state-sync with hard-stop-aware transitions | Seed sync pipeline, platform adapters, transition rules, rollback path |
+| **thegent-phase10-12-prd-wbs-crossmap-finalization.md** | PRD↔WBS finalization cross-map for phases 10–12 | Closing traceability and readiness deltas | FR/WP coverage, NFR mapping, finalization delta tasks |
+| **thegent-phase10-12-drift-reconciliation-playbook.md** | Drift reconciliation playbook for PRD/WBS/DAG/tracker mismatch | Detecting and correcting artifact divergence before gate advancement | Identity/dependency/evidence/gov drift classes, validation workflow, incident format |
+| **thegent-phase10-12-hard-stop-and-rollback-matrix.md** | Consolidated hard-stop and rollback matrix | Runtime containment, stopline criteria, and recovery ladder | L0-L3 taxonomy, bundle stop triggers, hard-stop response flow |
+| **thegent-phase10-12-compact-execution-dashboard.md** | Compact one-page execution dashboard for phases 10–12 | Running day-to-day execution with risk scoring and actionable rows | Dashboard schema, readiness scoring, blocker routing, rollout readiness alerts |
+| **thegent-phase10-12-policy-as-code-and-automation-contract.md** | Policy-as-code contract for deterministic phase 10–12 control | Enforcing gates, transitions, drift remediation, and rollback safety via machine-evaluable policy | DSL policy model, rule evaluation pipeline, governance exception handling |
+| **thegent-phase10-12-orchestrator-tooling-stack.md** | Orchestrator tooling stack for phase 10–12 automation | Multi-tool coordination architecture for policy-driven execution | Event bus model, connector contracts, concurrency model, rollback and drift handling |
+| **thegent-phase10-12-issue-board-seed.json** | Machine-readable import seed for tracker automation | Bulk creating tickets in issue trackers with DoR/DoD | JSON schema with bundle mapping, tests, artifacts, gates |
+| **thegent-phase10-12-implementation-issue-queue.md** | Concrete implementation issue queue for phases 10–12 | Creating and sequencing issue tickets for execution | WP-level issue IDs, owner mapping, test tie-ins |
+| **thegent-phase10-12-closure-readiness-pack-template.md** | Closure handoff template and finality requirements | Final readout before production completion | Evidence scoring, residual risk matrix, signoff package |
+| **thegent-phase10-12-launch-schedule.md** | Day-by-day launch plan for Phases 10–12 | Sequencing execution, owner commitments, and contingencies | Gate timeline, artifact schedule, escalation rules |
+| **thegent-phase13-plus-extension-proposal.md** | Post-12 extension strategy and discovery kit | Deciding phase 13–15 scope and boundaries | Cross-org policy federation, cost-aware learning, compliance APIs |
+| **E2E_NEXT_CHUNK_PLAN.md** | Next-chunk orchestration plan | Practical sequencing handoffs across chunk boundaries | Milestone plan for unresolved execution waves |
+| **E2E_REMAINING_FULL_DEPTH_PLAN.md** | Remaining full-depth completion plan | Deep-dive backlog for unresolved scope | High-priority remaining items and execution sequencing |
+| **REMAINING_GAPS_FULL_DEPTH.md** | Remaining gaps and priorities (full-depth) | Gap closure sequencing for uncompleted deep-dive work | Priority matrix and practical actions |
+| **REMAINING_GAPS_DEEP_DIVE.md** | Remaining gaps and edge-case deep dive | Risk and detail gap resolution planning | Operational hardening and failure-case coverage |
+| **Closure evidence docs** (`docs/closure/*`, `artifacts/closure/*`) | Closure readiness artifacts and evidence package | Readiness packaging and release audit | `PHASE6_READINESS_REPORT.md`, `GOVERNANCE_COMPLIANCE_BUNDLE.md`, `SLO_CERTIFICATION_MATRIX.md`, `DR_REHEARSAL_REPORT.md`, `ROLLBACK_RESERVE_PLAN.md`, `POST_LAUNCH_28DAY_OBSERVATION.md`, `KPI_BASELINES.json`, `artifacts/closure/closure_summary.ndjson` |
 | **thegent-implementation-log-2026-02-14.md** | Runtime output parsing hardening + model contract normalization; completed chunks | Understanding what's been implemented, avoiding rework | Chunk 173 (parsing), Chunk 174 (routing contract), implementation notes |
 | **thegent-cli-single-source-of-truth-audit-2026-02-14.md** | CLI entry point audit; ensures no hidden features, all capabilities reachable via CLI | Verifying implementation follows design, auditing CLI completeness | Entry points audit, script audit, CLI vs legacy command comparison |
 | **thegent-orchestration-optimization-prd.md** | Legacy monolith PRD (historical context only); source of truth before splitting | Understanding original requirements, tracing lineage of decisions | Original problem statement, working notes, comprehensive requirements |
 | **PRD_TEST_PLAN_MATRIX.md** | Maps FRs to test types and acceptance criteria; test gate definitions | Writing tests, understanding what needs to pass, test coverage planning | 12+ FR→test mappings, test location references, acceptance criteria |
 | **DAG_NODE_TO_SERVICE_CONTRACT_CHECKLIST.md** | DAG nodes mapped to service contracts and invariants | Implementing DAG nodes, validating service contracts, testing orchestration | 12 core nodes, invariants, implementation references, CLI/MCP mappings |
-| **WBS_TO_ISSUE_IMPORT_MATRIX.md** | WBS work packages mapped to issue/ticket IDs for tracking | Importing into project management, tracking WP status | Phase 0-6 issue mappings, status flags |
+| **WBS_TO_ISSUE_IMPORT_MATRIX.md** | WBS work packages mapped to issue/ticket IDs for tracking | Importing into project management, tracking WP status | Phase 0-12 issue mappings, status flags |
 | **PATTERNS.md** | Standalone pattern catalog; 114 patterns across 9 domains with implementation recipes | Implementing patterns, finding implementation guidance, understanding dependencies | 114 patterns (P-001..P-114), domain summaries, priority ranking, dependency graph |
 | **RISKS_AND_ANTIPATTERNS.md** | 15 anti-patterns, 12 integration risks, 32-item risk register, robustness/intuition guides | Avoiding known pitfalls, risk assessment, design reviews, robustness planning | AP-001..015, MAST 14-mode taxonomy, risk register, design principles |
 | **IMPLEMENTATION_STATUS.md** | Implementation tracker; per-WP status, FR/NFR coverage, dependency chain, blockers | Checking implementation progress, finding next work, tracking blockers | 72 WP status, FR/NFR matrices, critical path, next actions |
@@ -374,7 +413,7 @@ For each phase, the ordered sequence of operations (read → plan → implement 
 
 ## 5. Status Dashboard Summary
 
-**Last updated:** 2026-02-14
+**Last updated:** 2026-02-15
 **Overall program status:** Planning complete; execution-ready
 
 See **`docs/docset/IMPLEMENTATION_STATUS.md`** (when available) for detailed per-WP tracking.
@@ -390,13 +429,19 @@ See **`docs/docset/IMPLEMENTATION_STATUS.md`** (when available) for detailed per
 | **Phase 4** | 4 | 4 | — | — | — |
 | **Phase 5** | 3 | 3 | — | — | — |
 | **Phase X** (Cross-cut) | 8 | 8 | — | — | — |
+| **Phase 7** | 10 | 10 | — | — | — |
+| **Phase 8** | 10 | 10 | — | — | — |
+| **Phase 9** | 10 | 10 | — | — | — |
+| **Phase 10** | 10 | 10 | — | — | — |
+| **Phase 11** | 10 | 10 | — | — | — |
+| **Phase 12** | 10 | 10 | — | — | — |
 | **Phase 6** | 3 | 3 | — | — | — |
-| **TOTAL** | 38 | 33 | — | 3 | — |
+| **TOTAL** | 102 | 102 | — | 3 | — |
 
 ### Key Metrics (from PRD)
 
-**Functional Requirements:** 42 FRs defined
-**Non-Functional Requirements:** 16 NFRs defined
+**Functional Requirements:** 64 FRs defined
+**Non-Functional Requirements:** 28 NFRs defined
 **Pattern Library:** 114 patterns across 9 domains
 **Anti-Patterns Documented:** 15 with prevention strategies
 **Integration Points:** 12 with risk mitigations
@@ -420,23 +465,76 @@ All docset files with relative paths:
 
 ```
 docs/docset/
-├── thegent-plan-final-index.md                          (THIS FILE -- master index)
-├── thegent-wbs-final.md                                  (work breakdown structure)
-├── thegent-dag-final.md                                  (execution DAG)
-├── thegent-prd-final.md                                  (product requirements)
-├── thegent-research-validation-2026-02-14.md             (validation against adjacent systems)
-├── thegent-kush-docs-deep-dive-2026-02-14.md             (cross-project pattern analysis)
-├── thegent-mega-research-synthesis-2026-02-14.md         (comprehensive research synthesis)
-├── thegent-gaps-and-discovery-2026-02-14.md              (gaps and follow-up work)
-├── thegent-patterns-enhancement-synthesis.md             (pattern library enhancements)
-├── thegent-cross-analysis-matrix-2026-02-14.md           (system-to-system comparison)
-├── thegent-implementation-log-2026-02-14.md              (implementation progress log)
-├── thegent-cli-single-source-of-truth-audit-2026-02-14.md (CLI entry point audit)
-├── thegent-orchestration-optimization-prd.md             (legacy monolith PRD -- historical context)
-├── PRD_TEST_PLAN_MATRIX.md                               (FR→test mapping)
-├── DAG_NODE_TO_SERVICE_CONTRACT_CHECKLIST.md             (DAG node service contracts)
-├── DAG_NODE_SERVICE_CONTRACT_CHECKLIST.md                (older version, see above)
-└── WBS_TO_ISSUE_IMPORT_MATRIX.md                         (WP→issue mapping)
+├── thegent-plan-final-index.md
+├── thegent-wbs-final.md
+├── thegent-dag-final.md
+├── thegent-prd-final.md
+├── thegent-research-validation-2026-02-14.md
+├── thegent-kush-docs-deep-dive-2026-02-14.md
+├── thegent-mega-research-synthesis-2026-02-14.md
+├── thegent-gaps-and-discovery-2026-02-14.md
+├── thegent-patterns-enhancement-synthesis.md
+├── thegent-cross-analysis-matrix-2026-02-14.md
+├── thegent-phase3-6-full-depth-execution-prd.md
+├── thegent-phase7-9-next-wave-prd.md
+├── thegent-wbs-phase7-9.md
+├── thegent-dag-phase7-9-extension.md
+├── thegent-phase7-9-test-readiness-pack.md
+├── thegent-phase10-12-optimal-design-prd.md
+├── thegent-wbs-phase10-12.md
+├── thegent-dag-phase10-12-extension.md
+├── thegent-phase10-12-test-readiness-pack.md
+├── thegent-phase10-12-implementation-chunk-plan.md
+├── thegent-phase10-12-execution-bundles-playbook.md
+├── thegent-phase10-12-implementation-ticket-templates.md
+├── thegent-phase10-12-execution-workboard.md
+├── thegent-phase10-12-bundle-b-sprint-playbook.md
+├── thegent-phase11-control-and-adaptation-sprint-playbook.md
+├── thegent-phase12-explainability-and-closure-sprint-playbook.md
+├── thegent-phase10-12-issue-board-import-notes.md
+├── thegent-phase10-12-execution-synthesis-playbook.md
+├── thegent-phase10-12-bundle-signoff-and-handoff-packages.md
+├── thegent-phase10-12-release-readiness-and-delta-pack.md
+├── thegent-phase10-12-master-traceability-ledger.md
+├── thegent-phase10-12-prd-wbs-dag-ticket-validation.md
+├── thegent-phase10-12-issue-board-automation.md
+├── thegent-phase10-12-prd-wbs-crossmap-finalization.md
+├── thegent-phase10-12-drift-reconciliation-playbook.md
+├── thegent-phase10-12-hard-stop-and-rollback-matrix.md
+├── thegent-phase10-12-compact-execution-dashboard.md
+├── thegent-phase10-12-policy-as-code-and-automation-contract.md
+├── thegent-phase10-12-orchestrator-tooling-stack.md
+├── thegent-phase10-12-issue-board-seed.json
+├── thegent-phase10-12-implementation-issue-queue.md
+├── thegent-phase10-12-closure-readiness-pack-template.md
+├── thegent-phase10-12-launch-schedule.md
+├── thegent-phase13-plus-extension-proposal.md
+├── thegent-implementation-log-2026-02-14.md
+├── thegent-cli-single-source-of-truth-audit-2026-02-14.md
+├── thegent-orchestration-optimization-prd.md
+├── E2E_NEXT_CHUNK_PLAN.md
+├── E2E_REMAINING_FULL_DEPTH_PLAN.md
+├── REMAINING_GAPS_DEEP_DIVE.md
+├── REMAINING_GAPS_FULL_DEPTH.md
+├── PRD_TEST_PLAN_MATRIX.md
+├── DAG_NODE_TO_SERVICE_CONTRACT_CHECKLIST.md
+├── DAG_NODE_SERVICE_CONTRACT_CHECKLIST.md
+├── WBS_TO_ISSUE_IMPORT_MATRIX.md
+├── PATTERNS.md
+├── RISKS_AND_ANTIPATTERNS.md
+├── IMPLEMENTATION_STATUS.md
+├── OPTIMIZATION_POLISH_ADDENDUM.md
+├── FASTMCP_INTEGRATION.md
+├── docs/closure/
+│   ├── DR_REHEARSAL_REPORT.md
+│   ├── GOVERNANCE_COMPLIANCE_BUNDLE.md
+│   ├── KPI_BASELINES.json
+│   ├── POST_LAUNCH_28DAY_OBSERVATION.md
+│   ├── PHASE6_READINESS_REPORT.md
+│   ├── ROLLBACK_RESERVE_PLAN.md
+│   └── SLO_CERTIFICATION_MATRIX.md
+└── artifacts/closure/                                    (closure evidence stream)
+│   └── closure_summary.ndjson
 ```
 
 ---
@@ -483,11 +581,12 @@ docs/docset/
 
 ## 8. Governance & Versioning
 
-**Index version:** v4 (unified crosslinked docset)
+**Index version:** v5 (unified crosslinked docset)
 
-**v4 additions:** PATTERNS.md (1952 lines, 114 patterns), RISKS_AND_ANTIPATTERNS.md (815 lines, 15 anti-patterns + 32 risks), IMPLEMENTATION_STATUS.md (503 lines, 72 WP tracker), OPTIMIZATION_POLISH_ADDENDUM.md (581 lines, 73 optimization items), FASTMCP_INTEGRATION.md (1024 lines). Total docset: 22 files, 26,500+ lines.
+**v4 additions:** PATTERNS.md (1952 lines, 114 patterns), RISKS_AND_ANTIPATTERNS.md (815 lines, 15 anti-patterns + 32 risks), IMPLEMENTATION_STATUS.md (503 lines, 72 WP tracker), OPTIMIZATION_POLISH_ADDENDUM.md (581 lines, 73 optimization items), FASTMCP_INTEGRATION.md (1024 lines).  
+**v5 additions:** E2E plans, remaining-gap deep dives, Phase 10–12 implementation issue/launch/queue artifacts, policy-as-code automation contract, orchestrator tooling stack, phase-13+ proposal. Total docset: 41 files, 41 root doc entries.
 **Docset created:** 2026-02-14
-**Last updated:** 2026-02-14
+**Last updated:** 2026-02-15
 **Lineage:** Unified from iterative chunking phases (chunks 151-171 of orchestration-prd.md)
 
 **When to update this index:**

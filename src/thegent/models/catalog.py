@@ -1,7 +1,7 @@
 """Model catalog and route resolution for distributed routing."""
 
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Literal, cast, get_args
 
 # Canonical model ID -> list of routes (provider, backend, model_alias, priority)
 # Lower priority = prefer first when using prefer_direct
@@ -82,7 +82,7 @@ def _build_static_catalog() -> dict[str, list[Route]]:
         canonical = _canonicalize(model_alias, provider)
         route = Route(
             provider=provider,
-            backend_type=backend,
+            backend_type=cast("Literal['direct', 'proxy']", backend),
             model_alias=model_alias,
             priority=priority,
             cost_weight=cost,
@@ -110,6 +110,7 @@ _ALIASES: dict[str, str] = {
     "opus": "claude-opus-4.6",
 }
 
+
 def _is_model_blacklisted(model_id: str, provider: str) -> bool:
     """
     True if model is explicitly older than allowed. Unparseable models return False (allowed).
@@ -136,9 +137,7 @@ def _is_model_blacklisted(model_id: str, provider: str) -> bool:
     if "gpt-4" in m:
         return True
     # Codex/copilot: gpt-5 without 5.3 is older
-    if provider in ("codex", "copilot") and "gpt-5" in m and "5.3" not in m:
-        return True
-    return False
+    return bool(provider in ("codex", "copilot") and "gpt-5" in m and "5.3" not in m)
 
 
 def filter_models_for_provider(provider: str, models: list[str]) -> list[str]:
@@ -156,8 +155,10 @@ def normalize_route_policy(policy: str | None) -> RoutePolicy:
     """Validate and normalize routing policy. Raises ValueError on invalid policy."""
     normalized = (policy or "prefer_direct").strip().lower()
     if normalized in ("prefer_direct", "prefer_proxy", "failover", "round_robin", "cheapest"):
-        return normalized
-    raise ValueError(f"Invalid routing policy '{policy}'. Valid values: prefer_direct, prefer_proxy, failover, round_robin, cheapest.")
+        return cast("RoutePolicy", normalized)
+    raise ValueError(
+        f"Invalid routing policy '{policy}'. Valid values: prefer_direct, prefer_proxy, failover, round_robin, cheapest."
+    )
 
 
 def route_contract() -> dict[str, object]:
@@ -165,7 +166,7 @@ def route_contract() -> dict[str, object]:
     return {
         "schema_version": ROUTE_SCHEMA_VERSION,
         "backend_types": ["direct", "proxy"],
-        "policy_names": list(RoutePolicy.__args__),
+        "policy_names": list(get_args(RoutePolicy)),
     }
 
 
@@ -192,7 +193,7 @@ def _scraped_to_routes(by_provider: dict[str, list[str]]) -> dict[str, list[Rout
                 by_model[canonical] = []
             route = Route(
                 provider=provider,
-                backend_type=backend,
+                backend_type=cast("Literal['direct', 'proxy']", backend),
                 model_alias=model_id,
                 priority=priority,
                 cost_weight=cost_weight,
@@ -334,7 +335,7 @@ class ModelCatalog:
                 route_rows = [row for row in route_rows if row["provider"] == provider_filter]
             if not route_rows:
                 continue
-            detail[model_id] = route_rows
+            detail[model_id] = cast("list[dict[str, object]]", route_rows)
         return {
             "schema_version": ROUTE_SCHEMA_VERSION,
             "count": len(detail),

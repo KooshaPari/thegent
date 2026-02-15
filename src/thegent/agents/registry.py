@@ -80,8 +80,10 @@ def get_fallback_agents(agent_name: str) -> list[str]:
     return []
 
 
-def resolve_agent(agent_name: str) -> str:
+def resolve_agent(agent_name: str | None) -> str | None:
     """Resolve label/alias to canonical CLI name. E.g. 'cursor' -> 'cursor-agent'."""
+    if agent_name is None:
+        return None
     return _AGENT_ALIASES.get(agent_name, agent_name)
 
 

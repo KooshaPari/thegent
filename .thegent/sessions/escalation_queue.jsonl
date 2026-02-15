@@ -1,0 +1,1 @@
+{"run_id": "run_703194a8", "reason": "Circuit breaker is OPEN for agent 'kilo'. Repeated failures detected.", "owner": "kooshapari:thegent", "agent": "kilo", "lane": "standard", "priority": 0, "blocked_at_utc": "2026-02-15T11:51:40.101651+00:00", "escalate_by_utc": "2026-02-15T12:21:40.101651+00:00", "sla_minutes": 30, "status": "pending"}

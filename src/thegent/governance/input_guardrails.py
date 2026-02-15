@@ -6,11 +6,11 @@ See docs/governance/NEMO_GUARDRAILS_DESIGN.md.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 
 @dataclass
@@ -47,7 +47,7 @@ class InputGuardrails:
                 passed=False,
                 rail_id="prompt_length",
                 reason=f"Prompt exceeds {self.prompt_max_chars} chars ({len(prompt)})",
-                remediation=f"Shorten prompt or increase THGENT_PROMPT_MAX_CHARS",
+                remediation="Shorten prompt or increase THGENT_PROMPT_MAX_CHARS",
             )
 
         # prompt_blocklist
@@ -57,7 +57,7 @@ class InputGuardrails:
                     return GuardrailResult(
                         passed=False,
                         rail_id="prompt_blocklist",
-                        reason=f"Prompt matched blocklist pattern",
+                        reason="Prompt matched blocklist pattern",
                         remediation="Remove blocked content from prompt",
                     )
             except re.error:
@@ -100,10 +100,8 @@ def _guardrails_from_env() -> InputGuardrails:
     max_chars = 65536
     raw = os.environ.get("THGENT_PROMPT_MAX_CHARS", "").strip()
     if raw:
-        try:
+        with contextlib.suppress(ValueError):
             max_chars = int(raw)
-        except ValueError:
-            pass
 
     blocklist: list[str] = []
     raw = os.environ.get("THGENT_PROMPT_BLOCKLIST_PATTERNS", "").strip()

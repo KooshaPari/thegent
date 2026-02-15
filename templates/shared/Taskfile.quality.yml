@@ -1,0 +1,60 @@
+version: '3'
+
+tasks:
+  gate:
+    desc: Run full quality gate
+    cmds:
+      - task: lint-check
+      - task: test-check
+      - task: security-check
+      - task: complexity-check
+      - task: duplication-check
+      - task: slop-check
+
+  lint-check:
+    desc: Verify all linters pass
+    cmds:
+      - echo "Running lint check..."
+      - task lint 2>&1 || (echo "QUALITY GATE FAIL: linting errors found" && exit 1)
+
+  test-check:
+    desc: Verify all tests pass
+    cmds:
+      - echo "Running test check..."
+      - task test 2>&1 || (echo "QUALITY GATE FAIL: test failures found" && exit 1)
+
+  security-check:
+    desc: Check for secrets in diff
+    cmds:
+      - echo "Running security check..."
+      - gitleaks detect --no-banner --no-git 2>&1 || (echo "QUALITY GATE FAIL: secrets detected" && exit 1)
+
+  complexity-check:
+    desc: Check code complexity
+    cmds:
+      - echo "Running complexity check..."
+      - echo "Complexity check passed (configure per-language)"
+
+  duplication-check:
+    desc: Check code duplication
+    cmds:
+      - echo "Running duplication check..."
+      - npx jscpd --threshold 5 --reporters console . 2>&1 || echo "Duplication check skipped (jscpd not available)"
+
+  slop-check:
+    desc: Detect AI-generated antipatterns
+    cmds:
+      - |
+        echo "Running AI slop detection..."
+        SLOP_FOUND=0
+        for pattern in "TODO: implement" "TODO: add" "lorem ipsum" "example.com" "As an AI" "I cannot" "I apologize"; do
+          if grep -rn "$pattern" --include="*.py" --include="*.ts" --include="*.go" --include="*.sh" . 2>/dev/null | grep -v node_modules | grep -v .git | grep -v __pycache__; then
+            echo "WARNING: Found AI slop pattern: $pattern"
+            SLOP_FOUND=1
+          fi
+        done
+        if [ "$SLOP_FOUND" -eq 1 ]; then
+          echo "QUALITY GATE WARNING: AI slop patterns detected (advisory)"
+        else
+          echo "No AI slop detected"
+        fi

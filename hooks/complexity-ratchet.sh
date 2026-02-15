@@ -10,14 +10,15 @@
 set -euo pipefail
 
 # Ultra-fast cache check — before sourcing anything (Stop mode only).
-# Uses HEAD_SHA pre-computed by stop-dispatcher. 2-min TTL as safety net.
+# Uses HEAD_SHA pre-computed by stop-dispatcher. 10-min TTL for better reuse.
 # Only triggers when HEAD_SHA is set (Stop dispatcher), not PostToolUse.
 _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
+_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -n "${HEAD_SHA:-}" ]]; then
   _CACHE_FILE="${_CACHE_DIR}/complexity-ratchet-${HEAD_SHA}.result"
   if [[ -f "$_CACHE_FILE" ]]; then
     _age=$(( $(date +%s) - $(stat -f '%m' "$_CACHE_FILE" 2>/dev/null || stat -c '%Y' "$_CACHE_FILE" 2>/dev/null || echo 0) ))
-    if (( _age < 120 )); then
+    if (( _age < _CACHE_TTL )); then
       cat "$_CACHE_FILE"
       exit 0
     fi
@@ -29,6 +30,13 @@ fi
 HOOK_NAME="COMPLEXITY-RATCHET"
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
+
+# --- P1 optimization: Skip in Stop mode if no source files changed ---
+# Only apply to Stop hooks (HEAD_SHA set), not PostToolUse (single file check)
+if [[ -n "${HEAD_SHA:-}" ]] && ! any_source_changed; then
+  echo "COMPLEXITY-RATCHET: skipped (no source files changed)"
+  exit 0
+fi
 
 RATCHET_FILE="$HOME/.claude/.complexity-ratchet.json"
 mkdir -p "$HOME/.claude"

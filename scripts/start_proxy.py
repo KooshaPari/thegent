@@ -37,14 +37,8 @@ def main(argv: list[str]) -> int:
     try:
         os.execv(binary, [binary, "-config", str(config_path)])
     except FileNotFoundError:
-        print(
-            "start_proxy: cli-proxy-api-plus not found. "
-            "Set THGENT_CLIPROXY_BINARY or install CLIProxyAPIPlus.",
-            file=sys.stderr,
-        )
         return 1
-    except Exception as exc:
-        print(f"start_proxy: {exc}", file=sys.stderr)
+    except Exception:
         return 1
 
 

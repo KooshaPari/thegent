@@ -1,6 +1,7 @@
 """Pytest configuration for thegent."""
 
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -12,6 +13,50 @@ _THGENT_ROOT = Path(__file__).resolve().parent
 def project_root() -> Path:
     """Project root - thegent directory (has .git, pyproject.toml)."""
     return _THGENT_ROOT
+
+
+@pytest.fixture
+def tmp_session_dir(tmp_path: Path) -> Path:
+    """Temporary session directory with standard subdirectories."""
+    session = tmp_path / "session"
+    session.mkdir()
+    (session / "runs").mkdir()
+    (session / "checkpoints").mkdir()
+    (session / "escalations").mkdir()
+    (session / "overrides").mkdir()
+    return session
+
+
+@pytest.fixture
+def mock_settings(tmp_session_dir: Path, tmp_path: Path) -> MagicMock:
+    """Mock ThegentSettings with valid paths."""
+    settings = MagicMock()
+    settings.session_dir = tmp_session_dir
+    settings.environment = "development"
+    settings.trust_score_threshold = 0.8
+    settings.default_timeout = 90
+    settings.default_timeout_claude = 300
+    settings.factory_skills_dir = tmp_path / "skills"
+    settings.factory_droids_dir = tmp_path / "droids"
+    settings.cost_tracking_enabled = True
+    settings.cost_budget_mtd = 100.0
+    settings.opa_url = ""
+    settings.opa_timeout_ms = 500
+    settings.opa_fallback_allow = False
+    settings.contract_canary_percent = 0
+    settings.routing_parser_quality_enabled = True
+    settings.retention_days_sessions = 30
+    settings.retention_days_registry = 90
+    settings.retention_by_domain = {}
+    return settings
+
+
+@pytest.fixture
+def mock_runner():  # noqa: ANN201 -- returns MockRunner from conftest_factories
+    """Mock agent runner that returns successful RunResult."""
+    from tests.conftest_factories import MockRunner
+
+    return MockRunner()
 
 
 @pytest.fixture

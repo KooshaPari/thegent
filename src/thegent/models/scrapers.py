@@ -1,5 +1,6 @@
 """Model scrapers for dynamic discovery."""
 
+import contextlib
 import json
 import re
 import subprocess
@@ -17,6 +18,7 @@ class ModelScraper(Protocol):
     def __call__(self, settings: ThegentSettings | None = None) -> list[str]:
         """Scrape models for this provider. Returns model IDs."""
         ...
+
 
 _CACHE_PATH = Path.home() / ".cache" / "thegent" / "models-cache.json"
 
@@ -80,6 +82,7 @@ def get_scraped_catalog(
     if use_cache:
         _save_cache(result)
     return result
+
 
 _PROXY_CHECK_TIMEOUT = 3
 
@@ -157,6 +160,7 @@ def scrape_cursor() -> list[str]:
     try:
         proc = subprocess.run(
             ["cursor", "agent", "--list-models"],
+            check=False,
             capture_output=True,
             text=True,
             timeout=10,
@@ -200,6 +204,7 @@ def scrape_copilot() -> list[str]:
     try:
         proc = subprocess.run(
             ["copilot", "--help"],
+            check=False,
             capture_output=True,
             text=True,
             timeout=8,
@@ -227,6 +232,7 @@ def scrape_gemini() -> list[str]:
         try:
             proc = subprocess.run(
                 cmd,
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=4,
@@ -247,6 +253,7 @@ def scrape_claude() -> list[str]:
         try:
             proc = subprocess.run(
                 cmd,
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=4,
@@ -272,10 +279,10 @@ def scrape_minimax_from_proxy() -> list[str]:
 # Registry: provider -> scraper callable (settings) -> list[str]. Phase 12.
 # SA2: gemini, SA3: claude, SA4: cursor/copilot, SA5: antigravity/minimax/glm (via scrape_proxy in scrape_all)
 SCRAPER_REGISTRY: dict[str, ModelScraper] = {
-    "cursor-agent": lambda s=None: scrape_cursor(),
-    "copilot": lambda s=None: scrape_copilot(),
-    "gemini": lambda s=None: scrape_gemini(),
-    "claude": lambda s=None: scrape_claude(),
+    "cursor-agent": lambda settings=None: scrape_cursor(),
+    "copilot": lambda settings=None: scrape_copilot(),
+    "gemini": lambda settings=None: scrape_gemini(),
+    "claude": lambda settings=None: scrape_claude(),
 }
 
 
@@ -300,10 +307,8 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
         "gemini": [],
         "claude": [],
     }
-    try:
+    with contextlib.suppress(Exception):
         proxy_result = scrape_proxy(settings)
-    except Exception:
-        pass
 
     # Cursor (CLI) - SA4
     cursor_models: list[str] = []
@@ -317,9 +322,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
     # Cursor-api (wisdgod HTTP)
     try:
         cursor_api_models = scrape_cursor_api(settings)
-        filtered_cursor_api = (
-            filter_models_for_provider("cursor-api", cursor_api_models) if cursor_api_models else []
-        )
+        filtered_cursor_api = filter_models_for_provider("cursor-api", cursor_api_models) if cursor_api_models else []
         by_provider["cursor-api"] = (
             filtered_cursor_api
             if filtered_cursor_api

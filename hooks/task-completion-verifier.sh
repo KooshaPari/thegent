@@ -8,9 +8,10 @@ set -euo pipefail
 _CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
 _CACHE_KEY="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 _CACHE_FILE="${_CACHE_DIR}/task-completion-${_CACHE_KEY}.result"
+_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 if [[ -f "$_CACHE_FILE" ]]; then
   _age=$(( $(date +%s) - $(stat -f '%m' "$_CACHE_FILE" 2>/dev/null || stat -c '%Y' "$_CACHE_FILE" 2>/dev/null || echo 0) ))
-  if (( _age < 120 )); then
+  if (( _age < _CACHE_TTL )); then
     cat "$_CACHE_FILE"
     exit 0
   fi
@@ -20,9 +21,20 @@ HOOK_NAME="TASK-COMPLETION-VERIFIER"
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
 
+# Output immediately to prevent idle timeout
+echo "TASK-COMPLETION-VERIFIER: starting..." >&2
+
+# --- P1 optimization: Skip if no source files changed ---
+# Only run if code files were modified
+if ! any_source_changed; then
+  echo "TASK-COMPLETION-VERIFIER: skipped (no source files changed)"
+  exit 0
+fi
+
 # --- Cache check — skip if unchanged within TTL ---
 _tc_cache_key="${HOOK_NAME}_${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo none)}"
-if hook_cache_check "$_tc_cache_key" 120; then
+_ttl="${HOOK_CACHE_TTL:-600}"
+if hook_cache_check "$_tc_cache_key" "$_ttl"; then
   hook_cache_read "$_tc_cache_key" | tee "$_CACHE_FILE" 2>/dev/null
   exit 0
 fi
@@ -35,36 +47,29 @@ TASK_START_MARKER="/tmp/.claude-task-start"
 WARNINGS=()
 CHECKED=0
 
-# Common find exclusions (reused across fallback strategies)
-_FIND_EXCLUDES='! -path */node_modules/* ! -path */.git/* ! -path */vendor/* ! -path */__pycache__/* ! -path */.venv/* ! -path */test/* ! -path *_test.* ! -path *.test.* ! -path *.spec.*'
-_FIND_NAMES='\( -name *.py -o -name *.sh -o -name *.bash -o -name *.ts -o -name *.js -o -name *.tsx -o -name *.jsx -o -name *.go -o -name *.rs \)'
-
 # ---------- Collect recently modified source files ----------
+# Use CHANGED_FILES from dispatcher if available, otherwise use session-changes.log
 MODIFIED_FILES=()
 
-# Try session-changes.log first (grep is 1 spawn vs reading all files)
-if [[ -f "$CHANGE_LOG" ]]; then
+# Priority 1: Use dispatcher-provided CHANGED_FILES
+if [[ -n "${CHANGED_FILES:-}" ]]; then
+  while IFS= read -r file; do
+    [[ -n "$file" && -f "$file" ]] && MODIFIED_FILES+=("$file")
+  done < <(echo "$CHANGED_FILES" | tr ' ' '\n' | grep -E '\.(py|sh|bash|ts|js|tsx|jsx|go|rs)$')
+fi
+
+# Priority 2: Fallback to session-changes.log (no find fallback - too slow)
+if [[ ${#MODIFIED_FILES[@]} -eq 0 ]] && [[ -f "$CHANGE_LOG" ]]; then
   while IFS= read -r file; do
     [[ -f "$file" ]] && MODIFIED_FILES+=("$file")
   done < <(grep -oE '/[^ ]+\.(py|sh|bash|ts|js|tsx|jsx|go|rs)' "$CHANGE_LOG" 2>/dev/null | sort -u)
 fi
 
-# Fallback: single find with -newer OR -mmin (combined into 1 find call)
-if [[ ${#MODIFIED_FILES[@]} -eq 0 ]]; then
-  _find_time_arg=""
-  if [[ -f "$TASK_START_MARKER" ]]; then
-    _find_time_arg="-newer $TASK_START_MARKER"
-  else
-    _find_time_arg="-mmin -10"
-  fi
+# Priority 3: Only use git diff if no other source (last resort, not find)
+if [[ ${#MODIFIED_FILES[@]} -eq 0 ]] && in_git_repo >/dev/null 2>&1; then
   while IFS= read -r file; do
     [[ -f "$file" ]] && MODIFIED_FILES+=("$file")
-  done < <(find "$PROJECT_DIR" -maxdepth 5 $_find_time_arg -type f \
-    \( -name "*.py" -o -name "*.sh" -o -name "*.bash" -o -name "*.ts" -o -name "*.js" \
-       -o -name "*.tsx" -o -name "*.jsx" -o -name "*.go" -o -name "*.rs" \) \
-    ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/vendor/*" \
-    ! -path "*/__pycache__/*" ! -path "*/.venv/*" ! -path "*/test/*" \
-    ! -path "*_test.*" ! -path "*.test.*" ! -path "*.spec.*" 2>/dev/null)
+  done < <(git diff --name-only HEAD 2>/dev/null | grep -E '\.(py|sh|bash|ts|js|tsx|jsx|go|rs)$')
 fi
 
 # ---------- Batch syntax checks by type (reduce spawns) ----------

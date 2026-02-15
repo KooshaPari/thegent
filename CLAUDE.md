@@ -478,3 +478,93 @@ Test maturity expanded from 16 to 20 criteria across 5 levels:
 All hooks that exit non-zero now write descriptive failure messages to stderr.
 Format: `HOOK_NAME FAIL: reason` (e.g., "SUPPRESSION BLOCKER FAIL: 2 new lint suppression(s)")
 This ensures Claude Code displays the actual failure reason instead of "No stderr output".
+
+---
+
+## Development Philosophy
+
+### Extend, Never Duplicate
+- NEVER create a v2 file. Refactor the original.
+- NEVER create a new class if an existing one can be made generic.
+- NEVER create custom implementations when an OSS library exists.
+- Before writing ANY new code: search the codebase for existing patterns.
+
+### Primitives First
+- Build generic building blocks before application logic.
+- A provider interface + registry is better than N isolated classes.
+- Template strings > hardcoded messages. Config-driven > code-driven.
+
+### Research Before Implementing
+- Check project deps (pyproject.toml) for existing libraries.
+- Search PyPI before writing custom code.
+- For non-trivial algorithms: check GitHub for 80%+ implementations to fork/adapt.
+
+### Library Preferences (DO NOT REINVENT)
+| Need | Use | NOT |
+|------|-----|-----|
+| Retry/resilience | tenacity | Custom retry loops |
+| HTTP client | httpx | Custom wrappers |
+| Logging | structlog | print() or logging.getLogger |
+| Config | pydantic-settings | Manual env parsing |
+| CLI | typer | argparse |
+| Validation | pydantic | Manual if/else |
+| Rate limiting | tenacity + asyncio.Semaphore | Custom rate limiter class |
+
+### Code Quality Non-Negotiables
+- Zero new lint suppressions without inline justification
+- All new code must pass: ruff check, type checker, tests
+- Max function: 40 lines. Max cognitive complexity: 15.
+- No placeholder TODOs in committed code
+
+### thegent-Specific Rules
+- Use tach.toml for boundary enforcement (already configured)
+- All new agents must use the agent runner strategy pattern
+- All new hooks must follow existing hook patterns in hooks/
+- Provider pattern: use ProviderRegistry for extensible services
+- MCP tools go through the standard FastMCP registration
+
+---
+
+## Domain-Specific Patterns
+
+### What thegent Is
+
+thegent is an **MCP server + agent hook system** for governing AI agent lifecycle and quality. The core domain is: define agents (personas with capabilities), dispatch hooks at lifecycle events (session start, tool use, stop), enforce governance policies (cost, quality, security), and expose MCP tools for agent management. It is fundamentally an **agent orchestration and governance platform**.
+
+### Key Ports and Interfaces
+
+| Port | Responsibility | Location |
+|------|---------------|----------|
+| **AgentRunner** | Strategy pattern for executing agent personas | `agents/` |
+| **HookDispatcher** | Dispatches lifecycle hooks (pre/post tool use, stop, etc.) | `hooks/hook-dispatcher/`, `hooks/*-dispatcher.sh` |
+| **PolicyEngine** | Evaluates governance rules (cost caps, quality gates, security) | `hooks/qa-policy-engine.sh`, `contracts/` |
+| **MCPToolRegistry** | Registers and serves MCP tools to connected clients | MCP server entry point |
+| **CommandRegistry** | CLI commands for agent management, DAG compilation, spec ops | `commands/` |
+| **ContractStore** | Stores and validates governance contracts and policies | `contracts/` |
+
+### Provider Registry and Agent Strategy
+
+- **Agent personas** live in `agents/` as markdown definitions. New agents = new `.md` file describing the persona, capabilities, and constraints.
+- **Hooks** follow a strict naming and dispatch pattern. The dispatcher routes events to matching hook scripts. New hooks = new `.sh` file in `hooks/` following the naming convention (`qa-*.sh` for quality gates, `pre-*.sh` for pre-tool hooks, etc.).
+- **Commands** in `commands/` define CLI-accessible operations (DAG compilation, ledger init, spec hashing). New commands = new entry in `commands/` + registration.
+- **Contracts** define governance policies (cost limits, SLOs, migration rules). New governance rule = new contract JSON in `contracts/`.
+
+### Common Anti-Patterns to Avoid
+
+- **Direct MCP message handling in domain logic** -- MCP protocol concerns stay in the MCP server layer. Domain logic (agents, hooks, policies) must not import or depend on MCP transport
+- **Custom agent discovery** -- Use the agent registry pattern. Never glob for agent files at runtime outside the registry
+- **Hooks that bypass the dispatcher** -- All hooks fire through `hook-dispatcher/`. Never call hook scripts directly from application code
+- **Inline governance rules** -- Cost caps, quality thresholds, and policy rules belong in `contracts/` or `hooks/hook-config.yaml`, not hardcoded in hook scripts
+- **Monolithic hook scripts** -- Shared logic goes in `hooks/lib/`. Hook scripts should be thin dispatchers that call library functions
+
+### Where to Add New Functionality
+
+| Want to add... | Put it in... |
+|----------------|-------------|
+| New agent persona | `agents/<persona-name>.md` -- follows existing agent template |
+| New lifecycle hook | `hooks/<event>-<name>.sh` + register in `hooks/hook-config.yaml` |
+| New governance policy | `contracts/<policy>.json` + wire into `qa-policy-engine.sh` |
+| New MCP tool | MCP server registration (FastMCP pattern) |
+| New CLI command | `commands/<command>/` + register in command dispatch |
+| New quality gate | `hooks/qa-<gate-name>.sh` following existing `qa-*.sh` patterns |
+| Shared hook utility | `hooks/lib/<utility>.sh` -- sourced by hook scripts, never called directly |

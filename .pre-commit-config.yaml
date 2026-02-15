@@ -1,0 +1,53 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        args: ['--unsafe']
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.6
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.22.1
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: dx-audit
+        name: DX Standards Audit
+        entry: bash scripts/dx-audit.sh
+        language: system
+        pass_filenames: false
+
+      - id: tach
+        name: Architectural Boundary Check
+        entry: tach check
+        language: system
+        pass_filenames: false
+
+      - id: ty
+        name: Fast Type Check (ty)
+        entry: uv run ty check src/
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: basedpyright
+        name: Strict Type Check (basedpyright)
+        entry: uv run basedpyright src/
+        language: system
+        pass_filenames: false
+        types: [python]
