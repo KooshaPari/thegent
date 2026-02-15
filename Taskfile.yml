@@ -194,6 +194,11 @@ tasks:
 
   # -- Quality gates --
 
+  quality:
+    desc: "Run full quality pipeline (lint, typecheck, test, traceability, dx-audit)"
+    cmds:
+      - task: quality_project
+
   gate:
     desc: "Run full 9-gate quality system"
     cmds:
@@ -208,6 +213,60 @@ tasks:
       - task: test:pyramid
       - bash scripts/traceability-validator.sh
       - bash scripts/dx-audit.sh
+
+  # -- Quality fix (format + lint --fix) --
+
+  quality-fix:
+    desc: "Format + ruff check --fix (safe fixes only)"
+    cmds:
+      - bash scripts/quality-fix-agent.sh
+
+  quality-fix-d:
+    desc: "Format + ruff check --fix --unsafe-fixes"
+    cmds:
+      - bash scripts/quality-fix-agent.sh -d
+
+  quality-fix-a:
+    desc: "Quality fix; on fail pipe output to copilot/cursor-agent (interactive)"
+    cmds:
+      - bash scripts/quality-fix-agent.sh -a
+
+  quality-fix-a-d:
+    desc: "Quality fix with unsafe; on fail pipe to copilot/cursor-agent (interactive)"
+    cmds:
+      - bash scripts/quality-fix-agent.sh -a -d
+
+  quality-fix-a-h:
+    desc: "Quality fix; on fail pipe to thegent (headless)"
+    cmds:
+      - bash scripts/quality-fix-agent.sh -a -h
+
+  quality-fix-a-d-h:
+    desc: "Quality fix with unsafe; on fail pipe to thegent (headless)"
+    cmds:
+      - bash scripts/quality-fix-agent.sh -a -d -h
+
+  # Full quality + agent on fail
+  quality-a:
+    desc: "Full quality; on fail show output and pipe to copilot"
+    cmds:
+      - bash scripts/quality-agent.sh
+
+  quality-a-h:
+    desc: "Full quality; on fail pipe to thegent (headless)"
+    cmds:
+      - bash scripts/quality-agent.sh -h
+
+  # Ruff-only aliases
+  quality-a-d:
+    desc: "Alias: quality-fix-a-d (ruff unsafe + copilot)"
+    cmds:
+      - task: quality-fix-a-d
+
+  quality-a-d-h:
+    desc: "Alias: quality-fix-a-d-h (ruff unsafe + thegent)"
+    cmds:
+      - task: quality-fix-a-d-h
 
   # -- Hooks --
 
@@ -247,4 +306,9 @@ tasks:
     desc: Serve docsite locally with hot reload
     cmds:
       - pnpm docs:preview
+
+  docs:pdf:
+    desc: Export docsite to PDF
+    cmds:
+      - pnpm docs:pdf
 
