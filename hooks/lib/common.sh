@@ -79,6 +79,30 @@ if [[ -f "${BASH_SOURCE[0]%/*}/git-cache.sh" ]]; then
   source "${BASH_SOURCE[0]%/*}/git-cache.sh"
 fi
 
+# --- fd integration (Phase 3.5) ---
+# Source fd wrapper - provides fd-based find acceleration (3-5x faster)
+if [[ -f "${BASH_SOURCE[0]%/*}/fd-wrapper.sh" ]]; then
+  # shellcheck disable=SC1090
+  source "${BASH_SOURCE[0]%/*}/fd-wrapper.sh"
+fi
+
+# find() override for transparent fd acceleration
+# Intercepts all find calls and routes to fd when possible (3-5x faster)
+find() {
+  # Try fd first if available, fallback to system find
+  if command -v fd &>/dev/null; then
+    fd_find "$@"
+  else
+    # Fallback to system find with timeout
+    if command -v timeout &>/dev/null; then
+      timeout 5 /usr/bin/find "$@"
+    else
+      /usr/bin/find "$@"
+    fi
+  fi
+}
+export -f find
+
 # sort_unique: use huniq if available, else sort -u
 sort_unique() {
   if [[ -n "${HUNIQ_CMD:-}" ]]; then
