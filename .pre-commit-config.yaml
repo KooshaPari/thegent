@@ -1,29 +1,40 @@
+# thegent -- Pre-commit hooks (Gates 1-3: syntax, lint, type)
+# Stack: Python (pyproject.toml, src layout, uv, structlog, tenacity)
+
 repos:
+  # --- Base hooks (syntax validation - Gate 1) ---
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: check-yaml
-        args: ['--unsafe']
+        args: ["--unsafe"]
       - id: check-toml
+      - id: check-json
       - id: check-merge-conflict
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-added-large-files
-        args: ['--maxkb=500']
+        args: ["--maxkb=500"]
       - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ["--branch", "main", "--branch", "master"]
+      - id: check-ast
 
+  # --- Python lint + format (Gate 2) ---
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.6
     hooks:
       - id: ruff-check
-        args: [--fix]
+        args: ["--fix"]
       - id: ruff-format
 
+  # --- Secret detection ---
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.22.1
     hooks:
       - id: gitleaks
 
+  # --- Local hooks (Gate 2-3) ---
   - repo: local
     hooks:
       - id: dx-audit
@@ -39,15 +50,22 @@ repos:
         pass_filenames: false
 
       - id: ty
-        name: Fast Type Check (ty)
+        name: Fast Type Check (ty) (Gate 3)
         entry: uv run ty check src/
         language: system
         pass_filenames: false
         types: [python]
 
       - id: basedpyright
-        name: Strict Type Check (basedpyright)
+        name: Strict Type Check (basedpyright) (Gate 3)
         entry: uv run basedpyright src/
         language: system
         pass_filenames: false
         types: [python]
+
+      - id: docs-build
+        name: Build VitePress Docsite
+        entry: hooks/pre-commit-docs.sh
+        language: script
+        pass_filenames: false
+        files: '^docs/'
