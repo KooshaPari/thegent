@@ -103,6 +103,13 @@ find() {
 }
 export -f find
 
+# --- procs integration (Phase 3.5) ---
+# Source procs wrapper - provides process lookup acceleration (2-3x faster)
+if [[ -f "${BASH_SOURCE[0]%/*}/procs-wrapper.sh" ]]; then
+  # shellcheck disable=SC1090
+  source "${BASH_SOURCE[0]%/*}/procs-wrapper.sh"
+fi
+
 # sort_unique: use huniq if available, else sort -u
 sort_unique() {
   if [[ -n "${HUNIQ_CMD:-}" ]]; then
