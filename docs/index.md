@@ -1,26 +1,23 @@
 ---
 layout: home
 
-title: thegent
-titleTemplate: AI Agent Governance & MCP Server
-
 hero:
   name: thegent
   text: AI Agent Governance & MCP Server
-  tagline: MCP server + agent hook system for AI agent lifecycle governance
+  tagline: Comprehensive agent lifecycle management and quality governance
   actions:
     - theme: brand
       text: Get Started
-      link: /AGENT_INSTRUCTIONS
+      link: /ARCHITECTURE_LAYERS.md
     - theme: alt
       text: View on GitHub
-      link: https://github.com/thegent
+      link: https://github.com
 
 features:
-  - title: Agent Lifecycle Governance
-    details: Define agents, dispatch hooks at lifecycle events, enforce governance policies
-  - title: MCP Server
-    details: Expose MCP tools for agent management and governance
-  - title: Quality Gates
-    details: Enforce cost caps, quality thresholds, and security policies
+  - title: Agent Governance
+    details: Define agent personas, dispatch hooks, enforce quality gates
+  - title: MCP Integration
+    details: Expose agent capabilities via Model Context Protocol
+  - title: Hook System
+    details: Lifecycle hooks for pre/post tool execution
 ---
