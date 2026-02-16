@@ -20,6 +20,8 @@ from thegent.install import (
     _get_mcp_config,
     create_symlink,
     get_source_dest_mapping,
+    load_bundle_manifest,
+    resolve_bundles,
     run_install,
     run_wizard,
     should_exclude,
@@ -715,6 +717,64 @@ class TestGetMcpConfig:
         assert cfg == {"url": "http://localhost:3847/mcp"}
 
 
+@pytest.mark.unit
+class TestBundleManifestLoader:
+    """Tests for third-party bundle manifest loading and resolution helpers."""
+
+    def test_load_bundle_manifest_returns_empty_when_missing(self, tmp_path) -> None:
+        """Missing manifest path returns empty dict."""
+        missing = tmp_path / "does-not-exist.json"
+        assert load_bundle_manifest(missing) == {}
+
+    @patch("thegent.install.load_bundle_manifest")
+    def test_resolve_bundles_handles_all(self, mock_load, tmp_path) -> None:
+        # @trace FR-INST-047
+        mock_load.return_value = {
+            "cli-tools": [
+                {"source": str(tmp_path / "a.txt"), "target": "{home}/a.txt"},
+                {"source": "thegent:skills/agent-orchestra", "target": "{cwd}/agent-orchestra", "mode": "editable"},
+            ],
+            "hooks": [{"source": str(tmp_path / "hooks"), "target": str(tmp_path / "hooks.out"), "mode": "symlink"}],
+        }
+        (tmp_path / "a.txt").write_text("hello")
+
+        home = tmp_path / "home"
+        home.mkdir()
+        cwd = tmp_path / "project"
+        cwd.mkdir()
+        thegent_root = tmp_path
+        items = resolve_bundles(
+            ["all"],
+            Path("/tmp/manifest.json"),
+            thegent_root=thegent_root,
+            home=home,
+            cwd=cwd,
+            fallback_mode=InstallMode.SMART,
+        )
+        assert len(items) == 3
+        assert items[0][1] == home / "a.txt"
+        assert items[1][0] == thegent_root / "skills" / "agent-orchestra"
+        assert items[1][1] == cwd / "agent-orchestra"
+        assert items[2][2] == InstallMode.EDITABLE
+
+    def test_resolve_bundles_rejects_unknown(self, tmp_path) -> None:
+        """Unknown bundle name raises a clear error."""
+        manifest = tmp_path / "bundles.json"
+        manifest.write_text(json.dumps({"bundles": {"known": []}}))
+
+        with patch("thegent.install.load_bundle_manifest") as mock_load:
+            mock_load.return_value = {"known": []}
+            with pytest.raises(ValueError, match="Unknown bundle"):
+                resolve_bundles(
+                    ["missing"],
+                    manifest,
+                    thegent_root=tmp_path,
+                    home=tmp_path,
+                    cwd=tmp_path,
+                    fallback_mode=InstallMode.SMART,
+                )
+
+
 # ---------------------------------------------------------------------------
 # Legacy shims
 # ---------------------------------------------------------------------------
@@ -860,6 +920,94 @@ class TestRunInstall:
         assert isinstance(result, dict)
         # update_config should have been called for .claude.json
         assert mock_update_config.called
+
+    @patch("thegent.install.InstallManager.install_file")
+    @patch("thegent.install.InstallManager.update_config", return_value=True)
+    @patch("thegent.install.get_home_dir")
+    @patch("thegent.install.get_backup_dir")
+    @patch("thegent.install.get_manifest_path")
+    @patch("thegent.install.load_bundle_manifest")
+    def test_run_install_bundle_items(
+        self,
+        mock_load_bundle_manifest,
+        mock_manifest_path,
+        mock_backup_dir,
+        mock_home,
+        mock_update_config,
+        mock_install_file,
+        tmp_path,
+    ) -> None:
+        # @trace FR-INST-049
+        """Bundle items are applied via run_install and pass through item modes."""
+        manifest_file = tmp_path / "manifest.json"
+        mock_manifest_path.return_value = manifest_file
+        mock_backup_dir.return_value = tmp_path / "backups"
+        mock_home.return_value = tmp_path
+        mock_install_file.return_value = FileAction.COPIED
+
+        source_copy = tmp_path / "bundle_source_copy.txt"
+        source_copy.write_text("copy payload")
+        source_link = tmp_path / "bundle_source_link.txt"
+        source_link.write_text("symlink payload")
+        bundle_target = tmp_path / "bundle_copy.txt"
+        bundle_target_link = tmp_path / "bundle_link.txt"
+
+        mock_load_bundle_manifest.return_value = {
+            "web": [
+                {
+                    "source": str(source_copy),
+                    "target": str(bundle_target),
+                    "mode": "smart",
+                },
+                {
+                    "source": str(source_link),
+                    "target": str(bundle_target_link),
+                    "mode": "symlink",
+                },
+            ]
+        }
+
+        result = run_install(
+            target="codex",
+            mode="force",
+            dry_run=False,
+            bundles=["web"],
+            bundle_manifest=tmp_path / "bundles.json",
+        )
+
+        assert isinstance(result, dict)
+        assert mock_install_file.call_count == 2
+        called_targets = [c.args[1] for c in mock_install_file.call_args_list]
+        assert bundle_target in called_targets
+        assert not bundle_target.exists()
+        assert bundle_target_link in called_targets
+        assert mock_install_file.call_args_list[0].args[2] == InstallMode.SMART
+        assert mock_install_file.call_args_list[1].args[2] == InstallMode.EDITABLE
+
+    @patch("thegent.install.get_backup_dir")
+    @patch("thegent.install.get_manifest_path")
+    @patch("thegent.install.load_bundle_manifest")
+    @patch("thegent.install.get_home_dir")
+    @patch("thegent.install.InstallManager.update_config", return_value=True)
+    def test_run_install_unknown_bundle_raises(
+        self,
+        mock_update_config,
+        mock_home,
+        mock_load_bundle_manifest,
+        mock_manifest_path,
+        mock_backup_dir,
+        tmp_path,
+    ) -> None:
+        # @trace FR-INST-048
+        """Unknown bundle names fail fast."""
+        manifest_file = tmp_path / "manifest.json"
+        mock_manifest_path.return_value = manifest_file
+        mock_backup_dir.return_value = tmp_path / "backups"
+        mock_home.return_value = tmp_path
+        mock_load_bundle_manifest.return_value = {"known": []}
+
+        with pytest.raises(ValueError, match="Unknown bundle"):
+            run_install(target="codex", mode="smart", bundles=["missing"], bundle_manifest=tmp_path / "bundles.json")
 
     @patch("thegent.install.InstallManager.uninstall")
     @patch("thegent.install.get_backup_dir")

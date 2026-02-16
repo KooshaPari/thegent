@@ -92,4 +92,12 @@ echo "QA PREFLIGHT: stacks=[$_stack_list] tools=[$_available_list]"
 [[ -n "$CONFIG_PATH" ]] && echo "QA CONFIG: $CONFIG_PATH"
 [[ "$HAS_FR" == true ]] && echo "QA TRACEABILITY: FR spec found, traceability checks enabled"
 
+# ---------- Pre-warm caches on session start (P2 optimization) ----------
+# Non-blocking: fork and exit. Speeds up subsequent Stop hooks.
+if [[ -z "${_HOOK_DISPATCHED:-}" ]] && type hook_config_true hook_prewarm_all &>/dev/null; then
+  if hook_config_true "prewarm_on_session_start" 2>/dev/null; then
+    (hook_prewarm_all &) 2>/dev/null
+  fi
+fi
+
 exit 0

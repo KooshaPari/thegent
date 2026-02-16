@@ -4,6 +4,13 @@ These rules apply to ALL projects. Project-level CLAUDE.md files supplement (and
 
 ---
 
+# Heavy Web Research Policy
+- Use DuckDuckGo (`ddg_search`) for comprehensive web research when local knowledge is insufficient.
+- Prefer `duckduckgo-search` library for programmatic access.
+- Summarize findings for the user, providing links only for deep dives.
+
+---
+
 # Context Management Strategy
 
 ## The Manager Pattern
@@ -248,32 +255,88 @@ open docs-dist/index.html
   - `docs:build` - Build docsite
 
 ### 3. Linters (Language-Specific)
-| Stack | Linter | Config Template |
-|-------|--------|---------------|
-| Python | ruff | `thegent/templates/python/pyproject.template.toml` |
-| TypeScript | oxlint | `thegent/templates/typescript/oxlint.config.json` |
-| Go | golangci-lint | `thegent/templates/go/.golangci.yml` |
-| Bash | shellcheck | `thegent/templates/bash/.shellcheckrc` |
+| Stack | Linter | Formatter | Config Template |
+|-------|--------|-----------|---------------|
+| Python | ruff | ruff format | `thegent/templates/python/pyproject.template.toml` |
+| TypeScript | oxlint | oxfmt/prettier | `thegent/templates/typescript/oxlint.config.json` |
+| Go | golangci-lint | gofumpt | `thegent/templates/go/.golangci.yml` |
+| Rust | clippy | rustfmt | `thegent/templates/rust/clippy.toml` |
+| Ruby | rubocop | rubocop | `thegent/templates/ruby/.rubocop.yml` |
+| Java | checkstyle + spotbugs | google-java-format | `thegent/templates/java/checkstyle.xml` |
+| C/C++ | clang-tidy | clang-format | `thegent/templates/cpp/.clang-tidy` |
+| PHP | phpstan + psalm | PHP CS Fixer | `thegent/templates/php/phpstan.neon` |
+| Bash | shellcheck | shfmt | `thegent/templates/bash/.shellcheckrc` |
 
-### 4. Pre-commit Hooks
+### 4. Project Scaffolding Tools (CLI/App Frameworks)
+| Stack | CLI Framework | Web Framework | Config |
+|-------|--------------|---------------|--------|
+| Python | typer | FastAPI/starlette | `pyproject.toml` |
+| TypeScript | commander.js | Express/Fastify/Hono | `package.json` |
+| Rust | clap | axum/actix | `Cargo.toml` |
+| Go | cobra/urfave/cli | gin/echo/fiber | `go.mod` |
+| Ruby | thor | Rails/Hanami | `Gemfile` |
+| Java | picocli | Spring Boot | `pom.xml`/`build.gradle` |
+| C# | commandline | ASP.NET Core | `.csproj` |
+
+### 5. Pre-commit Hooks
 - [ ] Add `.pre-commit-config.yaml`
 - [ ] Include: ruff-check, ruff-format, gitleaks, trailing-whitespace
+- [ ] Run `pre-commit install`
 
-### 5. Quality Gates
+### 6. Quality Gates
 - [ ] Create `hooks/quality-gate.sh` with lint/test/coverage/security checks
 - [ ] Run on pre-commit or Stop hook
 
-### 6. Test Infrastructure
-- [ ] Python: pytest with coverage
-- [ ] TypeScript: vitest with coverage
+### 7. Test Infrastructure (Per Language)
+| Stack | Test Runner | Coverage | Test Config |
+|-------|-------------|----------|-------------|
+| Python | pytest + pytest-xdist | coverage.py | `pyproject.toml` [tool.pytest] |
+| TypeScript | vitest | v8 | `vitest.config.ts` |
+| Rust | cargo test | tarpaulin/grcov | `Cargo.toml` |
+| Go | go test | gocov/coverprofile | `_test.go` files |
+| Ruby | rspec | simplecov | `.rspec` |
+| Java | JUnit 5 | JaCoCo | `pom.xml`/`build.gradle` |
+| C++ | catch2/doctest | lcov | `CMakeLists.txt` |
+| PHP | phpunit | phpunit-coverage | `phpunit.xml` |
+| Bash | bats-core | - | `*.bats` files |
 
-### 7. CLAUDE.md Project Instructions
+### 8. Full Traceability Setup
+- [ ] Create `FUNCTIONAL_REQUIREMENTS.md` with FR-{CAT}-NNN IDs
+- [ ] Create `docs/reference/FR_TRACKER.md` to track FR implementation status
+- [ ] Create `docs/reference/CODE_ENTITY_MAP.md` mapping code <-> requirements
+- [ ] Add FR ID tags to all test functions:
+  - Python: `@pytest.mark.requirement("FR-XXX-NNN")`
+  - TypeScript: `describe("FR-XXX-NNN: description", () => {...})`
+  - Rust: `#[test] fn test_FR_XXX_NNN() {...}`
+  - Add docstring: `Traces to: FR-XXX-NNN`
+- [ ] Verify: `grep -r "FR-" tests/` shows all FRs have tests
+- [ ] Run: `task quality` to verify spec verification
+
+### 9. CLAUDE.md Project Instructions
 Create project-specific CLAUDE.md with project info, library preferences, domain patterns.
 
 ---
 
 ## Quick Project Initialization
 
+### Option 1: Copier (Recommended)
+```bash
+# Install copier if needed
+pip install copier
+
+# Initialize with all prompts
+copier copy thegent/templates/initialize-project ./my-new-project
+
+# Or with options specified
+copier copy thegent/templates/initialize-project ./my-new-project \
+  --project-name="my-project" \
+  --project-description="A description" \
+  --language="python" \
+  --include-docs=true \
+  --include-ci=true
+```
+
+### Option 2: Manual Template Selection
 ```bash
 # Full setup for new project:
 mkdir -p docs hooks
@@ -282,6 +345,18 @@ mv docs/package.json.template docs/package.json
 pnpm install && pnpm docs:build
 open docs-dist/index.html
 ```
+
+### Available Templates
+
+| Template | Location | Purpose |
+|----------|----------|---------|
+| CLAUDE.md | `templates/claude/CLAUDE.md.template` | Project-specific agent instructions |
+| Taskfile | `templates/{language}/Taskfile.{language}.yml` | Build automation |
+| Quality | `templates/quality/` | 50+ lint/coverage configs for 25+ languages |
+| VitePress | `templates/vitepress-full/` | Full docsite with versioning |
+| Specs | `templates/specs/` | PRD, ADR, FR, PLAN templates |
+| CI/CD | `templates/operational/ci/` | GitHub Actions workflows |
+| Docker | `templates/operational/docker/` | Dockerfiles & compose |
 
 **During work:**
 - When making significant code changes (new modules, features, architecture changes), note which spec docs would need updating
@@ -646,6 +721,10 @@ thegent is an **MCP server + agent hook system** for governing AI agent lifecycl
 - **Hooks that bypass the dispatcher** -- All hooks fire through `hook-dispatcher/`. Never call hook scripts directly from application code
 - **Inline governance rules** -- Cost caps, quality thresholds, and policy rules belong in `contracts/` or `hooks/hook-config.yaml`, not hardcoded in hook scripts
 - **Monolithic hook scripts** -- Shared logic goes in `hooks/lib/`. Hook scripts should be thin dispatchers that call library functions
+
+### Sitback Agent
+
+`thegent sitback` launches Claude Code with a Sitback Agent persona: dashboard (cockpit + terminals + ps), FastMCP tools first, CLI fallback. Skills: `skills/sitback-agent/` (default), overridable via `--skill`. MCP precondition: `thegent serve` for full toolset.
 
 ### Where to Add New Functionality
 

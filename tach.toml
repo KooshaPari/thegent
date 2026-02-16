@@ -75,7 +75,8 @@ depends_on = [
     "thegent.agents",
     "thegent.output_parser",
     "thegent.operations",
-    "thegent.orchestration_modes"]
+    "thegent.orchestration_modes",
+    "thegent.output_parser"]
 
 [[modules]]
 path = "thegent.cli"

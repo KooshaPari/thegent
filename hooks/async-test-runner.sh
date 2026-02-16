@@ -33,65 +33,9 @@ case "$FILE_PATH" in
   */node_modules/*|*/.git/*|*/vendor/*|*/__pycache__/*|*/.venv/*|*/dist/*|*/build/*) exit 0 ;;
 esac
 
-# Derive test files for a given source file (pure bash, no subprocess spawns)
-find_test_files() {
-  local src="$1"
-  local base ext name dir
-  base="${src##*/}"
-  ext="${base##*.}"
-  name="${base%.*}"
-  # dirname via parameter expansion (eliminates dirname subprocess)
-  dir="${src%/*}"
-
-  case "$ext" in
-    py)
-      for candidate in \
-        "${dir}/test_${name}.py" \
-        "${dir}/tests/test_${name}.py" \
-        "${PROJECT_DIR}/test/unit/test_${name}.py" \
-        "${PROJECT_DIR}/tests/test_${name}.py" \
-        "${PROJECT_DIR}/test/test_${name}.py"; do
-        [[ -f "$candidate" ]] && echo "$candidate"
-      done
-      # If the file itself is a test
-      [[ "$base" == test_* ]] && echo "$src"
-      ;;
-    sh|bash)
-      for candidate in \
-        "${PROJECT_DIR}/test/unit/test_${name}.bats" \
-        "${PROJECT_DIR}/test/unit/${name}.bats" \
-        "${PROJECT_DIR}/test/integration/test_${name}.bats" \
-        "${PROJECT_DIR}/test/integration/${name}.bats"; do
-        [[ -f "$candidate" ]] && echo "$candidate"
-      done
-      ;;
-    bats)
-      echo "$src"
-      ;;
-    ts|tsx|js|jsx)
-      for candidate in \
-        "${dir}/${name}.test.${ext}" \
-        "${dir}/${name}.spec.${ext}" \
-        "${dir}/__tests__/${name}.test.${ext}" \
-        "${dir}/__tests__/${name}.${ext}"; do
-        [[ -f "$candidate" ]] && echo "$candidate"
-      done
-      # If the file itself is a test
-      case "$base" in
-        *.test.*|*.spec.*) echo "$src" ;;
-      esac
-      ;;
-    go)
-      [[ -f "${dir}/${name}_test.go" ]] && echo "${dir}/${name}_test.go"
-      # If the file itself is a test
-      [[ "$base" == *_test.go ]] && echo "$src"
-      ;;
-  esac
-  return 0
-}
-
-# ---------- Determine test files ----------
-TEST_FILES=$(find_test_files "$FILE_PATH")
+# ---------- Determine test files (P4: use shared get_affected_tests from common.sh) ----------
+# Consolidates with quality-gate affected test selection; same logic as affected_tests_for_file.
+TEST_FILES=$(get_affected_tests "$FILE_PATH")
 
 # If no test files found, nothing to run
 [[ -z "$TEST_FILES" ]] && exit 0

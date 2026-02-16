@@ -73,6 +73,220 @@ class InstallManifest(BaseModel):
     configs: list[ConfigManifest] = []
 
 
+class BundleItem(BaseModel):
+    source: str
+    target: str
+    mode: str = ""
+
+
+class BundleManifest(BaseModel):
+    """Optional external manifest describing installable third-party bundles."""
+
+    bundles: dict[str, list[BundleItem]] = {}
+
+
+def get_default_bundle_manifest_path() -> Path:
+    """Default location for the third-party bundle manifest."""
+
+    return Path.home() / ".config" / "thegent" / "third_party_bundles.json"
+
+
+def _coerce_path(value: str) -> Path:
+    """Normalize and expand a user path token."""
+
+    return Path(os.path.expandvars(value)).expanduser()
+
+
+def load_bundle_manifest(path: Path | str | None = None) -> dict[str, list[dict[str, Any]]]:
+    """Load third-party bundle definitions from an external JSON manifest.
+
+    Expected schema:
+      {
+        "bundles": {
+          "name": {
+            "items": [
+              {"source": "...", "target": "...", "mode": "smart|force|editable"}
+            ]
+          }
+        }
+      }
+    """
+
+    manifest_path = _coerce_path(str(path)) if path is not None else get_default_bundle_manifest_path()
+
+    if not manifest_path.exists():
+        return {}
+
+    try:
+        data = json.loads(manifest_path.read_text())
+    except (json.JSONDecodeError, OSError, ValueError):
+        return {}
+
+    raw_bundles = data.get("bundles") if isinstance(data, dict) else None
+    if not isinstance(raw_bundles, dict):
+        return {}
+
+    bundles: dict[str, list[dict[str, Any]]] = {}
+    for name, bundle in raw_bundles.items():
+        if not isinstance(name, str):
+            continue
+        raw_items = bundle.get("items") if isinstance(bundle, dict) else bundle
+
+        if not isinstance(raw_items, list):
+            continue
+
+        items: list[dict[str, Any]] = []
+        for raw in raw_items:
+            if not isinstance(raw, dict):
+                continue
+
+            source = raw.get("source")
+            target = raw.get("target")
+            if not isinstance(source, str) or not isinstance(target, str):
+                continue
+
+            item: dict[str, Any] = {
+                "source": source.strip(),
+                "target": target.strip(),
+            }
+            mode = raw.get("mode")
+            if isinstance(mode, str) and mode.strip():
+                item["mode"] = mode.strip().lower()
+            else:
+                item["mode"] = ""
+            items.append(item)
+
+        if items:
+            bundles[name] = items
+
+    return bundles
+
+
+def _coerce_bundle_items(raw: dict[str, list[dict[str, Any]]]) -> BundleManifest:
+    """Normalize raw manifest payloads into a validated structure."""
+
+    normalized: dict[str, list[BundleItem]] = {}
+    for name, items in raw.items():
+        if not name or not isinstance(items, list):
+            continue
+        parsed_items: list[BundleItem] = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            source = item.get("source")
+            target = item.get("target")
+            if not isinstance(source, str) or not isinstance(target, str):
+                continue
+            parsed_items.append(
+                BundleItem(
+                    source=source.strip(),
+                    target=target.strip(),
+                    mode=str(item.get("mode", "")).strip().lower(),
+                )
+            )
+        if parsed_items:
+            normalized[name] = parsed_items
+    return BundleManifest(bundles=normalized)
+
+
+def resolve_bundles(
+    bundle_names: list[str] | None,
+    bundle_manifest: Path | str | None,
+    thegent_root: Path,
+    home: Path,
+    cwd: Path,
+    fallback_mode: InstallMode,
+) -> list[tuple[Path, Path, InstallMode]]:
+    """Resolve selected bundles to install tuples."""
+
+    selected = list(bundle_names or [])
+    if not selected:
+        return []
+
+    manifest = _coerce_bundle_items(load_bundle_manifest(bundle_manifest)).bundles
+    include_all = "all" in selected
+
+    missing = [name for name in selected if name != "all" and name not in manifest]
+    if missing:
+        known = ", ".join(sorted(manifest))
+        hint = f"Known: {known}" if known else "No bundles available"
+        raise ValueError(f"Unknown bundle(s): {', '.join(missing)}. {hint}")
+
+    resolved_items: list[tuple[Path, Path, InstallMode]] = []
+    names_to_apply: list[str]
+    if include_all:
+        names_to_apply = list(manifest.keys())
+    else:
+        seen: set[str] = set()
+        names_to_apply = []
+        for name in selected:
+            if name in seen:
+                continue
+            seen.add(name)
+            names_to_apply.append(name)
+
+    for name in names_to_apply:
+        for item in manifest[name]:
+            source = _resolve_bundle_source(item.source, thegent_root)
+            target = _resolve_bundle_target(item.target, home=home, cwd=cwd)
+            mode = _resolve_bundle_mode(item.mode, fallback_mode)
+            resolved_items.append((source, target, mode))
+    return resolved_items
+
+
+def _resolve_bundle_mode(raw_mode: str, fallback: InstallMode) -> InstallMode:
+    """Convert a user-defined bundle mode into an InstallMode."""
+
+    normalized = (raw_mode or "").strip().lower()
+    if normalized in {"", "copy"}:
+        return fallback
+    if normalized == "symlink":
+        return InstallMode.EDITABLE
+    try:
+        return InstallMode(normalized)
+    except ValueError:
+        return fallback
+
+
+def _resolve_bundle_source(source: str, thegent_root: Path) -> Path:
+    """Resolve a bundle source path.
+
+    Supports:
+    - thegent:/relative/path -> resolved relative to thegent root
+    - home/absolute/env-expanded paths
+    - relative paths -> resolved relative to thegent root
+    """
+
+    normalized = source.strip()
+    if normalized.startswith("thegent:"):
+        normalized = normalized.split(":", 1)[1].lstrip("/")
+        return thegent_root / normalized
+
+    expanded = _coerce_path(normalized)
+    if expanded.is_absolute():
+        return expanded
+    return thegent_root / expanded
+
+
+def _resolve_bundle_target(target: str, *, home: Path, cwd: Path) -> Path:
+    """Resolve a bundle target path.
+
+    Allows templating with {home}, {cwd}, ${HOME}, ${CWD}.
+    Relative destinations are placed under the home directory.
+    """
+
+    normalized = target.strip()
+    normalized = normalized.replace("{home}", str(home)).replace("{HOME}", str(home))
+    normalized = normalized.replace("{cwd}", str(cwd)).replace("{CWD}", str(cwd))
+    normalized = normalized.replace("${HOME}", str(home)).replace("${CWD}", str(cwd))
+    normalized = os.path.expandvars(normalized)
+
+    expanded = _coerce_path(normalized)
+    if expanded.is_absolute():
+        return expanded
+    return home / expanded
+
+
 # --- Constants & Mappings ---
 
 # Valid targets
@@ -101,6 +315,7 @@ EXCLUDE_DIRS = {
 # Bundle definitions
 CLAUDE_CODE_FILES = {
     "skills/agent-orchestra": "skills/agent-orchestra",
+    "skills/sitback-agent": "skills/sitback-agent",
     "hooks": "hooks",
     "templates": "templates",
     "agents": "agents",
@@ -142,6 +357,7 @@ THEGENT_TOOLS = [
     "thegent_list_models",
     "thegent_dag_list",
     "thegent_observe_summary",
+    "thegent_sitback_dashboard",
     "thegent_session_contracts",
     "thegent_session_contract_health_gate",
     "thegent_session_contract_health_report",
@@ -560,6 +776,8 @@ def run_install(
     verbose: bool = False,
     url: str | None = None,
     install_service: bool = False,
+    bundles: list[str] | None = None,
+    bundle_manifest: Path | str | None = None,
 ) -> dict:
     if target != "all" and target not in VALID_TARGETS:
         raise ValueError(f"Invalid target: {target}. Valid targets: {VALID_TARGETS}")
@@ -577,8 +795,9 @@ def run_install(
     thegent_root = Path(__file__).parent.parent.parent.resolve()
     mcp_url = url or "http://127.0.0.1:3847/mcp"
 
-    counts = {"copied": 0, "skipped": 0, "conflicts": 0, "errors": 0}
+    counts: dict[str, int] = {"copied": 0, "skipped": 0, "conflicts": 0, "errors": 0}
     home = get_home_dir()
+    cwd = Path.cwd()
 
     targets = [target] if target != "all" else ["claude-code", "claude-desktop", "cursor", "codex", "droid"]
 
@@ -610,9 +829,8 @@ def run_install(
                 dst = claude_dir / dst_rel
                 if src.exists():
                     res = mgr.install_file(src, dst, install_mode)
-                    counts[res.value if hasattr(res, "value") else res] = (
-                        counts.get(res.value if hasattr(res, "value") else res, 0) + 1
-                    )
+                    key = res.value if hasattr(res, "value") else str(res)
+                    counts[key] = counts.get(key, 0) + 1
 
             # MCP to ~/.claude.json
             mgr.update_config(home / ".claude.json", "mcpServers.thegent", mcp_cfg)
@@ -636,9 +854,8 @@ def run_install(
                 dst = cursor_dir / dst_rel
                 if src.exists():
                     res = mgr.install_file(src, dst, install_mode)
-                    counts[res.value if hasattr(res, "value") else res] = (
-                        counts.get(res.value if hasattr(res, "value") else res, 0) + 1
-                    )
+                    key = res.value if hasattr(res, "value") else str(res)
+                    counts[key] = counts.get(key, 0) + 1
 
             # Workspace level
             mgr.update_config(Path.cwd() / ".cursor" / "mcp.json", "mcpServers.thegent", mcp_cfg)
@@ -656,12 +873,26 @@ def run_install(
                 dst = factory_dir / dst_rel
                 if src.exists():
                     res = mgr.install_file(src, dst, install_mode)
-                    counts[res.value if hasattr(res, "value") else res] = (
-                        counts.get(res.value if hasattr(res, "value") else res, 0) + 1
-                    )
+                    key = res.value if hasattr(res, "value") else str(res)
+                    counts[key] = counts.get(key, 0) + 1
 
             # MCP to .factory/mcp.json in CWD
             mgr.update_config(Path.cwd() / ".factory" / "mcp.json", "mcpServers.thegent", mcp_cfg)
+
+    # Optional third-party bundles to install
+    for src, dst, bundle_mode in resolve_bundles(
+        bundle_names=bundles,
+        bundle_manifest=bundle_manifest,
+        thegent_root=thegent_root,
+        home=home,
+        cwd=cwd,
+        fallback_mode=install_mode,
+    ):
+        if verbose:
+            sys.stdout.write(f"Installing bundle item: {src} -> {dst}\n")
+        res = mgr.install_file(src, dst, bundle_mode)
+        key = res.value if hasattr(res, "value") else str(res)
+        counts[key] = counts.get(key, 0) + 1
 
     mgr.save_manifest()
 

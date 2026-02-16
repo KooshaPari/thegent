@@ -77,6 +77,36 @@ def _build_conformance_tests() -> list[ConformanceTest]:
             expected_status=CSMStatus.COMPLETED,
             min_confidence=0.9,
         ),
+        # WP-7006: Extended test vectors
+        ConformanceTest(
+            name="Deep Nested XML",
+            provider="claude",
+            raw_output="<STATUS>IN_PROGRESS</STATUS><PROGRESS>75</PROGRESS><METADATA><SUB_TAG>Value</SUB_TAG></METADATA>",
+            expected_status=CSMStatus.IN_PROGRESS,
+            min_confidence=0.8,
+            check_summary=False,
+        ),
+        ConformanceTest(
+            name="Sloppy Tag Recovery",
+            provider="gemini",
+            raw_output="<STATUS>COMPLETED<SUMMARY>Missing slash in status close tag but new tag starts",
+            expected_status=CSMStatus.COMPLETED,
+            min_confidence=0.7,
+        ),
+        ConformanceTest(
+            name="UTF-8 Entities",
+            provider="codex",
+            raw_output="<STATUS>COMPLETED</STATUS><SUMMARY>Done &amp; verified</SUMMARY>",
+            expected_status=CSMStatus.COMPLETED,
+            min_confidence=0.9,
+        ),
+        ConformanceTest(
+            name="Large Output Parsing",
+            provider="claude",
+            raw_output="<STATUS>COMPLETED</STATUS><SUMMARY>" + ("A" * 1000) + "</SUMMARY>",
+            expected_status=CSMStatus.COMPLETED,
+            min_confidence=0.9,
+        ),
     ]
 
 

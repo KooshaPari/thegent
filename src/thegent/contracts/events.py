@@ -40,6 +40,8 @@ class EvidenceEvent(BaseModel):
     evidence_id: str = ""  # session_id or artifact id
     evidence_type: str = "session"  # session, artifact, hash
     hash_value: str | None = None
+    audit_link: str | None = None  # WP-9009: Link to immutable audit trail entry
+    prev_evidence_hash: str | None = None  # WP-9009: Continuity linkage
     timestamp_utc: str = Field(default_factory=_utc_now)
     schema_version: str = "evidence-v1"
 

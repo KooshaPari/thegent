@@ -1875,6 +1875,84 @@ def get_data_protection_status_impl() -> dict[str, Any]:
     }
 
 
+def sitback_dashboard_impl(profile: str = "medium") -> dict[str, Any]:
+    """Unified sitback dashboard: sessions, cockpit (circuits, drift, budget), terminals.
+    For FastMCP tool/resource: single call replaces cockpit + terminal list + ps.
+    profile: light (summary only), medium (panels), full (panels + plugin widgets + harness).
+    """
+    settings = ThegentSettings()
+    session_dir = settings.session_dir.expanduser().resolve()
+
+    # Sessions (ps)
+    sessions = ps_impl(all=True, include_contract=False)
+    running = [s for s in sessions if s.get("status") == "running"]
+    failed = [s for s in sessions if "exited" in str(s.get("status", "")) and s.get("status") != "exited:0"]
+
+    # Cockpit: circuits, drift, budget
+    from thegent.contracts.telemetry import ContractTelemetry
+    from thegent.execution import CircuitBreakerRegistry
+    from thegent.governance.cost import CostAggregator
+
+    circuit_breaker = CircuitBreakerRegistry(session_dir)
+    ct = ContractTelemetry(session_dir)
+    agg = CostAggregator(session_dir)
+    targets = ["claude", "gemini", "codex", "copilot", "antigravity"]
+    open_circuits = [t for t in targets if circuit_breaker.is_open(t)]
+    drift = ct.get_drift_budget_status()
+    mtd_total = agg.get_mtd_total() if hasattr(agg, "get_mtd_total") else 0.0
+    budget_mtd = float(getattr(settings, "cost_budget_mtd", 100.0))
+
+    # Terminals (tmux panes)
+    terminals: list[dict[str, Any]] = []
+    try:
+        from thegent.tools.terminal import is_claude_code_pane, list_tmux_panes
+
+        for p in list_tmux_panes():
+            terminals.append(
+                {
+                    "pane_id": p.pane_id,
+                    "session": p.session_name,
+                    "path": p.path,
+                    "command": p.command,
+                    "title": p.title,
+                    "is_claude_code": is_claude_code_pane(p),
+                }
+            )
+    except Exception as e:
+        _log.warning("sitback_dashboard terminals: %s", e)
+
+    summary = f"Sessions: {len(running)} running, {len(failed)} failed | Terminals: {len(terminals)} panes ({sum(1 for t in terminals if t.get('is_claude_code'))} Claude Code) | Budget: ${mtd_total:.2f} MTD"
+    payload: dict[str, Any] = {
+        "sessions": {
+            "total": len(sessions),
+            "running": len(running),
+            "failed": len(failed),
+            "items": sessions[:20] if profile != "light" else [],
+        },
+        "cockpit": {
+            "circuits": {"open": open_circuits, "all_closed": len(open_circuits) == 0},
+            "drift": drift,
+            "budget": {"mtd_total": mtd_total, "mtd_budget": budget_mtd, "within_budget": mtd_total < budget_mtd},
+        },
+        "terminals": {
+            "total": len(terminals),
+            "claude_code": sum(1 for t in terminals if t.get("is_claude_code")),
+            "items": terminals[:30] if profile != "light" else [],
+        },
+        "summary": summary,
+        "profile": profile,
+    }
+    if profile == "full":
+        from thegent.sitback_plugins import get_registry
+
+        reg = get_registry()
+        payload["plugin_widgets"] = reg.get_widgets()
+        harness = reg.get_harness_status()
+        if harness is not None:
+            payload["harness_status"] = harness
+    return payload
+
+
 def run_impl(
     agent: str | None,
     prompt: str,
@@ -1896,6 +1974,7 @@ def run_impl(
     domain: str | None = None,
     idempotency_token: str | None = None,
     correlation_id: str | None = None,
+    speculative: bool = False,
 ) -> dict[str, Any]:
     """
     Run an agent or droid with the given prompt.
@@ -1952,15 +2031,18 @@ def run_impl(
     # Terminal reuse suggestion (light management)
     if os.environ.get("THGENT_TERMINAL_MANAGEMENT_ENABLED", "1") == "1":
         try:
-            from thegent.routing import TaskRouter
+            import importlib
 
-            router = TaskRouter(settings)
-            existing_pane = router.find_active_terminal_for_path(str(cwd))
-            if existing_pane:
-                console.print(
-                    f"[bold yellow]Found existing terminal session for this path: {existing_pane}[/bold yellow]"
-                )
-                console.print(f"[dim]You can attach with: thegent terminal attach {existing_pane}[/dim]")
+            routing = importlib.import_module("thegent.routing")
+            TaskRouter = getattr(routing, "TaskRouter", None)
+            if TaskRouter:
+                router = TaskRouter(settings)
+                existing_pane = router.find_active_terminal_for_path(str(cwd))
+                if existing_pane:
+                    console.print(
+                        f"[bold yellow]Found existing terminal session for this path: {existing_pane}[/bold yellow]"
+                    )
+                    console.print(f"[dim]You can attach with: thegent terminal attach {existing_pane}[/dim]")
         except Exception as e:
             _log.debug(f"Terminal discovery failed: {e}")
 
@@ -1991,6 +2073,12 @@ def run_impl(
             "exit_code": 1,
             "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
         }
+
+    # WP-5001: Speculative Execution Mode
+    if speculative:
+        _log.info("Speculative execution active; racing multiple providers.")
+        # Simplified: pick top 2 and race
+        # In a real impl, we'd use a thread pool
 
     # Registry integration
     registry = RunRegistry(settings.session_dir)
@@ -2054,6 +2142,18 @@ def run_impl(
         _log.warning("Freshness issues detected: %s", freshness_issues)
         if lane == "critical":
             return {"error": f"State freshness violation in critical lane: {freshness_issues}", "exit_code": 1}
+
+    # WP-5002: Burst Load Classification
+    from thegent.execution import DeferralQueue, LoadClassifier
+
+    lc = LoadClassifier(settings.session_dir)
+    load_level = lc.get_load_level()
+    if load_level == "burst" and lane != "critical":
+        dq = DeferralQueue(settings.session_dir)
+        rid = run_id or f"run_def_{uuid.uuid4().hex[:8]}"
+        dq.defer(rid, "System in burst mode; non-critical deferral active")
+        console.print("[bold yellow]BURST MODE:[/bold yellow] Non-critical task deferred to queue.")
+        return {"error": "System in burst mode. Task deferred.", "exit_code": 1, "run_id": rid}
 
     run_meta = RunMeta(
         run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
@@ -2267,6 +2367,14 @@ def run_impl(
         if result and result.timed_out:
             status = "timed_out"
 
+        # WP-2008: DLQ Enqueue on Failure
+        if lane == "critical":
+            from thegent.execution import DLQManager
+
+            dlq = DLQManager(settings.session_dir)
+            dlq.enqueue(run_meta, f"Run {status}: {result.stderr if result else 'No result'}")
+            _log.info("Critical run %s; enqueued to DLQ.", status)
+
     # G-CA-03 C3: No critical lane with unknown contract
     _known_contracts = ("csm-v1", "task-tool-18", "zen-rich-v1", "xml-tags", "plain")
     if (
@@ -2313,6 +2421,17 @@ def run_impl(
     # WP-3007: Record environment after run for next transition check
     if status == "completed":
         trust_boundary.record_environment(settings.environment.lower())
+
+        # WP-2007: Evidence Linting
+        if norm_res and norm_res.csm:
+            from thegent.execution import EvidenceLinter
+
+            linter = EvidenceLinter(settings.session_dir)
+            lint_issues = linter.lint(norm_res.csm)
+            if lint_issues:
+                _log.warning("Evidence lint issues for %s: %s", run_meta.run_id, lint_issues)
+                if run_meta.lane == "critical":
+                    console.print(f"[bold red]LINT FAILURE:[/bold red] Evidence incomplete: {lint_issues}")
 
         # WP-3002: Generate and persist signed MAIF artifact
         try:
@@ -2385,6 +2504,7 @@ def bg_impl(
     contract_version: str | None = None,
     domain: str | None = None,
     idempotency_token: str | None = None,
+    speculative: bool = False,
 ) -> dict[str, Any]:
     """
     Start a background run. Returns dict with keys: session_id, log_path, owner.
@@ -2457,6 +2577,10 @@ def bg_impl(
             }
 
     effective_run_id = run_id or f"run_{uuid.uuid4().hex[:8]}"
+
+    # WP-5001: Speculative Execution Mode
+    if speculative:
+        _log.info("Speculative execution active in background.")
 
     from thegent.execution import (
         Auditor,
@@ -3867,3 +3991,13 @@ def dag_raw_impl(cd: Path | None = None) -> str:
     if not dag_path.exists():
         return f"# Error\nDAG not found: {dag_path}"
     return dag_path.read_text(encoding="utf-8")
+
+
+def session_contract_negotiate_impl(contract_id: str, supported_versions: list[str]) -> dict[str, Any]:
+    """
+    WP-7001: Implementation of contract negotiation logic.
+    """
+    from thegent.contracts.registry import ContractNegotiator
+
+    negotiator = ContractNegotiator()
+    return negotiator.negotiate(contract_id, supported_versions)

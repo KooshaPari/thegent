@@ -846,6 +846,33 @@ hook_shared_fr_index() {
 }
 
 # ============================================================================
+# Hook Config Reader
+# ============================================================================
+# Read settings from hook-config.yaml (simple grep, no yq dependency).
+# Usage: hook_config_get "prewarm_on_session_start" -> "true" or ""
+_hook_config_path() {
+  local base="${BASH_SOURCE[0]%/*}"
+  [[ -f "${base}/../hook-config.yaml" ]] && echo "${base}/../hook-config.yaml"
+  [[ -f "${PROJECT_DIR:-.}/.claude/hooks/hook-config.yaml" ]] && echo "${PROJECT_DIR}/.claude/hooks/hook-config.yaml"
+  return 0
+}
+
+hook_config_get() {
+  local key="$1"
+  local cfg
+  cfg="$(_hook_config_path | head -1)"
+  [[ -z "$cfg" || ! -f "$cfg" ]] && return 1
+  grep -E "^\s*${key}:" "$cfg" 2>/dev/null | sed -E 's/^[^:]*:[[:space:]]*//' | tr -d '\r\n ' | head -1
+}
+
+# Check if a boolean config is true
+hook_config_true() {
+  local val
+  val="$(hook_config_get "$1" 2>/dev/null)"
+  [[ "$val" == "true" || "$val" == "yes" ]]
+}
+
+# ============================================================================
 # Skip Hooks Logic
 # ============================================================================
 # Allow skipping hooks via SKIP_HOOKS env var (comma-separated, e.g., "test-maturity,security-pipeline")
@@ -955,3 +982,194 @@ docs_changed() {
 # Max timeout: absolute maximum time before killing regardless of output
 export HOOK_IDLE_TIMEOUT="${HOOK_IDLE_TIMEOUT:-180}"
 export HOOK_MAX_TIMEOUT="${HOOK_MAX_TIMEOUT:-600}"
+
+# ============================================================================
+# Affected Test Selection
+# ============================================================================
+# Determine which tests to run based on changed files.
+# Uses file pattern matching to find related test files.
+
+# Find tests affected by changed source file
+# Usage: affected_tests_for_file "src/module.py" -> returns test file paths
+affected_tests_for_file() {
+    local src="$1"
+    local base ext name dir
+    base="${src##*/}"
+    ext="${base##*.}"
+    name="${base%.*}"
+    dir="${src%/*}"
+
+    case "$ext" in
+        py)
+            # Python: test_*.py in same dir, tests/ subdir, or project root
+            for candidate in \
+                "${dir}/test_${name}.py" \
+                "${dir}/tests/test_${name}.py" \
+                "${PROJECT_DIR:-.}/tests/test_${name}.py" \
+                "${PROJECT_DIR:-.}/test/test_${name}.py" \
+                "${PROJECT_DIR:-.}/test_${name}.py"; do
+                [[ -f "$candidate" ]] && echo "$candidate"
+            done
+            ;;
+        ts|tsx|js|jsx)
+            # TypeScript: *.test.ts, *.spec.ts in same dir or __tests__/
+            for candidate in \
+                "${dir}/${name}.test.${ext}" \
+                "${dir}/${name}.spec.${ext}" \
+                "${dir}/__tests__/${name}.test.${ext}" \
+                "${dir}/__tests__/${name}.${ext}"; do
+                [[ -f "$candidate" ]] && echo "$candidate"
+            done
+            ;;
+        sh|bash)
+            # Bash: *.bats files
+            for candidate in \
+                "${PROJECT_DIR:-.}/test/${name}.bats" \
+                "${PROJECT_DIR:-.}/test/unit/${name}.bats" \
+                "${PROJECT_DIR:-.}/tests/${name}.bats"; do
+                [[ -f "$candidate" ]] && echo "$candidate"
+            done
+            ;;
+        rs)
+            # Rust: tests in tests/ or #[test] in same file
+            for candidate in \
+                "${PROJECT_DIR:-.}/tests/${name}.rs"; do
+                [[ -f "$candidate" ]] && echo "$candidate"
+            done
+            ;;
+    esac
+}
+
+# Get all affected tests for a list of changed files
+# Usage: get_affected_tests file1.py file2.ts
+get_affected_tests() {
+    local tests=()
+    for file in "$@"; do
+        while IFS= read -r test; do
+            [[ -n "$test" ]] && tests+=("$test")
+        done < <(affected_tests_for_file "$file")
+    done
+    # Dedupe and return
+    printf '%s\n' "${tests[@]}" | sort -u
+}
+
+# ============================================================================
+# Pre-warm Cache Functions
+# ============================================================================
+# Warm caches at session start for faster subsequent hooks.
+
+# Pre-warm ruff cache for unchanged files
+prewarm_ruff_cache() {
+    local project_dir="${PROJECT_DIR:-.}"
+    [[ -f "$project_dir/pyproject.toml" ]] || [[ -f "$project_dir/ruff.toml" ]] || return 0
+
+    # Check if ruff cache exists, if not, run once to create
+    local cache_dir="${project_dir}/.ruff_cache"
+    if [[ ! -d "$cache_dir" ]]; then
+        command -v ruff >/dev/null 2>&1 || return 0
+        # Warm by running on a small subset first
+        ruff check --select=I "$project_dir" 2>/dev/null &
+    fi
+}
+
+# Pre-warm shellcheck cache
+prewarm_shellcheck_cache() {
+    local project_dir="${PROJECT_DIR:-.}"
+    local cache_dir="${TMPDIR}/shellcheck-cache-$(id -u)"
+    [[ -d "$cache_dir" ]] && return 0
+
+    command -v shellcheck >/dev/null 2>&1 || return 0
+    mkdir -p "$cache_dir"
+    # Pre-scan for shell scripts
+    find "$project_dir" -name "*.sh" -type f -exec dirname {} \; 2>/dev/null | sort -u > "$cache_dir/dirs.scan"
+}
+
+# Pre-warm the common shared data (changed files, FR list)
+prewarm_shared_data() {
+    local shared_dir="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)/shared"
+    mkdir -p "$shared_dir"
+
+    # Pre-compute changed files if not exists
+    if [[ ! -f "${shared_dir}/changed_files" ]]; then
+        (
+            git diff --name-only HEAD 2>/dev/null
+            git ls-files --others --exclude-standard 2>/dev/null
+        ) | grep -v -E '^(node_modules|vendor|\.git|target|out|dist|build|coverage)/' \
+          | sort -u > "${shared_dir}/changed_files" &
+    fi
+}
+
+# Run all pre-warms in parallel (non-blocking)
+hook_prewarm_all() {
+    prewarm_shared_data &
+    prewarm_ruff_cache &
+    prewarm_shellcheck_cache &
+    wait  # Wait for all to complete or fail silently
+}
+
+# ============================================================================
+# Progress Output for Long-Running Hooks
+# ============================================================================
+# Print periodic progress to prevent idle timeout.
+
+# Print progress message with timestamp
+hook_progress() {
+    echo "[$(date +%H:%M:%S)] HOOK_PROGRESS: $1" >&2
+}
+
+# Start a background progress reporter
+hook_progress_start() {
+    local interval="${2:-30}"
+    (
+        while true; do
+            sleep "$interval"
+            hook_progress "$1"
+        done
+    ) &
+    echo $!
+}
+
+# Kill the progress reporter
+hook_progress_stop() {
+    local pid="$1"
+    [[ -n "$pid" ]] && kill "$pid" 2>/dev/null
+}
+
+# ============================================================================
+# P5: Learning-Based Skip
+# ============================================================================
+# Track which hooks pass/fail for file patterns. Skip hooks that consistently
+# pass for certain change types. Adaptive based on project history.
+# Config: learning_skip in hook-config.yaml (default: false, opt-in).
+
+HOOK_LEARNING_DIR="${HOOK_CACHE_DIR}/learning"
+HOOK_LEARNING_MIN_SAMPLES=5
+HOOK_LEARNING_PASS_RATE=0.95
+
+# Record hook outcome for a pattern (extension or "all")
+# Usage: hook_learning_record "quality-gate" ".py" 0  (0=pass, 1=fail)
+hook_learning_record() {
+  local hook_name="$1" pattern="$2" passed="${3:-0}"
+  [[ -z "$hook_name" || -z "$pattern" ]] && return 0
+  mkdir -p "$HOOK_LEARNING_DIR"
+  echo "$(date +%s)|$hook_name|$pattern|$passed" >> "${HOOK_LEARNING_DIR}/history.log"
+  # Trim to last 1000 entries
+  tail -1000 "${HOOK_LEARNING_DIR}/history.log" > "${HOOK_LEARNING_DIR}/history.log.tmp"
+  mv "${HOOK_LEARNING_DIR}/history.log.tmp" "${HOOK_LEARNING_DIR}/history.log" 2>/dev/null || true
+}
+
+# Check if hook should be skipped based on learning (consistently passes for this pattern)
+# Returns 0 if should skip, 1 if should run
+hook_learning_should_skip() {
+  local hook_name="$1" pattern="$2"
+  hook_config_true "learning_skip" 2>/dev/null || return 1
+  [[ -f "${HOOK_LEARNING_DIR}/history.log" ]] || return 1
+  local samples pass_count total
+  samples=$(grep "|${hook_name}|${pattern}|" "${HOOK_LEARNING_DIR}/history.log" 2>/dev/null | tail -100)
+  total=$(echo "$samples" | grep -c . 2>/dev/null || echo 0)
+  (( total < HOOK_LEARNING_MIN_SAMPLES )) && return 1
+  pass_count=$(echo "$samples" | grep "|0$" | grep -c . 2>/dev/null || echo 0)
+  local rate=0
+  (( total > 0 )) && rate=$(( pass_count * 100 / total ))
+  (( rate >= 95 ))  # Skip if 95%+ pass rate (return 0)
+}

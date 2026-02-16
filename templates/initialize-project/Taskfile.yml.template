@@ -1,0 +1,232 @@
+# =============================================================================
+# {{project_name}} - Taskfile
+# =============================================================================
+# Generated from {{language}} template
+# Author: {{author}}
+# =============================================================================
+
+version: '3'
+
+vars:
+  PROJECT_NAME: "{{project_name}}"
+
+includes:
+  quality:
+    taskfile: ./templates/shared/Taskfile.quality.yml
+    optional: true
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true
+
+{% if language == "python" %}
+  # -- Development --
+
+  dev:
+    desc: "Start development environment"
+    cmds:
+      - echo "Configure your dev environment"
+
+  # -- Testing --
+
+  test:
+    desc: "Run all tests"
+    cmds:
+      - uv run pytest -q
+
+  test:cov:
+    desc: "Run tests with coverage"
+    cmds:
+      - uv run pytest --cov=src --cov-fail-under=80
+
+  # -- Linting --
+
+  lint:
+    desc: "Run all linters"
+    cmds:
+      - uv run ruff check .
+      - uv run ruff format --check .
+
+  lint:fix:
+    desc: "Fix linting issues"
+    cmds:
+      - uv run ruff check --fix .
+      - uv run ruff format .
+
+  # -- Type Checking --
+
+  typecheck:
+    desc: "Run type checker"
+    cmds:
+      - uv run ty check src/
+
+  # -- Formatting --
+
+  format:
+    desc: "Format code"
+    cmds:
+      - uv run ruff format .
+
+  # -- Quality --
+
+  quality:
+    desc: "Run quality gates"
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test
+
+{% elif language == "typescript" %}
+  # -- Development --
+
+  dev:
+    desc: "Start development environment"
+    cmds:
+      - pnpm dev
+
+  # -- Testing --
+
+  test:
+    desc: "Run all tests"
+    cmds:
+      - pnpm vitest run
+
+  test:watch:
+    desc: "Run tests in watch mode"
+    cmds:
+      - pnpm vitest
+
+  # -- Linting --
+
+  lint:
+    desc: "Run all linters"
+    cmds:
+      - pnpm oxlint
+      - pnpm prettier --check .
+
+  lint:fix:
+    desc: "Fix linting issues"
+    cmds:
+      - pnpm oxlint --fix
+      - pnpm prettier --write .
+
+  # -- Type Checking --
+
+  typecheck:
+    desc: "Run type checker"
+    cmds:
+      - pnpm tsc --noEmit
+
+  # -- Building --
+
+  build:
+    desc: "Build the project"
+    cmds:
+      - pnpm build
+
+  # -- Quality --
+
+  quality:
+    desc: "Run quality gates"
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test
+
+{% elif language == "go" %}
+  # -- Development --
+
+  dev:
+    desc: "Start development environment"
+    cmds:
+      - echo "Configure your dev environment"
+
+  # -- Testing --
+
+  test:
+    desc: "Run all tests"
+    cmds:
+      - go test -v ./...
+
+  test:cover:
+    desc: "Run tests with coverage"
+    cmds:
+      - go test -cover ./...
+
+  # -- Linting --
+
+  lint:
+    desc: "Run all linters"
+    cmds:
+      - golangci-lint run
+
+  # -- Building --
+
+  build:
+    desc: "Build the project"
+    cmds:
+      - go build -o bin/{{project_name}} .
+
+  # -- Quality --
+
+  quality:
+    desc: "Run quality gates"
+    cmds:
+      - task: lint
+      - task: test
+
+{% elif language == "bash" %}
+  # -- Development --
+
+  dev:
+    desc: "Start development environment"
+    cmds:
+      - echo "Configure your dev environment"
+
+  # -- Testing --
+
+  test:
+    desc: "Run all tests"
+    cmds:
+      - bats tests/
+
+  # -- Linting --
+
+  lint:
+    desc: "Run all linters"
+    cmds:
+      - shellcheck -x scripts/**/*.sh
+
+  # -- Quality --
+
+  quality:
+    desc: "Run quality gates"
+    cmds:
+      - task: lint
+      - task: test
+
+{% endif %}
+
+{% if include_docs %}
+  docs:build:
+    desc: "Build documentation site"
+    cmds:
+      - pnpm docs:build
+
+  docs:dev:
+    desc: "Start documentation dev server"
+    cmds:
+      - pnpm docs:dev
+{% endif %}
+
+  # -- Cleanup --
+
+  clean:
+    desc: "Clean build artifacts"
+    cmds:
+      - rm -rf .venv/
+      - rm -rf dist/
+      - rm -rf .pytest_cache/
+      - rm -rf .ruff_cache/

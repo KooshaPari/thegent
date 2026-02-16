@@ -193,7 +193,7 @@ def _scraped_to_routes(by_provider: dict[str, list[str]]) -> dict[str, list[Rout
                 by_model[canonical] = []
             route = Route(
                 provider=provider,
-                backend_type=backend,
+                backend_type=cast("Literal['direct', 'proxy']", backend),
                 model_alias=model_id,
                 priority=priority,
                 cost_weight=cost_weight,

@@ -411,3 +411,16 @@
 {"target": "cliproxy", "category": "agent", "event": "failure", "timestamp": "2026-02-15T12:47:56.836878+00:00"}
 {"target": "roo", "category": "agent", "event": "failure", "timestamp": "2026-02-15T12:48:39.157208+00:00"}
 {"target": "kilo", "category": "agent", "event": "failure", "timestamp": "2026-02-15T12:49:28.023278+00:00"}
+{"target": "antigravity", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:05:26.619953+00:00"}
+{"target": "minimax", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:06:08.743725+00:00"}
+{"target": "glm", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:06:50.472977+00:00"}
+{"target": "cliproxy", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:07:32.699319+00:00"}
+{"target": "roo", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:08:16.191101+00:00"}
+{"target": "kilo", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:09:01.238657+00:00"}
+{"target": "antigravity", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:09:46.765832+00:00"}
+{"target": "minimax", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:10:34.825153+00:00"}
+{"target": "glm", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:11:15.553745+00:00"}
+{"target": "cliproxy", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:11:55.098894+00:00"}
+{"target": "roo", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:12:37.824055+00:00"}
+{"target": "kilo", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:13:22.254619+00:00"}
+{"target": "claude", "category": "agent", "event": "failure", "timestamp": "2026-02-16T02:13:22.935518+00:00"}

@@ -1128,3 +1128,26 @@ class TestInstallCommandOutputPaths:
         result = runner.invoke(app, ["install", "--force"])
         assert result.exit_code == 0
         assert "force" in result.output
+
+    @patch("thegent.install.run_install")
+    def test_install_bundle_flags_forwarded(self, mock_run: MagicMock) -> None:
+        # @trace FR-MAIN-117
+        """Bundle flags are passed through to install runner."""
+        mock_run.return_value = {"copied": 1, "skipped": 0, "errors": 0, "conflicts": 0}
+        result = runner.invoke(
+            app,
+            [
+                "install",
+                "--bundle",
+                "web",
+                "--bundle",
+                "hooks",
+                "--bundle-manifest",
+                "/tmp/thegent-bundles.json",
+            ],
+        )
+        assert result.exit_code == 0
+        mock_run.assert_called_once()
+        _, kwargs = mock_run.call_args
+        assert kwargs["bundles"] == ["web", "hooks"]
+        assert kwargs["bundle_manifest"] == "/tmp/thegent-bundles.json"

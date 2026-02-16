@@ -33,11 +33,13 @@ from thegent.cli import (
     dag_update_cmd,
     dag_validate_cmd,
     data_protection_cmd,
+    discovery_register_cmd,
     drift_cmd,
     escalate_add_cmd,
     escalate_approve_cmd,
     escalate_list_cmd,
     escalate_resolve_cmd,
+    explorer_cmd,
     feedback_cmd,
     history_cmd,
     inspect_cmd,
@@ -61,9 +63,12 @@ from thegent.cli import (
     session_contract_health_trend_cmd,
     session_contracts_cmd,
     setup_cmd,
+    sitback_dashboard_cmd,
     status_cmd,
     stop_cmd,
     sweep_cmd,
+    takeover_cmd,
+    terminal_route_cmd,
     wait_cmd,
 )
 
@@ -111,16 +116,24 @@ govern_app = typer.Typer(help="Governance, policy, and compliance")
 recover_app = typer.Typer(help="State recovery and self-healing")
 observe_app = typer.Typer(help="Observability, telemetry, and performance")
 plan_app = typer.Typer(help="Task planning and DAG management")
+discovery_app = typer.Typer(help="Discovery of external agents (WP-4008)")
+
+discovery_app.command("register")(discovery_register_cmd)
 
 from thegent.clode_main import app as clode_app
+from thegent.clode_main import sitback_cmd
 from thegent.terminal_cli import app as terminal_app
 
+app.command("sitback")(sitback_cmd)
 app.add_typer(clode_app, name="clode")
 app.add_typer(orchestrate_app, name="orchestrate")
 app.add_typer(govern_app, name="govern")
 app.add_typer(recover_app, name="recover")
 app.add_typer(observe_app, name="observe")
 app.add_typer(plan_app, name="plan")
+app.add_typer(discovery_app, name="discovery")
+
+orchestrate_app.add_typer(discovery_app, name="discovery")
 app.add_typer(terminal_app, name="terminal")
 
 
@@ -151,6 +164,7 @@ def run(
         None, "--contract-version", help="Contract schema version (default: current)"
     ),
     domain: str | None = typer.Option(None, "--domain", help="Domain tag for tiered retention (WP-3006)"),
+    speculative: bool = typer.Option(False, "--speculative", help="Enable speculative execution mode (WP-5001)"),
 ) -> None:
     """Run a foreground agent invocation. Use -M <model> without agent for model-first routing."""
     run_cmd(
@@ -172,7 +186,18 @@ def run(
         override_reason=override,
         contract_version=contract_version,
         domain=domain,
+        speculative=speculative,
     )
+
+
+@app.command("route")
+@orchestrate_app.command("route")
+def terminal_route(
+    prompt: str = typer.Argument(..., help="Task prompt to route"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+) -> None:
+    """Route task to an active terminal session if available."""
+    terminal_route_cmd(prompt=prompt, cd=cd)
 
 
 @app.command("bg")
@@ -219,6 +244,7 @@ def bg(
         None, "--contract-version", help="Contract schema version (default: current)"
     ),
     domain: str | None = typer.Option(None, "--domain", help="Domain tag for tiered retention (WP-3006)"),
+    speculative: bool = typer.Option(False, "--speculative", help="Enable speculative execution mode (WP-5001)"),
 ) -> None:
     """Start a background run and register a session."""
     bg_cmd(
@@ -245,6 +271,7 @@ def bg(
         override_reason=override,
         contract_version=contract_version,
         domain=domain,
+        speculative=speculative,
     )
 
 
@@ -557,6 +584,36 @@ def observe_drift(
     drift_cmd(window=window, format=format, structural_budget=structural_budget, semantic_budget=semantic_budget)
 
 
+@observe_app.command("dlq")
+def observe_dlq(
+    status: str | None = typer.Option(None, "--status", help="Filter by status"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+) -> None:
+    """List items in the Dead-Letter Queue (WP-Y2/WP-2008)."""
+    from thegent.cli import dlq_list_cmd
+
+    dlq_list_cmd(status=status, format=format)
+
+
+@observe_app.command("traffic")
+def observe_traffic() -> None:
+    """TRAFFIC KPI Dashboard (WP-Y7)."""
+    from thegent.cli import traffic_cmd
+
+    traffic_cmd()
+
+
+@observe_app.command("drift-monitor")
+def observe_drift_monitor(
+    prompt: str = typer.Argument(..., help="Prompt to test for drift"),
+    agents: str = typer.Option("cursor-agent,gemini,claude", "--agents", help="Comma-separated list of agents"),
+) -> None:
+    """Cross-provider drift monitoring (WP-6002)."""
+    from thegent.cli import drift_monitor_cmd
+
+    drift_monitor_cmd(prompt=prompt, agents=agents.split(","))
+
+
 @observe_app.command("trend")
 def observe_trend(
     payload_type: str = typer.Option(
@@ -586,6 +643,32 @@ def observe_trend(
 def cockpit() -> None:
     """Show high-level operator cockpit summary."""
     cockpit_cmd()
+
+
+@app.command("sitback-dashboard")
+@observe_app.command("sitback-dashboard")
+def sitback_dashboard(
+    refresh: int | None = typer.Option(
+        None,
+        "--refresh",
+        "-r",
+        help="Refresh every N seconds (live mode); Ctrl+C to stop",
+    ),
+    format: str | None = typer.Option(
+        None,
+        "--format",
+        "-f",
+        help="Output format: json | rich (default)",
+    ),
+    profile: str = typer.Option(
+        "medium",
+        "--profile",
+        "-p",
+        help="Dashboard tier: light (summary only), medium (panels), full (panels + plugins)",
+    ),
+) -> None:
+    """Unified sitback dashboard: sessions, cockpit, terminals. CLI mirror of MCP tool."""
+    sitback_dashboard_cmd(refresh=refresh, format=format, profile=profile)
 
 
 @app.command("feedback")
@@ -648,6 +731,44 @@ def closure_pack(
 ) -> None:
     """Generate a formal closure pack for the current DAG session (WP-6002/6008/FR-024)."""
     closure_pack_cmd(cd=cd)
+
+
+@govern_app.command("roadmap")
+def govern_roadmap() -> None:
+    """Successor roadmap generation (WP-6004)."""
+    from thegent.cli import roadmap_cmd
+
+    roadmap_cmd()
+
+
+@govern_app.command("self-heal-tests")
+def govern_self_heal_tests(
+    test_output: str | None = typer.Option(None, "--output", help="Raw pytest output to analyze"),
+) -> None:
+    """Self-healing test suite: automated fix recommendations (WP-6006)."""
+    from thegent.cli import self_heal_tests_cmd
+
+    self_heal_tests_cmd(test_output=test_output)
+
+
+@govern_app.command("negotiate")
+def govern_negotiate(
+    contract_id: str = typer.Argument(..., help="Contract ID (e.g. csm)"),
+    supported: str = typer.Argument(..., help="Comma-separated supported versions"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich"),
+) -> None:
+    """Negotiate a contract version (WP-7001)."""
+    from thegent.cli import session_contract_negotiate_cmd
+
+    session_contract_negotiate_cmd(contract_id=contract_id, supported_versions=supported, format=format)
+
+
+@govern_app.command("trend-analysis")
+def govern_trend_analysis() -> None:
+    """Detailed contract trend analysis (WP-7009/7010)."""
+    from thegent.cli import session_contract_trend_analysis_cmd
+
+    session_contract_trend_analysis_cmd()
 
 
 @app.command("history-legacy", hidden=True)
@@ -732,6 +853,37 @@ def orchestrate_fallbacks(
         raise RuntimeError("fallbacks_cmd is not available")
 
     cli_mod.fallbacks_cmd(run_id=run_id)
+
+
+@orchestrate_app.command("handoff")
+def orchestrate_handoff(
+    owner: str = typer.Argument(..., help="New owner tag for the handoff"),
+) -> None:
+    """Create a continuity snapshot for a shift handoff (WP-4006)."""
+    from thegent.cli import handoff_cmd
+
+    handoff_cmd(owner=owner)
+
+
+@orchestrate_app.command("replay")
+def orchestrate_replay(
+    run_id: str = typer.Argument(..., help="Run ID to replay"),
+    what_if_env: str | None = typer.Option(None, "--what-if-env", help="Simulate run in different environment"),
+) -> None:
+    """Decision replay and rationale snapshots (WP-4007)."""
+    from thegent.cli import replay_cmd
+
+    replay_cmd(run_id=run_id, what_if_env=what_if_env)
+
+
+@orchestrate_app.command("watchdog")
+def orchestrate_watchdog(
+    max_idle: int = typer.Option(3600, "--max-idle", help="Max idle time in seconds before stale"),
+) -> None:
+    """Scan for stale sessions and recommend handoffs (WP-5005)."""
+    from thegent.cli import watchdog_cmd
+
+    watchdog_cmd(max_idle_s=max_idle)
 
 
 @orchestrate_app.command("inspect")
@@ -955,6 +1107,22 @@ def logs(
 ) -> None:
     """Print session logs."""
     logs_cmd(session_id=session_id, follow=follow, stderr=stderr, tail=tail, timeout=timeout)
+
+
+@app.command("takeover")
+@orchestrate_app.command("takeover")
+def takeover(
+    session_id: str = typer.Argument(..., help="Tmux session name or pane ID to attach to"),
+) -> None:
+    """Attach to an interactive tmux session (takeover)."""
+    takeover_cmd(session_id=session_id)
+
+
+@app.command("explorer")
+@observe_app.command("explorer")
+def terminal_explorer() -> None:
+    """Launch the terminal explorer TUI."""
+    explorer_cmd()
 
 
 @app.command("wait")
@@ -1484,6 +1652,17 @@ def install_cmd(
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Show what would happen without making changes"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed progress"),
     url: str = typer.Option(None, "--url", "-u", help="MCP server URL (default: http://127.0.0.1:3847/mcp)"),
+    bundle: list[str] = typer.Option(
+        [],
+        "--bundle",
+        "-b",
+        help="Install named third-party bundle(s) from manifest file (repeatable)",
+    ),
+    bundle_manifest: str | None = typer.Option(
+        None,
+        "--bundle-manifest",
+        help="Path to third-party bundle manifest JSON (default: ~/.config/thegent/third_party_bundles.json)",
+    ),
 ) -> None:
     """Managed installation of thegent components and MCP configuration."""
     from rich.console import Console
@@ -1516,6 +1695,8 @@ def install_cmd(
         verbose=verbose,
         url=url,
         install_service=service,
+        bundles=bundle,
+        bundle_manifest=bundle_manifest,
     )
 
     local_console.print()

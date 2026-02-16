@@ -1,0 +1,47 @@
+# Copier configuration for project initialization
+# Usage: copier copy thegent/templates/initialize-project ./my-new-project
+
+project_name:
+    type: str
+    default: my-project
+    help: Name of the project (used for directory, package names)
+
+project_description:
+    type: str
+    default: A new project
+    help: One-line description of the project
+
+author:
+    type: str
+    default: ""
+    help: Author name (optional)
+
+language:
+    type: str
+    default: python
+    help: Primary programming language
+    choices:
+        - python: Python
+        - typescript: TypeScript
+        - go: Go
+        - bash: Bash
+
+include_docs:
+    type: bool
+    default: true
+    help: Include VitePress docsite
+
+include_ci:
+    type: bool
+    default: true
+    help: Include GitHub Actions CI workflow
+
+include_docker:
+    type: bool
+    default: false
+    help: Include Docker setup
+
+include_hooks:
+    type: bool
+    default: true
+    help: Include pre-commit hooks

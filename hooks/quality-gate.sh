@@ -28,6 +28,10 @@ hook_init
 # Prevent infinite loops
 [[ "${STOP_ACTIVE:-false}" == "true" ]] && exit 0
 
+# Start progress reporter to prevent idle timeout
+_progress_pid=$(hook_progress_start "Quality gate running..." 45)
+trap 'hook_progress_stop $_progress_pid 2>/dev/null; trap - ERR' ERR EXIT
+
 # --- P1 optimization: Skip if no quality-relevant files changed ---
 # Only run if code/config files were modified
 if ! any_source_changed; then
@@ -419,15 +423,35 @@ lint_duplication() {
   fi
 }
 
-# ---------- Launch all lint groups in parallel ----------
-lint_python &
-lint_shell &
-lint_js &
-lint_go &
-lint_other &
-lint_security &
-lint_duplication &
-wait
+# ---------- Launch lint groups: parallel or staged (P3 optimization) ----------
+# When parallel_stages: true, run in stages for incremental feedback.
+# Stage 1 (fast): python, shell, js
+# Stage 2 (medium): go, other
+# Stage 3 (slow): security, duplication
+if hook_config_true "parallel_stages" 2>/dev/null; then
+  hook_progress "Stage 1/3: fast linters (python, shell, js)"
+  lint_python &
+  lint_shell &
+  lint_js &
+  wait
+  hook_progress "Stage 2/3: medium linters (go, other)"
+  lint_go &
+  lint_other &
+  wait
+  hook_progress "Stage 3/3: security + duplication"
+  lint_security &
+  lint_duplication &
+  wait
+else
+  lint_python &
+  lint_shell &
+  lint_js &
+  lint_go &
+  lint_other &
+  lint_security &
+  lint_duplication &
+  wait
+fi
 
 # ---------- Collect lint results from temp files ----------
 _collect_lint() {
