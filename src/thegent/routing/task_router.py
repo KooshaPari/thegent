@@ -387,22 +387,22 @@ class TaskRouter:
         """WP-11006: Adaptive task shaping (split/merge engine)."""
         # Simplified shaping logic
         word_count = len(prompt.split())
-        
+
         if category == TaskCategory.HIGH_COMPLEX and word_count > 500:
             return {
                 "action": "split",
                 "reason": "Task exceeds complexity and size threshold for single run.",
                 "sub_tasks": ["Phase 1: Discovery", "Phase 2: Implementation", "Phase 3: Validation"],
-                "rationale": "Large complex tasks are more reliable when decomposed."
+                "rationale": "Large complex tasks are more reliable when decomposed.",
             }
-            
+
         if category == TaskCategory.FAST and word_count < 10:
             return {
                 "action": "merge",
                 "reason": "Task is trivial; candidate for batching.",
-                "rationale": "Reducing overhead for micro-tasks."
+                "rationale": "Reducing overhead for micro-tasks.",
             }
-            
+
         return {"action": "none", "reason": "Task size and complexity optimal."}
 
     def find_active_terminal_for_path(self, path: str) -> str | None:
