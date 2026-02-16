@@ -42,6 +42,67 @@ class MAIFArtifact(BaseModel):
     policy_result: str | None = None
 
 
+class LaneController:
+    """WP-1002: Manages task prioritization and lane-based capacity."""
+
+    def __init__(self, session_dir: Path, capacity_limit: int = 10) -> None:
+        self.session_dir = session_dir
+        self.capacity_limit = capacity_limit
+
+    def get_lane_priority(self, lane: str) -> int:
+        """Return numeric priority for a lane (higher is more urgent)."""
+        mapping = {"critical": 100, "recovery": 50, "standard": 10}
+        return mapping.get(lane.lower(), 10)
+
+    def sort_tasks(self, tasks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Sort tasks by lane priority and dependencies."""
+        return sorted(tasks, key=lambda x: self.get_lane_priority(x.get("lane", "standard")), reverse=True)
+
+    def check_capacity(self, current_running: int) -> bool:
+        """Check if we have capacity for more tasks."""
+        return current_running < self.capacity_limit
+
+
+class IdempotencyManager:
+    """WP-1003: Ensures idempotent execution using 4-tuple keys."""
+
+    def __init__(self, session_dir: Path) -> None:
+        self.session_dir = session_dir
+
+    def generate_key(self, run_id: str, step_index: int, action_type: str, content: str) -> str:
+        """Generate a 4-tuple idempotency key (run_id, step, action, hash)."""
+        content_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
+        return f"{run_id}:{step_index}:{action_type}:{content_hash}"
+
+    def check_and_record(self, registry: "RunRegistry", key: str) -> bool:
+        """Check if key exists in registry; return True if already executed."""
+        run = registry.find_by_token(key)
+        return run is not None and run.get("status") == "completed"
+
+
+class ConcurrencyController:
+    """WP-5001: Adaptive concurrency controller with lane enforcement."""
+
+    def __init__(self, session_dir: Path, max_concurrency: int = 5) -> None:
+        self.session_dir = session_dir
+        self.max_concurrency = max_concurrency
+        self.lock_file = session_dir / "concurrency.lock"
+
+    def acquire(self, lane: str = "standard") -> bool:
+        """Acquire a concurrency slot. Critical lane can bypass if under absolute limit."""
+        # Simple implementation for now: count running sessions
+        from thegent.cli_impl import ps_impl
+
+        sessions = ps_impl(all=True)
+        running_count = sum(1 for s in sessions if s.get("status") == "running")
+
+        limit = self.max_concurrency
+        if lane == "critical":
+            limit = self.max_concurrency * 2  # Double limit for critical lane
+
+        return running_count < limit
+
+
 class RunMeta(BaseModel):
     """Metadata for a single agent/droid execution run."""
 
@@ -82,6 +143,14 @@ class RunMeta(BaseModel):
     # Optional routing contract context
     route_contract: dict[str, Any] | None = None
     route_request: dict[str, Any] | None = None
+
+    # Task routing metadata (Terminal Bench 2.0 Pareto frontier)
+    task_category: str | None = None  # fast/normal/complex/high_complex
+    task_complexity_score: int | None = None  # 0-100 complexity score
+    estimated_cost_usd: float | None = None  # Estimated cost for this task
+    estimated_duration_s: float | None = None  # Estimated duration
+    constraint_violations: list[str] | None = None  # Hard constraint failures
+    routing_reason: str | None = None  # Routing decision explanation
 
     # WP-3006: Compliance evidence retention — domain tagging for tiered retention
     domain_tag: str | None = None  # e.g. project-id, compliance-domain, lane
@@ -131,6 +200,50 @@ class CalibrationRegistry:
         }
         self.session_dir.mkdir(parents=True, exist_ok=True)
         self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+class LaneController:
+    """WP-1002: Priority and urgency lane model for task management."""
+
+    def __init__(self, session_dir: Path, capacity: int = 10) -> None:
+        self.session_dir = session_dir
+        self.capacity = capacity
+        self.registry = RunRegistry(session_dir)
+
+    def get_lane_priority(self, lane: str) -> int:
+        """Return numeric priority for a lane (lower is higher priority)."""
+        priorities = {
+            "critical": 0,
+            "standard": 10,
+            "recovery": 20,
+            "background": 100,
+        }
+        return priorities.get(lane.lower(), 50)
+
+    def sort_tasks(self, tasks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Sort tasks by lane priority and then by creation time."""
+        return sorted(
+            tasks,
+            key=lambda x: (
+                self.get_lane_priority(x.get("lane", "standard")),
+                x.get("started_at_utc", ""),
+            ),
+        )
+
+    def check_capacity(self, lane: str) -> bool:
+        """Check if a lane has capacity to run (starvation prevention)."""
+        runs = self.registry.list_runs(limit=100)
+        active_runs = [r for r in runs if r.get("status") == "started"]
+
+        # Reserved capacity for critical lane
+        if lane == "critical":
+            return True
+
+        # Standard lane uses remaining capacity but leaves 2 slots for critical
+        if len(active_runs) >= self.capacity - 2:
+            return False
+
+        return True
 
 
 class RunRegistry:
@@ -641,10 +754,42 @@ class PolicyEngine:
             from thegent.governance.cost import CostAggregator
 
             agg = CostAggregator(self.settings.session_dir)
+
+            # Global MTD budget check
             mtd_total = agg.get_mtd_total()
             cost_budget = float(getattr(self.settings, "cost_budget_mtd", 100.0))
             if mtd_total >= cost_budget:
                 return "deny", f"Monthly budget exceeded (${mtd_total:.2f} >= ${cost_budget:.2f})."
+
+            # Per-category budget check (if routing enabled and category provided)
+            if run.task_category and getattr(self.settings, "routing_enabled", False):
+                category_budgets: dict[str, float] = getattr(self.settings, "cost_budget_by_category", {}) or {}
+                category_limit = category_budgets.get(run.task_category.lower(), 0.0)
+
+                if category_limit > 0.0:
+                    category_mtd = agg.get_category_mtd_total(run.task_category.lower())
+                    estimated_cost = run.estimated_cost_usd or 0.0
+                    utilization = (category_mtd + estimated_cost) / category_limit
+
+                    # Block at 100% utilization
+                    if utilization >= 1.0:
+                        return "deny", (
+                            f"Category '{run.task_category}' budget exhausted: "
+                            f"${category_mtd:.2f} + ${estimated_cost:.4f} >= ${category_limit:.2f}"
+                        )
+
+                    # Warn at 80% utilization
+                    warning_threshold = float(getattr(self.settings, "routing_budget_warning_threshold", 0.80))
+                    if utilization >= warning_threshold:
+                        _log.warning(
+                            "Category '%s' budget at %.0f%% utilization ($%.2f + $%.4f / $%.2f)",
+                            run.task_category,
+                            utilization * 100,
+                            category_mtd,
+                            estimated_cost,
+                            category_limit,
+                        )
+                        # Continue (warn, don't deny)
 
         return "allow", "All policies passed."
 
