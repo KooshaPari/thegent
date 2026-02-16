@@ -31,28 +31,28 @@ class ThegentSettings(BaseSettings):
         description="Factory droids directory",
     )
     cursor_agent_cmd: str = Field(
-        default="cursor-agent",
-        description="Cursor agent CLI (cursor-agent or cursor); set THGENT_CURSOR_AGENT_CMD if not on PATH",
+        default="cursor",
+        description="Cursor API (wisdgod); set THGENT_CURSOR_AGENT_CMD for legacy compatibility",
     )
     default_cursor_model: str = Field(
         default="gemini-3-flash",
         description="Default model for cursor agent (gemini-3-flash, composer-1.5, auto)",
     )
     default_gemini_model: str = Field(
-        default="gemini-2.0-flash",
-        description="Default model for gemini CLI (-m/--model); gemini-2.0-flash widely available",
+        default="gemini-3-flash",
+        description="Default model for gemini CLI (-m/--model)",
     )
     default_copilot_model: str = Field(
-        default="claude-haiku-4.5",
-        description="Default model for copilot (--model)",
+        default="gpt-5-mini",
+        description="Default model for copilot (--model); copilot doesn't support flash",
     )
     default_claude_model: str = Field(
-        default="haiku",
-        description="Default model for claude (--model alias: haiku, sonnet, opus)",
+        default="claude-opus-4.6",
+        description="Default model for claude (--model)",
     )
     default_codex_model: str = Field(
-        default="gpt-5.3-codex",
-        description="Default model for codex; 5.3 spark/thinking mix",
+        default="gpt-5.3-codex-spark",
+        description="Default model for codex",
     )
     default_codex_model_high: str = Field(
         default="gpt-5.3-codex-high",
@@ -61,6 +61,10 @@ class ThegentSettings(BaseSettings):
     default_antigravity_model: str = Field(
         default="gemini-3-flash",
         description="Default model for antigravity (via CLIProxyAPIPlus); was tstars2.0",
+    )
+    default_kiro_model: str = Field(
+        default="claude-haiku-4.5",
+        description="Default model for kiro (claude-haiku-4.5, claude-opus-4.6 via CLIProxyAPIPlus)",
     )
     default_timeout: int = Field(
         default=90,
@@ -74,6 +78,24 @@ class ThegentSettings(BaseSettings):
         le=3600,
         description="Claude agent timeout (slower API); use THGENT_DEFAULT_TIMEOUT_CLAUDE to override",
     )
+    default_timeout_free: int = Field(
+        default=300,
+        ge=60,
+        le=3600,
+        description="Free agent (copilot) timeout for WP tasks; use THGENT_DEFAULT_TIMEOUT_FREE to override",
+    )
+    max_idle_seconds: int = Field(
+        default=180,
+        ge=60,
+        le=600,
+        description="Activity-based hang detection: kill only when no stdout/stderr for this many seconds (THGENT_MAX_IDLE_SECONDS)",
+    )
+    max_wall_time: int = Field(
+        default=0,
+        ge=0,
+        le=86400,
+        description="Optional absolute cap in seconds (0=unbounded). Only idle detection kills by default (THGENT_MAX_WALL_TIME)",
+    )
     default_routing: str = Field(
         default="prefer_direct",
         description="Default routing policy: prefer_direct | prefer_proxy | failover (THGENT_DEFAULT_ROUTING)",
@@ -83,6 +105,10 @@ class ThegentSettings(BaseSettings):
         ge=60,
         le=3600,
         description="Models cache TTL in seconds (5–60 min); THGENT_MODELS_CACHE_TTL_SEC",
+    )
+    cache_dir: Path = Field(
+        default_factory=lambda: Path("~/.cache/thegent").expanduser(),
+        description="Global cache directory for thegent",
     )
     session_dir: Path = Field(
         default_factory=lambda: Path("~/.cache/thegent/sessions").expanduser(),
@@ -181,11 +207,11 @@ class ThegentSettings(BaseSettings):
 
     # Routing configuration (Terminal Bench 2.0 Pareto frontier)
     routing_enabled: bool = Field(
-        default=False,
+        default=True,
         description="Enable task routing based on Terminal Bench 2.0 Pareto frontier (THGENT_ROUTING_ENABLED)",
     )
     routing_constraints_enabled: bool = Field(
-        default=False,
+        default=True,
         description="Enable hard constraint validation for routing (quality, cost, speed) (THGENT_ROUTING_CONSTRAINTS_ENABLED)",
     )
     routing_budget_warning_threshold: float = Field(
@@ -202,6 +228,23 @@ class ThegentSettings(BaseSettings):
             "high_complex": 50.0,
         },
         description="Per-category MTD budgets in USD (THGENT_COST_BUDGET_BY_CATEGORY JSON)",
+    )
+    # WP-5003: Cost-aware routing
+    routing_cost_aware_enabled: bool = Field(
+        default=True,
+        description="Enable cost_quality routing when budget pressure (WP-5003)",
+    )
+    cost_quality_min_weight: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=2.0,
+        description="Minimum cost_weight for cost_quality policy (0.1=gemini flash; WP-5003)",
+    )
+    cost_quality_budget_tighten_threshold: float = Field(
+        default=0.80,
+        ge=0.5,
+        le=1.0,
+        description="Budget utilization above this tightens quality floor (WP-5003)",
     )
 
     def validate_setup(self) -> None:
@@ -266,6 +309,10 @@ class ThegentSettings(BaseSettings):
         default_factory=lambda: Path("~/.config/thegent/cliproxy-config.yaml").expanduser(),
         description="Generated config for CLIProxyAPIPlus (THGENT_CLIPROXY_CONFIG_PATH)",
     )
+    cliproxy_adapter: bool = Field(
+        default=True,
+        description="Use adapter (Responses API + WebSocket) for Codex; THGENT_CLIPROXY_ADAPTER=1",
+    )
     cursor_api_url: str = Field(
         default="http://127.0.0.1:3000",
         description="cursor-api (wisdgod) base URL; set THGENT_CURSOR_API_URL when running cursor-api",
@@ -314,11 +361,51 @@ class ThegentSettings(BaseSettings):
         default="",
         description="Comma-separated bearer tokens for MCP server auth (THGENT_MCP_BEARER_TOKENS)",
     )
+    mcp_mount_flyto: bool = Field(
+        default=False,
+        description="Mount flyto-core browser tools at namespace 'browser' (THGENT_MCP_MOUNT_FLYTO); requires flyto-core HTTP at localhost:8333 or pip install flyto-core",
+    )
+    mcp_mount_playwright: bool = Field(
+        default=True,
+        description="Mount @playwright/mcp at namespace 'browser' (THGENT_MCP_MOUNT_PLAYWRIGHT); required",
+    )
+    mcp_mount_serena: bool = Field(
+        default=True,
+        description="Mount Serena (LSP code tools) at namespace 'serena' (THGENT_MCP_MOUNT_SERENA); required; requires uvx",
+    )
+    mcp_mount_octocode: bool = Field(
+        default=True,
+        description="Mount Octocode (GitHub/code search) at namespace 'octocode' (THGENT_MCP_MOUNT_OCTOCODE); required; requires npx",
+    )
     max_task_retries: int = Field(
         default=3,
         ge=0,
         le=10,
         description="Maximum retries for a DAG task before escalation (G-GP-05)",
+    )
+    interruption_dedup_window_s: int = Field(
+        default=300,
+        ge=60,
+        le=3600,
+        description="Deduplication window in seconds for interruption alerts (WP-4004)",
+    )
+    interruption_alerts_per_hour_ceiling: int = Field(
+        default=20,
+        ge=5,
+        le=200,
+        description="Max alerts per hour before suppression (WP-4004)",
+    )
+    load_spike_threshold: int = Field(
+        default=10,
+        ge=1,
+        le=100,
+        description="Running sessions above this = spike (WP-5002); traffic shaping applies",
+    )
+    load_surge_threshold: int = Field(
+        default=20,
+        ge=5,
+        le=200,
+        description="Running sessions above this = surge (WP-5002); safe-mode activates",
     )
 
     # G-GP-01: OPA integration (optional Phase 2)
@@ -394,20 +481,102 @@ class ThegentSettings(BaseSettings):
 
     # Parser-quality routing (G-CA-02 B2)
     shutdown_wait_s: int = Field(
-        default=0,
+        default=30,
         ge=0,
         le=60,
-        description="Seconds to wait for in-flight requests during MCP server shutdown (G-OP-10)",
+        description="Seconds to wait for in-flight requests during MCP server shutdown (ROB-020)",
     )
     shutdown_wait_active_s: int = Field(
-        default=0,
+        default=30,
         ge=0,
         le=120,
-        description="Seconds to poll for active background runs during MCP server shutdown (G-OP-10)",
+        description="Seconds to poll for active background runs during MCP server shutdown (ROB-020)",
     )
     max_concurrency: int = Field(
-        default=5,
+        default=20,
         ge=1,
         le=50,
-        description="Maximum concurrent agent runs (WP-1004); THGENT_MAX_CONCURRENCY",
+        description="Maximum concurrent agent runs (ceiling); THGENT_MAX_CONCURRENCY",
+    )
+    concurrency_load_based: bool = Field(
+        default=False,
+        description="Use FD/Mem/CPU gates for dynamic limit (WP-5001); THGENT_CONCURRENCY_LOAD_BASED",
+    )
+    concurrency_min_slots: int = Field(
+        default=1,
+        ge=1,
+        le=20,
+        description="Minimum slots when load-based; THGENT_CONCURRENCY_MIN_SLOTS",
+    )
+    concurrency_fd_utilization_max: float = Field(
+        default=0.75,
+        ge=0.5,
+        le=0.95,
+        description="Block when fd_used/fd_limit >= this; THGENT_CONCURRENCY_FD_UTILIZATION_MAX",
+    )
+    concurrency_load_per_cpu_max: float = Field(
+        default=1.5,
+        ge=0.5,
+        le=4.0,
+        description="Block when load_1m/cpu_count >= this; THGENT_CONCURRENCY_LOAD_PER_CPU_MAX",
+    )
+
+    # AgilePlus autonomous governance loop
+    agileplus_enabled: bool = Field(
+        default=False,
+        description="Enable AgilePlus autonomous governance loop (THGENT_AGILEPLUS_ENABLED)",
+    )
+    agileplus_interval: int = Field(
+        default=300,
+        ge=30,
+        le=3600,
+        description="Seconds between AgilePlus cycles (THGENT_AGILEPLUS_INTERVAL)",
+    )
+    agileplus_budget_daily_calls: int = Field(
+        default=20,
+        ge=1,
+        le=200,
+        description="Maximum agent triggers per day (THGENT_AGILEPLUS_BUDGET_DAILY_CALLS)",
+    )
+    agileplus_max_rerolls: int = Field(
+        default=2,
+        ge=0,
+        le=10,
+        description="Maximum retry attempts per task in a cycle (THGENT_AGILEPLUS_MAX_REROLLS)",
+    )
+    agileplus_max_tasks_per_cycle: int = Field(
+        default=10,
+        ge=1,
+        le=50,
+        description="Maximum tasks dispatched per AgilePlus cycle (THGENT_AGILEPLUS_MAX_TASKS_PER_CYCLE)",
+    )
+    agileplus_health_threshold: int = Field(
+        default=90,
+        ge=0,
+        le=100,
+        description="Health score above which AgilePlus idles (THGENT_AGILEPLUS_HEALTH_THRESHOLD)",
+    )
+
+    # LiteLLM Router settings
+    litellm_routing_policy: str = Field(
+        default="cheapest",
+        description="LiteLLM routing policy: cheapest, fastest, round_robin (THGENT_LITELLM_ROUTING_POLICY)",
+    )
+    litellm_timeout: int = Field(
+        default=300,
+        ge=10,
+        le=3600,
+        description="LiteLLM request timeout in seconds (THGENT_LITELLM_TIMEOUT)",
+    )
+    litellm_num_retries: int = Field(
+        default=2,
+        ge=0,
+        le=10,
+        description="Number of retries for LiteLLM requests (THGENT_LITELLM_NUM_RETRIES)",
+    )
+    litellm_retry_after: int = Field(
+        default=5,
+        ge=0,
+        le=60,
+        description="Seconds to wait before retrying after failure (THGENT_LITELLM_RETRY_AFTER)",
     )
