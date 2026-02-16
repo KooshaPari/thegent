@@ -1,9 +1,19 @@
 """Thegent CLI entry point (subcommand-only)."""
 
 import json
+import logging
+import os
 import sys
-from pathlib import Path
+import warnings
 
+# G-DX-01: Silencing noisy non-fatal warnings for better operator experience.
+# Must be before any other imports that might trigger Pydantic plugin loading.
+warnings.filterwarnings("ignore", message=".*is not JSON serializable; excluding default from JSON schema.*")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="websockets")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="uvicorn")
+warnings.filterwarnings("ignore", message=".*ImportError while loading the `logfire-plugin` Pydantic plugin.*")
+
+from pathlib import Path
 import typer
 
 from thegent.cli import (
@@ -14,8 +24,11 @@ from thegent.cli import (
     cliproxy_login_cmd,
     closure_pack_cmd,
     cockpit_cmd,
+    compliance_report_cmd,
+    config_check_cmd,
     contracts_conformance_cmd,
     contracts_registry_cmd,
+    cost_status_cmd,
     dag_add_cmd,
     dag_cancel_cmd,
     dag_checkpoint_cmd,
@@ -33,7 +46,11 @@ from thegent.cli import (
     dag_update_cmd,
     dag_validate_cmd,
     data_protection_cmd,
+    deferral_list_cmd,
+    deferral_resume_cmd,
+    discovery_parse_cmd,
     discovery_register_cmd,
+    discovery_scan_cmd,
     drift_cmd,
     escalate_add_cmd,
     escalate_approve_cmd,
@@ -41,23 +58,47 @@ from thegent.cli import (
     escalate_resolve_cmd,
     explorer_cmd,
     feedback_cmd,
+    govern_configure_cmd,
+    govern_go_cycle_cmd,
+    govern_go_health_cmd,
+    govern_go_status_cmd,
+    govern_go_watch_cmd,
+    handoff_list_cmd,
+    handoff_show_cmd,
     history_cmd,
     inspect_cmd,
+    interruption_list_cmd,
+    interruption_snooze_cmd,
     list_agents_cmd,
     list_droids_cmd,
     list_models_cmd,
+    load_status_cmd,
     logs_cmd,
+    loop_cmd,
+    loop_send_cmd,
+    loop_stop_cmd,
     migration_cmd,
     modes_cmd,
     operations_cmd,
     pause_cmd,
     plan_analyze_cmd,
+    plan_claim_cmd,
+    plan_complete_cmd,
+    plan_do_next_cmd,
+    plan_get_next_cmd,
+    plan_incorporate_cmd,
+    plan_loop_cmd,
+    plan_progress_cmd,
+    plan_wait_next_cmd,
     policy_show_cmd,
     ps_cmd,
     purge_cmd,
     resolve_model_route_cmd,
     resume_cmd,
+    retry_cmd,
+    rules_sync_cmd,
     run_cmd,
+    run_diff_cmd,
     session_contract_health_gate_cmd,
     session_contract_health_report_cmd,
     session_contract_health_trend_cmd,
@@ -69,7 +110,9 @@ from thegent.cli import (
     sweep_cmd,
     takeover_cmd,
     terminal_route_cmd,
+    trace_replay_cmd,
     wait_cmd,
+    summary_cmd,
 )
 
 
@@ -109,40 +152,455 @@ app = typer.Typer(
 
 app.command("init")(init_cmd)
 app.command("setup")(setup_cmd)
+app.command("summary")(summary_cmd)
 app.command("nim-setup", hidden=True)(setup_cmd)
 
 orchestrate_app = typer.Typer(help="Agent execution and session management")
 govern_app = typer.Typer(help="Governance, policy, and compliance")
+federation_app = typer.Typer(help="Manage multi-org policy federation (WP-13001)")
+govern_app.add_typer(federation_app, name="federation")
+
+learning_app = typer.Typer(help="Manage autonomous learning and model promotion (WP-14002)")
+govern_app.add_typer(learning_app, name="learning")
+
+trust_app = typer.Typer(help="Trust boundary and environment transition controls (WP-3007)")
+govern_app.add_typer(trust_app, name="trust")
+
+signatures_app = typer.Typer(help="Signed action artifacts (MAIF) management (WP-3002)")
+govern_app.add_typer(signatures_app, name="signatures")
+
+compliance_app = typer.Typer(help="Enterprise compliance and audit reports (WP-15004)")
+govern_app.add_typer(compliance_app, name="compliance")
+
+guardrails_app = typer.Typer(help="Input guardrails and prompt validation (FR-GOV-003..007)")
+govern_app.add_typer(guardrails_app, name="guardrails")
+
+finance_app = typer.Typer(help="Financial safety and cost governance (WP-5XXX)")
+govern_app.add_typer(finance_app, name="finance")
+
+
+@finance_app.command("dashboard")
+def finance_dashboard() -> None:
+    """Show financial safety dashboard (WP-Y1)."""
+    from thegent.cli_impl import financial_dashboard_impl
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    financial_dashboard_impl(settings)
+
+
+@govern_app.command("configure")
+def govern_configure(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    force: bool = typer.Option(False, "--force", help="Overwrite existing health-targets.json"),
+) -> None:
+    """Bootstrap governance: create contracts/health-targets.json if missing."""
+    govern_configure_cmd(cd=cd, force=force)
+
+
+@orchestrate_app.command("run-diff")
+def run_diff(
+    run_a: str = typer.Argument(..., help="ID of first run"),
+    run_b: str = typer.Argument(..., help="ID of second run"),
+) -> None:
+    """Compare two execution runs (trace comparison)."""
+    from thegent.cli import run_diff_cmd
+
+    run_diff_cmd(run_a, run_b)
+
+
+@orchestrate_app.command("trace-replay")
+def trace_replay(
+    run_id: str = typer.Argument(..., help="ID of run to replay"),
+) -> None:
+    """Replay an execution trace in simulation mode (WP-16001)."""
+    from thegent.cli import trace_replay_cmd
+
+    trace_replay_cmd(run_id)
+
+
+teammates_app = typer.Typer(help="Manage specialized teammate agents and delegation (WP-16001)")
+orchestrate_app.add_typer(teammates_app, name="teammates")
+
+deferral_app = typer.Typer(help="Manage deferred non-critical tasks (WP-5004)")
+orchestrate_app.add_typer(deferral_app, name="deferral")
+
+
+@deferral_app.command("list")
+def deferral_list() -> None:
+    """List all currently deferred tasks."""
+    from thegent.cli import deferral_list_cmd
+
+    deferral_list_cmd()
+
+
+@deferral_app.command("resume")
+def deferral_resume(
+    run_id: str = typer.Argument(..., help="ID of run to resume"),
+) -> None:
+    """Manually resume a deferred task."""
+    from thegent.cli import deferral_resume_cmd
+
+    deferral_resume_cmd(run_id)
+
+
+@teammates_app.command("list")
+def teammates_list() -> None:
+    """List all discovered specialized agents available for delegation (WP-16001)."""
+    from thegent.cli import teammates_list_cmd
+
+    teammates_list_cmd()
+
+
+@teammates_app.command("delegate")
+def teammates_delegate(
+    teammate_id: str = typer.Argument(..., help="ID of the teammate to delegate to"),
+    prompt: str = typer.Argument(..., help="Instruction for the teammate"),
+    parent_run_id: str = typer.Option(None, "--parent-run", help="Parent run ID for tracking"),
+) -> None:
+    """Delegate a sub-task to a specialized teammate (WP-16002)."""
+    from thegent.cli import teammates_delegate_cmd
+
+    teammates_delegate_cmd(teammate_id=teammate_id, prompt=prompt, parent_run_id=parent_run_id)
+
+
+@teammates_app.command("status")
+def teammates_status(
+    run_id: str = typer.Option(None, "--run-id", help="Filter by parent run ID"),
+) -> None:
+    """Monitor the status of the teammate swarm (WP-16002)."""
+    from thegent.cli import teammates_status_cmd
+
+    teammates_status_cmd(run_id=run_id)
+
+
+@compliance_app.command("export")
+def compliance_export(framework: str, output: str = "compliance_bundle.json"):
+    """Export evidence bundle for SOC2, ISO27001, or EU-AI-ACT."""
+    from pathlib import Path
+
+    from thegent.config import ThegentSettings
+    from thegent.governance.compliance import ComplianceExporter
+
+    settings = ThegentSettings()
+    exporter = ComplianceExporter(settings.session_dir)
+    target = Path(output)
+    bundle = exporter.export_bundle(framework, target)
+
+    typer.echo(f"Successfully exported {framework} evidence to {target}")
+    typer.echo(f"Mapped Controls: {len(bundle['controls'])}")
+
+
+@compliance_app.command("siem-test")
+def compliance_siem_test(
+    message: str = typer.Argument("Test SIEM egress event", help="Test message"),
+    severity: str = typer.Option("low", "--severity", "-s", help="Event severity"),
+) -> None:
+    """Test SIEM event egress (WP-15001)."""
+    from thegent.cli import compliance_siem_test_cmd
+
+    compliance_siem_test_cmd(message=message, severity=severity)
+
+
+@compliance_app.command("plugin-check")
+def compliance_plugin_check(
+    plugin_id: str = typer.Argument(..., help="Plugin ID to verify"),
+    signature: str = typer.Argument(..., help="Signature to verify"),
+) -> None:
+    """Verify a plugin contract (WP-15003)."""
+    from thegent.cli import compliance_plugin_check_cmd
+
+    compliance_plugin_check_cmd(plugin_id=plugin_id, signature=signature)
+
+
+@compliance_app.command("redact")
+def compliance_redact(
+    text: str = typer.Argument(..., help="Text to redact"),
+) -> None:
+    """Test PII/Secret redaction (WP-15005)."""
+    from thegent.cli import compliance_redact_cmd
+
+    compliance_redact_cmd(text=text)
+
+
+@compliance_app.command("ledger-verify")
+def ledger_verify():
+    """Verify the integrity of the immutable incident ledger (WP-15002)."""
+    from thegent.config import ThegentSettings
+    from thegent.governance.ledger import IncidentLedger
+
+    settings = ThegentSettings()
+    ledger_path = settings.session_dir / "incident_ledger.jsonl"
+    ledger = IncidentLedger(ledger_path)
+
+    if ledger.verify_integrity():
+        typer.echo("Ledger integrity VERIFIED. Hash chain is intact.")
+    else:
+        typer.echo("Ledger integrity FAILED! Hash chain breach detected.")
+
+
+@trust_app.command("status")
+def govern_trust_status(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich"),
+) -> None:
+    """Show last environment and trust boundary status (WP-3007)."""
+    from thegent.cli import trust_status_cmd
+
+    trust_status_cmd(format=format)
+
+
+@signatures_app.command("list")
+def govern_signatures_list(
+    limit: int = typer.Option(50, "--limit", "-n", help="Max artifacts to show"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich"),
+) -> None:
+    """List signed MAIF artifacts (WP-3002)."""
+    from thegent.cli import signatures_list_cmd
+
+    signatures_list_cmd(limit=limit, format=format)
+
+
+@signatures_app.command("verify")
+def govern_signatures_verify(
+    run_id: str = typer.Argument(..., help="Run ID to verify"),
+) -> None:
+    """Verify a signed MAIF artifact (WP-3002)."""
+    from thegent.cli import signatures_verify_cmd
+
+    signatures_verify_cmd(run_id=run_id)
+
+
+@learning_app.command("list")
+def learning_list():
+    """List all candidate models in the learning registry."""
+    import importlib
+
+    from thegent.config import ThegentSettings
+
+    LearningRegistry = importlib.import_module("thegent.planning.learning").LearningRegistry
+
+    settings = ThegentSettings()
+    registry_path = settings.session_dir / "learning_registry.json"
+    mgr = LearningRegistry(registry_path)
+    models = mgr.list_models()
+
+    if not models:
+        typer.echo("No learning models registered.")
+        return
+
+    for m in models:
+        typer.echo(f"Model: {m.id} | Status: {m.status.upper()} | Success Rate: {m.metrics.success_rate:.1%}")
+
+
+@learning_app.command("promote")
+def learning_promote(model_id: str, approver: str):
+    """Promote a candidate model to 'promoted' status (WP-14003)."""
+    import importlib
+
+    from thegent.config import ThegentSettings
+
+    LearningRegistry = importlib.import_module("thegent.planning.learning").LearningRegistry
+
+    settings = ThegentSettings()
+    registry_path = settings.session_dir / "learning_registry.json"
+    mgr = LearningRegistry(registry_path)
+
+    if mgr.finalize_promotion(model_id, approver):
+        typer.echo(f"Model {model_id} successfully promoted by {approver}.")
+    else:
+        typer.echo(f"Failed to promote model {model_id}. Ensure it is in 'candidate' status.")
+
+
+@learning_app.command("rollback")
+def learning_rollback(model_id: str):
+    """Rollback a promoted or candidate model (WP-14003)."""
+    import importlib
+
+    from thegent.config import ThegentSettings
+
+    LearningRegistry = importlib.import_module("thegent.planning.learning").LearningRegistry
+
+    settings = ThegentSettings()
+    registry_path = settings.session_dir / "learning_registry.json"
+    mgr = LearningRegistry(registry_path)
+
+    model = next((m for m in mgr.list_models() if m.id == model_id), None)
+    if not model:
+        typer.echo(f"Model {model_id} not found.")
+        return
+
+    model.status = "rejected"
+    save_fn = getattr(mgr, "save", None)
+    if callable(save_fn):
+        save_fn()
+    else:
+        _log.warning("LearningRegistry.save() not available; skipping persisted save")
+    typer.echo(f"Model {model_id} has been rolled back and rejected.")
+
+
+@federation_app.command("list")
+def federation_list():
+    """List all federated namespaces (WP-13005)."""
+    from thegent.config import ThegentSettings
+    from thegent.governance.federation import FederatedPolicyManager
+
+    settings = ThegentSettings()
+    mgr = FederatedPolicyManager(settings.session_dir / "policies")
+    health = mgr.get_federation_health()
+
+    typer.echo(f"Federation Health: {health['status']}")
+    typer.echo(f"Active Namespaces: {health['namespace_count']}")
+    for ns in health["namespaces"]:
+        typer.echo(f"  - {ns}")
+
+
+@federation_app.command("status")
+def federation_status():
+    """Show detailed federation health and drift status (WP-13005)."""
+    from thegent.config import ThegentSettings
+    from thegent.governance.federation import FederatedPolicyManager
+
+    settings = ThegentSettings()
+    mgr = FederatedPolicyManager(settings.session_dir / "policies")
+    health = mgr.get_federation_health()
+
+    typer.echo(json.dumps(health, indent=2))
+
+
 recover_app = typer.Typer(help="State recovery and self-healing")
 observe_app = typer.Typer(help="Observability, telemetry, and performance")
 plan_app = typer.Typer(help="Task planning and DAG management")
 discovery_app = typer.Typer(help="Discovery of external agents (WP-4008)")
+config_app = typer.Typer(help="Config validation and introspection")
 
 discovery_app.command("register")(discovery_register_cmd)
+discovery_app.command("parse")(discovery_parse_cmd)
+discovery_app.command("scan")(discovery_scan_cmd)
+
+
+@config_app.command("check")
+def config_check(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+) -> None:
+    """Validate config; fail-fast on misconfig (DX-010, ROB-013)."""
+    config_check_cmd(format=format)
+
 
 from thegent.clode_main import app as clode_app
 from thegent.clode_main import sitback_cmd
 from thegent.terminal_cli import app as terminal_app
 
+dex_app: typer.Typer | None = None
+try:
+    from thegent.dex_main import app as _dex_app
+
+    dex_app = _dex_app
+except Exception:
+    dex_app = None
+
 app.command("sitback")(sitback_cmd)
 app.add_typer(clode_app, name="clode")
+if dex_app is not None:
+    app.add_typer(dex_app, name="dex")
 app.add_typer(orchestrate_app, name="orchestrate")
 app.add_typer(govern_app, name="govern")
+
+# AgilePlus governance commands (go command group)
+go_app = typer.Typer(help="AgilePlus governance commands: cycle, watch, status, health")
+
+
+@go_app.command("health")
+def go_health(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich"),
+) -> None:
+    """Show current health score (composite 0-100, band, per-dimension breakdown)."""
+    govern_go_health_cmd(cd=cd, format=format)
+
+
+@go_app.command("status")
+def go_status(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+) -> None:
+    """Show current governance status (state, cycle_id, shutdown_requested)."""
+    govern_go_status_cmd(cd=cd)
+
+
+@go_app.command("cycle")
+def go_cycle(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    force: bool = typer.Option(False, "--force", help="Run even if health >= threshold"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich"),
+) -> None:
+    """Run a single governance cycle."""
+    govern_go_cycle_cmd(cd=cd, force=force, format=format)
+
+
+@go_app.command("watch")
+def go_watch(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    interval: int = typer.Option(300, "--interval", help="Seconds between cycles"),
+    max_cycles: int | None = typer.Option(None, "--max-cycles", help="Maximum cycles to run"),
+) -> None:
+    """Run continuous governance mode."""
+    govern_go_watch_cmd(cd=cd, interval=interval, max_cycles=max_cycles)
+
+
+app.add_typer(go_app, name="go")
 app.add_typer(recover_app, name="recover")
 app.add_typer(observe_app, name="observe")
 app.add_typer(plan_app, name="plan")
 app.add_typer(discovery_app, name="discovery")
+app.add_typer(config_app, name="config")
 
 orchestrate_app.add_typer(discovery_app, name="discovery")
 app.add_typer(terminal_app, name="terminal")
 
 
+@orchestrate_app.command("loop")
+def loop(
+    prompt: str = typer.Argument(..., help="Initial task prompt"),
+    todo_spec: str = typer.Argument(..., help="Todo spec/task list for the checker"),
+    agent: str | None = typer.Option(None, "--agent", "-a", help="Worker agent name"),
+    checker: str = typer.Option("antigravity", "--checker", help="Checker agent name"),
+    mode: str = typer.Option("soft", "--mode", help="Loop mode: soft | hard"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+) -> None:
+    """Run a Lifecycle loop with Checker oversight."""
+    loop_cmd(
+        prompt=prompt,
+        todo_spec=todo_spec,
+        agent=agent,
+        checker=checker,
+        loop_mode=mode,
+        cd=cd,
+    )
+
+
+@orchestrate_app.command("loop-send")
+def loop_send(
+    session_id: str = typer.Argument(..., help="Loop session ID (e.g. loop_1234567890)"),
+    prompt: str = typer.Argument(..., help="Next prompt to inject (takeover)"),
+) -> None:
+    """Send prompt to a running loop. Human or agent can use this to inject the next instruction."""
+    loop_send_cmd(session_id=session_id, prompt=prompt)
+
+
+@orchestrate_app.command("loop-stop")
+def loop_stop(
+    session_id: str = typer.Argument(..., help="Loop session ID to stop"),
+) -> None:
+    """Send STOP signal to a running Lifecycle loop."""
+    loop_stop_cmd(session_id=session_id)
+
+
 @app.command("run")
 @orchestrate_app.command("run")
 def run(
-    prompt: str = typer.Argument(..., help="Task prompt"),
+    prompt: str = typer.Argument(None, help="Task prompt (omit when using --retry --run-id)"),
     agent: str | None = typer.Argument(None, help="Provider (optional when -M/--model given)"),
     cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    retry_run: bool = typer.Option(False, "--retry", help="Retry failed run by --run-id (looks up prompt from registry)"),
     mode: str = typer.Option("write", "--mode", "-m", help="Mode: read-only, write, full"),
     timeout: int = typer.Option(90, "--timeout", "-t", help="Timeout hint in seconds (tool-call budget injection)"),
     full: bool = typer.Option(False, "--full", "-f", help="Show full raw output (default: stream-json, parsed)"),
@@ -158,15 +616,29 @@ def run(
     ),
     run_id: str | None = typer.Option(None, "--run-id", help="Explicit run ID for registry correlation"),
     lane: str = typer.Option("standard", "--lane", help="Execution lane: standard, critical, recovery"),
+    idempotency_token: str | None = typer.Option(
+        None, "--idempotency-token", help="Deterministic token to prevent duplicate runs"
+    ),
     confidence: float | None = typer.Option(None, "--confidence", help="Task confidence score (0.0-1.0)"),
+    arbitration: str | None = typer.Option(
+        None, "--arbitration", help="Arbitration role: leader | follower | consensus"
+    ),
     override: str | None = typer.Option(None, "--override", help="Policy override reason code"),
     contract_version: str | None = typer.Option(
         None, "--contract-version", help="Contract schema version (default: current)"
     ),
     domain: str | None = typer.Option(None, "--domain", help="Domain tag for tiered retention (WP-3006)"),
     speculative: bool = typer.Option(False, "--speculative", help="Enable speculative execution mode (WP-5001)"),
+    search: bool = typer.Option(True, "--search/--no-search", help="Enable web search for codex agents (default: on)"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug mode (THGENT_DEBUG=1, proxy -debug for model/provider/latency tags)"),
 ) -> None:
     """Run a foreground agent invocation. Use -M <model> without agent for model-first routing."""
+    if retry_run and run_id:
+        retry_cmd(run_id=run_id, agent=agent, failover=failover, cd=cd, override_reason=override)
+        return
+    if not prompt:
+        typer.echo("Error: prompt required (or use --retry --run-id <run_id>)")
+        raise typer.Exit(1)
     run_cmd(
         prompt=prompt,
         agent=agent,
@@ -182,12 +654,94 @@ def run(
         include_contract=include_contract,
         run_id=run_id,
         lane=lane,
+        idempotency_token=idempotency_token,
         confidence=confidence,
+        arbitration=arbitration,
         override_reason=override,
         contract_version=contract_version,
         domain=domain,
         speculative=speculative,
+        search=search,
+        debug=debug,
     )
+
+
+@app.command("free")
+@orchestrate_app.command("free")
+def free(
+    prompt: str = typer.Argument(None, help="Task prompt (omit when using --do-next)"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    mode: str = typer.Option("write", "--mode", "-m", help="Mode: read-only, write, full"),
+    timeout: int = typer.Option(
+        None,
+        "--timeout",
+        "-t",
+        help="Timeout in seconds (default from THGENT_DEFAULT_TIMEOUT_FREE, else 300)",
+    ),
+    do_next: bool = typer.Option(False, "--do-next", "-n", help="Find next work item from plan do-next and run it"),
+    repeat: int = typer.Option(1, "--repeat", "-r", help="With --do-next: run up to N work packages in sequence (stop on first failure)"),
+    live: bool = typer.Option(True, "--live/--no-live", "-l", help="Stream output live (default: on)"),
+    bg: bool = typer.Option(False, "--bg", "-b", help="Run in background (async)"),
+    diff: bool = typer.Option(False, "--diff", "-D", help="Suppress live stream; show diff/summary at end"),
+) -> None:
+    """Base free tier: Copilot gpt-5-mini. Alias for thegent run \"<prompt>\" free."""
+    if repeat > 1 and not do_next:
+        typer.echo("--repeat requires --do-next")
+        raise typer.Exit(1)
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    effective_timeout = timeout if timeout is not None else settings.default_timeout_free
+    effective_live = live and not diff
+
+    for attempt in range(max(1, repeat)):
+        if do_next:
+            from thegent.cli_impl import do_next_impl
+
+            result = do_next_impl(cd=Path(cd) if cd else None, limit=1)
+            if "error" in result:
+                typer.echo(f"Error: {result['error']}")
+                raise typer.Exit(1)
+            items = result.get("next_items", [])
+            if not items:
+                if attempt == 0:
+                    typer.echo("No next work items found. Use: thegent plan do-next")
+                    raise typer.Exit(1)
+                typer.echo(f"[do-next] No more items after {attempt} work package(s).")
+                break
+            prompt = items[0].get("prompt_suggestion", "")
+            if not prompt:
+                typer.echo("No prompt_suggestion in first work item.")
+                raise typer.Exit(1)
+            typer.echo(f"[do-next {attempt + 1}/{repeat}] {items[0].get('id', '?')}: {(prompt[:60] + '...') if len(prompt) > 60 else prompt}")
+        if not prompt:
+            typer.echo("Error: prompt required (or use --do-next)")
+            raise typer.Exit(1)
+
+        if bg:
+            bg_cmd(
+                prompt=prompt,
+                agent="copilot",
+                cd=cd,
+                mode=mode,
+                model="gpt-5-mini",
+                timeout=effective_timeout,
+                full=False,
+                owner=None,
+            )
+        else:
+            run_cmd(
+                prompt=prompt,
+                agent="copilot",
+                cd=cd,
+                mode=mode,
+                model="gpt-5-mini",
+                live=effective_live,
+                timeout=effective_timeout,
+            )
+
+        if do_next and repeat > 1 and attempt < repeat - 1:
+            prompt = None
 
 
 @app.command("route")
@@ -245,6 +799,7 @@ def bg(
     ),
     domain: str | None = typer.Option(None, "--domain", help="Domain tag for tiered retention (WP-3006)"),
     speculative: bool = typer.Option(False, "--speculative", help="Enable speculative execution mode (WP-5001)"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug mode (THGENT_DEBUG=1 for model/provider/latency tags)"),
 ) -> None:
     """Start a background run and register a session."""
     bg_cmd(
@@ -272,6 +827,7 @@ def bg(
         contract_version=contract_version,
         domain=domain,
         speculative=speculative,
+        debug=debug,
     )
 
 
@@ -339,6 +895,149 @@ def history_audit_verify(
 app.add_typer(history_app, name="history")
 
 
+inbox_app = typer.Typer(
+    help="Unified inbox: run registry + escalation events. List, filter, and wait for new events.",
+    invoke_without_command=True,
+)
+
+
+@inbox_app.callback(invoke_without_command=True)
+def inbox_root(
+    ctx: typer.Context,
+    owner: str | None = typer.Option(None, "--owner", "-o", help="Filter by owner"),
+    agent: str | None = typer.Option(None, "--agent", "-a", help="Filter by agent"),
+    event_type: str | None = typer.Option(
+        None,
+        "--event",
+        "-e",
+        help="Filter by event: start|finish|feedback|pause|resume|escalation",
+    ),
+    status: str | None = typer.Option(
+        None,
+        "--status",
+        "-s",
+        help="Filter by status: running|completed|failed",
+    ),
+    sources: str | None = typer.Option(
+        "registry,escalation",
+        "--sources",
+        help="Comma-separated: registry,escalation",
+    ),
+    limit: int = typer.Option(50, "--limit", "-l", help="Max events to show"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output: json | rich (default)"),
+) -> None:
+    """Default: list recent inbox events. Use 'inbox wait' to block until new event."""
+    if ctx.invoked_subcommand is None:
+        from thegent.cli import inbox_list_cmd
+
+        inbox_list_cmd(
+            owner=owner,
+            agent=agent,
+            event_type=event_type,
+            status=status,
+            sources=sources,
+            limit=limit,
+            format=format,
+        )
+
+
+@inbox_app.command("list")
+@observe_app.command("inbox")
+def inbox_list(
+    owner: str | None = typer.Option(None, "--owner", "-o", help="Filter by owner"),
+    agent: str | None = typer.Option(None, "--agent", "-a", help="Filter by agent"),
+    event_type: str | None = typer.Option(
+        None,
+        "--event",
+        "-e",
+        help="Filter by event: start|finish|feedback|pause|resume|escalation",
+    ),
+    status: str | None = typer.Option(
+        None,
+        "--status",
+        "-s",
+        help="Filter by status: running|completed|failed",
+    ),
+    sources: str | None = typer.Option(
+        "registry,escalation",
+        "--sources",
+        help="Comma-separated: registry,escalation",
+    ),
+    limit: int = typer.Option(50, "--limit", "-l", help="Max events to show"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output: json | rich (default)"),
+) -> None:
+    """List unified inbox events with optional filters."""
+    from thegent.cli import inbox_list_cmd
+
+    inbox_list_cmd(
+        owner=owner,
+        agent=agent,
+        event_type=event_type,
+        status=status,
+        sources=sources,
+        limit=limit,
+        format=format,
+    )
+
+
+@inbox_app.command("wait")
+def inbox_wait(
+    owner: str | None = typer.Option(None, "--owner", "-o", help="Filter by owner"),
+    agent: str | None = typer.Option(None, "--agent", "-a", help="Filter by agent"),
+    event_type: str | None = typer.Option(
+        None,
+        "--event",
+        "-e",
+        help="Filter by event: start|finish|feedback|pause|resume|escalation",
+    ),
+    status: str | None = typer.Option(
+        None,
+        "--status",
+        "-s",
+        help="Filter by status: running|completed|failed",
+    ),
+    sources: str | None = typer.Option(
+        "registry,escalation",
+        "--sources",
+        help="Comma-separated: registry,escalation",
+    ),
+    poll: float = typer.Option(2.0, "--poll", "-p", help="Poll interval in seconds"),
+    timeout: float = typer.Option(0.0, "--timeout", "-t", help="Max wait seconds (0=unbounded)"),
+    notify: bool = typer.Option(True, "--notify/--no-notify", help="Ring bell on new event"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output: json | rich (default)"),
+) -> None:
+    """Wait for next inbox event matching filters. Blocks until new event or timeout."""
+    from thegent.cli import inbox_wait_cmd
+
+    inbox_wait_cmd(
+        owner=owner,
+        agent=agent,
+        event_type=event_type,
+        status=status,
+        sources=sources,
+        poll=poll,
+        timeout=timeout,
+        notify=notify,
+        format=format,
+    )
+
+
+app.add_typer(inbox_app, name="inbox")
+
+rules_app = typer.Typer(help="Agent rules and instructions synchronization.")
+app.add_typer(rules_app, name="rules")
+
+
+@rules_app.command("sync")
+def rules_sync(
+    force: bool = typer.Option(False, "--force", "-f", help="Force overwrite even if identical"),
+    check: bool = typer.Option(False, "--check", help="Check for drift without syncing"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project directory"),
+) -> None:
+    """Sync CLAUDE.md to other platform-specific rule files (AGENTS.md, Cursor, Codex)."""
+    rules_sync_cmd(force=force, check=check, cd=cd)
+
+
 policy_app = typer.Typer(help="Governance and security policy commands")
 app.add_typer(policy_app, name="policy")
 
@@ -348,6 +1047,20 @@ app.add_typer(policy_app, name="policy")
 def policy_show() -> None:
     """Show active governance policies and thresholds."""
     policy_show_cmd()
+
+
+@policy_app.command("check")
+@govern_app.command("check-policy")
+def policy_check(
+    agent: str = typer.Option("cursor", "--agent", "-a", help="Agent to check"),
+    model: str | None = typer.Option(None, "--model", "-m", help="Model to check"),
+    lane: str = typer.Option("standard", "--lane", "-l", help="Execution lane"),
+    confidence: float = typer.Option(1.0, "--confidence", "-c", help="Confidence score"),
+) -> None:
+    """Evaluate a hypothetical run against governance policies (WP-3001)."""
+    from thegent.cli import policy_check_cmd
+
+    policy_check_cmd(agent=agent, model=model, lane=lane, confidence=confidence)
 
 
 @policy_app.command("purge")
@@ -372,9 +1085,17 @@ def govern_escalate_add(
     sla_minutes: int = typer.Option(30, "--sla", "-s", help="SLA in minutes (escalate by)"),
     owner: str | None = typer.Option(None, "--owner", "-o", help="Owner tag"),
     lane: str = typer.Option("standard", "--lane", "-l", help="Execution lane"),
+    priority: int = typer.Option(0, "--priority", "-p", help="Priority (higher = more urgent)"),
 ) -> None:
-    """Add a blocked run to the escalation queue."""
-    escalate_add_cmd(run_id=run_id, reason=reason, sla_minutes=sla_minutes, owner=owner, lane=lane)
+    """Add a blocked run to the escalation queue (WP-3008)."""
+    escalate_add_cmd(
+        run_id=run_id,
+        reason=reason,
+        sla_minutes=sla_minutes,
+        owner=owner,
+        lane=lane,
+        priority=priority,
+    )
 
 
 @escalate_app.command("list")
@@ -404,6 +1125,29 @@ def govern_escalate_approve(
     escalate_approve_cmd(run_id=run_id)
 
 
+interruption_app = typer.Typer(help="Interruption taxonomy and fatigue controls (WP-4004)")
+govern_app.add_typer(interruption_app, name="interruption")
+
+
+@interruption_app.command("list")
+def govern_interruption_list(
+    limit: int = typer.Option(20, "--limit", "-n", help="Max items to show"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+) -> None:
+    """List recent interruptions with taxonomy and fatigue score."""
+    interruption_list_cmd(limit=limit, format=format)
+
+
+@interruption_app.command("snooze")
+def govern_interruption_snooze(
+    alert_id: str = typer.Argument(..., help="Alert/run ID to snooze"),
+    minutes: int = typer.Option(5, "--minutes", "-m", help="Snooze duration in minutes"),
+    type: str = typer.Option("unknown", "--type", "-t", help="Interruption type for context"),
+) -> None:
+    """Snooze an alert; auto-escalates when expired."""
+    interruption_snooze_cmd(alert_id=alert_id, minutes=minutes, itype=type)
+
+
 @govern_app.command("calibrate")
 def govern_calibrate() -> None:
     """Recalculate trust score calibration factors for all agents (G-GP-09)."""
@@ -428,6 +1172,38 @@ def govern_calibrate() -> None:
 
     console.print(table)
     console.print("[green]Calibration factors persisted.[/green]")
+
+
+@govern_app.command("cost")
+def govern_cost(
+    owner: str | None = typer.Option(None, "--owner", "-o", help="Filter by owner"),
+    days: int = typer.Option(1, "--days", "-d", help="Number of days to aggregate"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich"),
+) -> None:
+    """Show daily cost aggregation (FR-GOV-002)."""
+    from thegent.cli import govern_cost_cmd
+
+    govern_cost_cmd(owner=owner, days=days, format=format)
+
+
+@guardrails_app.command("check")
+def govern_guardrails_check(
+    prompt: str = typer.Argument(..., help="Prompt to check"),
+    agent: str | None = typer.Option(None, "--agent", "-a", help="Agent to check"),
+    model: str | None = typer.Option(None, "--model", "-m", help="Model to check"),
+) -> None:
+    """Check a prompt against active guardrails (FR-GOV-003..006)."""
+    from thegent.cli import guardrails_check_cmd
+
+    guardrails_check_cmd(prompt=prompt, agent=agent, model=model)
+
+
+@guardrails_app.command("show")
+def govern_guardrails_show() -> None:
+    """Show active guardrail configuration (FR-GOV-007)."""
+    from thegent.cli import guardrails_show_cmd
+
+    guardrails_show_cmd()
 
 
 @govern_app.command("sweep")
@@ -456,6 +1232,15 @@ def govern_data_protection(
     data_protection_cmd(format=format)
 
 
+@govern_app.command("compliance-report")
+def govern_compliance_report(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | md (default)"),
+    output: Path | None = typer.Option(None, "--output", "-o", help="Write report to file"),
+) -> None:
+    """Generate compliance evidence retention report (WP-3006)."""
+    compliance_report_cmd(format=format, output=output)
+
+
 @govern_app.command("contracts")
 def govern_contracts(
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
@@ -482,6 +1267,41 @@ def govern_migration(
 ) -> None:
     """Evaluate migration status for a contract version."""
     migration_cmd(contract_id=contract_id, version=version, format=format)
+
+
+@govern_app.command("hook-watcher")
+def govern_hook_watcher(
+    project_dir: Path = typer.Argument(
+        Path(),
+        help="Project directory to watch",
+    ),
+    interval: int = typer.Option(5, "--interval", "-i", help="Poll interval in seconds"),
+    foreground: bool = typer.Option(False, "--foreground", "-f", help="Run in foreground (don't daemonize)"),
+) -> None:
+    """P8: Start hook cache watcher daemon — pre-warms caches on file changes."""
+    import subprocess
+
+    from rich.console import Console
+
+    console = Console()
+    hooks_root = Path(__file__).resolve().parents[2] / "hooks"
+    watcher = hooks_root / "hook-watcher.sh"
+    if not watcher.exists():
+        console.print("[red]hook-watcher.sh not found[/red]")
+        raise SystemExit(1)
+    env = os.environ.copy()
+    env["HOOK_WATCHER_INTERVAL"] = str(interval)
+    if foreground:
+        subprocess.run([str(watcher), str(project_dir.resolve())], env=env, check=False)
+    else:
+        subprocess.Popen(
+            [str(watcher), str(project_dir.resolve())],
+            env=env,
+            start_new_session=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        console.print(f"[green]Hook watcher started[/green] (project: {project_dir}, interval: {interval}s)")
 
 
 @observe_app.command("summary")
@@ -595,6 +1415,22 @@ def observe_dlq(
     dlq_list_cmd(status=status, format=format)
 
 
+@observe_app.command("load-status")
+def observe_load_status(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+) -> None:
+    """Show load classification and safe-mode status (WP-5002)."""
+    load_status_cmd(format=format)
+
+
+@observe_app.command("cost-status")
+def observe_cost_status(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+) -> None:
+    """Show cost budget utilization and cost-aware routing status (WP-5003)."""
+    cost_status_cmd(format=format)
+
+
 @observe_app.command("traffic")
 def observe_traffic() -> None:
     """TRAFFIC KPI Dashboard (WP-Y7)."""
@@ -606,7 +1442,7 @@ def observe_traffic() -> None:
 @observe_app.command("drift-monitor")
 def observe_drift_monitor(
     prompt: str = typer.Argument(..., help="Prompt to test for drift"),
-    agents: str = typer.Option("cursor-agent,gemini,claude", "--agents", help="Comma-separated list of agents"),
+    agents: str = typer.Option("cursor,headless_agent,interactive_agent", "--agents", help="Comma-separated list of agents (codex/claude aliases supported)"),
 ) -> None:
     """Cross-provider drift monitoring (WP-6002)."""
     from thegent.cli import drift_monitor_cmd
@@ -771,6 +1607,14 @@ def govern_trend_analysis() -> None:
     session_contract_trend_analysis_cmd()
 
 
+@govern_app.command("release-pack")
+def govern_release_pack(version: str = typer.Option("2.0", "--version", "-v", help="Release version")) -> None:
+    """Automated release documentation packaging (WP-12009)."""
+    from thegent.cli import release_pack_cmd
+
+    release_pack_cmd(version=version)
+
+
 @app.command("history-legacy", hidden=True)
 def history_legacy(
     limit: int = typer.Option(50, "--limit", "-l", help="Number of runs to show"),
@@ -829,7 +1673,7 @@ def status(
     status_cmd(session_id=session_id, format=format, include_contract=include_contract)
 
 
-@app.command("inspect")
+@app.command("explain")
 @orchestrate_app.command("explain")
 def explain_run(
     run_id: str = typer.Argument(..., help="Run ID to explain"),
@@ -859,10 +1703,40 @@ def orchestrate_fallbacks(
 def orchestrate_handoff(
     owner: str = typer.Argument(..., help="New owner tag for the handoff"),
 ) -> None:
-    """Create a continuity snapshot for a shift handoff (WP-4006)."""
+    """Create a continuity snapshot for a shift handoff (WP-4006, WP-3008)."""
     from thegent.cli import handoff_cmd
 
     handoff_cmd(owner=owner)
+
+
+@orchestrate_app.command("handoff-confirm")
+def orchestrate_handoff_confirm(
+    snapshot_id: str = typer.Argument(..., help="Snapshot ID to confirm"),
+    incoming_owner: str = typer.Argument(..., help="Incoming owner confirming the handoff"),
+    confidence: float = typer.Option(1.0, "--confidence", "-c", help="Confidence score (0-1)"),
+) -> None:
+    """Incoming owner confirms handoff completeness (WP-3008, WP-4006)."""
+    from thegent.cli import handoff_confirm_cmd
+
+    handoff_confirm_cmd(snapshot_id=snapshot_id, incoming_owner=incoming_owner, confidence=confidence)
+
+
+@orchestrate_app.command("handoff-list")
+def orchestrate_handoff_list(
+    limit: int = typer.Option(10, "--limit", "-n", help="Max snapshots to show"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+) -> None:
+    """List pending handoff snapshots (WP-4006)."""
+    handoff_list_cmd(limit=limit, format=format)
+
+
+@orchestrate_app.command("handoff-show")
+def orchestrate_handoff_show(
+    snapshot_id: str = typer.Argument(..., help="Snapshot ID to display"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+) -> None:
+    """Show full handoff summary: state, evidence, next steps (WP-4006)."""
+    handoff_show_cmd(snapshot_id=snapshot_id, format=format)
 
 
 @orchestrate_app.command("replay")
@@ -888,6 +1762,7 @@ def orchestrate_watchdog(
 
 @orchestrate_app.command("inspect")
 @observe_app.command("inspect")
+@app.command("inspect")
 def inspect(
     session_ids: list[str] = typer.Argument(default=[], help="Session ID(s). Use --owner to inspect all for owner."),
     owner: str | None = typer.Option(None, "--owner", "-o", help="Inspect all sessions for this owner"),
@@ -1136,6 +2011,24 @@ def wait(
     wait_cmd(session_id=session_id, timeout=timeout)
 
 
+@app.command("wait-next")
+@orchestrate_app.command("wait-next")
+def wait_next(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    poll: float = typer.Option(2.0, "--poll", "-p", help="Poll interval in seconds"),
+    timeout: float = typer.Option(0.0, "--timeout", "-t", help="Max wait seconds (0=unbounded)"),
+    sources: str | None = typer.Option(
+        None,
+        "--sources",
+        "-s",
+        help="Comma-separated: dag,do_next,escalation,inbox (default: all)",
+    ),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: rich | json"),
+) -> None:
+    """Block until next actionable work exists. Does not return until DAG ready, work item, escalation, or inbox event."""
+    plan_wait_next_cmd(cd=cd, poll=poll, timeout=timeout, sources=sources, format=format)
+
+
 @app.command("stop")
 @orchestrate_app.command("stop")
 @recover_app.command("stop")
@@ -1176,9 +2069,44 @@ def resume(
     resume_cmd(session_id=session_id)
 
 
+@app.command("retry")
+@orchestrate_app.command("retry")
+def retry(
+    run_id: str | None = typer.Argument(None, help="Run ID to retry (omit to list recent failed runs)"),
+    agent: str | None = typer.Option(None, "--agent", "-a", help="Override agent for retry"),
+    failover: bool = typer.Option(False, "--failover", help="Use next agent in fallback chain"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    override: str | None = typer.Option(None, "--override", help="Policy override reason (e.g. for policy-blocked retries)"),
+) -> None:
+    """Retry a failed run. With no run_id, list recent failed runs."""
+    retry_cmd(run_id=run_id, agent=agent, failover=failover, cd=cd, override_reason=override)
+
+
 @app.command("list-agents")
 def list_agents() -> None:
     """List available providers."""
+    list_agents_cmd()
+
+
+agents_app = typer.Typer(help="Agent-related commands (list, retry failed runs)")
+app.add_typer(agents_app, name="agents")
+
+
+@agents_app.command("retry")
+def agents_retry(
+    run_id: str | None = typer.Argument(None, help="Run ID to retry (omit to list recent failed runs)"),
+    agent: str | None = typer.Option(None, "--agent", "-a", help="Override agent for retry"),
+    failover: bool = typer.Option(False, "--failover", help="Use next agent in fallback chain"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    override: str | None = typer.Option(None, "--override", help="Policy override reason (e.g. for policy-blocked retries)"),
+) -> None:
+    """Retry a failed run. With no run_id, list recent failed runs. Alias for thegent retry."""
+    retry_cmd(run_id=run_id, agent=agent, failover=failover, cd=cd, override_reason=override)
+
+
+@agents_app.command("list")
+def agents_list() -> None:
+    """List available providers. Alias for thegent list-agents."""
     list_agents_cmd()
 
 
@@ -1220,6 +2148,18 @@ def resolve_model_route(
     resolve_model_route_cmd(model=model, provider=provider, policy=policy)
 
 
+@app.command("route-probe")
+def route_probe(
+    model: str = typer.Argument(..., help="Model identifier (alias or canonical model ID)"),
+    provider: str | None = typer.Option(None, "--provider", "-P", help="Optional provider hint"),
+    policy: str = typer.Option(
+        "prefer_direct", "--policy", help="Routing policy: prefer_direct, prefer_proxy, failover"
+    ),
+) -> None:
+    """Dry-run route resolution: show which provider would be selected (DX-004). Alias for resolve-model-route."""
+    resolve_model_route_cmd(model=model, provider=provider, policy=policy)
+
+
 models_app = typer.Typer(help="Model catalog and cache commands")
 app.add_typer(models_app, name="models")
 
@@ -1257,15 +2197,87 @@ def cliproxy_ensure_config() -> None:
     typer.echo(f"Config ensured: {config_path}")
 
 
+@cliproxy_app.command("start")
+def cliproxy_start() -> None:
+    """Start proxy if not running. Uses ensure-config + CLIProxyAPIPlus binary."""
+    from thegent.agents.cliproxy_manager import ensure_proxy_running
+    from thegent.config import ThegentSettings
+
+    base_url = ensure_proxy_running(ThegentSettings())
+    typer.echo(f"Proxy running at {base_url}")
+
+
+@cliproxy_app.command("stop")
+def cliproxy_stop() -> None:
+    """Stop proxy (kill process on cliproxy port)."""
+    from thegent.agents.cliproxy_manager import kill_proxy
+    from thegent.config import ThegentSettings
+
+    if kill_proxy(ThegentSettings()):
+        typer.echo("Proxy stopped.")
+    else:
+        typer.echo("No proxy process found on port.")
+
+
+@cliproxy_app.command("restart")
+def cliproxy_restart() -> None:
+    """Ensure config, stop proxy, then start. Use after config changes."""
+    from thegent.agents.cliproxy_manager import _ensure_config, ensure_proxy_running, kill_proxy
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    _ensure_config(settings)
+    kill_proxy(settings)
+    base_url = ensure_proxy_running(settings)
+    typer.echo(f"Proxy restarted at {base_url}")
+
+
+@cliproxy_app.command("service")
+def cliproxy_service(
+    action: str = typer.Argument(
+        ...,
+        help="install | start | stop | uninstall — LaunchAgent (macOS)",
+    ),
+) -> None:
+    """Manage proxy as launchd service (macOS). Runs at login, restarts on crash."""
+    from rich.console import Console
+
+    from thegent.agents.cliproxy_manager import (
+        proxy_service_install,
+        proxy_service_start,
+        proxy_service_stop,
+        proxy_service_uninstall,
+    )
+    from thegent.config import ThegentSettings
+
+    console = Console()
+    handlers = {
+        "install": lambda: proxy_service_install(ThegentSettings()),
+        "start": proxy_service_start,
+        "stop": proxy_service_stop,
+        "uninstall": proxy_service_uninstall,
+    }
+    if action not in handlers:
+        console.print(f"[red]Unknown action: {action}. Use: install, start, stop, uninstall[/red]")
+        raise typer.Exit(1)
+    ok, msg = handlers[action]()
+    if ok:
+        console.print(f"[green]{msg}[/green]")
+    else:
+        console.print(f"[red]{msg}[/red]")
+        raise typer.Exit(1)
+
+
 @cliproxy_app.command("login")
 def cliproxy_login(
     provider: str = typer.Argument(
         ...,
-        help="Provider: claude, codex, gemini, copilot, antigravity, qwen, iflow, kimi, kiro, kiro-aws, kiro-import, roo, kilo. Minimax: use config (see docs/guides/PROVIDER_SETUP_GUIDE.md)",
+        help="Provider: claude, codex (proxy API), minimax, glm, nim, kilo, roo, qwen, antigravity, iflow, kiro. gemini/copilot route via Codex proxy.",
     ),
+    force: bool = typer.Option(False, "--force", "-f", help="Re-enter key even if already configured"),
 ) -> None:
-    """Run OAuth login for provider. Tokens in ~/.cli-proxy-api (CLIProxy) or provider paths (roo: ~/.config/roo, kilo: ~/.kilocode)."""
-    cliproxy_login_cmd(provider)
+    """Run login for provider. Unified flow: open URL + prompt for API key. Preflight checks existing credentials."""
+    cliproxy_login_cmd(provider, force=force)
 
 
 @app.command("login")
@@ -1273,11 +2285,12 @@ def cliproxy_login(
 def login(
     provider: str = typer.Argument(
         ...,
-        help="Provider: claude, codex, gemini, copilot, antigravity, qwen, iflow, kimi, kiro, roo, kilo. Alias for cliproxy login.",
+        help="Provider: claude, codex (proxy API), minimax, glm, nim, kilo, roo, qwen, antigravity, iflow, kiro. Alias for cliproxy login.",
     ),
+    force: bool = typer.Option(False, "--force", "-f", help="Re-enter key even if already configured"),
 ) -> None:
-    """Run OAuth login for provider. Alias for `thegent cliproxy login`. Native: roo→roo auth login, kilo→kilo auth."""
-    cliproxy_login_cmd(provider)
+    """Run login for provider. Alias for `thegent cliproxy login`. Unified: open URL + prompt for key."""
+    cliproxy_login_cmd(provider, force=force)
 
 
 dag_app = typer.Typer(help="DAG session commands (read .factory/dag-session.md)")
@@ -1292,6 +2305,92 @@ def dag_list(
 ) -> None:
     """Parse and display DAG session from .factory/dag-session.md."""
     dag_list_cmd(cd=cd, format=format)
+
+
+@plan_app.command("incorporate")
+def plan_incorporate(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be merged without writing"),
+) -> None:
+    """Merge fragments from 02-UNIFIED-WBS into WORK_STREAM.md. Preserves CLAIMED and COMPLETED."""
+    plan_incorporate_cmd(cd=cd, dry_run=dry_run)
+
+
+@plan_app.command("do-next")
+def plan_do_next(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    limit: int = typer.Option(5, "--limit", "-l", help="Max items to return"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: rich | json"),
+) -> None:
+    """Find next actionable work items from PLAN_STATUS, FR_TRACKER, docs/plans/, escalation queue."""
+    plan_do_next_cmd(cd=cd, limit=limit, format=format)
+
+
+@plan_app.command("get-next")
+def plan_get_next(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output: plain (default, prompt only) | json"),
+) -> None:
+    """Get first work item prompt for scripting. Use: PROMPT=$(thegent plan get-next)"""
+    plan_get_next_cmd(cd=cd, format=format)
+
+
+@plan_app.command("loop")
+def plan_loop(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    max_iterations: int = typer.Option(0, "--max", "-m", help="Max iterations (0=unbounded)"),
+    sleep_seconds: float = typer.Option(5.0, "--sleep", "-s", help="Seconds between iterations"),
+    agent: str = typer.Option("free", "--agent", "-a", help="Agent for bg runs (default: free)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print only, do not run"),
+) -> None:
+    """Loop: get next item -> run bg -> repeat until no items or --max reached."""
+    plan_loop_cmd(cd=cd, max_iterations=max_iterations, sleep_seconds=sleep_seconds, agent=agent, dry_run=dry_run)
+
+
+@plan_app.command("progress")
+def plan_progress(
+    limit: int = typer.Option(10, "--limit", "-l", help="Number of runs to show"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: rich | json"),
+) -> None:
+    """Show recent runs (work-package progress). Alias for history --limit N."""
+    plan_progress_cmd(limit=limit, format=format)
+
+
+@plan_app.command("wait-next")
+def plan_wait_next(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    poll: float = typer.Option(2.0, "--poll", "-p", help="Poll interval in seconds"),
+    timeout: float = typer.Option(0.0, "--timeout", "-t", help="Max wait seconds (0=unbounded)"),
+    sources: str | None = typer.Option(
+        None,
+        "--sources",
+        "-s",
+        help="Comma-separated: dag,do_next,escalation,inbox (default: all)",
+    ),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: rich | json"),
+) -> None:
+    """Block until next actionable work exists (DAG ready, do_next, escalation, inbox)."""
+    plan_wait_next_cmd(cd=cd, poll=poll, timeout=timeout, sources=sources, format=format)
+
+
+@plan_app.command("claim")
+def plan_claim(
+    item_id: str = typer.Argument(..., help="Item ID to claim"),
+    agent_id: str = typer.Argument(..., help="Agent ID (e.g. agent-1)"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project directory"),
+) -> None:
+    """Claim an item in the unified work stream."""
+    plan_claim_cmd(item_id=item_id, agent_id=agent_id, cd=cd)
+
+
+@plan_app.command("complete")
+def plan_complete(
+    item_id: str = typer.Argument(..., help="Item ID to mark complete"),
+    agent_id: str = typer.Argument(..., help="Agent ID"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project directory"),
+) -> None:
+    """Mark an item as complete in the unified work stream."""
+    plan_complete_cmd(item_id=item_id, agent_id=agent_id, cd=cd)
 
 
 @plan_app.command("analyze")
@@ -1427,15 +2526,29 @@ def dag_sync(
     cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
     watch: bool = typer.Option(False, "--watch", "-w", help="Run in a loop (health check)"),
     interval: int = typer.Option(10, "--interval", "-i", help="Sync interval in seconds"),
+    auto_run_next: bool = typer.Option(False, "--auto-run-next", help="Spawn next ready tasks after sync"),
+    no_auto_run_next: bool = typer.Option(False, "--no-auto-run-next", help="Disable auto-run when --watch"),
 ) -> None:
     """Update task status from session exit (running -> done/failed)."""
     import time
 
+    effective_auto_run_next = auto_run_next or (watch and not no_auto_run_next)
     while True:
-        dag_sync_cmd(cd=cd)
+        dag_sync_cmd(cd=cd, auto_run_next=effective_auto_run_next)
         if not watch:
             break
         time.sleep(interval)
+
+
+@dag_app.command("wait-next")
+def dag_wait_next(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    poll: float = typer.Option(2.0, "--poll", "-p", help="Poll interval in seconds"),
+    timeout: float = typer.Option(0.0, "--timeout", "-t", help="Max wait seconds (0=unbounded)"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: rich | json"),
+) -> None:
+    """Block until DAG has next actionable work (sync + ready tasks). Does not return until ready tasks exist."""
+    plan_wait_next_cmd(cd=cd, poll=poll, timeout=timeout, sources="dag", format=format)
 
 
 @dag_app.command("reconcile")
@@ -1514,10 +2627,25 @@ def mcp_install(
     workspace: Path | None = typer.Option(
         None, "--workspace", "-d", help="Workspace dir for cursor (writes .cursor/mcp.json)"
     ),
+    replace_playwright: bool = typer.Option(
+        True,
+        "--replace-playwright/--keep-playwright",
+        help="Remove playwright from MCP config (default); thegent bundles browser tools when THGENT_MCP_MOUNT_PLAYWRIGHT=1",
+    ),
+    uni_mount: bool = typer.Option(
+        False,
+        "--uni-mount/--merge",
+        help="Replace ALL MCP entries with thegent only (fixes codex_apps/playwright handshake errors)",
+    ),
+    http: bool = typer.Option(
+        False,
+        "--http/--stdio",
+        help="Force HTTP transport (default: stdio for claude-code, http for others)",
+    ),
 ) -> None:
-    """Add thegent to MCP config for Cursor, Claude Code, Codex, or Claude Desktop."""
+    """Add thegent to MCP config for Cursor, Claude Code, Codex, or Claude Desktop. Bundles browser tools (playwright) by default."""
     from thegent.config import ThegentSettings
-    from thegent.mcp_manage import _get_mcp_url, install_to_client
+    from thegent.mcp_manage import _get_mcp_url, install_to_client, remove_playwright_from_client
 
     settings = ThegentSettings()
     mcp_url = url or _get_mcp_url(settings)
@@ -1527,11 +2655,217 @@ def mcp_install(
     console = Console()
     for c in clients:
         ws = workspace if c == "cursor" else None
-        ok, msg = install_to_client(c, mcp_url, workspace=ws)
+        ok, msg = install_to_client(c, mcp_url, workspace=ws, replace_all=uni_mount, force_http=http)
         if ok:
             console.print(f"[green]{msg}[/green]")
         else:
             console.print(f"[red]{c}: {msg}[/red]")
+        if not uni_mount and replace_playwright and ok and c != "droid":
+            rok, rmsg = remove_playwright_from_client(c, workspace=ws)
+            if rok:
+                console.print(f"[dim]{rmsg}[/dim]")
+            else:
+                console.print(f"[yellow]{rmsg}[/yellow]")
+
+
+@mcp_app.command("spotlight-exclude")
+def mcp_spotlight_exclude(
+    force: bool = typer.Option(False, "--force", help="Force command even if not on macOS")
+) -> None:
+    """Exclude heavy development and thegent metadata directories from Spotlight indexing (macOS).
+    Helps reduce mds_stores memory usage and CPU spikes during high-IO agent runs."""
+    import sys
+    import subprocess
+    if sys.platform != "darwin" and not force:
+        from rich.console import Console
+        Console().print("[yellow]Spotlight exclusion only applies to macOS.[/yellow]")
+        return
+
+    from thegent.config import ThegentSettings
+    settings = ThegentSettings()
+    
+    # Target directories
+    targets = [
+        settings.session_dir,
+        settings.cache_dir,
+        Path.home() / ".thegent",
+        Path.home() / ".claude",
+        Path.home() / ".cursor",
+        Path.cwd() / "node_modules",
+        Path.cwd() / ".venv",
+        Path.cwd() / "venv",
+        Path.cwd() / "dist",
+        Path.cwd() / "build",
+        Path.cwd() / ".claude",
+        Path.cwd() / ".thegent",
+    ]
+    
+    from rich.console import Console
+    console = Console()
+    console.print("[bold blue]Excluding heavy directories from Spotlight...[/bold blue]")
+    
+    for t in targets:
+        if t.exists():
+            console.print(f"  [dim]Excluding {t}[/dim]")
+            subprocess.run(["mdutil", "-i", "off", str(t)], capture_output=True, check=False)
+            # Create .noindex file as a fallback/reinforcement
+            if t.is_dir():
+                noindex = t / ".noindex"
+                try:
+                    noindex.touch(exist_ok=True)
+                except Exception:
+                    pass
+    
+    console.print("[green]Spotlight exclusion complete. Run 'thegent ps --all' to monitor memory recovery.[/green]")
+
+
+@mcp_app.command("prune")
+def mcp_prune(
+    force: bool = typer.Option(False, "--force", "-f", help="Force kill without confirmation"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be killed"),
+) -> None:
+    """Kill redundant agent-related Node.js processes (LSPs, MCP servers, cc-status).
+    Use this when memory usage is high (>10GB) and many orphan processes are detected."""
+    import subprocess
+    import os
+    import signal
+    from rich.console import Console
+    from rich.table import Table
+    
+    console = Console()
+    
+    # Patterns for redundant processes
+    patterns = [
+        "pyright-langserver",
+        "typescript-language-server",
+        "tsserver.js",
+        "@playwright/mcp",
+        "context7-mcp",
+        "cc-status",
+        "octocode-mcp",
+        "next-devtools-mcp",
+        "sequential-thinking",
+    ]
+    
+    try:
+        # Get all node processes
+        res = subprocess.run(["ps", "-eo", "pid,ppid,command"], capture_output=True, text=True, check=False)
+        lines = res.stdout.strip().splitlines()
+    except Exception as e:
+        console.print(f"[red]Failed to list processes: {e}[/red]")
+        return
+
+    to_kill: list[dict[str, Any]] = []
+    for line in lines[1:]: # Skip header
+        parts = line.split(None, 2)
+        if len(parts) < 3:
+            continue
+        pid, ppid, cmd = parts[0], parts[1], parts[2]
+        
+        if "node" in cmd.lower() or "npm" in cmd.lower() or "cc-status" in cmd.lower():
+            for p in patterns:
+                if p in cmd:
+                    to_kill.append({"pid": int(pid), "ppid": int(ppid), "cmd": cmd})
+                    break
+    
+    if not to_kill:
+        console.print("[green]No redundant agent processes found.[/green]")
+        return
+
+    t = Table(title="Redundant Processes Detected")
+    t.add_column("PID")
+    t.add_column("Command")
+    for item in to_kill:
+        t.add_row(str(item["pid"]), item["cmd"][:80] + ("..." if len(item["cmd"]) > 80 else ""))
+    
+    console.print(t)
+    
+    if dry_run:
+        console.print(f"[yellow]Dry run: would kill {len(to_kill)} processes.[/yellow]")
+        return
+        
+    if not force:
+        confirm = typer.confirm(f"Kill these {len(to_kill)} processes?")
+        if not confirm:
+            return
+
+    killed_count = 0
+    for item in to_kill:
+        try:
+            os.kill(item["pid"], signal.SIGTERM)
+            killed_count += 1
+        except Exception:
+            try:
+                os.kill(item["pid"], signal.SIGKILL)
+                killed_count += 1
+            except Exception:
+                pass
+                
+    console.print(f"[green]Successfully pruned {killed_count} processes.[/green]")
+    console.print("[dim]Note: Active agents may restart their LSPs on the next interaction.[/dim]")
+
+
+@mcp_app.command("fix")
+def mcp_fix(
+    client: str = typer.Argument(
+        ...,
+        help="Client: cursor, claude-code, codex, claude-desktop, or all",
+    ),
+    workspace: Path | None = typer.Option(
+        None, "--workspace", "-d", help="Workspace dir for cursor"
+    ),
+) -> None:
+    """Remove failing MCP servers (codex_apps, playwright) that cause 'MCP startup incomplete'.
+    Use thegent's bundled mounts instead. Run 'thegent mcp up' before using."""
+    from thegent.mcp_manage import FAILING_MCP_SERVERS, remove_servers_from_client
+
+    clients = ["cursor", "claude-code", "codex", "claude-desktop"] if client == "all" else [client]
+    from rich.console import Console
+
+    console = Console()
+    for c in clients:
+        ws = workspace if c == "cursor" else None
+        ok, msg = remove_servers_from_client(c, list(FAILING_MCP_SERVERS), workspace=ws)
+        if ok:
+            if "Removed" in msg or "No matching" in msg:
+                console.print(f"[green]{c}: {msg}[/green]")
+            else:
+                console.print(f"[dim]{c}: {msg}[/dim]")
+        else:
+            console.print(f"[red]{c}: {msg}[/red]")
+    console.print("[dim]Ensure thegent MCP is running: thegent mcp up[/dim]")
+
+
+@mcp_app.command("migrate-unimount")
+def mcp_migrate_unimount(
+    client: str = typer.Argument(
+        ...,
+        help="Client: cursor, claude-code, codex, claude-desktop, droid, or all",
+    ),
+    url: str | None = typer.Option(None, "--url", "-u", help="MCP URL (default: http://127.0.0.1:3847/mcp)"),
+    workspace: Path | None = typer.Option(
+        None, "--workspace", "-d", help="Workspace dir for cursor (writes .cursor/mcp.json)"
+    ),
+) -> None:
+    """Migrate to uni-mount: replace ALL MCP entries with thegent only. Fixes codex_apps/playwright handshake errors.
+    Thegent mounts playwright, serena, octocode — one URL, all tools. Run 'thegent mcp up' before using."""
+    from thegent.config import ThegentSettings
+    from thegent.mcp_manage import _get_mcp_url, migrate_to_unimount
+
+    settings = ThegentSettings()
+    mcp_url = url or _get_mcp_url(settings)
+    clients = ["cursor", "claude-code", "codex", "claude-desktop", "droid"] if client == "all" else [client]
+    from rich.console import Console
+
+    console = Console()
+    for c in clients:
+        ws = workspace if c == "cursor" else None
+        ok, msg = migrate_to_unimount(c, mcp_url, workspace=ws)
+        if ok:
+            console.print(f"[green]{msg}[/green]")
+        else:
+            console.print(f"[red]{c}: {msg}[/red]")
+    console.print("[dim]Ensure thegent MCP is running: thegent mcp up[/dim]")
 
 
 @mcp_app.command("up")
@@ -1562,6 +2896,23 @@ def mcp_down_cmd() -> None:
     ok, msg = mcp_down()
     if ok:
         console.print(f"[green]{msg}[/green]")
+    else:
+        console.print(f"[red]{msg}[/red]")
+        raise typer.Exit(1)
+
+
+@mcp_app.command("restart")
+def mcp_restart_cmd() -> None:
+    """Hot reload: restart MCP + proxy (down then up)."""
+    from rich.console import Console
+
+    from thegent.mcp_manage import mcp_restart
+
+    console = Console()
+    ok, msg = mcp_restart()
+    if ok:
+        console.print(f"[green]{msg}[/green]")
+        console.print("[dim]MCP: http://127.0.0.1:3847/mcp | Proxy: http://127.0.0.1:8317[/dim]")
     else:
         console.print(f"[red]{msg}[/red]")
         raise typer.Exit(1)
@@ -1618,12 +2969,28 @@ def mcp_service(
         raise typer.Exit(1)
 
 
+@app.command("mcp-stdio", hidden=True)
+def mcp_stdio() -> None:
+    """Start the MCP server in stdio mode (for Claude Code)."""
+    try:
+        from thegent.mcp_server import mcp
+
+        mcp.run()
+    except ImportError:
+        from rich.console import Console
+
+        Console().print("[red]fastmcp not installed. Run: pip install thegent[mcp][/red]")
+        raise typer.Exit(1)
+
+
 @app.command("serve")
 def serve(
     host: str | None = typer.Option(None, "--host", "-H", help="Bind address (default: THGENT_MCP_HOST or 127.0.0.1)"),
     port: int | None = typer.Option(None, "--port", "-p", help="HTTP port (default: THGENT_MCP_PORT or 3847)"),
+    force: bool = typer.Option(False, "--force", "-f", help="Run in foreground even if service is available"),
+    http: bool = typer.Option(True, "--http/--no-http", help="Start HTTP server (default)"),
 ) -> None:
-    """Start the MCP server (requires fastmcp: pip install thegent[mcp])."""
+    """Start the MCP server. Defaults to HTTP. Delegates to launchd/Homebrew service when available."""
     try:
         from thegent.mcp_server import run
     except ImportError:
@@ -1631,7 +2998,38 @@ def serve(
 
         Console().print("[red]fastmcp not installed. Run: pip install thegent[mcp][/red]")
         raise typer.Exit(1)
-    run(host=host, port=port)
+
+    if not http:
+        # Fallback to stdio if explicitly requested via --no-http
+        try:
+            from thegent.mcp_server import mcp
+
+            mcp.run(transport="stdio")
+            return
+        except Exception as e:
+            from rich.console import Console
+
+            Console().print(f"[red]Failed to start stdio server: {e}[/red]")
+            raise typer.Exit(1)
+
+    from thegent.config import ThegentSettings
+    from thegent.mcp_manage import serve_delegate_or_run
+
+    settings = ThegentSettings()
+    if host is not None:
+        settings = settings.model_copy(update={"mcp_host": host})
+    if port is not None:
+        settings = settings.model_copy(update={"mcp_port": port})
+
+    if not force:
+        run_foreground, msg = serve_delegate_or_run(settings)
+        if not run_foreground:
+            from rich.console import Console
+
+            Console().print(f"[green]{msg}[/green]")
+            raise typer.Exit(0)
+
+    run(host=host or settings.mcp_host, port=port or settings.mcp_port)
 
 
 @app.command("install")
@@ -1663,17 +3061,59 @@ def install_cmd(
         "--bundle-manifest",
         help="Path to third-party bundle manifest JSON (default: ~/.config/thegent/third_party_bundles.json)",
     ),
+    list_bundles: bool = typer.Option(
+        False,
+        "--list-bundles",
+        help="List named bundles from manifest and exit without installing",
+    ),
+    validate_bundles: bool = typer.Option(
+        False,
+        "--validate-bundles",
+        help="Validate manifest shape and exit without installing",
+    ),
+    bundle_conflict_policy: str | None = typer.Option(
+        None,
+        "--bundle-conflict-policy",
+        help="Bundle conflict policy for installation mode: smart|force|editable|interactive|copy|symlink",
+    ),
 ) -> None:
     """Managed installation of thegent components and MCP configuration."""
     from rich.console import Console
 
-    from thegent.install import run_install, run_wizard
+    local_console = Console()
+
+    from thegent.install import (
+        get_bundle_manifest_path,
+        list_bundle_names,
+        run_install,
+        run_wizard,
+    )
+    from thegent.install import (
+        validate_bundle_manifest as validate_bundle_manifest_file,
+    )
 
     if wizard:
         run_wizard(url=url)
         return
 
-    local_console = Console()
+    if list_bundles:
+        names = list_bundle_names(bundle_manifest)
+        local_console.print(f"[bold]Bundle names ({len(names)}):[/bold]")
+        for name in names:
+            local_console.print(f"  - {name}")
+        return
+
+    if validate_bundles:
+        valid, issues = validate_bundle_manifest_file(bundle_manifest)
+        manifest_path = get_bundle_manifest_path(bundle_manifest)
+        if not valid:
+            local_console.print(f"[red]Bundle manifest invalid: {manifest_path}[/red]")
+            for issue in issues:
+                local_console.print(f"  - {issue}")
+            raise typer.Exit(1)
+        local_console.print(f"[green]Bundle manifest valid: {manifest_path}[/green]")
+        return
+
     if undo:
         mode = "undo"
     elif interactive:
@@ -1697,6 +3137,7 @@ def install_cmd(
         install_service=service,
         bundles=bundle,
         bundle_manifest=bundle_manifest,
+        bundle_conflict_policy=bundle_conflict_policy,
     )
 
     local_console.print()
