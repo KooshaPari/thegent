@@ -1,0 +1,36 @@
+"""Provider type classification for execution path routing."""
+
+from enum import Enum, auto
+from typing import Final
+
+
+class ExecutionPath(Enum):
+    """Execution path for LLM provider."""
+
+    NATIVE_CLI = auto()  # codex, claude (interactive/agent harness)
+    LITELLM_API = auto()  # minimax, nim, glm, kilo (API keys)
+    CLIPROXY_API = auto()  # LOGIN-auth providers via CLIProxyAPIPlus
+
+
+# Immutable provider classifications
+NATIVE_CLI_PROVIDERS: Final[frozenset[str]] = frozenset({"codex", "claude"})
+API_KEY_PROVIDERS: Final[frozenset[str]] = frozenset({"minimax", "nim", "glm", "kilo"})
+LOGIN_AUTH_PROVIDERS: Final[frozenset[str]] = frozenset(
+    {"antigravity", "cursor", "kiro", "gemini", "copilot"}
+)
+
+
+def get_execution_path(provider: str) -> ExecutionPath:
+    """Determine execution path for a provider.
+
+    Args:
+        provider: Provider name (e.g., "codex", "minimax", "antigravity")
+
+    Returns:
+        ExecutionPath enum value
+    """
+    if provider in NATIVE_CLI_PROVIDERS:
+        return ExecutionPath.NATIVE_CLI
+    if provider in API_KEY_PROVIDERS:
+        return ExecutionPath.LITELLM_API
+    return ExecutionPath.CLIPROXY_API
