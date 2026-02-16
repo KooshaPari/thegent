@@ -10,7 +10,7 @@ import urllib.error
 import urllib.request
 import uuid
 from datetime import UTC, datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -19,13 +19,27 @@ from pydantic import BaseModel, Field
 _log = logging.getLogger(__name__)
 
 
-class RunState(str, Enum):
+class RunState(StrEnum):
     """Run lifecycle state for state-aware orchestration (G-KD-03)."""
 
     RUNNING = "running"
     PAUSED = "paused"
     COMPLETED = "completed"
     FAILED = "failed"
+
+
+class MAIFArtifact(BaseModel):
+    """WP-3002: Model AI Information Format (MAIF) for signed artifacts."""
+
+    version: str = "1.0"
+    run_id: str
+    timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+    agent: str
+    model: str | None = None
+    prompt_hash: str
+    output_hash: str | None = None
+    signature: str
+    policy_result: str | None = None
 
 
 class RunMeta(BaseModel):
@@ -689,6 +703,32 @@ class Auditor:
         # Simple hash-based signature for this phase
         data = f"{run.run_id}|{run.started_at_utc}|{run.owner}|{run.prompt}"
         return hashlib.sha256(data.encode()).hexdigest()
+
+    def generate_maif_artifact(self, run: RunMeta, output: str | None = None) -> MAIFArtifact:
+        """Generate a signed MAIF artifact for a run (WP-3002)."""
+        prompt_hash = hashlib.sha256(run.prompt.encode()).hexdigest()
+        output_hash = hashlib.sha256(output.encode()).hexdigest() if output else None
+
+        signature = self.sign_run(run)
+
+        return MAIFArtifact(
+            run_id=run.run_id,
+            agent=run.agent,
+            model=run.model,
+            prompt_hash=prompt_hash,
+            output_hash=output_hash,
+            signature=signature,
+            policy_result=run.policy_result,
+        )
+
+    def persist_maif_artifact(self, session_dir: Path, artifact: MAIFArtifact) -> Path:
+        """Persist a MAIF artifact to the artifacts directory (WP-3002)."""
+        artifacts_dir = session_dir / "artifacts"
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+
+        path = artifacts_dir / f"{artifact.run_id}.maif.json"
+        path.write_text(artifact.model_dump_json(indent=2), encoding="utf-8")
+        return path
 
     def verify_registry(self) -> dict[str, Any]:
         """Verify the integrity of all records in the registry, including the hash chain."""
