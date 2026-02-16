@@ -375,7 +375,15 @@ class ThegentSettings(BaseSettings):
     )
     mcp_mount_octocode: bool = Field(
         default=True,
-        description="Mount Octocode (GitHub/code search) at namespace 'octocode' (THGENT_MCP_MOUNT_OCTOCODE); required; requires npx",
+        description="Mount Octocode (GitHub/code search) at namespace 'octocode' (THGENT_MCP_MOUNT_OCTOCODE); required; requires npx or bun",
+    )
+    mcp_mount_sequential_thinking: bool = Field(
+        default=False,
+        description="Mount Sequential Thinking MCP at namespace 'thinking' (THGENT_MCP_MOUNT_SEQUENTIAL_THINKING); optional; requires npx or bun",
+    )
+    mcp_mount_next_devtools: bool = Field(
+        default=False,
+        description="Mount Next.js DevTools MCP at namespace 'next' (THGENT_MCP_MOUNT_NEXT_DEVTOOLS); optional; requires npx or bun",
     )
     max_task_retries: int = Field(
         default=3,
@@ -579,4 +587,54 @@ class ThegentSettings(BaseSettings):
         ge=0,
         le=60,
         description="Seconds to wait before retrying after failure (THGENT_LITELLM_RETRY_AFTER)",
+    )
+
+    # LiteLLM Enhanced Features
+    litellm_enable_cache: bool = Field(
+        default=True,
+        description="Enable LiteLLM response caching (THGENT_LITELLM_ENABLE_CACHE)",
+    )
+    litellm_cache_type: str = Field(
+        default="in-memory",
+        description="Cache type: in-memory, redis, s3 (THGENT_LITELLM_CACHE_TYPE)",
+    )
+    litellm_redis_url: str | None = Field(
+        default=None,
+        description="Redis URL for caching when cache_type=redis (THGENT_LITELLM_REDIS_URL)",
+    )
+    litellm_cooldown_time: int = Field(
+        default=60,
+        ge=10,
+        le=600,
+        description="Cooldown seconds after model failure before retry (THGENT_LITELLM_COOLDOWN_TIME)",
+    )
+    litellm_enable_streaming: bool = Field(
+        default=True,
+        description="Enable streaming responses for LiteLLM (THGENT_LITELLM_ENABLE_STREAMING)",
+    )
+    litellm_enable_cost_tracking: bool = Field(
+        default=True,
+        description="Enable cost tracking for LiteLLM calls (THGENT_LITELLM_ENABLE_COST_TRACKING)",
+    )
+    litellm_cost_budget: float | None = Field(
+        default=None,
+        ge=0,
+        description="Daily budget limit in USD for LiteLLM calls (THGENT_LITELLM_COST_BUDGET)",
+    )
+    litellm_alert_webhook: str | None = Field(
+        default=None,
+        description="Webhook URL for routing alerts (budget exceeded, high latency) (THGENT_LITELLM_ALERT_WEBHOOK)",
+    )
+    litellm_latency_threshold_ms: float = Field(
+        default=500.0,
+        ge=0,
+        description="Latency threshold in ms for high-latency alerts (THGENT_LITELLM_LATENCY_THRESHOLD_MS)",
+    )
+    litellm_context_window_validation: bool = Field(
+        default=True,
+        description="Enable pre-call context window validation (THGENT_LITELLM_CONTEXT_WINDOW_VALIDATION)",
+    )
+    litellm_fallback_enabled: bool = Field(
+        default=True,
+        description="Enable automatic fallback to alternative models on failure (THGENT_LITELLM_FALLBACK_ENABLED)",
     )
