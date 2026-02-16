@@ -2032,6 +2032,17 @@ def run_impl(
             "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
         }
 
+    # WP-4004: Interruption Controls
+    from thegent.execution import InterruptionTracker
+
+    it = InterruptionTracker(settings.session_dir)
+    fatigue = it.get_fatigue_score()
+    if fatigue > 0.8:
+        _log.warning("High fatigue detected (%.2f); recommending non-critical deferral.", fatigue)
+        if lane != "critical":
+            console.print("[bold yellow]ADVISORY:[/bold yellow] High system fatigue. Deferring non-critical task.")
+            return {"error": "System fatigue limit reached. Task deferred.", "exit_code": 1}
+
     effective_owner = owner or _default_owner_tag(cwd)
     run_meta = RunMeta(
         run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
