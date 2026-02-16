@@ -1,22 +1,107 @@
-"""LiteLLM Router wrapper for multi-provider API routing."""
+"""LiteLLM Router wrapper with full feature support.
+
+Provides comprehensive LiteLLM integration including:
+- Multi-provider routing (cheapest, fastest, latency-based, round_robin)
+- Response caching (in-memory or Redis)
+- Fallback chains with cooldown times
+- Context window validation
+- Cost tracking and budget alerts
+- Webhook alerting for latency/errors/budget
+- Streaming support
+- Donut Architecture integration
+"""
 
 from __future__ import annotations
 
 import logging
 import os
-from typing import Any
+import time
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 from litellm import Router
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
 from thegent.models.catalog import Route, _get_catalog
 from thegent.routing.provider_types import (
-    API_KEY_PROVIDERS,
     NATIVE_CLI_PROVIDERS,
     ExecutionPath,
     get_execution_path,
 )
 
 logger = logging.getLogger(__name__)
+
+
+# Model context windows for validation (in tokens)
+# Source: provider documentation as of 2026-02
+MODEL_CONTEXT_WINDOWS: dict[str, int] = {
+    # OpenAI
+    "gpt-4": 8192,
+    "gpt-4-turbo": 128000,
+    "gpt-4o": 128000,
+    "gpt-4o-mini": 128000,
+    "gpt-5-mini": 128000,
+    "gpt-5.3-codex-spark": 128000,
+    "gpt-5.3-codex-high": 128000,
+    # Anthropic
+    "claude-opus-4.6": 200000,
+    "claude-sonnet-4.5": 200000,
+    "claude-haiku-4.5": 200000,
+    # Google
+    "gemini-3-flash": 1000000,
+    "gemini-3-pro": 200000,
+    # DeepSeek
+    "deepseek-v3.2": 64000,
+    # Zhipu
+    "glm-5": 128000,
+    # Kimi
+    "kimi-k2.5": 200000,
+    # Meta
+    "llama-nemotron-ultra": 128000,
+    # Qwen
+    "qwen3-coder": 32000,
+    # Default fallback
+    "default": 8192,
+}
+
+
+@dataclass
+class RoutingResult:
+    """Result from a routing operation."""
+
+    success: bool
+    model: str
+    provider: str
+    response: Any | None = None
+    latency_ms: float = 0.0
+    tokens_used: int = 0
+    cost_usd: float = 0.0
+    error: str | None = None
+    is_fallback: bool = False
+    is_cached: bool = False
+
+
+@dataclass
+class RouterConfig:
+    """Configuration for LiteLLM Router."""
+
+    routing_policy: str = "cheapest"
+    timeout: int = 300
+    num_retries: int = 2
+    retry_after: int = 5
+    cooldown_time: int = 60
+    enable_cache: bool = True
+    cache_type: str = "in-memory"
+    redis_url: str | None = None
+    enable_streaming: bool = True
+    enable_cost_tracking: bool = True
+    cost_budget: float | None = None
+    alert_webhook: str | None = None
+    latency_threshold_ms: float = 500.0
+    context_window_validation: bool = True
+    fallback_enabled: bool = True
 
 
 def _route_to_litellm_config(route: Route) -> dict[str, Any]:
@@ -97,21 +182,449 @@ def build_litellm_model_list() -> list[dict[str, Any]]:
     return model_list
 
 
+def build_fallback_chains() -> list[dict[str, list[str]]]:
+    """Build fallback chains for models in LiteLLM format.
+
+    LiteLLM Router expects fallbacks as a list of dicts:
+    [{"primary_model": ["fallback1", "fallback2"]}, ...]
+
+    Returns:
+        List of fallback chain dicts for LiteLLM Router
+    """
+    # Fallback chains mapping primary model -> fallback models
+    chains_map = {
+        # High-end models fallback to capable cheaper alternatives
+        "claude-opus-4.6": ["claude-sonnet-4.5", "deepseek-v3.2", "glm-5"],
+        "claude-sonnet-4.5": ["deepseek-v3.2", "glm-5", "qwen3-coder"],
+        "gpt-4o": ["gpt-4o-mini", "deepseek-v3.2", "glm-5"],
+        # Mid-tier models
+        "gemini-3-flash": ["deepseek-v3.2", "qwen3-coder"],
+        "deepseek-v3.2": ["glm-5", "qwen3-coder", "llama-nemotron-ultra"],
+        "glm-5": ["deepseek-v3.2", "qwen3-coder"],
+        "kimi-k2.5": ["deepseek-v3.2", "glm-5"],
+        # Budget models
+        "qwen3-coder": ["llama-nemotron-ultra", "deepseek-v3.2"],
+        "llama-nemotron-ultra": ["qwen3-coder", "deepseek-v3.2"],
+    }
+
+    # Convert to LiteLLM format: list of dicts
+    return [{model: fallbacks} for model, fallbacks in chains_map.items()]
+
+
+def get_context_window(model: str) -> int:
+    """Get context window size for a model.
+
+    Args:
+        model: Model name (may be alias)
+
+    Returns:
+        Context window in tokens
+    """
+    # Normalize model name
+    normalized = model.lower().replace("-", "").replace(".", "")
+
+    for key, value in MODEL_CONTEXT_WINDOWS.items():
+        if key.lower().replace("-", "").replace(".", "") == normalized:
+            return value
+
+    # Default fallback
+    return MODEL_CONTEXT_WINDOWS["default"]
+
+
+def validate_context_window(model: str, prompt_tokens: int) -> bool:
+    """Validate that prompt fits within model's context window.
+
+    Args:
+        model: Model name
+        prompt_tokens: Estimated prompt token count
+
+    Returns:
+        True if prompt fits, False otherwise
+    """
+    max_tokens = get_context_window(model)
+    # Leave 25% buffer for response
+    effective_limit = int(max_tokens * 0.75)
+    return prompt_tokens <= effective_limit
+
+
+def get_router_config() -> RouterConfig:
+    """Get router configuration from settings.
+
+    Returns:
+        RouterConfig with values from ThegentSettings
+    """
+    try:
+        from thegent.config import ThegentSettings
+
+        settings = ThegentSettings()
+        return RouterConfig(
+            routing_policy=settings.litellm_routing_policy,
+            timeout=settings.litellm_timeout,
+            num_retries=settings.litellm_num_retries,
+            retry_after=settings.litellm_retry_after,
+            cooldown_time=settings.litellm_cooldown_time,
+            enable_cache=settings.litellm_enable_cache,
+            cache_type=settings.litellm_cache_type,
+            redis_url=settings.litellm_redis_url,
+            enable_streaming=settings.litellm_enable_streaming,
+            enable_cost_tracking=settings.litellm_enable_cost_tracking,
+            cost_budget=settings.litellm_cost_budget,
+            alert_webhook=settings.litellm_alert_webhook,
+            latency_threshold_ms=settings.litellm_latency_threshold_ms,
+            context_window_validation=settings.litellm_context_window_validation,
+            fallback_enabled=settings.litellm_fallback_enabled,
+        )
+    except Exception:
+        # Fallback to defaults
+        return RouterConfig()
+
+
 def get_litellm_router(policy: str = "cheapest") -> Router:
     """Get configured LiteLLM Router instance.
 
     Args:
-        policy: Routing policy (cheapest, fastest, round_robin)
+        policy: Routing policy (cheapest, fastest, round_robin, latency-based-routing)
 
     Returns:
         Configured LiteLLM Router
     """
+    config = get_router_config()
     model_list = build_litellm_model_list()
 
-    return Router(
-        model_list=model_list,
-        routing_strategy=policy,
-        num_retries=2,
-        timeout=300,
-        retry_after=5,
-    )
+    # Build router kwargs
+    router_kwargs: dict[str, Any] = {
+        "model_list": model_list,
+        "routing_strategy": policy,
+        "num_retries": config.num_retries,
+        "timeout": config.timeout,
+        "retry_after": config.retry_after,
+        "cooldown_time": config.cooldown_time,
+    }
+
+    # Add caching configuration
+    # LiteLLM uses cache_responses and redis_url parameters
+    if config.enable_cache:
+        router_kwargs["cache_responses"] = True
+        if config.cache_type == "redis" and config.redis_url:
+            router_kwargs["redis_url"] = config.redis_url
+
+    # Add fallback configuration
+    if config.fallback_enabled:
+        router_kwargs["fallbacks"] = build_fallback_chains()
+
+    return Router(**router_kwargs)
+
+
+class EnhancedRouter:
+    """Enhanced router with full feature support.
+
+    Wraps LiteLLM Router with:
+    - Cost tracking integration
+    - Alert management
+    - Donut Architecture integration
+    - Context window validation
+    - Streaming support
+    """
+
+    def __init__(self, policy: str | None = None) -> None:
+        """Initialize enhanced router.
+
+        Args:
+            policy: Optional routing policy override
+        """
+        self._config = get_router_config()
+        self._policy = policy or self._config.routing_policy
+        self._router = get_litellm_router(self._policy)
+        self._fallback_chains = build_fallback_chains()
+
+        # Lazy-load integrations
+        self._cost_tracker = None
+        self._alert_manager = None
+        self._donut_adapter = None
+
+    @property
+    def cost_tracker(self):
+        """Get cost tracker (lazy initialization)."""
+        if self._cost_tracker is None and self._config.enable_cost_tracking:
+            try:
+                from thegent.routing.cost_tracker import get_cost_tracker
+
+                self._cost_tracker = get_cost_tracker()
+            except Exception as e:
+                logger.debug("Could not initialize cost tracker: %s", e)
+        return self._cost_tracker
+
+    @property
+    def alert_manager(self):
+        """Get alert manager (lazy initialization)."""
+        if self._alert_manager is None and self._config.alert_webhook:
+            try:
+                from thegent.routing.alerting import get_alert_manager
+
+                self._alert_manager = get_alert_manager()
+            except Exception as e:
+                logger.debug("Could not initialize alert manager: %s", e)
+        return self._alert_manager
+
+    @property
+    def donut_adapter(self):
+        """Get Donut adapter (lazy initialization)."""
+        if self._donut_adapter is None:
+            try:
+                from thegent.routing.donut_adapter import get_donut_adapter
+
+                self._donut_adapter = get_donut_adapter()
+            except Exception as e:
+                logger.debug("Could not initialize Donut adapter: %s", e)
+        return self._donut_adapter
+
+    def route(
+        self,
+        prompt: str,
+        model: str | None = None,
+        stream: bool = False,
+        **kwargs: Any,
+    ) -> RoutingResult:
+        """Route a request through LiteLLM.
+
+        Args:
+            prompt: The prompt to send
+            model: Optional model override (otherwise router selects)
+            stream: Whether to stream the response
+            **kwargs: Additional LiteLLM parameters
+
+        Returns:
+            RoutingResult with response and metadata
+        """
+        start_time = time.time()
+        selected_model = model
+        is_fallback = False
+
+        # Check budget before routing
+        if self._config.cost_budget and self.cost_tracker:
+            if self.cost_tracker.is_over_budget():
+                if self.alert_manager:
+                    self.alert_manager.alert_budget_exceeded(
+                        self.cost_tracker.get_daily_spend(),
+                        self._config.cost_budget,
+                    )
+                return RoutingResult(
+                    success=False,
+                    model=model or "unknown",
+                    provider="unknown",
+                    error="Daily budget exceeded",
+                )
+
+        # Context window validation
+        if self._config.context_window_validation and selected_model:
+            # Estimate token count (rough: ~4 chars per token)
+            estimated_tokens = len(prompt) // 4
+            if not validate_context_window(selected_model, estimated_tokens):
+                logger.warning(
+                    "Prompt may exceed context window for %s: ~%d tokens",
+                    selected_model,
+                    estimated_tokens,
+                )
+
+        # Make the request
+        try:
+            if stream and self._config.enable_streaming:
+                response = self._router.completion(
+                    model=selected_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    stream=True,
+                    **kwargs,
+                )
+            else:
+                response = self._router.completion(
+                    model=selected_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    **kwargs,
+                )
+
+            latency_ms = (time.time() - start_time) * 1000
+
+            # Extract metadata from response
+            model_used = getattr(response, "model", selected_model) if response else selected_model
+            provider = self._extract_provider(model_used)
+
+            # Track tokens and cost
+            tokens_used = 0
+            cost_usd = 0.0
+            if response and hasattr(response, "usage"):
+                tokens_used = getattr(response.usage, "total_tokens", 0)
+                # LiteLLM calculates cost internally; we estimate here
+                cost_usd = self._estimate_cost(model_used, tokens_used)
+
+            # Track cost
+            if self.cost_tracker and tokens_used > 0:
+                self.cost_tracker.track(
+                    provider=provider,
+                    model=model_used,
+                    usage={
+                        "prompt_tokens": getattr(response.usage, "prompt_tokens", 0) if response else 0,
+                        "completion_tokens": getattr(response.usage, "completion_tokens", 0) if response else 0,
+                    },
+                    cost=cost_usd,
+                    latency_ms=latency_ms,
+                    is_fallback=is_fallback,
+                )
+
+            # Record in Donut adapter
+            if self.donut_adapter:
+                self.donut_adapter.record_request(
+                    model=model_used,
+                    provider=provider,
+                    tokens=tokens_used,
+                    cost_usd=cost_usd,
+                    is_fallback=is_fallback,
+                )
+
+            # Check latency threshold
+            if latency_ms > self._config.latency_threshold_ms:
+                if self.alert_manager:
+                    self.alert_manager.alert_high_latency(
+                        model=model_used,
+                        latency_ms=latency_ms,
+                        threshold_ms=self._config.latency_threshold_ms,
+                        provider=provider,
+                    )
+
+            return RoutingResult(
+                success=True,
+                model=model_used,
+                provider=provider,
+                response=response,
+                latency_ms=latency_ms,
+                tokens_used=tokens_used,
+                cost_usd=cost_usd,
+                is_fallback=is_fallback,
+            )
+
+        except Exception as e:
+            latency_ms = (time.time() - start_time) * 1000
+            error_str = str(e)
+            logger.error("Routing error: %s", error_str)
+
+            # Try fallback if enabled
+            if self._config.fallback_enabled and selected_model:
+                fallbacks = self._fallback_chains.get(selected_model, [])
+                for fallback_model in fallbacks:
+                    try:
+                        logger.info("Trying fallback model: %s", fallback_model)
+                        is_fallback = True
+                        # Recurse with fallback model
+                        result = self.route(prompt, model=fallback_model, stream=stream, **kwargs)
+                        result.is_fallback = True
+                        return result
+                    except Exception as fb_e:
+                        logger.warning("Fallback %s failed: %s", fallback_model, fb_e)
+                        continue
+
+            # Alert on error
+            if self.alert_manager:
+                self.alert_manager.alert_provider_error(
+                    provider=self._extract_provider(selected_model) if selected_model else "unknown",
+                    error=error_str,
+                    model=selected_model or "unknown",
+                    is_rate_limit="rate" in error_str.lower(),
+                )
+
+            return RoutingResult(
+                success=False,
+                model=selected_model or "unknown",
+                provider=self._extract_provider(selected_model) if selected_model else "unknown",
+                error=error_str,
+                latency_ms=latency_ms,
+                is_fallback=is_fallback,
+            )
+
+    def route_stream(
+        self,
+        prompt: str,
+        model: str | None = None,
+        **kwargs: Any,
+    ) -> Iterator[Any]:
+        """Route with streaming response.
+
+        Args:
+            prompt: The prompt to send
+            model: Optional model override
+            **kwargs: Additional LiteLLM parameters
+
+        Yields:
+            Stream chunks from the model
+        """
+        result = self.route(prompt, model=model, stream=True, **kwargs)
+        if result.success and hasattr(result.response, "__iter__"):
+            yield from result.response
+        else:
+            raise RuntimeError(result.error or "Streaming failed")
+
+    def _extract_provider(self, model: str) -> str:
+        """Extract provider from model string."""
+        if "/" in model:
+            return model.split("/")[0]
+        # Try to match from model_list
+        for entry in self._router.model_list:
+            if entry.get("model_name") == model:
+                litellm_model = entry.get("litellm_params", {}).get("model", "")
+                if "/" in litellm_model:
+                    return litellm_model.split("/")[0]
+        return "unknown"
+
+    def _estimate_cost(self, model: str, tokens: int) -> float:
+        """Estimate cost for a model call.
+
+        Rough estimates based on typical pricing.
+        For accurate costs, enable LiteLLM's built-in cost tracking.
+        """
+        # Cost per 1K tokens (rough estimates)
+        cost_per_1k = {
+            "claude-opus-4.6": 0.075,
+            "claude-sonnet-4.5": 0.015,
+            "claude-haiku-4.5": 0.001,
+            "gpt-4o": 0.025,
+            "gpt-4o-mini": 0.0003,
+            "gemini-3-flash": 0.000075,
+            "deepseek-v3.2": 0.0005,
+            "glm-5": 0.0007,
+            "kimi-k2.5": 0.0005,
+            "qwen3-coder": 0.0003,
+            "llama-nemotron-ultra": 0.0002,
+        }
+
+        # Normalize model name
+        normalized = model.lower().replace("-", "").replace(".", "").replace("/", "")
+
+        for key, cost in cost_per_1k.items():
+            if key.lower().replace("-", "").replace(".", "") in normalized:
+                return (tokens / 1000) * cost
+
+        # Default: assume budget model pricing
+        return (tokens / 1000) * 0.0005
+
+
+# Global enhanced router instance
+_enhanced_router: EnhancedRouter | None = None
+
+
+def get_enhanced_router(policy: str | None = None) -> EnhancedRouter:
+    """Get global enhanced router instance.
+
+    Args:
+        policy: Optional routing policy override
+
+    Returns:
+        EnhancedRouter instance
+    """
+    global _enhanced_router
+    if _enhanced_router is None:
+        _enhanced_router = EnhancedRouter(policy)
+    return _enhanced_router
+
+
+def reset_enhanced_router() -> None:
+    """Reset the global enhanced router (useful for testing)."""
+    global _enhanced_router
+    _enhanced_router = None
