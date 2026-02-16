@@ -252,6 +252,11 @@ tasks:
     cmds:
       - bash scripts/quality-agent.sh
 
+  quality-a-r:
+    desc: "Full quality; on fail pipe to copilot and reload until green"
+    cmds:
+      - bash scripts/quality-agent.sh -r
+
   quality-a-h:
     desc: "Full quality; on fail pipe to thegent (headless)"
     cmds:
@@ -309,6 +314,8 @@ tasks:
 
   docs:pdf:
     desc: Export docsite to PDF
+    env:
+      PUPPETEER_EXECUTABLE_PATH: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
     cmds:
       - pnpm docs:pdf
 
