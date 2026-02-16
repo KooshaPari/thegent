@@ -11,7 +11,7 @@ from typing import Any
 @dataclass
 class Recommendation:
     """A self-healing recommendation."""
-    
+
     id: str
     action: str
     confidence: float
@@ -29,7 +29,7 @@ class SelfHealingEngine:
     def generate_recommendations(self, issues: list[str]) -> list[Recommendation]:
         """WP-11005: Generate top-3 recommendations based on detected issues."""
         recs = []
-        
+
         if any("latency" in i.lower() for i in issues):
             recs.append(Recommendation(
                 id="REC-001",
@@ -39,7 +39,7 @@ class SelfHealingEngine:
                 rollback_path="Restore previous concurrency limit",
                 expected_outcome="Reduced queuing delay and lower p95 latency."
             ))
-            
+
         if any("drift" in i.lower() for i in issues):
             recs.append(Recommendation(
                 id="REC-002",
@@ -49,7 +49,7 @@ class SelfHealingEngine:
                 rollback_path="Revert to original provider chain",
                 expected_outcome="Improved structural parsing accuracy."
             ))
-            
+
         if any("error" in i.lower() for i in issues):
             recs.append(Recommendation(
                 id="REC-003",
@@ -59,7 +59,7 @@ class SelfHealingEngine:
                 rollback_path="Disable speculative mode",
                 expected_outcome="Zero-downtime execution even if one provider fails."
             ))
-            
+
         self._recommendations = sorted(recs, key=lambda x: x.confidence, reverse=True)[:3]
         return self._recommendations
 
@@ -79,6 +79,6 @@ class PredictorCalibrator:
                 "status": "paused",
                 "reason": f"Confidence {current_confidence:.2f} below threshold {self.threshold:.2f}."
             }
-            
+
         self.is_paused = False
         return {"status": "active", "confidence": current_confidence}
