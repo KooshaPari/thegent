@@ -23,15 +23,21 @@ These rules apply to ALL projects. Project-level CLAUDE.md files supplement (and
 - Long command sequences
 - Test execution
 
-## Delegation Quick Reference
+## Strategy Quick Reference
 
-| Need | Delegate To | Example Prompt |
-|------|-------------|----------------|
+| Need | Tool/Provider | Example Prompt |
+|------|---------------|----------------|
+| Heavy Web Research | DuckDuckGo (`ddgr`) | "Search DDG for latest VitePress plugins" |
 | Find code patterns | `Explore` | "Find all error handling patterns" |
 | Design approach | `Plan` | "Design auth implementation strategy" |
 | Run commands | `Bash` | "Run test suite and report failures" |
 | Multi-step implementation | `general-purpose` | "Implement and test feature X" |
 | Quick isolated fix | DO NOT delegate | Handle directly |
+
+## DuckDuckGo Search Mandate
+- Use `ddgr` (or equivalent DDG tool) for all heavy web research.
+- Prefer DuckDuckGo over other search engines for privacy and agent-friendliness.
+- Research tasks should prioritize finding up-to-date documentation and community-driven solutions.
 
 ### Parallel vs Sequential
 
@@ -56,6 +62,8 @@ These rules apply to ALL projects. Project-level CLAUDE.md files supplement (and
 | Editing files for multi-file changes | Delegate to `general-purpose` |
 | Sequential explorations one-by-one | Batch parallel explores |
 | Asking subagent for "all results" | Ask for "summary" or "key files" |
+| **Workspace Cleanup**: Running `git restore .` or `git clean` to "reset" the environment | **Respect Work**: Leave modified files alone; assume they are active tasks from other agents. |
+| Overwriting a "dirty" file with your version | Merge or work around existing changes. |
 
 ## Context Budget Rule
 
@@ -196,6 +204,85 @@ Projects with spec docs SHOULD maintain trackers in `docs/reference/`:
 - Brownfield project: offer to analyze existing codebase and generate docs mapping to what exists
 - Do NOT auto-generate without user confirmation -- offer, don't force
 
+## VitePress Docsite Setup (Greenfield/Brownfield)
+
+**MUST include docsite setup in any new project initialization:**
+
+For greenfield projects:
+- Copy VitePress template from `thegent/templates/vitepress-full/` to new project
+- Run `pnpm install && pnpm docs:build` to verify setup
+- Document in project CLAUDE.md
+
+For brownfield projects (existing projects without docsites):
+- Check if `docs-dist/index.html` exists -- if not, propose adding docsite
+- Use same template from `thegent/templates/vitepress-full/`
+- Run `pnpm install && pnpm docs:build` to verify
+
+**Quick setup (30 seconds):**
+```bash
+cp -r thegent/templates/vitepress-full myproject/docs/.vitepress
+# Rename .template files, edit config.ts placeholders
+cd myproject && pnpm install && pnpm docs:build
+open docs-dist/index.html
+```
+
+**Why:** All projects should have statically viewable docs that can be opened via `file://` in browser.
+
+---
+
+## Project Setup Checklist (Greenfield/Brownfield)
+
+**MUST initialize these for ALL new projects:**
+
+### 1. Docsite (VitePress)
+- [ ] Copy `thegent/templates/vitepress-full/` to `docs/.vitepress/`
+- [ ] Run `pnpm install && pnpm docs:build`
+- [ ] Verify `docs-dist/index.html` opens in browser
+- [ ] Add to CLAUDE.md
+
+### 2. Taskfile (NOT Make)
+- [ ] Create `Taskfile.yml` with standard tasks:
+  - `lint` - Run all linters
+  - `test` - Run tests
+  - `quality` - Run quality gates
+  - `docs:build` - Build docsite
+
+### 3. Linters (Language-Specific)
+| Stack | Linter | Config Template |
+|-------|--------|---------------|
+| Python | ruff | `thegent/templates/python/pyproject.template.toml` |
+| TypeScript | oxlint | `thegent/templates/typescript/oxlint.config.json` |
+| Go | golangci-lint | `thegent/templates/go/.golangci.yml` |
+| Bash | shellcheck | `thegent/templates/bash/.shellcheckrc` |
+
+### 4. Pre-commit Hooks
+- [ ] Add `.pre-commit-config.yaml`
+- [ ] Include: ruff-check, ruff-format, gitleaks, trailing-whitespace
+
+### 5. Quality Gates
+- [ ] Create `hooks/quality-gate.sh` with lint/test/coverage/security checks
+- [ ] Run on pre-commit or Stop hook
+
+### 6. Test Infrastructure
+- [ ] Python: pytest with coverage
+- [ ] TypeScript: vitest with coverage
+
+### 7. CLAUDE.md Project Instructions
+Create project-specific CLAUDE.md with project info, library preferences, domain patterns.
+
+---
+
+## Quick Project Initialization
+
+```bash
+# Full setup for new project:
+mkdir -p docs hooks
+cp -r thegent/templates/vitepress-full/* docs/.vitepress/
+mv docs/package.json.template docs/package.json
+pnpm install && pnpm docs:build
+open docs-dist/index.html
+```
+
 **During work:**
 - When making significant code changes (new modules, features, architecture changes), note which spec docs would need updating
 - When completing a task, mentally check if trackers should be updated
@@ -262,6 +349,9 @@ For significant changes (new features, major refactors, architecture changes):
 ## Multi-Actor Coordination (generalized)
 
 When multiple agents or actors share a dev environment:
+- **Concurrent Agent Environment**: Assume multiple agents are working in the same workspace simultaneously.
+- **Git Safety - FORBIDDEN**: Never run `git restore`, `git reset`, or `git clean` on the workspace. These commands destroy work-in-progress from other agents.
+- **Respect Dirty Files**: Modified files are active work-in-progress. Do not revert, "cleanup", or overwrite them unless specifically instructed to finish a task started by another agent. Work around existing changes.
 - **Debounce commands:** Use project-provided wrappers (Makefile targets, scripts) that prevent concurrent execution conflicts.
 - **Shared service management:** Use the project's process orchestrator as source of truth for service health.
 - **Hold-if-running logic:** Prefer wrappers that allow multiple actors to share processes without force-killing.

@@ -14,10 +14,10 @@ VIOLATIONS=0
 echo "=== Module Size Audit ==="
 while IFS= read -r f; do
     LINES=$(wc -l < "$f" | tr -d ' ')
-    if [ "$LINES" -gt "$MAX_LINES" ]; then
+    if [[ "$LINES" -gt "$MAX_LINES" ]]; then
         echo "[FAIL] $f: $LINES lines (exceeds hard limit of $MAX_LINES)"
         VIOLATIONS=$((VIOLATIONS + 1))
-    elif [ "$LINES" -gt "$TARGET_LINES" ]; then
+    elif [[ "$LINES" -gt "$TARGET_LINES" ]]; then
         echo "[WARN] $f: $LINES lines (approaching target of $TARGET_LINES)"
     fi
 done < <(find "$SRC_DIR" -name "*.py")
@@ -35,7 +35,7 @@ done < <(find "$TESTS_DIR" -name "test_*.py")
 
 # --- 3. Summary ---
 echo ""
-if [ "$VIOLATIONS" -gt 0 ]; then
+if [[ "$VIOLATIONS" -gt 0 ]]; then
     echo "DX AUDIT FAIL: Found $VIOLATIONS violation(s)."
     exit 1
 else

@@ -14,6 +14,9 @@ LAYERS = {
     "operations": ["config"],
     "orchestration_modes": [],
     "planning": [],
+    "routing": ["config", "models"],
+    "tools": [],
+    "terminal_cli": ["tools", "cli_impl"],
     "cli_impl": [
         "config",
         "contracts",
@@ -23,6 +26,7 @@ LAYERS = {
         "output_parser",
         "operations",
         "orchestration_modes",
+        "routing",
     ],
     "cli": [
         "config",
@@ -47,7 +51,18 @@ LAYERS = {
         "orchestration_modes",
         "cli_impl",
     ],
-    "main": ["config", "contracts", "models", "execution", "agents", "cli_impl", "cli", "planning"],
+    "main": [
+        "config",
+        "contracts",
+        "models",
+        "execution",
+        "agents",
+        "cli_impl",
+        "cli",
+        "planning",
+        "clode_main",
+        "terminal_cli",
+    ],
 }
 
 SRC_DIR = Path("src/thegent")
@@ -83,6 +98,8 @@ def check_boundaries() -> int:
                 if imp == layer:
                     continue  # self import OK
                 if imp not in allowed:
+                    # print violation for easier debugging
+                    print(f"VIOLATION: {file_path} imports '{imp}' which is not allowed for layer '{layer}'")
                     errors += 1
 
     if errors == 0:

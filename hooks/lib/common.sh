@@ -686,7 +686,7 @@ hook_debounce_file() {
         # Consume pending batch
         local batch
         batch="$(sort -u "$pending" 2>/dev/null)"
-        > "$pending"
+        : > "$pending"
         flock -u 200
         exec 200>&-
         echo "$batch"
@@ -723,7 +723,7 @@ hook_incremental_record() {
     local files=("$@")
     mkdir -p "$HOOK_MANIFEST_DIR"
     local manifest="${HOOK_MANIFEST_DIR}/${hook_name}.manifest"
-    > "${manifest}.tmp"
+    : > "${manifest}.tmp"
     for f in "${files[@]}"; do
         [[ -f "$f" ]] || continue
         echo "${f}:$(shasum -a 256 "$f" | cut -d' ' -f1)" >> "${manifest}.tmp"

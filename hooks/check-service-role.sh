@@ -4,8 +4,14 @@
 
 set -euo pipefail
 HOOK_NAME="CHECK-SERVICE-ROLE"
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
+
+# Initialize variables if not set by hook_init/dispatcher
+TOOL_NAME="${TOOL_NAME:-Edit}"
+TOOL_CONTENT="${TOOL_CONTENT:-}"
+TOOL_NEW_STRING="${TOOL_NEW_STRING:-}"
 
 # --- Fast-path exits (zero spawns) ---
 

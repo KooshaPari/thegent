@@ -91,6 +91,52 @@ class TestListDroids:
 
 
 @pytest.mark.e2e
+class TestClodeCommands:
+    """E2E tests for clode shims and help text."""
+
+    def test_clode_help_exits_zero(self) -> None:
+        """`thegent clode --help` exits 0."""
+        result = runner.invoke(app, ["clode", "--help"])
+        assert result.exit_code == 0
+        assert "thegent clode" in result.stdout
+        assert "glm" in result.stdout
+
+    def test_clode_no_subcommand_defaults_to_nim_interactive(self, monkeypatch) -> None:
+        """`thegent clode` defaults to Nim-backed interactive session."""
+        calls: list[str] = []
+
+        def fake_run(provider: str) -> None:
+            calls.append(provider)
+
+        monkeypatch.setattr("thegent.clode_main._run_claude_interactive", fake_run)
+        result = runner.invoke(app, ["clode"])
+        assert result.exit_code == 0
+        assert calls == ["nim"]
+
+    def test_clode_install_links_force_rewrites_wrappers(self, tmp_path: Path) -> None:
+        """`thegent clode install-links --force` creates expected shim files."""
+        # Start with legacy files to ensure --force path is exercised.
+        (tmp_path / "clode").write_text("legacy")
+        (tmp_path / "claudeglm").write_text("legacy")
+        (tmp_path / "claudemax").write_text("legacy")
+        result = runner.invoke(
+            app,
+            [
+                "clode",
+                "install-links",
+                f"--bin-dir={tmp_path}",
+                "--force",
+            ],
+        )
+        assert result.exit_code == 0
+        for name in ("clode", "claudeglm", "claudemax"):
+            wrapper = tmp_path / name
+            assert wrapper.exists()
+            assert wrapper.read_text(encoding="utf-8").startswith("#!/usr/bin/env sh")
+            assert "exec" in wrapper.read_text(encoding="utf-8")
+
+
+@pytest.mark.e2e
 class TestRunAmbiguousCwd:
     """E2E tests for run with ambiguous cwd (no project indicators)."""
 

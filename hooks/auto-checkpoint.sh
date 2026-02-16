@@ -11,6 +11,7 @@ if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
   printf -v now '%(%Y-%m-%dT%H:%M:%SZ)T' -1
 else
   HOOK_NAME="AUTO_CHECKPOINT"
+  # shellcheck source=./lib/common.sh
   source "${BASH_SOURCE[0]%/*}/lib/common.sh"
   hook_init
 fi

@@ -423,14 +423,20 @@ class TestRunLiveExtended:
         stdout_lines: list[str] = []
         stderr_lines: list[str] = []
 
+        def capture_stdout(line: str) -> None:
+            stdout_lines.append(line)
+
+        def capture_stderr(line: str) -> None:
+            stderr_lines.append(line)
+
         runner = DirectAgentRunner("claude")
         result = runner._run_live(
             ["claude", "--print"],
             Path("/tmp"),
             60,
             "prompt",
-            lambda line: stdout_lines.append(line),
-            lambda line: stderr_lines.append(line),
+            capture_stdout,
+            capture_stderr,
         )
         assert result.exit_code == 0
         assert len(stdout_lines) > 0

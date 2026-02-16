@@ -315,7 +315,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
     try:
         cursor_models = scrape_cursor()
         filtered_cursor = filter_models_for_provider("cursor-agent", cursor_models) if cursor_models else []
-        by_provider["cursor-agent"] = filtered_cursor if filtered_cursor else [settings.default_cursor_model]
+        by_provider["cursor-agent"] = filtered_cursor or [settings.default_cursor_model]
     except Exception:
         by_provider["cursor-agent"] = [settings.default_cursor_model]
 
@@ -323,11 +323,11 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
     try:
         cursor_api_models = scrape_cursor_api(settings)
         filtered_cursor_api = filter_models_for_provider("cursor-api", cursor_api_models) if cursor_api_models else []
-        by_provider["cursor-api"] = (
-            filtered_cursor_api
-            if filtered_cursor_api
-            else ["claude-4.5-opus-high-thinking", "gpt-5.1-codex", "claude-4.5-sonnet-thinking"]
-        )
+        by_provider["cursor-api"] = filtered_cursor_api or [
+            "claude-4.5-opus-high-thinking",
+            "gpt-5.1-codex",
+            "claude-4.5-sonnet-thinking",
+        ]
     except Exception:
         by_provider["cursor-api"] = ["claude-4.5-opus-high-thinking", "gpt-5.1-codex", "claude-4.5-sonnet-thinking"]
 
@@ -335,7 +335,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
     try:
         copilot_models = scrape_copilot()
         filtered_copilot = filter_models_for_provider("copilot", copilot_models) if copilot_models else []
-        by_provider["copilot"] = filtered_copilot if filtered_copilot else [settings.default_copilot_model]
+        by_provider["copilot"] = filtered_copilot or [settings.default_copilot_model]
     except Exception:
         by_provider["copilot"] = [settings.default_copilot_model]
 
@@ -345,7 +345,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
         proxy_gemini = proxy_result.get("gemini", [])
         combined_gemini = list(dict.fromkeys(gemini_models + proxy_gemini))
         filtered_gemini = filter_models_for_provider("gemini", combined_gemini) if combined_gemini else []
-        by_provider["gemini"] = filtered_gemini if filtered_gemini else [settings.default_gemini_model]
+        by_provider["gemini"] = filtered_gemini or [settings.default_gemini_model]
     except Exception:
         by_provider["gemini"] = [settings.default_gemini_model]
 
@@ -355,7 +355,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
         proxy_claude = proxy_result.get("claude", [])
         combined_claude = list(dict.fromkeys(claude_models + proxy_claude))
         filtered_claude = filter_models_for_provider("claude", combined_claude) if combined_claude else []
-        by_provider["claude"] = filtered_claude if filtered_claude else [settings.default_claude_model]
+        by_provider["claude"] = filtered_claude or [settings.default_claude_model]
     except Exception:
         by_provider["claude"] = [settings.default_claude_model]
 
@@ -363,7 +363,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
     try:
         codex_models = [m for m in cursor_models if "codex" in m.lower() or "gpt" in m]
         filtered_codex = filter_models_for_provider("codex", codex_models) if codex_models else []
-        by_provider["codex"] = filtered_codex if filtered_codex else [settings.default_codex_model]
+        by_provider["codex"] = filtered_codex or [settings.default_codex_model]
     except Exception:
         by_provider["codex"] = [settings.default_codex_model]
 

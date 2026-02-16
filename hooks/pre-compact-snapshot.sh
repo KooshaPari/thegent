@@ -12,6 +12,7 @@ if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
   CHANGE_LOG="${PROJECT_DIR:-.}/.claude/session-changes.log"
 else
   HOOK_NAME="PRE-COMPACT-SNAPSHOT"
+  # shellcheck source=./lib/common.sh
   source "${BASH_SOURCE[0]%/*}/lib/common.sh"
   hook_init
 fi

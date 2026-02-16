@@ -19,6 +19,7 @@ if [[ -f "$_CACHE_FILE" ]]; then
 fi
 
 HOOK_NAME="STOP-RECONCILE"
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
 

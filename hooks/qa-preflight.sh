@@ -13,6 +13,7 @@ if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
   QA_STATE="${PROJECT_DIR:-.}/.claude/qa-state.json"
 else
   HOOK_NAME="QA-PREFLIGHT"
+  # shellcheck source=./lib/common.sh
   source "${BASH_SOURCE[0]%/*}/lib/common.sh"
   hook_init
   printf -v _now '%(%Y-%m-%dT%H:%M:%SZ)T' -1

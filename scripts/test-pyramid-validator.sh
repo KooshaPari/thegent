@@ -20,7 +20,7 @@ E2E_COUNT=$(uv run pytest --collect-only -m e2e "$TESTS_DIR" 2>/dev/null | grep 
 
 TOTAL=$((UNIT_COUNT + INT_COUNT + E2E_COUNT))
 
-if [ "$TOTAL" -eq 0 ]; then
+if [[ "$TOTAL" -eq 0 ]]; then
     echo "[WARN] No tests found with unit/integration/e2e markers."
     exit 0
 fi
@@ -35,7 +35,7 @@ check_band() {
     local name="$1" actual="$2" target="$3"
     local low=$((target - TOLERANCE))
     local high=$((target + TOLERANCE))
-    if [ "$actual" -lt "$low" ] || [ "$actual" -gt "$high" ]; then
+    if [[ "$actual" -lt "$low" ]] || [[ "$actual" -gt "$high" ]]; then
         echo "  [FAIL] $name: $actual% (target: $target% +/-$TOLERANCE%)"
         PASS=false
     else
@@ -48,7 +48,7 @@ check_band "Unit" "$PCT_UNIT" "$TARGET_UNIT"
 check_band "Integration" "$PCT_INT" "$TARGET_INT"
 check_band "E2E" "$PCT_E2E" "$TARGET_E2E"
 
-if [ "$PASS" = true ]; then
+if [[ "$PASS" == "true" ]]; then
     echo "RESULT: PASS"
     exit 0
 else

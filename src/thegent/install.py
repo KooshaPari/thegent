@@ -6,7 +6,7 @@ import platform
 import shutil
 import sys
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -32,7 +32,7 @@ except ImportError:
 # --- Models ---
 
 
-class InstallMode(str, Enum):
+class InstallMode(StrEnum):
     SMART = "smart"
     EDITABLE = "editable"
     FORCE = "force"
@@ -40,7 +40,7 @@ class InstallMode(str, Enum):
     UNDO = "undo"
 
 
-class FileAction(str, Enum):
+class FileAction(StrEnum):
     COPIED = "copied"
     SYMLINKED = "symlinked"
     SKIPPED = "skipped"

@@ -86,7 +86,50 @@ class ContractRegistry:
         return list(self._versions.values())
 
 
+@dataclass(frozen=True)
+class TaskDefinition:
+    """Definition of a task type and its required contract."""
+
+    task_type: str
+    contract_id: str
+    required_version: str | None = None
+    description: str = ""
+
+
+class TaskRegistry:
+    """Registry for task types and their associated contract requirements."""
+
+    def __init__(self) -> None:
+        self._tasks: dict[str, TaskDefinition] = {}
+        self._register_defaults()
+
+    def _register_defaults(self) -> None:
+        self.register(
+            TaskDefinition(
+                task_type="coding",
+                contract_id="csm",
+                description="General coding tasks requiring full CSM structure",
+            )
+        )
+        self.register(
+            TaskDefinition(
+                task_type="research",
+                contract_id="csm",
+                description="Research tasks with emphasis on evidence and summaries",
+            )
+        )
+
+    def register(self, td: TaskDefinition) -> None:
+        """Register a task definition."""
+        self._tasks[td.task_type] = td
+
+    def get(self, task_type: str) -> TaskDefinition | None:
+        """Get task definition by type."""
+        return self._tasks.get(task_type)
+
+
 _registry: ContractRegistry | None = None
+_task_registry: TaskRegistry | None = None
 
 
 def get_registry() -> ContractRegistry:
@@ -95,3 +138,11 @@ def get_registry() -> ContractRegistry:
     if _registry is None:
         _registry = ContractRegistry()
     return _registry
+
+
+def get_task_registry() -> TaskRegistry:
+    """Get the global task registry (singleton)."""
+    global _task_registry
+    if _task_registry is None:
+        _task_registry = TaskRegistry()
+    return _task_registry

@@ -107,7 +107,6 @@ def run_cmd(
     timeout: int = 90,
     full: bool = False,
     live: bool = False,
-    droid: str | None = None,
     model: str | None = None,
     provider: str | None = None,
     failover: bool = False,
@@ -158,6 +157,7 @@ def run_cmd(
         timeout=timeout,
         full=full,
         model=model,
+        provider=provider,
         run_id=run_id,
         owner=None,
         include_contract=include_contract,
@@ -198,7 +198,6 @@ def bg_cmd(
     mode: str,
     timeout: int,
     full: bool,
-    droid: str | None,  # kept for API compat, ignored
     model: str | None,
     provider: str | None = None,
     routing: str | None = None,
@@ -209,7 +208,6 @@ def bg_cmd(
     continuation_include_stderr: bool = False,
     include_contract: bool = False,
     run_id: str | None = None,
-    correlation_id: str | None = None,
     lane: str | None = None,
     idempotency_token: str | None = None,
     confidence: float | None = None,
@@ -229,6 +227,7 @@ def bg_cmd(
         timeout=timeout,
         full=full,
         model=model,
+        provider=provider,
         owner=owner,
         continue_from=continue_from,
         continuation_include_stderr=continuation_include_stderr,
@@ -589,6 +588,23 @@ def policy_show_cmd() -> None:
     console.print(table)
 
 
+def policy_purge_cmd(dry_run: bool = True) -> None:
+    """Purge expired history based on tiered retention (WP-3006)."""
+    settings = ThegentSettings()
+    from thegent.execution import RunRegistry
+
+    registry = RunRegistry(settings.session_dir)
+    res = registry.purge_expired(
+        default_days=settings.retention_default_days,
+        by_domain=settings.retention_by_domain,
+        dry_run=dry_run,
+    )
+    if dry_run:
+        console.print(f"[yellow]Dry run: would purge {res['purged']} records (kept {res['kept']}).[/yellow]")
+    else:
+        console.print(f"[green]Purged {res['purged']} records (kept {res['kept']}).[/green]")
+
+
 def contracts_registry_cmd(format: str | None = None) -> None:
     """Show the contract registry and compatibility matrix."""
     from rich.console import Console
@@ -795,6 +811,80 @@ def observe_summary_cmd(
     console.print(panel)
 
 
+def explain_cmd(run_id: str) -> None:
+    """Show detailed explanation for an agent run (WP-4002)."""
+    from rich.panel import Panel
+
+    from thegent.cli_impl import history_impl
+
+    runs = history_impl(limit=1000)
+    run = next((r for r in runs if r.get("run_id") == run_id), None)
+
+    if not run:
+        console.print(f"[red]Run ID {run_id} not found.[/red]")
+        return
+
+    lines = [
+        f"[bold]Run ID:[/bold] {run.get('run_id')}",
+        f"[bold]Agent:[/bold] {run.get('agent')}",
+        f"[bold]Status:[/bold] {run.get('status')}",
+        f"[bold]Exit Code:[/bold] {run.get('exit_code')}",
+        f"[bold]Started:[/bold] {run.get('started_at_utc')}",
+        f"[bold]Duration:[/bold] {run.get('duration_s', 0):.2f}s",
+        f"[bold]Lane:[/bold] {run.get('lane', 'standard')}",
+        f"[bold]Confidence:[/bold] {run.get('confidence', 1.0):.2f}",
+        "",
+        "[bold]Prompt:[/bold]",
+        run.get("prompt", "")[:500] + ("..." if len(run.get("prompt", "")) > 500 else ""),
+    ]
+
+    if run.get("error"):
+        lines.append(f"\n[red][bold]Error:[/bold] {run.get('error')}[/red]")
+
+    if run.get("policy_result"):
+        lines.append(f"\n[bold]Policy:[/bold] {run.get('policy_result')} ({run.get('policy_reason')})")
+
+    panel = Panel("\n".join(lines), title=f"Run Explanation: {run_id}", border_style="blue")
+    console.print(panel)
+
+
+def fallbacks_cmd(run_id: str) -> None:
+    """Show safe fallback options for a failed or blocked run (WP-4003)."""
+    settings = ThegentSettings()
+    from thegent.agents.state_machine import FallbackStateMachine
+    from thegent.execution import RunRegistry
+
+    registry = RunRegistry(settings.session_dir)
+    runs = registry.list_runs(limit=100)
+    run = next((r for r in runs if r.get("run_id") == run_id), None)
+
+    if not run:
+        console.print(f"[red]Run {run_id} not found.[/red]")
+        raise typer.Exit(1)
+
+    # Initialize FSM with dummy providers to get structural suggestions
+    fsm = FallbackStateMachine(providers=["cursor-agent", "gemini", "claude"], run_id=run_id)
+    # Set dummy state to trigger suggestions
+    fsm.state.policy_issues = ["Dummy violation"] if run.get("status") == "failed" else []
+    fsm.state.model = run.get("model")
+
+    suggestions = fsm.suggest_fallbacks()
+
+    if not suggestions:
+        console.print("[yellow]No specific fallback suggestions available for this run state.[/yellow]")
+        return
+
+    table = Table(title=f"Safe Fallback Options for {run_id}")
+    table.add_column("Type", style="bold")
+    table.add_column("Suggestion")
+    table.add_column("Command (one-click copy)", style="dim")
+
+    for s in suggestions:
+        table.add_row(s["type"], s["reason"], s["command"])
+
+    console.print(table)
+
+
 def contracts_conformance_cmd(
     format: str | None = None,
     check_drift: bool = False,
@@ -854,12 +944,18 @@ from rich.panel import Panel
 def cockpit_cmd() -> None:
     """Show high-level operator cockpit summary."""
     settings = ThegentSettings()
+    from rich.table import Table
+
     from thegent.cli_impl import ps_impl
+    from thegent.contracts.telemetry import ContractTelemetry
     from thegent.execution import CheckpointRegistry, CircuitBreakerRegistry
+    from thegent.governance.cost import CostAggregator
 
     registry = RunRegistry(settings.session_dir)
     circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
     ckpt_registry = CheckpointRegistry(settings.session_dir)
+    ct = ContractTelemetry(settings.session_dir)
+    agg = CostAggregator(settings.session_dir)
 
     # 1. Session Health
     sessions = ps_impl(all=True)
@@ -874,6 +970,11 @@ def cockpit_cmd() -> None:
     targets = ["claude", "gemini", "codex", "copilot", "antigravity"]
     open_circuits = [t for t in targets if circuit_breaker.is_open(t)]
 
+    # 4. Drift and Budget
+    drift = ct.get_drift_budget_status()
+    mtd_total = agg.get_mtd_total() if hasattr(agg, "get_mtd_total") else 0.0
+    budget_mtd = float(getattr(settings, "cost_budget_mtd", 100.0))
+
     # Render Panels
     session_panel = Panel(
         f"[bold]Sessions[/bold]\nRunning: [green]{len(running)}[/green]\nFailed: [red]{len(failed)}[/red]",
@@ -884,13 +985,36 @@ def cockpit_cmd() -> None:
     circuit_text = "\n".join([f"- {t}: [red]OPEN[/red]" for t in open_circuits]) or "[green]All Closed[/green]"
     circuit_panel = Panel(f"[bold]Circuits[/bold]\n{circuit_text}", title="Resource State", border_style="magenta")
 
-    ckpt_panel = Panel(
-        f"Last Checkpoint: [dim]{ckpt_registry.list_checkpoints(limit=1)[0].get('checkpoint_id') if ckpt_registry.list_checkpoints(limit=1) else 'None'}[/dim]",
-        title="Continuity",
-        border_style="yellow",
+    drift_color = "green" if drift["within_budget"] else "red"
+    drift_text = (
+        f"Structural: [{drift_color}]{drift['structural_rate_pct']}%[/{drift_color}] (max {drift['structural_budget_pct']}%)\n"
+        f"Semantic: [{drift_color}]{drift['semantic_rate_pct']}%[/{drift_color}] (max {drift['semantic_budget_pct']}%)"
+    )
+    drift_panel = Panel(f"[bold]Contract Drift[/bold]\n{drift_text}", title="Quality Gate", border_style=drift_color)
+
+    budget_color = "green" if mtd_total < budget_mtd else "red"
+    budget_panel = Panel(
+        f"[bold]Budget MTD[/bold]\n[{budget_color}]${mtd_total:.2f}[/{budget_color}] / ${budget_mtd:.2f}",
+        title="Governance",
+        border_style=budget_color,
     )
 
-    console.print(Columns([session_panel, circuit_panel, ckpt_panel]))
+    console.print(Columns([session_panel, circuit_panel, drift_panel, budget_panel]))
+
+    # Task Breakdown by Lane
+    lane_table = Table(title="\nTask Lane Distribution", box=None)
+    lane_table.add_column("Lane", style="bold")
+    lane_table.add_column("Count", justify="right")
+
+    lanes: dict[str, int] = {}
+    for r in runs:
+        l = r.get("lane", "standard")
+        lanes[l] = lanes.get(l, 0) + 1
+
+    for l, count in sorted(lanes.items(), key=lambda x: x[1], reverse=True):
+        lane_table.add_row(l.capitalize(), str(count))
+
+    console.print(lane_table)
 
     if recent_errors:
         console.print("\n[bold]Recent Failure Rationale (WP-4002/4007):[/bold]")
@@ -1056,7 +1180,7 @@ def session_contracts_cmd(
                 f"{r.get('requested_provider_hint', '—')} | "
                 f"{r.get('resolved_model_alias', '—')} | "
                 f"{r.get('policy', '—')} | "
-                f"{issues if issues else '—'} |"
+                f"{issues or '—'} |"
             )
         console.print("")
         console.print(
@@ -1255,7 +1379,7 @@ def _serialize_health_report_md(result: dict[str, Any]) -> str:
             remediation = ", ".join(row.get("remediation", []))
             lines.append(
                 f"| {row['session_id']} | {row['owner']} | {row['state']} | "
-                f"{row['health']} | {issues if issues else '—'} | {remediation if remediation else '—'} |"
+                f"{row['health']} | {issues or '—'} | {remediation or '—'} |"
             )
     return "\n".join(lines)
 
@@ -1580,7 +1704,9 @@ def _serialize_health_gate_jsonl(result: dict[str, Any]) -> str:
         blocked_row["blocked_sessions_cap"] = result["blocked_sessions_cap"]
         blocked_row["generated_at_utc"] = result["generated_at_utc"]
         blocked_row["strict_checks_enabled"] = result["strict_checks_enabled"]
-        blocked_row["payload_signature_algorithm"] = _safe_dict(result.get("payload_signature")).get("algorithm", "sha256")
+        blocked_row["payload_signature_algorithm"] = _safe_dict(result.get("payload_signature")).get(
+            "algorithm", "sha256"
+        )
         blocked_row["payload_signature_value"] = _safe_dict(result.get("payload_signature")).get("value", "")
         blocked_row["generated_query"] = _safe_dict(result.get("generated_query"))
         lines.append(json.dumps(blocked_row, sort_keys=True))
@@ -1783,7 +1909,9 @@ def _serialize_health_trend_md(result: dict[str, Any]) -> str:
         f"scope_payload_type: {result.get('scope_payload_type', _safe_dict(result.get('scope_key')).get('payload_type', ''))}"
     )
     lines.append(f"scope_all: {result.get('scope_all', _safe_dict(result.get('scope_key')).get('all', False))}")
-    lines.append(f"scope_strict: {result.get('scope_strict', _safe_dict(result.get('scope_key')).get('strict', False))}")
+    lines.append(
+        f"scope_strict: {result.get('scope_strict', _safe_dict(result.get('scope_key')).get('strict', False))}"
+    )
     lines.append(
         f"scope_policy_profile: {result.get('scope_policy_profile', _safe_dict(result.get('scope_key')).get('policy_profile', 'custom'))}"
     )
@@ -2448,7 +2576,7 @@ def session_contract_health_report_cmd(
             remediation = ", ".join(row.get("remediation", []))
             console.print(
                 f"  - {row['session_id']} owner={row['owner']} health={row['health']} "
-                f"issues={issues if issues else '—'} remediation={remediation if remediation else '—'}"
+                f"issues={issues or '—'} remediation={remediation or '—'}"
             )
 
 
@@ -3264,7 +3392,9 @@ def closure_pack_cmd(cd: Path | None = None) -> None:
     retention_matrix = []
     retention_matrix.append("| Domain | Retention (Days) | Runs |")
     retention_matrix.append("|--------|------------------|------|")
-    retention_matrix.append(f"| default | {settings.retention_days_registry} | {len([r for r in runs if not r.get('domain_tag')])} |")
+    retention_matrix.append(
+        f"| default | {settings.retention_days_registry} | {len([r for r in runs if not r.get('domain_tag')])} |"
+    )
     for d in sorted(domains):
         days = settings.retention_by_domain.get(d, settings.retention_days_registry)
         count = len([r for r in runs if r.get("domain_tag") == d])
@@ -3491,11 +3621,10 @@ def dag_run_cmd(
                 mode="write",
                 timeout=90,
                 full=True,
-                droid=None,
                 model=None,
                 owner=None,
                 routing=routing,
-                correlation_id=tid,
+                run_id=tid,
                 lane=effective_lane,
                 idempotency_token=idempotency_token,
                 confidence=conf,
@@ -3743,8 +3872,15 @@ def dag_probe_cmd(cd: Path | None = None, baseline_id: str | None = None) -> Non
         console.print(f"[green]No drift detected against baseline {baseline_id}.[/green]")
     else:
         console.print(f"[yellow]Drift detected against baseline {baseline_id}:[/yellow]")
-        # Could use difflib here for more detail
-        console.print("[dim]Use 'thegent dag list' to inspect current state.[/dim]")
+        import difflib
+
+        diff = difflib.unified_diff(
+            baseline_content.splitlines(keepends=True),
+            current_content.splitlines(keepends=True),
+            fromfile=f"baseline:{baseline_id}",
+            tofile="current",
+        )
+        console.print("".join(diff))
 
 
 def status_cmd(session_id: str, format: str | None = None, include_contract: bool = False) -> None:
@@ -4037,6 +4173,22 @@ def list_agents_cmd() -> None:
     for name in agents:
         display_name = AGENT_LABELS.get(name, name)
         table.add_row(display_name, backends.get(name, "Direct"))
+    console.print(table)
+
+
+def list_droids_cmd(cd: Path | None = None) -> None:
+    """List available droids."""
+    settings = ThegentSettings()
+    resolved_cd = _resolve_cwd(cd)
+    droids_dir = _resolve_droids_dir(resolved_cd, settings)
+    droids = list_droid_names(droids_dir)
+    if not droids:
+        console.print("[yellow]No droids found.[/yellow]")
+        return
+    table = Table(title="Droids")
+    table.add_column("Name", style="cyan")
+    for name in sorted(droids):
+        table.add_row(name)
     console.print(table)
 
 
@@ -4334,21 +4486,144 @@ def cliproxy_login_cmd(provider: str) -> None:
         raise typer.Exit(1)
 
 
-def list_droids_cmd(
-    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory for project droids"),
+def setup_cmd(
+    api_key: str = typer.Option(None, "--api-key", "-k", help="NVIDIA NIM API key"),
+    model: str = typer.Option(None, "--model", "-m", help="NVIDIA NIM model (default: z-ai/glm-5)"),
+    openrouter_key: str = typer.Option(None, "--openrouter-key", help="OpenRouter API key"),
+    kilo_key: str = typer.Option(None, "--kilo-key", help="Kilo.ai API key"),
+    zai_key: str = typer.Option(None, "--zai-key", help="Z.AI (Zhipu) API key"),
+    minimax_key: str = typer.Option(None, "--minimax-key", help="MiniMax API key"),
+    wizard: bool = typer.Option(True, "--wizard/--no-wizard", help="Run interactive setup wizard"),
+    links: bool = typer.Option(True, "--links/--no-links", help="Install claudeglm/claudemax shortcuts"),
 ) -> None:
-    """List available droids."""
-    settings = ThegentSettings()
-    cwd = _resolve_cwd(cd) if cd else Path.cwd()
-    droids_dir = _resolve_droids_dir(cwd, settings)
-    droids = list_droid_names(droids_dir)
+    """Unified setup: configure providers and install interactive shortcuts."""
+    import os
+    import webbrowser
+    from pathlib import Path
 
-    if not droids:
-        console.print("[dim]No droids found. Check THGENT_FACTORY_DROIDS_DIR.[/dim]")
-        return
+    env_path = Path(".env")
+    lines = env_path.read_text().splitlines() if env_path.exists() else []
 
-    table = Table(title="Droids")
-    table.add_column("Name", style="cyan")
-    for name in sorted(droids):
-        table.add_row(name)
-    console.print(table)
+    def set_env(key: str, value: str):
+        found = False
+        for i, line in enumerate(lines):
+            if line.startswith(f"{key}="):
+                lines[i] = f"{key}={value}"
+                found = True
+                break
+        if not found:
+            lines.append(f"{key}={value}")
+
+    providers_config = {
+        "NVIDIA NIM (Free tier available)": {
+            "key": api_key,
+            "env_var": "THGENT_NIM_API_KEY",
+            "url": "https://build.nvidia.com/z-ai/glm-5",
+            "instructions": [
+                "1. Sign in to NVIDIA Build (build.nvidia.com).",
+                "2. Navigate to the model (e.g., z-ai/glm-5).",
+                "3. Click 'Get API Key' or 'Generate Key'.",
+                "4. Copy the key starting with 'nvapi-'.",
+            ],
+        },
+        "OpenRouter": {
+            "key": openrouter_key,
+            "env_var": "THGENT_OPENROUTER_API_KEY",
+            "url": "https://openrouter.ai/keys",
+            "instructions": [
+                "1. Log in to openrouter.ai.",
+                "2. Go to Settings -> Keys.",
+                "3. Create a new key and copy it.",
+                "4. Note: OpenRouter offers access to many reasoning models.",
+            ],
+        },
+        "Kilo.ai (Free GLM-5/MiniMax)": {
+            "key": kilo_key,
+            "env_var": "THGENT_KILO_API_KEY",
+            "url": "https://kilo.ai/api-keys",
+            "instructions": [
+                "1. Sign up/Log in at kilo.ai.",
+                "2. Go to the API Keys section.",
+                "3. Create a new key.",
+                "4. This provides a free tier for GLM and MiniMax models.",
+            ],
+        },
+        "Zhipu AI (z.ai native)": {
+            "key": zai_key,
+            "env_var": "THGENT_ZAI_API_KEY",
+            "url": "https://open.bigmodel.cn/usercenter/apikeys",
+            "instructions": [
+                "1. Log in to the Zhipu AI Open Platform (bigmodel.cn).",
+                "2. Go to User Center -> API Keys.",
+                "3. Copy your API Key.",
+                "4. Required for official GLM-5 subscription access.",
+            ],
+        },
+        "MiniMax": {
+            "key": minimax_key,
+            "env_var": "THGENT_MINIMAX_API_KEY",
+            "url": "https://platform.minimaxi.com/user-center/basic-information/interface-key",
+            "instructions": [
+                "1. Log in to the MiniMax Platform.",
+                "2. Go to User Center -> Interface Key.",
+                "3. Copy your API Key.",
+                "4. Required for official MiniMax-M2.5 subscription access.",
+            ],
+        },
+    }
+
+    any_configured = False
+
+    for name, cfg in providers_config.items():
+        current_key = cfg["key"]
+
+        # If wizard is on and no key was provided via CLI
+        if wizard and not current_key:
+            console.print(f"\n[bold cyan]Setting up {name}...[/bold cyan]")
+            for step in cfg["instructions"]:
+                console.print(f" [dim]{step}[/dim]")
+
+            console.print(f" Opening: [link={cfg['url']!s}]{cfg['url']!s}[/link]")
+            try:
+                webbrowser.open(str(cfg["url"]))
+            except Exception:
+                console.print(f"[yellow]Could not auto-open browser. Please visit: {cfg['url']}[/yellow]")
+
+            val = typer.prompt(f"Enter {name} API Key (press enter to skip)", default="", show_default=False).strip()
+            if val:
+                set_env(str(cfg["env_var"]), val)
+                any_configured = True
+        elif current_key:
+            set_env(str(cfg["env_var"]), str(current_key))
+            any_configured = True
+
+    if model:
+        set_env("THGENT_NIM_MODEL", model)
+        any_configured = True
+
+    if any_configured:
+        env_path.write_text("\n".join(lines) + "\n")
+        console.print(f"\n[green]Successfully updated {env_path}[/green]")
+
+    if links:
+        console.print("\n[bold cyan]Installing interactive shortcuts...[/bold cyan]")
+        try:
+            from thegent.clode_main import install_links
+
+            # Call the logic directly
+            install_links(bin_dir=Path.home() / ".local" / "bin", force=True)
+        except Exception as e:
+            console.print(f"[red]Failed to install links: {e}[/red]")
+
+    if wizard:
+        from rich.prompt import Confirm
+
+        if Confirm.ask(
+            "\nWould you like to integrate thegent with your AI agents (Cursor, Claude Code, etc.)?", default=True
+        ):
+            from thegent.install import run_wizard
+
+            run_wizard()
+
+    console.print("\n[bold green]Setup complete![/bold green]")
+    console.print("Try running: [blue]claudeglm[/blue] or [blue]claudemax[/blue]")

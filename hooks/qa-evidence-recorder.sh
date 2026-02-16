@@ -15,6 +15,7 @@ if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
   # Env vars already set: PROJECT_DIR, VERIFY_DIR, etc.
   printf -v now '%(%Y-%m-%dT%H:%M:%SZ)T' -1
 else
+  # shellcheck source=./lib/common.sh
   source "${BASH_SOURCE[0]%/*}/lib/common.sh"
   hook_init  # sets PROJECT_DIR, VERIFY_DIR, $now, reads stdin
 fi

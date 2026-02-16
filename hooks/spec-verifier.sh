@@ -25,6 +25,7 @@ if [[ -z "${FILE_PATH:-}" ]]; then
 fi
 
 HOOK_NAME="SPEC-VERIFIER"
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
 

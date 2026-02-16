@@ -5,8 +5,13 @@
 # Advisory only (always exits 0). Budget: <2s for dispatch, tests run async.
 set -euo pipefail
 HOOK_NAME="ASYNC-TEST-RUNNER"
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
+
+# Initialize variables if not set by hook_init/dispatcher
+PROJECT_DIR="${PROJECT_DIR:-.}"
+now="${now:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 
 # Stderr message on unexpected failure (set -e)
 trap 'echo "ASYNC-TEST-RUNNER FAIL: unexpected error at line $LINENO" >&2' ERR
@@ -111,7 +116,7 @@ run_tests_async() {
     py)
       if [[ "$(tool_available pytest)" == "true" ]]; then
         test_framework="pytest"
-        test_output=$(pytest --tb=short --no-header -q $TEST_FILES 2>&1) || test_exit=$?
+        test_output=$(pytest --tb=short --no-header -q "$TEST_FILES" 2>&1) || test_exit=$?
       elif command -v python3 >/dev/null 2>&1; then
         test_framework="unittest"
         for tf in $TEST_FILES; do
@@ -122,16 +127,16 @@ run_tests_async() {
     sh|bash|bats)
       if [[ "$(tool_available bats)" == "true" ]]; then
         test_framework="bats"
-        test_output=$(bats $TEST_FILES 2>&1) || test_exit=$?
+        test_output=$(bats "$TEST_FILES" 2>&1) || test_exit=$?
       fi
       ;;
     ts|tsx|js|jsx)
       if [[ -f "${PROJECT_DIR}/node_modules/.bin/vitest" ]]; then
         test_framework="vitest"
-        test_output=$(cd "$PROJECT_DIR" && npx vitest run --reporter=verbose $TEST_FILES 2>&1) || test_exit=$?
+        test_output=$(cd "$PROJECT_DIR" && npx vitest run --reporter=verbose "$TEST_FILES" 2>&1) || test_exit=$?
       elif [[ -f "${PROJECT_DIR}/node_modules/.bin/jest" ]]; then
         test_framework="jest"
-        test_output=$(cd "$PROJECT_DIR" && npx jest --verbose $TEST_FILES 2>&1) || test_exit=$?
+        test_output=$(cd "$PROJECT_DIR" && npx jest --verbose "$TEST_FILES" 2>&1) || test_exit=$?
       fi
       ;;
     go)

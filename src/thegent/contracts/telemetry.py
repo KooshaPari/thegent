@@ -306,4 +306,4 @@ def rank_providers_by_parser_quality(
         fb = v.get("fallback_rate", 0.5)
         return (conf, -fb)  # higher confidence first, then lower fallback
 
-    return sorted(providers, key=lambda p: score(p), reverse=True)
+    return sorted(providers, key=score, reverse=True)

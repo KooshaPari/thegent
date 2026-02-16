@@ -7,8 +7,10 @@ Distinguishes:
 
 import re
 from collections.abc import Callable
-from enum import Enum
-from typing import TypeVar
+from dataclasses import dataclass
+from enum import StrEnum
+from types import MappingProxyType
+from typing import Any, ClassVar, TypeVar
 
 from tenacity import (
     retry,
@@ -22,13 +24,97 @@ from thegent.agents.base import RunResult
 T = TypeVar("T")
 
 
-class FailureKind(str, Enum):
+class FailureKind(StrEnum):
     """Classification of agent run failure."""
 
     RATE_LIMIT = "rate_limit"  # 429, too many requests; retry same provider
     TRANSIENT = "transient"  # 502/503/504, reconnecting; retry same provider
     USAGE_LIMIT = "usage_limit"  # Quota/subscription exhausted; fallback to different provider
+    LOGIC_ERROR = "logic_error"  # Model output invalid or policy violation
+    TIMEOUT = "timeout"
+    PERMANENT = "permanent"  # Config error, unknown model
     UNKNOWN = "unknown"  # Not retryable, not fallback-worthy
+
+
+class ToolClass(StrEnum):
+    """WP-2002: Classification of tool calls for specialized retries."""
+
+    MODEL = "model"
+    STORAGE = "storage"
+    NETWORK = "network"
+    COMPUTE = "compute"
+
+
+@dataclass
+class RetryBudget:
+    """WP-2002: SLO-aware retry budget."""
+
+    max_retries: int = 3
+    total_timeout_ms: int = 60000
+    min_success_rate: float = 0.9
+
+
+class ToolCircuitBreaker:
+    """WP-2003: Circuit breaker for individual tools and models."""
+
+    def __init__(self, name: str, threshold: int = 5, window_s: int = 300) -> None:
+        self.name = name
+        self.threshold = threshold
+        self.window_s = window_s
+        self.failures: list[float] = []
+
+    def record_failure(self) -> None:
+        """Record a failure event."""
+        import time
+
+        self.failures.append(time.time())
+
+    def is_open(self) -> bool:
+        """True if the circuit is open (too many recent failures)."""
+        import time
+
+        now = time.time()
+        recent = [f for f in self.failures if now - f < self.window_s]
+        self.failures = recent
+        return len(recent) >= self.threshold
+
+
+class RecoveryEngine:
+    """WP-2004: Automated recovery playbooks for known failure patterns."""
+
+    PLAYBOOKS: ClassVar[Any] = MappingProxyType(
+        {
+            "rate_limit": "Reduce concurrency or switch to high-quota provider",
+            "context_overflow": "Summarize history or use model with larger context",
+            "structural_drift": "Refresh parser schemas or switch to legacy adapter",
+        }
+    )
+
+    def suggest_playbook(self, failure_type: str) -> str:
+        """Return a recovery playbook for the given failure type."""
+        return self.PLAYBOOKS.get(failure_type, "Standard retry with backoff")
+
+
+class FailureTaxonomy(StrEnum):
+    """WP-2005: Granular taxonomy of failures for root cause analysis."""
+
+    API_AUTH = "api.auth"
+    API_QUOTA = "api.quota"
+    MODEL_HALLUCINATION = "model.hallucination"
+    PARSER_INVALID_XML = "parser.invalid_xml"
+    CONTRACT_VIOLATION = "contract.violation"
+
+
+def classify_to_taxonomy(error_msg: str) -> FailureTaxonomy:
+    """Classify a raw error message into the failure taxonomy."""
+    msg = error_msg.lower()
+    if "auth" in msg or "key" in msg:
+        return FailureTaxonomy.API_AUTH
+    if "quota" in msg or "limit" in msg:
+        return FailureTaxonomy.API_QUOTA
+    if "xml" in msg:
+        return FailureTaxonomy.PARSER_INVALID_XML
+    return FailureTaxonomy.CONTRACT_VIOLATION
 
 
 # Retry same provider: rate limit or transient gateway/network

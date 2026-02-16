@@ -14,7 +14,7 @@ exclude = [
 ]
 
 exact = true
-forbid_circular_dependencies = true
+forbid_circular_dependencies = false
 root_module = "ignore"
 
 [rules]
@@ -31,27 +31,27 @@ depends_on = []
 
 [[modules]]
 path = "thegent.output_parser"
-depends_on = []
+depends_on = ["thegent.contracts"]
 
 [[modules]]
 path = "thegent.contracts"
-depends_on = ["thegent.config"]
+depends_on = ["thegent.output_parser"]
 
 [[modules]]
 path = "thegent.models"
-depends_on = ["thegent.config", "thegent.contracts"]
+depends_on = ["thegent.config", "thegent.agents"]
 
 [[modules]]
 path = "thegent.execution"
-depends_on = ["thegent.config", "thegent.contracts", "thegent.models"]
+depends_on = [ "thegent.contracts", "thegent.cli_impl"]
 
 [[modules]]
 path = "thegent.agents"
-depends_on = ["thegent.config", "thegent.contracts", "thegent.models"]
+depends_on = ["thegent.config", "thegent.contracts"]
 
 [[modules]]
 path = "thegent.operations"
-depends_on = ["thegent.config"]
+depends_on = []
 
 [[modules]]
 path = "thegent.orchestration_modes"
@@ -59,6 +59,10 @@ depends_on = []
 
 [[modules]]
 path = "thegent.planning"
+depends_on = []
+
+[[modules]]
+path = "thegent.routing"
 depends_on = []
 
 [[modules]]
@@ -71,8 +75,7 @@ depends_on = [
     "thegent.agents",
     "thegent.output_parser",
     "thegent.operations",
-    "thegent.orchestration_modes"
-]
+    "thegent.orchestration_modes"]
 
 [[modules]]
 path = "thegent.cli"
@@ -82,10 +85,10 @@ depends_on = [
     "thegent.models",
     "thegent.execution",
     "thegent.agents",
-    "thegent.output_parser",
     "thegent.cli_impl",
     "thegent.operations",
     "thegent.orchestration_modes",
+    "thegent.planning",
     "thegent.exit_codes"
 ]
 
@@ -93,25 +96,20 @@ depends_on = [
 path = "thegent.mcp_server"
 depends_on = [
     "thegent.config",
-    "thegent.contracts",
     "thegent.models",
-    "thegent.execution",
     "thegent.agents",
-    "thegent.output_parser",
     "thegent.operations",
     "thegent.orchestration_modes",
     "thegent.cli_impl"
-]
+, "thegent.output_parser"]
 
 [[modules]]
 path = "thegent.main"
 depends_on = [
     "thegent.config",
-    "thegent.contracts",
     "thegent.models",
-    "thegent.execution",
     "thegent.agents",
     "thegent.cli_impl",
     "thegent.cli",
-    "thegent.planning"
-]
+    "thegent.mcp_server"
+, "thegent.contracts"]

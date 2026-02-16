@@ -90,7 +90,7 @@ class ContentionResult:
 def simulate_resource_contention(
     tasks: list[Any],
     resources: list[ResourceProfile],
-    schedule: dict[str, Any],
+    _: dict[str, Any],
 ) -> list[ContentionResult]:
     """Identify resource contention windows (D2 stub)."""
     return []

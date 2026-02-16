@@ -3,13 +3,13 @@
 Defines coordination patterns for multi-agent workflows (FR-032).
 """
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel
 
 
-class ExecutionMode(str, Enum):
+class ExecutionMode(StrEnum):
     """Coordination patterns for multi-agent execution."""
 
     SEQUENTIAL_DELEGATION = "sequential_delegation"

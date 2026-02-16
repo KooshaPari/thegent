@@ -13,6 +13,7 @@ if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
   QA_STATE="${PROJECT_DIR:-.}/.claude/qa-state.json"
 else
   HOOK_NAME="SESSION-CLEANUP"
+  # shellcheck source=./lib/common.sh
   source "${BASH_SOURCE[0]%/*}/lib/common.sh"
   hook_init
 fi
