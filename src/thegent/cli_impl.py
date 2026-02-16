@@ -1894,6 +1894,8 @@ def run_impl(
     override_reason: str | None = None,
     contract_version: str | None = None,
     domain: str | None = None,
+    idempotency_token: str | None = None,
+    correlation_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Run an agent or droid with the given prompt.
@@ -1947,6 +1949,21 @@ def run_impl(
     if cwd is None:
         return {"error": "Ambiguous cwd. Provide --cd /path explicitly.", "exit_code": 1}
 
+    # Terminal reuse suggestion (light management)
+    if os.environ.get("THGENT_TERMINAL_MANAGEMENT_ENABLED", "1") == "1":
+        try:
+            from thegent.routing import TaskRouter
+
+            router = TaskRouter(settings)
+            existing_pane = router.find_active_terminal_for_path(str(cwd))
+            if existing_pane:
+                console.print(
+                    f"[bold yellow]Found existing terminal session for this path: {existing_pane}[/bold yellow]"
+                )
+                console.print(f"[dim]You can attach with: thegent terminal attach {existing_pane}[/dim]")
+        except Exception as e:
+            _log.debug(f"Terminal discovery failed: {e}")
+
     # G-GP-02: Input guardrails before PolicyEngine
     if os.environ.get("THGENT_INPUT_GUARDRAILS_ENABLED", "").lower() in ("1", "true", "yes"):
         try:
@@ -1964,8 +1981,33 @@ def run_impl(
         except Exception:
             pass
 
+    # Concurrency control (WP-5001)
+    from thegent.execution import ConcurrencyController
+
+    cc = ConcurrencyController(settings.session_dir, max_concurrency=settings.max_concurrency)
+    if not cc.acquire(lane=lane):
+        return {
+            "error": f"Concurrency limit reached ({settings.max_concurrency}). Task queued or blocked.",
+            "exit_code": 1,
+            "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
+        }
+
     # Registry integration
     registry = RunRegistry(settings.session_dir)
+
+    # WP-1003/WP-1008: Idempotency / Replay Detection
+    if idempotency_token:
+        existing = registry.find_by_token(idempotency_token)
+        if existing and existing.get("status") == "completed":
+            _log.info("Replay detected for token %s; skipping execution.", idempotency_token)
+            return {
+                "stdout": existing.get("stdout", ""),
+                "stderr": existing.get("stderr", ""),
+                "exit_code": existing.get("exit_code", 0),
+                "run_id": existing.get("run_id"),
+                "replayed": True,
+            }
+
     from thegent.execution import (
         Auditor,
         CircuitBreakerRegistry,
@@ -1980,9 +2022,20 @@ def run_impl(
     policy_engine = PolicyEngine(settings)
     auditor = Auditor(registry.registry_path)
 
+    # WP-3007: Trust Boundary Checks
+    last_env = trust_boundary.get_last_environment()
+    allowed, boundary_reason = trust_boundary.validate_transition(last_env, settings.environment.lower())
+    if not allowed:
+        return {
+            "error": f"Trust boundary violation: {boundary_reason}",
+            "exit_code": 1,
+            "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
+        }
+
     effective_owner = owner or _default_owner_tag(cwd)
     run_meta = RunMeta(
         run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
+        correlation_id=correlation_id,
         agent=agent or "unknown",
         model=model,
         mode=mode,
@@ -1993,6 +2046,7 @@ def run_impl(
         route_request=route_request,
         lane=lane,
         confidence=confidence,
+        idempotency_token=idempotency_token,
         override_reason=override_reason,
         override_by=effective_owner if override_reason else None,
         domain_tag=domain or settings.default_domain_tag,
@@ -2294,6 +2348,7 @@ def bg_impl(
     timeout: int,
     full: bool,
     model: str | None = None,
+    provider: str | None = None,
     owner: str | None = None,
     continue_from: str | None = None,
     continuation_include_stderr: bool = False,
@@ -2307,11 +2362,29 @@ def bg_impl(
     confidence: float | None = None,
     contract_version: str | None = None,
     domain: str | None = None,
+    idempotency_token: str | None = None,
 ) -> dict[str, Any]:
     """
     Start a background run. Returns dict with keys: session_id, log_path, owner.
     """
     settings = ThegentSettings()
+    if agent is None and model:
+        from thegent.models import normalize_model_id
+        from thegent.models.catalog import ModelCatalog, resolve_route
+
+        model_id = normalize_model_id(model)
+        route = resolve_route(model_id, provider_hint=provider)
+        if route is None:
+            routes = ModelCatalog.routes_for(model_id)
+            available = ", ".join(sorted({r.provider for r in routes})) if routes else "none"
+            suffix = f" Available: {available}." if available != "none" else ""
+            return {
+                "error": f"Model '{model}' not available via provider '{provider or 'any'}'.{suffix}",
+                "agents": available,
+                "exit_code": 1,
+                "session_id": "failed",
+            }
+        agent = route[0]
     agent = resolve_agent(agent) or "unknown"
 
     # WP-X1/V7: Contract Migration & Version Negotiation
@@ -2349,13 +2422,44 @@ def bg_impl(
 
     # Registry integration
     registry = RunRegistry(settings.session_dir)
+
+    # WP-1003/WP-1008: Idempotency
+    if idempotency_token:
+        existing = registry.find_by_token(idempotency_token)
+        if existing and existing.get("status") == "completed":
+            _log.info("Replay detected for token %s in bg; skipping.", idempotency_token)
+            return {
+                "session_id": existing.get("correlation_id") or "replayed",
+                "run_id": existing.get("run_id"),
+                "replayed": True,
+            }
+
     effective_run_id = run_id or f"run_{uuid.uuid4().hex[:8]}"
 
-    from thegent.execution import Auditor, PolicyEngine
+    from thegent.execution import (
+        Auditor,
+        CircuitBreakerRegistry,
+        OverrideRegistry,
+        PolicyEngine,
+        TrustBoundaryValidator,
+    )
 
+    circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
+    trust_boundary = TrustBoundaryValidator(settings.session_dir)
+    override_registry = OverrideRegistry(settings.session_dir)
     auditor = Auditor(registry.registry_path)
     policy_engine = PolicyEngine(settings)
     effective_owner = owner or _default_owner_tag(cwd)
+
+    # WP-3007: Trust Boundary Checks
+    last_env = trust_boundary.get_last_environment()
+    allowed, boundary_reason = trust_boundary.validate_transition(last_env, settings.environment.lower())
+    if not allowed:
+        return {
+            "error": f"Trust boundary violation: {boundary_reason}",
+            "exit_code": 1,
+            "session_id": "failed",
+        }
 
     run_meta = RunMeta(
         run_id=effective_run_id,
@@ -2372,11 +2476,19 @@ def bg_impl(
         domain_tag=domain or settings.default_domain_tag,
         lane=lane or "standard",
         confidence=confidence,
+        idempotency_token=idempotency_token,
         contract_version=requested_version,
     )
 
     # G-GP-05: Policy pre-check for background runs
     pol_res, pol_reason = policy_engine.evaluate(run_meta, registry)
+
+    # WP-3003: Overrides with TTL (revalidation on expiry)
+    if pol_res == "deny" and override_registry.has_unexpired(owner_tag):
+        _log.info("Policy override (cached, within TTL) for background run")
+        pol_res = "allow"
+        pol_reason = f"Overridden (cached): {pol_reason}"
+
     run_meta.policy_result = pol_res
     run_meta.policy_reason = pol_reason
     run_meta.signature = auditor.sign_run(run_meta)
@@ -2840,11 +2952,29 @@ def session_contract_health_gate_impl(
 
     blocked_ratio_val = payload.get("blocked_ratio", 0.0)
     blocked_count_val = payload.get("blocked_count", 0)
-    cur_ratio = float(cast("Any", blocked_ratio_val)) if blocked_ratio_val is not None else 0.0
-    cur_count = int(cast("Any", blocked_count_val)) if blocked_count_val is not None else 0
+    cur_ratio = 0.0
+    cur_count = 0
+    try:
+        if blocked_ratio_val is not None:
+            cur_ratio = float(str(blocked_ratio_val))
+        if blocked_count_val is not None:
+            cur_count = int(str(blocked_count_val))
+    except (TypeError, ValueError):
+        cur_ratio = 0.0
+        cur_count = 0
 
-    previous_ratio = float(cast("Any", previous.get("blocked_ratio", cur_ratio))) if previous is not None else cur_ratio
-    previous_count = int(cast("Any", previous.get("blocked_count", cur_count))) if previous is not None else cur_count
+    if previous is not None:
+        try:
+            previous_ratio = float(str(previous.get("blocked_ratio", cur_ratio)))
+        except (TypeError, ValueError):
+            previous_ratio = cur_ratio
+        try:
+            previous_count = int(str(previous.get("blocked_count", cur_count)))
+        except (TypeError, ValueError):
+            previous_count = cur_count
+    else:
+        previous_ratio = cur_ratio
+        previous_count = cur_count
     previous_issue_types = set(_coerce_issue_types((previous or {}).get("issue_types", [])))
     current_issue_types: set[str] = set()
     for row in blockers:
@@ -2906,6 +3036,32 @@ def session_contract_health_gate_impl(
     payload["payload_signature"] = _hash_health_payload(payload)
     _append_health_snapshot(payload, scope_key)
     return payload
+
+
+def explain_run_impl(run_id: str) -> dict[str, Any]:
+    """WP-4002: Multi-tier explanation framework for run decisions."""
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+
+    # 1. Fetch Run Metadata
+    runs = registry.list_runs(limit=100)
+    run = next((r for r in runs if r.get("run_id") == run_id), None)
+
+    if not run:
+        return {"error": f"Run {run_id} not found", "exit_code": 1}
+
+    # 2. Extract Rationales
+    concise = run.get("policy_reason") or run.get("error_class") or "No concise rationale available."
+    detailed = run.get("rationale") or "No detailed rationale available."
+
+    return {
+        "run_id": run_id,
+        "concise_rationale": concise,
+        "detailed_rationale": detailed,
+        "agent": run.get("agent"),
+        "status": run.get("status"),
+        "confidence": run.get("confidence"),
+    }
 
 
 def session_contract_health_report_impl(
@@ -3080,15 +3236,26 @@ def session_contract_health_report_impl(
         br = payload.get("blocked_ratio", 0.0)
         bc = payload.get("blocked_count", 0)
         if br is not None:
-            cur_ratio = float(cast("Any", br))
+            cur_ratio = float(str(br))
         if bc is not None:
-            cur_count = int(cast("Any", bc))
+            cur_count = int(str(bc))
     except (TypeError, ValueError):
         pass
 
-    previous_ratio = float(cast("Any", previous.get("blocked_ratio", cur_ratio))) if previous is not None else cur_ratio
-    previous_count = int(cast("Any", previous.get("blocked_count", cur_count))) if previous is not None else cur_count
-    previous_issue_counts = previous.get("issue_counts", {}) if previous is not None else {}
+    if previous is not None:
+        try:
+            previous_ratio = float(str(previous.get("blocked_ratio", cur_ratio)))
+        except (TypeError, ValueError):
+            previous_ratio = cur_ratio
+        try:
+            previous_count = int(str(previous.get("blocked_count", cur_count)))
+        except (TypeError, ValueError):
+            previous_count = cur_count
+        previous_issue_counts = previous.get("issue_counts", {})
+    else:
+        previous_ratio = cur_ratio
+        previous_count = cur_count
+        previous_issue_counts = {}
     previous_issue_types = {str(i) for i in previous_issue_counts}
     current_issue_types = {str(i) for i in issue_counts}
     max_blocked_ratio = 1.0 - float(policy["min_healthy_ratio"])
