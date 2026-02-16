@@ -17,6 +17,11 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "tenacity>=9.0.0",
     "pyyaml>=6.0",
+    "fastmcp>=3.0.0rc1",
+    "starlette>=0.36.0",
+    "uvicorn>=0.27.0",
+    "opentelemetry-api>=1.22.0",
+    "opentelemetry-sdk>=1.22.0",
 ]
 
 [project.optional-dependencies]
@@ -30,10 +35,6 @@ dev = [
     "pre-commit>=3.6.0",
     "tach>=0.4.0",
     "vulture>=2.11",
-]
-mcp = [
-    "fastmcp>=3.0.0rc1",
-    "fastmcp[tasks]>=3.0.0rc1",
 ]
 
 [project.scripts]
@@ -61,7 +62,7 @@ filterwarnings = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-exclude = ["templates/*"]
+exclude = ["templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*"]
 
 [tool.ruff.lint]
 select = [

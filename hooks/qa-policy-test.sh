@@ -7,6 +7,8 @@
 
 set -euo pipefail
 HOOK_NAME="QA-POLICY-TEST"
+# shellcheck source=./lib/common.sh
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
 

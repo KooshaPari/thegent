@@ -1784,6 +1784,38 @@ class TestListDroidsCmdImpl:
             list_droids_cmd(cd=None)
         mock_console.print.assert_called_once()
 
+    @patch("thegent.cli.console")
+    @patch("thegent.cli.ThegentSettings", return_value=_mock_settings())
+    def test_list_droids_resolves_cwd_for_precedence(self, mock_settings_cls, mock_console) -> None:
+        # @trace FR-CLI-281
+        """list_droids_cmd resolves cwd before resolving the droid directory."""
+        from thegent.cli import list_droids_cmd
+
+        with (
+            patch("thegent.cli._resolve_cwd", return_value=Path("/tmp/project")),
+            patch("thegent.cli._resolve_droids_dir", return_value=Path("/tmp/project/.factory/droids")),
+            patch("thegent.cli.list_droid_names", return_value=["alpha"]),
+        ) as mock_droids_dir:
+            list_droids_cmd(cd=None)
+
+        mock_droids_dir.assert_called_once_with(Path("/tmp/project"), mock_settings_cls.return_value)
+
+    @patch("thegent.cli.console")
+    @patch("thegent.cli.ThegentSettings", return_value=_mock_settings())
+    def test_list_droids_none_cwd_falls_back_to_settings(self, mock_settings_cls, mock_console) -> None:
+        # @trace FR-CLI-282
+        """list_droids_cmd passes None cwd through when unresolved and uses config path."""
+        from thegent.cli import list_droids_cmd
+
+        with (
+            patch("thegent.cli._resolve_cwd", return_value=None),
+            patch("thegent.cli._resolve_droids_dir", return_value=Path("/tmp/fallback/droids")),
+            patch("thegent.cli.list_droid_names", return_value=[]),
+        ) as mock_droids_dir:
+            list_droids_cmd(cd=None)
+
+        mock_droids_dir.assert_called_once_with(None, mock_settings_cls.return_value)
+
 
 # ---------------------------------------------------------------------------
 # _scope_key / _compose_owner_tag (helper functions)

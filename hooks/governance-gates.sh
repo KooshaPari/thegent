@@ -30,6 +30,7 @@ if [[ -f "$_CACHE_FILE" ]]; then
 fi
 
 HOOK_NAME="GOVERNANCE-GATES"
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
 read_quality_config

@@ -3,6 +3,7 @@
 # Ingests SARIF files and produces a deterministic summary JSON.
 set -euo pipefail
 HOOK_NAME="QA-SARIF-ADAPTER"
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 
 # This hook takes PROJECT_DIR as $1, not from stdin

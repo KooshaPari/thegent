@@ -9,7 +9,7 @@ TESTS_DIR="$ROOT_DIR/tests"
 
 echo "=== FR Traceability Audit ==="
 
-if [ ! -f "$FR_FILE" ]; then
+if [[ ! -f "$FR_FILE" ]]; then
     echo "[ERROR] $FR_FILE not found."
     exit 1
 fi
@@ -42,10 +42,10 @@ while IFS= read -r f; do
     fi
 done < <(find "$TESTS_DIR" -name "test_*.py")
 
-if [ "$PCT" -lt 80 ]; then
+if [[ "$PCT" -lt 80 ]]; then
     echo "RESULT: FAIL (Coverage below 80%)"
     exit 1
-elif [ "$ORPHAN_TESTS" -gt 5 ]; then
+elif [[ "$ORPHAN_TESTS" -gt 5 ]]; then
     echo "RESULT: WARN (Too many orphan tests)"
     exit 0
 else

@@ -120,41 +120,68 @@ class DirectAgentRunner(AgentRunner):
         agent_model: str | None = None,
     ) -> RunResult:
         model = agent_model or self._default_model
-        cmd = self._build_cmd(cwd, use_stream, model, mode)
-        stdin_input = prompt if self._uses_stdin else None
-        if not self._uses_stdin:
-            if self.agent_name == "gemini":
-                cmd.extend(["-p", prompt])
-            elif self.agent_name == "copilot":
-                cmd.extend(["-p", prompt])  # copilot requires -p for non-interactive
-            else:
-                cmd.append(prompt)
 
-        try:
-            if live_output:
-                return self._run_live(cmd, cwd, timeout, stdin_input, on_stdout, on_stderr)
-            return self._run_capture(cmd, cwd, timeout, stdin_input)
-        except FileNotFoundError:
-            env_hint = (
-                "THGENT_CURSOR_AGENT_CMD"
-                if self._cli_name == "cursor-agent"
-                else f"THGENT_{self._cli_name.upper().replace('-', '_')}_CMD"
-            )
-            return RunResult(
-                exit_code=1,
-                stdout="",
-                stderr=(
-                    f"{self._cli_name} not found. Install and add to PATH, or set {env_hint}=/path/to/{self._cli_name}"
-                ),
-                timed_out=False,
-            )
-        except subprocess.TimeoutExpired:
-            return RunResult(
-                exit_code=124,
-                stdout="",
-                stderr=f"Agent timed out after {timeout}s",
-                timed_out=True,
-            )
+        # WP-Y6: OTel GenAI Instrumentation
+        from thegent.observability.otel_instrumentation import instrument_genai_call
+
+        system_map = {
+            "claude": "anthropic",
+            "gemini": "google",
+            "codex": "openai",
+            "copilot": "github",
+            "cursor-agent": "cursor",
+        }
+
+        with instrument_genai_call(
+            agent_name=self.agent_name,
+            model=model,
+            system=system_map.get(self.agent_name),
+        ) as span:
+            cmd = self._build_cmd(cwd, use_stream, model, mode)
+            stdin_input = prompt if self._uses_stdin else None
+            if not self._uses_stdin:
+                if self.agent_name == "gemini":
+                    cmd.extend(["-p", prompt])
+                elif self.agent_name == "copilot":
+                    cmd.extend(["-p", prompt])  # copilot requires -p for non-interactive
+                else:
+                    cmd.append(prompt)
+
+            try:
+                if live_output:
+                    result = self._run_live(cmd, cwd, timeout, stdin_input, on_stdout, on_stderr)
+                else:
+                    result = self._run_capture(cmd, cwd, timeout, stdin_input)
+
+                span.set_attribute("exit_code", result.exit_code)
+                return result
+            except FileNotFoundError:
+                env_hint = (
+                    "THGENT_CURSOR_AGENT_CMD"
+                    if self._cli_name == "cursor-agent"
+                    else f"THGENT_{self._cli_name.upper().replace('-', '_')}_CMD"
+                )
+                res = RunResult(
+                    exit_code=1,
+                    stdout="",
+                    stderr=(
+                        f"{self._cli_name} not found. Install and add to PATH, or set {env_hint}=/path/to/{self._cli_name}"
+                    ),
+                    timed_out=False,
+                )
+                span.set_attribute("exit_code", 1)
+                cast("Any", span).record_exception(FileNotFoundError(res.stderr))
+                return res
+            except subprocess.TimeoutExpired:
+                res = RunResult(
+                    exit_code=124,
+                    stdout="",
+                    stderr=f"Agent timed out after {timeout}s",
+                    timed_out=True,
+                )
+                span.set_attribute("exit_code", 124)
+                span.set_attribute("timed_out", True)
+                return res
 
     def _build_cmd(
         self,

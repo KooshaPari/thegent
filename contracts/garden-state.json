@@ -1,0 +1,117 @@
+{
+  "$schema": "./contracts/schema.json",
+  "garden_state": {
+    "version": "1.0.0",
+    "last_scan_utc": null,
+    "hunger_states": [
+      {
+        "type": "test_coverage",
+        "threshold": 80,
+        "current": null,
+        "priority": "critical",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "lint_violations",
+        "threshold": 0,
+        "current": null,
+        "priority": "critical",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "doc_disorganization",
+        "threshold": 0,
+        "current": null,
+        "priority": "high",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "fragmented_research",
+        "threshold": 0,
+        "current": null,
+        "priority": "high",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "missing_specs",
+        "threshold": 0,
+        "current": null,
+        "priority": "medium",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "technical_debt",
+        "threshold": 10,
+        "current": null,
+        "priority": "medium",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "stale_items",
+        "threshold_days": 7,
+        "current": null,
+        "priority": "low",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "agent_failure",
+        "threshold": 0,
+        "current": null,
+        "priority": "critical",
+        "last_triggered_utc": null
+      }
+    ],
+    "xp_system": {
+      "total_xp": 0,
+      "level": 1,
+      "xp_to_next_level": 500,
+      "achievements": []
+    },
+    "stream_status": {
+      "intake_count": 0,
+      "breadth_count": 0,
+      "depth_count": 0,
+      "devil_advocate_count": 0,
+      "synthesis_count": 0,
+      "formalizing_count": 0,
+      "approved_count": 0,
+      "implementing_count": 0,
+      "verifying_count": 0,
+      "archived_count": 0
+    }
+  },
+  "xp_awards": {
+    "research_stage_complete": 50,
+    "quality_gate_pass": 100,
+    "critical_bug_fix": 75,
+    "test_coverage_increase": 25,
+    "implementation_complete": 150,
+    "code_review_pass": 50
+  },
+  "level_progression": {
+    "1": {"xp_required": 0, "unlocks": ["basic_agents"]},
+    "2": {"xp_required": 500, "unlocks": ["research_pipeline"]},
+    "3": {"xp_required": 1500, "unlocks": ["full_gardener"]},
+    "4": {"xp_required": 5000, "unlocks": ["parallel_execution"]},
+    "5": {"xp_required": 15000, "unlocks": ["advanced_orchestration"]}
+  },
+  "achievements": [
+    {"id": "first_blood", "name": "First Blood", "description": "Complete first task", "xp_reward": 10},
+    {"id": "quality_guardian", "name": "Quality Guardian", "description": "Pass 10 quality gates", "xp_reward": 100},
+    {"id": "research_master", "name": "Research Master", "description": "Complete all research stages", "xp_reward": 200},
+    {"id": "speed_demon", "name": "Speed Demon", "description": "Complete task in <5 minutes", "xp_reward": 50},
+    {"id": "zero_debt", "name": "Zero Debt", "description": "No technical debt for 7 days", "xp_reward": 150}
+  ],
+  "event_types": [
+    "idea:new",
+    "research:complete",
+    "spec:approved",
+    "implementation:complete",
+    "review:passed",
+    "deployment:ready",
+    "hunger:detected",
+    "task:started",
+    "task:completed",
+    "task:failed"
+  ]
+}

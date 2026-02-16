@@ -1,0 +1,280 @@
+# Tray Application Design - Plugin-Based Architecture
+
+## Overview
+
+Design for a unified system tray application that combines existing ShareCLI monitoring with new thegent features. The application uses a plugin-based architecture allowing both ShareCLI and thegent to coexist in a single tray application.
+
+**Date:** 2026-02-15
+**Status:** Approved
+
+---
+
+## Architecture
+
+### Directory Structure
+
+```
+tray-app/
+├── core/                          # Base tray app (plugin host)
+│   ├── app.py                     # Main entry point
+│   ├── plugin_system.py           # Plugin registry + lifecycle
+│   ├── api_client.py              # HTTP client for thegent MCP server
+│   └── shared_widgets.py          # Common UI components
+│
+├── plugins/                       # Feature plugins
+│   ├── sharecli/                  # Existing ShareCLI features (as plugin)
+│   │   ├── __init__.py           # Plugin registration
+│   │   ├── tabs.py               # Reuse existing tabs
+│   │   ├── workers.py            # Reuse existing workers
+│   │   └── modals/               # Reuse existing modals
+│   │
+│   └── thegent/                  # NEW: thegent features
+│       ├── __init__.py           # Plugin registration
+│       ├── tabs.py               # Project, Agent, Runs, Gardener, Cost, Gamification
+│       ├── api_client.py         # HTTP calls to MCP server (port 3847)
+│       └── modals/               # Edit dialogs for each feature
+│
+└── run_tray.py                   # Main entry - combines both plugins
+```
+
+### Plugin Interface
+
+```python
+class TrayPlugin(ABC):
+    """Base class for tray plugins."""
+
+    @property
+    def name(self) -> str:
+        """Plugin display name."""
+        ...
+
+    @property
+    def sidebar_items(self) -> list[SidebarItem]:
+        """Items to show in sidebar."""
+        ...
+
+    @property
+    def icon(self) -> QIcon:
+        """Plugin icon for sidebar."""
+        ...
+
+    def get_tab(self, tab_id: str) -> QWidget | None:
+        """Get tab widget by ID. Return None if not found."""
+        ...
+
+    def on_activate(self) -> None:
+        """Called when plugin is activated."""
+        ...
+
+    def on_deactivate(self) -> None:
+        """Called when plugin is deactivated."""
+        ...
+```
+
+### Communication Methods
+
+| Plugin | Method | Endpoint/Command |
+|--------|--------|------------------|
+| ShareCLI | Subprocess | `harness status`, `harness metrics`, etc. |
+| thegent | HTTP REST | `http://127.0.0.1:3847/api/v1/*` |
+
+---
+
+## UI/UX Specification
+
+### Window Model
+
+- **System Tray Icon**: Always running in background
+  - Left-click: Show/hide main window
+  - Right-click: Context menu with quick actions
+- **Main Window**: 800x600 (resizable, min 640x480)
+- **Sidebar**: 200px, collapsible sections per plugin
+- **Content Area**: Dynamic based on selected tab
+
+### Pages and Navigation
+
+#### ShareCLI Section (Existing)
+- Overview: Cache hit rate, metrics, Flush/Sync actions
+- Harness: Full `harness status` output
+- Coordination: Intents, fair share, deadlock status
+- Mesh: Sessions, discovery, mailbox, WAL
+- FUSE: FUSE mount status
+- Readcache: File read cache status
+- Tune: Auto-tune report
+- Log: Harness log tail
+
+#### thegent Section (New)
+- Projects: CRUD for projects
+- Agents: Agent configuration management
+- Runs: Headless run history and logs
+- Gardener: Control and monitoring
+- Costs: Cost tracking and budgets
+- Gamification: XP, levels, achievements
+
+---
+
+## thegent Plugin Features
+
+### Projects Tab
+
+**List Page:**
+- Searchable, paginated list of projects
+- Display: name, language, coverage %, last run time
+- Actions: View, Edit, Delete
+- Create new project button
+
+**Detail Page:**
+- Project path, language, framework, test framework
+- Coverage target settings
+- Latest run summary (status, duration, cost, XP)
+- Gardener config per project
+
+**Modals:**
+- Create/Edit Project: name, path, language, framework, coverage target, gardener settings
+
+### Agents Tab
+
+**List Page:**
+- Filterable list of configured agents
+- Display: name, model, context limit, rate, status, bounded contexts
+- Actions: Edit, Enable/Disable
+
+**Modals:**
+- Edit Agent: name, model, context limit, rates, bounded contexts, auto-spawn settings
+
+### Runs Tab
+
+**List Page:**
+- Filterable by project, status
+- Display: ID, project, duration, cost, date, agent, XP
+- Pagination
+- View log action
+
+**Detail Modal:**
+- Full run metadata
+- Files changed, tests added, docs updated
+- Expandable output log
+- Re-run action
+
+### Gardener Tab
+
+**Dashboard:**
+- Start/Stop/Scan Now controls
+- Hunger states with severity and actions
+- Garden state summary (XP, active agents, uptime)
+- Recent activity log
+
+**Config Modal:**
+- Enable/disable gardener
+- Scan interval
+- Thresholds (coverage, complexity, lint)
+- Auto-fix settings
+- Resource limits
+- Notifications
+
+### Costs Tab
+
+**Dashboard:**
+- Daily spend progress bar with budget
+- Monthly spend
+- 7-day trend chart
+- By-project breakdown
+- By-agent breakdown
+- Alert configuration
+
+**Alert Modal:**
+- Alert type selection
+- Threshold configuration
+- Notification settings
+
+### Gamification Tab
+
+**Dashboard:**
+- Level progress bar
+- Stats: Total XP, runs today, achievements, streak
+- Recent achievements list
+- Leaderboard (optional)
+
+**Achievements Modal:**
+- Full achievement list with status
+- Filter: All, Earned, Locked
+
+---
+
+## Settings Page
+
+- Start with system / Start minimized
+- Connection settings (thegent host: 127.0.0.1, port: 3847)
+- Theme, language, sidebar width
+- Plugin enable/disable
+- About, update check, licenses
+
+---
+
+## API Endpoints (to add to MCP server)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/projects` | GET | List all projects |
+| `/api/v1/projects` | POST | Create project |
+| `/api/v1/projects/{id}` | GET | Get project details |
+| `/api/v1/projects/{id}` | PUT | Update project |
+| `/api/v1/projects/{id}` | DELETE | Delete project |
+| `/api/v1/agents` | GET | List all agents |
+| `/api/v1/agents/{id}` | GET | Get agent details |
+| `/api/v1/agents/{id}` | PUT | Update agent |
+| `/api/v1/runs` | GET | List runs (with filters) |
+| `/api/v1/runs/{id}` | GET | Get run details |
+| `/api/v1/gardener/status` | GET | Get gardener status |
+| `/api/v1/gardener/start` | POST | Start gardener |
+| `/api/v1/gardener/stop` | POST | Stop gardener |
+| `/api/v1/gardener/scan` | POST | Trigger scan |
+| `/api/v1/gardener/config` | GET/PUT | Gardener config |
+| `/api/v1/costs/daily` | GET | Daily cost summary |
+| `/api/v1/costs/monthly` | GET | Monthly cost summary |
+| `/api/v1/costs/alerts` | GET/POST | Cost alerts |
+| `/api/v1/gamification/stats` | GET | XP, level, stats |
+| `/api/v1/gamification/achievements` | GET | Achievement list |
+
+---
+
+## Implementation Phases
+
+### Phase 1: Plugin System Foundation
+- Create core plugin system
+- Refactor existing ShareCLI into plugin format
+- Create combined run_tray.py
+
+### Phase 2: thegent API Client
+- Implement HTTP client for MCP server
+- Add REST endpoints to MCP server
+
+### Phase 3: thegent Plugin UI
+- Projects tab (list, detail, CRUD)
+- Agents tab (list, edit)
+- Runs tab (list, detail)
+- Gardener tab (dashboard, config)
+- Costs tab (dashboard, alerts)
+- Gamification tab (dashboard, achievements)
+
+### Phase 4: Integration & Polish
+- Settings page
+- Tray menu integration
+- Cross-plugin features
+- Testing and polish
+
+---
+
+## Acceptance Criteria
+
+1. Tray icon appears and responds to clicks
+2. Main window shows with sidebar navigation
+3. ShareCLI tabs work as before (backward compatible)
+4. thegent plugin loads and shows all 6 new tabs
+5. Project CRUD operations work via REST API
+6. Agent management works
+7. Run history displays
+8. Gardener can be started/stopped from UI
+9. Cost tracking displays correctly
+10. Gamification stats and achievements show
+11. Settings persist and apply correctly

@@ -53,6 +53,7 @@ if [[ "$_any_tool" == "false" ]]; then
 fi
 
 HOOK_NAME="SECURITY-PIPELINE"
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
 

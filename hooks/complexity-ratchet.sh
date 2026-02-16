@@ -29,8 +29,15 @@ fi
 
 HOOK_NAME="COMPLEXITY-RATCHET"
 export HOOK_NAME
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
+
+# Initialize variables if not set by hook_init/dispatcher/common.sh
+PROJECT_DIR="${PROJECT_DIR:-.}"
+CHANGE_LOG="${CHANGE_LOG:-$HOME/.claude/session-changes.log}"
+QUALITY_CONFIG="${QUALITY_CONFIG:-$HOME/.claude/quality.json}"
+JQ_CMD="${JQ_CMD:-jq}"
 
 # --- P1 optimization: Skip in Stop mode if no source files changed ---
 # Only apply to Stop hooks (HEAD_SHA set), not PostToolUse (single file check)

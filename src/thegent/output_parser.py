@@ -272,6 +272,140 @@ def _compact_report(text: str) -> str:
     return text
 
 
+def _summarize_tool_input(obj: dict[str, Any]) -> str:
+    """Produce short summary of tool call for condensed display (e.g. Search(pattern: "x", path: "y"))."""
+    inp = obj.get("input") or obj.get("arguments") or {}
+    if isinstance(inp, str):
+        try:
+            inp = json.loads(inp) if inp.strip().startswith("{") else {}
+        except json.JSONDecodeError:
+            return inp[:60] + ("..." if len(inp) > 60 else "")
+    if not isinstance(inp, dict):
+        return str(inp)[:60]
+    parts: list[str] = []
+    for k, v in list(inp.items())[:3]:
+        v_str = str(v)
+        if len(v_str) > 40:
+            v_str = v_str[:37] + "..."
+        parts.append(f"{k}: {v_str}")
+    return ", ".join(parts) if parts else ""
+
+
+def _truncate(text: str, max_len: int = 80) -> str:
+    """Truncate text for condensed display."""
+    text = text.strip().replace("\n", " ")
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 3] + "..."
+
+
+def _parse_stream_jsonl(stdout: str) -> tuple[list[dict[str, Any]], bool]:
+    """Parse JSONL stream into list of records. Returns (records, saw_jsonl)."""
+    records: list[dict[str, Any]] = []
+    saw_jsonl = False
+    for line in stdout.splitlines():
+        json_line = _normalize_jsonl_line(line)
+        if json_line is None:
+            continue
+        try:
+            obj = json.loads(json_line)
+        except json.JSONDecodeError:
+            continue
+        saw_jsonl = True
+        if isinstance(obj, dict):
+            records.append(obj)
+    return records, saw_jsonl
+
+
+def condense_stream_to_display(
+    stdout: str,
+    *,
+    max_answer_len: int = 80,
+    expandable_hint: str = "+{n} more tool uses (ctrl+o to expand)",
+) -> str:
+    """Produce Cursor-style condensed output from agent stream JSON.
+
+    Parses JSONL stream and formats:
+    - User answers: "User answered questions:" + bullets (Q → A)
+    - Agent turns: "agent(task)" + first tool + "+N more tool uses"
+
+    Returns empty string if input is not JSONL (caller should fall back to extract_condensed).
+    Supports Gemini/Codex stream-json; Copilot plain text returns empty.
+    """
+    if not stdout or not stdout.strip():
+        return ""
+    records, saw_jsonl = _parse_stream_jsonl(stdout)
+    if not saw_jsonl or not records:
+        return ""
+
+    user_answers: list[tuple[str, str]] = []
+    agent_turns: list[dict[str, Any]] = []
+    current_turn: dict[str, Any] | None = None
+    pending_question: str | None = None
+
+    for obj in records:
+        item = obj.get("item")
+        msg_type = obj.get("type") or (item.get("type") if isinstance(item, dict) else None)
+        role = obj.get("role") or (item.get("role") if isinstance(item, dict) else None)
+
+        if item and isinstance(item, dict):
+            role = role or item.get("role")
+            msg_type = msg_type or item.get("type")
+
+        content = _extract_record_message(obj)
+        if item and isinstance(item, dict):
+            ic = item.get("content") or item.get("message")
+            if ic:
+                content = _coerce_text(ic) or content
+
+        if msg_type == "message" and role == "user" and content:
+            if pending_question:
+                user_answers.append((_truncate(pending_question, max_answer_len), _truncate(content, max_answer_len)))
+                if agent_turns and not agent_turns[-1].get("tool_uses"):
+                    agent_turns.pop()
+                pending_question = None
+        elif msg_type == "message" and role == "assistant" and content:
+            pending_question = content.split("\n")[0].strip() or None
+            task_hint = content.split("\n")[0].strip() if content else ""
+            current_turn = {
+                "task_hint": _truncate(task_hint, 60),
+                "tool_uses": [],
+            }
+            agent_turns.append(current_turn)
+        elif msg_type == "tool_use" and current_turn is not None:
+            tool_name = (
+                obj.get("tool_name") or obj.get("name") or (item.get("tool_name") if isinstance(item, dict) else "")
+            )
+            if not tool_name and isinstance(item, dict):
+                tool_name = item.get("name", "")
+            tool_name = str(tool_name) if tool_name else "tool"
+            inp_summary = _summarize_tool_input(obj) or (_summarize_tool_input(item) if isinstance(item, dict) else "")
+            current_turn["tool_uses"].append({"name": tool_name, "input": inp_summary})
+
+    lines: list[str] = []
+    if user_answers:
+        lines.append("User answered questions:")
+        for q, a in user_answers:
+            lines.append(f"  · {q} → {a}")
+        lines.append("")
+
+    for turn in agent_turns:
+        task = turn.get("task_hint", "")
+        tools = turn.get("tool_uses", [])
+        if task:
+            lines.append(task)
+        if tools:
+            first = tools[0]
+            tool_line = f"{first['name']}({first['input']})" if first.get("input") else first["name"]
+            lines.append(f"  {tool_line}")
+            if len(tools) > 1:
+                lines.append(f"  {expandable_hint.format(n=len(tools) - 1)}")
+        lines.append("")
+
+    out = "\n".join(lines).strip()
+    return out or ""
+
+
 def extract_condensed(stdout: str) -> str:
     """Extract condensed/final output from agent stdout.
 

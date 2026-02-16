@@ -8,10 +8,71 @@ from thegent.output_parser import (
     PARSE_OK,
     PARSE_TRUNCATED,
     ParseResult,
+    condense_stream_to_display,
     extract_condensed,
     extract_condensed_structured,
     extract_condensed_validated,
 )
+
+
+@pytest.mark.unit
+class TestCondenseStreamToDisplay:
+    """Condensed stream JSON formatter (Cursor-style output)."""
+
+    def test_empty_returns_empty(self) -> None:
+        assert condense_stream_to_display("") == ""
+        assert condense_stream_to_display("   ") == ""
+
+    def test_plain_text_returns_empty(self) -> None:
+        assert condense_stream_to_display("Plain text output") == ""
+
+    def test_user_answers_produce_bullets(self) -> None:
+        stdout = (
+            '{"type":"message","role":"assistant","content":"What tray technology?"}\n'
+            '{"type":"message","role":"user","content":"Native desktop"}\n'
+        )
+        result = condense_stream_to_display(stdout)
+        assert "User answered questions:" in result
+        assert "What tray technology?" in result
+        assert "Native desktop" in result
+
+    def test_tool_uses_produce_first_plus_more(self) -> None:
+        stdout = (
+            '{"type":"message","role":"assistant","content":"Research tray tech"}\n'
+            '{"type":"tool_use","tool_name":"Search","input":{"pattern":"@mcp.tool","path":"src/mcp.py"}}\n'
+            '{"type":"tool_use","tool_name":"read_file","input":{"path":"foo"}}\n'
+        )
+        result = condense_stream_to_display(stdout)
+        assert "Research tray tech" in result
+        assert "Search" in result
+        assert "+1 more tool uses" in result
+
+    def test_mixed_user_and_tools(self) -> None:
+        stdout = (
+            '{"type":"message","role":"assistant","content":"What technology?"}\n'
+            '{"type":"message","role":"user","content":"Native"}\n'
+            '{"type":"message","role":"assistant","content":"I will research"}\n'
+            '{"type":"tool_use","tool_name":"Search","input":{"query":"tray"}}\n'
+        )
+        result = condense_stream_to_display(stdout)
+        assert "User answered questions:" in result
+        assert "What technology?" in result
+        assert "Native" in result
+        assert "I will research" in result
+        assert "Search" in result
+
+    def test_gemini_format_from_validation_doc(self) -> None:
+        stdout = (
+            '{"type":"init","timestamp":"2026-02-06T07:36:46.996Z","model":"auto-gemini-3"}\n'
+            '{"type":"message","role":"user","content":"List 3 files"}\n'
+            '{"type":"message","role":"assistant","content":"I will list 3 files..."}\n'
+            '{"type":"tool_use","timestamp":"2026-02-06T07:36:51.833Z","tool_name":"list_directory"}\n'
+            '{"type":"message","role":"assistant","content":"1. `.air.toml`\\n2. `.bandit`\\n3. `README.md`"}\n'
+        )
+        result = condense_stream_to_display(stdout)
+        assert "I will list 3 files" in result
+        assert "list_directory" in result
+        assert "1. `.air.toml`" in result or "air.toml" in result
 
 
 @pytest.mark.unit

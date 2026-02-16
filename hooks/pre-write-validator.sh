@@ -68,9 +68,7 @@ case "$EXT" in
   json)
     # JSON: validate with jq or python
     if [[ "$TOOL_NAME" == "Write" ]]; then
-      ERR=$(echo "$CONTENT" | jq . >/dev/null 2>&1) || {
-        ERR=$(echo "$CONTENT" | python3 -m json.tool 2>&1 >/dev/null) || block_with_reason "$ERR"
-      }
+      ERR=$(echo "$CONTENT" | jq . 2>&1 >/dev/null) || { ERR=$(echo "$CONTENT" | python3 -m json.tool 2>&1 >/dev/null) || block_with_reason "$ERR"; }
     fi
     ;;
   yaml|yml)

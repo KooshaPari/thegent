@@ -94,6 +94,12 @@ class ThegentSettings(BaseSettings):
         le=365,
         description="Retention for session dirs (WP-3006 tiered); THGENT_RETENTION_DAYS_SESSIONS",
     )
+    retention_default_days: int = Field(
+        default=30,
+        ge=1,
+        le=365,
+        description="Default retention in days for history (WP-3006); THGENT_RETENTION_DEFAULT_DAYS",
+    )
     retention_days_registry: int = Field(
         default=90,
         ge=30,
@@ -119,11 +125,13 @@ class ThegentSettings(BaseSettings):
         if isinstance(v, str):
             try:
                 parsed = json.loads(v)
-                return {k: int(val) for k, val in (parsed or {}).items()} if isinstance(parsed, dict) else {}
+                if isinstance(parsed, dict):
+                    return {str(k): int(val) if isinstance(val, (int, float, str)) else 0 for k, val in parsed.items()}
+                return {}
             except (json.JSONDecodeError, ValueError, TypeError):
                 return {}
         if isinstance(v, dict):
-            return {k: int(val) for k, val in v.items()}
+            return {str(k): int(val) if isinstance(val, (int, float, str)) else 0 for k, val in v.items()}
         return {}
 
     # WP-3001: Policy Evaluation & Normalization
@@ -169,6 +177,31 @@ class ThegentSettings(BaseSettings):
         default=100.0,
         ge=0.0,
         description="MTD budget for AI providers (THGENT_COST_BUDGET_MTD)",
+    )
+
+    # Routing configuration (Terminal Bench 2.0 Pareto frontier)
+    routing_enabled: bool = Field(
+        default=False,
+        description="Enable task routing based on Terminal Bench 2.0 Pareto frontier (THGENT_ROUTING_ENABLED)",
+    )
+    routing_constraints_enabled: bool = Field(
+        default=False,
+        description="Enable hard constraint validation for routing (quality, cost, speed) (THGENT_ROUTING_CONSTRAINTS_ENABLED)",
+    )
+    routing_budget_warning_threshold: float = Field(
+        default=0.80,
+        ge=0.0,
+        le=1.0,
+        description="Budget utilization threshold for warnings (0.8 = 80%) (THGENT_ROUTING_BUDGET_WARNING_THRESHOLD)",
+    )
+    cost_budget_by_category: dict[str, float] = Field(
+        default_factory=lambda: {
+            "fast": 50.0,
+            "normal": 200.0,
+            "complex": 150.0,
+            "high_complex": 50.0,
+        },
+        description="Per-category MTD budgets in USD (THGENT_COST_BUDGET_BY_CATEGORY JSON)",
     )
 
     def validate_setup(self) -> None:
@@ -371,4 +404,10 @@ class ThegentSettings(BaseSettings):
         ge=0,
         le=120,
         description="Seconds to poll for active background runs during MCP server shutdown (G-OP-10)",
+    )
+    max_concurrency: int = Field(
+        default=5,
+        ge=1,
+        le=50,
+        description="Maximum concurrent agent runs (WP-1004); THGENT_MAX_CONCURRENCY",
     )

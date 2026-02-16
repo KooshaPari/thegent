@@ -15,19 +15,20 @@ tasks:
     desc: Verify all linters pass
     cmds:
       - echo "Running lint check..."
-      - task lint 2>&1 || (echo "QUALITY GATE FAIL: linting errors found" && exit 1)
+      - task: lint
 
   test-check:
     desc: Verify all tests pass
     cmds:
       - echo "Running test check..."
-      - task test 2>&1 || (echo "QUALITY GATE FAIL: test failures found" && exit 1)
+      - task: test
 
   security-check:
     desc: Check for secrets in diff
     cmds:
       - echo "Running security check..."
-      - gitleaks detect --no-banner --no-git 2>&1 || (echo "QUALITY GATE FAIL: secrets detected" && exit 1)
+      - |
+        gitleaks detect --no-banner --no-git 2>&1 || (echo "QUALITY GATE FAIL: secrets detected" && exit 1)
 
   complexity-check:
     desc: Check code complexity

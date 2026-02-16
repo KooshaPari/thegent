@@ -21,6 +21,7 @@ if [[ -f "$_CACHE_FILE" ]]; then
 fi
 
 HOOK_NAME="QUALITY-GATE"
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
 

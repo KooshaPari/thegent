@@ -17,6 +17,7 @@ HOOK_TIMEOUT=15
 
 # Source common.sh and run hook_init_full ONCE (single jq call for all fields)
 HOOK_NAME="POSTTOOL-DISPATCHER"
+# shellcheck source=./lib/common.sh
 source "${HOOKS_DIR}/lib/common.sh"
 hook_init_full < "$_dispatch_tmpdir/input.json"
 

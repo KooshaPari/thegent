@@ -5,11 +5,11 @@ Maps CLI commands to operations: orchestrate, govern, recover, observe, plan.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class Operation(str, Enum):
+class Operation(StrEnum):
     """Canonical operation types for thegent capabilities."""
 
     ORCHESTRATE = "orchestrate"  # Execute agents, run, bg, dag run

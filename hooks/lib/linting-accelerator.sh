@@ -9,7 +9,7 @@ set -euo pipefail
 
 _ACCEL_LOG_FILE="${TMPDIR:-/tmp}/linting-accelerator-$(date +%s).log"
 
-# shellcheck disable=SC2317  -- usage is called via error handling
+# shellcheck disable=SC2317  # usage is called via error handling
 _accel_usage() {
   cat <<'EOF' >&2
 linting_accelerator — JS/TS Linting Fallback Wrapper

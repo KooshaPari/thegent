@@ -4,6 +4,7 @@ Verifies that every registered CLI path reaches the correct handler function.
 Each test mocks the underlying *_cmd callable and confirms exit_code == 0.
 """
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -94,6 +95,15 @@ class TestTopLevelRouting:
         # @trace FR-MAIN-012
         result = runner.invoke(app, ["list-droids"])
         assert result.exit_code == 0
+        assert mock_cmd.called
+
+    @patch("thegent.main.list_droids_cmd")
+    def test_list_droids_with_cd(self, mock_cmd: MagicMock, tmp_path: Path) -> None:
+        # @trace FR-MAIN-020
+        """Explicit --cd is forwarded to list_droids_cmd."""
+        result = runner.invoke(app, ["list-droids", f"--cd={tmp_path}"])
+        assert result.exit_code == 0
+        mock_cmd.assert_called_once_with(cd=tmp_path)
 
     @patch("thegent.main.list_models_cmd")
     def test_list_models(self, mock_cmd: MagicMock) -> None:

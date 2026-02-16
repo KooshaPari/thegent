@@ -10,6 +10,7 @@ if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
   # FILE_PATH, TOOL_NAME, TOOL_CONTENT, TOOL_NEW_STRING, TOOL_OLD_STRING already exported
   :
 else
+  # shellcheck source=./lib/common.sh
   source "${BASH_SOURCE[0]%/*}/lib/common.sh"
   hook_init
   hook_extract_content

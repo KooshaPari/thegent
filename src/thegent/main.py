@@ -60,6 +60,7 @@ from thegent.cli import (
     session_contract_health_report_cmd,
     session_contract_health_trend_cmd,
     session_contracts_cmd,
+    setup_cmd,
     status_cmd,
     stop_cmd,
     sweep_cmd,
@@ -102,6 +103,8 @@ app = typer.Typer(
 )
 
 app.command("init")(init_cmd)
+app.command("setup")(setup_cmd)
+app.command("nim-setup", hidden=True)(setup_cmd)
 
 orchestrate_app = typer.Typer(help="Agent execution and session management")
 govern_app = typer.Typer(help="Governance, policy, and compliance")
@@ -109,11 +112,16 @@ recover_app = typer.Typer(help="State recovery and self-healing")
 observe_app = typer.Typer(help="Observability, telemetry, and performance")
 plan_app = typer.Typer(help="Task planning and DAG management")
 
+from thegent.clode_main import app as clode_app
+from thegent.terminal_cli import app as terminal_app
+
+app.add_typer(clode_app, name="clode")
 app.add_typer(orchestrate_app, name="orchestrate")
 app.add_typer(govern_app, name="govern")
 app.add_typer(recover_app, name="recover")
 app.add_typer(observe_app, name="observe")
 app.add_typer(plan_app, name="plan")
+app.add_typer(terminal_app, name="terminal")
 
 
 @app.command("run")
@@ -153,7 +161,6 @@ def run(
         timeout=timeout,
         full=full,
         live=live,
-        droid=None,
         model=model,
         provider=provider,
         failover=failover,
@@ -221,7 +228,6 @@ def bg(
         mode=mode,
         timeout=timeout,
         full=full,
-        droid=None,
         model=model,
         provider=provider,
         routing=routing,
@@ -315,6 +321,17 @@ app.add_typer(policy_app, name="policy")
 def policy_show() -> None:
     """Show active governance policies and thresholds."""
     policy_show_cmd()
+
+
+@policy_app.command("purge")
+@govern_app.command("purge-history")
+def policy_purge(
+    dry_run: bool = typer.Option(True, "--dry-run/--no-dry-run", help="Dry run or actual purge"),
+) -> None:
+    """Purge expired history based on tiered retention (WP-3006)."""
+    from thegent.cli import policy_purge_cmd
+
+    policy_purge_cmd(dry_run=dry_run)
 
 
 escalate_app = typer.Typer(help="Governance escalation queue (WP-3008)")
@@ -692,6 +709,31 @@ def status(
 
 
 @app.command("inspect")
+@orchestrate_app.command("explain")
+def explain_run(
+    run_id: str = typer.Argument(..., help="Run ID to explain"),
+) -> None:
+    """Show detailed explanation for an agent run (WP-4002)."""
+    from thegent.cli import explain_cmd
+
+    explain_cmd(run_id=run_id)
+
+
+@orchestrate_app.command("fallbacks")
+def orchestrate_fallbacks(
+    run_id: str = typer.Argument(..., help="Run ID to get fallbacks for"),
+) -> None:
+    """Show safe fallback options for a failed run (WP-4003)."""
+    # import inside function to avoid import cycles; ensure symbol exists
+    import importlib
+
+    cli_mod = importlib.import_module("thegent.cli")
+    if not hasattr(cli_mod, "fallbacks_cmd") or not callable(cli_mod.fallbacks_cmd):
+        raise RuntimeError("fallbacks_cmd is not available")
+
+    cli_mod.fallbacks_cmd(run_id=run_id)
+
+
 @orchestrate_app.command("inspect")
 @observe_app.command("inspect")
 def inspect(

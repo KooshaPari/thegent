@@ -5,11 +5,11 @@ Mode selection policy tied to risk, urgency, and confidence.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class MultiAgentMode(str, Enum):
+class MultiAgentMode(StrEnum):
     """Canonical multi-agent orchestration modes."""
 
     SEQUENTIAL_DELEGATION = "sequential_delegation"
@@ -88,3 +88,59 @@ def suggest_mode(risk: str = "medium", urgency: str = "normal", confidence: floa
     if risk == "high" and urgency != "critical":
         return MultiAgentMode.REVIEW_LOOP
     return MultiAgentMode.SEQUENTIAL_DELEGATION
+
+
+class ConflictArbitrator:
+    """WP-1006: Arbitration rules and quorum policy for multi-agent consensus."""
+
+    def __init__(self, quorum_threshold: float = 0.6) -> None:
+        self.quorum_threshold = quorum_threshold
+
+    def detect_conflicts(self, results: list[Any]) -> list[str]:
+        """Detect conflicts between multiple agent outputs."""
+        # Simple implementation: compare summary/status
+        conflicts = []
+        if not results:
+            return conflicts
+
+        base = results[0]
+        for i, res in enumerate(results[1:], 1):
+            if res.csm.status != base.csm.status:
+                conflicts.append(f"Status mismatch between agent 0 and {i}")
+        return conflicts
+
+    def arbitrate(self, results: list[Any]) -> Any:
+        """Arbitrate between conflicting results using quorum policy."""
+        if not results:
+            return None
+
+        # Majority vote on status
+        votes: dict[str, int] = {}
+        for res in results:
+            s = res.csm.status.value
+            votes[s] = votes.get(s, 0) + 1
+
+        winner = max(votes.items(), key=lambda x: x[1])
+        if winner[1] / len(results) >= self.quorum_threshold:
+            # Return first result that matches winner
+            return next(res for res in results if res.csm.status.value == winner[0])
+
+        return results[0]  # Default to first if no quorum
+
+
+def calculate_risk_score(prompt: str, lane: str) -> float:
+    """WP-2008: Calculate risk score for a task to trigger oversight."""
+    score = 0.0
+
+    # High-risk keywords
+    high_risk = ["delete", "remove", "drop", "purge", "production", "security", "credentials"]
+    if any(kw in prompt.lower() for kw in high_risk):
+        score += 0.5
+
+    # Lane multiplier
+    if lane == "critical":
+        score += 0.4
+    elif lane == "recovery":
+        score += 0.2
+
+    return min(1.0, score)

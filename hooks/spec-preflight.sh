@@ -11,6 +11,7 @@ if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
   : # no timestamp needed — output is plain text
 else
   HOOK_NAME="SPEC-PREFLIGHT"
+  # shellcheck source=./lib/common.sh
   source "${BASH_SOURCE[0]%/*}/lib/common.sh"
   hook_init
 fi

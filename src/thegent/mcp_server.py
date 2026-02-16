@@ -7,7 +7,7 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, cast
 
 from fastmcp import FastMCP
 from fastmcp._vendor.docket_di import Depends
@@ -17,6 +17,9 @@ from fastmcp.server.context import (
     Context,
     DeclinedElicitation,
 )
+
+# Treat Context as Any for typing in this module to accommodate FastMCP runtime context shapes
+Context = Any  # type: ignore[assignment]
 from fastmcp.server.dependencies import CurrentContext
 from fastmcp.server.event_store import EventStore
 from fastmcp.server.lifespan import lifespan
@@ -32,7 +35,6 @@ from fastmcp.tools.tool import ToolResult
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
-
 from thegent.config import ThegentSettings
 
 
@@ -81,7 +83,6 @@ from thegent.cli_impl import (
     stop_impl,
     wait_impl,
 )
-from thegent.config import ThegentSettings
 from thegent.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
 
 # G-FM-04: Icon mapping for tools; wire when FastMCP supports icon parameter
@@ -99,6 +100,11 @@ TOOL_ICONS = {
     "thegent_list_models": "📦",
     "thegent_dag_list": "📊",
     "thegent_observe_summary": "📈",
+    "thegent_terminal_list": "🖥️",
+    "thegent_terminal_inspect": "👁️",
+    "thegent_terminal_send": "⌨️",
+    "thegent_terminal_attach": "🔗",
+    "thegent_ddg_search": "🔍",
 }
 
 _log = logging.getLogger(__name__)
@@ -123,7 +129,7 @@ def get_default_owner(ctx: Context = CurrentContext()) -> str | None:
 
 
 @lifespan
-async def thegent_lifespan(server: FastMCP):
+async def thegent_lifespan(_: FastMCP):
     """Startup and teardown for thegent MCP server. See gofastmcp.com/servers/lifespan."""
     _log.info("thegent MCP server starting")
 
@@ -554,7 +560,7 @@ async def thegent_run(
     confidence: float | None = None,
     arbitration: str | None = None,
     ctx: Context = CurrentContext(),
-    default_cwd: Path | None = Depends(get_default_cwd),
+    default_cwd: Any = Depends(get_default_cwd),
 ) -> ToolResult | str:
     """
     Run an agent synchronously with a prompt.
@@ -590,7 +596,11 @@ async def thegent_run(
         if policy not in ("prefer_direct", "prefer_proxy"):
             policy = "prefer_direct"
         request_payload["policy"] = policy
-        resolved = resolve_route(model, provider_hint=provider, policy=policy)
+        resolved = resolve_route(
+            model,
+            provider_hint=provider,
+            policy=cast("Literal['prefer_direct', 'prefer_proxy', 'failover', 'round_robin', 'cheapest']", policy),
+        )
         if resolved is None:
             return ToolResult(
                 content=json.dumps(
@@ -600,7 +610,11 @@ async def thegent_run(
             )
         agent, model = resolved[0], resolved[1]
         if include_contract:
-            route = resolve_route_contract(model, provider_hint=provider, policy=policy)
+            route = resolve_route_contract(
+                model,
+                provider_hint=provider,
+                policy=cast("Literal['prefer_direct', 'prefer_proxy', 'failover', 'round_robin', 'cheapest']", policy),
+            )
             if route is not None:
                 request_payload["route_contract"] = {
                     "provider": route.provider,
@@ -618,7 +632,11 @@ async def thegent_run(
         if policy not in ("prefer_direct", "prefer_proxy"):
             policy = "prefer_direct"
         request_payload["policy"] = policy
-        resolved = resolve_route(model, provider_hint=agent, policy=policy)
+        resolved = resolve_route(
+            model,
+            provider_hint=agent,
+            policy=cast("Literal['prefer_direct', 'prefer_proxy', 'failover', 'round_robin', 'cheapest']", policy),
+        )
         if resolved is None:
             routes = ModelCatalog.routes_for(model)
             available = ", ".join(sorted({r.provider for r in routes})) if routes else ""
@@ -631,7 +649,11 @@ async def thegent_run(
             )
         agent, model = resolved[0], resolved[1]
         if include_contract:
-            route = resolve_route_contract(model, provider_hint=agent, policy=policy)
+            route = resolve_route_contract(
+                model,
+                provider_hint=agent,
+                policy=cast("Literal['prefer_direct', 'prefer_proxy', 'failover', 'round_robin', 'cheapest']", policy),
+            )
             if route is not None:
                 request_payload["route_contract"] = {
                     "provider": route.provider,
@@ -646,13 +668,13 @@ async def thegent_run(
             meta={},
         )
 
-    await ctx.info(f"thegent_run agent={agent} cd={cd} timeout={timeout}")
+    await cast("Any", ctx).info(f"thegent_run agent={agent} cd={cd} timeout={timeout}")
     cd_path = Path(cd) if cd else default_cwd
-    cwd = _resolve_cwd(cd_path)
+    cwd = _resolve_cwd(cast("Path | None", cd_path))
     if cwd is None:
-        elicitation = await ctx.elicit(ELICIT_CWD_MSG, response_type=str)
+        elicitation = await cast("Any", ctx).elicit(ELICIT_CWD_MSG, response_type=str)
         if isinstance(elicitation, AcceptedElicitation):
-            cwd = Path(elicitation.data).expanduser().resolve()
+            cwd = Path(cast("str", elicitation.data)).expanduser().resolve()
         elif isinstance(elicitation, DeclinedElicitation):
             return ToolResult(
                 content=json.dumps({"error": "User declined to provide working directory.", "exit_code": 1}),
@@ -675,17 +697,22 @@ async def thegent_run(
     task = asyncio.create_task(
         asyncio.to_thread(
             run_impl,
-            agent,
-            prompt,
-            cd_path,
-            mode,
-            timeout,
-            full,
-            model,
-            None,  # run_id
-            "standard",  # lane
-            confidence,
-            arbitration,
+            agent=agent,
+            prompt=prompt,
+            cd=cd_path,
+            mode=mode,
+            timeout=timeout,
+            full=full,
+            model=model,
+            provider=None,
+            run_id=None,
+            owner=None,
+            include_contract=False,
+            route_contract=None,
+            route_request=None,
+            lane="standard",
+            confidence=confidence,
+            override_reason=arbitration,
         )
     )
     last_reported = 0
@@ -693,11 +720,11 @@ async def thegent_run(
     while not task.done():
         elapsed = int(time.perf_counter() - start_time)
         if elapsed - last_reported >= 10:
-            await ctx.report_progress(progress=elapsed, total=timeout)
+            await cast("Any", ctx).report_progress(progress=elapsed, total=timeout)
             last_reported = elapsed
         # Close SSE stream every 30s during long runs to avoid LB timeouts (SSE polling)
         if elapsed - last_close_at >= 30 and elapsed > 0:
-            await ctx.close_sse_stream()
+            await cast("Any", ctx).close_sse_stream()
             last_close_at = elapsed
         await asyncio.sleep(1)
     result = await task
@@ -738,8 +765,8 @@ async def thegent_bg(
     confidence: float | None = None,
     arbitration: str | None = None,
     ctx: Context = CurrentContext(),
-    default_cwd: Path | None = Depends(get_default_cwd),
-    default_owner: str | None = Depends(get_default_owner),
+    default_cwd: Any = Depends(get_default_cwd),
+    default_owner: Any = Depends(get_default_owner),
 ) -> ToolResult:
     """
     Start an agent run in the background.
@@ -761,14 +788,14 @@ async def thegent_bg(
 
     Returns: ToolResult with session_id, log_path, owner
     """
-    await ctx.info(f"thegent_bg agent={agent} cd={cd} owner={owner}")
+    await cast("Any", ctx).info(f"thegent_bg agent={agent} cd={cd} owner={owner}")
     cd_path = Path(cd) if cd else default_cwd
-    cwd = _resolve_cwd(cd_path)
+    cwd = _resolve_cwd(cast("Path | None", cd_path))
     elicited_cwd = False
     if cwd is None:
-        elicitation = await ctx.elicit(ELICIT_CWD_MSG, response_type=str)
+        elicitation = await cast("Any", ctx).elicit(ELICIT_CWD_MSG, response_type=str)
         if isinstance(elicitation, AcceptedElicitation):
-            cwd = Path(elicitation.data).expanduser().resolve()
+            cwd = Path(cast("str", elicitation.data)).expanduser().resolve()
             elicited_cwd = True
         elif isinstance(elicitation, DeclinedElicitation):
             err = {"error": "User declined to provide working directory.", "exit_code": 1}
@@ -802,9 +829,9 @@ async def thegent_bg(
 
     owner_tag = owner or default_owner
     if owner_tag is None and elicited_cwd:
-        elicitation = await ctx.elicit(ELICIT_OWNER_MSG, response_type=str)
+        elicitation = await cast("Any", ctx).elicit(ELICIT_OWNER_MSG, response_type=str)
         if isinstance(elicitation, AcceptedElicitation):
-            owner_tag = elicitation.data
+            owner_tag = cast("str", elicitation.data)
         elif isinstance(elicitation, DeclinedElicitation):
             owner_tag = _default_owner_tag(cwd)
         elif isinstance(elicitation, CancelledElicitation):
@@ -824,7 +851,7 @@ async def thegent_bg(
 
             contract = resolve_route_contract(
                 model,
-                provider_hint=requested_provider if requested_provider else None,
+                provider_hint=requested_provider or None,
                 policy=route_lookup_policy,
             )
             if contract is not None:
@@ -876,7 +903,6 @@ async def thegent_bg(
         else None,
         lane="standard",
         confidence=confidence,
-        arbitration=arbitration,
     )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     if include_contract:
@@ -1457,7 +1483,7 @@ def thegent_list_agents() -> ToolResult:
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_list_droids(
     cd: str | None = None,
-    default_cwd: Path | None = Depends(get_default_cwd),
+    default_cwd: Any = Depends(get_default_cwd),
 ) -> ToolResult:
     """
     List available droids.
@@ -1468,7 +1494,7 @@ def thegent_list_droids(
     """
     cd_path = Path(cd) if cd else default_cwd
     start_time = time.perf_counter()
-    result = list_droids_impl(cd=cd_path)
+    result = list_droids_impl(cd=cast("Path | None", cd_path))
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
         content=json.dumps(result),
@@ -1580,7 +1606,7 @@ def thegent_resolve_model_route(
 async def thegent_dag_list(
     cd: str | None = None,
     ctx: Context = CurrentContext(),
-    default_cwd: Path | None = Depends(get_default_cwd),
+    default_cwd: Any = Depends(get_default_cwd),
 ) -> ToolResult:
     """
     List DAG tasks from .factory/dag-session.md.
@@ -1591,11 +1617,11 @@ async def thegent_dag_list(
     Returns: JSON string with {frontmatter, tasks}
     """
     cd_path = Path(cd) if cd else default_cwd
-    cwd = _resolve_cwd(cd_path)
+    cwd = _resolve_cwd(cast("Path | None", cd_path))
     if cwd is None:
-        elicitation = await ctx.elicit(ELICIT_CWD_MSG, response_type=str)
+        elicitation = await cast("Any", ctx).elicit(ELICIT_CWD_MSG, response_type=str)
         if isinstance(elicitation, AcceptedElicitation):
-            cwd = Path(elicitation.data).expanduser().resolve()
+            cwd = Path(cast("str", elicitation.data)).expanduser().resolve()
         elif isinstance(elicitation, DeclinedElicitation):
             return ToolResult(
                 content=json.dumps(
@@ -1630,6 +1656,91 @@ async def thegent_dag_list(
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_terminal_list(all: bool = False) -> ToolResult:
+    """
+    List active terminal panes (tmux).
+
+    Args:
+        all: Show all panes, not just Claude Code (default: False)
+    """
+    from thegent.tools.terminal import is_claude_code_pane, list_tmux_panes
+
+    panes = list_tmux_panes()
+    result = []
+    for p in panes:
+        is_cc = is_claude_code_pane(p)
+        if not all and not is_cc:
+            continue
+        result.append(
+            {
+                "pane_id": p.pane_id,
+                "session": p.session_name,
+                "window": p.window_index,
+                "pane": p.pane_index,
+                "path": p.path,
+                "command": p.command,
+                "title": p.title,
+                "is_claude_code": is_cc,
+            }
+        )
+    return ToolResult(content=json.dumps(result), structured_content=result)
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_terminal_inspect(pane_id: str, last_lines: int = 50) -> ToolResult:
+    """
+    Capture the content of a terminal pane.
+    """
+    from thegent.tools.terminal import capture_tmux_pane
+
+    content = capture_tmux_pane(pane_id, last_lines=last_lines)
+    return ToolResult(content=content)
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_terminal_send(pane_id: str, text: str, enter: bool = True) -> ToolResult:
+    """
+    Send text/keys to a terminal pane.
+    """
+    from thegent.tools.terminal import send_to_tmux_pane
+
+    success = send_to_tmux_pane(pane_id, text, enter=enter)
+    return ToolResult(content=json.dumps({"success": success}), structured_content={"success": success})
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_terminal_attach(pane_id: str) -> ToolResult:
+    """
+    Get instructions to attach to a terminal session.
+    """
+    from thegent.tools.terminal import list_tmux_panes
+
+    panes = list_tmux_panes()
+    p = next((p for p in panes if p.pane_id == pane_id), None)
+    if not p:
+        return ToolResult(
+            content=json.dumps({"error": "Pane not found"}), structured_content={"error": "Pane not found"}
+        )
+
+    msg = f"To attach to this session, run: tmux attach-session -t {p.session_name}"
+    return ToolResult(
+        content=msg,
+        structured_content={"session": p.session_name, "command": f"tmux attach-session -t {p.session_name}"},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_ddg_search(query: str, num_results: int = 5) -> ToolResult:
+    """
+    Search DuckDuckGo for heavy web research.
+    """
+    from thegent.tools.research import ddg_search
+
+    results = ddg_search(query, num_results=num_results)
+    return ToolResult(content=json.dumps(results), structured_content=results)
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 async def thegent_suggest_prompt(
     raw_prompt: str,
     ctx: Context = CurrentContext(),
@@ -1640,7 +1751,7 @@ async def thegent_suggest_prompt(
     """
     start_time = time.perf_counter()
     try:
-        result = await ctx.sample(
+        result = await cast("Any", ctx).sample(
             f"Refine this task prompt to be clearer and more actionable for an AI agent. Keep it concise. Return only the refined prompt, no explanation.\n\nRaw prompt:\n{raw_prompt}",
             temperature=0.3,
             max_tokens=500,
@@ -1687,7 +1798,9 @@ def http_app(stateless_http: bool = True):
         transport="http",
         stateless_http=stateless_http,
     )
-    app.add_middleware(BearerAuthMiddleware)
+    # Some app objects used in testing may not implement add_middleware; guard to avoid attribute errors
+    if hasattr(app, "add_middleware"):
+        cast("Any", app).add_middleware(BearerAuthMiddleware)
     return app
 
 

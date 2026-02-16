@@ -20,6 +20,7 @@ HOOKS_DIR="${BASH_SOURCE[0]%/*}"
 
 # --- Parse input once via common.sh (single jq call for all fields) ---
 HOOK_NAME="PRETOOL-DISPATCHER"
+# shellcheck source=./lib/common.sh
 source "${HOOKS_DIR}/lib/common.sh"
 hook_init_full < "$_dispatch_tmpdir/input.json"
 

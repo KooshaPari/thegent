@@ -9,8 +9,15 @@
 
 set -euo pipefail
 HOOK_NAME="CHANGE-DOC-TRACKER"
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
+
+# Initialize variables if not set by hook_init/dispatcher
+PROJECT_DIR="${PROJECT_DIR:-.}"
+now="${now:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+TOOL_NAME="${TOOL_NAME:-Edit}"
+CHANGE_LOG="${CHANGE_LOG:-$HOME/.claude/session-changes.log}"
 
 # Stderr message on unexpected failure (set -e)
 trap 'echo "CHANGE-DOC-TRACKER FAIL: unexpected error at line $LINENO" >&2' ERR
@@ -44,8 +51,8 @@ while IFS= read -r _; do
 done < "$CHANGE_LOG"
 [[ "$TOTAL_LINES" -lt 3 ]] && exit 0
 
-# Ensure marker file exists (bash builtin: >> creates if absent, no touch spawn)
-[[ -f "$MARKER_FILE" ]] || >> "$MARKER_FILE"
+# Ensure marker file exists
+[[ -f "$MARKER_FILE" ]] || : >> "$MARKER_FILE"
 
 # Single awk pass: collect stats, config hits, common write dir, and affected areas
 # Eliminates 4 separate awk invocations + grep

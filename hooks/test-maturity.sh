@@ -22,6 +22,7 @@ else
 fi
 
 HOOK_NAME="TEST-MATURITY"
+# shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
 

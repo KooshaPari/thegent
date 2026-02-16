@@ -29,16 +29,26 @@ def validate_csm(csm: CanonicalStructuredMessage) -> list[str]:
         issues.append("Status is PENDING but progress is > 0.0")
     if csm.status == CSMStatus.IN_PROGRESS and (csm.progress < 0.0 or csm.progress >= 1.0):
         issues.append("Status is IN_PROGRESS but progress must be in [0, 1)")
+    if csm.progress < 0.0 or csm.progress > 1.0:
+        issues.append("Progress must be in [0, 1]")
 
     # 2. Summary Requirements
     if csm.status == CSMStatus.COMPLETED and not csm.summary:
         issues.append("Status is COMPLETED but summary is empty")
 
-    # 3. FAILED status: should have evidence of failure
-    if csm.status == CSMStatus.FAILED and not csm.issues and not csm.decision_reason_code:
-        issues.append("Status is FAILED but issues and decision_reason_code are empty")
+    # 3. FAILED status: should have evidence of failure (issues or blockers)
+    if csm.status == CSMStatus.FAILED and not csm.issues and not csm.decision_reason_code and not csm.blockers:
+        issues.append("Status is FAILED but issues, blockers and decision_reason_code are empty")
 
-    # 4. Phase-specific rules (phase-aware validators)
+    # 4. Confidence Level validation
+    if csm.confidence_level < 0.0 or csm.confidence_level > 1.0:
+        issues.append("Confidence level must be in [0, 1]")
+
+    # 5. Blockers vs Status
+    if csm.blockers and csm.status == CSMStatus.COMPLETED:
+        issues.append("Status is COMPLETED but active blockers are present")
+
+    # 6. Phase-specific rules (phase-aware validators)
     if csm.phase == CSMPhase.REVIEWER and not csm.decision_reason_code:
         issues.append("Phase is REVIEWER but decision_reason_code is missing")
     if csm.phase == CSMPhase.PLANNER and csm.status == CSMStatus.COMPLETED and not csm.objective:

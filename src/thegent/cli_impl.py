@@ -67,7 +67,7 @@ def _resolve_droids_dir(cwd: Path | None, settings: ThegentSettings) -> Path:
     return settings.factory_droids_dir.expanduser().resolve()
 
 
-def _resolve_cwd(cd: Path | None) -> Path | None:
+def _resolve_cwd(cd: Any) -> Path | None:
     """Resolve cwd: explicit --cd, or infer from current dir if project-like.
 
     Implements QW-002 optimization with 10s TTL and stat-based verification.
@@ -2044,6 +2044,17 @@ def run_impl(
             return {"error": "System fatigue limit reached. Task deferred.", "exit_code": 1}
 
     effective_owner = owner or _default_owner_tag(cwd)
+
+    # WP-4005: State Freshness Checks
+    from thegent.execution import FreshnessValidator
+
+    fv = FreshnessValidator(settings.session_dir)
+    freshness_issues = fv.validate_action(run_id or "new", [registry.registry_path])
+    if freshness_issues:
+        _log.warning("Freshness issues detected: %s", freshness_issues)
+        if lane == "critical":
+            return {"error": f"State freshness violation in critical lane: {freshness_issues}", "exit_code": 1}
+
     run_meta = RunMeta(
         run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
         correlation_id=correlation_id,
@@ -3742,7 +3753,7 @@ def list_agents_impl() -> list[dict[str, str]]:
     return [{"name": AGENT_LABELS.get(n, n), "backend": backends.get(n, "Direct")} for n in agents]
 
 
-def list_droids_impl(cd: Path | None = None) -> list[str]:
+def list_droids_impl(cd: Any = None) -> list[str]:
     """List available droids. Returns list of droid names."""
     settings = ThegentSettings()
     cwd = _resolve_cwd(cd) or Path.cwd()

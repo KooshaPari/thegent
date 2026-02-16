@@ -78,6 +78,52 @@ export THGENT_CURSOR_AGENT_CMD=/path/to/cursor
 
 See `.env.example` for other overrides.
 
+## clode (legacy CLI proxy shims)
+
+`thegent clode` provides a Claude-code-compatible bridge with explicit provider routing:
+
+```bash
+thegent clode                          # raw claude session via nim
+thegent clode nim                       # explicit nim backend
+thegent clode openrouter                # explicit openrouter backend
+thegent clode kilo                      # explicit kilo backend
+thegent clode zai                       # explicit zai backend
+thegent clode minimax                   # explicit minimax backend
+thegent clode glm --policy round_robin      # policy-based GLM balancing (default)
+thegent clode glm --policy cheapest         # choose cheapest configured backend in offer set
+thegent clode glm --prefer kilo             # force a specific backend in GLM offer set
+thegent clode glm --prefer openrouter       # force OpenRouter backend in GLM alias mode
+thegent clode max                        # alias for openrouter backend
+```
+
+To install executable compatibility wrappers used by droids and legacy scripts:
+
+```bash
+thegent clode install-links --force
+```
+
+This writes:
+
+- `clode` → `thegent clode`
+- `claudeglm` → `thegent clode glm`
+- `claudemax` → `thegent clode max`
+
+The shims send routing hints through `ANTHROPIC_API_KEY` when invoking Claude Code:
+
+- `glm:round_robin` (default for `glm`)
+- `glm:cheapest`
+- `glm:prefer_proxy`
+- `glm:prefer_direct`
+- `glm:failover`
+- `kilo`, `zai`, `nim`, `minimax`, `openrouter` can be forced directly
+
+You can also inspect available droids with:
+
+```bash
+thegent list-droids                # list project/discovery droids
+thegent list-droids --cd /path/to/project
+```
+
 ## MCP (Cursor, Claude Code, Codex, Droid)
 
 Expose thegent as an MCP server so Cursor, Claude Code, Codex, and droids can invoke agents as tools.

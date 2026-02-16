@@ -15,6 +15,7 @@ if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
 else
   set -euo pipefail
   HOOK_NAME="DOC-LOCATION-GUARD"
+  # shellcheck source=./lib/common.sh
   source "${BASH_SOURCE[0]%/*}/lib/common.sh"
   hook_init
 fi

@@ -18,6 +18,7 @@ if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
   :
 else
   HOOK_NAME="POST-EDIT-CHECKER"
+  # shellcheck source=./lib/common.sh
   source "${BASH_SOURCE[0]%/*}/lib/common.sh"
   hook_init
 fi
