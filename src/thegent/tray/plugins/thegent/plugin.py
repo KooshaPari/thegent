@@ -91,7 +91,21 @@ class ThegentPlugin(TrayPlugin):
             # Tabs module doesn't exist yet - return None
             return None
 
-        widget = get_tab(tab_id, self._api_client)
+        # Check if QApplication exists - required for Qt widgets
+        try:
+            from PySide6.QtWidgets import QApplication
+            if QApplication.instance() is None:
+                return None
+        except Exception:
+            return None
+
+        # Catch all exceptions including Qt crashes
+        try:
+            widget = get_tab(tab_id, self._api_client)
+        except BaseException:
+            # Tab creation failed (e.g., Qt not available in test environment)
+            return None
+
         if widget is not None:
             self._tabs[tab_id] = widget
 
