@@ -61,7 +61,7 @@ def simulate_monte_carlo(nodes: list[PERTNode], iterations: int = 1000) -> dict[
     for _ in range(iterations):
         for n in nodes:
             # Triangular distribution: lower, mode, upper
-            val = random.triangular(n.optimistic_days, n.pessimistic_days, n.most_likely_days)
+            val = random.triangular(n.optimistic_days, n.pessimistic_days, n.most_likely_days)  # noqa: S311 -- Monte Carlo sampling, not cryptographic; statistical sampling only
             task_histories[n.task_id].append(val)
 
     stats: dict[str, dict[str, float]] = {}
@@ -252,13 +252,13 @@ def continuity_risk_predictor(registry: Any) -> dict[str, Any]:
     # Simplified prediction based on recent history
     runs = registry.list_runs(limit=50)
     failed_handoffs = sum(1 for r in runs if r.get("error_class") == "handoff_failure")
-    
+
     risk_level = "low"
     if failed_handoffs > 2:
         risk_level = "high"
     elif failed_handoffs > 0:
         risk_level = "medium"
-        
+
     return {
         "risk_level": risk_level,
         "failed_handoff_count": failed_handoffs,
