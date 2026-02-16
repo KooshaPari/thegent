@@ -721,7 +721,6 @@ from thegent.operations import Operation
 from thegent.orchestration_modes import MultiAgentMode
 from thegent.output_parser import (
     OUTPUT_PARSER_SCHEMA_VERSION,
-    condense_stream_to_display,
     extract_condensed,
 )
 
