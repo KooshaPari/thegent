@@ -103,6 +103,67 @@ class ConcurrencyController:
         return running_count < limit
 
 
+class InterruptionTracker:
+    """WP-4004: Fatigue tracking and interruption controls."""
+
+    def __init__(self, session_dir: Path) -> None:
+        self.session_dir = session_dir
+        self.path = session_dir / "interruption_tracker.jsonl"
+
+    def record_interruption(self, run_id: str, severity: str = "medium") -> None:
+        """Record an agent interruption event."""
+        self.session_dir.mkdir(parents=True, exist_ok=True)
+        event = {
+            "timestamp": datetime.now(UTC).isoformat(),
+            "run_id": run_id,
+            "severity": severity,
+        }
+        with self.path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(event) + "\n")
+
+    def get_fatigue_score(self, window_s: int = 3600) -> float:
+        """Calculate fatigue score based on recent interruptions (0.0-1.0)."""
+        if not self.path.exists():
+            return 0.0
+        now = datetime.now(UTC)
+        count = 0
+        with self.path.open("r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    data = json.loads(line)
+                    ts = datetime.fromisoformat(data["timestamp"])
+                    if (now - ts).total_seconds() < window_s:
+                        count += 1
+                except Exception:
+                    continue
+        # Heuristic: 10+ interruptions per hour is high fatigue
+        return min(1.0, count / 10.0)
+
+
+class FreshnessValidator:
+    """WP-4005: Detects stale state and enforces refresh logic."""
+
+    def __init__(self, session_dir: Path) -> None:
+        self.session_dir = session_dir
+
+    def is_stale(self, path: Path, max_age_s: int = 300) -> bool:
+        """Check if a file or registry is stale."""
+        if not path.exists():
+            return True
+        import time
+
+        age = time.time() - path.stat().st_mtime
+        return age > max_age_s
+
+    def validate_action(self, run_id: str, context_files: list[Path]) -> list[str]:
+        """Validate if the action is safe to perform based on context freshness."""
+        issues = []
+        for f in context_files:
+            if self.is_stale(f):
+                issues.append(f"Context file is stale: {f.name}")
+        return issues
+
+
 class RunMeta(BaseModel):
     """Metadata for a single agent/droid execution run."""
 
