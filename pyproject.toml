@@ -6,10 +6,22 @@ build-backend = "hatchling.build"
 name = "thegent"
 version = "0.1.0"
 description = "Unified agent orchestration CLI for Factory skills and droids"
+authors = [{ name = "Koosha Paridehpour", email = "kooshapari@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
+urls = { "Homepage" = "https://github.com/router-for-me/thegent", "Repository" = "https://github.com/router-for-me/thegent", "Documentation" = "https://github.com/router-for-me/thegent#readme" }
+keywords = ["ai", "agent", "mcp", "orchestration", "automation", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
+    "httpx>=0.27.0",
     "typer>=0.21.1",
     "rich>=14.3.1",
     "pydantic>=2.12.5",
@@ -17,16 +29,18 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "tenacity>=9.0.0",
     "pyyaml>=6.0",
-    "fastmcp>=3.0.0rc1",
+    "fastmcp[tasks]>=3.0.0rc1",
     "starlette>=0.36.0",
     "uvicorn>=0.27.0",
-    "opentelemetry-api>=1.22.0",
-    "opentelemetry-sdk>=1.22.0",
+    "opentelemetry-api>=1.27.0",
+    "opentelemetry-sdk>=1.27.0",
+    "litellm>=1.50.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
     "pytest-cov>=4.0.0",
     "pytest-xdist>=3.5.0",
     "ruff>=0.3.0",
@@ -35,6 +49,7 @@ dev = [
     "pre-commit>=3.6.0",
     "tach>=0.4.0",
     "vulture>=2.11",
+    "radon>=6.0",
 ]
 
 [project.scripts]
@@ -48,21 +63,33 @@ managed = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
 markers = [
     "unit: marks unit tests",
     "integration: marks tests that call real agents (deselect with -m 'not integration')",
     "e2e: marks end-to-end CLI tests",
     "slow: marks slow tests (deselect with -m 'not slow')",
+    "asyncio: marks async tests (pytest-asyncio)",
+    "load: marks load/stress tests",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore:ImportError while loading.*logfire-plugin:UserWarning",
 ]
 
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/__pycache__/*", "*/conftest.py"]
+# P7: Per-test context for coverage-based affected test selection. Use: pytest --cov=src --cov-context=test
+
+[tool.coverage.report]
+fail_under = 80
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-exclude = ["templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*"]
+exclude = ["templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*", ".worktrees/*"]
 
 [tool.ruff.lint]
 select = [
@@ -101,6 +128,7 @@ pythonVersion = "3.12"
 [dependency-groups]
 dev = [
     "mypy>=1.19.1",
+    "types-pyyaml>=6.0.12.20250915",
 ]
 # basedpyright handles many things ruff/mypy might miss, or can be used for CI final check
 # to be even stricter than ty
