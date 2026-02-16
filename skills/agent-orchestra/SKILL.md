@@ -99,6 +99,20 @@ thegent stop "$SESSION_ID"
 thegent stop --force "$SESSION_ID"
 ```
 
+## Sitback (Recommended for Multi-Session Orchestration)
+
+For monitoring many terminals and Claude Code instances, use **Sitback**:
+
+```bash
+# Start Sitback Agent (dashboard + terminal list + ps on startup)
+thegent sitback
+thegent sitback -a kilo              # sibling session via kilo
+thegent sitback --skill agent-orchestra  # use this skill instead of sitback-agent
+thegent sitback --no-dashboard       # manual mode
+```
+
+**Precondition:** Start MCP first for FastMCP tools: `thegent serve` (or `thegent mcp up`). If MCP is down, Sitback falls back to CLI.
+
 ## Agent Selection Guidance
 
 - Prefer native tool-specific subagents only when a tool-only capability is required.

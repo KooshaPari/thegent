@@ -4,6 +4,7 @@ import contextlib
 import os
 import shutil
 import subprocess
+import sys
 from collections import Counter
 from collections.abc import Iterator
 from pathlib import Path
@@ -205,6 +206,175 @@ def clode_glm(
 def clode_max() -> None:
     """Legacy shortcut for OpenRouter-backed Claude sessions."""
     _run_claude_interactive("openrouter")
+
+
+_SITBACK_STARTUP_PROMPT = (
+    "You are in Sitback mode (THGENT_SITBACK=1). "
+    "Call thegent_sitback_dashboard (or run: thegent sitback-dashboard) "
+    "and present the summary. Say: Sitback ready. Awaiting instructions."
+)
+
+
+def _run_sitback_claude(
+    claude_path: str,
+    env: dict[str, str],
+    tmux: bool,
+    startup_path: str | None = None,
+) -> None:
+    """Run Claude (optionally with startup pipe) in current terminal or dedicated tmux session."""
+    cmd = f"cat {startup_path!r} - | {claude_path}" if startup_path else claude_path
+    if tmux:
+        session_name = f"sitback-{os.getpid()}"
+        run_args = ["tmux", "new-session", "-s", session_name, "sh", "-c", cmd]
+    else:
+        run_args = ["sh", "-c", cmd] if startup_path else [claude_path]
+    with contextlib.suppress(KeyboardInterrupt):
+        subprocess.run(
+            run_args,
+            check=False,
+            env=env,
+            stdin=sys.stdin,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+
+
+def sitback_cmd(
+    agent: str = typer.Option(
+        "minimax",
+        "--agent",
+        "-a",
+        help="Provider: minimax (default), nim, kilo, zai, glm, openrouter",
+    ),
+    cd: Path | None = typer.Option(
+        None,
+        "--cd",
+        "-d",
+        help="Working directory (default: cwd)",
+    ),
+    skill: str | None = typer.Option(
+        None,
+        "--skill",
+        "-s",
+        help="Override skill: sitback-agent (default), agent-orchestra, or custom name",
+    ),
+    profile: str = typer.Option(
+        "medium",
+        "--profile",
+        "-p",
+        help="Dashboard tier: light, medium (default), full",
+    ),
+    tmux: bool = typer.Option(
+        False,
+        "--tmux",
+        "-t",
+        help="Run inside a dedicated tmux session (tmux-native mode)",
+    ),
+    no_dashboard: bool = typer.Option(
+        False,
+        "--no-dashboard",
+        help="Skip auto-dashboard on startup (manual mode)",
+    ),
+) -> None:
+    """Start Claude Code with Sitback Agent persona (dashboard + terminal list + ps).
+
+    Examples:
+      thegent sitback                    # minimax, default skill
+      thegent sitback -a kilo             # sibling via kilo
+      thegent sitback --skill agent-orchestra  # use agent-orchestra skill
+      thegent sitback --profile full      # full dashboard with plugins
+      thegent sitback --tmux              # run in dedicated tmux session
+      thegent sitback --no-dashboard      # manual mode, no startup prompt
+    """
+    valid_agents = {"minimax", "nim", "kilo", "zai", "glm", "openrouter"}
+    resolved = agent.strip().lower()
+    if resolved not in valid_agents:
+        if resolved == "max":
+            resolved = "openrouter"
+        else:
+            console.print(f"[red]Invalid agent '{agent}'. Allowed: {', '.join(sorted(valid_agents))}[/red]")
+            raise typer.Exit(1)
+
+    valid_profiles = ("light", "medium", "full")
+    prof = profile.strip().lower() if profile else "medium"
+    if prof not in valid_profiles:
+        console.print(f"[red]Invalid profile '{profile}'. Allowed: {', '.join(valid_profiles)}[/red]")
+        raise typer.Exit(1)
+
+    env = _get_claude_env(resolved)
+    env["THGENT_SITBACK"] = "1"
+    env["THGENT_SITBACK_AGENT"] = resolved
+    env["THGENT_SITBACK_PROFILE"] = prof
+    if skill is not None:
+        env["THGENT_SITBACK_SKILL"] = skill.strip()
+    if tmux:
+        env["THGENT_SITBACK_TMUX"] = "1"
+    if no_dashboard:
+        env["THGENT_SITBACK_NO_DASHBOARD"] = "1"
+    if cd is not None:
+        env["THGENT_SITBACK_CD"] = str(cd.resolve())
+
+    # MCP precondition: warn if server not reachable (Sitback uses FastMCP tools)
+    settings = ThegentSettings()
+    try:
+        import urllib.request
+
+        health_url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
+        req = urllib.request.Request(health_url, method="GET")
+        with urllib.request.urlopen(req, timeout=2) as _:
+            pass
+    except Exception:
+        console.print("[yellow]MCP server not reachable. Start with: thegent serve (or thegent mcp up)[/yellow]")
+        console.print("[dim]Sitback will fall back to CLI (cockpit, terminal list, ps).[/dim]\n")
+
+    claude_path = shutil.which("claude")
+    if not claude_path:
+        console.print("[red]Error: 'claude' (Claude Code) CLI not found in PATH.[/red]")
+        console.print("[dim]Install it via: npm install -g @anthropic-ai/claude-code[/dim]")
+        raise typer.Exit(1)
+
+    console.print(f"[bold green]Starting Sitback Agent via {resolved} proxy...[/bold green]")
+
+    if no_dashboard:
+        console.print("[dim]Manual mode: no startup prompt injected.[/dim]")
+        _run_sitback_claude(claude_path, env, tmux)
+        return
+
+    # Phase 2: Startup prompt injection — try stdin first, always show paste fallback
+    startup_prompt = _SITBACK_STARTUP_PROMPT
+    try:
+        from thegent.sitback_plugins import get_registry
+
+        for step in get_registry().get_startup_steps():
+            startup_prompt += "\n" + step
+    except Exception:
+        pass
+
+    console.print("[dim]Injecting startup prompt via stdin...[/dim]")
+    console.print("[yellow]If Claude Code ignores stdin, paste the block below to start:[/yellow]\n")
+    console.print("[bold]--- Paste to start ---[/bold]")
+    console.print(startup_prompt)
+    console.print("[bold]--- End paste ---[/bold]\n")
+
+    # Option A: inject via stdin then forward — temp file avoids shell escaping
+    import tempfile
+
+    try:
+        from thegent.sitback_plugins import get_registry
+
+        for step in get_registry().get_startup_steps():
+            startup_prompt += "\n" + step
+    except Exception:
+        pass
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+        f.write(startup_prompt + "\n")
+        tmp_path = f.name
+    try:
+        _run_sitback_claude(claude_path, env, tmux, startup_path=tmp_path)
+    finally:
+        with contextlib.suppress(FileNotFoundError):
+            Path(tmp_path).unlink()
 
 
 @app.command("install-links")

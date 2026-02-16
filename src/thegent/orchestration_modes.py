@@ -99,7 +99,7 @@ class ConflictArbitrator:
     def detect_conflicts(self, results: list[Any]) -> list[str]:
         """Detect conflicts between multiple agent outputs."""
         # Simple implementation: compare summary/status
-        conflicts = []
+        conflicts: list[str] = []
         if not results:
             return conflicts
 

@@ -10,13 +10,156 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# Role-based routing (subscription-optimized, Terminal Bench 2.0)
+# Roles map to optimal models based on task characteristics
+
+_ROLE_TO_MODEL = {
+    # WORKHORSE: Bulk tasks, default fallback (minimax quota: 300/5hrs)
+    "workhorse": "minimax",
+    # RESEARCHER: Fast lookups, exploration (free tier)
+    "researcher": "gemini",  # gemini-3-flash primary, haiku-4.5 fallback
+    # WRITER: Code implementation, medium-high quality
+    "writer_fast": "codex",  # codex-spark for NORMAL
+    "writer_standard": "codex",  # codex-5.3-med for NORMAL (better quality)
+    "writer_high": "codex",  # codex-5.3-high for COMPLEX (SLOW, high quality)
+    # PLANNER: Architecture, design, reasoning (SLOW)
+    "planner": "claude",  # opus-4.6
+    # LARGE_CONTEXT: >100K tokens, cross-file analysis
+    "large_context": "claude",  # sonnet-1m (1M context)
+    # EXPERT: Never auto-routed (glm-5 too slow, only explicit)
+    "expert": "glm",  # Never used in auto-routing
+}
+
+# Keyword-based role detection
+_PLANNER_KEYWORDS = {
+    "design",
+    "architecture",
+    "plan",
+    "strategy",
+    "approach",
+    "tradeoffs",
+    "pros and cons",
+    "which approach",
+    "should we",
+    "system design",
+    "schema design",
+    "api design",
+    "evaluate options",
+    "decide between",
+}
+
+_WRITER_KEYWORDS = {
+    "implement",
+    "write",
+    "create",
+    "build",
+    "add",
+    "fix",
+    "refactor",
+    "optimize",
+    "code",
+    "function",
+    "class",
+    "module",
+    "test",
+    "debug",
+}
+
+_RESEARCHER_KEYWORDS = {
+    "what is",
+    "how does",
+    "explain",
+    "find",
+    "search",
+    "list",
+    "show me",
+    "where is",
+    "analyze",
+    "investigate",
+    "read",
+    "understand",
+    "learn",
+    "explore",
+    "research",
+}
+
+_MISSION_CRITICAL_KEYWORDS = {
+    "security",
+    "authentication",
+    "authorization",
+    "payment",
+    "encryption",
+    "production",
+    "critical",
+    "zero-downtime",
+    "data integrity",
+    "compliance",
+    "audit",
+}
+
+_LARGE_CONTEXT_INDICATORS = {
+    "across all files",
+    "entire codebase",
+    "all modules",
+    "cross-file",
+    "multi-file",
+    "refactor all",
+}
+
+
 class TaskClassifier:
     """Categorizes tasks based on prompt analysis and heuristics."""
 
     def __init__(self, config: "ThegentSettings") -> None:
         self.config = config
 
-    def classify(self, prompt: str) -> TaskMetadata:
+    def detect_role(self, prompt: str, agent_role: str | None = None) -> str:
+        """Detect task role from agent metadata or prompt keywords.
+
+        Priority:
+        1. Agent-specified role (from agent frontmatter)
+        2. Auto-detect from prompt keywords
+        3. Default to "workhorse"
+
+        Args:
+            prompt: User prompt text
+            agent_role: Role from agent metadata (e.g., "planner", "writer", "researcher")
+
+        Returns:
+            Role string (workhorse/researcher/writer_fast/writer_high/planner/large_context)
+        """
+        # Priority 1: Agent specifies role
+        if agent_role:
+            return agent_role.lower()
+
+        # Priority 2: Auto-detect from prompt
+        prompt_lower = prompt.lower()
+
+        # Check for large context indicators first
+        if any(kw in prompt_lower for kw in _LARGE_CONTEXT_INDICATORS):
+            return "large_context"
+
+        # Check for mission-critical indicators (writer_high tier)
+        if any(kw in prompt_lower for kw in _MISSION_CRITICAL_KEYWORDS):
+            return "writer_high"  # Use Codex XHigh for security/payment/etc.
+
+        # Check for planning keywords
+        if any(kw in prompt_lower for kw in _PLANNER_KEYWORDS):
+            return "planner"
+
+        # Check for implementation keywords
+        if any(kw in prompt_lower for kw in _WRITER_KEYWORDS):
+            # Default to fast writer for NORMAL, will upgrade to high if COMPLEX category
+            return "writer_fast"
+
+        # Check for research keywords
+        if any(kw in prompt_lower for kw in _RESEARCHER_KEYWORDS):
+            return "researcher"
+
+        # Default: workhorse (minimax)
+        return "workhorse"
+
+    def classify(self, prompt: str, agent_role: str | None = None) -> TaskMetadata:
         """
         Classify task complexity based on prompt content.
         Heuristics:
@@ -178,6 +321,36 @@ class TaskRouter:
 
     def get_fallback_chain(self, category: TaskCategory) -> list[str]:
         """Get LiteLLM-style fallback chain for task category (WP-1001)."""
+        from thegent.execution import LoadClassifier, ProviderScorer
+
+        lc = LoadClassifier(self.config.session_dir)
+        load_level = lc.get_load_level()
+
+        # WP-5008: Dynamic tuning based on load
+        if load_level == "burst":
+            # In burst mode, prefer faster/cheaper models for all but critical
+            if category != TaskCategory.HIGH_COMPLEX:
+                return ["gemini-3-flash", "claude-haiku-4.5"]
+
+        # WP-Y8: Provider scoring and learning
+        scorer = ProviderScorer(self.config.session_dir)
+        scores = scorer.get_scores()
+
+        # Map category to characteristic
+        characteristic = "coding"
+        if category == TaskCategory.FAST:
+            characteristic = "research"
+        elif category == TaskCategory.HIGH_COMPLEX:
+            characteristic = "orchestration"
+
+        char_scores = scores.get(characteristic, {})
+        if char_scores:
+            # Sort providers by score desc
+            sorted_providers = sorted(char_scores.items(), key=lambda x: x[1], reverse=True)
+            # Map top providers back to known model IDs (simplified)
+            mapping = {"codex": "gpt-5.3-codex", "claude": "claude-sonnet-4.5", "gemini": "gemini-3-pro"}
+            return [mapping[p] for p, s in sorted_providers if p in mapping]
+
         if category == TaskCategory.FAST:
             return ["gemini-3-flash", "claude-haiku-4.5"]
         if category == TaskCategory.NORMAL:
@@ -221,7 +394,22 @@ class TaskRouter:
 
         target_path = Path(path).resolve()
         panes = list_tmux_panes()
+        # 1. Exact match
         for p in panes:
             if Path(p.path).resolve() == target_path and is_claude_code_pane(p):
                 return p.pane_id
-        return None
+
+        # 2. Subpath/Parent match (deepest first)
+        best_pane = None
+        best_depth = -1
+        for p in panes:
+            if not is_claude_code_pane(p):
+                continue
+            pane_path = Path(p.path).resolve()
+            if target_path in pane_path.parents or pane_path in target_path.parents:
+                depth = len(pane_path.parts)
+                if depth > best_depth:
+                    best_depth = depth
+                    best_pane = p.pane_id
+
+        return best_pane

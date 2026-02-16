@@ -66,6 +66,11 @@ OPERATION_MAP: list[OperationEntry] = [
     ),
     OperationEntry(Operation.GOVERN, "history verify", "Verify run registry integrity", None),
     OperationEntry(Operation.GOVERN, "closure-pack", "Generate closure pack", None),
+    OperationEntry(Operation.GOVERN, "policy purge", "Purge expired history (tiered retention)", None),
+    OperationEntry(Operation.GOVERN, "roadmap", "Successor roadmap generation", None),
+    OperationEntry(Operation.GOVERN, "self-heal-tests", "Self-healing test recommendations", None),
+    OperationEntry(Operation.GOVERN, "negotiate", "Contract version negotiation", "thegent_negotiate_contract"),
+    OperationEntry(Operation.GOVERN, "trend-analysis", "Detailed contract trend analysis", None),
     # Recover
     OperationEntry(
         Operation.RECOVER, "dag recover", "Recovery actions (retry-failed, clear-stuck, reset-retries)", None
@@ -74,6 +79,8 @@ OPERATION_MAP: list[OperationEntry] = [
     OperationEntry(Operation.RECOVER, "dag reconcile", "Reconcile stuck DAG tasks", None),
     OperationEntry(Operation.RECOVER, "stop", "Stop background session", "thegent_stop"),
     OperationEntry(Operation.RECOVER, "archive", "Archive old sessions", None),
+    OperationEntry(Operation.RECOVER, "fallbacks", "Safe fallback suggestions", None),
+    OperationEntry(Operation.RECOVER, "handoff", "Continuity shift handoff", None),
     # Observe
     OperationEntry(Operation.OBSERVE, "ps", "List background sessions", "thegent_ps"),
     OperationEntry(Operation.OBSERVE, "status", "Session status", "thegent_status"),
@@ -88,6 +95,11 @@ OPERATION_MAP: list[OperationEntry] = [
     OperationEntry(Operation.OBSERVE, "list-droids", "List droids", "thegent_list_droids"),
     OperationEntry(Operation.OBSERVE, "list-models", "List models by provider", "thegent_list_models"),
     OperationEntry(Operation.OBSERVE, "wait", "Wait for session completion", "thegent_wait"),
+    OperationEntry(Operation.OBSERVE, "dlq", "Dead-Letter Queue list", None),
+    OperationEntry(Operation.OBSERVE, "traffic", "TRAFFIC KPI Dashboard", None),
+    OperationEntry(Operation.OBSERVE, "drift-monitor", "Cross-provider drift monitoring", None),
+    OperationEntry(Operation.OBSERVE, "replay", "Decision replay and rationale snapshots", None),
+    OperationEntry(Operation.OBSERVE, "watchdog", "Continuity watchdog scan", None),
     # Plan
     OperationEntry(Operation.PLAN, "dag list", "List DAG tasks", "thegent_dag_list"),
     OperationEntry(Operation.PLAN, "dag validate", "Validate DAG", None),

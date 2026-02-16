@@ -89,6 +89,31 @@ _AGENT_CLI: dict[str, tuple[str, bool, str]] = {
 }
 
 
+def _wrap_with_harness(cmd: list[str]) -> list[str]:
+    """WP-4008: Wrap command with sharecli harness if available and enabled."""
+    if os.environ.get("THGENT_SHARECLI_ENABLED", "1") != "1":
+        return cmd
+
+    harness_bin = shutil.which("harness")
+    if not harness_bin:
+        # Check relative path to sharecli
+        potential = Path.cwd().parent / "sharecli" / "bin" / "harness"
+        if potential.exists():
+            harness_bin = str(potential)
+        else:
+            # Check workspace root
+            from thegent.config import ThegentSettings
+
+            settings = ThegentSettings()
+            potential = settings.factory_skills_dir.parent.parent / "sharecli" / "bin" / "harness"
+            if potential.exists():
+                harness_bin = str(potential)
+
+    if harness_bin:
+        return [harness_bin, *cmd]
+    return cmd
+
+
 class DirectAgentRunner(AgentRunner):
     """Invokes cursor, claude, copilot, codex, gemini directly via their CLIs."""
 
@@ -146,6 +171,8 @@ class DirectAgentRunner(AgentRunner):
                     cmd.extend(["-p", prompt])  # copilot requires -p for non-interactive
                 else:
                     cmd.append(prompt)
+
+            cmd = _wrap_with_harness(cmd)
 
             try:
                 if live_output:

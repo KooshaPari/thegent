@@ -5,6 +5,7 @@ task-tool (18-tag), Zen rich protocol, and thegent provider outputs.
 """
 
 from dataclasses import dataclass
+from typing import Any
 
 # Contract schema version for thegent orchestration contracts
 CONTRACT_SCHEMA_VERSION = "csm-v1"
@@ -84,6 +85,54 @@ class ContractRegistry:
     def list_versions(self) -> list[ContractVersion]:
         """List all registered contract versions."""
         return list(self._versions.values())
+
+    def get_compatibility_matrix(self) -> dict[str, tuple[str, ...]]:
+        """Return the current compatibility matrix (WP-7002)."""
+        return _COMPATIBILITY_MATRIX.copy()
+
+
+class ContractNegotiator:
+    """WP-7001: Negotiates contract versions between client and server."""
+
+    def __init__(self, registry: ContractRegistry | None = None) -> None:
+        self.registry = registry or get_registry()
+
+    def negotiate(self, contract_id: str, supported_versions: list[str]) -> dict[str, Any]:
+        """Negotiate best version for contract_id given supported_versions.
+
+        Returns:
+            Dict with 'version', 'status', 'reason'.
+        """
+        # Find matches in registry
+        available = [
+            v.version for v in self.registry.list_versions() if v.contract_id == contract_id and not v.deprecated
+        ]
+
+        # Find intersection, preferring highest version in supported_versions (assumed sorted desc)
+        matches = [v for v in supported_versions if v in available]
+        if matches:
+            return {
+                "version": matches[0],
+                "status": "success",
+                "reason": f"Negotiated {contract_id}@{matches[0]} from {len(supported_versions)} options.",
+            }
+
+        # Fallback to compatibility check
+        latest = self.registry.get(contract_id)
+        if latest:
+            for v in supported_versions:
+                if self.registry.is_compatible(v, latest.version):
+                    return {
+                        "version": latest.version,
+                        "status": "compat_mode",
+                        "reason": f"Client version {v} compatible with server {latest.version}.",
+                    }
+
+        return {
+            "version": None,
+            "status": "failure",
+            "reason": f"No compatible version found for {contract_id}. Client: {supported_versions}, Server: {available}",
+        }
 
 
 @dataclass(frozen=True)

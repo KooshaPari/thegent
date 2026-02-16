@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import time
+from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any, Literal, cast
 
@@ -14,12 +15,11 @@ from fastmcp._vendor.docket_di import Depends
 from fastmcp.server.context import (
     AcceptedElicitation,
     CancelledElicitation,
-    Context,
     DeclinedElicitation,
 )
 
 # Treat Context as Any for typing in this module to accommodate FastMCP runtime context shapes
-Context = Any  # type: ignore[assignment]
+Context = Any
 from fastmcp.server.dependencies import CurrentContext
 from fastmcp.server.event_store import EventStore
 from fastmcp.server.lifespan import lifespan
@@ -79,6 +79,7 @@ from thegent.cli_impl import (
     session_contract_health_gate_impl,
     session_contract_health_report_impl,
     session_contract_health_trend_impl,
+    session_contract_negotiate_impl,
     status_impl,
     stop_impl,
     wait_impl,
@@ -100,6 +101,7 @@ TOOL_ICONS = {
     "thegent_list_models": "📦",
     "thegent_dag_list": "📊",
     "thegent_observe_summary": "📈",
+    "thegent_sitback_dashboard": "🖥️",
     "thegent_terminal_list": "🖥️",
     "thegent_terminal_inspect": "👁️",
     "thegent_terminal_send": "⌨️",
@@ -129,7 +131,7 @@ def get_default_owner(ctx: Context = CurrentContext()) -> str | None:
 
 
 @lifespan
-async def thegent_lifespan(_: FastMCP):
+async def thegent_lifespan(_: FastMCP) -> AsyncIterator[dict[str, Any] | None]:
     """Startup and teardown for thegent MCP server. See gofastmcp.com/servers/lifespan."""
     _log.info("thegent MCP server starting")
 
@@ -211,6 +213,7 @@ mcp.add_middleware(
                 "thegent_list_droids",
                 "thegent_list_models",
                 "thegent_session_contract_health_trend",
+                "thegent_sitback_dashboard",
             ],
             ttl=30,
         ),
@@ -543,6 +546,24 @@ def thegent_bg_task(agent: str, prompt: str, owner: str | None = None) -> str:
 # --- MCP Tools ---
 
 
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+async def thegent_negotiate_contract(
+    contract_id: str,
+    supported_versions: list[str],
+) -> str:
+    """
+    Negotiate a contract version between client and server (WP-7001).
+
+    Args:
+        contract_id: The ID of the contract (e.g. 'csm', 'task-tool')
+        supported_versions: List of versions supported by the client, in order of preference.
+
+    Returns: JSON string with 'version', 'status', 'reason'.
+    """
+    res = session_contract_negotiate_impl(contract_id, supported_versions)
+    return json.dumps(res, indent=2)
+
+
 @mcp.tool(
     annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False},
     task=TaskConfig(mode="optional"),
@@ -559,7 +580,7 @@ async def thegent_run(
     include_contract: bool = False,
     confidence: float | None = None,
     arbitration: str | None = None,
-    ctx: Context = CurrentContext(),
+    ctx: Any = CurrentContext(),
     default_cwd: Any = Depends(get_default_cwd),
 ) -> ToolResult | str:
     """
@@ -764,7 +785,7 @@ async def thegent_bg(
     failover: bool = False,
     confidence: float | None = None,
     arbitration: str | None = None,
-    ctx: Context = CurrentContext(),
+    ctx: Any = CurrentContext(),
     default_cwd: Any = Depends(get_default_cwd),
     default_owner: Any = Depends(get_default_owner),
 ) -> ToolResult:
@@ -852,7 +873,9 @@ async def thegent_bg(
             contract = resolve_route_contract(
                 model,
                 provider_hint=requested_provider or None,
-                policy=route_lookup_policy,
+                policy=cast(
+                    "Literal['prefer_direct','prefer_proxy','failover','round_robin','cheapest']", route_lookup_policy
+                ),
             )
             if contract is not None:
                 route_contract = {
@@ -865,8 +888,8 @@ async def thegent_bg(
                 }
             else:
                 route_contract = {
-                    "provider": requested_provider,
-                    "model_alias": model,
+                    "provider": requested_provider or "",
+                    "model_alias": model or "",
                     "route_lookup_failed": True,
                     "schema": catalog_route_contract(),
                 }
@@ -893,11 +916,11 @@ async def thegent_bg(
         routing=routing_for_child,
         failover=failover,
         route_request={
-            "requested_model": requested_model,
-            "requested_provider_hint": requested_provider,
-            "policy": requested_policy,
-            "resolved_model_alias": model,
-            "resolved_agent": agent,
+            "requested_model": requested_model or "",
+            "requested_provider_hint": requested_provider or "",
+            "policy": requested_policy or "",
+            "resolved_model_alias": model or "",
+            "resolved_agent": agent or "",
         }
         if include_contract
         else None,
@@ -1605,7 +1628,7 @@ def thegent_resolve_model_route(
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 async def thegent_dag_list(
     cd: str | None = None,
-    ctx: Context = CurrentContext(),
+    ctx: Any = CurrentContext(),
     default_cwd: Any = Depends(get_default_cwd),
 ) -> ToolResult:
     """
@@ -1730,20 +1753,31 @@ def thegent_terminal_attach(pane_id: str) -> ToolResult:
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_sharecli_status() -> ToolResult:
+    """
+    Get status from sharecli harness.
+    """
+    from thegent.tools.terminal import sharecli_status
+
+    status = sharecli_status()
+    return ToolResult(content=status)
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_ddg_search(query: str, num_results: int = 5) -> ToolResult:
     """
     Search DuckDuckGo for heavy web research.
     """
     from thegent.tools.research import ddg_search
 
-    results = ddg_search(query, num_results=num_results)
+    results = ddg_search(query, max_results=num_results)
     return ToolResult(content=json.dumps(results), structured_content=results)
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 async def thegent_suggest_prompt(
     raw_prompt: str,
-    ctx: Context = CurrentContext(),
+    ctx: Any = CurrentContext(),
 ) -> ToolResult:
     """
     Refine a raw prompt using LLM sampling. Returns a suggested, clearer prompt.
@@ -1768,9 +1802,14 @@ async def thegent_suggest_prompt(
     )
 
 
+# Sitback: dashboard resource, tool, prompts (FastMCP-first projection)
+from thegent.mcp_sitback import register_sitback
+
+register_sitback(mcp)
+
 # Add transforms to expose resources and prompts as tools for tool-only clients
-mcp.add_transform(ResourcesAsTools(mcp))
-mcp.add_transform(PromptsAsTools(mcp))
+mcp.add_transform(ResourcesAsTools(cast("Any", mcp)))
+mcp.add_transform(PromptsAsTools(cast("Any", mcp)))
 
 
 @mcp.custom_route("/health", methods=["GET"])

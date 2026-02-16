@@ -8,6 +8,19 @@ settings:
   cache_ttl: 600
   # Enable smart skip (default: true)
   smart_skip: true
+  # Pre-warm caches on session start (default: true)
+  prewarm_on_session_start: true
+  # Parallel pipeline staging: run quality-gate in stages (default: true)
+  parallel_stages: true
+  # Speculative execution: pre-run tests after edits (default: true)
+  speculative: true
+  # Learning-based skip: skip hooks that consistently pass (default: false, opt-in)
+  learning_skip: false
+  # Timeout overrides (in seconds) for slow hooks
+  timeout_overrides:
+    quality-gate: 300       # 5 min for comprehensive checks
+    task-completion: 300    # 5 min for task verification
+    security-pipeline: 600  # 10 min for security scans
 
 # Hook-specific configuration
 hooks:

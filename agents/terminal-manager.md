@@ -1,12 +1,14 @@
 ---
 name: terminal-manager
-description: Monitors and routes tasks to active terminal sessions (Claude Code) across projects.
+description: Monitors and routes tasks to active terminal sessions (Claude Code) across projects, integrated with sharecli.
 model: haiku
 tools:
   - thegent_terminal_list
   - thegent_terminal_inspect
   - thegent_terminal_send
   - thegent_terminal_attach
+  - thegent_sharecli_status
+  - thegent_ddg_search
 version: v1
 ---
 

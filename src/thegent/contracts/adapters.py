@@ -58,17 +58,16 @@ class XMLOutputAdapter:
         return self._provider
 
     def normalize(self, raw: str | dict[str, Any], context: dict[str, Any] | None = None) -> AdapterResult:
-        from thegent.contracts.parser import IncrementalXMLParser
+        from thegent.contracts.parser import extract_tags
 
-        parser = IncrementalXMLParser()
         text = raw if isinstance(raw, str) else str(raw.get("stdout", raw.get("content", "")))
-        tags = parser.parse(text)
+        tags = extract_tags(text)
         normalized_tags = {str(k).upper().replace("-", "_"): v for k, v in tags.items()}
 
         parse_errors = []
         if not normalized_tags:
-            partial = parser.get_partial_state(text)
-            parse_errors = ["parse_truncated"] if partial["open_tag"] else ["no_xml_tags_detected"]
+            # Simple heuristic: if looks like XML but no closed tags found => truncated
+            parse_errors = ["parse_truncated"] if "<" in text and ">" not in text else ["no_xml_tags_detected"]
 
             return AdapterResult(
                 csm=CanonicalStructuredMessage(
@@ -127,10 +126,20 @@ class XMLOutputAdapter:
         )
 
         issues = validate_csm(csm)
-        # If we had to guess many fields, reduce confidence
-        confidence = 1.0 if not issues else 0.7
+        # WP-7007: Fallback confidence scoring and downgrade path
+        # Base confidence for XML success is 1.0.
+        # If there are semantic issues, reduce.
+        confidence = 1.0
+        if issues:
+            confidence -= 0.2 * len(issues)
 
-        return AdapterResult(csm=csm, confidence=confidence, parse_errors=issues, source_provider=self._provider)
+        # Check for structural downgrades (e.g. missing tags that are normally expected)
+        if not normalized_tags.get("SUMMARY"):
+            confidence -= 0.3  # Heavy penalty for missing summary
+
+        return AdapterResult(
+            csm=csm, confidence=max(0.1, confidence), parse_errors=issues, source_provider=self._provider
+        )
 
 
 class GenericOutputAdapter:

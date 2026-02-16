@@ -4,7 +4,16 @@ from contextlib import contextmanager
 
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
+
+# TracerProvider may be vendored differently across SDK versions; import safely
+try:
+    # Some versions expose TracerProvider at this location
+    from opentelemetry.sdk.trace import TracerProvider
+except Exception:  # pragma: no cover - fallback for differing SDKs
+    # Fallback: import the module and use typing.Any to keep mypy happy
+    from typing import Any
+
+    TracerProvider = Any  # type: ignore[assignment]
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 
 # GenAI Semantic Conventions (standardized)

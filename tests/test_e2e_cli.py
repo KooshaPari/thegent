@@ -135,6 +135,44 @@ class TestClodeCommands:
             assert wrapper.read_text(encoding="utf-8").startswith("#!/usr/bin/env sh")
             assert "exec" in wrapper.read_text(encoding="utf-8")
 
+    def test_clode_glm_policy_round_robin_cycles_and_cheapest(self, monkeypatch) -> None:
+        """`thegent clode glm` routes through policy-defined backends."""
+        calls: list[str] = []
+
+        def fake_run(provider: str) -> None:
+            calls.append(provider)
+
+        monkeypatch.setattr("thegent.clode_main._run_claude_interactive", fake_run)
+        monkeypatch.setattr("thegent.clode_main._GLM_POLICY_COUNTER", {"glm": 0})
+        result = runner.invoke(app, ["clode", "glm", "--policy", "round_robin"])
+        assert result.exit_code == 0
+        assert calls == ["nim"]
+
+        result = runner.invoke(app, ["clode", "glm", "--policy", "round_robin"])
+        assert result.exit_code == 0
+        assert calls == ["nim", "kilo"]
+
+        result = runner.invoke(app, ["clode", "glm", "--policy", "cheapest"])
+        assert result.exit_code == 0
+        assert calls[-1] == "nim"
+
+    def test_clode_glm_prefer_openrouter(self, monkeypatch) -> None:
+        """`thegent clode glm --prefer openrouter` routes directly to openrouter."""
+        calls: list[str] = []
+
+        def fake_run(provider: str) -> None:
+            calls.append(provider)
+
+        monkeypatch.setattr("thegent.clode_main._run_claude_interactive", fake_run)
+        result = runner.invoke(app, ["clode", "glm", "--prefer", "openrouter"])
+        assert result.exit_code == 0
+        assert calls == ["openrouter"]
+
+    def test_clode_glm_invalid_policy(self) -> None:
+        """`thegent clode glm --policy bad` exits 1 with policy error."""
+        result = runner.invoke(app, ["clode", "glm", "--policy", "badpolicy"])
+        assert result.exit_code == 1
+
 
 @pytest.mark.e2e
 class TestRunAmbiguousCwd:

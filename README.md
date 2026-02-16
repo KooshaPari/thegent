@@ -14,6 +14,13 @@ Or from project root:
 uv run --project /Users/kooshapari/temp-PRODVERCEL/485/kush/thegent thegent --help
 ```
 
+Install third-party bundles with the manifest system:
+```bash
+thegent install --bundle web-stack
+thegent install --bundle hooks --bundle-manifest /path/to/third_party_bundles.json
+thegent install --bundle all
+```
+
 ## Usage
 
 ```bash
@@ -77,6 +84,23 @@ export THGENT_CURSOR_AGENT_CMD=/path/to/cursor
 ```
 
 See `.env.example` for other overrides.
+
+## sitback (Sitback Agent)
+
+Start Claude Code with a pre-configured Sitback Agent persona (dashboard, terminal list, sessions):
+
+```bash
+thegent sitback                    # minimax, dashboard on startup
+thegent sitback -a kilo            # sibling via kilo
+thegent sitback --profile full     # full dashboard (plugins, harness)
+thegent sitback --tmux             # run in dedicated tmux session
+thegent sitback --skill agent-orchestra  # override skill
+thegent sitback --no-dashboard    # manual mode
+```
+
+**Precondition:** `thegent serve` (or `thegent mcp up`) for FastMCP tools. Falls back to CLI if MCP is down.
+
+CLI dashboard (no MCP needed): `thegent sitback-dashboard`, `--profile light|medium|full`, `--refresh 5` for live mode. Plugins: `~/.claude/sitback-plugins/` (see `docs/guides/SITBACK_PLUGINS.md`).
 
 ## clode (legacy CLI proxy shims)
 

@@ -1,0 +1,123 @@
+# CLAUDE.md - {{project_name}}
+
+{{project_description}}
+
+---
+
+## Development Philosophy
+
+### Extend, Never Duplicate
+- NEVER create a v2 file. Refactor the original.
+- NEVER create a new class if an existing one can be made generic.
+- NEVER create custom implementations when an OSS library exists.
+- Before writing ANY new code: search the codebase for existing patterns.
+
+### Primitives First
+- Build generic building blocks before application logic.
+- A provider interface + registry is better than N isolated classes.
+- Template strings > hardcoded messages. Config-driven > code-driven.
+
+### Research Before Implementing
+- Check project deps ({{dependency_file}}) for existing libraries.
+- Search {{package_search}} before writing custom code.
+- For non-trivial algorithms: check GitHub for 80%+ implementations to fork/adapt.
+
+---
+
+## Library Preferences (DO NOT REINVENT)
+
+| Need | Use | NOT |
+|------|-----|-----|
+| Retry/resilience | tenacity | Custom retry loops |
+| HTTP client | httpx | Custom wrappers |
+| Logging | structlog | print() or logging.getLogger |
+| Config | pydantic-settings | Manual env parsing |
+| CLI | typer | argparse |
+| Validation | pydantic | Manual if/else |
+| Rate limiting | tenacity + asyncio.Semaphore | Custom rate limiter class |
+
+---
+
+## Code Quality Non-Negotiables
+
+- Zero new lint suppressions without inline justification
+- All new code must pass: {{lint_command}}, type checker, tests
+- Max function: 40 lines. Max cognitive complexity: 15.
+- No placeholder TODOs in committed code
+- {{additional_quality_rules}}
+
+---
+
+## Project Structure
+
+```
+{{project_root}}/
+├── src/                    # Source code
+├── tests/                  # Test files
+├── docs/                   # Documentation
+│   └── .vitepress/        # VitePress docsite
+├── hooks/                  # Pre-commit hooks
+├── scripts/                # Utility scripts
+├── Taskfile.yml            # Build automation
+└── CLAUDE.md               # This file
+```
+
+---
+
+## Domain-Specific Patterns
+
+### What {{project_name}} Is
+
+{{project_description}}
+
+### Key Interfaces
+
+| Port | Responsibility | Location |
+|------|---------------|----------|
+{{key_interfaces}}
+
+### Provider Registry Pattern
+
+{{provider_registry_pattern}}
+
+### Common Anti-Patterns to Avoid
+
+{{common_antipatterns}}
+
+### Where to Add New Functionality
+
+| Want to add... | Put it in... |
+|----------------|-------------|
+{{add_functionality_table}}
+
+---
+
+## Build Commands
+
+```bash
+{{build_commands}}
+```
+
+---
+
+## Testing
+
+```bash
+{{test_commands}}
+```
+
+---
+
+## Quality Gates
+
+Run before committing:
+
+```bash
+{{quality_gate_command}}
+```
+
+---
+
+## Additional Resources
+
+- {{additional_docs}}

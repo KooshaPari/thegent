@@ -3,6 +3,9 @@
 Enforces invariants and cross-tag logic for CanonicalStructuredMessage (CSM).
 """
 
+from collections.abc import Callable
+from typing import Any
+
 from thegent.contracts.csm import CanonicalStructuredMessage, CSMPhase, CSMStatus
 
 
@@ -69,3 +72,44 @@ def ensure_valid_csm(csm: CanonicalStructuredMessage) -> None:
     issues = validate_csm(csm)
     if issues:
         raise InvariantViolation(f"CSM semantic validation failed: {'; '.join(issues)}")
+
+
+class SemanticPolicyEngine:
+    """WP-7005: Policy layer for semantic validation of agent outputs."""
+
+    def __init__(self, strict: bool = False) -> None:
+        self.strict = strict
+        self._rules: list[Callable[[CanonicalStructuredMessage], list[str]]] = []
+
+    def add_rule(self, rule: Callable[[CanonicalStructuredMessage], list[str]]) -> None:
+        """Register a custom validation rule."""
+        self._rules.append(rule)
+
+    def evaluate(self, csm: CanonicalStructuredMessage) -> dict[str, Any]:
+        """Evaluate CSM against all semantic rules.
+
+        Returns:
+            Dict with 'allowed', 'issues', 'drift_detected'.
+        """
+        issues = validate_csm(csm)
+        for rule in self._rules:
+            issues.extend(rule(csm))
+
+        drift_detected = False
+        # Simple drift detection: if confidence changed significantly from metadata
+        # (Assuming metadata might store expected confidence)
+        prev_conf = None
+        meta = getattr(csm, "metadata", None)
+        if isinstance(meta, dict):
+            prev_conf = meta.get("expected_confidence")
+        if prev_conf is not None and abs(csm.confidence_level - prev_conf) > 0.3:
+            drift_detected = True
+
+        allowed = not issues if self.strict else True
+
+        return {
+            "allowed": allowed,
+            "issues": issues,
+            "drift_detected": drift_detected,
+            "policy_version": "v1.0",
+        }

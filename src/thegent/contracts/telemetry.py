@@ -280,6 +280,30 @@ class ContractTelemetry:
 
         return issues
 
+    def get_trend_analysis(self, window_size: int = 50) -> dict[str, Any]:
+        """WP-7009: Detailed trend analysis for contract health."""
+        drift_issues = self.detect_drift(window_size=window_size)
+        kpis = self.get_fallback_kpis(limit=window_size * 2)
+
+        return {
+            "drift_issues": drift_issues,
+            "status": "healthy" if not drift_issues else "degraded",
+            "kpis": kpis,
+            "recommendation": self._suggest_remediation(drift_issues),
+        }
+
+    def _suggest_remediation(self, issues: list[str]) -> str:
+        """WP-7010: Remediation hooks for detected drift."""
+        if not issues:
+            return "No remediation needed."
+
+        if any("fallback rate" in i for i in issues):
+            return "Action: Update provider adapters or refresh parser schemas."
+        if any("confidence" in i for i in issues):
+            return "Action: Review semantic validation rules or provider prompt templates."
+
+        return "Action: Investigate recent provider API changes."
+
 
 def detect_drift(stats: dict[str, Any], threshold: float = 0.2) -> list[str]:
     """Legacy helper for simple drift detection."""
