@@ -334,11 +334,98 @@ class CodexProxyRunner(AgentRunner):
     ) -> RunResult:
         """Execute via LiteLLM direct API (for API key providers).
 
-        NOTE: This is a placeholder. Full LiteLLM integration will
-        replace codex subprocess calls with litellm.completion().
-        For now, route through CLIProxyAPIPlus as before.
+        Uses litellm.completion() to call providers directly without
+        going through the CLIProxyAPIPlus proxy. Supports providers
+        like minimax, glm, nim, kilo that have API keys.
+
+        Args:
+            prompt: User prompt to send to the model
+            cwd: Working directory (not used for API calls, kept for signature compatibility)
+            mode: Execution mode (not used for API calls, kept for signature compatibility)
+            timeout: Timeout in seconds for the API call
+            provider: Provider name (e.g., "minimax", "glm")
+            model: Model name/alias (e.g., "minimax-m2.5")
+
+        Returns:
+            RunResult with the model response or error
         """
-        # TODO: Implement direct LiteLLM API calls
-        # For now, fall back to proxy execution
-        logger.info(f"LiteLLM API path not yet implemented for {provider}, using proxy")
-        return self.run(prompt, cwd, mode, timeout, agent_model=model)
+        try:
+            from litellm import completion
+        except ImportError as e:
+            logger.error(f"litellm not installed: {e}")
+            return RunResult(
+                exit_code=1,
+                stdout="",
+                stderr="litellm package not installed. Install with: pip install litellm",
+                timed_out=False,
+            )
+
+        # Build model string in LiteLLM format: "provider/model"
+        model_string = f"{provider}/{model}"
+
+        # Get API key environment variable name for this provider
+        api_key_env = self._get_api_key_env(provider)
+        api_key = os.environ.get(api_key_env)
+
+        if not api_key:
+            logger.error(f"API key not found for provider {provider} (env: {api_key_env})")
+            return RunResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"API key not found. Set {api_key_env} environment variable.",
+                timed_out=False,
+            )
+
+        logger.info(f"Calling LiteLLM API: {model_string}")
+
+        try:
+            response = completion(
+                model=model_string,
+                messages=[{"role": "user", "content": prompt}],
+                api_key=api_key,
+                timeout=timeout,
+            )
+
+            # Extract response content from LiteLLM response
+            # LiteLLM returns a ModelResponse with choices containing message content
+            content = response.choices[0].message.content
+
+            logger.info(f"LiteLLM API call successful: {model_string}")
+            return RunResult(
+                exit_code=0,
+                stdout=content or "",
+                stderr="",
+                timed_out=False,
+            )
+
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"LiteLLM API call failed: {error_msg}")
+
+            # Check for timeout-related errors
+            is_timeout = "timeout" in error_msg.lower() or "timed out" in error_msg.lower()
+
+            return RunResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"LiteLLM API error: {error_msg}",
+                timed_out=is_timeout,
+            )
+
+    @staticmethod
+    def _get_api_key_env(provider: str) -> str:
+        """Get environment variable name for provider API key.
+
+        Args:
+            provider: Provider name (e.g., "minimax", "glm")
+
+        Returns:
+            Environment variable name for the API key
+        """
+        mapping = {
+            "minimax": "MINIMAX_API_KEY",
+            "nim": "NVIDIA_API_KEY",
+            "glm": "ZHIPU_API_KEY",
+            "kilo": "KILO_API_KEY",
+        }
+        return mapping.get(provider, f"{provider.upper()}_API_KEY")
