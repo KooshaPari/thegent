@@ -14,14 +14,14 @@ class PreemptionPolicy:
         # System saturation threshold (e.g. 90% load)
         preempt = False
         reason = "System load normal"
-        
+
         if system_load > 0.9:
             if task_lane != "critical":
                 preempt = True
                 reason = f"System saturated ({system_load:.1%}). Preempting non-critical task."
-                
+
         return {
             "preempt": preempt,
             "reason": reason,
-            "rollback_assumption": "Task will be requeued in standard lane when load drops."
+            "rollback_assumption": "Task will be requeued in standard lane when load drops.",
         }

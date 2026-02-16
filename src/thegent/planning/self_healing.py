@@ -31,34 +31,40 @@ class SelfHealingEngine:
         recs = []
 
         if any("latency" in i.lower() for i in issues):
-            recs.append(Recommendation(
-                id="REC-001",
-                action="Increase concurrency cap by 20%",
-                confidence=0.85,
-                assumptions=["Sufficient API quota available", "Network bandwidth stable"],
-                rollback_path="Restore previous concurrency limit",
-                expected_outcome="Reduced queuing delay and lower p95 latency."
-            ))
+            recs.append(
+                Recommendation(
+                    id="REC-001",
+                    action="Increase concurrency cap by 20%",
+                    confidence=0.85,
+                    assumptions=["Sufficient API quota available", "Network bandwidth stable"],
+                    rollback_path="Restore previous concurrency limit",
+                    expected_outcome="Reduced queuing delay and lower p95 latency.",
+                )
+            )
 
         if any("drift" in i.lower() for i in issues):
-            recs.append(Recommendation(
-                id="REC-002",
-                action="Switch to 'claude-haiku-4.5' for routing-heavy tasks",
-                confidence=0.78,
-                assumptions=["Haiku 4.5 availability", "Cost within budget"],
-                rollback_path="Revert to original provider chain",
-                expected_outcome="Improved structural parsing accuracy."
-            ))
+            recs.append(
+                Recommendation(
+                    id="REC-002",
+                    action="Switch to 'claude-haiku-4.5' for routing-heavy tasks",
+                    confidence=0.78,
+                    assumptions=["Haiku 4.5 availability", "Cost within budget"],
+                    rollback_path="Revert to original provider chain",
+                    expected_outcome="Improved structural parsing accuracy.",
+                )
+            )
 
         if any("error" in i.lower() for i in issues):
-            recs.append(Recommendation(
-                id="REC-003",
-                action="Enable speculative execution for critical lane",
-                confidence=0.92,
-                assumptions=["Multiple providers healthy"],
-                rollback_path="Disable speculative mode",
-                expected_outcome="Zero-downtime execution even if one provider fails."
-            ))
+            recs.append(
+                Recommendation(
+                    id="REC-003",
+                    action="Enable speculative execution for critical lane",
+                    confidence=0.92,
+                    assumptions=["Multiple providers healthy"],
+                    rollback_path="Disable speculative mode",
+                    expected_outcome="Zero-downtime execution even if one provider fails.",
+                )
+            )
 
         self._recommendations = sorted(recs, key=lambda x: x.confidence, reverse=True)[:3]
         return self._recommendations
@@ -77,7 +83,7 @@ class PredictorCalibrator:
             self.is_paused = True
             return {
                 "status": "paused",
-                "reason": f"Confidence {current_confidence:.2f} below threshold {self.threshold:.2f}."
+                "reason": f"Confidence {current_confidence:.2f} below threshold {self.threshold:.2f}.",
             }
 
         self.is_paused = False
