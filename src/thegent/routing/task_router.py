@@ -97,29 +97,40 @@ class ConstraintValidator:
         category = task_metadata.category
 
         # 1. Instantaneous cost check
+        from thegent.governance.cost import CostEstimator
+
+        estimator = CostEstimator()
+        actual_est_cost = estimator.estimate(
+            model=model,
+            prompt_length=task_metadata.signals.get("word_count", 0) * 5,  # proxy for chars
+        )
+
         max_cost = {
-            TaskCategory.FAST: 0.005,
-            TaskCategory.NORMAL: 0.10,
-            TaskCategory.COMPLEX: 0.50,
-            TaskCategory.HIGH_COMPLEX: 2.00,
+            TaskCategory.FAST: 0.01,
+            TaskCategory.NORMAL: 0.20,
+            TaskCategory.COMPLEX: 1.00,
+            TaskCategory.HIGH_COMPLEX: 5.00,
         }.get(category, 1.0)
 
-        if task_metadata.estimated_cost > max_cost:
-            violations.append(
-                f"Cost: Estimated ${task_metadata.estimated_cost:.3f} exceeds max ${max_cost:.3f} for {category}"
-            )
+        if actual_est_cost > max_cost:
+            violations.append(f"Cost: Estimated ${actual_est_cost:.3f} exceeds max ${max_cost:.3f} for {category}")
 
         # 2. Cumulative budget check (if registry provided)
         if registry:
-            # Placeholder for actual budget logic
-            pass
+            from thegent.governance.cost import CostAggregator
+
+            agg = CostAggregator(registry.session_dir)
+            mtd_total = agg.get_mtd_total()
+            cost_budget = float(getattr(self.config, "cost_budget_mtd", 100.0))
+            if mtd_total >= cost_budget:
+                violations.append(f"Budget: Monthly total ${mtd_total:.2f} exceeds budget ${cost_budget:.2f}")
 
         # 3. Speed SLA check
         sla = {
-            TaskCategory.FAST: 2.0,
-            TaskCategory.NORMAL: 10.0,
-            TaskCategory.COMPLEX: 30.0,
-            TaskCategory.HIGH_COMPLEX: 120.0,
+            TaskCategory.FAST: 5.0,
+            TaskCategory.NORMAL: 15.0,
+            TaskCategory.COMPLEX: 45.0,
+            TaskCategory.HIGH_COMPLEX: 180.0,
         }.get(category, 60.0)
 
         if task_metadata.estimated_duration_s > sla:
@@ -164,3 +175,53 @@ class TaskRouter:
         task = self.classify(prompt)
         violations = self.validate(task, registry, model)
         return task, violations
+
+    def get_fallback_chain(self, category: TaskCategory) -> list[str]:
+        """Get LiteLLM-style fallback chain for task category (WP-1001)."""
+        if category == TaskCategory.FAST:
+            return ["gemini-3-flash", "claude-haiku-4.5"]
+        if category == TaskCategory.NORMAL:
+            return ["gpt-5.3-codex-spark", "claude-haiku-4.5"]
+        if category == TaskCategory.COMPLEX:
+            return ["gpt-5.3-codex", "gemini-3-pro"]
+        return ["claude-opus-4.6", "gpt-5.3-codex-max"]
+
+    def route_dag_tasks(self, dag: Any) -> dict[str, list[str]]:
+        """Route multiple tasks from a DAG, considering dependencies (WP-1001)."""
+        routing_table = {}
+        for task_id, task in getattr(dag, "tasks", {}).items():
+            meta = self.classify(task.get("prompt", ""))
+            routing_table[task_id] = self.get_fallback_chain(meta.category)
+        return routing_table
+
+    def route_by_capability(self, task_type: str) -> str:
+        """Route to an agent based on task capability (WP-1007)."""
+        mapping = {
+            "coding": "codex",
+            "research": "gemini",
+            "orchestration": "claude",
+            "review": "cursor-agent",
+            "fast-fix": "copilot",
+        }
+        return mapping.get(task_type, "gemini")
+
+    def should_delegate_to_reviewer(self, confidence: float) -> bool:
+        """Determine if a task should be delegated to a reviewer based on confidence (WP-1007)."""
+        # Threshold G-CA-02 B1: confidence < 0.7 triggers reviewer delegation
+        return confidence < 0.7
+
+    def find_active_terminal_for_path(self, path: str) -> str | None:
+        """
+        Find an active tmux pane matching the given project path.
+        Returns pane_id if found.
+        """
+        from pathlib import Path
+
+        from thegent.tools.terminal import is_claude_code_pane, list_tmux_panes
+
+        target_path = Path(path).resolve()
+        panes = list_tmux_panes()
+        for p in panes:
+            if Path(p.path).resolve() == target_path and is_claude_code_pane(p):
+                return p.pane_id
+        return None
