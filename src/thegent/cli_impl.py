@@ -15,6 +15,7 @@ import subprocess
 import sys
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -231,7 +232,7 @@ def _session_paths(base: Path, session_id: str) -> dict[str, Path]:
 def _new_session_id(agent: str | None, owner: str) -> str:
     now = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     digest = hashlib.sha1(f"{time.time_ns()}:{os.getpid()}:{owner}".encode()).hexdigest()[:8]
-    agent_tag = agent if agent else "any"
+    agent_tag = agent or "any"
     return f"{now}-{agent_tag}-p{os.getpid()}-{digest}"
 
 
@@ -411,7 +412,7 @@ def _parse_dag_full(path: Path) -> DagDocument:
                 headers = [h.lower().replace(" ", "_") for h in cells]
                 table_start = i
                 continue
-            if cells and not all(c in "-" for c in "".join(cells)):
+            if cells and "-" not in "".join(cells):
                 row = dict(zip(headers, cells, strict=False))
                 tasks.append(row)
             table_end = i
@@ -718,7 +719,11 @@ def _resolve_prompt(task_id: str, prompt: str, cwd: Path) -> str:
 from thegent.models.catalog import ROUTE_SCHEMA_VERSION
 from thegent.operations import Operation
 from thegent.orchestration_modes import MultiAgentMode
-from thegent.output_parser import OUTPUT_PARSER_SCHEMA_VERSION, extract_condensed
+from thegent.output_parser import (
+    OUTPUT_PARSER_SCHEMA_VERSION,
+    condense_stream_to_display,
+    extract_condensed,
+)
 
 # Elicitation messages for MCP tools when cwd/owner are ambiguous
 ELICIT_CWD_MSG = "Working directory?"
@@ -1877,7 +1882,6 @@ def run_impl(
     mode: str = "write",
     timeout: int = 90,
     full: bool = False,
-    droid: str | None = None,
     model: str | None = None,
     provider: str | None = None,
     run_id: str | None = None,
@@ -2143,8 +2147,28 @@ def run_impl(
         # Create a proxy object that satisfies AgentRunner
         @dataclass
         class RunnerProxy(AgentRunner):
-            def run(self, **kwargs) -> RunResult:
-                return wrapped_run(**kwargs)
+            def run(
+                self,
+                prompt: str,
+                cwd: Path | None,
+                mode: str,
+                timeout: int,
+                *,
+                use_stream: bool = True,
+                live_output: bool = False,
+                on_stdout: Callable[[str], None] | None = None,
+                on_stderr: Callable[[str], None] | None = None,
+            ) -> RunResult:
+                return wrapped_run(
+                    prompt=prompt,
+                    cwd=cwd,
+                    mode=mode,
+                    timeout=timeout,
+                    use_stream=use_stream,
+                    live_output=live_output,
+                    on_stdout=on_stdout,
+                    on_stderr=on_stderr,
+                )
 
         return RunnerProxy()
 
@@ -2214,6 +2238,13 @@ def run_impl(
     if status == "completed":
         trust_boundary.record_environment(settings.environment.lower())
 
+        # WP-3002: Generate and persist signed MAIF artifact
+        try:
+            artifact = auditor.generate_maif_artifact(run_meta, output=result.stdout if result else None)
+            auditor.persist_maif_artifact(settings.session_dir, artifact)
+        except Exception:
+            pass
+
     if not result:
         return {
             "error": f"Unknown agent: {agent}",
@@ -2229,8 +2260,12 @@ def run_impl(
     # WP-X7: Contract Telemetry (already recorded in FSM)
 
     if use_stream:
-        # Backward compat: stdout is the summary from CSM or extract_condensed
-        stdout = csm.summary if csm else extract_condensed(stdout)
+        # Prefer condensed stream display (Cursor-style); fall back to extract_condensed
+        if csm:
+            stdout = csm.summary
+        else:
+            condensed = condense_stream_to_display(stdout)
+            stdout = condensed or extract_condensed(stdout)
 
     payload = {
         "stdout": stdout,
@@ -2258,7 +2293,6 @@ def bg_impl(
     mode: str,
     timeout: int,
     full: bool,
-    droid: str | None = None,
     model: str | None = None,
     owner: str | None = None,
     continue_from: str | None = None,
@@ -2300,7 +2334,7 @@ def bg_impl(
     if cwd is None:
         return {"error": "Ambiguous cwd. Provide --cd /path explicitly.", "exit_code": 1}
 
-    full = full if full else True
+    full = full or True
 
     effective_prompt = prompt
     if continue_from:
@@ -2804,11 +2838,13 @@ def session_contract_health_gate_impl(
     scope_key = _health_scope_key(payload)
     previous = _load_previous_health_snapshot(scope_key)
 
-    cur_ratio = float(payload.get("blocked_ratio", 0.0))
-    cur_count = int(payload.get("blocked_count", 0))
+    blocked_ratio_val = payload.get("blocked_ratio", 0.0)
+    blocked_count_val = payload.get("blocked_count", 0)
+    cur_ratio = float(cast("Any", blocked_ratio_val)) if blocked_ratio_val is not None else 0.0
+    cur_count = int(cast("Any", blocked_count_val)) if blocked_count_val is not None else 0
 
-    previous_ratio = float(previous.get("blocked_ratio", cur_ratio)) if previous is not None else cur_ratio
-    previous_count = int(previous.get("blocked_count", cur_count)) if previous is not None else cur_count
+    previous_ratio = float(cast("Any", previous.get("blocked_ratio", cur_ratio))) if previous is not None else cur_ratio
+    previous_count = int(cast("Any", previous.get("blocked_count", cur_count))) if previous is not None else cur_count
     previous_issue_types = set(_coerce_issue_types((previous or {}).get("issue_types", [])))
     current_issue_types: set[str] = set()
     for row in blockers:
@@ -2961,7 +2997,7 @@ def session_contract_health_report_impl(
                     "state": row.get("contract_state"),
                     "health": row.get("contract_health"),
                     "issues": issues,
-                    "remediation": _remediation_lines(issues),
+                    "remediation": _remediation_lines(cast("list[str]", issues)),
                     "started_at_utc": row.get("started_at_utc", ""),
                     "agent": row.get("agent", ""),
                 }
@@ -3038,11 +3074,20 @@ def session_contract_health_report_impl(
     }
     scope_key = _health_scope_key(payload)
     previous = _load_previous_health_snapshot(scope_key)
-    cur_ratio = float(payload.get("blocked_ratio", 0.0))
-    cur_count = int(payload.get("blocked_count", 0))
+    cur_ratio = 0.0
+    cur_count = 0
+    try:
+        br = payload.get("blocked_ratio", 0.0)
+        bc = payload.get("blocked_count", 0)
+        if br is not None:
+            cur_ratio = float(cast("Any", br))
+        if bc is not None:
+            cur_count = int(cast("Any", bc))
+    except (TypeError, ValueError):
+        pass
 
-    previous_ratio = float(previous.get("blocked_ratio", cur_ratio)) if previous is not None else cur_ratio
-    previous_count = int(previous.get("blocked_count", cur_count)) if previous is not None else cur_count
+    previous_ratio = float(cast("Any", previous.get("blocked_ratio", cur_ratio))) if previous is not None else cur_ratio
+    previous_count = int(cast("Any", previous.get("blocked_count", cur_count))) if previous is not None else cur_count
     previous_issue_counts = previous.get("issue_counts", {}) if previous is not None else {}
     previous_issue_types = {str(i) for i in previous_issue_counts}
     current_issue_types = {str(i) for i in issue_counts}
