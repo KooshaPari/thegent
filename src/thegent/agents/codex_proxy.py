@@ -1,9 +1,12 @@
-"""Codex via CLIProxyAPIPlus - claude, codex, gemini, copilot, antigravity through our proxy."""
+"""Codex via CLIProxyAPIPlus - claude, codex, gemini, copilot, antigravity through our proxy. Native gemini/copilot swapped to Codex (proxy API)."""
 
+import logging
 import os
 import re
 import shutil
 import subprocess
+import threading
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -11,19 +14,25 @@ from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.cliproxy_manager import ensure_proxy_running
 from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
 from thegent.config import ThegentSettings
+from thegent.discovery import _is_triggered_by_agent_process
+from thegent.routing.models import TaskMetadata
+from thegent.routing.provider_types import ExecutionPath, get_execution_path
 
-# Agent -> default model for CLIProxyAPIPlus. Match fork registry IDs (minimax-m2.5, glm-5).
+logger = logging.getLogger(__name__)
+
+# Agent -> default model. All proxy agents use CLIProxyAPIPlus (merged into one proxy).
 _PROXY_MODEL: dict[str, str] = {
-    "claude": "claude-sonnet-4.5",
-    "codex": "gpt-5.3-codex",
-    "gemini": "gemini-2.5-flash",
-    "copilot": "claude-haiku-4.5",
+    "claude": "claude-opus-4.6",
+    "codex": "gpt-5.3-codex-spark",
+    "gemini": "gemini-3-flash",
+    "copilot": "gpt-5-mini",
     "antigravity": "gemini-3-flash",
     "minimax": "minimax-m2.5",
     "glm": "glm-5",
-    "cliproxy": "gemini-3-flash",
-    "roo": "roo-default",
-    "kilo": "kilo-default",
+    "cliproxy": "gemini-3-flash",  # generic proxy fallback
+    "kilo": "minimax-m2.5",
+    "kiro": "claude-haiku-4.5",
+    "nim": "step-3.5-flash",
 }
 
 
@@ -42,6 +51,99 @@ def _resolve_codex() -> str:
     return "codex"
 
 
+def _run_with_activity_monitoring(
+    cmd: list[str],
+    prompt: str,
+    cwd: Path | None,
+    env: dict[str, str],
+    max_idle_seconds: int,
+    max_wall_time: int,
+    on_stdout: Callable[[str], None] | None,
+    on_stderr: Callable[[str], None] | None,
+) -> RunResult:
+    """Run codex with activity-based hang detection. Kills only when no stdout/stderr for max_idle_seconds (hung), or when max_wall_time exceeded (if > 0)."""
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+        cwd=str(cwd) if cwd else None,
+        env=env,
+    )
+    if proc.stdin:
+        proc.stdin.write(prompt)
+        proc.stdin.close()
+
+    out_lines: list[str] = []
+    err_lines: list[str] = []
+    last_activity = {"t": time.monotonic()}
+    lock = threading.Lock()
+
+    def _on_chunk(_: str) -> None:
+        with lock:
+            last_activity["t"] = time.monotonic()
+
+    def _drain(stream, collector: list[str], cb: Callable[[str], None] | None) -> None:
+        for line in stream:
+            clean = _strip_ansi(line)
+            collector.append(clean)
+            _on_chunk(clean)
+            if cb:
+                cb(clean.rstrip("\n"))
+
+    t_out = threading.Thread(target=_drain, args=(proc.stdout, out_lines, on_stdout), daemon=True)
+    t_err = threading.Thread(target=_drain, args=(proc.stderr, err_lines, on_stderr), daemon=True)
+    t_out.start()
+    t_err.start()
+
+    start = time.monotonic()
+    rc: int | None = None
+    kill_reason: str | None = None
+
+    while True:
+        ret = proc.poll()
+        if ret is not None:
+            rc = ret
+            break
+
+        now = time.monotonic()
+        with lock:
+            idle = now - last_activity["t"]
+        elapsed = now - start
+
+        if max_wall_time > 0 and elapsed >= max_wall_time:
+            proc.kill()
+            rc = 124
+            kill_reason = f"absolute wall time ({max_wall_time}s)"
+            break
+        if idle >= max_idle_seconds:
+            proc.kill()
+            rc = 124
+            kill_reason = f"no output for {max_idle_seconds}s (hung)"
+            break
+
+        time.sleep(0.5)
+
+    t_out.join(timeout=2)
+    t_err.join(timeout=2)
+
+    stderr_msg = ""
+    if kill_reason:
+        stderr_msg = f"Agent stopped: {kill_reason}"
+        if err_lines:
+            stderr_msg = "".join(err_lines) + "\n" + stderr_msg
+
+    result = RunResult(
+        exit_code=rc if rc is not None else 1,
+        stdout="".join(out_lines),
+        stderr=stderr_msg or "".join(err_lines),
+        timed_out=rc == 124,
+    )
+    return result
+
+
 @with_retry(max_attempts=4, min_wait=2.0, max_wait=60.0)
 def _run_with_retry(
     cmd: list[str],
@@ -49,23 +151,23 @@ def _run_with_retry(
     cwd: Path | None,
     timeout: int,
     env: dict[str, str],
+    max_idle_seconds: int,
+    max_wall_time: int,
+    live_output: bool = False,
+    on_stdout: Callable[[str], None] | None = None,
+    on_stderr: Callable[[str], None] | None = None,
 ) -> RunResult:
-    """Run codex subprocess; raises TransientAgentError on retryable failure."""
-    proc = subprocess.run(
+    """Run codex subprocess with activity-based hang detection; raises TransientAgentError on retryable failure."""
+    effective_wall = max_wall_time if max_wall_time > 0 else 0
+    result = _run_with_activity_monitoring(
         cmd,
-        check=False,
-        input=prompt,
-        capture_output=True,
-        text=True,
-        timeout=timeout + 5,
-        cwd=str(cwd) if cwd else None,
-        env=env,
-    )
-    result = RunResult(
-        exit_code=proc.returncode,
-        stdout=_strip_ansi(proc.stdout),
-        stderr=_strip_ansi(proc.stderr),
-        timed_out=proc.returncode == 124,
+        prompt,
+        cwd,
+        env,
+        max_idle_seconds=max_idle_seconds,
+        max_wall_time=effective_wall,
+        on_stdout=on_stdout if live_output else None,
+        on_stderr=on_stderr if live_output else None,
     )
     if result.exit_code != 0 and is_retryable(result):
         raise TransientAgentError(result)
@@ -73,7 +175,7 @@ def _run_with_retry(
 
 
 class CodexProxyRunner(AgentRunner):
-    """Runs claude, codex, gemini, copilot, antigravity via Codex CLI pointing at our CLIProxyAPIPlus."""
+    """Runs claude, codex, gemini, copilot, antigravity via Codex CLI pointing at our CLIProxyAPIPlus. gemini/copilot route via proxy (no native CLI)."""
 
     def __init__(
         self,
@@ -99,6 +201,8 @@ class CodexProxyRunner(AgentRunner):
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
         agent_model: str | None = None,
+        enable_search: bool = True,
+        run_id: str | None = None,
     ) -> RunResult:
         model = agent_model or self._model
         try:
@@ -117,6 +221,11 @@ class CodexProxyRunner(AgentRunner):
 
         codex_cmd = _resolve_codex()
         cmd = [codex_cmd, "exec", "-", "--skip-git-repo-check"]
+        if not _is_triggered_by_agent_process():
+            cmd.append("--dangerously-bypass-approvals-and-sandbox")
+        # codex no longer supports a top-level --search flag; leave search disabled by default
+        # if enable_search:
+        #     cmd.append("--search")
         if cwd:
             cmd.extend(["--cd", str(cwd)])
         if use_stream:
@@ -129,7 +238,18 @@ class CodexProxyRunner(AgentRunner):
             cmd.extend(["--full-auto"])
 
         try:
-            return _run_with_retry(cmd, prompt, cwd, timeout, env)
+            return _run_with_retry(
+                cmd,
+                prompt,
+                cwd,
+                timeout,
+                env,
+                max_idle_seconds=self._settings.max_idle_seconds,
+                max_wall_time=self._settings.max_wall_time,
+                live_output=live_output,
+                on_stdout=on_stdout,
+                on_stderr=on_stderr,
+            )
         except TransientAgentError as e:
             return e.result
         except FileNotFoundError:
@@ -146,3 +266,79 @@ class CodexProxyRunner(AgentRunner):
                 stderr=f"Agent timed out after {timeout}s",
                 timed_out=True,
             )
+
+    def run_with_metadata(
+        self,
+        prompt: str,
+        cwd: Path | None,
+        mode: str,
+        timeout: int,
+        *,
+        metadata: TaskMetadata | None = None,
+        use_stream: bool = True,
+        live_output: bool = False,
+        on_stdout: Callable[[str], None] | None = None,
+        on_stderr: Callable[[str], None] | None = None,
+        enable_search: bool = True,
+        run_id: str | None = None,
+    ) -> RunResult:
+        """Run agent using resolved routing from TaskMetadata.
+
+        This method consumes resolved_provider and resolved_model_alias
+        from the routing classification.
+
+        Args:
+            prompt: User prompt
+            cwd: Working directory
+            mode: Execution mode (read/write/full)
+            timeout: Timeout in seconds
+            metadata: TaskMetadata with resolved routing
+
+        Returns:
+            RunResult from execution
+        """
+        # Determine provider and model from metadata
+        provider = metadata.resolved_provider if metadata else self.agent_name
+        model = metadata.resolved_model_alias if metadata else self._model
+
+        # Determine execution path
+        exec_path = get_execution_path(provider)
+
+        if exec_path == ExecutionPath.NATIVE_CLI:
+            return self._execute_native_cli(prompt, cwd, mode, timeout, model)
+        if exec_path == ExecutionPath.LITELLM_API:
+            return self._execute_litellm_api(prompt, cwd, mode, timeout, provider, model)
+        # CLIProxyAPIPlus path (default)
+        return self.run(prompt, cwd, mode, timeout, agent_model=model, use_stream=use_stream)
+
+    def _execute_native_cli(
+        self,
+        prompt: str,
+        cwd: Path | None,
+        mode: str,
+        timeout: int,
+        model: str,
+    ) -> RunResult:
+        """Execute via native codex CLI (for codex provider)."""
+        # Current implementation uses codex CLI already
+        return self.run(prompt, cwd, mode, timeout, agent_model=model)
+
+    def _execute_litellm_api(
+        self,
+        prompt: str,
+        cwd: Path | None,
+        mode: str,
+        timeout: int,
+        provider: str,
+        model: str,
+    ) -> RunResult:
+        """Execute via LiteLLM direct API (for API key providers).
+
+        NOTE: This is a placeholder. Full LiteLLM integration will
+        replace codex subprocess calls with litellm.completion().
+        For now, route through CLIProxyAPIPlus as before.
+        """
+        # TODO: Implement direct LiteLLM API calls
+        # For now, fall back to proxy execution
+        logger.info(f"LiteLLM API path not yet implemented for {provider}, using proxy")
+        return self.run(prompt, cwd, mode, timeout, agent_model=model)
