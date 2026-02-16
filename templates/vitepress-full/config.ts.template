@@ -1,0 +1,34 @@
+import { defineConfig } from 'vitepress'
+import { crossProjectLinks } from './plugins/cross-project-links'
+
+export default defineConfig({
+  title: '{{PROJECT_NAME}}',
+  description: '{{PROJECT_DESCRIPTION}}',
+  appearance: true,
+  lastUpdated: true,
+
+  themeConfig: {
+    nav: [
+      { text: 'Home', link: '/' },
+    ],
+    sidebar: [],
+    socialLinks: [],
+    search: { provider: 'local' },
+  },
+
+  markdown: {
+    config: (md) => {
+      md.use(crossProjectLinks)
+    }
+  },
+
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: undefined
+        }
+      }
+    }
+  }
+})
