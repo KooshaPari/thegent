@@ -45,14 +45,24 @@ run_python() {
 # TypeScript checks
 run_typescript() {
   echo "--- TypeScript Quality ---"
+  
+  # JS execution helper (Bun > Node)
+  _js_run() {
+    if command -v bun >/dev/null 2>&1; then
+      bun x "$@"
+    else
+      npx "$@"
+    fi
+  }
+
   echo "[1/4] oxlint..."
-  (cd "$PROJECT_ROOT" && npx oxlint .) || FAIL=1
+  (cd "$PROJECT_ROOT" && _js_run oxlint .) || FAIL=1
   echo "[2/4] Type check..."
-  (cd "$PROJECT_ROOT" && npx tsc --noEmit) || FAIL=1
+  (cd "$PROJECT_ROOT" && _js_run tsc --noEmit) || FAIL=1
   echo "[3/4] Format check..."
-  (cd "$PROJECT_ROOT" && npx prettier --check .) || echo "Prettier check skipped"
+  (cd "$PROJECT_ROOT" && _js_run prettier --check .) || echo "Prettier check skipped"
   echo "[4/4] Dead exports..."
-  (cd "$PROJECT_ROOT" && npx knip --no-progress 2>/dev/null) || echo "knip skipped"
+  (cd "$PROJECT_ROOT" && _js_run knip --no-progress 2>/dev/null) || echo "knip skipped"
   echo ""
 }
 

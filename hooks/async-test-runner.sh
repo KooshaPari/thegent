@@ -77,10 +77,10 @@ run_tests_async() {
     ts|tsx|js|jsx)
       if [[ -f "${PROJECT_DIR}/node_modules/.bin/vitest" ]]; then
         test_framework="vitest"
-        test_output=$(cd "$PROJECT_DIR" && npx vitest run --reporter=verbose "$TEST_FILES" 2>&1) || test_exit=$?
+        test_output=$(cd "$PROJECT_DIR" && _js_exec vitest run --reporter=verbose "$TEST_FILES" 2>&1) || test_exit=$?
       elif [[ -f "${PROJECT_DIR}/node_modules/.bin/jest" ]]; then
         test_framework="jest"
-        test_output=$(cd "$PROJECT_DIR" && npx jest --verbose "$TEST_FILES" 2>&1) || test_exit=$?
+        test_output=$(cd "$PROJECT_DIR" && _js_exec jest --verbose "$TEST_FILES" 2>&1) || test_exit=$?
       fi
       ;;
     go)

@@ -42,8 +42,30 @@ _hook_exit_trap() {
   if [[ $rc -ne 0 && $rc -ne 2 ]]; then
     echo "${HOOK_NAME:-HOOK}: unexpected exit $rc" >&2
   fi
+  # Clean up background jobs
+  local pids; pids=$(jobs -p 2>/dev/null)
+  if [[ -n "$pids" ]]; then
+    # Give jobs a moment to finish gracefully
+    sleep 0.1
+    pids=$(jobs -p 2>/dev/null)
+    [[ -n "$pids" ]] && kill $pids 2>/dev/null || true
+  fi
 }
 trap _hook_exit_trap EXIT
+
+# --- Resource limits (P5: prevent memory ballooning) ---
+# Limit virtual memory (address space) to 8GB per hook process tree
+# This prevents a single tool (like trivy or ruff) from consuming 32GB+ VSZ
+if [[ "${OSTYPE}" == "darwin"* ]]; then
+  # On macOS, ulimit -v is often ignored or causes issues with memory-mapped files.
+  # We use ulimit -m (RSS) if possible, but it is also often restricted.
+  # Best effort: set virtual memory limit to 16GB if machine has 16GB RAM.
+  ulimit -v 16777216 2>/dev/null || true
+  ulimit -m 8388608 2>/dev/null || true # RSS 8GB
+else
+  ulimit -v 8388608 2>/dev/null || true
+  ulimit -m 4194304 2>/dev/null || true # RSS 4GB
+fi
 
 # --- Session-level tool cache ---
 # Tool paths are stable within a session. Cache them in a file so subsequent
@@ -59,6 +81,7 @@ else
   # First invocation this session — detect tools and cache
   JQ_CMD="$(command -v jaq 2>/dev/null || command -v jq 2>/dev/null || echo jq)"
   HUNIQ_CMD="$(command -v huniq 2>/dev/null || true)"
+  RG_CMD="$(command -v rg 2>/dev/null || true)"
   if command -v gtimeout >/dev/null 2>&1; then
     TIMEOUT_CMD=gtimeout
   elif command -v timeout >/dev/null 2>&1; then
@@ -66,11 +89,39 @@ else
   else
     TIMEOUT_CMD=""
   fi
+  # WP-B: Hash utility for cache keys (b3sum 2-5x faster; fallback sha256sum/shasum)
+  if command -v b3sum >/dev/null 2>&1; then
+    HASH_CMD="b3sum"
+    HASH_ARGS=()
+  elif command -v sha256sum >/dev/null 2>&1; then
+    HASH_CMD="sha256sum"
+    HASH_ARGS=()
+  else
+    HASH_CMD="shasum"
+    HASH_ARGS=(-a 256)
+  fi
   # Write cache atomically
-  printf 'JQ_CMD=%q\nHUNIQ_CMD=%q\nTIMEOUT_CMD=%q\n' \
-    "$JQ_CMD" "$HUNIQ_CMD" "$TIMEOUT_CMD" > "$_TOOL_CACHE_FILE.$$"
+  printf 'JQ_CMD=%q\nHUNIQ_CMD=%q\nRG_CMD=%q\nTIMEOUT_CMD=%q\nHASH_CMD=%q\nHASH_ARGS=(%s)\n' \
+    "$JQ_CMD" "$HUNIQ_CMD" "$RG_CMD" "$TIMEOUT_CMD" "$HASH_CMD" \
+    "${HASH_ARGS[*]}" > "$_TOOL_CACHE_FILE.$$"
   mv "$_TOOL_CACHE_FILE.$$" "$_TOOL_CACHE_FILE" 2>/dev/null || true
 fi
+# Set HASH_ARGS when loaded from cache (HASH_CMD set but HASH_ARGS may be empty)
+if [[ -z "${HASH_ARGS+set}" && -n "${HASH_CMD:-}" ]]; then
+  [[ "${HASH_CMD}" == *shasum ]] && HASH_ARGS=(-a 256) || HASH_ARGS=()
+fi
+
+# WP-B: Hash for cache keys (stdin or file). Do NOT use for attestation/SLSA — those stay SHA-256.
+hash_for_cache() {
+  local cmd="${HASH_CMD:-shasum}" args=()
+  [[ "$cmd" == *shasum ]] && args=(-a 256)
+  [[ -n "${HASH_ARGS+set}" && ${#HASH_ARGS[@]} -gt 0 ]] && args=("${HASH_ARGS[@]}")
+  if [[ $# -eq 0 ]]; then
+    $cmd "${args[@]}" | cut -d' ' -f1
+  else
+    $cmd "${args[@]}" "$1" | cut -d' ' -f1
+  fi
+}
 
 # --- Git caching with gitoxide support (Phase 3.5) ---
 # Source git cache functions - provides git_cached() for 5-20x git speedup
@@ -103,6 +154,13 @@ find() {
 }
 export -f find
 
+# --- grep/rg integration (Rust tool swap) ---
+# Source grep wrapper - routes grep -r and common patterns to ripgrep (2-10x faster)
+if [[ -f "${BASH_SOURCE[0]%/*}/grep-wrapper.sh" ]]; then
+  # shellcheck disable=SC1090
+  source "${BASH_SOURCE[0]%/*}/grep-wrapper.sh"
+fi
+
 # --- procs integration (Phase 3.5) ---
 # Source procs wrapper - provides process lookup acceleration (2-3x faster)
 if [[ -f "${BASH_SOURCE[0]%/*}/procs-wrapper.sh" ]]; then
@@ -118,6 +176,19 @@ sort_unique() {
     sort -u
   fi
 }
+
+# --- JS execution helper (Bun > Node) ---
+# Prefers Bun for faster execution of JS tools/LSPs.
+_js_exec() {
+  if command -v bun >/dev/null 2>&1; then
+    # Bun x is significantly faster than npx for one-off tool runs
+    bun x "$@"
+  else
+    # Fallback to npx with non-interactive and no-install flags
+    npx -y --no-install "$@"
+  fi
+}
+export -f _js_exec
 
 # --- Timestamp (bash builtin, no subprocess) ---
 printf -v now '%(%Y-%m-%dT%H:%M:%SZ)T' -1
@@ -548,7 +619,7 @@ hook_cache_key() {
       head_sha="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo none)}"
     fi
     changed_files="${CHANGED_FILES_SORTED:-$(git diff --name-only HEAD 2>/dev/null | sort)}"
-    printf '%s\0%s\0%s' "$hook_name" "$head_sha" "$changed_files" | shasum -a 256 | cut -d' ' -f1
+    printf '%s\0%s\0%s' "$hook_name" "$head_sha" "$changed_files" | hash_for_cache
 }
 
 # Check if cached result exists and is fresh (within TTL seconds)
@@ -711,7 +782,7 @@ hook_incremental_check() {
     while IFS=':' read -r file expected_sha; do
         [[ -f "$file" ]] || return 1
         local actual_sha
-        actual_sha="$(shasum -a 256 "$file" | cut -d' ' -f1)"
+        actual_sha="$(hash_for_cache "$file")"
         [[ "$actual_sha" == "$expected_sha" ]] || return 1
     done < "$manifest"
     return 0  # all inputs unchanged
@@ -726,7 +797,7 @@ hook_incremental_record() {
     : > "${manifest}.tmp"
     for f in "${files[@]}"; do
         [[ -f "$f" ]] || continue
-        echo "${f}:$(shasum -a 256 "$f" | cut -d' ' -f1)" >> "${manifest}.tmp"
+        echo "${f}:$(hash_for_cache "$f")" >> "${manifest}.tmp"
     done
     mv -f "${manifest}.tmp" "$manifest"
 }
@@ -741,7 +812,7 @@ hook_cache_wrap() {
     key=$(hook_cache_key "$hook_name")
     # Incorporate extra key material if provided
     if [[ -n "$extra" ]]; then
-        key=$(printf '%s\0%s' "$key" "$extra" | shasum -a 256 | cut -d' ' -f1)
+        key=$(printf '%s\0%s' "$key" "$extra" | hash_for_cache)
     fi
     if hook_cache_check "$key" "$ttl"; then
         hook_cache_read "$key"
@@ -766,7 +837,7 @@ hook_file_hash_cache() {
     for f in "$@"; do
         [[ -f "$f" ]] || continue
         local cache_key hash_file
-        cache_key=$(printf '%s' "$f" | shasum -a 256 | cut -d' ' -f1)
+        cache_key=$(printf '%s' "$f" | hash_for_cache)
         hash_file="${HOOK_FILEHASH_DIR}/${cache_key}"
         # Check if cached hash is still valid (mtime match)
         if [[ -f "$hash_file" ]]; then
@@ -781,13 +852,13 @@ hook_file_hash_cache() {
         fi
         # Compute and cache
         local file_hash current_mtime
-        file_hash=$(shasum -a 256 "$f" | cut -d' ' -f1)
+        file_hash=$(hash_for_cache "$f")
         current_mtime=$(stat -f '%m' "$f" 2>/dev/null || stat -c '%Y' "$f" 2>/dev/null)
         printf '%s\t%s' "$current_mtime" "$file_hash" > "$hash_file"
         combined="${combined}${file_hash}"
     done
     # Return combined hash
-    printf '%s' "$combined" | shasum -a 256 | cut -d' ' -f1
+    printf '%s' "$combined" | hash_for_cache
 }
 
 # --- 8. Shared FR IDs ---
@@ -824,8 +895,7 @@ hook_shared_fr_index() {
         [[ -d "${PROJECT_DIR}/${d}" ]] && test_dirs="${test_dirs} ${PROJECT_DIR}/${d}"
     done
     [[ -z "$test_dirs" ]] && { touch "$shared_file"; return 0; }
-    local _rg_cmd
-    _rg_cmd=$(command -v rg 2>/dev/null || true)
+    local _rg_cmd="${RG_CMD:-$(command -v rg 2>/dev/null || true)}"
     if [[ -n "$_rg_cmd" ]]; then
         # shellcheck disable=SC2086
         "$_rg_cmd" -oN --no-heading \
@@ -1032,15 +1102,95 @@ affected_tests_for_file() {
             ;;
         rs)
             # Rust: tests in tests/ or #[test] in same file
-            for candidate in \
-                "${PROJECT_DIR:-.}/tests/${name}.rs"; do
-                [[ -f "$candidate" ]] && echo "$candidate"
-            done
+            candidate="${PROJECT_DIR:-.}/tests/${name}.rs"
+            if [[ -f "$candidate" ]]; then
+                echo "$candidate"
+            fi
             ;;
     esac
 }
 
+# WP-DX1/P7: Find tests from coverage index
+# Usage: affected_tests_from_coverage_index "src/thegent/cli.py"
+# Build index with: pytest --cov=src --cov-context=test && python scripts/build_coverage_affected_map.py
+affected_tests_from_coverage_index() {
+    local src="$1"
+    [[ "${src##*.}" != "py" ]] && return 0
+    
+    local index_file
+    # Try cache dir first (preferred for P7)
+    index_file="${HOOK_CACHE_DIR:-/tmp/claude-hook-cache-$(id -u)}/coverage_affected_map.json"
+    if [[ ! -f "$index_file" ]]; then
+        # Fallback to root index (WP-DX1 legacy)
+        index_file="${PROJECT_DIR:-.}/coverage-index.json"
+    fi
+    [[ ! -f "$index_file" ]] && return 0
+
+    local project_dir="${PROJECT_DIR:-.}"
+    # Normalize to project-relative path
+    local rel="${src#"$project_dir"/}"
+    rel="${rel#./}"
+    rel="${rel//\\//}"
+    
+    local tests
+    tests=$(${JQ_CMD:-jq} -r --arg f "$rel" 'if .[$f] then .[$f][] else empty end' "$index_file" 2>/dev/null)
+    [[ -n "$tests" ]] && printf '%s\n' $tests
+}
+
+# P7: Find Python tests that import the changed module (import-based selection)
+# More accurate than file-pattern for projects with non-standard test layout.
+# Usage: affected_tests_from_imports "src/thegent/cli.py"
+affected_tests_from_imports() {
+    local src="$1"
+    [[ "${src##*.}" != "py" ]] && return 0
+    local project_dir="${PROJECT_DIR:-.}"
+    # Convert path to module: src/thegent/cli.py -> thegent.cli (strip src/, .py)
+    local rel="${src#"$project_dir"/}"
+    rel="${rel#src/}"
+    rel="${rel%.py}"
+    local module="${rel//\//.}"
+    [[ -z "$module" ]] && return 0
+    # Escape dots for regex
+    local module_re="${module//./\\.}"
+    local module_alt="src.${rel//\//.}"
+    local module_alt_re="${module_alt//./\\.}"
+    local test_dirs=""
+    for d in test tests; do
+        [[ -d "${project_dir}/${d}" ]] && test_dirs="${test_dirs} ${project_dir}/${d}"
+    done
+    [[ -z "$test_dirs" ]] && return 0
+    local _rg_cmd
+    _rg_cmd=$(command -v rg 2>/dev/null || true)
+    if [[ -n "$_rg_cmd" ]]; then
+        # Match: from X import, import X (X = module or module_alt)
+        "$_rg_cmd" -l --no-heading \
+            -g '*.py' -g '!__pycache__' -g '!*.pyc' \
+            -e "(from ${module_re}|import ${module_re}|from ${module_alt_re}|import ${module_alt_re})" \
+            $test_dirs 2>/dev/null || true
+    else
+        grep -rEl "(from ${module_re}|import ${module_re}|from ${module_alt_re}|import ${module_alt_re})" \
+            $test_dirs 2>/dev/null || true
+    fi
+}
+
+# P6: Check if Python file can be skipped (tracked + no git diff)
+# Returns 0 if skip, 1 if must analyze. Used by quality-gate to filter PY_FILES.
+incremental_skip_py_file() {
+    local file="$1"
+    [[ "${file##*.}" != "py" ]] && return 1
+    hook_config_true "incremental_analysis" 2>/dev/null || return 1
+    local script_dir="${BASH_SOURCE[0]%/*}"
+    [[ -z "$script_dir" ]] && script_dir="."
+    local parser="${script_dir}/incremental_parser.py"
+    [[ -f "$parser" ]] || return 1
+    local project_dir="${PROJECT_DIR:-.}"
+    local result
+    result=$(python3 "$parser" --check "$file" "$project_dir" 2>/dev/null) || return 1
+    [[ "$result" == "skip" ]]
+}
+
 # Get all affected tests for a list of changed files
+# P7/WP-DX1: When coverage_based_selection, merges file-pattern + coverage-index + import-based for Python
 # Usage: get_affected_tests file1.py file2.ts
 get_affected_tests() {
     local tests=()
@@ -1048,6 +1198,15 @@ get_affected_tests() {
         while IFS= read -r test; do
             [[ -n "$test" ]] && tests+=("$test")
         done < <(affected_tests_for_file "$file")
+        # P7/WP-DX1: Add coverage-index and import-based for Python when enabled
+        if [[ "${file##*.}" == "py" ]] && hook_config_true "coverage_based_selection" 2>/dev/null; then
+            while IFS= read -r test; do
+                [[ -n "$test" ]] && tests+=("$test")
+            done < <(affected_tests_from_coverage_index "$file")
+            while IFS= read -r test; do
+                [[ -n "$test" ]] && tests+=("$test")
+            done < <(affected_tests_from_imports "$file")
+        fi
     done
     # Dedupe and return
     printf '%s\n' "${tests[@]}" | sort -u

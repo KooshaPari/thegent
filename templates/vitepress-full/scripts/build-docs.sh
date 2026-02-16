@@ -55,8 +55,12 @@ build_version() {
     cp "docs/.vitepress/config.${version}.ts" "docs/.vitepress/config.ts"
   fi
 
-  # Build
-  npx vitepress build "${DOCS_DIR}" --out-dir "${version_dir}"
+  # Build (prefer Bun for speed)
+  if command -v bun >/dev/null 2>&1; then
+    bun x vitepress build "${DOCS_DIR}" --out-dir "${version_dir}"
+  else
+    npx vitepress build "${DOCS_DIR}" --out-dir "${version_dir}"
+  fi
 
   # Create version indicator
   echo "${version}" > "${version_dir}/.version"

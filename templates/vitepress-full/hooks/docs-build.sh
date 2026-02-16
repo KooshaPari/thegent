@@ -105,7 +105,11 @@ build_docs() {
   fi
 
   # Build
-  npx vitepress build "${DOCS_DIR}" --out-dir "${OUTPUT_DIR}"
+  if command -v bun >/dev/null 2>&1; then
+    bun x vitepress build "${DOCS_DIR}" --out-dir "${OUTPUT_DIR}"
+  else
+    npx vitepress build "${DOCS_DIR}" --out-dir "${OUTPUT_DIR}"
+  fi
 
   if [ -f "${OUTPUT_DIR}/index.html" ]; then
     log_info "Documentation built successfully to ${OUTPUT_DIR}"
