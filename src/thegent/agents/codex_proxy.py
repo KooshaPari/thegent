@@ -158,7 +158,7 @@ def _run_with_retry(
     on_stderr: Callable[[str], None] | None = None,
 ) -> RunResult:
     """Run codex subprocess with activity-based hang detection; raises TransientAgentError on retryable failure."""
-    effective_wall = max_wall_time if max_wall_time > 0 else 0
+    effective_wall = max(0, max_wall_time)
     result = _run_with_activity_monitoring(
         cmd,
         prompt,

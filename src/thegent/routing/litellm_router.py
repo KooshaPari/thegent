@@ -79,7 +79,7 @@ def build_litellm_model_list() -> list[dict[str, Any]]:
     seen_models: set[str] = set()
 
     catalog = _get_catalog()
-    for model_id, routes in catalog.items():
+    for routes in catalog.values():
         for route in routes:
             # Skip native CLI providers
             if route.provider in NATIVE_CLI_PROVIDERS:
