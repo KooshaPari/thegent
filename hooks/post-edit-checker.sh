@@ -48,8 +48,16 @@ case "$EXT" in
     SYNTAX_OUTPUT=$(bash -n "$FILE_PATH" 2>&1 || true)
     ;;
   ts|tsx|js|jsx)
-    if [[ "$EXT" == "js" || "$EXT" == "jsx" ]] && _has_cmd node; then
-      SYNTAX_OUTPUT=$(timeout 3 node --check "$FILE_PATH" 2>&1 || true)
+    if [[ "$EXT" == "js" || "$EXT" == "jsx" ]]; then
+      if _has_cmd bun; then
+        # Bun: use 'bun build' as a syntax check (no-bundle)
+        SYNTAX_OUTPUT=$(timeout 3 bun build --no-bundle "$FILE_PATH" 2>&1 >/dev/null || true)
+      elif _has_cmd deno; then
+        # Deno: use 'deno check'
+        SYNTAX_OUTPUT=$(timeout 3 deno check "$FILE_PATH" 2>&1 || true)
+      elif _has_cmd node; then
+        SYNTAX_OUTPUT=$(timeout 3 node --check "$FILE_PATH" 2>&1 || true)
+      fi
     fi
     ;;
   rb)

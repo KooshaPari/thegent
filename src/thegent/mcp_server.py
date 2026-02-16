@@ -35,6 +35,7 @@ from fastmcp.tools.tool import ToolResult
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+
 from thegent.config import ThegentSettings
 
 
@@ -65,15 +66,27 @@ from thegent.cli_impl import (
     _default_owner_tag,
     _resolve_cwd,
     bg_impl,
+    continuity_snapshot_impl,
     dag_list_impl,
+    dag_status_impl,
+    do_next_impl,
     get_server_meta_impl,
+    history_impl,
+    incorporate_impl,
+    plan_analyze_impl,
+    inbox_list_impl,
+    inbox_wait_impl,
     inspect_impl,
     list_agents_impl,
     list_droids_impl,
     list_models_impl,
     logs_impl,
+    loop_impl,
     observe_summary_impl,
+    pause_impl,
     ps_impl,
+    resume_impl,
+    retry_impl,
     run_impl,
     session_contract_audit_impl,
     session_contract_health_gate_impl,
@@ -83,33 +96,88 @@ from thegent.cli_impl import (
     status_impl,
     stop_impl,
     wait_impl,
+    wait_next_impl,
+    work_stream_claim_impl,
+    work_stream_complete_impl,
+    escalate_add_impl,
+    escalate_approve_impl,
+    escalate_list_impl,
+    escalate_resolve_impl,
 )
 from thegent.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
 
 # G-FM-04: Icon mapping for tools; wire when FastMCP supports icon parameter
+# Uses Unicode symbols (not emoji) for consistent terminal rendering
 TOOL_ICONS = {
     "thegent_run": "▶",
+    "thegent_plan_status": "≡",
+    "thegent_plan_get": "▤",
+    "thegent_plan_save": "⌃",
+    "thegent_plan_approve": "✓",
+    "thegent_protocol_list": "≡",
+    "thegent_protocol_get": "≡",
+    "thegent_discussion_finalize": "◉",
+    "thegent_research_finalize": "⊕",
+    "thegent_validation_report": "✓",
+    "thegent_plan_create": "✎",
+    "thegent_team_create": "⊕",
+    "thegent_team_list": "≡",
+    "thegent_team_delegate": "→",
+    "thegent_discussion_start": "◉",
+    "thegent_discussion_add_question": "?",
     "thegent_bg": "⏸",
     "thegent_stop": "⏹",
-    "thegent_logs": "📄",
-    "thegent_ps": "📋",
+    "thegent_pause": "⏸",
+    "thegent_resume": "▶",
+    "thegent_continuity_snapshot": "≡",
+    "thegent_suggest_mode": "◎",
+    "thegent_logs": "▤",
+    "thegent_ps": "≡",
     "thegent_status": "ℹ",
     "thegent_wait": "⏳",
-    "thegent_inspect": "🔍",
-    "thegent_list_agents": "👤",
-    "thegent_list_droids": "🤖",
-    "thegent_list_models": "📦",
-    "thegent_dag_list": "📊",
-    "thegent_observe_summary": "📈",
-    "thegent_sitback_dashboard": "🖥️",
-    "thegent_terminal_list": "🖥️",
-    "thegent_terminal_inspect": "👁️",
-    "thegent_terminal_send": "⌨️",
-    "thegent_terminal_attach": "🔗",
-    "thegent_ddg_search": "🔍",
+    "thegent_inbox_list": "↓",
+    "thegent_inbox_wait": "⊞",
+    "thegent_inspect": "⌕",
+    "thegent_list_agents": "⊕",
+    "thegent_list_droids": "◉",
+    "thegent_list_models": "⊞",
+    "thegent_dag_list": "▣",
+    "thegent_dag_ready": "▣",
+    "thegent_dag_recover": "↺",
+    "thegent_dag_run": "▶",
+    "thegent_dag_sync": "↻",
+    "thegent_observe_summary": "↑",
+    "thegent_sitback_dashboard": "⊞",
+    "thegent_terminal_list": "⊞",
+    "thegent_terminal_inspect": "◉",
+    "thegent_terminal_send": "⌨",
+    "thegent_terminal_attach": "⎘",
+    "thegent_ddg_search": "⌕",
+    "thegent_do_next": "→",
+    "thegent_plan_get_next": "▤",
+    "thegent_plan_progress": "≡",
+    "thegent_plan_analyze": "⊕",
+    "thegent_plan_wait_next": "⏳",
+    "thegent_history": "≡",
+    "thegent_retry": "↺",
+    "thegent_plan_incorporate": "⌃",
+    "thegent_dag_status": "▣",
+    "thegent_escalate_list": "↑",
+    "thegent_escalate_add": "↑",
+    "thegent_escalate_approve": "✓",
+    "thegent_escalate_resolve": "✓",
+    "thegent_handoff": "↔",
+    "thegent_handoff_list": "≡",
+    "thegent_handoff_show": "◉",
+    "thegent_handoff_confirm": "✓",
+    "thegent_terminal_route": "⌨",
+    "thegent_free": "▶",
 }
 
 _log = logging.getLogger(__name__)
+
+# ROB-016: Elicitation timeout (seconds). Fail-safe if client doesn't respond.
+ELICIT_TIMEOUT_S = 30
 
 
 def get_default_cwd(ctx: Context = CurrentContext()) -> Path | None:
@@ -131,21 +199,119 @@ def get_default_owner(ctx: Context = CurrentContext()) -> str | None:
 
 
 @lifespan
-async def thegent_lifespan(_: FastMCP) -> AsyncIterator[dict[str, Any] | None]:
+async def thegent_lifespan(mcp_app: FastMCP) -> AsyncIterator[dict[str, Any] | None]:
     """Startup and teardown for thegent MCP server. See gofastmcp.com/servers/lifespan."""
     _log.info("thegent MCP server starting")
 
     # ROB-013: Configuration validation on startup (fail-fast)
     from thegent.config import ThegentSettings
 
+    settings = ThegentSettings()
     try:
-        settings = ThegentSettings()
         settings.validate_setup()
         _log.info("Configuration validated successfully")
     except Exception as e:
         _log.critical("Configuration validation failed: %s", e)
         # In mission-critical rigor, we might want to exit here,
         # but for now we'll just log loudly to avoid breaking all installs.
+
+    # MCP bundle: required mounts (playwright for browser; serena, octocode); flyto-core optional alternative for browser
+    mounts_enabled = (
+        settings.mcp_mount_flyto or settings.mcp_mount_playwright or
+        settings.mcp_mount_serena or settings.mcp_mount_octocode or
+        settings.mcp_mount_sequential_thinking or settings.mcp_mount_next_devtools
+    )
+    if mounts_enabled:
+        try:
+            from fastmcp.server import create_proxy
+
+            def _js_executor_config(package: str) -> dict[str, Any]:
+                """Utility to generate consistent JS executor proxy config.
+                Prefers 'bun x' (Bun) for speed, falls back to 'npx' (Node).
+                Uses --no-install if possible to reduce process sprawl."""
+                import shutil
+                bun = shutil.which("bun")
+                if bun:
+                    return {
+                        "mcpServers": {
+                            "default": {
+                                "command": "bun",
+                                "args": ["x", package],
+                                "env": {**os.environ}
+                            }
+                        }
+                    }
+                return {
+                    "mcpServers": {
+                        "default": {
+                            "command": "npx",
+                            "args": ["-y", "--no-install", package],
+                            "env": {**os.environ, "npm_config_update_notifier": "false"}
+                        }
+                    }
+                }
+
+            if settings.mcp_mount_flyto:
+                # flyto-core HTTP at 8333 (run: flyto serve) or THGENT_FLYTO_URL
+                flyto_url = os.environ.get("THGENT_FLYTO_URL", "http://localhost:8333/mcp")
+                proxy = create_proxy(flyto_url, name="flyto")
+                mcp_app.mount(proxy, namespace="browser")
+                _log.info("mounted flyto-core at namespace browser (url=%s)", flyto_url)
+            elif settings.mcp_mount_playwright:
+                playwright_config = _js_executor_config("@playwright/mcp@latest")
+                proxy = create_proxy(playwright_config, name="playwright")
+                mcp_app.mount(proxy, namespace="browser")
+                _log.info("mounted @playwright/mcp at namespace browser")
+
+            if settings.mcp_mount_serena:
+                serena_config = {
+                    "mcpServers": {
+                        "default": {
+                            "command": "uvx",
+                            "args": [
+                                "--from",
+                                "git+https://github.com/oraios/serena",
+                                "serena",
+                                "start-mcp-server",
+                                "--context",
+                                "ide",
+                            ],
+                        }
+                    }
+                }
+                proxy = create_proxy(serena_config, name="serena")
+                mcp_app.mount(proxy, namespace="serena")
+                _log.info("mounted Serena at namespace serena")
+
+            if settings.mcp_mount_octocode:
+                proxy = create_proxy(_js_executor_config("octocode-mcp@latest"), name="octocode")
+                mcp_app.mount(proxy, namespace="octocode")
+                _log.info("mounted Octocode at namespace octocode")
+
+            if settings.mcp_mount_sequential_thinking:
+                proxy = create_proxy(_js_executor_config("@modelcontextprotocol/server-sequential-thinking"), name="thinking")
+                mcp_app.mount(proxy, namespace="thinking")
+                _log.info("mounted Sequential Thinking at namespace thinking")
+
+            if settings.mcp_mount_next_devtools:
+                proxy = create_proxy(_js_executor_config("@next/devtools-mcp"), name="next")
+                mcp_app.mount(proxy, namespace="next")
+                _log.info("mounted Next DevTools at namespace next")
+        except Exception as e:
+            _log.warning("failed to mount provider: %s", e)
+
+    # OPT-021: Parallel Dependency Resolution (warming catalog/routes)
+    try:
+        from thegent.models.catalog import prewarm_catalog
+        from thegent.tools.terminal import prewarm_git_index
+
+        # Run in thread to avoid blocking lifespan event loop
+        task1 = asyncio.create_task(asyncio.to_thread(prewarm_catalog))
+        task2 = asyncio.create_task(asyncio.to_thread(prewarm_git_index))
+        # Keep references to avoid task cancellation
+        _background_tasks = (task1, task2)
+    except Exception as e:
+        _log.warning("failed to pre-warm dependencies: %s", e)
 
     proxy_proc = None
     if os.environ.get("THGENT_BUNDLE_PROXY", "").lower() in ("1", "true", "yes"):
@@ -205,15 +371,27 @@ mcp.add_middleware(ErrorHandlingMiddleware())
 mcp.add_middleware(RateLimitingMiddleware(max_requests_per_second=10.0, burst_capacity=20))
 mcp.add_middleware(TimingMiddleware())
 mcp.add_middleware(
-    ResponseCachingMiddleware(
-        call_tool_settings=CallToolSettings(
-            included_tools=[
-                "thegent_ps",
-                "thegent_list_agents",
-                "thegent_list_droids",
-                "thegent_list_models",
+        ResponseCachingMiddleware(
+            call_tool_settings=CallToolSettings(
+                included_tools=[
+                    "thegent_ps",
+                    "thegent_plan_status",
+                    "thegent_plan_get",
+                    "thegent_protocol_list",
+                    "thegent_protocol_get",
+                    "thegent_validation_report",
+                    "thegent_team_list",
+                    "thegent_dag_ready",
+                    "thegent_list_agents",
+                    "thegent_list_droids",
+                    "thegent_list_models",
                 "thegent_session_contract_health_trend",
                 "thegent_sitback_dashboard",
+                "thegent_inspect",
+                "thegent_inbox_list",
+                "thegent_resolve_model_route",
+                "thegent_list_operations",
+                "thegent_list_modes",
             ],
             ttl=30,
         ),
@@ -226,6 +404,23 @@ mcp.add_middleware(LoggingMiddleware())
 def _stable_json(payload: Any) -> str:
     """Serialize dict/list payloads with stable key order for deterministic MCP transport."""
     return json.dumps(payload, sort_keys=True)
+
+
+def _error_result(
+    error: str,
+    remediation: str,
+    exit_code: int = 1,
+    extra: dict[str, Any] | None = None,
+) -> ToolResult:
+    """Return ToolResult with error, remediation, and structured_content (MCP-OPT §5)."""
+    payload: dict[str, Any] = {"error": error, "remediation": remediation, "exit_code": exit_code}
+    if extra:
+        payload.update(extra)
+    return ToolResult(
+        content=json.dumps(payload),
+        structured_content=payload,
+        meta={"execution_time_ms": 0},
+    )
 
 
 # --- MCP Resources ---
@@ -304,6 +499,19 @@ def resource_models_contract() -> str:
     from thegent.models import route_contract
 
     return json.dumps(route_contract())
+
+
+@mcp.resource(
+    "thegent://workstream",
+    mime_type="text/markdown",
+    annotations={"readOnlyHint": True, "idempotentHint": True},
+)
+def resource_workstream() -> str:
+    """Get the canonical WORK_STREAM.md content."""
+    work_stream_path = Path("docs/reference/WORK_STREAM.md")
+    if not work_stream_path.exists():
+        return "WORK_STREAM.md not found. Run 'thegent plan incorporate' to seed it."
+    return work_stream_path.read_text()
 
 
 @mcp.resource(
@@ -513,6 +721,127 @@ def resource_modes(mode: str | None = None) -> str:
 # --- MCP Prompts ---
 
 
+@mcp.resource(
+    "thegent://workflow/triggers",
+    mime_type="text/markdown",
+    annotations={"readOnlyHint": True, "idempotentHint": True},
+)
+def resource_workflow_triggers() -> str:
+    """Workflow instructions: idea→research→spec, quality green, next item. Injected on UserPromptSubmit."""
+    return """# Workflow Triggers
+
+## Idea/Task Prompts
+When user gives idea/task prompts (research, explore, build, implement, design, create, feature, investigate):
+1. Dump research to docs/research/ (or docs/guides/)
+2. Create or update specs in docs/docset/
+3. Add work items to unified work stream (docs/reference/, contracts/, docs/plans/)
+4. Enables: spam ideas → open new chat → ask "find the next thing to do"
+
+## Quality Green
+When user says "get task quality green", "quality green", "make quality pass", "fix quality":
+- Run: task quality-a-r (full pipeline; on fail pipes to agent until green)
+- Or: task quality:dag (DAG only)
+
+## Next Item
+When user says "find the next thing to do", "what next", "pick next", "next task":
+1. Read from docs/reference/, docs/docset/, contracts/, docs/plans/
+2. Check PLAN_STATUS.md, FR_TRACKER.md, or project tracker
+3. Pick highest-priority in-progress or pending item
+4. Execute that item
+
+## Gardening (Converge to Empty Backlog + Green)
+When user says "garden", "converge", "empty backlog", "complete green", "check gov traceability":
+1. thegent govern go health (8 dimensions)
+2. task quality; FR traceability; spec-verifier
+3. Read PLAN_STATUS.md, FR_TRACKER.md, docs/plans/
+4. thegent govern escalate list --past-sla
+5. Dispatch: thegent_run/thegent_bg for each failing dimension or pending item
+6. task quality-a-r until green
+7. thegent govern go cycle (AgilePlus)
+8. Repeat until backlog empty and all green
+"""
+
+
+@mcp.prompt
+def thegent_workflow_idea(idea: str) -> str:
+    """
+    Instructions for idea/task prompts: dump research, create specs, add work items.
+    Use when user gives research/explore/build/implement/design/create/feature prompts.
+    """
+    return f"""Idea/task: {idea}
+
+Workflow:
+1. Dump research to docs/research/ (or docs/guides/)
+2. Create or update specs in docs/docset/
+3. Add work items to unified work stream (docs/reference/, contracts/, docs/plans/)
+4. This enables: spam ideas here → open new chat → ask "find the next thing to do"
+"""
+
+
+@mcp.prompt
+def thegent_workflow_quality_green() -> str:
+    """
+    Instructions to run full quality pipeline until green.
+    Use when user says "get task quality green", "quality green", "make quality pass".
+    """
+    return """Run: task quality-a-r
+(Full quality pipeline; on fail pipes to agent and reloads until green)
+Or: task quality:dag (DAG only, no agent loop)
+"""
+
+
+@mcp.prompt
+def thegent_workflow_next_item() -> str:
+    """
+    Instructions to find and execute the next work item from the unified stream.
+    Use when user says "find the next thing to do", "what next", "pick next".
+    """
+    return """1. Read from unified work stream: docs/reference/, docs/docset/, contracts/, docs/plans/
+2. Check docs/reference/PLAN_STATUS.md, docs/reference/FR_TRACKER.md, or project tracker
+3. Pick the highest-priority in-progress or pending item
+4. Execute that item
+"""
+
+
+@mcp.resource(
+    "thegent://workflow/gardening",
+    mime_type="text/markdown",
+    annotations={"readOnlyHint": True, "idempotentHint": True},
+)
+def resource_workflow_gardening() -> str:
+    """Gardening workflow: converge to empty backlog and complete green."""
+    return """# Gardening Workflow (Converge to Empty Backlog + Green)
+
+1. thegent govern go health (8 dimensions)
+2. task quality; FR traceability; spec-verifier
+3. Read PLAN_STATUS.md, FR_TRACKER.md, docs/plans/
+4. thegent govern escalate list --past-sla
+5. Dispatch: thegent_run/thegent_bg for each failing dimension or pending item
+6. task quality-a-r until green
+7. thegent govern go cycle (AgilePlus)
+8. Repeat until backlog empty and all green
+"""
+
+
+@mcp.prompt
+def thegent_workflow_gardening() -> str:
+    """
+    Instructions for gardening: check gov traceability, tests, plan items; dispatch; converge to empty backlog and complete green.
+    Use when user says "garden", "converge", "empty backlog", "complete green".
+    """
+    return """Gardening workflow — converge to empty backlog + complete green:
+
+1. thegent govern go health (8 dimensions)
+2. task quality; FR traceability; spec-verifier
+3. Read PLAN_STATUS.md, FR_TRACKER.md, docs/plans/
+4. thegent govern escalate list --past-sla
+5. Dispatch: thegent_run/thegent_bg for each failing dimension or pending item
+6. task quality-a-r until green
+7. thegent govern go cycle (AgilePlus)
+8. Repeat until backlog empty and all green
+"""
+
+
 @mcp.prompt
 def thegent_run_agent(agent: str, prompt: str, cd: str | None = None, mode: str = "write") -> str:
     """
@@ -584,7 +913,7 @@ async def thegent_run(
     default_cwd: Any = Depends(get_default_cwd),
 ) -> ToolResult | str:
     """
-    Run an agent synchronously with a prompt.
+    Execute agent task; blocks until complete. Use for sync runs.
 
     Args:
         prompt: The task prompt (required)
@@ -592,8 +921,8 @@ async def thegent_run(
         model: Model ID (e.g. gemini-3-flash, claude-sonnet-4). When set, agent can be omitted for auto-route.
         provider: Provider hint for model-first (use this provider if it serves the model)
         cd: Optional working directory
-    mode: 'write' or 'full' (default: 'write')
-    timeout: Timeout in seconds (default: 90)
+        mode: 'write' or 'full' (default: 'write')
+        timeout: Timeout in seconds (min: 5, max: 3600, default: 90)
     full: Return full output instead of condensed (default: False)
     include_contract: Include resolved route contract metadata for model-based routing
     confidence: Required confidence threshold (0.0-1.0)
@@ -623,11 +952,9 @@ async def thegent_run(
             policy=cast("Literal['prefer_direct', 'prefer_proxy', 'failover', 'round_robin', 'cheapest']", policy),
         )
         if resolved is None:
-            return ToolResult(
-                content=json.dumps(
-                    {"error": f"No route for model '{model}'. Try thegent list-models.", "exit_code": 1}
-                ),
-                meta={},
+            return _error_result(
+                f"No route for model '{model}'.",
+                "Run: thegent list-models",
             )
         agent, model = resolved[0], resolved[1]
         if include_contract:
@@ -662,11 +989,9 @@ async def thegent_run(
             routes = ModelCatalog.routes_for(model)
             available = ", ".join(sorted({r.provider for r in routes})) if routes else ""
             suffix = f" Available: {available}." if available else ""
-            return ToolResult(
-                content=json.dumps(
-                    {"error": f"Model '{model}' not available via provider '{agent}'.{suffix}", "exit_code": 1}
-                ),
-                meta={},
+            return _error_result(
+                f"Model '{model}' not available via provider '{agent}'.{suffix}",
+                "Run: thegent list-models" if not available else f"Available: {available}. Or: thegent list-models",
             )
         agent, model = resolved[0], resolved[1]
         if include_contract:
@@ -684,33 +1009,30 @@ async def thegent_run(
                     "schema_version": route.schema_version,
                 }
     elif not agent:
-        return ToolResult(
-            content=json.dumps({"error": "Provide agent or model for routing.", "exit_code": 1}),
-            meta={},
-        )
+        return _error_result("Provide agent or model for routing.", "Run: thegent list-agents")
 
-    await cast("Any", ctx).info(f"thegent_run agent={agent} cd={cd} timeout={timeout}")
+    await ctx.info(f"thegent_run agent={agent} cd={cd} timeout={timeout}")
     cd_path = Path(cd) if cd else default_cwd
-    cwd = _resolve_cwd(cast("Path | None", cd_path))
+    cwd = _resolve_cwd(cd_path)
     if cwd is None:
-        elicitation = await cast("Any", ctx).elicit(ELICIT_CWD_MSG, response_type=str)
+        try:
+            elicitation = await asyncio.wait_for(
+                ctx.elicit(ELICIT_CWD_MSG, response_type=str),
+                timeout=ELICIT_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError:
+            return _error_result(
+                "Elicitation timed out (no response from client).",
+                "Provide cd=/path in tool call",
+            )
         if isinstance(elicitation, AcceptedElicitation):
-            cwd = Path(cast("str", elicitation.data)).expanduser().resolve()
+            cwd = Path(elicitation.data).expanduser().resolve()
         elif isinstance(elicitation, DeclinedElicitation):
-            return ToolResult(
-                content=json.dumps({"error": "User declined to provide working directory.", "exit_code": 1}),
-                meta={},
-            )
+            return _error_result("User declined to provide working directory.", "Provide cd=/path in tool call")
         elif isinstance(elicitation, CancelledElicitation):
-            return ToolResult(
-                content=json.dumps({"error": "Elicitation cancelled.", "exit_code": 1}),
-                meta={},
-            )
+            return _error_result("Elicitation cancelled.", "Retry with explicit params")
         else:
-            return ToolResult(
-                content=json.dumps({"error": "Ambiguous cwd. Provide --cd /path explicitly.", "exit_code": 1}),
-                meta={},
-            )
+            return _error_result("Ambiguous cwd.", "Provide cd=/path explicitly")
     cd_path = cwd
 
     # Run in thread; poll and report progress every 10s until done
@@ -741,11 +1063,11 @@ async def thegent_run(
     while not task.done():
         elapsed = int(time.perf_counter() - start_time)
         if elapsed - last_reported >= 10:
-            await cast("Any", ctx).report_progress(progress=elapsed, total=timeout)
+            await ctx.report_progress(progress=elapsed, total=timeout)
             last_reported = elapsed
         # Close SSE stream every 30s during long runs to avoid LB timeouts (SSE polling)
         if elapsed - last_close_at >= 30 and elapsed > 0:
-            await cast("Any", ctx).close_sse_stream()
+            await ctx.close_sse_stream()
             last_close_at = elapsed
         await asyncio.sleep(1)
     result = await task
@@ -771,6 +1093,87 @@ async def thegent_run(
 
 
 @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+async def thegent_loop(
+    prompt: str,
+    todo_spec: str,
+    agent: str | None = None,
+    checker: str = "antigravity",
+    mode: str = "soft",
+    cd: str | None = None,
+    ctx: Any = CurrentContext(),
+    default_cwd: Any = Depends(get_default_cwd),
+) -> ToolResult:
+    """
+    Run a Lifecycle loop with Checker oversight.
+    """
+    await ctx.info(f"thegent_loop agent={agent} mode={mode}")
+    cd_path = Path(cd) if cd else default_cwd
+    cwd = _resolve_cwd(cd_path)
+    if cwd is None:
+        return _error_result("CWD not found.", "Provide cd=/path or run from project root")
+
+    start_time = time.perf_counter()
+
+    async def _run():
+        return await asyncio.to_thread(
+            loop_impl,
+            agent=agent or "cursor",
+            prompt=prompt,
+            todo_spec=todo_spec,
+            checker=checker,
+            mode=mode,
+            cd=cwd,
+        )
+
+    task = asyncio.create_task(_run())
+    while not task.done():
+        await asyncio.sleep(1)
+        await ctx.report_progress(progress=0, total=100)  # Progress unknown
+
+    result = await task
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+async def thegent_loop_takeover(
+    session_id: str,
+    prompt: str,
+) -> str:
+    """
+    Inject human input into a running loop for takeover.
+    """
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    session_dir = settings.session_dir / session_id
+    session_dir.mkdir(parents=True, exist_ok=True)
+    takeover_file = session_dir / "takeover.json"
+    takeover_file.write_text(json.dumps({"prompt": prompt}))
+    return f"Takeover input injected for session {session_id}"
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+async def thegent_loop_stop(
+    session_id: str,
+) -> str:
+    """
+    Send a STOP signal to a running loop.
+    """
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    session_dir = settings.session_dir / session_id
+    session_dir.mkdir(parents=True, exist_ok=True)
+    stop_file = session_dir / "STOP"
+    stop_file.write_text("STOP")
+    return f"Stop signal sent to session {session_id}"
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
 async def thegent_bg(
     agent: str,
     prompt: str,
@@ -790,7 +1193,7 @@ async def thegent_bg(
     default_owner: Any = Depends(get_default_owner),
 ) -> ToolResult:
     """
-    Start an agent run in the background.
+    Fire-and-forget; returns session_id for logs/status/wait.
 
     Args:
         agent: Agent name
@@ -809,24 +1212,30 @@ async def thegent_bg(
 
     Returns: ToolResult with session_id, log_path, owner
     """
-    await cast("Any", ctx).info(f"thegent_bg agent={agent} cd={cd} owner={owner}")
+    await ctx.info(f"thegent_bg agent={agent} cd={cd} owner={owner}")
     cd_path = Path(cd) if cd else default_cwd
     cwd = _resolve_cwd(cast("Path | None", cd_path))
     elicited_cwd = False
     if cwd is None:
-        elicitation = await cast("Any", ctx).elicit(ELICIT_CWD_MSG, response_type=str)
+        try:
+            elicitation = await asyncio.wait_for(
+                ctx.elicit(ELICIT_CWD_MSG, response_type=str),
+                timeout=ELICIT_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError:
+            return _error_result(
+                "Elicitation timed out (no response from client).",
+                "Provide cd=/path in tool call",
+            )
         if isinstance(elicitation, AcceptedElicitation):
             cwd = Path(cast("str", elicitation.data)).expanduser().resolve()
             elicited_cwd = True
         elif isinstance(elicitation, DeclinedElicitation):
-            err = {"error": "User declined to provide working directory.", "exit_code": 1}
-            return ToolResult(content=json.dumps(err), structured_content=err, meta={"execution_time_ms": 0})
+            return _error_result("User declined to provide working directory.", "Provide cd=/path in tool call")
         elif isinstance(elicitation, CancelledElicitation):
-            err = {"error": "Elicitation cancelled.", "exit_code": 1}
-            return ToolResult(content=json.dumps(err), structured_content=err, meta={"execution_time_ms": 0})
+            return _error_result("Elicitation cancelled.", "Retry with explicit params")
         else:
-            err = {"error": "Ambiguous cwd. Provide --cd /path explicitly.", "exit_code": 1}
-            return ToolResult(content=json.dumps(err), structured_content=err, meta={"execution_time_ms": 0})
+            return _error_result("Ambiguous cwd.", "Provide cd=/path explicitly")
     cd_path = cwd
     route_contract: dict[str, Any] | None = None
     route_lookup_policy = "prefer_direct"
@@ -850,18 +1259,22 @@ async def thegent_bg(
 
     owner_tag = owner or default_owner
     if owner_tag is None and elicited_cwd:
-        elicitation = await cast("Any", ctx).elicit(ELICIT_OWNER_MSG, response_type=str)
-        if isinstance(elicitation, AcceptedElicitation):
-            owner_tag = cast("str", elicitation.data)
-        elif isinstance(elicitation, DeclinedElicitation):
-            owner_tag = _default_owner_tag(cwd)
-        elif isinstance(elicitation, CancelledElicitation):
-            return ToolResult(
-                content=json.dumps({"error": "Elicitation cancelled.", "exit_code": 1}),
-                meta={},
+        try:
+            elicitation = await asyncio.wait_for(
+                ctx.elicit(ELICIT_OWNER_MSG, response_type=str),
+                timeout=ELICIT_TIMEOUT_S,
             )
-        else:
+        except asyncio.TimeoutError:
             owner_tag = _default_owner_tag(cwd)
+        else:
+            if isinstance(elicitation, AcceptedElicitation):
+                owner_tag = cast("str", elicitation.data)
+            elif isinstance(elicitation, DeclinedElicitation):
+                owner_tag = _default_owner_tag(cwd)
+            elif isinstance(elicitation, CancelledElicitation):
+                return _error_result("Elicitation cancelled.", "Retry with explicit params")
+            else:
+                owner_tag = _default_owner_tag(cwd)
     elif owner_tag is None:
         owner_tag = _default_owner_tag(cwd)
 
@@ -949,7 +1362,7 @@ async def thegent_bg(
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_ps(owner: str | None = None, all: bool = False, include_contract: bool = False) -> ToolResult:
     """
-    List background sessions.
+    List background sessions for discovery.
 
     Args:
         owner: Filter by owner tag (optional)
@@ -963,6 +1376,7 @@ def thegent_ps(owner: str | None = None, all: bool = False, include_contract: bo
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
         content=json.dumps(result),
+        structured_content={"sessions": result},
         meta={"execution_time_ms": elapsed_ms},
     )
 
@@ -970,7 +1384,7 @@ def thegent_ps(owner: str | None = None, all: bool = False, include_contract: bo
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_status(session_id: str, include_contract: bool = False) -> ToolResult:
     """
-    Get status of a background session.
+    Get session status for quick health check.
 
     Args:
         session_id: Session ID to query
@@ -987,7 +1401,7 @@ def thegent_status(session_id: str, include_contract: bool = False) -> ToolResul
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_logs(session_id: str, tail: int | None = None, stderr: bool = False) -> ToolResult:
     """
-    Get logs from a background session.
+    Read session log output with optional tail limit.
 
     Args:
         session_id: Session ID to query
@@ -1002,6 +1416,7 @@ def thegent_logs(session_id: str, tail: int | None = None, stderr: bool = False)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
         content=result,
+        structured_content={"logs": result, "session_id": session_id, "tail": tail, "stderr": stderr},
         meta={"execution_time_ms": elapsed_ms},
     )
 
@@ -1015,7 +1430,7 @@ def thegent_inspect(
     include_contract: bool = False,
 ) -> ToolResult:
     """
-    Get status and logs for one or more sessions. No shell loop needed.
+    Multi-session status + logs.
 
     Args:
         session_ids: Session ID(s) to inspect. Omit when using owner.
@@ -1034,9 +1449,11 @@ def thegent_inspect(
         include_contract=include_contract,
     )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    # structured_content must be dict or None; inspect_impl returns list
+    structured = {"sessions": result} if isinstance(result, list) else result
     return ToolResult(
         content=json.dumps(result),
-        structured_content=result,
+        structured_content=structured,
         meta={"execution_time_ms": elapsed_ms},
     )
 
@@ -1397,7 +1814,7 @@ def thegent_observe_summary(
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_wait(session_id: str, timeout: int | None = None) -> ToolResult:
     """
-    Wait for a background session to complete.
+    Block until session completes or timeout.
 
     Args:
         session_id: Session ID to wait for
@@ -1410,6 +1827,100 @@ def thegent_wait(session_id: str, timeout: int | None = None) -> ToolResult:
     result = wait_impl(session_id=session_id, timeout=timeout)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(content=json.dumps(result), structured_content=result, meta={"execution_time_ms": elapsed_ms})
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_inbox_list(
+    owner: str | None = None,
+    agent: str | None = None,
+    event_type: str | None = None,
+    status: str | None = None,
+    sources: str | None = None,
+    limit: int = 50,
+) -> ToolResult:
+    """
+    List unified inbox events (run registry + escalation) with optional filters.
+
+    Args:
+        owner: Filter by owner
+        agent: Filter by agent
+        event_type: start|finish|feedback|pause|resume|escalation
+        status: running|completed|failed
+        sources: Comma-separated: registry,escalation (default: registry,escalation)
+        limit: Max events to return (default: 50)
+
+    Returns: List of inbox events
+    """
+    src_tuple = tuple(s.strip() for s in (sources or "registry,escalation").split(",") if s.strip())
+    start_time = time.perf_counter()
+    events = inbox_list_impl(
+        owner=owner,
+        agent=agent,
+        event_type=event_type,
+        status=status,
+        sources=src_tuple,
+        limit=limit,
+    )
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    payload = {"events": events}
+    return ToolResult(
+        content=json.dumps(payload),
+        structured_content=payload,
+        meta={"count": len(events), "execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": False})
+def thegent_inbox_wait(
+    owner: str | None = None,
+    agent: str | None = None,
+    event_type: str | None = None,
+    status: str | None = None,
+    sources: str | None = None,
+    poll_interval: float = 2.0,
+    timeout: float = 60.0,
+) -> ToolResult:
+    """
+    Wait for next inbox event matching filters. Blocks until new event or timeout.
+
+    Args:
+        owner: Filter by owner
+        agent: Filter by agent
+        event_type: start|finish|feedback|pause|resume|escalation
+        status: running|completed|failed
+        sources: Comma-separated: registry,escalation (default: registry,escalation)
+        poll_interval: Poll interval in seconds (default: 2.0)
+        timeout: Max wait seconds (default: 60, 0=unbounded)
+
+    Returns: New events that arrived, or empty list on timeout
+    """
+    _log.info(
+        "thegent_inbox_wait owner=%s agent=%s event_type=%s poll=%.1f timeout=%.1f",
+        owner,
+        agent,
+        event_type,
+        poll_interval,
+        timeout,
+    )
+    src_tuple = tuple(s.strip() for s in (sources or "registry,escalation").split(",") if s.strip())
+    start_time = time.perf_counter()
+    events = inbox_wait_impl(
+        owner=owner,
+        agent=agent,
+        event_type=event_type,
+        status=status,
+        sources=src_tuple,
+        poll_interval=poll_interval,
+        timeout=timeout,
+        notify=False,
+    )
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    payload = {"events": events}
+    return ToolResult(
+        content=json.dumps(payload),
+        structured_content=payload,
+        meta={"count": len(events), "execution_time_ms": elapsed_ms},
+    )
 
 
 @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False})
@@ -1430,6 +1941,82 @@ def thegent_stop(session_id: str, force: bool = False) -> ToolResult:
     return ToolResult(content=json.dumps(result), structured_content=result, meta={"execution_time_ms": elapsed_ms})
 
 
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_pause(session_id: str, reason: str = "Manual pause") -> ToolResult:
+    """
+    WP-1009: Pause a background session (register pause event in registry).
+
+    Args:
+        session_id: Session ID to pause
+        reason: Reason for pause (default: Manual pause)
+
+    Returns: ToolResult with status
+    """
+    _log.info("thegent_pause session_id=%s", session_id)
+    start_time = time.perf_counter()
+    result = pause_impl(session_id=session_id, reason=reason)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_resume(session_id: str) -> ToolResult:
+    """
+    WP-1009: Resume a paused session (register resume event in registry).
+
+    Args:
+        session_id: Session ID to resume
+
+    Returns: ToolResult with status
+    """
+    _log.info("thegent_resume session_id=%s", session_id)
+    start_time = time.perf_counter()
+    result = resume_impl(session_id=session_id)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_continuity_snapshot(
+    owner: str,
+    run_ids: list[str],
+    state_summary: dict[str, Any] | None = None,
+    next_steps: list[str] | None = None,
+) -> ToolResult:
+    """
+    WP-1009: Create a continuity snapshot for shift handoff.
+
+    Args:
+        owner: Current owner
+        run_ids: Run IDs to include in snapshot
+        state_summary: Optional state summary dict
+        next_steps: Optional list of next steps
+
+    Returns: ToolResult with snapshot_id
+    """
+    start_time = time.perf_counter()
+    result = continuity_snapshot_impl(
+        owner=owner,
+        run_ids=run_ids,
+        state_summary=state_summary,
+        next_steps=next_steps,
+    )
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_list_operations(operation: str | None = None) -> ToolResult:
     """
@@ -1442,18 +2029,28 @@ def thegent_list_operations(operation: str | None = None) -> ToolResult:
     """
     from thegent.operations import Operation, get_operations_by_type, list_operations
 
+    start_time = time.perf_counter()
     if operation:
         try:
             op = Operation(operation)
         except ValueError:
-            return ToolResult(content=json.dumps({"error": f"Unknown operation: {operation}"}))
+            return _error_result(
+                f"Unknown operation: {operation}",
+                "Valid: orchestrate, govern, recover, observe, plan",
+                extra={"operation": operation},
+            )
         entries = get_operations_by_type(op)
         data = {
             op.value: [{"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries]
         }
     else:
         data = list_operations()
-    return ToolResult(content=_stable_json(data))
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=_stable_json(data),
+        structured_content=data,
+        meta={"execution_time_ms": elapsed_ms},
+    )
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
@@ -1468,10 +2065,15 @@ def thegent_list_modes(mode: str | None = None) -> ToolResult:
     """
     from thegent.orchestration_modes import get_mode, list_modes
 
+    start_time = time.perf_counter()
     if mode:
         entry = get_mode(mode)
         if not entry:
-            return ToolResult(content=json.dumps({"error": f"Unknown mode: {mode}"}))
+            return _error_result(
+                f"Unknown mode: {mode}",
+                "Valid: sequential_delegation, parallel_consensus, review_loop",
+                extra={"mode": mode},
+            )
         data = [
             {
                 "mode": entry.mode.value,
@@ -1484,13 +2086,46 @@ def thegent_list_modes(mode: str | None = None) -> ToolResult:
         ]
     else:
         data = list_modes()
-    return ToolResult(content=_stable_json(data))
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=_stable_json(data),
+        structured_content=data if isinstance(data, dict) else {"modes": data},
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_suggest_mode(
+    risk: str = "medium",
+    urgency: str = "normal",
+    confidence: float = 0.8,
+) -> ToolResult:
+    """
+    WP-Y1: Suggest multi-agent mode based on risk, urgency, confidence (FR-032).
+
+    Args:
+        risk: risk_profile (low | medium | high)
+        urgency: urgency tier (normal | high | critical)
+        confidence: confidence score 0.0-1.0
+
+    Returns: JSON with mode, reason, phases, and selection inputs.
+    """
+    from thegent.orchestration_modes import select_mode
+
+    start_time = time.perf_counter()
+    result = select_mode(risk=risk, urgency=urgency, confidence=confidence)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
+    )
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_list_agents() -> ToolResult:
     """
-    List available agents.
+    List available agents for routing.
 
     Returns: JSON string with list of {name, backend}
     """
@@ -1499,6 +2134,7 @@ def thegent_list_agents() -> ToolResult:
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
         content=json.dumps(result),
+        structured_content={"agents": result},
         meta={"execution_time_ms": elapsed_ms},
     )
 
@@ -1536,7 +2172,7 @@ def thegent_list_models(
     List available models (optionally filtered by provider).
 
     Args:
-        provider: Optional provider filter (minimax, glm, cursor, gemini, copilot, claude, codex)
+        provider: Optional provider filter (minimax, glm, cursor, claude, codex; gemini/copilot via Codex proxy)
         include_contract: If true, return route metadata payload instead of provider/model map.
         by_model: If true, return {model_id: [provider, ...]} for routing (R5).
 
@@ -1578,15 +2214,10 @@ def thegent_resolve_model_route(
     try:
         policy_value = normalize_route_policy(policy)
     except ValueError:
-        return ToolResult(
-            content=json.dumps(
-                {
-                    "error": "Invalid policy",
-                    "policy": policy,
-                    "valid_policies": ["prefer_direct", "prefer_proxy", "failover"],
-                }
-            ),
-            meta={"execution_time_ms": 0},
+        return _error_result(
+            f"Invalid policy: {policy}",
+            "Valid: prefer_direct, prefer_proxy, failover",
+            extra={"policy": policy, "valid_policies": ["prefer_direct", "prefer_proxy", "failover"]},
         )
 
     start_time = time.perf_counter()
@@ -1610,13 +2241,16 @@ def thegent_resolve_model_route(
         "available_routes": available_routes,
     }
     if route is not None:
-        payload["resolved_route"] = {
-            "provider": route.provider,
-            "model_alias": route.model_alias,
-            "backend_type": route.backend_type,
-            "priority": route.priority,
-            "schema_version": route.schema_version,
-        }
+        payload["resolved_route"] = cast(
+            "Any",
+            {
+                "provider": route.provider,
+                "model_alias": route.model_alias,
+                "backend_type": route.backend_type,
+                "priority": route.priority,
+                "schema_version": route.schema_version,
+            },
+        )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
         content=json.dumps(payload),
@@ -1642,31 +2276,32 @@ async def thegent_dag_list(
     cd_path = Path(cd) if cd else default_cwd
     cwd = _resolve_cwd(cast("Path | None", cd_path))
     if cwd is None:
-        elicitation = await cast("Any", ctx).elicit(ELICIT_CWD_MSG, response_type=str)
+        try:
+            elicitation = await asyncio.wait_for(
+                ctx.elicit(ELICIT_CWD_MSG, response_type=str),
+                timeout=ELICIT_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError:
+            return _error_result(
+                "Elicitation timed out (no response from client).",
+                "Provide cd=/path in tool call",
+                extra={"frontmatter": {}, "tasks": []},
+            )
         if isinstance(elicitation, AcceptedElicitation):
             cwd = Path(cast("str", elicitation.data)).expanduser().resolve()
         elif isinstance(elicitation, DeclinedElicitation):
-            return ToolResult(
-                content=json.dumps(
-                    {"error": "User declined to provide working directory.", "frontmatter": {}, "tasks": []}
-                ),
-                meta={},
+            return _error_result(
+                "User declined to provide working directory.",
+                "Provide cd=/path in tool call",
+                extra={"frontmatter": {}, "tasks": []},
             )
         elif isinstance(elicitation, CancelledElicitation):
-            return ToolResult(
-                content=json.dumps({"error": "Elicitation cancelled.", "frontmatter": {}, "tasks": []}),
-                meta={},
-            )
+            return _error_result("Elicitation cancelled.", "Retry with explicit params", extra={"frontmatter": {}, "tasks": []})
         else:
-            return ToolResult(
-                content=json.dumps(
-                    {
-                        "error": "Ambiguous cwd. Provide --cd /path or run from project root.",
-                        "frontmatter": {},
-                        "tasks": [],
-                    }
-                ),
-                meta={},
+            return _error_result(
+                "Ambiguous cwd.",
+                "Provide cd=/path or run from project root",
+                extra={"frontmatter": {}, "tasks": []},
             )
     start_time = time.perf_counter()
     result = dag_list_impl(cd=cwd)
@@ -1675,6 +2310,33 @@ async def thegent_dag_list(
         content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_do_next(cd: str | None = None, limit: int = 5) -> ToolResult:
+    """
+    Find the next actionable work items from PLAN_STATUS, FR_TRACKER, docs/plans/, escalation queue.
+
+    Use when user says "what next", "find the next thing to do", "pick next task".
+    Returns next_items with id, description, source, prompt_suggestion. Use prompt_suggestion with thegent_run or thegent_bg to execute.
+
+    Args:
+        cd: Optional working directory (default: cwd)
+        limit: Max items to return (min: 1, max: 50, default: 5)
+    """
+    cd_path = Path(cd) if cd else None
+    start_time = time.perf_counter()
+    result = do_next_impl(cd=cd_path, limit=limit)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={
+            "count": result.get("count", 0),
+            "sources_checked": result.get("sources_checked", []),
+            "execution_time_ms": elapsed_ms,
+        },
     )
 
 
@@ -1688,6 +2350,7 @@ def thegent_terminal_list(all: bool = False) -> ToolResult:
     """
     from thegent.tools.terminal import is_claude_code_pane, list_tmux_panes
 
+    start_time = time.perf_counter()
     panes = list_tmux_panes()
     result = []
     for p in panes:
@@ -1706,7 +2369,12 @@ def thegent_terminal_list(all: bool = False) -> ToolResult:
                 "is_claude_code": is_cc,
             }
         )
-    return ToolResult(content=json.dumps(result), structured_content=result)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
+    )
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
@@ -1716,8 +2384,14 @@ def thegent_terminal_inspect(pane_id: str, last_lines: int = 50) -> ToolResult:
     """
     from thegent.tools.terminal import capture_tmux_pane
 
+    start_time = time.perf_counter()
     content = capture_tmux_pane(pane_id, last_lines=last_lines)
-    return ToolResult(content=content)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=content,
+        structured_content={"content": content, "pane_id": pane_id, "last_lines": last_lines},
+        meta={"execution_time_ms": elapsed_ms},
+    )
 
 
 @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
@@ -1727,8 +2401,14 @@ def thegent_terminal_send(pane_id: str, text: str, enter: bool = True) -> ToolRe
     """
     from thegent.tools.terminal import send_to_tmux_pane
 
+    start_time = time.perf_counter()
     success = send_to_tmux_pane(pane_id, text, enter=enter)
-    return ToolResult(content=json.dumps({"success": success}), structured_content={"success": success})
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps({"success": success}),
+        structured_content={"success": success},
+        meta={"execution_time_ms": elapsed_ms},
+    )
 
 
 @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
@@ -1738,17 +2418,48 @@ def thegent_terminal_attach(pane_id: str) -> ToolResult:
     """
     from thegent.tools.terminal import list_tmux_panes
 
+    start_time = time.perf_counter()
     panes = list_tmux_panes()
     p = next((p for p in panes if p.pane_id == pane_id), None)
     if not p:
-        return ToolResult(
-            content=json.dumps({"error": "Pane not found"}), structured_content={"error": "Pane not found"}
-        )
+        return _error_result("Pane not found.", "Run: thegent terminal_list", extra={"pane_id": pane_id})
 
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     msg = f"To attach to this session, run: tmux attach-session -t {p.session_name}"
     return ToolResult(
         content=msg,
         structured_content={"session": p.session_name, "command": f"tmux attach-session -t {p.session_name}"},
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_workstream_claim(item_id: str, agent_id: str) -> ToolResult:
+    """
+    Claim an item in the unified work stream.
+    """
+    start_time = time.perf_counter()
+    result = work_stream_claim_impl(item_id, agent_id)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_workstream_complete(item_id: str, agent_id: str) -> ToolResult:
+    """
+    Mark an item as complete in the unified work stream.
+    """
+    start_time = time.perf_counter()
+    result = work_stream_complete_impl(item_id, agent_id)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
     )
 
 
@@ -1759,19 +2470,35 @@ def thegent_sharecli_status() -> ToolResult:
     """
     from thegent.tools.terminal import sharecli_status
 
+    start_time = time.perf_counter()
     status = sharecli_status()
-    return ToolResult(content=status)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=status,
+        structured_content={"status": status},
+        meta={"execution_time_ms": elapsed_ms},
+    )
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 def thegent_ddg_search(query: str, num_results: int = 5) -> ToolResult:
     """
     Search DuckDuckGo for heavy web research.
+
+    Args:
+        query: Search query string
+        num_results: Max results to return (min: 1, max: 20, default: 5)
     """
     from thegent.tools.research import ddg_search
 
+    start_time = time.perf_counter()
     results = ddg_search(query, max_results=num_results)
-    return ToolResult(content=json.dumps(results), structured_content=results)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(results),
+        structured_content=results,
+        meta={"execution_time_ms": elapsed_ms},
+    )
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
@@ -1785,7 +2512,7 @@ async def thegent_suggest_prompt(
     """
     start_time = time.perf_counter()
     try:
-        result = await cast("Any", ctx).sample(
+        result = await ctx.sample(
             f"Refine this task prompt to be clearer and more actionable for an AI agent. Keep it concise. Return only the refined prompt, no explanation.\n\nRaw prompt:\n{raw_prompt}",
             temperature=0.3,
             max_tokens=500,
@@ -1802,10 +2529,449 @@ async def thegent_suggest_prompt(
     )
 
 
-# Sitback: dashboard resource, tool, prompts (FastMCP-first projection)
-from thegent.mcp_sitback import register_sitback
+# --- Plan / CLI parity tools ---
 
-register_sitback(mcp)
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_plan_get_next(cd: str | None = None) -> ToolResult:
+    """
+    Get first work item prompt for scripting. Use with thegent_run or thegent_bg.
+    Equivalent to: thegent plan get-next
+    """
+    cd_path = Path(cd) if cd else None
+    result = do_next_impl(cd=cd_path, limit=1)
+    if "error" in result:
+        return _error_result(result["error"], result.get("remediation", ""), extra=result)
+    items = result.get("next_items", [])
+    if not items:
+        return _error_result("No pending items.", "Run thegent plan do-next", extra={"next_items": []})
+    item = items[0]
+    return ToolResult(
+        content=json.dumps(item),
+        structured_content=item,
+        meta={"execution_time_ms": 0},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": False})
+def thegent_plan_wait_next(
+    cd: str | None = None,
+    poll: float = 2.0,
+    timeout: float = 0.0,
+    sources: str = "dag,do_next,escalation,inbox",
+) -> ToolResult:
+    """
+    Block until next actionable work exists (DAG ready, do_next, escalation, inbox).
+    Equivalent to: thegent plan wait-next
+    """
+    cd_path = Path(cd) if cd else None
+    src_tuple = tuple(s.strip() for s in sources.split(",") if s.strip())
+    result = wait_next_impl(cd=cd_path, poll_interval=poll, timeout=timeout, sources=src_tuple)
+    if "error" in result:
+        return _error_result(result["error"], result.get("remediation", ""), extra=result)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": 0},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_history(limit: int = 50) -> ToolResult:
+    """
+    List execution history (recent runs). Equivalent to: thegent history --limit N
+    """
+    start_time = time.perf_counter()
+    runs = history_impl(limit=limit)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(runs),
+        structured_content=runs,
+        meta={"execution_time_ms": elapsed_ms, "count": len(runs)},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_plan_progress(limit: int = 10) -> ToolResult:
+    """
+    Show recent runs (work-package progress). Alias for thegent_history with smaller default.
+    Equivalent to: thegent plan progress --limit N
+    """
+    return thegent_history(limit=limit)
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_plan_analyze(
+    cd: str | None = None,
+    pert: bool = False,
+    resources: bool = False,
+    continuity: bool = False,
+) -> ToolResult:
+    """
+    Run planning simulation overlays (XD1–XD3): PERT, resource contention, continuity risk.
+    Equivalent to: thegent plan analyze
+    If no flags set, runs all three overlays.
+    """
+    cd_path = Path(cd) if cd else None
+    start_time = time.perf_counter()
+    result = plan_analyze_impl(cd=cd_path, pert=pert, resources=resources, continuity=continuity)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    if "error" in result:
+        return _error_result(result["error"], result.get("remediation", ""), extra=result)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_retry(
+    run_id: str,
+    agent_override: str | None = None,
+    failover: bool = False,
+    cd: str | None = None,
+    override_reason: str | None = None,
+) -> ToolResult:
+    """
+    Retry a failed run by run_id. Looks up prompt/agent from registry and re-runs.
+    Equivalent to: thegent retry <run_id>
+    """
+    cd_path = Path(cd) if cd else None
+    start_time = time.perf_counter()
+    result = retry_impl(
+        run_id=run_id,
+        agent_override=agent_override,
+        failover=failover,
+        cd=cd_path,
+        override_reason=override_reason,
+    )
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    if "error" in result:
+        return _error_result(result["error"], result.get("remediation", ""), extra=result)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_plan_incorporate(cd: str | None = None, dry_run: bool = False) -> ToolResult:
+    """
+    Merge fragments from 02-UNIFIED-WBS into WORK_STREAM.md BACKLOG.
+    Equivalent to: thegent plan incorporate
+    """
+    cd_path = Path(cd) if cd else None
+    start_time = time.perf_counter()
+    result = incorporate_impl(cd=cd_path, dry_run=dry_run)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_dag_status(cd: str | None = None) -> ToolResult:
+    """
+    For each DAG task with session_id, return id, status, session_id, session_status.
+    Equivalent to: thegent dag status
+    """
+    cd_path = Path(cd) if cd else None
+    start_time = time.perf_counter()
+    result = dag_status_impl(cd=cd_path)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_escalate_list(past_sla_only: bool = False, limit: int = 50) -> ToolResult:
+    """
+    List escalation queue items (blocked runs). Equivalent to: thegent govern escalate list
+    """
+    start_time = time.perf_counter()
+    items = escalate_list_impl(past_sla_only=past_sla_only, limit=limit)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(items),
+        structured_content=items,
+        meta={"execution_time_ms": elapsed_ms, "count": len(items)},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_escalate_add(
+    run_id: str,
+    reason: str,
+    sla_minutes: int = 30,
+    owner: str | None = None,
+    agent: str | None = None,
+    lane: str = "standard",
+    priority: int = 0,
+) -> ToolResult:
+    """
+    Add a blocked run to the escalation queue. Equivalent to: thegent govern escalate add
+    """
+    start_time = time.perf_counter()
+    try:
+        escalate_add_impl(
+            run_id=run_id,
+            reason=reason,
+            sla_minutes=sla_minutes,
+            owner=owner,
+            agent=agent,
+            lane=lane,
+            priority=priority,
+        )
+    except Exception as e:
+        return _error_result(str(e), "Check run_id exists", extra={})
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps({"success": True, "run_id": run_id}),
+        structured_content={"success": True, "run_id": run_id},
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_escalate_approve(run_id: str) -> ToolResult:
+    """
+    Approve an escalation (policy override). Equivalent to: thegent govern escalate approve
+    """
+    start_time = time.perf_counter()
+    ok = escalate_approve_impl(run_id=run_id)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps({"success": ok, "run_id": run_id}),
+        structured_content={"success": ok, "run_id": run_id},
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_escalate_resolve(run_id: str, resolution: str = "resolved") -> ToolResult:
+    """
+    Mark an escalation item as resolved. Equivalent to: thegent govern escalate resolve
+    """
+    start_time = time.perf_counter()
+    ok = escalate_resolve_impl(run_id=run_id, resolution=resolution)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps({"success": ok, "run_id": run_id}),
+        structured_content={"success": ok, "run_id": run_id},
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_handoff(owner: str, cd: str | None = None) -> ToolResult:
+    """
+    Create a handoff snapshot for shift handoff (WP-4006). Transfers active runs to snapshot.
+    Equivalent to: thegent orchestrate handoff <owner>
+    """
+    from thegent.execution import EscalationQueue, HandoffManager, RunRegistry
+
+    cwd = _resolve_cwd(Path(cd) if cd else None)
+    if cwd is None:
+        return _error_result("Ambiguous cwd.", "Provide cd=/path", extra={})
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+    runs = registry.list_runs(limit=50)
+    run_ids = [r["run_id"] for r in runs if r.get("status") == "running"]
+    escalation_items = escalate_list_impl(past_sla_only=False, limit=50)
+    escalation_run_ids = [e["run_id"] for e in escalation_items]
+    past_sla = escalate_list_impl(past_sla_only=True, limit=50)
+    state_summary = {
+        "running_count": len(run_ids),
+        "escalation_backlog": len(escalation_run_ids),
+        "past_sla_count": len(past_sla),
+    }
+    completed = [r for r in runs if r.get("status") == "completed"]
+    failed = [r for r in runs if r.get("status") == "failed"]
+    evidence_summary = [
+        {"run_id": r.get("run_id"), "status": r.get("status"), "agent": r.get("agent")}
+        for r in (completed[-5:] + failed[-5:])
+    ]
+    next_steps: list[str] = []
+    if past_sla:
+        next_steps.append(f"Resolve {len(past_sla)} past-SLA escalation(s)")
+    if failed:
+        next_steps.append(f"Review {len(failed)} failed run(s)")
+    if run_ids:
+        next_steps.append(f"Monitor {len(run_ids)} active run(s)")
+    hm = HandoffManager(settings.session_dir)
+    snapshot_id = hm.create_snapshot(
+        owner,
+        run_ids,
+        escalation_run_ids=escalation_run_ids or None,
+        state_summary=state_summary,
+        evidence_summary=evidence_summary or None,
+        next_steps=next_steps or None,
+    )
+    return ToolResult(
+        content=json.dumps({"snapshot_id": snapshot_id, "owner": owner, "run_ids": run_ids}),
+        structured_content={"snapshot_id": snapshot_id, "owner": owner, "run_ids": run_ids},
+        meta={"execution_time_ms": 0},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_handoff_list(limit: int = 10) -> ToolResult:
+    """
+    List pending handoff snapshots. Equivalent to: thegent orchestrate handoff-list
+    """
+    from thegent.execution import HandoffManager
+
+    settings = ThegentSettings()
+    hm = HandoffManager(settings.session_dir)
+    snapshots = hm.list_pending_snapshots(limit=limit)
+    return ToolResult(
+        content=json.dumps(snapshots),
+        structured_content=snapshots,
+        meta={"count": len(snapshots)},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_handoff_show(snapshot_id: str) -> ToolResult:
+    """
+    Show full handoff summary for a snapshot. Equivalent to: thegent orchestrate handoff-show
+    """
+    from thegent.execution import HandoffManager
+
+    settings = ThegentSettings()
+    hm = HandoffManager(settings.session_dir)
+    snap = hm.get_snapshot(snapshot_id)
+    if not snap:
+        return _error_result(f"Snapshot {snapshot_id} not found.", "Run thegent_handoff_list", extra={})
+    return ToolResult(
+        content=json.dumps(snap),
+        structured_content=snap,
+        meta={},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_handoff_confirm(snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> ToolResult:
+    """
+    Incoming owner confirms handoff completeness. Equivalent to: thegent orchestrate handoff-confirm
+    """
+    from thegent.execution import HandoffManager
+
+    settings = ThegentSettings()
+    hm = HandoffManager(settings.session_dir)
+    ok = hm.confirm_handoff(snapshot_id=snapshot_id, incoming_owner=incoming_owner, confidence=confidence)
+    return ToolResult(
+        content=json.dumps({"success": ok, "snapshot_id": snapshot_id}),
+        structured_content={"success": ok, "snapshot_id": snapshot_id},
+        meta={},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_terminal_route(prompt: str, cd: str | None = None) -> ToolResult:
+    """
+    Route a prompt to an active terminal session if matching. Falls back to thegent_run if none found.
+    Equivalent to: thegent route <prompt>
+    """
+    from thegent.config import ThegentSettings
+    from thegent.routing.task_router import TaskRouter
+    from thegent.tools.terminal import send_to_tmux_pane
+
+    settings = ThegentSettings()
+    router = TaskRouter(settings)
+    target_path = str(cd or Path.cwd())
+    pane_id = router.find_active_terminal_for_path(target_path)
+    if pane_id:
+        success = send_to_tmux_pane(pane_id, prompt)
+        return ToolResult(
+            content=json.dumps({"routed": True, "pane_id": pane_id, "success": success}),
+            structured_content={"routed": True, "pane_id": pane_id, "success": success},
+            meta={},
+        )
+    return ToolResult(
+        content=json.dumps({"routed": False, "fallback": "Use thegent_run or thegent_bg"}),
+        structured_content={"routed": False, "fallback": "Use thegent_run or thegent_bg"},
+        meta={},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+async def thegent_free(
+    prompt: str,
+    cd: str | None = None,
+    mode: str = "write",
+    timeout: int | None = None,
+    live: bool = True,
+    bg: bool = False,
+) -> ToolResult:
+    """
+    Run with free tier (copilot gpt-5-mini). Equivalent to: thegent free "<prompt>"
+    Default agent for subagents per CLAUDE.md. Use --bg for background.
+    """
+    settings = ThegentSettings()
+    effective_timeout = timeout if timeout is not None else settings.default_timeout_free
+    cd_path = Path(cd) if cd else None
+    if bg:
+        res = bg_impl(
+            agent="copilot",
+            prompt=prompt,
+            cd=cd_path,
+            mode=mode,
+            timeout=effective_timeout,
+            full=False,
+            model="gpt-5-mini",
+            owner=None,
+        )
+        if "error" in res:
+            return _error_result(res["error"], res.get("remediation", ""), extra=res)
+        return ToolResult(
+            content=json.dumps(res),
+            structured_content=res,
+            meta={"session_id": res.get("session_id")},
+        )
+    res = run_impl(
+        agent="copilot",
+        prompt=prompt,
+        cd=cd_path,
+        mode=mode,
+        timeout=effective_timeout,
+        full=False,
+        live=live,
+        model="gpt-5-mini",
+    )
+    if "error" in res:
+        return _error_result(res["error"], res.get("remediation", ""), extra=res)
+    return ToolResult(
+        content=json.dumps(res),
+        structured_content=res,
+        meta={"exit_code": res.get("exit_code")},
+    )
+
+
+# Sitback: dashboard resource, tool, prompts (FastMCP-first projection)
+try:
+    import importlib
+
+    sitback_mod = importlib.import_module("thegent.mcp_sitback")
+    register_sitback = sitback_mod.register_sitback
+    register_sitback(mcp)
+except Exception:
+    _log.debug("sitback not available; skipping sitback registration")
+
+# Mode tools: Plan, Delegate, Discussion, Research, Validation, Protocol
+try:
+    from thegent.mcp_tools_modes import register_modes
+
+    register_modes(mcp)
+except Exception as e:
+    _log.debug("mode tools not available; skipping: %s", e)
 
 # Add transforms to expose resources and prompts as tools for tool-only clients
 mcp.add_transform(ResourcesAsTools(cast("Any", mcp)))
@@ -1845,6 +3011,20 @@ def http_app(stateless_http: bool = True):
 
 def run(host: str | None = None, port: int | None = None) -> None:
     """Start the FastMCP server with EventStore and optional Docket."""
+    import warnings
+
+    # Suppress websockets deprecation warnings (uvicorn uses websockets.legacy until uvicorn updates)
+    warnings.filterwarnings(
+        "ignore",
+        category=DeprecationWarning,
+        module="websockets.legacy",
+    )
+    warnings.filterwarnings(
+        "ignore",
+        category=DeprecationWarning,
+        module="uvicorn.protocols.websockets.websockets_impl",
+    )
+
     import uvicorn
 
     from thegent.config import ThegentSettings

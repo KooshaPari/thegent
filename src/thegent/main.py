@@ -2762,7 +2762,8 @@ def mcp_prune(
             continue
         pid, ppid, cmd = parts[0], parts[1], parts[2]
         
-        if "node" in cmd.lower() or "npm" in cmd.lower() or "cc-status" in cmd.lower():
+        cmd_lower = cmd.lower()
+        if any(x in cmd_lower for x in ("node", "npm", "bun", "deno", "cc-status")):
             for p in patterns:
                 if p in cmd:
                     to_kill.append({"pid": int(pid), "ppid": int(ppid), "cmd": cmd})
