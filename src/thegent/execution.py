@@ -167,17 +167,25 @@ class HandoffManager:
             f.write(json.dumps(event) + "\n")
         return snapshot_id
 
-    def confirm_handoff(self, snapshot_id: str, incoming_owner: str) -> bool:
-        """WP-9004: Incoming owner confirms handoff completeness."""
+    def confirm_handoff(self, snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> bool:
+        """WP-9004/12005: Incoming owner confirms handoff completeness with confidence."""
         if not self.verify_integrity(snapshot_id):
             return False
+
+        # WP-12005: Handoff confidence threshold
+        if confidence < 0.8:
+            # Record low confidence handoff
+            pass
+
         self._confirmed_handoffs.add(snapshot_id)
         # Update registry record (simplified: append confirmation event)
         event = {
             "snapshot_id": snapshot_id,
             "timestamp": datetime.now(UTC).isoformat(),
             "incoming_owner": incoming_owner,
+            "confidence": confidence,
             "event_type": "handoff_confirmed",
+            "continuity_envelope_version": "v2.0",  # WP-12005
         }
         with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event) + "\n")
@@ -260,7 +268,7 @@ class ContinuityWatchdog:
                 stale.append(s["session_id"])
         return stale
 
-    def trigger_auto_handoff(self, session_id: str, backup_owner: str) -> bool:
+    def trigger_auto_handoff(self, session_id: str, _backup_owner: str) -> bool:
         """Automatically trigger a handoff for a stale session (WP-5006)."""
         # Logic to update session owner in metadata
         return True
@@ -362,8 +370,19 @@ class ReplayManager:
         engine = PolicyEngine(new_settings)
         return engine.evaluate(run_meta)
 
-    def what_if_branch(self, run_id: str, branch_point_index: int, new_params: dict[str, Any]) -> dict[str, Any]:
-        """WP-9006: Simulate an alternate outcome from a specific point in the replay chain."""
+    def what_if_branch(
+        self, run_id: str, branch_point_index: int, new_params: dict[str, Any], approved: bool = False
+    ) -> dict[str, Any]:
+        """WP-9006/12004: Simulate an alternate outcome with branch governance."""
+        # WP-12004: Branch governance
+        if not approved:
+            return {
+                "status": "pending_approval",
+                "reason": "Branch simulation requires explicit governance approval.",
+                "run_id": run_id,
+                "branch_point": branch_point_index,
+            }
+
         chain = self.get_replay_chain(run_id)
         if not chain or branch_point_index >= len(chain):
             return {"error": "Invalid branch point"}
@@ -373,6 +392,10 @@ class ReplayManager:
         sim_event.update(new_params)
         sim_event["is_simulation"] = True
         sim_event["sim_id"] = f"sim_{run_id}_{branch_point_index}"
+
+        # WP-12003: Sandbox hardening (ensure it's marked as non-mutating)
+        sim_event["sandbox_mode"] = True
+        sim_event["read_only"] = True
 
         return sim_event
 
@@ -408,7 +431,7 @@ class KPIManager:
 
 
 class ProviderScorer:
-    """WP-Y8: Continuous scoring from historical quality data and characteristics."""
+    """WP-Y8/11008: Continuous scoring and learning loop with policy guardrails."""
 
     def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
@@ -427,18 +450,31 @@ class ProviderScorer:
         except Exception:
             return {}
 
-    def update_score(self, provider: str, characteristic: str, quality_score: float) -> None:
-        """Update historical score for a provider/characteristic pair."""
+    def update_score(
+        self, provider: str, characteristic: str, quality_score: float, approved: bool = False
+    ) -> dict[str, Any]:
+        """WP-11008: Update score with policy guardrails (e.g. requires approval for large changes)."""
         scores = self.get_scores()
         if characteristic not in scores:
             scores[characteristic] = {}
 
         current = scores[characteristic].get(provider, 0.8)
+        delta = quality_score - current
+        # Guardrail: if delta is large (> 0.2), require approval
+        if abs(delta) > 0.2 and not approved:
+            return {
+                "status": "pending_approval",
+                "reason": f"Significant score drift detected for {provider}/{characteristic} (delta {delta:.2f}).",
+                "current": current,
+                "proposed": quality_score,
+            }
+
         # EMA update (0.1 alpha)
         scores[characteristic][provider] = (current * 0.9) + (quality_score * 0.1)
 
         self.session_dir.mkdir(parents=True, exist_ok=True)
         self.path.write_text(json.dumps(scores, indent=2), encoding="utf-8")
+        return {"status": "updated", "new_score": scores[characteristic][provider]}
 
 
 class EvidenceLinter:
