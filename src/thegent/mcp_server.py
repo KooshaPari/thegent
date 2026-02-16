@@ -1668,6 +1668,340 @@ async def health(request: Request) -> Response:
     return JSONResponse({"status": "ok", "server": "thegent"})
 
 
+# --- Tray Application REST API Endpoints (v1) ---
+
+
+# Mock data storage for tray integration
+# In production, these would be backed by actual storage
+MOCK_PROJECTS = [
+    {
+        "id": "test-project-1",
+        "name": "Test Project 1",
+        "path": "/path/to/project1",
+        "language": "python",
+        "coverage": 85.5,
+        "last_run": "2026-02-15T10:00:00Z",
+    },
+    {
+        "id": "test-project-2",
+        "name": "Test Project 2",
+        "path": "/path/to/project2",
+        "language": "typescript",
+        "coverage": 72.0,
+        "last_run": "2026-02-14T15:30:00Z",
+    },
+]
+
+MOCK_AGENTS = [
+    {
+        "id": "claude",
+        "name": "Claude",
+        "model": "claude-sonnet-4-20250514",
+        "context_limit": 200000,
+        "rate_input": 0.003,
+        "rate_output": 0.015,
+        "status": "active",
+        "bounded_contexts": [],
+    },
+    {
+        "id": "cursor",
+        "name": "Cursor",
+        "model": "cursor-fast",
+        "context_limit": 100000,
+        "rate_input": 0.002,
+        "rate_output": 0.010,
+        "status": "active",
+        "bounded_contexts": [],
+    },
+    {
+        "id": "gemini",
+        "name": "Gemini",
+        "model": "gemini-2-flash",
+        "context_limit": 1000000,
+        "rate_input": 0.0001,
+        "rate_output": 0.0005,
+        "status": "active",
+        "bounded_contexts": [],
+    },
+]
+
+MOCK_RUNS = [
+    {
+        "id": "run-001",
+        "project_id": "test-project-1",
+        "agent_id": "claude",
+        "status": "completed",
+        "duration": 120.5,
+        "cost": 0.25,
+        "xp": 150,
+        "started_at": "2026-02-15T09:00:00Z",
+        "ended_at": "2026-02-15T09:02:00Z",
+    },
+    {
+        "id": "run-002",
+        "project_id": "test-project-1",
+        "agent_id": "cursor",
+        "status": "running",
+        "duration": 45.0,
+        "cost": 0.10,
+        "xp": 50,
+        "started_at": "2026-02-15T09:30:00Z",
+        "ended_at": None,
+    },
+]
+
+MOCK_GARDENER_STATUS = {
+    "running": False,
+    "active_agents": 0,
+    "max_agents": 3,
+    "uptime_seconds": 0,
+    "runs_today": 5,
+    "total_xp": 1250,
+    "level": 5,
+    "hunger_states": {},
+}
+
+MOCK_GARDENER_CONFIG = {
+    "max_agents": 3,
+    "scan_interval": 300,
+    "auto_restart": True,
+    "hunger_decay_rate": 0.1,
+}
+
+MOCK_COST_ALERTS = [
+    {"id": "alert-1", "threshold": 100.0, "message": "Daily budget at 80%", "active": True},
+    {"id": "alert-2", "threshold": 150.0, "message": "Daily budget exceeded!", "active": False},
+]
+
+MOCK_ACHIEVEMENTS = [
+    {"id": "ach-1", "name": "First Run", "description": "Complete your first agent run", "unlocked": True, "xp_reward": 50},
+    {"id": "ach-2", "name": "Speed Runner", "description": "Complete a run in under 60 seconds", "unlocked": False, "xp_reward": 100},
+    {"id": "ach-3", "name": "Cost Conscious", "description": "Stay under budget for 10 runs", "unlocked": False, "xp_reward": 200},
+]
+
+
+# Projects endpoints
+@mcp.custom_route("/api/v1/projects", methods=["GET"])
+async def list_projects(request: Request) -> Response:
+    """List all projects."""
+    return JSONResponse(MOCK_PROJECTS)
+
+
+@mcp.custom_route("/api/v1/projects", methods=["POST"])
+async def create_project(request: Request) -> Response:
+    """Create a new project."""
+    data = await request.json()
+    project = {
+        "id": f"project-{len(MOCK_PROJECTS) + 1}",
+        "name": data.get("name", "New Project"),
+        "path": data.get("path", "/path"),
+        "language": data.get("language", "python"),
+        "coverage": 0.0,
+        "last_run": "",
+    }
+    MOCK_PROJECTS.append(project)
+    return JSONResponse(project, status_code=201)
+
+
+@mcp.custom_route("/api/v1/projects/{project_id}", methods=["GET"])
+async def get_project(request: Request) -> Response:
+    """Get a project by ID."""
+    project_id = request.path_params["project_id"]
+    for project in MOCK_PROJECTS:
+        if project["id"] == project_id:
+            return JSONResponse(project)
+    return JSONResponse({"error": "Project not found"}, status_code=404)
+
+
+@mcp.custom_route("/api/v1/projects/{project_id}", methods=["PUT", "PATCH"])
+async def update_project(request: Request) -> Response:
+    """Update a project."""
+    project_id = request.path_params["project_id"]
+    data = await request.json()
+    for project in MOCK_PROJECTS:
+        if project["id"] == project_id:
+            project.update(data)
+            return JSONResponse(project)
+    return JSONResponse({"error": "Project not found"}, status_code=404)
+
+
+@mcp.custom_route("/api/v1/projects/{project_id}", methods=["DELETE"])
+async def delete_project(request: Request) -> Response:
+    """Delete a project."""
+    project_id = request.path_params["project_id"]
+    for i, project in enumerate(MOCK_PROJECTS):
+        if project["id"] == project_id:
+            MOCK_PROJECTS.pop(i)
+            return JSONResponse({"status": "deleted"}, status_code=204)
+    return JSONResponse({"error": "Project not found"}, status_code=404)
+
+
+# Agents endpoints
+@mcp.custom_route("/api/v1/agents", methods=["GET"])
+async def list_agents(request: Request) -> Response:
+    """List all agents."""
+    return JSONResponse(MOCK_AGENTS)
+
+
+@mcp.custom_route("/api/v1/agents/{agent_id}", methods=["GET"])
+async def get_agent(request: Request) -> Response:
+    """Get an agent by ID."""
+    agent_id = request.path_params["agent_id"]
+    for agent in MOCK_AGENTS:
+        if agent["id"] == agent_id:
+            return JSONResponse(agent)
+    return JSONResponse({"error": "Agent not found"}, status_code=404)
+
+
+@mcp.custom_route("/api/v1/agents/{agent_id}", methods=["PUT", "PATCH"])
+async def update_agent(request: Request) -> Response:
+    """Update an agent."""
+    agent_id = request.path_params["agent_id"]
+    data = await request.json()
+    for agent in MOCK_AGENTS:
+        if agent["id"] == agent_id:
+            agent.update(data)
+            return JSONResponse(agent)
+    return JSONResponse({"error": "Agent not found"}, status_code=404)
+
+
+# Runs endpoints
+@mcp.custom_route("/api/v1/runs", methods=["GET"])
+async def list_runs(request: Request) -> Response:
+    """List all runs with optional filters."""
+    project_id = request.query_params.get("project_id")
+    status = request.query_params.get("status")
+
+    runs = MOCK_RUNS
+    if project_id:
+        runs = [r for r in runs if r["project_id"] == project_id]
+    if status:
+        runs = [r for r in runs if r["status"] == status]
+
+    return JSONResponse(runs)
+
+
+@mcp.custom_route("/api/v1/runs/{run_id}", methods=["GET"])
+async def get_run(request: Request) -> Response:
+    """Get a run by ID."""
+    run_id = request.path_params["run_id"]
+    for run in MOCK_RUNS:
+        if run["id"] == run_id:
+            return JSONResponse(run)
+    return JSONResponse({"error": "Run not found"}, status_code=404)
+
+
+# Gardener endpoints
+@mcp.custom_route("/api/v1/gardener/status", methods=["GET"])
+async def gardener_status(request: Request) -> Response:
+    """Get gardener status."""
+    return JSONResponse(MOCK_GARDENER_STATUS)
+
+
+@mcp.custom_route("/api/v1/gardener/start", methods=["POST"])
+async def start_gardener(request: Request) -> Response:
+    """Start the gardener."""
+    MOCK_GARDENER_STATUS["running"] = True
+    MOCK_GARDENER_STATUS["uptime_seconds"] = 0
+    return JSONResponse(MOCK_GARDENER_STATUS)
+
+
+@mcp.custom_route("/api/v1/gardener/stop", methods=["POST"])
+async def stop_gardener(request: Request) -> Response:
+    """Stop the gardener."""
+    MOCK_GARDENER_STATUS["running"] = False
+    return JSONResponse(MOCK_GARDENER_STATUS)
+
+
+@mcp.custom_route("/api/v1/gardener/scan", methods=["POST"])
+async def trigger_scan(request: Request) -> Response:
+    """Trigger a gardener scan."""
+    return JSONResponse({"scan_id": "scan-123", "status": "triggered"})
+
+
+@mcp.custom_route("/api/v1/gardener/config", methods=["GET"])
+async def get_gardener_config(request: Request) -> Response:
+    """Get gardener configuration."""
+    return JSONResponse(MOCK_GARDENER_CONFIG)
+
+
+@mcp.custom_route("/api/v1/gardener/config", methods=["PUT", "PATCH"])
+async def update_gardener_config(request: Request) -> Response:
+    """Update gardener configuration."""
+    data = await request.json()
+    MOCK_GARDENER_CONFIG.update(data)
+    return JSONResponse(MOCK_GARDENER_CONFIG)
+
+
+# Costs endpoints
+@mcp.custom_route("/api/v1/costs/daily", methods=["GET"])
+async def daily_cost(request: Request) -> Response:
+    """Get daily cost summary."""
+    return JSONResponse({
+        "daily_spend": 25.50,
+        "daily_budget": 100.0,
+        "daily_percent": 25.5,
+        "monthly_spend": 450.0,
+        "monthly_budget": 2000.0,
+        "by_project": {"test-project-1": 15.0, "test-project-2": 10.5},
+        "by_agent": {"claude": 12.0, "cursor": 8.5, "gemini": 5.0},
+    })
+
+
+@mcp.custom_route("/api/v1/costs/monthly", methods=["GET"])
+async def monthly_cost(request: Request) -> Response:
+    """Get monthly cost summary."""
+    return JSONResponse({
+        "daily_spend": 25.50,
+        "daily_budget": 100.0,
+        "daily_percent": 25.5,
+        "monthly_spend": 450.0,
+        "monthly_budget": 2000.0,
+        "by_project": {"test-project-1": 250.0, "test-project-2": 200.0},
+        "by_agent": {"claude": 200.0, "cursor": 150.0, "gemini": 100.0},
+    })
+
+
+@mcp.custom_route("/api/v1/costs/alerts", methods=["GET"])
+async def get_cost_alerts(request: Request) -> Response:
+    """Get cost alerts."""
+    return JSONResponse(MOCK_COST_ALERTS)
+
+
+@mcp.custom_route("/api/v1/costs/alerts", methods=["POST"])
+async def create_cost_alert(request: Request) -> Response:
+    """Create a cost alert."""
+    data = await request.json()
+    alert = {
+        "id": f"alert-{len(MOCK_COST_ALERTS) + 1}",
+        "threshold": data.get("threshold", 100.0),
+        "message": data.get("message", "Budget threshold reached"),
+        "active": True,
+    }
+    MOCK_COST_ALERTS.append(alert)
+    return JSONResponse(alert, status_code=201)
+
+
+# Gamification endpoints
+@mcp.custom_route("/api/v1/gamification/stats", methods=["GET"])
+async def gamification_stats(request: Request) -> Response:
+    """Get gamification statistics."""
+    return JSONResponse({
+        "total_xp": 1250,
+        "level": 5,
+        "xp_to_next_level": 250,
+        "runs_today": 5,
+        "achievements_count": 1,
+        "streak_days": 3,
+    })
+
+
+@mcp.custom_route("/api/v1/gamification/achievements", methods=["GET"])
+async def achievements(request: Request) -> Response:
+    """Get achievements."""
+    return JSONResponse(MOCK_ACHIEVEMENTS)
+
+
 def _get_event_store() -> EventStore:
     """EventStore: MemoryStore default, Redis when FASTMCP_EVENT_STORE_URL set."""
     url = os.environ.get("FASTMCP_EVENT_STORE_URL")
