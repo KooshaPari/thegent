@@ -11,12 +11,14 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from starlette.applications import Starlette
-from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
 from starlette.routing import Route, WebSocketRoute
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
 
 _log = logging.getLogger(__name__)
 
@@ -156,7 +158,7 @@ def _process_sse_line(line: bytes, transform: bool) -> bytes | None:
     if not transform:
         return line + b"\n"
     try:
-        obj = json.loads(data_part.decode())
+        obj = json.loads(data_part.decode(errors="replace"))
         transformed = _chat_completions_to_responses(obj)
         if transformed is None:
             return None  # Skip empty deltas; don't emit Chat Completions format to Responses client
@@ -230,7 +232,7 @@ async def _proxy_stream(
 def _transform_models_response(content: bytes) -> bytes | None:
     """Transform CLIProxy models response (data) to Codex format (models). Returns None if no transform needed."""
     try:
-        data = json.loads(content)
+        data = json.loads(content.decode(errors="replace"))
         if "data" in data and "models" not in data:
             data["models"] = data.pop("data", [])
             return json.dumps(data).encode()
@@ -344,7 +346,7 @@ async def websocket_responses_handler(websocket: Any) -> None:
                             data_part = line[5:].strip()
                             if data_part and data_part != b"[DONE]":
                                 try:
-                                    obj = json.loads(data_part.decode())
+                                    obj = json.loads(data_part.decode(errors="replace"))
                                     out = _chat_completions_to_responses(obj) if transform else obj
                                     if out is not None:
                                         await websocket.send_json(out)
