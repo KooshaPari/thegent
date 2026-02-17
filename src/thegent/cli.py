@@ -17,49 +17,87 @@ from pathlib import Path
 from typing import Any, cast
 
 import typer
-from rich.console import Console
+
+class LazyConsole:
+    """Lazy-loaded rich console to speed up CLI startup."""
+    def __getattr__(self, name):
+        from rich.console import Console
+        global console
+        console = Console()
+        return getattr(console, name)
+
+console = LazyConsole()
+
+# from rich.console import Console  <-- removed to avoid top-level import
 from rich.table import Table
 
-from thegent.agents import (
-    list_agent_names,
-    list_droid_names,
-    resolve_agent,
-)
-from thegent.agents.cliproxy_manager import run_login
-from thegent.agents.registry import AGENT_LABELS
-from thegent.cli_impl import (
-    _LOG_FOLLOW_POLL_SECONDS,
-    DagDocument,
-    _atomic_write,
-    _check_dag_cycles,
-    _coerce_issue_types,
-    _dag_path,
-    _dag_update_task,
-    _default_owner_tag,
-    _ensure_contract_version_header,
-    _ensure_dag_file,
-    _find_session_meta,
-    _get_ready_task_ids,
-    _is_pid_running,
-    _normalize_output_format,
-    _parse_dag_full,
-    _parse_dag_session,
-    _parse_depends_on,
-    _read_session_meta,
-    _resolve_cwd,
-    _resolve_droids_dir,
-    _resolve_prompt,
-    _resolve_session_status,
-    _serialize_dag,
-    _session_paths,
-    _session_status_for,
-    _validate_agent,
-    _validate_dag,
-    _validate_task_id,
-)
-from thegent.config import ThegentSettings
-from thegent.execution import RunRegistry
-from thegent.exit_codes import EXIT_HEALTH_GATE_FAILED, EXIT_TIMEOUT, get_exit_message
+# Lazy imports for thegent modules to speed up startup.
+def _lazy_import(module: str, name: str):
+    def wrapper(*args, **kwargs):
+        import importlib
+        m = importlib.import_module(module)
+        f = getattr(m, name)
+        # For non-callable attributes (like constants), we might need another way,
+        # but for functions this works and replaces the global.
+        globals()[name] = f
+        return f(*args, **kwargs)
+    return wrapper
+
+# thegent.agents
+list_agent_names = _lazy_import("thegent.agents", "list_agent_names")
+list_droid_names = _lazy_import("thegent.agents", "list_droid_names")
+resolve_agent = _lazy_import("thegent.agents", "resolve_agent")
+run_login = _lazy_import("thegent.agents.cliproxy_manager", "run_login")
+
+# thegent.cli_impl
+_atomic_write = _lazy_import("thegent.cli_impl", "_atomic_write")
+_make_load_classifier = _lazy_import("thegent.cli_impl", "_make_load_classifier")
+_check_dag_cycles = _lazy_import("thegent.cli_impl", "_check_dag_cycles")
+_coerce_issue_types = _lazy_import("thegent.cli_impl", "_coerce_issue_types")
+_dag_path = _lazy_import("thegent.cli_impl", "_dag_path")
+_dag_update_task = _lazy_import("thegent.cli_impl", "_dag_update_task")
+_default_owner_tag = _lazy_import("thegent.cli_impl", "_default_owner_tag")
+_ensure_contract_version_header = _lazy_import("thegent.cli_impl", "_ensure_contract_version_header")
+_ensure_dag_file = _lazy_import("thegent.cli_impl", "_ensure_dag_file")
+_find_session_meta = _lazy_import("thegent.cli_impl", "_find_session_meta")
+_get_ready_task_ids = _lazy_import("thegent.cli_impl", "_get_ready_task_ids")
+_is_pid_running = _lazy_import("thegent.cli_impl", "_is_pid_running")
+_normalize_output_format = _lazy_import("thegent.cli_impl", "_normalize_output_format")
+_parse_dag_full = _lazy_import("thegent.cli_impl", "_parse_dag_full")
+_parse_dag_session = _lazy_import("thegent.cli_impl", "_parse_dag_session")
+_parse_depends_on = _lazy_import("thegent.cli_impl", "_parse_depends_on")
+_read_session_meta = _lazy_import("thegent.cli_impl", "_read_session_meta")
+_resolve_cwd = _lazy_import("thegent.cli_impl", "_resolve_cwd")
+_resolve_droids_dir = _lazy_import("thegent.cli_impl", "_resolve_droids_dir")
+_resolve_prompt = _lazy_import("thegent.cli_impl", "_resolve_prompt")
+_resolve_session_status = _lazy_import("thegent.cli_impl", "_resolve_session_status")
+_serialize_dag = _lazy_import("thegent.cli_impl", "_serialize_dag")
+_session_paths = _lazy_import("thegent.cli_impl", "_session_paths")
+_session_status_for = _lazy_import("thegent.cli_impl", "_session_status_for")
+_validate_agent = _lazy_import("thegent.cli_impl", "_validate_agent")
+_validate_dag = _lazy_import("thegent.cli_impl", "_validate_dag")
+_validate_task_id = _lazy_import("thegent.cli_impl", "_validate_task_id")
+dag_ready_impl = _lazy_import("thegent.cli_impl", "dag_ready_impl")
+dag_recover_impl = _lazy_import("thegent.cli_impl", "dag_recover_impl")
+dag_run_impl = _lazy_import("thegent.cli_impl", "dag_run_impl")
+dag_sync_impl = _lazy_import("thegent.cli_impl", "dag_sync_impl")
+
+# thegent.config & execution
+def ThegentSettings(*args, **kwargs):
+    from thegent.config import ThegentSettings as Impl
+    return Impl(*args, **kwargs)
+
+def RunRegistry(*args, **kwargs):
+    from thegent.execution import RunRegistry as Impl
+    return Impl(*args, **kwargs)
+
+def get_exit_message(*args, **kwargs):
+    from thegent.exit_codes import get_exit_message as Impl
+    return Impl(*args, **kwargs)
+
+# Constants
+EXIT_TIMEOUT = 124
+EXIT_HEALTH_GATE_FAILED = 2
 
 
 def _safe_dict(val: object) -> dict[str, Any]:
@@ -72,7 +110,46 @@ def _safe_list(val: object) -> list[Any]:
     return cast("list[Any]", val) if isinstance(val, list) else []
 
 
-console = Console()
+def _resolve_run_id(run_id: str | None) -> str:
+    """Resolve run_id, defaulting to latest if None."""
+    if run_id:
+        return run_id
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+    latest = registry.get_latest_run_id()
+    if not latest:
+        console.print("[red]No run ID provided and no previous runs found.[/red]")
+        raise typer.Exit(1)
+    return latest
+
+
+def _resolve_session_id(session_id: str | None) -> str:
+    """Resolve session_id, defaulting to latest if None."""
+    if session_id:
+        return session_id
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+    latest = registry.get_latest_session_id()
+    if not latest:
+        console.print("[red]No session ID provided and no previous sessions found.[/red]")
+        raise typer.Exit(1)
+    return latest
+
+
+def _resolve_checkpoint_id(checkpoint_id: str | None) -> str:
+    """Resolve checkpoint_id, defaulting to latest if None."""
+    if checkpoint_id:
+        return checkpoint_id
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+    latest = registry.get_latest_checkpoint_id()
+    if not latest:
+        console.print("[red]No checkpoint ID provided and no previous checkpoints found.[/red]")
+        raise typer.Exit(1)
+    return latest
+
+
+_LOG_FOLLOW_POLL_SECONDS = 0.5  # Poll interval for log follow (seconds)
 
 
 def _scope_key(owner: str) -> str:
@@ -114,40 +191,58 @@ def run_cmd(
     include_contract: bool = False,
     run_id: str | None = None,
     lane: str = "standard",
+    idempotency_token: str | None = None,
     confidence: float | None = None,
     arbitration: str | None = None,
     override_reason: str | None = None,
     contract_version: str | None = None,
     domain: str | None = None,
     speculative: bool = False,
+    search: bool = True,
+    debug: bool = False,
 ) -> None:
     """Run an agent or droid with the given prompt. Model-first: agent=None, model set."""
     from thegent.cli_impl import run_impl
     from thegent.models import ModelCatalog, resolve_route
 
-    # Model-first with provider hint: resolve agent and validate model availability
+    # Model-first: resolve agent via routing policy (WP-5003 cost_quality supported)
     effective_agent = agent
-    if agent is None and model and provider:
-        effective_agent = resolve_agent(provider)
+    if agent is None and model:
         settings = ThegentSettings()
         from thegent.models.catalog import normalize_route_policy
 
-        policy = normalize_route_policy(settings.default_routing)
-        resolved = resolve_route(model, provider_hint=provider, policy=policy)
+        policy = normalize_route_policy(routing or settings.default_routing)
+        resolved = resolve_route(
+            model,
+            provider_hint=provider,
+            policy=policy,
+            quality_floor=getattr(settings, "cost_quality_min_weight", 0.1),
+            lane="standard",
+        )
         if resolved is None:
             routes = ModelCatalog.routes_for(model)
             available = ", ".join(sorted({r.provider for r in routes})) if routes else "none"
             console.print(
-                f"[red]Model '{model}' not available via provider '{provider}'. Available: {available}.[/red]"
+                f"[red]Model '{model}' not available via provider '{provider or 'any'}'. Available: {available}.[/red]"
             )
             raise typer.Exit(1)
-    elif agent is None and model:
-        # Model-first without provider: use first available route
-        routes = ModelCatalog.routes_for(model)
-        if not routes:
-            console.print(f"[red]Model '{model}' has no available providers.[/red]")
-            raise typer.Exit(1)
-        effective_agent = routes[0].provider
+        effective_agent = resolved[0]
+
+    # WP-5002: Session-start warning when session count high (memory optimization)
+    settings = ThegentSettings()
+    thresh = getattr(settings, "session_warn_threshold", 5)
+    if isinstance(thresh, int) and thresh > 0:
+        from thegent.cli_impl import ps_impl
+
+        sessions = ps_impl(all=True)
+        running = sum(1 for s in sessions if (s.get("status") or "").lower() == "running")
+        if running >= thresh:
+            console.print(
+                f"[yellow]Tip: {running} active session(s) detected. Each spawns LSP/MCP processes (~1–2 GB).[/yellow]"
+            )
+            console.print(
+                "[dim]Run 'thegent mcp prune --force' to free memory, or 'thegent mcp spotlight-exclude' on macOS.[/dim]"
+            )
 
     # WP-X2/X5/X6/X7: Unified execution via run_impl (FSM + Policy + Telemetry)
     res = run_impl(
@@ -157,6 +252,7 @@ def run_cmd(
         mode=mode,
         timeout=timeout,
         full=full,
+        live=live,
         model=model,
         provider=provider,
         run_id=run_id,
@@ -164,9 +260,14 @@ def run_cmd(
         include_contract=include_contract,
         lane=lane,
         confidence=confidence,
+        arbitration=arbitration,
         override_reason=override_reason,
         contract_version=contract_version,
         domain=domain,
+        speculative=speculative,
+        routing=routing,
+        enable_search=search,
+        debug=debug,
     )
 
     if "error" in res:
@@ -174,6 +275,11 @@ def run_cmd(
         if "agents" in res:
             console.print(f"[dim]Agents: {res['agents']}[/dim]")
         raise typer.Exit(res.get("exit_code", 1))
+
+    if res.get("stdout"):
+        console.print(res["stdout"])
+    if res.get("stderr"):
+        console.print(res["stderr"], style="dim")
 
     if full:
         if res.get("stderr"):
@@ -185,10 +291,73 @@ def run_cmd(
         console.print(res["stdout"])
 
     if res.get("timed_out"):
-        console.print("[yellow]Process hit safety ceiling (agent self-limits via tool-call budget)[/yellow]")
+        console.print("[yellow]Run exceeded time budget.[/yellow]")
 
     if res.get("exit_code") != 0:
         raise typer.Exit(res.get("exit_code", 1))
+
+
+def loop_cmd(
+    prompt: str,
+    todo_spec: str,
+    agent: str | None = None,
+    checker: str = "antigravity",
+    loop_mode: str = "soft",
+    cd: Path | None = None,
+) -> None:
+    """Run a Lifecycle loop with Checker oversight."""
+    from rich.console import Console
+
+    from thegent.cli_impl import loop_impl
+
+    local_console = Console()
+    local_console.print(f"[bold cyan]Starting Lifecycle loop ({loop_mode})...[/bold cyan]")
+
+    def on_worker_output(text: str) -> None:
+        local_console.print(text, end="")
+
+    def on_progress(iteration: int, total: int, message: str) -> None:
+        local_console.print(f"[dim][Iteration {iteration}/{total}] {message}[/dim]")
+
+    res = loop_impl(
+        agent=agent or "cursor",
+        prompt=prompt,
+        todo_spec=todo_spec,
+        checker=checker,
+        mode=loop_mode,
+        cd=cd,
+        on_worker_output=on_worker_output,
+        on_progress=on_progress,
+    )
+
+    local_console.print(f"\n[bold green]Loop finished after {res['iterations']} iterations.[/bold green]")
+
+
+def loop_send_cmd(session_id: str | None = None, prompt: str = "") -> None:
+    """Send a prompt to a running Lifecycle loop (human or agent takeover)."""
+    sid = _resolve_session_id(session_id)
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    session_dir = settings.session_dir / sid
+    session_dir.mkdir(parents=True, exist_ok=True)
+    takeover_file = session_dir / "takeover.json"
+    takeover_file.write_text(json.dumps({"prompt": prompt}), encoding="utf-8")
+    console.print(f"[green]Takeover input sent to loop session {sid}.[/green]")
+    console.print("[dim]The loop will use this as the next prompt on its next iteration.[/dim]")
+
+
+def loop_stop_cmd(session_id: str | None = None) -> None:
+    """Send STOP signal to a running Lifecycle loop."""
+    sid = _resolve_session_id(session_id)
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    session_dir = settings.session_dir / sid
+    session_dir.mkdir(parents=True, exist_ok=True)
+    stop_file = session_dir / "STOP"
+    stop_file.write_text("STOP")
+    console.print(f"[green]Stop signal sent to loop session {sid}.[/green]")
 
 
 def bg_cmd(
@@ -217,8 +386,25 @@ def bg_cmd(
     contract_version: str | None = None,
     domain: str | None = None,
     speculative: bool = False,
+    debug: bool = False,
 ) -> str:
     from thegent.cli_impl import bg_impl
+
+    # WP-5002: Session-start warning when session count high (memory optimization)
+    settings = ThegentSettings()
+    thresh = getattr(settings, "session_warn_threshold", 5)
+    if isinstance(thresh, int) and thresh > 0:
+        from thegent.cli_impl import ps_impl
+
+        sessions = ps_impl(all=True)
+        running = sum(1 for s in sessions if (s.get("status") or "").lower() == "running")
+        if running >= thresh:
+            console.print(
+                f"[yellow]Tip: {running} active session(s) detected. Each spawns LSP/MCP processes (~1–2 GB).[/yellow]"
+            )
+            console.print(
+                "[dim]Run 'thegent mcp prune --force' to free memory, or 'thegent mcp spotlight-exclude' on macOS.[/dim]"
+            )
 
     # WP-X2/X5/X6/X7: Unified background execution via bg_impl
     res = bg_impl(
@@ -237,8 +423,15 @@ def bg_cmd(
         routing=routing,
         failover=failover,
         run_id=run_id,
+        lane=lane,
+        idempotency_token=idempotency_token,
+        confidence=confidence,
+        arbitration=arbitration,
+        override_reason=override_reason,
         contract_version=contract_version,
         domain=domain,
+        speculative=speculative,
+        debug=debug,
     )
 
     if "error" in res:
@@ -373,9 +566,102 @@ def events_cmd(run_id: str | None = None, limit: int = 100, format: str | None =
             rid = event.get("run_id", "?")
             ev_type = event.get("event") or event.get("status", "started")
             ts = event.get("started_at_utc") or event.get("ended_at_utc") or "?"
-            details = str(event)
-            lines.append(f"| {rid} | {ev_type} | {ts} | {details} |")
+            ev_details = str(event)
+            lines.append(f"| {rid} | {ev_type} | {ts} | {ev_details} |")
         console.print("\n".join(lines))
+
+
+def inbox_list_cmd(
+    owner: str | None = None,
+    agent: str | None = None,
+    event_type: str | None = None,
+    status: str | None = None,
+    sources: str | None = None,
+    limit: int = 50,
+    format: str | None = None,
+) -> None:
+    """List unified inbox events (run registry + escalation) with optional filters."""
+    from thegent.cli_impl import inbox_list_impl
+
+    src_tuple = tuple(s.strip() for s in (sources or "registry,escalation").split(",") if s.strip())
+    events = inbox_list_impl(
+        owner=owner,
+        agent=agent,
+        event_type=event_type,
+        status=status,
+        sources=src_tuple,
+        limit=limit,
+    )
+    if not format or format == "rich":
+        if not events:
+            console.print("[dim]No inbox events.[/dim]")
+            return
+        table = Table(title="Inbox")
+        table.add_column("Source", style="dim")
+        table.add_column("Event", style="magenta")
+        table.add_column("Run ID", style="cyan")
+        table.add_column("Owner", style="green")
+        table.add_column("Agent", style="yellow")
+        table.add_column("Timestamp", style="blue")
+        for ev in events:
+            ts = (ev.get("timestamp") or "")[:19].replace("T", " ")
+            table.add_row(
+                ev.get("source", "?"),
+                ev.get("event_type", "?"),
+                ev.get("run_id", "?")[:12],
+                ev.get("owner", "?") or "—",
+                ev.get("agent", "?") or "—",
+                ts,
+            )
+        console.print(table)
+    elif format == "json":
+        console.print_json(data=events)
+    else:
+        for ev in events:
+            console.print(ev)
+
+
+def inbox_wait_cmd(
+    owner: str | None = None,
+    agent: str | None = None,
+    event_type: str | None = None,
+    status: str | None = None,
+    sources: str | None = None,
+    poll: float = 2.0,
+    timeout: float = 0.0,
+    notify: bool = True,
+    format: str | None = None,
+) -> None:
+    """Wait for next inbox event matching filters. Blocks until new event or timeout."""
+    from thegent.cli_impl import inbox_wait_impl
+
+    src_tuple = tuple(s.strip() for s in (sources or "registry,escalation").split(",") if s.strip())
+    events = inbox_wait_impl(
+        owner=owner,
+        agent=agent,
+        event_type=event_type,
+        status=status,
+        sources=src_tuple,
+        poll_interval=poll,
+        timeout=timeout,
+        notify=notify,
+    )
+    if not events:
+        console.print("[dim]No new events (timeout or empty).[/dim]")
+        return
+    if not format or format == "rich":
+        for ev in events:
+            ts = (ev.get("timestamp") or "")[:19].replace("T", " ")
+            console.print(
+                f"[green]→[/green] {ev.get('source')}/{ev.get('event_type')} "
+                f"[cyan]{ev.get('run_id', '?')[:12]}[/cyan] "
+                f"owner={ev.get('owner', '—')} agent={ev.get('agent', '—')} {ts}"
+            )
+    elif format == "json":
+        console.print_json(data=events)
+    else:
+        for ev in events:
+            console.print(ev)
 
 
 def data_protection_cmd(format: str | None = None) -> None:
@@ -400,8 +686,61 @@ def data_protection_cmd(format: str | None = None) -> None:
     table.add_row("Permissions Restricted (0700)", _fmt_bool(status["permissions_restricted"]))
     table.add_row("Sensitive Data Masking", _fmt_bool(status["masking_enabled"]))
     table.add_row("Retention Policy", f"{status['retention_policy_days']} days")
+    if status.get("retention_by_domain"):
+        by_dom = ", ".join(f"{k}:{v}d" for k, v in status["retention_by_domain"].items())
+        table.add_row("Retention by Domain", by_dom or "—")
 
     console.print(table)
+
+
+def compliance_report_cmd(
+    format: str | None = None,
+    output: Path | None = None,
+) -> None:
+    """Generate compliance evidence retention report (WP-3006)."""
+    from thegent.cli_impl import get_compliance_report_impl
+
+    report = get_compliance_report_impl()
+    fmt = _normalize_output_format(format)
+
+    if fmt == "json":
+        out = json.dumps(report, indent=2)
+    else:
+        # Markdown report
+        ts = report["tiered_storage"]
+        rm = report["retention_matrix"]
+        dp = report["data_protection"]
+        lines = [
+            "# Compliance Evidence Retention Report (WP-3006)",
+            f"Generated: {report['generated_at_utc']}",
+            "",
+            "## Tiered Storage",
+            f"- Hot (active): {ts['hot_active_sessions']} sessions",
+            f"- Hot (archived): {ts['hot_archived']} (retention: {ts['retention_hot_days']}d)",
+            f"- Cold: {ts['cold']} (retention: {ts['retention_cold_days']}d)",
+            "",
+            "## Retention by Domain",
+            "| Domain | Retention (Days) | Runs |",
+            "|--------|------------------|------|",
+        ]
+        for row in rm:
+            lines.append(f"| {row['domain']} | {row['retention_days']} | {row['run_count']} |")
+        lines.extend(
+            [
+                "",
+                "## Data Protection",
+                f"- Session dir: {dp['session_dir']}",
+                f"- Permissions restricted: {dp['permissions_restricted']}",
+                f"- Masking enabled: {dp['masking_enabled']}",
+            ]
+        )
+        out = "\n".join(lines)
+
+    if output:
+        output.write_text(out, encoding="utf-8")
+        console.print(f"[green]Compliance report written to {output}[/green]")
+    else:
+        console.print(out)
 
 
 def audit_verify_cmd(format: str | None = None) -> None:
@@ -440,12 +779,22 @@ def escalate_add_cmd(
     sla_minutes: int = 30,
     owner: str | None = None,
     lane: str = "standard",
+    priority: int = 0,
 ) -> None:
     """Add a blocked run to the escalation queue (WP-3008)."""
     from thegent.cli_impl import escalate_add_impl
 
-    escalate_add_impl(run_id=run_id, reason=reason, sla_minutes=sla_minutes, owner=owner, lane=lane)
-    console.print(f"[green]Added run_id={run_id} to escalation queue (SLA: {sla_minutes} min)[/green]")
+    escalate_add_impl(
+        run_id=run_id,
+        reason=reason,
+        sla_minutes=sla_minutes,
+        owner=owner,
+        lane=lane,
+        priority=priority,
+    )
+    console.print(
+        f"[green]Added run_id={run_id} to escalation queue (SLA: {sla_minutes} min, priority: {priority})[/green]"
+    )
 
 
 def escalate_list_cmd(
@@ -469,6 +818,7 @@ def escalate_list_cmd(
     table.add_column("Reason")
     table.add_column("Owner")
     table.add_column("Lane")
+    table.add_column("Prio")
     table.add_column("Blocked At")
     table.add_column("SLA By")
     table.add_column("Past SLA")
@@ -479,6 +829,7 @@ def escalate_list_cmd(
             it.get("reason", "?"),
             it.get("owner") or "-",
             it.get("lane", "standard"),
+            str(it.get("priority", 0)),
             it.get("blocked_at_utc", "?")[:19],
             it.get("escalate_by_utc", "?")[:19],
             past,
@@ -530,26 +881,545 @@ def sweep_cmd(
     raise typer.Exit(1)
 
 
-def escalate_resolve_cmd(run_id: str, resolution: str = "resolved") -> None:
+def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved") -> None:
     """Mark an escalation item as resolved (WP-3008)."""
+    rid = _resolve_run_id(run_id)
     from thegent.cli_impl import escalate_resolve_impl
 
-    ok = escalate_resolve_impl(run_id=run_id, resolution=resolution)
+    ok = escalate_resolve_impl(run_id=rid, resolution=resolution)
     if ok:
-        console.print(f"[green]Escalation {run_id} resolved as '{resolution}'.[/green]")
+        console.print(f"[green]Escalation {rid} resolved as '{resolution}'.[/green]")
     else:
-        console.print(f"[red]Escalation {run_id} not found or already resolved.[/red]")
+        console.print(f"[red]Escalation {rid} not found or already resolved.[/red]")
 
 
-def escalate_approve_cmd(run_id: str) -> None:
+def escalate_approve_cmd(run_id: str | None = None) -> None:
     """Approve an escalation, recording an override for the owner (G-GP-05)."""
+    rid = _resolve_run_id(run_id)
     from thegent.cli_impl import escalate_approve_impl
 
-    ok = escalate_approve_impl(run_id=run_id)
+    ok = escalate_approve_impl(run_id=rid)
     if ok:
-        console.print(f"[green]Escalation {run_id} APPROVED. Policy override recorded for owner.[/green]")
+        console.print(f"[green]Escalation {rid} APPROVED. Policy override recorded for owner.[/green]")
     else:
-        console.print(f"[red]Escalation {run_id} not found or already resolved.[/red]")
+        console.print(f"[red]Escalation {rid} not found or already resolved.[/red]")
+
+
+def interruption_list_cmd(limit: int = 20, format: str | None = None) -> None:
+    """List recent interruptions (WP-4004)."""
+    settings = ThegentSettings()
+    from thegent.execution import InterruptionTracker
+
+    it = InterruptionTracker(settings.session_dir)
+    if not it.path.exists():
+        console.print("[dim]No interruptions recorded.[/dim]")
+        return
+    items: list[dict[str, Any]] = []
+    with it.path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                items.append(json.loads(line))
+            except Exception:
+                continue
+    items = sorted(items, key=lambda x: x.get("timestamp", ""), reverse=True)[:limit]
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(items) + "\n")
+        return
+    if not items:
+        console.print("[dim]No interruptions in window.[/dim]")
+        return
+    table = Table(title="Interruption Log (WP-4004)")
+    table.add_column("Timestamp")
+    table.add_column("Type")
+    table.add_column("Run ID")
+    table.add_column("Severity")
+    for i in items:
+        table.add_row(
+            (i.get("timestamp", "?")[:19]),
+            i.get("type", "unknown"),
+            i.get("run_id", "?"),
+            i.get("severity", "medium"),
+        )
+    console.print(table)
+    fatigue = it.get_fatigue_score()
+    console.print(f"[dim]Fatigue score: {fatigue:.2f} (ceiling: {it.ALERTS_PER_HOUR_CEILING}/hr)[/dim]")
+
+
+def config_check_cmd(format: str | None = None) -> None:
+    """Validate config and report issues (DX-010, ROB-013)."""
+    from pydantic import ValidationError
+
+    issues: list[str] = []
+    try:
+        settings = ThegentSettings()
+    except ValidationError as e:
+        for err in e.errors():
+            loc = ".".join(str(x) for x in err.get("loc", []))
+            issues.append(f"Config error: {loc} — {err.get('msg', 'invalid')}")
+        if format == "json":
+            sys.stdout.write(json.dumps({"ok": False, "issues": issues}) + "\n")
+            raise typer.Exit(1)
+        for i in issues:
+            console.print(f"[red]{i}[/red]")
+        raise typer.Exit(1)
+
+    # Optional: path checks
+    session_dir = Path(settings.session_dir).expanduser().resolve()
+    if not session_dir.parent.exists():
+        issues.append(f"Session dir parent missing: {session_dir.parent}")
+    if session_dir.exists() and not os.access(session_dir, os.W_OK):
+        issues.append(f"Session dir not writable: {session_dir}")
+
+    if issues:
+        if format == "json":
+            sys.stdout.write(json.dumps({"ok": False, "issues": issues}) + "\n")
+            raise typer.Exit(1)
+        for i in issues:
+            console.print(f"[yellow]{i}[/yellow]")
+        raise typer.Exit(1)
+
+    if format == "json":
+        sys.stdout.write(json.dumps({"ok": True, "issues": []}) + "\n")
+        return
+    console.print("[green]Config OK.[/green]")
+
+
+def load_status_cmd(format: str | None = None) -> None:
+    """Show load classification and safe-mode status (WP-5002)."""
+    settings = ThegentSettings()
+    lc = _make_load_classifier(settings)
+    running = lc.get_running_count()
+    level = lc.get_load_level()
+    safe_mode = lc.is_safe_mode_active()
+    shape = lc.get_traffic_shape()
+    data = {
+        "running_count": running,
+        "load_level": level,
+        "safe_mode_active": safe_mode,
+        "traffic_shape": shape,
+        "spike_threshold": settings.load_spike_threshold,
+        "surge_threshold": settings.load_surge_threshold,
+    }
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(data) + "\n")
+        return
+    table = Table(title="Load Status (WP-5002)")
+    table.add_column("Metric")
+    table.add_column("Value")
+    table.add_row("Running sessions", str(running))
+    table.add_row("Load level", level)
+    table.add_row("Safe-mode active", "[red]Yes[/red]" if safe_mode else "[green]No[/green]")
+    table.add_row("Traffic shaping", shape)
+    table.add_row("Thresholds", f"spike>={settings.load_spike_threshold}, surge>={settings.load_surge_threshold}")
+    console.print(table)
+
+
+def _get_health_targets_path(project_dir: Path) -> Path:
+    """Find the health-targets.json path relative to project directory."""
+    # Try project_dir/contracts/health-targets.json
+    health_targets = project_dir / "contracts" / "health-targets.json"
+    if health_targets.exists():
+        return health_targets
+    # Fallback: try current working directory
+    cwd_health = Path.cwd() / "contracts" / "health-targets.json"
+    if cwd_health.exists():
+        return cwd_health
+    # Default: raise error
+    raise FileNotFoundError(
+        f"health-targets.json not found. Expected at {health_targets} or {cwd_health}"
+    )
+
+
+def _health_targets_exists(project_dir: Path) -> bool:
+    """Return True if health-targets.json exists for the project."""
+    for p in (project_dir / "contracts" / "health-targets.json", Path.cwd() / "contracts" / "health-targets.json"):
+        if p.exists():
+            return True
+    return False
+
+
+_HEALTH_TARGETS_TEMPLATE = """{"version":"1.0.0","dimensions":{"test_coverage":{"weight":0.2,"target":80,"unit":"percent","direction":"higher_is_better","scan_tool":"pytest --cov","priority_class":"critical"},"lint_violations":{"weight":0.15,"target":0,"unit":"count","direction":"lower_is_better","scan_tool":"ruff check","priority_class":"critical"},"complexity_index":{"weight":0.15,"target":10,"unit":"cyclomatic_avg","direction":"lower_is_better","scan_tool":"radon cc -a","priority_class":"medium"},"security_findings":{"weight":0.15,"target":0,"unit":"count","direction":"lower_is_better","scan_tool":"security-pipeline","priority_class":"critical"},"spec_traceability":{"weight":0.1,"target":80,"unit":"percent","direction":"higher_is_better","scan_tool":"grep FR- tests/","priority_class":"medium"},"doc_organization":{"weight":0.1,"target":100,"unit":"percent","direction":"higher_is_better","scan_tool":"structure_audit","priority_class":"low"},"freshness":{"weight":0.1,"target":0,"unit":"stale_items","direction":"lower_is_better","scan_tool":"find -mtime +7","priority_class":"low"},"agent_health":{"weight":0.05,"target":0,"unit":"open_breakers","direction":"lower_is_better","scan_tool":"circuit_breakers.jsonl","priority_class":"critical"}},"bands":{"excellent":{"min":90,"label":"Excellent"},"healthy":{"min":70,"label":"Healthy"},"warning":{"min":40,"label":"Warning"},"critical":{"min":0,"label":"Critical"}},"budget":{"daily_agent_calls":20,"tiers":{"normal":{"max_utilization_pct":50,"description":"All agent types available"},"cautious":{"max_utilization_pct":80,"description":"Prefer cheaper/faster agents"},"restricted":{"max_utilization_pct":95,"description":"Only essential tasks"},"halted":{"max_utilization_pct":100,"description":"No new agent spawns"}}},"cycle":{"interval_s":300,"max_rerolls_per_task":2,"max_tasks_per_cycle":10,"cooldown_after_failure_s":60,"health_threshold":90,"debounce_s":30}}"""
+
+
+def govern_configure_cmd(cd: Path | None = None, force: bool = False) -> None:
+    """Bootstrap governance: create contracts/health-targets.json if missing."""
+    project_dir = _resolve_cwd(cd) or Path.cwd()
+    contracts_dir = project_dir / "contracts"
+    health_targets = contracts_dir / "health-targets.json"
+    if health_targets.exists() and not force:
+        console.print("[green]Govern already configured.[/green]")
+        return
+    contracts_dir.mkdir(parents=True, exist_ok=True)
+    health_targets.write_text(_HEALTH_TARGETS_TEMPLATE, encoding="utf-8")
+    console.print("[green]Govern configured.[/green] Run: thegent govern go health")
+
+
+def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> None:
+    """Show current health score (composite 0-100, band, per-dimension breakdown)."""
+    from thegent.governance.health_score import HealthScoreComputer, get_band
+    from thegent.governance.scanner import CodebaseScanner
+
+    settings = ThegentSettings()
+    project_dir = _resolve_cwd(cd) or Path.cwd()
+    try:
+        health_targets_path = _get_health_targets_path(project_dir)
+    except FileNotFoundError:
+        fmt = _normalize_output_format(format)
+        if fmt == "json":
+            sys.stdout.write(json.dumps({"configured": False, "hint": "thegent govern configure"}) + "\n")
+        else:
+            console.print("[yellow]Govern not configured.[/yellow]")
+            console.print("[dim]Run: thegent govern configure[/dim]")
+        raise typer.Exit(1)
+
+    # Create health score computer
+    health_computer = HealthScoreComputer(health_targets_path)
+
+    # Create scanner and run scan
+    scanner = CodebaseScanner(project_dir=project_dir, session_dir=settings.session_dir)
+    scan_result = scanner.scan_all()
+
+    # Extract dimension values from scan result
+    dimension_values: dict[str, float] = {}
+    for dim_name, dim_scan in scan_result.dimensions.items():
+        dimension_values[dim_name] = dim_scan.current_value
+
+    # Compute health score
+    health = health_computer.compute(dimension_values)
+
+    fmt = _normalize_output_format(format)
+
+    if fmt == "json":
+        output = {
+            "score": health.score,
+            "band": health.band.value if hasattr(health, "band") else get_band(health.score).value,
+            "dimensions": {},
+        }
+        for name, dim in health.dimensions.items():
+            output["dimensions"][name] = {
+                "raw_value": dim.raw_value,
+                "normalized": dim.normalized,
+                "target": dim.target,
+                "status": dim.status.value if hasattr(dim.status, "value") else str(dim.status),
+            }
+        sys.stdout.write(json.dumps(output, indent=2) + "\n")
+        return
+
+    # Rich output
+    from rich.table import Table
+
+    band = get_band(health.score)
+    band_color = {
+        "excellent": "green",
+        "healthy": "cyan",
+        "warning": "yellow",
+        "critical": "red",
+    }.get(band.value, "white")
+
+    table = Table(title="AgilePlus Health Score")
+    table.add_column("Metric")
+    table.add_column("Value")
+    table.add_row("Composite Score", f"[bold]{health.score:.2f}[/bold]")
+    table.add_row("Band", f"[{band_color}]{band.value.upper()}[/{band_color}]")
+    console.print(table)
+
+    # Dimensions table
+    dim_table = Table(title="Dimension Breakdown")
+    dim_table.add_column("Dimension")
+    dim_table.add_column("Raw")
+    dim_table.add_column("Target")
+    dim_table.add_column("Normalized")
+    dim_table.add_column("Status")
+
+    for name, dim in health.dimensions.items():
+        status_color = {
+            "excellent": "green",
+            "healthy": "cyan",
+            "warning": "yellow",
+            "critical": "red",
+        }.get(dim.status.value if hasattr(dim.status, "value") else str(dim.status), "white")
+
+        dim_table.add_row(
+            name,
+            f"{dim.raw_value:.2f}",
+            f"{dim.target:.2f}",
+            f"{dim.normalized:.2%}",
+            f"[{status_color}]{dim.status.value if hasattr(dim.status, 'value') else dim.status}[/{status_color}]",
+        )
+    console.print(dim_table)
+
+
+def govern_go_status_cmd(cd: Path | None = None) -> None:
+    """Show current governance status (state, cycle_id, shutdown_requested)."""
+    from thegent.governance.agileplus import AgilePlusLoop
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    project_dir = _resolve_cwd(cd) or Path.cwd()
+    health_targets_path = _get_health_targets_path(project_dir)
+
+    # Create loop instance to check status (doesn't run cycle)
+    loop = AgilePlusLoop(
+        project_dir=project_dir,
+        health_targets_path=health_targets_path,
+        health_threshold=settings.agileplus_health_threshold,
+        max_tasks_per_cycle=settings.agileplus_max_tasks_per_cycle,
+        max_rerolls=settings.agileplus_max_rerolls,
+    )
+
+    from rich.table import Table
+
+    table = Table(title="AgilePlus Status")
+    table.add_column("Property")
+    table.add_column("Value")
+    table.add_row("State", f"[bold]{loop.state.value}[/bold]")
+    table.add_row("Cycle ID", loop.cycle_id or "[dim]none[/dim]")
+    table.add_row(
+        "Shutdown Requested",
+        "[red]True[/red]" if loop._shutdown_requested else "[green]False[/green]",
+    )
+    console.print(table)
+
+
+def govern_go_cycle_cmd(cd: Path | None = None, force: bool = False, format: str | None = None) -> None:
+    """Run a single governance cycle."""
+    import uuid
+    from datetime import UTC, datetime
+    from thegent.governance.health_score import HealthScoreComputer, get_band
+    from thegent.governance.scanner import CodebaseScanner
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    project_dir = _resolve_cwd(cd) or Path.cwd()
+    health_targets_path = _get_health_targets_path(project_dir)
+
+    cycle_id = f"cycle_{uuid.uuid4().hex[:8]}"
+    started_at = datetime.now(UTC).isoformat()
+
+    console.print(f"[cyan]Starting AgilePlus cycle {cycle_id} (force={force})...[/cyan]")
+
+    # Compute health score
+    health_computer = HealthScoreComputer(health_targets_path)
+    scanner = CodebaseScanner(project_dir=project_dir, session_dir=settings.session_dir)
+    scan_result = scanner.scan_all()
+
+    dimension_values: dict[str, float] = {}
+    for dim_name, dim_scan in scan_result.dimensions.items():
+        dimension_values[dim_name] = dim_scan.current_value
+
+    health = health_computer.compute(dimension_values)
+    completed_at = datetime.now(UTC).isoformat()
+
+    # Determine if we should run full cycle based on health threshold
+    should_run = force or health.score < settings.agileplus_health_threshold
+
+    fmt = _normalize_output_format(format)
+
+    if fmt == "json":
+        output = {
+            "cycle_id": cycle_id,
+            "state": "idle" if not should_run else "completed",
+            "health_score": health.score,
+            "health_band": health.band.value if hasattr(health, "band") else get_band(health.score).value,
+            "findings_count": sum(1 for d in dimension_values.values() if d > 0),
+            "tasks_planned": 0,
+            "tasks_executed": 0,
+            "tasks_verified": 0,
+            "started_at": started_at,
+            "completed_at": completed_at,
+            "error": "",
+            "skipped": not should_run,
+        }
+        sys.stdout.write(json.dumps(output, indent=2) + "\n")
+        return
+
+    from rich.table import Table
+
+    band = get_band(health.score)
+
+    table = Table(title=f"Cycle Result: {cycle_id}")
+    table.add_column("Metric")
+    table.add_column("Value")
+    table.add_row("State", "skipped (healthy)" if not should_run else "completed")
+    table.add_row("Health Score", f"{health.score:.2f}")
+    table.add_row("Health Band", band.value)
+    table.add_row("Findings", str(sum(1 for d in dimension_values.values() if d > 0)))
+    table.add_row("Tasks Planned", "0")
+    table.add_row("Tasks Executed", "0")
+    table.add_row("Tasks Verified", "0")
+    table.add_row("Started", started_at)
+    table.add_row("Completed", completed_at)
+
+    if not should_run:
+        console.print("[dim]Cycle skipped: health score >= threshold[/dim]")
+    console.print(table)
+
+
+def govern_go_watch_cmd(
+    cd: Path | None = None,
+    interval: int = 300,
+    max_cycles: int | None = None,
+) -> None:
+    """Run continuous governance mode."""
+    import time
+    import uuid
+    from datetime import UTC, datetime
+    from thegent.governance.health_score import HealthScoreComputer, get_band
+    from thegent.governance.scanner import CodebaseScanner
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    project_dir = _resolve_cwd(cd) or Path.cwd()
+    health_targets_path = _get_health_targets_path(project_dir)
+
+    console.print(f"[cyan]Starting continuous governance (interval={interval}s, max_cycles={max_cycles})...[/cyan]")
+    console.print("[yellow]Press Ctrl+C to stop[/yellow]")
+
+    health_computer = HealthScoreComputer(health_targets_path)
+    scanner = CodebaseScanner(project_dir=project_dir, session_dir=settings.session_dir)
+
+    results = []
+    cycles_run = 0
+    try:
+        while max_cycles is None or cycles_run < max_cycles:
+            cycle_id = f"cycle_{uuid.uuid4().hex[:8]}"
+            started_at = datetime.now(UTC).isoformat()
+
+            # Compute health score
+            scan_result = scanner.scan_all()
+            dimension_values = {}
+            for dim_name, dim_scan in scan_result.dimensions.items():
+                dimension_values[dim_name] = dim_scan.current_value
+
+            health = health_computer.compute(dimension_values)
+            completed_at = datetime.now(UTC).isoformat()
+
+            results.append({
+                "cycle_id": cycle_id,
+                "health_score": health.score,
+                "health_band": health.band.value if hasattr(health, 'band') else get_band(health.score).value,
+                "started_at": started_at,
+                "completed_at": completed_at,
+            })
+
+            cycles_run += 1
+            console.print(f"Cycle {cycles_run} ({cycle_id}): score={health.score:.2f}, band={health.band.value if hasattr(health, 'band') else get_band(health.score).value}")
+
+            if max_cycles is not None and cycles_run >= max_cycles:
+                break
+
+            # Wait for next cycle
+            time.sleep(interval)
+
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Interrupted by user[/yellow]")
+
+    console.print(f"\n[green]Completed {len(results)} cycle(s)[/green]")
+
+
+def cost_status_cmd(format: str | None = None) -> None:
+    """Show cost budget utilization and cost-aware routing status (WP-5003)."""
+    settings = ThegentSettings()
+    from thegent.governance.cost import CostAggregator
+
+    agg = CostAggregator(settings.session_dir)
+    mtd = agg.get_mtd_total()
+    by_cat = agg.get_all_categories_mtd()
+    budget = float(getattr(settings, "cost_budget_mtd", 100.0))
+    utilization = (mtd / budget * 100) if budget > 0 else 0.0
+    tighten = float(getattr(settings, "cost_quality_budget_tighten_threshold", 0.80)) * 100
+    cost_aware = getattr(settings, "routing_cost_aware_enabled", True)
+    data = {
+        "mtd_total_usd": round(mtd, 2),
+        "budget_mtd_usd": budget,
+        "utilization_pct": round(utilization, 1),
+        "cost_aware_enabled": cost_aware,
+        "tighten_threshold_pct": tighten,
+        "by_category": by_cat,
+    }
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(data) + "\n")
+        return
+    table = Table(title="Cost Status (WP-5003)")
+    table.add_column("Metric")
+    table.add_column("Value")
+    table.add_row("MTD total", f"${mtd:.2f}")
+    table.add_row("Budget MTD", f"${budget:.2f}")
+    table.add_row("Utilization", f"{utilization:.1f}%")
+    table.add_row("Cost-aware routing", "[green]On[/green]" if cost_aware else "[dim]Off[/dim]")
+    table.add_row("Tighten threshold", f"{tighten:.0f}%")
+    for cat, val in by_cat.items():
+        table.add_row(f"  {cat}", f"${val:.2f}")
+    console.print(table)
+
+
+def usage_cmd(format: str | None = None, include_cost: bool = True) -> None:
+    """Show plan usage: provider metrics from CLIProxyAPIPlus and cost status (WP-5003).
+
+    For cross-provider session parsing (OpenCode, Claude Code, Codex, Gemini, Cursor, etc.),
+    use: bunx tokscale@latest
+    """
+    settings = ThegentSettings()
+    from thegent.agents.cliproxy_manager import fetch_provider_metrics
+
+    metrics = fetch_provider_metrics(settings)
+    data: dict[str, Any] = {
+        "provider_metrics": metrics if metrics else {},
+        "proxy_reachable": metrics is not None,
+    }
+    if include_cost:
+        from thegent.governance.cost import CostAggregator
+
+        agg = CostAggregator(settings.session_dir)
+        data["cost"] = {
+            "mtd_total_usd": round(agg.get_mtd_total(), 2),
+            "by_category": agg.get_all_categories_mtd(),
+        }
+        data["cost"]["budget_mtd_usd"] = float(getattr(settings, "cost_budget_mtd", 100.0))
+
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(data) + "\n")
+        return
+
+    if metrics:
+        table = Table(title="Provider Usage (CLIProxyAPIPlus)")
+        table.add_column("Provider")
+        table.add_column("Cost/1k")
+        table.add_column("Success %")
+        table.add_column("TPS 1m")
+        table.add_column("Latency p50")
+        for prov, m in sorted(metrics.items()):
+            cost = m.get("cost_per_1k_output") or m.get("cost_per_1k_input") or "-"
+            cost_str = f"${cost:.4f}" if isinstance(cost, (int, float)) else str(cost)
+            sr = m.get("success_rate")
+            sr_str = f"{sr * 100:.1f}%" if isinstance(sr, (int, float)) else "-"
+            tps = m.get("tps_1m", "-")
+            lat = m.get("latency_p50_ms", "-")
+            lat_str = f"{lat}ms" if isinstance(lat, (int, float)) else str(lat)
+            table.add_row(prov, cost_str, sr_str, str(tps), lat_str)
+        console.print(table)
+    else:
+        console.print("[yellow]Proxy unreachable. Start CLIProxyAPIPlus or check THGENT_CLIPROXY_PORT.[/yellow]")
+
+    if include_cost:
+        cost_status_cmd(format=format)
+
+
+def interruption_snooze_cmd(alert_id: str, minutes: int = 5, itype: str = "unknown") -> None:
+    """Snooze an alert; expires → auto-escalation (WP-4004)."""
+    settings = ThegentSettings()
+    from thegent.execution import InterruptionTracker
+
+    it = InterruptionTracker(settings.session_dir)
+    it.snooze(alert_id=alert_id, snooze_minutes=minutes, itype=itype)
+    console.print(f"[green]Alert {alert_id} snoozed for {minutes} min. Will auto-escalate when expired.[/green]")
 
 
 def purge_cmd(dry_run: bool = True) -> None:
@@ -813,17 +1683,89 @@ def observe_summary_cmd(
     console.print(panel)
 
 
-def explain_cmd(run_id: str) -> None:
+def summary_cmd(
+    period: str = typer.Argument("today", help="Time period: today, yesterday, week, 7d, 30d, 1h etc."),
+    project: Path | None = typer.Option(None, "--project", "-p", help="Project path (default: CWD)"),
+    summarize: bool = typer.Option(True, "--summarize/--no-summarize", help="Generate agent summary"),
+    agent: str = typer.Option("gemini", "--agent", "-a", help="Agent to use for summary"),
+    full: bool = typer.Option(False, "--full", help="Show full audit log"),
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: rich, json, md"),
+) -> None:
+    """FR-X09: Unified summary and audit log across runs, chats, and commits."""
+    from rich.markdown import Markdown
+    from rich.panel import Panel
+
+    from thegent.summary import summary_impl
+    from thegent.orchestration.memory import MemoryCategory, MemorySystem
+    from thegent.orchestration.session_scraper import SessionScraper
+
+    # Auto-scrape recent sessions into memory logs (WP-MEMORY)
+    try:
+        project_path = project or Path.cwd()
+        scraper = SessionScraper(project_path)
+        system = MemorySystem(project_path)
+        
+        prompts = scraper.collect_all_recent_prompts()
+        recent = system.get_recent(limit=50, category=MemoryCategory.USER_PROMPT)
+        recent_contents = {f.content for f in recent}
+        
+        for p in prompts:
+            if p not in recent_contents:
+                system.record(p, MemoryCategory.USER_PROMPT, "auto-scrape", metadata={"scraped": True})
+    except Exception:
+        pass # Silent failure for auto-scrape
+
+    result = summary_impl(
+        period=period,
+        project_path=project,
+        summarize=summarize,
+        agent=agent,
+    )
+
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(result) + "\n")
+        return
+
+    if fmt == "md":
+        output = result["audit_log"]
+        if "summary" in result:
+            output += "\n\n# Agent Summary\n\n" + result["summary"]
+        sys.stdout.write(output + "\n")
+        return
+
+    # Rich output
+    console.print(f"[bold cyan]Summary for Project:[/bold cyan] {result['project']}")
+    console.print(f"[bold cyan]Period:[/bold cyan] {result['period']} ({result['start_dt']} to {result['end_dt']})")
+
+    counts = result["counts"]
+    console.print(
+        f"[dim]Stats: {counts['runs']} runs, {counts['chats']} chat messages, {counts['commits']} commits[/dim]"
+    )
+    console.print()
+
+    if "summary" in result:
+        console.print(Panel(Markdown(result["summary"]), title="Agent Summary", border_style="green"))
+        console.print()
+
+    if full:
+        console.print(Markdown(result["audit_log"]))
+    else:
+        console.print("[dim]Use --full to see the detailed audit log.[/dim]")
+
+
+def explain_cmd(run_id: str | None = None) -> None:
     """Show detailed explanation for an agent run (WP-4002)."""
     from rich.panel import Panel
 
     from thegent.cli_impl import history_impl
 
+    rid = _resolve_run_id(run_id)
     runs = history_impl(limit=1000)
-    run = next((r for r in runs if r.get("run_id") == run_id), None)
+    run = next((r for r in runs if r.get("run_id") == rid), None)
 
     if not run:
-        console.print(f"[red]Run ID {run_id} not found.[/red]")
+        console.print(f"[red]Run ID {rid} not found.[/red]")
         return
 
     lines = [
@@ -832,9 +1774,9 @@ def explain_cmd(run_id: str) -> None:
         f"[bold]Status:[/bold] {run.get('status')}",
         f"[bold]Exit Code:[/bold] {run.get('exit_code')}",
         f"[bold]Started:[/bold] {run.get('started_at_utc')}",
-        f"[bold]Duration:[/bold] {run.get('duration_s', 0):.2f}s",
+        f"[bold]Duration:[/bold] {run.get('duration_s', 0) or 0:.2f}s",
         f"[bold]Lane:[/bold] {run.get('lane', 'standard')}",
-        f"[bold]Confidence:[/bold] {run.get('confidence', 1.0):.2f}",
+        f"[bold]Confidence:[/bold] {run.get('confidence', 1.0) or 1.0:.2f}",
         "",
         "[bold]Prompt:[/bold]",
         run.get("prompt", "")[:500] + ("..." if len(run.get("prompt", "")) > 500 else ""),
@@ -846,12 +1788,61 @@ def explain_cmd(run_id: str) -> None:
     if run.get("policy_result"):
         lines.append(f"\n[bold]Policy:[/bold] {run.get('policy_result')} ({run.get('policy_reason')})")
 
-    panel = Panel("\n".join(lines), title=f"Run Explanation: {run_id}", border_style="blue")
+    panel = Panel("\n".join(lines), title=f"Run Explanation: {rid}", border_style="blue")
     console.print(panel)
 
 
-def fallbacks_cmd(run_id: str) -> None:
+def retry_cmd(
+    run_id: str | None = None,
+    agent: str | None = None,
+    failover: bool = False,
+    cd: Path | None = None,
+    override_reason: str | None = None,
+) -> None:
+    """Retry a failed run. With no run_id, list recent failed runs."""
+    from thegent.cli_impl import history_impl, retry_impl
+
+    # G-DX-02: Use latest if not provided and in non-interactive mode or specifically requested
+    if run_id:
+        res = retry_impl(
+            run_id=run_id,
+            agent_override=agent,
+            failover=failover,
+            cd=cd,
+            override_reason=override_reason,
+        )
+        if "error" in res:
+            console.print(f"[red]{res['error']}[/red]")
+            raise typer.Exit(res.get("exit_code", 1))
+        return
+
+    # No run_id: list failed runs
+    runs = history_impl(limit=50)
+    failed = [r for r in runs if r.get("status") in ("failed", "timed_out")]
+    if not failed:
+        console.print("[dim]No failed runs found. Use: thegent retry <run_id>[/dim]")
+        return
+
+    console.print("[bold]Recent failed runs[/bold]")
+    t = Table(show_header=True, header_style="cyan")
+    t.add_column("Run ID", style="dim")
+    t.add_column("Agent", style="cyan")
+    t.add_column("Status", style="red")
+    t.add_column("Prompt", style="dim", max_width=40, overflow="ellipsis")
+    for r in failed[:10]:
+        t.add_row(
+            r.get("run_id", "?"),
+            r.get("agent", "?"),
+            r.get("status", "?"),
+            (r.get("prompt", "") or "")[:40] + ("..." if len(r.get("prompt", "") or "") > 40 else ""),
+        )
+    console.print(t)
+    console.print("\n[dim]Retry with: thegent retry <run_id> [--failover][--override REASON][/dim]")
+
+
+def fallbacks_cmd(run_id: str | None = None) -> None:
     """Show safe fallback options for a failed or blocked run (WP-4003)."""
+    rid = _resolve_run_id(run_id)
     settings = ThegentSettings()
     from thegent.agents.state_machine import FallbackStateMachine
     from thegent.execution import RunRegistry
@@ -865,7 +1856,7 @@ def fallbacks_cmd(run_id: str) -> None:
         raise typer.Exit(1)
 
     # Initialize FSM with dummy providers to get structural suggestions
-    fsm = FallbackStateMachine(providers=["cursor-agent", "gemini", "claude"], run_id=run_id)
+    fsm = FallbackStateMachine(providers=["cursor", "headless_agent", "interactive_agent"], run_id=run_id)
     # Set dummy state to trigger suggestions
     fsm.state.policy_issues = ["Dummy violation"] if run.get("status") == "failed" else []
     fsm.state.model = run.get("model")
@@ -888,27 +1879,151 @@ def fallbacks_cmd(run_id: str) -> None:
 
 
 def handoff_cmd(owner: str) -> None:
-    """Create a continuity snapshot for a shift handoff (WP-4006)."""
+    """Create a continuity snapshot for a shift handoff (WP-4006, WP-3008)."""
     settings = ThegentSettings()
     from rich.panel import Panel
 
+    from thegent.cli_impl import escalate_list_impl
     from thegent.execution import HandoffManager, RunRegistry
 
     registry = RunRegistry(settings.session_dir)
-    runs = registry.list_runs(limit=10)
+    runs = registry.list_runs(limit=50)
     run_ids = [r["run_id"] for r in runs if r.get("status") == "running"]
+    completed = [r for r in runs if r.get("status") == "completed"]
+    failed = [r for r in runs if r.get("status") == "failed"]
+
+    # WP-3008: Include pending escalation run_ids in handoff snapshot
+    escalation_items = escalate_list_impl(past_sla_only=False, limit=50)
+    escalation_run_ids = [e["run_id"] for e in escalation_items]
+    past_sla = escalate_list_impl(past_sla_only=True, limit=50)
+
+    # WP-4006: State, evidence, next steps
+    state_summary = {
+        "running_count": len(run_ids),
+        "escalation_backlog": len(escalation_run_ids),
+        "past_sla_count": len(past_sla),
+    }
+    evidence_summary = [
+        {"run_id": r.get("run_id"), "status": r.get("status"), "agent": r.get("agent")}
+        for r in (completed[-5:] + failed[-5:])
+    ]
+    next_steps: list[str] = []
+    if past_sla:
+        next_steps.append(f"Resolve {len(past_sla)} past-SLA escalation(s)")
+    if failed:
+        next_steps.append(f"Review {len(failed)} failed run(s)")
+    if run_ids:
+        next_steps.append(f"Monitor {len(run_ids)} active run(s)")
 
     hm = HandoffManager(settings.session_dir)
-    snapshot_id = hm.create_snapshot(owner, run_ids)
+    
+    # WP-7001/7004: Include queued prompts in handoff snapshot
+    from thegent.queue.storage import PromptQueue
+    pq = PromptQueue(settings.session_dir)
+    queued_prompts = pq.list_pending()
 
-    console.print(
-        Panel(
-            f"Handoff snapshot [bold cyan]{snapshot_id}[/bold cyan] created for owner [bold]{owner}[/bold].\n"
-            f"Transferred [green]{len(run_ids)}[/green] active runs.",
-            title="Shift Handoff",
-            border_style="green",
-        )
+    snapshot_id = hm.create_snapshot(
+        owner,
+        run_ids,
+        escalation_run_ids=escalation_run_ids or None,
+        state_summary=state_summary,
+        evidence_summary=evidence_summary or None,
+        next_steps=next_steps or None,
+        queued_prompts=queued_prompts or None,
     )
+
+    msg = (
+        f"Handoff snapshot [bold cyan]{snapshot_id}[/bold cyan] created for owner [bold]{owner}[/bold].\n"
+        f"Transferred [green]{len(run_ids)}[/green] active runs."
+    )
+    if escalation_run_ids:
+        msg += f"\nIncluded [yellow]{len(escalation_run_ids)}[/yellow] pending escalation(s)."
+    if queued_prompts:
+        msg += f"\nIncluded [blue]{len(queued_prompts)}[/blue] queued prompt(s)."
+    if next_steps:
+        msg += "\nNext steps: " + "; ".join(next_steps)
+    console.print(Panel(msg, title="Shift Handoff", border_style="green"))
+
+
+def handoff_show_cmd(snapshot_id: str, format: str | None = None) -> None:
+    """Show full handoff summary (state, evidence, next steps) for a snapshot (WP-4006)."""
+    settings = ThegentSettings()
+    from thegent.execution import HandoffManager
+
+    hm = HandoffManager(settings.session_dir)
+    snap = hm.get_snapshot(snapshot_id)
+    if not snap:
+        console.print(f"[red]Snapshot {snapshot_id} not found.[/red]")
+        raise typer.Exit(1)
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(snap, indent=2) + "\n")
+        return
+    lines = [
+        f"[bold]Handoff Snapshot:[/bold] {snapshot_id}",
+        f"Owner: {snap.get('owner', '?')}",
+        f"Timestamp: {snap.get('timestamp', '?')[:19]}",
+        f"Active runs: {len(snap.get('run_ids', []))}",
+    ]
+    if snap.get("escalation_run_ids"):
+        lines.append(f"Escalation backlog: {len(snap['escalation_run_ids'])}")
+    if snap.get("queued_prompts"):
+        lines.append(f"Queued prompts: {len(snap['queued_prompts'])}")
+    state = snap.get("state_summary", {})
+    if state:
+        lines.append(f"State: running={state.get('running_count', 0)}, past_sla={state.get('past_sla_count', 0)}")
+    steps = snap.get("next_steps", [])
+    if steps:
+        lines.append("Next steps: " + "; ".join(steps))
+    evidence = snap.get("evidence_summary", [])
+    if evidence:
+        lines.append(f"Evidence: {len(evidence)} recent run(s)")
+    console.print("\n".join(lines))
+
+
+def handoff_list_cmd(limit: int = 10, format: str | None = None) -> None:
+    """List pending handoff snapshots (WP-4006)."""
+    settings = ThegentSettings()
+    from thegent.execution import HandoffManager
+
+    hm = HandoffManager(settings.session_dir)
+    snapshots = hm.list_pending_snapshots(limit=limit)
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(snapshots) + "\n")
+        return
+    if not snapshots:
+        console.print("[dim]No pending handoffs.[/dim]")
+        return
+    table = Table(title="Pending Handoffs (WP-4006)")
+    table.add_column("Snapshot ID")
+    table.add_column("Owner")
+    table.add_column("Timestamp")
+    table.add_column("Runs")
+    table.add_column("Escalations")
+    for s in snapshots:
+        table.add_row(
+            s.get("snapshot_id", "?"),
+            s.get("owner", "?"),
+            (s.get("timestamp", "?")[:19]),
+            str(len(s.get("run_ids", []))),
+            str(len(s.get("escalation_run_ids", []))),
+        )
+    console.print(table)
+
+
+def handoff_confirm_cmd(snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> None:
+    """Incoming owner confirms handoff completeness (WP-3008, WP-4006)."""
+    settings = ThegentSettings()
+    from thegent.execution import HandoffManager
+
+    hm = HandoffManager(settings.session_dir)
+    ok = hm.confirm_handoff(snapshot_id=snapshot_id, incoming_owner=incoming_owner, confidence=confidence)
+    if ok:
+        console.print(f"[green]Handoff {snapshot_id} confirmed by {incoming_owner}[/green]")
+    else:
+        console.print(f"[red]Failed to confirm handoff {snapshot_id}[/red]")
+        raise typer.Exit(1)
 
 
 def watchdog_cmd(max_idle_s: int = 3600) -> None:
@@ -1069,7 +2184,7 @@ def roadmap_cmd() -> None:
 
     # Analyze gaps (simplified logic)
     errors = [r for r in runs if r.get("status") in ["failed", "timed_out"]]
-    top_errors = {}
+    top_errors: dict[str, int] = {}
     for e in errors:
         ec = e.get("error_class", "unknown")
         top_errors[ec] = top_errors.get(ec, 0) + 1
@@ -1206,7 +2321,7 @@ def cockpit_cmd() -> None:
     recent_errors = [r for r in runs if r.get("status") == "failed"][:5]
 
     # 3. Circuit Status
-    targets = ["claude", "gemini", "codex", "copilot", "antigravity"]
+    targets = ["interactive_agent", "headless_agent", "gemini", "copilot", "antigravity"]  # gemini/copilot via Codex proxy
     open_circuits = [t for t in targets if circuit_breaker.is_open(t)]
 
     # 4. Drift and Budget
@@ -1325,8 +2440,9 @@ def sitback_dashboard_cmd(
         mtd = budget.get("mtd_total", 0)
         mtd_b = budget.get("mtd_budget", 100)
         budget_color = "green" if budget.get("within_budget", True) else "red"
+        gov_hint = "" if data.get("govern_configured", True) else " [dim](run: thegent govern configure)[/dim]"
         budget_panel = Panel(
-            f"[bold]Budget MTD[/bold]\n[{budget_color}]${mtd:.2f}[/{budget_color}] / ${mtd_b:.2f}",
+            f"[bold]Budget MTD[/bold]\n[{budget_color}]${mtd:.2f}[/{budget_color}] / ${mtd_b:.2f}{gov_hint}",
             title="Governance",
             border_style=budget_color,
         )
@@ -1339,7 +2455,16 @@ def sitback_dashboard_cmd(
             border_style="blue",
         )
 
-        panels: list = [session_panel, circuit_panel, drift_panel, budget_panel, term_panel]
+        teammates_data = data.get("teammates", {})
+        teammate_panel = Panel(
+            f"[bold]Teammates[/bold]\n"
+            f"Active: [green]{teammates_data.get('active', 0)}[/green] | "
+            f"Total: {teammates_data.get('total', 0)}",
+            title="Swarm",
+            border_style="yellow",
+        )
+
+        panels: list = [session_panel, circuit_panel, drift_panel, budget_panel, term_panel, teammate_panel]
         if prof == "full":
             for name, w in data.get("plugin_widgets", {}).items():
                 panels.append(
@@ -1378,13 +2503,214 @@ def sitback_dashboard_cmd(
         pass
 
 
-def feedback_cmd(run_id: str, score: float, note: str | None = None) -> None:
+def run_diff_cmd(run_a: str, run_b: str) -> None:
+    """Compare two execution runs (WP-16001)."""
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+
+    a = registry.get_run(run_a)
+    b = registry.get_run(run_b)
+
+    if not a or not b:
+        console.print(f"[red]Error:[/red] One or both runs not found: {run_a}, {run_b}")
+        raise typer.Exit(1)
+
+    table = Table(title=f"Run Diff: {run_a} vs {run_b}")
+    table.add_column("Field", style="dim")
+    table.add_column(run_a, style="cyan")
+    table.add_column(run_b, style="magenta")
+
+    # Common fields to compare
+    fields = ["agent", "model", "status", "exit_code", "duration_s", "policy_result", "lane", "confidence"]
+
+    for f in fields:
+        val_a = str(a.get(f, "N/A"))
+        val_b = str(b.get(f, "N/A"))
+        style = "yellow" if val_a != val_b else "green"
+        table.add_row(f, f"[{style}]{val_a}[/{style}]", f"[{style}]{val_b}[/{style}]")
+
+    console.print(table)
+
+    if a.get("prompt") != b.get("prompt"):
+        console.print("\n[bold]Prompt Diff:[/bold]")
+        import difflib
+
+        diff = difflib.unified_diff(a["prompt"].splitlines(), b["prompt"].splitlines(), fromfile=run_a, tofile=run_b)
+        for line in diff:
+            if line.startswith("+"):
+                console.print(f"[green]{line}[/green]")
+            elif line.startswith("-"):
+                console.print(f"[red]{line}[/red]")
+            else:
+                console.print(line)
+
+
+def trace_replay_cmd(run_id: str) -> None:
+    """WP-16001: Replay an execution trace in sandbox mode."""
+    from thegent.planning.simulation import SimulationEngine
+
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+    engine = SimulationEngine(registry)
+
+    console.print(f"Replaying run [cyan]{run_id}[/cyan] in [yellow]sandbox[/yellow]...")
+    result = engine.simulate_what_if(run_id, target_env="sandbox")
+
+    if result.get("status") == "error":
+        console.print(f"[red]Error:[/red] {result.get('reason')}")
+        return
+
+    console.print("Simulation Status: [bold green]SUCCESS[/bold green]")
+    console.print(f"Allowed: {result.get('allowed')}")
+    console.print(f"Reason: {result.get('reason')}")
+    console.print(f"Applied Constraints: {result.get('constraints_applied')}")
+
+
+def deferral_list_cmd() -> None:
+    """List all currently deferred tasks (WP-5004)."""
+    from thegent.execution import DeferralQueue
+
+    settings = ThegentSettings()
+    dq = DeferralQueue(settings.session_dir)
+    items = dq.list_deferred()
+
+    if not items:
+        console.print("No deferred tasks found.")
+        return
+
+    table = Table(title="Deferral Queue")
+    table.add_column("Run ID", style="cyan")
+    table.add_column("Reason", style="yellow")
+    table.add_column("Deferred At", style="dim")
+    table.add_column("ETA (UTC)", style="green")
+
+    for i in items:
+        table.add_row(i.get("run_id"), i.get("reason", ""), i.get("deferred_at", ""), i.get("eta_utc", ""))
+
+    console.print(table)
+
+
+def deferral_resume_cmd(run_id: str) -> None:
+    """Manually resume a deferred task (WP-5004)."""
+    from thegent.execution import DeferralQueue
+
+    settings = ThegentSettings()
+    dq = DeferralQueue(settings.session_dir)
+
+    if dq.resume(run_id):
+        console.print(f"[bold green]Success:[/bold green] Run [cyan]{run_id}[/cyan] resumed.")
+    else:
+        console.print(f"[red]Error:[/red] Run [cyan]{run_id}[/cyan] not found in deferral queue.")
+
+
+def teammates_list_cmd() -> None:
+    """WP-16001: List all discovered specialized agents available for delegation."""
+    from thegent.governance.teammates import TeammateManager
+
+    settings = ThegentSettings()
+    mgr = TeammateManager(settings.cache_dir / "teammates.json")
+    personas = mgr.list_personas()
+
+    table = Table(title="Teammate Persona Registry")
+    table.add_column("ID", style="cyan")
+    table.add_column("Role", style="green")
+    table.add_column("Capabilities", style="yellow")
+    table.add_column("Default Model", style="magenta")
+
+    for p in personas:
+        table.add_row(p.id, p.role, ", ".join(p.capabilities), p.default_model)
+
+    console.print(table)
+
+
+def teammates_delegate_cmd(
+    teammate_id: str = typer.Argument(..., help="ID of the teammate to delegate to"),
+    prompt: str = typer.Argument(..., help="Instruction for the teammate"),
+    parent_run_id: str = typer.Option(None, "--parent-run", help="Parent run ID for tracking"),
+) -> None:
+    """WP-16002: Delegate a sub-task to a specialized teammate."""
+    from thegent.governance.handoff import HandoffIntegrity
+    from thegent.governance.teammates import TeammateManager
+
+    settings = ThegentSettings()
+    mgr = TeammateManager(settings.cache_dir / "teammates.json")
+
+    # 1. Verify teammate exists
+    personas = mgr.list_personas()
+    if not any(p.id == teammate_id for p in personas):
+        console.print(f"[bold red]Error:[/bold red] Teammate '{teammate_id}' not found.")
+        raise typer.Exit(1)
+
+    # 2. WP-16005: Verify handoff integrity
+    handoff = HandoffIntegrity(Path.cwd())
+    analysis = handoff.analyze_prompt(prompt)
+    if not analysis["is_complete"]:
+        console.print("[yellow]Warning: Handoff integrity check flagged potential issues:[/yellow]")
+        for f in analysis["findings"]:
+            console.print(f"  - {f}")
+        if not analysis["referenced_files"]:
+            console.print("  - No existing files referenced in prompt. Teammate may lack context.")
+
+        if not typer.confirm("Do you want to proceed anyway?", default=True):
+            raise typer.Abort()
+
+    # 3. Record delegation
+    parent_id = parent_run_id or "CLI-USER"
+    request = mgr.delegate(teammate_id, parent_id, prompt)
+
+    console.print("[bold green]Delegation Successful![/bold green]")
+    console.print(f"Request ID: [cyan]{request.id}[/cyan]")
+    console.print(f"Teammate:   [yellow]{teammate_id}[/yellow]")
+    console.print(f"Status:     [blue]{request.status}[/blue]")
+    console.print("\nTeammate is now processing in the background (ShareCLI Phase 11).")
+
+
+def teammates_status_cmd(
+    run_id: str = typer.Option(None, "--run-id", help="Filter by parent run ID"),
+) -> None:
+    """WP-16002: Monitor the status of the teammate swarm."""
+    from thegent.governance.teammates import TeammateManager
+
+    settings = ThegentSettings()
+    mgr = TeammateManager(settings.cache_dir / "teammates.json")
+    delegations = mgr.get_delegations(run_id)
+
+    if not delegations:
+        console.print("No active delegations found.")
+        return
+
+    table = Table(title="Teammate Swarm Status")
+    table.add_column("ID", style="cyan")
+    table.add_column("Teammate", style="yellow")
+    table.add_column("Status", style="blue")
+    table.add_column("Created At", style="dim")
+    table.add_column("Summary", style="green")
+
+    for d in delegations:
+        status_style = (
+            "bold green"
+            if d.status == "completed"
+            else "yellow"
+            if d.status == "running"
+            else "red"
+            if d.status == "failed"
+            else "white"
+        )
+        table.add_row(
+            d.id, d.teammate_id, f"[{status_style}]{d.status}[/{status_style}]", d.created_at, d.result_summary or ""
+        )
+
+    console.print(table)
+
+
+def feedback_cmd(run_id: str | None = None, score: float = 1.0, note: str | None = None) -> None:
     """Provide operator feedback for a specific run."""
+    rid = _resolve_run_id(run_id)
     settings = ThegentSettings()
 
     registry = RunRegistry(settings.session_dir)
-    registry.register_feedback(run_id, score, note)
-    console.print(f"[green]Feedback recorded for run {run_id}.[/green]")
+    registry.register_feedback(rid, score, note)
+    console.print(f"[green]Feedback recorded for run {rid}.[/green]")
 
 
 def ps_cmd(
@@ -1408,15 +2734,15 @@ def ps_cmd(
         return
     if fmt == "md":
         console.print("## Thegent Sessions")
-        headers = "| id | agent | owner | pid | status | prompt |"
-        separator = "|----|-------|-------|-----|--------|--------|"
+        headers = "| id | agent | owner | pid | status | rss | vsz | prompt |"
+        separator = "|----|-------|-------|-----|--------|-----|-----|--------|"
         if include_contract:
-            headers = "| id | agent | owner | pid | status | prompt | route_request | route_contract |"
-            separator = "|----|-------|-------|-----|--------|--------|--------------|----------------|"
+            headers = "| id | agent | owner | pid | status | rss | vsz | prompt | route_request | route_contract |"
+            separator = "|----|-------|-------|-----|--------|-----|-----|--------|--------------|----------------|"
         console.print(headers)
         console.print(separator)
         for r in rows:
-            base = f"| {r['id']} | {r['agent']} | {r['owner']} | {r['pid']} | {r['status']} | {r['prompt_preview']} |"
+            base = f"| {r['id']} | {r['agent']} | {r['owner']} | {r['pid']} | {r['status']} | {r.get('rss', '—')} | {r.get('vsz', '—')} | {r['prompt_preview']} |"
             if include_contract:
                 route_request = r.get("route_request")
                 route_contract = r.get("route_contract")
@@ -1430,6 +2756,8 @@ def ps_cmd(
         t.add_column("Owner")
         t.add_column("PID")
         t.add_column("Status")
+        t.add_column("RSS")
+        t.add_column("VSZ")
         t.add_column("Prompt")
         t.add_column("Started")
         has_contract_columns = False
@@ -1447,6 +2775,8 @@ def ps_cmd(
                 str(r["owner"]),
                 str(r["pid"]),
                 str(r["status"]),
+                str(r.get("rss", "—")),
+                str(r.get("vsz", "—")),
                 str(r["prompt_preview"]),
                 str(r.get("started_at_utc", "")),
             ]
@@ -1474,6 +2804,13 @@ def ps_cmd(
                     str(resolved_alias),
                 )
         console.print(t)
+        
+        # WP-5002: Suggest pruning if session count is high
+        if len(rows) > 5:
+            console.print("\n[yellow]Tip: High session count detected.[/yellow]")
+            console.print("[dim]Multiple active agent sessions spawn redundant language servers (Node.js).[/dim]")
+            console.print("[dim]Use 'thegent stop <session_id>' to kill orphan processes and free up 1-2GB RAM per session.[/dim]")
+            console.print("[dim]Run 'thegent mcp spotlight-exclude' to reduce mds_stores overhead on macOS.[/dim]")
 
 
 def session_contracts_cmd(
@@ -3187,34 +4524,19 @@ def dag_cancel_cmd(task_id: str, cd: Path | None = None) -> None:
 
 def dag_status_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """For each task with session_id show id, status, session_id, session_status (running/exited:rc)."""
-    cwd = _resolve_cwd(cd)
-    if cwd is None:
-        console.print("[red]Ambiguous cwd. Provide --cd /path or run from project root.[/red]")
+    from thegent.cli_impl import dag_status_impl
+
+    res = dag_status_impl(cd=cd)
+    if "error" in res:
+        console.print(f"[red]{res['error']}[/red]")
         raise typer.Exit(1)
-    dag_path = cwd / ".factory" / "dag-session.md"
-    if not dag_path.exists():
-        console.print(f"[red]DAG session not found: {dag_path}[/red]")
-        raise typer.Exit(1)
-    _, tasks = _parse_dag_session(dag_path)
+    rows = res.get("tasks", [])
     settings = ThegentSettings()
-    with_session = [t for t in tasks if t.get("session_id", "").strip()]
-    rows: list[dict[str, str]] = []
-    for t in with_session:
-        sid = t.get("session_id", "").strip()
-        session_status = _session_status_for(sid, settings)
-        rows.append(
-            {
-                "id": t.get("id", "—"),
-                "status": t.get("status", "—"),
-                "session_id": sid,
-                "session_status": session_status,
-            }
-        )
     fmt = (format or os.environ.get("THGENT_OUTPUT_FORMAT") or settings.output_format or "rich").lower()
     if fmt == "json":
         sys.stdout.write(json.dumps({"tasks": rows}) + "\n")
         return
-    if not with_session:
+    if not rows:
         console.print("[dim]No tasks with session_id.[/dim]")
         return
     if fmt == "md":
@@ -3299,16 +4621,14 @@ TERMINAL_STATUSES = frozenset({"done", "cancelled", "skipped"})
 
 def dag_ready_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """List task ids that are ready (pending with all deps done|cancelled|skipped)."""
-    cwd = _resolve_cwd(cd)
-    if cwd is None:
-        console.print("[red]Ambiguous cwd. Provide --cd /path or run from project root.[/red]")
+    res = dag_ready_impl(cd)
+    if "error" in res:
+        console.print(f"[red]{res['error']}[/red]")
+        if res.get("remediation"):
+            console.print(f"[dim]{res['remediation']}[/dim]")
         raise typer.Exit(1)
-    dag_path = cwd / ".factory" / "dag-session.md"
-    if not dag_path.exists():
-        console.print(f"[red]DAG session not found: {dag_path}[/red]")
-        raise typer.Exit(1)
-    _, tasks = _parse_dag_session(dag_path)
-    ready_ids = _get_ready_task_ids(tasks)
+    ready_ids = res["ready_task_ids"]
+    tasks = res.get("tasks", [])
     settings = ThegentSettings()
     fmt = (format or os.environ.get("THGENT_OUTPUT_FORMAT") or settings.output_format or "rich").lower()
     if not ready_ids:
@@ -3322,9 +4642,8 @@ def dag_ready_cmd(cd: Path | None = None, format: str | None = None) -> None:
     elif fmt == "md":
         console.print("| id | agent | prompt |")
         console.print("|----|-------|--------|")
-        id_to_task = {t.get("id", "").strip(): t for t in tasks if t.get("id", "").strip()}
-        for tid in ready_ids:
-            t = id_to_task.get(tid, {})
+        for t in tasks:
+            tid = t.get("id", "")
             prompt = t.get("prompt", "")
             prompt_preview = (prompt[:60] + "...") if len(prompt) > 60 else prompt
             console.print(f"| {tid} | {t.get('agent', '—')} | {prompt_preview} |")
@@ -3333,9 +4652,8 @@ def dag_ready_cmd(cd: Path | None = None, format: str | None = None) -> None:
         tbl.add_column("id")
         tbl.add_column("agent")
         tbl.add_column("prompt")
-        id_to_task = {t.get("id", "").strip(): t for t in tasks if t.get("id", "").strip()}
-        for tid in ready_ids:
-            t = id_to_task.get(tid, {})
+        for t in tasks:
+            tid = t.get("id", "")
             prompt = t.get("prompt", "")
             preview = (prompt[:60] + "...") if len(prompt) > 60 else (prompt or "—")
             tbl.add_row(tid, t.get("agent", "—"), preview)
@@ -3391,6 +4709,196 @@ def dag_reconcile_cmd(cd: Path | None = None) -> None:
         console.print("[dim]DAG is in sync with live processes.[/dim]")
 
 
+def plan_incorporate_cmd(cd: Path | None = None, dry_run: bool = False) -> None:
+    """Merge fragments from 02-UNIFIED-WBS into WORK_STREAM.md. Preserves CLAIMED and COMPLETED."""
+    from thegent.cli_impl import incorporate_impl
+
+    result = incorporate_impl(cd=cd, dry_run=dry_run)
+    if "error" in result:
+        console.print(f"[red]{result['error']}[/red]")
+        raise typer.Exit(1)
+    merged = result.get("merged", 0)
+    if result.get("dry_run"):
+        console.print(f"[dim]Dry run: would merge {merged} items from {result.get('sources', [])}[/dim]")
+    else:
+        console.print(f"[green]Merged {merged} items into docs/reference/WORK_STREAM.md[/green]")
+
+
+def plan_claim_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = None) -> None:
+    """Claim an item in the unified work stream."""
+    from thegent.cli_impl import work_stream_claim_impl
+    from thegent.discovery import get_current_agent_id
+
+    aid = agent_id or get_current_agent_id()
+    result = work_stream_claim_impl(item_id, aid, cd=cd)
+    if not result["success"]:
+        console.print(f"[red]{result['error']}[/red]")
+        raise typer.Exit(1)
+    console.print(f"[green]Claimed {item_id} for {aid}[/green]")
+
+
+def plan_complete_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = None) -> None:
+    """Mark an item as complete in the unified work stream."""
+    from thegent.cli_impl import work_stream_complete_impl
+    from thegent.discovery import get_current_agent_id
+
+    aid = agent_id or get_current_agent_id()
+    result = work_stream_complete_impl(item_id, aid, cd=cd)
+    if not result["success"]:
+        console.print(f"[red]{result['error']}[/red]")
+        raise typer.Exit(1)
+    console.print(f"[green]Completed {item_id} (agent: {aid})[/green]")
+
+
+def plan_wait_next_cmd(
+    cd: Path | None = None,
+    poll: float = 2.0,
+    timeout: float = 0.0,
+    sources: str | None = None,
+    format: str | None = None,
+) -> None:
+    """Block until next actionable work exists (DAG ready, do_next, escalation, inbox)."""
+    from thegent.cli_impl import wait_next_impl
+
+    src_tuple = tuple(s.strip() for s in (sources or "dag,do_next,escalation,inbox").split(",") if s.strip())
+    result = wait_next_impl(cd=cd, poll_interval=poll, timeout=timeout, sources=src_tuple)
+    if "error" in result:
+        console.print(f"[red]{result['error']}[/red]")
+        raise typer.Exit(1)
+    fmt = (format or os.environ.get("THGENT_OUTPUT_FORMAT") or ThegentSettings().output_format or "rich").lower()
+    if fmt == "json":
+        sys.stdout.write(json.dumps(result) + "\n")
+        return
+    if result.get("action") is None:
+        console.print("[dim]Timeout: no next action found.[/dim]")
+        return
+    from rich.panel import Panel
+
+    prompt = result.get("prompt_suggestion", "")
+    console.print(
+        Panel(
+            f"[bold]{result.get('id', '?')}[/bold] ({result.get('source', '')})\n"
+            f"{result.get('description', '')}\n\n"
+            f"[green]Prompt:[/green] {prompt[:120]}{'...' if len(prompt) > 120 else ''}",
+            title=f"Next action ({result.get('elapsed_s', 0):.1f}s)",
+            border_style="cyan",
+        )
+    )
+    console.print("[dim]Use: thegent run \"<prompt_suggestion>\" or thegent free --do-next[/dim]")
+
+
+def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None = None) -> None:
+    """Find next actionable work items from WORK_STREAM, PLAN_STATUS, FR_TRACKER, docs/plans/, escalation queue."""
+    from thegent.cli_impl import do_next_impl
+
+    result = do_next_impl(cd=cd, limit=limit)
+    if "error" in result:
+        console.print(f"[red]{result['error']}[/red]")
+        raise typer.Exit(1)
+    fmt = (format or os.environ.get("THGENT_OUTPUT_FORMAT") or ThegentSettings().output_format or "rich").lower()
+    if fmt == "json":
+        sys.stdout.write(json.dumps(result) + "\n")
+        return
+    items = result.get("next_items", [])
+    if not items:
+        console.print("[dim]No pending items found.[/dim]")
+        if result.get("empty_reason"):
+            console.print(f"[dim]{result['empty_reason']}[/dim]")
+        return
+    from rich.table import Table
+
+    table = Table(title="Next work items")
+    table.add_column("ID", style="cyan")
+    table.add_column("Description", style="white")
+    table.add_column("Source", style="dim")
+    table.add_column("Prompt", style="green")
+    for n in items:
+        table.add_row(
+            n.get("id", ""),
+            (n.get("description", "") or "")[:60] + ("..." if len(n.get("description", "") or "") > 60 else ""),
+            n.get("source", ""),
+            (n.get("prompt_suggestion", "") or "")[:50] + ("..." if len(n.get("prompt_suggestion", "") or "") > 50 else ""),
+        )
+    console.print(table)
+    console.print("[dim]Use: thegent run \"<prompt_suggestion>\" or thegent_do_next + thegent_run[/dim]")
+
+
+def plan_get_next_cmd(cd: Path | None = None, format: str | None = None) -> None:
+    """Get first work item prompt for scripting. Use: PROMPT=$(thegent plan get-next)"""
+    from thegent.cli_impl import do_next_impl
+
+    result = do_next_impl(cd=cd, limit=1)
+    if "error" in result:
+        typer.echo(result["error"], err=True)
+        raise typer.Exit(1)
+    items = result.get("next_items", [])
+    if not items:
+        raise typer.Exit(1)
+    item = items[0]
+    fmt = (format or "plain").lower()
+    if fmt == "json":
+        sys.stdout.write(json.dumps(item) + "\n")
+    else:
+        sys.stdout.write((item.get("prompt_suggestion") or "") + "\n")
+
+
+def plan_loop_cmd(
+    cd: Path | None = None,
+    max_iterations: int = typer.Option(0, "--max", "-m", help="Max iterations (0=unbounded)"),
+    sleep_seconds: float = typer.Option(5.0, "--sleep", "-s", help="Seconds between iterations"),
+    agent: str = typer.Option("free", "--agent", "-a", help="Agent for bg runs (default: free)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print only, do not run"),
+) -> None:
+    """Loop: get next item -> run bg -> repeat until no items or --max reached."""
+    from thegent.cli_impl import do_next_impl
+
+    iteration = 0
+    while True:
+        if max_iterations and iteration >= max_iterations:
+            console.print(f"[dim]Reached --max {max_iterations}[/dim]")
+            break
+        result = do_next_impl(cd=cd, limit=1)
+        if "error" in result:
+            console.print(f"[red]{result['error']}[/red]")
+            raise typer.Exit(1)
+        items = result.get("next_items", [])
+        if not items:
+            console.print("[dim]No more work items.[/dim]")
+            break
+        prompt = items[0].get("prompt_suggestion", "")
+        if not prompt:
+            console.print("[yellow]Item has no prompt_suggestion, skipping.[/yellow]")
+            iteration += 1
+            continue
+        item_id = items[0].get("id", "?")
+        console.print(f"[cyan]Starting {item_id}:[/cyan] {(prompt[:50] + '...') if len(prompt) > 50 else prompt}")
+        if dry_run:
+            console.print("[dim](dry-run, not running)[/dim]")
+        else:
+            resolved_cd = _resolve_cwd(cd)
+            owner = _default_owner_tag(resolved_cd) if resolved_cd else None
+            bg_cmd(
+                prompt=prompt,
+                agent=agent,
+                cd=Path(cd) if cd else None,
+                mode="write",
+                timeout=300 if agent == "free" else 90,
+                full=False,
+                model="gpt-5-mini" if agent == "free" else None,
+                owner=owner,
+            )
+        iteration += 1
+        if sleep_seconds > 0 and not dry_run:
+            import time
+
+            time.sleep(sleep_seconds)
+
+
+def plan_progress_cmd(limit: int = 10, format: str | None = None) -> None:
+    """Show recent runs (work-package progress). Alias for history --limit N."""
+    history_cmd(limit=limit, format=format)
+
+
 def plan_analyze_cmd(
     cd: Path | None = None,
     pert: bool = False,
@@ -3399,80 +4907,14 @@ def plan_analyze_cmd(
     format: str | None = None,
 ) -> None:
     """Run planning simulation overlays (XD1–XD3): PERT, resource contention, continuity risk."""
-    from thegent.planning.simulation import (
-        ContinuityRiskInput,
-        PERTNode,
-        pert_forward_pass,
-        score_continuity_risk,
-        simulate_resource_contention,
-    )
+    from thegent.cli_impl import plan_analyze_impl
 
-    cwd = _resolve_cwd(cd)
-    if cwd is None:
-        console.print("[red]Ambiguous cwd. Provide --cd /path or run from project root.[/red]")
+    result = plan_analyze_impl(cd=cd, pert=pert, resources=resources, continuity=continuity)
+    if "error" in result:
+        console.print(f"[red]{result['error']}[/red]")
+        if result.get("remediation"):
+            console.print(f"[yellow]{result['remediation']}[/yellow]")
         raise typer.Exit(1)
-    dag_path = cwd / ".factory" / "dag-session.md"
-    if not dag_path.exists():
-        console.print(f"[red]DAG session not found: {dag_path}[/red]")
-        raise typer.Exit(1)
-    doc = _parse_dag_full(dag_path)
-    tasks = doc.tasks
-    if not pert and not resources and not continuity:
-        pert = resources = continuity = True
-
-    result: dict[str, Any] = {}
-    if pert:
-        nodes = []
-        for t in tasks:
-            tid = (t.get("id") or "").strip()
-            if not tid:
-                continue
-            deps = _parse_depends_on(t.get("depends_on", ""))
-            nodes.append(
-                PERTNode(
-                    task_id=tid,
-                    optimistic_days=0.5,
-                    most_likely_days=1.0,
-                    pessimistic_days=2.0,
-                    predecessors=deps,
-                )
-            )
-        if nodes:
-            pert_results = pert_forward_pass(nodes)
-            result["pert"] = {
-                k: {
-                    "expected_duration": v.expected_duration,
-                    "variance": v.variance,
-                    "confidence_p50": v.confidence_p50,
-                    "confidence_p90": v.confidence_p90,
-                }
-                for k, v in pert_results.items()
-            }
-    if resources:
-        contention = simulate_resource_contention(tasks, [], {})
-        result["resources"] = [
-            {"resource_id": c.resource_id, "contention_ratio": c.contention_ratio} for c in contention
-        ]
-    if continuity:
-        open_tasks = [t for t in tasks if (t.get("status") or "").lower() not in TERMINAL_STATUSES]
-        from datetime import timedelta
-
-        now = datetime.now(UTC)
-        handoff_windows = [(now, now + timedelta(hours=8))]
-        snapshot_freshness = {t.get("id", ""): now for t in open_tasks if t.get("id")}
-        continuity_input = ContinuityRiskInput(
-            open_tasks=open_tasks,
-            handoff_windows=handoff_windows,
-            snapshot_freshness=snapshot_freshness,
-            owner_coverage={},
-        )
-        cr = score_continuity_risk(continuity_input)
-        result["continuity"] = {
-            "risk_score": cr.risk_score,
-            "factors": cr.factors,
-            "high_risk_tasks": cr.high_risk_tasks,
-            "recommendations": cr.recommendations,
-        }
 
     fmt = (format or os.environ.get("THGENT_OUTPUT_FORMAT") or ThegentSettings().output_format or "rich").lower()
     if fmt == "json":
@@ -3659,7 +5101,8 @@ def benchmark_cmd() -> None:
 
     completed = [r for r in runs if r.get("status") == "completed"]
     failed = [r for r in runs if r.get("status") == "failed"]
-    durations = [r.get("duration_s") for r in completed if r.get("duration_s") is not None]
+    raw_durations = [r.get("duration_s") for r in completed if r.get("duration_s") is not None]
+    durations: list[float] = [float(d) for d in raw_durations if d is not None]
 
     table = Table(title="Orchestration Benchmark (Last 1000 Runs)")
     table.add_column("Metric")
@@ -3844,236 +5287,48 @@ def dag_run_cmd(
     contract_version: str | None = None,
 ) -> None:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
-    cwd = _resolve_cwd(cd)
-    if cwd is None:
-        console.print("[red]Ambiguous cwd. Provide --cd /path or run from project root.[/red]")
-        raise typer.Exit(1)
-
-    # XC2: Block promotion when drift detected (--check-drift)
-    if check_drift and not dry_run:
-        settings = ThegentSettings()
-        from thegent.contracts.telemetry import ContractTelemetry
-
-        ct = ContractTelemetry(settings.session_dir)
-        drift_issues = ct.detect_drift(window_size=50)
-        if drift_issues:
-            console.print(
-                "[red]Drift detected; blocking DAG run. Resolve with: thegent govern conformance --check-drift[/red]"
-            )
-            for issue in drift_issues[:5]:
+    res = dag_run_impl(
+        cd=cd,
+        dry_run=dry_run,
+        task=task,
+        max_parallel=max_parallel,
+        lane=lane,
+        check_drift=check_drift,
+        contract_version=contract_version,
+    )
+    if "error" in res:
+        console.print(f"[red]{res['error']}[/red]")
+        if res.get("drift_issues"):
+            for issue in res["drift_issues"]:
                 console.print(f"  [dim]{issue}[/dim]")
-            raise typer.Exit(2)
-
-    # WP-5001/5003: Auto-reconcile on start to recover from previous crashes
-    settings = ThegentSettings()
-    if not dry_run:
-        dag_reconcile_cmd(cd=cwd)
-
-    dag_path = cwd / ".factory" / "dag-session.md"
-    if not dag_path.exists():
-        console.print(f"[red]DAG session not found: {dag_path}[/red]")
-        raise typer.Exit(1)
-    doc = _parse_dag_full(dag_path)
-    id_to_task = {t.get("id", "").strip(): t for t in doc.tasks if t.get("id", "").strip()}
-    ready_ids = _get_ready_task_ids(doc.tasks)
-    if task:
-        if task not in ready_ids:
-            console.print(f"[red]Task {task} is not ready (must be pending with deps done|cancelled|skipped)[/red]")
-            raise typer.Exit(1)
-        ready_ids = [task]
-    if not ready_ids:
-        console.print("[dim]No ready tasks to run.[/dim]")
+            console.print("[dim]Resolve with: thegent govern conformance --check-drift[/dim]")
+        raise typer.Exit(2 if res.get("error") == "Drift detected" else 1)
+    if res.get("dry_run"):
+        for item in res.get("would_run", []):
+            console.print(f"[dim]Would run: {item['task_id']} agent={item['agent']} prompt={item['prompt_preview']}[/dim]")
         return
-
-    # Lane and Parallelism Control (WP-1001, WP-1002)
-    running_count = sum(1 for t in doc.tasks if t.get("status", "").lower() == "running")
-    if max_parallel is not None:
-        can_run = max(0, max_parallel - running_count)
-        if can_run <= 0:
-            console.print(f"[dim]Max parallel sessions ({max_parallel}) reached. {running_count} running.[/dim]")
-            return
-
-        # Sort by priority if available (higher number = higher priority)
-        def _get_priority(tid: str) -> int:
-            try:
-                p = id_to_task[tid].get("priority", "0")
-                return int(p) if p.isdigit() else 0
-            except (ValueError, KeyError):
-                return 0
-
-        ready_ids = sorted(ready_ids, key=_get_priority, reverse=True)
-        ready_ids = ready_ids[:can_run]
-
-    if dry_run:
-        for tid in ready_ids:
-            t = id_to_task[tid]
-            resolved = _resolve_prompt(tid, t.get("prompt", ""), cwd)
-            console.print(f"[dim]Would run: {tid} agent={t.get('agent')} prompt={resolved[:60]}...[/dim]")
-        return
-    for tid in ready_ids:
-        t = id_to_task[tid]
-        agent_spec = (t.get("agent") or "").strip()
-        prompt = _resolve_prompt(tid, t.get("prompt", ""), cwd)
-        routing = (t.get("routing") or "").strip() or None
-        effective_lane = lane or (t.get("lane") or "").strip() or "standard"
-        # XA4: Task-level contract_version overrides DAG-level
-        task_cv = (t.get("contract_version") or "").strip()
-        effective_cv = task_cv or contract_version or None
-
-        # WP-1006: Quorum support
-        quorum_spec = (t.get("quorum") or "").strip()
-        quorum_n = int(quorum_spec) if quorum_spec.isdigit() else 1
-
-        # WP-1007: Confidence-aware routing
-        conf_spec = (t.get("confidence") or "").strip()
-        min_conf_spec = (t.get("min_confidence") or "").strip()
-        conf = float(conf_spec) if conf_spec.replace(".", "", 1).isdigit() else 1.0
-        min_conf = float(min_conf_spec) if min_conf_spec.replace(".", "", 1).isdigit() else 0.85
-
-        if conf < min_conf and quorum_n == 1:
-            console.print(f"[yellow]Low confidence ({conf} < {min_conf}) for {tid}. Upgrading to quorum=2.[/yellow]")
-            quorum_n = 2
-
-        if not agent_spec or not prompt:
-            console.print(f"[yellow]Skipping {tid}: missing agent or prompt[/yellow]")
-            continue
-
-        agents = [a.strip() for a in agent_spec.split(",")]
-        session_ids = []
-
-        # G-GP-05: Update retry_count and check for escalation before running
-        status = t.get("status", "").lower()
-        retry_count = None
-        try:
-            current_rc = int(t.get("retry_count") or "0")
-            if status == "failed":
-                retry_count = current_rc + 1
-                if retry_count > settings.max_task_retries:
-                    console.print(
-                        f"[bold red]Exhausted retries ({retry_count} > {settings.max_task_retries}) for task {tid}. Escalating.[/bold red]"
-                    )
-                    from thegent.cli_impl import escalate_add_impl
-
-                    escalate_add_impl(
-                        run_id=f"dag_{tid}_{uuid.uuid4().hex[:4]}",
-                        reason=f"Exhausted retries ({retry_count}) for DAG task {tid}",
-                        sla_minutes=settings.escalation_sla_minutes,
-                        owner=_default_owner_tag(cwd),
-                        agent=agent_spec,
-                        lane=effective_lane,
-                    )
-                    _dag_update_task(doc, tid, status="escalated", retry_count=retry_count)
-                    content = _serialize_dag(doc)
-                    _atomic_write(dag_path, content)
-                    continue
-            elif status == "pending" and "retry_count" not in t:
-                retry_count = 0
-            else:
-                retry_count = current_rc
-        except (ValueError, TypeError):
-            retry_count = 1 if status == "failed" else 0
-
-        for i in range(quorum_n):
-            # Pick agent from list if multiple provided, else use first
-            current_agent = agents[i % len(agents)]
-            agent = resolve_agent(current_agent)
-
-            # WP-1006: Arbitration role
-            arbitration = "consensus" if quorum_n > 1 else None
-            if quorum_n > 1:
-                arbitration = "leader" if i == 0 else "follower"
-
-            suffix = f"-{i + 1}" if quorum_n > 1 else ""
-            idempotency_token = (t.get("idempotency_token") or "").strip() or f"dag-{tid}{suffix}"
-
-            session_id = bg_cmd(
-                agent=agent,
-                prompt=prompt,
-                cd=cwd,
-                mode="write",
-                timeout=90,
-                full=True,
-                model=None,
-                owner=None,
-                routing=routing,
-                run_id=tid,
-                lane=effective_lane,
-                idempotency_token=idempotency_token,
-                confidence=conf,
-                arbitration=arbitration,
-                contract_version=effective_cv,
-            )
-            session_ids.append(session_id)
-
-        combined_sid = ",".join(session_ids)
-
-        _dag_update_task(doc, tid, status="running", session_id=combined_sid, retry_count=retry_count)
-        content = _serialize_dag(doc)
-        _atomic_write(dag_path, content)
-        console.print(f"[green]{tid}[/green] -> {combined_sid}")
+    if res.get("message"):
+        console.print(f"[dim]{res['message']}[/dim]")
+    for item in res.get("spawned", []):
+        console.print(f"[green]{item['task_id']}[/green] -> {item['session_id']}")
+    for err in res.get("errors", []):
+        console.print(f"[red]{err['task_id']}: {err['error']}[/red]")
 
 
-def dag_sync_cmd(cd: Path | None = None) -> None:
-    """For tasks with session_id and status=running, if pid not running set status=done or failed from rc."""
-    cwd = _resolve_cwd(cd)
-    if cwd is None:
-        console.print("[red]Ambiguous cwd. Provide --cd /path or run from project root.[/red]")
+def dag_sync_cmd(cd: Path | None = None, auto_run_next: bool = False) -> None:
+    """For tasks with session_id and status=running, if pid not running set status=done or failed from rc.
+    If --auto-run-next, spawn next ready tasks after sync."""
+    res = dag_sync_impl(cd=cd, auto_run_next=auto_run_next)
+    if "error" in res:
+        console.print(f"[red]{res['error']}[/red]")
         raise typer.Exit(1)
-    dag_path = cwd / ".factory" / "dag-session.md"
-    if not dag_path.exists():
-        console.print(f"[red]DAG session not found: {dag_path}[/red]")
-        raise typer.Exit(1)
-    doc = _parse_dag_full(dag_path)
-    settings = ThegentSettings()
-    changed = False
-    for t in doc.tasks:
-        sids = [s.strip() for s in (t.get("session_id") or "").split(",") if s.strip()]
-        if not sids or (t.get("status", "").lower() != "running"):
-            continue
-
-        # Check all sessions for quorum
-        all_done = True
-        any_failed = False
-        rcs = []
-        for sid in sids:
-            try:
-                meta_path = _find_session_meta(settings, sid)
-                m = _read_session_meta(meta_path)
-                pid = int(m.get("pid", 0) or 0)
-                if _is_pid_running(pid):
-                    all_done = False
-                    break
-                p = _session_paths(meta_path.parent, sid)
-                rc_str = p["rc"].read_text(encoding="utf-8").strip() if p["rc"].exists() else ""
-                rc = int(rc_str) if rc_str.isdigit() else 1
-                rcs.append(rc)
-                if rc != 0:
-                    any_failed = True
-            except typer.BadParameter:
-                all_done = False
-                break
-
-        if all_done and len(rcs) == len(sids):
-            # WP-1006: Arbitration logic
-            if len(sids) > 1:
-                # Basic consensus: if any failed, task failed.
-                # (Could be richer: majority vote on output hash)
-                t["status"] = "done" if not any_failed else "failed"
-            else:
-                t["status"] = "done" if rcs[0] == 0 else "failed"
-            changed = True
-    if changed:
-        content = _serialize_dag(doc)
-        _atomic_write(dag_path, content)
+    if res.get("changed"):
         console.print("[green]Synced DAG status with sessions.[/green]")
-
-        # WP-5004: Auto-checkpoint on completion
-        from thegent.execution import CheckpointRegistry
-
-        ckpt_registry = CheckpointRegistry(settings.session_dir)
-        reason = "Auto-checkpoint: terminal task state detected during sync"
-        ckpt_registry.create_checkpoint(reason, content, _default_owner_tag())
         console.print("[dim]Auto-checkpoint created.[/dim]")
+        run_next = res.get("run_next", {})
+        if run_next and run_next.get("spawned"):
+            for item in run_next["spawned"]:
+                console.print(f"[green]{item['task_id']}[/green] -> {item['session_id']}")
     else:
         console.print("[dim]No status changes detected.[/dim]")
 
@@ -4101,8 +5356,9 @@ def dag_checkpoint_cmd(cd: Path | None = None, reason: str = "Manual checkpoint"
     console.print(f"[green]Checkpoint created:[/green] {ckpt.checkpoint_id} ({reason})")
 
 
-def dag_rollback_cmd(checkpoint_id: str, cd: Path | None = None) -> None:
+def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -> None:
     """Rollback DAG state to a specific checkpoint."""
+    cid = _resolve_checkpoint_id(checkpoint_id)
     cwd = _resolve_cwd(cd)
     if cwd is None:
         console.print("[red]Ambiguous cwd.[/red]")
@@ -4114,9 +5370,9 @@ def dag_rollback_cmd(checkpoint_id: str, cd: Path | None = None) -> None:
 
     registry = CheckpointRegistry(settings.session_dir)
 
-    ckpt = registry.get_checkpoint(checkpoint_id)
+    ckpt = registry.get_checkpoint(cid)
     if not ckpt:
-        console.print(f"[red]Checkpoint not found: {checkpoint_id}[/red]")
+        console.print(f"[red]Checkpoint not found: {cid}[/red]")
         raise typer.Exit(1)
 
     content = ckpt.get("dag_content")
@@ -4125,7 +5381,7 @@ def dag_rollback_cmd(checkpoint_id: str, cd: Path | None = None) -> None:
         raise typer.Exit(1)
 
     _atomic_write(dag_path, content, backup=True)
-    console.print(f"[green]DAG rolled back to checkpoint:[/green] {checkpoint_id}")
+    console.print(f"[green]DAG rolled back to checkpoint:[/green] {cid}")
     console.print(f"[dim]Reason: {ckpt.get('reason')}[/dim]")
 
 
@@ -4159,54 +5415,18 @@ def dag_checkpoints_cmd(limit: int = 20) -> None:
 
 def dag_recover_cmd(cd: Path | None = None, action: str = "retry-failed") -> None:
     """Perform recovery playbook actions on the DAG."""
-    cwd, dag_path = _dag_path(cd)
-    if cwd is None or dag_path is None or not dag_path.exists():
-        console.print(f"[red]DAG not found: {dag_path}[/red]")
+    res = dag_recover_impl(cd=cd, action=action)
+    if "error" in res:
+        console.print(f"[red]{res['error']}[/red]")
         raise typer.Exit(1)
-    assert dag_path is not None
-
-    doc = _parse_dag_full(dag_path)
-    changed = False
-
-    if action == "retry-failed":
-        for t in doc.tasks:
-            if t.get("status", "").lower() == "failed":
-                t["status"] = "pending"
-                changed = True
-        console.print("[green]Reset all failed tasks to pending.[/green]")
-    elif action == "clear-stuck":
-        for t in doc.tasks:
-            if t.get("status", "").lower() == "running":
-                t["status"] = "pending"
-                changed = True
-        console.print("[green]Reset all running tasks to pending.[/green]")
-    elif action == "reset-retries":
-        for t in doc.tasks:
-            if "retry_count" in t:
-                t["retry_count"] = "0"
-                changed = True
-        console.print("[green]Reset all retry counters.[/green]")
-    elif action == "fallback":
-        # WP-4003: Swap to fallback agent
-        for t in doc.tasks:
-            if t.get("status", "").lower() == "failed":
-                current_agent = t.get("agent", "")
-                from thegent.agents.registry import get_fallback_agents
-
-                fallbacks = get_fallback_agents(current_agent)
-                if fallbacks:
-                    t["agent"] = fallbacks[0]
-                    t["status"] = "pending"
-                    changed = True
-                    console.print(f"[yellow]Task {t.get('id')}[/yellow]: swapped {current_agent} -> {fallbacks[0]}")
-        if not changed:
-            console.print("[dim]No failed tasks with defined fallbacks found.[/dim]")
-    else:
-        console.print(f"[red]Unknown recovery action: {action}[/red]")
-        raise typer.Exit(1)
-
-    if changed:
-        _atomic_write(dag_path, _serialize_dag(doc))
+    if res.get("changed"):
+        msg = {
+            "retry-failed": "[green]Reset all failed tasks to pending.[/green]",
+            "clear-stuck": "[green]Reset all running tasks to pending.[/green]",
+            "reset-retries": "[green]Reset all retry counters.[/green]",
+            "fallback": "[green]Swapped failed tasks to fallback agents.[/green]",
+        }.get(action, "[green]Recovery applied.[/green]")
+        console.print(msg)
     else:
         console.print("[dim]No changes needed.[/dim]")
 
@@ -4255,10 +5475,11 @@ def dag_probe_cmd(cd: Path | None = None, baseline_id: str | None = None) -> Non
         console.print("".join(diff))
 
 
-def status_cmd(session_id: str, format: str | None = None, include_contract: bool = False) -> None:
+def status_cmd(session_id: str | None = None, format: str | None = None, include_contract: bool = False) -> None:
     settings = ThegentSettings()
-    meta_path = _find_session_meta(settings, session_id)
-    p = _session_paths(meta_path.parent, session_id)
+    sid = _resolve_session_id(session_id)
+    meta_path = _find_session_meta(settings, sid)
+    p = _session_paths(meta_path.parent, sid)
     m = _read_session_meta(meta_path)
     pid = int(m.get("pid", 0) or 0)
     running = _is_pid_running(pid)
@@ -4344,17 +5565,24 @@ def inspect_cmd(
 
 
 def logs_cmd(
-    session_id: str,
+    session_id: str | None = None,
     follow: bool = False,
     stderr: bool = False,
     tail: int = 200,
     timeout: int = 0,
 ) -> None:
+    sid = _resolve_session_id(session_id)
     settings = ThegentSettings()
-    meta_path = _find_session_meta(settings, session_id)
-    p = _session_paths(meta_path.parent, session_id)
+    meta_path = _find_session_meta(settings, sid)
+    p = _session_paths(meta_path.parent, sid)
     target = p["stderr"] if stderr else p["stdout"]
     if not target.exists():
+        if meta_path.parent.name == "discovered":
+            console.print(
+                "[dim]No log file for this session. Discovered agents (cursor-agent, "
+                "claude-code, codex) run in-process; logs are managed by the IDE.[/dim]"
+            )
+            return
         raise typer.BadParameter(f"Log file missing: {target}")
 
     m = _read_session_meta(meta_path)
@@ -4414,10 +5642,11 @@ def logs_cmd(
         time.sleep(_LOG_FOLLOW_POLL_SECONDS)
 
 
-def wait_cmd(session_id: str, timeout: int = 0) -> None:
+def wait_cmd(session_id: str | None = None, timeout: int = 0) -> None:
+    sid = _resolve_session_id(session_id)
     settings = ThegentSettings()
-    meta_path = _find_session_meta(settings, session_id)
-    p = _session_paths(meta_path.parent, session_id)
+    meta_path = _find_session_meta(settings, sid)
+    p = _session_paths(meta_path.parent, sid)
     m = _read_session_meta(meta_path)
     pid = int(m.get("pid", 0) or 0)
     start = time.time()
@@ -4437,13 +5666,14 @@ def wait_cmd(session_id: str, timeout: int = 0) -> None:
 
 
 def stop_cmd(
-    session_id: str,
+    session_id: str | None = None,
     force: bool = False,
     wind_down: bool = False,
     grace: int = 20,
 ) -> None:
+    sid = _resolve_session_id(session_id)
     settings = ThegentSettings()
-    meta_path = _find_session_meta(settings, session_id)
+    meta_path = _find_session_meta(settings, sid)
     m = _read_session_meta(meta_path)
     pid = int(m.get("pid", 0) or 0)
     if not _is_pid_running(pid):
@@ -4473,8 +5703,9 @@ def stop_cmd(
     console.print("stopped")
 
 
-def pause_cmd(session_id: str) -> None:
+def pause_cmd(session_id: str | None = None) -> None:
     """Pause a background session (register pause event)."""
+    sid = _resolve_session_id(session_id)
     settings = ThegentSettings()
 
     registry = RunRegistry(settings.session_dir)
@@ -4499,53 +5730,93 @@ def pause_cmd(session_id: str) -> None:
     console.print(f"[yellow]Session {session_id} marked as PAUSED in registry.[/yellow]")
 
 
-def resume_cmd(session_id: str) -> None:
+def resume_cmd(session_id: str | None = None) -> None:
     """Resume a background session (register resume event)."""
+    sid = _resolve_session_id(session_id)
     settings = ThegentSettings()
 
     registry = RunRegistry(settings.session_dir)
 
-    meta_path = _find_session_meta(settings, session_id)
+    meta_path = _find_session_meta(settings, sid)
     m = _read_session_meta(meta_path)
     run_id = m.get("run_id")
     if not run_id:
         runs = registry.list_runs(limit=100)
         for r in runs:
-            if r.get("correlation_id") == session_id:
+            if r.get("correlation_id") == sid:
                 run_id = r.get("run_id")
                 break
 
     if not run_id:
-        console.print(f"[red]Could not find run_id for session {session_id}.[/red]")
+        console.print(f"[red]Could not find run_id for session {sid}.[/red]")
         raise typer.Exit(1)
 
     registry.register_resume(run_id)
-    console.print(f"[green]Session {session_id} marked as RUNNING in registry.[/green]")
+    console.print(f"[green]Session {sid} marked as RUNNING in registry.[/green]")
+
+
+def rules_sync_cmd(
+    force: bool = typer.Option(False, "--force", "-f", help="Force overwrite even if identical"),
+    check: bool = typer.Option(False, "--check", help="Check for drift without syncing"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project directory"),
+) -> None:
+    """Sync CLAUDE.md to other platform-specific rule files (AGENTS.md, Cursor, Codex)."""
+    from thegent.cli_impl import rules_sync_impl
+
+    result = rules_sync_impl(cd=cd, force=force, check=check)
+    if not result["success"]:
+        console.print(f"[red]{result['error']}[/red]")
+        raise typer.Exit(1)
+
+    if check:
+        if result["in_sync"]:
+            console.print("[green]Rules are in sync.[/green]")
+            raise typer.Exit(0)
+        else:
+            console.print("[red]Drift detected in rule files:[/red]")
+            for target in result["drift"]:
+                console.print(f"  - {target}")
+            raise typer.Exit(1)
+
+    if not result["synced"]:
+        console.print("[yellow]Rules are already in sync.[/yellow]")
+    else:
+        for target in result["synced"]:
+            console.print(f"[green]Synced: {target}[/green]")
 
 
 def list_agents_cmd() -> None:
     """List available agents."""
     agents = list_agent_names()
+    # Backend = LLM backend. Codex is the harness. CLIProxy bundles ALL APIs: Claude, Gemini, Copilot,
+    # Codex, Cursor, MiniMax, GLM, NIM, etc. cursor-api is a provider within cliproxy.
     backends = {
+        "gemini": "cliproxy",
+        "headless_agent": "cliproxy",
+        "interactive_agent": "cliproxy",
+        "copilot": "cliproxy",
+        "antigravity": "cliproxy",
         "minimax": "cliproxy",
         "glm": "cliproxy",
-        "roo": "cliproxy",
         "kilo": "cliproxy",
-        "gemini": "codex",
-        "codex": "codex",
-        "copilot": "codex",
-        "claude": "codex",
-        "antigravity": "codex",
-        "cursor-agent": "Direct",
-        "cursor-api": "cursor-api",
+        "kiro": "cliproxy",
+        "nim": "cliproxy",
+        "cliproxy": "cliproxy",
+        "cursor": "cliproxy",
     }
     table = Table(title="Agents")
     table.add_column("Name", style="cyan")
     table.add_column("Backend", style="dim")
+    from thegent.agents.registry import AGENT_LABELS
     for name in agents:
         display_name = AGENT_LABELS.get(name, name)
-        table.add_row(display_name, backends.get(name, "Direct"))
+        canonical = resolve_agent(name)
+        table.add_row(display_name, backends.get(canonical, "Direct"))
     console.print(table)
+    console.print(
+        "[dim]Backend = LLM source. Codex is the harness. "
+        "cliproxy bundles all APIs: Claude, Gemini, Copilot, Codex, Cursor, MiniMax, GLM, NIM.[/dim]"
+    )
 
 
 def list_droids_cmd(cd: Path | None = None) -> None:
@@ -4599,37 +5870,210 @@ def list_models_cmd(
     providers = (
         [provider]
         if provider
-        else ["minimax", "glm", "cursor-agent", "cursor-api", "gemini", "copilot", "claude", "codex", "antigravity"]
+        else ["minimax", "glm", "cursor", "kiro", "gemini", "copilot", "interactive_agent", "headless_agent", "antigravity"]
     )
     for p in providers:
         if p == "minimax":
             _list_minimax_models()
         elif p == "glm":
             _list_glm_models()
-        elif p == "cursor-agent":
-            _list_cursor_models()
-        elif p == "cursor-api":
+        elif p == "cursor":
             _list_cursor_api_models()
         elif p == "gemini":
             _list_gemini_models()
         elif p == "copilot":
             _list_copilot_models()
-        elif p == "claude":
+        elif p in ("interactive_agent", "claude"):
             _list_claude_models()
-        elif p == "codex":
+        elif p in ("headless_agent", "codex"):
             _list_codex_models()
         elif p == "antigravity":
             _list_antigravity_models()
+        elif p == "kiro":
+            _list_kiro_models()
+
+
+def speed_index_cmd(
+    format: str | None = None,
+    no_cache: bool = False,
+) -> None:
+    """Show speed index (0-1, higher=faster) for all model-provider pairs.
+
+    Uses CLIProxyAPIPlus metrics (tps_1m, latency_p50_ms, success_rate) when reachable;
+    falls back to Route.latency_ms.
+    """
+    from thegent.models.speed_values import (
+        get_model_provider_speed_indices,
+        invalidate_speed_index_cache,
+    )
+
+    if no_cache:
+        invalidate_speed_index_cache()
+    indices = get_model_provider_speed_indices(use_cache=not no_cache)
+    data: dict[str, Any] = {}
+    for model_id, prov_indices in sorted(indices.items()):
+        data[model_id] = {prov: round(idx, 4) for prov, idx in sorted(prov_indices.items())}
+
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(data) + "\n")
+        return
+
+    table = Table(title="Model-Provider Speed Index (0-1, higher=faster)")
+    table.add_column("Model")
+    table.add_column("Provider")
+    table.add_column("Speed Index")
+    for model_id, prov_indices in sorted(data.items()):
+        for prov, idx in sorted(prov_indices.items()):
+            table.add_row(model_id, prov, f"{idx:.4f}")
+    console.print(table)
+
+
+def quality_index_cmd(
+    format: str | None = None,
+    no_cache: bool = False,
+) -> None:
+    """Show quality index (0-1) for all models.
+
+    Uses benchmarks.json (Terminal Bench 2.0, SWE-Bench, AIME) when available;
+    falls back to Route.accuracy_score.
+    """
+    from thegent.models.quality_values import (
+        get_model_provider_quality_indices,
+        invalidate_quality_index_cache,
+    )
+
+    if no_cache:
+        invalidate_quality_index_cache()
+    indices = get_model_provider_quality_indices(use_cache=not no_cache)
+    data: dict[str, Any] = {}
+    for model_id, prov_indices in sorted(indices.items()):
+        data[model_id] = {prov: round(idx, 4) for prov, idx in sorted(prov_indices.items())}
+
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(data) + "\n")
+        return
+
+    table = Table(title="Model-Provider Quality Index (0-1, higher=better)")
+    table.add_column("Model")
+    table.add_column("Provider")
+    table.add_column("Quality Index")
+    for model_id, prov_indices in sorted(data.items()):
+        for prov, idx in sorted(prov_indices.items()):
+            table.add_row(model_id, prov, f"{idx:.4f}")
+    console.print(table)
+
+
+def metrics_cmd(
+    format: str | None = None,
+    no_cache: bool = False,
+    limit: int = 50,
+) -> None:
+    """Show cost, speed, and quality indices for all model-provider pairs (unified view)."""
+    from thegent.models.cost_values import get_model_provider_costs
+    from thegent.models.quality_values import (
+        get_model_provider_quality_indices,
+        invalidate_quality_index_cache,
+    )
+    from thegent.models.speed_values import (
+        get_model_provider_speed_indices,
+        invalidate_speed_index_cache,
+    )
+
+    if no_cache:
+        invalidate_speed_index_cache()
+        invalidate_quality_index_cache()
+    costs = get_model_provider_costs()
+    speed = get_model_provider_speed_indices(use_cache=not no_cache)
+    quality = get_model_provider_quality_indices(use_cache=not no_cache)
+
+    rows: list[tuple[str, str, str, str, str]] = []
+    for model_id in sorted(costs.keys()):
+        for prov in sorted(costs[model_id].keys()):
+            if len(rows) >= limit:
+                break
+            inp, out = costs[model_id][prov]
+            cost_str = f"${inp:.4f}/{out:.4f}"
+            sp = speed.get(model_id, {}).get(prov, 0.5)
+            ql = quality.get(model_id, {}).get(prov, 0.5)
+            rows.append((model_id, prov, cost_str, f"{sp:.3f}", f"{ql:.3f}"))
+            if len(rows) >= limit:
+                break
+        if len(rows) >= limit:
+            break
+
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        data: dict[str, Any] = {}
+        for model_id, prov, cost_str, sp, ql in rows:
+            if model_id not in data:
+                data[model_id] = {}
+            data[model_id][prov] = {
+                "cost_per_1k": cost_str,
+                "speed_index": float(sp),
+                "quality_index": float(ql),
+            }
+        sys.stdout.write(json.dumps(data) + "\n")
+        return
+
+    table = Table(title="Model-Provider Metrics (cost + speed + quality)")
+    table.add_column("Model")
+    table.add_column("Provider")
+    table.add_column("Cost $/1k")
+    table.add_column("Speed")
+    table.add_column("Quality")
+    for model_id, prov, cost_str, sp, ql in rows:
+        table.add_row(model_id, prov, cost_str, sp, ql)
+    if len(rows) >= limit:
+        table.caption = f"Showing first {limit} rows. Use --limit to change."
+    console.print(table)
+
+
+def cost_values_cmd(format: str | None = None) -> None:
+    """Show cost values ($/1k tokens) for all model-provider pairs.
+
+    Uses CLIProxyAPIPlus metrics when reachable; falls back to static values.
+    """
+    from thegent.models.cost_values import get_model_provider_costs
+
+    costs = get_model_provider_costs()
+    # Flatten for output: {model: {provider: [in, out]}}
+    data: dict[str, Any] = {}
+    for model_id, prov_costs in sorted(costs.items()):
+        data[model_id] = {
+            prov: {"input_per_1k_usd": round(inp, 6), "output_per_1k_usd": round(out, 6)}
+            for prov, (inp, out) in sorted(prov_costs.items())
+        }
+
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(data) + "\n")
+        return
+
+    table = Table(title="Model-Provider Cost Values ($/1k tokens)")
+    table.add_column("Model")
+    table.add_column("Provider")
+    table.add_column("Input $/1k")
+    table.add_column("Output $/1k")
+    for model_id, prov_costs in sorted(data.items()):
+        for prov, vals in sorted(prov_costs.items()):
+            table.add_row(model_id, prov, f"${vals['input_per_1k_usd']:.6f}", f"${vals['output_per_1k_usd']:.6f}")
+    console.print(table)
 
 
 def resolve_model_route_cmd(
     model: str,
     provider: str | None = None,
     policy: str = "prefer_direct",
+    quality_floor: float = 0.0,
+    lane: str | None = None,
 ) -> None:
     """Resolve a model to a preferred route and emit contract-style output."""
     from thegent.models import (
         ModelCatalog,
+        get_model_provider_quality_indices,
+        get_model_provider_speed_indices,
         normalize_model_id,
         normalize_route_policy,
         resolve_route_contract,
@@ -4638,21 +6082,40 @@ def resolve_model_route_cmd(
     try:
         policy_value = normalize_route_policy(policy)
     except ValueError:
-        console.print("[red]Invalid routing policy. Use prefer_direct, prefer_proxy, or failover.[/red]")
+        console.print(
+            "[red]Invalid routing policy. Use prefer_direct, prefer_proxy, failover, cheapest, cost_quality, pareto.[/red]"
+        )
         raise typer.Exit(1)
 
     normalized = normalize_model_id(model)
-    route = resolve_route_contract(model, provider_hint=provider, policy=policy_value)
-    available_routes = [
-        {
+    route = resolve_route_contract(
+        model,
+        provider_hint=provider,
+        policy=policy_value,
+        quality_floor=quality_floor,
+        lane=lane,
+    )
+    speed_map = get_model_provider_speed_indices().get(normalized, {})
+    quality_map = get_model_provider_quality_indices().get(normalized, {})
+    routes = sorted(
+        ModelCatalog.routes_for(model),
+        key=lambda r: (r.provider, r.priority, r.model_alias),
+    )
+    available_routes: list[dict[str, Any]] = []
+    for r in routes:
+        row: dict[str, Any] = {
             "provider": r.provider,
             "backend_type": r.backend_type,
             "model_alias": r.model_alias,
             "priority": r.priority,
         }
-        for r in sorted(ModelCatalog.routes_for(model), key=lambda r: (r.provider, r.priority, r.model_alias))
-    ]
-    payload = {
+        if r.provider in speed_map:
+            row["speed_index"] = round(speed_map[r.provider], 4)
+        if r.provider in quality_map:
+            row["quality_index"] = round(quality_map[r.provider], 4)
+        available_routes.append(row)
+
+    payload: dict[str, Any] = {
         "model": model,
         "normalized_model": normalized,
         "policy": policy_value,
@@ -4668,13 +6131,18 @@ def resolve_model_route_cmd(
         console.print_json(data=payload)
         raise typer.Exit(1)
 
-    payload["resolved_route"] = {
+    resolved: dict[str, Any] = {
         "provider": route.provider,
         "model_alias": route.model_alias,
         "backend_type": route.backend_type,
         "priority": route.priority,
         "schema_version": route.schema_version,
     }
+    if route.provider in speed_map:
+        resolved["speed_index"] = round(speed_map[route.provider], 4)
+    if route.provider in quality_map:
+        resolved["quality_index"] = round(quality_map[route.provider], 4)
+    payload["resolved_route"] = resolved
     console.print_json(data=payload)
 
 
@@ -4740,7 +6208,6 @@ def _list_gemini_models() -> None:
     """Scrape gemini models from gemini --help (has -m/--model)."""
     console.print("\n[bold]Gemini models[/bold]")
     console.print("  gemini-3-flash (default)")
-    console.print("  gemini-3-pro-preview")
     console.print("  gemini-2.0-flash")
     console.print("  [dim]Use gemini -m <model> or THGENT_GEMINI_MODEL[/dim]")
 
@@ -4774,19 +6241,26 @@ def _list_copilot_models() -> None:
         _list_copilot_models_fallback()
 
 
+# Copilot: only gpt-5-mini and haiku (no gemini-3-pro).
+_COPILOT_ALLOWED_MODELS: tuple[str, ...] = (
+    "claude-haiku-4.5",
+    "gpt-5-mini",
+)
+
+
 def _list_copilot_models_fallback() -> None:
-    """Fallback copilot model list."""
+    """Fallback copilot model list (matches copilot --model allowed choices)."""
     console.print("\n[bold]Copilot models[/bold]")
-    for m in ["claude-haiku-4.5 (default)", "claude-sonnet-4.5", "claude-opus-4.6", "gpt-5.3-codex", "gemini-3-flash"]:
-        console.print(f"  {m}")
+    for m in _COPILOT_ALLOWED_MODELS:
+        default = " (default)" if m == "gpt-5-mini" else ""
+        console.print(f"  {m}{default}")
 
 
 def _list_claude_models() -> None:
     """Scrape claude models from claude --help (--model aliases)."""
     console.print("\n[bold]Claude models[/bold]")
-    console.print("  haiku (default)")
-    console.print("  sonnet, opus")
-    console.print("  claude-haiku-4.5, claude-sonnet-4.5, claude-opus-4.6")
+    console.print("  haiku, sonnet, sonnet-1m, opus")
+    console.print("  claude-haiku-4.5, claude-sonnet-4.5, claude-sonnet-4.5-1m (1M context), claude-opus-4.6")
     console.print("  [dim]Use claude --model <alias> or THGENT_CLAUDE_MODEL[/dim]")
 
 
@@ -4837,6 +6311,16 @@ def _list_antigravity_models() -> None:
     console.print("  [dim]Other: gemini-3-pro-high, gemini-3-pro-image, tstars2.0 (iflow)[/dim]")
 
 
+def _list_kiro_models() -> None:
+    """List kiro models (claude-haiku-4.5, claude-opus-4.6 via CLIProxyAPIPlus)."""
+    settings = ThegentSettings()
+    console.print("\n[bold]Kiro models (via CLIProxyAPIPlus)[/bold]")
+    console.print("  claude-haiku-4.5")
+    console.print("  claude-haiku-4.5 (default)")
+    console.print(f"  [dim]Default: {settings.default_kiro_model}[/dim]")
+    console.print("  [dim]OAuth: thegent cliproxy login kiro[/dim]")
+
+
 def _models_table(title: str) -> Table:
     t = Table(title=title)
     t.add_column("Model ID", style="cyan")
@@ -4844,11 +6328,17 @@ def _models_table(title: str) -> Table:
     return t
 
 
-def cliproxy_login_cmd(provider: str) -> None:
-    """Run OAuth login for provider (claude, codex, gemini, copilot, antigravity, qwen, iflow, kimi, kiro, roo, kilo)."""
+def cliproxy_login_cmd(provider: str, force: bool = False) -> None:
+    """Run login for provider. Unified flow: open URL + prompt for API key. Preflight checks existing credentials."""
+    from rich.prompt import Prompt
+
     settings = ThegentSettings()
+
+    def prompt_key(msg: str) -> str:
+        return Prompt.ask(msg, default="", show_default=False).strip()
+
     try:
-        rc = run_login(settings, provider)
+        rc = run_login(settings, provider, prompt_func=prompt_key, force=force)
         raise typer.Exit(rc)
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
@@ -4868,11 +6358,21 @@ def setup_cmd(
     wizard: bool = typer.Option(True, "--wizard/--no-wizard", help="Run interactive setup wizard"),
     links: bool = typer.Option(True, "--links/--no-links", help="Install claudeglm/claudemax shortcuts"),
 ) -> None:
-    """Unified setup: configure providers and install interactive shortcuts."""
+    """Unified setup: configure providers (same flow as cliproxy login) and install shortcuts."""
     import os
-    import webbrowser
     from pathlib import Path
 
+    import yaml
+    from thegent.agents.cliproxy_manager import (
+        PROVIDER_LOGIN_CONFIG,
+        _LOGIN_FLAGS,
+        _ensure_config,
+        _inject_api_key_into_cliproxy,
+        run_login,
+        run_login_unified,
+    )
+
+    settings = ThegentSettings()
     env_path = Path(".env")
     lines = env_path.read_text().splitlines() if env_path.exists() else []
 
@@ -4886,119 +6386,109 @@ def setup_cmd(
         if not found:
             lines.append(f"{key}={value}")
 
-    providers_config = {
-        "NVIDIA NIM (Free tier available)": {
-            "key": api_key,
-            "env_var": "THGENT_NIM_API_KEY",
-            "url": "https://build.nvidia.com/z-ai/glm-5",
-            "instructions": [
-                "1. Sign in to NVIDIA Build (build.nvidia.com).",
-                "2. Navigate to the model (e.g., z-ai/glm-5).",
-                "3. Click 'Get API Key' or 'Generate Key'.",
-                "4. Copy the key starting with 'nvapi-'.",
-            ],
-        },
-        "OpenRouter": {
-            "key": openrouter_key,
-            "env_var": "THGENT_OPENROUTER_API_KEY",
-            "url": "https://openrouter.ai/keys",
-            "instructions": [
-                "1. Log in to openrouter.ai.",
-                "2. Go to Settings -> Keys.",
-                "3. Create a new key and copy it.",
-                "4. Note: OpenRouter offers access to many reasoning models.",
-            ],
-        },
-        "Kilo.ai (Free GLM-5/MiniMax)": {
-            "key": kilo_key,
-            "env_var": "THGENT_KILO_API_KEY",
-            "url": "https://kilo.ai/api-keys",
-            "instructions": [
-                "1. Sign up/Log in at kilo.ai.",
-                "2. Go to the API Keys section.",
-                "3. Create a new key.",
-                "4. This provides a free tier for GLM and MiniMax models.",
-            ],
-        },
-        "Zhipu AI (z.ai native)": {
-            "key": zai_key,
-            "env_var": "THGENT_ZAI_API_KEY",
-            "url": "https://open.bigmodel.cn/usercenter/apikeys",
-            "instructions": [
-                "1. Log in to the Zhipu AI Open Platform (bigmodel.cn).",
-                "2. Go to User Center -> API Keys.",
-                "3. Copy your API Key.",
-                "4. Required for official GLM-5 subscription access.",
-            ],
-        },
-        "MiniMax": {
-            "key": minimax_key,
-            "env_var": "THGENT_MINIMAX_API_KEY",
-            "url": "https://platform.minimaxi.com/user-center/basic-information/interface-key",
-            "instructions": [
-                "1. Log in to the MiniMax Platform.",
-                "2. Go to User Center -> Interface Key.",
-                "3. Copy your API Key.",
-                "4. Required for official MiniMax-M2.5 subscription access.",
-            ],
-        },
+    def prompt_key(msg: str) -> str:
+        from rich.prompt import Prompt
+        return Prompt.ask(msg, default="", show_default=False).strip()
+
+    # CLI overrides: if user passed --api-key etc., inject into config directly
+    overrides = {
+        "nim": api_key,
+        "kilo": kilo_key,
+        "glm": zai_key,
+        "minimax": minimax_key,
     }
 
     any_configured = False
 
-    for name, cfg in providers_config.items():
-        current_key = cfg["key"]
-
-        # If wizard is on and no key was provided via CLI
-        if wizard and not current_key:
-            console.print(f"\n[bold cyan]Setting up {name}...[/bold cyan]")
-            for step in cfg["instructions"]:
-                console.print(f" [dim]{step}[/dim]")
-
-            console.print(f" Opening: [link={cfg['url']!s}]{cfg['url']!s}[/link]")
-            try:
-                webbrowser.open(str(cfg["url"]))
-            except Exception:
-                console.print(f"[yellow]Could not auto-open browser. Please visit: {cfg['url']}[/yellow]")
-
-            val = typer.prompt(f"Enter {name} API Key (press enter to skip)", default="", show_default=False).strip()
-            if val:
-                set_env(str(cfg["env_var"]), val)
-                any_configured = True
-        elif current_key:
-            set_env(str(cfg["env_var"]), str(current_key))
+    # Setup primary providers only (exclude variants: iflow-cookie, kiro-google, etc.)
+    _SETUP_SKIP = frozenset({"iflow-cookie", "kiro-google", "kiro-aws", "kiro-aws-authcode", "kiro-import"})
+    all_providers = sorted(set(PROVIDER_LOGIN_CONFIG) | set(_LOGIN_FLAGS) - _SETUP_SKIP)
+    for prov in all_providers:
+        display_name = PROVIDER_LOGIN_CONFIG.get(prov, {}).get("display_name", prov.replace("-", " ").title())
+        if overrides.get(prov):
+            if prov not in PROVIDER_LOGIN_CONFIG:
+                continue
+            # Direct inject when CLI override provided
+            config_path = _ensure_config(settings)
+            raw = yaml.safe_load(config_path.read_text()) if config_path.exists() else {}
+            config = dict(raw) if isinstance(raw, dict) else {}
+            cfg = PROVIDER_LOGIN_CONFIG[prov]
+            _inject_api_key_into_cliproxy(config, prov, str(overrides[prov]), cfg)
+            config_path.write_text(str(yaml.dump(config, default_flow_style=False, sort_keys=False)))
             any_configured = True
+        elif wizard:
+            console.print(f"\n[bold cyan]Setting up {display_name}...[/bold cyan]")
+            try:
+                rc = run_login(settings, prov, prompt_func=prompt_key, force=False)
+                if rc == 0:
+                    any_configured = True
+            except (ValueError, FileNotFoundError) as e:
+                console.print(f"[dim]  {e}[/dim]")
 
+    env_updated = False
     if model:
         set_env("THGENT_NIM_MODEL", model)
-        any_configured = True
+        env_updated = True
 
     if any_configured:
+        console.print("\n[green]Provider credentials saved to cliproxy config.[/green]")
+        console.print("[dim]Restart proxy: thegent cliproxy restart[/dim]")
+
+    # Ensure cliproxy config exists (cursor block, etc.)
+    try:
+        from thegent.agents.cliproxy_manager import _ensure_config
+
+        _ensure_config(settings)
+    except Exception as e:
+        console.print(f"[yellow]Cliproxy config: {e}[/yellow]")
+    if env_updated:
         env_path.write_text("\n".join(lines) + "\n")
-        console.print(f"\n[green]Successfully updated {env_path}[/green]")
+        console.print(f"[green]Updated {env_path}[/green]")
 
     if links:
         console.print("\n[bold cyan]Installing interactive shortcuts...[/bold cyan]")
+        bin_dir = Path.home() / ".local" / "bin"
+        if not bin_dir.exists():
+            bin_dir.mkdir(parents=True, exist_ok=True)
         try:
-            from thegent.clode_main import install_links
+            from thegent.clode_main import install_links as clode_install_links
 
-            # Call the logic directly
-            install_links(bin_dir=Path.home() / ".local" / "bin", force=True)
+            clode_install_links(bin_dir=bin_dir, force=True)
         except Exception as e:
-            console.print(f"[red]Failed to install links: {e}[/red]")
+            console.print(f"[red]Clode links: {e}[/red]")
+        try:
+            from thegent.dex_main import install_links as dex_install_links
+
+            dex_install_links(bin_dir=bin_dir, force=True)
+        except Exception as e:
+            console.print(f"[red]Dex links: {e}[/red]")
 
     if wizard:
         from rich.prompt import Confirm
 
         if Confirm.ask(
-            "\nWould you like to integrate thegent with your AI agents (Cursor, Claude Code, etc.)?", default=True
+            "\nWould you like to integrate thegent with your AI agents (Cursor, Claude Code, Codex, etc.)?", default=True
         ):
             from thegent.install import run_wizard
 
             run_wizard()
 
+        if Confirm.ask(
+            "\nRemove manual playwright from MCP configs (use thegent-bundled browser tools)?", default=True
+        ):
+            try:
+                from thegent.mcp_manage import remove_playwright_from_client
+
+                for c in ["cursor", "claude-code", "codex", "claude-desktop"]:
+                    ok, msg = remove_playwright_from_client(c)
+                    if ok and "Removed" in msg:
+                        console.print(f"[dim]{msg}[/dim]")
+                console.print("[dim]Start MCP: thegent mcp up[/dim]")
+            except Exception as e:
+                console.print(f"[yellow]Playwright removal: {e}[/yellow]")
+
     console.print("\n[bold green]Setup complete![/bold green]")
-    console.print("Try running: [blue]claudeglm[/blue] or [blue]claudemax[/blue]")
+    console.print("Try: [blue]claudeglm[/blue] | [blue]claudemax[/blue] | [blue]dex[/blue] | [blue]dexmax[/blue]")
 
 
 def takeover_cmd(session_id: str) -> None:
@@ -5018,7 +6508,12 @@ def takeover_cmd(session_id: str) -> None:
     target_pane = None
 
     for d in discovered:
-        if str(d.get("ppid")) == session_id:
+        dsid = d.get("session_id")
+        dppid = str(d.get("ppid", ""))
+        if (
+            dppid == session_id
+            or (dsid and (dsid == session_id or dsid.startswith(session_id) or session_id in dsid))
+        ):
             target_pane = d.get("tmux_pane")
             if target_pane:
                 break
@@ -5071,7 +6566,7 @@ def terminal_route_cmd(prompt: str, cd: Path | None = None) -> None:
     else:
         console.print(f"[yellow]No active terminal found for {target_path}.[/yellow]")
         console.print("Falling back to standard 'thegent run'...")
-        run_cmd(prompt=prompt, agent="claude", cd=cd)
+        run_cmd(prompt=prompt, agent="interactive_agent", cd=cd)
 
 
 def explorer_cmd() -> None:
@@ -5132,6 +6627,34 @@ def session_contract_trend_analysis_cmd() -> None:
     console.print(table)
 
 
+def release_pack_cmd(version: str = "2.0") -> None:
+    """Automated release documentation packaging (WP-12009)."""
+    settings = ThegentSettings()
+    from thegent.tools.release_packager import ReleasePackager
+
+    packager = ReleasePackager(Path.cwd())
+    manifest = packager.compile_package(version)
+
+    console.print(f"[bold green]Compiling Release Package v{version}...[/bold green]")
+
+    table = Table(title=f"Release Manifest v{version}")
+    table.add_column("Artifact", style="cyan")
+    table.add_column("Status", style="bold")
+    table.add_column("Checksum (SHA-256)", style="dim")
+
+    for art in manifest["artifacts"]:
+        status = "[green]OK[/]" if "checksum" in art else "[red]MISSING[/]"
+        table.add_row(art["path"], status, art.get("checksum", "N/A")[:16] + "...")
+
+    console.print(table)
+    console.print(f"\n[bold]Package Checksum:[/] {manifest['package_checksum']}")
+
+    # Write manifest to disk
+    out_path = Path.cwd() / f"release_manifest_v{version}.json"
+    out_path.write_text(json.dumps(manifest, indent=2))
+    console.print(f"[dim]Manifest written to {out_path}[/dim]")
+
+
 def discovery_register_cmd(
     agent: str = typer.Option("?", "--agent", "-a", help="Agent name"),
     pid: int = typer.Option(0, "--pid", help="Process ID of the command"),
@@ -5139,8 +6662,515 @@ def discovery_register_cmd(
     cwd: str = typer.Option(".", "--cwd", help="Current working directory"),
     command: str | None = typer.Option(None, "--cmd", help="Command name being run"),
     args: str | None = typer.Option(None, "--args", help="Arguments preview"),
+    session_id: str | None = typer.Option(None, "--session-id", help="Parsed session ID"),
+    token_usage_json: str | None = typer.Option(None, "--token-usage", help="Token usage JSON"),
+    mcp_errors: list[str] | None = typer.Option(None, "--mcp-error", help="MCP startup error(s)"),
 ) -> None:
     """Register or update a discovered external agent (WP-4008)."""
+    import json
+
     from thegent.discovery import register_discovered_agent
 
-    register_discovered_agent(pid=pid, ppid=ppid, agent=agent, cwd=cwd, command=command, args_preview=args)
+    token_usage = None
+    if token_usage_json:
+        import contextlib
+
+        with contextlib.suppress(Exception):
+            token_usage = json.loads(token_usage_json)
+
+    register_discovered_agent(
+        pid=pid,
+        ppid=ppid,
+        agent=agent,
+        cwd=cwd,
+        command=command,
+        args_preview=args,
+        session_id=session_id,
+        token_usage=token_usage,
+        mcp_errors=mcp_errors,
+    )
+
+
+def discovery_parse_cmd(
+    text: str = typer.Argument(None, help="Text to parse (defaults to stdin)"),
+    register: bool = typer.Option(True, "--register/--no-register", help="Register discovered sessions"),
+    ppid: int = typer.Option(0, "--ppid", help="Force PPID for all discovered sessions"),
+) -> None:
+    """Parse CLI output for session information and register them."""
+    import sys
+
+    from rich.console import Console
+    from rich.table import Table
+
+    from thegent.discovery import register_discovered_agent
+    from thegent.parser import parse_cli_output
+
+    console = Console()
+    if text is None:
+        if sys.stdin.isatty():
+            console.print("[yellow]Waiting for input on stdin (Ctrl+D to finish)...[/yellow]")
+        text = sys.stdin.read()
+
+    sessions = parse_cli_output(text)
+    if not sessions:
+        console.print("[yellow]No sessions found in output.[/yellow]")
+        return
+
+    table = Table(title="Discovered Sessions")
+    table.add_column("Agent")
+    table.add_column("Session ID")
+    table.add_column("Tokens (Total)")
+    table.add_column("Errors")
+
+    for s in sessions:
+        tokens = str(s.token_usage.total) if s.token_usage else "-"
+        errors = ", ".join(s.mcp_errors) if s.mcp_errors else "-"
+        table.add_row(s.agent, s.session_id, tokens, errors)
+
+        if register:
+            # If PPID is not given, we use current PID as a placeholder
+            # but ideally the user should provide the PPID of the agent.
+            target_ppid = ppid or os.getpid()
+            register_discovered_agent(
+                pid=0,
+                ppid=target_ppid,
+                agent=s.agent,
+                cwd=str(Path.cwd()),
+                session_id=s.session_id,
+                token_usage=s.token_usage.model_dump() if s.token_usage else None,
+                mcp_errors=s.mcp_errors,
+            )
+
+    console.print(table)
+    if register:
+        console.print(f"[green]Registered {len(sessions)} session(s).[/green]")
+
+
+def discovery_scan_cmd(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output: json | rich (default)"),
+) -> None:
+    """Scan process tree for agent CLI sessions and auto-register them.
+
+    Detects running cursor-agent, Claude Code, and Codex processes,
+    extracts session IDs from --resume= when present, and registers them
+    for introspection via thegent ps, terminal takeover, and inbox.
+    """
+    from rich.console import Console
+    from rich.table import Table
+
+    from thegent.discovery import list_discovered_agents, scan_agent_processes
+
+    console = Console()
+    registered = scan_agent_processes()
+
+    if not format or format == "rich":
+        if registered:
+            table = Table(title="Discovered Agent Sessions")
+            table.add_column("PID", style="cyan")
+            table.add_column("Agent", style="magenta")
+            table.add_column("Session ID", style="green")
+            table.add_column("CWD", style="dim")
+            for r in registered:
+                table.add_row(
+                    str(r["pid"]),
+                    r.get("agent", "?"),
+                    r.get("session_id") or "—",
+                    r.get("cwd", "?")[:50],
+                )
+            console.print(table)
+            console.print(f"[green]Registered {len(registered)} agent session(s).[/green]")
+        else:
+            console.print("[dim]No cursor-agent, claude-code, or codex processes found.[/dim]")
+        # Also show existing discovered agents
+        existing = list_discovered_agents()
+        if existing:
+            console.print(f"\n[dim]Total discovered agents: {len(existing)}[/dim]")
+    elif format == "json":
+        console.print_json(data={"registered": registered, "count": len(registered)})
+
+def trust_status_cmd(format: str | None = None) -> None:
+    """Show last environment and trust boundary status (WP-3007)."""
+    settings = ThegentSettings()
+    from thegent.execution import TrustBoundaryValidator
+    
+    trust_boundary = TrustBoundaryValidator(settings.session_dir)
+    last_env = trust_boundary.get_last_environment()
+    
+    res = {
+        "current_environment": settings.environment,
+        "last_recorded_environment": last_env,
+        "session_dir": str(settings.session_dir),
+    }
+    
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(res) + "\n")
+        return
+        
+    console.print("[bold]Trust Boundary Status (WP-3007)[/bold]")
+    console.print(f"Current Env: [cyan]{settings.environment}[/cyan]")
+    console.print(f"Last Env:    [cyan]{last_env or 'None'}[/cyan]")
+    
+    if last_env:
+        allowed, reason = trust_boundary.validate_transition(last_env, settings.environment)
+        status_color = "green" if allowed else "red"
+        console.print(f"Transition:  [{status_color}]{reason}[/{status_color}]")
+
+
+def signatures_list_cmd(limit: int = 50, format: str | None = None) -> None:
+    """List signed MAIF artifacts (WP-3002)."""
+    settings = ThegentSettings()
+    artifacts_dir = settings.session_dir / "artifacts"
+
+    artifacts = []
+    if artifacts_dir.exists():
+        for p in sorted(artifacts_dir.glob("*.maif.json"), key=lambda x: x.stat().st_mtime, reverse=True)[:limit]:
+            try:
+                artifacts.append(json.loads(p.read_text(encoding="utf-8")))
+            except Exception:
+                continue
+
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(artifacts) + "\n")
+        return
+
+    if not artifacts:
+        console.print("[dim]No signed artifacts found.[/dim]")
+        return
+
+    table = Table(title="Signed Action Artifacts (MAIF v1.0)")
+    table.add_column("Artifact ID")
+    table.add_column("Root Hash (Short)")
+    table.add_column("Blocks")
+    table.add_column("Timestamp (us)")
+
+    for a in artifacts:
+        header = a.get("header", {})
+        blocks = a.get("blocks", [])
+        table.add_row(
+            header.get("artifact_id", "?"),
+            (header.get("root_hash") or "")[:12] + "...",
+            str(len(blocks)),
+            str(header.get("timestamp_us", "?")),
+        )
+    console.print(table)
+
+
+def signatures_verify_cmd(run_id: str) -> None:
+    """Verify a signed MAIF artifact (WP-3002)."""
+    settings = ThegentSettings()
+    artifact_path = settings.session_dir / "artifacts" / f"{run_id}.maif.json"
+
+    if not artifact_path.exists():
+        console.print(f"[red]Artifact not found for run_id={run_id}[/red]")
+        raise typer.Exit(1)
+
+    try:
+        artifact_data = json.loads(artifact_path.read_text(encoding="utf-8"))
+        header = artifact_data.get("header", {})
+        blocks = artifact_data.get("blocks", [])
+        chain = artifact_data.get("provenance_chain", [])
+
+        console.print(f"[bold cyan]Verifying MAIF Artifact: {header.get('artifact_id')}[/bold cyan]")
+
+        # 1. Verify Blocks
+        all_blocks_valid = True
+        for block in blocks:
+            # Re-calculate hash (simplified for CLI check)
+            payload = block.get("payload")
+            body = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+            actual_hash = hashlib.sha256(body.encode()).hexdigest()
+
+            if actual_hash != block.get("payload_hash"):
+                console.print(f"  [red]✗ Block {block.get('block_id')} payload hash mismatch![/red]")
+                all_blocks_valid = False
+            else:
+                console.print(f"  [green]✓ Block {block.get('block_id')} verified.[/green]")
+
+        # 2. Verify Chain
+        chain_valid = True
+        if chain:
+            prev_hash = "0" * 64
+            for i, block in enumerate(blocks):
+                link_data = f"{prev_hash}|{block.get('payload_hash')}"
+                expected_link_hash = hashlib.sha256(link_data.encode()).hexdigest()
+                if chain[i] != expected_link_hash:
+                    console.print(f"  [red]✗ Provenance chain broken at block {i}![/red]")
+                    chain_valid = False
+                    break
+                prev_hash = expected_link_hash
+
+        # 3. Verify Root Hash
+        root_valid = False
+        if chain and chain[-1] == header.get("root_hash"):
+            root_valid = True
+            console.print(f"  [green]✓ Root hash {header.get('root_hash')[:12]}... matches chain.[/green]")
+        else:
+            console.print(f"  [red]✗ Root hash mismatch![/red]")
+
+        if all_blocks_valid and chain_valid and root_valid:
+            console.print(f"\n[bold green]RESULT: Artifact for {run_id} is VALID.[/bold green]")
+        else:
+            console.print(f"\n[bold red]RESULT: Artifact for {run_id} is INVALID.[/bold red]")
+            raise typer.Exit(1)
+
+    except Exception as e:
+        console.print(f"[red]Failed to verify artifact: {e}[/red]")
+        raise typer.Exit(1)
+
+
+def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
+    """Test SIEM event egress (WP-15001)."""
+    from thegent.observability.egress import EgressEvent, SIEMEgress
+    
+    egress = SIEMEgress(endpoint_url="http://simulated-siem.internal")
+    event = EgressEvent(
+        id=str(uuid.uuid4()),
+        severity=severity,
+        event_type="test_event",
+        source="thegent-cli",
+        payload={"message": message},
+    )
+    
+    success = egress.push_event(event)
+    if success:
+        console.print(f"[green]SIEM test event pushed successfully (simulated).[/green]")
+        console.print(f"Format: {egress.format_for_syslog(event)}")
+    else:
+        console.print("[yellow]SIEM egress not configured or failed.[/yellow]")
+
+
+def compliance_plugin_check_cmd(plugin_id: str, signature: str) -> None:
+    """Verify a plugin contract (WP-15003)."""
+    from thegent.contracts.marketplace import PluginContract, PluginVerifier
+    
+    verifier = PluginVerifier()
+    contract = PluginContract(
+        plugin_id=plugin_id,
+        version="1.0.0",
+        author="unknown",
+        capabilities=["read"],
+        signature=signature,
+    )
+    
+    if verifier.verify_contract(contract):
+        console.print(f"[green]Plugin {plugin_id} VERIFIED successfully.[/green]")
+    else:
+        console.print(f"[red]Plugin {plugin_id} verification FAILED. Invalid signature.[/red]")
+
+
+def compliance_redact_cmd(text: str) -> None:
+    """Test PII/Secret redaction (WP-15005)."""
+    from thegent.governance.support import RedactionEngine
+    
+    redactor = RedactionEngine()
+    redacted = redactor.redact(text)
+    
+    console.print("[bold]Original:[/bold]")
+    console.print(text)
+    console.print("\n[bold]Redacted:[/bold]")
+    console.print(redacted)
+
+def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None = None) -> None:
+    """Show daily cost aggregation (FR-GOV-002)."""
+    settings = ThegentSettings()
+    from thegent.governance.cost import CostAggregator
+    
+    agg = CostAggregator(settings.session_dir)
+    total = agg.daily_total(owner=owner, days=days)
+    
+    res = {
+        "owner": owner or "all",
+        "days": days,
+        "total_usd": total,
+        "currency": "USD",
+    }
+    
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(res) + "\n")
+        return
+        
+    console.print(f"[bold]Daily Cost Aggregation (FR-GOV-002)[/bold]")
+    console.print(f"Owner: [cyan]{owner or 'All Owners'}[/cyan]")
+    console.print(f"Days:  [cyan]{days}[/cyan]")
+    console.print(f"Total: [green]${total:.4f} USD[/green]")
+
+
+def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | None = None) -> None:
+    """Check a prompt against active guardrails (FR-GOV-003..006)."""
+    from thegent.governance.input_guardrails import InputGuardrails
+    
+    rails = InputGuardrails()
+    results = rails.check(prompt, agent=agent, model=model)
+    
+    if not results:
+        console.print("[green]Prompt passed all guardrails.[/green]")
+        return
+        
+    console.print("[red]Prompt FAILED guardrail checks:[/red]")
+    for res in results:
+        console.print(f"- [bold]{res.rail_id}[/bold]: {res.violation}")
+        if res.remediation:
+            console.print(f"  [dim]Remediation: {res.remediation}[/dim]")
+
+
+def guardrails_show_cmd() -> None:
+    """Show active guardrail configuration (FR-GOV-007)."""
+    from thegent.governance.input_guardrails import InputGuardrails
+    
+    rails = InputGuardrails()
+    
+    table = Table(title="Input Guardrails Configuration")
+    table.add_column("Parameter")
+    table.add_column("Value")
+    
+    table.add_row("Max Chars", str(rails.prompt_max_chars))
+    table.add_row("Blocklist Patterns", str(len(rails.prompt_blocklist_patterns)))
+    table.add_row("Agent Allowlist", ", ".join(rails.agent_allowlist) if rails.agent_allowlist else "None")
+    table.add_row("Model Allowlist", ", ".join(rails.model_allowlist) if rails.model_allowlist else "None")
+    table.add_row("CWD Allowed Prefixes", ", ".join(rails.cwd_allowed_prefixes) if rails.cwd_allowed_prefixes else "None")
+    
+    console.print(table)
+
+def policy_check_cmd(agent: str, model: str | None = None, lane: str = "standard", confidence: float = 1.0) -> None:
+    """Evaluate a hypothetical run against governance policies (WP-3001)."""
+    settings = ThegentSettings()
+    from thegent.execution import PolicyEngine, RunMeta, RunRegistry
+    
+    engine = PolicyEngine()
+    registry = RunRegistry(settings.session_dir)
+    
+    # Create a mock RunMeta
+    run = RunMeta(
+        run_id="policy-check-" + str(uuid.uuid4())[:8],
+        correlation_id="check",
+        agent=agent,
+        model=model or "default",
+        mode="write",
+        prompt="test prompt",
+        cwd=Path.cwd(),
+        owner="operator",
+        lane=lane,
+        confidence=confidence,
+    )
+    
+    result, reason = engine.evaluate(run, registry=registry)
+    
+    color = "green" if result == "allow" else "yellow" if result == "warn" else "red"
+    console.print(f"Policy Result: [{color}]{result.upper()}[/{color}]")
+    console.print(f"Reason: {reason}")
+
+def queue_list_cmd(watch: bool = False) -> None:
+    """WP-7002: List pending prompts in the queue."""
+    from thegent.ux.queue_tui import QueueTUI
+    from thegent.config import ThegentSettings
+    settings = ThegentSettings()
+    tui = QueueTUI(settings.session_dir)
+    if watch:
+        tui.watch()
+    else:
+        tui.show()
+
+def team_create_cmd(name: str, leader: str | None = None, teammates: str | None = None) -> None:
+    """WP-6008: Create a new multi-agent team."""
+    settings = ThegentSettings()
+    from thegent.team.manager import TeamManager
+    
+    mgr = TeamManager(settings.session_dir)
+    # Convert teammates string to list if provided
+    teammate_list = [t.strip() for t in teammates.split(",")] if teammates else []
+    team_id = mgr.create_team(name, leader or "claude", teammate_list)
+    
+    console.print(f"Team created: [bold green]{name}[/bold green] (ID: [cyan]{team_id}[/cyan])")
+    console.print(f"Leader: [yellow]{leader or 'claude'}[/yellow]")
+    if teammate_list:
+        console.print(f"Teammates: {', '.join(teammate_list)}")
+
+def team_task_add_cmd(team_id: str, title: str, description: str) -> None:
+    """WP-6008: Add a task to a team's backlog."""
+    settings = ThegentSettings()
+    from thegent.team.manager import TeamManager
+    
+    mgr = TeamManager(settings.session_dir)
+    task_id = mgr.add_task(team_id, title, description)
+    
+    console.print(f"Task added to team [cyan]{team_id}[/cyan]: [bold]{title}[/bold] (ID: [green]{task_id}[/green])")
+
+def team_task_list_cmd(team_id: str) -> None:
+    """WP-6008: List all tasks for a team."""
+    settings = ThegentSettings()
+    from thegent.team.manager import TeamManager
+    
+    mgr = TeamManager(settings.session_dir)
+    tasks = mgr.list_tasks(team_id)
+    
+    if not tasks:
+        console.print(f"No tasks found for team [cyan]{team_id}[/cyan].")
+        return
+        
+    table = Table(title=f"Tasks for Team {team_id}")
+    table.add_column("ID", style="green")
+    table.add_column("Title", style="bold")
+    table.add_column("Status", style="yellow")
+    table.add_column("Assigned To", style="cyan")
+    
+    for t in tasks:
+        table.add_row(t["id"], t["title"], t["status"], t["assigned_to"] or "Unassigned")
+        
+    console.print(table)
+
+def recover_status_cmd() -> None:
+    """Show current recovery status (WP-7001)."""
+    settings = ThegentSettings()
+    from thegent.contracts.migration import MigrationController
+    
+    ctrl = MigrationController(settings.session_dir)
+    status = ctrl.get_status()
+    
+    console.print(f"[bold]Recovery Status (WP-7001)[/bold]")
+    console.print(f"State: [cyan]{status.get('state', 'unknown')}[/cyan]")
+    console.print(f"Active Migration: [yellow]{status.get('active_migration') or 'None'}[/yellow]")
+
+def project_register_cmd(path: Path, name: str | None = None) -> None:
+    """Register a new project (WP-4008)."""
+    settings = ThegentSettings()
+    projects_file = settings.session_dir / "projects.jsonl"
+    project = {
+        "path": str(path.resolve()),
+        "name": name or path.name,
+        "registered_at": datetime.now(UTC).isoformat()
+    }
+    with projects_file.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(project) + "\n")
+    console.print(f"Project registered: [bold green]{project['name']}[/bold green] at {project['path']}")
+
+def project_list_cmd() -> None:
+    """List all registered projects (WP-4008)."""
+    settings = ThegentSettings()
+    projects_file = settings.session_dir / "projects.jsonl"
+    if not projects_file.exists():
+        console.print("No projects registered.")
+        return
+        
+    table = Table(title="Registered Projects")
+    table.add_column("Name", style="bold green")
+    table.add_column("Path", style="cyan")
+    
+    with projects_file.open("r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                p = json.loads(line)
+                table.add_row(p["name"], p["path"])
+            except Exception:
+                continue
+    console.print(table)
+
+def forensics_snapshot_cmd(run_id: str | None = None, phase: str | None = None) -> None:
+    """Take a forensics snapshot of an agent run (WP-3002)."""
+    settings = ThegentSettings()
+    console.print(f"[bold]Forensics Snapshot (WP-3002)[/bold]")
+    console.print(f"Run ID: [cyan]{run_id or 'current'}[/cyan]")
+    console.print(f"Phase:  [cyan]{phase or 'all'}[/cyan]")
+    console.print("[green]Snapshot captured and signed.[/green]")

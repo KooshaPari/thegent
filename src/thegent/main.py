@@ -29,6 +29,114 @@ from thegent.cli import (
     contracts_conformance_cmd,
     contracts_registry_cmd,
     cost_status_cmd,
+    usage_cmd,
+    dag_add_cmd,
+    dag_cancel_cmd,
+    dag_checkpoint_cmd,
+    dag_checkpoints_cmd,
+    dag_list_cmd,
+    dag_probe_cmd,
+    dag_ready_cmd,
+    dag_reconcile_cmd,
+    dag_recover_cmd,
+    dag_remove_cmd,
+    dag_rollback_cmd,
+    dag_run_cmd,
+    dag_status_cmd,
+    dag_sync_cmd,
+    dag_update_cmd,
+    dag_validate_cmd,
+    data_protection_cmd,
+    deferral_list_cmd,
+    deferral_resume_cmd,
+    discovery_parse_cmd,
+    discovery_register_cmd,
+    discovery_scan_cmd,
+    drift_cmd,
+    escalate_add_cmd,
+    escalate_approve_cmd,
+    escalate_list_cmd,
+    escalate_resolve_cmd,
+    explorer_cmd,
+    feedback_cmd,
+    govern_configure_cmd,
+    govern_go_cycle_cmd,
+    govern_go_health_cmd,
+    govern_go_status_cmd,
+    govern_go_watch_cmd,
+    handoff_list_cmd,
+    handoff_show_cmd,
+    history_cmd,
+    inspect_cmd,
+    interruption_list_cmd,
+    interruption_snooze_cmd,
+    list_agents_cmd,
+    list_droids_cmd,
+    list_models_cmd,
+    load_status_cmd,
+    logs_cmd,
+    loop_cmd,
+    loop_send_cmd,
+    loop_stop_cmd,
+    migration_cmd,
+    modes_cmd,
+    operations_cmd,
+    pause_cmd,
+    plan_analyze_cmd,
+    plan_claim_cmd,
+    plan_complete_cmd,
+    plan_do_next_cmd,
+    plan_get_next_cmd,
+    plan_incorporate_cmd,
+    plan_loop_cmd,
+    plan_progress_cmd,
+    plan_wait_next_cmd,
+    policy_show_cmd,
+    ps_cmd,
+    purge_cmd,
+    resolve_model_route_cmd,
+    resume_cmd,
+    retry_cmd,
+    rules_sync_cmd,
+    run_cmd,
+    run_diff_cmd,
+    session_contract_health_gate_cmd,
+    session_contract_health_report_cmd,
+    session_contract_health_trend_cmd,
+    session_contracts_cmd,
+    setup_cmd,
+    sitback_dashboard_cmd,
+    status_cmd,
+    stop_cmd,
+    sweep_cmd,
+    takeover_cmd,
+    terminal_route_cmd,
+    trace_replay_cmd,
+    wait_cmd,
+    summary_cmd,
+    team_create_cmd,
+    team_task_add_cmd,
+    team_task_list_cmd,
+    recover_status_cmd,
+    project_register_cmd,
+    project_list_cmd,
+    forensics_snapshot_cmd,
+)
+
+from thegent.cli import (
+    archive_cmd,
+    audit_verify_cmd,
+    benchmark_cmd,
+    bg_cmd,
+    cliproxy_login_cmd,
+    closure_pack_cmd,
+    cockpit_cmd,
+    compliance_report_cmd,
+    config_check_cmd,
+    contracts_conformance_cmd,
+    contracts_registry_cmd,
+    cost_status_cmd,
+    usage_cmd,
     dag_add_cmd,
     dag_cancel_cmd,
     dag_checkpoint_cmd,
@@ -177,6 +285,69 @@ govern_app.add_typer(guardrails_app, name="guardrails")
 
 finance_app = typer.Typer(help="Financial safety and cost governance (WP-5XXX)")
 govern_app.add_typer(finance_app, name="finance")
+
+team_app = typer.Typer(help="Manage multi-agent teams (WP-6008)")
+orchestrate_app.add_typer(team_app, name="team")
+
+
+@team_app.command("create")
+def team_create(
+    name: str = typer.Argument(..., help="Team name"),
+    leader: str = typer.Option("claude", "--leader", "-l", help="Team leader agent"),
+    teammates: str = typer.Option("cursor,codex", "--teammates", "-t", help="Comma-separated list of teammates"),
+) -> None:
+    """Create a new multi-agent team."""
+    team_create_cmd(name=name, leader=leader, teammates=teammates)
+
+
+@team_app.command("add-task")
+def team_task_add(
+    team_id: str = typer.Argument(..., help="Team ID"),
+    title: str = typer.Argument(..., help="Task title"),
+    description: str = typer.Option("", "--desc", "-d", help="Task description"),
+) -> None:
+    """Add a task to a team's backlog."""
+    team_task_add_cmd(team_id=team_id, title=title, description=description)
+
+
+@team_app.command("list-tasks")
+def team_task_list(
+    team_id: str = typer.Argument(..., help="Team ID"),
+) -> None:
+    """List all tasks for a team."""
+    team_task_list_cmd(team_id=team_id)
+
+
+project_app = typer.Typer(help="Manage cross-project discovery (WP-11XXX)")
+app.add_typer(project_app, name="project")
+
+
+@project_app.command("register")
+def project_register(
+    path: Path = typer.Argument(..., help="Project path"),
+    name: str | None = typer.Option(None, "--name", "-n", help="Project name"),
+) -> None:
+    """Register a project in the global registry."""
+    project_register_cmd(path=path, name=name)
+
+
+@project_app.command("list")
+def project_list() -> None:
+    """List all registered projects."""
+    project_list_cmd()
+
+
+forensics_app = typer.Typer(help="Forensic auditing and snapshotting (WP-12XXX)")
+app.add_typer(forensics_app, name="forensics")
+
+
+@forensics_app.command("snapshot")
+def forensics_snapshot(
+    run_id: str | None = typer.Option(None, "--run-id", "-r", help="Run ID"),
+    phase: str | None = typer.Option(None, "--phase", "-p", help="Snapshot phase: pre | post"),
+) -> None:
+    """Capture a forensic snapshot of the current environment."""
+    forensics_snapshot_cmd(run_id=run_id, phase=phase)
 
 
 @finance_app.command("dashboard")
@@ -579,7 +750,7 @@ def loop(
 
 @orchestrate_app.command("loop-send")
 def loop_send(
-    session_id: str = typer.Argument(..., help="Loop session ID (e.g. loop_1234567890)"),
+    session_id: str | None = typer.Argument(None, help="Loop session ID (auto-detected if missing)"),
     prompt: str = typer.Argument(..., help="Next prompt to inject (takeover)"),
 ) -> None:
     """Send prompt to a running loop. Human or agent can use this to inject the next instruction."""
@@ -588,7 +759,7 @@ def loop_send(
 
 @orchestrate_app.command("loop-stop")
 def loop_stop(
-    session_id: str = typer.Argument(..., help="Loop session ID to stop"),
+    session_id: str | None = typer.Argument(None, help="Loop session ID to stop (auto-detected if missing)"),
 ) -> None:
     """Send STOP signal to a running Lifecycle loop."""
     loop_stop_cmd(session_id=session_id)
@@ -666,8 +837,118 @@ def run(
     )
 
 
+from thegent.orchestration.tasks import TaskRole, ROLE_PROMPTS, get_role_prompt
+
+def _run_role_cmd(
+    role: TaskRole,
+    prompt: str,
+    cd: Path | None = None,
+    mode: str = "write",
+    timeout: int | None = None,
+    bg: bool = False,
+    model: str | None = None,
+    agent: str | None = None,
+    owner: str | None = None,
+    live: bool = True,
+    full: bool = False,
+) -> None:
+    """Run a task with a specific role-based system prompt."""
+    settings = ThegentSettings()
+    # If agent or model is explicitly provided, we use those.
+    # Otherwise, we use the virtual 'role' agent which defaults to gemini-3-flash.
+    effective_agent = agent or role.value
+    effective_timeout = timeout or settings.default_timeout
+    
+    if bg:
+        bg_cmd(
+            prompt=prompt,
+            agent=effective_agent,
+            cd=cd,
+            mode=mode,
+            timeout=effective_timeout,
+            full=full,
+            model=model,
+            owner=owner,
+        )
+    else:
+        run_cmd(
+            prompt=prompt,
+            agent=effective_agent,
+            cd=cd,
+            mode=mode,
+            timeout=effective_timeout,
+            full=full,
+            live=live,
+            model=model,
+        )
+
+@app.command("summarize")
+def summarize(
+    prompt: str = typer.Argument(..., help="Content or task to summarize"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    bg: bool = typer.Option(False, "--bg", "-b", help="Run in background"),
+    model: str | None = typer.Option(None, "--model", "-M", help="Model override"),
+    timeout: int | None = typer.Option(None, "--timeout", "-t", help="Timeout override"),
+) -> None:
+    """Summarize content with brevity and key takeaways."""
+    _run_role_cmd(TaskRole.SUMMARIZE, prompt, cd=cd, bg=bg, model=model, timeout=timeout)
+
+@app.command("research")
+def research(
+    prompt: str = typer.Argument(..., help="Research topic or task"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    bg: bool = typer.Option(False, "--bg", "-b", help="Run in background"),
+    model: str | None = typer.Option(None, "--model", "-M", help="Model override"),
+    timeout: int | None = typer.Option(None, "--timeout", "-t", help="Timeout override"),
+) -> None:
+    """Deep dive research and comprehensive information gathering."""
+    _run_role_cmd(TaskRole.RESEARCH, prompt, cd=cd, bg=bg, model=model, timeout=timeout)
+
+@app.command("review")
+def review(
+    prompt: str = typer.Argument(..., help="Content or code to review"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    bg: bool = typer.Option(False, "--bg", "-b", help="Run in background"),
+    model: str | None = typer.Option(None, "--model", "-M", help="Model override"),
+    timeout: int | None = typer.Option(None, "--timeout", "-t", help="Timeout override"),
+) -> None:
+    """Critical analysis and quality checks for code or documentation."""
+    _run_role_cmd(TaskRole.REVIEW, prompt, cd=cd, bg=bg, model=model, timeout=timeout)
+
+@app.command("explain")
+def explain(
+    prompt: str = typer.Argument(..., help="Concept or task to explain"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    bg: bool = typer.Option(False, "--bg", "-b", help="Run in background"),
+    model: str | None = typer.Option(None, "--model", "-M", help="Model override"),
+    timeout: int | None = typer.Option(None, "--timeout", "-t", help="Timeout override"),
+) -> None:
+    """Clarification and educational explanation of complex concepts."""
+    _run_role_cmd(TaskRole.EXPLAIN, prompt, cd=cd, bg=bg, model=model, timeout=timeout)
+
+@app.command("fix")
+def fix(
+    prompt: str = typer.Argument(..., help="Bug description or task to fix"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    bg: bool = typer.Option(False, "--bg", "-b", help="Run in background"),
+    model: str | None = typer.Option(None, "--model", "-M", help="Model override"),
+    timeout: int | None = typer.Option(None, "--timeout", "-t", help="Timeout override"),
+) -> None:
+    """Bug identification and resolution."""
+    _run_role_cmd(TaskRole.FIX, prompt, cd=cd, bg=bg, model=model, timeout=timeout)
+
+@app.command("code")
+def code(
+    prompt: str = typer.Argument(..., help="Feature implementation or coding task"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
+    bg: bool = typer.Option(False, "--bg", "-b", help="Run in background"),
+    model: str | None = typer.Option(None, "--model", "-M", help="Model override"),
+    timeout: int | None = typer.Option(None, "--timeout", "-t", help="Timeout override"),
+) -> None:
+    """Feature implementation and coding tasks."""
+    _run_role_cmd(TaskRole.CODE, prompt, cd=cd, bg=bg, model=model, timeout=timeout)
+
 @app.command("free")
-@orchestrate_app.command("free")
 def free(
     prompt: str = typer.Argument(None, help="Task prompt (omit when using --do-next)"),
     cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
@@ -1024,6 +1305,20 @@ def inbox_wait(
 
 app.add_typer(inbox_app, name="inbox")
 
+queue_app = typer.Typer(help="Manage the deferred prompt queue ($defer).")
+app.add_typer(queue_app, name="queue")
+
+
+@queue_app.command("list")
+def queue_list(
+    watch: bool = typer.Option(False, "--watch", "-w", help="Watch live"),
+) -> None:
+    """List pending prompts in the queue."""
+    from thegent.cli import queue_list_cmd
+
+    queue_list_cmd(watch=watch)
+
+
 rules_app = typer.Typer(help="Agent rules and instructions synchronization.")
 app.add_typer(rules_app, name="rules")
 
@@ -1110,7 +1405,7 @@ def govern_escalate_list(
 
 @escalate_app.command("resolve")
 def govern_escalate_resolve(
-    run_id: str = typer.Argument(..., help="Run ID to resolve"),
+    run_id: str | None = typer.Argument(None, help="Run ID to resolve (auto-detected if missing)"),
     resolution: str = typer.Option("resolved", "--resolution", "-r", help="Resolution status"),
 ) -> None:
     """Mark an escalation item as resolved."""
@@ -1119,7 +1414,7 @@ def govern_escalate_resolve(
 
 @escalate_app.command("approve")
 def govern_escalate_approve(
-    run_id: str = typer.Argument(..., help="Run ID to approve"),
+    run_id: str | None = typer.Argument(None, help="Run ID to approve (auto-detected if missing)"),
 ) -> None:
     """Approve an escalation, recording an override for the owner (G-GP-05)."""
     escalate_approve_cmd(run_id=run_id)
@@ -1431,6 +1726,15 @@ def observe_cost_status(
     cost_status_cmd(format=format)
 
 
+@observe_app.command("usage")
+def observe_usage(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+    no_cost: bool = typer.Option(False, "--no-cost", help="Skip cost status section"),
+) -> None:
+    """Show plan usage: provider metrics from CLIProxyAPIPlus and cost status."""
+    usage_cmd(format=format, include_cost=not no_cost)
+
+
 @observe_app.command("traffic")
 def observe_traffic() -> None:
     """TRAFFIC KPI Dashboard (WP-Y7)."""
@@ -1510,8 +1814,8 @@ def sitback_dashboard(
 @app.command("feedback")
 @govern_app.command("feedback")
 def feedback(
-    run_id: str = typer.Argument(..., help="Run ID to provide feedback for"),
-    score: float = typer.Argument(..., help="Confidence score (0.0 to 1.0)"),
+    run_id: str | None = typer.Argument(None, help="Run ID to provide feedback for (auto-detected if missing)"),
+    score: float = typer.Argument(1.0, help="Confidence score (0.0 to 1.0)"),
     note: str = typer.Option(None, "--note", "-m", help="Optional feedback note"),
 ) -> None:
     """Provide operator feedback for a specific run."""
@@ -1659,11 +1963,21 @@ def ps(
     )
 
 
+recover_app = typer.Typer(help="Self-healing and automated recovery (WP-2XXX)")
+app.add_typer(recover_app, name="recover")
+
+
+@recover_app.command("status")
+def recover_status() -> None:
+    """Show recovery stability and suggested playbooks."""
+    typer.echo("Command not implemented yet.")
+
+
 @app.command("status")
 @orchestrate_app.command("status")
 @observe_app.command("status")
 def status(
-    session_id: str = typer.Argument(..., help="Session id"),
+    session_id: str | None = typer.Argument(None, help="Session id (auto-detected if missing)"),
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: json or rich"),
     include_contract: bool = typer.Option(
         False, "--include-contract", help="Include resolved route contract metadata in output"
@@ -1676,7 +1990,7 @@ def status(
 @app.command("explain")
 @orchestrate_app.command("explain")
 def explain_run(
-    run_id: str = typer.Argument(..., help="Run ID to explain"),
+    run_id: str | None = typer.Argument(None, help="Run ID to explain (auto-detected if missing)"),
 ) -> None:
     """Show detailed explanation for an agent run (WP-4002)."""
     from thegent.cli import explain_cmd
@@ -1686,7 +2000,7 @@ def explain_run(
 
 @orchestrate_app.command("fallbacks")
 def orchestrate_fallbacks(
-    run_id: str = typer.Argument(..., help="Run ID to get fallbacks for"),
+    run_id: str | None = typer.Argument(None, help="Run ID to get fallbacks for (auto-detected if missing)"),
 ) -> None:
     """Show safe fallback options for a failed run (WP-4003)."""
     # import inside function to avoid import cycles; ensure symbol exists
@@ -1974,7 +2288,7 @@ def session_contract_health_trend(
 @orchestrate_app.command("logs")
 @observe_app.command("logs")
 def logs(
-    session_id: str = typer.Argument(..., help="Session id"),
+    session_id: str | None = typer.Argument(None, help="Session id (auto-detected if missing)"),
     follow: bool = typer.Option(False, "--follow", "-F", help="Follow log output"),
     stderr: bool = typer.Option(False, "--stderr", help="Show stderr log instead of stdout"),
     tail: int = typer.Option(200, "--tail", help="Initial tail lines"),
@@ -2004,7 +2318,7 @@ def terminal_explorer() -> None:
 @orchestrate_app.command("wait")
 @observe_app.command("wait")
 def wait(
-    session_id: str = typer.Argument(..., help="Session id"),
+    session_id: str | None = typer.Argument(None, help="Session id (auto-detected if missing)"),
     timeout: int = typer.Option(0, "--timeout", "-t", help="Max wait seconds (0=unbounded)"),
 ) -> None:
     """Wait for session completion and return session exit code."""
@@ -2033,7 +2347,7 @@ def wait_next(
 @orchestrate_app.command("stop")
 @recover_app.command("stop")
 def stop(
-    session_id: str = typer.Argument(..., help="Session id"),
+    session_id: str | None = typer.Argument(None, help="Session id (auto-detected if missing)"),
     force: bool = typer.Option(False, "--force", help="Use SIGKILL instead of SIGTERM"),
     wind_down: bool = typer.Option(
         False,
@@ -2054,7 +2368,7 @@ def stop(
 @app.command("pause")
 @orchestrate_app.command("pause")
 def pause(
-    session_id: str = typer.Argument(..., help="Session id to pause"),
+    session_id: str | None = typer.Argument(None, help="Session id to pause (auto-detected if missing)"),
 ) -> None:
     """Mark a session as PAUSED in the registry (HITL)."""
     pause_cmd(session_id=session_id)
@@ -2063,7 +2377,7 @@ def pause(
 @app.command("resume")
 @orchestrate_app.command("resume")
 def resume(
-    session_id: str = typer.Argument(..., help="Session id to resume"),
+    session_id: str | None = typer.Argument(None, help="Session id to resume (auto-detected if missing)"),
 ) -> None:
     """Mark a paused session as RUNNING in the registry (HITL)."""
     resume_cmd(session_id=session_id)
@@ -2141,11 +2455,13 @@ def resolve_model_route(
     model: str = typer.Argument(..., help="Model identifier (alias or canonical model ID)"),
     provider: str | None = typer.Option(None, "--provider", "-P", help="Optional provider hint"),
     policy: str = typer.Option(
-        "prefer_direct", "--policy", help="Routing policy: prefer_direct, prefer_proxy, failover"
+        "prefer_direct", "--policy", help="Routing policy: prefer_direct, prefer_proxy, failover, cheapest, cost_quality, pareto"
     ),
+    quality_floor: float = typer.Option(0.0, "--quality-floor", help="Min quality (0-1) for cost_quality policy"),
+    lane: str | None = typer.Option(None, "--lane", help="Lane: critical | speed for pareto strategy"),
 ) -> None:
     """Resolve a model to a concrete provider+alias route."""
-    resolve_model_route_cmd(model=model, provider=provider, policy=policy)
+    resolve_model_route_cmd(model=model, provider=provider, policy=policy, quality_floor=quality_floor, lane=lane)
 
 
 @app.command("route-probe")
@@ -2153,26 +2469,80 @@ def route_probe(
     model: str = typer.Argument(..., help="Model identifier (alias or canonical model ID)"),
     provider: str | None = typer.Option(None, "--provider", "-P", help="Optional provider hint"),
     policy: str = typer.Option(
-        "prefer_direct", "--policy", help="Routing policy: prefer_direct, prefer_proxy, failover"
+        "prefer_direct", "--policy", help="Routing policy: prefer_direct, prefer_proxy, failover, cheapest, cost_quality, pareto"
     ),
+    quality_floor: float = typer.Option(0.0, "--quality-floor", help="Min quality (0-1) for cost_quality policy"),
+    lane: str | None = typer.Option(None, "--lane", help="Lane: critical | speed for pareto strategy"),
 ) -> None:
     """Dry-run route resolution: show which provider would be selected (DX-004). Alias for resolve-model-route."""
-    resolve_model_route_cmd(model=model, provider=provider, policy=policy)
+    resolve_model_route_cmd(model=model, provider=provider, policy=policy, quality_floor=quality_floor, lane=lane)
 
 
 models_app = typer.Typer(help="Model catalog and cache commands")
 app.add_typer(models_app, name="models")
 
 
+@models_app.command("metrics")
+def models_metrics(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+    no_cache: bool = typer.Option(False, "--no-cache", help="Bypass cache"),
+    limit: int = typer.Option(50, "--limit", "-n", help="Max rows to show"),
+) -> None:
+    """Show cost, speed, and quality for all model-provider pairs (unified view)."""
+    from thegent.cli import metrics_cmd
+
+    metrics_cmd(format=format, no_cache=no_cache, limit=limit)
+
+
+@models_app.command("cost-values")
+def models_cost_values(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+) -> None:
+    """Show cost values ($/1k tokens) for all model-provider pairs. Uses proxy metrics when reachable."""
+    from thegent.cli import cost_values_cmd
+
+    cost_values_cmd(format=format)
+
+
+@models_app.command("speed-index")
+def models_speed_index(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+    no_cache: bool = typer.Option(False, "--no-cache", help="Bypass cache, fetch fresh metrics"),
+) -> None:
+    """Show speed index (0-1) for all model-provider pairs. Uses proxy metrics when reachable."""
+    from thegent.cli import speed_index_cmd
+
+    speed_index_cmd(format=format, no_cache=no_cache)
+
+
+@models_app.command("quality-index")
+def models_quality_index(
+    format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
+    no_cache: bool = typer.Option(False, "--no-cache", help="Bypass cache, fetch fresh data"),
+) -> None:
+    """Show quality index (0-1) for all models. Uses benchmarks.json (TB2.0, SWE-Bench, AIME)."""
+    from thegent.cli import quality_index_cmd
+
+    quality_index_cmd(format=format, no_cache=no_cache)
+
+
 @models_app.command("refresh")
 def models_refresh() -> None:
-    """Invalidate models cache. Next list-models or route resolution will re-scrape."""
-    from thegent.models import invalidate_models_cache
+    """Invalidate models, speed-index, and quality-index caches. Next lookup will re-fetch."""
+    from thegent.models import (
+        invalidate_models_cache,
+        invalidate_quality_index_cache,
+        invalidate_speed_index_cache,
+    )
 
-    if invalidate_models_cache():
+    models_invalidated = invalidate_models_cache()
+    invalidate_speed_index_cache()
+    invalidate_quality_index_cache()
+    if models_invalidated:
         typer.echo("Models cache invalidated.")
     else:
         typer.echo("Models cache was empty or already invalidated.")
+    typer.echo("Speed and quality index caches cleared.")
 
 
 @models_app.command("contract")
@@ -2376,7 +2746,7 @@ def plan_wait_next(
 @plan_app.command("claim")
 def plan_claim(
     item_id: str = typer.Argument(..., help="Item ID to claim"),
-    agent_id: str = typer.Argument(..., help="Agent ID (e.g. agent-1)"),
+    agent_id: str | None = typer.Argument(None, help="Agent ID (auto-detected if missing)"),
     cd: Path | None = typer.Option(None, "--cd", "-d", help="Project directory"),
 ) -> None:
     """Claim an item in the unified work stream."""
@@ -2386,7 +2756,7 @@ def plan_claim(
 @plan_app.command("complete")
 def plan_complete(
     item_id: str = typer.Argument(..., help="Item ID to mark complete"),
-    agent_id: str = typer.Argument(..., help="Agent ID"),
+    agent_id: str | None = typer.Argument(None, help="Agent ID (auto-detected if missing)"),
     cd: Path | None = typer.Option(None, "--cd", "-d", help="Project directory"),
 ) -> None:
     """Mark an item as complete in the unified work stream."""
@@ -2574,7 +2944,7 @@ def dag_checkpoint(
 @plan_app.command("rollback")
 @recover_app.command("rollback")
 def dag_rollback(
-    checkpoint_id: str = typer.Argument(..., help="Checkpoint ID to rollback to"),
+    checkpoint_id: str | None = typer.Argument(None, help="Checkpoint ID to rollback to (auto-detected if missing)"),
     cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
 ) -> None:
     """Rollback DAG state to a specific checkpoint."""
@@ -2615,6 +2985,49 @@ mcp_app = typer.Typer(
     help="MCP config and service: install thegent into Cursor/Claude Code/Codex; manage HTTP server as startup service",
 )
 app.add_typer(mcp_app, name="mcp")
+
+mgmt_app = typer.Typer(
+    help="Management commands for agent self-service: ensure proxy, verify integrations",
+)
+app.add_typer(mgmt_app, name="mgmt")
+
+
+@mgmt_app.command("ensure-proxy")
+def mgmt_ensure_proxy(
+    timeout: float = typer.Option(30.0, "--timeout", "-t", help="Seconds to wait for proxy readiness"),
+) -> None:
+    """Ensure MCP + proxy are running. Starts via process-compose if needed. Agent self-service."""
+    from rich.console import Console
+
+    from thegent.mgmt_manage import ensure_proxy
+
+    console = Console()
+    ok, msg = ensure_proxy(timeout_sec=timeout)
+    if ok:
+        console.print(f"[green]{msg}[/green]")
+    else:
+        console.print(f"[red]{msg}[/red]")
+        raise typer.Exit(1)
+
+
+@mgmt_app.command("verify-codex-cliproxy")
+def mgmt_verify_codex_cliproxy(
+    model: str = typer.Option("minimax-m2.5", "--model", "-m", help="Model to test"),
+    prompt: str = typer.Option("echo hello", "--prompt", "-p", help="Codex prompt"),
+    timeout: float = typer.Option(90.0, "--timeout", "-t", help="Codex exec timeout (seconds)"),
+) -> None:
+    """Verify Codex works with CLIProxy adapter. Agent self-service: no user intervention needed."""
+    from rich.console import Console
+
+    from thegent.mgmt_manage import verify_codex_cliproxy
+
+    console = Console()
+    ok, msg = verify_codex_cliproxy(model=model, prompt=prompt, timeout_sec=timeout)
+    if ok:
+        console.print(f"[green]{msg}[/green]")
+    else:
+        console.print(f"[red]{msg}[/red]")
+        raise typer.Exit(1)
 
 
 @mcp_app.command("install")
@@ -2725,15 +3138,23 @@ def mcp_prune(
     dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be killed"),
 ) -> None:
     """Kill redundant agent-related Node.js processes (LSPs, MCP servers, cc-status).
-    Use this when memory usage is high (>10GB) and many orphan processes are detected."""
-    import subprocess
+    Use this when memory usage is high (>10GB) and many orphan processes are detected.
+    For automatic pruning on Stop, set THGENT_AUTO_PRUNE=1."""
     import os
     import signal
+    import subprocess
+    import time
+    from typing import Any
+
     from rich.console import Console
     from rich.table import Table
-    
+
+    from thegent.config import ThegentSettings
+    from thegent.prune_utils import is_orphan_by_ppid
+
     console = Console()
-    
+    settings = ThegentSettings()
+
     # Patterns for redundant processes
     patterns = [
         "pyright-langserver",
@@ -2746,38 +3167,111 @@ def mcp_prune(
         "next-devtools-mcp",
         "sequential-thinking",
     ]
-    
-    try:
-        # Get all node processes
-        res = subprocess.run(["ps", "-eo", "pid,ppid,command"], capture_output=True, text=True, check=False)
-        lines = res.stdout.strip().splitlines()
-    except Exception as e:
-        console.print(f"[red]Failed to list processes: {e}[/red]")
-        return
 
-    to_kill: list[dict[str, Any]] = []
-    for line in lines[1:]: # Skip header
-        parts = line.split(None, 2)
-        if len(parts) < 3:
+    try:
+        res = subprocess.run(
+            ["ps", "-eo", "pid,ppid,rss,command"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        lines = res.stdout.strip().splitlines()
+        has_rss = True
+    except Exception:
+        try:
+            res = subprocess.run(
+                ["ps", "-eo", "pid,ppid,command"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            lines = res.stdout.strip().splitlines()
+            has_rss = False
+        except Exception as e:
+            console.print(f"[red]Failed to list processes: {e}[/red]")
+            return
+
+    # Build parent_map and cmd_map for orphan-by-ppid
+    parent_map: dict[int, int] = {}
+    cmd_map: dict[int, str] = {}
+    candidates: list[dict[str, Any]] = []
+
+    for line in lines[1:]:
+        if has_rss:
+            parts = line.split(None, 3)
+            if len(parts) < 4:
+                continue
+            pid_s, ppid_s, rss_s, cmd = parts[0], parts[1], parts[2], parts[3]
+            try:
+                rss_kb = int(rss_s)
+            except ValueError:
+                rss_kb = 0
+        else:
+            parts = line.split(None, 2)
+            if len(parts) < 3:
+                continue
+            pid_s, ppid_s, cmd = parts[0], parts[1], parts[2]
+            rss_kb = 0
+        try:
+            pid_i = int(pid_s)
+            ppid_i = int(ppid_s)
+        except ValueError:
             continue
-        pid, ppid, cmd = parts[0], parts[1], parts[2]
-        
+        parent_map[pid_i] = ppid_i
+        cmd_map[pid_i] = cmd
+
         cmd_lower = cmd.lower()
         if any(x in cmd_lower for x in ("node", "npm", "bun", "deno", "cc-status")):
             for p in patterns:
                 if p in cmd:
-                    to_kill.append({"pid": int(pid), "ppid": int(ppid), "cmd": cmd})
+                    candidates.append({"pid": pid_i, "ppid": ppid_i, "cmd": cmd, "rss_kb": rss_kb})
                     break
-    
+
+    # Filter to true orphans when orphan-by-ppid enabled
+    if settings.prune_orphan_by_ppid:
+        to_kill = [c for c in candidates if is_orphan_by_ppid(c["pid"], parent_map, cmd_map)]
+    else:
+        to_kill = candidates
+
+    # RSS-aware sort: kill highest first by default
+    sort_by = (settings.prune_sort_by or "rss").lower()
+    sort_order = (settings.prune_sort_order or "desc").lower()
+    if sort_by == "rss" and to_kill:
+        reverse = sort_order == "desc"
+        to_kill = sorted(to_kill, key=lambda c: c.get("rss_kb", 0), reverse=reverse)
+
     if not to_kill:
-        console.print("[green]No redundant agent processes found.[/green]")
+        if settings.prune_orphan_by_ppid and len(candidates) > 0:
+            console.print(f"[green]No orphan processes (all {len(candidates)} candidates have living Cursor/Claude/Codex parents).[/green]")
+        else:
+            console.print("[green]No redundant agent processes found.[/green]")
         return
 
-    t = Table(title="Redundant Processes Detected")
+    if settings.prune_orphan_by_ppid and len(candidates) > len(to_kill):
+        console.print(f"[dim]Orphan-by-ppid: {len(to_kill)} orphans of {len(candidates)} candidates (kept {len(candidates) - len(to_kill)} with living parents)[/dim]")
+
+    # Zombie count (processes with state Z; parent should reap)
+    zombie_count = 0
+    try:
+        zres = subprocess.run(["ps", "-eo", "stat"], capture_output=True, text=True, check=False)
+        if zres.returncode == 0:
+            zombie_count = sum(1 for line in zres.stdout.splitlines()[1:] if "Z" in line.split()[0])
+    except Exception:
+        pass
+    if zombie_count > 0:
+        console.print(f"[yellow]Zombie processes: {zombie_count} (parent should reap; not pruned)[/yellow]")
+
+    t = Table(title="Orphan Processes to Prune" if settings.prune_orphan_by_ppid else "Redundant Processes Detected")
     t.add_column("PID")
+    if any(c.get("rss_kb", 0) > 0 for c in to_kill):
+        t.add_column("RSS (KB)")
     t.add_column("Command")
     for item in to_kill:
-        t.add_row(str(item["pid"]), item["cmd"][:80] + ("..." if len(item["cmd"]) > 80 else ""))
+        row: list[str] = [str(item["pid"])]
+        if any(c.get("rss_kb", 0) > 0 for c in to_kill):
+            row.append(str(item.get("rss_kb", 0)))
+        row.append(item["cmd"][:80] + ("..." if len(item["cmd"]) > 80 else ""))
+        t.add_row(*row)
     
     console.print(t)
     
@@ -2791,19 +3285,68 @@ def mcp_prune(
             return
 
     killed_count = 0
+    grace_period = settings.prune_grace_period
     for item in to_kill:
+        pid = item["pid"]
         try:
-            os.kill(item["pid"], signal.SIGTERM)
+            os.kill(pid, signal.SIGTERM)
             killed_count += 1
+            if grace_period > 0:
+                time.sleep(grace_period)
+                try:
+                    os.kill(pid, 0)  # Check if still alive (raises if not)
+                    os.kill(pid, signal.SIGKILL)
+                except (ProcessLookupError, OSError):
+                    pass  # Process already exited
+        except ProcessLookupError:
+            pass  # Process already gone
         except Exception:
             try:
-                os.kill(item["pid"], signal.SIGKILL)
+                os.kill(pid, signal.SIGKILL)
                 killed_count += 1
             except Exception:
                 pass
                 
     console.print(f"[green]Successfully pruned {killed_count} processes.[/green]")
     console.print("[dim]Note: Active agents may restart their LSPs on the next interaction.[/dim]")
+
+
+@mcp_app.command("prune-periodic")
+def mcp_prune_periodic(
+    action: str = typer.Argument(
+        ...,
+        help="Action: install, start, stop, status, uninstall",
+    ),
+) -> None:
+    """Install periodic prune daemon (launchd on macOS, systemd on Linux).
+    Runs thegent mcp prune --force every 15 min. Catches orphans when Stop doesn't fire (headless, Codex)."""
+    from rich.console import Console
+
+    from thegent.mcp_manage import (
+        prune_periodic_install,
+        prune_periodic_start,
+        prune_periodic_status,
+        prune_periodic_stop,
+        prune_periodic_uninstall,
+    )
+
+    console = Console()
+    if action == "install":
+        ok, msg = prune_periodic_install()
+    elif action == "start":
+        ok, msg = prune_periodic_start()
+    elif action == "stop":
+        ok, msg = prune_periodic_stop()
+    elif action == "status":
+        ok, msg = prune_periodic_status()
+    elif action == "uninstall":
+        ok, msg = prune_periodic_uninstall()
+    else:
+        console.print(f"[red]Unknown action: {action}[/red]")
+        raise typer.Exit(1)
+    console.print(msg)
+    if not ok and action in ("install", "start", "stop", "uninstall"):
+        raise typer.Exit(1)
 
 
 @mcp_app.command("fix")
@@ -2869,15 +3412,201 @@ def mcp_migrate_unimount(
     console.print("[dim]Ensure thegent MCP is running: thegent mcp up[/dim]")
 
 
+@app.command(
+    "install-shims",
+    help="MTSP-10: Install optimized accelerators (shims) for common tools.",
+)
+def install_shims_cmd(
+    bin_dir: Path = typer.Option(
+        Path.home() / ".local" / "bin", "--bin-dir", help="Directory for shims"
+    ),
+    force: bool = typer.Option(False, "--force", "-f", help="Force overwrite"),
+    all_tools: bool = typer.Option(True, "--all", help="Install accelerators for git, grep, fd, jq, etc."),
+) -> None:
+    """MTSP-10: Install optimized accelerators (shims) for common tools.
+    Accelerates git (multi-tenant), grep (rg), find (fd), jq (jaq)."""
+    from thegent.clode_main import install_links as clode_install_links
+    from rich.console import Console
+    console = Console()
+    
+    clode_install_links(bin_dir=bin_dir, force=force)
+
+    if all_tools:
+        _install_tool_accelerators(bin_dir, force)
+        _install_role_accelerators(bin_dir, force)
+        console.print(f"[green]Tool accelerators installed to {bin_dir}[/green]")
+        console.print("[dim]Accelerators: git, grep, find, jq, wc, summarize, research, review, explain, fix, code[/dim]")
+        console.print(f"[yellow]Action Required: Ensure {bin_dir} is early in your PATH![/yellow]")
+
+def _install_role_accelerators(bin_dir: Path, force: bool) -> None:
+    """Install shims for new task roles."""
+    from thegent.orchestration.tasks import TaskRole
+    for role in TaskRole:
+        shim = bin_dir / role.value
+        if force or not shim.exists():
+            shim.write_text(f"""#!/usr/bin/env bash
+# thegent role accelerator: {role.value}
+# Generated by thegent install-shims --all
+exec thegent {role.value} "$@"
+""")
+            shim.chmod(0o755)
+
+def _install_tool_accelerators(bin_dir: Path, force: bool) -> None:
+    """Write accelerator shims to bin_dir."""
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    safe_bin_path = "/usr/bin:/opt/homebrew/bin:/bin:/usr/sbin:/sbin"
+    
+    # Git Accelerator (MTSP-09/10)
+    git_shim = bin_dir / "git"
+    if force or not git_shim.exists():
+        git_shim.write_text(f"""#!/usr/bin/env bash
+set -euo pipefail
+# thegent git accelerator: Multi-tenant lock coordination + caching
+# Generated by thegent install-shims --all
+THEGENT_TOOL_BIN_PATH="{safe_bin_path}"
+resolve_real_binary() {{
+  PATH="$THEGENT_TOOL_BIN_PATH" command -v "$1"
+}}
+REAL_GIT="$(resolve_real_binary git || true)"
+if [[ -z "$REAL_GIT" ]]; then
+  echo "thegent git shim: failed to resolve real git executable" >&2
+  exit 127
+fi
+export THEGENT_GIT_BIN="$REAL_GIT"
+PROJECT_DIR="$( "$REAL_GIT" rev-parse --show-toplevel 2>/dev/null || pwd )"
+HOOKS_LIB="$(dirname "$(which thegent)")/../hooks/lib/common.sh"
+if [[ -f "$HOOKS_LIB" ]]; then
+    export PROJECT_DIR
+    source "$HOOKS_LIB" 2>/dev/null || true
+fi
+
+# Use the git function defined in common.sh if available
+if [[ "$(type -t git)" == "function" ]]; then
+    git "$@"
+else
+    exec "$REAL_GIT" "$@"
+fi
+""")
+        git_shim.chmod(0o755)
+
+    # Grep -> rg
+    grep_shim = bin_dir / "grep"
+    if force or not grep_shim.exists():
+        grep_shim.write_text(f"""#!/usr/bin/env bash
+THEGENT_TOOL_BIN_PATH="{safe_bin_path}"
+resolve_real_binary() {{
+  PATH="$THEGENT_TOOL_BIN_PATH" command -v "$1"
+}}
+if command -v rg &>/dev/null; then
+    exec rg "$@"
+else
+    REAL_GREP="$(resolve_real_binary grep || true)"
+    if [[ -z "$REAL_GREP" ]]; then
+        echo "thegent grep shim: failed to resolve real grep executable" >&2
+        exit 127
+    fi
+    exec "$REAL_GREP" "$@"
+fi
+""")
+        grep_shim.chmod(0o755)
+
+    # find -> fd
+    find_shim = bin_dir / "find"
+    if force or not find_shim.exists():
+        find_shim.write_text(f"""#!/usr/bin/env bash
+THEGENT_TOOL_BIN_PATH="{safe_bin_path}"
+resolve_real_binary() {{
+  PATH="$THEGENT_TOOL_BIN_PATH" command -v "$1"
+}}
+if command -v fd &>/dev/null; then
+    exec fd "$@"
+else
+    REAL_FIND="$(resolve_real_binary find || true)"
+    if [[ -z "$REAL_FIND" ]]; then
+        echo "thegent find shim: failed to resolve real find executable" >&2
+        exit 127
+    fi
+    exec "$REAL_FIND" "$@"
+fi
+""")
+        find_shim.chmod(0o755)
+
+    # jq -> jaq
+    jq_shim = bin_dir / "jq"
+    if force or not jq_shim.exists():
+        jq_shim.write_text(f"""#!/usr/bin/env bash
+THEGENT_TOOL_BIN_PATH="{safe_bin_path}"
+resolve_real_binary() {{
+  PATH="$THEGENT_TOOL_BIN_PATH" command -v "$1"
+}}
+if command -v jaq &>/dev/null; then
+    exec jaq "$@"
+else
+    REAL_JQ="$(resolve_real_binary jq || true)"
+    if [[ -z "$REAL_JQ" ]]; then
+        echo "thegent jq shim: failed to resolve real jq executable" >&2
+        exit 127
+    fi
+    exec "$REAL_JQ" "$@"
+fi
+""")
+        jq_shim.chmod(0o755)
+
+    # uv accelerator (MTSP-15)
+    uv_shim = bin_dir / "uv"
+    if force or not uv_shim.exists():
+        uv_shim.write_text(f"""#!/usr/bin/env bash
+THEGENT_TOOL_BIN_PATH="{safe_bin_path}"
+resolve_real_binary() {{
+  PATH="$THEGENT_TOOL_BIN_PATH" command -v "$1"
+}}
+source "$(dirname "$(which thegent)")/../hooks/lib/common.sh" 2>/dev/null || true
+if [[ "$(type -t uv)" == "function" ]]; then
+    uv "$@"
+else
+    REAL_UV="$(resolve_real_binary uv || true)"
+    if [[ -z "$REAL_UV" ]]; then
+        echo "thegent uv shim: failed to resolve real uv executable" >&2
+        exit 127
+    fi
+    exec "$REAL_UV" "$@"
+fi
+""")
+        uv_shim.chmod(0o755)
+
+    # npm accelerator (MTSP-15)
+    npm_shim = bin_dir / "npm"
+    if force or not npm_shim.exists():
+        npm_shim.write_text(f"""#!/usr/bin/env bash
+THEGENT_TOOL_BIN_PATH="{safe_bin_path}"
+resolve_real_binary() {{
+  PATH="$THEGENT_TOOL_BIN_PATH" command -v "$1"
+}}
+source "$(dirname "$(which thegent)")/../hooks/lib/common.sh" 2>/dev/null || true
+if [[ "$(type -t npm)" == "function" ]]; then
+    npm "$@"
+else
+    REAL_NPM="$(resolve_real_binary npm || true)"
+    if [[ -z "$REAL_NPM" ]]; then
+        echo "thegent npm shim: failed to resolve real npm executable" >&2
+        exit 127
+    fi
+    exec "$REAL_NPM" "$@"
+fi
+""")
+        npm_shim.chmod(0o755)
+
 @mcp_app.command("up")
-def mcp_up_cmd() -> None:
+def mcp_up_cmd(
+    reload: bool = typer.Option(False, "--reload", "-r", help="Enable hot reload (HMR)"),
+) -> None:
     """Start MCP + proxy via process-compose (bundled mode)."""
     from rich.console import Console
 
     from thegent.mcp_manage import mcp_up
 
     console = Console()
-    ok, msg = mcp_up()
+    ok, msg = mcp_up(reload=reload)
     if ok:
         console.print(f"[green]{msg}[/green]")
         console.print("[dim]MCP: http://127.0.0.1:3847/mcp | Proxy: http://127.0.0.1:8317[/dim]")
@@ -2886,7 +3615,107 @@ def mcp_up_cmd() -> None:
         raise typer.Exit(1)
 
 
-@mcp_app.command("down")
+memory_app = typer.Typer(help="Dual system of issue collection and memory collection (WP-MEMORY)")
+app.add_typer(memory_app, name="memory")
+
+
+@memory_app.command("add")
+def memory_add_cmd(
+    content: str = typer.Argument(..., help="The memory content"),
+    cat: str = typer.Option("note", "--category", "-c", help="note|lesson_positive|lesson_negative|issue|friction"),
+    scope: str = typer.Option(None, "--scope", "-s", help="agent|ephemeral|project|process"),
+):
+    """MTSP-17: Manually record a memory fragment."""
+    from thegent.orchestration.memory import MemoryCategory, FrictionScope, MemorySystem
+    system = MemorySystem(Path.cwd())
+    system.record(
+        content,
+        MemoryCategory(cat),
+        "cli",
+        scope=FrictionScope(scope) if scope else None
+    )
+    from rich.console import Console
+    Console().print("[green]Memory recorded.[/green]")
+
+@memory_app.command("remember")
+def memory_remember(
+    content: str = typer.Argument(..., help="Note to remember"),
+):
+    """Shortcut for memory add --category note."""
+    memory_add_cmd(content=content, cat="note")
+
+@memory_app.command("issue")
+def memory_issue(
+    content: str = typer.Argument(..., help="Issue or friction point"),
+):
+    """Shortcut for memory add --category issue."""
+    memory_add_cmd(content=content, cat="issue")
+
+@memory_app.command("rule")
+def memory_rule(
+    content: str = typer.Argument(..., help="Rule or practice"),
+    negative: bool = typer.Option(False, "--negative", "-n", help="Mark as a 'don't do this' rule"),
+):
+    """Shortcut for memory add --category lesson_positive/negative."""
+    cat = "lesson_negative" if negative else "lesson_positive"
+    memory_add_cmd(content=content, cat=cat)
+
+@memory_app.command("scrape")
+def memory_scrape_cmd():
+    """MTSP-18: Scrape session history and record prompts to audit log."""
+    from thegent.orchestration.memory import MemoryCategory, MemorySystem
+    from thegent.orchestration.session_scraper import SessionScraper
+
+    scraper = SessionScraper(Path.cwd())
+    system = MemorySystem(Path.cwd())
+    
+    # Record current session prompts
+    prompts = scraper.collect_all_recent_prompts()
+    recorded = 0
+    
+    # Basic de-dupe
+    recent = system.get_recent(limit=100, category=MemoryCategory.USER_PROMPT)
+    recent_contents = {f.content for f in recent}
+    
+    for p in prompts:
+        if p not in recent_contents:
+            system.record(p, MemoryCategory.USER_PROMPT, "cli-scrape", metadata={"scraped": True})
+            recorded += 1
+            
+    if recorded > 0:
+        from rich.console import Console
+        Console().print(f"[green]Scraped {recorded} new prompts into memory audit log.[/green]")
+
+
+@memory_app.command("synthesize")
+def memory_synthesize_cmd():
+    """MTSP-17: Generate a synthesis report from the audit log."""
+    from thegent.orchestration.memory import MemorySystem
+    system = MemorySystem(Path.cwd())
+    from rich.console import Console
+    from rich.markdown import Markdown
+    Console().print(Markdown(system.synthesize_to_markdown()))
+
+
+@memory_app.command("garden")
+def memory_garden_cmd():
+    """MEM-AUD-02: Run the Gardener agent to prune memory into documentation."""
+    import asyncio
+    from thegent.orchestration.gardener import Gardener
+    from rich.console import Console
+    
+    console = Console()
+    console.print("[yellow]Gardener is entering the project...[/yellow]")
+    
+    gardener = Gardener(Path.cwd())
+    
+    # Run async function in a synchronous Typer command
+    async def _run():
+        return await gardener.run_synthesis()
+        
+    result = asyncio.run(_run())
+    console.print(result)
+
 def mcp_down_cmd() -> None:
     """Stop MCP + proxy (process-compose)."""
     from rich.console import Console
@@ -2990,6 +3819,12 @@ def serve(
     port: int | None = typer.Option(None, "--port", "-p", help="HTTP port (default: THGENT_MCP_PORT or 3847)"),
     force: bool = typer.Option(False, "--force", "-f", help="Run in foreground even if service is available"),
     http: bool = typer.Option(True, "--http/--no-http", help="Start HTTP server (default)"),
+    reload: bool = typer.Option(
+        os.environ.get("THGENT_RELOAD") == "1",
+        "--reload",
+        "-r",
+        help="Enable hot reload (HMR) for development",
+    ),
 ) -> None:
     """Start the MCP server. Defaults to HTTP. Delegates to launchd/Homebrew service when available."""
     try:
@@ -3022,7 +3857,7 @@ def serve(
     if port is not None:
         settings = settings.model_copy(update={"mcp_port": port})
 
-    if not force:
+    if not force and not reload:
         run_foreground, msg = serve_delegate_or_run(settings)
         if not run_foreground:
             from rich.console import Console
@@ -3030,7 +3865,7 @@ def serve(
             Console().print(f"[green]{msg}[/green]")
             raise typer.Exit(0)
 
-    run(host=host or settings.mcp_host, port=port or settings.mcp_port)
+    run(host=host or settings.mcp_host, port=port or settings.mcp_port, reload=reload)
 
 
 @app.command("install")
