@@ -1,1 +1,4 @@
+# Documentation assets
+docs/public/assets/demos/*.gif
+docs-dist/
 .worktrees/
