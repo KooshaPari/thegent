@@ -293,12 +293,16 @@ def _process_compose_path() -> Path | None:
 
 def mcp_up() -> tuple[bool, str]:
     """Start MCP + proxy via process-compose. Returns (success, message)."""
+    from thegent.errors import ConfigError, get_install_hint
     pc = _process_compose_path()
     if pc is None:
         return False, "process-compose.yaml not found. Run from thegent project root."
     proc = shutil.which("process-compose")
     if not proc:
-        return False, "process-compose not installed. Install: brew install process-compose"
+        raise ConfigError(
+            "process-compose not installed.",
+            get_install_hint("process-compose")
+        )
     result = subprocess.run(
         [proc, "-f", str(pc), "up", "-D"],
         check=False,
