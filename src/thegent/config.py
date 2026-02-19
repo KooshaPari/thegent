@@ -9,10 +9,6 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def _expand_path(p: Path) -> Path:
-    return p.expanduser().resolve()
-
-
 class ThegentSettings(BaseSettings):
     """Configuration for thegent CLI."""
 
@@ -372,7 +368,7 @@ class ThegentSettings(BaseSettings):
     )
     cliproxy_binary: str = Field(
         default="cli-proxy-api-plus",
-        description="CLIProxyAPIPlus binary (path or cmd); install from github.com/router-for-me/CLIProxyAPIPlus/releases",
+        description="CLIProxyAPIPlus binary (path or cmd); install from github.com/kooshapari/cliproxyapi-plusplus/releases",
     )
     cliproxy_port: int = Field(
         default=8317,
@@ -620,6 +616,77 @@ class ThegentSettings(BaseSettings):
         default="",
         description="Zen API key (THGENT_ZEN_API_KEY, OPENCODE_API_KEY, ZEN_API_KEY)",
     )
+
+    @field_validator("zen_api_key", mode="before")
+    @classmethod
+    def _parse_zen_api_key(cls, v: object) -> str:
+        """Read zen_api_key from THGENT_ZEN_API_KEY, OPENCODE_API_KEY, or ZEN_API_KEY."""
+        import os
+        if isinstance(v, str) and v:
+            return v
+        # Try multiple env vars (in order of preference)
+        for env_var in ["THGENT_ZEN_API_KEY", "OPENCODE_API_KEY", "ZEN_API_KEY"]:
+            val = os.environ.get(env_var, "").strip()
+            if val:
+                return val
+        return ""
+
+    @field_validator("virtual_env", mode="before")
+    @classmethod
+    def _parse_virtual_env(cls, v: object) -> Path | None:
+        """Auto-detect VIRTUAL_ENV from system if not explicitly set."""
+        import os
+        if isinstance(v, (str, Path)) and v:
+            return Path(v) if isinstance(v, str) else v
+        # Auto-detect from system VIRTUAL_ENV
+        venv_path = os.environ.get("VIRTUAL_ENV")
+        return Path(venv_path) if venv_path else None
+
+    @field_validator("shell_path", mode="before")
+    @classmethod
+    def _parse_shell_path(cls, v: object) -> str:
+        """Auto-detect SHELL from system if not explicitly set."""
+        import os
+        if isinstance(v, str) and v and v != "/bin/zsh":
+            return v
+        # Auto-detect from system SHELL
+        shell = os.environ.get("SHELL", "/bin/zsh")
+        return shell if shell else "/bin/zsh"
+
+    @field_validator("appdata_path", mode="before")
+    @classmethod
+    def _parse_appdata_path(cls, v: object) -> Path | None:
+        """Auto-detect APPDATA from system on Windows if not explicitly set."""
+        import os
+        if isinstance(v, (str, Path)) and v:
+            return Path(v) if isinstance(v, str) else v
+        # Auto-detect from system APPDATA (Windows only)
+        appdata = os.environ.get("APPDATA")
+        return Path(appdata) if appdata else None
+
+    @field_validator("check_leaks", mode="before")
+    @classmethod
+    def _parse_check_leaks(cls, v: object) -> bool:
+        """Parse CHECK_LEAKS environment variable."""
+        import os
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in ("1", "true", "yes", "on")
+        # Auto-detect from system CHECK_LEAKS
+        return os.environ.get("CHECK_LEAKS") == "1"
+
+    @field_validator("testing_mode", mode="before")
+    @classmethod
+    def _parse_testing_mode(cls, v: object) -> bool:
+        """Parse THGENT_TESTING environment variable."""
+        import os
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in ("1", "true", "yes", "on")
+        # Auto-detect from system THGENT_TESTING
+        return os.environ.get("THGENT_TESTING") == "1"
     sharecli_enabled: bool = Field(
         default=True,
         description="Enable sharecli bridge (THGENT_SHARECLI_ENABLED)",
@@ -732,7 +799,7 @@ class ThegentSettings(BaseSettings):
         description="Maximum concurrent agent runs (ceiling); THGENT_MAX_CONCURRENCY",
     )
     concurrency_load_based: bool = Field(
-        default=False,
+        default=True,  # Default to resource-based limits
         description="Use FD/Mem/CPU gates for dynamic limit (WP-5001); THGENT_CONCURRENCY_LOAD_BASED",
     )
     concurrency_min_slots: int = Field(
@@ -862,4 +929,67 @@ class ThegentSettings(BaseSettings):
     litellm_fallback_enabled: bool = Field(
         default=True,
         description="Enable automatic fallback to alternative models on failure (THGENT_LITELLM_FALLBACK_ENABLED)",
+    )
+
+    # Dex-specific settings
+    dex_force_yolo: bool = Field(
+        default=False,
+        description="Force YOLO mode: skip permissions, disable sandbox and approvals (THGENT_DEX_FORCE_YOLO)",
+    )
+
+    # ShareCLI integration settings
+    reddit_client_id: str = Field(
+        default="",
+        description="Reddit API Client ID (THGENT_REDDIT_CLIENT_ID)",
+    )
+    reddit_client_secret: str = Field(
+        default="",
+        description="Reddit API Client Secret (THGENT_REDDIT_CLIENT_SECRET)",
+    )
+    reddit_user_agent: str = Field(
+        default="thegent/0.1.0",
+        description="Reddit API User Agent (THGENT_REDDIT_USER_AGENT)",
+    )
+    research_protocol_enabled: bool = Field(
+        default=True,
+        description="Enable Deep Research Protocol (THGENT_RESEARCH_PROTOCOL_ENABLED)",
+    )
+
+    harness_root: Path = Field(
+        default_factory=lambda: Path("~/.agent-harness").expanduser(),
+        description="ShareCLI harness root directory (HARNESS_ROOT)",
+    )
+
+    # Environment variable consolidation (research-library-env-settings)
+    analytics_site_id: str = Field(
+        default="thegent",
+        description="Analytics site ID (THGENT_ANALYTICS_SITE_ID)",
+    )
+    siem_endpoint_url: str | None = Field(
+        default=None,
+        description="SIEM endpoint URL for egress (THGENT_SIEM_ENDPOINT_URL)",
+    )
+    virtual_env: Path | None = Field(
+        default=None,
+        description="Virtual environment path (VIRTUAL_ENV); auto-detected from system if not set",
+    )
+    shell_path: str = Field(
+        default="/bin/zsh",
+        description="Shell executable path (SHELL); used by installer for sourcing (THGENT_SHELL_PATH)",
+    )
+    appdata_path: Path | None = Field(
+        default=None,
+        description="Windows APPDATA path for config (APPDATA); auto-detected on Windows (THGENT_APPDATA_PATH)",
+    )
+    cliproxy_backend_url: str | None = Field(
+        default=None,
+        description="CLIProxy backend URL for proxy setup (THGENT_CLIPROXY_BACKEND_URL)",
+    )
+    check_leaks: bool = Field(
+        default=False,
+        description="Enable resource leak checks in tests (CHECK_LEAKS)",
+    )
+    testing_mode: bool = Field(
+        default=False,
+        description="Testing mode flag; set automatically in test environment (THGENT_TESTING)",
     )

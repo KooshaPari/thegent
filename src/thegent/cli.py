@@ -18,6 +18,11 @@ from typing import Any, cast
 
 import typer
 
+# Lazy import for fast subprocess
+def _get_run_subprocess_optimized():
+    from thegent.infra import run_subprocess_optimized
+    return run_subprocess_optimized
+
 class LazyConsole:
     """Lazy-loaded rich console to speed up CLI startup."""
     def __getattr__(self, name):
@@ -245,6 +250,8 @@ def run_cmd(
             )
 
     # WP-X2/X5/X6/X7: Unified execution via run_impl (FSM + Policy + Telemetry)
+    from thegent.config_provider import get_config_provider
+
     res = run_impl(
         agent=effective_agent or agent,
         prompt=prompt,
@@ -268,6 +275,7 @@ def run_cmd(
         routing=routing,
         enable_search=search,
         debug=debug,
+        config_provider=get_config_provider(),
     )
 
     if "error" in res:
@@ -407,6 +415,8 @@ def bg_cmd(
             )
 
     # WP-X2/X5/X6/X7: Unified background execution via bg_impl
+    from thegent.config_provider import get_config_provider
+
     res = bg_impl(
         agent=agent,
         prompt=prompt,
@@ -432,6 +442,7 @@ def bg_cmd(
         domain=domain,
         speculative=speculative,
         debug=debug,
+        config_provider=get_config_provider(),
     )
 
     if "error" in res:
@@ -988,6 +999,85 @@ def config_check_cmd(format: str | None = None) -> None:
     console.print("[green]Config OK.[/green]")
 
 
+def concurrency_show_cmd(format: str | None = None) -> None:
+    """Show current concurrency limit and utilization."""
+    from thegent.cli_impl import ps_impl
+
+    settings = ThegentSettings()
+    sessions = ps_impl(all=True)
+    running_count = sum(1 for s in sessions if s.get("status") == "running")
+    limit = settings.max_concurrency
+    utilization_pct = (running_count / limit * 100) if limit > 0 else 0
+
+    data = {
+        "limit": limit,
+        "running": running_count,
+        "available": limit - running_count,
+        "utilization_percent": round(utilization_pct, 1),
+    }
+
+    fmt = _normalize_output_format(format)
+    if fmt == "json":
+        sys.stdout.write(json.dumps(data) + "\n")
+        return
+
+    table = Table(title="Concurrency Status")
+    table.add_column("Metric")
+    table.add_column("Value")
+    table.add_row("Limit", str(limit))
+    table.add_row("Running", str(running_count))
+    table.add_row("Available", str(limit - running_count))
+    table.add_row("Utilization", f"{utilization_pct:.1f}%")
+    console.print(table)
+
+
+def concurrency_set_cmd(limit: int) -> None:
+    """Set concurrency limit (updates .env file)."""
+    if limit < 1:
+        console.print("[red]Error: Limit must be >= 1[/red]")
+        raise typer.Exit(1)
+    if limit > 200:
+        console.print("[red]Error: Limit must be <= 200[/red]")
+        raise typer.Exit(1)
+
+    # Find .env file (project root or current dir)
+    env_file = Path.cwd() / ".env"
+    if not env_file.exists():
+        # Try project root
+        env_file = Path(__file__).parent.parent.parent / ".env"
+    if not env_file.exists():
+        console.print("[yellow]Warning: .env file not found. Creating new one.[/yellow]")
+        env_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Read existing .env or create new
+    env_lines: list[str] = []
+    if env_file.exists():
+        env_lines = env_file.read_text(encoding="utf-8").splitlines()
+
+    # Update or add THGENT_MAX_CONCURRENCY
+    updated = False
+    new_lines: list[str] = []
+    for line in env_lines:
+        if line.strip().startswith("THGENT_MAX_CONCURRENCY="):
+            new_lines.append(f"THGENT_MAX_CONCURRENCY={limit}")
+            updated = True
+        else:
+            new_lines.append(line)
+
+    if not updated:
+        # Add new line
+        if new_lines and not new_lines[-1].strip():
+            new_lines.append(f"THGENT_MAX_CONCURRENCY={limit}")
+        else:
+            new_lines.append("")
+            new_lines.append(f"# --- Concurrency ---")
+            new_lines.append(f"THGENT_MAX_CONCURRENCY={limit}")
+
+    env_file.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+    console.print(f"[green]Concurrency limit set to {limit}[/green]")
+    console.print("[dim]Note: Restart thegent processes or reload environment for changes to take effect.[/dim]")
+
+
 def load_status_cmd(format: str | None = None) -> None:
     """Show load classification and safe-mode status (WP-5002)."""
     settings = ThegentSettings()
@@ -1408,8 +1498,52 @@ def usage_cmd(format: str | None = None, include_cost: bool = True) -> None:
     else:
         console.print("[yellow]Proxy unreachable. Start CLIProxyAPIPlus or check THGENT_CLIPROXY_PORT.[/yellow]")
 
-    if include_cost:
-        cost_status_cmd(format=format)
+
+def deep_research_cmd(
+    query: str = typer.Argument(..., help="Research query"),
+    subreddits: str = typer.Option(None, "--subreddits", "-s", help="Comma-separated subreddits"),
+    output: Path = typer.Option(None, "--output", "-o", help="Output file path (JSON)"),
+) -> None:
+    """Perform deep research using the Deep Research Protocol (DRP)."""
+    from thegent.tools.deep_research import perform_deep_research
+
+    console.print(f"[bold cyan]Deep Research Protocol (DRP) starting...[/bold cyan]")
+    console.print(f"Query: [green]{query}[/green]")
+    if subreddits:
+        console.print(f"Subreddits: [green]{subreddits}[/green]")
+
+    sub_list = [s.strip() for s in subreddits.split(",") if s.strip()] if subreddits else None
+
+    with console.status("[bold yellow]Researching...[/bold yellow]"):
+        results = perform_deep_research(query, subreddits=sub_list)
+
+    console.print(f"\n[bold green]Research complete![/bold green]")
+    console.print(f"Found [blue]{len(results['ddg_results'])}[/blue] DDG results")
+    console.print(f"Found [blue]{len(results['reddit_results'])}[/blue] Reddit results")
+    console.print(f"Found [blue]{len(results['arxiv_results'])}[/blue] Arxiv results")
+    console.print(f"Found [blue]{len(results['github_results'])}[/blue] GitHub results")
+
+    if output:
+        with open(output, "w") as f:
+            json.dump(results, f, indent=2)
+        console.print(f"\nResults saved to: [bold]{output}[/bold]")
+    else:
+        # Show a summary if no output file specified
+        table = Table(title="Top Research Results")
+        table.add_column("Source", style="cyan")
+        table.add_column("Title", style="white")
+        table.add_column("URL", style="blue")
+
+        for res in results["ddg_results"][:3]:
+            table.add_row("DDG", res["title"][:50] + "...", res["url"])
+        for res in results["reddit_results"][:3]:
+            table.add_row("Reddit", res["title"][:50] + "...", res["url"])
+        for res in results["arxiv_results"][:3]:
+            table.add_row("Arxiv", res["title"][:50] + "...", res["url"])
+        for res in results["github_results"][:3]:
+            table.add_row("GitHub", res["title"][:50] + "...", res["url"])
+
+        console.print(table)
 
 
 def interruption_snooze_cmd(alert_id: str, minutes: int = 5, itype: str = "unknown") -> None:
@@ -4403,7 +4537,7 @@ def dag_list_cmd(cd: Path | None = None, format: str | None = None) -> None:
         raise typer.Exit(1)
     _frontmatter, tasks = _parse_dag_session(dag_path)
     settings = ThegentSettings()
-    fmt = (format or os.environ.get("THGENT_OUTPUT_FORMAT") or settings.output_format or "rich").lower()
+    fmt = (format or settings.output_format or "rich").lower()
     if not tasks:
         if fmt == "json":
             sys.stdout.write(json.dumps({"tasks": []}) + "\n")
@@ -4532,7 +4666,7 @@ def dag_status_cmd(cd: Path | None = None, format: str | None = None) -> None:
         raise typer.Exit(1)
     rows = res.get("tasks", [])
     settings = ThegentSettings()
-    fmt = (format or os.environ.get("THGENT_OUTPUT_FORMAT") or settings.output_format or "rich").lower()
+    fmt = (format or settings.output_format or "rich").lower()
     if fmt == "json":
         sys.stdout.write(json.dumps({"tasks": rows}) + "\n")
         return
@@ -4630,7 +4764,7 @@ def dag_ready_cmd(cd: Path | None = None, format: str | None = None) -> None:
     ready_ids = res["ready_task_ids"]
     tasks = res.get("tasks", [])
     settings = ThegentSettings()
-    fmt = (format or os.environ.get("THGENT_OUTPUT_FORMAT") or settings.output_format or "rich").lower()
+    fmt = (format or settings.output_format or "rich").lower()
     if not ready_ids:
         console.print("[dim]No ready tasks.[/dim]")
         return
@@ -6170,16 +6304,17 @@ def _list_glm_models() -> None:
 def _list_cursor_models() -> None:
     """List cursor models via cursor agent --list-models."""
     try:
-        proc = subprocess.run(
+        run_subprocess_optimized = _get_run_subprocess_optimized()
+        proc = run_subprocess_optimized(
             ["cursor", "agent", "--list-models"],
             check=False,
             capture_output=True,
-            text=True,
             timeout=10,
         )
-        if proc.returncode == 0:
+        if proc.returncode == 0 and proc.stdout:
+            stdout_text = proc.stdout if isinstance(proc.stdout, str) else proc.stdout.decode("utf-8", errors="replace")
             console.print("\n[bold]Cursor models[/bold]")
-            for line in proc.stdout.splitlines():
+            for line in stdout_text.splitlines():
                 line = line.strip()
                 if line and not line.startswith("Tip:"):
                     console.print(f"  {line}")
@@ -6215,18 +6350,19 @@ def _list_gemini_models() -> None:
 def _list_copilot_models() -> None:
     """Scrape copilot models from copilot --help --model choices."""
     try:
-        proc = subprocess.run(
+        run_subprocess_optimized = _get_run_subprocess_optimized()
+        proc = run_subprocess_optimized(
             ["copilot", "--help"],
             check=False,
             capture_output=True,
-            text=True,
             timeout=8,
         )
-        if proc.returncode == 0 and "--model" in proc.stdout:
+        stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+        if proc.returncode == 0 and stdout_text and "--model" in stdout_text:
             console.print("\n[bold]Copilot models[/bold]")
             # Extract quoted model names after "choices:"
-            start = proc.stdout.find("--model")
-            chunk = proc.stdout[start : start + 600] if start >= 0 else ""
+            start = stdout_text.find("--model")
+            chunk = stdout_text[start : start + 600] if start >= 0 else ""
             choices = re.findall(r'"([a-zA-Z0-9.-]+)"', chunk)
             seen = set()
             for c in choices:
@@ -6267,16 +6403,17 @@ def _list_claude_models() -> None:
 def _list_codex_models() -> None:
     """List codex models (from cursor --list-models, codex variants)."""
     try:
-        proc = subprocess.run(
+        run_subprocess_optimized = _get_run_subprocess_optimized()
+        proc = run_subprocess_optimized(
             ["cursor", "agent", "--list-models"],
             check=False,
             capture_output=True,
-            text=True,
             timeout=10,
         )
-        if proc.returncode == 0 and "codex" in proc.stdout.lower():
+        stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+        if proc.returncode == 0 and stdout_text and "codex" in stdout_text.lower():
             console.print("\n[bold]Codex models[/bold]")
-            for line in proc.stdout.splitlines():
+            for line in stdout_text.splitlines():
                 line = line.strip()
                 if "codex" in line.lower():
                     console.print(f"  {line}")
@@ -6357,9 +6494,21 @@ def setup_cmd(
     minimax_key: str = typer.Option(None, "--minimax-key", help="MiniMax API key"),
     wizard: bool = typer.Option(True, "--wizard/--no-wizard", help="Run interactive setup wizard"),
     links: bool = typer.Option(True, "--links/--no-links", help="Install claudeglm/claudemax shortcuts"),
+    hooks: bool = typer.Option(False, "--hooks/--no-hooks", help="Install git hooks (pre-commit, pre-push) into .git/hooks"),
+    skills: bool = typer.Option(False, "--skills/--no-skills", help="Sync thegent-skills template to ~/.claude, ~/.cursor, project"),
+    full: bool = typer.Option(False, "--full", "-f", help="Full setup: install -t all, install-shims, lock-cleanup service, MCP service"),
+    agents: str = typer.Option(None, "--agents", "-a", help="Comma-separated agents to configure (e.g. claude,codex,cursor). Skips others in wizard."),
 ) -> None:
-    """Unified setup: configure providers (same flow as cliproxy login) and install shortcuts."""
+    """Unified setup: configure providers (same flow as cliproxy login) and install shortcuts.
+
+    Examples:
+      thegent setup                    # Interactive wizard
+      thegent setup --full             # Full setup: install, shims, services
+      thegent setup --agents claude,codex  # Configure only Claude and Codex
+      thegent setup --hooks --skills   # Project: git hooks + skills
+    """
     import os
+    import platform
     from pathlib import Path
 
     import yaml
@@ -6374,6 +6523,53 @@ def setup_cmd(
 
     settings = ThegentSettings()
     env_path = Path(".env")
+
+    # Full setup: install, shims, lock-cleanup, MCP service
+    if full:
+        run_subprocess_optimized = _get_run_subprocess_optimized()
+        from rich.prompt import Confirm
+
+        console.print("\n[bold cyan]Full setup: installing to all targets...[/bold cyan]")
+        try:
+            from thegent.install import run_install
+
+            run_install(target="all", install_service=True, verbose=True)
+        except Exception as e:
+            console.print(f"[yellow]Install: {e}[/yellow]")
+
+        console.print("\n[bold cyan]Installing tool accelerators (shims)...[/bold cyan]")
+        try:
+            run_subprocess_optimized([sys.executable, "-m", "thegent", "install-shims"], check=False)
+        except Exception as e:
+            console.print(f"[yellow]Install-shims: {e}[/yellow]")
+
+        if platform.system() in ("Darwin", "Linux"):
+            if Confirm.ask("Install git wrapper to system path (requires sudo)?", default=False):
+                try:
+                    run_subprocess_optimized(
+                        [sys.executable, "-m", "thegent", "install-shims", "--system"],
+                        check=False,
+                    )
+                except Exception as e:
+                    console.print(f"[yellow]Install-shims --system: {e}[/yellow]")
+
+        console.print("\n[bold cyan]Installing lock-cleanup service...[/bold cyan]")
+        try:
+            from thegent.git_lock_manage import lock_cleanup_install, lock_cleanup_start
+
+            ok, msg = lock_cleanup_install()
+            if ok:
+                console.print(f"[green]{msg}[/green]")
+                lock_cleanup_start()
+            else:
+                console.print(f"[yellow]{msg}[/yellow]")
+        except Exception as e:
+            console.print(f"[yellow]Lock-cleanup: {e}[/yellow]")
+
+        console.print("\n[bold green]Full setup complete.[/bold green]")
+        if not wizard:
+            console.print("[dim]Run thegent setup (without --full) to configure providers.[/dim]")
+            return
     lines = env_path.read_text().splitlines() if env_path.exists() else []
 
     def set_env(key: str, value: str):
@@ -6403,6 +6599,11 @@ def setup_cmd(
     # Setup primary providers only (exclude variants: iflow-cookie, kiro-google, etc.)
     _SETUP_SKIP = frozenset({"iflow-cookie", "kiro-google", "kiro-aws", "kiro-aws-authcode", "kiro-import"})
     all_providers = sorted(set(PROVIDER_LOGIN_CONFIG) | set(_LOGIN_FLAGS) - _SETUP_SKIP)
+    if agents:
+        agent_set = {a.strip().lower() for a in agents.split(",") if a.strip()}
+        all_providers = [p for p in all_providers if p in agent_set]
+        if not all_providers:
+            console.print(f"[yellow]No matching providers for --agents '{agents}'. Use names like claude, codex, cursor, nim, kilo.[/yellow]")
     for prov in all_providers:
         display_name = PROVIDER_LOGIN_CONFIG.get(prov, {}).get("display_name", prov.replace("-", " ").title())
         if overrides.get(prov):
@@ -6462,6 +6663,30 @@ def setup_cmd(
             dex_install_links(bin_dir=bin_dir, force=True)
         except Exception as e:
             console.print(f"[red]Dex links: {e}[/red]")
+
+    if hooks:
+        console.print("\n[bold cyan]Installing git hooks...[/bold cyan]")
+        try:
+            from thegent.install import setup_hooks
+
+            counts = setup_hooks(cwd=Path.cwd(), verbose=True)
+            if counts.get("installed", 0) > 0:
+                console.print(f"[green]✓[/green] Installed {counts['installed']} hook(s) into .git/hooks")
+            elif counts.get("skipped", 0) > 0:
+                console.print("[dim]Not a git repo; skipped hooks.[/dim]")
+        except Exception as e:
+            console.print(f"[yellow]Hooks: {e}[/yellow]")
+
+    if skills:
+        console.print("\n[bold cyan]Syncing skills template...[/bold cyan]")
+        try:
+            from thegent.install import setup_skills
+
+            counts = setup_skills(cwd=Path.cwd(), verbose=True)
+            if counts.get("copied", 0) > 0:
+                console.print(f"[green]✓[/green] Synced {counts['copied']} file(s) to ~/.claude, ~/.cursor")
+        except Exception as e:
+            console.print(f"[yellow]Skills: {e}[/yellow]")
 
     if wizard:
         from rich.prompt import Confirm
@@ -6533,7 +6758,8 @@ def takeover_cmd(session_id: str) -> None:
 
     console.print(f"[bold green]Attaching to tmux session: {target.session_name}[/bold green]")
     try:
-        subprocess.run(["tmux", "attach-session", "-t", target.session_name], check=True)
+        run_subprocess_optimized = _get_run_subprocess_optimized()
+        run_subprocess_optimized(["tmux", "attach-session", "-t", target.session_name], check=True)
     except Exception as e:
         console.print(f"[red]Failed to attach: {e}[/red]")
 
@@ -7166,6 +7392,96 @@ def project_list_cmd() -> None:
             except Exception:
                 continue
     console.print(table)
+
+def workstream_query_cmd(query: str) -> None:
+    """Execute SQL query on workstream database."""
+    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent.config import ThegentSettings
+    
+    try:
+        db = WorkstreamDB(settings=ThegentSettings())
+        results = db.execute_query(query)
+        
+        if not results:
+            console.print("[yellow]No results[/yellow]")
+            return
+        
+        # Display as table
+        table = Table(title="Query Results")
+        if results:
+            # Use first row keys as columns
+            for key in results[0].keys():
+                table.add_column(key, style="cyan")
+            
+            for row in results[:100]:  # Limit to 100 rows
+                table.add_row(*[str(row.get(k, "")) for k in results[0].keys()])
+        
+        console.print(table)
+        if len(results) > 100:
+            console.print(f"[dim]... and {len(results) - 100} more rows[/dim]")
+    except Exception as e:
+        console.print(f"[red]Error executing query: {e}[/red]")
+
+
+def workstream_stats_cmd() -> None:
+    """Get workstream statistics."""
+    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent.config import ThegentSettings
+    
+    try:
+        db = WorkstreamDB(settings=ThegentSettings())
+        stats = db.get_statistics()
+        lane_counts = db.get_running_count_by_lane()
+        recent_costs = db.get_recent_costs(limit=5)
+        
+        console.print("[bold]Workstream Statistics[/bold]\n")
+        
+        # Main stats
+        stats_table = Table(title="Statistics")
+        stats_table.add_column("Metric", style="bold")
+        stats_table.add_column("Value", style="green")
+        stats_table.add_row("Running", str(stats["running"]))
+        stats_table.add_row("Completed", str(stats["completed"]))
+        stats_table.add_row("Success Rate", f"{stats['success_rate']:.1f}%")
+        stats_table.add_row("Avg Duration", f"{stats['avg_duration']:.1f}s")
+        stats_table.add_row("Deferred", str(stats["deferred"]))
+        console.print(stats_table)
+        
+        # Lane breakdown
+        if lane_counts:
+            lane_table = Table(title="Lane Breakdown")
+            lane_table.add_column("Lane", style="cyan")
+            lane_table.add_column("Running", style="green")
+            for lane, count in lane_counts.items():
+                lane_table.add_row(lane, str(count))
+            console.print("\n")
+            console.print(lane_table)
+        
+        # Recent costs
+        if recent_costs:
+            cost_table = Table(title="Recent Costs")
+            cost_table.add_column("Period", style="cyan")
+            cost_table.add_column("Cost", style="green")
+            cost_table.add_column("Tasks", style="yellow")
+            cost_table.add_column("Avg/Task", style="dim")
+            for cost in recent_costs:
+                cost_table.add_row(
+                    cost["period"],
+                    f"${cost['cost_usd']:.2f}",
+                    str(cost["task_count"]),
+                    f"${cost['avg_per_task']:.4f}"
+                )
+            console.print("\n")
+            console.print(cost_table)
+    except Exception as e:
+        console.print(f"[red]Error getting stats: {e}[/red]")
+
+
+def workstream_dashboard_cmd() -> None:
+    """Launch workstream dashboard TUI."""
+    from thegent.tui.workstream_dashboard import run_dashboard
+    run_dashboard()
+
 
 def forensics_snapshot_cmd(run_id: str | None = None, phase: str | None = None) -> None:
     """Take a forensics snapshot of an agent run (WP-3002)."""
