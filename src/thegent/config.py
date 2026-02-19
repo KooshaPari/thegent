@@ -68,13 +68,13 @@ class ThegentSettings(BaseSettings):
         description="Default model for kiro (claude-haiku-4.5, claude-opus-4.6 via CLIProxyAPIPlus)",
     )
     default_timeout: int = Field(
-        default=90,
+        default=600,
         ge=10,
         le=3600,
-        description="Default agent timeout in seconds",
+        description="Default agent timeout in seconds (10m default; use -t 1800 for 30m long tasks)",
     )
     default_timeout_claude: int = Field(
-        default=300,
+        default=600,
         ge=60,
         le=3600,
         description="Claude agent timeout (slower API); use THGENT_DEFAULT_TIMEOUT_CLAUDE to override",
@@ -277,7 +277,7 @@ class ThegentSettings(BaseSettings):
         le=10.0,
         description="Maximum cost weight for Pareto selection (THGENT_AUTO_ROUTER_MAX_COST_WEIGHT)",
     )
-    
+
     # Environment variable consolidation (research-library-env-settings)
     owner_tag: str | None = Field(
         default=None,
@@ -352,10 +352,6 @@ class ThegentSettings(BaseSettings):
         default=None,
         description="Working directory (inferred or explicit)",
     )
-    output_format: str = Field(
-        default="rich",
-        description="Output format for bg/ps: rich (default) or md (agent-friendly markdown); THGENT_OUTPUT_FORMAT",
-    )
     debug: bool = Field(
         default=False,
         description="Enable debug logging; THGENT_DEBUG=1",
@@ -363,14 +359,6 @@ class ThegentSettings(BaseSettings):
     debug_keepalive: bool = Field(
         default=False,
         description="Enable keepalive debug logging; THGENT_DEBUG_KEEPALIVE=1",
-    )
-    terminal_management_enabled: bool = Field(
-        default=True,
-        description="Enable terminal management features; THGENT_TERMINAL_MANAGEMENT_ENABLED",
-    )
-    sandbox_env_filter: bool = Field(
-        default=False,
-        description="Filter sandbox env to allowlist only; THGENT_SANDBOX_ENV_FILTER=1",
     )
     mcp_host: str = Field(
         default="127.0.0.1",
@@ -515,16 +503,16 @@ class ThegentSettings(BaseSettings):
         description="Max alerts per hour before suppression (WP-4004)",
     )
     load_spike_threshold: int = Field(
-        default=10,
+        default=80,
         ge=1,
-        le=100,
+        le=200,
         description="Running sessions above this = spike (WP-5002); traffic shaping applies",
     )
     load_surge_threshold: int = Field(
-        default=20,
+        default=100,
         ge=5,
         le=200,
-        description="Running sessions above this = surge (WP-5002); safe-mode activates",
+        description="Running sessions above this = surge/burst (WP-5002); non-critical deferral",
     )
 
     # G-GP-01: OPA integration (optional Phase 2)
@@ -559,10 +547,6 @@ class ThegentSettings(BaseSettings):
         return ["PATH", "HOME", "LANG", "USER", "TERM", "PYTHONUNBUFFERED"]
 
     # G-GP-02: Input Guardrails
-    input_guardrails_enabled: bool = Field(
-        default=False,
-        description="Enable input guardrails (prompt length, blocklist, agent/cwd allowlist) (THGENT_INPUT_GUARDRAILS_ENABLED)",
-    )
     prompt_max_chars: int = Field(
         default=65536,
         ge=100,
@@ -742,9 +726,9 @@ class ThegentSettings(BaseSettings):
         description="Seconds to poll for active background runs during MCP server shutdown (ROB-020)",
     )
     max_concurrency: int = Field(
-        default=50,
+        default=100,
         ge=1,
-        le=100,
+        le=200,
         description="Maximum concurrent agent runs (ceiling); THGENT_MAX_CONCURRENCY",
     )
     concurrency_load_based: bool = Field(
