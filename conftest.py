@@ -1,5 +1,7 @@
 """Pytest configuration for thegent."""
 
+import os
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -7,6 +9,29 @@ import pytest
 
 # thegent project root (where conftest.py lives)
 _THGENT_ROOT = Path(__file__).resolve().parent
+
+# Ensure src/ is on sys.path for imports during test collection
+# This must happen before any test modules are imported
+_SRC_PATH = _THGENT_ROOT / "src"
+
+# Remove parent directory from sys.path if present (pytest adds it)
+_PARENT_PATH = str(_THGENT_ROOT.parent)
+if _PARENT_PATH in sys.path:
+    sys.path.remove(_PARENT_PATH)
+
+# Insert src/ at the beginning
+if str(_SRC_PATH) not in sys.path:
+    sys.path.insert(0, str(_SRC_PATH))
+
+
+@pytest.fixture(autouse=True)
+def _set_testing_mode_for_all_tests(monkeypatch) -> None:
+    """Autouse fixture: set THGENT_TESTING=1 for all tests via monkeypatch.
+
+    This prevents real agents from running 300s when tests accidentally spawn them.
+    Uses monkeypatch instead of direct os.environ mutation for proper test isolation.
+    """
+    monkeypatch.setenv("THGENT_TESTING", "1")
 
 
 @pytest.fixture
