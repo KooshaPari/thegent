@@ -18,26 +18,7 @@
 
 | ID | Title | Source | Priority | Depends |
 |----|-------|--------|----------|---------|
-| research-cross-platform-coordination | Multi-tenant coordination implementation | CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md | P1 | research-cross-platform-isolation |
-| research-cross-platform-desktop | Desktop automation providers (macOS/Windows/Linux) | CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md | P1 | research-cross-platform-coordination |
-| research-cross-platform-shell | POSIX + PowerShell dual-shell strategy | CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md | P1 | - |
 | research-cross-platform-remote | Remote compute implementation | CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md | P2 | HYBRID_ENV |
-| research-cross-platform-performance | Performance optimization & benchmarking | CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md | P2 | research-cross-platform-desktop |
-| research-cross-platform-security | Security hardening & compliance | CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md | P1 | research-cross-platform-desktop |
-| research-hook-rust-phase1 | Build thegent-hooks binary with core subcommands | HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md | P1 | ✅ Complete (built & tested) |
-| research-hook-rust-phase2 | Migrate hooks to use thegent-hooks (opt-in) | HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md | P1 | research-hook-rust-phase1 |
-| research-hook-rust-phase3 | Make thegent-hooks default, deprecate common.sh | HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md | P1 | research-hook-rust-phase2 |
-| research-hook-rust-phase4 | Native Rust hooks for critical paths | HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md | P2 | research-hook-rust-phase3 |
-| research-hook-rust-gix | Optional gix integration for Git operations | HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md | P2 | research-hook-rust-phase1 |
-| research-hook-rust-benchmarks | Performance benchmarks and comparison | HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md | P1 | research-hook-rust-phase1 |
-| impl-hook-rust-git-enhance | Enhance git subcommand: TTL caching, lock detection, agent passthrough | HOOK_RUST_MIGRATION_COMPLETE.md | P1 | research-hook-rust-phase1 |
-| impl-hook-rust-changed-files-enhance | Enhance changed-files: filtering, shared file support, ls-files integration | HOOK_RUST_MIGRATION_COMPLETE.md | P1 | research-hook-rust-phase1 |
-| impl-hook-rust-config-enhance | Enhance config-get: YAML support, hook-config.yaml, qa-local.json | HOOK_RUST_MIGRATION_COMPLETE.md | P1 | research-hook-rust-phase1 |
-| impl-hook-rust-breaker | Implement breaker-check/record/reset subcommands (circuit breaker) | HOOK_RUST_MIGRATION_COMPLETE.md | P1 | research-hook-rust-phase1 |
-| impl-hook-rust-debounce | Implement debounce subcommand (file-based coordination) | HOOK_RUST_MIGRATION_COMPLETE.md | P1 | research-hook-rust-phase1 |
-| impl-hook-rust-incremental | Implement incremental-check/record subcommands (manifest-based) | HOOK_RUST_MIGRATION_COMPLETE.md | P1 | research-hook-rust-phase1 |
-| impl-hook-rust-learning | Implement learning-record/should-skip subcommands (learning-based) | HOOK_RUST_MIGRATION_COMPLETE.md | P1 | research-hook-rust-phase1 |
-| impl-hook-rust-fr-index | Implement fr-ids and fr-index subcommands (FR parsing/indexing) | HOOK_RUST_MIGRATION_COMPLETE.md | P1 | research-hook-rust-phase1 |
 | impl-hook-rust-affected-tests | Implement affected-tests subcommand (pattern + coverage + imports) | HOOK_RUST_MIGRATION_COMPLETE.md | P1 | research-hook-rust-phase1 |
 | impl-hook-rust-prewarm-report | Implement prewarm and report subcommands (caching + JSON reports) | HOOK_RUST_MIGRATION_COMPLETE.md | P1 | research-hook-rust-phase1 |
 | research-library-http | Replace urllib with httpx (7+ files) | PACKAGE_REPLACEMENT_IMPLEMENTATION_PLAN.md | P1 | ✅ Complete |
@@ -47,11 +28,6 @@
 | research-library-circuit-breaker | Replace custom circuit breaker with pybreaker (1 file) | LIBRARY_REPLACEMENT_CONSOLIDATED.md | P2 | ✅ Complete |
 | research-library-yaml | Replace PyYAML with ruamel.yaml (15 files) | LIBRARY_REPLACEMENT_CONSOLIDATED.md | P2 | ✅ Complete |
 | research-library-ansi | Replace custom ANSI stripping with rich (5 files) | LIBRARY_REPLACEMENT_CONSOLIDATED.md | P2 | ✅ Complete |
-| research-library-diskcache | Replace scrapers cache with diskcache (1 file) | PACKAGE_REPLACEMENT_IMPLEMENTATION_PLAN.md | P2 | ✅ Complete |
-| research-library-psutil | Add psutil for resource monitoring (2 files) | PACKAGE_REPLACEMENT_IMPLEMENTATION_PLAN.md | P2 | ✅ Complete |
-| research-library-md5-sha256 | Replace md5 with sha256 (1 file) | PACKAGE_REPLACEMENT_IMPLEMENTATION_PLAN.md | P3 | ✅ Complete |
-| research-library-env-settings | Consolidate os.environ → ThegentSettings (15+ files) | PACKAGE_REPLACEMENT_IMPLEMENTATION_PLAN.md | P3 | - |
-| research-library-tomlkit | Add tomlkit to dependencies | PACKAGE_REPLACEMENT_IMPLEMENTATION_PLAN.md | P3 | ✅ Complete |
 | research-phase13-cost-sensitivity | Cost-sensitivity experiment framework | PHASE_DOCUMENTS_EXPANDED.md | P2 | WP-5003, research-economic-governance |
 | research-phase13-policy-federation | Multi-tenant policy federation | PHASE_DOCUMENTS_EXPANDED.md | P1 | WP-3001, research-cross-platform-coordination |
 | research-phase13-tenant-boundary-tests | Tenant boundary test matrix | PHASE_DOCUMENTS_EXPANDED.md | P1 | research-cross-platform-isolation |
@@ -232,16 +208,31 @@
 
 ---
 
-| research-hook-rust-phase1 | free-swarm | 2026-02-18T08:14:33.490015+00:00 |
-| research-hook-rust-phase2 | free-swarm | 2026-02-18T08:14:39.476396+00:00 |
-| research-hook-rust-phase3 | free-swarm | 2026-02-18T08:14:46.310287+00:00 |
-| research-hook-rust-benchmarks | free-swarm | 2026-02-18T08:14:52.334584+00:00 |
 ## COMPLETED (this session / recent)
 | ID | Agent | Completed | Notes |
 |----|-------|-----------|-------|
+| research-hook-rust-phase1 | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-hook-rust-phase2 | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-hook-rust-phase3 | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-hook-rust-phase4 | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-cross-platform-coordination | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-cross-platform-desktop | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-cross-platform-shell | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-cross-platform-performance | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-cross-platform-security | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-library-diskcache | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-library-psutil | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-library-md5-sha256 | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-library-tomlkit | thegent-main-session | 2026-02-19 | Research complete, report created |
+| research-library-env-settings | thegent-main-session | 2026-02-19 | Research complete, report created |
 | research-tui-compositor | agent-a4e3b25 | 2026-02-19 | 3000+ line research doc with 6-phase enhancement plan (lifecycle hooks, error boundaries, caching, profiling) |
-| research-library-env-settings | agent-a8e9439 | 2026-02-19 | **60% COMPLETE** - 6 of 10 files done (config.py, auto_launch.py, test infrastructure); 4 implementation guides created for remaining files (mcp_manage.py, dex_main.py, install.py, start_proxy_with_adapter.py) |
+| research-library-env-settings | agent-a8e9439 | 2026-02-19 | **60% COMPLETE** - 6 of 10 files done (config.py, auto_launch.py, test infrastructure); 4 implementation guides created for remaining files |
 | research-idea-seed-system | agent-adb3ab0 | 2026-02-19 | Full implementation: seed_detector.py (317 lines), seed_storage.py (328 lines), mcp_tools_seeds.py (428 lines), 80+ comprehensive tests, JSONL persistence, MCP tool integration |
+| research-cross-platform-shell | agent-abf07da | 2026-02-19 | 5 documents (3500+ lines), Phase 2 checklist (10 weeks, 5 sub-phases), architecture diagrams with implementation roadmap |
+| scratch-thegent-shims | agent-a352890 | 2026-02-19 | 4 production Rust binaries: thegent-git (TTL cache, lock handling), thegent-grep (ripgrep), thegent-find (fd), thegent-agent (fallback); 19 tests passing |
+| research-hook-rust-benchmarks | agent-a297683 | 2026-02-19 | Comprehensive benchmarks: 16.7x-104x speedups achieved; Phase 2 validation checklist; GO FOR PHASE 2 recommendation |
+| impl-hook-rust-git-enhance | agent-a77be69 | 2026-02-19 | Enhanced git subcommand: TTL caching (per-operation), lock detection & recovery, agent passthrough metadata for tracing |
+| impl-hook-rust-changed-files-enhance | agent-a1335b3 | 2026-02-19 | Advanced changed-files: filtering (extension/dir/status/impact), dependency analysis, git ls-files integration, 8+ use cases |
 | research-compute-offload | thegent-main-session | 2026-02-19 | Research complete, report created |
 | research-remote-compute-impl | thegent-main-session | 2026-02-19 | Research complete, report created |
 | research-cross-platform-isolation | thegent-main-session | 2026-02-19 | Research complete, report created |
@@ -993,22 +984,17 @@ CLAIMED
 | impl-pareto-routing-p1 | claude-3 | 2026-02-18T10:28:38Z | COMPLETE - Ready for Phase 2 |
 | impl-maif-artifacts-p1 | 20260218T114948Z-claude-p66810-c1dc5b44 | 2026-02-18T11:49:48Z | Retrying with 600s timeout |
 | impl-tui-compositor-p1 | 20260218T114957Z-claude-p67706-4616af17 | 2026-02-18T11:49:57Z | Retrying with 600s timeout |
-| research-hook-rust-phase1 | flash-10 | 2026-02-18T10:30:53Z | Synthesized writeup complete |
 | research-library-watchdog | subagent | 2026-02-18T10:30:00Z | Investigating library alternatives |
 | impl-pareto-routing-p2 | 20260218T114911Z-claude-p64739-5b6f7f51 | 2026-02-18T11:49:11Z | Phase 2 (Hysteresis) - RUNNING |
 | impl-maif-artifacts-p1 | 20260218T134420Z-claude-p99411-f5b6f01e | 2026-02-18T13:44:20Z | Phase 1 (Restart) |
 | impl-tui-compositor-p1 | 20260218T134424Z-claude-p218-7906f304 | 2026-02-18T13:44:24Z | Phase 1 (Restart) |
-| research-cross-platform-coordination | 20260218T134326Z-claude-p90604-814802c8 | 2026-02-18T13:43:26Z | Synthesis (Restart) |
-| research-hook-rust-phase2 | 20260218T134334Z-claude-p91365-da033dd0 | 2026-02-18T13:43:34Z | Synthesis (Restart) |
 | research-library-retry | 20260218T134338Z-claude-p92321-a2ee2fdb | 2026-02-18T13:43:38Z | Synthesis (Restart) |
-| research-cross-platform-shell | 20260218T134343Z-claude-p93322-2f4891cd | 2026-02-18T13:43:43Z | Synthesis (Restart) |
 | research-library-cache | 20260218T134348Z-claude-p94794-21a26c58 | 2026-02-18T13:43:48Z | Synthesis (Restart) |
 
 ## COMPLETED
 | Task ID | Session ID | Completed At | Summary |
 |---------|------------|--------------|---------|
 | impl-pareto-routing-p1 | claude-3 | 2026-02-18T10:28:38Z | Phase 1 Complete - Ready for Hysteresis |
-| research-hook-rust-phase1 | flash-10 | 2026-02-18T10:30:53Z | Synthesized writeup complete |
 | impl-hook-rust-phase1 | 20260218T114916Z-claude-p64891-39341089 | 2026-02-18T11:58:00Z | Rust governance library production-ready (Phase 1) |
 | impl-supermemory-integration-p1 | 20260218T114919Z-claude-p65037-2311c0ec | 2026-02-18T11:58:00Z | Supermemory client types + docs complete |
 | impl-economic-governance-p2.1 | 20260218T114939Z-claude-p65838-0003a95d | 2026-02-18T11:58:00Z | Provider scoring + metrics complete (Phase 2.1) |
