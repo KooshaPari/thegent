@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_fd0bd489",
+    "Implement thegent-hooks prewarm and report subcommands: Add shared data prewarm, ruff cache prewarm, shellcheck cache prewarm. Add JSON report writing and progress reporting. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a76.8. Add cmd_prewarm() and cmd_report() functions to crates/thegent-hooks/src/main.rs. Test with: thegent-hooks prewarm",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 37928,
+  "launcher_ppid": 31554,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:37928",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_37928/20260219T042025Z-copilot-p37928-cd098c0d.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_37928/20260219T042025Z-copilot-p37928-cd098c0d.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_37928/20260219T042025Z-copilot-p37928-cd098c0d.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_37928/20260219T042025Z-copilot-p37928-cd098c0d.stdout.log"
+  },
+  "pid": 44222,
+  "prompt": "Implement thegent-hooks prewarm and report subcommands: Add shared data prewarm, ruff cache prewarm, shellcheck cache prewarm. Add JSON report writing and progress reporting. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a76.8. Add cmd_prewarm() and cmd_report() functions to crates/thegent-hooks/src/main.rs. Test with: thegent-hooks prewarm",
+  "session_id": "20260219T042025Z-copilot-p37928-cd098c0d",
+  "started_at_utc": "2026-02-19T04:20:25.472313+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

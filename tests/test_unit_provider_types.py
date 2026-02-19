@@ -1,12 +1,11 @@
 """Tests for provider type classification."""
 
 import pytest
+
 from thegent.routing.provider_types import (
     NATIVE_CLI_PROVIDERS,
-    API_KEY_PROVIDERS,
-    LOGIN_AUTH_PROVIDERS,
-    get_execution_path,
     ExecutionPath,
+    get_execution_path,
 )
 
 

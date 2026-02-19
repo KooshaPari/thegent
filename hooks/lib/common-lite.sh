@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # Lightweight hook library for dispatched hooks (_HOOK_DISPATCHED=1).
 # Provides ONLY report-writing and state helpers. No stdin parsing,
 # no tool detection, no caching infrastructure, no subprocess spawns.

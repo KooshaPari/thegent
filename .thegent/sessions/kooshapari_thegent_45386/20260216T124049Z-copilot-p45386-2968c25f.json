@@ -1,0 +1,43 @@
+{
+  "agent": "free",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--lane",
+    "standard",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_3fc58218",
+    "Research WP-Y8-rel: Provider scoring with learning. Read docs/plans/02-UNIFIED-WBS.md for WP-Y8-rel. Write a brief summary (1\u20132 paragraphs) to docs/research/WP-Y8-rel-summary.md. Scope: research only.",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "MacBookPro.lan1",
+  "launcher_pid": 45386,
+  "launcher_ppid": 45328,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:45386",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_45386/20260216T124049Z-copilot-p45386-2968c25f.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_45386/20260216T124049Z-copilot-p45386-2968c25f.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_45386/20260216T124049Z-copilot-p45386-2968c25f.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_45386/20260216T124049Z-copilot-p45386-2968c25f.stdout.log"
+  },
+  "pid": 45669,
+  "prompt": "Research WP-Y8-rel: Provider scoring with learning. Read docs/plans/02-UNIFIED-WBS.md for WP-Y8-rel. Write a brief summary (1\u20132 paragraphs) to docs/research/WP-Y8-rel-summary.md. Scope: research only.",
+  "session_id": "20260216T124049Z-copilot-p45386-2968c25f",
+  "started_at_utc": "2026-02-16T12:40:49.725327+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

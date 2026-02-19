@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-onchain-transition-gate.sh
 # Validates onchain transition receipts: when onchain-ledger.jsonl exists and has transition_anchor events, tx_hash must match 0x[64 hex].
 # Install via: make install-governance-hooks

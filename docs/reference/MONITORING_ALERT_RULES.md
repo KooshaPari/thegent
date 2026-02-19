@@ -51,7 +51,7 @@ Alert: CATEGORY_BUDGET_WARNING (NORMAL)
 ├─ MTD Spend: $160.00 (80.0%)
 ├─ Budget Remaining: $40.00
 ├─ Daily Burn Rate: $11.43
-├─ Projected End-of-Month: $343 (172% of budget) ⚠️
+├─ Projected End-of-Month: $343 (172% of budget) ⚠
 ├─ Days to Exhaustion: 3.5 days
 └─ Action: Review and optimize model selection for normal tasks
 ```
@@ -88,14 +88,14 @@ category_budget_utilization >= 100%
 
 **Data Included in Alert:**
 ```
-🚨 CRITICAL: CATEGORY_BUDGET_CRITICAL (COMPLEX)
+! CRITICAL: CATEGORY_BUDGET_CRITICAL (COMPLEX)
 ├─ Category: complex
-├─ Budget: $150.00 EXCEEDED ❌
+├─ Budget: $150.00 EXCEEDED ✗
 ├─ MTD Spend: $152.34 (101.6%)
 ├─ Overage: $2.34 (1.6%)
 ├─ Daily Burn Rate: $10.88
 ├─ Last 24h Spend: $10.88
-├─ Projected Monthly Total: $326.40 (217% of budget) ⚠️⚠️⚠️
+├─ Projected Monthly Total: $326.40 (217% of budget) ⚠⚠⚠
 ├─ Status: BUDGET EXHAUSTED - NEW TASKS BLOCKED
 ├─ Task Backlog Pending: 5 tasks waiting
 └─ Required Action: Immediate budget review and approval
@@ -145,7 +145,7 @@ avg_quality_by_category < (baseline[category] - 0.05)
 
 **Data Included in Alert:**
 ```
-⚠️ WARNING: QUALITY_REGRESSION (COMPLEX)
+⚠ WARNING: QUALITY_REGRESSION (COMPLEX)
 ├─ Category: complex
 ├─ Current Avg Quality: 0.70 (7d rolling)
 ├─ Baseline: 0.75
@@ -184,18 +184,18 @@ ABS(model_selection_distribution[model] - expected[model]) > 10%
 
 **Data Included in Alert:**
 ```
-ℹ️ INFO: MODEL_SELECTION_ANOMALY (COMPLEX)
+ℹ INFO: MODEL_SELECTION_ANOMALY (COMPLEX)
 ├─ Category: complex
 ├─ Model Deviation Analysis (7d):
 │  ├─ minimax-m2.5:
 │  │  ├─ Expected: 85%
 │  │  ├─ Actual: 60%
-│  │  ├─ Deviation: -25% ⚠️
+│  │  ├─ Deviation: -25% ⚠
 │  │  └─ Reason: 15% constraint violations (instantaneous_cost)
 │  └─ claude-sonnet-4.5:
 │     ├─ Expected: 15% (fallback)
 │     ├─ Actual: 40%
-│     └─ Deviation: +25% ⚠️
+│     └─ Deviation: +25% ⚠
 ├─ Tasks Routed: 287
 └─ Recommendation: Review cost constraints - primary model failing cost checks
 ```
@@ -233,7 +233,7 @@ sla_attainment_pct < 95%
 
 **Data Included in Alert:**
 ```
-⚠️ WARNING: SLA_MISS_THRESHOLD (NORMAL)
+⚠ WARNING: SLA_MISS_THRESHOLD (NORMAL)
 ├─ Category: normal
 ├─ SLA Target: 5000ms
 ├─ SLA Attainment: 92.5% (target: ≥95%)
@@ -241,7 +241,7 @@ sla_attainment_pct < 95%
 ├─ Latency Metrics (7d):
 │  ├─ p50: 2800ms (56% of SLA)
 │  ├─ p99: 4800ms (96% of SLA) ← near limit
-│  └─ max: 7200ms (144% of SLA) ❌
+│  └─ max: 7200ms (144% of SLA) ✗
 ├─ Trend: ↑ degrading (was 97% yesterday)
 ├─ Suspected Cause: Model latency or system load
 └─ Action: Check model performance and system metrics
@@ -277,7 +277,7 @@ constraint_violation_rate[category] > (baseline + 3%)
 
 **Data Included in Alert:**
 ```
-⚠️ WARNING: CONSTRAINT_VIOLATION_SPIKE (NORMAL)
+⚠ WARNING: CONSTRAINT_VIOLATION_SPIKE (NORMAL)
 ├─ Category: normal
 ├─ Violation Rate: 4.8% (7d baseline: 1.5%)
 ├─ Spike: +3.3% above baseline
@@ -316,7 +316,7 @@ MAX(escalation_age_hours) > 4
 
 **Data Included in Alert:**
 ```
-⚠️ WARNING: ESCALATION_QUEUE_AGING
+⚠ WARNING: ESCALATION_QUEUE_AGING
 ├─ Pending Escalations: 12 (threshold: 10)
 ├─ Queue Age:
 │  ├─ Oldest: 5.2 hours (exceeds 4h limit)
@@ -361,7 +361,7 @@ error_rate_pct[category] > (baseline + 2%)
 
 **Data Included in Alert:**
 ```
-⚠️ WARNING: ERROR_RATE_SPIKE (COMPLEX)
+⚠ WARNING: ERROR_RATE_SPIKE (COMPLEX)
 ├─ Category: complex
 ├─ Error Rate: 6.2% (7d baseline: 3.8%)
 ├─ Spike: +2.4% above baseline
@@ -404,7 +404,7 @@ daily_cost > (7d_avg_daily_cost * 1.5)
 
 **Data Included in Alert:**
 ```
-ℹ️ INFO: COST_ANOMALY_DETECTION
+ℹ INFO: COST_ANOMALY_DETECTION
 ├─ Today's Cost: $14.20
 ├─ 7d Average: $8.90
 ├─ Deviation: +59.5% (threshold: +50%)
@@ -440,7 +440,7 @@ STDDEV(quality_scores) > (baseline_stddev * 1.5)
 
 **Data Included in Alert:**
 ```
-ℹ️ INFO: QUALITY_VARIANCE_ANOMALY (NORMAL)
+ℹ INFO: QUALITY_VARIANCE_ANOMALY (NORMAL)
 ├─ Category: normal
 ├─ Quality Variance: High
 ├─ Standard Deviation: 0.18 (baseline: 0.12)
@@ -476,13 +476,13 @@ p99_latency_today > (p99_latency_7d_avg * 1.2)
 
 **Data Included in Alert:**
 ```
-⚠️ WARNING: LATENCY_DEGRADATION (COMPLEX)
+⚠ WARNING: LATENCY_DEGRADATION (COMPLEX)
 ├─ Category: complex
 ├─ P50 Latency:
 │  ├─ Today: 15.8s
 │  ├─ 7d Average: 12.0s
 │  ├─ Degradation: +31.7% (threshold: +30%)
-│  └─ Status: ABOVE THRESHOLD ⚠️
+│  └─ Status: ABOVE THRESHOLD ⚠
 ├─ P99 Latency:
 │  ├─ Today: 21.2s
 │  ├─ 7d Average: 18.5s
@@ -657,3 +657,33 @@ channels:
 - Alert automatically clears 1 hour after condition resolves
 - Notification sent: "Alert resolved: budget_warning[normal] - now at 78%"
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+
+
+
+---
+
+## EXTENSION_SUMMARY
+
+**Extended on:** 2026-02-17  
+**Extended by:** Claude Code
+
+### Changes Made
+1. Added practical implementation patterns
+2. Added configuration examples
+3. Enhanced cross-references to related documentation
+
+### Cross-References Added
+- Related research and implementation guides
+- WORK_STREAM.md for tracking
+
+### Practical Additions
+- Implementation templates
+- Configuration examples
+- Best practices

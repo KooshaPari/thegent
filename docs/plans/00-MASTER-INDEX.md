@@ -1,6 +1,6 @@
 # Thegent Unified Plan — Master Index
 
-> **Generated**: 2026-02-14 | **Version**: 1.1 | **Status**: Active
+> **Generated**: 2026-02-16 | **Version**: 1.3 | **Status**: Active
 > **Project**: thegent — Unified agent orchestration CLI for Factory skills and droids
 > **Stack**: Python 3.12+, FastMCP 3.0, Typer, Pydantic, tenacity, process-compose
 
@@ -19,7 +19,7 @@
 
 **Need quick reference?** Jump to [Cross-Reference Index](#cross-reference-index) at the bottom.
 
-**Running multiple agents?** See [10-SUBAGENT-DISPATCH.md](./10-SUBAGENT-DISPATCH.md) for batch sequencing and context packages.
+**Running multiple agents?** See [10-SUBAGENT-DISPATCH.md](./10-SUBAGENT-DISPATCH.md) for batch sequencing. For "do all" without overlap: read [WORK_STREAM.md](../reference/WORK_STREAM.md) (canonical) or [WBS_AGENT_PROGRESS.md](../reference/WBS_AGENT_PROGRESS.md) — claim items before starting.
 
 ---
 
@@ -38,6 +38,41 @@
 | [08](./08-OPTIMIZATION-CATALOG.md) | Optimization Catalog | 93 enhancement items (quick wins + polish) | Performance, hardening, UX, DX, ops, design elegance |
 | [09](./09-RISK-REGISTRY.md) | Risk Registry | 15 anti-patterns, 17 risks, MAST 14-mode failure taxonomy | Prevention strategies, mitigations, operational safeguards |
 | [10](./10-SUBAGENT-DISPATCH.md) | Subagent Dispatch | 10 sequential batches, 30 agents, context packages | Batch schedule, dependencies, prompt template, parallelization |
+| [12](./12-LIFECYCLE-LOOP-DESIGN.md) | Lifecycle & Cycleloop | Soft/hard loops, checker-agent pattern, preset routing, human takeover | Loop controller, preset catalog, LLM fallback, observability overhaul |
+| [CODEX](./CODEX_DONUT_HARNESS_PLAN.md) | Agent Orchestration Harness (Multi-Platform) | Full parity: Claude Code, Codex, Cursor, Factory droid, Augment — queue, harvest, rules sync, agent teams | [Feature audit](../research/CLAUDE_CODE_FEATURE_PARITY_AUDIT.md), thegent team, rules sync |
+| [PARITY](./MULTI_PLATFORM_PARITY_MASTER_PLAN.md) | Multi-Platform Parity Master Plan | Complete matrix: achieve + supercede parity across 6 platforms; phased execution; §10–13 end-to-end flows, optimization, intuitive/robust design | [CODEX](./CODEX_DONUT_HARNESS_PLAN.md), [Deep dive](../research/MULTI_PLATFORM_DEEP_DIVE.md), [08-OPT](./08-OPTIMIZATION-CATALOG.md) |
+| [MCP-OPT](./MCP_TOOL_OPTIMIZATION_PLAN.md) | MCP Tool Optimization Plan | Optimization, polish, intuitive/robust design for MCP server and 40+ tools; OPT/ROB/UX mapping; actionable errors | [08-OPT](./08-OPTIMIZATION-CATALOG.md), [PARITY](./MULTI_PLATFORM_PARITY_MASTER_PLAN.md) |
+| [MCP-PARITY](../research/MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md) | MCP Full Parity & FastMCP Audit | CLI↔MCP↔Codex/CC matrix; FastMCP transport spec usage; Queue/Team MCP gaps; implementation plan | [PARITY](./MULTI_PLATFORM_PARITY_MASTER_PLAN.md), [MCP-OPT](./MCP_TOOL_OPTIMIZATION_PLAN.md) |
+| [SUPERMEMORY](./2026-02-16-supermemory-integration-plan.md) | Supermemory.ai Integration | Cloud-scale universal memory API; graph memory; persistence for L3/L4 | [CONTEXT_DEPTH](../reference/CONTEXT_MANAGEMENT_DEPTH.md) |
+| [PROCESS-OPT](./PROCESS_OPTIMIZATION_PLAN.md) | Process & Tool Optimization | Multi-tenant single process execution; efficient tool migration (rg/fd/jaq); process cleanup | [MCP-OPT](./MCP_TOOL_OPTIMIZATION_PLAN.md) |
+| [HOOK-RUST](./HOOK_RUNTIME_RUST_DESIGN.md) | Hook Runtime Rust Migration | Full common.sh replacement: thegent-hooks binary (init, cache, git, changed-files, config, …); phased deprecation | [Research synthesis](../research/HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS.md), [PROCESS-OPT](./PROCESS_OPTIMIZATION_PLAN.md) |
+| [SHELL→RUST](./FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md) | Full Shell → Rust Where Beneficial | Inventory of all shell (hooks/lib, dispatchers, hooks, install shims, scripts); benefit criteria; Rust target map; phased migration | [HOOK-RUST](./HOOK_RUNTIME_RUST_DESIGN.md), [RUST_GO](../migration/RUST_GO_MIGRATION_PLAN.md) |
+| [RESEARCH_SPRAWL](../research/RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) | Research/Seed/Fragment Inventory & Sprawl Todo | ✅ **P0 & P1 Complete** - Find all fragmented/seed docs; sprawl each to full breadth/depth (optimize, robustify, practical, holistic, maximal); place into [WORK_STREAM](../reference/WORK_STREAM.md); convert all md with thegent flash agents. **Status**: 9 docs expanded, 44 BACKLOG items added. | [RESEARCH_FRAGMENTS](../research/SESSION_RESEARCH_FRAGMENTS.md), [UNIFIED_WORK_STREAM_DESIGN](../reference/UNIFIED_WORK_STREAM_DESIGN.md), [FINAL_EXPANSION_REPORT](../research/FINAL_EXPANSION_REPORT.md) |
+| [RESEARCH_FRAGMENTS](../research/SESSION_RESEARCH_FRAGMENTS.md) | Session Research Fragments | ✅ **Expanded** - 2026-02-15 Deep-dives (Supermemory, Pareto, Econ Gov) → [SESSION_RESEARCH_COMPLETE.md](../research/SESSION_RESEARCH_COMPLETE.md) | [WBS](./02-UNIFIED-WBS.md), [RESEARCH_SPRAWL](../research/RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) |
+| [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md) | Documentation Expansion TODO | Systematic expansion of 411 MD docs from fragments to complete, optimized docs | [MASTER-INDEX](./00-MASTER-INDEX.md) |
+| [SESSION_RESEARCH_COMPLETE](../research/SESSION_RESEARCH_COMPLETE.md) | ✅ Session Research Complete | Expanded: 5 concept deep-dives (Supermemory, Pareto, Econ Gov, MAIF, Simulation) | [RESEARCH_FRAGMENTS](../research/SESSION_RESEARCH_FRAGMENTS.md), [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md) |
+| [CROSS_PLATFORM_RESEARCH_COMPLETE](../research/CROSS_PLATFORM_RESEARCH_COMPLETE.md) | ✅ Cross-Platform Research Complete | Consolidated: macOS/Linux/Windows/WSL, user isolation, desktop automation, shell strategy | [CROSS_PLATFORM_GUIDE](../guides/CROSS_PLATFORM_COMPLETE.md), [PARITY](./MULTI_PLATFORM_PARITY_MASTER_PLAN.md) |
+| [FASTMCP_COMPLETE](../research/FASTMCP_COMPLETE.md) | ✅ FastMCP Complete | Consolidated: 10 files → comprehensive guide (tools, resources, elicitation, progress, middleware, storage) | [MCP-PARITY](../research/MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md), [MCP-OPT](./MCP_TOOL_OPTIMIZATION_PLAN.md) |
+| [HOOK_RUST_MIGRATION_COMPLETE](../research/HOOK_RUST_MIGRATION_COMPLETE.md) | ✅ Hook Rust Migration Complete | Expanded: Detailed migration strategy, timeline (11 weeks), implementation patterns | [HOOK-RUST](./HOOK_RUNTIME_RUST_DESIGN.md), [SHELL→RUST](./FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md) |
+| [LIBRARY_REPLACEMENT_COMPLETE](../research/LIBRARY_REPLACEMENT_COMPLETE.md) | ✅ Library Replacement Complete | Consolidated: 3 files → comprehensive audit (urllib→httpx, retry→tenacity, caching, etc.) | [LIBRARY_FIRST](../research/LIBRARY_FIRST_AUDIT_AND_PLAN.md) |
+| [IDEA_SEED_REVIEW_COMPLETE](../research/IDEA_SEED_REVIEW_COMPLETE.md) | ✅ Idea Seed Review Complete | Reviewed: 4 idea-seed files (all duplicates, archived), expansion status | [RESEARCH_SPRAWL](../research/RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) |
+| [SHELL_ENV_COMPLETE](../guides/SHELL_ENVIRONMENT_COMPLETE.md) | ✅ Shell Environment Complete | Enhanced: Consolidated 4 guides (optimization, advanced features, management, plugin setup) | [SHELL_ADVANCED](../guides/SHELL_ADVANCED_FEATURES.md), [PROCESS-OPT](./PROCESS_OPTIMIZATION_PLAN.md) |
+| [CROSS_PLATFORM_GUIDE](../guides/CROSS_PLATFORM_COMPLETE.md) | ✅ Cross-Platform Complete Guide | Consolidated: 5 guides (quick start, migration, roadmap, cookbook, templates) | [CROSS_PLATFORM_RESEARCH](../research/CROSS_PLATFORM_RESEARCH_COMPLETE.md) |
+| [LIFECYCLE-PLAN](./2026-02-15-RESEARCH-AND-ELICITATION-PLAN.md) | Lifecycle Implementation Plan | Decisions, CheckerContext, intuitive/holistic/harmonious design | [12-LIFECYCLE](./12-LIFECYCLE-LOOP-DESIGN.md), [TOOLING-AUDIT](../reference/TOOLING_AND_OPTIMIZATION_AUDIT.md) |
+| [UNIFIED-APP](./UNIFIED_SYSTEM_APPLICATION_PLAN.md) | ✅ Unified System Application | Complete: Desktop app + tray + install merged; one installer, one surface; Ghostty-like, 300 agents; implementation details, code examples, testing strategy | [Tray](./2026-02-15-tray-application-design.md), [Install](./2026-02-14-thegent-install-design.md), [Sitback](./2026-02-15-thegent-sitback-design.md) |
+| [CONVERSATION_DUMP_COMPLETE](../research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md) | ✅ Conversation Dump Complete | Expanded: Structured doc with actionable items, implementation status, decision rationale, follow-up actions | [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md) |
+| [AGENT_PLATFORMS_COMPLETE](../research/AGENT_PLATFORMS_COMPLETE.md) | ✅ Agent Platforms Complete | Consolidated: 3 files → comprehensive guide (kilo, roo, OpenCode, OpenClaw, Agent Zero, integration strategies) | [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md) |
+| [SWARM_COMPLETE](../research/SWARM_COMPLETE.md) | ✅ Swarm Complete | Consolidated: 3 files → comprehensive guide (scheduling theory, process automation, resource management, implementation roadmap) | [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md), [PROCESS-OPT](./PROCESS_OPTIMIZATION_PLAN.md) |
+| [CACHING_COMPLETE](../research/CACHING_COMPLETE.md) | ✅ Caching Complete | Expanded: Practical guide with implementation patterns (multi-level cache, file indexing, pre-warming, frecency) | [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md), [LIBRARY_REPLACEMENT](../research/LIBRARY_REPLACEMENT_COMPLETE.md) |
+| [SYSTEM_RESOURCES_COMPLETE](../research/SYSTEM_RESOURCES_COMPLETE.md) | ✅ System Resources Complete | Expanded: Practical guide (resource sampling, per-process metrics, gates, prune prioritization) | [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md), [SWARM_COMPLETE](../research/SWARM_COMPLETE.md) |
+| [PROMPT_HISTORY_COMPLETE](./PROMPT_HISTORY_COLLECTION_COMPLETE.md) | ✅ Prompt History Complete | Expanded: Complete guide (collection, git integration, artifact extraction, MCP/CLI tools) | [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md) |
+| [SHELL_ENV_COMPLETE_PLAN](./SHELL_ENVIRONMENT_COMPLETE_PLAN.md) | ✅ Shell Environment Complete Plan | Consolidated: 4 files → comprehensive plan (optimization, safeguards, advanced features, CLI) | [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md), [SHELL_ENV_COMPLETE](../guides/SHELL_ENVIRONMENT_COMPLETE.md) |
+| [CROSS_PLATFORM_COMPLETE_PLAN](./CROSS_PLATFORM_COMPLETE_PLAN.md) | ✅ Cross-Platform Complete Plan | Expanded: Complete implementation guide (user isolation, multi-tenant, desktop automation, MCP integration) | [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md), [CROSS_PLATFORM_RESEARCH](../research/CROSS_PLATFORM_RESEARCH_COMPLETE.md) |
+| [PROCESS_OPT_COMPLETE](./PROCESS_OPTIMIZATION_COMPLETE_PLAN.md) | ✅ Process Optimization Complete Plan | Expanded: Complete guide (MTSP, tool migration, persistence, BKM tasks) | [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md), [PROCESS-OPT](./PROCESS_OPTIMIZATION_PLAN.md) |
+| [HOOK_RUST_COMPLETE](./HOOK_RUNTIME_RUST_COMPLETE.md) | ✅ Hook Runtime Rust Complete | Expanded: Complete migration guide (architecture, subcommands, implementation, performance targets) | [DOC_EXPANSION](./DOCUMENTATION_EXPANSION_TODO.md), [HOOK-RUST](./HOOK_RUNTIME_RUST_DESIGN.md) |
+| [SYNC-UPDATE](./SYNC_UPDATE_COMMAND_AND_SYSTEM_AUDIT_PLAN.md) | Sync/Update Command & System Audit | Design: Unified `thegent sync`/`update` command with full system audit, work stream integration, research sprawl automation | [WORK_STREAM](../reference/WORK_STREAM.md), [UNIFIED_WORK_STREAM_DESIGN](../reference/UNIFIED_WORK_STREAM_DESIGN.md), [RESEARCH_SPRAWL](../research/RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) |
+| [CONTROL-PLANE](./CONTROL_PLANE_DESIGN.md) | Control Plane Design | Robust multi-tenant config service: process + API, CLI/MCP interaction, harmonized with Agent Registry, Compute Offload, CROSS_PLATFORM_MULTI_TENANT | [AGENT_REGISTRY_DESIGN](../AGENT_REGISTRY_DESIGN.md), [research-compute-offload](../changes/research-compute-offload/design.md), [CROSS_PLATFORM_MULTI_TENANT](../reference/CROSS_PLATFORM_MULTI_TENANT_QUICK_REFERENCE.md) |
+| [CONTROL-PLANE-IMPL](./CONTROL_PLANE_IMPLEMENTATION_PLAN.md) | Control Plane Implementation Plan | 6-phase implementation: ConfigProvider, CP serve, CLI integration, tenant catalog, process-compose, observability; cross-platform Win/Linux/macOS/WSL | [CONTROL-PLANE](./CONTROL_PLANE_DESIGN.md) |
 
 ---
 
@@ -60,15 +95,15 @@
 
 | Phase | WPs | Done | Partial | Not Started | % Complete |
 |-------|-----|------|---------|-------------|-----------|
-| Phase 0: Foundation | 6 | 3 | 2 | 1 | 50% |
+| Phase 0: Foundation | 6 | 5 | 2 | 0 | 83% |
 | Phase X: Contract Hardening | 8 | 5 | 1 | 2 | 62% |
-| Phase 1: Core Routing | 9 | 4 | 2 | 3 | 44% |
+| Phase 1: Core Routing | 9 | 6 | 2 | 1 | 67% |
 | Phase 2: Reliability | 11 | 2 | 3 | 6 | 18% |
-| Phase 3: Governance | 9 | 1 | 3 | 5 | 11% |
-| Phase 4: UX | 9 | 0 | 1 | 8 | 0% |
-| Phase 5: Adaptive Scale | 10 | 0 | 1 | 9 | 0% |
+| Phase 3: Governance | 9 | 5 | 0 | 4 | 55% |
+| Phase 4: UX | 9 | 2 | 1 | 6 | 22% |
+| Phase 5: Adaptive Scale | 10 | 3 | 1 | 6 | 30% |
 | Phase 6: Enterprise | 8 | 0 | 2 | 6 | 0% |
-| **Total (WBS)** | **70** | **15** | **15** | **40** | **21%** |
+| **Total (WBS)** | **70** | **19** | **15** | **36** | **27%** |
 
 **Separately Completed** (not in WBS phases, but tracked in project state):
 - **FastMCP MCP Server**: Phases 1-4, 6-7 complete (Phase 5 production readiness pending)
@@ -201,6 +236,16 @@ For full dispatch details, context packages, and dependency visualization, see [
 | **How do I run multiple agents?** | [10-DISPATCH](./10-SUBAGENT-DISPATCH.md) batches | [02-WBS](./02-UNIFIED-WBS.md) WP details, [06-IMPL](./06-IMPLEMENTATION-GUIDE.md) context |
 | **What's the project status?** | [01-STATE](./01-PROJECT-STATE.md) current state | [02-WBS](./02-UNIFIED-WBS.md) completion %, [00-MASTER](./00-MASTER-INDEX.md) dashboard |
 | **How is the code organized?** | [01-STATE](./01-PROJECT-STATE.md) source map | [06-IMPL](./06-IMPLEMENTATION-GUIDE.md) module structure, [05-ARCH](./05-ARCHITECTURE.md) layers |
+| **How do lifecycle/checker decisions get implemented?** | [LIFECYCLE-PLAN](./2026-02-15-RESEARCH-AND-ELICITATION-PLAN.md) decisions, CheckerContext, robustness | [12-LIFECYCLE](./12-LIFECYCLE-LOOP-DESIGN.md), [HAC](../reference/HAC_AND_HITL_PATTERNS.md), [SITBACK](../guides/SITBACK_PLUGINS.md) |
+| **How do I integrate Codex/Cursor/droid/Augment with queue/harness?** | [CODEX](./CODEX_DONUT_HARNESS_PLAN.md) multi-platform harness | [Feature audit](../research/CLAUDE_CODE_FEATURE_PARITY_AUDIT.md), [USER_QUEUE](../research/USER_QUEUE_TUI_AND_AGENT_POLL.md) |
+| **What's the complete parity matrix and how do we achieve/supercede?** | [PARITY](./MULTI_PLATFORM_PARITY_MASTER_PLAN.md) master plan | [CODEX](./CODEX_DONUT_HARNESS_PLAN.md) phases, [Feature audit](../research/CLAUDE_CODE_FEATURE_PARITY_AUDIT.md) |
+| **How do I optimize/polish the MCP tools?** | [MCP-OPT](./MCP_TOOL_OPTIMIZATION_PLAN.md) MCP tool optimization plan | [08-OPT](./08-OPTIMIZATION-CATALOG.md), [PARITY](./MULTI_PLATFORM_PARITY_MASTER_PLAN.md) §10–13 |
+| **What's the full MCP parity matrix and FastMCP feature usage?** | [MCP-PARITY](../research/MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md) | CLI↔MCP↔Codex/CC; Queue/Team MCP; FastMCP transport spec |
+| **What MCP tools/resources exist and how does the transport stack work?** | [MULTI_PLATFORM_DEEP_DIVE](../research/MULTI_PLATFORM_DEEP_DIVE.md) Parts XXV–XXXII | [MCP-PARITY](../research/MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md), [MCP-OPT](./MCP_TOOL_OPTIMIZATION_PLAN.md) |
+| **How do MCP/CLI/skills/CLAUDE/roles/headless tie into the work stream?** | [TOUCHPOINT_EVAL](../reference/TOUCHPOINT_INTEGRATION_EVALUATION.md) MD vs SQLite, integration rules | [TOUCHPOINT_DEEP_DIVE](../reference/TOUCHPOINT_INTEGRATION_DEEP_DIVE.md) web research, copilot/sitback agents, ~/../project paths |
+| **How is the program becoming more robust and what's in future phases?** | [ROBUSTNESS_AND_DEPTH](../reference/ROBUSTNESS_AND_FUTURE_DEPTH.md) Phase 0–6 evolution | [AGENT_DEBUG_GUIDE](../guides/AGENT_DEBUGGING_AND_REMEDIATION_GUIDE.md), [MAIF_DEPTH](../reference/MAIF_ARTIFACT_SPEC_DEPTH.md), [COCKPIT_DEPTH](../reference/PHASE_4_COCKPIT_UX_DEPTH.md), [SCALE_DEPTH](../reference/PHASE_5_SCALE_ROBUSTNESS_DEPTH.md), [SIM_DEPTH](../reference/SIMULATION_AND_SANDBOX_DEPTH.md), [ROUTING_DEPTH](../reference/PARETO_ROUTING_DESIGN.md), [OTEL_DEPTH](../reference/OTEL_GENAI_AND_HYSTERESIS_DEPTH.md), [SWARM_DEPTH](../reference/SWARM_MEMORY_COORDINATION_DEPTH.md), [ECON_DEPTH](../reference/ECONOMIC_GOVERNANCE_DEPTH.md), [CONTEXT_DEPTH](../reference/CONTEXT_MANAGEMENT_DEPTH.md), [HAC_DEPTH](../reference/HAC_AND_HITL_PATTERNS.md), [HIERARCHY_DEPTH](../reference/MULTI_SWARM_HIERARCHY_DEPTH.md), [ACL_DEPTH](../reference/AGENT_NEGOTIATION_ACL_DEPTH.md), [CONST_DEPTH](../reference/CONSTITUTIONAL_ENFORCEMENT_DEPTH.md), [HEAL_DEPTH](../reference/SELF_HEALING_AGENTIC_CICD_DEPTH.md), [ID_DEPTH](../reference/AGENT_IDENTITY_SOVEREIGNTY_DEPTH.md) |
+| **What's the unified WBS breakdown?** | [UNIFIED_WBS](./02-UNIFIED-WBS.md) Phase breakdown | [DISPATCH](./10-SUBAGENT-DISPATCH.md) Agent schedule |
+| **What's the canonical backlog and how do incorporators merge fragments?** | [WORK_STREAM](../reference/WORK_STREAM.md) canonical backlog | [UNIFIED_WORK_STREAM_DESIGN](../reference/UNIFIED_WORK_STREAM_DESIGN.md) 4X/AgilePlus/gardening |
 
 ### By Phase
 
@@ -221,6 +266,8 @@ For full dispatch details, context packages, and dependency visualization, see [
 
 | Date | Version | Change | Author |
 |------|---------|--------|--------|
+| 2026-02-16 | 1.3 | Added 8 additional expanded/consolidated documents: CACHING_COMPLETE, SYSTEM_RESOURCES_COMPLETE, PROMPT_HISTORY_COMPLETE, SHELL_ENV_COMPLETE_PLAN, CROSS_PLATFORM_COMPLETE_PLAN, PROCESS_OPT_COMPLETE, HOOK_RUST_COMPLETE. All documents cross-referenced in master index | Documentation Expansion |
+| 2026-02-16 | 1.2 | Added 9 expanded/consolidated documents: CONVERSATION_DUMP_COMPLETE, AGENT_PLATFORMS_COMPLETE, SWARM_COMPLETE, SESSION_RESEARCH_COMPLETE, CROSS_PLATFORM_RESEARCH_COMPLETE, FASTMCP_COMPLETE, HOOK_RUST_MIGRATION_COMPLETE, LIBRARY_REPLACEMENT_COMPLETE, IDEA_SEED_REVIEW_COMPLETE. Updated UNIFIED_SYSTEM_APPLICATION_PLAN status to Complete | Documentation Expansion |
 | 2026-02-14 | 1.1 | Added "How to Use" quick start guide; corrected WP count (70 not 72); verified Completion Dashboard matches WBS status; expanded Source Code Map with actual directory structure (planning/ module); updated Batch Schedule table with dependencies; enhanced Cross-Reference Index with task-type and phase-based navigation; added this changelog | System Review |
 | 2026-02-14 | 1.0 | Initial docset generation from unified planning research | Foundation Phase |
 
@@ -228,7 +275,7 @@ For full dispatch details, context packages, and dependency visualization, see [
 
 ## Quality Assurance Checklist
 
-**Verification Completed (2026-02-14)**:
+**Verification Completed (2026-02-16)**:
 
 - [x] All 10 docset modules listed with accurate descriptions (70 WPs, 10 DAGs, 42 FRs, 16 NFRs)
 - [x] Completion Dashboard percentages verified against 02-WBS.md (70 WPs total: 15 done, 15 partial, 40 not started = 21%)
@@ -240,5 +287,9 @@ For full dispatch details, context packages, and dependency visualization, see [
 - [x] Document Changelog section added with version history
 - [x] All internal cross-reference links verified (relative paths to .md files, all anchors exist)
 - [x] Module descriptions updated with accurate counts (37 patterns, 17 risks, 93 optimization items)
-- [x] Version updated to 1.1 and generation date updated to 2026-02-14
+- [x] Version updated to 1.3 and generation date updated to 2026-02-16
 - [x] Module table columns expanded to show "Key Sections" for better discoverability
+- [x] Added 9 expanded/consolidated documents with cross-references (v1.2)
+- [x] Added 8 additional expanded/consolidated documents (v1.3): CACHING_COMPLETE, SYSTEM_RESOURCES_COMPLETE, PROMPT_HISTORY_COMPLETE, SHELL_ENV_COMPLETE_PLAN, CROSS_PLATFORM_COMPLETE_PLAN, PROCESS_OPT_COMPLETE, HOOK_RUST_COMPLETE: CACHING_COMPLETE, SYSTEM_RESOURCES_COMPLETE, PROMPT_HISTORY_COMPLETE, SHELL_ENV_COMPLETE_PLAN, CROSS_PLATFORM_COMPLETE_PLAN, PROCESS_OPT_COMPLETE, HOOK_RUST_COMPLETE
+- [x] Updated UNIFIED_SYSTEM_APPLICATION_PLAN status to Complete
+- [x] All expanded documents cross-referenced in master index

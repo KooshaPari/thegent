@@ -1,0 +1,34 @@
+"""
+E2E test for: thegent observe usage
+
+Agent Journey: Agent executes thegent observe usage command
+Expected Behavior: Command executes successfully and returns expected output
+"""
+import pytest
+from typer.testing import CliRunner
+
+from thegent.main import app
+
+runner = CliRunner()
+
+
+@pytest.mark.e2e
+class TestObserveUsage:
+    """E2E tests for thegent observe usage command."""
+
+    def test_observe_usage_exits_zero(self) -> None:
+        """thegent observe usage exits with code 0."""
+        result = runner.invoke(app, ['observe', 'usage'])
+        assert result.exit_code == 0, f"Command failed: {result.stdout} {result.stderr}"
+
+    def test_observe_usage_produces_output(self) -> None:
+        """thegent observe usage produces expected output."""
+        result = runner.invoke(app, ['observe', 'usage'])
+        assert result.exit_code == 0
+        # TODO: Add specific output assertions based on command behavior
+        assert len(result.stdout) > 0 or len(result.stderr) == 0
+
+    def test_observe_usage_help_exits_zero(self) -> None:
+        """thegent observe usage --help exits with code 0."""
+        result = runner.invoke(app, ['observe', 'usage', '--help'])
+        assert result.exit_code == 0

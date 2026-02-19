@@ -322,3 +322,11 @@ This dashboard is considered effective if:
 - all gate-readiness deltas are explained in under 24h
 
 If not, return to the compact dashboard design and enforce stricter schema validation before proceeding to bundle handoffs.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

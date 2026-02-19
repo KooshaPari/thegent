@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # suppress-hardcoded-strings.sh — PreToolUse hook (Write|Edit)
 # Detects hardcoded provider names and model strings in non-config files.
 # Advisory (exit 0 always). Budget: <100ms.

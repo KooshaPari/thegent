@@ -4,6 +4,7 @@ import json
 import os
 import platform
 import shutil
+import subprocess
 import sys
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -15,6 +16,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
+
+from thegent.infra import copy_file, copy_tree, run_subprocess_optimized
 
 try:
     from thegent.mcp_manage import service_install, service_start, service_uninstall
@@ -28,6 +31,682 @@ except ImportError:
 
     def service_uninstall() -> tuple[bool, str]:
         return False, "mcp_manage not available"
+
+
+def _get_thegent_root() -> Path:
+    """Return thegent root (has hooks/, skills/). Works for dev and installed package."""
+    # Installed: hooks/skills are force-included at thegent/hooks, thegent/skills
+    try:
+        import thegent
+        pkg = Path(thegent.__file__).resolve().parent
+        if (pkg / "hooks").exists() or (pkg / "skills").exists():
+            return pkg
+    except Exception:
+        pass
+    # Dev: install.py is at src/thegent/install.py -> project root is parent.parent.parent
+    return Path(__file__).resolve().parent.parent.parent
+
+
+def setup_hooks(cwd: Path | None = None, dry_run: bool = False, verbose: bool = False) -> dict[str, int]:
+    """Install thegent hooks into .git/hooks. Returns counts dict."""
+    root = _get_thegent_root()
+    hooks_src = root / "hooks"
+    cwd = cwd or Path.cwd()
+    git_hooks = cwd / ".git" / "hooks"
+    counts: dict[str, int] = {"installed": 0, "skipped": 0, "errors": 0}
+
+    if not git_hooks.parent.exists():
+        if verbose:
+            sys.stdout.write("  Not a git repo; skipping hooks.\n")
+        counts["skipped"] += 1
+        return counts
+
+    if not hooks_src.exists():
+        if verbose:
+            sys.stdout.write(f"  Hooks source not found at {hooks_src}\n")
+        counts["errors"] += 1
+        return counts
+
+    # Map git hook names to thegent hook scripts
+    hook_map = {
+        "pre-commit": "quality-gate.sh",  # Primary; fallback to pre-commit-docs if project has docs
+        "pre-push": "quality-gate.sh",
+    }
+
+    for hook_name, default_script in hook_map.items():
+        dst = git_hooks / hook_name
+        hook_script = hooks_src / default_script
+        if not hook_script.exists():
+            hook_script = next((hooks_src / s for s in ("pre-commit-docs.sh", "quality-gate.sh") if (hooks_src / s).exists()), None)
+        if not hook_script or not hook_script.exists():
+            continue
+        wrapper = f"""#!/bin/sh
+# thegent setup --hooks
+set -e
+exec sh "{hook_script}" "$@"
+"""
+        if dry_run:
+            counts["installed"] += 1
+            continue
+        try:
+            git_hooks.mkdir(parents=True, exist_ok=True)
+            dst.write_text(wrapper)
+            dst.chmod(0o755)
+            counts["installed"] += 1
+            if verbose:
+                sys.stdout.write(f"  Installed {hook_name}\n")
+        except OSError as e:
+            counts["errors"] += 1
+            if verbose:
+                sys.stdout.write(f"  Failed {hook_name}: {e}\n")
+
+    return counts
+
+
+def setup_skills(
+    cwd: Path | None = None,
+    template: str = "thegent-skills",
+    dry_run: bool = False,
+    verbose: bool = False,
+) -> dict[str, int]:
+    """Sync skills template to project. Returns counts dict."""
+    root = _get_thegent_root()
+    skills_src = root / "skills" / template
+    cwd = cwd or Path.cwd()
+    counts: dict[str, int] = {"copied": 0, "skipped": 0, "errors": 0}
+
+    if not skills_src.exists():
+        if verbose:
+            sys.stdout.write(f"  Skills template '{template}' not found at {skills_src}\n")
+        counts["errors"] += 1
+        return counts
+
+    # Targets: ~/.claude/skills, ~/.cursor/rules, project .claude/skills, .cursor/rules
+    home = Path.home()
+    skill_md = skills_src / "SKILL.md"
+    skill_json = skills_src / "skill.json"
+    if not skill_md.exists():
+        skill_md = next(skills_src.glob("*.md"), None)
+
+    for base_dir in [home / ".claude" / "skills", cwd / ".claude" / "skills"]:
+        for name in ["SKILL.md", "skill.json"]:
+            src_file = skills_src / name
+            if not src_file.exists():
+                continue
+            dst = base_dir / name
+            if dry_run:
+                counts["copied"] += 1
+                continue
+            try:
+                base_dir.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src_file, dst)
+                counts["copied"] += 1
+                if verbose:
+                    sys.stdout.write(f"  Synced {name} to {base_dir}\n")
+            except OSError as e:
+                counts["errors"] += 1
+                if verbose:
+                    sys.stdout.write(f"  Failed {dst}: {e}\n")
+
+    # Cursor rules: create thegent.mdc from SKILL.md
+    if skill_md and skill_md.exists():
+        content = skill_md.read_text()
+        mdc_content = f"---\nname: thegent-skills\ndescription: Unified orchestration guidance for thegent\n---\n\n{content}"
+        for rules_dir in [home / ".cursor" / "rules", cwd / ".cursor" / "rules"]:
+            dst = rules_dir / "thegent.mdc"
+            if dry_run:
+                counts["copied"] += 1
+                continue
+            try:
+                rules_dir.mkdir(parents=True, exist_ok=True)
+                dst.write_text(mdc_content)
+                counts["copied"] += 1
+                if verbose:
+                    sys.stdout.write(f"  Synced thegent.mdc to {rules_dir}\n")
+            except OSError as e:
+                counts["errors"] += 1
+                if verbose:
+                    sys.stdout.write(f"  Failed {dst}: {e}\n")
+
+    return counts
+
+
+def _service_plist_exists() -> bool:
+    """Compatibility helper for wizard preflight paths.
+
+    Some setup paths call this helper directly; keep it available even when
+    wizard flow is simplified.
+    """
+    if platform.system() != "Darwin":
+        return False
+    plist = Path.home() / "Library" / "LaunchAgents" / "com.thegent.mcp.plist"
+    return plist.exists()
+
+
+# --- System Dependencies Installation ---
+
+
+def _command_exists(cmd: str) -> bool:
+    """Check if a command exists in PATH."""
+    return shutil.which(cmd) is not None
+
+
+def _run_command(
+    cmd: list[str],
+    check: bool = False,
+    capture_output: bool = True,
+    retries: int = 3,
+    retry_delay: float = 1.0,
+) -> tuple[int, str, str]:
+    """Run a shell command with retry logic. Returns (returncode, stdout, stderr)."""
+    import time
+
+    last_error = None
+    for attempt in range(retries):
+        try:
+            result = run_subprocess_optimized(
+                cmd, check=check, capture_output=capture_output, timeout=300
+            )
+            stdout_text = result.stdout.strip() if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace").strip() if result.stdout else "")
+            stderr_text = result.stderr.strip() if isinstance(result.stderr, str) else (result.stderr.decode("utf-8", errors="replace").strip() if result.stderr else "")
+            return result.returncode, stdout_text, stderr_text
+        except subprocess.TimeoutExpired:
+            last_error = "Command timed out"
+            if attempt < retries - 1:
+                time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                continue
+            return 1, "", last_error
+        except Exception as e:
+            last_error = str(e)
+            last_error = str(e)
+            # Retry on network errors or temporary failures
+            if attempt < retries - 1 and any(keyword in str(e).lower() for keyword in ['network', 'connection', 'timeout', 'temporary']):
+                time.sleep(retry_delay * (attempt + 1))
+                continue
+            return 1, "", last_error
+
+    return 1, "", last_error or "Command failed after retries"
+
+
+def install_homebrew(console: Console | None = None, dry_run: bool = False) -> tuple[bool, str]:
+    """Install Homebrew if not present. Returns (success, message)."""
+    if _command_exists("brew"):
+        return True, "Homebrew already installed"
+
+    if dry_run:
+        return True, "Would install Homebrew"
+
+    if console:
+        console.print("[cyan]Installing Homebrew...[/cyan]")
+
+    # Official Homebrew installation script
+    install_script = '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+    rc, stdout, stderr = _run_command(["bash", "-c", install_script], check=False, capture_output=False)
+
+    if rc == 0 or _command_exists("brew"):
+        # Note: Avoid global PATH mutation. If brew_path is needed for subprocess calls,
+        # construct env dict locally: env = os.environ.copy(); env["PATH"] = ...
+        return True, "Homebrew installed successfully"
+    return False, f"Homebrew installation failed: {stderr or stdout}"
+
+
+
+
+def _backup_shell_config(hook_file: Path, console: Console | None = None) -> Path | None:
+    """Backup shell config file before modification. Returns backup path or None."""
+    if not hook_file.exists():
+        return None
+
+    backup_dir = Path.home() / ".thegent" / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    backup_file = backup_dir / f"{hook_file.name}.{timestamp}.bak"
+
+    try:
+        import shutil
+        shutil.copy2(hook_file, backup_file)
+        if console:
+            console.print(f"[dim]Backed up {hook_file.name} to {backup_file}[/dim]")
+        return backup_file
+    except Exception as e:
+        if console:
+            console.print(f"[yellow]Could not backup {hook_file.name}: {e}[/yellow]")
+        return None
+
+def install_mise(console: Console | None = None, dry_run: bool = False, use_nix: bool = False, settings: "ThegentSettings | None" = None) -> tuple[bool, str]:
+    """Install mise (formerly rtx) via Homebrew or Nix. Returns (success, message)."""
+    if settings is None:
+        from thegent.config import ThegentSettings
+        settings = ThegentSettings()
+
+    if _command_exists("mise"):
+        return True, "mise already installed"
+
+    if dry_run:
+        return True, "Would install mise"
+
+    if use_nix:
+        if not _command_exists("nix"):
+            return False, "Nix not found. Install Nix first or use Homebrew."
+        if console:
+            console.print("[cyan]Installing mise via Nix...[/cyan]")
+        rc, stdout, stderr = _run_command(["nix", "profile", "install", "nixpkgs#mise"])
+        if rc == 0:
+            return True, "mise installed via Nix"
+        return False, f"mise Nix installation failed: {stderr or stdout}"
+
+    # Try Homebrew
+    if not _command_exists("brew"):
+        installed, msg = install_homebrew(console, dry_run)
+        if not installed:
+            return False, f"Cannot install mise: {msg}"
+
+    if console:
+        console.print("[cyan]Installing mise via Homebrew...[/cyan]")
+    rc, stdout, stderr = _run_command(["brew", "install", "mise"])
+    if rc == 0:
+        # Setup shell hooks automatically
+        shell = settings.shell_path
+        shell_config_file = None
+        hook_cmd = None
+
+        if "zsh" in shell:
+            hook_cmd = 'eval "$(mise activate zsh)"'
+            # Check for .zshenv first (loaded earlier, better for mise)
+            zshenv = Path.home() / ".zshenv"
+            if zshenv.exists():
+                shell_config_file = zshenv
+        elif "fish" in shell:
+            hook_cmd = 'mise activate fish | source'
+            fish_config = Path.home() / ".config" / "fish" / "config.fish"
+            shell_config_file = fish_config if fish_config.exists() else fish_config
+        elif "tcsh" in shell or "csh" in shell:
+            hook_cmd = 'eval `mise activate tcsh`'
+            tcsh_config = Path.home() / ".tcshrc"
+            shell_config_file = tcsh_config if tcsh_config.exists() else Path.home() / ".cshrc"
+        elif "bash" in shell:
+            hook_cmd = 'eval "$(mise activate bash)"'
+            shell_config_file = Path.home() / ".bashrc"
+        else:
+            hook_cmd = 'eval "$(mise activate)"'
+            shell_config_file = Path.home() / f".{shell.split('/')[-1]}rc"
+
+        # Add hook if not already present
+        if shell_config_file:
+            try:
+                if not shell_config_file.exists():
+                    # Create shell config file if it doesn't exist (especially for .zshenv)
+                    shell_config_file.parent.mkdir(parents=True, exist_ok=True)
+                    initial_content = f"# mise hook (fast alternative to direnv)\n# Auto-installed by thegent\n{hook_cmd}\n"
+                    shell_config_file.write_text(initial_content)
+                    if console:
+                        console.print(f"[green]✓[/green] Created {shell_config_file.name} with mise hook")
+                else:
+                    # File exists, read and update
+                    # Backup before modification
+                    backup_path = _backup_shell_config(shell_config_file, console)
+                    # File exists, read and update
+                    content = shell_config_file.read_text()
+                    if "mise activate" not in content:
+                        # Add mise hook before direnv hook if direnv exists
+                        if "direnv hook" in content:
+                            # Insert before direnv
+                            content = content.replace(
+                                'eval "$(direnv hook',
+                                f'{hook_cmd}\n# direnv hook',
+                            )
+                        else:
+                            # Append at end
+                            content = f"{content}\n\n# mise hook (fast alternative to direnv)\n{hook_cmd}\n"
+                        shell_config_file.write_text(content)
+                        if console:
+                            console.print(f"[green]✓[/green] Added mise hook to {shell_config_file.name}")
+                    elif console:
+                        console.print(f"[dim]mise hook already in {shell_config_file.name}[/dim]")
+            except Exception as e:
+                if console:
+                    console.print(f"[yellow]Could not auto-add mise hook: {e}[/yellow]")
+                    console.print(f"[dim]Manually add to {shell_config_file}: {hook_cmd}[/dim]")
+        elif console:
+            console.print(f"[dim]Add to your shell config: {hook_cmd}[/dim]")
+        return True, "mise installed via Homebrew"
+    return False, f"mise installation failed: {stderr or stdout}"
+
+
+
+def verify_mise_installation(console: Console | None = None, settings: "ThegentSettings | None" = None) -> tuple[bool, list[str]]:
+    """Verify mise installation and configuration. Returns (success, messages)."""
+    if settings is None:
+        from thegent.config import ThegentSettings
+        settings = ThegentSettings()
+
+    messages = []
+    success = True
+
+    # Check if mise is in PATH
+    if not _command_exists("mise"):
+        messages.append("mise not found in PATH")
+        success = False
+    else:
+        messages.append("mise found in PATH")
+        # Get version
+        rc, stdout, stderr = _run_command(["mise", "--version"])
+        if rc == 0:
+            version = stdout.split()[0] if stdout else "unknown"
+            messages.append(f"mise version: {version}")
+        else:
+            messages.append("Could not get mise version")
+
+    # Check if shell hooks are configured
+    shell = settings.shell_path
+    hook_files = []
+    if "zsh" in shell:
+        hook_files = [Path.home() / ".zshenv", Path.home() / ".zshrc"]
+    if "zsh" in shell:
+        hook_files = [Path.home() / ".bashrc"]
+
+    hook_found = False
+    for hook_file in hook_files:
+        if hook_file.exists():
+            try:
+                hook_content = hook_file.read_text()
+                if "mise activate" in hook_content:
+                    messages.append(f"mise hook found in {hook_file.name}")
+                    hook_found = True
+                    break
+            except Exception:
+                pass
+
+    if not hook_found:
+        messages.append("Warning: mise hook not found in shell config files")
+        # Not a failure, just a warning
+
+    # Run mise doctor if available
+    if _command_exists("mise"):
+        rc, stdout, stderr = _run_command(["mise", "doctor"], capture_output=True)
+        if rc == 0:
+            messages.append("mise doctor: OK")
+        else:
+            messages.append(f"mise doctor warnings: {stderr[:200] if stderr else 'unknown'}")
+
+    return success, messages
+
+
+
+def uninstall_mise_hooks(console: Console | None = None, dry_run: bool = False, settings: "ThegentSettings | None" = None) -> tuple[bool, list[str]]:
+    """Remove mise hooks from shell config files. Returns (success, messages)."""
+    if settings is None:
+        from thegent.config import ThegentSettings
+        settings = ThegentSettings()
+
+    messages = []
+    success = True
+
+    shell = settings.shell_path
+    hook_files = []
+    if "zsh" in shell:
+        hook_files = [Path.home() / ".zshenv", Path.home() / ".zshrc"]
+    if "zsh" in shell:
+        hook_files = [Path.home() / ".bashrc"]
+    elif "fish" in shell:
+        hook_files = [Path.home() / ".config" / "fish" / "config.fish"]
+    elif "tcsh" in shell or "csh" in shell:
+        hook_files = [Path.home() / ".tcshrc", Path.home() / ".cshrc"]
+
+    removed_count = 0
+    for hook_file in hook_files:
+        if hook_file.exists():
+            try:
+                content = hook_file.read_text()
+                if "mise activate" in content:
+                    if dry_run:
+                        messages.append(f"Would remove mise hook from {hook_file.name}")
+                    else:
+                        # Remove mise hook lines
+                        lines = content.splitlines()
+                        new_lines = []
+                        skip_next = False
+                        for _i, line in enumerate(lines):
+                            if "mise activate" in line or "mise hook" in line.lower():
+                                skip_next = True
+                                continue
+                            if skip_next and line.strip() == "":
+                                skip_next = False
+                                continue
+                            skip_next = False
+                            new_lines.append(line)
+
+                        hook_file.write_text("\n".join(new_lines) + "\n")
+                        messages.append(f"Removed mise hook from {hook_file.name}")
+                        removed_count += 1
+            except Exception as e:
+                messages.append(f"Error removing hook from {hook_file.name}: {e}")
+                success = False
+
+    if removed_count == 0:
+        messages.append("No mise hooks found to remove")
+
+    return success, messages
+
+
+def uninstall_system_dependencies(
+    console: Console | None = None,
+    dry_run: bool = False,
+    uninstall_mise_pkg: bool = False,
+    remove_hooks: bool = True,
+) -> dict[str, Any]:
+    """Uninstall system dependencies: remove hooks, optionally uninstall mise.
+
+    Args:
+        console: Rich console for output
+        dry_run: If True, only show what would be done
+        uninstall_mise_pkg: Also uninstall mise package (via brew/nix)
+        remove_hooks: Remove shell hooks (default: True)
+
+    Returns:
+        dict with uninstall status
+    """
+    results: dict[str, Any] = {
+        "hooks_removed": False,
+        "mise_uninstalled": False,
+        "messages": [],
+    }
+
+    if remove_hooks:
+        success, msgs = uninstall_mise_hooks(console, dry_run)
+        results["hooks_removed"] = success
+        results["messages"].extend(msgs)
+        if console:
+            for msg in msgs:
+                console.print(f"[dim]{msg}[/dim]")
+
+    if uninstall_mise_pkg and not dry_run:
+        if _command_exists("brew"):
+            if console:
+                console.print("[cyan]Uninstalling mise via Homebrew...[/cyan]")
+            rc, stdout, stderr = _run_command(["brew", "uninstall", "mise"])
+            if rc == 0:
+                results["mise_uninstalled"] = True
+                results["messages"].append("mise uninstalled via Homebrew")
+            else:
+                results["messages"].append(f"Failed to uninstall mise: {stderr or stdout}")
+        elif _command_exists("nix"):
+            if console:
+                console.print("[cyan]Uninstalling mise via Nix...[/cyan]")
+            rc, stdout, stderr = _run_command(["nix", "profile", "remove", "mise"])
+            if rc == 0:
+                results["mise_uninstalled"] = True
+                results["messages"].append("mise uninstalled via Nix")
+            else:
+                results["messages"].append(f"Failed to uninstall mise: {stderr or stdout}")
+        else:
+            results["messages"].append("Neither Homebrew nor Nix found - cannot uninstall mise")
+
+    return results
+
+
+
+def restore_shell_config(backup_path: Path, console: Console | None = None) -> tuple[bool, str]:
+    """Restore shell config from backup. Returns (success, message)."""
+    if not backup_path.exists():
+        return False, f"Backup file not found: {backup_path}"
+
+    # Determine original file path from backup name
+    # Format: .zshenv.20260218_123456.bak
+    backup_name = backup_path.name
+    if '.bak' not in backup_name:
+        return False, "Invalid backup file format"
+
+    original_name = backup_name.rsplit('.', 2)[0]  # Remove .timestamp.bak
+    original_path = Path.home() / original_name
+
+    try:
+        import shutil
+        shutil.copy2(backup_path, original_path)
+        if console:
+            console.print(f"[green]✓[/green] Restored {original_name} from backup")
+        return True, f"Restored {original_name} from {backup_path.name}"
+    except Exception as e:
+        return False, f"Restore failed: {e}"
+
+
+def list_backups(console: Console | None = None) -> list[Path]:
+    """List all available backups. Returns list of backup paths."""
+    backup_dir = Path.home() / ".thegent" / "backups"
+    if not backup_dir.exists():
+        return []
+
+    backups = sorted(backup_dir.glob("*.bak"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return backups
+
+
+def cleanup_old_backups(keep_count: int = 10, console: Console | None = None) -> tuple[int, list[str]]:
+    """Remove old backups, keeping only the most recent ones.
+
+    Args:
+        keep_count: Number of backups to keep (default: 10)
+        console: Rich console for output
+
+    Returns:
+        (removed_count, removed_files)
+    """
+    backups = list_backups(console)
+    if len(backups) <= keep_count:
+        return 0, []
+
+    to_remove = backups[keep_count:]
+    removed_files = []
+
+    for backup in to_remove:
+        try:
+            backup.unlink()
+            removed_files.append(backup.name)
+            if console:
+                console.print(f"[dim]Removed old backup: {backup.name}[/dim]")
+        except Exception as e:
+            if console:
+                console.print(f"[yellow]Could not remove {backup.name}: {e}[/yellow]")
+
+    return len(removed_files), removed_files
+
+def clone_git_repo(
+    repo_url: str,
+    target_dir: Path,
+    console: Console | None = None,
+    dry_run: bool = False,
+    branch: str | None = None,
+) -> tuple[bool, str]:
+    """Clone a git repository. Returns (success, message)."""
+    if not _command_exists("git"):
+        return False, "git not found. Install git first."
+
+    if target_dir.exists():
+        if (target_dir / ".git").exists():
+            return True, f"Repository already exists at {target_dir}"
+        return False, f"Directory exists but is not a git repository: {target_dir}"
+
+    if dry_run:
+        return True, f"Would clone {repo_url} to {target_dir}"
+
+    if console:
+        console.print(f"[cyan]Cloning {repo_url}...[/cyan]")
+
+    cmd = ["git", "clone", repo_url, str(target_dir)]
+    if branch:
+        cmd.extend(["-b", branch])
+
+    rc, stdout, stderr = _run_command(cmd)
+    if rc == 0:
+        return True, f"Cloned {repo_url} to {target_dir}"
+    return False, f"Git clone failed: {stderr or stdout}"
+
+
+def install_system_dependencies(
+    console: Console | None = None,
+    dry_run: bool = False,
+    install_homebrew_pkg: bool = True,
+    install_mise_pkg: bool = True,
+    use_nix: bool = False,
+    git_repos: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    """Install system-wide dependencies: Homebrew, mise, git repos.
+
+    Args:
+        console: Rich console for output
+        dry_run: If True, only show what would be done
+        install_homebrew_pkg: Install Homebrew if missing
+        install_mise_pkg: Install mise if missing
+        use_nix: Use Nix instead of Homebrew for mise
+        git_repos: List of dicts with 'url', 'target', optional 'branch'
+
+    Returns:
+        dict with 'homebrew', 'mise', 'git_repos' status
+    """
+    results: dict[str, Any] = {
+        "homebrew": {"installed": False, "message": ""},
+        "mise": {"installed": False, "message": ""},
+        "git_repos": [],
+    }
+
+    if install_homebrew_pkg:
+        installed, msg = install_homebrew(console, dry_run)
+        results["homebrew"] = {"installed": installed, "message": msg}
+        if console and not dry_run:
+            status = "[green]✓[/green]" if installed else "[red]✗[/red]"
+            console.print(f"{status} Homebrew: {msg}")
+
+    if install_mise_pkg:
+        installed, msg = install_mise(console, dry_run, use_nix=use_nix)
+        results["mise"] = {"installed": installed, "message": msg}
+        if console and not dry_run:
+            status = "[green]✓[/green]" if installed else "[red]✗[/red]"
+            console.print(f"{status} mise: {msg}")
+
+        # Verify mise installation
+        if installed and not dry_run:
+            _verify_success, verify_msgs = verify_mise_installation(console)
+            if console and verify_msgs:
+                console.print("[dim]Verification:[/dim]")
+                for verify_msg in verify_msgs:
+                    console.print(f"  [dim]{verify_msg}[/dim]")
+
+    if git_repos:
+        for repo_info in git_repos:
+            url = repo_info.get("url", "")
+            target = repo_info.get("target", "")
+            branch = repo_info.get("branch")
+            if not url or not target:
+                continue
+            target_path = Path(target).expanduser()
+            installed, msg = clone_git_repo(url, target_path, console, dry_run, branch)
+            results["git_repos"].append({"url": url, "target": target, "installed": installed, "message": msg})
+            if console and not dry_run:
+                status = "[green]✓[/green]" if installed else "[red]✗[/red]"
+                console.print(f"{status} Git repo {url}: {msg}")
+
+    return results
+
 
 # --- Models ---
 
@@ -89,6 +768,89 @@ def get_default_bundle_manifest_path() -> Path:
     """Default location for the third-party bundle manifest."""
 
     return Path.home() / ".config" / "thegent" / "third_party_bundles.json"
+
+
+def get_bundle_manifest_path(bundle_manifest: Path | str | None = None) -> Path:
+    """Get the bundle manifest path.
+
+    Args:
+        bundle_manifest: Optional path to a bundle manifest file.
+
+    Returns:
+        The path to the bundle manifest file.
+    """
+    if bundle_manifest is not None:
+        return _coerce_path(str(bundle_manifest))
+    return get_default_bundle_manifest_path()
+
+
+def list_bundle_names(bundle_manifest: Path | str | None = None) -> list[str]:
+    """List available bundle names from the bundle manifest.
+
+    Args:
+        bundle_manifest: Optional path to a bundle manifest file.
+
+    Returns:
+        List of bundle names available in the bundle manifest.
+    """
+    manifest = load_bundle_manifest(bundle_manifest)
+    return list(manifest.keys())
+
+
+def validate_bundle_manifest(bundle_manifest: Path | str | None = None) -> tuple[bool, list[str]]:
+    """Validate a bundle manifest file.
+
+    Args:
+        bundle_manifest: Optional path to a bundle manifest file.
+
+    Returns:
+        Tuple of (is_valid, list of issues).
+    """
+    issues: list[str] = []
+    manifest_path = bundle_manifest or get_default_bundle_manifest_path()
+
+    if manifest_path and isinstance(manifest_path, (str, Path)):
+        path = Path(manifest_path) if not isinstance(manifest_path, Path) else manifest_path
+        if not path.exists():
+            issues.append(f"Bundle manifest not found: {path}")
+            return False, issues
+
+        try:
+            data = json.loads(path.read_text())
+        except (json.JSONDecodeError, OSError, ValueError) as e:
+            issues.append(f"Failed to parse bundle manifest: {e}")
+            return False, issues
+
+        if not isinstance(data, dict):
+            issues.append("Bundle manifest must be a JSON object")
+            return False, issues
+
+        bundles = data.get("bundles")
+        if not isinstance(bundles, dict):
+            issues.append("Bundle manifest must have a 'bundles' object")
+            return False, issues
+
+        for name, bundle in bundles.items():
+            if not isinstance(name, str):
+                issues.append("Bundle name must be a string")
+                continue
+            if not isinstance(bundle, dict):
+                issues.append(f"Bundle '{name}' must be an object")
+                continue
+            items = bundle.get("items")
+            if not isinstance(items, list):
+                issues.append(f"Bundle '{name}' must have an 'items' array")
+                continue
+            for i, item in enumerate(items):
+                if not isinstance(item, dict):
+                    issues.append(f"Bundle '{name}' item {i} must be an object")
+                    continue
+                if "source" not in item:
+                    issues.append(f"Bundle '{name}' item {i} missing 'source'")
+                if "target" not in item:
+                    issues.append(f"Bundle '{name}' item {i} missing 'target'")
+
+    return len(issues) == 0, issues
 
 
 def _coerce_path(value: str) -> Path:
@@ -290,7 +1052,32 @@ def _resolve_bundle_target(target: str, *, home: Path, cwd: Path) -> Path:
 # --- Constants & Mappings ---
 
 # Valid targets
-VALID_TARGETS = {"claude-code", "claude-desktop", "cursor", "codex", "droid", "all", "claude", "factory", "both"}
+VALID_TARGETS = {
+    "claude-code",
+    "claude-desktop",
+    "cursor",
+    "codex",
+    "droid",
+    "envrc",
+    "shell",
+    "system",
+    "git-lock-cleanup",
+    "all",
+    "claude",
+    "factory",
+    "both",
+}
+
+# Shell config: source (in shell/) -> target (in home)
+SHELL_FILES = {
+    ".zshenv": ".zshenv",
+    ".zsh_bundle.zsh": ".zsh_bundle.zsh",
+    ".zsh_safeguards.zsh": ".zsh_safeguards.zsh",
+    ".zsh_optimization.zsh": ".zsh_optimization.zsh",
+    ".zsh_advanced.zsh": ".zsh_advanced.zsh",
+    ".zshrc": ".zshrc",
+}
+SHELL_LOCAL_TEMPLATE = "zshrc.local.template"  # Copy only if ~/.zshrc.local missing
 
 # Exclude list for file sync
 EXCLUDE_DIRS = {
@@ -314,7 +1101,7 @@ EXCLUDE_DIRS = {
 
 # Bundle definitions
 CLAUDE_CODE_FILES = {
-    "skills/agent-orchestra": "skills/agent-orchestra",
+    "skills/thegent-skills": "skills/thegent-skills",
     "skills/sitback-agent": "skills/sitback-agent",
     "hooks": "hooks",
     "templates": "templates",
@@ -328,7 +1115,7 @@ CLAUDE_CODE_FILES = {
 
 # Cursor specific files
 CURSOR_FILES = {
-    "skills/agent-orchestra": "skills-cursor/agent-orchestra",
+    "skills/thegent-skills": "skills-cursor/thegent-skills",
 }
 
 FACTORY_FILES = {
@@ -467,7 +1254,7 @@ class InstallManager:
         rel_path = target.relative_to(Path.home()) if target.is_relative_to(Path.home()) else target.name
         backup_path = self.backup_dir / timestamp / rel_path
         backup_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(target, backup_path)
+        copy_file(target, backup_path)
         return backup_path
 
     def install_file(self, source: Path, target: Path, mode: InstallMode) -> FileAction:
@@ -520,9 +1307,9 @@ class InstallManager:
                 action = FileAction.SYMLINKED
             else:
                 if source.is_dir():
-                    shutil.copytree(source, target)
+                    copy_tree(source, target)
                 else:
-                    shutil.copy2(source, target)
+                    copy_file(source, target)
                 action = FileAction.COPIED
 
             # Register in manifest
@@ -621,9 +1408,9 @@ class InstallManager:
                         # Restore backup
                         backup = Path(m.backup)
                         if backup.is_dir():
-                            shutil.copytree(backup, target)
+                            copy_tree(backup, target)
                         else:
-                            shutil.copy2(backup, target)
+                            copy_file(backup, target)
                         counts["restored"] += 1
                     else:
                         counts["removed"] += 1
@@ -681,6 +1468,8 @@ def run_wizard(url: str | None = None) -> None:
         "3": ("claude-desktop", "Claude Desktop"),
         "4": ("codex", "Codex"),
         "5": ("droid", "Droid / Factory"),
+        "6": ("envrc", "~/.envrc (direnv fix)"),
+        "7": ("shell", "Shell config (~/.zshenv, .zshrc, etc.)"),
     }
 
     # Simple detection
@@ -691,6 +1480,8 @@ def run_wizard(url: str | None = None) -> None:
         "claude-desktop": (home / "Library/Application Support/Claude").exists(),
         "codex": (home / ".codex").exists(),
         "droid": (home / ".factory").exists(),
+        "envrc": True,  # Always relevant for direnv/FUNCNEST fix
+        "shell": True,  # Shell config always relevant for optimized startup
     }
 
     for k, (code, name) in targets_map.items():
@@ -769,6 +1560,68 @@ def run_wizard(url: str | None = None) -> None:
     console.print("\n[dim]Happy orchestrating![/dim]")
 
 
+def run_install_system(
+    prefix: Path = Path("/opt/thegent"),
+    dry_run: bool = False,
+    verbose: bool = False,
+) -> dict:
+    """Install thegent for agent-as-system-user. Layout: bin, share/thegent/hooks, etc/thegent, var/lib/thegent."""
+    counts: dict[str, int] = {"copied": 0, "skipped": 0, "conflicts": 0, "errors": 0}
+    thegent_root = Path(__file__).parent.parent.parent.resolve()
+    bin_dir = prefix / "bin"
+    hooks_dir = prefix / "share" / "thegent" / "hooks"
+    etc_dir = prefix / "etc" / "thegent"
+    var_dir = Path("/var/lib/thegent")
+
+    if not dry_run:
+        bin_dir.mkdir(parents=True, exist_ok=True)
+        hooks_dir.mkdir(parents=True, exist_ok=True)
+        etc_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            var_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass  # May need root for /var/lib
+
+    # Copy hooks (exclude build artifacts)
+    hooks_src = thegent_root / "hooks"
+    if hooks_src.exists():
+        for f in hooks_src.iterdir():
+            if f.name in ("hook-dispatcher", "__pycache__", ".git") or f.suffix == ".pyc":
+                continue
+            dst = hooks_dir / f.name
+            if f.is_dir() and f.name == "lib":
+                if not dry_run:
+                    shutil.copytree(f, dst, dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+                counts["copied"] += 1
+            elif f.is_file():
+                if not dry_run:
+                    shutil.copy2(f, dst)
+                counts["copied"] += 1
+
+    # Create bin/thegent wrapper
+    thegent_script = """#!/usr/bin/env bash
+exec python3 -m thegent.main "$@"
+"""
+    thegent_bin = bin_dir / "thegent"
+    if not dry_run:
+        thegent_bin.write_text(thegent_script)
+        thegent_bin.chmod(0o755)
+    counts["copied"] += 1
+
+    # Placeholder config
+    config_file = etc_dir / "config.yaml"
+    if not config_file.exists() and not dry_run:
+        config_file.write_text("# thegent system config (agent-as-system-user)\n")
+    counts["copied"] += 1
+
+    if verbose:
+        sys.stdout.write(f"  System install to {prefix} complete.\\n")
+        sys.stdout.write(f"  bin: {bin_dir}\\n")
+        sys.stdout.write(f"  hooks: {hooks_dir}\\n")
+        sys.stdout.write(f"  Run: thegent install-shims --prefix {prefix} for git wrapper\\n")
+    return counts
+
+
 def run_install(
     target: str = "all",
     mode: str = "smart",
@@ -778,6 +1631,7 @@ def run_install(
     install_service: bool = False,
     bundles: list[str] | None = None,
     bundle_manifest: Path | str | None = None,
+    bundle_conflict_policy: str | None = None,
 ) -> dict:
     if target != "all" and target not in VALID_TARGETS:
         raise ValueError(f"Invalid target: {target}. Valid targets: {VALID_TARGETS}")
@@ -799,7 +1653,7 @@ def run_install(
     home = get_home_dir()
     cwd = Path.cwd()
 
-    targets = [target] if target != "all" else ["claude-code", "claude-desktop", "cursor", "codex", "droid"]
+    targets = [target] if target != "all" else ["claude-code", "claude-desktop", "cursor", "codex", "droid", "envrc", "shell", "git-lock-cleanup"]
 
     # Optional: Install launchd service on macOS
     if install_service and platform.system() == "Darwin" and not dry_run:
@@ -839,7 +1693,11 @@ def run_install(
             if platform.system() == "Darwin":
                 p = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
             elif platform.system() == "Windows":
-                p = Path(os.environ.get("APPDATA", "")) / "Claude" / "claude_desktop_config.json"
+                # Use settings.appdata_path for Windows APPDATA detection
+                if settings.appdata_path:
+                    p = settings.appdata_path / "Claude" / "claude_desktop_config.json"
+                else:
+                    p = home / "AppData" / "Roaming" / "Claude" / "claude_desktop_config.json"
             else:
                 p = home / ".config" / "Claude" / "claude_desktop_config.json"
 
@@ -878,6 +1736,47 @@ def run_install(
 
             # MCP to .factory/mcp.json in CWD
             mgr.update_config(Path.cwd() / ".factory" / "mcp.json", "mcpServers.thegent", mcp_cfg)
+
+        elif t == "envrc":
+            # ~/.envrc: guarded direnv config to prevent FUNCNEST recursion in home
+            # (use flake only when flake.nix exists; in $HOME there is none)
+            src = thegent_root / "shell" / "envrc.home.template"
+            dst = home / ".envrc"
+            if src.exists():
+                res = mgr.install_file(src, dst, install_mode)
+                key = res.value if hasattr(res, "value") else str(res)
+                counts[key] = counts.get(key, 0) + 1
+
+        elif t == "shell":
+            # Shell config: zshenv, zsh_bundle, safeguards, optimization, advanced, zshrc
+            shell_dir = thegent_root / "shell"
+            for name in SHELL_FILES:
+                src = shell_dir / name
+                dst = home / name
+                if src.exists():
+                    res = mgr.install_file(src, dst, install_mode)
+                    key = res.value if hasattr(res, "value") else str(res)
+                    counts[key] = counts.get(key, 0) + 1
+            # zshrc.local: copy only if missing (never overwrite user customizations)
+            src_local = shell_dir / SHELL_LOCAL_TEMPLATE
+            dst_local = home / ".zshrc.local"
+            if src_local.exists() and not dst_local.exists():
+                res = mgr.install_file(src_local, dst_local, InstallMode.SMART)
+                key = res.value if hasattr(res, "value") else str(res)
+                counts[key] = counts.get(key, 0) + 1
+
+        elif t == "git-lock-cleanup":
+            from thegent.git_lock_manage import lock_cleanup_install, lock_cleanup_start
+            ok, msg = lock_cleanup_install()
+            if ok:
+                if verbose:
+                    sys.stdout.write(f"  {msg}\n")
+                lock_cleanup_start()
+                counts["copied"] += 1
+            else:
+                counts["errors"] += 1
+                if verbose:
+                    sys.stdout.write(f"  Failed: {msg}\n")
 
     # Optional third-party bundles to install
     for src, dst, bundle_mode in resolve_bundles(

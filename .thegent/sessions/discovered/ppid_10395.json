@@ -1,0 +1,17 @@
+{
+  "pid": 10395,
+  "ppid": 10395,
+  "agent": "claude-code",
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "discovered_at": "2026-02-18T08:28:53.519981+00:00",
+  "last_seen_at": "2026-02-18T08:33:13.372740+00:00",
+  "command": "/opt/homebrew/bin/claude",
+  "args_preview": "/opt/homebrew/bin/claude --print --add-dir /Users/kooshapari/temp-PRODVERCEL/485...",
+  "tmux_pane": null,
+  "session_id": null,
+  "token_usage": null,
+  "mcp_errors": null,
+  "capabilities": [],
+  "trust_score": 0.5,
+  "reputation": 0
+}

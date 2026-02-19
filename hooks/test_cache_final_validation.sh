@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # Final validation: Prove the cache vulnerability is fixed
 set -euo pipefail
 

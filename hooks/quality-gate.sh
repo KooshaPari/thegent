@@ -1,9 +1,21 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # quality-gate.sh — Stop hook
 # Comprehensive quality check before session ends.
 # SOLE OWNER of: ruff, vulture, knip, jscpd, shellcheck, oxlint (lint + dead code)
 # Budget: <5s. Optimized: batched linters, parallel execution, inlined sub-scripts.
 set -euo pipefail
+
+# --- DEBUG: Timing ---
+_HOOK_START_TIME=$(date +%s)
+_HOOK_DEBUG=$(hook_config_true "debug_timing" 2>/dev/null && echo "true" || echo "false")
+_debug_timing() {
+  if [[ "$_HOOK_DEBUG" == "true" ]]; then
+    local _now=$(date +%s)
+    local _elapsed=$((_now - _HOOK_START_TIME))
+    echo "[DEBUG-TIME] quality-gate: elapsed ${_elapsed}s at: $1" >&2
+  fi
+}
+_debug_timing "script_start"
 
 # --- Ultra-fast cache check BEFORE common.sh ---
 # Cache git HEAD once to avoid repeated git calls throughout hook
@@ -24,12 +36,13 @@ HOOK_NAME="QUALITY-GATE"
 # shellcheck source=./lib/common.sh
 source "${BASH_SOURCE[0]%/*}/lib/common.sh"
 hook_init
+_debug_timing "after_hook_init"
 
 # Prevent infinite loops
 [[ "${STOP_ACTIVE:-false}" == "true" ]] && exit 0
 
-# Start progress reporter to prevent idle timeout
-_progress_pid=$(hook_progress_start "Quality gate running..." 45)
+# Start progress reporter to prevent idle timeout in fast stop profile.
+_progress_pid=$(hook_progress_start "Quality gate running..." 4)
 trap 'hook_progress_stop $_progress_pid 2>/dev/null; trap - ERR' ERR EXIT
 
 # --- P1 optimization: Skip if no quality-relevant files changed ---
@@ -42,10 +55,23 @@ fi
 # No changes tracked — skip
 [[ ! -f "$CHANGE_LOG" ]] && exit 0
 
+# --- P5: Learning-based skip (opt-in via learning_skip: true) ---
+# Derive pattern from changed files for learning
+_LEARN_PATTERN="all"
+_changed_list=$(hook_shared_changed_files 2>/dev/null || get_changed_files 2>/dev/null)
+if [[ -n "$_changed_list" ]]; then
+  _dom=$(echo "$_changed_list" | while IFS= read -r line; do echo "${line##*.}"; done | sort | uniq -c | sort -rn | head -1 | awk '{print $2}')
+  [[ -n "$_dom" ]] && _LEARN_PATTERN=".$_dom"
+fi
+if hook_learning_should_skip "quality-gate" "$_LEARN_PATTERN" 2>/dev/null; then
+  echo "QUALITY-GATE: skipped (learning: consistently passes for $_LEARN_PATTERN)"
+  exit 0
+fi
+
 # --- Cache check — skip if unchanged ---
 _cache_extra=$(hook_file_hash_cache "$QUALITY_CONFIG" 2>/dev/null || echo "")
 _cache_key=$(hook_cache_key "$HOOK_NAME")
-_cache_key=$(printf '%s\0%s' "$_cache_key" "$_cache_extra" | shasum -a 256 | cut -d' ' -f1)
+_cache_key=$(printf '%s\0%s' "$_cache_key" "$_cache_extra" | hash_for_cache)
 _qg_ttl="${HOOK_CACHE_TTL:-600}"
 if hook_cache_check "$_cache_key" "$_qg_ttl"; then
     hook_cache_read "$_cache_key" | tee "$_CACHE_FILE" 2>/dev/null
@@ -112,6 +138,16 @@ while IFS= read -r fpath; do
       ;;
   esac
 done < <(get_changed_files)
+
+# P6: Filter out Python files with no actual diff (incremental analysis)
+if hook_config_true "incremental_analysis" 2>/dev/null; then
+  declare -a PY_FILES_FILTERED=()
+  for _pf in "${PY_FILES[@]}"; do
+    incremental_skip_py_file "$_pf" 2>/dev/null && continue
+    PY_FILES_FILTERED+=("$_pf")
+  done
+  PY_FILES=("${PY_FILES_FILTERED[@]}")
+fi
 
 [[ ${#ALL_FILES[@]} -eq 0 ]] && exit 0
 
@@ -428,29 +464,37 @@ lint_duplication() {
 # Stage 1 (fast): python, shell, js
 # Stage 2 (medium): go, other
 # Stage 3 (slow): security, duplication
-if hook_config_true "parallel_stages" 2>/dev/null; then
-  hook_progress "Stage 1/3: fast linters (python, shell, js)"
+if [[ "${THGENT_STOP_PROFILE:-full}" == "fast" ]]; then
+  hook_progress "Fast stop profile: running Stage 1 checks only (python, shell, js)"
   lint_python &
   lint_shell &
   lint_js &
-  wait
-  hook_progress "Stage 2/3: medium linters (go, other)"
-  lint_go &
-  lint_other &
-  wait
-  hook_progress "Stage 3/3: security + duplication"
-  lint_security &
-  lint_duplication &
   wait
 else
-  lint_python &
-  lint_shell &
-  lint_js &
-  lint_go &
-  lint_other &
-  lint_security &
-  lint_duplication &
-  wait
+  if hook_config_true "parallel_stages" 2>/dev/null; then
+    hook_progress "Stage 1/3: fast linters (python, shell, js)"
+    lint_python &
+    lint_shell &
+    lint_js &
+    wait
+    hook_progress "Stage 2/3: medium linters (go, other)"
+    lint_go &
+    lint_other &
+    wait
+    hook_progress "Stage 3/3: security + duplication"
+    lint_security &
+    lint_duplication &
+    wait
+  else
+    lint_python &
+    lint_shell &
+    lint_js &
+    lint_go &
+    lint_other &
+    lint_security &
+    lint_duplication &
+    wait
+  fi
 fi
 
 # ---------- Collect lint results from temp files ----------
@@ -501,24 +545,28 @@ _collect_lint "$LINT_TMP/psalm" "SECURITY -- psalm"
 
 # Dead code results
 if [[ -f "$LINT_TMP/py_deadcode" ]]; then
-  DC_COUNT=$(wc -l < "$LINT_TMP/py_deadcode" | tr -d ' ')
+  mapfile -t _lines < "$LINT_TMP/py_deadcode"
+  DC_COUNT="${#_lines[@]}"
   REPORT+="DEAD CODE: $DC_COUNT potential dead code items found (Python/vulture)\n$(<"$LINT_TMP/py_deadcode")\n\n"
   ISSUES=$((ISSUES + 1))
 fi
 if [[ -f "$LINT_TMP/ts_deadcode" ]]; then
-  DC_COUNT=$(wc -l < "$LINT_TMP/ts_deadcode" | tr -d ' ')
+  mapfile -t _lines < "$LINT_TMP/ts_deadcode"
+  DC_COUNT="${#_lines[@]}"
   REPORT+="DEAD CODE: $DC_COUNT potential dead code items found (JS-TS/knip)\n$(<"$LINT_TMP/ts_deadcode")\n\n"
   ISSUES=$((ISSUES + 1))
 fi
 
 # Dead import results
 if [[ -f "$LINT_TMP/py_deadimport" ]]; then
-  DI_COUNT=$(wc -l < "$LINT_TMP/py_deadimport" | tr -d ' ')
+  mapfile -t _lines < "$LINT_TMP/py_deadimport"
+  DI_COUNT="${#_lines[@]}"
   REPORT+="DEAD IMPORTS: $DI_COUNT unused imports found (Python/ruff F401)\n$(<"$LINT_TMP/py_deadimport")\n\n"
   ISSUES=$((ISSUES + 1))
 fi
 if [[ -f "$LINT_TMP/ts_deadimport" ]]; then
-  DI_COUNT=$(wc -l < "$LINT_TMP/ts_deadimport" | tr -d ' ')
+  mapfile -t _lines < "$LINT_TMP/ts_deadimport"
+  DI_COUNT="${#_lines[@]}"
   _label="JS-TS/oxlint"
   [[ "$(tool_available oxlint)" != "true" ]] && _label="JS-TS/eslint"
   REPORT+="DEAD IMPORTS: $DI_COUNT unused imports found ($_label)\n$(<"$LINT_TMP/ts_deadimport")\n\n"
@@ -752,7 +800,7 @@ _run_attestation() {
     local _prop_dir="$PROJECT_DIR/test"
     [[ -d "$PROJECT_DIR/tests" ]] && _prop_dir="$PROJECT_DIR/tests"
     if command -v rg >/dev/null 2>&1; then
-      rg -l -q 'hypothesis|fast-check|quickcheck|proptest' "$_prop_dir" 2>/dev/null && detected_property_based=true
+      env -u GREP_OPTIONS -u GREP_COLOR -u GREP_COLORS rg --no-config -l -q 'hypothesis|fast-check|quickcheck|proptest' "$_prop_dir" 2>/dev/null && detected_property_based=true
     fi
   fi
   [[ -d "$PROJECT_DIR/test/contract" || -d "$PROJECT_DIR/tests/contract" || -f "$PROJECT_DIR/pact.json" ]] && detected_contract=true
@@ -1093,6 +1141,8 @@ return 0
 # Run main, capture output, cache result
 _output=$(_quality_gate_main 2>&1); _rc=$?
 hook_cache_write "$_cache_key" "$_rc" "$_output"
+# P5: Record outcome for learning-based skip
+hook_learning_record "quality-gate" "${_LEARN_PATTERN:-all}" "$(( _rc != 0 ))" 2>/dev/null || true
 # Ultra-fast cache for next time
 mkdir -p "$_CACHE_DIR" 2>/dev/null || true
 echo "$_output" > "$_CACHE_FILE" 2>/dev/null || true

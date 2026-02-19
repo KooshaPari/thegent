@@ -100,27 +100,39 @@ All 6 phases done for 9 providers:
 
 ---
 
-## Not Started Subsystems
+## Active Subsystems
 
 ### 1. Orchestration Platform (Phase 0-6 WBS)
 
-The core PRD — 48 original work packages across 7 phases. None started.
-- DAG execution engine with dependency satisfaction
-- Checkpoint/rollback service
-- Policy pre-check and gate evaluator
-- Operator cockpit
-- Adaptive concurrency controller
-- Enterprise readiness
+**Started**:
+- **Phase 0-1**: Core foundation, telemetry, and deterministic routing (100% complete)
+- **Phase 2**: Reliability hardening (circuit breakers, retry) (50% complete)
+- **Phase 3**: Governance enforcement (OPA/Rego, signatures, audit, constitutional AI) (55% complete)
+- **Phase 4**: Operator UX (Cockpit definition, simulation/sandbox, HAC/HITL) (22% complete)
+- **Phase 5**: Adaptive Scale & Continuity (Hysteresis, cost-aware routing, Supermemory L3/L4) (30% complete)
 
-### 2. Cross-Cutting Enhancements (Phase Y)
+**Key Files**: `src/thegent/governance/`, `src/thegent/ux/`, `src/thegent/orchestration/`
 
-8 new work packages from research synthesis. None started.
+### 2. Universal Memory (Supermemory.ai)
+
+**Status**: Design and context layer integrated (P0).
+- L3 (Graph) for swarm relationships.
+- L4 (Archival) for immutable MAIF artifacts.
+- MCP integration via `https://mcp.supermemory.ai/mcp`.
+
+**Key Files**: `docs/plans/2026-02-16-supermemory-integration-plan.md`
+
+### 3. Cross-Cutting Enhancements (Phase Y)
+
+**Done**:
 - Multi-agent mode runtime (WP-Y1)
 - Dead-letter queue service (WP-Y2)
 - Chaos engineering framework (WP-Y3)
-- Cost tracking and optimization (WP-Y4)
-- Hierarchical prompt orchestration (WP-Y5)
 - OTel GenAI instrumentation (WP-Y6)
+
+**Not Done**:
+- Cost tracking service (WP-Y4)
+- Hierarchical prompt orchestration (WP-Y5)
 - TRAFFIC KPI dashboard (WP-Y7)
 - Provider scoring with learning (WP-Y8)
 
@@ -193,3 +205,10 @@ The core PRD — 48 original work packages across 7 phases. None started.
 | THGENT_DEFAULT_ROUTING | failover | Routing policy |
 | THGENT_MODELS_CACHE_TTL_SEC | 300 | Model cache TTL |
 | FASTMCP_DOCKET_URL | memory:// | Task backend URL |
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](./00-MASTER-INDEX.md) — plan index

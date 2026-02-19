@@ -39,3 +39,11 @@ See `docs/POST_LAUNCH_OBSERVATION_PLAYBOOK.md` for severity→SLA mapping and ro
 - **Sunset Plan:** See `docs/enterprise/DECOMMISSIONING_PLAN.md` for target components and migration path.
 - **Legacy Commands:** The `history-legacy` command is hidden and scheduled for sunset in v1.1.
 - **Temporary Sessions:** All sessions in `.thegent/sessions` older than 30 days should be archived.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index
+

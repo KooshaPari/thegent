@@ -136,3 +136,11 @@
 | **E** | Phase 4 | UX comprehension tests pass; safe fallback works; decision replay renders; stale state blocked | FR-015-018, 022, 023, 039, 040 | WP-4001-4008, WP-Y7 | Operator comprehension studies; fallback UX tests; replay rendering latency < 200ms | No |
 | **F** | Phase 5 | Critical path stable under burst; adaptive caps avoid oscillation; continuity snapshots at every boundary | FR-019-021, 036, 037 | WP-5001-5008, WP-Y4, WP-Y8 | Burst simulation with 5x traffic; cost tracking A/B tests; speculative execution clean cancellation | No |
 | **G** | Phase 6 | Launch dress rehearsal passes; compliance signoff received; KPI baselines met; runbook certified | FR-024, all NFRs | WP-6001-6008 | Dress rehearsal execution; SLO compliance report; runbook certification; two stable release cycles | Yes |
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](./00-MASTER-INDEX.md) — plan index
+- [07-TEST-STRATEGY.md](./07-TEST-STRATEGY.md) — test categories and traceability

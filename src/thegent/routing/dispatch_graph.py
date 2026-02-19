@@ -3,10 +3,9 @@
 Provides deterministic resolution of operations through a policy-aware dispatch graph.
 """
 
-from typing import Any, Literal
+from typing import Any
 
 from thegent.contracts.capability_registry import CapabilityRegistry
-from thegent.operations import OPERATION_MAP, Operation
 
 
 class DispatchResolver:

@@ -350,3 +350,11 @@ If criteria fail:
   - `thegent-phase10-12-policy-as-code-and-automation-contract.md`
   - `thegent-phase10-12-orchestrator-tooling-stack.md`
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

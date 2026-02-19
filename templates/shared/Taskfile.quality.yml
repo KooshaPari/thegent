@@ -1,5 +1,8 @@
 version: '3'
 
+vars:
+  GENT_ROOT: '{{.GENT_ROOT | default "../thegent"}}'
+
 tasks:
   gate:
     desc: Run full quality gate
@@ -59,3 +62,43 @@ tasks:
         else
           echo "No AI slop detected"
         fi
+
+  dag:
+    desc: Run quality DAG (requires config/quality-dag.yaml)
+    cmds:
+      - uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py
+
+  dag:dry-run:
+    desc: Print DAG tiers and commands without running
+    cmds:
+      - uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --dry-run
+
+  dag:v:
+    desc: Run quality DAG with verbose step logs
+    cmds:
+      - uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --verbose
+
+  dag:only:
+    desc: Run only specific steps and their deps (ONLY=py-lint,py-type)
+    cmds:
+      - uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --only {{.ONLY}}
+
+  dag:skip:
+    desc: Run DAG skipping steps and their dependents (SKIP=py-test,go-test)
+    cmds:
+      - uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --skip {{.SKIP}}
+
+  dag:ci:
+    desc: CI mode - compact one-line summary only
+    cmds:
+      - uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --ci
+
+  dag:ci:junit:
+    desc: CI mode with JUnit XML (JUNIT=.quality/junit.xml)
+    cmds:
+      - uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --ci --junit {{.JUNIT}}
+
+  fix:
+    desc: Run fix agents for failed quality steps (requires config/quality-fix-dag.yaml)
+    cmds:
+      - uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_fix_runner.py

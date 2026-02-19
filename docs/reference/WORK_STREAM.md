@@ -212,6 +212,7 @@
 | ID | Agent | Completed | Notes |
 |----|-------|-----------|-------|
 | research-hook-rust-phase1 | thegent-main-session | 2026-02-19 | Research complete, report created |
+| impl-agent-crew-maximal-mvp | thegent-main-session | 2026-02-19 | Crew stack implemented with Crew, CrewExecutor, WorkflowEngine, RouterManager, MonitoringEngine. CLI registered and tested. |
 | research-hook-rust-phase2 | thegent-main-session | 2026-02-19 | Research complete, report created |
 | research-hook-rust-phase3 | thegent-main-session | 2026-02-19 | Research complete, report created |
 | research-hook-rust-phase4 | thegent-main-session | 2026-02-19 | Research complete, report created |

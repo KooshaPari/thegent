@@ -85,3 +85,11 @@ Maps DAG nodes from the final DAG specification to thegent CLI/MCP service contr
 - [ ] Policy gates enforced in execution path
 - [ ] Recovery playbooks executable via `dag recover`
 - [ ] Audit trail integrity via `history verify`
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [03-UNIFIED-DAG.md](../plans/03-UNIFIED-DAG.md) — DAG specification

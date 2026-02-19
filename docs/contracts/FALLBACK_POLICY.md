@@ -73,3 +73,11 @@ Both MCP `thegent_run` and CLI `thegent run` use the same `run_with_failover` pa
 - **Config:** `src/thegent/config.py` — `normalization_policy_*`
 - **Telemetry:** `src/thegent/contracts/telemetry.py` — `ContractTelemetry`
 - **Usage:** `src/thegent/cli_impl.py` — `run_with_failover`
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [PROVIDER_ADAPTER_CONTRACTS.md](./PROVIDER_ADAPTER_CONTRACTS.md) — adapter contracts

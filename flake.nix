@@ -1,5 +1,5 @@
 {
-  description: "thegent: Agentic orchestration & governance platform";
+  description = "thegent: Agentic orchestration & governance platform";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -7,13 +7,18 @@
   };
 
   outputs = { self, nixpkgs, flake-utils }:
+    # Note: nix/ must be tracked by Git for flake evaluation. Run: git add nix/
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         python = pkgs.python312;
         pythonPackages = python.pkgs;
+        thegentPackage = (pkgs.callPackage ./nix/thegent-package.nix { python3 = python; }) { src = self; };
       in
       {
+        packages.thegent = thegentPackage;
+        packages.default = thegentPackage;
+
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             python
@@ -53,5 +58,10 @@
           '';
         };
       }
-    );
+    )
+    // {
+      homeManagerModules.thegent = import ./nix/home-manager.nix;
+      devenvModules.thegent = self: import ./nix/devenv.nix self;
+      nixDarwinModules.thegent = import ./nix/nix-darwin.nix;
+    };
 }

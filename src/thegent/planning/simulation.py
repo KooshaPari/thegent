@@ -56,13 +56,24 @@ def simulate_monte_carlo(nodes: list[PERTNode], iterations: int = 1000) -> dict[
     """WP-8002: Monte Carlo simulation for task durations using triangular distribution."""
     import random
 
+    from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
+
     task_histories: dict[str, list[float]] = {n.task_id: [] for n in nodes}
 
-    for _ in range(iterations):
-        for n in nodes:
-            # Triangular distribution: lower, mode, upper
-            val = random.triangular(n.optimistic_days, n.pessimistic_days, n.most_likely_days)  # noqa: S311 -- Monte Carlo sampling, not cryptographic; statistical sampling only
-            task_histories[n.task_id].append(val)
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        transient=True,
+    ) as progress:
+        task = progress.add_task("[cyan]Simulating durations...", total=iterations)
+        for _ in range(iterations):
+            for n in nodes:
+                # Triangular distribution: lower, mode, upper
+                val = random.triangular(n.optimistic_days, n.pessimistic_days, n.most_likely_days)  # noqa: S311 -- Monte Carlo sampling, not cryptographic; statistical sampling only
+                task_histories[n.task_id].append(val)
+            progress.update(task, advance=1)
 
     stats: dict[str, dict[str, float]] = {}
     for tid, history in task_histories.items():
@@ -262,7 +273,9 @@ def continuity_risk_predictor(registry: Any) -> dict[str, Any]:
     return {
         "risk_level": risk_level,
         "failed_handoff_count": failed_handoffs,
-        "warning": "Continuity risk predicted for upcoming shift." if risk_level != "low" else "No immediate continuity risk."
+        "warning": "Continuity risk predicted for upcoming shift."
+        if risk_level != "low"
+        else "No immediate continuity risk.",
     }
 
 

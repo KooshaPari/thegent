@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # PreToolUse Dispatcher -- single-process orchestrator for PreToolUse hooks.
 # Sources and runs all applicable hooks INLINE (no subprocess spawns per hook).
 # Runs hooks SEQUENTIALLY because PreToolUse hooks are blocking.

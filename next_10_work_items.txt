@@ -1,0 +1,10 @@
+research-library-http|Replace urllib with httpx (7+ files)|P1|✅ Complete
+vitepress-playwright-setup|Set up Playwright for browser recordings|P1|-
+docgen-sticky-nav|Implement sticky sidebar and header|P1|-
+docgen-algolia-search|Integrate Algolia search with suggestions|P1|-
+docgen-content-tabs|Create content tabs component|P1|-
+docgen-api-typescript|Create TypeScript/JavaScript API generator|P1|-
+docgen-performance-code-split|Optimize code splitting for faster loads|P1|-
+docgen-performance-images|Image optimization (WebP/AVIF, lazy loading)|P1|-
+docgen-edit-links|Add edit-on-GitHub links|P1|-
+docgen-link-checker|Automated link checking|P1|-

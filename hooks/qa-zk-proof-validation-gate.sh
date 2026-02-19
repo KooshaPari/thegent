@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-zk-proof-validation-gate.sh
 # @trace FR-EXT-003
 # Real implementation for WBS-F3 ZK proof validation gate.

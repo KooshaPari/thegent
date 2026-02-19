@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # Speculative Stop Pre-Warmer — PostToolUse:Write|Edit
 # Pre-warms caches for Stop hooks after each file edit.
 # Uses debouncing to batch rapid edits. Background-forks expensive work.

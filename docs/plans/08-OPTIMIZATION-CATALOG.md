@@ -1,6 +1,6 @@
 # 08 — Optimization, Polish, Enhancement & Robustness Catalog
 
-> Cross-ref: [00-MASTER-INDEX](./00-MASTER-INDEX.md) | [02-WBS](./02-UNIFIED-WBS.md) | [05-ARCH](./05-ARCHITECTURE.md) | [09-RISK](./09-RISK-REGISTRY.md)
+> Cross-ref: [00-MASTER-INDEX](./00-MASTER-INDEX.md) | [02-WBS](./02-UNIFIED-WBS.md) | [05-ARCH](./05-ARCHITECTURE.md) | [09-RISK](./09-RISK-REGISTRY.md) | [MCP-OPT](./MCP_TOOL_OPTIMIZATION_PLAN.md) — MCP-specific mapping
 
 ---
 
@@ -258,10 +258,10 @@ Patterns borrowed from kush ecosystem:
 
 From `thegent-gaps-and-discovery-2026-02-14.md`:
 
-- **F13-F15:** ResponseCaching, RateLimiting, ResponseLimiting middleware — ✅ Already done (mcp_server.py)
-- **F16-F17:** Tool annotations, ToolResult.meta — ✅ Mostly done (verify annotations on all 25+ tools)
+- **F13-F15:** ResponseCaching, RateLimiting, ResponseLimiting middleware — ✓ Already done (mcp_server.py)
+- **F16-F17:** Tool annotations, ToolResult.meta — ✓ Mostly done (verify annotations on all 25+ tools)
 - **R6-R7:** Provider adapter scraping optimization — ➜ OPT-016 (parallelization)
-- **V3-V4:** Incremental parser + semantic validation — ✅ Done (contracts/parser.py)
+- **V3-V4:** Incremental parser + semantic validation — ✓ Done (contracts/parser.py)
 - **XB3:** Fallback observability KPIs — ➜ OPS-012 (health gate trend snapshots)
 - **XD1-XD3:** PERT/simulation overlays, resource contention, continuity risk — ➜ Future research phase
 
@@ -273,3 +273,11 @@ From `thegent-gaps-and-discovery-2026-02-14.md`:
 4. **Observability:** Add OTel span attributes (OPT-021) for provider/model-level visibility
 5. **Resilience:** Route fallback chain (ROB-017) + self-healing health (ROB-018) reduce manual ops
 6. **Design Patterns:** Adapter factory (DE-010) and hierarchical prompts (DE-011) enable extensibility
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](./00-MASTER-INDEX.md) — plan index
+- [MCP_TOOL_OPTIMIZATION_PLAN.md](./MCP_TOOL_OPTIMIZATION_PLAN.md) — MCP-specific mapping

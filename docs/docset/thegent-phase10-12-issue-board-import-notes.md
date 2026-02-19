@@ -116,3 +116,11 @@ Minimal pseudo-payload template for each ticket:
   - `Done` only after signoff artifact exists.
 - Add a blocker rule: tickets with open `Blockers` due to gate mismatch cannot move to `Ready for Gate`.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

@@ -271,3 +271,11 @@ For each block of 2–3 WPs:
 - Use `thegent-phase10-12-test-readiness-pack.md` for concrete test names and mappings.
 - Use `thegent-phase10-12-launch-schedule.md` for calendar cadence.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

@@ -3308,3 +3308,11 @@ The 114-pattern synthesis is comprehensive but has **strategic gaps in implement
 All items are **production-grade specifications** with concrete code examples, database schemas, and decision trees. Implementation priority is calibrated: P0 (blocking), P1 (high-value), P2 (medium), P3 (nice-to-have).
 
 **Recommended next step:** Implement P-115, A-1, A-2, B-1, C-1, C-2, D-1, P-117 immediately (critical path), then proceed to P1 patterns in parallel.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

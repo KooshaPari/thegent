@@ -136,3 +136,40 @@ opentelemetry-instrument python -m thegent.main serve --host 127.0.0.1 --port 38
 | sampling_handler | OpenAISamplingHandler when client lacks sampling |
 | get_tracer | Custom spans in thegent_run (parse, route, execute) |
 | opentelemetry-instrument | Production trace export |
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+
+
+---
+
+## 6. EXTENSION_SUMMARY
+
+**Extended on:** 2026-02-17  
+**Extended by:** Claude Code
+
+### Changes Made
+1. Added telemetry patterns
+2. Added sampling configuration
+3. Enhanced cross-references
+
+### Cross-References Added
+- FASTMCP_TRANSFORMS_DEPLOYMENT.md
+- FASTMCP_SPEC_DEEP_DIVE.md
+
+### Practical Additions
+- Telemetry templates
+- Sampling configurations
+
+---
+
+## See Also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream
+- [FASTMCP_IMPLEMENTATION_GUIDE.md](./FASTMCP_IMPLEMENTATION_GUIDE.md) - Main implementation guide
+- [FASTMCP_SPEC_DEEP_DIVE.md](./FASTMCP_SPEC_DEEP_DIVE.md) - Specification deep dive
+- [RESEARCH_SEED_FRAGMENT_INVENTORY](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) - Fragment inventory

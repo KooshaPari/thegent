@@ -1,18 +1,15 @@
 """Droid runner - invokes Factory droid exec, OpenAI Codex CLI, or custom CLI backends."""
 
 import os
-import re
 import subprocess
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
 from thegent.agents.base import AgentRunner, RunResult
-
-
-def _strip_ansi(text: str) -> str:
-    """Remove ANSI escape sequences."""
-    return re.sub(r"\x1b\[[0-9;]*m", "", text)
+from thegent.infra import run_subprocess_optimized
+from thegent.infra.power import wrap_with_caffeinate
+from thegent.utils import strip_ansi
 
 
 def _resolve_cmd(cmd: str, candidates: list[Path] | None = None) -> str:
@@ -60,11 +57,17 @@ class DroidRunner(AgentRunner):
         droids_dir: Path,
         droid_cmd: str = "droid",
         model: str = "custom:MiniMax-M2.5",
+        use_litellm_router: bool | None = None,
     ) -> None:
         self.droid_name = droid_name
         self.droids_dir = droids_dir.expanduser().resolve()
         self._droid_cmd = _resolve_droid_cmd(droid_cmd)
         self._model = model
+        self._use_litellm_router = (
+            use_litellm_router
+            if use_litellm_router is not None
+            else (os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1")
+        )
 
     def run(
         self,
@@ -79,6 +82,12 @@ class DroidRunner(AgentRunner):
         on_stderr: Callable[[str], None] | None = None,
     ) -> RunResult:
         """Run droid via droid exec."""
+        # Route via LiteLLM Router if enabled
+        if self._use_litellm_router:
+            return self._run_via_litellm_router(
+                prompt, cwd, mode, timeout, self._model, use_stream, live_output, on_stdout, on_stderr
+            )
+
         droid_path = self.droids_dir / f"{self.droid_name}.md"
         if not droid_path.exists():
             return RunResult(
@@ -105,19 +114,19 @@ class DroidRunner(AgentRunner):
             elif mode == "full":
                 cmd.extend(["--auto", "high"])
 
-            proc = subprocess.run(
+            proc = run_subprocess_optimized(
                 cmd,
                 check=False,
                 capture_output=True,
-                text=True,
                 timeout=timeout + 5,
                 cwd=str(cwd) if cwd else None,
-                stdin=subprocess.DEVNULL,
             )
+            stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+            stderr_text = proc.stderr if isinstance(proc.stderr, str) else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
             return RunResult(
                 exit_code=proc.returncode,
-                stdout=_strip_ansi(proc.stdout),
-                stderr=_strip_ansi(proc.stderr),
+                stdout=strip_ansi(stdout_text),
+                stderr=strip_ansi(stderr_text),
                 timed_out=proc.returncode == 124,
             )
         except FileNotFoundError:
@@ -141,6 +150,99 @@ class DroidRunner(AgentRunner):
             Path(tmp_path).unlink(missing_ok=True)
 
 
+    def _run_via_litellm_router(
+        self,
+        prompt: str,
+        cwd: Path | None,
+        mode: str,
+        timeout: int,
+        model: str,
+        use_stream: bool,
+        live_output: bool,
+        on_stdout: Callable[[str], None] | None,
+        on_stderr: Callable[[str], None] | None,
+    ) -> RunResult:
+        """Run via LiteLLM Router for Droid compatibility."""
+        try:
+            from thegent.routing.litellm_router import get_enhanced_router
+
+            router = get_enhanced_router()
+            
+            # Extract provider/model from Factory format
+            if ":" in model:
+                model_to_use = model.split(":", 1)[1]
+            else:
+                model_to_use = model
+
+            # Check if droid file exists
+            droid_path = self.droids_dir / f"{self.droid_name}.md"
+            if droid_path.exists():
+                droid_content = droid_path.read_text()
+                combined_prompt = f"{droid_content.rstrip()}\n\n---\nUser request: {prompt}"
+            else:
+                combined_prompt = prompt
+
+            result = router.route(combined_prompt, model=model_to_use, stream=use_stream, timeout=timeout)
+
+            if not result.success:
+                return RunResult(
+                    exit_code=1,
+                    stdout="",
+                    stderr=result.error or "Routing failed",
+                    timed_out=False,
+                )
+
+            # Handle response
+            if use_stream:
+                stdout_collector = []
+                for chunk in result.response:
+                    content = ""
+                    if hasattr(chunk, "choices") and chunk.choices:
+                        delta = chunk.choices[0].delta
+                        if hasattr(delta, "content") and delta.content:
+                            content = delta.content
+                    elif isinstance(chunk, dict):
+                        choices = chunk.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            content = delta.get("content", "")
+
+                    if content:
+                        stdout_collector.append(content)
+                        if on_stdout:
+                            on_stdout(content)
+
+                return RunResult(
+                    exit_code=0,
+                    stdout="".join(stdout_collector),
+                    stderr="",
+                    timed_out=False,
+                )
+            else:
+                content = ""
+                if hasattr(result.response, "choices") and result.response.choices:
+                    content = result.response.choices[0].message.content
+                elif isinstance(result.response, dict):
+                    choices = result.response.get("choices", [])
+                    if choices:
+                        message = choices[0].get("message", {})
+                        content = message.get("content", "")
+
+                return RunResult(
+                    exit_code=0,
+                    stdout=content or "",
+                    stderr="",
+                    timed_out=False,
+                )
+
+        except Exception as e:
+            return RunResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"LiteLLM Router execution failed: {e}",
+                timed_out=False,
+            )
+
 class CodexRunner(AgentRunner):
     """Runs droids via OpenAI Codex CLI (codex exec)."""
 
@@ -150,11 +252,17 @@ class CodexRunner(AgentRunner):
         droids_dir: Path,
         codex_cmd: str = "codex",
         model: str = "gpt-5.3-codex-spark-xhigh",
+        use_litellm_router: bool | None = None,
     ) -> None:
         self.droid_name = droid_name
         self.droids_dir = droids_dir.expanduser().resolve()
         self._codex_cmd = _resolve_codex_cmd(codex_cmd)
         self._model = model
+        self._use_litellm_router = (
+            use_litellm_router
+            if use_litellm_router is not None
+            else (os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1")
+        )
 
     def run(
         self,
@@ -169,6 +277,12 @@ class CodexRunner(AgentRunner):
         on_stderr: Callable[[str], None] | None = None,
     ) -> RunResult:
         """Run droid via codex exec."""
+        # Route via LiteLLM Router if enabled
+        if self._use_litellm_router:
+            return self._run_via_litellm_router(
+                prompt, cwd, mode, timeout, self._model, use_stream, live_output, on_stdout, on_stderr
+            )
+
         droid_path = self.droids_dir / f"{self.droid_name}.md"
         if not droid_path.exists():
             return RunResult(
@@ -198,20 +312,29 @@ class CodexRunner(AgentRunner):
             cmd.extend(["--full-auto"])
 
         try:
-            proc = subprocess.run(
+            # Use run_subprocess_optimized with input support
+            proc = run_subprocess_optimized(
                 cmd,
                 check=False,
                 input=combined,
                 capture_output=True,
-                text=True,
                 timeout=timeout + 5,
                 cwd=str(cwd) if cwd else None,
             )
+            stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+            stderr_text = proc.stderr if isinstance(proc.stderr, str) else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
             return RunResult(
                 exit_code=proc.returncode,
-                stdout=_strip_ansi(proc.stdout),
-                stderr=_strip_ansi(proc.stderr),
+                stdout=strip_ansi(stdout_text),
+                stderr=strip_ansi(stderr_text),
                 timed_out=proc.returncode == 124,
+            )
+        except subprocess.TimeoutExpired:
+            return RunResult(
+                exit_code=124,
+                stdout="",
+                stderr=f"Codex timed out after {timeout}s",
+                timed_out=True,
             )
         except FileNotFoundError:
             return RunResult(
@@ -223,14 +346,94 @@ class CodexRunner(AgentRunner):
                 ),
                 timed_out=False,
             )
-        except subprocess.TimeoutExpired:
-            return RunResult(
-                exit_code=124,
-                stdout="",
-                stderr=f"Codex timed out after {timeout}s",
-                timed_out=True,
-            )
 
+
+    def _run_via_litellm_router(
+        self,
+        prompt: str,
+        cwd: Path | None,
+        mode: str,
+        timeout: int,
+        model: str,
+        use_stream: bool,
+        live_output: bool,
+        on_stdout: Callable[[str], None] | None,
+        on_stderr: Callable[[str], None] | None,
+    ) -> RunResult:
+        """Run via LiteLLM Router for Codex/Droid compatibility."""
+        try:
+            from thegent.routing.litellm_router import get_enhanced_router
+
+            router = get_enhanced_router()
+            
+            # Check if droid file exists
+            droid_path = self.droids_dir / f"{self.droid_name}.md"
+            if droid_path.exists():
+                droid_content = droid_path.read_text()
+                combined_prompt = f"{droid_content.rstrip()}\n\n---\nUser request: {prompt}"
+            else:
+                combined_prompt = prompt
+
+            result = router.route(combined_prompt, model=model, stream=use_stream, timeout=timeout)
+
+            if not result.success:
+                return RunResult(
+                    exit_code=1,
+                    stdout="",
+                    stderr=result.error or "Routing failed",
+                    timed_out=False,
+                )
+
+            # Handle response
+            if use_stream:
+                stdout_collector = []
+                for chunk in result.response:
+                    content = ""
+                    if hasattr(chunk, "choices") and chunk.choices:
+                        delta = chunk.choices[0].delta
+                        if hasattr(delta, "content") and delta.content:
+                            content = delta.content
+                    elif isinstance(chunk, dict):
+                        choices = chunk.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            content = delta.get("content", "")
+
+                    if content:
+                        stdout_collector.append(content)
+                        if on_stdout:
+                            on_stdout(content)
+
+                return RunResult(
+                    exit_code=0,
+                    stdout="".join(stdout_collector),
+                    stderr="",
+                    timed_out=False,
+                )
+            else:
+                content = ""
+                if hasattr(result.response, "choices") and result.response.choices:
+                    content = result.response.choices[0].message.content
+                elif isinstance(result.response, dict):
+                    choices = result.response.get("choices", [])
+                    if choices:
+                        message = choices[0].get("message", {})
+                        content = message.get("content", "")
+
+                return RunResult(
+                    exit_code=0,
+                    stdout=content or "",
+                    stderr="",
+                    timed_out=False,
+                )
+
+        except Exception as e:
+            return RunResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"LiteLLM Router execution failed: {e}",
+                timed_out=False,
+            )
 
 class CustomCliRunner(AgentRunner):
     """Runs droids via a generic custom CLI (e.g. claudemax, claudeglm in ~/.local/bin)."""
@@ -284,21 +487,32 @@ class CustomCliRunner(AgentRunner):
         if cwd:
             cmd.extend(["--cd", str(cwd)])
 
+        cmd = wrap_with_caffeinate(cmd, self.droid_name)
+
         try:
-            proc = subprocess.run(
+            # Use run_subprocess_optimized with input support
+            proc = run_subprocess_optimized(
                 cmd,
                 check=False,
                 input=combined,
                 capture_output=True,
-                text=True,
                 timeout=timeout + 5,
                 cwd=str(cwd) if cwd else None,
             )
+            stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+            stderr_text = proc.stderr if isinstance(proc.stderr, str) else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
             return RunResult(
                 exit_code=proc.returncode,
-                stdout=_strip_ansi(proc.stdout),
-                stderr=_strip_ansi(proc.stderr),
+                stdout=strip_ansi(stdout_text),
+                stderr=strip_ansi(stderr_text),
                 timed_out=proc.returncode == 124,
+            )
+        except subprocess.TimeoutExpired:
+            return RunResult(
+                exit_code=124,
+                stdout="",
+                stderr=f"Custom CLI timed out after {timeout}s",
+                timed_out=True,
             )
         except FileNotFoundError:
             return RunResult(
@@ -309,13 +523,6 @@ class CustomCliRunner(AgentRunner):
                     "Set THGENT_DROID_CUSTOM_CMD to path (e.g. ~/.local/bin/claudemax)"
                 ),
                 timed_out=False,
-            )
-        except subprocess.TimeoutExpired:
-            return RunResult(
-                exit_code=124,
-                stdout="",
-                stderr=f"Custom CLI timed out after {timeout}s",
-                timed_out=True,
             )
 
 

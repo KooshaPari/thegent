@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-verifier-dispute-gate.sh
 # N9: Ensure verifier dispute/challenge workflow exists and open disputes are auditable.
 set -euo pipefail

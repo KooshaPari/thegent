@@ -736,3 +736,11 @@ As of 2026-02-14, **Thegent v1.0 is fully implemented** with:
 
 **All core requirements are met.** Remaining work is performance optimization, scale testing, and proactive hardening of edge cases.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

@@ -132,7 +132,7 @@ Stale Reuse Risk: PREVENTED ✓
 Scenario: Attacker exploits cache staleness
 1. Add secret to file A
 2. Checkout B (secret removed)
-3. Security scan returns cached "no secrets" ❌
+3. Security scan returns cached "no secrets" ✗
 4. Attacker re-commits malicious code
 5. Old cache still valid → bypass detected
 ```
@@ -237,3 +237,11 @@ Critical data correctness vulnerability fixed. Git cache system now includes:
 Result: Stale cache cannot be reused. System is production-ready.
 
 **Status: ✓ READY FOR PRODUCTION**
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

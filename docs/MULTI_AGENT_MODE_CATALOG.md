@@ -56,3 +56,11 @@ Formalizes multi-agent orchestration patterns as supported modes per Kush docs D
 - **Catalog:** `src/thegent/orchestration_modes.py`
 - **CLI:** `thegent modes` (main.py)
 - **MCP:** `thegent_list_modes` tool, `thegent://modes` resource
+
+
+---
+## See also
+
+- [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index
+

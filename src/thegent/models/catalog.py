@@ -1,11 +1,13 @@
 """Model catalog and route resolution for distributed routing."""
 
+import hashlib
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Literal, cast, get_args
 
 # Canonical model ID -> list of routes (provider, backend, model_alias, priority)
 # Lower priority = prefer first when using prefer_direct
-RoutePolicy = Literal["prefer_direct", "prefer_proxy", "failover", "round_robin", "cheapest"]
+RoutePolicy = Literal["prefer_direct", "prefer_proxy", "failover", "round_robin", "cheapest", "pareto"]
 ROUTE_SCHEMA_VERSION = 1
 
 
@@ -46,8 +48,9 @@ def _build_static_catalog() -> dict[str, list[Route]]:
     provider_models: list[tuple[str, str, str, int, float]] = [
         # Anthropic: 4.5 (haiku, sonnet), 4.6 (opus)
         ("claude", "direct", "claude-haiku-4.5", -1, 0.2),
-        ("claude", "direct", "claude-sonnet-4.5", -1, 0.5),
+        ("claude", "direct", "claude-sonnet-4.6", -1, 0.5),
         ("claude", "direct", "claude-opus-4.6", -1, 1.0),
+        ("claude", "direct", "claude-opus-4.6-1m", -1, 1.2),
         ("claude", "direct", "haiku", -1, 0.2),
         ("claude", "direct", "sonnet", -1, 0.5),
         ("claude", "direct", "opus", -1, 1.0),
@@ -60,6 +63,7 @@ def _build_static_catalog() -> dict[str, list[Route]]:
         ("codex", "direct", "gpt-5.3-codex", 0, 0.5),
         ("codex", "direct", "gpt-5.3-codex-high", 0, 0.8),
         ("cursor-agent", "direct", "gemini-3-flash", 0, 0.1),
+        ("cursor-agent", "direct", "composer-1", 0, 0.25),
         ("cursor-agent", "direct", "composer-1.5", 0, 0.3),
         ("cursor-api", "proxy", "claude-4.5-opus-high-thinking", 5, 1.2),
         ("cursor-api", "proxy", "claude-4.5-opus-high", 5, 1.1),
@@ -68,9 +72,10 @@ def _build_static_catalog() -> dict[str, list[Route]]:
         ("cursor-api", "proxy", "gpt-4o", 5, 0.8),
         ("cursor-api", "proxy", "gpt-5.1-codex", 5, 0.7),
         ("antigravity", "proxy", "gemini-3-flash", 10, 0.2),
-        ("antigravity", "proxy", "claude-sonnet-4.5", 10, 0.6),
+        ("antigravity", "proxy", "claude-sonnet-4.6", 10, 0.6),
         ("antigravity", "proxy", "claude-haiku-4.5", 10, 0.3),
         ("antigravity", "proxy", "claude-opus-4.6", 10, 1.1),
+        ("antigravity", "proxy", "claude-opus-4.6-1m", 10, 1.3),
         ("minimax", "proxy", "minimax-m2.5", 0, 0.4),
         ("glm", "proxy", "glm-5", 0, 0.4),
         ("roo", "proxy", "roo-default", 0, 0.5),
@@ -106,8 +111,9 @@ def _build_static_catalog() -> dict[str, list[Route]]:
 # Minimal aliases: anthropic 4.5 (haiku, sonnet), 4.6 (opus). Prefer dynamic over hardcoded.
 _ALIASES: dict[str, str] = {
     "haiku": "claude-haiku-4.5",
-    "sonnet": "claude-sonnet-4.5",
+    "sonnet": "claude-sonnet-4.6",
     "opus": "claude-opus-4.6",
+    "opus1m": "claude-opus-4.6-1m",
 }
 
 
@@ -145,19 +151,48 @@ def filter_models_for_provider(provider: str, models: list[str]) -> list[str]:
     return [m for m in models if m and not _is_model_blacklisted(m, provider)]
 
 
+# OPT-019: Cache for normalized model IDs (frequently called)
+try:
+    from thegent.infra import get_cache
+    _USE_NORMALIZE_CACHE = True
+except (ImportError, NameError):
+    def get_cache(*args, **kwargs):
+        return None
+    _USE_NORMALIZE_CACHE = False
+
+try:
+    _NORMALIZE_CACHE = get_cache(l1_size=200, l2_size=1000, l3_path=None, default_ttl=3600)
+    if _NORMALIZE_CACHE is None:
+        _USE_NORMALIZE_CACHE = False
+except Exception:
+    _USE_NORMALIZE_CACHE = False
+
+
 def normalize_model_id(model_id: str) -> str:
     """Normalize provider-agnostic model aliases to canonical IDs."""
+    # OPT-019: Check cache first
+    if _USE_NORMALIZE_CACHE:
+        cached = _NORMALIZE_CACHE.get(model_id)
+        if cached is not None:
+            return cached
+    
     candidate = (model_id or "").strip()
-    return _ALIASES.get(candidate, candidate)
+    result = _ALIASES.get(candidate, candidate)
+    
+    # OPT-019: Cache the result
+    if _USE_NORMALIZE_CACHE:
+        _NORMALIZE_CACHE.set(model_id, result, ttl=3600)
+    
+    return result
 
 
 def normalize_route_policy(policy: str | None) -> RoutePolicy:
     """Validate and normalize routing policy. Raises ValueError on invalid policy."""
     normalized = (policy or "prefer_direct").strip().lower()
-    if normalized in ("prefer_direct", "prefer_proxy", "failover", "round_robin", "cheapest"):
+    if normalized in ("prefer_direct", "prefer_proxy", "failover", "round_robin", "cheapest", "pareto"):
         return cast("RoutePolicy", normalized)
     raise ValueError(
-        f"Invalid routing policy '{policy}'. Valid values: prefer_direct, prefer_proxy, failover, round_robin, cheapest."
+        f"Invalid routing policy '{policy}'. Valid values: prefer_direct, prefer_proxy, failover, round_robin, cheapest, pareto."
     )
 
 
@@ -218,11 +253,33 @@ def _merge_routes(base_routes: list[Route], extra_routes: list[Route]) -> list[R
 
 _STATIC_CATALOG: dict[str, list[Route]] | None = None
 
+# OPT-019: Multi-tier cache for static catalog (rarely changes, benefits from persistence)
+try:
+    from thegent.infra import MultiTierCache, get_cache
+
+    _CATALOG_CACHE = get_cache(l1_size=1, l2_size=1, l3_path=None, default_ttl=3600)  # 1 hour TTL
+    _USE_CATALOG_CACHE = True
+except (ImportError, NameError):
+    _USE_CATALOG_CACHE = False
+
 
 def _get_catalog() -> dict[str, list[Route]]:
+    """Get static catalog with multi-tier caching."""
     global _STATIC_CATALOG
+
+    # OPT-019: Check cache first
+    if _USE_CATALOG_CACHE:
+        cached = _CATALOG_CACHE.get("static_catalog")
+        if cached is not None:
+            return cached
+
     if _STATIC_CATALOG is None:
         _STATIC_CATALOG = _build_static_catalog()
+
+    # OPT-019: Cache the result
+    if _USE_CATALOG_CACHE:
+        _CATALOG_CACHE.set("static_catalog", _STATIC_CATALOG, ttl=3600)
+
     return _STATIC_CATALOG
 
 
@@ -370,17 +427,63 @@ def resolve_route_contract(
 _RR_COUNTER: dict[str, int] = {}
 
 
+# OPT-020: Route resolution memo with model ID hash prefix (LRU, 1000 entries)
+# Cache key: hash(model_id + provider_hint + policy + quality_floor + lane) -> (provider, model_alias)
+# Enhanced with multi-tier caching for better performance
+try:
+    from thegent.infra import MultiTierCache, get_cache
+
+    _ROUTE_CACHE = get_cache(l1_size=100, l2_size=1000, l3_path=None, default_ttl=300)
+    _USE_MULTI_TIER_CACHE = True
+except (ImportError, NameError):
+    _ROUTE_RESOLVE_CACHE: OrderedDict[str, tuple[str, str] | None] = OrderedDict()
+    _ROUTE_CACHE_MAX_SIZE = 1000
+    _USE_MULTI_TIER_CACHE = False
+
+
+def _make_route_cache_key(
+    model_id: str,
+    provider_hint: str | None,
+    policy: RoutePolicy,
+    quality_floor: float,
+    lane: str | None,
+) -> str:
+    """Create cache key for route resolution."""
+    key_parts = [model_id or "", provider_hint or "", policy, str(quality_floor), lane or ""]
+    key_str = "|".join(key_parts)
+    # Use hash prefix for shorter keys (first 16 chars of SHA256)
+    return hashlib.sha256(key_str.encode()).hexdigest()[:16]
+
+
 def resolve_route(
     model_id: str,
     provider_hint: str | None = None,
     policy: RoutePolicy = "prefer_direct",
+    quality_floor: float = 0.0,
+    lane: str | None = None,
 ) -> tuple[str, str] | None:
     """
     Resolve model to (provider, model_alias). Returns None if no route.
 
+    OPT-020: Uses LRU cache (1000 entries) for sub-1ms repeated route lookups.
+
     - provider_hint: Use this provider if it serves the model.
     - policy: prefer_direct (default) | prefer_proxy | failover | round_robin | cheapest
+    - quality_floor: Minimum quality threshold (0-1) for cost_quality routing.
+    - lane: Execution lane (reserved for future routing strategies).
     """
+    # OPT-020: Check cache first (multi-tier if available)
+    cache_key = _make_route_cache_key(model_id, provider_hint, policy, quality_floor, lane)
+    if _USE_MULTI_TIER_CACHE:
+        cached_result = _ROUTE_CACHE.get(cache_key)
+        if cached_result is not None:
+            return cached_result
+    elif cache_key in _ROUTE_RESOLVE_CACHE:
+        # Move to end (most recently used)
+        result = _ROUTE_RESOLVE_CACHE.pop(cache_key)
+        _ROUTE_RESOLVE_CACHE[cache_key] = result
+        return result
+
     routes = ModelCatalog.routes_for(model_id)
     if not routes:
         return None
@@ -392,7 +495,44 @@ def resolve_route(
         return None
 
     # Sort based on policy
-    if policy == "prefer_proxy":
+    if policy == "pareto":
+        try:
+            from thegent.routing.pareto_router import (
+                Offer,
+                _get_quality,
+                _get_shadow_multiplier,
+                _lexicographic_select,
+                _pareto_frontier,
+            )
+
+            shadow = _get_shadow_multiplier()
+            offers = []
+            for r in routes:
+                q = _get_quality(r.model_alias)
+                if q < quality_floor:
+                    continue
+                speed_score = r.cost_weight
+                effective_cost = r.cost_weight * shadow
+                offers.append(
+                    Offer(
+                        provider=r.provider,
+                        model_alias=r.model_alias,
+                        cost_weight=r.cost_weight,
+                        quality=q,
+                        speed_score=speed_score,
+                        route=r,
+                        effective_cost=effective_cost,
+                    )
+                )
+            if offers:
+                frontier = _pareto_frontier(offers)
+                sel = _lexicographic_select(frontier or offers, order=("quality", "cost", "speed"))
+                if sel:
+                    return (sel.provider, sel.model_alias)
+        except Exception:
+            pass
+        routes = sorted(routes, key=lambda r: (r.cost_weight, r.priority, r.provider))
+    elif policy == "prefer_proxy":
         # prefer_proxy = proxy first (priority 10), then direct (0)
         routes = sorted(routes, key=lambda r: (-r.priority, r.provider))
     elif policy == "round_robin":
@@ -410,5 +550,36 @@ def resolve_route(
         # prefer_direct (default) = direct first (priority 0), then proxy (10)
         routes = sorted(routes, key=lambda r: (r.priority, r.provider))
 
-    r = routes[0]
-    return (r.provider, r.model_alias)
+    # ROB-017: Explicit fallback chain: prefer_direct → prefer_proxy → error
+    # If policy is prefer_direct and no direct route found, fallback to prefer_proxy
+    if policy == "prefer_direct" and routes:
+        # Try direct routes first (priority 0)
+        direct_routes = [r for r in routes if r.priority == 0]
+        if direct_routes:
+            r = direct_routes[0]
+            return (r.provider, r.model_alias)
+        # Fallback to proxy routes (priority 10)
+        proxy_routes = [r for r in routes if r.priority > 0]
+        if proxy_routes:
+            r = proxy_routes[0]
+            return (r.provider, r.model_alias)
+        # No routes available - return None (error)
+        return None
+
+    # For other policies, use first route from sorted list
+    if not routes:
+        result = None
+    else:
+        r = routes[0]
+        result = (r.provider, r.model_alias)
+
+    # OPT-020: Cache result (multi-tier if available, else LRU eviction)
+    if _USE_MULTI_TIER_CACHE:
+        _ROUTE_CACHE.set(cache_key, result, ttl=300)
+    else:
+        if len(_ROUTE_RESOLVE_CACHE) >= _ROUTE_CACHE_MAX_SIZE:
+            # Remove oldest entry (first in OrderedDict)
+            _ROUTE_RESOLVE_CACHE.popitem(last=False)
+        _ROUTE_RESOLVE_CACHE[cache_key] = result
+
+    return result

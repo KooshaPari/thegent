@@ -1,0 +1,42 @@
+{
+  "agent": "claude",
+  "command": [
+    "/usr/local/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "300",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_28157a8c",
+    "Synthesize a development writeup for 'research-simulation-replay' (Deterministic Replay) including proposal.md, design.md, and tasks.md in docs/changes/research-simulation-replay/",
+    "claude"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 80976,
+  "launcher_ppid": 80965,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:80976",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_80976/20260218T103047Z-claude-p80976-18f75773.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_80976/20260218T103047Z-claude-p80976-18f75773.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_80976/20260218T103047Z-claude-p80976-18f75773.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_80976/20260218T103047Z-claude-p80976-18f75773.stdout.log"
+  },
+  "pid": 80980,
+  "prompt": "Synthesize a development writeup for 'research-simulation-replay' (Deterministic Replay) including proposal.md, design.md, and tasks.md in docs/changes/research-simulation-replay/",
+  "session_id": "20260218T103047Z-claude-p80976-18f75773",
+  "started_at_utc": "2026-02-18T10:30:47.950548+00:00",
+  "status": "running",
+  "timeout_hint_s": 300,
+  "version": 1
+}

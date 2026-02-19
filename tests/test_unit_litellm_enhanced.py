@@ -162,9 +162,7 @@ class TestAlertManager:
         from thegent.routing.alerting import AlertManager
 
         manager = AlertManager(webhook_url=None)
-        manager.send_alert(
-            manager.alert_budget_exceeded(daily_spend=10.0, budget=5.0)
-        )
+        manager.send_alert(manager.alert_budget_exceeded(daily_spend=10.0, budget=5.0))
 
         pending = manager.get_pending_alerts()
         assert len(pending) >= 1
@@ -269,11 +267,14 @@ class TestRoutingDonutAdapter:
 
         queue_path = tmp_path / "prompt_queue.jsonl"
         queue_path.write_text(
-            json.dumps({
-                "ts": "2026-02-16T00:00:00Z",
-                "prompt": "Test prompt",
-                "preferred_model": "claude-opus-4.6",
-            }) + "\n"
+            json.dumps(
+                {
+                    "ts": "2026-02-16T00:00:00Z",
+                    "prompt": "Test prompt",
+                    "preferred_model": "claude-opus-4.6",
+                }
+            )
+            + "\n"
         )
 
         adapter = RoutingDonutAdapter(queue_path=queue_path)
@@ -465,9 +466,7 @@ class TestEnhancedRouterGlobals:
             }
         ]
 
-        with patch.object(
-            litellm_router, "build_litellm_model_list", return_value=mock_model_list
-        ):
+        with patch.object(litellm_router, "build_litellm_model_list", return_value=mock_model_list):
             litellm_router.reset_enhanced_router()
             router1 = litellm_router.get_enhanced_router()
             router2 = litellm_router.get_enhanced_router()

@@ -1,0 +1,10 @@
+#!/bin/bash
+echo "Killing potential runaway processes..."
+pkill -9 -f "process-compose"
+pkill -9 -f "thegent"
+pkill -9 -f "cli-proxy-api-plus"
+pkill -9 -f "uvx"
+pkill -9 -f "bun"
+pkill -9 -f "node"
+pkill -9 -f "playwright"
+echo "Done."

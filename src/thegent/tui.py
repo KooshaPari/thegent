@@ -1,18 +1,11 @@
-import json
-import os
-import subprocess
-from pathlib import Path
-from typing import Any, Optional
-
 from rich.console import Console
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 
 from thegent.cli_impl import ps_impl
-from thegent.tools.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes
+from thegent.tools.terminal import is_claude_code_pane, list_tmux_panes
 
 console = Console()
 

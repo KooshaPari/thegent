@@ -4,6 +4,28 @@
       "url": "http://127.0.0.1:3847/mcp",
       "transport": "http",
       "description": "Thegent agent orchestration (run, bg, ps, logs, dag, etc.)",
+      "autoApprove": [
+        "thegent_run",
+        "thegent_bg",
+        "thegent_ps",
+        "thegent_status",
+        "thegent_logs",
+        "thegent_inspect",
+        "thegent_stop",
+        "thegent_wait",
+        "thegent_list_agents",
+        "thegent_list_droids",
+        "thegent_list_models",
+        "thegent_dag_list",
+        "thegent_observe_summary",
+        "thegent_sitback_dashboard",
+        "thegent_session_contracts",
+        "thegent_session_contract_health_gate",
+        "thegent_session_contract_health_report",
+        "thegent_session_contract_health_trend",
+        "thegent_resolve_model_route",
+        "thegent_suggest_prompt"
+      ],
       "transportType": "http"
     }
   }

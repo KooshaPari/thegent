@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-onchain-contract-gate.sh
 # N4: Onchain contract gate - functional when Forge/Foundry is installed.
 # When forge available: runs forge test, forge build, cast checks.

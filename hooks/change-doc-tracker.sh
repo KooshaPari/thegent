@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # Hook: PostToolUse (Edit|Write)
 # Purpose: Merged hook that:
 #   1. Accumulates a session-level change manifest (from track-changes.sh)

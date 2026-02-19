@@ -1,0 +1,17 @@
+{
+  "pid": 40537,
+  "ppid": 40537,
+  "agent": "codex",
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush",
+  "discovered_at": "2026-02-18T08:06:18.792936+00:00",
+  "last_seen_at": "2026-02-18T08:33:14.823339+00:00",
+  "command": "/opt/homebrew/Caskroom/cursor-cli/2026.02.13-41ac335/dist-package/node",
+  "args_preview": "/opt/homebrew/Caskroom/cursor-cli/2026.02.13-41ac335/dist-package/node /opt/home...",
+  "tmux_pane": null,
+  "session_id": null,
+  "token_usage": null,
+  "mcp_errors": null,
+  "capabilities": [],
+  "trust_score": 0.5,
+  "reputation": 0
+}

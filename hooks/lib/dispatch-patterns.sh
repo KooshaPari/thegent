@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # Phase 4: Dispatch array patterns library
 # Provides reusable associative array dispatch for efficient file classification
 # and gate result handling. Replaces cascading if-elif chains with O(1) hash lookups.

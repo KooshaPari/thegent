@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-evidence-recorder.sh (PostToolUse — optimized)
 # Records gate outputs into .claude/evidence/ for audit trail.
 # Runs after gates; aggregates pass/fail into evidence ledger.

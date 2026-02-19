@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-greenfield-bootstrap-gate.stub.sh (N7)
 # Validates architecture boundary configs per stack (ruff, golangci, oxlint).
 # Install via: make install-governance-hooks

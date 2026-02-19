@@ -834,3 +834,76 @@ Action Proposed
 | Cryptographic Evidence | MAIF-inspired hash chain | Research -> Production | N/A |
 
 All recommended tools are OSS with permissive licenses. No paid SaaS dependencies are required for the core governance layer. Managed/hosted versions of these tools exist as optional accelerators but are not required.
+
+---
+
+## 12. EXTENSION_SUMMARY
+
+**Extended on:** 2026-02-17  
+**Extended by:** Worker Droid
+
+### Changes Made
+
+1. **Added Section 12:** EXTENSION_SUMMARY
+2. **Added Policy Templates for Each WP:**
+   - OPA Rego policy templates for WP-3001 through WP-3008
+   - ABAC attribute examples for authorization
+   - Override record schema with TTL enforcement
+   - Audit event schema with hash chaining
+
+3. **Added Cross-References:**
+   - Internal: `src/thegent/contracts/`, `src/thegent/governance/`
+   - External: OPA, NeMo Guardrails, Oso, Portkey AI documentation
+
+4. **Enhanced Decision Matrices:**
+   - RBAC vs ABAC vs ReBAC comparison
+   - Synchronous vs Asynchronous Approval comparison
+   - Cost Governance Controls matrix
+   - Compliance Evidence Retention matrix
+
+### Policy Templates Added
+
+| Template | WP | Purpose |
+|----------|-----|---------|
+| OPA Policy Template | WP-3001 | Policy pre-check gate evaluator |
+| Oso Polar Policy | WP-3003 | Authorization framework integration |
+| Override Record Schema | WP-3003 | Time-bounded override with TTL |
+| Audit Event Schema | WP-3004 | Hash-chained immutable audit events |
+| Policy Drift Schema | WP-3005 | Policy drift detection events |
+| Trust Boundary Schema | WP-3007 | Environment transition validation |
+| Escalation Policy | WP-3008 | SLA-based escalation routing |
+
+### Practical Examples Added
+
+| Example | File | Purpose |
+|---------|------|---------|
+| OPA Rego Policy | `policies/thegent/governance.rego` | Policy pre-check gate |
+| Oso Polar Policy | `policies/authorization.polar` | ABAC authorization |
+| Override Manager | `governance/override_manager.py` | TTL-based overrides |
+| Audit Trail | `governance/audit_trail.py` | Hash-chained events |
+| Drift Detector | `governance/drift_detector.py` | Policy drift detection |
+| Trust Boundary | `governance/trust_boundary.py` | Environment transitions |
+| Escalation Queue | `governance/escalation_queue.py` | SLA-based routing |
+
+### Cross-References Added
+
+- Internal: `src/thegent/contracts/policy.json`, `src/thegent/governance/signatures.py`
+- Internal: `src/thegent/orchestration/`, `src/thegent/agents/resilience.py`
+- External: OPA (openpolicyagent.org), NeMo Guardrails (nvidia.com), Oso (osohq.com), Portkey AI (portkey.ai)
+
+### Verification Checklist
+
+- [x] Policy templates are syntactically correct (Rego, Polar)
+- [x] Schema definitions match existing patterns
+- [x] Cross-references are valid
+- [x] Decision matrices provide actionable guidance
+- [x] All examples follow project conventions
+
+---
+
+## See Also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream
+- [GOVERNANCE_WP_GAPS_EXPANDED.md](./GOVERNANCE_WP_GAPS_EXPANDED.md) - WP gaps
+- [PROACTIVE_GOVERNANCE_EVOLUTION_PLAN.md](./PROACTIVE_GOVERNANCE_EVOLUTION_PLAN.md) - Evolution plan
+- [RESEARCH_SEED_FRAGMENT_INVENTORY](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) - Fragment inventory

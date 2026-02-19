@@ -1,7 +1,6 @@
 """Cursor via cursor-api (wisdgod) - OpenAI-compatible HTTP backend."""
 
 import os
-import re
 import shutil
 import subprocess
 from collections.abc import Callable
@@ -10,12 +9,10 @@ from pathlib import Path
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
 from thegent.config import ThegentSettings
+from thegent.infra.power import wrap_with_caffeinate
+from thegent.utils import strip_ansi
 
 _PROXY_MODEL = "claude-4.5-opus-high-thinking"
-
-
-def _strip_ansi(text: str) -> str:
-    return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
 def _resolve_codex() -> str:
@@ -31,15 +28,13 @@ def _resolve_codex() -> str:
 
 def _is_cursor_api_reachable(base_url: str, token: str, timeout: float = 3.0) -> bool:
     """Check if cursor-api is reachable (GET /v1/models)."""
-    import urllib.request
+    import httpx
 
     url = f"{base_url.rstrip('/')}/v1/models"
-    req = urllib.request.Request(url, method="GET")
-    if token:
-        req.add_header("Authorization", f"Bearer {token}")
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as _:
-            return True
+        resp = httpx.get(url, headers=headers, timeout=timeout)
+        return resp.status_code == 200
     except Exception:
         return False
 
@@ -65,8 +60,8 @@ def _run_with_retry(
     )
     result = RunResult(
         exit_code=proc.returncode,
-        stdout=_strip_ansi(proc.stdout),
-        stderr=_strip_ansi(proc.stderr),
+        stdout=strip_ansi(proc.stdout),
+        stderr=strip_ansi(proc.stderr),
         timed_out=proc.returncode == 124,
     )
     if result.exit_code != 0 and is_retryable(result):
@@ -130,6 +125,8 @@ class CursorApiRunner(AgentRunner):
             cmd.extend(["--sandbox", "workspace-write"])
         elif mode == "full":
             cmd.extend(["--full-auto"])
+
+        cmd = wrap_with_caffeinate(cmd, "cursor-api")
 
         try:
             return _run_with_retry(cmd, prompt, cwd, timeout, env)

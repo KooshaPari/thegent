@@ -554,3 +554,11 @@ Items from [08-OPTIMIZATION-CATALOG.md](./08-OPTIMIZATION-CATALOG.md) not covere
 | OPT-F | DE-004..008 | Design elegance (DI stack, state machines, middleware, adoption model) |
 
 These can be dispatched as 6 parallel agents after all 10 core batches complete.
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](./00-MASTER-INDEX.md) — plan index
+- [12-LIFECYCLE-LOOP-DESIGN.md](./12-LIFECYCLE-LOOP-DESIGN.md) — cycleloop and checker agent

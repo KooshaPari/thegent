@@ -1,0 +1,1 @@
+"""MAIF artifact system tests."""

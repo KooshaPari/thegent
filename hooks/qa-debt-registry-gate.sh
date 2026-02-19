@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-debt-registry-gate.stub.sh
 # Validates debt-register.json exists and has valid structure when debt registry enabled.
 # Install via: make install-governance-hooks

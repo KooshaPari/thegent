@@ -216,3 +216,11 @@ Focus areas:
 4. **Chunk D:** WP-11006 → WP-11010 + resilience and control governance tests.
 5. **Chunk E:** WP-12001 → WP-12006 + explainability and evidence integrity tests.
 6. **Chunk F:** WP-12007 → WP-12010 + persona tests and final pack compile/review.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

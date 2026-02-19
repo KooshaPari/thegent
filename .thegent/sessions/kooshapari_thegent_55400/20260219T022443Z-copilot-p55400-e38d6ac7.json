@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_06554e5f",
+    "Complete sync-plan-consolidation: Plan consolidation automation",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 55400,
+  "launcher_ppid": 50806,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:55400",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_55400/20260219T022443Z-copilot-p55400-e38d6ac7.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_55400/20260219T022443Z-copilot-p55400-e38d6ac7.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_55400/20260219T022443Z-copilot-p55400-e38d6ac7.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_55400/20260219T022443Z-copilot-p55400-e38d6ac7.stdout.log"
+  },
+  "pid": 86062,
+  "prompt": "Complete sync-plan-consolidation: Plan consolidation automation",
+  "session_id": "20260219T022443Z-copilot-p55400-e38d6ac7",
+  "started_at_utc": "2026-02-19T02:24:43.963107+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

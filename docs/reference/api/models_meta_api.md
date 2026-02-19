@@ -1,0 +1,12 @@
+# models_meta API Reference
+
+> **Source**: `src/thegent/planning/models_meta.py`
+
+Metadata for AI models including cost and quality scores.
+
+---
+
+## ModelMetadata
+
+---
+

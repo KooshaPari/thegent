@@ -606,3 +606,11 @@ Retention default:
 - At least one nontrivial board connector emits transition events.
 - crosswave check can block and unblock via explicit evidence updates.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

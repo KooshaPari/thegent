@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-assurance-case-gate.stub.sh (N12)
 # Validates assurance-case.json against schema and structure. Install via: make install-governance-hooks
 set -euo pipefail

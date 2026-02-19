@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_8155ffe7",
+    "Implement thegent-hooks affected-tests subcommand: Pattern matching, coverage analysis, import graph traversal. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a78.2. Add to crates/thegent-hooks/src/main.rs.",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 39650,
+  "launcher_ppid": 35619,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:39650",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_39650/20260219T061815Z-copilot-p39650-b2252d98.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_39650/20260219T061815Z-copilot-p39650-b2252d98.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_39650/20260219T061815Z-copilot-p39650-b2252d98.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_39650/20260219T061815Z-copilot-p39650-b2252d98.stdout.log"
+  },
+  "pid": 52004,
+  "prompt": "Implement thegent-hooks affected-tests subcommand: Pattern matching, coverage analysis, import graph traversal. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a78.2. Add to crates/thegent-hooks/src/main.rs.",
+  "session_id": "20260219T061815Z-copilot-p39650-b2252d98",
+  "started_at_utc": "2026-02-19T06:18:16.284254+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

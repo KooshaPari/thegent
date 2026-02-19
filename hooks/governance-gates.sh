@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # governance-gates.sh
 # Consolidated governance gate dispatcher.
 # Replaces 26 individual qa-*-gate.sh Stop hooks with a single script
@@ -40,7 +40,7 @@ read_quality_config
 _head_sha="${_GIT_HEAD_SHA}"
 _qc_mtime="0"; [[ -f "$QUALITY_CONFIG" ]] && _qc_mtime="$(stat -f '%m' "$QUALITY_CONFIG" 2>/dev/null || stat -c '%Y' "$QUALITY_CONFIG" 2>/dev/null || echo 0)"
 _qs_mtime="0"; [[ -f "$QA_STATE" ]] && _qs_mtime="$(stat -f '%m' "$QA_STATE" 2>/dev/null || stat -c '%Y' "$QA_STATE" 2>/dev/null || echo 0)"
-_cache_key=$(printf '%s\0%s\0%s\0%s' "$HOOK_NAME" "$_head_sha" "$_qc_mtime" "$_qs_mtime" | shasum -a 256 | cut -d' ' -f1)
+_cache_key=$(printf '%s\0%s\0%s\0%s' "$HOOK_NAME" "$_head_sha" "$_qc_mtime" "$_qs_mtime" | hash_for_cache)
 unset _head_sha _qc_mtime _qs_mtime
 _gg_ttl="${HOOK_CACHE_TTL:-600}"
 if hook_cache_check "$_cache_key" "$_gg_ttl"; then

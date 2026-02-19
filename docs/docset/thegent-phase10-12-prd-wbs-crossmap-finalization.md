@@ -105,3 +105,11 @@ After each WP moves to `Done`, update:
 - [ ] Finality artifact and residual risks list generated for WP-12010.
 - [ ] Deterministic export command successfully rebuilt from clean git state.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

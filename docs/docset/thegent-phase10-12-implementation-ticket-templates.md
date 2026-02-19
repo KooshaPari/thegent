@@ -401,3 +401,11 @@ For each ticket, ensure the import row in `WBS_TO_ISSUE_IMPORT_MATRIX.md` is upd
   - `release-gate`
 - Set issue description using this template with exact artifact names to prevent drift.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

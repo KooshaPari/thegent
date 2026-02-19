@@ -334,3 +334,11 @@
 
 - Link each issue to evidence artifacts via `evidence_manifest_id`.
 - Require gate checklist checkbox updates before moving WPs to "In Review" status.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

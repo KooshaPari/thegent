@@ -166,3 +166,11 @@ Transfer to thegent:
 - Deep docs pass confirms your plan trajectory is correct.
 - The next major value unlock is tighter docs-to-code conformance and explicit multi-agent orchestration mode formalization.
 - Zen patterns are highly transferable, but contract authority and compatibility strategy must be made explicit first.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

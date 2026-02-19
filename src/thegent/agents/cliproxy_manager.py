@@ -5,8 +5,8 @@ existing credentials. Setup uses the same flow.
 Provider/model definitions from internal JSON (no factory config dependency).
 """
 
+import contextlib
 import json
-import logging
 import os
 import shutil
 import subprocess
@@ -17,22 +17,23 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-import yaml
 
 from thegent.config import ThegentSettings
+from thegent.infra import yaml_dump, yaml_load, run_subprocess_optimized
+
 
 # Lazy imports for better startup performance
 def _get_settings():
     from thegent.config import ThegentSettings
+
     return ThegentSettings()
 
-def _get_yaml():
-    import yaml
-    return yaml
 
 def _get_httpx():
     import httpx
+
     return httpx
+
 
 _CLIPROXY_DATA_DIR = Path(__file__).parent / "cliproxy_data"
 
@@ -59,28 +60,25 @@ def _get_provider_definitions() -> dict[str, Any]:
 def _get_model_definitions() -> dict[str, Any]:
     """Load model definitions (common aliases) from internal JSON."""
     return _load_json("model_definitions.json")
+
+
 _PROXY_CHECK_TIMEOUT = 2
 _CLIPROXY_NOT_FOUND_MSG = (
     "cli-proxy-api-plus not found. Install from "
-    "https://github.com/router-for-me/CLIProxyAPIPlus/releases "
+    "https://github.com/kooshapari/cliproxyapi-plusplus/releases "
     "(e.g. CLIProxyAPIPlus_*_darwin_arm64.tar.gz -> extract to ~/.local/bin). "
     "Or set THGENT_CLIPROXY_BINARY=/path/to/cli-proxy-api-plus"
 )
 
 
 def _resolve_binary(settings: "ThegentSettings") -> str:
-    """Resolve CLIProxyAPIPlus binary path. Prefers THGENT_CLIPROXY_BINARY env."""
+    """Resolve CLIProxyAPIPlus binary path. Uses settings.cliproxy_binary (THGENT_CLIPROXY_BINARY)."""
     cmd = settings.cliproxy_binary
-    env_val = os.environ.get("THGENT_CLIPROXY_BINARY")
-    if env_val:
-        expanded = str(Path(env_val).expanduser())
-        if Path(expanded).exists():
-            return expanded
-        return env_val
     if "/" in cmd or "~" in cmd:
         expanded = str(Path(cmd).expanduser())
         if Path(expanded).exists():
             return expanded
+        return cmd
     found = shutil.which(cmd)
     if found:
         return found
@@ -102,12 +100,23 @@ def _get_claude_aliases(model: str) -> list[dict[str, str]]:
     work without any Claude ID mapping. Include provider name as alias.
     """
     common = [
-        "sonnet", "haiku", "opus", 
-        "claude-sonnet-4.5", "claude-haiku-4.5", "claude-opus-4.6",
-        "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022",
-        "claude-3-5-haiku-20241022", "claude-3-opus-20240229",
-        "composer-1.5", "composer-1.5-high", "composer-1.5-spark",
-        "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"
+        "sonnet",
+        "haiku",
+        "opus",
+        "claude-sonnet-4.5",
+        "claude-haiku-4.5",
+        "claude-opus-4.6",
+        "claude-3-7-sonnet-20250219",
+        "claude-3-5-sonnet-20241022",
+        "claude-3-5-haiku-20241022",
+        "claude-3-opus-20240229",
+        "composer-1.5",
+        "composer-1.5-high",
+        "composer-1.5-spark",
+        "gpt-4o",
+        "gpt-4o-mini",
+        "gpt-4-turbo",
+        "gpt-3.5-turbo",
     ]
     out = [{"name": model, "alias": model}]
     for a in common:
@@ -138,6 +147,62 @@ def _build_provider_login_config() -> dict[str, dict[str, Any]]:
 
 # API-key-only providers (no OAuth available). Others use OAuth via _LOGIN_FLAGS.
 PROVIDER_LOGIN_CONFIG: dict[str, dict[str, Any]] = _build_provider_login_config()
+
+# Provider -> (base_url_patterns, model_patterns) for factory config lookup
+_FACTORY_PROVIDER_PATTERNS: dict[str, tuple[list[str], list[str]]] = {
+    "minimax": (["minimax"], ["minimax"]),
+    "nim": (["nvidia"], ["nvidia", "nim"]),
+    "openrouter": (["openrouter"], ["openrouter"]),
+}
+
+_DUMMY_KEYS = frozenset({"dummy-not-used", "dummy", ""})
+
+# OAuth-only providers: no API key option. Claude and Codex require OAuth.
+_OAUTH_ONLY_PROVIDERS: frozenset[str] = frozenset({"claude", "codex"})
+
+
+def _get_factory_api_key(provider: str) -> tuple[str | None, str]:
+    """Look up API key in ~/.factory/config.json and ~/.factory/settings.json.
+    Returns (api_key, source_path) or (None, ""). Skips dummy/empty keys."""
+    provider_lower = provider.lower()
+    patterns = _FACTORY_PROVIDER_PATTERNS.get(provider_lower)
+    if not patterns:
+        return None, ""
+
+    base_patterns, model_patterns = patterns
+
+    def _matches(entry: dict[str, Any], base_key: str, model_key: str, api_key: str) -> bool:
+        base_val = (entry.get(base_key) or "").lower()
+        model_val = (entry.get(model_key) or "").lower()
+        key_val = (entry.get(api_key) or "").strip()
+        if not key_val or key_val.lower() in _DUMMY_KEYS:
+            return False
+        return any(p in base_val for p in base_patterns) or any(p in model_val for p in model_patterns)
+
+    factory_dir = Path.home() / ".factory"
+    for name, base_key, model_key, api_key in [
+        ("config.json", "base_url", "model", "api_key"),
+        ("settings.json", "baseUrl", "model", "apiKey"),
+    ]:
+        path = factory_dir / name
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text())
+        except (json.JSONDecodeError, OSError):
+            continue
+        models_key = "custom_models" if name == "config.json" else "customModels"
+        entries = data.get(models_key) if isinstance(data, dict) else []
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            if _matches(entry, base_key, model_key, api_key):
+                key = (entry.get(api_key) or "").strip()
+                if key and key.lower() not in _DUMMY_KEYS:
+                    return key, str(path)
+    return None, ""
 
 
 def _has_provider_credentials(config: dict[str, Any], provider: str) -> bool:
@@ -180,11 +245,16 @@ def _has_oauth_credentials(settings: ThegentSettings, provider: str) -> bool:
     prefixes = _OAUTH_AUTH_PREFIXES.get(provider_lower)
     if not prefixes:
         return False
+    # Kiro: also check ~/.kiro/kiro-auth-token.json (from Kiro IDE or kiro-import)
+    if provider_lower == "kiro":
+        kiro_token = Path("~/.kiro/kiro-auth-token.json").expanduser().resolve()
+        if kiro_token.exists():
+            return True
     auth_dir = settings.cliproxy_auth_dir.expanduser().resolve()
     if not auth_dir.exists():
         return False
     for f in auth_dir.iterdir():
-        if not f.is_file() or not f.suffix == ".json":
+        if not f.is_file() or f.suffix != ".json":
             continue
         name = f.name
         for prefix in prefixes:
@@ -198,7 +268,10 @@ def _has_oauth_credentials(settings: ThegentSettings, provider: str) -> bool:
 
 def _inject_api_key_into_cliproxy(config: dict[str, Any], provider: str, api_key: str, cfg: dict[str, Any]) -> None:
     """Add or update openai-compatibility entry with the given API key.
-    Uses provider_definitions.json for model aliases when available."""
+    Uses provider_definitions.json for model aliases when available.
+    Claude and Codex are OAuth-only; no-op for them."""
+    if provider.lower() in _OAUTH_ONLY_PROVIDERS:
+        return
     compat = config.get("openai-compatibility")
     if not isinstance(compat, list):
         compat = []
@@ -214,9 +287,26 @@ def _inject_api_key_into_cliproxy(config: dict[str, Any], provider: str, api_key
     provider_def = defs_.get(provider) if isinstance(defs_.get(provider), dict) else {}
     extra_aliases = provider_def.get("extra_aliases", ["glm-5"] if provider in ("glm", "kilo") else [])
 
-    models = [*_get_claude_aliases(model)]
-    for alias in extra_aliases:
-        models.append({"name": model, "alias": alias})
+    # For provider-native models (MiniMax-M2.5, GLM-5), use provider-specific aliases
+    if provider.lower() == "minimax" and "MiniMax" in model:
+        # MiniMax uses provider-native name: MiniMax-M2.5
+        models = [
+            {"name": "MiniMax-M2.5", "alias": "MiniMax-M2.5"},
+            {"name": "MiniMax-M2.5", "alias": "minimax-m2.5"},
+        ]
+    elif provider.lower() in ("glm", "kilo") and ("GLM" in model or "glm" in model.lower()):
+        # GLM/Kilo use provider-native names
+        models = [
+            {"name": model, "alias": model},
+            {"name": model, "alias": model.lower()},
+        ]
+        for alias in extra_aliases:
+            models.append({"name": model, "alias": alias})
+    else:
+        # Claude-compatible models use Claude aliases
+        models = [*_get_claude_aliases(model)]
+        for alias in extra_aliases:
+            models.append({"name": model, "alias": alias})
 
     compat.append(
         {
@@ -235,10 +325,10 @@ def _inject_cursor_into_cliproxy(config: dict[str, Any], settings: ThegentSettin
     - token-file: when token is sk-... from cursor-api /build-key (direct use)
     - auth-token: when token is AUTH_TOKEN for zero-action (IDE + /tokens/add)
     """
-    if "cursor" in config and config["cursor"]:
+    if config.get("cursor"):
         return
-    url = os.environ.get("THGENT_CURSOR_API_URL") or settings.cursor_api_url
-    token = (os.environ.get("THGENT_CURSOR_API_TOKEN") or settings.cursor_api_token or "").strip()
+    url = settings.cursor_api_url
+    token = (settings.cursor_api_token or "").strip()
     if not url or not token:
         return
     cursor_api_url = url.rstrip("/")
@@ -265,6 +355,49 @@ def _inject_cursor_into_cliproxy(config: dict[str, Any], settings: ThegentSettin
     config["cursor"] = [entry]
 
 
+def _inject_kiro_into_cliproxy(config: dict[str, Any], settings: ThegentSettings) -> None:
+    """Inject kiro block when ~/.kiro/kiro-auth-token.json exists (from Kiro IDE or kiro-import).
+    Skips if kiro block already exists. Ensures token persists across config rewrites."""
+    if config.get("kiro"):
+        return
+    kiro_token = Path("~/.kiro/kiro-auth-token.json").expanduser().resolve()
+    if not kiro_token.exists():
+        return
+    config["kiro"] = [{"token-file": str(kiro_token)}]
+
+
+def _inject_zen_into_cliproxy(config: dict[str, Any], settings: ThegentSettings) -> None:
+    """Inject zen (OpenCode Zen) into openai-compatibility when THGENT_ZEN_API_KEY is set.
+    Zen serves gemini-3-flash, glm-5, gpt-5-mini at api.opencode.ai."""
+    if _has_provider_credentials(config, "zen"):
+        return
+    # Use settings first (settings.zen_api_key reads from THGENT_ZEN_API_KEY, OPENCODE_API_KEY, or ZEN_API_KEY)
+    key = (settings.zen_api_key or "").strip()
+    if not key:
+        return
+    defs_ = _get_provider_definitions()
+    zen_def = defs_.get("zen") if isinstance(defs_.get("zen"), dict) else {}
+    base_url = (zen_def.get("base_url") or settings.zen_base_url or "https://opencode.ai/zen/v1").rstrip("/")
+    model = zen_def.get("model", "glm-5")
+    extra = zen_def.get("extra_aliases", ["z-ai/glm-5", "gpt-5-mini", "gemini-3-flash"])
+    models = [{"name": model, "alias": model}, {"name": model, "alias": model.lower()}]
+    for a in extra:
+        models.append({"name": model, "alias": a})
+    compat = config.get("openai-compatibility")
+    if not isinstance(compat, list):
+        compat = []
+        config["openai-compatibility"] = compat
+    compat[:] = [c for c in compat if not (isinstance(c, dict) and (c.get("name") or "").lower() == "zen")]
+    compat.append(
+        {
+            "name": "zen",
+            "base-url": base_url,
+            "api-key-entries": [{"api-key": key}],
+            "models": models,
+        }
+    )
+
+
 def _ensure_config(settings: ThegentSettings) -> Path:
     """Ensure cliproxy config exists; create minimal YAML if missing."""
     config_path = settings.cliproxy_config_path.expanduser().resolve()
@@ -274,7 +407,7 @@ def _ensure_config(settings: ThegentSettings) -> Path:
 
     if config_path.exists():
         try:
-            raw = yaml.safe_load(config_path.read_text())
+            raw = yaml_load(config_path)
             config: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
         except Exception:
             config = {}
@@ -283,21 +416,81 @@ def _ensure_config(settings: ThegentSettings) -> Path:
 
     config.setdefault("port", settings.cliproxy_port)
     config.setdefault("auth-dir", str(auth_dir))
-    
+
     # WP-Y16: Ensure model aliases are up to date for existing providers
     if "openai-compatibility" in config:
         for p in config["openai-compatibility"]:
+            # Fix MiniMax base-url: api.minimax.chat -> api.minimax.io (correct international API)
+            name = (p.get("name") or "").lower()
+            if name == "minimax":
+                base = (p.get("base-url") or "").strip()
+                if "api.minimax.chat" in base:
+                    p["base-url"] = base.replace("api.minimax.chat", "api.minimax.io")
+                # Ensure MiniMax-M2.5 model is properly configured with aliases
+                models_list = p.get("models", [])
+                if not any(m.get("name") == "MiniMax-M2.5" for m in models_list):
+                    models_list.append({"name": "MiniMax-M2.5", "alias": "MiniMax-M2.5"})
+                    models_list.append({"name": "MiniMax-M2.5", "alias": "minimax-m2.5"})
+                    p["models"] = models_list
+            elif name == "glm":
+                # Ensure GLM-5 model is properly configured with aliases
+                models_list = p.get("models", [])
+                if not any(m.get("name") == "GLM-5" or m.get("alias") == "glm-5" for m in models_list):
+                    models_list.append({"name": "GLM-5", "alias": "GLM-5"})
+                    models_list.append({"name": "GLM-5", "alias": "glm-5"})
+                    models_list.append({"name": "GLM-5", "alias": "z-ai/glm-5"})
+                    p["models"] = models_list
+            elif name == "kilo":
+                # Ensure kilo-default model is properly configured
+                models_list = p.get("models", [])
+                if not any(m.get("alias") == "kilo-default" for m in models_list):
+                    model_name = p.get("model") or "kilo-default"
+                    models_list.append({"name": model_name, "alias": "kilo-default"})
+                    p["models"] = models_list
+            elif name == "roo":
+                # Ensure roo-default model is properly configured
+                models_list = p.get("models", [])
+                if not any(m.get("alias") == "roo-default" for m in models_list):
+                    model_name = p.get("model") or "roo-default"
+                    models_list.append({"name": model_name, "alias": "roo-default"})
+                    p["models"] = models_list
+            elif name == "zen":
+                # Ensure zen (OpenCode) has gemini-3-flash for dex flash
+                models_list = p.get("models", [])
+                if not any(m.get("alias") == "gemini-3-flash" for m in models_list):
+                    model_name = p.get("model") or "glm-5"
+                    models_list.append({"name": model_name, "alias": "gemini-3-flash"})
+                    models_list.append({"name": model_name, "alias": "gpt-5-mini"})
+                    p["models"] = models_list
             # Try to get underlying model from 'model' or first item in 'models'
             model = p.get("model")
             if not model and p.get("models"):
                 model = p["models"][0].get("name")
             if model:
-                p["models"] = _get_claude_aliases(model)
+                # Only use Claude aliases for Claude-compatible models
+                # For provider-native models (MiniMax-M2.5, GLM-5), use provider-specific aliases
+                if name == "minimax" and "MiniMax" in model:
+                    # MiniMax models use provider-native names
+                    if not p.get("models"):
+                        p["models"] = [
+                            {"name": "MiniMax-M2.5", "alias": "MiniMax-M2.5"},
+                            {"name": "MiniMax-M2.5", "alias": "minimax-m2.5"},
+                        ]
+                elif name in ("glm", "kilo") and ("GLM" in model or "glm" in model.lower()):
+                    # GLM models use provider-native names
+                    if not p.get("models"):
+                        p["models"] = [
+                            {"name": model, "alias": model},
+                            {"name": model, "alias": model.lower()},
+                        ]
+                else:
+                    p["models"] = _get_claude_aliases(model)
 
     _inject_cursor_into_cliproxy(config, settings)
+    _inject_kiro_into_cliproxy(config, settings)
+    _inject_zen_into_cliproxy(config, settings)
 
-    yaml = _get_yaml()
-    config_path.write_text(str(yaml.dump(config, default_flow_style=False, sort_keys=False)))
+    config_path.write_text(yaml_dump(config))
     return config_path
 
 
@@ -305,11 +498,8 @@ def _is_proxy_reachable(base_url: str) -> bool:
     """Check if proxy is reachable (GET /v1/models or /models)."""
     # If base_url already ends in /v1, don't duplicate it.
     base = base_url.rstrip("/")
-    if base.endswith("/v1"):
-        paths = ("/models", "/")
-    else:
-        paths = ("/v1/models", "/models", "/")
-        
+    paths = ("/models", "/") if base.endswith("/v1") else ("/v1/models", "/models", "/")
+
     for path in paths:
         try:
             resp = httpx.get(
@@ -324,12 +514,34 @@ def _is_proxy_reachable(base_url: str) -> bool:
     return False
 
 
-def _adapter_script_path() -> Path | None:
-    """Path to start_proxy_with_adapter.py if available (when running from source)."""
+def _is_adapter_running(base_url: str) -> bool:
+    """True if the server at base_url is the adapter (exposes /v1/responses), not raw CLIProxy.
+    Adapter transforms response to 'models'; raw proxy returns 'data'."""
     try:
-        import thegent
-        root = Path(thegent.__file__).resolve().parent.parent.parent
-        script = root / "scripts" / "start_proxy_with_adapter.py"
+        base = base_url.rstrip("/")
+        url = f"{base}/models" if base.endswith("/v1") else f"{base}/v1/models"
+        resp = httpx.get(url, timeout=2)
+        if not resp.is_success:
+            return False
+        data = resp.json()
+        if not isinstance(data, dict):
+            return False
+        # Adapter returns "models"; raw CLIProxy returns "data"
+        return "models" in data
+    except Exception:
+        return False
+
+
+def _adapter_script_path() -> Path | None:
+    """Path to start_proxy_with_adapter.py if available.
+
+    In dev mode, looks in the project root.
+    When installed, uses get_resource_path.
+    """
+    from thegent.utils import get_resource_path
+
+    try:
+        script = get_resource_path("scripts/start_proxy_with_adapter.py")
         return script if script.exists() else None
     except Exception:
         return None
@@ -342,13 +554,12 @@ def _start_proxy_and_wait(
     script = _adapter_script_path()
     if use_adapter and script is not None:
         import sys
+
         env = os.environ.copy()
         env.setdefault("THGENT_CLIPROXY_PORT", str(settings.cliproxy_port))
-        
+
         # Capture stderr if debug is enabled to help diagnose startup failures
-        stderr_target = None
-        if os.environ.get("THGENT_DEBUG") == "1":
-            stderr_target = subprocess.PIPE
+        stderr_target = subprocess.PIPE if settings.debug else None
 
         proc = subprocess.Popen(
             [sys.executable, str(script)],
@@ -358,16 +569,13 @@ def _start_proxy_and_wait(
             stderr=stderr_target,
             stdin=subprocess.DEVNULL,
             start_new_session=True,
-            text=True if stderr_target else False,
+            text=bool(stderr_target),
         )
     else:
         args = [binary, "-config", str(config_path)]
-        if os.environ.get("THGENT_DEBUG") == "1":
+        if settings.debug:
             args.append("-debug")
-        
-        stderr_target = None
-        if os.environ.get("THGENT_DEBUG") == "1":
-            stderr_target = subprocess.PIPE
+        stderr_target = subprocess.PIPE if settings.debug else None
 
         proc = subprocess.Popen(
             args,
@@ -376,9 +584,9 @@ def _start_proxy_and_wait(
             stdin=subprocess.DEVNULL,
             start_new_session=True,
             env=os.environ.copy(),
-            text=True if stderr_target else False,
+            text=bool(stderr_target),
         )
-    
+
     # Ready timeout: adapter script has its own internal timeouts, so we should be slightly longer
     wait_iterations = _PROXY_READY_TIMEOUT * 4  # ~10s total
     for _ in range(wait_iterations):
@@ -390,17 +598,17 @@ def _start_proxy_and_wait(
             if stderr_target:
                 _, err = proc.communicate()
                 err_msg = f"\nStderr: {err}"
-            
+
             hint = ""
             if use_adapter:
                 hint = "\nHint: Try THGENT_CLIPROXY_ADAPTER=0 for direct proxy without adapter."
-            
+
             raise RuntimeError(
                 f"CLIProxyAPIPlus exited with code {proc.returncode}. "
                 f"Check config at {config_path}.{err_msg}{hint}\n"
                 "Run with THGENT_DEBUG=1 for detailed logs."
             )
-    
+
     proc.kill()
     raise RuntimeError(
         f"CLIProxyAPIPlus did not become ready within {wait_iterations * 0.5}s. "
@@ -413,28 +621,51 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
     Ensure CLIProxyAPIPlus is running. Start if not reachable.
     Returns base_url (e.g. http://127.0.0.1:8317/v1).
     Supports adapter (Responses API) if THGENT_CLIPROXY_ADAPTER=1.
+
+    Uses shared MCP server (system-wide) if available.
     """
+    # Try shared MCP server first (system-wide)
+    try:
+        from thegent.shared_mcp_manager import get_shared_mcp_url
+
+        shared_url = get_shared_mcp_url()
+        if shared_url and _is_proxy_reachable(shared_url.replace("/mcp", "/v1")):
+            return shared_url.replace("/mcp", "/v1")
+    except ImportError:
+        pass  # Fallback to direct proxy
+
     port = settings.cliproxy_port
-    use_adapter = (
-        os.environ.get("THGENT_CLIPROXY_ADAPTER") == "1"
-        or (os.environ.get("THGENT_CLIPROXY_ADAPTER") is None and settings.cliproxy_adapter)
-    )
+    use_adapter = settings.cliproxy_adapter
     base_url = f"http://127.0.0.1:{port}/v1"
     if _is_proxy_reachable(base_url):
-        return base_url
+        # When adapter needed (Codex WebSocket), verify we have adapter not raw proxy
+        if use_adapter and not _is_adapter_running(base_url):
+            kill_proxy(settings)
+            # Fall through to start adapter
+        else:
+            return base_url
 
     if use_adapter:
         # Try to start using the adapter script
-        script_path = Path(__file__).resolve().parents[3] / "scripts" / "start_proxy_with_adapter.py"
+        from thegent.utils import get_resource_path
+
+        script_path = get_resource_path("scripts/start_proxy_with_adapter.py")
         if script_path.exists():
             import subprocess
+
             env = os.environ.copy()
-            env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
+            # If we're installed, we might not need to set PYTHONPATH
+            # but for dev mode it's crucial.
+            from thegent.utils import is_dev_mode
+
+            if is_dev_mode():
+                env["PYTHONPATH"] = str(script_path.parents[1] / "src")
+
             env.setdefault("THGENT_CLIPROXY_ADAPTER", "1")
             subprocess.Popen(
                 [sys.executable, str(script_path)],
                 env=env,
-                cwd=str(script_path.parent.parent),
+                cwd=str(script_path.parents[1]),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL,
@@ -452,9 +683,9 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
         raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
 
     config_path = _ensure_config(settings)
-    
+
     # Fallback path: if we tried adapter and it failed, _start_proxy_and_wait will try direct
-    # unless we explicitly tell it to use adapter. 
+    # unless we explicitly tell it to use adapter.
     # Here we call it without use_adapter=True to ensure a working direct proxy fallback.
     _start_proxy_and_wait(binary, config_path, base_url, settings, use_adapter=False)
     return base_url
@@ -464,6 +695,7 @@ def start_proxy_managed(settings: ThegentSettings) -> tuple[subprocess.Popen[byt
     """
     Start proxy and return (proc, base_url) for lifecycle management.
     Caller must terminate proc on shutdown. Skips if proxy already reachable (proc=None).
+    Uses adapter (Responses API + WebSocket /v1/responses) when THGENT_CLIPROXY_ADAPTER=1.
     """
     base_url = f"http://127.0.0.1:{settings.cliproxy_port}/v1"
     if _is_proxy_reachable(base_url):
@@ -474,7 +706,8 @@ def start_proxy_managed(settings: ThegentSettings) -> tuple[subprocess.Popen[byt
         raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
 
     config_path = _ensure_config(settings)
-    proc = _start_proxy_and_wait(binary, config_path, base_url, settings)
+    use_adapter = settings.cliproxy_adapter
+    proc = _start_proxy_and_wait(binary, config_path, base_url, settings, use_adapter=use_adapter)
     return (proc, base_url)
 
 
@@ -498,18 +731,20 @@ def kill_proxy(settings: ThegentSettings) -> bool:
     Uses lsof to find PIDs by port; works regardless of how proxy was started.
     """
     try:
-        result = subprocess.run(
+        result = run_subprocess_optimized(
             ["lsof", "-ti", f":{settings.cliproxy_port}"],
             capture_output=True,
-            text=True,
             timeout=5,
             check=False,
         )
-        if result.returncode != 0 or not result.stdout.strip():
+        if result.returncode != 0 or not result.stdout:
             return False
-        pids = [p.strip() for p in result.stdout.strip().split("\n") if p.strip()]
+        stdout_text = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+        if not stdout_text.strip():
+            return False
+        pids = [p.strip() for p in stdout_text.strip().split("\n") if p.strip()]
         for pid in pids:
-            subprocess.run(["kill", "-9", pid], capture_output=True, timeout=2, check=False)
+            run_subprocess_optimized(["kill", "-9", pid], capture_output=True, timeout=2, check=False)
         return bool(pids)
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return False
@@ -572,7 +807,7 @@ def proxy_service_uninstall() -> tuple[bool, str]:
     if platform.system() != "Darwin":
         return False, "launchd only on macOS"
     plist_path = _proxy_plist_path()
-    subprocess.run(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
+    run_subprocess_optimized(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
     if plist_path.exists():
         plist_path.unlink()
     return True, "Uninstalled"
@@ -587,7 +822,7 @@ def proxy_service_start() -> tuple[bool, str]:
     plist_path = _proxy_plist_path()
     if not plist_path.exists():
         return False, "Service not installed. Run: thegent cliproxy service install"
-    subprocess.run(["launchctl", "load", str(plist_path)], capture_output=True, check=True)
+    run_subprocess_optimized(["launchctl", "load", str(plist_path)], capture_output=True, check=True)
     return True, "Started"
 
 
@@ -600,20 +835,20 @@ def proxy_service_stop() -> tuple[bool, str]:
     plist_path = _proxy_plist_path()
     if not plist_path.exists():
         return False, "Service not installed"
-    subprocess.run(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
+    run_subprocess_optimized(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
     return True, "Stopped"
 
 
-def run_login_unified(settings: ThegentSettings, provider: str, prompt_func=None, skip_if_configured: bool = True) -> int:
+def run_login_unified(
+    settings: ThegentSettings, provider: str, prompt_func=None, skip_if_configured: bool = True
+) -> int:
     """
     Unified login: open URL + prompt for API key. Preflight check for existing credentials.
     Returns 0 on success, 1 on skip/cancel, 2 on error.
     """
     provider_lower = provider.lower()
     if provider_lower not in PROVIDER_LOGIN_CONFIG:
-        raise ValueError(
-            f"Unknown provider: {provider}. Supported: {', '.join(sorted(PROVIDER_LOGIN_CONFIG))}"
-        )
+        raise ValueError(f"Unknown provider: {provider}. Supported: {', '.join(sorted(PROVIDER_LOGIN_CONFIG))}")
 
     config_path = _ensure_config(settings)
     raw = yaml.safe_load(config_path.read_text()) if config_path.exists() else {}
@@ -621,7 +856,6 @@ def run_login_unified(settings: ThegentSettings, provider: str, prompt_func=None
 
     cfg = PROVIDER_LOGIN_CONFIG[provider_lower]
     if skip_if_configured and _has_provider_credentials(config, provider_lower):
-        print(f"  {cfg.get('display_name', provider)} already configured. Run with --force to re-enter key.")
         return 0  # Already configured
 
     url = cfg.get("url", "")
@@ -629,35 +863,36 @@ def run_login_unified(settings: ThegentSettings, provider: str, prompt_func=None
     instructions = cfg.get("instructions", [])
 
     # Print instructions
-    for line in instructions:
-        print(f"  {line}")
-    print(f"  Opening: {url}")
-    try:
+    for _line in instructions:
+        pass
+    with contextlib.suppress(Exception):
         webbrowser.open(url)
-    except Exception:
-        print(f"  Could not open browser. Visit: {url}")
 
     prompt_fn = prompt_func or input
-    key = prompt_fn(f"Enter {display_name} API key (or press Enter to skip): ").strip()
+    key: str | None = None
+
+    # Check factory config for existing API key
+    factory_key, factory_path = _get_factory_api_key(provider_lower)
+    if factory_key and factory_path:
+        resp = prompt_fn(f"  Found {display_name} API key in {factory_path}. Use it? [Y/n]: ").strip().lower()
+        if resp in ("", "y", "yes"):
+            key = factory_key
+
+    if not key:
+        key = prompt_fn(f"Enter {display_name} API key (or press Enter to skip): ").strip()
+
     if not key:
         return 1
 
     _inject_api_key_into_cliproxy(config, provider_lower, key, cfg)
-    yaml = _get_yaml()
-    config_path.write_text(str(yaml.dump(config, default_flow_style=False, sort_keys=False)))
-    print(f"  Saved API key for {display_name}.")
+    config_path.write_text(yaml.dump(config, default_flow_style=False, sort_keys=False))
 
     # WP-Y13: Auto-restart proxy to "hot-reload" the new API key
     if kill_proxy(settings):
-        print("  Proxy was running; restarting to pick up new key...")
-        try:
+        with contextlib.suppress(Exception):
             base_url = ensure_proxy_running(settings)
-            print(f"  Proxy restarted successfully at {base_url}")
-        except Exception as e:
-            print(f"  Warning: Proxy restart failed: {e}")
-            print(f"  Manually start with: thegent cliproxy start")
     else:
-        print("  Proxy is not currently running. Use 'thegent cliproxy start' to start it.")
+        pass
 
     return 0
 
@@ -697,28 +932,28 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
     if provider_lower in _LOGIN_FLAGS:
         # Preflight: skip if already configured (unless force)
         if not force and _has_oauth_credentials(settings, provider_lower):
-            display = PROVIDER_LOGIN_CONFIG.get(provider_lower, {}).get("display_name", provider_lower.replace("-", " ").title())
-            print(f"  {display} already configured. Run with --force to re-authenticate.")
+            display = PROVIDER_LOGIN_CONFIG.get(provider_lower, {}).get(
+                "display_name", provider_lower.replace("-", " ").title()
+            )
             return 0
         binary = _resolve_binary(settings)
         if not _binary_available(binary):
             raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
         config_path = _ensure_config(settings)
         flag = _LOGIN_FLAGS[provider_lower]
-        proc = subprocess.run(
+        proc = run_subprocess_optimized(
             [binary, "-config", str(config_path), flag],
             check=False,
             env=os.environ.copy(),
         )
+        if proc.returncode != 0 and provider_lower in _OAUTH_ONLY_PROVIDERS:
+            pass
         return proc.returncode
 
     # API-key-only providers
     if provider_lower in PROVIDER_LOGIN_CONFIG:
-        return run_login_unified(
-            settings, provider_lower, prompt_func=prompt_func, skip_if_configured=not force
-        )
+        return run_login_unified(settings, provider_lower, prompt_func=prompt_func, skip_if_configured=not force)
 
     raise ValueError(
-        f"Unknown provider: {provider}. Supported: "
-        f"{', '.join(sorted(set(PROVIDER_LOGIN_CONFIG) | set(_LOGIN_FLAGS)))}"
+        f"Unknown provider: {provider}. Supported: {', '.join(sorted(set(PROVIDER_LOGIN_CONFIG) | set(_LOGIN_FLAGS)))}"
     )

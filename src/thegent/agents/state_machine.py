@@ -15,7 +15,7 @@ from types import MappingProxyType
 from typing import Any, ClassVar
 
 from thegent.agents.base import RunResult
-from thegent.agents.resilience import FailureKind, classify_failure
+from thegent.agents.resilience import FailureKind, TransientAgentError, classify_failure, with_retry
 from thegent.contracts.adapters import AdapterResult, normalize_output
 from thegent.contracts.policy import FallbackPolicy, evaluate_fallback
 from thegent.contracts.telemetry import (
@@ -153,6 +153,37 @@ class FallbackStateMachine:
 
         return suggestions
 
+    def _run_with_retry(
+        self,
+        runner: Any,
+        prompt: str,
+        run_kwargs: dict[str, Any],
+        current_agent: str,
+        span: Any,
+    ) -> RunResult:
+        """Run agent with tenacity retry on RATE_LIMIT/TRANSIENT failures."""
+
+        @with_retry(
+            max_attempts=self.max_retries,
+            min_wait=self.retry_delay,
+            max_wait=60.0,
+        )
+        def _run() -> RunResult:
+            self.state.attempt += 1
+            span.add_event(
+                "agent_attempt",
+                attributes={"agent": current_agent, "attempt": self.state.attempt},
+            )
+            _log.info("Attempting %s (attempt %d/%d)", current_agent, self.state.attempt, self.max_retries)
+            result = runner.run(prompt=prompt, **run_kwargs)
+            if result.exit_code != 0:
+                failure_kind = classify_failure(result)
+                if failure_kind in (FailureKind.RATE_LIMIT, FailureKind.TRANSIENT):
+                    raise TransientAgentError(result)
+            return result
+
+        return _run()
+
     def run(
         self,
         runner_factory: Any,  # Callable[[str], Optional[AgentRunner]]
@@ -188,26 +219,14 @@ class FallbackStateMachine:
                 if current_agent not in self.state.providers_tried:
                     self.state.providers_tried.append(current_agent)
 
-                for attempt in range(1, self.max_retries + 1):
-                    # SLO Latency Check (WP-X6)
-                    elapsed_ms = (time.time() - self.state.start_time) * 1000
-                    if elapsed_ms > self.policy.max_latency_ms:
-                        _log.warning(
-                            "SLO: max_latency_ms exceeded (%dms > %dms)", elapsed_ms, self.policy.max_latency_ms
-                        )
-                        self.state.errors.append(f"SLO Timeout ({current_agent})")
-                        break
+                self.state.attempt = 0
 
-                    self.state.attempt = attempt
-                    _log.info("Attempting %s (attempt %d/%d)", current_agent, attempt, self.max_retries)
-
-                    span.add_event(
-                        "agent_attempt",
-                        attributes={
-                            "agent": current_agent,
-                            "attempt": attempt,
-                        },
-                    )
+                # SLO Latency Check (WP-X6)
+                elapsed_ms = (time.time() - self.state.start_time) * 1000
+                if elapsed_ms > self.policy.max_latency_ms:
+                    _log.warning("SLO: max_latency_ms exceeded (%dms > %dms)", elapsed_ms, self.policy.max_latency_ms)
+                    self.state.errors.append(f"SLO Timeout ({current_agent})")
+                    break
 
                 # 1. Resolve runner
                 runner = runner_factory(current_agent)
@@ -216,17 +235,29 @@ class FallbackStateMachine:
                     self.state.errors.append(f"No runner for {current_agent}")
                     break
 
-                # 2. Execution
+                # 2. Execution (with tenacity retry for RATE_LIMIT/TRANSIENT)
                 try:
-                    result = runner.run(prompt=prompt, **run_kwargs)
+                    result = self._run_with_retry(runner, prompt, run_kwargs, current_agent, span)
+                except TransientAgentError as e:
+                    self.state.last_result = e.result
+                    _log.warning(
+                        "Run failed for %s after %d retries (code %d)",
+                        current_agent,
+                        self.max_retries,
+                        e.result.exit_code,
+                    )
+                    self.state.errors.append(f"Run failed ({current_agent}, code {e.result.exit_code})")
+                    break
                 except Exception as e:
-                    _log.error("Execution error for %s: %s", current_agent, e)
+                    import traceback
+
+                    _log.error("Execution error for %s: %s\n%s", current_agent, e, traceback.format_exc())
                     self.state.errors.append(f"Execution error ({current_agent}): {e}")
                     break
 
                 self.state.last_result = result
 
-                # 3. Failure Classification
+                # 3. Failure Classification (non-retryable)
                 failure_kind = classify_failure(result)
                 if failure_kind == FailureKind.USAGE_LIMIT:
                     _log.warning("Usage limit reached for %s. Falling back.", current_agent)
@@ -235,13 +266,6 @@ class FallbackStateMachine:
 
                 if result.exit_code != 0:
                     _log.warning("Run failed for %s (code %d)", current_agent, result.exit_code)
-                    if failure_kind in (FailureKind.RATE_LIMIT, FailureKind.TRANSIENT):
-                        if attempt < self.max_retries:
-                            wait_time = self.retry_delay * (2 ** (attempt - 1))
-                            _log.info("Retryable failure. Waiting %.1fs...", wait_time)
-                            time.sleep(wait_time)
-                            continue
-
                     self.state.errors.append(f"Run failed ({current_agent}, code {result.exit_code})")
                     break
 

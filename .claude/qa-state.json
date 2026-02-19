@@ -1,0 +1,1 @@
+{"version":"1.0","timestamp":"2026-02-19T03:27:18Z","project_dir":"/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent","stacks":["python","typescript","shell"],"tools":{"jq":true,"semgrep":true,"bats":false,"ruff":false,"pytest":true,"bandit":false,"oxlint":true,"shellcheck":true},"config_path":"/Users/kooshapari/.claude/qa-config.json","has_functional_requirements":true}

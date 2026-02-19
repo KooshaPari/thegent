@@ -56,9 +56,9 @@ def test_install_links_writes_and_skips_without_force(tmp_path: Path) -> None:
     result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path)])
     assert result.exit_code == 0
     expected = {
-        "clode": '#!/usr/bin/env sh\nset -e\nexec thegent clode "$@"\n',
-        "claudeglm": '#!/usr/bin/env sh\nset -e\nexec thegent clode glm "$@"\n',
-        "claudemax": '#!/usr/bin/env sh\nset -e\nexec thegent clode max "$@"\n',
+        "clode": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="claude"\nexec thegent clode "$@"\n',
+        "claudeglm": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="claude"\nexec thegent clode glm "$@"\n',
+        "claudemax": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="claude"\nexec thegent clode max "$@"\n',
     }
     for name, expected_contents in expected.items():
         wrapper = tmp_path / name
@@ -117,7 +117,7 @@ def test_write_wrapper_functionality(tmp_path: Path) -> None:
     wrote = _write_wrapper(target, "thegent clode glm", force=False)
     assert wrote is True
     text = target.read_text(encoding="utf-8")
-    assert text == '#!/usr/bin/env sh\nset -e\nexec thegent clode glm "$@"\n'
+    assert text == '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="claude"\nexec thegent clode glm "$@"\n'
     assert (tmp_path / "shim").exists()
 
     # Existing file without force remains unchanged

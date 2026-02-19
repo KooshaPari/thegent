@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # suppression-blocker.sh — PreToolUse hook (Write|Edit)
 # Blocks introduction of NEW lint suppressions. Budget: <500ms.
 # Exit 2 + JSON to block, exit 0 to pass.

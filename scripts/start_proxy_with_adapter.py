@@ -13,14 +13,13 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src"
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
-
+import httpx
 import yaml
+
 from thegent.agents.cliproxy_manager import _ensure_config, _resolve_binary
 from thegent.config import ThegentSettings
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def main() -> int:
@@ -32,6 +31,7 @@ def main() -> int:
     config_path = _ensure_config(settings)
     # Backend needs its own port; create temp config with backend_port
     import tempfile
+
     raw = yaml.safe_load(config_path.read_text()) or {}
     backend_config = dict(raw)
     backend_config["port"] = backend_port
@@ -44,6 +44,13 @@ def main() -> int:
         alt = Path.cwd().parent / "CLIProxyAPIPlus-fork" / "cli-proxy-api-plus"
         if alt.exists():
             binary = str(alt)
+            # Ensure config exists before using fork binary (fork looks for config.yaml in its dir)
+            fork_config = alt.parent / "config.yaml"
+            if not fork_config.exists() and config_path.exists():
+                # Copy thegent config to fork location if fork binary is used
+                import shutil
+
+                shutil.copy2(config_path, fork_config)
 
     if not Path(binary).exists() and "/" not in binary:
         for segment in os.environ.get("PATH", "").split(":"):
@@ -60,20 +67,23 @@ def main() -> int:
     env = os.environ.copy()
     env["THGENT_CLIPROXY_PORT"] = str(backend_port)
     args = [binary, "-config", str(config_path)]
-    
+
     # Capture stderr if debug is enabled to help diagnose startup failures
     stderr_target = None
-    if os.environ.get("THGENT_DEBUG") == "1":
-        stderr_target = subprocess.PIPE
+    log_file = ROOT / ".process-compose" / "logs" / "proxy-backend.log"
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # We always redirect to a file for better debugging
+    backend_log = open(log_file, "a", buffering=1)
 
     proc = subprocess.Popen(
         args,
         env=env,
         cwd=str(ROOT),
-        stdout=subprocess.DEVNULL,
-        stderr=stderr_target,
+        stdout=backend_log,
+        stderr=backend_log,
         start_new_session=True,
-        text=True if stderr_target else False,
+        text=True,
     )
 
     # Wait for backend
@@ -81,30 +91,52 @@ def main() -> int:
     for _ in range(30):  # Increase from 20 to 30 (15s total)
         time.sleep(0.5)
         try:
-            import urllib.request
-            req = urllib.request.Request(f"http://127.0.0.1:{backend_port}/v1/models", method="GET")
-            with urllib.request.urlopen(req, timeout=2) as _:
+            with httpx.Client(timeout=2) as client:
+                resp = client.get(f"http://127.0.0.1:{backend_port}/v1/models")
+                resp.raise_for_status()
                 backend_ready = True
                 break
         except Exception:
             if proc.poll() is not None:
                 if stderr_target:
-                    out, err = proc.communicate()
-                    print(f"CLIProxyAPIPlus backend failed to start (exit {proc.returncode}).\nStderr: {err}", file=sys.stderr)
+                    _out, err = proc.communicate()
+                    print(
+                        f"CLIProxyAPIPlus backend failed to start (exit {proc.returncode}).\nStderr: {err}",
+                        file=sys.stderr,
+                    )
                 return 1
-    
+
     if not backend_ready:
         print(f"CLIProxyAPIPlus backend (port {backend_port}) never became ready.", file=sys.stderr)
         proc.kill()
         return 1
 
     # Start adapter
-    from thegent.cliproxy_adapter import create_adapter_app
     import uvicorn
 
-    app = create_adapter_app(backend_url)
-    log_level = "debug" if os.environ.get("THGENT_DEBUG") == "1" else "info"
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level=log_level)
+    from thegent.cliproxy_adapter import create_adapter_app
+
+    log_level = "debug" if settings.debug else "info"
+    reload = settings.reload
+
+    if reload:
+        # For reload, we must pass the app as an import string
+        # create_adapter_app needs the backend_url, so we set it in env for the reload process
+        if settings.cliproxy_backend_url:
+            backend_url = settings.cliproxy_backend_url
+        env["THGENT_CLIPROXY_BACKEND_URL"] = backend_url
+        uvicorn.run(
+            "thegent.cliproxy_adapter:create_adapter_app_reloading",
+            host="127.0.0.1",
+            port=port,
+            log_level=log_level,
+            reload=True,
+            factory=True,
+        )
+    else:
+        app = create_adapter_app(backend_url)
+        uvicorn.run(app, host="127.0.0.1", port=port, log_level=log_level)
+
     proc.terminate()
     return 0
 

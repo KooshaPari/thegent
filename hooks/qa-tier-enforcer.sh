@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-tier-enforcer.sh
 # Enforces tier-based QA methodology requirements from project .claude/quality.json.
 set -euo pipefail

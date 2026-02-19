@@ -1,17 +1,19 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "thegent"
-version = "0.1.0"
-description = "Unified agent orchestration CLI for Factory skills and droids"
-authors = [{ name = "Koosha Paridehpour", email = "kooshapari@gmail.com" }]
+dynamic = ["version"]
+description = "Unified agent orchestration CLI for Factory skills, droids, and multi-agent workflows"
+authors = [
+    { name = "Koosha Paridehpour", email = "kooshapari@gmail.com" },
+]
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
-urls = { "Homepage" = "https://github.com/router-for-me/thegent", "Repository" = "https://github.com/router-for-me/thegent", "Documentation" = "https://github.com/router-for-me/thegent#readme" }
-keywords = ["ai", "agent", "mcp", "orchestration", "automation", "cli"]
+urls = { "Homepage" = "https://github.com/kooshapari/thegent", "Repository" = "https://github.com/kooshapari/thegent", "Documentation" = "https://github.com/kooshapari/thegent#readme" }
+keywords = ["ai", "agent", "mcp", "orchestration", "automation", "cli", "factory", "droid", "codex", "claude"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -19,50 +21,86 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Operating System :: OS Independent",
 ]
 dependencies = [
-    "httpx>=0.27.0",
-    "typer>=0.21.1",
-    "rich>=14.3.1",
+    "httpx>=0.28.1",
+    "typer>=0.16.0",
+    "rich>=13.9.4",
     "pydantic>=2.12.5",
-    "pydantic-settings>=2.12.0",
-    "python-dotenv>=1.2.1",
+    "pydantic-settings>=2.8.1",
+    "python-dotenv>=1.0.1",
     "tenacity>=9.0.0",
-    "pyyaml>=6.0",
-    "fastmcp[tasks]>=3.0.0rc1",
-    "starlette>=0.36.0",
-    "uvicorn>=0.27.0",
-    "opentelemetry-api>=1.27.0",
-    "opentelemetry-sdk>=1.27.0",
-    "litellm>=1.50.0",
+    "pyyaml>=6.0.2",
+    "ruamel.yaml>=0.18.6",
+    "fastmcp[tasks]>=3.0.0",
+    "starlette>=0.46.0",
+    "uvicorn>=0.34.0",
+    "granian>=1.7.4",
+    "opentelemetry-api>=1.31.0",
+    "opentelemetry-sdk>=1.31.0",
+    "litellm>=1.81.13",
+    "tomlkit>=0.13.2",
+    "rtoml>=0.12.0",
+    "tomli>=2.2.1",
+    "cachetools>=5.5.2",
+    "diskcache>=5.6.3",
+    "orjson>=3.10.16",
+    "watchdog>=7.0.0",
+    "watchfiles>=1.0.4",
+    "fastjsonschema>=2.21.1",
+    "psutil>=7.0.0",
+    "pybreaker>=1.2.0",
+    "textual>=1.0.0",
+    "duckduckgo-search>=7.3.2",
+    "praw>=7.8.1",
+    "playwright>=1.50.0",
 ]
 
 [project.optional-dependencies]
+fast = [
+    "curl-cffi>=0.6.0",
+]
 dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.24.0",
-    "pytest-cov>=4.0.0",
+    "pytest>=8.1.1",
+    "pytest-asyncio>=0.23.6",
+    "pytest-cov>=5.0.0",
     "pytest-xdist>=3.5.0",
-    "ruff>=0.3.0",
+    "ruff>=0.3.4",
     "ty>=0.0.2",
     "basedpyright>=1.12.0",
-    "pre-commit>=3.6.0",
+    "pre-commit>=3.7.0",
     "tach>=0.4.0",
     "vulture>=2.11",
     "radon>=6.0",
+    "psleak>=0.1.0",
+    "mypy>=1.9.0",
+    "types-pyyaml>=6.0.12.20240311",
 ]
 
 [project.scripts]
 thegent = "thegent.main:app"
+clode = "thegent.clode_main:app"
+roid = "thegent.roid_main:app"
+dex = "thegent.dex_main:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/thegent"]
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.1.0"
+[tool.hatch.build.targets.wheel.force-include]
+"hooks" = "thegent/hooks"
+"skills" = "thegent/skills"
+"src/thegent/py.typed" = "thegent/py.typed"
 
 [tool.uv]
 managed = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+pythonpath = ["src"]
+testpaths = ["tests", "src"]
 asyncio_mode = "auto"
 markers = [
     "unit: marks unit tests",
@@ -80,10 +118,12 @@ filterwarnings = [
 [tool.coverage.run]
 source = ["src"]
 omit = ["*/tests/*", "*/__pycache__/*", "*/conftest.py"]
-# P7: Per-test context for coverage-based affected test selection. Use: pytest --cov=src --cov-context=test
+dynamic_context = "test_function"
 
 [tool.coverage.report]
-fail_under = 80
+# Agent-Only Environment: 100% coverage required (not 80%)
+# Since NO humans will test this, comprehensive automated coverage is CRITICAL
+fail_under = 100
 exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError"]
 
 [tool.ruff]
@@ -119,16 +159,54 @@ ignore = [
 [tool.ty]
 [tool.ty.src]
 include = ["src", "tests"]
+python-version = "3.12"
+
+[tool.ty.rules]
+# Error on all type violations
+possibly-unbound-attribute = "error"
+possibly-unbound-import = "error"
+unresolved-attribute = "error"
+unresolved-import = "error"
+invalid-type-form = "error"
 
 [tool.basedpyright]
 include = ["src", "tests"]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
+reportMissingTypeStubs = false
+reportMissingImports = true
+reportUnusedImport = true
+reportUnusedClass = true
+reportUnusedFunction = true
+reportUnusedVariable = true
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+    "scripts.*",
+]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
 
 [dependency-groups]
 dev = [
     "mypy>=1.19.1",
+    "pytest-asyncio>=1.3.0",
+    "ruff>=0.15.1",
     "types-pyyaml>=6.0.12.20250915",
 ]
-# basedpyright handles many things ruff/mypy might miss, or can be used for CI final check
-# to be even stricter than ty

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # gardener-parallel.sh — Parallel agent execution coordinator
 # Manages running multiple agents simultaneously with proper resource management
 # Based on research: LangGraph parallel execution, swarm coordination

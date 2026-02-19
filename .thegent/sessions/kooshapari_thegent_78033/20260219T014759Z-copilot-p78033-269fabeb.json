@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_9e0a3121",
+    "Complete docgen-api-python-enhanced: Enhance Python API generator (mkdocstrings-like)",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 78033,
+  "launcher_ppid": 71593,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:78033",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_78033/20260219T014759Z-copilot-p78033-269fabeb.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_78033/20260219T014759Z-copilot-p78033-269fabeb.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_78033/20260219T014759Z-copilot-p78033-269fabeb.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_78033/20260219T014759Z-copilot-p78033-269fabeb.stdout.log"
+  },
+  "pid": 95590,
+  "prompt": "Complete docgen-api-python-enhanced: Enhance Python API generator (mkdocstrings-like)",
+  "session_id": "20260219T014759Z-copilot-p78033-269fabeb",
+  "started_at_utc": "2026-02-19T01:48:04.853633+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

@@ -1,8 +1,5 @@
 """CLI implementation for terminal management."""
 
-import sys
-from typing import Any
-
 import typer
 from rich.console import Console
 from rich.table import Table

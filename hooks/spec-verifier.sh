@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # spec-verifier.sh — PostToolUse hook (Edit|Write) + Stop hook
 # Verifies FR traceability and spec compliance. Checks that test files have FR
 # tags, that source @trace annotations reference valid FRs, and reports coverage.
@@ -47,8 +47,16 @@ mkdir -p "$HOME/.claude"
 EXCLUDE_DIRS="--exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git --exclude-dir=target --exclude-dir=out --exclude-dir=dist --exclude-dir=build --exclude-dir=coverage --exclude-dir=__pycache__ --exclude-dir=.process-compose"
 # rg globs equivalent (for ripgrep)
 RG_GLOBS=(-g '!node_modules' -g '!vendor' -g '!.git' -g '!target' -g '!out' -g '!dist' -g '!build' -g '!coverage' -g '!__pycache__' -g '!.process-compose')
-# Prefer rg over grep -r
-_RG_CMD=$(command -v rg 2>/dev/null || true)
+# Prefer rg over grep -r (use RG_CMD from dispatcher/cache when set)
+# Sanitize environment to avoid grep config errors
+_RG_CMD_VAR="${RG_CMD:-$(command -v rg 2>/dev/null || true)}"
+_RG_CMD() {
+  if [[ -n "$_RG_CMD_VAR" ]]; then
+    env -u GREP_OPTIONS -u GREP_COLOR -u GREP_COLORS "$_RG_CMD_VAR" --no-config "$@" 2> >(grep -v "grep config error" >&2)
+  else
+    return 1
+  fi
+}
 
 # Find FUNCTIONAL_REQUIREMENTS.md
 FR_FILE="$PROJECT_DIR/FUNCTIONAL_REQUIREMENTS.md"
@@ -73,8 +81,8 @@ MODE="single"
 
 # ---------- Helpers ----------
 # Extract all valid FR IDs from the spec (1 grep/rg + 1 sort subprocess)
-if [[ -n "$_RG_CMD" ]]; then
-  SPEC_FRS=$("$_RG_CMD" -oN --no-filename 'FR-[A-Z]+-[0-9]+' "$FR_FILE" 2>/dev/null | sort_unique)
+if [[ -n "$_RG_CMD_VAR" ]]; then
+  SPEC_FRS=$(_RG_CMD -oN --no-filename 'FR-[A-Z]+-[0-9]+' "$FR_FILE" 2>/dev/null | sort_unique)
 else
   SPEC_FRS=$(grep -oE 'FR-[A-Z]+-[0-9]+' "$FR_FILE" 2>/dev/null | sort_unique)
 fi
@@ -162,8 +170,8 @@ if [[ "$MODE" == "single" ]]; then
       else
         # Single recursive search for all test FR references
         # shellcheck disable=SC2086
-        if [[ -n "$_RG_CMD" ]]; then
-          TEST_FRS=$("$_RG_CMD" -oN --no-filename "${RG_GLOBS[@]}" 'FR-[A-Z]+-[0-9]+' $TEST_DIRS 2>/dev/null | sort_unique || true)
+        if [[ -n "$_RG_CMD_VAR" ]]; then
+          TEST_FRS=$(_RG_CMD -oN --no-filename "${RG_GLOBS[@]}" 'FR-[A-Z]+-[0-9]+' $TEST_DIRS 2>/dev/null | sort_unique || true)
         else
           TEST_FRS=$(grep -rohE $EXCLUDE_DIRS 'FR-[A-Z]+-[0-9]+' $TEST_DIRS 2>/dev/null | sort_unique || true)
         fi
@@ -278,8 +286,8 @@ if [[ -f "$_fr_index_file" ]]; then
   FR_MATCHES=$(cat "$_fr_index_file")
 else
   # shellcheck disable=SC2086
-  if [[ -n "$_RG_CMD" ]]; then
-    FR_MATCHES=$("$_RG_CMD" -oN --no-heading "${RG_GLOBS[@]}" 'FR-[A-Z]+-[0-9]+' $TEST_DIRS 2>/dev/null || true)
+  if [[ -n "$_RG_CMD_VAR" ]]; then
+    FR_MATCHES=$(_RG_CMD -oN --no-heading "${RG_GLOBS[@]}" 'FR-[A-Z]+-[0-9]+' $TEST_DIRS 2>/dev/null || true)
   else
     FR_MATCHES=$(grep -rHoE $EXCLUDE_DIRS 'FR-[A-Z]+-[0-9]+' $TEST_DIRS 2>/dev/null || true)
   fi

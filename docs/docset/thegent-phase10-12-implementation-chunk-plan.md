@@ -282,3 +282,11 @@ This plan maps the new PRD/WBS/DAG/Test pack for Phases 10–12 into 6 execution
 - Enforce schema compatibility checks before any operation execution on canary.
 - Keep all new command surfaces under existing CLI/MCP parity checks.
 - Keep release artifacts generated as machine-readable NDJSON plus markdown summaries.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

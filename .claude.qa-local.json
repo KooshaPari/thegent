@@ -1,5 +1,10 @@
 {
   "hooks": {
     "skip": ["test-maturity", "security-pipeline", "task-completion-verifier", "complexity-ratchet"]
+  },
+  "stop": {
+    "profile": "fast",
+    "idle_timeout_sec": 10,
+    "max_timeout_sec": 15
   }
 }

@@ -13,7 +13,7 @@
 | Aspect | Status | Evidence |
 |--------|--------|----------|
 | **Requirement** | Block promotion (return success) when semantic validation fails | Research validation §9 |
-| **Implementation** | ✅ **Done** | `state_machine.py` lines 142–188 |
+| **Implementation** | ✓ **Done** | `state_machine.py` lines 142–188 |
 | **Flow** | `validate_csm(norm_res.csm)` → `semantic_issues`; if non-empty, we do NOT set `status="success"`; we either fall to next provider or fail | — |
 | **Gate logic** | `if not policy_violations and not semantic_issues:` → success; else → fallback or fail | — |
 
@@ -26,8 +26,8 @@
 | Aspect | Status | Evidence |
 |--------|--------|----------|
 | **Requirement** | Detect drift; block critical lane when drift exceeds budget | Cross-analysis matrix |
-| **Drift detection** | ✅ Done | `ContractTelemetry.detect_drift()`, `get_drift_budget_status()` |
-| **Block critical lane** | ✅ Done | `execution.py` Policy 2b (lines 412–424) |
+| **Drift detection** | ✓ Done | `ContractTelemetry.detect_drift()`, `get_drift_budget_status()` |
+| **Block critical lane** | ✓ Done | `execution.py` Policy 2b (lines 412–424) |
 | **Flow** | `PolicyEngine.evaluate()` checks `run.lane == "critical"` → `ct.get_drift_budget_status()` → if `not within_budget` → `return "deny"` | — |
 | **CLI** | `thegent observe drift`, `thegent govern conformance --check-drift` | — |
 
@@ -40,7 +40,7 @@
 | Aspect | Status | Evidence |
 |--------|--------|----------|
 | **Requirement** | Block runs when contract version is unknown | Cross-analysis matrix |
-| **Version check** | ✅ Done | `cli_impl.py` lines 941–949, 1231–1237 |
+| **Version check** | ✓ Done | `cli_impl.py` lines 941–949, 1231–1237 |
 | **Flow** | `migrator.evaluate_version("csm", requested_version)` → if `not mig_res["allowed"]` (e.g. `status="unknown"`) → return error, exit_code 1 | — |
 | **Policy engine** | N/A | Version check happens before policy; run never starts with unknown version |
 
@@ -82,10 +82,10 @@
 | Aspect | Status | Notes |
 |--------|--------|-------|
 | **Requirement** | Versioned package layout for canonical schema | Cross-analysis matrix |
-| **Current** | `contracts/csm/v1/__init__.py`; `contracts/csm/__init__.py` re-exports | ✅ Done |
+| **Current** | `contracts/csm/v1/__init__.py`; `contracts/csm/__init__.py` re-exports | ✓ Done |
 | **Gap** | — | — |
 | **Implementation** | Created `contracts/csm/v1/` with CanonicalStructuredMessage; `csm/` re-exports for backward compat | — |
-| **Priority** | P0 (per matrix) | ✅ Done |
+| **Priority** | P0 (per matrix) | ✓ Done |
 
 ---
 
@@ -148,7 +148,7 @@
 | **Current** | `--override` flag; `OverrideRegistry` with `override_ttl_seconds`; cached override within TTL | `execution.py`, `config.py` |
 | **Gap** | "Revalidation on expiry" — when TTL expires, next run must re-justify | — |
 | **Actual behavior** | `OverrideRegistry.has_unexpired()` returns False after TTL; policy re-evaluates; if deny, user must supply `--override` again | `cli_impl.py` 1001–1005 |
-| **Conclusion** | ✅ Effectively done: expiry forces re-justification | — |
+| **Conclusion** | ✓ Effectively done: expiry forces re-justification | — |
 
 ---
 
@@ -180,10 +180,10 @@
 
 | Aspect | Status | Notes |
 |--------|--------|-------|
-| **Current** | `contracts/events.py` with ChunkEvent, EvidenceEvent, PolicyEvent (Pydantic) | ✅ Done |
+| **Current** | `contracts/events.py` with ChunkEvent, EvidenceEvent, PolicyEvent (Pydantic) | ✓ Done |
 | **Gap** | — | — |
 | **Implementation** | Added `contracts/events.py` with Pydantic models | — |
-| **Priority** | P2 | ✅ Done |
+| **Priority** | P2 | ✓ Done |
 
 ---
 
@@ -213,9 +213,9 @@
 
 | ID | Item | Status | Notes |
 |----|------|--------|-------|
-| F2 | `thegent_run` with gemini/cursor-agent | ✅ Done | Verified via `verify-fastmcp.py --no-skip-api` |
-| F3 | `thegent_bg` / `thegent_ps` | ✅ Done | Verified via `verify-fastmcp.py --no-skip-api` |
-| F4 | Progress updates during long run | ✅ Done | Verified via `verify-fastmcp.py` during `thegent_run` (104s run) |
+| F2 | `thegent_run` with gemini/cursor-agent | ✓ Done | Verified via `verify-fastmcp.py --no-skip-api` |
+| F3 | `thegent_bg` / `thegent_ps` | ✓ Done | Verified via `verify-fastmcp.py --no-skip-api` |
+| F4 | Progress updates during long run | ✓ Done | Verified via `verify-fastmcp.py` during `thegent_run` (104s run) |
 | F19 | Icons/UX hints for tools | Not implemented | Optional |
 
 ---
@@ -224,20 +224,20 @@
 
 | ID | Item | Status |
 |----|------|--------|
-| XA1 | Canonical schema package `contracts/csm/v1` | ✅ Done |
-| FR-X01 | Contract version negotiation protocol | ✅ Done |
-| XA3 | Streaming parser partial-commit safety | ✅ Done |
-| XA4 | Contract version in task metadata | ✅ Done |
-| FR-X08 | Unified observability summary (`observe summary`) | ✅ Done |
-| XK3 | Contract authority publication (CI sync) | ✅ Done |
-| XK4 | CI architecture boundary checks | ✅ Done |
-| WP-3006 | Tiered storage (`archive --tier hot|cold`) | ✅ Done |
-| WP-3008 | Escalation SLA queue | ✅ Done |
-| WP-0002 | Canonical event schemas | ✅ Done |
-| WP-3004 | WORM-style audit trail logic | ✅ Done |
-| WP-0005 | Program operating model doc | ✅ Done |
-| WP-6007 | Post-launch playbook | ✅ Done |
-| F2-F4 | FastMCP API e2e verification | ✅ Done |
+| XA1 | Canonical schema package `contracts/csm/v1` | ✓ Done |
+| FR-X01 | Contract version negotiation protocol | ✓ Done |
+| XA3 | Streaming parser partial-commit safety | ✓ Done |
+| XA4 | Contract version in task metadata | ✓ Done |
+| FR-X08 | Unified observability summary (`observe summary`) | ✓ Done |
+| XK3 | Contract authority publication (CI sync) | ✓ Done |
+| XK4 | CI architecture boundary checks | ✓ Done |
+| WP-3006 | Tiered storage (`archive --tier hot|cold`) | ✓ Done |
+| WP-3008 | Escalation SLA queue | ✓ Done |
+| WP-0002 | Canonical event schemas | ✓ Done |
+| WP-3004 | WORM-style audit trail logic | ✓ Done |
+| WP-0005 | Program operating model doc | ✓ Done |
+| WP-6007 | Post-launch playbook | ✓ Done |
+| F2-F4 | FastMCP API e2e verification | ✓ Done |
 
 ---
 
@@ -245,11 +245,11 @@
 
 | Aspect | Status | Evidence |
 |--------|--------|----------|
-| **F2 thegent_run** | ✅ Pass | 104s run with gemini successfully returned output |
-| **F3 thegent_bg** | ✅ Pass | session_id returned, background process started, registry updated |
-| **F3 thegent_ps** | ✅ Pass | background session appeared in list |
-| **F4 Progress** | ✅ Pass | `ctx.report_progress` and `ctx.close_sse_stream` confirmed in log during long run |
-| **F5 logs** | ✅ Pass | `thegent://session/{id}/logs` returned background process output |
+| **F2 thegent_run** | ✓ Pass | 104s run with gemini successfully returned output |
+| **F3 thegent_bg** | ✓ Pass | session_id returned, background process started, registry updated |
+| **F3 thegent_ps** | ✓ Pass | background session appeared in list |
+| **F4 Progress** | ✓ Pass | `ctx.report_progress` and `ctx.close_sse_stream` confirmed in log during long run |
+| **F5 logs** | ✓ Pass | `thegent://session/{id}/logs` returned background process output |
 
 Verified on 2026-02-15 using `scripts/verify-fastmcp.py --no-skip-api`.
 

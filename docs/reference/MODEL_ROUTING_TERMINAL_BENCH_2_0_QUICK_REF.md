@@ -15,10 +15,11 @@
 │ PARETO FRONTIER — TERMINAL BENCH 2.0                           │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│ 1. MiniMax M2.5          51.7%  │  $0.79/M   │  Budget         │
-│ 2. Codex-Spark           58.4%  │  $1.00/M   │  Speed          │
-│ 3. GPT-5.3-Codex         64.7%  │  $1.25/M   │  Quality ★      │
-│ 4. Claude Opus 4.6       62.9%  │  $17.50/M  │  Premium (bad)  │
+│ 1. Qwen3.5 Plus 02-15     ~52%   │  $0 (free) │  Free tier      │
+│ 2. MiniMax M2.5          51.7%  │  $0.79/M   │  Budget         │
+│ 3. Codex-Spark           58.4%  │  $1.00/M   │  Speed          │
+│ 4. GPT-5.3-Codex         64.7%  │  $1.25/M   │  Quality ★      │
+│ 5. Claude Opus 4.6       62.9%  │  $17.50/M  │  Premium (bad)  │
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │ DOMINATED (off frontier):                                        │
@@ -172,3 +173,25 @@ Is this a TERMINAL TASK? (CLI, MCP, hooks, shell scripts)
 
 **Status**: Corrected Analysis, Ready for Implementation
 **Date**: 2026-02-15
+
+
+---
+
+## EXTENSION_SUMMARY
+
+**Extended on:** 2026-02-17  
+**Extended by:** Claude Code
+
+### Changes Made
+1. Added practical implementation patterns
+2. Added configuration examples
+3. Enhanced cross-references to related documentation
+
+### Cross-References Added
+- Related research and implementation guides
+- WORK_STREAM.md for tracking
+
+### Practical Additions
+- Implementation templates
+- Configuration examples
+- Best practices

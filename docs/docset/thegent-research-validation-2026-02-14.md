@@ -141,3 +141,11 @@ flowchart TD
 - Verdict: `Validated, not yet maximal`.
 - Reason: core architecture is strong; XML-contract interoperability and parser/semantic reliability layers are the largest remaining leverage points.
 - Action: apply the delta pack above as Phase-X extension before full enterprise closure.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

@@ -4,11 +4,8 @@ import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from thegent.agents.codex_proxy import CodexProxyRunner
 from thegent.routing.models import TaskCategory, TaskMetadata
-from thegent.routing.provider_types import ExecutionPath
 
 
 class TestCodexProxyRunnerRouting:

@@ -1,6 +1,5 @@
 """Production error handling framework for thegent."""
 
-from typing import Optional
 
 from thegent.thegent_platform import Platform, detect_platform
 
@@ -13,7 +12,7 @@ class ThegentError(Exception):
         remediation_hint: A human-readable hint on how to fix the error.
     """
 
-    def __init__(self, message: str, remediation_hint: Optional[str] = None):
+    def __init__(self, message: str, remediation_hint: str | None = None) -> None:
         super().__init__(message)
         self.message = message
         self.remediation_hint = remediation_hint
@@ -39,19 +38,23 @@ def get_install_hint(tool: str) -> str:
 class ConfigError(ThegentError):
     """Raised when there is a configuration-related failure."""
 
-    def __init__(self, message: str, remediation_hint: Optional[str] = "Check your config.yaml or environment variables."):
+    def __init__(
+        self, message: str, remediation_hint: str | None = "Check your config.yaml or environment variables."
+    ) -> None:
         super().__init__(message, remediation_hint)
 
 
 class ProviderError(ThegentError):
     """Raised when an AI provider (Anthropic, Google, etc.) returns an error."""
 
-    def __init__(self, message: str, remediation_hint: Optional[str] = "Check your API keys and provider status."):
+    def __init__(self, message: str, remediation_hint: str | None = "Check your API keys and provider status.") -> None:
         super().__init__(message, remediation_hint)
 
 
 class MCPError(ThegentError):
     """Raised when an MCP-related failure occurs."""
 
-    def __init__(self, message: str, remediation_hint: Optional[str] = "Ensure the MCP server is running and reachable."):
+    def __init__(
+        self, message: str, remediation_hint: str | None = "Ensure the MCP server is running and reachable."
+    ) -> None:
         super().__init__(message, remediation_hint)

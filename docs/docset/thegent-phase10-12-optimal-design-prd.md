@@ -303,3 +303,11 @@ These phases intentionally emphasize `optimization`, `robustness`, and `polish` 
 3. PRD/test/wbs/docset consistency check completed:
    - 102 WPs, 64 FRs, 28 NFRs represented across active docs.
 4. One production shadow window completes with zero critical control incidents and zero replay safety violations.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

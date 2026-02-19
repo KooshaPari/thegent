@@ -10,46 +10,64 @@ AGENT_NAMES = [
     "gemini",
     "codex",
     "copilot",
+    "opencode",
     "cursor-agent",
     "cursor-api",
     "claude",
     "antigravity",
     "minimax",
     "glm",
+    "zen",
     "cliproxy",
     "roo",
     "kilo",
 ]
 
 # Agents with native CLIs - use DirectAgentRunner (no proxy required)
-_DIRECT_AGENTS = frozenset({"cursor-agent", "gemini", "codex", "copilot", "claude"})
+# Note: gemini, copilot, claude, codex can have issues; use antigravity/minimax/etc via proxy instead
+_DIRECT_AGENTS = frozenset({"cursor-agent", "opencode"})
 # Agents that run via CLIProxyAPIPlus (antigravity, minimax, glm, cliproxy, roo, kilo use same backend)
-_PROXY_AGENTS = frozenset({"antigravity", "minimax", "glm", "cliproxy", "roo", "kilo"})
+# codex, claude, copilot, gemini moved here for reliability via proxy
+_PROXY_AGENTS = frozenset(
+    {"antigravity", "minimax", "glm", "zen", "cliproxy", "roo", "kilo", "codex", "claude", "copilot", "gemini"}
+)
 # Cursor via cursor-api (wisdgod) - OpenAI-compat HTTP backend
 _CURSOR_API_AGENTS = frozenset({"cursor-api"})
 
 # Fallback chain when provider hits usage limit (subscription/quota exhausted).
-# Order: try next provider in list. Gemini/codex/copilot/claude as stable fallbacks.
+# Order: try next provider in list. Using proxy-based agents for reliability.
 _PROVIDER_FALLBACK_CHAIN: list[list[str]] = [
-    ["glm", "minimax", "antigravity", "cliproxy", "roo", "kilo", "gemini"],
-    ["minimax", "glm", "antigravity", "cliproxy", "roo", "kilo", "gemini"],
-    ["antigravity", "minimax", "glm", "cliproxy", "roo", "kilo", "gemini"],
-    ["cliproxy", "antigravity", "minimax", "glm", "roo", "kilo", "gemini"],
-    ["roo", "kilo", "cliproxy", "antigravity", "minimax", "glm", "gemini"],
-    ["kilo", "roo", "cliproxy", "antigravity", "minimax", "glm", "gemini"],
-    ["gemini", "codex", "copilot", "claude"],
-    ["codex", "gemini", "copilot", "claude"],
-    ["copilot", "gemini", "codex", "claude"],
-    ["claude", "gemini", "codex", "copilot"],
-    ["cursor-agent", "gemini", "codex", "claude"],
-    ["cursor-api", "cursor-agent", "gemini", "codex", "claude"],
+    ["glm", "zen", "minimax", "antigravity", "cliproxy", "roo", "kilo"],
+    ["minimax", "glm", "antigravity", "cliproxy", "roo", "kilo"],
+    ["zen", "glm", "minimax", "antigravity", "cliproxy", "roo", "kilo"],
+    ["antigravity", "minimax", "glm", "cliproxy", "roo", "kilo"],
+    ["cliproxy", "antigravity", "minimax", "glm", "roo", "kilo"],
+    ["roo", "kilo", "cliproxy", "antigravity", "minimax", "glm"],
+    ["kilo", "roo", "cliproxy", "antigravity", "minimax", "glm"],
+    # Native CLIs now use proxy - fallback to proxy agents instead
+    ["gemini", "antigravity", "minimax", "glm"],
+    ["codex", "antigravity", "minimax", "glm"],
+    ["copilot", "antigravity", "minimax", "glm"],
+    ["claude", "antigravity", "minimax", "glm"],
+    ["cursor-agent", "antigravity", "minimax", "glm"],
+    ["cursor-api", "antigravity", "minimax", "glm"],
 ]
 
 # Label (display/metadata) -> CLI name. Frontmatter/agent_hint use label; run/bg use CLI name.
 AGENT_LABELS: dict[str, str] = {"cursor-agent": "cursor", "cursor-api": "cursor-api"}
 
-# Alias (label) -> canonical CLI name. Accept "cursor" for run/bg; resolves to cursor-agent.
-_AGENT_ALIASES: dict[str, str] = {"cursor": "cursor-agent"}
+# Alias (label) -> canonical CLI name.
+_AGENT_ALIASES: dict[str, str] = {
+    "cursor": "cursor-agent",
+    "oc": "opencode",
+    "free": "copilot",
+    "summarize": "gemini",
+    "research": "claude",
+    "review": "claude",
+    "explain": "gemini",
+    "fix": "claude",
+    "code": "claude",
+}
 
 
 def _resolve_agent(agent_name: str) -> str:

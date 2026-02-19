@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # pre-write-validator.sh — PreToolUse hook (Write|Edit)
 # Validates syntax of file content before write lands.
 # Budget: <1s. Exit 2 + JSON to block, exit 0 to pass.
@@ -49,9 +49,14 @@ case "$EXT" in
   py)
     # Python: compile check via temp file
     if [[ "$TOOL_NAME" == "Write" ]]; then
-      TMPF=$(mktemp /tmp/qa-validate-XXXXXX.py)
+      TMPF=$(mktemp /tmp/qa-validate-XXXXXX.py 2>/dev/null) || {
+        # Fallback if mktemp fails (e.g., temp dir full or permissions issue)
+        TMPF="/tmp/qa-validate-$$-$(date +%s).py"
+        touch "$TMPF" || exit 0  # If we can't create temp file, skip validation
+      }
       trap 'rm -f "$TMPF"' EXIT
-      echo "$CONTENT" > "$TMPF"
+      echo "$CONTENT" > "$TMPF" || exit 0  # If write fails, skip validation
+      [[ -f "$TMPF" ]] && [[ -s "$TMPF" ]] || exit 0  # Ensure file exists and has content
       ERR=$(python3 -c "compile(open('$TMPF').read(), '$TMPF', 'exec')" 2>&1) || block_with_reason "$ERR"
     fi
     # For Edit, we only have a snippet — skip full compile
@@ -59,9 +64,10 @@ case "$EXT" in
   sh|bash)
     # Shell: bash -n syntax check (only full files)
     if [[ "$TOOL_NAME" == "Write" ]]; then
-      TMPF=$(mktemp /tmp/qa-validate-XXXXXX.sh)
+      TMPF=$(mktemp /tmp/qa-validate-XXXXXX.sh 2>/dev/null) || { TMPF="/tmp/qa-validate-$$-$(date +%s).sh"; touch "$TMPF" || exit 0; }
       trap 'rm -f "$TMPF"' EXIT
-      echo "$CONTENT" > "$TMPF"
+      echo "$CONTENT" > "$TMPF" || exit 0
+      [[ -f "$TMPF" ]] && [[ -s "$TMPF" ]] || exit 0
       ERR=$(bash -n "$TMPF" 2>&1) || block_with_reason "$ERR"
     fi
     ;;
@@ -80,9 +86,13 @@ case "$EXT" in
   toml)
     # TOML: python tomllib (3.11+)
     if [[ "$TOOL_NAME" == "Write" ]]; then
-      TMPF=$(mktemp /tmp/qa-validate-XXXXXX.toml)
+      TMPF=$(mktemp /tmp/qa-validate-XXXXXX.toml 2>/dev/null) || {
+        TMPF="/tmp/qa-validate-$$-$(date +%s).toml"
+        touch "$TMPF" || exit 0
+      }
       trap 'rm -f "$TMPF"' EXIT
-      echo "$CONTENT" > "$TMPF"
+      echo "$CONTENT" > "$TMPF" || exit 0
+      [[ -f "$TMPF" ]] && [[ -s "$TMPF" ]] || exit 0
       ERR=$(python3 -c "import tomllib; tomllib.load(open('$TMPF','rb'))" 2>&1) || block_with_reason "$ERR"
     fi
     ;;

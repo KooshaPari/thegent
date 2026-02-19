@@ -262,3 +262,11 @@ Drift reconciliation is complete for a WP when:
 - compact dashboard risk score remains `>= 85` for at least 2 consecutive scans
 
 If any class remains unresolved, do not promote gate stage.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

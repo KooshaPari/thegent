@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # async-test-runner.sh — PostToolUse hook (Edit|Write)
 # After file edits, detects which test framework applies and runs relevant
 # tests asynchronously. Results are stored for later consumption by other hooks.

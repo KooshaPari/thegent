@@ -18,6 +18,7 @@
 | 8 | Recovery with DLQ | 12 | Dead-letter queue and poison pill | Design complete |
 | 9 | Provider Routing | 9 | 4-factor scoring and fallback chain | Design complete |
 | 10 | Observability | 9 | Telemetry collection and KPI aggregation | Design complete |
+| 11 | Supermemory Context Sync | 6 | Context persistence for L3/L4 tiers | Design complete |
 
 ---
 
@@ -668,6 +669,37 @@ All acceptance tests must pass before phase closure. Tests cover all DAG flows, 
 
 ---
 
+## DAG 11: Supermemory Context Sync (NEW)
+
+Context persistence for L3 (Long-term Graph) and L4 (Archival Docs) tiers using Supermemory.ai.
+
+**Traces to:** WP-5001-SM, WP-5001-SM-Auth, WP-5001-SM-Graph
+
+```mermaid
+flowchart TD
+  SM0["Context change detected<br/>(MAIF/Packet/Audit)"] --> SM1["Classify tier: L3 (Graph) vs L4 (Doc)<br/>(WP-5001-SM)"]
+  SM1 --> SM2["Resolve Project Scope (x-sm-project)<br/>(WP-5001-SM-Auth)"]
+  SM2 --> SM3{"Supermemory Sync"}
+  SM3 -->|Graph| SM4["Upsert Entity/Relationship<br/>(WP-5001-SM-Graph)"]
+  SM3 -->|Doc| SM5["Append to Document Store<br/>(WP-5001-SM)"]
+  SM4 --> SM6["Emit Persistence Event + Hash<br/>(A18, WP-3004)"]
+  SM5 --> SM6
+  SM6 --> SM7["Verify semantic retrieval integrity"]
+```
+
+**Node Semantics**:
+
+| Node | Purpose | WP | FR |
+|------|---------|----|----|
+| SM0 | Detect change in agent context/artifacts | WP-5001-SM | — |
+| SM1 | Map to Supermemory "Knowledge" vs "Documents" | WP-5001-SM | — |
+| SM2 | Inject THGENT_PROJECT_ID into headers | WP-5001-SM-Auth | — |
+| SM4 | Track swarm relationships and past decisions | WP-5001-SM-Graph | — |
+| SM5 | Store immutable MAIF artifacts and audit logs | WP-5001-SM | — |
+| SM6 | Link Supermemory UID to thegent audit trail | WP-3004 | FR-012 |
+
+---
+
 ## Summary
 
 This unified DAG specification defines:
@@ -681,3 +713,11 @@ This unified DAG specification defines:
 7. **40+ Acceptance Tests**: Covering all DAG sub-flows, failure classes, and cross-DAG consistency
 
 All DAGs are deterministic, observable, auditable, and testable. Every path has a recovery strategy, every gate has a reason code, and every decision is traced to a functional requirement.
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](./00-MASTER-INDEX.md) — plan index
+- [02-UNIFIED-WBS.md](./02-UNIFIED-WBS.md) — WBS and phases

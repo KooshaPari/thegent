@@ -1411,3 +1411,11 @@ Each file should include:
 If you want the actual implementation-ready artifacts (ready-to-create files), request:
 `generate closure files`
 and I will output concrete skeletons for each `docs/closure/*.md` and `artifacts/closure/*.ndjson` package.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

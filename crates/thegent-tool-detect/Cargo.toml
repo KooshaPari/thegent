@@ -1,0 +1,31 @@
+[package]
+name = "thegent-tool-detect"
+version = "0.1.0"
+edition = "2021"
+description = "Fast tool detection with caching for thegent hooks"
+
+[lib]
+name = "thegent_tool_detect"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "thegent-tool-detect"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+which = "6"
+pyo3 = { version = "0.28.2", features = ["extension-module"], optional = true }
+rayon = "1.11.0"
+clap = { version = "4.5.59", features = ["derive"] }
+
+[features]
+default = []
+python = ["pyo3"]
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1

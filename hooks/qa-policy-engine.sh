@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-policy-engine.sh (P8 + VP-C1)
 # Policy-as-Code: OPA eval on quality.json + policies. Fail-closed defaults.
 # VP-C1: Full break-glass support with reason, approver, expiry, and audit log.

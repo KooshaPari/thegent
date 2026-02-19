@@ -1,0 +1,66 @@
+2026-02-16T10:41:38.513Z [DEBUG] [init] configureGlobalMTLS starting
+2026-02-16T10:41:38.513Z [DEBUG] [init] configureGlobalMTLS complete
+2026-02-16T10:41:38.513Z [DEBUG] [init] configureGlobalAgents starting
+2026-02-16T10:41:38.513Z [DEBUG] [init] configureGlobalAgents complete
+2026-02-16T10:41:38.516Z [DEBUG] [STARTUP] Loading MCP configs...
+2026-02-16T10:41:38.518Z [DEBUG] [ToolSearch:optimistic] mode=standard, ENABLE_TOOL_SEARCH=undefined, result=false
+2026-02-16T10:41:38.518Z [DEBUG] [STARTUP] Running setup()...
+2026-02-16T10:41:38.521Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=.thegent/sessions/claude-config/skills, project=[]
+2026-02-16T10:41:38.521Z [DEBUG] Error log sink initialized
+2026-02-16T10:41:38.530Z [DEBUG] [STARTUP] setup() completed in 12ms
+2026-02-16T10:41:38.530Z [DEBUG] [STARTUP] Loading commands and agents...
+2026-02-16T10:41:38.530Z [DEBUG] Loaded 0 unique skills (0 unconditional, 0 conditional, managed: 0, user: 0, project: 0, additional: 0, legacy commands: 0)
+2026-02-16T10:41:38.534Z [DEBUG] [Claude in Chrome] Found chrome profiles: Default
+2026-02-16T10:41:38.535Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-02-16T10:41:38.535Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-02-16T10:41:38.535Z [DEBUG] Total plugin skills loaded: 0
+2026-02-16T10:41:38.535Z [DEBUG] Total plugin commands loaded: 0
+2026-02-16T10:41:38.535Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-02-16T10:41:38.535Z [DEBUG] Total plugin agents loaded: 0
+2026-02-16T10:41:38.535Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills, 2 bundled skills
+2026-02-16T10:41:38.537Z [DEBUG] Writing to temp file: .thegent/sessions/claude-config/.claude.json.tmp.99680.1771238498537
+2026-02-16T10:41:38.537Z [DEBUG] Preserving file permissions: 100600
+2026-02-16T10:41:38.537Z [DEBUG] Temp file written successfully, size: 1029 bytes
+2026-02-16T10:41:38.537Z [DEBUG] Applied original permissions to temp file
+2026-02-16T10:41:38.537Z [DEBUG] Renaming .thegent/sessions/claude-config/.claude.json.tmp.99680.1771238498537 to .thegent/sessions/claude-config/.claude.json
+2026-02-16T10:41:38.537Z [DEBUG] File .thegent/sessions/claude-config/.claude.json written atomically
+2026-02-16T10:41:38.543Z [DEBUG] [STARTUP] Commands and agents loaded in 13ms
+2026-02-16T10:41:38.554Z [DEBUG] Cannot acquire lock for 2.1.42 - held by PID 15285
+2026-02-16T10:41:38.554Z [ERROR] Error: Error: NON-FATAL: Lock acquisition failed for /Users/kooshapari/.local/share/claude/versions/2.1.42 (expected in multi-process scenarios)
+    at ZwR (/$bunfs/root/claude:3483:2098)
+    at ESA (/$bunfs/root/claude:3483:1209)
+    at processTicksAndRejections (native:7:39)
+2026-02-16T10:41:38.563Z [DEBUG] [STARTUP] Running showSetupScreens()...
+2026-02-16T10:41:38.844Z [DEBUG] [keybindings] KeybindingSetup initialized with 102 bindings, 0 warnings
+2026-02-16T10:41:38.873Z [DEBUG] [keybindings] Watching for changes to .thegent/sessions/claude-config/keybindings.json
+2026-02-16T10:41:38.900Z [DEBUG] [Claude in Chrome] Found edge profiles: Profile 1, Default, Profile 2
+2026-02-16T10:41:38.900Z [DEBUG] [Claude in Chrome] Found chromium profiles: Default
+2026-02-16T10:41:38.902Z [DEBUG] [Claude in Chrome] Extension not found in any browser
+2026-02-16T10:41:38.903Z [DEBUG] Writing to temp file: .thegent/sessions/claude-config/.claude.json.tmp.99680.1771238498903
+2026-02-16T10:41:38.903Z [DEBUG] Preserving file permissions: 100600
+2026-02-16T10:41:38.903Z [DEBUG] Temp file written successfully, size: 1029 bytes
+2026-02-16T10:41:38.903Z [DEBUG] Applied original permissions to temp file
+2026-02-16T10:41:38.903Z [DEBUG] Renaming .thegent/sessions/claude-config/.claude.json.tmp.99680.1771238498903 to .thegent/sessions/claude-config/.claude.json
+2026-02-16T10:41:38.904Z [DEBUG] File .thegent/sessions/claude-config/.claude.json written atomically
+2026-02-16T10:41:39.093Z [DEBUG] High write ratio: blit=0, write=1669 (100.0% writes), screen=36x105
+2026-02-16T10:41:40.131Z [DEBUG] High write ratio: blit=0, write=1659 (100.0% writes), screen=36x105
+2026-02-16T10:41:40.131Z [DEBUG] Full reset (scrollback changes): scrollbackRows=12, firstChangeY=0
+  prev: "Welcome to Claude Code v2.1.42                                                                           "
+  next: "Welcome to Claude Code v2.1.42                                                                           "
+2026-02-16T10:41:40.506Z [DEBUG] High write ratio: blit=0, write=1669 (100.0% writes), screen=36x105
+2026-02-16T10:41:40.506Z [DEBUG] Full reset (scrollback changes): scrollbackRows=12, firstChangeY=0
+  prev: "Welcome to Claude Code v2.1.42                                                                           "
+  next: "Welcome to Claude Code v2.1.42                                                                           "
+2026-02-16T10:41:40.794Z [DEBUG] Writing to temp file: .thegent/sessions/claude-config/.claude.json.tmp.99680.1771238500794
+2026-02-16T10:41:40.794Z [DEBUG] Preserving file permissions: 100600
+2026-02-16T10:41:40.794Z [DEBUG] Temp file written successfully, size: 1029 bytes
+2026-02-16T10:41:40.794Z [DEBUG] Applied original permissions to temp file
+2026-02-16T10:41:40.794Z [DEBUG] Renaming .thegent/sessions/claude-config/.claude.json.tmp.99680.1771238500794 to .thegent/sessions/claude-config/.claude.json
+2026-02-16T10:41:40.794Z [DEBUG] File .thegent/sessions/claude-config/.claude.json written atomically
+2026-02-16T10:41:40.796Z [DEBUG] Writing to temp file: .thegent/sessions/claude-config/.claude.json.tmp.99680.1771238500796
+2026-02-16T10:41:40.796Z [DEBUG] Preserving file permissions: 100600
+2026-02-16T10:41:40.796Z [DEBUG] Temp file written successfully, size: 1029 bytes
+2026-02-16T10:41:40.796Z [DEBUG] Applied original permissions to temp file
+2026-02-16T10:41:40.796Z [DEBUG] Renaming .thegent/sessions/claude-config/.claude.json.tmp.99680.1771238500796 to .thegent/sessions/claude-config/.claude.json
+2026-02-16T10:41:40.796Z [DEBUG] File .thegent/sessions/claude-config/.claude.json written atomically
+2026-02-16T10:41:40.802Z [DEBUG] High write ratio: blit=0, write=1222 (100.0% writes), screen=29x105

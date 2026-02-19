@@ -696,7 +696,7 @@ class ThegentSettings(BaseSettings):
         description="Keep Mac awake during claude/codex runs (caffeinate; THGENT_MAC_KEEP_AWAKE)",
     )
     mac_keep_awake_agents: list[str] = Field(
-        default=["claude", "codex", "cursor-agent", "opencode", "cursor-api"],
+        default=["claude", "codex", "cursor-agent", "opencode", "cursor-api", "droid", "gemini", "copilot"],
         description="Agents that trigger caffeinate when mac_keep_awake (THGENT_MAC_KEEP_AWAKE_AGENTS)",
     )
 
@@ -707,7 +707,7 @@ class ThegentSettings(BaseSettings):
             return [s.strip() for s in v.split(",") if s.strip()]
         if isinstance(v, list):
             return [str(s) for s in v]
-        return ["claude", "codex", "cursor-agent", "opencode", "cursor-api"]
+        return ["claude", "codex", "cursor-agent", "opencode", "cursor-api", "droid", "gemini", "copilot"]
     config_dir_override: Path | None = Field(
         default=None,
         description="Override config directory (THGENT_CONFIG_DIR)",

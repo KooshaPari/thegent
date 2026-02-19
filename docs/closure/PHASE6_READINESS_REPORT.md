@@ -65,3 +65,11 @@
 | Platform/Engineering Lead | `platform-lead` | `Approved` | `2026-02-16` | `WP-6005, WP-6006 recorded` |
 | Operations Lead | `operations-lead` | `Approved` | `2026-02-16` | `Post-launch reserve plan published` |
 | Program Lead | `program-lead` | `Approved` | `2026-02-16` | `Final consolidation complete` |
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [POST_LAUNCH_28DAY_OBSERVATION.md](./POST_LAUNCH_28DAY_OBSERVATION.md) — post-launch plan

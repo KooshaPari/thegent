@@ -349,3 +349,11 @@ If resuming this chunked plan in sequence:
 - [ ] all artifacts have sha256 written to `bundle_release_manifest.ndjson`.
 - [ ] final index references are updated in `thegent-plan-final-index.md`.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

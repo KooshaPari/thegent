@@ -1,0 +1,140 @@
+# WORK_STREAM Claim/Lock Audit and Plan
+
+Date: 2026-02-18
+Scope: `WORK_STREAM.md` claim/completion lifecycle, ownership guarantees, and agent coordination safety.
+
+## Executive Verdict
+
+Current claim semantics are soft and non-authoritative. Multiple code paths mutate work state with no shared lock, no CAS/version checks, and inconsistent file paths. This allows duplicate claim rows, CLAIMED/COMPLETED overlap, stale timestamps, and false claim outcomes.
+
+## Findings (severity-ordered)
+
+1. Broken/undefined claim APIs in MCP surface (Critical)
+- `src/thegent/mcp_server.py:74` comments out `incorporate_impl` import.
+- `src/thegent/mcp_server.py:99` and `src/thegent/mcp_server.py:100` comment out `work_stream_claim_impl` and `work_stream_complete_impl`.
+- `src/thegent/mcp_server.py:2527`, `src/thegent/mcp_server.py:2542`, `src/thegent/mcp_server.py:2752` call those symbols anyway.
+- Impact: MCP contract advertises workstream claim/complete/incorporate tools that can hard-fail at runtime.
+
+2. Claim implementation correctness bug (Critical)
+- `src/thegent/task/sync.py:165` removes backlog row by substring match (`task_id in line`), not strict ID cell match.
+- `src/thegent/task/sync.py:204` returns "not found" if `task_found` was reset after insertion; successful claims can be reported as failures.
+- Same substring risk in status/complete paths (`src/thegent/task/sync.py:254`, `src/thegent/task/sync.py:335`).
+- Impact: false negatives, accidental matches (e.g., ID prefix collisions), and inconsistent state transitions.
+
+3. No concurrency control for shared markdown mutation (Critical)
+- `src/thegent/task/sync.py` reads/modifies/writes without file locks or optimistic version checks.
+- `src/thegent/planning/work_stream.py` appends/removes rows with no locking.
+- `src/thegent/integration/work_stream.py` has no persistence (`_save_work_stream` is `pass` at `src/thegent/integration/work_stream.py:246`), so behavior diverges by caller path.
+- Impact: race conditions under multi-agent operation and silent lost updates.
+
+4. Inconsistent canonical path usage (High)
+- `do_next_impl` reads `docs/reference/WORK_STREAM.md` (`src/thegent/cli_impl.py:413`).
+- Task-aware run claim uses `cwd / "WORK_STREAM.md"` (`src/thegent/cli_impl.py:2703`).
+- Impact: claims may target a different file than scheduling reads, creating "claimed but still offered" behavior.
+
+5. Planner/workstream split-brain (High)
+- `src/thegent/planning/work_stream.py:25` claim appends into CLAIMED section but does not remove from BACKLOG.
+- `src/thegent/task/sync.py` does move semantics.
+- Impact: conflicting sources of truth across code paths.
+
+6. Soft identity and stale claim policy gaps (Medium)
+- Agent IDs are caller-supplied strings with no mandatory session binding.
+- No claim heartbeat, lease expiry, takeover protocol, or stale-owner watchdog in claim path.
+- Impact: CLAIMED rows do not prove active ownership.
+
+## Confirmed Data Symptoms (current stream)
+
+- `CLAIMED` and `COMPLETED` overlap exists (same IDs in both sections).
+- Placeholder timestamps like `$(date +%H:%M:%S)` exist in CLAIMED rows.
+- These are expected consequences of the above architecture gaps.
+
+## Root Cause
+
+There is no single authoritative claim engine. Instead there are at least three partial implementations with divergent behavior:
+- `src/thegent/task/sync.py`
+- `src/thegent/planning/work_stream.py`
+- `src/thegent/integration/work_stream.py`
+
+No central lock/CAS layer enforces atomicity and invariants.
+
+## Target State
+
+One claim engine with:
+- Single canonical path resolver for workstream files.
+- Atomic transition API: `claim`, `complete`, `release`, `reconcile`.
+- Strict row identity parsing (ID column exact match).
+- Locking + optimistic concurrency (file lock + version/hash).
+- Lease model (`owner`, `session_id`, `claimed_at`, `lease_expires_at`, `heartbeat_at`).
+- Invariant checks: no ID may exist in both CLAIMED and COMPLETED.
+
+## Phased WBS (with DAG)
+
+### Phase A: Stabilize Surface (P0)
+- A1. Add missing `incorporate_impl`, `work_stream_claim_impl`, `work_stream_complete_impl` exports or stop exposing MCP tools until implemented.
+- A2. Unify canonical path resolver (`docs/reference/WORK_STREAM.md`) and remove ad hoc paths.
+- A3. Patch strict ID matching in markdown table parser/writer (no substring matching).
+- A4. Fix `task_found` state bug in claim/complete.
+
+### Phase B: Introduce Locking and Invariants (P0)
+- B1. Add lock primitive for workstream mutation (`fcntl` on POSIX; fallback lock file with PID metadata).
+- B2. Add optimistic CAS check (content hash/version stamp) before write.
+- B3. Add invariant validator (`no overlap`, `single row per ID per section`, valid timestamp format).
+- B4. Block write if invariant fails; emit actionable error and auto-repair suggestion.
+
+### Phase C: Hard Ownership Semantics (P1)
+- C1. Define lease metadata schema in CLAIMED rows.
+- C2. Add heartbeat update path.
+- C3. Add stale-claim reclaim policy (TTL + reason + audit event).
+- C4. Require `agent_id + session_id` for claim/complete APIs.
+
+### Phase D: Reconcile and Migrate Existing State (P1)
+- D1. Build one-shot reconciler for current stream:
+  - Remove CLAIMED/COMPLETED overlaps by policy.
+  - Replace placeholder timestamps with normalized UTC values.
+  - Dedupe duplicate CLAIMED rows by newest valid lease.
+- D2. Add `thegent plan reconcile-workstream` command.
+- D3. Add dry-run mode and signed report artifact.
+
+### Phase E: Reliability Tests and Gates (P1)
+- E1. Unit tests for parser/row identity and transitions.
+- E2. Concurrency tests (N parallel claims for same item).
+- E3. Property tests for section invariants.
+- E4. Integration tests for `run --task-id` + do-next + MCP tools.
+
+## Dependency DAG
+
+- A1 -> A2 -> A3 -> A4
+- A4 -> B1 -> B2 -> B3 -> B4
+- B4 -> C1 -> C2 -> C3 -> C4
+- B4 -> D1 -> D2 -> D3
+- C4 + D3 -> E1 -> E2 -> E3 -> E4
+
+## Aggressive Agent Effort Estimate
+
+- Phase A: 6-10 tool calls, ~3-6 min
+- Phase B: 8-14 tool calls, ~5-10 min
+- Phase C: 10-18 tool calls, ~8-14 min
+- Phase D: 8-12 tool calls, ~5-9 min
+- Phase E: 10-20 tool calls, ~8-15 min
+- Total: ~29-54 min wall clock with 2-3 parallel agents
+
+## Immediate Next 10 Executable Items
+
+1. Implement strict table-row ID parser utility.
+2. Replace substring matches in `WorkStreamSync` claim/complete/status.
+3. Fix `task_found` lifecycle bug in claim path.
+4. Fix `task_found` lifecycle bug in complete path.
+5. Normalize path usage to `docs/reference/WORK_STREAM.md`.
+6. Implement `work_stream_claim_impl` in `cli_impl`.
+7. Implement `work_stream_complete_impl` in `cli_impl`.
+8. Implement `incorporate_impl` in `cli_impl` or remove exposed tool path.
+9. Add lock wrapper around all claim/complete/incorporate mutations.
+10. Add reconciliation command with dry-run report.
+
+## Exit Criteria
+
+- No runtime unresolved symbols for workstream claim/complete/incorporate paths.
+- No CLAIMED/COMPLETED overlap after reconcile.
+- No placeholder timestamps in CLAIMED/COMPLETED.
+- Parallel claim race test guarantees only one winner for same item.
+- do-next never returns already-claimed item unless lease stale and reclaim policy triggers.

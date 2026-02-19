@@ -1,14 +1,12 @@
 """Tests for LiteLLM Router wrapper."""
 
-import os
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from thegent.routing.litellm_router import (
+    _route_to_litellm_config,
     build_litellm_model_list,
     get_litellm_router,
-    _route_to_litellm_config,
 )
-from thegent.routing.provider_types import API_KEY_PROVIDERS
 
 
 class TestLiteLLMRouterBuilder:

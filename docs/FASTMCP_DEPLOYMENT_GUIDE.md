@@ -16,11 +16,11 @@ This guide covers deploying the thegent MCP server in production. Per G-FM-01 Ph
 
 | Feature | Status | Config |
 |---------|--------|--------|
-| **Stateless HTTP** | ✅ Supported | `stateless_http=True` (default) — per-request JSON-RPC without SSE |
-| **Redis EventStore** | ✅ Supported | `FASTMCP_EVENT_STORE_URL=redis://host:port` |
-| **Session state** | ✅ EventStore | In-memory default; Redis when URL set |
-| **Auth (Bearer/OAuth)** | 🔲 To add | See §4 |
-| **Deployment** | ✅ Uvicorn | `thegent mcp run` or `python -m thegent.mcp_server` |
+| **Stateless HTTP** | ✓ Supported | `stateless_http=True` (default) — per-request JSON-RPC without SSE |
+| **Redis EventStore** | ✓ Supported | `FASTMCP_EVENT_STORE_URL=redis://host:port` |
+| **Session state** | ✓ EventStore | In-memory default; Redis when URL set |
+| **Auth (Bearer/OAuth)** | □ To add | See §4 |
+| **Deployment** | ✓ Uvicorn | `thegent mcp run` or `python -m thegent.mcp_server` |
 
 ---
 

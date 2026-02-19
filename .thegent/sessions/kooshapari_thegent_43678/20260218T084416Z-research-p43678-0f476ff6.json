@@ -1,0 +1,42 @@
+{
+  "agent": "research",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_75e3a159",
+    "Synthesize a development writeup for 'research-tui-compositor' from docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md. Create docs/changes/research-tui-compositor/proposal.md, design.md, and tasks.md.",
+    "research"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 43678,
+  "launcher_ppid": 43673,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:43678",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_43678/20260218T084416Z-research-p43678-0f476ff6.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_43678/20260218T084416Z-research-p43678-0f476ff6.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_43678/20260218T084416Z-research-p43678-0f476ff6.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_43678/20260218T084416Z-research-p43678-0f476ff6.stdout.log"
+  },
+  "pid": 43684,
+  "prompt": "Synthesize a development writeup for 'research-tui-compositor' from docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md. Create docs/changes/research-tui-compositor/proposal.md, design.md, and tasks.md.",
+  "session_id": "20260218T084416Z-research-p43678-0f476ff6",
+  "started_at_utc": "2026-02-18T08:44:16.030057+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

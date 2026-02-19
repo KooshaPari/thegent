@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # agent-antipattern-detector.sh — PostToolUse hook (Edit|Write)
 # Detects agent anti-patterns in Python files: reinventing wheels, wrong libraries,
 # hardcoded providers, manual patterns that have library equivalents.

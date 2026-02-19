@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-brownfield-migration-gate.stub.sh (N6)
 # Validates brownfield migration evidence: characterization, canary, rollback, strangler.
 # Install via: make install-governance-hooks

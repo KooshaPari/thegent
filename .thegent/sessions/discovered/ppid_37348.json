@@ -1,0 +1,17 @@
+{
+  "pid": 37348,
+  "ppid": 37348,
+  "agent": "cursor-agent",
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush",
+  "discovered_at": "2026-02-18T08:06:18.707111+00:00",
+  "last_seen_at": "2026-02-18T08:33:14.718130+00:00",
+  "command": "/opt/homebrew/bin/cursor-agent",
+  "args_preview": "/opt/homebrew/bin/cursor-agent --use-system-ca /opt/homebrew/Caskroom/cursor-cli...",
+  "tmux_pane": null,
+  "session_id": null,
+  "token_usage": null,
+  "mcp_errors": null,
+  "capabilities": [],
+  "trust_score": 0.5,
+  "reputation": 0
+}

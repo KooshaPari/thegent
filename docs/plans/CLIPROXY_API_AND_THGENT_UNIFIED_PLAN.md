@@ -52,7 +52,7 @@ All providers have OAuth (or equivalent login/token flow). They must have **equa
 
 ---
 
-## Phase 3: MiniMax – Dedicated Block (Parity with Kiro/GLM) ✅ DONE
+## Phase 3: MiniMax – Dedicated Block (Parity with Kiro/GLM) ✓ DONE
 
 | ID   | Task                  | Description                                                              |
 |------|-----------------------|--------------------------------------------------------------------------|
@@ -64,7 +64,7 @@ All providers have OAuth (or equivalent login/token flow). They must have **equa
 
 ---
 
-## Phase 4: Thegent CLIProxy Backend (Depends on: P1) ✅ DONE
+## Phase 4: Thegent CLIProxy Backend (Depends on: P1) ✓ DONE
 
 | ID   | Task                  | Description                                                              |
 |------|-----------------------|--------------------------------------------------------------------------|
@@ -77,7 +77,7 @@ All providers have OAuth (or equivalent login/token flow). They must have **equa
 
 ---
 
-## Phase 5: Roo Code, Kilo – Dedicated Blocks (Parity) ✅ DONE
+## Phase 5: Roo Code, Kilo – Dedicated Blocks (Parity) ✓ DONE
 
 | ID   | Task    | Description                                                                 |
 |------|---------|-----------------------------------------------------------------------------|
@@ -90,7 +90,7 @@ All providers have OAuth (or equivalent login/token flow). They must have **equa
 
 ---
 
-## Phase 6: Polish & Documentation (Depends on: P2–P5) ✅ DONE
+## Phase 6: Polish & Documentation (Depends on: P2–P5) ✓ DONE
 
 | ID   | Task              | Description                                                                 |
 |------|-------------------|-----------------------------------------------------------------------------|

@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/.local/share/uv/tools/thegent/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_3d795b0e",
+    "Complete impl-hook-rust-config-enhance: Enhance config-get subcommand in Rust with YAML support and configuration merging. See docs/plans/HOOK_RUST_MIGRATION_COMPLETE.md for details.",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 1036,
+  "launcher_ppid": 98277,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:rust-migr",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T101556Z-copilot-p1036-9d3444ef.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T101556Z-copilot-p1036-9d3444ef.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T101556Z-copilot-p1036-9d3444ef.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T101556Z-copilot-p1036-9d3444ef.stdout.log"
+  },
+  "pid": 2025,
+  "prompt": "Complete impl-hook-rust-config-enhance: Enhance config-get subcommand in Rust with YAML support and configuration merging. See docs/plans/HOOK_RUST_MIGRATION_COMPLETE.md for details.",
+  "session_id": "20260219T101556Z-copilot-p1036-9d3444ef",
+  "started_at_utc": "2026-02-19T10:15:56.866874+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

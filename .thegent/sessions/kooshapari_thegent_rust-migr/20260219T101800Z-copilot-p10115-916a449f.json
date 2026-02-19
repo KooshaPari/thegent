@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/.local/share/uv/tools/thegent/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_a0edc94d",
+    "Complete impl-hook-rust-affected-tests: Implement affected tests detection in Rust using coverage and import maps. See docs/plans/HOOK_RUST_MIGRATION_COMPLETE.md for details.",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 10115,
+  "launcher_ppid": 98277,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:rust-migr",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T101800Z-copilot-p10115-916a449f.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T101800Z-copilot-p10115-916a449f.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T101800Z-copilot-p10115-916a449f.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T101800Z-copilot-p10115-916a449f.stdout.log"
+  },
+  "pid": 11053,
+  "prompt": "Complete impl-hook-rust-affected-tests: Implement affected tests detection in Rust using coverage and import maps. See docs/plans/HOOK_RUST_MIGRATION_COMPLETE.md for details.",
+  "session_id": "20260219T101800Z-copilot-p10115-916a449f",
+  "started_at_utc": "2026-02-19T10:18:00.642657+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

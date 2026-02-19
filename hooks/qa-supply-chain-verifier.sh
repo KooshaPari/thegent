@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-supply-chain-verifier.sh
 # Verifies signed attestation and provenance requirements (cosign/Rekor aware).
 set -euo pipefail

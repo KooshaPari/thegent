@@ -1,7 +1,7 @@
-import os
 import platform
 
-from thegent.platform import detect_platform, Platform
+from thegent.thegent_platform import Platform, detect_platform
+
 
 def test_detect_platform():
     p = detect_platform()

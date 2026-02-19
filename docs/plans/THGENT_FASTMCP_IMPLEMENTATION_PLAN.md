@@ -520,8 +520,8 @@ Design principles for maximally engineered, intuitive, and production-grade beha
 | `thegent_run` | `▶` or "play" | Indicates execution |
 | `thegent_bg` | `⏸` or "background" | Fire-and-forget |
 | `thegent_stop` | `⏹` or "stop" | Destructive; confirm in UI |
-| `thegent_logs` | `📄` or "logs" | Read-only output |
-| `thegent_ps` | `📋` or "list" | Discovery |
+| `thegent_logs` | `▤` or "logs" | Read-only output |
+| `thegent_ps` | `≡` or "list" | Discovery |
 
 Use `icons=[...]` on tools when FastMCP supports; improves client UI discoverability.
 

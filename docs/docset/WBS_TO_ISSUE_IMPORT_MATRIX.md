@@ -20,7 +20,7 @@ Maps work packages from the final WBS to issue/ticket identifiers for execution 
 | WP-0002 | Canonical schemas for chunk/evidence/policy events | — | Done (contracts package) |
 | WP-0003 | Planner dependency graph normalization | — | Done |
 | WP-0004 | Initial risk and confidence scoring framework | — | Done |
-| WP-0005 | Program operating model and ownership map | — | Pending |
+| WP-0005 | Program operating model and ownership map | — | Done |
 
 ---
 
@@ -63,9 +63,9 @@ Maps work packages from the final WBS to issue/ticket identifiers for execution 
 | WP-3003 | Override path with TTL and revalidation rules | — | Done |
 | WP-3004 | Immutable audit trail and query interface | — | Done |
 | WP-3005 | Policy drift detection and sweep automation | — | Done |
-| WP-3006 | Compliance evidence retention by domain | — | Pending |
+| WP-3006 | Compliance evidence retention by domain | — | Done |
 | WP-3007 | Trust boundary checks for environment transitions | — | Done |
-| WP-3008 | Escalation SLA and governance queue operations | — | Pending |
+| WP-3008 | Escalation SLA and governance queue operations | — | Done |
 
 ---
 
@@ -76,9 +76,9 @@ Maps work packages from the final WBS to issue/ticket identifiers for execution 
 | WP-4001 | Operator cockpit summary model | — | Done |
 | WP-4002 | Concise and detailed explanation tiers | — | Done |
 | WP-4003 | One-click safe fallback options | — | Done |
-| WP-4004 | Interruption taxonomy and fatigue controls | — | Pending |
+| WP-4004 | Interruption taxonomy and fatigue controls | — | Done |
 | WP-4005 | State freshness checks and stale-state prevention | — | Done |
-| WP-4006 | Continuity handoff summaries across shifts | — | Pending |
+| WP-4006 | Continuity handoff summaries across shifts | — | Done |
 | WP-4007 | Decision replay and rationale snapshots | — | Done |
 | WP-4008 | Feedback loops and confidence calibration | — | Done |
 
@@ -89,8 +89,8 @@ Maps work packages from the final WBS to issue/ticket identifiers for execution 
 | WP ID | Description | Issue ID | Status |
 |-------|-------------|----------|--------|
 | WP-5001 | Adaptive concurrency controller | — | Done |
-| WP-5002 | Burst load classification and safe-mode controls | — | Pending |
-| WP-5003 | Cost-aware routing and workload shaping | — | Pending |
+| WP-5002 | Burst load classification and safe-mode controls | — | Done |
+| WP-5003 | Cost-aware routing and workload shaping | — | Done |
 | WP-5004 | Non-critical deferral rules with explicit ETA | — | Done |
 | WP-5005 | Long-running continuity watchdog | — | Pending |
 | WP-5006 | Handoff integrity enforcement | — | Pending |
@@ -211,3 +211,11 @@ Maps work packages from the final WBS to issue/ticket identifiers for execution 
 - **Issue ID**: Use the `THEGENT-WP-####` pre-mapped key convention when importing into GitHub Issues, Jira, Linear, etc.
 - **Status**: Done = implemented; Planned = ready for execution; Pending = blocked or partially complete.
 - Use WP ID as prefix for issue keys (e.g. `THEGENT-WP-3006`).
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

@@ -1,0 +1,42 @@
+{
+  "agent": "sonnet",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_8a5990d5",
+    "Implement 'research-tui-compositor' Phase 1 as defined in docs/changes/research-tui-compositor/tasks.md.",
+    "sonnet"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 64350,
+  "launcher_ppid": 64345,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:64350",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_64350/20260218T101957Z-sonnet-p64350-b58c28af.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_64350/20260218T101957Z-sonnet-p64350-b58c28af.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_64350/20260218T101957Z-sonnet-p64350-b58c28af.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_64350/20260218T101957Z-sonnet-p64350-b58c28af.stdout.log"
+  },
+  "pid": 64357,
+  "prompt": "Implement 'research-tui-compositor' Phase 1 as defined in docs/changes/research-tui-compositor/tasks.md.",
+  "session_id": "20260218T101957Z-sonnet-p64350-b58c28af",
+  "started_at_utc": "2026-02-18T10:19:57.326125+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # PostToolUse Dispatcher -- single-process orchestrator for all PostToolUse hooks.
 # Sources common.sh ONCE and runs all hooks in PARALLEL subshells.
 # Uses ( source ) instead of bash to avoid exec overhead.
@@ -27,7 +27,7 @@ export INPUT CWD SESSION_ID TOOL_NAME FILE_PATH STOP_ACTIVE
 export PROJECT_DIR VERIFY_DIR QA_STATE QUALITY_CONFIG CHANGE_LOG
 export TOOL_CONTENT TOOL_NEW_STRING TOOL_OLD_STRING
 export HOOK_CACHE_DIR HOOK_SHARED_DIR
-export JQ_CMD HUNIQ_CMD TIMEOUT_CMD
+export JQ_CMD HUNIQ_CMD TIMEOUT_CMD HASH_CMD
 
 # Use the already-detected timeout command
 _TIMEOUT_CMD="${TIMEOUT_CMD:-}"
@@ -38,6 +38,7 @@ POSTTOOL_HOOKS=(
   qa-evidence-recorder.sh
   qa-policy-test.sh
   post-edit-checker.sh
+  friction-detector.sh
   agent-antipattern-detector.sh
   async-test-runner.sh
   speculative-stop-prewarmer.sh

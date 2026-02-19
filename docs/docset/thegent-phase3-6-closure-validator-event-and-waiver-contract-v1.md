@@ -227,3 +227,11 @@ If missing:
 - no unversioned events in CI or board automation
 - waiver expiry never exceeds 24h without committee override
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

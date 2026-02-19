@@ -1,0 +1,267 @@
+{
+  "query": "fzf vs peco vs selecta",
+  "ddg_results": [],
+  "reddit_results": [
+    {
+      "title": "fuzzy matchers overview?",
+      "url": "https://www.reddit.com/r/commandline/comments/36h2cj/fuzzy_matchers_overview/",
+      "selftext": "I've been looking at fuzzy matchers for the command line and it looks like writing one of those is the new \"write your own blogging engine\" project.\n\nSo far I have found:\n\n* fpp: http://facebook.github.io/PathPicker/\n* fzf: https://github.com/junegunn/fzf\n* peco: https://github.com/peco/peco\n* percol: https://github.com/mooz/percol\n* pick: https://github.com/thoughtbot/pick\n* selecta: https://github.com/garybernhardt/selecta/\n\nThere's undoubtedly more, but I'm having a hard time finding the differences, features, pros and cons between these projects. Can anyone who has used more than one of these tools tell about their experiences with them?\n\nWhat I am **NOT** interested in is what programming language they are written in.  I do care about performance but if project A is written in Python and project B in Go, I only care which one is better maintained, has better performance and more features. I really do not care about \"project B is like project A, but I don't like Python so I rewrote project A in Go\".",
+      "score": 7,
+      "subreddit": "commandline"
+    }
+  ],
+  "arxiv_results": [
+    {
+      "title": "VS-Net: Voting with Segmentation for Visual Localization",
+      "summary": "Visual localization is of great importance in robotics and computer vision. Recently, scene coordinate regression based methods have shown good performance in visual localization in small static scenes. However, it still estimates camera poses from many inferior scene coordinates. To address this problem, we propose a novel visual localization framework that establishes 2D-to-3D correspondences between the query image and the 3D map with a series of learnable scene-specific landmarks. In the landmark generation stage, the 3D surfaces of the target scene are over-segmented into mosaic patches whose centers are regarded as the scene-specific landmarks. To robustly and accurately recover the scene-specific landmarks, we propose the Voting with Segmentation Network (VS-Net) to segment the pixels into different landmark patches with a segmentation branch and estimate the landmark locations within each patch with a landmark location voting branch. Since the number of landmarks in a scene may reach up to 5000, training a segmentation network with such a large number of classes is both computation and memory costly for the commonly used cross-entropy loss. We propose a novel prototype-based triplet loss with hard negative mining, which is able to train semantic segmentation networks with a large number of labels efficiently. Our proposed VS-Net is extensively tested on multiple public benchmarks and can outperform state-of-the-art visual localization methods. Code and models are available at \\href{https://github.com/zju3dv/VS-Net}{https://github.com/zju3dv/VS-Net}.",
+      "url": "http://arxiv.org/abs/2105.10886v1"
+    },
+    {
+      "title": "Navigating Simply, Aligning Deeply: Winning Solutions for Mouse vs. AI 2025",
+      "summary": "Visual robustness and neural alignment remain critical challenges in developing artificial agents that can match biological vision systems. We present the winning approaches from Team HCMUS_TheFangs for both tracks of the NeurIPS 2025 Mouse vs. AI: Robust Visual Foraging Competition. For Track 1 (Visual Robustness), we demonstrate that architectural simplicity combined with targeted components yields superior generalization, achieving 95.4% final score with a lightweight two-layer CNN enhanced by Gated Linear Units and observation normalization. For Track 2 (Neural Alignment), we develop a deep ResNet-like architecture with 16 convolutional layers and GLU-based gating that achieves top-1 neural prediction performance with 17.8 million parameters. Our systematic analysis of ten model checkpoints trained between 60K to 1.14M steps reveals that training duration exhibits a non-monotonic relationship with performance, with optimal results achieved around 200K steps. Through comprehensive ablation studies and failure case analysis, we provide insights into why simpler architectures excel at visual robustness while deeper models with increased capacity achieve better neural alignment. Our results challenge conventional assumptions about model complexity in visuomotor learning and offer practical guidance for developing robust, biologically-inspired visual agents.",
+      "url": "http://arxiv.org/abs/2602.00982v1"
+    },
+    {
+      "title": "Wide Binaries from Gaia DR3 : testing GR vs MOND with realistic triple modelling",
+      "summary": "We provide an updated test for modifications of gravity from a sample of wide-binary stars from Gaia DR3, and their sky-projected relative velocities. Here we extend on our earlier 2023 study, using several updated selection cuts aimed at reducing contamination from triple systems with an undetected third star. We also use improved mass estimates from Gaia FLAME, and we add refinements to previous modelling of the triple and other populations and the model-fitting. We fit histograms of observed vs Newtonian velocity differences to a flexible mixture of binary + triple populations with realistic eccentricity distributions, plus unbound flyby and random-chance populations. We find as before that Newtonian models provide a significantly better fit than MOND, though improved understanding of the triple population is necessary to make this fully decisive.",
+      "url": "http://arxiv.org/abs/2504.07569v2"
+    },
+    {
+      "title": "Tate Objects in Exact Categories (with appendix by Jan \\vS\\vtov\\'\u0131\\vcek and Jan Trlifaj)",
+      "summary": "We study elementary Tate objects in an exact category. We characterize the category of elementary Tate objects as the smallest sub-category of admissible Ind-Pro objects which contains the categories of admissible Ind-objects and admissible Pro-objects, and which is closed under extensions. We compare Beilinson's approach to Tate modules to Drinfeld's. We establish several properties of the Sato Grassmannian of an elementary Tate object in an idempotent complete exact category (e.g. it is a directed poset). We conclude with a brief treatment of n-Tate modules and n-dimensional ad\u00e8les.\n  An appendix due to J. \\vS\\vtov\\'\u0131\\vcek and J. Trlifaj identifies the category of flat Mittag-Leffler modules with the idempotent completion of the category of admissible Ind-objects in the category of finitely generated projective modules.",
+      "url": "http://arxiv.org/abs/1402.4969v4"
+    },
+    {
+      "title": "Picking vs. Guessing Secrets: A Game-Theoretic Analysis (Technical Report)",
+      "summary": "Choosing a hard-to-guess secret is a prerequisite in many security applications. Whether it is a password for user authentication or a secret key for a cryptographic primitive, picking it requires the user to trade-off usability costs with resistance against an adversary: a simple password is easier to remember but is also easier to guess; likewise, a shorter cryptographic key may require fewer computational and storage resources but it is also easier to attack. A fundamental question is how one can optimally resolve this trade-off. A big challenge is the fact that an adversary can also utilize the knowledge of such usability vs. security trade-offs to strengthen its attack. In this paper, we propose a game-theoretic framework for analyzing the optimal trade-offs in the face of strategic adversaries. We consider two types of adversaries: those limited in their number of tries, and those that are ruled by the cost of making individual guesses. For each type, we derive the mutually-optimal decisions as Nash Equilibria, the strategically pessimistic decisions as maximin, and optimal commitments as Strong Stackelberg Equilibria of the game. We establish that when the adversaries are faced with a capped number of guesses, the user's optimal trade-off is a uniform randomization over a subset of the secret domain. On the other hand, when the attacker strategy is ruled by the cost of making individual guesses, Nash Equilibria may completely fail to provide the user with any level of security, signifying the crucial role of credible commitment for such cases. We illustrate our results using numerical examples based on real-world samples and discuss some policy implications of our work.",
+      "url": "http://arxiv.org/abs/1505.02325v1"
+    },
+    {
+      "title": "Scarecrow monitoring system:employing mobilenet ssd for enhanced animal supervision",
+      "summary": "Agriculture faces a growing challenge with wildlife wreaking havoc on crops, threatening sustainability. The project employs advanced object detection, the system utilizes the Mobile Net SSD model for real-time animal classification. The methodology initiates with the creation of a dataset, where each animal is represented by annotated images. The SSD Mobile Net architecture facilitates the use of a model for image classification and object detection. The model undergoes fine-tuning and optimization during training, enhancing accuracy for precise animal classification. Real-time detection is achieved through a webcam and the OpenCV library, enabling prompt identification and categorization of approaching animals. By seamlessly integrating intelligent scarecrow technology with object detection, this system offers a robust solution to field protection, minimizing crop damage and promoting precision farming. It represents a valuable contribution to agricultural sustainability, addressing the challenge of wildlife interference with crops. The implementation of the Intelligent Scarecrow Monitoring System stands as a progressive tool for proactive field management and protection, empowering farmers with an advanced solution for precision agriculture.\n  Keywords: Machine learning, Deep Learning, Computer Vision, MobileNet SSD",
+      "url": "http://arxiv.org/abs/2407.01435v1"
+    },
+    {
+      "title": "Interpreting Hand gestures using Object Detection and Digits Classification",
+      "summary": "Hand gestures have evolved into a natural and intuitive means of engaging with technology. The objective of this research is to develop a robust system that can accurately recognize and classify hand gestures representing numbers. The proposed approach involves collecting a dataset of hand gesture images, preprocessing and enhancing the images, extracting relevant features, and training a machine learning model. The advancement of computer vision technology and object detection techniques, in conjunction with OpenCV's capability to analyze and comprehend hand gestures, presents a chance to transform the identification of numerical digits and its potential applications. The advancement of computer vision technology and object identification technologies, along with OpenCV's capacity to analyze and interpret hand gestures, has the potential to revolutionize human interaction, boosting people's access to information, education, and employment opportunities. Keywords: Computer Vision, Machine learning, Deep Learning, Neural Networks",
+      "url": "http://arxiv.org/abs/2407.10902v1"
+    },
+    {
+      "title": "Independence of P vs. NP in regards to oracle relativizations",
+      "summary": "This is the third article in a series of four articles dealing with the P vs. NP question. The purpose of this work is to demonstrate that the methods used in the first two articles of this series are not affected by oracle relativizations. Furthermore, the solution to the P vs. NP problem is actually independent of oracle relativizations.",
+      "url": "http://arxiv.org/abs/0805.2170v6"
+    },
+    {
+      "title": "Cats vs Dogs, Photons vs Hadrons",
+      "summary": "In gamma ray astronomy with Cherenkov telescopes, machine learning models are needed to guess what kind of particles generated the detected light, and their energies and directions. The focus in this work is on the classification task, training a simple convolutional neural network suitable for binary classification (as it could be a cats vs dogs classification problem), using as input uncleaned images generated by Montecarlo data for a single ASTRI telescope. Results show an enhanced discriminant power with respect to classical random forest methods.",
+      "url": "http://arxiv.org/abs/2212.10281v1"
+    },
+    {
+      "title": "Machine Learning vs. Rules and Out-of-the-Box vs. Retrained: An Evaluation of Open-Source Bibliographic Reference and Citation Parsers",
+      "summary": "Bibliographic reference parsing refers to extracting machine-readable metadata, such as the names of the authors, the title, or journal name, from bibliographic reference strings. Many approaches to this problem have been proposed so far, including regular expressions, knowledge bases and supervised machine learning. Many open source reference parsers based on various algorithms are also available. In this paper, we apply, evaluate and compare ten reference parsing tools in a specific business use case. The tools are Anystyle-Parser, Biblio, CERMINE, Citation, Citation-Parser, GROBID, ParsCit, PDFSSA4MET, Reference Tagger and Science Parse, and we compare them in both their out-of-the-box versions and versions tuned to the project-specific data. According to our evaluation, the best performing out-of-the-box tool is GROBID (F1 0.89), followed by CERMINE (F1 0.83) and ParsCit (F1 0.75). We also found that even though machine learning-based tools and tools based on rules or regular expressions achieve on average similar precision (0.77 for ML-based tools vs. 0.76 for non-ML-based tools), applying machine learning-based tools results in a recall three times higher than in the case of non-ML-based tools (0.66 vs. 0.22). Our study also confirms that tuning the models to the task-specific data results in the increase in the quality. The retrained versions of reference parsers are in all cases better than their out-of-the-box counterparts; for GROBID F1 increased by 3% (0.92 vs. 0.89), for CERMINE by 11% (0.92 vs. 0.83), and for ParsCit by 16% (0.87 vs. 0.75).",
+      "url": "http://arxiv.org/abs/1802.01168v3"
+    },
+    {
+      "title": "Small Black holes vs horizonless solutions in AdS",
+      "summary": "It is argued that the appropriate macroscopic description of half-BPS mesonic chiral operators in generic $d=4$ ${\\cal N}=1$ toric gauge theories is in terms of the geometric quantization of smooth horizonless configurations. The relevance of different ensemble macroscopic descriptions is emphasized : lorentzian vs euclidean configurations as (semiclassical) microstates vs saddle points in an euclidean path integral.",
+      "url": "http://arxiv.org/abs/0910.3225v2"
+    },
+    {
+      "title": "Space-time: emerging vs. existing",
+      "summary": "The concept of the space-time as emerging in the world phase transition, vs. a priori existing, is put forward. The theory of gravity with two basic symmetries, the global affine one and the general covariance, is developed. Implications for the Universe are indicated.",
+      "url": "http://arxiv.org/abs/gr-qc/0507128v1"
+    },
+    {
+      "title": "Space-time: emerging vs. existing",
+      "summary": "The concept of the space-time as emerging in the world phase transition, vs. a priori exiting, is put forward. The theory of gravity with two basic symmetries, the global affine one and the general covariance, is developed. Implications for the Universe are indicated.",
+      "url": "http://arxiv.org/abs/gr-qc/0503091v1"
+    },
+    {
+      "title": "PECOS: Prediction for Enormous and Correlated Output Spaces",
+      "summary": "Many large-scale applications amount to finding relevant results from an enormous output space of potential candidates. For example, finding the best matching product from a large catalog or suggesting related search phrases on a search engine. The size of the output space for these problems can range from millions to billions, and can even be infinite in some applications. Moreover, training data is often limited for the long-tail items in the output space. Fortunately, items in the output space are often correlated thereby presenting an opportunity to alleviate the data sparsity issue. In this paper, we propose the Prediction for Enormous and Correlated Output Spaces (PECOS) framework, a versatile and modular machine learning framework for solving prediction problems for very large output spaces, and apply it to the eXtreme Multilabel Ranking (XMR) problem: given an input instance, find and rank the most relevant items from an enormous but fixed and finite output space. We propose a three phase framework for PECOS: (i) in the first phase, PECOS organizes the output space using a semantic indexing scheme, (ii) in the second phase, PECOS uses the indexing to narrow down the output space by orders of magnitude using a machine learned matching scheme, and (iii) in the third phase, PECOS ranks the matched items using a final ranking scheme. The versatility and modularity of PECOS allows for easy plug-and-play of various choices for the indexing, matching, and ranking phases. We also develop very fast inference procedures which allow us to perform XMR predictions in real time; for example, inference takes less than 1 millisecond per input on the dataset with 2.8 million labels. The PECOS software is available at https://libpecos.org.",
+      "url": "http://arxiv.org/abs/2010.05878v2"
+    },
+    {
+      "title": "Theory of a quantum-mechanical nucleation rate: classical vs. quantal nucleation",
+      "summary": "We address problems arising in supersaturated systems of small atomic particles in solids. Nucleation processes in such systems do not seem to follow the classical interpretation but may be indicative of quantal nucleation partucularly at higher supersaturations. We reconcile Gibbs' free energy DeltaG vs. particle radius r dependence with the double-well oscillator energy vs. configurational coordinate q dependence to take advantage of the solution of a well-known eigenvalue problem. Theoretical results are presented and compared with experimental data.",
+      "url": "http://arxiv.org/abs/0902.0787v1"
+    },
+    {
+      "title": "Traversing the QCD Phase Transition: Quenching Out of Equilibrium vs. Slowing Out of Equilibrium vs. Bubbling Out of Equilibrium",
+      "summary": "I review arguments for the existence of a critical point E in the QCD phase diagram as a function of temperature T and baryon chemical potential \u03bc. I describe how heavy ion collision experiments at the SPS and RHIC can discover the tell-tale signatures of such a critical point, thus mapping this region of the QCD phase diagram. I contrast the different ways in which the matter produced in a heavy ion collision can be driven out of equilibrium: quenching out of equilibrium (possible, but not guaranteed, if the transition region is traversed at \u03bc&lt;&lt; \u03bc_E) vs. slowing out of equilibrium (guaranteed for \u03bc\\sim \u03bc_E) vs. bubbling out of equilibrium (possible, but not guaranteed, for \u03bc&gt;&gt; \u03bc_E). Quenching or bubbling create and amplify distinct, detectable, non-gaussian fluctuations. In contrast, slowing out of equilibrium reduces the magnitude of the specific, detectable, gaussian fluctuations which signal the presence of the critical point.",
+      "url": "http://arxiv.org/abs/hep-ph/0005101v2"
+    },
+    {
+      "title": "Comparing the willingness to share for human-generated vs. AI-generated fake news",
+      "summary": "Generative artificial intelligence (AI) presents large risks for society when it is used to create fake news. A crucial factor for fake news to go viral on social media is that users share such content. Here, we aim to shed light on the sharing behavior of users across human-generated vs. AI-generated fake news. Specifically, we study: (1) What is the perceived veracity of human-generated fake news vs. AI-generated fake news? (2) What is the user's willingness to share human-generated fake news vs. AI-generated fake news on social media? (3) What socio-economic characteristics let users fall for AI-generated fake news? To this end, we conducted a pre-registered, online experiment with $N=$ 988 subjects and 20 fake news from the COVID-19 pandemic generated by GPT-4 vs. humans. Our findings show that AI-generated fake news is perceived as less accurate than human-generated fake news, but both tend to be shared equally. Further, several socio-economic factors explain who falls for AI-generated fake news.",
+      "url": "http://arxiv.org/abs/2402.07395v1"
+    },
+    {
+      "title": "A Critique of Uribe's \"P vs. NP\"",
+      "summary": "In this critique, we examine the technical report by Daniel Uribe entitled \"P vs. NP.\" The paper claims to show an exponential lower bound on the runtime of algorithms that decide CLIQUE. We show that the paper's proofs fail to generalize to all possible algorithms and that, even on those algorithms to which the proofs do apply, the proofs' arguments are flawed.",
+      "url": "http://arxiv.org/abs/2205.01189v1"
+    },
+    {
+      "title": "Arithmeticity vs. non-linearity for irreducible lattices",
+      "summary": "We establish an arithmeticity vs. non-linearity alternative for irreducible lattices in suitable product groups, such as for instance products of topologically simple groups. This applies notably to a (large class of) Kac-Moody groups. The alternative relies on a CAT(0) superrigidity theorem, as we follow Margulis' reduction of arithmeticity to superrigidity.",
+      "url": "http://arxiv.org/abs/math/0407083v1"
+    },
+    {
+      "title": "Bots vs. Wikipedians, Anons vs. Logged-Ins",
+      "summary": "Wikipedia is a global crowdsourced encyclopedia that at time of writing is available in 287 languages. Wikidata is a likewise global crowdsourced knowledge base that provides shared facts to be used by Wikipedias. In the context of this research, we have developed an application and an underlying Application Programming Interface (API) capable of monitoring realtime edit activity of all language versions of Wikipedia and Wikidata. This application allows us to easily analyze edits in order to answer questions such as \"Bots vs. Wikipedians, who edits more?\", \"Which is the most anonymously edited Wikipedia?\", or \"Who are the bots and what do they edit?\". To the best of our knowledge, this is the first time such an analysis could be done in realtime for Wikidata and for really all Wikipedias--large and small. Our application is available publicly online at the URL http://wikipedia-edits.herokuapp.com/, its code has been open-sourced under the Apache 2.0 license.",
+      "url": "http://arxiv.org/abs/1402.0412v2"
+    },
+    {
+      "title": "Accuracy Standards for AI at Work vs. Personal Life: Evidence from an Online Survey",
+      "summary": "We study how people trade off accuracy when using AI-powered tools in professional versus personal contexts for adoption purposes, the determinants of those trade-offs, and how users cope when AI/apps are unavailable. Because modern AI systems (especially generative models) can produce acceptable but non-identical outputs, we define \"accuracy\" as context-specific reliability: the degree to which an output aligns with the user's intent within a tolerance threshold that depends on stakes and the cost of correction. In an online survey (N=300), among respondents with both accuracy items (N=170), the share requiring high accuracy (top-box) is 24.1% at work vs. 8.8% in personal life (+15.3 pp; z=6.29, p&lt;0.001). The gap remains large under a broader top-two-box definition (67.0% vs. 32.9%) and on the full 1-5 ordinal scale (mean 3.86 vs. 3.08). Heavy app use and experience patterns correlate with stricter work standards (H2). When tools are unavailable (H3), respondents report more disruption in personal routines than at work (34.1% vs. 15.3%, p&lt;0.01). We keep the main text focused on these substantive results and place test taxonomy and power derivations in a technical appendix.",
+      "url": "http://arxiv.org/abs/2602.13283v1"
+    },
+    {
+      "title": "Analytic solution to N vs. M photon phase control in an open two-level system",
+      "summary": "Decoherence effects on the traditional N vs. M photon coherent control of a two-level system are investigated, with 1 vs. 3 used as a specific example. The problem reduces to that of a two-level system interacting with a single mode field, but with an effective Rabi frequency that depends upon the fundamental and third harmonic fields. The resultant analytic control solution is explored for a variety of parameters, with emphasis on the dependence of control on the relative phase of the lasers. The generalization to off-resonant cases is noted.",
+      "url": "http://arxiv.org/abs/quant-ph/0502058v1"
+    },
+    {
+      "title": "RR Lyrae - Theory vs Observation",
+      "summary": "The luminosities, effective temperatures and metallicities that are derived empirically by Kovacs and Jurcsik from the light curves of a large number of globular cluster and field RRab and RRc stars are compared to theoretical RR Lyrae models. The strong luminosity dependence of the empirical blue and red edges (Log L vs Log Teff diagram) is in disagreement with that of both radiative and convective models. A reexamination of the theoretical uncertainties in the modelling leads us to conclude that the disagreement is irreconcilable.",
+      "url": "http://arxiv.org/abs/astro-ph/0001442v2"
+    },
+    {
+      "title": "On P vs. NP, Geometric Complexity Theory, Explicit Proofs and the Complexity Barrier",
+      "summary": "Geometric complexity theory (GCT) is an approach to the P vs. NP and related problems. This article gives its complexity theoretic overview without assuming any background in algebraic geometry or representation theory.",
+      "url": "http://arxiv.org/abs/0908.1932v2"
+    },
+    {
+      "title": "Freedom in constructing quasi-copulas vs. copulas",
+      "summary": "The main goal of this paper is to study the extent of freedom one has in constructing quasi-copulas vs. copulas. Specifically, it exhibits three construction methods for quasi-copulas based on recent developments: a representation of multivariate quasi-copulas by means of infima and suprema of copulas, an extension of a classical result on shuffles of min to the setting of quasi-copulas, and a construction method for quasi-copulas obeying a given signed mass pattern on a patch.",
+      "url": "http://arxiv.org/abs/2407.15393v4"
+    },
+    {
+      "title": "HBT with Space- vs. Time-like Hydrodynamic Freezeout",
+      "summary": "Bose-Einstein correlations in relativistic heavy ion collisions and their dependence on the freeze-out condition in hydrodynamic models is compared to time-like freeze-out, where particles are emitted away only from the surface, i.e. space- vs. time-like freeze-out. The corresponding HBT radii are calculated for the two models emphasizing the difference in the outward HBT radius.",
+      "url": "http://arxiv.org/abs/nucl-th/9708001v1"
+    },
+    {
+      "title": "A Procedure for Developing Uncertainty-Consistent Vs Profiles from Inversion of Surface Wave Dispersion Data",
+      "summary": "Non-invasive surface wave methods have become a popular alternative to traditional invasive forms of site-characterization for inferring a site's subsurface shear wave velocity (Vs) structure. The advantage of surface wave methods over traditional forms of site characterization is that measurements made solely at the ground surface can be used routinely and economically to infer the subsurface structure of a site to depths of engineering interest (20-50 m), and much greater depths (&gt;1 km) in some special cases. However, the quantification and propagation of uncertainties from surface wave measurements into the Vs profiles used in subsequent engineering analyses remains challenging. While this has been the focus of much work in recent years, and while considerable progress has been made, no approach for doing so has been widely accepted, leading analysts to either address the propagation of uncertainties in their own specialized manner or, worse, to ignore these uncertainties entirely. In response, this paper presents an easy-to-implement, effective, and verifiable method for developing uncertainty-consistent Vs profiles from inversion of surface wave dispersion data. We begin by examining four approaches presented in the literature for developing suites of Vs profiles meant to account for uncertainty present in the measured dispersion data. These methods are shown to be deficient in three specific ways. First, all approaches are shown to be highly sensitive to their many user-defined inversion input parameters, making it difficult/impossible for them to be performed repeatedly by different analysts. Second, the suites of inverted Vs profiles, when viewed in terms of their implied theoretical dispersion data, are shown to significantly underestimate the uncertainty present in the experimental dispersion data, though some may appear satisfactory when viewed purely qualitatively...",
+      "url": "http://arxiv.org/abs/2007.09775v2"
+    },
+    {
+      "title": "Half-integer vs. integer effects in quantum synchronization of spin systems",
+      "summary": "We study the quantum synchronization of a single spin driven by an external semiclassical signal for spin numbers larger than $S = 1$, the smallest system to host a quantum self-sustained oscillator. The occurrence of interference-based quantum synchronization blockade is found to be qualitatively different for integer vs. half-integer spin number $S$. We explain this phenomenon as the interplay between the external signal and the structure of the limit cycle in the generation of coherence in the system. Moreover, we show that the same dissipative limit-cycle stabilization mechanism leads to very different levels of quantum synchronization for integer vs. half-integer $S$. However, by choosing an appropriate limit cycle for each spin number, comparable levels of quantum synchronization can be achieved for both integer and half-integer spin systems.",
+      "url": "http://arxiv.org/abs/2208.12766v2"
+    },
+    {
+      "title": "Complexity in genetic networks: topology vs. strength of interactions",
+      "summary": "Genetic regulatory networks are defined by their topology and by a multitude of continuously adjustable parameters. Here we present a class of simple models within which the relative importance of topology vs. interaction strengths becomes a well-posed problem. We find that complexity - the ability of the network to adopt multiple stable states - is dominated by the adjustable parameters. We comment on the implications for real networks and their evolution.",
+      "url": "http://arxiv.org/abs/1308.0317v1"
+    },
+    {
+      "title": "Identification for Accountability vs Privacy",
+      "summary": "This document considers the counteracting requirements of privacy and accountability applied to identity management. Based on the requirements of GDPR applied to identity attributes, two forms of identity, with differing balances between privacy and accountability, are suggested, termed \"publicly-recognised identity\" and \"domain-specific identity\". These forms of identity can be further refined using \"pseudonymisation\" and as described in GDPR. This leads to the different forms of identity on the spectrum of accountability vs privacy. It is recommended that the privacy and accountability requirements, and hence the appropriate form of identity, are considered in designing an identification scheme and in the adoption of a scheme by data processing systems. Also, users should be aware of the implications of the form of identity requested by a system, so that they can decide whether this is acceptable.",
+      "url": "http://arxiv.org/abs/2201.06971v4"
+    },
+    {
+      "title": "Cops vs. Gambler",
+      "summary": "We consider a variation of cop vs.\\ robber on graph in which the robber is not restricted by the graph edges; instead, he picks a time-independent probability distribution on $V(G)$ and moves according to this fixed distribution. The cop moves from vertex to adjacent vertex with the goal of minimizing expected capture time. Players move simultaneously. We show that when the gambler's distribution is known, the expected capture time (with best play) on any connected $n$-vertex graph is exactly $n$. We also give bounds on the (generally greater) expected capture time when the gambler's distribution is unknown to the cop.",
+      "url": "http://arxiv.org/abs/1308.4715v1"
+    },
+    {
+      "title": "New ultracool subdwarfs identified in large-scale surveys using Virtual Observatory tools: II. SDSS DR7 vs UKIDSS LAS DR6, SDSS DR7 vs UKIDSS LAS DR8, SDSS DR9 vs UKIDSS LAS DR10, and SDSS DR7 vs 2MASS",
+      "summary": "We aim at developing an efficient method to search for late-type subdwarfs (metal-depleted dwarfs with spectral types &gt;M5) to improve the current statistics. Our objectives are: improve our knowledge of metal-poor low-mass dwarfs, bridge the gap between the late-M and L types, determine their surface density, and understand the impact of metallicity on the stellar and substellar mass function.\n  We carried out a search cross-matching the SDSS, 2MASS, and UKIDSS using STILTS, Aladin, and Topcat. We considered different photometric and proper motion criteria for our selection. We identified 29 and 71 late-type subdwarf candidates in each cross-correlation over 8826 and 3679 square degrees, respectively. We obtained low-resolution optical spectra for 71 of our candidates with GTC, NOT, and VLT and retrieved spectra for 30 candidates from the SDSS spectroscopic database. We classified 92 candidates based on 101 optical spectra using two methods: spectral indices and comparison with templates of known subdwarfs.\n  We confirmed 86% and 94% of the candidates as late-type subdwarfs from the SDSS vs 2MASS and SDSS vs UKIDSS cross-matches, respectively. These subdwarfs have spectral types ranging between M5 and L0.5 and SDSS magnitudes in the r=19.4-23.3 mag range. Our new late-type M discoveries include 49 subdwarfs, 25 extreme subdwarfs, six ultrasubdwarfs, one subdwarf/extreme subdwarf, and two dwarfs/subdwarfs. We derived a surface density of late-type subdwarfs of 0.040$^{+0.012}_{-0.007}$ per square degree in the SDSS DR7 vs UKIDSS LAS DR10 cross-match. We also checked the AllWISE photometry of known and new subdwarfs and found that mid-infrared colours of M subdwarfs do not appear to differ from their solar-metallicity counterparts of similar spectral types. However, the J-W2 and J-W1 colours are bluer for lower metallicity dwarfs. (abstract strongly abridged)",
+      "url": "http://arxiv.org/abs/1609.08323v1"
+    },
+    {
+      "title": "Axial vs. Radial Junction Nanowire Solar Cell",
+      "summary": "Both axial and radial junction nanowire solar cells have their challenges and advantages. However, so far, there is no review that explicitly provides a detailed comparative analysis of both axial and radial junction solar cells. This article reviews some of the recent results on axial and radial junction nanowire solar cells with an attempt to perform a comparative study between the optical and device behavior of these cells. In particular, we start by reviewing different results on how the absorption can be tuned in axial and radial junction solar cells. We also discuss results on some of the critical device concepts that are required to achieve high efficiency in axial and radial junction solar cells. We include a section on new device concepts that can be realized in nanowire structures. Finally, we conclude this review by discussing a few of the standing challenges of nanowire solar cells.",
+      "url": "http://arxiv.org/abs/2103.13190v1"
+    },
+    {
+      "title": "Mildly mixed coupled models vs. WMAP7 data",
+      "summary": "Mildly mixed coupled models include massive neutrinos and CDM--DE coupling. We present new tests of their likelihood vs. recent data including WMAP7, confirming it to exceed LCDM, although at ~2\u03c3's. We then show the impact on the physics of the dark components of neutrino mass detection in tritium beta decay or neutrinoless double beta decay experiments.",
+      "url": "http://arxiv.org/abs/1101.2155v1"
+    },
+    {
+      "title": "BERT vs GPT for financial engineering",
+      "summary": "The paper benchmarks several Transformer models [4], to show how these models can judge sentiment from a news event. This signal can then be used for downstream modelling and signal identification for commodity trading. We find that fine-tuned BERT models outperform fine-tuned or vanilla GPT models on this task. Transformer models have revolutionized the field of natural language processing (NLP) in recent years, achieving state-of-the-art results on various tasks such as machine translation, text summarization, question answering, and natural language generation. Among the most prominent transformer models are Bidirectional Encoder Representations from Transformers (BERT) and Generative Pre-trained Transformer (GPT), which differ in their architectures and objectives.\n  A CopBERT model training data and process overview is provided. The CopBERT model outperforms similar domain specific BERT trained models such as FinBERT. The below confusion matrices show the performance on CopBERT &amp; CopGPT respectively. We see a ~10 percent increase in f1_score when compare CopBERT vs GPT4 and 16 percent increase vs CopGPT. Whilst GPT4 is dominant It highlights the importance of considering alternatives to GPT models for financial engineering tasks, given risks of hallucinations, and challenges with interpretability. We unsurprisingly see the larger LLMs outperform the BERT models, with predictive power. In summary BERT is partially the new XGboost, what it lacks in predictive power it provides with higher levels of interpretability. Concluding that BERT models might not be the next XGboost [2], but represent an interesting alternative for financial engineering tasks, that require a blend of interpretability and accuracy.",
+      "url": "http://arxiv.org/abs/2405.12990v1"
+    },
+    {
+      "title": "Dilaton vs Higgs: Nearly Conformal theory with confinement-like pattern",
+      "summary": "We consider the model containing a dilaton vs Higgs boson in the nearly conformal sector (NCS). The potential of a dilaton in NCS is linearly rising with distances. The light scalar dilaton would be one of the best candidates to explain the LHC data in recent discovery of a Higgs-like resonance at 125 GeV.",
+      "url": "http://arxiv.org/abs/1211.1186v1"
+    },
+    {
+      "title": "On the equation of the $p$-adic open string for the scalar tachyon field",
+      "summary": "We study the structure of solutions of the one-dimensional non-linear pseudodifferential equation describing the dynamics of the $p$-adic open string for the scalar tachyon field $p^{\\frac12\\partial^2_t}\u03a6=\u03a6^p$. We elicit the role of real zeros of the entire function $\u03a6^p(z)$ and the behaviour of solutions $\u03a6(t)$ in the neighbourhood of these zeros. We point out that discontinuous solutions can appear if $p$ is even. We use the method of expanding the solution $\u03a6$ and the function $\u03a6^p$ in the Hermite polynomials and modified Hermite polynomials and establish a connection between the coefficients of these expansions (integral conservation laws). For $p=2$ we construct an infinite system of non-linear equations in the unknown Hermite coefficients and study its structure. We consider the 3-approximation. We indicate a connection between the problems stated and the non-linear boundary-value problem for the heat equation.",
+      "url": "http://arxiv.org/abs/math-ph/0507018v1"
+    },
+    {
+      "title": "Antonym vs Synonym Distinction using InterlaCed Encoder NETworks (ICE-NET)",
+      "summary": "Antonyms vs synonyms distinction is a core challenge in lexico-semantic analysis and automated lexical resource construction. These pairs share a similar distributional context which makes it harder to distinguish them. Leading research in this regard attempts to capture the properties of the relation pairs, i.e., symmetry, transitivity, and trans-transitivity. However, the inability of existing research to appropriately model the relation-specific properties limits their end performance. In this paper, we propose InterlaCed Encoder NETworks (i.e., ICE-NET) for antonym vs synonym distinction, that aim to capture and model the relation-specific properties of the antonyms and synonyms pairs in order to perform the classification task in a performance-enhanced manner. Experimental evaluation using the benchmark datasets shows that ICE-NET outperforms the existing research by a relative score of upto 1.8% in F1-measure. We release the codes for ICE-NET at https://github.com/asif6827/ICENET.",
+      "url": "http://arxiv.org/abs/2401.10045v1"
+    },
+    {
+      "title": "Study of Particle Production in Quark vs. Gluon Fragmentation at sqrt s ~ 10GeV",
+      "summary": "Using data collected with the CLEO III detector at the Cornell Electron Storage Ring, we have compared proton, lambda (charged conjugate modes are implicit) and meson (phi and f2(1270)) production observed in gluon fragmentation vs. quark fragmentation. Two studies have been conducted: in the first, we corroborrate previous per-event particle yields in Upsilon(1S)-&gt;ggg vs. e+e- -&gt; qqbar. In the second, we compare particle production in the photon-tagged process U(1S)-&gt;gggamma with that in e+e- -&gt; qqbargamma events. For each particle, we determine the `enhancement' ratio, defined as the ratio of particle yields per gluon fragmentation event compared to quark fragmentation event. Thus defined, an enhancement of 1.0 implies equal per-event production in both gluon and quark fragmentation. In the photon-tagged analysis, we find an enhancement of order unity for protons and approximately 1.5 for lambda's. This measured proton enhancement rate is supported by a study of baryon production in chib(J=2)-&gt;proton+X relative to chib(J=1)-&gt;proton+X. The production of mesons having masses of order 1 GeV (phi and f2(1270)) are found to be also approximately the same in gggamma vs. qqbargamma fragmentation. Overall, per-event baryon production in two-gluon fragmentation is considerably smaller than that observed in three-gluon decays of the Upsilon(1S). Our results for baryon production are inconsistent with the predictions of the JETSET (7.4) fragmentation model.",
+      "url": "http://arxiv.org/abs/hep-ex/0607052v2"
+    },
+    {
+      "title": "Open Clusters in the log Age vs. M_V plane",
+      "summary": "In the log Age vs. integrated absolute magnitude (M_V) plane, the open clusters of the Milky Way form a well-defined band parallel to theoretical sequences decribing the passive evolution of Simple Stellar Populations and display a pretty sharp upper threshold in mass (M ~ 2X 10^4 M_{sun}) over a 4 dex range of ages.",
+      "url": "http://arxiv.org/abs/0711.0702v2"
+    },
+    {
+      "title": "Exact Distance Oracles for Planar Graphs with Failing Vertices",
+      "summary": "We consider exact distance oracles for directed weighted planar graphs in the presence of failing vertices. Given a source vertex $u$, a target vertex $v$ and a set $X$ of $k$ failed vertices, such an oracle returns the length of a shortest $u$-to-$v$ path that avoids all vertices in $X$. We propose oracles that can handle any number $k$ of failures. We show several tradeoffs between space, query time, and preprocessing time. In particular, for a directed weighted planar graph with $n$ vertices and any constant $k$, we show an $\\tilde{\\mathcal{O}}(n)$-size, $\\tilde{\\mathcal{O}}(\\sqrt{n})$-query-time oracle. We then present a space vs. query time tradeoff: for any $q \\in \\lbrack 1,\\sqrt n \\rbrack$, we propose an oracle of size $n^{k+1+o(1)}/q^{2k}$ that answers queries in $\\tilde{\\mathcal{O}}(q)$ time. For single vertex failures ($k=1$), our $n^{2+o(1)}/q^2$-size, $\\tilde{\\mathcal{O}}(q)$-query-time oracle improves over the previously best known tradeoff of Baswana et al. [SODA 2012] by polynomial factors for $q \\geq n^t$, for any $t \\in (0,1/2]$. For multiple failures, no planarity exploiting results were previously known.\n  A preliminary version of this work was presented in SODA 2019. In this version, we show improved space vs. query time tradeoffs relying on the recently proposed almost optimal distance oracles for planar graphs [Charalampopoulos et al., STOC 2019; Long and Pettie, SODA 2021].",
+      "url": "http://arxiv.org/abs/1807.05968v3"
+    },
+    {
+      "title": "Spectral Efficiency vs Complexity in Downlink Algorithms for Reconfigurable Intelligent Surfaces",
+      "summary": "Reconfigurable Intelligent Surfaces (RIS) are an emerging technology that can be used to reconfigure the propagation environment to improve cellular communication link rates. RIS, which are thin metasurfaces composed of discrete elements, passively manipulate incident electromagnetic waves through controlled reflective phase tuning. In this paper, we investigate co-design of the multiantenna basestation beamforming vector and multielement RIS phase shifts. The downlink narrowband transmission uses sub-6 GHz frequency bands, and the user equipment has a single antenna. Subject to the non-convex constraints due to the RIS phase shifts, we maximize the spectral efficiency or equivalent channel power as a proxy. Our contributions in improving RIS-aided links include (1) design of gradient ascent codesign algorithms, and (2) comparison of seven codesign algorithms in spectral efficiency vs. computational complexity. In simulation, the best spectral efficiency vs. computational complexity tradeoffs are shown by two of our proposed gradient ascent algorithms.",
+      "url": "http://arxiv.org/abs/2011.04859v1"
+    },
+    {
+      "title": "Double layer in ionic liquids: capacitance vs temperature",
+      "summary": "Temperature dependence of the capacitance of the electrical double layer (EDL) in concentrated electrolytes/ionic liquids has been under debates for decades. To rationalise the capacitance vs temperature dependence, we run molecular dynamics simulations of the EDL at variable temperatures. We show that the dependence is related to the smearing of the EDL multilayer structure with increasing temperature. The results are in agreement with the recent experimental data. To explain the results, we propose a phenomenological ionic bilayer model.",
+      "url": "http://arxiv.org/abs/1711.06854v2"
+    },
+    {
+      "title": "Holographic cosmology from \"dimensional reduction\" of ${\\cal N}=4$ SYM vs. $AdS_5\\times S^5$",
+      "summary": "We propose a way to obtain holographic cosmology models for 3+1 dimensional cosmologies vs. 3 dimensional field theories from a \"dimensional reduction\" procedure, obtained by integrating over the time direction, of (modifed) standard holographic duals of 3+1 dimensional field theories. The example of a modified ${\\cal N}=4$ SYM vs. $AdS_5\\times S^5$ is presented, and in perturbation theory doesn't match observations, though at strong coupling it might. But the proposed mechanism is more general, and it could in principle be applied to other top down holographic models.",
+      "url": "http://arxiv.org/abs/1812.07586v2"
+    },
+    {
+      "title": "Contractivity vs. Complete Contractivity via property P",
+      "summary": "In this paper, we consider the question of contractivity vs. complete contractivity for domains in $\\mathbb{C}^2$, which are unit balls with respect to some norm. We show that for a large class of Reinhardt domains, the corresponding Banach spaces do not have Property P, which implies that there exists contractive homomorphisms on these domains which are not completely contractive. At the end, we present a simple proof of the fact that the complex Banach spaces $(\\mathbb{C}^2,\\|\\cdot\\|_{\\infty})$ and $(\\mathbb{C}^3,\\|\\cdot\\|_{\\infty})$ have Property P.",
+      "url": "http://arxiv.org/abs/1701.02474v2"
+    },
+    {
+      "title": "The solution to the `$1/2$ vs $3/2$' puzzle",
+      "summary": "Using an almost complete relativistic method based on the Bethe-Salpeter equation, we study the mixing angle $\u03b8$, the mass splitting $\\bigtriangleup M$, the strong decay widths $\u0393(D^{({\\prime})}_1)$ and the weak production rates $Br(B\\to D^{({\\prime})}_1\\ell\u03bd_{\\ell})$ of the $D_1(2420)$ and $D_1^{\\prime}(2430)$. We find there is the strong cancellation between the $^1P_1$ and $^3P_1$ partial waves in $D_1^{\\prime}(2430)$ with $\u03b8\\sim-35.3^{\\circ}$, which leads to the `$1/2$ vs $3/2$' puzzle. The puzzle can not be overcome by adding only relativistic corrections since in a large parameter range where $\\bigtriangleup M$ is linear varying and not small, the $\u03b8$, $\u0393(D^{({\\prime})}_1)$ and $Br(B\\to D^{({\\prime})}_1\\ell\u03bd_{\\ell})$ remain almost unchanged but conflict with data. While in a special range around the mass inverse point where $\\bigtriangleup M=0$ and $\u03b8=\\pm 90^{\\circ}$, they change rapidly but we find the windows where $\\bigtriangleup M$, $\u0393(D^{({\\prime})}_1)$ and $Br(B\\to D^{({\\prime})}_1\\ell\u03bd_{\\ell})$ are all consistent with data. The small $\\bigtriangleup M$ confirmed by experiment, is crucial to solve the `$1/2$ vs $3/2$' puzzle.",
+      "url": "http://arxiv.org/abs/2205.15470v2"
+    },
+    {
+      "title": "Weak vs. Strong Correlations: Bid-Ask Spreads for Weather-Contingent Options",
+      "summary": "We price weather-contingent options by use of Monte Carlo simulations. After calibrating the models to fit quoted prices, we analyze bid-ask spreads in terms of correlations across markets. Results are presented for a double-trigger Weather vs. Natural Gas call option.",
+      "url": "http://arxiv.org/abs/cond-mat/0305417v1"
+    },
+    {
+      "title": "Robustness of Time Reversal vs. All-Rake Transceivers in Multiple Access Channels",
+      "summary": "Time reversal, that is prefiltering of transmitted signals with time reversed channel impulse responses, may be used in single user communications in order to move complexity from the receiver to the transmitter, and in multiuser communications to also modify statistical properties of multiuser interference. Imperfect channel estimation may, however, affect pre- vs. post- filtering schemes in a different way. This issue is the object of this paper; Robustness of time reversal vs. All-Rake (AR) transceivers, in multiple access communications, with respect to channel estimation errors, is investigated. Results of performance analyses in terms of symbol error probability and spectral efficiency when the receiver is structured either by a bank of matched filters or by 1Rake, followed by independent decoders, indicate that AR is slightly more robust than time reversal but requires in practice more complex channel estimation procedures since all channels must be simultaneously inferred in the multiuser communication setting.",
+      "url": "http://arxiv.org/abs/1405.4459v1"
+    },
+    {
+      "title": "On P vs. NP, Geometric Complexity Theory, and the Riemann Hypothesis",
+      "summary": "Geometric complexity theory (GCT) is an approach to the $P$ vs. $NP$ and related problems. A high level overview of this research plan and the results obtained so far was presented in a series of three lectures in the Institute of Advanced study, Princeton, Feb 9-11, 2009. This article contains the material covered in those lectures after some revision, and gives a mathematical overview of GCT. No background in algebraic geometry, representation theory or quantum groups is assumed.",
+      "url": "http://arxiv.org/abs/0908.1936v2"
+    },
+    {
+      "title": "Review on 'Integrability of the S-Matrix vs Integrability of the Hamiltonian' by C. Jung and T.H. Seligman",
+      "summary": "We review the paper 'Integrability of the S-Matrix vs Integrability of the Hamiltonian' by C. Jung and T.H. Seligman (Phys. Rep. 285, 77-141 (1997)). This paper deals with the connection between the integrability of the scattering matrix $S$ and the integrability of the Hamiltonian $H$ for classical and quantum Hamiltonian systems.",
+      "url": "http://arxiv.org/abs/chao-dyn/9712014v1"
+    }
+  ],
+  "github_results": [],
+  "summary": ""
+}

@@ -2,16 +2,31 @@
   "name": "thegent-docs",
   "private": true,
   "type": "module",
+  "packageManager": "bun@latest",
   "scripts": {
+    "docs:generate": "python3 scripts/vitepress-agent-workflow.py",
+    "docs:sidebar": "python3 scripts/generate-sidebar.py",
+    "docs:llms": "python3 scripts/generate-llms-docs.py",
+    "docs:api": "python3 scripts/generate-api-docs.py",
+    "docs:architecture": "python3 scripts/generate-architecture-diagrams.py",
+    "docs:cli": "python3 scripts/generate-cli-examples.py",
+    "docs:links": "python3 scripts/check-docs-links.py docs/",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "docs:pdf": "press-export-pdf docs"
   },
   "devDependencies": {
+    "@orama/plugin-vitepress": "^3.1.18",
+    "@playwright/test": "^1.48.0",
+    "markdown-it-emoji": "^3.0.0",
+    "markdown-it-katex": "^2.0.3",
+    "mermaid": "^11.4.0",
     "puppeteer": "^24.37.3",
+    "vite-imagetools": "^9.0.3",
     "vitepress": "^1.5.0",
     "vitepress-export-pdf": "^1.0.0",
+    "vitepress-plugin-mermaid": "^2.0.3",
     "vue": "^3.5.0"
   }
 }

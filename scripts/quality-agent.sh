@@ -1,58 +1,74 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # quality-agent.sh — Run full quality pipeline; on failure, show output and pipe to agent.
 # Flags: -h (headless), -r (reload until green)
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ -n "${ZSH_VERSION:-}" ]; then
+  _SCRIPT_PATH="${(%):-%x}"
+elif [ -n "${BASH_VERSION:-}" ]; then
+  _SCRIPT_PATH="${BASH_SOURCE[0]}"
+else
+  _SCRIPT_PATH="$0"
+fi
+_SCRIPT_DIR="${_SCRIPT_PATH%/*}"
+
+ROOT_DIR="$(cd "$_SCRIPT_DIR/.." && pwd)"
 cd "$ROOT_DIR"
+
+if ! command -v task &>/dev/null; then
+  echo "Error: 'task' (go-task) not found. Install with: brew install go-task"
+  echo "Or run: brew bundle (from project root)"
+  exit 127
+fi
 
 HEADLESS=0
 RELOAD=0
+VERBOSE=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h|--headless) HEADLESS=1; shift ;;
     -r|--reload) RELOAD=1; shift ;;
+    -v|--verbose) VERBOSE=1; shift ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
 
-KUSH_LIB="${KUSH_LIB:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)/lib}"
+_run_quality_agent() {
+  local prompt="$1"
+  # dex + copilot gpt-5-mini (copilot doesn't support flash); replaces direct copilot
+  local model="${COPILOT_QUALITY_MODEL:-gpt-5-mini}"
+  uv run thegent dex run "$model" "$prompt" --mode write
+}
+
+KUSH_LIB="${KUSH_LIB:-$(cd "$_SCRIPT_DIR/../.." 2>/dev/null && pwd)/lib}"
 if [[ -f "${KUSH_LIB:-}/quality-agent-common.sh" ]]; then
   # shellcheck source=../../lib/quality-agent-common.sh
   source "$KUSH_LIB/quality-agent-common.sh"
-else
-  _run_copilot() {
-    local prompt="$1"
-    local primary="${COPILOT_QUALITY_MODEL:-gemini-3-flash}"
-    local fallback="gpt-5-mini"
-    set +e
-    printf '%s' "$prompt" | copilot --model "$primary" --allow-all-paths --allow-all-tools
-    local rc=$?
-    set -e
-    if [[ $rc -ne 0 ]]; then
-      echo "── Primary model ($primary) unavailable, retrying with $fallback ──"
-      printf '%s' "$prompt" | copilot --model "$fallback" --allow-all-paths --allow-all-tools
-    fi
-  }
 fi
 
 _do_agent() {
   local prompt="$1"
+  local extra_args=""
+  [[ "$VERBOSE" -eq 1 ]] && extra_args="--full"
+
   if [[ "$HEADLESS" -eq 1 ]]; then
-    uv run thegent run "$prompt"
+    # shellcheck disable=SC2086
+    uv run thegent run "$prompt" quality-agent $extra_args
   else
-    if command -v copilot &>/dev/null; then
-      _run_copilot "$prompt"
+    if command -v codex &>/dev/null; then
+      _run_quality_agent "$prompt"
     else
-      echo "Install copilot for interactive fix."
-      exit 1
+      echo "No codex found, falling back to thegent quality-agent..."
+      # shellcheck disable=SC2086
+      uv run thegent run "$prompt" quality-agent $extra_args
     fi
   fi
 }
 
 while true; do
   set +e
-  RUN_OUTPUT=$(task quality 2>&1)
+  # quality:dag auto-generates config, runs DAG with soft-fail, prints failed logs for agent
+  RUN_OUTPUT=$(task quality:dag 2>&1)
   RC=$?
   set -e
 

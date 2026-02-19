@@ -1,0 +1,42 @@
+{
+  "agent": "claude",
+  "command": [
+    "/usr/local/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "300",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_65a6928b",
+    "Implement 'research-maif-artifacts' Phase 1 as defined in docs/changes/research-maif-artifacts/tasks.md.",
+    "claude"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 75357,
+  "launcher_ppid": 75293,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:75357",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75357/20260218T102839Z-claude-p75357-565e754c.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75357/20260218T102839Z-claude-p75357-565e754c.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75357/20260218T102839Z-claude-p75357-565e754c.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75357/20260218T102839Z-claude-p75357-565e754c.stdout.log"
+  },
+  "pid": 75387,
+  "prompt": "Implement 'research-maif-artifacts' Phase 1 as defined in docs/changes/research-maif-artifacts/tasks.md.",
+  "session_id": "20260218T102839Z-claude-p75357-565e754c",
+  "started_at_utc": "2026-02-18T10:28:39.799693+00:00",
+  "status": "running",
+  "timeout_hint_s": 300,
+  "version": 1
+}

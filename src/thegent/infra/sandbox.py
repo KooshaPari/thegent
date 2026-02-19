@@ -5,7 +5,7 @@ Ensures near-native performance with strict memory and capability isolation.
 
 import logging
 import shutil
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -37,10 +37,7 @@ class WasmSandbox:
 
         # Ensure wasmtime/wasmer is available if needed for the runtime
         if not shutil.which("wasmtime") and not shutil.which("wasmer"):
-            raise ConfigError(
-                "No Wasm runtime (wasmtime or wasmer) found in PATH.",
-                get_install_hint("wasmtime")
-            )
+            raise ConfigError("No Wasm runtime (wasmtime or wasmer) found in PATH.", get_install_hint("wasmtime"))
 
         # In a real implementation, this would use a library like 'wasmtime' or 'wasmer'.
         # We would instantiate the module, link imports, and call the exported function.

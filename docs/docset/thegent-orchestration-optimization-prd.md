@@ -10071,3 +10071,11 @@ The planning phase is considered complete when:
 - two consecutive release cycles meet stability and continuity SLAs.
 
 This document remains open for future append operations and historical traceability.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

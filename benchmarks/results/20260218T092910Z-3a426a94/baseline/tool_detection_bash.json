@@ -1,0 +1,35 @@
+{
+  "results": [
+    {
+      "command": "bash -lc 'source \"/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/hooks/lib/common.sh\"; JQ_CMD=\"$(command -v jq 2>/dev/null || echo jq)\"; RG_CMD=\"$(command -v rg 2>/dev/null || true)\"; FD_CMD=\"$(command -v fd 2>/dev/null || true)\"; echo \"$JQ_CMD$RG_CMD$FD_CMD\" >/dev/null'",
+      "mean": 2.7878912413399997,
+      "stddev": 2.3125216017479375,
+      "median": 1.49206224094,
+      "user": 0.8062164199999999,
+      "system": 0.25799806,
+      "min": 1.16707403294,
+      "max": 6.65844165794,
+      "times": [
+        6.65844165794,
+        3.21886982494,
+        1.16707403294,
+        1.40300844994,
+        1.49206224094
+      ],
+      "memory_usage_byte": [
+        75055104,
+        75055104,
+        75055104,
+        75055104,
+        75055104
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

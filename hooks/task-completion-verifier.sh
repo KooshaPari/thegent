@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # task-completion-verifier.sh — TaskCompleted hook
 # Checks that modified files have corresponding test files and pass syntax
 # checks. Advisory only (always exits 0).
@@ -24,6 +24,10 @@ hook_init
 
 # Output immediately to prevent idle timeout
 echo "TASK-COMPLETION-VERIFIER: starting..." >&2
+
+# Start progress reporter to prevent idle timeout (180s kill if no output)
+_progress_pid=$(hook_progress_start "Task completion verifier running..." 30)
+trap 'hook_progress_stop $_progress_pid 2>/dev/null; trap - ERR' ERR EXIT
 
 # --- P1 optimization: Skip if no source files changed ---
 # Only run if code files were modified
@@ -182,6 +186,15 @@ if [[ ${#RS_GREP_FILES[@]} -gt 0 ]]; then
     done
     WARNINGS=("${_new_warnings[@]}")
   fi
+fi
+
+# ---------- DX Standards Audit (WP-DX1) ----------
+if [[ -f "$PROJECT_DIR/scripts/dx-audit.sh" ]]; then
+  echo ""
+  echo "DX Standards Audit"
+  echo "------------------"
+  # Run in advisory mode with timeout to avoid idle timeout; ignore exit code
+  (cd "$PROJECT_DIR" && (run_with_timeout 120 ./scripts/dx-audit.sh 2>&1 || true)) | sed 's/^/  /' || true
 fi
 
 # ---------- Report ----------

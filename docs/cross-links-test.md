@@ -8,3 +8,11 @@ This page tests the cross-project link plugin functionality.
 - [jobhunter PRD](~jobhunter:/docs/specs/PRD.md)
 - [sharecli Guide](~sharecli:/README.md)
 - [trace Overview](~trace:/docs/index.md)
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

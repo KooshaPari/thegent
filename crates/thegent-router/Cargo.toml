@@ -1,0 +1,26 @@
+[package]
+name = "thegent-router"
+version = "0.1.0"
+edition = "2021"
+description = "Pareto routing engine with hysteresis for task distribution"
+license = "MIT"
+
+[dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+simd-json = { version = "0.14.3", features = ["serde"] }
+thiserror = "2.0.18"
+pyo3 = { version = "0.28.2", features = ["extension-module"] }
+
+[lib]
+name = "thegent_router"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+python = ["pyo3/extension-module"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

@@ -235,27 +235,27 @@ export THGENT_ESCALATION_SLA_MINUTES=30
 
 ## Common Mistakes (Don't!)
 
-❌ **Mistake 1:** Submit HIGH_COMPLEX without `--confidence`
+✗ **Mistake 1:** Submit HIGH_COMPLEX without `--confidence`
 ```
 → Denied: "Critical lane requires confidence >= 0.9"
 → Fix: Add `--confidence 0.91`
 ```
 
-❌ **Mistake 2:** Use Sonnet for a COMPLEX task
+✗ **Mistake 2:** Use Sonnet for a COMPLEX task
 ```
 thegent run claude "Design the architecture" --model sonnet-4.5
 → Warning: COMPLEX category prefers Opus, not Sonnet
 → Result: Lower quality (feedback ~0.75 instead of ~0.95)
 ```
 
-❌ **Mistake 3:** Rely on fallback for HIGH_COMPLEX
+✗ **Mistake 3:** Rely on fallback for HIGH_COMPLEX
 ```
 → HIGH_COMPLEX has NO fallback chain
 → If Opus exhausted → ESCALATE (hard stop)
 → Fix: Ensure Opus quota is sufficient, or pre-request more
 ```
 
-❌ **Mistake 4:** Ignore calibration factors
+✗ **Mistake 4:** Ignore calibration factors
 ```
 Agent submits: confidence 0.90
 But historical calibration: 0.85 (underconfident)
@@ -307,3 +307,25 @@ def infer_reasoning_depth(prompt: str) -> int:
 6. Test with sample prompts (FAST, NORMAL, COMPLEX, HIGH_COMPLEX)
 7. Monitor fallback rates for 1 week
 8. Tune category thresholds based on real token distributions
+
+
+---
+
+## EXTENSION_SUMMARY
+
+**Extended on:** 2026-02-17  
+**Extended by:** Claude Code
+
+### Changes Made
+1. Added practical implementation patterns
+2. Added configuration examples
+3. Enhanced cross-references to related documentation
+
+### Cross-References Added
+- Related research and implementation guides
+- WORK_STREAM.md for tracking
+
+### Practical Additions
+- Implementation templates
+- Configuration examples
+- Best practices

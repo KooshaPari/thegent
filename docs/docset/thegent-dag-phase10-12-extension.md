@@ -88,3 +88,11 @@ flowchart TD
 4. `G11` must confirm no control oscillation before entering `N12001`.
 5. `G12` requires signed evidence graph and deterministic artifact output.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

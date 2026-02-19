@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # Test suite for git cache invalidation fix (Critical Issue #2)
 # Validates that cache properly invalidates on HEAD SHA cycles and config changes
 set -euo pipefail
@@ -270,6 +270,9 @@ main() {
     echo "Git Cache Invalidation Tests (Critical Issue #2 Fix)"
     echo "======================================================"
     echo ""
+
+    # Initialize repo once for all tests
+    init_test_repo > /dev/null
 
     test_cache_key_on_config_change
     test_session_id_prevents_collision

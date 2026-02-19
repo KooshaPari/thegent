@@ -32,10 +32,10 @@ The thegent project is **primarily Python-based** (using ruff for linting) with 
 ### ESLint Configuration Status
 
 **Current State**:
-- ❌ No `.eslintrc*` file found in project root or source directories
-- ❌ No `eslint.config.js` configuration
-- ❌ No `package.json` with ESLint config
-- ⚠️ ESLint appears only as **fallback** in `quality-gate.sh` line 186-188
+- ✗ No `.eslintrc*` file found in project root or source directories
+- ✗ No `eslint.config.js` configuration
+- ✗ No `package.json` with ESLint config
+- ⚠ ESLint appears only as **fallback** in `quality-gate.sh` line 186-188
 
 **Integration Points**:
 ```bash
@@ -112,11 +112,11 @@ These ESLint rules map 1:1 to oxlint:
 
 | ESLint Rule | oxlint Status | Rationale/Workaround |
 |-------------|---------------|------|
-| import/no-default-export | ❌ NOT in oxlint | Style preference; skip or use in-code JSDoc/eslint-disable |
+| import/no-default-export | ✗ NOT in oxlint | Style preference; skip or use in-code JSDoc/eslint-disable |
 | import/max-dependencies | Partial | oxlint: max-params covers function params; file dependencies not natively checked |
 | security/detect-object-injection | ⚠ Basic coverage | oxlint has lighter detection; acceptable for template configs |
 | security/detect-non-literal-regexp | ⚠ Basic coverage | oxlint covers most cases; document gap |
-| jsdoc/* rules | ❌ NOT in oxlint | Use separate jsdoc plugin or skip in oxlint (use in separate tool) |
+| jsdoc/* rules | ✗ NOT in oxlint | Use separate jsdoc plugin or skip in oxlint (use in separate tool) |
 
 ---
 
@@ -239,3 +239,39 @@ Try eslint
 
 **Overall Risk**: LOW (Python-first project, JS/TS is optional/template-based)
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+
+
+---
+
+## 6. EXTENSION_SUMMARY
+
+**Extended on:** 2026-02-17  
+**Extended by:** Claude Code
+
+### Changes Made
+1. Added ESLint configuration patterns
+2. Added rule mappings
+3. Enhanced cross-references
+
+### Cross-References Added
+- LIBRARY_REPLACEMENT_AUDIT_DEEP.md
+- GOVERNANCE_POLICY_AUDIT_RESEARCH.md
+
+### Practical Additions
+- ESLint config templates
+- Rule recommendations
+
+---
+
+## See Also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream
+- [LIBRARY_REPLACEMENT_AUDIT_DEEP.md](./LIBRARY_REPLACEMENT_AUDIT_DEEP.md) - Library audit
+- [RESEARCH_SEED_FRAGMENT_INVENTORY](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) - Fragment inventory

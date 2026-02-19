@@ -40,3 +40,11 @@
 | Reliability | `reliability-lead` | 2026-02-15 | Scenario matrix passed with no critical breakage |
 | Governance | `governance-lead` | 2026-02-15 | Policy decisions and overrides auditable in NDJSON |
 | Operations | `operations-lead` | 2026-02-15 | Rollback cadence and runbook steps complete |
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [ROLLBACK_RESERVE_PLAN.md](./ROLLBACK_RESERVE_PLAN.md) — rollback reserve

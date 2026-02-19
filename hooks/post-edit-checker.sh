@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # post-edit-checker.sh — PostToolUse hook (Edit|Write)
 # Lightweight per-file checks for immediate feedback after edits.
 # Full lint runs are handled by quality-gate.sh on Stop — this hook only does:
@@ -9,8 +9,14 @@
 # OPTIMIZED: Skip common.sh when dispatched. Inline helpers.
 set -euo pipefail
 
-# Stderr message on unexpected failure (set -e)
-trap 'echo "POST-EDIT-CHECKER FAIL: unexpected error at line $LINENO" >&2' ERR
+if [ -n "${ZSH_VERSION:-}" ]; then
+  _SCRIPT_PATH="${(%):-%x}"
+elif [ -n "${BASH_VERSION:-}" ]; then
+  _SCRIPT_PATH="${BASH_SOURCE[0]}"
+else
+  _SCRIPT_PATH="$0"
+fi
+_SCRIPT_DIR="${_SCRIPT_PATH%/*}"
 
 # --- Fast-path: skip common.sh if dispatched ---
 if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
@@ -19,7 +25,7 @@ if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
 else
   HOOK_NAME="POST-EDIT-CHECKER"
   # shellcheck source=./lib/common.sh
-  source "${BASH_SOURCE[0]%/*}/lib/common.sh"
+  source "$_SCRIPT_DIR/lib/common.sh"
   hook_init
 fi
 
@@ -44,8 +50,12 @@ case "$EXT" in
       SYNTAX_OUTPUT=$(timeout 3 python -m py_compile "$FILE_PATH" 2>&1 || true)
     fi
     ;;
-  sh|bash)
-    SYNTAX_OUTPUT=$(bash -n "$FILE_PATH" 2>&1 || true)
+  sh|bash|zsh)
+    if [[ "$EXT" == "zsh" ]]; then
+      SYNTAX_OUTPUT=$(zsh -n "$FILE_PATH" 2>&1 || true)
+    else
+      SYNTAX_OUTPUT=$(bash -n "$FILE_PATH" 2>&1 || true)
+    fi
     ;;
   ts|tsx|js|jsx)
     if [[ "$EXT" == "js" || "$EXT" == "jsx" ]]; then
@@ -121,9 +131,9 @@ check_slop() {
   matches=$(grep -inE "$pattern" "$file" 2>/dev/null || true)
   [[ -z "$matches" ]] && return 0
 
-  # Count lines with bash builtin
-  local count=0
-  while IFS= read -r _; do (( count++ )); done <<< "$matches"
+  # Count lines with zsh or portable way
+  local count
+  count=$(echo "$matches" | grep -c "^" || echo 0)
   echo "SLOP: $count potential AI-generated placeholder(s) in $basename"
   echo "$matches" | head -5
 }
@@ -152,9 +162,9 @@ check_dead_imports() {
   [[ -z "$output" ]] && return 0
   [[ ! "$output" =~ [^[:space:]] ]] && return 0
 
-  # Count lines with bash
-  local count=0
-  while IFS= read -r _; do (( count++ )); done <<< "$output"
+  # Count lines with zsh or portable way
+  local count
+  count=$(echo "$output" | grep -c "^" || echo 0)
   echo "DEAD IMPORTS: $count unused import(s) in $basename"
   echo "$output"
 }

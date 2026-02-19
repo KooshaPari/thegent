@@ -554,3 +554,11 @@ Chunk F:
 - crosswave check can block/unblock with source and target updates.
 - at least one connector emits state transition + comment.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

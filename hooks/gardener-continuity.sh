@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # gardener-continuity.sh — Continuity packet handoff system
 # Enables structured handoffs between agents in different phases
 # Based on research: DDD context maps, CrewAI structured output

@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = [
+    "thegent-resources",
+    "thegent-parser",
+    "thegent-crypto",
+    "thegent-shm",
+    "thegent-git",
+    "thegent-discovery",
+    "thegent-cache",
+    "thegent-hooks",
+    "thegent-docs",
+    "thegent-utils",
+    "thegent-router", "supermemory-rs",
+]
+exclude = ["thegent-watcher", "thegent-shims"]

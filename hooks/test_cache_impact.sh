@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # Demonstration of cache invalidation fix for Critical Issue #2
 # Shows: (1) Cache key now includes config mtime, (2) Session ID prevents collisions
 set -euo pipefail

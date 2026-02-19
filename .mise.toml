@@ -1,0 +1,16 @@
+[tools]
+python = "3.12"
+
+[settings]
+env_shell_expand = true
+
+[env]
+RIPGREP_CONFIG_PATH = ""
+FUNCNEST = "1000"
+THGENT_NOTIFY_ENABLE = "1"
+THGENT_NOTIFY_VOICE_MODE = "all"
+THGENT_NOTIFY_VOICE_NAME = "Samantha"
+THGENT_NOTIFY_COOLDOWN_SEC = "8"
+THGENT_ZEN_BASE_URL = "https://api.opencode.ai"
+PYTHONPATH = "${PWD}/src"
+PATH = "${PWD}/.venv/bin:${HOME}/.local/bin:${PATH}"

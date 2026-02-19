@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # Service Role Detection Hook
 # CRITICAL: Prevents service role keys in application code
 

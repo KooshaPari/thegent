@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-trace-parity-audit.sh
 # Semantic parity audit against trace canonical strictness.
 set -euo pipefail

@@ -114,3 +114,11 @@
 3. Implement `TestContractNegotiation` and `TestParserPartialState` classes from PRD mapping.
 4. Add phase 7 acceptance checklist to implementation log.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

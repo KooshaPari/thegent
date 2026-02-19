@@ -525,3 +525,11 @@ Before marking any WP as complete:
 - [ ] Function docstrings with Args, Returns
 - [ ] Complex logic has inline comments (why, not what)
 - [ ] WP reference in module: `# WP-XXXX`
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](./00-MASTER-INDEX.md) — plan index
+- [05-ARCHITECTURE.md](./05-ARCHITECTURE.md) — architecture overview

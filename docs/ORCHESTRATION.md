@@ -48,3 +48,11 @@ This document summarizes the unified orchestration architecture implemented for 
 
 ## Status: v1.0 Ready
 The orchestration program is fully integrated, hardened, and ready for production use.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index
+

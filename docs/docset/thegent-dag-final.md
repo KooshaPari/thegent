@@ -678,3 +678,11 @@ This specification defines:
 9. **Operational Controls**: Retry budgets, circuit breakers, SLA monitors, continuity watchdogs
 
 All DAGs are deterministic, observable, auditable, and testable. Every path has a recovery strategy, every gate has a reason code, and every decision is traced to a functional requirement.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

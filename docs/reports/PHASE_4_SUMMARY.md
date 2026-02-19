@@ -104,8 +104,8 @@ Phase 4 implements modern Bash patterns (4.3+) achieving 5-10% additional perfor
 |---------|---------|
 | Bash 5.3 (current) | ✓ Full (100% features) |
 | Bash 4.3+ | ✓ Full (nameref required) |
-| Bash 4.0-4.2 | ⚠️ Degraded (no nameref) |
-| Bash <4.0 | ⚠️ Basic only |
+| Bash 4.0-4.2 | ⚠ Degraded (no nameref) |
+| Bash <4.0 | ⚠ Basic only |
 
 **Graceful degradation**: All features include version checks with clear fallback behavior.
 
@@ -307,3 +307,11 @@ Phase 4 successfully implements advanced Bash optimizations with:
 **Prepared by**: Claude Code
 **Test Environment**: macOS 14.x, Bash 5.3.9
 **Date**: February 15, 2025
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

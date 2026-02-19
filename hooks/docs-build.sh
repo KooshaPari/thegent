@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # Pre-commit hook: build docs if docs changed
 
 CHANGED_FILES=$(git diff --name-only --cached)

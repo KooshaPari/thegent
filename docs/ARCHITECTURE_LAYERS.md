@@ -40,3 +40,11 @@ python scripts/check_boundaries.py
 # or
 pytest tests/test_ci_architecture.py -v
 ```
+
+---
+
+## See also
+
+- [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
+- [05-ARCHITECTURE.md](plans/05-ARCHITECTURE.md) — architecture overview
+- [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index

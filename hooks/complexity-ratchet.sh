@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # complexity-ratchet.sh — PostToolUse hook (Edit|Write) + Stop hook
 # Tracks code complexity metrics and enforces a ratchet: complexity may not
 # increase beyond thresholds. Measures function length, file length, nesting
@@ -8,6 +8,26 @@
 # Optimized: single-pass awk per file, batched jq config/baseline reads,
 # single jq baseline write. ~15 spawns for 10 files (down from ~85).
 set -euo pipefail
+
+# --- DEBUG: Timing ---
+_HOOK_START_TIME=$(date +%s)
+_hook_config_path() {
+  local base="${BASH_SOURCE[0]%/*}"
+  [[ -f "${base}/../hook-config.yaml" ]] && echo "${base}/../hook-config.yaml"
+  [[ -f "${PROJECT_DIR:-.}/.claude/hooks/hook-config.yaml" ]] && echo "${PROJECT_DIR}/.claude/hooks/hook-config.yaml"
+}
+_HOOK_DEBUG="false"
+if grep -q "debug_timing:.*true" $(_hook_config_path) 2>/dev/null; then
+  _HOOK_DEBUG="true"
+fi
+_debug_timing() {
+  if [[ "$_HOOK_DEBUG" == "true" ]]; then
+    local _now=$(date +%s)
+    local _elapsed=$((_now - _HOOK_START_TIME))
+    echo "[DEBUG-TIME] complexity-ratchet: elapsed ${_elapsed}s at: $1" >&2
+  fi
+}
+_debug_timing "script_start"
 
 # Ultra-fast cache check — before sourcing anything (Stop mode only).
 # Uses HEAD_SHA pre-computed by stop-dispatcher. 10-min TTL for better reuse.

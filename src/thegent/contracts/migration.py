@@ -36,7 +36,7 @@ class MigrationController:
         # Deterministic hash-based canary
         import hashlib
 
-        h = int(hashlib.md5(run_id.encode()).hexdigest(), 16)
+        h = int(hashlib.sha256(run_id.encode()).hexdigest(), 16)
         return (h % 100) < (self._canary_percentage * 100)
 
     def evaluate_version(self, contract_id: str, version: str) -> dict[str, Any]:

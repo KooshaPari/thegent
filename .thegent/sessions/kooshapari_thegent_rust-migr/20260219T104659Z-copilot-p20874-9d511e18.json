@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/.local/share/uv/tools/thegent/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_c7f5d35f",
+    "Complete impl-hook-rust-git-enhance: Enhance git subcommand in Rust with TTL caching, lock detection, and agent passthrough. See docs/plans/HOOK_RUST_MIGRATION_COMPLETE.md for details.",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 20874,
+  "launcher_ppid": 20650,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:rust-migr",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104659Z-copilot-p20874-9d511e18.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104659Z-copilot-p20874-9d511e18.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104659Z-copilot-p20874-9d511e18.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104659Z-copilot-p20874-9d511e18.stdout.log"
+  },
+  "pid": 21481,
+  "prompt": "Complete impl-hook-rust-git-enhance: Enhance git subcommand in Rust with TTL caching, lock detection, and agent passthrough. See docs/plans/HOOK_RUST_MIGRATION_COMPLETE.md for details.",
+  "session_id": "20260219T104659Z-copilot-p20874-9d511e18",
+  "started_at_utc": "2026-02-19T10:46:59.621454+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

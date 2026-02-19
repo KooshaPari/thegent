@@ -207,6 +207,20 @@ class AutoLaunchSystem:
         # Track analytics
         self.analytics.track_page_view(f"/session/complete/{session_id}")
 
+        # Handle failure retry
+        if exit_code != 0 and session:
+            item_id = session[0].get("workstream_item_id")
+            if item_id:
+                _log.warning(f"Session {session_id} for {item_id} failed with code {exit_code}")
+                conn = sqlite3.connect(self.db.db_path)
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE workstream_items SET status = 'failed', retry_count = retry_count + 1, last_error = ? WHERE item_id = ?",
+                    (f"Exit code {exit_code}", item_id)
+                )
+                conn.commit()
+                conn.close()
+
         # Sync database with markdown before checking for next items
         self.sync_database()
 
@@ -374,6 +388,21 @@ class AutoLaunchSystem:
                 model=route.model, prompt_length=len(item.get("prompt", ""))
             )
 
+            # Check if should delegate to teammate
+            if self._should_delegate_to_teammate(item, category):
+                teammate = self._select_teammate(category)
+                if teammate:
+                    try:
+                        self.teammate_manager.delegate(
+                            teammate_id=teammate.id,
+                            parent_run_id="auto-launch",
+                            prompt=item.get("prompt", "")
+                        )
+                        _log.info(f"Delegated {item['id']} to teammate {teammate.id}")
+                        continue
+                    except Exception as e:
+                        _log.warning(f"Teammate delegation failed for {item['id']}: {e}")
+
             # Launch item
             await self._launch_item(item, lane, route.model, estimated_cost)
 
@@ -439,58 +468,88 @@ class AutoLaunchSystem:
         except Exception as e:
             _log.warning(f"Failed to claim {item_id}: {e}")
 
-        # Use spawn_next_impl pattern for consistency
-        from thegent.cli_impl import spawn_next_impl
-
+        # Use bg_impl directly for the specific item
+        from thegent.cli_impl import bg_impl
+        
         prompt = item.get("prompt_suggestion") or item.get("prompt") or item.get("title", item_id)
-        result = spawn_next_impl(
-            limit=1,
-            agent=model,
+        
+        # Use gpt-4o-mini as default for auto-launch if model not specified
+        launch_model = model or "gpt-4o-mini"
+        
+        result = bg_impl(
+            agent=None,  # Will be resolved from model
+            model=launch_model,
+            prompt=prompt,
+            cd=Path.cwd(),
+            mode="write",
+            timeout=self.settings.default_timeout,
+            full=False,
+            owner=self.settings.owner_tag,
             lane=lane,
             override_reason="auto-launch",
+            task_id=item_id,
         )
 
         # Record launch in database
-        if result.get("spawned"):
-            session_id = result["spawned"][0].get("session_id")
-            if session_id:
-                self.db.record_launch(
-                    item_id=item_id,
-                    session_id=session_id,
-                    lane=lane,
-                    model=model,
-                    estimated_cost=estimated_cost,
-                    trigger_type="auto_launch",
-                )
+        if result.get("session_id") and result.get("session_id") != "failed":
+            session_id = result["session_id"]
+            self.db.record_launch(
+                item_id=item_id,
+                session_id=session_id,
+                lane=lane,
+                model=launch_model,
+                estimated_cost=estimated_cost,
+                trigger_type="auto_launch",
+            )
 
-                # Record session in database
-                conn = sqlite3.connect(self.db.db_path)
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    INSERT OR REPLACE INTO sessions 
-                    (session_id, agent, prompt, status, started_at, workstream_item_id, lane, model, owner_tag)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        session_id,
-                        model,
-                        prompt,
-                        "running",
-                        datetime.now(UTC).isoformat(),
-                        item_id,
-                        lane,
-                        model,
-                        self.settings.owner_tag,
-                    ),
-                )
-                conn.commit()
-                conn.close()
+            # Record session in database
+            self.db.record_session(
+                session_id=session_id,
+                agent=launch_model,
+                prompt=prompt,
+                status="running",
+                workstream_item_id=item_id,
+                lane=lane,
+                model=launch_model,
+                owner_tag=self.settings.owner_tag,
+            )
 
-                _log.info(
-                    f"Launched {item_id} as {session_id} via {model} "
-                    f"(lane: {lane}, cost: ${estimated_cost:.4f})"
-                )
+            _log.info(
+                f"Launched {item_id} as {session_id} via {launch_model} "
+                f"(lane: {lane}, cost: ${estimated_cost:.4f})"
+            )
+
+    def _should_delegate_to_teammate(self, item: dict[str, Any], category: str) -> bool:
+        """Decide if an item should be delegated to a teammate."""
+        # Policy: delegate if explicitly requested or if it's a specific category
+        if "delegate" in item.get("tags", []):
+            return True
+        
+        # Or if it's a high-complexity task (heuristic)
+        if len(item.get("prompt", "")) > 1000:
+            return True
+            
+        return False
+
+    def _select_teammate(self, category: str) -> Any | None:
+        """Select the best teammate for a category."""
+        try:
+            teammates = self.teammate_manager.list_teammates()
+            # Filter by capability if teammate manager supports it
+            # For now, just pick the first available or matching
+            for t in teammates:
+                # teammate manager might return objects or dicts
+                capabilities = getattr(t, 'capabilities', []) if not isinstance(t, dict) else t.get('capabilities', [])
+                if category in capabilities:
+                    return t
+            
+            # Fallback to any teammate
+            if teammates:
+                return teammates[0]
+        except Exception as e:
+            _log.error(f"Error selecting teammate: {e}")
+            
+        return None
 
     def start(self) -> None:
         """Start the auto-launch system."""

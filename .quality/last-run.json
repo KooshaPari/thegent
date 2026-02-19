@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-02-19T02:01:11Z",
+  "steps": {
+    "py-type": 201,
+    "py-lint": 201,
+    "bash-lint": 0,
+    "py-test": -1
+  },
+  "step_details": {
+    "py-type": {
+      "code": 201,
+      "duration": 2.074206208999385
+    },
+    "py-lint": {
+      "code": 201,
+      "duration": 2.6193051250011194
+    },
+    "bash-lint": {
+      "code": 0,
+      "duration": 4.586196917000052
+    },
+    "py-test": {
+      "code": -1,
+      "duration": 0
+    }
+  },
+  "failed_steps": [
+    "py-type",
+    "py-lint"
+  ],
+  "ok": false
+}

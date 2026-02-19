@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # Hook: PreToolUse (Write)
 # Purpose: Enforce CLAUDE.md doc organization rules.
 # Block creation of .md files in project root (except allowed files).

@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_25b3d4cb",
+    "Complete vitepress-playwright-setup: Set up Playwright for browser recordings",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 94968,
+  "launcher_ppid": 88376,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:94968",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_94968/20260219T023831Z-copilot-p94968-29c37089.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_94968/20260219T023831Z-copilot-p94968-29c37089.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_94968/20260219T023831Z-copilot-p94968-29c37089.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_94968/20260219T023831Z-copilot-p94968-29c37089.stdout.log"
+  },
+  "pid": 11136,
+  "prompt": "Complete vitepress-playwright-setup: Set up Playwright for browser recordings",
+  "session_id": "20260219T023831Z-copilot-p94968-29c37089",
+  "started_at_utc": "2026-02-19T02:38:32.212992+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

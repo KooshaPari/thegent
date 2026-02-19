@@ -1,14 +1,21 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Shared hook library — sourced by all hooks.
 # Provides stdin parsing, path setup, tool detection, and common helpers.
 # Usage:
 #   HOOK_NAME="MY-HOOK"
-#   source "${BASH_SOURCE[0]%/*}/lib/common.sh"
+#   source "${(%):-%x:h}/lib/common.sh"
 #   hook_init  # reads stdin, parses common fields, sets paths
 
 # Guard against double-sourcing
 [[ -n "${_HOOK_LIB_LOADED:-}" ]] && return 0
 _HOOK_LIB_LOADED=1
+
+# ZSH compatibility: ensure we have bash-like word splitting if needed
+# but better to just use proper quoting.
+if [ -n "${ZSH_VERSION:-}" ]; then
+  # setopt shwordsplit # optional, but better to fix the code
+  :
+fi
 
 # Initialize variables to avoid 'unbound variable' errors with set -u
 INPUT="${INPUT:-}"
@@ -29,10 +36,43 @@ HEAD_SHA="${HEAD_SHA:-}"
 export INPUT CWD SESSION_ID TOOL_NAME FILE_PATH STOP_ACTIVE
 export PROJECT_DIR VERIFY_DIR QA_STATE QUALITY_CONFIG CHANGE_LOG
 export TOOL_CONTENT TOOL_NEW_STRING TOOL_OLD_STRING HEAD_SHA
+THEGENT_TOOL_BIN_PATH="${THEGENT_TOOL_BIN_PATH:-/usr/bin:/opt/homebrew/bin:/bin:/usr/sbin:/sbin}"
+# Resolve real binaries from a safe PATH, explicitly skipping the known self-shim in ~/.local/bin.
+resolve_real_binary() {
+  local _bin="$1"
+  local _candidate
+  _candidate="$(PATH="$THEGENT_TOOL_BIN_PATH" command -v "$_bin" 2>/dev/null || true)"
+  if [[ -z "$_candidate" ]]; then
+    return 1
+  fi
+  local _base="${_candidate##*/}"
+  if [[ "$_base" == "$_bin" || "$_base" == "$_bin.exe" ]] && [[ "$_candidate" == *"/.local/bin/"* ]]; then
+    return 1
+  fi
+  echo "$_candidate"
+  return 0
+}
+
+if [[ -z "${THEGENT_GIT_BIN:-}" ]]; then
+  THEGENT_GIT_BIN="$(resolve_real_binary git || true)"
+fi
+if [[ -n "${THEGENT_GIT_BIN:-}" && ! -x "$THEGENT_GIT_BIN" ]]; then
+  THEGENT_GIT_BIN=""
+fi
+export THEGENT_GIT_BIN
+# Get script path in a cross-shell compatible way
+if [ -n "${ZSH_VERSION:-}" ]; then
+  _SCRIPT_PATH="${(%):-%x}"
+elif [ -n "${BASH_VERSION:-}" ]; then
+  _SCRIPT_PATH="${BASH_SOURCE[0]}"
+else
+  _SCRIPT_PATH="$0"
+fi
+_SCRIPT_DIR="${_SCRIPT_PATH%/*}"
 
 # If dispatched and only lite functions needed, source lite version
 if [[ -n "${_HOOK_DISPATCHED:-}" && -n "${_HOOK_LITE_ONLY:-}" ]]; then
-  source "${BASH_SOURCE[0]%/*}/common-lite.sh"
+  source "${_SCRIPT_DIR}/common-lite.sh"
   return 0
 fi
 
@@ -46,12 +86,266 @@ _hook_exit_trap() {
   local pids; pids=$(jobs -p 2>/dev/null)
   if [[ -n "$pids" ]]; then
     # Give jobs a moment to finish gracefully
-    sleep 0.1
+    # sleep 0.1 -- OPTIMIZED: eliminated sleep subprocess
     pids=$(jobs -p 2>/dev/null)
     [[ -n "$pids" ]] && kill $pids 2>/dev/null || true
   fi
 }
 trap _hook_exit_trap EXIT
+
+# --- Global Command Accelerators (MTSP-02) ---
+# Globally migrate inefficient commands to faster replacements.
+
+# 1. JQ -> JAQ
+jq() {
+  if [[ -n "${JQ_CMD:-}" ]]; then
+    "$JQ_CMD" "$@"
+  else
+    command jq "$@"
+  fi
+}
+
+# 2. GREP -> RG (Ripgrep)
+# Note: rg handles -r, -i, -E, -o natively.
+# Sanitizes environment to avoid config errors from problematic env vars
+grep() {
+  if [[ -n "${RG_CMD:-}" ]]; then
+    # Map common grep flags to rg
+    local args=()
+    for arg in "$@"; do
+      case "$arg" in
+        -r|-R) args+=("--recursive") ;;
+        -E) ;; # rg is always ERE
+        -vE|-Ev) args+=("-v") ;;
+        -iE|-Ei) args+=("-i") ;;
+        -lE|-El) args+=("-l") ;;
+        -nE|-En) args+=("-n") ;;
+        -qE|-Eq) args+=("-q") ;;
+        -oE|-Eo) args+=("-o") ;;
+        *) args+=("$arg") ;;
+      esac
+    done
+    # Run rg with clean environment to avoid grep config errors
+    env -u GREP_OPTIONS -u GREP_COLOR -u GREP_COLORS "$RG_CMD" --no-config "${args[@]}" 2> >(grep -v "grep config error" >&2)
+  else
+    command grep "$@"
+  fi
+}
+
+# 3. FIND -> FD (overridden by fd-wrapper.sh find() when sourced)
+# Only route trivial cases to fd; complex find args (-o, -name, etc.) use real find
+find() {
+  # Filter out -q option (GNU find extension, not supported on macOS BSD find)
+  local filtered_args=()
+  local redirect_stderr=0
+  for arg in "$@"; do
+    if [[ "$arg" == "-q" || "$arg" == "--quiet" ]]; then
+      redirect_stderr=1
+      continue
+    fi
+    filtered_args+=("$arg")
+  done
+  
+  if [[ -n "${FD_CMD:-}" ]]; then
+    for arg in "${filtered_args[@]}"; do
+      case "$arg" in
+        -o|-name|-path|-prune|-print|-quit|-exec|-type|-maxdepth)
+          if (( redirect_stderr == 1 )); then
+            command find "${filtered_args[@]}" 2>/dev/null
+          else
+            command find "${filtered_args[@]}"
+          fi
+          return $?
+          ;;
+      esac
+    done
+    [[ "$*" == "."* || "$*" == "/"* ]] && {
+      if (( redirect_stderr == 1 )); then
+        command find "${filtered_args[@]}" 2>/dev/null
+      else
+        command find "${filtered_args[@]}"
+      fi
+      return $?
+    }
+    if (( redirect_stderr == 1 )); then
+      "$FD_CMD" "${filtered_args[@]}" 2>/dev/null
+    else
+      "$FD_CMD" "${filtered_args[@]}"
+    fi
+  else
+    if (( redirect_stderr == 1 )); then
+      command find "${filtered_args[@]}" 2>/dev/null
+    else
+      command find "${filtered_args[@]}"
+    fi
+  fi
+}
+
+# 4. WC -L (Line count accelerator)
+# Use bash builtin for single-file line counting
+wc() {
+  if [[ "$1" == "-l" && -f "$2" ]]; then
+    local count=0
+    while IFS= read -r _; do ((count++)); done < "$2"
+    echo "$count"
+  else
+    command wc "$@"
+  fi
+}
+
+# 5. DATE ACCELERATOR
+# Avoid spawning date in loops
+date() {
+  if [[ -n "${START_TIMESTAMP:-}" && ( "$*" == "+%s" || "$*" == "-u"* ) ]]; then
+    # Return pre-computed start time if format matches
+    if [[ "$*" == "+%s" ]]; then
+      echo "$START_TIMESTAMP"
+    else
+      command date "$@"
+    fi
+  else
+    command date "$@"
+  fi
+}
+
+# 6. TR -D ACCELERATOR (Space/newline removal)
+tr() {
+  if [[ "$1" == "-d" && ( "$2" == " " || "$2" == "' '" || "$2" == "\n" ) ]]; then
+    # Handle simple bash-based cleanup without process spawn
+    local input
+    if ! read -r input; then return 0; fi
+    if [[ "$2" == "\n" ]]; then
+      echo -n "${input//$'\n'/}"
+    else
+      echo -n "${input// /}"
+    fi
+  else
+    command tr "$@"
+  fi
+}
+
+# 7. AGENT WRAPPERS (codex/copilot/dex/claude/cursor) - Exec real binaries directly
+# Prevents git from trying to execute them as git subcommands
+# These commands exist as standalone binaries and should not be routed through git
+_agent_wrapper() {
+  local _cmd="$1"
+  shift
+  local _agent_bin
+  # Try safe PATH first (avoids git routing)
+  _agent_bin="$(PATH="$THEGENT_TOOL_BIN_PATH" command -v "$_cmd" 2>/dev/null || true)"
+  # If not found, try regular PATH
+  [[ -z "$_agent_bin" ]] && _agent_bin="$(command -v "$_cmd" 2>/dev/null || true)"
+  if [[ -n "$_agent_bin" && -x "$_agent_bin" ]]; then
+    exec "$_agent_bin" "$@"
+  else
+    echo "$_cmd: command not found" >&2
+    return 127
+  fi
+}
+
+codex() { _agent_wrapper codex "$@"; }
+copilot() { _agent_wrapper copilot "$@"; }
+dex() { _agent_wrapper dex "$@"; }
+claude() { _agent_wrapper claude "$@"; }
+cursor() { _agent_wrapper cursor "$@"; }
+
+# 8. PS / PGREP ACCELERATORS (procs-wrapper.sh equivalent)
+# Use system-native filters where possible
+pgrep() {
+  if [[ -n "${PGREP_CMD:-}" ]]; then
+    "$PGREP_CMD" "$@"
+  else
+    command pgrep "$@"
+  fi
+}
+
+# 8. MULTI-TENANT GIT ACCELERATOR (MTSP-09)
+# Solves index.lock contention and automates cleanup of stale locks.
+git() {
+  local cmd="$1"
+  [[ -z "$cmd" ]] && {
+    command git "$@"
+    return $?
+  }
+  shift
+
+  # --- Agent passthrough: codex/copilot/dex/claude/cursor are not git subcommands ---
+  # Git would look for git-codex in PATH and fail with "X is not a git command".
+  # Exec the agent binary directly (prefer ~/.local/bin shims when in PATH).
+  case "$cmd" in
+    codex|copilot|dex|claude|cursor)
+      local _agent_bin
+      # Try safe PATH first (avoids git routing)
+      _agent_bin="$(PATH="$THEGENT_TOOL_BIN_PATH" command -v "$cmd" 2>/dev/null || true)"
+      # If not found, try regular PATH
+      [[ -z "$_agent_bin" ]] && _agent_bin="$(command -v "$cmd" 2>/dev/null || true)"
+      if [[ -n "$_agent_bin" && -x "$_agent_bin" ]]; then
+        exec "$_agent_bin" "$@"
+      else
+        echo "thegent git-wrapper: $cmd not found in PATH" >&2
+        return 127
+      fi
+      ;;
+  esac
+
+  # --- Read-only path: Route to git_cached (5-20x speedup) ---
+  case "$cmd" in
+    diff|status|ls-files|rev-parse|log|show|name-rev|symbolic-ref)
+      if type git_cached &>/dev/null; then
+        git_cached "$cmd" "$@"
+        return $?
+      fi
+      ;;
+  esac
+
+  # --- Write path: Handle index.lock contention ---
+  local lock_file="${PROJECT_DIR:-.}/.git/index.lock"
+  local max_retries=15
+  local retry_count=0
+  local wait_ms=100
+
+  while [[ -f "$lock_file" ]]; do
+    # Lock Stealer: If lock is > 10s old, it's likely a crashed process
+    local mtime
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      mtime=$(stat -f %m "$lock_file" 2>/dev/null || echo 0)
+    else
+      mtime=$(stat -c %Y "$lock_file" 2>/dev/null || echo 0)
+    fi
+    local now; now=$(date +%s)
+    local age=$(( now - mtime ))
+
+    if [[ $age -gt 10 ]]; then
+      echo "GIT-MUTEX: Stealing stale lock ($age seconds old) from crashed process..." >&2
+      rm -f "$lock_file" 2>/dev/null || true
+      break
+    fi
+
+    # Lock Contention: Wait and retry
+    if [[ $retry_count -ge $max_retries ]]; then
+      echo "GIT-MUTEX: Max retries reached waiting for git lock. Failing." >&2
+      return 128
+    fi
+
+    echo "GIT-MUTEX: Waiting for git index.lock (held by another agent)..." >&2
+    # Sleep using bash builtin if possible (or small subshell)
+    sleep 0.2
+    retry_count=$(( retry_count + 1 ))
+  done
+
+  # Invalidate cache on write operations
+  case "$cmd" in
+    add|commit|checkout|reset|rm|mv|pull|push|merge|rebase)
+      [[ -n "${_GIT_CACHE_LOADED:-}" ]] && git_cache_invalidate
+      ;;
+  esac
+
+  if [[ -z "${THEGENT_GIT_BIN:-}" ]]; then
+    echo "thegent hooks: unable to resolve real git executable" >&2
+    return 127
+  fi
+  "$THEGENT_GIT_BIN" "$cmd" "$@"
+}
 
 # --- Resource limits (P5: prevent memory ballooning) ---
 # Limit virtual memory (address space) to 8GB per hook process tree
@@ -82,6 +376,8 @@ else
   JQ_CMD="$(command -v jaq 2>/dev/null || command -v jq 2>/dev/null || echo jq)"
   HUNIQ_CMD="$(command -v huniq 2>/dev/null || true)"
   RG_CMD="$(command -v rg 2>/dev/null || true)"
+  FD_CMD="$(command -v fd 2>/dev/null || command -v fdfind 2>/dev/null || true)"
+  PGREP_CMD="$(command -v pgrep 2>/dev/null || true)"
   if command -v gtimeout >/dev/null 2>&1; then
     TIMEOUT_CMD=gtimeout
   elif command -v timeout >/dev/null 2>&1; then
@@ -123,32 +419,91 @@ hash_for_cache() {
   fi
 }
 
-# --- Git caching with gitoxide support (Phase 3.5) ---
-# Source git cache functions - provides git_cached() for 5-20x git speedup
-if [[ -f "${BASH_SOURCE[0]%/*}/git-cache.sh" ]]; then
+# --- Git caching and mutex support (MTSP-09/10) ---
+# Source git cache and wrapper functions
+if [[ -f "${_SCRIPT_DIR}/git-cache.sh" ]]; then
   # shellcheck disable=SC1090
-  source "${BASH_SOURCE[0]%/*}/git-cache.sh"
+  source "${_SCRIPT_DIR}/git-cache.sh"
+fi
+if [[ -f "${_SCRIPT_DIR}/git-wrapper.sh" ]]; then
+  # shellcheck disable=SC1090
+  source "${_SCRIPT_DIR}/git-wrapper.sh"
+fi
+
+# --- Builtin accelerators (wc, tr, date) ---
+if [[ -f "${_SCRIPT_DIR}/builtin-wrapper.sh" ]]; then
+  # shellcheck disable=SC1090
+  source "${_SCRIPT_DIR}/builtin-wrapper.sh"
 fi
 
 # --- fd integration (Phase 3.5) ---
 # Source fd wrapper - provides fd-based find acceleration (3-5x faster)
-if [[ -f "${BASH_SOURCE[0]%/*}/fd-wrapper.sh" ]]; then
+if [[ -f "${_SCRIPT_DIR}/fd-wrapper.sh" ]]; then
   # shellcheck disable=SC1090
-  source "${BASH_SOURCE[0]%/*}/fd-wrapper.sh"
+  source "${_SCRIPT_DIR}/fd-wrapper.sh"
+fi
+
+# --- Package Manager coordination (MTSP-15) ---
+if [[ -f "${_SCRIPT_DIR}/pkg-wrapper.sh" ]]; then
+  # shellcheck disable=SC1090
+  source "${_SCRIPT_DIR}/pkg-wrapper.sh"
 fi
 
 # find() override for transparent fd acceleration
 # Intercepts all find calls and routes to fd when possible (3-5x faster)
+# Fast path: skip wrapper if called during PATH resolution (which/command -v)
 find() {
+  # Fast path: if we're in a PATH resolution context (which/command -v), use system find directly
+  # This prevents timeouts during command resolution
+  if [[ -n "${_RESOLVING_PATH:-}" ]] || \
+     [[ "${BASH_COMMAND:-}" == *"which"* ]] || \
+     [[ "${BASH_COMMAND:-}" == *"command -v"* ]] || \
+     [[ "${0:-}" == *"which"* ]]; then
+    # During PATH resolution, use system find directly to avoid wrapper overhead
+    # Filter out -q option (GNU find extension, not supported on macOS BSD find)
+    local filtered_args=()
+    for arg in "$@"; do
+      if [[ "$arg" != "-q" && "$arg" != "--quiet" ]]; then
+        filtered_args+=("$arg")
+      fi
+    done
+    command find "${filtered_args[@]}" 2>/dev/null || /usr/bin/find "${filtered_args[@]}" 2>/dev/null || true
+    return $?
+  fi
+  
+  # Filter out -q option (GNU find extension, not supported on macOS BSD find)
+  # Convert -q to 2>/dev/null redirection for error suppression
+  local filtered_args=()
+  local redirect_stderr=0
+  for arg in "$@"; do
+    if [[ "$arg" == "-q" || "$arg" == "--quiet" ]]; then
+      redirect_stderr=1
+      continue
+    fi
+    filtered_args+=("$arg")
+  done
+  
   # Try fd first if available, fallback to system find
-  if command -v fd &>/dev/null; then
-    fd_find "$@"
+  if command -v fd &>/dev/null 2>&1; then
+    if (( redirect_stderr == 1 )); then
+      fd_find "${filtered_args[@]}" 2>/dev/null
+    else
+      fd_find "${filtered_args[@]}"
+    fi
   else
     # Fallback to system find with timeout
-    if command -v timeout &>/dev/null; then
-      timeout 5 /usr/bin/find "$@"
+    if command -v timeout &>/dev/null 2>&1; then
+      if (( redirect_stderr == 1 )); then
+        timeout 5 /usr/bin/find "${filtered_args[@]}" 2>/dev/null || true
+      else
+        timeout 5 /usr/bin/find "${filtered_args[@]}" 2>/dev/null || true
+      fi
     else
-      /usr/bin/find "$@"
+      if (( redirect_stderr == 1 )); then
+        /usr/bin/find "${filtered_args[@]}" 2>/dev/null || true
+      else
+        /usr/bin/find "${filtered_args[@]}" 2>/dev/null || true
+      fi
     fi
   fi
 }
@@ -156,16 +511,16 @@ export -f find
 
 # --- grep/rg integration (Rust tool swap) ---
 # Source grep wrapper - routes grep -r and common patterns to ripgrep (2-10x faster)
-if [[ -f "${BASH_SOURCE[0]%/*}/grep-wrapper.sh" ]]; then
+if [[ -f "${_SCRIPT_DIR}/grep-wrapper.sh" ]]; then
   # shellcheck disable=SC1090
-  source "${BASH_SOURCE[0]%/*}/grep-wrapper.sh"
+  source "${_SCRIPT_DIR}/grep-wrapper.sh"
 fi
 
 # --- procs integration (Phase 3.5) ---
 # Source procs wrapper - provides process lookup acceleration (2-3x faster)
-if [[ -f "${BASH_SOURCE[0]%/*}/procs-wrapper.sh" ]]; then
+if [[ -f "${_SCRIPT_DIR}/procs-wrapper.sh" ]]; then
   # shellcheck disable=SC1090
-  source "${BASH_SOURCE[0]%/*}/procs-wrapper.sh"
+  source "${_SCRIPT_DIR}/procs-wrapper.sh"
 fi
 
 # sort_unique: always sort and unique. Use huniq for unique if available, but must sort for comm compatibility.
@@ -191,7 +546,86 @@ _js_exec() {
 export -f _js_exec
 
 # --- Timestamp (bash builtin, no subprocess) ---
-printf -v now '%(%Y-%m-%dT%H:%M:%SZ)T' -1
+if ! printf -v now '%(%Y-%m-%dT%H:%M:%SZ)T' -1 2>/dev/null; then
+  now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+fi
+
+# --- Phase 2: Rust runtime opt-in ---
+# Allows gradual migration to `thegent-hooks` while preserving shell fallback.
+hook_rust_runtime_enabled() {
+  local override="${THGENT_HOOK_USE_RUST_RUNTIME:-}"
+  if [[ -n "$override" ]]; then
+    local lower_override
+    lower_override="$(printf '%s' "$override" | tr '[:upper:]' '[:lower:]')"
+    case "$lower_override" in
+      1|true|yes|on) return 0 ;;
+      0|false|no|off) return 1 ;;
+    esac
+  fi
+  hook_config_true "use_rust_runtime" 2>/dev/null
+}
+
+hook_rust_runtime_path() {
+  local override="${THGENT_HOOK_RUST_RUNTIME_PATH:-}"
+  if [[ -n "$override" ]]; then
+    echo "$override"
+    return 0
+  fi
+  local from_cfg
+  from_cfg="$(hook_config_get "rust_runtime_path" 2>/dev/null || true)"
+  if [[ -n "$from_cfg" ]]; then
+    echo "$from_cfg"
+  else
+    echo "thegent-hooks"
+  fi
+}
+
+hook_rust_runtime_invoke() {
+  hook_rust_runtime_enabled || return 1
+  local runtime
+  runtime="$(hook_rust_runtime_path)"
+  [[ -z "$runtime" ]] && return 1
+
+  if [[ "$runtime" == */* ]]; then
+    [[ -x "$runtime" ]] || return 1
+    "$runtime" "$@"
+  else
+    command -v "$runtime" >/dev/null 2>&1 || return 1
+    "$runtime" "$@"
+  fi
+}
+
+_hook_runtime_apply_exports() {
+  local payload="$1"
+  [[ -n "$payload" ]] || return 1
+
+  local line key value
+  while IFS= read -r line; do
+    [[ -n "$line" && "$line" == *=* ]] || continue
+    key="${line%%=*}"
+    value="${line#*=}"
+    case "$key" in
+      INPUT|CWD|SESSION_ID|TOOL_NAME|FILE_PATH|STOP_ACTIVE|PROJECT_DIR|VERIFY_DIR|QA_STATE|QUALITY_CONFIG|CHANGE_LOG|TOOL_CONTENT|TOOL_NEW_STRING|TOOL_OLD_STRING)
+        printf -v "$key" '%s' "$value"
+        export "$key"
+        ;;
+    esac
+  done <<< "$payload"
+
+  [[ -n "${PROJECT_DIR:-}" ]] || return 1
+  [[ -n "${VERIFY_DIR:-}" ]] || VERIFY_DIR="${PROJECT_DIR}/.claude/verification"
+  [[ -d "$VERIFY_DIR" ]] || mkdir -p "$VERIFY_DIR" 2>/dev/null || true
+  export VERIFY_DIR
+  return 0
+}
+
+_hook_runtime_init_from_input() {
+  local input_json="$1"
+  local payload
+  payload="$(hook_rust_runtime_invoke init <<< "$input_json" 2>/dev/null || true)"
+  [[ -n "$payload" ]] || return 1
+  _hook_runtime_apply_exports "$payload"
+}
 
 # --- Core init function ---
 # Reads stdin, parses common fields in a single jq call, sets paths.
@@ -204,6 +638,10 @@ hook_init() {
   # Read stdin once
   INPUT="$(cat)"
   INPUT="${INPUT:-{\}}"
+
+  if _hook_runtime_init_from_input "$INPUT"; then
+    return 0
+  fi
 
   # Parse all common fields in ONE jq invocation (eliminates ~90 jq spawns across hooks)
   local -a _fields
@@ -233,15 +671,15 @@ hook_init() {
     # Cache git rev-parse --show-toplevel result to avoid repeated calls
     PROJECT_DIR="${_CACHED_GIT_TOPLEVEL:-}"
     if [[ -z "$PROJECT_DIR" ]]; then
-      PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+      PROJECT_DIR="$("$THEGENT_GIT_BIN" rev-parse --show-toplevel 2>/dev/null || pwd)"
       readonly _CACHED_GIT_TOPLEVEL="$PROJECT_DIR"
     fi
   fi
   # If empty/root and we are in the hooks dir, check symlink vs real path
   if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    if [[ "${BASH_SOURCE[0]}" == *".claude/hooks"* ]]; then
+    if [[ "${_SCRIPT_PATH}" == *".claude/hooks"* ]]; then
       # Check if this is a symlink to an external project
-      local hook_path="${BASH_SOURCE[0]}"
+      local hook_path="${_SCRIPT_PATH}"
       local resolved_path
       resolved_path="$(readlink -f "$hook_path" 2>/dev/null || echo "$hook_path")"
       # If resolved path is NOT in ~/.claude, use HOME/.claude
@@ -319,6 +757,10 @@ hook_init_full() {
   INPUT="$(cat)"
   INPUT="${INPUT:-{\}}"
 
+  if _hook_runtime_init_from_input "$INPUT"; then
+    return 0
+  fi
+
   # Single jq call: extract all 8 fields, NUL-delimited.
   # Pipe directly into read (not $()) because bash command substitution strips NUL bytes.
   local _f1 _f2 _f3 _f4 _f5 _f6 _f7 _f8
@@ -366,13 +808,13 @@ hook_init_full() {
     # Cache git rev-parse --show-toplevel result to avoid repeated calls
     PROJECT_DIR="${_CACHED_GIT_TOPLEVEL:-}"
     if [[ -z "$PROJECT_DIR" ]]; then
-      PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+      PROJECT_DIR="$("$THEGENT_GIT_BIN" rev-parse --show-toplevel 2>/dev/null || pwd)"
       readonly _CACHED_GIT_TOPLEVEL="$PROJECT_DIR"
     fi
   fi
   if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    if [[ "${BASH_SOURCE[0]}" == *".claude/hooks"* ]]; then
-      PROJECT_DIR="${BASH_SOURCE[0]%/.claude/hooks/*}"
+    if [[ "${_SCRIPT_PATH}" == *".claude/hooks"* ]]; then
+      PROJECT_DIR="${_SCRIPT_PATH%/.claude/hooks/*}"
     fi
   fi
   # Final fallback: pwd, then HOME, never "/" or empty
@@ -619,12 +1061,31 @@ hook_cache_key() {
       head_sha="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo none)}"
     fi
     changed_files="${CHANGED_FILES_SORTED:-$(git diff --name-only HEAD 2>/dev/null | sort)}"
+
+    if hook_rust_runtime_enabled; then
+      local runtime_key
+      runtime_key="$(hook_rust_runtime_invoke cache-key "$hook_name" "$head_sha" "$changed_files" 2>/dev/null || true)"
+      if [[ -n "$runtime_key" ]]; then
+        echo "$runtime_key"
+        return 0
+      fi
+    fi
+
     printf '%s\0%s\0%s' "$hook_name" "$head_sha" "$changed_files" | hash_for_cache
 }
 
 # Check if cached result exists and is fresh (within TTL seconds)
 hook_cache_check() {
     local key="$1" ttl="${2:-60}"
+    if hook_rust_runtime_enabled; then
+      if hook_rust_runtime_invoke cache-check "$key" "$ttl" >/dev/null 2>&1; then
+        return 0
+      fi
+      local rc=$?
+      if [[ $rc -eq 1 ]]; then
+        return 1
+      fi
+    fi
     local rc_file="${HOOK_CACHE_DIR}/${key}.rc"
     [[ -f "$rc_file" ]] || return 1
     local mtime age
@@ -636,6 +1097,14 @@ hook_cache_check() {
 # Read cached result (stdout + exit code)
 hook_cache_read() {
     local key="$1"
+    if hook_rust_runtime_enabled; then
+      local runtime_out
+      runtime_out="$(hook_rust_runtime_invoke cache-read "$key" 2>/dev/null || true)"
+      if [[ -n "$runtime_out" ]]; then
+        printf '%s' "$runtime_out"
+        return 0
+      fi
+    fi
     [[ -f "${HOOK_CACHE_DIR}/${key}.out" ]] && cat "${HOOK_CACHE_DIR}/${key}.out"
     return "$(cat "${HOOK_CACHE_DIR}/${key}.rc" 2>/dev/null || echo 1)"
 }
@@ -643,6 +1112,11 @@ hook_cache_read() {
 # Write result to cache
 hook_cache_write() {
     local key="$1" rc="$2" output="$3"
+    if hook_rust_runtime_enabled; then
+      if hook_rust_runtime_invoke cache-write "$key" "$rc" "$output" >/dev/null 2>&1; then
+        return 0
+      fi
+    fi
     mkdir -p "$HOOK_CACHE_DIR"
     echo "$output" > "${HOOK_CACHE_DIR}/${key}.out"
     echo "$rc" > "${HOOK_CACHE_DIR}/${key}.rc"
@@ -655,6 +1129,15 @@ HOOK_SHARED_DIR="${HOOK_CACHE_DIR}/shared"
 
 # Get or build the shared changed files list
 hook_shared_changed_files() {
+    if hook_rust_runtime_enabled; then
+      local runtime_changed
+      runtime_changed="$(hook_rust_runtime_invoke changed-files 2>/dev/null || true)"
+      if [[ -n "$runtime_changed" ]]; then
+        printf '%s\n' "$runtime_changed"
+        return 0
+      fi
+    fi
+
     local shared_file="${HOOK_SHARED_DIR}/changed_files"
     mkdir -p "$HOOK_SHARED_DIR"
 
@@ -898,7 +1381,7 @@ hook_shared_fr_index() {
     local _rg_cmd="${RG_CMD:-$(command -v rg 2>/dev/null || true)}"
     if [[ -n "$_rg_cmd" ]]; then
         # shellcheck disable=SC2086
-        "$_rg_cmd" -oN --no-heading \
+        "$_rg_cmd" --no-config -oN --no-heading \
             -g '!node_modules' -g '!vendor' -g '!.git' -g '!target' \
             -g '!out' -g '!dist' -g '!build' -g '!coverage' \
             -g '!__pycache__' -g '!.process-compose' \
@@ -932,7 +1415,16 @@ hook_config_get() {
   local cfg
   cfg="$(_hook_config_path | head -1)"
   [[ -z "$cfg" || ! -f "$cfg" ]] && return 1
-  grep -E "^\s*${key}:" "$cfg" 2>/dev/null | sed -E 's/^[^:]*:[[:space:]]*//' | tr -d '\r\n ' | head -1
+  
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^[[:space:]]*${key}:[[:space:]]*(.*) ]]; then
+      local val="${BASH_REMATCH[1]}"
+      val="${val%%#*}"
+      echo -n "${val//[[:space:]]/}"
+      return 0
+    fi
+  done < "$cfg"
+  return 1
 }
 
 # Check if a boolean config is true
@@ -1163,7 +1655,7 @@ affected_tests_from_imports() {
     _rg_cmd=$(command -v rg 2>/dev/null || true)
     if [[ -n "$_rg_cmd" ]]; then
         # Match: from X import, import X (X = module or module_alt)
-        "$_rg_cmd" -l --no-heading \
+        "$_rg_cmd" --no-config -l --no-heading \
             -g '*.py' -g '!__pycache__' -g '!*.pyc' \
             -e "(from ${module_re}|import ${module_re}|from ${module_alt_re}|import ${module_alt_re})" \
             $test_dirs 2>/dev/null || true

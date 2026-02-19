@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-claim-lifecycle-gate.sh (N10)
 # Enforces claim->evidence->verify chain: claims must cite evidence; evidence refs must resolve to existing artifacts.
 # Install via: make install-governance-hooks
