@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -199,6 +200,10 @@ class ThegentSettings(BaseSettings):
         default=True,
         description="Enable cost tracking per run (THGENT_COST_TRACKING_ENABLED)",
     )
+    cost_tracking: bool = Field(
+        default=False,
+        description="Legacy: enable cost tracking via THGENT_COST_TRACKING=1",
+    )
     cost_budget_mtd: float = Field(
         default=100.0,
         ge=0.0,
@@ -247,6 +252,76 @@ class ThegentSettings(BaseSettings):
         description="Budget utilization above this tightens quality floor (WP-5003)",
     )
 
+    # Auto router: Gemini Flash classifier + Pareto routing
+    auto_router_enabled: bool = Field(
+        default=True,
+        description="Enable auto router when agent/model is 'auto' (THGENT_AUTO_ROUTER_ENABLED)",
+    )
+    auto_router_classifier_model: str = Field(
+        default="gemini-3-flash",
+        description="Model for headless task complexity classification (THGENT_AUTO_ROUTER_CLASSIFIER_MODEL)",
+    )
+    auto_router_use_classifier: bool = Field(
+        default=True,
+        description="Use Gemini Flash to classify prompt; if False, assume moderate (THGENT_AUTO_ROUTER_USE_CLASSIFIER)",
+    )
+    auto_router_min_quality: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Minimum quality floor for Pareto selection (THGENT_AUTO_ROUTER_MIN_QUALITY)",
+    )
+    auto_router_max_cost_weight: float = Field(
+        default=2.0,
+        ge=0.1,
+        le=10.0,
+        description="Maximum cost weight for Pareto selection (THGENT_AUTO_ROUTER_MAX_COST_WEIGHT)",
+    )
+    
+    # Environment variable consolidation (research-library-env-settings)
+    owner_tag: str | None = Field(
+        default=None,
+        description="Explicit owner tag override (THGENT_OWNER_TAG)",
+    )
+    owner_scope: str = Field(
+        default="",
+        description="Owner scope template (THGENT_OWNER_SCOPE)",
+    )
+    output_format: str | None = Field(
+        default=None,
+        description="Output format override (THGENT_OUTPUT_FORMAT)",
+    )
+    session_meta_path: Path | None = Field(
+        default=None,
+        description="Session metadata path override (THGENT_SESSION_META_PATH)",
+    )
+    session_rc_path: Path | None = Field(
+        default=None,
+        description="Session rc path override (THGENT_SESSION_RC_PATH)",
+    )
+    health_snapshot_path: Path | None = Field(
+        default=None,
+        description="Health snapshot path (THGENT_HEALTH_SNAPSHOT_PATH)",
+    )
+    health_snapshot_max_lines: int = Field(
+        default=1000,
+        ge=100,
+        le=10000,
+        description="Health snapshot max lines (THGENT_HEALTH_SNAPSHOT_MAX_LINES)",
+    )
+    terminal_management_enabled: bool = Field(
+        default=True,
+        description="Enable terminal management (THGENT_TERMINAL_MANAGEMENT_ENABLED)",
+    )
+    input_guardrails_enabled: bool = Field(
+        default=False,
+        description="Enable input guardrails (THGENT_INPUT_GUARDRAILS_ENABLED)",
+    )
+    sandbox_env_filter: bool = Field(
+        default=False,
+        description="Filter environment variables in sandbox (THGENT_SANDBOX_ENV_FILTER)",
+    )
+
     def validate_setup(self) -> None:
         """ROB-013: Configuration validation on startup (fail-fast).
 
@@ -279,7 +354,23 @@ class ThegentSettings(BaseSettings):
     )
     output_format: str = Field(
         default="rich",
-        description="Output format for bg/ps: rich (default) or md (agent-friendly markdown)",
+        description="Output format for bg/ps: rich (default) or md (agent-friendly markdown); THGENT_OUTPUT_FORMAT",
+    )
+    debug: bool = Field(
+        default=False,
+        description="Enable debug logging; THGENT_DEBUG=1",
+    )
+    debug_keepalive: bool = Field(
+        default=False,
+        description="Enable keepalive debug logging; THGENT_DEBUG_KEEPALIVE=1",
+    )
+    terminal_management_enabled: bool = Field(
+        default=True,
+        description="Enable terminal management features; THGENT_TERMINAL_MANAGEMENT_ENABLED",
+    )
+    sandbox_env_filter: bool = Field(
+        default=False,
+        description="Filter sandbox env to allowlist only; THGENT_SANDBOX_ENV_FILTER=1",
     )
     mcp_host: str = Field(
         default="127.0.0.1",
@@ -373,6 +464,26 @@ class ThegentSettings(BaseSettings):
         default=True,
         description="Mount Serena (LSP code tools) at namespace 'serena' (THGENT_MCP_MOUNT_SERENA); required; requires uvx",
     )
+    serena_backend: Literal["auto", "lsp", "jetbrains"] = Field(
+        default="auto",
+        description="Serena backend: auto-detect, LSP, or JetBrains plugin (THGENT_SERENA_BACKEND)",
+    )
+    serena_jetbrains_port: int = Field(
+        default=8765,
+        description="Port for Serena JetBrains plugin MCP server (THGENT_SERENA_JETBRAINS_PORT)",
+    )
+    ghostty_enabled: bool = Field(
+        default=True,
+        description="Enable Ghostty terminal integration (THGENT_GHOSTTY_ENABLED)",
+    )
+    ide_integration_enabled: bool = Field(
+        default=True,
+        description="Enable IDE integration auto-setup (format, inspect, etc.) (THGENT_IDE_INTEGRATION_ENABLED)",
+    )
+    lsp_auto_install: bool = Field(
+        default=True,
+        description="Auto-install missing LSP servers (THGENT_LSP_AUTO_INSTALL)",
+    )
     mcp_mount_octocode: bool = Field(
         default=True,
         description="Mount Octocode (GitHub/code search) at namespace 'octocode' (THGENT_MCP_MOUNT_OCTOCODE); required; requires npx or bun",
@@ -452,6 +563,136 @@ class ThegentSettings(BaseSettings):
         default=False,
         description="Enable input guardrails (prompt length, blocklist, agent/cwd allowlist) (THGENT_INPUT_GUARDRAILS_ENABLED)",
     )
+    prompt_max_chars: int = Field(
+        default=65536,
+        ge=100,
+        le=2_000_000,
+        description="Max prompt chars for guardrails (THGENT_PROMPT_MAX_CHARS)",
+    )
+    prompt_blocklist_patterns: str = Field(
+        default="",
+        description="Comma-separated blocklist patterns (THGENT_PROMPT_BLOCKLIST_PATTERNS)",
+    )
+    agent_allowlist: str = Field(
+        default="",
+        description="Comma-separated agent allowlist (THGENT_AGENT_ALLOWLIST)",
+    )
+    cwd_allowed_prefixes: str = Field(
+        default="",
+        description="Comma-separated CWD path prefixes (THGENT_CWD_ALLOWED_PREFIXES)",
+    )
+    flyto_url: str = Field(
+        default="http://localhost:8333/mcp",
+        description="Flyto-core HTTP URL (THGENT_FLYTO_URL)",
+    )
+    bundle_proxy: bool = Field(
+        default=False,
+        description="Start CLIProxyAPIPlus with MCP server (THGENT_BUNDLE_PROXY=1)",
+    )
+    prune_orphan_by_ppid: bool = Field(
+        default=True,
+        description="Prune only true orphans (no Cursor/Claude/Codex/thegent parent). Set False to prune all matches. (THGENT_PRUNE_ORPHAN_BY_PPID)",
+    )
+    prune_grace_period: int = Field(
+        default=0,
+        ge=0,
+        le=60,
+        description="Grace period in seconds before SIGKILL (THGENT_PRUNE_GRACE_PERIOD)",
+    )
+    prune_sort_by: str = Field(
+        default="rss",
+        description="Sort candidates by metric (rss, pid) (THGENT_PRUNE_SORT_BY)",
+    )
+    prune_sort_order: str = Field(
+        default="desc",
+        description="Sort order (asc, desc) (THGENT_PRUNE_SORT_ORDER)",
+    )
+
+    sitback: bool = Field(
+        default=False,
+        description="Enable sitback mode (THGENT_SITBACK=1)",
+    )
+    sitback_harness: bool = Field(
+        default=False,
+        description="Sitback harness mode (THGENT_SITBACK_HARNESS=1)",
+    )
+    doctor_from_harness: bool = Field(
+        default=False,
+        description="Skip harness doctors when set (THGENT_DOCTOR_FROM_HARNESS=1)",
+    )
+    use_native_resources: bool = Field(
+        default=False,
+        description="Use thegent-resources Rust binary (THGENT_USE_NATIVE_RESOURCES=1)",
+    )
+    resources_bin: str | None = Field(
+        default=None,
+        description="Path to thegent-resources binary (THGENT_RESOURCES_BIN)",
+    )
+    zen_base_url: str = Field(
+        default="https://api.opencode.ai",
+        description="Zen/OpenCode base URL (THGENT_ZEN_BASE_URL)",
+    )
+    zen_api_key: str = Field(
+        default="",
+        description="Zen API key (THGENT_ZEN_API_KEY, OPENCODE_API_KEY, ZEN_API_KEY)",
+    )
+    sharecli_enabled: bool = Field(
+        default=True,
+        description="Enable sharecli bridge (THGENT_SHARECLI_ENABLED)",
+    )
+    mac_keep_awake: bool = Field(
+        default=True,
+        description="Keep Mac awake during claude/codex runs (caffeinate; THGENT_MAC_KEEP_AWAKE)",
+    )
+    mac_keep_awake_agents: list[str] = Field(
+        default=["claude", "codex", "cursor-agent", "opencode"],
+        description="Agents that trigger caffeinate when mac_keep_awake (THGENT_MAC_KEEP_AWAKE_AGENTS)",
+    )
+
+    @field_validator("mac_keep_awake_agents", mode="before")
+    @classmethod
+    def _parse_mac_keep_awake_agents(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [s.strip() for s in v.split(",") if s.strip()]
+        if isinstance(v, list):
+            return [str(s) for s in v]
+        return ["claude", "codex", "cursor-agent", "opencode"]
+    config_dir_override: Path | None = Field(
+        default=None,
+        description="Override config directory (THGENT_CONFIG_DIR)",
+    )
+    dev: bool = Field(
+        default=False,
+        description="Development mode (THGENT_DEV=1)",
+    )
+    otel_console: bool = Field(
+        default=False,
+        description="Emit OTEL to console (THGENT_OTEL_CONSOLE=1)",
+    )
+    use_native_shm: bool = Field(
+        default=True,
+        description="Use native SHM (THGENT_USE_NATIVE_SHM)",
+    )
+    use_native_discovery: bool = Field(
+        default=True,
+        description="Use native discovery (THGENT_USE_NATIVE_DISCOVERY)",
+    )
+    tee_mock: bool = Field(
+        default=False,
+        description="TEE mock mode (THGENT_TEE_MOCK=1)",
+    )
+    tee_required: bool = Field(
+        default=False,
+        description="Require TEE attestation (THGENT_TEE_REQUIRED=1)",
+    )
+    use_native_crypto: bool = Field(
+        default=True,
+        description="Use native crypto (THGENT_USE_NATIVE_CRYPTO)",
+    )
+    reload: bool = Field(
+        default=False,
+        description="Enable reload (THGENT_RELOAD=1)",
+    )
 
     # G-GP-04: Circuit Breakers
     circuit_breaker_enabled: bool = Field(
@@ -501,9 +742,9 @@ class ThegentSettings(BaseSettings):
         description="Seconds to poll for active background runs during MCP server shutdown (ROB-020)",
     )
     max_concurrency: int = Field(
-        default=20,
+        default=50,
         ge=1,
-        le=50,
+        le=100,
         description="Maximum concurrent agent runs (ceiling); THGENT_MAX_CONCURRENCY",
     )
     concurrency_load_based: bool = Field(
