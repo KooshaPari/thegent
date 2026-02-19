@@ -9,23 +9,23 @@ import pytest
 from thegent.agents.direct_agents import (
     DirectAgentRunner,
     _filter_noisy_stderr,
-    _strip_ansi,
 )
+from thegent.utils import strip_ansi
 
 
 @pytest.mark.unit
 class TestStripAnsi:
-    """Tests for _strip_ansi helper."""
+    """Tests for strip_ansi helper."""
 
     def test_strips_color_codes(self) -> None:
         # @trace FR-AGT-001
         """Removes ANSI color codes from text."""
-        assert _strip_ansi("\x1b[31mRed text\x1b[0m") == "Red text"
+        assert strip_ansi("\x1b[31mRed text\x1b[0m") == "Red text"
 
     def test_no_ansi_passthrough(self) -> None:
         # @trace FR-AGT-001
         """Plain text passes through unchanged."""
-        assert _strip_ansi("plain text") == "plain text"
+        assert strip_ansi("plain text") == "plain text"
 
 
 @pytest.mark.unit

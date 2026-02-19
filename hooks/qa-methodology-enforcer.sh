@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-methodology-enforcer.sh
 # Advisory/optional-enforcing methodology report from QA attestation.
 set -euo pipefail

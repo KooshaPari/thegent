@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-attestation-builder.sh
 # P16.2 / CDDL-C1: Generate attestation with in-toto Statement format and SLSA provenance.
 # Supports SLSA provenance v0.2 and v1 predicateTypes.
@@ -249,7 +249,7 @@ detect_test_types() {
 
   # Property-based tests: single rg call (only if rg available)
   if command -v rg >/dev/null 2>&1; then
-    if rg -l -q --max-depth 4 'hypothesis|fast-check|quickcheck|proptest|property' "$PROJECT_DIR" 2>/dev/null; then
+    if env -u GREP_OPTIONS -u GREP_COLOR -u GREP_COLORS rg --no-config -l -q --max-depth 4 'hypothesis|fast-check|quickcheck|proptest|property' "$PROJECT_DIR" 2>/dev/null; then
       detected_property_based=true
     fi
   fi
@@ -292,11 +292,12 @@ detect_fr_coverage() {
 
   # Check if FUNCTIONAL_REQUIREMENTS.md exists for total count
   if [[ -f "$PROJECT_DIR/FUNCTIONAL_REQUIREMENTS.md" ]] && command -v rg >/dev/null 2>&1; then
-    fr_total=$(rg -o "$fr_pattern" "$PROJECT_DIR/FUNCTIONAL_REQUIREMENTS.md" 2>/dev/null | sort -u | wc -l | tr -d ' ')
+    # Use sanitized rg call
+    fr_total=$(env -u GREP_OPTIONS -u GREP_COLOR -u GREP_COLORS rg --no-config -o "$fr_pattern" "$PROJECT_DIR/FUNCTIONAL_REQUIREMENTS.md" 2>/dev/null | sort -u | wc -l | tr -d ' ')
 
     # Check test files for FR references (single rg call across test dir)
     if [[ $fr_total -gt 0 && -d "$PROJECT_DIR/test" ]]; then
-      fr_covered=$(rg -o "$fr_pattern" -g '*.bats' -g '*_test.*' -g '*.test.*' -g '*.spec.*' -g 'test_*' "$PROJECT_DIR/test" 2>/dev/null | sort -u | wc -l | tr -d ' ')
+      fr_covered=$(env -u GREP_OPTIONS -u GREP_COLOR -u GREP_COLORS rg --no-config -o "$fr_pattern" -g '*.bats' -g '*_test.*' -g '*.test.*' -g '*.spec.*' -g 'test_*' "$PROJECT_DIR/test" 2>/dev/null | sort -u | wc -l | tr -d ' ')
     fi
   fi
 

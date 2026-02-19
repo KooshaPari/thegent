@@ -34,8 +34,25 @@ includes:
   quality:
     taskfile: ./templates/shared/Taskfile.quality.yml
     optional: true
+    vars:
+      GENT_ROOT: .
 
 tasks:
+  # -- Safety checks --
+
+  shims:guard:
+    desc: "Validate generated shims for self-reinvocation patterns"
+    cmds:
+      - bash scripts/guard-shim-forks.sh
+
+  shims:probe:
+    desc: "Run binary shim startup probes with timeout and fail fast"
+    cmds:
+      - |
+        PATH="${HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        export PATH
+        bash scripts/guard-shim-forks.sh
+
   default:
     cmds:
       - task --list
@@ -43,13 +60,48 @@ tasks:
 
   # -- Project setup --
 
+  nix:setup:
+    desc: "Setup Nix environment (flake + direnv)"
+    cmds:
+      - |
+        if ! command -v nix >/dev/null 2>&1; then
+          echo "Nix not found. Install it first: https://nixos.org/download.html"
+          exit 1
+        fi
+      - nix flake update
+      - direnv allow || echo "direnv not found, skipping allow"
+
+  nix:develop:
+    desc: "Enter Nix development shell"
+    cmds:
+      - nix develop
+
   setup:
-    desc: "Initial setup: install deps and config"
+    desc: "Full setup: deps, config, shell, shims"
     cmds:
       - brew bundle check || brew bundle
       - uv sync
       - cp -n .env.example .env || true
-      - python scripts/ensure-cliproxy-config.py
+      - task: cliproxy:build
+      - task: cliproxy:ensure-config
+      - mkdir -p ~/.local/bin
+      - uv run thegent dex install-links
+      - uv run thegent clode install-links
+      - uv run thegent install -t shell
+      - task: shims:guard
+      - task: shims:probe
+      - '[ "$(uname -s)" = "Darwin" ] && uv run thegent mcp spotlight-exclude || true'
+      - |
+        printf '%s\n' '# thegent project starship config' \
+          '# Avoids "Scanning current directory timed out" in large repos' \
+          '# Increased command_timeout to handle git shim resolution (first call only)' \
+          'scan_timeout = 2000' \
+          'command_timeout = 10000' > .starship.toml
+      - uv run thegent doctor || true
+      - |
+        echo ""
+        echo "Setup complete. Shell config: ~/.zshenv, ~/.zshrc, ~/.zsh_bundle.zsh, ~/.zshrc.local"
+        echo "Shims: ~/.local/bin (ensure early in PATH)"
     sources:
       - Brewfile
       - pyproject.toml
@@ -62,12 +114,19 @@ tasks:
   dev:
     desc: "Start MCP + Proxy via process-compose (TUI)"
     cmds:
-      - process-compose up
+      - python scripts/dev_start_with_preflight.py up
 
   dev:bg:
     desc: "Start MCP + Proxy in background"
     cmds:
-      - process-compose up -d
+      - python scripts/dev_start_with_preflight.py up -d
+
+  dev:hmr:
+    desc: "Start MCP + Proxy with hot reload (HMR)"
+    cmds:
+      - task: cliproxy:build
+      - task: cliproxy:ensure-config
+      - uv run thegent mcp up --reload
 
   dev:down:
     desc: "Stop all services"
@@ -79,12 +138,59 @@ tasks:
     cmds:
       - process-compose logs -f
 
+  # -- CLIProxyAPIPlus (local fork) --
+
+  cliproxy:build:
+    desc: "Build CLIProxyAPIPlus binary from source"
+    cmds:
+      - |
+        if [ -d ../cliproxyapi-plusplus ]; then
+          cd ../cliproxyapi-plusplus && go build -o cli-proxy-api-plus ./cmd/server
+        elif [ -d ../CLIProxyAPIPlus-fork ]; then
+          cd ../CLIProxyAPIPlus-fork && go build -o cli-proxy-api-plus ./cmd/server
+        else
+          echo "CLIProxy source not found; using system binary"
+        fi
+    silent: true
+
+  cliproxy:ensure-config:
+    desc: "Ensure cliproxy config exists (port, auth-dir)"
+    cmds:
+      - uv run thegent cliproxy ensure-config
+
+  cliproxy:restart:
+    desc: "Restart proxy (ensure-config, stop, start)"
+    cmds:
+      - uv run thegent cliproxy restart
+
+  cliproxy:start:
+    desc: "Start proxy if not running"
+    cmds:
+      - uv run thegent cliproxy start
+
+  cliproxy:stop:
+    desc: "Stop proxy"
+    cmds:
+      - uv run thegent cliproxy stop
+
+  # -- Mgmt (agent self-service) --
+
+  mgmt:ensure-proxy:
+    desc: "Ensure MCP+proxy running (mcp up if needed). Agent self-service."
+    cmds:
+      - uv run thegent mgmt ensure-proxy
+
+  mgmt:verify-codex-cliproxy:
+    desc: "Verify Codex+CLIProxy: ensure proxy, run codex exec, report. Agent self-service."
+    cmds:
+      - uv run thegent mgmt verify-codex-cliproxy
+
   # -- Testing --
 
   test:
-    desc: "Run all tests (parallel)"
+    desc: "Run all tests"
     cmds:
-      - uv run pytest -n auto --cov=src/thegent --cov-report=term-missing --cov-fail-under=80
+      - uv run pytest -q
 
   test:unit:
     desc: "Run unit tests"
@@ -94,7 +200,18 @@ tasks:
   test:cov:
     desc: "Run tests with coverage (80% threshold)"
     cmds:
-      - uv run pytest -n auto --cov=src/thegent --cov-report=term-missing --cov-fail-under=80
+      - uv run pytest -q
+
+  coverage-index:
+    desc: "Build coverage_affected_map.json for P7 coverage-based test selection"
+    cmds:
+      - uv run pytest -q --cov=src --cov-context=test --cov-report= -p no:tach
+      - uv run python scripts/build_coverage_affected_map.py
+
+  coverage:map:
+    desc: "Alias: build coverage→test map for hooks (run periodically for best affected-test selection)"
+    cmds:
+      - task: coverage-index
 
   test:pyramid:
     desc: "Validate test pyramid distribution"
@@ -114,6 +231,8 @@ tasks:
 
   lint:python:
     desc: "Python linting (ruff)"
+    env:
+      RUFF_CACHE_DIR: /tmp/.ruff_cache
     cmds:
       - uv run ruff check . --output-format=grouped
       - uv run ruff format --check .
@@ -161,12 +280,16 @@ tasks:
 
   format:
     desc: "Format all code"
+    env:
+      RUFF_CACHE_DIR: /tmp/.ruff_cache
     cmds:
       - uv run ruff format .
       - uv run ruff check --fix .
 
   format:check:
     desc: "Check formatting without modifying"
+    env:
+      RUFF_CACHE_DIR: /tmp/.ruff_cache
     cmds:
       - uv run ruff format --check .
 
@@ -181,6 +304,8 @@ tasks:
 
   security:
     desc: "Run security checks"
+    env:
+      RUFF_CACHE_DIR: /tmp/.ruff_cache
     cmds:
       - uv run ruff check --select S src/
 
@@ -207,6 +332,8 @@ tasks:
   quality_project:
     desc: "Run project-specific quality gate (comprehensive)"
     cmds:
+      - task: shims:guard
+      - task: shims:probe
       - task: lint
       - task: lint:strict
       - task: test
@@ -275,11 +402,54 @@ tasks:
 
   # -- Hooks --
 
+  hooks:bin:
+    desc: "Build hook-dispatcher and install to hooks/bin"
+    cmds:
+      - cargo build --release --manifest-path hooks/hook-dispatcher/Cargo.toml
+      - mkdir -p hooks/bin
+      - cp hooks/hook-dispatcher/target/release/hook-dispatcher hooks/bin/hook-dispatcher
+
+  build:rust:
+    desc: "Build BKM Rust crates (thegent-resources, thegent-crypto, thegent-parser, thegent-shm, thegent-git, thegent-discovery, thegent-watcher, hook-dispatcher)"
+    cmds:
+      - cargo build --release -p thegent-resources -p thegent-discovery -p thegent-watcher -p hook-dispatcher --manifest-path crates/Cargo.toml
+      - uv pip install crates/thegent-crypto
+      - uv pip install crates/thegent-parser
+      - uv pip install crates/thegent-shm
+      - uv pip install crates/thegent-git
+
   hooks:install:
     desc: "Install pre-commit hooks"
     cmds:
       - uv run pre-commit install
       - uv run pre-commit install --hook-type commit-msg
+
+  # -- Memory cache (Supermemory integration) --
+
+  memory:cache:test:
+    desc: "Run L1/L2 cache tests"
+    cmds:
+      - uv run pytest src/thegent/memory/test_cache.py -v
+
+  memory:cache:bench:
+    desc: "Run L1/L2 cache performance benchmarks"
+    cmds:
+      - uv run pytest src/thegent/memory/test_cache.py::TestPerformance -v
+
+  memory:client:test:
+    desc: "Run Rust Supermemory client tests"
+    cmds:
+      - cargo test --manifest-path crates/thegent-memory/Cargo.toml
+
+  memory:client:build:
+    desc: "Build Rust Supermemory client"
+    cmds:
+      - cargo build --manifest-path crates/thegent-memory/Cargo.toml
+
+  memory:client:doc:
+    desc: "Build and open Rust docs for thegent-memory"
+    cmds:
+      - cargo doc --manifest-path crates/thegent-memory/Cargo.toml --no-deps --open
 
   # -- Cleanup --
 
@@ -297,20 +467,41 @@ tasks:
 
   # -- Docs (VitePress) --
 
+  docs:demos:
+    desc: Generate GIFs for documentation demos
+    cmds:
+      - ./scripts/generate_demos.sh
+
   docs:build:
     desc: Build docsite (all versions)
+    deps: [docs:demos]
     cmds:
-      - pnpm docs:build
+      - |
+        if command -v bun >/dev/null 2>&1; then
+          bun run docs:build
+        else
+          pnpm docs:build
+        fi
 
   docs:watch:
     desc: Watch docs and rebuild on change
     cmds:
-      - pnpm docs:dev
+      - |
+        if command -v bun >/dev/null 2>&1; then
+          bun run docs:dev
+        else
+          pnpm docs:dev
+        fi
 
   docs:serve:
     desc: Serve docsite locally with hot reload
     cmds:
-      - pnpm docs:preview
+      - |
+        if command -v bun >/dev/null 2>&1; then
+          bun run docs:preview
+        else
+          pnpm docs:preview
+        fi
 
   docs:pdf:
     desc: Export docsite to PDF
@@ -319,3 +510,141 @@ tasks:
     cmds:
       - pnpm docs:pdf
 
+  docs:convert-audit:
+    desc: Audit docs/*.md for H1, frontmatter, See also (convert phase)
+    cmds:
+      - bash scripts/docs-convert-audit.sh docs
+
+  harvest-idea-seeds:
+    desc: Harvest $idea prompts from Claude/Codex/Cursor into docs/research/idea-seeds
+    cmds:
+      - ./scripts/harvest-idea-seeds.sh
+  prompts-harvest:
+    desc: Same as harvest-idea-seeds via thegent CLI
+    cmds:
+      - thegent prompts harvest
+  prompts-sessions:
+    desc: List sessions from Cursor, Codex, Claude (by session and project)
+    cmds:
+      - thegent prompts sessions
+  prompts-sync:
+    desc: Harvest + list — one-shot sync of all sources
+    cmds:
+      - thegent prompts sync
+
+  # -- Benchmarks (Hook Rust Migration) --
+
+  bench:setup:
+    desc: "Setup benchmarking environment (hyperfine, dependencies)"
+    cmds:
+      - |
+        if ! command -v hyperfine >/dev/null 2>&1; then
+          echo "Installing hyperfine..."
+          if command -v brew >/dev/null 2>&1; then
+            brew install hyperfine
+          else
+            cargo install hyperfine
+          fi
+        fi
+      - mkdir -p benchmarks/results
+
+  bench:comprehensive:
+    desc: "Run comprehensive hook benchmark suite (all scenarios)"
+    deps: [bench:setup]
+    cmds:
+      - bash scripts/benchmark-comprehensive.sh
+
+  bench:extended:
+    desc: "Run extended benchmark suite (operations + hooks + aggregate)"
+    deps: [bench:setup]
+    cmds:
+      - BENCH_SCENARIO=all bash scripts/benchmark-extended.sh
+
+  bench:operations:
+    desc: "Run operation-level benchmarks only (init, cache, git, etc.)"
+    deps: [bench:setup]
+    cmds:
+      - BENCH_SCENARIO=operations bash scripts/benchmark-extended.sh
+
+  bench:hooks:
+    desc: "Run real hook benchmarks (pre-write-validator, etc.)"
+    deps: [bench:setup]
+    cmds:
+      - BENCH_SCENARIO=hooks bash scripts/benchmark-extended.sh
+
+  bench:aggregate:
+    desc: "Run aggregate benchmarks (sequential hooks, batch performance)"
+    deps: [bench:setup]
+    cmds:
+      - BENCH_SCENARIO=aggregate bash scripts/benchmark-extended.sh
+
+  bench:dry-run:
+    desc: "Dry run (plan benchmarks without executing)"
+    deps: [bench:setup]
+    cmds:
+      - BENCH_DRY_RUN=1 bash scripts/benchmark-extended.sh
+
+  bench:custom:
+    desc: "Run with custom settings (use BENCH_WARMUP_RUNS and BENCH_MEASURE_RUNS)"
+    deps: [bench:setup]
+    cmds:
+      - bash scripts/benchmark-extended.sh
+
+  bench:report:
+    desc: "Generate report from latest benchmark results"
+    cmds:
+      - |
+        if [[ -d benchmarks/results/latest ]]; then
+          python3 scripts/benchmark-analysis.py \
+            --baseline-dir benchmarks/results/latest/baseline \
+            --current-dir benchmarks/results/latest/current \
+            --report-path benchmarks/results/latest/analysis.md \
+            --summary-path benchmarks/results/latest/analysis.json
+          echo ""
+          echo "Report: benchmarks/results/latest/analysis.md"
+          echo "Summary: benchmarks/results/latest/analysis.json"
+        else
+          echo "No benchmark results found. Run 'task bench:extended' first."
+          exit 1
+        fi
+
+  bench:compare:
+    desc: "Compare two benchmark runs"
+    cmds:
+      - |
+        if [[ $# -lt 2 ]]; then
+          echo "Usage: task bench:compare -- <run1_id> <run2_id>"
+          echo ""
+          echo "Available runs:"
+          ls -1 benchmarks/results/ | grep -v latest | tail -10
+          exit 1
+        fi
+        python3 scripts/benchmark-analysis.py \
+          --baseline-dir benchmarks/results/$1/current \
+          --current-dir benchmarks/results/$2/current \
+          --report-path benchmarks/results/comparison-$1-$2.md \
+          --summary-path benchmarks/results/comparison-$1-$2.json
+
+  bench:view:
+    desc: "View latest benchmark report"
+    cmds:
+      - |
+        if [[ -f benchmarks/results/latest/report.md ]]; then
+          less benchmarks/results/latest/report.md
+        else
+          echo "No report found. Run 'task bench:extended' first."
+          exit 1
+        fi
+
+  bench:list:
+    desc: "List all benchmark runs"
+    cmds:
+      - |
+        echo "Benchmark runs:"
+        ls -1dt benchmarks/results/* 2>/dev/null | head -20 | while read dir; do
+          if [[ -f "$dir/manifest.json" ]]; then
+            run_id=$(basename "$dir")
+            timestamp=$(jq -r '.generated_at_utc' "$dir/manifest.json" 2>/dev/null || echo "unknown")
+            echo "  $run_id ($timestamp)"
+          fi
+        done

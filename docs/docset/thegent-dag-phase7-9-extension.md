@@ -92,3 +92,11 @@ flowchart TD
 3. `N9001` requires both contract negotiation and parser health checks as preconditions.
 4. `G9` must record explicit owner signoff for replay safety and explainability.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

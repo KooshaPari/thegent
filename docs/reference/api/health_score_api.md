@@ -1,0 +1,117 @@
+# health_score API Reference
+
+> **Source**: `src/thegent/governance/health_score.py`
+
+Composite health score model (0-100) for autonomous codebase governance.
+
+Replaces XP/gamification with a weighted, multi-dimensional health metric.
+Each dimension (test coverage, lint violations, etc.) is normalized against
+targets defined in contracts/health-targets.json and combined into a single
+score that drives autonomous agent scheduling decisions.
+
+---
+
+## DimensionScore
+
+Score for a single health dimension with normalization against target.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## HealthBand
+
+Health classification bands derived from composite score.
+
+**Inherits from**: `str, Enum`
+
+---
+
+## HealthScore
+
+Composite health score aggregating all governance dimensions.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## HealthScoreComputer
+
+Computes composite health scores from raw dimension measurements.
+
+Loads dimension definitions (weights, targets, directions) from the
+contracts/health-targets.json file and normalizes incoming raw values
+into a weighted 0-100 composite score.
+
+### Methods
+
+#### HealthScoreComputer.__init__
+
+```python
+__init__(self, health_targets_path)
+```
+
+#### HealthScoreComputer.compute
+
+Compute a health score from raw dimension measurements.
+
+Args:
+    dimension_values: mapping of dimension name to raw measured value.
+        Dimensions not present in the dict default to their worst case
+        (0 for higher_is_better, target*2 for lower_is_better).
+
+Returns:
+    A fully populated HealthScore.
+
+```python
+compute(self, dimension_values)
+```
+
+#### HealthScoreComputer.compute_with_trend
+
+Compute health score and derive trend from comparison with previous score.
+
+```python
+compute_with_trend(self, dimension_values, previous_score)
+```
+
+---
+
+## compute
+
+Compute a health score from raw dimension measurements.
+
+Args:
+    dimension_values: mapping of dimension name to raw measured value.
+        Dimensions not present in the dict default to their worst case
+        (0 for higher_is_better, target*2 for lower_is_better).
+
+Returns:
+    A fully populated HealthScore.
+
+```python
+compute(self, dimension_values)
+```
+
+---
+
+## compute_with_trend
+
+Compute health score and derive trend from comparison with previous score.
+
+```python
+compute_with_trend(self, dimension_values, previous_score)
+```
+
+---
+
+## get_band
+
+Return the appropriate HealthBand for a numeric score (0-100).
+
+```python
+get_band(score)
+```
+
+---
+

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-dag-dependency-gate.sh
 # WBS-A1: Enforce PLAN.md dependency transitions — no task marked done if predecessors incomplete.
 # Reads dag.json edges (depends_on) and ledger.json item states; fails on violation.

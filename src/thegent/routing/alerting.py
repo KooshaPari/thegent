@@ -6,11 +6,11 @@ high latency, and provider errors. Supports webhook notifications.
 
 from __future__ import annotations
 
-import json
 import logging
-import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, ClassVar
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -87,20 +87,17 @@ class AlertManager:
             return False
 
         try:
-            data = json.dumps(alert.to_json()).encode("utf-8")
-            req = urllib.request.Request(
+            resp = httpx.post(
                 self._webhook_url,
-                data=data,
-                headers={"Content-Type": "application/json"},
-                method="POST",
+                json=alert.to_json(),
+                timeout=5,
             )
-            with urllib.request.urlopen(req, timeout=5) as response:
-                return response.status == 200
-        except urllib.error.HTTPError as e:
-            logger.error("Alert webhook HTTP error: %s %s", e.code, e.reason)
+            return resp.status_code == 200
+        except httpx.HTTPStatusError as e:
+            logger.error("Alert webhook HTTP error: %s %s", e.response.status_code, e.response.reason_phrase)
             return False
-        except urllib.error.URLError as e:
-            logger.error("Alert webhook URL error: %s", e.reason)
+        except httpx.RequestError as e:
+            logger.error("Alert webhook HTTP error: %s", e)
             return False
         except Exception as e:
             logger.error("Failed to send alert: %s", e)

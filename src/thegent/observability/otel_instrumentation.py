@@ -1,4 +1,3 @@
-import os
 from collections.abc import Generator
 from contextlib import contextmanager
 
@@ -28,8 +27,10 @@ def _setup_otel():
         resource = Resource.create({"service.name": "thegent"})
         provider = TracerProvider(resource=resource)
 
-        # Enable console export if THGENT_OTEL_CONSOLE is set
-        if os.environ.get("THGENT_OTEL_CONSOLE") == "1":
+        # Enable console export if otel_console is set
+        from thegent.config import ThegentSettings
+
+        if ThegentSettings().otel_console:
             processor = BatchSpanProcessor(ConsoleSpanExporter())
             provider.add_span_processor(processor)
 

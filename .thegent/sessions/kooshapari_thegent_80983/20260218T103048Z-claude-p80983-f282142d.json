@@ -1,0 +1,42 @@
+{
+  "agent": "claude",
+  "command": [
+    "/usr/local/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "300",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_e52e941a",
+    "Synthesize a development writeup for 'research-compute-offload' (Mac\u2194PC) including proposal.md, design.md, and tasks.md in docs/changes/research-compute-offload/",
+    "claude"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 80983,
+  "launcher_ppid": 80965,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:80983",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_80983/20260218T103048Z-claude-p80983-f282142d.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_80983/20260218T103048Z-claude-p80983-f282142d.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_80983/20260218T103048Z-claude-p80983-f282142d.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_80983/20260218T103048Z-claude-p80983-f282142d.stdout.log"
+  },
+  "pid": 80991,
+  "prompt": "Synthesize a development writeup for 'research-compute-offload' (Mac\u2194PC) including proposal.md, design.md, and tasks.md in docs/changes/research-compute-offload/",
+  "session_id": "20260218T103048Z-claude-p80983-f282142d",
+  "started_at_utc": "2026-02-18T10:30:49.037900+00:00",
+  "status": "running",
+  "timeout_hint_s": 300,
+  "version": 1
+}

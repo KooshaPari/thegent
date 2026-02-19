@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
+from thegent.infra import run_subprocess_optimized
 
 # MCP server URL (HTTP transport)
 DEFAULT_MCP_URL = "http://127.0.0.1:3847/mcp"
@@ -160,33 +161,34 @@ def _launchd_plist_path() -> Path:
     return Path.home() / "Library" / "LaunchAgents" / "com.thegent.mcp.plist"
 
 
-def _python_exe() -> str:
+def _python_exe(settings: ThegentSettings) -> str:
     """Resolve Python executable for thegent."""
-    if os.environ.get("VIRTUAL_ENV"):
-        venv = Path(os.environ["VIRTUAL_ENV"])
+    if settings.virtual_env:
+        venv = settings.virtual_env
         exe = venv / "bin" / "python"
         if exe.exists():
             return str(exe)
     return shutil.which("python3") or shutil.which("python") or "python3"
 
 
-def _thegent_serve_cmd() -> list[str]:
+def _thegent_serve_cmd(settings: ThegentSettings) -> list[str]:
     """Command to run thegent serve. Prefer sys.executable so launchd uses same Python as CLI."""
     import sys
 
     python = sys.executable
     if not python or not Path(python).exists():
-        python = _python_exe()
+        python = _python_exe(settings)
     return [python, "-m", "thegent.main", "serve"]
 
 
 def service_install() -> tuple[bool, str]:
     """Install thegent MCP as launchd service (macOS)."""
+    settings = ThegentSettings()
     if platform.system() != "Darwin":
         return False, "launchd only supported on macOS. Use systemd on Linux."
     plist_path = _launchd_plist_path()
     plist_path.parent.mkdir(parents=True, exist_ok=True)
-    cmd = _thegent_serve_cmd()
+    cmd = _thegent_serve_cmd(settings)
     plist = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -221,7 +223,7 @@ def service_uninstall() -> tuple[bool, str]:
     if platform.system() != "Darwin":
         return False, "launchd only on macOS"
     plist_path = _launchd_plist_path()
-    subprocess.run(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
+    run_subprocess_optimized(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
     if plist_path.exists():
         plist_path.unlink()
     return True, "Uninstalled"
@@ -234,7 +236,7 @@ def service_start() -> tuple[bool, str]:
     plist_path = _launchd_plist_path()
     if not plist_path.exists():
         return False, "Service not installed. Run: thegent mcp service install"
-    subprocess.run(["launchctl", "load", str(plist_path)], capture_output=True, check=True)
+    run_subprocess_optimized(["launchctl", "load", str(plist_path)], capture_output=True, check=True)
     return True, "Started"
 
 
@@ -245,7 +247,7 @@ def service_stop() -> tuple[bool, str]:
     plist_path = _launchd_plist_path()
     if not plist_path.exists():
         return False, "Service not installed"
-    subprocess.run(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
+    run_subprocess_optimized(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
     return True, "Stopped"
 
 
@@ -254,22 +256,22 @@ def service_status(settings: ThegentSettings | None = None) -> tuple[bool, str]:
     settings = settings or ThegentSettings()
     url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
     try:
-        import urllib.request
+        import httpx
 
-        req = urllib.request.Request(url, method="GET")
-        with urllib.request.urlopen(req, timeout=2) as resp:
-            if resp.status == 200:
-                return True, "Running (HTTP OK)"
+        resp = httpx.get(url, timeout=2)
+        if resp.status_code == 200:
+            return True, "Running (HTTP OK)"
     except Exception:
         pass
     if platform.system() == "Darwin":
-        result = subprocess.run(
+        result = run_subprocess_optimized(
             ["launchctl", "list", "com.thegent.mcp"],
             check=False,
             capture_output=True,
             text=True,
         )
-        if result.returncode == 0 and "com.thegent.mcp" in (result.stdout or ""):
+        stdout_text = result.stdout if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        if result.returncode == 0 and stdout_text and "com.thegent.mcp" in stdout_text:
             return False, "Loaded but HTTP not reachable (check logs)"
     return False, "Not running"
 
@@ -291,28 +293,30 @@ def _process_compose_path() -> Path | None:
         return None
 
 
-def mcp_up() -> tuple[bool, str]:
+def mcp_up(reload: bool = False) -> tuple[bool, str]:
     """Start MCP + proxy via process-compose. Returns (success, message)."""
     from thegent.errors import ConfigError, get_install_hint
+
     pc = _process_compose_path()
     if pc is None:
         return False, "process-compose.yaml not found. Run from thegent project root."
     proc = shutil.which("process-compose")
     if not proc:
-        raise ConfigError(
-            "process-compose not installed.",
-            get_install_hint("process-compose")
-        )
-    result = subprocess.run(
-        [proc, "-f", str(pc), "up", "-D"],
+        raise ConfigError("process-compose not installed.", get_install_hint("process-compose"))
+    # Handle reload: if True, use restart command instead of up
+    cmd = "restart" if reload else "up"
+    result = run_subprocess_optimized(
+        [proc, "-f", str(pc), cmd, "-D"],
         check=False,
         cwd=pc.parent,
         capture_output=True,
         text=True,
     )
     if result.returncode != 0:
-        return False, result.stderr or result.stdout or "process-compose up failed"
-    return True, f"MCP + proxy started (process-compose). MCP: {pc.parent}"
+        stderr_text = result.stderr if isinstance(result.stderr, str) else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
+        stdout_text = result.stdout if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        return False, stderr_text or stdout_text or f"process-compose {cmd} failed"
+    return True, f"MCP + proxy {'restarted' if reload else 'started'} (process-compose). MCP: {pc.parent}"
 
 
 def mcp_down() -> tuple[bool, str]:
@@ -324,7 +328,7 @@ def mcp_down() -> tuple[bool, str]:
     if not proc:
         return False, "process-compose not installed"
     # down connects to running server; must run from project dir
-    result = subprocess.run(
+    result = run_subprocess_optimized(
         [proc, "down"],
         check=False,
         cwd=pc.parent,
@@ -332,5 +336,20 @@ def mcp_down() -> tuple[bool, str]:
         text=True,
     )
     if result.returncode != 0:
-        return False, result.stderr or result.stdout or "process-compose down failed"
+        stderr_text = result.stderr if isinstance(result.stderr, str) else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
+        stdout_text = result.stdout if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        return False, stderr_text or stdout_text or "process-compose down failed"
     return True, "MCP + proxy stopped"
+
+
+def serve_delegate_or_run(settings) -> tuple[bool, str]:
+    """
+    Check if MCP server should be delegated to a service (launchd/Homebrew) or run directly.
+
+    Returns:
+        (run_foreground, message) - If run_foreground=True, run in foreground;
+        otherwise, message indicates delegation success.
+    """
+    # Check if we should use launchd/Homebrew service
+    # For now, always run foreground since service integration is not fully configured
+    return False, "Running MCP server directly (service delegation not configured)"

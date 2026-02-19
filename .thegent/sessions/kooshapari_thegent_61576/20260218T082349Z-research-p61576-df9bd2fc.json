@@ -1,0 +1,41 @@
+{
+  "agent": "research",
+  "command": [
+    "/usr/local/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_93668d38",
+    "Synthesize a development writeup for 'research-supermemory-integration' from docs/research/SESSION_RESEARCH_FRAGMENTS_EXPANDED.md. Create docs/changes/research-supermemory-integration/proposal.md, design.md, and tasks.md with implementation details.",
+    "research"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 61576,
+  "launcher_ppid": 61440,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:61576",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_61576/20260218T082349Z-research-p61576-df9bd2fc.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_61576/20260218T082349Z-research-p61576-df9bd2fc.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_61576/20260218T082349Z-research-p61576-df9bd2fc.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_61576/20260218T082349Z-research-p61576-df9bd2fc.stdout.log"
+  },
+  "pid": 62980,
+  "prompt": "Synthesize a development writeup for 'research-supermemory-integration' from docs/research/SESSION_RESEARCH_FRAGMENTS_EXPANDED.md. Create docs/changes/research-supermemory-integration/proposal.md, design.md, and tasks.md with implementation details.",
+  "session_id": "20260218T082349Z-research-p61576-df9bd2fc",
+  "started_at_utc": "2026-02-18T08:23:49.976136+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

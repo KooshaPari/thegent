@@ -42,3 +42,11 @@ Monitor stability, rollback readiness, policy integrity, and operator feedback f
 - Weekly executive digest
 - Final day-28 summary for leadership and governance
 - Day-28 artifact handoff to governance/compliance archive
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [PHASE6_READINESS_REPORT.md](./PHASE6_READINESS_REPORT.md) — Phase 6 readiness

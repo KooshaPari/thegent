@@ -165,56 +165,56 @@ CatalogView:
 
 **Deliverables:** `run_with_failover(model, prompt, ...)`.
 
-### Phase 5: Routing Policies ✅
+### Phase 5: Routing Policies ✓
 
 - `--routing prefer_direct | prefer_proxy | failover` (or config).
 - `round_robin`, `cheapest` as future extensions.
 
 **Deliverables:** Policy selection, configurable default. Implemented: `--routing`/`-R`, `THGENT_DEFAULT_ROUTING`, `routing=failover` enables failover behavior.
 
-### Phase 6: MCP Model-First ✅
+### Phase 6: MCP Model-First ✓
 
 - `thegent_run(prompt, agent?, model?, provider?)` — model-first when model set, agent optional.
 - Same semantics as CLI: resolve_route(model) or resolve_route(model, provider_hint).
 
 **Deliverables:** MCP `thegent_run` model-first routing. Implemented: agent optional when model given; provider hint; uses config default_routing.
 
-### Phase 7: Scraped Routes for Routing ✅
+### Phase 7: Scraped Routes for Routing ✓
 
 - Merge scraped catalog into `ModelCatalog.routes_for()` so routing uses live data.
 - `routes_for(model_id, use_scraped=True)` merges static + scraped; scraped adds routes not in static.
 
 **Deliverables:** `_scraped_to_routes()`, `routes_for(use_scraped=True)` merge. Implemented.
 
-### Phase 8: Canonicalization & Alias Expansion ✅
+### Phase 8: Canonicalization & Alias Expansion ✓
 
 - Expand alias table: claude-4-*, gemini-2-flash, gemini-2.5, gemini-3, etc.
 - `normalize_model_id()` maps short names to canonical IDs.
 
 **Deliverables:** Expanded `_ALIASES`, `normalize_model_id()`. Implemented.
 
-### Phase 9: Configurable Cache TTL ✅
+### Phase 9: Configurable Cache TTL ✓
 
 - Add `THGENT_MODELS_CACHE_TTL_SEC` (default 300, range 60–3600).
 - Scrapers use config TTL instead of hardcoded value.
 
 **Deliverables:** `models_cache_ttl_sec` in config. Implemented.
 
-### Phase 10: models refresh Subcommand ✅
+### Phase 10: models refresh Subcommand ✓
 
 - Add `thegent models refresh` to invalidate cache.
 - Plan: "Invalidate on config change or manual thegent models refresh."
 
 **Deliverables:** `models refresh` subcommand, `invalidate_models_cache()`. Implemented.
 
-### Phase 11: Provider Validation Message ✅
+### Phase 11: Provider Validation Message ✓
 
 - When `--provider X` doesn't serve model, error includes "Available: A, B, C".
 - Plan §12.3: "Model Y not available via provider X. Available: A, B, C."
 
 **Deliverables:** Enhanced error message in CLI and MCP. Implemented.
 
-### Phase 12: ModelScraper Protocol ✅
+### Phase 12: ModelScraper Protocol ✓
 
 - Define `ModelScraper` Protocol and `SCRAPER_REGISTRY`.
 - S1.1 from WBS: "Define ModelScraper interface and CatalogView schema."
@@ -257,14 +257,14 @@ CatalogView:
 
 | Provider | Scraping | Source |
 |----------|----------|--------|
-| cursor-agent | ✅ | `cursor agent --list-models` |
-| copilot | ✅ | `copilot --help` → parse `--model` choices |
-| codex | ✅ | `cursor agent --list-models` filtered |
-| gemini | ❌ | Hardcoded defaults |
-| claude | ❌ | Hardcoded defaults |
-| antigravity | ❌ | Hardcoded defaults |
-| minimax | ❌ | Hardcoded |
-| glm | ❌ | Hardcoded |
+| cursor-agent | ✓ | `cursor agent --list-models` |
+| copilot | ✓ | `copilot --help` → parse `--model` choices |
+| codex | ✓ | `cursor agent --list-models` filtered |
+| gemini | ✗ | Hardcoded defaults |
+| claude | ✗ | Hardcoded defaults |
+| antigravity | ✗ | Hardcoded defaults |
+| minimax | ✗ | Hardcoded |
+| glm | ✗ | Hardcoded |
 
 **MCP:** `list_models_impl` returns static defaults; does not invoke scrapers.
 
@@ -537,3 +537,11 @@ thegent run "prompt" claude -M sonnet
 | S-C | SC1 | `list_models_impl` returns scraped catalog; `list-models --by-model` uses it | SB3 |
 | S-C | SC2 | MCP `thegent_list_models` returns full catalog (by_provider, by_model) | SC1 |
 | S-C | SC3 | MCP `thegent_run(agent?, model?, prompt)` — model-first when model set, agent optional | SC1 |
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

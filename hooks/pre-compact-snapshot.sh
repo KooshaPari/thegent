@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # pre-compact-snapshot.sh — PreCompact hook
 # Snapshots current quality state before context compression.
 # Advisory only (always exits 0).

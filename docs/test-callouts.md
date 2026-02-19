@@ -15,3 +15,11 @@ This action cannot be undone!
 <Callout type="note">
 This is just an informational note.
 </Callout>
+
+
+---
+## See also
+
+- [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index
+

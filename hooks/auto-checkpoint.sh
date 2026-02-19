@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # Auto-Checkpoint — PreCompact
 # Before context compaction, record HEAD SHA and change count for recovery.
 # Advisory only — never blocks compaction.

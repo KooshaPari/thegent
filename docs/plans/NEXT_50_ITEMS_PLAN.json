@@ -1,0 +1,139 @@
+{
+  "plan_date": "2026-02-18",
+  "total_items": 7,
+  "categories": {
+    "Developer Experience": [
+      {
+        "id": "dx-improve-file-reading-efficiency",
+        "category": "Developer Experience",
+        "title": "Use offset/limit for targeted file reading",
+        "source": "FRICTION_LOG.md",
+        "priority": "P2",
+        "depends": "-"
+      }
+    ],
+    "Documentation": [
+      {
+        "id": "vitepress-playwright-setup",
+        "category": "Documentation",
+        "title": "Set up Playwright for browser recordings",
+        "source": "VITEPRESS_RICH_DOCUMENTATION_IMPLEMENTATION_PLAN.md",
+        "priority": "P1",
+        "depends": "-"
+      }
+    ],
+    "Governance/Cost": [
+      {
+        "id": "gov-wp-3008-dlq",
+        "category": "Governance/Cost",
+        "title": "EscalationQueue + DLQ integration (deferred)",
+        "source": "GOVERNANCE_WP_GAPS.md",
+        "priority": "P2",
+        "depends": "\u2014"
+      }
+    ],
+    "Implementation": [
+      {
+        "id": "impl-concurrency-cli",
+        "category": "Implementation",
+        "title": "Add CLI command to view/adjust concurrency limit (thegent concurrency show/set)",
+        "source": "This session",
+        "priority": "P1",
+        "depends": "-"
+      }
+    ],
+    "Phases/Scratch": [
+      {
+        "id": "phase13-compliance-profile",
+        "category": "Phases/Scratch",
+        "title": "Compliance profile mapping (EU-AI-ACT, US-SEC, SOX, GDPR)",
+        "source": "phase13-compliance-profile-mapping.md",
+        "priority": "P2",
+        "depends": "WP-13002"
+      }
+    ],
+    "Research": [
+      {
+        "id": "research-remote-compute-impl",
+        "category": "Research",
+        "title": "Implement thegent run --remote (Phase 4 compute offload)",
+        "source": "CONVERSATION_DUMP_2026-02-16.md \u00a74",
+        "priority": "P2",
+        "depends": "\u2014"
+      }
+    ],
+    "Work Packages": [
+      {
+        "id": "WP-28003",
+        "category": "Work Packages",
+        "title": "Poison Pill Detection in Swarm Memory",
+        "source": "02-UNIFIED-WBS.md",
+        "priority": "P2",
+        "depends": "WP-24003"
+      }
+    ]
+  },
+  "priority_breakdown": {
+    "P1": 2,
+    "P2": 5,
+    "P3": 0
+  },
+  "items": [
+    {
+      "id": "dx-improve-file-reading-efficiency",
+      "category": "Developer Experience",
+      "title": "Use offset/limit for targeted file reading",
+      "source": "FRICTION_LOG.md",
+      "priority": "P2",
+      "depends": "-"
+    },
+    {
+      "id": "vitepress-playwright-setup",
+      "category": "Documentation",
+      "title": "Set up Playwright for browser recordings",
+      "source": "VITEPRESS_RICH_DOCUMENTATION_IMPLEMENTATION_PLAN.md",
+      "priority": "P1",
+      "depends": "-"
+    },
+    {
+      "id": "gov-wp-3008-dlq",
+      "category": "Governance/Cost",
+      "title": "EscalationQueue + DLQ integration (deferred)",
+      "source": "GOVERNANCE_WP_GAPS.md",
+      "priority": "P2",
+      "depends": "\u2014"
+    },
+    {
+      "id": "impl-concurrency-cli",
+      "category": "Implementation",
+      "title": "Add CLI command to view/adjust concurrency limit (thegent concurrency show/set)",
+      "source": "This session",
+      "priority": "P1",
+      "depends": "-"
+    },
+    {
+      "id": "phase13-compliance-profile",
+      "category": "Phases/Scratch",
+      "title": "Compliance profile mapping (EU-AI-ACT, US-SEC, SOX, GDPR)",
+      "source": "phase13-compliance-profile-mapping.md",
+      "priority": "P2",
+      "depends": "WP-13002"
+    },
+    {
+      "id": "research-remote-compute-impl",
+      "category": "Research",
+      "title": "Implement thegent run --remote (Phase 4 compute offload)",
+      "source": "CONVERSATION_DUMP_2026-02-16.md \u00a74",
+      "priority": "P2",
+      "depends": "\u2014"
+    },
+    {
+      "id": "WP-28003",
+      "category": "Work Packages",
+      "title": "Poison Pill Detection in Swarm Memory",
+      "source": "02-UNIFIED-WBS.md",
+      "priority": "P2",
+      "depends": "WP-24003"
+    }
+  ]
+}

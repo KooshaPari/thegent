@@ -17,13 +17,13 @@
         "project_dir": "."
       },
       "internalParameters": {
-        "git_sha": "5e432bd850f76405b59f145cbff3f8d47a20a37e"
+        "git_sha": "3a426a9471a1309697138538a45e902d3d3d41ab"
       },
       "resolvedDependencies": [
         {
           "uri": "unknown",
           "digest": {
-            "gitSha": "5e432bd850f76405b59f145cbff3f8d47a20a37e"
+            "gitSha": "3a426a9471a1309697138538a45e902d3d3d41ab"
           }
         }
       ]
@@ -33,9 +33,9 @@
         "id": "https://github.com/kush/sharecli/builder/qa-attestation-builder"
       },
       "metadata": {
-        "invocationId": "session-49780-1771207985",
-        "startedOn": "2026-02-15T18:13:01Z",
-        "finishedOn": "2026-02-16T02:13:05Z"
+        "invocationId": "session-36920-1771466778",
+        "startedOn": "2026-02-19T02:05:44Z",
+        "finishedOn": "2026-02-19T02:05:44Z"
       }
     }
   }

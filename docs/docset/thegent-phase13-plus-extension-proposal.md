@@ -115,3 +115,11 @@ The proposal below defines explicit extension boundaries to convert Phase 13+ in
 - Approve Phase 13 only if policy federation demand is present and expected within 2 quarters.
 - Defer phase 14 until controlled cost observability shows clear measurable spend/quality trade-off targets.
 - Prioritize Phase 15 based on enterprise client demand and compliance commitments.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

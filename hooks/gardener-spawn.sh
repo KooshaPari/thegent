@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # gardener-spawn.sh — Agent spawning logic
 # Spawns agents to address detected hunger states
 # Based on research: hierarchical orchestration + bounded contexts
@@ -55,7 +55,7 @@ spawn_agent_for_hunger() {
             agent_type="${CONTEXT_AGENTS[docs]}"
             ;;
         fragmented_research)
-            agent_type="${CONTEXT_AGENTS[research]}"
+            agent_type="work-stream-incorporator"
             ;;
         missing_specs)
             agent_type="${CONTEXT_AGENTS[governance]}"

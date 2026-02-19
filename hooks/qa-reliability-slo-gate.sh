@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-reliability-slo-gate.sh
 # N9: Reliability SLO gate with progressive enforcement.
 set -euo pipefail

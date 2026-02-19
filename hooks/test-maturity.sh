@@ -1,8 +1,28 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # test-maturity.sh — Stop hook
 # Assesses project test maturity on a 5-level scale. Advisory only (exit 0 always).
 # Budget: <15s.
 set -uo pipefail
+
+# --- DEBUG: Timing ---
+_HOOK_START_TIME=$(date +%s)
+_hook_config_path() {
+  local base="${BASH_SOURCE[0]%/*}"
+  [[ -f "${base}/../hook-config.yaml" ]] && echo "${base}/../hook-config.yaml"
+  [[ -f "${PROJECT_DIR:-.}/.claude/hooks/hook-config.yaml" ]] && echo "${PROJECT_DIR}/.claude/hooks/hook-config.yaml"
+}
+_HOOK_DEBUG="false"
+if grep -q "debug_timing:.*true" $(_hook_config_path) 2>/dev/null; then
+  _HOOK_DEBUG="true"
+fi
+_debug_timing() {
+  if [[ "$_HOOK_DEBUG" == "true" ]]; then
+    local _now=$(date +%s)
+    local _elapsed=$((_now - _HOOK_START_TIME))
+    echo "[DEBUG-TIME] test-maturity: elapsed ${_elapsed}s at: $1" >&2
+  fi
+}
+_debug_timing "script_start"
 
 # Ultra-fast cache check — before sourcing anything.
 # Uses HEAD_SHA pre-computed by stop-dispatcher. 10-min TTL for better reuse.
@@ -68,7 +88,10 @@ add_criterion() {
 #   2. Combined boolean detection for 8 categories (single rg | awk)
 #   3. Suppression counting — bare and total (single rg | awk)
 # This reduces cold-run time from ~11s to <0.5s.
-_RG=(rg --no-config)
+# Use env sanitization to avoid grep config errors
+_RG() {
+  env -u GREP_OPTIONS -u GREP_COLOR -u GREP_COLORS rg --no-config "$@" 2> >(grep -v "grep config error" >&2)
+}
 
 # ---------- Detect project type ----------
 is_python=false; is_node=false; is_go=false; is_rust=false; is_shell=false
@@ -78,13 +101,13 @@ is_python=false; is_node=false; is_go=false; is_rust=false; is_shell=false
 [[ -f "$PROJECT_DIR/Cargo.toml" ]] && is_rust=true
 # Shell project: check for .sh or .bats files (rg --files is faster than find)
 is_shell=false
-"${_RG[@]}" --files -g '*.sh' -g '*.bats' --max-count 1 "$PROJECT_DIR" >/dev/null 2>&1 && is_shell=true
+_RG --files -g '*.sh' -g '*.bats' --max-count 1 "$PROJECT_DIR" >/dev/null 2>&1 && is_shell=true
 
 # ========== LEVEL 1 — MVP (4 criteria, 20 points) ==========
 
 # L1.1: Any test files exist (7 points)
 test_files_count=0
-test_files_count=$(rg --no-config --files \
+test_files_count=$(_RG --files \
   -g 'test_*.py' -g '*_test.py' -g '*_test.go' -g '*.test.ts' -g '*.test.js' \
   -g '*.test.tsx' -g '*.test.jsx' -g '*.spec.ts' -g '*.spec.js' -g '*.bats' -g '*_test.rs' \
   "$PROJECT_DIR" 2>/dev/null | wc -l | tr -d ' ')
@@ -114,7 +137,7 @@ add_criterion "Single-command runnable" "$has_test_cmd" 6 ""
 # L2.1: More than 10 test functions/cases (7 points)
 # P6: rg -c replaces grep -r | wc -l — auto-skips .gitignored dirs
 test_func_count=0
-test_func_count=$("${_RG[@]}" -c --no-filename \
+test_func_count=$(_RG -c --no-filename \
   -e '^\s*(def test_|async def test_|func Test|it\(|describe\(|@test |@Test)' \
   -g '*.py' -g '*.go' -g '*.ts' -g '*.js' -g '*.tsx' -g '*.jsx' -g '*.bats' -g '*.rs' -g '*.java' \
   "$PROJECT_DIR" 2>/dev/null | awk '{s+=$0}END{print s+0}')
@@ -135,7 +158,7 @@ add_criterion "Integration tests" "$has_integration" 7 ""
 # P6: replaces 2 separate grep -r calls that each traversed 6k+ files
 # Build suppression pattern dynamically to avoid triggering the suppression-blocker hook
 _supp_nq="no""qa"; _supp_ns="no""sec"; _supp_ti="type: ""ignore"; _supp_nl="no""lint"; _supp_ed="eslint-""disable"
-_supp_results=$("${_RG[@]}" --no-filename \
+_supp_results=$(_RG --no-filename \
   -e "#\s*(${_supp_nq}|${_supp_ns}|${_supp_nl}|${_supp_ti}|${_supp_ed})" \
   -g '*.py' -g '*.go' -g '*.ts' -g '*.js' -g '*.sh' \
   "$PROJECT_DIR" 2>/dev/null | awk -v nq="$_supp_nq" -v ns="$_supp_ns" -v nl="$_supp_nl" -v ti="$_supp_ti" -v ed="$_supp_ed" '
@@ -175,7 +198,7 @@ if [[ -f "$FR_FILE" ]]; then
     if [[ ${#_fr_dirs[@]} -gt 0 ]]; then
       while IFS= read -r _fr; do
         [[ -n "$_fr" ]] && _test_frs["$_fr"]=1
-      done < <("${_RG[@]}" --only-matching --no-filename 'FR-[A-Z]+-[0-9]+' "${_fr_dirs[@]}" 2>/dev/null)
+      done < <(_RG --only-matching --no-filename 'FR-[A-Z]+-[0-9]+' "${_fr_dirs[@]}" 2>/dev/null)
     fi
 
     fr_traced=0
@@ -238,7 +261,8 @@ add_criterion "Architecture enforcement" "$has_arch_enforcement" 5 ""
 # File type superset covers all categories: code + config files (no .md).
 _det_prop=0; _det_contract=0; _det_snapshot=0; _det_approval=0
 _det_mutation=0; _det_runtime=0; _det_chaos=0; _det_fuzz=0
-eval "$("${_RG[@]}" --no-filename \
+# Capture awk output first, then eval (prevents file paths from being executed)
+_det_vars="$(_RG --no-filename \
   -e 'hypothesis|quickcheck|proptest|prop_compose|fast-check|fc\.property|fc\.assert|@given|@settings|from hypothesis|gopter|rapid\.Check|testing/quick' \
   -e 'pact|contract\.test|contract_test' \
   -e 'toMatchSnapshot|toMatchInlineSnapshot|syrupy|snapshot_assertion|snapshottest|insta::assert_snapshot|cargo-insta|cupaloy|golden' \
@@ -264,6 +288,17 @@ eval "$("${_RG[@]}" --no-filename \
   END {
     printf "_det_prop=%d _det_contract=%d _det_snapshot=%d _det_approval=%d _det_mutation=%d _det_runtime=%d _det_chaos=%d _det_fuzz=%d\n", p+0, c+0, s+0, a+0, m+0, r+0, ch+0, f+0
   }')"
+# Only eval if output looks safe (contains only variable assignments, no file paths)
+# Safety check: output should only contain _det_*=number patterns and spaces
+if [[ -n "$_det_vars" && "$_det_vars" =~ ^(_det_[a-z_]+=[0-9]+\s*)+$ && ! "$_det_vars" =~ / ]]; then
+  # Only eval if output looks safe (contains only variable assignments, no file paths)
+  if [[ -n "$_det_vars" && "$_det_vars" =~ ^(_det_[a-z_]+=[0-9]+\s*)+$ && ! "$_det_vars" =~ / ]]; then
+    eval "$_det_vars"
+  fi
+else
+  # Fallback: if awk output is malformed or contains paths, keep defaults (all 0)
+  :
+fi
 
 # L4.3: Multiple test types (unit + integration + one more) (5 points)
 test_type_count=0
@@ -282,7 +317,7 @@ fi
 has_snapshot=false
 [[ $_det_snapshot -eq 1 ]] && has_snapshot=true
 # JS/TS: __snapshots__ directory (only if not already found)
-[[ "$has_snapshot" == "false" ]] && rg --no-config --files -g '__snapshots__/*' "$PROJECT_DIR" --max-count 1 >/dev/null 2>&1 && has_snapshot=true
+[[ "$has_snapshot" == "false" ]] && _RG --files -g '__snapshots__/*' "$PROJECT_DIR" --max-count 1 >/dev/null 2>&1 && has_snapshot=true
 add_criterion "Snapshot/golden tests" "$has_snapshot" 3 ""
 
 # L4.5: Approval test detection (2 points)
@@ -327,7 +362,7 @@ fi
 has_chaos=false
 [[ $_det_chaos -eq 1 ]] && has_chaos=true
 # chaos-toolkit experiment.json with steady-state (only if not already found)
-[[ "$has_chaos" == "false" ]] && rg --no-config -l 'steady.state' -g 'experiment.json' "$PROJECT_DIR" --max-count 1 >/dev/null 2>&1 && has_chaos=true
+[[ "$has_chaos" == "false" ]] && _RG -l 'steady.state' -g 'experiment.json' "$PROJECT_DIR" --max-count 1 >/dev/null 2>&1 && has_chaos=true
 add_criterion "Chaos/resilience testing" "$has_chaos" 3 ""
 
 # L5.6: Fuzz testing (3 points)

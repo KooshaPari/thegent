@@ -25,6 +25,13 @@ _DEFAULT_PRICING_MTOK: dict[str, float] = {
     "claude-sonnet-4.5": 3.00,
     "claude-opus-4.6": 15.00,
     "gpt-5.3-codex-max": 10.00,
+    "minimax-m2.5": 0.40,
+    "MiniMax-M2.5": 0.40,
+    "glm-5": 0.40,
+    "GLM-5": 0.40,
+    "z-ai/glm-5": 0.40,
+    "kilo-default": 0.50,
+    "roo-default": 0.50,
 }
 
 
@@ -41,8 +48,24 @@ class CostEstimator:
         prompt_length: int = 0,
     ) -> float:
         """Estimate cost in USD. Uses pricing table or heuristic fallback."""
-        if model and model in self.pricing_mtok:
+        price_per_m: float | None = None
+
+        # Try to get from metadata registry first
+        if model:
+            try:
+                from thegent.routing.model_metadata import get_model_metadata
+
+                metadata = get_model_metadata(model)
+                if metadata and "cost_per_mtok" in metadata:
+                    price_per_m = metadata["cost_per_mtok"]
+            except Exception:
+                pass
+
+        # Fallback to local pricing table
+        if price_per_m is None and model and model in self.pricing_mtok:
             price_per_m = self.pricing_mtok[model]
+
+        if price_per_m is not None:
             count = tokens_total or (prompt_length * 1.5 + 500)
             return (count / 1_000_000.0) * price_per_m
 

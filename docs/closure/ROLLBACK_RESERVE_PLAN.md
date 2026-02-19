@@ -62,3 +62,11 @@ Define controlled rollback behavior and decision logic for launch-phase anomalie
 | Governance Lead | `governance-lead` | `Approved` | `2026-02-15` |
 | Security Lead | `security-lead` | `Approved` | `2026-02-15` |
 | Product Lead | `product-lead` | `Approved` | `2026-02-15` |
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [DR_REHEARSAL_REPORT.md](./DR_REHEARSAL_REPORT.md) — DR rehearsal

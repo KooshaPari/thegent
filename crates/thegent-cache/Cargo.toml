@@ -1,0 +1,32 @@
+[package]
+name = "thegent-cache-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Advanced two-tier caching layer with LRU + DashMap"
+
+[lib]
+name = "thegent_cache"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+simd-json = { version = "0.14.3", features = ["serde"] }
+lru = "0.13.0"
+dashmap = "7.0.0-rc2"
+moka = { version = "0.12.10", optional = true }
+scc = { version = "2.3.6", optional = true }
+pyo3 = { version = "0.28.2", features = ["extension-module"] }
+
+[features]
+default = []
+moka = ["dep:moka"]
+scc = ["dep:scc"]
+
+[project]
+name = "thegent_cache_rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

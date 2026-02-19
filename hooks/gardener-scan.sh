@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # gardener-scan.sh — Hunger state detection
 # Scans for conditions that need attention (like "hunger" in games)
 # Based on research: vibecoding automation + DDD bounded contexts

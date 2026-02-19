@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-sarif-adapter.sh
 # Ingests SARIF files and produces a deterministic summary JSON.
 set -euo pipefail

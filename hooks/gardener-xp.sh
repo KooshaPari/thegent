@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # gardener-xp.sh — XP and level progression system
 # Tracks XP, levels, and achievements for gamification
 # Based on research: game mechanics, achievement systems
@@ -65,6 +65,14 @@ get_xp_state() {
 award_xp() {
     local action="$1"
     local amount="${XP_AWARDS[$action]:-25}"
+
+    # BKM-05: Try native SHM via thegent CLI first
+    if [[ "${THGENT_INTERNAL_XP_CALL:-0}" != "1" ]] && command -v thegent &> /dev/null; then
+        if THGENT_INTERNAL_XP_CALL=1 thegent gamify award "$amount" &> /dev/null; then
+            echo "Awarded +$amount XP for '$action' (via SHM)"
+            return 0
+        fi
+    fi
 
     init_xp_state
 

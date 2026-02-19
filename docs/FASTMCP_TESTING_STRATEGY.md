@@ -38,20 +38,20 @@
 
 | Tool | Unit | Contract | Integration | Timeout | Load |
 |------|------|----------|-------------|---------|------|
-| thegent_run | ⚠️ | ✅ (adapter) | ✅ (e2e) | 🔲 | 🔲 |
-| thegent_bg | ⚠️ | — | ✅ (e2e) | 🔲 | 🔲 |
-| thegent_ps | ✅ (e2e) | — | ✅ | — | 🔲 |
-| thegent_status | ✅ (e2e) | — | ✅ | — | — |
-| thegent_logs | ✅ (e2e) | — | ✅ | 🔲 (tail limit) | 🔲 |
-| thegent_wait | ✅ (e2e) | — | ✅ | 🔲 | — |
-| thegent_stop | ✅ (e2e) | — | ✅ | — | — |
-| thegent_list_agents | ✅ (e2e) | — | ✅ | — | — |
-| thegent_list_droids | ✅ (e2e) | — | ✅ | — | — |
-| thegent_list_models | ✅ (e2e) | — | ✅ | — | — |
-| thegent_dag_list | ✅ (e2e) | — | ✅ | — | — |
-| thegent_inspect | ✅ (e2e) | — | ✅ | — | — |
+| thegent_run | ⚠ | ✓ (adapter) | ✓ (e2e) | □ | □ |
+| thegent_bg | ⚠ | — | ✓ (e2e) | □ | □ |
+| thegent_ps | ✓ (e2e) | — | ✓ | — | □ |
+| thegent_status | ✓ (e2e) | — | ✓ | — | — |
+| thegent_logs | ✓ (e2e) | — | ✓ | □ (tail limit) | □ |
+| thegent_wait | ✓ (e2e) | — | ✓ | □ | — |
+| thegent_stop | ✓ (e2e) | — | ✓ | — | — |
+| thegent_list_agents | ✓ (e2e) | — | ✓ | — | — |
+| thegent_list_droids | ✓ (e2e) | — | ✓ | — | — |
+| thegent_list_models | ✓ (e2e) | — | ✓ | — | — |
+| thegent_dag_list | ✓ (e2e) | — | ✓ | — | — |
+| thegent_inspect | ✓ (e2e) | — | ✓ | — | — |
 
-Legend: ✅ Covered | ⚠️ Partial | 🔲 Gap
+Legend: ✓ Covered | ⚠ Partial | □ Gap
 
 ---
 

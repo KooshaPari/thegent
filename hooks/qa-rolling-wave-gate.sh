@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-rolling-wave-gate.stub.sh (CDDL-E1)
 # Rolling-wave maturity gate with CLI for checking and advancing maturity levels.
 # Usage:

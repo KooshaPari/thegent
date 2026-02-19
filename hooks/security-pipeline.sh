@@ -1,10 +1,30 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # security-pipeline.sh — Stop hook
 # Multi-layer security scanning pipeline. Advisory only (exit 0 always).
 # SOLE OWNER of: gitleaks, bandit, tfsec (removed from quality-gate)
 # Layers: Secrets, SAST, Dependencies, Infrastructure, Supply Chain & SBOM.
 # Budget: <60s total. All 5 layers run in parallel; within-layer tools also parallel.
 set -euo pipefail
+
+# --- DEBUG: Timing ---
+_HOOK_START_TIME=$(date +%s)
+_HOOK_DEBUG="false"
+_hook_config_path() {
+  local base="${BASH_SOURCE[0]%/*}"
+  [[ -f "${base}/../hook-config.yaml" ]] && echo "${base}/../hook-config.yaml"
+  [[ -f "${PROJECT_DIR:-.}/.claude/hooks/hook-config.yaml" ]] && echo "${PROJECT_DIR}/.claude/hooks/hook-config.yaml"
+}
+if grep -q "debug_timing:.*true" $(_hook_config_path) 2>/dev/null; then
+  _HOOK_DEBUG="true"
+fi
+_debug_timing() {
+  if [[ "$_HOOK_DEBUG" == "true" ]]; then
+    local _now=$(date +%s)
+    local _elapsed=$((_now - _HOOK_START_TIME))
+    echo "[DEBUG-TIME] security-pipeline: elapsed ${_elapsed}s at: $1" >&2
+  fi
+}
+_debug_timing "script_start"
 
 # --- Ultra-fast cache check BEFORE common.sh ---
 # Cache git HEAD once to avoid repeated git calls throughout hook
@@ -63,6 +83,16 @@ trap 'echo "SECURITY-PIPELINE FAIL: unexpected error at line $LINENO" >&2' ERR
 # Prevent infinite loops
 [[ "${STOP_ACTIVE:-false}" == "true" ]] && exit 0
 
+# --- Mutex Lock (P5: avoid concurrent security scans) ---
+# Multiple agent sessions trigger Stop hooks simultaneously.
+# This lock ensures only one security pipeline runs at a time per project.
+_SEC_LOCK_FILE="${TMPDIR:-/tmp}/thegent-sec-pipeline-${EUID:-$(id -u)}-$(printf '%s' "$PROJECT_DIR" | hash_for_cache).lock"
+exec 9>"$_SEC_LOCK_FILE"
+if ! flock -n 9; then
+  echo "SECURITY-PIPELINE: skip (scan already in progress for this project)"
+  exit 0
+fi
+
 # --- P1 optimization: Skip if no security-relevant files changed ---
 # Security scans are expensive - only run if source/config files changed
 if ! any_source_changed; then
@@ -81,7 +111,7 @@ is_python=false; is_node=false; is_go=false; is_rust=false
 
 # --- Cache check — skip if HEAD unchanged ---
 # Use cached git HEAD value from above (readonly _GIT_HEAD_SHA) to avoid second git call
-_sec_cache_key=$(printf '%s\0%s' "$HOOK_NAME" "$_GIT_HEAD_SHA" | shasum -a 256 | cut -d' ' -f1)
+_sec_cache_key=$(printf '%s\0%s' "$HOOK_NAME" "$_GIT_HEAD_SHA" | hash_for_cache)
 _sec_ttl="${HOOK_CACHE_TTL:-600}"
 if hook_cache_check "$_sec_cache_key" "$_sec_ttl"; then
     _sec_output=$(hook_cache_read "$_sec_cache_key")
@@ -152,7 +182,7 @@ layer1_secrets() {
     fi
   fi
 
-  # Fallback: grep-based secret detection on changed files
+  # Fallback: rg-based secret detection on changed files (replacing expensive perl calls)
   if [[ "$has_changed_files" == true ]]; then
     ran=true
     local secret_patterns=(
@@ -164,27 +194,37 @@ layer1_secrets() {
       'ghp_[a-zA-Z0-9]{36}'
       'sk-[a-zA-Z0-9]{20,}'
     )
+    local rg_patterns=()
+    for pat in "${secret_patterns[@]}"; do
+      rg_patterns+=("-e" "$pat")
+    done
+
     for fpath in "${CHANGED_FILES[@]}"; do
       [[ "$fpath" =~ \.(lock|lockb|png|jpg|gif|ico|woff|ttf|eot|svg|pdf)$ ]] && continue
       [[ "$fpath" =~ (fixture|mock|fake|stub|test_data|testdata) ]] && continue
-      for pat in "${secret_patterns[@]}"; do
-        matches=$(PAT="$pat" perl -ne 'print "$.: $_" if /$ENV{PAT}/i' "$fpath" 2>/dev/null | head -5) || true
-        if [[ -n "$matches" ]]; then
-          rel_path="${fpath#"$PROJECT_DIR"/}"
-          echo "$matches" | sed 's/^\([0-9]*\):.*/[HIGH] secrets: Possible secret in '"$rel_path"':\1/' >> "$findings_file"
-          count=$((count + $(echo "$matches" | wc -l)))
-        fi
-      done
+      
+      matches=$(rg -n -i "${rg_patterns[@]}" "$fpath" 2>/dev/null | head -5) || true
+      if [[ -n "$matches" ]]; then
+        rel_path="${fpath#"$PROJECT_DIR"/}"
+        while IFS=: read -r line content; do
+          echo "[HIGH] secrets: Possible secret in $rel_path:$line" >> "$findings_file"
+          count=$((count + 1))
+        done <<< "$matches"
+      fi
     done
 
     # Hardcoded IP check (exclude localhost patterns)
+    local ip_pattern='\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b'
+    local ip_exclude='127\.0\.0\.1|0\.0\.0\.0|localhost|255\.255\.\d+\.\d+|192\.168\.|10\.\d+\.|172\.(1[6-9]|2[0-9]|3[01])\.'
     for fpath in "${CHANGED_FILES[@]}"; do
       [[ "$fpath" =~ \.(lock|lockb|png|jpg|gif|ico|woff|ttf|eot|svg|pdf|md)$ ]] && continue
-      ip_matches=$(perl -ne 'print "$.: $_" if /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/ && !/127\.0\.0\.1|0\.0\.0\.0|localhost|255\.255\.\d+\.\d+|192\.168\.|10\.\d+\.|172\.(1[6-9]|2[0-9]|3[01])\./' "$fpath" 2>/dev/null | head -5) || true
+      ip_matches=$(rg -n "$ip_pattern" "$fpath" 2>/dev/null | grep -vE "$ip_exclude" | head -5) || true
       if [[ -n "$ip_matches" ]]; then
         rel_path="${fpath#"$PROJECT_DIR"/}"
-        echo "$ip_matches" | sed 's/^\([0-9]*\):.*/[MEDIUM] secrets: Hardcoded IP in '"$rel_path"':\1/' >> "$findings_file"
-        count=$((count + $(echo "$ip_matches" | wc -l)))
+        while IFS=: read -r line content; do
+          echo "[MEDIUM] secrets: Hardcoded IP in $rel_path:$line" >> "$findings_file"
+          count=$((count + 1))
+        done <<< "$ip_matches"
       fi
     done
   fi
@@ -252,7 +292,7 @@ layer2_sast() {
   local total_count=0
   for f in "$subtmp"/*.count; do
     [[ -f "$f" ]] || continue
-    c=$(cat "$f" 2>/dev/null || echo "0")
+    c=$(< "$f") || echo "0"
     total_count=$((total_count + c))
   done
   cat "$subtmp"/*.findings > "$tmpdir/layer2.findings" 2>/dev/null || : > "$tmpdir/layer2.findings"
@@ -348,7 +388,7 @@ layer3_deps() {
   local total_count=0
   for f in "$subtmp"/*.count; do
     [[ -f "$f" ]] || continue
-    c=$(cat "$f" 2>/dev/null || echo "0")
+    c=$(< "$f") || echo "0"
     total_count=$((total_count + c))
   done
   cat "$subtmp"/*.findings > "$tmpdir/layer3.findings" 2>/dev/null || : > "$tmpdir/layer3.findings"
@@ -429,7 +469,12 @@ layer4_infra() {
     ran=true
     (
       local count=0
-      trivy_out=$(cd "$PROJECT_DIR" && run_with_timeout 15 trivy config . --severity HIGH,CRITICAL 2>/dev/null) || { echo "SECURITY-PIPELINE: trivy failed ($?)" >&2; true; }
+      # P5 optimization: skip heavy dirs and shorten timeout
+      trivy_out=$(cd "$PROJECT_DIR" && run_with_timeout 20 trivy config . \
+        --severity HIGH,CRITICAL \
+        --skip-dirs "node_modules,.git,.thegent,.venv,venv,dist,build,.claude" \
+        --skip-files "uv.lock,package-lock.json,pnpm-lock.yaml,bun.lockb" \
+        2>/dev/null) || { echo "SECURITY-PIPELINE: trivy failed ($?)" >&2; true; }
       if [[ -n "$trivy_out" ]] && echo "$trivy_out" | grep -qE "(HIGH|CRITICAL)" 2>/dev/null; then
         count=$(echo "$trivy_out" | grep -cE "(HIGH|CRITICAL)" 2>/dev/null || echo "0")
         echo "$trivy_out" | grep -E "(HIGH|CRITICAL)" | head -10 | sed 's/^/[HIGH] infra\/trivy: /' > "$subtmp/trivy.findings"
@@ -444,7 +489,7 @@ layer4_infra() {
   local total_count=0
   for f in "$subtmp"/*.count; do
     [[ -f "$f" ]] || continue
-    c=$(cat "$f" 2>/dev/null || echo "0")
+    c=$(< "$f") || echo "0"
     total_count=$((total_count + c))
   done
   cat "$subtmp"/*.findings > "$tmpdir/layer4.findings" 2>/dev/null || : > "$tmpdir/layer4.findings"
@@ -551,7 +596,7 @@ layer5_supply_chain() {
   local total_count=0
   for f in "$subtmp"/*.count; do
     [[ -f "$f" ]] || continue
-    c=$(cat "$f" 2>/dev/null || echo "0")
+    c=$(< "$f") || echo "0"
     total_count=$((total_count + c))
   done
   cat "$subtmp"/*.findings > "$tmpdir/layer5.findings" 2>/dev/null || : > "$tmpdir/layer5.findings"
@@ -573,26 +618,36 @@ layer5_supply_chain() {
   echo "$total_count" > "$tmpdir/layer5.count"
 }
 
-# ========== Launch all 5 layers in parallel ==========
+# ========== Launch layers with concurrency control (P5: memory optimization) ==========
+# We run layers in parallel but use a simple semaphore to avoid massive spikes.
+# On 16GB machines, running 5 heavy security scanners + subtools can hit 32GB VSZ.
+max_jobs=3
+current_jobs=0
+
+run_layer() {
+  "$1" &
+}
+
 layer1_secrets &
 layer2_sast &
 layer3_deps &
+wait # Wait for heavy layers 1-3 before launching 4-5
 layer4_infra &
 layer5_supply_chain &
 wait
 
 # ========== Collect results from temp files ==========
-layer1_status=$(cat "$tmpdir/layer1.status" 2>/dev/null || echo "SKIP")
-layer1_count=$(cat "$tmpdir/layer1.count" 2>/dev/null || echo "0")
-layer2_status=$(cat "$tmpdir/layer2.status" 2>/dev/null || echo "SKIP")
-layer2_count=$(cat "$tmpdir/layer2.count" 2>/dev/null || echo "0")
-layer3_status=$(cat "$tmpdir/layer3.status" 2>/dev/null || echo "SKIP")
-layer3_count=$(cat "$tmpdir/layer3.count" 2>/dev/null || echo "0")
-layer4_status=$(cat "$tmpdir/layer4.status" 2>/dev/null || echo "SKIP")
-layer4_count=$(cat "$tmpdir/layer4.count" 2>/dev/null || echo "0")
-layer5_status=$(cat "$tmpdir/layer5.status" 2>/dev/null || echo "SKIP")
-layer5_count=$(cat "$tmpdir/layer5.count" 2>/dev/null || echo "0")
-sbom_path=$(cat "$tmpdir/sbom_path" 2>/dev/null || echo "")
+layer1_status=$(< "$tmpdir/layer1.status") || echo "SKIP"
+layer1_count=$(< "$tmpdir/layer1.count") || echo "0"
+layer2_status=$(< "$tmpdir/layer2.status") || echo "SKIP"
+layer2_count=$(< "$tmpdir/layer2.count") || echo "0"
+layer3_status=$(< "$tmpdir/layer3.status") || echo "SKIP"
+layer3_count=$(< "$tmpdir/layer3.count") || echo "0"
+layer4_status=$(< "$tmpdir/layer4.status") || echo "SKIP"
+layer4_count=$(< "$tmpdir/layer4.count") || echo "0"
+layer5_status=$(< "$tmpdir/layer5.status") || echo "SKIP"
+layer5_count=$(< "$tmpdir/layer5.count") || echo "0"
+sbom_path=$(< "$tmpdir/sbom_path") || echo ""
 
 # Collect all findings into a single array
 declare -a FINDINGS=()

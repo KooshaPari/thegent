@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-privacy-proof-gate.stub.sh (N13)
 # Validates privacy-proof.json when present. Install via: make install-governance-hooks
 set -euo pipefail

@@ -1,1 +1,1 @@
-{"generated_at":"2026-02-15T18:13:01Z","status":"not_declared","checks":[],"pass":true,"error_count":0,"warn_count":0}
+{"generated_at":"2026-02-18T09:29:55Z","status":"stub_not_evaluated","checks":[],"pass":true,"error_count":0,"warn_count":0,"warn":"Stub: install real qa-formal-methods-gate for TLC/Dafny/Alloy"}

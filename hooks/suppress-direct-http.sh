@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # suppress-direct-http.sh — PreToolUse hook (Write|Edit)
 # Detects raw requests/urllib usage when httpx should be used.
 # Advisory (exit 0 always). Budget: <100ms.

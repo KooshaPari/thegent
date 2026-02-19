@@ -1,0 +1,68 @@
+# Document Queue Configuration
+# Default configuration for markdown file scanning and queue management
+
+# Scan locations configuration
+locations:
+  kush:
+    path: "~/kush"
+    recursive: true
+    max_depth: null
+    excludes: []
+  
+  kooshapari:
+    path: "~/kooshapari"
+    recursive: false
+    max_depth: 3
+    excludes: []
+  
+  temp-PRODVERCEL:
+    path: "~/temp-PRODVERCEL"
+    recursive: true
+    max_depth: null
+    excludes: []
+
+# Patterns to exclude from scanning
+exclude_patterns:
+  - "node_modules"
+  - ".venv"
+  - ".git"
+  - "__pycache__"
+  - ".pytest_cache"
+  - ".mypy_cache"
+  - "dist"
+  - "build"
+
+# Minimum date filter (YYYY-MM format)
+# Only scan files modified after this date
+min_date: "2025-04"
+
+# Output directory for scan results
+output_dir: "~/.thegent/scans"
+
+# Queue file path
+queue_file: "~/.thegent/scans/MARKDOWN_SCAN_QUEUE.json"
+
+# State file path
+state_file: "~/.thegent/scans/.queue_state.json"
+
+# Processing configuration
+processing:
+  # Default processing stages
+  stages:
+    - "extract_metadata"
+    - "compute_file_hash"
+    - "count_lines"
+  
+  # Batch processing size
+  batch_size: 100
+  
+  # Enable document analysis
+  analyze: true
+
+# Analysis configuration
+analysis:
+  # Maximum keywords to extract
+  max_keywords: 10
+  
+  # Reading speed (words per minute)
+  reading_speed: 200

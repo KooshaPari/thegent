@@ -277,3 +277,11 @@ For finality, the checklist is:
   - `thegent-phase10-12-hard-stop-and-rollback-matrix.md` (runtime controls),
   - `thegent-phase10-12-closure-readiness-pack-template.md` (finality formatting).
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

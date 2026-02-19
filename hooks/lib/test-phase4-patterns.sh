@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # test-phase4-patterns.sh
 # Comprehensive test suite for Phase 4 advanced optimizations.
 # Validates: extended globs, namerefs, associative arrays, process substitution.

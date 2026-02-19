@@ -11,8 +11,8 @@ from tests.conftest_factories import make_run_result
 from thegent.agents.cursor_api_runner import (
     _PROXY_MODEL,
     CursorApiRunner,
-    _strip_ansi,
 )
+from thegent.utils import strip_ansi
 
 # ---------------------------------------------------------------------------
 # Construction
@@ -241,7 +241,7 @@ class TestResolveCodex:
 
 
 # ---------------------------------------------------------------------------
-# _strip_ansi
+# strip_ansi
 # ---------------------------------------------------------------------------
 
 
@@ -250,12 +250,12 @@ class TestStripAnsiCursorApi:
     def test_removes_ansi_sequences(self) -> None:
         # @trace FR-AGT-005
         """Strips ANSI color codes from text."""
-        assert _strip_ansi("\x1b[32mgreen\x1b[0m") == "green"
+        assert strip_ansi("\x1b[32mgreen\x1b[0m") == "green"
 
     def test_plain_text_unchanged(self) -> None:
         # @trace FR-AGT-005
         """Plain text without ANSI codes passes through."""
-        assert _strip_ansi("no colors here") == "no colors here"
+        assert strip_ansi("no colors here") == "no colors here"
 
 
 # ---------------------------------------------------------------------------

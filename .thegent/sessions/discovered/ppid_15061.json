@@ -1,0 +1,17 @@
+{
+  "pid": 15061,
+  "ppid": 15061,
+  "agent": "codex",
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "discovered_at": "2026-02-18T08:06:18.632956+00:00",
+  "last_seen_at": "2026-02-18T08:33:14.625110+00:00",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clangd",
+  "args_preview": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/u...",
+  "tmux_pane": null,
+  "session_id": null,
+  "token_usage": null,
+  "mcp_errors": null,
+  "capabilities": [],
+  "trust_score": 0.5,
+  "reputation": 0
+}

@@ -239,7 +239,7 @@ Scenario: HEAD checkout cycle
 │ Session 1, Commit A (again):                                │
 │   git_cached diff --name-only HEAD                          │
 │   → Cache Key: MD5("diff --name-only HEAD") = abc123        │
-│   → Cache HIT! Return [file1, file2] from abc123 ❌ STALE  │
+│   → Cache HIT! Return [file1, file2] from abc123 ✗ STALE  │
 │   → Should be fresh query but used old result               │
 └─────────────────────────────────────────────────────────────┘
 ```

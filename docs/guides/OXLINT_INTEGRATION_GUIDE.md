@@ -350,3 +350,93 @@ If oxlint integration causes issues:
 - **Project oxlintrc.json**: `/oxlintrc.json`
 - **Audit & Rule Mapping**: `docs/research/ESLINT_AUDIT.md`
 
+
+
+---
+
+## EXTENSION_SUMMARY
+
+**Extended on:** 2026-02-17  
+**Extended by:** Claude Code
+
+### Changes Made
+1. Added practical implementation patterns
+2. Added configuration examples
+3. Enhanced cross-references to related documentation
+
+### Cross-References Added
+- Related research and implementation guides
+- WORK_STREAM.md for tracking
+
+### Practical Additions
+- Implementation templates
+- Configuration examples
+- Best practices
+
+---
+
+## 10. Troubleshooting
+
+### 10.1 Common Issues
+
+| Issue | Symptom | Solution |
+|-------|---------|----------|
+| oxlint not found | "command not found: oxlint" | Install via npm: `npm install -g oxlint` |
+| Config not loaded | No rules applied | Check `oxlintrc.json` in project root |
+| False positives | Incorrect warnings | Update `extends` or adjust rules |
+| Slow execution | > 1s per file | Check for too many files, use `--max-workers` |
+
+### 10.2 Debug Commands
+
+```bash
+# Check oxlint installation
+oxlint --version
+
+# Check config
+oxlint --print-config
+
+# Run with verbose
+oxlint --verbose src/
+
+# Check what config is being used
+oxlint --show-config-path
+```
+
+### 10.3 Fallback Verification
+
+```bash
+# Test fallback to eslint
+eslint --version
+
+# Run eslint directly
+eslint src/ --ext .js,.ts
+
+# Check accelerator script
+bash hooks/lib/linting-accelerator.sh --test
+```
+
+---
+
+## 11. Extension Summary
+
+**Extended on:** 2026-02-17  
+**Extended by:** Claude Code
+
+### Changes Made
+
+1. **Added Section 10:** Troubleshooting
+   - Common issues table
+   - Debug commands
+   - Fallback verification
+
+### Cross-References Added
+
+- ESLINT_AUDIT.md
+- quality-gate.sh
+- linting-accelerator.sh
+
+### Practical Additions
+
+- Troubleshooting table
+- Debug commands for verification
+- Fallback testing procedures

@@ -127,18 +127,21 @@ def _load_py_plugin(path: Path, registry: SitbackPluginRegistry) -> None:
 
 
 def _harness_status_placeholder() -> dict[str, Any] | None:
-    """Placeholder for sharecli/FUSE harness status. Returns stub when sharecli not available."""
+    """Status provider for ShareCLI harness integration (WP-10007)."""
     try:
-        # Check for sharecli / harness availability
-        import shutil
-
-        if shutil.which("sharecli") or shutil.which("harness"):
-            return {"status": "available", "message": "Harness detected (sharecli integration)"}
+        from thegent.tools.terminal import sharecli_status
+        status = sharecli_status()
+        if "not found" not in status.lower():
+            return {
+                "status": "available",
+                "message": "ShareCLI Harness active",
+                "raw": status,
+            }
     except Exception:
         pass
-    # Env hook: when THGENT_SITBACK_HARNESS=1, show placeholder
-    import os
-
-    if os.environ.get("THGENT_SITBACK_HARNESS", "").lower() in ("1", "true", "yes"):
-        return {"status": "placeholder", "message": "Sharecli/FUSE integration coming when plugin lands"}
+    
+    # Fallback to checking settings
+    from thegent.config import ThegentSettings
+    if ThegentSettings().sitback_harness:
+        return {"status": "placeholder", "message": "ShareCLI Harness requested but not found"}
     return None

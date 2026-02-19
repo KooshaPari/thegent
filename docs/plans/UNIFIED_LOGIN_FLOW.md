@@ -1,0 +1,59 @@
+# Unified Login Flow: Open URL + Prompt for Key
+
+**Goal:** All providers use the same flow: open URL → prompt for API key → store in cliproxy config. Preflight check for existing credentials before running.
+
+## Current State
+
+- **OAuth providers:** `thegent cliproxy login <provider>` delegates to CLIProxyAPIPlus `-claude-login`, `-iflow-login`, etc.
+- **API-key providers:** minimax uses `-minimax-login` (proxy prompts); nim uses `-nim-login`.
+- **Native tools:** roo/kilo invoke `roo auth login` / `kilo auth` directly.
+
+## Proposed: Unified Flow for All
+
+| Step | Action |
+|------|--------|
+| 1 | **Preflight:** Check if provider already has credentials in cliproxy config (or .env). If yes, show "Already configured" and optionally offer to re-run. |
+| 2 | **Open URL:** Open provider's key/signup page in browser. |
+| 3 | **Prompt for key:** Ask user to paste API key in terminal. |
+| 4 | **Store:** Write key to cliproxy config (openai-compatibility block). |
+| 5 | **Done:** "Restart proxy to apply: thegent cliproxy restart" |
+
+## Provider Config (URL + base-url + model)
+
+| Provider | Key URL | API base-url | Config name |
+|----------|---------|--------------|-------------|
+| minimax | platform.minimax.io/user-center/.../interface-key | api.minimax.io/v1 | minimax |
+| glm | open.bigmodel.cn/usercenter/apikeys | open.bigmodel.cn/api/paas/v4 | glm |
+| nim | build.nvidia.com (model page) | ngc.nvidia.com or build.nvidia.com | nim |
+| kilo | kilo.ai/api-keys | api.kilo.ai/v1 | kilo |
+| claude | console.anthropic.com/settings/keys | api.anthropic.com | claude |
+| codex | platform.openai.com/api-keys | api.openai.com/v1 | codex |
+| gemini | aistudio.google.com/apikey | generativelanguage.googleapis.com | gemini |
+| roo | roocode.com (signup) | api.roocode.com/v1 | roo |
+| antigravity | antigravity.ai | (OAuth; fallback to CLIProxy) | antigravity |
+| qwen | dashscope.aliyun.com | dashscope.aliyuncs.com/compatible-mode/v1 | qwen |
+
+## Setup Alignment
+
+`thegent setup` already uses: open URL + prompt for key + preflight (has_key). It writes to `.env`. For cliproxy, we need keys in cliproxy config. Options:
+
+1. **Setup writes to .env** → `_ensure_config` reads .env and injects into cliproxy (new logic).
+2. **Setup calls login** → Setup invokes `run_login_unified` for each provider instead of writing .env.
+
+Preferred: **Setup calls the same `run_login_unified`** so both flows are identical. Setup can iterate providers and call login for each (with preflight skip).
+
+## Implementation
+
+1. Add `PROVIDER_LOGIN_CONFIG` in cliproxy_manager.py.
+2. Add `has_provider_credentials(config, provider) -> bool`.
+3. Add `run_login_unified(settings, provider) -> int`: preflight → open URL → prompt → write config.
+4. Replace `run_login` to use `run_login_unified` for API-key providers; keep CLIProxy fallback for OAuth-only (copilot, antigravity if no API key).
+5. Update `setup_cmd` to call `run_login_unified` per provider (or reuse providers_config and write to cliproxy).
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

@@ -1,6 +1,5 @@
 """Tests for LiteLLM config settings."""
 
-import pytest
 from thegent.config import ThegentSettings
 
 

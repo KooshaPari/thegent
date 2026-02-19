@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_44cdb5a9",
+    "Implement thegent-hooks breaker-check/record/reset subcommands: Add circuit breaker state management with failure tracking, threshold checking, and cooldown handling. Store state in cache_dir/breaker-{hook_name}.json. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a76.5. Add new functions cmd_breaker_check(), cmd_breaker_record(), cmd_breaker_reset() to crates/thegent-hooks/src/main.rs. Test with: thegent-hooks breaker-check quality-gate",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 20237,
+  "launcher_ppid": 14403,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:20237",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_20237/20260219T041032Z-copilot-p20237-8db81004.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_20237/20260219T041032Z-copilot-p20237-8db81004.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_20237/20260219T041032Z-copilot-p20237-8db81004.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_20237/20260219T041032Z-copilot-p20237-8db81004.stdout.log"
+  },
+  "pid": 38135,
+  "prompt": "Implement thegent-hooks breaker-check/record/reset subcommands: Add circuit breaker state management with failure tracking, threshold checking, and cooldown handling. Store state in cache_dir/breaker-{hook_name}.json. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a76.5. Add new functions cmd_breaker_check(), cmd_breaker_record(), cmd_breaker_reset() to crates/thegent-hooks/src/main.rs. Test with: thegent-hooks breaker-check quality-gate",
+  "session_id": "20260219T041032Z-copilot-p20237-8db81004",
+  "started_at_utc": "2026-02-19T04:10:33.719957+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

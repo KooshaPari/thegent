@@ -26,10 +26,10 @@ Thegent orchestration layer provides a unified control plane for agent execution
 
 | Requirement | Implementation | Status |
 |-------------|----------------|--------|
-| Audit Trail | RunRegistry hash-chaining | ✅ Compliant |
-| Immutable Logs | WORM-simulated storage | ✅ Compliant |
-| Policy Gating | PolicyEngine pre-check | ✅ Compliant |
-| Access Control | Env-scoped owner tags | ✅ Compliant |
+| Audit Trail | RunRegistry hash-chaining | ✓ Compliant |
+| Immutable Logs | WORM-simulated storage | ✓ Compliant |
+| Policy Gating | PolicyEngine pre-check | ✓ Compliant |
+| Access Control | Env-scoped owner tags | ✓ Compliant |
 
 ## 4. Threat Model & Mitigations
 
@@ -42,6 +42,14 @@ Thegent orchestration layer provides a unified control plane for agent execution
 
 ## 5. Signoff
 
-- **Architecture:** ✅ Approved 2026-02-14
+- **Architecture:** ✓ Approved 2026-02-14
 - **Security:** [PENDING]
 - **Compliance:** [PENDING]
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

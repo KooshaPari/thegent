@@ -1,0 +1,66 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      
+      - name: Install hyperfine
+        run: |
+          wget https://github.com/sharkdp/hyperfine/releases/download/v1.18.0/hyperfine_1.18.0_amd64.deb
+          sudo dpkg -i hyperfine_1.18.0_amd64.deb
+      
+      - name: Build extensions
+        run: bash scripts/build-all-rust-extensions.sh
+      
+      - name: Run benchmarks
+        run: |
+          mkdir -p benchmarks/results
+          bash scripts/benchmark-comprehensive.sh
+      
+      - name: Check for regressions
+        run: |
+          python3 << 'EOF'
+          import json
+          import sys
+          
+          try:
+              with open('benchmarks/results/current/tool_detection_rust.json') as f:
+                  current = json.load(f)
+              with open('benchmarks/results/baseline/tool_detection_bash.json') as f:
+                  baseline = json.load(f)
+              
+              current_mean = current['results'][0]['mean']
+              baseline_mean = baseline['results'][0]['mean']
+              
+              if current_mean > baseline_mean * 1.1:
+                  print(f"⚠️ Performance regression: {current_mean/baseline_mean:.2f}x slower")
+                  sys.exit(1)
+              else:
+                  print(f"✅ Performance OK: {baseline_mean/current_mean:.2f}x faster")
+          except FileNotFoundError:
+              print("⚠️ Benchmark files not found, skipping regression check")
+          EOF
+      
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmarks/results/

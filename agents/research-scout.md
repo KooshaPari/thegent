@@ -6,6 +6,7 @@ tools:
   - Read
   - Grep
   - WebSearch
+  - thegent_deep_research
 version: v1-project
 ---
 

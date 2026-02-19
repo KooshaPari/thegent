@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # Pre-commit hook to build VitePress docs when docs/ changes
 # Exit on error
 set -e

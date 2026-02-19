@@ -12,26 +12,26 @@ from thegent.agents.droid import (
     DroidRunner,
     _resolve_cmd,
     _resolve_droid_cmd,
-    _strip_ansi,
     get_droid_runner,
 )
+from thegent.utils import strip_ansi
 
 
 @pytest.mark.unit
 class TestStripAnsi:
-    """Tests for _strip_ansi helper."""
+    """Tests for strip_ansi helper."""
 
     def test_strips_color_codes(self) -> None:
         # @trace FR-DRD-001
-        assert _strip_ansi("\x1b[32mgreen\x1b[0m") == "green"
+        assert strip_ansi("\x1b[32mgreen\x1b[0m") == "green"
 
     def test_passthrough_plain_text(self) -> None:
         # @trace FR-DRD-001
-        assert _strip_ansi("plain text") == "plain text"
+        assert strip_ansi("plain text") == "plain text"
 
     def test_strips_multiple_codes(self) -> None:
         # @trace FR-DRD-001
-        assert _strip_ansi("\x1b[1;31mred bold\x1b[0m \x1b[34mblue\x1b[0m") == "red bold blue"
+        assert strip_ansi("\x1b[1;31mred bold\x1b[0m \x1b[34mblue\x1b[0m") == "red bold blue"
 
 
 @pytest.mark.unit

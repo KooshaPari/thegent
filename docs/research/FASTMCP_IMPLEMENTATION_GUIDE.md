@@ -1,7 +1,41 @@
 # FastMCP Implementation Guide for thegent
 
-**Date:** 2026-02-14
-**Purpose:** Consolidated extraction of all implementable items, patterns, and design decisions from FastMCP research documents.
+**Date:** 2026-02-14 | **Updated**: 2026-02-17  
+**Purpose:** Consolidated extraction of all implementable items, patterns, and design decisions from FastMCP research documents.  
+**Status:** Implementation Guide | **P3 Polish**: Summary table, cross-links, next actions added  
+**Related**:
+- [MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md](./MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md) - MCP parity audit
+- [MCP_TOOL_OPTIMIZATION_PLAN.md](../plans/MCP_TOOL_OPTIMIZATION_PLAN.md) - MCP tool optimization
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream
+
+---
+
+## Document Summary
+
+| Aspect | Details |
+|--------|---------|
+| **Document Type** | Implementation guide |
+| **Lines** | ~1,332 lines |
+| **Sections** | 10+ sections covering FastMCP features, patterns, implementation |
+| **Status** | Guide complete, ready for implementation |
+| **Key Features** | Elicitation API, Context API, Task mode, Tool patterns, Storage/EventStore |
+| **Implementation Priority** | High (core MCP functionality) |
+| **Performance Targets** | <50ms tool execution (p95), <100ms elicitation response |
+| **BACKLOG Items** | 5 items extracted (see Next Actions) |
+
+---
+
+## Next Actions (WORK_STREAM IDs)
+
+| ID | Action | Priority | Depends | Status |
+|----|--------|----------|---------|--------|
+| `fastmcp-elicitation-api` | Implement FastMCP elicitation API (structured input, single/multi-select) | P1 | - | BACKLOG |
+| `fastmcp-context-api` | Implement FastMCP Context API (foreground/background modes) | P1 | - | BACKLOG |
+| `fastmcp-task-mode` | Implement FastMCP task mode (background execution) | P1 | fastmcp-context-api | BACKLOG |
+| `fastmcp-storage-eventstore` | Implement FastMCP Storage/EventStore integration | P2 | fastmcp-context-api | BACKLOG |
+| `fastmcp-tool-patterns` | Implement FastMCP tool patterns (error handling, retry, validation) | P2 | fastmcp-elicitation-api | BACKLOG |
+
+**See Also**: [WORK_STREAM.md](../reference/WORK_STREAM.md) for full backlog
 
 ---
 
@@ -1322,6 +1356,73 @@ app = mcp.http_app(
 
 ---
 
+## 10. Failure Modes & Error Handling
+
+### 10.1 Failure Modes
+
+| Failure Mode | Impact | Mitigation |
+|--------------|--------|------------|
+| **Elicitation timeout** | User doesn't respond, tool hangs | Set timeout, fallback to default, return DeclinedElicitation |
+| **Context unavailable** | Tool called without context | Graceful degradation, log warning, use default behavior |
+| **Storage backend failure** | EventStore unavailable | Fallback to MemoryStore, retry with exponential backoff |
+| **Task mode failure** | Background task crashes | Error logging, task status update, client notification |
+| **Progress reporting failure** | Progress updates lost | Non-blocking, continue execution, log error |
+| **SSE stream closed** | Client disconnected | Graceful shutdown, cleanup resources, save state |
+
+### 10.2 Error Handling Patterns
+
+**Pattern 1: Elicitation with Timeout**
+```python
+try:
+    result = await asyncio.wait_for(
+        ctx.elicit("Confirm?", response_type=bool),
+        timeout=30.0
+    )
+except asyncio.TimeoutError:
+    await ctx.warning("No response, using default")
+    result = False
+```
+
+**Pattern 2: Storage Fallback**
+```python
+try:
+    await event_store.append(event)
+except StorageError:
+    await ctx.warning("Storage unavailable, using memory fallback")
+    memory_store.append(event)
+```
+
+**Pattern 3: Task Error Recovery**
+```python
+@mcp.tool(task_config=TaskConfig(mode="optional"))
+async def long_task(ctx: Context = CurrentContext()) -> dict:
+    try:
+        return await execute_long_operation()
+    except Exception as e:
+        await ctx.error(f"Task failed: {e}")
+        await ctx.report_task_status("failed", error=str(e))
+        raise
+```
+
+### 10.3 Validation
+
+**Pre-flight Checks:**
+- Verify context is available before elicitation
+- Validate storage backend connectivity
+- Check task mode compatibility
+
+**Post-action Verification:**
+- Confirm elicitation result is valid
+- Verify storage write succeeded
+- Validate task completion status
+
+**Performance Targets:**
+- Elicitation response: <100ms (p95)
+- Tool execution: <50ms (p95)
+- Storage write: <10ms (p95)
+
+---
+
 ## References
 
 1. **Elicitation & Context:** https://gofastmcp.com/servers/elicitation, https://gofastmcp.com/servers/context
@@ -1330,3 +1431,204 @@ app = mcp.http_app(
 4. **Storage:** https://gofastmcp.com/servers/storage-backends
 5. **Sampling & Telemetry:** https://gofastmcp.com/servers/sampling, https://gofastmcp.com/servers/telemetry
 6. **Middleware:** https://gofastmcp.com/servers/middleware
+
+---
+
+## See Also
+
+- [MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md](./MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md) - MCP parity audit
+- [MCP_TOOL_OPTIMIZATION_PLAN.md](../plans/MCP_TOOL_OPTIMIZATION_PLAN.md) - MCP tool optimization plan
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream (5 BACKLOG items)
+- [02-UNIFIED-WBS.md](../plans/02-UNIFIED-WBS.md) - Work breakdown structure
+
+---
+
+## EXTENSION_SUMMARY
+
+### 9. Advanced Authentication Patterns
+
+#### 9.1 OAuth 2.1 Provider Integration
+
+FastMCP supports OAuth 2.1 for enterprise authentication with multiple providers. This is critical for multi-tenant deployments.
+
+```python
+from fastmcp.server.auth import AuthMiddleware, BearerTokenValidator
+from fastmcp.server.auth.providers.github import GitHubProvider
+from key_value.aio.wrappers.encryption import FernetEncryptionWrapper
+
+# GitHub OAuth for development teams
+auth_provider = GitHubProvider(
+    client_id=os.environ["GITHUB_CLIENT_ID"],
+    client_secret=os.environ["GITHUB_CLIENT_SECRET"],
+    redirect_uri=os.environ["GITHUB_REDIRECT_URI"],
+    client_storage=FernetEncryptionWrapper(
+        key_value=RedisStore(url=os.environ["REDIS_URL"]),
+        fernet=Fernet(os.environ["STORAGE_ENCRYPTION_KEY"])
+    )
+)
+
+# Bearer token validation for service-to-service
+token_validator = BearerTokenValidator(
+    token_header="Authorization",
+    token_prefix="Bearer",
+    validate_token=lambda token: token in valid_tokens
+)
+
+mcp.add_middleware(AuthMiddleware(
+    auth_provider=auth_provider,
+    token_validator=token_validator
+))
+```
+
+**Cross-reference:** See `FASTMCP_SPEC_DEEP_DIVE.md` Section 13 for OAuth adoption checklist. See `hooks/security-pipeline.sh` for security enforcement patterns.
+
+#### 9.2 Multi-Tenant Isolation with Scopes
+
+```python
+from fastmcp.server.auth import TenantAwareAuth
+
+def extract_tenant(context):
+    """Extract tenant ID from request context."""
+    token = context.request.headers.get("X-Tenant-ID")
+    return token if token else "default"
+
+mcp.add_middleware(TenantAwareAuth(
+    tenant_extractor=extract_tenant,
+    tenant_scopes={
+        "tenant-a": {"tools": ["read"], "resources": ["sessions"]},
+        "tenant-b": {"tools": ["read", "write"], "resources": ["all"]},
+    }
+))
+```
+
+**Use cases:**
+- SaaS deployments with tenant isolation
+- Enterprise multi-team environments
+- Compliance with data residency requirements
+
+### 10. Testing Strategies
+
+#### 10.1 Unit Testing Tools
+
+```python
+import pytest
+from fastmcp import FastMCP
+from fastmcp.server.dependencies import Depends
+
+@pytest.fixture
+def mcp_server():
+    """Create test server with tools."""
+    mcp = FastMCP("TestServer")
+    
+    @mcp.tool()
+    async def test_tool(value: int) -> int:
+        return value * 2
+    
+    return mcp
+
+@pytest.mark.asyncio
+async def test_tool_execution(mcp_server):
+    """Test tool returns expected output."""
+    result = await mcp_server.tools["test_tool"].run(value=5)
+    assert result == 10
+```
+
+**Cross-reference:** See `tests/test_unit_mcp_tools.py` for existing tool tests. See `docs/guides/TESTING.md` for testing patterns.
+
+#### 10.2 Integration Testing with MCP Client
+
+```python
+import asyncio
+from fastmcp import Client
+
+@pytest.mark.asyncio
+async def test_elicitation_flow():
+    """Test elicitation via MCP client."""
+    async with Client(mcp) as client:
+        # Mock elicitation response
+        result = await client.call_tool(
+            "thegent_run",
+            {"agents": ["test-agent"]}
+        )
+        assert result.content[0].text == "expected output"
+```
+
+**Use cases:**
+- End-to-end tool testing
+- Context behavior verification
+- Middleware interaction testing
+
+### 11. Performance Optimization
+
+#### 11.1 Connection Pooling for HTTP Clients
+
+```python
+from httpx import AsyncClient, Limits, Timeout
+
+http_client = AsyncClient(
+    limits=Limits(
+        max_keepalive_connections=20,
+        max_connections=100,
+        keepalive_expiry=30.0
+    ),
+    timeout=Timeout(10.0)
+)
+
+# Use with HTTP transport
+app = mcp.http_app(
+    transport="streamable-http",
+    http_client=http_client
+)
+```
+
+**Cross-reference:** See `docs/reference/PERFORMANCE_OPTIMIZATION.md` for runtime optimization patterns.
+
+#### 11.2 Async Tool Batching
+
+```python
+from fastmcp.server.tools import ToolBatch
+
+async def batched_agent_execution(
+    agents: list[str],
+    batch_size: int = 5
+) -> list[dict]:
+    """Execute agents in batches to control concurrency."""
+    results = []
+    
+    for i in range(0, len(agents), batch_size):
+        batch = agents[i:i + batch_size]
+        batch_results = await asyncio.gather(
+            *[execute_agent(a) for a in batch],
+            return_exceptions=True
+        )
+        results.extend(batch_results)
+    
+    return results
+```
+
+**Configuration:**
+
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| batch_size | 5-10 | Balance throughput and rate limits |
+| max_concurrent | 20 | Prevent resource exhaustion |
+| retry_delay | 1.0 | Exponential backoff base |
+
+### 12. Cross-Document References
+
+| Reference | Purpose |
+|-----------|---------|
+| `FASTMCP_SPEC_DEEP_DIVE.md` | Full specification details, SEP compliance |
+| `FASTMCP_MIDDLEWARE.md` | Middleware pipeline configuration |
+| `FASTMCP_STORAGE_EVENTSTORE.md` | Storage backend selection |
+| `FASTMCP_TRANSFORMS_DEPLOYMENT.md` | Transform patterns and HTTP deployment |
+| `FASTMCP_FEATURES_AND_TRANSPORT_GAPS.md` | Client compatibility and gaps |
+| `docs/guides/TESTING.md` | Testing strategies and patterns |
+| `docs/reference/PERFORMANCE_OPTIMIZATION.md` | Runtime optimization |
+| `hooks/security-pipeline.sh` | Security enforcement hooks |
+
+---
+
+**Document Version:** 1.1  
+**Last Extended:** 2026-02-17  
+**Extension Author:** Worker Droid

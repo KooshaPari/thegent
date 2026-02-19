@@ -89,3 +89,11 @@ Defines service contracts and invariants for each DAG node. Use when implementin
 - [ ] Implementation path identified
 - [ ] Audit event emitted (if state transition)
 - [ ] Failure class mapped (if failure path)
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [03-UNIFIED-DAG.md](../plans/03-UNIFIED-DAG.md) — DAG specification

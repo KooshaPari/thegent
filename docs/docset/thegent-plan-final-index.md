@@ -624,3 +624,11 @@ This index is your **single entry point**. Every file in the docset is mapped he
 - **Locate any specific information** (Document Map)
 
 Start with the navigation tips in §7, then dive into the documents that match your role and task.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

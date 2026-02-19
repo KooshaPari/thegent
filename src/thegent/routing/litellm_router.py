@@ -33,6 +33,24 @@ from thegent.routing.provider_types import (
 
 logger = logging.getLogger(__name__)
 
+# Import model metadata registry
+try:
+    from thegent.routing.model_metadata import (
+        get_all_models_with_metadata,
+        get_model_metadata,
+        has_model_metadata,
+    )
+except ImportError:
+    # Fallback if module doesn't exist yet
+    def get_model_metadata(model_id: str) -> dict[str, Any] | None:
+        return None
+
+    def has_model_metadata(model_id: str) -> bool:
+        return False
+
+    def get_all_models_with_metadata() -> list[str]:
+        return []
+
 
 # Model context windows for validation (in tokens)
 # Source: provider documentation as of 2026-02
@@ -56,8 +74,17 @@ MODEL_CONTEXT_WINDOWS: dict[str, int] = {
     "deepseek-v3.2": 64000,
     # Zhipu
     "glm-5": 128000,
+    "GLM-5": 128000,
+    "z-ai/glm-5": 128000,
+    # MiniMax
+    "minimax-m2.5": 128000,
+    "MiniMax-M2.5": 128000,
     # Kimi
     "kimi-k2.5": 200000,
+    # Kilo
+    "kilo-default": 128000,
+    # Roo
+    "roo-default": 128000,
     # Meta
     "llama-nemotron-ultra": 128000,
     # Qwen
@@ -116,9 +143,21 @@ def _route_to_litellm_config(route: Route) -> dict[str, Any]:
     model_name = route.model_alias
     provider = route.provider
 
+    # Map thegent provider to LiteLLM provider
+    provider_mapping = {
+        "copilot": "openai",  # Copilot uses OpenAI-compatible API
+        "cursor": "openai",
+        "gemini": "gemini",
+        "claude": "anthropic",
+        "codex": "openai",
+        "antigravity": "gemini",
+        "opencode": "openai",
+    }
+    litellm_provider = provider_mapping.get(provider, provider)
+
     # Determine litellm model string
     # LiteLLM format: "provider/model-name"
-    litellm_model = f"{provider}/{model_name}"
+    litellm_model = f"{litellm_provider}/{model_name}"
 
     # For API key providers, get API key from environment
     api_key_env = _get_api_key_env(provider)
@@ -132,8 +171,10 @@ def _route_to_litellm_config(route: Route) -> dict[str, Any]:
         },
     }
 
-    # For CLIProxyAPIPlus providers, route through proxy
-    if get_execution_path(provider) == ExecutionPath.CLIPROXY_API:
+    # Route through CLIProxy for universal parity: Codex harness, LiteLLM, and direct
+    # - CLIPROXY_API (login-auth): antigravity, cursor, gemini, copilot, kiro
+    # - proxy backend (catalog): minimax, glm, kilo, roo — ensures Codex + LiteLLM use same path
+    if get_execution_path(provider) == ExecutionPath.CLIPROXY_API or route.backend_type == "proxy":
         config["litellm_params"]["api_base"] = "http://localhost:8317/v1"
 
     return config
@@ -220,7 +261,15 @@ def get_context_window(model: str) -> int:
     Returns:
         Context window in tokens
     """
-    # Normalize model name
+    # Try to get from metadata registry first
+    try:
+        metadata = get_model_metadata(model)
+        if metadata and "context_window" in metadata:
+            return metadata["context_window"]
+    except Exception:
+        pass
+
+    # Fallback to static dictionary with normalization
     normalized = model.lower().replace("-", "").replace(".", "")
 
     for key, value in MODEL_CONTEXT_WINDOWS.items():
@@ -291,10 +340,13 @@ def get_litellm_router(policy: str = "cheapest") -> Router:
     config = get_router_config()
     model_list = build_litellm_model_list()
 
+    # Pareto: LiteLLM has no native pareto; use cost-based as proxy
+    effective_policy = "cost-based-routing" if policy == "pareto" else policy
+
     # Build router kwargs
     router_kwargs: dict[str, Any] = {
         "model_list": model_list,
-        "routing_strategy": policy,
+        "routing_strategy": effective_policy,
         "num_retries": config.num_retries,
         "timeout": config.timeout,
         "retry_after": config.retry_after,
@@ -313,6 +365,19 @@ def get_litellm_router(policy: str = "cheapest") -> Router:
         router_kwargs["fallbacks"] = build_fallback_chains()
 
     return Router(**router_kwargs)
+
+
+def get_pareto_preferred_model(complexity_tier: str = "moderate") -> str | None:
+    """Pre-select model via Pareto for LiteLLM when policy=pareto. Returns provider/model or None."""
+    try:
+        from thegent.routing.pareto_router import select_offer
+
+        route = select_offer(complexity_tier=complexity_tier)
+        if route:
+            return f"{route[0]}/{route[1]}"
+    except Exception:
+        pass
+    return None
 
 
 class EnhancedRouter:
@@ -341,6 +406,9 @@ class EnhancedRouter:
         self._cost_tracker = None
         self._alert_manager = None
         self._donut_adapter = None
+
+        # Validate model metadata availability
+        self._validate_model_metadata()
 
     @property
     def cost_tracker(self):
@@ -399,6 +467,16 @@ class EnhancedRouter:
         start_time = time.time()
         selected_model = model
         is_fallback = False
+
+        # Validate model metadata availability (silent check, no warning spam)
+        if selected_model and not has_model_metadata(selected_model):
+            # Try to get from litellm model format (provider/model)
+            if "/" in selected_model:
+                provider_model = selected_model.split("/", 1)[1]
+                if not has_model_metadata(provider_model):
+                    logger.debug("Model metadata not found for %s (using fallback)", selected_model)
+            else:
+                logger.debug("Model metadata not found for %s (using fallback)", selected_model)
 
         # Check budget before routing
         if self._config.cost_budget and self.cost_tracker:
@@ -564,7 +642,7 @@ class EnhancedRouter:
     def _extract_provider(self, model: str) -> str:
         """Extract provider from model string."""
         if "/" in model:
-            return model.split("/")[0]
+            return model.split("/", maxsplit=1)[0]
         # Try to match from model_list
         for entry in self._router.model_list:
             if entry.get("model_name") == model:
@@ -579,7 +657,17 @@ class EnhancedRouter:
         Rough estimates based on typical pricing.
         For accurate costs, enable LiteLLM's built-in cost tracking.
         """
-        # Cost per 1K tokens (rough estimates)
+        # Try to get from metadata registry first
+        try:
+            metadata = get_model_metadata(model)
+            if metadata and "cost_per_mtok" in metadata:
+                # Convert from per MTok to per 1K tokens
+                cost_per_1k = metadata["cost_per_mtok"] / 1000.0
+                return (tokens / 1000) * cost_per_1k
+        except Exception:
+            pass
+
+        # Fallback to static dictionary
         cost_per_1k = {
             "claude-opus-4.6": 0.075,
             "claude-sonnet-4.5": 0.015,
@@ -589,7 +677,14 @@ class EnhancedRouter:
             "gemini-3-flash": 0.000075,
             "deepseek-v3.2": 0.0005,
             "glm-5": 0.0007,
+            "GLM-5": 0.0007,
+            "z-ai/glm-5": 0.0007,
+            "minimax-m2.5": 0.0004,
+            "minimaxm2.5": 0.0004,
+            "MiniMax-M2.5": 0.0004,
             "kimi-k2.5": 0.0005,
+            "kilo-default": 0.0005,
+            "roo-default": 0.0005,
             "qwen3-coder": 0.0003,
             "llama-nemotron-ultra": 0.0002,
         }
@@ -603,6 +698,51 @@ class EnhancedRouter:
 
         # Default: assume budget model pricing
         return (tokens / 1000) * 0.0005
+
+    def _validate_model_metadata(self) -> None:
+        """Validate that all models in router have metadata available.
+
+        Silently checks models and ensures metadata is available.
+        This prevents warnings from Codex CLI about missing model metadata.
+        """
+        try:
+            from thegent.routing.model_metadata import has_model_metadata
+
+            # Check all models in router and ensure they have metadata
+            for entry in self._router.model_list:
+                model_name = entry.get("model_name", "")
+                if not model_name:
+                    continue
+
+                # Check direct model name
+                if not has_model_metadata(model_name):
+                    # Check if it's a provider/model format (e.g., "glm/glm-5")
+                    litellm_model = entry.get("litellm_params", {}).get("model", "")
+                    if "/" in litellm_model:
+                        provider_model = litellm_model.split("/", 1)[1]
+                        if not has_model_metadata(provider_model):
+                            # Try normalized version
+                            normalized = (
+                                provider_model.lower()
+                                .replace("-", "")
+                                .replace(".", "")
+                                .replace("/", "")
+                                .replace("_", "")
+                            )
+                            found = False
+                            for key in get_all_models_with_metadata():
+                                key_normalized = (
+                                    key.lower().replace("-", "").replace(".", "").replace("/", "").replace("_", "")
+                                )
+                                if key_normalized == normalized:
+                                    found = True
+                                    break
+                            if not found:
+                                logger.debug("Model metadata not found for %s (alias: %s)", provider_model, model_name)
+                    else:
+                        logger.debug("Model metadata not found for %s", model_name)
+        except Exception as e:
+            logger.debug("Could not validate model metadata: %s", e)
 
 
 # Global enhanced router instance

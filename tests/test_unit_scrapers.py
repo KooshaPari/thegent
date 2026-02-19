@@ -51,23 +51,23 @@ def _subprocess_result(stdout: str = "", returncode: int = 0) -> MagicMock:
 
 @pytest.mark.unit
 class TestLoadCached:
-    """Tests for _load_cached."""
+    """Tests for _load_cached (diskcache-backed)."""
 
-    @patch(f"{MODULE}._CACHE_PATH")
-    def test_returns_none_when_file_missing(self, mock_path: MagicMock) -> None:
+    @patch(f"{MODULE}._MODELS_CACHE")
+    def test_returns_none_when_cache_missing(self, mock_cache: MagicMock) -> None:
         # @trace FR-MOD-001
-        mock_path.exists.return_value = False
+        mock_cache.get.side_effect = lambda k, default=None: default
         from thegent.models.scrapers import _load_cached
 
         assert _load_cached() is None
 
-    @patch(f"{MODULE}._CACHE_PATH")
-    def test_returns_data_when_fresh(self, mock_path: MagicMock) -> None:
+    @patch(f"{MODULE}._MODELS_CACHE")
+    def test_returns_data_when_fresh(self, mock_cache: MagicMock) -> None:
         # @trace FR-MOD-002
         now = time.time()
-        payload = json.dumps({"by_provider": {"claude": ["haiku"]}, "mtime": now})
-        mock_path.exists.return_value = True
-        mock_path.read_text.return_value = payload
+        mock_cache.get.side_effect = lambda k, default=None: (
+            {"claude": ["haiku"]} if k == "by_provider" else now if k == "by_provider_mtime" else default
+        )
         from thegent.models.scrapers import _load_cached
 
         result = _load_cached(ttl_sec=300)
@@ -76,31 +76,18 @@ class TestLoadCached:
         assert by_provider == {"claude": ["haiku"]}
         assert mtime == now
 
-    @patch(f"{MODULE}._CACHE_PATH")
-    def test_returns_none_when_expired(self, mock_path: MagicMock) -> None:
-        # @trace FR-MOD-003
-        stale = time.time() - 600
-        payload = json.dumps({"by_provider": {"claude": ["haiku"]}, "mtime": stale})
-        mock_path.exists.return_value = True
-        mock_path.read_text.return_value = payload
+    @patch(f"{MODULE}._MODELS_CACHE")
+    def test_returns_none_when_expired(self, mock_cache: MagicMock) -> None:
+        # @trace FR-MOD-003 (diskcache returns None for expired keys)
+        mock_cache.get.return_value = None
         from thegent.models.scrapers import _load_cached
 
         assert _load_cached(ttl_sec=300) is None
 
-    @patch(f"{MODULE}._CACHE_PATH")
-    def test_returns_none_on_json_decode_error(self, mock_path: MagicMock) -> None:
+    @patch(f"{MODULE}._MODELS_CACHE")
+    def test_returns_none_on_os_error(self, mock_cache: MagicMock) -> None:
         # @trace FR-MOD-004
-        mock_path.exists.return_value = True
-        mock_path.read_text.return_value = "NOT-JSON{{"
-        from thegent.models.scrapers import _load_cached
-
-        assert _load_cached() is None
-
-    @patch(f"{MODULE}._CACHE_PATH")
-    def test_returns_none_on_os_error(self, mock_path: MagicMock) -> None:
-        # @trace FR-MOD-005
-        mock_path.exists.return_value = True
-        mock_path.read_text.side_effect = OSError("disk read failed")
+        mock_cache.get.side_effect = OSError("disk read failed")
         from thegent.models.scrapers import _load_cached
 
         assert _load_cached() is None
@@ -108,23 +95,18 @@ class TestLoadCached:
 
 @pytest.mark.unit
 class TestSaveCache:
-    """Tests for _save_cache."""
+    """Tests for _save_cache (diskcache-backed)."""
 
     @patch(f"{MODULE}.time")
-    @patch(f"{MODULE}._CACHE_PATH")
-    def test_writes_json_with_mtime(self, mock_path: MagicMock, mock_time: MagicMock) -> None:
+    @patch(f"{MODULE}._MODELS_CACHE")
+    def test_writes_to_cache_with_ttl(self, mock_cache: MagicMock, mock_time: MagicMock) -> None:
         # @trace FR-MOD-006
         mock_time.time.return_value = 1700000000.0
-        mock_parent = MagicMock()
-        mock_path.parent = mock_parent
         from thegent.models.scrapers import _save_cache
 
-        _save_cache({"claude": ["sonnet"]})
-        mock_parent.mkdir.assert_called_once_with(parents=True, exist_ok=True)
-        written = mock_path.write_text.call_args[0][0]
-        data = json.loads(written)
-        assert data["by_provider"] == {"claude": ["sonnet"]}
-        assert data["mtime"] == 1700000000.0
+        _save_cache({"claude": ["sonnet"]}, ttl_sec=300)
+        mock_cache.set.assert_any_call("by_provider", {"claude": ["sonnet"]}, expire=300)
+        mock_cache.set.assert_any_call("by_provider_mtime", 1700000000.0, expire=300)
 
 
 # ---------------------------------------------------------------------------
@@ -142,30 +124,32 @@ class TestCacheUtilities:
 
         p = get_models_cache_path()
         assert isinstance(p, Path)
-        assert "models-cache.json" in str(p)
+        assert "models-cache" in str(p)
 
-    @patch(f"{MODULE}._CACHE_PATH")
-    def test_invalidate_removes_existing_file(self, mock_path: MagicMock) -> None:
+    @patch(f"{MODULE}._MODELS_CACHE")
+    def test_invalidate_removes_existing_cache(self, mock_cache: MagicMock) -> None:
         # @trace FR-MOD-008
-        mock_path.exists.return_value = True
+        mock_cache.__len__ = MagicMock(return_value=3)
+        mock_cache.clear = MagicMock()
         from thegent.models.scrapers import invalidate_models_cache
 
         assert invalidate_models_cache() is True
-        mock_path.unlink.assert_called_once()
+        mock_cache.clear.assert_called_once()
 
-    @patch(f"{MODULE}._CACHE_PATH")
-    def test_invalidate_returns_false_when_missing(self, mock_path: MagicMock) -> None:
+    @patch(f"{MODULE}._MODELS_CACHE")
+    def test_invalidate_returns_false_when_empty(self, mock_cache: MagicMock) -> None:
         # @trace FR-MOD-009
-        mock_path.exists.return_value = False
+        mock_cache.__len__ = MagicMock(return_value=0)
+        mock_cache.clear = MagicMock()
         from thegent.models.scrapers import invalidate_models_cache
 
         assert invalidate_models_cache() is False
 
-    @patch(f"{MODULE}._CACHE_PATH")
-    def test_invalidate_returns_false_on_os_error(self, mock_path: MagicMock) -> None:
+    @patch(f"{MODULE}._MODELS_CACHE")
+    def test_invalidate_returns_false_on_os_error(self, mock_cache: MagicMock) -> None:
         # @trace FR-MOD-010
-        mock_path.exists.return_value = True
-        mock_path.unlink.side_effect = OSError("permission denied")
+        mock_cache.__len__ = MagicMock(return_value=1)
+        mock_cache.clear = MagicMock(side_effect=OSError("permission denied"))
         from thegent.models.scrapers import invalidate_models_cache
 
         assert invalidate_models_cache() is False

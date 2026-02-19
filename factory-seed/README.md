@@ -1,8 +1,8 @@
-# Factory Seed — Agent Orchestra Skill
+# Factory Seed — Thegent Skills
 
 Thegent invokes agents (cursor-agent, claude, copilot, codex, gemini) **directly** via their CLIs. No per-agent run scripts.
 
-This directory contains the **agent-orchestra** skill: guidance for teaching agents how to use thegent.
+This directory contains the **thegent-skills** skill: guidance for teaching agents how to use thegent.
 
 ## Install
 
@@ -10,7 +10,7 @@ Use a symlink so every runtime reads the canonical skill definition from the sta
 
 ```bash
 mkdir -p ~/.factory/skills
-ln -sfn /Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/factory-seed/agent-orchestra ~/.factory/skills/agent-orchestra
+ln -sfn /Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/factory-seed/thegent-skills ~/.factory/skills/thegent-skills
 ```
 
 If you prefer a configurable location, define `THEGENT_ROOT` and use the path above.
@@ -18,8 +18,8 @@ If you prefer a configurable location, define `THEGENT_ROOT` and use the path ab
 For interactive tools that load from both `~/.factory` and `~/.claude`, keep matching symlink to the same module:
 
 ```bash
-ln -sfn /Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/factory-seed/agent-orchestra ~/.factory/skills/agent-orchestra
-ln -sfn /Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/skills/agent-orchestra ~/.claude/skills/agent-orchestra
+ln -sfn /Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/factory-seed/thegent-skills ~/.factory/skills/thegent-skills
+ln -sfn /Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/skills/thegent-skills ~/.claude/skills/thegent-skills
 ```
 
 ## Agents
@@ -36,4 +36,4 @@ ln -sfn /Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/skills/agent-orchestr
 
 ## Minimax / GLM
 
-Same backend as antigravity (CLIProxyAPIPlus). **GLM** is native (GLM-5); no extra config. **Minimax**: put MiniMax-M2.5 in `~/.factory/config.json`; creds merged into proxy config on first start.
+Same backend as antigravity (CLIProxyAPIPlus). **GLM** is native (GLM-5); run `thegent cliproxy login glm` for OAuth. **Minimax**: run `thegent cliproxy login minimax` for API key.

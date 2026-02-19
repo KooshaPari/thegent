@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # gardener-spawn-manager.sh — Headless agent spawning with resource management
 # Manages spawning of Codex agents with context, token, and time budgets
 # Based on research: hierarchical orchestration, resource management
@@ -155,6 +155,10 @@ spawn_agent() {
     local task="$2"
     local priority="${3:-medium}"
     local context="${4:-}"
+
+    # Backoff between spawn attempts (ADVANCED_STRATEGIES §2.4)
+    local _backoff="${GARDENER_SPAWN_BACKOFF_SEC:-0}"
+    [[ "${_backoff:-0}" -gt 0 ]] && sleep "$_backoff"
 
     # Check resources
     can_spawn || return 1

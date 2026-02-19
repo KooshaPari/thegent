@@ -5,6 +5,7 @@ Distinguishes:
 - usage_limit: subscription/quota exhausted; fallback to different provider.
 """
 
+import contextlib
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Any, ClassVar, TypeVar
 
+from pybreaker import STATE_OPEN, CircuitBreaker
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -55,28 +57,24 @@ class RetryBudget:
 
 
 class ToolCircuitBreaker:
-    """WP-2003: Circuit breaker for individual tools and models."""
+    """WP-2003: Circuit breaker for individual tools and models. Uses pybreaker."""
 
     def __init__(self, name: str, threshold: int = 5, window_s: int = 300) -> None:
         self.name = name
-        self.threshold = threshold
-        self.window_s = window_s
-        self.failures: list[float] = []
+        self._breaker = CircuitBreaker(
+            fail_max=threshold,
+            reset_timeout=window_s,
+            name=name,
+        )
 
     def record_failure(self) -> None:
         """Record a failure event."""
-        import time
-
-        self.failures.append(time.time())
+        with contextlib.suppress(Exception):
+            self._breaker.call(lambda: (_ for _ in ()).throw(RuntimeError("recorded")))
 
     def is_open(self) -> bool:
         """True if the circuit is open (too many recent failures)."""
-        import time
-
-        now = time.time()
-        recent = [f for f in self.failures if now - f < self.window_s]
-        self.failures = recent
-        return len(recent) >= self.threshold
+        return self._breaker.current_state == STATE_OPEN
 
 
 class RecoveryEngine:

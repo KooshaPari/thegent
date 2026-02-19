@@ -1,14 +1,12 @@
 """Doctor module for comprehensive health and preflight checks of thegent environment."""
 
-import json
 import os
 import platform
+import re
 import shutil
 import subprocess
-import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
 
 import httpx
 import yaml
@@ -17,9 +15,10 @@ from rich.panel import Panel
 from rich.table import Table
 
 from thegent.config import ThegentSettings
+from thegent.infra import run_subprocess_optimized
 
 console = Console()
-_project_root_cache: Optional[Path] = None
+_project_root_cache: Path | None = None
 
 
 class CheckResult:
@@ -28,8 +27,8 @@ class CheckResult:
         self.category = category
         self.status: str = "pending"  # ok, warn, fail
         self.message: str = ""
-        self.details: Optional[str] = None
-        self.fix_hint: Optional[str] = None
+        self.details: str | None = None
+        self.fix_hint: str | None = None
 
 
 def run_doctor(fix: bool = False) -> bool:
@@ -72,6 +71,9 @@ def run_doctor(fix: bool = False) -> bool:
     # Category: Environment & Shims
     results.extend(_check_environment())
 
+    # Category: Shim Binaries (thegent-hooks, thegent-shims)
+    results.extend(_check_shim_binaries())
+
     # Category: Shell (full setup)
     results.extend(_check_shell())
 
@@ -84,19 +86,31 @@ def run_doctor(fix: bool = False) -> bool:
 
     # Category: Runtime Infrastructure
     results.extend(_check_runtime_infrastructure())
-    
+
     # Category: Process Analysis & Leak Detection
     results.extend(_check_process_leaks())
-    
+
     # Category: MCP Tools & Sessions
     results.extend(_check_mcp_tools())
     results.extend(_check_sessions())
+
+    # Category: Project hints
+    results.extend(_check_project_hints())
+
+    # Apply fixes if requested
+    if fix:
+        _apply_fixes(results)
 
     # Display results
     success = _display_results(results)
 
     if not success:
-        console.print("\n[bold red]✗ Some checks failed. See hints above to fix them.[/bold red]")
+        if fix:
+            console.print("\n[bold yellow]⚠ Some checks failed. Fixes were attempted where possible.[/bold yellow]")
+        else:
+            console.print("\n[bold red]✗ Some checks failed. See hints above to fix them.[/bold red]")
+            console.print("[dim]Run with --fix to attempt automatic fixes[/dim]")
+        console.print("[dim]See docs/guides/TROUBLESHOOTING.md for more help[/dim]")
     else:
         console.print("\n[bold green]✓ All essential checks passed![/bold green]")
 
@@ -111,9 +125,11 @@ def _check_dependencies() -> list[CheckResult]:
     node_path = shutil.which("node")
     if node_path:
         try:
-            ver = subprocess.check_output(["node", "--version"], text=True).strip()
-            r.status = "ok"
-            r.message = f"Found Node.js {ver} at {node_path}"
+            result = run_subprocess_optimized(["node", "--version"], capture_output=True, timeout=5)
+            if result.returncode == 0 and result.stdout:
+                ver = result.stdout.strip() if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace").strip()
+                r.status = "ok"
+                r.message = f"Found Node.js {ver} at {node_path}"
         except Exception as e:
             r.status = "warn"
             r.message = f"Node.js found but failed to get version: {e}"
@@ -164,13 +180,14 @@ def _check_dependencies() -> list[CheckResult]:
         r.fix_hint = "Download and install from thegent repository or releases."
     res_list.append(r)
 
-    # Essential tools: rg, fd, jaq/jq, git
+    # Tools: git required; rg, fd, jq optional (install for 10x speedup)
     from thegent.errors import get_install_hint
-    for tool, name, _ in [
-        ("rg", "ripgrep", "brew install ripgrep"),
-        ("fd", "fd-find", "brew install fd"),
-        ("git", "Git", "brew install git"),
-        ("jq", "jq", "brew install jq"),
+
+    for tool, name, optional in [
+        ("rg", "ripgrep", True),
+        ("fd", "fd-find", True),
+        ("git", "Git", False),
+        ("jq", "jq", True),
     ]:
         r = CheckResult(name, "Dependencies")
         path = shutil.which(tool)
@@ -178,8 +195,8 @@ def _check_dependencies() -> list[CheckResult]:
             r.status = "ok"
             r.message = f"Found '{tool}' at {path}"
         else:
-            r.status = "warn"
-            r.message = f"'{tool}' not found in PATH"
+            r.status = "warn"  # All as warn for graceful degradation
+            r.message = f"'{tool}' not found" + (" (optional — install for 10x speedup)" if optional else " in PATH")
             r.fix_hint = get_install_hint(tool)
         res_list.append(r)
 
@@ -296,6 +313,7 @@ def _ensure_mcp_running(settings: ThegentSettings, timeout: int = 30) -> bool:
     console.print("[yellow]MCP server not running. Starting automatically...[/yellow]")
     try:
         from thegent.mcp_manage import mcp_up
+
         success, msg = mcp_up()
         if success:
             # Wait for it to become ready
@@ -310,9 +328,8 @@ def _ensure_mcp_running(settings: ThegentSettings, timeout: int = 30) -> bool:
                     continue
             console.print("[red]Timeout waiting for MCP server to start.[/red]")
             return False
-        else:
-            console.print(f"[red]Failed to start MCP server: {msg}[/red]")
-            return False
+        console.print(f"[red]Failed to start MCP server: {msg}[/red]")
+        return False
     except Exception as e:
         console.print(f"[red]Failed to start MCP server: {e}[/red]")
         return False
@@ -403,9 +420,44 @@ def _check_environment() -> list[CheckResult]:
     r = CheckResult("Tool Shims", "Environment")
     bin_dir = Path.home() / ".local" / "bin"
     installed_shims = []
+    shim_details = {}  # Store shim details for version/binary checks
+
     for shim in ["git", "grep", "find", "jq", "uv", "clode", "codex", "copilot", "droid", "roid"]:
-        if (bin_dir / shim).exists():
+        shim_path = bin_dir / shim
+        if shim_path.exists():
             installed_shims.append(shim)
+            # Check shim type and resolve target binary
+            try:
+                content = shim_path.read_text()
+                # Check if it's a symlink
+                if shim_path.is_symlink():
+                    target = shim_path.resolve()
+                    shim_details[shim] = {"type": "symlink", "target": str(target), "exists": target.exists()}
+                # Check if it's a shell script shim
+                elif "thegent" in content.lower() or "shim" in content.lower():
+                    # Try to extract target binary from script
+                    lines = content.split("\n")
+                    target_binary = None
+                    for line in lines[:20]:  # Check first 20 lines
+                        if "exec" in line.lower() or "which" in line.lower():
+                            # Try to extract binary path
+                            parts = line.split()
+                            for i, part in enumerate(parts):
+                                if part in ["exec", "which"] and i + 1 < len(parts):
+                                    potential_binary = parts[i + 1].strip("'\"")
+                                    if "/" in potential_binary or potential_binary in ["git", "grep", "find", "jq", "uv"]:
+                                        target_binary = shutil.which(potential_binary)
+                                        break
+                            break
+                    shim_details[shim] = {
+                        "type": "script",
+                        "target": target_binary,
+                        "exists": target_binary is not None and Path(target_binary).exists() if target_binary else False,
+                    }
+                else:
+                    shim_details[shim] = {"type": "unknown", "target": None, "exists": False}
+            except (OSError, UnicodeDecodeError):
+                shim_details[shim] = {"type": "unknown", "target": None, "exists": False}
 
     # Codex/Copilot: must resolve to ~/.local/bin (avoids "git: 'X' is not a git command")
     for agent in ["codex", "copilot"]:
@@ -447,6 +499,123 @@ def _check_environment() -> list[CheckResult]:
         r.message = "No thegent tool shims found in ~/.local/bin"
         r.fix_hint = "Run: thegent install-shims --all"
     res_list.append(r)
+
+    # Enhanced: Check shim versions and binary availability
+    for shim_name, details in shim_details.items():
+        if details.get("type") == "unknown":
+            continue
+
+        r_shim = CheckResult(f"{shim_name} Shim Details", "Environment")
+
+        # Check if target binary exists
+        target = details.get("target")
+        exists = details.get("exists", False)
+
+        if target and exists:
+            # Try to get version if possible
+            version_info = None
+            try:
+                if shim_name in ["git", "grep", "find", "jq", "uv"]:
+                    # Try to get version from binary
+                    if shim_name == "git":
+                        result = run_subprocess_optimized(["git", "--version"], capture_output=True, timeout=2)
+                        if result.returncode == 0 and result.stdout:
+                            stdout_text = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                            version_info = stdout_text.strip()
+                    elif shim_name == "grep":
+                        result = run_subprocess_optimized(["grep", "--version"], capture_output=True, timeout=2)
+                        if result.returncode == 0 and result.stdout:
+                            stdout_text = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                            version_info = stdout_text.split("\n")[0] if stdout_text else None
+                    elif shim_name == "uv":
+                        result = run_subprocess_optimized(["uv", "--version"], capture_output=True, timeout=2)
+                        if result.returncode == 0 and result.stdout:
+                            stdout_text = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                            version_info = stdout_text.strip()
+            except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
+                pass
+
+            if version_info:
+                r_shim.status = "ok"
+                r_shim.message = f"{shim_name} -> {target} ({version_info})"
+            else:
+                r_shim.status = "ok"
+                r_shim.message = f"{shim_name} -> {target} (binary available)"
+        elif target:
+            r_shim.status = "warn"
+            r_shim.message = f"{shim_name} -> {target} (target binary not found)"
+            r_shim.fix_hint = f"Install {shim_name} or fix shim target"
+        else:
+            r_shim.status = "warn"
+            r_shim.message = f"{shim_name} shim exists but target unclear"
+
+        res_list.append(r_shim)
+
+    return res_list
+
+
+def _check_shim_binaries() -> list[CheckResult]:
+    """Check thegent-hooks and thegent-shims (Rust) binary version and availability."""
+    res_list: list[CheckResult] = []
+
+    for name, candidates in [
+        ("thegent-hooks", ["thegent-hooks", "crates/target/release/thegent-hooks"]),
+        ("thegent-shims", ["thegent-shims", "crates/target/release/thegent-shims"]),
+    ]:
+        r = CheckResult(name, "Shim Binaries")
+        bin_path = shutil.which(name)
+        if not bin_path:
+            # Try project-relative path
+            root = _project_root_cache or Path.cwd()
+            for rel in candidates[1:]:
+                p = root / rel
+                if p.exists() and p.is_file():
+                    bin_path = str(p)
+                    break
+        if bin_path:
+            bin_file = Path(bin_path)
+            # Check binary exists and is executable
+            if not bin_file.exists():
+                r.status = "fail"
+                r.message = f"{name} path {bin_path} does not exist"
+                r.fix_hint = "Build with: cd crates && cargo build --release"
+            elif not os.access(bin_path, os.X_OK):
+                r.status = "warn"
+                r.message = f"{name} at {bin_path} is not executable"
+                r.fix_hint = f"Fix permissions: chmod +x {bin_path}"
+            else:
+                # Try to get version
+                try:
+                    out = run_subprocess_optimized(
+                        [bin_path, "--version"],
+                        capture_output=True,
+                        timeout=2,
+                        check=False,
+                    )
+                    stdout_text = out.stdout if isinstance(out.stdout, str) else (out.stdout.decode("utf-8", errors="replace") if out.stdout else "")
+                    stderr_text = out.stderr if isinstance(out.stderr, str) else (out.stderr.decode("utf-8", errors="replace") if out.stderr else "")
+                    ver = (stdout_text or stderr_text or "").strip().split("\n")[0] or "unknown"
+                    r.status = "ok"
+                    r.message = f"{name} at {bin_path}: {ver}"
+                    # Add file size and modification time for additional info
+                    try:
+                        stat = bin_file.stat()
+                        size_mb = stat.st_size / (1024 * 1024)
+                        mtime = time.strftime("%Y-%m-%d", time.localtime(stat.st_mtime))
+                        r.details = f"Size: {size_mb:.2f}MB, Modified: {mtime}"
+                    except OSError:
+                        pass
+                except subprocess.TimeoutExpired:
+                    r.status = "warn"
+                    r.message = f"{name} at {bin_path} (version check timed out)"
+                except Exception as e:
+                    r.status = "warn"
+                    r.message = f"{name} found at {bin_path} but --version failed: {e}"
+        else:
+            r.status = "info"
+            r.message = f"{name} not found (optional Rust binary)"
+            r.fix_hint = "Build with: cd crates && cargo build --release"
+        res_list.append(r)
 
     return res_list
 
@@ -540,16 +709,14 @@ def _check_nix_daemon_status() -> tuple[bool, str]:
     if platform.system() == "Darwin":
         # macOS: use launchctl
         try:
-            result = subprocess.run(
+            result = run_subprocess_optimized(
                 ["launchctl", "list"],
                 check=False,
                 capture_output=True,
-                text=True,
                 timeout=5,
             )
-            if result.returncode == 0:
-                # Check for nix-daemon or determinate-nixd
-                output = result.stdout or ""
+            if result.returncode == 0 and result.stdout:
+                output = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
                 if "com.determinate.nix-daemon" in output or "nix-daemon" in output.lower():
                     return True, "Running (launchd)"
                 # Also check for determinate-nixd process
@@ -561,7 +728,7 @@ def _check_nix_daemon_status() -> tuple[bool, str]:
     elif platform.system() == "Linux":
         # Linux: use systemctl
         try:
-            result = subprocess.run(
+            result = run_subprocess_optimized(
                 ["systemctl", "--user", "status", "nix-daemon"],
                 check=False,
                 capture_output=True,
@@ -585,9 +752,11 @@ def _check_nix() -> list[CheckResult]:
     r = CheckResult("Nix Installed", "Nix Support")
     if nix_path:
         try:
-            ver = subprocess.check_output(["nix", "--version"], text=True, timeout=5).strip()
-            r.status = "ok"
-            r.message = f"Found Nix: {ver}"
+            result = run_subprocess_optimized(["nix", "--version"], capture_output=True, timeout=5)
+            if result.returncode == 0 and result.stdout:
+                ver = result.stdout.strip() if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace").strip()
+                r.status = "ok"
+                r.message = f"Found Nix: {ver}"
         except subprocess.TimeoutExpired:
             r.status = "warn"
             r.message = "Nix command timed out"
@@ -600,18 +769,17 @@ def _check_nix() -> list[CheckResult]:
             else:
                 r.status = "ok"
                 r.message = "Found Nix in PATH"
+    # Check if Nix is installed but not in PATH (may need shell reload)
+    elif Path("/nix/var/nix/profiles/default/bin/nix").exists():
+        r.status = "warn"
+        r.message = "Nix installed but not in PATH"
+        r.fix_hint = "Reload shell or run: . ~/.zshenv"
     else:
-        # Check if Nix is installed but not in PATH (may need shell reload)
-        if Path("/nix/var/nix/profiles/default/bin/nix").exists():
-            r.status = "warn"
-            r.message = "Nix installed but not in PATH"
-            r.fix_hint = "Reload shell or run: . ~/.zshenv"
-        else:
-            r.status = "warn"  # Warning, not failure - Nix is optional
-            r.message = "Nix not found (optional)"
-            r.fix_hint = "Install Nix from https://nixos.org/ or use Determinate Systems installer."
+        r.status = "warn"  # Warning, not failure - Nix is optional
+        r.message = "Nix not found (optional)"
+        r.fix_hint = "Install Nix from https://nixos.org/ or use Determinate Systems installer."
     res_list.append(r)
-    
+
     # Nix daemon status (only check if Nix is installed)
     if nix_path:
         r = CheckResult("Nix Daemon", "Nix Support")
@@ -706,7 +874,7 @@ def _get_configured_providers_from_cliproxy() -> set[str]:
 
 def _check_providers() -> list[CheckResult]:
     """Validate all configured OAuth providers via proxy (ROB-016).
-    
+
     REQUIRES OAuth credentials - API keys are NOT used for OAuth-capable providers.
     Checks providers from /v1/models AND cliproxy config so nothing is missed.
     """
@@ -767,7 +935,7 @@ def _check_providers() -> list[CheckResult]:
                         defs_ = _get_provider_definitions()
                         cfg = defs_.get(provider, {}) if isinstance(defs_.get(provider), dict) else {}
                         test_model = cfg.get("model")
-                    
+
                     # If still no model and provider has no models in /v1/models, skip validation
                     if not test_model and not p_models:
                         r.status = "warn"
@@ -775,7 +943,7 @@ def _check_providers() -> list[CheckResult]:
                         r.fix_hint = f"Run: thegent cliproxy login {provider}"
                         res_list.append(r)
                         continue
-                    
+
                     # Last resort: use provider name (may fail, but better than skipping)
                     if not test_model:
                         test_model = provider
@@ -831,7 +999,9 @@ def _check_providers() -> list[CheckResult]:
         if "Connection refused" in str(e) or "ConnectError" in str(type(e).__name__):
             r.status = "warn"  # Changed from fail to warn - CLIProxy may not be needed
             r.message = f"CLIProxy not reachable: {e}"
-            r.details = "Suspicion Level: LOW\nCLIProxy is not running. This is OK if you're not using provider validation."
+            r.details = (
+                "Suspicion Level: LOW\nCLIProxy is not running. This is OK if you're not using provider validation."
+            )
             r.fix_hint = "Start CLIProxy if needed: thegent mcp up"
         else:
             r.status = "fail"
@@ -846,7 +1016,7 @@ def _check_providers() -> list[CheckResult]:
 def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_bytes: int = 1024) -> tuple[bool, str]:
     """
     Check if a process is actively working (not stuck) by monitoring CPU and I/O activity.
-    
+
     Returns (is_active, reason) where is_active=True means process is working.
     A process is considered active if:
     - CPU usage > min_cpu_percent over a short interval, OR
@@ -856,13 +1026,14 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
     """
     try:
         import psutil
+
         proc = psutil.Process(pid)
-        
+
         # Check process status
         status = proc.status()
         if status == psutil.STATUS_ZOMBIE:
             return False, "zombie process"
-        
+
         # Check if it's been running for a while - long-running sessions are OK
         create_time = proc.create_time()
         runtime = time.time() - create_time
@@ -872,12 +1043,15 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
             try:
                 connections = proc.connections()
                 if connections:
-                    return True, f"long-running session ({runtime/3600:.1f}h) with {len(connections)} network connections"
+                    return (
+                        True,
+                        f"long-running session ({runtime / 3600:.1f}h) with {len(connections)} network connections",
+                    )
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 pass
             # Long-running with no obvious activity - still assume active (user's chats run for hours)
-            return True, f"long-running session ({runtime/3600:.1f}h, assumed active)"
-        
+            return True, f"long-running session ({runtime / 3600:.1f}h, assumed active)"
+
         # For shorter runs, check for actual activity
         # Sample CPU usage over short interval (0.5s)
         try:
@@ -886,7 +1060,7 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
                 return True, f"CPU active ({cpu_percent:.1f}%)"
         except (psutil.AccessDenied, psutil.NoSuchProcess):
             pass
-        
+
         # Check I/O counters
         try:
             io_counters = proc.io_counters()
@@ -897,7 +1071,7 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
                     return True, f"I/O active (R:{read_bytes} W:{write_bytes})"
         except (psutil.AccessDenied, psutil.NoSuchProcess, AttributeError):
             pass
-        
+
         # Check if process has network connections (indicates activity)
         try:
             connections = proc.connections()
@@ -905,12 +1079,12 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
                 return True, f"network active ({len(connections)} connections)"
         except (psutil.AccessDenied, psutil.NoSuchProcess):
             pass
-        
+
         # If process is running/sleeping but no activity detected and runtime < 1 hour
         # Only flag as stuck if runtime > 5 minutes AND no activity
         if runtime > 300:  # > 5 minutes
             return False, "no recent activity detected (may be stuck)"
-        
+
         # Very short runtime - assume active
         return True, f"recently started ({runtime:.0f}s, assumed active)"
     except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
@@ -922,9 +1096,9 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
 def _find_stuck_processes(command_patterns: list[str], max_age_seconds: int = 300) -> list[tuple[int, str, str]]:
     """
     Find processes matching command patterns that appear to be stuck (not actively working).
-    
+
     Uses fast process monitor for better performance.
-    
+
     Returns list of (pid, command, reason) for stuck processes.
     Only flags processes that:
     - Match the command pattern
@@ -934,21 +1108,21 @@ def _find_stuck_processes(command_patterns: list[str], max_age_seconds: int = 30
     stuck = []
     try:
         from thegent.infra.fast_process_monitor import get_fast_monitor
-        
+
         monitor = get_fast_monitor()
         now = time.time()
-        
+
         # Use fast process finder
         matching_processes = monitor.find_by_command(command_patterns)
-        
+
         for info in matching_processes:
             try:
                 runtime = now - info.create_time
-                
+
                 # Only check processes that have been running for a while
                 if runtime < max_age_seconds:
                     continue
-                
+
                 # Check if process is actively working
                 is_active, reason = _is_process_actively_working(info.pid)
                 if not is_active:
@@ -959,19 +1133,19 @@ def _find_stuck_processes(command_patterns: list[str], max_age_seconds: int = 30
         # Fallback to psutil if fast monitor not available
         try:
             import psutil
-            
+
             for proc in psutil.process_iter(["pid", "name", "cmdline", "create_time"]):
                 try:
                     cmdline = " ".join(proc.info["cmdline"] or [])
                     if not any(pattern in cmdline for pattern in command_patterns):
                         continue
-                    
+
                     pid = proc.info["pid"]
                     runtime = time.time() - proc.info["create_time"]
-                    
+
                     if runtime < max_age_seconds:
                         continue
-                    
+
                     is_active, reason = _is_process_actively_working(pid)
                     if not is_active:
                         stuck.append((pid, cmdline[:100], reason))
@@ -981,7 +1155,7 @@ def _find_stuck_processes(command_patterns: list[str], max_age_seconds: int = 30
             pass  # No monitoring available
     except Exception:
         pass  # Ignore errors in process enumeration
-    
+
     return stuck
 
 
@@ -993,7 +1167,7 @@ def _check_headless() -> list[CheckResult]:
     """
     res_list = []
     from thegent.agents.cliproxy_manager import _has_oauth_credentials
-    
+
     # Check for stuck processes before running headless tests
     # Only flag processes that are > 5 minutes old AND show no activity
     # Long-running sessions (>1 hour) are assumed active (user's chats run for hours)
@@ -1025,21 +1199,22 @@ def _check_headless() -> list[CheckResult]:
     else:
         try:
             # Try a very simple print run
-            process = subprocess.run(
+            process = run_subprocess_optimized(
                 ["clode", "haiku", "--print", "respond with 'pong'"],
                 capture_output=True,
-                text=True,
                 timeout=90,  # Increased timeout
                 env={**os.environ, "THGENT_DEBUG": "0", "THGENT_LOG_LEVEL": "ERROR"},
             )
-            if process.returncode == 0 and "pong" in process.stdout.lower():
+            stdout_text = process.stdout if isinstance(process.stdout, str) else (process.stdout.decode("utf-8", errors="replace") if process.stdout else "")
+            stderr_text = process.stderr if isinstance(process.stderr, str) else (process.stderr.decode("utf-8", errors="replace") if process.stderr else "")
+            if process.returncode == 0 and stdout_text and "pong" in stdout_text.lower():
                 r.status = "ok"
                 r.message = "Claude Code headless run successful"
             else:
                 r.status = "fail"  # Required feature
                 r.message = f"Claude Code headless run failed (code {process.returncode})"
                 # Capture last line or interesting part
-                output = (process.stderr or process.stdout or "").strip()
+                output = (stderr_text or stdout_text or "").strip()
                 if output:
                     r.details = output.splitlines()[-1] if "\n" in output else output[:200]
                 r.fix_hint = "Check OAuth credentials: thegent cliproxy login claude"
@@ -1077,20 +1252,21 @@ def _check_headless() -> list[CheckResult]:
         res_list.append(r)
     else:
         try:
-            process = subprocess.run(
+            process = run_subprocess_optimized(
                 ["dex", "flash", "--print", "respond with 'pong'"],
                 capture_output=True,
-                text=True,
                 timeout=90,  # Increased timeout
                 env={**os.environ, "THGENT_DEBUG": "0", "THGENT_LOG_LEVEL": "ERROR"},
             )
-            if process.returncode == 0 and "pong" in process.stdout.lower():
+            stdout_text = process.stdout if isinstance(process.stdout, str) else (process.stdout.decode("utf-8", errors="replace") if process.stdout else "")
+            stderr_text = process.stderr if isinstance(process.stderr, str) else (process.stderr.decode("utf-8", errors="replace") if process.stderr else "")
+            if process.returncode == 0 and stdout_text and "pong" in stdout_text.lower():
                 r.status = "ok"
                 r.message = "Codex headless run successful"
             else:
                 r.status = "fail"  # Required feature
                 r.message = f"Codex headless run failed (code {process.returncode})"
-                output = (process.stderr or process.stdout or "").strip()
+                output = (stderr_text or stdout_text or "").strip()
                 if output:
                     r.details = output.splitlines()[-1] if "\n" in output else output[:200]
                 r.fix_hint = "Check OAuth credentials: thegent cliproxy login codex"
@@ -1109,7 +1285,7 @@ def _check_headless() -> list[CheckResult]:
     r = CheckResult("Droid Headless", "Headless Runs")
     droid_shim = shutil.which("droid")
     roid_shim = shutil.which("roid")
-    
+
     if not droid_shim and not roid_shim:
         r.status = "warn"  # Warning, not failure - droids are optional
         r.message = "droid/roid shims not found in PATH"
@@ -1127,14 +1303,14 @@ def _check_headless() -> list[CheckResult]:
         try:
             # Try a simple droid exec test
             droid_cmd = droid_shim or roid_shim
-            process = subprocess.run(
+            process = run_subprocess_optimized(
                 [droid_cmd, "exec", "--help"],
                 capture_output=True,
-                text=True,
                 timeout=10,
                 env={**os.environ, "THGENT_DEBUG": "0", "THGENT_LOG_LEVEL": "ERROR"},
             )
-            if process.returncode == 0 or "usage" in process.stdout.lower() or "help" in process.stdout.lower():
+            stdout_text = process.stdout if isinstance(process.stdout, str) else (process.stdout.decode("utf-8", errors="replace") if process.stdout else "")
+            if process.returncode == 0 or (stdout_text and ("usage" in stdout_text.lower() or "help" in stdout_text.lower())):
                 r.status = "ok"
                 r.message = f"Droid headless run successful ({droid_cmd})"
             else:
@@ -1163,65 +1339,72 @@ def _check_headless() -> list[CheckResult]:
 def _check_process_leaks() -> list[CheckResult]:
     """Check for potential process leaks and optimization opportunities."""
     res_list = []
-    
+
     # Process Leak Analysis
     r = CheckResult("Process Leak Analysis", "Process Analysis & Leak Detection")
     try:
         import psutil
-        
+
         issues = []
         suspicious_processes = []
         zombie_count = 0
         high_memory_processes = []
         high_fd_processes = []
         orphaned_processes = []
-        
+
         # Analyze processes
         try:
             from thegent.infra.fast_process_monitor import get_fast_monitor
+
             monitor = get_fast_monitor()
             process_infos = list(monitor.iter_processes(use_cache=False))
         except Exception:
             # Fallback to psutil
             process_infos = []
-            for proc in psutil.process_iter(["pid", "name", "cmdline", "status", "memory_info", "num_fds", "create_time"]):
+            for proc in psutil.process_iter(
+                ["pid", "name", "cmdline", "status", "memory_info", "num_fds", "create_time"]
+            ):
                 try:
                     info = proc.info
-                    process_infos.append(ProcessInfo(
-                        pid=info["pid"],
-                        name=info.get("name", "unknown"),
-                        cmdline=" ".join(info.get("cmdline", []) or []),
-                        create_time=info.get("create_time", 0),
-                        status=info.get("status", "unknown"),
-                    ))
+                    process_infos.append(
+                        ProcessInfo(
+                            pid=info["pid"],
+                            name=info.get("name", "unknown"),
+                            cmdline=" ".join(info.get("cmdline", []) or []),
+                            create_time=info.get("create_time", 0),
+                            status=info.get("status", "unknown"),
+                        )
+                    )
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
-        
+
         current_time = time.time()
-        
+
         for info in process_infos:
             try:
                 # Get detailed info using psutil
                 proc = psutil.Process(info.pid)
-                
+
                 # Check for zombies
                 if proc.status() == psutil.STATUS_ZOMBIE:
                     zombie_count += 1
                     continue
-                
+
                 # Check memory usage
                 memory_mb = proc.memory_info().rss / 1024 / 1024
                 if memory_mb > 500:  # > 500MB
                     high_memory_processes.append((info.pid, info.name, memory_mb, info.cmdline[:80]))
-                
+
                 # Check file descriptors
                 try:
-                    num_fds = proc.num_fds() if hasattr(proc, "num_fds") else len(proc.open_files()) + len(proc.connections())
+                    num_fds = (
+                        proc.num_fds() if hasattr(proc, "num_fds") else len(proc.open_files()) + len(proc.connections())
+                    )
                     if num_fds > 100:  # > 100 FDs
                         high_fd_processes.append((info.pid, info.name, num_fds, info.cmdline[:80]))
                 except (psutil.AccessDenied, AttributeError):
                     pass
-                
+
                 # Check for orphaned processes (parent is init/systemd)
                 try:
                     parent = proc.parent()
@@ -1230,44 +1413,47 @@ def _check_process_leaks() -> list[CheckResult]:
                         if runtime > 3600:  # > 1 hour
                             # Check if it's a thegent-related process
                             cmdline_lower = info.cmdline.lower()
-                            if any(keyword in cmdline_lower for keyword in ["thegent", "claude", "codex", "droid", "cliproxy"]):
-                                orphaned_processes.append((info.pid, info.name, runtime/3600, info.cmdline[:80]))
+                            if any(
+                                keyword in cmdline_lower
+                                for keyword in ["thegent", "claude", "codex", "droid", "cliproxy"]
+                            ):
+                                orphaned_processes.append((info.pid, info.name, runtime / 3600, info.cmdline[:80]))
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
-                
+
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
-        
+
         # Build suspicion report
         suspicion_level = "low"
         suggestions = []
-        
+
         if zombie_count > 0:
             issues.append(f"{zombie_count} zombie process(es)")
             suspicion_level = "medium" if suspicion_level == "low" else suspicion_level
-            suggestions.append(f"Clean up zombies: ps aux | grep '<defunct>' | awk '{{print $2}}' | xargs kill -9")
-        
+            suggestions.append("Clean up zombies: ps aux | grep '<defunct>' | awk '{print $2}' | xargs kill -9")
+
         if len(high_memory_processes) > 5:
             top_memory = sorted(high_memory_processes, key=lambda x: x[2], reverse=True)[:5]
             issues.append(f"{len(high_memory_processes)} high-memory processes (>500MB)")
             suspicion_level = "high" if suspicion_level in ["low", "medium"] else suspicion_level
             suggestions.append(f"Top memory hogs: {', '.join([f'PID {p[0]} ({p[2]:.0f}MB)' for p in top_memory])}")
             suggestions.append("Investigate: ps aux --sort=-%mem | head -10")
-        
+
         if len(high_fd_processes) > 3:
             top_fds = sorted(high_fd_processes, key=lambda x: x[2], reverse=True)[:3]
             issues.append(f"{len(high_fd_processes)} high-FD processes (>100 FDs)")
             suspicion_level = "high" if suspicion_level in ["low", "medium"] else suspicion_level
             suggestions.append(f"Top FD users: {', '.join([f'PID {p[0]} ({p[2]} FDs)' for p in top_fds])}")
             suggestions.append("Check FD leaks: lsof -p <PID> | wc -l")
-        
+
         if len(orphaned_processes) > 0:
             issues.append(f"{len(orphaned_processes)} potentially orphaned thegent processes")
             suspicion_level = "medium" if suspicion_level == "low" else suspicion_level
             top_orphaned = sorted(orphaned_processes, key=lambda x: x[2], reverse=True)[:3]
             suggestions.append(f"Orphaned processes: {', '.join([f'PID {p[0]} ({p[2]:.1f}h)' for p in top_orphaned])}")
             suggestions.append("Review: ps aux | grep -E '(thegent|claude|codex|droid)' | grep -v grep")
-        
+
         # Determine status and message
         if not issues:
             r.status = "ok"
@@ -1286,14 +1472,14 @@ def _check_process_leaks() -> list[CheckResult]:
             else:
                 r.status = "ok"
                 status_icon = "✓"
-            
+
             r.message = f"{status_icon} {len(issues)} potential issue(s) detected"
             r.details = f"Suspicion Level: {suspicion_level.upper()}\n"
             r.details += f"Issues: {', '.join(issues)}\n\n"
             r.details += "Optimization Suggestions:\n"
             r.details += "\n".join(f"  • {s}" for s in suggestions[:8])  # Limit to 8 suggestions
             r.fix_hint = "; ".join(suggestions[:3])  # Top 3 suggestions
-        
+
     except ImportError:
         r.status = "warn"
         r.message = "psutil not available for process analysis"
@@ -1302,9 +1488,9 @@ def _check_process_leaks() -> list[CheckResult]:
         r.status = "warn"
         r.message = f"Could not analyze processes: {e}"
         r.details = f"Error details: {str(e)[:200]}"
-    
+
     res_list.append(r)
-    
+
     return res_list
 
 
@@ -1337,7 +1523,7 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
         stats = get_resource_stats()
         if stats:
             suspicion_level, suggestions = stats.get_suspicion_level()
-            
+
             # Determine status based on suspicion level
             if suspicion_level == "critical":
                 r.status = "fail"
@@ -1351,14 +1537,14 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
             else:
                 r.status = "ok"
                 status_icon = "✓"
-            
+
             r.message = (
                 f"{status_icon} FDs: {stats.fd_count}/{stats.fd_limit} ({stats.fd_usage_percent:.1f}%), "
                 f"Memory: {stats.memory_mb:.1f}MB, "
                 f"CPU: {stats.cpu_percent:.1f}%, "
                 f"Processes: {stats.process_count}"
             )
-            
+
             # Add detailed report with suspicion level and suggestions
             if suspicion_level != "low":
                 r.details = f"Suspicion Level: {suspicion_level.upper()}\n"
@@ -1375,38 +1561,39 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
     # Process Registry
     r = CheckResult("Process Registry", "Runtime Infrastructure")
     try:
-        from thegent.infra.process_registry import get_registry
         import psutil
+
+        from thegent.infra.process_registry import get_registry
 
         registry = get_registry()
         active_processes = registry.list_alive()  # Fixed: use list_alive() instead of list_all()
         count = len(active_processes)
-        
+
         # Analyze tracked processes for potential issues
         dead_pids = []
         long_running = []
         high_resource = []
-        
+
         for handle in active_processes:
             try:
                 proc = psutil.Process(handle.pid)
                 status = proc.status()
-                
+
                 # Check if process is actually dead
                 if status == psutil.STATUS_ZOMBIE:
                     dead_pids.append(handle.pid)
                     continue
-                
+
                 # Check runtime
                 try:
                     create_time = proc.create_time()
                     runtime = time.time() - create_time
                     if runtime > 86400:  # > 24 hours
                         memory_mb = proc.memory_info().rss / 1024 / 1024
-                        long_running.append((handle.pid, runtime/3600, memory_mb))
+                        long_running.append((handle.pid, runtime / 3600, memory_mb))
                 except (psutil.AccessDenied, psutil.NoSuchProcess):
                     pass
-                
+
                 # Check resource usage
                 try:
                     memory_mb = proc.memory_info().rss / 1024 / 1024
@@ -1415,32 +1602,36 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
                         high_resource.append((handle.pid, memory_mb, cpu_percent))
                 except (psutil.AccessDenied, psutil.NoSuchProcess):
                     pass
-                    
+
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 dead_pids.append(handle.pid)
-        
+
         # Build report
         issues = []
         suspicion_level = "low"
         suggestions = []
-        
+
         if dead_pids:
             issues.append(f"{len(dead_pids)} dead/zombie process(es) in registry")
             suspicion_level = "medium"
             suggestions.append(f"Clean up dead processes: {', '.join([str(p) for p in dead_pids[:5]])}")
-        
+
         if len(long_running) > 10:
             top_long = sorted(long_running, key=lambda x: x[1], reverse=True)[:5]
             issues.append(f"{len(long_running)} very long-running processes (>24h)")
             suspicion_level = "medium" if suspicion_level == "low" else suspicion_level
-            suggestions.append(f"Long-running: {', '.join([f'PID {p[0]} ({p[1]:.1f}h, {p[2]:.0f}MB)' for p in top_long])}")
-        
+            suggestions.append(
+                f"Long-running: {', '.join([f'PID {p[0]} ({p[1]:.1f}h, {p[2]:.0f}MB)' for p in top_long])}"
+            )
+
         if len(high_resource) > 5:
             top_resource = sorted(high_resource, key=lambda x: x[1], reverse=True)[:5]
             issues.append(f"{len(high_resource)} high-resource processes")
             suspicion_level = "high" if suspicion_level in ["low", "medium"] else suspicion_level
-            suggestions.append(f"High resource: {', '.join([f'PID {p[0]} ({p[1]:.0f}MB, {p[2]:.1f}% CPU)' for p in top_resource])}")
-        
+            suggestions.append(
+                f"High resource: {', '.join([f'PID {p[0]} ({p[1]:.0f}MB, {p[2]:.1f}% CPU)' for p in top_resource])}"
+            )
+
         if count == 0:
             r.status = "ok"
             r.message = "No active tracked processes"
@@ -1465,7 +1656,11 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
             if issues:
                 r.details += "Issues: " + ", ".join(issues) + "\n"
             r.details += "Consider checking for processes that should have been cleaned up"
-            r.fix_hint = "; ".join(suggestions[:3]) if suggestions else "Review tracked processes: Check if long-running sessions are expected"
+            r.fix_hint = (
+                "; ".join(suggestions[:3])
+                if suggestions
+                else "Review tracked processes: Check if long-running sessions are expected"
+            )
         else:
             r.status = "warn"
             r.message = f"{count} active tracked processes"
@@ -1474,7 +1669,11 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
             if issues:
                 r.details += "Issues: " + ", ".join(issues) + "\n"
             r.details += "May indicate process leak or many concurrent sessions"
-            r.fix_hint = "; ".join(suggestions[:3]) if suggestions else "Investigate: Check for stuck processes or cleanup issues"
+            r.fix_hint = (
+                "; ".join(suggestions[:3])
+                if suggestions
+                else "Investigate: Check for stuck processes or cleanup issues"
+            )
     except Exception as e:
         r.status = "warn"
         r.message = f"Could not check process registry: {e}"
@@ -1505,7 +1704,7 @@ def _check_mcp_tools() -> list[CheckResult]:
     """Check MCP tools availability and functionality."""
     res_list = []
     settings = ThegentSettings()
-    
+
     # MCP Tools Availability
     r = CheckResult("MCP Tools", "MCP Tools & Sessions")
     try:
@@ -1528,7 +1727,7 @@ def _check_mcp_tools() -> list[CheckResult]:
         r.status = "warn"
         r.message = f"Could not check MCP tools: {e}"
     res_list.append(r)
-    
+
     return res_list
 
 
@@ -1536,7 +1735,7 @@ def _check_sessions() -> list[CheckResult]:
     """Check session directory and session management."""
     res_list = []
     settings = ThegentSettings()
-    
+
     # Session Directory
     r = CheckResult("Session Directory", "MCP Tools & Sessions")
     session_dir = settings.session_dir.expanduser().resolve()
@@ -1545,7 +1744,7 @@ def _check_sessions() -> list[CheckResult]:
             if os.access(session_dir, os.W_OK):
                 r.status = "ok"
                 r.message = f"Session directory writable: {session_dir}"
-                
+
                 # Check session count
                 try:
                     session_count = len([d for d in session_dir.iterdir() if d.is_dir()])
@@ -1570,8 +1769,142 @@ def _check_sessions() -> list[CheckResult]:
         r.status = "warn"
         r.message = f"Could not check session directory: {e}"
     res_list.append(r)
-    
+
     return res_list
+
+
+def _check_project_hints() -> list[CheckResult]:
+    """Project-specific hints (git repo, hooks)."""
+    res_list = []
+    project_root = _project_root_cache or Path.cwd()
+
+    # Git repo: suggest hooks if .git/hooks not configured
+    git_dir = project_root / ".git"
+    if git_dir.exists() and git_dir.is_dir():
+        hooks_dir = git_dir / "hooks"
+        pre_commit = hooks_dir / "pre-commit"
+        if not pre_commit.exists() or not pre_commit.is_file():
+            r = CheckResult("Git Hooks", "Project")
+            r.status = "warn"
+            r.message = "Git repo detected but no pre-commit hook"
+            r.fix_hint = "Run: thegent setup --hooks"
+            res_list.append(r)
+
+    return res_list
+
+
+def _apply_fixes(results: list[CheckResult]) -> None:
+    """Attempt to automatically fix issues based on fix_hint strings."""
+    fixes_applied = 0
+    fixes_failed = 0
+
+    console.print("\n[bold cyan]Attempting automatic fixes...[/bold cyan]\n")
+
+    for r in results:
+        if r.status in ("fail", "warn") and r.fix_hint:
+            # Parse fix hints and attempt fixes
+            hint = r.fix_hint.strip()
+
+            # Handle mkdir -p (e.g. "Create manually: mkdir -p /path")
+            if "mkdir" in hint and "-p" in hint:
+                m = re.search(r"mkdir\s+-p\s+(\S+)", hint)
+                if m:
+                    path = Path(m.group(1)).expanduser()
+                    try:
+                        path.mkdir(parents=True, exist_ok=True)
+                        fixes_applied += 1
+                        console.print(f"[green]  ✓ Fixed: {r.name} (created {path})[/green]")
+                        r.status = "ok"
+                        r.message = f"Created: {path}"
+                    except Exception as e:
+                        fixes_failed += 1
+                        console.print(f"[red]  ✗ Failed: {r.name} - {e}[/red]")
+                    continue
+
+            # Skip hints that require manual intervention
+            if any(skip in hint.lower() for skip in ["install", "download", "check", "ensure", "create manually", "move", "add"]):
+                if "run:" in hint.lower() or "thegent" in hint.lower():
+                    # These are actionable commands
+                    pass
+                else:
+                    continue
+
+            # Extract command from fix hints
+            if "run:" in hint.lower() or (":" in hint and any(cmd in hint.lower() for cmd in ["thegent", "mkdir", "chmod"])):
+                # Extract command after "Run:" or "run:" or direct commands
+                if "run:" in hint.lower():
+                    parts = hint.split(":", 1)
+                    cmd_str = parts[1].strip() if len(parts) > 1 else hint
+                # Handle direct commands like "Fix permissions: chmod 755 ..."
+                elif ":" in hint:
+                    cmd_str = hint.split(":", 1)[1].strip()
+                else:
+                    cmd_str = hint
+
+                # Handle multiple commands separated by semicolons
+                commands = [c.strip() for c in cmd_str.split(";")]
+
+                for cmd in commands:
+                    if not cmd:
+                        continue
+
+                    # Parse command into parts
+                    cmd_parts = cmd.split()
+                    if not cmd_parts:
+                        continue
+
+                    # Skip dangerous commands
+                    dangerous = ["rm", "delete", "remove", "uninstall", "kill"]
+                    if any(d in cmd_parts[0].lower() for d in dangerous):
+                        console.print(f"[yellow]⚠ Skipping potentially dangerous fix: {cmd}[/yellow]")
+                        continue
+
+                    # Execute safe commands
+                    try:
+                        console.print(f"[dim]  Fixing {r.name}: {cmd}[/dim]")
+
+                        # Handle thegent commands specially
+                        if cmd_parts[0] == "thegent":
+                            result = run_subprocess_optimized(
+                                cmd_parts,
+                                capture_output=True,
+                                timeout=30,
+                                cwd=_project_root_cache or None,
+                            )
+                            if result.returncode == 0:
+                                fixes_applied += 1
+                                console.print(f"[green]  ✓ Fixed: {r.name}[/green]")
+                            else:
+                                fixes_failed += 1
+                                stderr_text = result.stderr if isinstance(result.stderr, str) else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
+                                console.print(f"[red]  ✗ Failed: {r.name} - {stderr_text[:100]}[/red]")
+                        else:
+                            # For other commands, check if they're safe to run
+                            safe_commands = ["mkdir", "chmod", "touch"]
+                            if cmd_parts[0] in safe_commands:
+                                result = run_subprocess_optimized(
+                                    cmd_parts,
+                                    capture_output=True,
+                                    timeout=10,
+                                )
+                                if result.returncode == 0:
+                                    fixes_applied += 1
+                                    console.print(f"[green]  ✓ Fixed: {r.name}[/green]")
+                                else:
+                                    fixes_failed += 1
+                                    console.print(f"[red]  ✗ Failed: {r.name}[/red]")
+                            else:
+                                # For unknown commands, just log
+                                console.print(f"[yellow]  ⚠ Manual fix required: {cmd}[/yellow]")
+                    except subprocess.TimeoutExpired:
+                        fixes_failed += 1
+                        console.print(f"[red]  ✗ Timeout fixing: {r.name}[/red]")
+                    except Exception as e:
+                        fixes_failed += 1
+                        console.print(f"[red]  ✗ Error fixing {r.name}: {e}[/red]")
+
+    if fixes_applied > 0 or fixes_failed > 0:
+        console.print(f"\n[bold]Fix Summary:[/bold] {fixes_applied} applied, {fixes_failed} failed\n")
 
 
 def _display_results(results: list[CheckResult]) -> bool:

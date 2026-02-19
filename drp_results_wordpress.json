@@ -1,0 +1,73 @@
+{
+  "query": "site:wordpress.com shell optimization",
+  "ddg_results": [],
+  "reddit_results": [
+    {
+      "title": "\"Counting to Ten on Linux\" (2013) -- shell script and subprocess performance optimization discoveries.",
+      "url": "https://www.reddit.com/r/linuxadmin/comments/nm6yap/counting_to_ten_on_linux_2013_shell_script_and/",
+      "selftext": "",
+      "score": 30,
+      "subreddit": "linuxadmin"
+    }
+  ],
+  "arxiv_results": [
+    {
+      "title": "On the solution existence and stability of polynomial optimization problems",
+      "summary": "This paper introduces and investigates a regularity condition in the asymptotic sense for optimization problems whose objective functions are polynomial. Under this regularity condition, the normalization argument in asymptotic analysis enables us to see the solution existence as well as the solution stability of these problems. We prove a Frank-Wolfe type theorem for regular optimization problems and an Eaves type theorem for non-regular pseudoconvex optimization problems. Moreover, we show results on the stability such as upper semicontinuity and local upper-H\u00f6lder stability of the solution map of polynomial optimization problems. At the end of the paper, we discuss the genericity of the regularity condition.",
+      "url": "http://arxiv.org/abs/1808.06100v6"
+    },
+    {
+      "title": "Optimal design of frame structures with mixed categorical and continuous design variables using the Gumbel-Softmax method",
+      "summary": "In optimizing real-world structures, due to fabrication or budgetary restraints, the design variables may be restricted to a set of standard engineering choices. Such variables, commonly called categorical variables, are discrete and unordered in essence, precluding the utilization of gradient-based optimizers for the problems containing them. In this paper, incorporating the Gumbel-Softmax (GSM) method, we propose a new gradient-based optimizer for handling such variables in the optimal design of large-scale frame structures. The GSM method provides a means to draw differentiable samples from categorical distributions, thereby enabling sensitivity analysis for the variables generated from such distributions. The sensitivity information can greatly reduce the computational cost of traversing high-dimensional and discrete design spaces in comparison to employing gradient-free optimization methods. In addition, since the developed optimizer is gradient-based, it can naturally handle the simultaneous optimization of categorical and continuous design variables. Through three numerical case studies, different aspects of the proposed optimizer are studied and its advantages over population-based optimizers, specifically a genetic algorithm, are demonstrated.",
+      "url": "http://arxiv.org/abs/2501.00258v1"
+    },
+    {
+      "title": "Two-Scale Optimization of Graded Lattice Structures respecting Buckling on Micro- and Macroscale",
+      "summary": "Interest in components with detailed structures increased with the progress in advanced manufacturing techniques in recent years. Parts with graded lattice elements can provide interesting mechanical, thermal, and acoustic properties compared to parts where only coarse features are included. One of these improvements is better global buckling resistance of the component. However, thin features are prone to local buckling. Normally, analyses with high computational effort are conducted on high-resolution finite element meshes to optimize parts with good global and local stability. Until recently, works focused only on either global or local buckling behavior. We use two-scale optimization based on asymptotic homogenization of elastic properties and local buckling behavior to reduce the effort of full-scale analyses. For this, we present an approach for concurrent local and global buckling optimization of parameterized graded lattice structures. It is based on a worst-case model for the homogenized buckling load factor, which acts as a safeguard against pure local buckling. Cross-modes residing on both scales are not detected. We support our theory with numerical examples and validations on dehomogenized designs, which show the capabilities of our method, and discuss the advantages and limitations of the worst-case model.",
+      "url": "http://arxiv.org/abs/2303.08710v1"
+    },
+    {
+      "title": "An efficient and easy-to-extend Matlab code of the Moving Morphable Component (MMC) method for three-dimensional topology optimization",
+      "summary": "Explicit topology optimization methods have received ever-increasing interest in recent years. In particular, a 188-line Matlab code of the two-dimensional (2D) Moving Morphable Component (MMC)-based topology optimization method was released by Zhang et al. (Struct Multidiscip Optim 53(6):1243-1260, 2016). The present work aims to propose an efficient and easy-to-extend 256-line Matlab code of the MMC method for three-dimensional (3D) topology optimization implementing some new numerical techniques. To be specific, by virtue of the function aggregation technique, accurate sensitivity analysis, which is also easy-to-extend to other problems, is achieved. Besides, based on an efficient identification algorithm for load transmission path, the degrees of freedoms (DOFs) not belonging to the load transmission path are removed in finite element analysis (FEA), which significantly accelerates the optimization process. As a result, compared to the corresponding 188-line 2D code, the performance of the optimization results, the computational efficiency of FEA, and the convergence rate and the robustness of optimization process are greatly improved. For the sake of completeness, a refined 218-line Matlab code implementing the 2D-MMC method is also provided.",
+      "url": "http://arxiv.org/abs/2201.02491v3"
+    },
+    {
+      "title": "Stochastic (Approximate) Proximal Point Methods: Convergence, Optimality, and Adaptivity",
+      "summary": "We develop model-based methods for solving stochastic convex optimization problems, introducing the approximate-proximal point, or aProx, family, which includes stochastic subgradient, proximal point, and bundle methods. When the modeling approaches we propose are appropriately accurate, the methods enjoy stronger convergence and robustness guarantees than classical approaches, even though the model-based methods typically add little to no computational overhead over stochastic subgradient methods. For example, we show that improved models converge with probability 1 and enjoy optimal asymptotic normality results under weak assumptions; these methods are also adaptive to a natural class of what we term easy optimization problems, achieving linear convergence under appropriate strong growth conditions on the objective. Our substantial experimental investigation shows the advantages of more accurate modeling over standard subgradient methods across many smooth and non-smooth optimization problems.",
+      "url": "http://arxiv.org/abs/1810.05633v2"
+    }
+  ],
+  "github_results": [
+    {
+      "title": "tw93/Mole",
+      "url": "https://github.com/tw93/Mole",
+      "snippet": "\ud83d\udc39 Deep clean and optimize your Mac.",
+      "stars": 35380
+    },
+    {
+      "title": "MichaIng/DietPi",
+      "url": "https://github.com/MichaIng/DietPi",
+      "snippet": "Lightweight justice for your single-board computer!",
+      "stars": 5853
+    },
+    {
+      "title": "AvengeMedia/DankMaterialShell",
+      "url": "https://github.com/AvengeMedia/DankMaterialShell",
+      "snippet": "Desktop shell for wayland compositors built with Quickshell & GO, optimized for niri, hyprland, sway, MangoWC, labwc, and MiracleWM.",
+      "stars": 4354
+    },
+    {
+      "title": "sshnet/SSH.NET",
+      "url": "https://github.com/sshnet/SSH.NET",
+      "snippet": "SSH.NET is a Secure Shell (SSH) library for .NET, optimized for parallelism.",
+      "stars": 4311
+    },
+    {
+      "title": "sickcodes/osx-optimizer",
+      "url": "https://github.com/sickcodes/osx-optimizer",
+      "snippet": "OSX Optimizer: Optimize MacOS - Shell scripts to speed up your mac boot time, accelerate loading, and prevent unnecessary throttling.",
+      "stars": 1829
+    }
+  ],
+  "summary": ""
+}

@@ -7,8 +7,8 @@ Key components:
 - TaskRouter: Main routing engine with constraint validation
 - TaskClassifier: Categorizes tasks (FAST/NORMAL/COMPLEX/HIGH_COMPLEX)
 - ConstraintValidator: Validates hard constraints (quality, cost, speed)
-- TaskCategory: Enum for task complexity levels
-- TaskMetadata: Routing decision metadata
+- Pareto router: Hard constraints → Pareto frontier → lexicographic selection
+- Auto router: Gemini Flash classifier + Pareto routing for agent/model="auto"
 """
 
 from thegent.routing.models import RoutingConstraint, TaskCategory, TaskMetadata

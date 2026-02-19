@@ -8,6 +8,7 @@ import json
 from typing import TYPE_CHECKING
 
 from fastmcp.tools.tool import ToolResult
+
 from thegent.cli_impl import sitback_dashboard_impl
 
 if TYPE_CHECKING:

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # spec-preflight.sh — SessionStart hook
 # Detects project state (greenfield/brownfield), checks spec docs & trackers.
 # Must exit 0 always, target <80ms. Zero subprocess forks in dispatched mode.

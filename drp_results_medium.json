@@ -1,0 +1,65 @@
+{
+  "query": "site:medium.com ghostty terminal",
+  "ddg_results": [],
+  "reddit_results": [],
+  "arxiv_results": [
+    {
+      "title": "Large-Scale Terminal Agentic Trajectory Generation from Dockerized Environments",
+      "summary": "Training agentic models for terminal-based tasks critically depends on high-quality terminal trajectories that capture realistic long-horizon interactions across diverse domains. However, constructing such data at scale remains challenging due to two key requirements: \\textbf{\\emph{Executability}}, since each instance requires a suitable and often distinct Docker environment; and \\textbf{\\emph{Verifiability}}, because heterogeneous task outputs preclude unified, standardized verification. To address these challenges, we propose \\textbf{TerminalTraj}, a scalable pipeline that (i) filters high-quality repositories to construct Dockerized execution environments, (ii) generates Docker-aligned task instances, and (iii) synthesizes agent trajectories with executable validation code. Using TerminalTraj, we curate 32K Docker images and generate 50,733 verified terminal trajectories across eight domains. Models trained on this data with the Qwen2.5-Coder backbone achieve consistent performance improvements on TerminalBench (TB), with gains of up to 20\\% on TB~1.0 and 10\\% on TB~2.0 over their respective backbones. Notably, \\textbf{TerminalTraj-32B} achieves strong performance among models with fewer than 100B parameters, reaching 35.30\\% on TB~1.0 and 22.00\\% on TB~2.0, and demonstrates improved test-time scaling behavior. All code and data are available at https://github.com/Wusiwei0410/TerminalTraj.",
+      "url": "http://arxiv.org/abs/2602.01244v2"
+    },
+    {
+      "title": "Learning-based Autonomous Channel Access in the Presence of Hidden Terminals",
+      "summary": "We consider the problem of autonomous channel access (AutoCA), where a group of terminals tries to discover a communication strategy with an access point (AP) via a common wireless channel in a distributed fashion. Due to the irregular topology and the limited communication range of terminals, a practical challenge for AutoCA is the hidden terminal problem, which is notorious in wireless networks for deteriorating the throughput and delay performances. To meet the challenge, this paper presents a new multi-agent deep reinforcement learning paradigm, dubbed MADRL-HT, tailored for AutoCA in the presence of hidden terminals. MADRL-HT exploits topological insights and transforms the observation space of each terminal into a scalable form independent of the number of terminals. To compensate for the partial observability, we put forth a look-back mechanism such that the terminals can infer behaviors of their hidden terminals from the carrier sensed channel states as well as feedback from the AP. A window-based global reward function is proposed, whereby the terminals are instructed to maximize the system throughput while balancing the terminals' transmission opportunities over the course of learning. Extensive numerical experiments verified the superior performance of our solution benchmarked against the legacy carrier-sense multiple access with collision avoidance (CSMA/CA) protocol.",
+      "url": "http://arxiv.org/abs/2207.03605v2"
+    },
+    {
+      "title": "Terminal semantics for codata types in intensional Martin-L\u00f6f type theory",
+      "summary": "In this work, we study the notions of relative comonad and comodule over a relative comonad, and use these notions to give a terminal coalgebra semantics for the coinductive type families of streams and of infinite triangular matrices, respectively, in intensional Martin-L\u00f6f type theory. Our results are mechanized in the proof assistant Coq.",
+      "url": "http://arxiv.org/abs/1401.1053v2"
+    },
+    {
+      "title": "Spotting Separator Points at Line Terminals in Compressed Document Images for Text-line Segmentation",
+      "summary": "Line separators are used to segregate text-lines from one another in document image analysis. Finding the separator points at every line terminal in a document image would enable text-line segmentation. In particular, identifying the separators in handwritten text could be a thrilling exercise. Obviously it would be challenging to perform this in the compressed version of a document image and that is the proposed objective in this research. Such an effort would prevent the computational burden of decompressing a document for text-line segmentation. Since document images are generally compressed using run length encoding (RLE) technique as per the CCITT standards, the first column in the RLE will be a white column. The value (depth) in the white column is very low when a particular line is a text line and the depth could be larger at the point of text line separation. A longer consecutive sequence of such larger depth should indicate the gap between the text lines, which provides the separator region. In case of over separation and under separation issues, corrective actions such as deletion and insertion are suggested respectively. An extensive experimentation is conducted on the compressed images of the benchmark datasets of ICDAR13 and Alireza et al [17] to demonstrate the efficacy.",
+      "url": "http://arxiv.org/abs/1708.05545v1"
+    },
+    {
+      "title": "Terminal Lucidity: Envisioning the Future of the Terminal",
+      "summary": "The Unix terminal, or just simply, the terminal, can be found being applied in almost every facet of computing. It is available across all major platforms and often integrated into other applications. Due to its ubiquity, even marginal improvements to the terminal have the potential to make massive improvements to productivity on a global scale. We believe that evolutionary improvements to the terminal, in its current incarnation as windowed terminal emulator, are possible and that developing a thorough understanding of issues that current terminal users face is fundamental to knowing how the terminal should evolve. In order to develop that understanding we have mined Unix and Linux Stack Exchange using a fully-reproducible method which was able to extract and categorize 91.0% of 1,489 terminal-related questions (from the full set of nearly 240,000 questions) without manual intervention.\n  We present an analysis, to our knowledge the first of its kind, of windowed terminal-related questions posted over a 15-year period and viewed, in aggregate, approximately 40 million times. As expected, given its longevity, we find the terminal's many features being applied across a wide variety of use cases. We find evidence that the terminal, as windowed terminal emulator, has neither fully adapted to its now current graphical environment nor completely untangled itself from features more suited to incarnations in previous environments. We also find evidence of areas where we believe the terminal could be extended along with other areas where it could be simplified. Surprisingly, while many current efforts to improve the terminal include improving the terminal's social and collaborative aspects, we find little evidence of this as a prominent pain point.",
+      "url": "http://arxiv.org/abs/2504.13994v1"
+    }
+  ],
+  "github_results": [
+    {
+      "title": "ghostty-org/ghostty",
+      "url": "https://github.com/ghostty-org/ghostty",
+      "snippet": "\ud83d\udc7b Ghostty is a fast, feature-rich, and cross-platform terminal emulator that uses platform-native UI and GPU acceleration.",
+      "stars": 44061
+    },
+    {
+      "title": "mbadolato/iTerm2-Color-Schemes",
+      "url": "https://github.com/mbadolato/iTerm2-Color-Schemes",
+      "snippet": "Over 450 terminal color schemes/themes for iTerm/iTerm2. Includes ports to Terminal, Konsole, PuTTY, Xresources, XRDB, Remmina, Termite, XFCE, Tilda, FreeBSD VT, Terminator, Kitty, MobaXterm, LXTerminal, Microsoft's Windows Terminal, Visual Studio, Alacritty, Ghostty, and many more",
+      "stars": 26468
+    },
+    {
+      "title": "zerebos/ghostty-config",
+      "url": "https://github.com/zerebos/ghostty-config",
+      "snippet": "A beautiful config generator for Ghostty terminal.",
+      "stars": 2748
+    },
+    {
+      "title": "coder/ghostty-web",
+      "url": "https://github.com/coder/ghostty-web",
+      "snippet": "Ghostty for the web with xterm.js API compatibility",
+      "stars": 1816
+    },
+    {
+      "title": "0xhckr/ghostty-shaders",
+      "url": "https://github.com/0xhckr/ghostty-shaders",
+      "snippet": "A repository containing many free shaders to use with ghostty (the terminal)",
+      "stars": 1098
+    }
+  ],
+  "summary": ""
+}

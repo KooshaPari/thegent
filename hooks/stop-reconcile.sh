@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # Hook: Stop
 # Purpose: On session stop (the "silent commit"), reconcile changes against
 # the documentation system. Outputs context that Claude receives as feedback.

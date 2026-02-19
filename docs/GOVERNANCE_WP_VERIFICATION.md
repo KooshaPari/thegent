@@ -10,17 +10,17 @@
 
 | G-GP | WP | Item | Status | Implementation |
 |------|-----|------|--------|----------------|
-| G-GP-01 | WP-3001 | OPA integration | 🔲 In plan | PolicyEngine exists; OPA/Rego not wired |
-| G-GP-02 | — | NeMo Guardrails | 🔲 In plan | Input rails before OPA; not implemented |
-| G-GP-03 | WP-3004 | Audit trail hash chain | ✅ Done | RunRegistry prev_hash/hash; Auditor.verify_registry |
-| G-GP-04 | WP-2003 | Circuit breakers | ✅ Partial | CircuitBreakerRegistry; per-agent; config threshold/window |
-| G-GP-05 | WP-3008, 4004 | HITL patterns | ⚠️ Partial | Override with reason; escalation path; no formal HITL flow |
-| G-GP-06 | WP-5003 | Cost governance | 🔲 In plan | No per-run cost tracking |
-| G-GP-07 | WP-3006, 6002 | Compliance evidence | ⚠️ Partial | closure_pack_cmd; history verify; retention TBD |
-| G-GP-08 | WP-3007, FR-014 | Sandboxing | 🔲 In plan | No sandbox isolation; trust boundary checks TBD |
-| G-GP-09 | WP-0004, 4008 | Trust scoring | ⚠️ Partial | trust_score_threshold; feedback; calibration TBD |
+| G-GP-01 | WP-3001 | OPA integration | □ In plan | PolicyEngine exists; OPA/Rego not wired |
+| G-GP-02 | — | NeMo Guardrails | □ In plan | Input rails before OPA; not implemented |
+| G-GP-03 | WP-3004 | Audit trail hash chain | ✓ Done | RunRegistry prev_hash/hash; Auditor.verify_registry |
+| G-GP-04 | WP-2003 | Circuit breakers | ✓ Partial | CircuitBreakerRegistry; per-agent; config threshold/window |
+| G-GP-05 | WP-3008, 4004 | HITL patterns | ⚠ Partial | Override with reason; escalation path; no formal HITL flow |
+| G-GP-06 | WP-5003 | Cost governance | □ In plan | No per-run cost tracking |
+| G-GP-07 | WP-3006, 6002 | Compliance evidence | ⚠ Partial | closure_pack_cmd; history verify; retention TBD |
+| G-GP-08 | WP-3007, FR-014 | Sandboxing | □ In plan | No sandbox isolation; trust boundary checks TBD |
+| G-GP-09 | WP-0004, 4008 | Trust scoring | ⚠ Partial | trust_score_threshold; feedback; calibration TBD |
 
-Legend: ✅ Done | ⚠️ Partial | 🔲 In plan / Not done
+Legend: ✓ Done | ⚠ Partial | □ In plan / Not done
 
 ---
 
@@ -42,7 +42,7 @@ Legend: ✅ Done | ⚠️ Partial | 🔲 In plan / Not done
 
 **Current:** `src/thegent/governance/input_guardrails.py` — InputGuardrails (prompt_length, agent_allowlist, cwd_restriction, model_allowlist, prompt_blocklist). Wired before PolicyEngine when `THGENT_INPUT_GUARDRAILS_ENABLED=1`.
 
-**Status:** ⚠️ Partial — scaffold in place; default rules; CI tests in test_unit_governance.py.
+**Status:** ⚠ Partial — scaffold in place; default rules; CI tests in test_unit_governance.py.
 
 ---
 
@@ -52,7 +52,7 @@ Legend: ✅ Done | ⚠️ Partial | 🔲 In plan / Not done
 
 **Current:** `RunRegistry.register_start`, `register_end`, `register_feedback`, `register_pause`, `register_resume` — each event has `prev_hash`, `hash`. `Auditor.verify_registry()` checks chain integrity.
 
-**Status:** ✅ Done.
+**Status:** ✓ Done.
 
 ---
 
@@ -62,7 +62,7 @@ Legend: ✅ Done | ⚠️ Partial | 🔲 In plan / Not done
 
 **Current:** `CircuitBreakerRegistry` — `record_failure`, `is_open`. Threshold=5, window_s=300, recovery_s=60. Used in `run_with_failover` before invoking runner. Half-open: after recovery_s, allows trial.
 
-**Status:** ✅ Partial — verify per-subsystem config (currently agent-only).
+**Status:** ✓ Partial — verify per-subsystem config (currently agent-only).
 
 ---
 
@@ -82,7 +82,7 @@ Legend: ✅ Done | ⚠️ Partial | 🔲 In plan / Not done
 
 **Current:** `src/thegent/governance/cost.py` — CostEstimator, CostAggregator; RunRegistry.register_end(cost_usd=); THGENT_COST_TRACKING env.
 
-**Status:** ⚠️ Partial — scaffold in place; budget alerts and daily rollup TBD.
+**Status:** ⚠ Partial — scaffold in place; budget alerts and daily rollup TBD.
 
 ---
 
@@ -112,7 +112,7 @@ Legend: ✅ Done | ⚠️ Partial | 🔲 In plan / Not done
 
 **Current:** `trust_score_threshold` in config; `govern feedback` records score; PolicyEngine uses confidence for production gate. No calibration curve or calibration factor persistence.
 
-**Status:** ⚠️ Partial — `CircuitBreakerRegistry.get_calibration_factor` exists; feedback stored.
+**Status:** ⚠ Partial — `CircuitBreakerRegistry.get_calibration_factor` exists; feedback stored.
 
 ---
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-probabilistic-governance-gate.sh (CDDL-E3)
 # Validates statistical acceptance criteria for ML/probabilistic requirements.
 # @trace FR-CDDL-003

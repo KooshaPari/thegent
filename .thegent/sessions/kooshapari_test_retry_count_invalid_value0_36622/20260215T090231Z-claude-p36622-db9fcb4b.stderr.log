@@ -1,4 +1,0 @@
-/Users/kooshapari/miniforge3/lib/python3.12/site-packages/pydantic/plugin/_schema_validator.py:39: UserWarning: ImportError while loading the `logfire-plugin` Pydantic plugin, this plugin will not be installed.
-
-ImportError("cannot import name 'LogData' from 'opentelemetry.sdk._logs' (/Users/kooshapari/miniforge3/lib/python3.12/site-packages/opentelemetry/sdk/_logs/__init__.py)")
-  plugins = get_plugins()

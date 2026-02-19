@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-onchain-adapter.sh
 # Mandatory on-chain workflow adapter with local anchoring and optional broadcast.
 set -euo pipefail

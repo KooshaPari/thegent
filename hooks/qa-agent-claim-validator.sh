@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-agent-claim-validator.sh (N10)
 # Validates agent-statement.json against schema; enforces claim transitions (observation/claim/decision/risk require evidence).
 # Install via: make install-governance-hooks

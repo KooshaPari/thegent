@@ -180,3 +180,11 @@ If only partial WPs are green by Day 10:
 - Create explicit split tickets for deferred WPs.
 - Keep all open WPs in Bundle B until remaining risks are resolved.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

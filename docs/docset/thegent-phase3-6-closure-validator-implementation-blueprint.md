@@ -403,3 +403,11 @@ This blueprint is complete when:
 - crosswave checks are dry-run tested on a mixed-pass/mix-fail dataset
 - no unresolved P1/P0 blocks after hard-stop override handling
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

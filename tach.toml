@@ -47,7 +47,7 @@ depends_on = [ "thegent.contracts", "thegent.cli_impl"]
 
 [[modules]]
 path = "thegent.agents"
-depends_on = ["thegent.config", "thegent.contracts"]
+depends_on = ["thegent.config", "thegent.contracts", "thegent.observability"]
 
 [[modules]]
 path = "thegent.operations"
@@ -63,6 +63,10 @@ depends_on = []
 
 [[modules]]
 path = "thegent.routing"
+depends_on = [ "thegent.execution"]
+
+[[modules]]
+path = "thegent.observability"
 depends_on = []
 
 [[modules]]
@@ -76,7 +80,7 @@ depends_on = [
     "thegent.output_parser",
     "thegent.operations",
     "thegent.orchestration_modes",
-    "thegent.output_parser"]
+    "thegent.observability"]
 
 [[modules]]
 path = "thegent.cli"
@@ -90,7 +94,8 @@ depends_on = [
     "thegent.operations",
     "thegent.orchestration_modes",
     "thegent.planning",
-    "thegent.exit_codes"
+    "thegent.exit_codes",
+    "thegent.routing"
 ]
 
 [[modules]]

@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_280a508d",
+    "Complete WP-32002: Bio-Digital Confidence Calibration",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 85250,
+  "launcher_ppid": 79071,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:85250",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_85250/20260219T020757Z-copilot-p85250-f15dc49c.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_85250/20260219T020757Z-copilot-p85250-f15dc49c.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_85250/20260219T020757Z-copilot-p85250-f15dc49c.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_85250/20260219T020757Z-copilot-p85250-f15dc49c.stdout.log"
+  },
+  "pid": 9646,
+  "prompt": "Complete WP-32002: Bio-Digital Confidence Calibration",
+  "session_id": "20260219T020757Z-copilot-p85250-f15dc49c",
+  "started_at_utc": "2026-02-19T02:07:58.311544+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

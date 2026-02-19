@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # Hook: SessionEnd
 # Purpose: Clean up session-level state and finalize any pending tracker updates.
 # OPTIMIZED: Skip common.sh when dispatched. Just rm 2 files.
@@ -23,5 +23,15 @@ rm -f "${CHANGE_LOG:-}" 2>/dev/null || true
 
 # Clean up qa-state.json (ephemeral per-session, written by qa-preflight)
 rm -f "${QA_STATE:-}" 2>/dev/null || true
+
+NOTIFIER="${BASH_SOURCE[0]%/*}/notify-agent-event.sh"
+if [[ -x "$NOTIFIER" ]]; then
+  "$NOTIFIER" \
+    --event "sessionend" \
+    --severity "info" \
+    --title "Session Ended" \
+    --message "Session cleanup complete for ${PROJECT_DIR:-.}" \
+    >/dev/null 2>&1 || true
+fi
 
 exit 0

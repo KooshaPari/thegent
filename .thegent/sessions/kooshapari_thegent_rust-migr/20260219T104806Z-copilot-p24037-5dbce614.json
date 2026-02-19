@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/.local/share/uv/tools/thegent/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_f53955a6",
+    "Complete impl-hook-rust-debounce: Implement debounce subcommand in Rust for file-based coordination. See docs/plans/HOOK_RUST_MIGRATION_COMPLETE.md for details.",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 24037,
+  "launcher_ppid": 20650,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:rust-migr",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104806Z-copilot-p24037-5dbce614.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104806Z-copilot-p24037-5dbce614.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104806Z-copilot-p24037-5dbce614.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104806Z-copilot-p24037-5dbce614.stdout.log"
+  },
+  "pid": 25009,
+  "prompt": "Complete impl-hook-rust-debounce: Implement debounce subcommand in Rust for file-based coordination. See docs/plans/HOOK_RUST_MIGRATION_COMPLETE.md for details.",
+  "session_id": "20260219T104806Z-copilot-p24037-5dbce614",
+  "started_at_utc": "2026-02-19T10:48:07.002869+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

@@ -384,3 +384,11 @@ Sitback assumes MCP server is running (`thegent serve` or `thegent mcp up`). If 
 - **Sitback profiles:** `--profile light|medium|full` — light (summary only), medium (panels), full (+ plugins, harness).
 - **Sharecli/FUSE placeholder:** `THGENT_SITBACK_HARNESS=1` shows placeholder panel in full profile; plugins override via `register_harness_status`.
 - **Tmux-native:** `--tmux` / `-t` — runs Claude inside dedicated tmux session `sitback-{pid}`.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

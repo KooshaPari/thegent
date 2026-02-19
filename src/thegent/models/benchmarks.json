@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "terminal_bench_2_0": {
+    "gpt-5.3-codex": 64.7,
+    "claude-opus-4.6": 62.9,
+    "gpt-5.3-codex-spark": 58.4,
+    "glm-5": 56.2,
+    "gemini-3-flash": 51.7,
+    "minimax-m2.5": 51.7,
+    "claude-sonnet-4.5": 42.8,
+    "claude-haiku-4.5": 28.3,
+    "deepseek-v3.2": 55.0,
+    "step-3.5-flash": 52.0,
+    "glm-4.7-flash": 48.0
+  },
+  "swe_bench": {
+    "gpt-5.3-codex": 56.8,
+    "claude-opus-4.6": 80.8,
+    "claude-sonnet-4.5": 77.2,
+    "claude-haiku-4.5": 73.3,
+    "minimax-m2.5": 80.2,
+    "gemini-3-flash": 78.0,
+    "glm-5": 65.0,
+    "deepseek-v3.2": 73.0
+  },
+  "aime": {
+    "glm-5": 92.7,
+    "claude-opus-4.6": 85,
+    "minimax-m2.5": 60,
+    "claude-sonnet-4.5": 68
+  }
+}

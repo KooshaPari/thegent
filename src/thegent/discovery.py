@@ -3,11 +3,11 @@
 import contextlib
 import json
 import logging
-import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import psutil
 from pydantic import BaseModel, Field
 
 _log = logging.getLogger(__name__)
@@ -111,3 +111,53 @@ def list_discovered_agents(session_dir: Path | None = None) -> list[dict[str, An
             continue
 
     return sorted(agents, key=lambda x: x.get("last_seen_at", ""), reverse=True)
+
+
+def _is_triggered_by_agent_process() -> bool:
+    """Check if the current process was triggered by an agent process.
+
+    This checks the process tree (parent processes) to see if any ancestor
+    is a known agent process (thegent, codex, copilot, claude, etc.).
+
+    Returns:
+        True if triggered by an agent process, False otherwise.
+    """
+    try:
+        current = psutil.Process()
+
+        # Check current process name
+        current_name = current.name().lower()
+        agent_names = {"thegent", "codex", "copilot", "claude", "cursor-agent", "opencode", "zen"}
+        if any(agent in current_name for agent in agent_names):
+            return True
+
+        # Check parent process tree
+        parent = current.parent()
+        max_depth = 10  # Limit depth to avoid infinite loops
+        depth = 0
+
+        while parent and depth < max_depth:
+            try:
+                parent_name = parent.name().lower()
+                if any(agent in parent_name for agent in agent_names):
+                    return True
+
+                # Check if parent is in discovered agents
+                from thegent.config import ThegentSettings
+
+                settings = ThegentSettings()
+                discovery_dir = settings.session_dir.expanduser().resolve() / "discovered"
+                if discovery_dir.exists():
+                    ppid_file = discovery_dir / f"ppid_{parent.pid}.json"
+                    if ppid_file.exists():
+                        return True
+
+                parent = parent.parent()
+                depth += 1
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                break
+
+        return False
+    except Exception as e:
+        _log.debug(f"Error checking if triggered by agent process: {e}")
+        return False

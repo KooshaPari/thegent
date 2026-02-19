@@ -287,3 +287,11 @@ This section catalogs current code-level risks that must be resolved before prod
 | Rollback failure | Any rollback that fails | Incident response + manual intervention | 30 min response SLA | All rollback attempts logged; failure escalates immediately |
 | Recovery exhaustion | > 3 failed recovery attempts | Human escalation to incident lead | 10 min escalation SLA | Recovery attempt count per run; escalation trigger at 3 |
 | Confidence below threshold | < 0.3 calibrated confidence in critical lane | Block action + escalate | Blocking enforced at policy layer | Confidence distribution metrics; below-threshold rate tracked |
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](./00-MASTER-INDEX.md) — plan index
+- [03-UNIFIED-DAG.md](./03-UNIFIED-DAG.md) — DAG and recovery

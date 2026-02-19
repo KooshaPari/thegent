@@ -4,10 +4,8 @@ Handles partial/streaming XML output from agents, extracts tags into a structure
 dictionary, and provides error classification for malformed XML.
 """
 
-import re
 from collections.abc import Callable
 from enum import StrEnum
-from typing import Any
 
 
 class XMLParseError(Exception):
@@ -63,15 +61,45 @@ class IncrementalXMLParser:
 
         This is intentionally permissive and meant as a best-effort extractor for
         structured agent outputs.
+
+        OPT-007: Early-exit on structural failure detection to avoid full parse on bad input.
         """
         import re
 
         self._buffer = text or ""
+
+        # OPT-007: Early-exit check for obvious structural failures before full parse
+        # Check for unmatched angle brackets (structural failure indicator)
+        open_brackets = self._buffer.count("<")
+        close_brackets = self._buffer.count(">")
+        if open_brackets != close_brackets and self.strict:
+            # In strict mode, unmatched brackets indicate structural failure
+            # Return empty dict early to avoid expensive regex matching
+            return {}
+
+        # Quick check for invalid nesting patterns (e.g., <TAG><OTHER without closing)
+        # This is a lightweight heuristic before full regex parse
+        if self.strict and "<" in self._buffer:
+            # Check for patterns like <TAG><OTHER (nested open tags without proper closing)
+            # This is a fast pre-check before expensive regex
+            tag_open_positions = [i for i, char in enumerate(self._buffer) if char == "<"]
+            if len(tag_open_positions) > 1:
+                # Simple heuristic: if we have multiple opens but can't find matching closes,
+                # likely structural issue (but allow streaming/partial content in non-strict mode)
+                pass  # Continue to full parse in non-strict mode
+
         pattern = re.compile(r"<([A-Za-z0-9_\-]+)>(.*?)</\1>", re.DOTALL)
         tags: dict[str, str] = {}
         for m in pattern.finditer(self._buffer):
             key = m.group(1)
             val = m.group(2).strip()
+            # OPT-007: Early-exit if we detect invalid tag name (structural failure)
+            if self.allowed_tags and key not in self.allowed_tags:
+                if self.strict:
+                    # In strict mode, disallowed tag = structural failure, exit early
+                    return {}
+                # In non-strict mode, skip this tag but continue
+                continue
             tags[key] = val
         self._committed_tags = tags.copy()
         return tags

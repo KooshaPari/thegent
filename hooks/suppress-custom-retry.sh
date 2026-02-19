@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # suppress-custom-retry.sh — PreToolUse hook (Write|Edit)
 # Detects custom retry logic when tenacity is available in project deps.
 # Advisory (exit 0 always). Budget: <100ms.

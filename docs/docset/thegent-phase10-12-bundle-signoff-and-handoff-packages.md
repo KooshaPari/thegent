@@ -284,3 +284,11 @@ Each bundle handoff must assert:
 - `thegent-phase10-12-closure-readiness-pack-template.md`
 - `thegent-phase10-12-issue-board-automation.md`
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

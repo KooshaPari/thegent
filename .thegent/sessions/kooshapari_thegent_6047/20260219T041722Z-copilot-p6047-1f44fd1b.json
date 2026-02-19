@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_a14eb9b6",
+    "Implement thegent-hooks debounce subcommand: Add file-based debounce coordination with leader/follower pattern, batch file collection, and timeout handling. Store debounce state in cache_dir/debounce-{hook_name}.json. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a76.5. Add cmd_debounce() function to crates/thegent-hooks/src/main.rs. Test with: thegent-hooks debounce quality-gate file1.py file2.py",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 6047,
+  "launcher_ppid": 99370,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:6047",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_6047/20260219T041722Z-copilot-p6047-1f44fd1b.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_6047/20260219T041722Z-copilot-p6047-1f44fd1b.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_6047/20260219T041722Z-copilot-p6047-1f44fd1b.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_6047/20260219T041722Z-copilot-p6047-1f44fd1b.stdout.log"
+  },
+  "pid": 14000,
+  "prompt": "Implement thegent-hooks debounce subcommand: Add file-based debounce coordination with leader/follower pattern, batch file collection, and timeout handling. Store debounce state in cache_dir/debounce-{hook_name}.json. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a76.5. Add cmd_debounce() function to crates/thegent-hooks/src/main.rs. Test with: thegent-hooks debounce quality-gate file1.py file2.py",
+  "session_id": "20260219T041722Z-copilot-p6047-1f44fd1b",
+  "started_at_utc": "2026-02-19T04:17:23.403475+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

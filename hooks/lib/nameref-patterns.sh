@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # Phase 4: Nameref patterns library
 # Provides reusable nameref utilities for efficient array handling in bash hooks.
 # Requires Bash 4.3+ for nameref support.

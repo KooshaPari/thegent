@@ -100,3 +100,11 @@
 - If G11 enters oscillation: disable control actions (`phase11.autotune` off), continue explainability/readiness work.
 - If G12 replay safety fails: disable mode `phase12.hardening`, continue replay safety hardening under canary.
 - If launch artifacts diverge: delay launch by 1 day and rerun reproducibility script with manifest lock.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

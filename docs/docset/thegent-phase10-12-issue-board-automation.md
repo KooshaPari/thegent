@@ -231,3 +231,11 @@ Automation should verify before gate transitions:
 - Daily: run gate auditor and post Blockers digest at standup.
 - Weekly: rerun import in `--mode=sync --validate-only` to detect drift.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

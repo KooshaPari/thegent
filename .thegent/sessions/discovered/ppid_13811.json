@@ -1,0 +1,17 @@
+{
+  "pid": 13811,
+  "ppid": 13811,
+  "agent": "codex",
+  "cwd": "?",
+  "discovered_at": "2026-02-18T08:29:00.237187+00:00",
+  "last_seen_at": "2026-02-18T08:29:00.237212+00:00",
+  "command": "/Users/kooshapari/.cache/uv/archive-v0/tGtL_4n_9X94y-yaZErFG/bin/python",
+  "args_preview": "/Users/kooshapari/.cache/uv/archive-v0/tGtL_4n_9X94y-yaZErFG/bin/python -c impor...",
+  "tmux_pane": null,
+  "session_id": null,
+  "token_usage": null,
+  "mcp_errors": null,
+  "capabilities": [],
+  "trust_score": 0.5,
+  "reputation": 0
+}

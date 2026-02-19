@@ -337,3 +337,11 @@ Report to dashboard as:
 - deterministic reruns pass for 10 consecutive loops.
 - board connector reconcilers never duplicate transition state.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

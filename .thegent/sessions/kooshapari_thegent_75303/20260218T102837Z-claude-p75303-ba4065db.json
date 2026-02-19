@@ -1,0 +1,42 @@
+{
+  "agent": "claude",
+  "command": [
+    "/usr/local/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "300",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_e12260cb",
+    "Implement 'research-supermemory-integration' Phase 1 as defined in docs/changes/research-supermemory-integration/tasks.md.",
+    "claude"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 75303,
+  "launcher_ppid": 75293,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:75303",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75303/20260218T102837Z-claude-p75303-ba4065db.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75303/20260218T102837Z-claude-p75303-ba4065db.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75303/20260218T102837Z-claude-p75303-ba4065db.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75303/20260218T102837Z-claude-p75303-ba4065db.stdout.log"
+  },
+  "pid": 75342,
+  "prompt": "Implement 'research-supermemory-integration' Phase 1 as defined in docs/changes/research-supermemory-integration/tasks.md.",
+  "session_id": "20260218T102837Z-claude-p75303-ba4065db",
+  "started_at_utc": "2026-02-18T10:28:37.734039+00:00",
+  "status": "running",
+  "timeout_hint_s": 300,
+  "version": 1
+}

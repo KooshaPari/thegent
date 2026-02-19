@@ -229,3 +229,11 @@ Each chunk can be scheduled independently with acceptance checks and merge gates
 - Closure state: `docs/closure/PHASE6_READINESS_REPORT.md`
 - Existing governance and contract context: `docs/docset/thegent-cross-analysis-matrix-2026-02-14.md`
 - Plan and WBS anchors: `docs/docset/thegent-plan-final-index.md`
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

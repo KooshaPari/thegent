@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-preflight.sh — SessionStart hook
 # Auto-detects stacks, checks tool availability, loads quality config,
 # writes qa-state.json for downstream hooks. Must exit 0, target <80ms.
@@ -97,6 +97,16 @@ echo "QA PREFLIGHT: stacks=[$_stack_list] tools=[$_available_list]"
 if [[ -z "${_HOOK_DISPATCHED:-}" ]] && type hook_config_true hook_prewarm_all &>/dev/null; then
   if hook_config_true "prewarm_on_session_start" 2>/dev/null; then
     (hook_prewarm_all &) 2>/dev/null
+  fi
+fi
+
+# ---------- P8: Start hook watcher daemon when daemon_mode: true ----------
+if [[ -z "${_HOOK_DISPATCHED:-}" ]] && type hook_config_true &>/dev/null; then
+  if hook_config_true "daemon_mode" 2>/dev/null; then
+    watcher_script="${BASH_SOURCE[0]%/*}/hook-watcher.sh"
+    if [[ -f "$watcher_script" ]]; then
+      ("$watcher_script" "$_PD" &) 2>/dev/null
+    fi
   fi
 fi
 

@@ -10,11 +10,11 @@ LAYERS = {
     "contracts": ["config"],
     "models": ["config", "contracts"],
     "execution": ["config", "contracts", "models"],
-    "agents": ["config", "contracts", "models"],
+    "agents": ["config", "contracts", "models", "observability"],
     "operations": ["config"],
     "orchestration_modes": [],
     "planning": [],
-    "routing": ["config", "models"],
+    "routing": ["config", "models", "execution"],
     "tools": [],
     "terminal_cli": ["tools", "cli_impl"],
     "cli_impl": [
@@ -27,6 +27,7 @@ LAYERS = {
         "operations",
         "orchestration_modes",
         "routing",
+        "observability",
     ],
     "cli": [
         "config",
@@ -39,6 +40,7 @@ LAYERS = {
         "operations",
         "orchestration_modes",
         "exit_codes",
+        "routing",
     ],
     "mcp_server": [
         "config",

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-flake-quarantine-gate.sh
 # N9: Manage flaky test quarantine ledger and expiry.
 set -euo pipefail

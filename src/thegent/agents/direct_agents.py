@@ -1,4 +1,4 @@
-"""Direct agent invocation - cursor, claude, copilot, codex, gemini via their CLIs."""
+"""Direct agent invocation - cursor, claude, copilot, codex, gemini, opencode via CLIs."""
 
 import os
 import re
@@ -7,10 +7,16 @@ import subprocess
 import threading
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
+from thegent.infra.power import wrap_with_caffeinate
+from thegent.utils import strip_ansi
+
+
+if TYPE_CHECKING:
+    from thegent.config import ThegentSettings
 
 PROCESS_TIMEOUT_SECS = 3600
 
@@ -32,10 +38,6 @@ _NOISY_STDERR_PATTERNS = (
 )
 
 
-def _strip_ansi(text: str) -> str:
-    return re.sub(r"\x1b\[[0-9;]*m", "", text)
-
-
 def _filter_noisy_stderr(text: str) -> str:
     if not text:
         return text
@@ -47,9 +49,21 @@ def _filter_noisy_stderr(text: str) -> str:
     return "\n".join(lines).rstrip()
 
 
-def _resolve_cli(cmd: str, name: str) -> str:
-    """Resolve CLI path: env override, absolute path, which, or ~/.local/bin."""
-    # cursor-agent: THGENT_CURSOR_AGENT_CMD (underscore, shell-friendly)
+def _resolve_cli(cmd: str, name: str, settings: "ThegentSettings | None" = None) -> str:
+    """Resolve CLI path: settings override, env override, absolute path, which, or ~/.local/bin."""
+    if settings is None:
+        from thegent.config import ThegentSettings
+        settings = ThegentSettings()
+    
+    # Check settings first (cursor_agent_cmd for cursor-agent)
+    if name == "cursor-agent" and settings.cursor_agent_cmd != "cursor":
+        cmd_from_settings = settings.cursor_agent_cmd
+        expanded = str(Path(cmd_from_settings).expanduser())
+        if Path(expanded).exists():
+            return expanded
+        return cmd_from_settings
+    
+    # Fallback to environment variable override
     env_key = "THGENT_CURSOR_AGENT_CMD" if name == "cursor-agent" else f"THGENT_{name.upper().replace('-', '_')}_CMD"
     env_val = os.environ.get(env_key)
     if env_val:
@@ -86,12 +100,16 @@ _AGENT_CLI: dict[str, tuple[str, bool, str]] = {
     "copilot": ("copilot", False, "--stream on"),
     "codex": ("codex", True, "--json"),
     "gemini": ("gemini", False, "--output-format stream-json"),
+    "opencode": ("opencode", False, ""),
 }
 
 
 def _wrap_with_harness(cmd: list[str]) -> list[str]:
     """WP-4008: Wrap command with sharecli harness if available and enabled."""
-    if os.environ.get("THGENT_SHARECLI_ENABLED", "1") != "1":
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    if not settings.sharecli_enabled:
         return cmd
 
     harness_bin = shutil.which("harness")
@@ -122,14 +140,22 @@ class DirectAgentRunner(AgentRunner):
         agent_name: str,
         cli_cmd: str | None = None,
         default_model: str = "",
+        use_litellm_router: bool | None = None,
     ) -> None:
         self.agent_name = agent_name
         spec = _AGENT_CLI.get(agent_name)
         if not spec:
             raise ValueError(f"Unknown direct agent: {agent_name}")
         self._cli_name, self._uses_stdin, self._stream_arg = spec
-        self._cli_cmd = _resolve_cli(cli_cmd or self._cli_name, self._cli_name)
+        from thegent.config import ThegentSettings
+        settings = ThegentSettings()
+        self._cli_cmd = _resolve_cli(cli_cmd or self._cli_name, self._cli_name, settings)
         self._default_model = default_model
+        self._use_litellm_router = (
+            use_litellm_router
+            if use_litellm_router is not None
+            else (os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1")
+        )
 
     def run(
         self,
@@ -145,6 +171,12 @@ class DirectAgentRunner(AgentRunner):
         agent_model: str | None = None,
     ) -> RunResult:
         model = agent_model or self._default_model
+
+        # Route via LiteLLM Router if enabled and not opencode
+        if self._use_litellm_router and self.agent_name != "opencode":
+            return self._run_via_litellm_router(
+                prompt, cwd, mode, timeout, model, use_stream, live_output, on_stdout, on_stderr
+            )
 
         # WP-Y6: OTel GenAI Instrumentation
         from thegent.observability.otel_instrumentation import instrument_genai_call
@@ -172,7 +204,10 @@ class DirectAgentRunner(AgentRunner):
                 else:
                     cmd.append(prompt)
 
-            cmd = _wrap_with_harness(cmd)
+            # sharecli harness currently does not support opencode invocation shape.
+            if self.agent_name != "opencode":
+                cmd = _wrap_with_harness(cmd)
+            cmd = wrap_with_caffeinate(cmd, self.agent_name)
 
             try:
                 if live_output:
@@ -209,6 +244,98 @@ class DirectAgentRunner(AgentRunner):
                 span.set_attribute("exit_code", 124)
                 span.set_attribute("timed_out", True)
                 return res
+
+    def _run_via_litellm_router(
+        self,
+        prompt: str,
+        cwd: Path | None,
+        mode: str,
+        timeout: int,
+        model: str,
+        use_stream: bool,
+        live_output: bool,
+        on_stdout: Callable[[str], None] | None,
+        on_stderr: Callable[[str], None] | None,
+    ) -> RunResult:
+        """Run via LiteLLM Router for direct CLI compatibility."""
+        try:
+            from thegent.routing.litellm_router import get_enhanced_router
+
+            router = get_enhanced_router()
+            # Map provider if possible
+            provider = self.agent_name
+            # If model already has provider/ prefix, use it
+            if "/" in model:
+                model_to_use = model
+            else:
+                model_to_use = f"{provider}/{model}"
+
+            result = router.route(prompt, model=model_to_use, stream=use_stream, timeout=timeout)
+
+            if not result.success:
+                return RunResult(
+                    exit_code=1,
+                    stdout="",
+                    stderr=result.error or "Routing failed",
+                    timed_out=False,
+                )
+
+            # Handle response
+            if use_stream:
+                # For direct CLIs, we need to collect the stream into a single response
+                # or handle it as expected. Since we're emulating direct CLIs,
+                # we'll collect it for now unless we implement full SSE.
+                stdout_collector = []
+                for chunk in result.response:
+                    content = ""
+                    if hasattr(chunk, "choices") and chunk.choices:
+                        delta = chunk.choices[0].delta
+                        if hasattr(delta, "content") and delta.content:
+                            content = delta.content
+                    elif isinstance(chunk, dict):
+                        # Handle dict response (from some LiteLLM adapters)
+                        choices = chunk.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            content = delta.get("content", "")
+
+                    if content:
+                        stdout_collector.append(content)
+                        if on_stdout:
+                            on_stdout(content)
+
+                return RunResult(
+                    exit_code=0,
+                    stdout="".join(stdout_collector),
+                    stderr="",
+                    timed_out=False,
+                )
+            else:
+                content = ""
+                if hasattr(result.response, "choices") and result.response.choices:
+                    content = result.response.choices[0].message.content
+                elif isinstance(result.response, dict):
+                    choices = result.response.get("choices", [])
+                    if choices:
+                        message = choices[0].get("message", {})
+                        content = message.get("content", "")
+
+                return RunResult(
+                    exit_code=0,
+                    stdout=content or "",
+                    stderr="",
+                    timed_out=False,
+                )
+
+        except Exception as e:
+            # Fallback to direct CLI execution if LiteLLM Router fails
+            # This ensures robustness
+            return RunResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"LiteLLM Router execution failed: {e}",
+                timed_out=False,
+            )
 
     def _build_cmd(
         self,
@@ -276,6 +403,13 @@ class DirectAgentRunner(AgentRunner):
                 cmd.extend(["-m", model])
             return cmd
 
+        if self.agent_name == "opencode":
+            # OpenCode non-interactive execution path.
+            cmd.append("run")
+            if model:
+                cmd.extend(["-m", model])
+            return cmd
+
         return cmd
 
     def _run_capture(
@@ -300,19 +434,20 @@ class DirectAgentRunner(AgentRunner):
     ) -> RunResult:
         kwargs: dict = {
             "capture_output": True,
-            "text": True,
             "timeout": min(timeout + 10, PROCESS_TIMEOUT_SECS + 10),
             "cwd": str(cwd) if cwd else None,
         }
         if stdin_input is not None:
-            kwargs["input"] = stdin_input
+            kwargs["input"] = stdin_input.encode() if isinstance(stdin_input, str) else stdin_input
         else:
             kwargs["stdin"] = subprocess.DEVNULL
-        proc = subprocess.run(cmd, check=False, **cast("Any", kwargs))
+        proc = run_subprocess_optimized(cmd, check=False, **cast("Any", kwargs))
+        stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+        stderr_text = proc.stderr if isinstance(proc.stderr, str) else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
         result = RunResult(
             exit_code=proc.returncode,
-            stdout=_strip_ansi(proc.stdout),
-            stderr=_filter_noisy_stderr(_strip_ansi(proc.stderr)),
+            stdout=strip_ansi(stdout_text),
+            stderr=_filter_noisy_stderr(strip_ansi(stderr_text)),
             timed_out=proc.returncode == 124,
         )
         if result.exit_code != 0 and is_retryable(result):
@@ -345,7 +480,7 @@ class DirectAgentRunner(AgentRunner):
 
         def _drain(stream, collector: list[str], cb: Callable[[str], None] | None) -> None:
             for line in stream:
-                clean = _strip_ansi(line)
+                clean = strip_ansi(line)
                 collector.append(clean)
                 if cb:
                     cb(clean.rstrip("\n"))

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # git-changed.sh — Git-aware change detection utilities for hooks
 # Provides functions to get changed files, filter by pattern, and check specific files
 # Usage: source this file to use the functions

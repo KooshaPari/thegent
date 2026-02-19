@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-elicitation-closure-gate.sh
 # Blocks progressed states when elicitation is unresolved.
 set -euo pipefail

@@ -21,3 +21,8 @@ features:
   - title: Hook System
     details: Lifecycle hooks for pre/post tool execution
 ---
+
+## See also
+
+- [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index

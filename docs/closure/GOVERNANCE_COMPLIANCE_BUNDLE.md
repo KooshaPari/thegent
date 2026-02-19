@@ -60,7 +60,15 @@ This bundle provides the evidence set for:
 
 | Reviewer | Role | Signature | Date | Notes |
 |---|---|---|---|---|
-| Maya Patel | Governance | ✅ | 2026-02-15 | SOC 2 + policy controls mapped |
-| Arjun Singh | Security | ✅ | 2026-02-15 | Signature and audit chain integrity verified |
-| Nora Kim | Legal/Privacy | ✅ | 2026-02-15 | GDPR exception handling and retention logs confirmed |
-| Elliot Ward | Program Manager | ✅ | 2026-02-15 | Governance package complete; ready for launch |
+| Maya Patel | Governance | ✓ | 2026-02-15 | SOC 2 + policy controls mapped |
+| Arjun Singh | Security | ✓ | 2026-02-15 | Signature and audit chain integrity verified |
+| Nora Kim | Legal/Privacy | ✓ | 2026-02-15 | GDPR exception handling and retention logs confirmed |
+| Elliot Ward | Program Manager | ✓ | 2026-02-15 | Governance package complete; ready for launch |
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [09-RISK-REGISTRY.md](../plans/09-RISK-REGISTRY.md) — risk and compliance

@@ -2,6 +2,7 @@
 
 **Date:** 2026-02-14
 **Status:** Approved
+**Merged into:** [UNIFIED_SYSTEM_APPLICATION_PLAN.md](./UNIFIED_SYSTEM_APPLICATION_PLAN.md) — install is Phase 1 of unified setup
 
 ## Purpose
 
@@ -156,3 +157,11 @@ Run with --verbose for details
 - Unit tests for `smart_copy_file` logic
 - Integration tests for full install flow
 - Test dry-run output matches actual behavior
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

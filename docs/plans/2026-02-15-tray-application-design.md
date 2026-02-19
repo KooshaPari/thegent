@@ -6,6 +6,7 @@ Design for a unified system tray application that combines existing ShareCLI mon
 
 **Date:** 2026-02-15
 **Status:** Approved
+**Superseded by:** [UNIFIED_SYSTEM_APPLICATION_PLAN.md](./UNIFIED_SYSTEM_APPLICATION_PLAN.md) — tray merges into unified app
 
 ---
 
@@ -278,3 +279,11 @@ class TrayPlugin(ABC):
 9. Cost tracking displays correctly
 10. Gamification stats and achievements show
 11. Settings persist and apply correctly
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

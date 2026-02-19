@@ -205,6 +205,7 @@ def run_cmd(
     speculative: bool = False,
     search: bool = True,
     debug: bool = False,
+    task_id: str | None = None,
 ) -> None:
     """Run an agent or droid with the given prompt. Model-first: agent=None, model set."""
     from thegent.cli_impl import run_impl
@@ -275,6 +276,7 @@ def run_cmd(
         routing=routing,
         enable_search=search,
         debug=debug,
+        task_id=task_id,
         config_provider=get_config_provider(),
     )
 
@@ -395,6 +397,7 @@ def bg_cmd(
     domain: str | None = None,
     speculative: bool = False,
     debug: bool = False,
+    task_id: str | None = None,
 ) -> str:
     from thegent.cli_impl import bg_impl
 
@@ -442,6 +445,7 @@ def bg_cmd(
         domain=domain,
         speculative=speculative,
         debug=debug,
+        task_id=task_id,
         config_provider=get_config_provider(),
     )
 
@@ -7481,6 +7485,25 @@ def workstream_dashboard_cmd() -> None:
     """Launch workstream dashboard TUI."""
     from thegent.tui.workstream_dashboard import run_dashboard
     run_dashboard()
+
+
+def workstream_launch_cmd() -> None:
+    """Launch the auto-launch system in the background."""
+    from thegent.planning.auto_launch import AutoLaunchSystem
+    import time
+    
+    console.print("[bold]Auto-Launch System Starting...[/bold]")
+    system = AutoLaunchSystem()
+    system.start()
+    
+    console.print("[green]Auto-launch system is running. Press Ctrl+C to stop.[/green]")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        console.print("[yellow]Stopping auto-launch system...[/yellow]")
+        system.stop()
+        console.print("[green]Stopped.[/green]")
 
 
 def forensics_snapshot_cmd(run_id: str | None = None, phase: str | None = None) -> None:

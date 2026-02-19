@@ -1,6 +1,6 @@
 """CLIProxy adapter: exposes /v1/responses (HTTP + WebSocket) for Codex compatibility.
 
-CLIProxyAPIPlus (router-for-me) may not implement /v1/responses. This adapter:
+cliproxyapi++ (kooshapari fork) may not implement /v1/responses. This adapter:
 - Proxies all /v1/* to the backend
 - For POST /v1/responses: tries backend first; on 404, translates to /v1/chat/completions
 - For WebSocket /v1/responses: bridges WS to HTTP streaming (SSE)
@@ -11,6 +11,7 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+import os
 from typing import TYPE_CHECKING, Any
 
 from starlette.applications import Starlette
@@ -22,17 +23,12 @@ if TYPE_CHECKING:
 
 _log = logging.getLogger(__name__)
 
-# Codex/MiniMax model aliases -> CLIProxyAPIPlus/catalog model IDs
-_MODEL_ALIAS_MAP: dict[str, str] = {
-    "codex-MiniMax-M2.5": "minimax-m2.5",
-    "codex-minimax-m2.5": "minimax-m2.5",
-    "MiniMax-M2.5": "minimax-m2.5",
-}
-
 
 def _map_model_for_backend(model: str) -> str:
-    """Map Codex/MiniMax model IDs to backend (CLIProxyAPIPlus) model IDs."""
-    return _MODEL_ALIAS_MAP.get(model, model)
+    """Map Codex/provider model IDs to backend (CLIProxyAPIPlus) model IDs."""
+    from thegent.routing.harness_model_mapping import resolve_model_for_backend
+
+    return resolve_model_for_backend(model)
 
 
 def _responses_input_to_messages(input_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -141,7 +137,9 @@ async def _proxy_request(
     except (httpx.ConnectError, httpx.ConnectTimeout) as e:
         _log.error("Backend proxy (%s) unreachable: %s", backend_url, e)
         return Response(
-            content=json.dumps({"error": {"message": f"Backend proxy ({backend_url}) unreachable. Restart with: thegent mcp restart"}}).encode(),
+            content=json.dumps(
+                {"error": {"message": f"Backend proxy ({backend_url}) unreachable. Restart with: thegent mcp restart"}}
+            ).encode(),
             status_code=503,
             headers={"Content-Type": "application/json"},
         )
@@ -197,7 +195,7 @@ async def _proxy_stream(
                     if resp.status_code != 200:
                         err_body = await resp.aread()
                         _log.warning("backend stream error %s: %s", resp.status_code, err_body[:200])
-                        yield f"data: {{\"error\":{{\"message\":\"Backend {resp.status_code}\"}}}}\n\n".encode()
+                        yield f'data: {{"error":{{"message":"Backend {resp.status_code}"}}}}\n\n'.encode()
                         return
                     async for chunk in resp.aiter_bytes():
                         buffer += chunk
@@ -216,7 +214,7 @@ async def _proxy_stream(
                             yield out
         except (httpx.ConnectError, httpx.ConnectTimeout) as e:
             _log.error("Backend stream connection failed: %s", e)
-            yield f"data: {{\"error\":{{\"message\":\"Backend proxy ({url}) unreachable.\"}}}}\n\n".encode()
+            yield f'data: {{"error":{{"message":"Backend proxy ({url}) unreachable."}}}}\n\n'.encode()
 
     return StreamingResponse(
         stream(),
@@ -230,12 +228,46 @@ async def _proxy_stream(
 
 
 def _transform_models_response(content: bytes) -> bytes | None:
-    """Transform CLIProxy models response (data) to Codex format (models). Returns None if no transform needed."""
+    """Transform CLIProxy models response to Codex format (models) and enrich with metadata.
+
+    - Converts data -> models for Codex compatibility
+    - Adds context_window, max_completion_tokens from model_metadata to fix
+      "Model metadata for X not found" warning
+    - Returns None when response already has 'models' (no transform needed)
+    """
     try:
         data = json.loads(content.decode(errors="replace"))
-        if "data" in data and "models" not in data:
-            data["models"] = data.pop("data", [])
-            return json.dumps(data).encode()
+        if "data" not in data and "models" in data:
+            return None  # Already in Codex format, pass through
+        models = data.pop("data", data.get("models", []))
+        if not isinstance(models, list):
+            return None
+        data["models"] = models
+
+        # Enrich each model with metadata for Codex (avoids fallback metadata warning)
+        try:
+            from thegent.routing.model_metadata import get_model_metadata
+        except ImportError:
+            def get_model_metadata(_):
+                return None
+
+        for m in models:
+            if not isinstance(m, dict):
+                continue
+            mid = m.get("id") or m.get("name") or ""
+            if not mid:
+                continue
+            meta = get_model_metadata(mid)
+            if not meta and "/" in mid:
+                meta = get_model_metadata(mid.split("/", 1)[1])
+            if meta:
+                ctx = meta.get("context_window")
+                if ctx is not None and "context_length" not in m:
+                    m["context_length"] = ctx
+                if ctx is not None and "max_completion_tokens" not in m:
+                    m["max_completion_tokens"] = min(ctx, 8192)
+
+        return json.dumps(data).encode()
     except (json.JSONDecodeError, TypeError):
         pass
     return None
@@ -253,10 +285,27 @@ async def proxy_handler(request: Request) -> Response:
     """Proxy /v1/* to backend. Transform /v1/responses to /v1/chat/completions."""
     backend = getattr(request.app.state, "backend_url", "http://127.0.0.1:8318/v1")
     path = request.url.path or "/v1/models"
+
+    # Check if LiteLLM Router should be used
+    use_litellm = os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1"
+
     if _log.isEnabledFor(logging.DEBUG) or __debug__:
-        _log.debug("adapter request: %s %s", request.method, path)
+        _log.debug("adapter request: %s %s (litellm=%s)", request.method, path, use_litellm)
+
     if not path.startswith("/v1/"):
         return Response("Not Found", status_code=404)
+
+    # Route Responses API to LiteLLM Router if enabled
+    if use_litellm and path == "/v1/responses" and request.method == "POST":
+        try:
+            from thegent.routing.litellm_responses_handler import handle_responses_request
+
+            return await handle_responses_request(request)
+        except Exception as e:
+            _log.error("LiteLLM Router handler failed: %s", e, exc_info=True)
+            # Fallback to CLIProxyAPIPlus
+            pass
+
     backend_path = _backend_path(backend, path)
 
     if request.method == "GET" and path in ("/v1/models", "/v1/models/"):
@@ -300,6 +349,20 @@ async def proxy_handler(request: Request) -> Response:
 async def websocket_responses_handler(websocket: Any) -> None:
     """Bridge WebSocket /v1/responses to HTTP streaming. Buffers SSE by line."""
     import asyncio
+
+    # Check if LiteLLM Router should be used
+    use_litellm = os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1"
+
+    if use_litellm:
+        try:
+            from thegent.routing.litellm_responses_handler import handle_responses_websocket
+
+            await handle_responses_websocket(websocket)
+            return
+        except Exception as e:
+            _log.error("LiteLLM Router WebSocket handler failed: %s", e, exc_info=True)
+            # Fallback to CLIProxyAPIPlus
+            pass
 
     import httpx
 
@@ -363,9 +426,9 @@ async def websocket_responses_handler(websocket: Any) -> None:
 
 def create_adapter_app(backend_url: str) -> Starlette:
     """Create the adapter Starlette app."""
-    import os
+    from thegent.config import ThegentSettings
 
-    if os.environ.get("THGENT_DEBUG") == "1":
+    if ThegentSettings().debug:
         _log.setLevel(logging.DEBUG)
     app = Starlette(
         routes=[

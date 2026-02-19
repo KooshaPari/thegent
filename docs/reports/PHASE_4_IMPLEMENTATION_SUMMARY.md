@@ -371,3 +371,11 @@ Phase 4.1 (Current State Audit) is **complete with high confidence**:
 
 **Expected Outcome**: 5-50x JS/TS linting speedup with transparent fallback to ESLint
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

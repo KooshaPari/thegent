@@ -494,7 +494,7 @@ def extract_condensed_validated(stdout: str) -> ParseResult:
     if report and len(report) >= 20:
         condensed = _compact_report(report)
 
-    # Check for XML truncation (unclosed tags)
+    # ROB-002: Check for XML truncation (unclosed tags) with partial-state validity markers
     partial_state: dict[str, Any] | None = None
     if "<" in condensed and ">" in condensed:
         try:
@@ -504,7 +504,13 @@ def extract_condensed_validated(stdout: str) -> ParseResult:
             ps = parser.get_partial_state(condensed)
             if ps.get("open_tag"):
                 error_class = PARSE_TRUNCATED
-                partial_state = ps
+                # ROB-002: Partial-state validity markers - mark as invalid if incomplete
+                partial_state = {
+                    **ps,
+                    "valid": False,  # ROB-002: Mark partial state as invalid to prevent exposure
+                    "reason": "incomplete_xml_tags",
+                    "can_use": False,  # ROB-002: Do not use partial state in downstream processing
+                }
         except Exception:
             pass
 

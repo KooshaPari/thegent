@@ -1,0 +1,20 @@
+version: 1
+steps:
+  py-lint:
+    deps: []
+    command: task py:lint
+    display: Python lint
+  py-type:
+    deps: []
+    command: task py:typecheck
+    display: Python type
+  py-test:
+    deps:
+    - py-lint
+    - py-type
+    command: task py:test
+    display: Python test
+  bash-lint:
+    deps: []
+    command: task bash:lint
+    display: Bash lint

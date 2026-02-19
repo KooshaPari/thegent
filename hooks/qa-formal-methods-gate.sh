@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # @trace FR-FORMAL-001
 # qa-formal-methods-gate.sh
 # EXT-G2: Functional gate for formal methods (TLA+/Alloy/Dafny).

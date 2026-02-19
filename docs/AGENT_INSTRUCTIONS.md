@@ -192,3 +192,11 @@ All projects share these patterns:
 | sharecli | `sharecli/CLAUDE.md` | `docs/guides/AGENT_INSTRUCTIONS_SHARECLI.md` |
 | thegent | `thegent/CLAUDE.md` | `docs/guides/AGENT_INSTRUCTIONS_THEGENT.md` |
 | jobhunter | `jobhunter/CLAUDE.md` | `docs/guides/AGENT_INSTRUCTIONS_JOBHUNTER.md` |
+
+---
+
+## See also
+
+- [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index
+- [CLAUDE_CORE_GUIDELINES.md](reference/CLAUDE_CORE_GUIDELINES.md) — core guidelines

@@ -115,3 +115,11 @@ When `normalize_output(..., allow_fallback=True)`:
 - Run `thegent govern conformance` for adapter conformance suite
 - Run `thegent govern conformance --check-drift` for drift alarms
 - See `docs/contracts/FALLBACK_POLICY.md` for policy and observability
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [FALLBACK_POLICY.md](./FALLBACK_POLICY.md) — fallback policy

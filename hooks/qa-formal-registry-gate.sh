@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-formal-registry-gate.stub.sh
 # Validates contracts/formal/registry.json structure when present.
 # Install via: make install-governance-hooks

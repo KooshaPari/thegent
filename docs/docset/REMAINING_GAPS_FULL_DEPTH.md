@@ -18,7 +18,7 @@
 
 ## 1. Contract and Parser Engineering
 
-### XA1: Canonical Schema Package `contracts/csm/v1` ✅ DONE
+### XA1: Canonical Schema Package `contracts/csm/v1` ✓ DONE
 
 | Aspect | Status |
 |--------|--------|
@@ -40,7 +40,7 @@
 
 ---
 
-### XA4: Contract Version in Task Metadata (P1) ✅ DONE
+### XA4: Contract Version in Task Metadata (P1) ✓ DONE
 
 | Aspect | Status | Notes |
 |--------|--------|------|
@@ -65,7 +65,7 @@
 
 ## 2. Observability (FR-X08)
 
-### FR-X08: Unified Observability Dashboard (P2) ✅ DONE
+### FR-X08: Unified Observability Dashboard (P2) ✓ DONE
 
 | Aspect | Status | Notes |
 |--------|--------|------|
@@ -77,7 +77,7 @@
 
 ## 3. Event Schemas (WP-0002)
 
-### WP-0002: Canonical Schemas for Chunk/Evidence/Policy Events (P2) ✅ DONE
+### WP-0002: Canonical Schemas for Chunk/Evidence/Policy Events (P2) ✓ DONE
 
 | Aspect | Status | Notes |
 |--------|--------|------|
@@ -115,7 +115,7 @@
 
 ## 5. Governance (Completed)
 
-### WP-3003, WP-3006, WP-3008 ✅ DONE
+### WP-3003, WP-3006, WP-3008 ✓ DONE
 
 - **WP-3003:** Override TTL, revalidation on expiry
 - **WP-3006:** Domain tagging (run/bg --domain), THGENT_RETENTION_BY_DOMAIN, govern archive --domain

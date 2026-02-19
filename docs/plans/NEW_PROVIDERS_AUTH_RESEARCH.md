@@ -29,9 +29,9 @@
 
 | Config pattern | Fit? | Notes |
 |----------------|------|-------|
-| `openai-compatibility` + `api-key-entries` | ❌ | Keys from `/build-key` expire; not static |
-| Token-file / OAuth (like Kiro) | ✅ | Needs token refresh, session management |
-| Dedicated `cursor:` block | ✅ | Similar to `kiro:` with `token-file`, `access-token`, `refresh-token` |
+| `openai-compatibility` + `api-key-entries` | ✗ | Keys from `/build-key` expire; not static |
+| Token-file / OAuth (like Kiro) | ✓ | Needs token refresh, session management |
+| Dedicated `cursor:` block | ✓ | Similar to `kiro:` with `token-file`, `access-token`, `refresh-token` |
 
 ### Recommendation
 
@@ -47,7 +47,7 @@
 
 ### Known
 
-- **API:** `api.minimax.chat` / `platform.minimaxi.com`
+- **API:** `api.minimax.io` / `platform.minimax.io`
 - **Auth:** MiniMax offers **OAuth in tandem with API key** – similar to GLM.
 - **Existing in fork:** Via iFlow (OAuth) and Kiro (AWS).
 
@@ -55,8 +55,8 @@
 
 | Config pattern | Fit? | Notes |
 |----------------|------|-------|
-| `openai-compatibility` + `api-key-entries` | ✅ | For API-key-only usage |
-| Dedicated `minimax:` block (OAuth) | ✅ | For OAuth flow, like GLM/Kiro |
+| `openai-compatibility` + `api-key-entries` | ✓ | For API-key-only usage |
+| Dedicated `minimax:` block (OAuth) | ✓ | For OAuth flow, like GLM/Kiro |
 
 ### Recommendation
 
@@ -149,12 +149,12 @@
 
 | Provider | Auth type | CLIProxyAPIPlus config | Status |
 |----------|-----------|------------------------|--------|
-| OpenRouter | API key | `openai-compatibility` | ✅ Implemented |
-| Cursor | Session token (login) | Dedicated `cursor:` block (like Kiro) | ❌ Wrong docs; needs plan |
+| OpenRouter | API key | `openai-compatibility` | ✓ Implemented |
+| Cursor | Session token (login) | Dedicated `cursor:` block (like Kiro) | ✗ Wrong docs; needs plan |
 | MiniMax | OAuth + API key (like GLM) | `openai-compatibility` or dedicated block | Both supported |
 | Kilo | Free credits / optional API key | TBD | Research Kilo provider auth |
 | Roo Code | OpenAI-compat / Cloud | TBD | Research |
-| Kiro | OAuth (token-file, access/refresh) | `kiro:` | ✅ Reference |
+| Kiro | OAuth (token-file, access/refresh) | `kiro:` | ✓ Reference |
 
 ---
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # suppress-v2-files.sh — PreToolUse hook (Write)
 # Blocks creation of *_v2.*, *_new.*, *_old.*, *_backup.* files.
 # Philosophy: refactor the original, never duplicate.

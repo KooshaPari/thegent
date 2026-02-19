@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/.local/share/uv/tools/thegent/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_29a1ac4e",
+    "Complete impl-hook-rust-fr-index: Implement FR parsing and indexing (fr-ids, fr-index) in Rust. See docs/plans/HOOK_RUST_MIGRATION_COMPLETE.md for details.",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 26467,
+  "launcher_ppid": 20650,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:rust-migr",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104853Z-copilot-p26467-3fedf2db.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104853Z-copilot-p26467-3fedf2db.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104853Z-copilot-p26467-3fedf2db.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T104853Z-copilot-p26467-3fedf2db.stdout.log"
+  },
+  "pid": 26964,
+  "prompt": "Complete impl-hook-rust-fr-index: Implement FR parsing and indexing (fr-ids, fr-index) in Rust. See docs/plans/HOOK_RUST_MIGRATION_COMPLETE.md for details.",
+  "session_id": "20260219T104853Z-copilot-p26467-3fedf2db",
+  "started_at_utc": "2026-02-19T10:48:53.413993+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

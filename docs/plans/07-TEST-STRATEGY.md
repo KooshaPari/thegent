@@ -443,3 +443,11 @@ All 14 proposed new test files are CONFIRMED UNIQUE (no conflicts with existing 
 5. **Phase 5**: Implement Categories 13-14 (Calibration, Speculative)
 
 Target: 70/20/10 pyramid by end of Phase 3.
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](./00-MASTER-INDEX.md) — plan index
+- [04-REQUIREMENTS.md](./04-REQUIREMENTS.md) — FR traceability

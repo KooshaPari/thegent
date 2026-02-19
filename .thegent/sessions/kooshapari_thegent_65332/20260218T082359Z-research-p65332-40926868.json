@@ -1,0 +1,41 @@
+{
+  "agent": "research",
+  "command": [
+    "/usr/local/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_d67b7470",
+    "Synthesize a development writeup for 'research-pareto-routing' from docs/research/SESSION_RESEARCH_FRAGMENTS_EXPANDED.md. Create docs/changes/research-pareto-routing/proposal.md, design.md, and tasks.md.",
+    "research"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 65332,
+  "launcher_ppid": 61440,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:65332",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_65332/20260218T082359Z-research-p65332-40926868.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_65332/20260218T082359Z-research-p65332-40926868.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_65332/20260218T082359Z-research-p65332-40926868.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_65332/20260218T082359Z-research-p65332-40926868.stdout.log"
+  },
+  "pid": 67225,
+  "prompt": "Synthesize a development writeup for 'research-pareto-routing' from docs/research/SESSION_RESEARCH_FRAGMENTS_EXPANDED.md. Create docs/changes/research-pareto-routing/proposal.md, design.md, and tasks.md.",
+  "session_id": "20260218T082359Z-research-p65332-40926868",
+  "started_at_utc": "2026-02-18T08:23:59.420953+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

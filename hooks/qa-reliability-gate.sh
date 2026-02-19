@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-reliability-gate.sh
 # Reliability/flake governance from async test results.
 set -euo pipefail

@@ -1,0 +1,807 @@
+# thegent Control Plane — Robust Design (Extreme Depth)
+
+> **Status**: Design Draft  
+> **Date**: 2026-02-18  
+> **Scope**: Multi-tenant config service, process architecture, CLI/MCP interaction, harmonization with existing plans  
+> **Research**: DDG + local docs; harmonized with Agent Registry, Compute Offload, CROSS_PLATFORM_MULTI_TENANT
+
+---
+
+## Executive Summary
+
+This document defines a **robust control plane** for thegent that replaces env-var-only configuration with a **process-backed config service** suitable for multi-tenant operation. The control plane:
+
+- **Owns configuration** — per-tenant, per-session, per-request; no process-global env assumptions
+- **Exposes API** — CLI, MCP, and other clients interact via IPC/HTTP
+- **Harmonizes** with Agent Registry, Compute Offload, Gardener, CROSS_PLATFORM_MULTI_TENANT
+- **Extends** existing process-compose, MCP, and session management
+
+**Key innovation**: Control plane as a **first-class long-running process** that CLI and MCP connect to, not a side effect of env vars.
+
+---
+
+## Table of Contents
+
+1. [Problem Statement](#1-problem-statement)
+2. [Web Research Synthesis](#2-web-research-synthesis)
+3. [Local Research Harmonization](#3-local-research-harmonization)
+4. [Architecture Overview](#4-architecture-overview)
+5. [Control Plane Responsibilities](#5-control-plane-responsibilities)
+6. [Data Model](#6-data-model)
+7. [IPC & Transport](#7-ipc--transport)
+8. [CLI Integration](#8-cli-integration)
+9. [MCP Integration](#9-mcp-integration)
+10. [Multi-Tenant Design](#10-multi-tenant-design)
+11. [Process Architecture](#11-process-architecture)
+12. [Migration & Rollout](#12-migration--rollout)
+13. [Failure Modes & Resilience](#13-failure-modes--resilience)
+14. [Security](#14-security)
+15. [Observability](#15-observability)
+16. [References & Decision Records](#16-references--decision-records)
+
+---
+
+## 1. Problem Statement
+
+### 1.1 Why Env Vars Fail for Multi-Tenant
+
+| Issue | Impact |
+|-------|--------|
+| **Process-global** | One process = one config; cannot vary per tenant |
+| **No per-request override** | Timeout, concurrency, routing cannot differ by tenant/session |
+| **No runtime updates** | Changing config requires restart or new process |
+| **No audit trail** | Who changed what, when — not trackable |
+| **No validation** | Invalid config only discovered at use time |
+
+### 1.2 What We Need
+
+- **Central config source** — single source of truth, queryable by tenant/session
+- **Process + API** — long-running service; CLI/MCP connect, not read env directly
+- **Per-tenant isolation** — Tenant A's timeout ≠ Tenant B's
+- **Runtime updates** — change config without restarting agents
+- **Audit & governance** — config changes logged, policy enforced
+
+---
+
+## 2. Web Research Synthesis
+
+### 2.1 Microsoft Azure: Multitenant Control Planes
+
+**Source**: [Considerations for Multitenant Control Planes](https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/control-planes)
+
+**Key takeaways**:
+- **Control plane vs data plane**: Data plane = user-facing workload; control plane = cross-tenant management (provisioning, config, lifecycle)
+- **Core responsibilities**: Resource management, tenant configuration, lifecycle, telemetry, consumption tracking
+- **Isolation**: Control plane resources MUST be separate from data plane (bulkhead pattern)
+- **Reliability**: Control plane outage can make entire solution unavailable; define SLOs (RTO, RPO)
+- **Security**: Control plane is highly privileged; threat model essential
+- **Long-running ops**: Use Durable Functions / Logic Apps for multi-step workflows, not sync APIs
+- **Global vs Stamp control plane**: Global CP = cross-stamp coordination; Stamp CP = per-stamp (per-datacenter). thegent initially: single-stamp CP; future: global CP for federation.
+
+### 2.2 Microsoft: Architectural Approaches
+
+**Source**: [Architectural Approaches for Control Planes](https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/approaches/control-planes)
+
+**Approaches**:
+| Approach | Tenants | Effort | Use Case |
+|----------|---------|--------|----------|
+| Manual | <10 | Low | Start; scripts + docs |
+| Low-code | Occasional | Medium | Power Automate, workflows |
+| Custom | Many | High | Full control, testability |
+
+**Antipattern**: Using sync APIs for long-running ops (Azure deployments, multi-step orchestration).
+
+### 2.3 Kong: Control Plane / Data Plane Separation
+
+**Source**: [Multi-Tenancy and Kong](https://konghq.com/blog/enterprise/multi-tenancy)
+
+**Key takeaways**:
+- **CP**: Configuration storage, validation, governance, distribution to data planes
+- **DP**: Critical path for client traffic; optimized for speed
+- **Hybrid mode**: CP and DP decoupled; scale independently
+- **Workspaces**: Logical tenant isolation within shared CP; RBAC per workspace
+- **Secret references**: URI-based secret resolution; never store raw secrets in config
+
+### 2.4 Wikipedia: Control Plane (Networking)
+
+**Source**: [Control plane](https://en.wikipedia.org/wiki/Control_plane)
+
+**Core concept**: Control plane configures and manages; data plane processes requests. Separation allows:
+- Data plane: speed, simplicity, regularity
+- Control plane: customizability, policies, exceptional handling
+
+**Unix analogy**: `open`/`close` = control plane; `read`/`write` = data plane.
+
+---
+
+## 3. Local Research Harmonization
+
+### 3.0 Harmonization Index
+
+| Plan / Doc | CP Relationship | Section |
+|------------|-----------------|---------|
+| Agent Registry | Session Registry = CP subsystem | §3.1 |
+| Agent Registry Research | IPC (FIFO, socket) owned by CP | §3.2 |
+| Compute Offload | "Unified Control Plane" = this CP | §3.3 |
+| CROSS_PLATFORM_MULTI_TENANT | CP = Coordinator; tenant context | §3.4 |
+| Gardener | CP hosts ROUTE; hunger state | §3.5 |
+| process-compose | CP as third service | §3.6 |
+| TUI Compositor | CP feeds dashboard; "unified control plane" | §3.7 |
+| Unified Work Stream | CP can host claim state, do-next | §3.8 |
+
+### 3.1 Agent Registry Design
+
+**Source**: [AGENT_REGISTRY_DESIGN.md](../AGENT_REGISTRY_DESIGN.md)
+
+| Alignment | Control Plane Role |
+|-----------|-------------------|
+| Session Registry | Control plane holds session index; CLI/MCP query it |
+| `session list` / `session send` | Control plane resolves session metadata, routes messages |
+| IPC (FIFO, Unix socket) | Control plane can own message endpoints |
+| Owner-scoped | Control plane enforces tenant/owner filtering |
+
+**Extension**: Agent Registry's Session Registry becomes a **control plane subsystem**; control plane owns the canonical session index.
+
+### 3.2 Agent Registry Research (IPC)
+
+**Source**: [AGENT_REGISTRY_RESEARCH.md](../AGENT_REGISTRY_RESEARCH.md)
+
+| IPC Option | Control Plane Use |
+|------------|-------------------|
+| FIFO | Per-session message delivery; CP writes, agent reads |
+| Unix socket | CP ↔ CLI/MCP; bidirectional, robust |
+| File-based | Fallback; CP writes to `{session}.messages.jsonl` |
+
+**Extension**: Control plane **is** the process that owns FIFO/socket creation and message routing.
+
+### 3.3 Compute Offload Design
+
+**Source**: [research-compute-offload/design.md](../changes/research-compute-offload/design.md)
+
+| Component | Control Plane Integration |
+|-----------|---------------------------|
+| Compute Catalog | CP hosts catalog; offload router queries CP |
+| Offload Router | CP runs router logic; route decisions are config |
+| Bridge Protocol | CP orchestrates serialization/deserialization |
+
+**Extension**: "Unified thegent Control Plane" in compute offload = this control plane. Offload becomes a **control plane capability**.
+
+### 3.4 CROSS_PLATFORM_MULTI_TENANT
+
+**Source**: [CROSS_PLATFORM_MULTI_TENANT_QUICK_REFERENCE.md](../reference/CROSS_PLATFORM_MULTI_TENANT_QUICK_REFERENCE.md)
+
+| Concept | Control Plane Role |
+|---------|-------------------|
+| TenantContext | CP resolves tenant from request; injects into config |
+| EditLeaseManager | CP can host lease coordination (or delegate to Redis) |
+| Per-tenant concurrency | CP enforces `concurrency.per_tenant_max` |
+| Coordinator (Multi-Tenant) | CP **is** the coordinator |
+
+### 3.5 Gardener Architecture
+
+**Source**: [GARDENER_ARCHITECTURE.md](../reference/GARDENER_ARCHITECTURE.md)
+
+| Concept | Control Plane Role |
+|---------|-------------------|
+| SCAN → PRIORITIZE → ROUTE → EXECUTE | CP can host ROUTE; Gardener queries CP for routing policy |
+| Hunger states | CP stores hunger state; Gardener reads/writes |
+| Agent spawn | CP provides config (timeout, agent, model) for spawn |
+
+### 3.6 process-compose (MCP + Proxy)
+
+**Source**: [mcp_manage.py](../../src/thegent/mcp_manage.py), CLAUDE.md
+
+| Current | Control Plane Extension |
+|---------|-------------------------|
+| `mcp_up` / `mcp_down` | Control plane can be a process-compose service |
+| MCP + proxy bundled | Add control-plane as third service |
+| CLI introspection | CLI talks to control plane for config, not env |
+
+### 3.7 TUI Compositor (Sitback Dashboard)
+
+**Source**: [research-tui-compositor/proposal.md](../changes/research-tui-compositor/proposal.md)
+
+| Concept | Control Plane Role |
+|---------|-------------------|
+| "Unified control plane for agent orchestration and monitoring" | CP **is** that control plane; TUI queries CP for state |
+| Real-time process/session tracking | CP session index; TUI subscribes or polls |
+| Work stream integration (do-next, claim, complete) | CP can host work stream metadata; TUI reads via CP |
+| Statusbar, session status | CP provides aggregated view |
+
+**Extension**: TUI Compositor is a **CP client**; it does not duplicate config or session logic. CP is the single source of truth.
+
+### 3.8 Unified Work Stream
+
+**Source**: [UNIFIED_WORK_STREAM_DESIGN.md](../reference/UNIFIED_WORK_STREAM_DESIGN.md)
+
+| Concept | Control Plane Role |
+|---------|-------------------|
+| WORK_STREAM.md canonical | CP can cache/aggregate; or delegate to file (CP orchestrates) |
+| Claim / Complete | CP can host claim coordination (alternative to file-based) |
+| do-next, spawn-next | CP provides config for spawn; CP can enforce per-tenant limits |
+
+**Extension**: CP does not replace WORK_STREAM.md initially; it provides a **query API** over it. Future: CP can host claim state for distributed coordination.
+
+---
+
+## 4. Architecture Overview
+
+### 4.1 High-Level Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         thegent Control Plane Process                            │
+│  (long-running; config, tenant catalog, session index, routing, policy)           │
+│                                                                                  │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐            │
+│  │ Config Store │ │ Tenant       │ │ Session      │ │ Policy       │            │
+│  │ (per-tenant) │ │ Catalog      │ │ Registry     │ │ Engine       │            │
+│  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘            │
+│         │                │                │                │                     │
+│         └────────────────┴────────────────┴────────────────┘                     │
+│                                    │                                              │
+│                          ┌─────────▼─────────┐                                    │
+│                          │   Control Plane   │                                    │
+│                          │   API (IPC/HTTP)  │                                    │
+│                          └─────────┬─────────┘                                    │
+└────────────────────────────────────┼──────────────────────────────────────────────┘
+                                     │
+         ┌───────────────────────────┼───────────────────────────┐
+         │                           │                           │
+    ┌────▼────┐                 ┌────▼────┐                 ┌────▼────┐
+    │   CLI   │                 │   MCP   │                 │ Other   │
+    │ (run,   │                 │ (tools) │                 │ clients │
+    │  bg,    │                 │         │                 │         │
+    │  ps,    │                 │         │                 │         │
+    │  etc.)  │                 │         │                 │         │
+    └────┬────┘                 └────┬────┘                 └────┬────┘
+         │                            │                            │
+         └────────────────────────────┼────────────────────────────┘
+                                      │
+                          ┌───────────▼───────────┐
+                          │   Data Plane         │
+                          │   (Agent runs,       │
+                          │    session exec)     │
+                          └──────────────────────┘
+```
+
+### 4.2 Deployment Modes
+
+| Mode | Control Plane | CLI/MCP | Use Case |
+|------|---------------|---------|----------|
+| **Embedded** | In-process (CLI/MCP load config directly) | Same process | Single-tenant, dev, backward compat |
+| **Standalone** | Separate process (Unix socket / HTTP) | Connect to CP | Multi-tenant, production |
+| **Hybrid** | Optional; CLI tries CP first, falls back to env | Best effort | Migration, gradual rollout |
+
+---
+
+## 5. Control Plane Responsibilities
+
+### 5.1 Core (P0)
+
+| Responsibility | Description | API |
+|----------------|-------------|-----|
+| **Config resolution** | Resolve config for (tenant_id?, session_id?, request) | `GET /config?tenant=X&key=default_timeout` |
+| **Tenant catalog** | Store tenant metadata, SKUs, stamps | `GET /tenants`, `POST /tenants` |
+| **Session index** | Canonical list of sessions (from RunRegistry + discovery) | `GET /sessions`, `GET /sessions/:id` |
+| **Policy evaluation** | Override, lane, deferral decisions | `POST /policy/evaluate` |
+
+### 5.2 Extended (P1)
+
+| Responsibility | Description | API |
+|----------------|-------------|-----|
+| **Consumption tracking** | Per-tenant resource usage | `GET /tenants/:id/consumption` |
+| **Config mutation** | Update config (with audit) | `PUT /config`, `PATCH /tenants/:id/config` |
+| **Lifecycle hooks** | On tenant onboard/offboard | Webhook / internal event |
+| **Offload routing** | Compute catalog, workload classifier | `POST /offload/route` |
+
+### 5.3 Advanced (P2)
+
+| Responsibility | Description | API |
+|----------------|-------------|-----|
+| **Tenant placement** | Bin-packing, stamp assignment | `POST /tenants/place` |
+| **Maintenance ops** | Cleanup, retention, secret rotation | Scheduled jobs |
+| **Federation** | Cross-stamp coordination | Sync protocol |
+
+---
+
+## 6. Data Model
+
+### 6.1 Tenant Catalog
+
+```yaml
+Tenant:
+  id: string                    # tenant-001
+  name: string                  # "Acme Corp"
+  config: TenantConfig          # Overrides
+  stamp_id: string | null       # Which stamp this tenant is on
+  created_at: datetime
+  updated_at: datetime
+  status: enum                  # active | suspended | offboarded
+
+TenantConfig:
+  default_timeout: int          # 600
+  default_timeout_claude: int   # 600
+  default_timeout_free: int     # 300
+  max_concurrency: int          # 100
+  load_spike_threshold: int     # 80
+  load_surge_threshold: int     # 100
+  # ... full ThegentSettings overrides
+```
+
+### 6.2 Config Resolution Order
+
+1. **Request override** — `--timeout 1800` from CLI
+2. **Session override** — Session-specific config (if any)
+3. **Tenant config** — From tenant catalog
+4. **Stamp config** — Stamp-level defaults
+5. **Global defaults** — Base ThegentSettings
+
+### 6.3 Session Index (Extends RunRegistry)
+
+```yaml
+SessionEntry:
+  session_id: string
+  tenant_id: string | null
+  owner: string
+  agent: string
+  status: enum
+  pid: int | null
+  meta_path: string
+  # ... existing RunRegistry fields
+  config_snapshot: dict | null   # Config at spawn time (audit)
+```
+
+### 6.3.1 RunRegistry vs CP Session Index
+
+| Aspect | RunRegistry | CP Session Index |
+|--------|-------------|------------------|
+| **Write ownership** | CLI/agent writes on spawn/exit | CP does not write directly |
+| **Aggregation** | Per-run metadata; file or in-memory | CP aggregates from RunRegistry + discovery |
+| **Source of truth** | RunRegistry for lifecycle | CP for query/aggregation; eventual consistency |
+| **Use case** | `session list`, `session send` | TUI dashboard, session search, tenant view |
+
+**Model**: RunRegistry remains the **write owner**; CP **reads** and aggregates. CP can subscribe to RunRegistry events or poll. Future: CP can host claim state for distributed coordination (WORK_STREAM).
+
+### 6.4 Config Schema & Validation
+
+```yaml
+# JSON Schema for resolved config (subset)
+ConfigSchema:
+  type: object
+  properties:
+    default_timeout: { type: integer, minimum: 0, maximum: 3600 }
+    default_timeout_claude: { type: integer, minimum: 0 }
+    default_timeout_free: { type: integer, minimum: 0 }
+    max_concurrency: { type: integer, minimum: 1, maximum: 1000 }
+    load_spike_threshold: { type: integer, minimum: 0, maximum: 100 }
+    load_surge_threshold: { type: integer, minimum: 0, maximum: 100 }
+  additionalProperties: false  # or allow for extensibility
+```
+
+- **CP**: Validates before returning config; invalid tenant config → error with details
+- **Env fallback**: ThegentSettings validates at load; schema enforced in both paths
+
+---
+
+## 7. IPC & Transport
+
+### 7.1 Transport Options
+
+| Transport | Latency | Use Case | Fallback |
+|-----------|---------|----------|----------|
+| **Unix socket** | <1ms | Local CLI, MCP | Primary for standalone CP |
+| **HTTP (localhost)** | 1–5ms | Remote CLI, health checks | Alternative |
+| **stdio** | N/A | Embedded mode | When CP in-process |
+| **File-based** | 10–50ms | Fallback, audit | When CP unavailable |
+
+### 7.2 Protocol (JSON-RPC 2.0 or REST)
+
+**JSON-RPC 2.0** (recommended for CLI/MCP):
+```json
+{"jsonrpc":"2.0","id":1,"method":"config/resolve","params":{"tenant_id":"t1","keys":["default_timeout"]}}
+{"jsonrpc":"2.0","id":1,"result":{"default_timeout":600}}
+```
+
+**REST** (for HTTP):
+```
+GET /v1/config?tenant_id=t1&keys=default_timeout,default_timeout_claude
+→ 200 {"default_timeout":600,"default_timeout_claude":600}
+```
+
+### 7.3 Discovery
+
+| Method | Description |
+|--------|-------------|
+| **Socket path** | `~/.thegent/control-plane.sock` or `$XDG_RUNTIME_DIR/thegent/cp.sock` |
+| **Port** | `THGENT_CONTROL_PLANE_PORT` (default 3848) |
+| **Env** | `THGENT_CONTROL_PLANE_URL=http://127.0.0.1:3848` |
+| **process-compose** | Control plane as service; CLI discovers via health endpoint |
+
+---
+
+## 8. CLI Integration
+
+### 8.1 Config Resolution Flow
+
+```
+User runs: thegent run -t 1800 "Fix the bug"
+                    │
+                    ▼
+┌─────────────────────────────────────────────────┐
+│ CLI: Resolve config                             │
+│ 1. THGENT_CONTROL_PLANE_URL set?                 │
+│    → Connect to CP, GET config (tenant from cwd)  │
+│ 2. Else: ThegentSettings() from env (embedded)   │
+└─────────────────────────────────────────────────┘
+                    │
+                    ▼
+effective_timeout = 1800 (request override wins)
+```
+
+### 8.2 Concrete Spawn Flow (with CP)
+
+End-to-end flow when `thegent run` or `plan spawn-next` uses the control plane:
+
+```
+User: thegent run -t 1800 "Fix the bug"
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 1. CLI: Resolve tenant_id (--tenant X | cwd → project | default)         │
+└─────────────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 2. ConfigProvider.resolve(tenant_id, request_overrides={timeout: 1800})   │
+│    - CP mode: POST /v1/config/resolve                                    │
+│    - Env mode: ThegentSettings() + overrides                             │
+└─────────────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 3. Policy (optional): CP evaluates lane, deferral, per-tenant limits     │
+│    - If over limit: queue or reject                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 4. Spawn: run_impl / bg_impl with resolved config                        │
+│    - timeout=1800, agent=..., model=...                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 5. Session registration: RunRegistry writes; CP aggregates (if enabled)  │
+│    - CP session index updated via discovery or push                      │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key point**: Config resolution is **before** spawn; CP does not block the actual agent execution.
+
+### 8.3 New Commands
+
+| Command | Purpose |
+|---------|---------|
+| `thegent control-plane status` | Is CP running? Health |
+| `thegent control-plane start` | Start CP (if standalone) |
+| `thegent control-plane stop` | Stop CP |
+| `thegent config show [--tenant X]` | Show resolved config |
+| `thegent config set <key> <value> [--tenant X]` | Update config (if CP supports mutation) |
+
+### 8.4 Backward Compatibility
+
+- **Embedded mode**: No CP process; `ThegentSettings()` as today. Zero change for single-tenant.
+- **Standalone mode**: Opt-in via `THGENT_CONTROL_PLANE_URL` or `thegent control-plane start`.
+- **Hybrid**: CLI tries CP; on connection failure, falls back to env.
+
+---
+
+## 9. MCP Integration
+
+### 9.1 Tools
+
+| Tool | Purpose |
+|------|---------|
+| `thegent_config_resolve` | Resolve config for current context |
+| `thegent_control_plane_status` | CP health, version |
+| `thegent_tenant_list` | List tenants (admin) |
+| `thegent_config_set` | Set config key (admin, with audit) |
+
+### 9.2 Request Context
+
+MCP requests should carry:
+- `tenant_id` — from workspace, project, or default
+- `session_id` — if acting on behalf of a session
+- `owner` — for session-scoped ops
+
+Control plane uses these for config resolution and authorization.
+
+---
+
+## 10. Multi-Tenant Design
+
+### 10.1 Tenant Identification
+
+| Source | Tenant ID |
+|--------|-----------|
+| **CLI** | `--tenant X`, or from `cwd` → project config, or `default` |
+| **MCP** | Tool param, or from MCP context (workspace path hash) |
+| **Session** | Stored in session meta at spawn |
+
+### 10.2 Isolation
+
+- **Config**: Per-tenant overrides; no cross-tenant leakage
+- **Sessions**: Owner-scoped; tenant_id in index for filtering
+- **Secrets**: Secret references (URI); never in config store
+- **Audit**: All config access logged with tenant_id
+
+### 10.3 Per-Tenant Limits
+
+From CROSS_PLATFORM_MULTI_TENANT:
+```yaml
+coordination:
+  concurrency:
+    per_tenant_max: 20
+    global_max: 100
+```
+
+Control plane enforces these when spawning agents.
+
+---
+
+## 11. Process Architecture
+
+### 11.1 process-compose Integration
+
+**Current** (`process-compose.yaml`):
+- `mcp` — MCP server
+- `proxy` — CLIProxyAPIPlus
+
+**Extended**:
+```yaml
+services:
+  mcp: ...
+  proxy: ...
+  control-plane:
+    command: thegent control-plane serve
+    healthcheck:
+      cmd: curl -s http://127.0.0.1:3848/health
+    depends_on:
+      - mcp  # Optional; CP can run independently
+```
+
+### 11.2 Control Plane Process
+
+```
+thegent control-plane serve [--socket PATH] [--port PORT]
+```
+
+- Binds Unix socket and/or HTTP
+- Loads tenant catalog from `~/.thegent/tenants/` or DB
+- Merges with base config (env as fallback for bootstrap)
+- Serves API
+- Optional: Watch config files for hot reload
+
+### 11.3 Lifecycle
+
+| Event | Action |
+|-------|--------|
+| Start | Load catalog, bind socket, start API |
+| Config file change | Reload (if watch enabled) |
+| SIGTERM | Graceful shutdown; drain connections |
+| Crash | process-compose restarts (if managed) |
+
+---
+
+## 12. Migration & Rollout
+
+### 12.1 Phases
+
+| Phase | Scope | Risk |
+|-------|-------|------|
+| **0** | Design complete; no code change | None |
+| **1** | ConfigProvider abstraction; ThegentSettings implements it | Low |
+| **2** | Control plane serve (read-only); CLI/MCP opt-in connect | Medium |
+| **3** | Tenant catalog; per-tenant config resolution | Medium |
+| **4** | Config mutation API; audit logging | Medium |
+| **5** | process-compose integration; default for multi-tenant | Low |
+
+### 12.2 ConfigProvider Interface
+
+```python
+from typing import Any, Protocol
+
+class ConfigProvider(Protocol):
+    """Resolve config with full override semantics."""
+    def resolve(
+        self,
+        tenant_id: str | None = None,
+        session_id: str | None = None,
+        request_overrides: dict[str, Any] | None = None,
+        keys: list[str] | None = None,  # None = all
+    ) -> dict[str, Any]: ...
+
+    def get_tenant_config(self, tenant_id: str) -> dict[str, Any] | None: ...
+
+class EnvConfigProvider:
+    """Current behavior: read from ThegentSettings (env). Ignores tenant; merges overrides."""
+    def resolve(self, tenant_id=None, session_id=None, request_overrides=None, keys=None):
+        s = ThegentSettings()
+        base = {k: getattr(s, k) for k in (keys or _ALL_CONFIG_KEYS) if hasattr(s, k)}
+        return {**base, **(request_overrides or {})}
+
+class ControlPlaneConfigProvider:
+    """Connect to control plane; full resolution order applied server-side."""
+    def __init__(self, url: str, timeout: float = 2.0): ...
+    def resolve(self, tenant_id=None, session_id=None, request_overrides=None, keys=None):
+        return self._client.post("/v1/config/resolve", json={
+            "tenant_id": tenant_id, "session_id": session_id,
+            "overrides": request_overrides, "keys": keys
+        })
+```
+
+**Resolution order** (applied by CP or EnvProvider): `request_overrides` → `session` → `tenant` → `stamp` → `global`.
+
+### 12.3 Feature Flags
+
+```yaml
+control_plane:
+  enabled: false           # Phase 1: false; Phase 2: opt-in
+  url: null                # When set, use CP for config
+  fallback_to_env: true    # On CP failure, use env
+  tenant_from_cwd: true    # Infer tenant from cwd
+```
+
+---
+
+## 13. Failure Modes & Resilience
+
+| Failure | Impact | Mitigation |
+|---------|--------|------------|
+| CP process down | CLI/MCP cannot get config | Fallback to env; warn user |
+| CP slow | CLI blocks on config | Timeout (e.g. 2s); fallback |
+| CP returns invalid config | Agent misconfigured | Validate on CP side; schema |
+| Network partition | Remote CLI cannot reach CP | Fallback to env; cache last config |
+| Tenant not found | Config resolution fails | Use default tenant or global |
+| Catalog corruption | Wrong tenant config | Checksum; backup; restore |
+
+### 13.1 Circuit Breaker
+
+After N consecutive CP failures, CLI should:
+1. Open circuit; stop trying CP
+2. Use env fallback
+3. After cooldown (e.g. 30s), half-open; try once
+4. On success, close circuit
+
+---
+
+## 14. Security
+
+### 14.1 Threat Model
+
+| Threat | Mitigation |
+|--------|------------|
+| **Unauthorized config access** | Tenant isolation; CP returns only tenant's config |
+| **Config tampering** | Audit log; integrity checks on catalog |
+| **Privilege escalation** | CP runs as same user as CLI; no elevated perms |
+| **Secret leakage** | Secret references (URI) only; never store raw secrets in config |
+| **DoS via config resolution** | Rate limit per client; timeout on resolve |
+
+### 14.2 Authentication
+
+| Transport | Auth Model |
+|-----------|------------|
+| **Unix socket** | File permissions (`chmod 0700`); same UID = trusted. No explicit auth. |
+| **HTTP (localhost)** | Optional: `Authorization: Bearer <token>` or mTLS. Default: trust localhost. |
+| **HTTP (remote)** | Required: API key, JWT, or mTLS. Not in initial scope. |
+
+**Decision**: Unix socket primary = filesystem UID/GID is auth. HTTP localhost = trust by default for dev; production can add token.
+
+### 14.3 Authorization
+
+- **Config resolve**: Any authenticated client can resolve config for tenants they are allowed to access.
+- **Tenant catalog read**: Admin or tenant-scoped.
+- **Config mutation**: Admin only; audit required.
+- **Session index**: Owner-scoped; tenant filter applied.
+
+---
+
+## 15. Observability
+
+### 15.1 Metrics
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `thegent_cp_config_resolves_total` | Counter | Config resolve requests by tenant, status |
+| `thegent_cp_config_resolve_duration_seconds` | Histogram | Latency of config resolution |
+| `thegent_cp_tenants_active` | Gauge | Number of active tenants in catalog |
+| `thegent_cp_sessions_indexed` | Gauge | Sessions in session index |
+| `thegent_cp_fallback_total` | Counter | Fallbacks to env (CP unavailable) |
+
+### 15.2 Tracing (OTel)
+
+- **Span**: `config.resolve` — attributes: `tenant_id`, `session_id`, `keys`, `source` (cp | env)
+- **Span**: `tenant.catalog.get` — attributes: `tenant_id`
+- **Span**: `session.index.query` — attributes: `tenant_id`, `owner`
+
+Config resolution is on the critical path for spawn; tracing helps debug slow or incorrect config.
+
+### 15.3 Logging
+
+- **Structured logs**: JSON; include `tenant_id`, `request_id`, `operation`
+- **Audit**: Config mutations, tenant onboard/offboard
+- **Error**: CP connection failures, validation errors
+
+---
+
+## 16. References & Decision Records
+
+### 16.1 Internal References
+
+| Doc | Purpose |
+|-----|---------|
+| [AGENT_REGISTRY_DESIGN.md](../AGENT_REGISTRY_DESIGN.md) | Session registry, IPC, UX |
+| [AGENT_REGISTRY_RESEARCH.md](../AGENT_REGISTRY_RESEARCH.md) | IPC options, prior art |
+| [research-compute-offload/design.md](../changes/research-compute-offload/design.md) | Offload, control plane mention |
+| [CROSS_PLATFORM_MULTI_TENANT_QUICK_REFERENCE.md](../reference/CROSS_PLATFORM_MULTI_TENANT_QUICK_REFERENCE.md) | Tenant coordination |
+| [GARDENER_ARCHITECTURE.md](../reference/GARDENER_ARCHITECTURE.md) | Gardener loop |
+| [UNIFIED_WORK_STREAM_DESIGN.md](../reference/UNIFIED_WORK_STREAM_DESIGN.md) | Work stream |
+
+### 16.2 External References
+
+| Source | URL |
+|--------|-----|
+| Microsoft: Multitenant Control Planes | https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/control-planes |
+| Microsoft: Architectural Approaches | https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/approaches/control-planes |
+| Kong: Multi-Tenancy | https://konghq.com/blog/enterprise/multi-tenancy |
+| Wikipedia: Control plane | https://en.wikipedia.org/wiki/Control_plane |
+
+### 16.3 Decision Records
+
+| ID | Decision | Rationale |
+|----|----------|-----------|
+| DR-CP-1 | ConfigProvider abstraction | Allows embedded (env) and standalone (CP) without code paths |
+| DR-CP-2 | Unix socket primary for local | Lowest latency; no port conflict |
+| DR-CP-3 | Fallback to env on CP failure | Backward compat; no hard dependency |
+| DR-CP-4 | Tenant from cwd by default | Pragmatic; project dir = tenant for dev |
+| DR-CP-5 | process-compose for CP lifecycle | Aligns with MCP+proxy; single orchestration |
+| DR-CP-6 | JSON-RPC 2.0 for IPC | MCP already uses JSON-RPC; consistency |
+| DR-CP-7 | Session index in CP | Agent Registry Session Registry = CP subsystem |
+| DR-CP-8 | RunRegistry = write owner; CP = aggregator | CP reads RunRegistry; no duplicate write path |
+| DR-CP-9 | Unix socket auth = filesystem UID | No explicit auth for local; HTTP localhost trust default |
+
+---
+
+## Appendix A: Implementation Checklist
+
+> **Detailed implementation plan**: [CONTROL_PLANE_IMPLEMENTATION_PLAN.md](./CONTROL_PLANE_IMPLEMENTATION_PLAN.md)
+
+- [ ] ConfigProvider protocol + EnvConfigProvider (full resolution semantics)
+- [ ] Control plane serve command (socket + HTTP)
+- [ ] Config resolve API (`POST /v1/config/resolve`)
+- [ ] Config schema validation (JSON Schema)
+- [ ] CLI: connect to CP when THGENT_CONTROL_PLANE_URL set
+- [ ] CLI: fallback to env on failure (circuit breaker)
+- [ ] Tenant catalog (file-based: `~/.thegent/tenants/*.yaml`)
+- [ ] process-compose: add control-plane service
+- [ ] MCP: thegent_config_resolve tool
+- [ ] Audit logging for config access
+- [ ] OTel spans for config.resolve, tenant.catalog.get
+- [ ] Metrics: config_resolves_total, resolve_duration_seconds
+- [ ] Docs: CONTROL_PLANE_QUICK_START.md
+
+---
+
+## Appendix B: Open Questions (Resolved)
+
+| Question | Resolution |
+|----------|------------|
+| **Persistence** | Phase 1–3: File-based (`~/.thegent/tenants/*.yaml`). Phase 4+: SQLite optional for audit, scale. External DB = future. |
+| **Auth** | Unix socket: filesystem UID/GID. HTTP localhost: trust by default; token optional for production. See §14.2. |
+| **Federation** | Out of scope initially. Global vs Stamp CP noted in §2.1. Sync protocol in P2. |
+| **Observability** | Resolved: §15 defines metrics, OTel spans, structured logging. |
+
+---
+
+*Document generated with heavy DDG + local research; harmonized with existing thegent plans.*

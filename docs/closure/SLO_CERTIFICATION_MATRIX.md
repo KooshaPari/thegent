@@ -38,3 +38,11 @@
 | Reliability | Approved | 2026-02-15 | All stress and canary runs within threshold |
 | Governance | Approved | 2026-02-15 | Policy controls remained fail-closed and traceable |
 | Security | Approved | 2026-02-15 | Rollback and integrity tests recorded without exceptions |
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [SLO_TARGETS.md](../reference/SLO_TARGETS.md) — SLO targets reference

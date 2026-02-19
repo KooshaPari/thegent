@@ -11,14 +11,14 @@ from tests.conftest_factories import make_run_result
 from thegent.agents.codex_proxy import (
     _PROXY_MODEL,
     CodexProxyRunner,
-    _strip_ansi,
 )
+from thegent.utils import strip_ansi
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 # ---------------------------------------------------------------------------
-# _strip_ansi helper
+# strip_ansi helper
 # ---------------------------------------------------------------------------
 
 
@@ -27,12 +27,12 @@ class TestStripAnsi:
     def test_strips_color_codes(self) -> None:
         # @trace FR-AGT-004
         raw = "\x1b[31mERROR\x1b[0m: something went wrong"
-        assert _strip_ansi(raw) == "ERROR: something went wrong"
+        assert strip_ansi(raw) == "ERROR: something went wrong"
 
     def test_passthrough_plain_text(self) -> None:
         # @trace FR-AGT-004
         text = "no ansi here"
-        assert _strip_ansi(text) == "no ansi here"
+        assert strip_ansi(text) == "no ansi here"
 
 
 # ---------------------------------------------------------------------------

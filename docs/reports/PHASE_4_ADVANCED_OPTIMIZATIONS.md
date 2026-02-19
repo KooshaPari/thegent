@@ -411,7 +411,7 @@ shopt -s extglob 2>/dev/null || true  # Graceful if unavailable
 - **macOS**: Bash 5.3 (via Homebrew) - ✓ Full support
 - **Linux**: Bash 4.3+ standard - ✓ Full support
 - **Windows**: WSL2 with Bash 5.x - ✓ Full support
-- **Legacy systems**: Bash <4.3 - ⚠️ Features disabled (no errors)
+- **Legacy systems**: Bash <4.3 - ⚠ Features disabled (no errors)
 
 ---
 

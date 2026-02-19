@@ -175,3 +175,11 @@
 - `artifacts/phase12/replay_safety.ndjson`
 - `artifacts/phase12/evidence_graph.ndjson`
 - `artifacts/phase12/release_pack_summary.ndjson`
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

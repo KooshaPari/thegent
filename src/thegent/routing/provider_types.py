@@ -7,17 +7,15 @@ from typing import Final
 class ExecutionPath(Enum):
     """Execution path for LLM provider."""
 
-    NATIVE_CLI = auto()  # codex, claude (interactive/agent harness)
-    LITELLM_API = auto()  # minimax, nim, glm, kilo (API keys)
+    NATIVE_CLI = auto()  # codex, claude, opencode (interactive/agent harness)
+    LITELLM_API = auto()  # minimax, nim, glm, kilo, zen (API keys)
     CLIPROXY_API = auto()  # LOGIN-auth providers via CLIProxyAPIPlus
 
 
 # Immutable provider classifications
-NATIVE_CLI_PROVIDERS: Final[frozenset[str]] = frozenset({"codex", "claude"})
-API_KEY_PROVIDERS: Final[frozenset[str]] = frozenset({"minimax", "nim", "glm", "kilo"})
-LOGIN_AUTH_PROVIDERS: Final[frozenset[str]] = frozenset(
-    {"antigravity", "cursor", "kiro", "gemini", "copilot"}
-)
+NATIVE_CLI_PROVIDERS: Final[frozenset[str]] = frozenset({"codex", "claude", "opencode"})
+API_KEY_PROVIDERS: Final[frozenset[str]] = frozenset({"minimax", "nim", "glm", "kilo", "zen"})
+LOGIN_AUTH_PROVIDERS: Final[frozenset[str]] = frozenset({"antigravity", "cursor", "kiro", "gemini", "copilot"})
 
 
 def get_execution_path(provider: str) -> ExecutionPath:

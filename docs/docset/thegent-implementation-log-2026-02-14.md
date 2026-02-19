@@ -3386,3 +3386,11 @@ This chunk tightens deterministic parity across all three observation layers: di
     - Added deterministic policy-signature assertions for disabled trend modes (`--trend-samples 1` and `--trend-samples 0`) including disabled health state and policy fields.
 
 This chunk ensures policy explainability is present even when trend history is effectively disabled, which prevents silent observability regressions in non-trending modes.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

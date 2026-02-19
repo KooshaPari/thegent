@@ -168,3 +168,11 @@ Cross transfer:
 - Current plan quality: high.
 - Cross-analysis verdict: strong foundation with clear next leverage.
 - Most valuable remaining investment: structured-output unification + parser/fallback formalization + simulation-backed planning confidence.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

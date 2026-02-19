@@ -1,0 +1,17 @@
+{
+  "pid": 39794,
+  "ppid": 39794,
+  "agent": "codex",
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "discovered_at": "2026-02-18T07:59:04.188067+00:00",
+  "last_seen_at": "2026-02-18T08:33:14.322366+00:00",
+  "command": "node",
+  "args_preview": "node /opt/homebrew/bin/codex flash",
+  "tmux_pane": null,
+  "session_id": null,
+  "token_usage": null,
+  "mcp_errors": null,
+  "capabilities": [],
+  "trust_score": 0.5,
+  "reputation": 0
+}

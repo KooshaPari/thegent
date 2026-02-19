@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-playbook-contract-gate.stub.sh (N14)
 # Validates playbook JSON (brownfield/greenfield) exists and has valid structure.
 # Install via: make install-governance-hooks

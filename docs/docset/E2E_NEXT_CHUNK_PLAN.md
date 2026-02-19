@@ -149,3 +149,11 @@
 - Tests are read-only and deterministic; no agents, no network.
 - Use `@pytest.mark.e2e` on all classes.
 - Prefer `assert result.exit_code == 0` or expected nonzero; avoid brittle output parsing where possible.
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [07-TEST-STRATEGY.md](../plans/07-TEST-STRATEGY.md) — test strategy

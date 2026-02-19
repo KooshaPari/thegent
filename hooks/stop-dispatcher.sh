@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # Stop Dispatcher -- single-process orchestrator for all Stop hooks.
 # Reads stdin (Claude Code's JSON payload) once and replays it to each
 # hook via file redirect, then runs all Stop hooks in parallel.
@@ -31,21 +31,64 @@ else
   _dispatch_git_dir="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 fi
 
-# Ensure PROJECT_DIR is always set for child hooks (prevents /.claude/verification path bugs)
-# Fallback chain: extracted dir -> git root -> BASH_SOURCE path -> HOME
-if [[ -z "$_dispatch_git_dir" || "$_dispatch_git_dir" == "/" ]]; then
-  if [[ "${BASH_SOURCE[0]}" == *".claude/hooks"* ]]; then
-    _dispatch_git_dir="${BASH_SOURCE[0]%/.claude/hooks/*}"
-  fi
-fi
-if [[ -z "$_dispatch_git_dir" || "$_dispatch_git_dir" == "/" ]]; then
-  _dispatch_git_dir="${HOME:-$(pwd)}"
-fi
+# Ensure PROJECT_DIR is always set for child hooks
 export PROJECT_DIR="$_dispatch_git_dir"
 export VERIFY_DIR="$PROJECT_DIR/.claude/verification"
 export QA_STATE="$PROJECT_DIR/.claude/qa-state.json"
 
-# Skip hooks are now loaded from common.sh via _hook_load_skip_hooks
+# All Stop hooks
+STOP_HOOKS=(
+  quality-gate.sh
+  security-pipeline.sh
+  complexity-ratchet.sh
+  spec-verifier.sh
+  test-maturity.sh
+  task-completion-verifier.sh
+  stop-reconcile.sh
+  agileplus-cycle.sh
+)
 
+_max_rc=0
+for hook in "${STOP_HOOKS[@]}"; do
+  hook_path="${HOOKS_DIR}/${hook}"
+  [[ -f "$hook_path" ]] || continue
+  
+  (
+    # Run hook with timeout if available
+    if command -v timeout >/dev/null 2>&1; then
+      timeout "$HOOK_TIMEOUT" bash "$hook_path" < "$_dispatch_tmpdir/input.json" \
+        > "$_dispatch_tmpdir/${hook}.out" 2>"$_dispatch_tmpdir/${hook}.err"
+    else
+      bash "$hook_path" < "$_dispatch_tmpdir/input.json" \
+        > "$_dispatch_tmpdir/${hook}.out" 2>"$_dispatch_tmpdir/${hook}.err"
+    fi
+    echo $? > "$_dispatch_tmpdir/${hook}.rc"
+  ) &
+done
+
+wait
+
+# Collect output and determine max exit code
+for hook in "${STOP_HOOKS[@]}"; do
+  [[ -f "$_dispatch_tmpdir/${hook}.rc" ]] || continue
+  rc=$(cat "$_dispatch_tmpdir/${hook}.rc")
+  [[ "$rc" -gt $_max_rc ]] && _max_rc=$rc
+  
+  # Print stdout if not empty
+  [[ -s "$_dispatch_tmpdir/${hook}.out" ]] && cat "$_dispatch_tmpdir/${hook}.out"
+  # Print stderr if not empty
+  [[ -s "$_dispatch_tmpdir/${hook}.err" ]] && cat "$_dispatch_tmpdir/${hook}.err" >&2
+done
+
+NOTIFIER="${HOOKS_DIR}/notify-agent-event.sh"
+if [[ -x "$NOTIFIER" ]]; then
+  if [[ "$_max_rc" -eq 0 ]]; then
+    "$NOTIFIER" --event "stop" --severity "info" --title "Stop Complete" \
+      --message "legacy stop-dispatcher completed successfully" >/dev/null 2>&1 || true
+  else
+    "$NOTIFIER" --event "stop" --severity "error" --title "Stop Issues" \
+      --message "legacy stop-dispatcher returned rc=${_max_rc}" >/dev/null 2>&1 || true
+  fi
+fi
 
 exit $_max_rc

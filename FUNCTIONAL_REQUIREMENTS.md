@@ -609,6 +609,52 @@ The system SHALL provide `extract_condensed()` as the primary extraction entry p
 
 ---
 
+## FR-FED: Policy Federation
+
+### FR-FED-001: Hierarchical Policy Namespace Model
+
+The system SHALL support a three-level hierarchical namespace (`org.project.environment`) for policy isolation and inheritance, where policies at higher levels (e.g., org) apply to lower levels (e.g., project, environment) unless explicitly overridden.
+
+**Traces to:** WP-13001
+**Priority:** P1
+
+### FR-FED-002: Federated Policy Resolution
+
+The system SHALL resolve policies by traversing the namespace hierarchy from most specific to most general (org.project.env -> org.project.default -> org.default.default), loading the first matching JSON policy file found in the designated policy directory structure.
+
+**Traces to:** WP-13001
+**Priority:** P1
+
+### FR-FED-003: Jurisdiction Profile Mapping and Overlay
+
+The system SHALL map geographical regions to legal/audit jurisdiction profiles (e.g., EU-AI-ACT, US-SEC) and overlay profile-specific constraints (e.g., human-in-loop requirements, retention periods) onto resolved policies.
+
+**Traces to:** WP-13002
+**Priority:** P1
+
+### FR-FED-004: Cross-Namespace Consent Relay
+
+The system SHALL support relaying approval consent between namespaces for multi-tenant workflows, generating a traceable relay artifact with provenance signatures.
+
+**Traces to:** WP-13003
+**Priority P2
+
+### FR-FED-005: Policy Conflict Arbitration
+
+The system SHALL arbitrate conflicts between multiple federated policies using a "most restrictive wins" strategy for critical constraints like risk thresholds and human-in-loop requirements.
+
+**Traces to:** WP-13004
+**Priority:** P1
+
+### FR-FED-006: Federation Health and Drift Observability
+
+The system SHALL provide observability into the state of the policy federation, including namespace discovery, sync status, and drift detection across the mesh.
+
+**Traces to:** WP-13005
+**Priority:** P2
+
+---
+
 ## FR-EXIT: Exit Codes
 
 ### FR-EXIT-001: Standardized Exit Codes with Human-Readable Messages
@@ -616,4 +662,43 @@ The system SHALL provide `extract_condensed()` as the primary extraction entry p
 The system SHALL define standardized exit codes (EXIT_TIMEOUT=124 for timeouts, EXIT_HEALTH_GATE_FAILED=2 for governance gate failures) with human-readable message descriptions accessible via `get_exit_message()`, returning None for unknown codes.
 
 **Traces to:** E7.6
+**Priority:** P2
+
+---
+
+## FR-HAX: Harmonious Agent Experience (Unified)
+
+### FR-HAX-001: Unified Prompt Queue (UPQ)
+
+The system SHALL maintain a single, project-aware prompt queue in `.thegent/prompt_queue.jsonl` (fallback to `~/.thegent/` if not in project), storing tasks with timestamp, prompt, project path, and status (pending/claimed/done).
+
+**Traces to:** HAX-01
+**Priority:** P1
+
+### FR-HAX-002: Cross-Platform Rules Synchronization
+
+The system SHALL provide a `thegent rules sync` command that reads canonical rules from `.thegent/rules/` and synchronizes them to `.cursor/rules/` (.mdc), `CLAUDE.md`, and `.codex/skills/` (SKILL.md).
+
+**Traces to:** HAX-02
+**Priority:** P1
+
+### FR-HAX-003: Pareto-Optimal Model Routing via LiteLLM
+
+The system SHALL integrate `litellm` as the routing backend, selecting models from the catalog based on a `TaskRouter` that maps task category (FAST, COMPLEX, etc.) to the Pareto-optimal route (cheapest/fastest/highest quality).
+
+**Traces to:** HAX-03
+**Priority:** P1
+
+### FR-HAX-004: Universal Memory Provider (Supermemory.ai)
+
+The system SHALL implement a `SupermemoryProvider` that integrates with Supermemory.ai for L3 (Long-term Graph) and L4 (Archival Document) memory, replacing local file-based context stores.
+
+**Traces to:** HAX-04
+**Priority:** P1
+
+### FR-HAX-005: Automated Documentation Gardening (Gardener)
+
+The system SHALL provide a `Gardener` agent that synthesizes recent audit logs and memory fragments into updates for `CLAUDE.md`, `ADR.md`, `PRD.md`, and `PLAN.md`.
+
+**Traces to:** HAX-05
 **Priority:** P2

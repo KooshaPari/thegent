@@ -1,13 +1,10 @@
 """WP-5007: Recovery under sustained load drills test suite."""
 
-import asyncio
-import time
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from typer.testing import CliRunner
 
-from thegent.execution import LoadClassifier
 from thegent.main import app
 
 runner = CliRunner()

@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_5d6520f9",
+    "Enhance thegent-hooks git subcommand: Add TTL caching for read-only git commands (status, diff, rev-parse), implement index.lock detection with timeout and stale lock handling, add agent passthrough for codex/copilot/dex/claude/cursor. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a76.3. Update crates/thegent-hooks/src/main.rs cmd_git() function. Test with: thegent-hooks git status",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 55112,
+  "launcher_ppid": 51483,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:55112",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_55112/20260219T040817Z-copilot-p55112-c197701e.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_55112/20260219T040817Z-copilot-p55112-c197701e.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_55112/20260219T040817Z-copilot-p55112-c197701e.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_55112/20260219T040817Z-copilot-p55112-c197701e.stdout.log"
+  },
+  "pid": 66400,
+  "prompt": "Enhance thegent-hooks git subcommand: Add TTL caching for read-only git commands (status, diff, rev-parse), implement index.lock detection with timeout and stale lock handling, add agent passthrough for codex/copilot/dex/claude/cursor. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a76.3. Update crates/thegent-hooks/src/main.rs cmd_git() function. Test with: thegent-hooks git status",
+  "session_id": "20260219T040817Z-copilot-p55112-c197701e",
+  "started_at_utc": "2026-02-19T04:08:18.028638+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

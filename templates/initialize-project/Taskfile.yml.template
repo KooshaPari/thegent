@@ -58,9 +58,16 @@ tasks:
   # -- Type Checking --
 
   typecheck:
-    desc: "Run type checker"
+    desc: "Fast type checking (ty + zuban)"
     cmds:
       - uv run ty check src/
+      - uv run zuban check src/ --disable-error-code call-overload --disable-error-code unreachable --disable-error-code assignment --disable-error-code var-annotated --disable-error-code override --disable-error-code return-value --disable-error-code arg-type --disable-error-code union-attr --disable-error-code dict-item --disable-error-code misc --disable-error-code no-redef --disable-error-code call-arg --disable-error-code operator
+
+  typecheck:strict:
+    desc: "Strict type checking (basedpyright + mypy) - recommended for CI/commit"
+    cmds:
+      - uv run basedpyright src/
+      - uv run mypy src/
 
   # -- Formatting --
 

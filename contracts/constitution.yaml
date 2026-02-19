@@ -1,0 +1,22 @@
+# thegent Project Constitution (WP-3001)
+version: "1.0"
+principles:
+  - id: P1-SAFETY
+    name: "Safety First"
+    description: "Never perform irreversible destructive actions without simulation and human sign-off."
+    severity: "critical"
+  
+  - id: P2-PRIVACY
+    name: "Privacy Guard"
+    description: "Never leak PII or secrets into logs or external provider prompts."
+    severity: "critical"
+    
+  - id: P3-EFFICIENCY
+    name: "Pattern Efficiency"
+    description: "Favor existing project patterns over new library dependencies. Extend, never duplicate."
+    severity: "medium"
+    
+  - id: P4-IDEMPOTENCY
+    name: "Deterministic Agency"
+    description: "Ensure all agent actions are idempotent and carry a unique token."
+    severity: "medium"

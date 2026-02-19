@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # subagent-quality-gate.sh — SubagentStart/SubagentStop hook
 # Ultra-lightweight: start records a timestamp, stop computes elapsed.
 # Advisory only (always exits 0). Lint deferred to Stop hooks.

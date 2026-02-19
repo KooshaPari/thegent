@@ -6,11 +6,13 @@ See docs/governance/NEMO_GUARDRAILS_DESIGN.md.
 
 from __future__ import annotations
 
-import contextlib
-import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from thegent.config import ThegentSettings
 
 
 @dataclass
@@ -95,31 +97,16 @@ class InputGuardrails:
         return GuardrailResult(passed=True)
 
 
-def _guardrails_from_env() -> InputGuardrails:
-    """Build InputGuardrails from env vars."""
-    max_chars = 65536
-    raw = os.environ.get("THGENT_PROMPT_MAX_CHARS", "").strip()
-    if raw:
-        with contextlib.suppress(ValueError):
-            max_chars = int(raw)
+def guardrails_from_settings(settings: ThegentSettings | None = None) -> InputGuardrails:
+    """Build InputGuardrails from ThegentSettings."""
+    from thegent.config import ThegentSettings
 
-    blocklist: list[str] = []
-    raw = os.environ.get("THGENT_PROMPT_BLOCKLIST_PATTERNS", "").strip()
-    if raw:
-        blocklist = [p.strip() for p in raw.split(",") if p.strip()]
-
-    allowlist: list[str] = []
-    raw = os.environ.get("THGENT_AGENT_ALLOWLIST", "").strip()
-    if raw:
-        allowlist = [a.strip() for a in raw.split(",") if a.strip()]
-
-    cwd_prefixes: list[str] = []
-    raw = os.environ.get("THGENT_CWD_ALLOWED_PREFIXES", "").strip()
-    if raw:
-        cwd_prefixes = [p.strip() for p in raw.split(",") if p.strip()]
-
+    s = settings or ThegentSettings()
+    blocklist = [p.strip() for p in s.prompt_blocklist_patterns.split(",") if p.strip()]
+    allowlist = [a.strip() for a in s.agent_allowlist.split(",") if a.strip()]
+    cwd_prefixes = [p.strip() for p in s.cwd_allowed_prefixes.split(",") if p.strip()]
     return InputGuardrails(
-        prompt_max_chars=max_chars,
+        prompt_max_chars=s.prompt_max_chars,
         prompt_blocklist_patterns=blocklist,
         agent_allowlist=allowlist,
         cwd_allowed_prefixes=cwd_prefixes,

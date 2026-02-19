@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_9437495a",
+    "Enhance thegent-hooks config-get subcommand: Add YAML support (serde_yaml), parse hook-config.yaml, support qa-local.json. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a76.5. Update crates/thegent-hooks/src/main.rs cmd_config_get() function.",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 44428,
+  "launcher_ppid": 35619,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:44428",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_44428/20260219T061311Z-copilot-p44428-05d44cb6.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_44428/20260219T061311Z-copilot-p44428-05d44cb6.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_44428/20260219T061311Z-copilot-p44428-05d44cb6.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_44428/20260219T061311Z-copilot-p44428-05d44cb6.stdout.log"
+  },
+  "pid": 74932,
+  "prompt": "Enhance thegent-hooks config-get subcommand: Add YAML support (serde_yaml), parse hook-config.yaml, support qa-local.json. Reference: docs/research/HOOK_RUST_MIGRATION_COMPLETE.md \u00a76.5. Update crates/thegent-hooks/src/main.rs cmd_config_get() function.",
+  "session_id": "20260219T061311Z-copilot-p44428-05d44cb6",
+  "started_at_utc": "2026-02-19T06:13:13.082921+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

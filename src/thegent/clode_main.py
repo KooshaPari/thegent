@@ -1,7 +1,6 @@
 """Claude-backed interactive agent CLI (clode)."""
 
 import contextlib
-import json
 import os
 import shutil
 import subprocess
@@ -11,27 +10,36 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import typer
-from rich.console import Console
+
+from thegent.agents.cliproxy_manager import fetch_provider_metrics
+from thegent.infra.power import wrap_with_caffeinate
 
 # Import thegent CLI commands to reuse them.
 # Lazy imports used in commands to speed up CLI startup.
 from thegent.cli import bg_cmd, history_cmd, inspect_cmd, logs_cmd, ps_cmd, run_cmd, status_cmd, stop_cmd, wait_cmd
-from thegent.agents.cliproxy_manager import fetch_provider_metrics
+
+
 def _is_triggered_by_agent_process():
     from thegent.discovery import _is_triggered_by_agent_process as impl
+
     return impl()
+
 
 # Lazy imports for better startup performance
 def _get_settings():
     from thegent.config import ThegentSettings
+
     return ThegentSettings()
+
 
 class LazyConsole:
     def __getattr__(self, name):
         from rich.console import Console
+
         global console
         console = Console()
         return getattr(console, name)
+
 
 console = LazyConsole()
 app = typer.Typer(help="Claude-backed interactive agent CLI (clode)")
@@ -46,10 +54,12 @@ _GLM_OFFER_COST: dict[str, float] = {
 
 # Model-first aliases: pick model → auto-balance across providers
 _MODEL_ALIAS: dict[str, str] = {
+    "comp": "composer-1",
     "composer": "composer-1.5",
     "haiku": "claude-haiku-4.5",
     "opus": "claude-opus-4.6",
-    "sonnet": "anthropic/claude-sonnet-4",
+    "opus1m": "claude-opus-4.6-1m",
+    "sonnet": "anthropic/claude-sonnet-4-20250514",
     "glm": "glm-5",
     "glm5": "glm-5",
     "max": "minimax-m2.5",
@@ -59,12 +69,13 @@ _MODEL_ALIAS: dict[str, str] = {
     "mini": "gpt-5-mini",
 }
 _MODEL_PROVIDER_SETS: dict[str, tuple[str, ...]] = {
+    "composer-1": ("cursor",),
     "composer-1.5": ("cursor",),
     "glm-5": ("glm", "kilo", "nim", "minimax"),
     "minimax-m2.5": ("minimax", "kilo"),
     "claude-haiku-4.5": ("claude", "antigravity", "codex", "kiro"),
     "claude-opus-4.6": ("claude", "antigravity", "kiro"),
-    "anthropic/claude-sonnet-4": ("openrouter",),
+    "anthropic/claude-sonnet-4-20250514": ("openrouter",),
     "step-3.5-flash": ("nim",),
     "gemini-3-flash": ("gemini",),
     "gpt-5-mini": ("copilot",),
@@ -91,9 +102,11 @@ def default_clode(ctx: typer.Context) -> None:
 def _iter_install_targets() -> Iterator[tuple[str, str, str]]:
     """Return shim targets and their backing commands."""
     yield ("clode", "thegent clode", "clode")
+    yield ("clodecomp", "thegent clode comp", "clodecomp")
     yield ("clodecomposer", "thegent clode composer", "clodecomposer")
     yield ("clodehaiku", "thegent clode haiku", "clodehaiku")
     yield ("clodeopus", "thegent clode opus", "clodeopus")
+    yield ("clodeopus1m", "thegent clode opus1m", "clodeopus1m")
     yield ("clodesonnet", "thegent clode sonnet", "clodesonnet")
     yield ("clodeglm", "thegent clode glm", "clodeglm")
     yield ("clodemax", "thegent clode max", "clodemax")
@@ -165,21 +178,27 @@ def _write_wrapper(path: Path, command: str, force: bool = False) -> bool:
         return False
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f'#!/usr/bin/env sh\nset -e\nexec {command} "$@"\n')
+    path.write_text(f'#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="claude"\nexec {command} "$@"\n')
     path.chmod(0o755)
     return True
 
 
+# Minimax clode guidance: only when model-router-harness pairing aligns (clode + minimax/kilo + MiniMax-M2.5)
+MINIMAX_CLODE_GUIDANCE_URL = "https://platform.minimax.io/docs/coding-plan/claude-code"
+
 # Model -> providers. Align with catalog and CLIProxyAPIPlus.
 # NIM (NVIDIA NIM) provides glm-5 and step-3.5-flash, NOT minimax.
 _MODEL_PROVIDERS: dict[str, tuple[str, ...]] = {
+    "composer-1": ("cursor",),
+    "composer-1.5": ("cursor",),
     "minimax-m2.5": ("minimax", "kilo"),
     "deepseek-v3.2": ("kilo", "nim"),
     "glm-5": ("glm", "kilo", "nim"),
     "step-3.5-flash": ("nim",),
     "claude-haiku-4.5": ("claude", "antigravity", "codex", "kiro"),
     "claude-opus-4.6": ("claude", "antigravity", "kiro"),
-    "anthropic/claude-sonnet-4": ("openrouter",),
+    "claude-opus-4.6-1m": ("claude", "antigravity", "kiro"),
+    "anthropic/claude-sonnet-4-20250514": ("openrouter",),
 }
 
 
@@ -201,7 +220,7 @@ _CLODE_PROVIDER_MODEL: dict[str, str] = {
     "minimax": "MiniMax-M2.5",
     "kilo": "MiniMax-M2.5",
     "glm": "glm-5",
-    "openrouter": "anthropic/claude-sonnet-4",
+    "openrouter": "anthropic/claude-sonnet-4-20250514",
     "copilot": "gpt-5-mini",
     "gemini": "gemini-3-flash",
 }
@@ -215,10 +234,8 @@ def _ensure_claude_config_isolation(config_dir: Path) -> None:
     # 1. Onboarding state (~/.claude.json)
     target_json = config_dir / ".claude.json"
     if global_json.exists() and not target_json.exists():
-        try:
+        with contextlib.suppress(OSError):
             target_json.symlink_to(global_json)
-        except OSError:
-            pass
 
     if global_dir.exists():
         # 2. Settings (Copy to isolate auth, but keep theme/permissions)
@@ -228,6 +245,7 @@ def _ensure_claude_config_isolation(config_dir: Path) -> None:
             if global_settings.exists():
                 try:
                     import json
+
                     data = json.loads(global_settings.read_text())
                     target_settings.write_text(json.dumps(data, indent=2))
                 except Exception:
@@ -248,28 +266,27 @@ def _ensure_claude_config_isolation(config_dir: Path) -> None:
                         target.unlink()
                 except OSError:
                     pass
-            
+
             if not target.exists():
-                try:
+                with contextlib.suppress(OSError):
                     target.symlink_to(item, target_is_directory=item.is_dir())
-                except OSError:
-                    pass
 
 
 def _get_claude_env(provider: str, model_override: str | None = None) -> dict[str, str]:
     """Get environment variables for Claude Code pointing to thegent proxy.
 
-    Aligns with Minimax docs (platform.minimax.io/docs/coding-plan/claude-code) and
+    Aligns with Minimax clode guidance (MINIMAX_CLODE_GUIDANCE_URL) and
     z.ai docs (docs.z.ai/devpack/tool/claude): use provider-native model names
     (MiniMax-M2.5, glm-5) so the model "turns into" the provider correctly.
     No Claude ID mapping needed.
     """
-    settings = ThegentSettings()
-    
+    settings = _get_settings()
+
     # WP-Y15: Ensure proxy is running (adapter optional for clode but good for consistency)
     from thegent.agents.cliproxy_manager import ensure_proxy_running
+
     ensure_proxy_running(settings)
-    
+
     env = os.environ.copy()
     base = f"http://{settings.mcp_host}:{settings.cliproxy_port}"
     env["ANTHROPIC_BASE_URL"] = base
@@ -291,7 +308,7 @@ def _get_claude_env(provider: str, model_override: str | None = None) -> dict[st
     env["ANTHROPIC_SMALL_FAST_MODEL"] = model
     env["CLAUDE_MODEL"] = model
     env["API_TIMEOUT_MS"] = "300000"
-    if provider == "glm" or os.environ.get("THGENT_SITBACK") == "1":
+    if provider == "glm" or settings.sitback:
         env["THGENT_ROUTING"] = "round_robin"
     env["PATH"] = os.environ.get("PATH", "")
     return env
@@ -372,6 +389,7 @@ def _run_claude_print(
     model_override: str | None = None,
 ) -> None:
     """Run Claude Code in headless mode (-p/--print)."""
+    _ensure_provider_configured(provider)
     env = _get_claude_env(provider, model_override=model_override)
     _ensure_claude_config_isolation(Path(env["CLAUDE_CONFIG_DIR"]))
 
@@ -386,8 +404,52 @@ def _run_claude_print(
 
     if cd:
         os.chdir(cd)
+    
+    # Wrap with caffeinate to prevent sleep on macOS
+    cmd = wrap_with_caffeinate(cmd, "claude")
+
     console.print(f"[bold green]Claude print (headless) via {provider}...[/bold green]")
     os.execvpe(cmd[0], cmd, env)
+
+
+def _ensure_provider_configured(provider: str) -> None:
+    """Check if provider is configured in cliproxy; offer to run setup if not."""
+    settings = _get_settings()
+    config_path = settings.cliproxy_config_path.expanduser().resolve()
+    if not config_path.exists():
+        return
+    import yaml
+
+    try:
+        config = yaml.safe_load(config_path.read_text())
+        if not isinstance(config, dict):
+            return
+        from thegent.agents.cliproxy_manager import _LOGIN_FLAGS, _has_provider_credentials
+
+        if _has_provider_credentials(config, provider) or provider in _LOGIN_FLAGS:
+            return
+        console.print(f"[yellow]Warning: Provider '{provider}' may not be configured in cliproxy.[/yellow]")
+        if sys.stdin.isatty():
+            try:
+                resp = input("  Run setup now? [Y/n]: ").strip().lower()
+                if resp in ("", "y", "yes"):
+                    subprocess.run(
+                        [sys.executable, "-m", "thegent.main", "cliproxy", "login", provider],
+                        check=False,
+                    )
+                    config = yaml.safe_load(config_path.read_text()) if config_path.exists() else {}
+                    if not isinstance(config, dict) or not (
+                        _has_provider_credentials(config, provider) or provider in _LOGIN_FLAGS
+                    ):
+                        console.print(f"[dim]Run manually: thegent cliproxy login {provider}[/dim]\n")
+                else:
+                    console.print(f"[dim]Run manually: thegent cliproxy login {provider}[/dim]\n")
+            except (EOFError, KeyboardInterrupt):
+                console.print(f"[dim]Run manually: thegent cliproxy login {provider}[/dim]\n")
+        else:
+            console.print(f"[dim]Run: thegent cliproxy login {provider}[/dim]\n")
+    except Exception:
+        pass
 
 
 def _run_claude_interactive(
@@ -396,30 +458,19 @@ def _run_claude_interactive(
     model_override: str | None = None,
 ) -> None:
     """Start an interactive Claude Code session."""
-    # Pre-flight: check if provider is configured in cliproxy
-    settings = ThegentSettings()
-    config_path = settings.cliproxy_config_path.expanduser().resolve()
-    if config_path.exists():
-        import yaml
-        try:
-            config = yaml.safe_load(config_path.read_text())
-            if isinstance(config, dict):
-                from thegent.agents.cliproxy_manager import _has_provider_credentials, _LOGIN_FLAGS
-                is_configured = _has_provider_credentials(config, provider) or provider in _LOGIN_FLAGS
-                if not is_configured:
-                    console.print(f"[yellow]Warning: Provider '{provider}' may not be configured in cliproxy.[/yellow]")
-                    console.print(f"[dim]Run: thegent cliproxy login {provider}[/dim]\n")
-        except Exception:
-            pass
-
+    _ensure_provider_configured(provider)
     env = _get_claude_env(provider, model_override=model_override)
-    
+
     _ensure_claude_config_isolation(Path(env["CLAUDE_CONFIG_DIR"]))
 
     claude_path = _ensure_claude_installed()
 
     console.print(f"[bold green]Starting interactive Claude session via {provider} proxy...[/bold green]")
     console.print(f"[dim]Proxy URL: {env['ANTHROPIC_BASE_URL']}[/dim]")
+    # Minimax guidance only when model-router-harness pairing aligns (clode + minimax/kilo + MiniMax-M2.5)
+    model = _CLODE_PROVIDER_MODEL.get(provider) or model_override
+    if provider in ("minimax", "kilo") and model and "minimax" in model.lower():
+        console.print(f"[dim]Minimax clode guidance: {MINIMAX_CLODE_GUIDANCE_URL}[/dim]")
     # WP-Y11: Human-driven runs get bypass by default; agent-triggered runs never do
     cmd = [claude_path]
     if not _is_triggered_by_agent_process():
@@ -429,9 +480,13 @@ def _run_claude_interactive(
             if arg != "--dangerously-skip-permissions":
                 cmd.append(arg)
 
+    # Wrap with caffeinate to prevent sleep on macOS
+    cmd = wrap_with_caffeinate(cmd, "claude")
+
     # WP-Y15: Use os.execvpe for native interactive experience (better signal handling)
     # This replaces the Python process with the Claude process.
     import os
+
     os.execvpe(cmd[0], cmd, env)
 
 
@@ -468,6 +523,7 @@ def create_provider_app(provider: str) -> typer.Typer:
     ) -> None:
         """Run a task via Claude Code using the proxy (synchronous)."""
         from thegent.cli import run_cmd
+
         os.environ.update(_get_claude_env(provider, model_override=model))
         run_cmd(
             prompt=prompt,
@@ -493,6 +549,7 @@ def create_provider_app(provider: str) -> typer.Typer:
     ) -> None:
         """Start a background task via Claude Code using the proxy."""
         from thegent.cli import bg_cmd
+
         os.environ.update(_get_claude_env(provider, model_override=model))
         bg_cmd(
             prompt=prompt,
@@ -521,6 +578,7 @@ def create_provider_app(provider: str) -> typer.Typer:
     ) -> None:
         """List registered background sessions."""
         from thegent.cli import ps_cmd
+
         ps_cmd(all_sessions=all_sessions, owner=owner, format=format, include_contract=include_contract)
 
     @provider_app.command("logs")
@@ -533,6 +591,7 @@ def create_provider_app(provider: str) -> typer.Typer:
     ) -> None:
         """Print session logs."""
         from thegent.cli import logs_cmd
+
         logs_cmd(session_id=session_id, follow=follow, stderr=stderr, tail=tail, timeout=timeout)
 
     @provider_app.command("status")
@@ -545,6 +604,7 @@ def create_provider_app(provider: str) -> typer.Typer:
     ) -> None:
         """Show one session status."""
         from thegent.cli import status_cmd
+
         status_cmd(session_id=session_id, format=format, include_contract=include_contract)
 
     @provider_app.command("stop")
@@ -565,6 +625,7 @@ def create_provider_app(provider: str) -> typer.Typer:
     ) -> None:
         """Stop a running session."""
         from thegent.cli import stop_cmd
+
         stop_cmd(session_id=session_id, force=force, wind_down=wind_down, grace=grace)
 
     @provider_app.command("wait")
@@ -574,11 +635,14 @@ def create_provider_app(provider: str) -> typer.Typer:
     ) -> None:
         """Wait for session completion and return session exit code."""
         from thegent.cli import wait_cmd
+
         wait_cmd(session_id=session_id, timeout=timeout)
 
     @provider_app.command("inspect")
     def clode_inspect(
-        session_ids: list[str] = typer.Argument(default=[], help="Session ID(s). Use --owner to inspect all for owner."),
+        session_ids: list[str] = typer.Argument(
+            default=[], help="Session ID(s). Use --owner to inspect all for owner."
+        ),
         owner: str | None = typer.Option(None, "--owner", "-o", help="Inspect all sessions for this owner"),
         tail: int = typer.Option(50, "--tail", "-n", help="Log lines per session"),
         stderr: bool = typer.Option(False, "--stderr", help="Show stderr instead of stdout"),
@@ -589,6 +653,7 @@ def create_provider_app(provider: str) -> typer.Typer:
     ) -> None:
         """Show status and logs for one or more sessions."""
         from thegent.cli import inspect_cmd
+
         inspect_cmd(
             session_ids=session_ids,
             owner=owner,
@@ -609,6 +674,7 @@ def create_provider_app(provider: str) -> typer.Typer:
     ) -> None:
         """List execution run history (sync and background)."""
         from thegent.cli import history_cmd
+
         history_cmd(limit=limit, format=format)
 
     return provider_app
@@ -657,7 +723,11 @@ def _run_model_interactive(
     extra: list[str] = ["--model", model]
     if not _is_triggered_by_agent_process():
         extra.append("--dangerously-skip-permissions")
-    extra.extend(_clode_passthrough_args(cd=cd, debug=debug, add_dir=add_dir, output_format=output_format, continue_session=continue_session))
+    extra.extend(
+        _clode_passthrough_args(
+            cd=cd, debug=debug, add_dir=add_dir, output_format=output_format, continue_session=continue_session
+        )
+    )
     if resume:
         extra.extend(["--resume", resume])
     if prompt:
@@ -676,6 +746,35 @@ def _provider_opt() -> str | None:
     )
 
 
+@app.command("comp")
+def clode_comp(
+    provider: str | None = _provider_opt(),
+    resume: str | None = typer.Option(None, "--resume", "-r", help="Resume session by ID"),
+    cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
+    print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
+    add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
+    continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
+    prompt: str | None = typer.Argument(None, help="Startup prompt"),
+) -> None:
+    """Composer 1 (via Cursor). Use -x cursor to lock."""
+    _run_model_interactive(
+        "comp",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
+
+
 @app.command("composer")
 def clode_composer(
     provider: str | None = _provider_opt(),
@@ -684,12 +783,25 @@ def clode_composer(
     print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
     add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
-    output_format: str | None = typer.Option(None, "--output-format", help="Output format when --print: text, json, stream-json"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
 ) -> None:
     """Composer 1.5 (via Cursor). Use -x cursor to lock."""
-    _run_model_interactive("composer", provider=provider, resume=resume, prompt=prompt, cd=cd, print_mode=print_mode, debug=debug, add_dir=add_dir or None, output_format=output_format, continue_session=continue_session)
+    _run_model_interactive(
+        "composer",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 @app.command("haiku")
@@ -700,12 +812,25 @@ def clode_haiku(
     print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
     add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
-    output_format: str | None = typer.Option(None, "--output-format", help="Output format when --print: text, json, stream-json"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
 ) -> None:
     """Claude Haiku 4.5 balanced across claude, antigravity, codex (proxy API), kiro."""
-    _run_model_interactive("haiku", provider=provider, resume=resume, prompt=prompt, cd=cd, print_mode=print_mode, debug=debug, add_dir=add_dir or None, output_format=output_format, continue_session=continue_session)
+    _run_model_interactive(
+        "haiku",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 @app.command("opus")
@@ -716,12 +841,54 @@ def clode_opus(
     print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
     add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
-    output_format: str | None = typer.Option(None, "--output-format", help="Output format when --print: text, json, stream-json"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
 ) -> None:
     """Claude Opus 4.6 balanced across claude, antigravity, kiro."""
-    _run_model_interactive("opus", provider=provider, resume=resume, prompt=prompt, cd=cd, print_mode=print_mode, debug=debug, add_dir=add_dir or None, output_format=output_format, continue_session=continue_session)
+    _run_model_interactive(
+        "opus",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
+
+
+@app.command("opus1m")
+def clode_opus1m(
+    provider: str | None = _provider_opt(),
+    resume: str | None = typer.Option(None, "--resume", "-r", help="Resume session by ID"),
+    cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
+    print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
+    add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
+    continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
+    prompt: str | None = typer.Argument(None, help="Startup prompt"),
+) -> None:
+    """Claude Opus 4.6 with 1M context. Balanced across claude, antigravity, kiro."""
+    _run_model_interactive(
+        "opus1m",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 @app.command("sonnet")
@@ -732,12 +899,25 @@ def clode_sonnet(
     print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
     add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
-    output_format: str | None = typer.Option(None, "--output-format", help="Output format when --print: text, json, stream-json"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
 ) -> None:
-    """Claude Sonnet 4.5 via OpenRouter."""
-    _run_model_interactive("sonnet", provider=provider, resume=resume, prompt=prompt, cd=cd, print_mode=print_mode, debug=debug, add_dir=add_dir or None, output_format=output_format, continue_session=continue_session)
+    """Claude Sonnet 4.6 via OpenRouter."""
+    _run_model_interactive(
+        "sonnet",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 @app.command("step")
@@ -748,12 +928,25 @@ def clode_step(
     print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
     add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
-    output_format: str | None = typer.Option(None, "--output-format", help="Output format when --print: text, json, stream-json"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
 ) -> None:
     """Step 3.5 Flash via NIM. Fast, cheap."""
-    _run_model_interactive("step", provider=provider, resume=resume, prompt=prompt, cd=cd, print_mode=print_mode, debug=debug, add_dir=add_dir or None, output_format=output_format, continue_session=continue_session)
+    _run_model_interactive(
+        "step",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 @app.command("flash")
@@ -764,12 +957,25 @@ def clode_flash(
     print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
     add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
-    output_format: str | None = typer.Option(None, "--output-format", help="Output format when --print: text, json, stream-json"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
 ) -> None:
     """Gemini 3 Flash via cliproxy. Fast, cheap."""
-    _run_model_interactive("flash", provider=provider, resume=resume, prompt=prompt, cd=cd, print_mode=print_mode, debug=debug, add_dir=add_dir or None, output_format=output_format, continue_session=continue_session)
+    _run_model_interactive(
+        "flash",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 @app.command("mini")
@@ -779,12 +985,25 @@ def clode_mini(
     print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
     add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
-    output_format: str | None = typer.Option(None, "--output-format", help="Output format when --print: text, json, stream-json"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
 ) -> None:
     """GPT-5 mini / Copilot (free tier). Alias for clode free."""
-    _run_model_interactive("mini", provider="copilot", resume=resume, prompt=prompt, cd=cd, print_mode=print_mode, debug=debug, add_dir=add_dir or None, output_format=output_format, continue_session=continue_session)
+    _run_model_interactive(
+        "mini",
+        provider="copilot",
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 @app.command("free")
@@ -794,12 +1013,25 @@ def clode_free(
     print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
     add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
-    output_format: str | None = typer.Option(None, "--output-format", help="Output format when --print: text, json, stream-json"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
 ) -> None:
     """Base free tier: Copilot gpt-5-mini via cliproxy. Alias for clode mini."""
-    _run_model_interactive("mini", provider="copilot", resume=resume, prompt=prompt, cd=cd, print_mode=print_mode, debug=debug, add_dir=add_dir or None, output_format=output_format, continue_session=continue_session)
+    _run_model_interactive(
+        "mini",
+        provider="copilot",
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 app.command("ps")(ps_cmd)
@@ -813,7 +1045,9 @@ app.command("history")(history_cmd)
 
 @app.command("run")
 def clode_run_global(
-    model_alias: str = typer.Argument(..., help="Model: composer, max, glm, haiku, opus, sonnet, step, flash, mini"),
+    model_alias: str = typer.Argument(
+        ..., help="Model: comp, composer, max, glm, haiku, opus, opus1m, sonnet, step, flash, mini"
+    ),
     prompt: str = typer.Argument(..., help="Task prompt"),
     cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
     mode: str = typer.Option("write", "--mode", "-m", help="write | read-only"),
@@ -835,7 +1069,9 @@ def clode_run_global(
 
 @app.command("bg")
 def clode_bg_global(
-    model_alias: str = typer.Argument(..., help="Model: composer, max, glm, haiku, opus, sonnet, step, flash, mini"),
+    model_alias: str = typer.Argument(
+        ..., help="Model: comp, composer, max, glm, haiku, opus, opus1m, sonnet, step, flash, mini"
+    ),
     prompt: str = typer.Argument(..., help="Task prompt"),
     cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
     mode: str = typer.Option("write", "--mode", "-m", help="write | read-only"),
@@ -874,7 +1110,7 @@ def clode_glm(
     policy: str = typer.Option(
         "round_robin",
         "--policy",
-        "-p",
+        "-P",
         help="Routing policy: round_robin, cheapest, prefer_proxy, prefer_direct, failover",
     ),
     prefer: str = typer.Option(
@@ -895,18 +1131,31 @@ def clode_glm(
         help="Pass through to Claude Code: resume session by ID",
     ),
     cd: Path | None = typer.Option(None, "--cd", "-C", help="Working directory"),
-    print_mode: bool = typer.Option(False, "--print", help="Headless: print response and exit"),
+    print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
     add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
-    output_format: str | None = typer.Option(None, "--output-format", help="Output format when --print: text, json, stream-json"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
     model: str | None = typer.Option(None, "--model", help="Model override (glm-5, MiniMax-M2.5)"),
-    prompt: str | None = typer.Argument(None, help="Startup prompt"),
+    prompt: str | None = typer.Argument(None, help="Startup prompt (interactive) or prompt for headless when -p used"),
 ) -> None:
     """Start an interactive GLM session with policy-based balancing."""
     token = _resolve_clode_token("glm", prefer=prefer, policy=policy)
     model = model or _CLODE_PROVIDER_MODEL.get(token, "MiniMax-M2.5")
-    _run_model_interactive(model, provider=token, resume=resume, prompt=prompt, cd=cd, print_mode=print_mode, debug=debug, add_dir=add_dir or None, output_format=output_format, continue_session=continue_session)
+    _run_model_interactive(
+        model,
+        provider=token,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 @app.command("max")
@@ -917,12 +1166,25 @@ def clode_max(
     print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
     add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
-    output_format: str | None = typer.Option(None, "--output-format", help="Output format when --print: text, json, stream-json"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
 ) -> None:
     """MiniMax-M2.5 balanced across minimax and kilo."""
-    _run_model_interactive("max", provider=provider, resume=resume, prompt=prompt, cd=cd, print_mode=print_mode, debug=debug, add_dir=add_dir or None, output_format=output_format, continue_session=continue_session)
+    _run_model_interactive(
+        "max",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 _SITBACK_STARTUP_PROMPT = """You are the Sitback Agent (THGENT_SITBACK=1): a lightweight orchestrator for thegent. You monitor terminals, sessions, and governance; present dashboards; and route tasks efficiently.
@@ -1019,6 +1281,10 @@ def _run_sitback_claude(
     if tmux:
         session_name = f"sitback-{os.getpid()}"
         run_args = ["tmux", "new-session", "-s", session_name, *cmd]
+        
+        # Wrap with caffeinate to prevent sleep on macOS
+        run_args = wrap_with_caffeinate(run_args, "claude")
+
         with contextlib.suppress(KeyboardInterrupt):
             subprocess.run(
                 run_args,
@@ -1029,12 +1295,16 @@ def _run_sitback_claude(
                 stderr=sys.stderr,
             )
     else:
+        # Wrap with caffeinate to prevent sleep on macOS
+        cmd = wrap_with_caffeinate(cmd, "claude")
+        
         # WP-Y15: Use os.execvpe for native interactive experience (better signal handling)
         os.execvpe(cmd[0], cmd, env)
 
 
 # Model aliases for sitback --model (claude and dex)
 _SITBACK_MODEL_ALIAS: dict[str, str] = {
+    "comp": "composer-1",
     "composer": "composer-1.5",
     "max": "minimax-m2.5",
     "m2.5": "minimax-m2.5",
@@ -1042,19 +1312,23 @@ _SITBACK_MODEL_ALIAS: dict[str, str] = {
     "glm5": "glm-5",
     "haiku": "claude-haiku-4.5",
     "opus": "claude-opus-4.6",
-    "sonnet": "anthropic/claude-sonnet-4",
+    "opus1m": "claude-opus-4.6-1m",
+    "sonnet": "anthropic/claude-sonnet-4-20250514",
     "step": "step-3.5-flash",
     "flash": "gemini-3-flash",
     "mini": "gpt-5-mini",
+    "free": "gpt-5-mini",
 }
 # Provider-native names for Claude Code (ANTHROPIC_MODEL)
 _CLAUDE_NATIVE_MODEL: dict[str, str] = {
+    "composer-1": "composer-1",
     "composer-1.5": "composer-1.5",
     "minimax-m2.5": "MiniMax-M2.5",
     "glm-5": "glm-5",
     "claude-haiku-4.5": "claude-haiku-4.5",
     "claude-opus-4.6": "claude-opus-4.6",
-    "anthropic/claude-sonnet-4": "anthropic/claude-sonnet-4",
+    "claude-opus-4.6-1m": "claude-opus-4.6-1m",
+    "anthropic/claude-sonnet-4-20250514": "anthropic/claude-sonnet-4-20250514",
     "step-3.5-flash": "step-3.5-flash",
     "gemini-3-flash": "gemini-3-flash",
     "gpt-5-mini": "gpt-5-mini",
@@ -1094,30 +1368,74 @@ def _run_sitback_codex(
     if tmux:
         session_name = f"sitback-dex-{os.getpid()}"
         run_args = ["tmux", "new-session", "-s", session_name, *cmd]
+        # Wrap with caffeinate for macOS
+        run_args = wrap_with_caffeinate(run_args, "codex")
         with contextlib.suppress(KeyboardInterrupt):
             subprocess.run(run_args, check=False, env=codex_env, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
     else:
+        # Wrap with caffeinate for macOS
+        cmd = wrap_with_caffeinate(cmd, "codex")
         os.execvpe(cmd[0], cmd, codex_env)
+
+
+def _run_sitback_droid(
+    model_alias: str,
+    env: dict[str, str],
+    tmux: bool,
+    startup_path: str | None = None,
+) -> None:
+    """Run Factory Droid with Sitback Agent persona."""
+    canonical = _SITBACK_MODEL_ALIAS.get(model_alias.lower(), model_alias)
+    droid_path = shutil.which("droid")
+    if not droid_path:
+        local = Path.home() / ".local" / "bin" / "droid"
+        droid_path = str(local) if local.exists() else None
+    if not droid_path:
+        console.print("[red]Error: 'droid' CLI not found in PATH.[/red]")
+        console.print("[dim]Install it via: curl -fsSL https://app.factory.ai/Union[cli, sh][/dim]")
+        raise typer.Exit(1)
+
+    cmd = [droid_path, "--model", canonical]
+    if startup_path:
+        cmd.append(Path(startup_path).read_text())
+
+    if tmux:
+        session_name = f"sitback-droid-{os.getpid()}"
+        run_args = ["tmux", "new-session", "-s", session_name, *cmd]
+        # Wrap with caffeinate for macOS
+        run_args = wrap_with_caffeinate(run_args, "droid")
+        with contextlib.suppress(KeyboardInterrupt):
+            subprocess.run(run_args, check=False, env=env, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
+    else:
+        # Wrap with caffeinate for macOS
+        cmd = wrap_with_caffeinate(cmd, "droid")
+        os.execvpe(cmd[0], cmd, env)
 
 
 def sitback_cmd(
     agent: str = typer.Option(
-        "gemini",
+        "claude",
         "--agent",
         "-a",
-        help="Provider: gemini (default), nim, kilo, glm, openrouter (ignored when --dex)",
+        help="Harness: claude (default), codex, droid. Aliases: clode, dex, roid.",
+    ),
+    provider: str | None = typer.Option(
+        None,
+        "--provider",
+        "-P",
+        help="Optional backend provider for claude harness (e.g. nim, kilo, minimax, glm, openrouter).",
     ),
     model: str | None = typer.Option(
         None,
         "--model",
         "-M",
-        help="Override model: composer, max, glm, haiku, opus, sonnet, step, flash, mini (works with both claude and dex)",
+        help="Shared model alias: composer, max, glm, haiku, opus, sonnet, step, flash, mini, free.",
     ),
     dex: bool = typer.Option(
         False,
         "--dex",
         "-x",
-        help="Use Codex CLI instead of Claude Code (fallback when claude not installed)",
+        help="Deprecated alias for --agent codex.",
     ),
     cd: Path | None = typer.Option(
         None,
@@ -1129,7 +1447,7 @@ def sitback_cmd(
         None,
         "--skill",
         "-s",
-        help="Override skill: sitback-agent (default), agent-orchestra, or custom name",
+        help="Override skill: sitback-agent (default), thegent-skills, or custom name",
     ),
     profile: str = typer.Option(
         "medium",
@@ -1148,36 +1466,40 @@ def sitback_cmd(
         "--no-dashboard",
         help="Skip auto-dashboard on startup (manual mode)",
     ),
+    tui: bool = typer.Option(
+        False,
+        "--tui",
+        "-u",
+        help="Launch TUI compositor instead of dashboard",
+    ),
 ) -> None:
-    """Start Claude Code or Codex with Sitback Agent persona (dashboard + terminal list + ps).
+    """Start a Sitback harness (claude/codex/droid) with Sitback Agent persona.
 
     Examples:
-      thegent sitback                    # minimax, Claude Code
-      thegent sitback --dex              # Codex (max model), use when claude not installed
-      thegent sitback --dex -M glm       # Codex with GLM-5
-      thegent sitback -M haiku           # Claude Code with Haiku
-      thegent sitback -a kilo            # sibling via kilo
-      thegent sitback --skill agent-orchestra
+      thegent sitback                    # claude harness, flash model
+      thegent sitback -a codex -M glm    # codex harness with GLM-5
+      thegent sitback -a droid -M free   # droid harness with gpt-5-mini
+      thegent sitback -M haiku -P kiro   # claude harness with provider override
+      thegent sitback --skill thegent-skills
       thegent sitback --profile full
       thegent sitback --tmux
       thegent sitback --no-dashboard
+      thegent sitback --tui             # Launch TUI compositor
     """
-    valid_agents = {"minimax", "nim", "kilo", "glm", "openrouter", "gemini", "copilot"}
-    resolved = agent.strip().lower()
-    if resolved not in valid_agents:
-        if resolved == "max":
-            resolved = "openrouter"
-        else:
-            console.print(f"[red]Invalid agent '{agent}'. Allowed: {', '.join(sorted(valid_agents))}[/red]")
-            raise typer.Exit(1)
-
-    # Model override can imply provider: flash -> gemini, mini -> copilot
-    if model:
-        m = model.strip().lower()
-        if m in ("flash", "gemini-3-flash"):
-            resolved = "gemini"
-        elif m in ("mini", "free", "gpt-5-mini"):
-            resolved = "copilot"
+    harness_aliases = {
+        "claude": "claude",
+        "clode": "claude",
+        "codex": "codex",
+        "dex": "codex",
+        "droid": "droid",
+        "roid": "droid",
+    }
+    resolved_harness = harness_aliases.get(agent.strip().lower())
+    if resolved_harness is None:
+        console.print("[red]Invalid --agent. Allowed: claude, codex, droid (aliases: clode, dex, roid).[/red]")
+        raise typer.Exit(1)
+    if dex:
+        resolved_harness = "codex"
 
     valid_profiles = ("light", "medium", "full")
     prof = profile.strip().lower() if profile else "medium"
@@ -1185,14 +1507,11 @@ def sitback_cmd(
         console.print(f"[red]Invalid profile '{profile}'. Allowed: {', '.join(valid_profiles)}[/red]")
         raise typer.Exit(1)
 
-    model_override: str | None = None
-    if model:
-        canonical = _SITBACK_MODEL_ALIAS.get(model.strip().lower(), model.strip())
-        model_override = _CLAUDE_NATIVE_MODEL.get(canonical, canonical)
-
-    env = _get_claude_env(resolved, model_override=model_override)
+    model_alias = (model or "flash").strip().lower()
+    canonical = _SITBACK_MODEL_ALIAS.get(model_alias, model_alias)
+    env = os.environ.copy()
     env["THGENT_SITBACK"] = "1"
-    env["THGENT_SITBACK_AGENT"] = resolved
+    env["THGENT_SITBACK_AGENT"] = resolved_harness
     env["THGENT_SITBACK_PROFILE"] = prof
     if skill is not None:
         env["THGENT_SITBACK_SKILL"] = skill.strip()
@@ -1203,13 +1522,15 @@ def sitback_cmd(
     if cd is not None:
         env["THGENT_SITBACK_CD"] = str(cd.resolve())
 
-    if not dex:
-        env.update(_get_claude_env(resolved, model_override=model_override))
+    if resolved_harness == "claude":
+        provider_token = provider.strip().lower() if provider else _resolve_provider_for_model(model_alias)
+        model_override = _CLAUDE_NATIVE_MODEL.get(canonical, canonical)
+        env.update(_get_claude_env(provider_token, model_override=model_override))
         config_dir = Path(env["CLAUDE_CONFIG_DIR"])
         _ensure_claude_config_isolation(config_dir)
 
     # MCP precondition: ask when server not reachable (Sitback uses FastMCP tools)
-    settings = ThegentSettings()
+    settings = _get_settings()
     try:
         import httpx
 
@@ -1224,12 +1545,13 @@ def sitback_cmd(
             raise typer.Exit(0)
         console.print()
 
-    if dex:
-        model_alias = (model or "max").strip().lower()
+    if resolved_harness == "codex":
         console.print(f"[bold green]Starting Sitback Agent via Codex (model={model_alias})...[/bold green]")
+    elif resolved_harness == "droid":
+        console.print(f"[bold green]Starting Sitback Agent via Droid (model={model_alias})...[/bold green]")
     else:
         claude_path = _ensure_claude_installed(suggest_dex=True)
-        console.print(f"[bold green]Starting Sitback Agent via {resolved} proxy...[/bold green]")
+        console.print(f"[bold green]Starting Sitback Agent via Claude (provider={provider_token})...[/bold green]")
 
     startup_prompt = _SITBACK_STARTUP_PROMPT
     try:
@@ -1242,15 +1564,50 @@ def sitback_cmd(
 
     if no_dashboard:
         console.print("[dim]Manual mode: no startup prompt injected.[/dim]")
-        if dex:
-            _run_sitback_codex((model or "max").strip().lower(), env, tmux)
+        if resolved_harness == "codex":
+            _run_sitback_codex(model_alias, env, tmux)
+        elif resolved_harness == "droid":
+            _run_sitback_droid(model_alias, env, tmux)
         else:
             _run_sitback_claude(claude_path, env, tmux)
         return
 
+    if tui:
+        console.print("[bold green]Launching TUI Compositor...[/bold green]")
+        import asyncio
+        from pathlib import Path as PathCls
+
+        from thegent.tui.compositor import run_tui
+
+        session_id = f"sitback-{resolved_harness}"
+        cwd = str(cd.resolve()) if cd else str(PathCls.cwd())
+
+        async def launch_tui():
+            from thegent.tui.compositor import TUIContext
+
+            context = TUIContext(
+                session_id=session_id,
+                agent_name=f"sitback-{resolved_harness}",
+                cwd=PathCls(cwd),
+            )
+            await run_tui(context=context, headless=False)
+
+        try:
+            asyncio.run(launch_tui())
+        except KeyboardInterrupt:
+            console.print("[dim]TUI compositor closed.[/dim]")
+        except Exception as e:
+            console.print(f"[red]Error launching TUI: {e}[/red]")
+        return
+
     # Phase 2: Startup prompt injection — try stdin first, always show paste fallback
     console.print("[dim]Injecting startup prompt as positional argument...[/dim]")
-    client_name = "Codex" if dex else "Claude Code"
+    if resolved_harness == "codex":
+        client_name = "Codex"
+    elif resolved_harness == "droid":
+        client_name = "Droid"
+    else:
+        client_name = "Claude Code"
     console.print(f"[dim]{client_name} will process this as the first message in the session.[/dim]\n")
     console.print("[yellow]Fallback (copy/paste if needed):[/yellow]")
     console.print("[bold]--- Startup Prompt ---[/bold]")
@@ -1263,13 +1620,28 @@ def sitback_cmd(
         f.write(startup_prompt + "\n")
         tmp_path = f.name
     try:
-        if dex:
-            _run_sitback_codex((model or "max").strip().lower(), env, tmux, startup_path=tmp_path)
+        if resolved_harness == "codex":
+            _run_sitback_codex(model_alias, env, tmux, startup_path=tmp_path)
+        elif resolved_harness == "droid":
+            _run_sitback_droid(model_alias, env, tmux, startup_path=tmp_path)
         else:
             _run_sitback_claude(claude_path, env, tmux, startup_path=tmp_path)
     finally:
         with contextlib.suppress(FileNotFoundError):
             Path(tmp_path).unlink()
+
+
+@app.command("doctor")
+def clode_doctor(
+    fix: bool = typer.Option(False, "--fix", "-f", help="Attempt to fix issues"),
+) -> None:
+    """Run thegent doctor (harness-equiv)."""
+    import sys
+
+    from thegent.doctor import run_doctor
+
+    success = run_doctor(fix=fix)
+    sys.exit(0 if success else 1)
 
 
 @app.command("install-links")

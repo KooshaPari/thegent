@@ -27,9 +27,14 @@ brew "syft"
 brew "osv-scanner"
 brew "vulture"
 
-# --- Development & Debugging ---
+# --- Development & Debugging (Rust tooling for 2-10x speed) ---
 brew "ripgrep"
 brew "fd"
+brew "jaq"
+brew "procs"
+# huniq: cargo install huniq (optional, for sort_unique)
+# eza: brew install eza (optional, for ls)
+# b3sum: brew install b3sum (optional, 2-5x faster cache key hashing; WP-B)
 brew "lnav"
 brew "mdless"
 brew "btop"

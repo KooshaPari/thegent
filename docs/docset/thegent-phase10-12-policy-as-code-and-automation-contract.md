@@ -373,3 +373,11 @@ Run these queries after each gate boundary:
 - hard-stop, drift, and gate lock policies are enforced uniformly.
 - board transitions cannot bypass contract checks.
 - closure runbook references this contract for final release checks.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

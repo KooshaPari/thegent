@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # linting-accelerator.sh — JS/TS Linting Acceleration Layer
 # Purpose: Try oxlint first (5-50x faster), fallback to eslint, normalize output
 # Integrated into: quality-gate.sh for TS/JS file linting
@@ -68,7 +68,7 @@ _accel_cmd_available() {
 
 # Run oxlint lint check
 _accel_oxlint_lint() {
-  local -a files=("$@")
+  local files=("$@")
   if [[ ${#files[@]} -eq 0 ]]; then
     _accel_debug "oxlint: no files provided"
     return 1
@@ -82,7 +82,7 @@ _accel_oxlint_lint() {
 
 # Run eslint lint check (fallback)
 _accel_eslint_lint() {
-  local -a files=("$@")
+  local files=("$@")
   if [[ ${#files[@]} -eq 0 ]]; then
     _accel_debug "eslint: no files provided"
     return 1
@@ -97,7 +97,7 @@ _accel_eslint_lint() {
 
 # Run oxlint dead-imports check
 _accel_oxlint_dead_imports() {
-  local -a files=("$@")
+  local files=("$@")
   if [[ ${#files[@]} -eq 0 ]]; then
     _accel_debug "oxlint: no files provided for dead-imports"
     return 1
@@ -112,7 +112,7 @@ _accel_oxlint_dead_imports() {
 
 # Run eslint dead-imports check (fallback)
 _accel_eslint_dead_imports() {
-  local -a files=("$@")
+  local files=("$@")
   if [[ ${#files[@]} -eq 0 ]]; then
     _accel_debug "eslint: no files provided for dead-imports"
     return 1
@@ -142,7 +142,7 @@ _accel_main() {
   esac
 
   # Collect files
-  local -a files=()
+  local files=()
   while [[ $# -gt 0 ]]; do
     files+=("$1")
     shift
@@ -211,6 +211,14 @@ _accel_main() {
 }
 
 # Run if sourced with args or executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [ -n "${ZSH_VERSION:-}" ]; then
+  _ACCEL_PATH="${(%):-%x}"
+elif [ -n "${BASH_VERSION:-}" ]; then
+  _ACCEL_PATH="${BASH_SOURCE[0]}"
+else
+  _ACCEL_PATH="$0"
+fi
+
+if [[ "$_ACCEL_PATH" == "$0" ]]; then
   _accel_main "$@"
 fi

@@ -2,7 +2,6 @@
 
 import logging
 import os
-import re
 import shutil
 import subprocess
 import threading
@@ -15,8 +14,10 @@ from thegent.agents.cliproxy_manager import ensure_proxy_running
 from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
 from thegent.config import ThegentSettings
 from thegent.discovery import _is_triggered_by_agent_process
+from thegent.infra.power import wrap_with_caffeinate
 from thegent.routing.models import TaskMetadata
 from thegent.routing.provider_types import ExecutionPath, get_execution_path
+from thegent.utils import strip_ansi
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +34,8 @@ _PROXY_MODEL: dict[str, str] = {
     "kilo": "minimax-m2.5",
     "kiro": "claude-haiku-4.5",
     "nim": "step-3.5-flash",
+    "zen": "glm-5",
 }
-
-
-def _strip_ansi(text: str) -> str:
-    return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
 def _resolve_codex() -> str:
@@ -87,7 +85,7 @@ def _run_with_activity_monitoring(
 
     def _drain(stream, collector: list[str], cb: Callable[[str], None] | None) -> None:
         for line in stream:
-            clean = _strip_ansi(line)
+            clean = strip_ansi(line)
             collector.append(clean)
             _on_chunk(clean)
             if cb:
@@ -182,12 +180,18 @@ class CodexProxyRunner(AgentRunner):
         agent_name: str,
         settings: ThegentSettings | None = None,
         model: str = "",
+        use_litellm_router: bool | None = None,
     ) -> None:
         if agent_name not in _PROXY_MODEL:
             raise ValueError(f"Unknown proxy agent: {agent_name}")
         self.agent_name = agent_name
         self._settings = settings or ThegentSettings()
         self._model = model or _PROXY_MODEL[agent_name]
+        self._use_litellm_router = (
+            use_litellm_router
+            if use_litellm_router is not None
+            else (os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1")
+        )
 
     def run(
         self,
@@ -205,19 +209,43 @@ class CodexProxyRunner(AgentRunner):
         run_id: str | None = None,
     ) -> RunResult:
         model = agent_model or self._model
-        try:
-            base_url = ensure_proxy_running(self._settings)
-        except (FileNotFoundError, RuntimeError) as e:
-            return RunResult(
-                exit_code=1,
-                stdout="",
-                stderr=str(e),
-                timed_out=False,
+
+        # Route via LiteLLM Router if enabled and not zen
+        if self._use_litellm_router and self.agent_name != "zen":
+            return self._run_via_litellm_router(
+                prompt, cwd, mode, timeout, model, use_stream, live_output, on_stdout, on_stderr
             )
 
         env = os.environ.copy()
-        env["OPENAI_BASE_URL"] = base_url.rstrip("/")
-        env["OPENAI_API_KEY"] = "sk-dummy"
+        if self.agent_name == "zen":
+            base_url = (self._settings.zen_base_url or "https://api.opencode.ai").rstrip("/")
+            api_key = (
+                self._settings.zen_api_key or os.environ.get("OPENCODE_API_KEY") or os.environ.get("ZEN_API_KEY") or ""
+            ).strip()
+            if not api_key:
+                return RunResult(
+                    exit_code=1,
+                    stdout="",
+                    stderr=(
+                        "Zen API key missing. Set THGENT_ZEN_API_KEY (or OPENCODE_API_KEY / ZEN_API_KEY) "
+                        "to use provider=zen."
+                    ),
+                    timed_out=False,
+                )
+            env["OPENAI_BASE_URL"] = base_url
+            env["OPENAI_API_KEY"] = api_key
+        else:
+            try:
+                base_url = ensure_proxy_running(self._settings)
+            except (FileNotFoundError, RuntimeError) as e:
+                return RunResult(
+                    exit_code=1,
+                    stdout="",
+                    stderr=str(e),
+                    timed_out=False,
+                )
+            env["OPENAI_BASE_URL"] = base_url.rstrip("/")
+            env["OPENAI_API_KEY"] = "sk-dummy"
 
         codex_cmd = _resolve_codex()
         cmd = [codex_cmd, "exec", "-", "--skip-git-repo-check"]
@@ -265,6 +293,97 @@ class CodexProxyRunner(AgentRunner):
                 stdout="",
                 stderr=f"Agent timed out after {timeout}s",
                 timed_out=True,
+            )
+
+    def _run_via_litellm_router(
+        self,
+        prompt: str,
+        cwd: Path | None,
+        mode: str,
+        timeout: int,
+        model: str,
+        use_stream: bool,
+        live_output: bool,
+        on_stdout: Callable[[str], None] | None,
+        on_stderr: Callable[[str], None] | None,
+    ) -> RunResult:
+        """Run via LiteLLM Router for Codex CLI compatibility."""
+        try:
+            from thegent.routing.litellm_router import get_enhanced_router
+
+            router = get_enhanced_router()
+            # Map provider if possible
+            provider = self.agent_name
+            # If model already has provider/ prefix, use it
+            if "/" in model:
+                model_to_use = model
+            else:
+                model_to_use = f"{provider}/{model}"
+
+            result = router.route(prompt, model=model_to_use, stream=use_stream, timeout=timeout)
+
+            if not result.success:
+                return RunResult(
+                    exit_code=1,
+                    stdout="",
+                    stderr=result.error or "Routing failed",
+                    timed_out=False,
+                )
+
+            # Handle response
+            if use_stream:
+                # For Codex, we need to collect the stream into a single response
+                # or handle it as Codex expects. Since we're emulating Codex,
+                # we'll collect it for now unless we implement full SSE.
+                stdout_collector = []
+                for chunk in result.response:
+                    content = ""
+                    if hasattr(chunk, "choices") and chunk.choices:
+                        delta = chunk.choices[0].delta
+                        if hasattr(delta, "content") and delta.content:
+                            content = delta.content
+                    elif isinstance(chunk, dict):
+                        # Handle dict response (from some LiteLLM adapters)
+                        choices = chunk.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            content = delta.get("content", "")
+
+                    if content:
+                        stdout_collector.append(content)
+                        if on_stdout:
+                            on_stdout(content)
+
+                return RunResult(
+                    exit_code=0,
+                    stdout="".join(stdout_collector),
+                    stderr="",
+                    timed_out=False,
+                )
+            else:
+                content = ""
+                if hasattr(result.response, "choices") and result.response.choices:
+                    content = result.response.choices[0].message.content
+                elif isinstance(result.response, dict):
+                    choices = result.response.get("choices", [])
+                    if choices:
+                        message = choices[0].get("message", {})
+                        content = message.get("content", "")
+
+                return RunResult(
+                    exit_code=0,
+                    stdout=content or "",
+                    stderr="",
+                    timed_out=False,
+                )
+
+        except Exception as e:
+            logger.error("LiteLLM Router execution failed: %s", e, exc_info=True)
+            return RunResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"LiteLLM Router execution failed: {e}",
+                timed_out=False,
             )
 
     def run_with_metadata(

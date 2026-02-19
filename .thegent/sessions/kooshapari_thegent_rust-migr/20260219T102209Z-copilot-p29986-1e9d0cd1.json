@@ -1,0 +1,42 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/.local/share/uv/tools/thegent/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_b8fe2941",
+    "Complete research-hook-rust-gix: Implement optional gix integration for Git operations in Rust hooks. See HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md for details.",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 29986,
+  "launcher_ppid": 29624,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:rust-migr",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T102209Z-copilot-p29986-1e9d0cd1.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T102209Z-copilot-p29986-1e9d0cd1.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T102209Z-copilot-p29986-1e9d0cd1.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_rust-migr/20260219T102209Z-copilot-p29986-1e9d0cd1.stdout.log"
+  },
+  "pid": 31822,
+  "prompt": "Complete research-hook-rust-gix: Implement optional gix integration for Git operations in Rust hooks. See HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md for details.",
+  "session_id": "20260219T102209Z-copilot-p29986-1e9d0cd1",
+  "started_at_utc": "2026-02-19T10:22:10.009140+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

@@ -1,0 +1,42 @@
+{
+  "agent": "claude",
+  "command": [
+    "/usr/local/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "300",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_90c06fb2",
+    "Implement 'research-economic-governance' Phase 2.1 (Provider Scoring) as defined in docs/changes/research-economic-governance/tasks.md.",
+    "claude"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 75300,
+  "launcher_ppid": 75293,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:75300",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75300/20260218T102836Z-claude-p75300-f4b8d1b0.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75300/20260218T102836Z-claude-p75300-f4b8d1b0.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75300/20260218T102836Z-claude-p75300-f4b8d1b0.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_75300/20260218T102836Z-claude-p75300-f4b8d1b0.stdout.log"
+  },
+  "pid": 75302,
+  "prompt": "Implement 'research-economic-governance' Phase 2.1 (Provider Scoring) as defined in docs/changes/research-economic-governance/tasks.md.",
+  "session_id": "20260218T102836Z-claude-p75300-f4b8d1b0",
+  "started_at_utc": "2026-02-18T10:28:37.000719+00:00",
+  "status": "running",
+  "timeout_hint_s": 300,
+  "version": 1
+}

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-prdset-compiler.sh
 # Stop hook: compile PRD-set docs into generated contract items + refresh ledger.
 set -euo pipefail

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # suppress-print-statements.sh — PreToolUse hook (Write|Edit)
 # Detects print() in non-CLI source code. Enforces structlog usage.
 # Advisory (exit 0 always). Budget: <100ms.

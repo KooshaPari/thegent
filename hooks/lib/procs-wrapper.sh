@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # procs wrapper - 2-3x speedup on process lookups via Rust-based process scanner
 # Provides drop-in replacement for ps/pgrep with graceful fallback
 #

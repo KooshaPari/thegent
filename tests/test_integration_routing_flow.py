@@ -1,9 +1,10 @@
 """Integration tests for full routing flow: classify -> resolve -> execute."""
 
 import pytest
-from thegent.routing.task_router import TaskRouter
-from thegent.routing.models import TaskCategory
+
 from thegent.config import ThegentSettings
+from thegent.routing.models import TaskCategory
+from thegent.routing.task_router import TaskRouter
 
 
 class TestFullRoutingFlow:
@@ -26,7 +27,11 @@ class TestFullRoutingFlow:
         """COMPLEX tasks should route to higher quality models."""
         metadata = router.classify("design a microservices architecture for payment processing")
         assert metadata.category in (TaskCategory.COMPLEX, TaskCategory.HIGH_COMPLEX)
-        assert "claude" in metadata.selected_model or "deepseek" in metadata.selected_model or "glm" in metadata.selected_model
+        assert (
+            "claude" in metadata.selected_model
+            or "deepseek" in metadata.selected_model
+            or "glm" in metadata.selected_model
+        )
 
     def test_resolved_provider_set(self, router):
         """classify() should set resolved_provider when route exists."""

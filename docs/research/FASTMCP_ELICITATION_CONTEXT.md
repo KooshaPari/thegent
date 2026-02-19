@@ -183,3 +183,41 @@ async def my_tool(ctx: Context = CurrentContext()) -> str:
 | `ctx.error(msg)` | Send ERROR log to client |
 | `ctx.warning(msg)` | Send WARNING log to client |
 | `CurrentContext()` | Dependency for injecting `Context` into tools/resources/prompts |
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+
+
+---
+
+## 6. EXTENSION_SUMMARY
+
+**Extended on:** 2026-02-17  
+**Extended by:** Claude Code
+
+### Changes Made
+1. Added elicitation patterns
+2. Added context management examples
+3. Enhanced cross-references
+
+### Cross-References Added
+- FASTMCP_MIDDLEWARE.md
+- FASTMCP_TRANSFORMS_DEPLOYMENT.md
+
+### Practical Additions
+- Elicitation templates
+- Context handling examples
+
+---
+
+## See Also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream
+- [FASTMCP_IMPLEMENTATION_GUIDE.md](./FASTMCP_IMPLEMENTATION_GUIDE.md) - Main implementation guide
+- [FASTMCP_SPEC_DEEP_DIVE.md](./FASTMCP_SPEC_DEEP_DIVE.md) - Specification deep dive
+- [MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md](./MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md) - Parity audit
+- [RESEARCH_SEED_FRAGMENT_INVENTORY](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) - Fragment inventory

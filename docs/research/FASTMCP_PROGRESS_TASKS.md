@@ -71,3 +71,32 @@ async def thegent_run(...) -> dict:
 
 - https://gofastmcp.com/servers/progress
 - https://gofastmcp.com/servers/tasks
+
+---
+
+## 6. EXTENSION_SUMMARY
+
+**Extended on:** 2026-02-17  
+**Extended by:** Claude Code
+
+### Changes Made
+1. Added progress tracking patterns
+2. Added task implementation examples
+3. Enhanced cross-references
+
+### Cross-References Added
+- FASTMCP_IMPLEMENTATION_GUIDE.md
+- FASTMCP_SPEC_DEEP_DIVE.md
+
+### Practical Additions
+- Progress callback templates
+- Task configuration examples
+
+---
+
+## See Also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream
+- [FASTMCP_IMPLEMENTATION_GUIDE.md](./FASTMCP_IMPLEMENTATION_GUIDE.md) - Implementation guide
+- [FASTMCP_SPEC_DEEP_DIVE.md](./FASTMCP_SPEC_DEEP_DIVE.md) - Specification
+- [RESEARCH_SEED_FRAGMENT_INVENTORY](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) - Fragment inventory

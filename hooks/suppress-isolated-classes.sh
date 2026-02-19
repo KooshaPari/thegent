@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # suppress-isolated-classes.sh — PreToolUse hook (Write|Edit)
 # Detects God classes (too many methods) and suggests decomposition.
 # Advisory (exit 0 always). Budget: <200ms.

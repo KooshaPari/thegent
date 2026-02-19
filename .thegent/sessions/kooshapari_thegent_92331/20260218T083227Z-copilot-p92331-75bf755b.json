@@ -1,0 +1,43 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "300",
+    "-M",
+    "gpt-5-mini",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_7bf1f302",
+    "Complete research-simulation-replay: Simulation & Sandbox (Deterministic Replay)",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 92331,
+  "launcher_ppid": 92271,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:92331",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_92331/20260218T083227Z-copilot-p92331-75bf755b.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_92331/20260218T083227Z-copilot-p92331-75bf755b.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_92331/20260218T083227Z-copilot-p92331-75bf755b.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_92331/20260218T083227Z-copilot-p92331-75bf755b.stdout.log"
+  },
+  "pid": 93804,
+  "prompt": "Complete research-simulation-replay: Simulation & Sandbox (Deterministic Replay)",
+  "session_id": "20260218T083227Z-copilot-p92331-75bf755b",
+  "started_at_utc": "2026-02-18T08:32:27.650314+00:00",
+  "status": "running",
+  "timeout_hint_s": 300,
+  "version": 1
+}

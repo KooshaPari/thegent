@@ -1,0 +1,42 @@
+{
+  "agent": "research",
+  "command": [
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.venv/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_ae189d7c",
+    "Synthesize a development writeup for 'research-economic-governance' from docs/research/SESSION_RESEARCH_FRAGMENTS_EXPANDED.md. Create docs/changes/research-economic-governance/proposal.md, design.md, and tasks.md.",
+    "research"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 43656,
+  "launcher_ppid": 43650,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "kooshapari:thegent:43656",
+  "paths": {
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_43656/20260218T084414Z-research-p43656-e5f7a507.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_43656/20260218T084414Z-research-p43656-e5f7a507.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_43656/20260218T084414Z-research-p43656-e5f7a507.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/kooshapari_thegent_43656/20260218T084414Z-research-p43656-e5f7a507.stdout.log"
+  },
+  "pid": 43660,
+  "prompt": "Synthesize a development writeup for 'research-economic-governance' from docs/research/SESSION_RESEARCH_FRAGMENTS_EXPANDED.md. Create docs/changes/research-economic-governance/proposal.md, design.md, and tasks.md.",
+  "session_id": "20260218T084414Z-research-p43656-e5f7a507",
+  "started_at_utc": "2026-02-18T08:44:14.557336+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

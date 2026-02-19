@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 # qa-policy-test.sh — PostToolUse hook for policy files
 # Runs `opa test` when QA Rego policies are edited.
 

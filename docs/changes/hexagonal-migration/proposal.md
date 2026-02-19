@@ -109,3 +109,11 @@ Phase 6 -- Enforce:
 | Test imports break | Update test imports in same PR as source move |
 | Entry point changes | Update pyproject.toml `[project.scripts]` after moving main.py |
 | tach.toml conflicts with import-linter | Both tools can coexist; tach checks module deps, import-linter checks layer deps |
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../../plans/00-MASTER-INDEX.md) — plan index
+

@@ -138,3 +138,11 @@ The test pack remains compatible with the existing chunking approach:
 - **Chunk 4:** Implement phases 9001–9010, operator-facing schema + replay safety.
 - **Chunk 5:** Build final phase 7–9 readiness pack and conduct full gate review.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

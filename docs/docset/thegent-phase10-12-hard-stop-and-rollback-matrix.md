@@ -166,3 +166,11 @@ Record each event in `artifacts/phaseX/hard_stop_events.ndjson` (one JSON object
 2. Produce a short root-cause analysis and update dependency lock.
 3. Re-open the WP with `Ready` once unlock criteria pass.
 4. For L2/L3, require two-person signoff before moving past `Bundle QA`.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

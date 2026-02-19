@@ -10,6 +10,7 @@ UNSAFE=0
 AGENT_ON_FAIL=0
 HEADLESS=0
 RELOAD=0
+VERBOSE=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -17,6 +18,7 @@ while [[ $# -gt 0 ]]; do
     -a|--agent)  AGENT_ON_FAIL=1; shift ;;
     -h|--headless) HEADLESS=1; shift ;;
     -r|--reload) RELOAD=1; shift ;;
+    -v|--verbose) VERBOSE=1; shift ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
@@ -35,34 +37,29 @@ if [[ -f "${KUSH_LIB:-}/quality-agent-common.sh" ]]; then
   # shellcheck source=../../lib/quality-agent-common.sh
   source "$KUSH_LIB/quality-agent-common.sh"
 else
-  _run_copilot() {
+  _run_quality_agent() {
     local prompt="$1"
-    local primary="${COPILOT_QUALITY_MODEL:-gemini-3-flash}"
-    local fallback="gpt-5-mini"
-    set +e
-    printf '%s' "$prompt" | copilot --model "$primary" --allow-all-paths --allow-all-tools
-    local rc=$?
-    set -e
-    if [[ $rc -ne 0 ]]; then
-      echo "── Primary model ($primary) unavailable, retrying with $fallback ──"
-      printf '%s' "$prompt" | copilot --model "$fallback" --allow-all-paths --allow-all-tools
-    fi
+    # dex + copilot gpt-5-mini (copilot doesn't support flash); replaces direct copilot
+    local model="${COPILOT_QUALITY_MODEL:-gpt-5-mini}"
+    uv run thegent dex run "$model" "$prompt" --mode write
   }
 fi
 
 _do_agent() {
   local prompt="$1"
+  local extra_args=""
+  [[ "$VERBOSE" -eq 1 ]] && extra_args="--full"
+
   if [[ "$HEADLESS" -eq 1 ]]; then
-    uv run thegent run "$prompt"
+    # shellcheck disable=SC2086
+    uv run thegent run "$prompt" quality-agent $extra_args
   else
-    if command -v copilot &>/dev/null; then
-      _run_copilot "$prompt"
+    if command -v codex &>/dev/null; then
+      _run_quality_agent "$prompt"
     else
-      echo "Quality fix failed. Output:"
-      echo "$prompt"
-      echo ""
-      echo "Install copilot for interactive fix."
-      exit 1
+      echo "No codex found, falling back to thegent quality-agent..."
+      # shellcheck disable=SC2086
+      uv run thegent run "$prompt" quality-agent $extra_args
     fi
   fi
 }

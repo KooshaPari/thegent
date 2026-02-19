@@ -81,8 +81,22 @@ See `docs/POST_LAUNCH_OBSERVATION_PLAYBOOK.md` for severity→SLA mapping.
 
 ---
 
-## 6. References
+## 6. Configuration (Code Enforcement)
+
+The operating model is enforced via config. These settings map to the escalation paths above:
+
+| Config / Env | Default | Maps To |
+|--------------|---------|---------|
+| `escalation_sla_minutes` / `THGENT_ESCALATION_SLA_MINUTES` | 30 | §4.1 Policy Denial SLA |
+| `escalation_sla_breach_alert` | true | §4.1 Past-SLA alert in `govern sweep` |
+| `override_ttl_seconds` | 86400 (24h) | §4.1 Override validity |
+
+**Source:** `src/thegent/config.py` — `ThegentSettings`
+
+---
+
+## 7. References
 
 - `docs/RUNBOOK.md` — On-call procedures, recovery, escalation
 - `docs/research/GOVERNANCE_WP_GAPS.md` — WP-3008 escalation queue
-- `docs/unified-plan/09-RISK-REGISTRY.md` — Risk-based SLA targets
+- `docs/plans/09-RISK-REGISTRY.md` — Risk-based SLA targets

@@ -1,0 +1,5 @@
+# thegent project starship config
+# Avoids "Scanning current directory timed out" in large repos
+# Increased command_timeout to handle git shim resolution (first call only)
+scan_timeout = 2000
+command_timeout = 10000

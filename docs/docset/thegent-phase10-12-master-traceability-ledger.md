@@ -178,3 +178,11 @@ Treat this document as immutable for human review and generate an NDJSON ledger 
 - seed ticket rows,
 - and current issue-board status.
 
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

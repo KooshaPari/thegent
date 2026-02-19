@@ -223,3 +223,11 @@ CLIProxyAPIPlus handles:
 - `tests/test_integration_routing_flow.py` - 4 tests
 
 **Total: 27 new tests, all passing**
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+

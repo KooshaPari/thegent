@@ -20,10 +20,10 @@
 
 | Entry | Path | Status |
 |-------|------|--------|
-| CLI | `pyproject.toml` → `thegent = "thegent.main:app"` | ✅ Single entry point |
-| MCP | `thegent serve` (via main app) | ✅ CLI subcommand |
-| Process-compose MCP | `python -m thegent.main serve` | ✅ Uses CLI entry |
-| Process-compose proxy | `scripts/start_proxy.py` | ✅ Python-native |
+| CLI | `pyproject.toml` → `thegent = "thegent.main:app"` | ✓ Single entry point |
+| MCP | `thegent serve` (via main app) | ✓ CLI subcommand |
+| Process-compose MCP | `python -m thegent.main serve` | ✓ Uses CLI entry |
+| Process-compose proxy | `scripts/start_proxy.py` | ✓ Python-native |
 
 ### Scripts Audited
 
@@ -34,17 +34,17 @@
 
 ### Makefile
 
-- **None found** in thegent repo. ✅
+- **None found** in thegent repo. ✓
 
 ### Docs
 
-- README, PROVIDER_SETUP_GUIDE, SKILL.md, plans: all use `thegent run`, `thegent bg`, `thegent ps`, etc. ✅
-- Prompt-first syntax (`thegent run "prompt" [agent]`) is canonical; agent optional when `-M` given. ✅
+- README, PROVIDER_SETUP_GUIDE, SKILL.md, plans: all use `thegent run`, `thegent bg`, `thegent ps`, etc. ✓
+- Prompt-first syntax (`thegent run "prompt" [agent]`) is canonical; agent optional when `-M` given. ✓
 
 ### Tests
 
 - Unit tests (e.g. `test_agent_sync_async_validation.py`) import `run_impl` directly — **acceptable** for testing the impl layer in isolation.
-- E2E tests use `CliRunner` and invoke `app` (CLI). ✅
+- E2E tests use `CliRunner` and invoke `app` (CLI). ✓
 
 ---
 
@@ -70,3 +70,11 @@ python scripts/start_proxy.py
 ## Status
 
 **Audit complete.** All thegent capabilities are now reachable via the CLI. No scripts or Makefile targets bypass the CLI for orchestration/config capabilities.
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+
