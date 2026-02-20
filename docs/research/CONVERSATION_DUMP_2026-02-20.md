@@ -1,0 +1,137 @@
+# Conversation Dump 2026-02-20
+
+## Session Context
+
+Continuation of context-compacted prior session. Standing directives: "do it in batches of 5-10 agents async/teammates" + "yes to all". User message: "resume". Goal: clear all WORK_STREAM BACKLOG items via maximum-parallelism background agent dispatch.
+
+---
+
+## Issues Addressed
+
+### Structural Type Errors (Direct Fixes This Session)
+
+1. **`mcp_server.py:469`** — `Literal[False]` not assignable to `str | None`
+   - Root cause: `ps_impl(None, True, False)` — 3rd positional arg is `agent: str | None`, not `bool`
+   - Fix: Changed `False` → `None`
+
+2. **`mcp_server.py:581`** — Return type `str | None` not assignable to `str`
+   - Root cause: `logs_impl()` returns `str | None` but function declared `-> str`
+   - Fix: Added `or ""` to return expression
+
+### Agents Dispatched for Structural Fixes
+
+| Agent | File | Errors Being Fixed |
+|-------|------|--------------------|
+| a18673a | cli_impl.py | `FileLeaseRegistry.register_end`, `RunMeta.task_id`, `AuditRegistry`/`AuditEntry`, wrong escalation params, `max_parallel` undefined |
+| a745f61 | main.py | `hierarchy_show_cmd`, `teams_create_cmd`, `config_set_cmd`, `SyncCommand`/`SyncResult`, `subprocess` undefined, `crew_id` wrong param, `prune_periodic_*` symbols |
+| aaf6ef7 | mcp_server.py | `loop_impl` undefined, wrong params at 2363-2370, `pause_impl`/`resume_impl` undefined, `FunctionTool` not callable, `dag_status_impl` undefined, duplicate declarations |
+| a735c79 | load_based_limits.py | Wrong params `elapsed_s`/`deadline_s`/`overdue_by_s` for `SoftDeadline` |
+
+---
+
+## BACKLOG Progress
+
+### Batch J (agents j1-j10) — Dispatched Prior Session, Completed This Session
+
+| Work Item | Agent | Status |
+|-----------|-------|--------|
+| coordination-hybrid-strategy | agent-j1 (ac287b6) | COMPLETED |
+| borrow-dex-flash-agents | agent-j2 (a481d69) | COMPLETED |
+| setup-tailscale-nodes | agent-j3 (a5e4a7d) | COMPLETED |
+| setup-syncthing-workspace | agent-j4 (a37aef7) | COMPLETED |
+| impl-macos-desktop-automation | agent-j5 (a083e46) | COMPLETED |
+| compositor-perf-profiling | agent-j6 (affe26a) | COMPLETED |
+| ux-terminal-keepalive | agent-j7 (a0173c0) | IN PROGRESS |
+| ghostty-terminal-integration | agent-j8 (a8792df) | COMPLETED |
+| resource-gpu-utilization | agent-j9 (a3e5561) | IN PROGRESS |
+| resource-network-bandwidth | agent-j10 (a093495) | IN PROGRESS |
+
+### Batch K (agents k1-k7) — Dispatched Prior Session
+
+| Work Item | Agent | Status |
+|-----------|-------|--------|
+| resource-disk-queue-depth | agent-k1 (af0dbf5) | IN PROGRESS |
+| resource-distributed-coordination | agent-k2 (a8811ca) | IN PROGRESS |
+| swarm-token-bucket | agent-k3 (a9368a6) | IN PROGRESS |
+| swarm-dag-prioritization | agent-k4 (af895c0) | COMPLETED |
+| scratch-doctor-fix | agent-k5 (a808697) | IN PROGRESS |
+| impl-remote-executor | agent-k6 (ae83a68) | COMPLETED |
+| research-governance-override-events | agent-k7 (a8bf894) | IN PROGRESS |
+
+### Batch L (dispatched this session)
+
+| Work Item | Agent | Status |
+|-----------|-------|--------|
+| swarm-redlock-atomic | agent-l1 (a35175f) | IN PROGRESS |
+
+### Blocked Items
+
+| Work Item | Blocking On |
+|-----------|-------------|
+| swarm-priority-queue | swarm-critical-lane (agent-b4, still CLAIMED) |
+| wire-maif-agent-runner | impl-thegent-maif-crate (not in WORK_STREAM) |
+| research-cross-platform-remote | HYBRID_ENV (not in WORK_STREAM) |
+
+---
+
+## Fixes Applied
+
+| File | Line(s) | Fix |
+|------|---------|-----|
+| mcp_server.py | 469 | `ps_impl(None, True, False)` → `ps_impl(None, True, None)` |
+| mcp_server.py | 581 | `return logs_impl(...)` → `return logs_impl(...) or ""` |
+
+---
+
+## Research Findings
+
+### Transient vs Structural Pyright Errors
+
+Many errors are transient — appearing because agents are creating modules mid-session:
+- `thegent.compute.remote_executor`, `thegent.compute.syncthing`, `thegent.compute.tailscale` — agents creating these
+- `thegent.governance.override_events` — agent a8bf894 creating this
+- `thegent.mcp_storage` — agent a965099 created this (should resolve)
+
+Structural errors (require agent fix):
+- `AuditRegistry`/`AuditEntry` not defined in any file — agent a18673a addressing
+- `prune_periodic_install/start/status/stop/uninstall` — wrong symbols in main.py — agent a745f61 addressing
+- `FunctionTool` not callable in mcp_server.py — agent aaf6ef7 addressing
+
+### token_bucket.py structlog Issue
+
+Agent-k3 (a9368a6) created token_bucket.py with structlog-style keyword args:
+```python
+_slog.debug("token_bucket.consumed", tokens=tokens, remaining=self._tokens)
+```
+When structlog not installed, `_slog = _log` (standard Logger) which doesn't accept those kwargs.
+Solution: conditional structlog calling or `extra={}` pattern. Agent is addressing.
+
+---
+
+## Open Questions
+
+1. Is `impl-thegent-maif-crate` a dependency that needs to be created before `wire-maif-agent-runner`?
+2. Is `HYBRID_ENV` a WORK_STREAM item or external dependency for `research-cross-platform-remote`?
+3. Is `swarm-critical-lane` (agent-b4) still running or completed? (Not yet in COMPLETED section)
+4. Will main.py `SyncCommand`/`SyncResult` at line 6060/6066 resolve once Pyright rescans?
+
+---
+
+## Completed Sessions List (Prior + This)
+
+All COMPLETED items from WORK_STREAM as of this session:
+- impl-remote-executor, swarm-dag-prioritization, impl-simulation-replay-engine, coordination-hybrid-strategy, impl-compositor-manager, borrow-dex-flash-agents, setup-syncthing-workspace, enhance-macos-sandbox, compositor-caching, shell-consolidate-configs, serena-jetbrains-integration, fastmcp-storage-eventstore, cache-frecency-algorithm, swarm-redis-concurrency, cache-predictive-pre-warming, impl-memory-manager-integration, impl-cross-project-registry, impl-idea-seed-scanner, muxless-acp-session-endpoints, fastmcp-tool-patterns, acp-mcp-bridge, compositor-error-boundaries, cache-diskcache-migration, git-migrate-gix, swarm-soft-deadlines, acp-server-adapter, acp-client-adapter, bkm-06-git-native, impl-supermemory-client, fastmcp-elicitation-api, fastmcp-context-api, impl-routing-intake-integration, litellm-clode-integration, litellm-responses-handler, impl-sync-command, tenacity-migrate-cli, tenacity-migrate-loop, heliosShield-git-parallelism, task-io-improvement, bkm-09-watcher-daemon, muxless-termitty-introspection, borrow-plangent-subagents, impl-rust-zmx-wrapper, compositor-lifecycle-hooks, bkm-07-hook-dispatcher-extend, muxless-zmx-integration, compositor-perf-profiling, bkm-08-discovery-binary, cache-multi-level, bkm-05-state-shm, impl-zig-rust-interop-poc, swarm-usage-tracking, heliosShield-task-queue, adr-015-immutable-ledger, bkm-10-jsonl-parser, bkm-11-governance-scanner, heliosShield-smart-merge, ux-linting-accelerator
+
+---
+
+## Next Steps
+
+1. Monitor completions of batch k agents (k1-k5, k7) + batch l
+2. Once swarm-critical-lane completes → dispatch swarm-priority-queue
+3. Check if impl-thegent-maif-crate or HYBRID_ENV are needed
+4. Verify all structural fixes from agents a18673a, a745f61, aaf6ef7, a735c79
+5. Run quality gate once all critical agents complete
+
+## Cursor-Agent Recovery Note
+
+If restarting: check `docs/reference/WORK_STREAM.md` CLAIMED section for in-progress agents, COMPLETED section for done items. Agents a18673a/a745f61/aaf6ef7/a735c79 are fixing structural pyright errors. Agent a35175f is implementing swarm-redlock-atomic. Approximately 15 background agents still running.

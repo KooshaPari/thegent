@@ -1,21 +1,22 @@
 """Starlette server for thegent Control Plane."""
 
 import json
-import platform
-import os
 import logging
-from pathlib import Path
-from typing import Any, Optional, Dict
+import os
+import platform
 from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 import yaml
 from opentelemetry import trace
 from starlette.applications import Starlette
-from starlette.responses import JSONResponse, Response, PlainTextResponse
-from starlette.routing import Route
 from starlette.requests import Request
+from starlette.responses import JSONResponse, PlainTextResponse, Response
+from starlette.routing import Route
 
 from thegent.config_provider import EnvConfigProvider
+from thegent.control_plane.registry_router import registry_routes
 
 _log = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ tracer = trace.get_tracer("thegent.control_plane.server")
 _metrics = {
     "config_resolves_total": 0,
     "sessions_indexed": 0,
+    "config_resolve_duration_sum": 0.0,
 }
 
 
@@ -35,6 +37,9 @@ async def metrics(request: Request) -> Response:
         "# HELP config_resolves_total Total number of config resolutions",
         "# TYPE config_resolves_total counter",
         f"config_resolves_total {_metrics['config_resolves_total']}",
+        "# HELP config_resolve_duration_sum Total time spent in config resolution",
+        "# TYPE config_resolve_duration_sum counter",
+        f"config_resolve_duration_sum {_metrics['config_resolve_duration_sum']}",
         "# HELP thegent_sessions_indexed Total number of sessions in the CP index",
         "# TYPE thegent_sessions_indexed gauge",
         f"thegent_sessions_indexed {_metrics['sessions_indexed']}",
@@ -57,7 +62,7 @@ class TenantManager:
         if not p.exists():
             return {}
         try:
-            with open(p, "r") as f:
+            with open(p) as f:
                 return yaml.safe_load(f) or {}
         except Exception:
             return {}
@@ -68,20 +73,21 @@ class SessionIndexer:
 
     def __init__(self, session_dir: Path | None = None) -> None:
         from thegent.config import ThegentSettings
+
         settings = ThegentSettings()
         self.session_dir = session_dir or settings.session_dir
-        self.sessions: Dict[str, Dict[str, Any]] = {}
+        self.sessions: dict[str, dict[str, Any]] = {}
 
     def refresh(self) -> int:
         """Poll all run_registry.jsonl files in the session directory."""
         if not self.session_dir.exists():
             return 0
-        
+
         new_sessions = {}
         # Walk ~/.cache/thegent/sessions/<owner>/run_registry.jsonl
         for registry_path in self.session_dir.glob("**/run_registry.jsonl"):
             try:
-                with open(registry_path, "r", encoding="utf-8") as f:
+                with open(registry_path, encoding="utf-8") as f:
                     for line in f:
                         if not line.strip():
                             continue
@@ -91,7 +97,7 @@ class SessionIndexer:
                             run_id = data.get("run_id")
                             if not run_id:
                                 continue
-                            
+
                             # Merge updates for the same run_id
                             if run_id not in new_sessions:
                                 new_sessions[run_id] = data
@@ -101,7 +107,7 @@ class SessionIndexer:
                             continue
             except Exception as e:
                 _log.warning("Failed to read registry %s: %s", registry_path, e)
-        
+
         self.sessions = new_sessions
         _metrics["sessions_indexed"] = len(self.sessions)
         return len(self.sessions)
@@ -131,6 +137,7 @@ async def health(request: Request) -> JSONResponse:
     """GET /health — liveness."""
     try:
         import thegent
+
         version = getattr(thegent, "__version__", "0.1.0")
     except ImportError:
         version = "0.1.0"
@@ -139,6 +146,8 @@ async def health(request: Request) -> JSONResponse:
 
 async def resolve_config(request: Request) -> JSONResponse:
     """POST /v1/config/resolve — resolve config with overrides."""
+    import time
+    start = time.perf_counter()
     with tracer.start_as_current_span("config.resolve") as span:
         try:
             req = await request.json()
@@ -165,8 +174,18 @@ async def resolve_config(request: Request) -> JSONResponse:
         if keys:
             resolved = {k: v for k, v in resolved.items() if k in keys}
 
+        # WP-CP-4.2: Validate resolved config against ThegentSettings schema (partial)
+        from thegent.config import ThegentSettings
+        try:
+            # We only validate keys that exist in ThegentSettings
+            ThegentSettings.model_validate(resolved, strict=False)
+        except Exception as e:
+            _log.warning("Resolved config failed validation: %s", e)
+            # We proceed anyway but log it, as some keys might be dynamic/experimental
+
         # Update metrics
         _metrics["config_resolves_total"] += 1
+        _metrics["config_resolve_duration_sum"] += (time.perf_counter() - start)
 
         # Convert Path objects to strings for JSON serialization
         def _sanitize(obj: Any) -> Any:
@@ -212,6 +231,7 @@ def create_app() -> Starlette:
             Route("/v1/config/resolve", resolve_config, methods=["POST"]),
             Route("/v1/tenants/{tenant_id}/config", get_tenant_config, methods=["GET"]),
             Route("/v1/sessions", list_sessions, methods=["GET"]),
+            *registry_routes,
         ],
     )
 
@@ -233,16 +253,23 @@ def _default_port() -> int:
 
 def serve(socket_path: str | None = None, port: int | None = None, host: str = "127.0.0.1") -> None:
     """Run control plane server. Unix: socket or port. Windows: port only."""
+    import os
+
     import uvicorn
 
     is_windows = platform.system() == "Windows"
-    sock = socket_path or (None if is_windows else str(_default_socket_path()))
-    if sock:
-        sock_path = Path(sock)
-        sock_path.parent.mkdir(parents=True, exist_ok=True)
-        if sock_path.exists():
-            sock_path.unlink()
-        uvicorn.run(app, uds=sock, log_level="info")
+
+    # If port is explicitly provided, use it. Otherwise, prefer socket on non-Windows.
+    if port:
+        uvicorn.run(app, host=host, port=port, log_level="info")
     else:
-        p = port or _default_port()
-        uvicorn.run(app, host=host, port=p, log_level="info")
+        sock = socket_path or (None if is_windows else str(_default_socket_path()))
+        if sock:
+            sock_path = Path(sock)
+            sock_path.parent.mkdir(parents=True, exist_ok=True)
+            if sock_path.exists():
+                sock_path.unlink()
+            uvicorn.run(app, uds=sock, log_level="info")
+        else:
+            p = _default_port()
+            uvicorn.run(app, host=host, port=p, log_level="info")

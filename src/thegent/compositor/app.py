@@ -4,7 +4,6 @@ Provides the CompositApp class which manages the overall UI layout including
 header, footer, and pane management.
 """
 
-
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical
 from textual.widgets import Footer, Header, Static

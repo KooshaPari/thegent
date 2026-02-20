@@ -11,23 +11,23 @@ logger = logging.getLogger(__name__)
 class GovernanceDLQIntegration:
     """Integration between governance escalation queue and DLQ."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize DLQ integration."""
         self.escalation_queue = EscalationQueueDLQ()
 
     def process_with_dlq(self, max_retries: int = 3) -> None:
         """Process escalation queue with DLQ fallback.
-        
+
         Args:
             max_retries: Maximum retry attempts
         """
         retry_count = 0
-        
+
         while True:
             item = self.escalation_queue.process()
             if not item:
                 break
-            
+
             try:
                 # Process item
                 self._process_item(item)
@@ -43,7 +43,7 @@ class GovernanceDLQIntegration:
 
     def _process_item(self, item: dict[str, Any]) -> None:
         """Process a single escalation item.
-        
+
         Args:
             item: Item to process
         """

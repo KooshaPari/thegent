@@ -9,13 +9,13 @@ logger = logging.getLogger(__name__)
 class CodexHarness:
     """Codex harness for agent execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize codex harness."""
         self.agents: dict[str, Any] = {}
 
     def register_agent(self, agent_id: str, agent_executor: Any) -> None:
         """Register an agent executor.
-        
+
         Args:
             agent_id: Agent identifier
             agent_executor: Agent executor instance
@@ -25,18 +25,18 @@ class CodexHarness:
 
     def execute(self, agent_id: str, task: dict[str, Any]) -> dict[str, Any]:
         """Execute a task with an agent.
-        
+
         Args:
             agent_id: Agent identifier
             task: Task dictionary
-            
+
         Returns:
             Execution result
         """
         executor = self.agents.get(agent_id)
         if not executor:
             return {"error": f"Agent {agent_id} not found"}
-        
+
         logger.info(f"Executing task with agent {agent_id}")
         # Implementation would call executor.run() or similar
         return {"status": "success", "agent": agent_id}
@@ -45,16 +45,16 @@ class CodexHarness:
 class CCHarness:
     """CC (Claude Code) harness for agent execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize CC harness."""
         self.executor = None
 
     def execute(self, task: dict[str, Any]) -> dict[str, Any]:
         """Execute a task.
-        
+
         Args:
             task: Task dictionary
-            
+
         Returns:
             Execution result
         """
@@ -65,16 +65,16 @@ class CCHarness:
 class DroidHarness:
     """Droid harness for agent execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize droid harness."""
         self.executor = None
 
     def execute(self, task: dict[str, Any]) -> dict[str, Any]:
         """Execute a task.
-        
+
         Args:
             task: Task dictionary
-            
+
         Returns:
             Execution result
         """
@@ -85,7 +85,7 @@ class DroidHarness:
 class HarnessAdapter:
     """Adapter to wire harnesses as agent_executor for Crew."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize harness adapter."""
         self.codex = CodexHarness()
         self.cc = CCHarness()
@@ -93,25 +93,24 @@ class HarnessAdapter:
 
     def get_executor(self, harness_type: str = "codex") -> Any:
         """Get executor for a harness type.
-        
+
         Args:
             harness_type: Type of harness (codex, cc, droid)
-            
+
         Returns:
             Executor instance
         """
         if harness_type == "codex":
             return self.codex
-        elif harness_type == "cc":
+        if harness_type == "cc":
             return self.cc
-        elif harness_type == "droid":
+        if harness_type == "droid":
             return self.droid
-        else:
-            return self.codex  # Default
+        return self.codex  # Default
 
     def wire_to_crew(self, crew: Any, harness_type: str = "codex") -> None:
         """Wire harness to crew as agent_executor.
-        
+
         Args:
             crew: Crew instance
             harness_type: Type of harness to use

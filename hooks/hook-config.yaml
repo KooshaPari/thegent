@@ -116,6 +116,12 @@ hooks:
     run_if: "\\.(py|sh|yaml|json)$"
     description: "Run AgilePlus governance cycle to maintain code health"
 
+  # SCC Metrics - collect codebase stats
+  scc-metrics:
+    scope: all
+    timeout: 30
+    description: "Collect codebase metrics via scc"
+
 
 # File patterns for change detection
 patterns:

@@ -218,6 +218,24 @@ tach.toml                  (architecture boundaries)
 
 
 
+## Error Handling and Actionability
+
+thegent prioritizes actionable error messages. When reporting errors:
+
+1. **Use `print_error`**: instead of direct `console.print(f"[red]...")`.
+2. **Provide Hints**: Always include a `remediation_hint` if possible.
+3. **Structured Errors**: Use classes from `thegent.errors` (e.g., `ConfigError`, `ProviderError`).
+
+```python
+from thegent.errors import print_error, get_install_hint
+
+# Good
+print_error("Tool 'process-compose' not found.", hint=get_install_hint("process-compose"))
+
+# Also Good
+raise ConfigError("Missing API key", remediation_hint="Run 'thegent cliproxy login'")
+```
+
 ---
 
 ## EXTENSION_SUMMARY

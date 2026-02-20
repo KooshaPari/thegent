@@ -1,6 +1,7 @@
 """Health score calculator for thegent project governance."""
 
 import json
+from datetime import UTC
 from pathlib import Path
 from typing import TypedDict
 
@@ -30,7 +31,7 @@ class HealthReport(TypedDict):
 class HealthScorer:
     """Calculates project health based on defined targets."""
 
-    def __init__(self, targets_file: Path | str):
+    def __init__(self, targets_file: Path | str) -> None:
         """Load health targets configuration.
 
         Args:
@@ -63,10 +64,9 @@ class HealthScorer:
         if direction == "higher_is_better":
             # For higher-is-better: actual/target * 100, capped at 100
             return min(100.0, (actual / target) * 100) if actual >= 0 else 0.0
-        else:
-            # For lower-is-better: (1 - actual/target) * 100, capped at 100
-            score = (1 - actual / target) * 100
-            return min(100.0, max(0.0, score))
+        # For lower-is-better: (1 - actual/target) * 100, capped at 100
+        score = (1 - actual / target) * 100
+        return min(100.0, max(0.0, score))
 
     def dimension_status(self, score: float) -> str:
         """Get status label for a score.
@@ -77,17 +77,13 @@ class HealthScorer:
         Returns:
             Status label (excellent, healthy, warning, critical)
         """
-        bands = sorted(
-            self.bands.items(), key=lambda x: x[1]["min"], reverse=True
-        )
+        bands = sorted(self.bands.items(), key=lambda x: x[1]["min"], reverse=True)
         for band_name, band_config in bands:
             if score >= band_config["min"]:
                 return band_name
         return "critical"
 
-    def score_dimension(
-        self, dimension_key: str, actual: float
-    ) -> DimensionScore:
+    def score_dimension(self, dimension_key: str, actual: float) -> DimensionScore:
         """Score a single dimension.
 
         Args:
@@ -161,5 +157,5 @@ class HealthScorer:
             overall_score=round(overall, 1),
             status=status,
             dimensions=scores,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )

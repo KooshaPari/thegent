@@ -24,91 +24,73 @@ High-performance compression with automatic backend selection.
 
 #### FastCompression.compress
 
+```python
+compress(data: bytes, method: str, level: int)
+```
+
 Compress data using fastest available method.
 
-Args:
-    data: Data to compress
-    method: Compression method ("auto", "gzip", "brotli", "zstd")
-    level: Compression level (1-9, higher = better compression)
+**Parameters**:
 
-Returns:
-    Tuple of (compressed_data, method_used)
+- `data`: Data to compress
+- `method`: Compression method ("auto", "gzip", "brotli", "zstd")
+- `level`: Compression level (1-9, higher = better compression)
 
-Performance:
-    - zstd: Fastest compression/decompression
-    - brotli: Best compression ratios
-    - gzip: Standard fallback
+**Returns**: Tuple of (compressed_data, method_used)
 
-```python
-compress(data, method, level)
-```
+---
 
 #### FastCompression.decompress
 
+```python
+decompress(data: bytes, method: Any)
+```
+
 Decompress data, auto-detecting method if not specified.
 
-Args:
-    data: Compressed data
-    method: Compression method (None = auto-detect)
+**Parameters**:
 
-Returns:
-    Decompressed data
+- `data`: Compressed data
+- `method`: Compression method (None = auto-detect)
 
-Performance:
-    - Auto-detection tries fastest methods first
-    - zstd: Fastest decompression
-    - brotli: Fast decompression
-    - gzip: Standard fallback
+**Returns**: Decompressed data
 
-```python
-decompress(data, method)
-```
+---
 
 ---
 
 ## compress
 
+```python
+compress(data: bytes, method: str, level: int)
+```
+
 Compress data using fastest available method.
 
-Args:
-    data: Data to compress
-    method: Compression method ("auto", "gzip", "brotli", "zstd")
-    level: Compression level (1-9, higher = better compression)
+**Parameters**:
 
-Returns:
-    Tuple of (compressed_data, method_used)
+- `data`: Data to compress
+- `method`: Compression method ("auto", "gzip", "brotli", "zstd")
+- `level`: Compression level (1-9, higher = better compression)
 
-Performance:
-    - zstd: Fastest compression/decompression
-    - brotli: Best compression ratios
-    - gzip: Standard fallback
-
-```python
-compress(data, method, level)
-```
+**Returns**: Tuple of (compressed_data, method_used)
 
 ---
 
 ## decompress
 
+```python
+decompress(data: bytes, method: Any)
+```
+
 Decompress data, auto-detecting method if not specified.
 
-Args:
-    data: Compressed data
-    method: Compression method (None = auto-detect)
+**Parameters**:
 
-Returns:
-    Decompressed data
+- `data`: Compressed data
+- `method`: Compression method (None = auto-detect)
 
-Performance:
-    - Auto-detection tries fastest methods first
-    - zstd: Fastest decompression
-    - brotli: Fast decompression
-    - gzip: Standard fallback
-
-```python
-decompress(data, method)
-```
+**Returns**: Decompressed data
 
 ---
 

@@ -80,12 +80,13 @@ class DroidRunner(AgentRunner):
         live_output: bool = False,
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         """Run droid via droid exec."""
         # Route via LiteLLM Router if enabled
         if self._use_litellm_router:
             return self._run_via_litellm_router(
-                prompt, cwd, mode, timeout, self._model, use_stream, live_output, on_stdout, on_stderr
+                prompt, cwd, mode, timeout, self._model, use_stream, live_output, on_stdout, on_stderr, env=env
             )
 
         droid_path = self.droids_dir / f"{self.droid_name}.md"
@@ -114,15 +115,31 @@ class DroidRunner(AgentRunner):
             elif mode == "full":
                 cmd.extend(["--auto", "high"])
 
+            cmd = wrap_with_caffeinate(cmd, "droid")
+
+            # Merge provided env with current environment
+            process_env = os.environ.copy()
+            if env:
+                process_env.update(env)
+
             proc = run_subprocess_optimized(
                 cmd,
                 check=False,
                 capture_output=True,
                 timeout=timeout + 5,
                 cwd=str(cwd) if cwd else None,
+                env=process_env,
             )
-            stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
-            stderr_text = proc.stderr if isinstance(proc.stderr, str) else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
+            stdout_text = (
+                proc.stdout
+                if isinstance(proc.stdout, str)
+                else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+            )
+            stderr_text = (
+                proc.stderr
+                if isinstance(proc.stderr, str)
+                else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
+            )
             return RunResult(
                 exit_code=proc.returncode,
                 stdout=strip_ansi(stdout_text),
@@ -149,7 +166,6 @@ class DroidRunner(AgentRunner):
         finally:
             Path(tmp_path).unlink(missing_ok=True)
 
-
     def _run_via_litellm_router(
         self,
         prompt: str,
@@ -161,18 +177,16 @@ class DroidRunner(AgentRunner):
         live_output: bool,
         on_stdout: Callable[[str], None] | None,
         on_stderr: Callable[[str], None] | None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         """Run via LiteLLM Router for Droid compatibility."""
         try:
             from thegent.routing.litellm_router import get_enhanced_router
 
             router = get_enhanced_router()
-            
+
             # Extract provider/model from Factory format
-            if ":" in model:
-                model_to_use = model.split(":", 1)[1]
-            else:
-                model_to_use = model
+            model_to_use = model.split(":", 1)[1] if ":" in model else model
 
             # Check if droid file exists
             droid_path = self.droids_dir / f"{self.droid_name}.md"
@@ -218,22 +232,21 @@ class DroidRunner(AgentRunner):
                     stderr="",
                     timed_out=False,
                 )
-            else:
-                content = ""
-                if hasattr(result.response, "choices") and result.response.choices:
-                    content = result.response.choices[0].message.content
-                elif isinstance(result.response, dict):
-                    choices = result.response.get("choices", [])
-                    if choices:
-                        message = choices[0].get("message", {})
-                        content = message.get("content", "")
+            content = ""
+            if hasattr(result.response, "choices") and result.response.choices:
+                content = result.response.choices[0].message.content
+            elif isinstance(result.response, dict):
+                choices = result.response.get("choices", [])
+                if choices:
+                    message = choices[0].get("message", {})
+                    content = message.get("content", "")
 
-                return RunResult(
-                    exit_code=0,
-                    stdout=content or "",
-                    stderr="",
-                    timed_out=False,
-                )
+            return RunResult(
+                exit_code=0,
+                stdout=content or "",
+                stderr="",
+                timed_out=False,
+            )
 
         except Exception as e:
             return RunResult(
@@ -242,6 +255,7 @@ class DroidRunner(AgentRunner):
                 stderr=f"LiteLLM Router execution failed: {e}",
                 timed_out=False,
             )
+
 
 class CodexRunner(AgentRunner):
     """Runs droids via OpenAI Codex CLI (codex exec)."""
@@ -275,12 +289,13 @@ class CodexRunner(AgentRunner):
         live_output: bool = False,
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         """Run droid via codex exec."""
         # Route via LiteLLM Router if enabled
         if self._use_litellm_router:
             return self._run_via_litellm_router(
-                prompt, cwd, mode, timeout, self._model, use_stream, live_output, on_stdout, on_stderr
+                prompt, cwd, mode, timeout, self._model, use_stream, live_output, on_stdout, on_stderr, env=env
             )
 
         droid_path = self.droids_dir / f"{self.droid_name}.md"
@@ -311,6 +326,13 @@ class CodexRunner(AgentRunner):
         elif mode == "full":
             cmd.extend(["--full-auto"])
 
+        cmd = wrap_with_caffeinate(cmd, "codex")
+
+        # Merge provided env with current environment
+        process_env = os.environ.copy()
+        if env:
+            process_env.update(env)
+
         try:
             # Use run_subprocess_optimized with input support
             proc = run_subprocess_optimized(
@@ -320,9 +342,18 @@ class CodexRunner(AgentRunner):
                 capture_output=True,
                 timeout=timeout + 5,
                 cwd=str(cwd) if cwd else None,
+                env=process_env,
             )
-            stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
-            stderr_text = proc.stderr if isinstance(proc.stderr, str) else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
+            stdout_text = (
+                proc.stdout
+                if isinstance(proc.stdout, str)
+                else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+            )
+            stderr_text = (
+                proc.stderr
+                if isinstance(proc.stderr, str)
+                else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
+            )
             return RunResult(
                 exit_code=proc.returncode,
                 stdout=strip_ansi(stdout_text),
@@ -347,7 +378,6 @@ class CodexRunner(AgentRunner):
                 timed_out=False,
             )
 
-
     def _run_via_litellm_router(
         self,
         prompt: str,
@@ -359,13 +389,14 @@ class CodexRunner(AgentRunner):
         live_output: bool,
         on_stdout: Callable[[str], None] | None,
         on_stderr: Callable[[str], None] | None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         """Run via LiteLLM Router for Codex/Droid compatibility."""
         try:
             from thegent.routing.litellm_router import get_enhanced_router
 
             router = get_enhanced_router()
-            
+
             # Check if droid file exists
             droid_path = self.droids_dir / f"{self.droid_name}.md"
             if droid_path.exists():
@@ -410,22 +441,21 @@ class CodexRunner(AgentRunner):
                     stderr="",
                     timed_out=False,
                 )
-            else:
-                content = ""
-                if hasattr(result.response, "choices") and result.response.choices:
-                    content = result.response.choices[0].message.content
-                elif isinstance(result.response, dict):
-                    choices = result.response.get("choices", [])
-                    if choices:
-                        message = choices[0].get("message", {})
-                        content = message.get("content", "")
+            content = ""
+            if hasattr(result.response, "choices") and result.response.choices:
+                content = result.response.choices[0].message.content
+            elif isinstance(result.response, dict):
+                choices = result.response.get("choices", [])
+                if choices:
+                    message = choices[0].get("message", {})
+                    content = message.get("content", "")
 
-                return RunResult(
-                    exit_code=0,
-                    stdout=content or "",
-                    stderr="",
-                    timed_out=False,
-                )
+            return RunResult(
+                exit_code=0,
+                stdout=content or "",
+                stderr="",
+                timed_out=False,
+            )
 
         except Exception as e:
             return RunResult(
@@ -434,6 +464,7 @@ class CodexRunner(AgentRunner):
                 stderr=f"LiteLLM Router execution failed: {e}",
                 timed_out=False,
             )
+
 
 class CustomCliRunner(AgentRunner):
     """Runs droids via a generic custom CLI (e.g. claudemax, claudeglm in ~/.local/bin)."""
@@ -467,6 +498,7 @@ class CustomCliRunner(AgentRunner):
         live_output: bool = False,
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         """Run droid via custom CLI. Prompt sent via stdin; expects --model and --cd support."""
         droid_path = self.droids_dir / f"{self.droid_name}.md"
@@ -489,6 +521,11 @@ class CustomCliRunner(AgentRunner):
 
         cmd = wrap_with_caffeinate(cmd, self.droid_name)
 
+        # Merge provided env with current environment
+        process_env = os.environ.copy()
+        if env:
+            process_env.update(env)
+
         try:
             # Use run_subprocess_optimized with input support
             proc = run_subprocess_optimized(
@@ -498,9 +535,18 @@ class CustomCliRunner(AgentRunner):
                 capture_output=True,
                 timeout=timeout + 5,
                 cwd=str(cwd) if cwd else None,
+                env=process_env,
             )
-            stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
-            stderr_text = proc.stderr if isinstance(proc.stderr, str) else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
+            stdout_text = (
+                proc.stdout
+                if isinstance(proc.stdout, str)
+                else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+            )
+            stderr_text = (
+                proc.stderr
+                if isinstance(proc.stderr, str)
+                else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
+            )
             return RunResult(
                 exit_code=proc.returncode,
                 stdout=strip_ansi(stdout_text),

@@ -18,13 +18,15 @@ Supported platforms.
 
 Detect current platform.
 
-Returns:
-    Platform enum value (MACOS, LINUX, WINDOWS, WSL2, or UNKNOWN)
+**Returns**: Platform enum value (MACOS, LINUX, WINDOWS, WSL2, or UNKNOWN)
 
-Examples:
-    >>> plat = detect_platform()
-    >>> plat == Platform.MACOS
-    True
+**Examples**:
+
+```python
+>>> plat = detect_platform()
+>>> plat == Platform.MACOS
+True
+```
 
 ---
 
@@ -32,12 +34,14 @@ Examples:
 
 Get system architecture.
 
-Returns:
-    Architecture string: "x86_64", "arm64", "aarch64", "i386", etc.
+**Returns**: Architecture string: "x86_64", "arm64", "aarch64", "i386", etc.
 
-Examples:
-    >>> get_architecture()
-    'arm64'  # on Apple Silicon Mac
+**Examples**:
+
+```python
+>>> get_architecture()
+'arm64'  # on Apple Silicon Mac
+```
 
 ---
 
@@ -45,12 +49,14 @@ Examples:
 
 Get platform name as string.
 
-Returns:
-    Platform name: "macos", "linux", "windows", "wsl2", or "unknown"
+**Returns**: Platform name: "macos", "linux", "windows", "wsl2", or "unknown"
 
-Examples:
-    >>> get_platform_name()
-    'macos'
+**Examples**:
+
+```python
+>>> get_platform_name()
+'macos'
+```
 
 ---
 
@@ -58,12 +64,14 @@ Examples:
 
 Check if running on Linux (not WSL2).
 
-Returns:
-    True if Linux (not WSL2), False otherwise
+**Returns**: True if Linux (not WSL2), False otherwise
 
-Examples:
-    >>> is_linux()
-    True  # on Linux (not WSL2)
+**Examples**:
+
+```python
+>>> is_linux()
+True  # on Linux (not WSL2)
+```
 
 ---
 
@@ -71,12 +79,14 @@ Examples:
 
 Check if running on macOS.
 
-Returns:
-    True if macOS, False otherwise
+**Returns**: True if macOS, False otherwise
 
-Examples:
-    >>> is_macos()
-    True  # on macOS
+**Examples**:
+
+```python
+>>> is_macos()
+True  # on macOS
+```
 
 ---
 
@@ -84,12 +94,14 @@ Examples:
 
 Check if running on Unix-like system (macOS, Linux, WSL2).
 
-Returns:
-    True if macOS, Linux, or WSL2, False otherwise
+**Returns**: True if macOS, Linux, or WSL2, False otherwise
 
-Examples:
-    >>> is_unix()
-    True  # on macOS/Linux
+**Examples**:
+
+```python
+>>> is_unix()
+True  # on macOS/Linux
+```
 
 ---
 
@@ -97,12 +109,14 @@ Examples:
 
 Check if running on Windows (including WSL2).
 
-Returns:
-    True if Windows or WSL2, False otherwise
+**Returns**: True if Windows or WSL2, False otherwise
 
-Examples:
-    >>> is_windows()
-    False  # on macOS/Linux
+**Examples**:
+
+```python
+>>> is_windows()
+False  # on macOS/Linux
+```
 
 ---
 

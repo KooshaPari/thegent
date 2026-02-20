@@ -10,7 +10,7 @@
 This document analyzes work streams, features, and research plans across **8 active projects** in the kush ecosystem:
 
 1. **thegent** - Unified agent orchestration (most active)
-2. **sharecli** - Agent harness with governance (very structured)
+2. **heliosShield** - Agent harness with governance (very structured)
 3. **plangent** - Multi-agent orchestration (TypeScript)
 4. **kimaki** - Voice AI multi-agent system (complete)
 5. **smolgents** - Microagent delegation (production-ready)
@@ -19,7 +19,7 @@ This document analyzes work streams, features, and research plans across **8 act
 8. **usage** - AI usage tracking (migration in progress)
 
 **Key Finding**: Projects demonstrate **mature patterns** that can be borrowed:
-- **sharecli's P0-P4 priority system** → Adopt across all projects
+- **heliosShield's P0-P4 priority system** → Adopt across all projects
 - **thegent's unified work stream** → Template for others
 - **smolgents' cost optimization patterns** → Apply to other agent systems
 - **trace's comprehensive planning** → Model for MCP servers
@@ -58,7 +58,7 @@ This document analyzes work streams, features, and research plans across **8 act
 
 ---
 
-### 1.2 sharecli (Most Structured)
+### 1.2 heliosShield (Most Structured)
 
 **File**: `docs/unified/BACKLOG.md`
 
@@ -265,12 +265,12 @@ This document analyzes work streams, features, and research plans across **8 act
 
 | Project | Priority System | Strengths | Borrowable |
 |---------|----------------|-----------|------------|
-| **sharecli** | P0-P4 with SLAs | Clear definitions, SLA enforcement | ✅ **Adopt everywhere** |
+| **heliosShield** | P0-P4 with SLAs | Clear definitions, SLA enforcement | ✅ **Adopt everywhere** |
 | **thegent** | P1-P2 (implicit) | Simple, flexible | Use for lightweight projects |
 | **smolgents** | Story points | Detailed estimation | Use for complex projects |
 | **trace** | Phase-based | Clear boundaries | Use for MCP servers |
 
-**Recommendation**: **Adopt sharecli's P0-P4 system** across all projects.
+**Recommendation**: **Adopt heliosShield's P0-P4 system** across all projects.
 
 ---
 
@@ -279,10 +279,10 @@ This document analyzes work streams, features, and research plans across **8 act
 | Project | Dependency Format | Strengths |
 |---------|-------------------|-----------|
 | **thegent** | `Depends` column | Clear, explicit |
-| **sharecli** | `Depends On` column | Links to other items |
+| **heliosShield** | `Depends On` column | Links to other items |
 | **smolgents** | Critical path analysis | Visual dependencies |
 
-**Recommendation**: **Use thegent's `Depends` column format** with sharecli's linking.
+**Recommendation**: **Use thegent's `Depends` column format** with heliosShield's linking.
 
 ---
 
@@ -290,11 +290,11 @@ This document analyzes work streams, features, and research plans across **8 act
 
 | Project | Status System | Strengths |
 |---------|---------------|-----------|
-| **sharecli** | Planned, Blocked, In Progress | Clear states |
+| **heliosShield** | Planned, Blocked, In Progress | Clear states |
 | **thegent** | BACKLOG, CLAIMED, COMPLETED | Simple workflow |
 | **kimaki** | Status badges (✅, 🚧, 📋) | Visual |
 
-**Recommendation**: **Combine sharecli's states with kimaki's badges**.
+**Recommendation**: **Combine heliosShield's states with kimaki's badges**.
 
 ---
 
@@ -303,7 +303,7 @@ This document analyzes work streams, features, and research plans across **8 act
 | Project | Research Tracking | Strengths |
 |---------|-------------------|-----------|
 | **thegent** | Research doc integration | Comprehensive |
-| **sharecli** | Research doc references | Linked |
+| **heliosShield** | Research doc references | Linked |
 | **smolgents** | Stage-based research | Phased |
 
 **Recommendation**: **Adopt thegent's research doc integration**.
@@ -312,7 +312,7 @@ This document analyzes work streams, features, and research plans across **8 act
 
 ## Part 3: Borrowable Features by Category
 
-### 3.1 Governance & Quality (from sharecli)
+### 3.1 Governance & Quality (from heliosShield)
 
 **Features**:
 - ✅ Methodology enforcer (TDD/BDD/Contract/Property)
@@ -385,7 +385,7 @@ This document analyzes work streams, features, and research plans across **8 act
 - ✅ LLM-friendly docs
 
 **Borrowable To**:
-- **sharecli** - Documentation system
+- **heliosShield** - Documentation system
 - **plangent** - API documentation
 - **smolgents** - Usage guides
 - **trace** - MCP documentation
@@ -399,7 +399,7 @@ This document analyzes work streams, features, and research plans across **8 act
 | Project | Research Focus | Status | Borrowable |
 |---------|----------------|--------|------------|
 | **thegent** | Cross-platform, governance, FastMCP | Active | ✅ |
-| **sharecli** | LLM gates, chaos engineering | Active | ✅ |
+| **heliosShield** | LLM gates, chaos engineering | Active | ✅ |
 | **smolgents** | Cost optimization, routing | Complete | ✅ |
 | **trace** | MCP integration, BMM/OpenSpec | Planning | ✅ |
 | **dphi** | MCP composition, workflow integration | Active | ✅ |
@@ -408,7 +408,7 @@ This document analyzes work streams, features, and research plans across **8 act
 
 ### 4.2 Research Patterns to Borrow
 
-**From sharecli**:
+**From heliosShield**:
 - LLM-as-judge gate feasibility
 - Small local model gate (Ollama)
 - Chaos Toolkit experiment format
@@ -435,7 +435,7 @@ This document analyzes work streams, features, and research plans across **8 act
 
 ### 5.1 Immediate Actions
 
-1. **Adopt sharecli's P0-P4 priority system** across all projects
+1. **Adopt heliosShield's P0-P4 priority system** across all projects
    - Standardize priority definitions
    - Add SLA tracking
    - Implement module categorization
@@ -456,7 +456,7 @@ This document analyzes work streams, features, and research plans across **8 act
 
 1. **Create unified work stream template**
    - Based on thegent's structure
-   - Incorporate sharecli's priority system
+   - Incorporate heliosShield's priority system
    - Add kimaki's status badges
 
 2. **Cross-project feature borrowing**
@@ -496,10 +496,10 @@ This document analyzes work streams, features, and research plans across **8 act
 
 | Feature | Source | Target Projects | Impact |
 |---------|--------|-----------------|--------|
-| P0-P4 Priority System | sharecli | All projects | High |
+| P0-P4 Priority System | heliosShield | All projects | High |
 | Research Integration | thegent | All projects | High |
 | Cost Optimization | smolgents | thegent, plangent, kimaki | High |
-| Governance Gates | sharecli | thegent, plangent | High |
+| Governance Gates | heliosShield | thegent, plangent | High |
 | MCP Composition | trace, dphi | atoms-mcp-prod, zen-mcp-server | Medium |
 
 ---

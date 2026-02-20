@@ -1,7 +1,7 @@
 # In-Depth Tooling and Global Optimizations Audit (2026-02-15)
 
 ## 1. Overview
-This audit evaluates the current state of **thegent** and **sharecli** tooling, identifying gaps, performance bottlenecks, and opportunities for enterprise-grade optimization. It synthesizes findings from previous audits and incorporates new requirements for multi-agent "teammate" collaboration.
+This audit evaluates the current state of **thegent** and **heliosShield** tooling, identifying gaps, performance bottlenecks, and opportunities for enterprise-grade optimization. It synthesizes findings from previous audits and incorporates new requirements for multi-agent "teammate" collaboration.
 
 ## 2. CLI Surface Gaps (Priority: High)
 
@@ -37,7 +37,7 @@ This audit evaluates the current state of **thegent** and **sharecli** tooling, 
 
 ## 4. Multi-Agent Coordination (The "Teammates" Frontier)
 
-### 4.1 ShareCLI Phase 6-18 Integration
+### 4.1 heliosShield Phase 6-18 Integration
 - **Phase 6: Git Parallelism** — ✓ Implemented. Private `GIT_INDEX_FILE` used by teammates.
 - **Phase 7: Smart Merge** — ✓ Implemented. AST-aware merging via `Mergiraf`.
 - **Phase 11: Task Coordination** — ✓ Implemented. Maildir-based task queue for teammate coordination.
@@ -52,7 +52,7 @@ This audit evaluates the current state of **thegent** and **sharecli** tooling, 
 |-------|------|--------|--------|
 | **A** | Add `run-diff` and `trace replay` | ✓ Done | High (Debugging) |
 | **B** | Implement `thegent teammates` command surface | ✓ Done | High (Feature) |
-| **C** | Integrate ShareCLI Git Parallelism (Phase 6) | ✓ Done | Critical (Teammates) |
+| **C** | Integrate heliosShield Git Parallelism (Phase 6) | ✓ Done | Critical (Teammates) |
 | **D** | Implement Smart Merge Engine (Phase 7) | ✓ Done | Critical (Teammates) |
 | **E** | Observability Dashboard v2 (Live Teammate View) | ✓ Done | Medium (UX) |
 | **F** | Claude Code Proxy Model Unification (WP-Y) | ✓ Done | Critical (Robustness) |
@@ -77,7 +77,7 @@ This audit evaluates the current state of **thegent** and **sharecli** tooling, 
 
 ### Cross-References Added
 
-- ShareCLI Phase 6-18 Integration
+- heliosShield Phase 6-18 Integration
 - Agent registry implementation
 
 ### Practical Additions

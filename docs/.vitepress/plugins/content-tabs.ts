@@ -114,7 +114,7 @@ export function contentTabsPlugin(md: MarkdownIt) {
   }
   
   // Add the plugin
-  md.block.ruler.after(' fenced_code_block', 'content_tabs', tabsContainer, {
+  md.block.ruler.after('fence', 'content_tabs', tabsContainer, {
     alt: ['paragraph', 'reference', 'blockquote', 'list']
   })
   

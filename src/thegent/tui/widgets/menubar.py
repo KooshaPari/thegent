@@ -112,14 +112,14 @@ class MenubarWidget(Widget):
 
     def on_click(self, event: Click) -> None:
         """Handle click on menu items."""
-        if not hasattr(event, 'target') or not event.target:
+        if not hasattr(event, "target") or not event.target:
             return
-        
+
         # Find which menu item was clicked
         target = event.target
-        if hasattr(target, 'renderable'):
+        if hasattr(target, "renderable"):
             text = str(target.renderable)
-            for menu_name, items in self.MENUS:
+            for menu_name, _items in self.MENUS:
                 if menu_name in text:
                     self.action_toggle_menu(menu_name)
                     break

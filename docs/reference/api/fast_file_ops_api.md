@@ -25,239 +25,251 @@ High-performance file operations with platform-specific optimizations.
 
 #### FastFileOps.copy
 
+```python
+copy(src: Any, dst: Any, preserve_metadata: bool)
+```
+
 Copy file with optimized method selection.
 
-Args:
-    src: Source file path
-    dst: Destination file path
-    preserve_metadata: Whether to preserve file metadata
+**Parameters**:
 
-Performance:
-    - Linux: Uses sendfile() for large files (>10MB) - zero-copy
-    - Other platforms: Uses optimized shutil.copy2()
+- `src`: Source file path
+- `dst`: Destination file path
+- `preserve_metadata`: Whether to preserve file metadata
 
-```python
-copy(src, dst, preserve_metadata)
-```
+---
 
 #### FastFileOps.copy_tree
 
+```python
+copy_tree(src: Any, dst: Any, ignore: Any)
+```
+
 Copy directory tree with optimizations.
 
-Args:
-    src: Source directory path
-    dst: Destination directory path
-    ignore: Optional list of patterns to ignore
+**Parameters**:
 
-```python
-copy_tree(src, dst, ignore)
-```
+- `src`: Source directory path
+- `dst`: Destination directory path
+- `ignore`: Optional list of patterns to ignore
+
+---
 
 #### FastFileOps.ensure_dir
 
+```python
+ensure_dir(path: Any, mode: int)
+```
+
 Ensure directory exists (create if needed).
 
-Args:
-    path: Directory path
-    mode: Directory permissions
+**Parameters**:
 
-Returns:
-    Path object
+- `path`: Directory path
+- `mode`: Directory permissions
 
-```python
-ensure_dir(path, mode)
-```
+**Returns**: Path object
+
+---
 
 #### FastFileOps.get_size
 
+```python
+get_size(path: Any)
+```
+
 Get file or directory size (optimized).
 
-Args:
-    path: Path to file or directory
+**Parameters**:
 
-Returns:
-    Size in bytes
+- `path`: Path to file or directory
 
-```python
-get_size(path)
-```
+**Returns**: Size in bytes
+
+---
 
 #### FastFileOps.move
 
+```python
+move(src: Any, dst: Any)
+```
+
 Move file or directory (optimized).
 
-Args:
-    src: Source path
-    dst: Destination path
+**Parameters**:
 
-```python
-move(src, dst)
-```
+- `src`: Source path
+- `dst`: Destination path
+
+---
 
 #### FastFileOps.remove
 
+```python
+remove(path: Any, recursive: bool)
+```
+
 Remove file or directory (optimized).
 
-Args:
-    path: Path to remove
-    recursive: If True, remove directory recursively
+**Parameters**:
 
-```python
-remove(path, recursive)
-```
+- `path`: Path to remove
+- `recursive`: If True, remove directory recursively
+
+---
 
 ---
 
 ## copy
 
+```python
+copy(src: Any, dst: Any, preserve_metadata: bool)
+```
+
 Copy file with optimized method selection.
 
-Args:
-    src: Source file path
-    dst: Destination file path
-    preserve_metadata: Whether to preserve file metadata
+**Parameters**:
 
-Performance:
-    - Linux: Uses sendfile() for large files (>10MB) - zero-copy
-    - Other platforms: Uses optimized shutil.copy2()
-
-```python
-copy(src, dst, preserve_metadata)
-```
+- `src`: Source file path
+- `dst`: Destination file path
+- `preserve_metadata`: Whether to preserve file metadata
 
 ---
 
 ## copy_file
 
-Copy file with optimized method.
-
 ```python
-copy_file(src, dst, preserve_metadata)
+copy_file(src: Any, dst: Any, preserve_metadata: bool)
 ```
+
+Copy file with optimized method.
 
 ---
 
 ## copy_tree
 
+```python
+copy_tree(src: Any, dst: Any, ignore: Any)
+```
+
 Copy directory tree with optimizations.
 
-Args:
-    src: Source directory path
-    dst: Destination directory path
-    ignore: Optional list of patterns to ignore
+**Parameters**:
 
-```python
-copy_tree(src, dst, ignore)
-```
+- `src`: Source directory path
+- `dst`: Destination directory path
+- `ignore`: Optional list of patterns to ignore
 
 ---
 
 ## ensure_dir
 
+```python
+ensure_dir(path: Any, mode: int)
+```
+
 Ensure directory exists (create if needed).
 
-Args:
-    path: Directory path
-    mode: Directory permissions
+**Parameters**:
 
-Returns:
-    Path object
+- `path`: Directory path
+- `mode`: Directory permissions
 
-```python
-ensure_dir(path, mode)
-```
+**Returns**: Path object
 
 ---
 
 ## ensure_directory
 
-Ensure directory exists.
-
 ```python
-ensure_directory(path, mode)
+ensure_directory(path: Any, mode: int)
 ```
+
+Ensure directory exists.
 
 ---
 
 ## get_path_size
 
-Get file or directory size.
-
 ```python
-get_path_size(path)
+get_path_size(path: Any)
 ```
+
+Get file or directory size.
 
 ---
 
 ## get_size
 
+```python
+get_size(path: Any)
+```
+
 Get file or directory size (optimized).
 
-Args:
-    path: Path to file or directory
+**Parameters**:
 
-Returns:
-    Size in bytes
+- `path`: Path to file or directory
 
-```python
-get_size(path)
-```
+**Returns**: Size in bytes
 
 ---
 
 ## ignore_func
 
 ```python
-ignore_func(directory, files)
+ignore_func(directory: str, files: list[str]) -> list[str]
 ```
 
 ---
 
 ## move
 
+```python
+move(src: Any, dst: Any)
+```
+
 Move file or directory (optimized).
 
-Args:
-    src: Source path
-    dst: Destination path
+**Parameters**:
 
-```python
-move(src, dst)
-```
+- `src`: Source path
+- `dst`: Destination path
 
 ---
 
 ## move_file
 
-Move file or directory.
-
 ```python
-move_file(src, dst)
+move_file(src: Any, dst: Any)
 ```
+
+Move file or directory.
 
 ---
 
 ## remove
 
+```python
+remove(path: Any, recursive: bool)
+```
+
 Remove file or directory (optimized).
 
-Args:
-    path: Path to remove
-    recursive: If True, remove directory recursively
+**Parameters**:
 
-```python
-remove(path, recursive)
-```
+- `path`: Path to remove
+- `recursive`: If True, remove directory recursively
 
 ---
 
 ## remove_path
 
-Remove file or directory.
-
 ```python
-remove_path(path, recursive)
+remove_path(path: Any, recursive: bool)
 ```
+
+Remove file or directory.
 
 ---
 

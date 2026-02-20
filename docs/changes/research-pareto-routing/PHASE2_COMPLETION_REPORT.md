@@ -52,7 +52,7 @@ override_threshold: 0.20      // Risk change > 0.20 overrides
 - Custom parameter configurations
 - Invalid parameter validation
 
-**Performance**: All operations complete in <1μs (well under <500μs target)
+**Performance**: All operations complete in `<1μs` (well under `<500μs` target)
 
 ---
 
@@ -103,7 +103,7 @@ struct SessionState {
 
 **Validation**: 
 - ✅ Achieves 80±5% Lifecycle / 20±5% TheGent split (verified on 1000+ tasks)
-- ✅ Prevents oscillation: <1 switch per 1000 tasks in steady state
+- ✅ Prevents oscillation: `<1 s`witch per 1000 tasks in steady state
 - ✅ Independent session states with no crosstalk
 - ✅ Accurate metrics tracking across all dimensions
 
@@ -200,7 +200,7 @@ lifecycle_pct = router.lifecycle_percentage()
 - **Total Tests**: 78
 - **Passed**: 78 (100%)
 - **Failed**: 0
-- **Execution Time**: <2 seconds
+- **Execution Time**: `<2 s`econds
 
 ---
 
@@ -220,16 +220,16 @@ lifecycle_pct = router.lifecycle_percentage()
   - Type conversion and round-trip verified
 
 ### Performance Benchmarks
-- **Hysteresis check**: <1μs (well under <500μs target)
-- **Router decision**: <1ms typical
-- **Test execution**: <2s for all 78 tests
+- **Hysteresis check**: `<1μs` (well under `<500μs` target)
+- **Router decision**: `<1ms` typical
+- **Test execution**: `<2s` for all 78 tests
 - **Memory usage**: Negligible (HashMap-based per-session state)
 
 ### Code Quality
 - ✅ No Clippy warnings
 - ✅ All tests pass consistently
 - ✅ No panics or unwraps in happy path
-- ✅ Thread-safe implementation (Arc<AtomicUsize> for metrics)
+- ✅ Thread-safe implementation (`Arc<AtomicUsize>` for metrics)
 - ✅ Proper error handling with Result types
 - ✅ Clear documentation in comments
 
@@ -271,14 +271,14 @@ Complete FFI binding with PyO3 provides:
 ## Acceptance Criteria Verification
 
 ### P2.1 Acceptance Criteria
-- ✅ Dwell time enforcement prevents switches <5min (verified in tests)
+- ✅ Dwell time enforcement prevents switches `<5min` (verified in tests)
 - ✅ Max dwell (30min) forces re-evaluation (verified in tests)
 - ✅ Large risk changes override dwell (verified with 0.22 > 0.20 override)
 - ✅ No stuck tasks in steady state (verified in oscillation tests)
 
 ### P2.2 Acceptance Criteria
 - ✅ Router respects hysteresis band (verified with 0.15 band test cases)
-- ✅ Dwell time prevents oscillation (<1 switch/1000 tasks verified)
+- ✅ Dwell time prevents oscillation (`<1 s`witch/1000 tasks verified)
 - ✅ Metrics track activations (hysteresis_activations counter)
 - ✅ 80/20 split maintained (verified on 1000-task test runs)
 

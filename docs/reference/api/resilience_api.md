@@ -34,11 +34,13 @@ WP-2004: Automated recovery playbooks for known failure patterns.
 
 #### RecoveryEngine.suggest_playbook
 
+```python
+suggest_playbook(self: Any, failure_type: str)
+```
+
 Return a recovery playbook for the given failure type.
 
-```python
-suggest_playbook(self, failure_type)
-```
+---
 
 ---
 
@@ -50,31 +52,37 @@ WP-2002: SLO-aware retry budget.
 
 ## ToolCircuitBreaker
 
-WP-2003: Circuit breaker for individual tools and models.
+WP-2003: Circuit breaker for individual tools and models. Uses pybreaker.
 
 ### Methods
 
 #### ToolCircuitBreaker.__init__
 
 ```python
-__init__(self, name, threshold, window_s)
+__init__(self: Any, name: str, threshold: int, window_s: int)
 ```
+
+---
 
 #### ToolCircuitBreaker.is_open
 
+```python
+is_open(self: Any)
+```
+
 True if the circuit is open (too many recent failures).
 
-```python
-is_open(self)
-```
+---
 
 #### ToolCircuitBreaker.record_failure
 
+```python
+record_failure(self: Any)
+```
+
 Record a failure event.
 
-```python
-record_failure(self)
-```
+---
 
 ---
 
@@ -97,8 +105,10 @@ Raised when agent failed due to retryable condition (rate limit, 502, etc.).
 #### TransientAgentError.__init__
 
 ```python
-__init__(self, result)
+__init__(self: Any, result: RunResult)
 ```
+
+---
 
 ---
 
@@ -113,96 +123,98 @@ Raised when provider hit usage/quota limit; caller should fallback to different 
 #### UsageLimitError.__init__
 
 ```python
-__init__(self, result, agent)
+__init__(self: Any, result: RunResult, agent: str)
 ```
+
+---
 
 ---
 
 ## classify_failure
 
-Classify failure as rate_limit (retry), usage_limit (fallback), or unknown.
-
 ```python
-classify_failure(result)
+classify_failure(result: RunResult)
 ```
+
+Classify failure as rate_limit (retry), usage_limit (fallback), or unknown.
 
 ---
 
 ## classify_to_taxonomy
 
-Classify a raw error message into the failure taxonomy.
-
 ```python
-classify_to_taxonomy(error_msg)
+classify_to_taxonomy(error_msg: str)
 ```
+
+Classify a raw error message into the failure taxonomy.
 
 ---
 
 ## decorator
 
 ```python
-decorator(fn)
+decorator(fn: Callable[(Ellipsis, T)]) -> Callable[(Ellipsis, T)]
 ```
 
 ---
 
 ## is_open
 
-True if the circuit is open (too many recent failures).
-
 ```python
-is_open(self)
+is_open(self: Any)
 ```
+
+True if the circuit is open (too many recent failures).
 
 ---
 
 ## is_retryable
 
-Return True if failure is rate_limit or transient (retry same provider).
-
 ```python
-is_retryable(result)
+is_retryable(result: RunResult)
 ```
+
+Return True if failure is rate_limit or transient (retry same provider).
 
 ---
 
 ## is_usage_limit
 
-Return True if failure indicates usage/quota limit (fallback to different provider).
-
 ```python
-is_usage_limit(result)
+is_usage_limit(result: RunResult)
 ```
+
+Return True if failure indicates usage/quota limit (fallback to different provider).
 
 ---
 
 ## record_failure
 
-Record a failure event.
-
 ```python
-record_failure(self)
+record_failure(self: Any)
 ```
+
+Record a failure event.
 
 ---
 
 ## suggest_playbook
 
-Return a recovery playbook for the given failure type.
-
 ```python
-suggest_playbook(self, failure_type)
+suggest_playbook(self: Any, failure_type: str)
 ```
+
+Return a recovery playbook for the given failure type.
 
 ---
 
 ## with_retry
 
-Decorator that retries on TransientAgentError with exponential backoff.
-
 ```python
-with_retry(max_attempts, min_wait, max_wait)
+with_retry(max_attempts: int, min_wait: float, max_wait: float)
 ```
+
+Decorator that retries on TransientAgentError with exponential backoff.
 
 ---
 

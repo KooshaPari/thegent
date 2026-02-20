@@ -20,161 +20,174 @@ Supports callback registration for completion notifications.
 
 #### BackgroundTaskWatcher.__init__
 
-Initialize the watcher.
-
-Args:
-    session_dir: Path to session directory. Defaults to ~/.thegent/sessions/
-    poll_interval: Polling interval in seconds. Default 2.0
-
 ```python
-__init__(self, session_dir, poll_interval)
+__init__(self: Any, session_dir: Any, poll_interval: float)
 ```
 
+Initialize the watcher.
+
+**Parameters**:
+
+- `session_dir`: Path to session directory. Defaults to ~/.thegent/sessions/
+- `poll_interval`: Polling interval in seconds. Default 2.0
+
+---
+
 #### BackgroundTaskWatcher.check_completions
+
+```python
+check_completions(self: Any)
+```
 
 Check for newly completed tasks.
 
 Polls run_registry.jsonl for 'finish' events and checks session RC files.
 
-Returns:
-    List of (session_id, exit_code) tuples for newly completed tasks.
+**Returns**: List of (session_id, exit_code) tuples for newly completed tasks.
 
-```python
-check_completions(self)
-```
+---
 
 #### BackgroundTaskWatcher.get_known_sessions
 
+```python
+get_known_sessions(self: Any)
+```
+
 Return set of known session IDs.
 
-```python
-get_known_sessions(self)
-```
+---
 
 #### BackgroundTaskWatcher.register_callback
 
+```python
+register_callback(self: Any, callback: CompletionCallback)
+```
+
 Register a callback to be called on task completion.
 
-Args:
-    callback: Function(session_id, exit_code) to call when task completes.
+**Parameters**:
 
-```python
-register_callback(self, callback)
-```
+- `callback`: Function(session_id, exit_code) to call when task completes.
+
+---
 
 #### BackgroundTaskWatcher.reset
 
+```python
+reset(self: Any)
+```
+
 Reset state (for testing).
 
-```python
-reset(self)
-```
+---
 
 #### BackgroundTaskWatcher.run_once
 
-Run one check cycle, trigger callbacks, return completions.
-
-Returns:
-    List of (session_id, exit_code) tuples for completed tasks.
-
 ```python
-run_once(self)
+run_once(self: Any)
 ```
 
+Run one check cycle, trigger callbacks, return completions.
+
+**Returns**: List of (session_id, exit_code) tuples for completed tasks.
+
+---
+
 #### BackgroundTaskWatcher.wait_for_completion
+
+```python
+wait_for_completion(self: Any, timeout: Any)
+```
 
 Wait for any task to complete.
 
 This is a blocking wait with timeout. For non-blocking use run_once().
 
-Args:
-    timeout: Maximum seconds to wait. None = wait forever.
+**Parameters**:
 
-Returns:
-    List of (session_id, exit_code) tuples for completed tasks.
+- `timeout`: Maximum seconds to wait. None = wait forever.
 
-```python
-wait_for_completion(self, timeout)
-```
+**Returns**: List of (session_id, exit_code) tuples for completed tasks.
+
+---
 
 ---
 
 ## check_completions
 
+```python
+check_completions(self: Any)
+```
+
 Check for newly completed tasks.
 
 Polls run_registry.jsonl for 'finish' events and checks session RC files.
 
-Returns:
-    List of (session_id, exit_code) tuples for newly completed tasks.
-
-```python
-check_completions(self)
-```
+**Returns**: List of (session_id, exit_code) tuples for newly completed tasks.
 
 ---
 
 ## get_known_sessions
 
-Return set of known session IDs.
-
 ```python
-get_known_sessions(self)
+get_known_sessions(self: Any)
 ```
+
+Return set of known session IDs.
 
 ---
 
 ## register_callback
 
+```python
+register_callback(self: Any, callback: CompletionCallback)
+```
+
 Register a callback to be called on task completion.
 
-Args:
-    callback: Function(session_id, exit_code) to call when task completes.
+**Parameters**:
 
-```python
-register_callback(self, callback)
-```
+- `callback`: Function(session_id, exit_code) to call when task completes.
 
 ---
 
 ## reset
 
-Reset state (for testing).
-
 ```python
-reset(self)
+reset(self: Any)
 ```
+
+Reset state (for testing).
 
 ---
 
 ## run_once
 
+```python
+run_once(self: Any)
+```
+
 Run one check cycle, trigger callbacks, return completions.
 
-Returns:
-    List of (session_id, exit_code) tuples for completed tasks.
-
-```python
-run_once(self)
-```
+**Returns**: List of (session_id, exit_code) tuples for completed tasks.
 
 ---
 
 ## wait_for_completion
 
+```python
+wait_for_completion(self: Any, timeout: Any)
+```
+
 Wait for any task to complete.
 
 This is a blocking wait with timeout. For non-blocking use run_once().
 
-Args:
-    timeout: Maximum seconds to wait. None = wait forever.
+**Parameters**:
 
-Returns:
-    List of (session_id, exit_code) tuples for completed tasks.
+- `timeout`: Maximum seconds to wait. None = wait forever.
 
-```python
-wait_for_completion(self, timeout)
-```
+**Returns**: List of (session_id, exit_code) tuples for completed tasks.
 
 ---
 

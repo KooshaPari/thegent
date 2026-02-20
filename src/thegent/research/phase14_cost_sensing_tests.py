@@ -8,7 +8,7 @@ from thegent.phases.cost_sensing import CostSensingTestMatrix
 class Phase14CostSensingTestsResearch:
     """Research framework for cost sensing tests."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cost sensing tests research."""
         self.test_matrix = CostSensingTestMatrix()
 

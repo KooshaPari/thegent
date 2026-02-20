@@ -36,30 +36,75 @@ HEAD_SHA="${HEAD_SHA:-}"
 export INPUT CWD SESSION_ID TOOL_NAME FILE_PATH STOP_ACTIVE
 export PROJECT_DIR VERIFY_DIR QA_STATE QUALITY_CONFIG CHANGE_LOG
 export TOOL_CONTENT TOOL_NEW_STRING TOOL_OLD_STRING HEAD_SHA
-THEGENT_TOOL_BIN_PATH="${THEGENT_TOOL_BIN_PATH:-/usr/bin:/opt/homebrew/bin:/bin:/usr/sbin:/sbin}"
-# Resolve real binaries from a safe PATH, explicitly skipping the known self-shim in ~/.local/bin.
-resolve_real_binary() {
-  local _bin="$1"
-  local _candidate
-  _candidate="$(PATH="$THEGENT_TOOL_BIN_PATH" command -v "$_bin" 2>/dev/null || true)"
-  if [[ -z "$_candidate" ]]; then
-    return 1
-  fi
-  local _base="${_candidate##*/}"
-  if [[ "$_base" == "$_bin" || "$_base" == "$_bin.exe" ]] && [[ "$_candidate" == *"/.local/bin/"* ]]; then
-    return 1
-  fi
-  echo "$_candidate"
-  return 0
-}
+THEGENT_TOOL_BIN_PATH="${THEGENT_TOOL_BIN_PATH:-/usr/bin:/opt/homebrew/bin:/bin:/usr/sbin:/sbin:/Users/kooshapari/.cargo/bin}"
 
-if [[ -z "${THEGENT_GIT_BIN:-}" ]]; then
-  THEGENT_GIT_BIN="$(resolve_real_binary git || true)"
+# --- Binary Resolution (Rust Runtime) ---
+if [[ -z "${THEGENT_HOOKS_BIN:-}" ]]; then
+  if [[ -x "${PROJECT_DIR:-.}/crates/target/release/thegent-hooks" ]]; then
+    THEGENT_HOOKS_BIN="${PROJECT_DIR:-.}/crates/target/release/thegent-hooks"
+  elif [[ -x "${PROJECT_DIR:-.}/crates/target/debug/thegent-hooks" ]]; then
+    THEGENT_HOOKS_BIN="${PROJECT_DIR:-.}/crates/target/debug/thegent-hooks"
+  elif [[ -x "${PROJECT_DIR:-.}/target/release/thegent-hooks" ]]; then
+    THEGENT_HOOKS_BIN="${PROJECT_DIR:-.}/target/release/thegent-hooks"
+  elif [[ -x "${PROJECT_DIR:-.}/target/debug/thegent-hooks" ]]; then
+    THEGENT_HOOKS_BIN="${PROJECT_DIR:-.}/target/debug/thegent-hooks"
+  elif command -v thegent-hooks >/dev/null 2>&1; then
+    THEGENT_HOOKS_BIN="$(command -v thegent-hooks)"
+  fi
 fi
-if [[ -n "${THEGENT_GIT_BIN:-}" && ! -x "$THEGENT_GIT_BIN" ]]; then
-  THEGENT_GIT_BIN=""
+
+if [[ -z "${THEGENT_SHIMS_BIN:-}" ]]; then
+  if [[ -x "${PROJECT_DIR:-.}/crates/target/release/thegent-shims" ]]; then
+    THEGENT_SHIMS_BIN="${PROJECT_DIR:-.}/crates/target/release/thegent-shims"
+  elif [[ -x "${PROJECT_DIR:-.}/crates/target/debug/thegent-shims" ]]; then
+    THEGENT_SHIMS_BIN="${PROJECT_DIR:-.}/crates/target/debug/thegent-shims"
+  elif [[ -x "${PROJECT_DIR:-.}/target/release/thegent-shims" ]]; then
+    THEGENT_SHIMS_BIN="${PROJECT_DIR:-.}/target/release/thegent-shims"
+  elif [[ -x "${PROJECT_DIR:-.}/target/debug/thegent-shims" ]]; then
+    THEGENT_SHIMS_BIN="${PROJECT_DIR:-.}/target/debug/thegent-shims"
+  elif command -v thegent-shims >/dev/null 2>&1; then
+    THEGENT_SHIMS_BIN="$(command -v thegent-shims)"
+  fi
 fi
-export THEGENT_GIT_BIN
+
+# Fallback/Safety: Ensure Rust binaries are found or fail
+if [[ -z "${THEGENT_HOOKS_BIN:-}" ]] || [[ -z "${THEGENT_SHIMS_BIN:-}" ]]; then
+  echo "CRITICAL: thegent Rust runtime binaries not found. Migration is mandatory." >&2
+  # exit 1 # Don't exit here as it might break startup, but let hooks fail
+fi
+
+# Overrides using thegent-shims
+if [[ -n "${THEGENT_SHIMS_BIN:-}" ]]; then
+  jq() { "$THEGENT_SHIMS_BIN" jq "$@"; }
+  grep() { "$THEGENT_SHIMS_BIN" grep "$@"; }
+  find() { "$THEGENT_SHIMS_BIN" find "$@"; }
+  pgrep() { "$THEGENT_SHIMS_BIN" pgrep "$@"; }
+  wc() { "$THEGENT_SHIMS_BIN" wc "$@"; }
+  date() { "$THEGENT_SHIMS_BIN" date "$@"; }
+  tr() { "$THEGENT_SHIMS_BIN" tr "$@"; }
+  codex() { "$THEGENT_SHIMS_BIN" agent codex "$@"; }
+  copilot() { "$THEGENT_SHIMS_BIN" agent copilot "$@"; }
+  dex() { "$THEGENT_SHIMS_BIN" agent dex "$@"; }
+  claude() { "$THEGENT_SHIMS_BIN" agent claude "$@"; }
+  cursor() { "$THEGENT_SHIMS_BIN" agent cursor "$@"; }
+  git() { "$THEGENT_HOOKS_BIN" git "$@"; }
+  uv() { "$THEGENT_HOOKS_BIN" uv "$@"; }
+  npm() { "$THEGENT_HOOKS_BIN" npm "$@"; }
+  pnpm() { "$THEGENT_HOOKS_BIN" pnpm "$@"; }
+  bun() { "$THEGENT_HOOKS_BIN" bun "$@"; }
+  yarn() { "$THEGENT_HOOKS_BIN" yarn "$@"; }
+  pip() { "$THEGENT_HOOKS_BIN" pip "$@"; }
+  poetry() { "$THEGENT_HOOKS_BIN" poetry "$@"; }
+  cargo() { "$THEGENT_HOOKS_BIN" cargo "$@"; }
+  go() { "$THEGENT_HOOKS_BIN" go "$@"; }
+  ruff() { "$THEGENT_HOOKS_BIN" ruff "$@"; }
+  pytest() { "$THEGENT_HOOKS_BIN" pytest "$@"; }
+  sed() { "$THEGENT_HOOKS_BIN" sed "$@"; }
+  cp() { "$THEGENT_HOOKS_BIN" cp "$@"; }
+  mv() { "$THEGENT_HOOKS_BIN" mv "$@"; }
+  rm() { "$THEGENT_HOOKS_BIN" rm "$@"; }
+fi
+
 # Get script path in a cross-shell compatible way
 if [ -n "${ZSH_VERSION:-}" ]; then
   _SCRIPT_PATH="${(%):-%x}"
@@ -70,11 +115,8 @@ else
 fi
 _SCRIPT_DIR="${_SCRIPT_PATH%/*}"
 
-# If dispatched and only lite functions needed, source lite version
-if [[ -n "${_HOOK_DISPATCHED:-}" && -n "${_HOOK_LITE_ONLY:-}" ]]; then
-  source "${_SCRIPT_DIR}/common-lite.sh"
-  return 0
-fi
+# Migration complete: Rust runtime enabled by default.
+
 
 # --- EXIT trap: ensures stderr on unexpected failures ---
 _hook_exit_trap() {
@@ -82,517 +124,66 @@ _hook_exit_trap() {
   if [[ $rc -ne 0 && $rc -ne 2 ]]; then
     echo "${HOOK_NAME:-HOOK}: unexpected exit $rc" >&2
   fi
-  # Clean up background jobs
   local pids; pids=$(jobs -p 2>/dev/null)
   if [[ -n "$pids" ]]; then
-    # Give jobs a moment to finish gracefully
-    # sleep 0.1 -- OPTIMIZED: eliminated sleep subprocess
     pids=$(jobs -p 2>/dev/null)
     [[ -n "$pids" ]] && kill $pids 2>/dev/null || true
   fi
 }
 trap _hook_exit_trap EXIT
 
-# --- Global Command Accelerators (MTSP-02) ---
-# Globally migrate inefficient commands to faster replacements.
-
-# 1. JQ -> JAQ
-jq() {
-  if [[ -n "${JQ_CMD:-}" ]]; then
-    "$JQ_CMD" "$@"
-  else
-    command jq "$@"
-  fi
-}
-
-# 2. GREP -> RG (Ripgrep)
-# Note: rg handles -r, -i, -E, -o natively.
-# Sanitizes environment to avoid config errors from problematic env vars
-grep() {
-  if [[ -n "${RG_CMD:-}" ]]; then
-    # Map common grep flags to rg
-    local args=()
-    for arg in "$@"; do
-      case "$arg" in
-        -r|-R) args+=("--recursive") ;;
-        -E) ;; # rg is always ERE
-        -vE|-Ev) args+=("-v") ;;
-        -iE|-Ei) args+=("-i") ;;
-        -lE|-El) args+=("-l") ;;
-        -nE|-En) args+=("-n") ;;
-        -qE|-Eq) args+=("-q") ;;
-        -oE|-Eo) args+=("-o") ;;
-        *) args+=("$arg") ;;
-      esac
-    done
-    # Run rg with clean environment to avoid grep config errors
-    env -u GREP_OPTIONS -u GREP_COLOR -u GREP_COLORS "$RG_CMD" --no-config "${args[@]}" 2> >(grep -v "grep config error" >&2)
-  else
-    command grep "$@"
-  fi
-}
-
-# 3. FIND -> FD (overridden by fd-wrapper.sh find() when sourced)
-# Only route trivial cases to fd; complex find args (-o, -name, etc.) use real find
-find() {
-  # Filter out -q option (GNU find extension, not supported on macOS BSD find)
-  local filtered_args=()
-  local redirect_stderr=0
-  for arg in "$@"; do
-    if [[ "$arg" == "-q" || "$arg" == "--quiet" ]]; then
-      redirect_stderr=1
-      continue
-    fi
-    filtered_args+=("$arg")
-  done
-  
-  if [[ -n "${FD_CMD:-}" ]]; then
-    for arg in "${filtered_args[@]}"; do
-      case "$arg" in
-        -o|-name|-path|-prune|-print|-quit|-exec|-type|-maxdepth)
-          if (( redirect_stderr == 1 )); then
-            command find "${filtered_args[@]}" 2>/dev/null
-          else
-            command find "${filtered_args[@]}"
-          fi
-          return $?
-          ;;
-      esac
-    done
-    [[ "$*" == "."* || "$*" == "/"* ]] && {
-      if (( redirect_stderr == 1 )); then
-        command find "${filtered_args[@]}" 2>/dev/null
-      else
-        command find "${filtered_args[@]}"
-      fi
-      return $?
-    }
-    if (( redirect_stderr == 1 )); then
-      "$FD_CMD" "${filtered_args[@]}" 2>/dev/null
-    else
-      "$FD_CMD" "${filtered_args[@]}"
-    fi
-  else
-    if (( redirect_stderr == 1 )); then
-      command find "${filtered_args[@]}" 2>/dev/null
-    else
-      command find "${filtered_args[@]}"
-    fi
-  fi
-}
-
-# 4. WC -L (Line count accelerator)
-# Use bash builtin for single-file line counting
-wc() {
-  if [[ "$1" == "-l" && -f "$2" ]]; then
-    local count=0
-    while IFS= read -r _; do ((count++)); done < "$2"
-    echo "$count"
-  else
-    command wc "$@"
-  fi
-}
-
-# 5. DATE ACCELERATOR
-# Avoid spawning date in loops
-date() {
-  if [[ -n "${START_TIMESTAMP:-}" && ( "$*" == "+%s" || "$*" == "-u"* ) ]]; then
-    # Return pre-computed start time if format matches
-    if [[ "$*" == "+%s" ]]; then
-      echo "$START_TIMESTAMP"
-    else
-      command date "$@"
-    fi
-  else
-    command date "$@"
-  fi
-}
-
-# 6. TR -D ACCELERATOR (Space/newline removal)
-tr() {
-  if [[ "$1" == "-d" && ( "$2" == " " || "$2" == "' '" || "$2" == "\n" ) ]]; then
-    # Handle simple bash-based cleanup without process spawn
-    local input
-    if ! read -r input; then return 0; fi
-    if [[ "$2" == "\n" ]]; then
-      echo -n "${input//$'\n'/}"
-    else
-      echo -n "${input// /}"
-    fi
-  else
-    command tr "$@"
-  fi
-}
-
-# 7. AGENT WRAPPERS (codex/copilot/dex/claude/cursor) - Exec real binaries directly
-# Prevents git from trying to execute them as git subcommands
-# These commands exist as standalone binaries and should not be routed through git
-_agent_wrapper() {
-  local _cmd="$1"
-  shift
-  local _agent_bin
-  # Try safe PATH first (avoids git routing)
-  _agent_bin="$(PATH="$THEGENT_TOOL_BIN_PATH" command -v "$_cmd" 2>/dev/null || true)"
-  # If not found, try regular PATH
-  [[ -z "$_agent_bin" ]] && _agent_bin="$(command -v "$_cmd" 2>/dev/null || true)"
-  if [[ -n "$_agent_bin" && -x "$_agent_bin" ]]; then
-    exec "$_agent_bin" "$@"
-  else
-    echo "$_cmd: command not found" >&2
-    return 127
-  fi
-}
-
-codex() { _agent_wrapper codex "$@"; }
-copilot() { _agent_wrapper copilot "$@"; }
-dex() { _agent_wrapper dex "$@"; }
-claude() { _agent_wrapper claude "$@"; }
-cursor() { _agent_wrapper cursor "$@"; }
-
-# 8. PS / PGREP ACCELERATORS (procs-wrapper.sh equivalent)
-# Use system-native filters where possible
-pgrep() {
-  if [[ -n "${PGREP_CMD:-}" ]]; then
-    "$PGREP_CMD" "$@"
-  else
-    command pgrep "$@"
-  fi
-}
-
-# 8. MULTI-TENANT GIT ACCELERATOR (MTSP-09)
-# Solves index.lock contention and automates cleanup of stale locks.
-git() {
-  local cmd="$1"
-  [[ -z "$cmd" ]] && {
-    command git "$@"
-    return $?
-  }
-  shift
-
-  # --- Agent passthrough: codex/copilot/dex/claude/cursor are not git subcommands ---
-  # Git would look for git-codex in PATH and fail with "X is not a git command".
-  # Exec the agent binary directly (prefer ~/.local/bin shims when in PATH).
-  case "$cmd" in
-    codex|copilot|dex|claude|cursor)
-      local _agent_bin
-      # Try safe PATH first (avoids git routing)
-      _agent_bin="$(PATH="$THEGENT_TOOL_BIN_PATH" command -v "$cmd" 2>/dev/null || true)"
-      # If not found, try regular PATH
-      [[ -z "$_agent_bin" ]] && _agent_bin="$(command -v "$cmd" 2>/dev/null || true)"
-      if [[ -n "$_agent_bin" && -x "$_agent_bin" ]]; then
-        exec "$_agent_bin" "$@"
-      else
-        echo "thegent git-wrapper: $cmd not found in PATH" >&2
-        return 127
-      fi
-      ;;
-  esac
-
-  # --- Read-only path: Route to git_cached (5-20x speedup) ---
-  case "$cmd" in
-    diff|status|ls-files|rev-parse|log|show|name-rev|symbolic-ref)
-      if type git_cached &>/dev/null; then
-        git_cached "$cmd" "$@"
-        return $?
-      fi
-      ;;
-  esac
-
-  # --- Write path: Handle index.lock contention ---
-  local lock_file="${PROJECT_DIR:-.}/.git/index.lock"
-  local max_retries=15
-  local retry_count=0
-  local wait_ms=100
-
-  while [[ -f "$lock_file" ]]; do
-    # Lock Stealer: If lock is > 10s old, it's likely a crashed process
-    local mtime
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-      mtime=$(stat -f %m "$lock_file" 2>/dev/null || echo 0)
-    else
-      mtime=$(stat -c %Y "$lock_file" 2>/dev/null || echo 0)
-    fi
-    local now; now=$(date +%s)
-    local age=$(( now - mtime ))
-
-    if [[ $age -gt 10 ]]; then
-      echo "GIT-MUTEX: Stealing stale lock ($age seconds old) from crashed process..." >&2
-      rm -f "$lock_file" 2>/dev/null || true
-      break
-    fi
-
-    # Lock Contention: Wait and retry
-    if [[ $retry_count -ge $max_retries ]]; then
-      echo "GIT-MUTEX: Max retries reached waiting for git lock. Failing." >&2
-      return 128
-    fi
-
-    echo "GIT-MUTEX: Waiting for git index.lock (held by another agent)..." >&2
-    # Sleep using bash builtin if possible (or small subshell)
-    sleep 0.2
-    retry_count=$(( retry_count + 1 ))
-  done
-
-  # Invalidate cache on write operations
-  case "$cmd" in
-    add|commit|checkout|reset|rm|mv|pull|push|merge|rebase)
-      [[ -n "${_GIT_CACHE_LOADED:-}" ]] && git_cache_invalidate
-      ;;
-  esac
-
-  if [[ -z "${THEGENT_GIT_BIN:-}" ]]; then
-    echo "thegent hooks: unable to resolve real git executable" >&2
-    return 127
-  fi
-  "$THEGENT_GIT_BIN" "$cmd" "$@"
-}
-
-# --- Resource limits (P5: prevent memory ballooning) ---
-# Limit virtual memory (address space) to 8GB per hook process tree
-# This prevents a single tool (like trivy or ruff) from consuming 32GB+ VSZ
+# --- Resource limits ---
 if [[ "${OSTYPE}" == "darwin"* ]]; then
-  # On macOS, ulimit -v is often ignored or causes issues with memory-mapped files.
-  # We use ulimit -m (RSS) if possible, but it is also often restricted.
-  # Best effort: set virtual memory limit to 16GB if machine has 16GB RAM.
   ulimit -v 16777216 2>/dev/null || true
-  ulimit -m 8388608 2>/dev/null || true # RSS 8GB
+  ulimit -m 8388608 2>/dev/null || true
 else
   ulimit -v 8388608 2>/dev/null || true
-  ulimit -m 4194304 2>/dev/null || true # RSS 4GB
+  ulimit -m 4194304 2>/dev/null || true
 fi
 
-# --- Session-level tool cache ---
-# Tool paths are stable within a session. Cache them in a file so subsequent
-# hook invocations skip ~60ms of command -v subprocess spawns.
-_TOOL_CACHE_FILE="/tmp/claude-hook-tools-${EUID:-$(id -u)}.cache"
-if [[ -n "${JQ_CMD:-}" && -n "${TIMEOUT_CMD+set}" ]]; then
-  # Already set (e.g. by dispatcher export) — skip detection entirely
-  :
-elif [[ -f "$_TOOL_CACHE_FILE" ]]; then
-  # shellcheck disable=SC1090
-  source "$_TOOL_CACHE_FILE"
-else
-  # First invocation this session — detect tools and cache
-  JQ_CMD="$(command -v jaq 2>/dev/null || command -v jq 2>/dev/null || echo jq)"
-  HUNIQ_CMD="$(command -v huniq 2>/dev/null || true)"
-  RG_CMD="$(command -v rg 2>/dev/null || true)"
-  FD_CMD="$(command -v fd 2>/dev/null || command -v fdfind 2>/dev/null || true)"
-  PGREP_CMD="$(command -v pgrep 2>/dev/null || true)"
-  if command -v gtimeout >/dev/null 2>&1; then
-    TIMEOUT_CMD=gtimeout
-  elif command -v timeout >/dev/null 2>&1; then
-    TIMEOUT_CMD=timeout
-  else
-    TIMEOUT_CMD=""
-  fi
-  # WP-B: Hash utility for cache keys (b3sum 2-5x faster; fallback sha256sum/shasum)
-  if command -v b3sum >/dev/null 2>&1; then
-    HASH_CMD="b3sum"
-    HASH_ARGS=()
-  elif command -v sha256sum >/dev/null 2>&1; then
-    HASH_CMD="sha256sum"
-    HASH_ARGS=()
-  else
-    HASH_CMD="shasum"
-    HASH_ARGS=(-a 256)
-  fi
-  # Write cache atomically
-  printf 'JQ_CMD=%q\nHUNIQ_CMD=%q\nRG_CMD=%q\nTIMEOUT_CMD=%q\nHASH_CMD=%q\nHASH_ARGS=(%s)\n' \
-    "$JQ_CMD" "$HUNIQ_CMD" "$RG_CMD" "$TIMEOUT_CMD" "$HASH_CMD" \
-    "${HASH_ARGS[*]}" > "$_TOOL_CACHE_FILE.$$"
-  mv "$_TOOL_CACHE_FILE.$$" "$_TOOL_CACHE_FILE" 2>/dev/null || true
-fi
-# Set HASH_ARGS when loaded from cache (HASH_CMD set but HASH_ARGS may be empty)
-if [[ -z "${HASH_ARGS+set}" && -n "${HASH_CMD:-}" ]]; then
-  [[ "${HASH_CMD}" == *shasum ]] && HASH_ARGS=(-a 256) || HASH_ARGS=()
-fi
-
-# WP-B: Hash for cache keys (stdin or file). Do NOT use for attestation/SLSA — those stay SHA-256.
+# Hash for cache keys (Rust blake3)
 hash_for_cache() {
-  local cmd="${HASH_CMD:-shasum}" args=()
-  [[ "$cmd" == *shasum ]] && args=(-a 256)
-  [[ -n "${HASH_ARGS+set}" && ${#HASH_ARGS[@]} -gt 0 ]] && args=("${HASH_ARGS[@]}")
   if [[ $# -eq 0 ]]; then
-    $cmd "${args[@]}" | cut -d' ' -f1
+    local tmp; tmp="$(mktemp)"
+    cat > "$tmp"
+    hook_rust_runtime_invoke file-hash "$tmp" 2>/dev/null
+    rm -f "$tmp"
   else
-    $cmd "${args[@]}" "$1" | cut -d' ' -f1
+    hook_rust_runtime_invoke file-hash "$1" 2>/dev/null
   fi
 }
 
-# --- Git caching and mutex support (MTSP-09/10) ---
-# Source git cache and wrapper functions
-if [[ -f "${_SCRIPT_DIR}/git-cache.sh" ]]; then
-  # shellcheck disable=SC1090
-  source "${_SCRIPT_DIR}/git-cache.sh"
-fi
-if [[ -f "${_SCRIPT_DIR}/git-wrapper.sh" ]]; then
-  # shellcheck disable=SC1090
-  source "${_SCRIPT_DIR}/git-wrapper.sh"
-fi
-
-# --- Builtin accelerators (wc, tr, date) ---
-if [[ -f "${_SCRIPT_DIR}/builtin-wrapper.sh" ]]; then
-  # shellcheck disable=SC1090
-  source "${_SCRIPT_DIR}/builtin-wrapper.sh"
-fi
-
-# --- fd integration (Phase 3.5) ---
-# Source fd wrapper - provides fd-based find acceleration (3-5x faster)
-if [[ -f "${_SCRIPT_DIR}/fd-wrapper.sh" ]]; then
-  # shellcheck disable=SC1090
-  source "${_SCRIPT_DIR}/fd-wrapper.sh"
-fi
-
-# --- Package Manager coordination (MTSP-15) ---
-if [[ -f "${_SCRIPT_DIR}/pkg-wrapper.sh" ]]; then
-  # shellcheck disable=SC1090
-  source "${_SCRIPT_DIR}/pkg-wrapper.sh"
-fi
-
-# find() override for transparent fd acceleration
-# Intercepts all find calls and routes to fd when possible (3-5x faster)
-# Fast path: skip wrapper if called during PATH resolution (which/command -v)
-find() {
-  # Fast path: if we're in a PATH resolution context (which/command -v), use system find directly
-  # This prevents timeouts during command resolution
-  if [[ -n "${_RESOLVING_PATH:-}" ]] || \
-     [[ "${BASH_COMMAND:-}" == *"which"* ]] || \
-     [[ "${BASH_COMMAND:-}" == *"command -v"* ]] || \
-     [[ "${0:-}" == *"which"* ]]; then
-    # During PATH resolution, use system find directly to avoid wrapper overhead
-    # Filter out -q option (GNU find extension, not supported on macOS BSD find)
-    local filtered_args=()
-    for arg in "$@"; do
-      if [[ "$arg" != "-q" && "$arg" != "--quiet" ]]; then
-        filtered_args+=("$arg")
-      fi
-    done
-    command find "${filtered_args[@]}" 2>/dev/null || /usr/bin/find "${filtered_args[@]}" 2>/dev/null || true
-    return $?
-  fi
-  
-  # Filter out -q option (GNU find extension, not supported on macOS BSD find)
-  # Convert -q to 2>/dev/null redirection for error suppression
-  local filtered_args=()
-  local redirect_stderr=0
-  for arg in "$@"; do
-    if [[ "$arg" == "-q" || "$arg" == "--quiet" ]]; then
-      redirect_stderr=1
-      continue
-    fi
-    filtered_args+=("$arg")
-  done
-  
-  # Try fd first if available, fallback to system find
-  if command -v fd &>/dev/null 2>&1; then
-    if (( redirect_stderr == 1 )); then
-      fd_find "${filtered_args[@]}" 2>/dev/null
-    else
-      fd_find "${filtered_args[@]}"
-    fi
-  else
-    # Fallback to system find with timeout
-    if command -v timeout &>/dev/null 2>&1; then
-      if (( redirect_stderr == 1 )); then
-        timeout 5 /usr/bin/find "${filtered_args[@]}" 2>/dev/null || true
-      else
-        timeout 5 /usr/bin/find "${filtered_args[@]}" 2>/dev/null || true
-      fi
-    else
-      if (( redirect_stderr == 1 )); then
-        /usr/bin/find "${filtered_args[@]}" 2>/dev/null || true
-      else
-        /usr/bin/find "${filtered_args[@]}" 2>/dev/null || true
-      fi
-    fi
-  fi
-}
-export -f find
-
-# --- grep/rg integration (Rust tool swap) ---
-# Source grep wrapper - routes grep -r and common patterns to ripgrep (2-10x faster)
-if [[ -f "${_SCRIPT_DIR}/grep-wrapper.sh" ]]; then
-  # shellcheck disable=SC1090
-  source "${_SCRIPT_DIR}/grep-wrapper.sh"
-fi
-
-# --- procs integration (Phase 3.5) ---
-# Source procs wrapper - provides process lookup acceleration (2-3x faster)
-if [[ -f "${_SCRIPT_DIR}/procs-wrapper.sh" ]]; then
-  # shellcheck disable=SC1090
-  source "${_SCRIPT_DIR}/procs-wrapper.sh"
-fi
-
-# sort_unique: always sort and unique. Use huniq for unique if available, but must sort for comm compatibility.
+# sort_unique: always sort and unique.
 sort_unique() {
-  if [[ -n "${HUNIQ_CMD:-}" ]]; then
-    "$HUNIQ_CMD" | sort
-  else
-    sort -u
-  fi
+  sort -u
 }
 
 # --- JS execution helper (Bun > Node) ---
-# Prefers Bun for faster execution of JS tools/LSPs.
 _js_exec() {
   if command -v bun >/dev/null 2>&1; then
-    # Bun x is significantly faster than npx for one-off tool runs
     bun x "$@"
   else
-    # Fallback to npx with non-interactive and no-install flags
     npx -y --no-install "$@"
   fi
 }
 export -f _js_exec
 
-# --- Timestamp (bash builtin, no subprocess) ---
+# --- Timestamp ---
 if ! printf -v now '%(%Y-%m-%dT%H:%M:%SZ)T' -1 2>/dev/null; then
   now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 fi
 
-# --- Phase 2: Rust runtime opt-in ---
-# Allows gradual migration to `thegent-hooks` while preserving shell fallback.
-hook_rust_runtime_enabled() {
-  local override="${THGENT_HOOK_USE_RUST_RUNTIME:-}"
-  if [[ -n "$override" ]]; then
-    local lower_override
-    lower_override="$(printf '%s' "$override" | tr '[:upper:]' '[:lower:]')"
-    case "$lower_override" in
-      1|true|yes|on) return 0 ;;
-      0|false|no|off) return 1 ;;
-    esac
-  fi
-  hook_config_true "use_rust_runtime" 2>/dev/null
-}
+# --- Rust runtime invocation ---
+hook_rust_runtime_enabled() { return 0; }
 
 hook_rust_runtime_path() {
-  local override="${THGENT_HOOK_RUST_RUNTIME_PATH:-}"
-  if [[ -n "$override" ]]; then
-    echo "$override"
-    return 0
-  fi
-  local from_cfg
-  from_cfg="$(hook_config_get "rust_runtime_path" 2>/dev/null || true)"
-  if [[ -n "$from_cfg" ]]; then
-    echo "$from_cfg"
-  else
-    echo "thegent-hooks"
-  fi
+  echo "${THEGENT_HOOKS_BIN:-thegent-hooks}"
 }
 
 hook_rust_runtime_invoke() {
-  hook_rust_runtime_enabled || return 1
   local runtime
   runtime="$(hook_rust_runtime_path)"
-  [[ -z "$runtime" ]] && return 1
-
-  if [[ "$runtime" == */* ]]; then
-    [[ -x "$runtime" ]] || return 1
-    "$runtime" "$@"
-  else
-    command -v "$runtime" >/dev/null 2>&1 || return 1
-    "$runtime" "$@"
-  fi
+  "$runtime" "$@"
 }
 
 _hook_runtime_apply_exports() {
@@ -628,7 +219,7 @@ _hook_runtime_init_from_input() {
 }
 
 # --- Core init function ---
-# Reads stdin, parses common fields in a single jq call, sets paths.
+# Reads stdin, parses common fields via Rust binary, sets paths.
 hook_init() {
   # If dispatcher already parsed input, skip re-parsing
   if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
@@ -639,114 +230,24 @@ hook_init() {
   INPUT="$(cat)"
   INPUT="${INPUT:-{\}}"
 
-  if _hook_runtime_init_from_input "$INPUT"; then
+  local payload
+  payload="$(hook_rust_runtime_invoke init <<< "$INPUT" 2>/dev/null)"
+  if [[ -n "$payload" ]]; then
+    _hook_runtime_apply_exports "$payload"
     return 0
   fi
-
-  # Parse all common fields in ONE jq invocation (eliminates ~90 jq spawns across hooks)
-  local -a _fields
-  # Use read instead of mapfile for bash 3.x compatibility
-  _fields=()
-  while IFS= read -r line; do
-    _fields+=("$line")
-  done < <($JQ_CMD -r '
-    (.cwd // ""),
-    (.session_id // ""),
-    (.tool_name // ""),
-    (.tool_input.file_path // ""),
-    (.stop_hook_active // "false")
-  ' <<< "$INPUT" 2>/dev/null || printf '\n\n\n\n\n')
-
-  CWD="${_fields[0]:-}"
-  SESSION_ID="${_fields[1]:-}"
-  TOOL_NAME="${_fields[2]:-}"
-  FILE_PATH="${_fields[3]:-}"
-  STOP_ACTIVE="${_fields[4]:-false}"
-
-  # Derive PROJECT_DIR (respect pre-set from stop-dispatcher)
-  if [[ -z "${PROJECT_DIR:-}" || "$PROJECT_DIR" == "/" ]]; then
-    PROJECT_DIR="${CWD:-}"
-  fi
-  if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    # Cache git rev-parse --show-toplevel result to avoid repeated calls
-    PROJECT_DIR="${_CACHED_GIT_TOPLEVEL:-}"
-    if [[ -z "$PROJECT_DIR" ]]; then
-      PROJECT_DIR="$("$THEGENT_GIT_BIN" rev-parse --show-toplevel 2>/dev/null || pwd)"
-      readonly _CACHED_GIT_TOPLEVEL="$PROJECT_DIR"
-    fi
-  fi
-  # If empty/root and we are in the hooks dir, check symlink vs real path
-  if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    if [[ "${_SCRIPT_PATH}" == *".claude/hooks"* ]]; then
-      # Check if this is a symlink to an external project
-      local hook_path="${_SCRIPT_PATH}"
-      local resolved_path
-      resolved_path="$(readlink -f "$hook_path" 2>/dev/null || echo "$hook_path")"
-      # If resolved path is NOT in ~/.claude, use HOME/.claude
-      if [[ "$resolved_path" != "$HOME/.claude"* && "$resolved_path" != "$HOME"/.claude* ]]; then
-        # External project (thegent) - use HOME/.claude
-        PROJECT_DIR="$HOME"
-      else
-        PROJECT_DIR="${hook_path%/.claude/hooks/*}"
-      fi
-    fi
-  fi
-  # Final fallback: pwd, then HOME, never "/" or empty
-  if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    PROJECT_DIR="$(pwd)"
-  fi
-  if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    PROJECT_DIR="${HOME:-.}"
-  fi
-
-  # Standard paths — project-specific; use HOME when PROJECT_DIR is root or empty (avoid /.claude)
-  local _base="$PROJECT_DIR/.claude"
-  [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]] && _base="$HOME/.claude"
-  VERIFY_DIR="$_base/verification"
-  QA_STATE="$_base/qa-state.json"
-  QUALITY_CONFIG="$_base/quality.json"
-  CHANGE_LOG="$_base/session-changes.log"
-
-  # Ensure verification directory exists (skip mkdir if already there)
-  [[ -d "$VERIFY_DIR" ]] || mkdir -p "$VERIFY_DIR" 2>/dev/null || true
-
-  # Export for subshells
-  export INPUT CWD SESSION_ID TOOL_NAME FILE_PATH STOP_ACTIVE
-  export PROJECT_DIR VERIFY_DIR QA_STATE QUALITY_CONFIG CHANGE_LOG
+  
+  echo "HOOK_INIT: Rust runtime failed and fallbacks are disabled" >&2
+  return 1
 }
 
 # --- Content extraction for Write/Edit hooks ---
-# Extracts tool_input.content, tool_input.new_string, and tool_input.old_string
-# in a single jq call using base64 encoding to handle multiline content safely.
-# Sets: TOOL_CONTENT, TOOL_NEW_STRING, TOOL_OLD_STRING
-# Must be called AFTER hook_init (uses $INPUT).
 hook_extract_content() {
-  # If dispatcher already extracted content, skip re-parsing
-  if [[ -n "${_HOOK_DISPATCHED:-}" && -n "${TOOL_CONTENT+set}" ]]; then
-    return 0
-  fi
-  # Output one base64-encoded field per line (base64 is newline-free, safe for line reading)
-  local -a _b64_lines
-  _b64_lines=()
-  while IFS= read -r _b64_line; do
-    _b64_lines+=("$_b64_line")
-  done < <($JQ_CMD -r '
-    (.tool_input.content // "" | @base64),
-    (.tool_input.new_string // "" | @base64),
-    (.tool_input.old_string // "" | @base64)
-  ' <<< "$INPUT" 2>/dev/null || printf '\n\n\n')
-  TOOL_CONTENT="$(base64 -d <<< "${_b64_lines[0]:-}" 2>/dev/null)" || TOOL_CONTENT=""
-  TOOL_NEW_STRING="$(base64 -d <<< "${_b64_lines[1]:-}" 2>/dev/null)" || TOOL_NEW_STRING=""
-  TOOL_OLD_STRING="$(base64 -d <<< "${_b64_lines[2]:-}" 2>/dev/null)" || TOOL_OLD_STRING=""
-  export TOOL_CONTENT TOOL_NEW_STRING TOOL_OLD_STRING
+  # Not strictly needed if hook_init_full is used, but for compatibility:
+  hook_rust_runtime_invoke extract-content <<< "$INPUT" 2>/dev/null
 }
 
-# --- Combined init + content extraction (single jq call, zero base64) ---
-# Merges hook_init() and hook_extract_content() into ONE jq invocation.
-# Uses NUL-delimited output (\0 cannot appear in JSON strings).
-# Saves ~24ms by eliminating the second jq call and 3 base64 decodes.
-# Used by pretool-dispatcher.sh and posttool-dispatcher.sh.
-# Sets ALL variables that hook_init + hook_extract_content would set.
+# --- Combined init + content extraction ---
 hook_init_full() {
   # If dispatcher already parsed input, skip re-parsing
   if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
@@ -757,129 +258,60 @@ hook_init_full() {
   INPUT="$(cat)"
   INPUT="${INPUT:-{\}}"
 
-  if _hook_runtime_init_from_input "$INPUT"; then
+  local payload
+  payload="$(hook_rust_runtime_invoke init <<< "$INPUT" 2>/dev/null)"
+  if [[ -n "$payload" ]]; then
+    _hook_runtime_apply_exports "$payload"
     return 0
   fi
 
-  # Single jq call: extract all 8 fields, NUL-delimited.
-  # Pipe directly into read (not $()) because bash command substitution strips NUL bytes.
-  local _f1 _f2 _f3 _f4 _f5 _f6 _f7 _f8
-  {
-    IFS= read -r -d '' _f1 || true
-    IFS= read -r -d '' _f2 || true
-    IFS= read -r -d '' _f3 || true
-    IFS= read -r -d '' _f4 || true
-    IFS= read -r -d '' _f5 || true
-    IFS= read -r -d '' _f6 || true
-    IFS= read -r -d '' _f7 || true
-    IFS= read -r -d '' _f8 || true
-  } < <("$JQ_CMD" -j '
-    (.tool_name // ""),
-    "\u0000",
-    (.tool_input.file_path // ""),
-    "\u0000",
-    (.session_id // ""),
-    "\u0000",
-    (.cwd // ""),
-    "\u0000",
-    (.stop_hook_active // "false"),
-    "\u0000",
-    (.tool_input.content // ""),
-    "\u0000",
-    (.tool_input.new_string // ""),
-    "\u0000",
-    (.tool_input.old_string // "")
-  ' <<< "$INPUT" 2>/dev/null)
-
-  TOOL_NAME="$_f1"
-  FILE_PATH="$_f2"
-  SESSION_ID="$_f3"
-  CWD="$_f4"
-  STOP_ACTIVE="${_f5:-false}"
-  TOOL_CONTENT="$_f6"
-  TOOL_NEW_STRING="$_f7"
-  TOOL_OLD_STRING="$_f8"
-
-  # Derive PROJECT_DIR (respect pre-set from stop-dispatcher)
-  if [[ -z "${PROJECT_DIR:-}" || "$PROJECT_DIR" == "/" ]]; then
-    PROJECT_DIR="${CWD:-}"
-  fi
-  if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    # Cache git rev-parse --show-toplevel result to avoid repeated calls
-    PROJECT_DIR="${_CACHED_GIT_TOPLEVEL:-}"
-    if [[ -z "$PROJECT_DIR" ]]; then
-      PROJECT_DIR="$("$THEGENT_GIT_BIN" rev-parse --show-toplevel 2>/dev/null || pwd)"
-      readonly _CACHED_GIT_TOPLEVEL="$PROJECT_DIR"
-    fi
-  fi
-  if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    if [[ "${_SCRIPT_PATH}" == *".claude/hooks"* ]]; then
-      PROJECT_DIR="${_SCRIPT_PATH%/.claude/hooks/*}"
-    fi
-  fi
-  # Final fallback: pwd, then HOME, never "/" or empty
-  if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    PROJECT_DIR="$(pwd)"
-  fi
-  if [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]]; then
-    PROJECT_DIR="${HOME:-.}"
-  fi
-
-  # Standard paths — project-specific; use HOME when PROJECT_DIR is root or empty (avoid /.claude)
-  local _base="$PROJECT_DIR/.claude"
-  [[ -z "$PROJECT_DIR" || "$PROJECT_DIR" == "/" ]] && _base="$HOME/.claude"
-  VERIFY_DIR="$_base/verification"
-  QA_STATE="$_base/qa-state.json"
-  QUALITY_CONFIG="$_base/quality.json"
-  CHANGE_LOG="$_base/session-changes.log"
-
-  # Ensure verification directory exists (skip mkdir if already there)
-  [[ -d "$VERIFY_DIR" ]] || mkdir -p "$VERIFY_DIR" 2>/dev/null || true
-
-  # Export for subshells
-  export INPUT CWD SESSION_ID TOOL_NAME FILE_PATH STOP_ACTIVE
-  export PROJECT_DIR VERIFY_DIR QA_STATE QUALITY_CONFIG CHANGE_LOG
-  export TOOL_CONTENT TOOL_NEW_STRING TOOL_OLD_STRING
+  echo "HOOK_INIT_FULL: Rust runtime failed and fallbacks are disabled" >&2
+  return 1
 }
 
 # --- Tool availability cache ---
 declare -A _TOOL_CACHE 2>/dev/null || true
 _QA_STATE_TOOLS_LOADED=false
 
-# Pre-load all tool states from qa-state.json (once) to avoid per-tool jq spawns.
+# Pre-load all tool states from qa-state.json (once).
 _load_qa_state_tools() {
   if [[ "$_QA_STATE_TOOLS_LOADED" == "true" ]]; then
     return
   fi
   _QA_STATE_TOOLS_LOADED=true
   if [[ -f "${QA_STATE:-}" ]]; then
-    # Single jq call extracts all tool entries; populate cache in bash loop
     local _tool_name _tool_val
     while IFS=$'\t' read -r _tool_name _tool_val; do
       [[ -z "$_tool_name" ]] && continue
       _TOOL_CACHE[$_tool_name]="$_tool_val"
-    done < <($JQ_CMD -r '.tools // {} | to_entries[] | "\(.key)\t\(.value)"' "$QA_STATE" 2>/dev/null || true)
+    done < <(jq -r '.tools // {} | to_entries[] | "\(.key)\t\(.value)"' "$QA_STATE" 2>/dev/null || true)
   fi
 }
 
 tool_available() {
   local tool="$1"
-  # Check cache first (handles both pre-loaded and manually cached)
+  # Check cache first
   if [[ -n "${_TOOL_CACHE[$tool]+x}" ]]; then
     echo "${_TOOL_CACHE[$tool]}"
     return
   fi
   # Lazy-load all tools from qa-state.json on first cache miss
   _load_qa_state_tools
-  # Re-check cache after bulk load
   if [[ -n "${_TOOL_CACHE[$tool]+x}" ]]; then
     echo "${_TOOL_CACHE[$tool]}"
     return
   fi
-  # Fallback to command -v (tool not listed in qa-state.json)
-  local result="false"
-  if command -v "$tool" >/dev/null 2>&1; then
-    result="true"
+  
+  # Use Rust runtime for robust existence check
+  local result
+  result=$(hook_rust_runtime_invoke pkg exists "$tool" 2>/dev/null)
+  if [[ "$result" != "true" && "$result" != "false" ]]; then
+    # Fallback to command -v if Rust call fails
+    if command -v "$tool" >/dev/null 2>&1; then
+      result="true"
+    else
+      result="false"
+    fi
   fi
   _TOOL_CACHE[$tool]="$result"
   echo "$result"
@@ -893,39 +325,12 @@ _has_tool() {
 # --- Run with timeout ---
 run_with_timeout() {
   local secs="$1"; shift
-  if [[ -n "$TIMEOUT_CMD" ]]; then
-    "$TIMEOUT_CMD" "$secs" "$@" 2>&1 || true
-  else
-    "$@" 2>&1 || true
-  fi
+  timeout "$secs" "$@" 2>&1 || true
 }
 
-# --- Lazy: parse changed files from session-changes.log ---
-declare -a _CHANGED_FILES=()
-_CHANGED_FILES_LOADED=false
-
-parse_changed_files() {
-  if [[ "$_CHANGED_FILES_LOADED" == "true" ]]; then
-    return
-  fi
-  _CHANGED_FILES_LOADED=true
-  _CHANGED_FILES=()
-  [[ ! -f "${CHANGE_LOG:-}" ]] && return
-  local _ts _tool fpath
-  while IFS='|' read -r _ts _tool fpath; do
-    [[ -z "$fpath" ]] && continue
-    fpath="${fpath%%[[:space:]]}"
-    [[ ! -f "$fpath" ]] && continue
-    _CHANGED_FILES+=("$fpath")
-  done < "$CHANGE_LOG"
-}
-
-# Get changed files array (call parse_changed_files first or this does it)
+# Get changed files list (one per line) from Rust.
 get_changed_files() {
-  parse_changed_files
-  if [[ ${#_CHANGED_FILES[@]} -gt 0 ]]; then
-    printf '%s\n' "${_CHANGED_FILES[@]}"
-  fi
+  hook_rust_runtime_invoke changed-files 2>/dev/null | jq -r '.[]' 2>/dev/null
 }
 
 # --- Lazy: read quality.json config ---
@@ -942,7 +347,7 @@ read_quality_config() {
   local qfile="${QUALITY_CONFIG:-}"
   [[ ! -f "$qfile" ]] && return
   local _qparsed
-  _qparsed="$($JQ_CMD -r '[
+  _qparsed="$(jq -r '[
     (.governance.delivery_model // "auto"),
     (.criticality_tier // "established"),
     (.governance // {} | tojson)
@@ -952,75 +357,27 @@ read_quality_config() {
 }
 
 # --- Report writing helpers ---
-# All use printf for JSON generation — zero jq spawns.
-
-# Escape a string for JSON embedding (handles \, ", control chars)
-_json_escape() {
-  local s="$1"
-  s="${s//\\/\\\\}"    # backslash
-  s="${s//\"/\\\"}"    # double quote
-  s="${s//$'\n'/\\n}"  # newline
-  s="${s//$'\r'/\\r}"  # carriage return
-  s="${s//$'\t'/\\t}"  # tab
-  printf '%s' "$s"
-}
+# Rust-based report generation.
 
 # Write a simple pass report
 write_pass_report() {
-  local report_path="$1"
-  local gate_name="${2:-${HOOK_NAME:-unknown}}"
-  local g; g="$(_json_escape "$gate_name")"
-  printf '{"generated_at":"%s","gate":"%s","status":"pass","pass":true,"error_count":0}\n' \
-    "$now" "$g" > "$report_path"
+  hook_rust_runtime_invoke report-pass "$@" 2>/dev/null
 }
 
 # Write a not_applicable report (for stub gates)
 write_na_report() {
-  local report_path="$1"
-  local gate_name="${2:-${HOOK_NAME:-unknown}}"
-  local g; g="$(_json_escape "$gate_name")"
-  printf '{"generated_at":"%s","gate":"%s","status":"not_applicable","pass":true,"error_count":0}\n' \
-    "$now" "$g" > "$report_path"
+  hook_rust_runtime_invoke report-na "$@" 2>/dev/null
 }
 
 # Write a failure report
 write_fail_report() {
-  local report_path="$1"
-  local gate_name="${2:-${HOOK_NAME:-unknown}}"
-  local error_count="${3:-1}"
-  shift 3
-  local errors_json='[]'
-  if [[ $# -gt 0 ]]; then
-    local items="" e
-    for e in "$@"; do
-      local escaped; escaped="$(_json_escape "$e")"
-      if [[ -z "$items" ]]; then
-        items="\"$escaped\""
-      else
-        items="$items,\"$escaped\""
-      fi
-    done
-    errors_json="[$items]"
-  fi
-  local g; g="$(_json_escape "$gate_name")"
-  printf '{"generated_at":"%s","gate":"%s","status":"fail","pass":false,"error_count":%d,"errors":%s}\n' \
-    "$now" "$g" "$error_count" "$errors_json" > "$report_path"
+  hook_rust_runtime_invoke report-fail "$@" 2>/dev/null
 }
 
 # --- Feedback & Nudging ---
-# Emits a structured feedback JSON block that thegent output parser can detect.
-# Usage: emit_feedback <level> <scope> <message> [code] [suggestion]
-# Levels: success, info, suggestion, warning, error
+# Rust-based feedback helpers.
 emit_feedback() {
-  local level="$1" scope="$2" msg="$3" code="${4:-}" suggest="${5:-}"
-  local l; l="$(_json_escape "$level")"
-  local s; s="$(_json_escape "$scope")"
-  local m; m="$(_json_escape "$msg")"
-  local c; c="$(_json_escape "$code")"
-  local sug; sug="$(_json_escape "$suggest")"
-  
-  printf '\n{"type":"feedback","level":"%s","scope":"%s","message":"%s","code":"%s","suggestion":"%s"}\n' \
-    "$l" "$s" "$m" "$c" "$sug"
+  hook_rust_runtime_invoke feedback "$@" 2>/dev/null
 }
 
 # --- State helpers ---
@@ -1035,9 +392,9 @@ is_done_state() {
   esac
 }
 
-# File extension extraction (bash builtin, no external commands)
-file_ext() { echo "${1##*.}"; }
-file_basename() { echo "${1##*/}"; }
+# String extraction helpers (Rust-based)
+file_ext() { hook_rust_runtime_invoke file-ext "$1" 2>/dev/null; }
+file_basename() { hook_rust_runtime_invoke file-basename "$1" 2>/dev/null; }
 
 # =============================================================================
 # Hook Infrastructure: Caching, Sharing, Circuit Breaker, Debounce, Incremental
@@ -1054,7 +411,6 @@ hook_cache_key() {
     local hook_name="$1"
     local changed_files head_sha
     # Use dispatcher-precomputed values if available (saves ~63ms per hook)
-    # Use cached git HEAD value if available to avoid repeated git calls
     if [[ -n "${_GIT_HEAD_SHA:-}" ]]; then
       head_sha="$_GIT_HEAD_SHA"
     else
@@ -1062,64 +418,25 @@ hook_cache_key() {
     fi
     changed_files="${CHANGED_FILES_SORTED:-$(git diff --name-only HEAD 2>/dev/null | sort)}"
 
-    if hook_rust_runtime_enabled; then
-      local runtime_key
-      runtime_key="$(hook_rust_runtime_invoke cache-key "$hook_name" "$head_sha" "$changed_files" 2>/dev/null || true)"
-      if [[ -n "$runtime_key" ]]; then
-        echo "$runtime_key"
-        return 0
-      fi
-    fi
-
-    printf '%s\0%s\0%s' "$hook_name" "$head_sha" "$changed_files" | hash_for_cache
+    hook_rust_runtime_invoke cache-key "$hook_name" "$head_sha" "$changed_files" 2>/dev/null
 }
 
 # Check if cached result exists and is fresh (within TTL seconds)
 hook_cache_check() {
     local key="$1" ttl="${2:-60}"
-    if hook_rust_runtime_enabled; then
-      if hook_rust_runtime_invoke cache-check "$key" "$ttl" >/dev/null 2>&1; then
-        return 0
-      fi
-      local rc=$?
-      if [[ $rc -eq 1 ]]; then
-        return 1
-      fi
-    fi
-    local rc_file="${HOOK_CACHE_DIR}/${key}.rc"
-    [[ -f "$rc_file" ]] || return 1
-    local mtime age
-    mtime=$(stat -f '%m' "$rc_file" 2>/dev/null || stat -c '%Y' "$rc_file" 2>/dev/null) || return 1
-    age=$(( $(date +%s) - mtime ))
-    (( age < ttl ))
+    hook_rust_runtime_invoke cache-check "$key" "$ttl" >/dev/null 2>&1
 }
 
 # Read cached result (stdout + exit code)
 hook_cache_read() {
     local key="$1"
-    if hook_rust_runtime_enabled; then
-      local runtime_out
-      runtime_out="$(hook_rust_runtime_invoke cache-read "$key" 2>/dev/null || true)"
-      if [[ -n "$runtime_out" ]]; then
-        printf '%s' "$runtime_out"
-        return 0
-      fi
-    fi
-    [[ -f "${HOOK_CACHE_DIR}/${key}.out" ]] && cat "${HOOK_CACHE_DIR}/${key}.out"
-    return "$(cat "${HOOK_CACHE_DIR}/${key}.rc" 2>/dev/null || echo 1)"
+    hook_rust_runtime_invoke cache-read "$key" 2>/dev/null
 }
 
 # Write result to cache
 hook_cache_write() {
     local key="$1" rc="$2" output="$3"
-    if hook_rust_runtime_enabled; then
-      if hook_rust_runtime_invoke cache-write "$key" "$rc" "$output" >/dev/null 2>&1; then
-        return 0
-      fi
-    fi
-    mkdir -p "$HOOK_CACHE_DIR"
-    echo "$output" > "${HOOK_CACHE_DIR}/${key}.out"
-    echo "$rc" > "${HOOK_CACHE_DIR}/${key}.rc"
+    hook_rust_runtime_invoke cache-write "$key" "$rc" "$output" >/dev/null 2>&1
 }
 
 # --- 2. Cross-Hook Shared Results (Changed Files Index) ---
@@ -1129,35 +446,7 @@ HOOK_SHARED_DIR="${HOOK_CACHE_DIR}/shared"
 
 # Get or build the shared changed files list
 hook_shared_changed_files() {
-    if hook_rust_runtime_enabled; then
-      local runtime_changed
-      runtime_changed="$(hook_rust_runtime_invoke changed-files 2>/dev/null || true)"
-      if [[ -n "$runtime_changed" ]]; then
-        printf '%s\n' "$runtime_changed"
-        return 0
-      fi
-    fi
-
-    local shared_file="${HOOK_SHARED_DIR}/changed_files"
-    mkdir -p "$HOOK_SHARED_DIR"
-
-    if [[ -f "$shared_file" ]]; then
-        cat "$shared_file"
-        return 0
-    fi
-
-    # Build once: git diff + untracked, excluding build dirs
-    # Use dispatcher-precomputed CHANGED_FILES if available (saves ~52ms)
-    {
-        if [[ -n "${CHANGED_FILES+set}" ]]; then
-            echo "$CHANGED_FILES"
-        else
-            git diff --name-only HEAD 2>/dev/null
-        fi
-        git ls-files --others --exclude-standard 2>/dev/null
-    } | sort -u | grep -v -E '^(node_modules|vendor|\.git|target|out|dist|build|coverage|__pycache__)/' > "$shared_file"
-
-    cat "$shared_file"
+    hook_rust_runtime_invoke changed-files 2>/dev/null
 }
 
 # Store arbitrary shared results (e.g., file tree, FR list)
@@ -1186,33 +475,19 @@ HOOK_BREAKER_COOLDOWN=300  # 5 min
 # Returns 0 if circuit is open (tool broken), 1 if closed (tool ok to try)
 hook_breaker_check() {
     local tool="$1"
-    local state_file="${HOOK_BREAKER_DIR}/${tool}.state"
-    [[ -f "$state_file" ]] || return 1  # not broken
-
-    local count ts
-    read -r count ts < "$state_file"
-    local age=$(( $(date +%s) - ts ))
-
-    # If cooldown expired, allow probe (half-open)
-    (( age >= HOOK_BREAKER_COOLDOWN )) && return 1
-    # If threshold exceeded, circuit is open (broken)
-    (( count >= HOOK_BREAKER_THRESHOLD ))
+    hook_rust_runtime_invoke breaker-check "$tool" >/dev/null 2>&1
 }
 
 # Record a tool failure
 hook_breaker_record_failure() {
     local tool="$1"
-    mkdir -p "$HOOK_BREAKER_DIR"
-    local state_file="${HOOK_BREAKER_DIR}/${tool}.state"
-    local count=0
-    [[ -f "$state_file" ]] && read -r count _ < "$state_file"
-    echo "$(( count + 1 )) $(date +%s)" > "$state_file"
+    hook_rust_runtime_invoke breaker-record "$tool" >/dev/null 2>&1
 }
 
 # Reset breaker on success
 hook_breaker_reset() {
     local tool="$1"
-    rm -f "${HOOK_BREAKER_DIR}/${tool}.state" 2>/dev/null
+    hook_rust_runtime_invoke breaker-reset "$tool" >/dev/null 2>&1
 }
 
 # --- 4. Debounce Helper for PostToolUse Hooks ---
@@ -1225,29 +500,7 @@ HOOK_DEBOUNCE_DIR="${HOOK_CACHE_DIR}/debounce"
 # (i.e., it's the leader after the debounce window), 1 if it should skip (follower).
 hook_debounce_file() {
     local hook_name="$1" file="$2" window_ms="${3:-200}"
-    mkdir -p "$HOOK_DEBOUNCE_DIR"
-    local pending="${HOOK_DEBOUNCE_DIR}/${hook_name}.pending"
-    local lock="${HOOK_DEBOUNCE_DIR}/${hook_name}.lock"
-
-    # Append file to pending batch
-    echo "$file" >> "$pending"
-
-    # Try to become the debounce leader
-    exec 200>"$lock"
-    if flock -n 200 2>/dev/null; then
-        # Leader: wait for debounce window
-        sleep "$(awk "BEGIN{printf \"%.3f\", ${window_ms}/1000}")"
-        # Consume pending batch
-        local batch
-        batch="$(sort -u "$pending" 2>/dev/null)"
-        : > "$pending"
-        flock -u 200
-        exec 200>&-
-        echo "$batch"
-        return 0  # proceed with batch
-    fi
-    exec 200>&-
-    return 1  # follower, skip
+    hook_rust_runtime_invoke debounce "$hook_name" "$file" "$window_ms" 2>/dev/null
 }
 
 # --- 5. Incremental Validation for PreToolUse ---
@@ -1259,30 +512,15 @@ HOOK_MANIFEST_DIR="${HOOK_CACHE_DIR}/manifests"
 # Check if hook inputs are unchanged since last run
 hook_incremental_check() {
     local hook_name="$1"; shift
-    local manifest="${HOOK_MANIFEST_DIR}/${hook_name}.manifest"
-    [[ -f "$manifest" ]] || return 1
-
-    while IFS=':' read -r file expected_sha; do
-        [[ -f "$file" ]] || return 1
-        local actual_sha
-        actual_sha="$(hash_for_cache "$file")"
-        [[ "$actual_sha" == "$expected_sha" ]] || return 1
-    done < "$manifest"
-    return 0  # all inputs unchanged
+    local files=("$@")
+    hook_rust_runtime_invoke incremental-check "$hook_name" "${files[@]}" >/dev/null 2>&1
 }
 
 # Record current input state
 hook_incremental_record() {
     local hook_name="$1"; shift
     local files=("$@")
-    mkdir -p "$HOOK_MANIFEST_DIR"
-    local manifest="${HOOK_MANIFEST_DIR}/${hook_name}.manifest"
-    : > "${manifest}.tmp"
-    for f in "${files[@]}"; do
-        [[ -f "$f" ]] || continue
-        echo "${f}:$(hash_for_cache "$f")" >> "${manifest}.tmp"
-    done
-    mv -f "${manifest}.tmp" "$manifest"
+    hook_rust_runtime_invoke incremental-record "$hook_name" "${files[@]}" >/dev/null 2>&1
 }
 
 # --- 6. Cache Wrap Convenience ---
@@ -1314,52 +552,13 @@ hook_cache_wrap() {
 HOOK_FILEHASH_DIR="${HOOK_CACHE_DIR}/filehash"
 
 hook_file_hash_cache() {
-    mkdir -p "$HOOK_FILEHASH_DIR" 2>/dev/null
-    local combined=""
-    local f
-    for f in "$@"; do
-        [[ -f "$f" ]] || continue
-        local cache_key hash_file
-        cache_key=$(printf '%s' "$f" | hash_for_cache)
-        hash_file="${HOOK_FILEHASH_DIR}/${cache_key}"
-        # Check if cached hash is still valid (mtime match)
-        if [[ -f "$hash_file" ]]; then
-            local cached_mtime cached_hash
-            IFS=$'\t' read -r cached_mtime cached_hash < "$hash_file"
-            local current_mtime
-            current_mtime=$(stat -f '%m' "$f" 2>/dev/null || stat -c '%Y' "$f" 2>/dev/null)
-            if [[ "$cached_mtime" == "$current_mtime" ]]; then
-                combined="${combined}${cached_hash}"
-                continue
-            fi
-        fi
-        # Compute and cache
-        local file_hash current_mtime
-        file_hash=$(hash_for_cache "$f")
-        current_mtime=$(stat -f '%m' "$f" 2>/dev/null || stat -c '%Y' "$f" 2>/dev/null)
-        printf '%s\t%s' "$current_mtime" "$file_hash" > "$hash_file"
-        combined="${combined}${file_hash}"
-    done
-    # Return combined hash
-    printf '%s' "$combined" | hash_for_cache
+    hook_rust_runtime_invoke file-hash "$@" 2>/dev/null
 }
 
 # --- 8. Shared FR IDs ---
 # Parse FR IDs from FUNCTIONAL_REQUIREMENTS.md once, share across hooks.
 hook_shared_fr_ids() {
-    local shared_file="${HOOK_SHARED_DIR}/fr_ids"
-    mkdir -p "$HOOK_SHARED_DIR" 2>/dev/null
-    if [[ -f "$shared_file" ]]; then
-        cat "$shared_file"
-        return 0
-    fi
-    local fr_file="${PROJECT_DIR}/FUNCTIONAL_REQUIREMENTS.md"
-    if [[ -f "$fr_file" ]]; then
-        grep -oE 'FR-[A-Z]+-[0-9]+' "$fr_file" | sort_unique > "$shared_file"
-    else
-        touch "$shared_file"
-    fi
-    cat "$shared_file"
+    hook_rust_runtime_invoke fr-ids 2>/dev/null
 }
 
 # --- 9. Shared FR Index (file:FR pairs) ---
@@ -1367,64 +566,14 @@ hook_shared_fr_ids() {
 # Format: filepath:FR-XXX-NNN (one per line), same as grep -rHoE output.
 # Used by spec-verifier.sh to skip expensive recursive grep.
 hook_shared_fr_index() {
-    local shared_file="${HOOK_SHARED_DIR}/fr_index"
-    mkdir -p "$HOOK_SHARED_DIR" 2>/dev/null
-    if [[ -f "$shared_file" ]]; then
-        cat "$shared_file"
-        return 0
-    fi
-    local test_dirs=""
-    for d in test tests spec specs; do
-        [[ -d "${PROJECT_DIR}/${d}" ]] && test_dirs="${test_dirs} ${PROJECT_DIR}/${d}"
-    done
-    [[ -z "$test_dirs" ]] && { touch "$shared_file"; return 0; }
-    local _rg_cmd="${RG_CMD:-$(command -v rg 2>/dev/null || true)}"
-    if [[ -n "$_rg_cmd" ]]; then
-        # shellcheck disable=SC2086
-        "$_rg_cmd" --no-config -oN --no-heading \
-            -g '!node_modules' -g '!vendor' -g '!.git' -g '!target' \
-            -g '!out' -g '!dist' -g '!build' -g '!coverage' \
-            -g '!__pycache__' -g '!.process-compose' \
-            'FR-[A-Z]+-[0-9]+' $test_dirs > "$shared_file" 2>/dev/null || true
-    else
-        # shellcheck disable=SC2086
-        grep -rHoE \
-            --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git \
-            --exclude-dir=target --exclude-dir=out --exclude-dir=dist \
-            --exclude-dir=build --exclude-dir=coverage --exclude-dir=__pycache__ \
-            --exclude-dir=.process-compose \
-            'FR-[A-Z]+-[0-9]+' $test_dirs > "$shared_file" 2>/dev/null || true
-    fi
-    cat "$shared_file"
+    hook_rust_runtime_invoke fr-index 2>/dev/null
 }
 
 # ============================================================================
 # Hook Config Reader
 # ============================================================================
-# Read settings from hook-config.yaml (simple grep, no yq dependency).
-# Usage: hook_config_get "prewarm_on_session_start" -> "true" or ""
-_hook_config_path() {
-  local base="${BASH_SOURCE[0]%/*}"
-  [[ -f "${base}/../hook-config.yaml" ]] && echo "${base}/../hook-config.yaml"
-  [[ -f "${PROJECT_DIR:-.}/.claude/hooks/hook-config.yaml" ]] && echo "${PROJECT_DIR}/.claude/hooks/hook-config.yaml"
-  return 0
-}
-
 hook_config_get() {
-  local key="$1"
-  local cfg
-  cfg="$(_hook_config_path | head -1)"
-  [[ -z "$cfg" || ! -f "$cfg" ]] && return 1
-  
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    if [[ "$line" =~ ^[[:space:]]*${key}:[[:space:]]*(.*) ]]; then
-      local val="${BASH_REMATCH[1]}"
-      val="${val%%#*}"
-      echo -n "${val//[[:space:]]/}"
-      return 0
-    fi
-  done < "$cfg"
-  return 1
+  hook_rust_runtime_invoke config-get "$1" 2>/dev/null
 }
 
 # Check if a boolean config is true
@@ -1479,44 +628,22 @@ export HOOK_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 # Check if hook should run based on file changes
 # Usage: hook_should_run "hook-name" "file-pattern"
 # Returns 0 (success) if hook should run, 1 (failure) if should skip
-# If no files changed, returns 0 (run for safety)
-# Phase 3.5: Uses git_cached() for gitoxide + caching (5-20x speedup)
 hook_should_run() {
     local hook_name="${1:-unknown}" pattern="${2:-}"
-
-    # Get changed files - prefer CHANGED_FILES from dispatcher, fallback to git with caching
-    local changed_files=""
-
-    # Priority 1: Use dispatcher-provided CHANGED_FILES (already computed, no git needed)
-    if [[ -n "${CHANGED_FILES:-}" ]]; then
-        changed_files="${CHANGED_FILES}"
-    # Priority 2: Only call git if dispatcher didn't provide CHANGED_FILES
-    # AND we're in a git repo. Uses git_cached() for gitoxide + caching support.
-    elif in_git_repo >/dev/null 2>&1; then
-        # CRITICAL: Git command must timeout to avoid hanging for 180s
-        # Use git_cached() for:
-        #   - gitoxide (gix) support: 5-20x faster than canonical git
-        #   - File-based caching: 60s TTL + FS event invalidation
-        #   - Graceful fallback to canonical git if gitoxide unavailable
-        if type git_cached &>/dev/null; then
-            changed_files="$(git_cached diff --name-only HEAD 2>/dev/null || true)"
-        elif command -v timeout >/dev/null 2>&1; then
-            # Fallback: use original timeout-based git (for systems without git-cache.sh sourced)
-            changed_files="$(timeout 5 git diff --name-only HEAD 2>/dev/null || true)"
-        else
-            # Last resort: try git without timeout (shouldn't happen with dispatcher)
-            changed_files="$(git diff --name-only HEAD 2>/dev/null || true)"
-        fi
-    fi
-
-    # If no changes detected, run hook (safer default - assume first run)
-    [[ -z "$changed_files" ]] && return 0
-
+    local changed_files
+    
+    # Get changed files from Rust runtime (JSON format)
+    changed_files="$(hook_rust_runtime_invoke changed-files 2>/dev/null)"
+    
+    # If no changes detected or error, run hook for safety
+    [[ -z "$changed_files" || "$changed_files" == "[]" ]] && return 0
+    
     # If no pattern specified, run for any change
     [[ -z "$pattern" ]] && return 0
-
+    
     # Check if any changed file matches the pattern
-    echo "$changed_files" | grep -qE "$pattern"
+    # Extract strings from JSON array and grep
+    echo "$changed_files" | tr -d '[]"' | tr ',' '\n' | grep -qE "$pattern"
 }
 
 # Quick check if ANY source files changed (for expensive hooks)
@@ -1551,157 +678,9 @@ export HOOK_MAX_TIMEOUT="${HOOK_MAX_TIMEOUT:-600}"
 # Determine which tests to run based on changed files.
 # Uses file pattern matching to find related test files.
 
-# Find tests affected by changed source file
-# Usage: affected_tests_for_file "src/module.py" -> returns test file paths
-affected_tests_for_file() {
-    local src="$1"
-    local base ext name dir
-    base="${src##*/}"
-    ext="${base##*.}"
-    name="${base%.*}"
-    dir="${src%/*}"
-
-    case "$ext" in
-        py)
-            # Python: test_*.py in same dir, tests/ subdir, or project root
-            for candidate in \
-                "${dir}/test_${name}.py" \
-                "${dir}/tests/test_${name}.py" \
-                "${PROJECT_DIR:-.}/tests/test_${name}.py" \
-                "${PROJECT_DIR:-.}/test/test_${name}.py" \
-                "${PROJECT_DIR:-.}/test_${name}.py"; do
-                [[ -f "$candidate" ]] && echo "$candidate"
-            done
-            ;;
-        ts|tsx|js|jsx)
-            # TypeScript: *.test.ts, *.spec.ts in same dir or __tests__/
-            for candidate in \
-                "${dir}/${name}.test.${ext}" \
-                "${dir}/${name}.spec.${ext}" \
-                "${dir}/__tests__/${name}.test.${ext}" \
-                "${dir}/__tests__/${name}.${ext}"; do
-                [[ -f "$candidate" ]] && echo "$candidate"
-            done
-            ;;
-        sh|bash)
-            # Bash: *.bats files
-            for candidate in \
-                "${PROJECT_DIR:-.}/test/${name}.bats" \
-                "${PROJECT_DIR:-.}/test/unit/${name}.bats" \
-                "${PROJECT_DIR:-.}/tests/${name}.bats"; do
-                [[ -f "$candidate" ]] && echo "$candidate"
-            done
-            ;;
-        rs)
-            # Rust: tests in tests/ or #[test] in same file
-            candidate="${PROJECT_DIR:-.}/tests/${name}.rs"
-            if [[ -f "$candidate" ]]; then
-                echo "$candidate"
-            fi
-            ;;
-    esac
-}
-
-# WP-DX1/P7: Find tests from coverage index
-# Usage: affected_tests_from_coverage_index "src/thegent/cli.py"
-# Build index with: pytest --cov=src --cov-context=test && python scripts/build_coverage_affected_map.py
-affected_tests_from_coverage_index() {
-    local src="$1"
-    [[ "${src##*.}" != "py" ]] && return 0
-    
-    local index_file
-    # Try cache dir first (preferred for P7)
-    index_file="${HOOK_CACHE_DIR:-/tmp/claude-hook-cache-$(id -u)}/coverage_affected_map.json"
-    if [[ ! -f "$index_file" ]]; then
-        # Fallback to root index (WP-DX1 legacy)
-        index_file="${PROJECT_DIR:-.}/coverage-index.json"
-    fi
-    [[ ! -f "$index_file" ]] && return 0
-
-    local project_dir="${PROJECT_DIR:-.}"
-    # Normalize to project-relative path
-    local rel="${src#"$project_dir"/}"
-    rel="${rel#./}"
-    rel="${rel//\\//}"
-    
-    local tests
-    tests=$(${JQ_CMD:-jq} -r --arg f "$rel" 'if .[$f] then .[$f][] else empty end' "$index_file" 2>/dev/null)
-    [[ -n "$tests" ]] && printf '%s\n' $tests
-}
-
-# P7: Find Python tests that import the changed module (import-based selection)
-# More accurate than file-pattern for projects with non-standard test layout.
-# Usage: affected_tests_from_imports "src/thegent/cli.py"
-affected_tests_from_imports() {
-    local src="$1"
-    [[ "${src##*.}" != "py" ]] && return 0
-    local project_dir="${PROJECT_DIR:-.}"
-    # Convert path to module: src/thegent/cli.py -> thegent.cli (strip src/, .py)
-    local rel="${src#"$project_dir"/}"
-    rel="${rel#src/}"
-    rel="${rel%.py}"
-    local module="${rel//\//.}"
-    [[ -z "$module" ]] && return 0
-    # Escape dots for regex
-    local module_re="${module//./\\.}"
-    local module_alt="src.${rel//\//.}"
-    local module_alt_re="${module_alt//./\\.}"
-    local test_dirs=""
-    for d in test tests; do
-        [[ -d "${project_dir}/${d}" ]] && test_dirs="${test_dirs} ${project_dir}/${d}"
-    done
-    [[ -z "$test_dirs" ]] && return 0
-    local _rg_cmd
-    _rg_cmd=$(command -v rg 2>/dev/null || true)
-    if [[ -n "$_rg_cmd" ]]; then
-        # Match: from X import, import X (X = module or module_alt)
-        "$_rg_cmd" --no-config -l --no-heading \
-            -g '*.py' -g '!__pycache__' -g '!*.pyc' \
-            -e "(from ${module_re}|import ${module_re}|from ${module_alt_re}|import ${module_alt_re})" \
-            $test_dirs 2>/dev/null || true
-    else
-        grep -rEl "(from ${module_re}|import ${module_re}|from ${module_alt_re}|import ${module_alt_re})" \
-            $test_dirs 2>/dev/null || true
-    fi
-}
-
-# P6: Check if Python file can be skipped (tracked + no git diff)
-# Returns 0 if skip, 1 if must analyze. Used by quality-gate to filter PY_FILES.
-incremental_skip_py_file() {
-    local file="$1"
-    [[ "${file##*.}" != "py" ]] && return 1
-    hook_config_true "incremental_analysis" 2>/dev/null || return 1
-    local script_dir="${BASH_SOURCE[0]%/*}"
-    [[ -z "$script_dir" ]] && script_dir="."
-    local parser="${script_dir}/incremental_parser.py"
-    [[ -f "$parser" ]] || return 1
-    local project_dir="${PROJECT_DIR:-.}"
-    local result
-    result=$(python3 "$parser" --check "$file" "$project_dir" 2>/dev/null) || return 1
-    [[ "$result" == "skip" ]]
-}
-
-# Get all affected tests for a list of changed files
-# P7/WP-DX1: When coverage_based_selection, merges file-pattern + coverage-index + import-based for Python
-# Usage: get_affected_tests file1.py file2.ts
+# Get affected tests from Rust.
 get_affected_tests() {
-    local tests=()
-    for file in "$@"; do
-        while IFS= read -r test; do
-            [[ -n "$test" ]] && tests+=("$test")
-        done < <(affected_tests_for_file "$file")
-        # P7/WP-DX1: Add coverage-index and import-based for Python when enabled
-        if [[ "${file##*.}" == "py" ]] && hook_config_true "coverage_based_selection" 2>/dev/null; then
-            while IFS= read -r test; do
-                [[ -n "$test" ]] && tests+=("$test")
-            done < <(affected_tests_from_coverage_index "$file")
-            while IFS= read -r test; do
-                [[ -n "$test" ]] && tests+=("$test")
-            done < <(affected_tests_from_imports "$file")
-        fi
-    done
-    # Dedupe and return
-    printf '%s\n' "${tests[@]}" | sort -u
+  hook_rust_runtime_invoke affected-tests "$@" 2>/dev/null
 }
 
 # ============================================================================
@@ -1709,53 +688,9 @@ get_affected_tests() {
 # ============================================================================
 # Warm caches at session start for faster subsequent hooks.
 
-# Pre-warm ruff cache for unchanged files
-prewarm_ruff_cache() {
-    local project_dir="${PROJECT_DIR:-.}"
-    [[ -f "$project_dir/pyproject.toml" ]] || [[ -f "$project_dir/ruff.toml" ]] || return 0
-
-    # Check if ruff cache exists, if not, run once to create
-    local cache_dir="${project_dir}/.ruff_cache"
-    if [[ ! -d "$cache_dir" ]]; then
-        command -v ruff >/dev/null 2>&1 || return 0
-        # Warm by running on a small subset first
-        ruff check --select=I "$project_dir" 2>/dev/null &
-    fi
-}
-
-# Pre-warm shellcheck cache
-prewarm_shellcheck_cache() {
-    local project_dir="${PROJECT_DIR:-.}"
-    local cache_dir="${TMPDIR}/shellcheck-cache-$(id -u)"
-    [[ -d "$cache_dir" ]] && return 0
-
-    command -v shellcheck >/dev/null 2>&1 || return 0
-    mkdir -p "$cache_dir"
-    # Pre-scan for shell scripts
-    find "$project_dir" -name "*.sh" -type f -exec dirname {} \; 2>/dev/null | sort -u > "$cache_dir/dirs.scan"
-}
-
-# Pre-warm the common shared data (changed files, FR list)
-prewarm_shared_data() {
-    local shared_dir="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)/shared"
-    mkdir -p "$shared_dir"
-
-    # Pre-compute changed files if not exists
-    if [[ ! -f "${shared_dir}/changed_files" ]]; then
-        (
-            git diff --name-only HEAD 2>/dev/null
-            git ls-files --others --exclude-standard 2>/dev/null
-        ) | grep -v -E '^(node_modules|vendor|\.git|target|out|dist|build|coverage)/' \
-          | sort -u > "${shared_dir}/changed_files" &
-    fi
-}
-
 # Run all pre-warms in parallel (non-blocking)
 hook_prewarm_all() {
-    prewarm_shared_data &
-    prewarm_ruff_cache &
-    prewarm_shellcheck_cache &
-    wait  # Wait for all to complete or fail silently
+    hook_rust_runtime_invoke prewarm "${PROJECT_DIR:-.}" >/dev/null 2>&1 &
 }
 
 # ============================================================================
@@ -1765,25 +700,28 @@ hook_prewarm_all() {
 
 # Print progress message with timestamp
 hook_progress() {
-    echo "[$(date +%H:%M:%S)] HOOK_PROGRESS: $1" >&2
+    hook_rust_runtime_invoke progress "$@" >/dev/null 2>&1
 }
 
-# Start a background progress reporter
+# Start background progress reporter
 hook_progress_start() {
-    local interval="${2:-30}"
+    local msg="${1:-Working...}" interval="${2:-30}"
     (
         while true; do
             sleep "$interval"
-            hook_progress "$1"
+            echo "PROGRESS: $msg" >&2
         done
     ) &
     echo $!
 }
 
-# Kill the progress reporter
+# Stop background progress reporter
 hook_progress_stop() {
     local pid="$1"
-    [[ -n "$pid" ]] && kill "$pid" 2>/dev/null
+    if [[ -n "$pid" ]]; then
+        kill "$pid" 2>/dev/null || true
+        wait "$pid" 2>/dev/null || true
+    fi
 }
 
 # ============================================================================
@@ -1801,26 +739,14 @@ HOOK_LEARNING_PASS_RATE=0.95
 # Usage: hook_learning_record "quality-gate" ".py" 0  (0=pass, 1=fail)
 hook_learning_record() {
   local hook_name="$1" pattern="$2" passed="${3:-0}"
-  [[ -z "$hook_name" || -z "$pattern" ]] && return 0
-  mkdir -p "$HOOK_LEARNING_DIR"
-  echo "$(date +%s)|$hook_name|$pattern|$passed" >> "${HOOK_LEARNING_DIR}/history.log"
-  # Trim to last 1000 entries
-  tail -1000 "${HOOK_LEARNING_DIR}/history.log" > "${HOOK_LEARNING_DIR}/history.log.tmp"
-  mv "${HOOK_LEARNING_DIR}/history.log.tmp" "${HOOK_LEARNING_DIR}/history.log" 2>/dev/null || true
+  hook_rust_runtime_invoke learning-record "$hook_name" "$pattern" "$passed" >/dev/null 2>&1
 }
 
 # Check if hook should be skipped based on learning (consistently passes for this pattern)
 # Returns 0 if should skip, 1 if should run
 hook_learning_should_skip() {
   local hook_name="$1" pattern="$2"
-  hook_config_true "learning_skip" 2>/dev/null || return 1
-  [[ -f "${HOOK_LEARNING_DIR}/history.log" ]] || return 1
-  local samples pass_count total
-  samples=$(grep "|${hook_name}|${pattern}|" "${HOOK_LEARNING_DIR}/history.log" 2>/dev/null | tail -100)
-  total=$(echo "$samples" | grep -c . 2>/dev/null || echo 0)
-  (( total < HOOK_LEARNING_MIN_SAMPLES )) && return 1
-  pass_count=$(echo "$samples" | grep "|0$" | grep -c . 2>/dev/null || echo 0)
-  local rate=0
-  (( total > 0 )) && rate=$(( pass_count * 100 / total ))
-  (( rate >= 95 ))  # Skip if 95%+ pass rate (return 0)
+  hook_rust_runtime_invoke learning-should-skip "$hook_name" "$pattern" >/dev/null 2>&1
 }
+
+# Migration complete: Rust runtime enabled by default.

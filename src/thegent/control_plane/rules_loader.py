@@ -1,10 +1,11 @@
-"""WP-10003: Unified rules loader for ShareCLI rules.conf."""
+"""WP-10003: Unified rules loader for heliosShield rules.conf."""
 
+import contextlib
 import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ class Rule:
     command: str
     subcommand: str  # '*' for any
     strategy: str
-    options: Dict[str, Any] = field(default_factory=dict)
+    options: dict[str, Any] = field(default_factory=dict)
 
     @property
     def key(self) -> str:
@@ -22,12 +23,18 @@ class Rule:
 
 
 class RulesLoader:
-    """Parses and caches rules from sharecli/rules.conf."""
+    """Parses and caches rules from centralized rules.conf."""
 
-    def __init__(self, rules_path: Path):
+    def __init__(self, rules_path: Path | None = None) -> None:
+        if rules_path is None:
+            # Centralized config path
+            rules_path = Path.home() / ".config" / "thegent" / "rules.conf"
+            if not rules_path.exists():
+                # Fallback to CWD
+                rules_path = Path.cwd() / "rules.conf"
         self.rules_path = rules_path
-        self.rules: Dict[str, Rule] = {}
-        self.equivalences: Dict[str, List[str]] = {}
+        self.rules: dict[str, Rule] = {}
+        self.equivalences: dict[str, list[str]] = {}
         self._last_mtime: float = 0
 
     def load(self, force: bool = False) -> None:
@@ -39,11 +46,11 @@ class RulesLoader:
         if not force and mtime <= self._last_mtime:
             return
 
-        new_rules: Dict[str, Rule] = {}
-        new_equivs: Dict[str, List[str]] = {}
+        new_rules: dict[str, Rule] = {}
+        new_equivs: dict[str, list[str]] = {}
 
         try:
-            with open(self.rules_path, "r") as f:
+            with open(self.rules_path) as f:
                 for line in f:
                     line = line.split("#")[0].strip()
                     if not line:
@@ -64,13 +71,13 @@ class RulesLoader:
         except Exception as e:
             logger.error(f"Failed to load rules: {e}")
 
-    def _parse_equivalence(self, def_str: str, equivs: Dict[str, List[str]]) -> None:
+    def _parse_equivalence(self, def_str: str, equivs: dict[str, list[str]]) -> None:
         if ":" not in def_str:
             return
         name, members = def_str.split(":", 1)
         equivs[name.strip()] = [m.strip() for m in members.split(",") if m.strip()]
 
-    def _parse_rule_line(self, line: str) -> Optional[Rule]:
+    def _parse_rule_line(self, line: str) -> Rule | None:
         parts = line.split()
         if len(parts) < 2:
             return None
@@ -89,31 +96,26 @@ class RulesLoader:
             if "=" in opt:
                 k, v = opt.split("=", 1)
                 # Try to convert to numeric if possible
-                try:
-                    if "." in v:
-                        v = float(v)
-                    else:
-                        v = int(v)
-                except ValueError:
-                    pass
+                with contextlib.suppress(ValueError):
+                    v = float(v) if "." in v else int(v)
                 options[k] = v
 
         return Rule(command=cmd, subcommand=sub, strategy=strategy, options=options)
 
-    def get_rule(self, command: str, subcommand: Optional[str] = None) -> Rule:
+    def get_rule(self, command: str, subcommand: str | None = None) -> Rule:
         """Find the matching rule for a command/subcommand."""
         self.load()
         sub = subcommand or "*"
-        
+
         # Exact match
         key = f"{command}:{sub}"
         if key in self.rules:
             return self.rules[key]
-        
+
         # Wildcard match
         wild_key = f"{command}:*"
         if wild_key in self.rules:
             return self.rules[wild_key]
-        
+
         # Fallback
         return Rule(command=command, subcommand=sub, strategy="passthrough")

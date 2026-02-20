@@ -7,27 +7,29 @@ from thegent.sync.orchestrator import (
     SyncRegistry,
     SyncResult,
     SyncStatus,
-    registry,
+    global_registry,
 )
 from thegent.sync.unified_sync import UnifiedSyncCommand
 
 __all__ = [
-    "UnifiedSyncCommand",
-    "SystemAuditFramework",
     "SyncComponent",
     "SyncOrchestrator",
     "SyncRegistry",
     "SyncResult",
     "SyncStatus",
-    "registry",
+    "SystemAuditFramework",
+    "UnifiedSyncCommand",
+    "global_registry",
 ]
 
 from thegent.sync.plan_consolidation import PlanConsolidation
 from thegent.sync.research_integration import ResearchIntegration
 from thegent.sync.work_stream_integration import WorkStreamIntegration
 
-__all__.extend([
-    "WorkStreamIntegration",
-    "ResearchIntegration",
-    "PlanConsolidation",
-])
+__all__.extend(
+    [
+        "PlanConsolidation",
+        "ResearchIntegration",
+        "WorkStreamIntegration",
+    ]
+)

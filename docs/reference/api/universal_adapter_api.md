@@ -17,54 +17,60 @@ Adapts disparate tools to the unified operation surface.
 #### UniversalToolAdapter.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### UniversalToolAdapter.call_tool
 
+```python
+call_tool(self: Any, command: str)
+```
+
 Call a tool through its operation-mapped adapter.
 
-```python
-call_tool(self, command)
-```
+---
 
 #### UniversalToolAdapter.register_adapter
 
+```python
+register_adapter(self: Any, command: str, adapter_fn: Callable[(Ellipsis, Any)])
+```
+
 Register an adapter for a specific CLI command.
 
-```python
-register_adapter(self, command, adapter_fn)
-```
+---
 
 ---
 
 ## call_tool
 
-Call a tool through its operation-mapped adapter.
-
 ```python
-call_tool(self, command)
+call_tool(self: Any, command: str)
 ```
+
+Call a tool through its operation-mapped adapter.
 
 ---
 
 ## register_adapter
 
-Register an adapter for a specific CLI command.
-
 ```python
-register_adapter(self, command, adapter_fn)
+register_adapter(self: Any, command: str, adapter_fn: Callable[(Ellipsis, Any)])
 ```
+
+Register an adapter for a specific CLI command.
 
 ---
 
 ## validate_tool_schema
 
-WP-9005: Validate tool call payload against operation-specific schema.
-
 ```python
-validate_tool_schema(operation, payload)
+validate_tool_schema(operation: Operation, payload: dict[(str, Any)])
 ```
+
+WP-9005: Validate tool call payload against operation-specific schema.
 
 ---
 

@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 class Crew:
     """Agent crew for coordinating multiple agents."""
 
-    def __init__(self, agents: list[Any]):
+    def __init__(self, agents: list[Any]) -> None:
         """Initialize crew.
-        
+
         Args:
             agents: List of agents in the crew
         """
@@ -20,7 +20,7 @@ class Crew:
 
     def add_agent(self, agent: Any) -> None:
         """Add an agent to the crew.
-        
+
         Args:
             agent: Agent to add
         """
@@ -29,10 +29,10 @@ class Crew:
 
     def execute(self, task: dict[str, Any]) -> dict[str, Any]:
         """Execute a task with the crew.
-        
+
         Args:
             task: Task dictionary
-            
+
         Returns:
             Execution result
         """

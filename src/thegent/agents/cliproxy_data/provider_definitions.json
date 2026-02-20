@@ -43,7 +43,7 @@
       ]
     }
   },
-  "zen": {
+    "zen": {
     "base_url": "https://opencode.ai/zen/v1",
     "base_url_env": "THGENT_ZEN_BASE_URL",
     "model": "glm-5",
@@ -55,6 +55,30 @@
         "1. Sign in to OpenCode.",
         "2. Generate or copy your Zen API key.",
         "3. Paste the key when prompted."
+      ]
+    }
+  },
+  "qwen": {
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "model": "qwen-turbo",
+    "login": {
+      "url": "https://dashscope.console.aliyun.com/apiKey",
+      "display_name": "Qwen",
+      "instructions": [
+        "1. Sign in to DashScope console.",
+        "2. Create or copy your API key."
+      ]
+    }
+  },
+  "roo": {
+    "base_url": "https://api.roo.ai/v1",
+    "model": "roo-default",
+    "login": {
+      "url": "https://roo.ai/settings/api-keys",
+      "display_name": "Roo",
+      "instructions": [
+        "1. Sign in to Roo.ai.",
+        "2. Copy your API key."
       ]
     }
   }

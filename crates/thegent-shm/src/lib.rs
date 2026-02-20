@@ -12,9 +12,35 @@ const SLOT_SIZE: usize = 128;
 const XP_OFFSET: usize = MAX_BREAKERS * SLOT_SIZE;
 const HEALTH_OFFSET: usize = XP_OFFSET + 64;
 const RESOURCE_OFFSET: usize = HEALTH_OFFSET + 64;
-const SHM_SIZE: usize = RESOURCE_OFFSET + 1024;
+const RACE_OFFSET: usize = RESOURCE_OFFSET + 1024;
+const RACE_COUNT: usize = 32;
+const RACE_SLOT_SIZE: usize = 256;
+const CMD_CACHE_OFFSET: usize = RACE_OFFSET + (RACE_COUNT * RACE_SLOT_SIZE);
+const CMD_CACHE_COUNT: usize = 64;
+const CMD_CACHE_SLOT_SIZE: usize = 512;
+const SHM_SIZE: usize = CMD_CACHE_OFFSET + (CMD_CACHE_COUNT * CMD_CACHE_SLOT_SIZE);
 
 static GLOBAL_SHM: Lazy<Mutex<Option<SHMInterface>>> = Lazy::new(|| Mutex::new(None));
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct CommandLock {
+    cmd_hash: String,
+    pid: u32,
+    status: String, // "running", "completed", "failed"
+    output_path: String,
+    start_time: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct RaceResult {
+    race_id: String,
+    agent_id: String,
+    run_id: String,
+    status: String, // "success", "failed", "running"
+    duration_ms: u64,
+    score: f32,
+    timestamp: f64,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct BreakerState {
@@ -145,14 +171,12 @@ impl SHMInterface {
         self.save_xp_state(state)
     }
 
-    fn get_xp_state(&self) -> PyResult<Option<PyObject>> {
+    fn get_xp_state(&self, py: Python<'_>) -> PyResult<Option<PyObject>> {
         let state = self.get_xp_state_internal();
-        Python::with_gil(|py| {
-            let dict = pyo3::types::PyDict::new_bound(py);
-            dict.set_item("total_xp", state.total_xp)?;
-            dict.set_item("level", state.level)?;
-            Ok(Some(dict.into()))
-        })
+        let dict = pyo3::types::PyDict::new(py);
+        dict.set_item("total_xp", state.total_xp)?;
+        dict.set_item("level", state.level)?;
+        Ok(Some(dict.into_any().unbind()))
     }
 
     fn set_health_score(&mut self, score: f64) -> PyResult<()> {
@@ -182,20 +206,161 @@ impl SHMInterface {
         Ok(())
     }
 
-    fn get_resource_usage(&self) -> PyResult<Option<PyObject>> {
+    fn get_resource_usage(&self, py: Python<'_>) -> PyResult<Option<PyObject>> {
         let slot = &self.mmap[RESOURCE_OFFSET..RESOURCE_OFFSET+128];
         if slot[0] == 0 { return Ok(None); }
         if let Ok(state) = serde_json::from_slice::<ResourceMetrics>(slot) {
-            return Python::with_gil(|py| {
-                let dict = pyo3::types::PyDict::new_bound(py);
-                dict.set_item("pid", state.pid)?;
-                dict.set_item("cpu_usage", state.cpu_usage)?;
-                dict.set_item("memory_kb", state.memory_kb)?;
-                dict.set_item("timestamp", state.timestamp)?;
-                Ok(Some(dict.into()))
-            });
+            let dict = pyo3::types::PyDict::new(py);
+            dict.set_item("pid", state.pid)?;
+            dict.set_item("cpu_usage", state.cpu_usage)?;
+            dict.set_item("memory_kb", state.memory_kb)?;
+            dict.set_item("timestamp", state.timestamp)?;
+            Ok(Some(dict.into_any().unbind()))
+        } else {
+            Ok(None)
         }
-        Ok(None)
+    }
+
+    fn record_race_result(&mut self, race_id: String, agent_id: String, run_id: String, status: String, duration_ms: u64, score: f32) -> PyResult<()> {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
+        let result = RaceResult {
+            race_id: race_id.clone(),
+            agent_id,
+            run_id,
+            status,
+            duration_ms,
+            score,
+            timestamp: now,
+        };
+
+        let bytes = serde_json::to_vec(&result).map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+        
+        // Find slot for this race_id or an empty one
+        let mut target_idx = None;
+        for i in 0..RACE_COUNT {
+            let start = RACE_OFFSET + (i * RACE_SLOT_SIZE);
+            let slot = &self.mmap[start..start+RACE_SLOT_SIZE];
+            if slot[0] == 0 {
+                if target_idx.is_none() { target_idx = Some(i); }
+                continue;
+            }
+            if let Ok(existing) = serde_json::from_slice::<RaceResult>(slot) {
+                if existing.race_id == race_id && existing.run_id == result.run_id {
+                    target_idx = Some(i);
+                    break;
+                }
+            }
+        }
+
+        let idx = target_idx.ok_or_else(|| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("Race slots full"))?;
+        let start = RACE_OFFSET + (idx * RACE_SLOT_SIZE);
+        for b in &mut self.mmap[start..start+RACE_SLOT_SIZE] { *b = 0; }
+        let len = bytes.len().min(RACE_SLOT_SIZE);
+        self.mmap[start..start+len].copy_from_slice(&bytes[..len]);
+        Ok(())
+    }
+
+    fn get_race_winner(&self, py: Python<'_>, race_id: String) -> PyResult<Option<PyObject>> {
+        let mut best_result: Option<RaceResult> = None;
+
+        for i in 0..RACE_COUNT {
+            let start = RACE_OFFSET + (i * RACE_SLOT_SIZE);
+            let slot = &self.mmap[start..start+RACE_SLOT_SIZE];
+            if slot[0] == 0 { continue; }
+            if let Ok(res) = serde_json::from_slice::<RaceResult>(slot) {
+                if res.race_id == race_id && res.status == "success" {
+                    match &best_result {
+                        None => best_result = Some(res),
+                        Some(best) => {
+                            // Winner is first to finish or highest score? 
+                            // For now, let's say first to finish (lowest duration)
+                            if res.duration_ms < best.duration_ms {
+                                best_result = Some(res);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some(winner) = best_result {
+            let dict = pyo3::types::PyDict::new(py);
+            dict.set_item("agent_id", winner.agent_id)?;
+            dict.set_item("run_id", winner.run_id)?;
+            dict.set_item("duration_ms", winner.duration_ms)?;
+            dict.set_item("score", winner.score)?;
+            Ok(Some(dict.into_any().unbind()))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn try_acquire_cmd_lock(&mut self, py: Python<'_>, cmd_hash: String, pid: u32, output_path: String) -> PyResult<Option<PyObject>> {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
+        
+        // 1. Check for existing lock
+        for i in 0..CMD_CACHE_COUNT {
+            let start = CMD_CACHE_OFFSET + (i * CMD_CACHE_SLOT_SIZE);
+            let slot = &self.mmap[start..start+CMD_CACHE_SLOT_SIZE];
+            if slot[0] == 0 { continue; }
+            
+            if let Ok(lock) = serde_json::from_slice::<CommandLock>(slot) {
+                if lock.cmd_hash == cmd_hash {
+                    // Lock exists. Is the PID still alive? (In a real system we'd check /proc)
+                    // For now, if it's "running", return the existing lock info.
+                    if lock.status == "running" {
+                        let dict = pyo3::types::PyDict::new(py);
+                        dict.set_item("pid", lock.pid)?;
+                        dict.set_item("output_path", lock.output_path)?;
+                        dict.set_item("start_time", lock.start_time)?;
+                        return Ok(Some(dict.into_any().unbind()));
+                    }
+                }
+            }
+        }
+
+        // 2. No active lock, create one
+        let new_lock = CommandLock {
+            cmd_hash: cmd_hash.clone(),
+            pid,
+            status: "running".to_string(),
+            output_path,
+            start_time: now,
+        };
+
+        let bytes = serde_json::to_vec(&new_lock).map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+        
+        // Find empty slot
+        for i in 0..CMD_CACHE_COUNT {
+            let start = CMD_CACHE_OFFSET + (i * CMD_CACHE_SLOT_SIZE);
+            if self.mmap[start] == 0 {
+                let len = bytes.len().min(CMD_CACHE_SLOT_SIZE);
+                self.mmap[start..start+len].copy_from_slice(&bytes[..len]);
+                return Ok(None); // Success, lock acquired (None means no existing conflict)
+            }
+        }
+
+        Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("Command cache slots full"))
+    }
+
+    fn release_cmd_lock(&mut self, cmd_hash: String, status: String) -> PyResult<()> {
+        for i in 0..CMD_CACHE_COUNT {
+            let start = CMD_CACHE_OFFSET + (i * CMD_CACHE_SLOT_SIZE);
+            let slot = &self.mmap[start..start+CMD_CACHE_SLOT_SIZE];
+            if slot[0] == 0 { continue; }
+            
+            if let Ok(mut lock) = serde_json::from_slice::<CommandLock>(slot) {
+                if lock.cmd_hash == cmd_hash {
+                    lock.status = status;
+                    let bytes = serde_json::to_vec(&lock).map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+                    for b in &mut self.mmap[start..start+CMD_CACHE_SLOT_SIZE] { *b = 0; }
+                    let len = bytes.len().min(CMD_CACHE_SLOT_SIZE);
+                    self.mmap[start..start+len].copy_from_slice(&bytes[..len]);
+                    return Ok(());
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -251,11 +416,56 @@ fn record_resource_usage(pid: u32, cpu_usage: f32, memory_kb: u64) -> PyResult<(
     }
 }
 
+#[pyfunction]
+fn record_race_result(race_id: String, agent_id: String, run_id: String, status: String, duration_ms: u64, score: f32) -> PyResult<()> {
+    let mut global = GLOBAL_SHM.lock().unwrap();
+    if let Some(interface) = global.as_mut() {
+        interface.record_race_result(race_id, agent_id, run_id, status, duration_ms, score)?;
+        Ok(())
+    } else {
+        Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
+    }
+}
+
+#[pyfunction]
+fn get_race_winner(py: Python<'_>, race_id: String) -> PyResult<Option<PyObject>> {
+    let mut global = GLOBAL_SHM.lock().unwrap();
+    if let Some(interface) = global.as_mut() {
+        interface.get_race_winner(py, race_id)
+    } else {
+        Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
+    }
+}
+
+#[pyfunction]
+fn try_acquire_cmd_lock(py: Python<'_>, cmd_hash: String, pid: u32, output_path: String) -> PyResult<Option<PyObject>> {
+    let mut global = GLOBAL_SHM.lock().unwrap();
+    if let Some(interface) = global.as_mut() {
+        interface.try_acquire_cmd_lock(py, cmd_hash, pid, output_path)
+    } else {
+        Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
+    }
+}
+
+#[pyfunction]
+fn release_cmd_lock(cmd_hash: String, status: String) -> PyResult<()> {
+    let mut global = GLOBAL_SHM.lock().unwrap();
+    if let Some(interface) = global.as_mut() {
+        interface.release_cmd_lock(cmd_hash, status)
+    } else {
+        Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
+    }
+}
+
 #[pymodule]
 fn thegent_shm(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SHMInterface>()?;
     m.add_function(wrap_pyfunction!(init_shm, m)?)?;
     m.add_function(wrap_pyfunction!(set_health_score, m)?)?;
     m.add_function(wrap_pyfunction!(record_resource_usage, m)?)?;
+    m.add_function(wrap_pyfunction!(record_race_result, m)?)?;
+    m.add_function(wrap_pyfunction!(get_race_winner, m)?)?;
+    m.add_function(wrap_pyfunction!(try_acquire_cmd_lock, m)?)?;
+    m.add_function(wrap_pyfunction!(release_cmd_lock, m)?)?;
     Ok(())
 }

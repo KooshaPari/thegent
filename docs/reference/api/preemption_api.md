@@ -16,21 +16,23 @@ Policy engine for task preemption and saturation control.
 
 #### PreemptionPolicy.evaluate_preemption
 
+```python
+evaluate_preemption(self: Any, system_load: float, task_lane: str)
+```
+
 Determine if a task should be preempted based on load and lane.
 
-```python
-evaluate_preemption(self, system_load, task_lane)
-```
+---
 
 ---
 
 ## evaluate_preemption
 
-Determine if a task should be preempted based on load and lane.
-
 ```python
-evaluate_preemption(self, system_load, task_lane)
+evaluate_preemption(self: Any, system_load: float, task_lane: str)
 ```
+
+Determine if a task should be preempted based on load and lane.
 
 ---
 

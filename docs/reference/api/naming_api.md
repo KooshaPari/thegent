@@ -17,88 +17,89 @@ This class enforces consistent naming conventions across all components:
 - Classes: PascalCase
 - Constants: UPPER_SNAKE_CASE
 
-Examples:
-    >>> naming = NamingConvention()
-    >>> is_valid = naming.validate("thegent-install", "command")
-    >>> suggested = naming.suggest_name("thegent_install", "command")
-
 ### Methods
 
 #### NamingConvention.__init__
 
-Initialize naming convention enforcer.
-
 ```python
-__init__(self)
+__init__(self: Any)
 ```
 
+Initialize naming convention enforcer.
+
+---
+
 #### NamingConvention.suggest_name
+
+```python
+suggest_name(self: Any, name: str, convention_type: str)
+```
 
 Suggest name following convention.
 
 Converts name to follow the specified convention.
 
-Args:
-    name: Name to convert
-    convention_type: Target convention type
+**Parameters**:
 
-Returns:
-    Suggested name following convention
+- `name`: Name to convert
+- `convention_type`: Target convention type
 
-```python
-suggest_name(self, name, convention_type)
-```
+**Returns**: Suggested name following convention
+
+---
 
 #### NamingConvention.validate
 
+```python
+validate(self: Any, name: str, convention_type: str)
+```
+
 Validate name against convention.
 
-Args:
-    name: Name to validate
-    convention_type: Type of convention (command, config_key, function, class, constant)
+**Parameters**:
 
-Returns:
-    True if name follows convention, False otherwise
+- `name`: Name to validate
+- `convention_type`: Type of convention (command, config_key, function, class, constant)
 
-```python
-validate(self, name, convention_type)
-```
+**Returns**: True if name follows convention, False otherwise
+
+---
 
 ---
 
 ## suggest_name
 
+```python
+suggest_name(self: Any, name: str, convention_type: str)
+```
+
 Suggest name following convention.
 
 Converts name to follow the specified convention.
 
-Args:
-    name: Name to convert
-    convention_type: Target convention type
+**Parameters**:
 
-Returns:
-    Suggested name following convention
+- `name`: Name to convert
+- `convention_type`: Target convention type
 
-```python
-suggest_name(self, name, convention_type)
-```
+**Returns**: Suggested name following convention
 
 ---
 
 ## validate
 
+```python
+validate(self: Any, name: str, convention_type: str)
+```
+
 Validate name against convention.
 
-Args:
-    name: Name to validate
-    convention_type: Type of convention (command, config_key, function, class, constant)
+**Parameters**:
 
-Returns:
-    True if name follows convention, False otherwise
+- `name`: Name to validate
+- `convention_type`: Type of convention (command, config_key, function, class, constant)
 
-```python
-validate(self, name, convention_type)
-```
+**Returns**: True if name follows convention, False otherwise
 
 ---
 

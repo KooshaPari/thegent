@@ -158,6 +158,7 @@ class ManageDevkitIntegration:
             return
 
         try:
+            import yaml
             with open(self.manage_config_path, "w", encoding="utf-8") as f:
                 yaml.dump(self.manage_config, f, default_flow_style=False)
         except OSError:

@@ -9,14 +9,16 @@ logger = logging.getLogger(__name__)
 class AgentHierarchyManager:
     """Manager for agent hierarchy."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize agent hierarchy manager."""
         self.hierarchy: dict[str, Any] = {}
         self.agents: dict[str, Any] = {}
 
-    def register_agent(self, agent_id: str, parent_id: str | None = None, metadata: dict[str, Any] | None = None) -> None:
+    def register_agent(
+        self, agent_id: str, parent_id: str | None = None, metadata: dict[str, Any] | None = None
+    ) -> None:
         """Register an agent in the hierarchy.
-        
+
         Args:
             agent_id: Agent identifier
             parent_id: Parent agent ID (None for root)
@@ -31,10 +33,10 @@ class AgentHierarchyManager:
 
     def get_children(self, agent_id: str) -> list[str]:
         """Get child agents.
-        
+
         Args:
             agent_id: Parent agent ID
-            
+
         Returns:
             List of child agent IDs
         """
@@ -42,10 +44,10 @@ class AgentHierarchyManager:
 
     def get_hierarchy_path(self, agent_id: str) -> list[str]:
         """Get hierarchy path from root to agent.
-        
+
         Args:
             agent_id: Agent ID
-            
+
         Returns:
             List of agent IDs from root to agent
         """

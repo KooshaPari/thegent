@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/integration/physical.py`
 
 WP-40001: IoT/Robotics Command Bridge.
+
 Bridges agent logic with physical-world actuators and sensors.
 Enables agents to interact with IoT devices or robotic swarms.
 
@@ -17,62 +18,70 @@ Manages commands sent to physical IoT or robotic devices.
 #### physicalWorldBridge.__init__
 
 ```python
-__init__(self, bridge_id)
+__init__(self: Any, bridge_id: str)
 ```
+
+---
 
 #### physicalWorldBridge.read_sensor
 
+```python
+read_sensor(self: Any, device_id: str, sensor_type: str)
+```
+
 Read telemetry from a physical sensor.
 
-```python
-read_sensor(self, device_id, sensor_type)
-```
+---
 
 #### physicalWorldBridge.register_device
 
+```python
+register_device(self: Any, device_id: str, device_type: str)
+```
+
 Register a physical device.
 
-```python
-register_device(self, device_id, device_type)
-```
+---
 
 #### physicalWorldBridge.send_command
 
+```python
+send_command(self: Any, device_id: str, command: str, params: dict[(str, Any)])
+```
+
 WP-40001: Send an actuation command to a physical device.
 
-```python
-send_command(self, device_id, command, params)
-```
+---
 
 ---
 
 ## read_sensor
 
-Read telemetry from a physical sensor.
-
 ```python
-read_sensor(self, device_id, sensor_type)
+read_sensor(self: Any, device_id: str, sensor_type: str)
 ```
+
+Read telemetry from a physical sensor.
 
 ---
 
 ## register_device
 
-Register a physical device.
-
 ```python
-register_device(self, device_id, device_type)
+register_device(self: Any, device_id: str, device_type: str)
 ```
+
+Register a physical device.
 
 ---
 
 ## send_command
 
-WP-40001: Send an actuation command to a physical device.
-
 ```python
-send_command(self, device_id, command, params)
+send_command(self: Any, device_id: str, command: str, params: dict[(str, Any)])
 ```
+
+WP-40001: Send an actuation command to a physical device.
 
 ---
 

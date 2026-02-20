@@ -15,13 +15,13 @@ from .store import MAIFArtifactStore
 class MAIFManager:
     """High-level manager for MAIF artifacts, handling keys and storage."""
 
-    def __init__(self, db_path: Path, private_key_path: Optional[Path] = None):
+    def __init__(self, db_path: Path, private_key_path: Path | None = None) -> None:
         self.store = MAIFArtifactStore(db_path)
         self.private_key_path = private_key_path
-        self._private_key: Optional[rsa.RSAPrivateKey] = None
-        self._public_key: Optional[rsa.RSAPublicKey] = None
+        self._private_key: rsa.RSAPrivateKey | None = None
+        self._public_key: rsa.RSAPublicKey | None = None
 
-    def load_keys(self, password: Optional[bytes] = None) -> None:
+    def load_keys(self, password: bytes | None = None) -> None:
         """Load RSA keys from disk."""
         if not self.private_key_path or not self.private_key_path.exists():
             # Auto-generate if not exists (for dev/test)
@@ -44,11 +44,11 @@ class MAIFManager:
     def create_artifact(
         self,
         action_type: str,
-        payload: Dict[str, Any],
+        payload: dict[str, Any],
         agent_id: str,
         session_id: str,
-        chain_of_thought: Optional[str] = None,
-        previous_artifact_id: Optional[str] = None,
+        chain_of_thought: str | None = None,
+        previous_artifact_id: str | None = None,
     ) -> MAIFArtifact:
         """Create, sign, and store a new MAIF artifact."""
         if self._private_key is None:
@@ -88,6 +88,6 @@ class MAIFManager:
 
         return verify_artifact(artifact, self._public_key)
 
-    def get_session_history(self, session_id: str) -> List[MAIFArtifact]:
+    def get_session_history(self, session_id: str) -> list[MAIFArtifact]:
         """Get all artifacts for a session."""
         return self.store.list_by_session(session_id)

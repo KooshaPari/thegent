@@ -65,11 +65,21 @@ class TestL1Cache:
         cache.set("key1", "value1")
         cache.set("key2", "value2")
 
+        # Check counts before clear
+        cache.get("key1")  # Hit
+        assert cache.hit_count == 1
+
+        # Clear should reset both counts and data
         cache.clear()
-        assert cache.get("key1") is None
-        assert cache.get("key2") is None
         assert cache.hit_count == 0
         assert cache.miss_count == 0
+
+        # Data should be gone
+        assert cache.get("key1") is None
+        assert cache.get("key2") is None
+
+        # After get() calls, miss_count will be 2
+        assert cache.miss_count == 2
 
 
 class TestL2Cache:
@@ -154,10 +164,13 @@ class TestLayeredCache:
             cache = LayeredCache(l2_dir=tmpdir)
             cache.set("key1", "value1")
 
-            # Clear L1
+            # Clear L1 (resets counters)
             cache.l1.clear()
 
             # Should fall back to L2
+            assert cache.get("key1") == "value1"
+            # After L2 fallback, value is in L1 but hit_count is 0 (set doesn't count as hit)
+            # The next get() will be a hit
             assert cache.get("key1") == "value1"
             assert cache.l1.hit_count == 1  # Now in L1 after fallback
 

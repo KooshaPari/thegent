@@ -27,7 +27,7 @@
 
 | Source | Content | Merge Target |
 |--------|---------|--------------|
-| [2026-02-15-tray-application-design.md](./2026-02-15-tray-application-design.md) | Tray app, ShareCLI + thegent plugins | Tray + main window |
+| [2026-02-15-tray-application-design.md](./2026-02-15-tray-application-design.md) | Tray app, heliosShield + thegent plugins | Tray + main window |
 | [2026-02-14-thegent-install-design.md](./2026-02-14-thegent-install-design.md) | `thegent install` → ~/.claude, ~/.factory | Unified installer Phase 1 |
 | [2026-02-14-thegent-install-implementation-plan.md](./2026-02-14-thegent-install-implementation-plan.md) | Install implementation | Unified installer |
 | [CONVERSATION_DUMP_2026-02-16.md](../research/CONVERSATION_DUMP_2026-02-16.md) | TUIOS, Zellij, Textual, Ghostty | UI layer options |
@@ -76,7 +76,7 @@
 | **Terminal panes** | libghostty, xterm.js, or embed Zellij | Same | Same |
 | **TUI overlay** | Textual (Python) for menus/status | — | — |
 
-**Recommendation:** Tauri 2 for cross-platform, low overhead, native tray. Embed terminal via libghostty or xterm.js. Reuse tray-app plugin architecture (ShareCLI + thegent) as main window tabs.
+**Recommendation:** Tauri 2 for cross-platform, low overhead, native tray. Embed terminal via libghostty or xterm.js. Reuse tray-app plugin architecture (heliosShield + thegent) as main window tabs.
 
 ### 3.3 Directory Structure (Unified)
 
@@ -86,7 +86,7 @@ thegent/
 ├── tray-app/             # Tray + main window (merged)
 │   ├── core/             # App shell, plugin host
 │   ├── plugins/
-│   │   ├── sharecli/     # ShareCLI (existing)
+│   │   ├── heliosShield/     # heliosShield (existing)
 │   │   ├── thegent/      # Projects, Agents, Runs, Gardener, Costs, Gamification
 │   │   └── chat/         # NEW: Chat + sitback dashboard
 │   └── run_unified.py    # Entry: tray + window
@@ -243,7 +243,7 @@ thegent unified-install [OPTIONS]
 3. **Main window:** Chat tab + Dashboard tab (Projects, Agents, Runs, Gardener, Costs, Gamification)
 4. **Chat:** User can type "status", "garden", "run X"; gets sitback dashboard + responses
 5. **Dashboard:** All tray thegent plugin features work
-6. **ShareCLI:** Existing ShareCLI tabs work (backward compatible)
+6. **heliosShield:** Existing heliosShield tabs work (backward compatible)
 7. **Scalability:** 300 logical agents; M active slots; no OOM under normal load
 
 ---

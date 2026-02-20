@@ -31,7 +31,7 @@ This document provides an **expanded, deeper analysis** of the kush ecosystem, e
 | Project | Status | Key Strengths | Borrowable Features |
 |---------|--------|---------------|---------------------|
 | **thegent** | ✅ Active | Unified work stream, research integration | Work stream template, research linking |
-| **sharecli** | ✅ Active | P0-P4 priority system, governance gates | Priority system, governance patterns |
+| **heliosShield** | ✅ Active | P0-P4 priority system, governance gates | Priority system, governance patterns |
 | **plangent** | ✅ Complete | Adapter pattern, hierarchical agents | Multi-agent patterns, adapter design |
 | **kimaki** | ✅ Complete | Voice AI, multi-project context | Conversation rules, context management |
 | **smolgents** | ✅ Production | Cost optimization, model routing | Cost tracking, routing strategies |
@@ -174,7 +174,7 @@ This document provides an **expanded, deeper analysis** of the kush ecosystem, e
 
 | Project | Unit % | Integration % | E2E % | Coverage Target |
 |---------|--------|---------------|-------|-----------------|
-| **sharecli** | 70% | 20% | 10% | 80%+ |
+| **heliosShield** | 70% | 20% | 10% | 80%+ |
 | **smolgents** | 60-70% | 20-30% | 5-10% | 80%+ core |
 | **plangent** | 80% | 15% | 5% | 85%+ adapters |
 | **morph** | 80% | 15% | 5% | 90%+ domain |
@@ -233,12 +233,12 @@ Test Data Hierarchy:
 
 | Feature | Source | Target Projects | Priority |
 |---------|--------|-----------------|----------|
-| Test pyramid rebalance | sharecli | All projects | P1 |
+| Test pyramid rebalance | heliosShield | All projects | P1 |
 | Hexagonal testing strategy | morph | atoms-mcp-prod, usage | P1 |
 | Test data management | morph | All Python projects | P1 |
-| Characterization tests | sharecli | Brownfield projects | P2 |
-| Mutation testing | sharecli RS-012 | Critical systems | P2 |
-| Property testing | sharecli RC-005 | Smart contracts | P2 |
+| Characterization tests | heliosShield | Brownfield projects | P2 |
+| Mutation testing | heliosShield RS-012 | Critical systems | P2 |
+| Property testing | heliosShield RC-005 | Smart contracts | P2 |
 
 ---
 
@@ -546,7 +546,7 @@ Log Levels:
 
 ## Part 7: Research Areas Analysis
 
-### 7.1 LLM Quality Research (from sharecli)
+### 7.1 LLM Quality Research (from heliosShield)
 
 **Research Areas**:
 - LLM-as-Judge pattern
@@ -565,7 +565,7 @@ Log Levels:
 
 ---
 
-### 7.2 Chaos Engineering Research (from sharecli)
+### 7.2 Chaos Engineering Research (from heliosShield)
 
 **Research Areas**:
 - Resilience testing
@@ -587,16 +587,16 @@ Log Levels:
 
 | Research Area | Source | Target Projects | Priority |
 |---------------|--------|-----------------|----------|
-| LLM-as-Judge | sharecli | Code quality gates | P1 |
-| Local ML models | sharecli | Pre-commit hooks | P1 |
-| Chaos engineering | sharecli | Production services | P2 |
-| MLX optimization | sharecli | Apple Silicon projects | P2 |
+| LLM-as-Judge | heliosShield | Code quality gates | P1 |
+| Local ML models | heliosShield | Pre-commit hooks | P1 |
+| Chaos engineering | heliosShield | Production services | P2 |
+| MLX optimization | heliosShield | Apple Silicon projects | P2 |
 
 ---
 
 ## Part 8: Performance Optimization Patterns
 
-### 8.1 Caching Strategies (from smolgents, sharecli)
+### 8.1 Caching Strategies (from smolgents, heliosShield)
 
 **Patterns**:
 - LLM response caching (semantic similarity)
@@ -625,8 +625,8 @@ Log Levels:
 
 | Feature | Source | Target Projects | Priority |
 |---------|--------|-----------------|----------|
-| Hierarchical cache | sharecli | High-traffic services | P1 |
-| Stale-while-revalidate | sharecli | Cache systems | P1 |
+| Hierarchical cache | heliosShield | High-traffic services | P1 |
+| Stale-while-revalidate | heliosShield | Cache systems | P1 |
 | Parallel execution | smolgents | Agent systems | P1 |
 | Resource pooling | smolgents | All services | P1 |
 | Connection pooling | smolgents | Database services | P1 |
@@ -683,7 +683,7 @@ Log Levels:
 
 | Feature | Source | Target Projects | Impact | Effort |
 |---------|--------|-----------------|--------|--------|
-| P0-P4 Priority System | sharecli | All projects | High | 2-4h |
+| P0-P4 Priority System | heliosShield | All projects | High | 2-4h |
 | Test Pyramid (60-70-5-10) | smolgents | All projects | High | 1-2h |
 | Hexagonal Testing | morph | Hexagonal projects | High | 1 week |
 | Phased Rollout | morph | Production deployments | High | 1 week |
@@ -700,8 +700,8 @@ Log Levels:
 
 | Feature | Source | Target Projects | Impact | Effort |
 |---------|--------|-----------------|--------|--------|
-| LLM-as-Judge | sharecli | Code quality | Medium | 2-4h |
-| Chaos Engineering | sharecli | Production services | Medium | 1-2 weeks |
+| LLM-as-Judge | heliosShield | Code quality | Medium | 2-4h |
+| Chaos Engineering | heliosShield | Production services | Medium | 1-2 weeks |
 | Feature Flags | morph | Feature rollouts | Medium | 1 week |
 | Strangler Fig | morph | Legacy migrations | Medium | 2-4 weeks |
 | Threat Modeling | claude-squad | Production services | Medium | 1 week |

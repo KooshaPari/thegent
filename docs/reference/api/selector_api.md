@@ -15,16 +15,30 @@ Optimizes model selection across multiple objectives (WP-14001).
 #### ObjectiveSelector.__init__
 
 ```python
-__init__(self, weights)
+__init__(self: Any, weights: Any)
 ```
+
+---
+
+#### ObjectiveSelector.select
+
+```python
+select(self: Any, models: list[dict[(str, Any)]], profile: Any)
+```
+
+Select the best model from a list of model dictionaries.
+
+---
 
 #### ObjectiveSelector.select_best_model
 
+```python
+select_best_model(self: Any, candidate_ids: list[str])
+```
+
 Score and select the best model from the candidates.
 
-```python
-select_best_model(self, candidate_ids)
-```
+---
 
 ---
 
@@ -35,35 +49,55 @@ select_best_model(self, candidate_ids)
 #### ObjectiveWeights.validate
 
 ```python
-validate(self)
+validate(self: Any)
 ```
+
+---
 
 ---
 
 ## get_objective_profile
 
+```python
+get_objective_profile(profile_name: str)
+```
+
 Return a predefined objective profile.
 
+---
+
+## score_model
+
 ```python
-get_objective_profile(profile_name)
+score_model(m: Any)
 ```
+
+---
+
+## select
+
+```python
+select(self: Any, models: list[dict[(str, Any)]], profile: Any)
+```
+
+Select the best model from a list of model dictionaries.
 
 ---
 
 ## select_best_model
 
-Score and select the best model from the candidates.
-
 ```python
-select_best_model(self, candidate_ids)
+select_best_model(self: Any, candidate_ids: list[str])
 ```
+
+Score and select the best model from the candidates.
 
 ---
 
 ## validate
 
 ```python
-validate(self)
+validate(self: Any) -> None
 ```
 
 ---

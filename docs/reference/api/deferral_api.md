@@ -15,33 +15,42 @@ Manages deferral of non-critical tasks under high load.
 #### DeferralManager.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: ThegentSettings)
 ```
+
+---
 
 #### DeferralManager.defer_task
 
+```python
+defer_task(self: Any, task_id: str, reason: str)
+```
+
 Record a task as deferred.
 
-```python
-defer_task(self, task_id, reason)
-```
+---
 
 #### DeferralManager.list_deferred
 
+```python
+list_deferred(self: Any)
+```
+
 List all currently deferred tasks.
 
-```python
-list_deferred(self)
-```
+---
 
 #### DeferralManager.should_defer
 
+```python
+should_defer(self: Any, task_priority: str, load_level: float)
+```
+
 Determine if a task should be deferred.
+
 Priority: P0 (critical) to P3 (low).
 
-```python
-should_defer(self, task_priority, load_level)
-```
+---
 
 ---
 
@@ -54,39 +63,42 @@ Rule for deferring non-critical tasks.
 #### DeferralRule.__init__
 
 ```python
-__init__(self, id, condition, action)
+__init__(self: Any, id: str, condition: str, action: str)
 ```
+
+---
 
 ---
 
 ## defer_task
 
-Record a task as deferred.
-
 ```python
-defer_task(self, task_id, reason)
+defer_task(self: Any, task_id: str, reason: str)
 ```
+
+Record a task as deferred.
 
 ---
 
 ## list_deferred
 
-List all currently deferred tasks.
-
 ```python
-list_deferred(self)
+list_deferred(self: Any)
 ```
+
+List all currently deferred tasks.
 
 ---
 
 ## should_defer
 
-Determine if a task should be deferred.
-Priority: P0 (critical) to P3 (low).
-
 ```python
-should_defer(self, task_priority, load_level)
+should_defer(self: Any, task_priority: str, load_level: float)
 ```
+
+Determine if a task should be deferred.
+
+Priority: P0 (critical) to P3 (low).
 
 ---
 

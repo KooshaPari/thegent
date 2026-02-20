@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/security/geo_guard.py`
 
 WP-35003: Geo-Distributed Data Sovereignty Guard.
+
 Ensures that data is stored and processed according to regional sovereignty rules.
 
 ---
@@ -24,24 +25,30 @@ Enforces data sovereignty policies across distributed regions.
 #### GeoGuard.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### GeoGuard.add_rule
 
+```python
+add_rule(self: Any, rule: SovereigntyRule)
+```
+
 Add or update a sovereignty rule.
 
-```python
-add_rule(self, rule)
-```
+---
 
 #### GeoGuard.validate_location
 
+```python
+validate_location(self: Any, data_id: str, category: str, region: str)
+```
+
 Verify if data of a given category can reside in the specified region.
 
-```python
-validate_location(self, data_id, category, region)
-```
+---
 
 ---
 
@@ -55,21 +62,21 @@ Defines where specific data types can be stored/processed.
 
 ## add_rule
 
-Add or update a sovereignty rule.
-
 ```python
-add_rule(self, rule)
+add_rule(self: Any, rule: SovereigntyRule)
 ```
+
+Add or update a sovereignty rule.
 
 ---
 
 ## validate_location
 
-Verify if data of a given category can reside in the specified region.
-
 ```python
-validate_location(self, data_id, category, region)
+validate_location(self: Any, data_id: str, category: str, region: str)
 ```
+
+Verify if data of a given category can reside in the specified region.
 
 ---
 

@@ -42,7 +42,7 @@ Migrated THGENT_* environment variables to use `ThegentSettings`:
 5. ✅ `src/thegent/dex_main.py` (previously completed)
    - `THGENT_DEX_FORCE_YOLO` → `settings.dex_force_yolo`
 
-6. ✅ `src/thegent/governance/sharecli_bridge.py` (previously completed)
+6. ✅ `src/thegent/governance/heliosShield_bridge.py` (previously completed)
    - `THGENT_HARNESS_ROOT` → `settings.harness_root`
 
 ### 4. Subprocess Optimizations

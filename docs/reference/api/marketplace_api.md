@@ -19,44 +19,50 @@ Verifies third-party plugin contracts for safe execution (WP-15003).
 #### PluginVerifier.__init__
 
 ```python
-__init__(self, public_key_dir)
+__init__(self: Any, public_key_dir: Any)
 ```
+
+---
 
 #### PluginVerifier.check_permissions
 
+```python
+check_permissions(self: Any, contract: PluginContract, requested_action: str)
+```
+
 Check if the plugin contract allows the requested action.
 
-```python
-check_permissions(self, contract, requested_action)
-```
+---
 
 #### PluginVerifier.verify_contract
 
+```python
+verify_contract(self: Any, contract: PluginContract)
+```
+
 Verify the signature of a plugin contract.
 
-```python
-verify_contract(self, contract)
-```
+---
 
 ---
 
 ## check_permissions
 
-Check if the plugin contract allows the requested action.
-
 ```python
-check_permissions(self, contract, requested_action)
+check_permissions(self: Any, contract: PluginContract, requested_action: str)
 ```
+
+Check if the plugin contract allows the requested action.
 
 ---
 
 ## verify_contract
 
-Verify the signature of a plugin contract.
-
 ```python
-verify_contract(self, contract)
+verify_contract(self: Any, contract: PluginContract)
 ```
+
+Verify the signature of a plugin contract.
 
 ---
 

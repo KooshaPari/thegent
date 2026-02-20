@@ -6,7 +6,7 @@ This page tests the cross-project link plugin functionality.
 
 - [thegent Architecture](~thegent:/ARCHITECTURE_LAYERS.md)
 - [jobhunter PRD](~jobhunter:/docs/specs/PRD.md)
-- [sharecli Guide](~sharecli:/README.md)
+- [heliosShield Guide](~heliosShield:/README.md)
 - [trace Overview](~trace:/docs/index.md)
 
 

@@ -15,16 +15,20 @@ WP-11002: Bridges context (files, state) across projects.
 #### ContextBridger.__init__
 
 ```python
-__init__(self, registry)
+__init__(self: Any, registry: ProjectRegistry)
 ```
+
+---
 
 #### ContextBridger.get_peer_context
 
+```python
+get_peer_context(self: Any, project_name: str, file_pattern: str)
+```
+
 Find files in a peer project matching a pattern.
 
-```python
-get_peer_context(self, project_name, file_pattern)
-```
+---
 
 ---
 
@@ -37,72 +41,80 @@ Manages a registry of local projects using thegent.
 #### ProjectRegistry.__init__
 
 ```python
-__init__(self, global_config_dir)
+__init__(self: Any, global_config_dir: Path)
 ```
+
+---
 
 #### ProjectRegistry.list_projects
 
+```python
+list_projects(self: Any)
+```
+
 List all registered projects.
 
-```python
-list_projects(self)
-```
+---
 
 #### ProjectRegistry.register_project
 
+```python
+register_project(self: Any, path: Path, name: str)
+```
+
 Register a project path.
 
-```python
-register_project(self, path, name)
-```
+---
 
 #### ProjectRegistry.update_activity
 
+```python
+update_activity(self: Any, path: Path)
+```
+
 Update last active timestamp for a project.
 
-```python
-update_activity(self, path)
-```
+---
 
 ---
 
 ## get_peer_context
 
-Find files in a peer project matching a pattern.
-
 ```python
-get_peer_context(self, project_name, file_pattern)
+get_peer_context(self: Any, project_name: str, file_pattern: str)
 ```
+
+Find files in a peer project matching a pattern.
 
 ---
 
 ## list_projects
 
-List all registered projects.
-
 ```python
-list_projects(self)
+list_projects(self: Any)
 ```
+
+List all registered projects.
 
 ---
 
 ## register_project
 
-Register a project path.
-
 ```python
-register_project(self, path, name)
+register_project(self: Any, path: Path, name: str)
 ```
+
+Register a project path.
 
 ---
 
 ## update_activity
 
-Update last active timestamp for a project.
-
 ```python
-update_activity(self, path)
+update_activity(self: Any, path: Path)
 ```
+
+Update last active timestamp for a project.
 
 ---
 

@@ -10,7 +10,7 @@
 
 ### Files Migrated
 1. ✅ `src/thegent/dex_main.py` - Uses `settings.dex_force_yolo`
-2. ✅ `src/thegent/governance/sharecli_bridge.py` - Uses `settings.harness_root`
+2. ✅ `src/thegent/governance/heliosShield_bridge.py` - Uses `settings.harness_root`
 3. ✅ `src/thegent/cli_impl.py` - Uses `settings.sandbox_env_filter`
 4. ✅ `src/thegent/cli.py` - Removed `os.environ.get("THGENT_OUTPUT_FORMAT")` (6 instances) - now uses `settings.output_format`
 5. ✅ `src/thegent/main.py` - Uses `settings.reload` instead of `os.environ.get("THGENT_RELOAD")`

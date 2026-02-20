@@ -8,61 +8,61 @@ MCP configuration and service management for thegent.
 
 ## install_to_claude_code
 
-Add thegent to Claude Code config (~/.claude.json).
-
 ```python
-install_to_claude_code(url)
+install_to_claude_code(url: str)
 ```
+
+Add thegent to Claude Code config (~/.claude.json).
 
 ---
 
 ## install_to_claude_desktop
 
-Add thegent to Claude Desktop config (macOS).
-
 ```python
-install_to_claude_desktop(url)
+install_to_claude_desktop(url: str)
 ```
+
+Add thegent to Claude Desktop config (macOS).
 
 ---
 
 ## install_to_client
 
-Install thegent to given MCP client. Returns (success, message).
-
 ```python
-install_to_client(client, url, workspace)
+install_to_client(client: str, url: str, workspace: Any)
 ```
+
+Install thegent to given MCP client. Returns (success, message).
 
 ---
 
 ## install_to_codex
 
-Add thegent to Codex MCP config.
-
 ```python
-install_to_codex(url)
+install_to_codex(url: str)
 ```
+
+Add thegent to Codex MCP config.
 
 ---
 
 ## install_to_cursor
 
-Add thegent to Cursor MCP config. Prefers workspace .cursor/mcp.json if present.
-
 ```python
-install_to_cursor(url, workspace)
+install_to_cursor(url: str, workspace: Any)
 ```
+
+Add thegent to Cursor MCP config. Prefers workspace .cursor/mcp.json if present.
 
 ---
 
 ## install_to_droid
 
-Add thegent to .factory/mcp.json (project-level, for droids/scripts).
-
 ```python
-install_to_droid(url, workspace)
+install_to_droid(url: str, workspace: Any)
 ```
+
+Add thegent to .factory/mcp.json (project-level, for droids/scripts).
 
 ---
 
@@ -72,9 +72,32 @@ Stop MCP + proxy via process-compose. Returns (success, message).
 
 ---
 
+## mcp_restart
+
+Restart MCP + proxy via process-compose. Returns (success, message).
+
+---
+
 ## mcp_up
 
+```python
+mcp_up(reload: bool)
+```
+
 Start MCP + proxy via process-compose. Returns (success, message).
+
+---
+
+## serve_delegate_or_run
+
+```python
+serve_delegate_or_run(settings: Any)
+```
+
+Check if MCP server should be delegated to a service (launchd/Homebrew) or run directly.
+
+**Returns**: (run_foreground, message) - If run_foreground=True, run in foreground;
+otherwise, message indicates delegation success.
 
 ---
 
@@ -92,11 +115,11 @@ Start thegent MCP service.
 
 ## service_status
 
-Check if thegent MCP service is running (launchd loaded + HTTP reachable).
-
 ```python
-service_status(settings)
+service_status(settings: Any)
 ```
+
+Check if thegent MCP service is running (launchd loaded + HTTP reachable).
 
 ---
 

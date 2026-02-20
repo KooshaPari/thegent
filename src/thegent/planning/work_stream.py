@@ -44,6 +44,9 @@ class WorkStreamManager:
             )
             results["actions"].append({"file": "WBS_AGENT_PROGRESS.md", "action": "claim", "success": success})
 
+        results["success"] = any(a["success"] for a in results["actions"]) if results["actions"] else True
+        if not results["success"]:
+            results["error"] = "Failed to update any coordination files."
         return results
 
     def complete(self, item_id: str, agent_id: str) -> dict[str, Any]:
@@ -76,16 +79,20 @@ class WorkStreamManager:
             success = self._update_wbs_status(item_id, "DONE")
             results["actions"].append({"file": "02-UNIFIED-WBS.md", "action": "status_update", "success": success})
 
+        results["success"] = any(a["success"] for a in results["actions"]) if results["actions"] else True
+        if not results["success"]:
+            results["error"] = "Failed to update any coordination files."
         return results
 
-    def _update_section(
-        self, path: Path, section_header: str, row_text: str, placeholder: str | None = None
-    ) -> bool:
-        """Add a row to a section in a markdown file."""
-        if not path.exists():
+    def _update_section(self, path: Path, section_header: str, row_text: str, placeholder: str | None = None) -> bool:
+        """Add a row to a section in a markdown file with OCC."""
+        from thegent.utils.helpers import safe_read_file_with_version, safe_write_file
+
+        content, version = safe_read_file_with_version(path)
+        if content is None:
             return False
 
-        lines = path.read_text(encoding="utf-8").splitlines()
+        lines = content.splitlines()
         new_lines = []
         in_section = False
         found = False
@@ -116,19 +123,20 @@ class WorkStreamManager:
             found = True
 
         if not found and not in_section:
-            # Maybe the section doesn't exist or we missed it
-            # For robustness, we don't just append to end of file unless we are sure
             return False
 
-        path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
-        return True
+        new_content = "\n".join(new_lines) + "\n"
+        return safe_write_file(path, new_content, expected_version=version)
 
     def _remove_from_section(self, path: Path, section_header: str, item_id: str) -> bool:
-        """Remove a row containing item_id from a section."""
-        if not path.exists():
+        """Remove a row containing item_id from a section with OCC."""
+        from thegent.utils.helpers import safe_read_file_with_version, safe_write_file
+
+        content, version = safe_read_file_with_version(path)
+        if content is None:
             return False
 
-        lines = path.read_text(encoding="utf-8").splitlines()
+        lines = content.splitlines()
         new_lines = []
         in_section = False
         removed = False
@@ -150,33 +158,31 @@ class WorkStreamManager:
 
             new_lines.append(line)
 
-        path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+        new_content = "\n".join(new_lines) + "\n"
+        safe_write_file(path, new_content, expected_version=version)
         return removed
 
     def _update_wbs_status(self, item_id: str, new_status: str) -> bool:
-        """Update status of a WP in 02-UNIFIED-WBS.md."""
-        if not self.wbs_path.exists():
+        """Update status of a WP in 02-UNIFIED-WBS.md with OCC."""
+        from thegent.utils.helpers import safe_read_file_with_version, safe_write_file
+
+        content, version = safe_read_file_with_version(self.wbs_path)
+        if content is None:
             return False
 
-        text = self.wbs_path.read_text(encoding="utf-8")
-        lines = text.splitlines()
+        lines = content.splitlines()
         new_lines = []
         updated = False
 
         for line in lines:
-            # Union[Match, WP]-Union[XXXX, Title] | STATUS | ...
-            # Using regex to find the status column (usually 3rd column, index 2)
             if f"| {item_id} |" in line:
                 parts = line.split("|")
                 if len(parts) >= 4:
-                    # parts[0] is empty (before first |)
-                    # parts[1] is item_id
-                    # parts[2] is title
-                    # parts[3] is status
                     parts[3] = f" {new_status} "
                     line = "|".join(parts)
                     updated = True
             new_lines.append(line)
 
-        self.wbs_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+        new_content = "\n".join(new_lines) + "\n"
+        safe_write_file(self.wbs_path, new_content, expected_version=version)
         return updated

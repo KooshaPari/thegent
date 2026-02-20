@@ -1,44 +1,46 @@
 # harness API Reference
 
-> **Source**: `src/thegent/planning/harness.py`
+> **Source**: `src/thegent/crew/harness.py`
 
-WP-14005: Policy-safe exploration harness for candidate policy variants.
-
----
-
-## ExplorationResult
+Integration with thegent codex/cc/droid harness.
 
 ---
 
-## PolicyExplorationHarness
-
-Harness for controlled simulation of candidate policy variants (WP-14005).
-
-### Methods
-
-#### PolicyExplorationHarness.__init__
+## agent_executor
 
 ```python
-__init__(self, simulation_engine)
+agent_executor(agent_id: str, prompt: str, context: dict[(str, Any)])
 ```
 
-#### PolicyExplorationHarness.explore_variant
+Execute agent via thegent harness.
 
-Run simulation across a set of historical runs for a policy variant.
+**Parameters**:
 
-```python
-explore_variant(self, variant_id, base_run_ids)
-```
+- `agent_id`: Agent identifier (e.g., "codex", "cursor-agent", "claude", "copilot", "gemini", "droid")
+- `prompt`: Task prompt
+- `context`: Execution context
+
+**Returns**: ExecutionResult
 
 ---
 
-## explore_variant
-
-Run simulation across a set of historical runs for a policy variant.
+## create_agent_executor
 
 ```python
-explore_variant(self, variant_id, base_run_ids)
+create_agent_executor(cwd: Any, mode: str, timeout: int, model: Any, agent_map: Any)
 ```
+
+Create agent_executor callback that uses thegent's codex/cc/droid harness.
+
+**Parameters**:
+
+- `cwd`: Working directory for agent execution
+- `mode`: Execution mode (read-only, write, full)
+- `timeout`: Timeout in seconds
+- `model`: Optional model override
+- `agent_map`: Optional map of agent_id -> agent_name/role
+
+**Returns**: Callable (agent_id, prompt, context) -> ExecutionResult
 
 ---
 

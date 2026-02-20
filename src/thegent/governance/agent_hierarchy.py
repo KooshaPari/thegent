@@ -42,6 +42,7 @@ class CoordinationMode(Enum):
     HIERARCHICAL = "hierarchical"
     COLLABORATIVE = "collaborative"
     SWARM = "swarm"
+    ADAPTIVE = "adaptive"
 
 
 @dataclass

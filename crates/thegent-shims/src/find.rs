@@ -38,6 +38,13 @@ impl FindShim {
                         fd_args.push(args[i].clone());
                     }
                 }
+                "-maxdepth" => {
+                    if i + 1 < args.len() {
+                        i += 1;
+                        fd_args.push("--max-depth".to_string());
+                        fd_args.push(args[i].clone());
+                    }
+                }
                 "-type" => {
                     if i + 1 < args.len() {
                         i += 1;

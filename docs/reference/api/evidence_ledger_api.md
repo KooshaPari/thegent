@@ -29,104 +29,116 @@ to the previous record's hash, forming a tamper-evident chain.
 #### EvidenceLedger.__init__
 
 ```python
-__init__(self, session_dir)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
 
 #### EvidenceLedger.ledger_path
 
 ```python
-ledger_path(self)
+ledger_path(self: Any)
 ```
+
+---
 
 #### EvidenceLedger.link_to_graph
 
+```python
+link_to_graph(self: Any, graph: EvidenceGraph, event_hash: str, artifact_id: str)
+```
+
 Link an evidence event to an artifact in the EvidenceGraph.
 
-```python
-link_to_graph(self, graph, event_hash, artifact_id)
-```
+---
 
 #### EvidenceLedger.query
 
-Query evidence events, optionally filtering by cycle_id and/or event_type.
-
 ```python
-query(self, cycle_id, event_type)
+query(self: Any, cycle_id: Any, event_type: Any)
 ```
 
+Query evidence events, optionally filtering by cycle_id and/or event_type.
+
+---
+
 #### EvidenceLedger.record
+
+```python
+record(self: Any, event_type: str, cycle_id: str, payload: dict[(str, Any)])
+```
 
 Record an evidence event with hash chaining.
 
 Returns the hash of the newly recorded event.
 
-```python
-record(self, event_type, cycle_id, payload)
-```
+---
 
 #### EvidenceLedger.verify_chain
+
+```python
+verify_chain(self: Any)
+```
 
 Verify the integrity of the hash chain.
 
 Returns True if every record's hash is correct and prev_hash links
 form an unbroken chain. Returns False on any inconsistency.
 
-```python
-verify_chain(self)
-```
+---
 
 ---
 
 ## ledger_path
 
 ```python
-ledger_path(self)
+ledger_path(self: Any) -> Path
 ```
 
 ---
 
 ## link_to_graph
 
-Link an evidence event to an artifact in the EvidenceGraph.
-
 ```python
-link_to_graph(self, graph, event_hash, artifact_id)
+link_to_graph(self: Any, graph: EvidenceGraph, event_hash: str, artifact_id: str)
 ```
+
+Link an evidence event to an artifact in the EvidenceGraph.
 
 ---
 
 ## query
 
-Query evidence events, optionally filtering by cycle_id and/or event_type.
-
 ```python
-query(self, cycle_id, event_type)
+query(self: Any, cycle_id: Any, event_type: Any)
 ```
+
+Query evidence events, optionally filtering by cycle_id and/or event_type.
 
 ---
 
 ## record
 
+```python
+record(self: Any, event_type: str, cycle_id: str, payload: dict[(str, Any)])
+```
+
 Record an evidence event with hash chaining.
 
 Returns the hash of the newly recorded event.
-
-```python
-record(self, event_type, cycle_id, payload)
-```
 
 ---
 
 ## verify_chain
 
+```python
+verify_chain(self: Any)
+```
+
 Verify the integrity of the hash chain.
 
 Returns True if every record's hash is correct and prev_hash links
 form an unbroken chain. Returns False on any inconsistency.
-
-```python
-verify_chain(self)
-```
 
 ---
 

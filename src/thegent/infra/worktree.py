@@ -2,24 +2,25 @@
 Includes worktree creation, branch coordination, and cleanup.
 """
 
-import subprocess
 import logging
-from pathlib import Path
-from typing import List, Optional, Dict
-import time
 import shutil
+import subprocess
+import time
+from pathlib import Path
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class WorktreeManager:
     """Manages git worktrees for isolated agent environments."""
 
-    def __init__(self, project_root: Path, mesh_dir: Path):
+    def __init__(self, project_root: Path, mesh_dir: Path) -> None:
         self.project_root = project_root
         self.mesh_worktrees_dir = mesh_dir / "worktrees"
         self.mesh_worktrees_dir.mkdir(parents=True, exist_ok=True)
 
-    def create_worktree(self, agent_id: str, branch_name: Optional[str] = None) -> Optional[Path]:
+    def create_worktree(self, agent_id: str, branch_name: str | None = None) -> Path | None:
         """Create a new worktree for an agent."""
         wt_path = self.mesh_worktrees_dir / f"agent-{agent_id}"
         if not branch_name:
@@ -27,18 +28,16 @@ class WorktreeManager:
 
         try:
             # Check if branch exists, if not create from HEAD
-            subprocess.run(["git", "rev-parse", "--verify", branch_name], 
-                           cwd=self.project_root, capture_output=True)
-            
+            subprocess.run(["git", "rev-parse", "--verify", branch_name], cwd=self.project_root, capture_output=True)
+
             cmd = ["git", "worktree", "add", str(wt_path), branch_name]
             result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
-            
+
             if result.returncode == 0:
                 logger.info(f"Created worktree for agent {agent_id} at {wt_path}")
                 return wt_path
-            else:
-                logger.error(f"Failed to create worktree: {result.stderr}")
-                return None
+            logger.error(f"Failed to create worktree: {result.stderr}")
+            return None
         except Exception as e:
             logger.error(f"Worktree creation error: {e}")
             return None
@@ -48,35 +47,39 @@ class WorktreeManager:
         wt_path = self.mesh_worktrees_dir / f"agent-{agent_id}"
         if wt_path.exists():
             try:
-                subprocess.run(["git", "worktree", "remove", "--force", str(wt_path)], 
-                               cwd=self.project_root, check=True)
-                subprocess.run(["git", "worktree", "prune"], 
-                               cwd=self.project_root, check=True)
+                subprocess.run(
+                    ["git", "worktree", "remove", "--force", str(wt_path)], cwd=self.project_root, check=True
+                )
+                subprocess.run(["git", "worktree", "prune"], cwd=self.project_root, check=True)
                 logger.info(f"Cleaned up worktree for agent {agent_id}")
             except subprocess.CalledProcessError as e:
                 logger.error(f"Failed to cleanup worktree: {e}")
 
-    def list_active_worktrees(self) -> List[Dict[str, str]]:
+    def list_active_worktrees(self) -> list[dict[str, str]]:
         """List current git worktrees."""
         try:
-            result = subprocess.run(["git", "worktree", "list", "--porcelain"], 
-                                   cwd=self.project_root, capture_output=True, text=True)
+            result = subprocess.run(
+                ["git", "worktree", "list", "--porcelain"], cwd=self.project_root, capture_output=True, text=True
+            )
             worktrees = []
             current = {}
             for line in result.stdout.splitlines():
                 if line.startswith("worktree "):
-                    if current: worktrees.append(current)
+                    if current:
+                        worktrees.append(current)
                     current = {"path": line[9:]}
                 elif line.startswith("branch "):
                     current["branch"] = line[7:]
-            if current: worktrees.append(current)
+            if current:
+                worktrees.append(current)
             return worktrees
         except Exception:
             return []
 
+
 class BranchCoordinator:
     """Coordinates branch naming and collision avoidance."""
-    
+
     @staticmethod
     def get_safe_branch_name(base: str) -> str:
         timestamp = int(time.time())

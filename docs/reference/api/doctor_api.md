@@ -13,18 +13,20 @@ Doctor module for comprehensive health and preflight checks of thegent environme
 #### CheckResult.__init__
 
 ```python
-__init__(self, name, category)
+__init__(self: Any, name: str, category: str)
 ```
+
+---
 
 ---
 
 ## run_doctor
 
-Run all health checks and report results.
-
 ```python
-run_doctor(fix)
+run_doctor(fix: bool)
 ```
+
+Run all health checks and report results.
 
 ---
 

@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/discovery/edge_sync.py`
 
 WP-40003: Edge-Agent Low-Power Synchronization.
+
 Enables agents running on constrained edge devices (IoT, Mobile) to synchronize state
 using delta-compression and adaptive polling to conserve energy.
 
@@ -17,62 +18,70 @@ Manages low-power synchronization between edge agents and the mesh.
 #### EdgeSyncController.__init__
 
 ```python
-__init__(self, device_id)
+__init__(self: Any, device_id: str)
 ```
+
+---
 
 #### EdgeSyncController.apply_remote_delta
 
+```python
+apply_remote_delta(self: Any, compressed_delta: bytes)
+```
+
 Apply a received delta to the local base state.
 
-```python
-apply_remote_delta(self, compressed_delta)
-```
+---
 
 #### EdgeSyncController.compute_delta
 
+```python
+compute_delta(self: Any, current_state: dict[(str, Any)])
+```
+
 WP-40003: Generate a compressed delta between base and current state.
 
-```python
-compute_delta(self, current_state)
-```
+---
 
 #### EdgeSyncController.get_adaptive_polling_interval
 
+```python
+get_adaptive_polling_interval(self: Any, battery_level: float)
+```
+
 Adjust sync frequency based on battery (0.0 - 1.0).
 
-```python
-get_adaptive_polling_interval(self, battery_level)
-```
+---
 
 ---
 
 ## apply_remote_delta
 
-Apply a received delta to the local base state.
-
 ```python
-apply_remote_delta(self, compressed_delta)
+apply_remote_delta(self: Any, compressed_delta: bytes)
 ```
+
+Apply a received delta to the local base state.
 
 ---
 
 ## compute_delta
 
-WP-40003: Generate a compressed delta between base and current state.
-
 ```python
-compute_delta(self, current_state)
+compute_delta(self: Any, current_state: dict[(str, Any)])
 ```
+
+WP-40003: Generate a compressed delta between base and current state.
 
 ---
 
 ## get_adaptive_polling_interval
 
-Adjust sync frequency based on battery (0.0 - 1.0).
-
 ```python
-get_adaptive_polling_interval(self, battery_level)
+get_adaptive_polling_interval(self: Any, battery_level: float)
 ```
+
+Adjust sync frequency based on battery (0.0 - 1.0).
 
 ---
 

@@ -1,6 +1,6 @@
 # Cross-Project Agent Instructions
 
-This document defines the universal agent rules that apply across all projects in the portfolio (trace, sharecli, thegent, jobhunter). Each project's `CLAUDE.md` contains project-specific overrides; this document provides the rationale and enforcement details behind every shared rule.
+This document defines the universal agent rules that apply across all projects in the portfolio (trace, heliosShield, thegent, jobhunter). Each project's `CLAUDE.md` contains project-specific overrides; this document provides the rationale and enforcement details behind every shared rule.
 
 ---
 
@@ -180,7 +180,7 @@ All projects share these patterns:
 | Project | Stack | Build | Package Manager | Extra Tools |
 |---------|-------|-------|-----------------|-------------|
 | trace | Bash + Python | Taskfile | uv | shellcheck, shfmt |
-| sharecli | Multi-language | Taskfile | uv + bun | shellcheck |
+| heliosShield | Multi-language | Taskfile | uv + bun | shellcheck |
 | thegent | Python (MCP) | Taskfile | uv | tach, FastMCP |
 | jobhunter | Python + TypeScript | Taskfile | uv + bun | process-compose |
 
@@ -189,7 +189,7 @@ All projects share these patterns:
 | Project | CLAUDE.md | Deep-Dive Guide |
 |---------|-----------|----------------|
 | trace | `trace/CLAUDE.md` | Bash scripting toolkit, orchestration patterns |
-| sharecli | `sharecli/CLAUDE.md` | `docs/guides/AGENT_INSTRUCTIONS_SHARECLI.md` |
+| heliosShield | `heliosShield/CLAUDE.md` | `docs/guides/AGENT_INSTRUCTIONS_heliosShield.md` |
 | thegent | `thegent/CLAUDE.md` | `docs/guides/AGENT_INSTRUCTIONS_THEGENT.md` |
 | jobhunter | `jobhunter/CLAUDE.md` | `docs/guides/AGENT_INSTRUCTIONS_JOBHUNTER.md` |
 

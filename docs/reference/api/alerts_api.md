@@ -15,24 +15,30 @@ Manages alert volume and prevents operator fatigue.
 #### AlertFatigueController.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: ThegentSettings)
 ```
+
+---
 
 #### AlertFatigueController.get_fatigue_level
 
+```python
+get_fatigue_level(self: Any)
+```
+
 Return fatigue level from 0.0 to 1.0.
 
-```python
-get_fatigue_level(self)
-```
+---
 
 #### AlertFatigueController.record_alert
 
+```python
+record_alert(self: Any, kind: InterruptionKind)
+```
+
 Record an alert and return True if it should be suppressed due to fatigue.
 
-```python
-record_alert(self, kind)
-```
+---
 
 ---
 
@@ -40,27 +46,27 @@ record_alert(self, kind)
 
 Kinds of system interruptions.
 
-**Inherits from**: `str`
+**Inherits from**: `enum.StrEnum`
 
 ---
 
 ## get_fatigue_level
 
-Return fatigue level from 0.0 to 1.0.
-
 ```python
-get_fatigue_level(self)
+get_fatigue_level(self: Any)
 ```
+
+Return fatigue level from 0.0 to 1.0.
 
 ---
 
 ## record_alert
 
-Record an alert and return True if it should be suppressed due to fatigue.
-
 ```python
-record_alert(self, kind)
+record_alert(self: Any, kind: InterruptionKind)
 ```
+
+Record an alert and return True if it should be suppressed due to fatigue.
 
 ---
 

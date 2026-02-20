@@ -101,16 +101,16 @@ def send_to_tmux_pane(pane_id: str, text: str, enter: bool = True) -> bool:
         return False
 
 
-def sharecli_status() -> str:
-    """Get status from sharecli."""
-    # Look for sharecli in parent dir or path
+def heliosShield_status() -> str:
+    """Get status from thegent.mesh."""
+    # Look for heliosShield in parent dir or path
     try:
         # Prefer direct execution if available
-        result = subprocess.run(["../sharecli/bin/harness", "status"], capture_output=True, text=True, check=True)
+        result = subprocess.run(["../heliosShield/bin/harness", "status"], capture_output=True, text=True, check=True)
         return result.stdout
     except Exception:
         try:
             result = subprocess.run(["harness", "status"], capture_output=True, text=True, check=True)
             return result.stdout
         except Exception:
-            return "sharecli harness not found"
+            return "heliosShield harness not found"

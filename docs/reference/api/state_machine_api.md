@@ -18,32 +18,40 @@ State machine for managing orchestration fallbacks.
 #### FallbackStateMachine.__init__
 
 ```python
-__init__(self, providers, run_id, policy, telemetry, max_retries_per_provider, retry_delay_base)
+__init__(self: Any, providers: list[str], run_id: Any, policy: Any, telemetry: Any, max_retries_per_provider: int, retry_delay_base: float)
 ```
+
+---
 
 #### FallbackStateMachine.run
 
+```python
+run(self: Any, runner_factory: Any, prompt: str, model: Any)
+```
+
 Execute the orchestration loop.
 
-```python
-run(self, runner_factory, prompt, model)
-```
+---
 
 #### FallbackStateMachine.suggest_fallbacks
 
+```python
+suggest_fallbacks(self: Any)
+```
+
 Suggest safe fallback options for the current failed/blocked state (WP-4003).
 
-```python
-suggest_fallbacks(self)
-```
+---
 
 #### FallbackStateMachine.validate_transition
 
+```python
+validate_transition(self: Any, from_state: str, to_state: str)
+```
+
 Validate if a state transition is allowed (WP-1004).
 
-```python
-validate_transition(self, from_state, to_state)
-```
+---
 
 ---
 
@@ -62,74 +70,80 @@ WP-1005: Evidence capture and validation before state promotion.
 #### PromotionGate.__init__
 
 ```python
-__init__(self, session_dir)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
 
 #### PromotionGate.capture_evidence
 
+```python
+capture_evidence(self: Any, run_id: str, csm: Any)
+```
+
 Capture and hash CSM state as evidence.
 
-```python
-capture_evidence(self, run_id, csm)
-```
+---
 
 #### PromotionGate.validate_promotion
 
+```python
+validate_promotion(self: Any, csm: Any, policy: Any)
+```
+
 Validate if CSM is ready for promotion based on policy.
 
-```python
-validate_promotion(self, csm, policy)
-```
+---
 
 ---
 
 ## capture_evidence
 
-Capture and hash CSM state as evidence.
-
 ```python
-capture_evidence(self, run_id, csm)
+capture_evidence(self: Any, run_id: str, csm: Any)
 ```
+
+Capture and hash CSM state as evidence.
 
 ---
 
 ## run
 
-Execute the orchestration loop.
-
 ```python
-run(self, runner_factory, prompt, model)
+run(self: Any, runner_factory: Any, prompt: str, model: Any)
 ```
+
+Execute the orchestration loop.
 
 ---
 
 ## suggest_fallbacks
 
-Suggest safe fallback options for the current failed/blocked state (WP-4003).
-
 ```python
-suggest_fallbacks(self)
+suggest_fallbacks(self: Any)
 ```
+
+Suggest safe fallback options for the current failed/blocked state (WP-4003).
 
 ---
 
 ## validate_promotion
 
-Validate if CSM is ready for promotion based on policy.
-
 ```python
-validate_promotion(self, csm, policy)
+validate_promotion(self: Any, csm: Any, policy: Any)
 ```
+
+Validate if CSM is ready for promotion based on policy.
 
 ---
 
 ## validate_transition
 
-Validate if a state transition is allowed (WP-1004).
-
 ```python
-validate_transition(self, from_state, to_state)
+validate_transition(self: Any, from_state: str, to_state: str)
 ```
+
+Validate if a state transition is allowed (WP-1004).
 
 ---
 

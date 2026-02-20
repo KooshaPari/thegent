@@ -112,7 +112,7 @@ Full implementation of agent hierarchy system with:
 - [x] Extends TeammateManager
 - [x] Backward compatible
 - [x] Optional hierarchy support
-- [x] ShareCLI integration preserved
+- [x] heliosShield integration preserved
 
 ---
 
@@ -211,7 +211,7 @@ thegent teams create test-team --name "Test" --lead <run-id>
 1. **Integration Testing**
    - [ ] Test with real agent runs
    - [ ] Test with TeammateManager integration
-   - [ ] Test ShareCLI coordination
+   - [ ] Test heliosShield coordination
    - [ ] End-to-end delegation flow
 
 2. **Performance Testing**
@@ -247,7 +247,7 @@ thegent teams create test-team --name "Test" --lead <run-id>
 ## Known Issues
 
 1. **Import Path**: Thegent package import issues (unrelated to this implementation)
-2. **ShareCLI Bridge**: Optional import, gracefully handles missing module
+2. **heliosShield Bridge**: Optional import, gracefully handles missing module
 3. **Storage Path**: Uses cache_dir, may need configuration option
 
 ---

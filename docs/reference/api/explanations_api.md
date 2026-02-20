@@ -15,16 +15,20 @@ Generates explanations for agent decisions at different levels of detail.
 #### ExplanationGenerator.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: ThegentSettings)
 ```
+
+---
 
 #### ExplanationGenerator.generate_explanation
 
+```python
+generate_explanation(self: Any, data: dict[(str, Any)], tier: ExplanationTier)
+```
+
 Generate an explanation based on data and requested tier.
 
-```python
-generate_explanation(self, data, tier)
-```
+---
 
 ---
 
@@ -32,17 +36,17 @@ generate_explanation(self, data, tier)
 
 Tier of explanation detail.
 
-**Inherits from**: `str`
+**Inherits from**: `enum.StrEnum`
 
 ---
 
 ## generate_explanation
 
-Generate an explanation based on data and requested tier.
-
 ```python
-generate_explanation(self, data, tier)
+generate_explanation(self: Any, data: dict[(str, Any)], tier: ExplanationTier)
 ```
+
+Generate an explanation based on data and requested tier.
 
 ---
 

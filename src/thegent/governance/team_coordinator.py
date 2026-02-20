@@ -1,13 +1,17 @@
 """Team coordination and cross-team collaboration."""
 
+import logging
 from typing import Any
 
 from .agent_hierarchy import (
     AgentHierarchyManager,
+    AgentNode,
     AgentRelationship,
     CoordinationMode,
     RelationshipType,
 )
+
+_log = logging.getLogger(__name__)
 
 
 class TeamCoordinator:
@@ -203,50 +207,10 @@ class TeamCoordinator:
         coordination_mode = team.coordination_mode
 
         if coordination_mode == CoordinationMode.HIERARCHICAL:
-            # Team lead assigns to members
-            lead = self.hierarchy.get_agent(team.lead_id)
-            if not lead or lead.status != "active":
-                return {"status": "error", "message": "Team lead not active"}
-
-            # Lead delegates to members
-            assignments = []
-            for member in active_members:
-                if member.run_id != team.lead_id:
-                    rel = self.delegate_within_team(
-                        from_agent_id=team.lead_id,
-                        to_agent_id=member.run_id,
-                        task=task,
-                        context=context,
-                    )
-                    assignments.append(rel.relationship_id)
-
-            return {
-                "status": "success",
-                "coordination_mode": "hierarchical",
-                "assignments": assignments,
-                "assigned_by": team.lead_id,
-            }
+            return self.coordinate_team_task_hierarchical(team_id, task, context, active_members)
 
         if coordination_mode == CoordinationMode.COLLABORATIVE:
-            # All members collaborate (peer-to-peer)
-            # Create relationships between all members
-            assignments = []
-            for i, member1 in enumerate(active_members):
-                for member2 in active_members[i + 1 :]:
-                    rel = self.delegate_within_team(
-                        from_agent_id=member1.run_id,
-                        to_agent_id=member2.run_id,
-                        task=task,
-                        context=context,
-                    )
-                    assignments.append(rel.relationship_id)
-
-            return {
-                "status": "success",
-                "coordination_mode": "collaborative",
-                "assignments": assignments,
-                "participants": [m.run_id for m in active_members],
-            }
+            return self.coordinate_team_task_collaborative(team_id, task, context, active_members)
 
         if coordination_mode == CoordinationMode.SWARM:
             # All members work independently
@@ -263,4 +227,110 @@ class TeamCoordinator:
                 "participants": [m.run_id for m in active_members],
             }
 
+        if coordination_mode == CoordinationMode.ADAPTIVE:
+            # Choose mode based on task complexity
+            complexity = self._evaluate_task_complexity(task, context)
+            if complexity >= 0.5:
+                # High complexity -> Hierarchical (more control)
+                target_mode = CoordinationMode.HIERARCHICAL
+            else:
+                # Low complexity -> Collaborative (faster, less overhead)
+                target_mode = CoordinationMode.COLLABORATIVE
+
+            _log.info(
+                "Adaptive coordination: task complexity %.2f -> %s",
+                complexity,
+                target_mode.value,
+            )
+
+            # Delegate to appropriate mode logic
+            # For simplicity, we just call the same logic as above but with the target_mode
+            if target_mode == CoordinationMode.HIERARCHICAL:
+                return self.coordinate_team_task_hierarchical(team_id, task, context, active_members)
+            return self.coordinate_team_task_collaborative(team_id, task, context, active_members)
+
         return {"status": "error", "message": f"Unknown coordination mode: {coordination_mode}"}
+
+    def _evaluate_task_complexity(self, task: str, context: dict[str, Any] | None = None) -> float:
+        """
+        Evaluate task complexity (0.0 to 1.0).
+
+        Args:
+            task: Task description
+            context: Optional context
+
+        Returns:
+            Complexity score
+        """
+        # Simple heuristics for now
+        # 1. Length of task description
+        desc_score = min(len(task) / 500, 1.0)
+
+        # 2. Number of requested artifacts (if in context)
+        artifact_count = len(context.get("required_artifacts", [])) if context else 0
+        artifact_score = min(artifact_count / 5, 1.0)
+
+        # 3. Explicit complexity in context
+        manual_score = context.get("complexity", 0.0) if context else 0.0
+
+        return max(desc_score * 0.2 + artifact_score * 0.3 + manual_score * 0.5, 0.0)
+
+    def coordinate_team_task_hierarchical(
+        self,
+        team_id: str,
+        task: str,
+        context: dict[str, Any] | None,
+        active_members: list[AgentNode],
+    ) -> dict[str, Any]:
+        """Hierarchical coordination implementation."""
+        team = self.hierarchy.get_team(team_id)
+        if not team:
+            return {"status": "error", "message": f"Team {team_id} not found"}
+
+        lead = self.hierarchy.get_agent(team.lead_id)
+        if not lead or lead.status != "active":
+            return {"status": "error", "message": "Team lead not active"}
+
+        assignments = []
+        for member in active_members:
+            if member.run_id != team.lead_id:
+                rel = self.delegate_within_team(
+                    from_agent_id=team.lead_id,
+                    to_agent_id=member.run_id,
+                    task=task,
+                    context=context,
+                )
+                assignments.append(rel.relationship_id)
+
+        return {
+            "status": "success",
+            "coordination_mode": "hierarchical",
+            "assignments": assignments,
+            "assigned_by": team.lead_id,
+        }
+
+    def coordinate_team_task_collaborative(
+        self,
+        team_id: str,
+        task: str,
+        context: dict[str, Any] | None,
+        active_members: list[AgentNode],
+    ) -> dict[str, Any]:
+        """Collaborative (P2P) coordination implementation."""
+        assignments = []
+        for i, member1 in enumerate(active_members):
+            for member2 in active_members[i + 1 :]:
+                rel = self.delegate_within_team(
+                    from_agent_id=member1.run_id,
+                    to_agent_id=member2.run_id,
+                    task=task,
+                    context=context,
+                )
+                assignments.append(rel.relationship_id)
+
+        return {
+            "status": "success",
+            "coordination_mode": "collaborative",
+            "assignments": assignments,
+            "participants": [m.run_id for m in active_members],
+        }

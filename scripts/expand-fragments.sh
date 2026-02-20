@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Expand fragmented research docs using thegent flash agents
 set -euo pipefail
 

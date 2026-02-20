@@ -10,18 +10,42 @@ import re
 import time
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastmcp.tools.tool import ToolResult
 
 if TYPE_CHECKING:
     from fastmcp import FastMCP
 
+import contextlib
+
 from thegent.cli_impl import _resolve_cwd
 from thegent.config import ThegentSettings
 from thegent.utils import is_dev_mode
 
 _log = logging.getLogger(__name__)
+
+
+async def _ctx_info(ctx: Any, message: str) -> None:
+    """Send an info log message via FastMCP Context if available, else Python logging."""
+    if ctx is not None:
+        try:
+            await ctx.info(message)
+            return
+        except Exception:
+            pass
+    _log.info(message)
+
+
+async def _ctx_warning(ctx: Any, message: str) -> None:
+    """Send a warning log message via FastMCP Context if available, else Python logging."""
+    if ctx is not None:
+        try:
+            await ctx.warning(message)
+            return
+        except Exception:
+            pass
+    _log.warning(message)
 
 
 def _get_project_root(cd: Path | None) -> Path | None:
@@ -56,6 +80,12 @@ def _slugify(text: str, max_len: int = 32) -> str:
 
 def register_modes(mcp: "FastMCP") -> None:
     """Register Plan, Delegate, Discussion, Research, Validation, and Protocol tools."""
+    # Import CurrentContext for FastMCP dependency injection
+    try:
+        from fastmcp.server.dependencies import CurrentContext
+        _current_context = CurrentContext()
+    except Exception:
+        _current_context = None  # type: ignore[assignment]
 
     # --- Plan tools ---
 
@@ -109,13 +139,15 @@ def register_modes(mcp: "FastMCP") -> None:
             plans = list(path.glob("*.md"))
             latest = max(plans, key=lambda p: p.stat().st_mtime) if plans else None
             path = latest or path
-        if not path.exists() or not path.is_file():
+        from thegent.utils.helpers import read_file_optimized
+
+        content = read_file_optimized(path)
+        if content is None:
             return ToolResult(
-                content=json.dumps({"error": "Plan not found", "path": str(path)}),
-                structured_content={"error": "Plan not found", "path": str(path)},
+                content=json.dumps({"error": "Failed to read plan", "path": str(path)}),
+                structured_content={"error": "Failed to read plan", "path": str(path)},
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
-        content = path.read_text(encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
             content=content,
@@ -294,13 +326,15 @@ def register_modes(mcp: "FastMCP") -> None:
         if not mode and not name:
             candidates = list(protocols_dir.glob("*.md")) + list(protocols_dir.glob("*.yaml"))
         path = candidates[0] if candidates else None
-        if not path or not path.exists():
+        from thegent.utils.helpers import read_file_optimized
+
+        content = read_file_optimized(path)
+        if content is None:
             return ToolResult(
-                content=json.dumps({"error": "Protocol not found", "mode": mode, "name": name}),
-                structured_content={"error": "Protocol not found", "mode": mode, "name": name},
+                content=json.dumps({"error": "Protocol not found or empty", "mode": mode, "name": name}),
+                structured_content={"error": "Protocol not found or empty", "mode": mode, "name": name},
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
-        content = path.read_text(encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
             content=content,
@@ -394,7 +428,9 @@ def register_modes(mcp: "FastMCP") -> None:
         validation_dir = root / "docs" / "validation"
         reports = list(validation_dir.glob("*.md")) if validation_dir.exists() else []
         latest = max(reports, key=lambda p: p.stat().st_mtime) if reports else None
-        content = latest.read_text(encoding="utf-8") if latest else None
+        from thegent.utils.helpers import safe_read_file
+
+        content = safe_read_file(latest) if latest else None
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
             content=json.dumps({"path": str(latest) if latest else None, "content": content}),
@@ -428,18 +464,24 @@ def register_modes(mcp: "FastMCP") -> None:
         )
 
     @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
-    def thegent_dag_run(
+    async def thegent_dag_run(
         cd: str | None = None,
         dry_run: bool = False,
         task: str | None = None,
         max_parallel: int | None = None,
         lane: str | None = None,
+        ctx: Any = _current_context,
     ) -> ToolResult:
         """
         Spawn agents for ready DAG tasks. Use thegent_dag_ready first to see ready tasks.
         dry_run: list what would run without spawning. task: run only this task id.
         max_parallel: cap concurrent running tasks.
         """
+        await _ctx_info(
+            ctx,
+            f"thegent_dag_run dry_run={dry_run} task={task} max_parallel={max_parallel} lane={lane}",
+        )
+        await ctx.report_progress(progress=0, total=2) if ctx is not None else None
         start = time.perf_counter()
         from thegent.cli_impl import dag_run_impl
 
@@ -451,6 +493,11 @@ def register_modes(mcp: "FastMCP") -> None:
             lane=lane,
         )
         elapsed = int((time.perf_counter() - start) * 1000)
+        spawned = len(res.get("spawned", [])) if isinstance(res, dict) else 0
+        await _ctx_info(ctx, f"thegent_dag_run spawned={spawned} elapsed={elapsed}ms")
+        if ctx is not None:
+            with contextlib.suppress(Exception):
+                await ctx.report_progress(progress=2, total=2)
         return ToolResult(
             content=json.dumps(res),
             structured_content=res,

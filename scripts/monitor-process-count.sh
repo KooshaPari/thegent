@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Monitor process count and detect fork failures
 set -euo pipefail
 

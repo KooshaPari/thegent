@@ -11,45 +11,57 @@ Wrapper for thegent_shm Rust extension.
 #### SHMSystem.award_xp
 
 ```python
-award_xp(self, amount)
+award_xp(self: Any, amount: int)
 ```
+
+---
 
 #### SHMSystem.get_xp_state
 
 ```python
-get_xp_state(self)
+get_xp_state(self: Any)
 ```
+
+---
 
 #### SHMSystem.is_native_active
 
 ```python
-is_native_active(self)
+is_native_active(self: Any)
 ```
+
+---
 
 #### SHMSystem.is_open
 
 ```python
-is_open(self, target, category, threshold, window_s, recovery_s)
+is_open(self: Any, target: str, category: str, threshold: int, window_s: int, recovery_s: int)
 ```
+
+---
 
 #### SHMSystem.record_failure
 
 ```python
-record_failure(self, target, category)
+record_failure(self: Any, target: str, category: str)
 ```
+
+---
 
 #### SHMSystem.set_level
 
 ```python
-set_level(self, level)
+set_level(self: Any, level: int)
 ```
+
+---
 
 ---
 
 ## award_xp
 
 ```python
-award_xp(self, amount)
+award_xp(self: Any, amount: int)
 ```
 
 ---
@@ -57,7 +69,7 @@ award_xp(self, amount)
 ## get_shm_system
 
 ```python
-get_shm_system(session_dir)
+get_shm_system(session_dir: Path) -> SHMSystem
 ```
 
 ---
@@ -65,7 +77,7 @@ get_shm_system(session_dir)
 ## get_xp_state
 
 ```python
-get_xp_state(self)
+get_xp_state(self: Any) -> dict[(str, Any)]
 ```
 
 ---
@@ -73,7 +85,7 @@ get_xp_state(self)
 ## is_native_active
 
 ```python
-is_native_active(self)
+is_native_active(self: Any) -> bool
 ```
 
 ---
@@ -81,7 +93,7 @@ is_native_active(self)
 ## is_open
 
 ```python
-is_open(self, target, category, threshold, window_s, recovery_s)
+is_open(self: Any, target: str, category: str, threshold: int, window_s: int, recovery_s: int) -> bool
 ```
 
 ---
@@ -89,7 +101,7 @@ is_open(self, target, category, threshold, window_s, recovery_s)
 ## record_failure
 
 ```python
-record_failure(self, target, category)
+record_failure(self: Any, target: str, category: str)
 ```
 
 ---
@@ -97,7 +109,7 @@ record_failure(self, target, category)
 ## set_level
 
 ```python
-set_level(self, level)
+set_level(self: Any, level: int)
 ```
 
 ---

@@ -51,13 +51,13 @@
 - [x] Coverage: 100%
 
 ### Performance
-- [x] Risk assessment <1μs ✓
+- [x] Risk assessment `<1μs` ✓
 
 ### Acceptance Criteria
 - [x] Composite risk formula correct: (0.40 + 0.35 + 0.25 = 1.0) ✓
 - [x] All weights sum to 1.0 ✓
 - [x] Output always in [0.0, 1.0] ✓
-- [x] Performance: <1μs per assessment ✓
+- [x] Performance: `<1μs` per assessment ✓
 
 ---
 
@@ -78,10 +78,10 @@
 - [x] Default low_threshold: 0.35 ✓
 - [x] Default high_threshold: 0.65 ✓
 - [x] Configurable thresholds support ✓
-- [x] Config validation (low < high) ✓
+- [x] Config validation (low `<` high) ✓
 
 ### Routing Logic
-- [x] Risk < low_threshold → Lifecycle ✓
+- [x] Risk `<` low_threshold → Lifecycle ✓
 - [x] Risk > high_threshold → TheGent ✓
 - [x] Risk in middle → Default to Lifecycle ✓
 - [x] Rationale included in decision ✓
@@ -117,13 +117,13 @@
 - [x] Coverage: 100%
 
 ### Thread Safety
-- [x] Arc<AtomicUsize> for counters ✓
+- [x] `Arc<AtomicUsize>` for counters ✓
 - [x] Tested with 4 concurrent threads ✓
 - [x] 100 concurrent routes tested ✓
 - [x] No panics or race conditions ✓
 
 ### Performance
-- [x] Routing decision <1ms ✓
+- [x] Routing decision `<1ms` ✓
 
 ### Acceptance Criteria
 - [x] Routes correctly based on thresholds ✓
@@ -186,7 +186,7 @@
 ## Overall Quality Gates
 
 ### Code Quality
-- [x] No unsafe code (except Arc<Mutex>) ✓
+- [x] No unsafe code (except `Arc<Mutex>`) ✓
 - [x] All unwraps have justification ✓
 - [x] Error handling appropriate ✓
 - [x] No panics in normal paths ✓
@@ -198,8 +198,8 @@
 - [x] Test coverage documented ✓
 
 ### Performance
-- [x] Risk assessment: <1μs ✓
-- [x] Routing decision: <1ms ✓
+- [x] Risk assessment: `<1μs` ✓
+- [x] Routing decision: `<1ms` ✓
 - [x] No memory leaks (Arc properly managed) ✓
 - [x] Atomic operations efficient ✓
 

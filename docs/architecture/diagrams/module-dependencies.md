@@ -6,52 +6,106 @@ graph TD
   thegent_git["thegent_git"]
   thegent_platform["thegent_platform"]
   thegent_shm["thegent_shm"]
+  config_provider --> thegent
   cli_document_queue --> thegent
+  cli_crew --> thegent
+  git_lock_manage --> thegent
   execution --> thegent
+  cli_legacy --> thegent
   mcp_manage --> thegent
   platform_paths --> thegent
+  discovery --> thegent
   discovery --> thegent_discovery
   shared_server_integration --> thegent
+  roid_main --> thegent
+  mcp_tools_seeds --> thegent
   output_parser --> thegent
   cli_impl --> thegent
+  cliproxy_adapter --> thegent
   dex_main --> thegent
   prompts --> thegent
   summary --> thegent
   cli --> thegent
+  utils --> thegent
   clode_main --> thegent
+  cli_sync --> thegent
+  cli_linkcheck --> thegent
   mgmt_manage --> thegent
   tui --> thegent
+  sitback_plugins --> thegent
+  resources --> thegent
   install --> thegent
+  errors --> thegent
+  cli_concurrency --> thegent
   mcp_sitback --> thegent
   main --> thegent
+  provider_model_manager --> thegent
+  cli_initiative --> thegent
   shared_mcp_manager --> thegent
   doctor --> thegent
   cli_commands_shared_servers --> thegent
   mcp_tools_modes --> thegent
   mcp_server --> thegent
+  always_dumps_research --> thegent
+  library_psutil_research --> thegent
+  phase15_enterprise_lifecycle --> thegent
+  remote_compute_research --> thegent
+  agent_hierarchy_impl_research --> thegent
+  phase14_cost_sensing_tests --> thegent
+  phase13_compliance_profiles --> thegent
+  phase15_enterprise_compliance_tests --> thegent
+  phase14_autonomous_learning --> thegent
+  governance_escalation_dlq_research --> thegent
+  phase13_cost_sensitivity_research --> thegent
+  library_diskcache_research --> thegent
+  auto_setup --> thegent
+  auto_init --> thegent
   design_language --> thegent
+  registry --> thegent
+  tool_artifacts --> thegent
+  decision_artifacts --> thegent
+  generators --> thegent
+  api --> thegent
+  code_artifacts --> thegent
+  storage --> thegent
   arbitrage --> thegent
   runtime_init --> thegent
   drift_corrector --> thegent
   subprocess_manager --> thegent
   resource_monitor --> thegent
+  fast_subprocess --> thegent
+  terminal_keepalive --> thegent
+  fast_cache --> thegent
+  power --> thegent
+  provisioner --> thegent
   universal_adapter --> thegent
+  integration --> thegent
+  garden --> thegent
+  seed_storage --> thegent
   rbac --> thegent
   tenancy --> thegent
+  plugins --> thegent
+  registry_tui --> thegent
+  workstream_dashboard --> thegent
+  compositor --> thegent
+  app --> thegent
   harmonized_paths --> thegent
   work_stream --> thegent
   manage_devkit --> thegent
   consistency_checker --> thegent
   unified_config --> thegent
   promotion --> thegent
-  registry --> thegent
+  swarm_memory --> thegent
   conformance --> thegent
   migration --> thegent
   adapters --> thegent
   validation --> thegent
+  budget_alerts --> thegent
   harness --> thegent
   remediation_planner --> thegent
+  workstream_db --> thegent
   selector --> thegent
+  auto_launch --> thegent
   self_healing --> thegent
   autopoiesis --> thegent
   loop_controller --> thegent
@@ -63,19 +117,29 @@ graph TD
   state_machine --> thegent
   role_agent --> thegent
   cursor_api_runner --> thegent
+  unified_registry_cli --> thegent
   optimizer --> thegent
+  reward_model --> thegent
   cliproxy_manager --> thegent
   direct_agents --> thegent
   resilience --> thegent
   checker --> thegent
   synthesis --> thegent
+  edit_links --> thegent
+  link_checker --> thegent
+  workstream --> thegent
+  headless_manager --> thegent
+  serena_integration --> thegent
+  commands --> thegent
   catalog --> thegent
   cost_values --> thegent
   hybrid_router --> thegent
   scrapers --> thegent
   speed_values --> thegent
   quality_values --> thegent
+  otel_instrumentation --> thegent
   snapshot --> thegent_git
+  coordination --> thegent
   formal_loop --> thegent
   ethics_proof --> thegent
   alerts --> thegent
@@ -83,45 +147,68 @@ graph TD
   session_tui --> thegent
   kpis --> thegent
   fallback_ui --> thegent
+  models_providers_tui --> thegent
   queue_tui --> thegent
   launch --> thegent
-  compositor --> thegent
   calibration --> thegent
-  coordination --> thegent
+  base_provider --> thegent
+  sub_user_provider --> thegent
+  executor_integration --> thegent
+  server --> thegent
+  registry_router --> thegent
+  client --> thegent
+  validator --> thegent
+  shm --> thegent
   shm --> thegent_shm
   playbooks --> thegent
   checkpoint --> thegent
   billing --> thegent
   deferral --> thegent
-  swarm_memory --> thegent
+  session_watcher --> thegent
   context --> thegent
+  load_based_limits --> thegent
   circuit_breaker --> thegent
   session_scraper --> thegent
   collaboration --> thegent
+  cost --> thegent
   evidence --> thegent
   dlq --> thegent
   agileplus --> thegent
   triggers --> thegent
   audit --> thegent
-  analyzer --> thegent
+  input_guardrails --> thegent
+  scoring --> thegent
+  dlq_integration --> thegent
+  health_score --> thegent
   health_score --> thegent_shm
   agent_deployer --> thegent
   drift --> thegent
+  heliosShield_bridge --> thegent
   overrides --> thegent
+  forensics --> thegent
   escalation --> thegent
   evidence_ledger --> thegent
   signatures --> thegent
-  breakers --> thegent
   trust --> thegent
   attestation --> thegent
+  constitution --> thegent
   retention --> thegent
   adapter_policy --> thegent
+  config_provider_cp --> thegent
+  tee_check --> thegent
+  hash_chain --> thegent
+  artifact_generator --> thegent
   dispatch_graph --> thegent
   donut_adapter --> thegent
   cost_tracker --> thegent
-  scoring --> thegent
+  pareto_router --> thegent
   task_router --> thegent
+  litellm_responses_handler --> thegent
   litellm_router --> thegent
+  auto_router --> thegent
   alerting --> thegent
+  orchestrator --> thegent
+  unified_sync --> thegent
+  audit_framework --> thegent
   never_idle --> thegent
 ```

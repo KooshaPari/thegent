@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/verification/ethics_proof.py`
 
 WP-39002: Formal Proof of Ethical Alignment.
+
 Provides mathematically-grounded proofs that agent actions align with constitutional ethics.
 
 ---
@@ -15,11 +16,13 @@ Generates formal ethical proofs.
 
 #### EthicalProofGenerator.generate
 
+```python
+generate(self: Any, action_id: str, aligned: bool, evidence: list[str])
+```
+
 Generate a formal proof for an action.
 
-```python
-generate(self, action_id, aligned, evidence)
-```
+---
 
 ---
 
@@ -31,11 +34,13 @@ Verifies formal ethical proofs.
 
 #### EthicalProofVerifier.verify
 
+```python
+verify(self: Any, proof: FormalEthicalProof)
+```
+
 Verify the integrity and validity of the ethical proof.
 
-```python
-verify(self, proof)
-```
+---
 
 ---
 
@@ -49,21 +54,21 @@ A formal, verifiable proof of ethical alignment.
 
 ## generate
 
-Generate a formal proof for an action.
-
 ```python
-generate(self, action_id, aligned, evidence)
+generate(self: Any, action_id: str, aligned: bool, evidence: list[str])
 ```
+
+Generate a formal proof for an action.
 
 ---
 
 ## verify
 
-Verify the integrity and validity of the ethical proof.
-
 ```python
-verify(self, proof)
+verify(self: Any, proof: FormalEthicalProof)
 ```
+
+Verify the integrity and validity of the ethical proof.
 
 ---
 

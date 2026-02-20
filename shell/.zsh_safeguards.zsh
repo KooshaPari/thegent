@@ -7,7 +7,7 @@
 # - Eval security issues
 
 # Only load in interactive shells (not in scripts/agents)
-[[ -z "${PS1:-}" || -n "${AGENT_ID:-}" || -n "${SHARECLI_AGENT_CONTEXT:-}" ]] && return 0
+[[ -z "${PS1:-}" || -n "${AGENT_ID:-}" || -n "${heliosShield_AGENT_CONTEXT:-}" ]] && return 0
 
 # --- Resource Limits (Prevent Fork Explosions) ---
 # Set reasonable limits to prevent fork bombs and resource exhaustion

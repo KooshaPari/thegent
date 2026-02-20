@@ -219,22 +219,26 @@ class TestErrorHandlingLeaks(MemoryLeakTestCase):
 
         def create_with_errors():
             for i in range(20):
-                try:
-                    # This will fail, but shouldn't leak
-                    manager.run(
-                        ["nonexistent-command-12345"],
-                        name=f"error-test-{i}",
-                        timeout=1.0,
-                    )
-                except Exception:
-                    # Expected to fail
-                    pass
+                self._run_with_error(manager, i)
 
         self.execute(
             create_with_errors,
             times=10,
             checkers=Checkers.only("memory", "fds"),
         )
+
+    def _run_with_error(self, manager, i):
+        """Helper to run a command that is expected to fail."""
+        try:
+            # This will fail, but shouldn't leak
+            manager.run(
+                ["nonexistent-command-12345"],
+                name=f"error-test-{i}",
+                timeout=1.0,
+            )
+        except Exception:
+            # Expected to fail
+            pass
 
 
 # Tracemalloc-based memory leak tests (built-in, no external dependencies)

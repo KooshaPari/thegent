@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)
 class LibraryDiskcacheResearch:
     """Research for diskcache library replacement."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize diskcache research."""
         self.cache_dir = Path(".diskcache-research")
 
     def test_diskcache(self) -> dict[str, Any]:
         """Test diskcache functionality.
-        
+
         Returns:
             Test results
         """

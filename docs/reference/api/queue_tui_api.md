@@ -15,62 +15,70 @@ Rich-based TUI for the prompt queue.
 #### QueueTUI.__init__
 
 ```python
-__init__(self, session_dir)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
 
 #### QueueTUI.render_table
 
+```python
+render_table(self: Any)
+```
+
 Render the queue as a Rich Table.
 
-```python
-render_table(self)
-```
+---
 
 #### QueueTUI.show
 
+```python
+show(self: Any)
+```
+
 Show the queue once.
 
-```python
-show(self)
-```
+---
 
 #### QueueTUI.watch
 
+```python
+watch(self: Any, interval: float)
+```
+
 Watch the queue live.
 
-```python
-watch(self, interval)
-```
+---
 
 ---
 
 ## render_table
 
-Render the queue as a Rich Table.
-
 ```python
-render_table(self)
+render_table(self: Any)
 ```
+
+Render the queue as a Rich Table.
 
 ---
 
 ## show
 
-Show the queue once.
-
 ```python
-show(self)
+show(self: Any)
 ```
+
+Show the queue once.
 
 ---
 
 ## watch
 
-Watch the queue live.
-
 ```python
-watch(self, interval)
+watch(self: Any, interval: float)
 ```
+
+Watch the queue live.
 
 ---
 

@@ -15,23 +15,23 @@ class CostSensingTestMatrix:
         {"id": "AL-006", "name": "Multi-model cost comparison", "status": "pending"},
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cost sensing test matrix."""
         self.tests = {test["id"]: test for test in self.TESTS}
 
     def run_test(self, test_id: str) -> dict[str, Any]:
         """Run a test.
-        
+
         Args:
             test_id: Test identifier
-            
+
         Returns:
             Test result
         """
         test = self.tests.get(test_id)
         if not test:
             return {"error": "Test not found"}
-        
+
         test["status"] = "running"
         # Test execution logic
         test["status"] = "passed"
@@ -39,7 +39,7 @@ class CostSensingTestMatrix:
 
     def get_test_status(self) -> dict[str, Any]:
         """Get status of all tests.
-        
+
         Returns:
             Status dictionary
         """

@@ -13,10 +13,18 @@ cliproxyapi++ (kooshapari fork) may not implement /v1/responses. This adapter:
 
 ## create_adapter_app
 
+```python
+create_adapter_app(backend_url: str)
+```
+
 Create the adapter Starlette app.
 
+---
+
+## get_model_metadata
+
 ```python
-create_adapter_app(backend_url)
+get_model_metadata(_: Any)
 ```
 
 ---

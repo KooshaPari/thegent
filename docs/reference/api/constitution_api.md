@@ -15,24 +15,30 @@ WP-3001: Manages project principles and critique logic.
 #### ConstitutionManager.__init__
 
 ```python
-__init__(self, constitution_path)
+__init__(self: Any, constitution_path: Path)
 ```
+
+---
 
 #### ConstitutionManager.critique_action
 
+```python
+critique_action(self: Any, action: dict[(str, Any)])
+```
+
 WP-3001: Pre-execution critique of a proposed agent action.
 
-```python
-critique_action(self, action)
-```
+---
 
 #### ConstitutionManager.generate_poa
 
+```python
+generate_poa(self: Any, action_id: str, aligned: bool)
+```
+
 Generate a Proof of Alignment for a MAIF artifact.
 
-```python
-generate_poa(self, action_id, aligned)
-```
+---
 
 ---
 
@@ -52,21 +58,21 @@ Verifiable proof that an action aligns with the constitution.
 
 ## critique_action
 
-WP-3001: Pre-execution critique of a proposed agent action.
-
 ```python
-critique_action(self, action)
+critique_action(self: Any, action: dict[(str, Any)])
 ```
+
+WP-3001: Pre-execution critique of a proposed agent action.
 
 ---
 
 ## generate_poa
 
-Generate a Proof of Alignment for a MAIF artifact.
-
 ```python
-generate_poa(self, action_id, aligned)
+generate_poa(self: Any, action_id: str, aligned: bool)
 ```
+
+Generate a Proof of Alignment for a MAIF artifact.
 
 ---
 

@@ -766,7 +766,7 @@ Shutdown:
 | thegent_terminal_inspect | pane_id, last_lines? | Capture pane content |
 | thegent_terminal_send | pane_id, text, enter? | Send text to pane |
 | thegent_terminal_attach | pane_id | Get tmux attach command |
-| thegent_sharecli_status | — | ShareCLI harness status |
+| thegent_heliosShield_status | — | heliosShield harness status |
 | thegent_sitback_dashboard | — | Sitback dashboard (cached 30s) |
 
 ### 26.7 Research & Sampling

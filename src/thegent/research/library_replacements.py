@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 def replace_md5_with_sha256(data: bytes) -> str:
     """Replace MD5 with SHA256 for hashing.
-    
+
     Args:
         data: Data to hash
-        
+
     Returns:
         SHA256 hash hex string
     """
@@ -22,12 +22,13 @@ def replace_md5_with_sha256(data: bytes) -> str:
 
 def check_tomlkit_available() -> bool:
     """Check if tomlkit is available.
-    
+
     Returns:
         True if available
     """
     try:
         import tomlkit
+
         return True
     except ImportError:
         return False
@@ -35,15 +36,16 @@ def check_tomlkit_available() -> bool:
 
 def use_diskcache(cache_dir: Path) -> Any:
     """Use diskcache for caching.
-    
+
     Args:
         cache_dir: Cache directory
-        
+
     Returns:
         Cache instance
     """
     try:
         import diskcache
+
         return diskcache.Cache(str(cache_dir))
     except ImportError:
         logger.warning("diskcache not available")
@@ -52,12 +54,13 @@ def use_diskcache(cache_dir: Path) -> Any:
 
 def use_psutil_monitoring() -> dict[str, Any]:
     """Use psutil for resource monitoring.
-    
+
     Returns:
         Resource metrics dictionary
     """
     try:
         import psutil
+
         return {
             "cpu_percent": psutil.cpu_percent(interval=1),
             "memory_percent": psutil.virtual_memory().percent,

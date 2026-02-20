@@ -15,7 +15,7 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Optional, Protocol
 
 from pydantic import BaseModel
 
@@ -414,7 +414,7 @@ class HealthThresholdTrigger:
         self.threshold = threshold
         self.check_interval = check_interval
         self._shutdown = False
-        self._thread: threading.Optional[Thread] = None
+        self._thread: threading.Thread | None = None
 
     def start(self) -> None:
         """Start health monitoring in background."""

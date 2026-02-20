@@ -2,16 +2,17 @@
 
 from typing import Any
 
+
 class ActionableError(Exception):
     """Error with actionable suggestions for fixing it."""
-    
+
     def __init__(
         self,
         message: str,
         suggestion: str | None = None,
         docs_url: str | None = None,
         context: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.suggestion = suggestion
@@ -26,6 +27,7 @@ class ActionableError(Exception):
             output.append(f"📖 Docs: {self.docs_url}")
         return "\n".join(output)
 
+
 def handle_error_actionable(
     error: Exception,
     custom_message: str | None = None,
@@ -33,13 +35,13 @@ def handle_error_actionable(
     docs_url: str | None = None,
 ) -> ActionableError:
     """Wrap an error in an ActionableError.
-    
+
     Args:
         error: Original exception
         custom_message: Optional custom message
         suggestion: Optional suggestion
         docs_url: Optional docs URL
-        
+
     Returns:
         ActionableError instance
     """

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Audit all MD docs for proper structure (frontmatter, H1, See also)
 set -euo pipefail
 

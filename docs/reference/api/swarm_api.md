@@ -23,32 +23,40 @@ WP-1006: Shared memory for multi-agent coordination.
 #### Blackboard.__init__
 
 ```python
-__init__(self, namespace)
+__init__(self: Any, namespace: str)
 ```
+
+---
 
 #### Blackboard.list_keys
 
+```python
+list_keys(self: Any)
+```
+
 List all keys on the blackboard.
 
-```python
-list_keys(self)
-```
+---
 
 #### Blackboard.post
 
+```python
+post(self: Any, key: str, value: Any)
+```
+
 Post a finding or result to the blackboard.
 
-```python
-post(self, key, value)
-```
+---
 
 #### Blackboard.read
 
+```python
+read(self: Any, key: str)
+```
+
 Read a value from the blackboard.
 
-```python
-read(self, key)
-```
+---
 
 ---
 
@@ -60,19 +68,23 @@ WP-1006: Resolves conflicts when multiple agents propose solutions.
 
 #### ConsensusManager.resolve_by_confidence
 
+```python
+resolve_by_confidence(proposals: list[dict[(str, Any)]])
+```
+
 Pick the proposal with the highest confidence score.
 
-```python
-resolve_by_confidence(proposals)
-```
+---
 
 #### ConsensusManager.resolve_by_vote
 
+```python
+resolve_by_vote(proposals: list[dict[(str, Any)]])
+```
+
 Majority vote on identical proposal values.
 
-```python
-resolve_by_vote(proposals)
-```
+---
 
 ---
 
@@ -85,76 +97,80 @@ WP-1006: Handles inter-agent negotiation and Nash Equilibrium selection.
 #### NegotiationEngine.__init__
 
 ```python
-__init__(self, blackboard)
+__init__(self: Any, blackboard: Blackboard)
 ```
+
+---
 
 #### NegotiationEngine.resolve_conflict
 
+```python
+resolve_conflict(self: Any, proposals: list[ACLMessage])
+```
+
 Find the optimal proposal using utility scores.
 
-```python
-resolve_conflict(self, proposals)
-```
+---
 
 ---
 
 ## list_keys
 
-List all keys on the blackboard.
-
 ```python
-list_keys(self)
+list_keys(self: Any)
 ```
+
+List all keys on the blackboard.
 
 ---
 
 ## post
 
-Post a finding or result to the blackboard.
-
 ```python
-post(self, key, value)
+post(self: Any, key: str, value: Any)
 ```
+
+Post a finding or result to the blackboard.
 
 ---
 
 ## read
 
-Read a value from the blackboard.
-
 ```python
-read(self, key)
+read(self: Any, key: str)
 ```
+
+Read a value from the blackboard.
 
 ---
 
 ## resolve_by_confidence
 
-Pick the proposal with the highest confidence score.
-
 ```python
-resolve_by_confidence(proposals)
+resolve_by_confidence(proposals: list[dict[(str, Any)]])
 ```
+
+Pick the proposal with the highest confidence score.
 
 ---
 
 ## resolve_by_vote
 
-Majority vote on identical proposal values.
-
 ```python
-resolve_by_vote(proposals)
+resolve_by_vote(proposals: list[dict[(str, Any)]])
 ```
+
+Majority vote on identical proposal values.
 
 ---
 
 ## resolve_conflict
 
-Find the optimal proposal using utility scores.
-
 ```python
-resolve_conflict(self, proposals)
+resolve_conflict(self: Any, proposals: list[ACLMessage])
 ```
+
+Find the optimal proposal using utility scores.
 
 ---
 

@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/agents/policy_evolver.py`
 
 WP-20001: Self-Evolving Policy Controller.
+
 Analyzes run failures and evolves policy thresholds automatically.
 
 ---
@@ -16,26 +17,30 @@ Analyzes execution logs and proposes automatic policy adjustments.
 #### PolicyEvolver.__init__
 
 ```python
-__init__(self, session_dir, settings)
+__init__(self: Any, session_dir: Path, settings: Any)
 ```
+
+---
 
 #### PolicyEvolver.evolve
 
+```python
+evolve(self: Any, lookback_runs: int)
+```
+
 Analyze recent runs and propose policy updates.
 
-```python
-evolve(self, lookback_runs)
-```
+---
 
 ---
 
 ## evolve
 
-Analyze recent runs and propose policy updates.
-
 ```python
-evolve(self, lookback_runs)
+evolve(self: Any, lookback_runs: int)
 ```
+
+Analyze recent runs and propose policy updates.
 
 ---
 

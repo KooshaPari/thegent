@@ -15,32 +15,40 @@ Manages temporary policy overrides.
 #### OverrideManager.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: Any)
 ```
+
+---
 
 #### OverrideManager.apply_override
 
+```python
+apply_override(self: Any, policy_id: str, reason: str, by: str, duration_minutes: int, metadata: Any)
+```
+
 Create a new temporary override.
 
-```python
-apply_override(self, policy_id, reason, by, duration_minutes, metadata)
-```
+---
 
 #### OverrideManager.cleanup_expired
 
+```python
+cleanup_expired(self: Any)
+```
+
 Remove all expired overrides from disk.
 
-```python
-cleanup_expired(self)
-```
+---
 
 #### OverrideManager.get_override
 
+```python
+get_override(self: Any, policy_id: str)
+```
+
 Get an active override for a policy.
 
-```python
-get_override(self, policy_id)
-```
+---
 
 ---
 
@@ -52,87 +60,93 @@ An active override for a governance policy.
 
 #### PolicyOverride.from_dict
 
+```python
+from_dict(cls: Any, data: dict[(str, Any)])
+```
+
 Create from dictionary.
 
-```python
-from_dict(cls, data)
-```
+---
 
 #### PolicyOverride.is_active
 
+```python
+is_active(self: Any)
+```
+
 Check if the override is still valid.
 
-```python
-is_active(self)
-```
+---
 
 #### PolicyOverride.to_dict
 
+```python
+to_dict(self: Any)
+```
+
 Convert to dictionary.
 
-```python
-to_dict(self)
-```
+---
 
 ---
 
 ## apply_override
 
-Create a new temporary override.
-
 ```python
-apply_override(self, policy_id, reason, by, duration_minutes, metadata)
+apply_override(self: Any, policy_id: str, reason: str, by: str, duration_minutes: int, metadata: Any)
 ```
+
+Create a new temporary override.
 
 ---
 
 ## cleanup_expired
 
-Remove all expired overrides from disk.
-
 ```python
-cleanup_expired(self)
+cleanup_expired(self: Any)
 ```
+
+Remove all expired overrides from disk.
 
 ---
 
 ## from_dict
 
-Create from dictionary.
-
 ```python
-from_dict(cls, data)
+from_dict(cls: Any, data: dict[(str, Any)])
 ```
+
+Create from dictionary.
 
 ---
 
 ## get_override
 
-Get an active override for a policy.
-
 ```python
-get_override(self, policy_id)
+get_override(self: Any, policy_id: str)
 ```
+
+Get an active override for a policy.
 
 ---
 
 ## is_active
 
-Check if the override is still valid.
-
 ```python
-is_active(self)
+is_active(self: Any)
 ```
+
+Check if the override is still valid.
 
 ---
 
 ## to_dict
 
-Convert to dictionary.
-
 ```python
-to_dict(self)
+to_dict(self: Any)
 ```
+
+Convert to dictionary.
 
 ---
 

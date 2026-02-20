@@ -18,62 +18,70 @@ WP-1005: Evidence capture and validation before state promotion.
 #### PromotionGate.__init__
 
 ```python
-__init__(self, session_dir)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
 
 #### PromotionGate.capture_evidence
 
+```python
+capture_evidence(self: Any, run_id: str, csm: Any)
+```
+
 Capture CSM state as evidence; return SHA-256 hash. Appends to audit trail.
 
-```python
-capture_evidence(self, run_id, csm)
-```
+---
 
 #### PromotionGate.validate_promotion
 
+```python
+validate_promotion(self: Any, csm: Any, policy: FallbackPolicy)
+```
+
 Validate if CSM is ready for promotion based on policy.
 
-```python
-validate_promotion(self, csm, policy)
-```
+---
 
 #### PromotionGate.verify_evidence_hash
 
+```python
+verify_evidence_hash(self: Any, run_id: str, phase: str, expected_hash: str)
+```
+
 Verify stored evidence hash matches expected. Returns True if valid.
 
-```python
-verify_evidence_hash(self, run_id, phase, expected_hash)
-```
+---
 
 ---
 
 ## capture_evidence
 
-Capture CSM state as evidence; return SHA-256 hash. Appends to audit trail.
-
 ```python
-capture_evidence(self, run_id, csm)
+capture_evidence(self: Any, run_id: str, csm: Any)
 ```
+
+Capture CSM state as evidence; return SHA-256 hash. Appends to audit trail.
 
 ---
 
 ## validate_promotion
 
-Validate if CSM is ready for promotion based on policy.
-
 ```python
-validate_promotion(self, csm, policy)
+validate_promotion(self: Any, csm: Any, policy: FallbackPolicy)
 ```
+
+Validate if CSM is ready for promotion based on policy.
 
 ---
 
 ## verify_evidence_hash
 
-Verify stored evidence hash matches expected. Returns True if valid.
-
 ```python
-verify_evidence_hash(self, run_id, phase, expected_hash)
+verify_evidence_hash(self: Any, run_id: str, phase: str, expected_hash: str)
 ```
+
+Verify stored evidence hash matches expected. Returns True if valid.
 
 ---
 

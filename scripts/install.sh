@@ -1,10 +1,10 @@
-#!/usr/bin/env sh
+#!/usr/bin/env zsh
 # thegent install — full system installer (Unix)
 # Same as bootstrap.sh. Use either URL:
 #   curl -fsSL .../scripts/install.sh | sh -s -- install
 #   curl -fsSL .../scripts/bootstrap.sh | sh -s -- install
 #
-# Phases: install thegent → install -t all → install-shims → setup → doctor
+# Phases: install thegent → setup → doctor
 
 set -e
 
@@ -19,7 +19,7 @@ usage() {
   cat <<EOF
 thegent install — full system installer
 
-Phases: install thegent → install -t all → install-shims → setup → doctor
+Phases: install thegent → setup → doctor
 
 Usage:
   curl -fsSL ${SCRIPT_URL} | sh -s -- [options]
@@ -29,6 +29,7 @@ Options:
   --no-setup    Install CLI only
   --full        Use thegent setup --full
   --no-deps     Skip optional system deps
+  --rust-shims  Build and install Rust accelerators (requires Cargo)
   --help        Show this help
 
 Environment:
@@ -41,7 +42,9 @@ EOF
 run_setup=1
 use_full_setup=0
 install_deps=0
+install_rust_shims=0
 [ -n "$THGENT_BOOTSTRAP_DEPS" ] && install_deps=1
+[ -n "$THGENT_BOOTSTRAP_RUST_SHIMS" ] && install_rust_shims=1
 
 for arg in "$@"; do
   case "$arg" in
@@ -49,6 +52,7 @@ for arg in "$@"; do
     --no-setup) run_setup=0 ;;
     --full) use_full_setup=1 ;;
     --no-deps) install_deps=0 ;;
+    --rust-shims) install_rust_shims=1 ;;
     install) ;;
     *) warn "Unknown option: $arg" ;;
   esac
@@ -62,13 +66,21 @@ echo "thegent install"
 echo "==============="
 
 if [ "$install_deps" = 1 ]; then
-  step "Installing optional tools (ripgrep, fd, jq)..."
+  step "Installing optional tools (Modern Unix)..."
   if command -v brew >/dev/null 2>&1; then
-    brew install ripgrep fd jq 2>/dev/null || warn "brew install failed"
+    brew install ripgrep fd jq eza bat zoxide delta duf dust procs bottom yazi xh sd 2>/dev/null || warn "brew install failed"
   elif command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update -qq && sudo apt-get install -y ripgrep fd-find jq 2>/dev/null || warn "apt install failed"
-  else
-    warn "No brew or apt; skip with --no-deps"
+    sudo apt-get update -qq && sudo apt-get install -y ripgrep fd-find jq eza bat zoxide 2>/dev/null || warn "apt install failed"
+  fi
+fi
+
+if [ "$install_rust_shims" = 1 ]; then
+  step "Building and installing Rust accelerators..."
+  if [ -f "./scripts/install-thegent-shims.sh" ]; then
+    ./scripts/install-thegent-shims.sh || warn "Rust shim installation failed. Falling back to default."
+  elif command -v curl >/dev/null 2>&1; then
+    # In case we're running via curl | sh and script is not local
+    curl -fsSL "${GITHUB_RAW}/scripts/install-thegent-shims.sh" | bash || warn "Rust shim download/install failed."
   fi
 fi
 
@@ -96,7 +108,7 @@ fi
 
 if [ "$run_setup" != 1 ]; then
   echo ""
-  echo "==> Install complete (--no-setup). Run: thegent install -t all && thegent setup && thegent doctor"
+  echo "==> Install complete (--no-setup). Run: thegent setup"
   exit 0
 fi
 
@@ -104,11 +116,6 @@ if [ "$use_full_setup" = 1 ]; then
   step "Running thegent setup --full..."
   thegent setup --full || warn "setup --full had issues. Run 'thegent doctor'."
 else
-  step "Running thegent install -t all..."
-  thegent install -t all || warn "install -t all had issues. Run 'thegent doctor'."
-  step "Running thegent install-shims..."
-  thegent install-shims || warn "install-shims had issues. Run 'thegent doctor'."
-  [ -n "$THGENT_BOOTSTRAP_SYSTEM_SHIMS" ] && { step "Running thegent install-shims --system..."; thegent install-shims --system 2>/dev/null || warn "install-shims --system skipped."; }
   step "Running thegent setup..."
   thegent setup || warn "setup had issues. Run 'thegent setup' manually."
 fi

@@ -115,6 +115,11 @@ class AgilePlusLoop:
         """Current cycle ID."""
         return self._cycle_id
 
+    @property
+    def shutdown_requested(self) -> bool:
+        """True if a shutdown has been requested."""
+        return self._shutdown_requested
+
     # ----------------------------------------------------------------------
     # public API
     # ----------------------------------------------------------------------

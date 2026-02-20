@@ -17,37 +17,45 @@ A pool of persistent Python processes for executing tasks (MTSP-06).
 #### PersistentWorkerPool.__init__
 
 ```python
-__init__(self, size)
+__init__(self: Any, size: Any)
 ```
+
+---
 
 #### PersistentWorkerPool.get_instance
 
 ```python
-get_instance(cls, size)
+get_instance(cls: Any, size: Any)
 ```
+
+---
 
 #### PersistentWorkerPool.start
 
+```python
+start(self: Any)
+```
+
 Initialize the process pool.
 
-```python
-start(self)
-```
+---
 
 #### PersistentWorkerPool.stop
 
+```python
+stop(self: Any)
+```
+
 Shut down the pool.
 
-```python
-stop(self)
-```
+---
 
 ---
 
 ## get_instance
 
 ```python
-get_instance(cls, size)
+get_instance(cls: Any, size: Any) -> PersistentWorkerPool
 ```
 
 ---
@@ -60,21 +68,21 @@ Helper for dependency injection.
 
 ## start
 
-Initialize the process pool.
-
 ```python
-start(self)
+start(self: Any)
 ```
+
+Initialize the process pool.
 
 ---
 
 ## stop
 
-Shut down the pool.
-
 ```python
-stop(self)
+stop(self: Any)
 ```
+
+Shut down the pool.
 
 ---
 

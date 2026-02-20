@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/discovery/mesh.py`
 
 WP-26001: Global Mesh Networking for Agents.
+
 Extends agent discovery beyond the local network using a global mesh protocol.
 Inspired by libp2p and Tailscale-style overlay networking.
 
@@ -17,32 +18,40 @@ Manages global agent connectivity and peer discovery.
 #### AgentMesh.__init__
 
 ```python
-__init__(self, node_id, registry_url)
+__init__(self: Any, node_id: str, registry_url: str)
 ```
+
+---
 
 #### AgentMesh.discover_peers
 
+```python
+discover_peers(self: Any, capability: Any)
+```
+
 Discover peers in the global mesh with specific capabilities.
 
-```python
-discover_peers(self, capability)
-```
+---
 
 #### AgentMesh.join_mesh
 
+```python
+join_mesh(self: Any, public_addr: str)
+```
+
 Register the local agent with the global mesh registry.
 
-```python
-join_mesh(self, public_addr)
-```
+---
 
 #### AgentMesh.route_to_peer
 
+```python
+route_to_peer(self: Any, peer_id: str, payload: dict[(str, Any)])
+```
+
 Route a message payload over the mesh overlay network.
 
-```python
-route_to_peer(self, peer_id, payload)
-```
+---
 
 ---
 
@@ -56,31 +65,31 @@ Metadata for a node in the global agent mesh.
 
 ## discover_peers
 
-Discover peers in the global mesh with specific capabilities.
-
 ```python
-discover_peers(self, capability)
+discover_peers(self: Any, capability: Any)
 ```
+
+Discover peers in the global mesh with specific capabilities.
 
 ---
 
 ## join_mesh
 
-Register the local agent with the global mesh registry.
-
 ```python
-join_mesh(self, public_addr)
+join_mesh(self: Any, public_addr: str)
 ```
+
+Register the local agent with the global mesh registry.
 
 ---
 
 ## route_to_peer
 
-Route a message payload over the mesh overlay network.
-
 ```python
-route_to_peer(self, peer_id, payload)
+route_to_peer(self: Any, peer_id: str, payload: dict[(str, Any)])
 ```
+
+Route a message payload over the mesh overlay network.
 
 ---
 

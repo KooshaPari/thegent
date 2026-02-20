@@ -7,7 +7,7 @@ Expanded with breadth, depth, robustness, and optimization.
 import hashlib
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
@@ -79,7 +79,7 @@ class ProjectStructure:
     project_path: Path
     project_type: ProjectType
     governance_level: GovernanceLevel
-    assessment_date: datetime = field(default_factory=datetime.now)
+    assessment_date: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
     # Basic files (expanded)
     has_readme: bool = False
@@ -380,9 +380,8 @@ class ProjectGovernanceSetupEnhanced:
         self.structure: ProjectStructure | None = None
         self._cache: dict[str, any] = {}
 
-    @lru_cache(maxsize=128)
     def _file_exists(self, relative_path: str) -> bool:
-        """Cached file existence check."""
+        """Manual file existence check."""
         return (self.project_path / relative_path).exists()
 
     def analyze(self) -> ProjectStructure:
@@ -689,7 +688,7 @@ class ProjectGovernanceSetupEnhanced:
                         path=file_path,
                         exists=True,
                         size=stat.st_size,
-                        last_modified=datetime.fromtimestamp(stat.st_mtime),
+                        last_modified=datetime.fromtimestamp(stat.st_mtime, tz=UTC),
                         content_hash=content_hash,
                         is_valid=self._validate_file(file_name, content),
                     )
@@ -883,7 +882,7 @@ SOFTWARE.
             "version": "2.0",
             "metadata": {
                 "project": self.project_path.name,
-                "created": datetime.now().isoformat(),
+                "created": datetime.now(tz=UTC).isoformat(),
             },
             "gates": {
                 "code_quality": {
@@ -951,7 +950,7 @@ SOFTWARE.
             "version": "2.0",
             "metadata": {
                 "project": self.project_path.name,
-                "created": datetime.now().isoformat(),
+                "created": datetime.now(tz=UTC).isoformat(),
             },
             "audits": {
                 "code_review": {

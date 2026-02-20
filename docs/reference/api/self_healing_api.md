@@ -15,24 +15,30 @@ Routes failed runs to automated recovery playbooks.
 #### RecoveryRouter.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### RecoveryRouter.attempt_recovery
 
+```python
+attempt_recovery(self: Any, result: RunResult)
+```
+
 Suggest a recovery action based on the failure classification.
 
-```python
-attempt_recovery(self, result)
-```
+---
 
 #### RecoveryRouter.back_project_failure
 
+```python
+back_project_failure(self: Any, run_id: str, prompt: str, failure_type: str)
+```
+
 WP-16002: Analyze failure and project fix into instructions.
 
-```python
-back_project_failure(self, run_id, prompt, failure_type)
-```
+---
 
 ---
 
@@ -45,64 +51,70 @@ Monitors session stability and performance over time.
 #### StabilityTracker.__init__
 
 ```python
-__init__(self, window_size)
+__init__(self: Any, window_size: int)
 ```
+
+---
 
 #### StabilityTracker.get_stability_score
 
+```python
+get_stability_score(self: Any)
+```
+
 Calculate stability score (0.0 - 1.0) based on success rate.
 
-```python
-get_stability_score(self)
-```
+---
 
 #### StabilityTracker.record_result
 
+```python
+record_result(self: Any, result: RunResult)
+```
+
 Record a run result and prune old history.
 
-```python
-record_result(self, result)
-```
+---
 
 ---
 
 ## attempt_recovery
 
-Suggest a recovery action based on the failure classification.
-
 ```python
-attempt_recovery(self, result)
+attempt_recovery(self: Any, result: RunResult)
 ```
+
+Suggest a recovery action based on the failure classification.
 
 ---
 
 ## back_project_failure
 
-WP-16002: Analyze failure and project fix into instructions.
-
 ```python
-back_project_failure(self, run_id, prompt, failure_type)
+back_project_failure(self: Any, run_id: str, prompt: str, failure_type: str)
 ```
+
+WP-16002: Analyze failure and project fix into instructions.
 
 ---
 
 ## get_stability_score
 
-Calculate stability score (0.0 - 1.0) based on success rate.
-
 ```python
-get_stability_score(self)
+get_stability_score(self: Any)
 ```
+
+Calculate stability score (0.0 - 1.0) based on success rate.
 
 ---
 
 ## record_result
 
-Record a run result and prune old history.
-
 ```python
-record_result(self, result)
+record_result(self: Any, result: RunResult)
 ```
+
+Record a run result and prune old history.
 
 ---
 

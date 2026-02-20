@@ -34,8 +34,13 @@ def parse_docstring(docstring: str | None) -> dict[str, Any]:
         return {
             "description": parsed.short_description or "",
             "long_description": parsed.long_description or "",
-            "params": {p.arg_name: {"type": p.type_name or "", "description": p.description or ""} for p in parsed.params},
-            "returns": {"type": parsed.returns.type_name if parsed.returns else None, "description": parsed.returns.description if parsed.returns else None},
+            "params": {
+                p.arg_name: {"type": p.type_name or "", "description": p.description or ""} for p in parsed.params
+            },
+            "returns": {
+                "type": parsed.returns.type_name if parsed.returns else None,
+                "description": parsed.returns.description if parsed.returns else None,
+            },
             "raises": {r.type_name: r.description for r in parsed.raises} if parsed.raises else {},
             "examples": [ex.description for ex in parsed.examples] if parsed.examples else [],
         }
@@ -118,7 +123,8 @@ def extract_docstrings(module_path: Path) -> dict[str, dict[str, Any]]:
                 "docstring": parsed_doc["description"],
                 "long_description": parsed_doc.get("long_description", ""),
                 "params": parsed_doc["params"],
-                "returns": parsed_doc["returns"] or ({"type": return_type, "description": None} if return_type else None),
+                "returns": parsed_doc["returns"]
+                or ({"type": return_type, "description": None} if return_type else None),
                 "raises": parsed_doc["raises"],
                 "examples": parsed_doc["examples"],
                 "signature": None,

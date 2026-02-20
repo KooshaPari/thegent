@@ -13,32 +13,34 @@ from thegent.research.library_replacements import (
 from thegent.research.remote_compute import RemoteComputeClient
 
 __all__ = [
+    "AgentHierarchyManager",
+    "AutonomousLearningSurface",
+    "ConversationDumpWriter",
+    "CostSensitivityFramework",
+    "EscalationQueueDLQ",
     "RemoteComputeClient",
-    "replace_md5_with_sha256",
     "check_tomlkit_available",
+    "replace_md5_with_sha256",
     "use_diskcache",
     "use_psutil_monitoring",
-    "CostSensitivityFramework",
-    "AutonomousLearningSurface",
-    "EscalationQueueDLQ",
-    "ConversationDumpWriter",
-    "AgentHierarchyManager",
 ]
 
 from thegent.research.cost_routing import CostRoutingResearch
 
 __all__.append("CostRoutingResearch")
 
-from thegent.research.supermemory_integration import SupermemoryIntegration
-from thegent.research.pareto_routing import ParetoRouting
 from thegent.research.economic_governance import EconomicGovernance
-from thegent.research.maif_artifacts import MAIFArtifact
 from thegent.research.idea_seed_system import IdeaSeedSystem
+from thegent.research.maif_artifacts import MAIFArtifact
+from thegent.research.pareto_routing import ParetoRouting
+from thegent.research.supermemory_integration import SupermemoryIntegration
 
-__all__.extend([
-    "SupermemoryIntegration",
-    "ParetoRouting",
-    "EconomicGovernance",
-    "MAIFArtifact",
-    "IdeaSeedSystem",
-])
+__all__.extend(
+    [
+        "EconomicGovernance",
+        "IdeaSeedSystem",
+        "MAIFArtifact",
+        "ParetoRouting",
+        "SupermemoryIntegration",
+    ]
+)

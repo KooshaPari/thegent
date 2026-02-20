@@ -15,44 +15,50 @@ Calibrates agent confidence scores based on operator feedback.
 #### ConfidenceCalibrator.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: ThegentSettings)
 ```
+
+---
 
 #### ConfidenceCalibrator.calibrate
 
+```python
+calibrate(self: Any, agent_name: str, raw_confidence: float)
+```
+
 Apply calibration bias to a raw confidence score.
 
-```python
-calibrate(self, agent_name, raw_confidence)
-```
+---
 
 #### ConfidenceCalibrator.record_feedback
 
+```python
+record_feedback(self: Any, agent_name: str, provided_confidence: float, actual_success: bool)
+```
+
 Record feedback to update bias map.
 
-```python
-record_feedback(self, agent_name, provided_confidence, actual_success)
-```
+---
 
 ---
 
 ## calibrate
 
-Apply calibration bias to a raw confidence score.
-
 ```python
-calibrate(self, agent_name, raw_confidence)
+calibrate(self: Any, agent_name: str, raw_confidence: float)
 ```
+
+Apply calibration bias to a raw confidence score.
 
 ---
 
 ## record_feedback
 
-Record feedback to update bias map.
-
 ```python
-record_feedback(self, agent_name, provided_confidence, actual_success)
+record_feedback(self: Any, agent_name: str, provided_confidence: float, actual_success: bool)
 ```
+
+Record feedback to update bias map.
 
 ---
 

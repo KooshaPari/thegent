@@ -11,31 +11,31 @@
   ],
   "predicate": {
     "buildDefinition": {
-      "buildType": "https://github.com/kush/sharecli/build-type/bash",
+      "buildType": "https://github.com/kush/heliosShield/build-type/bash",
       "externalParameters": {
         "git_ref": "main",
         "project_dir": "."
       },
       "internalParameters": {
-        "git_sha": "3a426a9471a1309697138538a45e902d3d3d41ab"
+        "git_sha": "46be93540b65f38d52db4b0bc2fb826470de4322"
       },
       "resolvedDependencies": [
         {
           "uri": "unknown",
           "digest": {
-            "gitSha": "3a426a9471a1309697138538a45e902d3d3d41ab"
+            "gitSha": "46be93540b65f38d52db4b0bc2fb826470de4322"
           }
         }
       ]
     },
     "runDetails": {
       "builder": {
-        "id": "https://github.com/kush/sharecli/builder/qa-attestation-builder"
+        "id": "https://github.com/kush/heliosShield/builder/qa-attestation-builder"
       },
       "metadata": {
-        "invocationId": "session-36920-1771466778",
-        "startedOn": "2026-02-19T02:05:44Z",
-        "finishedOn": "2026-02-19T02:05:44Z"
+        "invocationId": "session-96427-1771551874",
+        "startedOn": "2026-02-19T18:44:28Z",
+        "finishedOn": "2026-02-20T01:44:34Z"
       }
     }
   }

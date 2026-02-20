@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Reproducible benchmark harness for shell-vs-rust hook runtime comparisons.
 set -euo pipefail
 

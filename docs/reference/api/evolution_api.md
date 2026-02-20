@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/planning/evolution.py`
 
 WP-37003: Infinite Plan Evolution Loop.
+
 Continously evolves the project plan (DAG) as new information is discovered.
 
 ---
@@ -16,44 +17,50 @@ Orchestrates the continuous evolution of the Work Breakdown Structure and DAG.
 #### PlanEvolver.__init__
 
 ```python
-__init__(self, current_dag)
+__init__(self: Any, current_dag: Any)
 ```
+
+---
 
 #### PlanEvolver.evolve_dag
 
+```python
+evolve_dag(self: Any, discovery_events: list[dict[(str, Any)]])
+```
+
 WP-37003: Analyze discovery events and append new work packages to the plan.
 
-```python
-evolve_dag(self, discovery_events)
-```
+---
 
 #### PlanEvolver.sandbox_evolution
 
+```python
+sandbox_evolution(self: Any, proposed_changes: list[str])
+```
+
 Run a simulation to see if the evolved plan is faster or cheaper.
 
-```python
-sandbox_evolution(self, proposed_changes)
-```
+---
 
 ---
 
 ## evolve_dag
 
-WP-37003: Analyze discovery events and append new work packages to the plan.
-
 ```python
-evolve_dag(self, discovery_events)
+evolve_dag(self: Any, discovery_events: list[dict[(str, Any)]])
 ```
+
+WP-37003: Analyze discovery events and append new work packages to the plan.
 
 ---
 
 ## sandbox_evolution
 
-Run a simulation to see if the evolved plan is faster or cheaper.
-
 ```python
-sandbox_evolution(self, proposed_changes)
+sandbox_evolution(self: Any, proposed_changes: list[str])
 ```
+
+Run a simulation to see if the evolved plan is faster or cheaper.
 
 ---
 

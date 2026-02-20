@@ -22,113 +22,133 @@ Checks for background task completions (non-blocking) and runs gardening steps.
 
 #### NeverIdleLoop.__init__
 
+```python
+__init__(self: Any, session_dir: Any, sleep_interval: int, project_root: Any)
+```
+
 Initialize the never-idle loop.
 
-Args:
-    session_dir: Path to session directory. Defaults to ~/.thegent/sessions/
-    sleep_interval: Seconds to sleep between iterations. Default 45.
-    project_root: Root directory for gardening. Defaults to cwd.
+**Parameters**:
 
-```python
-__init__(self, session_dir, sleep_interval, project_root)
-```
+- `session_dir`: Path to session directory. Defaults to ~/.thegent/sessions/
+- `sleep_interval`: Seconds to sleep between iterations. Default 45.
+- `project_root`: Root directory for gardening. Defaults to cwd.
+
+---
 
 #### NeverIdleLoop.current_step
 
+```python
+current_step(self: Any)
+```
+
 Return the current gardening step name.
 
-```python
-current_step(self)
-```
+---
 
 #### NeverIdleLoop.get_findings
 
+```python
+get_findings(self: Any)
+```
+
 Return gardening findings that need attention.
 
-```python
-get_findings(self)
-```
+---
 
 #### NeverIdleLoop.get_last_completion
 
+```python
+get_last_completion(self: Any)
+```
+
 Return last background task completion info.
 
-```python
-get_last_completion(self)
-```
+---
 
 #### NeverIdleLoop.get_status
 
+```python
+get_status(self: Any)
+```
+
 Get current status of the never-idle loop.
 
-```python
-get_status(self)
-```
+---
 
 #### NeverIdleLoop.is_running
 
+```python
+is_running(self: Any)
+```
+
 Return whether the loop is currently running.
 
-```python
-is_running(self)
-```
+---
 
 #### NeverIdleLoop.register_wake_callback
 
+```python
+register_wake_callback(self: Any, callback: WakeCallback)
+```
+
 Register a callback to be called when background task completes.
 
-Args:
-    callback: Function(list of (session_id, exit_code)) to call.
+**Parameters**:
 
-```python
-register_wake_callback(self, callback)
-```
+- `callback`: Function(list of (session_id, exit_code)) to call.
+
+---
 
 #### NeverIdleLoop.start
 
+```python
+start(self: Any)
+```
+
 Start the never-idle loop in a background thread.
 
-```python
-start(self)
-```
+---
 
 #### NeverIdleLoop.stop
 
+```python
+stop(self: Any)
+```
+
 Stop the never-idle loop.
 
-```python
-stop(self)
-```
+---
 
 ---
 
 ## current_step
 
-Return the current gardening step name.
-
 ```python
-current_step(self)
+current_step(self: Any)
 ```
+
+Return the current gardening step name.
 
 ---
 
 ## get_findings
 
-Return gardening findings that need attention.
-
 ```python
-get_findings(self)
+get_findings(self: Any)
 ```
+
+Return gardening findings that need attention.
 
 ---
 
 ## get_last_completion
 
-Return last background task completion info.
-
 ```python
-get_last_completion(self)
+get_last_completion(self: Any)
 ```
+
+Return last background task completion info.
 
 ---
 
@@ -146,72 +166,73 @@ Get status of the global never-idle loop.
 
 ## get_status
 
-Get current status of the never-idle loop.
-
 ```python
-get_status(self)
+get_status(self: Any)
 ```
+
+Get current status of the never-idle loop.
 
 ---
 
 ## is_running
 
-Return whether the loop is currently running.
-
 ```python
-is_running(self)
+is_running(self: Any)
 ```
+
+Return whether the loop is currently running.
 
 ---
 
 ## register_wake_callback
 
+```python
+register_wake_callback(self: Any, callback: WakeCallback)
+```
+
 Register a callback to be called when background task completes.
 
-Args:
-    callback: Function(list of (session_id, exit_code)) to call.
+**Parameters**:
 
-```python
-register_wake_callback(self, callback)
-```
+- `callback`: Function(list of (session_id, exit_code)) to call.
 
 ---
 
 ## start
 
-Start the never-idle loop in a background thread.
-
 ```python
-start(self)
+start(self: Any)
 ```
+
+Start the never-idle loop in a background thread.
 
 ---
 
 ## start_never_idle
 
+```python
+start_never_idle(sleep_interval: int, session_dir: Any, project_root: Any)
+```
+
 Start the global never-idle loop.
 
-Args:
-    sleep_interval: Seconds between iterations.
-    session_dir: Path to session directory.
-    project_root: Root directory for gardening.
+**Parameters**:
 
-Returns:
-    The started NeverIdleLoop instance.
+- `sleep_interval`: Seconds between iterations.
+- `session_dir`: Path to session directory.
+- `project_root`: Root directory for gardening.
 
-```python
-start_never_idle(sleep_interval, session_dir, project_root)
-```
+**Returns**: The started NeverIdleLoop instance.
 
 ---
 
 ## stop
 
-Stop the never-idle loop.
-
 ```python
-stop(self)
+stop(self: Any)
 ```
+
+Stop the never-idle loop.
 
 ---
 

@@ -104,8 +104,8 @@ fn main() {
 
     // Agent detection
     let is_agent = env::var("AGENT_ID").is_ok()
-        || env::var("SHARECLI_AGENT").is_ok()
-        || env::var("SHARECLI_AGENT_CONTEXT").is_ok();
+        || env::var("heliosShield_AGENT").is_ok()
+        || env::var("heliosShield_AGENT_CONTEXT").is_ok();
 
     // Dispatch to handler
     match tool.as_str() {

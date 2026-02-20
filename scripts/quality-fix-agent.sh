@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # quality-fix-agent.sh — Run quality fix; on failure, pipe output to agent.
 # Flags: -d/--unsafe (ruff --unsafe-fixes), -a (agent on fail), -h (headless), -r (reload until green)
 set -euo pipefail

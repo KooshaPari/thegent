@@ -28,6 +28,7 @@ This document provides a unified index of all documentation across **40+ project
 - `docs/research/KUSH_ECOSYSTEM_DEEP_DIVE.md` - Ecosystem analysis (this series)
 
 **Architecture Docs**:
+- `docs/research/AX_MASTER_SPEC.md` - **The Grand Unified Performance & AX Specification (300+ items)**
 - `docs/research/DESIGN_POLISH_IMPLEMENTATION.md` - Design system
 - `docs/research/DOCGEN_DOCSITE_COMPLETE.md` - Documentation system
 
@@ -123,7 +124,7 @@ This document provides a unified index of all documentation across **40+ project
 
 ## Part 3: CLI Tools & Utilities
 
-### sharecli
+### heliosShield
 **Status**: ✅ Production | **Docs**: Comprehensive
 
 **Key Documentation**:
@@ -318,7 +319,7 @@ This document provides a unified index of all documentation across **40+ project
 - `atoms-mcp-prod/docs/guides/architecture.md` - MCP architecture
 - `morph/MORPHa.MD` - Complete architecture blueprint
 - `crun/docs/HEXAGONAL_ARCHITECTURE.md` - Hexagonal architecture
-- `sharecli/docs/architecture/` - Architecture documentation
+- `heliosShield/docs/architecture/` - Architecture documentation
 
 **Quick References**:
 - `plangent/docs/getting-started/QUICK_REFERENCE.md`
@@ -520,7 +521,7 @@ project/
 
 **Integration Guides**:
 - `thegent/docs/research/` - Integration research
-- `sharecli/docs/unified/` - Unified documentation
+- `heliosShield/docs/unified/` - Unified documentation
 
 **Patterns & Best Practices**:
 - `thegent/docs/research/DESIGN_POLISH_IMPLEMENTATION.md` - Design patterns
@@ -546,7 +547,7 @@ project/
 
 **For Integration**:
 1. `thegent/docs/research/KUSH_ECOSYSTEM_DEEP_DIVE.md` - Integration opportunities
-2. `sharecli/docs/unified/MASTER_INDEX.md` - Unified docs
+2. `heliosShield/docs/unified/MASTER_INDEX.md` - Unified docs
 3. Project-specific integration guides
 
 ---

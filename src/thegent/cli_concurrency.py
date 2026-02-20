@@ -39,16 +39,16 @@ def show_concurrency(
             max_concurrency=settings.max_concurrency,
             use_load_based=settings.concurrency_load_based,
         )
-        
+
         # Get current usage
         table = Table(show_header=True, header_style="bold")
         table.add_column("Setting", style="cyan")
         table.add_column("Value", style="green")
-        
+
         table.add_row("Max Concurrency", str(settings.max_concurrency))
         table.add_row("Load-Based", "Enabled" if settings.concurrency_load_based else "Disabled")
         table.add_row("Session Directory", str(session_path))
-        
+
         console.print()
         console.print(table)
     except Exception as e:
@@ -60,22 +60,39 @@ def set_concurrency(
     max_concurrency: int = typer.Argument(..., help="New max concurrency value"),
     session_dir: str | None = typer.Option(None, "--session-dir", "-d", help="Session directory"),
 ) -> None:
-    """Set concurrency limit."""
+    """Set concurrency limit (persistently in .env)."""
+    import os
+
+    from dotenv import set_key
     from rich.console import Console
 
     console = Console()
-    settings = ThegentSettings()
 
     if max_concurrency < 1:
         console.print("[red]Error: Max concurrency must be at least 1[/red]")
         raise typer.Exit(1)
 
-    # Update settings (this would typically update config file)
-    console.print(f"[green]Setting max concurrency to {max_concurrency}[/green]")
-    console.print("[yellow]Note: This updates runtime settings. For persistent changes, update config file.[/yellow]")
-    
-    # In a real implementation, this would update the config
-    # For now, we'll just show what would be set
+    # Find .env file
+    env_path = Path(".env")
+    if not env_path.exists():
+        # Try parent directories
+        curr = Path.cwd()
+        for _ in range(5):
+            if (curr / ".env").exists():
+                env_path = curr / ".env"
+                break
+            curr = curr.parent
+
+    if env_path.exists():
+        set_key(str(env_path), "THGENT_MAX_CONCURRENCY", str(max_concurrency))
+        console.print(f"[green]Successfully set THGENT_MAX_CONCURRENCY={max_concurrency} in {env_path}[/green]")
+    else:
+        # If no .env, we'll create one in the current directory if we're in the project root
+        # but better to just warn for now if we can't find it.
+        console.print("[yellow]Warning: Could not find .env file to persist changes.[/yellow]")
+        console.print(f"Setting THGENT_MAX_CONCURRENCY={max_concurrency} in current environment.")
+        os.environ["THGENT_MAX_CONCURRENCY"] = str(max_concurrency)
+
     console.print(f"New max concurrency: {max_concurrency}")
 
 

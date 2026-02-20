@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/security/quantum_safe.py`
 
 WP-24001: Post-Quantum Cryptographic (PQC) Signatures.
+
 Ensures that agent artifacts are signed using algorithms resistant to quantum computer attacks.
 Uses NIST-selected candidates like Dilithium or Falcon (Simulated).
 
@@ -17,44 +18,50 @@ Provides quantum-resistant digital signatures for agent artifacts.
 #### PQCSigner.__init__
 
 ```python
-__init__(self, algorithm)
+__init__(self: Any, algorithm: str)
 ```
+
+---
 
 #### PQCSigner.sign_artifact
 
+```python
+sign_artifact(self: Any, artifact_data: bytes)
+```
+
 Sign artifact data using the PQC private key.
 
-```python
-sign_artifact(self, artifact_data)
-```
+---
 
 #### PQCSigner.verify_signature
 
+```python
+verify_signature(self: Any, artifact_data: bytes, signature: str, public_key: str)
+```
+
 Verify a PQC signature.
 
-```python
-verify_signature(self, artifact_data, signature, public_key)
-```
+---
 
 ---
 
 ## sign_artifact
 
-Sign artifact data using the PQC private key.
-
 ```python
-sign_artifact(self, artifact_data)
+sign_artifact(self: Any, artifact_data: bytes)
 ```
+
+Sign artifact data using the PQC private key.
 
 ---
 
 ## verify_signature
 
-Verify a PQC signature.
-
 ```python
-verify_signature(self, artifact_data, signature, public_key)
+verify_signature(self: Any, artifact_data: bytes, signature: str, public_key: str)
 ```
+
+Verify a PQC signature.
 
 ---
 

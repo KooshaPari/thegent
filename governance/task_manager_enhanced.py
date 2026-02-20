@@ -8,7 +8,7 @@ import json
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from pathlib import Path
 
@@ -91,8 +91,8 @@ class Task:
     documentation_requirements: list[str] = field(default_factory=list)
 
     # Tracking (enhanced)
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
     started_at: datetime | None = None
     completed_at: datetime | None = None
     due_date: datetime | None = None
@@ -340,7 +340,7 @@ class TaskManagerEnhanced:
             json.dump(
                 {
                     "version": "2.0",
-                    "updated_at": datetime.now().isoformat(),
+                    "updated_at": datetime.now(tz=UTC).isoformat(),
                     "total_tasks": len(self.tasks),
                     "tasks": {task_id: task.to_dict() for task_id, task in self.tasks.items()},
                 },
@@ -416,7 +416,7 @@ class TaskManagerEnhanced:
 
     def get_overdue_tasks(self) -> list[Task]:
         """Get overdue tasks."""
-        now = datetime.now()
+        now = datetime.now(tz=UTC)
         return [
             task
             for task in self.tasks.values()
@@ -450,7 +450,7 @@ class TaskManagerEnhanced:
             key=lambda t: (
                 t.priority.value == TaskPriority.CRITICAL.value,
                 t.priority.value == TaskPriority.HIGH.value,
-                t.due_date or datetime.max,
+                t.due_date or datetime.max.replace(tzinfo=UTC),
             ),
             reverse=True,
         )
@@ -488,12 +488,12 @@ class TaskManagerEnhanced:
 
         old_status = task.status
         task.status = status
-        task.updated_at = datetime.now()
+        task.updated_at = datetime.now(tz=UTC)
 
         if status == TaskStatus.IN_PROGRESS and not task.started_at:
-            task.started_at = datetime.now()
+            task.started_at = datetime.now(tz=UTC)
         elif status == TaskStatus.COMPLETED:
-            task.completed_at = datetime.now()
+            task.completed_at = datetime.now(tz=UTC)
             task.progress_percentage = 100.0
 
         task.calculate_progress()
@@ -550,7 +550,7 @@ class TaskManagerEnhanced:
         overdue_tasks = self.get_overdue_tasks()
 
         return {
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(tz=UTC).isoformat(),
             "statistics": stats,
             "conflicts": {k: [t.id for t in v] for k, v in conflicts.items()},
             "ready_tasks": [t.id for t in ready_tasks[:10]],

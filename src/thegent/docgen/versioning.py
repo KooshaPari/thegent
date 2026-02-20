@@ -1,22 +1,23 @@
 """Implement version switcher for documentation."""
 
-from typing import List, Dict, Any
 import logging
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
+
 class VersioningManager:
     """Manage documentation versioning."""
-    
-    def __init__(self, versions: List[str]):
+
+    def __init__(self, versions: list[str]) -> None:
         self.versions = versions
 
     def generate_version_switcher_html(self, current_version: str) -> str:
         """Generate HTML for version switcher.
-        
+
         Args:
             current_version: Currently selected version
-            
+
         Returns:
             Version switcher HTML content
         """
@@ -24,7 +25,7 @@ class VersioningManager:
         for v in self.versions:
             selected = "selected" if v == current_version else ""
             options.append(f'<option value="{v}" {selected}>{v}</option>')
-        
+
         return f"""
 <div class="version-switcher">
     <label for="doc-version">Version:</label>
@@ -36,12 +37,12 @@ class VersioningManager:
 
     def generate_version_manifest(self) -> str:
         """Generate version manifest for documentation site.
-        
+
         Returns:
             JSON version manifest string
         """
         import json
-        
+
         manifest = {
             "versions": self.versions,
             "latest": self.versions[-1] if self.versions else "unknown",

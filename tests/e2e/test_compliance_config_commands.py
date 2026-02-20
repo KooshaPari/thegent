@@ -78,3 +78,8 @@ class TestComplianceConfigCommands:
         """thegent config show --help exits with code 0."""
         result = runner.invoke(app, ["config", "show", "--help"])
         assert result.exit_code == 0
+
+    def test_config_set_help(self) -> None:
+        """thegent config set --help exits with code 0."""
+        result = runner.invoke(app, ["config", "set", "--help"])
+        assert result.exit_code == 0

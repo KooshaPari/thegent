@@ -15,44 +15,50 @@ Aggregates and displays TRAFFIC KPIs (Throughput, Reliability, Availability, Fin
 #### KPIDashboard.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: ThegentSettings)
 ```
+
+---
 
 #### KPIDashboard.get_metrics
 
+```python
+get_metrics(self: Any)
+```
+
 Aggregate KPIs from various subsystems.
 
-```python
-get_metrics(self)
-```
+---
 
 #### KPIDashboard.render_summary
 
+```python
+render_summary(self: Any)
+```
+
 Render a text-based KPI summary.
 
-```python
-render_summary(self)
-```
+---
 
 ---
 
 ## get_metrics
 
-Aggregate KPIs from various subsystems.
-
 ```python
-get_metrics(self)
+get_metrics(self: Any)
 ```
+
+Aggregate KPIs from various subsystems.
 
 ---
 
 ## render_summary
 
-Render a text-based KPI summary.
-
 ```python
-render_summary(self)
+render_summary(self: Any)
 ```
+
+Render a text-based KPI summary.
 
 ---
 

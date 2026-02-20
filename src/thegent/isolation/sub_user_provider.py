@@ -1,26 +1,48 @@
 """Sub-user isolation provider implementation."""
 
+import logging
 import os
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Any, Dict, Optional
 
+# Conditional import for POSIX-only features
+try:
+    import resource
+except ImportError:
+    resource = None
+
+from thegent.infra.os_user_manager import OSUserManager
 from thegent.isolation.base_provider import IsolationProvider
 from thegent.isolation.exceptions import (
     ExecutionContextError,
     TenantAllocationError,
 )
 from thegent.isolation.models import TenantContext
+from thegent.isolation.uid_pool import UidPool
+from thegent.isolation.vfs import VfsAdapter
+from thegent.orchestration.cmd_share import CommandSharer
+
+logger = logging.getLogger(__name__)
 
 
 class SubUserIsolationProvider(IsolationProvider):
-    """Isolation provider using sub-user UIDs and temporary home directories."""
+    """
+    Optimized isolation provider using persistent UID pools,
+    VFS-backed home directories, and resource guardrails.
+
+    Supports L1/L2 nesting via OSUserManager.
+    """
 
     def __init__(
         self,
         base_home_dir: str = "/tmp/thegent",
         base_uid: int = 2000,
         uid_pool_size: int = 1000,
+        state_dir: str | None = None,
+        skel_dir: str | None = None,
+        enable_l1_nesting: bool = False,
     ) -> None:
         """
         Initialize SubUserIsolationProvider.
@@ -29,33 +51,53 @@ class SubUserIsolationProvider(IsolationProvider):
             base_home_dir: Base directory for tenant home directories
             base_uid: Starting UID for tenant allocation
             uid_pool_size: Maximum number of tenants (pool size)
+            state_dir: Directory for persistence (defaults to base_home_dir/.state)
+            skel_dir: Skeleton directory for home dir templates
+            enable_l1_nesting: Whether to use real OS users for L1 identity
         """
         self.base_home_dir = Path(base_home_dir)
-        self.base_uid = base_uid
-        self.uid_pool_size = uid_pool_size
+        self.state_dir = Path(state_dir) if state_dir else self.base_home_dir / ".state"
+        self.skel_dir = Path(skel_dir) if skel_dir else None
+        self.enable_l1_nesting = enable_l1_nesting
+
+        # Core components for optimization
+        self.uid_pool = UidPool(
+            base_uid=base_uid,
+            size=uid_pool_size,
+            state_file=self.state_dir / "uid_pool.json",
+        )
+        self.vfs = VfsAdapter(base_skel_dir=self.skel_dir)
+        self.os_user_manager = OSUserManager() if enable_l1_nesting else None
+        self.cmd_sharer = CommandSharer(self.base_home_dir / ".share")
+
         self._tenant_cache: dict[str, TenantContext] = {}
 
-        # Ensure base directory exists
+        # Ensure directories exist
         self.base_home_dir.mkdir(parents=True, exist_ok=True)
+        self.state_dir.mkdir(parents=True, exist_ok=True)
 
-    def allocate_tenant(self, tenant_id: str, agent_id: str | None = None) -> TenantContext:
+    def allocate_tenant(self, tenant_id: str, agent_id: str | None = None, role: str | None = None) -> TenantContext:
         """
-        Allocate resources for a tenant.
-
-        Uses hash-based UID allocation to ensure idempotency.
+        Allocate resources for a tenant using persistent UID pool and VFS.
+        Supports optional L1 OS User creation.
         """
         # Check cache first (idempotency)
         if tenant_id in self._tenant_cache:
             return self._tenant_cache[tenant_id]
 
         try:
-            # Hash tenant_id to get deterministic UID
-            uid = self.base_uid + (hash(tenant_id) % self.uid_pool_size)
+            l1_user = None
+            if self.enable_l1_nesting and role:
+                # Create/Get L1 OS User for this role (e.g., 'frontend_lead')
+                l1_user = self.os_user_manager.create_user(role)
+
+            # Allocate deterministic UID from persistent pool for L2
+            uid = self.uid_pool.allocate(tenant_id)
             gid = uid  # Use same UID as GID for simplicity
 
-            # Create home directory
+            # Create optimized home directory
             home_dir = self.base_home_dir / tenant_id
-            home_dir.mkdir(parents=True, exist_ok=True)
+            self.vfs.create_home_dir(home_dir, tenant_id)
 
             # Create TenantContext
             ctx = TenantContext(
@@ -65,6 +107,10 @@ class SubUserIsolationProvider(IsolationProvider):
                 gid=gid,
                 home_dir=str(home_dir),
             )
+
+            if l1_user:
+                ctx.metadata["l1_username"] = l1_user.username
+                ctx.metadata["l1_uid"] = l1_user.uid
 
             # Cache the context
             self._tenant_cache[tenant_id] = ctx
@@ -78,17 +124,50 @@ class SubUserIsolationProvider(IsolationProvider):
         context: TenantContext,
         command: list,
         timeout_sec: int = 300,
+        limits: dict[str, Any] | None = None,
+        share: bool = False,
     ) -> dict:
         """
-        Execute a command in the tenant's isolated context.
-
-        Environment variables and working directory are set from context.
+        Execute a command in the tenant's isolated context with resource guardrails.
+        If 'share' is True, uses CommandSharer to debounce and attach to existing runs.
         """
         try:
             # Build environment with tenant variables
             env = os.environ.copy()
             env.update(context.env_vars)
             env["HOME"] = context.home_dir
+            env["TMPDIR"] = context.home_dir  # Isolate temp files
+
+            if share:
+                return self.cmd_sharer.execute_shared(
+                    command=command,
+                    cwd=Path(context.home_dir),
+                    env=env
+                )
+
+            # Default guardrail limits (can be tuned via Harness Cards)
+            effective_limits = {
+                "nproc": 100,
+                "nofile": 1024,
+                "as": 1024 * 1024 * 1024,  # 1GB virtual memory
+            }
+            if limits:
+                effective_limits.update(limits)
+
+            def preexec_fn():
+                """Apply POSIX resource limits before execution."""
+                if resource is None:
+                    return
+                try:
+                    # Set process count limit
+                    resource.setrlimit(resource.RLIMIT_NPROC, (effective_limits["nproc"], effective_limits["nproc"]))
+                    # Set file descriptor limit
+                    resource.setrlimit(resource.RLIMIT_NOFILE, (effective_limits["nofile"], effective_limits["nofile"]))
+                    # Set address space (memory) limit
+                    resource.setrlimit(resource.RLIMIT_AS, (effective_limits["as"], effective_limits["as"]))
+                except Exception as e:
+                    # Non-fatal: some systems (WSL2 with specific configs) may restrict setrlimit
+                    logger.debug(f"Failed to set rlimit: {e}")
 
             # Execute command
             result = subprocess.run(
@@ -98,6 +177,7 @@ class SubUserIsolationProvider(IsolationProvider):
                 capture_output=True,
                 text=True,
                 timeout=timeout_sec,
+                preexec_fn=preexec_fn if os.name == "posix" else None,
             )
 
             return {
@@ -106,7 +186,7 @@ class SubUserIsolationProvider(IsolationProvider):
                 "stderr": result.stderr,
             }
 
-        except subprocess.TimeoutExpired as e:
+        except subprocess.TimeoutExpired:
             raise ExecutionContextError(f"Command timeout after {timeout_sec}s: {' '.join(command)}")
         except Exception as e:
             raise ExecutionContextError(f"Failed to execute command in context {context.tenant_id}: {e}")
@@ -114,18 +194,17 @@ class SubUserIsolationProvider(IsolationProvider):
     def cleanup_tenant(self, context: TenantContext) -> None:
         """
         Clean up resources allocated for a tenant.
-
-        Removes the tenant's home directory and evicts from cache.
         """
         try:
-            # Remove home directory if it exists
+            # Use VFS for safe cleanup (unmount + remove)
             home_dir = Path(context.home_dir)
-            if home_dir.exists():
-                shutil.rmtree(home_dir, ignore_errors=True)
+            self.vfs.cleanup_home_dir(home_dir, context.tenant_id)
+
+            # Release UID back to pool
+            self.uid_pool.release(context.tenant_id)
 
             # Remove from cache
             self._tenant_cache.pop(context.tenant_id, None)
 
         except Exception as e:
-            # Log but don't raise - cleanup should be best-effort
-            pass
+            logger.warning(f"Cleanup failed for tenant {context.tenant_id}: {e}")

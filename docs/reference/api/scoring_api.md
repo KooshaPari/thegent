@@ -15,44 +15,50 @@ Scores providers based on historical performance and learning.
 #### ProviderScorer.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: ThegentSettings)
 ```
+
+---
 
 #### ProviderScorer.get_score
 
+```python
+get_score(self: Any, provider_id: str)
+```
+
 Get the current score for a provider (0.0 to 1.0).
 
-```python
-get_score(self, provider_id)
-```
+---
 
 #### ProviderScorer.update_score
 
+```python
+update_score(self: Any, provider_id: str, latency_s: float, success: bool)
+```
+
 Update provider score based on a new result.
 
-```python
-update_score(self, provider_id, latency_s, success)
-```
+---
 
 ---
 
 ## get_score
 
-Get the current score for a provider (0.0 to 1.0).
-
 ```python
-get_score(self, provider_id)
+get_score(self: Any, provider_id: str)
 ```
+
+Get the current score for a provider (0.0 to 1.0).
 
 ---
 
 ## update_score
 
-Update provider score based on a new result.
-
 ```python
-update_score(self, provider_id, latency_s, success)
+update_score(self: Any, provider_id: str, latency_s: float, success: bool)
 ```
+
+Update provider score based on a new result.
 
 ---
 

@@ -2,15 +2,6 @@
 
 > **Source**: `src/thegent/governance/health_score.py`
 
-Composite health score model (0-100) for autonomous codebase governance.
-
-Replaces XP/gamification with a weighted, multi-dimensional health metric.
-Each dimension (test coverage, lint violations, etc.) is normalized against
-targets defined in contracts/health-targets.json and combined into a single
-score that drives autonomous agent scheduling decisions.
-
----
-
 ## DimensionScore
 
 Score for a single health dimension with normalization against target.
@@ -23,7 +14,7 @@ Score for a single health dimension with normalization against target.
 
 Health classification bands derived from composite score.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -48,70 +39,76 @@ into a weighted 0-100 composite score.
 #### HealthScoreComputer.__init__
 
 ```python
-__init__(self, health_targets_path)
+__init__(self: Any, health_targets_path: Path)
 ```
+
+---
 
 #### HealthScoreComputer.compute
 
+```python
+compute(self: Any, dimension_values: dict[(str, float)])
+```
+
 Compute a health score from raw dimension measurements.
 
-Args:
-    dimension_values: mapping of dimension name to raw measured value.
-        Dimensions not present in the dict default to their worst case
-        (0 for higher_is_better, target*2 for lower_is_better).
+**Parameters**:
 
-Returns:
-    A fully populated HealthScore.
+- `dimension_values`: mapping of dimension name to raw measured value.
+Dimensions not present in the dict default to their worst case
+(0 for higher_is_better, target*2 for lower_is_better).
 
-```python
-compute(self, dimension_values)
-```
+**Returns**: A fully populated HealthScore.
+
+---
 
 #### HealthScoreComputer.compute_with_trend
 
+```python
+compute_with_trend(self: Any, dimension_values: dict[(str, float)], previous_score: Any)
+```
+
 Compute health score and derive trend from comparison with previous score.
 
-```python
-compute_with_trend(self, dimension_values, previous_score)
-```
+---
 
 ---
 
 ## compute
 
+```python
+compute(self: Any, dimension_values: dict[(str, float)])
+```
+
 Compute a health score from raw dimension measurements.
 
-Args:
-    dimension_values: mapping of dimension name to raw measured value.
-        Dimensions not present in the dict default to their worst case
-        (0 for higher_is_better, target*2 for lower_is_better).
+**Parameters**:
 
-Returns:
-    A fully populated HealthScore.
+- `dimension_values`: mapping of dimension name to raw measured value.
+Dimensions not present in the dict default to their worst case
+(0 for higher_is_better, target*2 for lower_is_better).
 
-```python
-compute(self, dimension_values)
-```
+**Returns**: A fully populated HealthScore.
 
 ---
 
 ## compute_with_trend
 
-Compute health score and derive trend from comparison with previous score.
-
 ```python
-compute_with_trend(self, dimension_values, previous_score)
+compute_with_trend(self: Any, dimension_values: dict[(str, float)], previous_score: Any)
 ```
+
+Compute health score and derive trend from comparison with previous score.
 
 ---
 
 ## get_band
 
-Return the appropriate HealthBand for a numeric score (0-100).
-
 ```python
-get_band(score)
+get_band(score: float)
 ```
+
+Return the appropriate HealthBand for a numeric score (0-100).
 
 ---
 

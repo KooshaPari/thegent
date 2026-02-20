@@ -10,26 +10,27 @@ Manages system-wide shared LSP servers, scoping down to per-project only when ne
 
 ## ensure_shared_lsp_server
 
-Ensure shared LSP server is running (system-wide by default).
-Returns: stdio pipe path or socket path or None
-
 ```python
-ensure_shared_lsp_server(project_root, language)
+ensure_shared_lsp_server(project_root: Any, language: str)
 ```
+
+Ensure shared LSP server is running (system-wide by default).
+
+Returns: stdio pipe path or socket path or None
 
 ---
 
 ## get_lsp_server_scope
 
+```python
+get_lsp_server_scope(project_root: Any, language: str)
+```
+
 Determine LSP server scope (system-wide or project-scoped).
+
 Default: system-wide. Scope down only if project requires isolation.
 
-Returns:
-    (scope_type, lockfile_path)
-
-```python
-get_lsp_server_scope(project_root, language)
-```
+**Returns**: (scope_type, lockfile_path)
 
 ---
 

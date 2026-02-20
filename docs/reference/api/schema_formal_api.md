@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/verification/schema_formal.py`
 
 WP-27003: Formal Verification of Schema Evolution.
+
 Ensures schema changes maintain backward compatibility and follow evolution policies.
 
 ---
@@ -15,14 +16,21 @@ Verifies evolution between two schema versions to prevent breaking changes.
 
 #### SchemaEvolutionVerifier.check_liveness_impact
 
-WP-25001: Check if evolution impacts agent liveness.
-Removing critical tags (STATUS, SUMMARY) impacts liveness.
-
 ```python
-check_liveness_impact(self, evolution_report)
+check_liveness_impact(self: Any, evolution_report: dict[(str, Any)])
 ```
 
+WP-25001: Check if evolution impacts agent liveness.
+
+Removing critical tags (STATUS, SUMMARY) impacts liveness.
+
+---
+
 #### SchemaEvolutionVerifier.verify_compatibility
+
+```python
+verify_compatibility(self: Any, old_schema: dict[(str, Any)], new_schema: dict[(str, Any)])
+```
 
 Check for breaking changes between old and new schema.
 
@@ -31,33 +39,39 @@ A breaking change is:
 - Change of field type (if strictly typed)
 - Making an existing optional field mandatory
 
-```python
-verify_compatibility(self, old_schema, new_schema)
-```
+---
 
 #### SchemaEvolutionVerifier.verify_tag_evolution
 
+```python
+verify_tag_evolution(self: Any, old_tags: list[str], new_tags: list[str])
+```
+
 Verify evolution of a list of allowed XML tags.
+
 Removing a tag is breaking; adding is an evolution.
 
-```python
-verify_tag_evolution(self, old_tags, new_tags)
-```
+---
 
 ---
 
 ## check_liveness_impact
 
-WP-25001: Check if evolution impacts agent liveness.
-Removing critical tags (STATUS, SUMMARY) impacts liveness.
-
 ```python
-check_liveness_impact(self, evolution_report)
+check_liveness_impact(self: Any, evolution_report: dict[(str, Any)])
 ```
+
+WP-25001: Check if evolution impacts agent liveness.
+
+Removing critical tags (STATUS, SUMMARY) impacts liveness.
 
 ---
 
 ## verify_compatibility
+
+```python
+verify_compatibility(self: Any, old_schema: dict[(str, Any)], new_schema: dict[(str, Any)])
+```
 
 Check for breaking changes between old and new schema.
 
@@ -66,20 +80,17 @@ A breaking change is:
 - Change of field type (if strictly typed)
 - Making an existing optional field mandatory
 
-```python
-verify_compatibility(self, old_schema, new_schema)
-```
-
 ---
 
 ## verify_tag_evolution
 
-Verify evolution of a list of allowed XML tags.
-Removing a tag is breaking; adding is an evolution.
-
 ```python
-verify_tag_evolution(self, old_tags, new_tags)
+verify_tag_evolution(self: Any, old_tags: list[str], new_tags: list[str])
 ```
+
+Verify evolution of a list of allowed XML tags.
+
+Removing a tag is breaking; adding is an evolution.
 
 ---
 

@@ -9,14 +9,17 @@
 #### EditLease.is_expired
 
 ```python
-is_expired(self)
+is_expired(self: Any)
 ```
+
+---
 
 ---
 
 ## EditLeaseManager
 
 MTSP-11: Centralized edit lease management for multi-tenant agent environments.
+
 Prevents agent-on-agent edit collisions by providing advisory locks with TTL.
 
 ### Methods
@@ -24,98 +27,108 @@ Prevents agent-on-agent edit collisions by providing advisory locks with TTL.
 #### EditLeaseManager.__init__
 
 ```python
-__init__(self, state_dir)
+__init__(self: Any, state_dir: Path)
 ```
+
+---
 
 #### EditLeaseManager.acquire
 
+```python
+acquire(self: Any, path: str, agent_id: str, duration: float, force: bool)
+```
+
 Acquire an advisory lease on a file path.
 
-```python
-acquire(self, path, agent_id, duration, force)
-```
+---
 
 #### EditLeaseManager.check
 
+```python
+check(self: Any, path: str, agent_id: Any)
+```
+
 Check if a path is currently leased by another agent.
 
-```python
-check(self, path, agent_id)
-```
+---
 
 #### EditLeaseManager.prune
 
+```python
+prune(self: Any)
+```
+
 Remove all expired leases.
 
-```python
-prune(self)
-```
+---
 
 #### EditLeaseManager.release
 
+```python
+release(self: Any, path: str, agent_id: str)
+```
+
 Release a lease if held by the agent.
 
-```python
-release(self, path, agent_id)
-```
+---
 
 ---
 
 ## acquire
 
-Acquire an advisory lease on a file path.
-
 ```python
-acquire(self, path, agent_id, duration, force)
+acquire(self: Any, path: str, agent_id: str, duration: float, force: bool)
 ```
+
+Acquire an advisory lease on a file path.
 
 ---
 
 ## check
 
-Check if a path is currently leased by another agent.
-
 ```python
-check(self, path, agent_id)
+check(self: Any, path: str, agent_id: Any)
 ```
+
+Check if a path is currently leased by another agent.
 
 ---
 
 ## get_lease_manager
 
-Return shared in-memory EditLeaseManager. MTSP-14: zero-latency lock coordination.
-
 ```python
-get_lease_manager(state_dir)
+get_lease_manager(state_dir: Path)
 ```
+
+Return shared in-memory EditLeaseManager. MTSP-14: zero-latency lock coordination.
 
 ---
 
 ## is_expired
 
 ```python
-is_expired(self)
+is_expired(self: Any) -> bool
 ```
 
 ---
 
 ## prune
 
-Remove all expired leases.
-
 ```python
-prune(self)
+prune(self: Any)
 ```
+
+Remove all expired leases.
 
 ---
 
 ## release
 
-Release a lease if held by the agent.
-
 ```python
-release(self, path, agent_id)
+release(self: Any, path: str, agent_id: str)
 ```
+
+Release a lease if held by the agent.
 
 ---
 

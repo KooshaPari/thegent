@@ -12,6 +12,7 @@ def create_agent_executor(
     mode: str = "write",
     timeout: int = 300,
     model: str | None = None,
+    agent_map: dict[str, str] | None = None,
 ) -> callable:
     """
     Create agent_executor callback that uses thegent's codex/cc/droid harness.
@@ -21,6 +22,7 @@ def create_agent_executor(
         mode: Execution mode (read-only, write, full)
         timeout: Timeout in seconds
         model: Optional model override
+        agent_map: Optional map of agent_id -> agent_name/role
 
     Returns:
         Callable (agent_id, prompt, context) -> ExecutionResult
@@ -38,7 +40,10 @@ def create_agent_executor(
         Returns:
             ExecutionResult
         """
-        # Map agent_id to agent name
+        # Resolve agent name from map if provided
+        lookup_id = agent_map.get(agent_id, agent_id) if agent_map else agent_id
+
+        # Map agent_id/name to actual CLI name
         agent_name_map: dict[str, str] = {
             "codex": "codex",
             "cursor": "cursor-agent",
@@ -46,10 +51,11 @@ def create_agent_executor(
             "claude": "claude",
             "copilot": "copilot",
             "gemini": "gemini",
-            "droid": "opencode",  # droid uses opencode CLI
+            "droid": "opencode",
+            "opencode": "opencode",
         }
 
-        agent_name = agent_name_map.get(agent_id.lower(), agent_id.lower())
+        agent_name = agent_name_map.get(lookup_id.lower(), lookup_id.lower())
 
         # Use model from context or default
         use_model = context.get("model") or model
@@ -66,6 +72,7 @@ def create_agent_executor(
                 timeout=timeout,
                 use_stream=True,
                 live_output=False,
+                agent_model=use_model,
             )
 
             # Convert RunResult to ExecutionResult

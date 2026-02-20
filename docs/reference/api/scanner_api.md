@@ -1,79 +1,155 @@
 # scanner API Reference
 
-> **Source**: `src/thegent/governance/scanner.py`
+> **Source**: `src/thegent/agents/document/scanner.py`
 
-Codebase scanner producing structured dimension measurements.
+Markdown File Scanner
 
-Python port of hooks/gardener-scan.sh.  Runs 8 scan dimensions
-(test coverage, lint violations, doc organisation, fragmented research,
-missing specs, technical debt, stale items, agent failure) and returns
-pydantic models consumable by the health-score computer.
+Scans directories for markdown files, organizing them by modification date
+and location. Supports configurable scan parameters and exclusion patterns.
 
 ---
 
-## CodebaseScanner
+## MarkdownScanner
 
-Scans the codebase across 8 governance dimensions.
+Scans directories for markdown files and organizes by date/location.
 
 ### Methods
 
-#### CodebaseScanner.__init__
+#### MarkdownScanner.__init__
 
 ```python
-__init__(self, project_dir, session_dir)
-```
-
-#### CodebaseScanner.scan_all
-
-Run every dimension scan and return the aggregated result.
-
-```python
-scan_all(self)
-```
-
-#### CodebaseScanner.scan_dimension
-
-Run a single dimension scan by name.
-
-```python
-scan_dimension(self, dimension)
+__init__(self: Any, config: ScanConfig)
 ```
 
 ---
 
-## DimensionScan
-
-Result of a single scan dimension.
-
-**Inherits from**: `BaseModel`
-
----
-
-## ScanResult
-
-Aggregated result of all dimension scans.
-
-**Inherits from**: `BaseModel`
-
----
-
-## scan_all
-
-Run every dimension scan and return the aggregated result.
+#### MarkdownScanner.get_file_date
 
 ```python
-scan_all(self)
+get_file_date(self: Any, filepath: Path)
 ```
+
+Get file modification date as YYYY-MM.
 
 ---
 
-## scan_dimension
-
-Run a single dimension scan by name.
+#### MarkdownScanner.get_summary
 
 ```python
-scan_dimension(self, dimension)
+get_summary(self: Any)
 ```
+
+Get summary statistics of scan results.
+
+---
+
+#### MarkdownScanner.save_results
+
+```python
+save_results(self: Any, output_path: Any)
+```
+
+Save scan results to JSON file.
+
+---
+
+#### MarkdownScanner.scan
+
+```python
+scan(self: Any)
+```
+
+Perform scan of all configured locations.
+
+---
+
+#### MarkdownScanner.scan_directory
+
+```python
+scan_directory(self: Any, base_path: str, recursive: bool, max_depth: Any)
+```
+
+Scan directory for .md files.
+
+---
+
+#### MarkdownScanner.should_exclude
+
+```python
+should_exclude(self: Any, filepath: Path)
+```
+
+Check if filepath should be excluded.
+
+---
+
+---
+
+## ScanConfig
+
+Configuration for markdown file scanning.
+
+### Methods
+
+---
+
+## get_file_date
+
+```python
+get_file_date(self: Any, filepath: Path)
+```
+
+Get file modification date as YYYY-MM.
+
+---
+
+## get_summary
+
+```python
+get_summary(self: Any)
+```
+
+Get summary statistics of scan results.
+
+---
+
+## save_results
+
+```python
+save_results(self: Any, output_path: Any)
+```
+
+Save scan results to JSON file.
+
+---
+
+## scan
+
+```python
+scan(self: Any)
+```
+
+Perform scan of all configured locations.
+
+---
+
+## scan_directory
+
+```python
+scan_directory(self: Any, base_path: str, recursive: bool, max_depth: Any)
+```
+
+Scan directory for .md files.
+
+---
+
+## should_exclude
+
+```python
+should_exclude(self: Any, filepath: Path)
+```
+
+Check if filepath should be excluded.
 
 ---
 

@@ -1,0 +1,92 @@
+# config_provider API Reference
+
+> **Source**: `src/thegent/governance/config_provider.py`
+
+WP-10001: ConfigProvider protocol and implementations for Control Plane Phase 1.
+
+---
+
+## ConfigProvider
+
+Protocol for configuration resolution with override semantics.
+
+**Inherits from**: `Protocol`
+
+### Methods
+
+#### ConfigProvider.get_tenant_config
+
+```python
+get_tenant_config(self: Any, tenant_id: str)
+```
+
+Fetch raw configuration for a specific tenant.
+
+---
+
+#### ConfigProvider.resolve
+
+```python
+resolve(self: Any, tenant_id: Any, session_id: Any, request_overrides: Any, keys: Any)
+```
+
+Resolve config for a given context.
+
+Resolution order: request_overrides -> session -> tenant -> stamp -> global.
+
+---
+
+---
+
+## EnvConfigProvider
+
+Standard implementation using local ThegentSettings (env vars).
+
+Ignores tenant/session isolation; merges request overrides onto base settings.
+
+### Methods
+
+#### EnvConfigProvider.get_tenant_config
+
+```python
+get_tenant_config(self: Any, tenant_id: str)
+```
+
+Env provider does not support multi-tenancy yet.
+
+---
+
+#### EnvConfigProvider.resolve
+
+```python
+resolve(self: Any, tenant_id: Any, session_id: Any, request_overrides: Any, keys: Any)
+```
+
+---
+
+---
+
+## get_config_provider
+
+Factory to get the active config provider based on environment.
+
+---
+
+## get_tenant_config
+
+```python
+get_tenant_config(self: Any, tenant_id: str)
+```
+
+Env provider does not support multi-tenancy yet.
+
+---
+
+## resolve
+
+```python
+resolve(self: Any, tenant_id: Any, session_id: Any, request_overrides: Any, keys: Any) -> dict[(str, Any)]
+```
+
+---
+

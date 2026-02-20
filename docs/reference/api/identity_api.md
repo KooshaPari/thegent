@@ -23,32 +23,40 @@ WP-6004: Manages agent identity, DID, and signing keys.
 #### AgentIdentity.__init__
 
 ```python
-__init__(self, agent_name, swarm_id)
+__init__(self: Any, agent_name: str, swarm_id: str)
 ```
+
+---
 
 #### AgentIdentity.get_did_document
 
+```python
+get_did_document(self: Any)
+```
+
 Return the agent's DID document.
 
-```python
-get_did_document(self)
-```
+---
 
 #### AgentIdentity.sign
 
+```python
+sign(self: Any, data: str)
+```
+
 Sign data with agent's private key (mocked).
 
-```python
-sign(self, data)
-```
+---
 
 #### AgentIdentity.verify
 
+```python
+verify(self: Any, data: str, signature: str)
+```
+
 Verify signature with agent's public key (mocked).
 
-```python
-verify(self, data, signature)
-```
+---
 
 ---
 
@@ -62,31 +70,31 @@ Proof of agent capability or identity.
 
 ## get_did_document
 
-Return the agent's DID document.
-
 ```python
-get_did_document(self)
+get_did_document(self: Any)
 ```
+
+Return the agent's DID document.
 
 ---
 
 ## sign
 
-Sign data with agent's private key (mocked).
-
 ```python
-sign(self, data)
+sign(self: Any, data: str)
 ```
+
+Sign data with agent's private key (mocked).
 
 ---
 
 ## verify
 
-Verify signature with agent's public key (mocked).
-
 ```python
-verify(self, data, signature)
+verify(self: Any, data: str, signature: str)
 ```
+
+Verify signature with agent's public key (mocked).
 
 ---
 

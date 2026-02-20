@@ -18,35 +18,45 @@ from typing import Any, cast
 
 import typer
 
+
 # Lazy import for fast subprocess
 def _get_run_subprocess_optimized():
     from thegent.infra import run_subprocess_optimized
+
     return run_subprocess_optimized
+
 
 class LazyConsole:
     """Lazy-loaded rich console to speed up CLI startup."""
-    def __getattr__(self, name):
+
+    def __getattr__(self, name) -> Any:
         from rich.console import Console
+
         global console
         console = Console()
         return getattr(console, name)
+
 
 console = LazyConsole()
 
 # from rich.console import Console  <-- removed to avoid top-level import
 from rich.table import Table
 
+
 # Lazy imports for thegent modules to speed up startup.
-def _lazy_import(module: str, name: str):
-    def wrapper(*args, **kwargs):
+def _lazy_import(module: str, name: str) -> Any:
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         import importlib
+
         m = importlib.import_module(module)
         f = getattr(m, name)
         # For non-callable attributes (like constants), we might need another way,
         # but for functions this works and replaces the global.
         globals()[name] = f
         return f(*args, **kwargs)
+
     return wrapper
+
 
 # thegent.agents
 list_agent_names = _lazy_import("thegent.agents", "list_agent_names")
@@ -87,18 +97,12 @@ dag_recover_impl = _lazy_import("thegent.cli_impl", "dag_recover_impl")
 dag_run_impl = _lazy_import("thegent.cli_impl", "dag_run_impl")
 dag_sync_impl = _lazy_import("thegent.cli_impl", "dag_sync_impl")
 
+
 # thegent.config & execution
-def ThegentSettings(*args, **kwargs):
-    from thegent.config import ThegentSettings as Impl
-    return Impl(*args, **kwargs)
+ThegentSettings = _lazy_import("thegent.config", "ThegentSettings")
+RunRegistry = _lazy_import("thegent.execution", "RunRegistry")
+get_exit_message = _lazy_import("thegent.exit_codes", "get_exit_message")
 
-def RunRegistry(*args, **kwargs):
-    from thegent.execution import RunRegistry as Impl
-    return Impl(*args, **kwargs)
-
-def get_exit_message(*args, **kwargs):
-    from thegent.exit_codes import get_exit_message as Impl
-    return Impl(*args, **kwargs)
 
 # Constants
 EXIT_TIMEOUT = 124
@@ -206,10 +210,15 @@ def run_cmd(
     search: bool = True,
     debug: bool = False,
     task_id: str | None = None,
+    tenant: str | None = None,
 ) -> None:
     """Run an agent or droid with the given prompt. Model-first: agent=None, model set."""
     from thegent.cli_impl import run_impl
     from thegent.models import ModelCatalog, resolve_route
+    from thegent.config_provider import get_config_provider, _resolve_tenant_from_cwd
+
+    # WP-CP-4.3: Resolve tenant from flag or CWD
+    effective_tenant = tenant or _resolve_tenant_from_cwd(cd)
 
     # Model-first: resolve agent via routing policy (WP-5003 cost_quality supported)
     effective_agent = agent
@@ -251,14 +260,21 @@ def run_cmd(
             )
 
     # WP-X2/X5/X6/X7: Unified execution via run_impl (FSM + Policy + Telemetry)
-    from thegent.config_provider import get_config_provider
+    cp_provider = get_config_provider()
+    
+    # WP-CP-3.1: Resolve config for tenant/session with overrides
+    resolved_config = cp_provider.resolve(
+        tenant_id=effective_tenant,
+        session_id=run_id,
+        request_overrides={"default_timeout": timeout} if timeout else {}
+    )
 
     res = run_impl(
         agent=effective_agent or agent,
         prompt=prompt,
         cd=cd,
         mode=mode,
-        timeout=timeout,
+        timeout=resolved_config.get("default_timeout", timeout),
         full=full,
         live=live,
         model=model,
@@ -277,7 +293,8 @@ def run_cmd(
         enable_search=search,
         debug=debug,
         task_id=task_id,
-        config_provider=get_config_provider(),
+        config_provider=cp_provider,
+        tenant_id=effective_tenant,
     )
 
     if "error" in res:
@@ -398,8 +415,13 @@ def bg_cmd(
     speculative: bool = False,
     debug: bool = False,
     task_id: str | None = None,
+    tenant: str | None = None,
 ) -> str:
     from thegent.cli_impl import bg_impl
+    from thegent.config_provider import get_config_provider, _resolve_tenant_from_cwd
+
+    # WP-CP-4.3: Resolve tenant from flag or CWD
+    effective_tenant = tenant or _resolve_tenant_from_cwd(cd)
 
     # WP-5002: Session-start warning when session count high (memory optimization)
     settings = ThegentSettings()
@@ -418,14 +440,21 @@ def bg_cmd(
             )
 
     # WP-X2/X5/X6/X7: Unified background execution via bg_impl
-    from thegent.config_provider import get_config_provider
+    cp_provider = get_config_provider()
+    
+    # WP-CP-3.1: Resolve config for tenant/session with overrides
+    resolved_config = cp_provider.resolve(
+        tenant_id=effective_tenant,
+        session_id=run_id,
+        request_overrides={"default_timeout": timeout} if timeout else {}
+    )
 
     res = bg_impl(
         agent=agent,
         prompt=prompt,
         cd=cd,
         mode=mode,
-        timeout=timeout,
+        timeout=resolved_config.get("default_timeout", timeout),
         full=full,
         model=model,
         provider=provider,
@@ -446,7 +475,8 @@ def bg_cmd(
         speculative=speculative,
         debug=debug,
         task_id=task_id,
-        config_provider=get_config_provider(),
+        config_provider=cp_provider,
+        tenant_id=effective_tenant,
     )
 
     if "error" in res:
@@ -964,6 +994,31 @@ def interruption_list_cmd(limit: int = 20, format: str | None = None) -> None:
     console.print(f"[dim]Fatigue score: {fatigue:.2f} (ceiling: {it.ALERTS_PER_HOUR_CEILING}/hr)[/dim]")
 
 
+def config_set_cmd(key: str, value: str) -> None:
+    """WP-3004: Set a configuration value in .env file."""
+    env_path = Path(".env")
+    key_upper = f"THGENT_{key.upper()}"
+    line = f"{key_upper}={value}\n"
+
+    if env_path.exists():
+        lines = env_path.read_text(encoding="utf-8").splitlines(keepends=True)
+        updated = False
+        for i, l in enumerate(lines):
+            if l.startswith(f"{key_upper}="):
+                lines[i] = line
+                updated = True
+                break
+        if not updated:
+            if lines and not lines[-1].endswith("\n"):
+                lines[-1] += "\n"
+            lines.append(line)
+        env_path.write_text("".join(lines), encoding="utf-8")
+    else:
+        env_path.write_text(line, encoding="utf-8")
+
+    console.print(f"[green]Configured [bold]{key}[/bold] = {value} in .env[/green]")
+
+
 def config_check_cmd(format: str | None = None) -> None:
     """Validate config and report issues (DX-010, ROB-013)."""
     from pydantic import ValidationError
@@ -1074,7 +1129,7 @@ def concurrency_set_cmd(limit: int) -> None:
             new_lines.append(f"THGENT_MAX_CONCURRENCY={limit}")
         else:
             new_lines.append("")
-            new_lines.append(f"# --- Concurrency ---")
+            new_lines.append("# --- Concurrency ---")
             new_lines.append(f"THGENT_MAX_CONCURRENCY={limit}")
 
     env_file.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
@@ -1124,9 +1179,7 @@ def _get_health_targets_path(project_dir: Path) -> Path:
     if cwd_health.exists():
         return cwd_health
     # Default: raise error
-    raise FileNotFoundError(
-        f"health-targets.json not found. Expected at {health_targets} or {cwd_health}"
-    )
+    raise FileNotFoundError(f"health-targets.json not found. Expected at {health_targets} or {cwd_health}")
 
 
 def _health_targets_exists(project_dir: Path) -> bool:
@@ -1250,8 +1303,8 @@ def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> N
 
 def govern_go_status_cmd(cd: Path | None = None) -> None:
     """Show current governance status (state, cycle_id, shutdown_requested)."""
-    from thegent.governance.agileplus import AgilePlusLoop
     from thegent.config import ThegentSettings
+    from thegent.governance.agileplus import AgilePlusLoop
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()
@@ -1275,7 +1328,7 @@ def govern_go_status_cmd(cd: Path | None = None) -> None:
     table.add_row("Cycle ID", loop.cycle_id or "[dim]none[/dim]")
     table.add_row(
         "Shutdown Requested",
-        "[red]True[/red]" if loop._shutdown_requested else "[green]False[/green]",
+        "[red]True[/red]" if loop.shutdown_requested else "[green]False[/green]",
     )
     console.print(table)
 
@@ -1284,9 +1337,10 @@ def govern_go_cycle_cmd(cd: Path | None = None, force: bool = False, format: str
     """Run a single governance cycle."""
     import uuid
     from datetime import UTC, datetime
+
+    from thegent.config import ThegentSettings
     from thegent.governance.health_score import HealthScoreComputer, get_band
     from thegent.governance.scanner import CodebaseScanner
-    from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()
@@ -1363,9 +1417,10 @@ def govern_go_watch_cmd(
     import time
     import uuid
     from datetime import UTC, datetime
+
+    from thegent.config import ThegentSettings
     from thegent.governance.health_score import HealthScoreComputer, get_band
     from thegent.governance.scanner import CodebaseScanner
-    from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()
@@ -1393,16 +1448,20 @@ def govern_go_watch_cmd(
             health = health_computer.compute(dimension_values)
             completed_at = datetime.now(UTC).isoformat()
 
-            results.append({
-                "cycle_id": cycle_id,
-                "health_score": health.score,
-                "health_band": health.band.value if hasattr(health, 'band') else get_band(health.score).value,
-                "started_at": started_at,
-                "completed_at": completed_at,
-            })
+            results.append(
+                {
+                    "cycle_id": cycle_id,
+                    "health_score": health.score,
+                    "health_band": health.band.value if hasattr(health, "band") else get_band(health.score).value,
+                    "started_at": started_at,
+                    "completed_at": completed_at,
+                }
+            )
 
             cycles_run += 1
-            console.print(f"Cycle {cycles_run} ({cycle_id}): score={health.score:.2f}, band={health.band.value if hasattr(health, 'band') else get_band(health.score).value}")
+            console.print(
+                f"Cycle {cycles_run} ({cycle_id}): score={health.score:.2f}, band={health.band.value if hasattr(health, 'band') else get_band(health.score).value}"
+            )
 
             if max_cycles is not None and cycles_run >= max_cycles:
                 break
@@ -1464,7 +1523,7 @@ def usage_cmd(format: str | None = None, include_cost: bool = True) -> None:
 
     metrics = fetch_provider_metrics(settings)
     data: dict[str, Any] = {
-        "provider_metrics": metrics if metrics else {},
+        "provider_metrics": metrics or {},
         "proxy_reachable": metrics is not None,
     }
     if include_cost:
@@ -1511,7 +1570,7 @@ def deep_research_cmd(
     """Perform deep research using the Deep Research Protocol (DRP)."""
     from thegent.tools.deep_research import perform_deep_research
 
-    console.print(f"[bold cyan]Deep Research Protocol (DRP) starting...[/bold cyan]")
+    console.print("[bold cyan]Deep Research Protocol (DRP) starting...[/bold cyan]")
     console.print(f"Query: [green]{query}[/green]")
     if subreddits:
         console.print(f"Subreddits: [green]{subreddits}[/green]")
@@ -1521,7 +1580,7 @@ def deep_research_cmd(
     with console.status("[bold yellow]Researching...[/bold yellow]"):
         results = perform_deep_research(query, subreddits=sub_list)
 
-    console.print(f"\n[bold green]Research complete![/bold green]")
+    console.print("\n[bold green]Research complete![/bold green]")
     console.print(f"Found [blue]{len(results['ddg_results'])}[/blue] DDG results")
     console.print(f"Found [blue]{len(results['reddit_results'])}[/blue] Reddit results")
     console.print(f"Found [blue]{len(results['arxiv_results'])}[/blue] Arxiv results")
@@ -1833,25 +1892,25 @@ def summary_cmd(
     from rich.markdown import Markdown
     from rich.panel import Panel
 
-    from thegent.summary import summary_impl
     from thegent.orchestration.memory import MemoryCategory, MemorySystem
     from thegent.orchestration.session_scraper import SessionScraper
+    from thegent.summary import summary_impl
 
     # Auto-scrape recent sessions into memory logs (WP-MEMORY)
     try:
         project_path = project or Path.cwd()
         scraper = SessionScraper(project_path)
         system = MemorySystem(project_path)
-        
+
         prompts = scraper.collect_all_recent_prompts()
         recent = system.get_recent(limit=50, category=MemoryCategory.USER_PROMPT)
         recent_contents = {f.content for f in recent}
-        
+
         for p in prompts:
             if p not in recent_contents:
                 system.record(p, MemoryCategory.USER_PROMPT, "auto-scrape", metadata={"scraped": True})
     except Exception:
-        pass # Silent failure for auto-scrape
+        pass  # Silent failure for auto-scrape
 
     result = summary_impl(
         period=period,
@@ -2054,9 +2113,10 @@ def handoff_cmd(owner: str) -> None:
         next_steps.append(f"Monitor {len(run_ids)} active run(s)")
 
     hm = HandoffManager(settings.session_dir)
-    
+
     # WP-7001/7004: Include queued prompts in handoff snapshot
     from thegent.queue.storage import PromptQueue
+
     pq = PromptQueue(settings.session_dir)
     queued_prompts = pq.list_pending()
 
@@ -2459,7 +2519,13 @@ def cockpit_cmd() -> None:
     recent_errors = [r for r in runs if r.get("status") == "failed"][:5]
 
     # 3. Circuit Status
-    targets = ["interactive_agent", "headless_agent", "gemini", "copilot", "antigravity"]  # gemini/copilot via Codex proxy
+    targets = [
+        "interactive_agent",
+        "headless_agent",
+        "gemini",
+        "copilot",
+        "antigravity",
+    ]  # gemini/copilot via Codex proxy
     open_circuits = [t for t in targets if circuit_breaker.is_open(t)]
 
     # 4. Drift and Budget
@@ -2650,7 +2716,9 @@ def run_diff_cmd(run_a: str, run_b: str) -> None:
     b = registry.get_run(run_b)
 
     if not a or not b:
-        console.print(f"[red]Error:[/red] One or both runs not found: {run_a}, {run_b}")
+        from thegent.errors import print_error
+
+        print_error(f"One or both runs not found: {run_a}, {run_b}")
         raise typer.Exit(1)
 
     table = Table(title=f"Run Diff: {run_a} vs {run_b}")
@@ -2695,7 +2763,9 @@ def trace_replay_cmd(run_id: str) -> None:
     result = engine.simulate_what_if(run_id, target_env="sandbox")
 
     if result.get("status") == "error":
-        console.print(f"[red]Error:[/red] {result.get('reason')}")
+        from thegent.errors import print_error
+
+        print_error(result.get("reason", "Unknown error during simulation"))
         return
 
     console.print("Simulation Status: [bold green]SUCCESS[/bold green]")
@@ -2738,7 +2808,9 @@ def deferral_resume_cmd(run_id: str) -> None:
     if dq.resume(run_id):
         console.print(f"[bold green]Success:[/bold green] Run [cyan]{run_id}[/cyan] resumed.")
     else:
-        console.print(f"[red]Error:[/red] Run [cyan]{run_id}[/cyan] not found in deferral queue.")
+        from thegent.errors import print_error
+
+        print_error(f"Run [cyan]{run_id}[/cyan] not found in deferral queue.")
 
 
 def teammates_list_cmd() -> None:
@@ -2800,7 +2872,7 @@ def teammates_delegate_cmd(
     console.print(f"Request ID: [cyan]{request.id}[/cyan]")
     console.print(f"Teammate:   [yellow]{teammate_id}[/yellow]")
     console.print(f"Status:     [blue]{request.status}[/blue]")
-    console.print("\nTeammate is now processing in the background (ShareCLI Phase 11).")
+    console.print("\nTeammate is now processing in the background (heliosShield Phase 11).")
 
 
 def teammates_status_cmd(
@@ -2942,12 +3014,14 @@ def ps_cmd(
                     str(resolved_alias),
                 )
         console.print(t)
-        
+
         # WP-5002: Suggest pruning if session count is high
         if len(rows) > 5:
             console.print("\n[yellow]Tip: High session count detected.[/yellow]")
             console.print("[dim]Multiple active agent sessions spawn redundant language servers (Node.js).[/dim]")
-            console.print("[dim]Use 'thegent stop <session_id>' to kill orphan processes and free up 1-2GB RAM per session.[/dim]")
+            console.print(
+                "[dim]Use 'thegent stop <session_id>' to kill orphan processes and free up 1-2GB RAM per session.[/dim]"
+            )
             console.print("[dim]Run 'thegent mcp spotlight-exclude' to reduce mds_stores overhead on macOS.[/dim]")
 
 
@@ -4922,7 +4996,7 @@ def plan_wait_next_cmd(
             border_style="cyan",
         )
     )
-    console.print("[dim]Use: thegent run \"<prompt_suggestion>\" or thegent free --do-next[/dim]")
+    console.print('[dim]Use: thegent run "<prompt_suggestion>" or thegent free --do-next[/dim]')
 
 
 def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None = None) -> None:
@@ -4955,10 +5029,11 @@ def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None 
             n.get("id", ""),
             (n.get("description", "") or "")[:60] + ("..." if len(n.get("description", "") or "") > 60 else ""),
             n.get("source", ""),
-            (n.get("prompt_suggestion", "") or "")[:50] + ("..." if len(n.get("prompt_suggestion", "") or "") > 50 else ""),
+            (n.get("prompt_suggestion", "") or "")[:50]
+            + ("..." if len(n.get("prompt_suggestion", "") or "") > 50 else ""),
         )
     console.print(table)
-    console.print("[dim]Use: thegent run \"<prompt_suggestion>\" or thegent_do_next + thegent_run[/dim]")
+    console.print('[dim]Use: thegent run "<prompt_suggestion>" or thegent_do_next + thegent_run[/dim]')
 
 
 def plan_get_next_cmd(cd: Path | None = None, format: str | None = None) -> None:
@@ -5443,7 +5518,9 @@ def dag_run_cmd(
         raise typer.Exit(2 if res.get("error") == "Drift detected" else 1)
     if res.get("dry_run"):
         for item in res.get("would_run", []):
-            console.print(f"[dim]Would run: {item['task_id']} agent={item['agent']} prompt={item['prompt_preview']}[/dim]")
+            console.print(
+                f"[dim]Would run: {item['task_id']} agent={item['agent']} prompt={item['prompt_preview']}[/dim]"
+            )
         return
     if res.get("message"):
         console.print(f"[dim]{res['message']}[/dim]")
@@ -5910,11 +5987,10 @@ def rules_sync_cmd(
         if result["in_sync"]:
             console.print("[green]Rules are in sync.[/green]")
             raise typer.Exit(0)
-        else:
-            console.print("[red]Drift detected in rule files:[/red]")
-            for target in result["drift"]:
-                console.print(f"  - {target}")
-            raise typer.Exit(1)
+        console.print("[red]Drift detected in rule files:[/red]")
+        for target in result["drift"]:
+            console.print(f"  - {target}")
+        raise typer.Exit(1)
 
     if not result["synced"]:
         console.print("[yellow]Rules are already in sync.[/yellow]")
@@ -5946,6 +6022,7 @@ def list_agents_cmd() -> None:
     table.add_column("Name", style="cyan")
     table.add_column("Backend", style="dim")
     from thegent.agents.registry import AGENT_LABELS
+
     for name in agents:
         display_name = AGENT_LABELS.get(name, name)
         canonical = resolve_agent(name)
@@ -6008,7 +6085,17 @@ def list_models_cmd(
     providers = (
         [provider]
         if provider
-        else ["minimax", "glm", "cursor", "kiro", "gemini", "copilot", "interactive_agent", "headless_agent", "antigravity"]
+        else [
+            "minimax",
+            "glm",
+            "cursor",
+            "kiro",
+            "gemini",
+            "copilot",
+            "interactive_agent",
+            "headless_agent",
+            "antigravity",
+        ]
     )
     for p in providers:
         if p == "minimax":
@@ -6361,7 +6448,11 @@ def _list_copilot_models() -> None:
             capture_output=True,
             timeout=8,
         )
-        stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+        stdout_text = (
+            proc.stdout
+            if isinstance(proc.stdout, str)
+            else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+        )
         if proc.returncode == 0 and stdout_text and "--model" in stdout_text:
             console.print("\n[bold]Copilot models[/bold]")
             # Extract quoted model names after "choices:"
@@ -6414,7 +6505,11 @@ def _list_codex_models() -> None:
             capture_output=True,
             timeout=10,
         )
-        stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+        stdout_text = (
+            proc.stdout
+            if isinstance(proc.stdout, str)
+            else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+        )
         if proc.returncode == 0 and stdout_text and "codex" in stdout_text.lower():
             console.print("\n[bold]Codex models[/bold]")
             for line in stdout_text.splitlines():
@@ -6498,10 +6593,21 @@ def setup_cmd(
     minimax_key: str = typer.Option(None, "--minimax-key", help="MiniMax API key"),
     wizard: bool = typer.Option(True, "--wizard/--no-wizard", help="Run interactive setup wizard"),
     links: bool = typer.Option(True, "--links/--no-links", help="Install claudeglm/claudemax shortcuts"),
-    hooks: bool = typer.Option(False, "--hooks/--no-hooks", help="Install git hooks (pre-commit, pre-push) into .git/hooks"),
-    skills: bool = typer.Option(False, "--skills/--no-skills", help="Sync thegent-skills template to ~/.claude, ~/.cursor, project"),
-    full: bool = typer.Option(False, "--full", "-f", help="Full setup: install -t all, install-shims, lock-cleanup service, MCP service"),
-    agents: str = typer.Option(None, "--agents", "-a", help="Comma-separated agents to configure (e.g. claude,codex,cursor). Skips others in wizard."),
+    hooks: bool = typer.Option(
+        False, "--hooks/--no-hooks", help="Install git hooks (pre-commit, pre-push) into .git/hooks"
+    ),
+    skills: bool = typer.Option(
+        False, "--skills/--no-skills", help="Sync thegent-skills template to ~/.claude, ~/.cursor, project"
+    ),
+    full: bool = typer.Option(
+        False, "--full", "-f", help="Full setup: install -t all, install-shims, lock-cleanup service, MCP service"
+    ),
+    agents: str = typer.Option(
+        None,
+        "--agents",
+        "-a",
+        help="Comma-separated agents to configure (e.g. claude,codex,cursor). Skips others in wizard.",
+    ),
 ) -> None:
     """Unified setup: configure providers (same flow as cliproxy login) and install shortcuts.
 
@@ -6516,9 +6622,10 @@ def setup_cmd(
     from pathlib import Path
 
     import yaml
+
     from thegent.agents.cliproxy_manager import (
-        PROVIDER_LOGIN_CONFIG,
         _LOGIN_FLAGS,
+        PROVIDER_LOGIN_CONFIG,
         _ensure_config,
         _inject_api_key_into_cliproxy,
         run_login,
@@ -6528,8 +6635,29 @@ def setup_cmd(
     settings = ThegentSettings()
     env_path = Path(".env")
 
-    # Full setup: install, shims, lock-cleanup, MCP service
-    if full:
+    # Step 0: Welcome if no specific flags
+    is_wizard = wizard and not any([api_key, openrouter_key, kilo_key, zai_key, minimax_key, agents, full, hooks, skills])
+    if is_wizard:
+        from rich.panel import Panel
+        console.clear()
+        console.print(
+            Panel(
+                "[bold cyan]Thegent[/bold cyan] [dim]Unified Setup[/dim]\n"
+                "[dim]Complete orchestration & environment configuration[/dim]",
+                border_style="cyan",
+                expand=False,
+                padding=(1, 2),
+            )
+        )
+
+    # Step 1: Managed Installation (IDEs, Shell)
+    if is_wizard:
+        from rich.prompt import Confirm
+        if Confirm.ask("\n[bold]Step 1: Install thegent to IDEs & Shell?[/bold]", default=True):
+            from thegent.install import run_wizard as run_install_wizard
+            run_install_wizard()
+    elif full:
+        # Full setup: install, shims, lock-cleanup, MCP service
         run_subprocess_optimized = _get_run_subprocess_optimized()
         from rich.prompt import Confirm
 
@@ -6574,6 +6702,51 @@ def setup_cmd(
         if not wizard:
             console.print("[dim]Run thegent setup (without --full) to configure providers.[/dim]")
             return
+
+    # Step 2: Provider Configuration
+    if is_wizard:
+        console.print("\n[bold]Step 2: Configure AI Providers[/bold]")
+        if not Confirm.ask("Would you like to setup AI provider API keys now?", default=True):
+            all_providers = []
+        else:
+            # Polished multi-selection
+            _SETUP_SKIP = frozenset({"iflow-cookie", "kiro-google", "kiro-aws", "kiro-aws-authcode", "kiro-import"})
+            available = sorted(set(PROVIDER_LOGIN_CONFIG) | set(_LOGIN_FLAGS) - _SETUP_SKIP)
+
+            console.print("\nAvailable Providers:")
+            for i, prov in enumerate(available, 1):
+                display_name = PROVIDER_LOGIN_CONFIG.get(prov, {}).get("display_name", prov.replace("-", " ").title())
+                console.print(f"  [cyan]{i}[/cyan]) {display_name}")
+
+            from rich.prompt import Prompt
+            selected_input = Prompt.ask("\nSelect providers to setup (e.g. 1,2 or 'all')", default="all")
+            if selected_input.lower() in ("all", "a"):
+                all_providers = available
+            else:
+                all_providers = []
+                for part in selected_input.replace(",", " ").split():
+                    if part.isdigit() and 1 <= int(part) <= len(available):
+                        all_providers.append(available[int(part) - 1])
+                    elif part in available:
+                        all_providers.append(part)
+    else:
+        # CLI / Non-wizard flow
+        _SETUP_SKIP = frozenset({"iflow-cookie", "kiro-google", "kiro-aws", "kiro-aws-authcode", "kiro-import"})
+        all_providers = sorted(set(PROVIDER_LOGIN_CONFIG) | set(_LOGIN_FLAGS) - _SETUP_SKIP)
+        if agents:
+            agent_set = {a.strip().lower() for a in agents.split(",") if a.strip()}
+            all_providers = [p for p in all_providers if p in agent_set]
+
+    # CLI overrides: if user passed --api-key etc., inject into config directly
+    overrides = {
+        "nim": api_key,
+        "kilo": kilo_key,
+        "glm": zai_key,
+        "minimax": minimax_key,
+    }
+
+    any_configured = False
+
     lines = env_path.read_text().splitlines() if env_path.exists() else []
 
     def set_env(key: str, value: str):
@@ -6588,26 +6761,9 @@ def setup_cmd(
 
     def prompt_key(msg: str) -> str:
         from rich.prompt import Prompt
+
         return Prompt.ask(msg, default="", show_default=False).strip()
 
-    # CLI overrides: if user passed --api-key etc., inject into config directly
-    overrides = {
-        "nim": api_key,
-        "kilo": kilo_key,
-        "glm": zai_key,
-        "minimax": minimax_key,
-    }
-
-    any_configured = False
-
-    # Setup primary providers only (exclude variants: iflow-cookie, kiro-google, etc.)
-    _SETUP_SKIP = frozenset({"iflow-cookie", "kiro-google", "kiro-aws", "kiro-aws-authcode", "kiro-import"})
-    all_providers = sorted(set(PROVIDER_LOGIN_CONFIG) | set(_LOGIN_FLAGS) - _SETUP_SKIP)
-    if agents:
-        agent_set = {a.strip().lower() for a in agents.split(",") if a.strip()}
-        all_providers = [p for p in all_providers if p in agent_set]
-        if not all_providers:
-            console.print(f"[yellow]No matching providers for --agents '{agents}'. Use names like claude, codex, cursor, nim, kilo.[/yellow]")
     for prov in all_providers:
         display_name = PROVIDER_LOGIN_CONFIG.get(prov, {}).get("display_name", prov.replace("-", " ").title())
         if overrides.get(prov):
@@ -6629,6 +6785,36 @@ def setup_cmd(
                     any_configured = True
             except (ValueError, FileNotFoundError) as e:
                 console.print(f"[dim]  {e}[/dim]")
+
+    # Step 3: Services & Shims
+    if is_wizard:
+        console.print("\n[bold]Step 3: Services & Accelerators[/bold]")
+        if Confirm.ask("Install background services (MCP, lock-cleanup) and tool shims?", default=True):
+            run_subprocess_optimized = _get_run_subprocess_optimized()
+
+            console.print("[dim]Installing tool shims...[/dim]")
+            import contextlib
+            with contextlib.suppress(Exception):
+                run_subprocess_optimized([sys.executable, "-m", "thegent", "install-shims"], check=False)
+
+            console.print("[dim]Installing lock-cleanup service...[/dim]")
+            with contextlib.suppress(Exception):
+                from thegent.git_lock_manage import lock_cleanup_install, lock_cleanup_start
+                lock_cleanup_install()
+                lock_cleanup_start()
+
+            if platform.system() == "Darwin":
+                console.print("[dim]Installing MCP background service...[/dim]")
+                with contextlib.suppress(Exception):
+                    from thegent.mcp_manage import install_launchd_service
+                    install_launchd_service()
+
+    # Step 4: Project Features
+    if is_wizard:
+        console.print("\n[bold]Step 4: Project Features[/bold]")
+        if Confirm.ask("Install git hooks and sync thegent-skills template to this project?", default=False):
+            hooks = True
+            skills = True
 
     env_updated = False
     if model:
@@ -6696,13 +6882,6 @@ def setup_cmd(
         from rich.prompt import Confirm
 
         if Confirm.ask(
-            "\nWould you like to integrate thegent with your AI agents (Cursor, Claude Code, Codex, etc.)?", default=True
-        ):
-            from thegent.install import run_wizard
-
-            run_wizard()
-
-        if Confirm.ask(
             "\nRemove manual playwright from MCP configs (use thegent-bundled browser tools)?", default=True
         ):
             try:
@@ -6739,10 +6918,7 @@ def takeover_cmd(session_id: str) -> None:
     for d in discovered:
         dsid = d.get("session_id")
         dppid = str(d.get("ppid", ""))
-        if (
-            dppid == session_id
-            or (dsid and (dsid == session_id or dsid.startswith(session_id) or session_id in dsid))
-        ):
+        if dppid == session_id or (dsid and (dsid == session_id or dsid.startswith(session_id) or session_id in dsid)):
             target_pane = d.get("tmux_pane")
             if target_pane:
                 break
@@ -7018,29 +7194,30 @@ def discovery_scan_cmd(
     elif format == "json":
         console.print_json(data={"registered": registered, "count": len(registered)})
 
+
 def trust_status_cmd(format: str | None = None) -> None:
     """Show last environment and trust boundary status (WP-3007)."""
     settings = ThegentSettings()
     from thegent.execution import TrustBoundaryValidator
-    
+
     trust_boundary = TrustBoundaryValidator(settings.session_dir)
     last_env = trust_boundary.get_last_environment()
-    
+
     res = {
         "current_environment": settings.environment,
         "last_recorded_environment": last_env,
         "session_dir": str(settings.session_dir),
     }
-    
+
     fmt = _normalize_output_format(format)
     if fmt == "json":
         sys.stdout.write(json.dumps(res) + "\n")
         return
-        
+
     console.print("[bold]Trust Boundary Status (WP-3007)[/bold]")
     console.print(f"Current Env: [cyan]{settings.environment}[/cyan]")
     console.print(f"Last Env:    [cyan]{last_env or 'None'}[/cyan]")
-    
+
     if last_env:
         allowed, reason = trust_boundary.validate_transition(last_env, settings.environment)
         status_color = "green" if allowed else "red"
@@ -7055,10 +7232,9 @@ def signatures_list_cmd(limit: int = 50, format: str | None = None) -> None:
     artifacts = []
     if artifacts_dir.exists():
         for p in sorted(artifacts_dir.glob("*.maif.json"), key=lambda x: x.stat().st_mtime, reverse=True)[:limit]:
-            try:
-                artifacts.append(json.loads(p.read_text(encoding="utf-8")))
-            except Exception:
-                continue
+            artifact = _load_artifact(p)
+            if artifact:
+                artifacts.append(artifact)
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
@@ -7085,6 +7261,14 @@ def signatures_list_cmd(limit: int = 50, format: str | None = None) -> None:
             str(header.get("timestamp_us", "?")),
         )
     console.print(table)
+
+
+def _load_artifact(p: Path) -> dict[str, Any] | None:
+    """Load a single artifact safely."""
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
 
 
 def signatures_verify_cmd(run_id: str) -> None:
@@ -7137,7 +7321,7 @@ def signatures_verify_cmd(run_id: str) -> None:
             root_valid = True
             console.print(f"  [green]✓ Root hash {header.get('root_hash')[:12]}... matches chain.[/green]")
         else:
-            console.print(f"  [red]✗ Root hash mismatch![/red]")
+            console.print("  [red]✗ Root hash mismatch![/red]")
 
         if all_blocks_valid and chain_valid and root_valid:
             console.print(f"\n[bold green]RESULT: Artifact for {run_id} is VALID.[/bold green]")
@@ -7153,7 +7337,7 @@ def signatures_verify_cmd(run_id: str) -> None:
 def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
     """Test SIEM event egress (WP-15001)."""
     from thegent.observability.egress import EgressEvent, SIEMEgress
-    
+
     egress = SIEMEgress(endpoint_url="http://simulated-siem.internal")
     event = EgressEvent(
         id=str(uuid.uuid4()),
@@ -7162,10 +7346,10 @@ def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
         source="thegent-cli",
         payload={"message": message},
     )
-    
+
     success = egress.push_event(event)
     if success:
-        console.print(f"[green]SIEM test event pushed successfully (simulated).[/green]")
+        console.print("[green]SIEM test event pushed successfully (simulated).[/green]")
         console.print(f"Format: {egress.format_for_syslog(event)}")
     else:
         console.print("[yellow]SIEM egress not configured or failed.[/yellow]")
@@ -7174,7 +7358,7 @@ def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
 def compliance_plugin_check_cmd(plugin_id: str, signature: str) -> None:
     """Verify a plugin contract (WP-15003)."""
     from thegent.contracts.marketplace import PluginContract, PluginVerifier
-    
+
     verifier = PluginVerifier()
     contract = PluginContract(
         plugin_id=plugin_id,
@@ -7183,7 +7367,7 @@ def compliance_plugin_check_cmd(plugin_id: str, signature: str) -> None:
         capabilities=["read"],
         signature=signature,
     )
-    
+
     if verifier.verify_contract(contract):
         console.print(f"[green]Plugin {plugin_id} VERIFIED successfully.[/green]")
     else:
@@ -7193,36 +7377,37 @@ def compliance_plugin_check_cmd(plugin_id: str, signature: str) -> None:
 def compliance_redact_cmd(text: str) -> None:
     """Test PII/Secret redaction (WP-15005)."""
     from thegent.governance.support import RedactionEngine
-    
+
     redactor = RedactionEngine()
     redacted = redactor.redact(text)
-    
+
     console.print("[bold]Original:[/bold]")
     console.print(text)
     console.print("\n[bold]Redacted:[/bold]")
     console.print(redacted)
 
+
 def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None = None) -> None:
     """Show daily cost aggregation (FR-GOV-002)."""
     settings = ThegentSettings()
     from thegent.governance.cost import CostAggregator
-    
+
     agg = CostAggregator(settings.session_dir)
     total = agg.daily_total(owner=owner, days=days)
-    
+
     res = {
         "owner": owner or "all",
         "days": days,
         "total_usd": total,
         "currency": "USD",
     }
-    
+
     fmt = _normalize_output_format(format)
     if fmt == "json":
         sys.stdout.write(json.dumps(res) + "\n")
         return
-        
-    console.print(f"[bold]Daily Cost Aggregation (FR-GOV-002)[/bold]")
+
+    console.print("[bold]Daily Cost Aggregation (FR-GOV-002)[/bold]")
     console.print(f"Owner: [cyan]{owner or 'All Owners'}[/cyan]")
     console.print(f"Days:  [cyan]{days}[/cyan]")
     console.print(f"Total: [green]${total:.4f} USD[/green]")
@@ -7231,14 +7416,14 @@ def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None 
 def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | None = None) -> None:
     """Check a prompt against active guardrails (FR-GOV-003..006)."""
     from thegent.governance.input_guardrails import InputGuardrails
-    
+
     rails = InputGuardrails()
     results = rails.check(prompt, agent=agent, model=model)
-    
+
     if not results:
         console.print("[green]Prompt passed all guardrails.[/green]")
         return
-        
+
     console.print("[red]Prompt FAILED guardrail checks:[/red]")
     for res in results:
         console.print(f"- [bold]{res.rail_id}[/bold]: {res.violation}")
@@ -7249,29 +7434,32 @@ def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | Non
 def guardrails_show_cmd() -> None:
     """Show active guardrail configuration (FR-GOV-007)."""
     from thegent.governance.input_guardrails import InputGuardrails
-    
+
     rails = InputGuardrails()
-    
+
     table = Table(title="Input Guardrails Configuration")
     table.add_column("Parameter")
     table.add_column("Value")
-    
+
     table.add_row("Max Chars", str(rails.prompt_max_chars))
     table.add_row("Blocklist Patterns", str(len(rails.prompt_blocklist_patterns)))
     table.add_row("Agent Allowlist", ", ".join(rails.agent_allowlist) if rails.agent_allowlist else "None")
     table.add_row("Model Allowlist", ", ".join(rails.model_allowlist) if rails.model_allowlist else "None")
-    table.add_row("CWD Allowed Prefixes", ", ".join(rails.cwd_allowed_prefixes) if rails.cwd_allowed_prefixes else "None")
-    
+    table.add_row(
+        "CWD Allowed Prefixes", ", ".join(rails.cwd_allowed_prefixes) if rails.cwd_allowed_prefixes else "None"
+    )
+
     console.print(table)
+
 
 def policy_check_cmd(agent: str, model: str | None = None, lane: str = "standard", confidence: float = 1.0) -> None:
     """Evaluate a hypothetical run against governance policies (WP-3001)."""
     settings = ThegentSettings()
     from thegent.execution import PolicyEngine, RunMeta, RunRegistry
-    
+
     engine = PolicyEngine()
     registry = RunRegistry(settings.session_dir)
-    
+
     # Create a mock RunMeta
     run = RunMeta(
         run_id="policy-check-" + str(uuid.uuid4())[:8],
@@ -7285,17 +7473,19 @@ def policy_check_cmd(agent: str, model: str | None = None, lane: str = "standard
         lane=lane,
         confidence=confidence,
     )
-    
+
     result, reason = engine.evaluate(run, registry=registry)
-    
+
     color = "green" if result == "allow" else "yellow" if result == "warn" else "red"
     console.print(f"Policy Result: [{color}]{result.upper()}[/{color}]")
     console.print(f"Reason: {reason}")
 
+
 def queue_list_cmd(watch: bool = False) -> None:
     """WP-7002: List pending prompts in the queue."""
-    from thegent.ux.queue_tui import QueueTUI
     from thegent.config import ThegentSettings
+    from thegent.ux.queue_tui import QueueTUI
+
     settings = ThegentSettings()
     tui = QueueTUI(settings.session_dir)
     if watch:
@@ -7303,78 +7493,80 @@ def queue_list_cmd(watch: bool = False) -> None:
     else:
         tui.show()
 
+
 def team_create_cmd(name: str, leader: str | None = None, teammates: str | None = None) -> None:
     """WP-6008: Create a new multi-agent team."""
     settings = ThegentSettings()
     from thegent.team.manager import TeamManager
-    
+
     mgr = TeamManager(settings.session_dir)
     # Convert teammates string to list if provided
     teammate_list = [t.strip() for t in teammates.split(",")] if teammates else []
     team_id = mgr.create_team(name, leader or "claude", teammate_list)
-    
+
     console.print(f"Team created: [bold green]{name}[/bold green] (ID: [cyan]{team_id}[/cyan])")
     console.print(f"Leader: [yellow]{leader or 'claude'}[/yellow]")
     if teammate_list:
         console.print(f"Teammates: {', '.join(teammate_list)}")
 
+
 def team_task_add_cmd(team_id: str, title: str, description: str) -> None:
     """WP-6008: Add a task to a team's backlog."""
     settings = ThegentSettings()
     from thegent.team.manager import TeamManager
-    
+
     mgr = TeamManager(settings.session_dir)
     task_id = mgr.add_task(team_id, title, description)
-    
+
     console.print(f"Task added to team [cyan]{team_id}[/cyan]: [bold]{title}[/bold] (ID: [green]{task_id}[/green])")
+
 
 def team_task_list_cmd(team_id: str) -> None:
     """WP-6008: List all tasks for a team."""
     settings = ThegentSettings()
     from thegent.team.manager import TeamManager
-    
+
     mgr = TeamManager(settings.session_dir)
     tasks = mgr.list_tasks(team_id)
-    
+
     if not tasks:
         console.print(f"No tasks found for team [cyan]{team_id}[/cyan].")
         return
-        
+
     table = Table(title=f"Tasks for Team {team_id}")
     table.add_column("ID", style="green")
     table.add_column("Title", style="bold")
     table.add_column("Status", style="yellow")
     table.add_column("Assigned To", style="cyan")
-    
+
     for t in tasks:
         table.add_row(t["id"], t["title"], t["status"], t["assigned_to"] or "Unassigned")
-        
+
     console.print(table)
+
 
 def recover_status_cmd() -> None:
     """Show current recovery status (WP-7001)."""
     settings = ThegentSettings()
     from thegent.contracts.migration import MigrationController
-    
+
     ctrl = MigrationController(settings.session_dir)
     status = ctrl.get_status()
-    
-    console.print(f"[bold]Recovery Status (WP-7001)[/bold]")
+
+    console.print("[bold]Recovery Status (WP-7001)[/bold]")
     console.print(f"State: [cyan]{status.get('state', 'unknown')}[/cyan]")
     console.print(f"Active Migration: [yellow]{status.get('active_migration') or 'None'}[/yellow]")
+
 
 def project_register_cmd(path: Path, name: str | None = None) -> None:
     """Register a new project (WP-4008)."""
     settings = ThegentSettings()
     projects_file = settings.session_dir / "projects.jsonl"
-    project = {
-        "path": str(path.resolve()),
-        "name": name or path.name,
-        "registered_at": datetime.now(UTC).isoformat()
-    }
+    project = {"path": str(path.resolve()), "name": name or path.name, "registered_at": datetime.now(UTC).isoformat()}
     with projects_file.open("a", encoding="utf-8") as f:
         f.write(json.dumps(project) + "\n")
     console.print(f"Project registered: [bold green]{project['name']}[/bold green] at {project['path']}")
+
 
 def project_list_cmd() -> None:
     """List all registered projects (WP-4008)."""
@@ -7383,43 +7575,49 @@ def project_list_cmd() -> None:
     if not projects_file.exists():
         console.print("No projects registered.")
         return
-        
+
     table = Table(title="Registered Projects")
     table.add_column("Name", style="bold green")
     table.add_column("Path", style="cyan")
-    
+
     with projects_file.open("r", encoding="utf-8") as f:
         for line in f:
-            try:
-                p = json.loads(line)
-                table.add_row(p["name"], p["path"])
-            except Exception:
-                continue
+            _add_project_to_table(table, line)
     console.print(table)
+
+
+def _add_project_to_table(table: Table, line: str) -> None:
+    """Parse and add a single project line to the table."""
+    try:
+        p = json.loads(line)
+        table.add_row(p["name"], p["path"])
+    except Exception:
+        pass
+
 
 def workstream_query_cmd(query: str) -> None:
     """Execute SQL query on workstream database."""
-    from thegent.planning.workstream_db import WorkstreamDB
     from thegent.config import ThegentSettings
-    
+    from thegent.planning.workstream_db import WorkstreamDB
+
     try:
         db = WorkstreamDB(settings=ThegentSettings())
         results = db.execute_query(query)
-        
+
         if not results:
             console.print("[yellow]No results[/yellow]")
             return
-        
+
         # Display as table
         table = Table(title="Query Results")
         if results:
             # Use first row keys as columns
-            for key in results[0].keys():
+            for key in results[0]:
                 table.add_column(key, style="cyan")
-            
+
             for row in results[:100]:  # Limit to 100 rows
-                table.add_row(*[str(row.get(k, "")) for k in results[0].keys()])
-        
+                table.add_row(*[str(row.get(k, "")) for k in results[0]])
+
         console.print(table)
         if len(results) > 100:
             console.print(f"[dim]... and {len(results) - 100} more rows[/dim]")
@@ -7429,17 +7627,17 @@ def workstream_query_cmd(query: str) -> None:
 
 def workstream_stats_cmd() -> None:
     """Get workstream statistics."""
-    from thegent.planning.workstream_db import WorkstreamDB
     from thegent.config import ThegentSettings
-    
+    from thegent.planning.workstream_db import WorkstreamDB
+
     try:
         db = WorkstreamDB(settings=ThegentSettings())
         stats = db.get_statistics()
         lane_counts = db.get_running_count_by_lane()
         recent_costs = db.get_recent_costs(limit=5)
-        
+
         console.print("[bold]Workstream Statistics[/bold]\n")
-        
+
         # Main stats
         stats_table = Table(title="Statistics")
         stats_table.add_column("Metric", style="bold")
@@ -7450,7 +7648,7 @@ def workstream_stats_cmd() -> None:
         stats_table.add_row("Avg Duration", f"{stats['avg_duration']:.1f}s")
         stats_table.add_row("Deferred", str(stats["deferred"]))
         console.print(stats_table)
-        
+
         # Lane breakdown
         if lane_counts:
             lane_table = Table(title="Lane Breakdown")
@@ -7460,7 +7658,7 @@ def workstream_stats_cmd() -> None:
                 lane_table.add_row(lane, str(count))
             console.print("\n")
             console.print(lane_table)
-        
+
         # Recent costs
         if recent_costs:
             cost_table = Table(title="Recent Costs")
@@ -7470,10 +7668,7 @@ def workstream_stats_cmd() -> None:
             cost_table.add_column("Avg/Task", style="dim")
             for cost in recent_costs:
                 cost_table.add_row(
-                    cost["period"],
-                    f"${cost['cost_usd']:.2f}",
-                    str(cost["task_count"]),
-                    f"${cost['avg_per_task']:.4f}"
+                    cost["period"], f"${cost['cost_usd']:.2f}", str(cost["task_count"]), f"${cost['avg_per_task']:.4f}"
                 )
             console.print("\n")
             console.print(cost_table)
@@ -7484,18 +7679,20 @@ def workstream_stats_cmd() -> None:
 def workstream_dashboard_cmd() -> None:
     """Launch workstream dashboard TUI."""
     from thegent.tui.workstream_dashboard import run_dashboard
+
     run_dashboard()
 
 
 def workstream_launch_cmd() -> None:
     """Launch the auto-launch system in the background."""
-    from thegent.planning.auto_launch import AutoLaunchSystem
     import time
-    
+
+    from thegent.planning.auto_launch import AutoLaunchSystem
+
     console.print("[bold]Auto-Launch System Starting...[/bold]")
     system = AutoLaunchSystem()
     system.start()
-    
+
     console.print("[green]Auto-launch system is running. Press Ctrl+C to stop.[/green]")
     try:
         while True:
@@ -7509,7 +7706,7 @@ def workstream_launch_cmd() -> None:
 def forensics_snapshot_cmd(run_id: str | None = None, phase: str | None = None) -> None:
     """Take a forensics snapshot of an agent run (WP-3002)."""
     settings = ThegentSettings()
-    console.print(f"[bold]Forensics Snapshot (WP-3002)[/bold]")
+    console.print("[bold]Forensics Snapshot (WP-3002)[/bold]")
     console.print(f"Run ID: [cyan]{run_id or 'current'}[/cyan]")
     console.print(f"Phase:  [cyan]{phase or 'all'}[/cyan]")
     console.print("[green]Snapshot captured and signed.[/green]")

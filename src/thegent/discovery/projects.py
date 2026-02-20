@@ -1,5 +1,6 @@
 """WP-11001: Cross-project discovery and context management."""
 
+import contextlib
 import json
 import logging
 from datetime import UTC, datetime
@@ -39,11 +40,13 @@ class ProjectRegistry:
         projects = []
         with self.registry_file.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    projects.append(json.loads(line))
-                except Exception:
-                    continue
+                self._parse_project_line(projects, line)
         return projects
+
+    def _parse_project_line(self, projects: list[dict[str, Any]], line: str) -> None:
+        """Parse a project registry line safely."""
+        with contextlib.suppress(Exception):
+            projects.append(json.loads(line))
 
     def update_activity(self, path: Path) -> None:
         """Update last active timestamp for a project."""

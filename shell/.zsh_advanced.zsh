@@ -3,7 +3,7 @@
 # background job management, cross-platform compatibility, advanced monitoring
 
 # Only load in interactive shells
-[[ -z "${PS1:-}" || -n "${AGENT_ID:-}" || -n "${SHARECLI_AGENT_CONTEXT:-}" ]] && return 0
+[[ -z "${PS1:-}" || -n "${AGENT_ID:-}" || -n "${heliosShield_AGENT_CONTEXT:-}" ]] && return 0
 
 # --- Platform Detection ---
 # Detect platform for cross-platform compatibility

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 
 # Guardrail: fail when a shim can recursively re-invoke a shim or dispatch the

@@ -157,7 +157,7 @@ class QualityMatrix:
     # Historical data
     historical_scores: list[tuple[datetime, float]] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize standard categories."""
         if self.code_quality is None:
             self.code_quality = QualityCategory("Code Quality", 0.18)
@@ -305,9 +305,8 @@ class QualityMatrixBuilderEnhanced:
             raise ValueError(f"Project path does not exist: {project_path}")
         self._cache: dict[str, any] = {}
 
-    @lru_cache(maxsize=256)
     def _file_exists(self, relative_path: str) -> bool:
-        """Cached file existence check."""
+        """Manual file existence check."""
         return (self.project_path / relative_path).exists()
 
     def build(self) -> QualityMatrix:

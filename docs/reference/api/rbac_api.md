@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/security/rbac.py`
 
 WP-19002: Role-Based Access Control (RBAC).
+
 Formally defines roles, permissions, and access checks.
 
 ---
@@ -11,7 +12,7 @@ Formally defines roles, permissions, and access checks.
 
 Fine-grained permissions.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -24,24 +25,30 @@ Orchestrates RBAC checks across the system.
 #### RBACManager.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### RBACManager.check_access
 
+```python
+check_access(self: Any, role: Role, operation: str, lane: str)
+```
+
 Hybrid check using both fine-grained permissions and persona-based constraints.
 
-```python
-check_access(self, role, operation, lane)
-```
+---
 
 #### RBACManager.has_permission
 
+```python
+has_permission(self: Any, role: Role, permission: Permission)
+```
+
 Check if a role has a specific permission.
 
-```python
-has_permission(self, role, permission)
-```
+---
 
 ---
 
@@ -49,27 +56,27 @@ has_permission(self, role, permission)
 
 Standard operator roles.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
 ## check_access
 
-Hybrid check using both fine-grained permissions and persona-based constraints.
-
 ```python
-check_access(self, role, operation, lane)
+check_access(self: Any, role: Role, operation: str, lane: str)
 ```
+
+Hybrid check using both fine-grained permissions and persona-based constraints.
 
 ---
 
 ## has_permission
 
-Check if a role has a specific permission.
-
 ```python
-has_permission(self, role, permission)
+has_permission(self: Any, role: Role, permission: Permission)
 ```
+
+Check if a role has a specific permission.
 
 ---
 

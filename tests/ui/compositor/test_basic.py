@@ -1,5 +1,7 @@
 """Basic tests for compositor components."""
 
+from pathlib import Path
+
 from thegent.ui.compositor import CompositApp, PaneManager, SessionState, TerminalPane
 
 

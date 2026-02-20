@@ -33,52 +33,65 @@ The adapter follows the Donut Architecture pattern where shared components
 
 #### RoutingDonutAdapter.__init__
 
+```python
+__init__(self: Any, queue_path: Any, harvest_path: Any)
+```
+
 Initialize the Donut adapter.
 
-Args:
-    queue_path: Path to prompt queue JSONL file.
-        Defaults to ~/.thegent/prompt_queue.jsonl
-    harvest_path: Path to routing harvest JSONL file.
-        Defaults to ~/.thegent/routing_harvest.jsonl
+**Parameters**:
 
-```python
-__init__(self, queue_path, harvest_path)
-```
+- `queue_path`: Path to prompt queue JSONL file.
+Defaults to ~/.thegent/prompt_queue.jsonl
+- `harvest_path`: Path to routing harvest JSONL file.
+Defaults to ~/.thegent/routing_harvest.jsonl
+
+---
 
 #### RoutingDonutAdapter.clear_stats
 
-Reset routing statistics.
-
 ```python
-clear_stats(self)
+clear_stats(self: Any)
 ```
 
+Reset routing statistics.
+
+---
+
 #### RoutingDonutAdapter.get_router
+
+```python
+get_router(self: Any, policy: str)
+```
 
 Get or create a shared LiteLLM router for the given policy.
 
 Routers are cached by policy, enabling reuse across teammates
 and multiple calls within a session.
 
-Args:
-    policy: Routing policy (cheapest, fastest, round_robin)
+**Parameters**:
 
-Returns:
-    Configured LiteLLM Router instance
+- `policy`: Routing policy (cheapest, fastest, round_robin)
 
-```python
-get_router(self, policy)
-```
+**Returns**: Configured LiteLLM Router instance
+
+---
 
 #### RoutingDonutAdapter.get_stats
 
-Get current routing statistics.
-
 ```python
-get_stats(self)
+get_stats(self: Any)
 ```
 
+Get current routing statistics.
+
+---
+
 #### RoutingDonutAdapter.get_team_router_config
+
+```python
+get_team_router_config(self: Any)
+```
 
 Get router config dict for sharing across teammates.
 
@@ -86,19 +99,20 @@ Exports configuration that can be used by teammate agents
 to instantiate compatible routers. This enables coordinated
 routing decisions across a team of agents.
 
-Returns:
-    Dictionary containing:
-    - policies: List of available routing policies
-    - default_policy: The default routing policy
-    - queue_path: Path to the shared queue
-    - harvest_path: Path to the harvest file
-    - stats_summary: Current routing statistics summary
+**Returns**: Dictionary containing:
+- policies: List of available routing policies
+- default_policy: The default routing policy
+- queue_path: Path to the shared queue
+- harvest_path: Path to the harvest file
+- stats_summary: Current routing statistics summary
 
-```python
-get_team_router_config(self)
-```
+---
 
 #### RoutingDonutAdapter.harvest_on_stop
+
+```python
+harvest_on_stop(self: Any)
+```
 
 Export routing stats for harvest on session stop.
 
@@ -106,30 +120,35 @@ Creates a harvest entry with routing statistics and appends it
 to the routing harvest JSONL file. This is called at session end
 to capture routing metrics for analysis and cost tracking.
 
-Returns:
-    The harvest entry dictionary that was written
+**Returns**: The harvest entry dictionary that was written
 
-```python
-harvest_on_stop(self)
-```
+---
 
 #### RoutingDonutAdapter.harvest_path
 
+```python
+harvest_path(self: Any)
+```
+
 Path to the routing harvest file.
 
-```python
-harvest_path(self)
-```
+---
 
 #### RoutingDonutAdapter.queue_path
 
-Path to the prompt queue file.
-
 ```python
-queue_path(self)
+queue_path(self: Any)
 ```
 
+Path to the prompt queue file.
+
+---
+
 #### RoutingDonutAdapter.read_model_preference_from_queue
+
+```python
+read_model_preference_from_queue(self: Any)
+```
 
 Read preferred_model from the first unclaimed queue item.
 
@@ -141,30 +160,30 @@ Queue item format:
     {"ts": "ISO8601", "prompt": "...", "preferred_model": "...",
      "claimed_by": null, "lease_expires_at": null}
 
-Returns:
-    The preferred_model string if found in an unclaimed item,
-    otherwise None.
+**Returns**: The preferred_model string if found in an unclaimed item,
+otherwise None.
 
-```python
-read_model_preference_from_queue(self)
-```
+---
 
 #### RoutingDonutAdapter.record_request
 
+```python
+record_request(self: Any, model: str, provider: str, category: str, tokens: int, cost_usd: float, is_fallback: bool, is_error: bool)
+```
+
 Record a routing request for stats tracking.
 
-Args:
-    model: The model that handled the request
-    provider: The provider used
-    category: Task category (fast, normal, complex, high_complex)
-    tokens: Total tokens used
-    cost_usd: Cost in USD
-    is_fallback: Whether this was a fallback routing
-    is_error: Whether the request resulted in an error
+**Parameters**:
 
-```python
-record_request(self, model, provider, category, tokens, cost_usd, is_fallback, is_error)
-```
+- `model`: The model that handled the request
+- `provider`: The provider used
+- `category`: Task category (fast, normal, complex, high_complex)
+- `tokens`: Total tokens used
+- `cost_usd`: Cost in USD
+- `is_fallback`: Whether this was a fallback routing
+- `is_error`: Whether the request resulted in an error
+
+---
 
 ---
 
@@ -176,11 +195,11 @@ Routing statistics for harvest export.
 
 ## clear_stats
 
-Reset routing statistics.
-
 ```python
-clear_stats(self)
+clear_stats(self: Any)
 ```
+
+Reset routing statistics.
 
 ---
 
@@ -192,34 +211,38 @@ Get global Donut adapter instance.
 
 ## get_router
 
+```python
+get_router(self: Any, policy: str)
+```
+
 Get or create a shared LiteLLM router for the given policy.
 
 Routers are cached by policy, enabling reuse across teammates
 and multiple calls within a session.
 
-Args:
-    policy: Routing policy (cheapest, fastest, round_robin)
+**Parameters**:
 
-Returns:
-    Configured LiteLLM Router instance
+- `policy`: Routing policy (cheapest, fastest, round_robin)
 
-```python
-get_router(self, policy)
-```
+**Returns**: Configured LiteLLM Router instance
 
 ---
 
 ## get_stats
 
-Get current routing statistics.
-
 ```python
-get_stats(self)
+get_stats(self: Any)
 ```
+
+Get current routing statistics.
 
 ---
 
 ## get_team_router_config
+
+```python
+get_team_router_config(self: Any)
+```
 
 Get router config dict for sharing across teammates.
 
@@ -227,21 +250,20 @@ Exports configuration that can be used by teammate agents
 to instantiate compatible routers. This enables coordinated
 routing decisions across a team of agents.
 
-Returns:
-    Dictionary containing:
-    - policies: List of available routing policies
-    - default_policy: The default routing policy
-    - queue_path: Path to the shared queue
-    - harvest_path: Path to the harvest file
-    - stats_summary: Current routing statistics summary
-
-```python
-get_team_router_config(self)
-```
+**Returns**: Dictionary containing:
+- policies: List of available routing policies
+- default_policy: The default routing policy
+- queue_path: Path to the shared queue
+- harvest_path: Path to the harvest file
+- stats_summary: Current routing statistics summary
 
 ---
 
 ## harvest_on_stop
+
+```python
+harvest_on_stop(self: Any)
+```
 
 Export routing stats for harvest on session stop.
 
@@ -249,36 +271,35 @@ Creates a harvest entry with routing statistics and appends it
 to the routing harvest JSONL file. This is called at session end
 to capture routing metrics for analysis and cost tracking.
 
-Returns:
-    The harvest entry dictionary that was written
-
-```python
-harvest_on_stop(self)
-```
+**Returns**: The harvest entry dictionary that was written
 
 ---
 
 ## harvest_path
 
-Path to the routing harvest file.
-
 ```python
-harvest_path(self)
+harvest_path(self: Any)
 ```
+
+Path to the routing harvest file.
 
 ---
 
 ## queue_path
 
-Path to the prompt queue file.
-
 ```python
-queue_path(self)
+queue_path(self: Any)
 ```
+
+Path to the prompt queue file.
 
 ---
 
 ## read_model_preference_from_queue
+
+```python
+read_model_preference_from_queue(self: Any)
+```
 
 Read preferred_model from the first unclaimed queue item.
 
@@ -290,32 +311,28 @@ Queue item format:
     {"ts": "ISO8601", "prompt": "...", "preferred_model": "...",
      "claimed_by": null, "lease_expires_at": null}
 
-Returns:
-    The preferred_model string if found in an unclaimed item,
-    otherwise None.
-
-```python
-read_model_preference_from_queue(self)
-```
+**Returns**: The preferred_model string if found in an unclaimed item,
+otherwise None.
 
 ---
 
 ## record_request
 
+```python
+record_request(self: Any, model: str, provider: str, category: str, tokens: int, cost_usd: float, is_fallback: bool, is_error: bool)
+```
+
 Record a routing request for stats tracking.
 
-Args:
-    model: The model that handled the request
-    provider: The provider used
-    category: Task category (fast, normal, complex, high_complex)
-    tokens: Total tokens used
-    cost_usd: Cost in USD
-    is_fallback: Whether this was a fallback routing
-    is_error: Whether the request resulted in an error
+**Parameters**:
 
-```python
-record_request(self, model, provider, category, tokens, cost_usd, is_fallback, is_error)
-```
+- `model`: The model that handled the request
+- `provider`: The provider used
+- `category`: Task category (fast, normal, complex, high_complex)
+- `tokens`: Total tokens used
+- `cost_usd`: Cost in USD
+- `is_fallback`: Whether this was a fallback routing
+- `is_error`: Whether the request resulted in an error
 
 ---
 

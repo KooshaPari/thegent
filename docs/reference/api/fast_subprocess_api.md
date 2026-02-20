@@ -25,69 +25,67 @@ High-performance subprocess execution with async support.
 
 #### FastSubprocess.run_optimized
 
+```python
+run_optimized(cmd: list[str])
+```
+
 Run subprocess with optimizations (synchronous).
 
-Args:
-    cmd: Command and arguments
-    cwd: Working directory
-    env: Environment variables
-    timeout: Timeout in seconds
-    check: Raise exception on non-zero exit
-    capture_output: Capture stdout/stderr
-    start_new_session: Start new session (Unix)
-    close_fds: Close file descriptors (Unix)
-    **kwargs: Additional subprocess options
+**Parameters**:
 
-Returns:
-    CompletedProcess with stdout, stderr, returncode
+- `cmd`: Command and arguments
+- `cwd`: Working directory
+- `env`: Environment variables
+- `timeout`: Timeout in seconds
+- `check`: Raise exception on non-zero exit
+- `capture_output`: Capture stdout/stderr
+- `start_new_session`: Start new session (Unix)
+- `close_fds`: Close file descriptors (Unix)
+- `**kwargs`: Additional subprocess options
 
-Optimizations:
-    - start_new_session for daemon processes
-    - close_fds to prevent FD leaks
-    - Optimized process creation flags
+**Returns**: CompletedProcess with stdout, stderr, returncode
 
-```python
-run_optimized(cmd)
-```
+---
 
 ---
 
 ## run_optimized
 
+```python
+run_optimized(cmd: list[str])
+```
+
 Run subprocess with optimizations (synchronous).
 
-Args:
-    cmd: Command and arguments
-    cwd: Working directory
-    env: Environment variables
-    timeout: Timeout in seconds
-    check: Raise exception on non-zero exit
-    capture_output: Capture stdout/stderr
-    start_new_session: Start new session (Unix)
-    close_fds: Close file descriptors (Unix)
-    **kwargs: Additional subprocess options
+**Parameters**:
 
-Returns:
-    CompletedProcess with stdout, stderr, returncode
+- `cmd`: Command and arguments
+- `cwd`: Working directory
+- `env`: Environment variables
+- `timeout`: Timeout in seconds
+- `check`: Raise exception on non-zero exit
+- `capture_output`: Capture stdout/stderr
+- `start_new_session`: Start new session (Unix)
+- `close_fds`: Close file descriptors (Unix)
+- `**kwargs`: Additional subprocess options
 
-Optimizations:
-    - start_new_session for daemon processes
-    - close_fds to prevent FD leaks
-    - Optimized process creation flags
-
-```python
-run_optimized(cmd)
-```
+**Returns**: CompletedProcess with stdout, stderr, returncode
 
 ---
 
 ## run_subprocess_optimized
 
+```python
+run_subprocess_optimized(cmd: list[str])
+```
+
 Run subprocess with optimizations.
 
-```python
-run_subprocess_optimized(cmd)
-```
+**Parameters**:
+
+- `input`: Input to send to stdin (str or bytes)
+- `text`: If True, input/output are text (str), else bytes
+- `**kwargs`: Additional subprocess options
 
 ---
 

@@ -18,7 +18,7 @@ from tenacity import (
     retry,
     retry_if_exception_type,
     stop_after_attempt,
-    wait_exponential,
+    wait_random_exponential,
 )
 
 from thegent.agents.base import RunResult
@@ -200,7 +200,7 @@ def with_retry(
     def decorator(fn: Callable[..., T]) -> Callable[..., T]:
         return retry(
             stop=stop_after_attempt(max_attempts),
-            wait=wait_exponential(multiplier=1, min=min_wait, max=max_wait),
+            wait=wait_random_exponential(multiplier=1, min=min_wait, max=max_wait),
             retry=retry_if_exception_type(TransientAgentError),
             reraise=True,
         )(fn)

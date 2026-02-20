@@ -21,86 +21,97 @@ and DAG synchronization.
 
 #### GardeningManager.__init__
 
+```python
+__init__(self: Any, project_root: Any)
+```
+
 Initialize the gardening manager.
 
-Args:
-    project_root: Root directory for the project. Defaults to cwd.
+**Parameters**:
 
-```python
-__init__(self, project_root)
-```
+- `project_root`: Root directory for the project. Defaults to cwd.
+
+---
 
 #### GardeningManager.clear_findings
 
+```python
+clear_findings(self: Any)
+```
+
 Clear stored findings.
 
-```python
-clear_findings(self)
-```
+---
 
 #### GardeningManager.get_findings
 
+```python
+get_findings(self: Any)
+```
+
 Return gardening findings that need attention.
 
-```python
-get_findings(self)
-```
+---
 
 #### GardeningManager.get_last_results
 
+```python
+get_last_results(self: Any)
+```
+
 Return results from last run of each step.
 
-```python
-get_last_results(self)
-```
+---
 
 #### GardeningManager.get_summary
 
+```python
+get_summary(self: Any)
+```
+
 Return a summary of gardening status.
 
-```python
-get_summary(self)
-```
+---
 
 ---
 
 ## clear_findings
 
-Clear stored findings.
-
 ```python
-clear_findings(self)
+clear_findings(self: Any)
 ```
+
+Clear stored findings.
 
 ---
 
 ## get_findings
 
-Return gardening findings that need attention.
-
 ```python
-get_findings(self)
+get_findings(self: Any)
 ```
+
+Return gardening findings that need attention.
 
 ---
 
 ## get_last_results
 
-Return results from last run of each step.
-
 ```python
-get_last_results(self)
+get_last_results(self: Any)
 ```
+
+Return results from last run of each step.
 
 ---
 
 ## get_summary
 
-Return a summary of gardening status.
-
 ```python
-get_summary(self)
+get_summary(self: Any)
 ```
+
+Return a summary of gardening status.
 
 ---
 

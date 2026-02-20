@@ -2,19 +2,21 @@
 Includes Mergiraf integration, conflict prediction, and structural merge.
 """
 
+import json
 import logging
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import subprocess
-import json
+
 import yaml
 
 logger = logging.getLogger(__name__)
 
+
 class SmartMerger:
     """Smart merge coordination using Mergiraf and structural aware merges."""
 
-    def __init__(self, mergiraf_path: str = "mergiraf"):
+    def __init__(self, mergiraf_path: str = "mergiraf") -> None:
         self.mergiraf_path = mergiraf_path
 
     def merge_ast(self, base: Path, local: Path, remote: Path, output: Path) -> bool:
@@ -25,14 +27,13 @@ class SmartMerger:
             if result.returncode == 0:
                 logger.info(f"AST merge successful for {output}")
                 return True
-            else:
-                logger.warning(f"AST merge failed for {output}: {result.stderr}")
-                return False
+            logger.warning(f"AST merge failed for {output}: {result.stderr}")
+            return False
         except FileNotFoundError:
             logger.error("Mergiraf binary not found. Falling back to standard merge.")
             return False
 
-    def predict_conflicts(self, intents: List[Dict[str, Any]]) -> List[str]:
+    def predict_conflicts(self, intents: list[dict[str, Any]]) -> list[str]:
         """Predict potential conflicts based on agent intents."""
         file_map = {}
         conflicts = []
@@ -53,11 +54,11 @@ class SmartMerger:
             imports = set()
             others = []
             for line in lines:
-                if line.startswith("import ") or line.startswith("from "):
+                if line.startswith(("import ", "from ")):
                     imports.add(line)
                 else:
                     others.append(line)
-            return "\n".join(sorted(list(imports))) + "\n\n" + "\n".join(others)
+            return "\n".join(sorted(imports)) + "\n\n" + "\n".join(others)
         return content
 
     def merge_structural(self, base_file: Path, local_file: Path, remote_file: Path, output_file: Path) -> bool:
@@ -71,7 +72,7 @@ class SmartMerger:
                 merged = self._deep_merge(base, local, remote)
                 output_file.write_text(json.dumps(merged, indent=2))
                 return True
-            elif ext in (".yaml", ".yml"):
+            if ext in (".yaml", ".yml"):
                 base = yaml.safe_load(base_file.read_text())
                 local = yaml.safe_load(local_file.read_text())
                 remote = yaml.safe_load(remote_file.read_text())
@@ -95,4 +96,4 @@ class SmartMerger:
                 else:
                     merged[k] = remote[k]
             return merged
-        return local # Ours wins
+        return local  # Ours wins

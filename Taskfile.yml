@@ -43,7 +43,7 @@ tasks:
   shims:guard:
     desc: "Validate generated shims for self-reinvocation patterns"
     cmds:
-      - bash scripts/guard-shim-forks.sh
+      - zsh scripts/guard-shim-forks.sh
 
   shims:probe:
     desc: "Run binary shim startup probes with timeout and fail fast"
@@ -51,7 +51,7 @@ tasks:
       - |
         PATH="${HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         export PATH
-        bash scripts/guard-shim-forks.sh
+        zsh scripts/guard-shim-forks.sh
 
   default:
     cmds:
@@ -114,12 +114,12 @@ tasks:
   dev:
     desc: "Start MCP + Proxy via process-compose (TUI)"
     cmds:
-      - python scripts/dev_start_with_preflight.py up
+      - uv run python scripts/dev_start_with_preflight.py up
 
   dev:bg:
     desc: "Start MCP + Proxy in background"
     cmds:
-      - python scripts/dev_start_with_preflight.py up -d
+      - uv run python scripts/dev_start_with_preflight.py up -d
 
   dev:hmr:
     desc: "Start MCP + Proxy with hot reload (HMR)"
@@ -216,7 +216,7 @@ tasks:
   test:pyramid:
     desc: "Validate test pyramid distribution"
     cmds:
-      - bash scripts/test-pyramid-validator.sh
+      - zsh scripts/test-pyramid-validator.sh
 
   # -- Linting --
 
@@ -274,7 +274,7 @@ tasks:
   lint:antipatterns:
     desc: "Scan for agent anti-patterns (custom retry, wrong logging, hardcoded providers)"
     cmds:
-      - bash -c 'find src/ -name "*.py" -not -path "*/test*" -not -name "conftest.py" | while read f; do FILE_PATH="$f" TOOL_CONTENT="$(cat "$f")" bash hooks/agent-antipattern-detector.sh; done'
+      - zsh -c 'find src/ -name "*.py" -not -path "*/test*" -not -name "conftest.py" | while read f; do FILE_PATH="$f" TOOL_CONTENT="$(cat "$f")" zsh hooks/agent-antipattern-detector.sh; done'
 
   # -- Formatting --
 
@@ -338,56 +338,56 @@ tasks:
       - task: lint:strict
       - task: test
       - task: test:pyramid
-      - bash scripts/traceability-validator.sh
-      - bash scripts/dx-audit.sh
+      - zsh scripts/traceability-validator.sh
+      - zsh scripts/dx-audit.sh
 
   # -- Quality fix (format + lint --fix) --
 
   quality-fix:
     desc: "Format + ruff check --fix (safe fixes only)"
     cmds:
-      - bash scripts/quality-fix-agent.sh
+      - zsh scripts/quality-fix-agent.sh
 
   quality-fix-d:
     desc: "Format + ruff check --fix --unsafe-fixes"
     cmds:
-      - bash scripts/quality-fix-agent.sh -d
+      - zsh scripts/quality-fix-agent.sh -d
 
   quality-fix-a:
     desc: "Quality fix; on fail pipe output to copilot/cursor-agent (interactive)"
     cmds:
-      - bash scripts/quality-fix-agent.sh -a
+      - zsh scripts/quality-fix-agent.sh -a
 
   quality-fix-a-d:
     desc: "Quality fix with unsafe; on fail pipe to copilot/cursor-agent (interactive)"
     cmds:
-      - bash scripts/quality-fix-agent.sh -a -d
+      - zsh scripts/quality-fix-agent.sh -a -d
 
   quality-fix-a-h:
     desc: "Quality fix; on fail pipe to thegent (headless)"
     cmds:
-      - bash scripts/quality-fix-agent.sh -a -h
+      - zsh scripts/quality-fix-agent.sh -a -h
 
   quality-fix-a-d-h:
     desc: "Quality fix with unsafe; on fail pipe to thegent (headless)"
     cmds:
-      - bash scripts/quality-fix-agent.sh -a -d -h
+      - zsh scripts/quality-fix-agent.sh -a -d -h
 
   # Full quality + agent on fail
   quality-a:
     desc: "Full quality; on fail show output and pipe to copilot"
     cmds:
-      - bash scripts/quality-agent.sh
+      - zsh scripts/quality-agent.sh
 
   quality-a-r:
     desc: "Full quality; on fail pipe to copilot and reload until green"
     cmds:
-      - bash scripts/quality-agent.sh -r
+      - zsh scripts/quality-agent.sh -r
 
   quality-a-h:
     desc: "Full quality; on fail pipe to thegent (headless)"
     cmds:
-      - bash scripts/quality-agent.sh -h
+      - zsh scripts/quality-agent.sh -h
 
   # Ruff-only aliases
   quality-a-d:
@@ -470,7 +470,7 @@ tasks:
   docs:demos:
     desc: Generate GIFs for documentation demos
     cmds:
-      - ./scripts/generate_demos.sh
+      - zsh scripts/generate_demos.sh
 
   docs:build:
     desc: Build docsite (all versions)
@@ -513,24 +513,24 @@ tasks:
   docs:convert-audit:
     desc: Audit docs/*.md for H1, frontmatter, See also (convert phase)
     cmds:
-      - bash scripts/docs-convert-audit.sh docs
+      - zsh scripts/docs-convert-audit.sh docs
 
   harvest-idea-seeds:
     desc: Harvest $idea prompts from Claude/Codex/Cursor into docs/research/idea-seeds
     cmds:
-      - ./scripts/harvest-idea-seeds.sh
+      - zsh scripts/harvest-idea-seeds.sh
   prompts-harvest:
     desc: Same as harvest-idea-seeds via thegent CLI
     cmds:
-      - thegent prompts harvest
+      - uv run thegent prompts harvest
   prompts-sessions:
     desc: List sessions from Cursor, Codex, Claude (by session and project)
     cmds:
-      - thegent prompts sessions
+      - uv run thegent prompts sessions
   prompts-sync:
     desc: Harvest + list — one-shot sync of all sources
     cmds:
-      - thegent prompts sync
+      - uv run thegent prompts sync
 
   # -- Benchmarks (Hook Rust Migration) --
 
@@ -552,50 +552,50 @@ tasks:
     desc: "Run comprehensive hook benchmark suite (all scenarios)"
     deps: [bench:setup]
     cmds:
-      - bash scripts/benchmark-comprehensive.sh
+      - zsh scripts/benchmark-comprehensive.sh
 
   bench:extended:
     desc: "Run extended benchmark suite (operations + hooks + aggregate)"
     deps: [bench:setup]
     cmds:
-      - BENCH_SCENARIO=all bash scripts/benchmark-extended.sh
+      - BENCH_SCENARIO=all zsh scripts/benchmark-extended.sh
 
   bench:operations:
     desc: "Run operation-level benchmarks only (init, cache, git, etc.)"
     deps: [bench:setup]
     cmds:
-      - BENCH_SCENARIO=operations bash scripts/benchmark-extended.sh
+      - BENCH_SCENARIO=operations zsh scripts/benchmark-extended.sh
 
   bench:hooks:
     desc: "Run real hook benchmarks (pre-write-validator, etc.)"
     deps: [bench:setup]
     cmds:
-      - BENCH_SCENARIO=hooks bash scripts/benchmark-extended.sh
+      - BENCH_SCENARIO=hooks zsh scripts/benchmark-extended.sh
 
   bench:aggregate:
     desc: "Run aggregate benchmarks (sequential hooks, batch performance)"
     deps: [bench:setup]
     cmds:
-      - BENCH_SCENARIO=aggregate bash scripts/benchmark-extended.sh
+      - BENCH_SCENARIO=aggregate zsh scripts/benchmark-extended.sh
 
   bench:dry-run:
     desc: "Dry run (plan benchmarks without executing)"
     deps: [bench:setup]
     cmds:
-      - BENCH_DRY_RUN=1 bash scripts/benchmark-extended.sh
+      - BENCH_DRY_RUN=1 zsh scripts/benchmark-extended.sh
 
   bench:custom:
     desc: "Run with custom settings (use BENCH_WARMUP_RUNS and BENCH_MEASURE_RUNS)"
     deps: [bench:setup]
     cmds:
-      - bash scripts/benchmark-extended.sh
+      - zsh scripts/benchmark-extended.sh
 
   bench:report:
     desc: "Generate report from latest benchmark results"
     cmds:
       - |
         if [[ -d benchmarks/results/latest ]]; then
-          python3 scripts/benchmark-analysis.py \
+          uv run python scripts/benchmark-analysis.py \
             --baseline-dir benchmarks/results/latest/baseline \
             --current-dir benchmarks/results/latest/current \
             --report-path benchmarks/results/latest/analysis.md \
@@ -619,7 +619,7 @@ tasks:
           ls -1 benchmarks/results/ | grep -v latest | tail -10
           exit 1
         fi
-        python3 scripts/benchmark-analysis.py \
+        uv run python scripts/benchmark-analysis.py \
           --baseline-dir benchmarks/results/$1/current \
           --current-dir benchmarks/results/$2/current \
           --report-path benchmarks/results/comparison-$1-$2.md \

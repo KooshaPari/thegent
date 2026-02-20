@@ -8,7 +8,7 @@ from thegent.research.autonomous_learning import AutonomousLearningSurface
 class Phase14AutonomousLearningResearch:
     """Research framework for autonomous learning."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize autonomous learning research."""
         self.learning_surface = AutonomousLearningSurface()
 

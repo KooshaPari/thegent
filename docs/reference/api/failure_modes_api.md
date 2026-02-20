@@ -10,17 +10,17 @@ MAST 14-mode failure taxonomy (WP-2005, FR-007).
 
 MAST 14-mode failure taxonomy for classification and recovery.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
 ## classify_failure
 
-Classify failure from error message to MAST mode.
-
 ```python
-classify_failure(error_message)
+classify_failure(error_message: str)
 ```
+
+Classify failure from error message to MAST mode.
 
 ---
 

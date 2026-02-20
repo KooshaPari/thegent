@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/verification/omega_safety.py`
 
 WP-45002: Universal Safety Invariants (Omega).
+
 Enforces system-wide, non-negotiable safety properties across all agent actions.
 
 ---
@@ -18,6 +19,7 @@ Details of a universal safety invariant violation.
 ## OmegaSafetyGuard
 
 The final safety gate for thegent (Phase 45).
+
 Enforces 'Omega' invariants which are universal and cannot be overridden.
 
 ### Methods
@@ -25,44 +27,50 @@ Enforces 'Omega' invariants which are universal and cannot be overridden.
 #### OmegaSafetyGuard.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### OmegaSafetyGuard.is_safe
 
+```python
+is_safe(self: Any, action_id: str, action_data: dict[(str, Any)])
+```
+
 Convenience method to check if an action is safe according to Omega invariants.
 
-```python
-is_safe(self, action_id, action_data)
-```
+---
 
 #### OmegaSafetyGuard.verify_action
 
+```python
+verify_action(self: Any, action_id: str, action_data: dict[(str, Any)])
+```
+
 Verify an action against all universal Omega invariants.
 
-```python
-verify_action(self, action_id, action_data)
-```
+---
 
 ---
 
 ## is_safe
 
-Convenience method to check if an action is safe according to Omega invariants.
-
 ```python
-is_safe(self, action_id, action_data)
+is_safe(self: Any, action_id: str, action_data: dict[(str, Any)])
 ```
+
+Convenience method to check if an action is safe according to Omega invariants.
 
 ---
 
 ## verify_action
 
-Verify an action against all universal Omega invariants.
-
 ```python
-verify_action(self, action_id, action_data)
+verify_action(self: Any, action_id: str, action_data: dict[(str, Any)])
 ```
+
+Verify an action against all universal Omega invariants.
 
 ---
 

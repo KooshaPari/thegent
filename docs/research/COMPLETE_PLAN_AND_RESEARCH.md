@@ -21,7 +21,7 @@ This master document indexes all planning and research documents:
 10. **[CODEX_CLI_LITELLM_FIX_SUMMARY.md](./CODEX_CLI_LITELLM_FIX_SUMMARY.md)** - Codex fix summary
 11. **[PLAN_INCORPORATE_RESEARCH.md](./PLAN_INCORPORATE_RESEARCH.md)** - Plan incorporate enhancement research
 12. **[SMART_CONTRACT_SYSTEM_OVERVIEW.md](./SMART_CONTRACT_SYSTEM_OVERVIEW.md)** - **QA GOVERNANCE** - Smart contract system (CDDL, evidence, state machine, P1–P16)
-13. **[SMART_CONTRACT_THGENT_TRACE_SHARECLI.md](./SMART_CONTRACT_THGENT_TRACE_SHARECLI.md)** - **QA GOVERNANCE** - How thegent, trace, sharecli fit into the smart contract system
+13. **[SMART_CONTRACT_THGENT_TRACE_heliosShield.md](./SMART_CONTRACT_THGENT_TRACE_heliosShield.md)** - **QA GOVERNANCE** - How thegent, trace, heliosShield fit into the smart contract system
 
 ---
 
@@ -163,7 +163,7 @@ This master document indexes all planning and research documents:
 - **Phases**: P1–P7 implemented; P8–P16 pending (policy engine, attestation, methodology, etc.)
 
 **Project Roles**:
-- **sharecli**: Hosts gate (`qa-smart-contract-gate.py`), hooks, governance
+- **heliosShield**: Hosts gate (`qa-smart-contract-gate.py`), hooks, governance
 - **trace**: Strictness reference for rollout (pyproject.toml, .golangci.yml)
 - **thegent**: Agent orchestration CLI; runs agents that produce evidence
 

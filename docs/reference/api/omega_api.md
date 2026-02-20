@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/planning/omega.py`
 
 WP-45001: Entropy-Minimizing Execution Loop (Omega).
+
 Optimizes execution by minimizing planning entropy and pruning redundant actions.
 
 ---
@@ -18,6 +19,7 @@ Result of an entropy-minimized execution step.
 ## OmegaLoop
 
 The final-stage execution loop for thegent (Phase 45).
+
 Focuses on minimizing entropy (wasted effort, redundant plans, and uncertainty).
 
 ### Methods
@@ -25,44 +27,50 @@ Focuses on minimizing entropy (wasted effort, redundant plans, and uncertainty).
 #### OmegaLoop.__init__
 
 ```python
-__init__(self, agent_id)
+__init__(self: Any, agent_id: str)
 ```
+
+---
 
 #### OmegaLoop.calculate_entropy
 
+```python
+calculate_entropy(self: Any, plan: list[dict[(str, Any)]])
+```
+
 Calculate the entropy (unpredictability/redundancy) of a proposed plan.
 
-```python
-calculate_entropy(self, plan)
-```
+---
 
 #### OmegaLoop.minimize_entropy
 
+```python
+minimize_entropy(self: Any, cycle_id: str, proposed_plan: list[dict[(str, Any)]])
+```
+
 Optimize a plan by pruning redundant or high-entropy actions.
 
-```python
-minimize_entropy(self, cycle_id, proposed_plan)
-```
+---
 
 ---
 
 ## calculate_entropy
 
-Calculate the entropy (unpredictability/redundancy) of a proposed plan.
-
 ```python
-calculate_entropy(self, plan)
+calculate_entropy(self: Any, plan: list[dict[(str, Any)]])
 ```
+
+Calculate the entropy (unpredictability/redundancy) of a proposed plan.
 
 ---
 
 ## minimize_entropy
 
-Optimize a plan by pruning redundant or high-entropy actions.
-
 ```python
-minimize_entropy(self, cycle_id, proposed_plan)
+minimize_entropy(self: Any, cycle_id: str, proposed_plan: list[dict[(str, Any)]])
 ```
+
+Optimize a plan by pruning redundant or high-entropy actions.
 
 ---
 

@@ -57,6 +57,33 @@ class FederatedPolicyManager:
             "namespaces": namespaces,
         }
 
+    def join_namespace(self, ns_str: str) -> bool:
+        """Register current node with a federated namespace (WP-13006)."""
+        parts = ns_str.split(".")
+        if len(parts) < 3:
+            _log.error("Invalid namespace format: %s. Expected org.project.env", ns_str)
+            return False
+
+        target_dir = self.base_dir / parts[0] / parts[1] / parts[2]
+        target_dir.mkdir(parents=True, exist_ok=True)
+        _log.info("Joined namespace: %s", ns_str)
+        return True
+
+    def leave_namespace(self, ns_str: str) -> bool:
+        """Remove registration for a federated namespace."""
+        parts = ns_str.split(".")
+        if len(parts) < 3:
+            return False
+
+        target_dir = self.base_dir / parts[0] / parts[1] / parts[2]
+        if target_dir.exists():
+            import shutil
+
+            shutil.rmtree(target_dir)
+            _log.info("Left namespace: %s", ns_str)
+            return True
+        return False
+
     def resolve_policy(self, ns: "PolicyNamespace", policy_id: str) -> dict[str, Any]:
         """Resolve policy by traversing namespace hierarchy."""
         for ns_str in ns.get_hierarchy():

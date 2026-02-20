@@ -1,8 +1,8 @@
-import logging
-import json
 import asyncio
-from typing import Any
+import json
+import logging
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,20 +38,25 @@ def reddit_search(query: str, max_results: int = 5, settings: Any = None) -> lis
     if settings and settings.reddit_client_id and settings.reddit_client_secret:
         try:
             import praw  # type: ignore[import]
+
             reddit = praw.Reddit(
                 client_id=settings.reddit_client_id,
                 client_secret=settings.reddit_client_secret,
-                user_agent=settings.reddit_user_agent
+                user_agent=settings.reddit_user_agent,
             )
             results = []
             for submission in reddit.subreddit("all").search(query, limit=max_results):
-                results.append({
-                    "title": submission.title,
-                    "url": f"https://www.reddit.com{submission.permalink}",
-                    "body": submission.selftext[:500] + "..." if len(submission.selftext) > 500 else submission.selftext,
-                    "score": submission.score,
-                    "num_comments": submission.num_comments
-                })
+                results.append(
+                    {
+                        "title": submission.title,
+                        "url": f"https://www.reddit.com{submission.permalink}",
+                        "body": submission.selftext[:500] + "..."
+                        if len(submission.selftext) > 500
+                        else submission.selftext,
+                        "score": submission.score,
+                        "num_comments": submission.num_comments,
+                    }
+                )
             return results
         except Exception as e:
             logger.warning(f"Reddit API error, falling back to DDG: {e}")
@@ -68,6 +73,7 @@ async def scrape_url(url: str, use_playwright: bool = True) -> dict[str, Any]:
     if use_playwright:
         try:
             from playwright.async_api import async_playwright  # type: ignore[import]
+
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
                 # Stealth context (simplified)
@@ -84,7 +90,7 @@ async def scrape_url(url: str, use_playwright: bool = True) -> dict[str, Any]:
                     "url": url,
                     "title": title,
                     "content": text[:5000],  # Limit content size
-                    "method": "playwright"
+                    "method": "playwright",
                 }
         except Exception as e:
             logger.warning(f"Playwright scraping failed for {url}: {e}")
@@ -92,14 +98,11 @@ async def scrape_url(url: str, use_playwright: bool = True) -> dict[str, Any]:
     # Fallback to httpx
     try:
         import httpx
+
         async with httpx.AsyncClient(follow_redirects=True, timeout=10.0) as client:
             resp = await client.get(url, headers={"User-Agent": "thegent/0.1.0"})
             resp.raise_for_status()
-            return {
-                "url": url,
-                "content": resp.text[:5000],
-                "method": "httpx"
-            }
+            return {"url": url, "content": resp.text[:5000], "method": "httpx"}
     except Exception as e:
         logger.error(f"Scraping failed for {url}: {e}")
         return {"url": url, "error": str(e)}
@@ -118,9 +121,9 @@ def deep_research_orchestrator(query: str, depth: int = 1, settings: Any = None)
         "query": query,
         "broad_results": ddg_search(query, max_results=5),
         "reddit_results": reddit_search(query, max_results=5, settings=settings),
-        "links_to_scrape": []
+        "links_to_scrape": [],
     }
-    
+
     # Collect links for Phase 3
     links = []
     for r in results["broad_results"]:
@@ -129,7 +132,7 @@ def deep_research_orchestrator(query: str, depth: int = 1, settings: Any = None)
     for r in results["reddit_results"]:
         if "url" in r:
             links.append(r["url"])
-            
-    results["links_to_scrape"] = links[:3] # Limit to top 3 links for now
-    
+
+    results["links_to_scrape"] = links[:3]  # Limit to top 3 links for now
+
     return results

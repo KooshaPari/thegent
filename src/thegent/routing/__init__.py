@@ -12,10 +12,13 @@ Key components:
 """
 
 from thegent.routing.models import RoutingConstraint, TaskCategory, TaskMetadata
+from thegent.routing.pareto_router import ParetoRouter, RouteCandidate
 from thegent.routing.task_router import ConstraintValidator, TaskClassifier, TaskRouter
 
 __all__ = [
     "ConstraintValidator",
+    "ParetoRouter",
+    "RouteCandidate",
     "RoutingConstraint",
     "TaskCategory",
     "TaskClassifier",

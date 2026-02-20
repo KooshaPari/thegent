@@ -16,6 +16,7 @@ from rich.table import Table
 
 from thegent.config import ThegentSettings
 from thegent.infra import run_subprocess_optimized
+from thegent.infra.fast_process_monitor import ProcessInfo
 
 console = Console()
 _project_root_cache: Path | None = None
@@ -97,6 +98,9 @@ def run_doctor(fix: bool = False) -> bool:
     # Category: Project hints
     results.extend(_check_project_hints())
 
+    # Category: Performance
+    results.extend(_check_performance())
+
     # Apply fixes if requested
     if fix:
         _apply_fixes(results)
@@ -127,7 +131,11 @@ def _check_dependencies() -> list[CheckResult]:
         try:
             result = run_subprocess_optimized(["node", "--version"], capture_output=True, timeout=5)
             if result.returncode == 0 and result.stdout:
-                ver = result.stdout.strip() if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace").strip()
+                ver = (
+                    result.stdout.strip()
+                    if isinstance(result.stdout, str)
+                    else result.stdout.decode("utf-8", errors="replace").strip()
+                )
                 r.status = "ok"
                 r.message = f"Found Node.js {ver} at {node_path}"
         except Exception as e:
@@ -439,20 +447,51 @@ def _check_environment() -> list[CheckResult]:
                     lines = content.split("\n")
                     target_binary = None
                     for line in lines[:20]:  # Check first 20 lines
-                        if "exec" in line.lower() or "which" in line.lower():
+                        line_lower = line.lower()
+                        # New format: REAL_GIT="$(resolve_real_binary git || true)"
+                        # Or: REAL_BIN="$(PATH="$SEARCH_PATH" command -v codex ...)"
+                        if "real_" in line_lower:
+                            if "resolve_real_binary" in line_lower:
+                                match = re.search(r'resolve_real_binary\s+([a-z-]+)', line_lower)
+                                if match:
+                                    target_binary = shutil.which(match.group(1))
+                                    if target_binary:
+                                        break
+                            elif "command -v" in line_lower:
+                                match = re.search(r'command -v\s+([a-z-]+)', line_lower)
+                                if match:
+                                    target_binary = shutil.which(match.group(1))
+                                    if target_binary:
+                                        break
+
+                        if "exec" in line_lower or "which" in line_lower:
                             # Try to extract binary path
                             parts = line.split()
                             for i, part in enumerate(parts):
                                 if part in ["exec", "which"] and i + 1 < len(parts):
                                     potential_binary = parts[i + 1].strip("'\"")
-                                    if "/" in potential_binary or potential_binary in ["git", "grep", "find", "jq", "uv"]:
+                                    if "/" in potential_binary or potential_binary in [
+                                        "git",
+                                        "grep",
+                                        "find",
+                                        "jq",
+                                        "uv",
+                                        "clode",
+                                        "codex",
+                                        "copilot",
+                                        "droid",
+                                        "roid",
+                                    ]:
                                         target_binary = shutil.which(potential_binary)
                                         break
-                            break
+                            if target_binary:
+                                break
                     shim_details[shim] = {
                         "type": "script",
                         "target": target_binary,
-                        "exists": target_binary is not None and Path(target_binary).exists() if target_binary else False,
+                        "exists": target_binary is not None and Path(target_binary).exists()
+                        if target_binary
+                        else False,
                     }
                 else:
                     shim_details[shim] = {"type": "unknown", "target": None, "exists": False}
@@ -520,17 +559,29 @@ def _check_environment() -> list[CheckResult]:
                     if shim_name == "git":
                         result = run_subprocess_optimized(["git", "--version"], capture_output=True, timeout=2)
                         if result.returncode == 0 and result.stdout:
-                            stdout_text = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                            stdout_text = (
+                                result.stdout
+                                if isinstance(result.stdout, str)
+                                else result.stdout.decode("utf-8", errors="replace")
+                            )
                             version_info = stdout_text.strip()
                     elif shim_name == "grep":
                         result = run_subprocess_optimized(["grep", "--version"], capture_output=True, timeout=2)
                         if result.returncode == 0 and result.stdout:
-                            stdout_text = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                            stdout_text = (
+                                result.stdout
+                                if isinstance(result.stdout, str)
+                                else result.stdout.decode("utf-8", errors="replace")
+                            )
                             version_info = stdout_text.split("\n")[0] if stdout_text else None
                     elif shim_name == "uv":
                         result = run_subprocess_optimized(["uv", "--version"], capture_output=True, timeout=2)
                         if result.returncode == 0 and result.stdout:
-                            stdout_text = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                            stdout_text = (
+                                result.stdout
+                                if isinstance(result.stdout, str)
+                                else result.stdout.decode("utf-8", errors="replace")
+                            )
                             version_info = stdout_text.strip()
             except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
                 pass
@@ -592,8 +643,16 @@ def _check_shim_binaries() -> list[CheckResult]:
                         timeout=2,
                         check=False,
                     )
-                    stdout_text = out.stdout if isinstance(out.stdout, str) else (out.stdout.decode("utf-8", errors="replace") if out.stdout else "")
-                    stderr_text = out.stderr if isinstance(out.stderr, str) else (out.stderr.decode("utf-8", errors="replace") if out.stderr else "")
+                    stdout_text = (
+                        out.stdout
+                        if isinstance(out.stdout, str)
+                        else (out.stdout.decode("utf-8", errors="replace") if out.stdout else "")
+                    )
+                    stderr_text = (
+                        out.stderr
+                        if isinstance(out.stderr, str)
+                        else (out.stderr.decode("utf-8", errors="replace") if out.stderr else "")
+                    )
                     ver = (stdout_text or stderr_text or "").strip().split("\n")[0] or "unknown"
                     r.status = "ok"
                     r.message = f"{name} at {bin_path}: {ver}"
@@ -716,7 +775,9 @@ def _check_nix_daemon_status() -> tuple[bool, str]:
                 timeout=5,
             )
             if result.returncode == 0 and result.stdout:
-                output = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                output = (
+                    result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                )
                 if "com.determinate.nix-daemon" in output or "nix-daemon" in output.lower():
                     return True, "Running (launchd)"
                 # Also check for determinate-nixd process
@@ -754,7 +815,11 @@ def _check_nix() -> list[CheckResult]:
         try:
             result = run_subprocess_optimized(["nix", "--version"], capture_output=True, timeout=5)
             if result.returncode == 0 and result.stdout:
-                ver = result.stdout.strip() if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace").strip()
+                ver = (
+                    result.stdout.strip()
+                    if isinstance(result.stdout, str)
+                    else result.stdout.decode("utf-8", errors="replace").strip()
+                )
                 r.status = "ok"
                 r.message = f"Found Nix: {ver}"
         except subprocess.TimeoutExpired:
@@ -1205,8 +1270,16 @@ def _check_headless() -> list[CheckResult]:
                 timeout=90,  # Increased timeout
                 env={**os.environ, "THGENT_DEBUG": "0", "THGENT_LOG_LEVEL": "ERROR"},
             )
-            stdout_text = process.stdout if isinstance(process.stdout, str) else (process.stdout.decode("utf-8", errors="replace") if process.stdout else "")
-            stderr_text = process.stderr if isinstance(process.stderr, str) else (process.stderr.decode("utf-8", errors="replace") if process.stderr else "")
+            stdout_text = (
+                process.stdout
+                if isinstance(process.stdout, str)
+                else (process.stdout.decode("utf-8", errors="replace") if process.stdout else "")
+            )
+            stderr_text = (
+                process.stderr
+                if isinstance(process.stderr, str)
+                else (process.stderr.decode("utf-8", errors="replace") if process.stderr else "")
+            )
             if process.returncode == 0 and stdout_text and "pong" in stdout_text.lower():
                 r.status = "ok"
                 r.message = "Claude Code headless run successful"
@@ -1258,8 +1331,16 @@ def _check_headless() -> list[CheckResult]:
                 timeout=90,  # Increased timeout
                 env={**os.environ, "THGENT_DEBUG": "0", "THGENT_LOG_LEVEL": "ERROR"},
             )
-            stdout_text = process.stdout if isinstance(process.stdout, str) else (process.stdout.decode("utf-8", errors="replace") if process.stdout else "")
-            stderr_text = process.stderr if isinstance(process.stderr, str) else (process.stderr.decode("utf-8", errors="replace") if process.stderr else "")
+            stdout_text = (
+                process.stdout
+                if isinstance(process.stdout, str)
+                else (process.stdout.decode("utf-8", errors="replace") if process.stdout else "")
+            )
+            stderr_text = (
+                process.stderr
+                if isinstance(process.stderr, str)
+                else (process.stderr.decode("utf-8", errors="replace") if process.stderr else "")
+            )
             if process.returncode == 0 and stdout_text and "pong" in stdout_text.lower():
                 r.status = "ok"
                 r.message = "Codex headless run successful"
@@ -1309,8 +1390,14 @@ def _check_headless() -> list[CheckResult]:
                 timeout=10,
                 env={**os.environ, "THGENT_DEBUG": "0", "THGENT_LOG_LEVEL": "ERROR"},
             )
-            stdout_text = process.stdout if isinstance(process.stdout, str) else (process.stdout.decode("utf-8", errors="replace") if process.stdout else "")
-            if process.returncode == 0 or (stdout_text and ("usage" in stdout_text.lower() or "help" in stdout_text.lower())):
+            stdout_text = (
+                process.stdout
+                if isinstance(process.stdout, str)
+                else (process.stdout.decode("utf-8", errors="replace") if process.stdout else "")
+            )
+            if process.returncode == 0 or (
+                stdout_text and ("usage" in stdout_text.lower() or "help" in stdout_text.lower())
+            ):
                 r.status = "ok"
                 r.message = f"Droid headless run successful ({droid_cmd})"
             else:
@@ -1793,6 +1880,40 @@ def _check_project_hints() -> list[CheckResult]:
     return res_list
 
 
+def _check_performance() -> list[CheckResult]:
+    """Check for performance optimizations."""
+    res_list = []
+    import sys
+    
+    # 1. Shell Strategy
+    r = CheckResult("Shell Strategy", "Performance")
+    agent_shell = os.getenv("THGENT_AGENT_SHELL")
+    
+    if sys.platform == "win32":
+        if agent_shell == "cmd":
+            r.status = "ok"
+            r.message = "Using high-performance 'cmd' for Windows execution"
+        else:
+            r.status = "warn"
+            r.message = f"Currently using '{agent_shell or 'default'}' shell; 'cmd' is faster for Windows"
+            r.fix_hint = "Run: thegent config set agent_shell cmd"
+    else:
+        if agent_shell == "dash":
+            r.status = "ok"
+            r.message = "Using high-performance 'dash' for Unix execution"
+        elif shutil.which("dash"):
+            r.status = "warn"
+            r.message = f"Currently using '{agent_shell or 'default'}' shell; 'dash' is faster for Unix"
+            r.fix_hint = "Run: thegent config set agent_shell dash"
+        else:
+            r.status = "info"
+            r.message = "Dash not found; bash is used as fallback"
+            r.fix_hint = "Install dash for 2x faster hook startup"
+            
+    res_list.append(r)
+    return res_list
+
+
 def _apply_fixes(results: list[CheckResult]) -> None:
     """Attempt to automatically fix issues based on fix_hint strings."""
     fixes_applied = 0
@@ -1822,7 +1943,10 @@ def _apply_fixes(results: list[CheckResult]) -> None:
                     continue
 
             # Skip hints that require manual intervention
-            if any(skip in hint.lower() for skip in ["install", "download", "check", "ensure", "create manually", "move", "add"]):
+            if any(
+                skip in hint.lower()
+                for skip in ["install", "download", "check", "ensure", "create manually", "move", "add"]
+            ):
                 if "run:" in hint.lower() or "thegent" in hint.lower():
                     # These are actionable commands
                     pass
@@ -1830,7 +1954,9 @@ def _apply_fixes(results: list[CheckResult]) -> None:
                     continue
 
             # Extract command from fix hints
-            if "run:" in hint.lower() or (":" in hint and any(cmd in hint.lower() for cmd in ["thegent", "mkdir", "chmod"])):
+            if "run:" in hint.lower() or (
+                ":" in hint and any(cmd in hint.lower() for cmd in ["thegent", "mkdir", "chmod"])
+            ):
                 # Extract command after "Run:" or "run:" or direct commands
                 if "run:" in hint.lower():
                     parts = hint.split(":", 1)
@@ -1853,9 +1979,16 @@ def _apply_fixes(results: list[CheckResult]) -> None:
                     if not cmd_parts:
                         continue
 
-                    # Skip dangerous commands
+                    # Skip dangerous commands, except for specific safe removals
                     dangerous = ["rm", "delete", "remove", "uninstall", "kill"]
-                    if any(d in cmd_parts[0].lower() for d in dangerous):
+                    is_safe_removal = False
+                    if cmd_parts[0].lower() == "rm" and len(cmd_parts) == 2:
+                        target_file = Path(cmd_parts[1]).expanduser()
+                        safe_targets = [Path.home() / ".local" / "bin" / "ps"]
+                        if any(target_file == safe for safe in safe_targets):
+                            is_safe_removal = True
+
+                    if any(d in cmd_parts[0].lower() for d in dangerous) and not is_safe_removal:
                         console.print(f"[yellow]⚠ Skipping potentially dangerous fix: {cmd}[/yellow]")
                         continue
 
@@ -1876,7 +2009,11 @@ def _apply_fixes(results: list[CheckResult]) -> None:
                                 console.print(f"[green]  ✓ Fixed: {r.name}[/green]")
                             else:
                                 fixes_failed += 1
-                                stderr_text = result.stderr if isinstance(result.stderr, str) else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
+                                stderr_text = (
+                                    result.stderr
+                                    if isinstance(result.stderr, str)
+                                    else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
+                                )
                                 console.print(f"[red]  ✗ Failed: {r.name} - {stderr_text[:100]}[/red]")
                         else:
                             # For other commands, check if they're safe to run

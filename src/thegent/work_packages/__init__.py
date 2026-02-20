@@ -48,10 +48,10 @@ WP_REGISTRY: dict[str, dict[str, Any]] = {
 
 def get_wp_info(wp_id: str) -> dict[str, Any] | None:
     """Get information about a work package.
-    
+
     Args:
         wp_id: Work package ID
-        
+
     Returns:
         Work package info or None
     """
@@ -60,7 +60,7 @@ def get_wp_info(wp_id: str) -> dict[str, Any] | None:
 
 def list_wps() -> list[str]:
     """List all registered work packages.
-    
+
     Returns:
         List of work package IDs
     """
@@ -68,17 +68,35 @@ def list_wps() -> list[str]:
 
 
 # P3 Work Packages
-WP_REGISTRY.update({
-    "WP-32002": {"name": "Bio-Digital Confidence Calibration", "module": "bio_digital", "status": "pending"},
-    "WP-34003": {"name": "Light-Speed Compensation Planning", "module": "light_speed", "status": "pending"},
-    "WP-36002": {"name": "Biological Feedback Confidence Injection", "module": "bio_feedback", "status": "pending"},
-    "WP-36003": {"name": "Molecular Computing Simulation sandbox", "module": "molecular_compute", "status": "pending"},
-    "WP-41001": {"name": "Neural-Link Cognitive Offloading (Sim)", "module": "neural_link", "status": "pending"},
-    "WP-41002": {"name": "Human-Agent Co-Consciousness Interface", "module": "co_consciousness", "status": "pending"},
-    "WP-42001": {"name": "Stellar Energy Harvesting Bridge (Sim)", "module": "stellar_energy", "status": "pending"},
-    "WP-42002": {"name": "Matrioshka Brain Resource Allocation", "module": "matrioshka_brain", "status": "pending"},
-    "WP-42003": {"name": "Cold-Storage Data Archiving (Planet-Scale)", "module": "cold_storage", "status": "pending"},
-    "WP-43002": {"name": "Gravity-Aware Task Scheduling", "module": "gravity_scheduling", "status": "pending"},
-    "WP-44003": {"name": "Virtualized Consciousness Bridge", "module": "virtualized_consciousness", "status": "pending"},
-    "WP-45003": {"name": "Final State Consensus Protocol", "module": "final_state_consensus", "status": "pending"},
-})
+WP_REGISTRY.update(
+    {
+        "WP-32002": {"name": "Bio-Digital Confidence Calibration", "module": "bio_digital", "status": "pending"},
+        "WP-34003": {"name": "Light-Speed Compensation Planning", "module": "light_speed", "status": "pending"},
+        "WP-36002": {"name": "Biological Feedback Confidence Injection", "module": "bio_feedback", "status": "pending"},
+        "WP-36003": {
+            "name": "Molecular Computing Simulation sandbox",
+            "module": "molecular_compute",
+            "status": "pending",
+        },
+        "WP-41001": {"name": "Neural-Link Cognitive Offloading (Sim)", "module": "neural_link", "status": "pending"},
+        "WP-41002": {
+            "name": "Human-Agent Co-Consciousness Interface",
+            "module": "co_consciousness",
+            "status": "pending",
+        },
+        "WP-42001": {"name": "Stellar Energy Harvesting Bridge (Sim)", "module": "stellar_energy", "status": "pending"},
+        "WP-42002": {"name": "Matrioshka Brain Resource Allocation", "module": "matrioshka_brain", "status": "pending"},
+        "WP-42003": {
+            "name": "Cold-Storage Data Archiving (Planet-Scale)",
+            "module": "cold_storage",
+            "status": "pending",
+        },
+        "WP-43002": {"name": "Gravity-Aware Task Scheduling", "module": "gravity_scheduling", "status": "pending"},
+        "WP-44003": {
+            "name": "Virtualized Consciousness Bridge",
+            "module": "virtualized_consciousness",
+            "status": "pending",
+        },
+        "WP-45003": {"name": "Final State Consensus Protocol", "module": "final_state_consensus", "status": "pending"},
+    }
+)

@@ -31,71 +31,84 @@ Wraps LiteLLM Router with:
 
 #### EnhancedRouter.__init__
 
+```python
+__init__(self: Any, policy: Any)
+```
+
 Initialize enhanced router.
 
-Args:
-    policy: Optional routing policy override
+**Parameters**:
 
-```python
-__init__(self, policy)
-```
+- `policy`: Optional routing policy override
+
+---
 
 #### EnhancedRouter.alert_manager
 
+```python
+alert_manager(self: Any)
+```
+
 Get alert manager (lazy initialization).
 
-```python
-alert_manager(self)
-```
+---
 
 #### EnhancedRouter.cost_tracker
 
+```python
+cost_tracker(self: Any)
+```
+
 Get cost tracker (lazy initialization).
 
-```python
-cost_tracker(self)
-```
+---
 
 #### EnhancedRouter.donut_adapter
 
+```python
+donut_adapter(self: Any)
+```
+
 Get Donut adapter (lazy initialization).
 
-```python
-donut_adapter(self)
-```
+---
 
 #### EnhancedRouter.route
 
+```python
+route(self: Any, prompt: str, model: Any, stream: bool)
+```
+
 Route a request through LiteLLM.
 
-Args:
-    prompt: The prompt to send
-    model: Optional model override (otherwise router selects)
-    stream: Whether to stream the response
-    **kwargs: Additional LiteLLM parameters
+**Parameters**:
 
-Returns:
-    RoutingResult with response and metadata
+- `prompt`: The prompt to send
+- `model`: Optional model override (otherwise router selects)
+- `stream`: Whether to stream the response
+- `**kwargs`: Additional LiteLLM parameters
 
-```python
-route(self, prompt, model, stream)
-```
+**Returns**: RoutingResult with response and metadata
+
+---
 
 #### EnhancedRouter.route_stream
 
+```python
+route_stream(self: Any, prompt: str, model: Any)
+```
+
 Route with streaming response.
 
-Args:
-    prompt: The prompt to send
-    model: Optional model override
-    **kwargs: Additional LiteLLM parameters
+**Parameters**:
 
-Yields:
-    Stream chunks from the model
+- `prompt`: The prompt to send
+- `model`: Optional model override
+- `**kwargs`: Additional LiteLLM parameters
 
-```python
-route_stream(self, prompt, model)
-```
+**Returns**: Stream chunks from the model
+
+---
 
 ---
 
@@ -113,23 +126,19 @@ Result from a routing operation.
 
 ## alert_manager
 
-Get alert manager (lazy initialization).
-
 ```python
-alert_manager(self)
+alert_manager(self: Any)
 ```
+
+Get alert manager (lazy initialization).
 
 ---
 
 ## build_fallback_chains
 
-Build fallback chains for models in LiteLLM format.
+Build fallback chains for models.
 
-LiteLLM Router expects fallbacks as a list of dicts:
-[{"primary_model": ["fallback1", "fallback2"]}, ...]
-
-Returns:
-    List of fallback chain dicts for LiteLLM Router
+**Returns**: Dict mapping primary model to list of fallback models
 
 ---
 
@@ -141,76 +150,97 @@ Excludes NATIVE_CLI_PROVIDERS (codex, claude).
 Routes API_KEY_PROVIDERS directly.
 Routes LOGIN_AUTH_PROVIDERS via CLIProxyAPIPlus.
 
-Returns:
-    List of LiteLLM model_list entries
+**Returns**: List of LiteLLM model_list entries
 
 ---
 
 ## cost_tracker
 
-Get cost tracker (lazy initialization).
-
 ```python
-cost_tracker(self)
+cost_tracker(self: Any)
 ```
+
+Get cost tracker (lazy initialization).
 
 ---
 
 ## donut_adapter
 
+```python
+donut_adapter(self: Any)
+```
+
 Get Donut adapter (lazy initialization).
 
-```python
-donut_adapter(self)
-```
+---
+
+## get_all_models_with_metadata
 
 ---
 
 ## get_context_window
 
+```python
+get_context_window(model: str)
+```
+
 Get context window size for a model.
 
-Args:
-    model: Model name (may be alias)
+**Parameters**:
 
-Returns:
-    Context window in tokens
+- `model`: Model name (may be alias)
 
-```python
-get_context_window(model)
-```
+**Returns**: Context window in tokens
 
 ---
 
 ## get_enhanced_router
 
+```python
+get_enhanced_router(policy: Any)
+```
+
 Get global enhanced router instance.
 
-Args:
-    policy: Optional routing policy override
+**Parameters**:
 
-Returns:
-    EnhancedRouter instance
+- `policy`: Optional routing policy override
 
-```python
-get_enhanced_router(policy)
-```
+**Returns**: EnhancedRouter instance
 
 ---
 
 ## get_litellm_router
 
+```python
+get_litellm_router(policy: str)
+```
+
 Get configured LiteLLM Router instance.
 
-Args:
-    policy: Routing policy (cheapest, fastest, round_robin, latency-based-routing)
+**Parameters**:
 
-Returns:
-    Configured LiteLLM Router
+- `policy`: Routing policy (cost-based-routing, fastest, round_robin, latency-based-routing)
+
+**Returns**: Configured LiteLLM Router
+
+---
+
+## get_model_metadata
 
 ```python
-get_litellm_router(policy)
+get_model_metadata(model_id: str) -> Any
 ```
+
+---
+
+## get_pareto_preferred_model
+
+```python
+get_pareto_preferred_model(complexity_tier: str)
+```
+
+Pre-select model via Pareto for LiteLLM when policy=pareto. Returns provider/model or None.
 
 ---
 
@@ -218,8 +248,15 @@ get_litellm_router(policy)
 
 Get router configuration from settings.
 
-Returns:
-    RouterConfig with values from ThegentSettings
+**Returns**: RouterConfig with values from ThegentSettings
+
+---
+
+## has_model_metadata
+
+```python
+has_model_metadata(model_id: str) -> bool
+```
 
 ---
 
@@ -231,55 +268,55 @@ Reset the global enhanced router (useful for testing).
 
 ## route
 
+```python
+route(self: Any, prompt: str, model: Any, stream: bool)
+```
+
 Route a request through LiteLLM.
 
-Args:
-    prompt: The prompt to send
-    model: Optional model override (otherwise router selects)
-    stream: Whether to stream the response
-    **kwargs: Additional LiteLLM parameters
+**Parameters**:
 
-Returns:
-    RoutingResult with response and metadata
+- `prompt`: The prompt to send
+- `model`: Optional model override (otherwise router selects)
+- `stream`: Whether to stream the response
+- `**kwargs`: Additional LiteLLM parameters
 
-```python
-route(self, prompt, model, stream)
-```
+**Returns**: RoutingResult with response and metadata
 
 ---
 
 ## route_stream
 
+```python
+route_stream(self: Any, prompt: str, model: Any)
+```
+
 Route with streaming response.
 
-Args:
-    prompt: The prompt to send
-    model: Optional model override
-    **kwargs: Additional LiteLLM parameters
+**Parameters**:
 
-Yields:
-    Stream chunks from the model
+- `prompt`: The prompt to send
+- `model`: Optional model override
+- `**kwargs`: Additional LiteLLM parameters
 
-```python
-route_stream(self, prompt, model)
-```
+**Returns**: Stream chunks from the model
 
 ---
 
 ## validate_context_window
 
+```python
+validate_context_window(model: str, prompt_tokens: int)
+```
+
 Validate that prompt fits within model's context window.
 
-Args:
-    model: Model name
-    prompt_tokens: Estimated prompt token count
+**Parameters**:
 
-Returns:
-    True if prompt fits, False otherwise
+- `model`: Model name
+- `prompt_tokens`: Estimated prompt token count
 
-```python
-validate_context_window(model, prompt_tokens)
-```
+**Returns**: True if prompt fits, False otherwise
 
 ---
 

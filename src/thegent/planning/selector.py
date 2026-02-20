@@ -1,6 +1,7 @@
 """WP-14001: Cost-aware objective selector for multi-objective optimization."""
 
 from dataclasses import dataclass
+from typing import Any, Optional
 
 from thegent.planning.models_meta import MODEL_METADATA, ModelMetadata
 
@@ -23,6 +24,25 @@ class ObjectiveSelector:
     def __init__(self, weights: ObjectiveWeights | None = None) -> None:
         self.weights = weights or ObjectiveWeights()
         self.weights.validate()
+
+    def select(self, models: list[dict[str, Any]], profile: ObjectiveWeights | None = None) -> dict[str, Any]:
+        """Select the best model from a list of model dictionaries."""
+        if not models:
+            return {}
+
+        weights = profile or self.weights
+
+        def score_model(m):
+            # Higher is better
+            q = m.get("quality", 0.5)
+            # Latency: normalize (0.1s -> 1.0, 10s -> 0.0)
+            l = max(0, 1.0 - (m.get("latency", 1.0) / 10.0))
+            # Cost: normalize ($0.01 -> 1.0, $1.0 -> 0.0)
+            c = max(0, 1.0 - (m.get("cost", 0.1) / 1.0))
+
+            return (q * weights.quality) + (l * weights.latency) + (c * weights.cost)
+
+        return max(models, key=score_model)
 
     def select_best_model(self, candidate_ids: list[str]) -> str:
         """Score and select the best model from the candidates."""

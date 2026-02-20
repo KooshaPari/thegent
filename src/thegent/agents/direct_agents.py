@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING, Any, cast
 
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
+from thegent.infra.fast_subprocess import run_subprocess_optimized
 from thegent.infra.power import wrap_with_caffeinate
 from thegent.utils import strip_ansi
-
 
 if TYPE_CHECKING:
     from thegent.config import ThegentSettings
@@ -53,8 +53,9 @@ def _resolve_cli(cmd: str, name: str, settings: "ThegentSettings | None" = None)
     """Resolve CLI path: settings override, env override, absolute path, which, or ~/.local/bin."""
     if settings is None:
         from thegent.config import ThegentSettings
+
         settings = ThegentSettings()
-    
+
     # Check settings first (cursor_agent_cmd for cursor-agent)
     if name == "cursor-agent" and settings.cursor_agent_cmd != "cursor":
         cmd_from_settings = settings.cursor_agent_cmd
@@ -62,7 +63,7 @@ def _resolve_cli(cmd: str, name: str, settings: "ThegentSettings | None" = None)
         if Path(expanded).exists():
             return expanded
         return cmd_from_settings
-    
+
     # Fallback to environment variable override
     env_key = "THGENT_CURSOR_AGENT_CMD" if name == "cursor-agent" else f"THGENT_{name.upper().replace('-', '_')}_CMD"
     env_val = os.environ.get(env_key)
@@ -104,30 +105,45 @@ _AGENT_CLI: dict[str, tuple[str, bool, str]] = {
 }
 
 
-def _wrap_with_harness(cmd: list[str]) -> list[str]:
-    """WP-4008: Wrap command with sharecli harness if available and enabled."""
+def _wrap_with_harness(cmd: list[str], agent_name: str | None = None) -> list[str]:
+    """WP-10010: Wrap command with unified harness (thegent-hooks or heliosShield)."""
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
-    if not settings.sharecli_enabled:
+    if not settings.heliosShield_enabled:
         return cmd
 
+    # Phase 2/3: Prefer thegent-hooks Rust harness
+    harness_bin = None
+
+    # Check for thegent-hooks first
+    if os.environ.get("THEGENT_HOOKS_RUST", "1") == "1":
+        harness_bin = shutil.which("thegent-hooks")
+        if harness_bin:
+            if agent_name:
+                # thegent-hooks agent <agent_name> -- <cmd> is the unified mesh entry point
+                return [harness_bin, "agent", agent_name, "--", *cmd]
+            # Fallback for generic git commands if no agent name provided
+            return [harness_bin, "git", *cmd]
+
+    # Fallback to legacy heliosShield harness
     harness_bin = shutil.which("harness")
     if not harness_bin:
-        # Check relative path to sharecli
-        potential = Path.cwd().parent / "sharecli" / "bin" / "harness"
+        # Check relative path to heliosShield
+        potential = Path.cwd().parent / "heliosShield" / "bin" / "harness"
         if potential.exists():
             harness_bin = str(potential)
         else:
             # Check workspace root
-            from thegent.config import ThegentSettings
-
             settings = ThegentSettings()
-            potential = settings.factory_skills_dir.parent.parent / "sharecli" / "bin" / "harness"
+            potential = settings.factory_skills_dir.parent.parent / "heliosShield" / "bin" / "harness"
             if potential.exists():
                 harness_bin = str(potential)
 
     if harness_bin:
+        # heliosShield harness currently does not support opencode invocation shape.
+        if cmd and cmd[0] == "opencode":
+            return cmd
         return [harness_bin, *cmd]
     return cmd
 
@@ -148,6 +164,7 @@ class DirectAgentRunner(AgentRunner):
             raise ValueError(f"Unknown direct agent: {agent_name}")
         self._cli_name, self._uses_stdin, self._stream_arg = spec
         from thegent.config import ThegentSettings
+
         settings = ThegentSettings()
         self._cli_cmd = _resolve_cli(cli_cmd or self._cli_name, self._cli_name, settings)
         self._default_model = default_model
@@ -169,13 +186,14 @@ class DirectAgentRunner(AgentRunner):
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
         agent_model: str | None = None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         model = agent_model or self._default_model
 
         # Route via LiteLLM Router if enabled and not opencode
         if self._use_litellm_router and self.agent_name != "opencode":
             return self._run_via_litellm_router(
-                prompt, cwd, mode, timeout, model, use_stream, live_output, on_stdout, on_stderr
+                prompt, cwd, mode, timeout, model, use_stream, live_output, on_stdout, on_stderr, env=env
             )
 
         # WP-Y6: OTel GenAI Instrumentation
@@ -204,16 +222,16 @@ class DirectAgentRunner(AgentRunner):
                 else:
                     cmd.append(prompt)
 
-            # sharecli harness currently does not support opencode invocation shape.
+            # heliosShield harness currently does not support opencode invocation shape.
             if self.agent_name != "opencode":
-                cmd = _wrap_with_harness(cmd)
+                cmd = _wrap_with_harness(cmd, agent_name=self.agent_name)
             cmd = wrap_with_caffeinate(cmd, self.agent_name)
 
             try:
                 if live_output:
-                    result = self._run_live(cmd, cwd, timeout, stdin_input, on_stdout, on_stderr)
+                    result = self._run_live(cmd, cwd, timeout, stdin_input, on_stdout, on_stderr, env=env)
                 else:
-                    result = self._run_capture(cmd, cwd, timeout, stdin_input)
+                    result = self._run_capture(cmd, cwd, timeout, stdin_input, env=env)
 
                 span.set_attribute("exit_code", result.exit_code)
                 return result
@@ -256,6 +274,7 @@ class DirectAgentRunner(AgentRunner):
         live_output: bool,
         on_stdout: Callable[[str], None] | None,
         on_stderr: Callable[[str], None] | None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         """Run via LiteLLM Router for direct CLI compatibility."""
         try:
@@ -265,10 +284,7 @@ class DirectAgentRunner(AgentRunner):
             # Map provider if possible
             provider = self.agent_name
             # If model already has provider/ prefix, use it
-            if "/" in model:
-                model_to_use = model
-            else:
-                model_to_use = f"{provider}/{model}"
+            model_to_use = model if "/" in model else f"{provider}/{model}"
 
             result = router.route(prompt, model=model_to_use, stream=use_stream, timeout=timeout)
 
@@ -310,22 +326,21 @@ class DirectAgentRunner(AgentRunner):
                     stderr="",
                     timed_out=False,
                 )
-            else:
-                content = ""
-                if hasattr(result.response, "choices") and result.response.choices:
-                    content = result.response.choices[0].message.content
-                elif isinstance(result.response, dict):
-                    choices = result.response.get("choices", [])
-                    if choices:
-                        message = choices[0].get("message", {})
-                        content = message.get("content", "")
+            content = ""
+            if hasattr(result.response, "choices") and result.response.choices:
+                content = result.response.choices[0].message.content
+            elif isinstance(result.response, dict):
+                choices = result.response.get("choices", [])
+                if choices:
+                    message = choices[0].get("message", {})
+                    content = message.get("content", "")
 
-                return RunResult(
-                    exit_code=0,
-                    stdout=content or "",
-                    stderr="",
-                    timed_out=False,
-                )
+            return RunResult(
+                exit_code=0,
+                stdout=content or "",
+                stderr="",
+                timed_out=False,
+            )
 
         except Exception as e:
             # Fallback to direct CLI execution if LiteLLM Router fails
@@ -418,9 +433,10 @@ class DirectAgentRunner(AgentRunner):
         cwd: Path | None,
         timeout: int,
         stdin_input: str | None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         try:
-            return self._run_capture_attempt(cmd, cwd, timeout, stdin_input)
+            return self._run_capture_attempt(cmd, cwd, timeout, stdin_input, env=env)
         except TransientAgentError as e:
             return e.result
 
@@ -431,19 +447,29 @@ class DirectAgentRunner(AgentRunner):
         cwd: Path | None,
         timeout: int,
         stdin_input: str | None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         kwargs: dict = {
             "capture_output": True,
             "timeout": min(timeout + 10, PROCESS_TIMEOUT_SECS + 10),
             "cwd": str(cwd) if cwd else None,
+            "env": env,
         }
         if stdin_input is not None:
             kwargs["input"] = stdin_input.encode() if isinstance(stdin_input, str) else stdin_input
         else:
             kwargs["stdin"] = subprocess.DEVNULL
         proc = run_subprocess_optimized(cmd, check=False, **cast("Any", kwargs))
-        stdout_text = proc.stdout if isinstance(proc.stdout, str) else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
-        stderr_text = proc.stderr if isinstance(proc.stderr, str) else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
+        stdout_text = (
+            proc.stdout
+            if isinstance(proc.stdout, str)
+            else (proc.stdout.decode("utf-8", errors="replace") if proc.stdout else "")
+        )
+        stderr_text = (
+            proc.stderr
+            if isinstance(proc.stderr, str)
+            else (proc.stderr.decode("utf-8", errors="replace") if proc.stderr else "")
+        )
         result = RunResult(
             exit_code=proc.returncode,
             stdout=strip_ansi(stdout_text),
@@ -462,6 +488,7 @@ class DirectAgentRunner(AgentRunner):
         stdin_input: str | None,
         on_stdout: Callable[[str], None] | None,
         on_stderr: Callable[[str], None] | None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         proc = subprocess.Popen(
             cmd,
@@ -471,6 +498,7 @@ class DirectAgentRunner(AgentRunner):
             text=True,
             bufsize=1,
             cwd=str(cwd) if cwd else None,
+            env=env,
         )
         if stdin_input and proc.stdin:
             proc.stdin.write(stdin_input)

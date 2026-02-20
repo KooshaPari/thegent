@@ -6,9 +6,9 @@ from typing import Any
 class AlgoliaSearchIntegration:
     """Algolia search integration with suggestions."""
 
-    def __init__(self, app_id: str, api_key: str, index_name: str):
+    def __init__(self, app_id: str, api_key: str, index_name: str) -> None:
         """Initialize Algolia integration.
-        
+
         Args:
             app_id: Algolia application ID
             api_key: Algolia API key
@@ -20,7 +20,7 @@ class AlgoliaSearchIntegration:
 
     def generate_config(self) -> dict[str, Any]:
         """Generate Algolia configuration.
-        
+
         Returns:
             Configuration dictionary
         """
@@ -36,7 +36,7 @@ class AlgoliaSearchIntegration:
 
     def render_search_component(self) -> str:
         """Render search component HTML.
-        
+
         Returns:
             HTML string
         """

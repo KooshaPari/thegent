@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/governance/semantic_firewall.py`
 
 WP-28002: Semantic Firewall for Model Output.
+
 Analyzes model outputs for semantic violations, alignment drift, and forbidden patterns.
 Sits between the model and the final execution environment.
 
@@ -25,26 +26,30 @@ Protects the agent environment from unsafe model outputs.
 #### SemanticFirewall.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### SemanticFirewall.inspect_output
 
+```python
+inspect_output(self: Any, output: str)
+```
+
 Inspect model output and apply firewall rules.
 
-```python
-inspect_output(self, output)
-```
+---
 
 ---
 
 ## inspect_output
 
-Inspect model output and apply firewall rules.
-
 ```python
-inspect_output(self, output)
+inspect_output(self: Any, output: str)
 ```
+
+Inspect model output and apply firewall rules.
 
 ---
 

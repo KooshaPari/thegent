@@ -2,18 +2,20 @@
 Includes OCC, HLC, and Lease registry.
 """
 
-import time
+import hashlib
 import logging
+import os
+import time
 from pathlib import Path
 from typing import Dict, Optional, Tuple
-import hashlib
-import os
 
 logger = logging.getLogger(__name__)
 
+
 class HybridLogicalClock:
     """Implementation of Hybrid Logical Clock (HLC)."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         self.logical = 0
         self.physical = 0
 
@@ -27,14 +29,16 @@ class HybridLogicalClock:
             self.logical += 1
         return f"{self.physical}:{self.logical}"
 
+
 class FileLeaseRegistry:
     """Registry for file leases using flock-like semantics."""
-    def __init__(self, registry_dir: Path):
+
+    def __init__(self, registry_dir: Path) -> None:
         self.registry_dir = registry_dir
         self.registry_dir.mkdir(parents=True, exist_ok=True)
         self.hlc = HybridLogicalClock()
 
-    def claim_lease(self, path: Path, agent_id: str, mode: str = "exclusive", ttl: int = 30) -> Optional[str]:
+    def claim_lease(self, path: Path, agent_id: str, mode: str = "exclusive", ttl: int = 30) -> str | None:
         """Claim a lease on a file."""
         lease_path = self._get_lease_path(path)
         if lease_path.exists():
@@ -61,7 +65,7 @@ class FileLeaseRegistry:
         lease_path = self._get_lease_path(path)
         if not lease_path.exists():
             return False
-        
+
         data = lease_path.read_text().split("|")
         if data[0] == agent_id and data[3] == token:
             expiry = time.time() + ttl
@@ -81,9 +85,11 @@ class FileLeaseRegistry:
         hashed = hashlib.sha256(str(path.resolve()).encode()).hexdigest()
         return self.registry_dir / f"{hashed}.lease"
 
+
 class OCCManager:
     """Optimistic Concurrency Control manager."""
-    def __init__(self, version_db: Path):
+
+    def __init__(self, version_db: Path) -> None:
         self.version_db = version_db
         self.version_db.mkdir(parents=True, exist_ok=True)
 
@@ -99,6 +105,6 @@ class OCCManager:
         if current_version != base_version:
             logger.error(f"OCC violation for {path}: expected {base_version}, got {current_version}")
             return False
-        
+
         path.write_bytes(new_content)
         return True

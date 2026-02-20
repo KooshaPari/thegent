@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/orchestration/fork_guard.py`
 
 WP-21001: Fork Explosion Guard.
+
 Prevents agent recursion depth and fan-out (parallel sub-tasks) from exceeding safe limits.
 
 ---
@@ -22,44 +23,50 @@ Monitors and limits the creation of sub-tasks to prevent cascading execution.
 #### ForkExplosionGuard.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### ForkExplosionGuard.get_stats
 
+```python
+get_stats(self: Any, run_id: str)
+```
+
 Return stats for a specific run.
 
-```python
-get_stats(self, run_id)
-```
+---
 
 #### ForkExplosionGuard.register_run
 
+```python
+register_run(self: Any, run_id: str, parent_id: Any)
+```
+
 Register a new run, inheriting depth from parent.
 
-```python
-register_run(self, run_id, parent_id)
-```
+---
 
 ---
 
 ## get_stats
 
-Return stats for a specific run.
-
 ```python
-get_stats(self, run_id)
+get_stats(self: Any, run_id: str)
 ```
+
+Return stats for a specific run.
 
 ---
 
 ## register_run
 
-Register a new run, inheriting depth from parent.
-
 ```python
-register_run(self, run_id, parent_id)
+register_run(self: Any, run_id: str, parent_id: Any)
 ```
+
+Register a new run, inheriting depth from parent.
 
 ---
 

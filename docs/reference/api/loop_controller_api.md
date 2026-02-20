@@ -15,16 +15,20 @@ Handles agent execution loops (Ralph Wiggum loops) with Checker Agent oversight.
 #### LifecycleController.__init__
 
 ```python
-__init__(self, settings, worker_agent_name, checker_agent_name, mode, max_iterations, worker_model, task_id, verification_callback)
+__init__(self: Any, settings: ThegentSettings, worker_agent_name: str, checker_agent_name: str, mode: LoopMode, max_iterations: int, worker_model: Any, task_id: Any, verification_callback: Any)
 ```
+
+---
 
 #### LifecycleController.run_loop
 
+```python
+run_loop(self: Any, initial_prompt: str, todo_spec: str, on_worker_output: Any, on_progress: Any)
+```
+
 Execute the Lifecycle loop.
 
-```python
-run_loop(self, initial_prompt, todo_spec, on_worker_output, on_progress)
-```
+---
 
 ---
 
@@ -32,7 +36,7 @@ run_loop(self, initial_prompt, todo_spec, on_worker_output, on_progress)
 
 Lifecycle loop modes.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -46,11 +50,11 @@ Current state of a Lifecycle loop.
 
 ## run_loop
 
-Execute the Lifecycle loop.
-
 ```python
-run_loop(self, initial_prompt, todo_spec, on_worker_output, on_progress)
+run_loop(self: Any, initial_prompt: str, todo_spec: str, on_worker_output: Any, on_progress: Any)
 ```
+
+Execute the Lifecycle loop.
 
 ---
 

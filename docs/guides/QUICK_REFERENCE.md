@@ -1,74 +1,50 @@
 # thegent Quick Reference
 
-One-page reference for the most common commands.
+Top commands and common workflows for `thegent`.
 
 ---
 
-## Installation & Setup
+## 🚀 Common Tasks
 
-| Command | Purpose |
-|---------|---------|
-| **Unix:** `curl -fsSL .../bootstrap.sh \| sh -s -- install` | Full bootstrap (install → setup → doctor) |
-| **Windows:** `irm .../install.ps1 \| iex` | Full bootstrap (PowerShell) |
-| `thegent setup` | Configure providers, install shortcuts, run wizard |
-| `thegent setup --full` | Full setup: install, shims, lock-cleanup, MCP service |
-| `thegent setup --agents claude,codex` | Configure only specified providers |
-| `thegent install -t all` | Install to all targets (claude, cursor, shell, etc.) |
-| `thegent install-shims` | Install git/rg/fd shims to ~/.local/bin |
-| `thegent install-shims --prefix /opt/thegent` | Install git wrapper for system install |
-| `thegent doctor` | Verify environment health |
-| `thegent doctor --fix` | Attempt to fix detected issues |
-
----
-
-## Running Agents
-
-| Command | Purpose |
-|---------|---------|
-| `thegent run "<prompt>" free` | Run task with free-tier agent |
-| `thegent run "<prompt>" -M gemini-3-flash` | Model-first routing |
-| `thegent bg "<prompt>"` | Run in background |
-| `thegent ps` | List active sessions |
-| `thegent status` | Session status and logs |
+| Task | Command |
+|------|---------|
+| **Run a task** | `thegent run "Your prompt" free` |
+| **Verify health** | `thegent doctor` |
+| **Auto-fix issues** | `thegent doctor --fix` |
+| **Configure providers** | `thegent setup` |
+| **Check config** | `thegent config show` |
+| **Next work item** | `thegent plan do-next` |
+| **Start MCP server** | `thegent serve` |
+| **List agents** | `thegent agents list` |
+| **Show sessions** | `thegent sessions list` |
 
 ---
 
-## Planning & Work Stream
+## 🛠 Setup & Installation
 
-| Command | Purpose |
-|---------|---------|
-| `thegent plan do-next` | Get next actionable item |
-| `thegent plan loop` | Continuous work stream processing |
-| `thegent plan claim <id>` | Claim a task |
-| `thegent plan complete <id>` | Mark task complete |
+- **Full Bootstrap**: `curl -fsSL https://raw.githubusercontent.com/.../bootstrap.sh | sh`
+- **Shell Completion**: `thegent --install-completion zsh`
+- **Install Shims**: `thegent install-shims --all`
+- **Git Hooks**: `thegent setup --hooks`
 
 ---
 
-## MCP & Providers
+## 🧪 Advanced Usage
 
-| Command | Purpose |
-|---------|---------|
-| `thegent serve` | Start MCP server |
-| `thegent cliproxy login <provider>` | Configure provider (claude, codex, etc.) |
-| `thegent mcp up` | Start MCP via process-compose |
-
----
-
-## Project Setup
-
-| Command | Purpose |
-|---------|---------|
-| `thegent setup --hooks` | Install git hooks |
-| `thegent setup --skills` | Sync thegent-skills to ~/.claude, ~/.cursor |
+- **Headless Mode**: `thegent run --headless "Prompt" agent-name`
+- **Remote Compute**: `thegent run --remote "Prompt" agent-name`
+- **Plan Verification**: `thegent plan verify`
+- **Sync Plans**: `thegent plan sync`
 
 ---
 
-## Help & Maintenance
+## 📁 Key Directories
 
-| Command | Purpose |
-|---------|---------|
-| `thegent --help` | Main help (includes getting started) |
-| `thegent run --help` | Command-specific help |
-| `thegent --install-completion zsh` | Enable shell completion |
-| `thegent upgrade` | Check for newer version |
-| `thegent upgrade --check` | Check only, no upgrade instructions |
+- **Config**: `~/.config/thegent/`
+- **Sessions**: `~/.cache/thegent/sessions/`
+- **Mesh**: `/tmp/agent-mesh/`
+- **Dumps**: `docs/dumps/`
+
+---
+
+For more details, run `thegent --help` or see the [full documentation](https://github.com/kooshapari/thegent).

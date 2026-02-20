@@ -15,8 +15,7 @@ Follows OS conventions:
 - Linux: ~/.config/thegent
 - Windows: %APPDATA%/thegent
 
-Returns:
-    Path to configuration directory (created if needed)
+**Returns**: Path to configuration directory (created if needed)
 
 ---
 

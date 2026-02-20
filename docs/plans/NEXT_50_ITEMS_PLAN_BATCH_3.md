@@ -5,7 +5,7 @@
 
 ## Summary
 
-This plan identifies the next 50 items from the unified work stream backlog (WORK_STREAM.md), covering advanced coordination, resource isolation, IPC primitives, and the beginning of the sharecli project.
+This plan identifies the next 50 items from the unified work stream backlog (WORK_STREAM.md), covering advanced coordination, resource isolation, IPC primitives, and the beginning of the heliosShield project.
 
 ## Items for Implementation
 
@@ -58,7 +58,7 @@ This plan identifies the next 50 items from the unified work stream backlog (WOR
 42. **TGNT-P18.3** - CLI for mesh management
 43. **TGNT-P18.4** - Health dashboard v2
 
-### sharecli: Phase 1 & 2 (7 items)
+### heliosShield: Phase 1 & 2 (7 items)
 44. **SCLI-P1.1** - Process enumeration from /proc (macOS ps fallback)
 45. **SCLI-P1.2** - Agent pattern matching
 46. **SCLI-P1.3** - Agent manifest system
@@ -70,5 +70,5 @@ This plan identifies the next 50 items from the unified work stream backlog (WOR
 ## Next Steps
 1. Implement Phase 7-11 for `thegent`
 2. Implement Phase 12-18 for `thegent`
-3. Implement Phase 1-2 for `sharecli`
+3. Implement Phase 1-2 for `heliosShield`
 4. Verify all implementations

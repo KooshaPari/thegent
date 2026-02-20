@@ -4,7 +4,7 @@ Identifies edge cases, jailbreaks, and policy bypass opportunities.
 """
 
 import logging
-import random
+import secrets
 from typing import Any
 
 from pydantic import BaseModel
@@ -47,13 +47,13 @@ class RedTeamAgent:
         """Generate an adversarial scenario for a target agent."""
         _log.info("Red Team generating attack for: %s", target_agent)
 
-        exploit = random.choice(list(self.payloads.keys()))
-        prompt = random.choice(self.payloads[exploit])
+        exploit = secrets.choice(list(self.payloads.keys()))
+        prompt = secrets.choice(self.payloads[exploit])
 
         level = "high" if exploit == "jailbreak" else "medium"
 
         return RedTeamScenario(
-            scenario_id=f"attack_{random.getrandbits(16):04x}",
+            scenario_id=f"attack_{secrets.token_hex(2)}",
             target_agent=target_agent,
             adversarial_prompt=prompt,
             exploit_type=exploit,

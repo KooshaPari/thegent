@@ -4,7 +4,13 @@ import { OramaPlugin } from '@orama/plugin-vitepress'
 import { imagetools } from 'vite-imagetools'
 import { crossProjectLinks } from './plugins/cross-project-links'
 import { contentTabsPlugin } from './plugins/content-tabs'
+import { videoEmbedPlugin } from './plugins/video-embed'
 import { sidebar } from './sidebar'
+import { createRequire } from 'module'
+
+const require = createRequire(import.meta.url)
+const markdownItKatex = require('markdown-it-katex')
+const markdownItEmoji = require('markdown-it-emoji').full
 
 const config = defineConfig({
   title: 'thegent',
@@ -13,13 +19,10 @@ const config = defineConfig({
   lastUpdated: true,
 
   // Exclude problematic directories from the build
-  ignore: [
-    'docset/',
-    'plans/',
-    'research/',
-    'docset',
-    'plans',
-    'research',
+  srcExclude: [
+    'docset/**',
+    'plans/**',
+    'research/**',
   ],
 
   // Disable dead link check (links are external or cross-project)
@@ -76,16 +79,20 @@ const config = defineConfig({
   markdown: {
     config: (md) => {
       md.use(crossProjectLinks)
-      md.use(contentTabsPlugin)
-      
+      // md.use(contentTabsPlugin)
+      md.use(videoEmbedPlugin, {
+        controls: true,
+        width: '100%',
+      })
+
       // Math support (KaTeX)
-      md.use(require('markdown-it-katex'), {
+      md.use(markdownItKatex, {
         throwOnError: false,
         errorColor: '#cc0000'
       })
-      
+
       // Emoji support
-      md.use(require('markdown-it-emoji'), {
+      md.use(markdownItEmoji, {
         shortcuts: {},
         defs: {}
       })

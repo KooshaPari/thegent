@@ -5,7 +5,7 @@
 AgilePlus trigger modes: watchdog, timer, and manual.
 
 Provides three ways to trigger governance cycles:
-- Watchdog: File system watcher with debounce
+- Watchdog: File system watcher with debounce (uses watchfiles for 5-10x performance)
 - Timer: Periodic interval-based triggering
 - Manual: One-shot CLI invocation
 
@@ -20,24 +20,30 @@ Trigger governance cycle when health drops below threshold.
 #### HealthThresholdTrigger.__init__
 
 ```python
-__init__(self, loop, threshold, check_interval)
+__init__(self: Any, loop: Any, threshold: float, check_interval: int)
 ```
+
+---
 
 #### HealthThresholdTrigger.start
 
+```python
+start(self: Any)
+```
+
 Start health monitoring in background.
 
-```python
-start(self)
-```
+---
 
 #### HealthThresholdTrigger.stop
 
+```python
+stop(self: Any)
+```
+
 Stop health monitoring.
 
-```python
-stop(self)
-```
+---
 
 ---
 
@@ -52,16 +58,20 @@ Runs a single governance cycle and exits.
 #### ManualTrigger.__init__
 
 ```python
-__init__(self, loop)
+__init__(self: Any, loop: Any)
 ```
+
+---
 
 #### ManualTrigger.run
 
+```python
+run(self: Any, force: bool)
+```
+
 Run a single governance cycle.
 
-```python
-run(self, force)
-```
+---
 
 ---
 
@@ -76,24 +86,30 @@ Triggers governance cycles at fixed intervals.
 #### TimerTrigger.__init__
 
 ```python
-__init__(self, loop, config)
+__init__(self: Any, loop: Any, config: TriggerConfig)
 ```
+
+---
 
 #### TimerTrigger.start
 
+```python
+start(self: Any)
+```
+
 Start the timer trigger.
 
-```python
-start(self)
-```
+---
 
 #### TimerTrigger.stop
 
+```python
+stop(self: Any)
+```
+
 Stop the timer trigger.
 
-```python
-stop(self)
-```
+---
 
 ---
 
@@ -116,14 +132,18 @@ Protocol for trigger implementations.
 #### TriggerProtocol.start
 
 ```python
-start(self)
+start(self: Any)
 ```
+
+---
 
 #### TriggerProtocol.stop
 
 ```python
-stop(self)
+stop(self: Any)
 ```
+
+---
 
 ---
 
@@ -131,40 +151,47 @@ stop(self)
 
 File system watcher trigger with debounce.
 
-Uses watchdog library to watch specified paths for changes and
-triggers cycles after a debounce period without new changes.
+Uses watchfiles (5-10x faster) or watchdog fallback to watch specified paths
+for changes and triggers cycles after a debounce period without new changes.
 
 ### Methods
 
 #### WatchdogTrigger.__init__
 
 ```python
-__init__(self, loop, config)
+__init__(self: Any, loop: Any, config: TriggerConfig)
 ```
+
+---
 
 #### WatchdogTrigger.start
 
+```python
+start(self: Any)
+```
+
 Start the watchdog trigger.
 
-```python
-start(self)
-```
+---
 
 #### WatchdogTrigger.stop
 
+```python
+stop(self: Any)
+```
+
 Stop the watchdog trigger.
 
-```python
-stop(self)
-```
+---
 
 ---
 
 ## _WatchdogEventHandler
 
-Event handler for watchdog file system events.
+Event handler for watchdog file system events (fallback).
 
 Filters events to only process relevant file changes.
+Only used when watchfiles is not available.
 
 **Inherits from**: `FileSystemEventHandler`
 
@@ -173,42 +200,50 @@ Filters events to only process relevant file changes.
 #### _WatchdogEventHandler.__init__
 
 ```python
-__init__(self, on_change, exclude_dirs, watch_extensions)
+__init__(self: Any, on_change: Any, exclude_dirs: frozenset[str], watch_extensions: frozenset[str])
 ```
+
+---
 
 #### _WatchdogEventHandler.on_created
 
+```python
+on_created(self: Any, event: Any)
+```
+
 Called when a file is created.
 
-```python
-on_created(self, event)
-```
+---
 
 #### _WatchdogEventHandler.on_deleted
 
+```python
+on_deleted(self: Any, event: Any)
+```
+
 Called when a file is deleted.
 
-```python
-on_deleted(self, event)
-```
+---
 
 #### _WatchdogEventHandler.on_modified
 
+```python
+on_modified(self: Any, event: Any)
+```
+
 Called when a file is modified.
 
-```python
-on_modified(self, event)
-```
+---
 
 ---
 
 ## create_trigger
 
-Factory function to create the appropriate trigger.
-
 ```python
-create_trigger(mode, loop, config)
+create_trigger(mode: str, loop: Any, config: TriggerConfig)
 ```
+
+Factory function to create the appropriate trigger.
 
 ---
 
@@ -224,69 +259,79 @@ CLI entry point for triggers.
 
 ## on_created
 
-Called when a file is created.
-
 ```python
-on_created(self, event)
+on_created(self: Any, event: Any)
 ```
+
+Called when a file is created.
 
 ---
 
 ## on_deleted
 
-Called when a file is deleted.
-
 ```python
-on_deleted(self, event)
+on_deleted(self: Any, event: Any)
 ```
+
+Called when a file is deleted.
 
 ---
 
 ## on_modified
 
-Called when a file is modified.
-
 ```python
-on_modified(self, event)
+on_modified(self: Any, event: Any)
 ```
+
+Called when a file is modified.
 
 ---
 
 ## run
 
-Run a single governance cycle.
-
 ```python
-run(self, force)
+run(self: Any, force: bool)
 ```
+
+Run a single governance cycle.
 
 ---
 
 ## shutdown
 
 ```python
-shutdown(signum, frame)
+shutdown(signum: int, frame: Any) -> None
 ```
 
 ---
 
 ## start
 
-Start health monitoring in background.
-
 ```python
-start(self)
+start(self: Any)
 ```
+
+Start health monitoring in background.
 
 ---
 
 ## stop
 
+```python
+stop(self: Any)
+```
+
 Stop health monitoring.
 
+---
+
+## watch_filter
+
 ```python
-stop(self)
+watch_filter(change: Change, path_str: str)
 ```
+
+Filter changes to only process relevant files.
 
 ---
 

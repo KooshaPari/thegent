@@ -14,11 +14,11 @@ Entry in the preset catalog.
 
 ## get_preset
 
-Return preset entry by id.
-
 ```python
-get_preset(preset_id)
+get_preset(preset_id: str)
 ```
+
+Return preset entry by id.
 
 ---
 
@@ -30,11 +30,11 @@ Return all presets for CLI/MCP discovery.
 
 ## match_preset
 
-Match text against preset trigger keywords.
-
 ```python
-match_preset(text)
+match_preset(text: str)
 ```
+
+Match text against preset trigger keywords.
 
 ---
 

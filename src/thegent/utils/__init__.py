@@ -10,6 +10,7 @@ def strip_ansi(text: str) -> str:
     return Text.from_ansi(text).plain
 
 
+from thegent.utils.edit_links import EditLinksGenerator
 from thegent.utils.helpers import (
     batch_file_operations,
     normalize_path,
@@ -18,7 +19,6 @@ from thegent.utils.helpers import (
 )
 from thegent.utils.link_checker import LinkChecker
 from thegent.utils.workstream import WorkStreamOps
-from thegent.utils.edit_links import EditLinksGenerator
 
 
 def is_dev_mode() -> bool:
@@ -36,6 +36,7 @@ def is_dev_mode() -> bool:
     # Check if we are in a git repo and running from source
     try:
         from pathlib import Path
+
         current_file = Path(__file__).resolve()
         # Expecting .../src/thegent/utils/__init__.py
         if "src/thegent" in str(current_file):
@@ -54,21 +55,22 @@ def get_resource_path(relative_path: str):
     In dev mode, looks in the project root.
     When installed, uses importlib.resources.
     """
-    from thegent import resources
-    return resources.get_resource_path(relative_path)
+    from thegent.resources import get_resource_path as _get_path
+
+    return _get_path(relative_path)
 
 
 __all__ = [
-    "strip_ansi",  # Export for backward compatibility
-    "is_dev_mode",
-    "get_resource_path",
-    "normalize_path",
-    "batch_file_operations",
-    "safe_read_file",
-    "safe_write_file",
+    "EditLinksGenerator",
     "LinkChecker",
     "WorkStreamOps",
-    "EditLinksGenerator",
+    "batch_file_operations",
+    "get_resource_path",
+    "is_dev_mode",
+    "normalize_path",
+    "safe_read_file",
+    "safe_write_file",
+    "strip_ansi",  # Export for backward compatibility
 ]
 
 from thegent.utils.reusable_helpers import ReusableHelpers

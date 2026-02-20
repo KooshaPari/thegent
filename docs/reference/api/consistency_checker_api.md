@@ -13,35 +13,29 @@ Check consistency across system.
 This class verifies that all system components are consistent,
 including version consistency, path consistency, and configuration consistency.
 
-Examples:
-    >>> checker = ConsistencyChecker()
-    >>> violations = checker.check_all()
-    >>> if violations:
-    ...     for violation in violations:
-    ...         print(f"{violation.component}.{violation.property}: "
-    ...               f"expected {violation.expected_value}, "
-    ...               f"got {violation.actual_value}")
-
 ### Methods
 
 #### ConsistencyChecker.__init__
 
+```python
+__init__(self: Any)
+```
+
 Initialize consistency checker.
 
-```python
-__init__(self)
-```
+---
 
 #### ConsistencyChecker.check_all
 
+```python
+check_all(self: Any)
+```
+
 Check all consistency rules.
 
-Returns:
-    List of consistency violations
+**Returns**: List of consistency violations
 
-```python
-check_all(self)
-```
+---
 
 ---
 
@@ -53,14 +47,13 @@ Consistency rule definition.
 
 ## check_all
 
+```python
+check_all(self: Any)
+```
+
 Check all consistency rules.
 
-Returns:
-    List of consistency violations
-
-```python
-check_all(self)
-```
+**Returns**: List of consistency violations
 
 ---
 

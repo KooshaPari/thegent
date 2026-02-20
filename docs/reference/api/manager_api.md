@@ -1,112 +1,262 @@
 # manager API Reference
 
-> **Source**: `src/thegent/team/manager.py`
+> **Source**: `src/thegent/tui/layouts/manager.py`
 
-WP-6008: Multi-agent team management and task coordination.
+Layout manager for TUI compositor.
+
+Provides multi-pane layout management with save/restore functionality.
 
 ---
 
-## TeamManager
+## LayoutManager
 
-Manages multi-agent teams and their shared task lists.
+Manages layout persistence and switching.
 
 ### Methods
 
-#### TeamManager.__init__
+#### LayoutManager.__init__
 
 ```python
-__init__(self, session_dir)
-```
-
-#### TeamManager.add_task
-
-Add a task to the team's shared list.
-
-```python
-add_task(self, team_id, title, description, dependencies)
-```
-
-#### TeamManager.assign_task
-
-Assign a task to an agent.
-
-```python
-assign_task(self, team_id, task_id, agent_id)
-```
-
-#### TeamManager.create_team
-
-Create a new team and return its ID.
-
-```python
-create_team(self, name, leader, teammates)
-```
-
-#### TeamManager.list_tasks
-
-List all tasks for a team.
-
-```python
-list_tasks(self, team_id)
-```
-
-#### TeamManager.update_task
-
-Update a task's fields.
-
-```python
-update_task(self, team_id, task_id, updates)
+__init__(self: Any, storage_dir: Any)
 ```
 
 ---
 
-## add_task
-
-Add a task to the team's shared list.
+#### LayoutManager.create_layout
 
 ```python
-add_task(self, team_id, title, description, dependencies)
+create_layout(self: Any, name: str, root: Any)
 ```
+
+Create a new layout.
 
 ---
 
-## assign_task
-
-Assign a task to an agent.
+#### LayoutManager.delete_layout
 
 ```python
-assign_task(self, team_id, task_id, agent_id)
+delete_layout(self: Any, name: str)
 ```
+
+Delete a layout.
 
 ---
 
-## create_team
-
-Create a new team and return its ID.
+#### LayoutManager.duplicate_layout
 
 ```python
-create_team(self, name, leader, teammates)
+duplicate_layout(self: Any, source_name: str, new_name: str)
 ```
+
+Duplicate an existing layout.
 
 ---
 
-## list_tasks
-
-List all tasks for a team.
+#### LayoutManager.get_current
 
 ```python
-list_tasks(self, team_id)
+get_current(self: Any)
 ```
+
+Get the current active layout.
 
 ---
 
-## update_task
-
-Update a task's fields.
+#### LayoutManager.get_layout
 
 ```python
-update_task(self, team_id, task_id, updates)
+get_layout(self: Any, name: str)
 ```
+
+Get a layout by name.
+
+---
+
+#### LayoutManager.list_layouts
+
+```python
+list_layouts(self: Any)
+```
+
+List all saved layouts.
+
+---
+
+#### LayoutManager.rename_layout
+
+```python
+rename_layout(self: Any, old_name: str, new_name: str)
+```
+
+Rename a layout.
+
+---
+
+#### LayoutManager.switch_layout
+
+```python
+switch_layout(self: Any, name: str)
+```
+
+Switch to a layout (returns the state for application).
+
+---
+
+---
+
+## LayoutState
+
+Complete layout state.
+
+---
+
+## PaneConfig
+
+Configuration for a single pane.
+
+---
+
+## SplitConfig
+
+Configuration for a split pane.
+
+---
+
+## create_default_layout
+
+Create the default layout.
+
+---
+
+## create_full_output_layout
+
+Create a full-screen output layout.
+
+---
+
+## create_horizontal_split
+
+```python
+create_horizontal_split(left_pane: PaneConfig, right_pane: PaneConfig, left_weight: int, right_weight: int)
+```
+
+Create a horizontal split layout.
+
+---
+
+## create_layout
+
+```python
+create_layout(self: Any, name: str, root: Any)
+```
+
+Create a new layout.
+
+---
+
+## create_main_sidebar
+
+```python
+create_main_sidebar(main_pane: PaneConfig, sidebar_pane: PaneConfig, sidebar_width: int)
+```
+
+Create a main content + sidebar layout.
+
+---
+
+## create_terminal_layout
+
+Create a layout optimized for terminal use.
+
+---
+
+## create_three_column
+
+```python
+create_three_column(left: PaneConfig, center: PaneConfig, right: PaneConfig, weights: Any)
+```
+
+Create a three-column layout.
+
+---
+
+## create_vertical_split
+
+```python
+create_vertical_split(top_pane: PaneConfig, bottom_pane: PaneConfig, top_weight: int, bottom_weight: int)
+```
+
+Create a vertical split layout.
+
+---
+
+## delete_layout
+
+```python
+delete_layout(self: Any, name: str)
+```
+
+Delete a layout.
+
+---
+
+## duplicate_layout
+
+```python
+duplicate_layout(self: Any, source_name: str, new_name: str)
+```
+
+Duplicate an existing layout.
+
+---
+
+## get_current
+
+```python
+get_current(self: Any)
+```
+
+Get the current active layout.
+
+---
+
+## get_layout
+
+```python
+get_layout(self: Any, name: str)
+```
+
+Get a layout by name.
+
+---
+
+## list_layouts
+
+```python
+list_layouts(self: Any)
+```
+
+List all saved layouts.
+
+---
+
+## rename_layout
+
+```python
+rename_layout(self: Any, old_name: str, new_name: str)
+```
+
+Rename a layout.
+
+---
+
+## switch_layout
+
+```python
+switch_layout(self: Any, name: str)
+```
+
+Switch to a layout (returns the state for application).
 
 ---
 

@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/economy/reputation.py`
 
 WP-26003: Decentralized Reputation System.
+
 Tracks agent performance and reliability across the global mesh.
 Uses weighted feedback and consensus to build decentralized trust scores.
 
@@ -25,62 +26,90 @@ Manages decentralized trust and reputation for mesh agents.
 #### ReputationManager.__init__
 
 ```python
-__init__(self)
+__init__(self: Any, db_path: Any)
 ```
+
+---
+
+#### ReputationManager.get_all_scores
+
+```python
+get_all_scores(self: Any)
+```
+
+Get all agent trust scores.
+
+---
 
 #### ReputationManager.get_reputation_report
 
+```python
+get_reputation_report(self: Any, agent_id: str)
+```
+
 Generate a detailed reputation report for an agent.
 
-```python
-get_reputation_report(self, agent_id)
-```
+---
 
 #### ReputationManager.get_trust_score
 
+```python
+get_trust_score(self: Any, agent_id: str)
+```
+
 Retrieve the current trust score for an agent.
 
-```python
-get_trust_score(self, agent_id)
-```
+---
 
 #### ReputationManager.submit_rating
 
+```python
+submit_rating(self: Any, agent_id: str, reviewer_id: str, task_id: str, rating: float, feedback: str)
+```
+
 Submit a rating for an agent's performance on a task.
 
+---
+
+---
+
+## get_all_scores
+
 ```python
-submit_rating(self, agent_id, reviewer_id, task_id, rating, feedback)
+get_all_scores(self: Any)
 ```
+
+Get all agent trust scores.
 
 ---
 
 ## get_reputation_report
 
-Generate a detailed reputation report for an agent.
-
 ```python
-get_reputation_report(self, agent_id)
+get_reputation_report(self: Any, agent_id: str)
 ```
+
+Generate a detailed reputation report for an agent.
 
 ---
 
 ## get_trust_score
 
-Retrieve the current trust score for an agent.
-
 ```python
-get_trust_score(self, agent_id)
+get_trust_score(self: Any, agent_id: str)
 ```
+
+Retrieve the current trust score for an agent.
 
 ---
 
 ## submit_rating
 
-Submit a rating for an agent's performance on a task.
-
 ```python
-submit_rating(self, agent_id, reviewer_id, task_id, rating, feedback)
+submit_rating(self: Any, agent_id: str, reviewer_id: str, task_id: str, rating: float, feedback: str)
 ```
+
+Submit a rating for an agent's performance on a task.
 
 ---
 

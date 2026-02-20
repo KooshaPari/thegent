@@ -35,6 +35,7 @@ _PROXY_MODEL: dict[str, str] = {
     "kiro": "claude-haiku-4.5",
     "nim": "step-3.5-flash",
     "zen": "glm-5",
+    "summarizer": "gemini-3-flash",
 }
 
 
@@ -207,16 +208,20 @@ class CodexProxyRunner(AgentRunner):
         agent_model: str | None = None,
         enable_search: bool = True,
         run_id: str | None = None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         model = agent_model or self._model
 
         # Route via LiteLLM Router if enabled and not zen
         if self._use_litellm_router and self.agent_name != "zen":
             return self._run_via_litellm_router(
-                prompt, cwd, mode, timeout, model, use_stream, live_output, on_stdout, on_stderr
+                prompt, cwd, mode, timeout, model, use_stream, live_output, on_stdout, on_stderr, env=env
             )
 
-        env = os.environ.copy()
+        full_env = os.environ.copy()
+        if env:
+            full_env.update(env)
+
         if self.agent_name == "zen":
             base_url = (self._settings.zen_base_url or "https://api.opencode.ai").rstrip("/")
             api_key = (
@@ -232,8 +237,8 @@ class CodexProxyRunner(AgentRunner):
                     ),
                     timed_out=False,
                 )
-            env["OPENAI_BASE_URL"] = base_url
-            env["OPENAI_API_KEY"] = api_key
+            full_env["OPENAI_BASE_URL"] = base_url
+            full_env["OPENAI_API_KEY"] = api_key
         else:
             try:
                 base_url = ensure_proxy_running(self._settings)
@@ -244,8 +249,8 @@ class CodexProxyRunner(AgentRunner):
                     stderr=str(e),
                     timed_out=False,
                 )
-            env["OPENAI_BASE_URL"] = base_url.rstrip("/")
-            env["OPENAI_API_KEY"] = "sk-dummy"
+            full_env["OPENAI_BASE_URL"] = base_url.rstrip("/")
+            full_env["OPENAI_API_KEY"] = "sk-dummy"
 
         codex_cmd = _resolve_codex()
         cmd = [codex_cmd, "exec", "-", "--skip-git-repo-check"]
@@ -271,7 +276,7 @@ class CodexProxyRunner(AgentRunner):
                 prompt,
                 cwd,
                 timeout,
-                env,
+                full_env,
                 max_idle_seconds=self._settings.max_idle_seconds,
                 max_wall_time=self._settings.max_wall_time,
                 live_output=live_output,
@@ -306,19 +311,17 @@ class CodexProxyRunner(AgentRunner):
         live_output: bool,
         on_stdout: Callable[[str], None] | None,
         on_stderr: Callable[[str], None] | None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         """Run via LiteLLM Router for Codex CLI compatibility."""
         try:
             from thegent.routing.litellm_router import get_enhanced_router
 
             router = get_enhanced_router()
-            # Map provider if possible
-            provider = self.agent_name
-            # If model already has provider/ prefix, use it
-            if "/" in model:
-                model_to_use = model
-            else:
-                model_to_use = f"{provider}/{model}"
+
+            # Use model as-is; it should match a model alias in our catalog
+            # which is what LiteLLM model_list uses for model_name.
+            model_to_use = model
 
             result = router.route(prompt, model=model_to_use, stream=use_stream, timeout=timeout)
 
@@ -360,22 +363,21 @@ class CodexProxyRunner(AgentRunner):
                     stderr="",
                     timed_out=False,
                 )
-            else:
-                content = ""
-                if hasattr(result.response, "choices") and result.response.choices:
-                    content = result.response.choices[0].message.content
-                elif isinstance(result.response, dict):
-                    choices = result.response.get("choices", [])
-                    if choices:
-                        message = choices[0].get("message", {})
-                        content = message.get("content", "")
+            content = ""
+            if hasattr(result.response, "choices") and result.response.choices:
+                content = result.response.choices[0].message.content
+            elif isinstance(result.response, dict):
+                choices = result.response.get("choices", [])
+                if choices:
+                    message = choices[0].get("message", {})
+                    content = message.get("content", "")
 
-                return RunResult(
-                    exit_code=0,
-                    stdout=content or "",
-                    stderr="",
-                    timed_out=False,
-                )
+            return RunResult(
+                exit_code=0,
+                stdout=content or "",
+                stderr="",
+                timed_out=False,
+            )
 
         except Exception as e:
             logger.error("LiteLLM Router execution failed: %s", e, exc_info=True)

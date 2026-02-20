@@ -1,6 +1,7 @@
 """WP-16001/16002: Thegent Teammates orchestration and delegation protocol."""
 
 import json
+import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -26,6 +27,7 @@ class TeammatePersona:
     capabilities: list[str]
     default_model: str = "gemini-3-flash"
     priority: int = 1  # 1 (high) to 5 (background)
+    odd: str | None = None  # Operational Design Domain (WP-16001)
 
 
 @dataclass
@@ -51,11 +53,13 @@ class TeammateManager:
         Initialize teammate manager.
 
         Args:
-            storage_path: Path for storing delegations
+            storage_path: Path for storing delegations (JSON file)
             hierarchy_manager: Optional AgentHierarchyManager for hierarchy support
         """
         self.storage_path = storage_path
-        self.hierarchy = hierarchy_manager or AgentHierarchyManager(storage_path / "hierarchy")
+        # Use a directory sibling to the storage file for hierarchy (WP-16001)
+        hierarchy_dir = storage_path.parent / "teammate_hierarchy"
+        self.hierarchy = hierarchy_manager or AgentHierarchyManager(hierarchy_dir)
         self._delegations: dict[str, DelegationRequest] = {}
         self._load()
 
@@ -74,31 +78,87 @@ class TeammateManager:
         self.storage_path.write_text(json.dumps(data, indent=2))
 
     def list_personas(self) -> list[TeammatePersona]:
-        """WP-16001: Discover teammates from agent markdown files."""
+        """WP-16001: Discover teammates from agent markdown files (recursive)."""
         personas = []
-        agents_dir = Path("agents")
-        if not agents_dir.exists():
+        # Look for agents/ in several possible locations, precedence to current working dir
+        possible_dirs = [
+            Path.cwd() / "agents",
+            Path("agents"),
+            Path(__file__).parent.parent.parent.parent / "agents",
+            Path(__file__).parent.parent.parent.parent.parent / "thegent" / "agents",
+        ]
+
+        agents_dir = None
+        for d in possible_dirs:
+            if d.exists() and d.is_dir():
+                agents_dir = d
+                # We stop at the first one that exists to avoid mixing definitions
+                break
+
+        if not agents_dir:
             return []
 
         from thegent.infra import yaml_loads
 
-        for md_file in agents_dir.glob("*.md"):
+        # Recursive search for all .md files
+        for md_file in agents_dir.rglob("*.md"):
             try:
-                content = md_file.read_text()
-                # Simple frontmatter extraction
-                if content.startswith("---"):
+                content = md_file.read_text(encoding="utf-8")
+
+                # Default persona if no metadata found
+                meta = {}
+
+                # 1. Try YAML frontmatter extraction
+                if content.strip().startswith("---"):
                     parts = content.split("---", 2)
                     if len(parts) >= 3:
-                        meta = yaml_loads(parts[1])
-                        personas.append(
-                            TeammatePersona(
-                                id=meta.get("name", md_file.stem),
-                                role=meta.get("role", "general"),
-                                description=meta.get("description", ""),
-                                capabilities=meta.get("tools", []),
-                                default_model=meta.get("model", "gemini-3-flash"),
-                            )
-                        )
+                        try:
+                            meta = yaml_loads(parts[1])
+                        except Exception:
+                            meta = {}
+
+                # Check if it's explicitly a teammate
+                is_teammate = meta.get("teammate") is True
+
+                # 2. Heuristic extraction if no frontmatter or not explicitly teammate
+
+                # Look for title as name
+                title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
+                name = meta.get("name") or (title_match.group(1).split()[0].lower() if title_match else md_file.stem.lower())
+
+                # Look for "Role: " or "Role :" at start of line
+                role_match = re.search(r"^\s*Role:\s*(.+)$", content, re.MULTILINE | re.IGNORECASE)
+                role = meta.get("role") or (role_match.group(1).strip() if role_match else "specialist")
+
+                # Heuristic for description
+                desc_match = re.search(r"^\s*Description:\s*(.+)$", content, re.MULTILINE | re.IGNORECASE)
+                description = meta.get("description") or (desc_match.group(1).strip() if desc_match else (content[:200].replace("\n", " ").strip() + "..."))
+
+                # Heuristic teammate check if not already confirmed
+                if not is_teammate:
+                    if "teammate" in content.lower() or "specialized agent" in content.lower() or "persona" in content.lower():
+                        is_teammate = True
+
+                # Only include if it looks like a teammate
+                if not is_teammate:
+                    continue
+
+                # Ensure tools is a list
+                tools = meta.get("tools", [])
+                if isinstance(tools, str):
+                    tools = [tools]
+
+                personas.append(
+                    TeammatePersona(
+                        id=name,
+                        role=role,
+                        description=description,
+                        capabilities=tools,
+                        default_model=meta.get("model", "gemini-3-flash"),
+                        priority=meta.get("priority", 3),
+                        odd=meta.get("odd"),
+                    )
+                )
             except Exception:
                 continue
 
@@ -126,6 +186,16 @@ class TeammateManager:
             DelegationRequest
         """
         req_id = f"DEL-{uuid.uuid4().hex[:8]}"
+
+        # Ensure parent exists in hierarchy (WP-16001 auto-registration)
+        if not self.hierarchy.get_agent(parent_run_id):
+            parent_role = AgentRole.EXECUTIVE if parent_run_id == "CLI-USER" else AgentRole.TEAM_LEAD
+            self.hierarchy.register_agent(
+                agent_id="human" if parent_run_id == "CLI-USER" else "parent-agent",
+                run_id=parent_run_id,
+                role=parent_role,
+                validate=False,
+            )
 
         # Infer role from teammate_id or use SPECIALIST as default
         role = self._infer_role(teammate_id)
@@ -155,18 +225,48 @@ class TeammateManager:
         self._delegations[req_id] = request
         self._save()
 
-        # WP-16003: ShareCLI Integration
+        # WP-16002: Trigger background execution
         try:
-            from thegent.governance.sharecli_bridge import ShareCLIBridge
+            # Resolve effective agent ID (canonical name)
+            from thegent.agents.registry import resolve_agent
+            from thegent.cli_impl import bg_impl
+            from thegent.config_provider import get_config_provider
 
-            bridge = ShareCLIBridge()
+            effective_agent = resolve_agent(teammate_id) or teammate_id
+
+            bg_impl(
+                agent=effective_agent,
+                prompt=prompt,
+                cd=None,  # Use current directory
+                mode="write",
+                timeout=600,
+                full=False,
+                model=None,
+                provider=None,
+                owner=f"teammate:{teammate_id}",
+                run_id=req_id,
+                lane="standard",
+                task_id=req_id,
+                config_provider=get_config_provider(),
+            )
+            # Update status to running once backgrounded
+            self.update_status(req_id, "running")
+        except Exception as e:
+            # If execution fails to start, mark as failed
+            self.update_status(req_id, "failed", summary=f"Failed to start: {e}")
+
+        # WP-16003: heliosShield Integration
+        try:
+            from thegent.governance.heliosShield_bridge import heliosShieldBridge
+
+            bridge = heliosShieldBridge()
             if bridge.is_available():
                 bridge.create_shared_task(
                     task_id=req_id, description=f"Delegated from {parent_run_id}: {prompt[:50]}..."
                 )
                 bridge.broadcast_intent(agent_id=f"thegent:{parent_run_id}", intent_type="delegate", target=teammate_id)
         except ImportError:
-            # ShareCLI bridge not available, continue without it
+            # heliosShield bridge not available, continue without it
             pass
 
         # In a real implementation, this would trigger 'thegent bg'

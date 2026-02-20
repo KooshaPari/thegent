@@ -146,8 +146,8 @@ def run_audit(project_path: str, audit_type: str, output: str | None):
         framework.save_results()
 
     click.echo("\nAudit Results:")
-    for audit_type, result in results.items():
-        click.echo(f"  {audit_type.value}: {len(result.findings)} findings")
+    for res_type, result in results.items():
+        click.echo(f"  {res_type.value}: {len(result.findings)} findings")
         severity_counts = result.get_severity_counts()
         for severity, count in severity_counts.items():
             click.echo(f"    {severity}: {count}")

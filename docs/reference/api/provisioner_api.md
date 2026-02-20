@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/infra/provisioner.py`
 
 WP-31001: Self-Provisioning Infra Bridge.
+
 Enables agents to provision their own compute, storage, and networking resources.
 Provides a high-level API over Terraform/Cloud-init/Docker.
 
@@ -17,24 +18,30 @@ Orchestrates self-provisioning of agent infrastructure.
 #### InfraProvisioner.__init__
 
 ```python
-__init__(self, provider)
+__init__(self: Any, provider: str)
 ```
+
+---
 
 #### InfraProvisioner.decommission
 
+```python
+decommission(self: Any, resource_id: str)
+```
+
 Release a previously provisioned resource.
 
-```python
-decommission(self, resource_id)
-```
+---
 
 #### InfraProvisioner.provision
 
+```python
+provision(self: Any, resource_id: str, spec: ResourceSpec)
+```
+
 Provision a resource based on the spec.
 
-```python
-provision(self, resource_id, spec)
-```
+---
 
 ---
 
@@ -48,21 +55,21 @@ Specification for an infra resource.
 
 ## decommission
 
-Release a previously provisioned resource.
-
 ```python
-decommission(self, resource_id)
+decommission(self: Any, resource_id: str)
 ```
+
+Release a previously provisioned resource.
 
 ---
 
 ## provision
 
-Provision a resource based on the spec.
-
 ```python
-provision(self, resource_id, spec)
+provision(self: Any, resource_id: str, spec: ResourceSpec)
 ```
+
+Provision a resource based on the spec.
 
 ---
 

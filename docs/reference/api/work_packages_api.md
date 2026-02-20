@@ -1,0 +1,35 @@
+# work_packages API Reference
+
+> **Source**: `src/thegent/work_packages/__init__.py`
+
+Work package implementations.
+
+This module contains implementations for various work packages (WP-XXXXX).
+Work packages represent advanced features and capabilities.
+
+---
+
+## get_wp_info
+
+```python
+get_wp_info(wp_id: str)
+```
+
+Get information about a work package.
+
+**Parameters**:
+
+- `wp_id`: Work package ID
+
+**Returns**: Work package info or None
+
+---
+
+## list_wps
+
+List all registered work packages.
+
+**Returns**: List of work package IDs
+
+---
+

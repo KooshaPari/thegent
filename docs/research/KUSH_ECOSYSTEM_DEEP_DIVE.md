@@ -11,7 +11,7 @@ The **kush** ecosystem is a sophisticated multi-project codebase containing **40
 
 - **Agent Orchestration Systems** (thegent, plangent, kimaki, smolgents, crun)
 - **MCP Servers** (atoms-mcp-prod, zen-mcp-server, 4sgm)
-- **CLI Tools** (sharecli, bloc, trace, usage)
+- **CLI Tools** (heliosShield, bloc, trace, usage)
 - **SDKs & Libraries** (pheno-sdk, smartcp)
 - **Infrastructure** (jobhunter, knowledgebase, agentapi)
 - **Specialized Tools** (task-tool, task2, morph, kagentop)
@@ -126,7 +126,7 @@ The **kush** ecosystem is a sophisticated multi-project codebase containing **40
 
 ### 1.3 CLI Tools & Utilities
 
-#### **sharecli**
+#### **heliosShield**
 - **Type**: Unified CLI for agent harness
 - **Purpose**: Agent command interception and orchestration
 - **Tech**: Python 3.11+, Typer, Rich
@@ -321,7 +321,7 @@ The **kush** ecosystem is a sophisticated multi-project codebase containing **40
 - **Pattern**: All projects expose CLI interfaces
 - **Tools**: Typer (Python), Commander (TypeScript)
 - **Benefits**: Scriptable, composable, developer-friendly
-- **Examples**: thegent, sharecli, bloc, trace, crun
+- **Examples**: thegent, heliosShield, bloc, trace, crun
 
 #### **MCP Compatibility**
 - **Pattern**: Projects integrate with Model Context Protocol
@@ -338,7 +338,7 @@ The **kush** ecosystem is a sophisticated multi-project codebase containing **40
 - **Pattern**: Beautiful terminal output
 - **Tools**: Rich (Python), Ink (TypeScript)
 - **Benefits**: Better UX, debugging, monitoring
-- **Examples**: thegent, sharecli, bloc
+- **Examples**: thegent, heliosShield, bloc
 
 #### **Type Safety**
 - **Pattern**: Strong typing with Pydantic/Zod
@@ -393,7 +393,7 @@ atoms-mcp-prod (MCP Server)
     ├─ Uses: FastMCP, Supabase, WorkOS
     └─ Provides: MCP tools for other projects
 
-sharecli (Agent Harness)
+heliosShield (Agent Harness)
     ├─ Uses: Typer, Rich
     └─ Integrates with: Agent ecosystem
 
@@ -424,7 +424,7 @@ crun (Orchestration + DSL)
 #### **Agent Registry**
 - **kimaki** has agent registry system
 - **plangent** has agent orchestration
-- **sharecli** manages agent harness
+- **heliosShield** manages agent harness
 
 #### **Project Context**
 - **kimaki** manages multi-project context
@@ -437,9 +437,9 @@ crun (Orchestration + DSL)
 
 ### 4.1 Language Distribution
 
-- **Python**: 70% of projects (thegent, atoms-mcp-prod, sharecli, bloc, trace, crun, smolgents, 4sgm)
+- **Python**: 70% of projects (thegent, atoms-mcp-prod, heliosShield, bloc, trace, crun, smolgents, 4sgm)
 - **TypeScript**: 20% of projects (plangent, kimaki)
-- **Rust**: 10% (thegent extensions, sharecli harness-native)
+- **Rust**: 10% (thegent extensions, heliosShield harness-native)
 - **Go**: <5% (CLIProxyAPIPlus-fork)
 
 ### 4.2 Framework Distribution
@@ -447,7 +447,7 @@ crun (Orchestration + DSL)
 #### **Python Frameworks**
 - **FastAPI**: atoms-mcp-prod, 4sgm
 - **FastMCP**: atoms-mcp-prod, zen-mcp-server
-- **Typer**: thegent, sharecli, bloc, trace
+- **Typer**: thegent, heliosShield, bloc, trace
 - **LangGraph**: crun, smolgents, 4sgm
 
 #### **TypeScript Frameworks**
@@ -472,7 +472,7 @@ crun (Orchestration + DSL)
 - **thegent**: VitePress docs (rich, interactive)
 - **atoms-mcp-prod**: MkDocs (50+ guides)
 - **plangent**: Architecture docs, quick reference
-- **sharecli**: Unified docs, architecture
+- **heliosShield**: Unified docs, architecture
 - **kimaki**: Implementation plans, summaries
 
 #### **Documentation Tools**
@@ -500,7 +500,7 @@ crun (Orchestration + DSL)
 ### 6.1 Cross-Project Integrations
 
 #### **Agent Registry Unification**
-- **Opportunity**: Unify agent registries (kimaki, plangent, sharecli)
+- **Opportunity**: Unify agent registries (kimaki, plangent, heliosShield)
 - **Benefit**: Single source of truth for agents
 - **Effort**: Medium
 
@@ -515,7 +515,7 @@ crun (Orchestration + DSL)
 - **Effort**: Medium
 
 #### **CLI Tool Composition**
-- **Opportunity**: Compose CLI tools (thegent, sharecli, bloc, trace)
+- **Opportunity**: Compose CLI tools (thegent, heliosShield, bloc, trace)
 - **Benefit**: Unified developer experience
 - **Effort**: Low
 
@@ -622,7 +622,7 @@ crun (Orchestration + DSL)
 |---------|--------|--------------|-------------|----------|
 | thegent | ✅ Production | ✅ Comprehensive | ✅ High | P0 |
 | atoms-mcp-prod | ✅ Production | ✅ Comprehensive | ✅ High | P0 |
-| sharecli | ✅ Production | ✅ Comprehensive | ✅ High | P0 |
+| heliosShield | ✅ Production | ✅ Comprehensive | ✅ High | P0 |
 | plangent | ✅ Production | ✅ Comprehensive | ✅ Medium | P1 |
 | kimaki | ✅ Complete | ✅ Comprehensive | ✅ Medium | P1 |
 | smolgents | ✅ Production | ✅ Good | ✅ Medium | P1 |

@@ -36,7 +36,6 @@ def main():
     research_files = [Path(f) for f in integration_data["research_files"]]
     project_paths = [Path(p) for p in integration_data["projects"]]
 
-
     # Create integrator
     integrator = WorkStreamIntegrator(base_path)
 

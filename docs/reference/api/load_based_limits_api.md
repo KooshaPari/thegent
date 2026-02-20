@@ -9,7 +9,7 @@ as a load balancer: allow more slots when system headroom exists, throttle when
 gates are near capacity.
 
 BKM-04: When THGENT_USE_NATIVE_RESOURCES=1, uses thegent-resources Rust binary
-instead of lsof/vm_stat subprocesses. Set THGENT_RESOURCES_BIN to override path.
+instead of psutil. Set THGENT_RESOURCES_BIN to override path.
 
 ---
 
@@ -22,17 +22,22 @@ WP-Y6: Prevents thrashing by using upper/lower thresholds and dwell time.
 #### HysteresisController.__init__
 
 ```python
-__init__(self, upper_threshold, lower_threshold, dwell_time_s)
+__init__(self: Any, upper_threshold: float, lower_threshold: float, dwell_time_s: int)
 ```
+
+---
 
 #### HysteresisController.get_limit
 
+```python
+get_limit(self: Any, current_limit: int, running_count: int, target_limit: int)
+```
+
 Apply hysteresis to determine the new limit.
+
 Returns the new limit (either changed or held).
 
-```python
-get_limit(self, current_limit, running_count, target_limit)
-```
+---
 
 ---
 
@@ -40,15 +45,22 @@ get_limit(self, current_limit, running_count, target_limit)
 
 Configuration for each resource gate. Thresholds are 0.0–1.0 (utilization).
 
+Uses resource-based limits with safety buffers:
+- Minimum buffer: 5% (hard limit, prevents crashes)
+- Discretionary buffer: 15% (soft limit, allows scaling)
+- No fixed concurrent limit - scales with available resources
+
 ### Methods
 
 #### LimitGateConfig.from_dict
 
-Build config from dict (e.g. settings).
-
 ```python
-from_dict(cls, d)
+from_dict(cls: Any, d: Any)
 ```
+
+Build config from dict (e.g. settings). Supports concurrency_ prefix.
+
+---
 
 ---
 
@@ -60,35 +72,40 @@ Current system resource usage for limit calculation.
 
 ## compute_dynamic_limit
 
-Compute max concurrent slots from resource gates. Load-balancer style:
-scale up when headroom exists, throttle when any gate is near capacity.
+```python
+compute_dynamic_limit(snapshot: ResourceSnapshot, config: Any, running_count: int)
+```
+
+Compute max concurrent slots from resource gates. Resource-based scaling:
+
+- No fixed limit - scales with available resources
+- 5% minimum buffer (hard limit, prevents crashes)
+- 15% discretionary buffer (soft limit, allows scaling)
+- Uses CPU, memory, FD, and load average
 
 Returns (effective_limit, gate_details).
-
-```python
-compute_dynamic_limit(snapshot, config, running_count)
-```
 
 ---
 
 ## from_dict
 
-Build config from dict (e.g. settings).
-
 ```python
-from_dict(cls, d)
+from_dict(cls: Any, d: Any)
 ```
+
+Build config from dict (e.g. settings). Supports concurrency_ prefix.
 
 ---
 
 ## get_limit
 
-Apply hysteresis to determine the new limit.
-Returns the new limit (either changed or held).
-
 ```python
-get_limit(self, current_limit, running_count, target_limit)
+get_limit(self: Any, current_limit: int, running_count: int, target_limit: int)
 ```
+
+Apply hysteresis to determine the new limit.
+
+Returns the new limit (either changed or held).
 
 ---
 

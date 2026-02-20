@@ -798,7 +798,7 @@ thegent fix [options]
 
 ## `thegent free`
 
-**Description**: Base free tier: Copilot gpt-5-mini. Alias for thegent run "<prompt>" free.
+**Description**: Base free tier: Copilot gpt-5-mini. Alias for thegent run "`<prompt>`" free.
 
 **Usage**:
 ```bash
@@ -2188,7 +2188,7 @@ thegent rule [options]
 
 ## `thegent run`
 
-**Description**: Run a foreground agent invocation. Use -M <model> without agent for model-first routing.
+**Description**: Run a foreground agent invocation. Use -M `<model>` without agent for model-first routing.
 
 **Usage**:
 ```bash

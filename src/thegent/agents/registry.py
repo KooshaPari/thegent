@@ -1,6 +1,7 @@
 """Agent registry."""
 
 from pathlib import Path
+from typing import Any, Optional
 
 from thegent.agents.codex_proxy import CodexProxyRunner
 from thegent.agents.cursor_api_runner import CursorApiRunner
@@ -21,6 +22,7 @@ AGENT_NAMES = [
     "cliproxy",
     "roo",
     "kilo",
+    "summarizer",
 ]
 
 # Agents with native CLIs - use DirectAgentRunner (no proxy required)
@@ -67,6 +69,7 @@ _AGENT_ALIASES: dict[str, str] = {
     "explain": "gemini",
     "fix": "claude",
     "code": "claude",
+    "architect": "claude",
 }
 
 
@@ -82,7 +85,7 @@ def get_runner(
     canonical = _resolve_agent(agent_name)
     if canonical in _DIRECT_AGENTS:
         return DirectAgentRunner(canonical, default_model="")
-    if canonical in _PROXY_AGENTS:
+    if canonical in _PROXY_AGENTS or canonical == "summarizer":
         return CodexProxyRunner(canonical)
     if canonical in _CURSOR_API_AGENTS:
         return CursorApiRunner()
@@ -116,3 +119,75 @@ def list_droid_names(droids_dir: Path) -> list[str]:
     if not d.exists():
         return []
     return [f.stem for f in d.glob("*.md")]
+
+
+class LearningCandidate:
+    """Represents a candidate model or configuration for autonomous learning."""
+
+    def __init__(self, model_id: str, baseline_id: str) -> None:
+        self.model_id = model_id
+        self.baseline_id = baseline_id
+        self.trust_score = 0.0
+        self.calibration = 0.0
+        self.metrics: dict[str, list[float]] = {}
+
+    def add_metric(self, name: str, value: float):
+        if name not in self.metrics:
+            self.metrics[name] = []
+        self.metrics[name].append(value)
+
+
+class LearningRegistry:
+    """Registry for autonomous learning models and metrics (WP-14001)."""
+
+    def __init__(self) -> None:
+        self.canaries: dict[str, LearningCandidate] = {}
+        self.active_model: str = "baseline-v1"
+
+    def register_canary(self, canary_id: str, baseline_id: str):
+        """Register a new canary model for testing."""
+        self.canaries[canary_id] = LearningCandidate(canary_id, baseline_id)
+
+    def record_metric(self, model_id: str, name: str, value: float):
+        """Record a performance metric for a model."""
+        if model_id in self.canaries:
+            self.canaries[model_id].add_metric(name, value)
+
+    def should_rollback(self, canary_id: str) -> bool:
+        """Determine if a canary model should be rolled back to baseline."""
+        candidate = self.canaries.get(canary_id)
+        if not candidate:
+            return False
+
+        # Simple heuristic: if any latency > 2s, rollback
+        latencies = candidate.metrics.get("latency", [])
+        if latencies and any(l > 2.0 for l in latencies):
+            self.active_model = candidate.baseline_id
+            return True
+        return False
+
+    def get_active_model(self) -> str:
+        """Get the currently active model ID."""
+        return self.active_model
+
+    def promote(self, canary_id: str, require_approval: bool = True) -> bool:
+        """Promote a canary model to default status."""
+        if require_approval:
+            # In a real impl, this would check a HITL signal
+            return False
+
+        if canary_id in self.canaries:
+            self.active_model = canary_id
+            return True
+        return False
+
+    def record_feedback(self, model_id: str, success: bool, quality_score: float):
+        """Record human or system feedback for a learning candidate."""
+        candidate = self.canaries.get(model_id)
+        if candidate:
+            candidate.trust_score += 0.1 if success else -0.2
+            candidate.calibration = (candidate.calibration + quality_score) / 2.0
+
+    def get_candidate(self, model_id: str) -> LearningCandidate | None:
+        """Get candidate metadata."""
+        return self.canaries.get(model_id)

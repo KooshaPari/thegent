@@ -87,7 +87,7 @@ class PromptQueue:
             lease = data.get("lease_expires_at")
             if lease and status == "claimed":
                 try:
-                    expires = datetime.fromisoformat(lease.replace("Z", "+00:00"))
+                    expires = datetime.fromisoformat(lease)
                     if expires < now and not include_expired:
                         continue
                 except Exception:

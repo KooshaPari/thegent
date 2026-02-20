@@ -11,12 +11,14 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastmcp.tools.tool import ToolResult
 
 if TYPE_CHECKING:
     from fastmcp import FastMCP
+
+from datetime import UTC
 
 from thegent.cli_impl import _resolve_cwd
 from thegent.memory.seed_detector import SeedDetector, SeedSource
@@ -25,14 +27,43 @@ from thegent.memory.seed_storage import SeedStorage
 _log = logging.getLogger(__name__)
 
 
+async def _ctx_info(ctx: Any, message: str) -> None:
+    """Send an info log message via FastMCP Context if available, else Python logging."""
+    if ctx is not None:
+        try:
+            await ctx.info(message)
+            return
+        except Exception:
+            pass
+    _log.info(message)
+
+
+async def _ctx_warning(ctx: Any, message: str) -> None:
+    """Send a warning log message via FastMCP Context if available, else Python logging."""
+    if ctx is not None:
+        try:
+            await ctx.warning(message)
+            return
+        except Exception:
+            pass
+    _log.warning(message)
+
+
 def register_seed_tools(mcp: "FastMCP") -> None:
     """Register seed detection and storage tools."""
+    # Import CurrentContext for FastMCP dependency injection
+    try:
+        from fastmcp.server.dependencies import CurrentContext
+        _current_context = CurrentContext()
+    except Exception:
+        _current_context = None  # type: ignore[assignment]
 
     @mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": False})
-    def thegent_seed_detect(
+    async def thegent_seed_detect(
         text: str,
         source: str = "user_prompt",
         use_llm: bool = False,
+        ctx: Any = _current_context,
     ) -> ToolResult:
         """
         Detect idea seeds in text using pattern matching.
@@ -57,14 +88,13 @@ def register_seed_tools(mcp: "FastMCP") -> None:
 
         if not text or not isinstance(text, str):
             return ToolResult(
-                content=json.dumps(
-                    {"error": "Invalid input", "seeds": [], "count": 0}
-                ),
+                content=json.dumps({"error": "Invalid input", "seeds": [], "count": 0}),
                 structured_content={"error": "Invalid input", "seeds": [], "count": 0},
                 meta={"execution_time_ms": 0},
             )
 
         try:
+            await _ctx_info(ctx, f"thegent_seed_detect source={source} use_llm={use_llm} text_len={len(text)}")
             # Map source string to SeedSource enum
             source_map = {
                 "user_prompt": SeedSource.USER_PROMPT,
@@ -88,6 +118,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
                 "seeds": [s.to_dict() for s in seeds],
             }
 
+            await _ctx_info(ctx, f"thegent_seed_detect found {len(seeds)} seed(s)")
             elapsed = int((time.perf_counter() - start) * 1000)
             return ToolResult(
                 content=json.dumps(result),
@@ -96,22 +127,22 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             )
 
         except Exception as e:
+            await _ctx_warning(ctx, f"thegent_seed_detect error: {e}")
             _log.exception("Seed detection error")
             return ToolResult(
-                content=json.dumps(
-                    {"error": str(e), "seeds": [], "count": 0}
-                ),
+                content=json.dumps({"error": str(e), "seeds": [], "count": 0}),
                 structured_content={"error": str(e), "seeds": [], "count": 0},
                 meta={"execution_time_ms": 0},
             )
 
     @mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": False})
-    def thegent_seed_store(
+    async def thegent_seed_store(
         text: str,
         source: str = "manual",
         confidence: float = 0.5,
         tags: list[str] | None = None,
         cd: str | None = None,
+        ctx: Any = _current_context,
     ) -> ToolResult:
         """
         Store an idea seed in persistent JSONL storage.
@@ -138,12 +169,11 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             )
 
         try:
+            await _ctx_info(ctx, f"thegent_seed_store source={source} confidence={confidence}")
             root = _resolve_cwd(Path(cd) if cd else None)
             if not root:
                 return ToolResult(
-                    content=json.dumps(
-                        {"error": "No project root", "remediation": "Set cwd or cd"}
-                    ),
+                    content=json.dumps({"error": "No project root", "remediation": "Set cwd or cd"}),
                     structured_content={
                         "error": "No project root",
                         "remediation": "Set cwd or cd",
@@ -167,15 +197,16 @@ def register_seed_tools(mcp: "FastMCP") -> None:
                     seed.tags = tags
             else:
                 # Create manual seed
-                from thegent.memory.seed_detector import Seed
                 from datetime import datetime, timezone
+
+                from thegent.memory.seed_detector import Seed
 
                 seed = Seed(
                     id="",  # Will be set in detector
                     text=text[:500],
                     source=SeedSource.MANUAL,
                     confidence=confidence,
-                    timestamp=datetime.now(timezone.utc).isoformat(),
+                    timestamp=datetime.now(UTC).isoformat(),
                     tags=tags or [],
                     detected_by="manual",
                 )
@@ -183,6 +214,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             # Store seed
             seed_id = storage.store_seed(seed)
 
+            await _ctx_info(ctx, f"thegent_seed_store stored seed_id={seed_id}")
             result = {
                 "seed_id": seed_id,
                 "stored": True,
@@ -197,6 +229,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             )
 
         except Exception as e:
+            await _ctx_warning(ctx, f"thegent_seed_store error: {e}")
             _log.exception("Seed storage error")
             return ToolResult(
                 content=json.dumps({"error": str(e), "seed": None}),
@@ -205,11 +238,12 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             )
 
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
-    def thegent_seed_list(
+    async def thegent_seed_list(
         status: str = "new",
         tag: str | None = None,
         source: str | None = None,
         cd: str | None = None,
+        ctx: Any = _current_context,
     ) -> ToolResult:
         """
         List stored seeds with optional filtering.
@@ -226,6 +260,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
         start = time.perf_counter()
 
         try:
+            await _ctx_info(ctx, f"thegent_seed_list status={status} tag={tag} source={source}")
             root = _resolve_cwd(Path(cd) if cd else None)
             if not root:
                 return ToolResult(
@@ -238,6 +273,8 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             storage = SeedStorage(storage_path=storage_path)
 
             seeds = storage.load_seeds()
+            total = len(seeds)
+            await _ctx_info(ctx, f"thegent_seed_list loaded {total} seed(s) before filtering")
 
             # Apply filters
             if status:
@@ -260,6 +297,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             )
 
         except Exception as e:
+            await _ctx_warning(ctx, f"thegent_seed_list error: {e}")
             _log.exception("Seed listing error")
             return ToolResult(
                 content=json.dumps({"error": str(e), "seeds": []}),
@@ -362,9 +400,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             root = _resolve_cwd(Path(cd) if cd else None)
             if not root:
                 return ToolResult(
-                    content=json.dumps(
-                        {"error": "No project root", "markdown": None}
-                    ),
+                    content=json.dumps({"error": "No project root", "markdown": None}),
                     structured_content={"error": "No project root", "markdown": None},
                     meta={"execution_time_ms": 0},
                 )

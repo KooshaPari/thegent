@@ -10,31 +10,31 @@ Delegates to execution.CircuitBreakerRegistry. Provides trip, recover, half-open
 
 ## is_open
 
-True if circuit is open (blocked). False if closed or half-open (trial allowed).
-
 ```python
-is_open(session_dir, target, category)
+is_open(session_dir: Path, target: str, category: str)
 ```
+
+True if circuit is open (blocked). False if closed or half-open (trial allowed).
 
 ---
 
 ## should_allow
 
-True if requests to target should be allowed (circuit closed or half-open).
-
 ```python
-should_allow(session_dir, target, category)
+should_allow(session_dir: Path, target: str, category: str)
 ```
+
+True if requests to target should be allowed (circuit closed or half-open).
 
 ---
 
 ## trip
 
-Record a failure; may open the circuit.
-
 ```python
-trip(session_dir, target, category)
+trip(session_dir: Path, target: str, category: str)
 ```
+
+Record a failure; may open the circuit.
 
 ---
 

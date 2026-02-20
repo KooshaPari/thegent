@@ -144,16 +144,18 @@ def _route_to_litellm_config(route: Route) -> dict[str, Any]:
     provider = route.provider
 
     # Map thegent provider to LiteLLM provider
-    provider_mapping = {
-        "copilot": "openai",  # Copilot uses OpenAI-compatible API
-        "cursor": "openai",
-        "gemini": "gemini",
-        "claude": "anthropic",
-        "codex": "openai",
-        "antigravity": "gemini",
-        "opencode": "openai",
-    }
-    litellm_provider = provider_mapping.get(provider, provider)
+    # For models going through CLIProxyAPIPlus, we use 'openai' provider
+    # to ensure LiteLLM uses the OpenAI-compatible handler.
+    if get_execution_path(provider) == ExecutionPath.CLIPROXY_API or route.backend_type == "proxy":
+        litellm_provider = "openai"
+    else:
+        provider_mapping = {
+            "gemini": "gemini",
+            "claude": "anthropic",
+            "minimax": "minimax",
+            "glm": "zhipu",
+        }
+        litellm_provider = provider_mapping.get(provider, provider)
 
     # Determine litellm model string
     # LiteLLM format: "provider/model-name"
@@ -223,14 +225,11 @@ def build_litellm_model_list() -> list[dict[str, Any]]:
     return model_list
 
 
-def build_fallback_chains() -> list[dict[str, list[str]]]:
-    """Build fallback chains for models in LiteLLM format.
-
-    LiteLLM Router expects fallbacks as a list of dicts:
-    [{"primary_model": ["fallback1", "fallback2"]}, ...]
+def build_fallback_chains() -> dict[str, list[str]]:
+    """Build fallback chains for models.
 
     Returns:
-        List of fallback chain dicts for LiteLLM Router
+        Dict mapping primary model to list of fallback models
     """
     # Fallback chains mapping primary model -> fallback models
     chains_map = {
@@ -247,9 +246,7 @@ def build_fallback_chains() -> list[dict[str, list[str]]]:
         "qwen3-coder": ["llama-nemotron-ultra", "deepseek-v3.2"],
         "llama-nemotron-ultra": ["qwen3-coder", "deepseek-v3.2"],
     }
-
-    # Convert to LiteLLM format: list of dicts
-    return [{model: fallbacks} for model, fallbacks in chains_map.items()]
+    return chains_map
 
 
 def get_context_window(model: str) -> int:
@@ -328,11 +325,11 @@ def get_router_config() -> RouterConfig:
         return RouterConfig()
 
 
-def get_litellm_router(policy: str = "cheapest") -> Router:
+def get_litellm_router(policy: str = "cost-based-routing") -> Router:
     """Get configured LiteLLM Router instance.
 
     Args:
-        policy: Routing policy (cheapest, fastest, round_robin, latency-based-routing)
+        policy: Routing policy (cost-based-routing, fastest, round_robin, latency-based-routing)
 
     Returns:
         Configured LiteLLM Router
@@ -340,8 +337,14 @@ def get_litellm_router(policy: str = "cheapest") -> Router:
     config = get_router_config()
     model_list = build_litellm_model_list()
 
-    # Pareto: LiteLLM has no native pareto; use cost-based as proxy
-    effective_policy = "cost-based-routing" if policy == "pareto" else policy
+    # Map thegent policy names to LiteLLM policy names
+    policy_mapping = {
+        "cheapest": "cost-based-routing",
+        "pareto": "cost-based-routing",
+        "fastest": "latency-based-routing",
+        "round_robin": "simple-shuffle",
+    }
+    effective_policy = policy_mapping.get(policy, policy)
 
     # Build router kwargs
     router_kwargs: dict[str, Any] = {
@@ -362,7 +365,9 @@ def get_litellm_router(policy: str = "cheapest") -> Router:
 
     # Add fallback configuration
     if config.fallback_enabled:
-        router_kwargs["fallbacks"] = build_fallback_chains()
+        chains = build_fallback_chains()
+        # Convert to LiteLLM format: list of dicts
+        router_kwargs["fallbacks"] = [{model: fallbacks} for model, fallbacks in chains.items()]
 
     return Router(**router_kwargs)
 

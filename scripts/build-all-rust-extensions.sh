@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Build all thegent Rust extensions with clean output and error handling
 set -euo pipefail
 

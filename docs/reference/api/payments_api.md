@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/security/payments.py`
 
 WP-30003: Micro-payment Settlement Bridge.
+
 Interfaces with external payment gateways or blockchains to settle agent-to-agent debts.
 Ensures that the virtual agent treasury can be backed by real-world liquidity.
 
@@ -17,24 +18,30 @@ Bridges internal agent payments to external settlement providers.
 #### PaymentBridge.__init__
 
 ```python
-__init__(self, provider)
+__init__(self: Any, provider: str)
 ```
+
+---
 
 #### PaymentBridge.initiate_settlement
 
+```python
+initiate_settlement(self: Any, agent_id: str, amount: float)
+```
+
 Settle an agent's accumulated micro-debts with an external provider.
 
-```python
-initiate_settlement(self, agent_id, amount)
-```
+---
 
 #### PaymentBridge.verify_liquidity
 
+```python
+verify_liquidity(self: Any, agent_id: str)
+```
+
 Check if an agent has enough real-world backing for its virtual treasury.
 
-```python
-verify_liquidity(self, agent_id)
-```
+---
 
 ---
 
@@ -48,21 +55,21 @@ Metadata for a settlement operation.
 
 ## initiate_settlement
 
-Settle an agent's accumulated micro-debts with an external provider.
-
 ```python
-initiate_settlement(self, agent_id, amount)
+initiate_settlement(self: Any, agent_id: str, amount: float)
 ```
+
+Settle an agent's accumulated micro-debts with an external provider.
 
 ---
 
 ## verify_liquidity
 
-Check if an agent has enough real-world backing for its virtual treasury.
-
 ```python
-verify_liquidity(self, agent_id)
+verify_liquidity(self: Any, agent_id: str)
 ```
+
+Check if an agent has enough real-world backing for its virtual treasury.
 
 ---
 

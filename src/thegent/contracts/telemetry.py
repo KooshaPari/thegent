@@ -5,6 +5,7 @@ or semantic drift in agent outputs. Emits schema.drift.structural and
 schema.drift.semantic events per G-RV-07.
 """
 
+import contextlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -22,6 +23,11 @@ class ContractTelemetry:
     def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
         self.telemetry_path = session_dir / "contract_telemetry.jsonl"
+
+    def _parse_event_line(self, events: list[dict[str, Any]], line: str) -> None:
+        """Parse a telemetry event line safely."""
+        with contextlib.suppress(Exception):
+            events.append(json.loads(line))
 
     def record_normalization(
         self,
@@ -181,10 +187,7 @@ class ContractTelemetry:
         events = []
         with self.telemetry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    events.append(json.loads(line))
-                except Exception:
-                    continue
+                self._parse_event_line(events, line)
         recent = events[-limit:]
 
         provider_filter = (provider or "").strip().lower()
@@ -239,10 +242,7 @@ class ContractTelemetry:
         all_events = []
         with self.telemetry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    all_events.append(json.loads(line))
-                except Exception:
-                    continue
+                self._parse_event_line(all_events, line)
 
         if len(all_events) < window_size * 2:
             return []

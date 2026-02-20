@@ -17,16 +17,20 @@ Runs droids via OpenAI Codex CLI (codex exec).
 #### CodexRunner.__init__
 
 ```python
-__init__(self, droid_name, droids_dir, codex_cmd, model)
+__init__(self: Any, droid_name: str, droids_dir: Path, codex_cmd: str, model: str, use_litellm_router: Any)
 ```
+
+---
 
 #### CodexRunner.run
 
+```python
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
+```
+
 Run droid via codex exec.
 
-```python
-run(self, prompt, cwd, mode, timeout)
-```
+---
 
 ---
 
@@ -41,16 +45,20 @@ Runs droids via a generic custom CLI (e.g. claudemax, claudeglm in ~/.local/bin)
 #### CustomCliRunner.__init__
 
 ```python
-__init__(self, droid_name, droids_dir, custom_cmd, model)
+__init__(self: Any, droid_name: str, droids_dir: Path, custom_cmd: str, model: str)
 ```
+
+---
 
 #### CustomCliRunner.run
 
+```python
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
+```
+
 Run droid via custom CLI. Prompt sent via stdin; expects --model and --cd support.
 
-```python
-run(self, prompt, cwd, mode, timeout)
-```
+---
 
 ---
 
@@ -65,36 +73,40 @@ Runs droids via Factory droid exec.
 #### DroidRunner.__init__
 
 ```python
-__init__(self, droid_name, droids_dir, droid_cmd, model)
+__init__(self: Any, droid_name: str, droids_dir: Path, droid_cmd: str, model: str, use_litellm_router: Any)
 ```
+
+---
 
 #### DroidRunner.run
 
+```python
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
+```
+
 Run droid via droid exec.
 
-```python
-run(self, prompt, cwd, mode, timeout)
-```
+---
 
 ---
 
 ## get_droid_runner
 
-Factory: return the appropriate droid runner for the given backend.
-
 ```python
-get_droid_runner(backend, droid_name, droids_dir)
+get_droid_runner(backend: str, droid_name: str, droids_dir: Path)
 ```
+
+Factory: return the appropriate droid runner for the given backend.
 
 ---
 
 ## run
 
-Run droid via custom CLI. Prompt sent via stdin; expects --model and --cd support.
-
 ```python
-run(self, prompt, cwd, mode, timeout)
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
 ```
+
+Run droid via custom CLI. Prompt sent via stdin; expects --model and --cd support.
 
 ---
 

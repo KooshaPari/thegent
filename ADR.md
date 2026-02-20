@@ -28,5 +28,11 @@ This document tracks the "Why" behind the core architectural shifts in `thegent`
 - **Status**: **ACCEPTED**
 - **Consequence**: Unified `$defer`, `$block`, and `$idea` syntax works across all 6+ supported platforms.
 
+## ADR-015: Immutable Audit Ledger
+- **Context**: Agent actions must be tamper-evident for governance compliance and forensic replay. Plain JSONL files are mutable and undetectably alterable.
+- **Decision**: All audit records are stored in append-only JSONL files with SHA-256 hash chaining. Each entry contains `prev_hash` (hash of the previous record) and `hash` (hash of the current record), forming a cryptographically linked chain. `EvidenceLedger` is the canonical implementation; `IncidentLedger` applies the same pattern for governance/omega-safety events.
+- **Status**: **ACCEPTED**
+- **Consequence**: Tampering is detectable via `verify_chain()` in O(n) time. No database or external service dependency. No concurrent-writer safety (single writer per session dir). Full detail: [ADR-015-immutable-audit-ledger.md](./docs/reference/ADR-015-immutable-audit-ledger.md)
+
 ---
 *Cross-ref: [ARCHITECTURE.md](./docs/plans/05-ARCHITECTURE.md)*

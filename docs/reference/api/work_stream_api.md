@@ -15,44 +15,50 @@ Manages the lifecycle of work packages across WORK_STREAM, WBS_AGENT_PROGRESS, a
 #### WorkStreamManager.__init__
 
 ```python
-__init__(self, settings, base_dir)
+__init__(self: Any, settings: ThegentSettings, base_dir: Any)
 ```
+
+---
 
 #### WorkStreamManager.claim
 
+```python
+claim(self: Any, item_id: str, agent_id: str)
+```
+
 Claim an item across all coordination files.
 
-```python
-claim(self, item_id, agent_id)
-```
+---
 
 #### WorkStreamManager.complete
 
+```python
+complete(self: Any, item_id: str, agent_id: str)
+```
+
 Mark an item as complete across all files.
 
-```python
-complete(self, item_id, agent_id)
-```
+---
 
 ---
 
 ## claim
 
-Claim an item across all coordination files.
-
 ```python
-claim(self, item_id, agent_id)
+claim(self: Any, item_id: str, agent_id: str)
 ```
+
+Claim an item across all coordination files.
 
 ---
 
 ## complete
 
-Mark an item as complete across all files.
-
 ```python
-complete(self, item_id, agent_id)
+complete(self: Any, item_id: str, agent_id: str)
 ```
+
+Mark an item as complete across all files.
 
 ---
 

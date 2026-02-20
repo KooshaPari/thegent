@@ -10,6 +10,9 @@ pub mod file_discovery;
 pub mod git_cache;
 pub mod git_ops;
 pub mod changed_files;
+pub mod affected_tests;
+pub mod prewarm;
+pub mod report;
 
 pub use types::{
     HookConfig, HookError, PolicyRule, PolicyOutcome, QualityMetrics, SecurityFinding,
@@ -28,4 +31,16 @@ pub use git_ops::{GitOps, GitOpsError};
 pub use changed_files::{
     ChangedFilesDetector, ChangedFile, ChangeStatus, ImpactType, FilterOptions, DependencyGraph,
     ChangedFilesError,
+};
+pub use affected_tests::{
+    AffectedTestsAnalyzer, PatternDetector, ImportDetector, TestFile, DetectionStrategy,
+    AffectedTestsError,
+};
+pub use prewarm::{
+    PrewarmManager, PrewarmReport, SharedDataCache, RuffCache, ShellcheckCache, SystemInfoCache,
+    PrewarmMetadata, PrewarmError,
+};
+pub use report::{
+    ReportManager, HookReport, Issue, IssueType, IssueSeverity, PerformanceMetrics, Statistics,
+    SummaryReport, ReportError,
 };

@@ -10,8 +10,7 @@ Runtime infrastructure initialization and cleanup.
 
 Get current resource statistics.
 
-Returns:
-    ResourceStats if monitoring is active, None otherwise.
+**Returns**: ResourceStats if monitoring is active, None otherwise.
 
 ---
 

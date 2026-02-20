@@ -4,7 +4,7 @@ import base64
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Dict, Optional
 
 from cryptography.hazmat.primitives import hashes, serialization
@@ -20,14 +20,14 @@ class MAIFArtifact(BaseModel):
 
     artifact_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     action_type: str  # mcp_call | tool_use | message | decision
-    payload: Dict[str, Any]
-    signature: Optional[str] = None
-    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    payload: dict[str, Any]
+    signature: str | None = None
+    timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     agent_id: str
     session_id: str
-    chain_of_thought: Optional[str] = None
-    verification_key_id: Optional[str] = None
-    previous_artifact_id: Optional[str] = None
+    chain_of_thought: str | None = None
+    verification_key_id: str | None = None
+    previous_artifact_id: str | None = None
 
     def get_canonical_data(self) -> str:
         """Return canonical JSON representation for signing."""

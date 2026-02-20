@@ -4,6 +4,7 @@ E2E test for: thegent signatures verify
 Agent Journey: Agent executes thegent signatures verify command
 Expected Behavior: Command executes successfully and returns expected output
 """
+
 import pytest
 from typer.testing import CliRunner
 
@@ -18,17 +19,17 @@ class TestSignaturesVerify:
 
     def test_signatures_verify_exits_zero(self) -> None:
         """thegent signatures verify exits with code 0."""
-        result = runner.invoke(app, ['signatures', 'verify'])
+        result = runner.invoke(app, ["signatures", "verify"])
         assert result.exit_code == 0, f"Command failed: {result.stdout} {result.stderr}"
 
     def test_signatures_verify_produces_output(self) -> None:
         """thegent signatures verify produces expected output."""
-        result = runner.invoke(app, ['signatures', 'verify'])
+        result = runner.invoke(app, ["signatures", "verify"])
         assert result.exit_code == 0
         # TODO: Add specific output assertions based on command behavior
         assert len(result.stdout) > 0 or len(result.stderr) == 0
 
     def test_signatures_verify_help_exits_zero(self) -> None:
         """thegent signatures verify --help exits with code 0."""
-        result = runner.invoke(app, ['signatures', 'verify', '--help'])
+        result = runner.invoke(app, ["signatures", "verify", "--help"])
         assert result.exit_code == 0

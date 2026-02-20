@@ -61,7 +61,7 @@ class FastFileWatcher:
         else:
             raise ImportError("No file watcher available. Install watchfiles or watchdog")
 
-    def watch(self, callback: Callable[[list[tuple[Change, str]]], None], **kwargs) -> None:
+    def watch(self, callback: Callable[[list[tuple[Any, str]]], None], **kwargs) -> None:
         """Watch for file changes using watchfiles backend.
 
         Args:
@@ -118,7 +118,7 @@ class FastFileWatcher:
 
 # Convenience function for watchfiles (recommended)
 def watch_files(
-    path: str | Path, callback: Callable[[list[tuple[Change, str]]], None], recursive: bool = True, **kwargs
+    path: str | Path, callback: Callable[[list[tuple[Any, str]]], None], recursive: bool = True, **kwargs
 ) -> None:
     """Watch files using fastest available backend (watchfiles preferred).
 

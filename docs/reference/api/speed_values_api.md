@@ -11,39 +11,39 @@ when available; falls back to Route.latency_ms from catalog.
 
 ## get_model_best_speed_index
 
+```python
+get_model_best_speed_index(model_id: str, settings: Any)
+```
+
 Get best speed index (0-1) across all providers for a model.
 
 Used when provider is unknown (e.g. ObjectiveSelector).
-
-```python
-get_model_best_speed_index(model_id, settings)
-```
 
 ---
 
 ## get_model_provider_speed_index
 
+```python
+get_model_provider_speed_index(model_id: str, provider: str, settings: Any)
+```
+
 Get speed index (0-1, higher = faster) for a model-provider pair.
 
 Returns 0.5 if unknown (neutral).
 
-```python
-get_model_provider_speed_index(model_id, provider, settings)
-```
-
 ---
 
 ## get_model_provider_speed_indices
+
+```python
+get_model_provider_speed_indices(settings: Any, use_cache: bool)
+```
 
 Build speed indices for all model-provider pairs.
 
 Returns: {model_id: {provider: speed_index}}
 speed_index is 0-1, higher = faster.
 Uses proxy metrics when reachable; falls back to Route.latency_ms.
-
-```python
-get_model_provider_speed_indices(settings, use_cache)
-```
 
 ---
 

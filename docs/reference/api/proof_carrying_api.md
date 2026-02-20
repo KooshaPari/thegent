@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/verification/proof_carrying.py`
 
 WP-18003: Proof-Carrying Code for MCP Tools.
+
 Ensures that all MCP tools carry logical proofs or signatures that can be verified at runtime.
 
 ---
@@ -16,24 +17,30 @@ Verifies proof-carrying code for MCP tools.
 #### PCCVerifier.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### PCCVerifier.register_proof
 
+```python
+register_proof(self: Any, tool_id: str, property_id: str, signature: str, proof_type: str)
+```
+
 Register a proof for a tool.
 
-```python
-register_proof(self, tool_id, property_id, signature, proof_type)
-```
+---
 
 #### PCCVerifier.verify_tool
 
+```python
+verify_tool(self: Any, tool_id: str, tool_code: str)
+```
+
 Verify that a tool's code matches its registered proofs.
 
-```python
-verify_tool(self, tool_id, tool_code)
-```
+---
 
 ---
 
@@ -47,21 +54,21 @@ A proof or signature for an MCP tool.
 
 ## register_proof
 
-Register a proof for a tool.
-
 ```python
-register_proof(self, tool_id, property_id, signature, proof_type)
+register_proof(self: Any, tool_id: str, property_id: str, signature: str, proof_type: str)
 ```
+
+Register a proof for a tool.
 
 ---
 
 ## verify_tool
 
-Verify that a tool's code matches its registered proofs.
-
 ```python
-verify_tool(self, tool_id, tool_code)
+verify_tool(self: Any, tool_id: str, tool_code: str)
 ```
+
+Verify that a tool's code matches its registered proofs.
 
 ---
 

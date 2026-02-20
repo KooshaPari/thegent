@@ -114,8 +114,8 @@ def parse(
         raise typer.Exit(1)
 
 
-@app.command()
-def list(
+@app.command(name="list")
+def list_tasks(
     tasks_dir: Path = typer.Option(Path("tasks"), "--dir", "-d", help="Tasks directory"),
     priority: str | None = typer.Option(None, "--priority", "-p", help="Filter by priority"),
     subagent: str | None = typer.Option(None, "--subagent", "-s", help="Filter by subagent type"),
@@ -238,13 +238,17 @@ def migrate(
     else:
         # Migrate WORK_STREAM.md
         if not work_stream.exists():
-            console.print(f"[red]WORK_STREAM.md not found: {work_stream}[/red]")
+            from thegent.errors import print_error
+
+            print_error(f"WORK_STREAM.md not found: {work_stream}")
             raise typer.Exit(1)
 
         result = migrate_work_stream_to_tasks(work_stream, tasks_dir, dry_run=dry_run)
 
         if "error" in result:
-            console.print(f"[red]Error:[/red] {result['error']}")
+            from thegent.errors import print_error
+
+            print_error(result["error"])
             raise typer.Exit(1)
 
         console.print("[bold]Migration Results:[/bold]")
@@ -292,7 +296,9 @@ def sync(
         console.print("[blue]Syncing tasks to WORK_STREAM.md...[/blue]")
         result = sync_manager.update_work_stream_from_tasks()
         if "error" in result:
-            console.print(f"[red]Error:[/red] {result['error']}")
+            from thegent.errors import print_error
+
+            print_error(result["error"])
             raise typer.Exit(1)
         console.print(f"[green]✓[/green] Synced {result['tasks_synced']} tasks to BACKLOG")
 
@@ -317,7 +323,9 @@ def claim(
     result = sync_manager.claim_task(task_id, agent_id)
 
     if "error" in result:
-        console.print(f"[red]Error:[/red] {result['error']}")
+        from thegent.errors import print_error
+
+        print_error(result["error"])
         raise typer.Exit(1)
 
     console.print(f"[green]✓[/green] Claimed task {task_id} as {agent_id}")
@@ -341,7 +349,9 @@ def complete(
     result = sync_manager.complete_task(task_id, agent_id)
 
     if "error" in result:
-        console.print(f"[red]Error:[/red] {result['error']}")
+        from thegent.errors import print_error
+
+        print_error(result["error"])
         raise typer.Exit(1)
 
     console.print(f"[green]✓[/green] Completed task {task_id} as {agent_id}")

@@ -8,7 +8,7 @@ from thegent.phases.enterprise_compliance_tests import EnterpriseComplianceTestM
 class Phase15EnterpriseComplianceTestsResearch:
     """Research framework for enterprise compliance tests."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize enterprise compliance tests research."""
         self.test_matrix = EnterpriseComplianceTestMatrix()
 

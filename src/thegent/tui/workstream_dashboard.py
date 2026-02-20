@@ -9,15 +9,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from textual.app import App, ComposeResult
-from textual.containers import Container, Grid, Horizontal, Vertical, ScrollableContainer
-from textual.widgets import DataTable, Footer, Header, Static, ProgressBar, TabbedContent, TabPane
 from textual import on, work
+from textual.app import App, ComposeResult
+from textual.containers import Container, Grid, Horizontal, ScrollableContainer, Vertical
+from textual.widgets import DataTable, Footer, Header, ProgressBar, Static, TabbedContent, TabPane
 
 from thegent.config import ThegentSettings
-from thegent.planning.workstream_db import WorkstreamDB
-from thegent.planning.auto_launch import AutoLaunchSystem
 from thegent.orchestration.load_based_limits import compute_dynamic_limit, sample_resources
+from thegent.planning.auto_launch import AutoLaunchSystem
+from thegent.planning.workstream_db import WorkstreamDB
 
 _log = logging.getLogger(__name__)
 
@@ -74,23 +74,27 @@ class SessionsTable(DataTable):
             session_id = session.get("session_id", "")[:12] + "..."
             agent = session.get("agent", "")
             status = session.get("status", "")
-            item_id = session.get("workstream_item_id", "")[:20] + "..." if len(session.get("workstream_item_id", "")) > 20 else session.get("workstream_item_id", "")
+            item_id = (
+                session.get("workstream_item_id", "")[:20] + "..."
+                if len(session.get("workstream_item_id", "")) > 20
+                else session.get("workstream_item_id", "")
+            )
             started = session.get("started_at", "")
             if started:
                 try:
-                    dt = datetime.fromisoformat(started.replace("Z", "+00:00"))
+                    dt = datetime.fromisoformat(started)
                     started = dt.strftime("%H:%M:%S")
                 except Exception:
                     pass
             lane = session.get("lane", "")
-            
+
             # Color code status
             status_style = {
                 "running": "[green]",
                 "exited": "[dim]",
                 "failed": "[red]",
             }.get(status.lower(), "")
-            
+
             self.add_row(
                 session_id,
                 agent,
@@ -112,12 +116,14 @@ class WorkstreamItemsTable(DataTable):
         """Update workstream items table."""
         self.clear()
         for item in items[:30]:  # Limit to 30 rows
-            item_id = item.get("item_id", "")[:20] + "..." if len(item.get("item_id", "")) > 20 else item.get("item_id", "")
+            item_id = (
+                item.get("item_id", "")[:20] + "..." if len(item.get("item_id", "")) > 20 else item.get("item_id", "")
+            )
             status = item.get("status", "")
             priority = item.get("priority", "")
             source = item.get("source", "")
             title = item.get("title", "")[:40] + "..." if len(item.get("title", "")) > 40 else item.get("title", "")
-            
+
             # Color code status
             status_style = {
                 "backlog": "[dim]",
@@ -126,7 +132,7 @@ class WorkstreamItemsTable(DataTable):
                 "completed": "[green]",
                 "running": "[green bold]",
             }.get(status.lower(), "")
-            
+
             self.add_row(
                 item_id,
                 f"{status_style}{status}[/]",
@@ -154,10 +160,10 @@ class ConcurrencyPanel(Static):
         """Render concurrency as formatted text."""
         if self.limit == 0:
             return "[dim]Loading concurrency info...[/dim]"
-        
+
         usage_pct = (self.running / self.limit * 100) if self.limit > 0 else 0
         available = max(0, self.limit - self.running)
-        
+
         # Color code usage
         if usage_pct >= 90:
             color = "[red]"
@@ -165,7 +171,7 @@ class ConcurrencyPanel(Static):
             color = "[yellow]"
         else:
             color = "[green]"
-        
+
         return f"""\
 [bold]Concurrency[/bold]
 
@@ -195,11 +201,11 @@ class KPIPanel(Static):
         return f"""\
 [bold]TRAFFIC KPIs[/bold]
 
-Throughput:  [green]{self.kpis.get('throughput', 0):.1f}/hr[/green]
-Reliability: [cyan]{self.kpis.get('reliability', 1.0):.1%}[/cyan]
-Finance:     [yellow]${self.kpis.get('finance', 0.0):.2f}[/yellow]
-Fatigue:     [magenta]{self.kpis.get('fatigue', 0.0):.1%}[/magenta]
-Integrity:   [blue]{self.kpis.get('integrity', 1.0):.1%}[/blue]
+Throughput:  [green]{self.kpis.get("throughput", 0):.1f}/hr[/green]
+Reliability: [cyan]{self.kpis.get("reliability", 1.0):.1%}[/cyan]
+Finance:     [yellow]${self.kpis.get("finance", 0.0):.2f}[/yellow]
+Fatigue:     [magenta]{self.kpis.get("fatigue", 0.0):.1%}[/magenta]
+Integrity:   [blue]{self.kpis.get("integrity", 1.0):.1%}[/blue]
 """
 
 
@@ -216,11 +222,7 @@ class ReputationTable(DataTable):
         for agent, score in sorted(scores.items(), key=lambda x: x[1], reverse=True):
             status = "Trusted" if score >= 0.7 else ("Probation" if score >= 0.3 else "Untrusted")
             status_color = "[green]" if score >= 0.7 else ("[yellow]" if score >= 0.3 else "[red]")
-            self.add_row(
-                agent,
-                f"{score:.2f}",
-                f"{status_color}{status}[/]"
-            )
+            self.add_row(agent, f"{score:.2f}", f"{status_color}{status}[/]")
 
 
 class DependenciesTable(DataTable):
@@ -241,6 +243,56 @@ class DependenciesTable(DataTable):
             self.add_row(item_id, dep_id, status)
 
 
+class XPTable(DataTable):
+    """Table showing agent XP and levels."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.add_columns("Agent", "XP", "Level", "Trust Score")
+
+    def update_xp(self, xp_data: list[dict[str, Any]]) -> None:
+        """Update XP table."""
+        self.clear()
+        for entry in xp_data:
+            self.add_row(
+                str(entry.get("agent_id", "")),
+                str(entry.get("xp", 0)),
+                str(entry.get("level", 1)),
+                f"{entry.get('trust_score', 1.0):.2f}",
+            )
+
+
+class GardenerPanel(Static):
+    """Panel showing auto-launch system health and gardening status."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.health_data: dict[str, Any] = {}
+
+    def update_health(self, health_data: dict[str, Any]) -> None:
+        """Update health display."""
+        self.health_data = health_data
+        self.update(self._render_health())
+
+    def _render_health(self) -> str:
+        """Render health as formatted text."""
+        if not self.health_data:
+            return "[dim]Loading health info...[/dim]"
+
+        score = self.health_data.get("health_score", 100)
+        color = "[green]" if score >= 90 else ("[yellow]" if score >= 70 else "[red]")
+
+        return f"""\
+[bold]System Health[/bold]
+
+Health Score: {color}{score}%[/]
+Sync Status:  [green]OK[/green]
+DB Status:    [green]Connected[/green]
+Pending Fixes: [yellow]{self.health_data.get("pending_fixes", 0)}[/yellow]
+Last Cycle:   {self.health_data.get("last_cycle", "—")}
+"""
+
+
 class WorkstreamDashboard(App):
     """Real-time workstream monitoring dashboard."""
 
@@ -251,19 +303,19 @@ class WorkstreamDashboard(App):
         padding: 1;
         margin: 1;
     }
-    
+
     .section-header {
         background: $primary;
         color: $on-primary;
         padding: 0 1;
         margin-top: 1;
     }
-    
+
     DataTable {
         height: 1fr;
         border: tall $primary;
     }
-    
+
     #progress-container {
         height: auto;
         border: solid $primary;
@@ -275,6 +327,7 @@ class WorkstreamDashboard(App):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh"),
+        ("g", "garden", "Garden"),
     ]
 
     def __init__(self, *args, **kwargs) -> None:
@@ -284,17 +337,19 @@ class WorkstreamDashboard(App):
         self.refresh_interval = 2.0
         try:
             from thegent.ux.kpis import KPIDashboard
+
             self.kpi_dashboard = KPIDashboard(self.settings)
         except Exception:
             self.kpi_dashboard = None
-        
+
         from thegent.economy.reputation import ReputationManager
+
         self.reputation_manager = ReputationManager(db_path=self.db.db_path)
 
     def compose(self) -> ComposeResult:
         """Compose the dashboard layout."""
         yield Header(show_clock=True)
-        
+
         with TabbedContent():
             with TabPane("Overview", id="overview"):
                 with Horizontal():
@@ -302,17 +357,17 @@ class WorkstreamDashboard(App):
                         yield StatsPanel(id="stats")
                         yield ConcurrencyPanel(id="concurrency")
                         yield KPIPanel(id="kpis")
-                    
+
                     with Vertical(id="main-content"):
                         yield Static("[bold]Active Sessions[/bold]", classes="section-header")
                         yield SessionsTable(id="sessions")
                         yield Static("[bold]Workstream Items[/bold]", classes="section-header")
                         yield WorkstreamItemsTable(id="items")
-            
+
             with TabPane("Costs", id="costs-tab"):
                 yield Static("[bold]Cost History[/bold]", classes="section-header")
                 yield DataTable(id="costs-history")
-            
+
             with TabPane("Reputation", id="reputation-tab"):
                 yield Static("[bold]Agent Reputation Scores[/bold]", classes="section-header")
                 yield ReputationTable(id="reputation-table")
@@ -321,14 +376,28 @@ class WorkstreamDashboard(App):
                 yield Static("[bold]Item Dependencies[/bold]", classes="section-header")
                 yield DependenciesTable(id="deps-table")
 
+            with TabPane("XP & Levels", id="xp-tab"):
+                yield Static("[bold]Agent XP & Levels[/bold]", classes="section-header")
+                yield XPTable(id="xp-table")
+
             with TabPane("Violations", id="violations-tab"):
                 yield Static("[bold]Constitutional Violations[/bold]", classes="section-header")
                 yield DataTable(id="violations-table")
 
+            with TabPane("Audit Log", id="events-tab"):
+                yield Static("[bold]Auto-Launch Audit Log[/bold]", classes="section-header")
+                yield DataTable(id="events-table")
+
+            with TabPane("Gardener", id="gardener-tab"):
+                yield Static("[bold]Auto-Launch System Health[/bold]", classes="section-header")
+                yield GardenerPanel(id="gardener-panel")
+                yield Static("[bold]Gardening Tasks[/bold]", classes="section-header")
+                yield DataTable(id="gardening-tasks")
+
         with Horizontal(id="progress-container"):
             yield Static("System Load: ")
             yield ProgressBar(id="progress", show_eta=True)
-        
+
         yield Footer()
 
     def on_mount(self) -> None:
@@ -336,12 +405,32 @@ class WorkstreamDashboard(App):
         # Initialize additional tables
         costs_table = self.query_one("#costs-history", DataTable)
         costs_table.add_columns("Period", "Cost ($)", "Tasks", "Avg/Task")
-        
+
         violations_table = self.query_one("#violations-table", DataTable)
         violations_table.add_columns("Item ID", "Principle", "Reason", "Remediation", "Timestamp")
 
+        events_table = self.query_one("#events-table", DataTable)
+        events_table.add_columns("Timestamp", "Event", "Item ID", "Session ID")
+
+        gardening_table = self.query_one("#gardening-tasks", DataTable)
+        gardening_table.add_columns("ID", "Title", "Status", "Priority")
+
         self.set_timer(self.refresh_interval, self.refresh_data, repeat=True)
         self.refresh_data()
+
+    @work(exclusive=False)
+    async def action_garden(self) -> None:
+        """Run gardening cycle from dashboard."""
+        self.notify("Starting gardening cycle...", severity="info")
+        try:
+            from thegent.planning.auto_launch import AutoLaunchSystem
+
+            launcher = AutoLaunchSystem(self.settings)
+            await launcher.run_gardening_cycle()
+            self.notify("Gardening cycle completed", severity="info")
+            await self.refresh_data()
+        except Exception as e:
+            self.notify(f"Gardening failed: {e}", severity="error")
 
     @work(exclusive=False)
     async def refresh_data(self) -> None:
@@ -349,36 +438,40 @@ class WorkstreamDashboard(App):
         try:
             # Get statistics
             stats = self.db.get_statistics()
-            
+
             # Get dynamic limit
             snapshot = sample_resources()
             current_running = stats.get("running", 0)
             dynamic_limit, _details = compute_dynamic_limit(snapshot, running_count=current_running)
             stats["dynamic_limit"] = dynamic_limit
-            
+
             # Update panels
             self.query_one("#stats", StatsPanel).update_stats(stats)
             self.query_one("#concurrency", ConcurrencyPanel).update_concurrency(current_running, dynamic_limit)
-            
+
             if self.kpi_dashboard:
                 kpis = self.kpi_dashboard.get_metrics()
                 self.query_one("#kpis", KPIPanel).update_kpis(kpis)
-            
+
             # Update Reputation
             scores = self.reputation_manager.get_all_scores()
             self.query_one("#reputation-table", ReputationTable).update_scores(scores)
-            
+
             # Update Dependencies
             deps = self.db.execute_query("SELECT * FROM dependencies LIMIT 50")
             self.query_one("#deps-table", DependenciesTable).update_dependencies(deps)
-            
+
+            # Update XP
+            xp_data = self.db.get_top_agents()
+            self.query_one("#xp-table", XPTable).update_xp(xp_data)
+
             # Update sessions
             sessions = self.db.execute_query(
                 "SELECT session_id, agent, status, workstream_item_id, started_at, lane "
                 "FROM sessions WHERE status = 'running' ORDER BY started_at DESC LIMIT 20"
             )
             self.query_one("#sessions", SessionsTable).update_sessions(sessions)
-            
+
             # Update items
             items = self.db.execute_query(
                 "SELECT item_id, status, priority, source, title FROM workstream_items "
@@ -386,7 +479,7 @@ class WorkstreamDashboard(App):
                 "CASE priority WHEN 'P0' THEN 1 WHEN 'P1' THEN 2 WHEN 'P2' THEN 3 ELSE 4 END LIMIT 30"
             )
             self.query_one("#items", WorkstreamItemsTable).update_items(items)
-            
+
             # Update costs history
             costs = self.db.get_recent_costs(limit=20)
             costs_table = self.query_one("#costs-history", DataTable)
@@ -396,9 +489,9 @@ class WorkstreamDashboard(App):
                     str(c.get("period", "")),
                     f"{c.get('cost_usd', 0.0):.4f}",
                     str(c.get("task_count", 0)),
-                    f"{c.get('avg_per_task', 0.0):.4f}"
+                    f"{c.get('avg_per_task', 0.0):.4f}",
                 )
-            
+
             # Update violations
             violations = self.db.execute_query(
                 "SELECT item_id, principle_id, reason, remediation, timestamp "
@@ -412,12 +505,54 @@ class WorkstreamDashboard(App):
                     v.get("principle_id", ""),
                     v.get("reason", "")[:30] + "...",
                     v.get("remediation", "")[:30] + "...",
-                    v.get("timestamp", "")[11:19]
+                    v.get("timestamp", "")[11:19],
                 )
-            
+
+            # Update events
+            events = self.db.execute_query(
+                "SELECT timestamp, event_type, item_id, session_id FROM auto_launch_events "
+                "ORDER BY timestamp DESC LIMIT 20"
+            )
+            e_table = self.query_one("#events-table", DataTable)
+            e_table.clear()
+            for e in events:
+                e_table.add_row(
+                    e.get("timestamp", "")[11:19],
+                    e.get("event_type", ""),
+                    e.get("item_id", "—")[:15],
+                    e.get("session_id", "—")[:12],
+                )
+
+            # Update Gardener
+            # Heuristic health score
+            reliability = stats.get("success_rate", 100.0)
+            pending_fixes = self.db.execute_query("SELECT COUNT(*) FROM backlog_items WHERE status = 'open'")[0][
+                "COUNT(*)"
+            ]
+            health_score = int(reliability * 0.8 + (100 - min(100, pending_fixes * 10)) * 0.2)
+
+            self.query_one("#gardener-panel", GardenerPanel).update_health(
+                {
+                    "health_score": health_score,
+                    "pending_fixes": pending_fixes,
+                    "last_cycle": datetime.now(UTC).strftime("%H:%M:%S"),
+                }
+            )
+
+            garden_tasks = self.db.execute_query(
+                "SELECT item_id, title, status, priority FROM workstream_items "
+                "WHERE source = 'gardening' ORDER BY priority ASC LIMIT 10"
+            )
+            g_table = self.query_one("#gardening-tasks", DataTable)
+            g_table.clear()
+            for gt in garden_tasks:
+                g_table.add_row(
+                    gt.get("item_id", "")[:15], gt.get("title", "")[:40], gt.get("status", ""), gt.get("priority", "")
+                )
+
             # Update progress bar
             self.query_one("#progress", ProgressBar).update(progress=current_running, total=dynamic_limit)
-            
+
         except Exception as e:
             _log.error(f"Error refreshing dashboard: {e}", exc_info=True)
             self.notify(f"Refresh error: {e}", severity="error")

@@ -1,10 +1,10 @@
 {
   "summary": {
-    "total_commands": 305,
-    "commands_with_e2e_tests": 304,
-    "commands_without_e2e_tests": 1,
-    "coverage_percent": 99.67,
-    "total_cli_functions": 148
+    "total_commands": 306,
+    "commands_with_e2e_tests": 306,
+    "commands_without_e2e_tests": 0,
+    "coverage_percent": 100.0,
+    "total_cli_functions": 149
   },
   "commands": {
     "thegent doctor": {
@@ -177,6 +177,16 @@
       "test_count": 1,
       "tests": [
         "test_workstream_dashboard_help"
+      ]
+    },
+    "thegent workstream launch": {
+      "command": "launch",
+      "function": "workstream_launch",
+      "app": "workstream_app",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_workstream_launch_help"
       ]
     },
     "thegent deferral resume": {
@@ -2092,6 +2102,16 @@
       "test_count": 1,
       "tests": [
         "test_config_show_help"
+      ]
+    },
+    "thegent config set": {
+      "command": "set",
+      "function": "config_set",
+      "app": "config_app",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_config_set_help"
       ]
     },
     "thegent control_plane serve": {

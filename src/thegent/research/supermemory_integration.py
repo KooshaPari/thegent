@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 class SupermemoryIntegration:
     """Integration with Supermemory.ai Universal Memory."""
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: str | None = None) -> None:
         """Initialize Supermemory integration.
-        
+
         Args:
             api_key: Supermemory API key
         """
@@ -20,11 +20,11 @@ class SupermemoryIntegration:
 
     def store_memory(self, content: str, level: str = "L3") -> dict[str, Any]:
         """Store memory in Supermemory.
-        
+
         Args:
             content: Content to store
             level: Memory level (L3 or L4)
-            
+
         Returns:
             Storage result
         """
@@ -37,11 +37,11 @@ class SupermemoryIntegration:
 
     def retrieve_memory(self, query: str, level: str = "L3") -> list[dict[str, Any]]:
         """Retrieve memories from Supermemory.
-        
+
         Args:
             query: Search query
             level: Memory level
-            
+
         Returns:
             List of matching memories
         """

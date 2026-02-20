@@ -8,41 +8,41 @@ CLI implementation for terminal management.
 
 ## attach_terminal
 
-Attach to a terminal session.
-
 ```python
-attach_terminal(pane_id)
+attach_terminal(pane_id: Any)
 ```
+
+Attach to a terminal session.
 
 ---
 
 ## inspect_terminal
 
-View the last few lines of a terminal pane.
-
 ```python
-inspect_terminal(pane_id)
+inspect_terminal(pane_id: str)
 ```
+
+View the last few lines of a terminal pane.
 
 ---
 
 ## list_terminals
 
-List active terminal panes (tmux).
-
 ```python
-list_terminals(all)
+list_terminals(all: bool)
 ```
+
+List active terminal panes (tmux).
 
 ---
 
 ## send_to_terminal
 
-Send a command to a terminal pane.
-
 ```python
-send_to_terminal(pane_id, text)
+send_to_terminal(pane_id: str, text: str)
 ```
+
+Send a command to a terminal pane.
 
 ---
 

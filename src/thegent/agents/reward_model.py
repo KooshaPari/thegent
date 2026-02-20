@@ -1,14 +1,14 @@
 """WP-39003: Recursive Reward Modeling Optimization.
 
 This module implements recursive reward modeling for agent optimization,
-integrating with ShareCLI bridge (WP-16003) for task coordination.
+integrating with heliosShield bridge (WP-16003) for task coordination.
 """
 
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
 
-from thegent.governance.sharecli_bridge import ShareCLIBridge
+from thegent.governance.heliosShield_bridge import heliosShieldBridge
 
 
 @dataclass
@@ -26,14 +26,14 @@ class RecursiveRewardModel:
     """WP-39003: Recursive Reward Modeling Optimization.
 
     Implements recursive reward modeling that learns from agent performance
-    and optimizes reward signals over time. Integrates with ShareCLI bridge
+    and optimizes reward signals over time. Integrates with heliosShield bridge
     for task coordination.
     """
 
     def __init__(self) -> None:
         """Initialize the recursive reward model."""
         self._reward_history: list[RewardSignal] = []
-        self._bridge = ShareCLIBridge()
+        self._bridge = heliosShieldBridge()
         self._optimization_epoch = 0
 
     def record_reward(
@@ -60,7 +60,7 @@ class RecursiveRewardModel:
         )
         self._reward_history.append(signal)
 
-        # Integrate with ShareCLI bridge if available
+        # Integrate with heliosShield bridge if available
         if self._bridge.is_available():
             self._bridge.broadcast_intent(
                 agent_id=agent_id,
@@ -87,10 +87,14 @@ class RecursiveRewardModel:
                 agent_rewards[signal.agent_id] = []
             agent_rewards[signal.agent_id].append(signal.reward_value)
 
-        best_agent = max(
-            agent_rewards.items(),
-            key=lambda x: sum(x[1]) / len(x[1]) if x[1] else 0,
-        )[0] if agent_rewards else None
+        best_agent = (
+            max(
+                agent_rewards.items(),
+                key=lambda x: sum(x[1]) / len(x[1]) if x[1] else 0,
+            )[0]
+            if agent_rewards
+            else None
+        )
 
         self._optimization_epoch += 1
 

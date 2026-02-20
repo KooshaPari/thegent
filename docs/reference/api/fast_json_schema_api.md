@@ -28,145 +28,156 @@ Backend priority (fastest first):
 
 #### FastJSONSchemaValidator.__init__
 
+```python
+__init__(self: Any, schema: dict[(str, Any)])
+```
+
 Initialize validator with a schema.
 
-Args:
-    schema: JSON schema dictionary
+**Parameters**:
 
-```python
-__init__(self, schema)
-```
+- `schema`: JSON schema dictionary
+
+---
 
 #### FastJSONSchemaValidator.backend
 
+```python
+backend(self: Any)
+```
+
 Get current backend name.
 
-```python
-backend(self)
-```
+---
 
 #### FastJSONSchemaValidator.is_valid
 
+```python
+is_valid(self: Any, instance: Any)
+```
+
 Check if instance is valid without raising exception.
 
-Args:
-    instance: Data to validate
+**Parameters**:
 
-Returns:
-    True if valid, False otherwise
+- `instance`: Data to validate
 
-```python
-is_valid(self, instance)
-```
+**Returns**: True if valid, False otherwise
+
+---
 
 #### FastJSONSchemaValidator.validate
 
+```python
+validate(self: Any, instance: Any)
+```
+
 Validate instance against schema.
 
-Args:
-    instance: Data to validate
+**Parameters**:
 
-Raises:
-    ValidationError: If validation fails
+- `instance`: Data to validate
 
-```python
-validate(self, instance)
-```
+---
 
 ---
 
 ## backend
 
-Get current backend name.
-
 ```python
-backend(self)
+backend(self: Any)
 ```
+
+Get current backend name.
 
 ---
 
 ## get_schema_validator
 
+```python
+get_schema_validator(schema: dict[(str, Any)], cache_key: Any)
+```
+
 Get or create a schema validator (with caching).
 
-Args:
-    schema: JSON schema dictionary
-    cache_key: Optional cache key (uses schema hash if not provided)
+**Parameters**:
 
-Returns:
-    FastJSONSchemaValidator instance
+- `schema`: JSON schema dictionary
+- `cache_key`: Optional cache key (uses schema hash if not provided)
 
-```python
-get_schema_validator(schema, cache_key)
-```
+**Returns**: FastJSONSchemaValidator instance
 
 ---
 
 ## is_valid
 
+```python
+is_valid(self: Any, instance: Any)
+```
+
 Check if instance is valid without raising exception.
 
-Args:
-    instance: Data to validate
+**Parameters**:
 
-Returns:
-    True if valid, False otherwise
+- `instance`: Data to validate
 
-```python
-is_valid(self, instance)
-```
+**Returns**: True if valid, False otherwise
 
 ---
 
 ## is_valid_json_schema
 
+```python
+is_valid_json_schema(instance: Any, schema: dict[(str, Any)], cache_key: Any)
+```
+
 Check if instance is valid against schema.
 
-Args:
-    instance: Data to validate
-    schema: JSON schema dictionary
-    cache_key: Optional cache key for schema caching
+**Parameters**:
 
-Returns:
-    True if valid, False otherwise
+- `instance`: Data to validate
+- `schema`: JSON schema dictionary
+- `cache_key`: Optional cache key for schema caching
 
-```python
-is_valid_json_schema(instance, schema, cache_key)
-```
+**Returns**: True if valid, False otherwise
 
 ---
 
 ## validate
 
+```python
+validate(self: Any, instance: Any)
+```
+
 Validate instance against schema.
 
-Args:
-    instance: Data to validate
+**Parameters**:
 
-Raises:
-    ValidationError: If validation fails
+- `instance`: Data to validate
 
-```python
-validate(self, instance)
-```
+**Raises**:
+
+- `ValidationError`: If validation fails
 
 ---
 
 ## validate_json_schema
 
+```python
+validate_json_schema(instance: Any, schema: dict[(str, Any)], cache_key: Any)
+```
+
 Validate instance against schema using fastest available backend.
 
-Args:
-    instance: Data to validate
-    schema: JSON schema dictionary
-    cache_key: Optional cache key for schema caching
+**Parameters**:
 
-Raises:
-    ValidationError: If validation fails
+- `instance`: Data to validate
+- `schema`: JSON schema dictionary
+- `cache_key`: Optional cache key for schema caching
 
-```python
-validate_json_schema(instance, schema, cache_key)
-```
+**Raises**:
+
+- `ValidationError`: If validation fails
 
 ---
 

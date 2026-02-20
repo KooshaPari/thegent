@@ -19,7 +19,7 @@ from typing import Any
 import httpx
 
 from thegent.config import ThegentSettings
-from thegent.infra import yaml_dump, yaml_load, run_subprocess_optimized
+from thegent.infra import run_subprocess_optimized, yaml_dump, yaml_load
 
 
 # Lazy imports for better startup performance
@@ -153,6 +153,10 @@ _FACTORY_PROVIDER_PATTERNS: dict[str, tuple[list[str], list[str]]] = {
     "minimax": (["minimax"], ["minimax"]),
     "nim": (["nvidia"], ["nvidia", "nim"]),
     "openrouter": (["openrouter"], ["openrouter"]),
+    "zen": (["opencode"], ["opencode", "zen"]),
+    "qwen": (["dashscope", "aliyuncs"], ["qwen"]),
+    "roo": (["roo.ai"], ["roo"]),
+    "kimi": (["moonshot.cn"], ["kimi"]),
 }
 
 _DUMMY_KEYS = frozenset({"dummy-not-used", "dummy", ""})
@@ -366,38 +370,6 @@ def _inject_kiro_into_cliproxy(config: dict[str, Any], settings: ThegentSettings
     config["kiro"] = [{"token-file": str(kiro_token)}]
 
 
-def _inject_zen_into_cliproxy(config: dict[str, Any], settings: ThegentSettings) -> None:
-    """Inject zen (OpenCode Zen) into openai-compatibility when THGENT_ZEN_API_KEY is set.
-    Zen serves gemini-3-flash, glm-5, gpt-5-mini at api.opencode.ai."""
-    if _has_provider_credentials(config, "zen"):
-        return
-    # Use settings first (settings.zen_api_key reads from THGENT_ZEN_API_KEY, OPENCODE_API_KEY, or ZEN_API_KEY)
-    key = (settings.zen_api_key or "").strip()
-    if not key:
-        return
-    defs_ = _get_provider_definitions()
-    zen_def = defs_.get("zen") if isinstance(defs_.get("zen"), dict) else {}
-    base_url = (zen_def.get("base_url") or settings.zen_base_url or "https://opencode.ai/zen/v1").rstrip("/")
-    model = zen_def.get("model", "glm-5")
-    extra = zen_def.get("extra_aliases", ["z-ai/glm-5", "gpt-5-mini", "gemini-3-flash"])
-    models = [{"name": model, "alias": model}, {"name": model, "alias": model.lower()}]
-    for a in extra:
-        models.append({"name": model, "alias": a})
-    compat = config.get("openai-compatibility")
-    if not isinstance(compat, list):
-        compat = []
-        config["openai-compatibility"] = compat
-    compat[:] = [c for c in compat if not (isinstance(c, dict) and (c.get("name") or "").lower() == "zen")]
-    compat.append(
-        {
-            "name": "zen",
-            "base-url": base_url,
-            "api-key-entries": [{"api-key": key}],
-            "models": models,
-        }
-    )
-
-
 def _ensure_config(settings: ThegentSettings) -> Path:
     """Ensure cliproxy config exists; create minimal YAML if missing."""
     config_path = settings.cliproxy_config_path.expanduser().resolve()
@@ -454,14 +426,6 @@ def _ensure_config(settings: ThegentSettings) -> Path:
                     model_name = p.get("model") or "roo-default"
                     models_list.append({"name": model_name, "alias": "roo-default"})
                     p["models"] = models_list
-            elif name == "zen":
-                # Ensure zen (OpenCode) has gemini-3-flash for dex flash
-                models_list = p.get("models", [])
-                if not any(m.get("alias") == "gemini-3-flash" for m in models_list):
-                    model_name = p.get("model") or "glm-5"
-                    models_list.append({"name": model_name, "alias": "gemini-3-flash"})
-                    models_list.append({"name": model_name, "alias": "gpt-5-mini"})
-                    p["models"] = models_list
             # Try to get underlying model from 'model' or first item in 'models'
             model = p.get("model")
             if not model and p.get("models"):
@@ -488,7 +452,6 @@ def _ensure_config(settings: ThegentSettings) -> Path:
 
     _inject_cursor_into_cliproxy(config, settings)
     _inject_kiro_into_cliproxy(config, settings)
-    _inject_zen_into_cliproxy(config, settings)
 
     config_path.write_text(yaml_dump(config))
     return config_path
@@ -500,17 +463,21 @@ def _is_proxy_reachable(base_url: str) -> bool:
     base = base_url.rstrip("/")
     paths = ("/models", "/") if base.endswith("/v1") else ("/v1/models", "/models", "/")
 
-    for path in paths:
-        try:
-            resp = httpx.get(
-                f"{base}{path}",
-                headers={"Authorization": "Bearer sk-dummy"},
-                timeout=_PROXY_CHECK_TIMEOUT,
-            )
-            if resp.is_success:
-                return True
-        except Exception:
-            continue
+    return any(_check_path(base, path) for path in paths)
+
+
+def _check_path(base: str, path: str) -> bool:
+    """Check a single path for proxy reachability."""
+    try:
+        resp = httpx.get(
+            f"{base}{path}",
+            headers={"Authorization": "Bearer sk-dummy"},
+            timeout=_PROXY_CHECK_TIMEOUT,
+        )
+        if resp.is_success:
+            return True
+    except Exception:
+        pass
     return False
 
 
@@ -739,7 +706,9 @@ def kill_proxy(settings: ThegentSettings) -> bool:
         )
         if result.returncode != 0 or not result.stdout:
             return False
-        stdout_text = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+        stdout_text = (
+            result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+        )
         if not stdout_text.strip():
             return False
         pids = [p.strip() for p in stdout_text.strip().split("\n") if p.strip()]
@@ -851,7 +820,7 @@ def run_login_unified(
         raise ValueError(f"Unknown provider: {provider}. Supported: {', '.join(sorted(PROVIDER_LOGIN_CONFIG))}")
 
     config_path = _ensure_config(settings)
-    raw = yaml.safe_load(config_path.read_text()) if config_path.exists() else {}
+    raw = yaml_load(config_path) if config_path.exists() else {}
     config: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
 
     cfg = PROVIDER_LOGIN_CONFIG[provider_lower]
@@ -862,37 +831,52 @@ def run_login_unified(
     display_name = cfg.get("display_name", provider)
     instructions = cfg.get("instructions", [])
 
-    # Print instructions
-    for _line in instructions:
-        pass
-    with contextlib.suppress(Exception):
-        webbrowser.open(url)
-
     prompt_fn = prompt_func or input
     key: str | None = None
 
-    # Check factory config for existing API key
+    # Check factory config for existing API key (DX-015: Check before opening browser)
     factory_key, factory_path = _get_factory_api_key(provider_lower)
     if factory_key and factory_path:
-        resp = prompt_fn(f"  Found {display_name} API key in {factory_path}. Use it? [Y/n]: ").strip().lower()
-        if resp in ("", "y", "yes"):
+        if skip_if_configured:
+            # Auto-use if not in force mode (user request: once found shouldnt ask again)
             key = factory_key
+        else:
+            # Force mode: still ask, but before opening browser
+            resp = prompt_fn(f"  Found {display_name} API key in {factory_path}. Use it? [Y/n]: ").strip().lower()
+            if resp in ("", "y", "yes"):
+                key = factory_key
 
     if not key:
+        # Print instructions
+        for _line in instructions:
+            pass
+        # ONLY open browser if no key found/accepted (user request: opens browser before i press y)
+        with contextlib.suppress(Exception):
+            webbrowser.open(url)
         key = prompt_fn(f"Enter {display_name} API key (or press Enter to skip): ").strip()
 
     if not key:
         return 1
 
     _inject_api_key_into_cliproxy(config, provider_lower, key, cfg)
-    config_path.write_text(yaml.dump(config, default_flow_style=False, sort_keys=False))
+    config_path.write_text(yaml_dump(config, default_flow_style=False, sort_keys=False))
 
     # WP-Y13: Auto-restart proxy to "hot-reload" the new API key
     if kill_proxy(settings):
         with contextlib.suppress(Exception):
             base_url = ensure_proxy_running(settings)
+            if base_url:
+                pass
     else:
-        pass
+        # If not running standalone, it might be managed by process-compose
+        try:
+            from thegent.mcp_manage import mcp_up
+
+            ok, _ = mcp_up(reload=True)
+            if ok:
+                pass
+        except Exception:
+            pass
 
     return 0
 
@@ -925,16 +909,22 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
     Prefers OAuth via CLIProxy for providers that support it.
     Falls back to API-key flow for providers without OAuth (minimax, nim).
     Preflight: skips OAuth flow if already configured (unless force=True).
+    DX-015: Checks for factory keys before opening browser or prompting.
     """
     provider_lower = provider.lower()
+
+    # Preflight: Check for factory key first (unless OAuth-only like claude/codex)
+    if provider_lower not in _OAUTH_ONLY_PROVIDERS:
+        factory_key, _ = _get_factory_api_key(provider_lower)
+        if factory_key and not force:
+            # If a key exists in factory config, use the API-key flow (run_login_unified)
+            # which we've updated to auto-use if skip_if_configured is True.
+            return run_login_unified(settings, provider_lower, prompt_func=prompt_func, skip_if_configured=True)
 
     # Prefer OAuth when available
     if provider_lower in _LOGIN_FLAGS:
         # Preflight: skip if already configured (unless force)
         if not force and _has_oauth_credentials(settings, provider_lower):
-            display = PROVIDER_LOGIN_CONFIG.get(provider_lower, {}).get(
-                "display_name", provider_lower.replace("-", " ").title()
-            )
             return 0
         binary = _resolve_binary(settings)
         if not _binary_available(binary):
@@ -946,8 +936,18 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
             check=False,
             env=os.environ.copy(),
         )
-        if proc.returncode != 0 and provider_lower in _OAUTH_ONLY_PROVIDERS:
-            pass
+        if proc.returncode == 0:
+            # DX-015: Auto-restart proxy after successful OAuth login
+            if kill_proxy(settings):
+                with contextlib.suppress(Exception):
+                    ensure_proxy_running(settings)
+            else:
+                try:
+                    from thegent.mcp_manage import mcp_up
+
+                    mcp_up(reload=True)
+                except Exception:
+                    pass
         return proc.returncode
 
     # API-key-only providers

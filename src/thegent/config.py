@@ -64,13 +64,13 @@ class ThegentSettings(BaseSettings):
         description="Default model for kiro (claude-haiku-4.5, claude-opus-4.6 via CLIProxyAPIPlus)",
     )
     default_timeout: int = Field(
-        default=600,
+        default=1800,
         ge=10,
         le=3600,
-        description="Default agent timeout in seconds (10m default; use -t 1800 for 30m long tasks)",
+        description="Default agent timeout in seconds (30m default; agents truly need to run indefinitely, up to 30m)",
     )
     default_timeout_claude: int = Field(
-        default=600,
+        default=1800,
         ge=60,
         le=3600,
         description="Claude agent timeout (slower API); use THGENT_DEFAULT_TIMEOUT_CLAUDE to override",
@@ -97,6 +97,41 @@ class ThegentSettings(BaseSettings):
         default="prefer_direct",
         description="Default routing policy: prefer_direct | prefer_proxy | failover (THGENT_DEFAULT_ROUTING)",
     )
+    use_fifo: bool = Field(
+        default=False,
+        description="Enable stdin FIFO for background sessions (WP-9004); THGENT_USE_FIFO",
+    )
+    fifo_path: Path | None = Field(
+        default=None,
+        description="Override path for stdin FIFO (default: session_dir/ID.in); THGENT_FIFO_PATH",
+    )
+
+    use_holdpty: bool = Field(
+        default=False,
+        description="Wrap background sessions with holdpty for interactive attach (WP-9007); THGENT_USE_HOLDPTY",
+    )
+    holdpty_socket_dir: Path | None = Field(
+        default=None,
+        description="Directory for holdpty sockets; defaults to session_dir/ID.sock",
+    )
+
+    # Session persistence backend (muxless-zmx-integration)
+    session_backend: Literal["auto", "zmx", "tmux", "none"] = Field(
+        default="auto",
+        description=(
+            "Session persistence backend for agent sessions. "
+            "'auto' probes for zmx then falls back to tmux/none. "
+            "'zmx' requires zmx (Zig muxless) on PATH. "
+            "'tmux' uses existing tmux tooling. "
+            "'none' disables session persistence. "
+            "(THGENT_SESSION_BACKEND)"
+        ),
+    )
+    zmx_bin: str = Field(
+        default="zmx",
+        description="Path or command name for the zmx binary (THGENT_ZMX_BIN)",
+    )
+
     models_cache_ttl_sec: int = Field(
         default=300,
         ge=60,
@@ -140,6 +175,29 @@ class ThegentSettings(BaseSettings):
     retention_policy: str | None = Field(
         default=None,
         description="Retention policy string (WP-3006); format: default:30,domain1:10",
+    )
+
+    # Budget settings (WP-Y4)
+    budget_hourly_limit: float = Field(
+        default=10.0,
+        ge=0.0,
+        description="Hourly budget limit in USD (THGENT_BUDGET_HOURLY_LIMIT)",
+    )
+    budget_daily_limit: float = Field(
+        default=100.0,
+        ge=0.0,
+        description="Daily budget limit in USD (THGENT_BUDGET_DAILY_LIMIT)",
+    )
+    budget_run_limit: float = Field(
+        default=5.0,
+        ge=0.0,
+        description="Per-run budget limit in USD (THGENT_BUDGET_RUN_LIMIT)",
+    )
+    budget_warning_threshold: float = Field(
+        default=0.8,
+        ge=0.0,
+        le=1.0,
+        description="Budget warning threshold (0.8 = 80%; THGENT_BUDGET_WARNING_THRESHOLD)",
     )
 
     @field_validator("retention_by_domain", mode="before")
@@ -511,6 +569,16 @@ class ThegentSettings(BaseSettings):
         description="Running sessions above this = surge/burst (WP-5002); non-critical deferral",
     )
 
+    # MTSP-12: Shadow Workspaces (Isolation via git worktree)
+    shadow_workspaces_enabled: bool = Field(
+        default=False,
+        description="Enable automatic shadow workspace creation for agent runs (git worktree isolation)",
+    )
+    shadow_workspaces_auto_merge: bool = Field(
+        default=True,
+        description="Automatically merge changes back from shadow workspace on success",
+    )
+
     # G-GP-01: OPA integration (optional Phase 2)
     opa_url: str = Field(
         default="",
@@ -608,6 +676,38 @@ class ThegentSettings(BaseSettings):
         default=None,
         description="Path to thegent-resources binary (THGENT_RESOURCES_BIN)",
     )
+    # Redis settings (swarm-redis-concurrency)
+    redis_host: str = Field(
+        default="localhost",
+        description="Redis host for distributed concurrency (THGENT_REDIS_HOST)",
+    )
+    redis_port: int = Field(
+        default=6379,
+        ge=1,
+        le=65535,
+        description="Redis port for distributed concurrency (THGENT_REDIS_PORT)",
+    )
+    redis_db: int = Field(
+        default=0,
+        ge=0,
+        le=15,
+        description="Redis DB index for distributed concurrency (THGENT_REDIS_DB)",
+    )
+    redis_password: str | None = Field(
+        default=None,
+        description="Redis password for distributed concurrency (THGENT_REDIS_PASSWORD)",
+    )
+    redis_key_prefix: str = Field(
+        default="thgent:concurrency",
+        description="Redis key namespace for concurrency slots (THGENT_REDIS_KEY_PREFIX)",
+    )
+    redis_concurrency_limit: int = Field(
+        default=10,
+        ge=1,
+        le=10000,
+        description="Max concurrent slots when Redis-backed (THGENT_REDIS_CONCURRENCY_LIMIT)",
+    )
+
     zen_base_url: str = Field(
         default="https://api.opencode.ai",
         description="Zen/OpenCode base URL (THGENT_ZEN_BASE_URL)",
@@ -622,6 +722,7 @@ class ThegentSettings(BaseSettings):
     def _parse_zen_api_key(cls, v: object) -> str:
         """Read zen_api_key from THGENT_ZEN_API_KEY, OPENCODE_API_KEY, or ZEN_API_KEY."""
         import os
+
         if isinstance(v, str) and v:
             return v
         # Try multiple env vars (in order of preference)
@@ -636,6 +737,7 @@ class ThegentSettings(BaseSettings):
     def _parse_virtual_env(cls, v: object) -> Path | None:
         """Auto-detect VIRTUAL_ENV from system if not explicitly set."""
         import os
+
         if isinstance(v, (str, Path)) and v:
             return Path(v) if isinstance(v, str) else v
         # Auto-detect from system VIRTUAL_ENV
@@ -647,17 +749,19 @@ class ThegentSettings(BaseSettings):
     def _parse_shell_path(cls, v: object) -> str:
         """Auto-detect SHELL from system if not explicitly set."""
         import os
+
         if isinstance(v, str) and v and v != "/bin/zsh":
             return v
         # Auto-detect from system SHELL
         shell = os.environ.get("SHELL", "/bin/zsh")
-        return shell if shell else "/bin/zsh"
+        return shell or "/bin/zsh"
 
     @field_validator("appdata_path", mode="before")
     @classmethod
     def _parse_appdata_path(cls, v: object) -> Path | None:
         """Auto-detect APPDATA from system on Windows if not explicitly set."""
         import os
+
         if isinstance(v, (str, Path)) and v:
             return Path(v) if isinstance(v, str) else v
         # Auto-detect from system APPDATA (Windows only)
@@ -669,6 +773,7 @@ class ThegentSettings(BaseSettings):
     def _parse_check_leaks(cls, v: object) -> bool:
         """Parse CHECK_LEAKS environment variable."""
         import os
+
         if isinstance(v, bool):
             return v
         if isinstance(v, str):
@@ -681,15 +786,17 @@ class ThegentSettings(BaseSettings):
     def _parse_testing_mode(cls, v: object) -> bool:
         """Parse THGENT_TESTING environment variable."""
         import os
+
         if isinstance(v, bool):
             return v
         if isinstance(v, str):
             return v.lower() in ("1", "true", "yes", "on")
         # Auto-detect from system THGENT_TESTING
         return os.environ.get("THGENT_TESTING") == "1"
-    sharecli_enabled: bool = Field(
+
+    heliosShield_enabled: bool = Field(
         default=True,
-        description="Enable sharecli bridge (THGENT_SHARECLI_ENABLED)",
+        description="Enable heliosShield bridge (THGENT_heliosShield_ENABLED)",
     )
     mac_keep_awake: bool = Field(
         default=True,
@@ -708,6 +815,7 @@ class ThegentSettings(BaseSettings):
         if isinstance(v, list):
             return [str(s) for s in v]
         return ["claude", "codex", "cursor-agent", "opencode", "cursor-api", "droid", "gemini", "copilot"]
+
     config_dir_override: Path | None = Field(
         default=None,
         description="Override config directory (THGENT_CONFIG_DIR)",
@@ -739,6 +847,10 @@ class ThegentSettings(BaseSettings):
     use_native_crypto: bool = Field(
         default=True,
         description="Use native crypto (THGENT_USE_NATIVE_CRYPTO)",
+    )
+    use_native_parser: bool = Field(
+        default=False,
+        description="Use thegent-parser Rust extension (THGENT_USE_NATIVE_PARSER=1)",
     )
     reload: bool = Field(
         default=False,
@@ -795,8 +907,14 @@ class ThegentSettings(BaseSettings):
     max_concurrency: int = Field(
         default=100,
         ge=1,
-        le=200,
+        le=1000,
         description="Maximum concurrent agent runs (ceiling); THGENT_MAX_CONCURRENCY",
+    )
+    critical_lane_slots: int = Field(
+        default=2,
+        ge=0,
+        le=100,
+        description="Slots reserved exclusively for critical-priority runs (standard runs cannot use these); THGENT_CRITICAL_LANE_SLOTS",
     )
     concurrency_load_based: bool = Field(
         default=True,  # Default to resource-based limits
@@ -817,8 +935,28 @@ class ThegentSettings(BaseSettings):
     concurrency_load_per_cpu_max: float = Field(
         default=1.5,
         ge=0.5,
-        le=4.0,
+        le=50.0,
         description="Block when load_1m/cpu_count >= this; THGENT_CONCURRENCY_LOAD_PER_CPU_MAX",
+    )
+
+    # Hysteresis tuning (WP-Y6 / swarm-hysteresis-env)
+    hysteresis_upper: float = Field(
+        default=0.8,
+        ge=0.0,
+        le=1.0,
+        description="Upper utilization ratio for scale-up; THGENT_HYSTERESIS_UPPER",
+    )
+    hysteresis_lower: float = Field(
+        default=0.4,
+        ge=0.0,
+        le=1.0,
+        description="Lower utilization ratio for scale-down; THGENT_HYSTERESIS_LOWER",
+    )
+    hysteresis_dwell: int = Field(
+        default=30,
+        ge=0,
+        le=3600,
+        description="Minimum seconds between scaling events; THGENT_HYSTERESIS_DWELL",
     )
 
     # AgilePlus autonomous governance loop
@@ -937,7 +1075,7 @@ class ThegentSettings(BaseSettings):
         description="Force YOLO mode: skip permissions, disable sandbox and approvals (THGENT_DEX_FORCE_YOLO)",
     )
 
-    # ShareCLI integration settings
+    # heliosShield integration settings
     reddit_client_id: str = Field(
         default="",
         description="Reddit API Client ID (THGENT_REDDIT_CLIENT_ID)",
@@ -957,7 +1095,16 @@ class ThegentSettings(BaseSettings):
 
     harness_root: Path = Field(
         default_factory=lambda: Path("~/.agent-harness").expanduser(),
-        description="ShareCLI harness root directory (HARNESS_ROOT)",
+        description="heliosShield harness root directory (HARNESS_ROOT)",
+    )
+
+    agent_shell: str | None = Field(
+        default=None,
+        description="Preferred shell for agent-spawned processes (THGENT_AGENT_SHELL)",
+    )
+    hook_shell: str | None = Field(
+        default=None,
+        description="Preferred shell for hook execution (THGENT_HOOK_SHELL)",
     )
 
     # Environment variable consolidation (research-library-env-settings)
@@ -993,3 +1140,11 @@ class ThegentSettings(BaseSettings):
         default=False,
         description="Testing mode flag; set automatically in test environment (THGENT_TESTING)",
     )
+
+
+def get_settings() -> ThegentSettings:
+    """Helper to get cached settings."""
+    return ThegentSettings()
+
+
+# End of file

@@ -1,158 +1,261 @@
-use serde::{Serialize, Deserialize};
-use sysinfo::{ProcessExt, System, SystemExt, CpuExt, Signal};
-use std::time::{SystemTime, UNIX_EPOCH};
-use clap::Parser;
+//! thegent-discovery binary
+//!
+//! BKM-08: Consolidates N subprocess spawns (git, ps, tmux, which, npx) into
+//! a single binary that returns structured JSON. The Python wrapper
+//! `src/thegent/native/discovery_native.py` calls this binary and falls back
+//! to individual subprocess calls when the binary is not present on PATH.
+//!
+//! Subcommands:
+//!   sessions   — tmux/screen sessions as JSON array
+//!   tools      — which claude/thegent/tmux/git/npx → {"tool": bool}
+//!   processes  — matching processes as JSON (optional --pattern <regex>)
+//!   all        — combined JSON with all of the above
+
+use anyhow::Result;
+use clap::{Parser, Subcommand};
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use sysinfo::System;
+use std::process::Command;
+
+// ---------------------------------------------------------------------------
+// CLI definition
+// ---------------------------------------------------------------------------
 
 #[derive(Parser, Debug)]
-#[command(author, version, about = "Native process discovery and session reaper for thegent", long_about = None)]
-struct Args {
-    /// Output snapshot as JSON (default)
-    #[arg(short, long, default_value_t = true)]
-    json: bool,
+#[command(
+    name = "thegent-discovery",
+    version,
+    about = "Consolidated discovery binary for thegent (BKM-08)",
+    long_about = "Replaces multiple subprocess spawns (git, ps, tmux, which, npx) with a \
+                  single binary that emits structured JSON. Used by the Python \
+                  DiscoveryClient in src/thegent/native/discovery_native.py."
+)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
 
-    /// Reap zombie/orphan agent processes
-    #[arg(short, long)]
-    reap: bool,
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// List tmux and screen sessions as JSON
+    Sessions,
+    /// Check which tools are available on PATH → {"tool": bool, ...}
+    Tools,
+    /// List processes matching an optional regex pattern
+    Processes {
+        /// Regex pattern to filter process command lines (default: agent patterns)
+        #[arg(short, long)]
+        pattern: Option<String>,
+    },
+    /// Combined output: sessions + tools + processes
+    All {
+        /// Regex pattern for processes (default: agent patterns)
+        #[arg(short, long)]
+        pattern: Option<String>,
+    },
+}
 
-    /// Dry run: show what would be reaped without killing
-    #[arg(short, long)]
-    dry_run: bool,
+// ---------------------------------------------------------------------------
+// Output types
+// ---------------------------------------------------------------------------
 
-    /// Minimum runtime in seconds to consider for reaping (default 2 hours)
-    #[arg(short, long, default_value_t = 7200)]
-    min_runtime: u64,
+#[derive(Serialize, Deserialize, Debug)]
+struct TmuxSession {
+    session_name: String,
+    windows: u32,
+    created: String,
+    attached: bool,
+    source: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct ProcessMetrics {
+struct ToolAvailability {
+    tool: String,
+    available: bool,
+    path: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ProcessInfo {
     pid: u32,
+    ppid: Option<u32>,
     name: String,
     cmd: Vec<String>,
-    cpu_usage: f32,
     memory_kb: u64,
-    virtual_memory_kb: u64,
+    cpu_usage: f32,
     run_time_s: u64,
-    parent_pid: Option<u32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SystemMetrics {
-    total_memory_kb: u64,
-    available_memory_kb: u64,
-    cpu_usage_avg: f32,
-    load_avg_1m: f64,
-    load_avg_5m: f64,
-    load_avg_15m: f64,
-    uptime_s: u64,
+struct DiscoveryAll {
+    sessions: Vec<TmuxSession>,
+    tools: Vec<ToolAvailability>,
+    processes: Vec<ProcessInfo>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct DiscoverySnapshot {
-    timestamp: f64,
-    system: SystemMetrics,
-    agents: Vec<ProcessMetrics>,
-    clode_sessions: Vec<ProcessMetrics>,
-    dex_sessions: Vec<ProcessMetrics>,
-    mcp_servers: Vec<ProcessMetrics>,
-    cursor_processes: Vec<ProcessMetrics>,
-    zombie_candidates: Vec<u32>,
-    reaped_count: usize,
-}
+// ---------------------------------------------------------------------------
+// Implementations
+// ---------------------------------------------------------------------------
 
-fn main() -> anyhow::Result<()> {
-    let args = Args::parse();
-    let mut sys = System::new_all();
-    sys.refresh_all();
-    
-    std::thread::sleep(std::time::Duration::from_millis(100));
-    sys.refresh_all();
+/// Default tools to probe when running `tools` or `all`
+const PROBE_TOOLS: &[&str] = &[
+    "claude",
+    "thegent",
+    "tmux",
+    "git",
+    "npx",
+    "node",
+    "python3",
+    "screen",
+    "cargo",
+];
 
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs_f64();
+/// Default agent process pattern
+const DEFAULT_AGENT_PATTERN: &str =
+    r"claude|thegent|codex|copilot|cursor.agent|opencode|aider|gemini|droid";
 
-    let load = sys.load_average();
-    let system_metrics = SystemMetrics {
-        total_memory_kb: sys.total_memory(),
-        available_memory_kb: sys.available_memory(),
-        cpu_usage_avg: sys.global_cpu_info().cpu_usage(),
-        load_avg_1m: load.one,
-        load_avg_5m: load.five,
-        load_avg_15m: load.fifteen,
-        uptime_s: sys.uptime(),
-    };
+fn discover_sessions() -> Vec<TmuxSession> {
+    let mut sessions: Vec<TmuxSession> = Vec::new();
 
-    let mut snapshot = DiscoverySnapshot {
-        timestamp: now,
-        system: system_metrics,
-        agents: Vec::new(),
-        clode_sessions: Vec::new(),
-        dex_sessions: Vec::new(),
-        mcp_servers: Vec::new(),
-        cursor_processes: Vec::new(),
-        zombie_candidates: Vec::new(),
-        reaped_count: 0,
-    };
+    // tmux sessions
+    let tmux_result = Command::new("tmux")
+        .args(["list-sessions", "-F", "#{session_name}|#{session_windows}|#{session_created_string}|#{session_attached}"])
+        .output();
 
-    for (pid, process) in sys.processes() {
-        let name = process.name().to_string();
-        let cmd = process.cmd().to_vec();
-        let cmd_str = cmd.join(" ");
-
-        let metrics = ProcessMetrics {
-            pid: pid.as_u32(),
-            name: name.clone(),
-            cmd: cmd.clone(),
-            cpu_usage: process.cpu_usage(),
-            memory_kb: process.memory(),
-            virtual_memory_kb: process.virtual_memory(),
-            run_time_s: process.run_time(),
-            parent_pid: process.parent().map(|p| p.as_u32()),
-        };
-
-        if cmd_str.contains("thegent") && (cmd_str.contains("serve") || cmd_str.contains("mcp")) {
-            snapshot.mcp_servers.push(metrics);
-        } else if cmd_str.contains("clode") || (cmd_str.contains("thegent") && cmd_str.contains("flash")) {
-            snapshot.clode_sessions.push(metrics);
-        } else if cmd_str.contains("dex") || (cmd_str.contains("thegent") && cmd_str.contains("run")) {
-            snapshot.dex_sessions.push(metrics);
-        } else if name.contains("agent") || cmd_str.contains("agent") {
-            snapshot.agents.push(metrics);
-        } else if name.contains("Cursor") || cmd_str.contains("Cursor") || name.contains("cursor-shell") {
-            snapshot.cursor_processes.push(metrics);
-        }
-    }
-
-    // Zombie detection and reaping
-    for p in &snapshot.cursor_processes {
-        // Candidate if low CPU and long runtime
-        if p.cpu_usage < 0.1 && p.run_time_s > args.min_runtime {
-            snapshot.zombie_candidates.push(p.pid);
-            
-            if args.reap {
-                if args.dry_run {
-                    eprintln!("DRY RUN: Would kill zombie candidate PID {}", p.pid);
-                } else {
-                    if let Some(proc) = sys.process(sysinfo::Pid::from(p.pid as usize)) {
-                        if proc.kill_with(Signal::Term).is_some() {
-                            snapshot.reaped_count += 1;
-                        } else {
-                            // Fallback to Kill if Term fails
-                            proc.kill_with(Signal::Kill);
-                            snapshot.reaped_count += 1;
-                        }
-                    }
+    if let Ok(output) = tmux_result {
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                let parts: Vec<&str> = line.splitn(4, '|').collect();
+                if parts.len() == 4 {
+                    sessions.push(TmuxSession {
+                        session_name: parts[0].to_string(),
+                        windows: parts[1].parse().unwrap_or(0),
+                        created: parts[2].to_string(),
+                        attached: parts[3].trim() != "0",
+                        source: "tmux".to_string(),
+                    });
                 }
             }
         }
     }
 
-    if args.json {
-        println!("{}", serde_json::to_string_pretty(&snapshot).unwrap());
-    } else {
-        println!("Reaped {} processes", snapshot.reaped_count);
-        println!("Identified {} zombie candidates", snapshot.zombie_candidates.len());
+    // GNU screen sessions (best-effort)
+    let screen_result = Command::new("screen")
+        .args(["-ls"])
+        .output();
+
+    if let Ok(output) = screen_result {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        for line in stdout.lines() {
+            // Screen output looks like: "	12345.session_name	(Detached)"
+            let trimmed = line.trim();
+            if trimmed.starts_with(|c: char| c.is_ascii_digit()) {
+                let parts: Vec<&str> = trimmed.splitn(2, '.').collect();
+                if parts.len() == 2 {
+                    let rest = parts[1];
+                    let name_end = rest.find('\t').unwrap_or(rest.len());
+                    let session_name = &rest[..name_end];
+                    let attached = rest.contains("(Attached)");
+                    sessions.push(TmuxSession {
+                        session_name: session_name.to_string(),
+                        windows: 1,
+                        created: String::new(),
+                        attached,
+                        source: "screen".to_string(),
+                    });
+                }
+            }
+        }
+    }
+
+    sessions
+}
+
+fn discover_tools() -> Vec<ToolAvailability> {
+    PROBE_TOOLS
+        .iter()
+        .map(|tool| {
+            let result = which::which(tool);
+            ToolAvailability {
+                tool: tool.to_string(),
+                available: result.is_ok(),
+                path: result.ok().and_then(|p| p.to_str().map(|s| s.to_string())),
+            }
+        })
+        .collect()
+}
+
+fn discover_processes(pattern: Option<&str>) -> Vec<ProcessInfo> {
+    let pat = pattern.unwrap_or(DEFAULT_AGENT_PATTERN);
+    let re = match Regex::new(&format!("(?i){}", pat)) {
+        Ok(r) => r,
+        Err(_) => {
+            eprintln!("Invalid regex pattern: {}", pat);
+            return Vec::new();
+        }
+    };
+
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
+    sys.processes()
+        .values()
+        .filter_map(|proc| {
+            let name = proc.name().to_string_lossy().to_string();
+            let cmd: Vec<String> = proc
+                .cmd()
+                .iter()
+                .map(|s| s.to_string_lossy().to_string())
+                .collect();
+            let cmd_str = cmd.join(" ");
+
+            if re.is_match(&name) || re.is_match(&cmd_str) {
+                Some(ProcessInfo {
+                    pid: proc.pid().as_u32(),
+                    ppid: proc.parent().map(|p| p.as_u32()),
+                    name,
+                    cmd,
+                    memory_kb: proc.memory() / 1024,
+                    cpu_usage: proc.cpu_usage(),
+                    run_time_s: proc.run_time(),
+                })
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+// ---------------------------------------------------------------------------
+// Entry point
+// ---------------------------------------------------------------------------
+
+fn main() -> Result<()> {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::Sessions => {
+            let sessions = discover_sessions();
+            println!("{}", serde_json::to_string_pretty(&sessions)?);
+        }
+        Commands::Tools => {
+            let tools = discover_tools();
+            println!("{}", serde_json::to_string_pretty(&tools)?);
+        }
+        Commands::Processes { pattern } => {
+            let procs = discover_processes(pattern.as_deref());
+            println!("{}", serde_json::to_string_pretty(&procs)?);
+        }
+        Commands::All { pattern } => {
+            let all = DiscoveryAll {
+                sessions: discover_sessions(),
+                tools: discover_tools(),
+                processes: discover_processes(pattern.as_deref()),
+            };
+            println!("{}", serde_json::to_string_pretty(&all)?);
+        }
     }
 
     Ok(())

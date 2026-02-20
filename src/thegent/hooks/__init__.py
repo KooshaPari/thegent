@@ -7,23 +7,25 @@ from thegent.hooks.debounce import DebounceSubcommand
 from thegent.hooks.git_enhance import GitEnhance
 
 __all__ = [
-    "GitEnhance",
+    "BreakerSubcommands",
     "ChangedFilesEnhance",
     "ConfigEnhance",
-    "BreakerSubcommands",
     "DebounceSubcommand",
+    "GitEnhance",
 ]
 
+from thegent.hooks.affected_tests import AffectedTestsSubcommand
+from thegent.hooks.fr_index import FRIndexSubcommands
 from thegent.hooks.incremental import IncrementalSubcommands
 from thegent.hooks.learning import LearningSubcommands
-from thegent.hooks.fr_index import FRIndexSubcommands
-from thegent.hooks.affected_tests import AffectedTestsSubcommand
 from thegent.hooks.prewarm_report import PrewarmReportSubcommands
 
-__all__.extend([
-    "IncrementalSubcommands",
-    "LearningSubcommands",
-    "FRIndexSubcommands",
-    "AffectedTestsSubcommand",
-    "PrewarmReportSubcommands",
-])
+__all__.extend(
+    [
+        "AffectedTestsSubcommand",
+        "FRIndexSubcommands",
+        "IncrementalSubcommands",
+        "LearningSubcommands",
+        "PrewarmReportSubcommands",
+    ]
+)

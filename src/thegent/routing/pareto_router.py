@@ -8,6 +8,10 @@ Implements the ChatGPT Pareto research design:
 - Shadow pricing when budget pressure (Phase 1)
 - Degraded mode at 85% budget burn (cheap offers only)
 - Route trace output (Phase 0)
+
+Also exposes the simple ParetoRouter public API:
+- RouteCandidate: lightweight dataclass {model, provider, cost_per_1k, quality_score}
+- ParetoRouter.select(): returns the Pareto-optimal candidate with highest quality/cost ratio
 """
 
 from __future__ import annotations
@@ -59,6 +63,93 @@ QUALITY_PROXY: dict[str, float] = {
     "roo-default": 0.70,
     "kilo-default": 0.70,
 }
+
+
+@dataclass
+class RouteCandidate:
+    """A routable model candidate with cost and quality metrics.
+
+    Attributes:
+        model: Model identifier (e.g. "claude-sonnet-4.6").
+        provider: Provider name (e.g. "claude", "gemini").
+        cost_per_1k: Cost in USD per 1 000 tokens.  Use 0.0 for free-tier routes.
+        quality_score: Quality proxy in [0, 1].  Higher is better.
+    """
+
+    model: str
+    provider: str
+    cost_per_1k: float
+    quality_score: float
+
+
+class ParetoRouter:
+    """Select the Pareto-optimal route that maximises quality per dollar.
+
+    A candidate is *dominated* when another candidate has both strictly lower cost
+    AND strictly higher quality (or equal on both with one strictly better).  The
+    Pareto frontier is the set of non-dominated candidates.  Among frontier members,
+    the one with the highest ``quality_score / cost_per_1k`` ratio is returned.
+
+    Fallback (zero-cost): when every candidate has ``cost_per_1k == 0``, the
+    ratio is undefined; select the candidate with the highest ``quality_score``.
+    """
+
+    def select(self, candidates: list[RouteCandidate]) -> RouteCandidate:
+        """Return the best Pareto-optimal candidate.
+
+        Args:
+            candidates: Non-empty list of route candidates.
+
+        Returns:
+            The selected ``RouteCandidate``.
+
+        Raises:
+            ValueError: If *candidates* is empty.
+        """
+        if not candidates:
+            raise ValueError("candidates must be non-empty")
+
+        frontier = self._pareto_frontier(candidates)
+        return self._best_from_frontier(frontier)
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _is_dominated(a: RouteCandidate, b: RouteCandidate) -> bool:
+        """True if *b* dominates *a*: b is at least as good on both axes and strictly better on one."""
+        cost_ok = b.cost_per_1k <= a.cost_per_1k
+        quality_ok = b.quality_score >= a.quality_score
+        strictly_better = b.cost_per_1k < a.cost_per_1k or b.quality_score > a.quality_score
+        return cost_ok and quality_ok and strictly_better
+
+    def _pareto_frontier(self, candidates: list[RouteCandidate]) -> list[RouteCandidate]:
+        """Return non-dominated candidates."""
+        frontier: list[RouteCandidate] = []
+        for candidate in candidates:
+            if not any(
+                self._is_dominated(candidate, other)
+                for other in candidates
+                if other is not candidate
+            ):
+                frontier.append(candidate)
+        return frontier
+
+    @staticmethod
+    def _best_from_frontier(frontier: list[RouteCandidate]) -> RouteCandidate:
+        """Select candidate with highest quality/cost ratio; fall back to highest quality when cost is zero."""
+        all_zero_cost = all(c.cost_per_1k == 0.0 for c in frontier)
+        if all_zero_cost:
+            return max(frontier, key=lambda c: c.quality_score)
+        # Among candidates with positive cost, prefer quality/cost ratio.
+        # Zero-cost candidates are implicitly infinite ratio — treat them as best.
+        def _ratio(c: RouteCandidate) -> float:
+            if c.cost_per_1k == 0.0:
+                return float("inf")
+            return c.quality_score / c.cost_per_1k
+
+        return max(frontier, key=_ratio)
 
 
 @dataclass

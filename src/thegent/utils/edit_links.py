@@ -17,9 +17,9 @@ class EditLinksGenerator:
         repo_url: str = "https://github.com/yourorg/thegent",
         branch: str = "main",
         base_dir: Path | None = None,
-    ):
+    ) -> None:
         """Initialize edit links generator.
-        
+
         Args:
             repo_url: GitHub repository URL
             branch: Git branch name
@@ -31,15 +31,15 @@ class EditLinksGenerator:
 
     def generate_edit_link(self, file_path: Path) -> str:
         """Generate edit link for a file.
-        
+
         Args:
             file_path: Path to file
-            
+
         Returns:
             GitHub edit URL
         """
         file_path = normalize_path(file_path)
-        
+
         # Get relative path from base_dir
         try:
             rel_path = file_path.relative_to(self.base_dir)
@@ -53,11 +53,11 @@ class EditLinksGenerator:
 
     def add_edit_link_to_file(self, file_path: Path, position: str = "top") -> bool:
         """Add edit link to a markdown file.
-        
+
         Args:
             file_path: Path to markdown file
             position: Where to add link ("top" or "bottom")
-            
+
         Returns:
             True if successful
         """
@@ -74,7 +74,7 @@ class EditLinksGenerator:
                 # Find end of frontmatter
                 end_idx = content.find("---", 3)
                 if end_idx != -1:
-                    new_content = content[:end_idx + 3] + edit_link + content[end_idx + 3:]
+                    new_content = content[: end_idx + 3] + edit_link + content[end_idx + 3 :]
                 else:
                     new_content = content + edit_link
             else:
@@ -86,11 +86,11 @@ class EditLinksGenerator:
 
     def add_edit_links_batch(self, files: list[Path], position: str = "bottom") -> dict[str, bool]:
         """Add edit links to multiple files.
-        
+
         Args:
             files: List of file paths
             position: Where to add links
-            
+
         Returns:
             Dictionary mapping file paths to success status
         """

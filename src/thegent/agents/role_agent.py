@@ -24,9 +24,10 @@ class RoleAgentRunner(AgentRunner):
         *,
         use_stream: bool = True,
         live_output: bool = False,
-        on_stdout: Callable[[str], Optional[None]] | None = None,
-        on_stderr: Callable[[str], Optional[None]] | None = None,
+        on_stdout: Callable[[str], None] | None = None,
+        on_stderr: Callable[[str], None] | None = None,
         run_id: str | None = None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         role_prompt = get_role_prompt(self.role)
         full_prompt = f"[ROLE: {self.role.value.upper()}]\n{role_prompt}\n\nTASK:\n{prompt}"
@@ -41,4 +42,5 @@ class RoleAgentRunner(AgentRunner):
             on_stdout=on_stdout,
             on_stderr=on_stderr,
             run_id=run_id,
+            env=env,
         )

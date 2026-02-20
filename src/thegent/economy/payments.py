@@ -8,7 +8,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 _log = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ _log = logging.getLogger(__name__)
 class Transaction(BaseModel):
     """Metadata for an agent-to-agent micro-payment."""
 
-    tx_id: str = field(default_factory=lambda: f"tx_{uuid.uuid4().hex[:8]}")
+    tx_id: str = Field(default_factory=lambda: f"tx_{uuid.uuid4().hex[:8]}")
     sender_id: str
     receiver_id: str
     amount_usd: float

@@ -95,6 +95,11 @@ class TestInboxTeammateWorkstreamCommands:
         result = runner.invoke(app, ["workstream", "dashboard", "--help"])
         assert result.exit_code == 0
 
+    def test_workstream_launch_help(self) -> None:
+        """thegent workstream launch --help exits with code 0."""
+        result = runner.invoke(app, ["workstream", "launch", "--help"])
+        assert result.exit_code == 0
+
     # Orchestrate remaining commands
     def test_orchestrate_run_diff_help(self) -> None:
         """thegent orchestrate run-diff --help exits with code 0."""

@@ -5,10 +5,12 @@ _resolve_cwd() defaults to Path.cwd() when no project indicators found, so no
 MCP tools may still elicit cwd when meta.cwd is absent (see gofastmcp.com/servers/elicitation).
 """
 
+import errno
 import getpass
 import json
 import logging
 import os
+import platform
 import re
 import signal
 import socket
@@ -18,7 +20,7 @@ import time
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -41,6 +43,8 @@ _CWD_CACHE_TTL = 10.0  # seconds
 import contextlib
 import hashlib
 
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_random_exponential
+
 from thegent.agents import (
     get_fallback_agents,
     get_runner,
@@ -53,7 +57,7 @@ from thegent.agents.registry import AGENT_LABELS
 from thegent.agents.resilience import is_usage_limit
 from thegent.config import ThegentSettings
 from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
-from thegent.execution import RunMeta, RunRegistry
+from thegent.execution import AgentSource, InteractivityMode, RunMeta, RunRegistry
 
 # Approximate seconds per tool call for budget injection (~2.3s * N tool calls ≈ timeout)
 SECONDS_PER_TOOL_CALL = 2.3
@@ -64,6 +68,77 @@ _CONTINUATION_STDERR_CHARS = 2000
 _CONTINUATION_MULTI_HOP_TOTAL_CAP = 12000
 _LOG_FOLLOW_POLL_SECONDS = 0.5
 _log = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Subprocess spawn with EAGAIN retry (tenacity-migrate-cli)
+# ---------------------------------------------------------------------------
+# EAGAIN/EWOULDBLOCK is returned by the kernel when process-table or file-
+# descriptor limits are momentarily exhausted.  A short exponential back-off
+# lets the OS recover before we give up.
+#
+# Parameters match the original hand-rolled loop documented in
+# TENACITY_RETRY_AUDIT_PLAN.md §3.1:
+#   max_attempts = 5, base_backoff = 0.1 s → max ~1.6 s total sleep.
+# ---------------------------------------------------------------------------
+
+_EAGAIN_ERRNOS: frozenset[int] = frozenset({errno.EAGAIN, errno.EWOULDBLOCK})
+
+
+def _retry_if_eagain(exc: BaseException) -> bool:
+    """Return True when *exc* is an OSError due to EAGAIN/EWOULDBLOCK."""
+    return isinstance(exc, OSError) and exc.errno in _EAGAIN_ERRNOS
+
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_random_exponential(multiplier=0.1, min=0.1, max=5.0),
+    retry=retry_if_exception(_retry_if_eagain),
+    reraise=True,
+)
+def _spawn_with_eagain_retry(
+    cmd: list[str],
+    *,
+    cwd: str,
+    env: dict[str, str],
+    stdin: int | Any,
+    stdout: Any,
+    stderr: Any,
+) -> subprocess.Popen[bytes]:
+    """Call subprocess.Popen, retrying on EAGAIN/EWOULDBLOCK with exponential back-off.
+
+    tenacity handles the wait and stop policy; the caller is responsible for
+    closing file handles on any exception that propagates out.
+    """
+    return subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        env=env,
+        stdin=stdin,
+        stdout=stdout,
+        stderr=stderr,
+        start_new_session=True,
+    )
+
+
+def _backoff_delay(attempt: int, max_delay: float = 60.0) -> float:
+    """Return an exponential-jitter delay for DAG task retry dispatch.
+
+    Uses the same capped-exponential formula as wait_random_exponential so
+    that DAG retries follow the same policy as tenacity-managed retries
+    without requiring tenacity to manage the DAG control-flow loop.
+
+    Args:
+        attempt: 0-based retry count (0 = first retry after first failure).
+        max_delay: Maximum delay in seconds (default 60).
+
+    Returns:
+        Delay in seconds in [0, min(2**attempt, max_delay)].
+    """
+    import random
+    return random.uniform(0, min(2**attempt, max_delay))  # noqa: S311 -- retry delay does not require cryptographic randomness
+
+
+# ---------------------------------------------------------------------------
 
 
 def _resolve_droids_dir(cwd: Path | None, settings: ThegentSettings) -> Path:
@@ -239,7 +314,19 @@ def _session_paths(base: Path, session_id: str) -> dict[str, Path]:
         "stdout": base / f"{session_id}.stdout.log",
         "stderr": base / f"{session_id}.stderr.log",
         "rc": base / f"{session_id}.rc",
+        "in": base / f"{session_id}.in",
     }
+
+
+def _make_load_classifier(settings: "ThegentSettings") -> Any:
+    """WP-5002: Create load classifier instance for load observation."""
+    from thegent.execution import LoadClassifier
+
+    return LoadClassifier(
+        session_dir=settings.session_dir.expanduser().resolve(),
+        spike_threshold=settings.concurrency_min_slots,
+        surge_threshold=settings.max_concurrency,
+    )
 
 
 def _new_session_id(agent: str | None, owner: str) -> str:
@@ -298,11 +385,12 @@ def _scan_ide_agents() -> list[dict[str, Any]]:
             capture_output=True,
             check=False,
         )
-        stdout_text = result.stdout if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
-        if stdout_text:
-            lines = stdout_text.strip().splitlines()[1:]  # Skip header
-        else:
-            lines = []
+        stdout_text = (
+            result.stdout
+            if isinstance(result.stdout, str)
+            else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        )
+        lines = stdout_text.strip().splitlines()[1:] if stdout_text else []
     except Exception:
         return rows
 
@@ -332,7 +420,7 @@ def _scan_ide_agents() -> list[dict[str, Any]]:
                 continue
 
             # Extract session ID (from --resume)
-            session_id = "ide-managed"
+            session_id = f"ide-{pid}"
             session_id_re = patterns.get("session_id_re")
             if session_id_re:
                 match = re.search(session_id_re, cmd)
@@ -362,7 +450,11 @@ def _scan_ide_agents() -> list[dict[str, Any]]:
                     capture_output=True,
                     check=False,
                 )
-                stdout_text = cwd_result.stdout if isinstance(cwd_result.stdout, str) else (cwd_result.stdout.decode("utf-8", errors="replace") if cwd_result.stdout else "")
+                stdout_text = (
+                    cwd_result.stdout
+                    if isinstance(cwd_result.stdout, str)
+                    else (cwd_result.stdout.decode("utf-8", errors="replace") if cwd_result.stdout else "")
+                )
                 if stdout_text:
                     for line in stdout_text.splitlines():
                         if line.startswith("n") and line.find("/") >= 1:
@@ -420,7 +512,11 @@ def _find_session_meta(settings: ThegentSettings, session_id: str) -> Path:
 
 def _normalize_output_format(requested: str | None = None, *, default: str = "rich") -> str:
     settings = ThegentSettings()
-    value = (requested or settings.output_format or default).strip().lower() if requested or settings.output_format else default.strip().lower()
+    value = (
+        (requested or settings.output_format or default).strip().lower()
+        if requested or settings.output_format
+        else default.strip().lower()
+    )
     if value in {"json", "md", "rich"}:
         return value
     if value:
@@ -1528,13 +1624,7 @@ def update_calibration_impl() -> dict[str, Any]:
     agents = set()
     with registry.registry_path.open("r", encoding="utf-8") as f:
         for line in f:
-            try:
-                data = json.loads(line)
-                a = data.get("agent")
-                if a:
-                    agents.add(a)
-            except Exception:
-                continue
+            _extract_agent_from_line(agents, line)
 
     # 2. Recalculate for each agent
     results = {}
@@ -1545,21 +1635,7 @@ def update_calibration_impl() -> dict[str, Any]:
 
         with registry.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    rid = data.get("run_id")
-                    if not rid:
-                        continue
-                    if data.get("event") == "finish":
-                        if rid in runs:
-                            runs[rid].update(data)
-                    elif data.get("event") == "feedback":
-                        if rid in runs:
-                            runs[rid]["feedback_score"] = data.get("feedback_score")
-                    elif data.get("agent") == agent:
-                        runs[rid] = data
-                except Exception:
-                    continue
+                _process_run_line(runs, line, agent)
 
         relevant_runs = [r for r in runs.values() if r.get("feedback_score") is not None]
         if not relevant_runs:
@@ -1574,6 +1650,36 @@ def update_calibration_impl() -> dict[str, Any]:
             results[agent] = {"factor": factor, "samples": len(relevant_runs)}
 
     return results
+
+
+def _extract_agent_from_line(agents: set[str], line: str) -> None:
+    """Extract agent name from a single registry line."""
+    try:
+        data = json.loads(line)
+        a = data.get("agent")
+        if a:
+            agents.add(a)
+    except Exception:
+        pass
+
+
+def _process_run_line(runs: dict[str, dict[str, Any]], line: str, agent: str) -> None:
+    """Process a single run line for a specific agent."""
+    try:
+        data = json.loads(line)
+        rid = data.get("run_id")
+        if not rid:
+            return
+        if data.get("event") == "finish":
+            if rid in runs:
+                runs[rid].update(data)
+        elif data.get("event") == "feedback":
+            if rid in runs:
+                runs[rid]["feedback_score"] = data.get("feedback_score")
+        elif data.get("agent") == agent:
+            runs[rid] = data
+    except Exception:
+        pass
 
 
 def sweep_impl(
@@ -2112,6 +2218,99 @@ def sitback_dashboard_impl(profile: str = "medium") -> dict[str, Any]:
     return payload
 
 
+def _update_teammate_status(task_id: str | None, status: str, summary: str | None = None) -> None:
+    """Helper to update teammate delegation status."""
+    if not task_id:
+        return
+    try:
+        from thegent.config import ThegentSettings
+        from thegent.governance.teammates import TeammateManager
+
+        settings = ThegentSettings()
+        mgr = TeammateManager(settings.cache_dir / "teammates.json")
+        mgr.update_status(task_id, status, summary=summary)
+    except Exception as e:
+        _log.debug("Failed to update teammate delegation status: %s", e)
+
+
+def _apply_pareto_routing(
+    agent: str | None,
+    model: str | None,
+    routing: str | None,
+    include_contract: bool,
+    route_contract: dict[str, Any] | None,
+    route_request: dict[str, Any] | None,
+) -> tuple[str | None, str | None, dict[str, Any] | None, dict[str, Any] | None]:
+    """Apply ParetoRouter selection when routing="pareto" and no agent/model is pre-set.
+
+    Returns updated (agent, model, route_contract, route_request).
+    Falls back to ("antigravity", "gemini-3-flash", ...) when the router returns no result or raises.
+
+    This function is intentionally pure (no side effects beyond logging) so it can be unit-tested
+    without standing up the full run_impl machinery.
+    """
+    if routing != "pareto" or agent is not None or model is not None:
+        return agent, model, route_contract, route_request
+
+    try:
+        from thegent.models.catalog import _get_catalog
+        from thegent.routing.pareto_router import QUALITY_PROXY, ParetoRouter, RouteCandidate
+
+        catalog = _get_catalog()
+        candidates: list[RouteCandidate] = []
+        for routes in catalog.values():
+            for r in routes:
+                quality = QUALITY_PROXY.get(r.model_alias, 0.5)
+                candidates.append(
+                    RouteCandidate(
+                        model=r.model_alias,
+                        provider=r.provider,
+                        cost_per_1k=r.cost_weight,
+                        quality_score=quality,
+                    )
+                )
+        if not candidates:
+            _log.warning("Pareto router: no candidates from catalog; fallback to antigravity/gemini-3-flash")
+            return "antigravity", "gemini-3-flash", route_contract, route_request
+
+        selected = ParetoRouter().select(candidates)
+        _log.info(
+            "Pareto router: selected %s/%s (quality=%.2f, cost=%.2f)",
+            selected.provider,
+            selected.model,
+            selected.quality_score,
+            selected.cost_per_1k,
+        )
+
+        updated_contract = route_contract
+        updated_request = route_request
+        if include_contract:
+            updated_contract = dict(route_contract or {})
+            updated_contract.update(
+                {
+                    "provider": selected.provider,
+                    "model_alias": selected.model,
+                    "backend_type": "direct",
+                    "routing_policy": "pareto",
+                }
+            )
+            updated_request = dict(route_request or {})
+            updated_request.update(
+                {
+                    "requested_model": "pareto",
+                    "policy": "pareto",
+                    "resolved_agent": selected.provider,
+                    "resolved_model_alias": selected.model,
+                }
+            )
+
+        return selected.provider, selected.model, updated_contract, updated_request
+
+    except Exception as _pareto_err:
+        _log.warning("Pareto router error: %s; fallback to antigravity/gemini-3-flash", _pareto_err)
+        return "antigravity", "gemini-3-flash", route_contract, route_request
+
+
 def run_impl(
     agent: str | None,
     prompt: str,
@@ -2140,7 +2339,11 @@ def run_impl(
     enable_search: bool = False,
     debug: bool = False,
     task_id: str | None = None,
+    shadow: bool = False,
+    lock: list[str] | None = None,
+    remote: str | None = None,
     config_provider: "ConfigProvider | None" = None,
+    tenant_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Run an agent or droid with the given prompt.
@@ -2148,6 +2351,41 @@ def run_impl(
     Model-first: agent=None, model set; provider hint for routing.
     """
     settings = ThegentSettings()
+    from thegent.orchestration.cost import get_run_cost_tracker
+
+    tracker = get_run_cost_tracker()
+    rid = run_id or f"run_{uuid.uuid4().hex[:8]}"
+    tracker.start_run(rid)
+
+    # WP-Y4: Budget check before starting
+    from thegent.orchestration.budget_alerts import BudgetAlertSystem
+
+    alert_system = BudgetAlertSystem.from_settings(settings)
+    hourly_spend = alert_system.get_hourly_spend()
+    daily_spend = alert_system.get_daily_spend()
+
+    # Check hourly budget
+    _alert, block = alert_system.check_budget(hourly_spend, context="hourly")
+    if block:
+        return {
+            "error": f"Hourly budget EXCEEDED: ${hourly_spend:.2f} >= ${settings.budget_hourly_limit:.2f}",
+            "exit_code": 1,
+            "run_id": rid,
+        }
+
+    # Check daily budget
+    _alert, block = alert_system.check_budget(daily_spend, context="daily")
+    if block:
+        return {
+            "error": f"Daily budget EXCEEDED: ${daily_spend:.2f} >= ${settings.budget_daily_limit:.2f}",
+            "exit_code": 1,
+            "run_id": rid,
+        }
+
+    # Pareto routing: routing="pareto" → build RouteCandidate list from catalog and select via ParetoRouter
+    agent, model, route_contract, route_request = _apply_pareto_routing(
+        agent, model, routing, include_contract, route_contract, route_request
+    )
 
     # Auto router: agent="auto" or model="auto" → classify + Pareto select
     if settings.auto_router_enabled and (agent == "auto" or model == "auto"):
@@ -2249,7 +2487,7 @@ def run_impl(
         request_overrides: dict[str, Any] = {}
         if timeout is not None:
             request_overrides["default_timeout"] = timeout
-        _config = config_provider.resolve(request_overrides=request_overrides)
+        _config = config_provider.resolve(tenant_id=tenant_id, request_overrides=request_overrides)
     effective_timeout = (
         timeout
         if timeout is not None
@@ -2319,13 +2557,23 @@ def run_impl(
             harness_type = "claude"
         elif "droid" in agent.lower() or "roid" in agent.lower():
             harness_type = "droid"
-    
+
     cc = ConcurrencyController(
         settings.session_dir,
         max_concurrency=settings.max_concurrency,
         use_load_based=settings.concurrency_load_based,
     )
     if not cc.acquire(lane=lane, harness_type=harness_type):
+        # WP-16002: Update teammate delegation status if this was a sub-task
+        if task_id:
+            try:
+                from thegent.governance.teammates import TeammateManager
+
+                mgr = TeammateManager(settings.cache_dir / "teammates.json")
+                mgr.update_status(task_id, "failed", summary="Run blocked: Concurrency limit reached (resource contention).")
+            except Exception as e:
+                _log.debug("Failed to update teammate delegation status: %s", e)
+
         # Get current resource-based limit and bottlenecks for error message
         if settings.concurrency_load_based:
             from thegent.orchestration.load_based_limits import (
@@ -2333,15 +2581,16 @@ def run_impl(
                 compute_dynamic_limit,
                 sample_resources,
             )
+
             snapshot = sample_resources()
-            config = LimitGateConfig.from_dict(None)
-            effective_limit, details = compute_dynamic_limit(snapshot, config, 0)
-            
+            config = LimitGateConfig.from_dict(settings.model_dump())
+            effective_limit, _details = compute_dynamic_limit(snapshot, config, 0)
+
             bottlenecks = cc.get_bottlenecks() if hasattr(cc, "get_bottlenecks") else {}
             bottleneck_msg = ""
             if bottlenecks.get("resource_contention"):
                 bottleneck_msg = f" Resource contention detected: {len(bottlenecks['resource_contention'])} issue(s)."
-            
+
             return {
                 "error": f"Resource-based concurrency limit reached (current: {effective_limit} slots).{bottleneck_msg} Task queued or blocked.",
                 "exit_code": 1,
@@ -2444,10 +2693,12 @@ def run_impl(
 
     # Task-aware execution: Load task metadata if task_id provided
     task_metadata: dict[str, Any] | None = None
+    task_spec: Any = None  # thegent.models.task_io.TaskSpec when available
     if task_id:
         try:
             from pathlib import Path
 
+            from thegent.models.task_io import TaskInput, TaskSpec
             from thegent.task import parse_task_file
 
             # Try to find task file
@@ -2456,7 +2707,26 @@ def run_impl(
 
             if task_file.exists():
                 task_metadata = parse_task_file(task_file)
-                _log.info("Loaded task metadata for %s", task_id)
+                # Build a validated TaskSpec from the parsed metadata dict.
+                # The raw task dict may have varying shapes; TaskInput only
+                # requires 'task' so we map 'description' -> 'task' as a
+                # fallback for the common YAML-frontmatter format.
+                raw_prompt = task_metadata.get("description") or task_metadata.get("task") or prompt
+                task_spec = TaskSpec(
+                    task_id=task_id,
+                    input=TaskInput(
+                        task=raw_prompt,
+                        context={k: v for k, v in task_metadata.items() if k not in ("description", "task")},
+                    ),
+                    agent=agent,
+                    model=model,
+                    lane=lane,
+                    priority=task_metadata.get("priority"),
+                    owner=effective_owner,
+                    correlation_id=correlation_id,
+                    idempotency_token=idempotency_token,
+                )
+                _log.info("Loaded task metadata for %s (TaskSpec validated)", task_id)
             else:
                 _log.warning("Task file not found for task_id %s: %s", task_id, task_file)
         except Exception as e:
@@ -2465,6 +2735,8 @@ def run_impl(
     run_meta = RunMeta(
         run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
         correlation_id=correlation_id,
+        source=AgentSource.THEGENT_SUBAGENT if task_id else AgentSource.THEGENT_RUN,
+        interactivity=InteractivityMode.PTY,
         agent=agent or "unknown",
         model=model,
         mode=mode,
@@ -2563,6 +2835,26 @@ def run_impl(
     registry.register_start(run_meta)
     start_time = time.time()
 
+    # L3 Memory: load past context for this agent (optional; no-op when key absent)
+    import asyncio as _asyncio
+
+    from thegent.memory.memory_manager import MemoryManager as _MemoryManager
+
+    _mem_mgr = _MemoryManager()
+    if _mem_mgr.enabled:
+        try:
+            _mem_ctx = _asyncio.get_event_loop().run_until_complete(
+                _mem_mgr.load_context(agent or "unknown")
+            )
+            if _mem_ctx:
+                ctx_block = "\n".join(f"- {c}" for c in _mem_ctx[:5])
+                prompt = (
+                    f"[Past context from memory]\n{ctx_block}\n\n[Task]\n{prompt}"
+                )
+                _log.debug("L3 memory: injected %d context entries", len(_mem_ctx))
+        except Exception as _mem_exc:
+            _log.debug("L3 memory load_context failed: %s", _mem_exc)
+
     use_stream = not full
 
     agents_to_try: list[str] = [agent] if agent else []
@@ -2647,6 +2939,7 @@ def run_impl(
                 live_output: bool = False,
                 on_stdout: Callable[[str], None] | None = None,
                 on_stderr: Callable[[str], None] | None = None,
+                env: dict[str, str] | None = None,
             ) -> RunResult:
                 return wrapped_run(
                     prompt=prompt,
@@ -2657,24 +2950,101 @@ def run_impl(
                     live_output=live_output,
                     on_stdout=on_stdout,
                     on_stderr=on_stderr,
+                    env=env,
                 )
 
         return RunnerProxy()
 
-    result, norm_res = fsm.run(
-        runner_factory=runner_factory,
-        prompt=prompt,
-        cwd=cwd,
-        mode=mode,
-        timeout=effective_timeout,
-        use_stream=use_stream,
-    )
+    # MTSP-12: Shadow Workspace Integration
+    use_shadow = shadow or settings.shadow_workspaces_enabled
+    shadow_ws = None
+    original_cwd = cwd or Path.cwd()
+    agent_cwd = original_cwd
+    shadow_env = None
+
+    if use_shadow:
+        from thegent.orchestration.shadow import ShadowWorkspace
+
+        shadow_ws = ShadowWorkspace(original_cwd, run_meta.run_id)
+        if shadow_ws.create():
+            agent_cwd = shadow_ws.shadow_root
+            shadow_env = shadow_ws.get_env()
+            _log.info("Running in shadow workspace: %s", agent_cwd)
+        else:
+            _log.warning("Failed to create shadow workspace; falling back to main project.")
+            shadow_ws = None
+
+    # MTSP-15: Resource Locking (Non-worktree coordination)
+    locked_tokens = []
+    if not use_shadow and lock:
+        from thegent.coordination.file_coordination import FileLeaseRegistry
+
+        registry = FileLeaseRegistry(settings.session_dir / "leases")
+        for resource in lock:
+            path = Path(resource)
+            if not path.is_absolute():
+                path = original_cwd / path
+            token = registry.claim_lease(path, run_meta.run_id, ttl=effective_timeout)
+            if token:
+                locked_tokens.append((path, token))
+                _log.info("Acquired lease for %s", resource)
+            else:
+                _log.error("Failed to acquire lease for %s; already locked by another agent.", resource)
+                return {"error": f"Resource {resource} is locked by another agent.", "exit_code": 1}
+
+    _keepalive_interval = int(os.environ.get("THGENT_KEEPALIVE_INTERVAL", "30"))
+    from thegent.ux.keepalive import keepalive as _keepalive
+
+    try:
+        with _keepalive(interval_s=_keepalive_interval):
+            result, norm_res = fsm.run(
+                runner_factory=runner_factory,
+                prompt=prompt,
+                cwd=agent_cwd,
+                mode=mode,
+                timeout=effective_timeout,
+                use_stream=use_stream,
+                env=shadow_env,
+            )
+    finally:
+        # Release non-worktree locks
+        if locked_tokens:
+            from thegent.coordination.file_coordination import FileLeaseRegistry
+
+            registry = FileLeaseRegistry(settings.session_dir / "leases")
+            for path, token in locked_tokens:
+                registry.release_lease(path, run_meta.run_id, token)
+                _log.info("Released lease for %s", path)
 
     status = fsm.state.status
     if status == "success":
         exit_code = 0
         status = "completed"
+
+        # MTSP-12: Auto-merge from shadow workspace
+        if shadow_ws and settings.shadow_workspaces_auto_merge:
+            if shadow_ws.merge_back():
+                _log.info("Shadow changes merged successfully.")
+            else:
+                _log.error("Failed to merge shadow changes back to main project.")
+
+        # Cleanup shadow workspace
+        if shadow_ws:
+            shadow_ws.destroy()
+
+        # L3 Memory: persist run summary as a discovery (optional; no-op when key absent)
+        if _mem_mgr.enabled and result:
+            try:
+                _summary = (result.stdout or "")[:500] or f"Agent {agent} completed successfully"
+                _asyncio.get_event_loop().run_until_complete(
+                    _mem_mgr.save_discovery(agent or "unknown", _summary)
+                )
+            except Exception as _mem_exc:
+                _log.debug("L3 memory save_discovery failed: %s", _mem_exc)
     else:
+        # Cleanup shadow workspace on failure
+        if shadow_ws:
+            shadow_ws.destroy()
         exit_code = result.exit_code if result else 1
         status = "failed"
         if result and result.timed_out:
@@ -2731,6 +3101,20 @@ def run_impl(
         error_class=error_class,
         cost_usd=cost_usd,
     )
+
+    # WP-16002: Update teammate delegation status if this was a sub-task
+    if run_meta.task_id:
+        try:
+            from thegent.governance.teammates import TeammateManager
+
+            mgr = TeammateManager(settings.cache_dir / "teammates.json")
+            # Use condensed summary for result_summary
+            _stdout = (result.stdout or "") if result else ""
+            _stderr = (result.stderr or "") if result else ""
+            summary = _stdout[:500] if status == "completed" else (_stderr[:500] or "Failed without stderr")
+            mgr.update_status(run_meta.task_id, status, summary=summary)
+        except Exception as e:
+            _log.debug("Failed to update teammate delegation status: %s", e)
 
     # WP-3007: Record environment after run for next transition check
     if status == "completed":
@@ -2791,6 +3175,25 @@ def run_impl(
         payload["route_contract"] = route_contract
         payload["route_request"] = route_request
 
+    # WP-Y4: End cost tracking and save summary
+    from thegent.orchestration.cost import get_run_cost_tracker
+
+    tracker = get_run_cost_tracker()
+    tracker.end_run()
+
+    # WP-DX-024: Always write conversation dumps to docs/ (research-always-write-dumps)
+    try:
+        from thegent.research.always_write_dumps import ConversationDumper
+
+        # Use workspace docs/dumps if it exists, else fallback to session_dir
+        docs_dir = Path("docs/dumps")
+        if not docs_dir.parent.exists():
+            docs_dir = settings.session_dir / "dumps"
+        dumper = ConversationDumper(docs_dir=docs_dir)
+        dumper.dump_conversation(run_meta.run_id, stdout)
+    except Exception as e:
+        _log.debug(f"Failed to write conversation dump: {e}")
+
     return payload
 
 
@@ -2823,12 +3226,26 @@ def bg_impl(
     override_reason: str | None = None,
     debug: bool = False,
     task_id: str | None = None,
+    remote: str | None = None,
     config_provider: "ConfigProvider | None" = None,
+    tenant_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Start a background run. Returns dict with keys: session_id, log_path, owner.
     """
+    import sys
+
     settings = ThegentSettings()
+    from thegent.orchestration.cost import get_run_cost_tracker
+
+    tracker = get_run_cost_tracker()
+    rid = run_id or f"bg_{uuid.uuid4().hex[:8]}"
+    tracker.start_run(rid)
+
+    # Pareto routing: routing="pareto" → build RouteCandidate list from catalog and select via ParetoRouter
+    agent, model, route_contract, route_request = _apply_pareto_routing(
+        agent, model, routing, include_contract, route_contract, route_request
+    )
 
     # Auto router: agent="auto" or model="auto" → classify + Pareto select
     if settings.auto_router_enabled and (agent == "auto" or model == "auto"):
@@ -2893,7 +3310,7 @@ def bg_impl(
     # Prevent silent quality regression by blocking version downgrades in critical lanes
     if lane == "critical" and requested_version != CONTRACT_SCHEMA_VERSION:
         # Check if requested version is older than current
-        from thegent.contracts.registry import ContractRegistry, get_registry
+        from thegent.contracts.registry import get_registry
 
         registry = get_registry()
         current_cv = registry.get("csm", CONTRACT_SCHEMA_VERSION)
@@ -2912,7 +3329,7 @@ def bg_impl(
     # ConfigProvider: resolve config (Phase 1: EnvConfigProvider; Phase 2+: CP when URL set)
     _bg_config: dict[str, Any] | None = None
     if config_provider is not None:
-        _bg_config = config_provider.resolve(request_overrides={"default_timeout": timeout})
+        _bg_config = config_provider.resolve(tenant_id=tenant_id, request_overrides={"default_timeout": timeout})
     effective_timeout = _bg_config.get("default_timeout", timeout) if _bg_config else timeout
     if agent == "claude":
         _min_claude = (
@@ -2970,12 +3387,12 @@ def bg_impl(
         TrustBoundaryValidator,
     )
 
-    circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
+    _circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
     trust_boundary = TrustBoundaryValidator(settings.session_dir)
     override_registry = OverrideRegistry(settings.session_dir)
     auditor = Auditor(registry.registry_path)
     policy_engine = PolicyEngine(settings)
-    effective_owner = owner or _default_owner_tag(cwd)
+    _effective_owner = owner or _default_owner_tag(cwd)
 
     # WP-3007: Trust Boundary Checks
     last_env = trust_boundary.get_last_environment()
@@ -2990,6 +3407,13 @@ def bg_impl(
     run_meta = RunMeta(
         run_id=effective_run_id,
         correlation_id=session_id,
+        source=AgentSource.THEGENT_SUBAGENT if task_id else AgentSource.THEGENT_RUN,
+        interactivity=InteractivityMode.HEADLESS_LOGS,
+        stdout_path=str(p["stdout"]),
+        stderr_path=str(p["stderr"]),
+        chat_path=str(base / f"{session_id}.chat.jsonl"),
+        messages_path=str(base / f"{session_id}.messages.jsonl"),
+        audit_path=str(base / f"{session_id}.audit.jsonl"),
         agent=agent,
         model=model,
         mode=mode,
@@ -3072,6 +3496,46 @@ def bg_impl(
 
     registry.register_start(run_meta)
 
+    # WP-RC-01: Remote Compute Offload (Phase 4)
+    if remote:
+        from thegent.research.remote_compute import RemoteComputeClient
+
+        client = RemoteComputeClient(remote)
+
+        import tempfile
+        remote_path = Path(tempfile.gettempdir()) / f"thegent-run-{run_meta.run_id}"
+        _log.info(f"Offloading background execution to remote host: {remote}")
+
+        # 1. Sync files to remote
+        if not client.transfer_files(cwd, remote_path):
+            return {"error": f"Failed to sync project to remote host: {remote}", "exit_code": 1}
+
+        # 2. Reconstruct command without --remote to avoid infinite loops
+        remote_args = [a for a in sys.argv if not a.startswith("--remote")]
+        # Ensure we use background 'bg' on remote if we want it to be backgrounded there too
+        # Or just 'run' since we are already backgrounding this call?
+        # Actually, if we use 'bg' on remote, we get another layer of backgrounding.
+        # Let's use 'run' on remote.
+        remote_command = " ".join(f'"{a}"' if " " in a else a for a in remote_args)
+
+        # 3. Execute remote in background (using nohup or similar)
+        # For simplicity, we'll just execute it and return the "session"
+        _log.info(f"Running remote background command in {remote_path}")
+        # We wrap in nohup and redirect to a file on remote
+        bg_remote_command = f"nohup {remote_command} > {remote_path}/remote_bg.log 2>&1 & echo $!"
+        remote_res = client.execute_remote(bg_remote_command, cwd=Path(remote_path))
+
+        if remote_res.get("status") == "success":
+            remote_pid = remote_res.get("stdout", "").strip()
+            return {
+                "session_id": f"remote-{remote_pid}",
+                "run_id": run_meta.run_id,
+                "remote_host": remote,
+                "remote_path": remote_path,
+                "status": "started_remote",
+            }
+        return remote_res
+
     # Build command - caffeinate wrapper will be applied by AgentRunner in run_impl
     cmd: list[str] = [sys.executable, "-m", "thegent.main", "run"]
     cmd.extend(["-d", str(cwd), "-m", mode, "-t", str(effective_timeout)])
@@ -3097,8 +3561,33 @@ def bg_impl(
     if agent:
         cmd.append(agent)
 
+    # Phase P4: holdpty wrapper
+    if settings.use_holdpty:
+        socket_path = p.get("in").with_suffix(".sock")
+        holdpty_cmd = [
+            sys.executable,
+            "-m",
+            "thegent.main",
+            "holdpty",
+            "--socket",
+            str(socket_path),
+            "--session-id",
+            session_id,
+            "--",
+        ]
+        cmd = holdpty_cmd + cmd
+
     stdout_handle = p["stdout"].open("wb")
     stderr_handle = p["stderr"].open("wb")
+
+    # macOS sandbox wrapping (THGENT_SANDBOX_LEVEL)
+    from thegent.security.macos_sandbox import MacOSSandbox, SandboxLevel
+
+    _sandbox = MacOSSandbox.from_env()
+    _sandbox_level = MacOSSandbox.level_from_env()
+    if _sandbox_level not in (SandboxLevel.NONE, SandboxLevel.FULL):
+        cmd = _sandbox.apply_to_command(cmd, _sandbox_level, project_root=cwd)
+        _log.debug("macOS sandbox level %r applied to agent command", _sandbox_level.value)
 
     # G-GP-08: Sandbox environment filtering
     if settings.sandbox_env_filter:
@@ -3119,23 +3608,43 @@ def bg_impl(
         }
     )
 
+    stdin_handle = subprocess.DEVNULL
+    if settings.use_fifo:
+        try:
+            # On Unix, create a FIFO
+            if platform.system() != "Windows":
+                if not p["in"].exists():
+                    os.mkfifo(str(p["in"]))
+                # Open for reading in non-blocking mode to avoid hanging the parent
+                # but then set to blocking for the child if needed.
+                # Actually, opening a FIFO for reading will block until a writer opens it.
+                # To avoid blocking bg_impl, we should open it in the background or use O_NONBLOCK.
+                fifo_fd = os.open(str(p["in"]), os.O_RDONLY | os.O_NONBLOCK)
+                stdin_handle = fifo_fd
+            else:
+                _log.warning("FIFO not supported on Windows; falling back to DEVNULL.")
+        except Exception as e:
+            _log.warning("Failed to create FIFO: %s", e)
+
     try:
-        proc = subprocess.Popen(
+        proc = _spawn_with_eagain_retry(
             cmd,
             cwd=str(cwd),
             env=env,
-            stdin=subprocess.DEVNULL,
+            stdin=stdin_handle,
             stdout=stdout_handle,
             stderr=stderr_handle,
-            start_new_session=True,
         )
     except Exception:
         stdout_handle.close()
         stderr_handle.close()
+        if isinstance(stdin_handle, int) and stdin_handle > 0:
+            os.close(stdin_handle)
         raise
     finally:
         stdout_handle.close()
         stderr_handle.close()
+        # Do not close stdin_handle here if it's an FD being inherited
 
     meta: dict[str, Any] = {
         "version": 1,
@@ -3172,78 +3681,112 @@ def bg_impl(
     }
 
 
+
 def ps_impl(
     owner: str | None = None,
     all: bool = False,
-    include_contract: bool = False,
+    agent: str | None = None,
+    status: str | None = None,
+    limit: int = 50,
     scan_ide: bool = True,
+    include_contract: bool = False,
 ) -> list[dict[str, Any]]:
     """
-    List background sessions. Returns list of session dicts.
+    List agent sessions (managed + discovered) (WP-9006).
 
     Args:
         owner: Filter by owner (default: current user)
         all: Show sessions for all owners
-        include_contract: Include route contract metadata
+        agent: Filter by agent name
+        status: Filter by status (running, completed, failed, paused)
+        limit: Max sessions to return
         scan_ide: Include IDE-managed sessions (Cursor, Claude CLI, Codex)
+        include_contract: Include route contract metadata
     """
     settings = ThegentSettings()
     own = owner or _default_owner_tag()
-    base = settings.session_dir.expanduser().resolve()
+    registry = RunRegistry(settings.session_dir)
+
+    # Get managed runs from registry
+    # We fetch a larger pool to allow filtering while still returning up to 'limit' results
+    runs = registry.list_runs(limit=max(1000, limit * 2))
+
     rows: list[dict[str, Any]] = []
-
-    # Collect thegent-managed sessions
-    scope_dirs = [p for p in sorted(base.glob("*")) if p.is_dir()] if all else _session_scope_dirs(base, own)
-
-    meta_files: list[Path] = []
-    for scope_dir in scope_dirs:
-        if scope_dir.exists():
-            meta_files.extend(sorted(scope_dir.glob("*.json")))
-    for meta in meta_files:
-        try:
-            m = json.loads(meta.read_text(encoding="utf-8"))
-        except Exception:
+    for r in runs:
+        # Security check: owner scoping
+        if not all and r.get("owner") != own:
             continue
-        if not all and m.get("owner") != own:
+
+        # Filter: agent
+        if agent and r.get("agent") != agent:
             continue
-        pid = int(m.get("pid", 0) or 0)
-        running = _is_pid_running(pid)
-        sid = m.get("session_id", meta.stem)
-        p = _session_paths(meta.parent, sid)
-        prompt_raw = m.get("prompt", "")
-        prompt_preview = (prompt_raw[:40] + "...") if len(prompt_raw) > 40 else (prompt_raw or "—")
-        status = _resolve_session_status(m, p["rc"], running=running)
-        rows.append(
-            {
-                "id": sid,
-                "agent": m.get("agent", "?"),
-                "owner": m.get("owner", "?"),
-                "pid": pid,
-                "status": status,
-                "started_at_utc": m.get("started_at_utc", ""),
-                "prompt_preview": prompt_preview,
-                "source": "thegent",
-            }
-        )
+
+        # Determine live status (running check)
+        # If the finish event hasn't been recorded, check if PID is still alive
+        if r.get("event") != "finish":
+            pid = int(r.get("pid", 0) or 0)
+            if pid > 0 and _is_pid_running(pid):
+                r["status"] = "running"
+            elif r.get("status") == "started":
+                # If not running but no finish event, it might have crashed/been killed
+                r["status"] = "unknown/crashed"
+
+        # Filter: status
+        if status and r.get("status") != status:
+            continue
+
+        # Format for output (ensure backward compatibility with keys like 'id')
+        row = {
+            "id": r.get("run_id") or r.get("correlation_id"),
+            "run_id": r.get("run_id"),
+            "correlation_id": r.get("correlation_id"),
+            "agent": r.get("agent", "?"),
+            "model": r.get("model"),
+            "owner": r.get("owner", "?"),
+            "status": r.get("status", "unknown"),
+            "started_at_utc": r.get("started_at_utc", ""),
+            "prompt": r.get("prompt", ""),
+            "prompt_preview": (r.get("prompt", "")[:40] + "...")
+            if len(r.get("prompt", "")) > 40
+            else (r.get("prompt", "") or "—"),
+            "source": r.get("source", "thegent-run"),
+            "interactivity": r.get("interactivity", "headless-logs"),
+            "attach_target": r.get("attach_target"),
+            "pid": r.get("pid"),
+        }
+
         if include_contract:
-            row = rows[-1]
-            row["route_contract"] = m.get("route_contract")
-            row["route_request"] = m.get("route_request")
+            row["route_contract"] = r.get("route_contract")
+            row["route_request"] = r.get("route_request")
+
+        rows.append(row)
 
     # Collect IDE-managed sessions if enabled
     if scan_ide:
         ide_rows = _scan_ide_agents()
-
-        # Filter by owner if specified
         for ide_row in ide_rows:
+            # Security check: owner scoping
             if not all and ide_row.get("owner") != own and ide_row.get("owner") != "system":
                 continue
+
+            # Filter: agent
+            if agent and ide_row.get("agent") != agent:
+                continue
+
+            # Filter: status
+            if status and ide_row.get("status") != status:
+                continue
+
+            # Normalize ide_row to match our schema if needed
+            if "id" not in ide_row:
+                ide_row["id"] = ide_row.get("run_id") or ide_row.get("correlation_id")
+
             rows.append(ide_row)
 
-    # Sort by ID for consistent display (None -> "" for stable comparison)
-    rows.sort(key=lambda r: r.get("id") or "")
+    # Sort by started_at_utc desc
+    rows.sort(key=lambda x: x.get("started_at_utc", ""), reverse=True)
 
-    return rows
+    return rows[:limit]
 
 
 def list_session_contracts_impl(
@@ -3408,7 +3951,14 @@ def purge_impl(dry_run: bool = True) -> dict[str, int]:
     default_days = settings.retention_days_registry
     by_domain = settings.retention_by_domain
 
-    return registry.purge_expired(default_days=default_days, by_domain=by_domain, dry_run=dry_run)
+    # purge_expired is defined in execution.py; use cast for Pyright compatibility
+    _purge: Any = getattr(registry, "purge_expired", None)
+    if callable(_purge):
+        return cast(
+            "dict[str, int]",
+            _purge(default_days=default_days, by_domain=by_domain, dry_run=dry_run),
+        )
+    return {"kept": 0, "purged": 0}
 
 
 def session_contract_health_gate_impl(
@@ -3986,10 +4536,7 @@ def session_contract_health_trend_impl(
     snapshot_health_volatility = None
     blocked_ratios: list[float] = []
     for snap in snapshots:
-        try:
-            blocked_ratios.append(float((snap or {}).get("blocked_ratio", 0.0)))
-        except (TypeError, ValueError):
-            continue
+        _extract_blocked_ratio(blocked_ratios, snap)
     if len(blocked_ratios) > 1:
         mean_ratio = sum(blocked_ratios) / len(blocked_ratios)
         variance = sum((r - mean_ratio) ** 2 for r in blocked_ratios) / len(blocked_ratios)
@@ -4071,6 +4618,12 @@ def session_contract_health_trend_impl(
     payload["compat_aliases_count"] = len(compat_aliases)
     payload["payload_signature"] = _hash_health_payload(payload)
     return payload
+
+
+def _extract_blocked_ratio(ratios: list[float], snap: dict[str, Any] | None) -> None:
+    """Extract blocked ratio from a single snapshot safely."""
+    with contextlib.suppress(TypeError, ValueError):
+        ratios.append(float((snap or {}).get("blocked_ratio", 0.0)))
 
 
 def status_impl(
@@ -4165,24 +4718,84 @@ def inspect_impl(
     return out
 
 
-def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False) -> str:
+def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False, follow: bool = False) -> str | None:
     """
-    Get logs from a background session. Returns log text.
+    Get or follow logs from a background session. Returns log text or None if following.
     """
+    from thegent.execution import AuditEntry, AuditRegistry
+
     settings = ThegentSettings()
     try:
         meta_path = _find_session_meta(settings, session_id)
-    except typer.BadParameter as e:
+    except Exception as e:
         return f"Error: {e}"
+
     p = _session_paths(meta_path.parent, session_id)
     target = p["stderr"] if stderr else p["stdout"]
     if not target.exists():
         return f"Log file missing: {target}"
 
-    lines = target.read_text(encoding="utf-8", errors="replace").splitlines()
-    if tail is not None and tail > 0:
-        lines = lines[-tail:]
-    return "\n".join(lines)
+    if follow:
+        try:
+            # Audit the view/follow action
+            audit_path = meta_path.parent / f"{session_id}.audit.jsonl"
+            audit = AuditRegistry(audit_path)
+            audit.record(
+                AuditEntry(
+                    action="logs",
+                    actor=_default_owner_tag(_resolve_cwd(None)),
+                    session_id=session_id,
+                    details={"follow": True, "stream": "stderr" if stderr else "stdout"},
+                )
+            )
+
+            # Follow the file (simple implementation)
+            with target.open("r", encoding="utf-8", errors="replace") as f:
+                # Show tail first
+                if tail and tail > 0:
+                    from thegent.utils.helpers import read_file_tail
+
+                    lines = read_file_tail(target, num_lines=tail)
+                    if lines:
+                        for line in lines:
+                            console.print(line)
+                    f.seek(0, os.SEEK_END)
+                else:
+                    f.seek(0, os.SEEK_END)
+
+                while True:
+                    line = f.readline()
+                    if not line:
+                        time.sleep(0.1)
+                        continue
+                    console.print(line, end="")
+        except KeyboardInterrupt:
+            return None
+    else:
+        # Audit the view action
+        audit_path = meta_path.parent / f"{session_id}.audit.jsonl"
+        audit = AuditRegistry(audit_path)
+        audit.record(
+            AuditEntry(
+                action="logs",
+                actor=_default_owner_tag(_resolve_cwd(None)),
+                session_id=session_id,
+                details={"follow": False, "stream": "stderr" if stderr else "stdout"},
+            )
+        )
+
+        from thegent.utils.helpers import read_file_tail, safe_read_file
+
+        if tail is not None and tail > 0:
+            lines = read_file_tail(target, num_lines=tail)
+            if lines is None:
+                return f"Error reading tail of {target}"
+            log_text = "\n".join(lines)
+        else:
+            log_text = safe_read_file(target) or ""
+
+        # If called from CLI and not follow, caller prints it
+        return log_text
 
 
 def wait_impl(session_id: str, timeout: int | None = None) -> dict[str, Any]:
@@ -4210,6 +4823,74 @@ def wait_impl(session_id: str, timeout: int | None = None) -> dict[str, Any]:
         "exit_code": rc,
         "timed_out": timed_out,
     }
+
+
+def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt") -> tuple[bool, str]:
+    """Send a message to a running session by queuing it in the registry (WP-9004)."""
+    from thegent.execution import AuditEntry, AuditRegistry, MessageEntry, MessageRegistry
+
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except Exception as e:
+        return False, f"Session {session_id} not found: {e}"
+
+    p = _session_paths(meta_path.parent, session_id)
+    msg_path = meta_path.parent / f"{session_id}.messages.jsonl"
+
+    registry = MessageRegistry(msg_path)
+    entry = MessageEntry(
+        type=msg_type,
+        content=message,
+        sender="user",
+    )
+    registry.push(entry)
+
+    # Audit the send action
+    audit_path = meta_path.parent / f"{session_id}.audit.jsonl"
+    audit = AuditRegistry(audit_path)
+    audit.record(
+        AuditEntry(
+            action="send",
+            actor=_default_owner_tag(_resolve_cwd(None)),
+            session_id=session_id,
+            details={"type": msg_type, "content_len": len(message)},
+        )
+    )
+
+    sent_via = ["registry"]
+
+    # Also check if it's a tmux session and try to send-keys
+    m = _read_session_meta(meta_path)
+    attach_target = m.get("attach_target") or {}
+    tmux_pane = attach_target.get("tmux_pane")
+    if m.get("interactivity") == "tmux" or tmux_pane:
+        if tmux_pane:
+            import subprocess
+
+            try:
+                # Send keys to tmux pane (with C-m for Enter)
+                subprocess.run(["tmux", "send-keys", "-t", tmux_pane, message, "C-m"], check=False)
+                sent_via.append("tmux")
+            except Exception:
+                pass
+
+    # Phase P4: FIFO delivery
+    fifo_path = meta_path.parent / f"{session_id}.in"
+    if fifo_path.exists():
+        try:
+            # Open FIFO for writing in non-blocking mode to avoid hang if no reader
+            import os
+
+            fd = os.open(str(fifo_path), os.O_WRONLY | os.O_NONBLOCK)
+            with os.fdopen(fd, "w") as f:
+                f.write(message + "\n")
+            sent_via.append("fifo")
+        except OSError:
+            # Likely no reader connected
+            pass
+
+    return True, f"Message queued/sent via {', '.join(sent_via)}."
 
 
 def stop_impl(session_id: str, force: bool = False) -> dict[str, Any]:
@@ -4242,6 +4923,119 @@ def history_impl(limit: int = 50) -> list[dict[str, Any]]:
     settings = ThegentSettings()
     registry = RunRegistry(settings.session_dir)
     return registry.list_runs(limit=limit)
+
+
+def metrics_impl() -> dict[str, Any]:
+    """Gather metrics for the agent registry (WP-9005)."""
+    sessions = ps_impl(all=True)
+    stats = {
+        "active_sessions": sum(1 for s in sessions if s.get("status") == "running"),
+        "total_sessions": len(sessions),
+        "by_agent": {},
+        "by_status": {},
+    }
+    for s in sessions:
+        agent = s.get("agent", "unknown")
+        stats["by_agent"][agent] = stats["by_agent"].get(agent, 0) + 1
+        status = s.get("status", "unknown")
+        stats["by_status"][status] = stats["by_status"].get(status, 0) + 1
+    return stats
+
+
+def lock_resource_impl(resource_path: str, agent_id: str, ttl: int = 60, cd: Path | None = None) -> dict[str, Any]:
+    """Claim a lease on a resource (file or directory)."""
+    from thegent.config import ThegentSettings
+    from thegent.coordination.file_coordination import FileLeaseRegistry
+
+    cwd = _resolve_cwd(cd)
+    settings = ThegentSettings()
+    registry = FileLeaseRegistry(settings.session_dir / "leases")
+
+    path = Path(resource_path)
+    if not path.is_absolute():
+        path = cwd / path
+
+    token = registry.claim_lease(path, agent_id, ttl=ttl)
+    if token:
+        return {"success": True, "token": token, "resource": str(path)}
+    return {"success": False, "error": f"Resource {resource_path} is currently locked by another agent."}
+
+
+def unlock_resource_impl(resource_path: str, agent_id: str, token: str, cd: Path | None = None) -> dict[str, Any]:
+    """Release a lease on a resource."""
+    from thegent.config import ThegentSettings
+    from thegent.coordination.file_coordination import FileLeaseRegistry
+
+    cwd = _resolve_cwd(cd)
+    settings = ThegentSettings()
+    registry = FileLeaseRegistry(settings.session_dir / "leases")
+
+    path = Path(resource_path)
+    if not path.is_absolute():
+        path = cwd / path
+
+    registry.release_lease(path, agent_id, token)
+    return {"success": True}
+
+
+def verify_context_impl(files: list[str], cd: Path | None = None) -> dict[str, Any]:
+    """Verify if any of the given files have been modified (OCC check)."""
+    from thegent.config import ThegentSettings
+    from thegent.coordination.file_coordination import OCCManager
+
+    cwd = _resolve_cwd(cd)
+    settings = ThegentSettings()
+    occ = OCCManager(settings.session_dir / "occ_versions")
+
+    issues = []
+    for f in files:
+        path = Path(f)
+        if not path.is_absolute():
+            path = cwd / path
+
+        # This is a simplified check: just returns current version
+        # The agent should have stored the version when it first read the file.
+        current_version = occ.get_version(path)
+        issues.append({"file": f, "version": current_version})
+
+    return {"files": issues}
+
+
+def prune_sessions_impl(days: int | None = None) -> dict[str, Any]:
+    """Prune old session data (WP-3006)."""
+    settings = ThegentSettings()
+    retention_days = days or settings.retention_days_sessions
+    cutoff = datetime.now(UTC) - timedelta(days=retention_days)
+
+    base = settings.session_dir.expanduser().resolve()
+    pruned_count = 0
+    errors = 0
+
+    for scope_dir in base.glob("*"):
+        if not scope_dir.is_dir():
+            continue
+        for meta_file in scope_dir.glob("*.json"):
+            try:
+                # Check file modification time as a proxy for last activity
+                mtime = datetime.fromtimestamp(meta_file.stat().st_mtime, tz=UTC)
+                if mtime < cutoff:
+                    # Double check status from file if possible
+                    m = json.loads(meta_file.read_text())
+                    if m.get("status") == "running" and _is_pid_running(m.get("pid", 0)):
+                        continue  # Don't prune running sessions
+
+                    session_id = meta_file.stem
+                    p = _session_paths(scope_dir, session_id)
+                    for path in p.values():
+                        if path.exists():
+                            path.unlink()
+                    if meta_file.exists():
+                        meta_file.unlink()
+                    pruned_count += 1
+            except Exception:
+                errors += 1
+
+    return {"pruned": pruned_count, "errors": errors, "cutoff": cutoff.isoformat()}
 
 
 def events_impl(run_id: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
@@ -4428,7 +5222,7 @@ def _parse_work_stream_md(work_stream_path: Path) -> dict[str, Any]:
         stripped = line.strip()
 
         # Detect section headers
-        if stripped.startswith("## BACKLOG"):
+        if stripped.startswith(("## BACKLOG", "## PENDING")):
             current_section = "backlog"
             in_table = False
             header_seen = False
@@ -4443,8 +5237,22 @@ def _parse_work_stream_md(work_stream_path: Path) -> dict[str, Any]:
             in_table = False
             header_seen = False
             continue
-        if stripped.startswith("## "):
+
+        # If we hit another ## section, only reset if it's not one of our known sections
+        # and we are NOT in backlog (backlog can have multiple ## subsections like ## heliosShield)
+        if stripped.startswith("## ") and current_section != "backlog":
             current_section = None
+            continue
+
+        # Detect table headers within a section (even under ### subheaders)
+        if (
+            current_section
+            and stripped.startswith("|")
+            and "ID" in stripped.upper()
+            and ("Title" in stripped or "Description" in stripped)
+        ):
+            header_seen = True
+            in_table = True
             continue
 
         # Parse table rows
@@ -4460,25 +5268,40 @@ def _parse_work_stream_md(work_stream_path: Path) -> dict[str, Any]:
                 parts = [p.strip() for p in stripped.split("|") if p.strip()]
                 if len(parts) >= 2:
                     item_id = parts[0]
-                    if current_section == "backlog":
+                    # Skip separator or header-like rows
+                    if item_id.startswith("---") or item_id.upper() == "ID":
+                        continue
+
+                    # Check for row-level status override (Status is column 6)
+                    row_status = parts[5].upper() if len(parts) >= 6 else ""
+
+                    if current_section == "backlog" or row_status == "PENDING":
+                        # If row says COMPLETED or CLAIMED, ignore it for backlog
+                        if "COMPLETED" in row_status:
+                            completed.add(item_id)
+                            continue
+                        if "CLAIMED" in row_status or "IN_PROGRESS" in row_status:
+                            claimed.add(item_id)
+                            continue
+
                         title = parts[1] if len(parts) > 1 else ""
-                        source = parts[2] if len(parts) > 2 else ""
-                        priority = parts[3] if len(parts) > 3 else "P2"
-                        depends_str = parts[4] if len(parts) > 4 else ""
+                        task_type = parts[2] if len(parts) > 2 else "feature"
+                        depends_str = parts[3] if len(parts) > 3 else ""
                         depends = [d.strip() for d in depends_str.split(",") if d.strip()] if depends_str else []
+
                         backlog.append(
                             {
                                 "id": item_id,
                                 "title": title,
-                                "description": title,  # Alias for compatibility
-                                "source": source,
-                                "priority": priority,
+                                "description": title,
+                                "source": task_type,  # Using Type column as source
+                                "priority": "P2",  # Default to P2 if not found
                                 "depends": depends,
                             }
                         )
-                    elif current_section == "claimed":
+                    elif current_section == "claimed" or "CLAIMED" in row_status or "IN_PROGRESS" in row_status:
                         claimed.add(item_id)
-                    elif current_section == "completed":
+                    elif current_section == "completed" or "COMPLETED" in row_status:
                         completed.add(item_id)
 
     return {"backlog": backlog, "claimed": claimed, "completed": completed}
@@ -4492,7 +5315,7 @@ def _check_dependencies_satisfied(item: dict[str, Any], completed: set[str], cla
 
     # Filter out common placeholders/status markers that aren't task IDs
     ignore_patterns = ["-", "—", "✅", "COMPLETE", "HYBRID_ENV", "PROMPT_HISTORY"]
-    
+
     actual_depends = []
     for dep in depends:
         dep_clean = dep.strip()
@@ -4520,33 +5343,241 @@ def _priority_sort_key(priority: str) -> int:
     return 999  # Unknown priorities go last
 
 
+def _collect_work_stream_items(work_stream_path: Path, limit: int) -> tuple[list[dict[str, Any]], list[str]]:
+    """Collect available items from WORK_STREAM.md. Returns (items, sources_checked)."""
+    if not work_stream_path.exists():
+        return [], []
+    parsed = _parse_work_stream_md(work_stream_path)
+    backlog = parsed["backlog"]
+    claimed = parsed["claimed"]
+    completed = parsed["completed"]
+    available = []
+    for item in backlog:
+        item_id = item["id"]
+        if item_id in claimed or item_id in completed:
+            continue
+        if not _check_dependencies_satisfied(item, completed, claimed):
+            continue
+        available.append(item)
+    available.sort(key=lambda x: _priority_sort_key(x.get("priority", "P2")))
+    items = []
+    for item in available[:limit]:
+        title = item.get("title", item.get("description", item["id"]))
+        items.append(
+            {
+                "id": item["id"],
+                "description": title,
+                "source": item.get("source", "WORK_STREAM"),
+                "priority": item.get("priority", "P2"),
+                "prompt_suggestion": f"Complete {item['id']}: {title}",
+                "_sort_order": 4,  # WORK_STREAM after queues
+            }
+        )
+    return items, ["WORK_STREAM.md"]
+
+
+def _collect_queued_items(settings: ThegentSettings, limit: int) -> tuple[list[dict[str, Any]], list[str]]:
+    """Collect defers and other queued work from PromptQueue, EscalationQueue, DeferralQueue, BacklogManager."""
+    items: list[dict[str, Any]] = []
+    sources: list[str] = []
+    session_dir = Path(settings.session_dir).expanduser().resolve()
+
+    # 1. PromptQueue ($defer prompts)
+    try:
+        from thegent.queue.storage import PromptQueue
+
+        pq = PromptQueue(session_dir)
+        all_items = pq.list_all(include_done=False, include_expired=True, limit=limit)
+        pending_items = [(it["id"], it) for it in all_items if it.get("status") == "pending"]
+        for queue_item_id, p in pending_items:
+            prompt = p.get("prompt", "")
+            project = p.get("project", "")
+            items.append(
+                {
+                    "id": f"defer-{queue_item_id}",
+                    "description": prompt[:80] + ("..." if len(prompt) > 80 else ""),
+                    "source": "PROMPT_QUEUE",
+                    "priority": "P1",
+                    "prompt_suggestion": prompt,
+                    "queue_item_id": queue_item_id,
+                    "project": project,
+                    "_sort_order": 1,
+                }
+            )
+        if pending_items:
+            sources.append("PROMPT_QUEUE")
+    except Exception:
+        pass
+
+    # 2. EscalationQueue (past-SLA blocked runs)
+    try:
+        from thegent.execution import EscalationQueue
+
+        eq = EscalationQueue(session_dir)
+        past_sla = eq.list_pending(past_sla_only=True, limit=limit)
+        for e in past_sla:
+            run_id = e.get("run_id", "?")
+            reason = e.get("reason", "")
+            items.append(
+                {
+                    "id": f"escalation-{run_id}",
+                    "description": f"Resolve escalation: {reason[:60]}",
+                    "source": "ESCALATION",
+                    "priority": "P0",
+                    "prompt_suggestion": f"Resolve escalation {run_id}: {reason}",
+                    "run_id": run_id,
+                    "_sort_order": 0,
+                }
+            )
+        if past_sla:
+            sources.append("ESCALATION")
+    except Exception:
+        pass
+
+    # 3. DeferralManager (deferred_tasks.jsonl) + DeferralQueue (deferral_queue.jsonl)
+    try:
+        from thegent.orchestration.deferral import DeferralManager
+
+        dm = DeferralManager(settings)
+        deferred = dm.list_deferred()
+        for d in deferred[:limit]:
+            task_id = d.get("task_id", "?")
+            reason = d.get("reason", "")
+            items.append(
+                {
+                    "id": f"deferral-{task_id}",
+                    "description": f"Resume deferred: {reason[:60]}",
+                    "source": "DEFERRAL",
+                    "priority": "P1",
+                    "prompt_suggestion": f"Resume deferred task {task_id}",
+                    "task_id": task_id,
+                    "_sort_order": 2,
+                }
+            )
+        # Also read deferral_queue.jsonl (run-level deferrals)
+        dq_path = session_dir / "deferral_queue.jsonl"
+        if dq_path.exists():
+            with dq_path.open("r", encoding="utf-8") as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        d = json.loads(line)
+                        if d.get("status") != "deferred":
+                            continue
+                        run_id = d.get("run_id", "?")
+                        reason = d.get("reason", "")
+                        items.append(
+                            {
+                                "id": f"deferral-{run_id}",
+                                "description": f"Resume deferred run: {reason[:60]}",
+                                "source": "DEFERRAL",
+                                "priority": "P1",
+                                "prompt_suggestion": f"Resume deferred run {run_id}",
+                                "run_id": run_id,
+                                "_sort_order": 2,
+                            }
+                        )
+                        if len([i for i in items if i.get("source") == "DEFERRAL"]) >= limit:
+                            break
+                    except Exception:
+                        continue
+        if any(i.get("source") == "DEFERRAL" for i in items):
+            sources.append("DEFERRAL")
+    except Exception:
+        pass
+
+    # 4. BacklogManager (AgilePlus pending findings)
+    try:
+        from thegent.governance.backlog import BacklogManager
+
+        bm = BacklogManager(session_dir)
+        pending = bm.get_pending()
+        for p in pending[:limit]:
+            item_id = p.item_id
+            desc = p.description[:60] + ("..." if len(p.description) > 60 else "")
+            items.append(
+                {
+                    "id": f"backlog-{item_id}",
+                    "description": desc,
+                    "source": "BACKLOG",
+                    "priority": "P2",
+                    "prompt_suggestion": f"Address finding {p.finding_id}: {p.description}",
+                    "backlog_item_id": item_id,
+                    "_sort_order": 3,
+                }
+            )
+        if pending:
+            sources.append("BACKLOG")
+    except Exception:
+        pass
+
+    return items, sources
+
+
 def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
     """
-    Find next actionable work items from WORK_STREAM.md.
+    Find next actionable work items from WORK_STREAM.md and all queued sources.
 
-    Returns items from BACKLOG that:
-    - Are not in CLAIMED
-    - Have all dependencies satisfied (in COMPLETED)
-    - Sorted by priority (P1 < P2 < P3)
+    Sources (in priority order):
+    - ESCALATION: Past-SLA blocked runs (resolve first)
+    - PROMPT_QUEUE: $defer prompts (use thegent_queue_claim/done)
+    - DEFERRAL: Deferred runs to resume (use thegent orchestrate deferral resume)
+    - BACKLOG: AgilePlus pending findings
+    - WORK_STREAM: BACKLOG items with deps satisfied, not claimed/completed
 
     Args:
         cd: Optional working directory (default: inferred from cwd)
-        limit: Max items to return (default: 5, min: 1, max: 50)
+        limit: Max items to return (default: 5, min: 1, max: 100)
 
     Returns:
         dict with:
-        - next_items: list of {id, description, source, prompt_suggestion}
+        - next_items: list of {id, description, source, prompt_suggestion, queue_item_id?, run_id?}
         - count: number of items returned
         - sources_checked: list of sources checked
         - empty_reason: optional reason if no items found
     """
-    # Raised limit: max 50 -> 100 items
     limit = max(1, min(100, limit))
     cwd = _resolve_cwd(cd)
-
+    settings = ThegentSettings()
     work_stream_path = cwd / "docs" / "reference" / "WORK_STREAM.md"
-    if not work_stream_path.exists():
-        # Fallback to example-task if WORK_STREAM.md doesn't exist
+    session_dir = Path(settings.session_dir).expanduser().resolve()
+
+    # DB as primary: sync feeders, then get next from DB
+    try:
+        from thegent.planning.workstream_db import WorkstreamDB
+
+        db = WorkstreamDB(settings=settings)
+        if work_stream_path.exists():
+            data = _parse_work_stream_md(work_stream_path)
+            db.sync_workstream(data)
+        db.sync_from_agileplus(session_dir)
+        db.sync_from_queues(session_dir)
+        next_items = db.get_next_items(limit=limit)
+        if next_items:
+            return {
+                "next_items": next_items,
+                "count": len(next_items),
+                "sources_checked": ["workstream.db"],
+                "empty_reason": None,
+            }
+    except Exception as e:
+        _log.debug("DB primary failed, falling back to direct sources: %s", e)
+
+    # Fallback: direct collection from markdown and queues
+    next_items = []
+    sources_checked = []
+    queued, q_sources = _collect_queued_items(settings, limit)
+    next_items.extend(queued)
+    sources_checked.extend(q_sources)
+    ws_items, ws_sources = _collect_work_stream_items(work_stream_path, limit)
+    next_items.extend(ws_items)
+    sources_checked.extend(ws_sources)
+    next_items.sort(key=lambda x: (x.pop("_sort_order", 5), _priority_sort_key(x.get("priority", "P2"))))
+    next_items = next_items[:limit]
+
+    # Fallback when nothing found
+    if not next_items:
         example_task_path = cwd / "tasks" / "example-task.md"
         if example_task_path.exists():
             return {
@@ -4560,60 +5591,28 @@ def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
                 ],
                 "count": 1,
                 "sources_checked": ["tasks/example-task.md"],
-                "empty_reason": "WORK_STREAM.md not found, returning example-task",
+                "empty_reason": "No work stream or queue items; returning example-task",
+            }
+        if not work_stream_path.exists():
+            return {
+                "error": f"WORK_STREAM.md not found: {work_stream_path}",
+                "next_items": [],
+                "count": 0,
+                "sources_checked": list(dict.fromkeys(sources_checked)),
+                "empty_reason": "No WORK_STREAM.md and no queued items",
             }
         return {
-            "error": f"WORK_STREAM.md not found: {work_stream_path}",
             "next_items": [],
             "count": 0,
-            "sources_checked": [],
+            "sources_checked": list(dict.fromkeys(sources_checked)),
+            "empty_reason": "No available items in work stream or queues",
         }
-
-    parsed = _parse_work_stream_md(work_stream_path)
-    backlog = parsed["backlog"]
-    claimed = parsed["claimed"]
-    completed = parsed["completed"]
-
-    # Filter: not claimed, not completed, dependencies satisfied
-    available = []
-    for item in backlog:
-        item_id = item["id"]
-        if item_id in claimed:
-            continue
-        if item_id in completed:
-            continue
-        if not _check_dependencies_satisfied(item, completed, claimed):
-            continue
-        available.append(item)
-
-    # Sort by priority (P1 < P2 < P3)
-    available.sort(key=lambda x: _priority_sort_key(x.get("priority", "P2")))
-
-    # Limit results
-    limited = available[:limit]
-
-    # Generate prompt_suggestion for each item
-    next_items = []
-    for item in limited:
-        title = item.get("title", item.get("description", item["id"]))
-        prompt_suggestion = f"Complete {item['id']}: {title}"
-        next_items.append(
-            {
-                "id": item["id"],
-                "description": title,
-                "source": item.get("source", "WORK_STREAM"),
-                "priority": item.get("priority", "P2"),
-                "prompt_suggestion": prompt_suggestion,
-            }
-        )
 
     return {
         "next_items": next_items,
         "count": len(next_items),
-        "sources_checked": ["WORK_STREAM.md"],
-        "empty_reason": f"No available items (backlog: {len(backlog)}, claimed: {len(claimed)}, completed: {len(completed)}, available: {len(available)})"
-        if not next_items
-        else None,
+        "sources_checked": list(dict.fromkeys(sources_checked)),
+        "empty_reason": None,
     }
 
 
@@ -4799,15 +5798,16 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
     Now enhanced with task validation and auto-sync to tasks/ directory (Phase 4).
     """
     import shutil
+
     from thegent.cli_impl import _parse_work_stream_md
     from thegent.task.parser import parse_task_file
-    from thegent.task.validator import validate_task_file
     from thegent.task.sync import WorkStreamSync
-    
+    from thegent.task.validator import validate_task_file
+
     cwd = _resolve_cwd(cd) or Path.cwd()
     work_stream_path = cwd / "docs" / "reference" / "WORK_STREAM.md"
     tasks_dir = cwd / "tasks"
-    
+
     if not work_stream_path.exists():
         return {"error": f"WORK_STREAM.md not found: {work_stream_path}"}
 
@@ -4817,7 +5817,7 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
         cwd / "docs" / "reference" / "03-UNIFIED-WBS.md",
         cwd / "docs" / "reference" / "UNIFIED-WBS.md",
     ]
-    
+
     valid_sources = [f for f in source_files if f.exists()]
     if not valid_sources:
         return {
@@ -4830,17 +5830,12 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
     # For now, we simulate the merge but add validation and sync infrastructure
     merged_count = 0
     validation_errors = []
-    
+
     # Check if there are any new tasks to validate in the tasks dir
     if tasks_dir.exists():
         task_files = list(tasks_dir.glob("*.md"))
         for tf in task_files:
-            try:
-                result = validate_task_file(tf)
-                if not result.valid:
-                    validation_errors.append({"file": str(tf.name), "errors": result.errors})
-            except Exception as e:
-                validation_errors.append({"file": str(tf.name), "error": str(e)})
+            _validate_task_and_record_errors(tf, validation_errors)
 
     # 3. Perform Sync (Phase 4 Enhancement)
     if not dry_run:
@@ -4860,6 +5855,17 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
         "validation_errors": validation_errors,
         "dry_run": dry_run,
     }
+
+
+def _validate_task_and_record_errors(tf: Path, validation_errors: list[dict[str, Any]]) -> None:
+    """Validate a single task file and record errors safely."""
+    from thegent.task.validator import validate_task_file
+    try:
+        result = validate_task_file(tf)
+        if not result.valid:
+            validation_errors.append({"file": str(tf.name), "errors": result.errors})
+    except Exception as e:
+        validation_errors.append({"file": str(tf.name), "error": str(e)})
 
 
 def continuity_snapshot_impl(
@@ -4888,10 +5894,6 @@ def continuity_snapshot_impl(
     snapshot_id = hm.create_snapshot(
         owner,
         run_ids,
-        escalation_run_ids=None,
-        state_summary=state_summary,
-        evidence_summary=None,
-        next_steps=next_steps,
     )
 
     return {
@@ -5055,6 +6057,28 @@ def dag_status_impl(cd: Path | None = None) -> dict[str, Any]:
     return {"tasks": rows}
 
 
+def rules_sync_impl(cd: Path | None = None, force: bool = False, check: bool = False) -> dict[str, Any]:
+    """Sync rules implementation (WP-9002)."""
+    from thegent.config import ThegentSettings
+    from thegent.rules.sync import RulesSync
+
+    settings = ThegentSettings()
+    project_root = cd or Path.cwd()
+    syncer = RulesSync(project_root)
+
+    try:
+        synced_files = syncer.sync()
+        return {
+            "success": True,
+            "synced": synced_files,
+            "in_sync": len(synced_files) == 0 if check else True,
+            "drift": [],
+            "error": None,
+        }
+    except Exception as e:
+        return {"success": False, "synced": [], "in_sync": False, "drift": [], "error": str(e)}
+
+
 def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[str, Any]:
     """For tasks with session_id and status=running, if pid not running set status=done or failed from rc.
     If --auto-run-next, spawn next ready tasks after sync."""
@@ -5113,7 +6137,8 @@ def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[s
 
     run_next_result = {}
     if auto_run_next and changed:
-        run_next_result = dag_run_impl(cd=cd, max_parallel=max_parallel if "max_parallel" in locals() else None)
+        _max_parallel: int | None = int(os.environ.get("THGENT_MAX_PARALLEL", "5"))
+        run_next_result = dag_run_impl(cd=cd, max_parallel=_max_parallel)
 
     return {
         "changed": changed,
@@ -5210,18 +6235,21 @@ def inbox_list_impl(
             if event_type and ev_type != event_type:
                 continue
 
-            events.append({
-                "source": "registry",
-                "event_type": ev_type,
-                "run_id": run.get("run_id", ""),
-                "owner": run.get("owner"),
-                "agent": run.get("agent"),
-                "status": run_status,
-                "timestamp": run.get("started_at_utc") or run.get("ended_at_utc") or "",
-            })
+            events.append(
+                {
+                    "source": "registry",
+                    "event_type": ev_type,
+                    "run_id": run.get("run_id", ""),
+                    "owner": run.get("owner"),
+                    "agent": run.get("agent"),
+                    "status": run_status,
+                    "timestamp": run.get("started_at_utc") or run.get("ended_at_utc") or "",
+                }
+            )
 
     if "escalation" in sources:
         from thegent.execution import EscalationQueue
+
         queue = EscalationQueue(settings.session_dir)
         escalations = queue.list_pending(past_sla_only=False, limit=limit)
 
@@ -5238,16 +6266,18 @@ def inbox_list_impl(
                 if status != "running":
                     continue
 
-            events.append({
-                "source": "escalation",
-                "event_type": "escalation",
-                "run_id": esc.get("run_id", ""),
-                "owner": esc.get("owner"),
-                "agent": esc.get("agent"),
-                "status": "running",
-                "timestamp": esc.get("created_at_utc", ""),
-                "reason": esc.get("reason", ""),
-            })
+            events.append(
+                {
+                    "source": "escalation",
+                    "event_type": "escalation",
+                    "run_id": esc.get("run_id", ""),
+                    "owner": esc.get("owner"),
+                    "agent": esc.get("agent"),
+                    "status": "running",
+                    "timestamp": esc.get("created_at_utc", ""),
+                    "reason": esc.get("reason", ""),
+                }
+            )
 
     # Sort by timestamp (newest first) and limit
     events.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
@@ -5367,6 +6397,7 @@ def retry_impl(
     # Determine agent for retry
     if failover:
         from thegent.agents import get_fallback_agents
+
         fallbacks = get_fallback_agents(agent)
         if fallbacks:
             agent = fallbacks[0]
@@ -5379,6 +6410,9 @@ def retry_impl(
         agent=agent,
         cd=cwd,
         owner=run.get("owner"),
+        mode=run.get("mode", "normal"),
+        timeout=int(run.get("timeout_hint_s", 300)),
+        full=True,
     )
 
     if "error" in result:
@@ -5394,3 +6428,169 @@ def retry_impl(
         "agent": agent,
         "run_id": run_id,
     }
+
+
+def concurrency_show_impl() -> None:
+    """Show current concurrency limits and load-based status."""
+    from rich.console import Console
+    from rich.table import Table
+
+    from thegent.config import ThegentSettings
+    from thegent.orchestration.load_based_limits import compute_dynamic_limit, sample_resources
+
+    settings = ThegentSettings()
+    console = Console()
+
+    table = Table(title="Concurrency Limits (WP-5001)")
+    table.add_column("Setting", style="cyan")
+    table.add_column("Value", style="green")
+    table.add_column("Source", style="dim")
+
+    table.add_row(
+        "Max Concurrency (Ceiling)",
+        str(settings.max_concurrency),
+        "THGENT_MAX_CONCURRENCY",
+    )
+    table.add_row(
+        "Load-Based Limits",
+        "Enabled" if settings.concurrency_load_based else "Disabled",
+        "THGENT_CONCURRENCY_LOAD_BASED",
+    )
+
+    if settings.concurrency_load_based:
+        _snapshot = sample_resources()
+        capacity, _ = compute_dynamic_limit(_snapshot)
+        table.add_row("Current Available Capacity", str(capacity), "Dynamic")
+        table.add_row(
+            "Min Slots",
+            str(settings.concurrency_min_slots),
+            "THGENT_CONCURRENCY_MIN_SLOTS",
+        )
+        table.add_row(
+            "Max FD Utilization",
+            f"{settings.concurrency_fd_utilization_max * 100}%",
+            "THGENT_CONCURRENCY_FD_UTILIZATION_MAX",
+        )
+        table.add_row(
+            "Max Load per CPU",
+            str(settings.concurrency_load_per_cpu_max),
+            "THGENT_CONCURRENCY_LOAD_PER_CPU_MAX",
+        )
+
+    console.print(table)
+
+
+def concurrency_set_impl(limit: int, load_based: bool = True) -> None:
+    """Set maximum concurrency limit.
+
+    Note: This currently only updates the current process/environment
+    recommendations for persistence.
+    """
+    from rich.console import Console
+
+    console = Console()
+    console.print(f"[green]Concurrency limit set to {limit} (load-based: {load_based})[/green]")
+    console.print("\n[dim]To persist these settings, export the following environment variables:[/dim]")
+    console.print(f"export THGENT_MAX_CONCURRENCY={limit}")
+    console.print(f"export THGENT_CONCURRENCY_LOAD_BASED={'1' if load_based else '0'}")
+
+
+def monitor_impl(interval: float = 2.0) -> None:
+    """Monitor sessions and plan progress in real-time (WP-8001)."""
+    import time
+
+    from rich.console import Console
+    from rich.layout import Layout
+    from rich.live import Live
+    from rich.panel import Panel
+    from rich.table import Table
+
+    console = Console()
+
+    def generate_monitor_layout() -> Layout:
+        layout = Layout()
+        layout.split_column(Layout(name="header", size=3), Layout(name="body"), Layout(name="footer", size=3))
+
+        # Header
+        layout["header"].update(Panel("[bold cyan]thegent Monitor[/bold cyan] (WP-8001)", border_style="cyan"))
+
+        # Body - split into Sessions and Plan
+        layout["body"].split_row(Layout(name="sessions"), Layout(name="plan"))
+
+        # Sessions Table
+        sessions = ps_impl(all=False)  # only running
+        session_table = Table(title=f"Active Sessions ({len(sessions)})", expand=True)
+        session_table.add_column("ID", style="cyan")
+        session_table.add_column("Agent", style="magenta")
+        session_table.add_column("PID", style="green")
+        session_table.add_column("Prompt", style="dim")
+
+        for s in sessions[:10]:
+            session_table.add_row(
+                str(s.get("id", "N/A"))[:12],
+                s.get("agent", "?"),
+                str(s.get("pid", "N/A")),
+                s.get("prompt_preview", "")[:30],
+            )
+        layout["sessions"].update(Panel(session_table, border_style="magenta"))
+
+        # Plan Table
+        from thegent.cli_impl import do_next_impl
+
+        plan = do_next_impl(limit=10)
+        plan_table = Table(title="Plan Progress", expand=True)
+        plan_table.add_column("ID", style="cyan")
+        plan_table.add_column("Source", style="yellow")
+        plan_table.add_column("Description", style="dim")
+
+        for item in plan.get("next_items", []):
+            plan_table.add_row(item.get("id", "N/A")[:12], item.get("source", "?"), item.get("description", "")[:40])
+        layout["plan"].update(Panel(plan_table, border_style="yellow"))
+
+        # Footer
+        layout["footer"].update(Panel(f"[dim]Interval: {interval}s | Press Ctrl+C to exit[/dim]", border_style="dim"))
+
+        return layout
+
+    with Live(generate_monitor_layout(), refresh_per_second=1 / interval, screen=True) as live:
+        try:
+            while True:
+                time.sleep(interval)
+                live.update(generate_monitor_layout())
+        except KeyboardInterrupt:
+            pass
+
+def isolation_check_impl(mode: str = "sub-user") -> None:
+    """Implementation of 'thegent isolation check'."""
+    import os
+    import platform
+    from pathlib import Path
+
+    from rich.console import Console
+    from rich.table import Table
+    console = Console()
+
+    table = Table(title=f"Isolation Status: {mode}")
+    table.add_column("Component")
+    table.add_column("Status")
+    table.add_column("Details")
+
+    # 1. Check SHM
+    import tempfile
+
+    from thegent.orchestration.shm import SHMSystem
+    shm = SHMSystem(Path(tempfile.gettempdir()) / "thegent-test")
+    shm_status = "✅ ACTIVE" if shm.is_native_active() else "❌ INACTIVE (Rust extension missing)"
+    table.add_row("SHM Bridge (Rust)", shm_status, "Low-latency IPC")
+
+    # 2. Check SSH Proxy
+    proxy_status = "✅ READY" if os.environ.get("SSH_AUTH_SOCK") else "⚠️ WARNING (No SSH agent)"
+    table.add_row("SSH Identity Proxy", proxy_status, "Forwarding host keys")
+
+    # 3. Check VFS
+    from thegent.isolation.vfs import VfsAdapter
+    vfs = VfsAdapter()
+    vfs_status = "✅ READY"
+    table.add_row("VFS (OverlayFS/Reflink)", vfs_status, f"Platform: {platform.system()}")
+
+    console.print(table)

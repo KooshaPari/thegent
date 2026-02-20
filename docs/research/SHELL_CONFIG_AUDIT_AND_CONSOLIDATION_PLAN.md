@@ -47,7 +47,7 @@
 
 ```
 ~/.zshenv (system-wide, always sourced)
-  ├── Early return for agents (AGENT_ID, SHARECLI_AGENT_CONTEXT)
+  ├── Early return for agents (AGENT_ID, heliosShield_AGENT_CONTEXT)
   ├── PATH setup (comprehensive: ~/.local/bin, ~/bin, Homebrew, system)
   ├── Runtime flags (USE_FAST_RUNTIME, USE_BUN_TOOLS, etc.)
   └── Source .zsh_bundle.zsh (if exists)
@@ -97,7 +97,7 @@
 **Loading Logic:**
 ```zsh
 # In .zshenv
-if [[ -n "${AGENT_ID:-}" || -n "${SHARECLI_AGENT_CONTEXT:-}" ]]; then
+if [[ -n "${AGENT_ID:-}" || -n "${heliosShield_AGENT_CONTEXT:-}" ]]; then
     [[ -f "$HOME/.zshrc.agent" ]] && source "$HOME/.zshrc.agent"
     return
 fi
@@ -359,7 +359,7 @@ class ShellConfig:
             lines.extend([
                 "# Agent mode: skip heavy init",
                 'export AGENT_ID="thegent"',
-                'export SHARECLI_AGENT_CONTEXT="1"',
+                'export heliosShield_AGENT_CONTEXT="1"',
                 'return',
             ])
         else:

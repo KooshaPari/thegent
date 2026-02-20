@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/security/homomorphic.py`
 
 WP-24003: Homomorphic Encryption for Context.
+
 Enables agents to perform computations on encrypted context data without decrypting it.
 Protects sensitive context in multi-tenant shared memory environments.
 
@@ -17,62 +18,70 @@ Simulates Fully Homomorphic Encryption (FHE) for agent context.
 #### HomomorphicContext.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### HomomorphicContext.compute_on_encrypted
 
+```python
+compute_on_encrypted(self: Any, ciphertext: str, operation: str)
+```
+
 Perform an operation (e.g. search, count) on encrypted data without decrypting.
 
-```python
-compute_on_encrypted(self, ciphertext, operation)
-```
+---
 
 #### HomomorphicContext.decrypt_result
 
+```python
+decrypt_result(self: Any, ciphertext: str)
+```
+
 Decrypt the result of a homomorphic computation.
 
-```python
-decrypt_result(self, ciphertext)
-```
+---
 
 #### HomomorphicContext.encrypt_context
 
+```python
+encrypt_context(self: Any, data: str)
+```
+
 Encrypt context data into an FHE ciphertext.
 
-```python
-encrypt_context(self, data)
-```
+---
 
 ---
 
 ## compute_on_encrypted
 
-Perform an operation (e.g. search, count) on encrypted data without decrypting.
-
 ```python
-compute_on_encrypted(self, ciphertext, operation)
+compute_on_encrypted(self: Any, ciphertext: str, operation: str)
 ```
+
+Perform an operation (e.g. search, count) on encrypted data without decrypting.
 
 ---
 
 ## decrypt_result
 
-Decrypt the result of a homomorphic computation.
-
 ```python
-decrypt_result(self, ciphertext)
+decrypt_result(self: Any, ciphertext: str)
 ```
+
+Decrypt the result of a homomorphic computation.
 
 ---
 
 ## encrypt_context
 
-Encrypt context data into an FHE ciphertext.
-
 ```python
-encrypt_context(self, data)
+encrypt_context(self: Any, data: str)
 ```
+
+Encrypt context data into an FHE ciphertext.
 
 ---
 

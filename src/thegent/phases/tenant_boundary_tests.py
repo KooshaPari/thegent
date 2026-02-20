@@ -37,26 +37,26 @@ class TenantBoundaryTestMatrix:
         },
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize tenant boundary test matrix."""
         self.tests = {test["id"]: test for test in self.TESTS}
 
     def run_test(self, test_id: str) -> dict[str, Any]:
         """Run a tenant boundary test.
-        
+
         Args:
             test_id: Test identifier
-            
+
         Returns:
             Test result
         """
         test = self.tests.get(test_id)
         if not test:
             return {"error": "Test not found"}
-        
+
         test["status"] = "running"
         logger.info(f"Running test: {test['name']}")
-        
+
         # Test execution logic would go here
         # For now, simulate success
         test["status"] = "passed"
@@ -64,17 +64,17 @@ class TenantBoundaryTestMatrix:
 
     def run_all_tests(self) -> dict[str, Any]:
         """Run all tenant boundary tests.
-        
+
         Returns:
             Test results
         """
         results = {}
-        for test_id in self.tests.keys():
+        for test_id in self.tests:
             results[test_id] = self.run_test(test_id)
-        
+
         passed = sum(1 for r in results.values() if r.get("status") == "passed")
         failed = sum(1 for r in results.values() if r.get("status") == "failed")
-        
+
         return {
             "total": len(self.tests),
             "passed": passed,

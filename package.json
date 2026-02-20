@@ -18,15 +18,15 @@
   },
   "devDependencies": {
     "@orama/plugin-vitepress": "^3.1.18",
-    "@playwright/test": "^1.48.0",
+    "@playwright/test": "^1.58.2",
     "markdown-it-emoji": "^3.0.0",
     "markdown-it-katex": "^2.0.3",
-    "mermaid": "^11.4.0",
-    "puppeteer": "^24.37.3",
+    "mermaid": "^11.12.3",
+    "puppeteer": "^24.37.4",
     "vite-imagetools": "^9.0.3",
-    "vitepress": "^1.5.0",
+    "vitepress": "^1.6.4",
     "vitepress-export-pdf": "^1.0.0",
-    "vitepress-plugin-mermaid": "^2.0.3",
-    "vue": "^3.5.0"
+    "vitepress-plugin-mermaid": "^2.0.17",
+    "vue": "^3.5.28"
   }
 }

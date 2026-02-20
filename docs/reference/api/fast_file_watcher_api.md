@@ -28,54 +28,67 @@ Backend priority (fastest first):
 
 #### FastFileWatcher.__init__
 
+```python
+__init__(self: Any, path: Any, recursive: bool)
+```
+
 Initialize file watcher.
 
-Args:
-    path: Directory or file to watch
-    recursive: Whether to watch recursively
+**Parameters**:
 
-```python
-__init__(self, path, recursive)
-```
+- `path`: Directory or file to watch
+- `recursive`: Whether to watch recursively
+
+---
 
 #### FastFileWatcher.backend
 
+```python
+backend(self: Any)
+```
+
 Get current backend name.
 
-```python
-backend(self)
-```
+---
 
 #### FastFileWatcher.start
 
+```python
+start(self: Any, event_handler: Any)
+```
+
 Start watching (watchdog backend).
 
-Args:
-    event_handler: Optional custom event handler
+**Parameters**:
 
-```python
-start(self, event_handler)
-```
+- `event_handler`: Optional custom event handler
+
+---
 
 #### FastFileWatcher.stop
 
+```python
+stop(self: Any)
+```
+
 Stop watching.
 
-```python
-stop(self)
-```
+---
 
 #### FastFileWatcher.watch
 
+```python
+watch(self: Any, callback: Callable[(Any, None)])
+```
+
 Watch for file changes using watchfiles backend.
 
-Args:
-    callback: Function to call on changes
-    **kwargs: Additional options for watchfiles
+**Parameters**:
 
-```python
-watch(self, callback)
-```
+- `callback`: Function to call on changes
+- `**kwargs`: Additional options for watchfiles
+
+---
 
 ---
 
@@ -88,79 +101,84 @@ watch(self, callback)
 #### SimpleHandler.on_any_event
 
 ```python
-on_any_event(self, event)
+on_any_event(self: Any, event: FileSystemEvent)
 ```
+
+---
 
 ---
 
 ## backend
 
-Get current backend name.
-
 ```python
-backend(self)
+backend(self: Any)
 ```
+
+Get current backend name.
 
 ---
 
 ## on_any_event
 
 ```python
-on_any_event(self, event)
+on_any_event(self: Any, event: FileSystemEvent) -> None
 ```
 
 ---
 
 ## start
 
+```python
+start(self: Any, event_handler: Any)
+```
+
 Start watching (watchdog backend).
 
-Args:
-    event_handler: Optional custom event handler
+**Parameters**:
 
-```python
-start(self, event_handler)
-```
+- `event_handler`: Optional custom event handler
 
 ---
 
 ## stop
 
-Stop watching.
-
 ```python
-stop(self)
+stop(self: Any)
 ```
+
+Stop watching.
 
 ---
 
 ## watch
 
+```python
+watch(self: Any, callback: Callable[(Any, None)])
+```
+
 Watch for file changes using watchfiles backend.
 
-Args:
-    callback: Function to call on changes
-    **kwargs: Additional options for watchfiles
+**Parameters**:
 
-```python
-watch(self, callback)
-```
+- `callback`: Function to call on changes
+- `**kwargs`: Additional options for watchfiles
 
 ---
 
 ## watch_files
 
+```python
+watch_files(path: Any, callback: Callable[(Any, None)], recursive: bool)
+```
+
 Watch files using fastest available backend (watchfiles preferred).
 
-Args:
-    path: Directory or file to watch
-    callback: Function to call on changes
-    recursive: Whether to watch recursively
-    **kwargs: Additional options
+**Parameters**:
 
-```python
-watch_files(path, callback, recursive)
-```
+- `path`: Directory or file to watch
+- `callback`: Function to call on changes
+- `recursive`: Whether to watch recursively
+- `**kwargs`: Additional options
 
 ---
 

@@ -64,14 +64,14 @@
 |----|-------|--------|----------|---------|-----|--------|-------------|
 | WP-28001 | Autonomous Red-Teaming Agent | DONE | P1 | — | — | 25-35 | agents/red_team.py |
 | WP-28002 | Semantic Firewall for Model Output | DONE | P1 | WP-3001 | — | 20-30 | governance/semantic_firewall.py |
-| WP-28003 | Poison Pill Detection in Swarm Memory | PENDING | P2 | WP-24003 | — | 18-24 | orchestration/swarm_memory.py |
+| WP-28003 | Poison Pill Detection in Swarm Memory | DONE | P2 | WP-24003 | — | 18-24 | orchestration/swarm_memory.py |
 
 ## Phase 29: Ethical Alignment & Value-Lock (Deeper)
 
 | ID | Title | Status | Priority | Depends | FRs | Effort | Target Files |
 |----|-------|--------|----------|---------|-----|--------|-------------|
 | WP-29001 | Value-Lock (Immutable Ethical Constraints) | DONE | P1 | WP-20004 | — | 30-40 | governance/value_lock.py |
-| WP-29002 | Societal Impact Simulation | PENDING | P2 | WP-14001 | — | 20-30 | planning/impact_sim.py |
+| WP-29002 | Societal Impact Simulation | DONE | P2 | WP-14001 | — | 20-30 | planning/impact_sim.py |
 | WP-29003 | Human-in-the-Loop Moral Arbitration | DONE | P1 | — | — | 15-25 | ux/moral_ui.py |
 
 ## Phase 30: Global Agent Market & Liquidity (Wider)
@@ -94,8 +94,8 @@
 
 | ID | Title | Status | Priority | Depends | FRs | Effort | Target Files |
 |----|-------|--------|----------|---------|-----|--------|-------------|
-| WP-32001 | Sensory Context Bridge (Audio/Video) | PENDING | P2 | — | — | 25-35 | context/sensory.py |
-| WP-32002 | Bio-Digital Confidence Calibration | PENDING | P3 | WP-4008 | — | 30-40 | agents/bio_feedback.py |
+| WP-32001 | Sensory Context Bridge (Audio/Video) | DONE | P2 | — | — | 25-35 | context/sensory.py |
+| WP-32002 | Bio-Digital Confidence Calibration | DONE | P3 | WP-4008 | — | 30-40 | agents/bio_feedback.py |
 | WP-32003 | Homomorphic Encryption for Context | DONE | P2 | WP-21002 | — | 35-45 | security/homomorphic.py |
 
 ## Phase 33: Universal Black-Box Agent Control (UBBAC) (Deeper)
@@ -115,14 +115,14 @@
 |----|-------|--------|----------|---------|-----|--------|-------------|
 | WP-34001 | Delay-Tolerant Networking (DTN) Bridge | DONE | P3 | WP-26001 | — | 30-45 | discovery/galactic.py |
 | WP-34002 | Asynchronous State Reconciler (Long Lag) | DONE | P3 | WP-34001 | — | 25-35 | discovery/galactic.py |
-| WP-34003 | Light-Speed Compensation Planning | PENDING | P3 | WP-14001 | — | 20-30 | planning/galactic_sim.py |
+| WP-34003 | Light-Speed Compensation Planning | DONE | P3 | WP-14001 | — | 20-30 | planning/galactic_sim.py |
 
 ## Phase 35: Planetary-Scale Resource Scheduling (Wider)
 
 | ID | Title | Status | Priority | Depends | FRs | Effort | Target Files |
 |----|-------|--------|----------|---------|-----|--------|-------------|
 | WP-35001 | Global Compute Arbitrage Engine | DONE | P2 | WP-30001 | — | 25-35 | economy/arbitrage.py |
-| WP-35002 | Cross-Region Latency-Aware Scheduling | PENDING | P2 | WP-31001 | — | 20-30 | infra/scheduler.py |
+| WP-35002 | Cross-Region Latency-Aware Scheduling | DONE | P2 | WP-31001 | — | 20-30 | infra/scheduler.py |
 | WP-35003 | Geo-Distributed Data Sovereignty Guard | DONE | P1 | WP-19001 | — | 15-25 | security/geo_guard.py |
 
 ## Phase 36: Bio-Digital & Molecular Storage (Deeper)
@@ -130,8 +130,8 @@
 | ID | Title | Status | Priority | Depends | FRs | Effort | Target Files |
 |----|-------|--------|----------|---------|-----|--------|-------------|
 | WP-36001 | Simulated DNA Data Encoding Bridge | DONE | P3 | — | — | 40-60 | context/dna_storage.py |
-| WP-36002 | Biological Feedback Confidence Injection | PENDING | P3 | WP-32002 | — | 30-40 | agents/bio_digital.py |
-| WP-36003 | Molecular Computing Simulation sandbox | PENDING | P3 | WP-31002 | — | 50-70 | infra/molecular.py |
+| WP-36002 | Biological Feedback Confidence Injection | DONE | P3 | WP-32002 | — | 30-40 | agents/bio_digital.py |
+| WP-36003 | Molecular Computing Simulation sandbox | DONE | P3 | WP-31002 | — | 50-70 | infra/molecular.py |
 
 ## Phase 37: Recursive Meta-Cognition & Agent Autopoiesis (Deeper)
 
@@ -149,7 +149,7 @@
 |----|-------|--------|----------|---------|-----|--------|-------------|
 | WP-38001 | Alternate Reality Simulator (Plan Forks) | DONE | P2 | WP-14001 | — | 40-60 | planning/multiverse.py |
 | WP-38002 | Counterfactual Impact Analysis | DONE | P2 | WP-38001 | — | 30-45 | planning/multiverse.py |
-| WP-38003 | Parallel Timeline State Merging | PENDING | P2 | WP-38001 | — | 50-70 | orchestration/timeline_merge.py |
+| WP-38003 | Parallel Timeline State Merging | DONE | P2 | WP-38001 | — | 50-70 | orchestration/timeline_merge.py |
 
 ## Phase 39: Singularity Gates & Formal Super-Alignment (Deeper)
 
@@ -164,15 +164,15 @@
 | ID | Title | Status | Priority | Depends | FRs | Effort | Target Files |
 |----|-------|--------|----------|---------|-----|--------|-------------|
 | WP-40001 | IoT/Robotics Command Bridge | DONE | P2 | — | — | 35-50 | integration/physical.py |
-| WP-40002 | Distributed Sensor Mesh Orchestration | PENDING | P2 | WP-26001 | — | 40-60 | infra/sensor_mesh.py |
+| WP-40002 | Distributed Sensor Mesh Orchestration | DONE | P2 | WP-26001 | — | 40-60 | infra/sensor_mesh.py |
 | WP-40003 | Edge-Agent Low-Power Synchronization | DONE | P2 | WP-34001 | — | 30-45 | discovery/edge_sync.py |
 
 ## Phase 41: Trans-Human Agent Symbiosis (Deeper)
 
 | ID | Title | Status | Priority | Depends | FRs | Effort | Target Files |
 |----|-------|--------|----------|---------|-----|--------|-------------|
-| WP-41001 | Neural-Link Cognitive Offloading (Sim) | PENDING | P3 | WP-36002 | — | 70-100 | context/neural_sim.py |
-| WP-41002 | Human-Agent Co-Consciousness Interface | PENDING | P3 | — | — | 80-120 | ux/symbiosis.py |
+| WP-41001 | Neural-Link Cognitive Offloading (Sim) | DONE | P3 | WP-36002 | — | 70-100 | context/neural_sim.py |
+| WP-41002 | Human-Agent Co-Consciousness Interface | DONE | P3 | — | — | 80-120 | ux/symbiosis.py |
 | WP-41003 | Legacy Identity Preservation (Digital Twin) | DONE | P2 | WP-15002 | — | 50-80 | agents/digital_twin.py |
 
 ---
@@ -181,16 +181,16 @@
 
 | ID | Title | Status | Priority | Depends | FRs | Effort | Target Files |
 |----|-------|--------|----------|---------|-----|--------|-------------|
-| WP-42001 | Stellar Energy Harvesting Bridge (Sim) | PENDING | P3 | WP-31001 | — | 100-150 | infra/dyson.py |
-| WP-42002 | Matrioshka Brain Resource Allocation | PENDING | P3 | WP-35001 | — | 120-180 | economy/stellar.py |
-| WP-42003 | Cold-Storage Data Archiving (Planet-Scale) | PENDING | P3 | WP-36001 | — | 80-120 | context/planetary.py |
+| WP-42001 | Stellar Energy Harvesting Bridge (Sim) | DONE | P3 | WP-31001 | — | 100-150 | infra/dyson.py |
+| WP-42002 | Matrioshka Brain Resource Allocation | DONE | P3 | WP-35001 | — | 120-180 | economy/stellar.py |
+| WP-42003 | Cold-Storage Data Archiving (Planet-Scale) | DONE | P3 | WP-36001 | — | 80-120 | context/planetary.py |
 
 ## Phase 43: Time-Dilation Awareness & Relativistic Scheduling (Deeper)
 
 | ID | Title | Status | Priority | Depends | FRs | Effort | Target Files |
 |----|-------|--------|----------|---------|-----|--------|-------------|
 | WP-43001 | Relativistic Clock Sync Protocol | DONE | P3 | WP-34001 | — | 60-90 | discovery/relativistic.py |
-| WP-43002 | Gravity-Aware Task Scheduling | PENDING | P3 | WP-14001 | — | 70-100 | planning/gravity.py |
+| WP-43002 | Gravity-Aware Task Scheduling | DONE | P3 | WP-14001 | — | 70-100 | planning/gravity.py |
 | WP-43003 | Inter-Stellar Handoff Compensation | DONE | P3 | WP-34002 | — | 50-80 | discovery/relativistic.py |
 
 ## Phase 44: Information Life-forms & Substrate Independence (Wider)
@@ -198,8 +198,8 @@
 | ID | Title | Status | Priority | Depends | FRs | Effort | Target Files |
 |----|-------|--------|----------|---------|-----|--------|-------------|
 | WP-44001 | Pure Information Persona Encoding | DONE | P2 | WP-41003 | — | 90-130 | agents/information_life.py |
-| WP-44002 | Cross-Substrate Migration Logic | PENDING | P2 | WP-23002 | — | 100-150 | agents/migration.py |
-| WP-44003 | Virtualized Consciousness Bridge | PENDING | P3 | WP-41002 | — | 150-200 | ux/virtual_consciousness.py |
+| WP-44002 | Cross-Substrate Migration Logic | DONE | P2 | WP-23002 | — | 100-150 | agents/migration.py |
+| WP-44003 | Virtualized Consciousness Bridge | DONE | P3 | WP-41002 | — | 150-200 | ux/virtual_consciousness.py |
 
 ## Phase 45: Universal Omega-Governance (Deeper)
 

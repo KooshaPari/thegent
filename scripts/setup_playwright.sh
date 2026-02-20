@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Setup Playwright for browser recordings in documentation
 
 set -e

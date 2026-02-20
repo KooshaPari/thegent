@@ -14,20 +14,20 @@ import sqlite3
 import subprocess
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
 # Default paths (match harvest-idea-seeds.sh)
-CLAUDE_HISTORY = Path(os.environ.get("CLAUDE_HISTORY", os.path.expanduser("~/.claude/history.jsonl")))
-CODEX_HISTORY = Path(os.environ.get("CODEX_HISTORY", os.path.expanduser("~/.codex/history.jsonl")))
-CODEX_STATE_DB = Path(os.environ.get("CODEX_STATE_DB", os.path.expanduser("~/.codex/state_5.sqlite")))
+CLAUDE_HISTORY = Path(os.environ.get("CLAUDE_HISTORY", Path("~/.claude/history.jsonl").expanduser()))
+CODEX_HISTORY = Path(os.environ.get("CODEX_HISTORY", Path("~/.codex/history.jsonl").expanduser()))
+CODEX_STATE_DB = Path(os.environ.get("CODEX_STATE_DB", Path("~/.codex/state_5.sqlite").expanduser()))
 # Match harvest-idea-seeds.sh: CURSOR_PROJECTS= explicitly skips
 _cursor_raw = os.environ.get("CURSOR_PROJECTS")
 if _cursor_raw == "":
     CURSOR_PROJECTS: Path | None = None
 else:
-    CURSOR_PROJECTS = Path(_cursor_raw or os.path.expanduser("~/.cursor/projects"))
+    CURSOR_PROJECTS = Path(_cursor_raw or Path("~/.cursor/projects").expanduser())
 
 
 @dataclass
@@ -65,12 +65,21 @@ def _resolve_project_root(dir_path: str | Path | None) -> str | None:
             capture_output=True,
             text=True,
             timeout=5,
+            check=False,
         )
         if result.returncode == 0:
             return result.stdout.strip()
     except Exception:
         pass
     return str(dir_path) if dir_path else None
+
+
+def _parse_line(line: str) -> dict[str, Any] | None:
+    """Parse a single JSON line from history."""
+    try:
+        return json.loads(line)
+    except json.JSONDecodeError:
+        return None
 
 
 def _list_claude_sessions() -> list[SessionInfo]:
@@ -83,9 +92,8 @@ def _list_claude_sessions() -> list[SessionInfo]:
             line = line.strip()
             if not line:
                 continue
-            try:
-                obj = json.loads(line)
-            except json.JSONDecodeError:
+            obj = _parse_line(line)
+            if not obj:
                 continue
             display = obj.get("display") or ""
             if not display:
@@ -93,7 +101,7 @@ def _list_claude_sessions() -> list[SessionInfo]:
             session_id = obj.get("sessionId") or f"claude-{line_num}"
             project = obj.get("project")
             ts = obj.get("timestamp")
-            ts_str = datetime.utcfromtimestamp(ts / 1000).isoformat() + "Z" if ts else None
+            ts_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).isoformat() + "Z" if ts else None
             if session_id not in sessions:
                 sessions[session_id] = SessionInfo(
                     source="claude",
@@ -130,13 +138,12 @@ def _list_codex_sessions() -> list[SessionInfo]:
             line = line.strip()
             if not line:
                 continue
-            try:
-                obj = json.loads(line)
-            except json.JSONDecodeError:
+            obj = _parse_line(line)
+            if not obj:
                 continue
             session_id = obj.get("session_id") or f"codex-{line_num}"
             ts = obj.get("ts")
-            ts_str = datetime.utcfromtimestamp(ts).isoformat() + "Z" if ts else None
+            ts_str = datetime.fromtimestamp(ts, tz=timezone.utc).isoformat() + "Z" if ts else None
             cwd = cwd_map.get(session_id, "")
             if session_id not in sessions:
                 sessions[session_id] = SessionInfo(
@@ -151,6 +158,14 @@ def _list_codex_sessions() -> list[SessionInfo]:
             s.prompt_count += 1
             s.last_ts = ts_str
     return list(sessions.values())
+
+
+def _read_file_safe(f: Path) -> str | None:
+    """Read a file safely, ignoring errors."""
+    try:
+        return f.read_text(errors="ignore")
+    except Exception:
+        return None
 
 
 def _cursor_project_path(folder: str) -> str | None:
@@ -168,13 +183,12 @@ def _cursor_project_path(folder: str) -> str | None:
         return None
     for pattern in ["agent-tools/*.txt", "agent-transcripts/*.jsonl"]:
         for f in proj_dir.glob(pattern):
-            try:
-                content = f.read_text(errors="ignore")
-                for seg in content.split():
-                    if f"/{last_seg}" in seg and Path(seg.split()[0] if " " in seg else seg).exists():
-                        return seg.split()[0] if " " in seg else seg
-            except Exception:
-                pass
+            content = _read_file_safe(f)
+            if not content:
+                continue
+            for seg in content.split():
+                if f"/{last_seg}" in seg and Path(seg.split()[0] if " " in seg else seg).exists():
+                    return seg.split()[0] if " " in seg else seg
     return None
 
 
@@ -200,13 +214,11 @@ def _list_cursor_sessions() -> list[SessionInfo]:
                         line = line.strip()
                         if not line:
                             continue
-                        try:
-                            obj = json.loads(line)
-                            if obj.get("role") == "user":
-                                count += 1
-                            # Could extract timestamp from message if present
-                        except json.JSONDecodeError:
+                        obj = _parse_line(line)
+                        if not obj:
                             continue
+                        if obj.get("role") == "user":
+                            count += 1
             except Exception:
                 pass
             sessions.append(
@@ -260,9 +272,8 @@ def dump_cursor_session(session_id: str, output_path: Path | None = None) -> lis
                 line = line.strip()
                 if not line:
                     continue
-                try:
-                    obj = json.loads(line)
-                except json.JSONDecodeError:
+                obj = _parse_line(line)
+                if not obj:
                     continue
                 role = obj.get("role", "unknown")
                 text = ""
@@ -304,6 +315,30 @@ def dump_cursor_session(session_id: str, output_path: Path | None = None) -> lis
     return entries
 
 
+def _extract_seed(f: Path) -> dict[str, Any] | None:
+    """Extract metadata and preview from an idea seed file."""
+    try:
+        content = f.read_text(encoding="utf-8")
+        front = {}
+        if content.startswith("---"):
+            parts = content.split("---", 2)
+            if len(parts) >= 3:
+                for line in parts[1].strip().split("\n"):
+                    if ":" in line:
+                        k, v = line.split(":", 1)
+                        front[k.strip()] = v.strip()
+        return {
+            "path": str(f),
+            "source": front.get("source", "unknown"),
+            "project": front.get("project"),
+            "session_id": front.get("session_id"),
+            "saved_at": front.get("saved_at"),
+            "preview": content.split("\n\n", 1)[-1][:200] if "\n\n" in content else content[:200],
+        }
+    except Exception:
+        return None
+
+
 def list_idea_seeds(project_root: Path | None = None) -> list[dict[str, Any]]:
     """List harvested idea seeds. If project_root given, filter to that project."""
     seeds: list[dict[str, Any]] = []
@@ -327,28 +362,9 @@ def list_idea_seeds(project_root: Path | None = None) -> list[dict[str, Any]]:
                             search_dirs.append(sd)
     for d in search_dirs:
         for f in d.glob("seed_*.md"):
-            try:
-                content = f.read_text(encoding="utf-8")
-                front = {}
-                if content.startswith("---"):
-                    parts = content.split("---", 2)
-                    if len(parts) >= 3:
-                        for line in parts[1].strip().split("\n"):
-                            if ":" in line:
-                                k, v = line.split(":", 1)
-                                front[k.strip()] = v.strip()
-                seeds.append(
-                    {
-                        "path": str(f),
-                        "source": front.get("source", "unknown"),
-                        "project": front.get("project"),
-                        "session_id": front.get("session_id"),
-                        "saved_at": front.get("saved_at"),
-                        "preview": content.split("\n\n", 1)[-1][:200] if "\n\n" in content else content[:200],
-                    }
-                )
-            except Exception:
-                pass
+            seed = _extract_seed(f)
+            if seed:
+                seeds.append(seed)
     return seeds
 
 
@@ -373,9 +389,8 @@ def _explore_claude_prompts(
             line = line.strip()
             if not line:
                 continue
-            try:
-                obj = json.loads(line)
-            except json.JSONDecodeError:
+            obj = _parse_line(line)
+            if not obj:
                 continue
             display = obj.get("display") or ""
             if not display:
@@ -390,7 +405,7 @@ def _explore_claude_prompts(
             proj = obj.get("project")
             if project and proj and project not in str(proj):
                 continue
-            ts_str = datetime.utcfromtimestamp(ts / 1000).isoformat() + "Z" if ts else None
+            ts_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).isoformat() + "Z" if ts else None
             entries.append(
                 PromptEntry(
                     source="claude",
@@ -433,9 +448,8 @@ def _explore_codex_prompts(
             line = line.strip()
             if not line:
                 continue
-            try:
-                obj = json.loads(line)
-            except json.JSONDecodeError:
+            obj = _parse_line(line)
+            if not obj:
                 continue
             text = obj.get("text") or ""
             if not text:
@@ -450,7 +464,7 @@ def _explore_codex_prompts(
             cwd = cwd_map.get(sid, "")
             if project and cwd and project not in cwd:
                 continue
-            ts_str = datetime.utcfromtimestamp(ts).isoformat() + "Z" if ts else None
+            ts_str = datetime.fromtimestamp(ts, tz=timezone.utc).isoformat() + "Z" if ts else None
             entries.append(
                 PromptEntry(
                     source="codex",
@@ -498,9 +512,8 @@ def _explore_cursor_prompts(
                     line = line.strip()
                     if not line:
                         continue
-                    try:
-                        obj = json.loads(line)
-                    except json.JSONDecodeError:
+                    obj = _parse_line(line)
+                    if not obj:
                         continue
                     role = obj.get("role", "unknown")
                     text = ""
@@ -552,7 +565,7 @@ def explore_prompts(
     return all_entries[:limit]
 
 
-def explore_session(session_id: str, source: str | None = None) -> Optional[tuple[SessionInfo], list[PromptEntry]]:
+def explore_session(session_id: str, source: str | None = None) -> tuple[SessionInfo, list[PromptEntry]] | None:
     """Explore a session by ID: metadata + all prompts/responses."""
     sessions = list_sessions(source=source)
     session = next((s for s in sessions if s.session_id == session_id), None)
@@ -599,6 +612,7 @@ def run_harvest(script_dir: Path | None = None) -> tuple[int, str]:
         text=True,
         cwd=str(base),
         timeout=120,
+        check=False,
     )
     out = (result.stdout or "") + (result.stderr or "")
     return result.returncode, out

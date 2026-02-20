@@ -1,6 +1,6 @@
 # Comprehensive Non-Canonical Audit and Consolidation Plan
 
-**Purpose:** Audit ALL non-canonical variations across thegent, sharecli, kush directories. Identify naming explosions and consolidate to canonical configs.  
+**Purpose:** Audit ALL non-canonical variations across thegent, heliosShield, kush directories. Identify naming explosions and consolidate to canonical configs.  
 **Date:** 2026-02-17  
 **Status:** Audit Complete, Consolidation Plan Ready
 
@@ -226,15 +226,15 @@
 
 ---
 
-### 3.9 Sharecli/Kush References
+### 3.9 heliosShield/Kush References
 
 | Reference | Location | Purpose | Status |
 |-----------|----------|---------|--------|
-| `SHARECLI_AGENT_CONTEXT` | `.zshenv` | Environment variable | ✅ Legitimate |
-| `SHARECLI_AGENT` | `.zshenv` | Environment variable | ✅ Legitimate |
-| `sharecli` in docs | Various | Cross-project references | ✅ Legitimate |
+| `heliosShield_AGENT_CONTEXT` | `.zshenv` | Environment variable | ✅ Legitimate |
+| `heliosShield_AGENT` | `.zshenv` | Environment variable | ✅ Legitimate |
+| `heliosShield` in docs | Various | Cross-project references | ✅ Legitimate |
 
-**Status:** ✅ **GOOD** - Sharecli references are legitimate (cross-project integration).
+**Status:** ✅ **GOOD** - heliosShield references are legitimate (cross-project integration).
 
 ---
 

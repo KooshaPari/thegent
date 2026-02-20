@@ -23,80 +23,90 @@ Central registry for managing and querying system capabilities.
 #### CapabilityRegistry.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### CapabilityRegistry.get_capability
 
+```python
+get_capability(self: Any, cap_id: str)
+```
+
 Return capability metadata if found.
 
-```python
-get_capability(self, cap_id)
-```
+---
 
 #### CapabilityRegistry.is_supported
 
+```python
+is_supported(self: Any, cap_id: str, version: Any)
+```
+
 Check if a capability and version are supported.
 
-```python
-is_supported(self, cap_id, version)
-```
+---
 
 #### CapabilityRegistry.list_capabilities
 
+```python
+list_capabilities(self: Any)
+```
+
 List all registered capabilities.
 
-```python
-list_capabilities(self)
-```
+---
 
 #### CapabilityRegistry.register
 
+```python
+register(self: Any, cap: Capability)
+```
+
 Register a new capability.
 
-```python
-register(self, cap)
-```
+---
 
 ---
 
 ## get_capability
 
-Return capability metadata if found.
-
 ```python
-get_capability(self, cap_id)
+get_capability(self: Any, cap_id: str)
 ```
+
+Return capability metadata if found.
 
 ---
 
 ## is_supported
 
-Check if a capability and version are supported.
-
 ```python
-is_supported(self, cap_id, version)
+is_supported(self: Any, cap_id: str, version: Any)
 ```
+
+Check if a capability and version are supported.
 
 ---
 
 ## list_capabilities
 
-List all registered capabilities.
-
 ```python
-list_capabilities(self)
+list_capabilities(self: Any)
 ```
+
+List all registered capabilities.
 
 ---
 
 ## register
 
-Register a new capability.
-
 ```python
-register(self, cap)
+register(self: Any, cap: Capability)
 ```
+
+Register a new capability.
 
 ---
 

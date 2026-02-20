@@ -2,7 +2,7 @@
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class ComplianceReporter:
     """Generate automated compliance reports."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize compliance reporter."""
         self.reports: list[dict[str, Any]] = []
 
@@ -22,34 +22,33 @@ class ComplianceReporter:
         format: str = "json",
     ) -> str:
         """Generate compliance report.
-        
+
         Args:
             compliance_data: Compliance data dictionary
             format: Report format (json, markdown, html)
-            
+
         Returns:
             Report content as string
         """
         report = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "compliance": compliance_data,
         }
-        
+
         if format == "json":
             return json.dumps(report, indent=2)
-        elif format == "markdown":
+        if format == "markdown":
             return self._generate_markdown(report)
-        elif format == "html":
+        if format == "html":
             return self._generate_html(report)
-        else:
-            return json.dumps(report, indent=2)
+        return json.dumps(report, indent=2)
 
     def _generate_markdown(self, report: dict[str, Any]) -> str:
         """Generate markdown report.
-        
+
         Args:
             report: Report dictionary
-            
+
         Returns:
             Markdown string
         """
@@ -58,19 +57,19 @@ class ComplianceReporter:
         lines.append("")
         lines.append("## Compliance Status")
         lines.append("")
-        
+
         compliance = report.get("compliance", {})
         for key, value in compliance.items():
             lines.append(f"- **{key}**: {value}")
-        
+
         return "\n".join(lines)
 
     def _generate_html(self, report: dict[str, Any]) -> str:
         """Generate HTML report.
-        
+
         Args:
             report: Report dictionary
-            
+
         Returns:
             HTML string
         """
@@ -79,11 +78,11 @@ class ComplianceReporter:
         html.append(f"<p><strong>Generated</strong>: {report['timestamp']}</p>")
         html.append("<h2>Compliance Status</h2>")
         html.append("<ul>")
-        
+
         compliance = report.get("compliance", {})
         for key, value in compliance.items():
             html.append(f"<li><strong>{key}</strong>: {value}</li>")
-        
+
         html.append("</ul></body></html>")
         return "\n".join(html)
 
@@ -94,12 +93,12 @@ class ComplianceReporter:
         format: str = "json",
     ) -> Path:
         """Export compliance report to file.
-        
+
         Args:
             compliance_data: Compliance data
             output_path: Output file path
             format: Report format
-            
+
         Returns:
             Path to exported file
         """

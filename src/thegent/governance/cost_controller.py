@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Call-count budget management for AgilePlus autonomous governance.
 
 Tracks daily agent trigger counts against a configurable budget (default 20/day)
@@ -76,7 +78,7 @@ class CostController:
         dimension: str,
         agent: str,
         *,
-        cost_usd: Optional[float] = None,
+        cost_usd: float | None = None,
     ) -> None:
         """Record one agent trigger against today's budget."""
         usage = self.get_today_usage()
@@ -99,7 +101,7 @@ class CostController:
 
         if self._usage_path.exists():
             # Scan for today's record (last matching line wins)
-            latest: Optional[DailyUsage] = None
+            latest: DailyUsage | None = None
             for line in self._usage_path.read_text().splitlines():
                 stripped = line.strip()
                 if not stripped:

@@ -2,10 +2,36 @@
 
 Handles partial/streaming XML output from agents, extracts tags into a structured
 dictionary, and provides error classification for malformed XML.
+
+BKM-02: When THGENT_USE_NATIVE_PARSER=1, uses thegent_parser Rust extension
+for extract_xml_tags. Falls back to Python IncrementalXMLParser otherwise.
 """
 
+import importlib.util
 from collections.abc import Callable
 from enum import StrEnum
+from typing import Any
+
+from thegent.config import ThegentSettings
+
+_thegent_parser: Any = None
+
+
+def _get_native_parser() -> Any:
+    """Lazy import of thegent_parser native extension. Returns None if unavailable."""
+    global _thegent_parser
+    if _thegent_parser is not None:
+        return _thegent_parser
+    if not ThegentSettings().use_native_parser:
+        return None
+    for mod_path in ("thegent_parser.thegent_parser", "thegent_parser"):
+        spec = importlib.util.find_spec(mod_path)
+        if spec is not None and spec.loader is not None:
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            _thegent_parser = mod
+            return mod
+    return None
 
 
 class XMLParseError(Exception):
@@ -186,6 +212,16 @@ class StreamingXMLParser(IncrementalXMLParser):
 
 
 def extract_tags(text: str, tags: list[str] | None = None) -> dict[str, str]:
-    """Helper function for quick tag extraction."""
+    """Helper function for quick tag extraction.
+
+    BKM-02: Uses thegent_parser Rust extension when THGENT_USE_NATIVE_PARSER=1;
+    otherwise falls back to Python IncrementalXMLParser.
+    """
+    native = _get_native_parser()
+    if native is not None and hasattr(native, "extract_xml_tags"):
+        try:
+            return native.extract_xml_tags(text, allowed_tags=tags, case_sensitive=False)
+        except Exception:
+            pass
     parser = IncrementalXMLParser(allowed_tags=tags)
     return parser.parse(text)

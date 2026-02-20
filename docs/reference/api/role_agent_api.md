@@ -17,21 +17,25 @@ Wraps another runner and injects a role-based system prompt.
 #### RoleAgentRunner.__init__
 
 ```python
-__init__(self, role, base_runner)
+__init__(self: Any, role: TaskRole, base_runner: AgentRunner)
 ```
+
+---
 
 #### RoleAgentRunner.run
 
 ```python
-run(self, prompt, cwd, mode, timeout)
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
 ```
+
+---
 
 ---
 
 ## run
 
 ```python
-run(self, prompt, cwd, mode, timeout)
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int) -> RunResult
 ```
 
 ---

@@ -41,72 +41,88 @@ Backend priority (fastest first):
 #### FastProcessMonitor.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### FastProcessMonitor.find_by_command
 
+```python
+find_by_command(self: Any, patterns: list[str])
+```
+
 Find processes whose command line contains any of the patterns.
 
-Args:
-    patterns: List of strings to search for in command line
+**Parameters**:
 
-Returns:
-    List of matching ProcessInfo objects
+- `patterns`: List of strings to search for in command line
 
-```python
-find_by_command(self, patterns)
-```
+**Returns**: List of matching ProcessInfo objects
+
+---
 
 #### FastProcessMonitor.find_processes
 
+```python
+find_processes(self: Any, predicate: Callable[(Any, bool)])
+```
+
 Find processes matching a predicate function.
 
-Args:
-    predicate: Function that takes ProcessInfo and returns bool
+**Parameters**:
 
-Returns:
-    List of matching ProcessInfo objects
+- `predicate`: Function that takes ProcessInfo and returns bool
 
-```python
-find_processes(self, predicate)
-```
+**Returns**: List of matching ProcessInfo objects
+
+---
 
 #### FastProcessMonitor.get_process
 
-Get process information by PID.
-
-Args:
-    pid: Process ID
-
-Returns:
-    ProcessInfo if found, None otherwise
-
 ```python
-get_process(self, pid)
+get_process(self: Any, pid: int)
 ```
 
+Get process information by PID.
+
+**Parameters**:
+
+- `pid`: Process ID
+
+**Returns**: ProcessInfo if found, None otherwise
+
+---
+
 #### FastProcessMonitor.get_process_count
+
+```python
+get_process_count(self: Any)
+```
 
 Get total number of processes (fast, optimized).
 
 Uses os.scandir() for faster directory scanning (2-3x faster than Path.iterdir()).
 
-```python
-get_process_count(self)
-```
+---
 
 #### FastProcessMonitor.get_process_info_detailed
+
+```python
+get_process_info_detailed(self: Any, pid: int)
+```
 
 Get detailed process information including memory and FD counts.
 
 Slower than get_process() but provides more details.
 
-```python
-get_process_info_detailed(self, pid)
-```
+---
 
 #### FastProcessMonitor.iter_processes
+
+```python
+iter_processes(self: Any, attrs: Any, use_cache: bool)
+```
 
 Iterate through all processes using the fastest available backend.
 
@@ -115,16 +131,14 @@ Backend selection priority:
 2. Direct /proc filesystem (Linux) - very fast, raw file reads
 3. psutil (cross-platform) - slower but reliable fallback
 
-Args:
-    attrs: Optional list of attributes to fetch (for psutil backend)
-    use_cache: Whether to use cached results (1 second TTL)
+**Parameters**:
 
-Yields:
-    ProcessInfo objects for each process
+- `attrs`: Optional list of attributes to fetch (for psutil backend)
+- `use_cache`: Whether to use cached results (1 second TTL)
 
-```python
-iter_processes(self, attrs, use_cache)
-```
+**Returns**: ProcessInfo objects for each process
+
+---
 
 ---
 
@@ -136,33 +150,33 @@ Lightweight process information.
 
 ## find_by_command
 
+```python
+find_by_command(self: Any, patterns: list[str])
+```
+
 Find processes whose command line contains any of the patterns.
 
-Args:
-    patterns: List of strings to search for in command line
+**Parameters**:
 
-Returns:
-    List of matching ProcessInfo objects
+- `patterns`: List of strings to search for in command line
 
-```python
-find_by_command(self, patterns)
-```
+**Returns**: List of matching ProcessInfo objects
 
 ---
 
 ## find_processes
 
+```python
+find_processes(self: Any, predicate: Callable[(Any, bool)])
+```
+
 Find processes matching a predicate function.
 
-Args:
-    predicate: Function that takes ProcessInfo and returns bool
+**Parameters**:
 
-Returns:
-    List of matching ProcessInfo objects
+- `predicate`: Function that takes ProcessInfo and returns bool
 
-```python
-find_processes(self, predicate)
-```
+**Returns**: List of matching ProcessInfo objects
 
 ---
 
@@ -174,45 +188,49 @@ Get global fast process monitor instance.
 
 ## get_process
 
+```python
+get_process(self: Any, pid: int)
+```
+
 Get process information by PID.
 
-Args:
-    pid: Process ID
+**Parameters**:
 
-Returns:
-    ProcessInfo if found, None otherwise
+- `pid`: Process ID
 
-```python
-get_process(self, pid)
-```
+**Returns**: ProcessInfo if found, None otherwise
 
 ---
 
 ## get_process_count
 
+```python
+get_process_count(self: Any)
+```
+
 Get total number of processes (fast, optimized).
 
 Uses os.scandir() for faster directory scanning (2-3x faster than Path.iterdir()).
-
-```python
-get_process_count(self)
-```
 
 ---
 
 ## get_process_info_detailed
 
+```python
+get_process_info_detailed(self: Any, pid: int)
+```
+
 Get detailed process information including memory and FD counts.
 
 Slower than get_process() but provides more details.
 
-```python
-get_process_info_detailed(self, pid)
-```
-
 ---
 
 ## iter_processes
+
+```python
+iter_processes(self: Any, attrs: Any, use_cache: bool)
+```
 
 Iterate through all processes using the fastest available backend.
 
@@ -221,23 +239,19 @@ Backend selection priority:
 2. Direct /proc filesystem (Linux) - very fast, raw file reads
 3. psutil (cross-platform) - slower but reliable fallback
 
-Args:
-    attrs: Optional list of attributes to fetch (for psutil backend)
-    use_cache: Whether to use cached results (1 second TTL)
+**Parameters**:
 
-Yields:
-    ProcessInfo objects for each process
+- `attrs`: Optional list of attributes to fetch (for psutil backend)
+- `use_cache`: Whether to use cached results (1 second TTL)
 
-```python
-iter_processes(self, attrs, use_cache)
-```
+**Returns**: ProcessInfo objects for each process
 
 ---
 
 ## matches
 
 ```python
-matches(info)
+matches(info: ProcessInfo) -> bool
 ```
 
 ---

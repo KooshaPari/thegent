@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Normalize all MD docs - add frontmatter, cross-links, See also sections
 set -euo pipefail
 

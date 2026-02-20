@@ -1,8 +1,11 @@
 """Reusable helper library for common patterns."""
 
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
+
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = logging.getLogger(__name__)
 
@@ -13,12 +16,12 @@ class ReusableHelpers:
     @staticmethod
     def safe_execute(func: Callable, *args, **kwargs) -> tuple[Any, Exception | None]:
         """Safely execute a function with error handling.
-        
+
         Args:
             func: Function to execute
             *args: Positional arguments
             **kwargs: Keyword arguments
-            
+
         Returns:
             Tuple of (result, error)
         """
@@ -37,38 +40,36 @@ class ReusableHelpers:
         *args,
         **kwargs,
     ) -> Any:
-        """Retry a function on failure.
-        
+        """Retry a function on failure using tenacity.
+
         Args:
             func: Function to retry
             max_retries: Maximum retry attempts
             delay: Delay between retries (seconds)
             *args: Positional arguments
             **kwargs: Keyword arguments
-            
+
         Returns:
             Function result
         """
-        import time
-        
-        for attempt in range(max_retries):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                if attempt == max_retries - 1:
-                    raise
-                logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying...")
-                time.sleep(delay)
-        
-        raise Exception("Max retries exceeded")
+
+        @retry(
+            stop=stop_after_attempt(max_retries),
+            wait=wait_fixed(delay),
+            reraise=True,
+        )
+        def _execute_with_retry():
+            return func(*args, **kwargs)
+
+        return _execute_with_retry()
 
     @staticmethod
     def ensure_directory(path: Path) -> Path:
         """Ensure a directory exists.
-        
+
         Args:
             path: Directory path
-            
+
         Returns:
             Path object
         """
@@ -82,12 +83,12 @@ class ReusableHelpers:
         recursive: bool = True,
     ) -> list[Path]:
         """Find files matching a pattern.
-        
+
         Args:
             directory: Directory to search
             pattern: File pattern
             recursive: Search recursively
-            
+
         Returns:
             List of matching file paths
         """
@@ -98,15 +99,15 @@ class ReusableHelpers:
     @staticmethod
     def read_json_safe(file_path: Path) -> dict[str, Any] | None:
         """Safely read a JSON file.
-        
+
         Args:
             file_path: JSON file path
-            
+
         Returns:
             Parsed JSON or None
         """
         import json
-        
+
         try:
             return json.loads(file_path.read_text())
         except Exception as e:
@@ -120,17 +121,17 @@ class ReusableHelpers:
         limit: int | None = None,
     ) -> str:
         """Read a file with offset and limit.
-        
+
         Args:
             file_path: File to read
             offset: Starting line (0-indexed)
             limit: Maximum number of lines to read
-            
+
         Returns:
             File content as string
         """
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 lines = f.readlines()
                 if limit is None:
                     return "".join(lines[offset:])
@@ -142,16 +143,16 @@ class ReusableHelpers:
     @staticmethod
     def write_json_safe(file_path: Path, data: dict[str, Any]) -> bool:
         """Safely write a JSON file.
-        
+
         Args:
             file_path: JSON file path
             data: Data to write
-            
+
         Returns:
             True if successful
         """
         import json
-        
+
         try:
             file_path.write_text(json.dumps(data, indent=2))
             return True

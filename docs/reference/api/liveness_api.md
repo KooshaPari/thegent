@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/verification/liveness.py`
 
 WP-25001: Liveness Proofs for Autonomous Agent Loops.
+
 Ensures that an agent loop will eventually terminate or make progress.
 Uses formal-inspired invariant checking on loop state history.
 
@@ -17,24 +18,30 @@ Verifies liveness properties of autonomous execution loops.
 #### LivenessChecker.__init__
 
 ```python
-__init__(self, run_id, max_retries, progress_timeout_s)
+__init__(self: Any, run_id: str, max_retries: int, progress_timeout_s: int)
 ```
+
+---
 
 #### LivenessChecker.check_invariants
 
+```python
+check_invariants(self: Any)
+```
+
 Check for liveness violations in the execution history.
 
-```python
-check_invariants(self)
-```
+---
 
 #### LivenessChecker.record_step
 
+```python
+record_step(self: Any, step_type: str, state: dict[(str, Any)])
+```
+
 Record a step in the agent loop for liveness analysis.
 
-```python
-record_step(self, step_type, state)
-```
+---
 
 ---
 
@@ -48,21 +55,21 @@ Details of a detected liveness violation.
 
 ## check_invariants
 
-Check for liveness violations in the execution history.
-
 ```python
-check_invariants(self)
+check_invariants(self: Any)
 ```
+
+Check for liveness violations in the execution history.
 
 ---
 
 ## record_step
 
-Record a step in the agent loop for liveness analysis.
-
 ```python
-record_step(self, step_type, state)
+record_step(self: Any, step_type: str, state: dict[(str, Any)])
 ```
+
+Record a step in the agent loop for liveness analysis.
 
 ---
 

@@ -77,34 +77,33 @@ impl GrepShim {
                         rg_args.push(args[i].clone());
                     }
                 }
-                "-e" => {
-                    // Pattern flag
+                "-A" | "-B" | "-C" | "--after-context" | "--before-context" | "--context" => {
+                    // Context flags
                     if i + 1 < args.len() {
+                        rg_args.push(arg.clone());
                         i += 1;
                         rg_args.push(args[i].clone());
                     }
                 }
-                "-r" | "-R" => {
-                    // Recursive - handled by default in rg
+                "-e" | "--regexp" => {
+                    // Pattern flag
+                    if i + 1 < args.len() {
+                        i += 1;
+                        rg_args.push("-e".to_string());
+                        rg_args.push(args[i].clone());
+                    }
                 }
-                // Skip recursive modifier flags
-                "-rE" | "-ro" | "-roE" | "-rH" | "-rHo" | "-rHoE" | "-rEl" | "-rEh" | "-rn" => {
-                    // Parse out the flags we care about
-                    if arg.contains('n') {
-                        rg_args.push("-n".to_string());
-                    }
-                    if arg.contains('o') {
-                        rg_args.push("-o".to_string());
-                    }
-                    if arg.contains('l') {
-                        rg_args.push("-l".to_string());
+                "-f" | "--file" => {
+                    // Patterns from file
+                    if i + 1 < args.len() {
+                        i += 1;
+                        rg_args.push("-f".to_string());
+                        rg_args.push(args[i].clone());
                     }
                 }
                 _ => {
-                    // Pass through other args (safe - Command avoids shell interpretation)
-                    if !arg.starts_with('-') {
-                        rg_args.push(arg.clone());
-                    }
+                    // Pass through all other args (safe - Command avoids shell interpretation)
+                    rg_args.push(arg.clone());
                 }
             }
             i += 1;

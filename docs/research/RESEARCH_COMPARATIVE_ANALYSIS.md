@@ -13,7 +13,7 @@
 | **3-level hierarchy** (Exec→Lead→Spec) | CrewAI hierarchical processes; smolgents manager/worker | ✅ **Validated** — Proceed |
 | **Parent-child relationships** | MetaGPT _watch; Claude Code team lead→teammates | ✅ **Validated** — Add cause-by tracking |
 | **Team organization** | MetaGPT Team.hire; kimaki Project Context | ✅ **Validated** — Functional/Project/Ad-Hoc |
-| **Escalation tiers** | sharecli agent-mesh (Tier 0–5) | ✅ **Validated** — Integrate |
+| **Escalation tiers** | heliosShield agent-mesh (Tier 0–5) | ✅ **Validated** — Integrate |
 | **blockedBy dependencies** | Claude Code task files | ✅ **Add** — Not in current design |
 | **Model heterogeneity** | CP-WBFT, DecentLLMs | ✅ **Add** — For consensus/debate |
 | **Debate cap (3 rounds)** | ACL 2025, Martingale proof | ✅ **Add** — For multi-agent consensus |
@@ -43,7 +43,7 @@
    - **Action**: Add `blocked_by: list[str]` to DelegationRequest or Task model
 
 2. **Model heterogeneity for consensus**
-   - sharecli research: homogeneous pools defeat BFT
+   - heliosShield research: homogeneous pools defeat BFT
    - **Action**: Document in TeamCoordinator — when forming consensus, use diverse models
 
 3. **Debate/consensus round cap**
@@ -99,9 +99,9 @@
 ### 4.3 Adopt from Local Codebase
 
 - **smolgents**: `execute_hierarchical()` — manager-first assignment
-- **sharecli**: Escalation urgency formula, hard gates
+- **heliosShield**: Escalation urgency formula, hard gates
 - **kimaki**: collaborationRules (canInitiateWith, mustConsultWith)
-- **thegent**: ShareCLIBridge for task queue, intent broadcast
+- **thegent**: heliosShieldBridge for task queue, intent broadcast
 
 ### 4.4 Adopt from Web Research
 
@@ -117,7 +117,7 @@
 | Risk | Mitigation |
 |------|-------------|
 | **Over-engineering** | Phase 1–3 first; defer lazy-agent, full consensus |
-| **Conflict with ShareCLI** | Mesh treats CLI as opaque; hierarchy internal to thegent |
+| **Conflict with heliosShield** | Mesh treats CLI as opaque; hierarchy internal to thegent |
 | **Token overhead** | Claude Code has this; optimize handoff context size |
 | **Nested teams** | Claude Code doesn't support; document as future work |
 
@@ -130,7 +130,7 @@
 | All local research documents reviewed | ✅ |
 | All relevant code patterns identified | ✅ |
 | Top 5 frameworks analyzed | ✅ (CrewAI, MetaGPT, AutoGen, LangGraph, Claude Code) |
-| 10+ academic papers reviewed | ⚠️ Partial (via sharecli agent-mesh) |
+| 10+ academic papers reviewed | ⚠️ Partial (via heliosShield agent-mesh) |
 | 5+ production systems analyzed | ✅ |
 | Comprehensive pattern library | ✅ (this doc + audits) |
 | Design validated against research | ✅ |

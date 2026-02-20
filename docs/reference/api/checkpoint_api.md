@@ -8,31 +8,31 @@ Checkpoint/rollback service ops (WP-2001, FR-006).
 
 ## create
 
-Create a checkpoint.
-
 ```python
-create(session_dir, reason, dag_content, owner)
+create(session_dir: Path, reason: str, dag_content: str, owner: str)
 ```
+
+Create a checkpoint.
 
 ---
 
 ## get
 
-Retrieve a checkpoint by ID.
-
 ```python
-get(session_dir, checkpoint_id)
+get(session_dir: Path, checkpoint_id: str)
 ```
+
+Retrieve a checkpoint by ID.
 
 ---
 
 ## list_checkpoints
 
-List recent checkpoints.
-
 ```python
-list_checkpoints(session_dir, limit)
+list_checkpoints(session_dir: Path, limit: int)
 ```
+
+List recent checkpoints.
 
 ---
 

@@ -9,13 +9,13 @@ logger = logging.getLogger(__name__)
 class WorkflowEngine:
     """Engine for managing agent workflows."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize workflow engine."""
         self.workflows: dict[str, Any] = {}
 
     def register_workflow(self, name: str, workflow: dict[str, Any]) -> None:
         """Register a workflow.
-        
+
         Args:
             name: Workflow name
             workflow: Workflow definition
@@ -25,18 +25,18 @@ class WorkflowEngine:
 
     def execute_workflow(self, name: str, context: dict[str, Any]) -> dict[str, Any]:
         """Execute a workflow.
-        
+
         Args:
             name: Workflow name
             context: Execution context
-            
+
         Returns:
             Execution result
         """
         workflow = self.workflows.get(name)
         if not workflow:
             return {"error": f"Workflow {name} not found"}
-        
+
         logger.info(f"Executing workflow: {name}")
         # Implementation would execute workflow steps
         return {"status": "success", "workflow": name}

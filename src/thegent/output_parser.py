@@ -4,12 +4,38 @@ Supports:
 - JSONL / stream-json: Extract last assistant message (type=message, role=assistant).
 - Plain text: Extract last meaningful block, stripping trailing noise.
 - Structural validation: ParseResult with error_class for downstream routing/fallback.
+
+BKM-02: When THGENT_USE_NATIVE_PARSER=1, uses thegent_parser Rust extension
+for strip_think_blocks. Falls back to Python regex otherwise.
 """
 
+import importlib.util
 import json
 import re
 from dataclasses import dataclass
 from typing import Any
+
+from thegent.config import ThegentSettings
+
+_thegent_parser: Any = None
+
+
+def _get_native_parser() -> Any:
+    """Lazy import of thegent_parser native extension. Returns None if unavailable."""
+    global _thegent_parser
+    if _thegent_parser is not None:
+        return _thegent_parser
+    if not ThegentSettings().use_native_parser:
+        return None
+    for mod_path in ("thegent_parser.thegent_parser", "thegent_parser"):
+        spec = importlib.util.find_spec(mod_path)
+        if spec is not None and spec.loader is not None:
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            _thegent_parser = mod
+            return mod
+    return None
+
 
 # Error class codes for structural validation (aligned with contracts/parser)
 PARSE_OK = "parse_ok"
@@ -239,7 +265,17 @@ _WORKER_REPORT_START = re.compile(
 
 
 def _strip_think_blocks(text: str) -> str:
-    """Remove <think>...</think> blocks from output."""
+    """Remove <think>...</think> blocks from output.
+
+    BKM-02: Uses thegent_parser Rust extension when THGENT_USE_NATIVE_PARSER=1;
+    otherwise falls back to Python regex.
+    """
+    native = _get_native_parser()
+    if native is not None and hasattr(native, "strip_think_blocks"):
+        try:
+            return native.strip_think_blocks(text)
+        except Exception:
+            pass
     # QW-006: Use pre-compiled regex singleton
     return _THINK_RE.sub("", text).strip()
 

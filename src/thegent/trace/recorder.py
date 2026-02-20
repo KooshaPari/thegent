@@ -13,7 +13,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -191,7 +191,7 @@ class TraceRecorder:
             redacted_result = self._truncate_result(redacted_result)
 
         record = ToolCallRecord(
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(timezone.utc).isoformat() + "Z",
             sequence_id=seq,
             tool=tool,
             tool_name=tool_name,
@@ -242,7 +242,7 @@ class TraceRecorder:
             seq = self._sequence_id
 
         record = DecisionRecord(
-            timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
             sequence_id=seq,
             decision_type=decision_type,
             context=context,
@@ -405,11 +405,11 @@ class TraceCleanup:
             return 0
 
         deleted_count = 0
-        cutoff_time = datetime.now(timezone.utc) - timedelta(days=self.ttl_days)
+        cutoff_time = datetime.now(UTC) - timedelta(days=self.ttl_days)
 
         for trace_file in self.trace_dir.glob("*.jsonl*"):
             try:
-                mtime = datetime.utcfromtimestamp(trace_file.stat().st_mtime)
+                mtime = datetime.fromtimestamp(trace_file.stat().st_mtime, tz=timezone.utc)
                 if mtime < cutoff_time:
                     trace_file.unlink()
                     deleted_count += 1

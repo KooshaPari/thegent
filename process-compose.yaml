@@ -16,6 +16,7 @@ log_level: info
 
 environment:
   - PYTHONUNBUFFERED=1
+  - PYTHONPATH=src
   - THGENT_MCP_HOST=127.0.0.1
   - THGENT_MCP_PORT=3847
   - THGENT_CLIPROXY_PORT=8317
@@ -56,7 +57,6 @@ processes:
       timeout_seconds: 5
       success_threshold: 1
       failure_threshold: 3
-    is_daemon: true
     log_location: .process-compose/logs/server.log
     log_length: 5000
 
@@ -83,7 +83,6 @@ processes:
       timeout_seconds: 5
       success_threshold: 1
       failure_threshold: 3
-    is_daemon: true
     log_location: .process-compose/logs/control-plane.log
 
   # Serena: only runs when THGENT_MCP_MOUNT_SERENA=1. When disabled, sleeps to avoid restart loops.
@@ -107,6 +106,5 @@ processes:
         args: ["-c", "test \"${THGENT_MCP_MOUNT_SERENA:-0}\" != 1 || nc -z 127.0.0.1 3848"]
       initial_delay_seconds: 5
       period_seconds: 10
-    is_daemon: true
     log_location: .process-compose/logs/serena.log
 

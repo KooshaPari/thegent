@@ -10,7 +10,7 @@
 
 ### Files Migrated
 1. ✅ `src/thegent/dex_main.py` - Uses `settings.dex_force_yolo`
-2. ✅ `src/thegent/governance/sharecli_bridge.py` - Uses `settings.harness_root`
+2. ✅ `src/thegent/governance/heliosShield_bridge.py` - Uses `settings.harness_root`
 3. ✅ `src/thegent/cli_impl.py` - Uses `settings.sandbox_env_filter` instead of `os.environ.get("THGENT_SANDBOX_ENV_FILTER")`
 
 ---

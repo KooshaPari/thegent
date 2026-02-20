@@ -1,13 +1,9 @@
-"""Tests for pending queue hooks: prompt-submit-guard $defer, harvest-pending-queue.
-
-Traces to: CLAUDE_CODE_QUEUE_PENDING_BLOCKING.md §11 Testing Strategy.
-"""
-
 from __future__ import annotations
 
 import json
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 import pytest
 
@@ -18,8 +14,8 @@ def _hooks_dir() -> Path:
 
 def _run_prompt_guard(
     prompt: str,
-    project_dir: Optional[Path] = None,
-    env_override: dict[str, Optional[str]] | None = None,
+    project_dir: Path | None = None,
+    env_override: dict[str, str | None] | None = None,
 ) -> subprocess.CompletedProcess:
     """Invoke prompt-submit-guard with given prompt via stdin."""
     hooks = _hooks_dir()
@@ -92,8 +88,8 @@ class TestPromptSubmitGuardDefer:
 
 
 def _run_harvest_pending_queue(
-    project_dir: Optional[Path] = None,
-    state_dir: Optional[Path] = None,
+    project_dir: Path | None = None,
+    state_dir: Path | None = None,
     queue_content: str = "",
     use_project_queue: bool = True,
 ) -> subprocess.CompletedProcess:
@@ -169,8 +165,8 @@ class TestHarvestPendingQueue:
 
 
 def _run_harvest_idea_seeds(
-    claude_history: Optional[Path] = None,
-    state_dir: Optional[Path] = None,
+    claude_history: Path | None = None,
+    state_dir: Path | None = None,
     cursor_projects: str = "",  # empty = skip Cursor
 ) -> subprocess.CompletedProcess:
     """Invoke harvest-idea-seeds with given paths."""

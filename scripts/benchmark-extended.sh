@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Extended benchmark suite for hook-rust migration analysis
 # Includes operation-level, hook-level, and aggregate benchmarks
 # Usage: bash scripts/benchmark-extended.sh [OPTIONS]

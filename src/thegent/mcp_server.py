@@ -71,6 +71,7 @@ from thegent.cli_impl import (
     bg_impl,
     continuity_snapshot_impl,
     dag_list_impl,
+    dag_status_impl,
     do_next_impl,  # Now exists
     escalate_add_impl,
     escalate_approve_impl,
@@ -79,7 +80,6 @@ from thegent.cli_impl import (
     get_server_meta_impl,
     history_impl,
     inbox_list_impl,
-    inbox_wait_impl,  # Used by thegent_inbox_wait
     incorporate_impl,
     inspect_impl,
     list_agents_impl,
@@ -181,6 +181,15 @@ TOOL_ICONS = {
     "thegent_queue_extend_lease": "⏳",
     "thegent_terminal_route": "⌨",
     "thegent_free": "▶",
+    "thegent_flash": "⚡",
+    "thegent_elicit_confirmation": "?",
+    "thegent_elicit_choice": "◎",
+    "thegent_elicit_text": "✎",
+    "thegent_storage_get": "▤",
+    "thegent_storage_set": "⌃",
+    "thegent_events_emit": "↑",
+    "thegent_events_replay": "≡",
+    "thegent_macos_run_script": "⌘",
 }
 
 _log = logging.getLogger(__name__)
@@ -212,10 +221,12 @@ def _cache_elicitation_response(prompt: str, response_type: type, response: Any)
     cache_key = _cache_elicitation_key(prompt, response_type)
     _ELICITATION_CACHE[cache_key] = response
 
+
 # OPT-018: ElicitationResponse caching with SHA256 of prompt+response
 # Cache to avoid re-eliciting identical contexts
-from cachetools import TTLCache
 import hashlib
+
+from cachetools import TTLCache
 
 _ELICITATION_CACHE: TTLCache[str, Any] = TTLCache(maxsize=100, ttl=300)  # 5 min TTL
 
@@ -455,7 +466,7 @@ async def thegent_lifespan(mcp_app: FastMCP) -> AsyncIterator[dict[str, Any] | N
             poll_interval = 2.0
             while (time.monotonic() - start) < active_wait_s:
                 try:
-                    rows = await asyncio.to_thread(ps_impl, None, True, False)
+                    rows = await asyncio.to_thread(ps_impl, None, True, None)
                     running = [r for r in rows if (r.get("status") or "").lower() == "running"]
                     if not running:
                         _log.info("no active runs; shutdown proceeding")
@@ -567,7 +578,7 @@ def resource_session_meta(id: str, include_contract: bool = False) -> str:
 )
 def resource_session_logs(id: str, stderr: bool = False, tail: int | None = None) -> str:
     """Get logs from a background session. Use ?stderr=true for stderr, ?tail=N for last N lines."""
-    return logs_impl(session_id=id, tail=tail, stderr=stderr)
+    return logs_impl(session_id=id, tail=tail, stderr=stderr) or ""
 
 
 @mcp.resource(
@@ -623,7 +634,6 @@ def resource_models_contract() -> str:
 def resource_workstream() -> str:
     """Get the canonical WORK_STREAM.md content."""
     from thegent.utils import get_resource_path
-
     from thegent.utils.helpers import read_file_optimized
 
     work_stream_path = get_resource_path("docs/reference/WORK_STREAM.md")
@@ -640,8 +650,8 @@ def resource_workstream() -> str:
 )
 def resource_events_session_complete() -> str:
     """Event stream for session completion events (for auto-launch system)."""
-    from thegent.planning.workstream_db import WorkstreamDB
     from thegent.config import ThegentSettings
+    from thegent.planning.workstream_db import WorkstreamDB
 
     try:
         db = WorkstreamDB(settings=ThegentSettings())
@@ -667,26 +677,45 @@ def resource_events_session_complete() -> str:
 )
 def resource_workstream_db() -> str:
     """Workstream database metadata and schema info."""
-    from thegent.planning.workstream_db import WorkstreamDB
     from thegent.config import ThegentSettings
+    from thegent.planning.workstream_db import WorkstreamDB
 
     try:
         db = WorkstreamDB(settings=ThegentSettings())
         stats = db.get_statistics()
-        return json.dumps({
-            "database_path": str(db.db_path),
-            "schema_version": db.SCHEMA_VERSION,
-            "statistics": stats,
-            "tables": [
-                "sessions", "workstream_items", "dependencies", "launches",
-                "auto_launch_events", "evidence_links", "cost_tracking",
-                "deferred_tasks", "team_tasks", "kpi_metrics", "backlog_items",
-                "teammate_delegations", "policy_overrides", "process_tracking",
-                "siem_events", "rbac_audit", "memory_cache", "constitutional_violations",
-                "reputation_entries", "agent_hierarchy", "sync_tracking",
-                "config_cache", "plan_tasks", "alert_fatigue"
-            ]
-        })
+        return json.dumps(
+            {
+                "database_path": str(db.db_path),
+                "schema_version": db.SCHEMA_VERSION,
+                "statistics": stats,
+                "tables": [
+                    "sessions",
+                    "workstream_items",
+                    "dependencies",
+                    "launches",
+                    "auto_launch_events",
+                    "evidence_links",
+                    "cost_tracking",
+                    "deferred_tasks",
+                    "team_tasks",
+                    "kpi_metrics",
+                    "backlog_items",
+                    "teammate_delegations",
+                    "policy_overrides",
+                    "process_tracking",
+                    "siem_events",
+                    "rbac_audit",
+                    "memory_cache",
+                    "constitutional_violations",
+                    "reputation_entries",
+                    "agent_hierarchy",
+                    "sync_tracking",
+                    "config_cache",
+                    "plan_tasks",
+                    "alert_fatigue",
+                ],
+            }
+        )
     except Exception as e:
         return json.dumps({"error": str(e)})
 
@@ -1053,6 +1082,147 @@ def thegent_bg_task(agent: str, prompt: str, owner: str | None = None) -> str:
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+async def thegent_session_list(
+    all: bool = False,
+    owner: str | None = None,
+    agent: str | None = None,
+    status: str | None = None,
+    limit: int = 50,
+) -> str:
+    """
+    List agent sessions from the registry (WP-9006).
+
+    Args:
+        all: Show sessions for all owners (admin)
+        owner: Filter by owner tag
+        agent: Filter by agent name
+        status: Filter by status (running, completed, failed)
+        limit: Max sessions to return
+    """
+    from thegent.cli_impl import ps_impl
+
+    sessions = ps_impl(all=all, owner=owner, agent=agent, status=status, limit=limit)
+    return json.dumps(sessions, indent=2)
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+async def thegent_session_show(
+    session_id: str,
+) -> str:
+    """
+    Get detailed metadata for a session (WP-9006).
+
+    Args:
+        session_id: The ID of the session
+    """
+    from thegent.cli_impl import ps_impl
+
+    sessions = ps_impl(all=True)
+    session = next(
+        (s for s in sessions if s.get("run_id") == session_id or s.get("correlation_id") == session_id), None
+    )
+    if not session:
+        return json.dumps({"error": f"Session {session_id} not found"}, indent=2)
+
+    return json.dumps(session, indent=2)
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+async def thegent_session_logs(
+    session_id: str,
+    stderr: bool = False,
+    tail: int = 100,
+) -> str:
+    """
+    Read session logs (stdout/stderr) (WP-9006).
+
+    Args:
+        session_id: The ID of the session
+        stderr: Read stderr instead of stdout
+        tail: Number of lines to return from the end
+    """
+    from thegent.cli_impl import logs_impl
+
+    res = logs_impl(session_id=session_id, stderr=stderr, follow=False, tail=tail)
+    if res is None:
+        return ""
+    return res
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+async def thegent_session_send(
+    session_id: str,
+    message: str,
+    msg_type: str = "reprompt",
+) -> str:
+    """
+    Send a message/reprompt to a running session (WP-9004).
+
+    Args:
+        session_id: The ID of the session
+        message: The message text to send
+        msg_type: reprompt, command, system
+    """
+    from thegent.cli_impl import session_send_impl
+
+    ok, msg = session_send_impl(session_id, message, msg_type=msg_type)
+    return json.dumps({"success": ok, "message": msg}, indent=2)
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+async def thegent_session_attach_hint(
+    session_id: str,
+) -> str:
+    """
+    Return the command to attach to a session (WP-9007).
+
+    Args:
+        session_id: The ID of the session
+    """
+    from thegent.cli_impl import ps_impl
+
+    sessions = ps_impl(all=True)
+    session = next(
+        (s for s in sessions if s.get("run_id") == session_id or s.get("correlation_id") == session_id), None
+    )
+    if not session:
+        return json.dumps({"error": f"Session {session_id} not found"}, indent=2)
+
+    interactivity = session.get("interactivity")
+    attach_target = session.get("attach_target") or {}
+
+    if interactivity == "tmux" or attach_target.get("tmux_pane"):
+        pane = attach_target.get("tmux_pane") or session_id
+        return json.dumps(
+            {
+                "mode": "tmux",
+                "command": f"thegent session attach {session_id}",
+                "raw_command": f"tmux attach-session -t {pane}",
+                "hint": "Attach via tmux",
+            },
+            indent=2,
+        )
+
+    if interactivity == "headless-holdpty":
+        return json.dumps(
+            {
+                "mode": "holdpty",
+                "command": f"thegent session attach {session_id}",
+                "hint": "Attach via holdpty wrapper",
+            },
+            indent=2,
+        )
+
+    return json.dumps(
+        {
+            "mode": "none",
+            "hint": "Session does not support interactive attachment. Use 'thegent session logs --follow' instead.",
+        },
+        indent=2,
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
 async def thegent_config_resolve(
     tenant_id: str | None = None,
     session_id: str | None = None,
@@ -1072,9 +1242,7 @@ async def thegent_config_resolve(
     from thegent.config_provider import get_config_provider
 
     provider = get_config_provider()
-    config = provider.resolve(
-        tenant_id=tenant_id, session_id=session_id, request_overrides=overrides, keys=keys
-    )
+    config = provider.resolve(tenant_id=tenant_id, session_id=session_id, request_overrides=overrides, keys=keys)
 
     # Sanitize for JSON (Path -> str)
     def _sanitize(obj: Any) -> Any:
@@ -1123,6 +1291,7 @@ async def thegent_run(
     include_contract: bool = False,
     confidence: float | None = None,
     arbitration: str | None = None,
+    async_task: bool = False,
     ctx: Any = CurrentContext(),
     default_cwd: Any = Depends(get_default_cwd),
 ) -> ToolResult | str:
@@ -1141,8 +1310,12 @@ async def thegent_run(
     include_contract: Include resolved route contract metadata for model-based routing
     confidence: Required confidence threshold (0.0-1.0)
     arbitration: Arbitration role (e.g. planner, operator, reviewer)
+    async_task: If True, dispatch run as a background asyncio task and return
+        task_id immediately. Use thegent_task_status/thegent_task_cancel to
+        track or cancel. Default: False (blocking).
 
     Returns: JSON string with keys: stdout, stderr, exit_code, timed_out and optional routing metadata.
+        When async_task=True: {"task_id": str, "status": "running"}.
     """
     # Model-first: resolve model -> (agent, model_alias)
     request_payload: dict[str, Any] = {
@@ -1284,6 +1457,17 @@ async def thegent_run(
             override_reason=arbitration,
         )
     )
+    # async_task=True: register in task registry and return task_id immediately
+    if async_task:
+        from thegent.mcp.task_registry import get_task_registry as _gtr
+
+        tid = _gtr().create(task)
+        payload = {"task_id": tid, "status": "running"}
+        return ToolResult(
+            content=json.dumps(payload),
+            structured_content=payload,
+            meta={"execution_time_ms": 0},
+        )
     last_reported = 0
     last_close_at = 0
     while not task.done():
@@ -1340,15 +1524,15 @@ async def thegent_loop(
 
     start_time = time.perf_counter()
 
+    # loop_impl is not yet implemented in cli_impl; use bg_impl to launch the loop agent
     async def _run():
         return await asyncio.to_thread(
-            loop_impl,
+            bg_impl,
             agent=agent or "cursor",
-            prompt=prompt,
-            todo_spec=todo_spec,
-            checker=checker,
-            mode=mode,
+            prompt=f"[LOOP mode={mode} checker={checker}] {prompt}\n\nTODO: {todo_spec}",
             cd=cwd,
+            mode="write",
+            timeout=0,
         )
 
     task = asyncio.create_task(_run())
@@ -2175,16 +2359,34 @@ def thegent_inbox_wait(
     )
     src_tuple = tuple(s.strip() for s in (sources or "registry,escalation").split(",") if s.strip())
     start_time = time.perf_counter()
-    result = inbox_wait_impl(
-        owner=owner,
-        agent=agent,
-        event_type=event_type,
-        status=status,
-        sources=src_tuple,
-        poll_interval=poll_interval,
-        timeout=timeout,
-        notify=False,
+    # inbox_wait_impl only supports timeout; implement filtered polling inline
+    auto_timeout_secs = 110.0  # Just under 2min to avoid Cursor 4min guard
+    effective_timeout = min(timeout, auto_timeout_secs) if timeout > 0 else auto_timeout_secs
+    seen_ids: set[str] = set()
+    result: dict | list = []
+    # Seed seen_ids with current events so we only return NEW events
+    initial = inbox_list_impl(
+        owner=owner, agent=agent, event_type=event_type, status=status, sources=src_tuple
     )
+    for ev in initial:
+        seen_ids.add(ev.get("run_id", "") + str(ev.get("timestamp", "")))
+    while True:
+        elapsed = time.perf_counter() - start_time
+        if effective_timeout > 0 and elapsed >= effective_timeout:
+            auto_timed_out = timeout <= 0 or elapsed < timeout
+            result = {"auto_timeout": auto_timed_out, "elapsed_seconds": int(elapsed), "retry_instruction": "retry"}
+            break
+        current = inbox_list_impl(
+            owner=owner, agent=agent, event_type=event_type, status=status, sources=src_tuple
+        )
+        new_events = [
+            ev for ev in current
+            if ev.get("run_id", "") + str(ev.get("timestamp", "")) not in seen_ids
+        ]
+        if new_events:
+            result = new_events
+            break
+        time.sleep(poll_interval)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
 
     # Handle auto-timeout case
@@ -2290,8 +2492,13 @@ def thegent_pause(session_id: str, reason: str = "Manual pause") -> ToolResult:
     Returns: ToolResult with status
     """
     _log.info("thegent_pause session_id=%s", session_id)
+    from thegent.execution import RunRegistry
+
     start_time = time.perf_counter()
-    result = pause_impl(session_id=session_id, reason=reason)
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+    registry.register_pause(run_id=session_id, reason=reason)
+    result = {"success": True, "session_id": session_id, "status": "paused", "reason": reason}
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
         content=json.dumps(result),
@@ -2311,8 +2518,13 @@ def thegent_resume(session_id: str) -> ToolResult:
     Returns: ToolResult with status
     """
     _log.info("thegent_resume session_id=%s", session_id)
+    from thegent.execution import RunRegistry
+
     start_time = time.perf_counter()
-    result = resume_impl(session_id=session_id)
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+    registry.register_resume(run_id=session_id)
+    result = {"success": True, "session_id": session_id, "status": "running"}
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
         content=json.dumps(result),
@@ -2447,10 +2659,19 @@ def thegent_suggest_mode(
 
     Returns: JSON with mode, reason, phases, and selection inputs.
     """
-    from thegent.orchestration_modes import select_mode
+    from thegent.orchestration_modes import get_mode, suggest_mode
 
     start_time = time.perf_counter()
-    result = select_mode(risk=risk, urgency=urgency, confidence=confidence)
+    mode_value = suggest_mode(risk=risk, urgency=urgency, confidence=confidence)
+    entry = get_mode(str(mode_value))
+    result: dict[str, Any] = {
+        "mode": str(mode_value),
+        "inputs": {"risk": risk, "urgency": urgency, "confidence": confidence},
+    }
+    if entry:
+        result["description"] = entry.description
+        result["phases"] = entry.phases
+        result["use_case"] = entry.use_case
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
         content=json.dumps(result),
@@ -2751,6 +2972,67 @@ def thegent_terminal_send(pane_id: str, text: str, enter: bool = True) -> ToolRe
 
 
 @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_lock_resource(resource: str, ttl: int = 60, cd: str | None = None) -> ToolResult:
+    """
+    Acquire an exclusive lock on a resource (file or directory).
+    Returns a token that MUST be used with thegent_unlock_resource.
+    Use for non-worktree multi-tenancy coordination.
+    """
+    from thegent.cli_impl import _default_owner_tag, lock_resource_impl
+
+    start_time = time.perf_counter()
+    agent_id = _default_owner_tag(Path(cd) if cd else None)
+    res = lock_resource_impl(resource, agent_id, ttl=ttl, cd=Path(cd) if cd else None)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+
+    if res["success"]:
+        return ToolResult(
+            content=f"Successfully locked {res['resource']} (token: {res['token']})",
+            structured_content=res,
+            meta={"execution_time_ms": elapsed_ms},
+        )
+    return _error_result(res["error"], "Retry later or check for stale locks.", extra={"resource": resource})
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_unlock_resource(resource: str, token: str, cd: str | None = None) -> ToolResult:
+    """
+    Release an exclusive lock on a resource using the token from thegent_lock_resource.
+    """
+    from thegent.cli_impl import _default_owner_tag, unlock_resource_impl
+
+    start_time = time.perf_counter()
+    agent_id = _default_owner_tag(Path(cd) if cd else None)
+    res = unlock_resource_impl(resource, agent_id, token, cd=Path(cd) if cd else None)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+
+    return ToolResult(
+        content=f"Successfully unlocked {resource}",
+        structured_content=res,
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_verify_context(files: list[str], cd: str | None = None) -> ToolResult:
+    """
+    Verify if any of the given files have been modified (OCC check).
+    Returns current versions (hashes) of files for stale-state detection.
+    """
+    from thegent.cli_impl import verify_context_impl
+
+    start_time = time.perf_counter()
+    res = verify_context_impl(files, cd=Path(cd) if cd else None)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+
+    return ToolResult(
+        content=json.dumps(res, indent=2),
+        structured_content=res,
+        meta={"execution_time_ms": elapsed_ms},
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
 def thegent_terminal_attach(pane_id: str) -> ToolResult:
     """
     Get instructions to attach to a terminal session.
@@ -2806,13 +3088,13 @@ def thegent_workstream_complete(item_id: str, agent_id: str) -> ToolResult:
 def thegent_workstream_query(query: str) -> ToolResult:
     """
     Execute SQL query on workstream database.
-    
+
     Returns query results as JSON. Use for exploring session/workstream data.
     Example: "SELECT * FROM sessions WHERE status='running' LIMIT 10"
     """
-    from thegent.planning.workstream_db import WorkstreamDB
     from thegent.config import ThegentSettings
-    
+    from thegent.planning.workstream_db import WorkstreamDB
+
     start_time = time.perf_counter()
     try:
         db = WorkstreamDB(settings=ThegentSettings())
@@ -2836,26 +3118,26 @@ def thegent_workstream_query(query: str) -> ToolResult:
 def thegent_workstream_stats() -> ToolResult:
     """
     Get workstream statistics.
-    
+
     Returns statistics including running/completed counts, success rate,
     average duration, deferred tasks, and lane breakdown.
     """
-    from thegent.planning.workstream_db import WorkstreamDB
     from thegent.config import ThegentSettings
-    
+    from thegent.planning.workstream_db import WorkstreamDB
+
     start_time = time.perf_counter()
     try:
         db = WorkstreamDB(settings=ThegentSettings())
         stats = db.get_statistics()
         lane_counts = db.get_running_count_by_lane()
         recent_costs = db.get_recent_costs(limit=5)
-        
+
         result = {
             "statistics": stats,
             "lane_breakdown": lane_counts,
             "recent_costs": recent_costs,
         }
-        
+
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
         return ToolResult(
             content=json.dumps(result, indent=2),
@@ -2878,14 +3160,14 @@ def thegent_workstream_stats() -> ToolResult:
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
-def thegent_sharecli_status() -> ToolResult:
+def thegent_heliosShield_status() -> ToolResult:
     """
-    Get status from sharecli harness.
+    Get status from thegent.mesh harness.
     """
-    from thegent.tools.terminal import sharecli_status
+    from thegent.tools.terminal import heliosShield_status
 
     start_time = time.perf_counter()
-    status = sharecli_status()
+    status = heliosShield_status()
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
         content=status,
@@ -2895,7 +3177,11 @@ def thegent_sharecli_status() -> ToolResult:
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
-def thegent_ddg_search(query: str, num_results: int = 5) -> ToolResult:
+async def thegent_ddg_search(
+    query: str,
+    num_results: int = 5,
+    ctx: Any = CurrentContext(),
+) -> ToolResult:
     """
     Search DuckDuckGo for heavy web research.
 
@@ -2905,12 +3191,16 @@ def thegent_ddg_search(query: str, num_results: int = 5) -> ToolResult:
     """
     from thegent.tools.research import ddg_search
 
+    await ctx.info(f"thegent_ddg_search query={query!r} num_results={num_results}")
     start_time = time.perf_counter()
     results = ddg_search(query, max_results=num_results)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    results_list = results if isinstance(results, list) else [results]
+    result_count = len(results_list)
+    await ctx.info(f"thegent_ddg_search returned {result_count} result(s) in {elapsed_ms}ms")
     return ToolResult(
-        content=json.dumps(results),
-        structured_content=results,
+        content=json.dumps(results_list),
+        structured_content={"results": results_list, "count": result_count},
         meta={"execution_time_ms": elapsed_ms},
     )
 
@@ -2939,7 +3229,11 @@ def thegent_reddit_search(query: str, num_results: int = 5) -> ToolResult:
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
-async def thegent_scrape_url(url: str, use_playwright: bool = True) -> ToolResult:
+async def thegent_scrape_url(
+    url: str,
+    use_playwright: bool = True,
+    ctx: Any = CurrentContext(),
+) -> ToolResult:
     """
     Scrape content from a URL using stealth tools (Playwright) to bypass blocks.
 
@@ -2949,9 +3243,16 @@ async def thegent_scrape_url(url: str, use_playwright: bool = True) -> ToolResul
     """
     from thegent.tools.research import scrape_url
 
+    await ctx.info(f"thegent_scrape_url url={url!r} use_playwright={use_playwright}")
+    await ctx.report_progress(progress=0, total=3)
     start_time = time.perf_counter()
+    await ctx.report_progress(progress=1, total=3)
     result = await scrape_url(url, use_playwright=use_playwright)
+    await ctx.report_progress(progress=2, total=3)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    content_len = len(result.get("content", "")) if isinstance(result, dict) else 0
+    await ctx.info(f"thegent_scrape_url done content_len={content_len} elapsed={elapsed_ms}ms")
+    await ctx.report_progress(progress=3, total=3)
     return ToolResult(
         content=json.dumps(result),
         structured_content=result,
@@ -3101,7 +3402,14 @@ def thegent_plan_progress(limit: int = 10) -> ToolResult:
     Show recent runs (work-package progress). Alias for thegent_history with smaller default.
     Equivalent to: thegent plan progress --limit N
     """
-    return thegent_history(limit=limit)
+    start_time = time.perf_counter()
+    runs = history_impl(limit=limit)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(runs),
+        structured_content=runs,
+        meta={"execution_time_ms": elapsed_ms, "count": len(runs)},
+    )
 
 
 @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
@@ -3313,10 +3621,6 @@ def thegent_handoff(owner: str, cd: str | None = None) -> ToolResult:
     snapshot_id = hm.create_snapshot(
         owner,
         run_ids,
-        escalation_run_ids=escalation_run_ids or None,
-        state_summary=state_summary,
-        evidence_summary=evidence_summary or None,
-        next_steps=next_steps or None,
     )
     return ToolResult(
         content=json.dumps({"snapshot_id": snapshot_id, "owner": owner, "run_ids": run_ids}),
@@ -3587,6 +3891,47 @@ async def thegent_free(
     )
 
 
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+async def thegent_flash(
+    prompt: str,
+    model: str = "claude-haiku-4.5",
+    timeout_s: float = 30.0,
+) -> ToolResult:
+    """
+    Run an ultra-short-lived flash agent that executes a single focused task via one LLM call.
+
+    Flash agents are ephemeral: they fire one LLM completion, enforce a strict timeout,
+    and self-terminate. Ideal for sub-30-second focused tasks (summarise, classify, extract).
+
+    Args:
+        prompt: The task prompt to execute.
+        model: LLM model identifier (default: claude-haiku-4.5).
+        timeout_s: Maximum execution time in seconds (default: 30.0).
+    """
+    from thegent.agents.flash_agent import flash as _flash
+
+    start_time = time.perf_counter()
+    result = await _flash(prompt=prompt, model=model, timeout_s=timeout_s)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    payload = {
+        "output": result.output,
+        "success": result.success,
+        "elapsed_s": result.elapsed_s,
+        "agent_id": result.agent_id,
+    }
+    if not result.success:
+        return ToolResult(
+            content=json.dumps({"error": "flash agent timed out", **payload}),
+            structured_content={"error": "flash agent timed out", **payload},
+            meta={"execution_time_ms": elapsed_ms, "agent_id": result.agent_id},
+        )
+    return ToolResult(
+        content=result.output,
+        structured_content=payload,
+        meta={"execution_time_ms": elapsed_ms, "agent_id": result.agent_id},
+    )
+
+
 # Sitback: dashboard resource, tool, prompts (FastMCP-first projection)
 try:
     import importlib
@@ -3612,6 +3957,202 @@ try:
     register_seed_tools(mcp)
 except Exception as e:
     _log.debug("seed tools not available; skipping: %s", e)
+
+# Elicitation tools: interactive user input via FastMCP ctx.elicit
+try:
+    from thegent.mcp_tools_elicitation import register_elicitation_tools
+
+    register_elicitation_tools(mcp)
+except Exception as e:
+    _log.debug("elicitation tools not available; skipping: %s", e)
+
+# Tool pattern tools: reusable decorator patterns (confirm, progress, retry)
+try:
+    from thegent.mcp_tool_patterns import register_tool_pattern_tools
+
+    register_tool_pattern_tools(mcp)
+except Exception as e:
+    _log.debug("tool pattern tools not available; skipping: %s", e)
+
+# Storage and EventStore tools: persistent KV and event streaming for MCP tools
+try:
+    from thegent.mcp_storage import (
+        McpEventStore,
+        McpStorage,
+    )
+    from thegent.mcp_storage import (
+        get_mcp_event_store as _get_mcp_event_store,
+    )
+    from thegent.mcp_storage import (
+        get_mcp_storage as _get_mcp_storage,
+    )
+
+    @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+    def thegent_storage_get(key: str) -> ToolResult:
+        """Get a value from persistent MCP storage.
+
+        Args:
+            key: Storage key (non-empty string).
+
+        Returns: JSON with value (null if missing) and found (bool).
+        """
+        start_ms = time.monotonic()
+        try:
+            value = _get_mcp_storage().get(key)
+            payload: dict[str, Any] = {"key": key, "value": value, "found": value is not None}
+        except ValueError as exc:
+            payload = {"error": str(exc), "key": key, "found": False}
+        elapsed = int((time.monotonic() - start_ms) * 1000)
+        return ToolResult(
+            content=json.dumps(payload),
+            structured_content=payload,
+            meta={"execution_time_ms": elapsed},
+        )
+
+    @mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": False})
+    def thegent_storage_set(
+        key: str,
+        value: str,
+        ttl_seconds: int | None = None,
+    ) -> ToolResult:
+        """Set a value in persistent MCP storage.
+
+        Args:
+            key: Storage key (non-empty string).
+            value: JSON-encoded value to store.
+            ttl_seconds: Optional TTL in seconds.  None means no expiry.
+
+        Returns: JSON with ok (bool) and error if any.
+        """
+        start_ms = time.monotonic()
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError as exc:
+            payload: dict[str, Any] = {"ok": False, "error": f"value is not valid JSON: {exc}"}
+            return ToolResult(
+                content=json.dumps(payload),
+                structured_content=payload,
+                meta={"execution_time_ms": 0},
+            )
+        try:
+            _get_mcp_storage().set(key, parsed, ttl=float(ttl_seconds) if ttl_seconds is not None else None)
+            payload = {"ok": True, "key": key}
+        except (ValueError, TypeError) as exc:
+            payload = {"ok": False, "error": str(exc), "key": key}
+        elapsed = int((time.monotonic() - start_ms) * 1000)
+        return ToolResult(
+            content=json.dumps(payload),
+            structured_content=payload,
+            meta={"execution_time_ms": elapsed},
+        )
+
+    @mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": False})
+    def thegent_events_emit(event_type: str, payload: str) -> ToolResult:
+        """Emit an event to the MCP event store.
+
+        Args:
+            event_type: Dot-separated event type string (e.g. "storage.set").
+            payload: JSON-encoded dict payload.
+
+        Returns: JSON with event_id on success, or error.
+        """
+        start_ms = time.monotonic()
+        try:
+            parsed_payload = json.loads(payload)
+        except json.JSONDecodeError as exc:
+            err_payload: dict[str, Any] = {"ok": False, "error": f"payload is not valid JSON: {exc}"}
+            return ToolResult(
+                content=json.dumps(err_payload),
+                structured_content=err_payload,
+                meta={"execution_time_ms": 0},
+            )
+        if not isinstance(parsed_payload, dict):
+            err_payload = {"ok": False, "error": "payload must be a JSON object (dict)"}
+            return ToolResult(
+                content=json.dumps(err_payload),
+                structured_content=err_payload,
+                meta={"execution_time_ms": 0},
+            )
+        try:
+            event_id = _get_mcp_event_store().emit(event_type, parsed_payload)
+            result_payload: dict[str, Any] = {"ok": True, "event_id": event_id, "event_type": event_type}
+        except (ValueError, TypeError) as exc:
+            result_payload = {"ok": False, "error": str(exc)}
+        elapsed = int((time.monotonic() - start_ms) * 1000)
+        return ToolResult(
+            content=json.dumps(result_payload),
+            structured_content=result_payload,
+            meta={"execution_time_ms": elapsed},
+        )
+
+    @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+    def thegent_events_replay(since_id: str | None = None) -> ToolResult:
+        """Replay events from the MCP event store.
+
+        Args:
+            since_id: If provided, return only events after this event_id.
+                      If not found, all events are returned.
+
+        Returns: JSON array of event objects.
+        """
+        start_ms = time.monotonic()
+        events = _get_mcp_event_store().replay(since_event_id=since_id)
+        result_payload: dict[str, Any] = {"events": events, "count": len(events)}
+        elapsed = int((time.monotonic() - start_ms) * 1000)
+        return ToolResult(
+            content=json.dumps(result_payload),
+            structured_content=result_payload,
+            meta={"execution_time_ms": elapsed},
+        )
+
+    _log.info(
+        "storage/event tools registered: thegent_storage_get, thegent_storage_set, "
+        "thegent_events_emit, thegent_events_replay"
+    )
+except Exception as _storage_tools_err:
+    _log.debug("storage/event tools not available; skipping: %s", _storage_tools_err)
+
+# Task mode: status/cancel tools for long-running async MCP operations
+try:
+    from thegent.mcp.task_registry import get_task_registry as _get_task_registry
+
+    _task_reg = _get_task_registry()
+
+    @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+    def thegent_task_status(task_id: str) -> ToolResult:
+        """Return status of a background MCP task created with async_task=True.
+
+        Args:
+            task_id: The task_id returned when the task was created.
+
+        Returns: JSON with status (running|done|error|cancelled), progress, result, error.
+        """
+        result = _task_reg.status(task_id)
+        return ToolResult(
+            content=json.dumps(result),
+            structured_content=result,
+            meta={"execution_time_ms": 0},
+        )
+
+    @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+    def thegent_task_cancel(task_id: str) -> ToolResult:
+        """Cancel a running background MCP task.
+
+        Args:
+            task_id: The task_id returned when the task was created.
+
+        Returns: JSON with cancelled (bool) and status.
+        """
+        result = _task_reg.cancel(task_id)
+        return ToolResult(
+            content=json.dumps(result),
+            structured_content=result,
+            meta={"execution_time_ms": 0},
+        )
+
+    _log.info("task mode tools registered: thegent_task_status, thegent_task_cancel")
+except Exception as _task_mode_err:
+    _log.debug("task mode tools not available; skipping: %s", _task_mode_err)
 
 # Add transforms to expose resources and prompts as tools for tool-only clients
 mcp.add_transform(ResourcesAsTools(cast("Any", mcp)))
@@ -3810,9 +4351,146 @@ def remove_model_alias(provider: str, alias: str) -> str:
     return json.dumps({"success": success, "message": msg})
 
 
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+async def thegent_acp_invoke(
+    agent_url: str,
+    task: str,
+    payload: str = "{}",
+) -> str:
+    """
+    Invoke a remote ACP agent and return its result (FR-ACP-002).
+
+    Uses the ACP <-> MCP bridge to call any ACP-compatible agent endpoint
+    over HTTP and return the agent's plain-text response.
+
+    Args:
+        agent_url: Base URL of the remote ACP agent (e.g. http://localhost:8420)
+        task:      Human-readable task description / prompt sent to the agent
+        payload:   JSON string with extra context dict forwarded to the agent
+                   (default: empty object)
+
+    Returns: JSON string with {success, result, agent_id, elapsed_ms}
+    """
+    import json as _json
+    import time as _time
+
+    from thegent.adapters.acp_client import ACPClient, ACPServerUnreachableError
+    from thegent.adapters.acp_mcp_bridge import ACPAgentCallError, AcpMcpBridge
+
+    try:
+        context: dict = _json.loads(payload) if payload else {}
+    except _json.JSONDecodeError as exc:
+        return _json.dumps({"success": False, "error": f"Invalid payload JSON: {exc}", "result": "", "agent_id": ""})
+
+    bridge = AcpMcpBridge(acp_client=ACPClient(base_url=agent_url))
+
+    start = _time.perf_counter()
+    try:
+        result_text = await bridge.acp_agent_to_mcp_tool(
+            agent_url=agent_url,
+            task=task,
+            payload=context,
+        )
+        elapsed_ms = int((_time.perf_counter() - start) * 1000)
+        return _json.dumps(
+            {
+                "success": True,
+                "result": result_text,
+                "agent_url": agent_url,
+                "elapsed_ms": elapsed_ms,
+            }
+        )
+    except ACPServerUnreachableError as exc:
+        elapsed_ms = int((_time.perf_counter() - start) * 1000)
+        return _json.dumps(
+            {
+                "success": False,
+                "error": f"ACP agent unreachable: {exc}",
+                "result": "",
+                "agent_url": agent_url,
+                "elapsed_ms": elapsed_ms,
+            }
+        )
+    except ACPAgentCallError as exc:
+        elapsed_ms = int((_time.perf_counter() - start) * 1000)
+        return _json.dumps(
+            {
+                "success": False,
+                "error": str(exc),
+                "result": "",
+                "agent_url": agent_url,
+                "elapsed_ms": elapsed_ms,
+            }
+        )
+
+
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+def thegent_macos_run_script(
+    script: str,
+    language: Literal["applescript", "jxa"] = "applescript",
+) -> str:
+    """
+    Run an AppleScript or JXA (JavaScript for Automation) script on macOS.
+
+    Wraps *osascript* to give agents agent-driven desktop control on macOS.
+    Returns a JSON object with ``{success, output, error}``.
+
+    On non-macOS platforms the tool returns immediately with
+    ``{success: false, error: "Not macOS"}``.
+
+    Args:
+        script:   Script source code to execute.
+        language: Scripting language — ``"applescript"`` (default) or ``"jxa"``.
+    """
+    import json as _json
+
+    from thegent.automation.macos_desktop import MacOSDesktopAutomation
+
+    automation = MacOSDesktopAutomation()
+
+    result = automation.run_jxa(script) if language == "jxa" else automation.run_applescript(script)
+
+    return _json.dumps(
+        {
+            "success": result.success,
+            "output": result.output,
+            "error": result.error,
+        }
+    )
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+async def thegent_config_resolve(
+    tenant_id: str | None = None,
+    session_id: str | None = None,
+    keys: list[str] | None = None,
+) -> dict[str, Any]:
+    """WP-CP-5.2: Resolve thegent configuration for a tenant/session context.
+    
+    Args:
+        tenant_id: Optional tenant identifier.
+        session_id: Optional session/run identifier.
+        keys: Optional list of specific config keys to resolve.
+    """
+    from thegent.config_provider import get_config_provider
+    provider = get_config_provider()
+    return provider.resolve(tenant_id=tenant_id, session_id=session_id, keys=keys)
+
+
 def http_app(stateless_http: bool = True):
     """Return ASGI app with EventStore (mountable in FastAPI/Starlette).
-    stateless_http=True allows per-request JSON-RPC without SSE session (for simple clients, CI, verification)."""
+
+    stateless_http=True allows per-request JSON-RPC without SSE session
+    (for simple clients, CI, verification).
+
+    Additionally registers:
+    - POST /v1/responses  → LiteLLM Router Responses API handler
+    - WS   /v1/responses/ws → LiteLLM Router WebSocket Responses handler
+
+    These routes enable Claude Code (clode) and Codex CLI to use the
+    Responses API format while routing through LiteLLM's multi-provider
+    Router for fallback, cost-tracking, and caching.
+    """
     app = mcp.http_app(
         event_store=_get_event_store(),
         retry_interval=2000,
@@ -3822,10 +4500,44 @@ def http_app(stateless_http: bool = True):
     # Some app objects used in testing may not implement add_middleware; guard to avoid attribute errors
     if hasattr(app, "add_middleware"):
         cast("Any", app).add_middleware(BearerAuthMiddleware)
+
+    # Wire LiteLLM Responses API routes so that clode/Codex CLI requests
+    # are routed through the LiteLLM Router (multi-provider, with fallback,
+    # cost-tracking, and caching support).
+    #
+    # The StarletteWithLifespan object returned by mcp.http_app() exposes
+    # both add_route() (HTTP) and add_websocket_route() (WebSocket).
+    if hasattr(app, "add_route") and hasattr(app, "add_websocket_route"):
+        from thegent.routing.litellm_responses_handler import (
+            handle_responses_request,
+            handle_responses_websocket,
+        )
+
+        cast("Any", app).add_route(
+            "/v1/responses",
+            handle_responses_request,
+            methods=["POST"],
+        )
+        cast("Any", app).add_websocket_route(
+            "/v1/responses/ws",
+            handle_responses_websocket,
+        )
+        _log.info("registered /v1/responses (POST) and /v1/responses/ws (WebSocket) via LiteLLM Router")
+    else:
+        _log.warning(
+            "http_app: ASGI app does not support add_route/add_websocket_route; "
+            "/v1/responses routes NOT registered"
+        )
+
     return app
 
 
-def run(host: str | None = None, port: int | None = None) -> None:
+def http_app_factory():
+    """Factory for uvicorn --reload."""
+    return http_app(stateless_http=True)
+
+
+def run(host: str | None = None, port: int | None = None, reload: bool = False) -> None:
     """Start the FastMCP server with EventStore and optional Docket."""
     import warnings
 
@@ -3848,13 +4560,24 @@ def run(host: str | None = None, port: int | None = None) -> None:
     settings = ThegentSettings()
     # FASTMCP_DOCKET_URL is FastMCP-specific, not thegent-specific, so keep as env var
     # docket_url = os.environ.get("FASTMCP_DOCKET_URL")  # Reserved for future FastMCP integration
-    app = http_app(stateless_http=True)
-    uvicorn.run(
-        app,
-        host=host or settings.mcp_host,
-        port=port or settings.mcp_port,
-        lifespan="on",
-    )
+
+    if reload:
+        # For reload to work, we need to pass app as a string import path
+        uvicorn.run(
+            "thegent.mcp_server:http_app_factory",
+            host=host or settings.mcp_host,
+            port=port or settings.mcp_port,
+            reload=True,
+            factory=True,
+        )
+    else:
+        app = http_app(stateless_http=True)
+        uvicorn.run(
+            app,
+            host=host or settings.mcp_host,
+            port=port or settings.mcp_port,
+            lifespan="on",
+        )
 
 
 if __name__ == "__main__":

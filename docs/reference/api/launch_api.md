@@ -15,44 +15,50 @@ Observes system health post-launch and manages rollback triggers.
 #### LaunchObserver.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: ThegentSettings)
 ```
+
+---
 
 #### LaunchObserver.check_health
 
+```python
+check_health(self: Any)
+```
+
 Check post-launch health metrics.
 
-```python
-check_health(self)
-```
+---
 
 #### LaunchObserver.trigger_rollback
 
+```python
+trigger_rollback(self: Any, reason: str)
+```
+
 Trigger an emergency rollback to the last stable state.
 
-```python
-trigger_rollback(self, reason)
-```
+---
 
 ---
 
 ## check_health
 
-Check post-launch health metrics.
-
 ```python
-check_health(self)
+check_health(self: Any)
 ```
+
+Check post-launch health metrics.
 
 ---
 
 ## trigger_rollback
 
-Trigger an emergency rollback to the last stable state.
-
 ```python
-trigger_rollback(self, reason)
+trigger_rollback(self: Any, reason: str)
 ```
+
+Trigger an emergency rollback to the last stable state.
 
 ---
 

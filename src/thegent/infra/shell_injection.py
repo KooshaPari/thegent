@@ -3,20 +3,21 @@ Includes tmux session detection, command injection via send-keys, and readiness 
 """
 
 import logging
+import re
 import subprocess
 import time
-from typing import List, Optional, Dict
-import re
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class TmuxInjector:
     """Injects commands into tmux sessions."""
 
-    def __init__(self, session_prefix: str = "mesh-"):
+    def __init__(self, session_prefix: str = "mesh-") -> None:
         self.session_prefix = session_prefix
 
-    def list_agent_sessions(self) -> List[str]:
+    def list_agent_sessions(self) -> list[str]:
         """List all tmux sessions matching agent prefix."""
         try:
             result = subprocess.run(["tmux", "ls", "-F", "#S"], capture_output=True, text=True)
@@ -58,7 +59,7 @@ class TmuxInjector:
             output = result.stdout.strip()
             if not output:
                 return False
-            
+
             last_line = output.splitlines()[-1]
             # Common prompt patterns: $, %, #, >, or agent-specific prompts
             prompt_patterns = [r"\$ $", r"% $", r"# $", r"> $", r"aider>", r"claude>"]
@@ -66,19 +67,21 @@ class TmuxInjector:
         except Exception:
             return False
 
+
 class AgentReadinessDetector:
     """Advanced readiness detection using process state and output analysis."""
-    
+
     @staticmethod
     def get_agent_state(pid: int) -> str:
         """Determine agent state: idle, busy, error."""
         import psutil
+
         try:
             proc = psutil.Process(pid)
             if proc.status() == psutil.STATUS_SLEEPING:
                 # Likely waiting for input/idle
                 return "idle"
-            elif proc.status() == psutil.STATUS_RUNNING:
+            if proc.status() == psutil.STATUS_RUNNING:
                 return "busy"
             return "unknown"
         except (psutil.NoSuchProcess, psutil.AccessDenied):

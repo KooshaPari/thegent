@@ -1869,8 +1869,8 @@ export const sidebar = {
               "link": "/api/shadow_api.md"
             },
             {
-              "text": "sharecli_bridge API Reference",
-              "link": "/api/sharecli_bridge_api.md"
+              "text": "heliosShield_bridge API Reference",
+              "link": "/api/heliosShield_bridge_api.md"
             },
             {
               "text": "shell_cli API Reference",
@@ -6109,8 +6109,8 @@ export const sidebar = {
           "link": "/api/shadow_api.md"
         },
         {
-          "text": "sharecli_bridge API Reference",
-          "link": "/api/sharecli_bridge_api.md"
+          "text": "heliosShield_bridge API Reference",
+          "link": "/api/heliosShield_bridge_api.md"
         },
         {
           "text": "shell_cli API Reference",

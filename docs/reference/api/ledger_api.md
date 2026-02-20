@@ -12,35 +12,45 @@ Immutable incident ledger with rolling hash chain (WP-15002).
 
 **Inherits from**: `LedgerVerifier`
 
+**Method Resolution Order**: `IncidentLedger -> LedgerVerifier`
+
 ### Methods
 
 #### IncidentLedger.__init__
 
 ```python
-__init__(self, ledger_path)
+__init__(self: Any, ledger_path: Path)
 ```
+
+---
 
 #### IncidentLedger.get_run_artifacts
 
+```python
+get_run_artifacts(self: Any, run_id: str)
+```
+
 Return all artifacts for run_id.
 
-```python
-get_run_artifacts(self, run_id)
-```
+---
 
 #### IncidentLedger.record_artifact
 
+```python
+record_artifact(self: Any, run_id: str, action: str, payload: dict[(str, Any)])
+```
+
 Append artifact with rolling hash; return computed hash.
 
-```python
-record_artifact(self, run_id, action, payload)
-```
+---
 
 #### IncidentLedger.verify_integrity
 
 ```python
-verify_integrity(self)
+verify_integrity(self: Any)
 ```
+
+---
 
 ---
 
@@ -53,43 +63,47 @@ Verifies the integrity of the action ledger using rolling hashes.
 #### LedgerVerifier.__init__
 
 ```python
-__init__(self, ledger_path)
+__init__(self: Any, ledger_path: Path)
 ```
+
+---
 
 #### LedgerVerifier.verify_integrity
 
+```python
+verify_integrity(self: Any)
+```
+
 Verify the rolling hash chain in the ledger.
 
-```python
-verify_integrity(self)
-```
+---
 
 ---
 
 ## get_run_artifacts
 
-Return all artifacts for run_id.
-
 ```python
-get_run_artifacts(self, run_id)
+get_run_artifacts(self: Any, run_id: str)
 ```
+
+Return all artifacts for run_id.
 
 ---
 
 ## record_artifact
 
-Append artifact with rolling hash; return computed hash.
-
 ```python
-record_artifact(self, run_id, action, payload)
+record_artifact(self: Any, run_id: str, action: str, payload: dict[(str, Any)])
 ```
+
+Append artifact with rolling hash; return computed hash.
 
 ---
 
 ## verify_integrity
 
 ```python
-verify_integrity(self)
+verify_integrity(self: Any) -> bool
 ```
 
 ---

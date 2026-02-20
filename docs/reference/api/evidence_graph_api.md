@@ -17,44 +17,50 @@ Graph of evidence artifacts with deterministic bundling.
 #### EvidenceGraph.__init__
 
 ```python
-__init__(self, session_dir)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
 
 #### EvidenceGraph.add_link
 
+```python
+add_link(self: Any, parent_id: str, child_id: str)
+```
+
 Add a link between two evidence artifacts.
 
-```python
-add_link(self, parent_id, child_id)
-```
+---
 
 #### EvidenceGraph.bundle_evidence
 
+```python
+bundle_evidence(self: Any, target_path: Path)
+```
+
 WP-12006: Deterministic export of the evidence graph and artifacts.
 
-```python
-bundle_evidence(self, target_path)
-```
+---
 
 ---
 
 ## add_link
 
-Add a link between two evidence artifacts.
-
 ```python
-add_link(self, parent_id, child_id)
+add_link(self: Any, parent_id: str, child_id: str)
 ```
+
+Add a link between two evidence artifacts.
 
 ---
 
 ## bundle_evidence
 
-WP-12006: Deterministic export of the evidence graph and artifacts.
-
 ```python
-bundle_evidence(self, target_path)
+bundle_evidence(self: Any, target_path: Path)
 ```
+
+WP-12006: Deterministic export of the evidence graph and artifacts.
 
 ---
 
