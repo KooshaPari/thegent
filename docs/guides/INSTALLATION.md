@@ -20,6 +20,22 @@ The bootstrap runs: install thegent → `install -t all` → `install-shims` →
 
 ---
 
+## Toolchain Manager Policy (Canonical)
+
+Use these roles consistently across macOS/Linux/Windows and across devices:
+
+- `mise`: runtime/version manager for language toolchains (Python/Node/Go/etc.) using repo pins (`.mise.toml`).
+- `uv`: Python package + virtualenv manager for project dependencies and CLI installs.
+- `Homebrew` (`Brewfile`): macOS system package manager for host tools.
+- `nix`: optional strict/declarative mode (`flake.nix`, `home-manager`, `nix-darwin`) when teams need stronger reproducibility.
+
+Important distinction:
+
+- **End-user install** (just run thegent): use bootstrap, `uv tool install`, `pipx`, or package-manager install.
+- **Repository development** (working on this repo): follow `task setup` + `task doctor`, which currently expects `brew` + `uv` and can optionally layer `mise`/`nix`.
+
+---
+
 ## 1. Quick Installation (All Platforms)
 
 ### pip (default)
@@ -226,6 +242,20 @@ thegent setup --hooks
 # Sync thegent-skills to ~/.claude, ~/.cursor
 thegent setup --skills
 ```
+
+## 5.1 Bundle and Worktree Governance
+
+For long-term cross-device/cross-platform setup hygiene:
+
+- First-party install assets (repo-owned shell/config/hook files) should be tracked in this repo and installed by `thegent install`.
+- Third-party/community assets should be declared in an external bundle manifest (`~/.config/thegent/third_party_bundles.json` by default) and installed via bundle options.
+- Worktrees and nested git repos are execution surfaces, not canonical config storage.
+
+Policy target for third-party bundles:
+
+- Pin to immutable source refs (commit/tag).
+- Record integrity metadata (checksum) in your governance process.
+- Keep manifests versioned in your dotfiles/config repo so they sync across devices.
 
 ---
 

@@ -84,9 +84,16 @@ Field semantics:
 - `source` (file):
   - supports absolute and relative filesystem paths.
   - supports `thegent:` prefix for paths relative to the repo root.
+  - external sources (`http://`, `https://`, `git+`, `github:`) must include `pin` and `checksum`.
 - `target` (file):
   - supports `{home}`, `{cwd}`, `${HOME}`, `${CWD}`.
   - plain relative targets are interpreted under `{home}`.
+- `pin` (file, external sources):
+  - required for external sources.
+  - should be an immutable commit SHA or release tag/version string.
+- `checksum` (file, external sources):
+  - required for external sources.
+  - store integrity hash (for example `sha256:...`).
 - `client` (mcp):
   - supported: `cursor`, `claude-code`, `claude-desktop`, `codex`, `droid`, `all`.
   - aliases accepted: `claude`, `factory`, `cursor-ide`, `cursor-code`, `claude desktop`, `claude_desktop`.
@@ -119,6 +126,10 @@ Field semantics:
 | `skill-pack` | domain-specific and vendor-specific skill trees |
 | `agent-extras` | experimental skill stacks from web sources |
 
+Template:
+
+- `templates/third_party_bundles.example.json`
+
 ## Compatibility notes
 
 - Existing `thegent install` behavior is unchanged when no `--bundle` is passed.
@@ -131,4 +142,3 @@ Field semantics:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

@@ -7,9 +7,9 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import httpx
-import psutil
 import yaml
 from rich.console import Console
 from rich.panel import Panel
@@ -17,7 +17,11 @@ from rich.table import Table
 
 from thegent.config import ThegentSettings
 from thegent.infra import run_subprocess_optimized
-from thegent.infra.fast_process_monitor import ProcessInfo
+
+if TYPE_CHECKING:
+    import psutil
+
+    from thegent.infra.fast_process_monitor import ProcessInfo
 
 console = Console()
 _project_root_cache: Path | None = None
@@ -75,7 +79,7 @@ def run_doctor(
     results: list[CheckResult] = []
 
     # Category: Dependencies
-    results.extend(_check_dependencies())
+    results.extend(_check_dependencies(deps=deps))
 
     # Category: Configuration
     results.extend(_check_configuration())
@@ -180,7 +184,7 @@ def run_doctor(
     return success
 
 
-def _check_dependencies() -> list[CheckResult]:
+def _check_dependencies(deps: bool = False) -> list[CheckResult]:
     res_list = []
 
     # Node.js
@@ -265,6 +269,101 @@ def _check_dependencies() -> list[CheckResult]:
             r.status = "warn"  # All as warn for graceful degradation
             r.message = f"'{tool}' not found" + (" (optional — install for 10x speedup)" if optional else " in PATH")
             r.fix_hint = get_install_hint(tool)
+        res_list.append(r)
+
+    project_root = _project_root_cache or Path.cwd()
+    has_mise_toml = (project_root / ".mise.toml").exists()
+    has_pyproject = (project_root / "pyproject.toml").exists()
+    has_brewfile = (project_root / "Brewfile").exists()
+
+    r = CheckResult("mise", "Dependencies")
+    mise_path = shutil.which("mise")
+    if mise_path:
+        r.status = "ok"
+        r.message = f"Found 'mise' at {mise_path}"
+    elif has_mise_toml:
+        r.status = "fail"
+        r.message = "mise is required by repo policy (.mise.toml present) but not found"
+        r.fix_hint = "Install with Homebrew (`brew install mise`) or Nix (`nix profile install nixpkgs#mise`)."
+    else:
+        r.status = "warn"
+        r.message = "mise not found"
+        r.fix_hint = "Install mise for consistent runtime pinning."
+    res_list.append(r)
+
+    r = CheckResult("uv", "Dependencies")
+    uv_path = shutil.which("uv")
+    if uv_path:
+        r.status = "ok"
+        r.message = f"Found 'uv' at {uv_path}"
+    elif has_pyproject:
+        r.status = "fail"
+        r.message = "uv is required by repo workflow (pyproject.toml present) but not found"
+        r.fix_hint = "Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    else:
+        r.status = "warn"
+        r.message = "uv not found"
+        r.fix_hint = "Install uv for faster Python dependency management."
+    res_list.append(r)
+
+    if platform.system() == "Darwin":
+        r = CheckResult("Homebrew", "Dependencies")
+        brew_path = shutil.which("brew")
+        if brew_path:
+            r.status = "ok"
+            r.message = f"Found 'brew' at {brew_path}"
+        elif has_brewfile:
+            r.status = "fail"
+            r.message = "Homebrew is required by repo setup (Brewfile present) but not found"
+            r.fix_hint = 'Install Homebrew: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        else:
+            r.status = "warn"
+            r.message = "Homebrew not found"
+            r.fix_hint = "Install Homebrew for macOS host dependency management."
+        res_list.append(r)
+
+    if deps and mise_path:
+        r = CheckResult("mise doctor", "Dependencies")
+        try:
+            result = run_subprocess_optimized(["mise", "doctor"], capture_output=True, timeout=20)
+            if result.returncode == 0:
+                r.status = "ok"
+                r.message = "mise doctor: OK"
+            else:
+                stderr = (
+                    result.stderr if isinstance(result.stderr, str) else result.stderr.decode("utf-8", errors="replace")
+                )
+                r.status = "warn"
+                r.message = "mise doctor reported issues"
+                r.details = (stderr or "unknown issue")[:300]
+                r.fix_hint = "Run `mise doctor` directly and address reported configuration issues."
+        except Exception as e:
+            r.status = "warn"
+            r.message = f"Failed to run mise doctor: {e}"
+        res_list.append(r)
+
+    if deps and platform.system() == "Darwin" and has_brewfile and shutil.which("brew"):
+        r = CheckResult("brew bundle check", "Dependencies")
+        try:
+            result = run_subprocess_optimized(
+                ["brew", "bundle", "check", "--file", str(project_root / "Brewfile")],
+                capture_output=True,
+                timeout=30,
+            )
+            if result.returncode == 0:
+                r.status = "ok"
+                r.message = "brew bundle check: OK"
+            else:
+                stdout = (
+                    result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                )
+                r.status = "warn"
+                r.message = "brew bundle check reported missing packages"
+                r.details = (stdout or "bundle drift detected")[:300]
+                r.fix_hint = "Run `brew bundle --file Brewfile` from repo root."
+        except Exception as e:
+            r.status = "warn"
+            r.message = f"Failed to run brew bundle check: {e}"
         res_list.append(r)
 
     return res_list

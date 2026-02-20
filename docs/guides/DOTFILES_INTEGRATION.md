@@ -127,3 +127,20 @@ Run `home-manager switch` — no manual `thegent install` needed.
 | shims         | `~/.local/bin`                |
 
 Choose which paths to manage with your dotfile manager; thegent will merge/overwrite on `install`.
+
+---
+
+## 7. Cross-Device Bundle Governance
+
+For reproducible user/dev/agent environments across machines:
+
+- Keep first-party config in git (repo + dotfiles manager).
+- Keep third-party bundle definitions in a tracked manifest (default path: `~/.config/thegent/third_party_bundles.json`).
+- Sync that manifest through your dotfiles workflow (chezmoi/yadm/etc.) so every device applies the same bundle set.
+- Do not use `git worktree` directories or nested repos as canonical config storage; treat them as execution workspaces only.
+
+Recommended governance fields for third-party items:
+
+- immutable source reference (`commit` or `tag`)
+- integrity value (`checksum`)
+- owner/review metadata
