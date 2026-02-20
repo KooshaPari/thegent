@@ -142,6 +142,7 @@ fn print_help() {
     println!("    reliability-eval        Native reliability gate evaluator");
     println!("    reliability-slo-eval    Native reliability SLO evaluator");
     println!("    flake-quarantine-eval   Native flaky test quarantine evaluator");
+    println!("    verifier-dispute-eval   Native verifier dispute evaluator");
     println!("    methodology-eval        Native methodology attestation evaluator");
     println!("    artifact-quality-eval   Native artifact quality evaluator");
     println!("    playbook-contract-eval  Native playbook contract evaluator");
@@ -2896,6 +2897,176 @@ fn cmd_flake_quarantine_eval() {
     }
 }
 
+fn cmd_verifier_dispute_eval() {
+    let args: Vec<String> = env::args().collect();
+    let mut project_dir: Option<String> = None;
+    let mut disputes_path: Option<String> = None;
+    let mut report_path: Option<String> = None;
+    let mut tier: Option<String> = None;
+    let mut enabled: Option<String> = None;
+    let mut max_open_days: Option<String> = None;
+
+    let mut i = 2usize;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--project-dir" if i + 1 < args.len() => {
+                project_dir = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--disputes" if i + 1 < args.len() => {
+                disputes_path = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--report" if i + 1 < args.len() => {
+                report_path = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--tier" if i + 1 < args.len() => {
+                tier = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--enabled" if i + 1 < args.len() => {
+                enabled = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--max-open-days" if i + 1 < args.len() => {
+                max_open_days = Some(args[i + 1].clone());
+                i += 2;
+            }
+            _ => {
+                eprintln!("VERIFIER_DISPUTE FAIL: usage: thegent-hooks verifier-dispute-eval --project-dir <path> --disputes <path> --report <path> --tier <tier> --enabled <true|false> --max-open-days <int>");
+                exit(2);
+            }
+        }
+    }
+
+    let project_dir = project_dir.unwrap_or_else(|| {
+        eprintln!("VERIFIER_DISPUTE FAIL: missing --project-dir");
+        exit(2);
+    });
+    let disputes_path = disputes_path.unwrap_or_else(|| {
+        eprintln!("VERIFIER_DISPUTE FAIL: missing --disputes");
+        exit(2);
+    });
+    let report_path = report_path.unwrap_or_else(|| {
+        eprintln!("VERIFIER_DISPUTE FAIL: missing --report");
+        exit(2);
+    });
+    let tier = tier.unwrap_or_else(|| "established".to_string());
+    let enabled = enabled.unwrap_or_else(|| "false".to_string()) == "true";
+    let max_open_days = max_open_days
+        .unwrap_or_else(|| "14".to_string())
+        .parse::<u64>()
+        .unwrap_or(14);
+
+    let disputes_path_buf = PathBuf::from(&disputes_path);
+    if let Some(parent) = disputes_path_buf.parent() {
+        if let Err(e) = fs::create_dir_all(parent) {
+            eprintln!(
+                "VERIFIER_DISPUTE FAIL: cannot create disputes dir {}: {}",
+                parent.display(),
+                e
+            );
+            exit(2);
+        }
+    }
+    if !disputes_path_buf.is_file() {
+        if let Err(e) = fs::write(&disputes_path_buf, "") {
+            eprintln!(
+                "VERIFIER_DISPUTE FAIL: cannot initialize disputes file {}: {}",
+                disputes_path_buf.display(),
+                e
+            );
+            exit(2);
+        }
+    }
+
+    let report_path_buf = PathBuf::from(&report_path);
+    if let Some(parent) = report_path_buf.parent() {
+        if let Err(e) = fs::create_dir_all(parent) {
+            eprintln!(
+                "VERIFIER_DISPUTE FAIL: cannot create report dir {}: {}",
+                parent.display(),
+                e
+            );
+            exit(2);
+        }
+    }
+
+    let mut policy_content = String::new();
+    let policy1 = PathBuf::from(&project_dir).join("VERIFICATION_POLICY.md");
+    let policy2 = PathBuf::from(&project_dir).join("RELEASE_CONTRACT.md");
+    if policy1.is_file() {
+        policy_content.push_str(&fs::read_to_string(policy1).unwrap_or_default());
+    }
+    if policy2.is_file() {
+        policy_content.push_str(&fs::read_to_string(policy2).unwrap_or_default());
+    }
+    let policy_lower = policy_content.to_lowercase();
+    let policy_present = policy_lower.contains("dispute")
+        || policy_lower.contains("challenge")
+        || policy_lower.contains("appeal")
+        || policy_lower.contains("verifier escalation");
+
+    let mut open_count: u64 = 0;
+    let disputes_raw = fs::read_to_string(&disputes_path_buf).unwrap_or_default();
+    for line in disputes_raw.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if let Ok(item) = serde_json::from_str::<Value>(trimmed) {
+            let status = item.get("status").and_then(|v| v.as_str()).unwrap_or("");
+            if status == "open" || status == "under_review" {
+                open_count += 1;
+            }
+        }
+    }
+
+    let mut err = 0u64;
+    let mut warn = 0u64;
+    let mut checks: Vec<Value> = Vec::new();
+    if policy_present {
+        checks.push(json!({"check":"dispute_policy_text","status":"pass"}));
+    } else if enabled {
+        err += 1;
+        checks.push(json!({"check":"dispute_policy_text","status":"fail"}));
+    } else {
+        warn += 1;
+        checks.push(json!({"check":"dispute_policy_text","status":"warn"}));
+    }
+    checks.push(json!({"check":"open_disputes","status":"info","count":open_count}));
+
+    let report_json = json!({
+        "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+        "tier": tier,
+        "enabled": enabled,
+        "policy": {
+            "max_dispute_open_days": max_open_days
+        },
+        "open_disputes": open_count,
+        "error_count": err,
+        "warn_count": warn,
+        "checks": checks,
+        "pass": err == 0
+    });
+    if let Err(e) = fs::write(
+        &report_path_buf,
+        serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+    ) {
+        eprintln!(
+            "VERIFIER_DISPUTE FAIL: cannot write report {}: {}",
+            report_path_buf.display(),
+            e
+        );
+        exit(2);
+    }
+
+    if err > 0 {
+        exit(1);
+    }
+}
+
 fn cmd_methodology_eval() {
     let args: Vec<String> = env::args().collect();
     let mut attestation_path: Option<String> = None;
@@ -3913,6 +4084,7 @@ fn main() {
         "reliability-eval" => cmd_reliability_eval(),
         "reliability-slo-eval" => cmd_reliability_slo_eval(),
         "flake-quarantine-eval" => cmd_flake_quarantine_eval(),
+        "verifier-dispute-eval" => cmd_verifier_dispute_eval(),
         "methodology-eval" => cmd_methodology_eval(),
         "artifact-quality-eval" => cmd_artifact_quality_eval(),
         "playbook-contract-eval" => cmd_playbook_contract_eval(),
