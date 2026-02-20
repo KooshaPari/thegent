@@ -21,6 +21,7 @@
 - [Governance & Policy](#-governance--policy)
 - [Security & Hardening](#-security--hardening)
 - [Documentation](#-documentation)
+- [Docs Deploy](#-docs-deploy)
 - [Contributing](#-contributing)
 - [License](#-license)
 
@@ -130,11 +131,32 @@ thegent setup --hooks
 
 ## 📚 Documentation
 
+- **[Docsets](./docs/docsets/)** — Audience-based documentation tracks.
+  - [Developer (Internal)](./docs/docsets/developer/internal/)
+  - [Developer (External)](./docs/docsets/developer/external/)
+  - [Technical User](./docs/docsets/user/)
+  - [Agent Operator](./docs/docsets/agent/)
 - **[Quick Start Guide](./docs/guides/QUICK_START.md)** — Get up and running in 5 minutes.
 - **[Complete User Guide](./docs/guides/COMPLETE_USER_GUIDE.md)** — Deep dive into features.
 - **[Installation Guide](./docs/guides/INSTALLATION.md)** — Advanced setup options.
 - **[Architecture Overview](./docs/reference/ARCHITECTURE_LAYERS.md)** — Design layers and internals.
 - **[Research Index](./docs/research/RESEARCH_CONSOLIDATED.md)** — Findings and experiments.
+
+---
+
+## 🚢 Docs Deploy
+
+Local docs:
+
+```bash
+bun run docs:dev
+bun run docs:build
+```
+
+GitHub Pages:
+
+- Workflow: `.github/workflows/docs.yml`
+- URL convention: `https://<owner>.github.io/thegent/`
 
 ---
 
