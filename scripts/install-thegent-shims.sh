@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # thegent-shims installation script
-# Installs thegent-shims binary and creates symlinks for git, grep, find, and agent shims
+# Installs thegent-shims binary and creates harness symlinks (dex, clode, roid, fanta, antigma)
 
 set -euo pipefail
 
@@ -37,19 +37,27 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get script directory (zsh-safe; avoids BASH_SOURCE dependency)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Resolve binary path - look in various locations
 resolve_binary_path() {
     local binary_path=""
     
-    # Check if running from project (development)
-    if [[ -f "${SCRIPT_DIR}/../crates/thegent-shims/target/release/${BINARY_NAME}" ]]; then
+    # Check if running from workspace (development)
+    if [[ -f "${SCRIPT_DIR}/../crates/target/release/${BINARY_NAME}" ]]; then
+        binary_path="${SCRIPT_DIR}/../crates/target/release/${BINARY_NAME}"
+    # Check if running from crate-local target (development)
+    elif [[ -f "${SCRIPT_DIR}/../crates/thegent-shims/target/release/${BINARY_NAME}" ]]; then
         binary_path="${SCRIPT_DIR}/../crates/thegent-shims/target/release/${BINARY_NAME}"
     # Check if already installed
     elif [[ -f "${INSTALL_DIR}/${BINARY_NAME}" ]]; then
-        binary_path="${INSTALL_DIR}/${BINARY_NAME}"
+        # Guard against self-referential symlink loops.
+        if [[ -L "${INSTALL_DIR}/${BINARY_NAME}" ]] && [[ "$(readlink "${INSTALL_DIR}/${BINARY_NAME}" 2>/dev/null || true)" == "${INSTALL_DIR}/${BINARY_NAME}" ]]; then
+            binary_path=""
+        else
+            binary_path="${INSTALL_DIR}/${BINARY_NAME}"
+        fi
     # Try to find in common locations
     elif [[ -f "/usr/local/bin/${BINARY_NAME}" ]]; then
         binary_path="/usr/local/bin/${BINARY_NAME}"
@@ -71,12 +79,12 @@ find_or_build_binary() {
     fi
     
     # Try to build if not found
-    echo -e "${YELLOW}Binary not found. Attempting to build...${NC}"
+    echo -e "${YELLOW}Binary not found. Attempting to build...${NC}" >&2
     
     # Check if we're in a git repository with thegent-shims
     if [[ -f "${SCRIPT_DIR}/../crates/thegent-shims/Cargo.toml" ]]; then
         local build_dir="${SCRIPT_DIR}/../crates/thegent-shims"
-        echo "Building thegent-shims..."
+        echo "Building thegent-shims..." >&2
         if command -v cargo &> /dev/null; then
             (cd "$build_dir" && cargo build --release)
             echo "${build_dir}/target/release/${BINARY_NAME}"
@@ -99,36 +107,15 @@ create_symlinks() {
     # Ensure install directory exists
     mkdir -p "$INSTALL_DIR"
     
-    # List of shim commands to create
-    local shims=("git" "grep" "find")
-    
     # Create the main binary symlink first
     echo -e "${GREEN}Installing ${BINARY_NAME} to ${INSTALL_DIR}/${BINARY_NAME}${NC}"
     ln -sf "$binary_path" "${INSTALL_DIR}/${BINARY_NAME}"
-    
-    # Create shim symlinks
-    for shim in "${shims[@]}"; do
-        link="${INSTALL_DIR}/thegent-${shim}"
-        echo -e "${GREEN}Creating shim: ${link}${NC}"
+
+    local harnesses=("dex" "clode" "roid" "fanta" "antigma")
+    for harness in "${harnesses[@]}"; do
+        link="${INSTALL_DIR}/${harness}"
+        echo -e "${GREEN}Creating harness shim: ${link}${NC}"
         ln -sf "${INSTALL_DIR}/${BINARY_NAME}" "$link"
-    done
-    
-    # Create agent shim (special case - creates 'thegent-agent' link)
-    echo -e "${GREEN}Creating shim: ${INSTALL_DIR}/thegent-agent${NC}"
-    ln -sf "${INSTALL_DIR}/${BINARY_NAME}" "${INSTALL_DIR}/thegent-agent"
-    
-    # Create symlinks for common agent names (codex, copilot, dex, claude, cursor)
-    # These point to thegent-agent which then dispatches
-    local agents=("codex" "copilot" "dex" "claude" "cursor")
-    for agent in "${agents[@]}"; do
-        link="${INSTALL_DIR}/thegent-${agent}"
-        # Only create if the actual binary doesn't exist in PATH
-        if ! command -v "$agent" &> /dev/null; then
-            echo -e "${YELLOW}Warning: $agent not in PATH, skipping thegent-${agent} shim${NC}"
-        else
-            echo -e "${GREEN}Creating agent shim: ${link}${NC}"
-            ln -sf "${INSTALL_DIR}/${BINARY_NAME}" "$link"
-        fi
     done
 }
 
@@ -161,16 +148,18 @@ main() {
     echo ""
     echo "Installed shims:"
     echo "  - thegent-shims (main binary)"
-    echo "  - thegent-git -> thegent-shims git"
-    echo "  - thegent-grep -> thegent-shims grep"
-    echo "  - thegent-find -> thegent-shims find"
-    echo "  - thegent-agent -> thegent-shims agent"
+    echo "  - dex -> thegent-shims"
+    echo "  - clode -> thegent-shims"
+    echo "  - roid -> thegent-shims"
+    echo "  - fanta -> thegent-shims"
+    echo "  - antigma -> thegent-shims"
     echo ""
     echo "Usage:"
-    echo "  thegent-shims git -- --version"
-    echo "  thegent-shims grep -- --help"
-    echo "  thegent-shims find -- --help"
-    echo "  thegent-shims agent codex -- --help"
+    echo "  dex --help"
+    echo "  clode --help"
+    echo "  roid --help"
+    echo "  fanta --help"
+    echo "  antigma --help"
 }
 
 main "$@"

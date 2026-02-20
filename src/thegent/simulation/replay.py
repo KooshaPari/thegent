@@ -117,9 +117,7 @@ class SimulationReplayEngine:
 
         return ReplaySession(session_id=session_id, events=events, metadata=meta)
 
-    def replay(
-        self, session: ReplaySession, speed: float = 1.0
-    ) -> Iterator[ReplayEvent]:
+    def replay(self, session: ReplaySession, speed: float = 1.0) -> Iterator[ReplayEvent]:
         """Yield events in timestamp order, sleeping between events per *speed*.
 
         Args:
@@ -143,9 +141,7 @@ class SimulationReplayEngine:
             yield event
             prev_ts = event.timestamp
 
-    def replay_from_event(
-        self, session: ReplaySession, event_index: int
-    ) -> Iterator[ReplayEvent]:
+    def replay_from_event(self, session: ReplaySession, event_index: int) -> Iterator[ReplayEvent]:
         """Replay starting from *event_index* (0-based), no sleep.
 
         Args:
@@ -162,15 +158,10 @@ class SimulationReplayEngine:
         """
         sorted_events = sorted(session.events, key=lambda e: e.timestamp)
         if event_index < 0 or event_index >= len(sorted_events):
-            raise IndexError(
-                f"event_index {event_index} out of range "
-                f"(session has {len(sorted_events)} events)"
-            )
+            raise IndexError(f"event_index {event_index} out of range (session has {len(sorted_events)} events)")
         yield from sorted_events[event_index:]
 
-    def compare_sessions(
-        self, session_a: ReplaySession, session_b: ReplaySession
-    ) -> dict:
+    def compare_sessions(self, session_a: ReplaySession, session_b: ReplaySession) -> dict:
         """Return a structured diff between two sessions.
 
         Compares metadata fields and event sequences.  Events are matched
@@ -240,11 +231,7 @@ class SimulationReplayEngine:
 
         # @trace FR-REPLAY-005
         """
-        return [
-            e.data
-            for e in sorted(session.events, key=lambda e: e.timestamp)
-            if e.event_type == "tool_call"
-        ]
+        return [e.data for e in sorted(session.events, key=lambda e: e.timestamp) if e.event_type == "tool_call"]
 
     def generate_test_fixture(self, session: ReplaySession, output: Path) -> None:
         """Write a pytest fixture file derived from a session's replay data.
@@ -369,25 +356,13 @@ class SimulationReplayEngine:
         )
 
         # Parse stdout log for tool-call and response lines
-        stdout_path = Path(
-            meta.get("paths", {}).get(
-                "stdout", str(session_file.with_suffix(".stdout.log"))
-            )
-        )
+        stdout_path = Path(meta.get("paths", {}).get("stdout", str(session_file.with_suffix(".stdout.log"))))
         if stdout_path.exists():
-            events.extend(
-                self._parse_log_events(stdout_path, base_ts, "response")
-            )
+            events.extend(self._parse_log_events(stdout_path, base_ts, "response"))
 
-        stderr_path = Path(
-            meta.get("paths", {}).get(
-                "stderr", str(session_file.with_suffix(".stderr.log"))
-            )
-        )
+        stderr_path = Path(meta.get("paths", {}).get("stderr", str(session_file.with_suffix(".stderr.log"))))
         if stderr_path.exists():
-            events.extend(
-                self._parse_log_events(stderr_path, base_ts + 0.001, "error")
-            )
+            events.extend(self._parse_log_events(stderr_path, base_ts + 0.001, "error"))
 
         # state_change: session finished (if status is known)
         status = meta.get("status", "")
@@ -403,9 +378,7 @@ class SimulationReplayEngine:
         return events
 
     @staticmethod
-    def _parse_log_events(
-        log_path: Path, base_ts: float, default_type: str
-    ) -> list[ReplayEvent]:
+    def _parse_log_events(log_path: Path, base_ts: float, default_type: str) -> list[ReplayEvent]:
         """Parse a log file into ReplayEvent objects.
 
         Each non-blank line becomes a single event.  Lines that look like JSON
@@ -426,9 +399,7 @@ class SimulationReplayEngine:
             if line.startswith("TOOL_CALL:"):
                 payload_str = line[len("TOOL_CALL:") :].strip()
                 data = _try_parse_json(payload_str) or {"raw": payload_str}
-                events.append(
-                    ReplayEvent(timestamp=ts, event_type="tool_call", data=data)
-                )
+                events.append(ReplayEvent(timestamp=ts, event_type="tool_call", data=data))
             elif line.startswith(("ERROR:", "Error:")):
                 events.append(
                     ReplayEvent(
@@ -439,14 +410,10 @@ class SimulationReplayEngine:
                 )
             else:
                 data = _try_parse_json(line) or {"raw": line}
-                events.append(
-                    ReplayEvent(timestamp=ts, event_type=default_type, data=data)
-                )
+                events.append(ReplayEvent(timestamp=ts, event_type=default_type, data=data))
         return events
 
-    def _diff_tool_calls(
-        self, session_a: ReplaySession, session_b: ReplaySession
-    ) -> dict:
+    def _diff_tool_calls(self, session_a: ReplaySession, session_b: ReplaySession) -> dict:
         """Diff the tool-call sequences of two sessions."""
         calls_a = self.extract_tool_calls(session_a)
         calls_b = self.extract_tool_calls(session_b)
@@ -454,9 +421,7 @@ class SimulationReplayEngine:
         max_shared = min(len_a, len_b)
 
         changed = [
-            {"index": i, "a": calls_a[i], "b": calls_b[i]}
-            for i in range(max_shared)
-            if calls_a[i] != calls_b[i]
+            {"index": i, "a": calls_a[i], "b": calls_b[i]} for i in range(max_shared) if calls_a[i] != calls_b[i]
         ]
         removed = calls_a[max_shared:]
         added = calls_b[max_shared:]

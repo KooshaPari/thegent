@@ -1,73 +1,165 @@
-"""Budget alerts and cost-overage gates."""
+"""Budget alerts and cost-overage gates for the orchestration layer."""
+
+from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime, timezone
-from typing import Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from thegent.config import ThegentSettings
 
 logger = logging.getLogger(__name__)
 
 
-class BudgetAlerts:
-    """Budget alerts and cost-overage gates."""
+@dataclass
+class BudgetConfig:
+    """Budget configuration."""
 
-    def __init__(self, budget_limit: float = 1000.0) -> None:
-        """Initialize budget alerts.
+    hourly_limit_usd: float = 10.0
+    daily_limit_usd: float = 100.0
+    run_limit_usd: float = 5.0
+    warning_threshold: float = 0.8
+
+
+class BudgetAlertSystem:
+    """Check budgets and emit alerts."""
+
+    def __init__(self, cost_dir: Path | None = None, config: BudgetConfig | None = None) -> None:
+        """Initialize budget alert system.
 
         Args:
-            budget_limit: Budget limit in dollars
+            cost_dir: Directory where cost summaries are stored.
+            config: Budget configuration.
         """
-        self.budget_limit = budget_limit
-        self.current_spend = 0.0
-        self.alerts: list[dict[str, Any]] = []
+        from thegent.cost.tracker import DEFAULT_COST_DIR
 
-    def record_spend(self, amount: float, description: str = "") -> None:
-        """Record spending.
+        self.cost_dir = cost_dir or DEFAULT_COST_DIR
+        self.config = config or BudgetConfig()
+
+    @classmethod
+    def from_settings(cls, settings: Any) -> BudgetAlertSystem:
+        """Create budget alert system from settings."""
+        config = BudgetConfig(
+            hourly_limit_usd=getattr(settings, "budget_hourly_limit", 10.0),
+            daily_limit_usd=getattr(settings, "budget_daily_limit", 100.0),
+            run_limit_usd=getattr(settings, "budget_run_limit", 5.0),
+            warning_threshold=getattr(settings, "budget_warning_threshold", 0.8),
+        )
+        # Ensure they are floats (in case of mocks returning MagicMocks)
+        try:
+            config.hourly_limit_usd = float(config.hourly_limit_usd)
+            config.daily_limit_usd = float(config.daily_limit_usd)
+            config.run_limit_usd = float(config.run_limit_usd)
+            config.warning_threshold = float(config.warning_threshold)
+        except (TypeError, ValueError):
+            # Fallback for mocks
+            config = BudgetConfig()
+
+        return cls(config=config)
+
+    def check_budget(self, current_cost: float, context: str = "run") -> tuple[str, bool]:
+        """Check if cost exceeds budget.
 
         Args:
-            amount: Amount spent
-            description: Description of spending
-        """
-        self.current_spend += amount
-        logger.info(f"Recorded spend: ${amount:.2f} (Total: ${self.current_spend:.2f})")
+            current_cost: Current cost in USD.
+            context: Context for limit ("run", "hourly", "daily").
 
-        # Check if over budget
-        if self.current_spend >= self.budget_limit:
-            self._trigger_alert(
-                "budget_exceeded",
-                {
-                    "current": self.current_spend,
-                    "limit": self.budget_limit,
-                    "overage": self.current_spend - self.budget_limit,
-                },
+        Returns:
+            Tuple of (alert_level, is_blocking).
+            alert_level is one of "OK", "WARN", "BLOCK".
+        """
+        limit = getattr(self.config, f"{context}_limit_usd", self.config.run_limit_usd)
+
+        if current_cost >= limit:
+            logger.error(
+                "Budget EXCEEDED for %s: $%.4f >= $%.4f",
+                context,
+                current_cost,
+                limit,
             )
+            return ("BLOCK", True)
+        if current_cost >= limit * self.config.warning_threshold:
+            logger.warning(
+                "Budget Warning for %s: $%.4f (%.0f%% of $%.4f)",
+                context,
+                current_cost,
+                (current_cost / limit) * 100,
+                limit,
+            )
+            return ("WARN", False)
 
-    def _trigger_alert(self, alert_type: str, data: dict[str, Any]) -> None:
-        """Trigger an alert.
+        return ("OK", False)
 
-        Args:
-            alert_type: Type of alert
-            data: Alert data
+    def get_hourly_spend(self) -> float:
+        """Get total spend in the current hour.
+
+        Calculated by scanning the aggregate.jsonl log.
         """
-        alert = {
-            "type": alert_type,
-            "timestamp": datetime.now(UTC).isoformat(),
-            "data": data,
-        }
-        self.alerts.append(alert)
-        logger.warning(f"Alert triggered: {alert_type} - {data}")
+        aggregate_file = self.cost_dir / "aggregate.jsonl"
+        if not aggregate_file.exists():
+            return 0.0
 
-    def check_budget_gate(self) -> bool:
-        """Check if budget gate allows operation.
+        from datetime import UTC, datetime, timedelta
 
-        Returns:
-            True if within budget
-        """
-        return self.current_spend < self.budget_limit
+        one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
+        total = 0.0
 
-    def get_alerts(self) -> list[dict[str, Any]]:
-        """Get all alerts.
+        import json
 
-        Returns:
-            List of alerts
-        """
-        return self.alerts
+        try:
+            with open(aggregate_file, encoding="utf-8") as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        data = json.loads(line)
+                        ts_str = data.get("timestamp")
+                        if ts_str:
+                            ts = datetime.fromisoformat(ts_str)
+                            if ts >= one_hour_ago:
+                                total += data.get("total_cost", 0.0)
+                    except (ValueError, json.JSONDecodeError):
+                        continue
+        except Exception as exc:
+            logger.debug("Error reading aggregate.jsonl: %s", exc)
+
+        return total
+
+    def get_daily_spend(self) -> float:
+        """Get total spend in the current day (UTC)."""
+        aggregate_file = self.cost_dir / "aggregate.jsonl"
+        if not aggregate_file.exists():
+            return 0.0
+
+        from datetime import UTC, datetime
+
+        today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+        total = 0.0
+
+        import json
+
+        try:
+            with open(aggregate_file, encoding="utf-8") as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        data = json.loads(line)
+                        ts_str = data.get("timestamp")
+                        if ts_str:
+                            ts = datetime.fromisoformat(ts_str)
+                            if ts >= today_start:
+                                total += data.get("total_cost", 0.0)
+                    except (ValueError, json.JSONDecodeError):
+                        continue
+        except Exception as exc:
+            logger.debug("Error reading aggregate.jsonl: %s", exc)
+
+        return total
+
+
+# Backward compatibility alias
+BudgetAlerts = BudgetAlertSystem

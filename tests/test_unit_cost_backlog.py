@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 import pytest
 
 from thegent.governance.backlog import BacklogItem, BacklogManager, BacklogStatus
-from thegent.governance.cost_controller import BudgetTier, CostController
+from thegent.cost.aggregator_controller import BudgetTier, CostController
 
 pytestmark = pytest.mark.unit
 

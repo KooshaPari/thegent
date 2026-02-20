@@ -42,7 +42,9 @@ def registry_register(
     project_dir = project_dir.resolve()
 
     if not project_dir.is_dir():
-        console.print(f"[red]Error:[/red] {project_dir} is not a directory.")
+        from thegent.errors import print_error
+
+        print_error(f"{project_dir} is not a directory.")
         raise typer.Exit(1)
 
     reg = _load_registry()

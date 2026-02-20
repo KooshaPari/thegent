@@ -57,7 +57,7 @@ class SSHIdentityProxy:
             s.settimeout(1.0)
 
             while self._running:
-                try:
+                try:  # noqa: PERF203 -- socket accept loop, exception handling required for timeout
                     conn, _addr = s.accept()
                     threading.Thread(target=self._handle_client, args=(conn,), daemon=True).start()
                 except TimeoutError:
@@ -76,24 +76,27 @@ class SSHIdentityProxy:
                 client_conn.setblocking(False)
                 host_conn.setblocking(False)
 
+                def _forward_recv(src: socket.socket, dst: socket.socket) -> bool:
+                    """Forward data from src to dst. Returns False if connection closed."""
+                    try:
+                        data = src.recv(4096)
+                        if not data:
+                            return False
+                        dst.sendall(data)
+                    except BlockingIOError:
+                        pass
+                    return True
+
                 while self._running:
                     # Very basic pump - in production, use select/poll
-                    try:
-                        data = client_conn.recv(4096)
-                        if not data: break
-                        host_conn.sendall(data)
-                    except BlockingIOError:
-                        pass
-
-                    try:
-                        data = host_conn.recv(4096)
-                        if not data: break
-                        client_conn.sendall(data)
-                    except BlockingIOError:
-                        pass
+                    if not _forward_recv(client_conn, host_conn):
+                        break
+                    if not _forward_recv(host_conn, client_conn):
+                        break
 
                     import time
-                    time.sleep(0.001) # Avoid 100% CPU
+
+                    time.sleep(0.001)  # Avoid 100% CPU
         except Exception as e:
             logger.error(f"Proxy handler error: {e}")
         finally:
@@ -101,7 +104,4 @@ class SSHIdentityProxy:
 
     def get_env(self) -> dict[str, str]:
         """Return the environment variable for L2 agents to use this proxy."""
-        return {
-            "SSH_AUTH_SOCK": str(self.proxy_socket_path),
-            "THEGENT_IDENTITY_PROXY": "1"
-        }
+        return {"SSH_AUTH_SOCK": str(self.proxy_socket_path), "THEGENT_IDENTITY_PROXY": "1"}

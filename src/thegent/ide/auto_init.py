@@ -62,7 +62,14 @@ def ensure_lsp_servers_ready(languages: list[str] | None = None) -> None:
     from thegent.lsp.auto_install import ensure_lsp_server_installed
 
     for language in languages:
-        try:
-            ensure_lsp_server_installed(language, auto_install=True)
-        except Exception as e:
-            logger.debug(f"Failed to ensure LSP server for {language}: {e}")
+        _ensure_server(language)
+
+
+def _ensure_server(language: str) -> None:
+    """Helper to ensure a single LSP server is installed."""
+    from thegent.lsp.auto_install import ensure_lsp_server_installed
+
+    try:
+        ensure_lsp_server_installed(language, auto_install=True)
+    except Exception as e:
+        logger.debug(f"Failed to ensure LSP server for {language}: {e}")

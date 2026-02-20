@@ -88,9 +88,7 @@ class JetBrainsConfig:
 
     def __post_init__(self) -> None:
         if self.ide_type not in _VALID_IDE_TYPES:
-            raise ValueError(
-                f"ide_type must be one of {sorted(_VALID_IDE_TYPES)}, got {self.ide_type!r}"
-            )
+            raise ValueError(f"ide_type must be one of {sorted(_VALID_IDE_TYPES)}, got {self.ide_type!r}")
         self._mcp_config_path = self.config_dir / "mcp.json"
 
     @property

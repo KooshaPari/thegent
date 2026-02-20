@@ -94,10 +94,9 @@ class FastCompression:
             else:
                 # Try zstd first (fastest), then brotli, then gzip
                 for try_method in ["zstd", "brotli", "gzip"]:
-                    try:
-                        return FastCompression.decompress(data, try_method)
-                    except Exception:
-                        continue
+                    res = FastCompression._try_decompress(data, try_method)
+                    if res is not None:
+                        return res
                 raise ValueError("Could not decompress data (unknown format)")
 
         if method == "zstd" and ZSTD_AVAILABLE:
@@ -108,6 +107,14 @@ class FastCompression:
         if method == "gzip":
             return gzip.decompress(data)
         raise ValueError(f"Unsupported compression method: {method}")
+
+    @staticmethod
+    def _try_decompress(data: bytes, method: str) -> bytes | None:
+        """Helper to try decompression with a specific method."""
+        try:
+            return FastCompression.decompress(data, method)
+        except Exception:
+            return None
 
 
 # Convenience functions

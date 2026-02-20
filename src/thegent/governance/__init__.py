@@ -1,6 +1,6 @@
 """Governance modules: cost, policy, sandbox, economic routing (G-GP, WP-5003)."""
 
-from thegent.governance.cost import CostAggregator, CostEstimator
+from thegent.cost.aggregator import CostAggregator, CostEstimator
 from thegent.governance.input_guardrails import GuardrailResult, InputGuardrails
 
 # Phase 2.1: Provider Scoring System (WP-5003)
@@ -63,3 +63,5 @@ __all__ += [
     "OverrideExpiredEvent",
     "OverrideExpiryMonitor",
 ]
+
+from thegent.governance.native_scanner import NativeGovernanceScanner

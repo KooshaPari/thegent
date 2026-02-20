@@ -120,9 +120,7 @@ class DistributedResourceCoordinator:
         resource_limits: dict | None = None,
         lock_timeout: float = 10.0,
     ) -> None:
-        self._lease_file = (
-            Path(lease_file) if lease_file is not None else self._DEFAULT_LEASE_FILE
-        )
+        self._lease_file = Path(lease_file) if lease_file is not None else self._DEFAULT_LEASE_FILE
         self._resource_limits: dict = resource_limits or {}
         self._lock_timeout = lock_timeout
         self._lease_file.parent.mkdir(parents=True, exist_ok=True)
@@ -130,9 +128,7 @@ class DistributedResourceCoordinator:
         if _FILELOCK_AVAILABLE:
             import filelock as fl
 
-            self._filelock = fl.FileLock(
-                str(self._lease_file) + ".lock", timeout=lock_timeout
-            )
+            self._filelock = fl.FileLock(str(self._lease_file) + ".lock", timeout=lock_timeout)
         else:
             self._filelock = None
 
@@ -177,9 +173,7 @@ class DistributedResourceCoordinator:
 
             if capacity is not None:
                 active_amount = sum(
-                    lease.amount
-                    for lease in leases.values()
-                    if lease.resource == resource and not lease.is_expired
+                    lease.amount for lease in leases.values() if lease.resource == resource and not lease.is_expired
                 )
                 if active_amount + amount > capacity:
                     return None
@@ -260,9 +254,7 @@ class DistributedResourceCoordinator:
             ``total`` minus the sum of active (non-expired) lease amounts for
             *resource*.  Never returns a negative value.
         """
-        active_amount = sum(
-            lease.amount for lease in self.get_active_leases(resource=resource)
-        )
+        active_amount = sum(lease.amount for lease in self.get_active_leases(resource=resource))
         return max(0.0, total - active_amount)
 
     # ------------------------------------------------------------------
@@ -286,9 +278,7 @@ class DistributedResourceCoordinator:
             raw = json.loads(self._lease_file.read_text(encoding="utf-8"))
             return {item["lease_id"]: ResourceLease.from_dict(item) for item in raw}
         except (json.JSONDecodeError, KeyError, ValueError) as exc:
-            raise ResourceCoordinationError(
-                f"Failed to parse lease store {self._lease_file}: {exc}"
-            ) from exc
+            raise ResourceCoordinationError(f"Failed to parse lease store {self._lease_file}: {exc}") from exc
 
     def _write(self, leases: dict) -> None:
         """Persist lease store atomically (write-then-rename)."""
@@ -301,9 +291,7 @@ class DistributedResourceCoordinator:
             tmp.write_text(payload, encoding="utf-8")
             os.replace(str(tmp), str(self._lease_file))
         except OSError as exc:
-            raise ResourceCoordinationError(
-                f"Failed to write lease store {self._lease_file}: {exc}"
-            ) from exc
+            raise ResourceCoordinationError(f"Failed to write lease store {self._lease_file}: {exc}") from exc
 
     @staticmethod
     def _purge_expired(leases: dict) -> None:

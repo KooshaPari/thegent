@@ -1,25 +1,50 @@
 """Orchestration: phase transitions, lanes, evidence, recovery (WP-1004, WP-1005, WP-1002, WP-2001+)."""
 
-from thegent.orchestration import (
-    dag_prioritization,
-    load_based_limits,
-    resource_management,
-    speculative_strategies,
-    work_chunking,
-)
-from thegent.orchestration.dag_prioritization import (
-    DagCycleError,
-    DagPrioritizer,
-    DagTask,
-)
-from thegent.orchestration.evidence import PromotionGate
-from thegent.orchestration.hybrid_coordination import (
+from thegent.coordination.hybrid_coordination import (
     CoordinationMetrics,
     CoordinationMode,
     HybridCoordinationStrategy,
 )
-from thegent.orchestration.lanes import Lane, LaneModel
-from thegent.orchestration.load_based_limits import (
+from thegent.orchestration.consensus.redis_concurrency import (
+    RedisConcurrencyController,
+    RedisConfig,
+    make_redis_concurrency_controller,
+)
+from thegent.orchestration.consensus.redlock_atomic import (
+    RedlockAcquireResult,
+    RedlockController,
+    make_redlock_controller,
+)
+from thegent.orchestration.execution import (
+    dag_prioritization,
+    work_chunking,
+)
+from thegent.orchestration.execution.dag_prioritization import (
+    DagCycleError,
+    DagPrioritizer,
+    DagTask,
+)
+from thegent.orchestration.execution.lanes import Lane, LaneModel
+from thegent.orchestration.execution.phases import (
+    PHASE_TRANSITIONS,
+    PhaseTransitionContract,
+    validate_transition,
+)
+from thegent.orchestration.execution.priority_queue import (
+    QueuedRun,
+    RunPriorityQueue,
+    make_priority_queue,
+)
+from thegent.orchestration.execution.work_chunking import (
+    ChunkConfig,
+    chunk_work_items,
+    compute_optimal_chunk_size,
+)
+from thegent.orchestration.resource import (
+    load_based_limits,
+    resource_management,
+)
+from thegent.orchestration.resource.load_based_limits import (
     DeadlineMonitor,
     LimitGateConfig,
     ResourceSnapshot,
@@ -28,27 +53,7 @@ from thegent.orchestration.load_based_limits import (
     get_deadline_monitor,
     sample_resources,
 )
-from thegent.orchestration.phases import (
-    PHASE_TRANSITIONS,
-    PhaseTransitionContract,
-    validate_transition,
-)
-from thegent.orchestration.priority_queue import (
-    QueuedRun,
-    RunPriorityQueue,
-    make_priority_queue,
-)
-from thegent.orchestration.redis_concurrency import (
-    RedisConcurrencyController,
-    RedisConfig,
-    make_redis_concurrency_controller,
-)
-from thegent.orchestration.redlock_atomic import (
-    RedlockAcquireResult,
-    RedlockController,
-    make_redlock_controller,
-)
-from thegent.orchestration.resource_management import (
+from thegent.orchestration.resource.resource_management import (
     BottleneckDetector,
     ExtendedResourceSnapshot,
     HarnessCard,
@@ -56,22 +61,21 @@ from thegent.orchestration.resource_management import (
     create_harness_cards,
     sample_extended_resources,
 )
-from thegent.orchestration.speculative_strategies import (
+from thegent.orchestration.resource.token_bucket import (
+    RateLimitedSwarmRunner,
+    TokenBucket,
+    TokenBucketConfig,
+)
+from thegent.orchestration.strategies import (
+    speculative_strategies,
+)
+from thegent.orchestration.strategies.evidence import PromotionGate
+from thegent.orchestration.strategies.speculative_strategies import (
     SpeculativeConfig,
     SpeculativeStrategy,
     compute_adaptive_timeout,
     select_speculative_providers,
     should_terminate_early,
-)
-from thegent.orchestration.token_bucket import (
-    RateLimitedSwarmRunner,
-    TokenBucket,
-    TokenBucketConfig,
-)
-from thegent.orchestration.work_chunking import (
-    ChunkConfig,
-    chunk_work_items,
-    compute_optimal_chunk_size,
 )
 
 __all__ = [

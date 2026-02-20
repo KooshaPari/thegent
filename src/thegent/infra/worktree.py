@@ -7,7 +7,6 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +26,12 @@ class WorktreeManager:
             branch_name = f"mesh/agent-{agent_id}"
 
         try:
-            # Check if branch exists, if not create from HEAD
-            subprocess.run(["git", "rev-parse", "--verify", branch_name], cwd=self.project_root, capture_output=True)
+            subprocess.run(
+                ["git", "rev-parse", "--verify", branch_name], cwd=self.project_root, capture_output=True, check=False
+            )
 
             cmd = ["git", "worktree", "add", str(wt_path), branch_name]
-            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
+            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True, check=False)
 
             if result.returncode == 0:
                 logger.info(f"Created worktree for agent {agent_id} at {wt_path}")
@@ -59,7 +59,11 @@ class WorktreeManager:
         """List current git worktrees."""
         try:
             result = subprocess.run(
-                ["git", "worktree", "list", "--porcelain"], cwd=self.project_root, capture_output=True, text=True
+                ["git", "worktree", "list", "--porcelain"],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                check=False,
             )
             worktrees = []
             current = {}

@@ -1,155 +1,306 @@
 # Troubleshooting Guide
 
-This guide provides solutions for common issues encountered while using thegent on different platforms.
+This guide helps you diagnose and fix common issues with `thegent`.
 
----
+## Quick Diagnostics
 
-## 1. Quick Verification
-
-If you encounter issues, always start by running the diagnostic tool:
+Run the comprehensive health check:
 
 ```bash
 thegent doctor
 ```
 
-This will check your configuration, paths, and provider connectivity.
+For automatic fixes where possible:
 
----
-
-## 2. Common Issues by Platform
-
-| Issue | macOS | Linux | Windows |
-|-------|-------|-------|---------|
-| **Command not found** | Check `~/.local/bin` in PATH | Check `~/.local/bin` in PATH | Check `%LOCALAPPDATA%\thegent\bin` in PATH |
-| **Permission denied** | `chmod 755 ~/Library/Application\ Support/thegent` | `chmod 755 ~/.config/thegent` | Run PowerShell as Administrator |
-| **Provider not configured** | `thegent cliproxy login <provider>` | `thegent cliproxy login <provider>` | `thegent cliproxy login <provider>` |
-| **MCP server not reachable** | `thegent serve` | `thegent serve` | `thegent serve` (check firewall) |
-| **WSL2 not available** | N/A | N/A | `wsl --install` |
-| **PowerShell not found** | N/A | N/A | `winget install Microsoft.PowerShell` |
-
----
-
-## 3. Platform-Specific Gotchas
-
-### macOS
-- **Case-insensitive filesystem:** thegent handles path resolution to avoid collisions on default macOS volumes. If you use a case-sensitive volume, ensure your paths match exactly.
-- **SIP (System Integrity Protection):** thegent avoids modifying system directories and stays within user-writable paths (e.g., `~/Library/Application Support/thegent`).
-
-### Linux
-- **Multiple Python versions:** Ensure you are using the correct Python version. Check with `python3 --version`.
-- **SELinux/AppArmor:** If you encounter unexpected permission errors even with correct file permissions, check your security policies.
-
-### Windows
-- **Long paths:** Windows has a 260-character path limit by default. If you encounter "Path too long" errors, enable long path support via Group Policy or Registry.
-- **Antivirus interference:** Some antivirus software may slow down thegent's execution or block its background processes. Consider adding exclusions for the thegent installation directory.
-- **WSL2 path mixing:** When using thegent in WSL2, use `wslpath` to convert between Windows and Unix-style paths.
-
----
-
-## 4. Provider & OAuth Troubleshooting
-
-### OAuth Failures
-**Symptom:** The browser opens, you log in, but the token is not stored or the CLI doesn't recognize it.
-
-**Solutions:**
-1. Check token storage: `cat ~/.cli-proxy-api/tokens/*.json`
-2. Run with verbose logging: `thegent cliproxy login <provider> --verbose`
-3. Check proxy logs: `tail -f ~/.cli-proxy-api/logs/*.log`
-
-### Token Expiry
-**Symptom:** You receive "Token expired" or "Unauthorized" errors after a period of use.
-
-**Solutions:**
-1. Refresh all tokens: `thegent cliproxy tokens refresh`
-2. Check token status: `thegent cliproxy tokens status`
-3. Manual re-login: `thegent cliproxy login <provider>`
-
-### API Key Issues (MiniMax, NIM)
-**Symptom:** "Invalid API key" error message.
-
-**Solutions:**
-1. Re-enter the key: `thegent cliproxy login minimax --force`
-2. Verify key in config: `cat ~/.cli-proxy-api/config.toml | grep -A5 minimax`
-
----
-
-## 5. MCP Server Issues
-
-### Connectivity
-If your client (Cursor, Claude Code) cannot find thegent tools:
-1. Ensure the server is running: `thegent ps`
-2. Restart the server: `thegent cliproxy restart`
-3. Check the port: Default is `8317`. Ensure no other service is using it.
-
----
-
-## 6. Shell Issues (Development)
-
-### Fork Exhaustion
-**Symptom**: `Resource temporarily unavailable` errors, can't spawn new processes.
-
-**Solution**:
 ```bash
-# Kill hanging processes
-pkill -9 -f "thegent"
-pkill -9 -f "python.*thegent"
-
-# Or run the cleanup script
-bash scripts/fix_shell_corruption.sh
+thegent doctor --fix
 ```
 
-### Shell Corruption
-**Symptom**: Commands not found, PATH errors, broken prompts.
+## Common Issues
 
-**Solution**:
+### Installation Issues
+
+#### "Command not found: thegent"
+
+**Symptoms**: `thegent` command is not recognized.
+
+**Causes**:
+- `thegent` is not installed
+- `~/.local/bin` is not in PATH
+- Virtual environment is not activated
+
+**Solutions**:
+1. Install thegent:
+   ```bash
+   pip install thegent
+   ```
+
+2. Add `~/.local/bin` to PATH:
+   ```bash
+   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+   source ~/.zshrc
+   ```
+
+3. Verify installation:
+   ```bash
+   which thegent
+   ```
+
+#### "uv not found"
+
+**Symptoms**: `uv` command is not available.
+
+**Solutions**:
 ```bash
-# Restore from backup
-bash scripts/fix_shell_corruption.sh --restore
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Verify
+uv --version
 ```
 
----
+### Configuration Issues
 
-## 7. Performance Issues
+#### "Configuration file not found"
 
-### Slow Hook Execution
-**Symptom**: Hooks take seconds to run.
+**Symptoms**: Configuration errors on startup.
 
-**Solution**:
+**Solutions**:
+1. Create configuration:
+   ```bash
+   thegent setup --wizard
+   ```
+
+2. Validate configuration:
+   ```bash
+   thegent config validate
+   ```
+
+3. Check configuration file:
+   ```bash
+   cat .env
+   ```
+
+#### "Invalid configuration value"
+
+**Symptoms**: Configuration validation errors.
+
+**Solutions**:
+1. Check the error message for the specific field
+2. Review `docs/guides/CONFIGURATION.md` for valid values
+3. Run `thegent config validate` for detailed errors
+
+### Runtime Issues
+
+#### "PyPy not available"
+
+**Symptoms**: PyPy runtime not found.
+
+**Solutions**:
 ```bash
-# Clear hook cache
-rm -rf ~/.thegent/cache/hooks/*
+# Install PyPy via uv
+uv python install pypy-3.11
 
-# Verify Rust tools are installed
-which hook-dispatcher
+# Verify
+uv run --python pypy-3.11 python --version
 ```
 
----
+#### "CPython 3.14 not available"
 
-## 8. Debug Commands
+**Symptoms**: CPython 3.14 runtime not found.
 
-### Enable Debug Mode
+**Solutions**:
 ```bash
-# Run with debug output
-thegent --debug serve
-thegent --debug run "task"
+# Install CPython 3.14 via uv
+uv python install 3.14
 
-# Enable hook debug
-export THGENT_HOOK_DEBUG=1
+# Verify
+uv run --python 3.14 python --version
 ```
 
-### View Logs
-```bash
-# Tail all logs
-thegent logs --tail 100
+#### "Rust not available"
 
-# File system logs
-tail -f ~/.thegent/logs/*.log
+**Symptoms**: Rust toolchain not found.
+
+**Solutions**:
+```bash
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Verify
+cargo --version
 ```
 
----
+### Network Issues
 
-## 9. Getting Help
+#### "Connection timeout"
 
-If your issue persists:
-1. Check the logs: `thegent logs --tail 100`
-2. Open an issue on [GitHub](https://github.com/kooshapari/thegent/issues) with the output of `thegent doctor`.
+**Symptoms**: Network requests timing out.
+
+**Causes**:
+- Firewall blocking connections
+- Network connectivity issues
+- Proxy configuration
+
+**Solutions**:
+1. Check network connectivity:
+   ```bash
+   thegent doctor --network
+   ```
+
+2. Test endpoint:
+   ```bash
+   curl -v https://api.example.com/health
+   ```
+
+3. Check proxy settings:
+   ```bash
+   echo $HTTP_PROXY
+   echo $HTTPS_PROXY
+   ```
+
+#### "WiFi connectivity issues (Mac)"
+
+**Symptoms**: Intermittent connectivity on Mac WiFi.
+
+**Solutions**:
+1. Check WiFi signal strength
+2. Use Ethernet when possible for heavy compute
+3. Configure asymmetric buffering (see `docs/architecture/HARDWARE_OPTIMIZATION_2026.md`)
+
+### Performance Issues
+
+#### "Slow startup time"
+
+**Symptoms**: `thegent` takes a long time to start.
+
+**Solutions**:
+1. Check for process leaks:
+   ```bash
+   thegent doctor --processes
+   ```
+
+2. Clear caches:
+   ```bash
+   thegent clean --cache
+   ```
+
+3. Optimize PATH:
+   ```bash
+   # Remove unnecessary PATH entries
+   echo $PATH
+   ```
+
+#### "High memory usage"
+
+**Symptoms**: High memory consumption.
+
+**Solutions**:
+1. Check for memory leaks:
+   ```bash
+   thegent doctor --memory
+   ```
+
+2. Restart services:
+   ```bash
+   thegent mcp restart
+   ```
+
+3. Review configuration for memory limits
+
+### Multi-Runtime Issues
+
+#### "Runtime dispatcher not selecting optimal runtime"
+
+**Symptoms**: Suboptimal performance.
+
+**Solutions**:
+1. Check runtime availability:
+   ```bash
+   thegent doctor --runtime
+   ```
+
+2. Review runtime selection guide:
+   ```bash
+   cat docs/architecture/RUNTIME_SELECTION_GUIDE.md
+   ```
+
+3. Verify runtime dispatcher:
+   ```bash
+   python -c "from thegent.infra.runtime_dispatcher import router_dispatcher; print(router_dispatcher.get_impl())"
+   ```
+
+## Getting Help
+
+### Error Reports
+
+Generate a detailed error report:
+
+```bash
+thegent error report
+```
+
+This creates a report with:
+- Error details
+- System information
+- Configuration (sanitized)
+- Runtime status
+
+### Documentation
+
+- [Quick Start Guide](./QUICK_START.md)
+- [Configuration Guide](./CONFIGURATION.md)
+- [Architecture Overview](../architecture/ARCHITECTURE_LAYERS.md)
+
+### Community
+
+- GitHub Issues: https://github.com/kooshapari/thegent/issues
+- Documentation: https://github.com/kooshapari/thegent#readme
+
+## Diagnostic Commands
+
+### Comprehensive Health Check
+
+```bash
+thegent doctor
+```
+
+### Specific Checks
+
+```bash
+# Runtime status
+thegent doctor --runtime
+
+# Network diagnostics
+thegent doctor --network
+
+# Process health
+thegent doctor --processes
+
+# Memory usage
+thegent doctor --memory
+
+# Dependencies
+thegent doctor --deps
+```
+
+### Configuration
+
+```bash
+# Validate configuration
+thegent config validate
+
+# Show configuration
+thegent config show
+
+# Interactive setup
+thegent setup --wizard
+```
+
+## Still Stuck?
+
+1. Run `thegent doctor` and review all checks
+2. Generate error report: `thegent error report`
+3. Check logs: `thegent logs`
+4. Review documentation
+5. Open a GitHub issue with the error report

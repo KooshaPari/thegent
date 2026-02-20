@@ -26,24 +26,24 @@ if [ -d "$DEMO_DIR/cli" ]; then
 fi
 
 # Playwright browser recordings
-if [ -d "$DEMO_DIR/web" ]; then
+if [ -d "recordings" ]; then
   echo "🌐 Processing Playwright browser recordings..."
-  cd "$DEMO_DIR/web"
   
-  # Install browsers if needed
-  npx playwright install --with-deps chromium 2>/dev/null || true
+  # Install browsers if needed (minimal, just chromium for demos)
+  npx playwright install chromium --with-deps 2>/dev/null || true
   
-  for script in *.spec.ts; do
+  for script in recordings/*.spec.ts; do
     if [ -f "$script" ]; then
       name=$(basename "$script" .spec.ts)
-      echo "  → Generating GIF from $script..."
-      npx playwright test "$script" --project=chromium --gif="$OUTPUT_DIR/${name}.gif" || {
-        echo "  ⚠️  Failed to generate GIF from $script"
+      echo "  → Generating demo output from $script..."
+      # For now, we just run the test to ensure it passes.
+      # True GIF generation requires a plugin or xvfb/ffmpeg setup,
+      # but we can capture screenshots/videos as artifacts.
+      npx playwright test "$script" --project=chromium || {
+        echo "  ⚠️  Failed to run Playwright test $script"
       }
     fi
   done
-  
-  cd - > /dev/null
 fi
 
 echo "✅ Demo GIF generation complete!"

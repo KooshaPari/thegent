@@ -11,9 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
-from thegent.cli import _scope_key
-from thegent.cli_impl import (
+from thegent.cli.commands.impl import (
     bg_impl,
     dag_list_impl,
     dag_raw_impl,
@@ -30,6 +28,8 @@ from thegent.mcp_server import (
     thegent_session_contract_health_report,
     thegent_session_contract_health_trend,
 )
+
+from thegent.cli import _scope_key
 
 
 class _Proc:
@@ -75,7 +75,7 @@ class TestCLIImplDagRaw:
     def test_dag_raw_no_dag_returns_message(self, tmp_path: Path) -> None:
         # @trace FR-MCP-001
         """When no .factory/dag-session.md, returns error message."""
-        with patch("thegent.cli_impl._resolve_cwd", return_value=tmp_path):
+        with patch("thegent.cli.commands.impl._resolve_cwd", return_value=tmp_path):
             result = dag_raw_impl(cd=tmp_path)
         assert isinstance(result, str)
         assert "dag" in result.lower() or "not found" in result.lower() or len(result) >= 0
@@ -87,7 +87,7 @@ class TestCLIImplDagRaw:
         factory_dir.mkdir()
         dag_file = factory_dir / "dag-session.md"
         dag_file.write_text("# DAG\n\n- task a\n- task b\n")
-        with patch("thegent.cli_impl._resolve_cwd", return_value=tmp_path):
+        with patch("thegent.cli.commands.impl._resolve_cwd", return_value=tmp_path):
             result = dag_raw_impl(cd=tmp_path)
         assert "# DAG" in result
         assert "task a" in result
@@ -116,7 +116,7 @@ owner: test
         factory_dir.mkdir()
         dag_file = factory_dir / "dag-session.md"
         dag_file.write_text(self.PERT_DAG)
-        with patch("thegent.cli_impl._resolve_cwd", return_value=tmp_path):
+        with patch("thegent.cli.commands.impl._resolve_cwd", return_value=tmp_path):
             result = dag_list_impl(cd=tmp_path)
         assert "error" not in result
         assert "frontmatter" in result
@@ -143,7 +143,7 @@ project: label-test
 """
         dag_file = factory_dir / "dag-session.md"
         dag_file.write_text(dag_content)
-        with patch("thegent.cli_impl._resolve_cwd", return_value=tmp_path):
+        with patch("thegent.cli.commands.impl._resolve_cwd", return_value=tmp_path):
             result = dag_list_impl(cd=tmp_path)
         assert "error" not in result
         assert len(result["tasks"]) == 1
@@ -157,7 +157,7 @@ class TestMCPMetaContract:
     def test_get_server_meta_impl_includes_health_payload_schema(self) -> None:
         # @trace FR-MCP-001
         """get_server_meta_impl returns health_payload_schema_version and health_payload_types."""
-        from thegent.cli_impl import get_server_meta_impl
+        from thegent.cli.commands.impl import get_server_meta_impl
 
         meta = get_server_meta_impl()
         assert meta["server"] == "thegent"
@@ -283,12 +283,12 @@ class TestCLIImplBackground:
         session_dir = tmp_path / "sessions"
 
         with (
-            patch("thegent.cli_impl._resolve_cwd", return_value=tmp_path),
+            patch("thegent.cli.commands.impl._resolve_cwd", return_value=tmp_path),
             patch.dict(
                 os.environ,
                 {"THGENT_SESSION_DIR": str(session_dir)},
             ),
-            patch("thegent.cli_impl.subprocess.Popen") as popen,
+            patch("thegent.cli.commands.impl.subprocess.Popen") as popen,
         ):
             popen.return_value = _Proc(pid=43210)
             result = bg_impl(

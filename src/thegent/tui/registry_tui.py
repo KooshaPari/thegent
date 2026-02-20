@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 from datetime import UTC, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from textual import on, work
 from textual.app import App, ComposeResult
@@ -20,7 +20,7 @@ from textual.widgets import (
     TabPane,
 )
 
-from thegent.cli_impl import logs_impl, ps_impl, session_send_impl
+from thegent.cli.commands.impl import logs_impl, ps_impl, session_send_impl
 from thegent.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
@@ -122,7 +122,7 @@ class RegistryTUI(App):
     async def refresh_data(self) -> None:
         """Poll registry for session updates."""
         try:
-            from thegent.cli_impl import ps_impl
+            from thegent.cli.commands.impl import ps_impl
 
             self.sessions = ps_impl(all=self.show_all)
             table = self.query_one("#session-list", DataTable)

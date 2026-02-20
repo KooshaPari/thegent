@@ -1,6 +1,6 @@
 research-library-http|Replace urllib with httpx (7+ files)|P1|✅ Complete
-vitepress-playwright-setup|Set up Playwright for browser recordings|P1|-
-docgen-sticky-nav|Implement sticky sidebar and header|P1|-
+vitepress-playwright-setup|Set up Playwright for browser recordings|P1|✅ Complete
+docgen-sticky-nav|Implement sticky sidebar and header|P1|✅ Complete
 docgen-algolia-search|Integrate Algolia search with suggestions|P1|-
 docgen-content-tabs|Create content tabs component|P1|-
 docgen-api-typescript|Create TypeScript/JavaScript API generator|P1|-

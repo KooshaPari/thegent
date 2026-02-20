@@ -102,7 +102,7 @@ if fifo_path.exists():
     with open(fifo_path, 'r') as f:
         msg = json.loads(f.read())
         if msg["type"] == "reprompt":
-            # Handle reprompt
+            pass # Handle reprompt
 ```
 
 ### Option 2: Unix Domain Sockets
@@ -345,29 +345,29 @@ session_dir/
 
 ```python
 class MessageRegistry:
-    def send_message(session_id: str, message: dict) -> bool
-    def get_pending_messages(session_id: str) -> list[dict]
-    def mark_processed(session_id: str, message_id: str)
-    def create_fifo(session_id: str) -> Path | None
+    def send_message(session_id: str, message: dict) -> bool: ...
+    def get_pending_messages(session_id: str) -> list[dict]: ...
+    def mark_processed(session_id: str, message_id: str): ...
+    def create_fifo(session_id: str) -> Path | None: ...
 ```
 
 #### 2. Chat History (`thegent/src/thegent/chat.py`)
 
 ```python
 class ChatHistory:
-    def append(session_id: str, entry: dict)
-    def get_history(session_id: str, limit: int = 100) -> list[dict]
-    def get_context(session_id: str, max_chars: int = 8000) -> str
+    def append(session_id: str, entry: dict): ...
+    def get_history(session_id: str, limit: int = 100) -> list[dict]: ...
+    def get_context(session_id: str, max_chars: int = 8000) -> str: ...
 ```
 
 #### 3. Agent Registry TUI (`thegent/src/thegent/tui/agent_registry.py`)
 
 ```python
 class AgentRegistryTUI:
-    def render_session_list()
-    def render_chat_view(session_id: str)
-    def handle_input(session_id: str, message: str)
-    def attach_to_session(session_id: str)
+    def render_session_list(): ...
+    def render_chat_view(session_id: str): ...
+    def handle_input(session_id: str, message: str): ...
+    def attach_to_session(session_id: str): ...
 ```
 
 ## Implementation Plan

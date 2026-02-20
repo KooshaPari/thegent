@@ -59,20 +59,26 @@ class RemoteResult:
     elapsed_s: float
 
 
-def _load_nodes_from_env() -> list[str]:
-    """Parse ``THGENT_REMOTE_NODES`` into a list of node addresses.
+def _load_nodes_from_settings() -> list[str]:
+    """Parse remote nodes from settings into a list of node addresses.
 
     Returns:
-        Non-empty stripped tokens from the comma-separated env var, or an
-        empty list when the variable is unset or blank.
+        Non-empty stripped tokens from the comma-separated setting, or an
+        empty list when unset or blank.
     """
-    raw = os.environ.get("THGENT_REMOTE_NODES", "")
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    raw = settings.remote_nodes or ""
     return [n.strip() for n in raw.split(",") if n.strip()]
 
 
-def _load_ssh_user_from_env() -> str | None:
-    """Return ``THGENT_REMOTE_SSH_USER`` or *None* if unset."""
-    return os.environ.get("THGENT_REMOTE_SSH_USER") or None
+def _load_ssh_user_from_settings() -> str | None:
+    """Return remote SSH user from settings or None if unset."""
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    return settings.remote_ssh_user
 
 
 class RemoteExecutor:
@@ -89,9 +95,9 @@ class RemoteExecutor:
 
     Args:
         nodes: List of node hostnames or IP addresses.  When *None* the
-            value is read from ``THGENT_REMOTE_NODES``.
+            value is read from settings.remote_nodes.
         ssh_user: SSH username for all nodes.  When *None* the value is
-            read from ``THGENT_REMOTE_SSH_USER`` (may remain *None*,
+            read from settings.remote_ssh_user (may remain *None*,
             meaning SSH picks up the OS user).
     """
 
@@ -102,14 +108,10 @@ class RemoteExecutor:
         nodes: list[str] | None = None,
         ssh_user: str | None = None,
     ) -> None:
-        self._nodes: list[str] = nodes if nodes is not None else _load_nodes_from_env()
-        self._ssh_user: str | None = (
-            ssh_user if ssh_user is not None else _load_ssh_user_from_env()
-        )
+        self._nodes: list[str] = nodes if nodes is not None else _load_nodes_from_settings()
+        self._ssh_user: str | None = ssh_user if ssh_user is not None else _load_ssh_user_from_settings()
         # Infinite round-robin iterator; created lazily when nodes exist.
-        self._rr: itertools.cycle[str] | None = (
-            itertools.cycle(self._nodes) if self._nodes else None
-        )
+        self._rr: itertools.cycle[str] | None = itertools.cycle(self._nodes) if self._nodes else None
 
     # ------------------------------------------------------------------
     # Public API
@@ -146,13 +148,9 @@ class RemoteExecutor:
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise RemoteExecutorError(
-                f"Task {task.task_id} timed out after {task.timeout_s}s on {node}"
-            ) from exc
+            raise RemoteExecutorError(f"Task {task.task_id} timed out after {task.timeout_s}s on {node}") from exc
         except OSError as exc:
-            raise RemoteExecutorError(
-                f"Task {task.task_id} failed to spawn SSH process: {exc}"
-            ) from exc
+            raise RemoteExecutorError(f"Task {task.task_id} failed to spawn SSH process: {exc}") from exc
 
         elapsed = time.monotonic() - start
         logger.debug(

@@ -11,10 +11,10 @@ import re
 from pathlib import Path
 
 import pytest
+from thegent.cli.commands.impl import run_impl
 
 from thegent.agents import get_runner, list_agent_names
 from thegent.agents.registry import _PROXY_AGENTS
-from thegent.cli_impl import run_impl
 
 
 def _runner_available(agent: str) -> bool:

@@ -14,8 +14,7 @@ from unittest.mock import MagicMock, patch
 import click.exceptions
 import pytest
 import typer
-
-from thegent.cli_impl import DagDocument
+from thegent.cli.commands.impl import DagDocument
 
 _EXIT = (SystemExit, click.exceptions.Exit)
 
@@ -146,7 +145,7 @@ class TestSweepCmdBranches:
 
     @patch("thegent.cli.console")
     @patch("thegent.cli._normalize_output_format", return_value="json")
-    @patch("thegent.cli_impl.sweep_impl")
+    @patch("thegent.cli.commands.impl.sweep_impl")
     def test_sweep_json_with_audit(self, mock_impl, mock_fmt, mock_console) -> None:
         # @trace FR-GOV-001
         mock_impl.return_value = {
@@ -161,7 +160,7 @@ class TestSweepCmdBranches:
 
     @patch("thegent.cli.console")
     @patch("thegent.cli._normalize_output_format", return_value="rich")
-    @patch("thegent.cli_impl.sweep_impl")
+    @patch("thegent.cli.commands.impl.sweep_impl")
     def test_sweep_rich_audit_failed_status(self, mock_impl, mock_fmt, mock_console) -> None:
         # @trace FR-GOV-002
         mock_impl.return_value = {
@@ -383,7 +382,7 @@ class TestObserveSummaryCmdRich:
             },
             "generated_query": {"owner": "ci"},
         }
-        with patch("thegent.cli_impl.observe_summary_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.observe_summary_impl", return_value=result):
             from thegent.cli import observe_summary_cmd
 
             observe_summary_cmd(limit=100, drift_window=50, format=None, provider=None)
@@ -472,7 +471,7 @@ class TestCockpitCmdBranches:
             patch("thegent.cli.RunRegistry", return_value=mock_registry),
             patch("thegent.execution.CircuitBreakerRegistry", return_value=mock_cb),
             patch("thegent.execution.CheckpointRegistry", return_value=mock_ckpt),
-            patch("thegent.cli_impl.ps_impl", return_value=[]),
+            patch("thegent.cli.commands.impl.ps_impl", return_value=[]),
         ):
             from thegent.cli import cockpit_cmd
 
@@ -508,7 +507,7 @@ class TestPsCmdBranches:
                 "route_contract": {"provider": "claude"},
             },
         ]
-        with patch("thegent.cli_impl.ps_impl", return_value=rows):
+        with patch("thegent.cli.commands.impl.ps_impl", return_value=rows):
             from thegent.cli import ps_cmd
 
             ps_cmd(all_sessions=False, owner=None, format="md", include_contract=True)
@@ -547,7 +546,7 @@ class TestSessionContractAuditCmdBranches:
     @patch("thegent.cli.ThegentSettings", return_value=_mock_settings())
     def test_audit_no_rows_missing_only(self, mock_settings, mock_owner, mock_fmt, mock_console) -> None:
         # @trace FR-GOV-004
-        with patch("thegent.cli_impl.session_contract_audit_impl", return_value=self._audit_result()):
+        with patch("thegent.cli.commands.impl.session_contract_audit_impl", return_value=self._audit_result()):
             from thegent.cli import session_contracts_cmd
 
             session_contracts_cmd(
@@ -567,7 +566,7 @@ class TestSessionContractAuditCmdBranches:
     @patch("thegent.cli.ThegentSettings", return_value=_mock_settings())
     def test_audit_md_summary_only(self, mock_settings, mock_owner, mock_fmt, mock_console) -> None:
         # @trace FR-GOV-005
-        with patch("thegent.cli_impl.session_contract_audit_impl", return_value=self._audit_result()):
+        with patch("thegent.cli.commands.impl.session_contract_audit_impl", return_value=self._audit_result()):
             from thegent.cli import session_contracts_cmd
 
             session_contracts_cmd(
@@ -602,7 +601,7 @@ class TestSessionContractAuditCmdBranches:
                 "contract_issues": [],
             },
         ]
-        with patch("thegent.cli_impl.session_contract_audit_impl", return_value=self._audit_result(rows=rows)):
+        with patch("thegent.cli.commands.impl.session_contract_audit_impl", return_value=self._audit_result(rows=rows)):
             from thegent.cli import session_contracts_cmd
 
             session_contracts_cmd(
@@ -635,7 +634,7 @@ class TestSessionContractAuditCmdBranches:
                 "contract_issues": ["stale_contract"],
             },
         ]
-        with patch("thegent.cli_impl.session_contract_audit_impl", return_value=self._audit_result(rows=rows)):
+        with patch("thegent.cli.commands.impl.session_contract_audit_impl", return_value=self._audit_result(rows=rows)):
             from thegent.cli import session_contracts_cmd
 
             session_contracts_cmd(
@@ -664,7 +663,7 @@ class TestHealthGateCmdBranches:
     def test_gate_md_format(self, mock_settings, mock_owner, mock_fmt, mock_console) -> None:
         # @trace FR-GOV-008
         result = _health_gate_result()
-        with patch("thegent.cli_impl.session_contract_health_gate_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_gate_impl", return_value=result):
             from thegent.cli import session_contract_health_gate_cmd
 
             session_contract_health_gate_cmd(
@@ -694,7 +693,7 @@ class TestHealthGateCmdBranches:
                 "blocked_count_delta": -2,
             },
         )
-        with patch("thegent.cli_impl.session_contract_health_gate_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_gate_impl", return_value=result):
             from thegent.cli import session_contract_health_gate_cmd
 
             session_contract_health_gate_cmd(
@@ -721,7 +720,7 @@ class TestHealthGateCmdBranches:
         result = _health_gate_result()
         out_file = tmp_path / "gate.json"
         with (
-            patch("thegent.cli_impl.session_contract_health_gate_impl", return_value=result),
+            patch("thegent.cli.commands.impl.session_contract_health_gate_impl", return_value=result),
             patch("thegent.cli._write_health_gate_export", return_value="json") as mock_export,
         ):
             from thegent.cli import session_contract_health_gate_cmd
@@ -926,7 +925,7 @@ class TestHealthReportCmdBranches:
     def test_report_md_format(self, mock_settings, mock_owner, mock_fmt, mock_console) -> None:
         # @trace FR-GOV-011
         result = _health_report_result()
-        with patch("thegent.cli_impl.session_contract_health_report_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_report_impl", return_value=result):
             from thegent.cli import session_contract_health_report_cmd
 
             session_contract_health_report_cmd(
@@ -969,7 +968,7 @@ class TestHealthReportCmdBranches:
                 },
             ],
         )
-        with patch("thegent.cli_impl.session_contract_health_report_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_report_impl", return_value=result):
             from thegent.cli import session_contract_health_report_cmd
 
             session_contract_health_report_cmd(
@@ -1000,7 +999,7 @@ class TestHealthReportCmdBranches:
         result = _health_report_result()
         out_file = tmp_path / "report.xyz"
         with (
-            patch("thegent.cli_impl.session_contract_health_report_impl", return_value=result),
+            patch("thegent.cli.commands.impl.session_contract_health_report_impl", return_value=result),
             patch("thegent.cli._write_report_export", return_value="json"),
         ):
             from thegent.cli import session_contract_health_report_cmd
@@ -1038,7 +1037,7 @@ class TestHealthTrendCmdBranches:
     def test_trend_md_format(self, mock_settings, mock_owner, mock_fmt, mock_console) -> None:
         # @trace FR-GOV-014
         result = _health_trend_result()
-        with patch("thegent.cli_impl.session_contract_health_trend_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_trend_impl", return_value=result):
             from thegent.cli import session_contract_health_trend_cmd
 
             session_contract_health_trend_cmd(
@@ -1067,7 +1066,7 @@ class TestHealthTrendCmdBranches:
         result = _health_trend_result()
         out_file = tmp_path / "trend.xyz"
         with (
-            patch("thegent.cli_impl.session_contract_health_trend_impl", return_value=result),
+            patch("thegent.cli.commands.impl.session_contract_health_trend_impl", return_value=result),
             patch("thegent.cli._write_health_trend_export", return_value="json"),
         ):
             from thegent.cli import session_contract_health_trend_cmd
@@ -2019,9 +2018,9 @@ class TestInspectCmdBranches:
     def test_rich_status_and_logs_error(self, mock_fmt, mock_console) -> None:
         # @trace FR-CLI-462
         with (
-            patch("thegent.cli_impl.status_impl", return_value={"status": "running"}),
-            patch("thegent.cli_impl.logs_impl", side_effect=Exception("no log")),
-            patch("thegent.cli_impl.ps_impl"),
+            patch("thegent.cli.commands.impl.status_impl", return_value={"status": "running"}),
+            patch("thegent.cli.commands.impl.logs_impl", side_effect=Exception("no log")),
+            patch("thegent.cli.commands.impl.ps_impl"),
         ):
             from thegent.cli import inspect_cmd
 

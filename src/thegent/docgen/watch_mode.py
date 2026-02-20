@@ -5,7 +5,6 @@ import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import List
 
 logger = logging.getLogger(__name__)
 

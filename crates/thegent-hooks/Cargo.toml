@@ -31,6 +31,8 @@ thegent-git = { path = "../thegent-git" }
 thiserror = "2.0.18"
 lazy_static = "1.5.0"
 which = "6.0.3"
+tempfile = "3"
+toml = "0.8"
 
 [features]
 default = []

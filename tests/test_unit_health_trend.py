@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 import typer
 
-from thegent import cli_impl
+from thegent.cli.commands import impl as cli_impl
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -130,8 +130,8 @@ class TestHealthPolicyAndTrend:
                 return next(times)
 
         # Patch in multiple places to be sure
-        monkeypatch.setattr("thegent.cli_impl.datetime", MockDateTime)
-        import thegent.cli_impl as mod
+        monkeypatch.setattr("thegent.cli.commands.impl.datetime", MockDateTime)
+        import thegent.cli.commands.impl as mod
 
         monkeypatch.setattr(mod, "datetime", MockDateTime)
 

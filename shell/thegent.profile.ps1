@@ -72,6 +72,15 @@ function Get-Aliases {
 
     # thegent shortcuts
     Set-Alias -Name thg -Value thegent
+
+    # Modernization Aliases
+    if (Get-Command uv -ErrorAction SilentlyContinue) {
+        function pip { uv pip $args }
+    }
+    if (Get-Command bun -ErrorAction SilentlyContinue) {
+        Set-Alias -Name npm -Value bun
+        Set-Alias -Name npx -Value bunx
+    }
 }
 Get-Aliases
 

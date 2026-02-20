@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 import httpx
+import psutil
 import yaml
 from rich.console import Console
 from rich.panel import Panel
@@ -32,8 +33,24 @@ class CheckResult:
         self.fix_hint: str | None = None
 
 
-def run_doctor(fix: bool = False) -> bool:
-    """Run all health checks and report results."""
+def run_doctor(
+    fix: bool = False,
+    runtime: bool = False,
+    network: bool = False,
+    processes: bool = False,
+    memory: bool = False,
+    deps: bool = False,
+) -> bool:
+    """Run all health checks and report results.
+
+    Args:
+        fix: Attempt to fix detected issues
+        runtime: Show multi-runtime diagnostics
+        network: Check network connectivity
+        processes: Check process health
+        memory: Check memory usage
+        deps: Check dependencies
+    """
     console.print(Panel("[bold cyan]Thegent Doctor[/bold cyan]\n[dim]Comprehensive environment health check[/dim]"))
 
     # Project Root Detection
@@ -107,6 +124,48 @@ def run_doctor(fix: bool = False) -> bool:
 
     # Display results
     success = _display_results(results)
+
+    # Show multi-runtime diagnostics if requested
+    if runtime:
+        try:
+            from thegent.infra.multi_runtime_diagnostics import check_all_runtimes, display_runtime_status
+
+            console.print("\n")
+            statuses = check_all_runtimes()
+            display_runtime_status(statuses)
+        except Exception as e:
+            console.print(f"[yellow]Could not run multi-runtime diagnostics: {e}[/yellow]")
+
+    # Show network diagnostics if requested
+    if network:
+        console.print("\n[bold cyan]Network Diagnostics[/bold cyan]")
+        # Network checks are already in _check_connectivity, but we can add more here
+        console.print("[dim]Network diagnostics integrated into connectivity checks above[/dim]")
+
+    # Show process diagnostics if requested
+    if processes:
+        console.print("\n[bold cyan]Process Diagnostics[/bold cyan]")
+        # Process checks are already in _check_process_leaks, but we can add more here
+        console.print("[dim]Process diagnostics integrated into process leak checks above[/dim]")
+
+    # Show memory diagnostics if requested
+    if memory:
+        console.print("\n[bold cyan]Memory Diagnostics[/bold cyan]")
+        try:
+            import psutil
+
+            mem = psutil.virtual_memory()
+            console.print(f"Total Memory: {mem.total / (1024**3):.2f} GB")
+            console.print(f"Available Memory: {mem.available / (1024**3):.2f} GB")
+            console.print(f"Used Memory: {mem.used / (1024**3):.2f} GB ({mem.percent}%)")
+        except Exception as e:
+            console.print(f"[yellow]Could not get memory info: {e}[/yellow]")
+
+    # Show dependency diagnostics if requested
+    if deps:
+        console.print("\n[bold cyan]Dependency Diagnostics[/bold cyan]")
+        # Dependency checks are already in _check_dependencies, but we can add more here
+        console.print("[dim]Dependency diagnostics integrated into dependency checks above[/dim]")
 
     if not success:
         if fix:
@@ -452,13 +511,13 @@ def _check_environment() -> list[CheckResult]:
                         # Or: REAL_BIN="$(PATH="$SEARCH_PATH" command -v codex ...)"
                         if "real_" in line_lower:
                             if "resolve_real_binary" in line_lower:
-                                match = re.search(r'resolve_real_binary\s+([a-z-]+)', line_lower)
+                                match = re.search(r"resolve_real_binary\s+([a-z-]+)", line_lower)
                                 if match:
                                     target_binary = shutil.which(match.group(1))
                                     if target_binary:
                                         break
                             elif "command -v" in line_lower:
-                                match = re.search(r'command -v\s+([a-z-]+)', line_lower)
+                                match = re.search(r"command -v\s+([a-z-]+)", line_lower)
                                 if match:
                                     target_binary = shutil.which(match.group(1))
                                     if target_binary:
@@ -1423,6 +1482,74 @@ def _check_headless() -> list[CheckResult]:
     return res_list
 
 
+def _extract_process_info(proc: "psutil.Process") -> "ProcessInfo | None":
+    """Extract ProcessInfo from psutil.Process. WP-P2: Fix PERF203."""
+    import psutil
+
+    from thegent.infra.fast_process_monitor import ProcessInfo
+
+    try:
+        info = proc.info
+        return ProcessInfo(
+            pid=info["pid"],
+            name=info.get("name", "unknown"),
+            cmdline=" ".join(info.get("cmdline", []) or []),
+            create_time=info.get("create_time", 0),
+            status=info.get("status", "unknown"),
+        )
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        return None
+
+
+def _check_process_health_v2(
+    info: "ProcessInfo",
+    current_time: float,
+    high_memory_processes: list,
+    high_fd_processes: list,
+    orphaned_processes: list,
+) -> int:
+    """Check health of a single process. Returns 1 if zombie, else 0. WP-P2: Fix PERF203."""
+    import psutil
+
+    try:
+        # Get detailed info using psutil
+        proc = psutil.Process(info.pid)
+
+        # Check for zombies
+        if proc.status() == psutil.STATUS_ZOMBIE:
+            return 1
+
+        # Check memory usage
+        memory_mb = proc.memory_info().rss / 1024 / 1024
+        if memory_mb > 500:  # > 500MB
+            high_memory_processes.append((info.pid, info.name, memory_mb, info.cmdline[:80]))
+
+        # Check file descriptors
+        try:
+            num_fds = proc.num_fds() if hasattr(proc, "num_fds") else len(proc.open_files()) + len(proc.connections())
+            if num_fds > 100:  # > 100 FDs
+                high_fd_processes.append((info.pid, info.name, num_fds, info.cmdline[:80]))
+        except (psutil.AccessDenied, AttributeError):
+            pass
+
+        # Check for orphaned processes (parent is init/systemd)
+        try:
+            parent = proc.parent()
+            if parent and parent.pid == 1:
+                runtime = current_time - info.create_time
+                if runtime > 3600:  # > 1 hour
+                    # Check if it's a thegent-related process
+                    cmdline_lower = info.cmdline.lower()
+                    if any(keyword in cmdline_lower for keyword in ["thegent", "claude", "codex", "droid", "cliproxy"]):
+                        orphaned_processes.append((info.pid, info.name, runtime / 3600, info.cmdline[:80]))
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        pass
+    return 0
+
+
 def _check_process_leaks() -> list[CheckResult]:
     """Check for potential process leaks and optimization opportunities."""
     res_list = []
@@ -1451,65 +1578,16 @@ def _check_process_leaks() -> list[CheckResult]:
             for proc in psutil.process_iter(
                 ["pid", "name", "cmdline", "status", "memory_info", "num_fds", "create_time"]
             ):
-                try:
-                    info = proc.info
-                    process_infos.append(
-                        ProcessInfo(
-                            pid=info["pid"],
-                            name=info.get("name", "unknown"),
-                            cmdline=" ".join(info.get("cmdline", []) or []),
-                            create_time=info.get("create_time", 0),
-                            status=info.get("status", "unknown"),
-                        )
-                    )
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
+                info = _extract_process_info(proc)
+                if info:
+                    process_infos.append(info)
 
         current_time = time.time()
 
         for info in process_infos:
-            try:
-                # Get detailed info using psutil
-                proc = psutil.Process(info.pid)
-
-                # Check for zombies
-                if proc.status() == psutil.STATUS_ZOMBIE:
-                    zombie_count += 1
-                    continue
-
-                # Check memory usage
-                memory_mb = proc.memory_info().rss / 1024 / 1024
-                if memory_mb > 500:  # > 500MB
-                    high_memory_processes.append((info.pid, info.name, memory_mb, info.cmdline[:80]))
-
-                # Check file descriptors
-                try:
-                    num_fds = (
-                        proc.num_fds() if hasattr(proc, "num_fds") else len(proc.open_files()) + len(proc.connections())
-                    )
-                    if num_fds > 100:  # > 100 FDs
-                        high_fd_processes.append((info.pid, info.name, num_fds, info.cmdline[:80]))
-                except (psutil.AccessDenied, AttributeError):
-                    pass
-
-                # Check for orphaned processes (parent is init/systemd)
-                try:
-                    parent = proc.parent()
-                    if parent and parent.pid == 1:
-                        runtime = current_time - info.create_time
-                        if runtime > 3600:  # > 1 hour
-                            # Check if it's a thegent-related process
-                            cmdline_lower = info.cmdline.lower()
-                            if any(
-                                keyword in cmdline_lower
-                                for keyword in ["thegent", "claude", "codex", "droid", "cliproxy"]
-                            ):
-                                orphaned_processes.append((info.pid, info.name, runtime / 3600, info.cmdline[:80]))
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
+            zombie_count += _check_process_health_v2(
+                info, current_time, high_memory_processes, high_fd_processes, orphaned_processes
+            )
 
         # Build suspicion report
         suspicion_level = "low"
@@ -1884,11 +1962,12 @@ def _check_performance() -> list[CheckResult]:
     """Check for performance optimizations."""
     res_list = []
     import sys
-    
+
     # 1. Shell Strategy
     r = CheckResult("Shell Strategy", "Performance")
-    agent_shell = os.getenv("THGENT_AGENT_SHELL")
-    
+    settings = ThegentSettings()
+    agent_shell = settings.agent_shell
+
     if sys.platform == "win32":
         if agent_shell == "cmd":
             r.status = "ok"
@@ -1897,19 +1976,18 @@ def _check_performance() -> list[CheckResult]:
             r.status = "warn"
             r.message = f"Currently using '{agent_shell or 'default'}' shell; 'cmd' is faster for Windows"
             r.fix_hint = "Run: thegent config set agent_shell cmd"
+    elif agent_shell == "dash":
+        r.status = "ok"
+        r.message = "Using high-performance 'dash' for Unix execution"
+    elif shutil.which("dash"):
+        r.status = "warn"
+        r.message = f"Currently using '{agent_shell or 'default'}' shell; 'dash' is faster for Unix"
+        r.fix_hint = "Run: thegent config set agent_shell dash"
     else:
-        if agent_shell == "dash":
-            r.status = "ok"
-            r.message = "Using high-performance 'dash' for Unix execution"
-        elif shutil.which("dash"):
-            r.status = "warn"
-            r.message = f"Currently using '{agent_shell or 'default'}' shell; 'dash' is faster for Unix"
-            r.fix_hint = "Run: thegent config set agent_shell dash"
-        else:
-            r.status = "info"
-            r.message = "Dash not found; bash is used as fallback"
-            r.fix_hint = "Install dash for 2x faster hook startup"
-            
+        r.status = "info"
+        r.message = "Dash not found; bash is used as fallback"
+        r.fix_hint = "Install dash for 2x faster hook startup"
+
     res_list.append(r)
     return res_list
 

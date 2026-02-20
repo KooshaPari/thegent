@@ -100,13 +100,15 @@ def configure_mergiraf_driver(
     driver_cmd = f"{mergiraf_bin} merge --git %O %A %B -p %P"
 
     git_config_args_name = [
-        "git", "config",
+        "git",
+        "config",
         *(["--global"] if global_config else []),
         "merge.mergiraf.name",
         "mergiraf",
     ]
     git_config_args_driver = [
-        "git", "config",
+        "git",
+        "config",
         *(["--global"] if global_config else []),
         "merge.mergiraf.driver",
         driver_cmd,
@@ -193,9 +195,7 @@ def merge_files(
     mergiraf_bin = shutil.which("mergiraf")
 
     if mergiraf_bin:
-        return _merge_with_mergiraf(
-            mergiraf_bin, base, ours, theirs, output, path_hint=path_hint
-        )
+        return _merge_with_mergiraf(mergiraf_bin, base, ours, theirs, output, path_hint=path_hint)
 
     return _merge_with_git_merge_file(base, ours, theirs, output)
 
@@ -265,9 +265,7 @@ def _merge_with_git_merge_file(
     import tempfile
 
     # Work on a scratch copy of ours so the original is preserved.
-    with tempfile.NamedTemporaryFile(
-        suffix=ours.suffix, delete=False, dir=output.parent
-    ) as tmp:
+    with tempfile.NamedTemporaryFile(suffix=ours.suffix, delete=False, dir=output.parent) as tmp:
         tmp_path = Path(tmp.name)
 
     try:
@@ -497,7 +495,10 @@ class SmartMerger:
         """Determine the path to the mergiraf binary."""
         if self._config.mergiraf_binary:
             return self._config.mergiraf_binary
-        env_bin = os.environ.get("THGENT_MERGIRAF_BINARY")
+        from thegent.config import ThegentSettings
+
+        settings = ThegentSettings()
+        env_bin = settings.mergiraf_binary
         if env_bin:
             return env_bin
         return shutil.which("mergiraf")

@@ -77,16 +77,16 @@ tasks:
       - nix develop
 
   setup:
-    desc: "Full setup: deps, config, shell, shims"
+    desc: "Full setup: deps, config, shell, shims, polyglot"
     cmds:
       - brew bundle check || brew bundle
       - uv sync
       - cp -n .env.example .env || true
       - task: cliproxy:build
       - task: cliproxy:ensure-config
+      - task: polyglot:setup
       - mkdir -p ~/.local/bin
-      - uv run thegent dex install-links
-      - uv run thegent clode install-links
+      - zsh scripts/install-thegent-shims.sh
       - uv run thegent install -t shell
       - task: shims:guard
       - task: shims:probe
@@ -97,7 +97,7 @@ tasks:
           '# Increased command_timeout to handle git shim resolution (first call only)' \
           'scan_timeout = 2000' \
           'command_timeout = 10000' > .starship.toml
-      - uv run thegent doctor || true
+      - task: polyglot:doctor
       - |
         echo ""
         echo "Setup complete. Shell config: ~/.zshenv, ~/.zshrc, ~/.zsh_bundle.zsh, ~/.zshrc.local"
@@ -108,6 +108,54 @@ tasks:
     generates:
       - .venv/bin/python
       - .env
+
+  # -- Polyglot Architecture Tasks (2026) --
+
+  polyglot:setup:
+    desc: "Setup polyglot runtimes (PyPy, Mojo, Zig, Rust)"
+    cmds:
+      - uv python install pypy-3.11 3.13 3.14
+      - brew install zig || echo "Zig install via brew failed"
+      - command -v rustup >/dev/null 2>&1 || (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh)
+      - task: polyglot:build
+      - echo "Mojo installation requires manual step: https://docs.modular.com/mojo/manual/get-started/"
+
+  polyglot:build:
+    desc: "Build all native polyglot extensions (Rust, Go)"
+    cmds:
+      - task: build:rust
+      - task: cliproxy:build
+      - echo "Building Rust Python extensions..."
+      - export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 && cd crates/thegent-shm && uvx maturin develop --release
+      - export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 && cd crates/thegent-router && uvx maturin develop --release --features python
+
+  polyglot:doctor:
+    desc: "Verify environment health across all runtimes"
+    cmds:
+      - ./thegent.sh audit doctor --runtime
+
+  polyglot:shm:clean:
+    desc: "Reset the shared memory IPC mesh"
+    cmds:
+      - rm -rf /tmp/thegent-bridge*
+      - rm -rf /tmp/agent-mesh*
+
+  polyglot:wasm:build:
+    desc: "Build all Zig/Rust Wasm plugins"
+    cmds:
+      - |
+        for tool in tools/*/; do
+          if [ -f "$tool/main.zig" ]; then
+            echo "Building Zig tool: $tool"
+            cd "$tool" && zig build-lib main.zig -target wasm32-wasi -dynamic -O ReleaseSmall
+          fi
+        done
+
+  polyglot:bench:
+    desc: "Run performance comparison across runtimes"
+    cmds:
+      - task: bench:extended
+      - ./thegent.sh audit doctor --runtime
 
   # -- Dev environment (process-compose) --
 
@@ -463,6 +511,7 @@ tasks:
       - rm -rf .ty_cache/
       - rm -rf .basedpyright_cache/
       - rm -rf .process-compose/
+      - task: polyglot:shm:clean
       - find . -type d -name "__pycache__" -exec rm -rf {} +
 
   # -- Docs (VitePress) --

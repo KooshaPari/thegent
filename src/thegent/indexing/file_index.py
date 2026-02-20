@@ -24,12 +24,11 @@ _DEFAULT_EXCLUDE_DIRS: frozenset[str] = frozenset(
 
 
 def _get_ttl() -> int:
-    """Read TTL from environment, falling back to default."""
-    raw = os.environ.get("THGENT_FILE_INDEX_TTL", "")
-    try:
-        return int(raw) if raw else _DEFAULT_TTL
-    except ValueError:
-        return _DEFAULT_TTL
+    """Read TTL from settings."""
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    return settings.file_index_ttl
 
 
 class FileIndex:

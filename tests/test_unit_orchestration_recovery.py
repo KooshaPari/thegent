@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.orchestration.circuit_breaker import is_open, should_allow
 
 pytestmark = pytest.mark.unit

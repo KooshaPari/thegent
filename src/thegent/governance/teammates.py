@@ -38,7 +38,7 @@ class DelegationRequest:
     teammate_id: str
     parent_run_id: str
     prompt: str
-    status: str = "pending"  # pending, running, completed, failed
+    status: str = "pending"  # pending, running, completed, failed, deferred, paused
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     completed_at: str | None = None
     result_summary: str | None = None
@@ -98,7 +98,7 @@ class TeammateManager:
         if not agents_dir:
             return []
 
-        from thegent.infra import yaml_loads
+        from thegent.infra.fast_yaml_parser import yaml_loads
 
         # Recursive search for all .md files
         for md_file in agents_dir.rglob("*.md"):
@@ -124,7 +124,9 @@ class TeammateManager:
 
                 # Look for title as name
                 title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
-                name = meta.get("name") or (title_match.group(1).split()[0].lower() if title_match else md_file.stem.lower())
+                name = meta.get("name") or (
+                    title_match.group(1).split()[0].lower() if title_match else md_file.stem.lower()
+                )
 
                 # Look for "Role: " or "Role :" at start of line
                 role_match = re.search(r"^\s*Role:\s*(.+)$", content, re.MULTILINE | re.IGNORECASE)
@@ -132,11 +134,17 @@ class TeammateManager:
 
                 # Heuristic for description
                 desc_match = re.search(r"^\s*Description:\s*(.+)$", content, re.MULTILINE | re.IGNORECASE)
-                description = meta.get("description") or (desc_match.group(1).strip() if desc_match else (content[:200].replace("\n", " ").strip() + "..."))
+                description = meta.get("description") or (
+                    desc_match.group(1).strip() if desc_match else (content[:200].replace("\n", " ").strip() + "...")
+                )
 
                 # Heuristic teammate check if not already confirmed
                 if not is_teammate:
-                    if "teammate" in content.lower() or "specialized agent" in content.lower() or "persona" in content.lower():
+                    if (
+                        "teammate" in content.lower()
+                        or "specialized agent" in content.lower()
+                        or "persona" in content.lower()
+                    ):
                         is_teammate = True
 
                 # Only include if it looks like a teammate
@@ -148,9 +156,14 @@ class TeammateManager:
                 if isinstance(tools, str):
                     tools = [tools]
 
+                # WP-16001: Support model-specific persona variants
+                # If frontmatter has 'model', create an ID suffix
+                model_suffix = meta.get("model", "")
+                persona_id = f"{name}-{model_suffix}" if model_suffix else name
+
                 personas.append(
                     TeammatePersona(
-                        id=name,
+                        id=persona_id,
                         role=role,
                         description=description,
                         capabilities=tools,
@@ -229,7 +242,7 @@ class TeammateManager:
         try:
             # Resolve effective agent ID (canonical name)
             from thegent.agents.registry import resolve_agent
-            from thegent.cli_impl import bg_impl
+            from thegent.cli.commands.impl import bg_impl
             from thegent.config_provider import get_config_provider
 
             effective_agent = resolve_agent(teammate_id) or teammate_id
@@ -326,8 +339,9 @@ class TeammateManager:
 
         req = self._delegations[req_id]
         req.status = status
-        if status in ("completed", "failed"):
-            req.completed_at = datetime.now(UTC).isoformat()
+        if status in ("completed", "failed", "deferred", "paused"):
+            if status not in ("deferred", "paused"):
+                req.completed_at = datetime.now(UTC).isoformat()
             req.result_summary = summary
 
         self._save()

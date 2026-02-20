@@ -147,6 +147,7 @@ async def health(request: Request) -> JSONResponse:
 async def resolve_config(request: Request) -> JSONResponse:
     """POST /v1/config/resolve — resolve config with overrides."""
     import time
+
     start = time.perf_counter()
     with tracer.start_as_current_span("config.resolve") as span:
         try:
@@ -176,6 +177,7 @@ async def resolve_config(request: Request) -> JSONResponse:
 
         # WP-CP-4.2: Validate resolved config against ThegentSettings schema (partial)
         from thegent.config import ThegentSettings
+
         try:
             # We only validate keys that exist in ThegentSettings
             ThegentSettings.model_validate(resolved, strict=False)
@@ -185,7 +187,7 @@ async def resolve_config(request: Request) -> JSONResponse:
 
         # Update metrics
         _metrics["config_resolves_total"] += 1
-        _metrics["config_resolve_duration_sum"] += (time.perf_counter() - start)
+        _metrics["config_resolve_duration_sum"] += time.perf_counter() - start
 
         # Convert Path objects to strings for JSON serialization
         def _sanitize(obj: Any) -> Any:
@@ -248,7 +250,10 @@ def _default_socket_path() -> Path:
 
 
 def _default_port() -> int:
-    return int(os.environ.get("THGENT_CONTROL_PLANE_PORT", "3848"))
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    return settings.control_plane_port
 
 
 def serve(socket_path: str | None = None, port: int | None = None, host: str = "127.0.0.1") -> None:

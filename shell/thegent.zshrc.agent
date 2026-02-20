@@ -20,6 +20,9 @@ fi
 alias g='git'
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
+alias pip='uv pip'
+alias npm='bun'
+alias npx='bunx'
 
 # 4. thegent Hook (Agent Edition)
 # Instead of full interactive hooks, we use a simple command timer

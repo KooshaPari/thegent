@@ -6,7 +6,6 @@ import shutil
 import subprocess
 import sys
 from collections import Counter
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -93,29 +92,65 @@ def _glm_offer_backends() -> tuple[str, ...]:
     return _GLM_OFFER_SET
 
 
+def _is_thegent_shim(path: str) -> bool:
+    p = Path(path)
+    if "thegent-shims" in p.name:
+        return True
+    try:
+        if p.is_symlink() and "thegent-shims" in os.readlink(p):
+            return True
+    except OSError:
+        pass
+    return False
+
+
 @app.callback(invoke_without_command=True)
-def default_clode(ctx: typer.Context) -> None:
+def default_clode(
+    ctx: typer.Context,
+    native: bool = typer.Option(
+        False,
+        "--native",
+        help="Bypass cliproxy/thegent routing and run native claude directly",
+    ),
+) -> None:
     """Start Claude Code with model-first routing. Default: flash (Gemini 3 Flash)."""
+    if native:
+        claude_path = _ensure_claude_installed(require_native=True)
+        passthrough = [arg for arg in sys.argv[1:] if arg != "--native"]
+        cmd = [claude_path, *passthrough]
+        console.print("[bold green]Starting native Claude (proxy bypass)...[/bold green]")
+        os.execvpe(cmd[0], cmd, os.environ.copy())
+
     if ctx.invoked_subcommand is None:
         _run_model_interactive("flash")
 
 
-def _iter_install_targets() -> Iterator[tuple[str, str, str]]:
-    """Return shim targets and their backing commands."""
-    yield ("clode", "thegent clode", "clode")
-    yield ("clodecomp", "thegent clode comp", "clodecomp")
-    yield ("clodecomposer", "thegent clode composer", "clodecomposer")
-    yield ("clodehaiku", "thegent clode haiku", "clodehaiku")
-    yield ("clodeopus", "thegent clode opus", "clodeopus")
-    yield ("clodeopus1m", "thegent clode opus1m", "clodeopus1m")
-    yield ("clodesonnet", "thegent clode sonnet", "clodesonnet")
-    yield ("clodeglm", "thegent clode glm", "clodeglm")
-    yield ("clodemax", "thegent clode max", "clodemax")
-    yield ("clodeflash", "thegent clode flash", "clodeflash")
-    yield ("clodemini", "thegent clode mini", "clodemini")
-    yield ("clodefree", "thegent clode free", "clodefree")
-    yield ("claudeglm", "thegent clode glm", "claudeglm")
-    yield ("claudemax", "thegent clode max", "claudemax")
+def _install_harness_link(bin_dir: Path, harness: str, force: bool = False) -> bool:
+    """Install a harness symlink to thegent-shims. Returns True when link is created/updated."""
+    shims_path = shutil.which("thegent-shims")
+    if not shims_path:
+        candidate = bin_dir / "thegent-shims"
+        if candidate.exists():
+            shims_path = str(candidate)
+    if not shims_path:
+        console.print(
+            "[red]thegent-shims not found.[/red] Install it first with: [dim]zsh scripts/install-thegent-shims.sh[/dim]"
+        )
+        raise typer.Exit(1)
+
+    target = bin_dir / harness
+    if target.exists() or target.is_symlink():
+        if not force:
+            return False
+        if target.is_dir() and not target.is_symlink():
+            from thegent.errors import print_error
+
+            print_error(f"{target} is a directory. Remove it before reinstalling.")
+            raise typer.Exit(1)
+        target.unlink()
+
+    target.symlink_to(Path(shims_path))
+    return True
 
 
 def _resolve_provider_for_model(model_alias: str) -> str:
@@ -171,17 +206,6 @@ def _resolve_clode_token(provider: str, prefer: str, policy: str) -> str:
 
         return min(backends, key=cost_key)
     return f"glm:{policy_name}"
-
-
-def _write_wrapper(path: Path, command: str, force: bool = False) -> bool:
-    """Write/update a shim wrapper. Returns True if a write occurred."""
-    if path.exists() and not force:
-        return False
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f'#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="claude"\nexec {command} "$@"\n')
-    path.chmod(0o755)
-    return True
 
 
 # Minimax clode guidance: only when model-router-harness pairing aligns (clode + minimax/kilo + MiniMax-M2.5)
@@ -339,21 +363,28 @@ def _clode_passthrough_args(
     return args
 
 
-def _find_claude() -> str | None:
+def _find_claude(*, require_native: bool = False) -> str | None:
     """Return path to claude CLI, or None. Checks PATH and common install dirs."""
+    override = os.environ.get("THGENT_NATIVE_CLAUDE_BIN") if require_native else None
+    candidates: list[Path] = []
+    if override:
+        candidates.append(Path(override).expanduser())
     p = shutil.which("claude")
     if p:
-        return p
+        candidates.append(Path(p))
     for d in (Path("/opt/homebrew/bin"), Path("/usr/local/bin"), Path("~/.bun/bin").expanduser()):
-        cand = d / "claude"
+        candidates.append(d / "claude")
+    for cand in candidates:
         if cand.is_file() and os.access(cand, os.X_OK):
+            if require_native and _is_thegent_shim(str(cand)):
+                continue
             return str(cand)
     return None
 
 
-def _ensure_claude_installed(suggest_dex: bool = False) -> str:
+def _ensure_claude_installed(suggest_dex: bool = False, require_native: bool = False) -> str:
     """Auto-install Claude Code via brew or bun if missing. Returns path or raises."""
-    p = _find_claude()
+    p = _find_claude(require_native=require_native)
     if p:
         return p
     # Try brew first
@@ -362,19 +393,27 @@ def _ensure_claude_installed(suggest_dex: bool = False) -> str:
         console.print("[dim]Installing Claude Code via Homebrew...[/dim]")
         r = subprocess.run([brew, "install", "--cask", "claude-code"], capture_output=True, text=True, check=False)
         if r.returncode == 0:
-            p = _find_claude()
+            p = _find_claude(require_native=require_native)
             if p:
                 return p
     # Try bun
     bun = shutil.which("bun")
     if bun:
         console.print("[dim]Installing Claude Code via Bun...[/dim]")
-        r = subprocess.run([bun, "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True, check=False)
+        r = subprocess.run(
+            [bun, "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True, check=False
+        )
         if r.returncode == 0:
-            p = _find_claude()
+            p = _find_claude(require_native=require_native)
             if p:
                 return p
-    console.print("[red]Error: 'claude' (Claude Code) CLI not found.[/red]")
+    if require_native:
+        console.print(
+            "[red]Error: native 'claude' CLI not found (or only thegent-shims was found).[/red]\n"
+            "[dim]Set THGENT_NATIVE_CLAUDE_BIN=/absolute/path/to/claude to force a specific binary.[/dim]"
+        )
+    else:
+        console.print("[red]Error: 'claude' (Claude Code) CLI not found.[/red]")
     if suggest_dex:
         console.print("[dim]Or use: thegent sitback --dex (Codex)[/dim]")
     raise typer.Exit(1)
@@ -1412,12 +1451,56 @@ def _run_sitback_droid(
         os.execvpe(cmd[0], cmd, env)
 
 
+def _run_sitback_anen(
+    model_alias: str,
+    env: dict[str, str],
+    tmux: bool = False,
+    startup_path: str | None = None,
+) -> None:
+    canonical = _SITBACK_MODEL_ALIAS.get(model_alias.lower(), model_alias)
+    resolved_bin_name = ""
+    anen_path = None
+    for bin_name in ("fanta", "antigma", "anen", "ante"):
+        resolved = shutil.which(bin_name)
+        if resolved:
+            anen_path = resolved
+            resolved_bin_name = bin_name
+            break
+        local = Path.home() / ".local" / "bin" / bin_name
+        if local.exists():
+            anen_path = str(local)
+            resolved_bin_name = bin_name
+            break
+    if not anen_path:
+        console.print("[red]Error: none of 'fanta', 'antigma', 'anen', or 'ante' found in PATH.[/red]")
+        raise typer.Exit(1)
+
+    cmd = [anen_path, "--model", canonical]
+    if startup_path:
+        startup_prompt = Path(startup_path).read_text()
+        if resolved_bin_name in {"fanta", "antigma", "ante"}:
+            cmd.extend(["--prompt", startup_prompt])
+        else:
+            # anen harness expects startup prompt as positional argument.
+            cmd.append(startup_prompt)
+
+    if tmux:
+        session_name = f"sitback-anen-{os.getpid()}"
+        run_args = ["tmux", "new-session", "-s", session_name, *cmd]
+        run_args = wrap_with_caffeinate(run_args, "anen")
+        with contextlib.suppress(KeyboardInterrupt):
+            subprocess.run(run_args, check=False, env=env, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
+    else:
+        cmd = wrap_with_caffeinate(cmd, "anen")
+        os.execvpe(cmd[0], cmd, env)
+
+
 def sitback_cmd(
     agent: str = typer.Option(
         "claude",
         "--agent",
         "-a",
-        help="Harness: claude (default), codex, droid. Aliases: clode, dex, roid.",
+        help="Harness: claude (default), codex, droid, antigma. Aliases: clode, dex, roid, anen, fanta.",
     ),
     provider: str | None = typer.Option(
         None,
@@ -1473,12 +1556,13 @@ def sitback_cmd(
         help="Launch TUI compositor instead of dashboard",
     ),
 ) -> None:
-    """Start a Sitback harness (claude/codex/droid) with Sitback Agent persona.
+    """Start a Sitback harness (claude/codex/droid/antigma) with Sitback Agent persona.
 
     Examples:
       thegent sitback                    # claude harness, flash model
       thegent sitback -a codex -M glm    # codex harness with GLM-5
       thegent sitback -a droid -M free   # droid harness with gpt-5-mini
+      thegent sitback -a fanta -M max    # antigma harness with MiniMax-M2.5
       thegent sitback -M haiku -P kiro   # claude harness with provider override
       thegent sitback --skill thegent-skills
       thegent sitback --profile full
@@ -1493,10 +1577,15 @@ def sitback_cmd(
         "dex": "codex",
         "droid": "droid",
         "roid": "droid",
+        "antigma": "antigma",
+        "anen": "antigma",
+        "fanta": "antigma",
     }
     resolved_harness = harness_aliases.get(agent.strip().lower())
     if resolved_harness is None:
-        console.print("[red]Invalid --agent. Allowed: claude, codex, droid (aliases: clode, dex, roid).[/red]")
+        console.print(
+            "[red]Invalid --agent. Allowed: claude, codex, droid, antigma (aliases: clode, dex, roid, anen, fanta).[/red]"
+        )
         raise typer.Exit(1)
     if dex:
         resolved_harness = "codex"
@@ -1549,6 +1638,8 @@ def sitback_cmd(
         console.print(f"[bold green]Starting Sitback Agent via Codex (model={model_alias})...[/bold green]")
     elif resolved_harness == "droid":
         console.print(f"[bold green]Starting Sitback Agent via Droid (model={model_alias})...[/bold green]")
+    elif resolved_harness == "antigma":
+        console.print(f"[bold green]Starting Sitback Agent via Antigma (model={model_alias})...[/bold green]")
     else:
         claude_path = _ensure_claude_installed(suggest_dex=True)
         console.print(f"[bold green]Starting Sitback Agent via Claude (provider={provider_token})...[/bold green]")
@@ -1568,6 +1659,8 @@ def sitback_cmd(
             _run_sitback_codex(model_alias, env, tmux)
         elif resolved_harness == "droid":
             _run_sitback_droid(model_alias, env, tmux)
+        elif resolved_harness == "antigma":
+            _run_sitback_anen(model_alias, env, tmux)
         else:
             _run_sitback_claude(claude_path, env, tmux)
         return
@@ -1606,6 +1699,8 @@ def sitback_cmd(
         client_name = "Codex"
     elif resolved_harness == "droid":
         client_name = "Droid"
+    elif resolved_harness == "antigma":
+        client_name = "Antigma"
     else:
         client_name = "Claude Code"
     console.print(f"[dim]{client_name} will process this as the first message in the session.[/dim]\n")
@@ -1624,6 +1719,8 @@ def sitback_cmd(
             _run_sitback_codex(model_alias, env, tmux, startup_path=tmp_path)
         elif resolved_harness == "droid":
             _run_sitback_droid(model_alias, env, tmux, startup_path=tmp_path)
+        elif resolved_harness == "antigma":
+            _run_sitback_anen(model_alias, env, tmux, startup_path=tmp_path)
         else:
             _run_sitback_claude(claude_path, env, tmux, startup_path=tmp_path)
     finally:
@@ -1649,28 +1746,21 @@ def install_links(
     bin_dir: Path = typer.Option(
         Path.home() / ".local" / "bin",
         "--bin-dir",
-        help="Directory to install command wrappers",
+        help="Directory to install harness shim symlink",
     ),
     force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing files"),
 ) -> None:
-    """Install/update clode + claudeglm + claudemax shims under ~/.local/bin."""
+    """Install/update clode -> thegent-shims harness shim under ~/.local/bin."""
     if not bin_dir.exists():
-        console.print(f"[red]Error: {bin_dir} does not exist.[/red]")
+        from thegent.errors import print_error
+
+        print_error(f"{bin_dir} does not exist.")
         raise typer.Exit(1)
 
-    installed = 0
-    for target_name, command, label in _iter_install_targets():
-        target = bin_dir / target_name
-        if _write_wrapper(target, command, force=force):
-            installed += 1
-            console.print(f"[green]Installed[/green] {target} -> {label}")
-        else:
-            console.print(f"[yellow]Skipping {target} (already exists). Use --force to overwrite.[/yellow]")
-
-    if installed:
-        console.print("[bold]Wrappers installed successfully.[/bold]")
-    elif not force:
-        console.print("[yellow]No wrappers updated.[/yellow]")
+    if _install_harness_link(bin_dir, "clode", force=force):
+        console.print(f"[green]Installed[/green] {bin_dir / 'clode'} -> thegent-shims")
+        return
+    console.print(f"[yellow]Skipping {bin_dir / 'clode'} (already exists). Use --force to overwrite.[/yellow]")
 
 
 if __name__ == "__main__":

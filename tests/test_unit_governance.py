@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from thegent.execution import PolicyEngine, RunMeta
-from thegent.governance.cost import CostAggregator, CostEstimator
+from thegent.cost.aggregator import CostAggregator, CostEstimator
 from thegent.governance.input_guardrails import (
     InputGuardrails,
     guardrails_from_settings,
@@ -126,20 +126,10 @@ class TestPolicyEngineOPA:
         engine = PolicyEngine(settings)
         run = RunMeta(agent="gemini", prompt="test", cwd="/tmp", owner="user", lane="standard")
 
-        class MockOPAResponse:
-            def read(self):
-                return json.dumps({"result": {"allow": True, "reason": "OPA allowed"}}).encode("utf-8")
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *args):
-                return False
-
-        def mock_urlopen(req, timeout=None):
-            return MockOPAResponse()
-
-        with patch("thegent.execution.urllib.request.urlopen", side_effect=mock_urlopen):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"result": {"allow": True, "reason": "OPA allowed"}}
+        mock_resp.raise_for_status.return_value = None
+        with patch("thegent.execution.httpx.post", return_value=mock_resp):
             result, reason = engine.evaluate(run)
         assert result == "allow"
         assert "OPA" in reason or "allowed" in reason
@@ -158,20 +148,10 @@ class TestPolicyEngineOPA:
         engine = PolicyEngine(settings)
         run = RunMeta(agent="gemini", prompt="test", cwd="/tmp", owner="user", lane="standard")
 
-        class MockOPADenyResponse:
-            def read(self):
-                return json.dumps({"result": {"allow": False, "reason": "OPA denied"}}).encode("utf-8")
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *args):
-                return False
-
-        def mock_urlopen(req, timeout=None):
-            return MockOPADenyResponse()
-
-        with patch("thegent.execution.urllib.request.urlopen", side_effect=mock_urlopen):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"result": {"allow": False, "reason": "OPA denied"}}
+        mock_resp.raise_for_status.return_value = None
+        with patch("thegent.execution.httpx.post", return_value=mock_resp):
             result, reason = engine.evaluate(run)
         assert result == "deny"
         assert "OPA" in reason or "denied" in reason
@@ -190,7 +170,7 @@ class TestPolicyEngineOPA:
         engine = PolicyEngine(settings)
         run = RunMeta(agent="gemini", prompt="test", cwd="/tmp", owner="user", lane="standard")
 
-        with patch("thegent.execution.urllib.request.urlopen", side_effect=OSError("connection refused")):
+        with patch("thegent.execution.httpx.post", side_effect=OSError("connection refused")):
             result, reason = engine.evaluate(run)
         assert result == "deny"
         assert "OPA" in reason or "deny" in reason.lower()
@@ -209,7 +189,7 @@ class TestPolicyEngineOPA:
         engine = PolicyEngine(settings)
         run = RunMeta(agent="gemini", prompt="test", cwd="/tmp", owner="user", lane="standard")
 
-        with patch("thegent.execution.urllib.request.urlopen", side_effect=OSError("connection refused")):
+        with patch("thegent.execution.httpx.post", side_effect=OSError("connection refused")):
             result, reason = engine.evaluate(run)
         assert result == "allow"
         assert "fallback" in reason.lower()
@@ -227,7 +207,7 @@ class TestPolicyEngineOPA:
         engine = PolicyEngine(settings)
         run = RunMeta(agent="gemini", prompt="test", cwd="/tmp", owner="user", lane="standard")
 
-        with patch("thegent.governance.cost.CostAggregator.get_mtd_total", return_value=15.0):
+        with patch("thegent.cost.aggregator.CostAggregator.get_mtd_total", return_value=15.0):
             result, reason = engine.evaluate(run)
 
         assert result == "deny"

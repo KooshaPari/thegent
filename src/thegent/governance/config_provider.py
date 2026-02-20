@@ -62,9 +62,9 @@ class EnvConfigProvider:
 
 
 def get_config_provider() -> ConfigProvider:
-    """Factory to get the active config provider based on environment."""
-    # Phase 2: Check for THGENT_CONTROL_PLANE_URL
-    cp_url = os.environ.get("THGENT_CONTROL_PLANE_URL")
+    """Factory to get the active config provider based on settings."""
+    settings = ThegentSettings()
+    cp_url = settings.control_plane_url
     if cp_url:
         # Avoid circular import if/when ControlPlaneConfigProvider is added
         from thegent.governance.config_provider_cp import ControlPlaneConfigProvider

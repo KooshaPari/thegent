@@ -14,13 +14,12 @@ import pytest
 
 from thegent.mesh.isolation import ResourceIsolation
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def isolation(tmp_path: Path) -> ResourceIsolation:
     """A fresh ResourceIsolation instance backed by a temporary directory."""
     return ResourceIsolation(mesh_root=tmp_path, agent_id="agent-001")

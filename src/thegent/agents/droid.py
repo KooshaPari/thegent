@@ -7,6 +7,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from thegent.agents.base import AgentRunner, RunResult
+from thegent.config import ThegentSettings
 from thegent.infra import run_subprocess_optimized
 from thegent.infra.power import wrap_with_caffeinate
 from thegent.utils import strip_ansi
@@ -63,11 +64,8 @@ class DroidRunner(AgentRunner):
         self.droids_dir = droids_dir.expanduser().resolve()
         self._droid_cmd = _resolve_droid_cmd(droid_cmd)
         self._model = model
-        self._use_litellm_router = (
-            use_litellm_router
-            if use_litellm_router is not None
-            else (os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1")
-        )
+        settings = ThegentSettings()
+        self._use_litellm_router = use_litellm_router if use_litellm_router is not None else settings.use_litellm_router
 
     def run(
         self,
@@ -272,11 +270,8 @@ class CodexRunner(AgentRunner):
         self.droids_dir = droids_dir.expanduser().resolve()
         self._codex_cmd = _resolve_codex_cmd(codex_cmd)
         self._model = model
-        self._use_litellm_router = (
-            use_litellm_router
-            if use_litellm_router is not None
-            else (os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1")
-        )
+        settings = ThegentSettings()
+        self._use_litellm_router = use_litellm_router if use_litellm_router is not None else settings.use_litellm_router
 
     def run(
         self,

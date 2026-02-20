@@ -96,7 +96,7 @@ class CursorApiRunner(AgentRunner):
     ) -> RunResult:
         model = agent_model or self._model
         base_url = self._settings.cursor_api_url.rstrip("/")
-        token = self._settings.cursor_api_token or os.environ.get("THGENT_CURSOR_API_TOKEN", "")
+        token = self._settings.cursor_api_token or ""
 
         if not _is_cursor_api_reachable(base_url, token):
             return RunResult(

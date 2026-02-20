@@ -10,7 +10,11 @@ set -euo pipefail
 trap 'echo "PRUNE-ORPHANS FAIL: unexpected error at line $LINENO" >&2' ERR
 
 # Opt-in: disabled by default
-[[ "${THGENT_AUTO_PRUNE:-0}" == "1" ]] || exit 0
+# TEMPORARILY DISABLED: Auto-prune is too aggressive and kills user terminals
+# Re-enable only after proper process tree mapping is implemented
+# [[ "${THGENT_AUTO_PRUNE:-0}" == "1" ]] || exit 0
+echo "THEGENT PRUNE: Auto-prune hook DISABLED (was killing terminals). Set THGENT_AUTO_PRUNE=1 to re-enable after fixes." >&2
+exit 0
 
 readonly _THRESHOLD="${THGENT_AUTO_PRUNE_THRESHOLD:-12}"
 readonly _CC_STATUS_THRESHOLD="${THGENT_AUTO_PRUNE_CC_STATUS_THRESHOLD:-3}"
@@ -72,12 +76,21 @@ _jitter=$(( RANDOM % (_COOLDOWN_JITTER + 1) ))
 [[ "$_jitter" -gt 0 ]] && sleep "$_jitter"
 
 # Run prune with retry+backoff on failure (ADVANCED_STRATEGIES §2.4)
+# Log errors instead of suppressing them so user knows what triggered pruning
 if command -v thegent >/dev/null 2>&1; then
   _prune_rc=1
   for _attempt in 1 2 3; do
-    if thegent mcp prune --force 2>/dev/null; then
+    # Log what's triggering the prune
+    echo "THEGENT PRUNE: Auto-prune hook triggered (attempt $_attempt/3)" >&2
+    echo "THEGENT PRUNE: Reason: orphan count=$_count, cc-status=$_cc_count, available_mb=$_available_mb" >&2
+    
+    if thegent mcp prune --force 2>&1; then
       _prune_rc=0
+      echo "THEGENT PRUNE: Successfully pruned processes" >&2
       break
+    else
+      _prune_err=$?
+      echo "THEGENT PRUNE: Prune attempt $_attempt failed with exit code $_prune_err" >&2
     fi
     [[ $_attempt -lt 3 ]] && sleep $(( 2 ** _attempt ))
   done

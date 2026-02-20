@@ -23,7 +23,7 @@ __init__(self: Any, storage_path: Path)
 #### ComplianceAuditTrail.record_action
 
 ```python
-record_action(self: Any, action: str, context: dict[(str, Any)], profile: ComplianceProfile)
+record_action(self: Any, action: str, context: dict[str, Any], profile: ComplianceProfile)
 ```
 
 Record an action in the audit trail.
@@ -55,7 +55,7 @@ __init__(self: Any, profile: ComplianceProfile)
 #### ComplianceEnforcer.check_control
 
 ```python
-check_control(self: Any, control_id: str, context: dict[(str, Any)])
+check_control(self: Any, control_id: str, context: dict[str, Any])
 ```
 
 Check if a control is satisfied.
@@ -65,7 +65,7 @@ Check if a control is satisfied.
 #### ComplianceEnforcer.enforce_mandatory
 
 ```python
-enforce_mandatory(self: Any, action: str, context: dict[(str, Any)])
+enforce_mandatory(self: Any, action: str, context: dict[str, Any])
 ```
 
 Enforce all mandatory controls for an action.
@@ -127,7 +127,7 @@ Get all mandatory controls.
 ## check_control
 
 ```python
-check_control(self: Any, control_id: str, context: dict[(str, Any)])
+check_control(self: Any, control_id: str, context: dict[str, Any])
 ```
 
 Check if a control is satisfied.
@@ -137,7 +137,7 @@ Check if a control is satisfied.
 ## enforce_mandatory
 
 ```python
-enforce_mandatory(self: Any, action: str, context: dict[(str, Any)])
+enforce_mandatory(self: Any, action: str, context: dict[str, Any])
 ```
 
 Enforce all mandatory controls for an action.
@@ -167,7 +167,7 @@ Get all mandatory controls.
 ## record_action
 
 ```python
-record_action(self: Any, action: str, context: dict[(str, Any)], profile: ComplianceProfile)
+record_action(self: Any, action: str, context: dict[str, Any], profile: ComplianceProfile)
 ```
 
 Record an action in the audit trail.

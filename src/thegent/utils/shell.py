@@ -5,6 +5,7 @@ Ensures all shell invocations use the fastest available shell (zsh > bash > sh).
 """
 
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -79,6 +80,39 @@ def get_shell_env(optimize_startup: bool = True) -> dict:
     return env
 
 
+def _validate_shell_command_safety(cmd: str | list[str]) -> None:
+    """Validate shell command is not trying to kill agent processes.
+
+    Raises:
+        ValueError: If command attempts to kill agent processes
+    """
+    cmd_str = cmd if isinstance(cmd, str) else " ".join(cmd)
+    cmd_lower = cmd_str.lower()
+
+    # Check for kill commands targeting agent processes
+    agent_patterns = [
+        "cursor-agent",
+        "cursor agent",
+        "thegent",
+        "claude",
+        "codex",
+        "droid",
+        "opencode",
+        "copilot",
+    ]
+
+    # Check for xargs kill patterns (e.g., "ps ... | grep ... | xargs kill")
+    if re.search(r"xargs.*kill|kill.*-9|kill.*-KILL|pkill|killall", cmd_lower):
+        for agent_pattern in agent_patterns:
+            if agent_pattern in cmd_lower:
+                # Allow if explicitly excluding current process
+                if "grep -v" not in cmd_lower and "exclude" not in cmd_lower:
+                    raise ValueError(
+                        f"SECURITY BLOCKED: Shell command attempts to kill agent processes: {cmd_str}\n"
+                        f"Agents cannot kill other agent processes. Use 'thegent mcp prune' for safe cleanup."
+                    )
+
+
 def run_shell_command(
     cmd: str | list[str],
     shell: str | None = None,
@@ -99,6 +133,9 @@ def run_shell_command(
     Returns:
         CompletedProcess result
     """
+    # SECURITY: Validate command safety before execution
+    _validate_shell_command_safety(cmd)
+
     if shell is None:
         shell = get_fastest_shell()
 
@@ -112,12 +149,13 @@ def run_shell_command(
         kwargs["capture_output"] = capture_output
     if capture_output and "text" not in kwargs:
         kwargs["text"] = True
+    check = kwargs.pop("check", False)
 
     # If cmd is a string, use shell=True with explicit executable
     if isinstance(cmd, str):
-        return subprocess.run(cmd, shell=True, executable=shell, env=env, **kwargs)
+        return subprocess.run(cmd, shell=True, executable=shell, env=env, check=check, **kwargs)
     # If cmd is a list, prepend shell
-    return subprocess.run([shell, "-c", " ".join(cmd)], env=env, **kwargs)
+    return subprocess.run([shell, "-c", " ".join(cmd)], env=env, check=check, **kwargs)
 
 
 def popen_shell_command(
@@ -135,6 +173,20 @@ def popen_shell_command(
     Returns:
         Popen process object
     """
+    # SECURITY: Validate command safety before execution
+    _validate_shell_command_safety(cmd)
+
+    # Apply comprehensive guardrails validation
+    try:
+        from thegent.security.guardrails import validate_command
+
+        is_allowed, error = validate_command(cmd, operation_type="command_execution")
+        if not is_allowed:
+            raise ValueError(f"Guardrails blocked: {error}")
+    except ImportError:
+        # Fallback if guardrails not available
+        pass
+
     if shell is None:
         shell = get_fastest_shell()
 

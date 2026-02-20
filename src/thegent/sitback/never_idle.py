@@ -41,7 +41,7 @@ class NeverIdleLoop:
         "session_discovery",  # Scan for new external agents
         "quality_check",  # task quality-a-r
         "dag_sync",  # thegent dag sync
-        "smart_prune",  # Intelligent resource reclamation
+        # "smart_prune",  # DISABLED: Intelligent resource reclamation - too aggressive, kills terminals
     ]
 
     def __init__(

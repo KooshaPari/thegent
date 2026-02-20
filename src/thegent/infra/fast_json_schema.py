@@ -124,9 +124,11 @@ def get_schema_validator(schema: dict[str, Any], cache_key: str | None = None) -
     """
     if cache_key is None:
         import hashlib
-        import json
 
-        schema_str = json.dumps(schema, sort_keys=True)
+        from thegent.infra.runtime_dispatcher import get_json_dumps
+
+        json_dumps = get_json_dumps()
+        schema_str = json_dumps(schema, sort_keys=True)
         cache_key = hashlib.sha256(schema_str.encode()).hexdigest()
 
     if cache_key not in _schema_cache:

@@ -116,13 +116,10 @@ class SyncthingManager:
             return resp.json()
         except httpx.HTTPStatusError as exc:
             raise SyncthingError(
-                f"Syncthing API error {exc.response.status_code} for {path}: "
-                f"{exc.response.text}"
+                f"Syncthing API error {exc.response.status_code} for {path}: {exc.response.text}"
             ) from exc
         except httpx.RequestError as exc:
-            raise SyncthingError(
-                f"Syncthing connection error for {path}: {exc}"
-            ) from exc
+            raise SyncthingError(f"Syncthing connection error for {path}: {exc}") from exc
 
     async def _post(self, path: str, json: Any = None) -> Any:
         """Perform a POST request and return parsed JSON (if any).
@@ -144,13 +141,10 @@ class SyncthingManager:
             return None
         except httpx.HTTPStatusError as exc:
             raise SyncthingError(
-                f"Syncthing API error {exc.response.status_code} for {path}: "
-                f"{exc.response.text}"
+                f"Syncthing API error {exc.response.status_code} for {path}: {exc.response.text}"
             ) from exc
         except httpx.RequestError as exc:
-            raise SyncthingError(
-                f"Syncthing connection error for {path}: {exc}"
-            ) from exc
+            raise SyncthingError(f"Syncthing connection error for {path}: {exc}") from exc
 
     # ------------------------------------------------------------------
     # Public API
@@ -216,11 +210,7 @@ class SyncthingManager:
             folder_id = item.get("id", "")
             path = item.get("path", "")
             label = item.get("label", "") or folder_id
-            device_ids = [
-                d.get("deviceID", "")
-                for d in item.get("devices", [])
-                if d.get("deviceID")
-            ]
+            device_ids = [d.get("deviceID", "") for d in item.get("devices", []) if d.get("deviceID")]
             folders.append(
                 SyncthingFolder(
                     folder_id=folder_id,
@@ -281,10 +271,6 @@ class SyncthingManager:
         Raises:
             SyncthingError: On API or connection error.
         """
-        data: dict[str, Any] = await self._get(
-            "/rest/db/status", folder=folder_id
-        )
-        logger.debug(
-            "Sync status for folder %r: state=%r", folder_id, data.get("state")
-        )
+        data: dict[str, Any] = await self._get("/rest/db/status", folder=folder_id)
+        logger.debug("Sync status for folder %r: state=%r", folder_id, data.get("state"))
         return data

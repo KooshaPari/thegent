@@ -8,7 +8,6 @@ Provides three ways to trigger governance cycles:
 
 from __future__ import annotations
 
-import argparse
 import logging
 import signal
 import sys
@@ -17,6 +16,7 @@ import time
 from pathlib import Path
 from typing import Any, Optional, Protocol
 
+import typer
 from pydantic import BaseModel
 
 # Use watchfiles (fast) with watchdog fallback
@@ -35,6 +35,12 @@ except ImportError:
         WATCHDOG_AVAILABLE = False
 
 _log = logging.getLogger(__name__)
+app = typer.Typer(
+    name="agileplus-triggers",
+    help="AgilePlus governance trigger",
+    add_completion=False,
+    no_args_is_help=False,
+)
 
 # Default debounce time for watchdog mode
 DEFAULT_DEBOUNCE_SECONDS = 30
@@ -476,80 +482,22 @@ def create_trigger(
     raise ValueError(f"Unknown trigger mode: {mode}")
 
 
-def main() -> int:
+def main(
+    *,
+    mode: str = "manual",
+    interval: int = 300,
+    debounce: int = DEFAULT_DEBOUNCE_SECONDS,
+    max_cycles: int | None = None,
+    force: bool = False,
+    watch: list[str] | None = None,
+    project_dir: Path = Path.cwd(),
+    health_targets: Path | None = None,
+    threshold: float = 90.0,
+    lifecycle_mode: str = "soft",
+    watch_health: float = 90.0,
+    watch_health_interval: int = 60,
+) -> int:
     """CLI entry point for triggers."""
-    parser = argparse.ArgumentParser(description="AgilePlus governance trigger")
-    parser.add_argument(
-        "--mode",
-        choices=["watchdog", "timer", "manual", "watch-health"],
-        default="manual",
-        help="Trigger mode",
-    )
-    parser.add_argument(
-        "--interval",
-        type=int,
-        default=300,
-        help="Interval in seconds for timer mode",
-    )
-    parser.add_argument(
-        "--debounce",
-        type=int,
-        default=DEFAULT_DEBOUNCE_SECONDS,
-        help="Debounce seconds for watchdog mode",
-    )
-    parser.add_argument(
-        "--max-cycles",
-        type=int,
-        help="Maximum cycles to run (timer/watchdog only)",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Run even if health >= threshold",
-    )
-    parser.add_argument(
-        "--watch",
-        nargs="+",
-        default=["src/", "tests/", "hooks/"],
-        help="Paths to watch (watchdog mode)",
-    )
-    parser.add_argument(
-        "--project-dir",
-        type=Path,
-        default=Path.cwd(),
-        help="Project directory",
-    )
-    parser.add_argument(
-        "--health-targets",
-        type=Path,
-        help="Path to health-targets.json",
-    )
-    parser.add_argument(
-        "--threshold",
-        type=float,
-        default=90.0,
-        help="Health threshold",
-    )
-    parser.add_argument(
-        "--lifecycle-mode",
-        choices=["soft", "hard"],
-        default="soft",
-        help="Lifecycle execution mode: soft (autonomous) or hard (human-in-loop)",
-    )
-    parser.add_argument(
-        "--watch-health",
-        type=float,
-        default=90.0,
-        help="Trigger cycle when health drops below this threshold (watch-health mode)",
-    )
-    parser.add_argument(
-        "--watch-health-interval",
-        type=int,
-        default=60,
-        help="Health check interval in seconds (watch-health mode)",
-    )
-
-    args = parser.parse_args()
 
     # Setup logging
     logging.basicConfig(
@@ -558,13 +506,13 @@ def main() -> int:
     )
 
     # Find health-targets.json
-    if args.health_targets:
-        health_targets_path = args.health_targets
+    if health_targets:
+        health_targets_path = health_targets
     else:
         # Look in standard locations
         candidates = [
-            args.project_dir / "contracts" / "health-targets.json",
-            args.project_dir.parent / "contracts" / "health-targets.json",
+            project_dir / "contracts" / "health-targets.json",
+            project_dir.parent / "contracts" / "health-targets.json",
         ]
         health_targets_path = None
         for c in candidates:
@@ -580,29 +528,29 @@ def main() -> int:
     from thegent.governance.agileplus import AgilePlusLoop
 
     loop = AgilePlusLoop(
-        project_dir=args.project_dir,
+        project_dir=project_dir,
         health_targets_path=health_targets_path,
-        health_threshold=args.threshold,
-        lifecycle_mode=args.lifecycle_mode,
+        health_threshold=threshold,
+        lifecycle_mode=lifecycle_mode,
     )
 
     # Create config
     config = TriggerConfig(
-        mode=args.mode,
-        interval_seconds=args.interval,
-        debounce_seconds=args.debounce,
-        watch_paths=args.watch,
-        max_cycles=args.max_cycles,
-        health_threshold=args.threshold,
+        mode=mode,
+        interval_seconds=interval,
+        debounce_seconds=debounce,
+        watch_paths=watch or ["src/", "tests/", "hooks/"],
+        max_cycles=max_cycles,
+        health_threshold=threshold,
     )
 
     # Create and run trigger
     trigger = create_trigger(
-        args.mode,
+        mode,
         loop,
         config,
-        watch_health_threshold=args.watch_health,
-        watch_health_interval=args.watch_health_interval,
+        watch_health_threshold=watch_health,
+        watch_health_interval=watch_health_interval,
     )
 
     # Handle signals
@@ -615,8 +563,8 @@ def main() -> int:
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    if args.mode == "manual":
-        result = trigger.run(force=args.force)
+    if mode == "manual":
+        result = trigger.run(force=force)
         _log.info("\nCycle Result:")
         _log.info("  State: %s", result.state)
         _log.info("  Health Score: %.2f", result.health_score)
@@ -635,5 +583,45 @@ def main() -> int:
     return 0
 
 
+@app.callback(invoke_without_command=True)
+def cli(
+    mode: str = typer.Option("manual", "--mode", help="Trigger mode"),
+    interval: int = typer.Option(300, "--interval", help="Interval in seconds for timer mode"),
+    debounce: int = typer.Option(DEFAULT_DEBOUNCE_SECONDS, "--debounce", help="Debounce seconds for watchdog mode"),
+    max_cycles: int | None = typer.Option(None, "--max-cycles", help="Maximum cycles to run (timer/watchdog only)"),
+    force: bool = typer.Option(False, "--force", help="Run even if health >= threshold"),
+    watch: list[str] | None = typer.Option(None, "--watch", help="Paths to watch (repeat --watch for multiple paths)"),
+    project_dir: Path = typer.Option(Path.cwd(), "--project-dir", help="Project directory"),
+    health_targets: Path | None = typer.Option(None, "--health-targets", help="Path to health-targets.json"),
+    threshold: float = typer.Option(90.0, "--threshold", help="Health threshold"),
+    lifecycle_mode: str = typer.Option("soft", "--lifecycle-mode", help="Lifecycle execution mode: soft or hard"),
+    watch_health: float = typer.Option(
+        90.0, "--watch-health", help="Trigger cycle when health drops below this threshold"
+    ),
+    watch_health_interval: int = typer.Option(60, "--watch-health-interval", help="Health check interval in seconds"),
+) -> None:
+    """Run AgilePlus trigger modes."""
+    if mode not in {"watchdog", "timer", "manual", "watch-health"}:
+        raise typer.BadParameter("mode must be one of: watchdog, timer, manual, watch-health")
+    if lifecycle_mode not in {"soft", "hard"}:
+        raise typer.BadParameter("lifecycle-mode must be one of: soft, hard")
+
+    code = main(
+        mode=mode,
+        interval=interval,
+        debounce=debounce,
+        max_cycles=max_cycles,
+        force=force,
+        watch=watch,
+        project_dir=project_dir,
+        health_targets=health_targets,
+        threshold=threshold,
+        lifecycle_mode=lifecycle_mode,
+        watch_health=watch_health,
+        watch_health_interval=watch_health_interval,
+    )
+    raise typer.Exit(code=code)
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    app()

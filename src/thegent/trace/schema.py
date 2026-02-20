@@ -41,7 +41,9 @@ class ToolCallRecord:
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "ToolCallRecord":
         """Construct from dictionary (e.g., JSON parsed)."""
-        return ToolCallRecord(**data)
+        data_copy = data.copy()
+        data_copy.pop("__type__", None)
+        return ToolCallRecord(**data_copy)
 
 
 @dataclass
@@ -71,7 +73,9 @@ class DecisionRecord:
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "DecisionRecord":
         """Construct from dictionary."""
-        return DecisionRecord(**data)
+        data_copy = data.copy()
+        data_copy.pop("__type__", None)
+        return DecisionRecord(**data_copy)
 
 
 @dataclass
@@ -96,7 +100,9 @@ class SessionRecord:
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "SessionRecord":
         """Construct from dictionary."""
-        return SessionRecord(**data)
+        data_copy = data.copy()
+        data_copy.pop("__type__", None)
+        return SessionRecord(**data_copy)
 
 
 class TraceRecord:

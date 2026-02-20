@@ -12,21 +12,20 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from thegent.cache.multi_level import MultiLevelCache, _DISKCACHE_AVAILABLE, cached_multi
-
+from thegent.cache.multi_level import _DISKCACHE_AVAILABLE, MultiLevelCache, cached_multi
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def l1_only_cache() -> MultiLevelCache:
     """Return an L1-only cache (no disk layer)."""
     return MultiLevelCache(l1_maxsize=10, l1_ttl=60)
 
 
-@pytest.fixture()
+@pytest.fixture
 def two_level_cache(tmp_path: Path) -> MultiLevelCache:
     """Return a two-level cache backed by a temp directory."""
     cache = MultiLevelCache(l1_maxsize=10, l1_ttl=60, l2_dir=tmp_path / "cache", l2_ttl=3600)

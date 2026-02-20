@@ -4,7 +4,7 @@ import os
 import shutil
 import socket
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, List, Optional
 
 
 class ResourceIsolation:
@@ -25,17 +25,18 @@ class ResourceIsolation:
         self.agent_tmp.mkdir(parents=True, exist_ok=True, mode=0o700)
         return self.agent_tmp
 
-    def allocate_workdir(self, branch: Optional[str] = None) -> Path:
+    def allocate_workdir(self, branch: str | None = None) -> Path:
         """Allocate isolated work directory for the agent (FR-ISOL-001).
-        
-        If a branch is provided, it uses a git worktree. Otherwise, it 
+
+        If a branch is provided, it uses a git worktree. Otherwise, it
         ensures the agent's work directory exists.
         """
         if branch:
             from thegent.mesh.worktree import WorktreeManager
+
             wm = WorktreeManager(self.project_root, self.mesh_root)
             return wm.create_worktree(self.agent_id, branch)
-        
+
         self.work_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
         return self.work_dir
 
@@ -65,9 +66,10 @@ class ResourceIsolation:
 
         return env
 
-    def get_process_tree(self) -> List[int]:
+    def get_process_tree(self) -> list[int]:
         """Identify process tree for the current agent (FR-ISOL-002)."""
         import psutil
+
         try:
             current_process = psutil.Process(os.getpid())
             children = current_process.children(recursive=True)

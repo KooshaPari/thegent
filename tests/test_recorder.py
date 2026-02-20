@@ -248,7 +248,8 @@ class TestTraceCleanup:
 
         # Set mtime to 10 days ago
         old_time = (datetime.now(timezone.utc) - timedelta(days=10)).timestamp()
-        trace_file.touch(old_time)
+        import os
+        os.utime(trace_file, (old_time, old_time))
 
         deleted = await cleanup.cleanup_expired_traces()
         assert deleted == 1

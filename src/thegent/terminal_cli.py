@@ -4,7 +4,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from .tools.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes, send_to_tmux_pane
+from .skills.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes, send_to_tmux_pane
 
 console = Console()
 app = typer.Typer(help="Manage terminal sessions and agent interactions")

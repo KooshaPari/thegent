@@ -22,7 +22,7 @@ from thegent.isolation.exceptions import (
 from thegent.isolation.models import TenantContext
 from thegent.isolation.uid_pool import UidPool
 from thegent.isolation.vfs import VfsAdapter
-from thegent.orchestration.cmd_share import CommandSharer
+from thegent.orchestration.execution.cmd_share import CommandSharer
 
 logger = logging.getLogger(__name__)
 
@@ -139,11 +139,7 @@ class SubUserIsolationProvider(IsolationProvider):
             env["TMPDIR"] = context.home_dir  # Isolate temp files
 
             if share:
-                return self.cmd_sharer.execute_shared(
-                    command=command,
-                    cwd=Path(context.home_dir),
-                    env=env
-                )
+                return self.cmd_sharer.execute_shared(command=command, cwd=Path(context.home_dir), env=env)
 
             # Default guardrail limits (can be tuned via Harness Cards)
             effective_limits = {
@@ -178,6 +174,7 @@ class SubUserIsolationProvider(IsolationProvider):
                 text=True,
                 timeout=timeout_sec,
                 preexec_fn=preexec_fn if os.name == "posix" else None,
+                check=False,
             )
 
             return {

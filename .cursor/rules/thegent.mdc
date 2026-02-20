@@ -7,6 +7,60 @@ description: Unified orchestration guidance for thegent
 
 Unified orchestration guidance for external agents using `thegent` as the default execution path.
 
+---
+
+# 🔒 CRITICAL SECURITY RULES - NEVER VIOLATE
+
+## ⛔ FORBIDDEN: Killing Agent or Terminal Processes
+
+**ABSOLUTELY FORBIDDEN** - Agents MUST NEVER kill other agent processes or terminal processes.
+
+### ❌ NEVER RUN THESE COMMANDS:
+```bash
+# FORBIDDEN - Killing cursor-agent
+ps -ao pid,command | grep "cursor-agent" | grep -v grep | grep -v 40690 | awk '{print $1}' | xargs kill -9
+ps | grep cursor-agent | xargs kill -9
+pkill cursor-agent
+killall cursor-agent
+
+# FORBIDDEN - Killing any agent process
+kill -9 <pid>  # where PID is cursor-agent, thegent, claude, codex, droid, etc.
+
+# FORBIDDEN - Killing shell/terminal processes
+kill -9 <pid>  # where PID is bash, zsh, sh, ghostty, terminal, iterm, etc.
+```
+
+### ✅ CORRECT ALTERNATIVES:
+```bash
+# Safe cleanup of orphaned LSP/MCP processes
+thegent mcp prune
+
+# See what would be pruned (dry run)
+thegent mcp prune --dry-run
+
+# List active sessions
+thegent ps
+
+# Properly stop a session
+thegent stop <session_id>
+```
+
+### 🛡️ PROTECTED PROCESSES:
+The following processes are PROTECTED and MUST NEVER be killed:
+- **Agent processes**: `cursor-agent`, `thegent`, `claude`, `codex`, `droid`, `opencode`, `copilot`, `gemini`
+- **Shell processes**: `bash`, `zsh`, `sh`, `fish`, `tcsh`, `csh`
+- **Terminal emulators**: `ghostty`, `terminal`, `iterm`, `alacritty`, `kitty`, `wezterm`, `warp`
+
+### ⚠️ SECURITY ENFORCEMENT:
+- All commands are validated before execution
+- Commands attempting to kill protected processes will be **BLOCKED**
+- Violations are logged and reported
+- Rate limiting prevents abuse
+
+**If you need to clean up processes, use the safe pruning tools provided by thegent, NOT manual kill commands.**
+
+---
+
 ## Primary Rule
 
 Use `thegent` subcommands, not legacy positional form.

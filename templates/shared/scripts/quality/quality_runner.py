@@ -47,14 +47,10 @@ def _detect_stacks(root: Path) -> list[str]:
     """Detect project stacks from root (py, ts, go, bash)."""
     stacks = []
     # py: root or backend/
-    if (root / "pyproject.toml").exists() or (root / "setup.py").exists():
-        stacks.append("py")
-    elif (root / "backend" / "pyproject.toml").exists():
+    if (root / "pyproject.toml").exists() or (root / "setup.py").exists() or (root / "backend" / "pyproject.toml").exists():
         stacks.append("py")
     # ts: frontend/ dir or package.json at root (exclude py-primary with docs package.json)
-    if (root / "frontend").is_dir():
-        stacks.append("ts")
-    elif (root / "package.json").exists() and not (root / "pyproject.toml").exists():
+    if (root / "frontend").is_dir() or ((root / "package.json").exists() and not (root / "pyproject.toml").exists()):
         stacks.append("ts")
     if (root / "go.mod").exists():
         stacks.append("go")
@@ -199,7 +195,7 @@ def _validate_dag(steps: dict[str, dict]) -> None:
                 print(f"Step '{name}' depends on undefined step '{dep}'.", file=sys.stderr)
                 raise SystemExit(1)
     # Check cycles: Kahn's algorithm leaves remaining iff cycle exists
-    in_degree = {s: 0 for s in steps}
+    in_degree = dict.fromkeys(steps, 0)
     for name, cfg in steps.items():
         for dep in cfg.get("deps", []):
             if dep in steps:
@@ -221,7 +217,7 @@ def _validate_dag(steps: dict[str, dict]) -> None:
 
 def topological_tiers(steps: dict[str, dict]) -> list[list[str]]:
     """Return steps in tiers (each tier can run in parallel)."""
-    in_degree = {s: 0 for s in steps}
+    in_degree = dict.fromkeys(steps, 0)
     for name, cfg in steps.items():
         for dep in cfg.get("deps", []):
             if dep in steps:

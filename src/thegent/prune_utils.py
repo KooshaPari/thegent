@@ -20,12 +20,33 @@ def is_agent_in_cmd(cmd: str) -> bool:
         return True
     if "cursor helper" in c or "cursorhelper" in c:
         return True
-    # Claude Code / Codex
-    if "claude-code" in c or "claude code" in c or "clode" in c:
+    # Claude Code / Codex / Droid / etc.
+    if any(
+        x in c
+        for x in (
+            "claude-code",
+            "claude code",
+            "clode",
+            "cursor-agent",
+            "cursor agent",
+            "opencode",
+            "copilot",
+            "gemini",
+            "droid",
+            "roid",
+            "anen",
+            "antigma",
+            "fanta",
+            "ante",
+            "factory",
+        )
+    ):
         return True
-    if exe in ("claude", "codex", "clode", "dex"):
+    if exe in ("claude", "codex", "clode", "dex", "droid", "roid", "anen", "antigma", "fanta", "ante", "opencode", "copilot", "gemini"):
         return True
-    if exe.startswith(("claude", "clode")) or "/claude" in c:
+    if exe.startswith(("claude", "clode", "droid", "roid", "anen", "antigma", "fanta", "ante", "opencode")) or any(
+        x in c for x in ("/claude", "/droid", "/anen", "/antigma", "/fanta", "/ante", "/opencode")
+    ):
         return True
     if ("codex" in c and ("codex" in exe or exe.endswith("codex"))) or "dex" in c:
         return True
@@ -33,6 +54,11 @@ def is_agent_in_cmd(cmd: str) -> bool:
     if exe in ("python", "python3", "python3.12", "python3.14"):
         if "thegent" in c or "uv run" in c or "uv run thegent" in c:
             return True
+    # System / Terminal parents (to avoid killing user shells)
+    if exe in ("iterm2", "iterm", "terminal", "tmux", "screen", "login", "sshd", "zsh", "bash", "sh"):
+        return True
+    if "iterm" in c or "terminal.app" in c or "tmux" in c or "sshd" in c:
+        return True
     return False
 
 

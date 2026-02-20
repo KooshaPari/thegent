@@ -189,9 +189,7 @@ class CodexProxyRunner(AgentRunner):
         self._settings = settings or ThegentSettings()
         self._model = model or _PROXY_MODEL[agent_name]
         self._use_litellm_router = (
-            use_litellm_router
-            if use_litellm_router is not None
-            else (os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1")
+            use_litellm_router if use_litellm_router is not None else self._settings.use_litellm_router
         )
 
     def run(

@@ -23,6 +23,8 @@ class TestIsAgentInCmd:
     def test_codex(self) -> None:
         assert is_agent_in_cmd("/usr/local/bin/codex") is True
         assert is_agent_in_cmd("codex run task") is True
+        assert is_agent_in_cmd("/Users/kooshapari/.ante/bin/ante --model glm-5") is True
+        assert is_agent_in_cmd("fanta --model MiniMax-M2.5") is True
 
     def test_non_agent(self) -> None:
         assert is_agent_in_cmd("node pyright-langserver") is False
@@ -34,9 +36,9 @@ class TestIsOrphanByPpid:
     """Tests for is_orphan_by_ppid."""
 
     def test_orphan_chain_to_init(self) -> None:
-        # LSP (100) -> shell (50) -> init (1); no agent
+        # LSP (100) -> non-agent parent (50) -> init (1); no agent
         parent_map = {100: 50, 50: 1}
-        cmd_map = {100: "node pyright", 50: "/bin/zsh", 1: "/sbin/init"}
+        cmd_map = {100: "node pyright", 50: "/usr/libexec/non-agent-helper", 1: "/sbin/init"}
         assert is_orphan_by_ppid(100, parent_map, cmd_map) is True
 
     def test_keep_when_agent_in_chain(self) -> None:

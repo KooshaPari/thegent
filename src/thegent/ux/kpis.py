@@ -31,7 +31,7 @@ class KPIDashboard:
 
         # WP-5003: Cost awareness
         try:
-            from thegent.governance.cost import CostAggregator
+            from thegent.cost.aggregator import CostAggregator
 
             agg = CostAggregator(self.settings.session_dir)
             metrics["finance"] = agg.get_mtd_total()

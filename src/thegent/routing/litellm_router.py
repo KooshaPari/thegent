@@ -69,7 +69,7 @@ MODEL_CONTEXT_WINDOWS: dict[str, int] = {
     "claude-haiku-4.5": 200000,
     # Google
     "gemini-3-flash": 1000000,
-    "gemini-3-pro": 200000,
+    "gemini-3.1-pro": 1000000,
     # DeepSeek
     "deepseek-v3.2": 64000,
     # Zhipu

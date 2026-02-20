@@ -45,7 +45,7 @@ def _json_content(result: ToolResult | str) -> Any:
 
 def _inject_missing_names() -> None:
     """Inject _resolve_cwd, _default_owner_tag, and elicitation types."""
-    from thegent.cli_impl import _default_owner_tag, _resolve_cwd
+    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd
 
     if not hasattr(_mcp_mod, "_resolve_cwd"):
         _mcp_mod._resolve_cwd = _resolve_cwd

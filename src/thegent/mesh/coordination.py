@@ -5,7 +5,7 @@ import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 
 class HLCTimestamp:
@@ -62,11 +62,7 @@ class OptimisticConcurrencyControl:
     def claim_version(self, file_path: Path, agent_id: str) -> str:
         """Record the version of a file at claim time (SCLI-P6.1)."""
         version = self.get_version(file_path)
-        claim_data = {
-            "agent_id": agent_id,
-            "version": version,
-            "timestamp": str(HLCTimestamp().update())
-        }
+        claim_data = {"agent_id": agent_id, "version": version, "timestamp": str(HLCTimestamp().update())}
 
         file_id = hashlib.md5(str(file_path).encode()).hexdigest()
         with open(self.version_dir / f"{file_id}-{agent_id}.json", "w") as f:
@@ -117,7 +113,7 @@ class FileClaimsRegistry:
             "agent_id": agent_id,
             "mode": mode,
             "expires_at": time.time() + ttl,
-            "timestamp": str(HLCTimestamp().update())
+            "timestamp": str(HLCTimestamp().update()),
         }
 
         try:
@@ -144,19 +140,24 @@ class FileClaimsRegistry:
 
         return False
 
+    def _cleanup_expired_lock(self, lock_file: Path, now: float) -> int:
+        """Clean up a single expired lock file. Returns 1 if deleted, 0 otherwise."""
+        try:
+            with open(lock_file) as f:
+                data = json.load(f)
+            if now > data["expires_at"]:
+                lock_file.unlink()
+                return 1
+        except Exception:
+            pass
+        return 0
+
     def cleanup_expired(self) -> int:
         """Background cleanup daemon (SCLI-P6.4)."""
         count = 0
         now = time.time()
         for lock_file in self.claims_dir.glob("*.lock"):
-            try:
-                with open(lock_file) as f:
-                    data = json.load(f)
-                if now > data["expires_at"]:
-                    lock_file.unlink()
-                    count += 1
-            except Exception:
-                pass
+            count += self._cleanup_expired_lock(lock_file, now)
         return count
 
 
@@ -202,9 +203,7 @@ class IntentRegistry:
 
     def register_intent(self, intent: EditIntent) -> Path:
         """Register an agent's edit intent."""
-        intent_id = hashlib.md5(
-            f"{intent.agent_id}:{intent.file_path}:{intent.timestamp}".encode()
-        ).hexdigest()
+        intent_id = hashlib.md5(f"{intent.agent_id}:{intent.file_path}:{intent.timestamp}".encode()).hexdigest()
         intent_file = self.intents_dir / f"{intent_id}.json"
         data = {
             "agent_id": intent.agent_id,
@@ -218,38 +217,51 @@ class IntentRegistry:
             json.dump(data, f)
         return intent_file
 
+    def _load_intent(self, intent_file: Path, agent_id: str | None) -> EditIntent | None:
+        """Load an intent from file, optionally filtering by agent_id."""
+        try:
+            with open(intent_file) as f:
+                data = json.load(f)
+            if agent_id is None or data["agent_id"] == agent_id:
+                return EditIntent(
+                    agent_id=data["agent_id"],
+                    file_path=data["file_path"],
+                    operation=data["operation"],
+                    line_ranges=data.get("line_ranges", []),
+                    new_content=data.get("new_content"),
+                    timestamp=data.get("timestamp"),
+                )
+        except Exception:
+            pass
+        return None
+
+    def _delete_intent_if_owned(self, intent_file: Path, agent_id: str) -> bool:
+        """Delete an intent file if owned by the specified agent. Returns True if deleted."""
+        try:
+            with open(intent_file) as f:
+                data = json.load(f)
+            if data["agent_id"] == agent_id:
+                intent_file.unlink()
+                return True
+        except Exception:
+            pass
+        return False
+
     def get_intents(self, agent_id: str | None = None) -> list[EditIntent]:
         """Retrieve registered intents, optionally filtered by agent."""
         intents: list[EditIntent] = []
         for intent_file in self.intents_dir.glob("*.json"):
-            try:
-                with open(intent_file) as f:
-                    data = json.load(f)
-                if agent_id is None or data["agent_id"] == agent_id:
-                    intents.append(EditIntent(
-                        agent_id=data["agent_id"],
-                        file_path=data["file_path"],
-                        operation=data["operation"],
-                        line_ranges=data.get("line_ranges", []),
-                        new_content=data.get("new_content"),
-                        timestamp=data.get("timestamp"),
-                    ))
-            except Exception:
-                pass
+            intent = self._load_intent(intent_file, agent_id)
+            if intent is not None:
+                intents.append(intent)
         return intents
 
     def clear_intents(self, agent_id: str) -> int:
         """Clear all intents for a given agent (post-commit cleanup)."""
         count = 0
         for intent_file in self.intents_dir.glob("*.json"):
-            try:
-                with open(intent_file) as f:
-                    data = json.load(f)
-                if data["agent_id"] == agent_id:
-                    intent_file.unlink()
-                    count += 1
-            except Exception:
-                pass
+            if self._delete_intent_if_owned(intent_file, agent_id):
+                count += 1
         return count
 
 

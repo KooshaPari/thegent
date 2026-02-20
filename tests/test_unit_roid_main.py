@@ -1,4 +1,4 @@
-"""Unit tests for roid command wiring and wrapper installation."""
+"""Unit tests for roid command wiring and shim-link installation."""
 
 import sys
 from pathlib import Path
@@ -54,17 +54,15 @@ def test_roid_mini_uses_gpt5_mini(mock_run: MagicMock, _mock_resolve: MagicMock)
 
 
 def test_install_links_writes_roid_wrappers(tmp_path: Path) -> None:
-    result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path)])
+    shims_bin = tmp_path / "thegent-shims"
+    shims_bin.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    shims_bin.chmod(0o755)
+
+    with patch("thegent.roid_main.shutil.which", return_value=None):
+        result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path)])
 
     assert result.exit_code == 0
 
     roid = tmp_path / "roid"
-    roidflash = tmp_path / "roidflash"
-    assert roid.exists()
-    assert roidflash.exists()
-    assert roid.read_text(encoding="utf-8") == (
-        '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="droid"\nexec thegent roid "$@"\n'
-    )
-    assert roidflash.read_text(encoding="utf-8") == (
-        '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="droid"\nexec thegent roid flash "$@"\n'
-    )
+    assert roid.is_symlink()
+    assert roid.resolve() == shims_bin.resolve()

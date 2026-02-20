@@ -13,8 +13,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-from thegent.cli_impl import (
+from thegent.cli.commands.impl import (
     HEALTH_PAYLOAD_SCHEMA_VERSION,
     DagDocument,
     _atomic_write,
@@ -169,8 +168,8 @@ class TestParseDagFull:
 class TestValidateDag:
     """Tests for _validate_dag validation."""
 
-    @patch("thegent.cli_impl.resolve_agent", side_effect=lambda x: x)
-    @patch("thegent.cli_impl.list_agent_names", return_value=["claude", "gemini", "codex"])
+    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda x: x)
+    @patch("thegent.cli.commands.impl.list_agent_names", return_value=["claude", "gemini", "codex"])
     def test_valid_dag_no_errors(self, mock_list, mock_resolve, tmp_path) -> None:
         # @trace FR-CLI-155
         dag_file = _write_dag(tmp_path, DAG_CONTENT)
@@ -178,8 +177,8 @@ class TestValidateDag:
         errors = _validate_dag(doc)
         assert errors == []
 
-    @patch("thegent.cli_impl.resolve_agent", side_effect=lambda x: x)
-    @patch("thegent.cli_impl.list_agent_names", return_value=["claude"])
+    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda x: x)
+    @patch("thegent.cli.commands.impl.list_agent_names", return_value=["claude"])
     def test_invalid_agent(self, mock_list, mock_resolve, tmp_path) -> None:
         # @trace FR-CLI-156
         content = """\
@@ -194,8 +193,8 @@ class TestValidateDag:
         errors = _validate_dag(doc)
         assert any("Unknown agent" in e for e in errors)
 
-    @patch("thegent.cli_impl.resolve_agent", side_effect=lambda x: x)
-    @patch("thegent.cli_impl.list_agent_names", return_value=["claude"])
+    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda x: x)
+    @patch("thegent.cli.commands.impl.list_agent_names", return_value=["claude"])
     def test_duplicate_task_ids(self, mock_list, mock_resolve, tmp_path) -> None:
         # @trace FR-CLI-157
         content = """\
@@ -211,8 +210,8 @@ class TestValidateDag:
         errors = _validate_dag(doc)
         assert any("Duplicate task ID" in e for e in errors)
 
-    @patch("thegent.cli_impl.resolve_agent", side_effect=lambda x: x)
-    @patch("thegent.cli_impl.list_agent_names", return_value=["claude"])
+    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda x: x)
+    @patch("thegent.cli.commands.impl.list_agent_names", return_value=["claude"])
     def test_done_task_missing_evidence(self, mock_list, mock_resolve, tmp_path) -> None:
         # @trace FR-CLI-158
         content = """\
@@ -635,7 +634,7 @@ class TestDagRecoverCmd:
             table_headers=["id", "agent", "prompt", "depends_on", "status", "retry_count"],
         )
 
-    @patch("thegent.cli_impl._resolve_cwd")
+    @patch("thegent.cli.commands.impl._resolve_cwd")
     @patch("thegent.cli._parse_dag_full")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._atomic_write")
@@ -659,7 +658,7 @@ class TestDagRecoverCmd:
         assert doc.tasks[0]["status"] == "pending"
         assert doc.tasks[1]["status"] == "done"
 
-    @patch("thegent.cli_impl._resolve_cwd")
+    @patch("thegent.cli.commands.impl._resolve_cwd")
     @patch("thegent.cli._parse_dag_full")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._atomic_write")
@@ -681,7 +680,7 @@ class TestDagRecoverCmd:
 
         assert doc.tasks[0]["status"] == "pending"
 
-    @patch("thegent.cli_impl._resolve_cwd")
+    @patch("thegent.cli.commands.impl._resolve_cwd")
     @patch("thegent.cli._parse_dag_full")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._atomic_write")
@@ -770,7 +769,7 @@ class TestDagProbeCmd:
 class TestBuildContinuationPrompt:
     """Tests for _build_continuation_prompt."""
 
-    @patch("thegent.cli_impl._load_prior_session_output", return_value="prior output text")
+    @patch("thegent.cli.commands.impl._load_prior_session_output", return_value="prior output text")
     def test_prompt_includes_prior_context(self, mock_load) -> None:
         # @trace FR-CLI-180
         settings = MagicMock()
@@ -779,7 +778,7 @@ class TestBuildContinuationPrompt:
         assert "do next thing" in result
         assert "Continuing from prior session" in result
 
-    @patch("thegent.cli_impl._load_prior_session_output", return_value="")
+    @patch("thegent.cli.commands.impl._load_prior_session_output", return_value="")
     def test_prompt_no_prior_output(self, mock_load) -> None:
         # @trace FR-CLI-181
         settings = MagicMock()
@@ -792,7 +791,7 @@ class TestBuildContinuationPrompt:
         result = _build_continuation_prompt(settings, "", "do next thing")
         assert result == "do next thing"
 
-    @patch("thegent.cli_impl._load_prior_session_output", side_effect=["output A", "output B"])
+    @patch("thegent.cli.commands.impl._load_prior_session_output", side_effect=["output A", "output B"])
     def test_prompt_multiple_sessions(self, mock_load) -> None:
         # @trace FR-CLI-183
         settings = MagicMock()
@@ -811,9 +810,9 @@ class TestBuildContinuationPrompt:
 class TestHealthReportImpl:
     """Tests for session_contract_health_report_impl."""
 
-    @patch("thegent.cli_impl.session_contract_audit_impl")
-    @patch("thegent.cli_impl._load_previous_health_snapshot", return_value=None)
-    @patch("thegent.cli_impl._append_health_snapshot")
+    @patch("thegent.cli.commands.impl.session_contract_audit_impl")
+    @patch("thegent.cli.commands.impl._load_previous_health_snapshot", return_value=None)
+    @patch("thegent.cli.commands.impl._append_health_snapshot")
     def test_report_all_healthy(self, mock_append, mock_prev, mock_audit) -> None:
         # @trace FR-CLI-184
         mock_audit.return_value = {
@@ -830,7 +829,7 @@ class TestHealthReportImpl:
             ],
         }
 
-        from thegent.cli_impl import session_contract_health_report_impl
+        from thegent.cli.commands.impl import session_contract_health_report_impl
 
         result = session_contract_health_report_impl(owner="alice")
         assert result["status"] == "passed"
@@ -838,9 +837,9 @@ class TestHealthReportImpl:
         assert result["blocked_count"] == 0
         assert result["payload_type"] == "session_contract_health_report"
 
-    @patch("thegent.cli_impl.session_contract_audit_impl")
-    @patch("thegent.cli_impl._load_previous_health_snapshot", return_value=None)
-    @patch("thegent.cli_impl._append_health_snapshot")
+    @patch("thegent.cli.commands.impl.session_contract_audit_impl")
+    @patch("thegent.cli.commands.impl._load_previous_health_snapshot", return_value=None)
+    @patch("thegent.cli.commands.impl._append_health_snapshot")
     def test_report_with_blockers(self, mock_append, mock_prev, mock_audit) -> None:
         # @trace FR-CLI-185
         mock_audit.return_value = {
@@ -863,7 +862,7 @@ class TestHealthReportImpl:
             ],
         }
 
-        from thegent.cli_impl import session_contract_health_report_impl
+        from thegent.cli.commands.impl import session_contract_health_report_impl
 
         result = session_contract_health_report_impl(owner="alice")
         assert result["blocked_count"] == 1
@@ -880,9 +879,9 @@ class TestHealthReportImpl:
 class TestHealthGateImpl:
     """Tests for session_contract_health_gate_impl."""
 
-    @patch("thegent.cli_impl.session_contract_audit_impl")
-    @patch("thegent.cli_impl._load_previous_health_snapshot", return_value=None)
-    @patch("thegent.cli_impl._append_health_snapshot")
+    @patch("thegent.cli.commands.impl.session_contract_audit_impl")
+    @patch("thegent.cli.commands.impl._load_previous_health_snapshot", return_value=None)
+    @patch("thegent.cli.commands.impl._append_health_snapshot")
     def test_gate_pass(self, mock_append, mock_prev, mock_audit) -> None:
         # @trace FR-CLI-186
         mock_audit.return_value = {
@@ -899,15 +898,15 @@ class TestHealthGateImpl:
             ],
         }
 
-        from thegent.cli_impl import session_contract_health_gate_impl
+        from thegent.cli.commands.impl import session_contract_health_gate_impl
 
         result = session_contract_health_gate_impl(owner="alice", min_healthy_ratio=1.0)
         assert result["pass"] is True
         assert result["status"] == "passed"
 
-    @patch("thegent.cli_impl.session_contract_audit_impl")
-    @patch("thegent.cli_impl._load_previous_health_snapshot", return_value=None)
-    @patch("thegent.cli_impl._append_health_snapshot")
+    @patch("thegent.cli.commands.impl.session_contract_audit_impl")
+    @patch("thegent.cli.commands.impl._load_previous_health_snapshot", return_value=None)
+    @patch("thegent.cli.commands.impl._append_health_snapshot")
     def test_gate_fail(self, mock_append, mock_prev, mock_audit) -> None:
         # @trace FR-CLI-187
         mock_audit.return_value = {
@@ -944,7 +943,7 @@ class TestHealthGateImpl:
             ],
         }
 
-        from thegent.cli_impl import session_contract_health_gate_impl
+        from thegent.cli.commands.impl import session_contract_health_gate_impl
 
         result = session_contract_health_gate_impl(owner="alice", min_healthy_ratio=1.0)
         assert result["pass"] is False
@@ -961,14 +960,14 @@ class TestHealthGateImpl:
 class TestHealthTrendImpl:
     """Tests for session_contract_health_trend_impl."""
 
-    @patch("thegent.cli_impl._health_snapshot_log_path")
-    @patch("thegent.cli_impl._health_snapshot_max_lines", return_value=5000)
+    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=5000)
     def test_trend_empty_snapshots(self, mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-188
         snap_path = tmp_path / "snapshots.jsonl"
         mock_path.return_value = snap_path
 
-        from thegent.cli_impl import session_contract_health_trend_impl
+        from thegent.cli.commands.impl import session_contract_health_trend_impl
 
         result = session_contract_health_trend_impl(
             payload_type="session_contract_health_report",
@@ -977,8 +976,8 @@ class TestHealthTrendImpl:
         assert result["snapshot_count"] == 0
         assert result["latest"] is None
 
-    @patch("thegent.cli_impl._health_snapshot_log_path")
-    @patch("thegent.cli_impl._health_snapshot_max_lines", return_value=5000)
+    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=5000)
     def test_trend_reads_existing_snapshots(self, mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-189
         snap_path = tmp_path / "snapshots.jsonl"
@@ -1003,7 +1002,7 @@ class TestHealthTrendImpl:
         snap_path.write_text(json.dumps(snapshot, sort_keys=True) + "\n", encoding="utf-8")
         mock_path.return_value = snap_path
 
-        from thegent.cli_impl import session_contract_health_trend_impl
+        from thegent.cli.commands.impl import session_contract_health_trend_impl
 
         result = session_contract_health_trend_impl(
             payload_type="session_contract_health_report",
@@ -1014,8 +1013,7 @@ class TestHealthTrendImpl:
     def test_trend_invalid_payload_type(self) -> None:
         # @trace FR-CLI-190
         import typer
-
-        from thegent.cli_impl import session_contract_health_trend_impl
+        from thegent.cli.commands.impl import session_contract_health_trend_impl
 
         with pytest.raises(typer.BadParameter):
             session_contract_health_trend_impl(payload_type="bogus_type")
@@ -1030,7 +1028,7 @@ class TestHealthTrendImpl:
 class TestLoadPreviousHealthSnapshot:
     """Tests for _load_previous_health_snapshot."""
 
-    @patch("thegent.cli_impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
     def test_load_from_file(self, mock_path, tmp_path) -> None:
         # @trace FR-CLI-191
         snap_path = tmp_path / "snapshots.jsonl"
@@ -1047,7 +1045,7 @@ class TestLoadPreviousHealthSnapshot:
         assert result is not None
         assert result["blocked_ratio"] == 0.1
 
-    @patch("thegent.cli_impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
     def test_load_no_matching_scope(self, mock_path, tmp_path) -> None:
         # @trace FR-CLI-192
         snap_path = tmp_path / "snapshots.jsonl"
@@ -1062,7 +1060,7 @@ class TestLoadPreviousHealthSnapshot:
         result = _load_previous_health_snapshot({"payload_type": "gate", "owner": "bob"})
         assert result is None
 
-    @patch("thegent.cli_impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
     def test_load_no_file(self, mock_path, tmp_path) -> None:
         # @trace FR-CLI-193
         mock_path.return_value = tmp_path / "nonexistent.jsonl"
@@ -1079,8 +1077,8 @@ class TestLoadPreviousHealthSnapshot:
 class TestCompactHealthSnapshotLog:
     """Tests for _compact_health_snapshot_log."""
 
-    @patch("thegent.cli_impl._health_snapshot_log_path")
-    @patch("thegent.cli_impl._health_snapshot_max_lines", return_value=3)
+    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=3)
     def test_compacts_when_over_limit(self, mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-194
         snap_path = tmp_path / "snapshots.jsonl"
@@ -1093,8 +1091,8 @@ class TestCompactHealthSnapshotLog:
         remaining_lines = [l for l in snap_path.read_text(encoding="utf-8").splitlines() if l.strip()]
         assert len(remaining_lines) == 3
 
-    @patch("thegent.cli_impl._health_snapshot_log_path")
-    @patch("thegent.cli_impl._health_snapshot_max_lines", return_value=100)
+    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=100)
     def test_no_compact_when_under_limit(self, mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-195
         snap_path = tmp_path / "snapshots.jsonl"
@@ -1163,9 +1161,9 @@ class TestResolveHealthPolicy:
 class TestObserveSummaryImpl:
     """Tests for observe_summary_impl."""
 
-    @patch("thegent.cli_impl.ThegentSettings")
-    @patch("thegent.cli_impl.ContractTelemetry", create=True)
-    @patch("thegent.cli_impl.EscalationQueue", create=True)
+    @patch("thegent.cli.commands.impl.ThegentSettings")
+    @patch("thegent.cli.commands.impl.ContractTelemetry", create=True)
+    @patch("thegent.cli.commands.impl.EscalationQueue", create=True)
     def test_observe_summary_basic(self, mock_queue_cls, mock_ct_cls, mock_settings) -> None:
         # @trace FR-CLI-151
         mock_settings.return_value = MagicMock(session_dir="/tmp/sessions")
@@ -1194,12 +1192,12 @@ class TestObserveSummaryImpl:
         mock_queue_cls.return_value = mock_queue
 
         with (
-            patch("thegent.cli_impl._health_snapshot_log_path") as mock_snap_path,
-            patch("thegent.cli_impl._compact_health_snapshot_log"),
+            patch("thegent.cli.commands.impl._health_snapshot_log_path") as mock_snap_path,
+            patch("thegent.cli.commands.impl._compact_health_snapshot_log"),
         ):
             mock_snap_path.return_value = Path("/tmp/fake-snapshots.jsonl")
 
-            from thegent.cli_impl import observe_summary_impl
+            from thegent.cli.commands.impl import observe_summary_impl
 
             result = observe_summary_impl(limit=100, trend_samples=0)
             assert "status" in result
@@ -1219,7 +1217,7 @@ class TestCockpitCmd:
     @patch("thegent.execution.RunRegistry")
     @patch("thegent.execution.CircuitBreakerRegistry")
     @patch("thegent.execution.CheckpointRegistry")
-    @patch("thegent.cli_impl.ps_impl")
+    @patch("thegent.cli.commands.impl.ps_impl")
     def test_cockpit_output(self, mock_ps, mock_ckpt_cls, mock_cb_cls, mock_rr_cls, mock_settings) -> None:
         # @trace FR-CLI-152
         mock_ps.return_value = [
@@ -1686,21 +1684,21 @@ class TestDagHelpers:
         _ensure_contract_version_header(doc)
         assert "contract_version" in doc.table_headers
 
-    @patch("thegent.cli_impl._resolve_cwd", return_value=None)
+    @patch("thegent.cli.commands.impl._resolve_cwd", return_value=None)
     def test_dag_path_returns_none_for_ambiguous_cwd(self, mock_cwd) -> None:
         # @trace FR-CLI-188
         cwd, dp = _dag_path(None)
         assert cwd is None
         assert dp is None
 
-    @patch("thegent.cli_impl._resolve_cwd")
+    @patch("thegent.cli.commands.impl._resolve_cwd")
     def test_dag_list_impl_no_file(self, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-189
         mock_cwd.return_value = tmp_path
         result = dag_list_impl(cd=tmp_path)
         assert "error" in result
 
-    @patch("thegent.cli_impl._resolve_cwd")
+    @patch("thegent.cli.commands.impl._resolve_cwd")
     def test_dag_list_impl_with_file(self, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-190
         mock_cwd.return_value = tmp_path
@@ -1709,14 +1707,14 @@ class TestDagHelpers:
         assert "tasks" in result
         assert len(result["tasks"]) == 3
 
-    @patch("thegent.cli_impl._resolve_cwd")
+    @patch("thegent.cli.commands.impl._resolve_cwd")
     def test_dag_raw_impl_no_file(self, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-191
         mock_cwd.return_value = tmp_path
         result = dag_raw_impl(cd=tmp_path)
         assert "Error" in result
 
-    @patch("thegent.cli_impl._resolve_cwd")
+    @patch("thegent.cli.commands.impl._resolve_cwd")
     def test_dag_raw_impl_with_file(self, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-192
         mock_cwd.return_value = tmp_path

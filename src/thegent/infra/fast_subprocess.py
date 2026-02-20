@@ -49,6 +49,62 @@ def _record_history(
         pass
 
 
+def _validate_command_safety(cmd: list[str]) -> None:
+    """Validate that command is not trying to kill agent processes.
+
+    Raises:
+        ValueError: If command attempts to kill agent processes
+    """
+    if not cmd:
+        return
+
+    cmd_str = " ".join(cmd).lower()
+
+    # Check for kill commands targeting agent processes
+    kill_patterns = [
+        "kill",
+        "pkill",
+        "killall",
+        "xargs.*kill",  # xargs kill patterns
+    ]
+
+    agent_patterns = [
+        "cursor-agent",
+        "cursor agent",
+        "thegent",
+        "claude",
+        "codex",
+        "droid",
+        "opencode",
+        "copilot",
+    ]
+
+    # Check for xargs kill patterns (e.g., "ps ... | grep ... | xargs kill")
+    import re
+
+    if re.search(r"xargs.*kill|kill.*-9|kill.*-KILL", cmd_str):
+        for agent_pattern in agent_patterns:
+            if agent_pattern in cmd_str:
+                raise ValueError(
+                    f"SECURITY BLOCKED: Command attempts to kill agent processes via xargs/kill: {' '.join(cmd)}\n"
+                    f"Agents cannot kill other agent processes. Use 'thegent mcp prune' for safe cleanup."
+                )
+
+    # Check if command contains kill + agent pattern
+    has_kill = any(pattern in cmd_str for pattern in kill_patterns)
+    if has_kill:
+        # Check if it's targeting agent processes
+        for agent_pattern in agent_patterns:
+            if agent_pattern in cmd_str:
+                # Allow if it's explicitly excluding the current process or is a safe operation
+                # But block general kill commands targeting agents
+                if "grep -v" not in cmd_str and "exclude" not in cmd_str:
+                    raise ValueError(
+                        f"SECURITY BLOCKED: Command attempts to kill agent processes: {' '.join(cmd)}\n"
+                        f"Agents cannot kill other agent processes. Use 'thegent mcp prune' for safe cleanup."
+                    )
+
+
 def _wrap_with_caffeinate(cmd: list[str], agent_name: str) -> list[str]:
     """Wrap command with caffeinate on macOS to keep Mac awake during long runs."""
     import platform
@@ -127,6 +183,20 @@ class FastSubprocess:
         if capture_output:
             kwargs.setdefault("stdout", asyncio.subprocess.PIPE)
             kwargs.setdefault("stderr", asyncio.subprocess.PIPE)
+
+        # SECURITY: Validate command safety before execution
+        _validate_command_safety(cmd)
+
+        # Apply guardrails validation
+        try:
+            from thegent.security.guardrails import validate_command
+
+            is_allowed, error = validate_command(cmd, operation_type="command_execution")
+            if not is_allowed:
+                raise ValueError(f"Guardrails blocked: {error}")
+        except ImportError:
+            # Fallback if guardrails not available
+            pass
 
         # Create async subprocess
         process = await asyncio.create_subprocess_exec(
@@ -231,6 +301,20 @@ class FastSubprocess:
         if "input" in kwargs and "text" not in kwargs:
             # Default to text=True if input is string, text=False if bytes
             kwargs["text"] = isinstance(kwargs["input"], str)
+
+        # SECURITY: Validate command safety before execution
+        _validate_command_safety(cmd)
+
+        # Apply guardrails validation
+        try:
+            from thegent.security.guardrails import validate_command
+
+            is_allowed, error = validate_command(cmd, operation_type="command_execution")
+            if not is_allowed:
+                raise ValueError(f"Guardrails blocked: {error}")
+        except ImportError:
+            # Fallback if guardrails not available
+            pass
 
         start_time = time.time()
         result = subprocess.run(

@@ -60,10 +60,11 @@
 ## 📝 Optional Improvements
 
 1. **Create `.zshenv` if missing**
-   ```python
-   if not shell_config_file.exists():
-       shell_config_file.write_text(f"# mise hook (fast alternative to direnv)\n{hook_cmd}\n")
-   ```
+
+```python
+if not shell_config_file.exists():
+    shell_config_file.write_text(f"# mise hook (fast alternative to direnv)\n{hook_cmd}\n")
+```
 
 2. **Add verification step after installation**
    - Check if mise is actually in PATH

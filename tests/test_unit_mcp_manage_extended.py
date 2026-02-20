@@ -11,7 +11,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.mcp_manage import (
     DEFAULT_MCP_URL,
     _get_mcp_url,

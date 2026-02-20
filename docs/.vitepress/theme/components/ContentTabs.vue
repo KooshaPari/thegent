@@ -145,7 +145,7 @@ function handleKeydown(event: KeyboardEvent, tabId: string) {
         ></span>
       </button>
     </div>
-    <Transition name="tab-panel" mode="out-in">
+    <TransitionGroup name="tab-panel">
       <div
         v-for="tab in tabs"
         :key="`${tab.id}-${activeTabId === tab.id}`"
@@ -161,7 +161,7 @@ function handleKeydown(event: KeyboardEvent, tabId: string) {
           <slot />
         </slot>
       </div>
-    </Transition>
+    </TransitionGroup>
   </div>
 </template>
 

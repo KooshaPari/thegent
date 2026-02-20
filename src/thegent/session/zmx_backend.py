@@ -232,6 +232,7 @@ class ZmxBackend:
                 capture_output=True,
                 text=True,
                 timeout=5,
+                check=False,
             )
             if result.returncode == 0:
                 logger.debug("zmx detected: %s", result.stdout.strip())
@@ -242,6 +243,7 @@ class ZmxBackend:
                 capture_output=True,
                 text=True,
                 timeout=5,
+                check=False,
             )
             return result2.returncode == 0
         except (OSError, subprocess.TimeoutExpired) as exc:
@@ -252,10 +254,10 @@ class ZmxBackend:
         """Run a zmx command, returning True on returncode==0."""
         try:
             if capture:
-                result = subprocess.run(args, capture_output=True, text=True, timeout=30)
+                result = subprocess.run(args, capture_output=True, text=True, timeout=30, check=False)
             else:
                 # Interactive attach — no capture, inherit stdio
-                result = subprocess.run(args, timeout=None)
+                result = subprocess.run(args, timeout=None, check=False)
             if result.returncode != 0 and capture:
                 logger.debug(
                     "zmx command %r exited %d: %s",
@@ -271,7 +273,7 @@ class ZmxBackend:
     def _run_capture(self, args: list[str]) -> tuple[bool, str, str]:
         """Run a zmx command, returning (success, stdout, stderr)."""
         try:
-            result = subprocess.run(args, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(args, capture_output=True, text=True, timeout=30, check=False)
             return result.returncode == 0, result.stdout, result.stderr
         except (OSError, subprocess.TimeoutExpired) as exc:
             logger.debug("zmx command %r failed: %s", args, exc)
@@ -409,8 +411,7 @@ def resolve_session_backend(
         return None
 
     logger.warning(
-        "Unknown THGENT_SESSION_BACKEND value %r. Valid values: zmx, tmux, none, auto. "
-        "Defaulting to none.",
+        "Unknown THGENT_SESSION_BACKEND value %r. Valid values: zmx, tmux, none, auto. Defaulting to none.",
         choice,
     )
     return None

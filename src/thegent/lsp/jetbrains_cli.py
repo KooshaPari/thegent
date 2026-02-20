@@ -99,6 +99,7 @@ class JetBrainsCLI:
                 capture_output=True,
                 text=True,
                 timeout=300,
+                check=False,
             )
             return {
                 "success": result.returncode == 0,
@@ -132,6 +133,7 @@ class JetBrainsCLI:
                 capture_output=True,
                 text=True,
                 timeout=600,
+                check=False,
             )
             return {
                 "success": result.returncode == 0,
@@ -163,6 +165,7 @@ class JetBrainsCLI:
                 capture_output=True,
                 text=True,
                 timeout=60,
+                check=False,
             )
             return {
                 "success": result.returncode == 0,
@@ -203,6 +206,7 @@ class JetBrainsCLI:
                 capture_output=True,
                 text=True,
                 timeout=300,
+                check=False,
             )
             return {
                 "success": result.returncode == 0,

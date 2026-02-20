@@ -25,25 +25,30 @@ class LedgerVerifier:
         last_hash = ""
         with self.ledger_path.open("r", encoding="utf-8") as f:
             for i, line in enumerate(f):
-                try:
-                    entry = json.loads(line)
-                    # WP-3002: Action signatures
-                    # Expect entry to have 'rolling_hash' and 'prev_hash'
-                    prev_hash = entry.get("prev_hash", "")
-                    if prev_hash != last_hash:
-                        report["valid"] = False
-                        report["errors"].append(f"Hash mismatch at line {i + 1}")
-
-                    # Compute rolling hash of current entry (minus its own hash)
-                    content = line.strip().split(',"rolling_hash"')[0] + "}"
-                    current_hash = hashlib.sha256(content.encode()).hexdigest()
-                    last_hash = current_hash
-                    report["count"] += 1
-                except Exception as e:
-                    report["valid"] = False
-                    report["errors"].append(f"Error at line {i + 1}: {e}")
+                last_hash = self._process_ledger_line(line, i, last_hash, report)
 
         return report
+
+    def _process_ledger_line(self, line: str, i: int, last_hash: str, report: dict[str, Any]) -> str:
+        """Helper to process a single ledger line."""
+        try:
+            entry = json.loads(line)
+            # WP-3002: Action signatures
+            # Expect entry to have 'rolling_hash' and 'prev_hash'
+            prev_hash = entry.get("prev_hash", "")
+            if prev_hash != last_hash:
+                report["valid"] = False
+                report["errors"].append(f"Hash mismatch at line {i + 1}")
+
+            # Compute rolling hash of current entry (minus its own hash)
+            content = line.strip().split(',"rolling_hash"')[0] + "}"
+            current_hash = hashlib.sha256(content.encode()).hexdigest()
+            report["count"] += 1
+            return current_hash
+        except Exception as e:
+            report["valid"] = False
+            report["errors"].append(f"Error at line {i + 1}: {e}")
+            return last_hash
 
 
 class IncidentLedger(LedgerVerifier):
@@ -55,11 +60,15 @@ class IncidentLedger(LedgerVerifier):
         if self.ledger_path.exists():
             with self.ledger_path.open("r", encoding="utf-8") as f:
                 for line in f:
-                    try:
-                        entry = json.loads(line)
-                        self._last_hash = entry.get("rolling_hash", "")
-                    except Exception:
-                        pass
+                    self._last_hash = self._get_last_hash_from_line(line, self._last_hash)
+
+    def _get_last_hash_from_line(self, line: str, current_last_hash: str) -> str:
+        """Helper to extract last hash from a line."""
+        try:
+            entry = json.loads(line)
+            return entry.get("rolling_hash", current_last_hash)
+        except Exception:
+            return current_last_hash
 
     def record_artifact(self, run_id: str, action: str, payload: dict[str, Any]) -> str:
         """Append artifact with rolling hash; return computed hash."""
@@ -87,13 +96,20 @@ class IncidentLedger(LedgerVerifier):
             return out
         with self.ledger_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    entry = json.loads(line)
-                    if entry.get("run_id") == run_id:
-                        out.append(entry)
-                except Exception:
-                    pass
+                entry = self._parse_line_if_run_id(line, run_id)
+                if entry:
+                    out.append(entry)
         return out
+
+    def _parse_line_if_run_id(self, line: str, run_id: str) -> dict[str, Any] | None:
+        """Helper to parse line and check run_id."""
+        try:
+            entry = json.loads(line)
+            if entry.get("run_id") == run_id:
+                return entry
+        except Exception:
+            pass
+        return None
 
     def verify_integrity(self) -> bool:
         report = super().verify_integrity()

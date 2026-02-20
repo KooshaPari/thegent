@@ -9,7 +9,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 # Mock quality proxy based on thegent.routing.pareto_router
 QUALITY_PROXY = {

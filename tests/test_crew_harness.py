@@ -6,14 +6,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from thegent.agents.base import RunResult
-from thegent.crew.executor import ExecutionResult
-from thegent.crew.harness import create_agent_executor
+from thegent.agents.crew.executor import ExecutionResult
+from thegent.agents.crew.harness import create_agent_executor
 
 
 class TestCrewHarness:
     """Test Crew harness integration."""
 
-    @patch("thegent.crew.harness.DirectAgentRunner")
+    @patch("thegent.agents.crew.harness.DirectAgentRunner")
     def test_agent_executor_success(self, mock_runner_class):
         """Test successful agent execution via harness."""
         # Setup mock runner
@@ -47,7 +47,7 @@ class TestCrewHarness:
             agent_model=None,
         )
 
-    @patch("thegent.crew.harness.DirectAgentRunner")
+    @patch("thegent.agents.crew.harness.DirectAgentRunner")
     def test_agent_executor_failure(self, mock_runner_class):
         """Test failed agent execution via harness."""
         # Setup mock runner
@@ -66,7 +66,7 @@ class TestCrewHarness:
         assert result.error == "Error occurred"
         assert result.task_id == "task2"
 
-    @patch("thegent.crew.harness.DirectAgentRunner")
+    @patch("thegent.agents.crew.harness.DirectAgentRunner")
     def test_agent_executor_timeout(self, mock_runner_class):
         """Test timed out agent execution via harness."""
         # Setup mock runner

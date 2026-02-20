@@ -144,9 +144,7 @@ class AsyncTaskRegistry:
         """Remove completed tasks older than max_age_s seconds. Returns count removed."""
         now = time.time()
         to_remove = [
-            tid
-            for tid, entry in self._entries.items()
-            if entry.task.done() and (now - entry.started_at) > max_age_s
+            tid for tid, entry in self._entries.items() if entry.task.done() and (now - entry.started_at) > max_age_s
         ]
         for tid in to_remove:
             del self._entries[tid]

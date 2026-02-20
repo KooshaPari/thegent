@@ -9,12 +9,14 @@ Public API::
     from thegent.agents.smolgents import SmolAgent, Tool, AgentTree
 """
 
-from thegent.agents.smolgents.base import SmolAgent
+from thegent.agents.smolgents.base import SmolAgent, SmolGentJob, SmolGentResult
 from thegent.agents.smolgents.hierarchy import AgentTree
 from thegent.agents.smolgents.tools import Tool
 
 __all__ = [
     "AgentTree",
     "SmolAgent",
+    "SmolGentJob",
+    "SmolGentResult",
     "Tool",
 ]

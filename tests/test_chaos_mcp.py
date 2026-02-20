@@ -11,9 +11,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from thegent.cli.commands.impl import logs_impl, ps_impl, run_impl, status_impl
 
 from thegent.agents.base import RunResult
-from thegent.cli_impl import logs_impl, ps_impl, run_impl, status_impl
 from thegent.execution import CircuitBreakerRegistry
 
 
@@ -24,7 +24,7 @@ class TestRunTimeout:
     def test_run_returns_timed_out_when_runner_times_out(self, tmp_path: Path) -> None:
         # @trace FR-MCP-001
         """run_impl returns timed_out=True when runner reports timeout."""
-        with patch("thegent.cli_impl.get_runner") as mock_get_runner:
+        with patch("thegent.cli.commands.impl.get_runner") as mock_get_runner:
             mock_runner = mock_get_runner.return_value
             mock_runner.run.return_value = RunResult(
                 exit_code=124,
@@ -32,7 +32,7 @@ class TestRunTimeout:
                 stderr="timeout",
                 timed_out=True,
             )
-            with patch("thegent.cli_impl._resolve_cwd", return_value=tmp_path):
+            with patch("thegent.cli.commands.impl._resolve_cwd", return_value=tmp_path):
                 result = run_impl(
                     agent="gemini",
                     prompt="test",
@@ -45,7 +45,7 @@ class TestRunTimeout:
     def test_run_with_slow_mock_returns_within_timeout(self, tmp_path: Path) -> None:
         # @trace FR-MCP-001
         """run_impl with fast mock returns quickly (sanity)."""
-        with patch("thegent.cli_impl.get_runner") as mock_get_runner:
+        with patch("thegent.cli.commands.impl.get_runner") as mock_get_runner:
             mock_runner = mock_get_runner.return_value
             mock_runner.run.return_value = RunResult(
                 exit_code=0,
@@ -53,7 +53,7 @@ class TestRunTimeout:
                 stderr="",
                 timed_out=False,
             )
-            with patch("thegent.cli_impl._resolve_cwd", return_value=tmp_path):
+            with patch("thegent.cli.commands.impl._resolve_cwd", return_value=tmp_path):
                 start = time.perf_counter()
                 result = run_impl(
                     agent="gemini",
@@ -133,12 +133,12 @@ class TestCorruptSession:
     def test_ps_skips_corrupt_session_meta(self, tmp_path: Path) -> None:
         # @trace FR-MCP-001
         """ps_impl skips corrupt JSON meta files; returns list without crashing."""
-        from thegent.cli_impl import _scope_key
+        from thegent.cli.commands.impl import _scope_key
 
         scope_dir = tmp_path / _scope_key("user:test")
         scope_dir.mkdir(parents=True)
         (scope_dir / "corrupt-session.json").write_text("not valid json {{{")
-        with patch("thegent.cli_impl.ThegentSettings") as mock_settings:
+        with patch("thegent.cli.commands.impl.ThegentSettings") as mock_settings:
             inst = mock_settings.return_value
             inst.session_dir = tmp_path
             inst.retention_days_sessions = 7

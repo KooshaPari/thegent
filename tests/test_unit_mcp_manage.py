@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.mcp_manage import (
     DEFAULT_MCP_URL,
     _ensure_mcp_servers,

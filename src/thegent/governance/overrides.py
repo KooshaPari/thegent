@@ -4,6 +4,7 @@ import json
 import logging
 import time
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
@@ -99,15 +100,21 @@ class OverrideManager:
         """Remove all expired overrides from disk."""
         count = 0
         for f in self.override_dir.glob("*.json"):
-            try:
-                data = json.loads(f.read_text(encoding="utf-8"))
-                override = PolicyOverride.from_dict(data)
-                if not override.is_active():
-                    f.unlink()
-                    count += 1
-            except Exception as e:
-                _log.error("Failed to cleanup override %s: %s", f, e)
+            if self._cleanup_if_expired(f):
+                count += 1
         return count
+
+    def _cleanup_if_expired(self, f: Path) -> bool:
+        """Helper to check and cleanup a single override file."""
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            override = PolicyOverride.from_dict(data)
+            if not override.is_active():
+                f.unlink()
+                return True
+        except Exception as e:
+            _log.error("Failed to cleanup override %s: %s", f, e)
+        return False
 
     def _save_override(self, override: PolicyOverride) -> None:
         """Save override to disk."""

@@ -670,7 +670,7 @@ def test_init_components(
         patch("thegent.governance.analyzer.HealthAnalyzer") as mock_analyzer,
         patch("thegent.planning.remediation_planner.RemediationPlanner") as mock_planner,
         patch("thegent.governance.backlog.BacklogManager") as mock_backlog,
-        patch("thegent.governance.cost_controller.CostController") as mock_cost,
+        patch("thegent.cost.aggregator_controller.CostController") as mock_cost,
         patch("thegent.governance.evidence_ledger.EvidenceLedger") as mock_ledger,
         patch("thegent.config.ThegentSettings") as mock_settings,
     ):

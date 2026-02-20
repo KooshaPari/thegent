@@ -57,6 +57,7 @@ class AgentCage:
                 text=True,
                 timeout=30,
                 env={"CAGE_ID": self.cage_id, "PATH": "/usr/bin:/bin"},  # Restricted path
+                check=False,
             )
             return {"exit_code": result.returncode, "stdout": result.stdout, "stderr": result.stderr}
         except Exception as e:

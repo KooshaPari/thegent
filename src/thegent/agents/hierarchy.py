@@ -58,8 +58,8 @@ class RoutingStrategy(Enum):
     """How the hierarchy manager selects an agent for a task."""
 
     CAPABILITY_MATCH = "capability_match"  # Pick first agent with matching capability
-    ROUND_ROBIN = "round_robin"            # Cycle through capable agents
-    LEAST_LOADED = "least_loaded"          # Pick agent with fewest active tasks
+    ROUND_ROBIN = "round_robin"  # Cycle through capable agents
+    LEAST_LOADED = "least_loaded"  # Pick agent with fewest active tasks
 
 
 # ---------------------------------------------------------------------------
@@ -318,7 +318,8 @@ class AgentHierarchyManager:
         """
         exclude = exclude_ids or set()
         candidates = [
-            n for n in self._nodes.values()
+            n
+            for n in self._nodes.values()
             if n.agent_id not in exclude
             and n.state in (AgentState.IDLE, AgentState.RUNNING)
             and n.has_any_capability(required_capabilities)
@@ -394,9 +395,7 @@ class AgentHierarchyManager:
         # than being swallowed as a task failure.
         if node.smolagent is None and self.task_executor is None:
             node.active_task_count = max(0, node.active_task_count - 1)
-            raise RuntimeError(
-                f"No smolagent attached and no task_executor configured for agent '{agent_id}'"
-            )
+            raise RuntimeError(f"No smolagent attached and no task_executor configured for agent '{agent_id}'")
 
         try:
             if node.smolagent is not None:
@@ -435,7 +434,10 @@ class AgentHierarchyManager:
         self._results[tid] = result
         logger.debug(
             "Task %s on agent %s: success=%s duration=%.2fs",
-            tid, agent_id, result.success, result.duration_seconds,
+            tid,
+            agent_id,
+            result.success,
+            result.duration_seconds,
         )
         return result
 
@@ -471,6 +473,7 @@ class AgentHierarchyManager:
         Returns:
             List of :class:`TaskResult` objects in the same order as ``tasks``.
         """
+
         async def _run_all() -> list[TaskResult]:
             coros = [
                 self._execute_task_async(
@@ -488,6 +491,7 @@ class AgentHierarchyManager:
             if loop.is_running():
                 # In async context, create a new loop in thread
                 import concurrent.futures
+
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
                     future = pool.submit(asyncio.run, _run_all())
                     return future.result()

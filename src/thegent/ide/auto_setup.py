@@ -43,6 +43,7 @@ def auto_setup_jetbrains_integration(auto_install: bool = True) -> dict[str, any
                     capture_output=True,
                     text=True,
                     timeout=600,
+                    check=False,
                 )
                 if result.returncode == 0:
                     logger.info("✅ IntelliJ IDEA installed successfully")

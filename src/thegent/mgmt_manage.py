@@ -104,6 +104,7 @@ def verify_codex_cliproxy(
         capture_output=True,
         text=True,
         timeout=timeout_sec,
+        check=False,
     )
 
     if result.returncode == 0:

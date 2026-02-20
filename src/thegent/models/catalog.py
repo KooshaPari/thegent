@@ -43,7 +43,7 @@ class CatalogView:
 
 
 def _build_static_catalog() -> dict[str, list[Route]]:
-    """Build static model -> routes. Anthropic 4.5/4.6, Gemini flash-only, Codex 5.3, GLM-5, MiniMax-M2.5."""
+    """Build static model -> routes. Anthropic 4.5/4.6, Gemini flash + 3.1 pro, Codex 5.3, GLM-5, MiniMax-M2.5."""
     # (provider, backend, model_alias, priority, cost_weight). priority -1=native, 0=direct, 10=proxy
     provider_models: list[tuple[str, str, str, int, float]] = [
         # Anthropic: 4.5 (haiku, sonnet), 4.6 (opus)
@@ -54,10 +54,11 @@ def _build_static_catalog() -> dict[str, list[Route]]:
         ("claude", "direct", "haiku", -1, 0.2),
         ("claude", "direct", "sonnet", -1, 0.5),
         ("claude", "direct", "opus", -1, 1.0),
-        # Gemini: flash only, no pro
+        # Gemini: flash + 3.1 pro
         ("gemini", "direct", "gemini-2.0-flash", -1, 0.1),
         ("gemini", "direct", "gemini-2.5-flash", -1, 0.1),
         ("gemini", "direct", "gemini-3-flash", -1, 0.1),
+        ("gemini", "direct", "gemini-3.1-pro", -1, 0.6),
         ("copilot", "direct", "claude-haiku-4.5", 0, 0.2),
         ("copilot", "direct", "gpt-5.3-codex", 0, 0.5),
         ("codex", "direct", "gpt-5.3-codex", 0, 0.5),
@@ -72,6 +73,7 @@ def _build_static_catalog() -> dict[str, list[Route]]:
         ("cursor-api", "proxy", "gpt-4o", 5, 0.8),
         ("cursor-api", "proxy", "gpt-5.1-codex", 5, 0.7),
         ("antigravity", "proxy", "gemini-3-flash", 10, 0.2),
+        ("antigravity", "proxy", "gemini-3.1-pro", 10, 0.7),
         ("antigravity", "proxy", "claude-sonnet-4.6", 10, 0.6),
         ("antigravity", "proxy", "claude-haiku-4.5", 10, 0.3),
         ("antigravity", "proxy", "claude-opus-4.6", 10, 1.1),
@@ -120,7 +122,7 @@ _ALIASES: dict[str, str] = {
 def _is_model_blacklisted(model_id: str, provider: str) -> bool:
     """
     True if model is explicitly older than allowed. Unparseable models return False (allowed).
-    Anthropic: 4.5 (haiku, sonnet), 4.6 (opus) only. Gemini: flash only, no pro. Codex: 5.3 only.
+    Anthropic: 4.5 (haiku, sonnet), 4.6 (opus) only. Gemini: flash + 3.1 pro. Codex: 5.3 only.
     """
     m = (model_id or "").strip().lower()
     if not m:
@@ -136,8 +138,8 @@ def _is_model_blacklisted(model_id: str, provider: str) -> bool:
         return True
     if "gemini-2.0-flash-exp" in m:
         return True
-    # Gemini: no pro variants
-    if "gemini" in m and "-pro" in m:
+    # Gemini: allow 3.1 pro variants only
+    if "gemini" in m and "-pro" in m and "gemini-3.1-pro" not in m:
         return True
     # GPT-4
     if "gpt-4" in m:
@@ -278,6 +280,46 @@ def _get_catalog() -> dict[str, list[Route]]:
 
     if _STATIC_CATALOG is None:
         _STATIC_CATALOG = _build_static_catalog()
+
+        # WP-X8: Load custom model catalog from user configuration
+        try:
+            from thegent.config import get_settings
+
+            settings = get_settings()
+            custom_path = settings.custom_models_path
+            if custom_path.exists():
+                import yaml
+
+                custom_data = yaml.safe_load(custom_path.read_text(encoding="utf-8"))
+                if custom_data and isinstance(custom_data, dict):
+                    for model_id, routes_data in custom_data.items():
+                        custom_routes = []
+                        for r in routes_data:
+                            if not isinstance(r, dict):
+                                continue
+                            try:
+                                custom_routes.append(
+                                    Route(
+                                        provider=r["provider"],
+                                        backend_type=r.get("backend_type", "direct"),
+                                        model_alias=r["model_alias"],
+                                        priority=r.get("priority", 0),
+                                        cost_weight=r.get("cost_weight", 1.0),
+                                    )
+                                )
+                            except KeyError:
+                                continue
+
+                        if custom_routes:
+                            if model_id in _STATIC_CATALOG:
+                                # Prepend custom routes to override/augment static ones
+                                _STATIC_CATALOG[model_id] = _merge_routes(custom_routes, _STATIC_CATALOG[model_id])
+                            else:
+                                _STATIC_CATALOG[model_id] = custom_routes
+        except Exception as e:
+            import logging
+
+            logging.getLogger(__name__).warning("Failed to load custom models: %s", e)
 
     # OPT-019: Cache the result
     if _USE_CATALOG_CACHE:

@@ -17,11 +17,11 @@ from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
+from thegent.cost.aggregator import CostAggregator, CostEstimator
 from thegent.economy.reputation import ReputationManager
 from thegent.governance.agent_hierarchy import AgentHierarchyManager
 from thegent.governance.backlog import BacklogManager
 from thegent.governance.constitution import ConstitutionManager
-from thegent.governance.cost import CostAggregator, CostEstimator
 from thegent.governance.evidence_ledger import EvidenceLedger
 from thegent.governance.overrides import OverrideManager
 from thegent.governance.teammates import TeammateManager
@@ -32,14 +32,14 @@ from thegent.integration.unified_config import UnifiedConfigManager
 from thegent.memory.manager import MemoryManager
 from thegent.observability.analytics import AnalyticsIntegration
 from thegent.observability.egress import EgressEvent, SIEMEgress
-from thegent.orchestration.deferral import DeferralManager
-from thegent.orchestration.lanes import Lane, LaneModel
-from thegent.orchestration.load_based_limits import (
+from thegent.orchestration.execution.lanes import Lane, LaneModel
+from thegent.orchestration.resilience.deferral import DeferralManager
+from thegent.orchestration.resource.load_based_limits import (
     compute_dynamic_limit,
     sample_resources,
 )
-from thegent.orchestration.session_watcher import SessionEventWatcher
-from thegent.orchestration.worker_pool import PersistentWorkerPool
+from thegent.orchestration.state.session_watcher import SessionEventWatcher
+from thegent.orchestration.execution.worker_pool import PersistentWorkerPool
 from thegent.planning.work_stream import WorkStreamManager
 from thegent.planning.workstream_db import WorkstreamDB
 from thegent.routing.task_router import TaskCategory, TaskRouter
@@ -309,7 +309,7 @@ class AutoLaunchSystem:
     def sync_database(self) -> None:
         """Sync workstream database with WORK_STREAM.md."""
         try:
-            from thegent.cli_impl import _parse_work_stream_md
+            from thegent.cli.commands.impl import _parse_work_stream_md
 
             work_stream_path = Path("docs/reference/WORK_STREAM.md")
             if work_stream_path.exists():
@@ -325,7 +325,7 @@ class AutoLaunchSystem:
         ready_items = self.db.get_ready_items()
         if not ready_items:
             # Fallback to do_next_impl if DB is empty or out of sync
-            from thegent.cli_impl import do_next_impl
+            from thegent.cli.commands.impl import do_next_impl
 
             result = do_next_impl(limit=10)
             if "error" in result or not result.get("next_items"):
@@ -521,7 +521,7 @@ class AutoLaunchSystem:
             _log.warning(f"Failed to claim {item_id}: {e}")
 
         # Use bg_impl directly for the specific item
-        from thegent.cli_impl import bg_impl
+        from thegent.cli.commands.impl import bg_impl
 
         prompt = item.get("prompt_suggestion") or item.get("prompt") or item.get("title", item_id)
 

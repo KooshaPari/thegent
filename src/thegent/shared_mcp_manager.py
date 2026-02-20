@@ -65,7 +65,7 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
             lockfile.unlink()
 
     # Start new server (system-wide)
-    from thegent.mcp_manage import _get_mcp_url, mcp_up
+    from thegent.mcp.manage import _get_mcp_url, mcp_up
 
     # Start MCP server via process-compose
     try:
@@ -86,7 +86,9 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
 
         try:
             # Find process-compose process managing MCP
-            result = subprocess.run(["pgrep", "-f", "process-compose.*mcp"], capture_output=True, text=True)
+            result = subprocess.run(
+                ["pgrep", "-f", "process-compose.*mcp"], capture_output=True, text=True, check=False
+            )
             pid = int(result.stdout.strip().split("\n")[0]) if result.stdout.strip() else None
         except Exception:
             pid = None

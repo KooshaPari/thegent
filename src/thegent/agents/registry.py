@@ -89,6 +89,16 @@ def get_runner(
         return CodexProxyRunner(canonical)
     if canonical in _CURSOR_API_AGENTS:
         return CursorApiRunner()
+
+    # WP-16001: Support teammates
+    from thegent.agents.teammate_runner import TeammateRunner
+
+    try:
+        return TeammateRunner(agent_name)
+    except Exception as e:
+        # print(f"DEBUG: TeammateRunner failed for {agent_name}: {e}")
+        pass
+
     return None
 
 

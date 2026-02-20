@@ -95,6 +95,7 @@ def queue_list(
     table.add_column("Payload", style="white")
 
     from datetime import datetime
+
     for t in tasks:
         created = datetime.fromtimestamp(t["created_at"]).strftime("%Y-%m-%d %H:%M:%S")
         table.add_row(
@@ -102,7 +103,7 @@ def queue_list(
             str(t["priority"]),
             str(t["attempts"]),
             created,
-            str(t["payload"])[:50] + "..." if len(str(t["payload"])) > 50 else str(t["payload"])
+            str(t["payload"])[:50] + "..." if len(str(t["payload"])) > 50 else str(t["payload"]),
         )
 
     console.print(table)
@@ -140,6 +141,7 @@ def status(
     table.add_column("Workdir", style="dim")
 
     import yaml
+
     for manifest in agents_dir.glob("agent-*.yaml"):
         _load_mesh_manifest(table, manifest)
 
@@ -148,8 +150,37 @@ def status(
 
 def _live_status(manager: MeshManager, root: Path) -> None:
     """Display a live-updating mesh status dashboard."""
-    from rich.live import Live
     import time
+
+    from rich.live import Live
+
+    def _process_manifest(manifest: Path) -> tuple[str, str, str, str] | None:
+        """Process a single manifest file, returns row data or None on error."""
+        import psutil
+        import yaml
+
+        try:
+            with open(manifest) as f:
+                data = yaml.safe_load(f)
+                pid = data.get("pid", "unknown")
+                agent_type = data.get("type", "unknown")
+                status = data.get("status", "unknown")
+
+                # Last modified time as heartbeat proxy
+                mtime = manifest.stat().st_mtime
+                elapsed = int(time.time() - mtime)
+                hb = f"{elapsed}s ago"
+
+                try:
+                    p = psutil.Process(int(pid))
+                    if not p.is_running():
+                        status = "[red]zombie[/red]"
+                except Exception:
+                    status = "[red]offline[/red]"
+
+                return (str(pid), agent_type, status, hb)
+        except Exception:
+            return None
 
     def generate_table() -> Table:
         table = Table(title="Agent Mesh Dashboard (Live)")
@@ -157,36 +188,15 @@ def _live_status(manager: MeshManager, root: Path) -> None:
         table.add_column("Type", style="green")
         table.add_column("Status", style="magenta")
         table.add_column("Heartbeat", style="dim")
-        
+
         agents_dir = root / "agents"
         if not agents_dir.exists():
             return table
 
-        import yaml
-        import psutil
         for manifest in sorted(agents_dir.glob("agent-*.yaml")):
-            try:
-                with open(manifest) as f:
-                    data = yaml.safe_load(f)
-                    pid = data.get("pid", "unknown")
-                    agent_type = data.get("type", "unknown")
-                    status = data.get("status", "unknown")
-                    
-                    # Last modified time as heartbeat proxy
-                    mtime = manifest.stat().st_mtime
-                    elapsed = int(time.time() - mtime)
-                    hb = f"{elapsed}s ago"
-                    
-                    try:
-                        p = psutil.Process(int(pid))
-                        if not p.is_running():
-                            status = "[red]zombie[/red]"
-                    except Exception:
-                        status = "[red]offline[/red]"
-                        
-                    table.add_row(str(pid), agent_type, status, hb)
-            except Exception:
-                continue
+            row = _process_manifest(manifest)
+            if row is not None:
+                table.add_row(*row)
         return table
 
     with Live(generate_table(), refresh_per_second=1) as live:
@@ -202,6 +212,7 @@ def _load_mesh_manifest(table: Table, manifest: Path) -> None:
     """Load and process a single mesh manifest safely."""
     import psutil
     import yaml
+
     try:
         with open(manifest) as f:
             data = yaml.safe_load(f)
@@ -252,11 +263,14 @@ def discover(
         console.print(f"  - [cyan]PID {pid}[/cyan]: {name}")
 
         if register:
-            manager.register_agent(f"agent-{pid}", {
-                "pid": pid,
-                "type": name,
-                "working_directory": "unknown", # Improved detection needed
-            })
+            manager.register_agent(
+                f"agent-{pid}",
+                {
+                    "pid": pid,
+                    "type": name,
+                    "working_directory": "unknown",  # Improved detection needed
+                },
+            )
             manager.heartbeat(f"agent-{pid}")
 
     if register:
@@ -311,17 +325,16 @@ def run_agent(
     script_path = Path(__file__).parent / "scripts" / "agent-run.sh"
 
     if not script_path.exists():
-        console.print(f"[red]Error: {script_path} not found.[/red]")
+        from thegent.errors import print_error
+
+        print_error(f"{script_path} not found.")
         raise typer.Exit(1)
 
     console.print(f"Launching {agent_type} in managed mesh session...")
 
     try:
         result = subprocess.run(
-            ["bash", str(script_path), agent_type, prompt, str(workdir)],
-            capture_output=True,
-            text=True,
-            check=True
+            ["bash", str(script_path), agent_type, prompt, str(workdir)], capture_output=True, text=True, check=True
         )
         console.print(result.stdout)
     except subprocess.CalledProcessError as e:

@@ -45,6 +45,7 @@ def _run_binary(subcommand: str, repo_path: str) -> dict[str, Any] | None:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         if result.returncode != 0:
             _log.debug(
@@ -109,8 +110,8 @@ def _git_status_fallback(repo_path: str) -> dict[str, Any]:
     for line in raw.splitlines():
         if len(line) < 3:
             continue
-        index_flag = line[0]   # staged status
-        wt_flag = line[1]      # worktree status
+        index_flag = line[0]  # staged status
+        wt_flag = line[1]  # worktree status
         path = line[3:].strip()
 
         if index_flag not in (" ", "?") and index_flag != "!":
@@ -190,8 +191,9 @@ class GitNative:
         if result is not None:
             _log.debug("GitNative.head via binary: %s", result)
             return result
-        _log.debug("GitNative.head falling back to git subprocess")
-        return _git_head_fallback(self.repo_path)
+
+        _log.error("thegent-git binary failed and legacy git fallback is disabled")
+        return {"sha": "", "branch": "HEAD"}
 
     def status(self) -> dict[str, Any]:
         """Return working-tree status.
@@ -203,8 +205,9 @@ class GitNative:
         if result is not None:
             _log.debug("GitNative.status via binary: %s", result)
             return result
-        _log.debug("GitNative.status falling back to git subprocess")
-        return _git_status_fallback(self.repo_path)
+
+        _log.error("thegent-git binary failed and legacy git fallback is disabled")
+        return {"modified": [], "untracked": [], "staged": []}
 
     def diff_stat(self) -> dict[str, Any]:
         """Return diff stats comparing HEAD to current worktree + index.
@@ -216,5 +219,6 @@ class GitNative:
         if result is not None:
             _log.debug("GitNative.diff_stat via binary: %s", result)
             return result
-        _log.debug("GitNative.diff_stat falling back to git subprocess")
-        return _git_diff_stat_fallback(self.repo_path)
+
+        _log.error("thegent-git binary failed and legacy git fallback is disabled")
+        return {"files_changed": 0, "insertions": 0, "deletions": 0}

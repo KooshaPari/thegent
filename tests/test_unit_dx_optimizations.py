@@ -1,6 +1,7 @@
-from thegent.governance.handoff import HandoffIntegrity
 from thegent.tools.cache import ResourceCache
 from thegent.tools.xml_repair import SloppyXMLRepair
+
+from thegent.governance.handoff import HandoffIntegrity
 
 
 def test_handoff_integrity_analysis(tmp_path):

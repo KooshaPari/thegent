@@ -30,7 +30,7 @@ def test_install_agent_accelerators_writes_roid_and_codex_shims(tmp_path: Path) 
     codex_script = codex.read_text(encoding="utf-8")
     # Allow either bash routing or Rust shim
     assert ("dex|clode" in codex_script or "Rust shim" in codex_script)
-    
+
     # Check other shims exist and have reasonable content
     for shim, harness, cmd in [
         (roid, "droid", "roid"),
@@ -39,7 +39,7 @@ def test_install_agent_accelerators_writes_roid_and_codex_shims(tmp_path: Path) 
     ]:
         content = shim.read_text(encoding="utf-8")
         if "Rust shim" in content:
-            assert f'exec' in content
+            assert 'exec' in content
             assert harness in content or cmd in content
         else:
             assert f'export THGENT_HARNESS="{harness}"' in content

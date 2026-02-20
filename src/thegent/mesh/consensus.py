@@ -5,7 +5,6 @@ import json
 import random
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 
 class ConsensusStatus(enum.Enum):
@@ -33,7 +32,7 @@ class ConsensusProtocol:
             "topic": topic,
             "content": content,
             "phase": "propose",
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
         with open(self.proposals_dir / f"{proposal_id}.json", "w") as f:
             json.dump(proposal_data, f)
@@ -50,24 +49,19 @@ class ConsensusProtocol:
         proposal_file = self.proposals_dir / f"{proposal_id}.json"
         if not proposal_file.exists():
             return
-        
-        with open(proposal_file, "r") as f:
+
+        with open(proposal_file) as f:
             data = json.load(f)
-        
+
         data["phase"] = "share"
         data["finalized_at"] = time.time()
-        
+
         with open(proposal_file, "w") as f:
             json.dump(data, f)
 
     def cast_vote(self, proposal_id: str, agent_id: str, vote: bool, confidence: float = 0.8) -> None:
         """Phase 4: VOTE (ADR-013). Cast a weighted vote for the finalized proposal."""
-        vote_data = {
-            "agent_id": agent_id,
-            "vote": vote,
-            "confidence": confidence,
-            "timestamp": time.time()
-        }
+        vote_data = {"agent_id": agent_id, "vote": vote, "confidence": confidence, "timestamp": time.time()}
         proposal_dir = self.votes_dir / proposal_id
         proposal_dir.mkdir(parents=True, exist_ok=True, mode=0o1777)
 
@@ -80,13 +74,19 @@ class ConsensusProtocol:
         if not proposal_dir.exists():
             return ConsensusStatus.PENDING, 0.0
 
-        votes = []
-        for vote_file in proposal_dir.glob("*.json"):
+        def _load_vote(vote_file: Path) -> dict | None:
+            """Load a vote file, return None on error."""
             try:
                 with open(vote_file) as f:
-                    votes.append(json.load(f))
+                    return json.load(f)
             except Exception:
-                continue
+                return None
+
+        votes = []
+        for vote_file in proposal_dir.glob("*.json"):
+            vote = _load_vote(vote_file)
+            if vote is not None:
+                votes.append(vote)
 
         if not votes:
             return ConsensusStatus.PENDING, 0.0
@@ -109,13 +109,16 @@ class ConsensusProtocol:
         decision_file = self.mesh_root / "decisions" / f"{proposal_id}.json"
         decision_file.parent.mkdir(parents=True, exist_ok=True)
         with open(decision_file, "w") as f:
-            json.dump({
-                "proposal_id": proposal_id,
-                "status": status.value,
-                "ratio": ratio,
-                "total_weight": total_weight,
-                "ts": time.time()
-            }, f)
+            json.dump(
+                {
+                    "proposal_id": proposal_id,
+                    "status": status.value,
+                    "ratio": ratio,
+                    "total_weight": total_weight,
+                    "ts": time.time(),
+                },
+                f,
+            )
 
         return status, ratio
 
@@ -128,12 +131,7 @@ class CausalInfluenceTracker:
 
     def record_influence(self, agent_id: str, action_id: str, contribution: float) -> None:
         """Log contribution for later analysis."""
-        entry = {
-            "agent_id": agent_id,
-            "action_id": action_id,
-            "contribution": contribution,
-            "timestamp": time.time()
-        }
+        entry = {"agent_id": agent_id, "action_id": action_id, "contribution": contribution, "timestamp": time.time()}
         with open(self.influence_log, "a") as f:
             f.write(json.dumps(entry) + "\n")
 
@@ -160,11 +158,7 @@ class EscalationWorkflow:
             return True
 
         # In this stub, we just record the escalation
-        escalation_data = {
-            "proposal_id": proposal_id,
-            "tier": current_tier + 1,
-            "timestamp": time.time()
-        }
+        escalation_data = {"proposal_id": proposal_id, "tier": current_tier + 1, "timestamp": time.time()}
         with open(self.escalation_queue / f"escalation-{proposal_id}.json", "w") as f:
             json.dump(escalation_data, f)
 

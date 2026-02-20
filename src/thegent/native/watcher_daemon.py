@@ -71,7 +71,16 @@ _log = logging.getLogger(__name__)
 # Optional CircuitBreakerShm integration
 # ---------------------------------------------------------------------------
 
-_SHM_ENABLED: bool = os.environ.get("THGENT_WATCHER_USE_SHM", "1").strip() not in ("0", "false", "no")
+
+def _is_shm_enabled() -> bool:
+    """Check if watcher SHM is enabled via settings."""
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    return settings.watcher_use_shm
+
+
+_SHM_ENABLED: bool = _is_shm_enabled()
 
 _TARGET_KEY = "watcher_daemon"
 
@@ -81,10 +90,12 @@ def _try_get_breaker() -> Any:
     if not _SHM_ENABLED:
         return None
     try:
+        from thegent.config import ThegentSettings
         from thegent.native.state_shm import CircuitBreakerShm
 
+        settings = ThegentSettings()
         shm_default = str(Path(tempfile.gettempdir()) / "thegent_watcher.shm")
-        tmp_path = Path(os.environ.get("THGENT_WATCHER_SHM_PATH", shm_default))
+        tmp_path = Path(settings.watcher_shm_path) if settings.watcher_shm_path else Path(shm_default)
         return CircuitBreakerShm(tmp_path)
     except Exception as exc:
         _log.debug("WatcherDaemon: CircuitBreakerShm not available: %s", exc)

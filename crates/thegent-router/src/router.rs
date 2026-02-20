@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::collections::HashMap;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 /// Routing mode for task execution.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -43,6 +43,14 @@ pub struct RouterConfig {
     pub low_threshold: f64,
     /// Risk threshold above which to route to TheGent.
     pub high_threshold: f64,
+    /// Hysteresis band width (±band around decision point)
+    pub hysteresis_band: f64,
+    /// Minimum dwell time before allowing next switch (seconds)
+    pub hysteresis_dwell_s: u64,
+    /// Maximum time to stay in current mode (seconds)
+    pub hysteresis_max_dwell_s: u64,
+    /// Large risk change threshold that overrides dwell
+    pub hysteresis_override: f64,
 }
 
 impl Default for RouterConfig {
@@ -50,6 +58,10 @@ impl Default for RouterConfig {
         Self {
             low_threshold: 0.35,  // 35% - Lifecycle for low risk
             high_threshold: 0.65, // 65% - TheGent for high risk
+            hysteresis_band: 0.15,
+            hysteresis_dwell_s: 300,
+            hysteresis_max_dwell_s: 1800,
+            hysteresis_override: 0.20,
         }
     }
 }
@@ -99,10 +111,17 @@ impl ParetoRouter {
             "high_threshold must be in [0.0, 1.0]"
         );
 
+        let hysteresis = HysteresisManager::with_config(
+            config.hysteresis_band,
+            Duration::from_secs(config.hysteresis_dwell_s),
+            Duration::from_secs(config.hysteresis_max_dwell_s),
+            config.hysteresis_override,
+        );
+
         Self {
             config,
             risk_calculator: RiskCalculator::new(),
-            hysteresis: HysteresisManager::new(),
+            hysteresis,
             total_decisions: Arc::new(AtomicUsize::new(0)),
             lifecycle_count: Arc::new(AtomicUsize::new(0)),
             thegent_count: Arc::new(AtomicUsize::new(0)),
@@ -130,25 +149,32 @@ impl ParetoRouter {
             RoutingMode::Lifecycle
         };
 
-        // Update metrics
+        // Update metrics in memory
         self.total_decisions.fetch_add(1, Ordering::Relaxed);
-        match mode {
+        let (lc_inc, tg_inc) = match mode {
             RoutingMode::Lifecycle => {
                 self.lifecycle_count.fetch_add(1, Ordering::Relaxed);
+                (1, 0)
             }
             RoutingMode::TheGent => {
                 self.thegent_count.fetch_add(1, Ordering::Relaxed);
+                (0, 1)
             }
-        }
+        };
 
         // Track route changes
         let mut last = self.last_mode.lock().unwrap();
+        let mut changes_inc = 0;
         if let Some(prev_mode) = *last {
             if prev_mode != mode {
                 self.route_changes.fetch_add(1, Ordering::Relaxed);
+                changes_inc = 1;
             }
         }
         *last = Some(mode);
+
+        // NEW: Sync to SHM
+        let _ = thegent_shm::update_router_metrics(lc_inc, tg_inc, changes_inc, 0);
 
         let rationale = match mode {
             RoutingMode::Lifecycle => format!(

@@ -17,6 +17,7 @@ __all__ = [
     "FlashAgent",
     "FlashAgentConfig",
     "FlashAgentResult",
+    "MAIFAgentRunner",
     "RunResult",
     "flash",
     "get_fallback_agents",
@@ -25,3 +26,5 @@ __all__ = [
     "list_droid_names",
     "resolve_agent",
 ]
+
+from thegent.agents.maif_runner import MAIFAgentRunner

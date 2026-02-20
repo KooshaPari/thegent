@@ -15,13 +15,12 @@ import pytest
 from thegent.mesh.git_parallelism import (
     WorktreeContext,
     WorktreePool,
-    _PoolStateLock,
     _atomic_write,
     _git_available,
+    _PoolStateLock,
     _project_hash,
     _worktrees_supported,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

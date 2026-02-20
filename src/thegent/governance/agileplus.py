@@ -19,9 +19,9 @@ from pydantic import BaseModel
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from thegent.cost.aggregator_controller import CostController
     from thegent.governance.analyzer import HealthAnalyzer
     from thegent.governance.backlog import BacklogManager
-    from thegent.governance.cost_controller import CostController
     from thegent.governance.evidence_ledger import EvidenceLedger
     from thegent.governance.scanner import CodebaseScanner
     from thegent.planning.remediation_planner import RemediationPlanner
@@ -307,9 +307,9 @@ class AgilePlusLoop:
     def _init_components(self) -> None:
         """Initialize all governance components."""
         from thegent.config import ThegentSettings
+        from thegent.cost.aggregator_controller import CostController
         from thegent.governance.analyzer import HealthAnalyzer
         from thegent.governance.backlog import BacklogManager
-        from thegent.governance.cost_controller import CostController
         from thegent.governance.evidence_ledger import EvidenceLedger
         from thegent.governance.health_score import HealthScoreComputer
         from thegent.governance.scanner import CodebaseScanner

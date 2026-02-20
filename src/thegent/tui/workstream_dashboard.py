@@ -15,7 +15,7 @@ from textual.containers import Container, Grid, Horizontal, ScrollableContainer,
 from textual.widgets import DataTable, Footer, Header, ProgressBar, Static, TabbedContent, TabPane
 
 from thegent.config import ThegentSettings
-from thegent.orchestration.load_based_limits import compute_dynamic_limit, sample_resources
+from thegent.orchestration.resource.load_based_limits import compute_dynamic_limit, sample_resources
 from thegent.planning.auto_launch import AutoLaunchSystem
 from thegent.planning.workstream_db import WorkstreamDB
 

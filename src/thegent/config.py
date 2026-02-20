@@ -371,6 +371,10 @@ class ThegentSettings(BaseSettings):
         default=False,
         description="Enable input guardrails (THGENT_INPUT_GUARDRAILS_ENABLED)",
     )
+    sandbox_level: str = Field(
+        default="none",
+        description="macOS sandbox level: none, readonly, restricted, networked, full (THGENT_SANDBOX_LEVEL)",
+    )
     sandbox_env_filter: bool = Field(
         default=False,
         description="Filter environment variables in sandbox (THGENT_SANDBOX_ENV_FILTER)",
@@ -424,6 +428,24 @@ class ThegentSettings(BaseSettings):
         le=65535,
         description="MCP server port (THGENT_MCP_PORT)",
     )
+    control_plane_url: str = Field(
+        default="http://127.0.0.1:3848",
+        description="Control plane server URL (THGENT_CONTROL_PLANE_URL)",
+    )
+    control_plane_port: int = Field(
+        default=3848,
+        ge=1024,
+        le=65535,
+        description="Control plane server port (THGENT_CONTROL_PLANE_PORT)",
+    )
+    mcp_storage_dir: Path | None = Field(
+        default=None,
+        description="MCP storage directory override (THGENT_MCP_STORAGE_DIR)",
+    )
+    mergiraf_binary: str | None = Field(
+        default=None,
+        description="Path to mergiraf binary for AST-aware merging (THGENT_MERGIRAF_BINARY)",
+    )
     cliproxy_binary: str = Field(
         default="cli-proxy-api-plus",
         description="CLIProxyAPIPlus binary (path or cmd); install from github.com/kooshapari/cliproxyapi-plusplus/releases",
@@ -441,6 +463,10 @@ class ThegentSettings(BaseSettings):
     cliproxy_config_path: Path = Field(
         default_factory=lambda: Path("~/.config/thegent/cliproxy-config.yaml").expanduser(),
         description="Generated config for CLIProxyAPIPlus (THGENT_CLIPROXY_CONFIG_PATH)",
+    )
+    custom_models_path: Path = Field(
+        default_factory=lambda: Path("~/.config/thegent/custom_models.yaml").expanduser(),
+        description="Path to custom models configuration (THGENT_CUSTOM_MODELS_PATH)",
     )
     cliproxy_adapter: bool = Field(
         default=True,
@@ -707,6 +733,78 @@ class ThegentSettings(BaseSettings):
         le=10000,
         description="Max concurrent slots when Redis-backed (THGENT_REDIS_CONCURRENCY_LIMIT)",
     )
+    max_parallel: int = Field(
+        default=5,
+        ge=1,
+        le=50,
+        description="Maximum parallel operations (THGENT_MAX_PARALLEL)",
+    )
+    supermemory_api_key: str = Field(
+        default="",
+        description="Supermemory.ai API key (THGENT_SUPERMEMORY_API_KEY)",
+    )
+    supermemory_base_url: str = Field(
+        default="https://api.supermemory.ai/v3",
+        description="Supermemory.ai base URL (THGENT_SUPERMEMORY_BASE_URL)",
+    )
+    hier_threshold: int = Field(
+        default=5,
+        ge=1,
+        description="Swarm size threshold for hierarchical coordination (THGENT_HIER_THRESHOLD)",
+    )
+    remote_nodes: str = Field(
+        default="",
+        description="Comma-separated list of remote node addresses (THGENT_REMOTE_NODES)",
+    )
+    remote_ssh_user: str | None = Field(
+        default=None,
+        description="SSH user for remote execution (THGENT_REMOTE_SSH_USER)",
+    )
+    redlock_nodes: str = Field(
+        default="redis://localhost:6379",
+        description="Comma-separated Redis URLs for Redlock (THGENT_REDLOCK_NODES)",
+    )
+    rate_tokens_per_sec: float = Field(
+        default=10.0,
+        ge=0.0,
+        description="Token bucket refill rate (THGENT_RATE_TOKENS_PER_SEC)",
+    )
+    rate_bucket_size: float = Field(
+        default=20.0,
+        ge=1.0,
+        description="Token bucket capacity (THGENT_RATE_BUCKET_SIZE)",
+    )
+    sync_remote: str = Field(
+        default="<local-stub>",
+        description="Default remote sync target (THGENT_SYNC_REMOTE)",
+    )
+    file_index_ttl: int = Field(
+        default=30,
+        ge=1,
+        description="File index TTL in seconds (THGENT_FILE_INDEX_TTL)",
+    )
+    zmx_max_sessions: int = Field(
+        default=50,
+        ge=1,
+        description="Maximum concurrent zmx sessions (THGENT_ZMX_MAX_SESSIONS)",
+    )
+    zmx_session_ttl: int = Field(
+        default=3600,
+        ge=1,
+        description="zmx session TTL in seconds (THGENT_ZMX_SESSION_TTL)",
+    )
+    zmx_binary: str = Field(
+        default="zmx",
+        description="zmx binary path or name (THGENT_ZMX_BINARY)",
+    )
+    maif_enabled: bool = Field(
+        default=False,
+        description="Enable MAIF runner (THGENT_MAIF_ENABLED)",
+    )
+    maif_db_path: Path | None = Field(
+        default=None,
+        description="MAIF database path (THGENT_MAIF_DB_PATH)",
+    )
 
     zen_base_url: str = Field(
         default="https://api.opencode.ai",
@@ -831,6 +929,14 @@ class ThegentSettings(BaseSettings):
     use_native_shm: bool = Field(
         default=True,
         description="Use native SHM (THGENT_USE_NATIVE_SHM)",
+    )
+    watcher_use_shm: bool = Field(
+        default=True,
+        description="Enable CircuitBreakerShm integration for watcher daemon (THGENT_WATCHER_USE_SHM)",
+    )
+    watcher_shm_path: Path | None = Field(
+        default=None,
+        description="Path for watcher daemon SHM file (THGENT_WATCHER_SHM_PATH)",
     )
     use_native_discovery: bool = Field(
         default=True,
@@ -958,6 +1064,36 @@ class ThegentSettings(BaseSettings):
         le=3600,
         description="Minimum seconds between scaling events; THGENT_HYSTERESIS_DWELL",
     )
+    routing_hysteresis_threshold: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=1.0,
+        description="Threshold for Pareto routing hysteresis; THGENT_ROUTING_HYSTERESIS_THRESHOLD",
+    )
+    router_hysteresis_band: float = Field(
+        default=0.15,
+        ge=0.0,
+        le=0.5,
+        description="Hysteresis band for thegent-router; THGENT_ROUTER_HYSTERESIS_BAND",
+    )
+    router_hysteresis_dwell: int = Field(
+        default=300,
+        ge=0,
+        le=86400,
+        description="Dwell time for thegent-router hysteresis; THGENT_ROUTER_HYSTERESIS_DWELL",
+    )
+    router_hysteresis_max_dwell: int = Field(
+        default=1800,
+        ge=0,
+        le=86400,
+        description="Max dwell time for thegent-router hysteresis; THGENT_ROUTER_HYSTERESIS_MAX_DWELL",
+    )
+    router_hysteresis_override: float = Field(
+        default=0.20,
+        ge=0.0,
+        le=1.0,
+        description="Override threshold for thegent-router hysteresis; THGENT_ROUTER_HYSTERESIS_OVERRIDE",
+    )
 
     # AgilePlus autonomous governance loop
     agileplus_enabled: bool = Field(
@@ -996,6 +1132,10 @@ class ThegentSettings(BaseSettings):
     )
 
     # LiteLLM Router settings
+    use_litellm_router: bool = Field(
+        default=False,
+        description="Enable LiteLLM router for agent execution (THGENT_USE_LITELLM_ROUTER)",
+    )
     litellm_routing_policy: str = Field(
         default="cheapest",
         description="LiteLLM routing policy: cheapest, fastest, round_robin (THGENT_LITELLM_ROUTING_POLICY)",
@@ -1067,6 +1207,20 @@ class ThegentSettings(BaseSettings):
     litellm_fallback_enabled: bool = Field(
         default=True,
         description="Enable automatic fallback to alternative models on failure (THGENT_LITELLM_FALLBACK_ENABLED)",
+    )
+
+    # Keepalive settings
+    keepalive_interval: int = Field(
+        default=30,
+        ge=5,
+        le=300,
+        description="Keepalive interval in seconds (THGENT_KEEPALIVE_INTERVAL)",
+    )
+
+    # Agent identification
+    agent_id: str = Field(
+        default="default-agent",
+        description="Current agent ID (THGENT_AGENT_ID)",
     )
 
     # Dex-specific settings

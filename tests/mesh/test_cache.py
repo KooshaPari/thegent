@@ -16,25 +16,24 @@ import pytest
 
 from thegent.mesh.cache import MeshCache, Singleflight
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def sf() -> Singleflight:
     """Fresh Singleflight instance."""
     return Singleflight()
 
 
-@pytest.fixture()
+@pytest.fixture
 def mesh_cache(tmp_path: Path) -> MeshCache:
     """MeshCache backed by a temporary directory with default capacity."""
     return MeshCache(tmp_path, capacity=1000)
 
 
-@pytest.fixture()
+@pytest.fixture
 def small_cache(tmp_path: Path) -> MeshCache:
     """MeshCache with capacity=3 for eviction tests."""
     return MeshCache(tmp_path, capacity=3)

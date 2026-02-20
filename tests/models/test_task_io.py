@@ -20,7 +20,6 @@ from pydantic import ValidationError
 
 from thegent.models.task_io import TaskError, TaskInput, TaskOutput, TaskSpec
 
-
 # ---------------------------------------------------------------------------
 # TaskInput
 # ---------------------------------------------------------------------------

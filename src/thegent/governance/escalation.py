@@ -125,37 +125,9 @@ class EscalationQueue:
         """List items in the queue, optionally filtered by status."""
         items = []
         for p in self.queue_dir.glob("*.json"):
-            try:
-                data = json.loads(p.read_text(encoding="utf-8"))
-                item = EscalationItem.from_dict(data)
-
-                # Auto-expire if deadline passed
-                if item.status == EscalationStatus.PENDING and item.deadline and time.time() > item.deadline:
-                    item.status = EscalationStatus.EXPIRED
-                    self._save_item(item)
-
-                    # WP-3008: Move expired item to DLQ
-                    try:
-                        from thegent.execution import DLQManager, RunMeta
-
-                        dlq = DLQManager(self.settings.session_dir)
-                        # Create a minimal RunMeta for DLQ
-                        meta = RunMeta(
-                            run_id=item.run_id,
-                            agent=item.agent,
-                            prompt=item.prompt,
-                            cwd=str(Path.cwd()),
-                            owner=item.assigned_to or "system",
-                        )
-                        dlq.enqueue(meta, f"Escalation EXPIRED: {item.reason}")
-                        _log.warning("Moved expired escalation %s to DLQ", item.id)
-                    except Exception as e:
-                        _log.error("Failed to move expired escalation %s to DLQ: %s", item.id, e)
-
-                if status is None or item.status == status:
-                    items.append(item)
-            except Exception as e:
-                _log.error("Failed to load escalation item %s: %s", p, e)
+            item = self._load_and_process_item(p)
+            if item and (status is None or item.status == status):
+                items.append(item)
 
         # Sort by priority (Urgent > High > Normal > Low) and then by deadline
         priority_map = {
@@ -196,3 +168,36 @@ class EscalationQueue:
         """Save item to disk."""
         p = self.queue_dir / f"{item.id}.json"
         p.write_text(json.dumps(item.to_dict(), indent=2), encoding="utf-8")
+
+    def _load_and_process_item(self, p: Path) -> EscalationItem | None:
+        """Helper to load and process a single escalation item."""
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            item = EscalationItem.from_dict(data)
+
+            # Auto-expire if deadline passed
+            if item.status == EscalationStatus.PENDING and item.deadline and time.time() > item.deadline:
+                item.status = EscalationStatus.EXPIRED
+                self._save_item(item)
+
+                # WP-3008: Move expired item to DLQ
+                try:
+                    from thegent.execution import DLQManager, RunMeta
+
+                    dlq = DLQManager(self.settings.session_dir)
+                    # Create a minimal RunMeta for DLQ
+                    meta = RunMeta(
+                        run_id=item.run_id,
+                        agent=item.agent,
+                        prompt=item.prompt,
+                        cwd=str(Path.cwd()),
+                        owner=item.assigned_to or "system",
+                    )
+                    dlq.enqueue(meta, f"Escalation EXPIRED: {item.reason}")
+                    _log.warning("Moved expired escalation %s to DLQ", item.id)
+                except Exception as e:
+                    _log.error("Failed to move expired escalation %s to DLQ: %s", item.id, e)
+            return item
+        except Exception as e:
+            _log.error("Failed to load escalation item %s: %s", p, e)
+            return None

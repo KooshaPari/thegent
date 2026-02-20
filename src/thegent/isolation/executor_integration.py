@@ -61,6 +61,7 @@ class IsolatedExecutor:
                 capture_output=True,
                 text=True,
                 timeout=timeout_sec,
+                check=False,
             )
             return {
                 "returncode": result.returncode,

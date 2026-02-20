@@ -16,7 +16,7 @@ from thegent.agents.base import RunResult
 from thegent.agents.checker import CheckerAgent, CheckerDecision, CheckerResult
 from thegent.agents.presets import get_preset, match_preset
 from thegent.agents.resilience import TransientAgentError, with_retry
-from thegent.cli_impl import run_impl
+from thegent.cli.commands.impl import run_impl
 from thegent.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
@@ -255,7 +255,7 @@ class LifecycleController:
 
                 # 6. Invoke Checker Agent (WP-1201 Phase 2/3 - LLM Fallback)
                 try:
-                    from thegent.cli_impl import dag_status_impl
+                    from thegent.cli.commands.impl import dag_status_impl
 
                     wbs_status_data = dag_status_impl(self.settings.cwd)
                     wbs_status = json.dumps(wbs_status_data, indent=2)

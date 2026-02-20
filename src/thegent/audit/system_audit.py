@@ -256,8 +256,7 @@ class SystemAuditor:
                         expected=f"hooks/{hook_name}.sh",
                         actual="not found on disk",
                         fix_suggestion=(
-                            f"Create hooks/{hook_name}.sh or remove the '{hook_name}' "
-                            "entry from hook-config.yaml."
+                            f"Create hooks/{hook_name}.sh or remove the '{hook_name}' entry from hook-config.yaml."
                         ),
                     )
                 )
@@ -272,10 +271,7 @@ class SystemAuditor:
                         status=AuditStatus.UNEXPECTED,
                         expected="registered in hook-config.yaml",
                         actual=str(path.relative_to(self._root)),
-                        fix_suggestion=(
-                            f"Register '{stem}' in hooks/hook-config.yaml or remove "
-                            f"{path.name}."
-                        ),
+                        fix_suggestion=(f"Register '{stem}' in hooks/hook-config.yaml or remove {path.name}."),
                     )
                 )
 
@@ -308,9 +304,7 @@ class SystemAuditor:
                 )
             ]
 
-        agent_files: list[Path] = sorted(
-            p for p in agents_dir.iterdir() if p.suffix == ".md" and p.is_file()
-        )
+        agent_files: list[Path] = sorted(p for p in agents_dir.iterdir() if p.suffix == ".md" and p.is_file())
 
         if not agent_files:
             results.append(
@@ -369,9 +363,7 @@ class SystemAuditor:
                                 status=AuditStatus.MISSING,
                                 expected=f"agents/{name}.md",
                                 actual="referenced in bounded-contexts.yaml but not found on disk",
-                                fix_suggestion=(
-                                    f"Create agents/{name}.md or remove from bounded-contexts.yaml."
-                                ),
+                                fix_suggestion=(f"Create agents/{name}.md or remove from bounded-contexts.yaml."),
                             )
                         )
             except Exception as exc:
@@ -469,8 +461,7 @@ class SystemAuditor:
                         expected="recognized THGENT_* environment variable",
                         actual=f"{key}={val!r} (not mapped to any ThegentSettings field)",
                         fix_suggestion=(
-                            f"Remove {key} from environment or add a corresponding "
-                            "field to ThegentSettings."
+                            f"Remove {key} from environment or add a corresponding field to ThegentSettings."
                         ),
                     )
                 )
@@ -544,7 +535,7 @@ class SystemAuditor:
 
             if norm in installed:
                 installed_ver = installed[norm]
-                specifier_part = dep_spec[len(pkg_name):].strip()
+                specifier_part = dep_spec[len(pkg_name) :].strip()
                 # Strip extras from specifier_part if present
                 specifier_part = re.sub(r"^\[.*?\]", "", specifier_part).strip()
                 # Strip environment markers

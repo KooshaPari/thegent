@@ -127,8 +127,8 @@ Full implementation of Agent Crew stack following Agile Plus principles:
 ## Usage Example
 
 ```python
-from thegent.crew import Crew, CrewAgent, Task, CrewExecutor, ExecutionMode
-from thegent.crew.harness import create_agent_executor
+from thegent.agents.crew import Crew, CrewAgent, Task, CrewExecutor, ExecutionMode
+from thegent.agents.crew.harness import create_agent_executor
 from pathlib import Path
 
 # Create crew
@@ -166,7 +166,7 @@ agent_executor = create_agent_executor(
     timeout=300,
 )
 
-from thegent.crew.executor import TaskExecutor
+from thegent.agents.crew.executor import TaskExecutor
 task_executor = TaskExecutor(agent_executor=agent_executor)
 
 # Execute crew

@@ -15,9 +15,11 @@ Usage:
         result = runner.run(prompt, cwd, mode, timeout)
 """
 
+import asyncio
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -84,7 +86,10 @@ class TracedAgentRunner(AgentRunner):
             duration_ms: Execution duration in milliseconds.
             error: Optional error message if tool failed.
         """
-        tool_call = ToolCallRecord(
+        self._tool_call_count += 1
+
+        # Queue for async recording (non-blocking)
+        await self.recorder.record_tool_call(
             tool=tool_type,
             tool_name=tool_name,
             args=args,
@@ -92,11 +97,6 @@ class TracedAgentRunner(AgentRunner):
             duration_ms=duration_ms,
             error=error,
         )
-        self._recorded_tool_calls.append(tool_call)
-        self._tool_call_count += 1
-
-        # Queue for async recording (non-blocking)
-        self.recorder.record_tool_call(tool_call)
 
     def run(
         self,
@@ -133,8 +133,6 @@ class TracedAgentRunner(AgentRunner):
             RunResult with exit_code, stdout, stderr.
         """
         self._execution_start_time = time.time()
-        self._tool_call_count = 0
-        self._recorded_tool_calls = []
 
         # Run the base agent
         result = self.base_runner.run(
@@ -192,15 +190,23 @@ class TracedAgentRunner(AgentRunner):
             duration_ms: Execution duration.
             error: Optional error message.
         """
-        tool_call = ToolCallRecord(
+        self._tool_call_count += 1
+        record = ToolCallRecord(
+            timestamp=datetime.now(timezone.utc).isoformat() + "Z",
+            sequence_id=self._tool_call_count,
             tool=tool_type,
             tool_name=tool_name,
             args=args,
-            result=result,
+            result=result if isinstance(result, dict) else {"value": result},
             duration_ms=duration_ms,
             error=error,
+            metadata={},
         )
-        self.recorder.record_tool_call(tool_call)
+        self._recorded_tool_calls.append(record)
+
+        # In synchronous runner paths, persist immediately so traces exist even if
+        # the async recorder worker wasn't started.
+        self.recorder.trace_file.write_record(record)
 
     def get_execution_metrics(self) -> ExecutionMetrics:
         """Get metrics for the last execution.

@@ -18,8 +18,7 @@ from unittest.mock import MagicMock, patch
 import click.exceptions
 import pytest
 import typer
-
-from thegent.cli_impl import DagDocument
+from thegent.cli.commands.impl import DagDocument
 
 _EXIT = (SystemExit, click.exceptions.Exit)
 
@@ -123,7 +122,7 @@ class TestObserveSummaryNonDictEscalation:
 
     @patch("thegent.cli.console")
     @patch("thegent.cli._normalize_output_format", return_value="rich")
-    @patch("thegent.cli_impl.observe_summary_impl")
+    @patch("thegent.cli.commands.impl.observe_summary_impl")
     def test_non_dict_escalation_skipped(self, mock_impl, mock_fmt, mock_console) -> None:
         # @trace FR-CLI-722
         mock_impl.return_value = {
@@ -188,7 +187,7 @@ class TestHealthGateUnrecognizedSuffix:
     @patch("thegent.cli.console")
     @patch("thegent.cli._default_owner_tag", return_value="ci")
     @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli_impl.session_contract_health_gate_impl")
+    @patch("thegent.cli.commands.impl.session_contract_health_gate_impl")
     @patch("thegent.cli._write_health_gate_export", return_value="json")
     def test_unrecognized_suffix_note(self, mock_write, mock_impl, mock_settings_cls, mock_owner, mock_console) -> None:
         # @trace FR-CLI-1114

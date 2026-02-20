@@ -84,11 +84,7 @@ class ProgressPanel:
         """Return a text representation of current progress state."""
         task = self.progress.tasks[self.task_id]
         total = task.total if task.total is not None else "?"
-        return (
-            f"[{self.name}] {task.description}: "
-            f"{task.completed}/{total} "
-            f"({task.percentage:.0f}%)"
-        )
+        return f"[{self.name}] {task.description}: {task.completed}/{total} ({task.percentage:.0f}%)"
 
 
 @dataclass

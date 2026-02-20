@@ -4,7 +4,6 @@ import enum
 import os
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 class AutonomyTier(enum.IntEnum):
@@ -24,7 +23,22 @@ class Sandboxing:
 
     def get_bubblewrap_args(self, tier: AutonomyTier) -> list[str]:
         """Generate bubblewrap arguments for Linux (SCLI-P10.1)."""
-        args = ["bwrap", "--ro-bind", "/usr", "/usr", "--ro-bind", "/lib", "/lib", "--ro-bind", "/bin", "/bin", "--dev", "/dev", "--proc", "/proc"]
+        args = [
+            "bwrap",
+            "--ro-bind",
+            "/usr",
+            "/usr",
+            "--ro-bind",
+            "/lib",
+            "/lib",
+            "--ro-bind",
+            "/bin",
+            "/bin",
+            "--dev",
+            "/dev",
+            "--proc",
+            "/proc",
+        ]
 
         if tier >= AutonomyTier.WORKTREE:
             # Allow writes to a specific worktree directory
@@ -43,7 +57,7 @@ class Sandboxing:
     def get_seatbelt_profile(self, tier: AutonomyTier) -> str:
         """Generate seatbelt (sandbox-exec) profile for macOS (SCLI-P10.2)."""
         if tier == AutonomyTier.READ_ONLY:
-            return f"(version 1)\n(deny default)\n(allow file-read* (subpath \"{self.project_root}\"))"
+            return f'(version 1)\n(deny default)\n(allow file-read* (subpath "{self.project_root}"))'
         return "(version 1)\n(allow default)\n(deny network-outbound)"
 
     def classify_operation(self, command: str, target: str) -> AutonomyTier:

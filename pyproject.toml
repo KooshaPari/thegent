@@ -83,10 +83,13 @@ dev = [
 ]
 
 [project.scripts]
-thegent = "thegent.main:app"
+thegent = "thegent.cli.apps.main:app"
 clode = "thegent.clode_main:app"
 roid = "thegent.roid_main:app"
 dex = "thegent.dex_main:app"
+anen = "thegent.anen_main:app"
+fanta = "thegent.fanta_main:app"
+antigma = "thegent.fanta_main:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/thegent"]

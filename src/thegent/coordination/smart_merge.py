@@ -6,7 +6,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -23,7 +23,7 @@ class SmartMerger:
         """Perform AST-aware merge using Mergiraf."""
         try:
             cmd = [self.mergiraf_path, "merge", str(base), str(local), str(remote), "-o", str(output)]
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
             if result.returncode == 0:
                 logger.info(f"AST merge successful for {output}")
                 return True

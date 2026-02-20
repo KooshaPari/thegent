@@ -112,7 +112,15 @@ class FastTOMLParser:
         Returns:
             Parsed TOML as dictionary
         """
-        return self.load(s)
+        if self.edit_mode:
+            import tomlkit
+
+            return tomlkit.parse(s).value
+
+        from thegent.infra.runtime_dispatcher import get_toml_loads
+
+        toml_loads = get_toml_loads()
+        return toml_loads(s)
 
     def dump(self, data: dict[str, Any], stream: Any | None = None, **kwargs) -> str | None:
         """Dump TOML to string or file.

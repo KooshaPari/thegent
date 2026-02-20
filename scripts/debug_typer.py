@@ -1,12 +1,14 @@
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add src to sys.path
 sys.path.append(os.path.abspath("src"))
 
-from thegent.main import app
 import inspect
+
+from thegent.main import app
+
 
 def check_group(group):
     for command in group.registered_commands:
@@ -20,7 +22,7 @@ def check_group(group):
                 inspect.get_annotations(func)
             except NameError as e2:
                 print(f"  Annotations error: {e2}")
-    
+
     for sub_group in group.registered_groups:
         check_group(sub_group.typer_instance)
 

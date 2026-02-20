@@ -15,7 +15,7 @@ import pytest
 
 from tests.conftest_factories import make_run_meta
 from thegent.execution import PolicyEngine, RunRegistry
-from thegent.governance.cost import CostAggregator, CostEstimator
+from thegent.cost.aggregator import CostAggregator, CostEstimator
 
 
 def _make_settings(**overrides: Any) -> SimpleNamespace:

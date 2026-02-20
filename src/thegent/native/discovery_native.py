@@ -62,13 +62,7 @@ def _fallback_sessions() -> list[dict[str, Any]]:
     sockets = [
         None,
         str(Path(tempfile.gettempdir()) / f"tmux-{os.getuid()}" / "default"),
-        str(
-            Path(tempfile.gettempdir())
-            / ".."
-            / "private"
-            / f"tmux-{os.getuid()}"
-            / "default"
-        ),
+        str(Path(tempfile.gettempdir()) / ".." / "private" / f"tmux-{os.getuid()}" / "default"),
     ]
     for socket in sockets:
         cmd = ["tmux"]
@@ -82,9 +76,7 @@ def _fallback_sessions() -> list[dict[str, Any]]:
             ]
         )
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=5
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)
             if result.returncode == 0:
                 for line in result.stdout.strip().splitlines():
                     parts = line.split("|", 3)
@@ -104,9 +96,7 @@ def _fallback_sessions() -> list[dict[str, Any]]:
 
     # screen (best-effort)
     try:
-        result = subprocess.run(
-            ["screen", "-ls"], capture_output=True, text=True, timeout=5
-        )
+        result = subprocess.run(["screen", "-ls"], capture_output=True, text=True, timeout=5, check=False)
         for line in result.stdout.splitlines():
             stripped = line.strip()
             if stripped and stripped[0].isdigit():
@@ -162,9 +152,7 @@ def _fallback_processes(pattern: str | None = None) -> list[dict[str, Any]]:
         return []
 
     found: list[dict[str, Any]] = []
-    for proc in psutil.process_iter(
-        ["pid", "ppid", "name", "cmdline", "memory_info", "cpu_percent", "create_time"]
-    ):
+    for proc in psutil.process_iter(["pid", "ppid", "name", "cmdline", "memory_info", "cpu_percent", "create_time"]):
         try:
             name = proc.info.get("name") or ""
             cmdline = proc.info.get("cmdline") or []
@@ -222,9 +210,7 @@ class DiscoveryClient:
         if self.is_native:
             _log.debug("thegent-discovery binary found at %s", self.binary_path)
         else:
-            _log.debug(
-                "thegent-discovery binary not found; using Python fallback (BKM-08)"
-            )
+            _log.debug("thegent-discovery binary not found; using Python fallback (BKM-08)")
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -240,6 +226,7 @@ class DiscoveryClient:
                 capture_output=True,
                 text=True,
                 timeout=15,
+                check=False,
             )
             if result.returncode != 0:
                 _log.warning(

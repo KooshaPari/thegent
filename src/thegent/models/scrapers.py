@@ -356,7 +356,7 @@ def scrape_gemini() -> list[str]:
     """Scrape gemini models: try 'gemini models list' or 'gemini list-models', else --help."""
     fallback = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-3-flash"]
     for cmd in [["gemini", "models", "list"], ["gemini", "list-models"], ["gemini", "--help"]]:
-        try:
+        try:  # noqa: PERF203 -- fallback chain pattern, trying multiple commands
             proc = run_subprocess_optimized(
                 cmd,
                 check=False,
@@ -379,7 +379,7 @@ def scrape_claude() -> list[str]:
     """Scrape claude models: try 'claude models list', else --help for --model aliases."""
     fallback = ["haiku", "sonnet", "opus", "claude-haiku-4.5", "claude-sonnet-4.5", "claude-opus-4.6"]
     for cmd in [["claude", "models", "list"], ["claude", "list-models"], ["claude", "--help"]]:
-        try:
+        try:  # noqa: PERF203 -- fallback chain pattern, trying multiple commands
             proc = run_subprocess_optimized(
                 cmd,
                 check=False,

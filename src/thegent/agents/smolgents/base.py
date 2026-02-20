@@ -19,12 +19,53 @@ Design principles
 from __future__ import annotations
 
 import logging
+import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from thegent.agents.smolgents.tools import Tool
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class SmolGentJob:
+    """A structured task/job for a SmolAgent to execute.
+
+    Attributes:
+        id: Unique job identifier.
+        description: Natural-language task description.
+        metadata: Additional job metadata.
+        created_at: When the job was created.
+    """
+
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    description: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+
+
+@dataclass
+class SmolGentResult:
+    """The result of a SmolGentJob execution.
+
+    Attributes:
+        job_id: ID of the job that produced this result.
+        output: String output from the agent.
+        success: Whether the job completed successfully.
+        error: Error message if failed.
+        completed_at: When the job finished.
+        metadata: Additional result metadata.
+    """
+
+    job_id: str
+    output: str = ""
+    success: bool = True
+    error: str | None = None
+    completed_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class SmolAgent:
@@ -69,7 +110,7 @@ class SmolAgent:
     # Public API
     # ------------------------------------------------------------------
 
-    def run(self, task: str) -> str:
+    def run(self, task: str | SmolGentJob) -> str | SmolGentResult:
         """Execute *task* by selecting an appropriate tool.
 
         The selection algorithm is intentionally simple: the first tool
@@ -77,14 +118,19 @@ class SmolAgent:
         no match is found, the task string itself is returned unchanged
         (pass-through behaviour).
 
+        If a :class:`SmolGentJob` is provided, the agent will execute it
+        and return a :class:`SmolGentResult` instead of a string.
+
         Args:
-            task: Natural-language task description.  Tool selection is
-                based on whether the tool name appears in the task.
+            task: Natural-language task description or structured job.
 
         Returns:
-            String output from the matched tool, or the original *task*
-            string if no tool matches.
+            String output from the matched tool (if task is a string),
+            or :class:`SmolGentResult` (if task is a :class:`SmolGentJob`).
         """
+        if isinstance(task, SmolGentJob):
+            return self.execute_job(task)
+
         logger.debug("SmolAgent '%s' running task: %s", self.name, task)
         tool = self._select_tool(task)
         if tool is None:
@@ -99,7 +145,40 @@ class SmolAgent:
         result = tool(task)
         return str(result)
 
-    def delegate(self, sub_task: str) -> str:
+    def execute_job(self, job: SmolGentJob) -> SmolGentResult:
+        """Execute a structured :class:`SmolGentJob`.
+
+        This method is the structured alternative to :py:meth:`run`.
+
+        Args:
+            job: The :class:`SmolGentJob` to execute.
+
+        Returns:
+            A :class:`SmolGentResult` wrapping the agent's output.
+        """
+        logger.debug("SmolAgent '%s' executing job '%s'", self.name, job.id)
+        try:
+            # Re-use run() for the core logic (extract description as task)
+            output = self.run(job.description)
+            # If run returned a result (e.g. delegated job), extract its output
+            if isinstance(output, SmolGentResult):
+                output = output.output
+
+            return SmolGentResult(
+                job_id=job.id,
+                output=str(output),
+                success=True,
+            )
+        except Exception as e:
+            logger.error("SmolAgent '%s': job '%s' failed: %s", self.name, job.id, e)
+            return SmolGentResult(
+                job_id=job.id,
+                output="",
+                success=False,
+                error=str(e),
+            )
+
+    def delegate(self, sub_task: str | SmolGentJob) -> str | SmolGentResult:
         """Spawn a child SmolAgent to handle *sub_task*.
 
         A new ``SmolAgent`` is created with the same tool set as this
@@ -111,7 +190,7 @@ class SmolAgent:
             sub_task: The subtask to hand off to the child agent.
 
         Returns:
-            The string result produced by the child agent's ``run`` call.
+            The string result or :class:`SmolGentResult` produced by the child.
         """
         child_name = f"{self.name}.child-{len(self._children)}"
         child = SmolAgent(

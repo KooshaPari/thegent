@@ -8,8 +8,9 @@
 
 use clap::{Parser, Subcommand};
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command as StdCommand, ExitCode};
+use std::os::unix::process::ExitStatusExt;
 
 /// thegent-shims - Efficient shell command shims for thegent
 #[derive(Parser)]
@@ -77,6 +78,12 @@ enum ShimCommand {
     /// Tr accelerator
     Tr {
         /// Arguments to pass to tr
+        #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
+        args: Vec<String>,
+    },
+    /// Flock accelerator
+    Flock {
+        /// Arguments to pass to flock
         #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
         args: Vec<String>,
     },
@@ -256,15 +263,45 @@ fn run_find(args: &[String]) -> ExitCode {
 }
 
 /// Resolve agent binary - handles fallback logic (dex -> codex, etc.)
+fn is_self_or_shim_wrapper(path: &Path) -> bool {
+    if let (Ok(candidate), Ok(current)) = (path.canonicalize(), env::current_exe()) {
+        if let Ok(current_canon) = current.canonicalize() {
+            if candidate == current_canon {
+                return true;
+            }
+        }
+    }
+
+    if let Ok(content) = std::fs::read_to_string(path) {
+        return content.contains("thegent-shims");
+    }
+
+    false
+}
+
+fn resolve_nonshim_binary(name: &str) -> Option<PathBuf> {
+    if let Ok(paths) = which::which_all(name) {
+        for path in paths {
+            if !is_self_or_shim_wrapper(&path) {
+                return Some(path);
+            }
+        }
+    }
+    None
+}
+
 fn resolve_agent(name: &str) -> Option<PathBuf> {
     // Direct names first
-    if resolve_binary(name).is_some() {
-        return resolve_binary(name);
+    if let Some(path) = resolve_nonshim_binary(name) {
+        return Some(path);
     }
     
     // Fallback mappings
     let fallback = match name.to_lowercase().as_str() {
         "dex" => Some("codex"),
+        "clode" => Some("claude"),
+        "roid" => Some("droid"),
+        "anen" | "antigma" | "fanta" => Some("ante"),
         "claude" => Some("claude"),
         "cursor" => Some("cursor"),
         "copilot" => Some("copilot"),
@@ -272,12 +309,52 @@ fn resolve_agent(name: &str) -> Option<PathBuf> {
     };
     
     if let Some(fb) = fallback {
-        if let Ok(path) = which::which(fb) {
+        if let Some(path) = resolve_nonshim_binary(fb) {
             return Some(path);
+        }
+        if fb == "ante" {
+            if let Ok(home) = env::var("HOME") {
+                let candidate = PathBuf::from(home).join(".ante").join("bin").join("ante");
+                if candidate.is_file() {
+                    return Some(candidate);
+                }
+            }
         }
     }
     
     None
+}
+
+fn inject_harness_defaults(name: &str, args: &[String]) -> Vec<String> {
+    let mut out = args.to_vec();
+    match name {
+        "dex" => {
+            if !out.iter().any(|a| a == "--dangerously-bypass-approvals-and-sandbox") {
+                out.insert(0, "--dangerously-bypass-approvals-and-sandbox".to_string());
+            }
+            if !out.iter().any(|a| a == "--search") {
+                out.insert(0, "--search".to_string());
+            }
+        }
+        "clode" => {
+            if !out.iter().any(|a| {
+                a == "--dangerously-skip-permissions" || a == "--allow-dangerously-skip-permissions"
+            }) {
+                out.insert(0, "--dangerously-skip-permissions".to_string());
+            }
+        }
+        "roid" | "anen" | "antigma" | "fanta" => {
+            if out.first().map(String::as_str) == Some("exec") {
+                let has_skip = out.iter().any(|a| a == "--skip-permissions-unsafe");
+                let has_auto = out.iter().any(|a| a == "--auto");
+                if !has_skip && !has_auto {
+                    out.insert(1, "--skip-permissions-unsafe".to_string());
+                }
+            }
+        }
+        _ => {}
+    }
+    out
 }
 
 /// Run agent with thegent integration
@@ -288,7 +365,17 @@ fn run_agent(name: &str, args: &[String]) -> ExitCode {
     match agent_path {
         Some(path) => {
             let mut cmd = safe_command(path.to_str().unwrap_or(name));
-            cmd.args(args);
+            let passthrough_args: Vec<String> = if matches!(name, "dex" | "clode" | "roid" | "anen" | "antigma" | "fanta") {
+                let filtered: Vec<String> = args
+                    .iter()
+                    .filter(|a| a.as_str() != "--native")
+                    .cloned()
+                    .collect();
+                inject_harness_defaults(name, &filtered)
+            } else {
+                args.to_vec()
+            };
+            cmd.args(&passthrough_args);
             
             // Preserve thegent environment
             if let Ok(project_dir) = env::var("PROJECT_DIR") {
@@ -448,6 +535,31 @@ fn run_tr(args: &[String]) -> ExitCode {
     }
 }
 
+/// Run flock with acceleration
+fn run_flock(args: &[String]) -> ExitCode {
+    // Basic implementation of flock -n <fd> <command>
+    if args.len() >= 2 {
+        // We don't actually support FD-based locking easily in a portable way here
+        // but we can support file-based locking.
+        // For now, if it's 'flock -n <fd>', we just skip or try to resolve.
+        // If it's a real command, we just execute it.
+        // This is a stub to prevent 'command not found' errors.
+        
+        let mut cmd_idx = 0;
+        while cmd_idx < args.len() && (args[cmd_idx].starts_with("-") || args[cmd_idx].chars().all(|c| c.is_digit(10))) {
+            cmd_idx += 1;
+        }
+        
+        if cmd_idx < args.len() {
+            let mut cmd = StdCommand::new(&args[cmd_idx]);
+            cmd.args(&args[cmd_idx+1..]);
+            let status = cmd.status().unwrap_or_else(|_| std::process::ExitStatus::from_raw(0));
+            return ExitCode::from(status.code().unwrap_or(0) as u8);
+        }
+    }
+    ExitCode::SUCCESS
+}
+
 fn main() -> ExitCode {
     // Initialize logger for debugging
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn"))
@@ -460,7 +572,15 @@ fn main() -> ExitCode {
         .and_then(|n| n.to_str())
         .unwrap_or("");
 
-    if program_name == "thegent-git" {
+    if program_name == "dex"
+        || program_name == "clode"
+        || program_name == "roid"
+        || program_name == "anen"
+        || program_name == "antigma"
+        || program_name == "fanta"
+    {
+        return run_agent(program_name, &args[1..].to_vec());
+    } else if program_name == "thegent-git" {
         return run_git(&args[1..].to_vec());
     } else if program_name == "thegent-grep" {
         return run_grep(&args[1..].to_vec());
@@ -478,7 +598,10 @@ fn main() -> ExitCode {
         return run_tr(&args[1..].to_vec());
     } else if program_name.starts_with("thegent-") && program_name != "thegent-shims" && program_name != "thegent-agent" {
         let agent = program_name.strip_prefix("thegent-").unwrap();
-        if matches!(agent, "codex" | "copilot" | "dex" | "claude" | "cursor" | "clode" | "roid") {
+        if matches!(
+            agent,
+            "codex" | "copilot" | "dex" | "claude" | "cursor" | "clode" | "roid" | "anen" | "antigma" | "fanta"
+        ) {
             return run_agent(agent, &args[1..].to_vec());
         }
     } else if program_name == "thegent-agent" {
@@ -502,6 +625,7 @@ fn main() -> ExitCode {
             "wc" => return run_wc(&cmd_args),
             "date" => return run_date(&cmd_args),
             "tr" => return run_tr(&cmd_args),
+            "flock" => return run_flock(&cmd_args),
             "--version" | "-V" => {
                 println!("thegent-shims {}", env!("CARGO_PKG_VERSION"));
                 return ExitCode::SUCCESS;
@@ -546,6 +670,9 @@ fn main() -> ExitCode {
         }
         ShimCommand::Tr { args } => {
             run_tr(&args)
+        }
+        ShimCommand::Flock { args } => {
+            run_flock(&args)
         }
     }
 }

@@ -20,6 +20,15 @@ _WEIGHT_TB2 = 0.7
 _WEIGHT_SWE = 0.2
 _WEIGHT_AIME = 0.1
 _WEIGHT_PARSER = 0.0
+_DEFAULT_TASK_TYPE_WEIGHTS: dict[str, float] = {
+    "agentic_terminal_coding": 0.30,
+    "agentic_coding": 0.25,
+    "agentic_tool_use": 0.20,
+    "reasoning": 0.15,
+    "long_context": 0.05,
+    "multimodal": 0.03,
+    "multilingual": 0.02,
+}
 
 
 def _make_quality_cache() -> MultiLevelCache:
@@ -95,6 +104,95 @@ def _quality_index_from_benchmarks(
     return weight_tb2 * norm_tb2 + weight_swe * norm_swe + weight_aime * norm_aime + _WEIGHT_PARSER * 1.0
 
 
+def _normalize_sparse_benchmark_score(raw_score: float, all_scores: list[float]) -> float:
+    """Normalize benchmark values into [0,1] using benchmark-local min/max."""
+    if not all_scores:
+        return 0.5
+    floor = min(all_scores)
+    ceil = max(all_scores)
+    if ceil <= floor:
+        return 0.5
+    return (raw_score - floor) / (ceil - floor)
+
+
+def _quality_index_from_task_categories(
+    model_id: str,
+    benchmarks: dict,
+    category_weights: dict[str, float] | None = None,
+) -> float | None:
+    """Compute quality index from benchmarks_by_task_type with category weighting."""
+    by_task = benchmarks.get("benchmarks_by_task_type")
+    if not isinstance(by_task, dict) or not by_task:
+        return None
+
+    category_to_ids: dict[str, list[str]] = {}
+    categories = benchmarks.get("benchmark_categories")
+    if isinstance(categories, dict):
+        for category, benchmark_ids in categories.items():
+            if isinstance(benchmark_ids, list):
+                category_to_ids[str(category)] = [str(i) for i in benchmark_ids]
+    else:
+        for bench_id, bench_cfg in by_task.items():
+            if not isinstance(bench_cfg, dict):
+                continue
+            category = str(bench_cfg.get("task_type", "")).strip()
+            if category:
+                category_to_ids.setdefault(category, []).append(str(bench_id))
+
+    if not category_to_ids:
+        return None
+
+    weights = category_weights or _DEFAULT_TASK_TYPE_WEIGHTS
+    weighted_sum = 0.0
+    weight_total = 0.0
+
+    for category, weight in weights.items():
+        if weight <= 0:
+            continue
+        bench_ids = category_to_ids.get(category, [])
+        if not bench_ids:
+            continue
+
+        normalized_scores: list[float] = []
+        for bench_id in bench_ids:
+            bench_cfg = by_task.get(bench_id)
+            if not isinstance(bench_cfg, dict):
+                continue
+            scores = bench_cfg.get("scores")
+            if not isinstance(scores, dict):
+                continue
+
+            raw_value = scores.get(model_id)
+            if raw_value is None:
+                continue
+            try:
+                raw_score = float(raw_value)
+            except (TypeError, ValueError):
+                continue
+
+            all_scores: list[float] = []
+            for value in scores.values():
+                if value is None:
+                    continue
+                try:
+                    all_scores.append(float(value))
+                except (TypeError, ValueError):
+                    continue
+
+            normalized_scores.append(_normalize_sparse_benchmark_score(raw_score, all_scores))
+
+        if not normalized_scores:
+            continue
+
+        category_score = sum(normalized_scores) / len(normalized_scores)
+        weighted_sum += weight * category_score
+        weight_total += weight
+
+    if weight_total <= 0:
+        return None
+    return weighted_sum / weight_total
+
+
 def get_model_quality_index(
     model_id: str,
     settings: ThegentSettings | None = None,
@@ -114,6 +212,8 @@ def get_model_quality_index(
     w_swe = getattr(settings, "quality_index_weight_swe", _WEIGHT_SWE) if settings else _WEIGHT_SWE
     w_aime = getattr(settings, "quality_index_weight_aime", _WEIGHT_AIME) if settings else _WEIGHT_AIME
     idx = _quality_index_from_benchmarks(canonical, benchmarks, w_tb2, w_swe, w_aime)
+    if idx is None:
+        idx = _quality_index_from_task_categories(canonical, benchmarks)
     if idx is not None:
         return max(0.0, min(1.0, idx))
 
@@ -158,6 +258,8 @@ def get_model_provider_quality_indices(
     result: dict[str, dict[str, float]] = {}
     for model_id, routes in _iter_catalog_routes():
         base_idx = _quality_index_from_benchmarks(model_id, benchmarks, w_tb2, w_swe, w_aime)
+        if base_idx is None:
+            base_idx = _quality_index_from_task_categories(model_id, benchmarks)
         if base_idx is not None:
             base_idx = max(0.0, min(1.0, base_idx))
 
@@ -202,6 +304,16 @@ _ROLE_TO_BENCHMARK: dict[str, tuple[str, ...]] = {
     "swe_bench": ("coding", "tool_use"),
     "aime": ("reasoning", "long_context", "writing_eval"),
 }
+_ROLE_TO_TASK_TYPE_KEYS: dict[str, tuple[str, ...]] = {
+    "agentic_terminal_coding": ("instruction_following", "coherence"),
+    "agentic_coding": ("coding", "writing_eval"),
+    "agentic_tool_use": ("tool_use", "safety"),
+    "reasoning": ("reasoning",),
+    "long_context": ("long_context",),
+    "multimodal": ("multimodal",),
+    "multilingual": ("multilingual",),
+    "expert_tasks": ("expert_tasks",),
+}
 
 
 def _role_weights_to_benchmark_weights(
@@ -217,6 +329,22 @@ def _role_weights_to_benchmark_weights(
     return (w_tb2 / total, w_swe / total, w_aime / total)
 
 
+def _role_weights_to_task_type_weights(role_weights: dict[str, float]) -> dict[str, float]:
+    """Map role benchmark weights to categorized task-type weights."""
+    mapped: dict[str, float] = {}
+    for category, source_keys in _ROLE_TO_TASK_TYPE_KEYS.items():
+        direct = float(role_weights.get(category, 0.0))
+        indirect = sum(float(role_weights.get(k, 0.0)) for k in source_keys)
+        total = direct + indirect
+        if total > 0:
+            mapped[category] = total
+
+    total_weight = sum(mapped.values())
+    if total_weight <= 0:
+        return {}
+    return {k: v / total_weight for k, v in mapped.items()}
+
+
 def get_model_quality_for_role(
     model_id: str,
     role_benchmark_weights: dict[str, float] | None,
@@ -229,12 +357,17 @@ def get_model_quality_for_role(
     """
     if not role_benchmark_weights:
         return get_model_quality_index(model_id, settings, benchmarks_path)
-    w_tb2, w_swe, w_aime = _role_weights_to_benchmark_weights(role_benchmark_weights)
     path = Path(benchmarks_path) if benchmarks_path else _resolve_benchmarks_path(settings)
     benchmarks = _load_benchmarks(path)
     from thegent.models.catalog import normalize_model_id
 
     canonical = normalize_model_id(model_id)
+    task_type_weights = _role_weights_to_task_type_weights(role_benchmark_weights)
+    if task_type_weights:
+        idx = _quality_index_from_task_categories(canonical, benchmarks, task_type_weights)
+        if idx is not None:
+            return max(0.0, min(1.0, idx))
+    w_tb2, w_swe, w_aime = _role_weights_to_benchmark_weights(role_benchmark_weights)
     idx = _quality_index_from_benchmarks(canonical, benchmarks, w_tb2, w_swe, w_aime)
     if idx is not None:
         return max(0.0, min(1.0, idx))
@@ -270,6 +403,8 @@ def get_all_model_quality_indices(
     result: dict[str, float] = {}
     for model_id, routes in _iter_catalog_routes():
         idx = _quality_index_from_benchmarks(model_id, benchmarks, w_tb2, w_swe, w_aime)
+        if idx is None:
+            idx = _quality_index_from_task_categories(model_id, benchmarks)
         if idx is not None:
             result[model_id] = max(0.0, min(1.0, idx))
         elif routes:

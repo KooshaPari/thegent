@@ -82,5 +82,6 @@ class RustMAIFManager:
                 str(self.public_key_path),
             ],
             capture_output=True,
+            check=False,
         )
         return result.returncode == 0

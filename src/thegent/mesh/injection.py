@@ -4,7 +4,6 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 class ShellInjection:
@@ -40,15 +39,13 @@ class ShellInjection:
         """Detect if agent shell is ready for input (SCLI-P9.3)."""
         try:
             # Capture last few lines of tmux session
-            output = subprocess.check_output(
-                ["tmux", "capture-pane", "-p", "-t", self.session_name],
-                text=True
-            )
+            output = subprocess.check_output(["tmux", "capture-pane", "-p", "-t", self.session_name], text=True)
             lines = output.splitlines()
             if not lines:
                 return False
 
             import re
+
             return bool(re.search(prompt_pattern, lines[-1]))
         except subprocess.CalledProcessError:
             return False

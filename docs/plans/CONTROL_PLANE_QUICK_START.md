@@ -11,32 +11,32 @@ The Control Plane is a long-running service that manages configuration, session 
 
 ## Getting Started
 
-### 1. Start the Control Plane
+### 1. Start the Stack (Recommended)
 
-You can start the control plane manually:
+The most intuitive way to start the Control Plane and its associated services (MCP, CLIProxy) is using the unified `up` command:
 
 ```bash
-thegent control-plane serve --port 3848
+thegent up
 ```
 
-Or via `process-compose` (recommended):
+This starts the entire service stack in the background using `process-compose`.
+
+### 2. Manual Control (Optional)
+
+If you only need the Control Plane for specific debugging:
 
 ```bash
-thegent control-plane start
-```
+# Start just the CP stack
+thegent cp start
 
-### 2. Configure the CLI to use it
-
-Set the `THGENT_CONTROL_PLANE_URL` environment variable:
-
-```bash
-export THGENT_CONTROL_PLANE_URL=http://127.0.0.1:3848
+# Or run the CP server in foreground
+thegent cp run --port 3848
 ```
 
 ### 3. Verify the setup
 
 ```bash
-thegent control-plane status
+thegent cp status
 thegent config show
 ```
 
@@ -54,12 +54,10 @@ echo "default_timeout: 1800" > ~/.thegent/tenants/acme.yaml
 ### 2. Use the tenant in CLI
 
 ```bash
-thegent run --tenant acme "Do something"
-```
+# Run a task with tenant context
+thegent run --tenant acme "Summarize our latest plan"
 
-Or show its resolved config:
-
-```bash
+# Or show its resolved config
 thegent config show --tenant acme
 ```
 

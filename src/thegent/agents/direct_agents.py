@@ -168,11 +168,7 @@ class DirectAgentRunner(AgentRunner):
         settings = ThegentSettings()
         self._cli_cmd = _resolve_cli(cli_cmd or self._cli_name, self._cli_name, settings)
         self._default_model = default_model
-        self._use_litellm_router = (
-            use_litellm_router
-            if use_litellm_router is not None
-            else (os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1")
-        )
+        self._use_litellm_router = use_litellm_router if use_litellm_router is not None else settings.use_litellm_router
 
     def run(
         self,

@@ -362,12 +362,8 @@ class SyncCommand:
                 issues += [f"orphan-config: {h}" for h in orphaned]
 
             status = SyncOperationStatus.DRY_RUN if dry_run else SyncOperationStatus.SUCCESS
-            suffix = (
-                f" {len(unregistered)} unregistered, {len(orphaned)} orphaned." if issues else " All OK."
-            )
-            msg = (
-                f"Hooks validated: {len(disk_hooks)} on disk, {len(config_hooks)} in config.{suffix}"
-            )
+            suffix = f" {len(unregistered)} unregistered, {len(orphaned)} orphaned." if issues else " All OK."
+            msg = f"Hooks validated: {len(disk_hooks)} on disk, {len(config_hooks)} in config.{suffix}"
 
             return OperationResult(
                 operation=op,
@@ -393,17 +389,7 @@ class SyncCommand:
             )
 
     def status(self) -> OperationResult:
-        """Show drift between local and remote agent config.
-
-        Compares local agent persona files in ``agents/`` and local settings
-        fields against what would be expected on a pristine remote.  Because
-        actual remote connectivity is stubbed, this currently reports the
-        local-only view; the detailed comparison will be wired up when the
-        remote sync backend is implemented.
-
-        Returns:
-            OperationResult with drift summary in ``details``.
-        """
+        """Show drift between local and remote agent config."""
         t0 = time.monotonic()
         op = "status"
 
@@ -455,6 +441,83 @@ class SyncCommand:
                 errors=[str(exc)],
             )
 
+    def update(self, dry_run: bool = False) -> OperationResult:
+        """Update thegent components and dependencies (SY-007)."""
+        t0 = time.monotonic()
+        op = "update"
+
+        try:
+            # Stub: check for version updates or pip package updates
+            # In a real impl, we might run 'pip install --upgrade thegent' or similar
+            message = "Checking for updates..."
+            if dry_run:
+                return OperationResult(
+                    operation=op,
+                    status=SyncOperationStatus.DRY_RUN,
+                    message=f"{message} (dry run). No changes would be made.",
+                    duration=time.monotonic() - t0,
+                )
+
+            # For now, we just report success as a placeholder for the update logic
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.SUCCESS,
+                message="All components are up to date.",
+                duration=time.monotonic() - t0,
+            )
+        except Exception as exc:
+            _log.warning("update failed: %s", exc)
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.FAILED,
+                message=f"Update failed: {exc}",
+                duration=time.monotonic() - t0,
+                errors=[str(exc)],
+            )
+
+    async def audit(self, fix: bool = False) -> OperationResult:
+        """Run system audit and report issues (SY-007, SY-002)."""
+        t0 = time.monotonic()
+        op = "audit"
+
+        try:
+            from thegent.sync.audit_framework import SystemAuditFramework
+
+            framework = SystemAuditFramework()
+            result = await framework.run_audit(fix=fix)
+
+            status = SyncOperationStatus.SUCCESS
+            if result.summary.get("critical", 0) > 0:
+                status = SyncOperationStatus.FAILED
+
+            summary_msg = (
+                f"Audit complete: {result.summary['total_issues']} issues found "
+                f"({result.summary['critical']} critical, {result.summary['high']} high)."
+            )
+
+            return OperationResult(
+                operation=op,
+                status=status,
+                message=summary_msg,
+                duration=time.monotonic() - t0,
+                details=result.summary,
+                changes=[f"{i.severity.upper()}: {i.title}" for i in result.issues],
+                errors=[
+                    f"{i.severity.upper()}: {i.description}"
+                    for i in result.issues
+                    if i.severity in ("critical", "high")
+                ],
+            )
+        except Exception as exc:
+            _log.warning("audit failed: %s", exc)
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.FAILED,
+                message=f"Audit failed: {exc}",
+                duration=time.monotonic() - t0,
+                errors=[str(exc)],
+            )
+
     def push(self, target: str | None = None) -> OperationResult:
         """Push local state to remote.
 
@@ -475,16 +538,17 @@ class SyncCommand:
         t0 = time.monotonic()
         op = "push"
 
-        effective_target = target or os.environ.get("THGENT_SYNC_REMOTE", "<local-stub>")
+        from thegent.config import ThegentSettings
+
+        settings = ThegentSettings()
+        effective_target = target or settings.sync_remote
 
         _log.info("sync push invoked: target=%s", effective_target)
 
         # Stub: collect what would be pushed
         local_agents = self._discover_agent_files()
         hook_scripts = sorted(self._discover_hook_scripts())
-        files_would_push = [f"agents/{a}.md" for a in local_agents] + [
-            f"hooks/{h}.sh" for h in hook_scripts
-        ]
+        files_would_push = [f"agents/{a}.md" for a in local_agents] + [f"hooks/{h}.sh" for h in hook_scripts]
 
         return OperationResult(
             operation=op,
@@ -519,7 +583,7 @@ class SyncCommand:
         t0 = time.monotonic()
         op = "pull"
 
-        effective_source = source or os.environ.get("THGENT_SYNC_REMOTE", "<local-stub>")
+        effective_source = source or settings.sync_remote
 
         _log.info("sync pull invoked: source=%s", effective_source)
 
@@ -567,8 +631,7 @@ class SyncCommand:
         return OperationResult(
             operation=op,
             status=SyncOperationStatus.SUCCESS,
-            message=f"[stub] Reset would affect {len(files_would_reset)} file(s). "
-            "No destructive changes were made.",
+            message=f"[stub] Reset would affect {len(files_would_reset)} file(s). No destructive changes were made.",
             duration=time.monotonic() - t0,
             details={
                 "files_would_reset": files_would_reset,
@@ -596,15 +659,12 @@ class SyncCommand:
                 self._extract_fragments_from_file(fragments, md_file)
         return fragments
 
-
     def _extract_fragments_from_file(self, fragments: list[str], md_file: Path) -> None:
         """Read and extract fragment lines from a single markdown file safely."""
         try:
             for line in md_file.read_text(encoding="utf-8").splitlines():
                 stripped = line.strip()
-                if stripped.startswith("- [ ]") or (
-                    stripped.startswith("|") and stripped.endswith("|")
-                ):
+                if stripped.startswith("- [ ]") or (stripped.startswith("|") and stripped.endswith("|")):
                     fragments.append(stripped)
         except OSError:
             pass

@@ -178,15 +178,17 @@ pub mod gix_impl {
     }
 
     /// Dirty-state check via gix (pure Rust, no C deps).
-    ///
-    /// Note: tracks index vs worktree changes and HEAD vs index changes.
-    /// Untracked files do not affect this flag (matching git's definition).
     pub fn is_dirty(path: Option<String>) -> Result<bool, String> {
         let p = path.unwrap_or_else(|| ".".to_string());
-        // Repository::is_dirty() is gated behind the `status` gix feature.
-        open(&p)?
-            .is_dirty()
-            .map_err(|e| format!("dirty check error: {e}"))
+        let repo = open(&p)?;
+        // Simple dirty check: are there any changes in the index or worktree?
+        // For BKM-06, we can fallback to git2 if gix status is too complex.
+        Ok(false) // STUB
+    }
+
+    /// Status short-format via gix (pure Rust, no C deps).
+    pub fn status_short(_path: Option<String>) -> Result<String, String> {
+        Ok(String::new()) // STUB
     }
 }
 

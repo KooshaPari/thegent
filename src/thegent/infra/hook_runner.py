@@ -3,7 +3,6 @@
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 from thegent.config import get_settings
 from thegent.infra.shell_detection import ShellType, get_preferred_shell, get_shell_executable
@@ -31,29 +30,17 @@ def run_hook(hook_path: Path, input_data: str | None = None, timeout: int = 60) 
 
     # 4. Execute
     try:
-        result = subprocess.run(
-            cmd,
-            input=input_data,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            check=False
-        )
+        result = subprocess.run(cmd, input=input_data, capture_output=True, text=True, timeout=timeout, check=False)
         return result
     except subprocess.TimeoutExpired as e:
         return subprocess.CompletedProcess(
             args=cmd,
             returncode=124,
             stdout=e.stdout.decode() if e.stdout else "",
-            stderr=f"Hook timed out after {timeout}s\n" + (e.stderr.decode() if e.stderr else "")
+            stderr=f"Hook timed out after {timeout}s\n" + (e.stderr.decode() if e.stderr else ""),
         )
     except Exception as e:
-        return subprocess.CompletedProcess(
-            args=cmd,
-            returncode=1,
-            stdout="",
-            stderr=f"Failed to run hook: {e}"
-        )
+        return subprocess.CompletedProcess(args=cmd, returncode=1, stdout="", stderr=f"Failed to run hook: {e}")
 
 
 def main():
