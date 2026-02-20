@@ -1,6 +1,5 @@
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
-import { OramaPlugin } from '@orama/plugin-vitepress'
 import { imagetools } from 'vite-imagetools'
 import { crossProjectLinks } from './plugins/cross-project-links'
 import { contentTabsPlugin } from './plugins/content-tabs'
@@ -11,10 +10,15 @@ import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const markdownItKatex = require('markdown-it-katex')
 const markdownItEmoji = require('markdown-it-emoji').full
+const algoliaAppId = process.env.VITEPRESS_ALGOLIA_APP_ID
+const algoliaApiKey = process.env.VITEPRESS_ALGOLIA_API_KEY
+const algoliaIndexName = process.env.VITEPRESS_ALGOLIA_INDEX_NAME
+const hasAlgolia = Boolean(algoliaAppId && algoliaApiKey && algoliaIndexName)
 
 const config = defineConfig({
   title: 'thegent',
   description: 'AI Agent Governance & MCP Server',
+  base: '/thegent/',
   appearance: true,
   lastUpdated: true,
 
@@ -23,6 +27,7 @@ const config = defineConfig({
     'docset/**',
     'plans/**',
     'research/**',
+    'reference/api/**',
   ],
 
   // Disable dead link check (links are external or cross-project)
@@ -30,15 +35,8 @@ const config = defineConfig({
 
   vite: {
     plugins: [
-      OramaPlugin({
-        // Orama search plugin configuration
-        // Automatically indexes all markdown content
-        // Supports full-text search with typo tolerance
-        // OSS, self-hosted, no external services required
-      }),
+      // VitePress bundles its own vite; cast required to resolve dual-vite Plugin type mismatch
       imagetools({
-        // Image optimization: WebP/AVIF conversion, lazy loading
-        // Usage: ![Image](./image.jpg?format=webp&w=800)
         defaultDirectives: (url) => {
           if (url.searchParams.has('format')) {
             return new URLSearchParams({
@@ -47,9 +45,11 @@ const config = defineConfig({
           }
           return new URLSearchParams()
         }
-      })
+      }) as any
     ],
     build: {
+      outDir: '../docs-dist',
+      assetsDir: 'assets',
       rollupOptions: {
         output: {
           manualChunks: (id) => {
@@ -61,9 +61,6 @@ const config = defineConfig({
               }
               if (id.includes('vue')) {
                 return 'vue'
-              }
-              if (id.includes('@orama')) {
-                return 'orama'
               }
               if (id.includes('markdown-it')) {
                 return 'markdown'
@@ -79,7 +76,7 @@ const config = defineConfig({
   markdown: {
     config: (md) => {
       md.use(crossProjectLinks)
-      // md.use(contentTabsPlugin)
+      md.use(contentTabsPlugin)
       md.use(videoEmbedPlugin, {
         controls: true,
         width: '100%',
@@ -129,25 +126,22 @@ const config = defineConfig({
     sidebar: sidebar,
 
     socialLinks: [],
-    search: {
-      provider: 'orama',
-      options: {
-        // Orama search configuration
-        // Indexes all markdown content automatically
-        // Supports full-text, vector, and hybrid search
-      }
-    },
+    search: hasAlgolia
+      ? {
+          provider: 'algolia',
+          options: {
+            appId: algoliaAppId,
+            apiKey: algoliaApiKey,
+            indexName: algoliaIndexName,
+          },
+        }
+      : { provider: 'local' },
     outline: 'deep',
 
     editLink: {
       pattern: 'https://github.com/kooshapari/temp-PRODVERCEL/485/kush/thegent/edit/main/docs/:path',
       text: 'Edit this page on GitHub'
     },
-  },
-
-  build: {
-    outDir: '../docs-dist',
-    assetsDir: 'assets',
   },
 
   // Mermaid configuration
