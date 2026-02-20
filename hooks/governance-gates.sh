@@ -146,9 +146,9 @@ _file_age_minutes() {
 }
 
 _append_spiral_metric() {
-  local status="$1"
-  local severity="$2"
-  local reason="$3"
+  local metric_status="$1"
+  local metric_severity="$2"
+  local metric_reason="$3"
   local total="$4"
   local failed="$5"
   local flaky="$6"
@@ -168,7 +168,7 @@ _append_spiral_metric() {
   local metrics_file="$VERIFY_DIR/regression-spiral-metrics.jsonl"
   mkdir -p "$VERIFY_DIR" 2>/dev/null || true
   printf '{"generated_at":"%s","session_id":"%s","status":"%s","severity":"%s","reason":"%s","metrics":{"total":%d,"failed":%d,"flaky":%d,"missing_pairs":%d,"missing_types":%d,"env_missing":%d,"e2e_missing":%d,"stale_test_evidence":%d,"stale_build_evidence":%d,"stale_e2e_evidence":%d},"violations":%d,"streak":%d,"interrupt":%s,"pressure_score":%s,"policy_band":"%s"}\n' \
-    "$now" "${SESSION_ID:-unknown}" "$status" "$severity" "$reason" \
+    "$now" "${SESSION_ID:-unknown}" "$metric_status" "$metric_severity" "$metric_reason" \
     "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" \
     "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" \
     "$violations" "$streak" "$interrupt" "$pressure_score" "$policy_band" >> "$metrics_file"
@@ -560,21 +560,37 @@ gate_agent_claim_validator() {
     return 0
   fi
 
-  # Claim transitions: observation/claim/decision/risk must have evidence
-  local bad_stmts
-  bad_stmts="$($JQ_CMD -r '
-    [.statements[]? | select(.kind | IN("observation","claim","decision","risk")) | select((.evidence | type != "array") or (.evidence | length == 0))]
-    | length
-  ' "$stmt" 2>/dev/null || echo 0)"
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for agent claim evaluator" "${QA_AGENT_CLAIM_FAIL_CLOSED:-true}"
+    return 0
+  fi
 
-  if [[ "${bad_stmts:-0}" -gt 0 ]]; then
+  local eval_rc=0
+  if hook_rust_runtime_invoke agent-claim-eval --statement "$stmt" --report "$report" >/dev/null 2>&1; then
+    eval_rc=0
+  else
+    eval_rc=$?
+  fi
+
+  if [[ "$eval_rc" -eq 0 ]]; then
+    _gate_pass "$name"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 3 ]]; then
+    write_na_report "$report" "$name"
+    _gate_na "$name" "no agent-statement.json"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local bad_stmts
+    bad_stmts="$($JQ_CMD -r '.error_count // 1' "$report" 2>/dev/null || echo 1)"
     write_fail_report "$report" "$name" "$bad_stmts" "Claims/observations/decisions/risks require evidence array"
     _gate_fail "$name" "claims without evidence: $bad_stmts" "${QA_AGENT_CLAIM_FAIL_CLOSED:-true}"
     return 0
   fi
-
-  write_pass_report "$report" "$name"
-  _gate_pass "$name"
+  write_fail_report "$report" "$name" 1 "agent claim evaluator error"
+  _gate_fail "$name" "agent claim evaluator failed" "${QA_AGENT_CLAIM_FAIL_CLOSED:-true}"
   return 0
 }
 

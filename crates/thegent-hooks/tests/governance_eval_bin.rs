@@ -31,6 +31,7 @@ fn help_lists_new_governance_evaluators() {
     assert!(stdout.contains("flake-quarantine-eval"));
     assert!(stdout.contains("verifier-dispute-eval"));
     assert!(stdout.contains("claim-lifecycle-eval"));
+    assert!(stdout.contains("agent-claim-eval"));
 }
 
 #[test]
@@ -484,6 +485,56 @@ fn claim_lifecycle_passes_with_valid_refs() {
         stmt.to_str().expect("stmt path"),
         "--project-dir",
         project.to_str().expect("project path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert!(out.status.success());
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(true));
+}
+
+#[test]
+fn agent_claim_fails_when_claim_has_no_evidence() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let stmt = tmp.path().join("agent-statement.json");
+    let report = tmp.path().join("agent-claim-report.json");
+    fs::write(
+        &stmt,
+        r#"{"statements":[{"kind":"claim","evidence":[]},{"kind":"decision"}]}"#,
+    )
+    .expect("write statement");
+
+    let out = run(&[
+        "agent-claim-eval",
+        "--statement",
+        stmt.to_str().expect("stmt path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(2));
+}
+
+#[test]
+fn agent_claim_passes_when_evidence_present() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let stmt = tmp.path().join("agent-statement.json");
+    let report = tmp.path().join("agent-claim-report.json");
+    fs::write(
+        &stmt,
+        r#"{"statements":[{"kind":"claim","evidence":["file://docs/a.md"]},{"kind":"observation","evidence":["url://x"]}]}"#,
+    )
+    .expect("write statement");
+
+    let out = run(&[
+        "agent-claim-eval",
+        "--statement",
+        stmt.to_str().expect("stmt path"),
         "--report",
         report.to_str().expect("report path"),
     ]);
