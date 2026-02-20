@@ -444,7 +444,7 @@ def install_mise(
         elif "fish" in shell:
             hook_cmd = "mise activate fish | source"
             fish_config = Path.home() / ".config" / "fish" / "config.fish"
-            shell_config_file = fish_config if fish_config.exists() else fish_config
+            shell_config_file = fish_config if fish_config.exists() else fish_config  # noqa: RUF034 -- explicit conditional for clarity
         elif "tcsh" in shell or "csh" in shell:
             hook_cmd = "eval `mise activate tcsh`"
             tcsh_config = Path.home() / ".tcshrc"
@@ -894,6 +894,8 @@ class BundleItem(BaseModel):
     source: str
     target: str
     mode: str = ""
+    pin: str | None = None
+    checksum: str | None = None
 
 
 class BundleManifest(BaseModel):
@@ -987,6 +989,14 @@ def validate_bundle_manifest(bundle_manifest: Path | str | None = None) -> tuple
                     issues.append(f"Bundle '{name}' item {i} missing 'source'")
                 if "target" not in item:
                     issues.append(f"Bundle '{name}' item {i} missing 'target'")
+                source = item.get("source")
+                if isinstance(source, str) and _source_requires_pin_and_checksum(source):
+                    pin = item.get("pin")
+                    checksum = item.get("checksum")
+                    if not isinstance(pin, str) or not pin.strip():
+                        issues.append(f"Bundle '{name}' item {i} requires non-empty 'pin' for external source")
+                    if not isinstance(checksum, str) or not checksum.strip():
+                        issues.append(f"Bundle '{name}' item {i} requires non-empty 'checksum' for external source")
 
     return len(issues) == 0, issues
 
@@ -995,6 +1005,13 @@ def _coerce_path(value: str) -> Path:
     """Normalize and expand a user path token."""
 
     return Path(os.path.expandvars(value)).expanduser()
+
+
+def _source_requires_pin_and_checksum(source: str) -> bool:
+    """Determine whether a source should include immutable pin and checksum metadata."""
+
+    normalized = source.strip().lower()
+    return normalized.startswith(("http://", "https://", "git+", "github:"))
 
 
 def load_bundle_manifest(path: Path | str | None = None) -> dict[str, list[dict[str, Any]]]:
@@ -1054,6 +1071,12 @@ def load_bundle_manifest(path: Path | str | None = None) -> dict[str, list[dict[
                 item["mode"] = mode.strip().lower()
             else:
                 item["mode"] = ""
+            pin = raw.get("pin")
+            if isinstance(pin, str) and pin.strip():
+                item["pin"] = pin.strip()
+            checksum = raw.get("checksum")
+            if isinstance(checksum, str) and checksum.strip():
+                item["checksum"] = checksum.strip()
             items.append(item)
 
         if items:
@@ -1082,6 +1105,8 @@ def _coerce_bundle_items(raw: dict[str, list[dict[str, Any]]]) -> BundleManifest
                     source=source.strip(),
                     target=target.strip(),
                     mode=str(item.get("mode", "")).strip().lower(),
+                    pin=str(item.get("pin")).strip() if isinstance(item.get("pin"), str) else None,
+                    checksum=str(item.get("checksum")).strip() if isinstance(item.get("checksum"), str) else None,
                 )
             )
         if parsed_items:
@@ -1744,7 +1769,7 @@ def run_install_system(
         bin_dir.mkdir(parents=True, exist_ok=True)
         hooks_dir.mkdir(parents=True, exist_ok=True)
         etc_dir.mkdir(parents=True, exist_ok=True)
-        try:
+        try:  # noqa: SIM105 -- explicit try/except preferred for clarity
             var_dir.mkdir(parents=True, exist_ok=True)
         except OSError:
             pass  # May need root for /var/lib

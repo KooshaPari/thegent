@@ -25,6 +25,11 @@ uv run thegent doctor --runtime
 
 # Network diagnostics
 uv run thegent doctor --network
+
+# Toolchain manager sanity checks
+mise doctor
+uv --version
+brew bundle check
 ```
 
 ## What It Checks
@@ -93,6 +98,24 @@ brew install git ripgrep fd jq
 
 # Or via package manager (Linux)
 sudo apt-get install git ripgrep fd-find jq
+```
+
+### Manager Drift
+
+**Problem**: Runtime versions or tooling differ across devices.
+
+**Solution**:
+```bash
+# Validate runtime pins and shell activation
+mise doctor
+mise current
+
+# Validate Python tooling path/version
+uv --version
+uv run python --version
+
+# Validate host package set (macOS)
+brew bundle check
 ```
 
 ## Related Tasks

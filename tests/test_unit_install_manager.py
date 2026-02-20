@@ -26,6 +26,7 @@ from thegent.install import (
     run_wizard,
     should_exclude,
     smart_copy_file,
+    validate_bundle_manifest,
 )
 
 pytestmark = pytest.mark.unit
@@ -773,6 +774,55 @@ class TestBundleManifestLoader:
                     cwd=tmp_path,
                     fallback_mode=InstallMode.SMART,
                 )
+
+    def test_validate_bundle_manifest_requires_pin_checksum_for_external_sources(self, tmp_path) -> None:
+        """External (URL/git) sources must include immutable pin and checksum metadata."""
+        manifest = tmp_path / "bundles.json"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "bundles": {
+                        "external-tools": {
+                            "items": [
+                                {
+                                    "source": "https://example.com/tool.tar.gz",
+                                    "target": "{home}/.tools/tool.tar.gz",
+                                }
+                            ]
+                        }
+                    }
+                }
+            )
+        )
+        ok, issues = validate_bundle_manifest(manifest)
+        assert ok is False
+        assert any("requires non-empty 'pin'" in issue for issue in issues)
+        assert any("requires non-empty 'checksum'" in issue for issue in issues)
+
+    def test_validate_bundle_manifest_accepts_pin_checksum_for_external_sources(self, tmp_path) -> None:
+        """External sources validate when pin + checksum are provided."""
+        manifest = tmp_path / "bundles.json"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "bundles": {
+                        "external-tools": {
+                            "items": [
+                                {
+                                    "source": "github:org/repo//path?ref=v1.2.3",
+                                    "target": "{home}/.tools/tool",
+                                    "pin": "v1.2.3",
+                                    "checksum": "sha256:abc123",
+                                }
+                            ]
+                        }
+                    }
+                }
+            )
+        )
+        ok, issues = validate_bundle_manifest(manifest)
+        assert ok is True
+        assert issues == []
 
 
 # ---------------------------------------------------------------------------

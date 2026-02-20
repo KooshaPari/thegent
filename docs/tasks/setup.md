@@ -22,7 +22,7 @@ task setup --no-polyglot
 
 ## What It Does
 
-1. **Dependencies**: Installs system dependencies via Homebrew
+1. **Dependencies**: Installs system dependencies via package manager (Homebrew on macOS via `Brewfile`)
 2. **Python Environment**: Sets up Python virtual environment with `uv sync`
 3. **Configuration**: Creates `.env` file from `.env.example` if it doesn't exist
 4. **CLIProxy**: Builds and configures CLIProxyAPIPlus
@@ -30,6 +30,11 @@ task setup --no-polyglot
 6. **Shims**: Installs tool shims to `~/.local/bin`
 7. **Shell Integration**: Configures shell integration
 8. **Health Check**: Runs `thegent doctor` to verify setup
+
+Runtime policy note:
+
+- Prefer `mise` for runtime version pinning (`.mise.toml`) and `uv` for Python dependencies.
+- `task setup` remains the canonical project bootstrap entrypoint.
 
 ## Dependencies
 
