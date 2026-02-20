@@ -45,7 +45,7 @@ enum ShimCommand {
     },
     /// agent: Agent invocation shim
     Agent {
-        /// Agent name (codex, copilot, dex, claude, cursor)
+        /// Agent name (codex, copilot, dex, claude, cursor, clode, roid, fanta)
         name: String,
         /// Arguments to pass to the agent
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
@@ -617,6 +617,14 @@ fn main() -> ExitCode {
         let cmd = &args[1];
         let cmd_args = args[2..].to_vec();
         match cmd.as_str() {
+            "agent" => {
+                if args.len() > 2 {
+                    let agent_name = &args[2];
+                    return run_agent(agent_name, &args[3..].to_vec());
+                }
+                eprintln!("thegent-shims: missing agent name");
+                return ExitCode::from(2);
+            }
             "git" => return run_git(&cmd_args),
             "grep" => return run_grep(&cmd_args),
             "find" => return run_find(&cmd_args),
