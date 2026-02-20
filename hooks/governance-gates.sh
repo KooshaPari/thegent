@@ -17,16 +17,16 @@ set -euo pipefail
 HOOK_NAME="GOVERNANCE-GATES"
 # Get script directory in a cross-shell compatible way
 if [ -n "${ZSH_VERSION:-}" ]; then
-  _SCRIPT_DIR="${0:h}"
+  _GG_SCRIPT_DIR="${0:h}"
 elif [ -n "${BASH_SOURCE:-}" ]; then
-  _SCRIPT_DIR="${BASH_SOURCE[0]%/*}"
+  _GG_SCRIPT_DIR="${BASH_SOURCE[0]%/*}"
 else
-  _SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+  _GG_SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 fi
 # shellcheck source=./lib/common.sh
-source "${_SCRIPT_DIR}/lib/common.sh"
+source "${_GG_SCRIPT_DIR}/lib/common.sh"
 # shellcheck source=./lib/spiral-config.sh
-source "${_SCRIPT_DIR}/lib/spiral-config.sh"
+source "${_GG_SCRIPT_DIR}/lib/spiral-config.sh"
 hook_init
 read_quality_config
 
@@ -162,14 +162,16 @@ _append_spiral_metric() {
   local violations="${14}"
   local streak="${15}"
   local interrupt="${16}"
+  local pressure_score="${17}"
+  local policy_band="${18}"
 
   local metrics_file="$VERIFY_DIR/regression-spiral-metrics.jsonl"
   mkdir -p "$VERIFY_DIR" 2>/dev/null || true
-  printf '{"generated_at":"%s","session_id":"%s","status":"%s","severity":"%s","reason":"%s","metrics":{"total":%d,"failed":%d,"flaky":%d,"missing_pairs":%d,"missing_types":%d,"env_missing":%d,"e2e_missing":%d,"stale_test_evidence":%d,"stale_build_evidence":%d,"stale_e2e_evidence":%d},"violations":%d,"streak":%d,"interrupt":%s}\n' \
+  printf '{"generated_at":"%s","session_id":"%s","status":"%s","severity":"%s","reason":"%s","metrics":{"total":%d,"failed":%d,"flaky":%d,"missing_pairs":%d,"missing_types":%d,"env_missing":%d,"e2e_missing":%d,"stale_test_evidence":%d,"stale_build_evidence":%d,"stale_e2e_evidence":%d},"violations":%d,"streak":%d,"interrupt":%s,"pressure_score":%s,"policy_band":"%s"}\n' \
     "$now" "${SESSION_ID:-unknown}" "$status" "$severity" "$reason" \
     "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" \
     "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" \
-    "$violations" "$streak" "$interrupt" >> "$metrics_file"
+    "$violations" "$streak" "$interrupt" "$pressure_score" "$policy_band" >> "$metrics_file"
 }
 
 # Helper: check if a delivery model matches
@@ -792,8 +794,10 @@ gate_regression_spiral_guard() {
   # Persistent streak tracking: continuous interruption if spiral keeps growing.
   local streak_file="$VERIFY_DIR/regression-spiral-state.json"
   local prev_streak=0
+  local prev_violations=0
   if [[ -f "$streak_file" ]]; then
     prev_streak="$($JQ_CMD -r '.streak // 0' "$streak_file" 2>/dev/null || echo 0)"
+    prev_violations="$($JQ_CMD -r '.prev_violations // .violations // 0' "$streak_file" 2>/dev/null || echo 0)"
   fi
   local streak=0
   if (( violations > 0 )); then
@@ -802,7 +806,58 @@ gate_regression_spiral_guard() {
     streak=0
   fi
 
-  printf '{"generated_at":"%s","streak":%d,"violations":%d}\n' "$now" "$streak" "$violations" > "$streak_file"
+  local breach_rate=0
+  (( violations > 0 )) && breach_rate=1
+
+  local interrupt_rate=0
+  if [[ "$should_interrupt" == "true" ]]; then
+    interrupt_rate=1
+  fi
+
+  local stale_evidence_rate
+  stale_evidence_rate="$(awk -v test="$stale_test_evidence" -v build="$stale_build_evidence" -v e2e="$stale_e2e_evidence" 'BEGIN { printf "%.6f", (test + build + e2e) / 3.0 }')"
+
+  local streak_pressure
+  streak_pressure="$(awk -v streak="$streak" 'BEGIN { v = streak / 3.0; if (v > 1.0) v = 1.0; if (v < 0.0) v = 0.0; printf "%.6f", v }')"
+
+  local positive_delta=0
+  if (( violations > prev_violations )); then
+    positive_delta=$((violations - prev_violations))
+  fi
+  local positive_violations_delta_pressure
+  positive_violations_delta_pressure="$(awk -v delta="$positive_delta" 'BEGIN { v = delta / 3.0; if (v > 1.0) v = 1.0; if (v < 0.0) v = 0.0; printf "%.6f", v }')"
+
+  local pressure_score
+  pressure_score="$(awk \
+    -v breach_rate="$breach_rate" \
+    -v interrupt_rate="$interrupt_rate" \
+    -v stale_evidence_rate="$stale_evidence_rate" \
+    -v streak_pressure="$streak_pressure" \
+    -v positive_violations_delta_pressure="$positive_violations_delta_pressure" \
+    'BEGIN {
+      score = (0.40 * breach_rate) +
+              (0.20 * interrupt_rate) +
+              (0.20 * stale_evidence_rate) +
+              (0.15 * streak_pressure) +
+              (0.05 * positive_violations_delta_pressure);
+      if (score < 0.0) score = 0.0;
+      if (score > 1.0) score = 1.0;
+      printf "%.6f", score;
+    }')"
+
+  local policy_band="green"
+  policy_band="$(awk -v score="$pressure_score" 'BEGIN {
+    if (score >= 0.75) print "red";
+    else if (score >= 0.45) print "yellow";
+    else print "green";
+  }')"
+
+  if [[ "$policy_band" == "red" ]]; then
+    should_interrupt=true
+    reason="policy_band=red pressure_score=$pressure_score"
+  fi
+
+  printf '{"generated_at":"%s","streak":%d,"violations":%d,"prev_violations":%d}\n' "$now" "$streak" "$violations" "$violations" > "$streak_file"
 
   if (( streak >= streak_trigger )); then
     should_interrupt=true
@@ -812,30 +867,44 @@ gate_regression_spiral_guard() {
     reason="violations=$violations"
   fi
 
-  printf '{"generated_at":"%s","metrics":{"total":%d,"failed":%d,"flaky":%d,"missing_pairs":%d,"missing_types":%d,"env_missing":%d,"e2e_missing":%d,"stale_test_evidence":%d,"stale_build_evidence":%d,"stale_e2e_evidence":%d},"thresholds":{"max_failed_tests":%d,"max_flaky_tests":%d,"max_missing_pairs":%d,"max_missing_types":%d,"streak_trigger":%d,"max_test_evidence_age_minutes":%d,"max_build_evidence_age_minutes":%d,"max_e2e_evidence_age_minutes":%d},"violations":%d,"streak":%d,"interrupt":%s}\n' \
+  local enforcement_path="pass"
+  if [[ "$should_interrupt" == "true" ]]; then
+    enforcement_path="fail_closed"
+  elif (( violations > 0 )); then
+    enforcement_path="warning"
+  fi
+
+  printf '{"generated_at":"%s","metrics":{"total":%d,"failed":%d,"flaky":%d,"missing_pairs":%d,"missing_types":%d,"env_missing":%d,"e2e_missing":%d,"stale_test_evidence":%d,"stale_build_evidence":%d,"stale_e2e_evidence":%d},"thresholds":{"max_failed_tests":%d,"max_flaky_tests":%d,"max_missing_pairs":%d,"max_missing_types":%d,"streak_trigger":%d,"max_test_evidence_age_minutes":%d,"max_build_evidence_age_minutes":%d,"max_e2e_evidence_age_minutes":%d},"violations":%d,"streak":%d,"interrupt":%s,"pressure_score":%s,"policy_band":"%s","enforcement_path":"%s"}\n' \
     "$now" "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" \
     "$max_failed_tests" "$max_flaky_tests" "$max_missing_pairs" "$max_missing_types" "$streak_trigger" "$max_test_evidence_age_minutes" "$max_build_evidence_age_minutes" "$max_e2e_evidence_age_minutes" \
-    "$violations" "$streak" "$should_interrupt" > "$report"
+    "$violations" "$streak" "$should_interrupt" "$pressure_score" "$policy_band" "$enforcement_path" > "$report"
 
+  local interrupt_fail_closed="$fail_closed"
+  if [[ "$policy_band" == "red" ]]; then
+    interrupt_fail_closed="true"
+  fi
   if [[ "$should_interrupt" == "true" ]]; then
     _append_spiral_metric "critical_interrupt" "critical" "$reason" \
       "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" \
-      "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" "$violations" "$streak" "$should_interrupt"
+      "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" "$violations" "$streak" "$should_interrupt" \
+      "$pressure_score" "$policy_band"
     _emit_spiral_alert "critical" "$name $reason"
-    _gate_fail "$name" "$reason; pause feature work and remediate tests/build/env/e2e debt first" "$fail_closed"
+    _gate_fail "$name" "$reason; pause feature work and remediate tests/build/env/e2e debt first" "$interrupt_fail_closed"
     return 0
   fi
 
   if (( violations > 0 )); then
     _append_spiral_metric "warning" "warning" "$reason" \
       "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" \
-      "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" "$violations" "$streak" "$should_interrupt"
+      "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" "$violations" "$streak" "$should_interrupt" \
+      "$pressure_score" "$policy_band"
     _emit_spiral_alert "warning" "$name violations=$violations"
     _gate_fail "$name" "warning-level spiral signals detected ($violations)" "false"
   else
     _append_spiral_metric "healthy" "info" "no_violations" \
       "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" \
-      "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" "$violations" "$streak" "$should_interrupt"
+      "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" "$violations" "$streak" "$should_interrupt" \
+      "$pressure_score" "$policy_band"
     _clear_spiral_alert
     _gate_pass "$name"
   fi
@@ -1328,54 +1397,33 @@ gate_verifier_dispute() {
   [[ "$tier" == "critical" ]] && enabled=true
   [[ "${QA_RELIABILITY_REQUIRED:-false}" == "true" ]] && enabled=true
 
-  local err=0 warn=0
-
-  # B3: Build checks array in bash
-  _json_arr_init
-
-  # policy text presence — use bash string match instead of rg
-  local policy_present=false
-  local policy_content=""
-  [[ -f "$PROJECT_DIR/VERIFICATION_POLICY.md" ]] && policy_content+=$(<"$PROJECT_DIR/VERIFICATION_POLICY.md" 2>/dev/null) || true
-  [[ -f "$PROJECT_DIR/RELEASE_CONTRACT.md" ]] && policy_content+=$(<"$PROJECT_DIR/RELEASE_CONTRACT.md" 2>/dev/null) || true
-  if [[ -n "$policy_content" ]]; then
-    # Case-insensitive check via bash lowercasing
-    local policy_lower="${policy_content,,}"
-    if [[ "$policy_lower" == *"dispute"* ]] || [[ "$policy_lower" == *"challenge"* ]] || [[ "$policy_lower" == *"appeal"* ]] || [[ "$policy_lower" == *"verifier escalation"* ]]; then
-      policy_present=true
-    fi
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for verifier dispute evaluator" "$fail_closed"
+    return 0
   fi
 
-  if [[ "$policy_present" == "true" ]]; then
-    _json_arr_add '{"check":"dispute_policy_text","status":"pass"}'
+  local eval_rc=0
+  if hook_rust_runtime_invoke verifier-dispute-eval --project-dir "$PROJECT_DIR" --disputes "$disputes" --report "$report" --tier "$tier" --enabled "$enabled" --max-open-days "$max_open_days" >/dev/null 2>&1; then
+    eval_rc=0
   else
-    local s
-    if [[ "$enabled" == "true" ]]; then err=$((err+1)); s="fail"; else warn=$((warn+1)); s="warn"; fi
-    _json_arr_add "{\"check\":\"dispute_policy_text\",\"status\":\"$s\"}"
+    eval_rc=$?
   fi
 
-  local open_count=0
-  if [[ -f "$disputes" ]]; then
-    open_count="$($JQ_CMD -s '[.[] | select((.status // "") == "open" or (.status // "") == "under_review")] | length' "$disputes" 2>/dev/null || echo 0)"
-  else
-    : > "$disputes"
-  fi
-  _json_arr_add "{\"check\":\"open_disputes\",\"status\":\"info\",\"count\":$open_count}"
-
-  local checks
-  checks="$(_json_arr_emit)"
-
-  local _pass_bool="true"; [[ "$err" -gt 0 ]] && _pass_bool="false"
-  printf '{"generated_at":"%s","tier":"%s","enabled":%s,"policy":{"max_dispute_open_days":%s},"open_disputes":%d,"error_count":%d,"warn_count":%d,"checks":%s,"pass":%s}\n' \
-    "$now" "$tier" "$enabled" "$max_open_days" "$open_count" "$err" "$warn" "$checks" "$_pass_bool" > "$report"
-
-  if [[ "$enabled" == "true" && "$err" -gt 0 ]]; then
-    _gate_fail "$name" "dispute workflow requirements not satisfied" "$fail_closed"
-  elif [[ "$err" -gt 0 ]]; then
-    _gate_fail "$name" "dispute workflow requirements not satisfied" "false"
-  else
+  if [[ "$eval_rc" -eq 0 ]]; then
     _gate_pass "$name"
+    return 0
   fi
+  if [[ "$eval_rc" -eq 1 ]]; then
+    if [[ "$enabled" == "true" ]]; then
+      _gate_fail "$name" "dispute workflow requirements not satisfied" "$fail_closed"
+    else
+      _gate_fail "$name" "dispute workflow requirements not satisfied" "false"
+    fi
+    return 0
+  fi
+  write_fail_report "$report" "$name" 1 "verifier dispute evaluator error"
+  _gate_fail "$name" "verifier dispute evaluator failed" "$fail_closed"
   return 0
 }
 

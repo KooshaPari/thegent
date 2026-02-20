@@ -29,6 +29,7 @@ fn help_lists_new_governance_evaluators() {
     assert!(stdout.contains("reliability-eval"));
     assert!(stdout.contains("reliability-slo-eval"));
     assert!(stdout.contains("flake-quarantine-eval"));
+    assert!(stdout.contains("verifier-dispute-eval"));
 }
 
 #[test]
@@ -361,6 +362,69 @@ fn flake_quarantine_fails_in_enforced_mode_for_expired_entries() {
         "--enabled",
         "true",
         "--ttl-days",
+        "14",
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(1));
+}
+
+#[test]
+fn verifier_dispute_warns_without_policy_in_advisory_mode() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let project = tmp.path().join("project");
+    let disputes = tmp.path().join("disputes.jsonl");
+    let report = tmp.path().join("dispute-report.json");
+    fs::create_dir_all(&project).expect("create project");
+    fs::write(&disputes, "{\"status\":\"open\"}\n").expect("write disputes");
+
+    let out = run(&[
+        "verifier-dispute-eval",
+        "--project-dir",
+        project.to_str().expect("project path"),
+        "--disputes",
+        disputes.to_str().expect("disputes path"),
+        "--report",
+        report.to_str().expect("report path"),
+        "--tier",
+        "established",
+        "--enabled",
+        "false",
+        "--max-open-days",
+        "14",
+    ]);
+    assert!(out.status.success());
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("warn_count").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(report_json.get("open_disputes").and_then(|v| v.as_u64()), Some(1));
+}
+
+#[test]
+fn verifier_dispute_fails_without_policy_in_enforced_mode() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let project = tmp.path().join("project");
+    let disputes = tmp.path().join("disputes.jsonl");
+    let report = tmp.path().join("dispute-report.json");
+    fs::create_dir_all(&project).expect("create project");
+    fs::write(&disputes, "{\"status\":\"under_review\"}\n").expect("write disputes");
+
+    let out = run(&[
+        "verifier-dispute-eval",
+        "--project-dir",
+        project.to_str().expect("project path"),
+        "--disputes",
+        disputes.to_str().expect("disputes path"),
+        "--report",
+        report.to_str().expect("report path"),
+        "--tier",
+        "critical",
+        "--enabled",
+        "true",
+        "--max-open-days",
         "14",
     ]);
     assert_eq!(out.status.code(), Some(1));
