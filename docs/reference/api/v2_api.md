@@ -18,11 +18,11 @@ Unified operation envelope for Phase 10 convergence.
 
 ## validate_envelope_v2
 
-Validate a raw dict against the OperationEnvelopeV2 schema.
-
 ```python
-validate_envelope_v2(envelope)
+validate_envelope_v2(envelope: dict[(str, Any)])
 ```
+
+Validate a raw dict against the OperationEnvelopeV2 schema.
 
 ---
 

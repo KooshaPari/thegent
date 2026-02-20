@@ -4,7 +4,7 @@ Plugins are discovered from ~/.claude/sitback-plugins/ (JSON or Python).
 Each plugin can register:
 - dashboard_widgets: dict[str, callable] -> name -> fn() -> dict (title, content, border_style)
 - startup_steps: list[str] -> extra lines for startup prompt
-- harness_status: callable -> dict | None (for sharecli/FUSE; returns None if unavailable)
+- harness_status: callable -> dict | None (for heliosShield/FUSE; returns None if unavailable)
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ class SitbackPluginRegistry:
         self._startup_steps.append(step)
 
     def register_harness_status(self, fn: Callable[[], dict[str, Any] | None]) -> None:
-        """Register harness status provider (e.g. sharecli). Returns None if unavailable."""
+        """Register harness status provider (e.g. heliosShield). Returns None if unavailable."""
         self._harness_status_fn = fn
 
     def get_widgets(self) -> dict[str, dict[str, Any]]:
@@ -127,21 +127,23 @@ def _load_py_plugin(path: Path, registry: SitbackPluginRegistry) -> None:
 
 
 def _harness_status_placeholder() -> dict[str, Any] | None:
-    """Status provider for ShareCLI harness integration (WP-10007)."""
+    """Status provider for heliosShield harness integration (WP-10007)."""
     try:
-        from thegent.tools.terminal import sharecli_status
-        status = sharecli_status()
+        from thegent.tools.terminal import thegent.mesh_status
+
+        status = heliosShield_status()
         if "not found" not in status.lower():
             return {
                 "status": "available",
-                "message": "ShareCLI Harness active",
+                "message": "heliosShield Harness active",
                 "raw": status,
             }
     except Exception:
         pass
-    
+
     # Fallback to checking settings
     from thegent.config import ThegentSettings
+
     if ThegentSettings().sitback_harness:
-        return {"status": "placeholder", "message": "ShareCLI Harness requested but not found"}
+        return {"status": "placeholder", "message": "heliosShield Harness requested but not found"}
     return None

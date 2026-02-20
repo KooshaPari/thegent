@@ -1,7 +1,7 @@
 """Power management utilities (macOS sleep prevention)."""
 
-import shutil
 import platform
+import shutil
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 def wrap_with_caffeinate(cmd: list[str], agent_name: str | None = None) -> list[str]:
     """
     Wrap command with caffeinate on macOS to keep Mac awake during long-running tasks.
-    
+
     Args:
         cmd: Command to wrap
         agent_name: Name of the agent (claude, codex, etc.) to check against config.
@@ -22,6 +22,7 @@ def wrap_with_caffeinate(cmd: list[str], agent_name: str | None = None) -> list[
 
     try:
         from thegent.config import ThegentSettings
+
         settings = ThegentSettings()
     except ImportError:
         # Fallback if config is not available in current context
@@ -51,9 +52,10 @@ def is_mac_sleep_prevention_enabled() -> bool:
     """Check if macOS sleep prevention is enabled in settings."""
     if platform.system() != "Darwin":
         return False
-        
+
     try:
         from thegent.config import ThegentSettings
+
         return ThegentSettings().mac_keep_awake
     except ImportError:
         return False

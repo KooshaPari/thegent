@@ -29,6 +29,7 @@ class AgentRunner:
         live_output: bool = False,
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         """Run the agent with the given prompt and options."""
         raise NotImplementedError

@@ -41,7 +41,11 @@ def _has_open_holder(lock_path: Path) -> bool:
             capture_output=True,
             timeout=5,
         )
-        stdout_text = result.stdout if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        stdout_text = (
+            result.stdout
+            if isinstance(result.stdout, str)
+            else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        )
         return result.returncode == 0 and bool(stdout_text and stdout_text.strip())
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
@@ -182,7 +186,10 @@ WantedBy=timers.target
     timer_path = systemd_user / "thegent-git-lock-cleanup.timer"
     service_path.write_text(service_content)
     timer_path.write_text(timer_content)
-    return True, f"Installed to {service_path} and {timer_path}. Run: systemctl --user enable --now thegent-git-lock-cleanup.timer"
+    return (
+        True,
+        f"Installed to {service_path} and {timer_path}. Run: systemctl --user enable --now thegent-git-lock-cleanup.timer",
+    )
 
 
 def lock_cleanup_uninstall() -> tuple[bool, str]:
@@ -255,7 +262,11 @@ def lock_cleanup_status() -> tuple[bool, str]:
             capture_output=True,
             text=True,
         )
-        stdout_text = result.stdout if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        stdout_text = (
+            result.stdout
+            if isinstance(result.stdout, str)
+            else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        )
         if result.returncode == 0 and stdout_text and "com.thegent.git-lock-cleanup" in stdout_text:
             return True, "Running (launchd)"
         return True, "Stopped"
@@ -266,7 +277,11 @@ def lock_cleanup_status() -> tuple[bool, str]:
             capture_output=True,
             text=True,
         )
-        stdout_text = result.stdout if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        stdout_text = (
+            result.stdout
+            if isinstance(result.stdout, str)
+            else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        )
         if result.returncode == 0 and stdout_text and "active" in stdout_text.strip():
             return True, "Running (systemd)"
         return True, "Stopped"

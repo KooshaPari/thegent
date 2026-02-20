@@ -8,7 +8,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 _log = logging.getLogger(__name__)
 
@@ -20,6 +20,10 @@ class ToolDefinition(BaseModel):
     description: str
     parameters: dict[str, Any]
     protocol: str  # 'mcp', 'rest', 'python', 'cli'
+
+
+# Pre-compile the TypeAdapter for ToolDefinition to speed up high-frequency validation (Phase 1: JIT Migration)
+tool_definition_adapter = TypeAdapter(ToolDefinition)
 
 
 class ToolAdapter:

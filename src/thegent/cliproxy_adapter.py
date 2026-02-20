@@ -248,6 +248,7 @@ def _transform_models_response(content: bytes) -> bytes | None:
         try:
             from thegent.routing.model_metadata import get_model_metadata
         except ImportError:
+
             def get_model_metadata(_):
                 return None
 
@@ -262,10 +263,16 @@ def _transform_models_response(content: bytes) -> bytes | None:
                 meta = get_model_metadata(mid.split("/", 1)[1])
             if meta:
                 ctx = meta.get("context_window")
+                if "slug" not in m:
+                    m["slug"] = mid
+                if ctx is not None and "context_window" not in m:
+                    m["context_window"] = ctx
                 if ctx is not None and "context_length" not in m:
                     m["context_length"] = ctx
                 if ctx is not None and "max_completion_tokens" not in m:
                     m["max_completion_tokens"] = min(ctx, 8192)
+            elif "slug" not in m:
+                m["slug"] = mid
 
         return json.dumps(data).encode()
     except (json.JSONDecodeError, TypeError):
@@ -304,7 +311,6 @@ async def proxy_handler(request: Request) -> Response:
         except Exception as e:
             _log.error("LiteLLM Router handler failed: %s", e, exc_info=True)
             # Fallback to CLIProxyAPIPlus
-            pass
 
     backend_path = _backend_path(backend, path)
 
@@ -362,7 +368,6 @@ async def websocket_responses_handler(websocket: Any) -> None:
         except Exception as e:
             _log.error("LiteLLM Router WebSocket handler failed: %s", e, exc_info=True)
             # Fallback to CLIProxyAPIPlus
-            pass
 
     import httpx
 

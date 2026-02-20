@@ -2,6 +2,7 @@
 
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.direct_agents import DirectAgentRunner
+from thegent.agents.flash_agent import FlashAgent, FlashAgentConfig, FlashAgentResult, flash
 from thegent.agents.registry import (
     get_fallback_agents,
     get_runner,
@@ -13,7 +14,11 @@ from thegent.agents.registry import (
 __all__ = [
     "AgentRunner",
     "DirectAgentRunner",
+    "FlashAgent",
+    "FlashAgentConfig",
+    "FlashAgentResult",
     "RunResult",
+    "flash",
     "get_fallback_agents",
     "get_runner",
     "list_agent_names",

@@ -15,98 +15,110 @@ Rich-based TUI for session management with subagent monitoring.
 #### SessionTUI.__init__
 
 ```python
-__init__(self, session_id)
+__init__(self: Any, session_id: Any)
 ```
+
+---
 
 #### SessionTUI.manage_session
 
+```python
+manage_session(self: Any, session_id: str, action: str)
+```
+
 Manage a session (stop, pause, resume, logs).
 
-```python
-manage_session(self, session_id, action)
-```
+---
 
 #### SessionTUI.render_session_view
 
+```python
+render_session_view(self: Any, session_id: str)
+```
+
 Render detailed view for a specific session.
 
-```python
-render_session_view(self, session_id)
-```
+---
 
 #### SessionTUI.render_sessions_list
 
+```python
+render_sessions_list(self: Any)
+```
+
 Render list of all sessions.
 
-```python
-render_sessions_list(self)
-```
+---
 
 #### SessionTUI.show
 
+```python
+show(self: Any, session_id: Any)
+```
+
 Show session view (single session or list).
 
-```python
-show(self, session_id)
-```
+---
 
 #### SessionTUI.watch
 
+```python
+watch(self: Any, session_id: Any, interval: float)
+```
+
 Watch sessions live with auto-refresh.
 
-```python
-watch(self, session_id, interval)
-```
+---
 
 ---
 
 ## manage_session
 
-Manage a session (stop, pause, resume, logs).
-
 ```python
-manage_session(self, session_id, action)
+manage_session(self: Any, session_id: str, action: str)
 ```
+
+Manage a session (stop, pause, resume, logs).
 
 ---
 
 ## render_session_view
 
-Render detailed view for a specific session.
-
 ```python
-render_session_view(self, session_id)
+render_session_view(self: Any, session_id: str)
 ```
+
+Render detailed view for a specific session.
 
 ---
 
 ## render_sessions_list
 
-Render list of all sessions.
-
 ```python
-render_sessions_list(self)
+render_sessions_list(self: Any)
 ```
+
+Render list of all sessions.
 
 ---
 
 ## show
 
-Show session view (single session or list).
-
 ```python
-show(self, session_id)
+show(self: Any, session_id: Any)
 ```
+
+Show session view (single session or list).
 
 ---
 
 ## watch
 
-Watch sessions live with auto-refresh.
-
 ```python
-watch(self, session_id, interval)
+watch(self: Any, session_id: Any, interval: float)
 ```
+
+Watch sessions live with auto-refresh.
 
 ---
 

@@ -6,7 +6,7 @@ Provides read, write, update, and query operations.
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -21,7 +21,7 @@ class SeedStorage:
     DEFAULT_STORAGE_PATH = Path("docs/research/seeds.jsonl")
     ARCHIVE_PATH = Path("docs/research/seeds_archive.jsonl")
 
-    def __init__(self, storage_path: Optional[Path] = None):
+    def __init__(self, storage_path: Path | None = None) -> None:
         """Initialize seed storage.
 
         Args:
@@ -83,7 +83,7 @@ class SeedStorage:
 
         return seeds
 
-    def find_by_id(self, seed_id: str) -> Optional[Seed]:
+    def find_by_id(self, seed_id: str) -> Seed | None:
         """Find a seed by ID.
 
         Args:
@@ -95,7 +95,7 @@ class SeedStorage:
         seeds = self.load_seeds()
         return next((s for s in seeds if s.id == seed_id), None)
 
-    def find_by_text(self, text: str) -> Optional[Seed]:
+    def find_by_text(self, text: str) -> Seed | None:
         """Find a seed by exact text match.
 
         Args:
@@ -156,7 +156,7 @@ class SeedStorage:
         seeds = self.load_seeds()
         updated = False
 
-        for i, seed in enumerate(seeds):
+        for _i, seed in enumerate(seeds):
             if seed.id == seed_id:
                 # Update allowed fields
                 if "status" in kwargs:
@@ -231,15 +231,11 @@ class SeedStorage:
             stats["by_status"][seed.status] = stats["by_status"].get(seed.status, 0) + 1
 
             # By source
-            source_name = (
-                seed.source
-                if isinstance(seed.source, str)
-                else SeedSource(seed.source).value
-            )
+            source_name = seed.source if isinstance(seed.source, str) else SeedSource(seed.source).value
             stats["by_source"][source_name] = stats["by_source"].get(source_name, 0) + 1
 
             # By confidence
-            if seed.confidence >= 0.8:
+            if seed.confidence > 0.8:
                 stats["by_confidence"]["high"] += 1
             elif seed.confidence >= 0.5:
                 stats["by_confidence"]["medium"] += 1
@@ -251,7 +247,7 @@ class SeedStorage:
 
         return stats
 
-    def export_markdown(self, output_path: Optional[Path] = None) -> str:
+    def export_markdown(self, output_path: Path | None = None) -> str:
         """Export seeds as markdown for easy reading.
 
         Args:
@@ -264,7 +260,7 @@ class SeedStorage:
 
         md_lines = [
             "# Idea Seeds\n",
-            f"Generated: {datetime.now(timezone.utc).isoformat()}\n",
+            f"Generated: {datetime.now(UTC).isoformat()}\n",
             f"Total seeds: {len(seeds)}\n",
             "---\n",
         ]
@@ -311,8 +307,7 @@ class SeedStorage:
         """
         self._ensure_directory()
         with open(self.storage_path, "w") as f:
-            for seed in seeds:
-                f.write(json.dumps(seed.to_dict()) + "\n")
+            f.writelines(json.dumps(seed.to_dict()) + "\n" for seed in seeds)
 
     @staticmethod
     def _dict_to_seed(data: dict) -> Seed:
@@ -324,10 +319,16 @@ class SeedStorage:
         Returns:
             Seed object
         """
+        # Get source value from data, defaulting to MANUAL enum
+        source_value = data.get("source", SeedSource.MANUAL.value)
+        # Ensure we pass the enum value (string), the Seed.__post_init__ will convert to enum
+        if isinstance(source_value, SeedSource):
+            source_value = source_value.value
+
         return Seed(
             id=data.get("id", ""),
             text=data.get("text", ""),
-            source=data.get("source", SeedSource.MANUAL.value),
+            source=source_value,  # Pass string; __post_init__ converts to enum
             confidence=data.get("confidence", 0.5),
             timestamp=data.get("timestamp", ""),
             tags=data.get("tags", []),

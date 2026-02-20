@@ -6,19 +6,20 @@ Analyzes benchmark results to produce performance reports,
 trends, and optimization recommendations.
 """
 
-import json
-import sys
-import statistics
-from pathlib import Path
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 import argparse
+import json
+import statistics
+import sys
+from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
 class BenchmarkResult:
     """Single benchmark result"""
+
     name: str
     command: str
     mean: float
@@ -26,7 +27,7 @@ class BenchmarkResult:
     stddev: float
     min: float
     max: float
-    times: List[float]
+    times: list[float]
 
     @property
     def p95(self) -> float:
@@ -48,6 +49,7 @@ class BenchmarkResult:
 @dataclass
 class ComparisonResult:
     """Comparison of baseline vs current"""
+
     operation: str
     baseline_mean: float
     current_mean: float
@@ -66,14 +68,13 @@ class ComparisonResult:
         """Status emoji"""
         if self.speedup > 10:
             return "⭐"  # Huge win
-        elif self.speedup > 5:
+        if self.speedup > 5:
             return "✅"  # Major win
-        elif self.speedup > 2:
+        if self.speedup > 2:
             return "📈"  # Good
-        elif self.speedup > 1:
+        if self.speedup > 1:
             return "📊"  # Slight improvement
-        else:
-            return "⚠️"   # Regression
+        return "⚠️"  # Regression
 
 
 class BenchmarkAnalyzer:
@@ -82,15 +83,15 @@ class BenchmarkAnalyzer:
     def __init__(self, baseline_dir: Path, current_dir: Path):
         self.baseline_dir = Path(baseline_dir)
         self.current_dir = Path(current_dir)
-        self.baseline_results: Dict[str, BenchmarkResult] = {}
-        self.current_results: Dict[str, BenchmarkResult] = {}
+        self.baseline_results: dict[str, BenchmarkResult] = {}
+        self.current_results: dict[str, BenchmarkResult] = {}
 
     def load_results(self):
         """Load benchmark results from JSON files"""
         self._load_from_dir(self.baseline_dir, self.baseline_results)
         self._load_from_dir(self.current_dir, self.current_results)
 
-    def _load_from_dir(self, dir_path: Path, results: Dict[str, BenchmarkResult]):
+    def _load_from_dir(self, dir_path: Path, results: dict[str, BenchmarkResult]):
         """Load all benchmark JSONs from directory"""
         if not dir_path.exists():
             return
@@ -99,7 +100,7 @@ class BenchmarkAnalyzer:
             try:
                 with open(json_file) as f:
                     data = json.load(f)
-                    if "results" in data and data["results"]:
+                    if data.get("results"):
                         result_data = data["results"][0]
                         name = json_file.stem
                         result = BenchmarkResult(
@@ -116,7 +117,7 @@ class BenchmarkAnalyzer:
             except Exception as e:
                 print(f"Warning: Failed to load {json_file}: {e}", file=sys.stderr)
 
-    def compare(self) -> List[ComparisonResult]:
+    def compare(self) -> list[ComparisonResult]:
         """Compare baseline and current results"""
         comparisons = []
 
@@ -167,8 +168,8 @@ class BenchmarkAnalyzer:
             speedup_str = f"{comp.speedup:.1f}x"
             improvement_str = f"{comp.improvement_percent:.0f}%"
             report.append(
-                f"| {comp.status} {comp.operation} | {comp.baseline_mean*1000:.2f}ms | "
-                f"{comp.current_mean*1000:.2f}ms | {speedup_str} | {improvement_str} |"
+                f"| {comp.status} {comp.operation} | {comp.baseline_mean * 1000:.2f}ms | "
+                f"{comp.current_mean * 1000:.2f}ms | {speedup_str} | {improvement_str} |"
             )
 
         # Detailed analysis
@@ -177,10 +178,10 @@ class BenchmarkAnalyzer:
         for comp in comparisons:
             report.append(f"### {comp.operation}\n")
             report.append(f"**Speedup**: {comp.speedup:.1f}x ({comp.improvement_percent:.0f}% faster)\n")
-            report.append(f"- Baseline mean: {comp.baseline_mean*1000:.2f}ms")
-            report.append(f"- Current mean: {comp.current_mean*1000:.2f}ms")
-            report.append(f"- Baseline P95: {comp.baseline_p95*1000:.2f}ms")
-            report.append(f"- Current P95: {comp.current_p95*1000:.2f}ms")
+            report.append(f"- Baseline mean: {comp.baseline_mean * 1000:.2f}ms")
+            report.append(f"- Current mean: {comp.current_mean * 1000:.2f}ms")
+            report.append(f"- Baseline P95: {comp.baseline_p95 * 1000:.2f}ms")
+            report.append(f"- Current P95: {comp.current_p95 * 1000:.2f}ms")
             report.append("")
 
         # Statistical summary
@@ -199,7 +200,7 @@ class BenchmarkAnalyzer:
 
         return "\n".join(report)
 
-    def _generate_recommendations(self, comparisons: List[ComparisonResult]) -> List[str]:
+    def _generate_recommendations(self, comparisons: list[ComparisonResult]) -> list[str]:
         """Generate optimization recommendations"""
         recommendations = []
 
@@ -213,37 +214,29 @@ class BenchmarkAnalyzer:
             recommendations.append(f"### Huge Performance Wins ({len(huge_wins)})")
             for comp in huge_wins:
                 recommendations.append(
-                    f"- **{comp.operation}**: {comp.speedup:.0f}x faster - "
-                    f"Ready for Phase 2 rollout"
+                    f"- **{comp.operation}**: {comp.speedup:.0f}x faster - Ready for Phase 2 rollout"
                 )
 
         if major_wins:
             recommendations.append(f"\n### Major Performance Improvements ({len(major_wins)})")
             for comp in major_wins:
                 recommendations.append(
-                    f"- **{comp.operation}**: {comp.speedup:.1f}x faster - "
-                    f"High priority for optimization"
+                    f"- **{comp.operation}**: {comp.speedup:.1f}x faster - High priority for optimization"
                 )
 
         if good_wins:
             recommendations.append(f"\n### Good Performance Gains ({len(good_wins)})")
             for comp in good_wins:
-                recommendations.append(
-                    f"- **{comp.operation}**: {comp.speedup:.1f}x faster - "
-                    f"Worthwhile improvement"
-                )
+                recommendations.append(f"- **{comp.operation}**: {comp.speedup:.1f}x faster - Worthwhile improvement")
 
         if regressions:
             recommendations.append(f"\n### ⚠️ Regressions ({len(regressions)})")
             for comp in regressions:
-                recommendations.append(
-                    f"- **{comp.operation}**: {comp.speedup:.2f}x - "
-                    f"Investigate before rollout"
-                )
+                recommendations.append(f"- **{comp.operation}**: {comp.speedup:.2f}x - Investigate before rollout")
 
         # Overall assessment
         avg_speedup = statistics.mean([c.speedup for c in comparisons])
-        recommendations.append(f"\n### Overall Assessment")
+        recommendations.append("\n### Overall Assessment")
         if avg_speedup > 5:
             recommendations.append(
                 f"✅ **Excellent**: Average {avg_speedup:.1f}x speedup across all operations. "
@@ -251,23 +244,20 @@ class BenchmarkAnalyzer:
             )
         elif avg_speedup > 2:
             recommendations.append(
-                f"📈 **Good**: Average {avg_speedup:.1f}x speedup. "
-                "Ready for gradual Phase 2 rollout with monitoring."
+                f"📈 **Good**: Average {avg_speedup:.1f}x speedup. Ready for gradual Phase 2 rollout with monitoring."
             )
         elif avg_speedup > 1:
             recommendations.append(
-                f"📊 **Modest**: Average {avg_speedup:.1f}x speedup. "
-                "Requires investigation before Phase 2."
+                f"📊 **Modest**: Average {avg_speedup:.1f}x speedup. Requires investigation before Phase 2."
             )
         else:
             recommendations.append(
-                f"⚠️ **Concerning**: {avg_speedup:.2f}x speedup. "
-                "Needs major optimization before proceeding."
+                f"⚠️ **Concerning**: {avg_speedup:.2f}x speedup. Needs major optimization before proceeding."
             )
 
         return recommendations
 
-    def generate_json_summary(self) -> Dict:
+    def generate_json_summary(self) -> dict:
         """Generate JSON summary"""
         comparisons = self.compare()
 
@@ -275,10 +265,8 @@ class BenchmarkAnalyzer:
             "timestamp": datetime.now().isoformat(),
             "summary": {
                 "total_operations": len(comparisons),
-                "average_speedup": statistics.mean([c.speedup for c in comparisons])
-                if comparisons else 0,
-                "median_speedup": statistics.median([c.speedup for c in comparisons])
-                if comparisons else 0,
+                "average_speedup": statistics.mean([c.speedup for c in comparisons]) if comparisons else 0,
+                "median_speedup": statistics.median([c.speedup for c in comparisons]) if comparisons else 0,
             },
             "results": [
                 {
@@ -294,9 +282,7 @@ class BenchmarkAnalyzer:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Analyze hook-rust benchmark results"
-    )
+    parser = argparse.ArgumentParser(description="Analyze hook-rust benchmark results")
     parser.add_argument(
         "--baseline-dir",
         type=Path,

@@ -15,44 +15,50 @@ Interface to Supermemory.ai knowledge graph.
 #### KnowledgeGraph.__init__
 
 ```python
-__init__(self, api_token)
+__init__(self: Any, api_token: str)
 ```
+
+---
 
 #### KnowledgeGraph.add_relation
 
+```python
+add_relation(self: Any, source: str, relation: str, target: str)
+```
+
 Add a new relation to the knowledge graph.
 
-```python
-add_relation(self, source, relation, target)
-```
+---
 
 #### KnowledgeGraph.query
 
+```python
+query(self: Any, query_text: str)
+```
+
 Query the knowledge graph for relevant entities and relations.
 
-```python
-query(self, query_text)
-```
+---
 
 ---
 
 ## add_relation
 
-Add a new relation to the knowledge graph.
-
 ```python
-add_relation(self, source, relation, target)
+add_relation(self: Any, source: str, relation: str, target: str)
 ```
+
+Add a new relation to the knowledge graph.
 
 ---
 
 ## query
 
-Query the knowledge graph for relevant entities and relations.
-
 ```python
-query(self, query_text)
+query(self: Any, query_text: str)
 ```
+
+Query the knowledge graph for relevant entities and relations.
 
 ---
 

@@ -24,157 +24,147 @@ High-performance string operations with optimized backends.
 
 #### FastStringOps.fuzzy_match
 
+```python
+fuzzy_match(query: str, choices: list[str], limit: int, score_cutoff: int)
+```
+
 Fuzzy string matching using rapidfuzz (10-100x faster).
 
-Args:
-    query: Query string
-    choices: List of strings to match against
-    limit: Maximum number of results
-    score_cutoff: Minimum similarity score (0-100)
+**Parameters**:
 
-Returns:
-    List of (match, score, index) tuples
+- `query`: Query string
+- `choices`: List of strings to match against
+- `limit`: Maximum number of results
+- `score_cutoff`: Minimum similarity score (0-100)
 
-Performance:
-    - rapidfuzz: 10-100x faster than fuzzywuzzy
-    - Uses optimized C++ implementation
+**Returns**: List of (match, score, index) tuples
 
-```python
-fuzzy_match(query, choices, limit, score_cutoff)
-```
+---
 
 #### FastStringOps.fuzzy_ratio
 
+```python
+fuzzy_ratio(str1: str, str2: str)
+```
+
 Calculate fuzzy similarity ratio (0-100).
 
-Args:
-    str1: First string
-    str2: Second string
+**Parameters**:
 
-Returns:
-    Similarity ratio (0-100)
+- `str1`: First string
+- `str2`: Second string
 
-```python
-fuzzy_ratio(str1, str2)
-```
+**Returns**: Similarity ratio (0-100)
+
+---
 
 #### FastStringOps.regex_findall
 
+```python
+regex_findall(pattern: str, text: str)
+```
+
 Find all matches using regex library.
 
-Args:
-    pattern: Regex pattern
-    text: Text to search
-    **kwargs: Additional regex options
+**Parameters**:
 
-Returns:
-    List of matches
+- `pattern`: Regex pattern
+- `text`: Text to search
+- `**kwargs`: Additional regex options
 
-```python
-regex_findall(pattern, text)
-```
+**Returns**: List of matches
+
+---
 
 #### FastStringOps.regex_search
 
+```python
+regex_search(pattern: str, text: str)
+```
+
 Search using regex library (faster for complex patterns).
 
-Args:
-    pattern: Regex pattern
-    text: Text to search
-    **kwargs: Additional regex options
+**Parameters**:
 
-Returns:
-    Match object or None
+- `pattern`: Regex pattern
+- `text`: Text to search
+- `**kwargs`: Additional regex options
 
-Performance:
-    - regex library: Faster for complex patterns
-    - Better Unicode support
-    - More features than standard re
+**Returns**: Match object or None
 
-```python
-regex_search(pattern, text)
-```
+---
 
 ---
 
 ## fuzzy_match
 
+```python
+fuzzy_match(query: str, choices: list[str], limit: int, score_cutoff: int)
+```
+
 Fuzzy string matching using rapidfuzz (10-100x faster).
 
-Args:
-    query: Query string
-    choices: List of strings to match against
-    limit: Maximum number of results
-    score_cutoff: Minimum similarity score (0-100)
+**Parameters**:
 
-Returns:
-    List of (match, score, index) tuples
+- `query`: Query string
+- `choices`: List of strings to match against
+- `limit`: Maximum number of results
+- `score_cutoff`: Minimum similarity score (0-100)
 
-Performance:
-    - rapidfuzz: 10-100x faster than fuzzywuzzy
-    - Uses optimized C++ implementation
-
-```python
-fuzzy_match(query, choices, limit, score_cutoff)
-```
+**Returns**: List of (match, score, index) tuples
 
 ---
 
 ## fuzzy_ratio
 
+```python
+fuzzy_ratio(str1: str, str2: str)
+```
+
 Calculate fuzzy similarity ratio (0-100).
 
-Args:
-    str1: First string
-    str2: Second string
+**Parameters**:
 
-Returns:
-    Similarity ratio (0-100)
+- `str1`: First string
+- `str2`: Second string
 
-```python
-fuzzy_ratio(str1, str2)
-```
+**Returns**: Similarity ratio (0-100)
 
 ---
 
 ## regex_findall
 
+```python
+regex_findall(pattern: str, text: str)
+```
+
 Find all matches using regex library.
 
-Args:
-    pattern: Regex pattern
-    text: Text to search
-    **kwargs: Additional regex options
+**Parameters**:
 
-Returns:
-    List of matches
+- `pattern`: Regex pattern
+- `text`: Text to search
+- `**kwargs`: Additional regex options
 
-```python
-regex_findall(pattern, text)
-```
+**Returns**: List of matches
 
 ---
 
 ## regex_search
 
+```python
+regex_search(pattern: str, text: str)
+```
+
 Search using regex library (faster for complex patterns).
 
-Args:
-    pattern: Regex pattern
-    text: Text to search
-    **kwargs: Additional regex options
+**Parameters**:
 
-Returns:
-    Match object or None
+- `pattern`: Regex pattern
+- `text`: Text to search
+- `**kwargs`: Additional regex options
 
-Performance:
-    - regex library: Faster for complex patterns
-    - Better Unicode support
-    - More features than standard re
-
-```python
-regex_search(pattern, text)
-```
+**Returns**: Match object or None
 
 ---
 

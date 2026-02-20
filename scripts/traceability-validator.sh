@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # traceability-validator.sh — Validates FR traceability tags in code and tests
 set -euo pipefail
 

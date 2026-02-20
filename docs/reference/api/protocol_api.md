@@ -15,30 +15,38 @@ Zeroconf-style discovery for agents on the local network.
 #### P2PDiscovery.__init__
 
 ```python
-__init__(self, agent_id, port, capabilities)
+__init__(self: Any, agent_id: str, port: int, capabilities: list[str])
 ```
+
+---
 
 #### P2PDiscovery.list_peers
 
+```python
+list_peers(self: Any)
+```
+
 Return list of active peers (seen in last 30s).
 
-```python
-list_peers(self)
-```
+---
 
 #### P2PDiscovery.start
 
+```python
+start(self: Any)
+```
+
 Start discovery and heartbeat threads.
 
-```python
-start(self)
-```
+---
 
 #### P2PDiscovery.stop
 
 ```python
-stop(self)
+stop(self: Any)
 ```
+
+---
 
 ---
 
@@ -52,28 +60,28 @@ Metadata for a peer agent on the network.
 
 ## list_peers
 
-Return list of active peers (seen in last 30s).
-
 ```python
-list_peers(self)
+list_peers(self: Any)
 ```
+
+Return list of active peers (seen in last 30s).
 
 ---
 
 ## start
 
-Start discovery and heartbeat threads.
-
 ```python
-start(self)
+start(self: Any)
 ```
+
+Start discovery and heartbeat threads.
 
 ---
 
 ## stop
 
 ```python
-stop(self)
+stop(self: Any)
 ```
 
 ---

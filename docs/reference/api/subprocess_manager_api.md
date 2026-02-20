@@ -15,24 +15,30 @@ Manager for subprocess lifecycle with resource tracking.
 #### SubprocessManager.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### SubprocessManager.popen
 
+```python
+popen(self: Any, args: list[str], name: str)
+```
+
 Context manager for subprocess.Popen with automatic cleanup.
 
-```python
-popen(self, args, name)
-```
+---
 
 #### SubprocessManager.run
 
+```python
+run(self: Any, args: list[str], name: str, timeout: Any)
+```
+
 Run subprocess with resource tracking.
 
-```python
-run(self, args, name, timeout)
-```
+---
 
 ---
 
@@ -44,21 +50,21 @@ Get global subprocess manager.
 
 ## popen
 
-Context manager for subprocess.Popen with automatic cleanup.
-
 ```python
-popen(self, args, name)
+popen(self: Any, args: list[str], name: str)
 ```
+
+Context manager for subprocess.Popen with automatic cleanup.
 
 ---
 
 ## run
 
-Run subprocess with resource tracking.
-
 ```python
-run(self, args, name, timeout)
+run(self: Any, args: list[str], name: str, timeout: Any)
 ```
+
+Run subprocess with resource tracking.
 
 ---
 

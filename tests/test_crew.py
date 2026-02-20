@@ -1,6 +1,5 @@
 """Unit tests for crew system."""
 
-
 import pytest
 
 from thegent.crew import (

@@ -14,76 +14,77 @@ This class creates consistent path mappings across all integrated systems
 (thegent, manage devkit, workstream, plan system) to ensure harmonious
 directory structures.
 
-Examples:
-    >>> paths = HarmonizedPathManager()
-    >>> config_path = paths.get_harmonized_path("thegent", "config")
-    >>> paths.create_shared_structure()
-
 ### Methods
 
 #### HarmonizedPathManager.__init__
 
-Initialize harmonized path manager.
-
 ```python
-__init__(self)
+__init__(self: Any)
 ```
 
+Initialize harmonized path manager.
+
+---
+
 #### HarmonizedPathManager.create_shared_structure
+
+```python
+create_shared_structure(self: Any)
+```
 
 Create shared directory structure.
 
 Creates common parent directories and ensures consistent structure
 across all integrated systems.
 
-```python
-create_shared_structure(self)
-```
+---
 
 #### HarmonizedPathManager.get_harmonized_path
 
+```python
+get_harmonized_path(self: Any, system: str, path_type: str)
+```
+
 Get harmonized path for system.
 
-Args:
-    system: System name (thegent, manage, workstream, plan)
-    path_type: Path type (config, cache, data, bin, log, temp)
+**Parameters**:
 
-Returns:
-    Path object, or None if not found
+- `system`: System name (thegent, manage, workstream, plan)
+- `path_type`: Path type (config, cache, data, bin, log, temp)
 
-```python
-get_harmonized_path(self, system, path_type)
-```
+**Returns**: Path object, or None if not found
+
+---
 
 ---
 
 ## create_shared_structure
 
+```python
+create_shared_structure(self: Any)
+```
+
 Create shared directory structure.
 
 Creates common parent directories and ensures consistent structure
 across all integrated systems.
 
-```python
-create_shared_structure(self)
-```
-
 ---
 
 ## get_harmonized_path
 
+```python
+get_harmonized_path(self: Any, system: str, path_type: str)
+```
+
 Get harmonized path for system.
 
-Args:
-    system: System name (thegent, manage, workstream, plan)
-    path_type: Path type (config, cache, data, bin, log, temp)
+**Parameters**:
 
-Returns:
-    Path object, or None if not found
+- `system`: System name (thegent, manage, workstream, plan)
+- `path_type`: Path type (config, cache, data, bin, log, temp)
 
-```python
-get_harmonized_path(self, system, path_type)
-```
+**Returns**: Path object, or None if not found
 
 ---
 

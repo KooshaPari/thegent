@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Auto-generate GIFs from demo scripts
 # Reduces verbosity: single command to generate all demo GIFs
 

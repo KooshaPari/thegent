@@ -29,66 +29,80 @@ States:
 #### AgilePlusLoop.__init__
 
 ```python
-__init__(self, project_dir, health_targets_path, health_threshold, max_tasks_per_cycle, max_rerolls, lifecycle_mode)
+__init__(self: Any, project_dir: Path, health_targets_path: Path, health_threshold: float, max_tasks_per_cycle: int, max_rerolls: int, lifecycle_mode: str)
 ```
+
+---
 
 #### AgilePlusLoop.cycle_id
 
+```python
+cycle_id(self: Any)
+```
+
 Current cycle ID.
 
-```python
-cycle_id(self)
-```
+---
 
 #### AgilePlusLoop.get_status
 
+```python
+get_status(self: Any)
+```
+
 Get current status without running a cycle.
 
-```python
-get_status(self)
-```
+---
 
 #### AgilePlusLoop.request_shutdown
 
+```python
+request_shutdown(self: Any)
+```
+
 Request graceful shutdown.
 
-```python
-request_shutdown(self)
-```
+---
 
 #### AgilePlusLoop.run_continuous
 
-Run continuous governance cycles.
-
-Args:
-    interval_seconds: Seconds between cycles
-    max_cycles: Maximum cycles to run (None = infinite)
-
-Returns:
-    List of CycleResult for each completed cycle
-
 ```python
-run_continuous(self, interval_seconds, max_cycles)
+run_continuous(self: Any, interval_seconds: int, max_cycles: Any)
 ```
 
+Run continuous governance cycles.
+
+**Parameters**:
+
+- `interval_seconds`: Seconds between cycles
+- `max_cycles`: Maximum cycles to run (None = infinite)
+
+**Returns**: List of CycleResult for each completed cycle
+
+---
+
 #### AgilePlusLoop.run_once
+
+```python
+run_once(self: Any, force: bool)
+```
 
 Run a single governance cycle.
 
 Returns a CycleResult with the outcome of the complete
 scan-analyze-plan-deploy-verify-commit loop.
 
-```python
-run_once(self, force)
-```
+---
 
 #### AgilePlusLoop.state
 
+```python
+state(self: Any)
+```
+
 Current cycle state.
 
-```python
-state(self)
-```
+---
 
 ---
 
@@ -104,77 +118,77 @@ Result of a single AgilePlus cycle.
 
 AgilePlus cycle states.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
 ## cycle_id
 
-Current cycle ID.
-
 ```python
-cycle_id(self)
+cycle_id(self: Any)
 ```
+
+Current cycle ID.
 
 ---
 
 ## get_status
 
-Get current status without running a cycle.
-
 ```python
-get_status(self)
+get_status(self: Any)
 ```
+
+Get current status without running a cycle.
 
 ---
 
 ## request_shutdown
 
-Request graceful shutdown.
-
 ```python
-request_shutdown(self)
+request_shutdown(self: Any)
 ```
+
+Request graceful shutdown.
 
 ---
 
 ## run_continuous
 
+```python
+run_continuous(self: Any, interval_seconds: int, max_cycles: Any)
+```
+
 Run continuous governance cycles.
 
-Args:
-    interval_seconds: Seconds between cycles
-    max_cycles: Maximum cycles to run (None = infinite)
+**Parameters**:
 
-Returns:
-    List of CycleResult for each completed cycle
+- `interval_seconds`: Seconds between cycles
+- `max_cycles`: Maximum cycles to run (None = infinite)
 
-```python
-run_continuous(self, interval_seconds, max_cycles)
-```
+**Returns**: List of CycleResult for each completed cycle
 
 ---
 
 ## run_once
+
+```python
+run_once(self: Any, force: bool)
+```
 
 Run a single governance cycle.
 
 Returns a CycleResult with the outcome of the complete
 scan-analyze-plan-deploy-verify-commit loop.
 
-```python
-run_once(self, force)
-```
-
 ---
 
 ## state
 
-Current cycle state.
-
 ```python
-state(self)
+state(self: Any)
 ```
+
+Current cycle state.
 
 ---
 

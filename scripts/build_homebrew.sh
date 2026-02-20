@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # scripts/build_homebrew.sh
 # Generates a Homebrew formula from the template
 

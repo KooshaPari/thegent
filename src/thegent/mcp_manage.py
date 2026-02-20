@@ -124,6 +124,8 @@ def install_to_client(
     client: str,
     url: str,
     workspace: Path | None = None,
+    replace_all: bool = False,
+    force_http: bool = False,
 ) -> tuple[bool, str]:
     """Install thegent to given MCP client. Returns (success, message)."""
     if client == "cursor":
@@ -270,7 +272,11 @@ def service_status(settings: ThegentSettings | None = None) -> tuple[bool, str]:
             capture_output=True,
             text=True,
         )
-        stdout_text = result.stdout if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        stdout_text = (
+            result.stdout
+            if isinstance(result.stdout, str)
+            else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        )
         if result.returncode == 0 and stdout_text and "com.thegent.mcp" in stdout_text:
             return False, "Loaded but HTTP not reachable (check logs)"
     return False, "Not running"
@@ -303,19 +309,30 @@ def mcp_up(reload: bool = False) -> tuple[bool, str]:
     proc = shutil.which("process-compose")
     if not proc:
         raise ConfigError("process-compose not installed.", get_install_hint("process-compose"))
-    # Handle reload: if True, use restart command instead of up
-    cmd = "restart" if reload else "up"
+
+    # Handle reload: if True, stop first
+    if reload:
+        mcp_down()
+
     result = run_subprocess_optimized(
-        [proc, "-f", str(pc), cmd, "-D"],
+        [proc, "-f", str(pc), "up", "-D"],
         check=False,
         cwd=pc.parent,
         capture_output=True,
         text=True,
     )
     if result.returncode != 0:
-        stderr_text = result.stderr if isinstance(result.stderr, str) else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
-        stdout_text = result.stdout if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
-        return False, stderr_text or stdout_text or f"process-compose {cmd} failed"
+        stderr_text = (
+            result.stderr
+            if isinstance(result.stderr, str)
+            else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
+        )
+        stdout_text = (
+            result.stdout
+            if isinstance(result.stdout, str)
+            else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        )
+        return False, stderr_text or stdout_text or "process-compose up failed"
     return True, f"MCP + proxy {'restarted' if reload else 'started'} (process-compose). MCP: {pc.parent}"
 
 
@@ -336,10 +353,23 @@ def mcp_down() -> tuple[bool, str]:
         text=True,
     )
     if result.returncode != 0:
-        stderr_text = result.stderr if isinstance(result.stderr, str) else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
-        stdout_text = result.stdout if isinstance(result.stdout, str) else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        stderr_text = (
+            result.stderr
+            if isinstance(result.stderr, str)
+            else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
+        )
+        stdout_text = (
+            result.stdout
+            if isinstance(result.stdout, str)
+            else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
+        )
         return False, stderr_text or stdout_text or "process-compose down failed"
     return True, "MCP + proxy stopped"
+
+
+def mcp_restart() -> tuple[bool, str]:
+    """Restart MCP + proxy via process-compose. Returns (success, message)."""
+    return mcp_up(reload=True)
 
 
 def serve_delegate_or_run(settings) -> tuple[bool, str]:
@@ -352,4 +382,276 @@ def serve_delegate_or_run(settings) -> tuple[bool, str]:
     """
     # Check if we should use launchd/Homebrew service
     # For now, always run foreground since service integration is not fully configured
-    return False, "Running MCP server directly (service delegation not configured)"
+    return True, "Running MCP server directly (service delegation not configured)"
+
+
+# --- Known failing MCP servers ---
+
+FAILING_MCP_SERVERS: frozenset[str] = frozenset({"codex_apps", "playwright"})
+
+
+# --- Server removal helpers ---
+
+
+def remove_servers_from_client(
+    client: str,
+    server_names: list[str],
+    workspace: Path | None = None,
+) -> tuple[bool, str]:
+    """Remove named MCP servers from a client's config. Returns (success, message)."""
+    try:
+        if client == "cursor":
+            config_path = (
+                workspace.resolve() / ".cursor" / "mcp.json"
+                if workspace
+                else Path.home() / ".cursor" / "mcp.json"
+            )
+        elif client == "claude-code":
+            config_path = Path.home() / ".claude.json"
+        elif client == "codex":
+            config_path = Path.home() / ".codex" / "config.json"
+        elif client == "claude-desktop":
+            config_path = (
+                Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+            )
+        else:
+            return False, f"Unknown client: {client}"
+
+        if not config_path.exists():
+            return True, "No matching servers found"
+
+        config: dict[str, Any] = json.loads(config_path.read_text())
+        mcp_servers: dict[str, Any] = config.get("mcpServers", {})
+        removed = 0
+        for name in server_names:
+            if name in mcp_servers:
+                del mcp_servers[name]
+                removed += 1
+        config["mcpServers"] = mcp_servers
+        config_path.write_text(json.dumps(config, indent=2))
+        return True, f"Removed {removed} servers from {client}"
+    except FileNotFoundError:
+        return True, "No matching servers found"
+    except Exception as e:
+        return False, str(e)
+
+
+# --- Uni-mount migration ---
+
+
+def migrate_to_unimount(
+    client: str,
+    mcp_url: str,
+    workspace: Path | None = None,
+) -> tuple[bool, str]:
+    """Replace ALL MCP server entries with a single thegent entry at mcp_url. Returns (success, message)."""
+    try:
+        if client == "cursor":
+            config_path = (
+                workspace.resolve() / ".cursor" / "mcp.json"
+                if workspace
+                else Path.home() / ".cursor" / "mcp.json"
+            )
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {}
+            config["mcpServers"] = {"thegent": {"url": mcp_url}}
+            config_path.write_text(json.dumps(config, indent=2))
+        elif client == "claude-code":
+            config_path = Path.home() / ".claude.json"
+            config = json.loads(config_path.read_text()) if config_path.exists() else {}
+            config["mcpServers"] = {"thegent": {"url": mcp_url}}
+            config_path.write_text(json.dumps(config, indent=2))
+        elif client == "codex":
+            config_path = Path.home() / ".codex" / "config.json"
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config = json.loads(config_path.read_text()) if config_path.exists() else {}
+            config["mcpServers"] = {"thegent": {"command": "uvx", "args": ["thegent", "serve"]}}
+            config_path.write_text(json.dumps(config, indent=2))
+        elif client == "claude-desktop":
+            config_path = (
+                Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+            )
+            config = json.loads(config_path.read_text()) if config_path.exists() else {}
+            config["mcpServers"] = {"thegent": {"url": mcp_url}}
+            config_path.write_text(json.dumps(config, indent=2))
+        else:
+            return False, f"Unknown client: {client}"
+        return True, f"Migrated {client} to uni-mount"
+    except Exception as e:
+        return False, str(e)
+
+
+# --- Periodic prune daemon ---
+
+_PRUNE_LAUNCHD_LABEL = "com.thegent.mcp.prune"
+_PRUNE_PLIST_PATH = Path.home() / "Library" / "LaunchAgents" / f"{_PRUNE_LAUNCHD_LABEL}.plist"
+_PRUNE_SYSTEMD_UNIT = "thegent-mcp-prune.service"
+_PRUNE_SYSTEMD_PATH = Path.home() / ".config" / "systemd" / "user" / _PRUNE_SYSTEMD_UNIT
+
+
+def prune_periodic_install() -> tuple[bool, str]:
+    """Install a periodic prune daemon. Returns (success, message)."""
+    try:
+        system = platform.system()
+        if system == "Darwin":
+            _PRUNE_PLIST_PATH.parent.mkdir(parents=True, exist_ok=True)
+            plist = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+<key>Label</key>
+<string>{_PRUNE_LAUNCHD_LABEL}</string>
+<key>ProgramArguments</key>
+<array>
+<string>thegent</string>
+<string>mcp</string>
+<string>prune</string>
+</array>
+<key>StartInterval</key>
+<integer>3600</integer>
+<key>RunAtLoad</key>
+<false/>
+</dict>
+</plist>
+"""
+            _PRUNE_PLIST_PATH.write_text(plist)
+            subprocess.run(
+                ["launchctl", "load", str(_PRUNE_PLIST_PATH)],
+                check=False,
+                capture_output=True,
+            )
+            return True, "Periodic prune installed"
+        if system == "Linux":
+            _PRUNE_SYSTEMD_PATH.parent.mkdir(parents=True, exist_ok=True)
+            unit = """[Unit]
+Description=Thegent MCP periodic prune
+
+[Service]
+Type=oneshot
+ExecStart=thegent mcp prune
+
+[Install]
+WantedBy=default.target
+"""
+            _PRUNE_SYSTEMD_PATH.write_text(unit)
+            subprocess.run(
+                ["systemctl", "--user", "enable", _PRUNE_SYSTEMD_UNIT],
+                check=False,
+                capture_output=True,
+            )
+            return True, "Periodic prune installed"
+        return False, f"Unsupported platform: {system}"
+    except Exception as e:
+        return False, str(e)
+
+
+def prune_periodic_start() -> tuple[bool, str]:
+    """Start the periodic prune daemon. Returns (success, message)."""
+    try:
+        system = platform.system()
+        if system == "Darwin":
+            subprocess.run(
+                ["launchctl", "start", _PRUNE_LAUNCHD_LABEL],
+                check=False,
+                capture_output=True,
+            )
+            return True, "Periodic prune started"
+        if system == "Linux":
+            subprocess.run(
+                ["systemctl", "--user", "start", _PRUNE_SYSTEMD_UNIT],
+                check=False,
+                capture_output=True,
+            )
+            return True, "Periodic prune started"
+        return False, f"Unsupported platform: {system}"
+    except Exception as e:
+        return False, str(e)
+
+
+def prune_periodic_stop() -> tuple[bool, str]:
+    """Stop the periodic prune daemon. Returns (success, message)."""
+    try:
+        system = platform.system()
+        if system == "Darwin":
+            subprocess.run(
+                ["launchctl", "stop", _PRUNE_LAUNCHD_LABEL],
+                check=False,
+                capture_output=True,
+            )
+            return True, "Periodic prune stopped"
+        if system == "Linux":
+            subprocess.run(
+                ["systemctl", "--user", "stop", _PRUNE_SYSTEMD_UNIT],
+                check=False,
+                capture_output=True,
+            )
+            return True, "Periodic prune stopped"
+        return False, f"Unsupported platform: {system}"
+    except Exception as e:
+        return False, str(e)
+
+
+def prune_periodic_status() -> tuple[bool, str]:
+    """Return status of the periodic prune daemon. Returns (success, message)."""
+    try:
+        system = platform.system()
+        if system == "Darwin":
+            result = subprocess.run(
+                ["launchctl", "list", _PRUNE_LAUNCHD_LABEL],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                return True, f"Periodic prune loaded: {result.stdout.strip()}"
+            return False, "Periodic prune not loaded"
+        if system == "Linux":
+            result = subprocess.run(
+                ["systemctl", "--user", "is-active", _PRUNE_SYSTEMD_UNIT],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            status = result.stdout.strip()
+            return result.returncode == 0, f"Periodic prune: {status}"
+        return False, f"Unsupported platform: {system}"
+    except Exception as e:
+        return False, str(e)
+
+
+def prune_periodic_uninstall() -> tuple[bool, str]:
+    """Remove the periodic prune daemon. Returns (success, message)."""
+    try:
+        system = platform.system()
+        if system == "Darwin":
+            subprocess.run(
+                ["launchctl", "unload", str(_PRUNE_PLIST_PATH)],
+                check=False,
+                capture_output=True,
+            )
+            if _PRUNE_PLIST_PATH.exists():
+                _PRUNE_PLIST_PATH.unlink()
+            return True, "Periodic prune uninstalled"
+        if system == "Linux":
+            subprocess.run(
+                ["systemctl", "--user", "disable", "--now", _PRUNE_SYSTEMD_UNIT],
+                check=False,
+                capture_output=True,
+            )
+            if _PRUNE_SYSTEMD_PATH.exists():
+                _PRUNE_SYSTEMD_PATH.unlink()
+            return True, "Periodic prune uninstalled"
+        return False, f"Unsupported platform: {system}"
+    except Exception as e:
+        return False, str(e)
+
+
+# --- Playwright shorthand ---
+
+
+def remove_playwright_from_client(
+    client: str,
+    workspace: Path | None = None,
+) -> tuple[bool, str]:
+    """Shorthand to remove playwright from a single client."""
+    return remove_servers_from_client(client, ["playwright"], workspace=workspace)

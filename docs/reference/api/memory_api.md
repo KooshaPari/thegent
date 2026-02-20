@@ -4,13 +4,13 @@
 
 ## FrictionScope
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
 ## MemoryCategory
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -21,6 +21,7 @@
 ## MemorySystem
 
 MTSP-17: Dual Issue & Memory Collection System.
+
 Append-only audit log for agent observations, synthesized into formal docs.
 
 ### Methods
@@ -28,35 +29,43 @@ Append-only audit log for agent observations, synthesized into formal docs.
 #### MemorySystem.__init__
 
 ```python
-__init__(self, project_root)
+__init__(self: Any, project_root: Path)
 ```
+
+---
 
 #### MemorySystem.get_recent
 
 ```python
-get_recent(self, limit, category)
+get_recent(self: Any, limit: int, category: Any)
 ```
+
+---
 
 #### MemorySystem.record
 
 ```python
-record(self, content, category, agent_id, scope, metadata)
+record(self: Any, content: str, category: MemoryCategory, agent_id: str, scope: Any, metadata: Any)
 ```
+
+---
 
 #### MemorySystem.synthesize_to_markdown
 
+```python
+synthesize_to_markdown(self: Any)
+```
+
 Helper to generate a summary for an agent to incorporate.
 
-```python
-synthesize_to_markdown(self)
-```
+---
 
 ---
 
 ## get_recent
 
 ```python
-get_recent(self, limit, category)
+get_recent(self: Any, limit: int, category: Any) -> list[MemoryFragment]
 ```
 
 ---
@@ -64,18 +73,18 @@ get_recent(self, limit, category)
 ## record
 
 ```python
-record(self, content, category, agent_id, scope, metadata)
+record(self: Any, content: str, category: MemoryCategory, agent_id: str, scope: Any, metadata: Any) -> MemoryFragment
 ```
 
 ---
 
 ## synthesize_to_markdown
 
-Helper to generate a summary for an agent to incorporate.
-
 ```python
-synthesize_to_markdown(self)
+synthesize_to_markdown(self: Any)
 ```
+
+Helper to generate a summary for an agent to incorporate.
 
 ---
 

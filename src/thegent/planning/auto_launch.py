@@ -17,7 +17,6 @@ from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
-from thegent.docgen.analytics import AnalyticsIntegration
 from thegent.economy.reputation import ReputationManager
 from thegent.governance.agent_hierarchy import AgentHierarchyManager
 from thegent.governance.backlog import BacklogManager
@@ -31,9 +30,10 @@ from thegent.infra.subprocess_manager import SubprocessManager
 from thegent.integration.plan_system import PlanSystemIntegration
 from thegent.integration.unified_config import UnifiedConfigManager
 from thegent.memory.manager import MemoryManager
-from thegent.observability.egress import SIEMEgress
+from thegent.observability.analytics import AnalyticsIntegration
+from thegent.observability.egress import EgressEvent, SIEMEgress
 from thegent.orchestration.deferral import DeferralManager
-from thegent.orchestration.lanes import LaneModel, Lane
+from thegent.orchestration.lanes import Lane, LaneModel
 from thegent.orchestration.load_based_limits import (
     compute_dynamic_limit,
     sample_resources,
@@ -42,8 +42,8 @@ from thegent.orchestration.session_watcher import SessionEventWatcher
 from thegent.orchestration.worker_pool import PersistentWorkerPool
 from thegent.planning.work_stream import WorkStreamManager
 from thegent.planning.workstream_db import WorkstreamDB
-from thegent.routing.task_router import TaskRouter, TaskCategory
-from thegent.security.rbac import RBACManager, Role, Permission
+from thegent.routing.task_router import TaskCategory, TaskRouter
+from thegent.security.rbac import Permission, RBACManager, Role
 from thegent.sync import SyncOrchestrator, SyncRegistry
 from thegent.team.coordination import TeamCoordinator
 from thegent.ux.alerts import AlertFatigueController, InterruptionKind
@@ -63,9 +63,7 @@ class AutoLaunchSystem:
         self.settings = settings or ThegentSettings()
 
         # Core components
-        self.workstream_manager = WorkStreamManager(
-            self.settings, base_dir=Path.cwd()
-        )
+        self.workstream_manager = WorkStreamManager(self.settings, base_dir=Path.cwd())
         self.db = WorkstreamDB(settings=self.settings)
         self.evidence_ledger = EvidenceLedger(self.settings.session_dir)
         self.event_watcher = SessionEventWatcher(self.settings.session_dir)
@@ -105,26 +103,68 @@ class AutoLaunchSystem:
         self.rbac_manager = RBACManager()
 
         # Phase 0+ integrations
-        self.memory_manager = MemoryManager(
-            l1_size=1000,
-            l2_dir=str(self.settings.session_dir / "cache" / "l2")
-        )
+        self.memory_manager = MemoryManager(l1_size=1000, l2_dir=str(self.settings.session_dir / "cache" / "l2"))
         self.constitution_manager = ConstitutionManager(Path("CONSTITUTION.yaml"))
         self.reputation_manager = ReputationManager(db_path=self.db.db_path)
         self.sync_orchestrator = SyncOrchestrator(SyncRegistry())
         self.unified_config = UnifiedConfigManager()
         self.plan_integration = PlanSystemIntegration()
         self.alert_fatigue = AlertFatigueController(self.settings)
-        self.analytics = AnalyticsIntegration(
-            provider="plausible",
-            site_id=self.settings.analytics_site_id
-        )
+        self.analytics = AnalyticsIntegration(provider="plausible", site_id=self.settings.analytics_site_id)
         self.siem_egress = SIEMEgress(endpoint_url=self.settings.siem_endpoint_url)
 
         # Start event watcher
         self.event_watcher.start()
 
         _log.info("Auto-launch system initialized")
+
+    def record_event(
+        self,
+        event_type: str,
+        session_id: str | None = None,
+        item_id: str | None = None,
+        payload: dict[str, Any] | None = None,
+    ) -> None:
+        """Record an auto-launch event in the database.
+
+        Args:
+            event_type: Type of event
+            session_id: Associated session ID
+            item_id: Associated workstream item ID
+            payload: Optional event payload
+        """
+        import json
+
+        evidence_hash = self.evidence_ledger.record(
+            event_type=f"auto_launch_{event_type}",
+            cycle_id=f"auto-launch-{datetime.now(UTC).isoformat()}",
+            payload={
+                "event_type": event_type,
+                "session_id": session_id,
+                "item_id": item_id,
+                "payload": payload,
+            },
+        )
+
+        conn = sqlite3.connect(self.db.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO auto_launch_events
+            (event_type, session_id, item_id, timestamp, payload, evidence_hash)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                event_type,
+                session_id,
+                item_id,
+                datetime.now(UTC).isoformat(),
+                json.dumps(payload) if payload else None,
+                evidence_hash,
+            ),
+        )
+        conn.commit()
+        conn.close()
 
     def handle_completion(self, session_id: str, exit_code: int) -> None:
         """Handle session completion event.
@@ -142,13 +182,18 @@ class AutoLaunchSystem:
             payload={"session_id": session_id, "exit_code": exit_code},
         )
 
+        # Record auto-launch event
+        self.record_event("session_completed", session_id=session_id, payload={"exit_code": exit_code})
+
         # Update database
-        session = self.db.execute_query(
-            "SELECT * FROM sessions WHERE session_id = ? LIMIT 1", (session_id,)
-        )
+        session = self.db.execute_query("SELECT * FROM sessions WHERE session_id = ? LIMIT 1", (session_id,))
         if session:
             self.db.mark_session_complete(session_id, exit_code)
-            
+
+            # Award XP for successful completion
+            if exit_code == 0:
+                self._award_xp(session[0])
+
             # Update workstream item status
             item_id = session[0].get("workstream_item_id")
             if item_id:
@@ -157,13 +202,18 @@ class AutoLaunchSystem:
                     self.workstream_manager.complete(item_id, "auto-launch")
                 except Exception as e:
                     _log.warning(f"Failed to complete {item_id} in WorkStreamManager: {e}")
-                
+
                 # Update status in DB workstream_items table
                 conn = sqlite3.connect(self.db.db_path)
                 cursor = conn.cursor()
+                now_iso = datetime.now(UTC).isoformat()
                 cursor.execute(
                     "UPDATE workstream_items SET status = 'completed', completed_at = ? WHERE item_id = ?",
-                    (datetime.now(UTC).isoformat(), item_id)
+                    (now_iso, item_id),
+                )
+                # Update dependencies table
+                cursor.execute(
+                    "UPDATE dependencies SET satisfied_at = ? WHERE depends_on_item_id = ?", (now_iso, item_id)
                 )
                 conn.commit()
                 conn.close()
@@ -175,12 +225,7 @@ class AutoLaunchSystem:
                     model=s["model"],
                     tokens_total=s.get("tokens_total", 0),
                 )
-                self.db.record_cost(
-                    session_id, 
-                    cost, 
-                    tokens_total=s.get("tokens_total", 0),
-                    model=s.get("model")
-                )
+                self.db.record_cost(session_id, cost, tokens_total=s.get("tokens_total", 0), model=s.get("model"))
                 _log.debug(f"Recorded cost for {session_id}: ${cost:.4f}")
 
         # Check team coordination
@@ -192,17 +237,19 @@ class AutoLaunchSystem:
             )
 
         # Emit SIEM event
-        self.siem_egress.push_event(EgressEvent(
-            id=f"completion-{session_id}",
-            severity="low" if exit_code == 0 else "medium",
-            event_type="session_completed",
-            source="auto-launch-system",
-            payload={
-                "session_id": session_id,
-                "exit_code": exit_code,
-                "item_id": session[0].get("workstream_item_id") if session else None
-            }
-        ))
+        self.siem_egress.push_event(
+            EgressEvent(
+                id=f"completion-{session_id}",
+                severity="low" if exit_code == 0 else "medium",
+                event_type="session_completed",
+                source="auto-launch-system",
+                payload={
+                    "session_id": session_id,
+                    "exit_code": exit_code,
+                    "item_id": session[0].get("workstream_item_id") if session else None,
+                },
+            )
+        )
 
         # Track analytics
         self.analytics.track_page_view(f"/session/complete/{session_id}")
@@ -216,7 +263,7 @@ class AutoLaunchSystem:
                 cursor = conn.cursor()
                 cursor.execute(
                     "UPDATE workstream_items SET status = 'failed', retry_count = retry_count + 1, last_error = ? WHERE item_id = ?",
-                    (f"Exit code {exit_code}", item_id)
+                    (f"Exit code {exit_code}", item_id),
                 )
                 conn.commit()
                 conn.close()
@@ -226,19 +273,29 @@ class AutoLaunchSystem:
 
         # Send notification
         import subprocess
+
         try:
-            subprocess.run([
-                "bash", "hooks/notify-agent-event.sh",
-                "--event", "sessionend",
-                "--title", f"Session {session_id} Complete",
-                "--message", f"Exit code: {exit_code}",
-                "--severity", "info" if exit_code == 0 else "error"
-            ], check=False)
+            subprocess.run(
+                [
+                    "bash",
+                    "hooks/notify-agent-event.sh",
+                    "--event",
+                    "sessionend",
+                    "--title",
+                    f"Session {session_id} Complete",
+                    "--message",
+                    f"Exit code: {exit_code}",
+                    "--severity",
+                    "info" if exit_code == 0 else "error",
+                ],
+                check=False,
+            )
         except Exception as e:
             _log.warning(f"Failed to send notification for {session_id}: {e}")
 
         # Get next items and launch if capacity available
         import asyncio
+
         try:
             asyncio.run(self._try_launch_next())
         except RuntimeError:
@@ -253,7 +310,7 @@ class AutoLaunchSystem:
         """Sync workstream database with WORK_STREAM.md."""
         try:
             from thegent.cli_impl import _parse_work_stream_md
-            
+
             work_stream_path = Path("docs/reference/WORK_STREAM.md")
             if work_stream_path.exists():
                 data = _parse_work_stream_md(work_stream_path)
@@ -269,6 +326,7 @@ class AutoLaunchSystem:
         if not ready_items:
             # Fallback to do_next_impl if DB is empty or out of sync
             from thegent.cli_impl import do_next_impl
+
             result = do_next_impl(limit=10)
             if "error" in result or not result.get("next_items"):
                 return
@@ -287,9 +345,7 @@ class AutoLaunchSystem:
         items_to_launch = ready_items[:available]
         await self.launch_batch(items_to_launch, role=Role.OPERATOR)
 
-    async def launch_batch(
-        self, items: list[dict[str, Any]], role: Role = Role.OPERATOR
-    ) -> None:
+    async def launch_batch(self, items: list[dict[str, Any]], role: Role = Role.OPERATOR) -> None:
         """Launch batch of items with lane-aware routing, RBAC, and resource management.
 
         Args:
@@ -312,14 +368,15 @@ class AutoLaunchSystem:
             return
 
         # Check memory cache for recent launch decisions
-        cache_key = f"auto_launch_batch_{hash(tuple(i.get('id', '') for i in items))}"
+        cache_key = f"auto_launch_batch_{hash(tuple((i.get('item_id') or i.get('id')) for i in items))}"
         cached = await self.memory_manager.get_knowledge(cache_key)
         if cached:
-            _log.debug(f"Using cached launch decision for batch")
+            _log.debug("Using cached launch decision for batch")
             return
 
-        # Sort by lane priority
+        # Sort by lane priority and group by source
         sorted_items = self.lane_model.sort_tasks(items)
+        sorted_items.sort(key=lambda x: (x.get("priority", "P2"), x.get("source", "")))
 
         # Check dynamic limit
         current_running = self.db.get_running_count()
@@ -334,7 +391,12 @@ class AutoLaunchSystem:
             _log.warning(f"Component sync failed before launch: {e}")
 
         for item in sorted_items:
-            if len([i for i in items if i.get("id") == item.get("id")]) == 0:
+            # item_id normalized from DB or workstream
+            item_id = item.get("item_id") or item.get("id")
+            if not item_id:
+                continue
+
+            if len([i for i in items if (i.get("item_id") or i.get("id")) == item_id]) == 0:
                 continue
 
             priority = item.get("priority", "P2")
@@ -343,91 +405,88 @@ class AutoLaunchSystem:
             # Check deferral
             if self.deferral_manager.should_defer(priority, load_level):
                 self.deferral_manager.defer_task(
-                    item["id"],
+                    item_id,
                     f"High load ({load_level:.1%}), priority {priority}",
                 )
                 continue
 
             # Check lane capacity
             lane_counts = self.db.get_running_count_by_lane()
-            if not self.lane_model.check_capacity(
-                lane, lane_counts.get(lane, 0), dynamic_limit
-            ):
+            if not self.lane_model.check_capacity(lane, lane_counts.get(lane, 0), dynamic_limit):
                 continue
 
             # Constitutional AI critique
-            action = {"prompt": item.get("prompt", ""), "item_id": item["id"]}
+            action = {"prompt": item.get("prompt", ""), "item_id": item_id}
             violations = self.constitution_manager.critique_action(action)
             if violations:
-                _log.warning(f"Constitutional violations detected for {item['id']}: {[v.reason for v in violations]}")
+                _log.warning(f"Constitutional violations detected for {item_id}: {[v.reason for v in violations]}")
                 # Record violation in DB and backlog
                 for violation in violations:
-                    self.db.record_constitutional_violation(item["id"], None, violation)
+                    self.db.record_constitutional_violation(item_id, None, violation)
                     self.backlog_manager.add(
-                        finding_id=f"constitutional-{item['id']}",
+                        finding_id=f"constitutional-{item_id}",
                         dimension="safety",
                         severity=0.8,
-                        description=f"{violation.reason}. Remediation: {violation.remediation}"
+                        description=f"{violation.reason}. Remediation: {violation.remediation}",
                     )
                 continue
 
             # Route task to optimal model
-            category = self.task_router.categorize_task(item.get("prompt", ""))
-            route = self.task_router.route_task(
-                category, urgency=self.lane_model.get_urgency(lane)
-            )
+            metadata = self.task_router.classify(item.get("prompt", ""))
+            category = metadata.category
+            fallbacks = self.task_router.get_fallback_chain(category)
+            model = fallbacks[0] if fallbacks else "gemini-3-flash"
 
             # Check agent reputation
-            trust_score = self.reputation_manager.get_trust_score(route.model)
+            trust_score = self.reputation_manager.get_trust_score(model)
             if trust_score < 0.3:
-                _log.warning(f"Low trust score ({trust_score:.2f}) for model {route.model}, skipping")
+                _log.warning(f"Low trust score ({trust_score:.2f}) for model {model}, skipping")
                 continue
 
             # Estimate cost
-            estimated_cost = self.cost_estimator.estimate(
-                model=route.model, prompt_length=len(item.get("prompt", ""))
-            )
+            estimated_cost = self.cost_estimator.estimate(model=model, prompt_length=len(item.get("prompt", "")))
 
             # Check if should delegate to teammate
-            if self._should_delegate_to_teammate(item, category):
-                teammate = self._select_teammate(category)
+            if self._should_delegate_to_teammate(item, str(category)):
+                teammate = self._select_teammate(str(category))
                 if teammate:
                     try:
                         self.teammate_manager.delegate(
-                            teammate_id=teammate.id,
-                            parent_run_id="auto-launch",
-                            prompt=item.get("prompt", "")
+                            teammate_id=teammate.id, parent_run_id="auto-launch", prompt=item.get("prompt", "")
                         )
-                        _log.info(f"Delegated {item['id']} to teammate {teammate.id}")
+                        _log.info(f"Delegated {item_id} to teammate {teammate.id}")
                         continue
                     except Exception as e:
-                        _log.warning(f"Teammate delegation failed for {item['id']}: {e}")
+                        _log.warning(f"Teammate delegation failed for {item_id}: {e}")
 
             # Launch item
-            await self._launch_item(item, lane, route.model, estimated_cost)
+            await self._launch_item(item, lane, model, estimated_cost)
 
             # Emit SIEM event
-            self.siem_egress.push_event(EgressEvent(
-                id=f"launch-{item['id']}",
-                severity="low",
-                event_type="auto_launch_started",
-                source="auto-launch-system",
-                payload={
-                    "item_id": item["id"],
-                    "lane": lane,
-                    "model": route.model,
-                    "estimated_cost": estimated_cost,
-                    "trust_score": trust_score
-                }
-            ))
+            from thegent.observability.egress import EgressEvent
+
+            self.siem_egress.push_event(
+                EgressEvent(
+                    id=f"launch-{item_id}",
+                    severity="low",
+                    event_type="auto_launch_started",
+                    source="auto-launch-system",
+                    payload={
+                        "item_id": item_id,
+                        "lane": lane,
+                        "model": model,
+                        "estimated_cost": estimated_cost,
+                        "trust_score": trust_score,
+                    },
+                )
+            )
 
             # Track analytics
-            self.analytics.track_page_view(f"/auto-launch/{item['id']}")
+            self.analytics.track_page_view(f"/auto-launch/{item_id}")
 
         # Cache launch decision
         await self.memory_manager.store_knowledge(
-            cache_key,
-            {"launched": True, "timestamp": datetime.now(UTC).isoformat()}
+            cache_key, {"launched": True, "timestamp": datetime.now(UTC).isoformat()}
         )
 
     def _determine_lane(self, item: dict[str, Any]) -> str:
@@ -442,26 +501,19 @@ class AutoLaunchSystem:
         priority = item.get("priority", "P2")
         if priority == "P0":
             return Lane.CRITICAL
-        elif priority == "P1":
+        if priority == "P1":
             return Lane.STANDARD
-        elif item.get("source") == "gardening":
+        if item.get("source") == "gardening":
             return Lane.RECOVERY
-        else:
-            return Lane.BACKGROUND
+        return Lane.BACKGROUND
 
-    async def _launch_item(
-        self, item: dict[str, Any], lane: str, model: str, estimated_cost: float
-    ) -> None:
-        """Launch a single workstream item.
-
-        Args:
-            item: Workstream item dict
-            lane: Execution lane
-            model: Model to use
-            estimated_cost: Estimated cost in USD
-        """
+    async def _launch_item(self, item: dict[str, Any], lane: str, model: str, estimated_cost: float) -> None:
+        """Launch a single workstream item."""
         # Claim item first
-        item_id = item["id"]
+        item_id = item.get("item_id") or item.get("id")
+        if not item_id:
+            return
+
         agent_id = "auto-launch"
         try:
             self.workstream_manager.claim(item_id, agent_id)
@@ -470,12 +522,12 @@ class AutoLaunchSystem:
 
         # Use bg_impl directly for the specific item
         from thegent.cli_impl import bg_impl
-        
+
         prompt = item.get("prompt_suggestion") or item.get("prompt") or item.get("title", item_id)
-        
+
         # Use gpt-4o-mini as default for auto-launch if model not specified
         launch_model = model or "gpt-4o-mini"
-        
+
         result = bg_impl(
             agent=None,  # Will be resolved from model
             model=launch_model,
@@ -514,58 +566,164 @@ class AutoLaunchSystem:
                 owner_tag=self.settings.owner_tag,
             )
 
+            # Update last_attempted_at in workstream_items
+            conn = sqlite3.connect(self.db.db_path)
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE workstream_items SET last_attempted_at = ?, status = 'running' WHERE item_id = ?",
+                (datetime.now(UTC).isoformat(), item_id),
+            )
+            conn.commit()
+            conn.close()
+
             _log.info(
-                f"Launched {item_id} as {session_id} via {launch_model} "
-                f"(lane: {lane}, cost: ${estimated_cost:.4f})"
+                f"Launched {item_id} as {session_id} via {launch_model} (lane: {lane}, cost: ${estimated_cost:.4f})"
+            )
+
+            # Record auto-launch event
+            self.record_event(
+                "item_launched",
+                item_id=item_id,
+                session_id=session_id,
+                payload={"lane": lane, "model": launch_model, "estimated_cost": estimated_cost},
             )
 
     def _should_delegate_to_teammate(self, item: dict[str, Any], category: str) -> bool:
         """Decide if an item should be delegated to a teammate."""
+        tags = item.get("tags")
+        if isinstance(tags, str):
+            try:
+                import json
+
+                tags = json.loads(tags)
+            except json.JSONDecodeError:
+                tags = []
+        elif tags is None:
+            tags = []
+
         # Policy: delegate if explicitly requested or if it's a specific category
-        if "delegate" in item.get("tags", []):
+        if "delegate" in tags:
             return True
-        
+
         # Or if it's a high-complexity task (heuristic)
         if len(item.get("prompt", "")) > 1000:
             return True
-            
+
         return False
 
     def _select_teammate(self, category: str) -> Any | None:
         """Select the best teammate for a category."""
         try:
-            teammates = self.teammate_manager.list_teammates()
+            personas = self.teammate_manager.list_personas()
             # Filter by capability if teammate manager supports it
             # For now, just pick the first available or matching
-            for t in teammates:
-                # teammate manager might return objects or dicts
-                capabilities = getattr(t, 'capabilities', []) if not isinstance(t, dict) else t.get('capabilities', [])
-                if category in capabilities:
+            for t in personas:
+                if category in t.capabilities:
                     return t
-            
+
             # Fallback to any teammate
-            if teammates:
-                return teammates[0]
+            if personas:
+                return personas[0]
         except Exception as e:
             _log.error(f"Error selecting teammate: {e}")
-            
+
         return None
+
+    async def run_gardening_cycle(self) -> None:
+        """Run a gardening cycle to identify and queue maintenance tasks."""
+        _log.info("Starting gardening cycle")
+
+        # 1. Scan for backlog items from BacklogManager
+        pending_backlog = self.backlog_manager.get_pending()
+        for item in pending_backlog:
+            # Check if already in workstream
+            existing = self.db.execute_query(
+                "SELECT item_id FROM workstream_items WHERE item_id = ? OR title LIKE ?",
+                (f"garden-{item.item_id}", f"%{item.finding_id}%"),
+            )
+            if not existing:
+                # Add to workstream
+                item_id = f"garden-{item.item_id}"
+                self.db.execute_query(
+                    """
+                    INSERT INTO workstream_items (item_id, title, source, priority, status, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        item_id,
+                        f"Gardening: {item.description[:50]}...",
+                        "gardening",
+                        "P2" if item.severity < 0.7 else "P1",
+                        "pending",
+                        datetime.now(UTC).isoformat(),
+                    ),
+                )
+                _log.info(f"Queued gardening task {item_id}")
+
+        # 2. Check for stalled items
+        stalled_limit = datetime.now(UTC).timestamp() - 3600  # 1 hour
+        stalled_items = self.db.execute_query(
+            "SELECT item_id FROM workstream_items WHERE status = 'running' AND last_attempted_at < ?",
+            (datetime.fromtimestamp(stalled_limit, UTC).isoformat(),),
+        )
+        for item in stalled_items:
+            _log.warning(f"Item {item['item_id']} stalled, resetting to failed for retry")
+            self.db.execute_query(
+                "UPDATE workstream_items SET status = 'failed', last_error = 'stalled' WHERE item_id = ?",
+                (item["item_id"],),
+            )
+
+        # 3. Clean up old costs and logs
+        # Implementation...
 
     def start(self) -> None:
         """Start the auto-launch system."""
         # Initial sync with markdown
         work_stream_path = Path("docs/reference/WORK_STREAM.md")
-        if not work_stream_path.exists():
-            # Try to find it if not at default path
-            from thegent.integration.work_stream import WorkStreamIntegration
-            # This is a bit of a hack but okay for now
-            pass
-        
         try:
             self.db.sync_with_markdown(work_stream_path)
             _log.info(f"Initial sync with {work_stream_path} completed")
         except Exception as e:
             _log.warning(f"Initial sync failed: {e}")
+
+        # Start periodic sync and gardening tasks
+        import threading
+
+        def periodic_tasks():
+            import asyncio
+            import time
+
+            count = 0
+            while True:
+                time.sleep(60)  # Check every minute
+                count += 1
+
+                # Sync every 5 minutes
+                if count % 5 == 0:
+                    try:
+                        self.db.sync_with_markdown(work_stream_path)
+                        _log.debug("Periodic sync completed")
+                    except Exception as e:
+                        _log.warning(f"Periodic sync failed: {e}")
+
+                # Garden every 30 minutes
+                if count % 30 == 0:
+                    try:
+                        # Use a new event loop or the current one if it exists
+                        try:
+                            loop = asyncio.get_event_loop()
+                            if loop.is_running():
+                                loop.create_task(self.run_gardening_cycle())
+                            else:
+                                loop.run_until_complete(self.run_gardening_cycle())
+                        except RuntimeError:
+                            asyncio.run(self.run_gardening_cycle())
+                        _log.debug("Periodic gardening completed")
+                    except Exception as e:
+                        _log.warning(f"Periodic gardening failed: {e}")
+
+        self.worker_thread = threading.Thread(target=periodic_tasks, daemon=True)
+        self.worker_thread.start()
 
         self.event_watcher.start()
         _log.info("Auto-launch system started")
@@ -574,3 +732,33 @@ class AutoLaunchSystem:
         """Stop the auto-launch system."""
         self.event_watcher.stop()
         _log.info("Auto-launch system stopped")
+
+    def _award_xp(self, session: dict[str, Any]) -> None:
+        """Award XP for a successful session completion."""
+        import subprocess
+
+        agent = session.get("agent", "unknown")
+        item_id = session.get("workstream_item_id", "unknown")
+
+        # Determine XP based on lane and priority
+        lane = session.get("lane", "standard")
+        xp_amount = {"critical": 50, "standard": 20, "recovery": 30, "background": 10}.get(lane, 20)
+
+        _log.info(f"Awarding {xp_amount} XP to {agent} for {item_id}")
+
+        try:
+            subprocess.run(
+                [
+                    "bash",
+                    "hooks/gardener-xp.sh",
+                    "--agent",
+                    agent,
+                    "--amount",
+                    str(xp_amount),
+                    "--reason",
+                    f"auto-launch-complete:{item_id}",
+                ],
+                check=False,
+            )
+        except Exception as e:
+            _log.warning(f"Failed to award XP: {e}")

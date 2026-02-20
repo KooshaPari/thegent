@@ -92,7 +92,7 @@ class QualityMatrix:
     maintainability: QualityCategory = None
     governance: QualityCategory = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize standard categories."""
         if self.code_quality is None:
             self.code_quality = QualityCategory("Code Quality", 0.20)

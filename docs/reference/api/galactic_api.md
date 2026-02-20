@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/discovery/galactic.py`
 
 WP-34001: Delay-Tolerant Networking (DTN) Bridge.
+
 Enables agent communication over high-latency, intermittently connected links (Inter-Galactic).
 Inspired by NASA's DTN (BPv7) protocols.
 
@@ -23,62 +24,70 @@ Bridges standard thegent networking with Delay-Tolerant protocols.
 #### DTNBridge.__init__
 
 ```python
-__init__(self, node_id)
+__init__(self: Any, node_id: str)
 ```
+
+---
 
 #### DTNBridge.add_contact
 
+```python
+add_contact(self: Any, node_id: str, contact_time: float)
+```
+
 Schedule a future contact opportunity.
 
-```python
-add_contact(self, node_id, contact_time)
-```
+---
 
 #### DTNBridge.process_contacts
 
+```python
+process_contacts(self: Any)
+```
+
 WP-34002: Reconcile state when contact is established.
 
-```python
-process_contacts(self)
-```
+---
 
 #### DTNBridge.send_bundle
 
+```python
+send_bundle(self: Any, dest_node: str, payload: bytes)
+```
+
 Queue a bundle for transmission.
 
-```python
-send_bundle(self, dest_node, payload)
-```
+---
 
 ---
 
 ## add_contact
 
-Schedule a future contact opportunity.
-
 ```python
-add_contact(self, node_id, contact_time)
+add_contact(self: Any, node_id: str, contact_time: float)
 ```
+
+Schedule a future contact opportunity.
 
 ---
 
 ## process_contacts
 
-WP-34002: Reconcile state when contact is established.
-
 ```python
-process_contacts(self)
+process_contacts(self: Any)
 ```
+
+WP-34002: Reconcile state when contact is established.
 
 ---
 
 ## send_bundle
 
-Queue a bundle for transmission.
-
 ```python
-send_bundle(self, dest_node, payload)
+send_bundle(self: Any, dest_node: str, payload: bytes)
 ```
+
+Queue a bundle for transmission.
 
 ---
 

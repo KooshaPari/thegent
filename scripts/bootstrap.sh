@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env zsh
 # thegent bootstrap — full system installer (Unix)
 #
 # Usage:
@@ -102,9 +102,9 @@ echo "================="
 if [ "$install_deps" = 1 ]; then
   step "Installing optional tools (ripgrep, fd, jq)..."
   if command -v brew >/dev/null 2>&1; then
-    brew install ripgrep fd jq 2>/dev/null || warn "brew install ripgrep fd jq failed"
+    brew install ripgrep fd jq || warn "brew install ripgrep fd jq failed"
   elif command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update -qq && sudo apt-get install -y ripgrep fd-find jq 2>/dev/null || warn "apt install failed"
+    sudo apt-get update -qq && sudo apt-get install -y ripgrep fd-find jq || warn "apt install failed"
   else
     warn "No brew or apt; skip optional deps or set THGENT_BOOTSTRAP_DEPS=0"
   fi

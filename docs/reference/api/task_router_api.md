@@ -11,19 +11,24 @@ Validates task metadata against configured constraints.
 #### ConstraintValidator.__init__
 
 ```python
-__init__(self, config)
+__init__(self: Any, config: ThegentSettings)
 ```
+
+---
 
 #### ConstraintValidator.validate
 
+```python
+validate(self: Any, task_metadata: TaskMetadata, registry: RunRegistry | None, model: Any)
+```
+
 Validate task against hard constraints:
+
 - Instantaneous cost (per-call)
 - Cumulative cost (MTD per category)
 - Speed (SLA)
 
-```python
-validate(self, task_metadata, registry, model)
-```
+---
 
 ---
 
@@ -36,22 +41,31 @@ Categorizes tasks based on prompt analysis and heuristics.
 #### TaskClassifier.__init__
 
 ```python
-__init__(self, config)
+__init__(self: Any, config: ThegentSettings)
 ```
+
+---
 
 #### TaskClassifier.classify
 
+```python
+classify(self: Any, prompt: str, agent_role: Any)
+```
+
 Classify task complexity based on prompt content.
+
 Heuristics:
 - Word count (token estimate proxy)
 - Keywords (architecture, design -> HIGH_COMPLEX)
 - Structure (bullets, code blocks -> COMPLEX)
 
-```python
-classify(self, prompt, agent_role)
-```
+---
 
 #### TaskClassifier.detect_role
+
+```python
+detect_role(self: Any, prompt: str, agent_role: Any)
+```
 
 Detect task role from agent metadata or prompt keywords.
 
@@ -60,16 +74,14 @@ Priority:
 2. Auto-detect from prompt keywords
 3. Default to "workhorse"
 
-Args:
-    prompt: User prompt text
-    agent_role: Role from agent metadata (e.g., "planner", "writer", "researcher")
+**Parameters**:
 
-Returns:
-    Role string (workhorse/researcher/writer_fast/writer_high/planner/large_context)
+- `prompt`: User prompt text
+- `agent_role`: Role from agent metadata (e.g., "planner", "writer", "researcher")
 
-```python
-detect_role(self, prompt, agent_role)
-```
+**Returns**: Role string (workhorse/researcher/writer_fast/writer_high/planner/large_context)
+
+---
 
 ---
 
@@ -82,96 +94,122 @@ Orchestrates task classification and constraint validation.
 #### TaskRouter.__init__
 
 ```python
-__init__(self, config)
+__init__(self: Any, config: ThegentSettings)
 ```
+
+---
 
 #### TaskRouter.classify
 
+```python
+classify(self: Any, prompt: str)
+```
+
 Classify task.
 
-```python
-classify(self, prompt)
-```
+---
 
 #### TaskRouter.find_active_terminal_for_path
 
+```python
+find_active_terminal_for_path(self: Any, path: str)
+```
+
 Find an active tmux pane matching the given project path.
+
 Returns pane_id if found.
 
-```python
-find_active_terminal_for_path(self, path)
-```
+---
 
 #### TaskRouter.get_fallback_chain
 
+```python
+get_fallback_chain(self: Any, category: TaskCategory)
+```
+
 Get LiteLLM-style fallback chain for task category (WP-1001).
 
-```python
-get_fallback_chain(self, category)
-```
+---
 
 #### TaskRouter.route
 
+```python
+route(self: Any, prompt: str, registry: RunRegistry | None, model: Any)
+```
+
 Full routing: classify + validate.
+
 Returns (TaskMetadata, violations).
 
-```python
-route(self, prompt, registry, model)
-```
+---
 
 #### TaskRouter.route_by_capability
 
+```python
+route_by_capability(self: Any, task_type: str)
+```
+
 Route to an agent based on task capability (WP-1007).
 
-```python
-route_by_capability(self, task_type)
-```
+---
 
 #### TaskRouter.route_dag_tasks
 
+```python
+route_dag_tasks(self: Any, dag: Any)
+```
+
 Route multiple tasks from a DAG, considering dependencies (WP-1001).
 
-```python
-route_dag_tasks(self, dag)
-```
+---
 
 #### TaskRouter.shape_task
 
+```python
+shape_task(self: Any, prompt: str, category: TaskCategory)
+```
+
 WP-11006: Adaptive task shaping (split/merge engine).
 
-```python
-shape_task(self, prompt, category)
-```
+---
 
 #### TaskRouter.should_delegate_to_reviewer
 
+```python
+should_delegate_to_reviewer(self: Any, confidence: float)
+```
+
 Determine if a task should be delegated to a reviewer based on confidence (WP-1007).
 
-```python
-should_delegate_to_reviewer(self, confidence)
-```
+---
 
 #### TaskRouter.validate
 
+```python
+validate(self: Any, task_metadata: TaskMetadata, registry: RunRegistry | None, model: Any)
+```
+
 Validate task against constraints.
 
-```python
-validate(self, task_metadata, registry, model)
-```
+---
 
 ---
 
 ## classify
 
-Classify task.
-
 ```python
-classify(self, prompt)
+classify(self: Any, prompt: str)
 ```
+
+Classify task.
 
 ---
 
 ## detect_role
+
+```python
+detect_role(self: Any, prompt: str, agent_role: Any)
+```
 
 Detect task role from agent metadata or prompt keywords.
 
@@ -180,98 +218,96 @@ Priority:
 2. Auto-detect from prompt keywords
 3. Default to "workhorse"
 
-Args:
-    prompt: User prompt text
-    agent_role: Role from agent metadata (e.g., "planner", "writer", "researcher")
+**Parameters**:
 
-Returns:
-    Role string (workhorse/researcher/writer_fast/writer_high/planner/large_context)
+- `prompt`: User prompt text
+- `agent_role`: Role from agent metadata (e.g., "planner", "writer", "researcher")
 
-```python
-detect_role(self, prompt, agent_role)
-```
+**Returns**: Role string (workhorse/researcher/writer_fast/writer_high/planner/large_context)
 
 ---
 
 ## find_active_terminal_for_path
 
-Find an active tmux pane matching the given project path.
-Returns pane_id if found.
-
 ```python
-find_active_terminal_for_path(self, path)
+find_active_terminal_for_path(self: Any, path: str)
 ```
+
+Find an active tmux pane matching the given project path.
+
+Returns pane_id if found.
 
 ---
 
 ## get_fallback_chain
 
-Get LiteLLM-style fallback chain for task category (WP-1001).
-
 ```python
-get_fallback_chain(self, category)
+get_fallback_chain(self: Any, category: TaskCategory)
 ```
+
+Get LiteLLM-style fallback chain for task category (WP-1001).
 
 ---
 
 ## route
 
-Full routing: classify + validate.
-Returns (TaskMetadata, violations).
-
 ```python
-route(self, prompt, registry, model)
+route(self: Any, prompt: str, registry: RunRegistry | None, model: Any)
 ```
+
+Full routing: classify + validate.
+
+Returns (TaskMetadata, violations).
 
 ---
 
 ## route_by_capability
 
-Route to an agent based on task capability (WP-1007).
-
 ```python
-route_by_capability(self, task_type)
+route_by_capability(self: Any, task_type: str)
 ```
+
+Route to an agent based on task capability (WP-1007).
 
 ---
 
 ## route_dag_tasks
 
-Route multiple tasks from a DAG, considering dependencies (WP-1001).
-
 ```python
-route_dag_tasks(self, dag)
+route_dag_tasks(self: Any, dag: Any)
 ```
+
+Route multiple tasks from a DAG, considering dependencies (WP-1001).
 
 ---
 
 ## shape_task
 
-WP-11006: Adaptive task shaping (split/merge engine).
-
 ```python
-shape_task(self, prompt, category)
+shape_task(self: Any, prompt: str, category: TaskCategory)
 ```
+
+WP-11006: Adaptive task shaping (split/merge engine).
 
 ---
 
 ## should_delegate_to_reviewer
 
-Determine if a task should be delegated to a reviewer based on confidence (WP-1007).
-
 ```python
-should_delegate_to_reviewer(self, confidence)
+should_delegate_to_reviewer(self: Any, confidence: float)
 ```
+
+Determine if a task should be delegated to a reviewer based on confidence (WP-1007).
 
 ---
 
 ## validate
 
-Validate task against constraints.
-
 ```python
-validate(self, task_metadata, registry, model)
+validate(self: Any, task_metadata: TaskMetadata, registry: RunRegistry | None, model: Any)
 ```
+
+Validate task against constraints.
 
 ---
 

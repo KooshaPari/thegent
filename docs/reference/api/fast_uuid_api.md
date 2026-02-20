@@ -24,33 +24,33 @@ High-performance UUID generation with automatic backend selection.
 
 Generate UUID1 (MAC address + timestamp).
 
-Returns:
-    UUID object
+**Returns**: UUID object
+
+---
 
 #### FastUUID.uuid1_str
 
 Generate UUID1 as string.
 
-Returns:
-    UUID string
+**Returns**: UUID string
+
+---
 
 #### FastUUID.uuid4
 
 Generate UUID4 (random UUID).
 
-Returns:
-    UUID object
+**Returns**: UUID object
 
-Performance:
-    - fastuuid: 2-5x faster than standard uuid.uuid4()
-    - Optimized for high-frequency generation
+---
 
 #### FastUUID.uuid4_str
 
 Generate UUID4 as string.
 
-Returns:
-    UUID string
+**Returns**: UUID string
+
+---
 
 ---
 
@@ -58,8 +58,7 @@ Returns:
 
 Generate UUID1 (MAC address + timestamp).
 
-Returns:
-    UUID object
+**Returns**: UUID object
 
 ---
 
@@ -67,8 +66,7 @@ Returns:
 
 Generate UUID1 as string.
 
-Returns:
-    UUID string
+**Returns**: UUID string
 
 ---
 
@@ -76,12 +74,7 @@ Returns:
 
 Generate UUID4 (random UUID).
 
-Returns:
-    UUID object
-
-Performance:
-    - fastuuid: 2-5x faster than standard uuid.uuid4()
-    - Optimized for high-frequency generation
+**Returns**: UUID object
 
 ---
 
@@ -89,8 +82,7 @@ Performance:
 
 Generate UUID4 as string.
 
-Returns:
-    UUID string
+**Returns**: UUID string
 
 ---
 

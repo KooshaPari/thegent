@@ -14,43 +14,27 @@
 #   2 = at least one fail-closed gate failed
 set -euo pipefail
 
-# --- Ultra-fast cache check BEFORE common.sh (saves ~400ms on cache hit) ---
-# Cache git HEAD once to avoid repeated git calls throughout hook
-readonly _GIT_HEAD_SHA="${HEAD_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
-_CACHE_DIR="${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)"
-_CACHE_KEY="$_GIT_HEAD_SHA"
-_CACHE_FILE="${_CACHE_DIR}/governance-gates-${_CACHE_KEY}.result"
-_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
-if [[ -f "$_CACHE_FILE" ]]; then
-  _age=$(( $(date +%s) - $(stat -f '%m' "$_CACHE_FILE" 2>/dev/null || stat -c '%Y' "$_CACHE_FILE" 2>/dev/null || echo 0) ))
-  if (( _age < _CACHE_TTL )); then
-    cat "$_CACHE_FILE"
-    exit 0
-  fi
-fi
-
 HOOK_NAME="GOVERNANCE-GATES"
+# Get script directory in a cross-shell compatible way
+if [ -n "${ZSH_VERSION:-}" ]; then
+  _SCRIPT_DIR="${0:h}"
+elif [ -n "${BASH_SOURCE:-}" ]; then
+  _SCRIPT_DIR="${BASH_SOURCE[0]%/*}"
+else
+  _SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
 # shellcheck source=./lib/common.sh
-source "${BASH_SOURCE[0]%/*}/lib/common.sh"
+source "${_SCRIPT_DIR}/lib/common.sh"
 hook_init
 read_quality_config
 
-# --- Cache check with full key (post common.sh, for precision) ---
-# Use cached git HEAD value from above (readonly _GIT_HEAD_SHA) to avoid second git call
-_head_sha="${_GIT_HEAD_SHA}"
-_qc_mtime="0"; [[ -f "$QUALITY_CONFIG" ]] && _qc_mtime="$(stat -f '%m' "$QUALITY_CONFIG" 2>/dev/null || stat -c '%Y' "$QUALITY_CONFIG" 2>/dev/null || echo 0)"
-_qs_mtime="0"; [[ -f "$QA_STATE" ]] && _qs_mtime="$(stat -f '%m' "$QA_STATE" 2>/dev/null || stat -c '%Y' "$QA_STATE" 2>/dev/null || echo 0)"
-_cache_key=$(printf '%s\0%s\0%s\0%s' "$HOOK_NAME" "$_head_sha" "$_qc_mtime" "$_qs_mtime" | hash_for_cache)
-unset _head_sha _qc_mtime _qs_mtime
+# --- Cache check ---
+_cache_key=$(hook_cache_key "$HOOK_NAME")
 _gg_ttl="${HOOK_CACHE_TTL:-600}"
 if hook_cache_check "$_cache_key" "$_gg_ttl"; then
     hook_cache_read "$_cache_key"
     _cached_rc=$?
-    # Also write to ultra-fast cache for next time
-    hook_cache_read "$_cache_key" > "$_CACHE_FILE" 2>/dev/null || true
-    if [[ "$_cached_rc" -ne 0 ]]; then
-      echo "GOVERNANCE-GATES FAIL: cached result was non-zero ($_cached_rc)" >&2
-    fi
+    [[ "$_cached_rc" -ne 0 ]] && echo "GOVERNANCE-GATES FAIL: cached result was non-zero ($_cached_rc)" >&2
     exit "$_cached_rc"
 fi
 
@@ -1668,6 +1652,55 @@ gate_playbook_contract() {
 }
 
 # ============================================================================
+# Gate 27: scc-metrics-gate
+# Collect codebase metrics via scc (faster cloc).
+# ============================================================================
+gate_scc_metrics() {
+  local name="scc-metrics"
+  local report="$VERIFY_DIR/scc-metrics-gate.json"
+  local fail_closed="${QA_SCC_FAIL_CLOSED:-false}"
+  
+  if ! command -v scc >/dev/null 2>&1; then
+    write_na_report "$report" "$name"
+    _gate_na "$name" "scc not installed"
+    return 0
+  fi
+
+  # Run scc on PROJECT_DIR
+  local scc_out
+  scc_out=$(scc --exclude-dir node_modules,target,dist,.venv,crates/target --format json "${PROJECT_DIR:-.}" 2>/dev/null)
+  
+  if [[ -z "$scc_out" ]]; then
+    _gate_fail "$name" "scc failed to produce output" "false"
+    return 0
+  fi
+
+  # Extract key metrics via jq
+  local metrics
+  metrics=$(echo "$scc_out" | jq -r '
+    reduce .[] as $item ({code:0, complexity:0, files:0, lines:0};
+      .code += $item.Code |
+      .complexity += $item.Complexity |
+      .files += $item.Count |
+      .lines += $item.Lines
+    ) | tojson
+  ')
+
+  local code complexity files lines
+  code=$(echo "$metrics" | jq -r '.code')
+  complexity=$(echo "$metrics" | jq -r '.complexity')
+  files=$(echo "$metrics" | jq -r '.files')
+  lines=$(echo "$metrics" | jq -r '.lines')
+
+  # Write report
+  printf '{"generated_at":"%s","code_loc":%d,"complexity":%d,"file_count":%d,"total_lines":%d,"pass":true}\n' \
+    "$now" "$code" "$complexity" "$files" "$lines" > "$report"
+
+  _gate_pass "$name"
+  return 0
+}
+
+# ============================================================================
 # Parallel gate execution infrastructure
 # ============================================================================
 # When gates run in background subshells, they cannot modify parent variables.
@@ -1771,6 +1804,7 @@ main() {
   _run_gate gate_artifact_quality "artifact_quality"
   _run_gate gate_debt_registry "debt_registry"
   _run_gate gate_playbook_contract "playbook_contract"
+  _run_gate gate_scc_metrics "scc_metrics"
   _collect_gate_results
   rm -f "$_gate_tmpdir"/*.result
 

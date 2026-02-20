@@ -2,26 +2,31 @@
 Includes Singleflight, inotify cache invalidation, and heat-based LRU.
 """
 
-import time
-import logging
-from pathlib import Path
-from typing import Any, Callable, Dict, Optional
-import threading
 import collections
+import logging
+import threading
+import time
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 try:
-    import watchdog.observers
     import watchdog.events
+    import watchdog.observers
+
     HAS_WATCHDOG = True
 except ImportError:
     HAS_WATCHDOG = False
 
 logger = logging.getLogger(__name__)
 
+
 class Singleflight:
     """Implementation of Singleflight pattern to prevent duplicate requests."""
-    def __init__(self):
-        self.calls: Dict[str, threading.Event] = {}
-        self.results: Dict[str, Any] = {}
+
+    def __init__(self) -> None:
+        self.calls: dict[str, threading.Event] = {}
+        self.results: dict[str, Any] = {}
         self.lock = threading.Lock()
 
     def do(self, key: str, func: Callable[[], Any]) -> Any:
@@ -46,19 +51,90 @@ class Singleflight:
             with self.lock:
                 event.set()
                 del self.calls[key]
-                # Results are kept until someone reads them or we use a better cache
+
+
+class CrossProcessSingleflight:
+    """Implementation of Singleflight pattern across processes using file locks."""
+
+    def __init__(self, coordination_dir: Path) -> None:
+        self.coordination_dir = coordination_dir
+        self.coordination_dir.mkdir(parents=True, exist_ok=True)
+
+    def do(self, key: str, func: Callable[[], Any], ttl: int = 300) -> Any:
+        """Execute func for key, coalescing concurrent calls across processes."""
+        import hashlib
+        import json
+        import os
+
+        hashed_key = hashlib.sha256(key.encode()).hexdigest()
+        lock_file = self.coordination_dir / f"{hashed_key}.lock"
+        result_file = self.coordination_dir / f"{hashed_key}.result"
+
+        # 1. Check if a recent result already exists
+        if result_file.exists():
+            try:
+                data = json.loads(result_file.read_text())
+                if time.time() - data.get("timestamp", 0) < ttl:
+                    return data.get("result")
+            except Exception:
+                pass
+
+        # 2. Try to acquire lock
+        try:
+            fd = os.open(lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            with os.fdopen(fd, "w") as f:
+                f.write(f"{os.getpid()}|{time.time()}")
+        except FileExistsError:
+            # Lock exists, check if stale
+            try:
+                content = lock_file.read_text().split("|")
+                lock_time = float(content[1])
+                if time.time() - lock_time > 120:  # 2 minute lock TTL
+                    logger.warning(f"Stale lock found for {key}, breaking.")
+                    lock_file.unlink()
+                    return self.do(key, func, ttl)
+            except (IndexError, ValueError, OSError):
+                pass
+
+            # Wait for result
+            start_wait = time.time()
+            while time.time() - start_wait < 120:
+                if result_file.exists():
+                    try:
+                        data = json.loads(result_file.read_text())
+                        return data.get("result")
+                    except Exception:
+                        pass
+                if not lock_file.exists():
+                    # Lock released but no result? Retry.
+                    return self.do(key, func, ttl)
+                time.sleep(1)
+
+            logger.error(f"Timeout waiting for singleflight result: {key}")
+            return None
+
+        # 3. We have the lock, execute func
+        try:
+            result = func()
+            result_file.write_text(json.dumps({"result": result, "timestamp": time.time()}))
+            return result
+        finally:
+            if lock_file.exists():
+                lock_file.unlink()
+
 
 class HeatBasedLRU:
     """LRU cache with heat-based eviction (frequency + decay)."""
-    def __init__(self, capacity: int = 100, decay_factor: float = 0.9):
+
+    def __init__(self, capacity: int = 100, decay_factor: float = 0.9) -> None:
         self.capacity = capacity
         self.decay_factor = decay_factor
-        self.cache: Dict[str, Any] = {}
-        self.heat: Dict[str, float] = collections.defaultdict(float)
-        self.last_access: Dict[str, float] = {}
+        self.cache: dict[str, Any] = {}
+        self.heat: dict[str, float] = collections.defaultdict(float)
+        self.last_access: dict[str, float] = {}
         self.lock = threading.Lock()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         with self.lock:
             if key in self.cache:
                 self._update_heat(key)
@@ -77,19 +153,19 @@ class HeatBasedLRU:
         prev_time = self.last_access.get(key, now)
         elapsed = now - prev_time
         # Apply decay to existing heat
-        self.heat[key] = self.heat[key] * (self.decay_factor ** elapsed) + 1.0
+        self.heat[key] = self.heat[key] * (self.decay_factor**elapsed) + 1.0
         self.last_access[key] = now
 
     def _evict(self):
         # Evict item with lowest heat
         if not self.heat:
             return
-        
+
         # Recalculate heat for all items before eviction to apply decay
         now = time.time()
         for k in list(self.heat.keys()):
             elapsed = now - self.last_access[k]
-            self.heat[k] *= (self.decay_factor ** elapsed)
+            self.heat[k] *= self.decay_factor**elapsed
             self.last_access[k] = now
 
         victim = min(self.heat, key=self.heat.get)
@@ -98,9 +174,11 @@ class HeatBasedLRU:
         del self.last_access[victim]
         logger.info(f"Evicted {victim} from cache based on heat")
 
+
 class CacheInvalidator:
     """inotify-based cache invalidation."""
-    def __init__(self, cache: Any):
+
+    def __init__(self, cache: Any) -> None:
         self.cache = cache
         if HAS_WATCHDOG:
             self.observer = watchdog.observers.Observer()
@@ -113,8 +191,9 @@ class CacheInvalidator:
             return
 
         class Handler(watchdog.events.FileSystemEventHandler):
-            def __init__(self, cache):
+            def __init__(self, cache) -> None:
                 self.cache = cache
+
             def on_modified(self, event):
                 if not event.is_directory:
                     logger.info(f"Invalidating cache for {event.src_path}")

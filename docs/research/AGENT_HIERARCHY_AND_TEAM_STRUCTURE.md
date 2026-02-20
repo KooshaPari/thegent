@@ -18,7 +18,7 @@ This document defines a comprehensive agent hierarchy system for `thegent` that 
 - ✅ **Local Codebase**: 3 coordination strategies, multiple framework implementations, production patterns
 - ✅ **Web Frameworks**: CrewAI hierarchical process, MetaGPT role-based teams, LangGraph stateful workflows, AutoGen multi-agent orchestration
 - ✅ **Academic Research**: Cursor Planner-Worker-Judge hierarchy, MetaGPT global message pool
-- ✅ **Production Systems**: Claude Code Teams, ShareCLI coordination, SmolGents execution modes
+- ✅ **Production Systems**: Claude Code Teams, heliosShield coordination, SmolGents execution modes
 
 **See**: [RESEARCH_SYNTHESIS.md](./RESEARCH_SYNTHESIS.md) for complete research validation.
 
@@ -879,7 +879,7 @@ This design has been validated through comprehensive research:
 - **CRUN Deep Dive**: Hierarchical, P2P, and hybrid coordination strategies
 - **SmolGents**: Hierarchical execution modes, manager-first assignment
 - **Multi-Swarm Hierarchy**: Hierarchical blackboard, stigmergic handoff
-- **ShareCLI Agent Mesh**: File-based IPC, Maildir pattern, atomic operations
+- **heliosShield Agent Mesh**: File-based IPC, Maildir pattern, atomic operations
 - **Teammates System**: Delegation patterns, handoff protocols
 
 ### 11.2 Web Framework Research
@@ -905,7 +905,7 @@ This design has been validated through comprehensive research:
 
 - [TEAMMATES_RESEARCH_AND_PLAN.md](./TEAMMATES_RESEARCH_AND_PLAN.md) - Original teammate research
 - [CLAUDE.md](../CLAUDE.md) - Agent governance and delegation patterns
-- ShareCLI Phase 6-18 - Coordination and conflict resolution
+- heliosShield Phase 6-18 - Coordination and conflict resolution
 - MetaGPT - Multi-agent collaboration patterns
 - CrewAI - Role-based agent teams
 - [AGENT_HIERARCHY_RESEARCH_PLAN.md](./AGENT_HIERARCHY_RESEARCH_PLAN.md) - Research methodology

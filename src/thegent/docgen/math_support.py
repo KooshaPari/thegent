@@ -6,9 +6,9 @@ from typing import Any
 class MathSupport:
     """KaTeX math rendering support."""
 
-    def __init__(self, auto_render: bool = True):
+    def __init__(self, auto_render: bool = True) -> None:
         """Initialize math support.
-        
+
         Args:
             auto_render: Auto-render math expressions
         """
@@ -16,11 +16,11 @@ class MathSupport:
 
     def render_script(self) -> str:
         """Render KaTeX script tags.
-        
+
         Returns:
             HTML script tags
         """
-        return '''<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+        return """<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <script>
@@ -34,14 +34,14 @@ class MathSupport:
       ]
     });
   });
-</script>'''
+</script>"""
 
     def render_inline(self, expression: str) -> str:
         """Render inline math expression.
-        
+
         Args:
             expression: Math expression
-            
+
         Returns:
             HTML string
         """
@@ -49,10 +49,10 @@ class MathSupport:
 
     def render_block(self, expression: str) -> str:
         """Render block math expression.
-        
+
         Args:
             expression: Math expression
-            
+
         Returns:
             HTML string
         """

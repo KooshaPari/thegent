@@ -61,7 +61,7 @@ class IdempotencyManager:
 
 class ConcurrencyController:
     """WP-5001: Advanced resource-based adaptive concurrency controller.
-    
+
     Features:
     - Extended resource indices (CPU, memory, FD, network, disk, GPU, etc.)
     - Prediction engine for forecasting resource needs
@@ -69,14 +69,40 @@ class ConcurrencyController:
     - Bottleneck detection and analysis
     - Speculative execution strategies
     - Work chunking and parallelization
+    - Per-owner usage tracking for fairness enforcement (swarm-usage-tracking)
     """
 
-    def __init__(self, session_dir: Path, max_concurrency: int = 5, use_load_based: bool = True) -> None:
+    def __init__(
+        self,
+        session_dir: Path,
+        max_concurrency: int = 5,
+        use_load_based: bool = True,
+        critical_lane_slots: int | None = None,
+    ) -> None:
         self.session_dir = session_dir
         self.max_concurrency = max_concurrency  # Fallback if load-based disabled
         self.use_load_based = use_load_based
         self.lock_file = session_dir / "concurrency.lock"
-        
+        # Critical lane reservation: slots kept exclusively for critical-priority runs.
+        # Standard runs are limited to slots 0..(max_slots - critical_lane_slots - 1).
+        # Resolved from: explicit arg → THGENT_CRITICAL_LANE_SLOTS env var → default 2.
+        if critical_lane_slots is not None:
+            self.critical_lane_slots = max(0, critical_lane_slots)
+        else:
+            import os
+            env_val = os.environ.get("THGENT_CRITICAL_LANE_SLOTS")
+            if env_val is not None:
+                try:
+                    self.critical_lane_slots = max(0, int(env_val))
+                except ValueError:
+                    self.critical_lane_slots = 2
+            else:
+                self.critical_lane_slots = 2
+
+        # Per-owner usage tracker (module-level singleton, shared across instances).
+        from thegent.orchestration.load_based_limits import get_usage_tracker
+        self._usage_tracker = get_usage_tracker()
+
         # Initialize advanced features (if available)
         if use_load_based:
             try:
@@ -85,6 +111,7 @@ class ConcurrencyController:
                     ResourcePredictionEngine,
                     create_harness_cards,
                 )
+
                 self.prediction_engine = ResourcePredictionEngine(session_dir / "resource_history.jsonl")
                 self.bottleneck_detector = BottleneckDetector()
                 self.harness_cards = create_harness_cards()
@@ -94,9 +121,19 @@ class ConcurrencyController:
                 self.bottleneck_detector = None
                 self.harness_cards = None
 
-    def acquire(self, lane: str = "standard", harness_type: str | None = None) -> bool:
+    def acquire(
+        self,
+        lane: str = "standard",
+        harness_type: str | None = None,
+        priority: str = "standard",
+        owner: str = "unknown",
+        run_id: str = "",
+        soft_deadline_s: float | None = None,
+        warn_at_pct: float = 0.8,
+        speculative: bool = False,
+    ) -> bool:
         """Acquire a concurrency slot using advanced resource-based limits.
-        
+
         Uses:
         - Extended resource monitoring (CPU, memory, FD, network, disk, etc.)
         - Prediction engine for forecasting
@@ -104,16 +141,41 @@ class ConcurrencyController:
         - Bottleneck detection
         - 5% minimum buffer (hard limit, prevents crashes)
         - 15% discretionary buffer (soft limit, allows scaling)
+        - Critical lane reservation: standard runs are blocked from the top
+          ``critical_lane_slots`` slots so that critical runs always find room.
+        - Per-owner usage tracking: records start when admitted.
+        - Soft deadline monitoring: registers a preferred completion time with
+          the :class:`DeadlineMonitor` when ``soft_deadline_s`` is provided.
+          Past-deadline runs are logged but never cancelled.
+
+        Args:
+            lane: Lane name (``"standard"``, ``"critical"``, etc.).
+            harness_type: Optional harness type for capacity modeling.
+            priority: ``"critical"`` or ``"standard"`` (default).  A run is
+                treated as critical when ``priority="critical"`` OR when
+                ``lane="critical"``.  Critical runs may use all available
+                slots; standard runs are limited to
+                ``effective_limit - critical_lane_slots``.
+            owner: Identifier for the owning agent/user/project (for fairness tracking).
+            run_id: Unique run identifier (for tracing in usage logs).
+            soft_deadline_s: Optional preferred completion budget in seconds.
+                When provided and the run is admitted, a soft deadline is
+                registered with the module-level :class:`DeadlineMonitor`.
+                Violations emit WARNING (at ``warn_at_pct * soft_deadline_s``)
+                and ERROR (at ``soft_deadline_s``) but do NOT cancel the run.
+            warn_at_pct: Fraction of ``soft_deadline_s`` at which to warn
+                (default 0.8 → 80 %).  Only used when ``soft_deadline_s`` is set.
         """
+        is_critical = priority == "critical" or (lane or "").lower() == "critical"
         from thegent.cli_impl import ps_impl
         from thegent.config import ThegentSettings
 
         sessions = ps_impl(all=True)
         running_count = sum(1 for s in sessions if s.get("status") == "running")
 
-            # Use resource-based limits if enabled (default)
+        # Use resource-based limits if enabled (default)
         settings = ThegentSettings()
-        if self.use_load_based and (settings.concurrency_load_based or True):  # Default to True
+        if self.use_load_based and (True):  # Default to True
             from thegent.orchestration.load_based_limits import (
                 LimitGateConfig,
                 compute_dynamic_limit,
@@ -122,20 +184,26 @@ class ConcurrencyController:
 
             # Sample current resources
             snapshot = sample_resources()
-            
+
             # Compute base dynamic limit (uses 5% min buffer, 15% discretionary buffer)
-            config = LimitGateConfig()
-            effective_limit, details = compute_dynamic_limit(snapshot, config, running_count)
-            
+            config = LimitGateConfig.from_dict(settings.model_dump())
+            effective_limit, _details = compute_dynamic_limit(snapshot, config, running_count)
+
             # Advanced features (if available)
             try:
                 from thegent.orchestration.resource_management import sample_extended_resources
+
                 extended_snapshot = sample_extended_resources()
-                
+
                 # Record for prediction engine
                 if self.prediction_engine:
                     self.prediction_engine.record(extended_snapshot)
-                
+
+                    # WP-5001: Predictive Throttling for Speculative Runs
+                    if speculative and self.prediction_engine.should_throttle_speculative():
+                        _log.info(f"Speculative run {run_id} throttled due to resource trends.")
+                        return False
+
                 # Apply harness card modeling if harness type specified
                 if harness_type and self.harness_cards:
                     card = self.harness_cards.get(harness_type)
@@ -145,11 +213,9 @@ class ConcurrencyController:
                         # Extract p95 memory estimate (or fallback to avg)
                         mem_estimate = estimated["memory_mb"].get("p95", estimated["memory_mb"].get("avg", 0))
                         # Adjust limit based on harness capacity
-                        harness_limit = int(
-                            (snapshot.mem_available_mb - mem_estimate) / config.mem_mb_per_slot
-                        )
+                        harness_limit = int((snapshot.mem_available_mb - mem_estimate) / config.mem_mb_per_slot)
                         effective_limit = min(effective_limit, max(1, harness_limit))
-                
+
                 # Apply prediction adjustments
                 if self.prediction_engine:
                     prediction = self.prediction_engine.predict_next_interval(60)
@@ -159,7 +225,7 @@ class ConcurrencyController:
                         if pred_mem and pred_mem.get("trend", 0) > 0:
                             # Memory trending up, reduce limit slightly
                             effective_limit = int(effective_limit * 0.95)
-                
+
                 # Check for bottlenecks
                 if self.bottleneck_detector:
                     contentions = self.bottleneck_detector.detect_resource_contention(
@@ -173,32 +239,104 @@ class ConcurrencyController:
             except ImportError:
                 # Advanced features not available, use basic resource-based limits
                 pass
-            
-            # Critical lane gets 20% headroom above calculated limit
-            if lane == "critical":
-                effective_limit = int(effective_limit * 1.2)
-            
-            return running_count < effective_limit
-        
-        # Fallback to fixed limit (if load-based disabled)
-        limit = self.max_concurrency
-        if lane == "critical":
-            limit = self.max_concurrency * 2  # Double limit for critical lane
 
-        return running_count < limit
-    
+            # Apply critical lane reservation.
+            # Critical runs can use all slots (no cap adjustment).
+            # Standard runs are capped at effective_limit - critical_lane_slots
+            # to keep dedicated headroom available for critical runs.
+            slot_limit = effective_limit if is_critical else max(1, effective_limit - self.critical_lane_slots)
+            admitted = running_count < slot_limit
+            _log.debug(
+                "gate %s: gate=slots value=%.2f limit=%.2f",
+                "passed" if admitted else "blocked",
+                float(running_count),
+                float(slot_limit),
+            )
+            if admitted:
+                _log.info("run admitted: slots=%d/%d", running_count, slot_limit)
+                self._usage_tracker.record_start(owner, run_id)
+                if soft_deadline_s is not None and soft_deadline_s > 0:
+                    from thegent.orchestration.load_based_limits import get_deadline_monitor
+
+                    get_deadline_monitor().register(
+                        run_id=run_id or owner,
+                        deadline_ts=soft_deadline_s,
+                        warn_at_pct=warn_at_pct,
+                    )
+            else:
+                _log.warning("run blocked: reason=%s", "slots")
+            return admitted
+
+        # Fallback to fixed limit (if load-based disabled).
+        # Apply the same critical lane reservation against max_concurrency.
+        slot_limit = self.max_concurrency if is_critical else max(1, self.max_concurrency - self.critical_lane_slots)
+        admitted = running_count < slot_limit
+        _log.debug(
+            "gate %s: gate=slots value=%.2f limit=%.2f",
+            "passed" if admitted else "blocked",
+            float(running_count),
+            float(slot_limit),
+        )
+        if admitted:
+            _log.info("run admitted: slots=%d/%d", running_count, slot_limit)
+            self._usage_tracker.record_start(owner, run_id)
+            if soft_deadline_s is not None and soft_deadline_s > 0:
+                from thegent.orchestration.load_based_limits import get_deadline_monitor
+
+                get_deadline_monitor().register(
+                    run_id=run_id or owner,
+                    deadline_ts=soft_deadline_s,
+                    warn_at_pct=warn_at_pct,
+                )
+        else:
+            _log.warning("run blocked: reason=%s", "slots")
+        return admitted
+
+    def release(self, owner: str = "unknown", run_id: str = "", elapsed_ms: float = 0.0) -> None:
+        """Record the completion of a run for per-owner usage tracking.
+
+        Also unregisters any soft deadline that was associated with this run so
+        that the :class:`DeadlineMonitor` stops checking it.
+
+        Call this after a run finishes (succeeded or failed) to decrement the
+        owner's active count and accumulate elapsed time statistics.
+
+        Args:
+            owner:      Identifier used in the corresponding :meth:`acquire` call.
+            run_id:     Run identifier used in the corresponding :meth:`acquire` call.
+            elapsed_ms: Wall-clock duration of the run in milliseconds.
+        """
+        self._usage_tracker.record_end(owner, run_id, elapsed_ms)
+        # Unregister any soft deadline for this run (no-op if none registered).
+        try:
+            from thegent.orchestration.load_based_limits import get_deadline_monitor
+
+            get_deadline_monitor().unregister(run_id or owner)
+        except Exception:
+            pass
+
+    def get_usage_stats(self) -> dict[str, Any]:
+        """Return per-owner usage statistics as a serializable dict.
+
+        Returns a mapping of ``{owner: stats_dict}`` suitable for CLI/MCP display.
+        Each value is the output of :meth:`OwnerStats.to_dict`.
+        """
+        all_stats = self._usage_tracker.get_all_stats()
+        return {owner: stats.to_dict() for owner, stats in all_stats.items()}
+
     def get_bottlenecks(self) -> list[dict[str, Any]]:
         """Get current bottlenecks and slow points."""
         if not hasattr(self, "bottleneck_detector"):
             return []
-        
+
         slow_points = self.bottleneck_detector.identify_slow_points()
         from thegent.orchestration.resource_management import sample_extended_resources
+
         snapshot = sample_extended_resources()
         contentions = self.bottleneck_detector.detect_resource_contention(
             snapshot, self.harness_cards if hasattr(self, "harness_cards") else {}
         )
-        
+
         return {
             "slow_points": slow_points,
             "resource_contention": contentions,
@@ -343,22 +481,26 @@ class LoadClassifier:
         self._spike = spike_threshold
         self._surge = surge_threshold
 
+    def get_running_count(self) -> int:
+        """Return count of currently running sessions."""
+        from thegent.cli_impl import ps_impl
+
+        sessions = ps_impl(all=True)
+        return sum(1 for s in sessions if s.get("status") == "running")
+
     def get_load_level(self) -> str:
         """Return current load level: normal, high, burst.
-        
+
         Uses resource-based thresholds when load-based limits are enabled:
         - Normal: Below 70% of resource-based limit
         - High: 70-95% of resource-based limit (15% discretionary buffer)
         - Burst: Above 95% of resource-based limit (5% minimum buffer)
         """
-        from thegent.cli_impl import ps_impl
         from thegent.config import ThegentSettings
 
-        sessions = ps_impl(all=True)
-        running = sum(1 for s in sessions if s.get("status") == "running")
-
+        running = self.get_running_count()
         settings = ThegentSettings()
-        
+
         # Use resource-based limits if enabled
         if settings.concurrency_load_based:
             from thegent.orchestration.load_based_limits import (
@@ -366,20 +508,21 @@ class LoadClassifier:
                 compute_dynamic_limit,
                 sample_resources,
             )
+
             snapshot = sample_resources()
-            config = LimitGateConfig.from_dict(None)
+            config = LimitGateConfig.from_dict(settings.model_dump())
             effective_limit, _ = compute_dynamic_limit(snapshot, config, running)
-            
+
             # Thresholds based on resource-based limit with buffers
             surge = int(effective_limit * 0.95)  # 95% = 5% minimum buffer
             spike = int(effective_limit * 0.85)  # 85% = 15% discretionary buffer
-            
+
             if running > surge:
                 return "burst"
             if running > spike:
                 return "high"
             return "normal"
-        
+
         # Fallback to fixed thresholds if load-based disabled
         max_concurrency = settings.max_concurrency
         surge = self._surge if self._surge is not None else max_concurrency
@@ -389,6 +532,19 @@ class LoadClassifier:
             return "burst"
         if running > spike:
             return "high"
+        return "normal"
+
+    def is_safe_mode_active(self) -> bool:
+        """Return True if system is in safe-mode (burst load)."""
+        return self.get_load_level() == "burst"
+
+    def get_traffic_shape(self) -> str:
+        """Return current traffic shape (normal, shaped, restricted)."""
+        level = self.get_load_level()
+        if level == "burst":
+            return "restricted"
+        if level == "high":
+            return "shaped"
         return "normal"
 
 
@@ -475,7 +631,7 @@ class ContinuityWatchdog:
                     if idle_s > max_idle_s:
                         # ROB-012: Escalate stale critical task
                         try:
-                            from thegent.governance.escalation import EscalationQueue, EscalationPriority
+                            from thegent.governance.escalation import EscalationPriority, EscalationQueue
 
                             esc_queue = EscalationQueue(self.session_dir)
                             esc_queue.escalate(
@@ -736,11 +892,47 @@ class EvidenceLinter:
         return issues
 
 
+class AgentSource(StrEnum):
+    """Source of the agent process for session registry (WP-9001)."""
+
+    THEGENT_RUN = "thegent-run"
+    THEGENT_DROID = "thegent-droid"
+    THEGENT_SUBAGENT = "thegent-subagent"
+    IDE_MANAGED = "ide-managed"
+    USER_SPAWNED = "user-spawned"
+    DISCOVERED = "discovered"
+    MCP_PROXY = "mcp-proxy"
+
+
+class InteractivityMode(StrEnum):
+    """Interactivity mode of the session (WP-9002)."""
+
+    PTY = "pty"
+    TMUX = "tmux"
+    HEADLESS_LOGS = "headless-logs"
+    HEADLESS_HOLDPTY = "headless-holdpty"
+    READ_ONLY = "read-only"
+
+
 class RunMeta(BaseModel):
     """Metadata for a single agent/droid execution run."""
 
     run_id: str = Field(default_factory=lambda: f"run_{uuid.uuid4().hex[:8]}")
     correlation_id: str | None = None
+    source: AgentSource = AgentSource.THEGENT_RUN
+    interactivity: InteractivityMode = InteractivityMode.HEADLESS_LOGS
+
+    # Attachment details
+    attach_target: dict[str, Any] | None = None
+    message_endpoint: str | None = None
+
+    # Paths (managed sessions only)
+    stdout_path: str | None = None
+    stderr_path: str | None = None
+    chat_path: str | None = None
+    messages_path: str | None = None
+    audit_path: str | None = None
+
     agent: str
     model: str | None = None
     mode: str = "write"
@@ -793,6 +985,10 @@ class RunMeta(BaseModel):
 
     # XA4: Contract version in task/run metadata for negotiation
     contract_version: str | None = None
+
+    # WP-16002: Teammate delegation linkage
+    task_id: str | None = None
+    task_metadata: dict[str, Any] | None = None
 
 
 class CheckpointMeta(BaseModel):
@@ -1144,6 +1340,150 @@ class RunRegistry:
                     continue
         return False
 
+
+class ChatEntry(BaseModel):
+    """Structured chat message for session history (WP-9003)."""
+
+    ts: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+    role: str  # user, assistant, system, tool
+    content: str
+    tool_name: str | None = None
+    tool_input: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ChatHistory:
+    """Manages structured conversation history for a session (WP-9003)."""
+
+    def __init__(self, chat_path: Path) -> None:
+        self.chat_path = chat_path
+
+    def append(self, entry: ChatEntry) -> None:
+        """Append a new chat entry to the session log."""
+        self.chat_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.chat_path.open("a", encoding="utf-8") as f:
+            f.write(entry.model_dump_json() + "\n")
+
+    def load(self, limit: int | None = None) -> list[ChatEntry]:
+        """Load chat history from the session log."""
+        if not self.chat_path.exists():
+            return []
+        entries = []
+        with self.chat_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    entries.append(ChatEntry.model_validate_json(line))
+                except Exception:
+                    continue
+        if limit:
+            return entries[-limit:]
+        return entries
+
+
+class MessageEntry(BaseModel):
+    """Pending message in the session queue (WP-9004)."""
+
+    id: str = Field(default_factory=lambda: f"msg_{uuid.uuid4().hex[:8]}")
+    ts: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+    type: str = "reprompt"  # reprompt, command, system, interrupt
+    sender: str = "user"
+    content: str
+    status: str = "pending"  # pending, delivered, processed, failed
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class MessageRegistry:
+    """Manages the pending message queue for a session (WP-9004)."""
+
+    def __init__(self, messages_path: Path) -> None:
+        self.messages_path = messages_path
+
+    def push(self, entry: MessageEntry) -> None:
+        """Add a message to the queue."""
+        self.messages_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.messages_path.open("a", encoding="utf-8") as f:
+            f.write(entry.model_dump_json() + "\n")
+
+    def list_pending(self) -> list[MessageEntry]:
+        """List all pending messages in the queue."""
+        if not self.messages_path.exists():
+            return []
+        entries = []
+        with self.messages_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    msg = MessageEntry.model_validate_json(line)
+                    if msg.status == "pending":
+                        entries.append(msg)
+                except Exception:
+                    continue
+        return entries
+
+    def mark_processed(self, msg_id: str, status: str = "processed") -> None:
+        """Mark a message as processed (appends an update event)."""
+        # Since it's a JSONL queue, we append the update event
+        # A more robust implementation would rewrite the file or use a separate state file
+        update = {
+            "id": msg_id,
+            "status": status,
+            "updated_at": datetime.now(UTC).isoformat(),
+            "event": "update",
+        }
+        with self.messages_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(update) + "\n")
+
+
+class AuditEntry(BaseModel):
+    """Audit trail entry for session actions (WP-9005)."""
+
+    ts: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+    action: str  # view, send, attach, stop, pause, resume
+    actor: str
+    session_id: str
+    details: dict[str, Any] = Field(default_factory=dict)
+    result: str = "success"  # success, denied, error
+
+
+class AuditRegistry:
+    """Manages the session audit trail (WP-9005)."""
+
+    def __init__(self, audit_path: Path) -> None:
+        self.audit_path = audit_path
+
+    def record(self, entry: AuditEntry) -> None:
+        """Record an action in the audit trail."""
+        self.audit_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.audit_path.open("a", encoding="utf-8") as f:
+            f.write(entry.model_dump_json() + "\n")
+
+
+def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
+    """Poll for pending messages for the current session (WP-9004).
+
+    If session_id is None, tries to read from THGENT_SESSION_ID.
+    """
+    if session_id is None:
+        session_id = os.environ.get("THGENT_SESSION_ID")
+
+    if not session_id:
+        return []
+
+    from thegent.cli_impl import _find_session_meta
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+        msg_path = meta_path.parent / f"{session_id}.messages.jsonl"
+        registry = MessageRegistry(msg_path)
+        return registry.list_pending()
+    except Exception:
+        return []
+
     def find_by_token(self, token: str) -> dict[str, Any] | None:
         """Find the most recent run with a given idempotency token."""
         if not self.registry_path.exists():
@@ -1277,6 +1617,8 @@ class RunRegistry:
             self.registry_path.write_text("".join(kept_lines), encoding="utf-8")
 
         return {"kept": len(kept_lines), "purged": purged_count}
+
+    return None
 
 
 class CheckpointRegistry:
@@ -1558,42 +1900,95 @@ class Auditor:
 
     def __init__(self, registry_path: Path) -> None:
         self.registry_path = registry_path
+        # WP-3002: Rust MAIF Manager integration
+        from thegent.maif.rust_manager import RustMAIFManager
+
+        binary_path = Path("target-maif/release/thegent-maif")
+        session_dir = registry_path.parent
+        keys_dir = session_dir / "keys"
+        self.maif_manager = RustMAIFManager(
+            binary_path=binary_path,
+            private_key_path=keys_dir / "maif_private.pem",
+            public_key_path=keys_dir / "maif_public.pem",
+        )
 
     def sign_run(self, run: RunMeta) -> str:
         """Generate a cryptographic signature for a run record."""
-        # Simple hash-based signature for this phase
-        data = f"{run.run_id}|{run.started_at_utc}|{run.owner}|{run.prompt}"
-        return hashlib.sha256(data.encode()).hexdigest()
+        # WP-3002: Use Rust MAIF for actual signing
+        try:
+            artifact_path = self.registry_path.parent / "artifacts" / f"{run.run_id}_pre.maif.json"
+            artifact_path.parent.mkdir(parents=True, exist_ok=True)
+            payload = {
+                "prompt": run.prompt,
+                "owner": run.owner,
+                "lane": run.lane,
+            }
+            artifact = self.maif_manager.create_artifact(
+                action="run_start",
+                payload=payload,
+                agent=run.agent or "unknown",
+                session=run.run_id,
+                output_path=artifact_path,
+            )
+            return artifact.get("signature", "")
+        except Exception as e:
+            _log.debug(f"MAIF signing failed: {e}; falling back to hash")
+            # Fallback to simple hash-based signature
+            data = f"{run.run_id}|{run.started_at_utc}|{run.owner}|{run.prompt}"
+            return hashlib.sha256(data.encode()).hexdigest()
 
-    def generate_maif_artifact(self, run: RunMeta, output: str | None = None) -> MAIFArtifact:
+    def generate_maif_artifact(self, run: RunMeta, output: str | None = None) -> Any:
         """Generate a signed MAIF artifact for a run (WP-3002)."""
-        prompt_hash = hashlib.sha256(run.prompt.encode()).hexdigest()
-        output_hash = hashlib.sha256(output.encode()).hexdigest() if output else None
+        # WP-3002: Use Rust MAIF binary for artifact generation
+        try:
+            artifact_path = self.registry_path.parent / "artifacts" / f"{run.run_id}.maif.json"
+            artifact_path.parent.mkdir(parents=True, exist_ok=True)
+            payload = {
+                "prompt": run.prompt,
+                "output": output,
+                "policy_result": run.policy_result,
+                "policy_reason": run.policy_reason,
+            }
+            return self.maif_manager.create_artifact(
+                action="run_complete",
+                payload=payload,
+                agent=run.agent or "unknown",
+                session=run.run_id,
+                output_path=artifact_path,
+            )
+        except Exception as e:
+            _log.debug(f"MAIF generation failed: {e}; falling back to Pydantic model")
+            prompt_hash = hashlib.sha256(run.prompt.encode()).hexdigest()
+            output_hash = hashlib.sha256(output.encode()).hexdigest() if output else None
+            signature = self.sign_run(run)
 
-        signature = self.sign_run(run)
+            return MAIFArtifact(
+                run_id=run.run_id,
+                agent=run.agent,
+                model=run.model,
+                prompt_hash=prompt_hash,
+                output_hash=output_hash,
+                signature=signature,
+                policy_result=run.policy_result,
+            )
 
-        return MAIFArtifact(
-            run_id=run.run_id,
-            agent=run.agent,
-            model=run.model,
-            prompt_hash=prompt_hash,
-            output_hash=output_hash,
-            signature=signature,
-            policy_result=run.policy_result,
-        )
-
-    def persist_maif_artifact(self, session_dir: Path, artifact: MAIFArtifact) -> Path:
+    def persist_maif_artifact(self, session_dir: Path, artifact: Any) -> Path:
         """Persist a MAIF artifact to the artifacts directory (WP-3002)."""
         artifacts_dir = session_dir / "artifacts"
         artifacts_dir.mkdir(parents=True, exist_ok=True)
 
-        path = artifacts_dir / f"{artifact.run_id}.maif.json"
-        path.write_text(artifact.model_dump_json(indent=2), encoding="utf-8")
+        run_id = artifact.get("session_id") if isinstance(artifact, dict) else artifact.run_id
+        path = artifacts_dir / f"{run_id}.maif.json"
+
+        if isinstance(artifact, dict):
+            path.write_text(json.dumps(artifact, indent=2), encoding="utf-8")
+        else:
+            path.write_text(artifact.model_dump_json(indent=2), encoding="utf-8")
         return path
 
     def verify_registry(self) -> dict[str, Any]:
         """Verify the integrity of all records in the registry, including the hash chain.
-        
+
         ROB-006: Hash chain integrity verification on audit read - Detect tampered audit logs.
         """
         if not self.registry_path.exists():
@@ -1612,33 +2007,36 @@ class Auditor:
                 try:
                     data = json.loads(line)
                     rid = data.get("run_id", "unknown")
-                    
+
                     # ROB-006: Verify hash chain integrity
                     stored_hash = data.get("hash")
                     prev_hash = data.get("prev_hash")
-                    
+
                     # Verify prev_hash matches last_hash (chain integrity)
                     if prev_hash != last_hash:
                         if last_hash is not None:  # First record has no prev_hash
                             chain_broken = True
-                            issues.append(f"ROB-006: Hash chain broken at line {i+1} (run_id: {rid}). Expected prev_hash: {last_hash}, got: {prev_hash}")
-                    
+                            issues.append(
+                                f"ROB-006: Hash chain broken at line {i + 1} (run_id: {rid}). Expected prev_hash: {last_hash}, got: {prev_hash}"
+                            )
+
                     # Verify stored hash matches computed hash
                     if stored_hash:
                         computed_hash = self._calculate_hash(data)
                         if stored_hash != computed_hash:
                             corrupt += 1
-                            issues.append(f"ROB-006: Hash mismatch at line {i+1} (run_id: {rid}). Stored: {stored_hash[:16]}..., computed: {computed_hash[:16]}...")
+                            issues.append(
+                                f"ROB-006: Hash mismatch at line {i + 1} (run_id: {rid}). Stored: {stored_hash[:16]}..., computed: {computed_hash[:16]}..."
+                            )
                         else:
                             valid += 1
                             last_hash = stored_hash
+                    # No hash field - might be schema version marker
+                    elif data.get("event") == "schema_version":
+                        valid += 1
                     else:
-                        # No hash field - might be schema version marker
-                        if data.get("event") == "schema_version":
-                            valid += 1
-                        else:
-                            corrupt += 1
-                            issues.append(f"Line {i+1}: Missing hash field (run_id: {rid})")
+                        corrupt += 1
+                        issues.append(f"Line {i + 1}: Missing hash field (run_id: {rid})")
 
                     # 1. Verify Hash Chain
                     prev_hash = data.get("prev_hash")
@@ -1707,7 +2105,7 @@ class CircuitBreakerRegistry:
 
     def record_failure(self, target: str, category: str = "agent", error_message: str | None = None) -> None:
         """Record a failure for a target in a specific category.
-        
+
         ROB-003: Detects poison pills (repeated identical failures) and prevents infinite retry loops.
         """
         self.session_dir.mkdir(parents=True, exist_ok=True)
@@ -1717,31 +2115,32 @@ class CircuitBreakerRegistry:
             error_hash = hashlib.sha256(error_message.encode()).hexdigest()[:16]
             key = f"{target}:{category}"
             now = time.time()
-            
+
             # Track identical failures
             if key not in self._poison_pill_tracker:
                 self._poison_pill_tracker[key] = []
-            
+
             # Remove old entries outside window
             self._poison_pill_tracker[key] = [
-                (eh, ts) for eh, ts in self._poison_pill_tracker[key]
-                if (now - ts) < self.window_s
+                (eh, ts) for eh, ts in self._poison_pill_tracker[key] if (now - ts) < self.window_s
             ]
-            
+
             # Add new failure
             self._poison_pill_tracker[key].append((error_hash, now))
-            
+
             # ROB-003: Check for poison pill (3+ identical failures in window)
             identical_count = sum(1 for eh, _ in self._poison_pill_tracker[key] if eh == error_hash)
             if identical_count >= 3:
                 _log.warning(
-                    "ROB-003: Poison pill detected for %s/%s: %d identical failures (hash: %s). "
-                    "Stopping retry loop.",
-                    target, category, identical_count, error_hash
+                    "ROB-003: Poison pill detected for %s/%s: %d identical failures (hash: %s). Stopping retry loop.",
+                    target,
+                    category,
+                    identical_count,
+                    error_hash,
                 )
                 # Mark as poison pill - circuit breaker will stay open longer
                 self.recovery_s = self.recovery_s * 3  # Extend recovery time for poison pills
-        
+
         event = {
             "target": target,
             "category": category,

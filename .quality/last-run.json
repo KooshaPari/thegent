@@ -1,23 +1,23 @@
 {
-  "timestamp": "2026-02-19T02:01:11Z",
+  "timestamp": "2026-02-19T13:15:07Z",
   "steps": {
     "py-type": 201,
     "py-lint": 201,
-    "bash-lint": 0,
+    "bash-lint": 201,
     "py-test": -1
   },
   "step_details": {
     "py-type": {
       "code": 201,
-      "duration": 2.074206208999385
+      "duration": 1.7445250419987133
     },
     "py-lint": {
       "code": 201,
-      "duration": 2.6193051250011194
+      "duration": 4.446051458000511
     },
     "bash-lint": {
-      "code": 0,
-      "duration": 4.586196917000052
+      "code": 201,
+      "duration": 17.42943933300012
     },
     "py-test": {
       "code": -1,
@@ -26,7 +26,8 @@
   },
   "failed_steps": [
     "py-type",
-    "py-lint"
+    "py-lint",
+    "bash-lint"
   ],
   "ok": false
 }

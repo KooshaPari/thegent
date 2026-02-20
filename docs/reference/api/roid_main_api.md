@@ -8,36 +8,46 @@ Roid CLI: Factory Droid-backed interactive harness with dex/clode-style aliases.
 
 ## default_roid
 
-Default roid behavior: flash model (gemini-3-flash).
-
 ```python
-default_roid(ctx)
+default_roid(ctx: typer.Context)
 ```
+
+Default roid behavior: flash model (gemini-3-flash).
 
 ---
 
 ## install_links
 
-Install roid shims under ~/.local/bin.
-
 ```python
-install_links(bin_dir, force)
+install_links(bin_dir: Path, force: bool)
 ```
+
+Install roid shims under ~/.local/bin.
 
 ---
 
 ## roid_composer
 
 ```python
-roid_composer(ctx)
+roid_composer(ctx: typer.Context) -> None
 ```
+
+---
+
+## roid_doctor
+
+```python
+roid_doctor(fix: bool)
+```
+
+Run thegent doctor (harness-equiv).
 
 ---
 
 ## roid_flash
 
 ```python
-roid_flash(ctx)
+roid_flash(ctx: typer.Context) -> None
 ```
 
 ---
@@ -45,7 +55,7 @@ roid_flash(ctx)
 ## roid_free
 
 ```python
-roid_free(ctx)
+roid_free(ctx: typer.Context) -> None
 ```
 
 ---
@@ -53,7 +63,7 @@ roid_free(ctx)
 ## roid_glm
 
 ```python
-roid_glm(ctx)
+roid_glm(ctx: typer.Context) -> None
 ```
 
 ---
@@ -61,7 +71,7 @@ roid_glm(ctx)
 ## roid_haiku
 
 ```python
-roid_haiku(ctx)
+roid_haiku(ctx: typer.Context) -> None
 ```
 
 ---
@@ -69,7 +79,7 @@ roid_haiku(ctx)
 ## roid_max
 
 ```python
-roid_max(ctx)
+roid_max(ctx: typer.Context) -> None
 ```
 
 ---
@@ -77,7 +87,7 @@ roid_max(ctx)
 ## roid_mini
 
 ```python
-roid_mini(ctx)
+roid_mini(ctx: typer.Context) -> None
 ```
 
 ---
@@ -85,7 +95,7 @@ roid_mini(ctx)
 ## roid_opus
 
 ```python
-roid_opus(ctx)
+roid_opus(ctx: typer.Context) -> None
 ```
 
 ---
@@ -93,7 +103,7 @@ roid_opus(ctx)
 ## roid_sonnet
 
 ```python
-roid_sonnet(ctx)
+roid_sonnet(ctx: typer.Context) -> None
 ```
 
 ---
@@ -101,7 +111,7 @@ roid_sonnet(ctx)
 ## roid_step
 
 ```python
-roid_step(ctx)
+roid_step(ctx: typer.Context) -> None
 ```
 
 ---
@@ -109,7 +119,7 @@ roid_step(ctx)
 ## roid_ultra
 
 ```python
-roid_ultra(ctx)
+roid_ultra(ctx: typer.Context) -> None
 ```
 
 ---

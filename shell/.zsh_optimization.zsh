@@ -3,7 +3,7 @@
 # Implements: lazy loading, eval caching, parallel loading, profiling
 
 # Only load in interactive shells
-[[ -z "${PS1:-}" || -n "${AGENT_ID:-}" || -n "${SHARECLI_AGENT_CONTEXT:-}" ]] && return 0
+[[ -z "${PS1:-}" || -n "${AGENT_ID:-}" || -n "${heliosShield_AGENT_CONTEXT:-}" ]] && return 0
 
 # --- Configuration ---
 THEGENT_CACHE_DIR="${THEGENT_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/thegent}"

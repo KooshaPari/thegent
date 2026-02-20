@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Safe grep wrapper that avoids alias/config issues
 # Use this instead of rg or grep when encountering config errors
 

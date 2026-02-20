@@ -1,6 +1,6 @@
 # Agent Registry & Interactive Session Management — Holistic Design
 
-> **Status**: Design Draft  
+> **Status**: Implemented (Phases P0-P5 complete)  
 > **Scope**: Unified agent registry, session lifecycle, interaction modes, UX, security, observability  
 > **Related**: [AGENT_REGISTRY_RESEARCH.md](./AGENT_REGISTRY_RESEARCH.md) (research, IPC, prior art)
 
@@ -96,7 +96,7 @@ All agents are classified by **source** and **interactivity**:
 | **thegent-subagent** | Internal sub-task (e.g. cc task, plan step) | Orchestration workers |
 | **ide-managed** | Spawned by IDE (Cursor, Claude Code) | Cursor agent, Claude Code pane |
 | **user-spawned** | User ran agent CLI directly | `claude -p "..."` in terminal |
-| **discovered** | Detected via sharecli / process tree | External codex, copilot |
+| **discovered** | Detected via heliosShield / process tree | External codex, copilot |
 | **mcp-proxy** | Running behind MCP / CLIProxyAPIPlus | Codex via proxy |
 
 ### 2.2 Interactivity Modes
@@ -452,7 +452,7 @@ thegent session resume <id>
 
 ```yaml
 agent_registry:
-  discovery_plugins: ["sharecli", "k8s"]
+  discovery_plugins: ["heliosShield", "k8s"]
   attachment_handlers:
     tmux: "thegent.tools.terminal"
     holdpty: "thegent.tools.holdpty"
@@ -562,14 +562,14 @@ agent_registry:
 
 ## 15. Implementation Roadmap
 
-| Phase | Focus | Deliverables | Est. |
-|-------|-------|--------------|------|
-| **P0** | Foundation | Schema, ChatHistory, MessageRegistry (file), audit stub | 1 wk |
-| **P1** | Read UX | `session list`/`show`/`logs`, TUI read-only, MCP list/show | 1 wk |
-| **P2** | Send | `session send`, tmux delivery, TUI input | 1 wk |
-| **P3** | Attach | `session attach`, tmux/holdpty hints, TUI attach button | 1 wk |
-| **P4** | Headless | FIFO transport, agent polling hook, holdpty wrapper opt-in | 1–2 wk |
-| **P5** | Polish | Metrics, retention, discovery plugins, docs | 1 wk |
+| Phase | Focus | Deliverables | Est. | Status |
+|-------|-------|--------------|------|--------|
+| **P0** | Foundation | Schema, ChatHistory, MessageRegistry (file), audit stub | 1 wk | ✅ |
+| **P1** | Read UX | `session list`/`show`/`logs`, TUI read-only, MCP list/show | 1 wk | ✅ |
+| **P2** | Send | `session send`, tmux delivery, TUI input | 1 wk | ✅ |
+| **P3** | Attach | `session attach`, tmux/holdpty hints, TUI attach button | 1 wk | ✅ |
+| **P4** | Headless | FIFO transport, agent polling hook, holdpty wrapper opt-in | 1–2 wk | ✅ |
+| **P5** | Polish | Metrics, retention, discovery plugins, docs | 1 wk | ✅ |
 
 **Spec traceability**: Add FR-REG-XXX to FUNCTIONAL_REQUIREMENTS.md for each deliverable; tests reference FR IDs per project QA governance.
 

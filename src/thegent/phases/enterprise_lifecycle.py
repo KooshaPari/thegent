@@ -6,7 +6,7 @@ from typing import Any
 class EnterpriseLifecycleManager:
     """Manager for enterprise lifecycle and compliance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize enterprise lifecycle manager."""
         self.lifecycle_stages = [
             "planning",
@@ -20,7 +20,7 @@ class EnterpriseLifecycleManager:
 
     def register_compliance_check(self, stage: str, check: str) -> None:
         """Register a compliance check for a stage.
-        
+
         Args:
             stage: Lifecycle stage
             check: Compliance check name
@@ -31,10 +31,10 @@ class EnterpriseLifecycleManager:
 
     def get_stage_compliance(self, stage: str) -> list[str]:
         """Get compliance checks for a stage.
-        
+
         Args:
             stage: Lifecycle stage
-            
+
         Returns:
             List of compliance checks
         """
@@ -42,7 +42,7 @@ class EnterpriseLifecycleManager:
 
     def get_lifecycle_map(self) -> dict[str, Any]:
         """Get complete lifecycle map.
-        
+
         Returns:
             Lifecycle map dictionary
         """

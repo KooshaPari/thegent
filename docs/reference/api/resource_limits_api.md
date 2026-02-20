@@ -14,67 +14,71 @@ Manage and enforce resource limits.
 
 #### ResourceLimits.__init__
 
+```python
+__init__(self: Any)
+```
+
 Initialize resource limits manager.
 
-```python
-__init__(self)
-```
+---
 
 #### ResourceLimits.get_fd_limit
 
+```python
+get_fd_limit(self: Any)
+```
+
 Get current FD limit.
 
-Returns:
-    Current file descriptor limit.
+**Returns**: Current file descriptor limit.
 
-```python
-get_fd_limit(self)
-```
+---
 
 #### ResourceLimits.get_process_limit
 
+```python
+get_process_limit(self: Any)
+```
+
 Get current process limit.
 
-Returns:
-    Current process limit, or default if not available.
+**Returns**: Current process limit, or default if not available.
 
-```python
-get_process_limit(self)
-```
+---
 
 #### ResourceLimits.restore_limits
 
+```python
+restore_limits(self: Any)
+```
+
 Restore original limits.
 
-```python
-restore_limits(self)
-```
+---
 
 ---
 
 ## get_fd_limit
 
+```python
+get_fd_limit(self: Any)
+```
+
 Get current FD limit.
 
-Returns:
-    Current file descriptor limit.
-
-```python
-get_fd_limit(self)
-```
+**Returns**: Current file descriptor limit.
 
 ---
 
 ## get_process_limit
 
+```python
+get_process_limit(self: Any)
+```
+
 Get current process limit.
 
-Returns:
-    Current process limit, or default if not available.
-
-```python
-get_process_limit(self)
-```
+**Returns**: Current process limit, or default if not available.
 
 ---
 
@@ -86,11 +90,11 @@ Get global resource limits manager.
 
 ## restore_limits
 
-Restore original limits.
-
 ```python
-restore_limits(self)
+restore_limits(self: Any)
 ```
+
+Restore original limits.
 
 ---
 

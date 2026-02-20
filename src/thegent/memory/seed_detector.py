@@ -12,6 +12,7 @@ Provides:
 import logging
 import re
 from dataclasses import dataclass
+from datetime import UTC
 from enum import Enum
 from typing import Optional
 
@@ -48,15 +49,22 @@ class Seed:
     timestamp: str  # ISO 8601 format
     tags: list[str]  # Optional tags (e.g., ["architecture", "performance"])
     status: str = "new"  # new, developing, implemented, archived
-    context: Optional[str] = None  # Additional context
-    detected_by: Optional[str] = None  # Detection method (pattern, llm, manual)
+    context: str | None = None  # Additional context
+    detected_by: str | None = None  # Detection method (pattern, llm, manual)
+
+    def __post_init__(self):
+        """Normalize source to always be a SeedSource enum."""
+        if isinstance(self.source, str):
+            self.source = SeedSource(self.source)
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
+        # Ensure source is treated as enum (should be due to __post_init__)
+        source_value = self.source.value if isinstance(self.source, SeedSource) else self.source
         return {
             "id": self.id,
             "text": self.text,
-            "source": self.source.value,
+            "source": source_value,
             "confidence": self.confidence,
             "timestamp": self.timestamp,
             "tags": self.tags,
@@ -106,7 +114,7 @@ class SeedDetector:
         r"(?i)\bmaintainability\b",
     ]
 
-    def __init__(self, use_llm: bool = False):
+    def __init__(self, use_llm: bool = False) -> None:
         """Initialize detector.
 
         Args:
@@ -114,9 +122,7 @@ class SeedDetector:
         """
         self.use_llm = use_llm
         self._compiled_explicit = [re.compile(p) for p in self.EXPLICIT_PATTERNS]
-        self._compiled_code_quality = [
-            re.compile(p, re.MULTILINE) for p in self.CODE_QUALITY_PATTERNS
-        ]
+        self._compiled_code_quality = [re.compile(p, re.MULTILINE) for p in self.CODE_QUALITY_PATTERNS]
         self._compiled_design = [re.compile(p) for p in self.DESIGN_PATTERNS]
 
     def detect_seeds(self, text: str, source: SeedSource) -> list[Seed]:
@@ -134,9 +140,7 @@ class SeedDetector:
         # Check explicit patterns (highest confidence)
         for pattern in self._compiled_explicit:
             if pattern.search(text):
-                seed = self._create_seed(
-                    text, source, SeedConfidence.HIGH, "explicit_marker"
-                )
+                seed = self._create_seed(text, source, SeedConfidence.HIGH, "explicit_marker")
                 seeds.append(seed)
                 break  # One seed per detection pass
 
@@ -144,9 +148,7 @@ class SeedDetector:
         if not seeds:
             for pattern in self._compiled_code_quality:
                 if pattern.search(text):
-                    seed = self._create_seed(
-                        text, source, SeedConfidence.MEDIUM, "code_quality_marker"
-                    )
+                    seed = self._create_seed(text, source, SeedConfidence.MEDIUM, "code_quality_marker")
                     seeds.append(seed)
                     break
 
@@ -154,9 +156,7 @@ class SeedDetector:
         if not seeds:
             for pattern in self._compiled_design:
                 if pattern.search(text):
-                    seed = self._create_seed(
-                        text, source, SeedConfidence.MEDIUM, "design_marker"
-                    )
+                    seed = self._create_seed(text, source, SeedConfidence.MEDIUM, "design_marker")
                     seeds.append(seed)
                     break
 
@@ -193,7 +193,7 @@ class SeedDetector:
         tags = self._extract_tags(text)
 
         seed_id = str(uuid.uuid4())[:8]
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
 
         return Seed(
             id=seed_id,
@@ -235,7 +235,7 @@ class SeedDetector:
 
         return tags[:3]  # Limit to 3 tags
 
-    def _classify_with_llm(self, text: str, source: SeedSource) -> Optional[Seed]:
+    def _classify_with_llm(self, text: str, source: SeedSource) -> Seed | None:
         """Classify text as seed using LLM (stub for future implementation).
 
         Args:

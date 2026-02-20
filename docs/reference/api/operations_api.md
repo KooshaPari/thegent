@@ -25,11 +25,11 @@ A command or capability mapped to an operation.
 
 ## get_operations_by_type
 
-Return all entries for an operation type.
-
 ```python
-get_operations_by_type(op)
+get_operations_by_type(op: Operation)
 ```
+
+Return all entries for an operation type.
 
 ---
 

@@ -15,44 +15,50 @@ Captures detailed system and project state snapshots.
 #### ForensicSnapshotter.__init__
 
 ```python
-__init__(self, session_dir)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
 
 #### ForensicSnapshotter.capture_post_run
 
+```python
+capture_post_run(self: Any, run_id: str, project_root: Path, exit_code: int)
+```
+
 Capture state after a run, including git diff.
 
-```python
-capture_post_run(self, run_id, project_root, exit_code)
-```
+---
 
 #### ForensicSnapshotter.capture_pre_run
 
+```python
+capture_pre_run(self: Any, run_id: str, project_root: Path)
+```
+
 Capture state before a run.
 
-```python
-capture_pre_run(self, run_id, project_root)
-```
+---
 
 ---
 
 ## capture_post_run
 
-Capture state after a run, including git diff.
-
 ```python
-capture_post_run(self, run_id, project_root, exit_code)
+capture_post_run(self: Any, run_id: str, project_root: Path, exit_code: int)
 ```
+
+Capture state after a run, including git diff.
 
 ---
 
 ## capture_pre_run
 
-Capture state before a run.
-
 ```python
-capture_pre_run(self, run_id, project_root)
+capture_pre_run(self: Any, run_id: str, project_root: Path)
 ```
+
+Capture state before a run.
 
 ---
 

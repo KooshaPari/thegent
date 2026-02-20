@@ -5,18 +5,21 @@
 set -euo pipefail
 HOOK_NAME="SUPPRESSION-BLOCKER"
 
-# Dispatched mode: skip common.sh entirely — env vars already set by dispatcher
-if [[ -n "${_HOOK_DISPATCHED:-}" ]]; then
-  # FILE_PATH, TOOL_NAME, TOOL_CONTENT, TOOL_NEW_STRING, TOOL_OLD_STRING already exported
-  :
-else
-  # shellcheck source=./lib/common.sh
-  source "${BASH_SOURCE[0]%/*}/lib/common.sh"
+# Dispatched mode: env vars already set by dispatcher, but we still need common helpers
+if [[ -z "${FILE_PATH:-}" || -z "${TOOL_NAME:-}" ]]; then
+  source "${0:h}/lib/common.sh"
   hook_init
   hook_extract_content
+elif [[ -z "${_HOOK_LIB_LOADED:-}" ]]; then
+  source "${0:h}/lib/common.sh"
 fi
 
 [[ -z "${FILE_PATH:-}" ]] && exit 0
+
+# Honor skip list
+if hook_should_skip "$HOOK_NAME"; then
+  exit 0
+fi
 
 # Suppression patterns (grep -E extended regex)
 SUPPRESSION_RE='#[[:space:]]*noqa|#[[:space:]]*type:[[:space:]]*ignore|#[[:space:]]*pragma:[[:space:]]*no[[:space:]]*cover|//[[:space:]]*eslint-disable|/\*[[:space:]]*eslint-disable|@ts-ignore|@ts-expect-error|//[[:space:]]*nolint|#\[allow\(|#[[:space:]]*nosec|//[[:space:]]*nosemgrep|@SuppressWarnings|@Suppress\(|//[[:space:]]*swiftlint:disable|#[[:space:]]*rubocop:disable|//[[:space:]]*phpcs:disable|//[[:space:]]*@phpstan-ignore|/\*[[:space:]]*stylelint-disable|<!--[[:space:]]*markdownlint-disable|//[[:space:]]*ignore:|//[[:space:]]*ignore_for_file:|--[[:space:]]*noqa|#[[:space:]]*tfsec:ignore|--[[:space:]]*luacheck:[[:space:]]*ignore|#[[:space:]]*credo:disable|\{-[[:space:]]*HLINT[[:space:]]*ignore'

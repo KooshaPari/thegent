@@ -23,21 +23,33 @@ Input validation rails before OPA/PolicyEngine. G-GP-02.
 
 #### InputGuardrails.check
 
+```python
+check(self: Any, prompt: str, agent: str, model: Any, cwd: Any)
+```
+
 Validate inputs. Returns passed=True if all rails pass.
 
-```python
-check(self, prompt, agent, model, cwd)
-```
+---
 
 ---
 
 ## check
 
+```python
+check(self: Any, prompt: str, agent: str, model: Any, cwd: Any)
+```
+
 Validate inputs. Returns passed=True if all rails pass.
 
+---
+
+## guardrails_from_settings
+
 ```python
-check(self, prompt, agent, model, cwd)
+guardrails_from_settings(settings: Any)
 ```
+
+Build InputGuardrails from ThegentSettings.
 
 ---
 

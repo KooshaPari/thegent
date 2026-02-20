@@ -41,28 +41,40 @@ class ReputationManager:
             return
 
         import sqlite3
+
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
-            # Check if reputation_entries table exists
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='reputation_entries'")
-            if not cursor.fetchone():
-                conn.close()
-                return
 
-            cursor.execute("SELECT agent_id, rating, reviewer_id, task_id, feedback_hash, timestamp FROM reputation_entries")
-            for row in cursor.fetchall():
-                agent_id, rating, rev_id, task_id, fb_hash, ts = row
-                entry = ReputationEntry(
-                    agent_id=agent_id,
-                    rating=rating,
-                    reviewer_id=rev_id,
-                    task_id=task_id,
-                    feedback_hash=fb_hash,
-                    timestamp=ts
+            # 1. Load aggregate scores from reputation table if it exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='reputation'")
+            if cursor.fetchone():
+                cursor.execute("SELECT agent_id, trust_score, entries_count, xp, level FROM reputation")
+                for row in cursor.fetchall():
+                    agent_id, score, count, xp, level = row
+                    self.scores[agent_id] = {"score": score, "count": float(count), "xp": xp, "level": level}
+
+            # 2. Load history from reputation_entries table
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='reputation_entries'")
+            if cursor.fetchone():
+                cursor.execute(
+                    "SELECT agent_id, rating, reviewer_id, task_id, feedback_hash, timestamp FROM reputation_entries"
                 )
-                self.ledger.append(entry)
-                self._update_score_in_memory(agent_id, rating)
+                for row in cursor.fetchall():
+                    agent_id, rating, rev_id, task_id, fb_hash, ts = row
+                    entry = ReputationEntry(
+                        agent_id=agent_id,
+                        rating=rating,
+                        reviewer_id=rev_id,
+                        task_id=task_id,
+                        feedback_hash=fb_hash,
+                        timestamp=ts,
+                    )
+                    self.ledger.append(entry)
+                    # Only update memory if not already loaded from reputation table
+                    if agent_id not in self.scores:
+                        self._update_score_in_memory(agent_id, rating)
+
             conn.close()
         except Exception as e:
             _log.error(f"Failed to load reputation from DB: {e}")
@@ -85,12 +97,12 @@ class ReputationManager:
     def _update_score_in_memory(self, agent_id: str, rating: float):
         """Update the aggregate score in memory."""
         if agent_id not in self.scores:
-            self.scores[agent_id] = {"score": rating, "count": 1.0}
+            self.scores[agent_id] = {"score": rating, "count": 1.0, "xp": 0, "level": 1}
         else:
             current = self.scores[agent_id]
             new_count = current["count"] + 1
             new_score = ((current["score"] * current["count"]) + rating) / new_count
-            self.scores[agent_id] = {"score": new_score, "count": new_count}
+            self.scores[agent_id].update({"score": new_score, "count": new_count})
 
     def _persist_entry(self, entry: ReputationEntry):
         """Persist reputation entry to database."""
@@ -98,17 +110,42 @@ class ReputationManager:
             return
 
         import sqlite3
+
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
+
+            # 1. Insert history entry
             cursor.execute(
                 """
-                INSERT INTO reputation_entries 
+                INSERT INTO reputation_entries
                 (agent_id, reviewer_id, task_id, rating, feedback_hash, timestamp)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (entry.agent_id, entry.reviewer_id, entry.task_id, entry.rating, entry.feedback_hash, entry.timestamp)
+                (entry.agent_id, entry.reviewer_id, entry.task_id, entry.rating, entry.feedback_hash, entry.timestamp),
             )
+
+            # 2. Update aggregate reputation table
+            score_data = self.scores.get(entry.agent_id, {"score": entry.rating, "count": 1, "xp": 0, "level": 1})
+            cursor.execute(
+                """
+                INSERT INTO reputation (agent_id, trust_score, entries_count, last_updated, xp, level)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(agent_id) DO UPDATE SET
+                    trust_score = excluded.trust_score,
+                    entries_count = excluded.entries_count,
+                    last_updated = excluded.last_updated
+                """,
+                (
+                    entry.agent_id,
+                    score_data["score"],
+                    int(score_data["count"]),
+                    entry.timestamp,
+                    score_data.get("xp", 0),
+                    score_data.get("level", 1),
+                ),
+            )
+
             conn.commit()
             conn.close()
         except Exception as e:

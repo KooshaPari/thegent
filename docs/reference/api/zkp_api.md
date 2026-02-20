@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/verification/zkp.py`
 
 WP-27002: Zero-Knowledge Proofs (ZKP) for Context Integrity.
+
 Enables agents to prove they have certain context or permissions without revealing the raw data.
 Uses a simplified ZK-SNARK-inspired pattern for agent governance.
 
@@ -17,24 +18,30 @@ Orchestrates Zero-Knowledge governance for sensitive context.
 #### ZKGovernor.__init__
 
 ```python
-__init__(self, agent_id)
+__init__(self: Any, agent_id: str)
 ```
+
+---
 
 #### ZKGovernor.generate_proof
 
+```python
+generate_proof(self: Any, secret_context: str, challenge: str)
+```
+
 Generate a ZK proof for a given secret context and challenge.
 
-```python
-generate_proof(self, secret_context, challenge)
-```
+---
 
 #### ZKGovernor.verify_proof
 
+```python
+verify_proof(self: Any, proof: ZKProof, known_commitment: str)
+```
+
 Verify a ZK proof against a known commitment.
 
-```python
-verify_proof(self, proof, known_commitment)
-```
+---
 
 ---
 
@@ -48,21 +55,21 @@ Metadata for a Zero-Knowledge Proof.
 
 ## generate_proof
 
-Generate a ZK proof for a given secret context and challenge.
-
 ```python
-generate_proof(self, secret_context, challenge)
+generate_proof(self: Any, secret_context: str, challenge: str)
 ```
+
+Generate a ZK proof for a given secret context and challenge.
 
 ---
 
 ## verify_proof
 
-Verify a ZK proof against a known commitment.
-
 ```python
-verify_proof(self, proof, known_commitment)
+verify_proof(self: Any, proof: ZKProof, known_commitment: str)
 ```
+
+Verify a ZK proof against a known commitment.
 
 ---
 

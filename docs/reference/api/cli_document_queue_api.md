@@ -5,76 +5,77 @@
 Document Queue CLI Commands for thegent
 
 Integrates document queue management into thegent's typer-based CLI.
+Uses centralized path utilities for cross-platform consistency.
 
 ---
 
 ## analyze_cmd
 
-Analyze a document.
-
 ```python
-analyze_cmd(filepath)
+analyze_cmd(filepath: Path)
 ```
+
+Analyze a document.
 
 ---
 
 ## files_cmd
 
-Get files for a specific month.
-
 ```python
-files_cmd(month, location, queue_file, output)
+files_cmd(month: str, location: Any, queue_file: Any, output: Any)
 ```
+
+Get files for a specific month.
 
 ---
 
 ## list_cmd
 
-List all months in the queue.
-
 ```python
-list_cmd(queue_file)
+list_cmd(queue_file: Any)
 ```
+
+List all months in the queue.
 
 ---
 
 ## next_cmd
 
-Get next month to process.
-
 ```python
-next_cmd(queue_file, files)
+next_cmd(queue_file: Any, files: bool)
 ```
+
+Get next month to process.
 
 ---
 
 ## process_cmd
 
-Process a single file.
-
 ```python
-process_cmd(filepath, queue_file, analyze)
+process_cmd(filepath: Path, queue_file: Any, analyze: bool)
 ```
+
+Process a single file.
 
 ---
 
 ## scan_cmd
 
-Scan for markdown files and create queue.
-
 ```python
-scan_cmd(config, output, min_date, location)
+scan_cmd(config: Any, output: Any, min_date: Any, location: Any)
 ```
+
+Scan for markdown files and create queue.
 
 ---
 
 ## summary_cmd
 
-Get queue summary statistics.
-
 ```python
-summary_cmd(queue_file)
+summary_cmd(queue_file: Any)
 ```
+
+Get queue summary statistics.
 
 ---
 

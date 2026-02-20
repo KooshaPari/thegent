@@ -68,6 +68,7 @@ def get_config_provider() -> ConfigProvider:
     if cp_url:
         # Avoid circular import if/when ControlPlaneConfigProvider is added
         from thegent.governance.config_provider_cp import ControlPlaneConfigProvider
+
         return ControlPlaneConfigProvider(cp_url)
 
     return EnvConfigProvider()

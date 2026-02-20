@@ -9,13 +9,13 @@ logger = logging.getLogger(__name__)
 class HookRustPhase4Research:
     """Research for native Rust hooks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize hook rust phase4 research."""
         self.critical_paths: list[str] = []
 
     def identify_critical_paths(self) -> list[str]:
         """Identify critical paths for native Rust hooks.
-        
+
         Returns:
             List of critical path identifiers
         """
@@ -31,7 +31,7 @@ class HookRustPhase4Research:
 
     def get_migration_plan(self) -> dict[str, Any]:
         """Get migration plan for native Rust hooks.
-        
+
         Returns:
             Migration plan dictionary
         """

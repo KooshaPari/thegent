@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from thegent.governance.sharecli_bridge import ShareCLIBridge, SmartMerge
+from thegent.governance.heliosShield_bridge import SmartMerge, heliosShieldBridge
 from thegent.governance.teammates import TeammateManager
 
 
@@ -37,9 +37,9 @@ def test_teammate_delegation(tmp_path):
     assert delegations[0].result_summary == "Refactoring done."
 
 
-def test_sharecli_bridge_availability():
-    """WP-16003: The system SHALL check for ShareCLI availability."""
-    bridge = ShareCLIBridge()
+def test_heliosShield_bridge_availability():
+    """WP-16003: The system SHALL check for heliosShield availability."""
+    bridge = heliosShieldBridge()
     # Should be false in test env unless HARNESS_ROOT is set
     assert bridge.is_available() is False
 

@@ -29,70 +29,88 @@ for audit trail but are excluded from get_pending() results.
 #### BacklogManager.__init__
 
 ```python
-__init__(self, session_dir)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
 
 #### BacklogManager.add
 
+```python
+add(self: Any, finding_id: str, dimension: str, severity: float, description: str)
+```
+
 Add a finding to the backlog as a new pending item.
 
-```python
-add(self, finding_id, dimension, severity, description)
-```
+---
 
 #### BacklogManager.backlog_path
 
 ```python
-backlog_path(self)
+backlog_path(self: Any)
 ```
+
+---
 
 #### BacklogManager.defer
 
+```python
+defer(self: Any, item_id: str, reason: str)
+```
+
 Mark a backlog item as deferred with a reason.
 
-```python
-defer(self, item_id, reason)
-```
+---
 
 #### BacklogManager.get_all
 
+```python
+get_all(self: Any)
+```
+
 Return all backlog items (including resolved/deferred) for audit trail.
 
-```python
-get_all(self)
-```
+---
 
 #### BacklogManager.get_pending
 
+```python
+get_pending(self: Any)
+```
+
 Return pending items sorted by severity descending, then attempts ascending.
 
-```python
-get_pending(self)
-```
+---
 
 #### BacklogManager.increment_attempt
 
+```python
+increment_attempt(self: Any, item_id: str)
+```
+
 Increment the attempt counter and update the last_attempted_at timestamp.
 
-```python
-increment_attempt(self, item_id)
-```
+---
 
 #### BacklogManager.resolve
 
+```python
+resolve(self: Any, item_id: str)
+```
+
 Mark a backlog item as resolved.
 
-```python
-resolve(self, item_id)
-```
+---
 
 #### BacklogManager.update_status
 
+```python
+update_status(self: Any, item_id: str, status: BacklogStatus, reason: Any)
+```
+
 Update the status of a backlog item.
 
-```python
-update_status(self, item_id, status, reason)
-```
+---
 
 ---
 
@@ -100,85 +118,85 @@ update_status(self, item_id, status, reason)
 
 Lifecycle status for backlog items.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
 ## add
 
-Add a finding to the backlog as a new pending item.
-
 ```python
-add(self, finding_id, dimension, severity, description)
+add(self: Any, finding_id: str, dimension: str, severity: float, description: str)
 ```
+
+Add a finding to the backlog as a new pending item.
 
 ---
 
 ## backlog_path
 
 ```python
-backlog_path(self)
+backlog_path(self: Any) -> Path
 ```
 
 ---
 
 ## defer
 
-Mark a backlog item as deferred with a reason.
-
 ```python
-defer(self, item_id, reason)
+defer(self: Any, item_id: str, reason: str)
 ```
+
+Mark a backlog item as deferred with a reason.
 
 ---
 
 ## get_all
 
-Return all backlog items (including resolved/deferred) for audit trail.
-
 ```python
-get_all(self)
+get_all(self: Any)
 ```
+
+Return all backlog items (including resolved/deferred) for audit trail.
 
 ---
 
 ## get_pending
 
-Return pending items sorted by severity descending, then attempts ascending.
-
 ```python
-get_pending(self)
+get_pending(self: Any)
 ```
+
+Return pending items sorted by severity descending, then attempts ascending.
 
 ---
 
 ## increment_attempt
 
-Increment the attempt counter and update the last_attempted_at timestamp.
-
 ```python
-increment_attempt(self, item_id)
+increment_attempt(self: Any, item_id: str)
 ```
+
+Increment the attempt counter and update the last_attempted_at timestamp.
 
 ---
 
 ## resolve
 
-Mark a backlog item as resolved.
-
 ```python
-resolve(self, item_id)
+resolve(self: Any, item_id: str)
 ```
+
+Mark a backlog item as resolved.
 
 ---
 
 ## update_status
 
-Update the status of a backlog item.
-
 ```python
-update_status(self, item_id, status, reason)
+update_status(self: Any, item_id: str, status: BacklogStatus, reason: Any)
 ```
+
+Update the status of a backlog item.
 
 ---
 

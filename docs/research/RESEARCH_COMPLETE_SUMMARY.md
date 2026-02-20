@@ -161,7 +161,7 @@ Existing frameworks lack:
 
 2. **Leverage Existing Patterns**
    - Use SmolGents execution modes
-   - Adopt ShareCLI coordination
+   - Adopt heliosShield coordination
    - Extend TeammateManager
 
 3. **Build Unique Features**

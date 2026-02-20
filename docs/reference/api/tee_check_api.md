@@ -23,24 +23,30 @@ Verifies if the agent is running in a trusted execution environment.
 #### TEEChecker.__init__
 
 ```python
-__init__(self, mock_mode)
+__init__(self: Any, mock_mode: bool)
 ```
+
+---
 
 #### TEEChecker.check
 
+```python
+check(self: Any)
+```
+
 Perform TEE check and return attestation.
 
-```python
-check(self)
-```
+---
 
 #### TEEChecker.enforce_tee
 
+```python
+enforce_tee(self: Any)
+```
+
 Raise error if not running in TEE and environment requires it.
 
-```python
-enforce_tee(self)
-```
+---
 
 ---
 
@@ -52,21 +58,21 @@ enforce_tee(self)
 
 ## check
 
-Perform TEE check and return attestation.
-
 ```python
-check(self)
+check(self: Any)
 ```
+
+Perform TEE check and return attestation.
 
 ---
 
 ## enforce_tee
 
-Raise error if not running in TEE and environment requires it.
-
 ```python
-enforce_tee(self)
+enforce_tee(self: Any)
 ```
+
+Raise error if not running in TEE and environment requires it.
 
 ---
 

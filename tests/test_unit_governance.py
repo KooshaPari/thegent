@@ -11,7 +11,7 @@ from thegent.execution import PolicyEngine, RunMeta
 from thegent.governance.cost import CostAggregator, CostEstimator
 from thegent.governance.input_guardrails import (
     InputGuardrails,
-    _guardrails_from_env,
+    guardrails_from_settings,
 )
 
 
@@ -85,11 +85,11 @@ class TestInputGuardrails:
         r = g.check(cwd=tmp_path / "subdir")
         assert r.passed is True
 
-    def test_guardrails_from_env(self) -> None:
+    def testguardrails_from_settings(self) -> None:
         # @trace FR-GOV-007
-        """_guardrails_from_env reads THGENT_PROMPT_MAX_CHARS."""
+        """guardrails_from_settings reads THGENT_PROMPT_MAX_CHARS."""
         with patch.dict(os.environ, {"THGENT_PROMPT_MAX_CHARS": "100"}, clear=False):
-            g = _guardrails_from_env()
+            g = guardrails_from_settings()
             assert g.prompt_max_chars == 100
 
 
@@ -583,20 +583,20 @@ class TestCostAggregatorBlankAndCorruptedLines:
 
 @pytest.mark.unit
 class TestGuardrailsFromEnvBranches:
-    """Tests for _guardrails_from_env env var branches (lines 105-106, 111, 116, 121)."""
+    """Tests for guardrails_from_settings env var branches (lines 105-106, 111, 116, 121)."""
 
     def test_invalid_prompt_max_chars_uses_default(self) -> None:
         # @trace FR-GOV-007
         """Invalid THGENT_PROMPT_MAX_CHARS falls back to default (lines 105-106)."""
         with patch.dict(os.environ, {"THGENT_PROMPT_MAX_CHARS": "not_a_number"}, clear=False):
-            g = _guardrails_from_env()
+            g = guardrails_from_settings()
         assert g.prompt_max_chars == 65536
 
     def test_blocklist_from_env(self) -> None:
         # @trace FR-GOV-007
         """THGENT_PROMPT_BLOCKLIST_PATTERNS parsed from env (line 111)."""
         with patch.dict(os.environ, {"THGENT_PROMPT_BLOCKLIST_PATTERNS": "SECRET,PASSWORD"}, clear=False):
-            g = _guardrails_from_env()
+            g = guardrails_from_settings()
         assert "SECRET" in g.prompt_blocklist_patterns
         assert "PASSWORD" in g.prompt_blocklist_patterns
 
@@ -604,7 +604,7 @@ class TestGuardrailsFromEnvBranches:
         # @trace FR-GOV-007
         """THGENT_AGENT_ALLOWLIST parsed from env (line 116)."""
         with patch.dict(os.environ, {"THGENT_AGENT_ALLOWLIST": "gemini,claude"}, clear=False):
-            g = _guardrails_from_env()
+            g = guardrails_from_settings()
         assert "gemini" in g.agent_allowlist
         assert "claude" in g.agent_allowlist
 
@@ -612,6 +612,6 @@ class TestGuardrailsFromEnvBranches:
         # @trace FR-GOV-007
         """THGENT_CWD_ALLOWED_PREFIXES parsed from env (line 121)."""
         with patch.dict(os.environ, {"THGENT_CWD_ALLOWED_PREFIXES": "/home,/workspace"}, clear=False):
-            g = _guardrails_from_env()
+            g = guardrails_from_settings()
         assert "/home" in g.cwd_allowed_prefixes
         assert "/workspace" in g.cwd_allowed_prefixes

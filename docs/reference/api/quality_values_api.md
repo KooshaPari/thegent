@@ -11,46 +11,59 @@ falls back to Route.accuracy_score from catalog.
 
 ## get_all_model_quality_indices
 
-Returns: {model_id: quality_index}
-
 ```python
-get_all_model_quality_indices(settings, benchmarks_path)
+get_all_model_quality_indices(settings: Any, benchmarks_path: Any)
 ```
+
+Returns: {model_id: quality_index}
 
 ---
 
 ## get_model_provider_quality_index
 
+```python
+get_model_provider_quality_index(model_id: str, provider: str, settings: Any)
+```
+
 Get quality index (0-1) for a model-provider pair.
 
 Returns 0.5 if unknown.
-
-```python
-get_model_provider_quality_index(model_id, provider, settings)
-```
 
 ---
 
 ## get_model_provider_quality_indices
 
+```python
+get_model_provider_quality_indices(settings: Any, benchmarks_path: Any, use_cache: bool)
+```
+
 Returns: {model_id: {provider: quality_index}}
+
 Same model has same quality across providers; structure matches cost/speed.
 
+---
+
+## get_model_quality_for_role
+
 ```python
-get_model_provider_quality_indices(settings, benchmarks_path, use_cache)
+get_model_quality_for_role(model_id: str, role_benchmark_weights: Any, settings: Any, benchmarks_path: Any)
 ```
+
+Get quality index (0-1) for a model with role-specific benchmark weights.
+
+When role_benchmark_weights is None or empty, falls back to default weights.
 
 ---
 
 ## get_model_quality_index
 
+```python
+get_model_quality_index(model_id: str, settings: Any, benchmarks_path: Any)
+```
+
 Get quality index (0-1) for a model.
 
 Uses benchmarks.json when available; falls back to Route.accuracy_score.
-
-```python
-get_model_quality_index(model_id, settings, benchmarks_path)
-```
 
 ---
 

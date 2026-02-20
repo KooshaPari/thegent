@@ -10,7 +10,7 @@ Pydantic models for task types.
 
 Task complexity level.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -26,7 +26,7 @@ A deliverable artifact.
 
 Priority level enumeration.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -34,7 +34,7 @@ Priority level enumeration.
 
 Subagent type enumeration.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -48,19 +48,23 @@ Task input model.
 
 #### Task.validate_allowed_agents
 
+```python
+validate_allowed_agents(cls: Any, v: list[str], info: Any)
+```
+
 Validate allowed_agents is set when visibility is restricted.
 
-```python
-validate_allowed_agents(cls, v, info)
-```
+---
 
 #### Task.validate_depends
 
+```python
+validate_depends(cls: Any, v: list[str])
+```
+
 Validate dependency IDs.
 
-```python
-validate_depends(cls, v)
-```
+---
 
 ---
 
@@ -84,7 +88,7 @@ Task execution output.
 
 Task output status.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -100,27 +104,27 @@ A single step in a task.
 
 Task visibility level.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
 ## validate_allowed_agents
 
-Validate allowed_agents is set when visibility is restricted.
-
 ```python
-validate_allowed_agents(cls, v, info)
+validate_allowed_agents(cls: Any, v: list[str], info: Any)
 ```
+
+Validate allowed_agents is set when visibility is restricted.
 
 ---
 
 ## validate_depends
 
-Validate dependency IDs.
-
 ```python
-validate_depends(cls, v)
+validate_depends(cls: Any, v: list[str])
 ```
+
+Validate dependency IDs.
 
 ---
 

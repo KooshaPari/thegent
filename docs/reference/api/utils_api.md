@@ -2,20 +2,20 @@
 
 > **Source**: `src/thegent/utils/__init__.py`
 
-Utility modules for thegent.
+Utility functions and helpers.
 
 ---
 
 ## get_resource_path
 
+```python
+get_resource_path(relative_path: str)
+```
+
 Get absolute path to a resource file.
 
 In dev mode, looks in the project root.
 When installed, uses importlib.resources.
-
-```python
-get_resource_path(relative_path)
-```
 
 ---
 
@@ -24,19 +24,18 @@ get_resource_path(relative_path)
 Check if thegent is running in development mode.
 
 Dev mode is active if:
-1. THGENT_DEV=1 is set in environment
+1. THGENT_DEV=1 is set (via ThegentSettings.dev)
 2. We are running from a git repository and src/thegent exists
 
 ---
 
 ## strip_ansi
 
-Remove ANSI escape sequences (colors, etc.) from text.
-Uses rich.text.Text.from_ansi() which is the idiomatic way to strip ANSI in Rich.
-
 ```python
-strip_ansi(text)
+strip_ansi(text: str)
 ```
+
+Remove ANSI escape sequences from text. Uses rich Text.from_ansi().plain.
 
 ---
 

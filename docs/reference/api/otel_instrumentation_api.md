@@ -4,21 +4,21 @@
 
 ## instrument_genai_call
 
-Wrap an agent call with OTel spans using GenAI semantic conventions.
-
 ```python
-instrument_genai_call(agent_name, model, run_id, chunk_id, system)
+instrument_genai_call(agent_name: str, model: str, run_id: Any, chunk_id: Any, system: Any)
 ```
+
+Wrap an agent call with OTel spans using GenAI semantic conventions.
 
 ---
 
 ## record_usage
 
-Record token usage on an active span.
-
 ```python
-record_usage(span, input_tokens, output_tokens)
+record_usage(span: trace.Span, input_tokens: int, output_tokens: int)
 ```
+
+Record token usage on an active span.
 
 ---
 

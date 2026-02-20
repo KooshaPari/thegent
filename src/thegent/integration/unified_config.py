@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from thegent.infra import yaml_load, yaml_loads, get_cache
+from thegent.infra import get_cache, yaml_load, yaml_loads
 from thegent.platform_paths import get_config_dir
 
 __all__ = ["UnifiedConfigManager"]
@@ -53,7 +53,7 @@ class UnifiedConfigManager:
             if cached is not None:
                 self.unified_config = cached
                 return
-        
+
         for system_name, config_path in self.config_sources:
             if config_path.exists():
                 try:
@@ -68,7 +68,7 @@ class UnifiedConfigManager:
                 except (OSError, Exception):
                     # Load failed, skip this source
                     continue
-        
+
         # OPT-019: Cache the result
         if _USE_UNIFIED_CACHE:
             _UNIFIED_CONFIG_CACHE.set("unified_config", self.unified_config, ttl=300)

@@ -252,7 +252,7 @@ export ZEN_API_KEY="<your-zen-key>"        # recognized as fallback
 
 - [AGENT_PLATFORMS_KILO_ROO_OPencode_CLIPROXY_RESEARCH.md](../research/AGENT_PLATFORMS_KILO_ROO_OPencode_CLIPROXY_RESEARCH.md)
 - [CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md](../plans/CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md)
-- Cursor zero-action spec: `docs/guides/CURSOR_ZERO_ACTION_FLOW_SPEC.md` (in sharecli)
+- Cursor zero-action spec: `docs/guides/CURSOR_ZERO_ACTION_FLOW_SPEC.md` (in heliosShield)
 
 
 ---

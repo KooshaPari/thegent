@@ -15,62 +15,70 @@ Breaks the flow when usage spikes are detected.
 #### CircuitBreaker.__init__
 
 ```python
-__init__(self, session_dir)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
 
 #### CircuitBreaker.check_spike
 
+```python
+check_spike(self: Any, current_batch_cost: float)
+```
+
 Check if the current cost batch causes a spike.
 
-```python
-check_spike(self, current_batch_cost)
-```
+---
 
 #### CircuitBreaker.is_tripped
 
+```python
+is_tripped(self: Any)
+```
+
 Return True if any active breaker is tripped.
 
-```python
-is_tripped(self)
-```
+---
 
 #### CircuitBreaker.trip
 
+```python
+trip(self: Any, reason: str, value: float)
+```
+
 Trip the circuit breaker.
 
-```python
-trip(self, reason, value)
-```
+---
 
 ---
 
 ## check_spike
 
-Check if the current cost batch causes a spike.
-
 ```python
-check_spike(self, current_batch_cost)
+check_spike(self: Any, current_batch_cost: float)
 ```
+
+Check if the current cost batch causes a spike.
 
 ---
 
 ## is_tripped
 
-Return True if any active breaker is tripped.
-
 ```python
-is_tripped(self)
+is_tripped(self: Any)
 ```
+
+Return True if any active breaker is tripped.
 
 ---
 
 ## trip
 
-Trip the circuit breaker.
-
 ```python
-trip(self, reason, value)
+trip(self: Any, reason: str, value: float)
 ```
+
+Trip the circuit breaker.
 
 ---
 

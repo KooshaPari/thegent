@@ -10,7 +10,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 simd-json = { version = "0.14.3", features = ["serde"] }
 thiserror = "2.0.18"
-pyo3 = { version = "0.28.2", features = ["extension-module"] }
+pyo3 = { version = "0.23.4", features = ["extension-module"] }
 
 [lib]
 name = "thegent_router"

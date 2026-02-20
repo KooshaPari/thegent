@@ -15,16 +15,20 @@ Head LLM that decides the next action in a loop.
 #### CheckerAgent.__init__
 
 ```python
-__init__(self, settings, agent_name)
+__init__(self: Any, settings: ThegentSettings, agent_name: str)
 ```
+
+---
 
 #### CheckerAgent.decide
 
+```python
+decide(self: Any, governance_report: dict[(str, Any, str)], todo_spec: str, wbs_status: dict[(str, Any, str)], agent_response: str)
+```
+
 Invoke the Checker Agent to make a decision.
 
-```python
-decide(self, governance_report, todo_spec, wbs_status, agent_response)
-```
+---
 
 ---
 
@@ -32,7 +36,7 @@ decide(self, governance_report, todo_spec, wbs_status, agent_response)
 
 Possible decisions by the Checker Agent.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -46,11 +50,11 @@ Result of a Checker Agent decision.
 
 ## decide
 
-Invoke the Checker Agent to make a decision.
-
 ```python
-decide(self, governance_report, todo_spec, wbs_status, agent_response)
+decide(self: Any, governance_report: dict[(str, Any, str)], todo_spec: str, wbs_status: dict[(str, Any, str)], agent_response: str)
 ```
+
+Invoke the Checker Agent to make a decision.
 
 ---
 

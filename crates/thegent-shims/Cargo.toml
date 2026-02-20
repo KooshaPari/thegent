@@ -7,6 +7,10 @@ authors = ["thegent"]
 license = "MIT"
 
 [[bin]]
+name = "thegent-shims"
+path = "src/main.rs"
+
+[[bin]]
 name = "thegent-git"
 path = "src/shims/git.rs"
 

@@ -17,66 +17,72 @@ Runs claude, codex, gemini, copilot, antigravity via Codex CLI pointing at our C
 #### CodexProxyRunner.__init__
 
 ```python
-__init__(self, agent_name, settings, model)
+__init__(self: Any, agent_name: str, settings: Any, model: str, use_litellm_router: Any)
 ```
+
+---
 
 #### CodexProxyRunner.run
 
 ```python
-run(self, prompt, cwd, mode, timeout)
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
 ```
 
+---
+
 #### CodexProxyRunner.run_with_metadata
+
+```python
+run_with_metadata(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
+```
 
 Run agent using resolved routing from TaskMetadata.
 
 This method consumes resolved_provider and resolved_model_alias
 from the routing classification.
 
-Args:
-    prompt: User prompt
-    cwd: Working directory
-    mode: Execution mode (read/write/full)
-    timeout: Timeout in seconds
-    metadata: TaskMetadata with resolved routing
+**Parameters**:
 
-Returns:
-    RunResult from execution
+- `prompt`: User prompt
+- `cwd`: Working directory
+- `mode`: Execution mode (read/write/full)
+- `timeout`: Timeout in seconds
+- `metadata`: TaskMetadata with resolved routing
 
-```python
-run_with_metadata(self, prompt, cwd, mode, timeout)
-```
+**Returns**: RunResult from execution
+
+---
 
 ---
 
 ## run
 
 ```python
-run(self, prompt, cwd, mode, timeout)
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int) -> RunResult
 ```
 
 ---
 
 ## run_with_metadata
 
+```python
+run_with_metadata(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
+```
+
 Run agent using resolved routing from TaskMetadata.
 
 This method consumes resolved_provider and resolved_model_alias
 from the routing classification.
 
-Args:
-    prompt: User prompt
-    cwd: Working directory
-    mode: Execution mode (read/write/full)
-    timeout: Timeout in seconds
-    metadata: TaskMetadata with resolved routing
+**Parameters**:
 
-Returns:
-    RunResult from execution
+- `prompt`: User prompt
+- `cwd`: Working directory
+- `mode`: Execution mode (read/write/full)
+- `timeout`: Timeout in seconds
+- `metadata`: TaskMetadata with resolved routing
 
-```python
-run_with_metadata(self, prompt, cwd, mode, timeout)
-```
+**Returns**: RunResult from execution
 
 ---
 

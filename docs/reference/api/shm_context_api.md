@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/orchestration/shm_context.py`
 
 WP-21002: Zero-Copy Context Sharing (Shared Memory).
+
 MTSP-09/11: Efficiently share large context blocks across multi-tenant agent runs.
 
 ---
@@ -16,24 +17,30 @@ Manages context sharing across multiple agent runs (Multi-Tenancy).
 #### ContextSharer.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### ContextSharer.get_context
 
+```python
+get_context(self: Any, session_id: str)
+```
+
 Retrieve or create a shared context for a session.
 
-```python
-get_context(self, session_id)
-```
+---
 
 #### ContextSharer.release_context
 
+```python
+release_context(self: Any, session_id: str)
+```
+
 Clean up session context.
 
-```python
-release_context(self, session_id)
-```
+---
 
 ---
 
@@ -46,82 +53,90 @@ Provides high-performance shared memory context for agent processes.
 #### ZeroCopyContext.__init__
 
 ```python
-__init__(self, size)
+__init__(self: Any, size: int)
 ```
+
+---
 
 #### ZeroCopyContext.close
 
+```python
+close(self: Any)
+```
+
 Clean up resources.
 
-```python
-close(self)
-```
+---
 
 #### ZeroCopyContext.read_context
 
+```python
+read_context(self: Any, size: int, offset: int)
+```
+
 Read context data directly from memory-mapped file.
 
-```python
-read_context(self, size, offset)
-```
+---
 
 #### ZeroCopyContext.write_context
 
+```python
+write_context(self: Any, data: bytes, offset: int)
+```
+
 Write context data directly to memory-mapped file.
 
-```python
-write_context(self, data, offset)
-```
+---
 
 ---
 
 ## close
 
-Clean up resources.
-
 ```python
-close(self)
+close(self: Any)
 ```
+
+Clean up resources.
 
 ---
 
 ## get_context
 
-Retrieve or create a shared context for a session.
-
 ```python
-get_context(self, session_id)
+get_context(self: Any, session_id: str)
 ```
+
+Retrieve or create a shared context for a session.
 
 ---
 
 ## read_context
 
-Read context data directly from memory-mapped file.
-
 ```python
-read_context(self, size, offset)
+read_context(self: Any, size: int, offset: int)
 ```
+
+Read context data directly from memory-mapped file.
 
 ---
 
 ## release_context
 
-Clean up session context.
-
 ```python
-release_context(self, session_id)
+release_context(self: Any, session_id: str)
 ```
+
+Clean up session context.
 
 ---
 
 ## write_context
 
-Write context data directly to memory-mapped file.
-
 ```python
-write_context(self, data, offset)
+write_context(self: Any, data: bytes, offset: int)
 ```
+
+Write context data directly to memory-mapped file.
 
 ---
 

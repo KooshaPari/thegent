@@ -9,9 +9,9 @@ from thegent.agent.workflow_engine import WorkflowEngine
 __all__ = [
     "Crew",
     "CrewExecutor",
-    "WorkflowEngine",
-    "RouterManager",
     "MonitoringEngine",
+    "RouterManager",
+    "WorkflowEngine",
 ]
 
 from thegent.agent.codex_harness import (
@@ -21,9 +21,11 @@ from thegent.agent.codex_harness import (
     HarnessAdapter,
 )
 
-__all__.extend([
-    "CodexHarness",
-    "CCHarness",
-    "DroidHarness",
-    "HarnessAdapter",
-])
+__all__.extend(
+    [
+        "CCHarness",
+        "CodexHarness",
+        "DroidHarness",
+        "HarnessAdapter",
+    ]
+)

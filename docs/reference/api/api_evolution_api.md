@@ -17,44 +17,50 @@ Manages compatibility between different API versions.
 #### APIEvolutionManager.__init__
 
 ```python
-__init__(self, current_version)
+__init__(self: Any, current_version: str)
 ```
+
+---
 
 #### APIEvolutionManager.is_feature_enabled
 
+```python
+is_feature_enabled(self: Any, flag: str)
+```
+
 Check if a specific compatibility flag is enabled.
 
-```python
-is_feature_enabled(self, flag)
-```
+---
 
 #### APIEvolutionManager.negotiate_version
 
+```python
+negotiate_version(self: Any, client_version: str)
+```
+
 Negotiate the best API version for the client.
 
-```python
-negotiate_version(self, client_version)
-```
+---
 
 ---
 
 ## is_feature_enabled
 
-Check if a specific compatibility flag is enabled.
-
 ```python
-is_feature_enabled(self, flag)
+is_feature_enabled(self: Any, flag: str)
 ```
+
+Check if a specific compatibility flag is enabled.
 
 ---
 
 ## negotiate_version
 
-Negotiate the best API version for the client.
-
 ```python
-negotiate_version(self, client_version)
+negotiate_version(self: Any, client_version: str)
 ```
+
+Negotiate the best API version for the client.
 
 ---
 

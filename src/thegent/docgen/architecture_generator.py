@@ -7,28 +7,28 @@ from typing import Any
 class ArchitectureGenerator:
     """Generate architecture diagrams from code structure."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize architecture generator."""
         self.components: list[dict[str, Any]] = []
 
     def analyze_structure(self, root_path: Path) -> dict[str, Any]:
         """Analyze code structure.
-        
+
         Args:
             root_path: Root directory to analyze
-            
+
         Returns:
             Structure analysis
         """
         packages = []
         modules = []
-        
+
         for py_file in root_path.rglob("*.py"):
             if "__init__.py" in str(py_file):
                 packages.append(str(py_file.parent))
             else:
                 modules.append(str(py_file))
-        
+
         return {
             "packages": packages,
             "modules": modules,
@@ -37,10 +37,10 @@ class ArchitectureGenerator:
 
     def _build_structure(self, root_path: Path) -> dict[str, Any]:
         """Build structure tree.
-        
+
         Args:
             root_path: Root directory
-            
+
         Returns:
             Structure tree
         """
@@ -54,15 +54,15 @@ class ArchitectureGenerator:
 
     def generate_mermaid(self, structure: dict[str, Any]) -> str:
         """Generate Mermaid diagram.
-        
+
         Args:
             structure: Structure dictionary
-            
+
         Returns:
             Mermaid diagram code
         """
         lines = ["graph TD"]
-        
+
         def add_nodes(d: dict[str, Any], prefix: str = ""):
             for key, value in d.items():
                 node_id = f"{prefix}_{key}" if prefix else key
@@ -71,6 +71,6 @@ class ArchitectureGenerator:
                     add_nodes(value, node_id)
                 else:
                     lines.append(f"    {node_id}[{key}]")
-        
+
         add_nodes(structure)
         return "\n".join(lines)

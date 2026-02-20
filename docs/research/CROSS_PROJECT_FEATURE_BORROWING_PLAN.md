@@ -13,9 +13,9 @@ This plan details **specific features** that can be borrowed from more active/re
 
 ## Part 1: Priority System Adoption
 
-### 1.1 Borrow: sharecli's P0-P4 System
+### 1.1 Borrow: heliosShield's P0-P4 System
 
-**Source**: `sharecli/docs/unified/BACKLOG.md`
+**Source**: `heliosShield/docs/unified/BACKLOG.md`
 
 **Target Projects**: All projects
 
@@ -51,9 +51,9 @@ This plan details **specific features** that can be borrowed from more active/re
 
 ## Part 2: Governance Features
 
-### 2.1 Borrow: Methodology Enforcer (sharecli FT-001)
+### 2.1 Borrow: Methodology Enforcer (heliosShield FT-001)
 
-**Source**: `sharecli/docs/unified/BACKLOG.md` (FT-001)
+**Source**: `heliosShield/docs/unified/BACKLOG.md` (FT-001)
 
 **Target Projects**: thegent, plangent, smolgents
 
@@ -70,9 +70,9 @@ This plan details **specific features** that can be borrowed from more active/re
 
 ---
 
-### 2.2 Borrow: Reliability Gate (sharecli FT-002)
+### 2.2 Borrow: Reliability Gate (heliosShield FT-002)
 
-**Source**: `sharecli/docs/unified/BACKLOG.md` (FT-002)
+**Source**: `heliosShield/docs/unified/BACKLOG.md` (FT-002)
 
 **Target Projects**: thegent, plangent, smolgents, trace
 
@@ -89,9 +89,9 @@ This plan details **specific features** that can be borrowed from more active/re
 
 ---
 
-### 2.3 Borrow: Typed Agent Claim Enforcement (sharecli FT-004)
+### 2.3 Borrow: Typed Agent Claim Enforcement (heliosShield FT-004)
 
-**Source**: `sharecli/docs/unified/BACKLOG.md` (FT-004)
+**Source**: `heliosShield/docs/unified/BACKLOG.md` (FT-004)
 
 **Target Projects**: thegent, plangent, kimaki
 
@@ -272,7 +272,7 @@ This plan details **specific features** that can be borrowed from more active/re
 
 **Source**: `thegent/docs/guides/VITEPRESS_USAGE_GUIDE.md`
 
-**Target Projects**: sharecli, plangent, smolgents, trace
+**Target Projects**: heliosShield, plangent, smolgents, trace
 
 **Feature**: Rich documentation with diagrams, code playgrounds, demos
 
@@ -292,7 +292,7 @@ This plan details **specific features** that can be borrowed from more active/re
 
 **Source**: `thegent/scripts/generate-api-docs.py`
 
-**Target Projects**: sharecli, plangent, smolgents
+**Target Projects**: heliosShield, plangent, smolgents
 
 **Feature**: Auto-generate API docs from docstrings
 
@@ -389,7 +389,7 @@ This plan details **specific features** that can be borrowed from more active/re
 
 ### Phase 4: Documentation (Weeks 11-12)
 
-1. **Rich Documentation** (sharecli, plangent, smolgents)
+1. **Rich Documentation** (heliosShield, plangent, smolgents)
    - VitePress setup
    - Auto-generated docs
    - Examples

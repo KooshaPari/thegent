@@ -15,44 +15,50 @@ A session where multiple agents collaborate on a task.
 #### CollaborativeSession.__init__
 
 ```python
-__init__(self, settings, task_id)
+__init__(self: Any, settings: ThegentSettings, task_id: str)
 ```
+
+---
 
 #### CollaborativeSession.broadcast_state
 
+```python
+broadcast_state(self: Any, state: dict[(str, Any)])
+```
+
 Broadcast state updates to all participants.
 
-```python
-broadcast_state(self, state)
-```
+---
 
 #### CollaborativeSession.recruit_participants
 
+```python
+recruit_participants(self: Any, needed_capabilities: list[str])
+```
+
 Recruit external agents based on capabilities (including P2P).
 
-```python
-recruit_participants(self, needed_capabilities)
-```
+---
 
 ---
 
 ## broadcast_state
 
-Broadcast state updates to all participants.
-
 ```python
-broadcast_state(self, state)
+broadcast_state(self: Any, state: dict[(str, Any)])
 ```
+
+Broadcast state updates to all participants.
 
 ---
 
 ## recruit_participants
 
-Recruit external agents based on capabilities (including P2P).
-
 ```python
-recruit_participants(self, needed_capabilities)
+recruit_participants(self: Any, needed_capabilities: list[str])
 ```
+
+Recruit external agents based on capabilities (including P2P).
 
 ---
 

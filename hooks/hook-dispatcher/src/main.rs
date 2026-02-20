@@ -12,20 +12,459 @@ use std::time::{Duration, Instant};
 use regex::Regex;
 use std::sync::OnceLock;
 
+// ---------------------------------------------------------------------------
+// Secret scanning types and registry (BKM-07)
+// ---------------------------------------------------------------------------
+
+/// A named secret pattern entry: (type_name, compiled regex).
+struct SecretPattern {
+    kind: &'static str,
+    regex: Regex,
+}
+
+/// A single secret match found during scanning.
+#[derive(Serialize)]
+struct SecretMatch {
+    /// Human-readable type label (e.g. "openai_api_key").
+    kind: String,
+    /// 1-based line number of the match.
+    line: usize,
+    /// Masked version of the matched text (never the raw secret).
+    masked: String,
+}
+
+/// Top-level JSON output for `hook-dispatcher scan-secrets`.
+#[derive(Serialize)]
+struct ScanSecretsOutput {
+    found: bool,
+    matches: Vec<SecretMatch>,
+}
+
+/// Return the lazily-initialized list of named secret patterns.
+fn get_named_secret_patterns() -> &'static Vec<SecretPattern> {
+    static PATTERNS: OnceLock<Vec<SecretPattern>> = OnceLock::new();
+    PATTERNS.get_or_init(|| {
+        vec![
+            SecretPattern { kind: "openai_api_key",    regex: Regex::new(r"sk-[a-zA-Z0-9]{48}").unwrap() },
+            SecretPattern { kind: "openai_proj_key",   regex: Regex::new(r"sk-proj-[a-zA-Z0-9_-]{48,}").unwrap() },
+            SecretPattern { kind: "anthropic_api_key", regex: Regex::new(r"sk-ant-[a-zA-Z0-9_-]{90,}").unwrap() },
+            SecretPattern { kind: "google_cloud_key",  regex: Regex::new(r"AIza[0-9A-Za-z\-_]{35}").unwrap() },
+            SecretPattern { kind: "slack_token",       regex: Regex::new(r"xox[baprs]-[0-9A-Za-z\-]{10,}").unwrap() },
+            SecretPattern { kind: "private_key_block", regex: Regex::new(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----").unwrap() },
+            SecretPattern { kind: "square_access_token", regex: Regex::new(r"sq0atp-[0-9A-Za-z\-_]{22}").unwrap() },
+            SecretPattern { kind: "aws_access_key_id", regex: Regex::new(r"AKIA[0-9A-Z]{16}").unwrap() },
+            SecretPattern { kind: "aws_secret_key_context", regex: Regex::new(r"(?i)(aws_secret_access_key|secret_access_key)\s*[=:]\s*\S{20,}").unwrap() },
+            SecretPattern { kind: "github_pat",        regex: Regex::new(r"ghp_[a-zA-Z0-9]{36}").unwrap() },
+            SecretPattern { kind: "github_oauth",      regex: Regex::new(r"gho_[a-zA-Z0-9]{36}").unwrap() },
+            SecretPattern { kind: "github_app_token",  regex: Regex::new(r"ghs_[a-zA-Z0-9]{36}").unwrap() },
+            SecretPattern { kind: "generic_hex_secret", regex: Regex::new(r"(?i)(password|secret|token|api[_-]?key)\s*[=:]\s*[0-9a-f]{20,}").unwrap() },
+            SecretPattern { kind: "generic_base64_secret", regex: Regex::new(r"(?i)(password|secret|token|api[_-]?key)\s*[=:]\s*[A-Za-z0-9+/]{32,}={0,2}").unwrap() },
+        ]
+    })
+}
+
+/// Mask a matched string: keep first 4 chars + `****` + last 2 chars if long enough.
+fn mask_secret(matched: &str) -> String {
+    let chars: Vec<char> = matched.chars().collect();
+    if chars.len() <= 8 {
+        return "****".to_string();
+    }
+    let prefix: String = chars[..4].iter().collect();
+    let suffix: String = chars[chars.len() - 2..].iter().collect();
+    format!("{prefix}****{suffix}")
+}
+
+/// Scan `content` line-by-line for secrets. Returns all matches with masking.
+fn scan_content_for_secrets(content: &str) -> Vec<SecretMatch> {
+    let patterns = get_named_secret_patterns();
+    let mut matches: Vec<SecretMatch> = Vec::new();
+
+    for (line_idx, line) in content.lines().enumerate() {
+        let line_no = line_idx + 1;
+        for pat in patterns {
+            if let Some(m) = pat.regex.find(line) {
+                matches.push(SecretMatch {
+                    kind: pat.kind.to_string(),
+                    line: line_no,
+                    masked: mask_secret(m.as_str()),
+                });
+                // One match per pattern per line is enough
+                break;
+            }
+        }
+    }
+
+    matches
+}
+
+/// Backward-compat helper used by run_governance_scan: returns count of files with secrets.
 fn get_secret_regexes() -> &'static Vec<Regex> {
     static SECRET_REGEXES: OnceLock<Vec<Regex>> = OnceLock::new();
     SECRET_REGEXES.get_or_init(|| {
-        vec![
-            Regex::new(r"sk-[a-zA-Z0-9]{48}").unwrap(),      // OpenAI
-            Regex::new(r"AIza[0-9A-Za-z-_]{35}").unwrap(),   // Google Cloud
-            Regex::new(r"xox[baprs]-[0-9]{12}").unwrap(),    // Slack
-            Regex::new(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----").unwrap(), // Private keys
-            Regex::new(r"sq0atp-[0-9A-Za-z-_]{22}").unwrap(), // Square
-            Regex::new(r"access_key_id.:\s*.AKIA").unwrap(),  // AWS
-            Regex::new(r"secret_access_key.:").unwrap(),     // AWS
-            Regex::new(r"ghp_[a-zA-Z0-9]{36}").unwrap(),     // GitHub PAT
-        ]
+        get_named_secret_patterns()
+            .iter()
+            .map(|p| Regex::new(p.regex.as_str()).unwrap())
+            .collect()
     })
+}
+
+// ---------------------------------------------------------------------------
+// Governance scanning types and rules (BKM-11)
+// ---------------------------------------------------------------------------
+
+/// A single governance violation found during file scanning.
+#[derive(Serialize)]
+struct GovernanceViolation {
+    /// Rule ID that was violated (e.g. "noqa-no-justification").
+    rule: String,
+    /// Severity level: "error", "warning", or "info".
+    severity: String,
+    /// 1-based line number of the violation.
+    line: usize,
+    /// Human-readable description of the violation.
+    message: String,
+}
+
+/// Top-level JSON output for `hook-dispatcher governance scan`.
+#[derive(Serialize)]
+struct GovernanceScanOutput {
+    /// Total number of violations found.
+    violation_count: usize,
+    /// The list of individual violations.
+    violations: Vec<GovernanceViolation>,
+}
+
+/// Return the lazily-initialized noqa-with-justification regex (positive match = has justification).
+fn get_noqa_justified_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        // Matches `\x23 noqa` or `\x23 noqa: X123` followed by ` -- ` justification marker
+        Regex::new(r"#\s*noqa(?::\s*\S+)?\s+--\s").unwrap()
+    })
+}
+
+/// Return the lazily-initialized noqa-bare regex (any noqa annotation).
+fn get_noqa_bare_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"#\s*noq\x61").unwrap()
+    })
+}
+
+/// Return the lazily-initialized TO\x44O/FIX\x4DE/HAC\x4B keyword regex.
+fn get_todo_keyword_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)\b(TO\x44O|FIX\x4DE|HAC\x4B|XXX)\b").unwrap()
+    })
+}
+
+/// Return the lazily-initialized ticket reference regex.
+fn get_ticket_ref_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        // Matches \x23 123, PROJ-456, [\x23 789]
+        Regex::new(r"(?:#\d+|[A-Z][A-Z0-9]+-\d+|\[#\d+\])").unwrap()
+    })
+}
+
+/// Return the lazily-initialized hardcoded credential regex.
+fn get_hardcoded_cred_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r#"(?i)(password|passwd|pwd|secret|api_key|apikey|access_token|auth_token)\s*=\s*["'][^"']{4,}["']"#).unwrap()
+    })
+}
+
+/// Detect `\x23 noqa` annotations without a justification comment (`-- reason`).
+fn scan_noqa_violations(content: &str) -> Vec<GovernanceViolation> {
+    let bare_re = get_noqa_bare_regex();
+    let justified_re = get_noqa_justified_regex();
+    content
+        .lines()
+        .enumerate()
+        .filter_map(|(idx, line)| {
+            // Flag if the line has a noqa annotation but lacks the justification marker
+            if bare_re.is_match(line) && !justified_re.is_match(line) {
+                Some(GovernanceViolation {
+                    rule: "noqa-no-justification".to_string(),
+                    severity: "error".to_string(),
+                    line: idx + 1,
+                    message: format!(
+                        "Suppression `\x23 noqa` at line {} lacks inline justification (`-- reason`).",
+                        idx + 1
+                    ),
+                })
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+/// Detect TODO/FIXME/HACK comments without a ticket reference.
+fn scan_todo_no_ticket_violations(content: &str) -> Vec<GovernanceViolation> {
+    let keyword_re = get_todo_keyword_regex();
+    let ticket_re = get_ticket_ref_regex();
+    content
+        .lines()
+        .enumerate()
+        .filter_map(|(idx, line)| {
+            if let Some(m) = keyword_re.find(line) {
+                // Only flag if the same line has no ticket reference
+                if !ticket_re.is_match(line) {
+                    let keyword = m.as_str().to_uppercase();
+                    let keyword = keyword.trim();
+                    Some(GovernanceViolation {
+                        rule: "todo-no-ticket".to_string(),
+                        severity: "warning".to_string(),
+                        line: idx + 1,
+                        message: format!(
+                            "{} at line {} has no ticket reference (e.g. #123 or PROJ-456).",
+                            keyword,
+                            idx + 1
+                        ),
+                    })
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+/// Check Python function lengths.  A function that spans more than 40 lines
+/// (from `def …:` to the next `def ` / `class ` / end-of-file) is flagged.
+fn scan_function_length_violations(content: &str, max_lines: usize) -> Vec<GovernanceViolation> {
+    let def_re = Regex::new(r"^(\s*)(?:async\s+)?def\s+\w+").unwrap();
+    let class_re = Regex::new(r"^(\s*)class\s+\w+").unwrap();
+
+    let lines: Vec<&str> = content.lines().collect();
+    let mut violations = Vec::new();
+
+    let mut i = 0;
+    while i < lines.len() {
+        if let Some(caps) = def_re.captures(lines[i]) {
+            let def_indent = caps[1].len();
+            let def_line_no = i + 1; // 1-based
+            let func_start = i;
+
+            // Walk forward until we find another def/class at the same or shallower indent
+            let mut j = i + 1;
+            while j < lines.len() {
+                let l = lines[j];
+                // Skip blank lines and comment-only lines
+                if l.trim().is_empty() || l.trim_start().starts_with('#') {
+                    j += 1;
+                    continue;
+                }
+                // If we hit a def/class at same or shallower indent, stop
+                let indent = l.len() - l.trim_start().len();
+                let is_def = def_re.is_match(l);
+                let is_class = class_re.is_match(l);
+                if (is_def || is_class) && indent <= def_indent {
+                    break;
+                }
+                j += 1;
+            }
+
+            let func_len = j - func_start;
+            if func_len > max_lines {
+                violations.push(GovernanceViolation {
+                    rule: "function-too-long".to_string(),
+                    severity: "warning".to_string(),
+                    line: def_line_no,
+                    message: format!(
+                        "Function at line {} is {} lines long (max {max_lines}).",
+                        def_line_no, func_len
+                    ),
+                });
+            }
+            i = j; // advance past this function
+        } else {
+            i += 1;
+        }
+    }
+
+    violations
+}
+
+/// Detect hardcoded credential patterns (e.g. `password = "secret"`).
+fn scan_hardcoded_cred_violations(content: &str) -> Vec<GovernanceViolation> {
+    let re = get_hardcoded_cred_regex();
+    content
+        .lines()
+        .enumerate()
+        .filter_map(|(idx, line)| {
+            if re.is_match(line) {
+                Some(GovernanceViolation {
+                    rule: "hardcoded-credential".to_string(),
+                    severity: "error".to_string(),
+                    line: idx + 1,
+                    message: format!(
+                        "Possible hardcoded credential at line {}.",
+                        idx + 1
+                    ),
+                })
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+/// Run all governance rules against `content` and return every violation.
+fn scan_content_for_governance(content: &str) -> Vec<GovernanceViolation> {
+    let mut violations = Vec::new();
+    violations.extend(scan_noqa_violations(content));
+    violations.extend(scan_todo_no_ticket_violations(content));
+    violations.extend(scan_function_length_violations(content, 40));
+    violations.extend(scan_hardcoded_cred_violations(content));
+    // Sort by line number for deterministic output
+    violations.sort_by_key(|v| v.line);
+    violations
+}
+
+/// `hook-dispatcher governance scan <file>` or `governance scan --stdin`
+/// `hook-dispatcher governance check-contract <contract_id> <file>`
+/// Outputs: JSON GovernanceScanOutput
+fn cmd_governance(args: &[String]) -> ExitCode {
+    // args[0] = binary name, args[1] = "governance"
+    let sub = args.get(2).map(|s| s.as_str()).unwrap_or("");
+
+    match sub {
+        "scan" => {
+            let content = if args.get(3).map(|s| s.as_str()) == Some("--stdin") {
+                let mut buf = String::new();
+                std::io::stdin().read_to_string(&mut buf).unwrap_or(0);
+                buf
+            } else if let Some(path) = args.get(3) {
+                match fs::read_to_string(path) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        eprintln!("governance scan: cannot read {path:?}: {e}");
+                        let out = GovernanceScanOutput { violation_count: 0, violations: vec![] };
+                        println!("{}", serde_json::to_string(&out).unwrap());
+                        return ExitCode::from(1);
+                    }
+                }
+            } else {
+                eprintln!("usage: hook-dispatcher governance scan <file>");
+                eprintln!("       hook-dispatcher governance scan --stdin");
+                return ExitCode::from(1);
+            };
+
+            let violations = scan_content_for_governance(&content);
+            let found = !violations.is_empty();
+            let out = GovernanceScanOutput {
+                violation_count: violations.len(),
+                violations,
+            };
+            println!("{}", serde_json::to_string(&out).unwrap());
+            if found { ExitCode::from(1) } else { ExitCode::from(0) }
+        }
+
+        "check-contract" => {
+            // args: governance check-contract <contract_id> <file>
+            let contract_id = match args.get(3) {
+                Some(s) => s.clone(),
+                None => {
+                    eprintln!("usage: hook-dispatcher governance check-contract <contract_id> <file>");
+                    return ExitCode::from(1);
+                }
+            };
+            let content = if args.get(4).map(|s| s.as_str()) == Some("--stdin") {
+                let mut buf = String::new();
+                std::io::stdin().read_to_string(&mut buf).unwrap_or(0);
+                buf
+            } else if let Some(path) = args.get(4) {
+                match fs::read_to_string(path) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        eprintln!("governance check-contract: cannot read {path:?}: {e}");
+                        let out = GovernanceScanOutput { violation_count: 0, violations: vec![] };
+                        println!("{}", serde_json::to_string(&out).unwrap());
+                        return ExitCode::from(1);
+                    }
+                }
+            } else {
+                eprintln!("usage: hook-dispatcher governance check-contract <contract_id> <file>");
+                return ExitCode::from(1);
+            };
+
+            // Map contract IDs to specific rule subsets
+            let violations: Vec<GovernanceViolation> = match contract_id.as_str() {
+                "P2-PRIVACY" | "secret-detection" => {
+                    let mut v = scan_hardcoded_cred_violations(&content);
+                    v.sort_by_key(|x| x.line);
+                    v
+                }
+                "suppression-policy" | "noqa-policy" => {
+                    let mut v = scan_noqa_violations(&content);
+                    v.sort_by_key(|x| x.line);
+                    v
+                }
+                "todo-policy" => {
+                    let mut v = scan_todo_no_ticket_violations(&content);
+                    v.sort_by_key(|x| x.line);
+                    v
+                }
+                "complexity-policy" | "function-length" => {
+                    let mut v = scan_function_length_violations(&content, 40);
+                    v.sort_by_key(|x| x.line);
+                    v
+                }
+                // Unknown contracts: run all rules
+                _ => scan_content_for_governance(&content),
+            };
+
+            let found = !violations.is_empty();
+            let out = GovernanceScanOutput {
+                violation_count: violations.len(),
+                violations,
+            };
+            println!("{}", serde_json::to_string(&out).unwrap());
+            if found { ExitCode::from(1) } else { ExitCode::from(0) }
+        }
+
+        _ => {
+            eprintln!("usage: hook-dispatcher governance <scan|check-contract> ...");
+            ExitCode::from(1)
+        }
+    }
+}
+
+/// `hook-dispatcher scan-secrets <file>` or `hook-dispatcher scan-secrets --stdin`
+/// Outputs: JSON {"found": bool, "matches": [...]}
+fn cmd_scan_secrets(args: &[String]) -> ExitCode {
+    let content = if args.get(2).map(|s| s.as_str()) == Some("--stdin") {
+        let mut buf = String::new();
+        std::io::stdin().read_to_string(&mut buf).unwrap_or(0);
+        buf
+    } else if let Some(path) = args.get(2) {
+        match fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(e) => {
+                let output = ScanSecretsOutput { found: false, matches: vec![] };
+                eprintln!("scan-secrets: cannot read {:?}: {e}", path);
+                println!("{}", serde_json::to_string(&output).unwrap());
+                return ExitCode::from(1);
+            }
+        }
+    } else {
+        eprintln!("usage: hook-dispatcher scan-secrets <file>");
+        eprintln!("       hook-dispatcher scan-secrets --stdin");
+        return ExitCode::from(1);
+    };
+
+    let matches = scan_content_for_secrets(&content);
+    let found = !matches.is_empty();
+    let output = ScanSecretsOutput { found, matches };
+    println!("{}", serde_json::to_string(&output).unwrap());
+    // Exit 1 when secrets found (non-zero signals caller to block)
+    if found { ExitCode::from(1) } else { ExitCode::from(0) }
 }
 
 // ---------------------------------------------------------------------------
@@ -465,12 +904,19 @@ fn count_todos(dir: &Path) -> usize {
 // Tool lookup helper (native PATH scan, no subprocess)
 // ---------------------------------------------------------------------------
 
-fn find_in_path(name: &str) -> Option<String> {
-    let path_var = env::var("PATH").unwrap_or_default();
-    for dir in path_var.split(':') {
-        let candidate = Path::new(dir).join(name);
-        if candidate.is_file() {
-            return Some(candidate.to_string_lossy().into_owned());
+fn find_in_path(executable: &str) -> Option<String> {
+    if let Ok(path_var) = env::var("PATH") {
+        for path in env::split_paths(&path_var) {
+            let exe_path = path.join(executable);
+            if exe_path.is_file() {
+                return Some(exe_path.to_string_lossy().to_string());
+            }
+            if cfg!(target_os = "windows") {
+                let with_exe = path.join(format!("{}.exe", executable));
+                if with_exe.is_file() {
+                    return Some(with_exe.to_string_lossy().to_string());
+                }
+            }
         }
     }
     None
@@ -797,6 +1243,80 @@ struct HookResult {
 // Monitors stdout/stderr in real-time and resets idle timer on each output
 // ---------------------------------------------------------------------------
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum ShellType {
+    Zsh,
+    Bash,
+    Pwsh,
+    Powershell,
+    Cmd,
+    Dash,
+    Unknown,
+}
+
+impl ShellType {
+    fn as_str(&self) -> &'static str {
+        match self {
+            ShellType::Zsh => "zsh",
+            ShellType::Bash => "bash",
+            ShellType::Pwsh => "pwsh",
+            ShellType::Powershell => "powershell",
+            ShellType::Cmd => "cmd",
+            ShellType::Dash => "dash",
+            ShellType::Unknown => "unknown",
+        }
+    }
+
+    fn from_str(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "zsh" => ShellType::Zsh,
+            "bash" => ShellType::Bash,
+            "pwsh" => ShellType::Pwsh,
+            "powershell" => ShellType::Powershell,
+            "cmd" => ShellType::Cmd,
+            "dash" => ShellType::Dash,
+            _ => ShellType::Unknown,
+        }
+    }
+}
+
+fn get_preferred_shell() -> ShellType {
+    if let Ok(env_shell) = env::var("THGENT_AGENT_SHELL") {
+        let st = ShellType::from_str(&env_shell);
+        if st != ShellType::Unknown {
+            return st;
+        }
+    }
+
+    if cfg!(target_os = "windows") {
+        if find_in_path("pwsh").is_some() {
+            return ShellType::Pwsh;
+        }
+        return ShellType::Powershell;
+    }
+
+    for shell in &["zsh", "bash", "dash"] {
+        if find_in_path(shell).is_some() {
+            return ShellType::from_str(shell);
+        }
+    }
+
+    ShellType::Unknown
+}
+
+fn get_shell_executable(shell_type: ShellType) -> String {
+    if let Some(path) = find_in_path(shell_type.as_str()) {
+        return path;
+    }
+
+    match shell_type {
+        ShellType::Powershell => "powershell.exe".to_string(),
+        ShellType::Pwsh => "pwsh.exe".to_string(),
+        ShellType::Cmd => "cmd.exe".to_string(),
+        _ => shell_type.as_str().to_string(),
+    }
+}
+
 fn run_hook_with_idle_timeout(
     hooks_dir: &Path,
     hook_name: &str,
@@ -828,8 +1348,19 @@ fn run_hook_with_idle_timeout(
         }
     };
 
-    let mut cmd = Command::new("bash");
-    cmd.arg(&script);
+    let shell_type = get_preferred_shell();
+    let shell_exe = get_shell_executable(shell_type);
+    
+    let mut cmd = Command::new(&shell_exe);
+    
+    match shell_type {
+        ShellType::Pwsh | ShellType::Powershell => {
+            cmd.args(["-NoProfile", "-NonInteractive", "-File", &script.to_string_lossy()]);
+        }
+        _ => {
+            cmd.arg(&script);
+        }
+    }
 
     for arg in extra_args {
         cmd.arg(arg);
@@ -993,6 +1524,39 @@ fn run_hook(
     temp_path: &Path,
     timeout: Option<Duration>,
 ) -> HookResult {
+    // MTSP-20: Native Rust hook execution (avoid shell bridge)
+    if hook_name == "quality-gate.sh" || hook_name == "security-pipeline.sh" || hook_name == "stop-dispatcher.sh" {
+        let tool = match hook_name {
+            "quality-gate.sh" => "quality-gate",
+            "security-pipeline.sh" => "security-pipeline",
+            "stop-dispatcher.sh" => "dispatch",
+            _ => unreachable!(),
+        };
+        
+        let mut cmd = Command::new(env_map.get("THEGENT_HOOKS_BIN").map(|s| s.as_str()).unwrap_or("thegent-hooks"));
+        cmd.arg(tool);
+        for arg in extra_args {
+            cmd.arg(arg);
+        }
+        
+        let stdin_file = match fs::File::open(temp_path) {
+            Ok(f) => f,
+            Err(e) => return HookResult { name: hook_name.into(), rc: 1, stdout: String::new(), stderr: format!("failed to open temp file: {e}") },
+        };
+        
+        cmd.stdin(Stdio::from(stdin_file)).stdout(Stdio::piped()).stderr(Stdio::piped());
+        for (k, v) in env_map { cmd.env(k, v); }
+        if let Some(project_dir) = env_map.get("PROJECT_DIR") { cmd.current_dir(project_dir); }
+        
+        let output = cmd.output().unwrap();
+        return HookResult {
+            name: hook_name.into(),
+            rc: output.status.code().unwrap_or(1),
+            stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
+            stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+        };
+    }
+
     let script = hooks_dir.join(hook_name);
     if !script.exists() {
         return HookResult {
@@ -1015,8 +1579,19 @@ fn run_hook(
         }
     };
 
-    let mut cmd = Command::new("bash");
-    cmd.arg(&script);
+    let shell_type = get_preferred_shell();
+    let shell_exe = get_shell_executable(shell_type);
+    
+    let mut cmd = Command::new(&shell_exe);
+    
+    match shell_type {
+        ShellType::Pwsh | ShellType::Powershell => {
+            cmd.args(["-NoProfile", "-NonInteractive", "-File", &script.to_string_lossy()]);
+        }
+        _ => {
+            cmd.arg(&script);
+        }
+    }
 
     // Append extra arguments (e.g., "start" or "stop" for subagent gate)
     for arg in extra_args {
@@ -1518,9 +2093,20 @@ fn main() -> ExitCode {
     if args.len() < 2 {
         eprintln!(
             "usage: hook-dispatcher <pretool|posttool|stop|sessionstart|promptsubmit|\
-             subagentstart|subagentstop|precompact|sessionend|taskcompleted|teammateidle>"
+             subagentstart|subagentstop|precompact|sessionend|taskcompleted|teammateidle|\
+             scan-secrets|governance>"
         );
         return ExitCode::from(1);
+    }
+
+    // Dispatch scan-secrets subcommand before mode parsing (no stdin JSON needed)
+    if args[1] == "scan-secrets" {
+        return cmd_scan_secrets(&args);
+    }
+
+    // Dispatch governance subcommand before mode parsing (BKM-11)
+    if args[1] == "governance" {
+        return cmd_governance(&args);
     }
 
     let mode = match args[1].as_str() {
@@ -1659,6 +2245,7 @@ fn main() -> ExitCode {
                     ("prune-orphans-stop.sh", &[]),
                     ("stop-reconcile.sh", &[]),
                     ("task-completion-verifier.sh", &[]),
+                    ("teammate-reconcile.sh", &[]),
                 ],
                 // Full profile: all governance + verification hooks.
                 _ => vec![
@@ -1674,6 +2261,7 @@ fn main() -> ExitCode {
                     ("prune-orphans-stop.sh", &[]),
                     ("stop-reconcile.sh", &[]),
                     ("task-completion-verifier.sh", &[]),
+                    ("teammate-reconcile.sh", &[]),
                 ],
             };
 

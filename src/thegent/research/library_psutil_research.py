@@ -8,13 +8,12 @@ from thegent.research.library_replacements import use_psutil_monitoring
 class LibraryPsutilResearch:
     """Research for psutil library."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize psutil research."""
-        pass
 
     def test_psutil(self) -> dict[str, Any]:
         """Test psutil functionality.
-        
+
         Returns:
             Test results
         """

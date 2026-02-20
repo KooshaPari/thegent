@@ -17,21 +17,25 @@ Runs Cursor models via cursor-api (wisdgod) - OpenAI-compatible HTTP backend.
 #### CursorApiRunner.__init__
 
 ```python
-__init__(self, settings, model)
+__init__(self: Any, settings: Any, model: str)
 ```
+
+---
 
 #### CursorApiRunner.run
 
 ```python
-run(self, prompt, cwd, mode, timeout)
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
 ```
+
+---
 
 ---
 
 ## run
 
 ```python
-run(self, prompt, cwd, mode, timeout)
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int) -> RunResult
 ```
 
 ---

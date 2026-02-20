@@ -47,11 +47,11 @@ class BatchOperation:
     file_path: str
     operation_type: str  # 'read', 'write', 'edit', 'delete'
     success: bool
-    error_message: Optional[str] = None
-    result: Optional[Any] = None
-    timestamp: Optional[str] = None
+    error_message: str | None = None
+    result: Any | None = None
+    timestamp: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return asdict(self)
 
@@ -63,12 +63,12 @@ class BatchOperationResult:
     total: int
     successful: int
     failed: int
-    operations: List[BatchOperation]
-    errors: List[str]
-    backup_dir: Optional[str] = None
-    duration_ms: Optional[float] = None
+    operations: list[BatchOperation]
+    errors: list[str]
+    backup_dir: str | None = None
+    duration_ms: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "total": self.total,
@@ -94,9 +94,9 @@ class BatchFileOps:
         """
         self.create_backups = create_backups
         self.verbose = verbose
-        self.backup_dir: Optional[Path] = None
-        self.operations: List[BatchOperation] = []
-        self.start_time: Optional[float] = None
+        self.backup_dir: Path | None = None
+        self.operations: list[BatchOperation] = []
+        self.start_time: float | None = None
 
     def _log(self, message: str) -> None:
         """Log message if verbose mode is enabled."""
@@ -109,15 +109,13 @@ class BatchFileOps:
         if not self.create_backups or self.backup_dir:
             return self.backup_dir or Path("/tmp")
 
-        backup_dir = Path.home() / ".thegent" / "backups" / datetime.now().strftime(
-            "%Y%m%d_%H%M%S"
-        )
+        backup_dir = Path.home() / ".thegent" / "backups" / datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_dir.mkdir(parents=True, exist_ok=True)
         self.backup_dir = backup_dir
         self._log(f"Created backup directory: {self.backup_dir}")
         return self.backup_dir
 
-    def _backup_file(self, file_path: Path) -> Optional[Path]:
+    def _backup_file(self, file_path: Path) -> Path | None:
         """Create backup of a single file."""
         if not file_path.exists():
             return None
@@ -145,11 +143,11 @@ class BatchFileOps:
 
     def batch_read_files(
         self,
-        file_paths: List[str],
-        offsets: Optional[Dict[str, int]] = None,
-        limits: Optional[Dict[str, int]] = None,
+        file_paths: list[str],
+        offsets: dict[str, int] | None = None,
+        limits: dict[str, int] | None = None,
         encoding: str = "utf-8",
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Read multiple files atomically.
 
@@ -226,7 +224,7 @@ class BatchFileOps:
                 self._log(f"Read: {file_path} ({len(content)} bytes)")
 
             except Exception as e:
-                error_msg = f"Error reading {file_path_str}: {str(e)}"
+                error_msg = f"Error reading {file_path_str}: {e!s}"
                 errors.append(error_msg)
                 self.operations.append(
                     BatchOperation(
@@ -256,7 +254,7 @@ class BatchFileOps:
 
     def batch_write_files(
         self,
-        operations: List[Tuple[str, str]],
+        operations: list[tuple[str, str]],
         encoding: str = "utf-8",
         atomic: bool = True,
     ) -> BatchOperationResult:
@@ -276,8 +274,8 @@ class BatchFileOps:
         """
         self.start_time = time.time()
         self.operations = []
-        backups: Dict[str, Path] = {}
-        written_files: List[Path] = []
+        backups: dict[str, Path] = {}
+        written_files: list[Path] = []
         errors = []
 
         try:
@@ -308,7 +306,7 @@ class BatchFileOps:
                     self._log(f"Wrote: {file_path} ({len(content)} bytes)")
 
                 except Exception as e:
-                    error_msg = f"Error writing {file_path_str}: {str(e)}"
+                    error_msg = f"Error writing {file_path_str}: {e!s}"
                     errors.append(error_msg)
                     self.operations.append(
                         BatchOperation(
@@ -360,7 +358,7 @@ class BatchFileOps:
 
     def batch_edit_files(
         self,
-        operations: List[Tuple[str, str, str]],
+        operations: list[tuple[str, str, str]],
         encoding: str = "utf-8",
         atomic: bool = True,
         count: int = 1,
@@ -382,8 +380,8 @@ class BatchFileOps:
         """
         self.start_time = time.time()
         self.operations = []
-        backups: Dict[str, Path] = {}
-        edited_files: List[Path] = []
+        backups: dict[str, Path] = {}
+        edited_files: list[Path] = []
         errors = []
 
         try:
@@ -444,7 +442,7 @@ class BatchFileOps:
                     self._log(f"Edited: {file_path} ({replacements} replacement(s))")
 
                 except Exception as e:
-                    error_msg = f"Error editing {file_path_str}: {str(e)}"
+                    error_msg = f"Error editing {file_path_str}: {e!s}"
                     errors.append(error_msg)
                     self.operations.append(
                         BatchOperation(
@@ -494,7 +492,7 @@ class BatchFileOps:
 
     def batch_delete_files(
         self,
-        file_paths: List[str],
+        file_paths: list[str],
         atomic: bool = True,
     ) -> BatchOperationResult:
         """
@@ -512,8 +510,8 @@ class BatchFileOps:
         """
         self.start_time = time.time()
         self.operations = []
-        backups: Dict[str, Path] = {}
-        deleted_files: List[Path] = []
+        backups: dict[str, Path] = {}
+        deleted_files: list[Path] = []
         errors = []
 
         try:
@@ -559,7 +557,7 @@ class BatchFileOps:
                     self._log(f"Deleted: {file_path}")
 
                 except Exception as e:
-                    error_msg = f"Error deleting {file_path_str}: {str(e)}"
+                    error_msg = f"Error deleting {file_path_str}: {e!s}"
                     errors.append(error_msg)
                     self.operations.append(
                         BatchOperation(
@@ -607,7 +605,7 @@ class BatchFileOps:
                 )
             raise
 
-    def _get_duration_ms(self) -> Optional[float]:
+    def _get_duration_ms(self) -> float | None:
         """Get operation duration in milliseconds."""
         if self.start_time is None:
             return None
@@ -617,7 +615,7 @@ class BatchFileOps:
 class BatchFileOpsError(Exception):
     """Exception raised by batch file operations."""
 
-    def __init__(self, message: str, errors: Optional[List[str]] = None, result=None):
+    def __init__(self, message: str, errors: list[str] | None = None, result=None):
         super().__init__(message)
         self.errors = errors or []
         self.result = result
@@ -625,12 +623,12 @@ class BatchFileOpsError(Exception):
 
 # Module-level convenience functions
 def batch_read_files(
-    file_paths: List[str],
-    offsets: Optional[Dict[str, int]] = None,
-    limits: Optional[Dict[str, int]] = None,
+    file_paths: list[str],
+    offsets: dict[str, int] | None = None,
+    limits: dict[str, int] | None = None,
     encoding: str = "utf-8",
     verbose: bool = False,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Read multiple files in a single operation.
 
@@ -649,7 +647,7 @@ def batch_read_files(
 
 
 def batch_write_files(
-    operations: List[Tuple[str, str]],
+    operations: list[tuple[str, str]],
     encoding: str = "utf-8",
     atomic: bool = True,
     verbose: bool = False,
@@ -671,7 +669,7 @@ def batch_write_files(
 
 
 def batch_edit_files(
-    operations: List[Tuple[str, str, str]],
+    operations: list[tuple[str, str, str]],
     encoding: str = "utf-8",
     atomic: bool = True,
     count: int = 1,
@@ -695,7 +693,7 @@ def batch_edit_files(
 
 
 def batch_delete_files(
-    file_paths: List[str],
+    file_paths: list[str],
     atomic: bool = True,
     verbose: bool = False,
 ) -> BatchOperationResult:
@@ -714,7 +712,7 @@ def batch_delete_files(
     return ops.batch_delete_files(file_paths, atomic=atomic)
 
 
-def normalize_path(path: str, base: Optional[str] = None) -> str:
+def normalize_path(path: str, base: str | None = None) -> str:
     """
     Normalize file path to absolute form.
 
@@ -755,9 +753,7 @@ if __name__ == "__main__":
                     print(f"{path}: {len(content)} bytes")
 
         elif args.write and len(args.write) % 2 == 0:
-            ops_list = [
-                (args.write[i], args.write[i + 1]) for i in range(0, len(args.write), 2)
-            ]
+            ops_list = [(args.write[i], args.write[i + 1]) for i in range(0, len(args.write), 2)]
             result = batch_write_files(ops_list, verbose=args.verbose)
             if args.json:
                 print(json.dumps(result.to_dict(), indent=2))
@@ -765,10 +761,7 @@ if __name__ == "__main__":
                 print(f"Wrote {result.successful}/{result.total} files")
 
         elif args.edit and len(args.edit) % 3 == 0:
-            ops_list = [
-                (args.edit[i], args.edit[i + 1], args.edit[i + 2])
-                for i in range(0, len(args.edit), 3)
-            ]
+            ops_list = [(args.edit[i], args.edit[i + 1], args.edit[i + 2]) for i in range(0, len(args.edit), 3)]
             result = batch_edit_files(ops_list, verbose=args.verbose)
             if args.json:
                 print(json.dumps(result.to_dict(), indent=2))

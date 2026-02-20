@@ -2,19 +2,11 @@
 
 > **Source**: `src/thegent/governance/cost_controller.py`
 
-Call-count budget management for AgilePlus autonomous governance.
-
-Tracks daily agent trigger counts against a configurable budget (default 20/day)
-and enforces tiered throttling as utilization increases. Budget tiers and limits
-are loaded from contracts/health-targets.json.
-
----
-
 ## BudgetTier
 
 Throttle tier based on daily budget utilization percentage.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -31,54 +23,68 @@ types may be spawned, ultimately halting all spawns at 95%+ utilization.
 #### CostController.__init__
 
 ```python
-__init__(self, session_dir, health_targets_path)
+__init__(self: Any, session_dir: Path, health_targets_path: Path)
 ```
+
+---
 
 #### CostController.calls_remaining
 
+```python
+calls_remaining(self: Any)
+```
+
 Number of agent calls remaining in today's budget.
 
-```python
-calls_remaining(self)
-```
+---
 
 #### CostController.can_spawn
 
+```python
+can_spawn(self: Any, estimated_calls: int)
+```
+
 Return False when budget exhausted or insufficient for estimated_calls.
 
-```python
-can_spawn(self, estimated_calls)
-```
+---
 
 #### CostController.get_tier
 
+```python
+get_tier(self: Any)
+```
+
 Determine the current budget tier from today's utilization.
 
-```python
-get_tier(self)
-```
+---
 
 #### CostController.get_today_usage
 
+```python
+get_today_usage(self: Any)
+```
+
 Load or create today's usage record from the JSONL ledger.
 
-```python
-get_today_usage(self)
-```
+---
 
 #### CostController.record_call
 
+```python
+record_call(self: Any, dimension: str, agent: str)
+```
+
 Record one agent trigger against today's budget.
 
-```python
-record_call(self, dimension, agent)
-```
+---
 
 #### CostController.usage_path
 
 ```python
-usage_path(self)
+usage_path(self: Any)
 ```
+
+---
 
 ---
 
@@ -92,58 +98,58 @@ Snapshot of agent call consumption for a single calendar day.
 
 ## calls_remaining
 
-Number of agent calls remaining in today's budget.
-
 ```python
-calls_remaining(self)
+calls_remaining(self: Any)
 ```
+
+Number of agent calls remaining in today's budget.
 
 ---
 
 ## can_spawn
 
-Return False when budget exhausted or insufficient for estimated_calls.
-
 ```python
-can_spawn(self, estimated_calls)
+can_spawn(self: Any, estimated_calls: int)
 ```
+
+Return False when budget exhausted or insufficient for estimated_calls.
 
 ---
 
 ## get_tier
 
-Determine the current budget tier from today's utilization.
-
 ```python
-get_tier(self)
+get_tier(self: Any)
 ```
+
+Determine the current budget tier from today's utilization.
 
 ---
 
 ## get_today_usage
 
-Load or create today's usage record from the JSONL ledger.
-
 ```python
-get_today_usage(self)
+get_today_usage(self: Any)
 ```
+
+Load or create today's usage record from the JSONL ledger.
 
 ---
 
 ## record_call
 
-Record one agent trigger against today's budget.
-
 ```python
-record_call(self, dimension, agent)
+record_call(self: Any, dimension: str, agent: str)
 ```
+
+Record one agent trigger against today's budget.
 
 ---
 
 ## usage_path
 
 ```python
-usage_path(self)
+usage_path(self: Any) -> Path
 ```
 
 ---

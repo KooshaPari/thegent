@@ -69,4 +69,3 @@ try:
     assert pm.focus_pane_id == initial
 except Exception as e:
     sys.exit(1)
-

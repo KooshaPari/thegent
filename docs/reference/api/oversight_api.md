@@ -8,21 +8,21 @@ Controlled oversight for repeated failures (WP-2008, FR-009).
 
 ## get_oversight_action
 
-Return recommended oversight action: Union[pause, escalate] | continue.
-
 ```python
-get_oversight_action(failure_count)
+get_oversight_action(failure_count: int)
 ```
+
+Return recommended oversight action: Union[pause, escalate] | continue.
 
 ---
 
 ## should_trigger_oversight
 
-True if repeated failures exceed threshold and oversight should trigger.
-
 ```python
-should_trigger_oversight(session_dir, target, failure_count, threshold)
+should_trigger_oversight(session_dir: Path, target: str, failure_count: int, threshold: int)
 ```
+
+True if repeated failures exceed threshold and oversight should trigger.
 
 ---
 

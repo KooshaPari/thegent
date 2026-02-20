@@ -14,71 +14,85 @@ Monitor system resources using psutil and detect leaks.
 
 #### ResourceMonitor.__init__
 
+```python
+__init__(self: Any, check_interval: float)
+```
+
 Initialize resource monitor.
 
-Args:
-    check_interval: Interval in seconds between monitoring checks.
+**Parameters**:
 
-```python
-__init__(self, check_interval)
-```
+- `check_interval`: Interval in seconds between monitoring checks.
+
+---
 
 #### ResourceMonitor.detect_leak
 
+```python
+detect_leak(self: Any)
+```
+
 Detect potential resource leaks from history.
 
-Returns:
-    Description of detected leak, or None if no leak detected.
+**Returns**: Description of detected leak, or None if no leak detected.
 
-```python
-detect_leak(self)
-```
+---
 
 #### ResourceMonitor.get_history
 
+```python
+get_history(self: Any)
+```
+
 Get resource usage history.
 
-```python
-get_history(self)
-```
+---
 
 #### ResourceMonitor.get_process_info
 
+```python
+get_process_info(self: Any, pid: int)
+```
+
 Get detailed process information using psutil.
 
-Args:
-    pid: Process ID.
+**Parameters**:
 
-Returns:
-    Dictionary with process information, or None if process not found.
+- `pid`: Process ID.
 
-```python
-get_process_info(self, pid)
-```
+**Returns**: Dictionary with process information, or None if process not found.
+
+---
 
 #### ResourceMonitor.get_stats
 
+```python
+get_stats(self: Any)
+```
+
 Get current resource statistics using psutil.
 
-```python
-get_stats(self)
-```
+---
 
 #### ResourceMonitor.start
 
+```python
+start(self: Any)
+```
+
 Start monitoring thread.
 
-```python
-start(self)
-```
+---
 
 #### ResourceMonitor.stop
 
+```python
+stop(self: Any)
+```
+
 Stop monitoring thread.
 
-```python
-stop(self)
-```
+---
 
 ---
 
@@ -90,6 +104,10 @@ Resource usage statistics.
 
 #### ResourceStats.get_suspicion_level
 
+```python
+get_suspicion_level(self: Any)
+```
+
 Get suspicion level and optimization suggestions.
 
 Returns (level, suggestions) where level is one of:
@@ -98,11 +116,13 @@ Returns (level, suggestions) where level is one of:
 - "high": High usage, investigate
 - "critical": Critical usage, immediate action needed
 
-```python
-get_suspicion_level(self)
-```
+---
 
 #### ResourceStats.is_critical
+
+```python
+is_critical(self: Any)
+```
 
 Check if resource usage is critical.
 
@@ -111,48 +131,45 @@ Critical thresholds:
 - Process count > 500 (very high, may indicate leak)
 - Memory > 2048MB (2GB) for this process
 
-```python
-is_critical(self)
-```
+---
 
 ---
 
 ## detect_leak
 
+```python
+detect_leak(self: Any)
+```
+
 Detect potential resource leaks from history.
 
-Returns:
-    Description of detected leak, or None if no leak detected.
-
-```python
-detect_leak(self)
-```
+**Returns**: Description of detected leak, or None if no leak detected.
 
 ---
 
 ## get_history
 
-Get resource usage history.
-
 ```python
-get_history(self)
+get_history(self: Any)
 ```
+
+Get resource usage history.
 
 ---
 
 ## get_process_info
 
+```python
+get_process_info(self: Any, pid: int)
+```
+
 Get detailed process information using psutil.
 
-Args:
-    pid: Process ID.
+**Parameters**:
 
-Returns:
-    Dictionary with process information, or None if process not found.
+- `pid`: Process ID.
 
-```python
-get_process_info(self, pid)
-```
+**Returns**: Dictionary with process information, or None if process not found.
 
 ---
 
@@ -164,15 +181,19 @@ Get global resource monitor.
 
 ## get_stats
 
-Get current resource statistics using psutil.
-
 ```python
-get_stats(self)
+get_stats(self: Any)
 ```
+
+Get current resource statistics using psutil.
 
 ---
 
 ## get_suspicion_level
+
+```python
+get_suspicion_level(self: Any)
+```
 
 Get suspicion level and optimization suggestions.
 
@@ -182,13 +203,13 @@ Returns (level, suggestions) where level is one of:
 - "high": High usage, investigate
 - "critical": Critical usage, immediate action needed
 
-```python
-get_suspicion_level(self)
-```
-
 ---
 
 ## is_critical
+
+```python
+is_critical(self: Any)
+```
 
 Check if resource usage is critical.
 
@@ -197,29 +218,25 @@ Critical thresholds:
 - Process count > 500 (very high, may indicate leak)
 - Memory > 2048MB (2GB) for this process
 
-```python
-is_critical(self)
-```
-
 ---
 
 ## start
 
-Start monitoring thread.
-
 ```python
-start(self)
+start(self: Any)
 ```
+
+Start monitoring thread.
 
 ---
 
 ## stop
 
-Stop monitoring thread.
-
 ```python
-stop(self)
+stop(self: Any)
 ```
+
+Stop monitoring thread.
 
 ---
 

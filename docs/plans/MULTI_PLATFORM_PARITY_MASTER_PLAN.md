@@ -912,7 +912,7 @@ def merge_codex_notify(config_path: Path) -> None:
 | **Sitback dashboard** | MCP resource: thegent://sitback/dashboard | All (cached 30s) |
 | **thegent queue tui** | Textual TUI for queue | All |
 | **Terminal tools** | thegent_terminal_list, inspect, send, attach | tmux |
-| **ShareCLI** | thegent_sharecli_status | Multi-agent coordination |
+| **heliosShield** | thegent_heliosShield_status | Multi-agent coordination |
 
 **Sitback skills:** `skills/sitback-agent/` (default); overridable via `--skill`. MCP precondition: `thegent serve` for full toolset.
 

@@ -28,8 +28,10 @@ Protocol for HealthScoreComputer -- used to get dimension weights.
 #### HealthComputerProtocol.compute
 
 ```python
-compute(self, scan_result)
+compute(self: Any, scan_result: Any)
 ```
+
+---
 
 ---
 
@@ -52,8 +54,10 @@ Protocol for a full codebase scan result.
 #### ScanResultProtocol.get_dimension
 
 ```python
-get_dimension(self, dimension)
+get_dimension(self: Any, dimension: str)
 ```
+
+---
 
 ---
 
@@ -68,14 +72,18 @@ Protocol for CodebaseScanner -- only scan_dimension is needed here.
 #### ScannerProtocol.scan
 
 ```python
-scan(self)
+scan(self: Any)
 ```
+
+---
 
 #### ScannerProtocol.scan_dimension
 
 ```python
-scan_dimension(self, dimension)
+scan_dimension(self: Any, dimension: str)
 ```
+
+---
 
 ---
 
@@ -107,37 +115,45 @@ against the pre-scan baseline. Detects regressions in other dimensions.
 #### VerificationGate.__init__
 
 ```python
-__init__(self, scanner, health_computer, max_rerolls)
+__init__(self: Any, scanner: ScannerProtocol, health_computer: HealthComputerProtocol, max_rerolls: int)
 ```
 
+---
+
 #### VerificationGate.get_escalated_tier
+
+```python
+get_escalated_tier(self: Any, current_tier: str)
+```
 
 Return the next agent tier for reroll escalation.
 
 Returns None if already at the highest tier.
 
-```python
-get_escalated_tier(self, current_tier)
-```
+---
 
 #### VerificationGate.should_reroll
 
-Return True if the task should be retried based on attempt count.
-
 ```python
-should_reroll(self, attempts)
+should_reroll(self: Any, attempts: int)
 ```
 
+Return True if the task should be retried based on attempt count.
+
+---
+
 #### VerificationGate.verify_task
+
+```python
+verify_task(self: Any, task: RemediationTaskProtocol, execution: TaskExecutionProtocol, pre_scan: ScanResultProtocol)
+```
 
 Verify a completed task by re-scanning its target dimension.
 
 Compares post-execution metrics against the pre-scan baseline to
 determine whether the task improved, regressed, or had no effect.
 
-```python
-verify_task(self, task, execution, pre_scan)
-```
+---
 
 ---
 
@@ -145,14 +161,14 @@ verify_task(self, task, execution, pre_scan)
 
 Outcome of post-task verification.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
 ## compute
 
 ```python
-compute(self, scan_result)
+compute(self: Any, scan_result: Any) -> Any
 ```
 
 ---
@@ -160,27 +176,27 @@ compute(self, scan_result)
 ## get_dimension
 
 ```python
-get_dimension(self, dimension)
+get_dimension(self: Any, dimension: str) -> Any
 ```
 
 ---
 
 ## get_escalated_tier
 
+```python
+get_escalated_tier(self: Any, current_tier: str)
+```
+
 Return the next agent tier for reroll escalation.
 
 Returns None if already at the highest tier.
-
-```python
-get_escalated_tier(self, current_tier)
-```
 
 ---
 
 ## scan
 
 ```python
-scan(self)
+scan(self: Any) -> ScanResultProtocol
 ```
 
 ---
@@ -188,31 +204,31 @@ scan(self)
 ## scan_dimension
 
 ```python
-scan_dimension(self, dimension)
+scan_dimension(self: Any, dimension: str) -> DimensionScanResult
 ```
 
 ---
 
 ## should_reroll
 
-Return True if the task should be retried based on attempt count.
-
 ```python
-should_reroll(self, attempts)
+should_reroll(self: Any, attempts: int)
 ```
+
+Return True if the task should be retried based on attempt count.
 
 ---
 
 ## verify_task
 
+```python
+verify_task(self: Any, task: RemediationTaskProtocol, execution: TaskExecutionProtocol, pre_scan: ScanResultProtocol)
+```
+
 Verify a completed task by re-scanning its target dimension.
 
 Compares post-execution metrics against the pre-scan baseline to
 determine whether the task improved, regressed, or had no effect.
-
-```python
-verify_task(self, task, execution, pre_scan)
-```
 
 ---
 

@@ -19,44 +19,50 @@ Pushes normalized events to external enterprise security systems (WP-15001).
 #### SIEMEgress.__init__
 
 ```python
-__init__(self, endpoint_url)
+__init__(self: Any, endpoint_url: Any)
 ```
+
+---
 
 #### SIEMEgress.format_for_syslog
 
+```python
+format_for_syslog(self: Any, event: EgressEvent)
+```
+
 Format the event for traditional RFC 5424 syslog.
 
-```python
-format_for_syslog(self, event)
-```
+---
 
 #### SIEMEgress.push_event
 
+```python
+push_event(self: Any, event: EgressEvent)
+```
+
 Push an event to the external SIEM endpoint via HTTP POST.
 
-```python
-push_event(self, event)
-```
+---
 
 ---
 
 ## format_for_syslog
 
-Format the event for traditional RFC 5424 syslog.
-
 ```python
-format_for_syslog(self, event)
+format_for_syslog(self: Any, event: EgressEvent)
 ```
+
+Format the event for traditional RFC 5424 syslog.
 
 ---
 
 ## push_event
 
-Push an event to the external SIEM endpoint via HTTP POST.
-
 ```python
-push_event(self, event)
+push_event(self: Any, event: EgressEvent)
 ```
+
+Push an event to the external SIEM endpoint via HTTP POST.
 
 ---
 

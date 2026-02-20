@@ -16,17 +16,17 @@ Execution path for LLM provider.
 
 ## get_execution_path
 
+```python
+get_execution_path(provider: str)
+```
+
 Determine execution path for a provider.
 
-Args:
-    provider: Provider name (e.g., "codex", "minimax", "antigravity")
+**Parameters**:
 
-Returns:
-    ExecutionPath enum value
+- `provider`: Provider name (e.g., "codex", "minimax", "antigravity")
 
-```python
-get_execution_path(provider)
-```
+**Returns**: ExecutionPath enum value
 
 ---
 

@@ -2,7 +2,7 @@
 
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 class WorkStreamOps:
     """Automated operations on work stream files."""
 
-    def __init__(self, base_dir: Path | None = None):
+    def __init__(self, base_dir: Path | None = None) -> None:
         """Initialize work stream operations.
-        
+
         Args:
             base_dir: Base directory for work stream files
         """
@@ -26,7 +26,7 @@ class WorkStreamOps:
 
     def read_backlog(self) -> list[dict[str, Any]]:
         """Read all items from BACKLOG section.
-        
+
         Returns:
             List of backlog items with id, title, priority, depends
         """
@@ -60,22 +60,24 @@ class WorkStreamOps:
                     depends = parts[5]
 
                     if item_id and item_id != "(none)" and not item_id.startswith("*"):
-                        items.append({
-                            "id": item_id,
-                            "title": title,
-                            "priority": priority,
-                            "depends": depends,
-                        })
+                        items.append(
+                            {
+                                "id": item_id,
+                                "title": title,
+                                "priority": priority,
+                                "depends": depends,
+                            }
+                        )
 
         return items
 
     def claim_item(self, item_id: str, agent_id: str) -> bool:
         """Claim an item by adding it to CLAIMED section.
-        
+
         Args:
             item_id: Work item ID
             agent_id: Agent identifier
-            
+
         Returns:
             True if successful
         """
@@ -104,7 +106,7 @@ class WorkStreamOps:
                 insert_idx = i + 1
 
         # Create claim entry
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         claim_line = f"| {item_id} | {agent_id} | {timestamp} |"
 
         # Insert claim
@@ -114,11 +116,11 @@ class WorkStreamOps:
 
     def complete_item(self, item_id: str, agent_id: str) -> bool:
         """Mark an item as complete.
-        
+
         Args:
             item_id: Work item ID
             agent_id: Agent identifier
-            
+
         Returns:
             True if successful
         """
@@ -127,7 +129,7 @@ class WorkStreamOps:
             return False
 
         lines = content.splitlines()
-        
+
         # Remove from CLAIMED
         in_claimed = False
         new_lines = []
@@ -160,9 +162,9 @@ class WorkStreamOps:
             new_lines.append("|----|-------|-----------|")
             completed_start = len(new_lines) - 1
 
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         complete_line = f"| {item_id} | {agent_id} | {timestamp} |"
-        
+
         insert_idx = completed_start + 3
         new_lines.insert(insert_idx, complete_line)
 

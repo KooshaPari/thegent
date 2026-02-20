@@ -62,7 +62,7 @@ class PolicyCache:
             self.cache.pop(cache_key, None)
         else:
             # Invalidate all policies for namespace
-            keys_to_remove = [k for k in self.cache.keys() if k.startswith(f"{namespace}:")]
+            keys_to_remove = [k for k in self.cache if k.startswith(f"{namespace}:")]
             for key in keys_to_remove:
                 self.cache.pop(key, None)
 
@@ -102,9 +102,7 @@ class GovernanceConflictResolver:
             # Merge with precedence
             rules = policy.get("rules", {})
             for key, value in rules.items():
-                if key not in resolved:
-                    resolved[key] = value
-                elif self._is_more_restrictive(key, value, resolved[key]):
+                if key not in resolved or self._is_more_restrictive(key, value, resolved[key]):
                     resolved[key] = value
 
         return resolved
@@ -120,15 +118,13 @@ class GovernanceConflictResolver:
         Returns:
             True if new value is more restrictive
         """
-        if key == "cost_cap":
-            return isinstance(new_value, (int, float)) and isinstance(
-                current_value, (int, float)
-            ) and new_value < current_value
-        elif key == "sla_minutes":
-            return isinstance(new_value, (int, float)) and isinstance(
-                current_value, (int, float)
-            ) and new_value < current_value
-        elif key == "allow":
+        if key in {"cost_cap", "sla_minutes"}:
+            return (
+                isinstance(new_value, (int, float))
+                and isinstance(current_value, (int, float))
+                and new_value < current_value
+            )
+        if key == "allow":
             return not new_value  # Deny is more restrictive
         return False
 

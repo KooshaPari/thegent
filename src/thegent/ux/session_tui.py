@@ -182,14 +182,12 @@ class SessionTUI:
         log_paths = details.get("log_paths", {})
         if log_paths:
             stdout_path = log_paths.get("stdout", "")
-            if stdout_path and Path(stdout_path).exists():
-                try:
-                    with open(stdout_path) as f:
-                        lines = f.readlines()
-                        if lines:
-                            logs_text = Text("\n".join(lines[-10:]), style="dim")
-                except Exception:
-                    pass
+            if stdout_path:
+                from thegent.utils.helpers import read_file_tail
+
+                lines = read_file_tail(stdout_path, num_lines=10)
+                if lines:
+                    logs_text = Text("\n".join(lines), style="dim")
 
         layout["logs_preview"].update(Panel(logs_text, border_style="blue", title="Recent Logs"))
 

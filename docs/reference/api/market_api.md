@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/discovery/market.py`
 
 WP-30001: Agent Service Registry (Global).
+
 A decentralized marketplace for agent services.
 Enables agents to list capabilities and for clients to discover and bind to them.
 
@@ -25,62 +26,70 @@ Manages global agent service listings and discovery.
 #### GlobalServiceRegistry.__init__
 
 ```python
-__init__(self, storage_path)
+__init__(self: Any, storage_path: Path)
 ```
+
+---
 
 #### GlobalServiceRegistry.discover_services
 
+```python
+discover_services(self: Any, capability: str)
+```
+
 Find active services for a given capability.
 
-```python
-discover_services(self, capability)
-```
+---
 
 #### GlobalServiceRegistry.list_service
 
+```python
+list_service(self: Any, service: AgentService)
+```
+
 Publish a service listing to the registry.
 
-```python
-list_service(self, service)
-```
+---
 
 #### GlobalServiceRegistry.run_auction
 
+```python
+run_auction(self: Any, task_id: str, capability: str, budget: float)
+```
+
 WP-30002: Run a reverse auction for a task requirement.
 
-```python
-run_auction(self, task_id, capability, budget)
-```
+---
 
 ---
 
 ## discover_services
 
-Find active services for a given capability.
-
 ```python
-discover_services(self, capability)
+discover_services(self: Any, capability: str)
 ```
+
+Find active services for a given capability.
 
 ---
 
 ## list_service
 
-Publish a service listing to the registry.
-
 ```python
-list_service(self, service)
+list_service(self: Any, service: AgentService)
 ```
+
+Publish a service listing to the registry.
 
 ---
 
 ## run_auction
 
-WP-30002: Run a reverse auction for a task requirement.
-
 ```python
-run_auction(self, task_id, capability, budget)
+run_auction(self: Any, task_id: str, capability: str, budget: float)
 ```
+
+WP-30002: Run a reverse auction for a task requirement.
 
 ---
 

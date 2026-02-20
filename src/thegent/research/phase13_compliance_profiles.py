@@ -8,7 +8,7 @@ from thegent.phases.compliance_profile import ComplianceProfile
 class Phase13ComplianceProfilesResearch:
     """Research framework for compliance profiles."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize compliance profiles research."""
         self.profiles = {}
 

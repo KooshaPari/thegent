@@ -17,50 +17,54 @@ Resolves an OperationEnvelopeV2 to a specific execution path.
 #### DispatchResolver.__init__
 
 ```python
-__init__(self, registry)
+__init__(self: Any, registry: Any)
 ```
+
+---
 
 #### DispatchResolver.add_alias
 
+```python
+add_alias(self: Any, alias: str, target_command: str)
+```
+
 Register an alias for a command (WP-10005).
 
-```python
-add_alias(self, alias, target_command)
-```
+---
 
 #### DispatchResolver.resolve
 
+```python
+resolve(self: Any, envelope: Any)
+```
+
 Resolve the operation to a dispatch path.
 
-Returns:
-    Dict with 'dispatch_path', 'resolved_command', 'status'.
+**Returns**: Dict with 'dispatch_path', 'resolved_command', 'status'.
 
-```python
-resolve(self, envelope)
-```
+---
 
 ---
 
 ## add_alias
 
-Register an alias for a command (WP-10005).
-
 ```python
-add_alias(self, alias, target_command)
+add_alias(self: Any, alias: str, target_command: str)
 ```
+
+Register an alias for a command (WP-10005).
 
 ---
 
 ## resolve
 
+```python
+resolve(self: Any, envelope: Any)
+```
+
 Resolve the operation to a dispatch path.
 
-Returns:
-    Dict with 'dispatch_path', 'resolved_command', 'status'.
-
-```python
-resolve(self, envelope)
-```
+**Returns**: Dict with 'dispatch_path', 'resolved_command', 'status'.
 
 ---
 

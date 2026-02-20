@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/economy/arbitrage.py`
 
 WP-35001: Global Compute Arbitrage Engine.
+
 Optimizes task execution cost by finding the cheapest available agent service globally.
 
 ---
@@ -16,44 +17,50 @@ Finds and exploits price differences across regional agent markets.
 #### ArbitrageEngine.__init__
 
 ```python
-__init__(self, market)
+__init__(self: Any, market: AgentMarket)
 ```
+
+---
 
 #### ArbitrageEngine.estimate_global_savings
 
+```python
+estimate_global_savings(self: Any, run_count: int)
+```
+
 Estimate total savings using arbitrage over standard fixed routing.
 
-```python
-estimate_global_savings(self, run_count)
-```
+---
 
 #### ArbitrageEngine.find_best_value
 
+```python
+find_best_value(self: Any, task_id: str, capabilities: list[str], max_budget: float)
+```
+
 WP-35001: Run an arbitrage cycle to find the highest value provider.
 
-```python
-find_best_value(self, task_id, capabilities, max_budget)
-```
+---
 
 ---
 
 ## estimate_global_savings
 
-Estimate total savings using arbitrage over standard fixed routing.
-
 ```python
-estimate_global_savings(self, run_count)
+estimate_global_savings(self: Any, run_count: int)
 ```
+
+Estimate total savings using arbitrage over standard fixed routing.
 
 ---
 
 ## find_best_value
 
-WP-35001: Run an arbitrage cycle to find the highest value provider.
-
 ```python
-find_best_value(self, task_id, capabilities, max_budget)
+find_best_value(self: Any, task_id: str, capabilities: list[str], max_budget: float)
 ```
+
+WP-35001: Run an arbitrage cycle to find the highest value provider.
 
 ---
 

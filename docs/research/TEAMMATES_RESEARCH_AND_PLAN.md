@@ -9,11 +9,11 @@ Claude Code's "teammates" feature represents a shift from a single monolithic ag
 
 ## 2. Competitive Analysis: Thegent vs. Teammates
 
-| Capability | Claude Code Teammates | Thegent + ShareCLI |
+| Capability | Claude Code Teammates | Thegent + heliosShield |
 |------------|-----------------------|--------------------|
 | **Orchestration** | Centralized | `thegent sitback` (Manager) |
 | **Isolation** | Workspace-based (likely) | Git Parallelism (Private Index) |
-| **Coordination** | Internal protocol | ShareCLI Phase 6-18 (OCC + Locks) |
+| **Coordination** | Internal protocol | heliosShield Phase 6-18 (OCC + Locks) |
 | **Handoff** | Structured prompts | XML Tags (Task Tool Contract) |
 | **Observability** | CLI Dashboard | Sitback Dashboard v2 |
 
@@ -25,8 +25,8 @@ We will leverage `thegent sitback` as the primary entry point. The sitback agent
 - **`thegent teammates delegate <persona> <prompt>`**: Spawn an asynchronous sub-agent to handle a specific task.
 - **Status Tracking**: Use the `EvidenceGraph` to link teammate actions back to the primary run.
 
-### 3.2 Coordination (ShareCLI Layer)
-To allow teammates to work safely in the same directory, we must implement the **Shared-Directory Architecture** from ShareCLI Phase 6+:
+### 3.2 Coordination (heliosShield Layer)
+To allow teammates to work safely in the same directory, we must implement the **Shared-Directory Architecture** from heliosShield Phase 6+:
 - **Git Parallelism (Phase 6)**: Enable multiple agents to commit concurrently using private `GIT_INDEX_FILE` and CAS ref updates.
 - **Smart Merge (Phase 7)**: Use `Mergiraf` for AST-aware conflict resolution when teammates edit the same files.
 - **Task Coordination (Phase 11)**: A filesystem-native task queue (Maildir style) for teammates to claim work.
@@ -48,12 +48,12 @@ We will adopt and extend the XML contract from `task-tool`:
 - Implement `thegent teammates delegate` command.
 - Implement `thegent teammates status` to monitor the swarm.
 
-### WP-16003: ShareCLI Integration Bridge
-- Wire `thegent` into ShareCLI's Phase 11 task queue.
-- Ensure `thegent_run` automatically respects ShareCLI locks and intents.
+### WP-16003: heliosShield Integration Bridge
+- Wire `thegent` into heliosShield's Phase 11 task queue.
+- Ensure `thegent_run` automatically respects heliosShield locks and intents.
 
 ### WP-16004: Intelligent Conflict Resolution Bridge
-- Implement a `thegent merge` helper that wraps ShareCLI's Phase 7 AST merge.
+- Implement a `thegent merge` helper that wraps heliosShield's Phase 7 AST merge.
 
 ## 5. Success Criteria
 - [ ] A single `thegent sitback` session can delegate a sub-task to a "coder" teammate.
@@ -223,7 +223,7 @@ class HandoffProtocol:
 
 ### Cross-References Added
 
-- ShareCLI Phase 6-18 Integration
+- heliosShield Phase 6-18 Integration
 - Task Tool Contract documentation
 
 ### Practical Additions

@@ -11,7 +11,7 @@ typeset -gU path
 autoload -Uz add-zsh-hook
 
 # Early return for non-human AI sessions (zero-fork UX).
-if [[ -n "${AGENT_ID:-}" || -n "${SHARECLI_AGENT_CONTEXT:-}" || -n "${SHARECLI_AGENT:-}" ]]; then
+if [[ -n "${AGENT_ID:-}" || -n "${heliosShield_AGENT_CONTEXT:-}" || -n "${heliosShield_AGENT:-}" ]]; then
     unsetopt zle 2>/dev/null || true
     return
 fi

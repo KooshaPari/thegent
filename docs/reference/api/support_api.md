@@ -15,16 +15,20 @@ Least-privilege session for platform support engineers.
 #### SupportModeSession.__init__
 
 ```python
-__init__(self, engineer_id)
+__init__(self: Any, engineer_id: str)
 ```
+
+---
 
 #### SupportModeSession.get_view
 
+```python
+get_view(self: Any, raw_output: str)
+```
+
 Return a redacted view of the system output.
 
-```python
-get_view(self, raw_output)
-```
+---
 
 ---
 
@@ -37,54 +41,60 @@ Automatic redaction of PII and secrets for support mode (WP-15005).
 #### SupportRedactor.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### SupportRedactor.redact_payload
 
+```python
+redact_payload(self: Any, payload: dict[(str, Any)])
+```
+
 Recursively redact strings within a nested dictionary payload.
 
-```python
-redact_payload(self, payload)
-```
+---
 
 #### SupportRedactor.redact_text
 
+```python
+redact_text(self: Any, text: str)
+```
+
 Apply all redaction patterns to the provided text.
 
-```python
-redact_text(self, text)
-```
+---
 
 ---
 
 ## get_view
 
-Return a redacted view of the system output.
-
 ```python
-get_view(self, raw_output)
+get_view(self: Any, raw_output: str)
 ```
+
+Return a redacted view of the system output.
 
 ---
 
 ## redact_payload
 
-Recursively redact strings within a nested dictionary payload.
-
 ```python
-redact_payload(self, payload)
+redact_payload(self: Any, payload: dict[(str, Any)])
 ```
+
+Recursively redact strings within a nested dictionary payload.
 
 ---
 
 ## redact_text
 
-Apply all redaction patterns to the provided text.
-
 ```python
-redact_text(self, text)
+redact_text(self: Any, text: str)
 ```
+
+Apply all redaction patterns to the provided text.
 
 ---
 

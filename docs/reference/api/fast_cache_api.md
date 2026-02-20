@@ -31,148 +31,203 @@ Tiers:
 
 #### MultiTierCache.__init__
 
+```python
+__init__(self: Any, l1_size: int, l2_size: int, l3_path: Any, default_ttl: Any)
+```
+
 Initialize multi-tier cache.
 
-Args:
-    l1_size: Maximum items in L1 cache
-    l2_size: Maximum items in L2 cache
-    l3_path: Path for L3 disk cache (None to disable)
-    default_ttl: Default time-to-live in seconds (None = no expiry)
+**Parameters**:
 
-```python
-__init__(self, l1_size, l2_size, l3_path, default_ttl)
-```
+- `l1_size`: Maximum items in L1 cache
+- `l2_size`: Maximum items in L2 cache
+- `l3_path`: Path for L3 disk cache (None to disable)
+- `default_ttl`: Default time-to-live in seconds (None = no expiry)
+
+---
 
 #### MultiTierCache.clear
 
+```python
+clear(self: Any)
+```
+
 Clear all tiers.
 
-```python
-clear(self)
-```
+---
 
 #### MultiTierCache.delete
 
+```python
+delete(self: Any, key: str)
+```
+
 Delete key from all tiers.
 
+---
+
+#### MultiTierCache.enable_invalidation
+
 ```python
-delete(self, key)
+enable_invalidation(self: Any, directory: Any)
 ```
+
+Enable real-time cache invalidation based on file changes (TGNT-P9.2).
+
+---
 
 #### MultiTierCache.get
 
+```python
+get(self: Any, key: str)
+```
+
 Get value from cache (checks all tiers).
 
-Args:
-    key: Cache key
+**Parameters**:
 
-Returns:
-    Cached value or None if not found
+- `key`: Cache key
+
+**Returns**: Cached value or None if not found
+
+---
+
+#### MultiTierCache.get_with_fetch
 
 ```python
-get(self, key)
+get_with_fetch(self: Any, key: str, fetch_func: Any, ttl: Any)
 ```
+
+Get value from cache, or fetch and store if missing (with Singleflight TGNT-P9.1).
+
+---
 
 #### MultiTierCache.set
 
+```python
+set(self: Any, key: str, value: Any, ttl: Any)
+```
+
 Set value in cache (stores in all tiers).
 
-Args:
-    key: Cache key
-    value: Value to cache
-    ttl: Time-to-live in seconds (uses default_ttl if None)
+**Parameters**:
 
-```python
-set(self, key, value, ttl)
-```
+- `key`: Cache key
+- `value`: Value to cache
+- `ttl`: Time-to-live in seconds (uses default_ttl if None)
+
+---
 
 #### MultiTierCache.stats
 
+```python
+stats(self: Any)
+```
+
 Get cache statistics.
 
-```python
-stats(self)
-```
+---
 
 ---
 
 ## clear
 
-Clear all tiers.
-
 ```python
-clear(self)
+clear(self: Any)
 ```
+
+Clear all tiers.
 
 ---
 
 ## delete
 
+```python
+delete(self: Any, key: str)
+```
+
 Delete key from all tiers.
 
+---
+
+## enable_invalidation
+
 ```python
-delete(self, key)
+enable_invalidation(self: Any, directory: Any)
 ```
+
+Enable real-time cache invalidation based on file changes (TGNT-P9.2).
 
 ---
 
 ## get
 
+```python
+get(self: Any, key: str)
+```
+
 Get value from cache (checks all tiers).
 
-Args:
-    key: Cache key
+**Parameters**:
 
-Returns:
-    Cached value or None if not found
+- `key`: Cache key
 
-```python
-get(self, key)
-```
+**Returns**: Cached value or None if not found
 
 ---
 
 ## get_cache
 
+```python
+get_cache(l1_size: int, l2_size: int, l3_path: Any, default_ttl: Any)
+```
+
 Get global multi-tier cache instance.
 
-Args:
-    l1_size: Maximum items in L1 cache
-    l2_size: Maximum items in L2 cache
-    l3_path: Path for L3 disk cache
-    default_ttl: Default time-to-live in seconds
+**Parameters**:
 
-Returns:
-    MultiTierCache instance
+- `l1_size`: Maximum items in L1 cache
+- `l2_size`: Maximum items in L2 cache
+- `l3_path`: Path for L3 disk cache
+- `default_ttl`: Default time-to-live in seconds
+
+**Returns**: MultiTierCache instance
+
+---
+
+## get_with_fetch
 
 ```python
-get_cache(l1_size, l2_size, l3_path, default_ttl)
+get_with_fetch(self: Any, key: str, fetch_func: Any, ttl: Any)
 ```
+
+Get value from cache, or fetch and store if missing (with Singleflight TGNT-P9.1).
 
 ---
 
 ## set
 
+```python
+set(self: Any, key: str, value: Any, ttl: Any)
+```
+
 Set value in cache (stores in all tiers).
 
-Args:
-    key: Cache key
-    value: Value to cache
-    ttl: Time-to-live in seconds (uses default_ttl if None)
+**Parameters**:
 
-```python
-set(self, key, value, ttl)
-```
+- `key`: Cache key
+- `value`: Value to cache
+- `ttl`: Time-to-live in seconds (uses default_ttl if None)
 
 ---
 
 ## stats
 
-Get cache statistics.
-
 ```python
-stats(self)
+stats(self: Any)
 ```
+
+Get cache statistics.
 
 ---
 

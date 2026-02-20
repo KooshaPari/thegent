@@ -25,9 +25,9 @@ class ComplianceProfile:
         },
     }
 
-    def __init__(self, profile_name: str):
+    def __init__(self, profile_name: str) -> None:
         """Initialize compliance profile.
-        
+
         Args:
             profile_name: Name of compliance profile
         """
@@ -36,7 +36,7 @@ class ComplianceProfile:
 
     def get_requirements(self) -> list[str]:
         """Get requirements for this profile.
-        
+
         Returns:
             List of requirement names
         """
@@ -44,10 +44,10 @@ class ComplianceProfile:
 
     def check_compliance(self, feature: str) -> bool:
         """Check if a feature is compliant.
-        
+
         Args:
             feature: Feature name
-            
+
         Returns:
             True if compliant
         """

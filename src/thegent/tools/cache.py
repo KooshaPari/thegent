@@ -1,12 +1,16 @@
 import contextlib
 import hashlib
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any
 
 # Library-first (LIBRARY_FIRST_POLICY.md): Using cachetools.TTLCache for in-memory caching
 from cachetools import TTLCache
+
+_log = logging.getLogger(__name__)
+
 
 
 class ResourceCache:
@@ -71,3 +75,11 @@ class ResourceCache:
         for cache_file in self.cache_dir.glob("*.json"):
             with contextlib.suppress(Exception):
                 cache_file.unlink()
+
+    def enable_invalidation(self, directory: Path) -> None:
+        """Enable real-time cache invalidation based on file changes (TGNT-P9.2)."""
+        from thegent.infra.cache_v2 import CacheInvalidator
+
+        self.invalidator = CacheInvalidator(self)
+        self.invalidator.watch(directory)
+        _log.info(f"Real-time cache invalidation enabled for {directory}")

@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/orchestration/swarm_memory.py`
 
 WP-24003: Swarm Memory Consolidation.
+
 Consolidates distributed agent memories into a unified swarm knowledge base.
 Uses cross-agent memory synthesis to eliminate redundancy and conflicts.
 
@@ -17,26 +18,30 @@ Synthesizes memory artifacts from multiple agents into a unified view.
 #### SwarmMemoryConsolidator.__init__
 
 ```python
-__init__(self, swarm_id, local_memory)
+__init__(self: Any, swarm_id: str, local_memory: DualMemory)
 ```
+
+---
 
 #### SwarmMemoryConsolidator.consolidate
 
+```python
+consolidate(self: Any, peer_memories: list[dict[(str, Any)]])
+```
+
 Consolidate peer memories with local memory.
 
-```python
-consolidate(self, peer_memories)
-```
+---
 
 ---
 
 ## consolidate
 
-Consolidate peer memories with local memory.
-
 ```python
-consolidate(self, peer_memories)
+consolidate(self: Any, peer_memories: list[dict[(str, Any)]])
 ```
+
+Consolidate peer memories with local memory.
 
 ---
 

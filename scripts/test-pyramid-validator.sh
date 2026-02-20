@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # test-pyramid-validator.sh — Validates pytest distribution against pyramid targets
 set -euo pipefail
 

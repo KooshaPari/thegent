@@ -15,62 +15,70 @@ WP-5001: Manages L1-L4 memory tiers and triggers semantic compression.
 #### ContextCompressor.__init__
 
 ```python
-__init__(self, session_dir, threshold_pct)
+__init__(self: Any, session_dir: Path, threshold_pct: float)
 ```
+
+---
 
 #### ContextCompressor.generate_continuity_packet
 
+```python
+generate_continuity_packet(self: Any, intent: str, decisions: list[str], risks: list[str], context_files: list[Path])
+```
+
 Create a compressed essence of progress for handoffs.
 
-```python
-generate_continuity_packet(self, intent, decisions, risks, context_files)
-```
+---
 
 #### ContextCompressor.prune_context
 
+```python
+prune_context(self: Any, conversation: list[dict[(str, Any)]])
+```
+
 WP-5001: Priority-based pruning of conversation history.
 
-```python
-prune_context(self, conversation)
-```
+---
 
 #### ContextCompressor.should_compress
 
+```python
+should_compress(self: Any, current_tokens: int, max_tokens: int)
+```
+
 True if current token usage exceeds threshold.
 
-```python
-should_compress(self, current_tokens, max_tokens)
-```
+---
 
 ---
 
 ## generate_continuity_packet
 
-Create a compressed essence of progress for handoffs.
-
 ```python
-generate_continuity_packet(self, intent, decisions, risks, context_files)
+generate_continuity_packet(self: Any, intent: str, decisions: list[str], risks: list[str], context_files: list[Path])
 ```
+
+Create a compressed essence of progress for handoffs.
 
 ---
 
 ## prune_context
 
-WP-5001: Priority-based pruning of conversation history.
-
 ```python
-prune_context(self, conversation)
+prune_context(self: Any, conversation: list[dict[(str, Any)]])
 ```
+
+WP-5001: Priority-based pruning of conversation history.
 
 ---
 
 ## should_compress
 
-True if current token usage exceeds threshold.
-
 ```python
-should_compress(self, current_tokens, max_tokens)
+should_compress(self: Any, current_tokens: int, max_tokens: int)
 ```
+
+True if current token usage exceeds threshold.
 
 ---
 

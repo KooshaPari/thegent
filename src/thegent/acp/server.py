@@ -12,28 +12,6 @@ from thegent.agents.registry import AGENT_NAMES, get_runner
 
 logger = logging.getLogger(__name__)
 
-class AgentSession:
-    """Represents an active agent session."""
-
-    def __init__(self, agent_id: str, runner, cwd=None) -> None:
-        """Initialize agent session."""
-        self.agent_id = agent_id
-        self.runner = runner
-        self.cwd = cwd
-        self.conversation_history = []
-        self.is_running = False
-        self._stop_event = None
-
-    def add_message(self, role: str, content: str) -> None:
-        """Add a message to conversation history."""
-        self.conversation_history.append({"role": role, "content": content})
-
-    def stop(self) -> None:
-        """Stop the session."""
-        self.is_running = False
-        if self._stop_event:
-            self._stop_event.set()
-
 
 class AgentSession:
     """Represents an active agent session."""
@@ -64,54 +42,61 @@ class ACPServerAdapter:
         """Initialize ACP server adapter."""
         self.agents: dict[str, AgentRunner] = {}
         self.sessions: dict[str, AgentSession] = {}
-        self.sessions: dict[str, AgentSession] = {}
         self._load_agents()
 
     def _load_agents(self) -> None:
         """Load available thegent agents from registry."""
-        # Load all agents from AGENT_NAMES registry
         for agent_name in AGENT_NAMES:
-            try:
-                runner = get_runner(agent_name, default_model="")
-                if runner:
-                    self.agents[agent_name] = runner
-                    logger.debug(f"Loaded agent: {agent_name}")
-            except Exception as e:
-                logger.warning(f"Failed to load agent {agent_name}: {e}")
+            self._load_agent(agent_name)
 
         if not self.agents:
             logger.warning("No agents loaded from registry, falling back to common agents")
-            # Fallback to common agents if registry loading failed
             common_agents = ["claude", "codex", "copilot", "gemini", "opencode"]
             for agent_name in common_agents:
-                runner = get_runner(agent_name, default_model="")
-                if runner:
-                    self.agents[agent_name] = runner
+                self._load_agent(agent_name)
+
+    def _load_agent(self, agent_name: str) -> None:
+        """Load a single agent from the registry."""
+        try:
+            runner = get_runner(agent_name)
+            if runner:
+                self.agents[agent_name] = runner
+                logger.debug("Loaded agent: %s", agent_name)
+        except Exception as e:
+            logger.warning("Failed to load agent %s: %s", agent_name, e)
 
     async def handle_request(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle ACP JSON-RPC request."""
+        """Handle ACP JSON-RPC request.
+
+        Args:
+            request: JSON-RPC request dict with method, params, and optional id.
+
+        Returns:
+            JSON-RPC response dict.
+        """
         method = request.get("method")
         params = request.get("params", {})
+        req_id = request.get("id")
 
         if method == "initialize":
-            return await self._handle_initialize(params)
+            return await self._handle_initialize(req_id, params)
         if method == "agent/spawn":
-            return await self._handle_spawn(params)
+            return await self._handle_spawn(req_id, params)
         if method == "agent/message":
-            return await self._handle_message(params)
+            return await self._handle_message(req_id, params)
         if method == "agent/stop":
-            return await self._handle_stop(params)
+            return await self._handle_stop(req_id, params)
         return {
             "jsonrpc": "2.0",
-            "id": request.get("id"),
+            "id": req_id,
             "error": {"code": -32601, "message": f"Method '{method}' not found"},
         }
 
-    async def _handle_initialize(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def _handle_initialize(self, req_id: Any, params: dict[str, Any]) -> dict[str, Any]:
         """Handle ACP initialize request."""
         return {
             "jsonrpc": "2.0",
-            "id": params.get("id", 1),
+            "id": req_id,
             "result": {
                 "capabilities": {
                     "agents": list(self.agents.keys()),
@@ -119,7 +104,7 @@ class ACPServerAdapter:
             },
         }
 
-    async def _handle_spawn(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def _handle_spawn(self, req_id: Any, params: dict[str, Any]) -> dict[str, Any]:
         """Spawn a thegent agent via ACP."""
         agent_name = params.get("agent", "claude")
         prompt = params.get("prompt", "")
@@ -127,34 +112,31 @@ class ACPServerAdapter:
 
         runner = self.agents.get(agent_name)
         if not runner:
-            # Try to get from registry
-            runner = get_runner(agent_name, default_model="")
+            runner = get_runner(agent_name)
             if runner:
                 self.agents[agent_name] = runner
 
         if not runner:
             return {
                 "jsonrpc": "2.0",
-                "id": params.get("id", 2),
+                "id": req_id,
                 "error": {
                     "code": -32602,
                     "message": f"Agent '{agent_name}' not found. Available: {list(self.agents.keys())}",
                 },
             }
 
-        # Create session
         cwd = Path(cwd_str) if cwd_str else None
         agent_id = f"thegent-{agent_name}-{len(self.sessions)}"
         session = AgentSession(agent_id, runner, cwd)
         self.sessions[agent_id] = session
-        
+
         if prompt:
             session.add_message("user", prompt)
 
-        # Run agent asynchronously in executor to avoid blocking
         loop = asyncio.get_event_loop()
         session.is_running = True
-        
+
         try:
             result = await loop.run_in_executor(
                 None,
@@ -166,15 +148,15 @@ class ACPServerAdapter:
                     use_stream=True,
                 ),
             )
-            
+
             if result.stdout:
                 session.add_message("assistant", result.stdout)
         except Exception as e:
-            logger.error(f"Error running agent {agent_name}: {e}", exc_info=True)
+            logger.error("Error running agent %s: %s", agent_name, e, exc_info=True)
             session.is_running = False
             return {
                 "jsonrpc": "2.0",
-                "id": params.get("id", 2),
+                "id": req_id,
                 "error": {
                     "code": -32603,
                     "message": f"Agent execution failed: {e}",
@@ -183,10 +165,9 @@ class ACPServerAdapter:
         finally:
             session.is_running = False
 
-        # Convert RunResult to ACP response
         return {
             "jsonrpc": "2.0",
-            "id": params.get("id", 2),
+            "id": req_id,
             "result": {
                 "agent_id": agent_id,
                 "stdout": result.stdout,
@@ -196,7 +177,7 @@ class ACPServerAdapter:
             },
         }
 
-    async def _handle_message(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def _handle_message(self, req_id: Any, params: dict[str, Any]) -> dict[str, Any]:
         """Handle message to existing agent session."""
         agent_id = params.get("agent_id")
         message = params.get("message", "")
@@ -204,7 +185,7 @@ class ACPServerAdapter:
         if not agent_id:
             return {
                 "jsonrpc": "2.0",
-                "id": params.get("id", 3),
+                "id": req_id,
                 "error": {
                     "code": -32602,
                     "message": "agent_id parameter required",
@@ -215,22 +196,16 @@ class ACPServerAdapter:
         if not session:
             return {
                 "jsonrpc": "2.0",
-                "id": params.get("id", 3),
+                "id": req_id,
                 "error": {
                     "code": -32602,
                     "message": f"Session '{agent_id}' not found",
                 },
             }
 
-        # Add user message to conversation history
         session.add_message("user", message)
+        context_prompt = "\n\n".join(f"{msg['role']}: {msg['content']}" for msg in session.conversation_history)
 
-        # Build context from conversation history
-        context_prompt = "\n\n".join(
-            f"{msg['role']}: {msg['content']}" for msg in session.conversation_history
-        )
-
-        # Run agent asynchronously
         loop = asyncio.get_event_loop()
         session.is_running = True
 
@@ -249,11 +224,11 @@ class ACPServerAdapter:
             if result.stdout:
                 session.add_message("assistant", result.stdout)
         except Exception as e:
-            logger.error(f"Error in session {agent_id}: {e}", exc_info=True)
+            logger.error("Error in session %s: %s", agent_id, e, exc_info=True)
             session.is_running = False
             return {
                 "jsonrpc": "2.0",
-                "id": params.get("id", 3),
+                "id": req_id,
                 "error": {
                     "code": -32603,
                     "message": f"Agent execution failed: {e}",
@@ -264,7 +239,7 @@ class ACPServerAdapter:
 
         return {
             "jsonrpc": "2.0",
-            "id": params.get("id", 3),
+            "id": req_id,
             "result": {
                 "agent_id": agent_id,
                 "stdout": result.stdout,
@@ -274,14 +249,14 @@ class ACPServerAdapter:
             },
         }
 
-    async def _handle_stop(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def _handle_stop(self, req_id: Any, params: dict[str, Any]) -> dict[str, Any]:
         """Stop an agent session."""
         agent_id = params.get("agent_id")
 
         if not agent_id:
             return {
                 "jsonrpc": "2.0",
-                "id": params.get("id", 4),
+                "id": req_id,
                 "error": {
                     "code": -32602,
                     "message": "agent_id parameter required",
@@ -292,22 +267,18 @@ class ACPServerAdapter:
         if not session:
             return {
                 "jsonrpc": "2.0",
-                "id": params.get("id", 4),
+                "id": req_id,
                 "error": {
                     "code": -32602,
                     "message": f"Session '{agent_id}' not found",
                 },
             }
 
-        # Stop the session
         session.stop()
-        
-        # Optionally remove from sessions dict (or keep for history)
-        # For now, we keep it but mark as stopped
 
         return {
             "jsonrpc": "2.0",
-            "id": params.get("id", 4),
+            "id": req_id,
             "result": {
                 "stopped": True,
                 "agent_id": agent_id,
@@ -320,7 +291,6 @@ class ACPServerAdapter:
 
         while True:
             try:
-                # Read JSON-RPC request from stdin
                 line = await asyncio.get_event_loop().run_in_executor(None, sys.stdin.readline)
                 if not line:
                     break
@@ -331,23 +301,27 @@ class ACPServerAdapter:
 
                 request = json.loads(line)
                 response = await self.handle_request(request)
-
-                # Write JSON-RPC response to stdout
+                sys.stdout.write(json.dumps(response) + "\n")
+                sys.stdout.flush()
 
             except json.JSONDecodeError as e:
-                logger.error(f"Invalid JSON-RPC request: {e}")
+                logger.error("Invalid JSON-RPC request: %s", e)
                 error_response = {
                     "jsonrpc": "2.0",
                     "id": None,
                     "error": {"code": -32700, "message": f"Parse error: {e}"},
                 }
+                sys.stdout.write(json.dumps(error_response) + "\n")
+                sys.stdout.flush()
             except Exception as e:
-                logger.error(f"Error handling request: {e}", exc_info=True)
+                logger.error("Error handling request: %s", e, exc_info=True)
                 error_response = {
                     "jsonrpc": "2.0",
                     "id": None,
                     "error": {"code": -32603, "message": f"Internal error: {e}"},
                 }
+                sys.stdout.write(json.dumps(error_response) + "\n")
+                sys.stdout.flush()
 
 
 async def main() -> None:

@@ -2,9 +2,11 @@
 Document Queue CLI Commands for thegent
 
 Integrates document queue management into thegent's typer-based CLI.
+Uses centralized path utilities for cross-platform consistency.
 """
 
 import json
+import sys
 from pathlib import Path
 
 import typer
@@ -25,10 +27,17 @@ from thegent.agents.document.processor import (
     extract_metadata,
 )
 
+# Import path utilities for normalized path handling
+try:
+    from scripts.path_utils import normalize_path, safe_join
+except ImportError:
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
+    from path_utils import normalize_path, safe_join
+
 console = Console()
 
-# Default queue file location
-DEFAULT_QUEUE_FILE = Path.home() / ".thegent" / "scans" / "MARKDOWN_SCAN_QUEUE.json"
+# Default queue file location using normalized paths
+DEFAULT_QUEUE_FILE = safe_join(normalize_path("~/.thegent"), "scans", "MARKDOWN_SCAN_QUEUE.json")
 
 # Create typer app for document queue commands
 doc_queue_app = typer.Typer(name="doc-queue", help="Document queue management commands")
@@ -49,7 +58,8 @@ def scan_cmd(
             locations=config_data.get("locations", {}),
             exclude_patterns=set(config_data.get("exclude_patterns", [])),
             min_date=min_date or config_data.get("min_date"),
-            output_dir=Path(config_data.get("output_dir", "~/.thegent/scans")).expanduser(),
+            # Use normalize_path for output_dir
+            output_dir=normalize_path(config_data.get("output_dir", "~/.thegent/scans")),
         )
     else:
         # Use default or command-line location
@@ -61,17 +71,18 @@ def scan_cmd(
                 path = parts[1]
                 recursive = parts[2].lower() == "true" if len(parts) > 2 else True
                 max_depth = int(parts[3]) if len(parts) > 3 and parts[3] else None
+                # Use normalize_path for user-provided location paths
                 locations[name] = {
-                    "path": Path(path).expanduser(),
+                    "path": normalize_path(path),
                     "recursive": recursive,
                     "max_depth": max_depth,
                 }
 
         if not locations:
-            # Default locations
+            # Default locations using normalized paths
             locations = {
-                "kush": {"path": Path.home() / "kush", "recursive": True},
-                "temp-PRODVERCEL": {"path": Path.home() / "temp-PRODVERCEL", "recursive": True},
+                "kush": {"path": safe_join(normalize_path("~"), "kush"), "recursive": True},
+                "temp-PRODVERCEL": {"path": safe_join(normalize_path("~"), "temp-PRODVERCEL"), "recursive": True},
             }
 
         scan_config = ScanConfig(
@@ -103,8 +114,9 @@ def list_cmd(
     else:
         queue_file_path = DEFAULT_QUEUE_FILE
         if not queue_file_path.exists():
-            console.print(f"[red]Queue file not found: {queue_file_path}[/red]")
-            console.print("Run 'thegent doc-queue scan' first to create a queue.")
+            from thegent.errors import print_error
+
+            print_error(f"Queue file not found: {queue_file_path}")
             raise typer.Exit(1)
         queue_manager = QueueManager(queue_file_path)
 
@@ -134,7 +146,9 @@ def next_cmd(
     else:
         queue_file_path = DEFAULT_QUEUE_FILE
         if not queue_file_path.exists():
-            console.print(f"[red]Queue file not found: {queue_file_path}[/red]")
+            from thegent.errors import print_error
+
+            print_error(f"Queue file not found: {queue_file_path}")
             raise typer.Exit(1)
         queue_manager = QueueManager(queue_file_path)
 
@@ -169,7 +183,9 @@ def files_cmd(
     else:
         queue_file_path = DEFAULT_QUEUE_FILE
         if not queue_file_path.exists():
-            console.print(f"[red]Queue file not found: {queue_file_path}[/red]")
+            from thegent.errors import print_error
+
+            print_error(f"Queue file not found: {queue_file_path}")
             raise typer.Exit(1)
         queue_manager = QueueManager(queue_file_path)
 
@@ -194,7 +210,9 @@ def summary_cmd(
     else:
         queue_file_path = DEFAULT_QUEUE_FILE
         if not queue_file_path.exists():
-            console.print(f"[red]Queue file not found: {queue_file_path}[/red]")
+            from thegent.errors import print_error
+
+            print_error(f"Queue file not found: {queue_file_path}")
             raise typer.Exit(1)
         queue_manager = QueueManager(queue_file_path)
 
@@ -228,7 +246,9 @@ def process_cmd(
     """Process a single file."""
     path = filepath.expanduser()
     if not path.exists():
-        console.print(f"[red]Error: File not found: {filepath}[/red]")
+        from thegent.errors import print_error
+
+        print_error(f"File not found: {filepath}")
         raise typer.Exit(1)
 
     # Create processing pipeline
@@ -273,7 +293,9 @@ def analyze_cmd(
     """Analyze a document."""
     path = filepath.expanduser()
     if not path.exists():
-        console.print(f"[red]Error: File not found: {filepath}[/red]")
+        from thegent.errors import print_error
+
+        print_error(f"File not found: {filepath}")
         raise typer.Exit(1)
 
     analyzer = DocumentAnalyzer()

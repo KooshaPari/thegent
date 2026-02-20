@@ -14,7 +14,7 @@ fn artifact_hash_bytes(canonical_json: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(canonical_json);
     let hash = hasher.finalize();
-    let mut buf = vec![0u8; base16ct::encoded_len(hash.len())];
+    let mut buf = vec![0u8; base16ct::encoded_len(&hash)];
     let encoded = lower::encode(&hash, &mut buf).unwrap();
     String::from_utf8_lossy(encoded).to_string()
 }
@@ -27,7 +27,7 @@ fn sign_artifact_bytes(canonical_json: &[u8], secret_key: &str) -> String {
     mac.update(canonical_json);
     let result = mac.finalize();
     let bytes = result.into_bytes();
-    let mut buf = vec![0u8; base16ct::encoded_len(bytes.len())];
+    let mut buf = vec![0u8; base16ct::encoded_len(&bytes)];
     let encoded = lower::encode(&bytes, &mut buf).unwrap();
     String::from_utf8_lossy(encoded).to_string()
 }

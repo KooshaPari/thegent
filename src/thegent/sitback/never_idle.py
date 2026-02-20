@@ -13,7 +13,7 @@ import logging
 import threading
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from thegent.sitback.gardening import GardeningManager
 from thegent.sitback.watchdog import BackgroundTaskWatcher
@@ -41,6 +41,7 @@ class NeverIdleLoop:
         "session_discovery",  # Scan for new external agents
         "quality_check",  # task quality-a-r
         "dag_sync",  # thegent dag sync
+        "smart_prune",  # Intelligent resource reclamation
     ]
 
     def __init__(
@@ -65,7 +66,7 @@ class NeverIdleLoop:
 
         self._running = False
         self._current_step = 0
-        self._thread: threading.Optional[Thread] = None
+        self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
 
         # Initialize components

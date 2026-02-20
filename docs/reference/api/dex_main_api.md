@@ -14,6 +14,10 @@ Codex-backed interactive agent CLI (dex). Model-only routing (no provider filter
 
 ## default_dex
 
+```python
+default_dex(ctx: typer.Context)
+```
+
 Default: flash (gemini-3-flash) or model from first argument. Model-only, no provider filter.
 
 Usage:
@@ -23,209 +27,215 @@ Usage:
     dex [model]      # Uses specified model (max, glm, haiku, opus, sonnet, ultra, flash, mini, composer, step)
     dex [model] [prompt]  # Uses model with prompt
 
-```python
-default_dex(ctx)
-```
-
 ---
 
 ## dex_bg
 
-Start a background task. Model-first, no provider filter.
-
 ```python
-dex_bg(model_alias, prompt, cd, mode, timeout, owner)
+dex_bg(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int, owner: Any)
 ```
+
+Start a background task. Model-first, no provider filter.
 
 ---
 
 ## dex_composer
 
+```python
+dex_composer(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, prompt: Any)
+```
+
 Start Codex with Composer 1.5 (Cursor). Use 'dex max' for minimax-m2.5.
 
+---
+
+## dex_doctor
+
 ```python
-dex_composer(dangerously_bypass, resume, cd, print_mode, debug, add_dir, sandbox, full_auto, search, no_alt_screen, prompt)
+dex_doctor(fix: bool)
 ```
+
+Run thegent doctor (harness-equiv).
 
 ---
 
 ## dex_flash
 
-Gemini 3 Flash via cliproxy. Fast, cheap.
-
 ```python
-dex_flash(dangerously_bypass, resume, cd, print_mode, debug, add_dir, sandbox, full_auto, search, no_alt_screen, continue_session, prompt)
+dex_flash(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
 ```
+
+Gemini 3 Flash via cliproxy. Fast, cheap.
 
 ---
 
 ## dex_free
 
-GPT-5 mini / Copilot (free tier). Alias for dex mini.
-
 ```python
-dex_free(dangerously_bypass, resume, cd, print_mode, debug, add_dir, sandbox, full_auto, search, no_alt_screen, continue_session, prompt)
+dex_free(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
 ```
+
+GPT-5 mini / Copilot (free tier). Alias for dex mini.
 
 ---
 
 ## dex_glm
 
-GLM-5 model. Balanced across glm, kilo, nim, minimax.
-
 ```python
-dex_glm(dangerously_bypass, resume, cd, print_mode, debug, add_dir, sandbox, full_auto, search, no_alt_screen, continue_session, prompt)
+dex_glm(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
 ```
+
+GLM-5 model. Balanced across glm, kilo, nim, minimax.
 
 ---
 
 ## dex_haiku
 
-Claude Haiku. Balanced across CC plan, antigravity, etc.
-
 ```python
-dex_haiku(dangerously_bypass, resume, cd, print_mode, debug, add_dir, sandbox, full_auto, search, no_alt_screen, continue_session, prompt)
+dex_haiku(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
 ```
+
+Claude Haiku. Balanced across CC plan, antigravity, etc.
 
 ---
 
 ## dex_history
 
-List execution run history (sync and background).
-
 ```python
-dex_history(limit, format)
+dex_history(limit: int, format: Any)
 ```
+
+List execution run history (sync and background).
 
 ---
 
 ## dex_inspect
 
-Show status and logs for one or more sessions.
-
 ```python
-dex_inspect(session_ids, owner, tail, stderr, format, include_contract)
+dex_inspect(session_ids: list[str], owner: Any, tail: int, stderr: bool, format: Any, include_contract: bool)
 ```
+
+Show status and logs for one or more sessions.
 
 ---
 
 ## dex_logs
 
-Print session logs.
-
 ```python
-dex_logs(session_id, follow, stderr, tail, timeout)
+dex_logs(session_id: str, follow: bool, stderr: bool, tail: int, timeout: int)
 ```
+
+Print session logs.
 
 ---
 
 ## dex_max
 
-M2.5 model. Balanced across nim, kilo, minimax.
-
 ```python
-dex_max(dangerously_bypass, resume, cd, print_mode, debug, add_dir, sandbox, full_auto, search, no_alt_screen, continue_session, prompt)
+dex_max(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
 ```
+
+M2.5 model. Balanced across nim, kilo, minimax.
 
 ---
 
 ## dex_mini
 
-GPT-5 mini / Copilot (free tier).
-
 ```python
-dex_mini(dangerously_bypass, resume, cd, print_mode, debug, add_dir, sandbox, full_auto, search, no_alt_screen, continue_session, prompt)
+dex_mini(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
 ```
+
+GPT-5 mini / Copilot (free tier).
 
 ---
 
 ## dex_opus
 
-Claude Opus. Balanced across CC plan, antigravity, etc.
-
 ```python
-dex_opus(dangerously_bypass, resume, cd, print_mode, debug, add_dir, sandbox, full_auto, search, no_alt_screen, continue_session, prompt)
+dex_opus(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
 ```
+
+Claude Opus. Balanced across CC plan, antigravity, etc.
 
 ---
 
 ## dex_ps
 
-List registered background sessions.
-
 ```python
-dex_ps(all_sessions, owner, format, include_contract)
+dex_ps(all_sessions: bool, owner: Any, format: Any, include_contract: bool)
 ```
+
+List registered background sessions.
 
 ---
 
 ## dex_run
 
-Run a task. Model-first, no provider filter.
-
 ```python
-dex_run(model_alias, prompt, cd, mode, timeout)
+dex_run(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int)
 ```
+
+Run a task. Model-first, no provider filter.
 
 ---
 
 ## dex_sonnet
 
-Claude Sonnet. Balanced across CC plan, antigravity, etc.
-
 ```python
-dex_sonnet(dangerously_bypass, resume, cd, print_mode, debug, add_dir, sandbox, full_auto, search, no_alt_screen, continue_session, prompt)
+dex_sonnet(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
 ```
+
+Claude Sonnet. Balanced across CC plan, antigravity, etc.
 
 ---
 
 ## dex_status
 
-Show one session status.
-
 ```python
-dex_status(session_id, format, include_contract)
+dex_status(session_id: str, format: Any, include_contract: bool)
 ```
+
+Show one session status.
 
 ---
 
 ## dex_stop
 
-Stop a running session.
-
 ```python
-dex_stop(session_id, force, wind_down, grace)
+dex_stop(session_id: str, force: bool, wind_down: bool, grace: int)
 ```
+
+Stop a running session.
 
 ---
 
 ## dex_ultra
 
-Llama Nemotron Ultra. NIM (FREE).
-
 ```python
-dex_ultra(dangerously_bypass, resume, cd, print_mode, debug, add_dir, sandbox, full_auto, search, no_alt_screen, continue_session, prompt)
+dex_ultra(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
 ```
+
+Llama Nemotron Ultra. NIM (FREE).
 
 ---
 
 ## dex_wait
 
-Wait for session completion and return session exit code.
-
 ```python
-dex_wait(session_id, timeout)
+dex_wait(session_id: str, timeout: int)
 ```
+
+Wait for session completion and return session exit code.
 
 ---
 
 ## install_links
 
-Install dex shims: dex, dexmax, dexglm, dexhaiku, dexopus, dexsonnet, dexstep (model-only).
-
 ```python
-install_links(bin_dir, force)
+install_links(bin_dir: Path, force: bool)
 ```
+
+Install dex shims: dex, dexmax, dexglm, dexhaiku, dexopus, dexsonnet, dexstep (model-only).
 
 ---
 

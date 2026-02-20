@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 class CrewExecutor:
     """Execute crew tasks."""
 
-    def __init__(self, crew: Any):
+    def __init__(self, crew: Any) -> None:
         """Initialize crew executor.
-        
+
         Args:
             crew: Crew instance
         """
@@ -19,10 +19,10 @@ class CrewExecutor:
 
     def execute(self, task: dict[str, Any]) -> dict[str, Any]:
         """Execute a task.
-        
+
         Args:
             task: Task dictionary
-            
+
         Returns:
             Execution result
         """
@@ -31,10 +31,10 @@ class CrewExecutor:
 
     def execute_async(self, task: dict[str, Any]) -> Any:
         """Execute task asynchronously.
-        
+
         Args:
             task: Task dictionary
-            
+
         Returns:
             Async result
         """

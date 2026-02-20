@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/infra/cage.py`
 
 WP-33003: External Policy Enforcement (The Cage).
+
 Physically restricts black-box agents using runtime isolation and monitoring.
 Provides a 'cage' that enforces governance regardless of the agent's internal logic.
 
@@ -17,62 +18,70 @@ A hardened runtime environment for untrusted or black-box agents.
 #### AgentCage.__init__
 
 ```python
-__init__(self, cage_id, base_dir)
+__init__(self: Any, cage_id: str, base_dir: Path)
 ```
+
+---
 
 #### AgentCage.cleanup
 
+```python
+cleanup(self: Any)
+```
+
 Tear down the cage and scrub data.
 
-```python
-cleanup(self)
-```
+---
 
 #### AgentCage.run_command
 
+```python
+run_command(self: Any, cmd: list[str])
+```
+
 Execute a command inside the cage with restricted CWD.
 
-```python
-run_command(self, cmd)
-```
+---
 
 #### AgentCage.setup
 
+```python
+setup(self: Any, allowed_files: list[Path])
+```
+
 Initialize the cage by mirroring only allowed files (Copy-on-Write style).
 
-```python
-setup(self, allowed_files)
-```
+---
 
 ---
 
 ## cleanup
 
-Tear down the cage and scrub data.
-
 ```python
-cleanup(self)
+cleanup(self: Any)
 ```
+
+Tear down the cage and scrub data.
 
 ---
 
 ## run_command
 
-Execute a command inside the cage with restricted CWD.
-
 ```python
-run_command(self, cmd)
+run_command(self: Any, cmd: list[str])
 ```
+
+Execute a command inside the cage with restricted CWD.
 
 ---
 
 ## setup
 
-Initialize the cage by mirroring only allowed files (Copy-on-Write style).
-
 ```python
-setup(self, allowed_files)
+setup(self: Any, allowed_files: list[Path])
 ```
+
+Initialize the cage by mirroring only allowed files (Copy-on-Write style).
 
 ---
 

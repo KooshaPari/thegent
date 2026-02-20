@@ -8,7 +8,7 @@ from thegent.phases.enterprise_lifecycle import EnterpriseLifecycleManager
 class Phase15EnterpriseLifecycleResearch:
     """Research framework for enterprise lifecycle."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize enterprise lifecycle research."""
         self.lifecycle_manager = EnterpriseLifecycleManager()
 

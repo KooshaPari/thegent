@@ -4,25 +4,31 @@
 
 Orphan detection for prune (orphan-by-ppid).
 
+Conservative: only treat as orphan when we are confident the process has no
+live Cursor/Claude/Codex/thegent parent. False positives (killing live sessions)
+are worse than false negatives (leaving some orphans).
+
 ---
 
 ## is_agent_in_cmd
 
-True if command indicates Cursor/Claude/Codex (agent parent).
-
 ```python
-is_agent_in_cmd(cmd)
+is_agent_in_cmd(cmd: str)
 ```
+
+True if command indicates Cursor/Claude/Codex/thegent (agent parent).
+
+Conservative: include all known IDE and agent parent process names.
 
 ---
 
 ## is_orphan_by_ppid
 
-True if process has no Cursor/Claude/Codex in parent chain (true orphan).
-
 ```python
-is_orphan_by_ppid(pid, parent_map, cmd_map)
+is_orphan_by_ppid(pid: int, parent_map: dict[(int, int)], cmd_map: dict[(int, str)])
 ```
+
+True if process has no Cursor/Claude/Codex in parent chain (true orphan).
 
 ---
 

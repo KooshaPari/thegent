@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # dx-audit.sh — Programmatic enforcement of thegent DX standards
 # WP-DX1: Extended with complexity (radon) and import-boundary (tach) checks.
 set -euo pipefail

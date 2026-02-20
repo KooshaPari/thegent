@@ -35,7 +35,7 @@
 - [x] Any custom multi-agent systems (smolgents)
 
 #### 1.3 Coordination Patterns
-- [x] ShareCLI coordination mechanisms
+- [x] heliosShield coordination mechanisms
 - [x] Task queue systems
 - [x] Conflict resolution strategies
 - [x] Communication protocols
@@ -51,7 +51,7 @@
 ### 2. Web Research
 
 #### 2.1 Academic Research
-- [x] Multi-agent systems papers (via sharecli agent-mesh)
+- [x] Multi-agent systems papers (via heliosShield agent-mesh)
 - [x] Hierarchical agent architectures
 - [x] Team formation algorithms
 - [x] Coordination protocols
@@ -184,7 +184,7 @@
 - [x] All local research documents reviewed
 - [x] All relevant code patterns identified
 - [x] Top 5 frameworks analyzed in depth
-- [x] 10+ academic papers reviewed (via sharecli agent-mesh)
+- [x] 10+ academic papers reviewed (via heliosShield agent-mesh)
 - [x] 5+ production systems analyzed
 - [x] Comprehensive pattern library created
 - [x] Design validated against research

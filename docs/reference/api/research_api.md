@@ -4,12 +4,40 @@
 
 ## ddg_search
 
+```python
+ddg_search(query: str, max_results: int)
+```
+
 Perform a web search using DuckDuckGo.
+
 Requires 'duckduckgo-search' library.
 
+---
+
+## deep_research_orchestrator
+
 ```python
-ddg_search(query, max_results)
+deep_research_orchestrator(query: str, depth: int, settings: Any)
 ```
+
+Orchestrate a deep research protocol.
+
+1. Broad search.
+2. Reddit search.
+3. Targeted scraping of top results.
+4. Synthesis (simplified here, the agent will do the final synthesis).
+
+---
+
+## reddit_search
+
+```python
+reddit_search(query: str, max_results: int, settings: Any)
+```
+
+Perform a search on Reddit.
+
+Uses PRAW if credentials are provided, otherwise falls back to DDG site:reddit.com.
 
 ---
 

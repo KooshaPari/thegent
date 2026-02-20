@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # scripts/generate_demos.sh - Generate GIFs for documentation
 
 set -e

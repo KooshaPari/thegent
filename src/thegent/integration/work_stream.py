@@ -242,12 +242,12 @@ class WorkStreamIntegration:
 
         try:
             content = self.work_stream_file.read_text(encoding="utf-8")
-            
+
             # Helper to generate markdown table from list of dicts
             def generate_table(items: list[dict], section_name: str) -> str:
                 if not items:
                     return ""
-                
+
                 # Get headers from first item or define them based on section
                 if section_name == "BACKLOG":
                     headers = ["ID", "Title", "Source", "Priority", "Depends"]
@@ -257,14 +257,14 @@ class WorkStreamIntegration:
                     headers = ["ID", "Agent", "Completed", "Notes"]
                 else:
                     headers = list(items[0].keys())
-                
+
                 table = f"| {' | '.join(headers)} |\n"
                 table += f"| {' | '.join(['---'] * len(headers))} |\n"
-                
+
                 for item in items:
                     row = [str(item.get(h, "")) for h in headers]
                     table += f"| {' | '.join(row)} |\n"
-                
+
                 return table
 
             # Replace each section's table
@@ -272,25 +272,23 @@ class WorkStreamIntegration:
             for section, status_key in [("BACKLOG", "pending"), ("CLAIMED", "claimed"), ("COMPLETED", "completed")]:
                 items = self.work_stream_data.get(status_key, [])
                 new_table = generate_table(items, section)
-                
+
                 match = re.search(rf"##\s+{section}.*?\n", new_content, re.IGNORECASE)
                 if match:
                     section_start = match.end()
                     # Find end of current table/section
                     # Look for next ## header
                     next_header = re.search(r"\n##\s+", new_content[section_start:])
-                    if next_header:
-                        section_end = section_start + next_header.start()
-                    else:
-                        section_end = len(new_content)
-                    
+                    section_end = section_start + next_header.start() if next_header else len(new_content)
+
                     # Construct new section content: newline + table + newline
                     replacement = "\n" + new_table + "\n"
                     new_content = new_content[:section_start] + replacement + new_content[section_end:]
 
             if new_content != content:
                 self.work_stream_file.write_text(new_content, encoding="utf-8")
-                
+
         except OSError as e:
             import logging
+
             logging.getLogger(__name__).warning(f"Failed to save WORK_STREAM.md: {e}")

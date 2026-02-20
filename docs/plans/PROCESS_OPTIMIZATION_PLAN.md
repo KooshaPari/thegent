@@ -61,7 +61,7 @@ To solve the "Terminating this tab kills processes" issue:
 ## 3. Implementation Roadmap
 
 ### Phase 1: Immediate Efficiency (Today)
-- [x] Eliminate redundant `date` subprocesses in `sharecli_bridge.py`.
+- [x] Eliminate redundant `date` subprocesses in `heliosShield_bridge.py`.
 - [x] Consolidate MCP configurations in `mcp_server.py`.
 - [x] Mount `sequential-thinking` and `next-devtools` within `thegent serve`.
 - [x] Port trivial shell hooks to Rust in `hook-dispatcher`.

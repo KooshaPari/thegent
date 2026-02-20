@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Diagnosis script for rg/grep error
 # Issue: rg reports "error parsing flag -E: grep config error: unknown encoding"
 

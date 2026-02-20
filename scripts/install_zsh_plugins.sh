@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Install zsh plugins for ~/.zshrc.local (fnm, fzf-tab, autosuggestions, etc.)
 # Run from thegent repo root or with THEGENT_ROOT set.
 # Usage: ./scripts/install_zsh_plugins.sh [--template-only]

@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import Protocol
 
 import httpx
-from diskcache import Cache
 
+from thegent.cache.multi_level import MultiLevelCache
 from thegent.config import ThegentSettings
 from thegent.infra import run_subprocess_optimized
 
@@ -27,43 +27,69 @@ class ModelScraper(Protocol):
         ...
 
 
-_CACHE_DIR = Path.home() / ".cache" / "thegent" / "models-cache"
-_MODELS_CACHE = Cache(str(_CACHE_DIR))
+def _make_models_cache() -> MultiLevelCache:
+    """Create multi-level cache for scraped model lists.
+
+    L1: fast in-process TTLCache (5 min);
+    L2: diskcache on disk (1 h, survives restarts between CLI invocations).
+    Falls back to L1-only if ThegentSettings cannot be loaded.
+    """
+    try:
+        settings = ThegentSettings()
+        l2_dir = settings.cache_dir / "models-cache"
+    except Exception:
+        l2_dir = Path.home() / ".cache" / "thegent" / "models-cache"
+    return MultiLevelCache(l1_maxsize=32, l1_ttl=300, l2_dir=l2_dir, l2_ttl=3600)
+
+
+_MODELS_CACHE: MultiLevelCache = _make_models_cache()
+
+
+def _models_cache_dir() -> Path:
+    """Return the L2 directory for the models cache (for introspection/invalidation)."""
+    l2 = _MODELS_CACHE.l2_dir
+    if l2 is not None:
+        return l2
+    return Path.home() / ".cache" / "thegent" / "models-cache"
 
 
 def get_models_cache_path() -> Path:
     """Return path to models cache directory (for invalidation)."""
-    return _CACHE_DIR
+    return _models_cache_dir()
 
 
 def invalidate_models_cache() -> bool:
     """Clear models cache. Returns True if cache had entries and was cleared."""
     try:
-        had_entries = len(_MODELS_CACHE) > 0
+        had = _MODELS_CACHE.get("by_provider") is not None
         _MODELS_CACHE.clear()
-        return had_entries
-    except OSError:
+        return had
+    except Exception:
         return False
 
 
 def _load_cached(ttl_sec: int = 300) -> tuple[dict[str, list[str]], float] | None:
-    """Load cached scrape result. Returns (by_provider, mtime) or None if expired/missing."""
+    """Load cached scrape result. Returns (by_provider, mtime) or None on miss.
+
+    TTL is enforced by MultiLevelCache layers; the ttl_sec argument is accepted for
+    backwards-compatibility but is no longer used for manual expiry checks.
+    """
     try:
-        by_provider = _MODELS_CACHE.get("by_provider", default=None)
+        by_provider = _MODELS_CACHE.get("by_provider")
         if by_provider is None:
             return None
-        mtime = _MODELS_CACHE.get("by_provider_mtime", default=0)
-        return (by_provider, mtime)
-    except (OSError, TypeError):
+        mtime = _MODELS_CACHE.get("by_provider_mtime") or 0.0
+        return (by_provider, float(mtime))
+    except Exception:
         return None
 
 
 def _save_cache(by_provider: dict[str, list[str]], ttl_sec: int = 300) -> None:
-    """Save scrape result to diskcache with TTL."""
+    """Save scrape result via MultiLevelCache (write-through to L1 + L2)."""
     try:
-        _MODELS_CACHE.set("by_provider", by_provider, expire=ttl_sec)
-        _MODELS_CACHE.set("by_provider_mtime", time.time(), expire=ttl_sec)
-    except OSError:
+        _MODELS_CACHE.set("by_provider", by_provider, ttl=float(ttl_sec))
+        _MODELS_CACHE.set("by_provider_mtime", time.time(), ttl=float(ttl_sec))
+    except Exception:
         pass
 
 
@@ -82,10 +108,12 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
             loop = asyncio.get_running_loop()
             # If we're in a loop, use ThreadPoolExecutor fallback
             from concurrent.futures import ThreadPoolExecutor, as_completed
+
             from thegent.models.catalog import filter_models_for_provider
+
             settings = settings or ThegentSettings()
             by_provider: dict[str, list[str]] = {}
-            
+
             def _scrape_cursor() -> tuple[str, list[str]]:
                 try:
                     cursor_models = scrape_cursor()
@@ -93,15 +121,24 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
                     return ("cursor-agent", filtered_cursor or [settings.default_cursor_model])
                 except Exception:
                     return ("cursor-agent", [settings.default_cursor_model])
-            
+
             def _scrape_cursor_api() -> tuple[str, list[str]]:
                 try:
                     cursor_api_models = scrape_cursor_api(settings)
-                    filtered_cursor_api = filter_models_for_provider("cursor-api", cursor_api_models) if cursor_api_models else []
-                    return ("cursor-api", filtered_cursor_api or ["claude-4.5-opus-high-thinking", "gpt-5.1-codex", "claude-4.5-sonnet-thinking"])
+                    filtered_cursor_api = (
+                        filter_models_for_provider("cursor-api", cursor_api_models) if cursor_api_models else []
+                    )
+                    return (
+                        "cursor-api",
+                        filtered_cursor_api
+                        or ["claude-4.5-opus-high-thinking", "gpt-5.1-codex", "claude-4.5-sonnet-thinking"],
+                    )
                 except Exception:
-                    return ("cursor-api", ["claude-4.5-opus-high-thinking", "gpt-5.1-codex", "claude-4.5-sonnet-thinking"])
-            
+                    return (
+                        "cursor-api",
+                        ["claude-4.5-opus-high-thinking", "gpt-5.1-codex", "claude-4.5-sonnet-thinking"],
+                    )
+
             def _scrape_copilot() -> tuple[str, list[str]]:
                 try:
                     copilot_models = scrape_copilot()
@@ -109,7 +146,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
                     return ("copilot", filtered_copilot or [settings.default_copilot_model])
                 except Exception:
                     return ("copilot", [settings.default_copilot_model])
-            
+
             def _scrape_gemini() -> tuple[str, list[str]]:
                 try:
                     gemini_models = scrape_gemini()
@@ -117,7 +154,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
                     return ("gemini", filtered_gemini or [settings.default_gemini_model])
                 except Exception:
                     return ("gemini", [settings.default_gemini_model])
-            
+
             def _scrape_claude() -> tuple[str, list[str]]:
                 try:
                     claude_models = scrape_claude()
@@ -125,7 +162,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
                     return ("claude", filtered_claude or [settings.default_claude_model])
                 except Exception:
                     return ("claude", [settings.default_claude_model])
-            
+
             with ThreadPoolExecutor(max_workers=6) as executor:
                 futures = {
                     executor.submit(_scrape_cursor): "cursor-agent",
@@ -327,7 +364,9 @@ def scrape_gemini() -> list[str]:
                 timeout=4,
             )
             if proc.returncode == 0 and proc.stdout:
-                stdout_text = proc.stdout if isinstance(proc.stdout, str) else proc.stdout.decode("utf-8", errors="replace")
+                stdout_text = (
+                    proc.stdout if isinstance(proc.stdout, str) else proc.stdout.decode("utf-8", errors="replace")
+                )
                 matches = re.findall(r"gemini-[a-zA-Z0-9.-]+", stdout_text)
                 if matches:
                     return list(dict.fromkeys(matches))
@@ -348,7 +387,9 @@ def scrape_claude() -> list[str]:
                 timeout=4,
             )
             if proc.returncode == 0 and proc.stdout:
-                stdout_text = proc.stdout if isinstance(proc.stdout, str) else proc.stdout.decode("utf-8", errors="replace")
+                stdout_text = (
+                    proc.stdout if isinstance(proc.stdout, str) else proc.stdout.decode("utf-8", errors="replace")
+                )
                 out: list[str] = ["haiku", "sonnet", "opus"]
                 matches = re.findall(r"claude-[a-zA-Z0-9.-]+", stdout_text)
                 for m in matches:
@@ -413,12 +454,18 @@ async def scrape_all_async(settings: ThegentSettings | None = None) -> dict[str,
     def _scrape_cursor_api() -> tuple[str, list[str]]:
         try:
             cursor_api_models = scrape_cursor_api(settings)
-            filtered_cursor_api = filter_models_for_provider("cursor-api", cursor_api_models) if cursor_api_models else []
-            return ("cursor-api", filtered_cursor_api or [
-                "claude-4.5-opus-high-thinking",
-                "gpt-5.1-codex",
-                "claude-4.5-sonnet-thinking",
-            ])
+            filtered_cursor_api = (
+                filter_models_for_provider("cursor-api", cursor_api_models) if cursor_api_models else []
+            )
+            return (
+                "cursor-api",
+                filtered_cursor_api
+                or [
+                    "claude-4.5-opus-high-thinking",
+                    "gpt-5.1-codex",
+                    "claude-4.5-sonnet-thinking",
+                ],
+            )
         except Exception:
             return ("cursor-api", ["claude-4.5-opus-high-thinking", "gpt-5.1-codex", "claude-4.5-sonnet-thinking"])
 
@@ -453,20 +500,40 @@ async def scrape_all_async(settings: ThegentSettings | None = None) -> dict[str,
     # OPT-005: Use asyncio.gather for parallel async execution (3-5x faster)
     # Wrap sync functions in async using asyncio.to_thread (Python 3.9+) or run_in_executor
     async def _scrape_cursor_async() -> tuple[str, list[str]]:
-        return await asyncio.to_thread(_scrape_cursor) if hasattr(asyncio, 'to_thread') else await asyncio.get_event_loop().run_in_executor(None, _scrape_cursor)
-    
+        return (
+            await asyncio.to_thread(_scrape_cursor)
+            if hasattr(asyncio, "to_thread")
+            else await asyncio.get_event_loop().run_in_executor(None, _scrape_cursor)
+        )
+
     async def _scrape_cursor_api_async() -> tuple[str, list[str]]:
-        return await asyncio.to_thread(_scrape_cursor_api) if hasattr(asyncio, 'to_thread') else await asyncio.get_event_loop().run_in_executor(None, _scrape_cursor_api)
-    
+        return (
+            await asyncio.to_thread(_scrape_cursor_api)
+            if hasattr(asyncio, "to_thread")
+            else await asyncio.get_event_loop().run_in_executor(None, _scrape_cursor_api)
+        )
+
     async def _scrape_copilot_async() -> tuple[str, list[str]]:
-        return await asyncio.to_thread(_scrape_copilot) if hasattr(asyncio, 'to_thread') else await asyncio.get_event_loop().run_in_executor(None, _scrape_copilot)
-    
+        return (
+            await asyncio.to_thread(_scrape_copilot)
+            if hasattr(asyncio, "to_thread")
+            else await asyncio.get_event_loop().run_in_executor(None, _scrape_copilot)
+        )
+
     async def _scrape_gemini_async() -> tuple[str, list[str]]:
-        return await asyncio.to_thread(_scrape_gemini) if hasattr(asyncio, 'to_thread') else await asyncio.get_event_loop().run_in_executor(None, _scrape_gemini)
-    
+        return (
+            await asyncio.to_thread(_scrape_gemini)
+            if hasattr(asyncio, "to_thread")
+            else await asyncio.get_event_loop().run_in_executor(None, _scrape_gemini)
+        )
+
     async def _scrape_claude_async() -> tuple[str, list[str]]:
-        return await asyncio.to_thread(_scrape_claude) if hasattr(asyncio, 'to_thread') else await asyncio.get_event_loop().run_in_executor(None, _scrape_claude)
-    
+        return (
+            await asyncio.to_thread(_scrape_claude)
+            if hasattr(asyncio, "to_thread")
+            else await asyncio.get_event_loop().run_in_executor(None, _scrape_claude)
+        )
+
     # OPT-005: Parallel execution with asyncio.gather
     results = await asyncio.gather(
         _scrape_cursor_async(),
@@ -476,9 +543,9 @@ async def scrape_all_async(settings: ThegentSettings | None = None) -> dict[str,
         _scrape_claude_async(),
         return_exceptions=True,
     )
-    
+
     for result in results:
-        if isinstance(result, Exception):
+        if isinstance(result, BaseException):
             continue
         provider, models = result
         by_provider[provider] = models

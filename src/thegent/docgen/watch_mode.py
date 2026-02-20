@@ -1,17 +1,19 @@
 """Implement watch mode for auto-regeneration of documentation."""
 
-import time
 import logging
-from pathlib import Path
-from typing import Callable, List
 import threading
+import time
+from collections.abc import Callable
+from pathlib import Path
+from typing import List
 
 logger = logging.getLogger(__name__)
 
+
 class DocumentationWatcher:
     """Watch documentation source files and auto-regenerate."""
-    
-    def __init__(self, source_dir: Path, output_dir: Path, build_func: Callable):
+
+    def __init__(self, source_dir: Path, output_dir: Path, build_func: Callable) -> None:
         self.source_dir = source_dir
         self.output_dir = output_dir
         self.build_func = build_func
@@ -25,11 +27,11 @@ class DocumentationWatcher:
     def _watch_loop(self, poll_interval: float = 1.0):
         """Internal watch loop."""
         last_modified = self._get_last_modified_times()
-        
+
         while not self._stop_event.is_set():
             time.sleep(poll_interval)
             current_modified = self._get_last_modified_times()
-            
+
             if current_modified != last_modified:
                 logger.info("Changes detected in documentation sources. Regenerating...")
                 try:
@@ -37,7 +39,7 @@ class DocumentationWatcher:
                     logger.info("Documentation regenerated successfully.")
                 except Exception as e:
                     logger.error(f"Error regenerating documentation: {e}")
-                
+
                 last_modified = current_modified
 
     def start(self, poll_interval: float = 1.0):

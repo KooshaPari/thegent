@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Identify shell scripts that should be migrated to Rust/Go for performance
 set -euo pipefail
 

@@ -183,7 +183,9 @@ class TestOrphanedAgentDetection:
         hierarchy.create_team(
             "TEAM-1", "Test Team", "Description", TeamType.FUNCTIONAL, CoordinationMode.HIERARCHICAL, "RUN-2"
         )
-        hierarchy.register_agent("spec", "RUN-3", AgentRole.SPECIALIST, parent_id="RUN-2", team_id="TEAM-1", validate=False)
+        hierarchy.register_agent(
+            "spec", "RUN-3", AgentRole.SPECIALIST, parent_id="RUN-2", team_id="TEAM-1", validate=False
+        )
         hierarchy.add_team_member("TEAM-1", "RUN-3")
 
         orphaned = hierarchy.detect_orphaned_agents()

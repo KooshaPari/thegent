@@ -36,16 +36,10 @@ class ScreenshotOptions(BaseModel):
 
     full_page: bool = Field(default=False, description="Capture full page or viewport")
     quality: int = Field(default=95, ge=1, le=100, description="JPEG quality (1-100)")
-    omit_background: bool = Field(
-        default=False, description="Omit background for PNG"
-    )
-    annotations: dict[str, Any] = Field(
-        default_factory=dict, description="Overlay annotations"
-    )
+    omit_background: bool = Field(default=False, description="Omit background for PNG")
+    annotations: dict[str, Any] = Field(default_factory=dict, description="Overlay annotations")
     timeout: int = Field(default=30000, ge=1000, description="Timeout in milliseconds")
-    wait_for_selector: str | None = Field(
-        default=None, description="Wait for selector before capturing"
-    )
+    wait_for_selector: str | None = Field(default=None, description="Wait for selector before capturing")
 
 
 class VideoRecordingOptions(BaseModel):
@@ -82,28 +76,17 @@ class RecordingConfig(BaseModel):
     user_agent: str | None = Field(default=None, description="Custom user agent")
     storage_state: str | None = Field(default=None, description="Storage state file")
     http_timeout: int = Field(default=30000, ge=5000, description="HTTP timeout")
-    navigation_timeout: int = Field(
-        default=30000, ge=5000, description="Navigation timeout"
-    )
-    video: VideoRecordingOptions = Field(
-        default_factory=VideoRecordingOptions, description="Video settings"
-    )
-    screenshot: ScreenshotOptions = Field(
-        default_factory=ScreenshotOptions, description="Screenshot settings"
-    )
-    output_dir: Path = Field(
-        default_factory=lambda: Path("docs/recordings"), description="Output directory"
-    )
+    navigation_timeout: int = Field(default=30000, ge=5000, description="Navigation timeout")
+    video: VideoRecordingOptions = Field(default_factory=VideoRecordingOptions, description="Video settings")
+    screenshot: ScreenshotOptions = Field(default_factory=ScreenshotOptions, description="Screenshot settings")
+    output_dir: Path = Field(default_factory=lambda: Path("docs/recordings"), description="Output directory")
 
     @field_validator("browser")
     @classmethod
     def validate_browser(cls, v: str) -> str:
         """Validate browser is one of the supported types."""
         if v not in ("chromium", "firefox", "webkit"):
-            msg = (
-                f"Unknown browser: {v}. "
-                f"Must be one of: chromium, firefox, webkit"
-            )
+            msg = f"Unknown browser: {v}. Must be one of: chromium, firefox, webkit"
             raise ValueError(msg)
         return v
 
@@ -192,16 +175,11 @@ class PlaywrightRecorder:
             }
             self._browser_type = browsers.get(self.config.browser)
             if not self._browser_type:
-                msg = (
-                    f"Unknown browser: {self.config.browser}. "
-                    f"Must be one of: {', '.join(browsers.keys())}"
-                )
+                msg = f"Unknown browser: {self.config.browser}. Must be one of: {', '.join(browsers.keys())}"
                 raise ValueError(msg)
 
             # Launch browser
-            self.browser = await self._browser_type.launch(
-                headless=self.config.headless
-            )
+            self.browser = await self._browser_type.launch(headless=self.config.headless)
             logger.info(f"Launched {self.config.browser} browser")
 
             # Create context with recording
@@ -225,21 +203,15 @@ class PlaywrightRecorder:
                 context_kwargs["storage_state"] = self.config.storage_state
 
             # Set up video recording
-            self._video_path = (
-                self.config.output_dir / f"video_{int(time.time())}.webm"
-            )
+            self._video_path = self.config.output_dir / f"video_{int(time.time())}.webm"
             context_kwargs["record_video_dir"] = str(self._video_path.parent)
 
             self.context = await self.browser.new_context(**context_kwargs)
             self.context.set_default_timeout(self.config.http_timeout)
-            self.context.set_default_navigation_timeout(
-                self.config.navigation_timeout
-            )
+            self.context.set_default_navigation_timeout(self.config.navigation_timeout)
 
             self.page = await self.context.new_page()
-            viewport_str = (
-                f"{self.config.viewport_width}x{self.config.viewport_height}"
-            )
+            viewport_str = f"{self.config.viewport_width}x{self.config.viewport_height}"
             logger.info(f"Created context with viewport {viewport_str}")
 
         except Exception as e:
@@ -313,9 +285,7 @@ class PlaywrightRecorder:
         await self.page.wait_for_selector(selector, timeout=timeout)
         logger.debug(f"Waited for {selector}")
 
-    async def wait_for_function(
-        self, expression: str, timeout: int = 30000
-    ) -> None:
+    async def wait_for_function(self, expression: str, timeout: int = 30000) -> None:
         """Wait for JavaScript expression to return true."""
         if not self.page:
             raise RuntimeError("Browser not launched")
@@ -339,9 +309,7 @@ class PlaywrightRecorder:
             raise RuntimeError("Browser not launched")
         return await self.page.text_content(selector)
 
-    async def screenshot(
-        self, name: str | None = None, options: ScreenshotOptions | None = None
-    ) -> Path:
+    async def screenshot(self, name: str | None = None, options: ScreenshotOptions | None = None) -> Path:
         """Capture screenshot."""
         if not self.page:
             raise RuntimeError("Browser not launched")
@@ -354,9 +322,7 @@ class PlaywrightRecorder:
 
         # Wait for selector if specified
         if options.wait_for_selector:
-            await self.wait_for_selector(
-                options.wait_for_selector, options.timeout
-            )
+            await self.wait_for_selector(options.wait_for_selector, options.timeout)
 
         # Capture screenshot
         screenshot_kwargs = {
@@ -379,6 +345,33 @@ class PlaywrightRecorder:
 
         video_files = list(self._video_path.parent.glob("**/*.webm"))
         return video_files[0] if video_files else None
+
+    async def _execute_action(self, action: str, selector: str, value: Any | None) -> None:
+        """Execute a single interaction action safely."""
+        try:
+            if action == "click":
+                await self.click(selector)
+            elif action == "type":
+                await self.type_text(selector, value or "")
+            elif action == "fill":
+                await self.fill(selector, value or "")
+            elif action == "press":
+                await self.press(selector, value or "Enter")
+            elif action == "wait":
+                await self.wait_for_selector(selector)
+            elif action == "wait_function":
+                await self.wait_for_function(selector)
+            elif action == "navigate":
+                await self.navigate(selector)
+            elif action == "evaluate":
+                await self.evaluate(selector)
+            elif action == "sleep":
+                await self.wait(int(value or 1000))
+            else:
+                logger.warning(f"Unknown action: {action}")
+        except Exception as e:
+            logger.error(f"Failed to execute {action} on {selector}: {e}")
+            raise
 
     async def record_interaction(
         self,
@@ -420,30 +413,7 @@ class PlaywrightRecorder:
 
             instructions = instructions or []
             for action, selector, value in instructions:
-                try:
-                    if action == "click":
-                        await self.click(selector)
-                    elif action == "type":
-                        await self.type_text(selector, value or "")
-                    elif action == "fill":
-                        await self.fill(selector, value or "")
-                    elif action == "press":
-                        await self.press(selector, value or "Enter")
-                    elif action == "wait":
-                        await self.wait_for_selector(selector)
-                    elif action == "wait_function":
-                        await self.wait_for_function(selector)
-                    elif action == "navigate":
-                        await self.navigate(selector)
-                    elif action == "evaluate":
-                        await self.evaluate(selector)
-                    elif action == "sleep":
-                        await self.wait(int(value or 1000))
-                    else:
-                        logger.warning(f"Unknown action: {action}")
-                except Exception as e:
-                    logger.error(f"Failed to execute {action} on {selector}: {e}")
-                    raise
+                await self._execute_action(action, selector, value)
 
             if screenshot_after:
                 screenshot_path = await self.screenshot(name)
@@ -609,7 +579,5 @@ async def record_simple_demo(
     config = config or RecordingConfig()
 
     async with PlaywrightRecorder(config) as recorder:
-        result = await recorder.record_feature(
-            feature_name, route=route, interactions=interactions
-        )
+        result = await recorder.record_feature(feature_name, route=route, interactions=interactions)
         return result

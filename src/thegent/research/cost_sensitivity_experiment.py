@@ -30,12 +30,14 @@ COST_WEIGHTS = {
     "minimax-m2.5": 0.2,
 }
 
+
 @dataclass
 class PolicyNamespace:
     name: str
-    parent: Optional['PolicyNamespace'] = None
+    parent: Optional["PolicyNamespace"] = None
     cost_cap: float = 10.0  # Default high cap
     min_quality: float = 0.0
+
 
 class FederatedPolicyEngineSim:
     """Simulates FederatedPolicyEngine with namespace inheritance."""
@@ -65,6 +67,7 @@ class FederatedPolicyEngineSim:
         effective["latency_ms"] = latency
         return effective
 
+
 class ExperimentRunner:
     """Runs cost-sensitivity experiments."""
 
@@ -76,7 +79,8 @@ class ExperimentRunner:
 
         # Routing decision based on effective policy
         eligible_models = [
-            m for m in QUALITY_PROXY
+            m
+            for m in QUALITY_PROXY
             if COST_WEIGHTS[m] <= policy["cost_cap"] and QUALITY_PROXY[m] >= policy["min_quality"]
         ]
 
@@ -99,14 +103,16 @@ class ExperimentRunner:
             "selected_model": selected_model,
             "routing_cost_weight": selected_cost,
             "model_quality": selected_quality,
-            "sla_breach": policy["latency_ms"] > 50.0 # SLA threshold 50ms
+            "sla_breach": policy["latency_ms"] > 50.0,  # SLA threshold 50ms
         }
         self.results.append(result)
         return result
 
+
 def setup_baseline() -> tuple[FederatedPolicyEngineSim, str]:
     root = PolicyNamespace("global", cost_cap=10.0, min_quality=0.0)
     return FederatedPolicyEngineSim([root]), "global"
+
 
 def setup_experiment_a() -> tuple[FederatedPolicyEngineSim, str]:
     # 10 namespaces, shallow inheritance
@@ -127,6 +133,7 @@ def setup_experiment_a() -> tuple[FederatedPolicyEngineSim, str]:
 
     return FederatedPolicyEngineSim(namespaces), "level_9"
 
+
 def setup_experiment_b() -> tuple[FederatedPolicyEngineSim, str]:
     # 50 namespaces, deep inheritance
     namespaces = []
@@ -143,6 +150,7 @@ def setup_experiment_b() -> tuple[FederatedPolicyEngineSim, str]:
         current = child
 
     return FederatedPolicyEngineSim(namespaces), "level_49"
+
 
 if __name__ == "__main__":
     runner = ExperimentRunner()
@@ -169,14 +177,25 @@ if __name__ == "__main__":
         f.write("## 1. Scenario Summary\n\n")
         f.write("| Scenario | Depth | Latency (ms) | Cost Cap | Min Quality | Model | Cost | SLA Breach |\n")
         f.write("|----------|-------|--------------|----------|-------------|-------|------|------------|\n")
-        f.writelines(f"| {r['scenario']} | {r['depth']} | {r['lookup_latency_ms']:.2f} | {r['effective_cost_cap']:.1f} | {r['effective_min_quality']:.1f} | {r['selected_model']} | {r['routing_cost_weight']:.1f} | {r['sla_breach']} |\n" for r in runner.results)
+        f.writelines(
+            f"| {r['scenario']} | {r['depth']} | {r['lookup_latency_ms']:.2f} | {r['effective_cost_cap']:.1f} | {r['effective_min_quality']:.1f} | {r['selected_model']} | {r['routing_cost_weight']:.1f} | {r['sla_breach']} |\n"
+            for r in runner.results
+        )
 
         f.write("\n## 2. Key Findings\n\n")
         f.write("- **Latency Overhead**: Federated lookups introduce linear latency growth based on namespace depth.\n")
-        f.write("- **SLA Breach**: Experiment B (50 levels) consistently breaches the 50ms lookup SLA due to recursive resolution overhead.\n")
-        f.write("- **Economic Accuracy**: Deep federation successfully enforces restrictive cost caps, shifting routing from premium models (Opus) to value models (Haiku/Flash).\n")
+        f.write(
+            "- **SLA Breach**: Experiment B (50 levels) consistently breaches the 50ms lookup SLA due to recursive resolution overhead.\n"
+        )
+        f.write(
+            "- **Economic Accuracy**: Deep federation successfully enforces restrictive cost caps, shifting routing from premium models (Opus) to value models (Haiku/Flash).\n"
+        )
 
         f.write("\n## 3. Recommendations\n\n")
-        f.write("1. **Policy Caching**: Implement a flattening/compilation step for deep namespace trees to keep lookup latency < 10ms.\n")
+        f.write(
+            "1. **Policy Caching**: Implement a flattening/compilation step for deep namespace trees to keep lookup latency < 10ms.\n"
+        )
         f.write("2. **Depth Limits**: Cap policy inheritance at 10 levels for real-time routing paths.\n")
-        f.write("3. **Asynchronous Resolution**: For non-critical paths, move policy resolution out of the primary request flow.\n")
+        f.write(
+            "3. **Asynchronous Resolution**: For non-critical paths, move policy resolution out of the primary request flow.\n"
+        )

@@ -15,11 +15,11 @@ const props = defineProps({
     type: String,
     default: ''
   },
-  lazy?: {
+  lazy: {
     type: Boolean,
     default: true
   },
-  expandable?: {
+  expandable: {
     type: Boolean,
     default: true
   }

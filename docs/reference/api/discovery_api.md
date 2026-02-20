@@ -11,14 +11,18 @@ Wrapper for thegent_discovery Rust extension.
 #### DiscoverySystem.is_native_active
 
 ```python
-is_native_active(self)
+is_native_active(self: Any)
 ```
+
+---
 
 #### DiscoverySystem.scan_agents
 
 ```python
-scan_agents(self)
+scan_agents(self: Any)
 ```
+
+---
 
 ---
 
@@ -29,7 +33,7 @@ scan_agents(self)
 ## is_native_active
 
 ```python
-is_native_active(self)
+is_native_active(self: Any) -> bool
 ```
 
 ---
@@ -37,7 +41,7 @@ is_native_active(self)
 ## scan_agents
 
 ```python
-scan_agents(self)
+scan_agents(self: Any) -> list[dict[(str, Any)]]
 ```
 
 ---

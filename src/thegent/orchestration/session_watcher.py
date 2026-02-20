@@ -44,7 +44,7 @@ class SessionEventWatcher:
         self._watcher = FastFileWatcher(self.session_dir, recursive=True)
 
         class CompletionHandler:
-            def __init__(self, watcher: SessionEventWatcher):
+            def __init__(self, watcher: SessionEventWatcher) -> None:
                 self.watcher = watcher
 
             def on_completion(self, session_id: str, exit_code: int) -> None:
@@ -63,9 +63,7 @@ class SessionEventWatcher:
             import threading
 
             def watch_loop():
-                self._watcher.watch(
-                    lambda changes: self._process_changes(changes, handler)
-                )
+                self._watcher.watch(lambda changes: self._process_changes(changes, handler))
 
             thread = threading.Thread(target=watch_loop, daemon=True)
             thread.start()
@@ -82,11 +80,9 @@ class SessionEventWatcher:
             self._watcher = None
             _log.info("Stopped session event watcher")
 
-    def _process_changes(
-        self, changes: list[tuple[Any, str]], handler: Any
-    ) -> None:
+    def _process_changes(self, changes: list[tuple[Any, str]], handler: Any) -> None:
         """Process file system changes and detect completions."""
-        for change, path_str in changes:
+        for _change, path_str in changes:
             path = Path(path_str)
 
             # Look for metadata.json updates (session completion marker)
@@ -105,6 +101,7 @@ class SessionEventWatcher:
                 session_id = path.parent.name
                 try:
                     from thegent.utils.helpers import read_file_optimized
+
                     # Check last few lines for completion markers
                     content = read_file_optimized(path, max_size_mb=1)
                     if content and ("Session completed" in content[-1000:] or "exit code" in content[-1000:].lower()):

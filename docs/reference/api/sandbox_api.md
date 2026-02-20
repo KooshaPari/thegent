@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/infra/sandbox.py`
 
 WP-31002: Containerized Agent Sandboxes (Wasm).
+
 Provides lightweight, secure execution environments for untrusted agent code using WebAssembly.
 Ensures near-native performance with strict memory and capability isolation.
 
@@ -18,51 +19,57 @@ Configuration for a Wasm sandbox.
 
 ## WasmSandbox
 
-Manages secure execution of agent code in a Wasm environment.
+Manages secure execution of agent code in a Wasm environment using Extism.
 
 ### Methods
 
 #### WasmSandbox.__init__
 
 ```python
-__init__(self, sandbox_id, config)
-```
-
-#### WasmSandbox.run_binary
-
-Execute a function inside the Wasm sandbox.
-
-```python
-run_binary(self, wasm_binary_path, function_name, args)
-```
-
-#### WasmSandbox.shutdown
-
-Tear down the sandbox and release resources.
-
-```python
-shutdown(self)
+__init__(self: Any, sandbox_id: str, config: Optional[SandboxConfig])
 ```
 
 ---
 
-## run_binary
-
-Execute a function inside the Wasm sandbox.
+#### WasmSandbox.run_function
 
 ```python
-run_binary(self, wasm_binary_path, function_name, args)
+run_function(self: Any, wasm_binary_path: str, function_name: str, input_data: Any)
 ```
+
+Execute a function inside the Wasm sandbox using Extism.
+
+---
+
+#### WasmSandbox.shutdown
+
+```python
+shutdown(self: Any)
+```
+
+Tear down the sandbox and release resources.
+
+---
+
+---
+
+## run_function
+
+```python
+run_function(self: Any, wasm_binary_path: str, function_name: str, input_data: Any)
+```
+
+Execute a function inside the Wasm sandbox using Extism.
 
 ---
 
 ## shutdown
 
-Tear down the sandbox and release resources.
-
 ```python
-shutdown(self)
+shutdown(self: Any)
 ```
+
+Tear down the sandbox and release resources.
 
 ---
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Fix which timeout by adding fast-path wrappers
 # This prevents shell initialization cascades during PATH resolution
 set -euo pipefail

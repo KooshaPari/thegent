@@ -57,7 +57,7 @@ class PaneManager:
             return None
 
         logger.info(f"Splitting pane {self.current_pane_id} {direction}")
-        
+
         # Find the current pane node
         current_node = self._find_node(self.root, self.current_pane_id)
         if not current_node:
@@ -66,6 +66,7 @@ class PaneManager:
 
         # Create new pane node
         import uuid
+
         new_pane_id = f"pane-{uuid.uuid4().hex[:8]}"
         new_node = PaneNode(pane_id=new_pane_id, is_leaf=True)
 
@@ -106,7 +107,7 @@ class PaneManager:
 
         # Find parent of current pane
         parent, current_node = self._find_parent(self.root, self.current_pane_id)
-        
+
         if not current_node:
             logger.warning(f"Pane {self.current_pane_id} not found")
             return False
@@ -153,7 +154,7 @@ class PaneManager:
             return False
 
         logger.info(f"Focusing next pane from {self.current_pane_id}")
-        
+
         # Get all leaf nodes in order
         leaves = self._get_all_leaves(self.root)
         if len(leaves) <= 1:
@@ -226,7 +227,9 @@ class PaneManager:
                 return found
         return None
 
-    def _find_parent(self, node: PaneNode | None, pane_id: str, parent: PaneNode | None = None) -> tuple[PaneNode | None, PaneNode | None]:
+    def _find_parent(
+        self, node: PaneNode | None, pane_id: str, parent: PaneNode | None = None
+    ) -> tuple[PaneNode | None, PaneNode | None]:
         """Find parent and node by pane_id."""
         if not node:
             return None, None
@@ -261,7 +264,7 @@ class PaneManager:
         """Deserialize a node from dict."""
         if not data:
             return None
-        
+
         pane_id = data.get("pane_id", "")
         direction = data.get("direction")
         is_leaf = data.get("is_leaf", True)

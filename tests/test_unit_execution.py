@@ -1503,3 +1503,131 @@ class TestEscalationQueueExceptionPaths:
         # Verify corrupt line is preserved
         content = eq.queue_path.read_text(encoding="utf-8")
         assert "corrupt-json-line" in content
+
+
+@pytest.mark.unit
+class TestConcurrencyControllerCriticalLane:
+    """Tests for ConcurrencyController critical lane reservation (swarm-critical-lane).
+
+    Traces to: FR-EXE-011 (Critical lane slot reservation prevents starvation).
+    """
+
+    def _make_controller(self, tmp_path: Path, max_concurrency: int = 5, critical_lane_slots: int = 2):
+        """Build a ConcurrencyController with load-based limits disabled for deterministic tests."""
+        from thegent.execution import ConcurrencyController
+
+        return ConcurrencyController(
+            session_dir=tmp_path,
+            max_concurrency=max_concurrency,
+            use_load_based=False,
+            critical_lane_slots=critical_lane_slots,
+        )
+
+    def _patch_running(self, running_count: int):
+        """Return a context manager that mocks ps_impl to report N running sessions.
+
+        execution.py imports ps_impl via ``from thegent.cli_impl import ps_impl``
+        at call-time, so we patch the binding in the source module.
+        """
+        return patch(
+            "thegent.cli_impl.ps_impl",
+            return_value=[{"status": "running"}] * running_count,
+        )
+
+    def test_critical_lane_slots_defaults_to_two(self, tmp_path: Path) -> None:
+        # @trace FR-EXE-011
+        """ConcurrencyController defaults critical_lane_slots to 2."""
+        from thegent.execution import ConcurrencyController
+
+        cc = ConcurrencyController(session_dir=tmp_path, max_concurrency=5, use_load_based=False)
+        assert cc.critical_lane_slots == 2
+
+    def test_critical_lane_slots_explicit(self, tmp_path: Path) -> None:
+        # @trace FR-EXE-011
+        """Explicit critical_lane_slots value is stored correctly."""
+        cc = self._make_controller(tmp_path, max_concurrency=10, critical_lane_slots=3)
+        assert cc.critical_lane_slots == 3
+
+    def test_critical_lane_slots_from_env(self, tmp_path: Path, monkeypatch) -> None:
+        # @trace FR-EXE-011
+        """THGENT_CRITICAL_LANE_SLOTS env var sets critical_lane_slots."""
+        from thegent.execution import ConcurrencyController
+
+        monkeypatch.setenv("THGENT_CRITICAL_LANE_SLOTS", "4")
+        cc = ConcurrencyController(session_dir=tmp_path, max_concurrency=10, use_load_based=False)
+        assert cc.critical_lane_slots == 4
+
+    def test_critical_lane_slots_env_invalid_falls_back_to_default(self, tmp_path: Path, monkeypatch) -> None:
+        # @trace FR-EXE-011
+        """Invalid THGENT_CRITICAL_LANE_SLOTS env var falls back to default 2."""
+        from thegent.execution import ConcurrencyController
+
+        monkeypatch.setenv("THGENT_CRITICAL_LANE_SLOTS", "not-a-number")
+        cc = ConcurrencyController(session_dir=tmp_path, max_concurrency=10, use_load_based=False)
+        assert cc.critical_lane_slots == 2
+
+    def test_standard_run_blocked_when_standard_slots_full(self, tmp_path: Path) -> None:
+        # @trace FR-EXE-011
+        """Standard run is blocked when all standard-available slots are occupied.
+
+        max_concurrency=5, critical_lane_slots=2 → standard cap = 3.
+        With 3 running sessions, a standard run must be blocked.
+        """
+        cc = self._make_controller(tmp_path, max_concurrency=5, critical_lane_slots=2)
+        with self._patch_running(3):
+            # 3 running == standard cap (5-2=3) → blocked
+            assert cc.acquire(priority="standard") is False
+
+    def test_critical_run_admitted_when_standard_slots_full(self, tmp_path: Path) -> None:
+        # @trace FR-EXE-011
+        """Critical run is admitted even when all standard-available slots are occupied.
+
+        max_concurrency=5, critical_lane_slots=2, running=3.
+        Standard would be blocked (3 >= 3), but critical uses all 5 slots.
+        """
+        cc = self._make_controller(tmp_path, max_concurrency=5, critical_lane_slots=2)
+        with self._patch_running(3):
+            # Standard is blocked
+            assert cc.acquire(priority="standard") is False
+            # Critical is admitted (3 < 5)
+            assert cc.acquire(priority="critical") is True
+
+    def test_standard_run_admitted_when_slots_available(self, tmp_path: Path) -> None:
+        # @trace FR-EXE-011
+        """Standard run is admitted when standard slots are available."""
+        cc = self._make_controller(tmp_path, max_concurrency=5, critical_lane_slots=2)
+        with self._patch_running(2):
+            # 2 running < 3 standard cap → admitted
+            assert cc.acquire(priority="standard") is True
+
+    def test_both_blocked_when_all_slots_full(self, tmp_path: Path) -> None:
+        # @trace FR-EXE-011
+        """Both standard and critical runs are blocked when max_concurrency is exhausted."""
+        cc = self._make_controller(tmp_path, max_concurrency=5, critical_lane_slots=2)
+        with self._patch_running(5):
+            assert cc.acquire(priority="standard") is False
+            assert cc.acquire(priority="critical") is False
+
+    def test_lane_critical_treated_as_critical_priority(self, tmp_path: Path) -> None:
+        # @trace FR-EXE-011
+        """A run with lane='critical' is treated as critical regardless of priority kwarg."""
+        cc = self._make_controller(tmp_path, max_concurrency=5, critical_lane_slots=2)
+        with self._patch_running(3):
+            # lane=critical overrides default priority="standard"
+            assert cc.acquire(lane="critical") is True
+
+    def test_priority_critical_kwarg_treated_as_critical(self, tmp_path: Path) -> None:
+        # @trace FR-EXE-011
+        """A run with is_critical via priority='critical' uses full slot pool."""
+        cc = self._make_controller(tmp_path, max_concurrency=5, critical_lane_slots=2)
+        with self._patch_running(4):
+            # 4 running < 5 total → critical admitted
+            assert cc.acquire(priority="critical") is True
+
+    def test_zero_critical_lane_slots_no_reservation(self, tmp_path: Path) -> None:
+        # @trace FR-EXE-011
+        """With critical_lane_slots=0, standard runs may use all slots (no reservation)."""
+        cc = self._make_controller(tmp_path, max_concurrency=5, critical_lane_slots=0)
+        with self._patch_running(4):
+            # standard cap = max(1, 5-0) = 5 → 4 < 5 → admitted
+            assert cc.acquire(priority="standard") is True

@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/governance/meta.py`
 
 WP-20004: Meta-Governance & Constitutional AI.
+
 Provides high-level, human-aligned rules (constitution) for all agent operations.
 Inspired by Constitutional AI principles (Anthropic).
 
@@ -10,7 +11,7 @@ Inspired by Constitutional AI principles (Anthropic).
 
 ## ConstitutionalPrinciple
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -23,32 +24,40 @@ Manages the agent constitution and high-level governance rules.
 #### MetaGovernance.__init__
 
 ```python
-__init__(self, constitution_path)
+__init__(self: Any, constitution_path: Any)
 ```
+
+---
 
 #### MetaGovernance.get_constitution_summary
 
+```python
+get_constitution_summary(self: Any)
+```
+
 Return a formatted summary of the agent constitution.
 
-```python
-get_constitution_summary(self)
-```
+---
 
 #### MetaGovernance.save_constitution
 
+```python
+save_constitution(self: Any)
+```
+
 Save the constitution to disk.
 
-```python
-save_constitution(self)
-```
+---
 
 #### MetaGovernance.validate_action
 
+```python
+validate_action(self: Any, action_description: str, tags: set[str])
+```
+
 Validate an agent's intended action against the constitution.
 
-```python
-validate_action(self, action_description, tags)
-```
+---
 
 ---
 
@@ -60,31 +69,31 @@ A high-level governance rule aligned with a constitutional principle.
 
 ## get_constitution_summary
 
-Return a formatted summary of the agent constitution.
-
 ```python
-get_constitution_summary(self)
+get_constitution_summary(self: Any)
 ```
+
+Return a formatted summary of the agent constitution.
 
 ---
 
 ## save_constitution
 
-Save the constitution to disk.
-
 ```python
-save_constitution(self)
+save_constitution(self: Any)
 ```
+
+Save the constitution to disk.
 
 ---
 
 ## validate_action
 
-Validate an agent's intended action against the constitution.
-
 ```python
-validate_action(self, action_description, tags)
+validate_action(self: Any, action_description: str, tags: set[str])
 ```
+
+Validate an agent's intended action against the constitution.
 
 ---
 

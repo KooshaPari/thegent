@@ -15,16 +15,20 @@ Recommends operational tuning actions based on system performance (WP-14004).
 #### RunbookTuner.__init__
 
 ```python
-__init__(self, slo_metrics)
+__init__(self: Any, slo_metrics: dict[(str, Any)])
 ```
+
+---
 
 #### RunbookTuner.generate_recommendations
 
+```python
+generate_recommendations(self: Any)
+```
+
 Analyze metrics and generate tuning recommendations.
 
-```python
-generate_recommendations(self)
-```
+---
 
 ---
 
@@ -34,11 +38,11 @@ generate_recommendations(self)
 
 ## generate_recommendations
 
-Analyze metrics and generate tuning recommendations.
-
 ```python
-generate_recommendations(self)
+generate_recommendations(self: Any)
 ```
+
+Analyze metrics and generate tuning recommendations.
 
 ---
 

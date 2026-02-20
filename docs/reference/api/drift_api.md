@@ -15,48 +15,58 @@ Detects drift in policy state and cleans up stale overrides.
 #### DriftDetector.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: ThegentSettings)
 ```
+
+---
 
 #### DriftDetector.detect_drift
 
+```python
+detect_drift(self: Any)
+```
+
 Check for drift between current state and baseline.
+
 Returns a report of detected issues.
 
-```python
-detect_drift(self)
-```
+---
 
 #### DriftDetector.sweep
 
+```python
+sweep(self: Any)
+```
+
 Perform a sweep to correct detected drift.
+
 Returns counts of corrected items.
 
-```python
-sweep(self)
-```
+---
 
 ---
 
 ## detect_drift
 
-Check for drift between current state and baseline.
-Returns a report of detected issues.
-
 ```python
-detect_drift(self)
+detect_drift(self: Any)
 ```
+
+Check for drift between current state and baseline.
+
+Returns a report of detected issues.
 
 ---
 
 ## sweep
 
-Perform a sweep to correct detected drift.
-Returns counts of corrected items.
-
 ```python
-sweep(self)
+sweep(self: Any)
 ```
+
+Perform a sweep to correct detected drift.
+
+Returns counts of corrected items.
 
 ---
 

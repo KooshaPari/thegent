@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/orchestration/gardener.py`
 
 MEM-AUD-02: Memory-to-Doc Synthesis Agent.
+
 Consolidates raw memory audit logs into formal project documentation.
 
 ---
@@ -16,8 +17,10 @@ The Project Gardener - prunes memory into documentation.
 #### Gardener.__init__
 
 ```python
-__init__(self, project_root)
+__init__(self: Any, project_root: Path)
 ```
+
+---
 
 ---
 

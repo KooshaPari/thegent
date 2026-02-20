@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/orchestration/billing.py`
 
 WP-19004: Quota & Billing for Multi-Tenant Teams.
+
 Enforces resource quotas (runs, tokens, storage) per team/tenant.
 
 ---
@@ -16,62 +17,70 @@ Manages resource quotas and billing for multi-tenant teams.
 #### TeamBillingManager.__init__
 
 ```python
-__init__(self, session_dir)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
 
 #### TeamBillingManager.check_quota
 
+```python
+check_quota(self: Any, team_id: str, resource: str, cost: float)
+```
+
 Check if a team has enough quota for a resource.
 
-```python
-check_quota(self, team_id, resource, cost)
-```
+---
 
 #### TeamBillingManager.get_billing_report
 
+```python
+get_billing_report(self: Any, team_id: str)
+```
+
 Generate a billing report for a team.
 
-```python
-get_billing_report(self, team_id)
-```
+---
 
 #### TeamBillingManager.record_usage
 
+```python
+record_usage(self: Any, team_id: str, resource: str, amount: float)
+```
+
 Record resource usage for a team.
 
-```python
-record_usage(self, team_id, resource, amount)
-```
+---
 
 ---
 
 ## check_quota
 
-Check if a team has enough quota for a resource.
-
 ```python
-check_quota(self, team_id, resource, cost)
+check_quota(self: Any, team_id: str, resource: str, cost: float)
 ```
+
+Check if a team has enough quota for a resource.
 
 ---
 
 ## get_billing_report
 
-Generate a billing report for a team.
-
 ```python
-get_billing_report(self, team_id)
+get_billing_report(self: Any, team_id: str)
 ```
+
+Generate a billing report for a team.
 
 ---
 
 ## record_usage
 
-Record resource usage for a team.
-
 ```python
-record_usage(self, team_id, resource, amount)
+record_usage(self: Any, team_id: str, resource: str, amount: float)
 ```
+
+Record resource usage for a team.
 
 ---
 

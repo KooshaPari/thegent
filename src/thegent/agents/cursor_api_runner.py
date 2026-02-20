@@ -92,6 +92,7 @@ class CursorApiRunner(AgentRunner):
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
         agent_model: str | None = None,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         model = agent_model or self._model
         base_url = self._settings.cursor_api_url.rstrip("/")
@@ -109,9 +110,11 @@ class CursorApiRunner(AgentRunner):
                 timed_out=False,
             )
 
-        env = os.environ.copy()
-        env["OPENAI_BASE_URL"] = base_url
-        env["OPENAI_API_KEY"] = token or "sk-dummy"
+        process_env = os.environ.copy()
+        process_env["OPENAI_BASE_URL"] = base_url
+        process_env["OPENAI_API_KEY"] = token or "sk-dummy"
+        if env:
+            process_env.update(env)
 
         codex_cmd = _resolve_codex()
         cmd = [codex_cmd, "exec", "-", "--skip-git-repo-check"]
@@ -129,7 +132,7 @@ class CursorApiRunner(AgentRunner):
         cmd = wrap_with_caffeinate(cmd, "cursor-api")
 
         try:
-            return _run_with_retry(cmd, prompt, cwd, timeout, env)
+            return _run_with_retry(cmd, prompt, cwd, timeout, process_env)
         except TransientAgentError as e:
             return e.result
         except FileNotFoundError:

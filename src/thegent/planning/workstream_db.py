@@ -4,6 +4,7 @@ SQLite database for tracking sessions, workstream items, launches, and all relat
 Harmonized with EvidenceLedger, RunRegistry, and other thegent components.
 """
 
+import contextlib
 import json
 import logging
 import sqlite3
@@ -19,9 +20,11 @@ _log = logging.getLogger(__name__)
 
 
 class WorkstreamDB:
-    """SQLite database for workstream tracking and auto-launch observability."""
+    """SQLite database for workstream tracking and auto-launch observability.
+    Canonical PM: DB is primary; WORK_STREAM.md is generated view.
+    """
 
-    SCHEMA_VERSION = 1
+    SCHEMA_VERSION = 2
 
     def __init__(self, db_path: Path | None = None, settings: ThegentSettings | None = None) -> None:
         """Initialize workstream database.
@@ -47,17 +50,23 @@ class WorkstreamDB:
         conn.execute("PRAGMA foreign_keys = ON")
         cursor = conn.cursor()
 
-        # Check if schema exists
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_version'"
-        )
+        # Check if schema exists and run migrations if needed
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_version'")
         if cursor.fetchone():
-            # Schema exists, check version
             cursor.execute("SELECT version FROM schema_version ORDER BY id DESC LIMIT 1")
             row = cursor.fetchone()
-            if row and row[0] >= self.SCHEMA_VERSION:
+            current_version = row[0] if row else 0
+            if current_version >= self.SCHEMA_VERSION:
                 conn.close()
                 return
+            # Run migrations
+            if current_version < 2:
+                self._migrate_v1_to_v2(cursor)
+            cursor.execute("INSERT INTO schema_version (version) VALUES (?)", (self.SCHEMA_VERSION,))
+            conn.commit()
+            conn.close()
+            _log.info(f"Migrated workstream database to schema v{self.SCHEMA_VERSION}")
+            return
 
         # Create schema version table
         cursor.execute(
@@ -94,13 +103,14 @@ class WorkstreamDB:
             """
         )
 
-        # Workstream items table (harmonized with WORK_STREAM.md)
+        # Workstream items table (canonical PM; source_system=AGILEPLUS|WORK_STREAM|PROMPT_QUEUE|ESCALATION|DEFERRAL)
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS workstream_items (
                 item_id TEXT PRIMARY KEY,
                 title TEXT,
                 source TEXT,
+                source_system TEXT,
                 priority TEXT,
                 status TEXT,
                 claimed_at TIMESTAMP,
@@ -109,8 +119,12 @@ class WorkstreamDB:
                 notes TEXT,
                 created_at TIMESTAMP,
                 last_synced_at TIMESTAMP,
+                last_attempted_at TIMESTAMP,
                 retry_count INTEGER DEFAULT 0,
-                last_error TEXT
+                last_error TEXT,
+                tags TEXT,
+                category TEXT,
+                metadata TEXT
             )
             """
         )
@@ -400,6 +414,20 @@ class WorkstreamDB:
         # Reputation tracking (harmonized with ReputationManager)
         cursor.execute(
             """
+            CREATE TABLE IF NOT EXISTS reputation (
+                agent_id TEXT PRIMARY KEY,
+                trust_score REAL DEFAULT 1.0,
+                entries_count INTEGER DEFAULT 0,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                xp INTEGER DEFAULT 0,
+                level INTEGER DEFAULT 1
+            )
+            """
+        )
+
+        # Reputation entries (harmonized with ReputationManager)
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS reputation_entries (
                 reputation_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 agent_id TEXT,
@@ -407,7 +435,8 @@ class WorkstreamDB:
                 task_id TEXT,
                 rating REAL,
                 feedback_hash TEXT,
-                timestamp TIMESTAMP
+                timestamp TIMESTAMP,
+                FOREIGN KEY (agent_id) REFERENCES reputation(agent_id)
             )
             """
         )
@@ -528,13 +557,20 @@ class WorkstreamDB:
             cursor.execute(index_sql)
 
         # Record schema version
-        cursor.execute(
-            "INSERT INTO schema_version (version) VALUES (?)", (self.SCHEMA_VERSION,)
-        )
+        cursor.execute("INSERT INTO schema_version (version) VALUES (?)", (self.SCHEMA_VERSION,))
 
         conn.commit()
         conn.close()
         _log.info(f"Initialized workstream database at {self.db_path}")
+
+    def _migrate_v1_to_v2(self, cursor: sqlite3.Cursor) -> None:
+        """Add source_system and metadata columns for canonical PM."""
+        cursor.execute("PRAGMA table_info(workstream_items)")
+        cols = {row[1] for row in cursor.fetchall()}
+        if "source_system" not in cols:
+            cursor.execute("ALTER TABLE workstream_items ADD COLUMN source_system TEXT")
+        if "metadata" not in cols:
+            cursor.execute("ALTER TABLE workstream_items ADD COLUMN metadata TEXT")
 
     def get_running_count(self) -> int:
         """Get count of running sessions."""
@@ -551,9 +587,9 @@ class WorkstreamDB:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT lane, COUNT(*) 
-            FROM sessions 
-            WHERE status = 'running' 
+            SELECT lane, COUNT(*)
+            FROM sessions
+            WHERE status = 'running'
             GROUP BY lane
             """
         )
@@ -567,7 +603,7 @@ class WorkstreamDB:
         cursor = conn.cursor()
         cursor.execute(
             """
-            UPDATE sessions 
+            UPDATE sessions
             SET status = 'exited', completed_at = ?, exit_code = ?
             WHERE session_id = ?
             """,
@@ -589,16 +625,17 @@ class WorkstreamDB:
         """Record a launch in the database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
+        now = datetime.now(UTC).isoformat()
         cursor.execute(
             """
-            INSERT INTO launches 
+            INSERT INTO launches
             (item_id, session_id, launched_at, lane, model, estimated_cost_usd, trigger_type)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 item_id,
                 session_id,
-                datetime.now(UTC).isoformat(),
+                now,
                 lane,
                 model,
                 estimated_cost,
@@ -607,11 +644,16 @@ class WorkstreamDB:
         )
         launch_id = cursor.lastrowid
 
+        # Also update workstream item status and last attempted
+        cursor.execute(
+            "UPDATE workstream_items SET status = 'running', last_attempted_at = ? WHERE item_id = ?", (now, item_id)
+        )
+
         # Record process tracking if pid provided
         if pid:
             cursor.execute(
                 """
-                INSERT INTO process_tracking 
+                INSERT INTO process_tracking
                 (session_id, pid, name, started_at)
                 VALUES (?, ?, ?, ?)
                 """,
@@ -626,7 +668,7 @@ class WorkstreamDB:
         """Record cost for a session."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         # Get session info if model not provided
         if not model:
             cursor.execute("SELECT model, owner_tag FROM sessions WHERE session_id = ?", (session_id,))
@@ -640,25 +682,25 @@ class WorkstreamDB:
 
         cursor.execute(
             """
-            INSERT INTO cost_tracking 
+            INSERT INTO cost_tracking
             (session_id, owner_tag, date, cost_usd, tokens_total, model)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
             (session_id, owner_tag, datetime.now(UTC).date().isoformat(), cost_usd, tokens_total, model),
         )
-        
+
         # Update session record
         cursor.execute(
             "UPDATE sessions SET cost_usd = ?, tokens_total = ? WHERE session_id = ?",
             (cost_usd, tokens_total, session_id),
         )
-        
+
         # Update launch record if exists
         cursor.execute(
             "UPDATE launches SET actual_cost_usd = ? WHERE session_id = ?",
             (cost_usd, session_id),
         )
-        
+
         conn.commit()
         conn.close()
 
@@ -668,7 +710,7 @@ class WorkstreamDB:
         cursor = conn.cursor()
         cursor.execute(
             """
-            UPDATE process_tracking 
+            UPDATE process_tracking
             SET memory_mb = ?, cpu_percent = ?, num_threads = ?, open_files = ?, connections = ?, num_fds = ?
             WHERE session_id = ?
             """,
@@ -691,7 +733,7 @@ class WorkstreamDB:
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO constitutional_violations 
+            INSERT INTO constitutional_violations
             (item_id, session_id, principle_id, reason, remediation, timestamp)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
@@ -709,18 +751,18 @@ class WorkstreamDB:
 
     def sync_workstream(self, workstream_data: dict[str, Any]) -> None:
         """Sync workstream data from markdown parser to database.
-        
+
         Args:
             workstream_data: Dict with 'backlog', 'claimed', 'completed' keys.
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         # 1. Update workstream_items
         backlog = workstream_data.get("backlog", [])
         claimed = workstream_data.get("claimed", set())
         completed = workstream_data.get("completed", set())
-        
+
         # Upsert items from backlog
         for item in backlog:
             item_id = item["id"]
@@ -729,14 +771,15 @@ class WorkstreamDB:
                 status = "claimed"
             elif item_id in completed:
                 status = "completed"
-                
+
             cursor.execute(
                 """
-                INSERT INTO workstream_items (item_id, title, source, priority, status, last_synced_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO workstream_items (item_id, title, source, source_system, priority, status, last_synced_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(item_id) DO UPDATE SET
                     title=excluded.title,
                     source=excluded.source,
+                    source_system=excluded.source_system,
                     priority=excluded.priority,
                     status=excluded.status,
                     last_synced_at=excluded.last_synced_at
@@ -745,12 +788,13 @@ class WorkstreamDB:
                     item_id,
                     item.get("title", ""),
                     item.get("source", ""),
+                    "WORK_STREAM",
                     item.get("priority", "P2"),
                     status,
                     datetime.now(UTC).isoformat(),
                 ),
             )
-            
+
             # Update dependencies
             depends = item.get("depends", [])
             # First remove existing dependencies for this item
@@ -760,50 +804,341 @@ class WorkstreamDB:
                     "INSERT OR IGNORE INTO dependencies (item_id, depends_on_item_id) VALUES (?, ?)",
                     (item_id, dep_id),
                 )
-        
-        # Upsert items that are only in claimed/completed but not in backlog
-        # (Shouldn't happen often but for robustness)
-        for item_id in (claimed | completed):
-            cursor.execute("SELECT 1 FROM workstream_items WHERE item_id = ?", (item_id,))
-            if not cursor.fetchone():
-                status = "claimed" if item_id in claimed else "completed"
-                cursor.execute(
-                    """
-                    INSERT INTO workstream_items (item_id, status, last_synced_at)
-                    VALUES (?, ?, ?)
-                    """,
-                    (item_id, status, datetime.now(UTC).isoformat()),
-                )
+
+        # Upsert items that are only in claimed/completed but not in backlog (ensure status updated)
+        for item_id in claimed | completed:
+            status = "claimed" if item_id in claimed else "completed"
+            cursor.execute(
+                """
+                INSERT INTO workstream_items (item_id, status, source_system, last_synced_at)
+                VALUES (?, ?, 'WORK_STREAM', ?)
+                ON CONFLICT(item_id) DO UPDATE SET
+                    status=excluded.status,
+                    last_synced_at=excluded.last_synced_at
+                """,
+                (item_id, status, datetime.now(UTC).isoformat()),
+            )
 
         conn.commit()
         conn.close()
 
-    def get_ready_items(self, max_retries: int = 3) -> list[dict[str, Any]]:
-        """Get items that are pending and have all dependencies satisfied."""
+    def upsert_canonical_item(
+        self,
+        item_id: str,
+        title: str,
+        source: str = "",
+        source_system: str = "WORK_STREAM",
+        priority: str = "P2",
+        status: str = "pending",
+        metadata: dict[str, Any] | None = None,
+        depends: list[str] | None = None,
+    ) -> None:
+        """Upsert a work item into the canonical PM store."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        now = datetime.now(UTC).isoformat()
+        meta_json = json.dumps(metadata) if metadata else None
+        cursor.execute(
+            """
+            INSERT INTO workstream_items (item_id, title, source, source_system, priority, status, last_synced_at, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(item_id) DO UPDATE SET
+                title=excluded.title,
+                source=excluded.source,
+                source_system=excluded.source_system,
+                priority=excluded.priority,
+                status=excluded.status,
+                last_synced_at=excluded.last_synced_at,
+                metadata=excluded.metadata
+            """,
+            (item_id, title, source, source_system, priority, status, now, meta_json),
+        )
+        if depends:
+            cursor.execute("DELETE FROM dependencies WHERE item_id = ?", (item_id,))
+            for dep_id in depends:
+                cursor.execute(
+                    "INSERT OR IGNORE INTO dependencies (item_id, depends_on_item_id) VALUES (?, ?)",
+                    (item_id, dep_id),
+                )
+        conn.commit()
+        conn.close()
+
+    def sync_from_agileplus(self, session_dir: Path) -> int:
+        """Sync AgilePlus backlog.jsonl into canonical workstream. Returns count upserted."""
+        from thegent.governance.backlog import BacklogManager
+
+        bm = BacklogManager(session_dir)
+        pending = bm.get_pending()
+        for p in pending:
+            item_id = f"backlog-{p.item_id}"
+            self.upsert_canonical_item(
+                item_id=item_id,
+                title=p.description[:200],
+                source="agileplus",
+                source_system="AGILEPLUS",
+                priority="P2" if p.severity < 0.5 else "P1",
+                status="pending",
+                metadata={"finding_id": p.finding_id, "dimension": p.dimension, "severity": p.severity},
+            )
+        return len(pending)
+
+    def sync_from_queues(self, session_dir: Path) -> int:
+        """Sync PromptQueue, EscalationQueue, DeferralQueue into canonical workstream. Returns count upserted."""
+        count = 0
+
+        # PromptQueue
+        try:
+            from thegent.queue.storage import PromptQueue
+
+            pq = PromptQueue(session_dir)
+            all_items = pq.list_all(include_done=False, include_expired=True)
+            for it in all_items:
+                if it.get("status") != "pending":
+                    continue
+                item_id = f"defer-{it['id']}"
+                self.upsert_canonical_item(
+                    item_id=item_id,
+                    title=(it.get("prompt", "") or "")[:200],
+                    source="prompt_queue",
+                    source_system="PROMPT_QUEUE",
+                    priority="P1",
+                    status="pending",
+                    metadata={"queue_item_id": it["id"], "project": it.get("project")},
+                )
+                count += 1
+        except Exception:
+            pass
+
+        # EscalationQueue (past-SLA)
+        try:
+            from thegent.execution import EscalationQueue
+
+            eq = EscalationQueue(session_dir)
+            past_sla = eq.list_pending(past_sla_only=True, limit=100)
+            for e in past_sla:
+                run_id = e.get("run_id", "?")
+                item_id = f"escalation-{run_id}"
+                reason = e.get("reason", "")
+                self.upsert_canonical_item(
+                    item_id=item_id,
+                    title=f"Resolve escalation: {reason[:100]}",
+                    source="escalation_queue",
+                    source_system="ESCALATION",
+                    priority="P0",
+                    status="pending",
+                    metadata={"run_id": run_id, "reason": reason},
+                )
+                count += 1
+        except Exception:
+            pass
+
+        # DeferralQueue (deferred_tasks.jsonl + deferral_queue.jsonl)
+        try:
+            for path, id_key, meta_key in [
+                (session_dir / "deferred_tasks.jsonl", "task_id", "task_id"),
+                (session_dir / "deferral_queue.jsonl", "run_id", "run_id"),
+            ]:
+                if not path.exists():
+                    continue
+                with path.open("r", encoding="utf-8") as f:
+                    for line in f:
+                        if not line.strip():
+                            continue
+                        try:
+                            d = json.loads(line)
+                            if path.name == "deferral_queue.jsonl" and d.get("status") != "deferred":
+                                continue
+                            ext_id = d.get(id_key, "?")
+                            item_id = f"deferral-{ext_id}"
+                            reason = d.get("reason", "")
+                            self.upsert_canonical_item(
+                                item_id=item_id,
+                                title=f"Resume deferred: {reason[:100]}",
+                                source=path.stem,
+                                source_system="DEFERRAL",
+                                priority="P1",
+                                status="pending",
+                                metadata={meta_key: ext_id},
+                            )
+                            count += 1
+                        except Exception:
+                            continue
+        except Exception:
+            pass
+
+        return count
+
+    def get_next_items(self, limit: int = 10, completed_ids: set[str] | None = None) -> list[dict[str, Any]]:
+        """Get next actionable items from canonical DB (do_next format)."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
+        completed = completed_ids or set()
+
+        # Get items with status pending or backlog, sorted by priority
+        # For WORK_STREAM items, require deps satisfied; others (queues) are always ready
+        cursor.execute(
+            """
+            SELECT wi.*, wi.metadata as meta_json
+            FROM workstream_items wi
+            WHERE wi.status IN ('pending', 'backlog')
+            AND (
+                wi.source_system NOT IN ('WORK_STREAM', '') AND (wi.source_system IS NOT NULL)
+                OR NOT EXISTS (SELECT 1 FROM dependencies d WHERE d.item_id = wi.item_id)
+                OR NOT EXISTS (
+                    SELECT 1 FROM dependencies d
+                    JOIN workstream_items wi2 ON d.depends_on_item_id = wi2.item_id
+                    WHERE d.item_id = wi.item_id AND (wi2.status IS NULL OR wi2.status != 'completed')
+                )
+            )
+            ORDER BY
+                CASE wi.priority WHEN 'P0' THEN 1 WHEN 'P1' THEN 2 WHEN 'P2' THEN 3 ELSE 4 END,
+                COALESCE(wi.last_synced_at, '')
+            LIMIT ?
+            """,
+            (limit * 2,),
+        )
+        rows = cursor.fetchall()
+        conn.close()
+
+        result = []
+        for row in rows:
+            r = dict(row)
+            item_id = r["item_id"]
+            if item_id in completed:
+                continue
+            meta = {}
+            if r.get("meta_json"):
+                with contextlib.suppress(Exception):
+                    meta = json.loads(r["meta_json"]) or {}
+            source_system = r.get("source_system") or "WORK_STREAM"
+            title = r.get("title") or item_id
+            prompt_suggestion = f"Complete {item_id}: {title}"
+            if source_system == "PROMPT_QUEUE":
+                prompt_suggestion = title
+            elif source_system == "ESCALATION":
+                prompt_suggestion = f"Resolve escalation {meta.get('run_id', item_id)}: {meta.get('reason', '')}"
+            elif source_system == "DEFERRAL":
+                prompt_suggestion = f"Resume deferred {meta.get('run_id', meta.get('task_id', item_id))}"
+            elif source_system == "AGILEPLUS":
+                prompt_suggestion = f"Address finding {meta.get('finding_id', '')}: {title}"
+
+            result.append(
+                {
+                    "id": item_id,
+                    "description": title[:80] + ("..." if len(title) > 80 else ""),
+                    "source": source_system,
+                    "priority": r.get("priority") or "P2",
+                    "prompt_suggestion": prompt_suggestion,
+                    **{
+                        k: v
+                        for k, v in meta.items()
+                        if k in ("queue_item_id", "run_id", "task_id", "project", "backlog_item_id")
+                    },
+                }
+            )
+            if meta.get("queue_item_id") is not None:
+                result[-1]["queue_item_id"] = meta["queue_item_id"]
+            if meta.get("run_id"):
+                result[-1]["run_id"] = meta["run_id"]
+            if meta.get("task_id"):
+                result[-1]["task_id"] = meta["task_id"]
+            if meta.get("finding_id"):
+                result[-1]["backlog_item_id"] = r["item_id"].replace("backlog-", "")
+            if len(result) >= limit:
+                break
+        return result
+
+    def generate_work_stream_md(self, output_path: Path) -> None:
+        """Generate WORK_STREAM.md from canonical DB."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT item_id, title, source, priority, status, claimed_at, completed_at, agent_id, source_system
+            FROM workstream_items
+            WHERE source_system = 'WORK_STREAM' OR source_system IS NULL
+            ORDER BY
+                CASE priority WHEN 'P0' THEN 1 WHEN 'P1' THEN 2 WHEN 'P2' THEN 3 ELSE 4 END,
+                item_id
+            """
+        )
+        ws_items = [dict(row) for row in cursor.fetchall()]
+        cursor.execute("SELECT item_id, depends_on_item_id FROM dependencies")
+        deps = {}
+        for row in cursor.fetchall():
+            deps.setdefault(row[0], []).append(row[1])
+        conn.close()
+
+        backlog = [i for i in ws_items if i["status"] in ("pending", "backlog")]
+        claimed = [i for i in ws_items if i["status"] == "claimed"]
+        completed = [i for i in ws_items if i["status"] == "completed"]
+
+        lines = [
+            "# Unified Work Stream — Canonical",
+            "",
+            "> **Purpose**: Single source of truth. Generated from workstream.db.",
+            "",
+            "---",
+            "",
+            "## BACKLOG (not started)",
+            "",
+            "| ID | Title | Source | Priority | Depends |",
+            "|----|-------|--------|----------|---------|",
+        ]
+        for item in backlog:
+            dep_str = ", ".join(deps.get(item["item_id"], []))
+            lines.append(
+                f"| {item['item_id']} | {item.get('title', '')} | {item.get('source', '')} | {item.get('priority', 'P2')} | {dep_str} |"
+            )
+        lines.extend(["", "## CLAIMED (in progress)", "", "| ID | Agent | Started |", "|----|-------|---------|"])
+        for item in claimed:
+            lines.append(f"| {item['item_id']} | {item.get('agent_id', '')} | {item.get('claimed_at', '')} |")
+        lines.extend(["", "## COMPLETED", "", "| ID | Agent | Completed |", "|----|-------|-----------|"])
+        for item in completed:
+            lines.append(f"| {item['item_id']} | {item.get('agent_id', '')} | {item.get('completed_at', '')} |")
+        lines.append("")
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text("\n".join(lines), encoding="utf-8")
+        _log.info(f"Generated WORK_STREAM.md from {self.db_path}")
+
+    def get_ready_items(self, max_retries: int = 3, base_backoff_sec: int = 300) -> list[dict[str, Any]]:
+        """Get items that are pending and have all dependencies satisfied.
+
+        Supports exponential backoff for failed items.
+        """
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        now = datetime.now(UTC).isoformat()
+
         # Items with no unsatisfied dependencies
+        # Filter for failed items where backoff has passed
+        # backoff_sec = base_backoff_sec * (2 ** retry_count)
         cursor.execute(
             """
             SELECT wi.* FROM workstream_items wi
-            WHERE (wi.status IN ('pending', 'backlog') OR (wi.status = 'failed' AND wi.retry_count < ?))
+            WHERE (wi.status IN ('pending', 'backlog')
+               OR (wi.status = 'failed' AND wi.retry_count < ? AND
+                   (julianday(?) - julianday(wi.last_attempted_at)) * 86400 > (? * (1 << wi.retry_count))))
             AND NOT EXISTS (
                 SELECT 1 FROM dependencies d
                 JOIN workstream_items wi2 ON d.depends_on_item_id = wi2.item_id
                 WHERE d.item_id = wi.item_id
-                AND wi2.status != 'completed'
+                AND (wi2.status != 'completed' OR wi2.status IS NULL)
             )
-            ORDER BY 
-                CASE wi.priority 
-                    WHEN 'P0' THEN 1 
-                    WHEN 'P1' THEN 2 
-                    WHEN 'P2' THEN 3 
-                    ELSE 4 
+            ORDER BY
+                CASE wi.priority
+                    WHEN 'P0' THEN 1
+                    WHEN 'P1' THEN 2
+                    WHEN 'P2' THEN 3
+                    ELSE 4
                 END
             """,
-            (max_retries,)
+            (max_retries, now, base_backoff_sec),
         )
         rows = cursor.fetchall()
         conn.close()
@@ -830,9 +1165,7 @@ class WorkstreamDB:
         completed = cursor.fetchone()[0]
 
         # Success rate
-        cursor.execute(
-            "SELECT COUNT(*) FROM sessions WHERE status = 'exited' AND exit_code = 0"
-        )
+        cursor.execute("SELECT COUNT(*) FROM sessions WHERE status = 'exited' AND exit_code = 0")
         successful = cursor.fetchone()[0]
         success_rate = (successful / completed * 100) if completed > 0 else 0.0
 
@@ -859,22 +1192,21 @@ class WorkstreamDB:
             "avg_duration": avg_duration,
             "deferred": deferred,
         }
-        
+
         # Cache results
         with self._cache_lock:
             self._stats_cache["stats"] = stats
             self._stats_cache["last_stats_refresh"] = datetime.now(UTC).isoformat()
-            
+
         return stats
 
-    @lru_cache(maxsize=32)
     def get_recent_costs(self, limit: int = 10) -> list[dict[str, Any]]:
         """Get recent cost tracking entries."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 date as period,
                 SUM(cost_usd) as cost_usd,
                 COUNT(*) as task_count,
@@ -905,9 +1237,20 @@ class WorkstreamDB:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute(query, params)
+
+        # Commit if it's a modifying query
+        if query.strip().upper().startswith(("INSERT", "UPDATE", "DELETE", "REPLACE")):
+            conn.commit()
+
         rows = cursor.fetchall()
         conn.close()
         return [dict(row) for row in rows]
+
+    def get_top_agents(self, limit: int = 10) -> list[dict[str, Any]]:
+        """Get top agents by XP."""
+        return self.execute_query(
+            "SELECT agent_id, xp, level, trust_score FROM reputation ORDER BY xp DESC LIMIT ?", (limit,)
+        )
 
     def get_session(self, session_id: str) -> dict[str, Any] | None:
         """Get session by ID."""
@@ -921,7 +1264,25 @@ class WorkstreamDB:
     def get_active_items(self) -> list[dict[str, Any]]:
         """Get active workstream items."""
         return self.execute_query(
-            "SELECT * FROM workstream_items WHERE status IN ('backlog', 'claimed') ORDER BY priority ASC"
+            "SELECT * FROM workstream_items WHERE status IN ('backlog', 'claimed', 'running', 'pending') ORDER BY priority ASC"
+        )
+
+    def get_dependency_graph(self) -> list[dict[str, Any]]:
+        """Get the full dependency graph."""
+        return self.execute_query(
+            """
+            SELECT
+                d.item_id,
+                wi1.title as item_title,
+                wi1.status as item_status,
+                d.depends_on_item_id,
+                wi2.title as depends_on_title,
+                wi2.status as depends_on_status,
+                d.satisfied_at
+            FROM dependencies d
+            JOIN workstream_items wi1 ON d.item_id = wi1.item_id
+            JOIN workstream_items wi2 ON d.depends_on_item_id = wi2.item_id
+            """
         )
 
     def record_session(
@@ -942,7 +1303,7 @@ class WorkstreamDB:
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT OR REPLACE INTO sessions 
+            INSERT OR REPLACE INTO sessions
             (session_id, agent, prompt, status, started_at, workstream_item_id, lane, model, owner_tag, team_id, task_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -965,7 +1326,7 @@ class WorkstreamDB:
 
     def sync_with_markdown(self, work_stream_path: Path) -> None:
         """Sync WORK_STREAM.md with the database.
-        
+
         Bidirectional sync:
         1. Parse WORK_STREAM.md
         2. Update database workstream_items and dependencies
@@ -976,13 +1337,14 @@ class WorkstreamDB:
             return
 
         from thegent.integration.work_stream import WorkStreamIntegration
+
         integration = WorkStreamIntegration(work_stream_path)
-        
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         now = datetime.now(UTC).isoformat()
-        
+
         # 1. Sync items
         for section, status in [("pending", "backlog"), ("claimed", "claimed"), ("completed", "completed")]:
             items = integration.work_stream_data.get(section, [])
@@ -990,12 +1352,12 @@ class WorkstreamDB:
                 item_id = item.get("ID")
                 if not item_id:
                     continue
-                
+
                 title = item.get("Title", "")
                 source = item.get("Source", "")
                 priority = item.get("Priority", "P2")
                 agent_id = item.get("Agent", "")
-                
+
                 cursor.execute(
                     """
                     INSERT INTO workstream_items (item_id, title, source, priority, status, agent_id, last_synced_at)
@@ -1008,21 +1370,21 @@ class WorkstreamDB:
                         agent_id=excluded.agent_id,
                         last_synced_at=excluded.last_synced_at
                     """,
-                    (item_id, title, source, priority, status, agent_id, now)
+                    (item_id, title, source, priority, status, agent_id, now),
                 )
-                
+
                 # 2. Sync dependencies
                 depends_on = item.get("Depends", "")
-                if depends_on and depends_on != "—" and depends_on != "-":
+                if depends_on and depends_on not in {"—", "-"}:
                     # Split by comma or semicolon
                     dep_ids = [d.strip() for d in depends_on.replace(";", ",").split(",")]
                     for dep_id in dep_ids:
                         if not dep_id or dep_id.startswith("✅"):
                             continue
-                        
+
                         cursor.execute(
                             "INSERT OR IGNORE INTO dependencies (item_id, depends_on_item_id) VALUES (?, ?)",
-                            (item_id, dep_id)
+                            (item_id, dep_id),
                         )
 
         conn.commit()

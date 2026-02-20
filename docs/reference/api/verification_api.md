@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/agents/verification.py`
 
 WP-16001: Multi-Step CoT Verification.
+
 Chain-of-Thought (CoT) verification before agent execution.
 
 ---
@@ -16,24 +17,30 @@ Verifies multi-step agent reasoning chains before final execution.
 #### CoTVerifier.__init__
 
 ```python
-__init__(self, run_id)
+__init__(self: Any, run_id: str)
 ```
+
+---
 
 #### CoTVerifier.get_summary
 
+```python
+get_summary(self: Any)
+```
+
 Summarize all verification results.
 
-```python
-get_summary(self)
-```
+---
 
 #### CoTVerifier.verify_step
 
+```python
+verify_step(self: Any, step_id: str, prompt: str, reasoning: str)
+```
+
 Verify a single reasoning step against its intended prompt.
 
-```python
-verify_step(self, step_id, prompt, reasoning)
-```
+---
 
 ---
 
@@ -47,21 +54,21 @@ Result of a CoT step verification.
 
 ## get_summary
 
-Summarize all verification results.
-
 ```python
-get_summary(self)
+get_summary(self: Any)
 ```
+
+Summarize all verification results.
 
 ---
 
 ## verify_step
 
-Verify a single reasoning step against its intended prompt.
-
 ```python
-verify_step(self, step_id, prompt, reasoning)
+verify_step(self: Any, step_id: str, prompt: str, reasoning: str)
 ```
+
+Verify a single reasoning step against its intended prompt.
 
 ---
 

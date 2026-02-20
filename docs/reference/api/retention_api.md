@@ -15,46 +15,54 @@ Manages retention and archival of compliance evidence.
 #### EvidenceRetentionManager.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: ThegentSettings)
 ```
+
+---
 
 #### EvidenceRetentionManager.enforce_retention
 
+```python
+enforce_retention(self: Any)
+```
+
 Scan evidence and archive or delete based on policy.
+
 Returns counts of processed items.
 
-```python
-enforce_retention(self)
-```
+---
 
 #### EvidenceRetentionManager.list_archived
 
+```python
+list_archived(self: Any)
+```
+
 Return list of archived evidence files.
 
-```python
-list_archived(self)
-```
+---
 
 ---
 
 ## enforce_retention
 
-Scan evidence and archive or delete based on policy.
-Returns counts of processed items.
-
 ```python
-enforce_retention(self)
+enforce_retention(self: Any)
 ```
+
+Scan evidence and archive or delete based on policy.
+
+Returns counts of processed items.
 
 ---
 
 ## list_archived
 
-Return list of archived evidence files.
-
 ```python
-list_archived(self)
+list_archived(self: Any)
 ```
+
+Return list of archived evidence files.
 
 ---
 

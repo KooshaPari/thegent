@@ -54,6 +54,7 @@ def _run_ps() -> str:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         return res.stdout or ""
     except Exception as e:

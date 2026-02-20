@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Audit docs/**/*.md for convert phase: H1, frontmatter, See also/Related.
 # See: docs/research/RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md §5.2
 set -euo pipefail

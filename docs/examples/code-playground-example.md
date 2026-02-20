@@ -9,11 +9,7 @@ This page demonstrates the CodePlayground component for interactive code example
 <CodePlayground 
   lang="python" 
   title="Agent Example"
-  code="from thegent import Agent
-
-agent = Agent('codex')
-result = agent.run('Hello world')
-print(result)" 
+  code="from thegent import Agent\n\nagent = Agent('codex')\nresult = agent.run('Hello world')\nprint(result)" 
 />
 
 ---
@@ -23,9 +19,7 @@ print(result)"
 <CodePlayground 
   lang="bash" 
   title="CLI Example"
-  code="thegent run codex 'Fix this bug'
-thegent list agents
-thegent status" 
+  code="thegent run codex 'Fix this bug'\nthegent list agents\nthegent status" 
 />
 
 ---
@@ -35,9 +29,7 @@ thegent status"
 <CodePlayground 
   lang="javascript" 
   title="API Example"
-  code="const agent = new Agent('codex');
-const result = await agent.run('Hello world');
-console.log(result);" 
+  code="const agent = new Agent('codex');\nconst result = await agent.run('Hello world');\nconsole.log(result);" 
 />
 
 ---

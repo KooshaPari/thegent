@@ -2,7 +2,7 @@
 
 ## Overview
 
-Design for a unified system tray application that combines existing ShareCLI monitoring with new thegent features. The application uses a plugin-based architecture allowing both ShareCLI and thegent to coexist in a single tray application.
+Design for a unified system tray application that combines existing heliosShield monitoring with new thegent features. The application uses a plugin-based architecture allowing both heliosShield and thegent to coexist in a single tray application.
 
 **Date:** 2026-02-15
 **Status:** Approved
@@ -23,7 +23,7 @@ tray-app/
 │   └── shared_widgets.py          # Common UI components
 │
 ├── plugins/                       # Feature plugins
-│   ├── sharecli/                  # Existing ShareCLI features (as plugin)
+│   ├── heliosShield/                  # Existing heliosShield features (as plugin)
 │   │   ├── __init__.py           # Plugin registration
 │   │   ├── tabs.py               # Reuse existing tabs
 │   │   ├── workers.py            # Reuse existing workers
@@ -76,7 +76,7 @@ class TrayPlugin(ABC):
 
 | Plugin | Method | Endpoint/Command |
 |--------|--------|------------------|
-| ShareCLI | Subprocess | `harness status`, `harness metrics`, etc. |
+| heliosShield | Subprocess | `harness status`, `harness metrics`, etc. |
 | thegent | HTTP REST | `http://127.0.0.1:3847/api/v1/*` |
 
 ---
@@ -94,7 +94,7 @@ class TrayPlugin(ABC):
 
 ### Pages and Navigation
 
-#### ShareCLI Section (Existing)
+#### heliosShield Section (Existing)
 - Overview: Cache hit rate, metrics, Flush/Sync actions
 - Harness: Full `harness status` output
 - Coordination: Intents, fair share, deadlock status
@@ -243,7 +243,7 @@ class TrayPlugin(ABC):
 
 ### Phase 1: Plugin System Foundation
 - Create core plugin system
-- Refactor existing ShareCLI into plugin format
+- Refactor existing heliosShield into plugin format
 - Create combined run_tray.py
 
 ### Phase 2: thegent API Client
@@ -270,7 +270,7 @@ class TrayPlugin(ABC):
 
 1. Tray icon appears and responds to clicks
 2. Main window shows with sidebar navigation
-3. ShareCLI tabs work as before (backward compatible)
+3. heliosShield tabs work as before (backward compatible)
 4. thegent plugin loads and shows all 6 new tabs
 5. Project CRUD operations work via REST API
 6. Agent management works

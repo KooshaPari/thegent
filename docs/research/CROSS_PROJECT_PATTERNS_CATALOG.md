@@ -19,7 +19,7 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 
 | Pattern | Source | Description | Borrowable To |
 |---------|--------|-------------|---------------|
-| **P0-P4 Priority System** | sharecli | P0 Blocker, P1 Feature (1 sprint), P2 Polish (2 sprints), P3 Research (3 sprints), P4 Icebox | All projects |
+| **P0-P4 Priority System** | heliosShield | P0 Blocker, P1 Feature (1 sprint), P2 Polish (2 sprints), P3 Research (3 sprints), P4 Icebox | All projects |
 | **Story Point Estimation** | smolgents | Detailed point estimates with velocity tracking | Complex projects |
 | **Phase-Based Planning** | trace, dphi | Clear phase boundaries with completion tracking | MCP servers, planning systems |
 
@@ -31,9 +31,9 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 |---------|--------|-------------|---------------|
 | **Agent Claiming System** | thegent | Agent-based work claiming with timestamps | Multi-agent projects |
 | **Research Doc Integration** | thegent | Link research docs to work items, track extensions | All projects |
-| **Dependency Tracking** | thegent, sharecli | Explicit dependency columns, blocking relationships | All projects |
+| **Dependency Tracking** | thegent, heliosShield | Explicit dependency columns, blocking relationships | All projects |
 | **Status Badges** | kimaki | Visual status indicators (✅, 🚧, 📋) | All projects |
-| **Recently Completed** | sharecli | Track completed items in last 30 days | All projects |
+| **Recently Completed** | heliosShield | Track completed items in last 30 days | All projects |
 
 ---
 
@@ -55,7 +55,7 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 
 | Pattern | Source | Distribution | Coverage Target | Borrowable To |
 |---------|--------|-------------|-----------------|---------------|
-| **Standard Pyramid** | sharecli | 70% unit, 20% integration, 10% E2E | 80%+ | All projects |
+| **Standard Pyramid** | heliosShield | 70% unit, 20% integration, 10% E2E | 80%+ | All projects |
 | **Agent Pyramid** | smolgents | 60-70% unit, 20-30% integration, 5-10% E2E | 80%+ core | Agent systems |
 | **Hexagonal Pyramid** | morph | 80% unit, 15% integration, 5% E2E | 90%+ domain | Hexagonal projects |
 
@@ -67,9 +67,9 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 |---------|--------|-------------|---------------|
 | **Hexagonal Testing** | morph | Layer-based testing (domain 90%+, app 80%+, infra 70%+) | Hexagonal projects |
 | **Test Data Management** | morph | Fixtures, factories, mocks hierarchy | All Python projects |
-| **Characterization Tests** | sharecli | Gate for brownfield refactoring | Legacy projects |
-| **Mutation Testing** | sharecli | PIT/Stryker/Infection for critical systems | Critical systems |
-| **Property Testing** | sharecli | Echidna for smart contracts | Smart contracts |
+| **Characterization Tests** | heliosShield | Gate for brownfield refactoring | Legacy projects |
+| **Mutation Testing** | heliosShield | PIT/Stryker/Infection for critical systems | Critical systems |
+| **Property Testing** | heliosShield | Echidna for smart contracts | Smart contracts |
 
 ---
 
@@ -77,7 +77,7 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 
 | Pattern | Source | Structure | Borrowable To |
 |---------|--------|-----------|---------------|
-| **Test Pyramid Rebalance** | sharecli | 63% → 70% unit tests | All projects |
+| **Test Pyramid Rebalance** | heliosShield | 63% → 70% unit tests | All projects |
 | **Coverage Targets** | smolgents | Component-specific coverage targets | All projects |
 | **Test Categorization** | plangent | Unit, integration, E2E, regression | All projects |
 
@@ -157,7 +157,7 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 |---------|--------|-----------|----------|---------------|
 | **Row-Level Security (RLS)** | atoms-mcp-prod | Database-level security | Automatic query scoping, org-based access | PostgreSQL projects |
 | **RBAC** | trace, claude-squad | Role-based access control | Role definitions, permission mapping | Multi-user systems |
-| **Policy Federation** | sharecli | Multi-tenant policy federation | Cross-tenant policies | Multi-tenant systems |
+| **Policy Federation** | heliosShield | Multi-tenant policy federation | Cross-tenant policies | Multi-tenant systems |
 
 ---
 
@@ -176,7 +176,7 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 |---------|--------|----------|---------------|
 | **Threat Modeling** | claude-squad | Threat matrix, attack scenarios, mitigation | Production services |
 | **Security Monitoring** | claude-squad | Intrusion detection, anomaly detection | Production services |
-| **Vulnerability Scanning** | sharecli | Dependency scanning, DAST | All projects |
+| **Vulnerability Scanning** | heliosShield | Dependency scanning, DAST | All projects |
 | **Audit Trail** | trace, atoms-mcp-prod | Immutable logs, change tracking | All systems |
 
 ---
@@ -211,8 +211,8 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 
 | Pattern | Source | Strategy | Features | Borrowable To |
 |---------|--------|----------|----------|---------------|
-| **Hierarchical Cache** | sharecli | L1/L2/L3 cache layers | Multi-level caching | High-traffic services |
-| **Stale-While-Revalidate** | sharecli | Serve stale, update async | Fast responses | Cache systems |
+| **Hierarchical Cache** | heliosShield | L1/L2/L3 cache layers | Multi-level caching | High-traffic services |
+| **Stale-While-Revalidate** | heliosShield | Serve stale, update async | Fast responses | Cache systems |
 | **LLM Response Caching** | smolgents | Semantic similarity caching | Cost reduction | Agent systems |
 | **Tool Result Caching** | smolgents | Time-based TTL | Performance | Tool systems |
 
@@ -233,9 +233,9 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 | Pattern | Source | Feature | Borrowable To |
 |---------|--------|---------|---------------|
 | **Lazy Loading** | smolgents | Load on demand | All projects |
-| **Code Splitting** | sharecli | Manual chunks, optimization | Frontend projects |
-| **Image Optimization** | sharecli | WebP/AVIF, lazy loading | Documentation sites |
-| **Font Optimization** | sharecli | Subset fonts, preload | Web projects |
+| **Code Splitting** | heliosShield | Manual chunks, optimization | Frontend projects |
+| **Image Optimization** | heliosShield | WebP/AVIF, lazy loading | Documentation sites |
+| **Font Optimization** | heliosShield | Subset fonts, preload | Web projects |
 
 ---
 
@@ -256,7 +256,7 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 | Pattern | Source | Metrics | Features | Borrowable To |
 |---------|--------|---------|----------|---------------|
 | **Cost Tracking** | smolgents | Per task, per agent, per model | Detailed tracking | Agent systems |
-| **Budget Alerts** | sharecli | Cost-overage gates | Budget management | All projects |
+| **Budget Alerts** | heliosShield | Cost-overage gates | Budget management | All projects |
 | **Cost Metrics** | smolgents | Cost per execution, savings | Business metrics | Agent systems |
 
 ---
@@ -290,9 +290,9 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 
 | Pattern | Source | Approach | Tools | Borrowable To |
 |---------|--------|----------|-------|---------------|
-| **LLM-as-Judge** | sharecli | Binary classification | Gemini Flash, Claude Haiku | Code quality |
-| **Local ML Models** | sharecli | On-device inference | Qwen-Coder, MLX | Pre-commit hooks |
-| **Semantic Verification** | sharecli | Intent verification | LLM APIs | Code review |
+| **LLM-as-Judge** | heliosShield | Binary classification | Gemini Flash, Claude Haiku | Code quality |
+| **Local ML Models** | heliosShield | On-device inference | Qwen-Coder, MLX | Pre-commit hooks |
+| **Semantic Verification** | heliosShield | Intent verification | LLM APIs | Code review |
 
 ---
 
@@ -300,9 +300,9 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 
 | Pattern | Source | Tool | Level | Borrowable To |
 |---------|--------|------|-------|---------------|
-| **Fault Injection** | sharecli | Toxiproxy, WireMock | Integration | All projects |
-| **Resilience Testing** | sharecli | Resilience libraries | Unit | All projects |
-| **Platform Chaos** | sharecli | Chaos Mesh, LitmusChaos | Platform | Kubernetes |
+| **Fault Injection** | heliosShield | Toxiproxy, WireMock | Integration | All projects |
+| **Resilience Testing** | heliosShield | Resilience libraries | Unit | All projects |
+| **Platform Chaos** | heliosShield | Chaos Mesh, LitmusChaos | Platform | Kubernetes |
 
 ---
 
@@ -310,9 +310,9 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 
 | Area | Source | Status | Borrowable To |
 |------|--------|--------|---------------|
-| **MLX Optimization** | sharecli | Research | Apple Silicon projects |
-| **Monte Carlo Simulation** | sharecli | Research | Planning systems |
-| **ZK-Proofs** | sharecli | Research | Security systems |
+| **MLX Optimization** | heliosShield | Research | Apple Silicon projects |
+| **Monte Carlo Simulation** | heliosShield | Research | Planning systems |
+| **ZK-Proofs** | heliosShield | Research | Security systems |
 
 ---
 
@@ -345,7 +345,7 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 
 | Need | Recommended Pattern | Source | Priority |
 |------|---------------------|--------|----------|
-| **Work Stream** | P0-P4 Priority System | sharecli | P1 |
+| **Work Stream** | P0-P4 Priority System | heliosShield | P1 |
 | **Testing** | Test Pyramid (60-70-5-10) | smolgents | P1 |
 | **Deployment** | Phased Rollout | morph | P1 |
 | **Monitoring** | Prometheus + Grafana | claude-squad | P1 |
@@ -362,7 +362,7 @@ This catalog organizes **all borrowable patterns** from the kush ecosystem into 
 |--------------|--------------|---------|
 | **Agent Systems** | Cost optimization, multi-agent patterns, monitoring | smolgents, plangent, kimaki |
 | **MCP Servers** | Tool categorization, composition, OAuth | trace, dphi, atoms-mcp-prod |
-| **CLI Tools** | Rich output, async-first, type safety | sharecli, bloc, trace |
+| **CLI Tools** | Rich output, async-first, type safety | heliosShield, bloc, trace |
 | **Web Services** | OAuth, RBAC, monitoring, security | claude-squad, trace |
 | **Documentation** | VitePress, auto-generation, rich elements | thegent |
 

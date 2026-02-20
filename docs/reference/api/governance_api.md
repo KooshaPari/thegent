@@ -2,7 +2,7 @@
 
 > **Source**: `src/thegent/governance/__init__.py`
 
-Governance modules: cost, policy, sandbox (G-GP).
+Governance modules: cost, policy, sandbox, economic routing (G-GP, WP-5003).
 
 ---
 

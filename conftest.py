@@ -7,12 +7,16 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# thegent project root (where conftest.py lives)
-_THGENT_ROOT = Path(__file__).resolve().parent
+# Import path utilities for normalized path handling
+sys.path.insert(0, str(Path(__file__).parent / "scripts"))
+from path_utils import normalize_path, safe_join
+
+# thegent project root (where conftest.py lives) - use normalized path
+_THGENT_ROOT = normalize_path(Path(__file__))
 
 # Ensure src/ is on sys.path for imports during test collection
 # This must happen before any test modules are imported
-_SRC_PATH = _THGENT_ROOT / "src"
+_SRC_PATH = safe_join(_THGENT_ROOT.parent, "src")
 
 # Remove parent directory from sys.path if present (pytest adds it)
 _PARENT_PATH = str(_THGENT_ROOT.parent)
@@ -20,8 +24,9 @@ if _PARENT_PATH in sys.path:
     sys.path.remove(_PARENT_PATH)
 
 # Insert src/ at the beginning
-if str(_SRC_PATH) not in sys.path:
-    sys.path.insert(0, str(_SRC_PATH))
+_SRC_PATH_STR = str(_SRC_PATH)
+if _SRC_PATH_STR not in sys.path:
+    sys.path.insert(0, _SRC_PATH_STR)
 
 
 @pytest.fixture(autouse=True)

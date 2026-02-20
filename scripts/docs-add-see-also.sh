@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Append "See also" section to all docs/**/*.md that don't already have See also|Related|References.
 # Skip docs/index.md (VitePress). Run from repo root.
 set -euo pipefail

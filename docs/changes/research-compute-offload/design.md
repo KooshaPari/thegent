@@ -10,46 +10,75 @@
 
 ## 1. Architecture Overview
 
-### 1.1 System Diagram
+### 1.1 System Diagram: Remote Shadow Workspace (RSW)
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                      thegent Control Plane                              │
-│  (agent dispatch, policy eval, cost agg, telemetry)                     │
-└──────────────────────────┬─────────────────────────────────────────────┘
-                           │
-                           │ offload.route()
-                           ▼
-         ┌─────────────────────────────────────────┐
-         │    Offload Router                       │
-         │  (select best target environment)       │
-         └──────────────┬──────────────────────────┘
-                        │
-          ┌─────────────┼──────────────┐
-          │             │              │
-          ▼             ▼              ▼
-     ┌─────────┐  ┌─────────┐   ┌─────────┐
-     │  Host A │  │  Host B │   │ Host C  │
-     │  (Mac)  │  │  (PC)   │   │ (Linux) │
-     │         │  │         │   │         │
-     │ Remote  │  │ Remote  │   │ Remote  │
-     │Executor │  │Executor │   │Executor │
-     │ Server  │  │ Server  │   │ Server  │
-     └────┬────┘  └────┬────┘   └────┬────┘
-          │            │             │
-          └────────────┼─────────────┘
-             ▲          │         ▲
-             │ Bridge Protocol   │
-             │ (HTTP + JSON)     │
-             └──────────────────┘
+The Distributed Compute Offload architecture is designed as a **Remote Shadow Workspace (RSW)** system. It does not just share states; it creates true, isolated, concurrent execution environments on remote "Worker" nodes (e.g., your Desktop PC).
 
-   ┌──────────────────────────────────────────────┐
-   │  Shared Registries (synchronized across)     │
-   │  • Compute Catalog                           │
-   │  • Capability Registry                       │
-   │  • Cost Profiles                             │
-   └──────────────────────────────────────────────┘
+```text
+[ LAPTOP (Client) ]                      [ DESKTOP PC (Worker Node) ]
+        │                                            │
+        │ 1. Workload Analysis                       │
+        ├───────────────────┐                        │
+        │                   ▼                        │
+        │           [Offload Router]                 │
+        │                   │                        │
+        │ 2. State Sync (SSE)│ 3. Execution Request  │
+        ├───────────────────┼───────────────────────▶│ [Remote Executor]
+        │                   │ (JSON Bridge)          │        │
+        │                   │                        │        │ 4. Spawn RSW
+        │                   │                        │        ▼
+        │                   │                        │ [Shadow Workspace]
+        │                   │                        │ (git worktree)
+        │                   │                        │        │
+        │                   │                        │        │ 5. Execute Agent
+        │                   │                        │        ▼
+        │ 6. Stream Results │                        │ [ isolated process ]
+        │◀──────────────────┼────────────────────────┤        │
+        │                   │                        │        │
+        │ 7. Reconcile      │                        │        │ 8. Cleanup
+        │◀──────────────────┴────────────────────────┴────────┘
 ```
+
+### 1.2 Core Logic: Remote Worktree vs. Shared State
+
+*   **Option: Shared OS/States (NO)**: We avoid a simple shared filesystem because it leads to "Index Contention" and state-smashing when both your laptop and desktop try to write to the same `.git` index.
+*   **Effectively Remote Worktree (YES)**: The `State Synchronization Engine (SSE)` ensures your desktop has the exact delta of your code. The `Remote Executor` then spawns a **True Concurrent Workspace** using `git worktree`.
+*   **Result**: You can be coding on your laptop while 3 different agents are running heavy tests or builds on your Desktop PC, each in their own isolated filesystem slice.
+
+## 2. Expanded Feature Set (Breadth & Depth)
+
+To "maximally engineer" this system, we are adding the following dimensions:
+
+### 2.1 State Synchronization Engine (SSE) [BREADTH]
+*   **Git-Delta Sync**: Instead of sending full files, we send uncommitted diffs + current HEAD. Fast, even on high-latency links.
+*   **Virtual Filesystem Fallback**: If the repo is not Git-managed, we use an `rsync`-like rolling hash sync.
+*   **Artifact-Aware Sync**: Excludes `node_modules`, `.venv`, and `target/` to minimize network transit.
+
+### 2.2 Remote Shadow Workspace Manager (RSWM) [DEPTH]
+*   **Isolation Levels**: 
+    *   *Level 1 (Process)*: High speed, uses standard worktree isolation.
+    *   *Level 2 (Containerized)*: Spawns a Docker container mapped to the worktree for OS-level parity (e.g., running Linux tests from a Mac client).
+*   **Lifespan Management**: Auto-prunes worktrees after task completion or heartbeat loss.
+
+### 2.3 Cross-Platform Context Bridging (XPCB) [POLISH]
+*   **Path Translation**: Automatically maps `/Users/koosha/...` (Mac) to `C:\Users\koosha\...` (Windows) during context handoff.
+*   **Tool Parity**: Leverages `mise` on the remote node to ensure the *exact* same version of Python/Rust/Node is used as on the client.
+
+### 2.4 Distributed TUI Cockpit (QOL) [POLISH]
+*   **Unified View**: A laptop dashboard showing:
+    *   CPU/RAM load on Desktop PC.
+    *   Active remote tasks and their "time-to-complete" estimates.
+    *   One-click "Remote Attach" to view live logs.
+
+## 3. Implementation Status (Updated)
+
+| Feature | Engineering Depth | Status |
+| :--- | :--- | :--- |
+| **Bridge Protocol** | Pydantic V2 + JSON | Finalized |
+| **SSE (Sync)** | Git Worktree Over SSH | **IN DEVELOPMENT** |
+| **Remote Executor** | FastAPI + Streaming | **IN DEVELOPMENT** |
+| **Workload Classifier** | Heuristic AST Analysis | Finalized |
+| **TUI Cockpit** | Textual (Python) | Planned |
 
 ### 1.2 Component Responsibilities
 

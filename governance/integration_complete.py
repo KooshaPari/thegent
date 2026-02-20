@@ -15,17 +15,18 @@ Orchestrates the entire governance system:
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Add thegent to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from thegent.agents.document import DocumentAnalyzer, MarkdownScanner, ScanConfig
 from thegent.governance.audit_framework import AuditFramework
 from thegent.governance.project_setup_enhanced import ProjectGovernanceSetupEnhanced
 from thegent.governance.quality_matrix_enhanced import QualityMatrixBuilderEnhanced
 from thegent.governance.task_manager_enhanced import Task, TaskManagerEnhanced, TaskMaturity, TaskPriority
+
+from thegent.agents.document import DocumentAnalyzer, MarkdownScanner, ScanConfig
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ class GovernanceIntegration:
     def __init__(self, base_path: Path) -> None:
         self.base_path = Path(base_path)
         self.results: dict[str, any] = {
-            "started_at": datetime.now().isoformat(),
+            "started_at": datetime.now(timezone.utc).isoformat(),
             "projects_analyzed": [],
             "governance_setup": [],
             "quality_matrices": [],
@@ -68,57 +69,9 @@ class GovernanceIntegration:
         # Step 2: Analyze each project
         project_assessments = {}
         for project_path in projects:
-            try:
-                logger.info(f"Analyzing: {project_path}")
-                setup = ProjectGovernanceSetupEnhanced(project_path)
-                structure = setup.analyze()
-                project_assessments[project_path] = structure
-
-                # Step 3: Set up governance if needed
-                if setup_governance and structure.governance_level.value == "none":
-                    logger.info(f"Setting up governance for: {project_path}")
-                    setup.setup_basic_structure()
-                    self.results["governance_setup"].append(str(project_path))
-
-                # Step 4: Create quality matrix
-                if assess_quality:
-                    try:
-                        logger.info(f"Creating quality matrix for: {project_path}")
-                        builder = QualityMatrixBuilderEnhanced(project_path)
-                        matrix = builder.build()
-                        matrix.save(project_path / "governance" / "quality-matrix.json")
-                        self.results["quality_matrices"].append(
-                            {
-                                "project": str(project_path),
-                                "score": matrix.overall_score,
-                                "level": matrix.quality_level.value,
-                            }
-                        )
-                    except Exception as e:
-                        logger.warning(f"Error creating quality matrix: {e}")
-
-                # Step 5: Run audits
-                if run_audits:
-                    try:
-                        logger.info(f"Running audits for: {project_path}")
-                        framework = AuditFramework(project_path)
-                        audit_results = framework.run_all_audits()
-                        framework.save_results()
-
-                        report = framework.generate_report()
-                        self.results["audits"].append(
-                            {
-                                "project": str(project_path),
-                                "total_findings": report["total_findings"],
-                                "critical_findings": report["critical_findings"],
-                            }
-                        )
-                    except Exception as e:
-                        logger.warning(f"Error running audits: {e}")
-
-            except Exception as e:
-                logger.error(f"Error processing {project_path}: {e}")
-                continue
+            self._process_project(
+                project_path, setup_governance, assess_quality, run_audits, project_assessments
+            )
 
         # Step 6: Generate tasks for research completion
         if generate_tasks:
@@ -129,10 +82,78 @@ class GovernanceIntegration:
         # Step 7: Generate comprehensive report
         self._generate_master_report(project_assessments)
 
-        self.results["completed_at"] = datetime.now().isoformat()
+        self.results["completed_at"] = datetime.now(timezone.utc).isoformat()
         logger.info("Governance integration complete!")
 
         return self.results
+
+    def _process_project(
+        self,
+        project_path: Path,
+        setup_governance: bool,
+        assess_quality: bool,
+        run_audits: bool,
+        project_assessments: dict,
+    ) -> None:
+        """Process a single project."""
+        try:
+            logger.info(f"Analyzing: {project_path}")
+            setup = ProjectGovernanceSetupEnhanced(project_path)
+            structure = setup.analyze()
+            project_assessments[project_path] = structure
+
+            # Step 3: Set up governance if needed
+            if setup_governance and structure.governance_level.value == "none":
+                logger.info(f"Setting up governance for: {project_path}")
+                setup.setup_basic_structure()
+                self.results["governance_setup"].append(str(project_path))
+
+            # Step 4: Create quality matrix
+            if assess_quality:
+                self._create_quality_matrix(project_path)
+
+            # Step 5: Run audits
+            if run_audits:
+                self._run_project_audits(project_path)
+
+        except Exception as e:
+            logger.error(f"Error processing {project_path}: {e}")
+
+    def _create_quality_matrix(self, project_path: Path) -> None:
+        """Create quality matrix for a project."""
+        try:
+            logger.info(f"Creating quality matrix for: {project_path}")
+            builder = QualityMatrixBuilderEnhanced(project_path)
+            matrix = builder.build()
+            matrix.save(project_path / "governance" / "quality-matrix.json")
+            self.results["quality_matrices"].append(
+                {
+                    "project": str(project_path),
+                    "score": matrix.overall_score,
+                    "level": matrix.quality_level.value,
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Error creating quality matrix: {e}")
+
+    def _run_project_audits(self, project_path: Path) -> None:
+        """Run audits for a project."""
+        try:
+            logger.info(f"Running audits for: {project_path}")
+            framework = AuditFramework(project_path)
+            framework.run_all_audits()
+            framework.save_results()
+
+            report = framework.generate_report()
+            self.results["audits"].append(
+                {
+                    "project": str(project_path),
+                    "total_findings": report["total_findings"],
+                    "critical_findings": report["critical_findings"],
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Error running audits: {e}")
 
     def _scan_projects(self) -> list[Path]:
         """Scan for projects using document queue."""
@@ -210,7 +231,7 @@ class GovernanceIntegration:
             project_name = project_path.name
             gov_tasks = manager.generate_governance_tasks(project_path, project_name)
             for task in gov_tasks:
-                success, errors = manager.add_task(task)
+                success, _errors = manager.add_task(task)
                 if success:
                     tasks.append(task)
 
@@ -254,7 +275,7 @@ class GovernanceIntegration:
     def _generate_master_report(self, project_assessments: dict[Path, any]):
         """Generate master governance report."""
         report_data = {
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "total_projects": len(project_assessments),
             "projects": {},
             "summary": {
@@ -288,7 +309,6 @@ def main():
 
     integrator = GovernanceIntegration(base_path)
     results = integrator.run_complete_integration()
-
 
     return 0
 

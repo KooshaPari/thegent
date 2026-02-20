@@ -18,74 +18,80 @@ Manager for signing and verifying governance artifacts.
 #### ArtifactSigner.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: Any)
 ```
+
+---
 
 #### ArtifactSigner.create_signed_artifact
 
+```python
+create_signed_artifact(self: Any, artifact_type: str, payload: dict[(str, Any)])
+```
+
 Create a signed artifact with metadata.
 
-```python
-create_signed_artifact(self, artifact_type, payload)
-```
+---
 
 #### ArtifactSigner.verify_envelope
 
+```python
+verify_envelope(self: Any, envelope: dict[(str, Any)])
+```
+
 Verify the signature of an artifact envelope.
 
-```python
-verify_envelope(self, envelope)
-```
+---
 
 ---
 
 ## create_signed_artifact
 
-Create a signed artifact with metadata.
-
 ```python
-create_signed_artifact(self, artifact_type, payload)
+create_signed_artifact(self: Any, artifact_type: str, payload: dict[(str, Any)])
 ```
+
+Create a signed artifact with metadata.
 
 ---
 
 ## generate_artifact_hash
 
-Generate SHA-256 hash of a dictionary artifact.
-
 ```python
-generate_artifact_hash(data)
+generate_artifact_hash(data: dict[(str, Any)])
 ```
+
+Generate SHA-256 hash of a dictionary artifact.
 
 ---
 
 ## sign_artifact
 
-Produce a provenance signature for an artifact using HMAC-SHA256.
-
 ```python
-sign_artifact(data, secret_key)
+sign_artifact(data: dict[(str, Any)], secret_key: str)
 ```
+
+Produce a provenance signature for an artifact using HMAC-SHA256.
 
 ---
 
 ## verify_envelope
 
-Verify the signature of an artifact envelope.
-
 ```python
-verify_envelope(self, envelope)
+verify_envelope(self: Any, envelope: dict[(str, Any)])
 ```
+
+Verify the signature of an artifact envelope.
 
 ---
 
 ## verify_signature
 
-Verify the provenance signature of an artifact.
-
 ```python
-verify_signature(data, signature, secret_key)
+verify_signature(data: dict[(str, Any)], signature: str, secret_key: str)
 ```
+
+Verify the provenance signature of an artifact.
 
 ---
 

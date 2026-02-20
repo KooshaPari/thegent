@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from cachetools import TTLCache
+from thegent.cache.multi_level import MultiLevelCache
 
 if TYPE_CHECKING:
     from thegent.config import ThegentSettings
@@ -20,8 +20,26 @@ _WEIGHT_TPS = 0.4
 _WEIGHT_LATENCY = 0.5
 _WEIGHT_SUCCESS = 0.1
 
-# TTL cache for speed indices (key "default" = full result)
-_CACHE: TTLCache[str, dict[str, dict[str, float]]] = TTLCache(maxsize=4, ttl=60)
+
+def _make_speed_cache() -> MultiLevelCache:
+    """Create the speed-index cache (L1 in-process + L2 disk).
+
+    L2 dir is resolved lazily from ThegentSettings so the import is safe even if
+    config is not yet fully initialised (L2 is disabled in that case).
+    """
+    try:
+        from thegent.config import ThegentSettings
+
+        settings = ThegentSettings()
+        l2_dir = settings.cache_dir / "speed-index"
+    except Exception:
+        l2_dir = None
+    return MultiLevelCache(l1_maxsize=4, l1_ttl=60, l2_dir=l2_dir, l2_ttl=600)
+
+
+# Multi-level cache for speed indices (key "default" = full result)
+# L1: fast in-process TTLCache (60s); L2: diskcache on disk (10 min, survives restarts).
+_CACHE: MultiLevelCache = _make_speed_cache()
 
 
 def _get_params(settings: ThegentSettings | None) -> tuple[float, float]:
@@ -80,8 +98,6 @@ def get_model_provider_speed_indices(
     speed_index is 0-1, higher = faster.
     Uses proxy metrics when reachable; falls back to Route.latency_ms.
     """
-    global _CACHE
-
     try:
         from thegent.config import ThegentSettings
 
@@ -116,7 +132,7 @@ def get_model_provider_speed_indices(
                 result[model_id][prov] = _speed_index_from_latency_ms(getattr(route, "latency_ms", 500.0), latency_max)
 
     if use_cache and cache_ttl > 0:
-        _CACHE["default"] = result
+        _CACHE.set("default", result)
 
     return result
 

@@ -1,86 +1,120 @@
 # policy API Reference
 
-> **Source**: `src/thegent/contracts/policy.py`
+> **Source**: `src/thegent/governance/policy.py`
 
-Normalization policy and fallback evaluation for agent outputs.
-
-Defines rules for when a normalized message is acceptable and when a fallback
-to plain text extraction should be flagged or blocked.
+Core policy management and evaluation (WP-3001, WP-3002).
 
 ---
 
-## FallbackPolicy
+## LearningSession
 
-Configuration for normalization fallback behavior and SLO budgets.
-
----
-
-## PolicyRegistry
-
-Registry for named fallback policies.
+Represents an autonomous learning session bounded by policy.
 
 ### Methods
 
-#### PolicyRegistry.__init__
+#### LearningSession.__init__
 
 ```python
-__init__(self)
-```
-
-#### PolicyRegistry.get
-
-Get policy by name, falling back to default.
-
-```python
-get(self, name)
-```
-
-#### PolicyRegistry.register
-
-Register a named policy.
-
-```python
-register(self, name, policy)
+__init__(self: Any, policy_manager: PolicyManager)
 ```
 
 ---
 
-## evaluate_fallback
-
-Evaluate if a normalization result violates fallback policies.
-
-Returns:
-    List of policy violation strings. Empty if valid.
+#### LearningSession.is_valid
 
 ```python
-evaluate_fallback(provider, confidence, is_fallback, policy, stats)
+is_valid(self: Any)
+```
+
+Verify session is still valid against current policy.
+
+---
+
+#### LearningSession.start
+
+```python
+start(self: Any)
+```
+
+Start the learning session.
+
+---
+
+---
+
+## PolicyManager
+
+Manages system-wide policies and their evaluation.
+
+### Methods
+
+#### PolicyManager.__init__
+
+```python
+__init__(self: Any, initial_policies: Any)
 ```
 
 ---
 
-## get
-
-Get policy by name, falling back to default.
+#### PolicyManager.get_policy
 
 ```python
-get(self, name)
+get_policy(self: Any, key: str)
 ```
+
+Get a policy value.
 
 ---
 
-## get_policy_registry
+#### PolicyManager.update
 
-Get global policy registry (singleton).
+```python
+update(self: Any, new_policies: dict[(str, Any)])
+```
+
+Update policies.
 
 ---
 
-## register
+---
 
-Register a named policy.
+## get_policy
 
 ```python
-register(self, name, policy)
+get_policy(self: Any, key: str)
 ```
+
+Get a policy value.
+
+---
+
+## is_valid
+
+```python
+is_valid(self: Any)
+```
+
+Verify session is still valid against current policy.
+
+---
+
+## start
+
+```python
+start(self: Any)
+```
+
+Start the learning session.
+
+---
+
+## update
+
+```python
+update(self: Any, new_policies: dict[(str, Any)])
+```
+
+Update policies.
 
 ---
 

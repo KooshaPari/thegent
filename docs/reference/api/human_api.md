@@ -16,12 +16,13 @@ Request for human intervention or clarification.
 
 ## ask_human
 
-WP-4009: Human-as-a-Tool (HaaT).
-Pauses execution and waits for human input via the Cockpit or CLI.
-
 ```python
-ask_human(prompt, options)
+ask_human(prompt: str, options: Any)
 ```
+
+WP-4009: Human-as-a-Tool (HaaT).
+
+Pauses execution and waits for human input via the Cockpit or CLI.
 
 ---
 

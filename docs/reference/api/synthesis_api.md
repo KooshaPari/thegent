@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/agents/synthesis.py`
 
 WP-27001: Neural-Symbolic Program Synthesis.
+
 Combines LLM-based code generation with symbolic verification and formal methods.
 Ensures synthesized programs are correct and safe by construction.
 
@@ -17,16 +18,20 @@ Orchestrates neural-symbolic program generation.
 #### ProgramSynthesizer.__init__
 
 ```python
-__init__(self, run_id)
+__init__(self: Any, run_id: str)
 ```
+
+---
 
 #### ProgramSynthesizer.synthesize
 
+```python
+synthesize(self: Any, prompt: str, formal_spec: Any)
+```
+
 Synthesize a program from a prompt and optional formal spec.
 
-```python
-synthesize(self, prompt, formal_spec)
-```
+---
 
 ---
 
@@ -40,11 +45,11 @@ Result of a neural-symbolic synthesis operation.
 
 ## synthesize
 
-Synthesize a program from a prompt and optional formal spec.
-
 ```python
-synthesize(self, prompt, formal_spec)
+synthesize(self: Any, prompt: str, formal_spec: Any)
 ```
+
+Synthesize a program from a prompt and optional formal spec.
 
 ---
 

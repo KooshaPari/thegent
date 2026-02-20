@@ -14,6 +14,8 @@ Raised when a specific invariant is violated.
 
 **Inherits from**: `SemanticValidationError`
 
+**Method Resolution Order**: `InvariantViolation -> SemanticValidationError`
+
 ---
 
 ## SemanticPolicyEngine
@@ -25,27 +27,32 @@ WP-7005: Policy layer for semantic validation of agent outputs.
 #### SemanticPolicyEngine.__init__
 
 ```python
-__init__(self, strict)
+__init__(self: Any, strict: bool)
 ```
+
+---
 
 #### SemanticPolicyEngine.add_rule
 
+```python
+add_rule(self: Any, rule: Callable[(Any, list[str])])
+```
+
 Register a custom validation rule.
 
-```python
-add_rule(self, rule)
-```
+---
 
 #### SemanticPolicyEngine.evaluate
 
+```python
+evaluate(self: Any, csm: CanonicalStructuredMessage)
+```
+
 Evaluate CSM against all semantic rules.
 
-Returns:
-    Dict with 'allowed', 'issues', 'drift_detected'.
+**Returns**: Dict with 'allowed', 'issues', 'drift_detected'.
 
-```python
-evaluate(self, csm)
-```
+---
 
 ---
 
@@ -59,47 +66,45 @@ Raised when a CSM fails semantic validation.
 
 ## add_rule
 
-Register a custom validation rule.
-
 ```python
-add_rule(self, rule)
+add_rule(self: Any, rule: Callable[(Any, list[str])])
 ```
+
+Register a custom validation rule.
 
 ---
 
 ## ensure_valid_csm
 
-Raise InvariantViolation if CSM is semantically invalid.
-
 ```python
-ensure_valid_csm(csm)
+ensure_valid_csm(csm: CanonicalStructuredMessage)
 ```
+
+Raise InvariantViolation if CSM is semantically invalid.
 
 ---
 
 ## evaluate
 
+```python
+evaluate(self: Any, csm: CanonicalStructuredMessage)
+```
+
 Evaluate CSM against all semantic rules.
 
-Returns:
-    Dict with 'allowed', 'issues', 'drift_detected'.
-
-```python
-evaluate(self, csm)
-```
+**Returns**: Dict with 'allowed', 'issues', 'drift_detected'.
 
 ---
 
 ## validate_csm
 
+```python
+validate_csm(csm: CanonicalStructuredMessage)
+```
+
 Perform semantic validation on a CSM.
 
-Returns:
-    List of validation issue strings. Empty if valid.
-
-```python
-validate_csm(csm)
-```
+**Returns**: List of validation issue strings. Empty if valid.
 
 ---
 

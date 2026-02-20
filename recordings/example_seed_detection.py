@@ -65,9 +65,7 @@ async def record_seed_detection_demo() -> None:
 
             # Save metadata
             if result.screenshot_paths:
-                metadata_path = (
-                    config.output_dir / "seed-detection-metadata.json"
-                )
+                metadata_path = config.output_dir / "seed-detection-metadata.json"
                 result.to_json(metadata_path)
                 logger.info(f"Metadata saved to {metadata_path}")
         else:

@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/verification/symbolic.py`
 
 WP-18002: Symbolic Execution for Risk Assessment.
+
 Uses symbolic execution principles to explore possible execution paths and identify high-risk branches.
 
 ---
@@ -22,44 +23,50 @@ Symbolically explores task dependency graphs to identify potential failures.
 #### SymbolicRiskExplorer.__init__
 
 ```python
-__init__(self, dag)
+__init__(self: Any, dag: dict[(str, Any)])
 ```
+
+---
 
 #### SymbolicRiskExplorer.explore
 
+```python
+explore(self: Any, start_node: str)
+```
+
 Explore all reachable paths from start_node and calculate risk.
 
-```python
-explore(self, start_node)
-```
+---
 
 #### SymbolicRiskExplorer.get_highest_risk_path
 
+```python
+get_highest_risk_path(self: Any)
+```
+
 Return the path with the highest risk score.
 
-```python
-get_highest_risk_path(self)
-```
+---
 
 ---
 
 ## explore
 
-Explore all reachable paths from start_node and calculate risk.
-
 ```python
-explore(self, start_node)
+explore(self: Any, start_node: str)
 ```
+
+Explore all reachable paths from start_node and calculate risk.
 
 ---
 
 ## get_highest_risk_path
 
-Return the path with the highest risk score.
-
 ```python
-get_highest_risk_path(self)
+get_highest_risk_path(self: Any)
 ```
+
+Return the path with the highest risk score.
 
 ---
 

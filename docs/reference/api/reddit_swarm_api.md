@@ -1,0 +1,44 @@
+# reddit_swarm API Reference
+
+> **Source**: `src/thegent/tools/reddit_swarm.py`
+
+## extract_subreddits_from_links
+
+```python
+extract_subreddits_from_links(links: list[str])
+```
+
+Extract subreddit names from a list of Reddit links.
+
+---
+
+## process_reddit_swathe
+
+```python
+process_reddit_swathe(links: list[str], additional_subreddits: Any)
+```
+
+Process a swathe of Reddit links and perform deep research.
+
+---
+
+## save_swathe_results
+
+```python
+save_swathe_results(results: dict[(str, Any)], output_path: Path)
+```
+
+Save the results of the reddit swathe processing.
+
+---
+
+## suggest_related_subreddits
+
+```python
+suggest_related_subreddits(subreddits: list[str])
+```
+
+Suggest related subreddits based on initial list.
+
+---
+

@@ -8,17 +8,21 @@ Management commands for agent self-service: ensure proxy, verify Codex+CLIProxy.
 
 ## ensure_proxy
 
+```python
+ensure_proxy(timeout_sec: float)
+```
+
 Ensure MCP + proxy are running. Starts via process-compose if needed.
 
 Returns (success, message).
 
-```python
-ensure_proxy(timeout_sec)
-```
-
 ---
 
 ## verify_codex_cliproxy
+
+```python
+verify_codex_cliproxy(model: str, prompt: str, timeout_sec: float)
+```
 
 Verify Codex works with CLIProxy adapter.
 
@@ -27,10 +31,6 @@ Verify Codex works with CLIProxy adapter.
 3. Returns (success, message)
 
 Requires: codex CLI installed (npm i -g @openai/codex).
-
-```python
-verify_codex_cliproxy(model, prompt, timeout_sec)
-```
 
 ---
 

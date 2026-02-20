@@ -11,7 +11,6 @@ Performance improvements:
 - Optimized string operations
 """
 
-
 try:
     from rapidfuzz import fuzz, process
 

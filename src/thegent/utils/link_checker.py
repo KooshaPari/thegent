@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 class LinkChecker:
     """Check links in markdown files."""
 
-    def __init__(self, base_dir: Path | None = None):
+    def __init__(self, base_dir: Path | None = None) -> None:
         """Initialize link checker.
-        
+
         Args:
             base_dir: Base directory for documentation
         """
@@ -24,10 +24,10 @@ class LinkChecker:
 
     def find_links(self, file_path: Path) -> list[dict[str, Any]]:
         """Find all links in a markdown file.
-        
+
         Args:
             file_path: Path to markdown file
-            
+
         Returns:
             List of link dictionaries with url, line, type
         """
@@ -39,39 +39,43 @@ class LinkChecker:
         lines = content.splitlines()
 
         # Markdown link patterns: [text](url) and [text][ref]
-        link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
-        ref_pattern = r'\[([^\]]+)\]\[([^\]]+)\]'
+        link_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
+        ref_pattern = r"\[([^\]]+)\]\[([^\]]+)\]"
 
         for i, line in enumerate(lines, 1):
             # Find inline links
             for match in re.finditer(link_pattern, line):
                 url = match.group(2)
-                links.append({
-                    "url": url,
-                    "line": i,
-                    "type": "inline",
-                    "text": match.group(1),
-                })
+                links.append(
+                    {
+                        "url": url,
+                        "line": i,
+                        "type": "inline",
+                        "text": match.group(1),
+                    }
+                )
 
             # Find reference links
             for match in re.finditer(ref_pattern, line):
                 ref = match.group(2)
-                links.append({
-                    "url": ref,
-                    "line": i,
-                    "type": "reference",
-                    "text": match.group(1),
-                })
+                links.append(
+                    {
+                        "url": ref,
+                        "line": i,
+                        "type": "reference",
+                        "text": match.group(1),
+                    }
+                )
 
         return links
 
     def check_link(self, url: str, base_path: Path) -> dict[str, Any]:
         """Check if a link is valid.
-        
+
         Args:
             url: Link URL
             base_path: Base path for relative links
-            
+
         Returns:
             Dictionary with status, error, etc.
         """
@@ -112,10 +116,10 @@ class LinkChecker:
 
     def check_file(self, file_path: Path) -> list[dict[str, Any]]:
         """Check all links in a file.
-        
+
         Args:
             file_path: Path to markdown file
-            
+
         Returns:
             List of check results
         """
@@ -124,22 +128,24 @@ class LinkChecker:
 
         for link in links:
             check_result = self.check_link(link["url"], file_path)
-            check_result.update({
-                "line": link["line"],
-                "type": link["type"],
-                "text": link["text"],
-            })
+            check_result.update(
+                {
+                    "line": link["line"],
+                    "type": link["type"],
+                    "text": link["text"],
+                }
+            )
             results.append(check_result)
 
         return results
 
     def check_directory(self, dir_path: Path, pattern: str = "**/*.md") -> dict[str, Any]:
         """Check all markdown files in a directory.
-        
+
         Args:
             dir_path: Directory to check
             pattern: File pattern to match
-            
+
         Returns:
             Summary dictionary with results
         """

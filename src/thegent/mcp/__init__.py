@@ -1,0 +1,1 @@
+"""thegent MCP sub-package."""

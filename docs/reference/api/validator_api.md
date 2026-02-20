@@ -14,42 +14,49 @@ Task validator using JSON Schema.
 
 #### TaskValidator.__init__
 
+```python
+__init__(self: Any, schema_path: Any)
+```
+
 Initialize validator with schema.
 
-Args:
-    schema_path: Path to JSON Schema file (defaults to schemas/task-input.schema.json)
+**Parameters**:
 
-```python
-__init__(self, schema_path)
-```
+- `schema_path`: Path to JSON Schema file (defaults to schemas/task-input.schema.json)
+
+---
 
 #### TaskValidator.validate
 
+```python
+validate(self: Any, task: dict[(str, Any)])
+```
+
 Validate a task dictionary.
 
-Args:
-    task: Task dictionary to validate
+**Parameters**:
 
-Returns:
-    ValidationResult with validation status and errors
+- `task`: Task dictionary to validate
 
-```python
-validate(self, task)
-```
+**Returns**: ValidationResult with validation status and errors
+
+---
 
 #### TaskValidator.validate_file
 
+```python
+validate_file(self: Any, file_path: Path)
+```
+
 Validate a task file.
 
-Args:
-    file_path: Path to task file
+**Parameters**:
 
-Returns:
-    ValidationResult with validation status and errors
+- `file_path`: Path to task file
 
-```python
-validate_file(self, file_path)
-```
+**Returns**: ValidationResult with validation status and errors
+
+---
 
 ---
 
@@ -67,91 +74,93 @@ Task validation result.
 
 #### ValidationResult.format_errors
 
+```python
+format_errors(self: Any)
+```
+
 Format errors for display.
 
-```python
-format_errors(self)
-```
+---
 
 ---
 
 ## format_errors
 
-Format errors for display.
-
 ```python
-format_errors(self)
+format_errors(self: Any)
 ```
+
+Format errors for display.
 
 ---
 
 ## validate
 
+```python
+validate(self: Any, task: dict[(str, Any)])
+```
+
 Validate a task dictionary.
 
-Args:
-    task: Task dictionary to validate
+**Parameters**:
 
-Returns:
-    ValidationResult with validation status and errors
+- `task`: Task dictionary to validate
 
-```python
-validate(self, task)
-```
+**Returns**: ValidationResult with validation status and errors
 
 ---
 
 ## validate_file
 
+```python
+validate_file(self: Any, file_path: Path)
+```
+
 Validate a task file.
 
-Args:
-    file_path: Path to task file
+**Parameters**:
 
-Returns:
-    ValidationResult with validation status and errors
+- `file_path`: Path to task file
 
-```python
-validate_file(self, file_path)
-```
+**Returns**: ValidationResult with validation status and errors
 
 ---
 
 ## validate_task
 
+```python
+validate_task(task: dict[(str, Any)], schema_path: Any)
+```
+
 Validate a task dictionary.
 
 Convenience function that creates a validator and validates.
 
-Args:
-    task: Task dictionary to validate
-    schema_path: Optional path to schema file
+**Parameters**:
 
-Returns:
-    ValidationResult
+- `task`: Task dictionary to validate
+- `schema_path`: Optional path to schema file
 
-```python
-validate_task(task, schema_path)
-```
+**Returns**: ValidationResult
 
 ---
 
 ## validate_task_file
 
+```python
+validate_task_file(file_path: Path, schema_path: Any)
+```
+
 Validate a task file.
 
 Convenience function that creates a validator and validates.
 
-Args:
-    file_path: Path to task file
-    schema_path: Optional path to schema file
+**Parameters**:
 
-Returns:
-    ValidationResult
+- `file_path`: Path to task file
+- `schema_path`: Optional path to schema file
 
-```python
-validate_task_file(file_path, schema_path)
-```
+**Returns**: ValidationResult
 
 ---
 

@@ -30,214 +30,227 @@ Backend priority (fastest first):
 
 #### FastTOMLParser.__init__
 
+```python
+__init__(self: Any, edit_mode: bool)
+```
+
 Initialize TOML parser.
 
-Args:
-    edit_mode: If True, prefer tomlkit for editing capabilities
+**Parameters**:
 
-```python
-__init__(self, edit_mode)
-```
+- `edit_mode`: If True, prefer tomlkit for editing capabilities
+
+---
 
 #### FastTOMLParser.backend
 
+```python
+backend(self: Any)
+```
+
 Get current backend name.
 
-```python
-backend(self)
-```
+---
 
 #### FastTOMLParser.dump
 
+```python
+dump(self: Any, data: dict[(str, Any)], stream: Any)
+```
+
 Dump TOML to string or file.
 
-Args:
-    data: Data to serialize
-    stream: Optional file-like object or Path to write to
-    **kwargs: Additional options
+**Parameters**:
 
-Returns:
-    TOML string if stream is None, else None
+- `data`: Data to serialize
+- `stream`: Optional file-like object or Path to write to
+- `**kwargs`: Additional options
 
-```python
-dump(self, data, stream)
-```
+**Returns**: TOML string if stream is None, else None
+
+---
 
 #### FastTOMLParser.dumps
 
+```python
+dumps(self: Any, data: dict[(str, Any)])
+```
+
 Dump TOML to string.
 
-Args:
-    data: Data to serialize
-    **kwargs: Additional options
+**Parameters**:
 
-Returns:
-    TOML string
+- `data`: Data to serialize
+- `**kwargs`: Additional options
 
-```python
-dumps(self, data)
-```
+**Returns**: TOML string
+
+---
 
 #### FastTOMLParser.load
 
+```python
+load(self: Any, stream: Any)
+```
+
 Load TOML from string or file path.
 
-Args:
-    stream: TOML string, Path object, or file-like object
+**Parameters**:
 
-Returns:
-    Parsed TOML as dictionary
+- `stream`: TOML string, Path object, or file-like object
 
-```python
-load(self, stream)
-```
+**Returns**: Parsed TOML as dictionary
+
+---
 
 #### FastTOMLParser.loads
 
+```python
+loads(self: Any, s: str)
+```
+
 Load TOML from string.
 
-Args:
-    s: TOML string
+**Parameters**:
 
-Returns:
-    Parsed TOML as dictionary
+- `s`: TOML string
 
-```python
-loads(self, s)
-```
+**Returns**: Parsed TOML as dictionary
+
+---
 
 ---
 
 ## backend
 
-Get current backend name.
-
 ```python
-backend(self)
+backend(self: Any)
 ```
+
+Get current backend name.
 
 ---
 
 ## dump
 
+```python
+dump(self: Any, data: dict[(str, Any)], stream: Any)
+```
+
 Dump TOML to string or file.
 
-Args:
-    data: Data to serialize
-    stream: Optional file-like object or Path to write to
-    **kwargs: Additional options
+**Parameters**:
 
-Returns:
-    TOML string if stream is None, else None
+- `data`: Data to serialize
+- `stream`: Optional file-like object or Path to write to
+- `**kwargs`: Additional options
 
-```python
-dump(self, data, stream)
-```
+**Returns**: TOML string if stream is None, else None
 
 ---
 
 ## dumps
 
+```python
+dumps(self: Any, data: dict[(str, Any)])
+```
+
 Dump TOML to string.
 
-Args:
-    data: Data to serialize
-    **kwargs: Additional options
+**Parameters**:
 
-Returns:
-    TOML string
+- `data`: Data to serialize
+- `**kwargs`: Additional options
 
-```python
-dumps(self, data)
-```
+**Returns**: TOML string
 
 ---
 
 ## get_toml_parser
 
+```python
+get_toml_parser(edit_mode: bool)
+```
+
 Get global fast TOML parser instance.
 
-Args:
-    edit_mode: If True, prefer tomlkit for editing capabilities
+**Parameters**:
 
-Returns:
-    FastTOMLParser instance
+- `edit_mode`: If True, prefer tomlkit for editing capabilities
 
-```python
-get_toml_parser(edit_mode)
-```
+**Returns**: FastTOMLParser instance
 
 ---
 
 ## load
 
+```python
+load(self: Any, stream: Any)
+```
+
 Load TOML from string or file path.
 
-Args:
-    stream: TOML string, Path object, or file-like object
+**Parameters**:
 
-Returns:
-    Parsed TOML as dictionary
+- `stream`: TOML string, Path object, or file-like object
 
-```python
-load(self, stream)
-```
+**Returns**: Parsed TOML as dictionary
 
 ---
 
 ## loads
 
+```python
+loads(self: Any, s: str)
+```
+
 Load TOML from string.
 
-Args:
-    s: TOML string
+**Parameters**:
 
-Returns:
-    Parsed TOML as dictionary
+- `s`: TOML string
 
-```python
-loads(self, s)
-```
+**Returns**: Parsed TOML as dictionary
 
 ---
 
 ## toml_dump
 
-Dump TOML using fastest available backend.
-
 ```python
-toml_dump(data, stream)
+toml_dump(data: dict[(str, Any)], stream: Any)
 ```
+
+Dump TOML using fastest available backend.
 
 ---
 
 ## toml_dumps
 
-Dump TOML to string using fastest available backend.
-
 ```python
-toml_dumps(data)
+toml_dumps(data: dict[(str, Any)])
 ```
+
+Dump TOML to string using fastest available backend.
 
 ---
 
 ## toml_load
 
-Load TOML using fastest available backend.
-
 ```python
-toml_load(stream)
+toml_load(stream: Any)
 ```
+
+Load TOML using fastest available backend.
 
 ---
 
 ## toml_loads
 
-Load TOML string using fastest available backend.
-
 ```python
-toml_loads(s)
+toml_loads(s: str)
 ```
+
+Load TOML string using fastest available backend.
 
 ---
 

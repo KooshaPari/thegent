@@ -17,11 +17,13 @@ Routing alert.
 
 #### Alert.to_json
 
+```python
+to_json(self: Any)
+```
+
 Serialize alert to JSON dict.
 
-```python
-to_json(self)
-```
+---
 
 ---
 
@@ -33,203 +35,222 @@ Manage routing alerts with webhook support.
 
 #### AlertManager.__init__
 
+```python
+__init__(self: Any, webhook_url: Any, min_severity: str)
+```
+
 Initialize alert manager.
 
-Args:
-    webhook_url: Optional webhook URL for alert delivery.
-    min_severity: Minimum severity level to send (info, warning, critical).
+**Parameters**:
 
-```python
-__init__(self, webhook_url, min_severity)
-```
+- `webhook_url`: Optional webhook URL for alert delivery.
+- `min_severity`: Minimum severity level to send (info, warning, critical).
+
+---
 
 #### AlertManager.alert_budget_exceeded
 
+```python
+alert_budget_exceeded(self: Any, daily_spend: float, budget: float)
+```
+
 Create and send budget exceeded alert.
 
-Args:
-    daily_spend: Current daily spend in USD.
-    budget: Configured budget limit in USD.
+**Parameters**:
 
-Returns:
-    The created Alert.
+- `daily_spend`: Current daily spend in USD.
+- `budget`: Configured budget limit in USD.
 
-```python
-alert_budget_exceeded(self, daily_spend, budget)
-```
+**Returns**: The created Alert.
+
+---
 
 #### AlertManager.alert_cooldown_triggered
 
+```python
+alert_cooldown_triggered(self: Any, model: str, provider: str, cooldown_seconds: float, reason: str)
+```
+
 Create and send cooldown triggered alert.
 
-Args:
-    model: The model in cooldown.
-    provider: The provider.
-    cooldown_seconds: Duration of cooldown.
-    reason: Why cooldown was triggered.
+**Parameters**:
 
-Returns:
-    The created Alert.
+- `model`: The model in cooldown.
+- `provider`: The provider.
+- `cooldown_seconds`: Duration of cooldown.
+- `reason`: Why cooldown was triggered.
 
-```python
-alert_cooldown_triggered(self, model, provider, cooldown_seconds, reason)
-```
+**Returns**: The created Alert.
+
+---
 
 #### AlertManager.alert_high_latency
 
+```python
+alert_high_latency(self: Any, model: str, latency_ms: float, threshold_ms: float, provider: Any)
+```
+
 Create and send high latency alert.
 
-Args:
-    model: The model that had high latency.
-    latency_ms: Observed latency in milliseconds.
-    threshold_ms: Configured threshold in milliseconds.
-    provider: Optional provider name.
+**Parameters**:
 
-Returns:
-    The created Alert.
+- `model`: The model that had high latency.
+- `latency_ms`: Observed latency in milliseconds.
+- `threshold_ms`: Configured threshold in milliseconds.
+- `provider`: Optional provider name.
 
-```python
-alert_high_latency(self, model, latency_ms, threshold_ms, provider)
-```
+**Returns**: The created Alert.
+
+---
 
 #### AlertManager.alert_provider_error
 
+```python
+alert_provider_error(self: Any, provider: str, error: str, model: str, is_rate_limit: bool)
+```
+
 Create and send provider error alert.
 
-Args:
-    provider: The provider that had an error.
-    error: Error message or type.
-    model: The model being used.
-    is_rate_limit: Whether this was a rate limit error.
+**Parameters**:
 
-Returns:
-    The created Alert.
+- `provider`: The provider that had an error.
+- `error`: Error message or type.
+- `model`: The model being used.
+- `is_rate_limit`: Whether this was a rate limit error.
 
-```python
-alert_provider_error(self, provider, error, model, is_rate_limit)
-```
+**Returns**: The created Alert.
+
+---
 
 #### AlertManager.clear_pending_alerts
 
+```python
+clear_pending_alerts(self: Any)
+```
+
 Clear pending alerts list.
 
-```python
-clear_pending_alerts(self)
-```
+---
 
 #### AlertManager.get_pending_alerts
 
+```python
+get_pending_alerts(self: Any)
+```
+
 Get list of alerts that weren't sent (no webhook configured).
 
-```python
-get_pending_alerts(self)
-```
+---
 
 #### AlertManager.send_alert
 
+```python
+send_alert(self: Any, alert: Alert)
+```
+
 Send alert to configured webhook.
 
-Args:
-    alert: The alert to send.
+**Parameters**:
 
-Returns:
-    True if sent successfully, False otherwise.
+- `alert`: The alert to send.
 
-```python
-send_alert(self, alert)
-```
+**Returns**: True if sent successfully, False otherwise.
+
+---
 
 #### AlertManager.webhook_url
 
+```python
+webhook_url(self: Any)
+```
+
 Configured webhook URL.
 
-```python
-webhook_url(self)
-```
+---
 
 ---
 
 ## alert_budget_exceeded
 
+```python
+alert_budget_exceeded(self: Any, daily_spend: float, budget: float)
+```
+
 Create and send budget exceeded alert.
 
-Args:
-    daily_spend: Current daily spend in USD.
-    budget: Configured budget limit in USD.
+**Parameters**:
 
-Returns:
-    The created Alert.
+- `daily_spend`: Current daily spend in USD.
+- `budget`: Configured budget limit in USD.
 
-```python
-alert_budget_exceeded(self, daily_spend, budget)
-```
+**Returns**: The created Alert.
 
 ---
 
 ## alert_cooldown_triggered
 
+```python
+alert_cooldown_triggered(self: Any, model: str, provider: str, cooldown_seconds: float, reason: str)
+```
+
 Create and send cooldown triggered alert.
 
-Args:
-    model: The model in cooldown.
-    provider: The provider.
-    cooldown_seconds: Duration of cooldown.
-    reason: Why cooldown was triggered.
+**Parameters**:
 
-Returns:
-    The created Alert.
+- `model`: The model in cooldown.
+- `provider`: The provider.
+- `cooldown_seconds`: Duration of cooldown.
+- `reason`: Why cooldown was triggered.
 
-```python
-alert_cooldown_triggered(self, model, provider, cooldown_seconds, reason)
-```
+**Returns**: The created Alert.
 
 ---
 
 ## alert_high_latency
 
+```python
+alert_high_latency(self: Any, model: str, latency_ms: float, threshold_ms: float, provider: Any)
+```
+
 Create and send high latency alert.
 
-Args:
-    model: The model that had high latency.
-    latency_ms: Observed latency in milliseconds.
-    threshold_ms: Configured threshold in milliseconds.
-    provider: Optional provider name.
+**Parameters**:
 
-Returns:
-    The created Alert.
+- `model`: The model that had high latency.
+- `latency_ms`: Observed latency in milliseconds.
+- `threshold_ms`: Configured threshold in milliseconds.
+- `provider`: Optional provider name.
 
-```python
-alert_high_latency(self, model, latency_ms, threshold_ms, provider)
-```
+**Returns**: The created Alert.
 
 ---
 
 ## alert_provider_error
 
+```python
+alert_provider_error(self: Any, provider: str, error: str, model: str, is_rate_limit: bool)
+```
+
 Create and send provider error alert.
 
-Args:
-    provider: The provider that had an error.
-    error: Error message or type.
-    model: The model being used.
-    is_rate_limit: Whether this was a rate limit error.
+**Parameters**:
 
-Returns:
-    The created Alert.
+- `provider`: The provider that had an error.
+- `error`: Error message or type.
+- `model`: The model being used.
+- `is_rate_limit`: Whether this was a rate limit error.
 
-```python
-alert_provider_error(self, provider, error, model, is_rate_limit)
-```
+**Returns**: The created Alert.
 
 ---
 
 ## clear_pending_alerts
 
-Clear pending alerts list.
-
 ```python
-clear_pending_alerts(self)
+clear_pending_alerts(self: Any)
 ```
+
+Clear pending alerts list.
 
 ---
 
@@ -243,11 +264,11 @@ Initializes with settings from config on first call.
 
 ## get_pending_alerts
 
-Get list of alerts that weren't sent (no webhook configured).
-
 ```python
-get_pending_alerts(self)
+get_pending_alerts(self: Any)
 ```
+
+Get list of alerts that weren't sent (no webhook configured).
 
 ---
 
@@ -259,37 +280,37 @@ Reset the global alert manager (useful for testing).
 
 ## send_alert
 
+```python
+send_alert(self: Any, alert: Alert)
+```
+
 Send alert to configured webhook.
 
-Args:
-    alert: The alert to send.
+**Parameters**:
 
-Returns:
-    True if sent successfully, False otherwise.
+- `alert`: The alert to send.
 
-```python
-send_alert(self, alert)
-```
+**Returns**: True if sent successfully, False otherwise.
 
 ---
 
 ## to_json
 
-Serialize alert to JSON dict.
-
 ```python
-to_json(self)
+to_json(self: Any)
 ```
+
+Serialize alert to JSON dict.
 
 ---
 
 ## webhook_url
 
-Configured webhook URL.
-
 ```python
-webhook_url(self)
+webhook_url(self: Any)
 ```
+
+Configured webhook URL.
 
 ---
 

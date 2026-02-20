@@ -18,104 +18,114 @@ Controls and monitors contract version migrations (WP-7008).
 #### MigrationController.__init__
 
 ```python
-__init__(self, registry)
+__init__(self: Any, registry: Any)
 ```
+
+---
 
 #### MigrationController.evaluate_version
 
+```python
+evaluate_version(self: Any, contract_id: str, version: str)
+```
+
 Evaluate if a contract version is suitable for current use.
 
-Returns:
-    Dictionary with keys: 'allowed', 'status', 'reason', 'migration_days_left'.
+**Returns**: Dictionary with keys: 'allowed', 'status', 'reason', 'migration_days_left'.
 
-```python
-evaluate_version(self, contract_id, version)
-```
+---
 
 #### MigrationController.get_preferred_version
 
+```python
+get_preferred_version(self: Any, contract_id: str)
+```
+
 Return the latest non-deprecated version for a contract ID.
 
-```python
-get_preferred_version(self, contract_id)
-```
+---
 
 #### MigrationController.set_canary
 
+```python
+set_canary(self: Any, percentage: float)
+```
+
 Set canary rollout percentage (WP-7008).
 
-```python
-set_canary(self, percentage)
-```
+---
 
 #### MigrationController.set_dual_write
 
+```python
+set_dual_write(self: Any, enabled: bool)
+```
+
 Enable or disable dual-write mode (WP-7008).
 
-```python
-set_dual_write(self, enabled)
-```
+---
 
 #### MigrationController.should_use_new_version
 
+```python
+should_use_new_version(self: Any, run_id: str)
+```
+
 Determine if a run should use the target migration version based on canary.
 
-```python
-should_use_new_version(self, run_id)
-```
+---
 
 ---
 
 ## evaluate_version
 
+```python
+evaluate_version(self: Any, contract_id: str, version: str)
+```
+
 Evaluate if a contract version is suitable for current use.
 
-Returns:
-    Dictionary with keys: 'allowed', 'status', 'reason', 'migration_days_left'.
-
-```python
-evaluate_version(self, contract_id, version)
-```
+**Returns**: Dictionary with keys: 'allowed', 'status', 'reason', 'migration_days_left'.
 
 ---
 
 ## get_preferred_version
 
-Return the latest non-deprecated version for a contract ID.
-
 ```python
-get_preferred_version(self, contract_id)
+get_preferred_version(self: Any, contract_id: str)
 ```
+
+Return the latest non-deprecated version for a contract ID.
 
 ---
 
 ## set_canary
 
-Set canary rollout percentage (WP-7008).
-
 ```python
-set_canary(self, percentage)
+set_canary(self: Any, percentage: float)
 ```
+
+Set canary rollout percentage (WP-7008).
 
 ---
 
 ## set_dual_write
 
-Enable or disable dual-write mode (WP-7008).
-
 ```python
-set_dual_write(self, enabled)
+set_dual_write(self: Any, enabled: bool)
 ```
+
+Enable or disable dual-write mode (WP-7008).
 
 ---
 
 ## should_use_new_version
 
-Determine if a run should use the target migration version based on canary.
-
 ```python
-should_use_new_version(self, run_id)
+should_use_new_version(self: Any, run_id: str)
 ```
+
+Determine if a run should use the target migration version based on canary.
 
 ---
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # EMERGENCY FIX: Run this from a CLEAN terminal to fix shell corruption
 # This script fixes CLIProxyAPI config issues that cause shell corruption
 #

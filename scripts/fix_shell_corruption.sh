@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Emergency fix for shell corruption where commands are being evaluated incorrectly.
 # This script helps diagnose and fix shell hook issues.
 

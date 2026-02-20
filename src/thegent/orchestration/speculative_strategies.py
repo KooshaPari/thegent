@@ -14,7 +14,7 @@ _log = logging.getLogger(__name__)
 
 class SpeculativeStrategy(Enum):
     """Speculative execution strategies."""
-    
+
     RACE_FIRST = "race_first"  # Race multiple providers, use first result
     RACE_BEST = "race_best"  # Race multiple providers, use best quality
     ADAPTIVE_TIMEOUT = "adaptive_timeout"  # Adjust timeout based on historical performance
@@ -25,17 +25,17 @@ class SpeculativeStrategy(Enum):
 @dataclass
 class SpeculativeConfig:
     """Configuration for speculative execution."""
-    
+
     strategy: SpeculativeStrategy = SpeculativeStrategy.RACE_FIRST
     providers: list[str] = None  # List of providers to race
     timeout_ms: int = 5000
     quality_threshold: float = 0.8
     cost_budget_usd: float = 0.01
-    
+
     # Adaptive parameters
     historical_latency_p95_ms: float = 2000.0
     historical_quality_avg: float = 0.85
-    
+
     def __post_init__(self):
         if self.providers is None:
             self.providers = ["free", "claude", "gemini"]
@@ -63,7 +63,7 @@ def select_speculative_providers(
         "claude": 0.001,
         "codex": 0.0005,
     }
-    
+
     if strategy == SpeculativeStrategy.COST_QUALITY_TRADEOFF:
         # Select providers within budget
         selected = []
@@ -74,7 +74,7 @@ def select_speculative_providers(
                 selected.append(provider)
                 total_cost += cost
         return selected[:3]  # Limit to 3 providers
-    
+
     # Default: race top 2-3 providers
     return available_providers[:3]
 
@@ -90,9 +90,9 @@ def should_terminate_early(
         # Terminate if we have a result and elapsed > 50% of timeout
         if other_results and elapsed_ms > timeout_ms * 0.5:
             return True
-    
+
     # Always terminate if timeout exceeded
     if elapsed_ms > timeout_ms:
         return True
-    
+
     return False

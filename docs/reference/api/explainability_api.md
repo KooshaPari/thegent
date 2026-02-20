@@ -24,32 +24,40 @@ Stack for managing and rendering progressive disclosure explanations.
 #### ExplainabilityEngine.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### ExplainabilityEngine.get_explanation
 
+```python
+get_explanation(self: Any, decision_id: str, level: DetailLevel)
+```
+
 Return the explanation string for the requested level.
 
-```python
-get_explanation(self, decision_id, level)
-```
+---
 
 #### ExplainabilityEngine.record_decision
 
+```python
+record_decision(self: Any, decision_id: str, explanation: Explanation)
+```
+
 Register an explanation for a specific decision.
 
-```python
-record_decision(self, decision_id, explanation)
-```
+---
 
 #### ExplainabilityEngine.render_all
 
+```python
+render_all(self: Any, decision_id: str)
+```
+
 Render a progressive disclosure view of the explanation.
 
-```python
-render_all(self, decision_id)
-```
+---
 
 ---
 
@@ -61,31 +69,31 @@ A single decision explanation at multiple levels.
 
 ## get_explanation
 
-Return the explanation string for the requested level.
-
 ```python
-get_explanation(self, decision_id, level)
+get_explanation(self: Any, decision_id: str, level: DetailLevel)
 ```
+
+Return the explanation string for the requested level.
 
 ---
 
 ## record_decision
 
-Register an explanation for a specific decision.
-
 ```python
-record_decision(self, decision_id, explanation)
+record_decision(self: Any, decision_id: str, explanation: Explanation)
 ```
+
+Register an explanation for a specific decision.
 
 ---
 
 ## render_all
 
-Render a progressive disclosure view of the explanation.
-
 ```python
-render_all(self, decision_id)
+render_all(self: Any, decision_id: str)
 ```
+
+Render a progressive disclosure view of the explanation.
 
 ---
 

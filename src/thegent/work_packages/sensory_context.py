@@ -113,9 +113,7 @@ class SensoryContextBridge:
         Returns:
             Dictionary containing frames, features, and metadata
         """
-        logger.info(
-            f"Processing video data ({len(video_data)} bytes, format: {format})"
-        )
+        logger.info(f"Processing video data ({len(video_data)} bytes, format: {format})")
 
         # TODO: Integrate with actual video processing library
         # Options: opencv-python, moviepy, ffmpeg-python

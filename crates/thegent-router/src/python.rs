@@ -116,10 +116,10 @@ impl PyRiskFactors {
         let factors = RiskFactors::new(complexity.into());
         PyRiskFactors {
             complexity: factors.complexity,
-            cost_cents: factors.cost_cents,
+            cost_cents: factors.cost_cents as usize,
             dependency_count: factors.dependency_count,
             security_sensitive: factors.security_sensitive,
-            max_cost_cents: factors.max_cost_cents,
+            max_cost_cents: factors.max_cost_cents as usize,
         }
     }
 
@@ -190,10 +190,10 @@ impl PyRiskCalculator {
     fn calculate(&self, factors: &PyRiskFactors) -> f64 {
         let rust_factors = RiskFactors {
             complexity: factors.complexity,
-            cost_cents: factors.cost_cents,
+            cost_cents: factors.cost_cents as u32,
             dependency_count: factors.dependency_count,
             security_sensitive: factors.security_sensitive,
-            max_cost_cents: factors.max_cost_cents,
+            max_cost_cents: factors.max_cost_cents as u32,
         };
         self.calculator.calculate(&rust_factors)
     }
@@ -290,10 +290,10 @@ impl PyParetoRouter {
     fn route(&self, factors: &PyRiskFactors) -> PyRoutingDecision {
         let rust_factors = RiskFactors {
             complexity: factors.complexity,
-            cost_cents: factors.cost_cents,
+            cost_cents: factors.cost_cents as u32,
             dependency_count: factors.dependency_count,
             security_sensitive: factors.security_sensitive,
-            max_cost_cents: factors.max_cost_cents,
+            max_cost_cents: factors.max_cost_cents as u32,
         };
 
         let decision = self.router.route(&rust_factors);
@@ -308,10 +308,10 @@ impl PyParetoRouter {
     fn route_with_session(&self, session_id: &str, factors: &PyRiskFactors) -> PyRoutingDecision {
         let rust_factors = RiskFactors {
             complexity: factors.complexity,
-            cost_cents: factors.cost_cents,
+            cost_cents: factors.cost_cents as u32,
             dependency_count: factors.dependency_count,
             security_sensitive: factors.security_sensitive,
-            max_cost_cents: factors.max_cost_cents,
+            max_cost_cents: factors.max_cost_cents as u32,
         };
 
         let decision = self.router.route_with_session(session_id, &rust_factors);
@@ -346,7 +346,7 @@ impl PyParetoRouter {
 
 /// Python module for thegent_router.
 #[pymodule]
-fn thegent_router(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn thegent_router(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyRoutingMode>()?;
     m.add_class::<PyComplexityLevel>()?;
     m.add_class::<PyRiskFactors>()?;

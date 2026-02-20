@@ -17,26 +17,30 @@ Packager for system release documentation and artifacts.
 #### ReleasePackager.__init__
 
 ```python
-__init__(self, workspace_root)
+__init__(self: Any, workspace_root: Path)
 ```
+
+---
 
 #### ReleasePackager.compile_package
 
+```python
+compile_package(self: Any, version: str)
+```
+
 Compile all required documents and generate checksums.
 
-```python
-compile_package(self, version)
-```
+---
 
 ---
 
 ## compile_package
 
-Compile all required documents and generate checksums.
-
 ```python
-compile_package(self, version)
+compile_package(self: Any, version: str)
 ```
+
+Compile all required documents and generate checksums.
 
 ---
 

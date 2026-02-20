@@ -14,6 +14,7 @@ Performance improvements:
 """
 
 import contextlib
+from pathlib import Path
 from typing import Any
 
 # Library-first (LIBRARY_FIRST_POLICY.md): Using cachetools for in-memory caching
@@ -159,6 +160,34 @@ class MultiTierCache:
             stats["l3_volume"] = 0
 
         return stats
+
+    def get_with_fetch(self, key: str, fetch_func: Any, ttl: float | None = None) -> Any:
+        """Get value from cache, or fetch and store if missing (with Singleflight TGNT-P9.1)."""
+        value = self.get(key)
+        if value is not None:
+            return value
+
+        from thegent.infra.cache_v2 import Singleflight
+
+        if not hasattr(self, "_singleflight"):
+            self._singleflight = Singleflight()
+
+        def _fetch_and_store():
+            res = fetch_func()
+            if res is not None:
+                self.set(key, res, ttl=ttl)
+            return res
+
+        return self._singleflight.do(key, _fetch_and_store)
+
+    def enable_invalidation(self, directory: str | Path) -> None:
+        """Enable real-time cache invalidation based on file changes (TGNT-P9.2)."""
+        from pathlib import Path
+
+        from thegent.infra.cache_v2 import CacheInvalidator
+
+        self.invalidator = CacheInvalidator(self)
+        self.invalidator.watch(Path(directory))
 
 
 # Global cache instance

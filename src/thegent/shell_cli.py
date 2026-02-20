@@ -75,7 +75,9 @@ def shell_profile(
     zshrc = Path.home() / ".zshrc"
 
     if not zshrc.exists():
-        console.print("[red]Error: .zshrc not found. Run 'thegent install --target user' first.[/red]")
+        from thegent.errors import print_error
+
+        print_error(".zshrc not found.", hint="Run 'thegent install --target user' first.")
         raise typer.Exit(1)
 
     content = zshrc.read_text()

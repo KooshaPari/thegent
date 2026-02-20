@@ -35,10 +35,10 @@ class BacklogItem(BaseModel):
     severity: float
     description: str
     attempts: int = 0
-    last_attempted_at: Optional[str] = None
+    last_attempted_at: str | None = None
     created_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     status: BacklogStatus = BacklogStatus.PENDING
-    deferred_reason: Optional[str] = None
+    deferred_reason: str | None = None
 
 
 class BacklogManager:
@@ -110,7 +110,7 @@ class BacklogManager:
         self,
         item_id: str,
         status: BacklogStatus,
-        reason: Optional[str] = None,
+        reason: str | None = None,
     ) -> None:
         """Update the status of a backlog item."""
         items = self._read_all()

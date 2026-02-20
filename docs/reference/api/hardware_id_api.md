@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/security/hardware_id.py`
 
 WP-23002: Hardware-Bound Identity (TPM/SecureEnclave).
+
 Ensures agent identities are bound to physical hardware or secure enclaves.
 Provides hardware-attested provenance for agent actions.
 
@@ -25,44 +26,50 @@ Manages hardware-bound cryptographic identities for agents.
 #### HardwareIdentityManager.__init__
 
 ```python
-__init__(self, agent_id)
+__init__(self: Any, agent_id: str)
 ```
+
+---
 
 #### HardwareIdentityManager.get_hardware_attestation
 
+```python
+get_hardware_attestation(self: Any)
+```
+
 Retrieve an attestation token from the local hardware provider.
 
-```python
-get_hardware_attestation(self)
-```
+---
 
 #### HardwareIdentityManager.verify_attestation
 
+```python
+verify_attestation(self: Any, attestation: HardwareAttestation)
+```
+
 Verify a hardware attestation token.
 
-```python
-verify_attestation(self, attestation)
-```
+---
 
 ---
 
 ## get_hardware_attestation
 
-Retrieve an attestation token from the local hardware provider.
-
 ```python
-get_hardware_attestation(self)
+get_hardware_attestation(self: Any)
 ```
+
+Retrieve an attestation token from the local hardware provider.
 
 ---
 
 ## verify_attestation
 
-Verify a hardware attestation token.
-
 ```python
-verify_attestation(self, attestation)
+verify_attestation(self: Any, attestation: HardwareAttestation)
 ```
+
+Verify a hardware attestation token.
 
 ---
 

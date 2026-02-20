@@ -11,26 +11,26 @@ static catalog cost_weight, planning/models_meta, and governance defaults.
 
 ## get_cost_for_model_provider
 
+```python
+get_cost_for_model_provider(model_id: str, provider: str, settings: Any)
+```
+
 Get (input_per_1k_usd, output_per_1k_usd) for a model-provider pair.
 
 Returns (0.001, 0.002) if unknown.
-
-```python
-get_cost_for_model_provider(model_id, provider, settings)
-```
 
 ---
 
 ## get_model_provider_costs
 
+```python
+get_model_provider_costs(settings: Any)
+```
+
 Build cost values for all model-provider pairs.
 
 Returns: {model_id: {provider: (input_per_1k_usd, output_per_1k_usd)}}
 Uses proxy metrics when reachable; falls back to static values.
-
-```python
-get_model_provider_costs(settings)
-```
 
 ---
 

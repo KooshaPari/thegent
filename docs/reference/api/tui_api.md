@@ -1,14 +1,11 @@
 # tui API Reference
 
-> **Source**: `src/thegent/tui.py`
+> **Source**: `src/thegent/tui/__init__.py`
 
-## render_explorer
+TUI Compositor for thegent.
 
----
-
-## run_explorer_tui
-
-Simple TUI to explore and take over sessions.
+A unified terminal user interface combining multiple output streams,
+agent status, and interactive controls using Textual.
 
 ---
 

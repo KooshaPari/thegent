@@ -23,251 +23,255 @@ High-performance path operations with optimizations.
 
 #### FastPathOps.abspath
 
+```python
+abspath(path: str)
+```
+
 Get absolute path efficiently.
 
-Args:
-    path: Path to resolve
+**Parameters**:
 
-Returns:
-    Absolute path
+- `path`: Path to resolve
 
-```python
-abspath(path)
-```
+**Returns**: Absolute path
+
+---
 
 #### FastPathOps.basename
 
+```python
+basename(path: Any)
+```
+
 Get basename efficiently.
 
-Args:
-    path: Path
+**Parameters**:
 
-Returns:
-    Basename (filename)
+- `path`: Path
 
-```python
-basename(path)
-```
+**Returns**: Basename (filename)
+
+---
 
 #### FastPathOps.dirname
 
+```python
+dirname(path: Any)
+```
+
 Get directory name efficiently.
 
-Args:
-    path: Path
+**Parameters**:
 
-Returns:
-    Directory name
+- `path`: Path
 
-```python
-dirname(path)
-```
+**Returns**: Directory name
+
+---
 
 #### FastPathOps.exists
 
+```python
+exists(path: Any)
+```
+
 Check if path exists efficiently.
 
-Args:
-    path: Path to check
+**Parameters**:
 
-Returns:
-    True if path exists
+- `path`: Path to check
 
-Performance:
-    - os.path.exists: Fast existence check
-    - Avoids Path overhead for simple checks
+**Returns**: True if path exists
 
-```python
-exists(path)
-```
+---
 
 #### FastPathOps.is_dir
 
+```python
+is_dir(path: Any)
+```
+
 Check if path is a directory efficiently.
 
-Args:
-    path: Path to check
+**Parameters**:
 
-Returns:
-    True if path is a directory
+- `path`: Path to check
 
-```python
-is_dir(path)
-```
+**Returns**: True if path is a directory
+
+---
 
 #### FastPathOps.is_file
 
+```python
+is_file(path: Any)
+```
+
 Check if path is a file efficiently.
 
-Args:
-    path: Path to check
+**Parameters**:
 
-Returns:
-    True if path is a file
+- `path`: Path to check
 
-```python
-is_file(path)
-```
+**Returns**: True if path is a file
+
+---
 
 #### FastPathOps.join
 
 Join path parts efficiently.
 
-Args:
-    *parts: Path components
+**Parameters**:
 
-Returns:
-    Joined path string
+- `*parts`: Path components
 
-Performance:
-    - os.path.join: Faster than Path() for simple joins
-    - Optimized for common cases
+**Returns**: Joined path string
+
+---
 
 #### FastPathOps.normalize
 
+```python
+normalize(path: str)
+```
+
 Normalize path efficiently.
 
-Args:
-    path: Path to normalize
+**Parameters**:
 
-Returns:
-    Normalized path
+- `path`: Path to normalize
 
-Performance:
-    - os.path.normpath: Fast normalization
-    - Handles .. and . correctly
+**Returns**: Normalized path
 
-```python
-normalize(path)
-```
+---
 
 #### FastPathOps.split
 
+```python
+split(path: Any)
+```
+
 Split path into directory and filename efficiently.
 
-Args:
-    path: Path to split
+**Parameters**:
 
-Returns:
-    Tuple of (directory, filename)
+- `path`: Path to split
 
-```python
-split(path)
-```
+**Returns**: Tuple of (directory, filename)
+
+---
 
 #### FastPathOps.splitext
 
+```python
+splitext(path: Any)
+```
+
 Split path into base and extension efficiently.
 
-Args:
-    path: Path to split
+**Parameters**:
 
-Returns:
-    Tuple of (base, extension)
+- `path`: Path to split
 
-```python
-splitext(path)
-```
+**Returns**: Tuple of (base, extension)
+
+---
 
 ---
 
 ## abspath
 
+```python
+abspath(path: str)
+```
+
 Get absolute path efficiently.
 
-Args:
-    path: Path to resolve
+**Parameters**:
 
-Returns:
-    Absolute path
+- `path`: Path to resolve
 
-```python
-abspath(path)
-```
+**Returns**: Absolute path
 
 ---
 
 ## basename
 
+```python
+basename(path: Any)
+```
+
 Get basename efficiently.
 
-Args:
-    path: Path
+**Parameters**:
 
-Returns:
-    Basename (filename)
+- `path`: Path
 
-```python
-basename(path)
-```
+**Returns**: Basename (filename)
 
 ---
 
 ## dirname
 
+```python
+dirname(path: Any)
+```
+
 Get directory name efficiently.
 
-Args:
-    path: Path
+**Parameters**:
 
-Returns:
-    Directory name
+- `path`: Path
 
-```python
-dirname(path)
-```
+**Returns**: Directory name
 
 ---
 
 ## exists
 
+```python
+exists(path: Any)
+```
+
 Check if path exists efficiently.
 
-Args:
-    path: Path to check
+**Parameters**:
 
-Returns:
-    True if path exists
+- `path`: Path to check
 
-Performance:
-    - os.path.exists: Fast existence check
-    - Avoids Path overhead for simple checks
-
-```python
-exists(path)
-```
+**Returns**: True if path exists
 
 ---
 
 ## is_dir
 
+```python
+is_dir(path: Any)
+```
+
 Check if path is a directory efficiently.
 
-Args:
-    path: Path to check
+**Parameters**:
 
-Returns:
-    True if path is a directory
+- `path`: Path to check
 
-```python
-is_dir(path)
-```
+**Returns**: True if path is a directory
 
 ---
 
 ## is_file
 
+```python
+is_file(path: Any)
+```
+
 Check if path is a file efficiently.
 
-Args:
-    path: Path to check
+**Parameters**:
 
-Returns:
-    True if path is a file
+- `path`: Path to check
 
-```python
-is_file(path)
-```
+**Returns**: True if path is a file
 
 ---
 
@@ -275,65 +279,57 @@ is_file(path)
 
 Join path parts efficiently.
 
-Args:
-    *parts: Path components
+**Parameters**:
 
-Returns:
-    Joined path string
+- `*parts`: Path components
 
-Performance:
-    - os.path.join: Faster than Path() for simple joins
-    - Optimized for common cases
+**Returns**: Joined path string
 
 ---
 
 ## normalize
 
+```python
+normalize(path: str)
+```
+
 Normalize path efficiently.
 
-Args:
-    path: Path to normalize
+**Parameters**:
 
-Returns:
-    Normalized path
+- `path`: Path to normalize
 
-Performance:
-    - os.path.normpath: Fast normalization
-    - Handles .. and . correctly
-
-```python
-normalize(path)
-```
+**Returns**: Normalized path
 
 ---
 
 ## path_exists
 
-Check if path exists efficiently.
-
 ```python
-path_exists(path)
+path_exists(path: Any)
 ```
+
+Check if path exists efficiently.
 
 ---
 
 ## path_is_dir
 
-Check if path is a directory efficiently.
-
 ```python
-path_is_dir(path)
+path_is_dir(path: Any)
 ```
+
+Check if path is a directory efficiently.
 
 ---
 
 ## path_is_file
 
-Check if path is a file efficiently.
-
 ```python
-path_is_file(path)
+path_is_file(path: Any)
 ```
+
+Check if path is a file efficiently.
 
 ---
 
@@ -345,43 +341,43 @@ Join path parts efficiently.
 
 ## path_normalize
 
-Normalize path efficiently.
-
 ```python
-path_normalize(path)
+path_normalize(path: str)
 ```
+
+Normalize path efficiently.
 
 ---
 
 ## split
 
+```python
+split(path: Any)
+```
+
 Split path into directory and filename efficiently.
 
-Args:
-    path: Path to split
+**Parameters**:
 
-Returns:
-    Tuple of (directory, filename)
+- `path`: Path to split
 
-```python
-split(path)
-```
+**Returns**: Tuple of (directory, filename)
 
 ---
 
 ## splitext
 
+```python
+splitext(path: Any)
+```
+
 Split path into base and extension efficiently.
 
-Args:
-    path: Path to split
+**Parameters**:
 
-Returns:
-    Tuple of (base, extension)
+- `path`: Path to split
 
-```python
-splitext(path)
-```
+**Returns**: Tuple of (base, extension)
 
 ---
 

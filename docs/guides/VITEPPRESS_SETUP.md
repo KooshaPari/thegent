@@ -82,7 +82,7 @@ The cross-project link plugin enables linking between projects:
 
 ```markdown
 [Link to jobhunter](../jobhunter/index.md)
-[Link to sharecli](../sharecli/index.md)
+[Link to heliosShield](../heliosShield/index.md)
 [Link to trace](../trace/index.md)
 ```
 

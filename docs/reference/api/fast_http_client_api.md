@@ -20,187 +20,237 @@ Performance improvements:
 
 ## FastHTTPClient
 
-High-performance HTTP client with automatic backend selection.
+High-performance HTTP client with automatic backend selection and connection pooling.
+
+OPT-004: Connection pooling for provider HTTP clients (40% connection overhead reduction).
 
 Backend priority (fastest first):
 1. curl_cffi (if installed) - 2-3x faster, libcurl-based
-2. httpx (modern, well-maintained) - good balance
-3. requests (legacy fallback) - baseline
+2. httpx (modern, well-maintained) - good balance, supports connection pooling
+3. requests (legacy fallback) - baseline, supports Session pooling
+
+Connection pooling:
+- httpx: Uses persistent Client with connection pool
+- requests: Uses Session with connection pool
+- curl_cffi: Uses persistent session (implicit pooling)
 
 ### Methods
 
 #### FastHTTPClient.__init__
 
-Initialize HTTP client.
-
-Args:
-    impersonate: Browser to impersonate (curl_cffi only, e.g., "chrome", "safari")
-
 ```python
-__init__(self, impersonate)
+__init__(self: Any, impersonate: Any)
 ```
+
+Initialize HTTP client with connection pooling.
+
+**Parameters**:
+
+- `impersonate`: Browser to impersonate (curl_cffi only, e.g., "chrome", "safari")
+
+---
 
 #### FastHTTPClient.backend
 
+```python
+backend(self: Any)
+```
+
 Get current backend name.
 
+---
+
+#### FastHTTPClient.close
+
 ```python
-backend(self)
+close(self: Any)
 ```
+
+Close connection pool.
+
+---
 
 #### FastHTTPClient.get
 
-Perform GET request.
-
-Args:
-    url: URL to request
-    **kwargs: Additional request options
-
-Returns:
-    Response object
-
 ```python
-get(self, url)
+get(self: Any, url: str)
 ```
+
+Perform GET request using connection pool.
+
+OPT-004: Uses persistent client for connection reuse.
+
+**Parameters**:
+
+- `url`: URL to request
+- `**kwargs`: Additional request options
+
+**Returns**: Response object
+
+---
 
 #### FastHTTPClient.post
 
-Perform POST request.
-
-Args:
-    url: URL to request
-    **kwargs: Additional request options
-
-Returns:
-    Response object
-
 ```python
-post(self, url)
+post(self: Any, url: str)
 ```
+
+Perform POST request using connection pool.
+
+OPT-004: Uses persistent client for connection reuse.
+
+**Parameters**:
+
+- `url`: URL to request
+- `**kwargs`: Additional request options
+
+**Returns**: Response object
+
+---
 
 #### FastHTTPClient.request
 
-Perform HTTP request.
-
-Args:
-    method: HTTP method (GET, POST, etc.)
-    url: URL to request
-    **kwargs: Additional request options
-
-Returns:
-    Response object
-
 ```python
-request(self, method, url)
+request(self: Any, method: str, url: str)
 ```
+
+Perform HTTP request using connection pool.
+
+OPT-004: Uses persistent client for connection reuse.
+
+**Parameters**:
+
+- `method`: HTTP method (GET, POST, etc.)
+- `url`: URL to request
+- `**kwargs`: Additional request options
+
+**Returns**: Response object
+
+---
 
 ---
 
 ## backend
 
+```python
+backend(self: Any)
+```
+
 Get current backend name.
 
+---
+
+## close
+
 ```python
-backend(self)
+close(self: Any)
 ```
+
+Close connection pool.
 
 ---
 
 ## get
 
-Perform GET request.
-
-Args:
-    url: URL to request
-    **kwargs: Additional request options
-
-Returns:
-    Response object
-
 ```python
-get(self, url)
+get(self: Any, url: str)
 ```
+
+Perform GET request using connection pool.
+
+OPT-004: Uses persistent client for connection reuse.
+
+**Parameters**:
+
+- `url`: URL to request
+- `**kwargs`: Additional request options
+
+**Returns**: Response object
 
 ---
 
 ## get_http_client
 
+```python
+get_http_client(impersonate: Any)
+```
+
 Get global fast HTTP client instance.
 
-Args:
-    impersonate: Browser to impersonate (curl_cffi only)
+**Parameters**:
 
-Returns:
-    FastHTTPClient instance
+- `impersonate`: Browser to impersonate (curl_cffi only)
 
-```python
-get_http_client(impersonate)
-```
+**Returns**: FastHTTPClient instance
 
 ---
 
 ## http_get
 
-Perform GET request using fastest available backend.
-
 ```python
-http_get(url)
+http_get(url: str)
 ```
+
+Perform GET request using fastest available backend.
 
 ---
 
 ## http_post
 
-Perform POST request using fastest available backend.
-
 ```python
-http_post(url)
+http_post(url: str)
 ```
+
+Perform POST request using fastest available backend.
 
 ---
 
 ## http_request
 
-Perform HTTP request using fastest available backend.
-
 ```python
-http_request(method, url)
+http_request(method: str, url: str)
 ```
+
+Perform HTTP request using fastest available backend.
 
 ---
 
 ## post
 
-Perform POST request.
-
-Args:
-    url: URL to request
-    **kwargs: Additional request options
-
-Returns:
-    Response object
-
 ```python
-post(self, url)
+post(self: Any, url: str)
 ```
+
+Perform POST request using connection pool.
+
+OPT-004: Uses persistent client for connection reuse.
+
+**Parameters**:
+
+- `url`: URL to request
+- `**kwargs`: Additional request options
+
+**Returns**: Response object
 
 ---
 
 ## request
 
-Perform HTTP request.
-
-Args:
-    method: HTTP method (GET, POST, etc.)
-    url: URL to request
-    **kwargs: Additional request options
-
-Returns:
-    Response object
-
 ```python
-request(self, method, url)
+request(self: Any, method: str, url: str)
 ```
+
+Perform HTTP request using connection pool.
+
+OPT-004: Uses persistent client for connection reuse.
+
+**Parameters**:
+
+- `method`: HTTP method (GET, POST, etc.)
+- `url`: URL to request
+- `**kwargs`: Additional request options
+
+**Returns**: Response object
 
 ---
 

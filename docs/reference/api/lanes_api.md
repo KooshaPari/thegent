@@ -13,7 +13,7 @@ Critical lane bypasses overload rejection and gets reserved capacity under burst
 
 Canonical execution lanes (WP-1002).
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -31,99 +31,109 @@ Usage:
 
 #### LaneModel.check_capacity
 
+```python
+check_capacity(cls: Any, lane: str, active_count: int, total_capacity: int)
+```
+
 Check if lane has capacity (starvation prevention, FR-019).
 
 Critical lane always has capacity. Non-critical lanes leave reserved
 slots for critical to prevent starvation under burst.
 
-```python
-check_capacity(cls, lane, active_count, total_capacity)
-```
+---
 
 #### LaneModel.get_priority
 
+```python
+get_priority(cls: Any, lane: str)
+```
+
 Return numeric priority for a lane (lower = higher priority).
 
-```python
-get_priority(cls, lane)
-```
+---
 
 #### LaneModel.get_urgency
 
+```python
+get_urgency(cls: Any, lane: str)
+```
+
 Return urgency tier for a lane.
 
-```python
-get_urgency(cls, lane)
-```
+---
 
 #### LaneModel.is_protected
 
+```python
+is_protected(cls: Any, lane: str)
+```
+
 True if lane bypasses overload rejection (FR-019 critical lane protection).
 
-```python
-is_protected(cls, lane)
-```
+---
 
 #### LaneModel.sort_tasks
 
+```python
+sort_tasks(cls: Any, tasks: list[dict[(str, Any)]])
+```
+
 Sort tasks by lane priority (asc) then by creation time (asc).
 
-```python
-sort_tasks(cls, tasks)
-```
+---
 
 ---
 
 ## check_capacity
 
+```python
+check_capacity(cls: Any, lane: str, active_count: int, total_capacity: int)
+```
+
 Check if lane has capacity (starvation prevention, FR-019).
 
 Critical lane always has capacity. Non-critical lanes leave reserved
 slots for critical to prevent starvation under burst.
 
-```python
-check_capacity(cls, lane, active_count, total_capacity)
-```
-
 ---
 
 ## get_priority
 
-Return numeric priority for a lane (lower = higher priority).
-
 ```python
-get_priority(cls, lane)
+get_priority(cls: Any, lane: str)
 ```
+
+Return numeric priority for a lane (lower = higher priority).
 
 ---
 
 ## get_urgency
 
-Return urgency tier for a lane.
-
 ```python
-get_urgency(cls, lane)
+get_urgency(cls: Any, lane: str)
 ```
+
+Return urgency tier for a lane.
 
 ---
 
 ## is_protected
 
-True if lane bypasses overload rejection (FR-019 critical lane protection).
-
 ```python
-is_protected(cls, lane)
+is_protected(cls: Any, lane: str)
 ```
+
+True if lane bypasses overload rejection (FR-019 critical lane protection).
 
 ---
 
 ## sort_tasks
 
-Sort tasks by lane priority (asc) then by creation time (asc).
-
 ```python
-sort_tasks(cls, tasks)
+sort_tasks(cls: Any, tasks: list[dict[(str, Any)]])
 ```
+
+Sort tasks by lane priority (asc) then by creation time (asc).
 
 ---
 

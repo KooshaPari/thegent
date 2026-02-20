@@ -2,7 +2,7 @@
 
 **Purpose:** Handoff doc for the QA governance smart-contract system. Explains what it is, where it lives, and how it works.
 
-**Source:** `sharecli/docs/guides/QA_GOVERNANCE_SMART_CONTRACT_PLAN_V3.md`, `sharecli/chatgpt.md`, `sharecli/docs/unified/modules/governance/smart-contracts.md`
+**Source:** `heliosShield/docs/guides/QA_GOVERNANCE_SMART_CONTRACT_PLAN_V3.md`, `heliosShield/chatgpt.md`, `heliosShield/docs/unified/modules/governance/smart-contracts.md`
 
 ---
 
@@ -89,12 +89,12 @@ Agent output must be machine-typed, not free-form. Allowed kinds:
 
 | Component | Location |
 |-----------|----------|
-| Plan | `sharecli/docs/guides/QA_GOVERNANCE_SMART_CONTRACT_PLAN_V3.md` |
-| Gate script | `sharecli/scripts/qa-smart-contract-gate.py` |
-| Gate output | `sharecli/.claude/verification/smart-contract-gate.json` |
-| Module overview | `sharecli/docs/unified/modules/governance/smart-contracts.md` |
-| Source transcript | `sharecli/chatgpt.md` (CDDL origin) |
-| Audit | `sharecli/docs/reports/2026-02-14-SHARECLI-SMART-CONTRACT-HOOKS-AUDIT.md` |
+| Plan | `heliosShield/docs/guides/QA_GOVERNANCE_SMART_CONTRACT_PLAN_V3.md` |
+| Gate script | `heliosShield/scripts/qa-smart-contract-gate.py` |
+| Gate output | `heliosShield/.claude/verification/smart-contract-gate.json` |
+| Module overview | `heliosShield/docs/unified/modules/governance/smart-contracts.md` |
+| Source transcript | `heliosShield/chatgpt.md` (CDDL origin) |
+| Audit | `heliosShield/docs/reports/2026-02-14-heliosShield-SMART-CONTRACT-HOOKS-AUDIT.md` |
 
 ---
 
@@ -139,7 +139,7 @@ Agent output must be machine-typed, not free-form. Allowed kinds:
 
 ## 9. Integration with chatgpt.md
 
-The v3 plan integrates the full model from `sharecli/chatgpt.md`:
+The v3 plan integrates the full model from `heliosShield/chatgpt.md`:
 
 | chatgpt.md concept | v3 coverage |
 |--------------------|-------------|

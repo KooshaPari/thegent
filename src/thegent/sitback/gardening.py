@@ -32,6 +32,7 @@ class GardeningManager:
         "session_discovery",
         "quality_check",
         "dag_sync",
+        "smart_prune",
     ]
 
     def __init__(self, project_root: Path | None = None) -> None:
@@ -228,6 +229,26 @@ class GardeningManager:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    async def run_smart_prune(self) -> dict[str, Any]:
+        """Run intelligent resource pruning.
+
+        Returns:
+            Dict with pruning results.
+        """
+        try:
+            from thegent.orchestration.smart_prune import smart_prune_main
+            results = smart_prune_main(force=False, reprompt=True)
+            return {
+                "success": True,
+                "pruned": results["pruned"],
+                "reprompted": results["reprompted"],
+                "details": results["details"],
+                "needs_attention": results["reprompted"] > 0,
+            }
+        except Exception as e:
+            _log.error(f"Error in smart_prune gardening: {e}")
+            return {"success": False, "error": str(e)}
+
     async def run_step(self, step: str) -> dict[str, Any]:
         """Run a single gardening step.
 
@@ -246,6 +267,7 @@ class GardeningManager:
             "quality_check": self.check_quality,
             "dag_sync": self.check_dag_sync,
             "session_discovery": self._session_discovery,  # Placeholder
+            "smart_prune": self.run_smart_prune,
         }
 
         handler = step_handlers.get(step)

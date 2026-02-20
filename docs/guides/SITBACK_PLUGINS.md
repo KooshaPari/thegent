@@ -39,7 +39,7 @@ def register_sitback(registry):
         "content": fetch_live_data(),
         "border_style": "green"
     })
-    registry.register_harness_status(lambda: get_sharecli_status())  # override default
+    registry.register_harness_status(lambda: get_heliosShield_status())  # override default
 ```
 
 ### Registry Methods
@@ -48,11 +48,11 @@ def register_sitback(registry):
 |--------|---------|
 | `register_widget(name, fn)` | `fn()` → `{title, content, border_style}` |
 | `register_startup_step(step)` | Append line to startup prompt |
-| `register_harness_status(fn)` | `fn()` → `dict | None` (sharecli/FUSE) |
+| `register_harness_status(fn)` | `fn()` → `dict | None` (heliosShield/FUSE) |
 
-## Harness / Sharecli Placeholder
+## Harness / heliosShield Placeholder
 
-When `THGENT_SITBACK_HARNESS=1`, the built-in harness placeholder shows a "Sharecli/FUSE integration coming when plugin lands" panel in `--profile full`. Plugins can override via `register_harness_status()`.
+When `THGENT_SITBACK_HARNESS=1`, the built-in harness placeholder shows a "heliosShield/FUSE integration coming when plugin lands" panel in `--profile full`. Plugins can override via `register_harness_status()`.
 
 ## Profiles
 

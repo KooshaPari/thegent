@@ -26,11 +26,11 @@ Metadata for an execution mode.
 
 ## get_mode_capability
 
-Get capability metadata for a mode string.
-
 ```python
-get_mode_capability(mode)
+get_mode_capability(mode: str)
 ```
+
+Get capability metadata for a mode string.
 
 ---
 

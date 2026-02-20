@@ -8,11 +8,11 @@ Shell environment management CLI commands.
 
 ## shell_benchmark
 
-Benchmark shell startup time.
-
 ```python
-shell_benchmark(iterations)
+shell_benchmark(iterations: int)
 ```
+
+Benchmark shell startup time.
 
 ---
 
@@ -24,11 +24,11 @@ Show cache statistics (hit/miss rates, sizes).
 
 ## shell_circuit_breaker
 
-Manage circuit breakers for error recovery.
-
 ```python
-shell_circuit_breaker(reset, list_all)
+shell_circuit_breaker(reset: Any, list_all: bool)
 ```
+
+Manage circuit breakers for error recovery.
 
 ---
 
@@ -40,11 +40,11 @@ Clear shell optimization cache (eval cache, tool cache, etc.).
 
 ## shell_doctor
 
-Diagnose shell environment issues.
-
 ```python
-shell_doctor(fix)
+shell_doctor(fix: bool)
 ```
+
+Diagnose shell environment issues.
 
 ---
 
@@ -74,11 +74,11 @@ Show platform detection and compatibility information.
 
 ## shell_profile
 
-Enable or disable shell startup profiling.
-
 ```python
-shell_profile(enable, disable)
+shell_profile(enable: bool, disable: bool)
 ```
+
+Enable or disable shell startup profiling.
 
 ---
 

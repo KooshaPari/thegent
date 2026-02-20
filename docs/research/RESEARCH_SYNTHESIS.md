@@ -12,7 +12,7 @@ After conducting **extreme depth research** across local codebase and web framew
 
 - **3 coordination strategies** (hierarchical, P2P, hybrid)
 - **4 major frameworks** analyzed (CrewAI, MetaGPT, LangGraph, AutoGen)
-- **Production patterns** from crun, smolgents, sharecli
+- **Production patterns** from crun, smolgents, heliosShield
 - **Academic validation** from Cursor research, MetaGPT patterns
 - **Clear gaps** that our design fills
 
@@ -97,7 +97,7 @@ After conducting **extreme depth research** across local codebase and web framew
    - Heartbeat-based failure detection
 
 **Evidence:**
-- **ShareCLI**: File-based coordination protocol
+- **heliosShield**: File-based coordination protocol
 - **MetaGPT**: Global message pool
 - **CrewAI**: Manager coordination
 - **AutoGen**: Group chat patterns
@@ -165,7 +165,7 @@ After conducting **extreme depth research** across local codebase and web framew
 
 4. **File-Based IPC Integration**
    - Frameworks use HTTP/API-based communication
-   - Our design integrates with ShareCLI file-based IPC
+   - Our design integrates with heliosShield file-based IPC
    - Enables coordination without persistent connections
 
 ---
@@ -235,7 +235,7 @@ After conducting **extreme depth research** across local codebase and web framew
    - Message pool patterns
    - Stigmergic handoff
 
-2. **File-Based IPC** (ShareCLI, Agent Mesh)
+2. **File-Based IPC** (heliosShield, Agent Mesh)
    - Maildir pattern
    - Atomic operations
    - Heartbeat-based failure detection
@@ -302,7 +302,7 @@ After conducting **extreme depth research** across local codebase and web framew
 **Gap**: Frameworks use HTTP/API, not file-based IPC
 
 **Our Solution:**
-- Integrates with ShareCLI file-based IPC
+- Integrates with heliosShield file-based IPC
 - Maildir pattern for messages
 - Atomic operations for coordination
 - Works without persistent connections
@@ -322,7 +322,7 @@ After conducting **extreme depth research** across local codebase and web framew
    - Manager-first assignment pattern
    - Extend with explicit relationship tracking
 
-2. **Adopt ShareCLI Coordination**
+2. **Adopt heliosShield Coordination**
    - File-based IPC protocol
    - Maildir pattern
    - Atomic operations
@@ -367,7 +367,7 @@ After conducting **extreme depth research** across local codebase and web framew
 
 3. **Unified Integration**
    - Extends TeammateManager
-   - Uses ShareCLI coordination
+   - Uses heliosShield coordination
    - Integrates with existing systems
 
 ---
@@ -493,7 +493,7 @@ After conducting **extreme depth research** across local codebase and web framew
 - CRUN Deep Dive: Coordination strategies
 - SmolGents Architecture: Execution modes
 - Multi-Swarm Hierarchy: Swarm patterns
-- ShareCLI Agent Mesh: File-based IPC
+- heliosShield Agent Mesh: File-based IPC
 - CrewAI Documentation: Hierarchical process
 - MetaGPT: Software company simulation
 - LangGraph: Stateful workflows

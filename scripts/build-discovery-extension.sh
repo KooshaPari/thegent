@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Build script for thegent_discovery Rust Python extension
 set -euo pipefail
 

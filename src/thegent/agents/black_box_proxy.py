@@ -1,3 +1,5 @@
+from typing import Optional
+
 """WP-33001: Universal External Proxy (Donut Bridge).
 Provides a generic wrapper to intercept and control I/O for black-box agents.
 Supports stdio, HTTP, and LSP interception to enforce thegent's policies externally.
@@ -16,7 +18,7 @@ class BlackBoxProxy:
     def __init__(self, agent_cmd: list[str], policy_enforcer: Callable | None = None) -> None:
         self.agent_cmd = agent_cmd
         self.policy_enforcer = policy_enforcer
-        self.process: asyncio.subprocess.Optional[Process] = None
+        self.process: asyncio.subprocess.Process | None = None
 
     async def start(self):
         """Launch the black-box agent as a subprocess with intercepted I/O."""

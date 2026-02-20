@@ -9,30 +9,32 @@ logger = logging.getLogger(__name__)
 class AutonomousLearningSurface:
     """Surface map for autonomous learning."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize autonomous learning surface."""
         self.learning_points: list[dict[str, Any]] = []
 
     def add_learning_point(self, context: str, action: str, outcome: Any) -> None:
         """Add a learning point.
-        
+
         Args:
             context: Context of learning
             action: Action taken
             outcome: Outcome observed
         """
-        self.learning_points.append({
-            "context": context,
-            "action": action,
-            "outcome": outcome,
-        })
+        self.learning_points.append(
+            {
+                "context": context,
+                "action": action,
+                "outcome": outcome,
+            }
+        )
 
     def get_recommendation(self, context: str) -> str | None:
         """Get recommendation based on learning.
-        
+
         Args:
             context: Current context
-            
+
         Returns:
             Recommended action or None
         """

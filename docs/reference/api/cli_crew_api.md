@@ -1,0 +1,74 @@
+# cli_crew API Reference
+
+> **Source**: `src/thegent/cli_crew.py`
+
+CLI commands for crew management.
+
+---
+
+## crew_add_agent_cmd
+
+```python
+crew_add_agent_cmd(crew_id: str, role: str, name: str, description: str, capabilities: str, model: str)
+```
+
+Add agent to crew.
+
+---
+
+## crew_add_task_cmd
+
+```python
+crew_add_task_cmd(crew_id: str, description: str, dependencies: str, agent_id: str)
+```
+
+Add task to crew.
+
+---
+
+## crew_create_cmd
+
+```python
+crew_create_cmd(name: str, description: str, execution_mode: str, output: str)
+```
+
+Create a new crew.
+
+---
+
+## crew_execute_cmd
+
+```python
+crew_execute_cmd(crew_file: str, cwd: str, mode: str, timeout: int, model: str)
+```
+
+Execute a crew from a JSON file.
+
+---
+
+## crew_list_cmd
+
+List all crews.
+
+---
+
+## crew_show_cmd
+
+```python
+crew_show_cmd(crew_id: str)
+```
+
+Show crew details.
+
+---
+
+## crew_status_cmd
+
+```python
+crew_status_cmd(crew_id: str)
+```
+
+Show crew execution status.
+
+---
+

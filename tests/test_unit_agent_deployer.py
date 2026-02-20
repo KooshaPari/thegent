@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Unit tests for AgentDeployer with LifecycleController integration."""
 
 from unittest.mock import MagicMock, patch
@@ -23,7 +25,7 @@ class MockCostController:
         dimension: str,
         agent_type: str,
         *,
-        cost_usd: Optional[float] = None,
+        cost_usd: float | None = None,
     ) -> None:
         self.calls.append((dimension, agent_type, cost_usd))
 

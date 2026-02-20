@@ -12,7 +12,7 @@ This audit identifies **extensive existing research** on multi-agent systems, hi
 
 - **3 coordination strategies** identified (hierarchical, P2P, hybrid)
 - **Multiple framework implementations** (CrewAI patterns, MetaGPT references, AutoGen patterns)
-- **Production-ready patterns** from crun, smolgents, sharecli
+- **Production-ready patterns** from crun, smolgents, heliosShield
 - **Hierarchical blackboard** system already designed
 - **File-based IPC** coordination protocol documented
 - **Team/swarm patterns** extensively researched
@@ -122,7 +122,7 @@ def execute_hierarchical(self):
 
 ## 3. Agent Mesh & Coordination
 
-### 3.1 File-Based IPC Protocol (sharecli/compass_artifact_wf-0975646a-645a-4dd9-82ca-5d096f2e188a_text_markdown.md)
+### 3.1 File-Based IPC Protocol (heliosShield/compass_artifact_wf-0975646a-645a-4dd9-82ca-5d096f2e188a_text_markdown.md)
 
 **Core Architecture:**
 - File-based IPC on tmpfs (`/dev/shm/`)
@@ -169,7 +169,7 @@ def execute_hierarchical(self):
 
 ---
 
-### 3.2 Agent Mesh Research (sharecli/agent-mesh-research-r3-consensus-escalation-2026.md)
+### 3.2 Agent Mesh Research (heliosShield/agent-mesh-research-r3-consensus-escalation-2026.md)
 
 **Claude Code Agent Teams:**
 - Team lead coordinates, spawns teammates
@@ -193,7 +193,7 @@ def execute_hierarchical(self):
 
 ## 4. Delegation Patterns
 
-### 4.1 Manager Pattern (sharecli/agents.md, trace/claude.md)
+### 4.1 Manager Pattern (heliosShield/agents.md, trace/claude.md)
 
 **CRITICAL**: Operate as strategic manager, not worker. Delegate to subagents.
 
@@ -344,7 +344,7 @@ interface AgentRegistration {
 - `thegent teammates delegate <persona> <prompt>`: Spawn async sub-agent
 - Status Tracking: Use EvidenceGraph to link actions
 
-**Coordination (ShareCLI Layer):**
+**Coordination (heliosShield Layer):**
 - Git Parallelism (Phase 6): Multiple agents commit concurrently
 - Smart Merge (Phase 7): AST-aware conflict resolution
 - Task Coordination (Phase 11): Filesystem-native task queue
@@ -365,11 +365,11 @@ interface AgentRegistration {
 
 ## 6. Production Patterns
 
-### 6.1 ShareCLI Coordination (sharecli/docs/architecture/)
+### 6.1 heliosShield Coordination (heliosShield/docs/architecture/)
 
 **System Hierarchy:**
 ```
-sharecli/
+heliosShield/
 ├── bin/harness                 # Dispatcher + CLI
 ├── proxy/                      # Symlink farm (intercepted commands)
 ├── lib/core.sh                 # Core orchestration/strategies
@@ -477,7 +477,7 @@ sharecli/
    - Add hierarchy support
    - Enhance delegation protocol
 
-3. **Use ShareCLI Coordination**
+3. **Use heliosShield Coordination**
    - Git parallelism for concurrent work
    - Smart merge for conflict resolution
    - Task queue for coordination
@@ -495,10 +495,10 @@ sharecli/
 
 2. **Hierarchy & Swarms**
    - `thegent/docs/reference/MULTI_SWARM_HIERARCHY_DEPTH.md`
-   - `sharecli/compass_artifact_wf-0975646a-645a-4dd9-82ca-5d096f2e188a_text_markdown.md`
+   - `heliosShield/compass_artifact_wf-0975646a-645a-4dd9-82ca-5d096f2e188a_text_markdown.md`
 
 3. **Delegation & Teams**
-   - `sharecli/agents.md`
+   - `heliosShield/agents.md`
    - `trace/claude.md`
    - `smolgents/RESEARCH_MICROAGENT_DELEGATION.md`
    - `thegent/docs/research/TEAMMATES_RESEARCH_AND_PLAN.md`
@@ -506,11 +506,11 @@ sharecli/
 4. **Multi-Agent Systems**
    - `kimaki/COMPREHENSIVE-MULTI-AGENT-PLAN.md`
    - `kimaki/MULTI-AGENT-COMMUNICATION-ARCHITECTURE.md`
-   - `sharecli/agent-mesh-research-r3-consensus-escalation-2026.md`
+   - `heliosShield/agent-mesh-research-r3-consensus-escalation-2026.md`
 
 5. **Coordination Protocols**
-   - `sharecli/docs/architecture/00-system-overview.md`
-   - `sharecli/docs/architecture/04-flow-atlas.md`
+   - `heliosShield/docs/architecture/00-system-overview.md`
+   - `heliosShield/docs/architecture/04-flow-atlas.md`
 
 ---
 
@@ -527,7 +527,7 @@ sharecli/
    - Fill identified gaps
 
 3. **Implementation Plan**
-   - Leverage existing code (SmolGents, ShareCLI)
+   - Leverage existing code (SmolGents, heliosShield)
    - Extend TeammateManager
    - Implement hierarchy manager
 

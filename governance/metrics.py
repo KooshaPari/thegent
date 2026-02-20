@@ -83,6 +83,7 @@ class ProviderMetricsCollector:
         self.results: dict[str, list[ExecutionResult]] = {}
         self.metrics_cache: dict[str, ProviderMetricsSnapshot] = {}
         self.last_update: dict[str, datetime] = {}
+        self._background_tasks: set[asyncio.Task] = set()
 
         # Ensure cache directory exists
         if storage_backend == "local":
@@ -107,7 +108,9 @@ class ProviderMetricsCollector:
             del self.metrics_cache[provider_id]
 
         # Store to persistent backend (async, non-blocking)
-        asyncio.create_task(self._persist_result(result))
+        task = asyncio.create_task(self._persist_result(result))
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
 
     async def _persist_result(self, result: ExecutionResult) -> None:
         """

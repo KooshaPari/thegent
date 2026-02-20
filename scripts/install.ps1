@@ -69,6 +69,19 @@ if (Test-Path (Join-Path $env:USERPROFILE "AppData\Roaming\Python\Scripts")) {
 Write-Host "thegent bootstrap"
 Write-Host "================="
 
+# --- Phase 0: System Dependencies ---
+if ($env:THGENT_BOOTSTRAP_DEPS -eq "1") {
+    Write-Step "Installing optional tools (Modern Unix)..."
+    if (Get-Command brew -ErrorAction SilentlyContinue) {
+        brew install ripgrep fd jq eza bat zoxide delta duf dust procs bottom yazi xh sd
+    } elseif (Get-Command winget -ErrorAction SilentlyContinue) {
+        $pkgs = "BurntSushi.ripgrep", "sharkdp.fd", "jqlang.jq", "eza-community.eza", "sharkdp.bat", "ajeetdsouza.zoxide", "dandavison.delta", "muesli.duf", "sharkdp.dust", "dalance.procs", "ClementTsang.bottom", "sxyazi.yazi", "ducaale.xh", "chmln.sd"
+        foreach ($pkg in $pkgs) {
+            try { winget install $pkg --silent --accept-package-agreements --accept-source-agreements } catch {}
+        }
+    }
+}
+
 # --- Phase 1: Install thegent ---
 $thegentInstalled = Get-Command thegent -ErrorAction SilentlyContinue
 if ($thegentInstalled) {

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Wrapper script for generate-api-docs.py
 # Auto-generates API docs from Python docstrings for VitePress documentation
 

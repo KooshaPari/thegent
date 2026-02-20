@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-This document specifies the design for a **Unified Agent Registry API** that consolidates agent management across multiple projects in the kush ecosystem (thegent, kimaki, plangent, sharecli). The API provides a single source of truth for agent registration, discovery, and coordination.
+This document specifies the design for a **Unified Agent Registry API** that consolidates agent management across multiple projects in the kush ecosystem (thegent, kimaki, plangent, heliosShield). The API provides a single source of truth for agent registration, discovery, and coordination.
 
 **Key Goals**:
 - ✅ Single source of truth for agent metadata
@@ -38,7 +38,7 @@ This document specifies the design for a **Unified Agent Registry API** that con
 - **Schema**: Python-based agent definitions
 - **Storage**: File-based, MCP server discovery
 
-#### **sharecli**
+#### **heliosShield**
 - **Features**: Agent harness, command interception
 - **Schema**: Python-based agent definitions
 - **Storage**: Runtime detection

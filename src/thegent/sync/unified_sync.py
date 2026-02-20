@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class UnifiedSyncCommand:
     """Unified sync/update command."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize unified sync command."""
         self.work_stream_integration = WorkStreamIntegration()
         self.research_integration = ResearchIntegration()
@@ -22,7 +22,7 @@ class UnifiedSyncCommand:
 
     def sync_all(self) -> dict[str, Any]:
         """Sync all components.
-        
+
         Returns:
             Sync results dictionary
         """
@@ -35,7 +35,7 @@ class UnifiedSyncCommand:
 
     def sync_work_stream(self) -> dict[str, Any]:
         """Sync work stream.
-        
+
         Returns:
             Sync result
         """
@@ -46,7 +46,7 @@ class UnifiedSyncCommand:
 
     def sync_research(self) -> dict[str, Any]:
         """Sync research sprawl.
-        
+
         Returns:
             Sync result
         """
@@ -56,7 +56,7 @@ class UnifiedSyncCommand:
 
     def sync_plans(self) -> dict[str, Any]:
         """Sync and consolidate plans.
-        
+
         Returns:
             Sync result
         """

@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/agents/information_life.py`
 
 WP-44001: Pure Information Persona Encoding.
+
 Encodes an agent's 'soul' (weights, value vectors, and memory) into a substrate-independent
 information format. Allows for migration between model architectures or digital-to-analog bridges.
 
@@ -17,62 +18,70 @@ Substrate-independent encoding of an agent identity.
 #### InformationPersona.__init__
 
 ```python
-__init__(self, agent_id)
+__init__(self: Any, agent_id: str)
 ```
+
+---
 
 #### InformationPersona.check_integrity
 
+```python
+check_integrity(self: Any)
+```
+
 Calculate the information entropy of the persona encoding.
 
-```python
-check_integrity(self)
-```
+---
 
 #### InformationPersona.decode_persona
 
+```python
+decode_persona(self: Any, encoded_data: str)
+```
+
 Reconstruct persona from an information stream.
 
-```python
-decode_persona(self, encoded_data)
-```
+---
 
 #### InformationPersona.encode_persona
 
+```python
+encode_persona(self: Any)
+```
+
 WP-44001: Serialize persona into a high-density, portable format.
 
-```python
-encode_persona(self)
-```
+---
 
 ---
 
 ## check_integrity
 
-Calculate the information entropy of the persona encoding.
-
 ```python
-check_integrity(self)
+check_integrity(self: Any)
 ```
+
+Calculate the information entropy of the persona encoding.
 
 ---
 
 ## decode_persona
 
-Reconstruct persona from an information stream.
-
 ```python
-decode_persona(self, encoded_data)
+decode_persona(self: Any, encoded_data: str)
 ```
+
+Reconstruct persona from an information stream.
 
 ---
 
 ## encode_persona
 
-WP-44001: Serialize persona into a high-density, portable format.
-
 ```python
-encode_persona(self)
+encode_persona(self: Any)
 ```
+
+WP-44001: Serialize persona into a high-density, portable format.
 
 ---
 

@@ -1,146 +1,96 @@
 # learning API Reference
 
-> **Source**: `src/thegent/planning/learning.py`
+> **Source**: `src/thegent/hooks/learning.py`
 
-WP-14002: Learning model registry and promotion with canary scoring.
+Implement learning-record/should-skip subcommands (learning-based).
 
 ---
 
-## CanaryMetrics
+## LearningSubcommands
+
+Learning-based subcommands.
 
 ### Methods
 
-#### CanaryMetrics.avg_latency
+#### LearningSubcommands.__init__
 
 ```python
-avg_latency(self)
+__init__(self: Any, learning_db_path: Any)
 ```
 
-#### CanaryMetrics.success_rate
+Initialize learning subcommands.
 
-```python
-success_rate(self)
-```
+**Parameters**:
+
+- `learning_db_path`: Learning database path
 
 ---
 
-## LearningModel
+#### LearningSubcommands.record
+
+```python
+record(self: Any, pattern: str, skipped: bool, reason: str)
+```
+
+Record a learning decision.
+
+**Parameters**:
+
+- `pattern`: Pattern that was evaluated
+- `skipped`: Whether it was skipped
+- `reason`: Reason for skipping
 
 ---
 
-## LearningRegistry
-
-Registry for managing the lifecycle of candidate models (WP-14002).
-
-### Methods
-
-#### LearningRegistry.__init__
+#### LearningSubcommands.should_skip
 
 ```python
-__init__(self, storage_path)
+should_skip(self: Any, pattern: str, threshold: float)
 ```
 
-#### LearningRegistry.add_canary
+Determine if pattern should be skipped.
 
-Register a new model for canary testing.
+**Parameters**:
 
-```python
-add_canary(self, model_id)
-```
+- `pattern`: Pattern to evaluate
+- `threshold`: Skip threshold (0.0-1.0)
 
-#### LearningRegistry.finalize_promotion
-
-WP-14003: Finalize promotion after human approval.
-
-```python
-finalize_promotion(self, model_id, approver)
-```
-
-#### LearningRegistry.list_models
-
-```python
-list_models(self)
-```
-
-#### LearningRegistry.promote_to_candidate
-
-Promote a canary to a promotion candidate based on metrics.
-
-```python
-promote_to_candidate(self, model_id)
-```
-
-#### LearningRegistry.record_outcome
-
-Record the outcome of a canary run.
-
-```python
-record_outcome(self, model_id, success, latency_ms, cost_usd)
-```
+**Returns**: True if should skip
 
 ---
 
-## add_canary
+---
 
-Register a new model for canary testing.
+## record
 
 ```python
-add_canary(self, model_id)
+record(self: Any, pattern: str, skipped: bool, reason: str)
 ```
+
+Record a learning decision.
+
+**Parameters**:
+
+- `pattern`: Pattern that was evaluated
+- `skipped`: Whether it was skipped
+- `reason`: Reason for skipping
 
 ---
 
-## avg_latency
+## should_skip
 
 ```python
-avg_latency(self)
+should_skip(self: Any, pattern: str, threshold: float)
 ```
 
----
+Determine if pattern should be skipped.
 
-## finalize_promotion
+**Parameters**:
 
-WP-14003: Finalize promotion after human approval.
+- `pattern`: Pattern to evaluate
+- `threshold`: Skip threshold (0.0-1.0)
 
-```python
-finalize_promotion(self, model_id, approver)
-```
-
----
-
-## list_models
-
-```python
-list_models(self)
-```
-
----
-
-## promote_to_candidate
-
-Promote a canary to a promotion candidate based on metrics.
-
-```python
-promote_to_candidate(self, model_id)
-```
-
----
-
-## record_outcome
-
-Record the outcome of a canary run.
-
-```python
-record_outcome(self, model_id, success, latency_ms, cost_usd)
-```
-
----
-
-## success_rate
-
-```python
-success_rate(self)
-```
+**Returns**: True if should skip
 
 ---
 

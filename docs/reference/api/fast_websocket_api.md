@@ -24,25 +24,34 @@ High-performance WebSocket client with automatic backend selection.
 
 #### FastWebSocket.__init__
 
+```python
+__init__(self: Any, url: str)
+```
+
 Initialize WebSocket client.
 
-Args:
-    url: WebSocket URL (ws:// or wss://)
-    **kwargs: Additional connection options
+**Parameters**:
 
-```python
-__init__(self, url)
-```
+- `url`: WebSocket URL (ws:// or wss://)
+- `**kwargs`: Additional connection options
+
+---
 
 #### FastWebSocket.close_sync
 
-Close connection synchronously.
-
 ```python
-close_sync(self)
+close_sync(self: Any)
 ```
 
+Close connection synchronously.
+
+---
+
 #### FastWebSocket.connect_sync
+
+```python
+connect_sync(self: Any)
+```
 
 Connect synchronously using websocket-client.
 
@@ -50,39 +59,45 @@ Performance:
     - websocket-client: Legacy, sync-only
     - Fallback for compatibility
 
-```python
-connect_sync(self)
-```
+---
 
 #### FastWebSocket.recv_sync
 
+```python
+recv_sync(self: Any)
+```
+
 Receive data synchronously.
 
-```python
-recv_sync(self)
-```
+---
 
 #### FastWebSocket.send_sync
 
+```python
+send_sync(self: Any, data: Any)
+```
+
 Send data synchronously.
 
-```python
-send_sync(self, data)
-```
+---
 
 ---
 
 ## close_sync
 
-Close connection synchronously.
-
 ```python
-close_sync(self)
+close_sync(self: Any)
 ```
+
+Close connection synchronously.
 
 ---
 
 ## connect_sync
+
+```python
+connect_sync(self: Any)
+```
 
 Connect synchronously using websocket-client.
 
@@ -90,39 +105,35 @@ Performance:
     - websocket-client: Legacy, sync-only
     - Fallback for compatibility
 
-```python
-connect_sync(self)
-```
-
 ---
 
 ## recv_sync
 
-Receive data synchronously.
-
 ```python
-recv_sync(self)
+recv_sync(self: Any)
 ```
+
+Receive data synchronously.
 
 ---
 
 ## send_sync
 
-Send data synchronously.
-
 ```python
-send_sync(self, data)
+send_sync(self: Any, data: Any)
 ```
+
+Send data synchronously.
 
 ---
 
 ## websocket_connect_sync
 
-Create and connect WebSocket synchronously.
-
 ```python
-websocket_connect_sync(url)
+websocket_connect_sync(url: str)
 ```
+
+Create and connect WebSocket synchronously.
 
 ---
 

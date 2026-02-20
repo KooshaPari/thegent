@@ -8,15 +8,16 @@ import sys
 from collections import Counter
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import typer
 
 from thegent.agents.cliproxy_manager import fetch_provider_metrics
-from thegent.infra.power import wrap_with_caffeinate
 
 # Import thegent CLI commands to reuse them.
 # Lazy imports used in commands to speed up CLI startup.
 from thegent.cli import bg_cmd, history_cmd, inspect_cmd, logs_cmd, ps_cmd, run_cmd, status_cmd, stop_cmd, wait_cmd
+from thegent.infra.power import wrap_with_caffeinate
 
 
 def _is_triggered_by_agent_process():
@@ -33,7 +34,7 @@ def _get_settings():
 
 
 class LazyConsole:
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> Any:
         from rich.console import Console
 
         global console
@@ -343,10 +344,10 @@ def _find_claude() -> str | None:
     p = shutil.which("claude")
     if p:
         return p
-    for d in ("/opt/homebrew/bin", "/usr/local/bin", os.path.expanduser("~/.bun/bin")):
-        cand = os.path.join(d, "claude")
-        if os.path.isfile(cand) and os.access(cand, os.X_OK):
-            return cand
+    for d in (Path("/opt/homebrew/bin"), Path("/usr/local/bin"), Path("~/.bun/bin").expanduser()):
+        cand = d / "claude"
+        if cand.is_file() and os.access(cand, os.X_OK):
+            return str(cand)
     return None
 
 
@@ -359,7 +360,7 @@ def _ensure_claude_installed(suggest_dex: bool = False) -> str:
     brew = shutil.which("brew")
     if brew:
         console.print("[dim]Installing Claude Code via Homebrew...[/dim]")
-        r = subprocess.run([brew, "install", "--cask", "claude-code"], capture_output=True, text=True)
+        r = subprocess.run([brew, "install", "--cask", "claude-code"], capture_output=True, text=True, check=False)
         if r.returncode == 0:
             p = _find_claude()
             if p:
@@ -368,7 +369,7 @@ def _ensure_claude_installed(suggest_dex: bool = False) -> str:
     bun = shutil.which("bun")
     if bun:
         console.print("[dim]Installing Claude Code via Bun...[/dim]")
-        r = subprocess.run([bun, "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True)
+        r = subprocess.run([bun, "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True, check=False)
         if r.returncode == 0:
             p = _find_claude()
             if p:
@@ -399,12 +400,11 @@ def _run_claude_print(
     if not _is_triggered_by_agent_process():
         cmd.insert(1, "--dangerously-skip-permissions")
     extra = _clode_passthrough_args(cd=cd, add_dir=add_dir, output_format=output_format)
-    for arg in extra:
-        cmd.append(arg)
+    cmd.extend(extra)
 
     if cd:
         os.chdir(cd)
-    
+
     # Wrap with caffeinate to prevent sleep on macOS
     cmd = wrap_with_caffeinate(cmd, "claude")
 
@@ -1281,7 +1281,7 @@ def _run_sitback_claude(
     if tmux:
         session_name = f"sitback-{os.getpid()}"
         run_args = ["tmux", "new-session", "-s", session_name, *cmd]
-        
+
         # Wrap with caffeinate to prevent sleep on macOS
         run_args = wrap_with_caffeinate(run_args, "claude")
 
@@ -1297,7 +1297,7 @@ def _run_sitback_claude(
     else:
         # Wrap with caffeinate to prevent sleep on macOS
         cmd = wrap_with_caffeinate(cmd, "claude")
-        
+
         # WP-Y15: Use os.execvpe for native interactive experience (better signal handling)
         os.execvpe(cmd[0], cmd, env)
 

@@ -15,26 +15,30 @@ Manages autonomous model promotion based on performance metrics.
 #### ModelPromoter.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: ThegentSettings)
 ```
+
+---
 
 #### ModelPromoter.evaluate_promotion
 
+```python
+evaluate_promotion(self: Any, model_id: str, success_rate: float, cost_efficiency: float)
+```
+
 Evaluate if a model should be promoted to a higher tier (e.g. from experimental to production).
 
-```python
-evaluate_promotion(self, model_id, success_rate, cost_efficiency)
-```
+---
 
 ---
 
 ## evaluate_promotion
 
-Evaluate if a model should be promoted to a higher tier (e.g. from experimental to production).
-
 ```python
-evaluate_promotion(self, model_id, success_rate, cost_efficiency)
+evaluate_promotion(self: Any, model_id: str, success_rate: float, cost_efficiency: float)
 ```
+
+Evaluate if a model should be promoted to a higher tier (e.g. from experimental to production).
 
 ---
 

@@ -46,5 +46,20 @@ __all__ = [
 ]
 
 from thegent.governance.compliance_reports import ComplianceReporter
+from thegent.governance.federated_policy import FederatedPolicyEngine, PolicyRule, PolicyScope
+from thegent.governance.override_events import (
+    OverrideActivatedEvent,
+    OverrideEventEmitter,
+    OverrideExpiredEvent,
+    OverrideExpiryMonitor,
+)
 
 __all__.append("ComplianceReporter")
+__all__ += ["FederatedPolicyEngine", "PolicyRule", "PolicyScope"]
+__all__ += [
+    # Override expiry event emission (research-governance-override-events)
+    "OverrideActivatedEvent",
+    "OverrideEventEmitter",
+    "OverrideExpiredEvent",
+    "OverrideExpiryMonitor",
+]

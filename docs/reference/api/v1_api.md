@@ -35,39 +35,43 @@ Maps task-tool 18-tag and Zen rich protocol into one typed structure.
 
 #### CanonicalStructuredMessage.from_dict
 
+```python
+from_dict(cls: Any, data: dict[(str, Any)])
+```
+
 Deserialize from dict.
 
-```python
-from_dict(cls, data)
-```
+---
 
 #### CanonicalStructuredMessage.to_dict
 
+```python
+to_dict(self: Any)
+```
+
 Serialize to dict for JSON/transport.
 
-```python
-to_dict(self)
-```
+---
 
 ---
 
 ## from_dict
 
-Deserialize from dict.
-
 ```python
-from_dict(cls, data)
+from_dict(cls: Any, data: dict[(str, Any)])
 ```
+
+Deserialize from dict.
 
 ---
 
 ## to_dict
 
-Serialize to dict for JSON/transport.
-
 ```python
-to_dict(self)
+to_dict(self: Any)
 ```
+
+Serialize to dict for JSON/transport.
 
 ---
 

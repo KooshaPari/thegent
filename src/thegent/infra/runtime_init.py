@@ -4,7 +4,11 @@ import atexit
 import logging
 import signal
 import sys
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from thegent.infra.resource_limits import ResourceLimits
+    from thegent.infra.resource_monitor import ResourceMonitor, ResourceStats
 
 logger = logging.getLogger(__name__)
 

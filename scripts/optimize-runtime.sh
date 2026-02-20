@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Optimize runtime: Install Bun, optimize zsh, replace slow tools
 set -euo pipefail
 

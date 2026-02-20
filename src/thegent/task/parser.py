@@ -12,7 +12,6 @@ class TaskParseError(Exception):
     """Error parsing task file."""
 
 
-
 def parse_yaml_frontmatter(content: str) -> tuple[dict[str, Any], str]:
     """Parse YAML frontmatter from markdown content.
 

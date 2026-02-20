@@ -14,19 +14,23 @@ An item in the escalation queue.
 
 #### EscalationItem.from_dict
 
+```python
+from_dict(cls: Any, data: dict[(str, Any)])
+```
+
 Create from dictionary.
 
-```python
-from_dict(cls, data)
-```
+---
 
 #### EscalationItem.to_dict
 
+```python
+to_dict(self: Any)
+```
+
 Convert to dictionary for serialization.
 
-```python
-to_dict(self)
-```
+---
 
 ---
 
@@ -34,7 +38,7 @@ to_dict(self)
 
 Priority of an escalation item.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -47,48 +51,60 @@ Manages the governance escalation queue.
 #### EscalationQueue.__init__
 
 ```python
-__init__(self, settings)
+__init__(self: Any, settings: Any)
 ```
+
+---
 
 #### EscalationQueue.add
 
+```python
+add(self: Any, run_id: str, reason: str, priority: int)
+```
+
 Simplified add for legacy/internal callers.
 
-```python
-add(self, run_id, reason, priority)
-```
+---
 
 #### EscalationQueue.escalate
 
+```python
+escalate(self: Any, run_id: str, prompt: str, reason: str, agent: str, priority: EscalationPriority, sla_minutes: int, metadata: Any)
+```
+
 Add a new item to the escalation queue.
 
-```python
-escalate(self, run_id, prompt, reason, agent, priority, sla_minutes, metadata)
-```
+---
 
 #### EscalationQueue.get_item
 
+```python
+get_item(self: Any, esc_id: str)
+```
+
 Retrieve a specific escalation item.
 
-```python
-get_item(self, esc_id)
-```
+---
 
 #### EscalationQueue.list_items
 
+```python
+list_items(self: Any, status: Any)
+```
+
 List items in the queue, optionally filtered by status.
 
-```python
-list_items(self, status)
-```
+---
 
 #### EscalationQueue.resolve
 
+```python
+resolve(self: Any, esc_id: str, resolution: str, solver: str)
+```
+
 Mark an escalation item as resolved.
 
-```python
-resolve(self, esc_id, resolution, solver)
-```
+---
 
 ---
 
@@ -96,77 +112,77 @@ resolve(self, esc_id, resolution, solver)
 
 Status of an escalation item.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
 ## add
 
-Simplified add for legacy/internal callers.
-
 ```python
-add(self, run_id, reason, priority)
+add(self: Any, run_id: str, reason: str, priority: int)
 ```
+
+Simplified add for legacy/internal callers.
 
 ---
 
 ## escalate
 
-Add a new item to the escalation queue.
-
 ```python
-escalate(self, run_id, prompt, reason, agent, priority, sla_minutes, metadata)
+escalate(self: Any, run_id: str, prompt: str, reason: str, agent: str, priority: EscalationPriority, sla_minutes: int, metadata: Any)
 ```
+
+Add a new item to the escalation queue.
 
 ---
 
 ## from_dict
 
-Create from dictionary.
-
 ```python
-from_dict(cls, data)
+from_dict(cls: Any, data: dict[(str, Any)])
 ```
+
+Create from dictionary.
 
 ---
 
 ## get_item
 
-Retrieve a specific escalation item.
-
 ```python
-get_item(self, esc_id)
+get_item(self: Any, esc_id: str)
 ```
+
+Retrieve a specific escalation item.
 
 ---
 
 ## list_items
 
-List items in the queue, optionally filtered by status.
-
 ```python
-list_items(self, status)
+list_items(self: Any, status: Any)
 ```
+
+List items in the queue, optionally filtered by status.
 
 ---
 
 ## resolve
 
-Mark an escalation item as resolved.
-
 ```python
-resolve(self, esc_id, resolution, solver)
+resolve(self: Any, esc_id: str, resolution: str, solver: str)
 ```
+
+Mark an escalation item as resolved.
 
 ---
 
 ## to_dict
 
-Convert to dictionary for serialization.
-
 ```python
-to_dict(self)
+to_dict(self: Any)
 ```
+
+Convert to dictionary for serialization.
 
 ---
 

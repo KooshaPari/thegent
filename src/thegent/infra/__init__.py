@@ -1,5 +1,6 @@
 """Infrastructure modules for runtime resource management."""
 
+from thegent.infra.power import wrap_with_caffeinate
 from thegent.infra.process_registry import ProcessHandle, ProcessRegistry, get_registry
 from thegent.infra.resource_limits import ResourceLimits, get_resource_limits
 from thegent.infra.resource_monitor import ResourceMonitor, ResourceStats, get_resource_monitor
@@ -117,6 +118,7 @@ __all__ = [
     "get_subprocess_manager",
     "initialize_runtime_infrastructure",
     "is_initialized",
+    "wrap_with_caffeinate",
 ]
 
 # Conditionally add fast parser exports

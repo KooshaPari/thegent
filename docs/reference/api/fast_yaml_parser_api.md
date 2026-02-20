@@ -30,214 +30,227 @@ Backend priority (fastest first):
 
 #### FastYAMLParser.__init__
 
+```python
+__init__(self: Any, preserve_formatting: bool)
+```
+
 Initialize YAML parser.
 
-Args:
-    preserve_formatting: If True, prefer ruamel.yaml for round-trip preservation
+**Parameters**:
 
-```python
-__init__(self, preserve_formatting)
-```
+- `preserve_formatting`: If True, prefer ruamel.yaml for round-trip preservation
+
+---
 
 #### FastYAMLParser.backend
 
+```python
+backend(self: Any)
+```
+
 Get current backend name.
 
-```python
-backend(self)
-```
+---
 
 #### FastYAMLParser.dump
 
+```python
+dump(self: Any, data: dict[(str, Any)], stream: Any)
+```
+
 Dump YAML to string or file.
 
-Args:
-    data: Data to serialize
-    stream: Optional file-like object or Path to write to
-    **kwargs: Additional options
+**Parameters**:
 
-Returns:
-    YAML string if stream is None, else None
+- `data`: Data to serialize
+- `stream`: Optional file-like object or Path to write to
+- `**kwargs`: Additional options
 
-```python
-dump(self, data, stream)
-```
+**Returns**: YAML string if stream is None, else None
+
+---
 
 #### FastYAMLParser.dumps
 
+```python
+dumps(self: Any, data: dict[(str, Any)])
+```
+
 Dump YAML to string.
 
-Args:
-    data: Data to serialize
-    **kwargs: Additional options
+**Parameters**:
 
-Returns:
-    YAML string
+- `data`: Data to serialize
+- `**kwargs`: Additional options
 
-```python
-dumps(self, data)
-```
+**Returns**: YAML string
+
+---
 
 #### FastYAMLParser.load
 
+```python
+load(self: Any, stream: Any)
+```
+
 Load YAML from string or file path.
 
-Args:
-    stream: YAML string, Path object, or file-like object
+**Parameters**:
 
-Returns:
-    Parsed YAML as dictionary
+- `stream`: YAML string, Path object, or file-like object
 
-```python
-load(self, stream)
-```
+**Returns**: Parsed YAML as dictionary
+
+---
 
 #### FastYAMLParser.loads
 
+```python
+loads(self: Any, s: str)
+```
+
 Load YAML from string.
 
-Args:
-    s: YAML string
+**Parameters**:
 
-Returns:
-    Parsed YAML as dictionary
+- `s`: YAML string
 
-```python
-loads(self, s)
-```
+**Returns**: Parsed YAML as dictionary
+
+---
 
 ---
 
 ## backend
 
-Get current backend name.
-
 ```python
-backend(self)
+backend(self: Any)
 ```
+
+Get current backend name.
 
 ---
 
 ## dump
 
+```python
+dump(self: Any, data: dict[(str, Any)], stream: Any)
+```
+
 Dump YAML to string or file.
 
-Args:
-    data: Data to serialize
-    stream: Optional file-like object or Path to write to
-    **kwargs: Additional options
+**Parameters**:
 
-Returns:
-    YAML string if stream is None, else None
+- `data`: Data to serialize
+- `stream`: Optional file-like object or Path to write to
+- `**kwargs`: Additional options
 
-```python
-dump(self, data, stream)
-```
+**Returns**: YAML string if stream is None, else None
 
 ---
 
 ## dumps
 
+```python
+dumps(self: Any, data: dict[(str, Any)])
+```
+
 Dump YAML to string.
 
-Args:
-    data: Data to serialize
-    **kwargs: Additional options
+**Parameters**:
 
-Returns:
-    YAML string
+- `data`: Data to serialize
+- `**kwargs`: Additional options
 
-```python
-dumps(self, data)
-```
+**Returns**: YAML string
 
 ---
 
 ## get_yaml_parser
 
+```python
+get_yaml_parser(preserve_formatting: bool)
+```
+
 Get global fast YAML parser instance.
 
-Args:
-    preserve_formatting: If True, prefer ruamel.yaml for round-trip preservation
+**Parameters**:
 
-Returns:
-    FastYAMLParser instance
+- `preserve_formatting`: If True, prefer ruamel.yaml for round-trip preservation
 
-```python
-get_yaml_parser(preserve_formatting)
-```
+**Returns**: FastYAMLParser instance
 
 ---
 
 ## load
 
+```python
+load(self: Any, stream: Any)
+```
+
 Load YAML from string or file path.
 
-Args:
-    stream: YAML string, Path object, or file-like object
+**Parameters**:
 
-Returns:
-    Parsed YAML as dictionary
+- `stream`: YAML string, Path object, or file-like object
 
-```python
-load(self, stream)
-```
+**Returns**: Parsed YAML as dictionary
 
 ---
 
 ## loads
 
+```python
+loads(self: Any, s: str)
+```
+
 Load YAML from string.
 
-Args:
-    s: YAML string
+**Parameters**:
 
-Returns:
-    Parsed YAML as dictionary
+- `s`: YAML string
 
-```python
-loads(self, s)
-```
+**Returns**: Parsed YAML as dictionary
 
 ---
 
 ## yaml_dump
 
-Dump YAML using fastest available backend.
-
 ```python
-yaml_dump(data, stream)
+yaml_dump(data: dict[(str, Any)], stream: Any)
 ```
+
+Dump YAML using fastest available backend.
 
 ---
 
 ## yaml_dumps
 
-Dump YAML to string using fastest available backend.
-
 ```python
-yaml_dumps(data)
+yaml_dumps(data: dict[(str, Any)])
 ```
+
+Dump YAML to string using fastest available backend.
 
 ---
 
 ## yaml_load
 
-Load YAML using fastest available backend.
-
 ```python
-yaml_load(stream)
+yaml_load(stream: Any)
 ```
+
+Load YAML using fastest available backend.
 
 ---
 
 ## yaml_loads
 
-Load YAML string using fastest available backend.
-
 ```python
-yaml_loads(s)
+yaml_loads(s: str)
 ```
+
+Load YAML string using fastest available backend.
 
 ---
 

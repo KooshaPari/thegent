@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # thegent-shims installation script
 # Installs thegent-shims binary and creates symlinks for git, grep, find, and agent shims
 
@@ -64,7 +64,8 @@ find_or_build_binary() {
     binary_path=$(resolve_binary_path)
     
     if [[ -n "$binary_path" ]]; then
-        echo -e "${GREEN}Found existing binary: ${binary_path}${NC}"
+        # Use stderr for info messages to avoid capturing in variable
+        echo -e "${GREEN}Found existing binary: ${binary_path}${NC}" >&2
         echo "$binary_path"
         return 0
     fi

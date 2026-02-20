@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 class IncrementalSubcommands:
     """Incremental check/record subcommands."""
 
-    def __init__(self, manifest_path: Path | None = None):
+    def __init__(self, manifest_path: Path | None = None) -> None:
         """Initialize incremental subcommands.
-        
+
         Args:
             manifest_path: Manifest file path
         """
@@ -22,7 +22,7 @@ class IncrementalSubcommands:
 
     def _load_manifest(self) -> dict[str, Any]:
         """Load manifest.
-        
+
         Returns:
             Manifest dictionary
         """
@@ -35,26 +35,26 @@ class IncrementalSubcommands:
 
     def check(self, file_path: Path) -> bool:
         """Check if file needs processing.
-        
+
         Args:
             file_path: File to check
-            
+
         Returns:
             True if needs processing
         """
         file_str = str(file_path)
         last_hash = self.manifest.get(file_str)
         current_hash = self._file_hash(file_path)
-        
+
         if last_hash != current_hash:
             logger.info(f"File {file_path} changed, needs processing")
             return True
-        
+
         return False
 
     def record(self, file_path: Path) -> None:
         """Record file as processed.
-        
+
         Args:
             file_path: File to record
         """
@@ -64,14 +64,15 @@ class IncrementalSubcommands:
 
     def _file_hash(self, file_path: Path) -> str:
         """Calculate file hash.
-        
+
         Args:
             file_path: File path
-            
+
         Returns:
             File hash
         """
         import hashlib
+
         if file_path.exists():
             content = file_path.read_bytes()
             return hashlib.sha256(content).hexdigest()

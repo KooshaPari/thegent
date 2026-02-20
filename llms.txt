@@ -1,0 +1,32 @@
+# thegent 🎩 🚀
+
+> Unified Agent Orchestration, Governance, and Lifecycle Management.
+
+## Overview
+thegent is a production-ready CLI and framework for managing AI agent workflows, droids, and multi-agent swarms. It is built with a "Library-First" philosophy and optimized with Rust extensions for 10-100x performance gains.
+
+## Key Files
+- `src/thegent/main.py`: Main CLI entry point (using Typer).
+- `pyproject.toml`: Project dependencies and configuration (managed by uv).
+- `Taskfile.yml`: Unified task runner for dev, test, and quality gates.
+- `governance/`: Core module for agent policy, cost caps, and quality gates.
+- `crates/`: High-performance Rust extensions for path resolution and tool detection.
+
+## Commands
+- `thegent run`: Execute a task with a specific agent.
+- `thegent bg`: Start background sessions.
+- `thegent plan loop`: Continuous autonomous work stream.
+- `thegent doctor`: Environment health check and performance diagnosis.
+
+## Performance
+- Tool Detection: <1ms (Rust)
+- PATH Resolution: <0.5ms (Rust)
+- Process Scanning: <0.5ms (Rust)
+
+## Agent Guidelines
+- Use `thegent run` for targeted task execution.
+- Leverage the `unified work stream` for cross-project task management.
+- Policies are defined in `CONSTITUTION.yaml` and `governance/`.
+- Rust extensions handle hot paths; core logic remains in Python.
+
+For full details, see [llms-full.txt](llms-full.txt).

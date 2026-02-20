@@ -1244,6 +1244,6 @@ Code modules that exist but aren't explicitly mapped to WBS work packages:
 **Work Packages:** WP-16001, WP-16002, WP-16003, WP-16004, WP-16005
 - Expanded PersonaManager with teammate auto-discovery from markdown agents.
 - Implemented `thegent teammates delegate` for asynchronous sub-task orchestration.
-- Created ShareCLI bridge for Phase 11 task coordination and intent broadcasting.
+- Created heliosShield bridge for Phase 11 task coordination and intent broadcasting.
 - Integrated intelligent conflict resolution (Smart Merge) using AST-aware Mergiraf.
 - Enhanced Sitback Dashboard with live teammate swarm status tracking.

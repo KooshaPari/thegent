@@ -66,8 +66,8 @@ def render_explorer() -> Layout:
 
     layout["sessions"].update(Panel(sess_table, border_style="magenta"))
 
-    # Discovered Agents (sharecli)
-    disc_table = Table(title="Discovered Agents (via sharecli)", expand=True)
+    # Discovered Agents (heliosShield)
+    disc_table = Table(title="Discovered Agents (via heliosShield)", expand=True)
     disc_table.add_column("PPID", style="cyan")
     disc_table.add_column("Agent", style="magenta")
     disc_table.add_column("CWD", style="yellow")

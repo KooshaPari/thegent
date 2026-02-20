@@ -8,31 +8,31 @@ Dead-letter queue service (WP-Y2, FR-034).
 
 ## is_poison_pill
 
-True if run has failed threshold+ times (poison pill).
-
 ```python
-is_poison_pill(session_dir, run_id, threshold)
+is_poison_pill(session_dir: Path, run_id: str, threshold: int)
 ```
+
+True if run has failed threshold+ times (poison pill).
 
 ---
 
 ## list_pending
 
-List DLQ items pending review.
-
 ```python
-list_pending(session_dir, limit)
+list_pending(session_dir: Path, limit: int)
 ```
+
+List DLQ items pending review.
 
 ---
 
 ## resolve
 
-Mark DLQ item as resolved (replayed, fixed, discarded).
-
 ```python
-resolve(session_dir, run_id, resolution)
+resolve(session_dir: Path, run_id: str, resolution: str)
 ```
+
+Mark DLQ item as resolved (replayed, fixed, discarded).
 
 ---
 

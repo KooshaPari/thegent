@@ -5,9 +5,26 @@ import os
 import subprocess
 from pathlib import Path
 
+from textual.message import Message
 from textual.widgets import Static
 
 logger = logging.getLogger(__name__)
+
+
+class PanelMounted(Message):
+    """Sent when a panel is mounted."""
+
+    def __init__(self, pane_id: str) -> None:
+        super().__init__()
+        self.pane_id = pane_id
+
+
+class PanelUnmounted(Message):
+    """Sent when a panel is unmounted."""
+
+    def __init__(self, pane_id: str) -> None:
+        super().__init__()
+        self.pane_id = pane_id
 
 
 class TerminalPane(Static):
@@ -42,7 +59,7 @@ class TerminalPane(Static):
         super().__init__(name=name, id=id, classes=classes)
         self.pane_id = pane_id
         self.working_dir = working_dir
-        self.process: subprocess.Popen | None = None  # type: ignore
+        self.process: subprocess.Popen | None = None
         self.pty_master: int | None = None
         logger.info(f"TerminalPane {pane_id} created with working_dir={working_dir}")
 
@@ -115,31 +132,89 @@ class TerminalPane(Static):
             raise
 
     def on_mount(self) -> None:
-        """Called when widget is mounted."""
-        logger.debug(f"TerminalPane {self.pane_id} mounted")
-        self.render = self._render_placeholder
+        """Called when widget is mounted.
+
+        Lifecycle hook that spawns the shell process on pane mount.
+        This ensures the shell starts when the widget is actually displayed.
+        """
+        try:
+            logger.debug(f"TerminalPane {self.pane_id} mounted")
+
+            # Spawn shell process on mount
+            self.spawn_shell()
+
+            # Post mount message
+            self.post_message(PanelMounted(self.pane_id))
+
+            logger.info(f"Shell spawned for pane {self.pane_id}")
+
+        except Exception as e:
+            logger.error(f"Error spawning shell in on_mount for {self.pane_id}: {e}", exc_info=True)
+            # Use a custom render method for error display
+            self._error_msg = str(e)
+            self.render = self._render_error
+
+    def on_unmount(self) -> None:
+        """Called when widget is unmounted."""
+        logger.debug(f"TerminalPane {self.pane_id} unmounting")
+        self.close()
+        self.post_message(PanelUnmounted(self.pane_id))
+
+    def _render_error(self) -> str:
+        """Render error message."""
+        return f"Terminal Pane: {self.pane_id}\n[red]ERROR[/red]: {self._error_msg}\n[dim]Check logs for details[/dim]"
 
     def _render_placeholder(self) -> str:
         """Render placeholder content."""
-        return f"Terminal Pane: {self.pane_id}\nWorking Directory: {self.working_dir}"
+        status = "Ready"
+        if self.process:
+            status = f"Running (PID: {self.process.pid})"
+        elif self.process is None and hasattr(self, "_spawn_attempted"):
+            status = "Shell spawned via PTY"
+        return f"Terminal Pane: {self.pane_id}\nStatus: {status}\nDirectory: {self.working_dir}"
 
     def close(self) -> None:
-        """Close this pane and cleanup resources."""
-        logger.info(f"Closing TerminalPane {self.pane_id}")
-        if self.process:
-            try:
-                self.process.terminate()
-                self.process.wait(timeout=1)
-            except Exception as e:
-                logger.error(f"Error terminating process: {e}")
-                if self.process:
-                    self.process.kill()
+        """Close this pane and cleanup resources.
 
-        if self.pty_master is not None:
-            try:
-                os.close(self.pty_master)
-            except Exception as e:
-                logger.error(f"Error closing PTY: {e}")
+        Lifecycle hook that:
+        - Gracefully terminates the shell process
+        - Cleans up PTY file descriptors
+        - Handles edge cases (already terminated, permission errors)
+        """
+        try:
+            logger.info(f"Closing TerminalPane {self.pane_id}")
 
-        self.process = None
-        self.pty_master = None
+            # Terminate process if running
+            if self.process:
+                try:
+                    # Try graceful termination first
+                    self.process.terminate()
+                    try:
+                        self.process.wait(timeout=1)
+                    except subprocess.TimeoutExpired:
+                        logger.warning(f"Process {self.pane_id} did not terminate gracefully, killing")
+                        self.process.kill()
+                        self.process.wait()
+                    logger.debug(f"Process {self.pane_id} terminated")
+
+                except Exception as e:
+                    logger.error(f"Error terminating process {self.pane_id}: {e}")
+
+            # Close PTY master file descriptor
+            if self.pty_master is not None:
+                try:
+                    os.close(self.pty_master)
+                    logger.debug(f"PTY closed for {self.pane_id}")
+                except Exception as e:
+                    logger.error(f"Error closing PTY for {self.pane_id}: {e}")
+
+            # Clear references
+            self.process = None
+            self.pty_master = None
+            logger.info(f"TerminalPane {self.pane_id} closed successfully")
+
+        except Exception as e:
+            logger.error(f"Unexpected error during close: {e}", exc_info=True)
+            # Still clear references even on error
+            self.process = None
+            self.pty_master = None

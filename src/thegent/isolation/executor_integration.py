@@ -4,7 +4,6 @@ This module demonstrates how to integrate SubUserIsolationProvider
 into the main agent executor for Phase 1.
 """
 
-
 from thegent.isolation.sub_user_provider import SubUserIsolationProvider
 
 

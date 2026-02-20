@@ -11,12 +11,16 @@ console = Console()
 def control_plane_status() -> None:
     """Check the health and status of the control plane."""
     import os
+
     cp_url = os.environ.get("THGENT_CONTROL_PLANE_URL")
     if not cp_url:
-        console.print("[yellow]THGENT_CONTROL_PLANE_URL not set.[/yellow] System is running in [bold]embedded mode[/bold].")
+        console.print(
+            "[yellow]THGENT_CONTROL_PLANE_URL not set.[/yellow] System is running in [bold]embedded mode[/bold]."
+        )
         return
 
     import httpx
+
     try:
         with httpx.Client(timeout=2.0) as client:
             response = client.get(f"{cp_url.rstrip('/')}/health")
@@ -38,9 +42,10 @@ def control_plane_serve(
 ) -> None:
     """Start the Control Plane configuration service (Phase 2)."""
     console.print(f"[bold cyan]thegent control-plane serve[/bold cyan] on http://{host}:{port}")
-    
+
     # Check if granian/uvicorn is available
     import uvicorn
+
     from thegent.control_plane.server import app as fastapi_app
-    
+
     uvicorn.run(fastapi_app, host=host, port=port, reload=reload)

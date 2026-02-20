@@ -154,10 +154,13 @@ def filter_models_for_provider(provider: str, models: list[str]) -> list[str]:
 # OPT-019: Cache for normalized model IDs (frequently called)
 try:
     from thegent.infra import get_cache
+
     _USE_NORMALIZE_CACHE = True
 except (ImportError, NameError):
+
     def get_cache(*args, **kwargs):
         return None
+
     _USE_NORMALIZE_CACHE = False
 
 try:
@@ -175,14 +178,14 @@ def normalize_model_id(model_id: str) -> str:
         cached = _NORMALIZE_CACHE.get(model_id)
         if cached is not None:
             return cached
-    
+
     candidate = (model_id or "").strip()
     result = _ALIASES.get(candidate, candidate)
-    
+
     # OPT-019: Cache the result
     if _USE_NORMALIZE_CACHE:
         _NORMALIZE_CACHE.set(model_id, result, ttl=3600)
-    
+
     return result
 
 

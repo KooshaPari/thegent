@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Start CLIProxyAPIPlus for local dev. Uses fork binary when built, else PATH.
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

@@ -521,7 +521,7 @@ Planner
 3. **Unified System**
    - Integrates with existing patterns
    - Extends TeammateManager
-   - Builds on ShareCLI coordination
+   - Builds on heliosShield coordination
 
 ---
 
@@ -559,7 +559,7 @@ Planner
 
 3. **Integration**
    - Extend TeammateManager
-   - Use ShareCLI coordination
+   - Use heliosShield coordination
    - Leverage file-based IPC
 
 ---

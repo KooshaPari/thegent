@@ -5,7 +5,7 @@ import type { RenderRule } from 'vitepress'
 const PROJECT_PATHS: Record<string, string> = {
   'thegent': '/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/docs-dist/main',
   'jobhunter': '/Users/kooshapari/Dev/job-hunter/docs-dist',
-  'sharecli': '/Users/kooshapari/temp-PRODVERCEL-485/kush/sharecli/docs-dist',
+  'heliosShield': '/Users/kooshapari/temp-PRODVERCEL-485/kush/heliosShield/docs-dist',
   'trace': '/Users/kooshapari/kush/trace/docs-dist',
 }
 

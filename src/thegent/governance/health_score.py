@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Composite health score model (0-100) for autonomous codebase governance.
 
 Replaces XP/gamification with a weighted, multi-dimensional health metric.
@@ -84,7 +86,7 @@ class HealthScore(BaseModel):
     band: HealthBand
     trend: str
     computed_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
-    cycle_id: Optional[str] = None
+    cycle_id: str | None = None
 
 
 class HealthScoreComputer:
@@ -170,7 +172,7 @@ class HealthScoreComputer:
     def compute_with_trend(
         self,
         dimension_values: dict[str, float],
-        previous_score: Optional[float],
+        previous_score: float | None,
     ) -> HealthScore:
         """Compute health score and derive trend from comparison with previous score."""
         result = self.compute(dimension_values)

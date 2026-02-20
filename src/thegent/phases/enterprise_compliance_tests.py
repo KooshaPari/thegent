@@ -42,40 +42,40 @@ class EnterpriseComplianceTestMatrix:
         },
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize enterprise compliance test matrix."""
         self.tests = {test["id"]: test for test in self.TESTS}
 
     def run_test(self, test_id: str) -> dict[str, Any]:
         """Run a compliance test.
-        
+
         Args:
             test_id: Test identifier
-            
+
         Returns:
             Test result
         """
         test = self.tests.get(test_id)
         if not test:
             return {"error": "Test not found"}
-        
+
         test["status"] = "running"
         logger.info(f"Running compliance test: {test['name']}")
-        
+
         # Test execution logic
         test["status"] = "passed"
         return test
 
     def get_compliance_status(self) -> dict[str, Any]:
         """Get overall compliance status.
-        
+
         Returns:
             Compliance status
         """
         passed = sum(1 for t in self.tests.values() if t["status"] == "passed")
         failed = sum(1 for t in self.tests.values() if t["status"] == "failed")
         pending = sum(1 for t in self.tests.values() if t["status"] == "pending")
-        
+
         return {
             "total": len(self.tests),
             "passed": passed,

@@ -2,7 +2,7 @@
 
 > **Source**: `src/thegent/agents/direct_agents.py`
 
-Direct agent invocation - cursor, claude, copilot, codex, gemini via their CLIs.
+Direct agent invocation - cursor, claude, copilot, codex, gemini, opencode via CLIs.
 
 ---
 
@@ -17,21 +17,25 @@ Invokes cursor, claude, copilot, codex, gemini directly via their CLIs.
 #### DirectAgentRunner.__init__
 
 ```python
-__init__(self, agent_name, cli_cmd, default_model)
+__init__(self: Any, agent_name: str, cli_cmd: Any, default_model: str, use_litellm_router: Any)
 ```
+
+---
 
 #### DirectAgentRunner.run
 
 ```python
-run(self, prompt, cwd, mode, timeout)
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
 ```
+
+---
 
 ---
 
 ## run
 
 ```python
-run(self, prompt, cwd, mode, timeout)
+run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int) -> RunResult
 ```
 
 ---

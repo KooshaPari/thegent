@@ -12,17 +12,17 @@ System prompts and task-based role definitions for thegent.
 
 ## TaskRole
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
 ## get_role_prompt
 
-Get the system prompt for a given role.
-
 ```python
-get_role_prompt(role)
+get_role_prompt(role: TaskRole)
 ```
+
+Get the system prompt for a given role.
 
 ---
 

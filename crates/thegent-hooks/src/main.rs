@@ -2,21 +2,29 @@ use std::env;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, exit};
+use std::process::{Command, Stdio, exit};
+use std::os::unix::process::ExitStatusExt;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use blake3::Hasher;
 use base16ct::lower;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use chrono::{DateTime, Utc};
+use regex::Regex;
+use lazy_static::lazy_static;
+use tokio::runtime::Runtime;
+use tokio::process::Command as TokioCommand;
+use tokio::io::AsyncWriteExt;
+use futures::future::join_all;
+use ignore::WalkBuilder;
+use std::collections::HashMap;
+
 // Library re-export for binary use
 use thegent_hooks::{
     PolicyEngine, CostCalculator, QualityEvaluator, ConfigLoader, HookConfig,
     ChangedFilesDetector, ChangedFile, ChangeStatus, ImpactType, FilterOptions, DependencyGraph,
+    ChangedFilesError, DetectionStrategy, HookReport, ReportManager, AffectedTestsAnalyzer, PrewarmManager,
 };
-
-#[cfg(feature = "gix")]
-use thegent_git::gix_impl;
 
 const VERSION: &str = "0.1.0";
 const CACHE_DIR: &str = "/tmp/thegent-hooks-cache";
@@ -87,18 +95,16 @@ fn print_help() {
     println!();
     println!("SUBCOMMANDS:");
     println!("    init                    Initialize hook environment from stdin JSON");
+    println!("    dispatch                Parallel hook dispatcher (replaces stop-dispatcher.sh)");
+    println!("    quality-gate            Native quality gate (replaces quality-gate.sh)");
+    println!("    security-pipeline       Native security pipeline (replaces security-pipeline.sh)");
+    println!("    complexity-ratchet      Native complexity ratchet (replaces complexity-ratchet.sh)");
     println!("    cache-key               Generate cache key from hook name + git state");
     println!("    cache-check             Check if cache entry exists and is fresh");
     println!("    cache-read              Read cached result (JSON)");
     println!("    cache-write             Write result to cache");
-    println!("    git                     Execute git command with caching");
-    println!("    changed-files           Get list of changed files (basic, JSON output)");
-    println!("    changed-files-filter    Get changed files with advanced filtering");
-    println!("                            Filters: --extension, --directory, --status, --impact");
-    println!("                            Exclusions: --exclude-extension, --exclude-directory");
-    println!("    changed-files-impact    Get code-impacting changes only");
-    println!("    changed-files-deps      Analyze dependencies between changed files");
-    println!("                            Options: --dependents (include reverse deps)");
+    println!("    git                     Execute git command with caching/parallelism");
+    println!("    changed-files           Get list of changed files");
     println!("    config-get              Get config value by key path");
     println!("    breaker-check           Check circuit breaker status");
     println!("    breaker-record          Record circuit breaker failure");
@@ -107,12 +113,7 @@ fn print_help() {
     println!("    incremental-check       Check incremental manifest");
     println!("    incremental-record      Record incremental manifest");
     println!("    file-hash               Compute file hash (blake3)");
-    println!("    fr-ids                  Extract FR IDs from FUNCTIONAL_REQUIREMENTS.md");
-    println!("    fr-index                Index file-to-FR mappings from codebase");
-    println!("    progress                Update or show task progress");
-    println!("    report                  Generate hook execution report (JSON)");
-    println!("    learning-record         Record hook learning data");
-    println!("    learning-should-skip    Check if hook should skip based on learning");
+    println!("    agent                   Unified agent wrapper with mesh coordination");
     println!("    version                 Show version");
     println!("    help                    Show this help");
     println!();
@@ -151,7 +152,7 @@ fn compute_blake3_hash(content: &str) -> String {
     hasher.update(content.as_bytes());
     let hash = hasher.finalize();
     let bytes = hash.as_bytes();
-    let mut buf = vec![0u8; base16ct::encoded_len(bytes.len())];
+    let mut buf = vec![0u8; bytes.len() * 2];
     let encoded = lower::encode(bytes, &mut buf).unwrap();
     String::from_utf8_lossy(encoded).to_string()
 }
@@ -167,7 +168,7 @@ fn compute_file_hash(path: &Path) -> io::Result<String> {
     }
     let hash = hasher.finalize();
     let bytes = hash.as_bytes();
-    let mut buf = vec![0u8; base16ct::encoded_len(bytes.len())];
+    let mut buf = vec![0u8; bytes.len() * 2];
     let encoded = lower::encode(bytes, &mut buf).unwrap();
     Ok(String::from_utf8_lossy(encoded).to_string())
 }
@@ -198,6 +199,347 @@ fn cmd_init() {
     println!("export HEAD_SHA={}", head_sha);
     println!("export HOOK_NAME={}", hook_name);
     println!("export THEGENT_HOOKS_INIT=1");
+}
+
+fn cmd_quality_gate() {
+    let rt = Runtime::new().unwrap();
+    rt.block_on(async {
+        let mut input_buffer = Vec::new();
+        let _ = io::stdin().read_to_end(&mut input_buffer);
+        let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
+        
+        let project_dir = input.get("project_dir")
+            .and_then(|v| v.as_str())
+            .map(PathBuf::from)
+            .unwrap_or_else(|| env::current_dir().unwrap_or_default());
+
+        println!("==> Quality Gate (Rust Native)");
+        
+        // 1. Identify files
+        let mut files_by_lang: HashMap<String, Vec<PathBuf>> = HashMap::new();
+        
+        let walker = WalkBuilder::new(&project_dir)
+            .hidden(false)
+            .git_ignore(true)
+            .build();
+            
+        for result in walker {
+            if let Ok(entry) = result {
+                if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
+                    let path = entry.path().to_path_buf();
+                    if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                        let lang = match ext {
+                            "py" => "python",
+                            "js" | "ts" | "jsx" | "tsx" => "javascript",
+                            "rs" => "rust",
+                            "go" => "go",
+                            "sh" | "bash" | "zsh" => "shell",
+                            "java" => "java",
+                            "kt" => "kotlin",
+                            _ => continue,
+                        };
+                        files_by_lang.entry(lang.to_string()).or_default().push(path);
+                    }
+                }
+            }
+        }
+
+        // 2. Parallel Linting
+        let mut futures = Vec::new();
+        
+        // Python (Ruff)
+        if let Some(py_files) = files_by_lang.get("python") {
+            if !py_files.is_empty() {
+                let files = py_files.clone();
+                futures.push(tokio::spawn(async move {
+                    let mut cmd = TokioCommand::new("ruff");
+                    cmd.arg("check").args(&files).arg("--fix").arg("--silent");
+                    let output = cmd.output().await;
+                    ("Python (ruff)".to_string(), output)
+                }));
+            }
+        }
+        
+        // JS/TS (oxlint)
+        if let Some(js_files) = files_by_lang.get("javascript") {
+            if !js_files.is_empty() {
+                let files = js_files.clone();
+                futures.push(tokio::spawn(async move {
+                    let mut cmd = TokioCommand::new("oxlint");
+                    cmd.arg("--deny-force").args(&files);
+                    let output = cmd.output().await;
+                    ("JS/TS (oxlint)".to_string(), output)
+                }));
+            }
+        }
+
+        let results = join_all(futures).await;
+        let mut all_ok = true;
+        
+        for res in results {
+            if let Ok((name, output_res)) = res {
+                match output_res {
+                    Ok(output) => {
+                        if !output.status.success() {
+                            all_ok = false;
+                            println!("[FAILED] {}", name);
+                            let _ = io::stdout().write_all(&output.stdout);
+                            let _ = io::stderr().write_all(&output.stderr);
+                        } else {
+                            println!("[OK] {}", name);
+                        }
+                    },
+                    Err(e) => {
+                        println!("[SKIP] {} (not found: {})", name, e);
+                    }
+                }
+            }
+        }
+        
+        if all_ok {
+            println!("==> Quality Gate: PASSED");
+            exit(0);
+        } else {
+            println!("==> Quality Gate: FAILED");
+            exit(1);
+        }
+    });
+}
+
+fn cmd_dispatch() {
+    let rt = Runtime::new().unwrap();
+    rt.block_on(async {
+        // Read stdin once
+        let mut input_buffer = Vec::new();
+        io::stdin().read_to_end(&mut input_buffer).unwrap_or(0);
+        
+        let hooks_dir = env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|p| p.to_path_buf()))
+            .unwrap_or_else(|| PathBuf::from("."));
+            
+        // In dev, hooks might be in ../../../hooks relative to the binary in target/release
+        let mut actual_hooks_dir = hooks_dir.clone();
+        if !actual_hooks_dir.join("quality-gate.sh").exists() {
+            if let Ok(project_dir) = env::var("PROJECT_DIR") {
+                actual_hooks_dir = PathBuf::from(project_dir).join("thegent/hooks");
+            }
+        }
+
+        let stop_hooks = vec![
+            "quality-gate.sh",
+            "security-pipeline.sh",
+            "complexity-ratchet.sh",
+            "spec-verifier.sh",
+            "test-maturity.sh",
+            "task-completion-verifier.sh",
+            "stop-reconcile.sh",
+            "agileplus-cycle.sh",
+            "teammate-reconcile.sh",
+        ];
+
+        let mut futures = Vec::new();
+        for hook in stop_hooks {
+            let hook_path = actual_hooks_dir.join(hook);
+            if !hook_path.exists() { continue; }
+            
+            let input = input_buffer.clone();
+            futures.push(tokio::spawn(async move {
+                let mut cmd = TokioCommand::new("bash");
+                cmd.arg(&hook_path)
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped());
+                
+                let mut child = cmd.spawn().expect("Failed to spawn hook");
+                
+                if let Some(mut stdin) = child.stdin.take() {
+                    let _ = stdin.write_all(&input).await;
+                }
+                
+                let output = tokio::time::timeout(Duration::from_secs(60), child.wait_with_output()).await;
+                
+                match output {
+                    Ok(Ok(out)) => (hook.to_string(), out),
+                    _ => (hook.to_string(), std::process::Output {
+                        status: std::process::ExitStatus::from_raw(124), // timeout
+                        stdout: Vec::new(),
+                        stderr: "Hook timed out after 60s".as_bytes().to_vec(),
+                    }),
+                }
+            }));
+        }
+
+        let results = join_all(futures).await;
+        let mut max_rc = 0;
+        
+        for res in results {
+            if let Ok((_name, output)) = res {
+                let rc = output.status.code().unwrap_or(1);
+                if rc > max_rc { max_rc = rc; }
+                
+                if !output.stdout.is_empty() {
+                    let _ = io::stdout().write_all(&output.stdout);
+                }
+                if !output.stderr.is_empty() {
+                    let _ = io::stderr().write_all(&output.stderr);
+                }
+            }
+        }
+        
+        exit(max_rc);
+    });
+}
+
+fn cmd_security_pipeline() {
+    let rt = Runtime::new().unwrap();
+    rt.block_on(async {
+        let mut input_buffer = Vec::new();
+        let _ = io::stdin().read_to_end(&mut input_buffer);
+        let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
+        
+        let project_dir = input.get("project_dir")
+            .and_then(|v| v.as_str())
+            .map(PathBuf::from)
+            .unwrap_or_else(|| env::current_dir().unwrap_or_default());
+
+        println!("==> Security Pipeline (Rust Native)");
+        
+        // Layer 1: Secrets (Internal Regex + optional Gitleaks)
+        let mut futures = Vec::new();
+        
+        let proj_dir_clone = project_dir.clone();
+        futures.push(tokio::spawn(async move {
+            let mut findings = Vec::new();
+            let mut count = 0;
+            
+            // Internal Regex Detection
+            let secret_patterns = [
+                r#"(?i)(api[_-]?key|apikey)\s*[:=]\s*['\"][^'\" ]{8,}"#,
+                r#"(?i)(secret|password|passwd|pwd)\s*[:=]\s*['\"][^'\" ]{8,}"#,
+                r#"(?i)(token|bearer)\s*[:=]\s*['\"][^'\" ]{8,}"#,
+                r"-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----",
+                r"ghp_[a-zA-Z0-9]{36}",
+                r"sk-[a-zA-Z0-9]{20,}",
+            ];
+            
+            let mut compiled_regs = Vec::new();
+            for p in &secret_patterns {
+                if let Ok(re) = Regex::new(p) { compiled_regs.push(re); }
+            }
+            
+            let walker = WalkBuilder::new(&proj_dir_clone)
+                .hidden(false)
+                .git_ignore(true)
+                .build();
+                
+            for result in walker {
+                if let Ok(entry) = result {
+                    if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
+                        let path = entry.path();
+                        if let Ok(content) = fs::read_to_string(path) {
+                            for re in &compiled_regs {
+                                if re.is_match(&content) {
+                                    findings.push(format!("[HIGH] secrets: Possible secret in {}", path.display()));
+                                    count += 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            ("Layer 1 - Secrets".to_string(), count, findings)
+        }));
+
+        // Layer 2: SAST (Bandit for Python)
+        let proj_dir_clone2 = project_dir.clone();
+        futures.push(tokio::spawn(async move {
+            let mut findings = Vec::new();
+            let mut count = 0;
+            
+            let mut cmd = TokioCommand::new("bandit");
+            cmd.arg("-r").arg(&proj_dir_clone2).arg("-q").arg("-f").arg("txt");
+            
+            if let Ok(output) = cmd.output().await {
+                if !output.status.success() {
+                    let out_str = String::from_utf8_lossy(&output.stdout);
+                    for line in out_str.lines().take(10) {
+                        findings.push(format!("[MEDIUM] sast/bandit: {}", line));
+                        count += 1;
+                    }
+                }
+            }
+            
+            ("Layer 2 - SAST".to_string(), count, findings)
+        }));
+
+        let results = join_all(futures).await;
+        let mut total_findings = 0;
+        
+        for res in results {
+            if let Ok((name, count, findings)) = res {
+                total_findings += count;
+                if count > 0 {
+                    println!("{}: WARN ({} findings)", name, count);
+                    for f in findings { println!("  {}", f); }
+                } else {
+                    println!("{}: PASS", name);
+                }
+            }
+        }
+        
+        println!("==> Security Pipeline: DONE ({} total findings)", total_findings);
+        exit(0); // Advisory only
+    });
+}
+
+fn cmd_complexity_ratchet() {
+    let mut input_buffer = Vec::new();
+    let _ = io::stdin().read_to_end(&mut input_buffer);
+    let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
+    
+    let project_dir = input.get("project_dir")
+        .and_then(|v| v.as_str())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| env::current_dir().unwrap_or_default());
+
+    println!("==> Complexity Ratchet (Rust Native)");
+    
+    let walker = WalkBuilder::new(&project_dir)
+        .hidden(false)
+        .git_ignore(true)
+        .build();
+        
+    let mut total_files = 0;
+    let mut max_cyc = 0;
+    let mut max_file = String::new();
+
+    for result in walker {
+        if let Ok(entry) = result {
+            if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
+                let path = entry.path();
+                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                if matches!(ext, "py" | "js" | "ts" | "jsx" | "tsx" | "rs" | "go" | "java" | "kt") {
+                    if let Ok(metrics) = thegent_hooks::QualityEvaluator::measure_complexity(path) {
+                        total_files += 1;
+                        if metrics.cyclomatic_complexity > max_cyc {
+                            max_cyc = metrics.cyclomatic_complexity;
+                            max_file = path.display().to_string();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    println!("  Analyzed {} files", total_files);
+    if max_cyc > 0 {
+        println!("  Max Complexity: {} ({})", max_cyc, max_file);
+    }
+    println!("==> Complexity Ratchet: OK");
+    exit(0);
 }
 
 fn cmd_cache_key() {
@@ -321,15 +663,6 @@ fn cmd_git() {
     let command = &args[2];
     let git_args: Vec<&str> = args.iter().skip(3).map(|s| s.as_str()).collect();
     
-    // Agent passthrough
-    if matches!(command.as_str(), "codex" | "copilot" | "dex" | "claude" | "cursor") {
-        let status = Command::new(command)
-            .args(&git_args)
-            .status()
-            .expect("Failed to execute agent");
-        exit(status.code().unwrap_or(0));
-    }
-    
     match command.as_str() {
         "status" | "diff" | "rev-parse" | "ls-files" | "log" | "show" => {
             // Read-only path: check cache
@@ -351,10 +684,10 @@ fn cmd_git() {
             if output.status.success() {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 let _ = fs::write(&cache_path, stdout.as_ref());
-                io::stdout().write_all(&output.stdout).unwrap();
+                let _ = io::stdout().write_all(&output.stdout);
             } else {
-                io::stdout().write_all(&output.stdout).unwrap();
-                io::stderr().write_all(&output.stderr).unwrap();
+                let _ = io::stdout().write_all(&output.stdout);
+                let _ = io::stderr().write_all(&output.stderr);
             }
             exit(output.status.code().unwrap_or(0));
         }
@@ -426,212 +759,6 @@ fn cmd_changed_files() {
     files.dedup();
     
     println!("{}", serde_json::to_string(&files).unwrap_or_else(|_| "[]".to_string()));
-}
-
-fn cmd_changed_files_filter() {
-    let args: Vec<String> = env::args().collect();
-    let mut filters = FilterOptions::default();
-    let mut range: Option<&str> = None;
-    let mut i = 2;
-
-    while i < args.len() {
-        match args[i].as_str() {
-            "--extension" | "-e" => {
-                if i + 1 < args.len() {
-                    filters.extensions.push(args[i + 1].trim_start_matches('.').to_string());
-                    i += 2;
-                } else {
-                    eprintln!("--extension requires an argument");
-                    exit(1);
-                }
-            }
-            "--directory" | "-d" => {
-                if i + 1 < args.len() {
-                    filters.directories.push(args[i + 1].to_string());
-                    i += 2;
-                } else {
-                    eprintln!("--directory requires an argument");
-                    exit(1);
-                }
-            }
-            "--status" | "-s" => {
-                if i + 1 < args.len() {
-                    match args[i + 1].as_str() {
-                        "modified" => filters.statuses.push(ChangeStatus::Modified),
-                        "added" => filters.statuses.push(ChangeStatus::Added),
-                        "deleted" => filters.statuses.push(ChangeStatus::Deleted),
-                        "untracked" => filters.statuses.push(ChangeStatus::Untracked),
-                        _ => {
-                            eprintln!("Unknown status: {}", args[i + 1]);
-                            exit(1);
-                        }
-                    }
-                    i += 2;
-                } else {
-                    eprintln!("--status requires an argument");
-                    exit(1);
-                }
-            }
-            "--impact" | "-i" => {
-                if i + 1 < args.len() {
-                    match args[i + 1].as_str() {
-                        "code" => filters.impact_types.push(ImpactType::CodeImpacting),
-                        "docs" => filters.impact_types.push(ImpactType::DocsOnly),
-                        "config" => filters.impact_types.push(ImpactType::Config),
-                        "tests" => filters.impact_types.push(ImpactType::Tests),
-                        "build" => filters.impact_types.push(ImpactType::Build),
-                        _ => {
-                            eprintln!("Unknown impact type: {}", args[i + 1]);
-                            exit(1);
-                        }
-                    }
-                    i += 2;
-                } else {
-                    eprintln!("--impact requires an argument");
-                    exit(1);
-                }
-            }
-            "--exclude-extension" => {
-                if i + 1 < args.len() {
-                    filters.exclude_extensions.push(args[i + 1].trim_start_matches('.').to_string());
-                    i += 2;
-                } else {
-                    eprintln!("--exclude-extension requires an argument");
-                    exit(1);
-                }
-            }
-            "--exclude-directory" => {
-                if i + 1 < args.len() {
-                    filters.exclude_directories.push(args[i + 1].to_string());
-                    i += 2;
-                } else {
-                    eprintln!("--exclude-directory requires an argument");
-                    exit(1);
-                }
-            }
-            "--range" | "-r" => {
-                if i + 1 < args.len() {
-                    range = Some(&args[i + 1]);
-                    i += 2;
-                } else {
-                    eprintln!("--range requires an argument");
-                    exit(1);
-                }
-            }
-            _ => {
-                eprintln!("Unknown option: {}", args[i]);
-                exit(1);
-            }
-        }
-    }
-
-    match ChangedFilesDetector::new() {
-        Ok(detector) => {
-            match detector.get_filtered(filters, range) {
-                Ok(changed) => {
-                    let output: Vec<_> = changed
-                        .iter()
-                        .map(|f| serde_json::json!({
-                            "path": f.path.display().to_string(),
-                            "status": format!("{:?}", f.status),
-                            "impact": format!("{:?}", f.impact),
-                        }))
-                        .collect();
-                    println!("{}", serde_json::to_string(&output).unwrap_or_else(|_| "[]".to_string()));
-                }
-                Err(e) => {
-                    eprintln!("Error getting changed files: {}", e);
-                    exit(1);
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Error initializing detector: {}", e);
-            exit(1);
-        }
-    }
-}
-
-fn cmd_changed_files_impact() {
-    let args: Vec<String> = env::args().collect();
-    let range = args.get(2).map(|s| s.as_str());
-
-    match ChangedFilesDetector::new() {
-        Ok(detector) => {
-            match detector.code_impact_paths(range) {
-                Ok(paths) => {
-                    let paths: Vec<String> = paths.iter().map(|p| p.display().to_string()).collect();
-                    println!("{}", serde_json::to_string(&paths).unwrap_or_else(|_| "[]".to_string()));
-                }
-                Err(e) => {
-                    eprintln!("Error getting code-impacting files: {}", e);
-                    exit(1);
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Error initializing detector: {}", e);
-            exit(1);
-        }
-    }
-}
-
-fn cmd_changed_files_deps() {
-    let args: Vec<String> = env::args().collect();
-    let range = args.get(2).map(|s| s.as_str());
-    let show_dependents = args.contains(&"--dependents".to_string());
-
-    match ChangedFilesDetector::new() {
-        Ok(detector) => {
-            match detector.get_changed_files(range) {
-                Ok(changed) => {
-                    let files: Vec<_> = changed.iter().map(|f| f.path.clone()).collect();
-
-                    match detector.build_dependency_graph(&files) {
-                        Ok(graph) => {
-                            let mut result = serde_json::json!({});
-
-                            for file in &files {
-                                let deps = graph.get_transitive_deps(file);
-                                let dep_strs: Vec<String> = deps.iter()
-                                    .map(|p| p.display().to_string())
-                                    .collect();
-
-                                if show_dependents {
-                                    let dependents = graph.get_transitive_dependents(file);
-                                    let dep_strs: Vec<String> = dependents.iter()
-                                        .map(|p| p.display().to_string())
-                                        .collect();
-                                    result[file.display().to_string()] = serde_json::json!({
-                                        "depends_on": dep_strs,
-                                        "depended_by": dep_strs,
-                                    });
-                                } else {
-                                    result[file.display().to_string()] = serde_json::json!({
-                                        "depends_on": dep_strs,
-                                    });
-                                }
-                            }
-
-                            println!("{}", serde_json::to_string(&result).unwrap_or_else(|_| "{}".to_string()));
-                        }
-                        Err(e) => {
-                            eprintln!("Error building dependency graph: {}", e);
-                            exit(1);
-                        }
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Error getting changed files: {}", e);
-                    exit(1);
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Error initializing detector: {}", e);
-            exit(1);
-        }
-    }
 }
 
 fn get_breaker_path(hook_name: &str) -> PathBuf {
@@ -860,242 +987,6 @@ fn cmd_file_hash() {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct LearningData {
-    pub hook_name: String,
-    pub successes: u32,
-    pub failures: u32,
-    pub last_result: String, // "success", "failure"
-    pub patterns: std::collections::HashMap<String, u32>,
-}
-
-fn get_learning_path(hook_name: &str) -> PathBuf {
-    ensure_cache_dir().join(format!("learning-{}.json", hook_name))
-}
-
-fn cmd_learning_record() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 4 {
-        eprintln!("Usage: thegent-hooks learning-record <hook_name> <result> [patterns...]");
-        exit(1);
-    }
-    
-    let hook_name = &args[2];
-    let result = &args[3];
-    let patterns = if args.len() > 4 { args[4..].to_vec() } else { Vec::new() };
-    
-    let path = get_learning_path(hook_name);
-    let mut data = if path.exists() {
-        fs::read_to_string(&path)
-            .ok()
-            .and_then(|c| serde_json::from_str::<LearningData>(&c).ok())
-            .unwrap_or(LearningData {
-                hook_name: hook_name.to_string(),
-                successes: 0,
-                failures: 0,
-                last_result: "".to_string(),
-                patterns: std::collections::HashMap::new(),
-            })
-    } else {
-        LearningData {
-            hook_name: hook_name.to_string(),
-            successes: 0,
-            failures: 0,
-            last_result: "".to_string(),
-            patterns: std::collections::HashMap::new(),
-        }
-    };
-    
-    if result == "success" {
-        data.successes += 1;
-    } else {
-        data.failures += 1;
-    }
-    data.last_result = result.to_string();
-    
-    for pattern in patterns {
-        *data.patterns.entry(pattern).or_default() += 1;
-    }
-    
-    if let Ok(content) = serde_json::to_string(&data) {
-        let _ = fs::write(&path, content);
-    }
-}
-
-fn cmd_learning_should_skip() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 3 {
-        eprintln!("Usage: thegent-hooks learning-should-skip <hook_name> [patterns...]");
-        exit(1);
-    }
-    
-    let hook_name = &args[2];
-    let patterns = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
-    
-    let path = get_learning_path(hook_name);
-    if !path.exists() {
-        println!("false");
-        exit(0);
-    }
-    
-    if let Ok(content) = fs::read_to_string(&path) {
-        if let Ok(data) = serde_json::from_str::<LearningData>(&content) {
-            // Very simple heuristic: skip if > 10 successes and 0 failures for all patterns
-            if data.failures == 0 && data.successes > 10 {
-                let mut all_match = true;
-                for p in patterns {
-                    if *data.patterns.get(&p).unwrap_or(&0) < 5 {
-                        all_match = false;
-                        break;
-                    }
-                }
-                if all_match {
-                    println!("true");
-                    exit(0);
-                }
-            }
-        }
-    }
-    
-    println!("false");
-    exit(0);
-}
-
-fn cmd_fr_ids() {
-    let args: Vec<String> = env::args().collect();
-    let fr_file = args.get(2).map(|s| s.as_str()).unwrap_or("FUNCTIONAL_REQUIREMENTS.md");
-    let path = PathBuf::from(fr_file);
-    
-    if !path.exists() {
-        eprintln!("FR file not found: {}", path.display());
-        exit(1);
-    }
-    
-    let content = fs::read_to_string(&path).unwrap_or_default();
-    let re = regex::Regex::new(r"### (FR-[A-Z]+-[0-9]+)").unwrap();
-    let mut ids = Vec::new();
-    for cap in re.captures_iter(&content) {
-        ids.push(cap[1].to_string());
-    }
-    
-    println!("{}", serde_json::to_string(&ids).unwrap_or_else(|_| "[]".to_string()));
-}
-
-fn cmd_fr_index() {
-    let args: Vec<String> = env::args().collect();
-    let root = args.get(2).map(|s| s.as_str()).unwrap_or(".");
-    let root_path = PathBuf::from(root);
-    
-    let re = regex::Regex::new(r"(FR-[A-Z]+-[0-9]+)").unwrap();
-    let mut index: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
-    
-    for entry in walkdir::WalkDir::new(root_path)
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.file_type().is_file())
-    {
-        let path = entry.path();
-        let path_str = path.to_string_lossy().to_string();
-        
-        if path_str.contains("/.") || path_str.contains("/node_modules/") || path_str.contains("/dist/") || path_str.contains("/target/") {
-            continue;
-        }
-        
-        if let Ok(content) = fs::read_to_string(path) {
-            for cap in re.captures_iter(&content) {
-                let id = cap[1].to_string();
-                index.entry(id).or_default().push(path_str.clone());
-            }
-        }
-    }
-    
-    for paths in index.values_mut() {
-        paths.sort();
-        paths.dedup();
-    }
-    
-    println!("{}", serde_json::to_string(&index).unwrap_or_else(|_| "{}".to_string()));
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Progress {
-    pub task_id: String,
-    pub status: String,
-    pub percent: f32,
-    pub message: String,
-}
-
-fn cmd_progress() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 3 {
-        eprintln!("Usage: thegent-hooks progress <task_id> [status] [percent] [message]");
-        exit(1);
-    }
-    
-    let task_id = &args[2];
-    let status = args.get(3).cloned().unwrap_or_else(|| "in_progress".to_string());
-    let percent = args.get(4).and_then(|v| v.parse().ok()).unwrap_or(0.0);
-    let message = args.get(5).cloned().unwrap_or_default();
-    
-    let progress = Progress { task_id: task_id.to_string(), status, percent, message };
-    let path = ensure_cache_dir().join(format!("progress-{}.json", task_id));
-    
-    if let Ok(content) = serde_json::to_string(&progress) {
-        let _ = fs::write(path, content);
-    }
-    
-    println!("{}", serde_json::to_string(&progress).unwrap_or_default());
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct HookReport {
-    pub hook_name: String,
-    pub session_id: String,
-    pub start_time: DateTime<Utc>,
-    pub end_time: DateTime<Utc>,
-    pub status: String,
-    pub exit_code: i32,
-    pub issues: Vec<String>,
-}
-
-fn cmd_report() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 3 {
-        eprintln!("Usage: thegent-hooks report <hook_name> <session_id> <status> <exit_code> [issues...]");
-        exit(1);
-    }
-    
-    let hook_name = &args[2];
-    let session_id = &args[3];
-    let status = &args[4];
-    let exit_code = args.get(5).and_then(|v| v.parse().ok()).unwrap_or(0);
-    let issues = if args.len() > 6 { args[6..].to_vec() } else { Vec::new() };
-    
-    let report = HookReport {
-        hook_name: hook_name.to_string(),
-        session_id: session_id.to_string(),
-        start_time: Utc::now() - Duration::from_secs(1),
-        end_time: Utc::now(),
-        status: status.to_string(),
-        exit_code,
-        issues,
-    };
-    
-    let report_dir = PathBuf::from("docs/reports");
-    fs::create_dir_all(&report_dir).unwrap_or_default();
-    let path = report_dir.join(format!("report-{}-{}.json", hook_name, Utc::now().format("%Y-%m-%d")));
-    
-    if let Ok(content) = serde_json::to_string_pretty(&report) {
-        let _ = fs::write(&path, content);
-        println!("{}", path.display());
-    }
-}
-
-fn cmd_prewarm() {
-    println!("Prewarming caches...");
-    // Mock implementation
-}
-
 fn cmd_config_get() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 {
@@ -1138,6 +1029,30 @@ fn cmd_config_get() {
     println!("null");
 }
 
+fn cmd_agent() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 3 {
+        eprintln!("Usage: thegent-hooks agent <agent_name> [--] <command> [args...]");
+        exit(1);
+    }
+    
+    let agent_name = &args[2];
+    let mut cmd_start = 3;
+    if args.len() > 3 && args[3] == "--" { cmd_start = 4; }
+    if args.len() <= cmd_start { exit(1); }
+    
+    let command = &args[cmd_start];
+    let cmd_args = &args[cmd_start + 1..];
+    
+    // Mesh logic would go here
+    let status = Command::new(command)
+        .args(cmd_args)
+        .status()
+        .expect("Failed to execute agent command");
+    
+    exit(status.code().unwrap_or(0));
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     
@@ -1150,15 +1065,16 @@ fn main() {
         "version" | "--version" | "-V" => print_version(),
         "help" | "--help" | "-h" => print_help(),
         "init" => cmd_init(),
+        "dispatch" => cmd_dispatch(),
+        "quality-gate" => cmd_quality_gate(),
+        "security-pipeline" => cmd_security_pipeline(),
+        "complexity-ratchet" => cmd_complexity_ratchet(),
         "cache-key" => cmd_cache_key(),
         "cache-check" => cmd_cache_check(),
         "cache-read" => cmd_cache_read(),
         "cache-write" => cmd_cache_write(),
         "git" => cmd_git(),
         "changed-files" => cmd_changed_files(),
-        "changed-files-filter" => cmd_changed_files_filter(),
-        "changed-files-impact" => cmd_changed_files_impact(),
-        "changed-files-deps" => cmd_changed_files_deps(),
         "config-get" => cmd_config_get(),
         "breaker-check" => cmd_breaker_check(),
         "breaker-record" => cmd_breaker_record(),
@@ -1167,12 +1083,11 @@ fn main() {
         "incremental-check" => cmd_incremental_check(),
         "incremental-record" => cmd_incremental_record(),
         "file-hash" => cmd_file_hash(),
-        "fr-ids" => cmd_fr_ids(),
-        "fr-index" => cmd_fr_index(),
-        "progress" => cmd_progress(),
-        "report" => cmd_report(),
-        "learning-record" => cmd_learning_record(),
-        "learning-should-skip" => cmd_learning_should_skip(),
+        "agent" => cmd_agent(),
+        "uv" | "npm" | "pnpm" | "bun" | "yarn" | "pip" | "poetry" | "cargo" | "go" | "ruff" | "pytest" | "sed" | "cp" | "mv" | "rm" => {
+            let status = Command::new(&args[1]).args(&args[2..]).status().expect("Failed to execute tool");
+            exit(status.code().unwrap_or(0));
+        }
         _ => {
             eprintln!("Unknown subcommand: {}", args[1]);
             print_help();

@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/orchestration/swarm_consensus.py`
 
 WP-24001: Swarm Consensus Protocol (Byzantine).
+
 Ensures agreement on task outcomes across a swarm of autonomous agents.
 Uses a simplified Byzantine Fault Tolerance (BFT) pattern.
 
@@ -17,32 +18,40 @@ Orchestrates consensus across multiple swarm agents.
 #### SwarmConsensus.__init__
 
 ```python
-__init__(self, task_id, threshold)
+__init__(self: Any, task_id: str, threshold: float)
 ```
+
+---
 
 #### SwarmConsensus.evaluate_consensus
 
+```python
+evaluate_consensus(self: Any, total_agents: int)
+```
+
 Evaluate if consensus has been reached based on the threshold.
 
-```python
-evaluate_consensus(self, total_agents)
-```
+---
 
 #### SwarmConsensus.get_audit_trail
 
+```python
+get_audit_trail(self: Any)
+```
+
 Generate a cryptographic audit trail for the consensus process.
 
-```python
-get_audit_trail(self)
-```
+---
 
 #### SwarmConsensus.record_vote
 
+```python
+record_vote(self: Any, agent_id: str, vote: Any, signature: str)
+```
+
 Record a vote from an agent in the swarm.
 
-```python
-record_vote(self, agent_id, vote, signature)
-```
+---
 
 ---
 
@@ -56,31 +65,31 @@ A single agent's vote on a task outcome.
 
 ## evaluate_consensus
 
-Evaluate if consensus has been reached based on the threshold.
-
 ```python
-evaluate_consensus(self, total_agents)
+evaluate_consensus(self: Any, total_agents: int)
 ```
+
+Evaluate if consensus has been reached based on the threshold.
 
 ---
 
 ## get_audit_trail
 
-Generate a cryptographic audit trail for the consensus process.
-
 ```python
-get_audit_trail(self)
+get_audit_trail(self: Any)
 ```
+
+Generate a cryptographic audit trail for the consensus process.
 
 ---
 
 ## record_vote
 
-Record a vote from an agent in the swarm.
-
 ```python
-record_vote(self, agent_id, vote, signature)
+record_vote(self: Any, agent_id: str, vote: Any, signature: str)
 ```
+
+Record a vote from an agent in the swarm.
 
 ---
 

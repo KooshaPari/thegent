@@ -4,7 +4,7 @@ Generates an 'agent fingerprint' to enable better steering and policy enforcemen
 """
 
 import logging
-import random
+import secrets
 from typing import Any
 
 from pydantic import BaseModel
@@ -46,8 +46,8 @@ class AgentProber:
         _log.info("Analyzing probe responses...")
 
         return AgentFingerprint(
-            fingerprint_id=f"fp_{random.getrandbits(32):08x}",
-            inferred_model_family="claude" if random.random() > 0.5 else "gpt",
+            fingerprint_id=f"fp_{secrets.token_hex(4)}",
+            inferred_model_family="claude" if secrets.choice([True, False]) else "gpt",
             creativity_score=0.85,
             compliance_score=0.92,
             refusal_threshold=0.1,

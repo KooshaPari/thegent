@@ -150,10 +150,83 @@ impl QualityEvaluator {
             lint_issues: lint_issues.len() as u32,
             lint_errors: errors,
             lint_warnings: warnings,
-            cyclomatic_complexity: 0, // Would be parsed separately
-            cognitive_complexity: 0,  // Would be parsed separately
-            function_max_lines: 0,    // Would be parsed separately
+            cyclomatic_complexity: 0,
+            cognitive_complexity: 0,
+            function_max_lines: 0,
         }
+    }
+
+    /// Measure complexity metrics for a file
+    pub fn measure_complexity(path: &std::path::Path) -> Result<QualityMetrics, HookError> {
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| HookError::IoError(format!("Failed to read {}: {}", path.display(), e)))?;
+        
+        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+        
+        let mut cyc = 0;
+        let mut cog = 0;
+        let mut max_nest = 0;
+        let mut line_count = 0;
+        let mut current_nest = 0;
+        
+        for line in content.lines() {
+            line_count += 1;
+            let trimmed = line.trim();
+            if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with("//") { continue; }
+            
+            // Simplified nesting and complexity proxies
+            match ext {
+                "py" => {
+                    // Python: indentation based
+                    let indent = line.len() - line.trim_start().len();
+                    let level = indent / 4;
+                    if level > max_nest { max_nest = level; }
+                    
+                    if trimmed.contains("if ") || trimmed.contains("elif ") || trimmed.contains("for ") || 
+                       trimmed.contains("while ") || trimmed.contains("except ") || trimmed.contains("with ") {
+                        cyc += 1;
+                        cog += 1 + level;
+                    }
+                    if trimmed.contains(" and ") || trimmed.contains(" or ") {
+                        cyc += 1;
+                        cog += 1;
+                    }
+                },
+                "js" | "ts" | "jsx" | "tsx" | "rs" | "go" | "java" | "kt" => {
+                    // Brace based
+                    for c in trimmed.chars() {
+                        if c == '{' {
+                            current_nest += 1;
+                            if current_nest > max_nest { max_nest = current_nest; }
+                        } else if c == '}' {
+                            if current_nest > 0 { current_nest -= 1; }
+                        }
+                    }
+                    
+                    if trimmed.contains("if ") || trimmed.contains("else if") || trimmed.contains("for ") || 
+                       trimmed.contains("while ") || trimmed.contains("switch ") || trimmed.contains("case ") ||
+                       trimmed.contains("catch ") {
+                        cyc += 1;
+                        cog += 1 + current_nest;
+                    }
+                    if trimmed.contains(" && ") || trimmed.contains(" || ") || trimmed.contains(" ?? ") {
+                        cyc += 1;
+                        cog += 1;
+                    }
+                },
+                _ => {}
+            }
+        }
+        
+        Ok(QualityMetrics {
+            coverage_percent: 0.0,
+            lint_issues: 0,
+            lint_errors: 0,
+            lint_warnings: 0,
+            cyclomatic_complexity: cyc as u32,
+            cognitive_complexity: cog as u32,
+            function_max_lines: max_nest as u32, // Reusing field for nesting depth for now
+        })
     }
 }
 

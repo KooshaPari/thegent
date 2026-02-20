@@ -1637,3 +1637,4 @@
 {"gate":"trace-parity-report","pass":false,"recorded_at":"2026-02-18T09:29:55Z"}
 {"gate":"rolling-wave","pass":true,"recorded_at":"2026-02-18T09:29:55Z"}
 {"gate":"agent-claim-validator","pass":true,"recorded_at":"2026-02-18T09:29:55Z"}
+{"gate":"qa-attestation","pass":false,"recorded_at":"2026-02-19T16:03:35Z"}

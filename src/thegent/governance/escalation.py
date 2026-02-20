@@ -134,6 +134,24 @@ class EscalationQueue:
                     item.status = EscalationStatus.EXPIRED
                     self._save_item(item)
 
+                    # WP-3008: Move expired item to DLQ
+                    try:
+                        from thegent.execution import DLQManager, RunMeta
+
+                        dlq = DLQManager(self.settings.session_dir)
+                        # Create a minimal RunMeta for DLQ
+                        meta = RunMeta(
+                            run_id=item.run_id,
+                            agent=item.agent,
+                            prompt=item.prompt,
+                            cwd=str(Path.cwd()),
+                            owner=item.assigned_to or "system",
+                        )
+                        dlq.enqueue(meta, f"Escalation EXPIRED: {item.reason}")
+                        _log.warning("Moved expired escalation %s to DLQ", item.id)
+                    except Exception as e:
+                        _log.error("Failed to move expired escalation %s to DLQ: %s", item.id, e)
+
                 if status is None or item.status == status:
                     items.append(item)
             except Exception as e:

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class ChangedFilesEnhance:
     """Enhanced changed files detection."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize changed files enhance."""
         self.filters: list[str] = []
 
@@ -20,11 +20,11 @@ class ChangedFilesEnhance:
         filter_patterns: list[str] | None = None,
     ) -> list[Path]:
         """Get changed files with filtering.
-        
+
         Args:
             repo_path: Repository path
             filter_patterns: Optional filter patterns
-            
+
         Returns:
             List of changed file paths
         """
@@ -38,10 +38,10 @@ class ChangedFilesEnhance:
 
     def get_shared_files(self, repo_path: Path) -> list[Path]:
         """Get shared files (symlinks, etc.).
-        
+
         Args:
             repo_path: Repository path
-            
+
         Returns:
             List of shared file paths
         """
@@ -51,10 +51,10 @@ class ChangedFilesEnhance:
 
     def integrate_ls_files(self, repo_path: Path) -> list[Path]:
         """Integrate git ls-files for comprehensive file listing.
-        
+
         Args:
             repo_path: Repository path
-            
+
         Returns:
             List of all tracked files
         """

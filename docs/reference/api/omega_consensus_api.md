@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/orchestration/omega_consensus.py`
 
 WP-45003: Final State Consensus Protocol (Omega).
+
 Ensures all agents in the swarm agree on the final project state using BFT.
 
 ---
@@ -10,6 +11,7 @@ Ensures all agents in the swarm agree on the final project state using BFT.
 ## OmegaConsensus
 
 The final consensus engine for thegent (Phase 45).
+
 Enforces agreement on the project's 'Omega' (final) state across all agents.
 
 ### Methods
@@ -17,40 +19,50 @@ Enforces agreement on the project's 'Omega' (final) state across all agents.
 #### OmegaConsensus.__init__
 
 ```python
-__init__(self, swarm_size, threshold)
+__init__(self: Any, swarm_size: int, threshold: float)
 ```
+
+---
 
 #### OmegaConsensus.cast_vote
 
+```python
+cast_vote(self: Any, proposal_id: str, voter_id: str, vote: bool, signature: str)
+```
+
 Cast a vote for an Omega proposal.
 
-```python
-cast_vote(self, proposal_id, voter_id, vote, signature)
-```
+---
 
 #### OmegaConsensus.finalize_consensus
 
+```python
+finalize_consensus(self: Any, proposal_id: str)
+```
+
 Check if a proposal has reached consensus and finalize the state.
 
-```python
-finalize_consensus(self, proposal_id)
-```
+---
 
 #### OmegaConsensus.get_final_state
 
+```python
+get_final_state(self: Any)
+```
+
 Return the finalized Omega state if consensus was reached.
 
-```python
-get_final_state(self)
-```
+---
 
 #### OmegaConsensus.propose_state
 
+```python
+propose_state(self: Any, proposer_id: str, state: Any, metadata: dict[(str, Any)])
+```
+
 Propose a new final state for the project.
 
-```python
-propose_state(self, proposer_id, state, metadata)
-```
+---
 
 ---
 
@@ -72,41 +84,41 @@ A vote on an Omega proposal.
 
 ## cast_vote
 
-Cast a vote for an Omega proposal.
-
 ```python
-cast_vote(self, proposal_id, voter_id, vote, signature)
+cast_vote(self: Any, proposal_id: str, voter_id: str, vote: bool, signature: str)
 ```
+
+Cast a vote for an Omega proposal.
 
 ---
 
 ## finalize_consensus
 
-Check if a proposal has reached consensus and finalize the state.
-
 ```python
-finalize_consensus(self, proposal_id)
+finalize_consensus(self: Any, proposal_id: str)
 ```
+
+Check if a proposal has reached consensus and finalize the state.
 
 ---
 
 ## get_final_state
 
-Return the finalized Omega state if consensus was reached.
-
 ```python
-get_final_state(self)
+get_final_state(self: Any)
 ```
+
+Return the finalized Omega state if consensus was reached.
 
 ---
 
 ## propose_state
 
-Propose a new final state for the project.
-
 ```python
-propose_state(self, proposer_id, state, metadata)
+propose_state(self: Any, proposer_id: str, state: Any, metadata: dict[(str, Any)])
 ```
+
+Propose a new final state for the project.
 
 ---
 

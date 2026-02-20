@@ -103,7 +103,7 @@ task.add_dependency(other_task.id)
 | **No conditional routing** | Fixed assignment at start | Defer to LangGraph |
 | **Flat hierarchy** | Only manager vs worker, no nested teams | Accept for MVP |
 
-**MVP execution backend**: thegent already has a **codex/cc/droid harness**—DirectAgentRunner, CodexProxyRunner, DroidRunner, cursor_api_runner—with sharecli harness wrapping when enabled. The MVP uses this existing harness, not TeammateManager.
+**MVP execution backend**: thegent already has a **codex/cc/droid harness**—DirectAgentRunner, CodexProxyRunner, DroidRunner, cursor_api_runner—with heliosShield harness wrapping when enabled. The MVP uses this existing harness, not TeammateManager.
 
 ### 2.6 MVP Use Case: thegent + SmolGents
 
@@ -111,7 +111,7 @@ task.add_dependency(other_task.id)
 
 1. **Crew**: 4 agents (planner, researcher, coder, reviewer), 4 tasks with dependencies
 2. **CrewExecutor**: Sequential mode; SkillBasedAssigner matches task to agent role
-3. **TaskExecutor.agent_executor**: Callback that invokes thegent **codex/cc/droid harness** (DirectAgentRunner, CodexProxyRunner, DroidRunner, etc.)—the existing agent runners that wrap claude, codex, copilot, gemini, droid via CLI + sharecli harness
+3. **TaskExecutor.agent_executor**: Callback that invokes thegent **codex/cc/droid harness** (DirectAgentRunner, CodexProxyRunner, DroidRunner, etc.)—the existing agent runners that wrap claude, codex, copilot, gemini, droid via CLI + heliosShield harness
 4. **Result**: Linear pipeline, dependency-ordered, each step executed via codex/cc/droid
 
 **Maximal MVP**: Include WorkflowEngine for multi-crew; single Crew per sitback is the primary path, but multi-crew stages supported.
@@ -195,7 +195,7 @@ class CCWorkflowState(TypedDict):
 
 **Durable execution**: LangGraph checkpointer persists state. CC has no session resumption—LangGraph fills that gap by resuming from checkpoint and re-invoking CC as needed.
 
-### 3.4 sharecli Mesh Interface (Alignment)
+### 3.4 heliosShield Mesh Interface (Alignment)
 
 From agent-mesh research:
 - Mesh treats each CLI process as **opaque**
@@ -307,8 +307,8 @@ From agent-mesh research:
 ## 7. References
 
 - smolgents: `src/crews/crew.py`, `src/executors/crew_executor.py`, `src/executors/task_executor.py`, `src/executors/agent_assigner.py`
-- thegent codex/cc/droid harness: `src/thegent/agents/direct_agents.py`, `codex_proxy.py`, `droid.py`, `cursor_api_runner.py`; sharecli harness via `_wrap_with_harness`
-- sharecli: `agent-mesh-research-r3-consensus-escalation-2026.md` (§6 CLI Tool Coordination)
+- thegent codex/cc/droid harness: `src/thegent/agents/direct_agents.py`, `codex_proxy.py`, `droid.py`, `cursor_api_runner.py`; heliosShield harness via `_wrap_with_harness`
+- heliosShield: `agent-mesh-research-r3-consensus-escalation-2026.md` (§6 CLI Tool Coordination)
 - LangGraph: StateGraph, Nodes, Edges, Command, interrupt, checkpointer
 - Claude Code: TeammateTool, teams dir, tasks dir, blockedBy
 

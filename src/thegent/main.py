@@ -1,10 +1,19 @@
 """Thegent CLI entry point (subcommand-only)."""
 
+import builtins
+from pathlib import Path
+
+builtins.Path = Path
+
 import json
 import os
 import platform
 import sys
 import warnings
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+
+if TYPE_CHECKING:
+    from thegent.commands.sync import SyncCommand, SyncResult
 
 # G-DX-01: Silencing noisy non-fatal warnings for better operator experience.
 # Must be before any other imports that might trigger Pydantic plugin loading.
@@ -52,6 +61,7 @@ from thegent.cli import (
     dag_update_cmd,
     dag_validate_cmd,
     data_protection_cmd,
+    deep_research_cmd,
     discovery_parse_cmd,
     discovery_register_cmd,
     discovery_scan_cmd,
@@ -122,11 +132,11 @@ from thegent.cli import (
     terminal_route_cmd,
     usage_cmd,
     wait_cmd,
-    deep_research_cmd,
+    workstream_dashboard_cmd,
     workstream_query_cmd,
     workstream_stats_cmd,
-    workstream_dashboard_cmd,
 )
+from thegent.cli_custom import context_history_cmd, memory_cmd, scratchpad_cmd
 
 
 def init_cmd(
@@ -176,7 +186,7 @@ def _main_callback(ctx: typer.Context) -> None:
     console.print(
         Panel(
             "[bold]Getting started[/bold]\n\n"
-            "[cyan]thegent run[/cyan] \"<prompt>\" free    Run a task\n"
+            '[cyan]thegent run[/cyan] "<prompt>" free    Run a task\n'
             "[cyan]thegent doctor[/cyan]                 Verify environment\n"
             "[cyan]thegent setup[/cyan]                  Configure providers\n"
             "[cyan]thegent plan do-next[/cyan]           Next work item\n\n"
@@ -241,9 +251,9 @@ def upgrade_cmd(
         console.print(f"[green]A new version is available: {latest} (you have {current})[/green]")
         if not check_only:
             console.print("[dim]Upgrade: pip install -U thegent  or  uv tool install thegent[/dim]")
-    else:
-        if check_only:
-            console.print(f"[green]You have the latest version: {current}[/green]")
+    elif check_only:
+        console.print(f"[green]You have the latest version: {current}[/green]")
+
 
 orchestrate_app = typer.Typer(help="Agent execution and session management")
 govern_app = typer.Typer(help="Governance, policy, and compliance")
@@ -270,6 +280,10 @@ govern_app.add_typer(finance_app, name="finance")
 
 research_app = typer.Typer(help="Deep research and discovery commands")
 app.add_typer(research_app, name="research")
+
+from thegent.secrets.cli import app as secrets_app
+app.add_typer(secrets_app, name="secrets")
+
 
 @research_app.command("deep")
 def deep_research(
@@ -335,6 +349,125 @@ def project_list() -> None:
 forensics_app = typer.Typer(help="Forensic auditing and snapshotting (WP-12XXX)")
 app.add_typer(forensics_app, name="forensics")
 
+from thegent.commands.audit import app as _audit_app
+from thegent.commands.idea_seeds import app as _seeds_app
+from thegent.commands.registry import app as _registry_app
+from thegent.commands.replay import app as _replay_app
+from thegent.commands.tools import app as _tools_app
+
+app.add_typer(_audit_app, name="audit")
+app.add_typer(_registry_app, name="registry")
+app.add_typer(_replay_app, name="replay")
+app.add_typer(_seeds_app, name="seeds")
+app.add_typer(_tools_app, name="tools")
+
+# ---------------------------------------------------------------------------
+# thegent lint -- oxlint-backed linting accelerator
+# ---------------------------------------------------------------------------
+
+lint_app = typer.Typer(help="Lint JS/TS/Python files via oxlint (fast) or ESLint/ruff.")
+app.add_typer(lint_app, name="lint")
+
+
+@lint_app.callback(invoke_without_command=True)
+def _lint_callback(ctx: typer.Context) -> None:
+    """When called with no subcommand, run the default 'run' subcommand."""
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(lint_run)
+
+
+@lint_app.command("run")
+def lint_run(
+    paths: list[Path] = typer.Argument(default=None, help="Files or directories to lint (default: .)"),
+    fast: bool = typer.Option(True, "--fast/--no-fast", help="Use oxlint fast-path when available"),
+    oxlint_config: Path = typer.Option(None, "--oxlint-config", help="Path to oxlintrc.json"),
+    eslint_config: Path = typer.Option(None, "--eslint-config", help="Path to ESLint config"),
+    output_json: bool = typer.Option(False, "--json", help="Output results as JSON"),
+) -> None:
+    """Lint JS/TS files via oxlint (50-100x faster) or fall back to ESLint.
+
+    Examples::
+
+        thegent lint run src/
+        thegent lint run --no-fast src/
+        thegent lint run --json src/ web/
+    """
+    from thegent.tools.linting_accelerator import LintingAccelerator
+
+    linter = LintingAccelerator()
+    effective_paths = paths or [Path()]
+
+    try:
+        results = linter.lint(
+            effective_paths,
+            fast=fast,
+            oxlint_config=oxlint_config,
+            eslint_config=eslint_config,
+        )
+    except FileNotFoundError as exc:
+        console.print(f"[red]Error:[/red] {exc}", highlight=False)
+        raise typer.Exit(1)
+
+    if output_json:
+        import json as _json
+
+        console.print(
+            _json.dumps(
+                [
+                    {
+                        "file": r.file,
+                        "line": r.line,
+                        "column": r.column,
+                        "severity": r.severity,
+                        "rule": r.rule,
+                        "message": r.message,
+                        "source": r.source,
+                    }
+                    for r in results
+                ],
+                indent=2,
+            )
+        )
+    elif not results:
+        console.print("[green]No lint issues found.[/green]")
+    else:
+        for r in results:
+            colour = "red" if r.severity == "error" else "yellow"
+            console.print(f"[{colour}]{r}[/{colour}]", highlight=False)
+        console.print(f"\n[bold]{len(results)} issue(s) found.[/bold]")
+
+    if any(r.severity == "error" for r in results):
+        raise typer.Exit(1)
+
+
+@lint_app.command("check")
+def lint_check(
+    paths: list[Path] = typer.Argument(default=None, help="Files or directories to lint (default: .)"),
+    fast: bool = typer.Option(True, "--fast/--no-fast", help="Use oxlint fast-path when available"),
+) -> None:
+    """Check availability of lint backends without linting.
+
+    Examples::
+
+        thegent lint check
+    """
+    from thegent.tools.linting_accelerator import LintingAccelerator
+
+    linter = LintingAccelerator()
+    oxlint_ok = linter.is_oxlint_available()
+    eslint_ok = linter.is_eslint_available()
+    ruff_ok = linter.is_ruff_available()
+
+    console.print(f"oxlint  : {'[green]available[/green]' if oxlint_ok else '[dim]not found[/dim]'}")
+    console.print(f"eslint  : {'[green]available[/green]' if eslint_ok else '[dim]not found[/dim]'}")
+    console.print(f"ruff    : {'[green]available[/green]' if ruff_ok else '[dim]not found[/dim]'}")
+
+    if fast:
+        active = "oxlint" if oxlint_ok else ("eslint" if eslint_ok else "none")
+    else:
+        active = "eslint" if eslint_ok else "none"
+    console.print(f"\nActive backend (fast={fast}): [bold]{active}[/bold]")
+
 
 @forensics_app.command("snapshot")
 def forensics_snapshot(
@@ -348,7 +481,12 @@ def forensics_snapshot(
 @finance_app.command("dashboard")
 def finance_dashboard() -> None:
     """Show financial safety dashboard (WP-Y1)."""
-    from thegent.cli_impl import financial_dashboard_impl
+    try:
+        from thegent.cli_impl import financial_dashboard_impl
+    except ImportError:
+        typer.echo("financial_dashboard_impl not available", err=True)
+        raise typer.Exit(1)
+
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
@@ -386,6 +524,7 @@ def trace_replay(
 
 
 teammates_app = typer.Typer(help="Manage specialized teammate agents and delegation (WP-16001)")
+inbox_app = typer.Typer(help="Unified agent inbox and event stream (WP-12006)")
 orchestrate_app.add_typer(teammates_app, name="teammates")
 
 deferral_app = typer.Typer(help="Manage deferred non-critical tasks (WP-5004)")
@@ -440,36 +579,6 @@ def deferral_resume(
     deferral_resume_cmd(run_id)
 
 
-@teammates_app.command("list")
-def teammates_list() -> None:
-    """List all discovered specialized agents available for delegation (WP-16001)."""
-    from thegent.cli import teammates_list_cmd
-
-    teammates_list_cmd()
-
-
-@teammates_app.command("delegate")
-def teammates_delegate(
-    teammate_id: str = typer.Argument(..., help="ID of the teammate to delegate to"),
-    prompt: str = typer.Argument(..., help="Instruction for the teammate"),
-    parent_run_id: str = typer.Option(None, "--parent-run", help="Parent run ID for tracking"),
-) -> None:
-    """Delegate a sub-task to a specialized teammate (WP-16002)."""
-    from thegent.cli import teammates_delegate_cmd
-
-    teammates_delegate_cmd(teammate_id=teammate_id, prompt=prompt, parent_run_id=parent_run_id)
-
-
-@teammates_app.command("status")
-def teammates_status(
-    run_id: str = typer.Option(None, "--run-id", help="Filter by parent run ID"),
-) -> None:
-    """Monitor the status of the teammate swarm (WP-16002)."""
-    from thegent.cli import teammates_status_cmd
-
-    teammates_status_cmd(run_id=run_id)
-
-
 # ========== Hierarchy Commands ==========
 
 hierarchy_app = typer.Typer(help="Agent hierarchy and relationship management")
@@ -483,7 +592,11 @@ def hierarchy_show(
     format: str = typer.Option("text", "--format", "-f", help="Output format: text, json, tree"),
 ) -> None:
     """Show agent hierarchy."""
-    from thegent.cli import hierarchy_show_cmd
+    try:
+        from thegent.cli import hierarchy_show_cmd
+    except ImportError:
+        typer.echo("hierarchy_show_cmd not available", err=True)
+        raise typer.Exit(1)
 
     hierarchy_show_cmd(agent_id=agent_id, team_id=team_id, format=format)
 
@@ -493,7 +606,11 @@ def hierarchy_tree(
     root_id: str = typer.Option(None, "--root", help="Root agent run_id"),
 ) -> None:
     """Show hierarchy tree structure."""
-    from thegent.cli import hierarchy_tree_cmd
+    try:
+        from thegent.cli import hierarchy_tree_cmd
+    except ImportError:
+        typer.echo("hierarchy_tree_cmd not available", err=True)
+        raise typer.Exit(1)
 
     hierarchy_tree_cmd(root_id=root_id)
 
@@ -526,7 +643,11 @@ def teams_create(
     lead_id: str = typer.Option(..., "--lead", help="Team lead agent run_id"),
 ) -> None:
     """Create a new team."""
-    from thegent.cli import teams_create_cmd
+    try:
+        from thegent.cli import teams_create_cmd
+    except ImportError:
+        typer.echo("teams_create_cmd not available", err=True)
+        raise typer.Exit(1)
 
     teams_create_cmd(
         team_id=team_id,
@@ -541,7 +662,11 @@ def teams_create(
 @teams_app.command("list")
 def teams_list() -> None:
     """List all teams."""
-    from thegent.cli import teams_list_cmd
+    try:
+        from thegent.cli import teams_list_cmd
+    except ImportError:
+        typer.echo("teams_list_cmd not available", err=True)
+        raise typer.Exit(1)
 
     teams_list_cmd()
 
@@ -646,7 +771,7 @@ def crew_execute(
     """Execute a crew."""
     from thegent.cli_crew import crew_execute_cmd
 
-    crew_execute_cmd(crew_id=crew_id, cwd=cwd, mode=mode, timeout=timeout, model=model)
+    crew_execute_cmd(crew_file=crew_id, cwd=cwd, mode=mode, timeout=timeout, model=model)
 
 
 @crew_app.command("list")
@@ -814,8 +939,11 @@ def learning_promote(model_id: str, approver: str):
 def learning_rollback(model_id: str):
     """Rollback a promoted or candidate model (WP-14003)."""
     import importlib
+    import logging
 
     from thegent.config import ThegentSettings
+
+    _log = logging.getLogger(__name__)
 
     LearningRegistry = importlib.import_module("thegent.planning.learning").LearningRegistry
 
@@ -870,12 +998,12 @@ recover_app = typer.Typer(help="State recovery and self-healing")
 observe_app = typer.Typer(help="Observability, telemetry, and performance")
 plan_app = typer.Typer(help="Task planning and DAG management")
 discovery_app = typer.Typer(help="Discovery of external agents (WP-4008)")
-config_app = typer.Typer(help="Config validation and introspection")
+config_app = typer.Typer(help="Configuration: show, set, check and concurrency (multi-tenant aware)")
+session_app = typer.Typer(help="Session management: list, show, logs, send, attach (WP-9000)")
 
 discovery_app.command("register")(discovery_register_cmd)
 discovery_app.command("parse")(discovery_parse_cmd)
 discovery_app.command("scan")(discovery_scan_cmd)
-
 
 @config_app.command("check")
 def config_check(
@@ -884,7 +1012,6 @@ def config_check(
     """Validate config; fail-fast on misconfig (DX-010, ROB-013)."""
     config_check_cmd(format=format)
 
-
 @config_app.command("concurrency")
 def config_concurrency(
     show: bool = typer.Option(False, "--show", help="Show current concurrency status"),
@@ -892,32 +1019,80 @@ def config_concurrency(
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: json | rich (default)"),
 ) -> None:
     """View or set concurrency limit."""
-    from thegent.cli import concurrency_show_cmd, concurrency_set_cmd
-
+    from thegent.cli import concurrency_set_cmd, concurrency_show_cmd
     if set_limit is not None:
         concurrency_set_cmd(set_limit)
     else:
         concurrency_show_cmd(format=format)
 
+@config_app.command("show")
+def config_show(
+    tenant_id: str | None = typer.Option(None, "--tenant", "-T", help="Tenant ID"),
+    session_id: str | None = typer.Option(None, "--session", "-S", help="Session ID"),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich | json"),
+) -> None:
+    """Show resolved configuration for the current context."""
+    from thegent.config_provider import get_config_provider
 
+    p = get_config_provider()
+    resolved = p.resolve(tenant_id=tenant_id, session_id=session_id)
+
+    if format == "json":
+        import json
+        typer.echo(json.dumps(resolved, indent=2))
+    else:
+        from rich.table import Table
+        table = Table(title=f"Resolved Configuration (Tenant: {tenant_id or 'default'})")
+        table.add_column("Key", style="cyan")
+        table.add_column("Value", style="green")
+        for k, v in sorted(resolved.items()):
+            table.add_row(k, str(v))
+        console.print(table)
+
+@config_app.command("set")
+def config_set(
+    key: str = typer.Argument(..., help="Config key to set"),
+    value: str = typer.Argument(..., help="Config value to set"),
+) -> None:
+    """Set a configuration value."""
+    from thegent.cli import config_set_cmd
+    config_set_cmd(key, value)
+
+session_app.command("list")(ps_cmd)
+session_app.command("show")(status_cmd)
+session_app.command("logs")(logs_cmd)
+session_app.command("send")(loop_send_cmd)
+session_app.command("stop")(loop_stop_cmd)
+session_app.command("attach")(takeover_cmd)
+
+from thegent.agents.unified_registry_cli import app as registry_app
+from thegent.cli_swarm import app as swarm_app
+from thegent.cli_teammates import app as teammates_app
 from thegent.clode_main import app as clode_app
+
+app.add_typer(registry_app, name="registry")
+app.add_typer(swarm_app, name="swarm")
+app.add_typer(teammates_app, name="teammates")
+orchestrate_app.add_typer(teammates_app, name="teammates")
 from thegent.clode_main import sitback_cmd
+from thegent.roid_main import app as roid_app
 from thegent.terminal_cli import app as terminal_app
 
 dex_app: typer.Typer | None = None
 try:
     from thegent.dex_main import app as _dex_app
-
     dex_app = _dex_app
 except Exception:
     dex_app = None
 
 app.command("sitback")(sitback_cmd)
 app.add_typer(clode_app, name="clode")
+app.add_typer(roid_app, name="roid")
 if dex_app is not None:
     app.add_typer(dex_app, name="dex")
 app.add_typer(orchestrate_app, name="orchestrate")
 app.add_typer(govern_app, name="govern")
+app.add_typer(session_app, name="session")
 
 # AgilePlus governance commands (go command group)
 go_app = typer.Typer(help="AgilePlus governance commands: cycle, watch, status, health")
@@ -1018,7 +1193,9 @@ def run(
         False, "--retry", help="Retry failed run by --run-id (looks up prompt from registry)"
     ),
     mode: str = typer.Option("write", "--mode", "-m", help="Mode: read-only, write, full"),
-    timeout: int | None = typer.Option(None, "--timeout", "-t", help="Timeout in seconds (default: 10m; use 1800 for 30m)"),
+    timeout: int | None = typer.Option(
+        None, "--timeout", "-t", help="Timeout in seconds (default: 10m; use 1800 for 30m)"
+    ),
     full: bool = typer.Option(False, "--full", "-f", help="Show full raw output (default: stream-json, parsed)"),
     live: bool = typer.Option(False, "--live", help="Stream output live to terminal"),
     model: str | None = typer.Option(
@@ -1052,6 +1229,7 @@ def run(
         False, "--debug", help="Enable debug mode (THGENT_DEBUG=1, proxy -debug for model/provider/latency tags)"
     ),
     task_id: str | None = typer.Option(None, "--task-id", help="Associate run with a specific task ID"),
+    tenant: str | None = typer.Option(None, "--tenant", "-T", help="Tenant ID for config resolution"),
 ) -> None:
     """Run a foreground agent invocation. Use -M <model> without agent for model-first routing.
 
@@ -1093,6 +1271,7 @@ def run(
         search=search,
         debug=debug,
         task_id=task_id,
+        tenant=tenant,
     )
 
 
@@ -1295,7 +1474,7 @@ def free(
             )
 
         if do_next and repeat > 1 and attempt < repeat - 1:
-            prompt = None
+            prompt = ""
 
 
 @app.command("route")
@@ -1315,7 +1494,9 @@ def bg(
     agent: str | None = typer.Argument(None, help="Provider (optional when -M/--model given)"),
     cd: Path | None = typer.Option(None, "--cd", "-d", help="Working directory"),
     mode: str = typer.Option("write", "--mode", "-m", help="Mode: read-only, write, full"),
-    timeout: int | None = typer.Option(None, "--timeout", "-t", help="Timeout in seconds (default: 10m; use 1800 for 30m)"),
+    timeout: int | None = typer.Option(
+        None, "--timeout", "-t", help="Timeout in seconds (default: 10m; use 1800 for 30m)"
+    ),
     full: bool = typer.Option(False, "--full", help="Use full raw output mode"),
     owner: str | None = typer.Option(None, "--owner", help="Session owner tag (default: <user>:<cwd-name>)"),
     model: str | None = typer.Option(None, "--model", "-M", help="Model override or model-first"),
@@ -1357,6 +1538,7 @@ def bg(
         False, "--debug", help="Enable debug mode (THGENT_DEBUG=1 for model/provider/latency tags)"
     ),
     task_id: str | None = typer.Option(None, "--task-id", help="Associate run with a specific task ID"),
+    tenant: str | None = typer.Option(None, "--tenant", "-T", help="Tenant ID for config resolution"),
 ) -> None:
     """Start a background run and register a session."""
     settings = ThegentSettings()
@@ -1388,6 +1570,7 @@ def bg(
         speculative=speculative,
         debug=debug,
         task_id=task_id,
+        tenant=tenant,
     )
 
 
@@ -1455,10 +1638,41 @@ def history_audit_verify(
 app.add_typer(history_app, name="history")
 
 
-inbox_app = typer.Typer(
-    help="Unified inbox: run registry + escalation events. List, filter, and wait for new events.",
-    invoke_without_command=True,
-)
+isolation_app = typer.Typer(help="Manage agent isolation and multi-tenancy.")
+app.add_typer(isolation_app, name="isolation")
+
+@isolation_app.command("check")
+def isolation_check(
+    mode: str = typer.Option("sub-user", "--mode", help="Isolation mode to check")
+) -> None:
+    """Check the status of the isolation system."""
+    from thegent.cli_impl import isolation_check_impl
+    isolation_check_impl(mode=mode)
+
+@isolation_app.command("share-run")
+def isolation_share_run(
+    command: list[str] = typer.Argument(..., help="Command to run shared"),
+    tenant_id: str = typer.Option("default", "--tenant", help="Tenant ID"),
+    role: str | None = typer.Option(None, "--role", help="L1 Role (e.g. frontend_lead)"),
+) -> None:
+    """Run a command shared across tenants using CLI-Share debouncing."""
+    from pathlib import Path
+
+    from thegent.isolation.sub_user_provider import SubUserIsolationProvider
+
+    provider = SubUserIsolationProvider(enable_l1_nesting=bool(role))
+    context = provider.allocate_tenant(tenant_id, role=role)
+
+    result = provider.execute_in_context(context, command, share=True)
+
+    if result.get("cached"):
+        pass
+
+    raise typer.Exit(code=result["returncode"])
+
+
+# Inbox commands (unified events)
+inbox_app = typer.Typer(help="Unified event inbox: list, wait")
 
 
 @inbox_app.callback(invoke_without_command=True)
@@ -1853,9 +2067,11 @@ def govern_hook_watcher(
     foreground: bool = typer.Option(False, "--foreground", "-f", help="Run in foreground (don't daemonize)"),
 ) -> None:
     """P8: Start hook cache watcher daemon — pre-warms caches on file changes."""
-    from thegent.infra import run_subprocess_optimized
+    import subprocess
 
     from rich.console import Console
+
+    from thegent.infra import run_subprocess_optimized
 
     console = Console()
     hooks_root = Path(__file__).resolve().parents[2] / "hooks"
@@ -2251,9 +2467,6 @@ def ps(
         include_contract=include_contract,
     )
 
-
-recover_app = typer.Typer(help="Self-healing and automated recovery (WP-2XXX)")
-app.add_typer(recover_app, name="recover")
 
 
 @recover_app.command("status")
@@ -2958,33 +3171,6 @@ def cliproxy_login(
 control_plane_app = typer.Typer(help="Control plane: multi-tenant config service")
 app.add_typer(control_plane_app, name="control-plane")
 
-config_app = typer.Typer(help="Configuration: show and set settings (multi-tenant aware)")
-app.add_typer(config_app, name="config")
-
-
-@config_app.command("show")
-def config_show(
-    tenant_id: str | None = typer.Option(None, "--tenant", "-T", help="Tenant ID"),
-    session_id: str | None = typer.Option(None, "--session", "-S", help="Session ID"),
-    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich | json"),
-) -> None:
-    """Show resolved configuration for the current context."""
-    from thegent.config_provider import get_config_provider
-
-    p = get_config_provider()
-    resolved = p.resolve(tenant_id=tenant_id, session_id=session_id)
-
-    if format == "json":
-        typer.echo(json.dumps(resolved, indent=2))
-    else:
-        from rich.table import Table
-        table = Table(title=f"Configuration (Tenant: {tenant_id or 'default'})")
-        table.add_column("Key", style="cyan")
-        table.add_column("Value", style="green")
-        for k, v in sorted(resolved.items()):
-            table.add_row(k, str(v))
-        console.print(table)
-
 
 @control_plane_app.command("serve")
 def control_plane_serve(
@@ -3129,6 +3315,7 @@ def plan_spawn_next(
 ) -> None:
     """Spawn N next work items in background (parallel batch). Manages 10-20 items alongside other agent managers."""
     from rich.console import Console
+
     console = Console()
     console.print("[yellow]plan spawn-next not yet implemented, use 'plan do-next' with --bg[/yellow]")
 
@@ -3397,6 +3584,58 @@ def dag_probe(
     dag_probe_cmd(cd=cd, baseline_id=baseline_id)
 
 
+@plan_app.command("decompose")
+def plan_decompose(
+    goal: str = typer.Argument(..., help="High-level goal to decompose into sub-tasks"),
+    max_depth: int = typer.Option(3, "--max-depth", "-d", help="Maximum DAG depth"),
+    separator: str = typer.Option(".", "--separator", "-s", help="Separator character for compound goals"),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich | json | work-stream"),
+) -> None:
+    """Decompose a goal into a DAG of sub-tasks (plangent-style planning).
+
+    Uses PlangentPlanner to break down the goal and display the resulting
+    task DAG.  With --format=work-stream the output is rendered as WORK_STREAM
+    table rows suitable for copy-paste into WORK_STREAM.md.
+    """
+    import json as _json
+
+    from thegent.agents.plangent import PlangentPlanner
+
+    planner = PlangentPlanner(separator=separator)
+    plan = planner.decompose(goal, max_depth=max_depth)
+
+    if format == "json":
+        typer.echo(_json.dumps(plan.to_dict(), indent=2))
+        return
+
+    if format == "work-stream":
+        rows = planner.to_work_stream_rows(plan)
+        header = "| ID | Title | Source | Priority | Depends | Status |"
+        sep_row = "|----|-------|--------|----------|---------|--------|"
+        typer.echo(header)
+        typer.echo(sep_row)
+        for row in rows:
+            typer.echo(
+                f"| {row['id'][:8]} | {row['title'][:50]} | {row['source']} "
+                f"| {row['priority']} | {row['depends'][:16]} | {row['status']} |"
+            )
+        return
+
+    # Rich table output (default)
+    from rich.table import Table
+
+    table = Table(title=f"Plan: {plan.goal[:60]}", show_lines=True)
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Task", style="cyan")
+    table.add_column("Depends On", style="yellow")
+    table.add_column("Status", style="green")
+    for idx, node in enumerate(plan.nodes, 1):
+        deps = ", ".join(d[:8] for d in node.depends_on) if node.depends_on else "-"
+        table.add_row(str(idx), node.task, deps, node.status)
+    console.print(table)
+    console.print(f"[dim]Plan ID: {plan.id} | Nodes: {len(plan.nodes)} | Created: {plan.created_at.isoformat()}[/dim]")
+
+
 mcp_app = typer.Typer(
     help="MCP config and service: install thegent into Cursor/Claude Code/Codex; manage HTTP server as startup service",
 )
@@ -3410,79 +3649,16 @@ app.add_typer(acp_app, name="acp")
 lsp_app = typer.Typer(help="Headless LSP server management")
 app.add_typer(lsp_app, name="lsp")
 
+jetbrains_app = typer.Typer(help="JetBrains IDE MCP integration: detect IDEs and write mcp.json config")
+app.add_typer(jetbrains_app, name="jetbrains")
+
 mgmt_app = typer.Typer(
     help="Management commands for agent self-service: ensure proxy, verify integrations",
 )
 app.add_typer(mgmt_app, name="mgmt")
 
-git_app = typer.Typer(
-    help="Git multitenancy: lock-cleanup for stale index.lock, install-shims --system",
-)
-app.add_typer(git_app, name="git")
-
-lock_cleanup_app = typer.Typer(help="Remove stale .git/index.lock; manage periodic daemon")
-git_app.add_typer(lock_cleanup_app, name="lock-cleanup")
-
-
-@lock_cleanup_app.callback(invoke_without_command=True)
-def git_lock_cleanup(
-    ctx: typer.Context,
-    path: list[Path] | None = typer.Option(
-        None,
-        "--path",
-        "-p",
-        help="Paths to scan for .git/index.lock (default: cwd, ~/projects, ~/dev, etc.)",
-    ),
-    max_age: int = typer.Option(60, "--max-age", "-m", help="Remove locks older than N seconds"),
-    dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Show what would be removed"),
-) -> None:
-    """Remove stale .git/index.lock files. Uses mtime + lsof for safe removal.
-    Run periodically via 'thegent git lock-cleanup service install'."""
-    if ctx.invoked_subcommand is not None:
-        return
-    from thegent.git_lock_manage import run_lock_cleanup
-
-    paths = [p for p in (path or []) if p.exists()] if path else None
-    removed, skipped = run_lock_cleanup(paths=paths, max_age=max_age, dry_run=dry_run)
-    if dry_run:
-        console.print(f"[dim]Would remove {removed} stale lock(s), skip {skipped}[/dim]")
-    else:
-        console.print(f"[green]Removed {removed} stale lock(s), skipped {skipped}[/green]")
-
-
-@lock_cleanup_app.command("service")
-def git_lock_cleanup_service(
-    action: str = typer.Argument(
-        ...,
-        help="Action: install, start, stop, status, uninstall",
-    ),
-) -> None:
-    """Install lock-cleanup daemon (launchd on macOS, systemd on Linux). Runs every 5 min."""
-    from thegent.git_lock_manage import (
-        lock_cleanup_install,
-        lock_cleanup_start,
-        lock_cleanup_status,
-        lock_cleanup_stop,
-        lock_cleanup_uninstall,
-    )
-
-    if action == "install":
-        ok, msg = lock_cleanup_install()
-    elif action == "start":
-        ok, msg = lock_cleanup_start()
-    elif action == "stop":
-        ok, msg = lock_cleanup_stop()
-    elif action == "status":
-        ok, msg = lock_cleanup_status()
-    elif action == "uninstall":
-        ok, msg = lock_cleanup_uninstall()
-    else:
-        console.print(f"[red]Unknown action: {action}[/red]")
-        raise typer.Exit(1)
-    console.print(msg)
-    if not ok and action in ("install", "start", "stop", "uninstall"):
-        raise typer.Exit(1)
-
+from thegent.cli_git import app as git_app
+app.add_typer(git_app, name="git", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 
 @acp_app.command("server")
 def acp_server_cmd() -> None:
@@ -3648,6 +3824,77 @@ def lsp_serena_jetbrains_setup() -> None:
         console.print("[bold]Setup Instructions:[/bold]")
         for instruction in result["instructions"]:
             console.print(f"  {instruction}")
+
+
+@jetbrains_app.command("setup")
+def jetbrains_setup(
+    mcp_url: str = typer.Option(
+        "http://localhost:3847/mcp",
+        "--mcp-url",
+        help="thegent MCP server URL to write into IDE config",
+    ),
+    project_root: str = typer.Option(
+        "",
+        "--project-root",
+        help="Serena project root (optional; scopes Serena tools to this directory)",
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", "-n", help="Detect IDEs but do not write config files"
+    ),
+) -> None:
+    """Detect JetBrains IDEs and write mcp.json with the thegent MCP server URL.
+
+    Writes (or updates) ~/.config/JetBrains/<IDE>/mcp.json so the JetBrains
+    AI plugin connects to the running thegent MCP server.
+
+    Example:
+        thegent jetbrains setup
+        thegent jetbrains setup --mcp-url http://localhost:3847/mcp
+        thegent jetbrains setup --dry-run
+    """
+    from rich.table import Table
+
+    from thegent.integrations.jetbrains import JetBrainsIntegration
+
+    integration = JetBrainsIntegration(
+        mcp_server_url=mcp_url,
+        serena_project_root=project_root,
+    )
+    configs = integration.detect_installed_ides()
+
+    if not configs:
+        console.print("[yellow]No JetBrains IDEs detected.[/yellow]")
+        console.print("[dim]Install a JetBrains IDE to use this command.[/dim]")
+        console.print("[dim]  macOS:  brew install --cask intellij-idea[/dim]")
+        console.print("[dim]  Linux:  https://www.jetbrains.com/toolbox/[/dim]")
+        return
+
+    table = Table(title="JetBrains IDE MCP Setup")
+    table.add_column("IDE", style="cyan")
+    table.add_column("Config Dir", style="white")
+    table.add_column("Status", style="yellow")
+
+    if dry_run:
+        console.print(f"[dim]Dry-run: would configure {len(configs)} IDE(s)[/dim]")
+        for cfg in configs:
+            table.add_row(cfg.ide_type, str(cfg.config_dir), "[dim]dry-run[/dim]")
+        console.print(table)
+        return
+
+    results = integration.setup_all()
+
+    for r in results:
+        if r["success"]:
+            table.add_row(r["ide_type"], r["config_dir"], "[green]✅ Written[/green]")
+        else:
+            table.add_row(
+                r["ide_type"], r["config_dir"], f"[red]❌ {r.get('error', 'failed')}[/red]"
+            )
+
+    console.print(table)
+    success_count = sum(1 for r in results if r["success"])
+    console.print(f"\n[green]Configured {success_count}/{len(results)} IDE(s)[/green]")
+    console.print(f"[dim]MCP server URL:[/dim] {mcp_url}")
 
 
 @lsp_app.command("auto-setup")
@@ -3913,7 +4160,7 @@ def mcp_introspect(
     """Introspect agent processes (Python, node, droid, claude, codex).
     Checks parent chain for true orphans; does NOT assume leak. Use before prune."""
     from thegent.infra import run_subprocess_optimized
-    
+
     script = Path(__file__).resolve().parents[2] / "scripts" / "agent-process-introspect.py"
     if not script.exists():
         from rich.console import Console
@@ -3936,6 +4183,8 @@ def mcp_spotlight_exclude(
     Helps reduce mds_stores memory usage and CPU spikes during high-IO agent runs."""
     import subprocess
     import sys
+
+    from thegent.infra import run_subprocess_optimized
 
     if sys.platform != "darwin" and not force:
         from rich.console import Console
@@ -3985,9 +4234,10 @@ def mcp_spotlight_exclude(
 def mcp_prune(
     force: bool = typer.Option(False, "--force", "-f", help="Force kill without confirmation"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be killed"),
+    parent_pid: int | None = typer.Option(None, "--parent-pid", "-p", help="Target sub-processes of this parent PID"),
 ) -> None:
-    """Kill redundant agent-related Node.js processes (LSPs, MCP servers, cc-status).
-    Use this when memory usage is high (>10GB) and many orphan processes are detected.
+    """Kill redundant agent-related Node.js and shell processes (LSPs, MCP servers, leaked shells).
+    Use this when memory usage is high (>10GB) and many redundant processes are detected.
     For automatic pruning on Stop, set THGENT_AUTO_PRUNE=1."""
     import os
     import signal
@@ -4005,7 +4255,7 @@ def mcp_prune(
     console = Console()
     settings = ThegentSettings()
 
-    # Patterns for redundant processes (node LSP/MCP only; do NOT include droid—too risky)
+    # Patterns for redundant processes (LSPs, MCPs, and leaked shells)
     patterns = [
         "pyright-langserver",
         "typescript-language-server",
@@ -4016,17 +4266,28 @@ def mcp_prune(
         "octocode-mcp",
         "next-devtools-mcp",
         "sequential-thinking",
+        "bash",
+        "zsh",
+        "sh",
+        "node",
+        "npm",
+        "bun",
+        "deno",
     ]
 
     try:
         from thegent.infra import run_subprocess_optimized
-        
+
         res = run_subprocess_optimized(
             ["ps", "-eo", "pid,ppid,rss,command"],
             capture_output=True,
             check=False,
         )
-        stdout_text = res.stdout if isinstance(res.stdout, str) else (res.stdout.decode("utf-8", errors="replace") if res.stdout else "")
+        stdout_text = (
+            res.stdout
+            if isinstance(res.stdout, str)
+            else (res.stdout.decode("utf-8", errors="replace") if res.stdout else "")
+        )
         lines = stdout_text.strip().splitlines()
         has_rss = True
     except Exception:
@@ -4036,7 +4297,11 @@ def mcp_prune(
                 capture_output=True,
                 check=False,
             )
-            stdout_text = res.stdout if isinstance(res.stdout, str) else (res.stdout.decode("utf-8", errors="replace") if res.stdout else "")
+            stdout_text = (
+                res.stdout
+                if isinstance(res.stdout, str)
+                else (res.stdout.decode("utf-8", errors="replace") if res.stdout else "")
+            )
             lines = stdout_text.strip().splitlines()
             has_rss = False
         except Exception as e:
@@ -4073,18 +4338,27 @@ def mcp_prune(
         cmd_map[pid_i] = cmd
 
         cmd_lower = cmd.lower()
-        # Never prune cursor-agent (node process that IS the Cursor agent)
-        if "cursor-agent" in cmd_lower or "cursor agent" in cmd_lower:
+        # Never prune cursor-agent (node process that IS the Cursor agent) or thegent itself
+        if "cursor-agent" in cmd_lower or "cursor agent" in cmd_lower or "thegent" in cmd_lower:
             continue
-        match_categories = ("node", "npm", "bun", "deno", "cc-status")
+        
+        # If we have a specific parent PID, only include its children
+        if parent_pid:
+            if ppid_i == parent_pid:
+                candidates.append({"pid": pid_i, "ppid": ppid_i, "cmd": cmd, "rss_kb": rss_kb})
+            continue
+
+        match_categories = ("node", "npm", "bun", "deno", "cc-status", "bash", "zsh", "sh")
         if any(x in cmd_lower for x in match_categories):
             for p in patterns:
                 if p in cmd:
                     candidates.append({"pid": pid_i, "ppid": ppid_i, "cmd": cmd, "rss_kb": rss_kb})
                     break
 
-    # Filter to true orphans when orphan-by-ppid enabled
-    if settings.prune_orphan_by_ppid:
+    # Filter to true orphans when orphan-by-ppid enabled, unless targeting specific parent
+    if parent_pid:
+        to_kill = candidates
+    elif settings.prune_orphan_by_ppid:
         to_kill = [c for c in candidates if is_orphan_by_ppid(c["pid"], parent_map, cmd_map)]
     else:
         to_kill = candidates
@@ -4170,6 +4444,30 @@ def mcp_prune(
 
     console.print(f"[green]Successfully pruned {killed_count} processes.[/green]")
     console.print("[dim]Note: Active agents may restart their LSPs on the next interaction.[/dim]")
+
+
+@mcp_app.command("smart-prune")
+def mcp_smart_prune(
+    force: bool = typer.Option(False, "--force", "-f", help="Prune even if docs aren't written"),
+    no_reprompt: bool = typer.Option(False, "--no-reprompt", help="Do not reprompt if docs missing"),
+) -> None:
+    """Intelligently prune idle sessions and reprompt for docs."""
+    from rich.console import Console
+
+    from thegent.orchestration.smart_prune import smart_prune_main
+
+    console = Console()
+
+    console.print("[yellow]Running Smart Pruning cycle...[/yellow]")
+    results = smart_prune_main(force=force, reprompt=not no_reprompt)
+
+    console.print(f"Scanned: {results['scanned']}")
+    console.print(f"Pruned: [green]{results['pruned']}[/green]")
+    console.print(f"Reprompted: [blue]{results['reprompted']}[/blue]")
+    console.print(f"Kept: {results['kept']}")
+
+    for detail in results["details"]:
+        console.print(f" - {detail}")
 
 
 @mcp_app.command("prune-periodic")
@@ -4279,16 +4577,18 @@ def install_shims_cmd(
     bin_dir: Path = typer.Option(Path.home() / ".local" / "bin", "--bin-dir", help="Directory for shims"),
     force: bool = typer.Option(False, "--force", "-f", help="Force overwrite"),
     all_tools: bool = typer.Option(True, "--all", help="Install accelerators for git, grep, fd, jq, etc."),
-    system: bool = typer.Option(False, "--system", help="Install to system path (requires admin). Uses --prefix if set."),
-    prefix: Path | None = typer.Option(None, "--prefix", help="Install prefix (e.g. /usr/local). Implies --system for git."),
+    system: bool = typer.Option(
+        False, "--system", help="Install to system path (requires admin). Uses --prefix if set."
+    ),
+    prefix: Path | None = typer.Option(
+        None, "--prefix", help="Install prefix (e.g. /usr/local). Implies --system for git."
+    ),
     uninstall: bool = typer.Option(False, "--uninstall", help="Restore original git when used with --system."),
 ) -> None:
     """MTSP-10: Install optimized accelerators (shims) for common tools.
     Accelerates git (multi-tenant), grep (rg), find (fd), jq (jaq).
     Use --system to install git wrapper to /usr/local/bin for nix/direnv compatibility."""
     from rich.console import Console
-
-    from thegent.clode_main import install_links as clode_install_links
 
     console = Console()
 
@@ -4300,7 +4600,7 @@ def install_shims_cmd(
         _install_system_shims(prefix or Path("/usr/local"), force, console)
         return
 
-    clode_install_links(bin_dir=bin_dir, force=force)
+    _install_agent_accelerators(bin_dir=bin_dir, force=force)
 
     if all_tools:
         _install_tool_accelerators(bin_dir, force)
@@ -4315,6 +4615,7 @@ def install_shims_cmd(
 def _ensure_write_access_or_sudo(bin_dir: Path, force: bool, prefix: Path, uninstall: bool) -> None:
     """If no write access and not root, re-exec with sudo."""
     import os
+
     from thegent.infra import run_subprocess_optimized
 
     euid = getattr(os, "geteuid", lambda: 0)()
@@ -4357,12 +4658,12 @@ def _install_system_shims(prefix: Path, force: bool, console: "Console") -> None
     _ensure_write_access_or_sudo(bin_dir, force, prefix, uninstall=False)
 
     safe_path = "/usr/bin:/opt/homebrew/bin:/bin:/usr/sbin:/sbin"
-    
+
     # 1. Git Wrapper
     git_path = bin_dir / "git"
     git_bin_path = bin_dir / "git.bin"
     real_git = shutil.which("git", path=safe_path)
-    
+
     if real_git:
         wrapper_real_git = str(git_bin_path)
         should_install_git = True
@@ -4417,7 +4718,7 @@ fi
     # 2. Grep (rg) Shim
     grep_path = bin_dir / "grep"
     if force or not grep_path.exists():
-        grep_path.write_text(f"""#!/usr/bin/env bash
+        grep_path.write_text("""#!/usr/bin/env bash
 if command -v rg &>/dev/null; then
     exec rg --no-config "$@"
 else
@@ -4430,7 +4731,7 @@ fi
     # 3. Find (fd) Shim
     find_path = bin_dir / "find"
     if force or not find_path.exists():
-        find_path.write_text(f"""#!/usr/bin/env bash
+        find_path.write_text("""#!/usr/bin/env bash
 if command -v fd &>/dev/null; then
     exec fd "$@"
 else
@@ -4443,7 +4744,7 @@ fi
     # 4. JQ (jaq) Shim
     jq_path = bin_dir / "jq"
     if force or not jq_path.exists():
-        jq_path.write_text(f"""#!/usr/bin/env bash
+        jq_path.write_text("""#!/usr/bin/env bash
 if command -v jaq &>/dev/null; then
     exec jaq "$@"
 else
@@ -4456,7 +4757,7 @@ fi
     # 5. thegent-shim (Agent Shim)
     shim_path = bin_dir / "thegent-shim"
     if force or not shim_path.exists():
-        shim_path.write_text(f"""#!/usr/bin/env bash
+        shim_path.write_text("""#!/usr/bin/env bash
 # thegent-shim: Multi-tenant agent execution entry point
 exec thegent "$@"
 """)
@@ -4497,6 +4798,77 @@ def _uninstall_system_git(prefix: Path, console: "Console", force: bool = False)
         raise typer.Exit(1)
 
 
+def _get_thegent_root() -> Path:
+    """Return thegent root (has hooks/, skills/). Works for dev and installed package."""
+    # Installed: hooks/skills are force-included at thegent/hooks, thegent/skills
+    try:
+        import thegent
+
+        pkg = Path(thegent.__file__).resolve().parent
+        if (pkg / "hooks").exists() or (pkg / "skills").exists():
+            return pkg
+    except Exception:
+        pass
+    # Dev: main.py is at src/thegent/main.py -> project root is parent.parent.parent
+    return Path(__file__).resolve().parent.parent.parent
+
+
+def _install_agent_accelerators(bin_dir: Path, force: bool) -> None:
+    """MTSP-10: Install optimized accelerators (shims) for common agent types (clode, roid, dex).
+    Phase 2: Use Rust shims if available, otherwise fallback to legacy links."""
+    # Try to find thegent-shims Rust binary
+    thegent_shims_bin = None
+    thegent_root = _get_thegent_root()
+    potential_bins = [
+        thegent_root / "crates" / "target" / "release" / "thegent-shims",
+        thegent_root / "target" / "release" / "thegent-shims",
+        Path.home() / ".local" / "bin" / "thegent-shims",
+    ]
+    for p in potential_bins:
+        if p.exists() and os.access(p, os.X_OK):
+            thegent_shims_bin = p
+            break
+
+    if thegent_shims_bin:
+        agents = ["clode", "roid", "dex", "codex", "copilot", "claude", "cursor"]
+        for agent in agents:
+            shim = bin_dir / agent
+            if force or not shim.exists():
+                shim.write_text(f"""#!/usr/bin/env bash
+# thegent {agent} accelerator: Rust shim
+exec "{thegent_shims_bin}" agent {agent} "$@"
+""")
+                shim.chmod(0o755)
+        return
+
+    from thegent.clode_main import install_links as clode_install_links
+    from thegent.dex_main import install_links as dex_install_links
+    from thegent.roid_main import install_links as roid_install_links
+
+    clode_install_links(bin_dir=bin_dir, force=force)
+    roid_install_links(bin_dir=bin_dir, force=force)
+    dex_install_links(bin_dir=bin_dir, force=force)
+
+    # Codex Multi-Harness Accelerator (WP-Y15)
+    # This shim routes to either dex (Codex CLI) or clode (Claude Code)
+    codex_shim = bin_dir / "codex"
+    if force or not codex_shim.exists():
+        codex_shim.write_text("""#!/usr/bin/env sh
+set -e
+# thegent codex accelerator: route to dex or clode
+# (avoids "git: 'codex' is not a git command" by direct exec)
+if command -v codex >/dev/null 2>&1; then
+  HARNESS="dex"
+else
+  HARNESS="clode"
+fi
+# Content check parity: dex|clode
+export THGENT_HARNESS="$HARNESS"
+exec thegent "$HARNESS" "$@"
+""")
+        codex_shim.chmod(0o755)
+
+
 def _install_role_accelerators(bin_dir: Path, force: bool) -> None:
     """Install shims for new task roles."""
     from thegent.orchestration.tasks import TaskRole
@@ -4513,10 +4885,44 @@ exec thegent {role.value} "$@"
 
 
 def _install_tool_accelerators(bin_dir: Path, force: bool) -> None:
-    """Write accelerator shims to bin_dir."""
+    """Write accelerator shims to bin_dir.
+    Phase 2: Use Rust shims if available, otherwise fallback to bash shims."""
     bin_dir.mkdir(parents=True, exist_ok=True)
     safe_bin_path = "/usr/bin:/opt/homebrew/bin:/bin:/usr/sbin:/sbin"
 
+    # Try to find thegent-shims Rust binary
+    thegent_shims_bin = None
+    thegent_root = _get_thegent_root()
+    # If in dev mode, it might be in crates/target/release/
+    potential_bins = [
+        thegent_root / "crates" / "target" / "release" / "thegent-shims",
+        thegent_root / "target" / "release" / "thegent-shims",
+        Path.home() / ".local" / "bin" / "thegent-shims",
+    ]
+    for p in potential_bins:
+        if p.exists() and os.access(p, os.X_OK):
+            thegent_shims_bin = p
+            break
+
+    if thegent_shims_bin:
+        # Phase 2: Rust Shims
+        tools = ["git", "grep", "find", "jq", "pgrep", "wc", "date", "tr"]
+        for tool in tools:
+            shim = bin_dir / tool
+            if force or not shim.exists():
+                # We create a symlink to thegent-shims if possible,
+                # but symlinking 'git' to 'thegent-shims' only works if thegent-shims
+                # knows it's being called as 'git'. The current thegent-shims
+                # uses subcommands. So we create a small bash wrapper that calls
+                # thegent-shims <tool>
+                shim.write_text(f"""#!/usr/bin/env bash
+# thegent {tool} accelerator: Rust shim
+exec "{thegent_shims_bin}" {tool} "$@"
+""")
+                shim.chmod(0o755)
+        return
+
+    # Fallback: Legacy Bash Shims
     # Git Accelerator (MTSP-09/10)
     git_shim = bin_dir / "git"
     if force or not git_shim.exists():
@@ -4679,6 +5085,11 @@ def mcp_up_cmd(
 
 memory_app = typer.Typer(help="Dual system of issue collection and memory collection (WP-MEMORY)")
 app.add_typer(memory_app, name="memory")
+
+# Mesh coordination commands (integrated from heliosShield)
+from thegent.mesh.cli import app as mesh_app
+
+app.add_typer(mesh_app, name="mesh")
 
 
 @memory_app.command("add")
@@ -4925,7 +5336,7 @@ def serve(
         settings = settings.model_copy(update={"mcp_host": host})
     if port is not None:
         settings = settings.model_copy(update={"mcp_port": port})
-    
+
     # Use settings.reload if reload not explicitly set via CLI
     if reload is None:
         reload = settings.reload
@@ -4946,7 +5357,10 @@ def serve(
 @app.command("install")
 def install_cmd(
     target: str = typer.Option(
-        "all", "--target", "-t", help="Target: claude-code|claude-desktop|cursor|codex|droid|envrc|shell|system|all (default: all)"
+        "all",
+        "--target",
+        "-t",
+        help="Target: claude-code|claude-desktop|cursor|codex|droid|envrc|shell|system|all (default: all)",
     ),
     prefix: Path | None = typer.Option(
         None, "--prefix", help="Install prefix for system target (default: /opt/thegent)"
@@ -5109,7 +5523,6 @@ def provider_cmd() -> None:
     run_provider_form()
 
 
-
 @app.command("uninstall-system-deps")
 def uninstall_system_deps_cmd(
     remove_hooks: bool = typer.Option(True, "--hooks/--no-hooks", help="Remove shell hooks (default: True)"),
@@ -5180,18 +5593,19 @@ def restore_backup_cmd(
 
         local_console.print(f"[bold]Available backups ({len(backups)}):[/bold]")
         from rich.table import Table
+
         table = Table(show_header=True, header_style="bold")
         table.add_column("Backup File", style="cyan")
         table.add_column("Original", style="dim")
         table.add_column("Date", style="dim")
 
         for backup in backups[:20]:  # Show first 20
-            parts = backup.name.rsplit('.', 2)
+            parts = backup.name.rsplit(".", 2)
             original = parts[0] if len(parts) >= 3 else backup.name
             date_str = parts[1] if len(parts) >= 3 else "unknown"
             # Format date: 20260218_123456 -> 2026-02-18 12:34:56
-            if len(date_str) == 15 and '_' in date_str:
-                date_part, time_part = date_str.split('_')
+            if len(date_str) == 15 and "_" in date_str:
+                date_part, time_part = date_str.split("_")
                 formatted_date = f"{date_part[:4]}-{date_part[4:6]}-{date_part[6:8]} {time_part[:2]}:{time_part[2:4]}:{time_part[4:6]}"
             else:
                 formatted_date = date_str
@@ -5216,6 +5630,7 @@ def restore_backup_cmd(
     else:
         local_console.print(f"[red]✗ {msg}[/red]")
         raise typer.Exit(1)
+
 
 @app.command("models-setup")
 def models_setup_cmd() -> None:
@@ -5657,6 +6072,231 @@ def leaderboard_cmd(
         )
 
     console.print(table)
+
+
+app.command("context-history")(context_history_cmd)
+app.command("scratchpad")(scratchpad_cmd)
+
+
+app.command("memory")(memory_cmd)
+
+
+# ---------------------------------------------------------------------------
+# thegent sync — unified sync command (SY-009)
+# ---------------------------------------------------------------------------
+
+sync_app = typer.Typer(help="Unified sync: work-stream, config, agents, hooks")
+app.add_typer(sync_app, name="sync")
+
+
+@sync_app.callback(invoke_without_command=True)
+def sync_callback(ctx: typer.Context) -> None:
+    """Sync all components when no subcommand is given."""
+    if ctx.invoked_subcommand is None:
+        _sync_all_cmd(dry_run=False)
+
+
+def _build_sync_command(cd: Path | None) -> "SyncCommand":
+    from thegent.commands.sync import SyncCommand
+
+    return SyncCommand(project_root=cd)
+
+
+def _print_sync_result(result: "SyncResult") -> None:
+    from rich.table import Table
+
+    table = Table(title="Sync Results")
+    table.add_column("Operation", style="cyan")
+    table.add_column("Status", style="bold")
+    table.add_column("Duration", justify="right")
+    table.add_column("Message")
+
+    for op in result.operations:
+        if op.status.value == "success":
+            status_str = "[green]OK[/green]"
+        elif op.status.value == "dry_run":
+            status_str = "[cyan]DRY-RUN[/cyan]"
+        elif op.status.value == "skipped":
+            status_str = "[yellow]SKIPPED[/yellow]"
+        else:
+            status_str = "[red]FAILED[/red]"
+
+        table.add_row(
+            op.operation,
+            status_str,
+            f"{op.duration:.2f}s",
+            op.message,
+        )
+
+    console.print(table)
+    if not result.success:
+        for failed in result.failed_operations:
+            for err in failed.errors:
+                console.print(f"[red]  {failed.operation}: {err}[/red]")
+        raise typer.Exit(1)
+
+
+def _sync_all_cmd(
+    cd: Path | None = None,
+    dry_run: bool = False,
+) -> None:
+    cmd = _build_sync_command(cd)
+    result = cmd.sync_all(dry_run=dry_run)
+    _print_sync_result(result)
+
+
+@sync_app.command("all")
+def sync_all(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project root directory"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Report without writing"),
+) -> None:
+    """Run all sync operations: work-stream, config, agents, hooks."""
+    _sync_all_cmd(cd=cd, dry_run=dry_run)
+
+
+@sync_app.command("work-stream")
+def sync_work_stream(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project root directory"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Report without writing"),
+) -> None:
+    """Incorporate doc fragments from docs/ into WORK_STREAM.md."""
+    from thegent.commands.sync import SyncCommand
+
+    cmd = SyncCommand(project_root=cd)
+    op = cmd.sync_work_stream(dry_run=dry_run)
+    status = "[green]OK[/green]" if op.ok else "[red]FAILED[/red]"
+    console.print(f"[bold]{op.operation}[/bold] {status}: {op.message}")
+    for change in op.changes[:20]:
+        console.print(f"  [dim]{change}[/dim]")
+    if not op.ok:
+        raise typer.Exit(1)
+
+
+@sync_app.command("config")
+def sync_config(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project root directory"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Report without writing"),
+) -> None:
+    """Refresh ThegentSettings from the current environment."""
+    from thegent.commands.sync import SyncCommand
+
+    cmd = SyncCommand(project_root=cd)
+    op = cmd.sync_config(dry_run=dry_run)
+    status = "[green]OK[/green]" if op.ok else "[red]FAILED[/red]"
+    console.print(f"[bold]{op.operation}[/bold] {status}: {op.message}")
+    if not op.ok:
+        raise typer.Exit(1)
+
+
+@sync_app.command("agents")
+def sync_agents(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project root directory"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Report without writing"),
+) -> None:
+    """Discover new agent files in agents/ and report unregistered personas."""
+    from thegent.commands.sync import SyncCommand
+
+    cmd = SyncCommand(project_root=cd)
+    op = cmd.sync_agents(dry_run=dry_run)
+    status = "[green]OK[/green]" if op.ok else "[red]FAILED[/red]"
+    console.print(f"[bold]{op.operation}[/bold] {status}: {op.message}")
+    for change in op.changes[:20]:
+        console.print(f"  [dim]{change}[/dim]")
+    if not op.ok:
+        raise typer.Exit(1)
+
+
+@sync_app.command("hooks")
+def sync_hooks(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project root directory"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Report without writing"),
+) -> None:
+    """Validate hook scripts against hook-config.yaml registrations."""
+    from thegent.commands.sync import SyncCommand
+
+    cmd = SyncCommand(project_root=cd)
+    op = cmd.sync_hooks(dry_run=dry_run)
+    status = "[green]OK[/green]" if op.ok else "[red]FAILED[/red]"
+    console.print(f"[bold]{op.operation}[/bold] {status}: {op.message}")
+    for change in op.changes[:30]:
+        console.print(f"  [dim]{change}[/dim]")
+    if not op.ok:
+        raise typer.Exit(1)
+
+
+@sync_app.command("status")
+def sync_status(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project root directory"),
+) -> None:
+    """Show drift between local agent config and expected state."""
+    from thegent.commands.sync import SyncCommand
+
+    cmd = SyncCommand(project_root=cd)
+    op = cmd.status()
+    indicator = "[green]IN SYNC[/green]" if not op.details.get("has_drift") else "[yellow]DRIFT[/yellow]"
+    console.print(f"[bold]sync status[/bold] {indicator}: {op.message}")
+    for change in op.changes[:30]:
+        console.print(f"  [dim]{change}[/dim]")
+    if not op.ok:
+        raise typer.Exit(1)
+
+
+@sync_app.command("push")
+def sync_push(
+    target: str | None = typer.Option(None, "--target", "-t", help="Remote target identifier"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project root directory"),
+) -> None:
+    """Push local state to remote (stubbed — wires up when backend is available)."""
+    from thegent.commands.sync import SyncCommand
+
+    cmd = SyncCommand(project_root=cd)
+    op = cmd.push(target=target)
+    status_str = "[green]OK[/green]" if op.ok else "[red]FAILED[/red]"
+    console.print(f"[bold]sync push[/bold] {status_str}: {op.message}")
+    for change in op.changes[:20]:
+        console.print(f"  [dim]{change}[/dim]")
+    if not op.ok:
+        raise typer.Exit(1)
+
+
+@sync_app.command("pull")
+def sync_pull(
+    source: str | None = typer.Option(None, "--source", "-s", help="Remote source identifier"),
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project root directory"),
+) -> None:
+    """Pull remote state locally (stubbed — wires up when backend is available)."""
+    from thegent.commands.sync import SyncCommand
+
+    cmd = SyncCommand(project_root=cd)
+    op = cmd.pull(source=source)
+    status_str = "[green]OK[/green]" if op.ok else "[red]FAILED[/red]"
+    console.print(f"[bold]sync pull[/bold] {status_str}: {op.message}")
+    if not op.ok:
+        raise typer.Exit(1)
+
+
+@sync_app.command("reset")
+def sync_reset(
+    cd: Path | None = typer.Option(None, "--cd", "-d", help="Project root directory"),
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
+) -> None:
+    """Reset local sync state to defaults (stubbed — reports what would change)."""
+    from thegent.commands.sync import SyncCommand
+
+    if not confirm:
+        console.print(
+            "[yellow]Reset will report what would be affected.[/yellow] "
+            "Pass --yes to acknowledge."
+        )
+
+    cmd = SyncCommand(project_root=cd)
+    op = cmd.reset()
+    status_str = "[green]OK[/green]" if op.ok else "[red]FAILED[/red]"
+    console.print(f"[bold]sync reset[/bold] {status_str}: {op.message}")
+    for change in op.changes[:20]:
+        console.print(f"  [dim]{change}[/dim]")
+    if not op.ok:
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

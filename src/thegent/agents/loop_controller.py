@@ -101,8 +101,8 @@ class LifecycleController:
         self,
         initial_prompt: str,
         todo_spec: str,
-        on_worker_output: Callable[[str], Optional[None]] | None = None,
-        on_progress: Callable[[int, int, str], Optional[None]] | None = None,
+        on_worker_output: Callable[[str], None] | None = None,
+        on_progress: Callable[[int, int, str], None] | None = None,
     ) -> LoopState:
         """Execute the Lifecycle loop."""
         import json

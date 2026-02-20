@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/integration/slack.py`
 
 WP-17004: Slack/Discord Integration Bot for Agent Alerts.
+
 Handles multi-platform notifications and user interaction for approvals.
 
 ---
@@ -16,8 +17,10 @@ Manages integration with Slack and Discord for real-time agent monitoring.
 #### IntegrationBot.__init__
 
 ```python
-__init__(self, platform, webhook_url)
+__init__(self: Any, platform: str, webhook_url: str)
 ```
+
+---
 
 ---
 

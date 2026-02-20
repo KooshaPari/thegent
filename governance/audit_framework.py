@@ -10,7 +10,7 @@ import re
 import subprocess
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -69,7 +69,7 @@ class AuditFinding:
     rule_id: str | None = None
     recommendation: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-    detected_at: datetime = field(default_factory=datetime.now)
+    detected_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
     resolved: bool = False
     resolved_at: datetime | None = None
     resolved_by: str | None = None
@@ -157,7 +157,7 @@ class AuditFramework:
         result = AuditResult(
             audit_type=audit_type,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         try:
@@ -183,7 +183,7 @@ class AuditFramework:
                 result = self._run_testing_audit()
 
             result.status = AuditStatus.COMPLETED
-            result.completed_at = datetime.now()
+            result.completed_at = datetime.now(tz=UTC)
 
         except Exception as e:
             logger.error(f"Error running {audit_type.value} audit: {e}")
@@ -220,7 +220,7 @@ class AuditFramework:
         result = AuditResult(
             audit_type=AuditType.CODE_REVIEW,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         findings = []
@@ -233,47 +233,11 @@ class AuditFramework:
         ]
 
         for py_file in self.project_path.rglob("*.py"):
-            try:
-                content = py_file.read_text()
-                for pattern, title in secret_patterns:
-                    matches = re.finditer(pattern, content, re.IGNORECASE)
-                    for match in matches:
-                        line_num = content[: match.start()].count("\n") + 1
-                        findings.append(
-                            AuditFinding(
-                                id=f"secret-{len(findings)}",
-                                audit_type=AuditType.CODE_REVIEW,
-                                severity=AuditSeverity.CRITICAL,
-                                title=title,
-                                description=f"Potential hardcoded secret found in {py_file.name}",
-                                file_path=py_file,
-                                line_number=line_num,
-                                recommendation="Move secrets to environment variables or secret management",
-                            )
-                        )
-            except Exception:
-                pass
+            self._scan_file_for_secrets(py_file, findings, secret_patterns)
 
         # Check for TODO/FIXME comments
         for py_file in self.project_path.rglob("*.py"):
-            try:
-                content = py_file.read_text()
-                for i, line in enumerate(content.split("\n"), 1):
-                    if re.search(r"TODO|FIXME|XXX|HACK", line, re.IGNORECASE):
-                        findings.append(
-                            AuditFinding(
-                                id=f"todo-{len(findings)}",
-                                audit_type=AuditType.CODE_REVIEW,
-                                severity=AuditSeverity.LOW,
-                                title="TODO/FIXME comment found",
-                                description=line.strip(),
-                                file_path=py_file,
-                                line_number=i,
-                                recommendation="Address technical debt items",
-                            )
-                        )
-            except Exception:
-                pass
+            self._scan_file_for_todos(py_file, findings)
 
         result.findings = findings
         result.summary = {
@@ -283,12 +247,56 @@ class AuditFramework:
 
         return result
 
+    def _scan_file_for_secrets(self, py_file: Path, findings: list[AuditFinding], patterns: list[tuple[str, str]]) -> None:
+        """Scan a single file for hardcoded secrets."""
+        try:
+            content = py_file.read_text()
+            for pattern, title in patterns:
+                matches = re.finditer(pattern, content, re.IGNORECASE)
+                for match in matches:
+                    line_num = content[: match.start()].count("\n") + 1
+                    findings.append(
+                        AuditFinding(
+                            id=f"secret-{len(findings)}",
+                            audit_type=AuditType.CODE_REVIEW,
+                            severity=AuditSeverity.CRITICAL,
+                            title=title,
+                            description=f"Potential hardcoded secret found in {py_file.name}",
+                            file_path=py_file,
+                            line_number=line_num,
+                            recommendation="Move secrets to environment variables or secret management",
+                        )
+                    )
+        except Exception:
+            pass
+
+    def _scan_file_for_todos(self, py_file: Path, findings: list[AuditFinding]) -> None:
+        """Scan a single file for TODO/FIXME comments."""
+        try:
+            content = py_file.read_text()
+            for i, line in enumerate(content.split("\n"), 1):
+                if re.search(r"TODO|FIXME|XXX|HACK", line, re.IGNORECASE):
+                    findings.append(
+                        AuditFinding(
+                            id=f"todo-{len(findings)}",
+                            audit_type=AuditType.CODE_REVIEW,
+                            severity=AuditSeverity.LOW,
+                            title="TODO/FIXME comment found",
+                            description=line.strip(),
+                            file_path=py_file,
+                            line_number=i,
+                            recommendation="Address technical debt items",
+                        )
+                    )
+        except Exception:
+            pass
+
     def _run_dependency_audit(self) -> AuditResult:
         """Run dependency audit."""
         result = AuditResult(
             audit_type=AuditType.DEPENDENCY_AUDIT,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         findings = []
@@ -303,6 +311,7 @@ class AuditFramework:
                     capture_output=True,
                     text=True,
                     timeout=30,
+                    check=False,
                 )
                 if proc.returncode != 0 and "vulnerability" in proc.stdout.lower():
                     findings.append(
@@ -330,7 +339,7 @@ class AuditFramework:
         result = AuditResult(
             audit_type=AuditType.SECURITY_AUDIT,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         findings = []
@@ -344,26 +353,7 @@ class AuditFramework:
         ]
 
         for py_file in self.project_path.rglob("*.py"):
-            try:
-                content = py_file.read_text()
-                for pattern, title, severity in security_checks:
-                    matches = re.finditer(pattern, content, re.IGNORECASE)
-                    for match in matches:
-                        line_num = content[: match.start()].count("\n") + 1
-                        findings.append(
-                            AuditFinding(
-                                id=f"sec-{len(findings)}",
-                                audit_type=AuditType.SECURITY_AUDIT,
-                                severity=severity,
-                                title=title,
-                                description=f"Security risk in {py_file.name}",
-                                file_path=py_file,
-                                line_number=line_num,
-                                recommendation="Review and secure this code",
-                            )
-                        )
-            except Exception:
-                pass
+            self._scan_file_for_security_risks(py_file, findings, security_checks)
 
         result.findings = findings
         result.summary = {
@@ -372,12 +362,37 @@ class AuditFramework:
 
         return result
 
+    def _scan_file_for_security_risks(
+        self, py_file: Path, findings: list[AuditFinding], checks: list[tuple[str, str, AuditSeverity]]
+    ) -> None:
+        """Scan a single file for security risks."""
+        try:
+            content = py_file.read_text()
+            for pattern, title, severity in checks:
+                matches = re.finditer(pattern, content, re.IGNORECASE)
+                for match in matches:
+                    line_num = content[: match.start()].count("\n") + 1
+                    findings.append(
+                        AuditFinding(
+                            id=f"sec-{len(findings)}",
+                            audit_type=AuditType.SECURITY_AUDIT,
+                            severity=severity,
+                            title=title,
+                            description=f"Security risk in {py_file.name}",
+                            file_path=py_file,
+                            line_number=line_num,
+                            recommendation="Review and secure this code",
+                        )
+                    )
+        except Exception:
+            pass
+
     def _run_documentation_audit(self) -> AuditResult:
         """Run documentation audit."""
         result = AuditResult(
             audit_type=AuditType.DOCUMENTATION_AUDIT,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         findings = []
@@ -399,23 +414,7 @@ class AuditFramework:
         docs_dir = self.project_path / "docs"
         if docs_dir.exists():
             for doc_file in docs_dir.rglob("*.md"):
-                try:
-                    stat = doc_file.stat()
-                    age_days = (datetime.now() - datetime.fromtimestamp(stat.st_mtime)).days
-                    if age_days > 180:  # 6 months
-                        findings.append(
-                            AuditFinding(
-                                id=f"doc-stale-{len(findings)}",
-                                audit_type=AuditType.DOCUMENTATION_AUDIT,
-                                severity=AuditSeverity.MEDIUM,
-                                title="Potentially outdated documentation",
-                                description=f"{doc_file.name} last modified {age_days} days ago",
-                                file_path=doc_file,
-                                recommendation="Review and update documentation",
-                            )
-                        )
-                except Exception:
-                    pass
+                self._check_stale_documentation(doc_file, findings)
 
         result.findings = findings
         result.summary = {
@@ -424,12 +423,32 @@ class AuditFramework:
 
         return result
 
+    def _check_stale_documentation(self, doc_file: Path, findings: list[AuditFinding]) -> None:
+        """Check if documentation is potentially outdated."""
+        try:
+            stat = doc_file.stat()
+            age_days = (datetime.now(tz=timezone.utc) - datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)).days
+            if age_days > 180:  # 6 months
+                findings.append(
+                    AuditFinding(
+                        id=f"doc-stale-{len(findings)}",
+                        audit_type=AuditType.DOCUMENTATION_AUDIT,
+                        severity=AuditSeverity.MEDIUM,
+                        title="Potentially outdated documentation",
+                        description=f"{doc_file.name} last modified {age_days} days ago",
+                        file_path=doc_file,
+                        recommendation="Review and update documentation",
+                    )
+                )
+        except Exception:
+            pass
+
     def _run_performance_audit(self) -> AuditResult:
         """Run performance audit."""
         result = AuditResult(
             audit_type=AuditType.PERFORMANCE_AUDIT,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         findings = []
@@ -471,7 +490,7 @@ class AuditFramework:
         result = AuditResult(
             audit_type=AuditType.COMPLIANCE_AUDIT,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         findings = []
@@ -514,7 +533,7 @@ class AuditFramework:
         result = AuditResult(
             audit_type=AuditType.QUALITY_AUDIT,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         findings = []
@@ -545,7 +564,7 @@ class AuditFramework:
         result = AuditResult(
             audit_type=AuditType.ARCHITECTURE_AUDIT,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         findings = []
@@ -585,7 +604,7 @@ class AuditFramework:
         result = AuditResult(
             audit_type=AuditType.ACCESSIBILITY_AUDIT,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         # Placeholder for accessibility checks
@@ -599,7 +618,7 @@ class AuditFramework:
         result = AuditResult(
             audit_type=AuditType.TESTING_AUDIT,
             status=AuditStatus.RUNNING,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         findings = []
@@ -641,7 +660,7 @@ class AuditFramework:
             json.dump(
                 {
                     "project_path": str(self.project_path),
-                    "generated_at": datetime.now().isoformat(),
+                    "generated_at": datetime.now(tz=UTC).isoformat(),
                     "audit_results": all_results,
                 },
                 f,
@@ -660,7 +679,7 @@ class AuditFramework:
             severity_counts[finding.severity.value] += 1
 
         return {
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(tz=UTC).isoformat(),
             "total_findings": len(all_findings),
             "severity_counts": dict(severity_counts),
             "critical_findings": len([f for f in all_findings if f.severity == AuditSeverity.CRITICAL]),

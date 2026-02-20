@@ -17,7 +17,36 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
+from typing import Optional
+
+
+def _record_history(
+    cmd: list[str],
+    cwd: str | None,
+    exit_code: int,
+    duration_s: float,
+    task_id: str | None = None,
+    agent_id: str | None = None,
+) -> None:
+    """Helper to record command execution in the context-aware history."""
+    try:
+        from thegent.infra.history import ContextHistory, HistoryEntry
+
+        history = ContextHistory()
+        entry = HistoryEntry(
+            command=" ".join(cmd),
+            cwd=cwd or os.getcwd(),
+            exit_code=exit_code,
+            duration_s=duration_s,
+            task_id=task_id or os.environ.get("THEGENT_TASK_ID"),
+            agent_id=agent_id or os.environ.get("THEGENT_AGENT_ID"),
+        )
+        history.record(entry)
+    except Exception:
+        # Never let history recording fail the main execution
+        pass
 
 
 def _wrap_with_caffeinate(cmd: list[str], agent_name: str) -> list[str]:
@@ -109,12 +138,15 @@ class FastSubprocess:
         )
 
         # Wait for completion with timeout
+        start_time = time.time()
         try:
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
         except asyncio.TimeoutExpired:
             process.kill()
             await process.wait()
             raise subprocess.TimeoutExpired(cmd, timeout)
+
+        duration = time.time() - start_time
 
         # Decode output
         if stdout:
@@ -123,6 +155,14 @@ class FastSubprocess:
             stderr = stderr.decode("utf-8", errors="replace")
 
         result = subprocess.CompletedProcess(cmd, process.returncode, stdout or "", stderr or "")
+
+        # WP-22001: Record in context-aware history
+        _record_history(
+            cmd=cmd,
+            cwd=str(cwd) if cwd else None,
+            exit_code=result.returncode,
+            duration_s=duration,
+        )
 
         if check and result.returncode != 0:
             raise subprocess.CalledProcessError(result.returncode, cmd, result.stdout, result.stderr)
@@ -192,9 +232,21 @@ class FastSubprocess:
             # Default to text=True if input is string, text=False if bytes
             kwargs["text"] = isinstance(kwargs["input"], str)
 
-        return subprocess.run(
+        start_time = time.time()
+        result = subprocess.run(
             cmd, cwd=str(cwd) if cwd else None, env=process_env, timeout=timeout, check=check, **kwargs
         )
+        duration = time.time() - start_time
+
+        # WP-22001: Record in context-aware history
+        _record_history(
+            cmd=cmd,
+            cwd=str(cwd) if cwd else None,
+            exit_code=result.returncode,
+            duration_s=duration,
+        )
+
+        return result
 
     @staticmethod
     async def run_concurrent(
@@ -256,7 +308,7 @@ def run_subprocess_optimized(
     **kwargs,
 ) -> subprocess.CompletedProcess:
     """Run subprocess with optimizations.
-    
+
     Args:
         input: Input to send to stdin (str or bytes)
         text: If True, input/output are text (str), else bytes

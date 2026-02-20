@@ -17,44 +17,51 @@ Daily cost rollup by owner. G-GP-06 Phase 4.
 
 #### CostAggregator.daily_total
 
+```python
+daily_total(self: Any, owner: str)
+```
+
 Sum cost_usd for owner's runs today. Returns 0.0 if no cost tracking.
 
-```python
-daily_total(self, owner)
-```
+---
 
 #### CostAggregator.get_all_categories_mtd
 
+```python
+get_all_categories_mtd(self: Any)
+```
+
 Get MTD cost totals for all categories.
 
-Returns:
-    Dictionary mapping category names to MTD costs
+**Returns**: Dictionary mapping category names to MTD costs
 
-```python
-get_all_categories_mtd(self)
-```
+---
 
 #### CostAggregator.get_category_mtd_total
 
+```python
+get_category_mtd_total(self: Any, category: str)
+```
+
 Sum cost_usd for a specific category this month.
 
-Args:
-    category: Task category (fast/normal/complex/high_complex)
+**Parameters**:
 
-Returns:
-    Total cost in USD for the category this month
+- `category`: Task category (fast/normal/complex/high_complex)
 
-```python
-get_category_mtd_total(self, category)
-```
+**Returns**: Total cost in USD for the category this month
+
+---
 
 #### CostAggregator.get_mtd_total
 
+```python
+get_mtd_total(self: Any)
+```
+
 Sum cost_usd for all runs this month. G-GP-06 Phase 4.
 
-```python
-get_mtd_total(self)
-```
+---
 
 ---
 
@@ -66,70 +73,71 @@ Estimate run cost from metadata. WP-5003: Cost-aware routing integration.
 
 #### CostEstimator.estimate
 
+```python
+estimate(self: Any, model: Any, tokens_total: int, prompt_length: int)
+```
+
 Estimate cost in USD. Uses pricing table or heuristic fallback.
 
-```python
-estimate(self, model, tokens_total, prompt_length)
-```
+---
 
 ---
 
 ## daily_total
 
-Sum cost_usd for owner's runs today. Returns 0.0 if no cost tracking.
-
 ```python
-daily_total(self, owner)
+daily_total(self: Any, owner: str)
 ```
+
+Sum cost_usd for owner's runs today. Returns 0.0 if no cost tracking.
 
 ---
 
 ## estimate
 
-Estimate cost in USD. Uses pricing table or heuristic fallback.
-
 ```python
-estimate(self, model, tokens_total, prompt_length)
+estimate(self: Any, model: Any, tokens_total: int, prompt_length: int)
 ```
+
+Estimate cost in USD. Uses pricing table or heuristic fallback.
 
 ---
 
 ## get_all_categories_mtd
 
+```python
+get_all_categories_mtd(self: Any)
+```
+
 Get MTD cost totals for all categories.
 
-Returns:
-    Dictionary mapping category names to MTD costs
-
-```python
-get_all_categories_mtd(self)
-```
+**Returns**: Dictionary mapping category names to MTD costs
 
 ---
 
 ## get_category_mtd_total
 
+```python
+get_category_mtd_total(self: Any, category: str)
+```
+
 Sum cost_usd for a specific category this month.
 
-Args:
-    category: Task category (fast/normal/complex/high_complex)
+**Parameters**:
 
-Returns:
-    Total cost in USD for the category this month
+- `category`: Task category (fast/normal/complex/high_complex)
 
-```python
-get_category_mtd_total(self, category)
-```
+**Returns**: Total cost in USD for the category this month
 
 ---
 
 ## get_mtd_total
 
-Sum cost_usd for all runs this month. G-GP-06 Phase 4.
-
 ```python
-get_mtd_total(self)
+get_mtd_total(self: Any)
 ```
+
+Sum cost_usd for all runs this month. G-GP-06 Phase 4.
 
 ---
 

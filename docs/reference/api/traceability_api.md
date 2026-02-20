@@ -3,6 +3,7 @@
 > **Source**: `src/thegent/verification/traceability.py`
 
 WP-25003: Automated Spec-to-Code Traceability.
+
 Scans source code and tests for FR-ID and WP-ID tags to ensure spec adherence.
 Provides a coverage report mapping requirements to implementation artifacts.
 
@@ -17,24 +18,30 @@ Audits code and specs for traceability links.
 #### TraceabilityAuditor.__init__
 
 ```python
-__init__(self, root_dir)
+__init__(self: Any, root_dir: Path)
 ```
+
+---
 
 #### TraceabilityAuditor.audit
 
+```python
+audit(self: Any, expected_ids: list[str])
+```
+
 Scan the project for implementation of expected IDs.
 
-```python
-audit(self, expected_ids)
-```
+---
 
 #### TraceabilityAuditor.generate_markdown_report
 
+```python
+generate_markdown_report(self: Any, report: TraceabilityReport)
+```
+
 Format the traceability report as Markdown.
 
-```python
-generate_markdown_report(self, report)
-```
+---
 
 ---
 
@@ -48,21 +55,21 @@ Result of a traceability audit.
 
 ## audit
 
-Scan the project for implementation of expected IDs.
-
 ```python
-audit(self, expected_ids)
+audit(self: Any, expected_ids: list[str])
 ```
+
+Scan the project for implementation of expected IDs.
 
 ---
 
 ## generate_markdown_report
 
-Format the traceability report as Markdown.
-
 ```python
-generate_markdown_report(self, report)
+generate_markdown_report(self: Any, report: TraceabilityReport)
 ```
+
+Format the traceability report as Markdown.
 
 ---
 

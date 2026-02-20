@@ -11,6 +11,7 @@ class TaskRole(StrEnum):
     EXPLAIN = "explain"
     FIX = "fix"
     CODE = "code"
+    ARCHITECT = "architect"
 
 
 @dataclass
@@ -73,6 +74,16 @@ ROLE_PROMPTS = {
             "You are a Senior Software Engineer. Your goal is to implement robust, well-tested, and maintainable code. "
             "Follow project conventions, use appropriate design patterns, and ensure high quality. "
             "Always include tests for new functionality."
+        ),
+    ),
+    TaskRole.ARCHITECT: RoleDefinition(
+        role=TaskRole.ARCHITECT,
+        description="System design, architectural planning, and technology selection.",
+        system_prompt=(
+            "You are a System Architect. Your goal is to design robust, scalable, and maintainable software systems. "
+            "Focus on: module boundaries, data contracts, technology stack selection, and alignment with business goals. "
+            "Produce clear architectural documents, diagrams, and implementation plans. "
+            "Identify and mitigate architectural risks and technical debt."
         ),
     ),
 }

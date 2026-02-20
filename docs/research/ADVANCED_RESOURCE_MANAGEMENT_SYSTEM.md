@@ -269,5 +269,5 @@ bottlenecks = cc.get_bottlenecks()
 
 - WP-5001: Speculative Execution Mode
 - WP-5002: Burst Load Classification
-- ShareCLI harness integration patterns
+- heliosShield harness integration patterns
 - Existing bottleneck analysis in `planning/simulation.py`

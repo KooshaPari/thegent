@@ -63,11 +63,7 @@ class TestBatchReadFiles:
         content = "line1\nline2\nline3\nline4\nline5"
         test_file.write_text(content)
 
-        result = batch_read_files(
-            [str(test_file)],
-            offsets={str(test_file): 2},
-            limits={str(test_file): 2}
-        )
+        result = batch_read_files([str(test_file)], offsets={str(test_file): 2}, limits={str(test_file): 2})
         lines = result[str(test_file)].split("\n")
         assert lines[0] == "line2"
         assert lines[1] == "line3"
@@ -110,10 +106,12 @@ class TestBatchWriteFiles:
         file1 = tmp_path / "file1.txt"
         file2 = tmp_path / "file2.txt"
 
-        result = batch_write_files([
-            (str(file1), "Content 1"),
-            (str(file2), "Content 2"),
-        ])
+        result = batch_write_files(
+            [
+                (str(file1), "Content 1"),
+                (str(file2), "Content 2"),
+            ]
+        )
 
         assert result.successful == 2
         assert file1.read_text() == "Content 1"
@@ -161,10 +159,13 @@ class TestBatchWriteFiles:
         # This test verifies that if an error occurs during atomic write,
         # previously written files are backed up. We'll skip the actual failure
         # since permission errors are platform-specific
-        result = batch_write_files([  # noqa: F841
-            (str(file1), "new1"),
-            (str(file2), "new2"),
-        ], atomic=True)
+        result = batch_write_files(
+            [  # noqa: F841
+                (str(file1), "new1"),
+                (str(file2), "new2"),
+            ],
+            atomic=True,
+        )
 
         assert result.successful == 2
 
@@ -177,9 +178,7 @@ class TestBatchEditFiles:
         test_file = tmp_path / "test.txt"
         test_file.write_text("Hello World")
 
-        result = batch_edit_files([
-            (str(test_file), "World", "Python")
-        ])
+        result = batch_edit_files([(str(test_file), "World", "Python")])
 
         assert result.successful == 1
         assert test_file.read_text() == "Hello Python"
@@ -191,10 +190,12 @@ class TestBatchEditFiles:
         file1.write_text("foo bar")
         file2.write_text("foo baz")
 
-        result = batch_edit_files([
-            (str(file1), "bar", "qux"),
-            (str(file2), "baz", "qux"),
-        ])
+        result = batch_edit_files(
+            [
+                (str(file1), "bar", "qux"),
+                (str(file2), "baz", "qux"),
+            ]
+        )
 
         assert result.successful == 2
         assert file1.read_text() == "foo qux"
@@ -205,9 +206,7 @@ class TestBatchEditFiles:
         test_file = tmp_path / "test.txt"
         test_file.write_text("foo foo foo")
 
-        result = batch_edit_files([
-            (str(test_file), "foo", "bar")
-        ], count=1)
+        result = batch_edit_files([(str(test_file), "foo", "bar")], count=1)
 
         # Should only replace first occurrence
         assert test_file.read_text() == "bar foo foo"
@@ -217,9 +216,7 @@ class TestBatchEditFiles:
         test_file = tmp_path / "test.txt"
         test_file.write_text("foo foo foo")
 
-        result = batch_edit_files([
-            (str(test_file), "foo", "bar")
-        ], count=-1)
+        result = batch_edit_files([(str(test_file), "foo", "bar")], count=-1)
 
         assert test_file.read_text() == "bar bar bar"
 
@@ -229,18 +226,14 @@ class TestBatchEditFiles:
         test_file.write_text("Hello World")
 
         with pytest.raises(BatchFileOpsError):
-            batch_edit_files([
-                (str(test_file), "nonexistent", "replacement")
-            ])
+            batch_edit_files([(str(test_file), "nonexistent", "replacement")])
 
     def test_edit_creates_backup(self, tmp_path):
         """Test that edit creates backups."""
         test_file = tmp_path / "test.txt"
         test_file.write_text("original")
 
-        result = batch_edit_files([
-            (str(test_file), "original", "modified")
-        ])
+        result = batch_edit_files([(str(test_file), "original", "modified")])
 
         assert result.backup_dir is not None
         backup_dir = Path(result.backup_dir)
@@ -254,10 +247,13 @@ class TestBatchEditFiles:
         file2.write_text("original2 data")
 
         with pytest.raises(BatchFileOpsError):
-            batch_edit_files([
-                (str(file1), "original1", "modified1"),
-                (str(file2), "nonexistent", "modified2"),
-            ], atomic=True)
+            batch_edit_files(
+                [
+                    (str(file1), "original1", "modified1"),
+                    (str(file2), "nonexistent", "modified2"),
+                ],
+                atomic=True,
+            )
 
         # file1 should be rolled back
         assert file1.read_text() == "original1 data"
@@ -363,9 +359,7 @@ class TestBatchFileOps:
         test_file.write_text("original")
 
         ops = BatchFileOps(verbose=True)
-        result = ops.batch_write_files([
-            (str(test_file), "modified")
-        ])
+        result = ops.batch_write_files([(str(test_file), "modified")])
 
         assert result.successful == 1
 
@@ -375,9 +369,7 @@ class TestBatchFileOps:
         test_file.write_text("original")
 
         ops = BatchFileOps(create_backups=False)
-        result = ops.batch_write_files([
-            (str(test_file), "modified")
-        ])
+        result = ops.batch_write_files([(str(test_file), "modified")])
 
         assert result.successful == 1
         assert result.backup_dir is None
@@ -420,10 +412,12 @@ class TestBatchOperationTracking:
         file1 = tmp_path / "file1.txt"
         file2 = tmp_path / "file2.txt"
 
-        result = batch_write_files([
-            (str(file1), "content1"),
-            (str(file2), "content2"),
-        ])
+        result = batch_write_files(
+            [
+                (str(file1), "content1"),
+                (str(file2), "content2"),
+            ]
+        )
 
         assert len(result.operations) == 2
         assert all(op.operation_type == "write" for op in result.operations)
@@ -487,9 +481,7 @@ class TestIntegration:
         assert read_result[str(file1)] == "Initial content"
 
         # Edit
-        edit_result = batch_edit_files([
-            (str(file1), "Initial", "Modified")
-        ])
+        edit_result = batch_edit_files([(str(file1), "Initial", "Modified")])
         assert edit_result.successful == 1
 
         # Verify edit
@@ -503,10 +495,7 @@ class TestIntegration:
 
     def test_large_batch_operation(self, tmp_path):
         """Test batch operation with many files."""
-        files_to_create = [
-            (str(tmp_path / f"file{i}.txt"), f"Content {i}")
-            for i in range(50)
-        ]
+        files_to_create = [(str(tmp_path / f"file{i}.txt"), f"Content {i}") for i in range(50)]
 
         result = batch_write_files(files_to_create)
 

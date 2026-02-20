@@ -33,16 +33,20 @@ Converts findings into an executable remediation DAG.
 #### RemediationPlanner.__init__
 
 ```python
-__init__(self, health_targets_path)
+__init__(self: Any, health_targets_path: Path)
 ```
+
+---
 
 #### RemediationPlanner.plan
 
+```python
+plan(self: Any, findings: list[Finding], budget_remaining_calls: int)
+```
+
 Build a remediation plan from *findings* within *budget*.
 
-```python
-plan(self, findings, budget_remaining_calls)
-```
+---
 
 ---
 
@@ -56,11 +60,11 @@ A single task in a remediation plan.
 
 ## plan
 
-Build a remediation plan from *findings* within *budget*.
-
 ```python
-plan(self, findings, budget_remaining_calls)
+plan(self: Any, findings: list[Finding], budget_remaining_calls: int)
 ```
+
+Build a remediation plan from *findings* within *budget*.
 
 ---
 

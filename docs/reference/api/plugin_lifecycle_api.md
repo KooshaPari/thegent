@@ -17,32 +17,40 @@ Manages the state and conformance of system plugins.
 #### PluginLifecycleManager.__init__
 
 ```python
-__init__(self)
+__init__(self: Any)
 ```
+
+---
 
 #### PluginLifecycleManager.get_plugin_status
 
+```python
+get_plugin_status(self: Any, plugin_id: str)
+```
+
 Return the current status of a plugin.
 
-```python
-get_plugin_status(self, plugin_id)
-```
+---
 
 #### PluginLifecycleManager.register_plugin
 
+```python
+register_plugin(self: Any, plugin_id: str, metadata: dict[(str, Any)])
+```
+
 Register a new plugin for validation.
 
-```python
-register_plugin(self, plugin_id, metadata)
-```
+---
 
 #### PluginLifecycleManager.run_conformance
 
+```python
+run_conformance(self: Any, plugin_id: str)
+```
+
 WP-10008: Run conformance tests on a plugin.
 
-```python
-run_conformance(self, plugin_id)
-```
+---
 
 ---
 
@@ -54,31 +62,31 @@ run_conformance(self, plugin_id)
 
 ## get_plugin_status
 
-Return the current status of a plugin.
-
 ```python
-get_plugin_status(self, plugin_id)
+get_plugin_status(self: Any, plugin_id: str)
 ```
+
+Return the current status of a plugin.
 
 ---
 
 ## register_plugin
 
-Register a new plugin for validation.
-
 ```python
-register_plugin(self, plugin_id, metadata)
+register_plugin(self: Any, plugin_id: str, metadata: dict[(str, Any)])
 ```
+
+Register a new plugin for validation.
 
 ---
 
 ## run_conformance
 
-WP-10008: Run conformance tests on a plugin.
-
 ```python
-run_conformance(self, plugin_id)
+run_conformance(self: Any, plugin_id: str)
 ```
+
+WP-10008: Run conformance tests on a plugin.
 
 ---
 

@@ -75,9 +75,7 @@ class Task(BaseModel):
     depends: list[str] = Field(default_factory=list, description="List of task IDs this depends on")
     source: str | None = Field(None, description="Source document this task originated from")
     metadata: TaskMetadata = Field(default_factory=TaskMetadata, description="Task metadata")
-    implementation_details: str | None = Field(
-        None, max_length=10000, description="Technical implementation details"
-    )
+    implementation_details: str | None = Field(None, max_length=10000, description="Technical implementation details")
     steps: list[TaskStep] = Field(default_factory=list, description="Step-by-step instructions")
     deliverables: list[str] = Field(default_factory=list, description="Expected outputs")
     acceptance_criteria: list[str] = Field(default_factory=list, description="Acceptance criteria")

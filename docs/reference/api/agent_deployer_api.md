@@ -18,27 +18,33 @@ Deploys remediation tasks from a DAG, respecting dependencies and budget.
 #### AgentDeployer.__init__
 
 ```python
-__init__(self, cost_controller, verification_gate, max_concurrent, lifecycle_mode, checker_agent_name)
+__init__(self: Any, cost_controller: CostControllerProtocol, verification_gate: Any, max_concurrent: int, lifecycle_mode: str, checker_agent_name: str)
 ```
 
+---
+
 #### AgentDeployer.deploy
+
+```python
+deploy(self: Any, plan: Any, pre_scan: Any, cycle_id: str)
+```
 
 Execute a full remediation plan.
 
 Walks DAG topologically, groups ready tasks into batches,
 spawns agents for each batch respecting max_concurrent.
 
-```python
-deploy(self, plan, pre_scan, cycle_id)
-```
+---
 
 #### AgentDeployer.get_ready_batch
 
+```python
+get_ready_batch(self: Any, plan: Any, completed_task_ids: set[str])
+```
+
 Get tasks ready to execute (all dependencies completed).
 
-```python
-get_ready_batch(self, plan, completed_task_ids)
-```
+---
 
 ---
 
@@ -53,20 +59,26 @@ Protocol for cost controller.
 #### CostControllerProtocol.can_spawn
 
 ```python
-can_spawn(self, estimated_calls)
+can_spawn(self: Any, estimated_calls: int)
 ```
+
+---
 
 #### CostControllerProtocol.get_tier
 
 ```python
-get_tier(self)
+get_tier(self: Any)
 ```
+
+---
 
 #### CostControllerProtocol.record_call
 
 ```python
-record_call(self, dimension, agent_type)
+record_call(self: Any, dimension: str, agent_type: str)
 ```
+
+---
 
 ---
 
@@ -97,52 +109,56 @@ Protocol for verification gate.
 #### VerificationGateProtocol.should_reroll
 
 ```python
-should_reroll(self, attempts)
+should_reroll(self: Any, attempts: int)
 ```
+
+---
 
 #### VerificationGateProtocol.verify_task
 
 ```python
-verify_task(self, task, execution, pre_scan)
+verify_task(self: Any, task: Any, execution: Any, pre_scan: Any)
 ```
+
+---
 
 ---
 
 ## can_spawn
 
 ```python
-can_spawn(self, estimated_calls)
+can_spawn(self: Any, estimated_calls: int) -> bool
 ```
 
 ---
 
 ## deploy
 
+```python
+deploy(self: Any, plan: Any, pre_scan: Any, cycle_id: str)
+```
+
 Execute a full remediation plan.
 
 Walks DAG topologically, groups ready tasks into batches,
 spawns agents for each batch respecting max_concurrent.
 
-```python
-deploy(self, plan, pre_scan, cycle_id)
-```
-
 ---
 
 ## get_ready_batch
 
-Get tasks ready to execute (all dependencies completed).
-
 ```python
-get_ready_batch(self, plan, completed_task_ids)
+get_ready_batch(self: Any, plan: Any, completed_task_ids: set[str])
 ```
+
+Get tasks ready to execute (all dependencies completed).
 
 ---
 
 ## get_tier
 
 ```python
-get_tier(self)
+get_tier(self: Any) -> str
 ```
 
 ---
@@ -150,7 +166,7 @@ get_tier(self)
 ## record_call
 
 ```python
-record_call(self, dimension, agent_type)
+record_call(self: Any, dimension: str, agent_type: str) -> None
 ```
 
 ---
@@ -158,7 +174,7 @@ record_call(self, dimension, agent_type)
 ## should_reroll
 
 ```python
-should_reroll(self, attempts)
+should_reroll(self: Any, attempts: int) -> bool
 ```
 
 ---
@@ -166,7 +182,7 @@ should_reroll(self, attempts)
 ## verify_task
 
 ```python
-verify_task(self, task, execution, pre_scan)
+verify_task(self: Any, task: Any, execution: Any, pre_scan: Any) -> Any
 ```
 
 ---

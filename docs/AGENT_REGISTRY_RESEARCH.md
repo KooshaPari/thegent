@@ -30,7 +30,7 @@ Create an automatic agent registry system that allows:
    - Limited to file-based communication
 
 3. **Discovery** (`thegent/src/thegent/discovery.py`):
-   - Discovers external agents via sharecli
+   - Discovers external agents via heliosShield
    - Tracks agents by PPID
    - Can detect tmux panes
 

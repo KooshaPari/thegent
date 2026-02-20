@@ -7,7 +7,6 @@ import httpx
 
 from thegent.config import ThegentSettings
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -18,7 +17,7 @@ class ControlPlaneConfigProvider:
     server-side to ensure multi-tenant isolation.
     """
 
-    def __init__(self, url: str, timeout: float = 2.0):
+    def __init__(self, url: str, timeout: float = 2.0) -> None:
         self.url = url.rstrip("/")
         self.timeout = timeout
 
@@ -35,13 +34,14 @@ class ControlPlaneConfigProvider:
                 response = self._post_resolve(client, tenant_id, session_id, request_overrides, keys)
                 if response.status_code == 200:
                     return response.json()
-                
+
                 logger.error(f"CP resolution failed: {response.status_code} {response.text}")
         except Exception as e:
             logger.error(f"CP connection error: {e}")
 
         # Fallback to local env if CP is down (Circuit Breaker logic would go here)
         from thegent.governance.config_provider import EnvConfigProvider
+
         return EnvConfigProvider().resolve(tenant_id, session_id, request_overrides, keys)
 
     def _post_resolve(

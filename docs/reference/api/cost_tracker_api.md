@@ -17,11 +17,13 @@ Single cost tracking entry.
 
 #### CostEntry.to_json
 
+```python
+to_json(self: Any)
+```
+
 Serialize entry to JSON dict.
 
-```python
-to_json(self)
-```
+---
 
 ---
 
@@ -33,92 +35,121 @@ Track LLM costs across sessions.
 
 #### CostTracker.__init__
 
+```python
+__init__(self: Any, log_path: Any, daily_budget: Any)
+```
+
 Initialize cost tracker.
 
-Args:
-    log_path: Path to JSONL cost log file.
-    daily_budget: Optional daily budget limit in USD.
+**Parameters**:
 
-```python
-__init__(self, log_path, daily_budget)
-```
+- `log_path`: Path to JSONL cost log file.
+- `daily_budget`: Optional daily budget limit in USD.
+
+---
 
 #### CostTracker.clear
 
+```python
+clear(self: Any)
+```
+
 Reset all tracking state.
 
-```python
-clear(self)
-```
+---
 
 #### CostTracker.daily_budget
 
+```python
+daily_budget(self: Any)
+```
+
 Configured daily budget.
 
+---
+
+#### CostTracker.get_budget_burn_ratio
+
 ```python
-daily_budget(self)
+get_budget_burn_ratio(self: Any)
 ```
+
+Get budget burn ratio (0-1). None if no budget set. 0.85+ triggers degraded mode.
+
+---
 
 #### CostTracker.get_budget_remaining
 
+```python
+get_budget_remaining(self: Any)
+```
+
 Get remaining budget, or None if no budget set.
 
-```python
-get_budget_remaining(self)
-```
+---
 
 #### CostTracker.get_daily_spend
 
+```python
+get_daily_spend(self: Any)
+```
+
 Get today's total spend in USD.
 
-```python
-get_daily_spend(self)
-```
+---
 
 #### CostTracker.get_stats
 
+```python
+get_stats(self: Any)
+```
+
 Get cost statistics summary.
 
-```python
-get_stats(self)
-```
+---
 
 #### CostTracker.is_over_budget
 
+```python
+is_over_budget(self: Any)
+```
+
 Check if daily budget is exceeded.
 
-```python
-is_over_budget(self)
-```
+---
 
 #### CostTracker.log_path
 
+```python
+log_path(self: Any)
+```
+
 Path to the cost log file.
 
-```python
-log_path(self)
-```
+---
 
 #### CostTracker.track
 
+```python
+track(self: Any, provider: str, model: str, usage: dict[(str, int)], cost: float, latency_ms: float, session_id: Any, is_error: bool, is_fallback: bool)
+```
+
 Track a single LLM call cost.
 
-Args:
-    provider: Provider name (e.g., "openai", "anthropic")
-    model: Model name (e.g., "gpt-4", "claude-opus")
-    usage: Dict with prompt_tokens and completion_tokens
-    cost: Cost in USD
-    latency_ms: Request latency in milliseconds
-    session_id: Optional session identifier
-    is_error: Whether the request resulted in an error
-    is_fallback: Whether this was a fallback routing
+**Parameters**:
 
-Returns:
-    The created CostEntry
+- `provider`: Provider name (e.g., "openai", "anthropic")
+- `model`: Model name (e.g., "gpt-4", "claude-opus")
+- `usage`: Dict with prompt_tokens and completion_tokens
+- `cost`: Cost in USD
+- `latency_ms`: Request latency in milliseconds
+- `session_id`: Optional session identifier
+- `is_error`: Whether the request resulted in an error
+- `is_fallback`: Whether this was a fallback routing
 
-```python
-track(self, provider, model, usage, cost, latency_ms, session_id, is_error, is_fallback)
-```
+**Returns**: The created CostEntry
+
+---
 
 ---
 
@@ -130,31 +161,41 @@ Routing statistics summary.
 
 ## clear
 
-Reset all tracking state.
-
 ```python
-clear(self)
+clear(self: Any)
 ```
+
+Reset all tracking state.
 
 ---
 
 ## daily_budget
 
+```python
+daily_budget(self: Any)
+```
+
 Configured daily budget.
 
+---
+
+## get_budget_burn_ratio
+
 ```python
-daily_budget(self)
+get_budget_burn_ratio(self: Any)
 ```
+
+Get budget burn ratio (0-1). None if no budget set. 0.85+ triggers degraded mode.
 
 ---
 
 ## get_budget_remaining
 
-Get remaining budget, or None if no budget set.
-
 ```python
-get_budget_remaining(self)
+get_budget_remaining(self: Any)
 ```
+
+Get remaining budget, or None if no budget set.
 
 ---
 
@@ -168,41 +209,41 @@ Initializes with settings from config on first call.
 
 ## get_daily_spend
 
-Get today's total spend in USD.
-
 ```python
-get_daily_spend(self)
+get_daily_spend(self: Any)
 ```
+
+Get today's total spend in USD.
 
 ---
 
 ## get_stats
 
-Get cost statistics summary.
-
 ```python
-get_stats(self)
+get_stats(self: Any)
 ```
+
+Get cost statistics summary.
 
 ---
 
 ## is_over_budget
 
-Check if daily budget is exceeded.
-
 ```python
-is_over_budget(self)
+is_over_budget(self: Any)
 ```
+
+Check if daily budget is exceeded.
 
 ---
 
 ## log_path
 
-Path to the cost log file.
-
 ```python
-log_path(self)
+log_path(self: Any)
 ```
+
+Path to the cost log file.
 
 ---
 
@@ -214,34 +255,34 @@ Reset the global cost tracker (useful for testing).
 
 ## to_json
 
-Serialize entry to JSON dict.
-
 ```python
-to_json(self)
+to_json(self: Any)
 ```
+
+Serialize entry to JSON dict.
 
 ---
 
 ## track
 
+```python
+track(self: Any, provider: str, model: str, usage: dict[(str, int)], cost: float, latency_ms: float, session_id: Any, is_error: bool, is_fallback: bool)
+```
+
 Track a single LLM call cost.
 
-Args:
-    provider: Provider name (e.g., "openai", "anthropic")
-    model: Model name (e.g., "gpt-4", "claude-opus")
-    usage: Dict with prompt_tokens and completion_tokens
-    cost: Cost in USD
-    latency_ms: Request latency in milliseconds
-    session_id: Optional session identifier
-    is_error: Whether the request resulted in an error
-    is_fallback: Whether this was a fallback routing
+**Parameters**:
 
-Returns:
-    The created CostEntry
+- `provider`: Provider name (e.g., "openai", "anthropic")
+- `model`: Model name (e.g., "gpt-4", "claude-opus")
+- `usage`: Dict with prompt_tokens and completion_tokens
+- `cost`: Cost in USD
+- `latency_ms`: Request latency in milliseconds
+- `session_id`: Optional session identifier
+- `is_error`: Whether the request resulted in an error
+- `is_fallback`: Whether this was a fallback routing
 
-```python
-track(self, provider, model, usage, cost, latency_ms, session_id, is_error, is_fallback)
-```
+**Returns**: The created CostEntry
 
 ---
 

@@ -45,7 +45,7 @@ graph TB
     end
 
     subgraph "CLI & Utility Layer"
-        SHARECLI[sharecli<br/>Agent Harness]
+        heliosShield[heliosShield<br/>Agent Harness]
         BLOC[bloc<br/>Code Analysis]
         TRACE[trace<br/>RTM]
         USAGE[usage<br/>AI Tracking]
@@ -68,7 +68,7 @@ graph TB
     end
 
     CLI --> THEGENT
-    CLI --> SHARECLI
+    CLI --> heliosShield
     CLI --> BLOC
     CLI --> TRACE
     CLI --> USAGE
@@ -81,7 +81,7 @@ graph TB
     
     VOICE --> KIMAKI
     
-    GUI --> SHARECLI
+    GUI --> heliosShield
     GUI --> USAGE
 
     THEGENT --> ATOMS_MCP
@@ -98,7 +98,7 @@ graph TB
     SMOLGENTS --> ATOMS_MCP
     CRUN --> ATOMS_MCP
     
-    SHARECLI --> PHENO_SDK
+    heliosShield --> PHENO_SDK
     BLOC --> PHENO_SDK
     CRUN --> PHENO_SDK
     USAGE --> PHENO_SDK
@@ -147,7 +147,7 @@ graph TB
 
     subgraph "Service Layer"
         MCP_SERVERS[MCP Servers<br/>atoms-mcp-prod, zen-mcp-server, 4sgm, morph, task-tool, task2]
-        CLI_SERVICES[CLI Services<br/>sharecli, bloc, trace, usage, dphi]
+        CLI_SERVICES[CLI Services<br/>heliosShield, bloc, trace, usage, dphi]
     end
 
     subgraph "Infrastructure Layer"
@@ -208,7 +208,7 @@ graph TB
     end
 
     subgraph "Entry Points"
-        CLI_ENTRY[CLI Entry<br/>thegent, sharecli]
+        CLI_ENTRY[CLI Entry<br/>thegent, heliosShield]
         VOICE_ENTRY[Voice Entry<br/>kimaki]
         WEB_ENTRY[Web Entry<br/>jobhunter, knowledgebase]
     end
@@ -384,7 +384,7 @@ graph TD
 
     subgraph "Core Layer"
         THEGENT[thegent<br/>Orchestration]
-        SHARECLI[sharecli<br/>Harness]
+        heliosShield[heliosShield<br/>Harness]
     end
 
     subgraph "MCP Layer"
@@ -416,7 +416,7 @@ graph TD
     THEGENT --> MORPH
     THEGENT --> TASK_TOOL
 
-    SHARECLI --> PHENO
+    heliosShield --> PHENO
 
     SMARTCP --> ATOMS
     SMARTCP --> MORPH

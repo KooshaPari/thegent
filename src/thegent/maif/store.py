@@ -11,7 +11,7 @@ from .artifacts import MAIFArtifact
 class MAIFArtifactStore:
     """SQLite-based storage for MAIF artifacts."""
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self.db_path = db_path
         self._init_db()
 
@@ -59,7 +59,7 @@ class MAIFArtifactStore:
             )
             conn.commit()
 
-    def get(self, artifact_id: str) -> Optional[MAIFArtifact]:
+    def get(self, artifact_id: str) -> MAIFArtifact | None:
         """Retrieve artifact by ID."""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -68,7 +68,7 @@ class MAIFArtifactStore:
                 return self._row_to_artifact(row)
         return None
 
-    def list_by_session(self, session_id: str) -> List[MAIFArtifact]:
+    def list_by_session(self, session_id: str) -> list[MAIFArtifact]:
         """List all artifacts for a given session."""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row

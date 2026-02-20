@@ -1,151 +1,194 @@
+"""SY-007: Unified CLI commands for sync, update, and audit."""
+
+import logging
+from pathlib import Path
+from typing import Optional
 
 import typer
 from rich.console import Console
+from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from thegent.sync import SyncComponent, SyncOrchestrator, SyncResult, SyncStatus, registry
+from thegent.sync.audit_framework import AuditIssue, AuditResult, AuditSeverity, SystemAuditFramework
+from thegent.sync.orchestrator import SyncOrchestrator, SyncResult, SyncStatus
 
+_log = logging.getLogger(__name__)
 console = Console()
-app = typer.Typer(help="Unified sync, update, and audit commands.")
-
-# --- Component Implementations ---
 
 
-class RulesSyncComponent(SyncComponent):
-    def __init__(self) -> None:
-        super().__init__("rules", "Sync agent rules (CLAUDE.md -> platforms)")
+async def sync_cmd_impl(
+    components: list[str] | None = None,
+    force: bool = False,
+    dry_run: bool = False,
+    watch: bool = False,
+    interval: int = 10,
+    output: Path | None = None,
+    format: str = "rich",
+) -> None:
+    """Implementation for the unified sync command."""
+    orchestrator = SyncOrchestrator()
 
-    def sync(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        from thegent.cli_impl import rules_sync_impl
+    if watch:
+        import asyncio
 
-        result = rules_sync_impl(force=force, check=dry_run)
-        if result["success"]:
-            msg = "Rules synced successfully" if not dry_run else "Rules check complete"
-            return SyncResult(self.name, SyncStatus.SUCCESS, msg, details=result)
-        return SyncResult(self.name, SyncStatus.FAILED, result.get("error", "Unknown error"))
-
-
-class PromptsSyncComponent(SyncComponent):
-    def __init__(self) -> None:
-        super().__init__("prompts", "Harvest idea seeds from prompt history")
-
-    def sync(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        if dry_run:
-            return SyncResult(self.name, SyncStatus.SKIPPED, "Harvest skipped in dry-run")
-        from thegent.prompts import run_harvest
-
-        exit_code, msg = run_harvest()
-        status = SyncStatus.SUCCESS if exit_code == 0 else SyncStatus.FAILED
-        return SyncResult(self.name, status, msg)
-
-
-class DagSyncComponent(SyncComponent):
-    def __init__(self) -> None:
-        super().__init__("dag", "Synchronize DAG state")
-
-    def sync(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        from thegent.cli_impl import dag_sync_impl
-
-        # dag_sync_impl doesn't have a dry_run mode easily accessible here,
-        # but it's generally safe to run as it just reconciles state.
-        if dry_run:
-            return SyncResult(self.name, SyncStatus.SKIPPED, "DAG sync skipped in dry-run")
-        result = dag_sync_impl()
-        if result.get("success", True):
-            return SyncResult(self.name, SyncStatus.SUCCESS, "DAG state synchronized")
-        return SyncResult(self.name, SyncStatus.FAILED, result.get("error", "DAG sync failed"))
-
-
-class WorkStreamSyncComponent(SyncComponent):
-    def __init__(self) -> None:
-        super().__init__("work-stream", "Incorporate work stream fragments", depends_on=["dag"])
-
-    def sync(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        from thegent.cli import plan_incorporate_cmd
-
+        console.print(f"[bold cyan]Starting watch mode (interval: {interval}s)...[/bold cyan]")
         try:
-            # plan_incorporate_cmd prints directly to console, so we might want to capture it or just call it
-            plan_incorporate_cmd(dry_run=dry_run)
-            return SyncResult(self.name, SyncStatus.SUCCESS, "Work stream incorporated")
-        except Exception as e:
-            return SyncResult(self.name, SyncStatus.FAILED, str(e))
+            while True:
+                results = await orchestrator.sync_all(components, dry_run=dry_run, force=force)
+                _display_sync_results(results, format)
+                await asyncio.sleep(interval)
+        except KeyboardInterrupt:
+            console.print("[yellow]Watch mode stopped.[/yellow]")
+            return
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        progress.add_task(description="Syncing components...", total=None)
+        results = await orchestrator.sync_all(components, dry_run=dry_run, force=force)
+
+    _display_sync_results(results, format)
+
+    if output:
+        _save_sync_report(results, output)
 
 
-class CatalogUpdateComponent(SyncComponent):
-    def __init__(self) -> None:
-        super().__init__("catalog", "Update model catalog by scraping providers")
+async def update_cmd_impl(
+    components: list[str] | None = None,
+    check: bool = False,
+    force: bool = False,
+    dry_run: bool = False,
+    output: Path | None = None,
+) -> None:
+    """Implementation for the unified update command."""
+    orchestrator = SyncOrchestrator()
 
-    def sync(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        from thegent.models.scrapers import get_scraped_catalog
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        progress.add_task(description="Updating components...", total=None)
+        results = await orchestrator.update_all(components, dry_run=dry_run, force=force)
 
-        try:
-            get_scraped_catalog(refresh=not dry_run)
-            return SyncResult(self.name, SyncStatus.SUCCESS, "Model catalog updated")
-        except Exception as e:
-            return SyncResult(self.name, SyncStatus.FAILED, str(e))
+    _display_sync_results(results, "rich", title="Update Results")
 
-
-# --- Registration ---
-
-registry.register(RulesSyncComponent())
-registry.register(PromptsSyncComponent())
-registry.register(DagSyncComponent())
-registry.register(WorkStreamSyncComponent())
-registry.register(CatalogUpdateComponent())
-
-# --- CLI Commands ---
+    if output:
+        _save_sync_report(results, output)
 
 
-@app.command("sync")
-def sync_cmd(
-    components: list[str] | None = typer.Argument(None, help="Components to sync (default: all)"),
-    force: bool = typer.Option(False, "--force", "-f", help="Force sync even if up-to-date"),
-    dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Show what would sync"),
-):
-    """Unified sync command for all thegent components."""
-    orchestrator = SyncOrchestrator(registry)
-    results = orchestrator.sync(names=components, dry_run=dry_run, force=force)
+async def audit_cmd_impl(
+    audit_types: list[str] | None = None,
+    output: Path | None = None,
+    format: str = "rich",
+    fix: bool = False,
+    severity: str = "all",
+) -> None:
+    """Implementation for the system audit command."""
+    orchestrator = SystemAuditFramework()
 
-    table = Table(title="Sync Results")
-    table.add_column("Component")
-    table.add_column("Status")
-    table.add_column("Duration")
-    table.add_column("Message")
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        progress.add_task(description="Running system audit...", total=None)
+        result = await orchestrator.run_audit(audit_types, fix=fix)
 
-    for res in results:
-        status_color = (
-            "green" if res.status == SyncStatus.SUCCESS else "red" if res.status == SyncStatus.FAILED else "yellow"
+    _display_audit_results(result, format, severity)
+
+    if output:
+        _save_audit_report(result, output)
+
+
+def _display_sync_results(results: list[SyncResult], format: str, title: str = "Sync Results") -> None:
+    """Display sync results in the specified format."""
+    if format == "rich":
+        table = Table(title=title)
+        table.add_column("Component", style="cyan")
+        table.add_column("Status", style="bold")
+        table.add_column("Duration", justify="right")
+        table.add_column("Message")
+
+        for r in results:
+            status = "[green]SUCCESS[/green]" if r.status == SyncStatus.SUCCESS else "[red]FAILED[/red]"
+            table.add_row(
+                r.component,
+                status,
+                f"{r.duration:.2f}s",
+                r.message,
+            )
+
+        console.print(table)
+    elif format == "json":
+        import json
+
+        console.print(json.dumps([r.to_dict() for r in results], indent=2))
+
+
+def _display_audit_results(result: AuditResult, format: str, severity_filter: str) -> None:
+    """Display audit results in the specified format."""
+    issues = result.issues
+    if severity_filter != "all":
+        issues = [i for i in issues if i.severity == severity_filter]
+
+    if format == "rich":
+        console.print(
+            Panel(
+                f"Audit Summary: {result.summary['total_issues']} issues found in {result.summary['duration']:.2f}s",
+                title="System Audit",
+                border_style="blue",
+            )
         )
-        table.add_row(
-            res.component, f"[{status_color}]{res.status.value}[/{status_color}]", f"{res.duration:.2f}s", res.message
-        )
 
-    console.print(table)
+        if not issues:
+            console.print("[green]No issues found.[/green]")
+            return
+
+        table = Table(title="Audit Issues")
+        table.add_column("ID", style="dim")
+        table.add_column("Component", style="cyan")
+        table.add_column("Severity", style="bold")
+        table.add_column("Title")
+        table.add_column("Remediation")
+
+        for i in issues:
+            sev_color = {
+                AuditSeverity.CRITICAL: "red",
+                AuditSeverity.HIGH: "magenta",
+                AuditSeverity.MEDIUM: "yellow",
+                AuditSeverity.LOW: "blue",
+            }.get(i.severity, "white")
+
+            table.add_row(
+                i.id,
+                i.component,
+                f"[{sev_color}]{i.severity.upper()}[/{sev_color}]",
+                i.title,
+                i.remediation or "N/A",
+            )
+
+        console.print(table)
+    elif format == "json":
+        import json
+
+        console.print(json.dumps(result.to_dict(), indent=2))
 
 
-@app.command("update")
-def update_cmd(
-    components: list[str] | None = typer.Argument(None, help="Components to update (default: all)"),
-    dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Show what would update"),
-    force: bool = typer.Option(False, "--force", "-f", help="Force update even if current"),
-):
-    """Unified update command for all thegent components."""
-    # For now, update is just an alias for sync with catalog included
-    # In the future, it will include dependency updates etc.
-    if not components:
-        components = ["catalog"]
+def _save_sync_report(results: list[SyncResult], path: Path) -> None:
+    """Save sync results to a file."""
+    import json
 
-    sync_cmd(components=components, dry_run=dry_run, force=force)
+    path.write_text(json.dumps([r.to_dict() for r in results], indent=2))
+    console.print(f"[dim]Sync report saved to {path}[/dim]")
 
 
-@app.command("audit")
-def audit_cmd():
-    """Comprehensive system audit."""
-    from thegent.doctor import run_doctor
+def _save_audit_report(result: AuditResult, path: Path) -> None:
+    """Save audit result to a file."""
+    import json
 
-    # Audit is currently delegated to the existing doctor command
-    run_doctor(fix=False)
-
-
-if __name__ == "__main__":
-    app()
+    path.write_text(json.dumps(result.to_dict(), indent=2))
+    console.print(f"[dim]Audit report saved to {path}[/dim]")

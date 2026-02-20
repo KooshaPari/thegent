@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from cachetools import TTLCache
+from thegent.cache.multi_level import MultiLevelCache
 
 if TYPE_CHECKING:
     from thegent.config import ThegentSettings
@@ -21,8 +21,26 @@ _WEIGHT_SWE = 0.2
 _WEIGHT_AIME = 0.1
 _WEIGHT_PARSER = 0.0
 
-# TTL cache for quality indices (key "default" = full result)
-_CACHE: TTLCache[str, dict[str, dict[str, float]]] = TTLCache(maxsize=4, ttl=300)
+
+def _make_quality_cache() -> MultiLevelCache:
+    """Create the quality-index cache (L1 in-process + L2 disk).
+
+    L2 dir is resolved lazily from ThegentSettings so the import is safe even if
+    config is not yet fully initialised (L2 is disabled in that case).
+    """
+    try:
+        from thegent.config import ThegentSettings
+
+        settings = ThegentSettings()
+        l2_dir = settings.cache_dir / "quality-index"
+    except Exception:
+        l2_dir = None
+    return MultiLevelCache(l1_maxsize=4, l1_ttl=300, l2_dir=l2_dir, l2_ttl=3600)
+
+
+# Multi-level cache for quality indices (key "default" = full result)
+# L1: fast in-process TTLCache; L2: diskcache on disk (survives restarts).
+_CACHE: MultiLevelCache = _make_quality_cache()
 
 
 def _default_benchmarks_path() -> Path:
@@ -115,8 +133,6 @@ def get_model_provider_quality_indices(
     Returns: {model_id: {provider: quality_index}}
     Same model has same quality across providers; structure matches cost/speed.
     """
-    global _CACHE
-
     try:
         from thegent.config import ThegentSettings
 
@@ -157,7 +173,7 @@ def get_model_provider_quality_indices(
                 result[model_id][prov] = getattr(route, "accuracy_score", 0.8)
 
     if use_cache and cache_ttl > 0:
-        _CACHE["default"] = result
+        _CACHE.set("default", result)
 
     return result
 
