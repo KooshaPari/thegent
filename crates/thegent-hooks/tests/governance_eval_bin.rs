@@ -30,6 +30,7 @@ fn help_lists_new_governance_evaluators() {
     assert!(stdout.contains("reliability-slo-eval"));
     assert!(stdout.contains("flake-quarantine-eval"));
     assert!(stdout.contains("verifier-dispute-eval"));
+    assert!(stdout.contains("claim-lifecycle-eval"));
 }
 
 #[test]
@@ -432,4 +433,63 @@ fn verifier_dispute_fails_without_policy_in_enforced_mode() {
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
     assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(1));
+}
+
+#[test]
+fn claim_lifecycle_fails_for_missing_file_evidence() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let project = tmp.path().join("project");
+    let stmt = tmp.path().join("agent-statement.json");
+    let report = tmp.path().join("claim-report.json");
+    fs::create_dir_all(&project).expect("create project");
+    fs::write(
+        &stmt,
+        r#"{"statements":[{"kind":"claim","evidence":["file://docs/missing.md","url://example.com"]}]}"#,
+    )
+    .expect("write statement");
+
+    let out = run(&[
+        "claim-lifecycle-eval",
+        "--statement",
+        stmt.to_str().expect("stmt path"),
+        "--project-dir",
+        project.to_str().expect("project path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(1));
+}
+
+#[test]
+fn claim_lifecycle_passes_with_valid_refs() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let project = tmp.path().join("project");
+    let stmt = tmp.path().join("agent-statement.json");
+    let report = tmp.path().join("claim-report.json");
+    fs::create_dir_all(project.join("docs")).expect("create docs");
+    fs::write(project.join("docs/existing.md"), "ok").expect("write evidence file");
+    fs::write(
+        &stmt,
+        r#"{"statements":[{"kind":"claim","evidence":["file://docs/existing.md","att://x"]}]}"#,
+    )
+    .expect("write statement");
+
+    let out = run(&[
+        "claim-lifecycle-eval",
+        "--statement",
+        stmt.to_str().expect("stmt path"),
+        "--project-dir",
+        project.to_str().expect("project path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert!(out.status.success());
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(true));
 }
