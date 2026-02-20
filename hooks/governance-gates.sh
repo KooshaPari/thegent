@@ -25,6 +25,8 @@ else
 fi
 # shellcheck source=./lib/common.sh
 source "${_SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=./lib/spiral-config.sh
+source "${_SCRIPT_DIR}/lib/spiral-config.sh"
 hook_init
 read_quality_config
 
@@ -36,6 +38,32 @@ if hook_cache_check "$_cache_key" "$_gg_ttl"; then
     _cached_rc=$?
     [[ "$_cached_rc" -ne 0 ]] && echo "GOVERNANCE-GATES FAIL: cached result was non-zero ($_cached_rc)" >&2
     exit "$_cached_rc"
+fi
+
+# --- WL-006: Scope-bound guards ---
+# Abort if the quality gate has been invoked too many times in a single session
+# (prevents runaway loop saturation from recursive hook triggers).
+QUALITY_MAX_ATTEMPTS="${QUALITY_MAX_ATTEMPTS:-3}"
+_gg_scope="${SESSION_ID:-global}"
+_GG_ATTEMPT_FILE="${HOOK_CACHE_DIR:-/tmp}/.gg-attempt-count-${_gg_scope}"
+_gg_current_attempt=0
+if [[ -f "$_GG_ATTEMPT_FILE" ]]; then
+  _gg_current_attempt="$(cat "$_GG_ATTEMPT_FILE" 2>/dev/null || echo 0)"
+fi
+_gg_current_attempt=$((_gg_current_attempt + 1))
+echo "$_gg_current_attempt" > "$_GG_ATTEMPT_FILE"
+if [[ "$_gg_current_attempt" -gt "$QUALITY_MAX_ATTEMPTS" ]]; then
+  echo "GOVERNANCE-GATES FAIL: attempt $_gg_current_attempt exceeds QUALITY_MAX_ATTEMPTS=$QUALITY_MAX_ATTEMPTS — aborting to prevent scan saturation" >&2
+  exit 2
+fi
+
+# Abort if the prompt/input payload is excessively large — unbounded stdin reads
+# cause memory and I/O pressure when large transcripts are piped into the hook.
+QUALITY_MAX_PROMPT_CHARS="${QUALITY_MAX_PROMPT_CHARS:-20000}"
+_input_len="${#INPUT}"
+if [[ "$_input_len" -gt "$QUALITY_MAX_PROMPT_CHARS" ]]; then
+  echo "GOVERNANCE-GATES: input length $_input_len chars exceeds QUALITY_MAX_PROMPT_CHARS=$QUALITY_MAX_PROMPT_CHARS — skipping full parse" >&2
+  INPUT="${INPUT:0:$QUALITY_MAX_PROMPT_CHARS}"
 fi
 
 # --- Shared state ---
@@ -68,6 +96,82 @@ _gate_fail() {
   fi
 }
 
+# Emit a structured alert payload for interruption/regression spirals.
+# Consumers can watch this file and force higher-priority remediation loops.
+_emit_spiral_alert() {
+  local severity="$1"
+  local reason="$2"
+  local state_file="$VERIFY_DIR/regression-spiral-alert.json"
+
+  mkdir -p "$VERIFY_DIR" 2>/dev/null || true
+  printf '{"generated_at":"%s","severity":"%s","reason":"%s","session_id":"%s","project_dir":"%s"}\n' \
+    "$now" "$severity" "$reason" "${SESSION_ID:-unknown}" "$PROJECT_DIR" > "$state_file"
+  echo "GOVERNANCE-GATES ALERT [$severity]: $reason" >&2
+}
+
+_clear_spiral_alert() {
+  local state_file="$VERIFY_DIR/regression-spiral-alert.json"
+  [[ -f "$state_file" ]] && rm -f "$state_file"
+}
+
+_file_mtime_epoch() {
+  local file="$1"
+  [[ -f "$file" ]] || return 1
+
+  local mtime=""
+  if mtime="$(stat -f %m "$file" 2>/dev/null)"; then
+    :
+  elif mtime="$(stat -c %Y "$file" 2>/dev/null)"; then
+    :
+  else
+    return 2
+  fi
+
+  [[ "$mtime" =~ ^[0-9]+$ ]] || return 3
+  printf '%s\n' "$mtime"
+}
+
+_file_age_minutes() {
+  local file="$1"
+  local mtime=""
+  local now_epoch=""
+
+  mtime="$(_file_mtime_epoch "$file")" || return $?
+  now_epoch="$(date +%s)"
+  [[ "$now_epoch" =~ ^[0-9]+$ ]] || return 4
+
+  local age_seconds=$((now_epoch - mtime))
+  (( age_seconds < 0 )) && age_seconds=0
+  printf '%d\n' $((age_seconds / 60))
+}
+
+_append_spiral_metric() {
+  local status="$1"
+  local severity="$2"
+  local reason="$3"
+  local total="$4"
+  local failed="$5"
+  local flaky="$6"
+  local missing_pairs="$7"
+  local missing_types="$8"
+  local env_missing="$9"
+  local e2e_missing="${10}"
+  local stale_test_evidence="${11}"
+  local stale_build_evidence="${12}"
+  local stale_e2e_evidence="${13}"
+  local violations="${14}"
+  local streak="${15}"
+  local interrupt="${16}"
+
+  local metrics_file="$VERIFY_DIR/regression-spiral-metrics.jsonl"
+  mkdir -p "$VERIFY_DIR" 2>/dev/null || true
+  printf '{"generated_at":"%s","session_id":"%s","status":"%s","severity":"%s","reason":"%s","metrics":{"total":%d,"failed":%d,"flaky":%d,"missing_pairs":%d,"missing_types":%d,"env_missing":%d,"e2e_missing":%d,"stale_test_evidence":%d,"stale_build_evidence":%d,"stale_e2e_evidence":%d},"violations":%d,"streak":%d,"interrupt":%s}\n' \
+    "$now" "${SESSION_ID:-unknown}" "$status" "$severity" "$reason" \
+    "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" \
+    "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" \
+    "$violations" "$streak" "$interrupt" >> "$metrics_file"
+}
+
 # Helper: check if a delivery model matches
 _model_is() {
   local want="$1"
@@ -77,6 +181,21 @@ _model_is() {
 # Helper: SCRIPT_DIR / REPO_ROOT (for schema validation references)
 _HOOKS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _REPO_ROOT="$(cd "$_HOOKS_DIR/.." && pwd)"
+
+_validate_json_schema() {
+  local schema_path="$1"
+  local instance_path="$2"
+
+  [[ -f "$schema_path" ]] || return 0
+  [[ -f "$instance_path" ]] || return 1
+
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    echo "GOVERNANCE-GATES FAIL: rust hook runtime unavailable for schema validation" >&2
+    return 2
+  fi
+
+  hook_rust_runtime_invoke schema-validate "$schema_path" "$instance_path" >/dev/null 2>&1
+}
 
 # ==========================================================================
 # B2: Batch quality.json parsing — one jq call extracts ALL config fields
@@ -96,6 +215,7 @@ QCFG_ZK_REQUIRED="false"
 QCFG_REQUIRE_TX_HASH="false"
 QCFG_DEBT_ENFORCE="false"
 QCFG_PLAYBOOK_ENFORCE="false"
+QCFG_METRIC_CONTRACTS_ENFORCE="false"
 
 if [[ -f "$QUALITY_CONFIG" ]]; then
   _qcfg_raw="$($JQ_CMD -r '
@@ -114,7 +234,8 @@ if [[ -f "$QUALITY_CONFIG" ]]; then
       (.governance.privacy_preserving.zk_required // false | tostring),
       (.governance.onchain.require_tx_hash // false | tostring),
       (.governance.debt_registry.enforce_gate // false | tostring),
-      (.governance.playbooks.enforce_gate // false | tostring)
+      (.governance.playbooks.enforce_gate // false | tostring),
+      (.governance.metric_contracts.enforce_gate // false | tostring)
     ] | @tsv
   ' "$QUALITY_CONFIG" 2>/dev/null || true)"
   if [[ -n "$_qcfg_raw" ]]; then
@@ -134,6 +255,7 @@ if [[ -f "$QUALITY_CONFIG" ]]; then
       QCFG_REQUIRE_TX_HASH \
       QCFG_DEBT_ENFORCE \
       QCFG_PLAYBOOK_ENFORCE \
+      QCFG_METRIC_CONTRACTS_ENFORCE \
       <<< "$_qcfg_raw"
   fi
   unset _qcfg_raw
@@ -371,29 +493,45 @@ gate_elicitation_closure() {
 # ============================================================================
 gate_methodology_enforcer() {
   local name="methodology-enforcer"
+  local report="$VERIFY_DIR/methodology-enforcer.json"
   local fail_closed="${QA_METHODOLOGY_FAIL_CLOSED:-false}"
   local attest_file="$VERIFY_DIR/qa-attestation.json"
 
-  [[ -f "$attest_file" ]] || { _gate_na "$name" "no attestation"; return 0; }
-
-  # B4: Use pre-parsed attestation values
-  _load_attestation
-
-  local fr_total="$ATT_FR_TOTAL"
-  local fr_covered="$ATT_FR_COVERED"
-  local missing_pairs="$ATT_MISSING_PAIRS"
-  local missing_types="$ATT_MISSING_TYPES"
-
-  local violations=0
-  (( missing_pairs > 0 )) && violations=$((violations + 1))
-  (( missing_types > 0 )) && violations=$((violations + 1))
-  (( fr_total > 0 && fr_covered < fr_total )) && violations=$((violations + 1))
-
-  if [[ "$violations" -gt 0 ]]; then
-    _gate_fail "$name" "$violations methodology violation(s) (pairs=$missing_pairs types=$missing_types cov=$fr_covered/$fr_total)" "$fail_closed"
-  else
-    _gate_pass "$name"
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for methodology evaluator" "$fail_closed"
+    return 0
   fi
+
+  local eval_rc=0
+  if hook_rust_runtime_invoke methodology-eval --attestation "$attest_file" --report "$report" >/dev/null 2>&1; then
+    eval_rc=0
+  else
+    eval_rc=$?
+  fi
+
+  if [[ "$eval_rc" -eq 0 ]]; then
+    _gate_pass "$name"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 3 ]]; then
+    write_na_report "$report" "$name"
+    _gate_na "$name" "no attestation"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local errors missing_pairs missing_types fr_total fr_covered
+    errors="$($JQ_CMD -r '.error_count // 1' "$report" 2>/dev/null || echo 1)"
+    missing_pairs="$($JQ_CMD -r '.missing_pairs // 0' "$report" 2>/dev/null || echo 0)"
+    missing_types="$($JQ_CMD -r '.missing_types // 0' "$report" 2>/dev/null || echo 0)"
+    fr_total="$($JQ_CMD -r '.fr_total // 0' "$report" 2>/dev/null || echo 0)"
+    fr_covered="$($JQ_CMD -r '.fr_covered // 0' "$report" 2>/dev/null || echo 0)"
+    write_fail_report "$report" "$name" "$errors" "methodology violations (pairs=$missing_pairs types=$missing_types cov=$fr_covered/$fr_total)"
+    _gate_fail "$name" "$errors methodology violation(s) (pairs=$missing_pairs types=$missing_types cov=$fr_covered/$fr_total)" "$fail_closed"
+    return 0
+  fi
+  write_fail_report "$report" "$name" 1 "methodology evaluator error"
+  _gate_fail "$name" "methodology evaluator failed" "$fail_closed"
   return 0
 }
 
@@ -414,12 +552,10 @@ gate_agent_claim_validator() {
   fi
 
   # Schema validation
-  if [[ -f "$schema" ]] && [[ -f "$_REPO_ROOT/scripts/validate-json-schema.sh" ]]; then
-    if ! bash "$_REPO_ROOT/scripts/validate-json-schema.sh" "$schema" "$stmt" 2>/dev/null; then
-      write_fail_report "$report" "$name" 1 "Schema validation failed"
-      _gate_fail "$name" "schema validation failed" "${QA_AGENT_CLAIM_FAIL_CLOSED:-true}"
-      return 0
-    fi
+  if ! _validate_json_schema "$schema" "$stmt"; then
+    write_fail_report "$report" "$name" 1 "Schema validation failed"
+    _gate_fail "$name" "schema validation failed" "${QA_AGENT_CLAIM_FAIL_CLOSED:-true}"
+    return 0
   fi
 
   # Claim transitions: observation/claim/decision/risk must have evidence
@@ -504,26 +640,203 @@ gate_claim_lifecycle() {
 # ============================================================================
 gate_reliability() {
   local name="reliability"
+  local report="$VERIFY_DIR/reliability-gate.json"
   local fail_closed="${QA_RELIABILITY_FAIL_CLOSED:-false}"
   local max_flake="${QA_MAX_FLAKE_RATE:-0.10}"
 
-  [[ -f "$RESULTS_FILE" ]] || { _gate_na "$name" "no async results"; return 0; }
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for reliability evaluator" "$fail_closed"
+    return 0
+  fi
 
-  # Use pre-parsed results
-  _load_async_results
-
-  local total="$RESULTS_TOTAL" failed="$RESULTS_FAILED" flaky="$RESULTS_FLAKY"
-
-  [[ "$total" -eq 0 ]] && { _gate_na "$name" "total=0"; return 0; }
-
-  local flake_rate
-  flake_rate="$(awk -v f="$flaky" -v t="$total" 'BEGIN { if (t==0) print 0; else printf "%.4f", f/t }')"
-
-  local exceeds
-  exceeds="$(awk -v r="$flake_rate" -v m="$max_flake" 'BEGIN { if (r>m) print "true"; else print "false" }')"
-  if [[ "$exceeds" == "true" ]]; then
-    _gate_fail "$name" "flake rate $flake_rate exceeds max $max_flake" "$fail_closed"
+  local eval_rc=0
+  if hook_rust_runtime_invoke reliability-eval --results "$RESULTS_FILE" --max-flake "$max_flake" --report "$report" >/dev/null 2>&1; then
+    eval_rc=0
   else
+    eval_rc=$?
+  fi
+
+  if [[ "$eval_rc" -eq 0 ]]; then
+    _gate_pass "$name"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 3 ]]; then
+    local status
+    status="$($JQ_CMD -r '.status // "no_results"' "$report" 2>/dev/null || echo "no_results")"
+    if [[ "$status" == "empty_results" ]]; then
+      _gate_na "$name" "total=0"
+    else
+      _gate_na "$name" "no async results"
+    fi
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local flake_rate
+    flake_rate="$($JQ_CMD -r '.metrics.flake_rate // 0' "$report" 2>/dev/null || echo 0)"
+    _gate_fail "$name" "flake rate $flake_rate exceeds max $max_flake" "$fail_closed"
+    return 0
+  fi
+  write_fail_report "$report" "$name" 1 "reliability evaluator error"
+  _gate_fail "$name" "reliability evaluator failed" "$fail_closed"
+  return 0
+}
+
+# ============================================================================
+# Gate 6b: regression-spiral-guard
+# Interrupts agent loops when quality/governance regression grows beyond limits.
+# Also enforces test/build/env-first discipline plus e2e coverage presence.
+# ============================================================================
+gate_regression_spiral_guard() {
+  local name="regression-spiral-guard"
+  local report="$VERIFY_DIR/regression-spiral-guard.json"
+  local fail_closed="${QA_REGRESSION_SPIRAL_FAIL_CLOSED:-true}"
+
+  load_spiral_guard_config "$_HOOKS_DIR/hook-config.yaml"
+
+  local max_failed_tests="${QA_SPIRAL_MAX_FAILED_TESTS:-$CFG_SPIRAL_MAX_FAILED_TESTS}"
+  local max_flaky_tests="${QA_SPIRAL_MAX_FLAKY_TESTS:-$CFG_SPIRAL_MAX_FLAKY_TESTS}"
+  local max_missing_pairs="${QA_SPIRAL_MAX_MISSING_TEST_PAIRS:-$CFG_SPIRAL_MAX_MISSING_TEST_PAIRS}"
+  local max_missing_types="${QA_SPIRAL_MAX_MISSING_TEST_TYPES:-$CFG_SPIRAL_MAX_MISSING_TEST_TYPES}"
+  local streak_trigger="${QA_SPIRAL_STREAK_TRIGGER:-$CFG_SPIRAL_STREAK_TRIGGER}"
+  local require_e2e="${QA_REQUIRE_E2E_FIRST:-$CFG_REQUIRE_E2E_FIRST}"
+  local require_env_ready="${QA_REQUIRE_ENV_READY_FIRST:-$CFG_REQUIRE_ENV_READY_FIRST}"
+  local max_test_evidence_age_minutes="${QA_SPIRAL_MAX_TEST_EVIDENCE_AGE_MINUTES:-$CFG_SPIRAL_MAX_TEST_EVIDENCE_AGE_MINUTES}"
+  local max_build_evidence_age_minutes="${QA_SPIRAL_MAX_BUILD_EVIDENCE_AGE_MINUTES:-$CFG_SPIRAL_MAX_BUILD_EVIDENCE_AGE_MINUTES}"
+  local max_e2e_evidence_age_minutes="${QA_SPIRAL_MAX_E2E_EVIDENCE_AGE_MINUTES:-$CFG_SPIRAL_MAX_E2E_EVIDENCE_AGE_MINUTES}"
+
+  local failed=0 flaky=0 total=0
+  local missing_pairs=0 missing_types=0
+  local env_missing=0 e2e_missing=0
+  local stale_test_evidence=0 stale_build_evidence=0 stale_e2e_evidence=0
+  local should_interrupt=false
+  local reason=""
+  local qa_state_file="$VERIFY_DIR/qa-state.json"
+  local qa_attestation_file="$VERIFY_DIR/qa-attestation.json"
+
+  # Async test results: direct regression signal.
+  if [[ -f "$RESULTS_FILE" ]]; then
+    _load_async_results
+    total="$RESULTS_TOTAL"
+    failed="$RESULTS_FAILED"
+    flaky="$RESULTS_FLAKY"
+  fi
+
+  # Attestation methodology debt: indicates test/governance drift.
+  _load_attestation
+  missing_pairs="$ATT_MISSING_PAIRS"
+  missing_types="$ATT_MISSING_TYPES"
+
+  # Freshness checks: missing evidence or stale mtimes are violations.
+  local evidence_age=0
+  if [[ ! -f "$RESULTS_FILE" ]]; then
+    stale_test_evidence=1
+  else
+    if ! evidence_age="$(_file_age_minutes "$RESULTS_FILE")"; then
+      _gate_fail "$name" "unable to read test evidence mtime: $RESULTS_FILE" "$fail_closed"
+      return 0
+    fi
+    (( evidence_age > max_test_evidence_age_minutes )) && stale_test_evidence=1
+  fi
+
+  if [[ ! -f "$qa_state_file" ]]; then
+    stale_build_evidence=1
+  else
+    if ! evidence_age="$(_file_age_minutes "$qa_state_file")"; then
+      _gate_fail "$name" "unable to read build/env evidence mtime: $qa_state_file" "$fail_closed"
+      return 0
+    fi
+    (( evidence_age > max_build_evidence_age_minutes )) && stale_build_evidence=1
+  fi
+
+  if [[ "$require_e2e" == "true" ]]; then
+    if [[ ! -f "$qa_attestation_file" ]]; then
+      stale_e2e_evidence=1
+      e2e_missing=1
+    else
+      if ! evidence_age="$(_file_age_minutes "$qa_attestation_file")"; then
+        _gate_fail "$name" "unable to read e2e evidence mtime: $qa_attestation_file" "$fail_closed"
+        return 0
+      fi
+      (( evidence_age > max_e2e_evidence_age_minutes )) && stale_e2e_evidence=1
+    fi
+  fi
+
+  # Environment-first readiness for agent-driven runs.
+  if [[ "$require_env_ready" == "true" ]]; then
+    command -v python3 >/dev/null 2>&1 || env_missing=$((env_missing + 1))
+    command -v task >/dev/null 2>&1 || env_missing=$((env_missing + 1))
+    command -v uv >/dev/null 2>&1 || env_missing=$((env_missing + 1))
+    command -v git >/dev/null 2>&1 || env_missing=$((env_missing + 1))
+  fi
+
+  # Enforce e2e presence for "human-cannot-test" workflow.
+  if [[ "$require_e2e" == "true" ]]; then
+    if [[ ! -d "$PROJECT_DIR/test/e2e" && ! -d "$PROJECT_DIR/tests/e2e" && ! -d "$PROJECT_DIR/e2e" && ! -d "$PROJECT_DIR/playwright" && ! -d "$PROJECT_DIR/cypress" ]]; then
+      e2e_missing=1
+    fi
+  fi
+
+  # Build a local violation count.
+  local violations=0
+  (( failed > max_failed_tests )) && violations=$((violations + 1))
+  (( flaky > max_flaky_tests )) && violations=$((violations + 1))
+  (( missing_pairs > max_missing_pairs )) && violations=$((violations + 1))
+  (( missing_types > max_missing_types )) && violations=$((violations + 1))
+  (( env_missing > 0 )) && violations=$((violations + 1))
+  (( e2e_missing > 0 )) && violations=$((violations + 1))
+  (( stale_test_evidence > 0 )) && violations=$((violations + 1))
+  (( stale_build_evidence > 0 )) && violations=$((violations + 1))
+  (( stale_e2e_evidence > 0 )) && violations=$((violations + 1))
+
+  # Persistent streak tracking: continuous interruption if spiral keeps growing.
+  local streak_file="$VERIFY_DIR/regression-spiral-state.json"
+  local prev_streak=0
+  if [[ -f "$streak_file" ]]; then
+    prev_streak="$($JQ_CMD -r '.streak // 0' "$streak_file" 2>/dev/null || echo 0)"
+  fi
+  local streak=0
+  if (( violations > 0 )); then
+    streak=$((prev_streak + 1))
+  else
+    streak=0
+  fi
+
+  printf '{"generated_at":"%s","streak":%d,"violations":%d}\n' "$now" "$streak" "$violations" > "$streak_file"
+
+  if (( streak >= streak_trigger )); then
+    should_interrupt=true
+    reason="streak=$streak >= trigger=$streak_trigger"
+  fi
+  if (( violations > 0 )) && [[ -z "$reason" ]]; then
+    reason="violations=$violations"
+  fi
+
+  printf '{"generated_at":"%s","metrics":{"total":%d,"failed":%d,"flaky":%d,"missing_pairs":%d,"missing_types":%d,"env_missing":%d,"e2e_missing":%d,"stale_test_evidence":%d,"stale_build_evidence":%d,"stale_e2e_evidence":%d},"thresholds":{"max_failed_tests":%d,"max_flaky_tests":%d,"max_missing_pairs":%d,"max_missing_types":%d,"streak_trigger":%d,"max_test_evidence_age_minutes":%d,"max_build_evidence_age_minutes":%d,"max_e2e_evidence_age_minutes":%d},"violations":%d,"streak":%d,"interrupt":%s}\n' \
+    "$now" "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" \
+    "$max_failed_tests" "$max_flaky_tests" "$max_missing_pairs" "$max_missing_types" "$streak_trigger" "$max_test_evidence_age_minutes" "$max_build_evidence_age_minutes" "$max_e2e_evidence_age_minutes" \
+    "$violations" "$streak" "$should_interrupt" > "$report"
+
+  if [[ "$should_interrupt" == "true" ]]; then
+    _append_spiral_metric "critical_interrupt" "critical" "$reason" \
+      "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" \
+      "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" "$violations" "$streak" "$should_interrupt"
+    _emit_spiral_alert "critical" "$name $reason"
+    _gate_fail "$name" "$reason; pause feature work and remediate tests/build/env/e2e debt first" "$fail_closed"
+    return 0
+  fi
+
+  if (( violations > 0 )); then
+    _append_spiral_metric "warning" "warning" "$reason" \
+      "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" \
+      "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" "$violations" "$streak" "$should_interrupt"
+    _emit_spiral_alert "warning" "$name violations=$violations"
+    _gate_fail "$name" "warning-level spiral signals detected ($violations)" "false"
+  else
+    _append_spiral_metric "healthy" "info" "no_violations" \
+      "$total" "$failed" "$flaky" "$missing_pairs" "$missing_types" "$env_missing" "$e2e_missing" \
+      "$stale_test_evidence" "$stale_build_evidence" "$stale_e2e_evidence" "$violations" "$streak" "$should_interrupt"
+    _clear_spiral_alert
     _gate_pass "$name"
   fi
   return 0
@@ -900,63 +1213,41 @@ gate_reliability_slo() {
   [[ "$tier" == "critical" ]] && enabled=true
   [[ "${QA_RELIABILITY_REQUIRED:-false}" == "true" ]] && enabled=true
 
-  if [[ ! -f "$RESULTS_FILE" ]]; then
-    printf '{"generated_at":"%s","tier":"%s","enabled":%s,"status":"no_results","error_count":0,"warn_count":0,"pass":true}\n' \
-      "$now" "$tier" "$enabled" > "$report"
-    _gate_na "$name" "no async results"
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for reliability SLO evaluator" "$fail_closed"
     return 0
   fi
 
-  # Use pre-parsed results
-  _load_async_results
-  local total="$RESULTS_TOTAL" failed="$RESULTS_FAILED" flaky="$RESULTS_FLAKY"
-
-  if [[ "$total" -le 0 ]]; then
-    printf '{"generated_at":"%s","tier":"%s","enabled":%s,"status":"empty_results","error_count":0,"warn_count":1,"pass":true}\n' \
-      "$now" "$tier" "$enabled" > "$report"
-    _gate_na "$name" "total=0"
-    return 0
+  local eval_rc=0
+  if hook_rust_runtime_invoke reliability-slo-eval --results "$RESULTS_FILE" --report "$report" --tier "$tier" --enabled "$enabled" --max-flake "$max_flake" --min-pass "$min_pass" >/dev/null 2>&1; then
+    eval_rc=0
+  else
+    eval_rc=$?
   fi
 
-  local flake_rate pass_rate
-  flake_rate="$(awk -v f="$flaky" -v t="$total" 'BEGIN { printf "%.4f", (t==0?0:f/t) }')"
-  pass_rate="$(awk -v f="$failed" -v t="$total" 'BEGIN { printf "%.4f", (t==0?1:(t-f)/t) }')"
-
-  local err=0 warn=0
-
-  # B3: Build checks array in bash instead of incremental jq calls
-  _json_arr_init
-
-  if awk -v x="$flake_rate" -v y="$max_flake" 'BEGIN{exit !(x>y)}'; then
-    local s
-    if [[ "$enabled" == "true" ]]; then err=$((err+1)); s="fail"; else warn=$((warn+1)); s="warn"; fi
-    _json_arr_add "{\"check\":\"max_flake_rate\",\"status\":\"$s\",\"value\":\"$flake_rate\",\"threshold\":\"$max_flake\"}"
-  else
-    _json_arr_add "{\"check\":\"max_flake_rate\",\"status\":\"pass\",\"value\":\"$flake_rate\",\"threshold\":\"$max_flake\"}"
-  fi
-
-  if awk -v x="$pass_rate" -v y="$min_pass" 'BEGIN{exit !(x<y)}'; then
-    local s
-    if [[ "$enabled" == "true" ]]; then err=$((err+1)); s="fail"; else warn=$((warn+1)); s="warn"; fi
-    _json_arr_add "{\"check\":\"min_pass_rate\",\"status\":\"$s\",\"value\":\"$pass_rate\",\"threshold\":\"$min_pass\"}"
-  else
-    _json_arr_add "{\"check\":\"min_pass_rate\",\"status\":\"pass\",\"value\":\"$pass_rate\",\"threshold\":\"$min_pass\"}"
-  fi
-
-  local checks
-  checks="$(_json_arr_emit)"
-
-  local _pass_bool="true"; [[ "$err" -gt 0 ]] && _pass_bool="false"
-  printf '{"generated_at":"%s","tier":"%s","enabled":%s,"metrics":{"total":%d,"failed":%d,"flaky":%d,"flake_rate":%s,"pass_rate":%s},"error_count":%d,"warn_count":%d,"checks":%s,"pass":%s}\n' \
-    "$now" "$tier" "$enabled" "$total" "$failed" "$flaky" "$flake_rate" "$pass_rate" "$err" "$warn" "$checks" "$_pass_bool" > "$report"
-
-  if [[ "$enabled" == "true" && "$err" -gt 0 ]]; then
-    _gate_fail "$name" "$err SLO check(s) failed" "$fail_closed"
-  elif [[ "$err" -gt 0 ]]; then
-    _gate_fail "$name" "$err SLO check(s) failed" "false"
-  else
+  if [[ "$eval_rc" -eq 0 ]]; then
     _gate_pass "$name"
+    return 0
   fi
+  if [[ "$eval_rc" -eq 3 ]]; then
+    local status
+    status="$($JQ_CMD -r '.status // "no_results"' "$report" 2>/dev/null || echo "no_results")"
+    if [[ "$status" == "empty_results" ]]; then
+      _gate_na "$name" "total=0"
+    else
+      _gate_na "$name" "no async results"
+    fi
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local err
+    err="$($JQ_CMD -r '.error_count // 1' "$report" 2>/dev/null || echo 1)"
+    _gate_fail "$name" "$err SLO check(s) failed" "$fail_closed"
+    return 0
+  fi
+  write_fail_report "$report" "$name" 1 "reliability SLO evaluator error"
+  _gate_fail "$name" "reliability SLO evaluator failed" "$fail_closed"
   return 0
 }
 
@@ -985,71 +1276,33 @@ gate_flake_quarantine() {
   [[ "$tier" == "critical" ]] && enabled=true
   [[ "${QA_RELIABILITY_REQUIRED:-false}" == "true" ]] && enabled=true
 
-  [[ -f "$quar_file" ]] || echo '{"generated_at":"","entries":[]}' > "$quar_file"
-
-  # determine flaky tests from async results
-  local flaky_tests='[]'
-  if [[ -f "$RESULTS_FILE" ]]; then
-    flaky_tests="$($JQ_CMD -c '
-      if (.flaky_tests|type)=="array" then .flaky_tests
-      elif (.tests|type)=="array" then [ .tests[] | select((.flaky // false)==true) | (.name // .id // empty) ]
-      else [] end | map(select(type=="string" and length>0)) | unique
-    ' "$RESULTS_FILE" 2>/dev/null || echo '[]')"
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for flake quarantine evaluator" "$fail_closed"
+    return 0
   fi
 
-  local now_iso="$now"
-  local exp_iso
-  exp_iso="$(date -u -v+${ttl_days}d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "+${ttl_days} days" +%Y-%m-%dT%H:%M:%SZ)"
-
-  # upsert active flaky tests + compute expired/active counts (single jq call)
-  # Outputs 3 lines: line 1 = updated quarantine JSON, line 2 = expired count, line 3 = active count
-  local _quar_output
-  _quar_output="$($JQ_CMD -r --arg now "$now_iso" --arg exp "$exp_iso" --argjson flaky "$flaky_tests" '
-    .entries = ((.entries // []) | map(if (.status // "active") == "active" then . else . end))
-    | reduce $flaky[] as $t (.;
-        if any(.entries[]?; .test_id == $t and (.status // "active") == "active") then .
-        else .entries += [{test_id:$t,reason:"detected_flaky",introduced_at:$now,expires_at:$exp,owner:"qa-system",status:"active"}] end
-      )
-    | .generated_at = $now
-    | ([.entries[]? | select((.status // "active") == "active" and (.expires_at // "") < $now)] | length) as $expired |
-      ([.entries[]? | select((.status // "active") == "active")] | length) as $active |
-      (. | tojson), ($expired | tostring), ($active | tostring)
-  ' "$quar_file" 2>/dev/null || printf '{"generated_at":"","entries":[]}\n0\n0')"
-
-  # Parse 3-line output: data, expired, active
-  local _quar_data expired_count active_count
-  { read -r _quar_data; read -r expired_count; read -r active_count; } <<< "$_quar_output"
-  echo "$_quar_data" > "$quar_file" 2>/dev/null || { echo "GOVERNANCE-GATES: write quarantine file failed ($?)" >&2; true; }
-  expired_count="${expired_count:-0}"
-  active_count="${active_count:-0}"
-
-  local err=0 warn=0
-
-  # B3: Build checks array in bash
-  _json_arr_init
-  if [[ "$expired_count" -gt 0 ]]; then
-    local s
-    if [[ "$enabled" == "true" ]]; then err=$((err+1)); s="fail"; else warn=$((warn+1)); s="warn"; fi
-    _json_arr_add "{\"check\":\"expired_quarantine_entries\",\"status\":\"$s\",\"count\":$expired_count}"
+  local eval_rc=0
+  if hook_rust_runtime_invoke flake-quarantine-eval --results "$RESULTS_FILE" --quarantine "$quar_file" --report "$report" --tier "$tier" --enabled "$enabled" --ttl-days "$ttl_days" >/dev/null 2>&1; then
+    eval_rc=0
   else
-    _json_arr_add '{"check":"expired_quarantine_entries","status":"pass","count":0}'
+    eval_rc=$?
   fi
-  _json_arr_add "{\"check\":\"active_quarantine_entries\",\"status\":\"info\",\"count\":$active_count}"
 
-  local checks
-  checks="$(_json_arr_emit)"
-
-  local _pass_bool="true"; [[ "$err" -gt 0 ]] && _pass_bool="false"
-  printf '{"generated_at":"%s","tier":"%s","enabled":%s,"active_count":%d,"expired_count":%d,"error_count":%d,"warn_count":%d,"checks":%s,"pass":%s}\n' \
-    "$now_iso" "$tier" "$enabled" "$active_count" "$expired_count" "$err" "$warn" "$checks" "$_pass_bool" > "$report"
-
-  if [[ "$enabled" == "true" && "$err" -gt 0 ]]; then
-    _gate_fail "$name" "expired quarantine entries present" "$fail_closed"
-  elif [[ "$err" -gt 0 ]]; then
-    _gate_fail "$name" "expired quarantine entries present" "false"
-  else
+  if [[ "$eval_rc" -eq 0 ]]; then
     _gate_pass "$name"
+    return 0
   fi
+  if [[ "$eval_rc" -eq 1 ]]; then
+    if [[ "$enabled" == "true" ]]; then
+      _gate_fail "$name" "expired quarantine entries present" "$fail_closed"
+    else
+      _gate_fail "$name" "expired quarantine entries present" "false"
+    fi
+    return 0
+  fi
+  write_fail_report "$report" "$name" 1 "flake quarantine evaluator error"
+  _gate_fail "$name" "flake quarantine evaluator failed" "$fail_closed"
   return 0
 }
 
@@ -1174,12 +1427,10 @@ gate_rolling_wave() {
   [[ "${bad_forecast:-0}" -eq 0 ]] || { write_fail_report "$report" "$name" "$bad_forecast" "acceptance_ready items require promotion_evidence"; _gate_fail "$name" "acceptance_ready items require promotion_evidence ($bad_forecast)" "false"; return 0; }
 
   # Schema validation
-  if [[ -f "$schema" ]] && [[ -f "$_REPO_ROOT/scripts/validate-json-schema.sh" ]]; then
-    if ! bash "$_REPO_ROOT/scripts/validate-json-schema.sh" "$schema" "$rw" 2>/dev/null; then
-      write_fail_report "$report" "$name" 1 "schema validation failed"
-      _gate_fail "$name" "schema validation failed" "false"
-      return 0
-    fi
+  if ! _validate_json_schema "$schema" "$rw"; then
+    write_fail_report "$report" "$name" 1 "schema validation failed"
+    _gate_fail "$name" "schema validation failed" "false"
+    return 0
   fi
 
   write_pass_report "$report" "$name"
@@ -1217,12 +1468,10 @@ gate_assurance_case() {
     missing_fields) write_fail_report "$report" "$name" 1 "missing required fields (generated_at, top_claims, nodes)"; _gate_fail "$name" "missing required fields" "false"; return 0 ;;
   esac
 
-  if [[ -f "$schema" ]] && [[ -f "$_REPO_ROOT/scripts/validate-json-schema.sh" ]]; then
-    if ! bash "$_REPO_ROOT/scripts/validate-json-schema.sh" "$schema" "$ac" 2>/dev/null; then
-      write_fail_report "$report" "$name" 1 "schema validation failed"
-      _gate_fail "$name" "schema validation failed" "false"
-      return 0
-    fi
+  if ! _validate_json_schema "$schema" "$ac"; then
+    write_fail_report "$report" "$name" 1 "schema validation failed"
+    _gate_fail "$name" "schema validation failed" "false"
+    return 0
   fi
 
   write_pass_report "$report" "$name"
@@ -1489,40 +1738,38 @@ gate_formal_registry() {
   local name="formal-registry"
   local registry="$PROJECT_DIR/contracts/formal/registry.json"
   local report="$VERIFY_DIR/formal-registry-gate.json"
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for formal registry evaluator" "false"
+    return 0
+  fi
 
-  if [[ ! -f "$registry" ]]; then
+  local eval_rc=0
+  if hook_rust_runtime_invoke formal-registry-eval --registry "$registry" --report "$report" >/dev/null 2>&1; then
+    eval_rc=0
+  else
+    eval_rc=$?
+  fi
+
+  if [[ "$eval_rc" -eq 0 ]]; then
+    _gate_pass "$name"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 3 ]]; then
     write_na_report "$report" "$name"
     _gate_na "$name" "no formal registry"
     return 0
   fi
-
-  # Combined validation: JSON validity + required fields + item shapes (single jq call)
-  local reg_check
-  reg_check="$($JQ_CMD -r '
-    if (type != "object") then "invalid_json"
-    elif ((.generated_at | type != "string") or (.items | type != "array")) then "missing_fields"
-    else
-      ([.items[]? | select(
-        (.id | type != "string" or length == 0)
-        or (.path | type != "string" or length == 0)
-        or (.kind | type != "string" or length == 0)
-      )] | length) | tostring
-    end
-  ' "$registry" 2>/dev/null || echo "invalid_json")"
-
-  case "$reg_check" in
-    invalid_json) write_fail_report "$report" "$name" 1 "Invalid JSON"; _gate_fail "$name" "invalid JSON" "false"; return 0 ;;
-    missing_fields) write_fail_report "$report" "$name" 1 "Missing generated_at or items array"; _gate_fail "$name" "missing generated_at or items" "false"; return 0 ;;
-  esac
-
-  if [[ "${reg_check:-0}" -gt 0 ]]; then
-    write_fail_report "$report" "$name" "$reg_check" "Items require id, path, kind"
-    _gate_fail "$name" "invalid item shape: $reg_check" "false"
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local reason errors
+    reason="$($JQ_CMD -r '.reason // "invalid registry"' "$report" 2>/dev/null || echo "invalid registry")"
+    errors="$($JQ_CMD -r '.error_count // 1' "$report" 2>/dev/null || echo 1)"
+    write_fail_report "$report" "$name" "$errors" "$reason"
+    _gate_fail "$name" "$reason" "false"
     return 0
   fi
-
-  write_pass_report "$report" "$name"
-  _gate_pass "$name"
+  write_fail_report "$report" "$name" 1 "formal registry evaluator error"
+  _gate_fail "$name" "formal registry evaluator failed" "false"
   return 0
 }
 
@@ -1534,37 +1781,38 @@ gate_formal_registry() {
 gate_artifact_quality() {
   local name="artifact-quality"
   local report="$VERIFY_DIR/artifact-quality-gate.json"
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for artifact quality evaluator" "false"
+    return 0
+  fi
 
-  local files=()
-  [[ -f "$PROJECT_DIR/contracts/assurance-case.json" ]] && files+=("$PROJECT_DIR/contracts/assurance-case.json")
-  [[ -f "$PROJECT_DIR/contracts/rolling-wave.json" ]] && files+=("$PROJECT_DIR/contracts/rolling-wave.json")
-  [[ -f "$VERIFY_DIR/privacy-proof.json" ]] && files+=("$VERIFY_DIR/privacy-proof.json")
+  local eval_rc=0
+  if hook_rust_runtime_invoke artifact-quality-eval --project-dir "$PROJECT_DIR" --verify-dir "$VERIFY_DIR" --report "$report" >/dev/null 2>&1; then
+    eval_rc=0
+  else
+    eval_rc=$?
+  fi
 
-  if [[ "${#files[@]}" -eq 0 ]]; then
+  if [[ "$eval_rc" -eq 0 ]]; then
+    _gate_pass "$name"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 3 ]]; then
     write_na_report "$report" "$name"
     _gate_na "$name" "no critical artifacts"
     return 0
   fi
-
-  local errors=0 bad_files=""
-  for fpath in "${files[@]}"; do
-    [[ -f "$fpath" ]] || continue
-    local content
-    content=$(<"$fpath" 2>/dev/null) || continue
-    local content_lower="${content,,}"
-    if [[ "$content_lower" == *"placeholder"* ]] || [[ "$content_lower" == *"bootstrap"* ]] || [[ "$content_lower" == *"todo"* ]] || [[ "$content_lower" == *"tbd"* ]]; then
-      errors=$((errors + 1))
-      bad_files="${bad_files:+$bad_files,}${fpath##*/}"
-    fi
-  done
-
-  if [[ "$errors" -gt 0 ]]; then
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local errors bad_files
+    errors="$($JQ_CMD -r '.error_count // 1' "$report" 2>/dev/null || echo 1)"
+    bad_files="$($JQ_CMD -r '(.bad_files // []) | join(",")' "$report" 2>/dev/null || echo "")"
     write_fail_report "$report" "$name" "$errors" "Placeholders in: $bad_files"
     _gate_fail "$name" "$errors placeholder(s) in: $bad_files" "false"
-  else
-    write_pass_report "$report" "$name"
-    _gate_pass "$name"
+    return 0
   fi
+  write_fail_report "$report" "$name" 1 "artifact quality evaluator error"
+  _gate_fail "$name" "artifact quality evaluator failed" "false"
   return 0
 }
 
@@ -1584,22 +1832,38 @@ gate_debt_registry() {
   local tier="$QCFG_CRITICALITY"
   [[ "$tier" == "critical" ]] && debt_enabled=true
 
-  if [[ "$debt_enabled" != "true" ]]; then
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for debt registry evaluator" "false"
+    return 0
+  fi
+
+  local eval_rc=0
+  if hook_rust_runtime_invoke debt-registry-eval --debt "$debt" --report "$report" --enabled "$debt_enabled" >/dev/null 2>&1; then
+    eval_rc=0
+  else
+    eval_rc=$?
+  fi
+
+  if [[ "$eval_rc" -eq 0 ]]; then
+    _gate_pass "$name"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 3 ]]; then
     write_na_report "$report" "$name"
     _gate_na "$name" "not required"
     return 0
   fi
-
-  if [[ ! -f "$debt" ]]; then
-    write_fail_report "$report" "$name" 1 "missing debt-register.json"
-    _gate_fail "$name" "missing debt-register.json" "false"
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local reason errors
+    reason="$($JQ_CMD -r '.reason // "invalid debt registry"' "$report" 2>/dev/null || echo "invalid debt registry")"
+    errors="$($JQ_CMD -r '.error_count // 1' "$report" 2>/dev/null || echo 1)"
+    write_fail_report "$report" "$name" "$errors" "$reason"
+    _gate_fail "$name" "$reason" "false"
     return 0
   fi
-
-  $JQ_CMD -e . "$debt" >/dev/null 2>&1 || { write_fail_report "$report" "$name" 1 "invalid JSON"; _gate_fail "$name" "invalid JSON" "false"; return 0; }
-
-  write_pass_report "$report" "$name"
-  _gate_pass "$name"
+  write_fail_report "$report" "$name" 1 "debt registry evaluator error"
+  _gate_fail "$name" "debt registry evaluator failed" "false"
   return 0
 }
 
@@ -1619,40 +1883,135 @@ gate_playbook_contract() {
   local tier="$QCFG_CRITICALITY"
   [[ "$tier" == "critical" ]] && playbook_enabled=true
 
-  if [[ "$playbook_enabled" != "true" ]]; then
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for playbook contract evaluator" "false"
+    return 0
+  fi
+
+  local eval_rc=0
+  if hook_rust_runtime_invoke playbook-contract-eval --project-dir "$PROJECT_DIR" --report "$report" --model "$model" --enabled "$playbook_enabled" >/dev/null 2>&1; then
+    eval_rc=0
+  else
+    eval_rc=$?
+  fi
+
+  if [[ "$eval_rc" -eq 0 ]]; then
+    _gate_pass "$name"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 3 ]]; then
+    write_na_report "$report" "$name"
+    _gate_na "$name" "not required"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local errors missing_playbooks
+    errors="$($JQ_CMD -r '.error_count // 1' "$report" 2>/dev/null || echo 1)"
+    missing_playbooks="$($JQ_CMD -r '(.missing // []) | join(",")' "$report" 2>/dev/null || echo "")"
+    write_fail_report "$report" "$name" "$errors" "Missing: $missing_playbooks"
+    _gate_fail "$name" "$errors playbook issue(s): $missing_playbooks" "false"
+    return 0
+  fi
+  write_fail_report "$report" "$name" 1 "playbook contract evaluator error"
+  _gate_fail "$name" "playbook contract evaluator failed" "false"
+  return 0
+}
+
+# ============================================================================
+# Gate 27: metric-contracts-gate
+# Enforces hard quality/security/reliability/extensibility metric contracts.
+# ============================================================================
+gate_metric_contracts() {
+  local name="metric-contracts"
+  local report="$VERIFY_DIR/metric-contracts-gate.json"
+  local contract="$PROJECT_DIR/contracts/metric-contracts.json"
+  local metrics="$VERIFY_DIR/quality-metrics.json"
+
+  [[ -f "$QUALITY_CONFIG" ]] || { write_na_report "$report" "$name"; _gate_na "$name" "no quality.json"; return 0; }
+
+  local enforce="$QCFG_METRIC_CONTRACTS_ENFORCE"
+  local tier="$QCFG_CRITICALITY"
+  [[ "$tier" == "critical" ]] && enforce=true
+
+  if [[ "$enforce" != "true" ]]; then
     write_na_report "$report" "$name"
     _gate_na "$name" "not required"
     return 0
   fi
 
-  local errors=0 missing_playbooks=""
-  if [[ "$model" == "brownfield" || "$model" == "hybrid" ]]; then
-    [[ -f "$PROJECT_DIR/contracts/playbooks/brownfield.playbook.json" ]] || { errors=$((errors+1)); missing_playbooks="${missing_playbooks:+$missing_playbooks,}brownfield.playbook.json"; }
-  fi
-  if [[ "$model" == "greenfield" || "$model" == "hybrid" ]]; then
-    [[ -f "$PROJECT_DIR/contracts/playbooks/greenfield.playbook.json" ]] || { errors=$((errors+1)); missing_playbooks="${missing_playbooks:+$missing_playbooks,}greenfield.playbook.json"; }
-  fi
-  if [[ "$model" == "auto" ]]; then
-    [[ -f "$PROJECT_DIR/contracts/playbooks/brownfield.playbook.json" ]] || [[ -f "$PROJECT_DIR/contracts/playbooks/greenfield.playbook.json" ]] || { errors=$((errors+1)); missing_playbooks="${missing_playbooks:+$missing_playbooks}playbook"; }
+  if [[ ! -f "$contract" ]]; then
+    write_fail_report "$report" "$name" 1 "missing contracts/metric-contracts.json"
+    _gate_fail "$name" "missing metric contract" "true"
+    return 0
   fi
 
-  for pb in "$PROJECT_DIR/contracts/playbooks/brownfield.playbook.json" "$PROJECT_DIR/contracts/playbooks/greenfield.playbook.json"; do
-    [[ -f "$pb" ]] || continue
-    $JQ_CMD -e '.name and .version and .delivery_model' "$pb" >/dev/null 2>&1 || { errors=$((errors+1)); }
-  done
+  # Minimal shape validation (schema-based validation can be layered separately).
+  if ! $JQ_CMD -e '
+    (.version | type == "string") and
+    (.enforcement | type == "object") and
+    (.domains | type == "object")
+  ' "$contract" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "invalid metric contract shape"
+    _gate_fail "$name" "invalid metric contract shape" "true"
+    return 0
+  fi
 
-  if [[ "$errors" -gt 0 ]]; then
-    write_fail_report "$report" "$name" "$errors" "Missing: $missing_playbooks"
-    _gate_fail "$name" "$errors playbook issue(s): $missing_playbooks" "false"
+  local require_metrics
+  require_metrics="$($JQ_CMD -r '.enforcement.require_metrics_report // true' "$contract" 2>/dev/null || echo true)"
+  local fail_closed
+  fail_closed="$($JQ_CMD -r '.enforcement.fail_closed // true' "$contract" 2>/dev/null || echo true)"
+  local metrics_path_cfg
+  metrics_path_cfg="$($JQ_CMD -r '.enforcement.metrics_report_path // ".claude/verification/quality-metrics.json"' "$contract" 2>/dev/null || echo ".claude/verification/quality-metrics.json")"
+  if [[ "$metrics_path_cfg" == /* ]]; then
+    metrics="$metrics_path_cfg"
   else
+    metrics="$PROJECT_DIR/$metrics_path_cfg"
+  fi
+
+  if [[ "$require_metrics" == "true" && ! -f "$metrics" ]]; then
+    write_fail_report "$report" "$name" 1 "missing quality-metrics.json"
+    _gate_fail "$name" "required metrics report missing ($metrics)" "$fail_closed"
+    return 0
+  fi
+
+  # If metrics report is optional and absent, pass contract presence/shape only.
+  if [[ ! -f "$metrics" ]]; then
     write_pass_report "$report" "$name"
     _gate_pass "$name"
+    return 0
   fi
+
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for metric contracts evaluator" "$fail_closed"
+    return 0
+  fi
+
+  local eval_rc=0
+  if hook_rust_runtime_invoke metric-contracts-eval --contract "$contract" --metrics "$metrics" --report "$report" >/dev/null 2>&1; then
+    eval_rc=0
+  else
+    eval_rc=$?
+  fi
+  if [[ "$eval_rc" -eq 0 ]]; then
+    _gate_pass "$name"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local violations
+    violations="$($JQ_CMD -r '.error_count // 0' "$report" 2>/dev/null || echo 1)"
+    _gate_fail "$name" "$violations metric contract violation(s)" "$fail_closed"
+    return 0
+  fi
+
+  write_fail_report "$report" "$name" 1 "metric contract evaluator error"
+  _gate_fail "$name" "metric contract evaluator failed" "$fail_closed"
   return 0
 }
 
 # ============================================================================
-# Gate 27: scc-metrics-gate
+# Gate 28: scc-metrics-gate
 # Collect codebase metrics via scc (faster cloc).
 # ============================================================================
 gate_scc_metrics() {
@@ -1804,6 +2163,7 @@ main() {
   _run_gate gate_artifact_quality "artifact_quality"
   _run_gate gate_debt_registry "debt_registry"
   _run_gate gate_playbook_contract "playbook_contract"
+  _run_gate gate_metric_contracts "metric_contracts"
   _run_gate gate_scc_metrics "scc_metrics"
   _collect_gate_results
   rm -f "$_gate_tmpdir"/*.result
@@ -1820,6 +2180,7 @@ main() {
   # --- Batch 3: Async-results-dependent gates ---
   # These call _load_async_results or use RESULTS_FILE
   _run_gate gate_reliability "reliability" &
+  _run_gate gate_regression_spiral_guard "regression_spiral_guard" &
   _run_gate gate_reliability_slo "reliability_slo" &
   _run_gate gate_flake_quarantine "flake_quarantine" &
   _run_gate gate_verifier_dispute "verifier_dispute" &
@@ -1863,8 +2224,11 @@ main() {
   return 0
 }
 
-# Run main, capture output, cache result
-_output=$(main 2>&1); _rc=$?
+# Run main, capture output, cache result (including fail-closed rc=2)
+set +e
+_output=$(main 2>&1)
+_rc=$?
+set -e
 hook_cache_write "$_cache_key" "$_rc" "$_output"
 # Also write ultra-fast cache file
 mkdir -p "$_CACHE_DIR" 2>/dev/null || true

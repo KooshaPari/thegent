@@ -1,0 +1,371 @@
+use std::fs;
+use std::path::PathBuf;
+use std::process::Command;
+
+fn hooks_bin() -> PathBuf {
+    if let Ok(v) = std::env::var("CARGO_BIN_EXE_thegent-hooks") {
+        return PathBuf::from(v);
+    }
+    let mut p = std::env::current_exe().expect("current_exe");
+    p.pop();
+    p.pop();
+    p.join("thegent-hooks")
+}
+
+fn run(args: &[&str]) -> std::process::Output {
+    Command::new(hooks_bin()).args(args).output().expect("run binary")
+}
+
+#[test]
+fn help_lists_new_governance_evaluators() {
+    let out = run(&["help"]);
+    assert!(out.status.success());
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(stdout.contains("artifact-quality-eval"));
+    assert!(stdout.contains("playbook-contract-eval"));
+    assert!(stdout.contains("debt-registry-eval"));
+    assert!(stdout.contains("formal-registry-eval"));
+    assert!(stdout.contains("methodology-eval"));
+    assert!(stdout.contains("reliability-eval"));
+    assert!(stdout.contains("reliability-slo-eval"));
+    assert!(stdout.contains("flake-quarantine-eval"));
+}
+
+#[test]
+fn debt_registry_passes_with_valid_json() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let debt = tmp.path().join("debt-register.json");
+    let report = tmp.path().join("debt-report.json");
+    fs::write(&debt, "{\"items\":[],\"version\":\"1\"}").expect("write debt");
+
+    let out = run(&[
+        "debt-registry-eval",
+        "--debt",
+        debt.to_str().expect("debt path"),
+        "--report",
+        report.to_str().expect("report path"),
+        "--enabled",
+        "true",
+    ]);
+    assert!(out.status.success());
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(true));
+}
+
+#[test]
+fn formal_registry_fails_for_invalid_json() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let registry = tmp.path().join("FORMAL_REGISTRY.json");
+    let report = tmp.path().join("formal-report.json");
+    fs::write(&registry, "not-json").expect("write registry");
+
+    let out = run(&[
+        "formal-registry-eval",
+        "--registry",
+        registry.to_str().expect("registry path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(
+        report_json.get("reason").and_then(|v| v.as_str()),
+        Some("invalid_json")
+    );
+}
+
+#[test]
+fn playbook_auto_fails_when_missing() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let project_dir = tmp.path().join("project");
+    let report = tmp.path().join("playbook-report.json");
+    fs::create_dir_all(&project_dir).expect("create project");
+
+    let out = run(&[
+        "playbook-contract-eval",
+        "--project-dir",
+        project_dir.to_str().expect("project path"),
+        "--report",
+        report.to_str().expect("report path"),
+        "--model",
+        "auto",
+        "--enabled",
+        "true",
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(false));
+}
+
+#[test]
+fn artifact_quality_not_applicable_returns_three() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let project_dir = tmp.path().join("project");
+    let verify_dir = tmp.path().join("verify");
+    let report = tmp.path().join("artifact-report.json");
+    fs::create_dir_all(&project_dir).expect("create project");
+    fs::create_dir_all(&verify_dir).expect("create verify");
+
+    let out = run(&[
+        "artifact-quality-eval",
+        "--project-dir",
+        project_dir.to_str().expect("project path"),
+        "--verify-dir",
+        verify_dir.to_str().expect("verify path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert_eq!(out.status.code(), Some(3));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(
+        report_json.get("status").and_then(|v| v.as_str()),
+        Some("not_applicable")
+    );
+}
+
+#[test]
+fn methodology_eval_passes_when_attestation_is_clean() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let attestation = tmp.path().join("qa-attestation.json");
+    let report = tmp.path().join("methodology-report.json");
+    fs::write(
+        &attestation,
+        r#"{
+          "summary": {"fr_total": 4, "fr_covered": 4},
+          "methodology": {
+            "test_first": {"missing_test_pairs": []},
+            "missing_required_test_types": []
+          }
+        }"#,
+    )
+    .expect("write attestation");
+
+    let out = run(&[
+        "methodology-eval",
+        "--attestation",
+        attestation.to_str().expect("attestation path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert!(out.status.success());
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(true));
+}
+
+#[test]
+fn methodology_eval_fails_when_methodology_has_gaps() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let attestation = tmp.path().join("qa-attestation.json");
+    let report = tmp.path().join("methodology-report.json");
+    fs::write(
+        &attestation,
+        r#"{
+          "summary": {"fr_total": 3, "fr_covered": 1},
+          "methodology": {
+            "test_first": {"missing_test_pairs": ["FR-1"]},
+            "missing_required_test_types": ["integration"]
+          }
+        }"#,
+    )
+    .expect("write attestation");
+
+    let out = run(&[
+        "methodology-eval",
+        "--attestation",
+        attestation.to_str().expect("attestation path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(3));
+}
+
+#[test]
+fn methodology_eval_not_applicable_when_attestation_missing() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let attestation = tmp.path().join("missing-qa-attestation.json");
+    let report = tmp.path().join("methodology-report.json");
+
+    let out = run(&[
+        "methodology-eval",
+        "--attestation",
+        attestation.to_str().expect("attestation path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert_eq!(out.status.code(), Some(3));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(
+        report_json.get("status").and_then(|v| v.as_str()),
+        Some("not_applicable")
+    );
+}
+
+#[test]
+fn reliability_eval_fails_when_flake_exceeds_threshold() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let results = tmp.path().join("results.json");
+    let report = tmp.path().join("reliability-report.json");
+    fs::write(&results, r#"{"total":10,"failed":2,"flaky":3}"#).expect("write results");
+
+    let out = run(&[
+        "reliability-eval",
+        "--results",
+        results.to_str().expect("results path"),
+        "--max-flake",
+        "0.10",
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(false));
+}
+
+#[test]
+fn reliability_slo_warns_in_advisory_mode() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let results = tmp.path().join("results.json");
+    let report = tmp.path().join("slo-report.json");
+    fs::write(&results, r#"{"total":10,"failed":2,"flaky":3}"#).expect("write results");
+
+    let out = run(&[
+        "reliability-slo-eval",
+        "--results",
+        results.to_str().expect("results path"),
+        "--report",
+        report.to_str().expect("report path"),
+        "--tier",
+        "established",
+        "--enabled",
+        "false",
+        "--max-flake",
+        "0.10",
+        "--min-pass",
+        "0.90",
+    ]);
+    assert!(out.status.success());
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(0));
+    assert_eq!(report_json.get("warn_count").and_then(|v| v.as_u64()), Some(2));
+}
+
+#[test]
+fn reliability_slo_fails_in_enforced_mode() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let results = tmp.path().join("results.json");
+    let report = tmp.path().join("slo-report.json");
+    fs::write(&results, r#"{"total":10,"failed":2,"flaky":3}"#).expect("write results");
+
+    let out = run(&[
+        "reliability-slo-eval",
+        "--results",
+        results.to_str().expect("results path"),
+        "--report",
+        report.to_str().expect("report path"),
+        "--tier",
+        "critical",
+        "--enabled",
+        "true",
+        "--max-flake",
+        "0.10",
+        "--min-pass",
+        "0.90",
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(2));
+    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(false));
+}
+
+#[test]
+fn flake_quarantine_warns_in_advisory_mode_for_expired_entries() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let results = tmp.path().join("results.json");
+    let quarantine = tmp.path().join("flaky-tests.json");
+    let report = tmp.path().join("flake-report.json");
+    fs::write(&results, r#"{"total":10,"failed":0,"flaky":0}"#).expect("write results");
+    fs::write(
+        &quarantine,
+        r#"{"generated_at":"2026-01-01T00:00:00Z","entries":[{"test_id":"a","reason":"detected_flaky","introduced_at":"2026-01-01T00:00:00Z","expires_at":"2000-01-01T00:00:00Z","owner":"qa-system","status":"active"}]}"#,
+    )
+    .expect("write quarantine");
+
+    let out = run(&[
+        "flake-quarantine-eval",
+        "--results",
+        results.to_str().expect("results path"),
+        "--quarantine",
+        quarantine.to_str().expect("quarantine path"),
+        "--report",
+        report.to_str().expect("report path"),
+        "--tier",
+        "established",
+        "--enabled",
+        "false",
+        "--ttl-days",
+        "14",
+    ]);
+    assert!(out.status.success());
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("warn_count").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(0));
+}
+
+#[test]
+fn flake_quarantine_fails_in_enforced_mode_for_expired_entries() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let results = tmp.path().join("results.json");
+    let quarantine = tmp.path().join("flaky-tests.json");
+    let report = tmp.path().join("flake-report.json");
+    fs::write(&results, r#"{"total":10,"failed":0,"flaky":0}"#).expect("write results");
+    fs::write(
+        &quarantine,
+        r#"{"generated_at":"2026-01-01T00:00:00Z","entries":[{"test_id":"a","reason":"detected_flaky","introduced_at":"2026-01-01T00:00:00Z","expires_at":"2000-01-01T00:00:00Z","owner":"qa-system","status":"active"}]}"#,
+    )
+    .expect("write quarantine");
+
+    let out = run(&[
+        "flake-quarantine-eval",
+        "--results",
+        results.to_str().expect("results path"),
+        "--quarantine",
+        quarantine.to_str().expect("quarantine path"),
+        "--report",
+        report.to_str().expect("report path"),
+        "--tier",
+        "critical",
+        "--enabled",
+        "true",
+        "--ttl-days",
+        "14",
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(1));
+}
