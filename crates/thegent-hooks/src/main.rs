@@ -143,6 +143,7 @@ fn print_help() {
     println!("    reliability-slo-eval    Native reliability SLO evaluator");
     println!("    flake-quarantine-eval   Native flaky test quarantine evaluator");
     println!("    verifier-dispute-eval   Native verifier dispute evaluator");
+    println!("    claim-lifecycle-eval    Native claim lifecycle evaluator");
     println!("    methodology-eval        Native methodology attestation evaluator");
     println!("    artifact-quality-eval   Native artifact quality evaluator");
     println!("    playbook-contract-eval  Native playbook contract evaluator");
@@ -3067,6 +3068,169 @@ fn cmd_verifier_dispute_eval() {
     }
 }
 
+fn cmd_claim_lifecycle_eval() {
+    let args: Vec<String> = env::args().collect();
+    let mut statement_path: Option<String> = None;
+    let mut project_dir: Option<String> = None;
+    let mut report_path: Option<String> = None;
+
+    let mut i = 2usize;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--statement" if i + 1 < args.len() => {
+                statement_path = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--project-dir" if i + 1 < args.len() => {
+                project_dir = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--report" if i + 1 < args.len() => {
+                report_path = Some(args[i + 1].clone());
+                i += 2;
+            }
+            _ => {
+                eprintln!("CLAIM_LIFECYCLE FAIL: usage: thegent-hooks claim-lifecycle-eval --statement <path> --project-dir <path> --report <path>");
+                exit(2);
+            }
+        }
+    }
+
+    let statement_path = statement_path.unwrap_or_else(|| {
+        eprintln!("CLAIM_LIFECYCLE FAIL: missing --statement");
+        exit(2);
+    });
+    let project_dir = project_dir.unwrap_or_else(|| {
+        eprintln!("CLAIM_LIFECYCLE FAIL: missing --project-dir");
+        exit(2);
+    });
+    let report_path = report_path.unwrap_or_else(|| {
+        eprintln!("CLAIM_LIFECYCLE FAIL: missing --report");
+        exit(2);
+    });
+
+    let statement_path_buf = PathBuf::from(&statement_path);
+    let report_path_buf = PathBuf::from(&report_path);
+    if let Some(parent) = report_path_buf.parent() {
+        if let Err(e) = fs::create_dir_all(parent) {
+            eprintln!(
+                "CLAIM_LIFECYCLE FAIL: cannot create report dir {}: {}",
+                parent.display(),
+                e
+            );
+            exit(2);
+        }
+    }
+
+    if !statement_path_buf.is_file() {
+        let report_json = json!({
+            "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            "status": "not_applicable",
+            "error_count": 0,
+            "pass": true
+        });
+        let _ = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        );
+        exit(3);
+    }
+
+    let raw = match fs::read_to_string(&statement_path_buf) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!(
+                "CLAIM_LIFECYCLE FAIL: cannot read statement {}: {}",
+                statement_path_buf.display(),
+                e
+            );
+            exit(2);
+        }
+    };
+    let parsed: Value = match serde_json::from_str(&raw) {
+        Ok(v) => v,
+        Err(_) => {
+            let report_json = json!({
+                "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                "error_count": 1,
+                "reason": "invalid_statement_json",
+                "pass": false
+            });
+            let _ = fs::write(
+                &report_path_buf,
+                serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+            );
+            exit(1);
+        }
+    };
+
+    let mut refs: Vec<String> = Vec::new();
+    if let Some(stmts) = parsed.get("statements").and_then(|v| v.as_array()) {
+        for stmt in stmts {
+            let kind = stmt.get("kind").and_then(|v| v.as_str()).unwrap_or("");
+            if !["observation", "claim", "decision", "risk"].contains(&kind) {
+                continue;
+            }
+            if let Some(evidence) = stmt.get("evidence").and_then(|v| v.as_array()) {
+                for item in evidence {
+                    if let Some(r) = item.as_str() {
+                        if !r.is_empty() {
+                            refs.push(r.to_string());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    refs.sort();
+    refs.dedup();
+
+    let mut errors: u64 = 0;
+    let mut missing: Vec<String> = Vec::new();
+    for r in refs {
+        if let Some(rel) = r.strip_prefix("file://") {
+            let path = PathBuf::from(&project_dir).join(rel);
+            if !path.is_file() {
+                errors += 1;
+                missing.push(r);
+            }
+            continue;
+        }
+        if r.starts_with("att://")
+            || r.starts_with("prov://")
+            || r.starts_with("test://")
+            || r.starts_with("sarif://")
+            || r.starts_with("onchain://")
+            || r.starts_with("url://")
+        {
+            continue;
+        }
+        errors += 1;
+        missing.push(r);
+    }
+
+    let report_json = json!({
+        "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+        "error_count": errors,
+        "missing": missing,
+        "pass": errors == 0
+    });
+    if let Err(e) = fs::write(
+        &report_path_buf,
+        serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+    ) {
+        eprintln!(
+            "CLAIM_LIFECYCLE FAIL: cannot write report {}: {}",
+            report_path_buf.display(),
+            e
+        );
+        exit(2);
+    }
+    if errors > 0 {
+        exit(1);
+    }
+}
+
 fn cmd_methodology_eval() {
     let args: Vec<String> = env::args().collect();
     let mut attestation_path: Option<String> = None;
@@ -4085,6 +4249,7 @@ fn main() {
         "reliability-slo-eval" => cmd_reliability_slo_eval(),
         "flake-quarantine-eval" => cmd_flake_quarantine_eval(),
         "verifier-dispute-eval" => cmd_verifier_dispute_eval(),
+        "claim-lifecycle-eval" => cmd_claim_lifecycle_eval(),
         "methodology-eval" => cmd_methodology_eval(),
         "artifact-quality-eval" => cmd_artifact_quality_eval(),
         "playbook-contract-eval" => cmd_playbook_contract_eval(),

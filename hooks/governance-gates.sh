@@ -181,7 +181,7 @@ _model_is() {
 }
 
 # Helper: SCRIPT_DIR / REPO_ROOT (for schema validation references)
-_HOOKS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_HOOKS_DIR="$(cd "$_GG_SCRIPT_DIR" && pwd)"
 _REPO_ROOT="$(cd "$_HOOKS_DIR/.." && pwd)"
 
 _validate_json_schema() {
@@ -587,52 +587,38 @@ gate_claim_lifecycle() {
   local stmt="$VERIFY_DIR/agent-statement.json"
   local report="$VERIFY_DIR/claim-lifecycle-gate.json"
 
-  if [[ ! -f "$stmt" ]]; then
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for claim lifecycle evaluator" "${QA_CLAIM_LIFECYCLE_FAIL_CLOSED:-false}"
+    return 0
+  fi
+
+  local eval_rc=0
+  if hook_rust_runtime_invoke claim-lifecycle-eval --statement "$stmt" --project-dir "$PROJECT_DIR" --report "$report" >/dev/null 2>&1; then
+    eval_rc=0
+  else
+    eval_rc=$?
+  fi
+
+  if [[ "$eval_rc" -eq 0 ]]; then
+    _gate_pass "$name"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 3 ]]; then
     write_na_report "$report" "$name"
     _gate_na "$name" "no agent-statement.json"
     return 0
   fi
-
-  local refs
-  refs="$($JQ_CMD -r '
-    [.statements[]? | select(.kind | IN("observation","claim","decision","risk")) | .evidence[]?]
-    | unique[]
-  ' "$stmt" 2>/dev/null || true)"
-
-  if [[ -z "$refs" ]]; then
-    write_pass_report "$report" "$name"
-    _gate_pass "$name"
-    return 0
-  fi
-
-  local errors=0 missing=""
-  while IFS= read -r ref; do
-    [[ -z "$ref" ]] && continue
-    case "$ref" in
-      file://*)
-        local rel="${ref#file://}"
-        local path="$PROJECT_DIR/$rel"
-        if [[ ! -f "$path" ]]; then
-          errors=$((errors + 1))
-          missing="${missing:+$missing }$ref"
-        fi
-        ;;
-      att://*|prov://*|test://*|sarif://*|onchain://*|url://*)
-        ;; # external refs: pass
-      *)
-        errors=$((errors + 1))
-        missing="${missing:+$missing }$ref"
-        ;;
-    esac
-  done <<< "$refs"
-
-  if [[ "$errors" -gt 0 ]]; then
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local errors missing
+    errors="$($JQ_CMD -r '.error_count // 1' "$report" 2>/dev/null || echo 1)"
+    missing="$($JQ_CMD -r '(.missing // []) | join(" ")' "$report" 2>/dev/null || echo "")"
     write_fail_report "$report" "$name" "$errors" "Missing evidence: $missing"
     _gate_fail "$name" "missing evidence refs: $missing" "${QA_CLAIM_LIFECYCLE_FAIL_CLOSED:-false}"
-  else
-    write_pass_report "$report" "$name"
-    _gate_pass "$name"
+    return 0
   fi
+  write_fail_report "$report" "$name" 1 "claim lifecycle evaluator error"
+  _gate_fail "$name" "claim lifecycle evaluator failed" "${QA_CLAIM_LIFECYCLE_FAIL_CLOSED:-false}"
   return 0
 }
 
@@ -844,6 +830,7 @@ gate_regression_spiral_guard() {
       if (score > 1.0) score = 1.0;
       printf "%.6f", score;
     }')"
+  [[ -n "$pressure_score" ]] || pressure_score="0.000000"
 
   local policy_band="green"
   policy_band="$(awk -v score="$pressure_score" 'BEGIN {
@@ -2279,6 +2266,8 @@ _rc=$?
 set -e
 hook_cache_write "$_cache_key" "$_rc" "$_output"
 # Also write ultra-fast cache file
+: "${_CACHE_DIR:=${HOOK_CACHE_DIR:-${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)}}"
+: "${_CACHE_FILE:=${_CACHE_DIR}/governance-gates.last}"
 mkdir -p "$_CACHE_DIR" 2>/dev/null || true
 echo "$_output" > "$_CACHE_FILE" 2>/dev/null || true
 [[ -n "$_output" ]] && echo "$_output"
