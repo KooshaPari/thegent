@@ -440,52 +440,39 @@ gate_elicitation_closure() {
   local name="elicitation-closure"
   local fail_closed="${QA_ELICITATION_FAIL_CLOSED:-false}"
   local ledger="$PROJECT_DIR/contracts/ledger.json"
-
-  [[ -f "$ledger" ]] || { _gate_na "$name" "no ledger.json"; return 0; }
-
+  local report="$VERIFY_DIR/elicitation-closure-gate.json"
   local adr_doc="$PROJECT_DIR/ADR.md"
-  local adr_doc_content=""
-  [[ -f "$adr_doc" ]] && adr_doc_content=$(<"$adr_doc" 2>/dev/null) || true
-  local vcount=0
 
-  # P6: Extract id+source as TSV in a single jq call (was: jq per item + normalize-item.sh per .md)
-  # Instead of calling normalize-item.sh (Python3, ~200ms each), check for open_questions
-  # and decisions directly from the generated item JSON files (already produced by prdset-compiler).
-  while IFS=$'\t' read -r id src; do
-    [[ -z "$id" || -z "$src" ]] && continue
-
-    if [[ "$src" == *.md ]] && [[ -f "$src" ]]; then
-      # P6: Check generated item JSON instead of re-running normalize-item.sh
-      local gen_item="$PROJECT_DIR/contracts/items-generated/${id}.json"
-      if [[ -f "$gen_item" ]]; then
-        # Single jq call extracts open_questions count + decisions array
-        local _eli_raw
-        _eli_raw="$($JQ_CMD -r '[(.open_questions | length // 0 | tostring), ((.decisions // []) | join("\n"))] | @tsv' "$gen_item" 2>/dev/null || true)"
-        local oq_count="" decisions=""
-        IFS=$'\t' read -r oq_count decisions <<< "$_eli_raw"
-        if [[ "${oq_count:-0}" -gt 0 ]]; then
-          vcount=$((vcount + 1))
-        fi
-        # Check decisions against ADR doc
-        while IFS= read -r adr; do
-          [[ -z "$adr" ]] && continue
-          if [[ ! "$adr" =~ ^ADR- ]]; then
-            vcount=$((vcount + 1))
-          elif [[ -n "$adr_doc_content" ]] && [[ "$adr_doc_content" != *"$adr"* ]]; then
-            vcount=$((vcount + 1))
-          elif [[ -z "$adr_doc_content" ]]; then
-            vcount=$((vcount + 1))
-          fi
-        done <<< "$decisions"
-      fi
-    fi
-  done < <($JQ_CMD -r '.items[] | select((.state|ascii_downcase) as $s | ($s=="approved" or $s=="claimed" or $s=="evidence_submitted" or $s=="verified" or $s=="accepted" or $s=="released")) | [(.id // ""), (.source // "")] | @tsv' "$ledger" 2>/dev/null || true)
-
-  if [[ "$vcount" -gt 0 ]]; then
-    _gate_fail "$name" "$vcount elicitation violation(s)" "$fail_closed"
-  else
-    _gate_pass "$name"
+  if ! command -v "$(hook_rust_runtime_path)" >/dev/null 2>&1; then
+    write_fail_report "$report" "$name" 1 "rust runtime unavailable"
+    _gate_fail "$name" "rust runtime unavailable for elicitation closure evaluator" "$fail_closed"
+    return 0
   fi
+
+  local eval_rc=0
+  if hook_rust_runtime_invoke elicitation-closure-eval --ledger "$ledger" --project-dir "$PROJECT_DIR" --adr-doc "$adr_doc" --report "$report" >/dev/null 2>&1; then
+    eval_rc=0
+  else
+    eval_rc=$?
+  fi
+
+  if [[ "$eval_rc" -eq 0 ]]; then
+    _gate_pass "$name"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 3 ]]; then
+    write_na_report "$report" "$name"
+    _gate_na "$name" "no ledger.json"
+    return 0
+  fi
+  if [[ "$eval_rc" -eq 1 ]]; then
+    local vcount
+    vcount="$($JQ_CMD -r '.error_count // 1' "$report" 2>/dev/null || echo 1)"
+    _gate_fail "$name" "$vcount elicitation violation(s)" "$fail_closed"
+    return 0
+  fi
+  write_fail_report "$report" "$name" 1 "elicitation closure evaluator error"
+  _gate_fail "$name" "elicitation closure evaluator failed" "$fail_closed"
   return 0
 }
 

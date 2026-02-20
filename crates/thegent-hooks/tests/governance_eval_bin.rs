@@ -32,6 +32,7 @@ fn help_lists_new_governance_evaluators() {
     assert!(stdout.contains("verifier-dispute-eval"));
     assert!(stdout.contains("claim-lifecycle-eval"));
     assert!(stdout.contains("agent-claim-eval"));
+    assert!(stdout.contains("elicitation-closure-eval"));
 }
 
 #[test]
@@ -535,6 +536,94 @@ fn agent_claim_passes_when_evidence_present() {
         "agent-claim-eval",
         "--statement",
         stmt.to_str().expect("stmt path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert!(out.status.success());
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(true));
+}
+
+#[test]
+fn elicitation_closure_fails_when_open_questions_exist() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let project = tmp.path().join("project");
+    let contracts = project.join("contracts");
+    let items_generated = contracts.join("items-generated");
+    fs::create_dir_all(&items_generated).expect("create generated dir");
+    let source = project.join("story.md");
+    fs::write(&source, "story").expect("write source");
+    let ledger = contracts.join("ledger.json");
+    fs::write(
+        &ledger,
+        format!(
+            r#"{{"items":[{{"id":"I-1","source":"{}","state":"approved"}}]}}"#,
+            source.to_string_lossy()
+        ),
+    )
+    .expect("write ledger");
+    fs::write(
+        items_generated.join("I-1.json"),
+        r#"{"open_questions":["q1"],"decisions":[]}"#,
+    )
+    .expect("write item");
+    fs::write(project.join("ADR.md"), "ADR-001").expect("write adr");
+
+    let report = tmp.path().join("elicitation-report.json");
+    let out = run(&[
+        "elicitation-closure-eval",
+        "--ledger",
+        ledger.to_str().expect("ledger path"),
+        "--project-dir",
+        project.to_str().expect("project path"),
+        "--adr-doc",
+        project.join("ADR.md").to_str().expect("adr path"),
+        "--report",
+        report.to_str().expect("report path"),
+    ]);
+    assert_eq!(out.status.code(), Some(1));
+
+    let report_raw = fs::read_to_string(report).expect("read report");
+    let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
+    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(1));
+}
+
+#[test]
+fn elicitation_closure_passes_when_decisions_match_adr() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let project = tmp.path().join("project");
+    let contracts = project.join("contracts");
+    let items_generated = contracts.join("items-generated");
+    fs::create_dir_all(&items_generated).expect("create generated dir");
+    let source = project.join("story.md");
+    fs::write(&source, "story").expect("write source");
+    let ledger = contracts.join("ledger.json");
+    fs::write(
+        &ledger,
+        format!(
+            r#"{{"items":[{{"id":"I-1","source":"{}","state":"verified"}}]}}"#,
+            source.to_string_lossy()
+        ),
+    )
+    .expect("write ledger");
+    fs::write(
+        items_generated.join("I-1.json"),
+        r#"{"open_questions":[],"decisions":["ADR-001"]}"#,
+    )
+    .expect("write item");
+    fs::write(project.join("ADR.md"), "ADR-001\nsomething").expect("write adr");
+
+    let report = tmp.path().join("elicitation-report.json");
+    let out = run(&[
+        "elicitation-closure-eval",
+        "--ledger",
+        ledger.to_str().expect("ledger path"),
+        "--project-dir",
+        project.to_str().expect("project path"),
+        "--adr-doc",
+        project.join("ADR.md").to_str().expect("adr path"),
         "--report",
         report.to_str().expect("report path"),
     ]);
