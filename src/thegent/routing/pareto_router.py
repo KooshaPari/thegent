@@ -53,6 +53,7 @@ QUALITY_PROXY: dict[str, float] = {
     "gpt-4o": 0.85,
     "gpt-5.1-codex": 0.80,
     "gemini-3-flash": 0.78,
+    "gemini-3.1-pro": 0.90,
     "gemini-2.5-flash": 0.76,
     "gemini-2.0-flash": 0.72,
     "glm-5": 0.78,
@@ -83,7 +84,7 @@ class RouteCandidate:
 
 
 class ParetoRouter:
-    """Select the Pareto-optimal route that maximises quality per dollar.
+    """Select the Pareto-optimal route that maximises quality per dollar (WP-1004).
 
     A candidate is *dominated* when another candidate has both strictly lower cost
     AND strictly higher quality (or equal on both with one strictly better).  The
@@ -95,22 +96,37 @@ class ParetoRouter:
     """
 
     def select(self, candidates: list[RouteCandidate]) -> RouteCandidate:
-        """Return the best Pareto-optimal candidate.
-
-        Args:
-            candidates: Non-empty list of route candidates.
-
-        Returns:
-            The selected ``RouteCandidate``.
-
-        Raises:
-            ValueError: If *candidates* is empty.
-        """
+        """Return the best Pareto-optimal candidate using default balanced strategy."""
         if not candidates:
             raise ValueError("candidates must be non-empty")
 
         frontier = self._pareto_frontier(candidates)
         return self._best_from_frontier(frontier)
+
+    def select_by_strategy(self, strategy: str, candidates: list[RouteCandidate]) -> RouteCandidate:
+        """Applies a strategy slice to the Pareto Front (cost, speed, quality, balanced)."""
+        if not candidates:
+            raise ValueError("candidates must be non-empty")
+
+        frontier = self._pareto_frontier(candidates)
+        if not frontier:
+            return candidates[0]
+
+        if strategy == "cost":
+            return min(frontier, key=lambda p: p.cost_per_1k)
+        if strategy == "quality":
+            return max(frontier, key=lambda p: p.quality_score)
+        if strategy == "speed":
+            # Speed is proxied by cost in this simplified model (cheaper models are usually faster)
+            # In a real model, we'd have a separate latency metric.
+            return min(frontier, key=lambda p: p.cost_per_1k)
+
+        # Default to balanced
+        return self._best_from_frontier(frontier)
+
+    def get_optimal_providers(self, candidates: list[RouteCandidate]) -> list[RouteCandidate]:
+        """Returns the non-dominated set (Pareto Front)."""
+        return self._pareto_frontier(candidates)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -128,11 +144,7 @@ class ParetoRouter:
         """Return non-dominated candidates."""
         frontier: list[RouteCandidate] = []
         for candidate in candidates:
-            if not any(
-                self._is_dominated(candidate, other)
-                for other in candidates
-                if other is not candidate
-            ):
+            if not any(self._is_dominated(candidate, other) for other in candidates if other is not candidate):
                 frontier.append(candidate)
         return frontier
 
@@ -142,6 +154,7 @@ class ParetoRouter:
         all_zero_cost = all(c.cost_per_1k == 0.0 for c in frontier)
         if all_zero_cost:
             return max(frontier, key=lambda c: c.quality_score)
+
         # Among candidates with positive cost, prefer quality/cost ratio.
         # Zero-cost candidates are implicitly infinite ratio — treat them as best.
         def _ratio(c: RouteCandidate) -> float:

@@ -1,6 +1,7 @@
+import re
 import sys
 import urllib.parse
-import re
+
 
 def main():
     content = sys.stdin.read()

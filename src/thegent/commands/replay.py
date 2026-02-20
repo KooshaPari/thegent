@@ -150,11 +150,7 @@ def replay_run(
                 )
             )
         else:
-            console.print(
-                f"[dim]{event.timestamp:.3f}[/dim] "
-                f"[bold cyan]{event.event_type}[/bold cyan]: "
-                f"{event.data}"
-            )
+            console.print(f"[dim]{event.timestamp:.3f}[/dim] [bold cyan]{event.event_type}[/bold cyan]: {event.data}")
 
 
 @app.command("diff")
@@ -210,7 +206,12 @@ def replay_diff(
     console = Console()
     console.print(f"[bold]Diff[/bold]: {sess_a.session_id}  vs  {sess_b.session_id}")
 
-    if not diff["metadata_diff"] and not diff["events_changed"] and not diff["events_added"] and not diff["events_removed"]:
+    if (
+        not diff["metadata_diff"]
+        and not diff["events_changed"]
+        and not diff["events_added"]
+        and not diff["events_removed"]
+    ):
         console.print("[green]Sessions are identical.[/green]")
         return
 

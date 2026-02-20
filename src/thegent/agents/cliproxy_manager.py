@@ -19,7 +19,8 @@ from typing import Any
 import httpx
 
 from thegent.config import ThegentSettings
-from thegent.infra import run_subprocess_optimized, yaml_dump, yaml_load
+from thegent.infra.fast_subprocess import run_subprocess_optimized
+from thegent.infra.fast_yaml_parser import yaml_dump, yaml_load
 
 
 # Lazy imports for better startup performance
@@ -539,9 +540,9 @@ def _start_proxy_and_wait(
             text=bool(stderr_target),
         )
     else:
+        # cli-proxy-api-plus does not support a -debug CLI flag.
+        # Keep stderr capture for diagnostics but avoid passing unsupported args.
         args = [binary, "-config", str(config_path)]
-        if settings.debug:
-            args.append("-debug")
         stderr_target = subprocess.PIPE if settings.debug else None
 
         proc = subprocess.Popen(

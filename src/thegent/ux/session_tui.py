@@ -13,7 +13,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from thegent.cli_impl import (
+from thegent.cli.commands.impl import (
     _find_session_meta,
     _is_pid_running,
     _read_session_meta,
@@ -42,6 +42,9 @@ class SessionTUI:
             if not pid or not _is_pid_running(pid):
                 return []
 
+            # QOL: Enhanced human-only monitoring
+            is_agent = self.settings.agent_id != "default-agent"
+
             # Find child processes
             subagents = []
             try:
@@ -54,7 +57,8 @@ class SessionTUI:
                         # Check if it's an agent process
                         agent_name = "unknown"
                         if any(
-                            agent in cmd_str.lower() for agent in ["thegent", "codex", "copilot", "claude", "cursor"]
+                            agent in cmd_str.lower()
+                            for agent in ["thegent", "codex", "copilot", "claude", "cursor", "uv", "bun", "cargo"]
                         ):
                             if "thegent" in cmd_str.lower():
                                 agent_name = "thegent"
@@ -66,6 +70,17 @@ class SessionTUI:
                                 agent_name = "claude"
                             elif "cursor" in cmd_str.lower():
                                 agent_name = "cursor"
+                            elif "uv" in cmd_str.lower():
+                                agent_name = "uv"
+                            elif "bun" in cmd_str.lower():
+                                agent_name = "bun"
+                            elif "cargo" in cmd_str.lower():
+                                agent_name = "cargo"
+
+                        # DX: Richer info for humans
+                        cpu_percent = child.cpu_percent(interval=0.1)
+                        memory_info = child.memory_info()
+                        memory_mb = memory_info.rss / 1024 / 1024
 
                         subagents.append(
                             {
@@ -73,9 +88,11 @@ class SessionTUI:
                                 "ppid": child.ppid(),
                                 "agent": agent_name,
                                 "cmd": cmd_str[:60] + ("..." if len(cmd_str) > 60 else ""),
-                                "memory_mb": child.memory_info().rss / 1024 / 1024,
-                                "cpu_percent": child.cpu_percent(interval=0.1),
+                                "memory_mb": memory_mb,
+                                "cpu_percent": cpu_percent,
                                 "status": child.status(),
+                                "num_fds": child.num_fds() if not is_agent and hasattr(child, "num_fds") else "N/A",
+                                "create_time": child.create_time(),
                             }
                         )
                     except (psutil.NoSuchProcess, psutil.AccessDenied):

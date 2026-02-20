@@ -47,7 +47,7 @@ def _inject_missing_names() -> None:
     the module level. We inject stubs so that ``@patch(..., create=True)`` is
     not needed and patching targets are available.
     """
-    from thegent.cli_impl import _default_owner_tag, _resolve_cwd
+    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd
 
     if not hasattr(_mcp_mod, "_resolve_cwd"):
         _mcp_mod._resolve_cwd = _resolve_cwd  # type: ignore[attr-defined]

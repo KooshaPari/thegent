@@ -114,18 +114,16 @@ class SupermemoryClient:
         Raises:
             SupermemoryConfigError: If no API key is available.
         """
-        resolved_key = api_key or os.environ.get("THGENT_SUPERMEMORY_API_KEY", "")
+        from thegent.config import ThegentSettings
+
+        settings = ThegentSettings()
+        resolved_key = api_key or settings.supermemory_api_key or ""
         if not resolved_key:
             raise SupermemoryConfigError(
-                "Supermemory API key is required. "
-                "Set THGENT_SUPERMEMORY_API_KEY or pass api_key= to SupermemoryClient."
+                "Supermemory API key is required. Set THGENT_SUPERMEMORY_API_KEY or pass api_key= to SupermemoryClient."
             )
 
-        resolved_url = (
-            base_url
-            or os.environ.get("THGENT_SUPERMEMORY_BASE_URL", "")
-            or _DEFAULT_BASE_URL
-        ).rstrip("/")
+        resolved_url = (base_url or settings.supermemory_base_url or _DEFAULT_BASE_URL).rstrip("/")
 
         self._base_url = resolved_url
         self._headers = {

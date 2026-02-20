@@ -130,10 +130,7 @@ class MacOSDesktopAutomation:
         Returns:
             Application name string, or None if the query fails.
         """
-        script = (
-            'tell application "System Events" to get name of first '
-            "application process whose frontmost is true"
-        )
+        script = 'tell application "System Events" to get name of first application process whose frontmost is true'
         result = self.run_applescript(script)
         if result.success and result.output:
             return result.output

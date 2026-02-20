@@ -70,9 +70,11 @@ def print_error(message: str, hint: str | None = None, console=None) -> None:
     if console is None:
         try:
             from thegent.cli import console as cli_console
+
             console = cli_console
         except ImportError:
             from rich.console import Console
+
             console = Console()
 
     # Try to find a hint if none provided

@@ -45,23 +45,26 @@ def shell_status() -> None:
     env_table.add_column("Variable", style="cyan")
     env_table.add_column("Value", style="green")
 
-    import os
+    from thegent.config import ThegentSettings
 
-    env_vars = [
-        "THEGENT_BUNDLE_LOADED",
-        "THEGENT_SHELL_OPTIMIZATION_LOADED",
-        "THEGENT_SHELL_SAFEGUARDS_LOADED",
-        "THEGENT_ADVANCED_LOADED",
-        "THEGENT_PLATFORM",
-        "THEGENT_CACHE_DIR",
-        "THEGENT_INSTANT_PROMPT_ENABLED",
-        "THEGENT_ASYNC_LOADING_ENABLED",
-        "THEGENT_METRICS_ENABLED",
-    ]
+    settings = ThegentSettings()
 
-    for var in env_vars:
-        value = os.environ.get(var, "Not set")
-        env_table.add_row(var, value)
+    # Map env var names to settings attributes
+    env_mapping = {
+        "THEGENT_CACHE_DIR": str(settings.cache_dir),
+        # Runtime/state vars that aren't settings - keep as env check
+        "THEGENT_BUNDLE_LOADED": os.environ.get("THEGENT_BUNDLE_LOADED", "Not set"),
+        "THEGENT_SHELL_OPTIMIZATION_LOADED": os.environ.get("THEGENT_SHELL_OPTIMIZATION_LOADED", "Not set"),
+        "THEGENT_SHELL_SAFEGUARDS_LOADED": os.environ.get("THEGENT_SHELL_SAFEGUARDS_LOADED", "Not set"),
+        "THEGENT_ADVANCED_LOADED": os.environ.get("THEGENT_ADVANCED_LOADED", "Not set"),
+        "THEGENT_PLATFORM": os.environ.get("THEGENT_PLATFORM", "Not set"),
+        "THEGENT_INSTANT_PROMPT_ENABLED": os.environ.get("THEGENT_INSTANT_PROMPT_ENABLED", "Not set"),
+        "THEGENT_ASYNC_LOADING_ENABLED": os.environ.get("THEGENT_ASYNC_LOADING_ENABLED", "Not set"),
+        "THEGENT_METRICS_ENABLED": os.environ.get("THEGENT_METRICS_ENABLED", "Not set"),
+    }
+
+    for var, value in env_mapping.items():
+        env_table.add_row(var, str(value))
 
     console.print(env_table)
 
@@ -109,7 +112,10 @@ def shell_clear_cache() -> None:
     import os
     import shutil
 
-    cache_dir = Path(os.environ.get("THEGENT_CACHE_DIR", Path.home() / ".cache" / "thegent"))
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    cache_dir = settings.cache_dir
     eval_cache_dir = cache_dir / "eval-cache"
 
     if eval_cache_dir.exists():
@@ -162,6 +168,7 @@ def shell_doctor(fix: bool = typer.Option(False, "--fix", help="Attempt to fix i
             text=True,
             timeout=2,
             env={**os.environ, "RIPGREP_CONFIG_PATH": "", "GREP_OPTIONS": ""},
+            check=False,
         )
         if result.stdout.strip():
             issues.append("ls is aliased to tree/recursive output")
@@ -203,6 +210,7 @@ def shell_benchmark(iterations: int = typer.Option(10, "--iterations", "-n", hel
                 capture_output=True,
                 text=True,
                 timeout=10,
+                check=False,
             )
             # Parse time output
             for line in result.stderr.split("\n"):
@@ -270,7 +278,10 @@ def shell_metrics() -> None:
     """Show shell performance metrics and statistics."""
     import os
 
-    cache_dir = Path(os.environ.get("THEGENT_CACHE_DIR", Path.home() / ".cache" / "thegent"))
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    cache_dir = settings.cache_dir
     metrics_file = cache_dir / "advanced" / "metrics" / "stats"
 
     if not metrics_file.exists():
@@ -311,7 +322,10 @@ def shell_jobs() -> None:
     """Show background job status."""
     import os
 
-    cache_dir = Path(os.environ.get("THEGENT_CACHE_DIR", Path.home() / ".cache" / "thegent"))
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    cache_dir = settings.cache_dir
     registry_file = cache_dir / "advanced" / "jobs" / "registry"
 
     if not registry_file.exists():
@@ -356,7 +370,10 @@ def shell_cache_stats() -> None:
     """Show cache statistics (hit/miss rates, sizes)."""
     import os
 
-    cache_dir = Path(os.environ.get("THEGENT_CACHE_DIR", Path.home() / ".cache" / "thegent"))
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    cache_dir = settings.cache_dir
     l1_dir = cache_dir / "advanced" / "cache-l1"
     l2_dir = cache_dir / "advanced" / "cache-l2"
     eval_cache_dir = cache_dir / "eval-cache"
@@ -396,7 +413,10 @@ def shell_circuit_breaker(
     """Manage circuit breakers for error recovery."""
     import os
 
-    cache_dir = Path(os.environ.get("THEGENT_CACHE_DIR", Path.home() / ".cache" / "thegent"))
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    cache_dir = settings.cache_dir
     cb_dir = cache_dir / "advanced" / "circuit-breakers"
 
     if reset:
@@ -461,7 +481,7 @@ def shell_platform() -> None:
 
     # Check shell
     try:
-        result = subprocess.run(["zsh", "--version"], capture_output=True, text=True, timeout=2)
+        result = subprocess.run(["zsh", "--version"], capture_output=True, text=True, timeout=2, check=False)
         zsh_version = result.stdout.strip().split()[1] if result.returncode == 0 else "Unknown"
         table.add_row("Zsh Version", zsh_version)
     except Exception:

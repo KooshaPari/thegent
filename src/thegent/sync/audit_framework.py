@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 _log = logging.getLogger(__name__)
 
@@ -143,13 +143,16 @@ class DoctorAuditType(AuditType):
         ]
 
         issues = []
-        for check_func in all_checks:
+
+        def _run_check(check_func: callable) -> list[AuditIssue]:
+            """Run a single doctor check and return any issues found."""
+            check_issues = []
             try:
                 results = check_func()
                 for r in results:
                     if r.status in ("fail", "warn"):
                         severity = AuditSeverity.HIGH if r.status == "fail" else AuditSeverity.MEDIUM
-                        issues.append(
+                        check_issues.append(
                             AuditIssue(
                                 id=f"doctor-{r.category}-{r.name}",
                                 title=r.name,
@@ -162,6 +165,10 @@ class DoctorAuditType(AuditType):
                         )
             except Exception as e:
                 _log.error(f"Doctor check {check_func.__name__} failed: {e}")
+            return check_issues
+
+        for check_func in all_checks:
+            issues.extend(_run_check(check_func))
 
         if fix:
             run_doctor(fix=True)
@@ -221,13 +228,12 @@ class SystemAuditFramework:
             [a for a in self.registry.get_all_audits() if a.name in names] if names else self.registry.get_all_audits()
         )
 
-        for audit in target_audits:
+        async def _run_audit(audit: AuditType) -> list[AuditIssue]:
+            """Run a single audit and return issues."""
             try:
-                issues = await audit.run(fix=fix)
-                for issue in issues:
-                    result.add_issue(issue)
+                return await audit.run(fix=fix)
             except Exception as e:
-                result.add_issue(
+                return [
                     AuditIssue(
                         id=f"audit-failure-{audit.name}",
                         title=f"Audit Execution Failure: {audit.name}",
@@ -235,7 +241,12 @@ class SystemAuditFramework:
                         severity=AuditSeverity.HIGH,
                         component=audit.name,
                     )
-                )
+                ]
+
+        for audit in target_audits:
+            issues = await _run_audit(audit)
+            for issue in issues:
+                result.add_issue(issue)
         result.complete()
         return result
 
@@ -250,7 +261,7 @@ class PlanAuditType(AuditType):
         return "Audit planning simulation overlays (PERT, resources, continuity)."
 
     async def run(self, fix: bool = False) -> list[AuditIssue]:
-        from thegent.cli_impl import plan_analyze_impl
+        from thegent.cli.commands.impl import plan_analyze_impl
 
         issues = []
         try:
@@ -295,7 +306,7 @@ class DagAuditType(AuditType):
         return "Audit DAG for cycles, orphans, and stale state."
 
     async def run(self, fix: bool = False) -> list[AuditIssue]:
-        from thegent.cli_impl import _parse_dag_full, _resolve_cwd, _validate_dag
+        from thegent.cli.commands.impl import _parse_dag_full, _resolve_cwd, _validate_dag
 
         issues = []
         try:
@@ -333,7 +344,7 @@ class InitiativeAuditType(AuditType):
         return "Audit initiative progress and alignment with PLAN.md."
 
     async def run(self, fix: bool = False) -> list[AuditIssue]:
-        from thegent.cli_initiative import parse_plan_initiatives
+        from thegent.cli.commands.cli_initiative import parse_plan_initiatives
 
         initiatives = parse_plan_initiatives(Path("PLAN.md"))
         issues = []

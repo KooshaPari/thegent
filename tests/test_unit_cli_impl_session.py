@@ -20,7 +20,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import typer
 
-from thegent import cli_impl
+from thegent.cli.commands import impl as cli_impl
 
 
 # ---------------------------------------------------------------------------
@@ -73,11 +73,12 @@ class TestSessionPaths:
     def test_returns_expected_keys(self, tmp_path) -> None:
         # @trace FR-CLI-106
         paths = cli_impl._session_paths(tmp_path, "sess-001")
-        assert set(paths.keys()) == {"meta", "stdout", "stderr", "rc"}
+        assert set(paths.keys()) == {"meta", "stdout", "stderr", "rc", "in"}
         assert paths["meta"] == tmp_path / "sess-001.json"
         assert paths["stdout"] == tmp_path / "sess-001.stdout.log"
         assert paths["stderr"] == tmp_path / "sess-001.stderr.log"
         assert paths["rc"] == tmp_path / "sess-001.rc"
+        assert paths["in"] == tmp_path / "sess-001.in"
 
 
 # ---------------------------------------------------------------------------
@@ -384,8 +385,8 @@ class TestStatusImpl:
             },
         )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=True),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=True),
         ):
             result = cli_impl.status_impl("sess-run")
         assert result["status"] == "running"
@@ -408,8 +409,8 @@ class TestStatusImpl:
         rc_path = tmp_path / "sess-done.rc"
         rc_path.write_text("0\n", encoding="utf-8")
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             result = cli_impl.status_impl("sess-done")
         assert result["status"] == "exited:0"
@@ -420,7 +421,7 @@ class TestStatusImpl:
         # @trace FR-CLI-140
         settings = MagicMock()
         settings.session_dir = tmp_path
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.status_impl("nonexistent")
         assert "error" in result
 
@@ -440,8 +441,8 @@ class TestStatusImpl:
             },
         )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             result = cli_impl.status_impl("sess-c", include_contract=True)
         assert result["route_contract"] == {"provider": "claude"}
@@ -466,8 +467,8 @@ class TestStopImpl:
             },
         )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=True),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=True),
             patch("os.killpg") as mock_killpg,
         ):
             result = cli_impl.stop_impl("sess-stop")
@@ -487,8 +488,8 @@ class TestStopImpl:
             },
         )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=True),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=True),
             patch("os.killpg") as mock_killpg,
         ):
             result = cli_impl.stop_impl("sess-fk", force=True)
@@ -508,8 +509,8 @@ class TestStopImpl:
             },
         )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             result = cli_impl.stop_impl("sess-dead")
         assert result["status"] == "not_running"
@@ -527,8 +528,8 @@ class TestStopImpl:
             },
         )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=True),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=True),
             patch("os.killpg", side_effect=OSError("Permission denied")),
         ):
             result = cli_impl.stop_impl("sess-err")
@@ -539,7 +540,7 @@ class TestStopImpl:
         # @trace FR-CLI-146
         settings = MagicMock()
         settings.session_dir = tmp_path
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.stop_impl("nope-id")
         assert "error" in result
 
@@ -564,8 +565,8 @@ class TestWaitImpl:
         rc_path = tmp_path / "sess-w.rc"
         rc_path.write_text("0\n", encoding="utf-8")
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             result = cli_impl.wait_impl("sess-w")
         assert result["exit_code"] == 0
@@ -591,10 +592,10 @@ class TestWaitImpl:
             return True
 
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", side_effect=_fake_pid_running),
-            patch("thegent.cli_impl.time.sleep"),
-            patch("thegent.cli_impl.time.time", side_effect=[0.0, 0.0, 0.5, 1.0, 1.5, 2.0]),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", side_effect=_fake_pid_running),
+            patch("thegent.cli.commands.impl.time.sleep"),
+            patch("thegent.cli.commands.impl.time.time", side_effect=[0.0, 0.0, 0.5, 1.0, 1.5, 2.0]),
         ):
             result = cli_impl.wait_impl("sess-wt", timeout=1)
         assert result["timed_out"] is True
@@ -603,7 +604,7 @@ class TestWaitImpl:
         # @trace FR-CLI-149
         settings = MagicMock()
         settings.session_dir = tmp_path
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.wait_impl("no-session")
         assert "error" in result
 
@@ -621,7 +622,7 @@ class TestLogsImpl:
         meta_path.write_text("{}", encoding="utf-8")
         stdout_path = tmp_path / "sess-log.stdout.log"
         stdout_path.write_text("line1\nline2\nline3\n", encoding="utf-8")
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.logs_impl("sess-log")
         assert "line1" in result
         assert "line3" in result
@@ -634,7 +635,7 @@ class TestLogsImpl:
         meta_path.write_text("{}", encoding="utf-8")
         stderr_path = tmp_path / "sess-log2.stderr.log"
         stderr_path.write_text("err1\nerr2\n", encoding="utf-8")
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.logs_impl("sess-log2", stderr=True)
         assert "err1" in result
 
@@ -646,7 +647,7 @@ class TestLogsImpl:
         meta_path.write_text("{}", encoding="utf-8")
         stdout_path = tmp_path / "sess-tail.stdout.log"
         stdout_path.write_text("\n".join(f"line{i}" for i in range(100)), encoding="utf-8")
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.logs_impl("sess-tail", tail=5)
         lines = result.strip().splitlines()
         assert len(lines) == 5
@@ -657,7 +658,7 @@ class TestLogsImpl:
         settings.session_dir = tmp_path
         meta_path = tmp_path / "sess-nolog.json"
         meta_path.write_text("{}", encoding="utf-8")
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.logs_impl("sess-nolog")
         assert "Log file missing" in result
 
@@ -665,7 +666,7 @@ class TestLogsImpl:
         # @trace FR-CLI-104
         settings = MagicMock()
         settings.session_dir = tmp_path
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.logs_impl("phantom")
         assert "Error" in result
 
@@ -693,9 +694,9 @@ class TestPsImpl:
             },
         )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._default_owner_tag", return_value="alice:proj"),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._default_owner_tag", return_value="alice:proj"),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             rows = cli_impl.ps_impl()
         assert len(rows) == 1
@@ -723,8 +724,8 @@ class TestPsImpl:
                 },
             )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             rows = cli_impl.ps_impl(all=True)
         assert len(rows) == 2
@@ -756,8 +757,8 @@ class TestPsImpl:
             },
         )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             rows = cli_impl.ps_impl(owner="alice:proj")
         assert all(r["owner"] == "alice:proj" for r in rows)
@@ -780,9 +781,9 @@ class TestPsImpl:
             },
         )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._default_owner_tag", return_value="x:x"),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._default_owner_tag", return_value="x:x"),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             rows = cli_impl.ps_impl()
         assert rows[0]["prompt_preview"].endswith("...")
@@ -806,9 +807,9 @@ class TestPsImpl:
             },
         )
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._default_owner_tag", return_value="a:b"),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._default_owner_tag", return_value="a:b"),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             rows = cli_impl.ps_impl(include_contract=True)
         assert rows[0]["route_contract"] == {"provider": "claude"}
@@ -835,8 +836,8 @@ class TestInspectImpl:
         stdout_path = tmp_path / "sess-insp.stdout.log"
         stdout_path.write_text("hello world\n", encoding="utf-8")
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             results = cli_impl.inspect_impl(["sess-insp"])
         assert len(results) == 1
@@ -860,8 +861,8 @@ class TestInspectImpl:
             stdout = tmp_path / f"{sid}.stdout.log"
             stdout.write_text(f"output of {sid}\n", encoding="utf-8")
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             results = cli_impl.inspect_impl(["s1", "s2"])
         assert len(results) == 2
@@ -884,9 +885,9 @@ class TestInspectImpl:
         )
         (scope_dir / "s1.stdout.log").write_text("hi\n", encoding="utf-8")
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._default_owner_tag", return_value="alice:proj"),
-            patch("thegent.cli_impl._is_pid_running", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._default_owner_tag", return_value="alice:proj"),
+            patch("thegent.cli.commands.impl._is_pid_running", return_value=False),
         ):
             results = cli_impl.inspect_impl([], owner="alice:proj")
         assert len(results) >= 1
@@ -912,8 +913,8 @@ class TestHistoryImpl:
             {"run_id": "r2", "agent": "codex"},
         ]
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl.RunRegistry", return_value=mock_registry),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl.RunRegistry", return_value=mock_registry),
         ):
             results = cli_impl.history_impl(limit=50)
         assert len(results) == 2
@@ -926,8 +927,8 @@ class TestHistoryImpl:
         mock_registry = MagicMock()
         mock_registry.list_runs.return_value = []
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl.RunRegistry", return_value=mock_registry),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl.RunRegistry", return_value=mock_registry),
         ):
             cli_impl.history_impl(limit=10)
         mock_registry.list_runs.assert_called_once_with(limit=10)
@@ -952,7 +953,7 @@ class TestEventsImpl:
             "\n".join(json.dumps(e) for e in events) + "\n",
             encoding="utf-8",
         )
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.events_impl()
         assert len(result) == 3
 
@@ -969,7 +970,7 @@ class TestEventsImpl:
             "\n".join(json.dumps(e) for e in events) + "\n",
             encoding="utf-8",
         )
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.events_impl(run_id="r1")
         assert len(result) == 1
         assert result[0]["run_id"] == "r1"
@@ -978,7 +979,7 @@ class TestEventsImpl:
         # @trace FR-CLI-118
         settings = MagicMock()
         settings.session_dir = tmp_path
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.events_impl()
         assert result == []
 
@@ -992,7 +993,7 @@ class TestEventsImpl:
             "\n".join(json.dumps(e) for e in events) + "\n",
             encoding="utf-8",
         )
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.events_impl(limit=5)
         assert len(result) == 5
 
@@ -1015,7 +1016,7 @@ class TestSessionMetaImpl:
                 "owner": "user:proj",
             },
         )
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.session_meta_impl("smeta")
         assert result["session_id"] == "smeta"
         assert result["agent"] == "claude"
@@ -1024,7 +1025,7 @@ class TestSessionMetaImpl:
         # @trace FR-CLI-121
         settings = MagicMock()
         settings.session_dir = tmp_path
-        with patch("thegent.cli_impl.ThegentSettings", return_value=settings):
+        with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
             result = cli_impl.session_meta_impl("ghost")
         assert "error" in result
 
@@ -1096,12 +1097,12 @@ class TestSessionScopeDirs:
 # ---------------------------------------------------------------------------
 @pytest.mark.unit
 class TestBgImpl:
-    @patch("thegent.cli_impl.subprocess.Popen")
-    @patch("thegent.cli_impl.RunRegistry")
-    @patch("thegent.cli_impl.ThegentSettings")
-    @patch("thegent.cli_impl.resolve_agent", side_effect=lambda a: a)
-    @patch("thegent.cli_impl._resolve_cwd")
-    @patch("thegent.cli_impl._default_owner_tag", return_value="user:proj:1234")
+    @patch("thegent.cli.commands.impl.subprocess.Popen")
+    @patch("thegent.cli.commands.impl.RunRegistry")
+    @patch("thegent.cli.commands.impl.ThegentSettings")
+    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda a: a)
+    @patch("thegent.cli.commands.impl._resolve_cwd")
+    @patch("thegent.cli.commands.impl._default_owner_tag", return_value="user:proj:1234")
     @patch("thegent.contracts.migration.MigrationController")
     def test_bg_basic(
         self,
@@ -1151,12 +1152,12 @@ class TestBgImpl:
         mock_popen.assert_called_once()
         mock_registry.register_start.assert_called_once()
 
-    @patch("thegent.cli_impl.subprocess.Popen")
-    @patch("thegent.cli_impl.RunRegistry")
-    @patch("thegent.cli_impl.ThegentSettings")
-    @patch("thegent.cli_impl.resolve_agent", side_effect=lambda a: a)
-    @patch("thegent.cli_impl._resolve_cwd")
-    @patch("thegent.cli_impl._default_owner_tag", return_value="u:p:1")
+    @patch("thegent.cli.commands.impl.subprocess.Popen")
+    @patch("thegent.cli.commands.impl.RunRegistry")
+    @patch("thegent.cli.commands.impl.ThegentSettings")
+    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda a: a)
+    @patch("thegent.cli.commands.impl._resolve_cwd")
+    @patch("thegent.cli.commands.impl._default_owner_tag", return_value="u:p:1")
     @patch("thegent.contracts.migration.MigrationController")
     def test_bg_with_owner(
         self,
@@ -1202,9 +1203,9 @@ class TestBgImpl:
         )
         assert result["owner"] == "custom-owner"
 
-    @patch("thegent.cli_impl.ThegentSettings")
-    @patch("thegent.cli_impl.resolve_agent", side_effect=lambda a: a)
-    @patch("thegent.cli_impl._resolve_cwd", return_value=None)
+    @patch("thegent.cli.commands.impl.ThegentSettings")
+    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda a: a)
+    @patch("thegent.cli.commands.impl._resolve_cwd", return_value=None)
     @patch("thegent.contracts.migration.MigrationController")
     def test_bg_ambiguous_cwd(self, mock_migration_cls, mock_cwd, mock_resolve, mock_settings_cls, tmp_path) -> None:
         # @trace FR-CLI-129
@@ -1227,8 +1228,8 @@ class TestBgImpl:
         assert "error" in result
         assert "Ambiguous cwd" in result["error"]
 
-    @patch("thegent.cli_impl.ThegentSettings")
-    @patch("thegent.cli_impl.resolve_agent", side_effect=lambda a: a)
+    @patch("thegent.cli.commands.impl.ThegentSettings")
+    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda a: a)
     @patch("thegent.contracts.migration.MigrationController")
     def test_bg_contract_version_rejected(self, mock_migration_cls, mock_resolve, mock_settings_cls, tmp_path) -> None:
         # @trace FR-CLI-130
@@ -1256,13 +1257,13 @@ class TestBgImpl:
         assert "error" in result
         assert "rejected" in result["error"].lower() or "Version too old" in result["error"]
 
-    @patch("thegent.cli_impl.subprocess.Popen")
-    @patch("thegent.cli_impl.RunRegistry")
-    @patch("thegent.cli_impl.ThegentSettings")
-    @patch("thegent.cli_impl.resolve_agent", side_effect=lambda a: a)
-    @patch("thegent.cli_impl._resolve_cwd")
-    @patch("thegent.cli_impl._default_owner_tag", return_value="u:p:1")
-    @patch("thegent.cli_impl._build_continuation_prompt", return_value="continued prompt")
+    @patch("thegent.cli.commands.impl.subprocess.Popen")
+    @patch("thegent.cli.commands.impl.RunRegistry")
+    @patch("thegent.cli.commands.impl.ThegentSettings")
+    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda a: a)
+    @patch("thegent.cli.commands.impl._resolve_cwd")
+    @patch("thegent.cli.commands.impl._default_owner_tag", return_value="u:p:1")
+    @patch("thegent.cli.commands.impl._build_continuation_prompt", return_value="continued prompt")
     @patch("thegent.contracts.migration.MigrationController")
     def test_bg_with_continuation(
         self,
@@ -1375,20 +1376,24 @@ class TestRunImpl:
         migrator_mock = MagicMock()
         migrator_mock.evaluate_version.return_value = {"allowed": True, "status": "active"}
 
+        mock_trust = MagicMock()
+        mock_trust.get_last_environment.return_value = "development"
+        mock_trust.validate_transition.return_value = (True, "ok")
+
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl.resolve_agent", side_effect=lambda a: a),
-            patch("thegent.cli_impl._resolve_cwd", return_value=cwd),
-            patch("thegent.cli_impl._default_owner_tag", return_value="user:proj"),
-            patch("thegent.cli_impl.RunRegistry", return_value=mock_registry),
-            patch("thegent.cli_impl.get_fallback_agents", return_value=[]),
-            patch("thegent.cli_impl.extract_condensed", return_value="condensed"),
-            patch("thegent.cli_impl.is_usage_limit", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda a: a),
+            patch("thegent.cli.commands.impl._resolve_cwd", return_value=cwd),
+            patch("thegent.cli.commands.impl._default_owner_tag", return_value="user:proj"),
+            patch("thegent.cli.commands.impl.RunRegistry", return_value=mock_registry),
+            patch("thegent.cli.commands.impl.get_fallback_agents", return_value=[]),
+            patch("thegent.cli.commands.impl.extract_condensed", return_value="condensed"),
+            patch("thegent.cli.commands.impl.is_usage_limit", return_value=False),
             patch("thegent.contracts.migration.MigrationController", return_value=migrator_mock),
             patch("thegent.execution.Auditor", return_value=mock_auditor),
             patch("thegent.execution.PolicyEngine", return_value=mock_pe),
             patch("thegent.execution.CircuitBreakerRegistry"),
-            patch("thegent.execution.TrustBoundaryValidator"),
+            patch("thegent.execution.TrustBoundaryValidator", return_value=mock_trust),
             patch("thegent.execution.OverrideRegistry", return_value=mock_override_reg),
             patch("thegent.agents.state_machine.FallbackStateMachine", return_value=mock_fsm),
             patch("thegent.contracts.telemetry.ContractTelemetry"),
@@ -1452,9 +1457,9 @@ class TestRunImpl:
         migrator_mock.evaluate_version.return_value = {"allowed": True, "status": "active"}
 
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl.resolve_agent", side_effect=lambda a: a),
-            patch("thegent.cli_impl._resolve_cwd", return_value=None),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda a: a),
+            patch("thegent.cli.commands.impl._resolve_cwd", return_value=None),
             patch("thegent.contracts.migration.MigrationController", return_value=migrator_mock),
         ):
             result = cli_impl.run_impl(agent="claude", prompt="task")
@@ -1501,22 +1506,26 @@ class TestRunImpl:
         mock_pe = MagicMock()
         mock_pe.evaluate.return_value = ("allow", "ok")
 
+        mock_trust = MagicMock()
+        mock_trust.get_last_environment.return_value = "development"
+        mock_trust.validate_transition.return_value = (True, "ok")
+
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl._resolve_cwd", return_value=cwd),
-            patch("thegent.cli_impl._default_owner_tag", return_value="u:p"),
-            patch("thegent.cli_impl.resolve_agent", side_effect=lambda a: a),
-            patch("thegent.cli_impl.RunRegistry"),
-            patch("thegent.cli_impl.get_fallback_agents", return_value=[]),
-            patch("thegent.cli_impl.extract_condensed", return_value="condensed"),
-            patch("thegent.cli_impl.is_usage_limit", return_value=False),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl._resolve_cwd", return_value=cwd),
+            patch("thegent.cli.commands.impl._default_owner_tag", return_value="u:p"),
+            patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda a: a),
+            patch("thegent.cli.commands.impl.RunRegistry"),
+            patch("thegent.cli.commands.impl.get_fallback_agents", return_value=[]),
+            patch("thegent.cli.commands.impl.extract_condensed", return_value="condensed"),
+            patch("thegent.cli.commands.impl.is_usage_limit", return_value=False),
             patch("thegent.contracts.migration.MigrationController", return_value=migrator_mock),
             patch("thegent.models.normalize_model_id", return_value="gpt-4"),
             patch("thegent.models.catalog.resolve_route", return_value=mock_route),
             patch("thegent.execution.Auditor", return_value=mock_auditor),
             patch("thegent.execution.PolicyEngine", return_value=mock_pe),
             patch("thegent.execution.CircuitBreakerRegistry"),
-            patch("thegent.execution.TrustBoundaryValidator"),
+            patch("thegent.execution.TrustBoundaryValidator", return_value=mock_trust),
             patch("thegent.execution.OverrideRegistry"),
             patch("thegent.agents.state_machine.FallbackStateMachine", return_value=mock_fsm),
             patch("thegent.contracts.telemetry.ContractTelemetry"),
@@ -1544,10 +1553,15 @@ class TestRunImpl:
             "reason": "Unsupported version",
         }
 
+        mock_trust = MagicMock()
+        mock_trust.get_last_environment.return_value = "development"
+        mock_trust.validate_transition.return_value = (True, "ok")
+
         with (
-            patch("thegent.cli_impl.ThegentSettings", return_value=settings),
-            patch("thegent.cli_impl.resolve_agent", side_effect=lambda a: a),
+            patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings),
+            patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda a: a),
             patch("thegent.contracts.migration.MigrationController", return_value=migrator_mock),
+            patch("thegent.execution.TrustBoundaryValidator", return_value=mock_trust),
         ):
             result = cli_impl.run_impl(
                 agent="claude",

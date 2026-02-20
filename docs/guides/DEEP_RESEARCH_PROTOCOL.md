@@ -46,9 +46,10 @@
 | Tool | Engine | Status | Purpose |
 |---|---|---|---|
 | `thegent_ddg_search` | duckduckgo-search | ✅ Implemented | Broad web search |
-| `thegent_reddit_search` | PRAW / site:reddit.com | ⏳ Planned | Dedicated Reddit search |
-| `thegent_scrape_url` | Playwright (Stealth) | ⏳ Planned | Bypassing blocks on Reddit/Google |
-| `thegent_exa_search` | Exa.ai API | ⏳ Planned | Semantic search for AI agents |
+| `thegent_reddit_search` | PRAW / site:reddit.com | ✅ Implemented | Dedicated Reddit search |
+| `thegent_scrape_url` | Playwright (Stealth) | ✅ Implemented | Bypassing blocks on Reddit/Google |
+| `thegent_deep_research` | Orchestrator | ✅ Implemented | Multi-phase research protocol |
+| `thegent_exa_search` | Exa.ai API | ⏳ Future | Semantic search for AI agents |
 
 ---
 

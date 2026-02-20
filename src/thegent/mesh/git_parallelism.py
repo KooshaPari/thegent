@@ -116,9 +116,7 @@ class WorktreeContext:
             if proc.returncode not in (0, 1):
                 _log.warning("commit failed in worktree %s: %s", self.path, proc.stderr)
                 return None
-            result = subprocess.check_output(
-                ["git", "rev-parse", "HEAD"], cwd=str(self.path), text=True
-            ).strip()
+            result = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(self.path), text=True).strip()
             return result
         except Exception as exc:
             _log.warning("commit_all failed for agent %s: %s", self.agent_id, exc)
@@ -231,8 +229,7 @@ class WorktreePool:
         self._merger: SmartMerger | None = merger
         if not self._worktrees_ok:
             _log.info(
-                "WorktreePool: git worktrees unavailable for %s; "
-                "falling back to shared-tree advisory lock.",
+                "WorktreePool: git worktrees unavailable for %s; falling back to shared-tree advisory lock.",
                 self.project_root,
             )
 
@@ -362,9 +359,7 @@ class WorktreePool:
             try:
                 _run(["git", "branch", branch], self.project_root)
             except subprocess.CalledProcessError as exc:
-                raise RuntimeError(
-                    f"WorktreePool: failed to create branch {branch!r}: {exc.stderr}"
-                ) from exc
+                raise RuntimeError(f"WorktreePool: failed to create branch {branch!r}: {exc.stderr}") from exc
 
         # Remove stale worktree registration if directory was orphaned.
         if worktree_path.exists() and any(worktree_path.iterdir()):
@@ -378,9 +373,7 @@ class WorktreePool:
                 self.project_root,
             )
         except subprocess.CalledProcessError as exc:
-            raise RuntimeError(
-                f"WorktreePool: git worktree add failed for agent {agent_id!r}: {exc.stderr}"
-            ) from exc
+            raise RuntimeError(f"WorktreePool: git worktree add failed for agent {agent_id!r}: {exc.stderr}") from exc
 
         _log.info("WorktreePool: created worktree for %s at %s (branch %s)", agent_id, worktree_path, branch)
         return WorktreeContext(

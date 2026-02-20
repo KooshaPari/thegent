@@ -12,13 +12,12 @@ import pytest
 
 from thegent.mesh.task_queue import MaildirQueue
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def queue(tmp_path: Path) -> MaildirQueue:
     """A fresh MaildirQueue backed by a temporary directory."""
     return MaildirQueue(tmp_path / "q")

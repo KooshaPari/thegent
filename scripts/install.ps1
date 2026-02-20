@@ -73,9 +73,13 @@ Write-Host "================="
 if ($env:THGENT_BOOTSTRAP_DEPS -eq "1") {
     Write-Step "Installing optional tools (Modern Unix)..."
     if (Get-Command brew -ErrorAction SilentlyContinue) {
-        brew install ripgrep fd jq eza bat zoxide delta duf dust procs bottom yazi xh sd
+        brew install ripgrep fd jq eza bat zoxide delta duf dust procs bottom yazi xh sd `
+                     zellij starship hyperfine tokei onefetch lazygit lazydocker grex `
+                     mise proto pixi pkgx wasmtime wasmer zig
     } elseif (Get-Command winget -ErrorAction SilentlyContinue) {
-        $pkgs = "BurntSushi.ripgrep", "sharkdp.fd", "jqlang.jq", "eza-community.eza", "sharkdp.bat", "ajeetdsouza.zoxide", "dandavison.delta", "muesli.duf", "sharkdp.dust", "dalance.procs", "ClementTsang.bottom", "sxyazi.yazi", "ducaale.xh", "chmln.sd"
+        $pkgs = "BurntSushi.ripgrep", "sharkdp.fd", "jqlang.jq", "eza-community.eza", "sharkdp.bat", "ajeetdsouza.zoxide", "dandavison.delta", "muesli.duf", "sharkdp.dust", "dalance.procs", "ClementTsang.bottom", "sxyazi.yazi", "ducaale.xh", "chmln.sd", `
+                "Zellij.Zellij", "Starship.Starship", "sharkdp.hyperfine", "XAMPPRocky.tokei", "dalance.onefetch", "JesseDuffield.LazyGit", "JesseDuffield.LazyDocker", "pemistahl.grex", `
+                "jdx.mise", "proto.proto", "prefix-dev.pixi", "pkgx.pkgx", "BytecodeAlliance.Wasmtime", "Wasmer.Wasmer", "zig.zig"
         foreach ($pkg in $pkgs) {
             try { winget install $pkg --silent --accept-package-agreements --accept-source-agreements } catch {}
         }
@@ -84,7 +88,7 @@ if ($env:THGENT_BOOTSTRAP_DEPS -eq "1") {
 
 # --- Phase 1: Install thegent ---
 $thegentInstalled = Get-Command thegent -ErrorAction SilentlyContinue
-if ($thegentInstalled) {
+    if ($thegentInstalled) {
     Write-Host "==> thegent already installed: $(thegent --version 2>$null)"
 } else {
     Write-Step "Installing thegent..."
@@ -92,6 +96,9 @@ if ($thegentInstalled) {
     $installed = $false
     if (Get-Command uv -ErrorAction SilentlyContinue) {
         uv tool install thegent
+        $installed = $true
+    } elseif (Get-Command bun -ErrorAction SilentlyContinue) {
+        bun install -g thegent
         $installed = $true
     } elseif (Get-Command pipx -ErrorAction SilentlyContinue) {
         pipx install thegent
@@ -108,7 +115,7 @@ if ($thegentInstalled) {
     }
 
     if (-not $installed) {
-        Write-Die "No installer (uv, pipx, pip) found. Install Python from https://python.org or uv from https://astral.sh/uv"
+        Write-Die "No installer (uv, bun, pipx, pip) found. Install Python from https://python.org or uv from https://astral.sh/uv"
     }
 }
 

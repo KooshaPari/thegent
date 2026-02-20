@@ -82,9 +82,7 @@ class WorktreeManager:
     def _save_registry(self, registry: dict[str, dict[str, str]]) -> None:
         """Persist the branch registry to disk."""
         self._registry_path.parent.mkdir(parents=True, exist_ok=True)
-        self._registry_path.write_text(
-            json.dumps(registry, indent=2), encoding="utf-8"
-        )
+        self._registry_path.write_text(json.dumps(registry, indent=2), encoding="utf-8")
 
     def _register_branch(self, agent_id: str, branch: str) -> None:
         """Register a branch as owned by *agent_id*."""
@@ -106,9 +104,7 @@ class WorktreeManager:
         registry = self._load_registry()
         for other_id, entry in registry.items():
             if other_id != agent_id and entry.get("branch") == branch:
-                raise BranchCollisionError(
-                    f"Branch {branch!r} is already claimed by agent {other_id!r}"
-                )
+                raise BranchCollisionError(f"Branch {branch!r} is already claimed by agent {other_id!r}")
 
     def get_branch_status(self) -> dict[str, dict[str, str]]:
         """Return the full branch registry (TGNT-P15.2)."""
@@ -186,7 +182,7 @@ class WorktreeManager:
                 continue
             if not entry.name.startswith("agent-"):
                 continue
-            agent_id = entry.name[len("agent-"):]
+            agent_id = entry.name[len("agent-") :]
             if agent_id in registry:
                 continue
 
@@ -216,15 +212,8 @@ class WorktreeManager:
         registry = self._load_registry()
         worktree_dirs = []
         if self.worktree_base.exists():
-            worktree_dirs = [
-                d.name
-                for d in self.worktree_base.iterdir()
-                if d.is_dir() and d.name.startswith("agent-")
-            ]
-        orphans = [
-            d for d in worktree_dirs
-            if d[len("agent-"):] not in registry
-        ]
+            worktree_dirs = [d.name for d in self.worktree_base.iterdir() if d.is_dir() and d.name.startswith("agent-")]
+        orphans = [d for d in worktree_dirs if d[len("agent-") :] not in registry]
         return {
             "registered_agents": len(registry),
             "worktree_dirs": len(worktree_dirs),

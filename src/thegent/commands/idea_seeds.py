@@ -521,10 +521,7 @@ def seeds_add_to_workstream(
     existing = ws_path.read_text(encoding="utf-8")
     new_lines: list[str] = []
     for row in rows:
-        row_md = (
-            f"| {row['id']} | {row['title']} "
-            f"| {row['source']} | {row['priority']} | {row['depends']} |"
-        )
+        row_md = f"| {row['id']} | {row['title']} | {row['source']} | {row['priority']} | {row['depends']} |"
         if row["id"] not in existing:
             new_lines.append(row_md)
 

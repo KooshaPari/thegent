@@ -5,7 +5,6 @@ import random
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 class GitParallelismManager:
@@ -19,13 +18,25 @@ class GitParallelismManager:
         self.agent_index = mesh_root / "indices" / f"index-{agent_id}"
         self.agent_index.parent.mkdir(parents=True, exist_ok=True, mode=0o1777)
 
+    def _get_ref_hash(self, ref: str) -> str | None:
+        """Get current hash for a ref."""
+        try:
+            return subprocess.check_output(
+                ["git", "rev-parse", ref], cwd=self.project_root, text=True
+            ).strip()
+        except subprocess.CalledProcessError:
+            return None
+
     def ensure_index(self) -> Path:
         """Create or refresh the per-agent index file (SCLI-P4.1)."""
         system_index = self.git_dir / "index"
 
         # Initialize index from current system index if not exists or outdated
-        if not self.agent_index.exists() or (system_index.exists() and system_index.stat().st_mtime > self.agent_index.stat().st_mtime):
+        if not self.agent_index.exists() or (
+            system_index.exists() and system_index.stat().st_mtime > self.agent_index.stat().st_mtime
+        ):
             import shutil
+
             if system_index.exists():
                 shutil.copy2(system_index, self.agent_index)
             else:
@@ -43,11 +54,7 @@ class GitParallelismManager:
         try:
             # git add -- <files>
             subprocess.run(
-                ["git", "add", "--", *files],
-                cwd=self.project_root,
-                env=env,
-                check=True,
-                capture_output=True
+                ["git", "add", "--", *files], cwd=self.project_root, env=env, check=True, capture_output=True
             )
             return True
         except subprocess.CalledProcessError:
@@ -62,17 +69,12 @@ class GitParallelismManager:
         try:
             # 1. write-tree
             tree_hash = subprocess.check_output(
-                ["git", "write-tree"],
-                cwd=self.project_root,
-                env=env,
-                text=True
+                ["git", "write-tree"], cwd=self.project_root, env=env, text=True
             ).strip()
 
             # 2. get parent commit hash
             parent_hash = subprocess.check_output(
-                ["git", "rev-parse", parent_ref],
-                cwd=self.project_root,
-                text=True
+                ["git", "rev-parse", parent_ref], cwd=self.project_root, text=True
             ).strip()
 
             # 3. commit-tree
@@ -80,7 +82,7 @@ class GitParallelismManager:
                 ["git", "commit-tree", tree_hash, "-p", parent_hash, "-m", message],
                 cwd=self.project_root,
                 env=env,
-                text=True
+                text=True,
             ).strip()
 
             return commit_hash
@@ -93,30 +95,24 @@ class GitParallelismManager:
         base_delay = 0.1
 
         for i in range(max_retries):
-            try:
+            try:  # noqa: PERF203 -- intentional retry loop, max 5 iterations
                 # git update-ref <ref> <new_hash> <old_hash>
                 # Fails if <ref> is not currently <old_hash>
                 subprocess.run(
                     ["git", "update-ref", ref, new_hash, old_hash],
                     cwd=self.project_root,
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
                 return True
             except subprocess.CalledProcessError:
                 # Collision detected or ref moved. Retry with jitter.
-                delay = base_delay * (2 ** i) + random.uniform(0, 0.1)
+                delay = base_delay * (2**i) + random.uniform(0, 0.1)
                 time.sleep(delay)
 
                 # Refresh old_hash for next attempt
-                try:
-                    old_hash = subprocess.check_output(
-                        ["git", "rev-parse", ref],
-                        cwd=self.project_root,
-                        text=True
-                    ).strip()
-                except subprocess.CalledProcessError:
-                    # Ref might have been deleted?
+                old_hash = self._get_ref_hash(ref)
+                if old_hash is None:
                     return False
 
         return False
@@ -130,12 +126,7 @@ class GitParallelismManager:
         try:
             # git status --short using the agent's index
             # Note: This compares agent's index with worktree
-            status = subprocess.check_output(
-                ["git", "status", "--short"],
-                cwd=self.project_root,
-                env=env,
-                text=True
-            )
+            status = subprocess.check_output(["git", "status", "--short"], cwd=self.project_root, env=env, text=True)
             return status
         except subprocess.CalledProcessError:
             return "Error retrieving agent status"

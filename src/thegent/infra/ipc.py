@@ -25,8 +25,6 @@ class IPCMesh:
         """Initialize tmpfs-like mesh directory."""
         try:
             self.mesh_root.mkdir(parents=True, exist_ok=True, mode=0o1777)
-            # On Linux, we could try mounting tmpfs here if privileged,
-            # but usually /tmp is already tmpfs.
         except PermissionError:
             logger.warning(f"Could not create mesh root at {self.mesh_root} with mode 1777")
 
@@ -36,17 +34,14 @@ class IPCMesh:
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             lock_path.mkdir()
-            # Write metadata
             (lock_path / "metadata").write_text(f"{os.getpid()}|{time.time() + ttl}")
             return True
         except FileExistsError:
-            # Check if expired
             meta_file = lock_path / "metadata"
             if meta_file.exists():
                 try:
                     _pid, expiry = meta_file.read_text().split("|")
                     if time.time() > float(expiry):
-                        logger.info(f"Lock {lock_name} expired, breaking.")
                         self.release_atomic_lock(lock_name)
                         return self.acquire_atomic_lock(lock_name, ttl)
                 except ValueError:
@@ -57,7 +52,6 @@ class IPCMesh:
         """Release atomic lock."""
         lock_path = self.mesh_root / "locks" / lock_name
         if lock_path.exists():
-            # In a real implementation, should check if we own it
             import shutil
 
             shutil.rmtree(lock_path, ignore_errors=True)
@@ -78,7 +72,7 @@ class MaildirQueue:
         new_path = self.queue_dir / "new" / msg_id
 
         tmp_path.write_text(json.dumps(message))
-        tmp_path.rename(new_path)  # Atomic move
+        tmp_path.rename(new_path)
         return msg_id
 
     def receive(self) -> tuple[str, dict[str, Any]] | None:
@@ -95,6 +89,50 @@ class MaildirQueue:
             return msg_file.name, json.loads(cur_path.read_text())
         except json.JSONDecodeError:
             return None
+
+
+class SharedStateManager:
+    """Manages high-frequency shared state (metrics, circuit breakers) in the mesh."""
+
+    def __init__(self, mesh_root: Path) -> None:
+        self.mesh_root = mesh_root
+        self.metrics_dir = mesh_root / "metrics"
+        self.metrics_dir.mkdir(parents=True, exist_ok=True)
+        from .shm_manager import SHMManager
+
+        self.shm = SHMManager(mesh_root / "state.shm")
+
+    def update_provider_metrics(self, provider: str, metrics: dict[str, Any]):
+        """Update metrics for a specific provider."""
+        # Update SHM (High Performance)
+        req_count = metrics.get("request_count", 0)
+        succ_count = metrics.get("success_count", 0)
+        lat_ms = int(metrics.get("latency_p50_ms", metrics.get("latency_ms", 0)))
+        self.shm.update_provider_metrics(provider, req_count, succ_count, lat_ms)
+
+        # Fallback to file-based (for observability/debugging)
+        metric_file = self.metrics_dir / f"{provider}.json"
+        tmp_file = metric_file.with_suffix(".tmp")
+        tmp_file.write_text(json.dumps(metrics))
+        tmp_file.replace(metric_file)
+
+    def get_all_metrics(self) -> dict[str, Any]:
+        """Read all provider metrics from the mesh."""
+        all_metrics = {}
+        # Try reading from SHM first
+        # (Note: we need a way to list all providers in SHM,
+        # for now we'll merge file-based listing with SHM data)
+        for f in self.metrics_dir.glob("*.json"):
+            provider = f.stem
+            shm_data = self.shm.get_provider_metrics(provider)
+            if shm_data:
+                all_metrics[provider] = shm_data
+            else:
+                try:
+                    all_metrics[provider] = json.loads(f.read_text())
+                except Exception:
+                    continue
+        return all_metrics
 
 
 class WriteAheadLog:

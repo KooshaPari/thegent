@@ -47,7 +47,10 @@ class MemoryManager:
         api_key: str | None = None,
         base_url: str | None = None,
     ) -> None:
-        resolved_key = api_key or os.environ.get("THGENT_SUPERMEMORY_API_KEY", "")
+        from thegent.config import ThegentSettings
+
+        settings = ThegentSettings()
+        resolved_key = api_key or settings.supermemory_api_key or ""
         self._enabled = bool(resolved_key)
         self._client: SupermemoryClient | None = None
 
@@ -61,13 +64,9 @@ class MemoryManager:
             except SupermemoryConfigError:
                 # Key was present but invalid — degrade gracefully.
                 self._enabled = False
-                logger.warning(
-                    "MemoryManager: SupermemoryClient config error; running in no-op mode"
-                )
+                logger.warning("MemoryManager: SupermemoryClient config error; running in no-op mode")
         else:
-            logger.debug(
-                "MemoryManager: THGENT_SUPERMEMORY_API_KEY not set; no-op mode active"
-            )
+            logger.debug("MemoryManager: THGENT_SUPERMEMORY_API_KEY not set; no-op mode active")
 
     # ------------------------------------------------------------------
     # Public API
@@ -96,9 +95,7 @@ class MemoryManager:
             return []
 
         try:
-            entries = await self._client.search(
-                agent_id, limit=_CONTEXT_SEARCH_LIMIT
-            )
+            entries = await self._client.search(agent_id, limit=_CONTEXT_SEARCH_LIMIT)
             contents = [e.content for e in entries]
             logger.debug(
                 "MemoryManager.load_context: %d entries for agent=%r",
@@ -107,9 +104,7 @@ class MemoryManager:
             )
             return contents
         except Exception as exc:
-            logger.warning(
-                "MemoryManager.load_context failed (agent=%r): %s", agent_id, exc
-            )
+            logger.warning("MemoryManager.load_context failed (agent=%r): %s", agent_id, exc)
             return []
 
     async def save_discovery(self, agent_id: str, content: str) -> None:
@@ -142,9 +137,7 @@ class MemoryManager:
                 agent_id,
             )
         except Exception as exc:
-            logger.warning(
-                "MemoryManager.save_discovery failed (agent=%r): %s", agent_id, exc
-            )
+            logger.warning("MemoryManager.save_discovery failed (agent=%r): %s", agent_id, exc)
 
     async def get_session_context(self, session_id: str) -> str:
         """Retrieve a summary of memories associated with *session_id*.
@@ -164,9 +157,7 @@ class MemoryManager:
             return ""
 
         try:
-            entries = await self._client.search(
-                session_id, limit=_SESSION_SEARCH_LIMIT
-            )
+            entries = await self._client.search(session_id, limit=_SESSION_SEARCH_LIMIT)
             if not entries:
                 return ""
             summary = "\n".join(e.content for e in entries)

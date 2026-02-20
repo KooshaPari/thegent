@@ -3,7 +3,6 @@
 Runs on specialized runtimes (PyPy, CPython 3.14) and executes dispatched tasks.
 """
 
-import argparse
 import asyncio
 import importlib
 import json
@@ -13,6 +12,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict
 
+import typer
+
 # Ensure we can import thegent
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -20,24 +21,58 @@ from thegent.infra.ipc import MaildirQueue
 
 try:
     from thegent_shm import init_shm, record_resource_usage
+
     HAS_SHM = True
 except ImportError:
     HAS_SHM = False
 
+app = typer.Typer(
+    name="worker-node",
+    help="Worker node runtime entrypoint.",
+    add_completion=False,
+    no_args_is_help=False,
+)
+
+
 async def worker_loop(mesh_root: Path, runtime_name: str):
     queue_path = mesh_root / "queue" / runtime_name.lower()
+    print(f"Worker {runtime_name} initialized. PID: {os.getpid()}. Queue: {queue_path}")
+    print(f"[{runtime_name}] sys.version: {sys.version}")
+    print(f"[{runtime_name}] sys.implementation: {sys.implementation.name}")
 
     queue = MaildirQueue(queue_path)
 
     # Initialize SHM if available
     if HAS_SHM:
         init_shm(str(mesh_root / "state.shm"))
+        print(f"[{runtime_name}] SHM linked.")
+
+    # Platform-specific heartbeat tuning
+    is_wifi = os.environ.get("THEGENT_NETWORK_TIER") == "wifi"
+    heartbeat_interval = 2.0 if is_wifi else 1.0
+    last_heartbeat = 0.0
 
     while True:
-        # Check for new messages
+        # 1. Emit Heartbeat
+        now = time.time()
+        if now - last_heartbeat > heartbeat_interval:
+            print(f"[HEARTBEAT] {now}")
+            last_heartbeat = now
+
+            # Record health metrics to SHM
+            if HAS_SHM:
+                import psutil
+
+                try:
+                    proc = psutil.Process()
+                    record_resource_usage(os.getpid(), proc.cpu_percent(), proc.memory_info().rss)
+                except Exception:
+                    pass
+
+        # 2. Check for new tasks
         result = queue.receive()
         if result:
-            _msg_id, message = result
+            msg_id, message = result
             if message.get("type") == "task":
                 task_id = message["task_id"]
                 module_name = message["module"]
@@ -45,6 +80,7 @@ async def worker_loop(mesh_root: Path, runtime_name: str):
                 args = message.get("args", [])
                 kwargs = message.get("kwargs", {})
 
+                print(f"[{runtime_name}] Executing task {task_id}: {module_name}.{func_name}")
 
                 try:
                     # Dynamic Import and Execution
@@ -58,29 +94,35 @@ async def worker_loop(mesh_root: Path, runtime_name: str):
                     # Store result back in mesh (e.g., results/task_id.json)
                     result_path = mesh_root / "results" / f"{task_id}.json"
                     result_path.parent.mkdir(parents=True, exist_ok=True)
-                    result_path.write_text(json.dumps({
-                        "status": "success",
-                        "output": output,
-                        "duration": duration,
-                        "runtime": runtime_name,
-                        "implementation": sys.implementation.name,
-                        "version": sys.version
-                    }))
+                    result_path.write_text(
+                        json.dumps(
+                            {
+                                "status": "success",
+                                "output": output,
+                                "duration": duration,
+                                "runtime": runtime_name,
+                                "implementation": sys.implementation.name,
+                                "version": sys.version,
+                            }
+                        )
+                    )
 
                 except Exception as e:
+                    print(f"[{runtime_name}] Task {task_id} failed: {e}")
                     result_path = mesh_root / "results" / f"{task_id}.json"
-                    result_path.write_text(json.dumps({
-                        "status": "error",
-                        "error": str(e),
-                        "runtime": runtime_name
-                    }))
+                    result_path.write_text(json.dumps({"status": "error", "error": str(e), "runtime": runtime_name}))
 
+        # 3. Sleep with low-latency responsiveness
         await asyncio.sleep(0.1)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--mesh-root", type=str, required=True)
-    parser.add_argument("--runtime", type=str, required=True)
-    args = parser.parse_args()
 
-    asyncio.run(worker_loop(Path(args.mesh_root), args.runtime))
+@app.callback(invoke_without_command=True)
+def cli(
+    mesh_root: Path = typer.Option(..., "--mesh-root", help="Mesh root directory."),
+    runtime: str = typer.Option(..., "--runtime", help="Runtime name."),
+) -> None:
+    asyncio.run(worker_loop(mesh_root, runtime))
+
+
+if __name__ == "__main__":
+    app()

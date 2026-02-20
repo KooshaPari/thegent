@@ -1,17 +1,30 @@
-"""Compute Offloading Mac↔PC."""
+"""Compute Offloading Mac↔PC (WP-4001).
+
+Implements compute offloading between Mac and PC using Tailscale/SSH nodes.
+"""
+
+from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Dict, List, Optional
 
-logger = logging.getLogger(__name__)
+from thegent.compute.remote_executor import RemoteExecutor, RemoteResult, RemoteTask
+
+_log = logging.getLogger(__name__)
 
 
 class ComputeOffload:
-    """Compute offloading between Mac and PC."""
+    """Compute offloading between Mac and PC using Tailscale nodes (WP-4001)."""
 
-    def __init__(self) -> None:
-        """Initialize compute offload."""
-        self.targets: dict[str, Any] = {}
+    def __init__(self, nodes: list[str] | None = None, ssh_user: str | None = None) -> None:
+        """Initialize compute offload with remote executor.
+
+        Args:
+            nodes: Optional list of node hostnames or IPs.
+            ssh_user: Optional SSH login user.
+        """
+        self.executor = RemoteExecutor(nodes=nodes, ssh_user=ssh_user)
+        self.targets: dict[str, dict[str, Any]] = {}
 
     def register_target(self, target_id: str, host: str, port: int = 22) -> None:
         """Register an offload target.
@@ -25,22 +38,43 @@ class ComputeOffload:
             "host": host,
             "port": port,
         }
-        logger.info(f"Registered offload target: {target_id}")
+        _log.info("Registered offload target: %s (%s:%d)", target_id, host, port)
 
-    def offload(self, target_id: str, command: str) -> dict[str, Any]:
-        """Offload computation to target.
+    def offload(self, target_id: str, command: str, timeout_s: float = 300.0) -> RemoteResult:
+        """Offload computation to target node.
 
         Args:
-            target_id: Target identifier
-            command: Command to execute
+            target_id: Target identifier (must be a registered host or in executor's node list)
+            command: Shell command to execute on the remote host
+            timeout_s: Execution timeout in seconds
 
         Returns:
-            Execution result
+            RemoteResult with exit code, stdout, and stderr.
         """
-        target = self.targets.get(target_id)
-        if not target:
-            return {"error": f"Target {target_id} not found"}
+        _log.info("Offloading to %s: %s", target_id, command)
 
-        logger.info(f"Offloading to {target_id}: {command}")
-        # Implementation would use SSH/remote execution
-        return {"status": "success", "target": target_id}
+        task = RemoteTask(
+            task_id=f"offload-{target_id}",
+            command=command,
+            timeout_s=timeout_s,
+            node=target_id if target_id in self.executor._nodes else None,
+        )
+
+        return self.executor.execute(task)
+
+    async def offload_async(self, target_id: str, command: str, timeout_s: float = 300.0) -> RemoteResult:
+        """Asynchronously offload computation to target node."""
+        _log.info("Offloading async to %s: %s", target_id, command)
+
+        task = RemoteTask(
+            task_id=f"offload-async-{target_id}",
+            command=command,
+            timeout_s=timeout_s,
+            node=target_id if target_id in self.executor._nodes else None,
+        )
+
+        return await self.executor.execute_async(task)
+
+    def available_targets(self) -> list[str]:
+        """Return list of reachable targets."""
+        return self.executor.available_nodes()

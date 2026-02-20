@@ -9,8 +9,7 @@ import concurrent.futures
 import time
 
 import pytest
-
-from thegent.cli_impl import list_models_impl, ps_impl
+from thegent.cli.commands.impl import list_models_impl, ps_impl
 
 
 @pytest.mark.integration

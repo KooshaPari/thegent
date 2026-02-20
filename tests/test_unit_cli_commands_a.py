@@ -57,7 +57,7 @@ class TestRunCmdImpl:
         mock_route = MagicMock()
         mock_route.provider = "claude"
         with (
-            patch("thegent.cli_impl.run_impl", return_value={"exit_code": 0, "stdout": "ok"}) as mock_impl,
+            patch("thegent.cli.commands.impl.run_impl", return_value={"exit_code": 0, "stdout": "ok"}) as mock_impl,
             patch("thegent.models.resolve_route", return_value=mock_route),
         ):
             run_cmd(
@@ -97,7 +97,7 @@ class TestRunCmdImpl:
         mock_route = MagicMock()
         mock_route.provider = "gemini"
         with (
-            patch("thegent.cli_impl.run_impl", return_value={"exit_code": 0, "stdout": "done"}) as mock_impl,
+            patch("thegent.cli.commands.impl.run_impl", return_value={"exit_code": 0, "stdout": "done"}) as mock_impl,
             patch("thegent.models.ModelCatalog") as mock_catalog,
         ):
             mock_catalog.routes_for.return_value = [mock_route]
@@ -123,7 +123,7 @@ class TestRunCmdImpl:
         from thegent.cli import run_cmd
 
         with patch(
-            "thegent.cli_impl.run_impl",
+            "thegent.cli.commands.impl.run_impl",
             return_value={
                 "error": "Agent not found",
                 "agents": "claude, gemini",
@@ -142,7 +142,7 @@ class TestRunCmdImpl:
         from thegent.cli import run_cmd
 
         with patch(
-            "thegent.cli_impl.run_impl",
+            "thegent.cli.commands.impl.run_impl",
             return_value={
                 "exit_code": 0,
                 "stdout": "full output here",
@@ -161,7 +161,7 @@ class TestRunCmdImpl:
         from thegent.cli import run_cmd
 
         with patch(
-            "thegent.cli_impl.run_impl",
+            "thegent.cli.commands.impl.run_impl",
             return_value={
                 "exit_code": 0,
                 "stdout": "condensed",
@@ -180,7 +180,7 @@ class TestRunCmdImpl:
         from thegent.cli import run_cmd
 
         with patch(
-            "thegent.cli_impl.run_impl",
+            "thegent.cli.commands.impl.run_impl",
             return_value={
                 "exit_code": 0,
                 "stdout": "",
@@ -198,7 +198,7 @@ class TestRunCmdImpl:
         from thegent.cli import run_cmd
 
         with patch(
-            "thegent.cli_impl.run_impl",
+            "thegent.cli.commands.impl.run_impl",
             return_value={
                 "exit_code": 3,
                 "stdout": "",
@@ -227,7 +227,7 @@ class TestBgCmdImpl:
         from thegent.cli import bg_cmd
 
         with patch(
-            "thegent.cli_impl.bg_impl",
+            "thegent.cli.commands.impl.bg_impl",
             return_value={
                 "session_id": "abc-123",
                 "log_path": "/tmp/log.txt",
@@ -259,7 +259,7 @@ class TestBgCmdImpl:
         from thegent.cli import bg_cmd
 
         with patch(
-            "thegent.cli_impl.bg_impl",
+            "thegent.cli.commands.impl.bg_impl",
             return_value={
                 "session_id": "abc-456",
                 "log_path": "/tmp/log.txt",
@@ -289,7 +289,7 @@ class TestBgCmdImpl:
         from thegent.cli import bg_cmd
 
         with patch(
-            "thegent.cli_impl.bg_impl",
+            "thegent.cli.commands.impl.bg_impl",
             return_value={
                 "session_id": "md-session",
                 "log_path": "/tmp/log.txt",
@@ -318,7 +318,7 @@ class TestBgCmdImpl:
         from thegent.cli import bg_cmd
 
         with patch(
-            "thegent.cli_impl.bg_impl",
+            "thegent.cli.commands.impl.bg_impl",
             return_value={
                 "error": "Agent failure",
                 "exit_code": 5,
@@ -354,7 +354,7 @@ class TestHistoryCmdImpl:
         """history_cmd prints dim message when no history exists."""
         from thegent.cli import history_cmd
 
-        with patch("thegent.cli_impl.history_impl", return_value=[]):
+        with patch("thegent.cli.commands.impl.history_impl", return_value=[]):
             history_cmd(limit=50)
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("no execution history" in p.lower() for p in printed)
@@ -379,7 +379,7 @@ class TestHistoryCmdImpl:
                 "prompt": "short prompt",
             }
         ]
-        with patch("thegent.cli_impl.history_impl", return_value=runs):
+        with patch("thegent.cli.commands.impl.history_impl", return_value=runs):
             history_cmd(limit=50)
         mock_console.print.assert_called_once()
 
@@ -390,7 +390,7 @@ class TestHistoryCmdImpl:
         from thegent.cli import history_cmd
 
         runs = [{"run_id": "r1", "agent": "claude"}]
-        with patch("thegent.cli_impl.history_impl", return_value=runs):
+        with patch("thegent.cli.commands.impl.history_impl", return_value=runs):
             history_cmd(limit=50, format="json")
         mock_console.print_json.assert_called_once()
 
@@ -411,7 +411,7 @@ class TestHistoryCmdImpl:
                 "prompt": "prompt\nwith newline",
             }
         ]
-        with patch("thegent.cli_impl.history_impl", return_value=runs):
+        with patch("thegent.cli.commands.impl.history_impl", return_value=runs):
             history_cmd(limit=50, format="md")
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("Execution History" in p for p in printed)
@@ -435,7 +435,7 @@ class TestHistoryCmdImpl:
                 "prompt": "x" * 50,
             }
         ]
-        with patch("thegent.cli_impl.history_impl", return_value=runs):
+        with patch("thegent.cli.commands.impl.history_impl", return_value=runs):
             history_cmd(limit=50)
         # Table was rendered -- verify no crash
         mock_console.print.assert_called_once()
@@ -456,7 +456,7 @@ class TestEventsCmdImpl:
         """events_cmd prints dim message when no events."""
         from thegent.cli import events_cmd
 
-        with patch("thegent.cli_impl.events_impl", return_value=[]):
+        with patch("thegent.cli.commands.impl.events_impl", return_value=[]):
             events_cmd()
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("no events" in p.lower() for p in printed)
@@ -477,7 +477,7 @@ class TestEventsCmdImpl:
                 "duration_s": None,
             }
         ]
-        with patch("thegent.cli_impl.events_impl", return_value=events):
+        with patch("thegent.cli.commands.impl.events_impl", return_value=events):
             events_cmd()
         mock_console.print.assert_called_once()
 
@@ -488,7 +488,7 @@ class TestEventsCmdImpl:
         from thegent.cli import events_cmd
 
         events = [{"run_id": "r1", "event": "started"}]
-        with patch("thegent.cli_impl.events_impl", return_value=events):
+        with patch("thegent.cli.commands.impl.events_impl", return_value=events):
             events_cmd(format="json")
         mock_console.print_json.assert_called_once()
 
@@ -505,7 +505,7 @@ class TestEventsCmdImpl:
                 "started_at_utc": "2025-01-01T12:00:00Z",
             }
         ]
-        with patch("thegent.cli_impl.events_impl", return_value=events):
+        with patch("thegent.cli.commands.impl.events_impl", return_value=events):
             events_cmd(format="md")
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("Telemetry Events" in p for p in printed)
@@ -526,7 +526,7 @@ class TestEventsCmdImpl:
                 "duration_s": 5.2,
             }
         ]
-        with patch("thegent.cli_impl.events_impl", return_value=events):
+        with patch("thegent.cli.commands.impl.events_impl", return_value=events):
             events_cmd()
         mock_console.print.assert_called_once()
 
@@ -553,7 +553,7 @@ class TestDataProtectionCmdImpl:
             "retention_policy_days": 30,
         }
         with (
-            patch("thegent.cli_impl.get_data_protection_status_impl", return_value=status),
+            patch("thegent.cli.commands.impl.get_data_protection_status_impl", return_value=status),
             patch("thegent.cli._normalize_output_format", return_value="rich"),
         ):
             data_protection_cmd()
@@ -573,7 +573,7 @@ class TestDataProtectionCmdImpl:
         }
         buf = io.StringIO()
         with (
-            patch("thegent.cli_impl.get_data_protection_status_impl", return_value=status),
+            patch("thegent.cli.commands.impl.get_data_protection_status_impl", return_value=status),
             patch("thegent.cli._normalize_output_format", return_value="json"),
             patch("sys.stdout", buf),
         ):
@@ -685,7 +685,7 @@ class TestEscalateCmdImpl:
         """escalate_add_cmd calls impl and prints confirmation."""
         from thegent.cli import escalate_add_cmd
 
-        with patch("thegent.cli_impl.escalate_add_impl") as mock_impl:
+        with patch("thegent.cli.commands.impl.escalate_add_impl") as mock_impl:
             escalate_add_cmd(run_id="r1", reason="blocked", sla_minutes=15)
         mock_impl.assert_called_once_with(
             run_id="r1",
@@ -705,7 +705,7 @@ class TestEscalateCmdImpl:
         from thegent.cli import escalate_list_cmd
 
         with (
-            patch("thegent.cli_impl.escalate_list_impl", return_value=[]),
+            patch("thegent.cli.commands.impl.escalate_list_impl", return_value=[]),
             patch("thegent.cli._normalize_output_format", return_value="rich"),
         ):
             escalate_list_cmd()
@@ -721,7 +721,7 @@ class TestEscalateCmdImpl:
         items = [{"run_id": "r1", "reason": "test"}]
         buf = io.StringIO()
         with (
-            patch("thegent.cli_impl.escalate_list_impl", return_value=items),
+            patch("thegent.cli.commands.impl.escalate_list_impl", return_value=items),
             patch("thegent.cli._normalize_output_format", return_value="json"),
             patch("sys.stdout", buf),
         ):
@@ -747,7 +747,7 @@ class TestEscalateCmdImpl:
             }
         ]
         with (
-            patch("thegent.cli_impl.escalate_list_impl", return_value=items),
+            patch("thegent.cli.commands.impl.escalate_list_impl", return_value=items),
             patch("thegent.cli._normalize_output_format", return_value="rich"),
         ):
             escalate_list_cmd()
@@ -759,7 +759,7 @@ class TestEscalateCmdImpl:
         """escalate_resolve_cmd prints success on resolution."""
         from thegent.cli import escalate_resolve_cmd
 
-        with patch("thegent.cli_impl.escalate_resolve_impl", return_value=True):
+        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=True):
             escalate_resolve_cmd(run_id="r1")
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("resolved" in p.lower() for p in printed)
@@ -770,7 +770,7 @@ class TestEscalateCmdImpl:
         """escalate_resolve_cmd prints error when not found."""
         from thegent.cli import escalate_resolve_cmd
 
-        with patch("thegent.cli_impl.escalate_resolve_impl", return_value=False):
+        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=False):
             escalate_resolve_cmd(run_id="unknown")
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("no pending" in p.lower() for p in printed)
@@ -791,7 +791,7 @@ class TestPurgeCmdImpl:
         """purge_cmd in dry-run mode prints would-be purge count."""
         from thegent.cli import purge_cmd
 
-        with patch("thegent.cli_impl.purge_impl", return_value={"purged": 5, "kept": 10}, create=True):
+        with patch("thegent.cli.commands.impl.purge_impl", return_value={"purged": 5, "kept": 10}, create=True):
             purge_cmd(dry_run=True)
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("dry-run" in p.lower() for p in printed)
@@ -803,7 +803,7 @@ class TestPurgeCmdImpl:
         """purge_cmd without dry-run purges records."""
         from thegent.cli import purge_cmd
 
-        with patch("thegent.cli_impl.purge_impl", return_value={"purged": 3, "kept": 7}, create=True):
+        with patch("thegent.cli.commands.impl.purge_impl", return_value={"purged": 3, "kept": 7}, create=True):
             purge_cmd(dry_run=False)
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("purged" in p.lower() for p in printed)
@@ -859,7 +859,7 @@ class TestSweepCmdImpl:
 
         with (
             patch(
-                "thegent.cli_impl.sweep_impl",
+                "thegent.cli.commands.impl.sweep_impl",
                 return_value={
                     "pass": True,
                     "drift_issues": [],
@@ -880,7 +880,7 @@ class TestSweepCmdImpl:
 
         with (
             patch(
-                "thegent.cli_impl.sweep_impl",
+                "thegent.cli.commands.impl.sweep_impl",
                 return_value={
                     "pass": False,
                     "drift_issues": ["drift issue 1"],
@@ -902,7 +902,7 @@ class TestSweepCmdImpl:
         buf = io.StringIO()
         with (
             patch(
-                "thegent.cli_impl.sweep_impl",
+                "thegent.cli.commands.impl.sweep_impl",
                 return_value={
                     "pass": True,
                     "drift_issues": [],
@@ -924,7 +924,7 @@ class TestSweepCmdImpl:
         buf = io.StringIO()
         with (
             patch(
-                "thegent.cli_impl.sweep_impl",
+                "thegent.cli.commands.impl.sweep_impl",
                 return_value={
                     "pass": False,
                     "drift_issues": [],
@@ -981,7 +981,7 @@ class TestPsCmdImpl:
         """ps_cmd prints dim message when no sessions."""
         from thegent.cli import ps_cmd
 
-        with patch("thegent.cli_impl.ps_impl", return_value=[]):
+        with patch("thegent.cli.commands.impl.ps_impl", return_value=[]):
             ps_cmd()
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("no sessions" in p.lower() for p in printed)
@@ -998,7 +998,7 @@ class TestPsCmdImpl:
         rows = [
             {"id": "s1", "agent": "claude", "owner": "user", "pid": 123, "status": "running", "prompt_preview": "hi"}
         ]
-        with patch("thegent.cli_impl.ps_impl", return_value=rows):
+        with patch("thegent.cli.commands.impl.ps_impl", return_value=rows):
             ps_cmd(format="json")
         # Source returns without printing for JSON format
         mock_console.print.assert_not_called()
@@ -1015,7 +1015,7 @@ class TestPsCmdImpl:
         rows = [
             {"id": "s1", "agent": "claude", "owner": "user", "pid": 123, "status": "running", "prompt_preview": "hi"}
         ]
-        with patch("thegent.cli_impl.ps_impl", return_value=rows):
+        with patch("thegent.cli.commands.impl.ps_impl", return_value=rows):
             ps_cmd(format="md")
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("thegent sessions" in p.lower() for p in printed)
@@ -1040,7 +1040,7 @@ class TestPsCmdImpl:
                 "started_at_utc": "2025-01-01T00:00:00",
             }
         ]
-        with patch("thegent.cli_impl.ps_impl", return_value=rows):
+        with patch("thegent.cli.commands.impl.ps_impl", return_value=rows):
             ps_cmd()
         mock_console.print.assert_called_once()
 
@@ -1070,7 +1070,7 @@ class TestPsCmdImpl:
                 },
             }
         ]
-        with patch("thegent.cli_impl.ps_impl", return_value=rows):
+        with patch("thegent.cli.commands.impl.ps_impl", return_value=rows):
             ps_cmd(include_contract=True)
         mock_console.print.assert_called()
 
@@ -1093,7 +1093,7 @@ class TestSessionContractsCmdImpl:
         from thegent.cli import session_contracts_cmd
 
         with patch(
-            "thegent.cli_impl.session_contract_audit_impl",
+            "thegent.cli.commands.impl.session_contract_audit_impl",
             return_value={
                 "rows": [],
                 "summary": {},
@@ -1127,7 +1127,7 @@ class TestSessionContractsCmdImpl:
                 "strict_checks_enabled": False,
             },
         }
-        with patch("thegent.cli_impl.session_contract_audit_impl", return_value=audit):
+        with patch("thegent.cli.commands.impl.session_contract_audit_impl", return_value=audit):
             session_contracts_cmd(format="json")
         # Source returns without printing for JSON format
         mock_console.print.assert_not_called()
@@ -1156,7 +1156,7 @@ class TestSessionContractsCmdImpl:
                 "strict_checks_enabled": False,
             },
         }
-        with patch("thegent.cli_impl.session_contract_audit_impl", return_value=audit):
+        with patch("thegent.cli.commands.impl.session_contract_audit_impl", return_value=audit):
             session_contracts_cmd(summary_only=True)
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("summary" in p.lower() for p in printed)
@@ -1307,7 +1307,7 @@ class TestInspectCmdImpl:
         """inspect_cmd with owner but no matching sessions prints dim."""
         from thegent.cli import inspect_cmd
 
-        with patch("thegent.cli_impl.ps_impl", return_value=[]):
+        with patch("thegent.cli.commands.impl.ps_impl", return_value=[]):
             inspect_cmd(owner="user:proj")
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("no sessions" in p.lower() for p in printed)
@@ -1319,8 +1319,8 @@ class TestInspectCmdImpl:
         from thegent.cli import inspect_cmd
 
         with (
-            patch("thegent.cli_impl.status_impl", return_value={"status": "running"}) as mock_st,
-            patch("thegent.cli_impl.logs_impl", return_value="log line 1") as mock_lg,
+            patch("thegent.cli.commands.impl.status_impl", return_value={"status": "running"}) as mock_st,
+            patch("thegent.cli.commands.impl.logs_impl", return_value="log line 1") as mock_lg,
             patch("thegent.cli._normalize_output_format", return_value="json"),
             patch("builtins.print"),
         ):
@@ -1335,7 +1335,7 @@ class TestInspectCmdImpl:
         from thegent.cli import inspect_cmd
 
         with (
-            patch("thegent.cli_impl.status_impl", side_effect=RuntimeError("bad")),
+            patch("thegent.cli.commands.impl.status_impl", side_effect=RuntimeError("bad")),
             patch("thegent.cli._normalize_output_format", return_value="json"),
         ):
             inspect_cmd(session_ids=["s1"])

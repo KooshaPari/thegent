@@ -36,6 +36,7 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import typer
 import uvicorn
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse, PlainTextResponse
@@ -54,6 +55,12 @@ logger = logging.getLogger(__name__)
 
 # Default HTTP port for the ACP server adapter
 ACP_DEFAULT_PORT: int = int(os.environ.get("ACP_SERVER_PORT", "8420"))
+app = typer.Typer(
+    name="acp-server",
+    help="thegent ACP server adapter",
+    add_completion=False,
+    no_args_is_help=False,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -692,30 +699,40 @@ def _rpc_error(req_id: Any, code: int, message: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def main() -> None:
+def main(
+    *,
+    http: bool = False,
+    host: str = "127.0.0.1",
+    port: int = ACP_DEFAULT_PORT,
+    log_level: str = "INFO",
+) -> None:
     """CLI entry point.  Use ``--http`` flag to start HTTP server."""
-    import argparse
-
-    parser = argparse.ArgumentParser(description="thegent ACP server adapter")
-    parser.add_argument(
-        "--http",
-        action="store_true",
-        help="Start HTTP server instead of stdio",
-    )
-    parser.add_argument("--host", default="127.0.0.1", help="HTTP bind host (default: 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=ACP_DEFAULT_PORT, help=f"HTTP bind port (default: {ACP_DEFAULT_PORT})")
-    parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
-    args = parser.parse_args()
-
-    logging.basicConfig(level=getattr(logging, args.log_level))
+    normalized_log_level = log_level.upper()
+    if normalized_log_level not in {"DEBUG", "INFO", "WARNING", "ERROR"}:
+        raise ValueError(f"Invalid log level: {log_level}")
+    logging.basicConfig(level=getattr(logging, normalized_log_level))
 
     adapter = ACPServerAdapter()
 
-    if args.http:
-        adapter.run_http(host=args.host, port=args.port)
+    if http:
+        adapter.run_http(host=host, port=port)
     else:
         asyncio.run(adapter.run_stdio())
 
 
+@app.callback(invoke_without_command=True)
+def cli(
+    http: bool = typer.Option(False, "--http", help="Start HTTP server instead of stdio"),
+    host: str = typer.Option("127.0.0.1", "--host", help="HTTP bind host"),
+    port: int = typer.Option(ACP_DEFAULT_PORT, "--port", help="HTTP bind port"),
+    log_level: str = typer.Option("INFO", "--log-level", help="Log level (DEBUG, INFO, WARNING, ERROR)"),
+) -> None:
+    """Run ACP server in stdio mode by default, or HTTP mode with ``--http``."""
+    try:
+        main(http=http, host=host, port=port, log_level=log_level)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
 if __name__ == "__main__":
-    main()
+    app()

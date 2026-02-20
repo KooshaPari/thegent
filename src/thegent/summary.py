@@ -61,6 +61,43 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
         return []
 
 
+def _parse_log_entry(line: str, start_dt: datetime, end_dt: datetime) -> dict[str, Any] | None:
+    """Parse a single log entry, returning it if within time range."""
+    try:
+        data = json.loads(line)
+        if data.get("type") in ("user", "assistant"):
+            ts_str = data.get("timestamp")
+            if ts_str:
+                # handle various timestamp formats
+                if ts_str.endswith("Z"):
+                    ts = datetime.fromisoformat(ts_str)
+                else:
+                    ts = datetime.fromisoformat(ts_str)
+
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=UTC)
+
+                if start_dt <= ts <= end_dt:
+                    return data
+    except Exception:
+        pass
+    return None
+
+
+def _read_log_file(log_file: Path, start_dt: datetime, end_dt: datetime) -> list[dict[str, Any]]:
+    """Read a single log file and return entries within time range."""
+    logs = []
+    try:
+        with log_file.open("r", encoding="utf-8") as f:
+            for line in f:
+                entry = _parse_log_entry(line, start_dt, end_dt)
+                if entry is not None:
+                    logs.append(entry)
+    except Exception:
+        pass
+    return logs
+
+
 def get_chat_logs(session_dir: Path, project_key: str, start_dt: datetime, end_dt: datetime) -> list[dict[str, Any]]:
     """Fetch chat logs from project session directory."""
     project_logs_dir = session_dir / "claude-config" / "projects" / project_key
@@ -69,29 +106,7 @@ def get_chat_logs(session_dir: Path, project_key: str, start_dt: datetime, end_d
 
     logs = []
     for log_file in project_logs_dir.glob("*.jsonl"):
-        try:
-            with log_file.open("r", encoding="utf-8") as f:
-                for line in f:
-                    try:
-                        data = json.loads(line)
-                        if data.get("type") in ("user", "assistant"):
-                            ts_str = data.get("timestamp")
-                            if ts_str:
-                                # handle various timestamp formats
-                                if ts_str.endswith("Z"):
-                                    ts = datetime.fromisoformat(ts_str)
-                                else:
-                                    ts = datetime.fromisoformat(ts_str)
-
-                                if ts.tzinfo is None:
-                                    ts = ts.replace(tzinfo=UTC)
-
-                                if start_dt <= ts <= end_dt:
-                                    logs.append(data)
-                    except Exception:
-                        continue
-        except Exception:
-            continue
+        logs.extend(_read_log_file(log_file, start_dt, end_dt))
     return sorted(logs, key=lambda x: x.get("timestamp", ""))
 
 
@@ -102,7 +117,7 @@ def summary_impl(
     agent: str = "claude",
 ) -> dict[str, Any]:
     """FR-X09: Unified summary and audit log across runs, chats, and commits."""
-    from thegent.cli_impl import _resolve_cwd, run_impl
+    from thegent.cli.commands.impl import _resolve_cwd, run_impl
 
     settings = ThegentSettings()
     resolved_path = _resolve_cwd(project_path) or Path.cwd()

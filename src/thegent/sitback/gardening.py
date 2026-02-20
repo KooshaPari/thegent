@@ -58,6 +58,7 @@ class GardeningManager:
                 text=True,
                 timeout=60,
                 cwd=self.project_root,
+                check=False,
             )
             return {
                 "success": result.returncode == 0,
@@ -118,6 +119,7 @@ class GardeningManager:
                 text=True,
                 timeout=30,
                 cwd=self.project_root,
+                check=False,
             )
             # Just collecting, not running tests
             return {"success": True, "can_collect": result.returncode == 0}
@@ -162,6 +164,7 @@ class GardeningManager:
                 text=True,
                 timeout=30,
                 cwd=self.project_root,
+                check=False,
             )
             # Parse output for escalations
             has_escalations = "escalation" in result.stdout.lower() and len(result.stdout) > 50
@@ -191,6 +194,7 @@ class GardeningManager:
                 text=True,
                 timeout=120,
                 cwd=self.project_root,
+                check=False,
             )
             return {
                 "success": result.returncode == 0,
@@ -217,6 +221,7 @@ class GardeningManager:
                 text=True,
                 timeout=30,
                 cwd=self.project_root,
+                check=False,
             )
             return {
                 "success": result.returncode == 0,
@@ -236,7 +241,8 @@ class GardeningManager:
             Dict with pruning results.
         """
         try:
-            from thegent.orchestration.smart_prune import smart_prune_main
+            from thegent.orchestration.pruning.smart_prune import smart_prune_main
+
             results = smart_prune_main(force=False, reprompt=True)
             return {
                 "success": True,

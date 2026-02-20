@@ -4,7 +4,6 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 
 class SmartMerge:
@@ -18,9 +17,20 @@ class SmartMerge:
         # Mergiraf command line: mergiraf merge --base <base> --ours <ours> --theirs <theirs> --output <output>
         try:
             subprocess.run(
-                ["mergiraf", "merge", "--base", str(base), "--ours", str(ours), "--theirs", str(theirs), "--output", str(output)],
+                [
+                    "mergiraf",
+                    "merge",
+                    "--base",
+                    str(base),
+                    "--ours",
+                    str(ours),
+                    "--theirs",
+                    str(theirs),
+                    "--output",
+                    str(output),
+                ],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
             return True
         except (subprocess.CalledProcessError, FileNotFoundError):
@@ -29,7 +39,7 @@ class SmartMerge:
                 subprocess.run(
                     ["git", "merge-file", "-p", str(ours), str(base), str(theirs)],
                     check=True,
-                    stdout=open(output, "wb")
+                    stdout=open(output, "wb"),
                 )
                 return True
             except subprocess.CalledProcessError:
@@ -82,9 +92,7 @@ class SmartMerge:
         if ext == ".json":
             try:
                 subprocess.run(
-                    ["jq", "-s", ".[0] * .[1]", str(path_a), str(path_b)],
-                    check=True,
-                    stdout=open(output, "wb")
+                    ["jq", "-s", ".[0] * .[1]", str(path_a), str(path_b)], check=True, stdout=open(output, "wb")
                 )
                 return True
             except (subprocess.CalledProcessError, FileNotFoundError):
@@ -93,6 +101,7 @@ class SmartMerge:
             # Deep merge YAML manually using ruamel.yaml or similar
             try:
                 import ruamel.yaml
+
                 yaml = ruamel.yaml.YAML()
                 with open(path_a) as f:
                     data_a = yaml.load(f)

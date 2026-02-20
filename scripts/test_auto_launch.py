@@ -11,8 +11,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from thegent.orchestration.state.session_watcher import SessionEventWatcher
+
 from thegent.config import ThegentSettings
-from thegent.orchestration.session_watcher import SessionEventWatcher
 from thegent.planning.auto_launch import AutoLaunchSystem
 from thegent.planning.workstream_db import WorkstreamDB
 

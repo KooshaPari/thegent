@@ -12,14 +12,13 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-from thegent.execution import ConcurrencyController
 from thegent.orchestration.load_based_limits import (
     OwnerStats,
     UsageTracker,
     get_usage_tracker,
 )
 
+from thegent.execution import ConcurrencyController
 
 # ---------------------------------------------------------------------------
 # OwnerStats unit tests
@@ -59,7 +58,7 @@ class TestOwnerStats:
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def tracker() -> UsageTracker:
     """Fresh UsageTracker instance per test (isolated from the singleton)."""
     return UsageTracker()
@@ -254,7 +253,7 @@ class TestGetUsageTrackerSingleton:
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def cc(tmp_path: Path) -> ConcurrencyController:
     """ConcurrencyController with an isolated UsageTracker."""
     ctrl = ConcurrencyController(
@@ -270,7 +269,7 @@ def cc(tmp_path: Path) -> ConcurrencyController:
 def _patch_sessions(running: int):
     """Return a context manager that mocks ps_impl to report *running* running sessions."""
     fake_sessions = [{"status": "running"}] * running
-    return patch("thegent.cli_impl.ps_impl", return_value=fake_sessions)
+    return patch("thegent.cli.commands.impl.ps_impl", return_value=fake_sessions)
 
 
 class TestConcurrencyControllerUsageIntegration:

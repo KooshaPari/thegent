@@ -7,12 +7,14 @@ from .artifact_generator import MAIFArtifactGenerator
 from .crypto import SigningKey, VerifyingKey, hash_data
 from .hash_chain import HashChainValidator
 from .models import ActionType, MAIFArtifact
+from .runner import MAIFRunner
 
 __all__ = [
     "ActionType",
     "HashChainValidator",
     "MAIFArtifact",
     "MAIFArtifactGenerator",
+    "MAIFRunner",
     "SigningKey",
     "VerifyingKey",
     "hash_data",

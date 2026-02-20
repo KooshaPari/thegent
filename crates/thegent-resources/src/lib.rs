@@ -104,28 +104,55 @@ fn get_memory_mb() -> (f64, f64) {
                     let s = String::from_utf8_lossy(&out.stdout);
                     let mut free = 0u64;
                     let mut inactive = 0u64;
+                    let mut speculative = 0u64;
+                    let mut purgeable = 0u64;
+                    let mut page_size = 4096u64;
+
                     for line in s.lines() {
-                        if line.contains("Pages free:") {
+                        let line = line.trim();
+                        if line.is_empty() {
+                            continue;
+                        }
+
+                        if line.contains("page size of") {
+                            if let Some(start) = line.find("page size of ") {
+                                let rest = &line[start + 13..];
+                                if let Some(end) = rest.find(" bytes") {
+                                    if let Ok(ps) = rest[..end].parse::<u64>() {
+                                        page_size = ps;
+                                    }
+                                }
+                            }
+                        } else if line.contains("Pages free") {
                             if let Some(rest) = line.split(':').nth(1) {
                                 free = rest.trim().trim_end_matches('.').parse().unwrap_or(0);
                             }
-                        } else if line.contains("Pages inactive:") {
+                        } else if line.contains("Pages inactive") {
                             if let Some(rest) = line.split(':').nth(1) {
                                 inactive = rest.trim().trim_end_matches('.').parse().unwrap_or(0);
                             }
+                        } else if line.contains("Pages speculative") {
+                            if let Some(rest) = line.split(':').nth(1) {
+                                speculative = rest.trim().trim_end_matches('.').parse().unwrap_or(0);
+                            }
+                        } else if line.contains("Pages purgeable") {
+                            if let Some(rest) = line.split(':').nth(1) {
+                                purgeable = rest.trim().trim_end_matches('.').parse().unwrap_or(0);
+                            }
                         }
                     }
-                    (free + inactive) as f64 * 4096.0 / (1024.0 * 1024.0)
+                    (free + inactive + speculative + purgeable) as f64 * page_size as f64
+                        / (1024.0 * 1024.0)
                 } else {
-                    512.0
+                    1024.0
                 }
             } else {
-                512.0
+                1024.0
             }
         }
         #[cfg(not(target_os = "macos"))]
         {
-            512.0
+            1024.0
         }
     };
     (rss_mb, available_mb)

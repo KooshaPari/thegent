@@ -55,24 +55,11 @@ def get_resource_path(relative_path: str):
     In dev mode, looks in the project root.
     When installed, uses importlib.resources.
     """
-    from thegent.resources import get_resource_path as _get_path
+    from thegent import resources
 
-    return _get_path(relative_path)
+    return resources.get_resource_path(relative_path)
 
 
-__all__ = [
-    "EditLinksGenerator",
-    "LinkChecker",
-    "WorkStreamOps",
-    "batch_file_operations",
-    "get_resource_path",
-    "is_dev_mode",
-    "normalize_path",
-    "safe_read_file",
-    "safe_write_file",
-    "strip_ansi",  # Export for backward compatibility
-]
-
-from thegent.utils.reusable_helpers import ReusableHelpers
-
-__all__.append("ReusableHelpers")
+def _strip_ansi(text: str) -> str:
+    """Backward compatibility alias for strip_ansi."""
+    return strip_ansi(text)

@@ -60,7 +60,7 @@ def _inject_missing_names() -> None:
     These names are used in the module's tool functions but are not imported at
     the module level. We inject stubs so that patching targets are available.
     """
-    from thegent.cli_impl import _default_owner_tag, _resolve_cwd
+    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd
 
     if not hasattr(_mcp_mod, "_resolve_cwd"):
         _mcp_mod._resolve_cwd = _resolve_cwd

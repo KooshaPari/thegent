@@ -40,69 +40,21 @@ THEGENT_TOOL_BIN_PATH="${THEGENT_TOOL_BIN_PATH:-/usr/bin:/opt/homebrew/bin:/bin:
 
 # --- Binary Resolution (Rust Runtime) ---
 if [[ -z "${THEGENT_HOOKS_BIN:-}" ]]; then
-  if [[ -x "${PROJECT_DIR:-.}/crates/target/release/thegent-hooks" ]]; then
-    THEGENT_HOOKS_BIN="${PROJECT_DIR:-.}/crates/target/release/thegent-hooks"
-  elif [[ -x "${PROJECT_DIR:-.}/crates/target/debug/thegent-hooks" ]]; then
-    THEGENT_HOOKS_BIN="${PROJECT_DIR:-.}/crates/target/debug/thegent-hooks"
-  elif [[ -x "${PROJECT_DIR:-.}/target/release/thegent-hooks" ]]; then
-    THEGENT_HOOKS_BIN="${PROJECT_DIR:-.}/target/release/thegent-hooks"
-  elif [[ -x "${PROJECT_DIR:-.}/target/debug/thegent-hooks" ]]; then
-    THEGENT_HOOKS_BIN="${PROJECT_DIR:-.}/target/debug/thegent-hooks"
-  elif command -v thegent-hooks >/dev/null 2>&1; then
-    THEGENT_HOOKS_BIN="$(command -v thegent-hooks)"
-  fi
+  for loc in "${PROJECT_DIR:-.}/crates/target/release/thegent-hooks" \
+             "${PROJECT_DIR:-.}/crates/target/debug/thegent-hooks" \
+             "${PROJECT_DIR:-.}/target/release/thegent-hooks" \
+             "${PROJECT_DIR:-.}/target/debug/thegent-hooks"; do
+    if [[ -x "$loc" ]]; then THEGENT_HOOKS_BIN="$loc"; break; fi
+  done
+  [[ -z "${THEGENT_HOOKS_BIN:-}" ]] && THEGENT_HOOKS_BIN="$(command -v thegent-hooks 2>/dev/null || echo "")"
 fi
 
-if [[ -z "${THEGENT_SHIMS_BIN:-}" ]]; then
-  if [[ -x "${PROJECT_DIR:-.}/crates/target/release/thegent-shims" ]]; then
-    THEGENT_SHIMS_BIN="${PROJECT_DIR:-.}/crates/target/release/thegent-shims"
-  elif [[ -x "${PROJECT_DIR:-.}/crates/target/debug/thegent-shims" ]]; then
-    THEGENT_SHIMS_BIN="${PROJECT_DIR:-.}/crates/target/debug/thegent-shims"
-  elif [[ -x "${PROJECT_DIR:-.}/target/release/thegent-shims" ]]; then
-    THEGENT_SHIMS_BIN="${PROJECT_DIR:-.}/target/release/thegent-shims"
-  elif [[ -x "${PROJECT_DIR:-.}/target/debug/thegent-shims" ]]; then
-    THEGENT_SHIMS_BIN="${PROJECT_DIR:-.}/target/debug/thegent-shims"
-  elif command -v thegent-shims >/dev/null 2>&1; then
-    THEGENT_SHIMS_BIN="$(command -v thegent-shims)"
-  fi
+if [[ -n "${THEGENT_HOOKS_BIN:-}" && -z "${THEGENT_SETUP_COMPLETE:-}" ]]; then
+  eval "$("$THEGENT_HOOKS_BIN" setup)"
 fi
 
-# Fallback/Safety: Ensure Rust binaries are found or fail
-if [[ -z "${THEGENT_HOOKS_BIN:-}" ]] || [[ -z "${THEGENT_SHIMS_BIN:-}" ]]; then
-  echo "CRITICAL: thegent Rust runtime binaries not found. Migration is mandatory." >&2
-  # exit 1 # Don't exit here as it might break startup, but let hooks fail
-fi
-
-# Overrides using thegent-shims
-if [[ -n "${THEGENT_SHIMS_BIN:-}" ]]; then
-  jq() { "$THEGENT_SHIMS_BIN" jq "$@"; }
-  grep() { "$THEGENT_SHIMS_BIN" grep "$@"; }
-  find() { "$THEGENT_SHIMS_BIN" find "$@"; }
-  pgrep() { "$THEGENT_SHIMS_BIN" pgrep "$@"; }
-  wc() { "$THEGENT_SHIMS_BIN" wc "$@"; }
-  date() { "$THEGENT_SHIMS_BIN" date "$@"; }
-  tr() { "$THEGENT_SHIMS_BIN" tr "$@"; }
-  codex() { "$THEGENT_SHIMS_BIN" agent codex "$@"; }
-  copilot() { "$THEGENT_SHIMS_BIN" agent copilot "$@"; }
-  dex() { "$THEGENT_SHIMS_BIN" agent dex "$@"; }
-  claude() { "$THEGENT_SHIMS_BIN" agent claude "$@"; }
-  cursor() { "$THEGENT_SHIMS_BIN" agent cursor "$@"; }
-  git() { "$THEGENT_HOOKS_BIN" git "$@"; }
-  uv() { "$THEGENT_HOOKS_BIN" uv "$@"; }
-  npm() { "$THEGENT_HOOKS_BIN" npm "$@"; }
-  pnpm() { "$THEGENT_HOOKS_BIN" pnpm "$@"; }
-  bun() { "$THEGENT_HOOKS_BIN" bun "$@"; }
-  yarn() { "$THEGENT_HOOKS_BIN" yarn "$@"; }
-  pip() { "$THEGENT_HOOKS_BIN" pip "$@"; }
-  poetry() { "$THEGENT_HOOKS_BIN" poetry "$@"; }
-  cargo() { "$THEGENT_HOOKS_BIN" cargo "$@"; }
-  go() { "$THEGENT_HOOKS_BIN" go "$@"; }
-  ruff() { "$THEGENT_HOOKS_BIN" ruff "$@"; }
-  pytest() { "$THEGENT_HOOKS_BIN" pytest "$@"; }
-  sed() { "$THEGENT_HOOKS_BIN" sed "$@"; }
-  cp() { "$THEGENT_HOOKS_BIN" cp "$@"; }
-  mv() { "$THEGENT_HOOKS_BIN" mv "$@"; }
-  rm() { "$THEGENT_HOOKS_BIN" rm "$@"; }
+if [[ -z "${THEGENT_HOOKS_BIN:-}" ]]; then
+  echo "CRITICAL: thegent Rust runtime (thegent-hooks) not found." >&2
 fi
 
 # Get script path in a cross-shell compatible way

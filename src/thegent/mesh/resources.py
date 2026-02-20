@@ -5,7 +5,6 @@ import os
 import resource
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 class ResourceManager:
@@ -52,4 +51,4 @@ class ResourceManager:
             with open(path / "tasks", "w") as f:
                 f.write(str(os.getpid()))
         except (PermissionError, OSError):
-            pass # Requires sudo or specific cgroup setup
+            pass  # Requires sudo or specific cgroup setup

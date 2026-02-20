@@ -6,7 +6,6 @@ import logging
 import re
 import subprocess
 import time
-from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class TmuxInjector:
     def list_agent_sessions(self) -> list[str]:
         """List all tmux sessions matching agent prefix."""
         try:
-            result = subprocess.run(["tmux", "ls", "-F", "#S"], capture_output=True, text=True)
+            result = subprocess.run(["tmux", "ls", "-F", "#S"], capture_output=True, text=True, check=False)
             if result.returncode != 0:
                 return []
             sessions = result.stdout.splitlines()
@@ -55,7 +54,9 @@ class TmuxInjector:
         """Check if session is at a prompt (idle)."""
         try:
             # Capture last few lines of the pane
-            result = subprocess.run(["tmux", "capture-pane", "-pt", session_id], capture_output=True, text=True)
+            result = subprocess.run(
+                ["tmux", "capture-pane", "-pt", session_id], capture_output=True, text=True, check=False
+            )
             output = result.stdout.strip()
             if not output:
                 return False

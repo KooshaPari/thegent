@@ -213,13 +213,25 @@ class ProcessRegistry:
 
             cleaned = 0
 
-            # Terminate children first
-            for child in children:
+            def _terminate_child(child: psutil.Process) -> int:
+                """Terminate a child process, return 1 if successful."""
                 try:
                     child.terminate()
-                    cleaned += 1
+                    return 1
                 except psutil.NoSuchProcess:
-                    pass
+                    return 0
+
+            def _kill_child(child: psutil.Process) -> int:
+                """Kill a child process, return 1 if successful."""
+                try:
+                    child.kill()
+                    return 1
+                except psutil.NoSuchProcess:
+                    return 0
+
+            # Terminate children first
+            for child in children:
+                cleaned += _terminate_child(child)
 
             # Wait for children using psutil.wait_procs
             if children:
@@ -227,11 +239,7 @@ class ProcessRegistry:
 
                 # Kill any remaining children
                 for child in alive:
-                    try:
-                        child.kill()
-                        cleaned += 1
-                    except psutil.NoSuchProcess:
-                        pass
+                    cleaned += _kill_child(child)
 
                 cleaned = len(gone) + len(alive)
 

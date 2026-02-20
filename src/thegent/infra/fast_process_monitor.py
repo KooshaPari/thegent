@@ -214,37 +214,34 @@ class FastProcessMonitor:
             clock_ticks = self._get_clock_ticks()
 
             for proc_obj in proc.processes:
-                try:
-                    pid = proc_obj.pid
-                    stat_data = proc_obj.stat
-                    cmdline_data = proc_obj.cmdline
-
-                    # Parse stat data
-                    name = stat_data.comm.strip("()")
-                    state = stat_data.state
-                    starttime = stat_data.starttime
-
-                    # Calculate create_time
-                    starttime_seconds = starttime / clock_ticks
-                    create_time = boot_time + starttime_seconds
-
-                    # Get cmdline
-                    cmdline = " ".join(cmdline_data) if cmdline_data else name
-
-                    info = ProcessInfo(
-                        pid=pid,
-                        name=name,
-                        cmdline=cmdline,
-                        create_time=create_time,
-                        status=state,
-                    )
-
+                info = self._procfs_lib_proc_to_info(proc_obj, boot_time, clock_ticks)
+                if info:
                     yield info
-                except (AttributeError, ValueError, OSError):
-                    continue
         except Exception:
             # Fallback to direct /proc access if procfs library fails
             yield from self._procfs_iter_processes(attrs)
+
+    def _procfs_lib_proc_to_info(self, proc_obj: Any, boot_time: float, clock_ticks: int) -> ProcessInfo | None:
+        """Helper to build ProcessInfo from a procfs library process object."""
+        try:
+            pid = proc_obj.pid
+            stat_data = proc_obj.stat
+            cmdline_data = proc_obj.cmdline
+            name = stat_data.comm.strip("()")
+            state = stat_data.state
+            starttime = stat_data.starttime
+            starttime_seconds = starttime / clock_ticks
+            create_time = boot_time + starttime_seconds
+            cmdline = " ".join(cmdline_data) if cmdline_data else name
+            return ProcessInfo(
+                pid=pid,
+                name=name,
+                cmdline=cmdline,
+                create_time=create_time,
+                status=state,
+            )
+        except (AttributeError, ValueError, OSError):
+            return None
 
     def _procfs_iter_processes(self, attrs: list | None = None) -> Iterator[ProcessInfo]:
         """Fast process iteration using direct /proc access (Linux only).
@@ -263,33 +260,32 @@ class FastProcessMonitor:
                 for entry in entries:
                     if not entry.name.isdigit():
                         continue
-
-                    try:
-                        pid = int(entry.name)
-                        stat = self._read_proc_stat(pid)
-                        if not stat:
-                            continue
-
-                        cmdline = self._read_proc_cmdline(pid) or stat["name"]
-
-                        # Calculate create_time from starttime
-                        starttime_ticks = stat["starttime"]
-                        starttime_seconds = starttime_ticks / clock_ticks
-                        create_time = boot_time + starttime_seconds
-
-                        info = ProcessInfo(
-                            pid=pid,
-                            name=stat["name"],
-                            cmdline=cmdline,
-                            create_time=create_time,
-                            status=stat["state"],
-                        )
-
+                    info = self._procfs_entry_to_info(entry, boot_time, clock_ticks)
+                    if info:
                         yield info
-                    except (ValueError, OSError, PermissionError):
-                        continue
         except OSError:
             return
+
+    def _procfs_entry_to_info(self, entry: os.DirEntry[str], boot_time: float, clock_ticks: int) -> ProcessInfo | None:
+        """Helper to build ProcessInfo from a single /proc entry."""
+        try:
+            pid = int(entry.name)
+            stat = self._read_proc_stat(pid)
+            if not stat:
+                return None
+            cmdline = self._read_proc_cmdline(pid) or stat["name"]
+            starttime_ticks = stat["starttime"]
+            starttime_seconds = starttime_ticks / clock_ticks
+            create_time = boot_time + starttime_seconds
+            return ProcessInfo(
+                pid=pid,
+                name=stat["name"],
+                cmdline=cmdline,
+                create_time=create_time,
+                status=stat["state"],
+            )
+        except (ValueError, OSError, PermissionError):
+            return None
 
     def _psutil_iter_processes(self, attrs: list | None = None) -> Iterator[ProcessInfo]:
         """Process iteration using psutil (cross-platform fallback)."""
@@ -300,20 +296,26 @@ class FastProcessMonitor:
             # Use attrs parameter for efficiency
             proc_attrs = attrs or ["pid", "name", "cmdline", "create_time", "status"]
             for proc in psutil.process_iter(proc_attrs):
-                try:
-                    info_dict = proc.info
-                    cmdline = " ".join(info_dict.get("cmdline", []) or [info_dict.get("name", "")])
-                    yield ProcessInfo(
-                        pid=info_dict["pid"],
-                        name=info_dict.get("name", "unknown"),
-                        cmdline=cmdline,
-                        create_time=info_dict.get("create_time", 0),
-                        status=info_dict.get("status", "unknown"),
-                    )
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
+                info = self._extract_psutil_info(proc)
+                if info:
+                    yield info
         except Exception:
             return
+
+    def _extract_psutil_info(self, proc: Any) -> ProcessInfo | None:
+        """Helper to extract info from a psutil Process."""
+        try:
+            info_dict = proc.info
+            cmdline = " ".join(info_dict.get("cmdline", []) or [info_dict.get("name", "")])
+            return ProcessInfo(
+                pid=info_dict["pid"],
+                name=info_dict.get("name", "unknown"),
+                cmdline=cmdline,
+                create_time=info_dict.get("create_time", 0),
+                status=info_dict.get("status", "unknown"),
+            )
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            return None
 
     def iter_processes(self, attrs: list | None = None, use_cache: bool = True) -> Iterator[ProcessInfo]:
         """Iterate through all processes using the fastest available backend.

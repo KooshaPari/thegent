@@ -18,7 +18,7 @@ from thegent.agents.resilience import TransientAgentError
 from thegent.config import ThegentSettings
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_settings(tmp_path):
     settings = MagicMock(spec=ThegentSettings)
     settings.cwd = tmp_path / "cwd"
@@ -29,7 +29,7 @@ def mock_settings(tmp_path):
     return settings
 
 
-@pytest.fixture()
+@pytest.fixture
 def controller(mock_settings):
     return LifecycleController(
         settings=mock_settings,

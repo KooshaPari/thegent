@@ -13,44 +13,43 @@ from unittest.mock import patch
 
 import pytest
 
-from thegent.mesh.coordination import (
-    FileClaimsRegistry,
-    HLCTimestamp,
-    OptimisticConcurrencyControl,
-)
 from thegent.coordination.file_coordination import (
     FileLeaseRegistry,
     HybridLogicalClock,
     OCCManager,
 )
-
+from thegent.mesh.coordination import (
+    FileClaimsRegistry,
+    HLCTimestamp,
+    OptimisticConcurrencyControl,
+)
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def mesh_root(tmp_path: Path) -> Path:
     return tmp_path / "mesh"
 
 
-@pytest.fixture()
+@pytest.fixture
 def occ(mesh_root: Path) -> OptimisticConcurrencyControl:
     return OptimisticConcurrencyControl(mesh_root)
 
 
-@pytest.fixture()
+@pytest.fixture
 def claims(mesh_root: Path) -> FileClaimsRegistry:
     return FileClaimsRegistry(mesh_root)
 
 
-@pytest.fixture()
+@pytest.fixture
 def occ_manager(tmp_path: Path) -> OCCManager:
     return OCCManager(tmp_path / "versions")
 
 
-@pytest.fixture()
+@pytest.fixture
 def lease_registry(tmp_path: Path) -> FileLeaseRegistry:
     return FileLeaseRegistry(tmp_path / "leases")
 

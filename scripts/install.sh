@@ -68,7 +68,9 @@ echo "==============="
 if [ "$install_deps" = 1 ]; then
   step "Installing optional tools (Modern Unix)..."
   if command -v brew >/dev/null 2>&1; then
-    brew install ripgrep fd jq eza bat zoxide delta duf dust procs bottom yazi xh sd 2>/dev/null || warn "brew install failed"
+    brew install ripgrep fd jq eza bat zoxide delta duf dust procs bottom yazi xh sd \
+                 zellij starship hyperfine tokei onefetch lazygit lazydocker grex \
+                 mise proto pixi pkgx wasmtime wasmer zig bpftrace 2>/dev/null || warn "brew install failed"
   elif command -v apt-get >/dev/null 2>&1; then
     sudo apt-get update -qq && sudo apt-get install -y ripgrep fd-find jq eza bat zoxide 2>/dev/null || warn "apt install failed"
   fi
@@ -90,6 +92,8 @@ else
   step "Installing thegent..."
   if command -v uv >/dev/null 2>&1; then
     uv tool install thegent
+  elif command -v bun >/dev/null 2>&1; then
+    bun install -g thegent
   elif command -v pipx >/dev/null 2>&1; then
     pipx install thegent
   elif command -v pip3 >/dev/null 2>&1; then
@@ -97,7 +101,7 @@ else
   elif command -v pip >/dev/null 2>&1; then
     pip install --user thegent
   else
-    die "No installer (uv, pipx, pip). Install: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    die "No installer (uv, bun, pipx, pip). Install: curl -LsSf https://astral.sh/uv/install.sh | sh"
   fi
 fi
 

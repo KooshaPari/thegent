@@ -341,12 +341,8 @@ class Compositor:
                 Defaults to 256.
         """
         self._panels: dict[str, Panel] = {}
-        self._cache: TTLCache[tuple[str, str], str] = TTLCache(
-            maxsize=maxsize, ttl=ttl
-        )
-        self._error_cache: TTLCache[str, str] = TTLCache(
-            maxsize=maxsize, ttl=error_ttl
-        )
+        self._cache: TTLCache[tuple[str, str], str] = TTLCache(maxsize=maxsize, ttl=ttl)
+        self._error_cache: TTLCache[str, str] = TTLCache(maxsize=maxsize, ttl=error_ttl)
         self._hits: int = 0
         self._misses: int = 0
         self.profiler: CompositorProfiler = CompositorProfiler()
@@ -428,10 +424,7 @@ class Compositor:
         Returns:
             Dictionary mapping each panel name to its rendered string.
         """
-        return {
-            name: self._render_cached(panel)
-            for name, panel in self._panels.items()
-        }
+        return {name: self._render_cached(panel) for name, panel in self._panels.items()}
 
     def render_panel(self, name: str) -> str | None:
         """Render a single panel by name.

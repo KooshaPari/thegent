@@ -5,7 +5,7 @@ Includes AGENT.md template system, tool-specific context symlinks, and dynamic u
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import yaml
 

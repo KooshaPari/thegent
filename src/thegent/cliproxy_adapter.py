@@ -11,12 +11,13 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
-import os
 from typing import TYPE_CHECKING, Any
 
 from starlette.applications import Starlette
 from starlette.responses import Response, StreamingResponse
 from starlette.routing import Route, WebSocketRoute
+
+from thegent.config import ThegentSettings
 
 if TYPE_CHECKING:
     from starlette.requests import Request
@@ -122,7 +123,7 @@ async def _proxy_request(
             _log.warning("responses->chat transform failed: %s", e)
 
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=120.0, verify=False) as client:
             resp = await client.request(
                 request.method,
                 url,
@@ -294,7 +295,8 @@ async def proxy_handler(request: Request) -> Response:
     path = request.url.path or "/v1/models"
 
     # Check if LiteLLM Router should be used
-    use_litellm = os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1"
+    settings = ThegentSettings()
+    use_litellm = settings.use_litellm_router
 
     if _log.isEnabledFor(logging.DEBUG) or __debug__:
         _log.debug("adapter request: %s %s (litellm=%s)", request.method, path, use_litellm)
@@ -357,7 +359,8 @@ async def websocket_responses_handler(websocket: Any) -> None:
     import asyncio
 
     # Check if LiteLLM Router should be used
-    use_litellm = os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1"
+    settings = ThegentSettings()
+    use_litellm = settings.use_litellm_router
 
     if use_litellm:
         try:

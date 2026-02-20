@@ -23,10 +23,6 @@ from thegent.commands.sync import (
     SyncResult,
 )
 
-if TYPE_CHECKING:
-    pass
-
-
 # ---------------------------------------------------------------------------
 # Shared fixtures / helpers
 # ---------------------------------------------------------------------------

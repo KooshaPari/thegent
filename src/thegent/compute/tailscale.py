@@ -110,9 +110,7 @@ class TailscaleManager:
             raise TailscaleError(f"Failed to run tailscale: {exc}") from exc
 
         if result.returncode != 0:
-            raise TailscaleError(
-                f"tailscale status exited with {result.returncode}: {result.stderr.strip()}"
-            )
+            raise TailscaleError(f"tailscale status exited with {result.returncode}: {result.stderr.strip()}")
 
         return self._parse_status(result.stdout)
 

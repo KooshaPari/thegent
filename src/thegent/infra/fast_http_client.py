@@ -4,7 +4,6 @@ This module provides a high-performance abstraction layer for HTTP requests
 that automatically selects the fastest available backend:
 - curl_cffi: 2-3x faster, libcurl-based, browser fingerprinting
 - httpx: Modern, well-maintained, good async/sync support
-- requests: Legacy fallback
 
 Performance improvements:
 - curl_cffi uses libcurl (2-3x faster than httpx)
@@ -13,7 +12,11 @@ Performance improvements:
 - Automatic backend selection
 """
 
-from typing import Any
+import logging
+import time
+from typing import Any, Dict, Optional
+
+import tenacity
 
 try:
     import curl_cffi
@@ -29,12 +32,22 @@ try:
 except ImportError:
     HTTPX_AVAILABLE = False
 
-try:
-    import requests
+_log = logging.getLogger(__name__)
 
-    REQUESTS_AVAILABLE = True
-except ImportError:
-    REQUESTS_AVAILABLE = False
+
+# Standard retry policy using tenacity (FR-LIB-001)
+def _get_retry_decorator(max_attempts: int = 3):
+    return tenacity.retry(
+        stop=tenacity.stop_after_attempt(max_attempts),
+        wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
+        retry=tenacity.retry_if_exception_type((Exception,)),  # Narrower in specific methods
+        before_sleep=lambda retry_state: _log.warning(
+            "Retrying HTTP request (attempt %d): %s",
+            retry_state.attempt_number,
+            retry_state.outcome.exception() if retry_state.outcome else "unknown",
+        ),
+        reraise=True,
+    )
 
 
 class FastHTTPClient:
@@ -45,11 +58,9 @@ class FastHTTPClient:
     Backend priority (fastest first):
     1. curl_cffi (if installed) - 2-3x faster, libcurl-based
     2. httpx (modern, well-maintained) - good balance, supports connection pooling
-    3. requests (legacy fallback) - baseline, supports Session pooling
 
     Connection pooling:
     - httpx: Uses persistent Client with connection pool
-    - requests: Uses Session with connection pool
     - curl_cffi: Uses persistent session (implicit pooling)
     """
 
@@ -74,21 +85,8 @@ class FastHTTPClient:
                 timeout=30.0,
                 limits=httpx.Limits(max_keepalive_connections=20, max_connections=100),
             )
-        elif REQUESTS_AVAILABLE:
-            self._backend = "requests"
-            # OPT-004: Create persistent requests.Session with connection pool
-            import requests.adapters
-
-            self._client = requests.Session()
-            adapter = requests.adapters.HTTPAdapter(
-                pool_connections=10,
-                pool_maxsize=20,
-                max_retries=3,
-            )
-            self._client.mount("http://", adapter)
-            self._client.mount("https://", adapter)
         else:
-            raise ImportError("No HTTP client available. Install curl_cffi, httpx, or requests")
+            raise ImportError("No HTTP client available. Install curl_cffi or httpx")
 
     def __enter__(self):
         """Context manager entry."""
@@ -106,76 +104,31 @@ class FastHTTPClient:
             self._client = None
 
     def get(self, url: str, **kwargs) -> Any:
-        """Perform GET request using connection pool.
-
-        OPT-004: Uses persistent client for connection reuse.
-
-        Args:
-            url: URL to request
-            **kwargs: Additional request options
-
-        Returns:
-            Response object
-        """
-        if self._backend == "curl_cffi":
-            impersonate = kwargs.pop("impersonate", self.impersonate)
-            return curl_cffi.get(url, impersonate=impersonate, **kwargs)
-        if self._backend == "httpx":
-            # OPT-004: Use persistent client with connection pool
-            return self._client.get(url, **kwargs) if self._client else httpx.get(url, **kwargs)
-        if self._backend == "requests":
-            # OPT-004: Use persistent session with connection pool
-            return self._client.get(url, **kwargs) if self._client else requests.get(url, **kwargs)
-        raise RuntimeError(f"Unknown backend: {self._backend}")
+        """Perform GET request using connection pool (FR-LIB-001)."""
+        return self.request("GET", url, **kwargs)
 
     def post(self, url: str, **kwargs) -> Any:
-        """Perform POST request using connection pool.
-
-        OPT-004: Uses persistent client for connection reuse.
-
-        Args:
-            url: URL to request
-            **kwargs: Additional request options
-
-        Returns:
-            Response object
-        """
-        if self._backend == "curl_cffi":
-            impersonate = kwargs.pop("impersonate", self.impersonate)
-            return curl_cffi.post(url, impersonate=impersonate, **kwargs)
-        if self._backend == "httpx":
-            # OPT-004: Use persistent client with connection pool
-            return self._client.post(url, **kwargs) if self._client else httpx.post(url, **kwargs)
-        if self._backend == "requests":
-            # OPT-004: Use persistent session with connection pool
-            return self._client.post(url, **kwargs) if self._client else requests.post(url, **kwargs)
-        raise RuntimeError(f"Unknown backend: {self._backend}")
+        """Perform POST request using connection pool (FR-LIB-001)."""
+        return self.request("POST", url, **kwargs)
 
     def request(self, method: str, url: str, **kwargs) -> Any:
-        """Perform HTTP request using connection pool.
+        """Perform HTTP request using connection pool and tenacity retries (FR-LIB-001)."""
+        max_retries = kwargs.pop("max_retries", 3)
 
-        OPT-004: Uses persistent client for connection reuse.
+        @_get_retry_decorator(max_attempts=max_retries)
+        def _execute():
+            if self._backend == "curl_cffi":
+                impersonate = kwargs.pop("impersonate", self.impersonate)
+                return curl_cffi.request(method, url, impersonate=impersonate, **kwargs)
+            if self._backend == "httpx":
+                return (
+                    self._client.request(method, url, **kwargs)
+                    if self._client
+                    else httpx.request(method, url, **kwargs)
+                )
+            raise RuntimeError(f"Unknown backend: {self._backend}")
 
-        Args:
-            method: HTTP method (GET, POST, etc.)
-            url: URL to request
-            **kwargs: Additional request options
-
-        Returns:
-            Response object
-        """
-        if self._backend == "curl_cffi":
-            impersonate = kwargs.pop("impersonate", self.impersonate)
-            return curl_cffi.request(method, url, impersonate=impersonate, **kwargs)
-        if self._backend == "httpx":
-            # OPT-004: Use persistent client with connection pool
-            return self._client.request(method, url, **kwargs) if self._client else httpx.request(method, url, **kwargs)
-        if self._backend == "requests":
-            # OPT-004: Use persistent session with connection pool
-            return (
-                self._client.request(method, url, **kwargs) if self._client else requests.request(method, url, **kwargs)
-            )
-        raise RuntimeError(f"Unknown backend: {self._backend}")
+        return _execute()
 
     @property
     def backend(self) -> str:

@@ -261,6 +261,43 @@ impl PyParetoRouter {
         }
     }
 
+    /// Create a router with custom thresholds and hysteresis parameters.
+    #[staticmethod]
+    #[pyo3(signature = (low_threshold=0.35, high_threshold=0.65, hysteresis_band=0.15, hysteresis_dwell_s=300, hysteresis_max_dwell_s=1800, hysteresis_override=0.20))]
+    fn with_full_config(
+        low_threshold: f64,
+        high_threshold: f64,
+        hysteresis_band: f64,
+        hysteresis_dwell_s: u64,
+        hysteresis_max_dwell_s: u64,
+        hysteresis_override: f64,
+    ) -> PyResult<Self> {
+        if low_threshold >= high_threshold {
+            return Err(PyValueError::new_err(
+                "low_threshold must be less than high_threshold",
+            ));
+        }
+        if low_threshold < 0.0 || low_threshold > 1.0 {
+            return Err(PyValueError::new_err("low_threshold must be in [0.0, 1.0]"));
+        }
+        if high_threshold < 0.0 || high_threshold > 1.0 {
+            return Err(PyValueError::new_err("high_threshold must be in [0.0, 1.0]"));
+        }
+
+        let config = RouterConfig {
+            low_threshold,
+            high_threshold,
+            hysteresis_band,
+            hysteresis_dwell_s,
+            hysteresis_max_dwell_s,
+            hysteresis_override,
+        };
+
+        Ok(PyParetoRouter {
+            router: ParetoRouter::with_config(config),
+        })
+    }
+
     /// Create a router with custom thresholds.
     #[staticmethod]
     fn with_thresholds(low_threshold: f64, high_threshold: f64) -> PyResult<Self> {
@@ -279,6 +316,7 @@ impl PyParetoRouter {
         let config = RouterConfig {
             low_threshold,
             high_threshold,
+            ..RouterConfig::default()
         };
 
         Ok(PyParetoRouter {

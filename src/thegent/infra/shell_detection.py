@@ -19,14 +19,16 @@ class ShellType(str, Enum):
 
 def get_preferred_shell(performance: bool = False) -> ShellType:
     """Determine the best shell for the current platform and user configuration.
-    
+
     If performance=True, prioritizes shells with the lowest startup overhead (dash/cmd).
     """
-    # 1. Check environment overrides
-    env_shell = os.getenv("THGENT_AGENT_SHELL")
-    if env_shell:
+    # 1. Check settings override
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    if settings.agent_shell:
         try:
-            return ShellType(env_shell.lower())
+            return ShellType(settings.agent_shell.lower())
         except ValueError:
             pass
 
@@ -41,7 +43,7 @@ def get_preferred_shell(performance: bool = False) -> ShellType:
     # 3. macOS/Linux defaults
     # For performance, dash is the clear winner (<10ms vs 20-50ms for bash/zsh)
     shells = ["dash", "bash", "zsh"] if performance else ["zsh", "bash", "dash"]
-    
+
     for shell in shells:
         if shutil.which(shell):
             return ShellType(shell)
@@ -73,4 +75,4 @@ def get_fast_command_prefix(shell_type: ShellType) -> list[str]:
         return [exe, "/c"]
     if shell_type == ShellType.DASH or shell_type == ShellType.BASH or shell_type == ShellType.ZSH:
         return [exe, "-c"]
-    return [exe, "-c"] # Default fallback
+    return [exe, "-c"]  # Default fallback

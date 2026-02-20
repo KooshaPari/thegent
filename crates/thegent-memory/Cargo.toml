@@ -27,7 +27,7 @@ ed25519-dalek = "3.0.0-pre.6"
 base64 = "0.22.1"
 
 [features]
-default = []
+default = ["moka"]
 compio = ["dep:compio"]
 moka = ["dep:moka"]
 sonic = ["dep:sonic-rs"]

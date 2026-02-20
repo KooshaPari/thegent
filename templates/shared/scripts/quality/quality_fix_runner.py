@@ -36,7 +36,7 @@ def load_fix_dag() -> dict:
 
 def _topological_tiers(steps: dict[str, dict]) -> list[list[str]]:
     """Return steps in tiers (each tier can run in parallel)."""
-    in_degree = {s: 0 for s in steps}
+    in_degree = dict.fromkeys(steps, 0)
     for name, cfg in steps.items():
         for dep in cfg.get("deps", []):
             if dep in steps:

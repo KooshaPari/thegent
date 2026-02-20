@@ -925,17 +925,10 @@ class TestPolicyEngineOPAQuery:
         engine = PolicyEngine(settings)
         run = RunMeta(agent="gemini", prompt="test", cwd="/tmp", owner="u")
 
-        class MockResp:
-            def read(self):
-                return json.dumps({"result": {"allow": True, "reason": "All good"}}).encode()
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *a):
-                return False
-
-        with patch("thegent.execution.urllib.request.urlopen", return_value=MockResp()):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"result": {"allow": True, "reason": "All good"}}
+        mock_resp.raise_for_status.return_value = None
+        with patch("thegent.execution.httpx.post", return_value=mock_resp):
             result = engine._query_opa(run)
         assert result == ("allow", "All good")
 
@@ -946,17 +939,10 @@ class TestPolicyEngineOPAQuery:
         engine = PolicyEngine(settings)
         run = RunMeta(agent="gemini", prompt="test", cwd="/tmp", owner="u")
 
-        class MockResp:
-            def read(self):
-                return json.dumps({"result": {"allow": False, "reason": "Not allowed"}}).encode()
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *a):
-                return False
-
-        with patch("thegent.execution.urllib.request.urlopen", return_value=MockResp()):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"result": {"allow": False, "reason": "Not allowed"}}
+        mock_resp.raise_for_status.return_value = None
+        with patch("thegent.execution.httpx.post", return_value=mock_resp):
             result = engine._query_opa(run)
         assert result == ("deny", "Not allowed")
 
@@ -966,7 +952,7 @@ class TestPolicyEngineOPAQuery:
         settings = self._make_settings()
         engine = PolicyEngine(settings)
         run = RunMeta(agent="gemini", prompt="test", cwd="/tmp", owner="u")
-        with patch("thegent.execution.urllib.request.urlopen", side_effect=OSError("conn refused")):
+        with patch("thegent.execution.httpx.post", side_effect=OSError("conn refused")):
             result = engine._query_opa(run)
         assert result is None
 
@@ -1526,11 +1512,11 @@ class TestConcurrencyControllerCriticalLane:
     def _patch_running(self, running_count: int):
         """Return a context manager that mocks ps_impl to report N running sessions.
 
-        execution.py imports ps_impl via ``from thegent.cli_impl import ps_impl``
+        execution.py imports ps_impl via ``from thegent.cli.commands.impl import ps_impl``
         at call-time, so we patch the binding in the source module.
         """
         return patch(
-            "thegent.cli_impl.ps_impl",
+            "thegent.cli.commands.impl.ps_impl",
             return_value=[{"status": "running"}] * running_count,
         )
 

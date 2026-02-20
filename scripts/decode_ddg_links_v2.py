@@ -1,6 +1,7 @@
+import re
 import sys
 import urllib.parse
-import re
+
 
 def main():
     content = sys.stdin.read()
@@ -14,7 +15,7 @@ def main():
             if url not in found:
                 print(url)
                 found.add(url)
-    
+
     # Also find any raw links that look like GitHub or Dev.to
     raw_links = re.findall(r'https?://(?:github\.com|dev\.to|medium\.com|hashnode\.com|arxiv\.org)/[^\s"\'<>]+', content)
     for url in raw_links:

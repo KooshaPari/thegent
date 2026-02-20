@@ -1,4 +1,4 @@
-"""Unit tests for dex command wiring and wrapper installation."""
+"""Unit tests for dex command wiring and shim-link installation."""
 
 from pathlib import Path
 from unittest.mock import patch
@@ -83,22 +83,17 @@ def test_install_links_bin_dir_missing_errors(tmp_path: Path) -> None:
 
 
 def test_install_links_writes_model_shims(tmp_path: Path) -> None:
-    """Install creates dex, dexmax, dexglm, dexhaiku, dexopus, dexsonnet, dexstep."""
-    result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path)])
+    """Install creates dex -> thegent-shims symlink."""
+    shims_bin = tmp_path / "thegent-shims"
+    shims_bin.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    shims_bin.chmod(0o755)
+
+    with patch("thegent.dex_main.shutil.which", return_value=None):
+        result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path)])
     assert result.exit_code == 0
-    expected = {
-        "dex": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="codex"\nexec thegent dex "$@"\n',
-        "dexmax": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="codex"\nexec thegent dex max "$@"\n',
-        "dexglm": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="codex"\nexec thegent dex glm "$@"\n',
-        "dexhaiku": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="codex"\nexec thegent dex haiku "$@"\n',
-        "dexopus": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="codex"\nexec thegent dex opus "$@"\n',
-        "dexsonnet": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="codex"\nexec thegent dex sonnet "$@"\n',
-        "dexstep": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="codex"\nexec thegent dex step "$@"\n',
-    }
-    for name, expected_contents in expected.items():
-        wrapper = tmp_path / name
-        assert wrapper.exists(), f"Missing {name}"
-        assert wrapper.read_text(encoding="utf-8") == expected_contents
+    wrapper = tmp_path / "dex"
+    assert wrapper.is_symlink(), "dex should be a symlink"
+    assert wrapper.resolve() == shims_bin.resolve()
 
 
 def test_dex_composer_uses_composer_model() -> None:

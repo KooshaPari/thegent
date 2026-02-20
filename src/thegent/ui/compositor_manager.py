@@ -297,18 +297,12 @@ class CompositorManager:
                 available = max(width, 2)
                 w0 = max(1, round(pair[0].weight / total_w * available))
                 w1 = max(1, available - w0)
-                left_lines = self._box_lines(
-                    pair[0], self._get_slot_content(pair[0]), w0
-                )
-                right_lines = self._box_lines(
-                    pair[1], self._get_slot_content(pair[1]), w1
-                )
+                left_lines = self._box_lines(pair[0], self._get_slot_content(pair[0]), w0)
+                right_lines = self._box_lines(pair[1], self._get_slot_content(pair[1]), w1)
                 parts.append(self._merge_columns([left_lines, right_lines]))
             else:
                 slot = pair[0]
-                parts.append(
-                    self._box(slot, self._get_slot_content(slot), width)
-                )
+                parts.append(self._box(slot, self._get_slot_content(slot), width))
 
         for slot in overflow:
             parts.append(self._box(slot, self._get_slot_content(slot), width))
@@ -323,9 +317,7 @@ class CompositorManager:
         """Build a full box string for *slot* at *width* characters wide."""
         return "\n".join(self._box_lines(slot, content, width))
 
-    def _box_lines(
-        self, slot: CompositorSlot, content: str, width: int
-    ) -> list[str]:
+    def _box_lines(self, slot: CompositorSlot, content: str, width: int) -> list[str]:
         """Return a list of strings forming the box for *slot*.
 
         The box uses single-line box-drawing characters.  The top border
@@ -453,9 +445,7 @@ class CompositorManager:
             panel_outputs = slot.compositor.render()
             return "\n".join(panel_outputs)
         except Exception:
-            logger.exception(
-                "CompositorManager: error rendering slot '%s'", slot.id
-            )
+            logger.exception("CompositorManager: error rendering slot '%s'", slot.id)
             return f"[render error: {slot.id}]"
 
     # ------------------------------------------------------------------

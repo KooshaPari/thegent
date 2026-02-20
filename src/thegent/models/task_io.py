@@ -106,8 +106,7 @@ class TaskError(BaseModel):
     error_type: str = Field(
         ...,
         description=(
-            "Short error class identifier, e.g. 'usage_limit', 'timeout', "
-            "'api_error', 'policy_deny', 'parse_error'."
+            "Short error class identifier, e.g. 'usage_limit', 'timeout', 'api_error', 'policy_deny', 'parse_error'."
         ),
     )
     message: str = Field(

@@ -28,6 +28,7 @@ class CLIExamplesGenerator:
                 capture_output=True,
                 text=True,
                 timeout=5,
+                check=False,
             )
             # Parse help output to extract commands
             commands = []

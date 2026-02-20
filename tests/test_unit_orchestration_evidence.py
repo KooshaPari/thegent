@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+from thegent.orchestration.evidence import PromotionGate
+
 from thegent.contracts.csm import CanonicalStructuredMessage, CSMPhase, CSMStatus
 from thegent.contracts.policy import FallbackPolicy
-from thegent.orchestration.evidence import PromotionGate
 
 if TYPE_CHECKING:
     from pathlib import Path

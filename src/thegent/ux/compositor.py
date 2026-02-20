@@ -17,7 +17,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from thegent.infra import yaml_load
-from thegent.tools.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes
+from thegent.skills.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes
 
 
 class TUICompositor:

@@ -343,7 +343,7 @@ class TestRunImplMemoryIntegration:
         """run_impl body references MemoryManager import from memory_manager module."""
         import inspect
 
-        from thegent import cli_impl
+        from thegent.cli.commands import impl as cli_impl
 
         src = inspect.getsource(cli_impl.run_impl)
         assert "MemoryManager" in src, "run_impl must instantiate MemoryManager"
@@ -353,7 +353,7 @@ class TestRunImplMemoryIntegration:
         """run_impl body calls load_context on the MemoryManager instance."""
         import inspect
 
-        from thegent import cli_impl
+        from thegent.cli.commands import impl as cli_impl
 
         src = inspect.getsource(cli_impl.run_impl)
         assert "load_context" in src, "run_impl must call load_context"
@@ -362,7 +362,7 @@ class TestRunImplMemoryIntegration:
         """run_impl body calls save_discovery after a successful run."""
         import inspect
 
-        from thegent import cli_impl
+        from thegent.cli.commands import impl as cli_impl
 
         src = inspect.getsource(cli_impl.run_impl)
         assert "save_discovery" in src, "run_impl must call save_discovery"
@@ -371,7 +371,7 @@ class TestRunImplMemoryIntegration:
         """run_impl guards memory ops behind the enabled property check."""
         import inspect
 
-        from thegent import cli_impl
+        from thegent.cli.commands import impl as cli_impl
 
         src = inspect.getsource(cli_impl.run_impl)
         assert "_mem_mgr.enabled" in src, "run_impl must gate memory ops on enabled"

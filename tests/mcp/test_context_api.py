@@ -71,9 +71,11 @@ class TestSeedDetectContextApi:
     async def test_ctx_info_called_on_success(self) -> None:
         """ctx.info() is called at start and on result count."""
         # @trace FR-MCP-CTX-001
-        from thegent.mcp_tools_seeds import _ctx_info  # ensures module-level symbol exists
         from fastmcp import FastMCP
-        from thegent.mcp_tools_seeds import register_seed_tools
+        from thegent.mcp_tools_seeds import (
+            _ctx_info,  # ensures module-level symbol exists
+            register_seed_tools,
+        )
 
         mcp = FastMCP("test")
         with (
@@ -399,7 +401,7 @@ class TestDagRunContextApi:
         from thegent.mcp_tools_modes import register_modes
 
         mcp = FastMCP("test")
-        with patch("thegent.cli_impl.dag_run_impl", return_value={"spawned": ["t1", "t2"], "skipped": []}):
+        with patch("thegent.cli.commands.impl.dag_run_impl", return_value={"spawned": ["t1", "t2"], "skipped": []}):
             register_modes(mcp)
             tool_fn = await _get_tool_fn(mcp, "thegent_dag_run")
 
@@ -420,7 +422,7 @@ class TestDagRunContextApi:
         from thegent.mcp_tools_modes import register_modes
 
         mcp = FastMCP("test")
-        with patch("thegent.cli_impl.dag_run_impl", return_value={"spawned": [], "skipped": []}):
+        with patch("thegent.cli.commands.impl.dag_run_impl", return_value={"spawned": [], "skipped": []}):
             register_modes(mcp)
             tool_fn = await _get_tool_fn(mcp, "thegent_dag_run")
 

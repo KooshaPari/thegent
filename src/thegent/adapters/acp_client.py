@@ -260,8 +260,7 @@ class ACPClient:
             data = await _do_send()
         except (httpx.ConnectError, httpx.TimeoutException, httpx.RemoteProtocolError) as exc:
             raise ACPServerUnreachableError(
-                f"ACP server at {self._base_url} is unreachable after {_MAX_RETRY_ATTEMPTS} "
-                f"attempts: {exc}"
+                f"ACP server at {self._base_url} is unreachable after {_MAX_RETRY_ATTEMPTS} attempts: {exc}"
             ) from exc
 
         elapsed_ms = (time.monotonic() - start) * 1000

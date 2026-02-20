@@ -19,80 +19,83 @@
 | ID | Title | Source | Priority | Depends |
 |----|-------|--------|----------|---------|
 | ~~heliosShield-smart-merge~~ | ~~Integrate Mergiraf for AST-aware merging~~ | TEAMMATES_RESEARCH_AND_PLAN.md | DONE | - |
-| compositor-caching | Implement composition caching for renders | COMPOSITOR_RESEARCH_AND_ENHANCEMENT_PLAN.md | P2 | - |
+| ~~compositor-caching~~ | ~~Implement composition caching for renders~~ | COMPOSITOR_RESEARCH_AND_ENHANCEMENT_PLAN.md | DONE | - |
 | ~~compositor-perf-profiling~~ | ~~Add render performance profiling~~ | COMPOSITOR_RESEARCH_AND_ENHANCEMENT_PLAN.md | DONE | - |
-| compositor-cli-integration | Integrate compositor with CLI progress bars | COMPOSITOR_RESEARCH_AND_ENHANCEMENT_PLAN.md | P2 | - |
-| ux-linting-accelerator | Create oxlint-based linting accelerator wrapper | ESLINT_AUDIT.md | P2 | - |
+| ~~compositor-cli-integration~~ | ~~Integrate compositor with CLI progress bars~~ | COMPOSITOR_RESEARCH_AND_ENHANCEMENT_PLAN.md | DONE | - |
+| ~~ux-linting-accelerator~~ | ~~Create oxlint-based linting accelerator wrapper~~ | ESLINT_AUDIT.md | DONE | - |
 | ~~ux-terminal-keepalive~~ | ~~Integrate terminal keepalive into long-running tasks~~ | WAIT_KEEPALIVE_IMPLEMENTATION.md | DONE | - |
-| borrow-thegent-mcp-tools | Port thegent MCP tools to other projects | CROSS_PROJECT_FEATURE_BORROWING_PLAN.md | P2 | COMPLETED |
-| borrow-plangent-subagents | Integrate plangent sub-agents into thegent | CROSS_PROJECT_FEATURE_BORROWING_PLAN.md | P2 | - |
-| borrow-dex-flash-agents | Port dex flash agents to other projects | CROSS_PROJECT_FEATURE_BORROWING_PLAN.md | P2 | - |
-| impl-cross-project-registry | Unified persona registry across projects | CROSS_PROJECT_INTEGRATION_GUIDE.md | P2 | - |
-| impl-cross-project-ipc | File-based IPC protocol for cross-project agents | CROSS_PROJECT_INTEGRATION_GUIDE.md | P2 | - |
-| swarm-fix-macos-sampling | ⏳ Claimed (agent-koosha) | Fix macOS vm_stat sampling in ResourceSnapshot | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | P1 | - | ⏳ Claimed (agent-koosha) |
-| swarm-hysteresis-env | ⏳ Claimed (agent-koosha) | Expose hysteresis parameters via env | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | P1 | - |
-| swarm-per-gate-logging | ⏳ Claimed (agent-koosha) | Add per-gate logging to ConcurrencyController | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | P1 | - |
-| swarm-critical-lane | ⏳ Claimed (agent-koosha) | Implement critical lane reservation | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | P1 | - |
-| swarm-priority-queue | Add priority queue for runs | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | P2 | swarm-critical-lane | ⏳ Claimed (agent-koosha) |
-| swarm-redis-concurrency | Redis-backed concurrency limits | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | P3 | - |
-| swarm-redlock-atomic | Use Redlock for atomic acquire/release | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | P3 | swarm-redis-concurrency |
-| swarm-token-bucket | Token bucket for API rate limits | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | P4 | COMPLETED |
-| swarm-dag-prioritization | DAG critical-path prioritization | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | P4 | - |
-| cache-multi-level | ⏳ Claimed (agent-koosha) | Implement multi-level caching (memory → disk → network) | CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md | P1 | - |
-| cache-diskcache-migration | Migrate to diskcache for disk-backed cache | CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md | P1 | cache-multi-level | ⏳ Claimed (agent-koosha) |
-| index-file-indexing | ⏳ Claimed (agent-koosha) | Add file indexing (fd-style) for common find patterns | CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md | P1 | - |
-| cache-frecency-algorithm | Implement frecency algorithm for history | CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md | P2 | cache-multi-level | ⏳ Claimed (agent-koosha) |
-| cache-predictive-pre-warming | Add predictive pre-warming based on usage | CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md | P2 | cache-multi-level | ⏳ Claimed (agent-koosha) |
-| tenacity-migrate-cli | Migrate EAGAIN retry in cli_impl.py to tenacity | TENACITY_RETRY_AUDIT_PLAN.md | P2 | - |
-| tenacity-migrate-loop | Migrate loop_controller.py retry to tenacity | TENACITY_RETRY_AUDIT_PLAN.md | P2 | - |
+| ~~borrow-thegent-mcp-tools~~ | ~~Port thegent MCP tools to other projects~~ | CROSS_PROJECT_FEATURE_BORROWING_PLAN.md | DONE | COMPLETED |
+| ~~borrow-plangent-subagents~~ | ~~Integrate plangent sub-agents into thegent~~ | CROSS_PROJECT_FEATURE_BORROWING_PLAN.md | DONE | - |
+| ~~borrow-dex-flash-agents~~ | ~~Port dex flash agents to other projects~~ | CROSS_PROJECT_FEATURE_BORROWING_PLAN.md | DONE | - |
+| ~~impl-cross-project-registry~~ | ~~Unified persona registry across projects~~ | CROSS_PROJECT_INTEGRATION_GUIDE.md | DONE | - |
+| ~~impl-cross-project-ipc~~ | ~~File-based IPC protocol for cross-project agents~~ | CROSS_PROJECT_INTEGRATION_GUIDE.md | DONE | - |
+| ~~swarm-per-gate-logging~~ | ~~Add per-gate logging to ConcurrencyController~~ | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | DONE | - |
+| ~~swarm-critical-lane~~ | ~~Implement critical lane reservation~~ | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | DONE | - |
+| ~~swarm-priority-queue~~ | ~~Add priority queue for runs~~ | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | DONE | swarm-critical-lane |
+| ~~swarm-redis-concurrency~~ | ~~Redis-backed concurrency limits~~ | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | DONE | - |
+| ~~swarm-redlock-atomic~~ | ~~Use Redlock for atomic acquire/release~~ | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | DONE | swarm-redis-concurrency |
+| ~~swarm-token-bucket~~ | ~~Token bucket for API rate limits~~ | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | DONE | COMPLETED |
+| ~~swarm-dag-prioritization~~ | ~~DAG critical-path prioritization~~ | SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md | DONE | - |
+| ~~cache-multi-level~~ | ~~Implement multi-level caching (memory → disk → network)~~ | CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md | DONE | - |
+| ~~cache-diskcache-migration~~ | ~~Migrate to diskcache for disk-backed cache~~ | CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md | DONE | cache-multi-level |
+| ~~index-file-indexing~~ | ~~Add file indexing (fd-style) for common find patterns~~ | CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md | DONE | - |
+| ~~cache-frecency-algorithm~~ | ~~Implement frecency algorithm for history~~ | CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md | DONE | cache-multi-level |
+| ~~cache-predictive-pre-warming~~ | ~~Add predictive pre-warming based on usage~~ | CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md | DONE | cache-multi-level |
+| ~~tenacity-migrate-cli~~ | ~~Migrate EAGAIN retry in cli_impl.py to tenacity~~ | TENACITY_RETRY_AUDIT_PLAN.md | DONE | - |
+| ~~tenacity-migrate-loop~~ | ~~Migrate loop_controller.py retry to tenacity~~ | TENACITY_RETRY_AUDIT_PLAN.md | DONE | - |
 | ~~shell-consolidate-configs~~ | ~~Consolidate Zsh configs, remove .zshrc.optimized~~ | SHELL_CONFIG_AUDIT_AND_CONSOLIDATION_PLAN.md | DONE | - |
-| bkm-05-state-shm | ⏳ Claimed (agent-koosha) | State-SHM (CircuitBreaker + XP in memory-mapped Rust) | PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md | P1 | - |
-| bkm-06-git-native | ⏳ Claimed (agent-koosha) | thegent-git (HEAD, status, diff stats via gitoxide) | PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md | P1 | - |
-| bkm-07-hook-dispatcher-extend | Extend hook-dispatcher (native secret scan, shell detection) | AUDIT_REMEDIATION_PLAN_2026_02_19.md | P1 | COMPLETED |
-| bkm-08-discovery-binary | thegent-discovery binary (consolidate discovery) | PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md | P1 | COMPLETED |
-| bkm-09-watcher-daemon | thegent-watcher daemon (multi-tenant file watcher) | PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md | P2 | COMPLETED |
-| bkm-10-jsonl-parser | JSONL streaming parser in Rust | PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md | P2 | - |
-| bkm-11-governance-scanner | Native governance scanner (obfuscated triggers, Rust built) | AUDIT_REMEDIATION_PLAN_2026_02_19.md | P2 | COMPLETED |
-| impl-os-user-adapter | OS-level user creation adapter (Linux/macOS/Win) | AUDIT_REMEDIATION_PLAN_2026_02_19.md | P1 | COMPLETED |
-| heliosShield-bridge-fix | Fix heliosShield bridge and tests | AUDIT_REMEDIATION_PLAN_2026_02_19.md | P1 | COMPLETED |
-| litellm-responses-handler | ⏳ Claimed (agent-koosha) | Create LiteLLM Router Responses API handler | LITELLM_HARNESS_MASTER_PLAN.md | P1 | - |
+| ~~bkm-05-state-shm~~ | ~~State-SHM (CircuitBreaker + XP in memory-mapped Rust)~~ | PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md | DONE | - |
+| ~~bkm-06-git-native~~ | ~~thegent-git (HEAD, status, diff stats via gitoxide)~~ | PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md | DONE | - |
+| ~~bkm-07-hook-dispatcher-extend~~ | ~~Extend hook-dispatcher (native secret scan, shell detection)~~ | AUDIT_REMEDIATION_PLAN_2026_02_19.md | DONE | COMPLETED |
+| ~~bkm-08-discovery-binary~~ | ~~thegent-discovery binary (consolidate discovery)~~ | PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md | DONE | COMPLETED |
+| ~~bkm-09-watcher-daemon~~ | ~~thegent-watcher daemon (multi-tenant file watcher)~~ | PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md | DONE | COMPLETED |
+| ~~bkm-10-jsonl-parser~~ | ~~JSONL streaming parser in Rust~~ | PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md | DONE | - |
+| ~~bkm-11-governance-scanner~~ | ~~Native governance scanner (obfuscated triggers, Rust built)~~ | AUDIT_REMEDIATION_PLAN_2026_02_19.md | DONE | COMPLETED |
+| ~~impl-os-user-adapter~~ | ~~OS-level user creation adapter (Linux/macOS/Win)~~ | AUDIT_REMEDIATION_PLAN_2026_02_19.md | DONE | COMPLETED |
+| ~~heliosShield-bridge-fix~~ | ~~Fix heliosShield bridge and tests~~ | AUDIT_REMEDIATION_PLAN_2026_02_19.md | DONE | COMPLETED |
+| ~~litellm-responses-handler~~ | ~~Create LiteLLM Router Responses API handler~~ | LITELLM_HARNESS_MASTER_PLAN.md | DONE | - |
 | ~~litellm-clode-integration~~ | ~~Route Claude Code through LiteLLM Router~~ | LITELLM_HARNESS_MASTER_PLAN.md | DONE | litellm-responses-handler | ⏳ Claimed (agent-koosha) |
-| acp-client-adapter | Implement ACP Client Adapter | ACP_ADAPTERS_DESIGN_2026-02-18.md | P2 | - |
-| acp-mcp-bridge | Implement MCP `&lt;->` ACP Bridge | ACP_ADAPTERS_DESIGN_2026-02-18.md | P2 | - |
-| resource-gpu-utilization | GPU utilization tracking (nvidia-ml-py) | ADVANCED_RESOURCE_MANAGEMENT_SYSTEM.md | P3 | - |
-| resource-network-bandwidth | Network bandwidth monitoring | ADVANCED_RESOURCE_MANAGEMENT_SYSTEM.md | P3 | - |
-| resource-disk-queue-depth | Disk I/O queue depth monitoring | ADVANCED_RESOURCE_MANAGEMENT_SYSTEM.md | P3 | COMPLETED |
-| resource-distributed-coordination | Distributed resource coordination | ADVANCED_RESOURCE_MANAGEMENT_SYSTEM.md | P3 | COMPLETED |
-| fastmcp-elicitation-api | Implement FastMCP elicitation API | FASTMCP_IMPLEMENTATION_GUIDE.md | P1 | - |
-| fastmcp-task-mode | Implement FastMCP task mode | FASTMCP_IMPLEMENTATION_GUIDE.md | P1 | fastmcp-context-api |
-| fastmcp-storage-eventstore | Implement FastMCP Storage/EventStore integration | FASTMCP_IMPLEMENTATION_GUIDE.md | P2 | fastmcp-context-api |
+| ~~acp-client-adapter~~ | ~~Implement ACP Client Adapter~~ | ACP_ADAPTERS_DESIGN_2026-02-18.md | DONE | - |
+| ~~acp-mcp-bridge~~ | ~~Implement MCP `<->` ACP Bridge~~ | ACP_ADAPTERS_DESIGN_2026-02-18.md | DONE | - |
+| ~~resource-gpu-utilization~~ | ~~GPU utilization tracking (nvidia-ml-py)~~ | ADVANCED_RESOURCE_MANAGEMENT_SYSTEM.md | DONE | - |
+| ~~resource-network-bandwidth~~ | ~~Network bandwidth monitoring~~ | ADVANCED_RESOURCE_MANAGEMENT_SYSTEM.md | DONE | - |
+| ~~resource-disk-queue-depth~~ | ~~Disk I/O queue depth monitoring~~ | ADVANCED_RESOURCE_MANAGEMENT_SYSTEM.md | DONE | COMPLETED |
+| ~~resource-distributed-coordination~~ | ~~Distributed resource coordination~~ | ADVANCED_RESOURCE_MANAGEMENT_SYSTEM.md | DONE | COMPLETED |
+| ~~fastmcp-elicitation-api~~ | ~~Implement FastMCP elicitation API~~ | FASTMCP_IMPLEMENTATION_GUIDE.md | DONE | - |
+| ~~fastmcp-task-mode~~ | ~~Implement FastMCP task mode~~ | FASTMCP_IMPLEMENTATION_GUIDE.md | DONE | fastmcp-context-api |
+| ~~fastmcp-storage-eventstore~~ | ~~Implement FastMCP Storage/EventStore integration~~ | FASTMCP_IMPLEMENTATION_GUIDE.md | DONE | fastmcp-context-api |
 | ~~research-governance-override-events~~ | ~~Add override expiry event emission~~ | GOVERNANCE_WP_GAPS_EXPANDED.md | DONE | WP-3003 |
-| impl-supermemory-client | ⏳ Claimed (agent-koosha) | Implement SupermemoryClient in thegent-memory | SUPERMEMORY_INTEGRATION_RESEARCH_REPORT.md | P1 | - |
-| impl-memory-manager-integration | Integrate MemoryManager into main agent loop | SUPERMEMORY_INTEGRATION_RESEARCH_REPORT.md | P1 | impl-supermemory-client | ⏳ Claimed (agent-koosha) |
-| impl-pareto-router | Implement ParetoRouter in thegent-router | PARETO_ROUTING_RESEARCH_REPORT.md | P1 | - |
-| impl-cost-aware-router | Implement CostAwareRouter in governance catalog | ECONOMIC_GOVERNANCE_RESEARCH_REPORT.md | P1 | - |
-| wire-maif-agent-runner | Wire MAIF artifacts into AgentRunner/ExecutionEngine | MAIF_ACTION_ARTIFACTS_RESEARCH_REPORT.md | P1 | impl-thegent-maif-crate |
-| impl-simulation-replay-engine | Implement SimulationReplay engine in UX | SIMULATION_REPLAY_RESEARCH_REPORT.md | P2 | - |
-| setup-tailscale-nodes | Configure Tailscale for Mac/Windows compute offload | COMPUTE_OFFLOAD_RESEARCH_REPORT.md | P2 | - |
-| setup-syncthing-workspace | Set up Syncthing for workspace synchronization | COMPUTE_OFFLOAD_RESEARCH_REPORT.md | P2 | - |
-| impl-idea-seed-scanner | Implement Idea Seed scanner in CLI | IDEA_SEED_SYSTEM_RESEARCH_REPORT.md | P2 | - |
-| impl-remote-executor | Implement RemoteExecutor in Python | REMOTE_COMPUTE_IMPL_RESEARCH_REPORT.md | P1 | setup-tailscale-nodes |
-| enhance-macos-sandbox | Enhance macOS sandbox profile for finer control | USER_ISOLATION_IMPL_RESEARCH_REPORT.md | P2 | - |
-| impl-macos-desktop-automation | Implement macOS Desktop Automation provider | CROSS_PLATFORM_RESEARCH_REPORT.md | P2 | - |
-| impl-library-phase1 | Migrate HTTP (httpx) and Retry (tenacity) | LIBRARY_REPLACEMENT_RESEARCH_REPORT.md | P1 | install-library-deps |
-| prototype-federated-policy | Prototype FederatedPolicyEngine in governance | PHASE_GOVERNANCE_CONSOLIDATED_REPORT.md | P1 | - |
-| impl-sync-command | Implement thegent sync command structure | SYNC_DX_IMPROVEMENTS_REPORT.md | P1 | - |
-| research-cross-platform-remote | Remote compute implementation | CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md | P2 | HYBRID_ENV |
-| research-library-retry | Migrate manual retry loops to tenacity (4 files) | LIBRARY_REPLACEMENT_CONSOLIDATED.md | P1 | ✅ Complete |
-| research-library-cache | Replace custom caching with cachetools (5 files) | LIBRARY_REPLACEMENT_CONSOLIDATED.md | P2 | ✅ Complete |
-| research-library-circuit-breaker | Replace custom circuit breaker with pybreaker (1 file) | LIBRARY_REPLACEMENT_CONSOLIDATED.md | P2 | ✅ Complete |
-| research-library-yaml | Replace PyYAML with ruamel.yaml (15 files) | LIBRARY_REPLACEMENT_CONSOLIDATED.md | P2 | ✅ Complete |
-| research-library-ansi | Replace custom ANSI stripping with rich (5 files) | LIBRARY_REPLACEMENT_CONSOLIDATED.md | P2 | ✅ Complete |
-| scratch-doctor-fix | Proactive doctor --fix for detected environment issues | scratchpad/session_review.md | P2 | — |
-| muxless-acp-session-endpoints | Extend ACP with session/attach, session/inspect, session/send | MUXLESS_AGENT_SESSION_MANAGEMENT_2026-02-19.md | P2 | acp-server-adapter |
-| impl-zig-rust-interop-poc | Implement Zig-Rust C ABI Interop POC (Rust calls zmx) | ZIG_RUST_ECOSYSTEM_RESEARCH_2026-02-19.md | P1 | - |
-| impl-zmx-c-abi | Expose zmx C ABI for list/attach/capture (if not present) | ZIG_RUST_ECOSYSTEM_RESEARCH_2026-02-19.md | P1 | - |
-| impl-rust-zmx-wrapper | Create Rust crate wrapping zmx C ABI | ZIG_RUST_ECOSYSTEM_RESEARCH_2026-02-19.md | P2 | impl-zig-rust-interop-poc |
+| ~~impl-supermemory-client~~ | ~~Implement SupermemoryClient in thegent-memory~~ | SUPERMEMORY_INTEGRATION_RESEARCH_REPORT.md | DONE | - |
+| ~~impl-memory-manager-integration~~ | ~~Integrate MemoryManager into main agent loop~~ | SUPERMEMORY_INTEGRATION_RESEARCH_REPORT.md | DONE | impl-supermemory-client |
+| ~~impl-pareto-router~~ | ~~Implement ParetoRouter in thegent-router~~ | PARETO_ROUTING_RESEARCH_REPORT.md | DONE | - |
+| ~~impl-cost-aware-router~~ | ~~Implement CostAwareRouter in governance catalog~~ | ECONOMIC_GOVERNANCE_RESEARCH_REPORT.md | DONE | - |
+| ~~wire-maif-agent-runner~~ | ~~Wire MAIF artifacts into AgentRunner/ExecutionEngine~~ | MAIF_ACTION_ARTIFACTS_RESEARCH_REPORT.md | DONE | impl-thegent-maif-crate |
+| ~~impl-simulation-replay-engine~~ | ~~Implement SimulationReplay engine in UX~~ | SIMULATION_REPLAY_RESEARCH_REPORT.md | DONE | - |
+| ~~setup-tailscale-nodes~~ | ~~Configure Tailscale for Mac/Windows compute offload~~ | COMPUTE_OFFLOAD_RESEARCH_REPORT.md | DONE | - |
+| ~~setup-syncthing-workspace~~ | ~~Set up Syncthing for workspace synchronization~~ | COMPUTE_OFFLOAD_RESEARCH_REPORT.md | DONE | - |
+| ~~impl-idea-seed-scanner~~ | ~~Implement Idea Seed scanner in CLI~~ | IDEA_SEED_SYSTEM_RESEARCH_REPORT.md | DONE | - |
+| ~~impl-remote-executor~~ | ~~Implement RemoteExecutor in Python~~ | REMOTE_COMPUTE_IMPL_RESEARCH_REPORT.md | DONE | setup-tailscale-nodes |
+| ~~enhance-macos-sandbox~~ | ~~Enhance macOS sandbox profile for finer control~~ | USER_ISOLATION_IMPL_RESEARCH_REPORT.md | DONE | - |
+| ~~impl-macos-desktop-automation~~ | ~~Implement macOS Desktop Automation provider~~ | CROSS_PLATFORM_RESEARCH_REPORT.md | DONE | - |
+| ~~impl-library-phase1~~ | ~~Migrate HTTP (httpx) and Retry (tenacity)~~ | LIBRARY_REPLACEMENT_RESEARCH_REPORT.md | DONE | install-library-deps |
+| ~~prototype-federated-policy~~ | ~~Prototype FederatedPolicyEngine in governance~~ | PHASE_GOVERNANCE_CONSOLIDATED_REPORT.md | DONE | - |
+| ~~impl-sync-command~~ | ~~Implement thegent sync command structure~~ | SYNC_DX_IMPROVEMENTS_REPORT.md | DONE | - |
+| ~~research-cross-platform-remote~~ | ~~Remote compute implementation~~ | CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md | DONE | HYBRID_ENV |
+| ~~research-library-retry~~ | ~~Migrate manual retry loops to tenacity (4 files)~~ | LIBRARY_REPLACEMENT_CONSOLIDATED.md | DONE | ✅ Complete |
+| ~~research-library-cache~~ | ~~Replace custom caching with cachetools (5 files)~~ | LIBRARY_REPLACEMENT_CONSOLIDATED.md | DONE | ✅ Complete |
+| ~~research-library-circuit-breaker~~ | ~~Replace custom circuit breaker with pybreaker (1 file)~~ | LIBRARY_REPLACEMENT_CONSOLIDATED.md | DONE | ✅ Complete |
+| ~~research-library-yaml~~ | ~~Replace PyYAML with ruamel.yaml (15 files)~~ | LIBRARY_REPLACEMENT_CONSOLIDATED.md | DONE | ✅ Complete |
+| ~~research-library-ansi~~ | ~~Replace custom ANSI stripping with rich (5 files)~~ | LIBRARY_REPLACEMENT_CONSOLIDATED.md | DONE | ✅ Complete |
+| ~~scratch-doctor-fix~~ | ~~Proactive doctor --fix for detected environment issues~~ | scratchpad/session_review.md | DONE | — |
+| ~~muxless-acp-session-endpoints~~ | ~~Extend ACP with session/attach, session/inspect, session/send~~ | MUXLESS_AGENT_SESSION_MANAGEMENT_2026-02-19.md | DONE | acp-server-adapter |
+| ~~impl-zig-rust-interop-poc~~ | ~~Implement Zig-Rust C ABI Interop POC (Rust calls zmx)~~ | ZIG_RUST_ECOSYSTEM_RESEARCH_2026-02-19.md | DONE | - |
+| ~~impl-zmx-c-abi~~ | ~~Expose zmx C ABI for list/attach/capture (if not present)~~ | ZIG_RUST_ECOSYSTEM_RESEARCH_2026-02-19.md | DONE | - |
+| ~~impl-rust-zmx-wrapper~~ | ~~Create Rust crate wrapping zmx C ABI~~ | ZIG_RUST_ECOSYSTEM_RESEARCH_2026-02-19.md | DONE | impl-zig-rust-interop-poc |
+| wp-71001-registry-db | Implement ProjectRegistry SQLite schema | 2026-02-19-VERSIONING-AND-SHADOW-AUDIT-PLAN.md | P1 | WP-23001 |
+| wp-71002-shadow-git | Implement ShadowAuditGit with secret scrubbing | 2026-02-19-VERSIONING-AND-SHADOW-AUDIT-PLAN.md | P1 | wp-71001-registry-db |
+| wp-71003-episode-ctrl | Integrate EpisodeController into agent loop | 2026-02-19-VERSIONING-AND-SHADOW-AUDIT-PLAN.md | P1 | wp-71002-shadow-git |
+| wp-71004-audit-cli | Add `thegent audit log/diff` commands | 2026-02-19-VERSIONING-AND-SHADOW-AUDIT-PLAN.md | P2 | wp-71003-episode-ctrl |
+| wp-71005-hierarchy-cli | Add `thegent plan milestone/sprint` commands | 2026-02-19-VERSIONING-AND-SHADOW-AUDIT-PLAN.md | P2 | wp-71001-registry-db |
 
 *Run `thegent plan incorporate` to refresh from plans, research, specs.*
 
@@ -102,43 +105,12 @@
 
 | ID | Agent | Started | Notes |
 |----|-------|---------|-------|
-| dx-improve-path-handling | agent-aca1cda | 2026-02-19T18:00:00Z | Path utilities library |
-| ax-improve-reusable-helpers | agent-aff4a65 | 2026-02-19T18:00:00Z | Reusable agent helpers |
-| ax-improve-workstream-operations | agent-ac58c02 | 2026-02-19T18:00:00Z | Work stream automation |
-| research-agent-hierarchy-mvp | agent-a9dd66a | 2026-02-19T18:00:00Z | Agent hierarchy research + prototype |
-| research-hook-rust-phase2 | agent-af755af | 2026-02-19T18:00:00Z | Hook Rust opt-in migration |
-| sync-unified-command | agent-a7e7a5e | 2026-02-19T18:00:00Z | Unified sync command |
-| sync-audit-framework | agent-aa688d5 | 2026-02-19T18:00:00Z | System audit framework |
-| swarm-fix-macos-sampling | ⏳ Claimed (agent-koosha) | agent-b1 | 2026-02-19T19:00:00Z | Fix macOS vm_stat sampling in ResourceSnapshot |
-| swarm-hysteresis-env | ⏳ Claimed (agent-koosha) | agent-b2 | 2026-02-19T19:00:00Z | Expose hysteresis parameters via env |
-| swarm-per-gate-logging | ⏳ Claimed (agent-koosha) | agent-b3 | 2026-02-19T19:00:00Z | Add per-gate logging to ConcurrencyController |
-| swarm-critical-lane | ⏳ Claimed (agent-koosha) | agent-b4 | 2026-02-19T19:00:00Z | Implement critical lane reservation |
-| index-file-indexing | ⏳ Claimed (agent-koosha) | agent-b5 | 2026-02-19T19:00:00Z | Add file indexing (fd-style) for common find patterns |
-| fastmcp-task-mode | agent-b6 | 2026-02-19T19:00:00Z | Implement FastMCP task mode |
-| impl-pareto-router | agent-b7 | 2026-02-19T19:00:00Z | Implement ParetoRouter in thegent-router |
-| impl-cost-aware-router | agent-b8 | 2026-02-19T19:00:00Z | Implement CostAwareRouter in governance catalog |
-| impl-library-phase1 | agent-c1 | 2026-02-19T19:30:00Z | Migrate HTTP (httpx) and Retry (tenacity) |
-| prototype-federated-policy | agent-c2 | 2026-02-19T19:30:00Z | Prototype FederatedPolicyEngine |
-| OPT-001 | agent-c3 | 2026-02-19T19:30:00Z | Response caching middleware (30s TTL) |
-| OPT-002 | agent-c4 | 2026-02-19T19:30:00Z | Rate limiting middleware for MCP |
-| ROB-004 | agent-c5 | 2026-02-19T19:30:00Z | Circuit breaker per-provider |
-| ROB-007 | agent-c6 | 2026-02-19T19:30:00Z | Graceful shutdown with in-flight drain |
-| QW-002 | agent-c7 | 2026-02-19T19:30:00Z | Implement _resolve_cwd() caching |
-| impl-zmx-c-abi | agent-d9 | 2026-02-19T20:00:00Z | Expose zmx C ABI for list/attach/capture |
-| impl-memory-manager-integration | agent-g3 | 2026-02-19T21:00:00Z | Integrate MemoryManager into main agent loop |
-| bkm-10-jsonl-parser | agent-g7 | 2026-02-19 | Rust crate thegent-jsonl with lib (parse_stream/parse_file/filter_stream/count_stream/sample_file) + CLI binary (count/stream/filter/sample); Python JsonlParser wrapper in native/jsonl_parser.py with binary-first + Python fallback; 32 tests all passing, ruff clean, cargo check clean |
-| bkm-11-governance-scanner | agent-g8 | 2026-02-19 | Added `governance` subcommand to hook-dispatcher (scan + check-contract); 4 rules: noqa-no-justification, todo-no-ticket, function-too-long, hardcoded-credential; NativeGovernanceScanner Python wrapper in native_governance_scan.py with binary-first + Python fallback; 47 tests in tests/governance/test_native_governance_scan.py; all pass, ruff clean |
-| impl-rust-zmx-wrapper | agent-h4 | 2026-02-19T21:30:00Z | Rust crate wrapping zmx C ABI |
-| impl-cross-project-registry | agent-h6 | 2026-02-19T21:30:00Z | Unified persona registry across projects |
-| impl-cross-project-ipc | agent-h7 | 2026-02-19 | Maildir-style file-based IPC in src/thegent/ipc/cross_project.py: IpcMessage dataclass, CrossProjectIpc (send/broadcast/receive/receive_topic/reply/ack), CrossProjectIpcServer dispatch loop; atomic Path.rename delivery to ~/.thegent/ipc/; exported from ipc/__init__.py; 38 tests in tests/ipc/test_cross_project.py; all pass, ruff clean |
-| cache-predictive-pre-warming | agent-i7 | 2026-02-19T22:00:00Z | Predictive pre-warming |
-| borrow-thegent-mcp-tools | agent-h9 | 2026-02-19 | ToolManifest dataclass + BorrowConfig + ToolBorrower class (list_available_tools, export_tool_config, generate_mcp_json, generate_claude_md_snippet, validate_server_reachable) in src/thegent/tools/borrow.py; CLI commands (list, borrow, show, snippet) in src/thegent/commands/tools.py; registered as `thegent tools` sub-app in main.py; docs/guides/tool-borrowing.md guide; 43 tests in tests/tools/test_borrow.py; all pass, ruff clean |
-| impl-idea-seed-scanner | agent-h10 | 2026-02-19T21:30:00Z | Idea Seed scanner in CLI |
-| compositor-cli-integration | agent-i2 | 2026-02-19T22:00:00Z | CLI compositor integration |
-| muxless-zmq-integration | agent-m2 | 2026-02-20 | zmx session persistence |
 ## COMPLETED (this session / recent)
 | ID | Agent | Completed | Notes |
 |----|-------|-----------|-------|
+| wire-maif-agent-runner | thegent-main-session | 2026-02-19 | MAIF wired: MAIFRunner.record_run_start/record_run_end in ExecutionEngine and cli run_impl; auditor.generate_maif_artifact + persist for run registry |
+| swarm-fix-macos-sampling | agent-koosha | 2026-02-19 | Fixed macOS vm_stat sampling: now includes speculative/purgeable pages and uses dynamic page size from sysctl. Matches psutil. |
+| swarm-hysteresis-env | agent-koosha | 2026-02-19 | Exposed hysteresis parameters (upper/lower/dwell) via THGENT_HYSTERESIS_* environment variables in ThegentSettings. |
 | heliosShield-git-overhaul | agent-koosha | 2026-02-19 | Overhauled Git CLI in `thegent git`; replaced standard `git` with parallel-safe, multitenant version using private index files and atomic CAS commits via `thegent-hooks` smart dispatcher; integrated AST-aware `merge` via `Mergiraf`; unified `lock-cleanup` and service management; ensured transparent pass-through for unhandled commands. |
 | swarm-redlock-atomic | agent-l1 | 2026-02-19 | RedlockController with SETNX+Lua release; in-memory fallback; 56 tests pass, ruff clean |
 | resource-gpu-utilization | agent-j9 | 2026-02-19 | GpuMonitor (is_available/get_gpus/get_total_utilization); nvidia-smi fallback; GpuInfo dataclass; GpuMonitorError; pynvml dynamic import via _import_pynvml(); _run_subprocess helper; exported from resources/__init__.py; 39 tests pass, ruff clean |
@@ -205,6 +177,32 @@
 | compositor-lifecycle-hooks | agent-g4 | 2026-02-19 | Panel dataclass with on_mount/on_unmount hooks + Compositor manager in src/thegent/ui/compositor/compositor.py; hooks fire on add_panel/remove_panel; exceptions logged and swallowed; 28 tests in tests/ui/test_compositor_lifecycle.py; ruff clean |
 | bkm-07-hook-dispatcher-extend | agent-d4 | 2026-02-19 | scan-secrets subcommand in hook-dispatcher Rust binary (14 named patterns, JSON output, masked secrets); Python wrapper native_secret_scan.py with Python fallback; 36 tests in tests/governance/test_native_secret_scan.py |
 | muxless-zmx-integration | agent-d7 | 2026-02-19 | ZmxBackend + SessionBackend protocol; config settings; 37 unit tests; zmx-session-persistence.md guide |
+| dx-improve-path-handling | agent-aca1cda | 2026-02-19 | FastPathOps in infra/fast_path_ops.py; optimized join/normalize/exists; used throughout codebase |
+| ax-improve-reusable-helpers | agent-aff4a65 | 2026-02-19 | Reusable agent helpers added to agents/ and infra/ modules |
+| ax-improve-workstream-operations | agent-ac58c02 | 2026-02-19 | Work stream automation in sync/work_stream_integration.py |
+| research-agent-hierarchy-mvp | agent-a9dd66a | 2026-02-19 | AgentHierarchy in agents/hierarchy.py; orchestrator->specialist routing; asyncio parallel; SmolAgents integration |
+| research-hook-rust-phase2 | agent-af755af | 2026-02-19 | Hook Rust opt-in migration; hook-dispatcher extended for native scan |
+| sync-unified-command | agent-a7e7a5e | 2026-02-19 | UnifiedSync in sync/unified_sync.py; thegent sync command structure |
+| sync-audit-framework | agent-aa688d5 | 2026-02-19 | AuditFramework in sync/audit_framework.py; system audit pipeline |
+| swarm-per-gate-logging | agent-b3 | 2026-02-19 | Per-gate logging in execution.py ConcurrencyController: gate blocked/passed/admitted/blocked messages via _log |
+| swarm-critical-lane | agent-b4 | 2026-02-19 | Critical lane reservation in execution.py ConcurrencyController: critical_lane_slots param; env THGENT_CRITICAL_LANE_SLOTS |
+| index-file-indexing | agent-b5 | 2026-02-19 | FileIndex in src/thegent/indexing/file_index.py; fd-style fast file search with pattern matching |
+| fastmcp-task-mode | agent-b6 | 2026-02-19 | FastMCP task registry in mcp/task_registry.py; async task tracking, status-polling, cancellation |
+| impl-pareto-router | agent-b7 | 2026-02-19 | ParetoRouter in routing/pareto_router.py; multi-objective optimization for model selection |
+| impl-cost-aware-router | agent-b8 | 2026-02-19 | CostAwareRouter in routing/cost_aware_router.py; budget-aware model routing |
+| impl-library-phase1 | agent-c1 | 2026-02-19 | httpx used throughout routing/; tenacity retry in infra/; library-first migration complete |
+| prototype-federated-policy | agent-c2 | 2026-02-19 | FederatedPolicyEngine in governance/federated_policy.py; multi-tenant policy federation |
+| OPT-001 | agent-c3 | 2026-02-19 | ResponseCachingMiddleware with 30s TTL in mcp/server.py for thegent_ps, list_agents, list_models |
+| OPT-002 | agent-c4 | 2026-02-19 | RateLimitingMiddleware (10/s, burst=20) in mcp/server.py |
+| ROB-004 | agent-c5 | 2026-02-19 | Circuit breaker per-provider in orchestration/resilience/circuit_breaker.py |
+| ROB-007 | agent-c6 | 2026-02-19 | Graceful shutdown with in-flight drain (shutdown_wait_s, shutdown_wait_active_s) in config |
+| QW-002 | agent-c7 | 2026-02-19 | _resolve_cwd() caching with 10s TTL in cli_impl.py |
+| impl-zmx-c-abi | agent-d9 | 2026-02-19 | zmx C ABI in crates/thegent-zmx-interop; Zig-Rust interop via C ABI; build.rs |
+| compositor-cli-integration | agent-i2 | 2026-02-19 | CLI compositor integration in ui/cli_compositor.py; progress bars with CompositorManager |
+| setup-tailscale-nodes | agent-c1 | 2026-02-19 | TailscaleManager in compute/tailscale.py: TailscaleNode/TailscaleConfig; add_node/list_nodes/ping; exported from compute/__init__.py |
+| acp-client-adapter | agent-h9 | 2026-02-19 | AcpClient in adapters/acp_client.py; JSON-RPC ACP protocol client |
+| impl-zig-rust-interop-poc | agent-d9 | 2026-02-19 | Zig-Rust C ABI interop POC in crates/thegent-zmx-interop; thiserror + libc; zmx-native feature flag |
+| muxless-zmq-integration | agent-m2 | 2026-02-20 | zmx session persistence via ZmxBackend in session/zmx_backend.py; already covered by muxless-zmx-integration |
 | impl-unified-agent-registry | thegent-main-session | 2026-02-19 | Core implementation, CLI, and Control Plane integration. |
 | wp-16001-persona-registry | thegent-main-session | 2026-02-19 | Auto-discovery of teammates from agents/ directory. |
 | wp-16002-async-delegation | thegent-main-session | 2026-02-19 | CLI commands for delegate and status. |
@@ -5386,7 +5384,7 @@
 | Task ID | Title | Files | Effort | Status | Source |
 |---------|-------|-------|--------|--------|--------|
 | **IMPL-LIB-201** | Replace md5 with sha256 | 1 file | 0.5 hr | ⏳ Pending | Phase 9 |
-| **IMPL-LIB-202** | Consolidate os.environ → ThegentSettings | 15+ files | 2-3 hrs | ⏳ Pending | Phase 10 |
+| ~~**IMPL-LIB-202**~~ | ~~Consolidate os.environ → ThegentSettings~~ | ~~40+ files~~ | ~~2-3 hrs~~ | ✅ **COMPLETED** | Phase 10 |
 | **IMPL-LIB-203** | Replace _CWD_CACHE with cachetools | 1 file | 0.5 hr | ⏳ Pending | Phase 21 |
 | **IMPL-LIB-204** | Add tomlkit to dependencies | pyproject.toml | 0.5 hr | ⏳ Pending | Phase 19 |
 - [ ] All urllib imports removed
@@ -10090,4 +10088,103 @@
 | tests/test_unit_config_provider.py | -2 patch.dict → monkeypatch | ✅ DONE |
 | tests/test_platform_paths.py | -1 fixture, +4 monkeypatch | ✅ DONE |
 | tests/test_resource_leaks.py | reviewed (+else) | ✅ DONE |
-| src/thegent/mcp_manage.
+| src/thegent/mcp_manage.| S1.1 | Create `src/thegent/secrets/manager.py` using `cryptography` for Fernet symmetric encryption. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S1.2 | Implement `thegent secrets set <key> <value>` with interactive masked input. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S1.3 | Implement `thegent secrets get <key>` with auto-copy to clipboard (optional). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S1.4 | Add `thegent secrets list` with masked values and metadata (last updated, usage count). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S1.5 | Integrate with `keyring` for OS-native secret storage (Keychain/Windows Credential Manager). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S1.6 | Implement `thegent secrets export --project` to generate encrypted `.thegent/project_secrets.enc`. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S1.7 | Add `thegent secrets import --file <path>` to ingest encrypted bundles. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S1.8 | Implement `SecretSharing` via SSH/GPG: `thegent secrets share <key> --with <github_user>`. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S1.9 | Add automated secret redaction in all CLI output and logs using `GovernanceScanner`. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S1.10 | Support "Ghost Credentials": Load secrets into Rust SHM and clear from process environment. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S2.1 | Harden `OSUserAdapter` with `sudo -n` non-interactive capability reporting. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S2.2 | Implement `thegent isolation init` to set up persistent isolated users/groups. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S2.3 | Add `NamespaceManager` for Linux PID/Network namespace isolation. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S2.4 | Implement `FileSystemSandbox`: Use `mount --bind` and `pivot_root` for per-tenant VFS. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S2.5 | Add `ResourceQuotas`: Set CPU/Memory limits for agent processes via `cgroups`. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S2.6 | Implement `NetworkGuard`: Block external egress for agents unless explicitly whitelisted. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S2.7 | Add `thegent isolation shell <tenant_id>` to enter a tenant's sandbox for debugging. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S2.8 | Implement `SharedGroup` for multi-agent collaboration within a single isolation boundary. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S2.9 | Add `ZombieCleanup`: Ensure no leaked processes remain after isolation exit. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| S2.10 | Implement `AuditLedger` per-tenant signed hash chains for tamper-proof evidence. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| H1.1 | Restrict all internal `.sh` hook execution to `dash` (Unix) for 2x faster startup vs `bash`. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| H1.2 | Restrict all internal Windows execution to `cmd.exe /c` where `pwsh` overhead is unnecessary. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| H1.3 | Implement `posix_spawn` wrapper in `thegent.infra` to bypass `fork/exec` overhead. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| H1.4 | Add `THGENT_FAST_SHELL=1` to force `dash/cmd` preference globally. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| H1.5 | Rewrite `stop-dispatcher.sh` logic into `hook-dispatcher` Rust binary. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| H1.6 | Rewrite `quality-gate.sh` logic into `hook-dispatcher` Rust binary. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| H1.7 | Implement "Warm Shell" pool: Keep a few shell processes alive for instant command execution. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| H1.8 | Eliminate shell-outs for environment variable resolution (use Rust `env` introspection). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| H1.9 | Optimize `PATH` searching in Rust using `OnceLock` and `BTreeSet` for O(log n) lookups. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| H1.10 | Add `thegent shell profile` to identify slow shell scripts in the workspace. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| P1.1 | Port `ThegentSettings` parsing from Pydantic to Rust `serde` for instant CLI boot. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| P1.2 | Implement native `MeshDiscovery` in Rust using `/proc` (Linux) and `ntquery` (Windows). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| P1.3 | Port `MaildirQueue` logic to Rust for atomic task handling without Python overhead. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| P1.4 | Implement `StateSHM` (Shared Memory) persistence for agent heartbeats in Rust. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| P1.5 | Move `GovernanceScanner` regex engine to Rust `regex` crate with SIMD acceleration. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| P1.6 | Implement `SmartMerge` core in Rust using `tree-sitter` for AST-aware merging. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| P1.7 | Add `thegent-git` native `is_dirty` check using `gitoxide`. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| P1.8 | Optimize `TUI Compositor` render loop in Rust to handle 60fps live updates. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| P1.9 | Use `mimalloc` or `jemalloc` in the Rust binaries for better memory performance. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| P1.10 | Implement binary multi-call (busybox-style) to reduce total binary size. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R1.1 | Implement `thegent sync init` to link multiple devices via an encrypted backend. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R1.2 | Add `SyncBackend` for S3/GCS with client-side encryption. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R1.3 | Implement `thegent sync push/pull` for `.thegent/` metadata and state. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R1.4 | Add `DeviceRegistry` to track active machines in the mesh. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R1.5 | Implement `ConflictResolver` for state sync (Last-Write-Wins or Vector Clocks). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R1.6 | Add `PeerDiscovery`: Use MDNS/Bonjour for local network device discovery. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R1.7 | Implement `Tailscale` integration for secure device-to-device tunneling. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R1.8 | Add `thegent sync watch`: Continuous background sync of workspace state. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R1.9 | Implement `SharedClipboard` across devices for agent coordination. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R1.10 | Add `StateDe-duplication`: Avoid syncing large redundant log files. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R2.1 | Auto-resolve `tenant_id` based on `git remote origin get-url`. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R2.2 | Support `.thegent/config.yaml` for project-local overrides. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R2.3 | Implement `ContextIsolation`: Ensure an agent in Project A cannot see files in Project B. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R2.4 | Add `ProjectDashboard`: View all agents active across all your local projects. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R2.5 | Implement `CrossProjectBacklog`: Move tasks between projects seamlessly. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R2.6 | Add `WorkspaceLinking`: Link a "Frontend" and "Backend" project into one logical mesh. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R2.7 | Implement `SharedPersona`: Allow a custom teammate agent to follow you across projects. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R2.8 | Add `ProjectRetentionPolicy`: Different log expiry for client projects vs personal. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R2.9 | Implement `AutoIngest`: Detect a new thegent project and offer to join the mesh. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| R2.10 | Add `thegent project doctor`: Validate project-level coordination settings. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q1.1 | Add `rich.progress` to all long-running tasks (`install`, `sync`, `governance`). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q1.2 | Implement `thegent doctor --fix` with interactive auto-remediation. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q1.3 | Add "Smart Suggestions" for CLI typos (using Levenshtein distance). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q1.4 | Implement `thegent status --live` (Real-time dashboard using `rich.live`). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q1.5 | Add desktop notifications for task completion (macOS `osascript`, Windows `toaster`). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q1.6 | Implement `thegent logs --follow` with colored, filtered output. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q1.7 | Add `thegent search` to instantly find documentation fragments. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q1.8 | Implement "Interactive Rebase" for `thegent plan`: Edit the DAG via TUI. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q1.9 | Add `thegent explain <run_id>` to get a plain-English summary of an agent run. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q1.10 | Support `THGENT_THEME=nord|dracula` for CLI colors. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q2.1 | Implement `thegent init` with project templates (Python, Rust, JS). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q2.2 | Add `thegent shell-completion` for Zsh, Bash, Fish, and PowerShell. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q2.3 | Create `thegent man` page and auto-generated Markdown CLI reference. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q2.4 | Implement `thegent update` (self-updater for binaries and hooks). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q2.5 | Add `thegent bench` to profile agent performance and token usage. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q2.6 | Implement `thegent feedback` (Collect system info and open GitHub issue). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q2.7 | Add `thegent aliases`: Create custom shortcuts for common command patterns. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q2.8 | Implement `thegent template`: Create new teammate agents from blueprints. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q2.9 | Add `thegent history`: Search and replay previous CLI commands. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| Q2.10 | Support `thegent config edit` (Open default editor for settings). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.1 | **Consensus**: Implement `WeightedVoting` algorithm in `src/thegent/mesh/consensus.py`. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.2 | **Consensus**: Add `MajorityVote` fallback for quick agent alignment. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.3 | **Compliance**: Implement `AuditReportGenerator` (Markdown/PDF output). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.4 | **Compliance**: Add `SLA_Monitor` to track agent response times. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.5 | **Federation**: Implement `NamespaceRegistry` for multi-org policy sharing. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.6 | **Federation**: Add `CrossOrgSync` via secure HTTP relay. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.7 | **Learning**: Implement `ModelPerformanceTracker`: Record pass/fail rates per model. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.8 | **Learning**: Add `AutoPromote`: Switch models when a cheaper one hits >95% parity. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.9 | **Finance**: Implement `TokenQuotaManager` with daily/monthly limits. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.10 | **Finance**: Add `CostProjection` to estimate the cost of a full DAG run. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.11 | **Forensics**: Implement `EnvironmentSnapshot` (Captures process list, open files). | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.12 | **Forensics**: Add `TraceDiff`: Compare two agent runs to find where they diverged. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.13 | **Inbox**: Implement `HumanInTheLoop` (HITL) prompt for high-risk actions. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.14 | **Inbox**: Add `ApprovalQueue` for batch-approving agent tasks. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.15 | **Recovery**: Implement `DagResume`: Start from the last successful node in a DAG. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.16 | **Recovery**: Add `AutoRemediate`: Attempt known fixes for common environment errors. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.17 | **Project**: Implement `MeshBridge`: Link two local meshes via filesystem sockets. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.18 | **Project**: Add `DependencyScanner`: Detect project-to-project task dependencies. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.19 | **Control Plane**: Fully implement `ThegentSettings` validation against JSON Schema. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |
+| F1.20 | **Main**: Final cleanup of all unused or deprecated CLI flags and apps. | POLISH_OPTIMIZE_QOL_PLAN_2026_02_19.md | P2 | - |

@@ -1,4 +1,4 @@
-"""Unit tests for clode command wiring and wrapper installation."""
+"""Unit tests for clode command wiring and shim-link installation."""
 
 from pathlib import Path
 from unittest.mock import patch
@@ -11,7 +11,6 @@ from thegent.clode_main import (
     _GLM_POLICY_COUNTER,
     _resolve_clode_token,
     _run_claude_interactive,
-    _write_wrapper,
     app,
 )
 
@@ -52,38 +51,40 @@ def test_install_links_bin_dir_missing_errors(tmp_path: Path) -> None:
 
 
 def test_install_links_writes_and_skips_without_force(tmp_path: Path) -> None:
-    # First write should create all three wrappers.
-    result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path)])
+    shims_bin = tmp_path / "thegent-shims"
+    shims_bin.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    shims_bin.chmod(0o755)
+
+    # First write should create clode link.
+    with patch("thegent.clode_main.shutil.which", return_value=None):
+        result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path)])
     assert result.exit_code == 0
-    expected = {
-        "clode": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="claude"\nexec thegent clode "$@"\n',
-        "claudeglm": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="claude"\nexec thegent clode glm "$@"\n',
-        "claudemax": '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="claude"\nexec thegent clode max "$@"\n',
-    }
-    for name, expected_contents in expected.items():
-        wrapper = tmp_path / name
-        assert wrapper.exists()
-        assert wrapper.read_text(encoding="utf-8") == expected_contents
+    wrapper = tmp_path / "clode"
+    assert wrapper.is_symlink()
+    assert wrapper.resolve() == shims_bin.resolve()
 
     # Without --force, existing files should be preserved.
-    prewrite = (tmp_path / "clode").read_text(encoding="utf-8")
-    result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path)])
+    prewrite_target = (tmp_path / "clode").resolve()
+    with patch("thegent.clode_main.shutil.which", return_value=None):
+        result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path)])
     assert result.exit_code == 0
-    assert (tmp_path / "clode").read_text(encoding="utf-8") == prewrite
+    assert (tmp_path / "clode").resolve() == prewrite_target
 
 
 def test_install_links_force_rewrites_existing(tmp_path: Path) -> None:
+    shims_bin = tmp_path / "thegent-shims"
+    shims_bin.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    shims_bin.chmod(0o755)
+
     target = tmp_path / "clode"
     target.write_text("legacy", encoding="utf-8")
     target.chmod(0o644)
-    (tmp_path / "claudeglm").write_text("legacy", encoding="utf-8")
-    (tmp_path / "claudemax").write_text("legacy", encoding="utf-8")
 
-    result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path), "--force"])
+    with patch("thegent.clode_main.shutil.which", return_value=None):
+        result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path), "--force"])
     assert result.exit_code == 0
-    assert (tmp_path / "clode").read_text(encoding="utf-8") != "legacy"
-    assert (tmp_path / "claudeglm").read_text(encoding="utf-8") != "legacy"
-    assert (tmp_path / "claudemax").read_text(encoding="utf-8") != "legacy"
+    assert (tmp_path / "clode").is_symlink()
+    assert (tmp_path / "clode").resolve() == shims_bin.resolve()
 
 
 def test_clode_max_and_glm_aliases_forward_expected_token() -> None:
@@ -110,20 +111,6 @@ def test_clode_max_and_glm_aliases_forward_expected_token() -> None:
         )
         assert result.exit_code == 0
         run_interactive.assert_called_once_with("openrouter")
-
-
-def test_write_wrapper_functionality(tmp_path: Path) -> None:
-    target = tmp_path / "shim"
-    wrote = _write_wrapper(target, "thegent clode glm", force=False)
-    assert wrote is True
-    text = target.read_text(encoding="utf-8")
-    assert text == '#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="claude"\nexec thegent clode glm "$@"\n'
-    assert (tmp_path / "shim").exists()
-
-    # Existing file without force remains unchanged
-    target.write_text("legacy", encoding="utf-8")
-    assert _write_wrapper(target, "thegent clode max", force=False) is False
-    assert target.read_text(encoding="utf-8") == "legacy"
 
 
 def test_clode_provider_default_to_interactive() -> None:

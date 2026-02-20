@@ -728,15 +728,22 @@ def cleanup_old_backups(keep_count: int = 10, console: Console | None = None) ->
     to_remove = backups[keep_count:]
     removed_files = []
 
-    for backup in to_remove:
+    def _remove_backup(backup: Path) -> str | None:
+        """Remove a single backup file. Returns filename if removed, None on error."""
         try:
             backup.unlink()
-            removed_files.append(backup.name)
-            if console:
-                console.print(f"[dim]Removed old backup: {backup.name}[/dim]")
+            return backup.name
         except Exception as e:
             if console:
                 console.print(f"[yellow]Could not remove {backup.name}: {e}[/yellow]")
+            return None
+
+    for backup in to_remove:
+        name = _remove_backup(backup)
+        if name is not None:
+            removed_files.append(name)
+            if console:
+                console.print(f"[dim]Removed old backup: {name}[/dim]")
 
     return len(removed_files), removed_files
 
@@ -1191,6 +1198,7 @@ VALID_TARGETS = {
     "droid",
     "envrc",
     "shell",
+    "harness",
     "system",
     "git-lock-cleanup",
     "all",
@@ -1601,6 +1609,7 @@ def run_wizard(url: str | None = None) -> None:
         "5": ("droid", "Droid / Factory"),
         "6": ("envrc", "~/.envrc (direnv fix)"),
         "7": ("shell", "Shell config (~/.zshenv, .zshrc, etc.)"),
+        "8": ("harness", "Harness (Claude Code, Codex, Droid, Cursor + login)"),
     }
 
     # Simple detection
@@ -1613,6 +1622,7 @@ def run_wizard(url: str | None = None) -> None:
         "droid": (home / ".factory").exists(),
         "envrc": True,  # Always relevant for direnv/FUNCNEST fix
         "shell": True,  # Shell config always relevant for optimized startup
+        "harness": True,  # CLIProxy config always relevant for provider routing
     }
 
     for k, (code, name) in targets_map.items():
@@ -1700,6 +1710,20 @@ def run_wizard(url: str | None = None) -> None:
     console.print("  → Restart your AI agent (Cursor, Claude Desktop, etc.)")
     console.print("  → Run [bold]thegent serve[/bold] (if not using service)")
     console.print("  → Try [bold]thegent ps[/bold] in your terminal")
+
+    # 6. Optional: Configure providers (harness login)
+    if Confirm.ask("\n[bold]Configure AI providers now?[/bold] (thegent setup / cliproxy login)", default=True):
+        try:
+            run_subprocess_optimized([sys.executable, "-m", "thegent", "setup"], check=False)
+        except Exception:
+            console.print(
+                "[dim]Run [bold]thegent setup[/bold] or [bold]thegent cliproxy login <provider>[/bold] to configure providers.[/dim]"
+            )
+    else:
+        console.print(
+            "[dim]Run [bold]thegent setup[/bold] or [bold]thegent cliproxy login <provider>[/bold] to configure providers.[/dim]"
+        )
+
     console.print("\n[dim]Happy orchestrating![/dim]")
 
 
@@ -1805,7 +1829,17 @@ def run_install(
     targets = (
         [target]
         if target != "all"
-        else ["claude-code", "claude-desktop", "cursor", "codex", "droid", "envrc", "shell", "git-lock-cleanup"]
+        else [
+            "claude-code",
+            "claude-desktop",
+            "cursor",
+            "codex",
+            "droid",
+            "envrc",
+            "shell",
+            "harness",
+            "git-lock-cleanup",
+        ]
     )
 
     # Optional: Install launchd service on macOS
@@ -1903,6 +1937,100 @@ def run_install(
                 res = mgr.install_file(src, dst, install_mode)
                 key = res.value if hasattr(res, "value") else str(res)
                 counts[key] = counts.get(key, 0) + 1
+
+        elif t == "harness":
+            # Harness: set up Claude Code, Codex, Droid, Cursor + ensure-config + run login
+            # 1. Install harness configs (claude-code, codex, droid, cursor)
+            harness_targets = ["claude-code", "codex", "droid", "cursor"]
+            if target == "harness":
+                # When harness-only: install the harness configs first
+                for ht in harness_targets:
+                    if ht == "claude-code":
+                        claude_dir = home / ".claude"
+                        for src_rel, dst_rel in CLAUDE_CODE_FILES.items():
+                            src = thegent_root / src_rel
+                            dst = claude_dir / dst_rel
+                            if src.exists() and not dry_run:
+                                res = mgr.install_file(src, dst, install_mode)
+                                key = res.value if hasattr(res, "value") else str(res)
+                                counts[key] = counts.get(key, 0) + 1
+                        mgr.update_config(
+                            home / ".claude.json", "mcpServers.thegent", _get_mcp_config(mcp_url, client="claude-code")
+                        )
+                    elif ht == "codex":
+                        mgr.update_config(
+                            home / ".codex" / "mcp.json", "mcpServers.thegent", _get_mcp_config(mcp_url, client="codex")
+                        )
+                    elif ht == "droid":
+                        factory_dir = home / ".factory"
+                        for src_rel, dst_rel in FACTORY_FILES.items():
+                            src = thegent_root / src_rel
+                            dst = factory_dir / dst_rel
+                            if src.exists() and not dry_run:
+                                res = mgr.install_file(src, dst, install_mode)
+                                key = res.value if hasattr(res, "value") else str(res)
+                                counts[key] = counts.get(key, 0) + 1
+                        mgr.update_config(
+                            Path.cwd() / ".factory" / "mcp.json",
+                            "mcpServers.thegent",
+                            _get_mcp_config(mcp_url, client="droid"),
+                        )
+                    elif ht == "cursor":
+                        cursor_dir = home / ".cursor"
+                        for src_rel, dst_rel in CURSOR_FILES.items():
+                            src = thegent_root / src_rel
+                            dst = cursor_dir / dst_rel
+                            if src.exists() and not dry_run:
+                                res = mgr.install_file(src, dst, install_mode)
+                                key = res.value if hasattr(res, "value") else str(res)
+                                counts[key] = counts.get(key, 0) + 1
+                        mgr.update_config(
+                            Path.cwd() / ".cursor" / "mcp.json",
+                            "mcpServers.thegent",
+                            _get_mcp_config(mcp_url, client="cursor"),
+                        )
+                        mgr.update_config(
+                            home / ".cursor" / "mcp.json",
+                            "mcpServers.thegent",
+                            _get_mcp_config(mcp_url, client="cursor"),
+                        )
+
+            # 2. ensure-config (cliproxy harness config)
+            if not dry_run:
+                try:
+                    from thegent.agents.cliproxy_manager import _ensure_config
+                    from thegent.config import ThegentSettings
+
+                    config_path = _ensure_config(ThegentSettings())
+                    if verbose:
+                        sys.stdout.write(f"  Harness config: {config_path}\n")
+                    counts["copied"] = counts.get("copied", 0) + 1
+                except Exception as e:
+                    counts["errors"] = counts.get("errors", 0) + 1
+                    if verbose:
+                        sys.stdout.write(f"  Harness ensure-config: {e}\n")
+            elif verbose:
+                sys.stdout.write("  Would run cliproxy ensure-config\n")
+
+            # 3. Run login for harness providers (Claude Code, Codex, Droid, Cursor)
+            # Providers: claude, codex (OAuth); minimax, glm, antigravity, cursor, roo, kilo (API/OAuth)
+            if not dry_run and sys.stdin.isatty():
+                try:
+                    run_subprocess_optimized(
+                        [
+                            sys.executable,
+                            "-m",
+                            "thegent",
+                            "setup",
+                            "--agents",
+                            "claude,codex,minimax,glm,antigravity,cursor,roo,kilo",
+                            "--no-wizard",
+                        ],
+                        check=False,
+                    )
+                except Exception:
+                    if verbose:
+                        sys.stdout.write("  Run thegent cliproxy login <provider> to configure providers.\n")
 
         elif t == "shell":
             # Shell config: zshenv, zsh_bundle, safeguards, optimization, advanced, zshrc

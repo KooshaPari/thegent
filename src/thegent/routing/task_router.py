@@ -240,7 +240,7 @@ class ConstraintValidator:
         category = task_metadata.category
 
         # 1. Instantaneous cost check
-        from thegent.governance.cost import CostEstimator
+        from thegent.cost.aggregator import CostEstimator
 
         estimator = CostEstimator()
         actual_est_cost = estimator.estimate(
@@ -260,7 +260,7 @@ class ConstraintValidator:
 
         # 2. Cumulative budget check (if registry provided)
         if registry:
-            from thegent.governance.cost import CostAggregator
+            from thegent.cost.aggregator import CostAggregator
 
             agg = CostAggregator(registry.session_dir)
             mtd_total = agg.get_mtd_total()
@@ -348,7 +348,7 @@ class TaskRouter:
             # Sort providers by score desc
             sorted_providers = sorted(char_scores.items(), key=lambda x: x[1], reverse=True)
             # Map top providers back to known model IDs (simplified)
-            mapping = {"codex": "gpt-5.3-codex", "claude": "claude-sonnet-4.5", "gemini": "gemini-3-pro"}
+            mapping = {"codex": "gpt-5.3-codex", "claude": "claude-sonnet-4.5", "gemini": "gemini-3.1-pro"}
             return [mapping[p] for p, s in sorted_providers if p in mapping]
 
         if category == TaskCategory.FAST:
@@ -356,7 +356,7 @@ class TaskRouter:
         if category == TaskCategory.NORMAL:
             return ["gpt-5.3-codex-spark", "claude-haiku-4.5"]
         if category == TaskCategory.COMPLEX:
-            return ["gpt-5.3-codex", "gemini-3-pro"]
+            return ["gpt-5.3-codex", "gemini-3.1-pro"]
         return ["claude-opus-4.6", "gpt-5.3-codex-max"]
 
     def route_dag_tasks(self, dag: Any) -> dict[str, list[str]]:
@@ -412,7 +412,7 @@ class TaskRouter:
         """
         from pathlib import Path
 
-        from thegent.tools.terminal import is_claude_code_pane, list_tmux_panes
+        from thegent.skills.terminal import is_claude_code_pane, list_tmux_panes
 
         target_path = Path(path).resolve()
         panes = list_tmux_panes()

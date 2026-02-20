@@ -5,7 +5,6 @@ import platform
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 
 class OSUserAdapter:
@@ -20,7 +19,7 @@ class OSUserAdapter:
         if self.system in ["Linux", "Darwin"]:
             if os.geteuid() != 0:
                 if shutil.which("sudo"):
-                    cmd = ["sudo", "-n"] + cmd # -n for non-interactive
+                    cmd = ["sudo", "-n"] + cmd  # -n for non-interactive
                 else:
                     return False, "Not root and sudo not found"
 
@@ -58,7 +57,7 @@ class OSUserAdapter:
         """Create a user on macOS using dscl."""
         # Note: macOS user creation via dscl is complex and needs a unique UID
         # This is a simplified version; in production, we'd need to find the next available UID
-        uid = "501" # Placeholder for discovery logic
+        uid = "501"  # Placeholder for discovery logic
 
         success, next_uid = self._run_privileged(["dscl", ".", "-list", "/Users", "UniqueID"])
         if success:
@@ -70,9 +69,9 @@ class OSUserAdapter:
             ["dscl", ".", "-create", f"/Users/{username}", "UserShell", "/bin/zsh"],
             ["dscl", ".", "-create", f"/Users/{username}", "RealName", f"Agent User {username}"],
             ["dscl", ".", "-create", f"/Users/{username}", "UniqueID", uid],
-            ["dscl", ".", "-create", f"/Users/{username}", "PrimaryGroupID", "20"], # staff group
+            ["dscl", ".", "-create", f"/Users/{username}", "PrimaryGroupID", "20"],  # staff group
             ["dscl", ".", "-create", f"/Users/{username}", "NFSHomeDirectory", str(home_dir or f"/Users/{username}")],
-            ["dscl", ".", "-passwd", f"/Users/{username}", "*"], # No password
+            ["dscl", ".", "-passwd", f"/Users/{username}", "*"],  # No password
         ]
 
         for cmd in commands:
@@ -106,6 +105,7 @@ class OSUserAdapter:
             return False, result.stderr.strip()
         except Exception as e:
             return False, str(e)
+
 
 def create_os_user(username: str, home_dir: Path | None = None) -> tuple[bool, str]:
     """Factory function for create_os_user."""

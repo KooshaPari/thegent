@@ -19,7 +19,6 @@ from thegent.agents.smolgents import AgentTree, SmolAgent, Tool
 from thegent.agents.smolgents.base import SmolAgent as SmolAgentDirect
 from thegent.agents.smolgents.tools import Tool as ToolDirect
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

@@ -29,13 +29,17 @@ def batch_file_operations(
         batch = files[i : i + batch_size]
         logger.info(f"Processing batch {i // batch_size + 1} ({len(batch)} files)")
 
-        for file_path in batch:
+        def _process_file(file_path: Path) -> Any:
+            """Process a single file, returning result or None on error."""
             try:
-                result = operation(file_path)
-                results.append(result)
+                return operation(file_path)
             except Exception as e:
                 logger.error(f"Error processing {file_path}: {e}")
-                results.append(None)
+                return None
+
+        for file_path in batch:
+            result = _process_file(file_path)
+            results.append(result)
 
     return results
 

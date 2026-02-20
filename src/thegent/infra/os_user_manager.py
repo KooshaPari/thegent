@@ -11,7 +11,6 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -87,10 +86,12 @@ class OSUserManager:
             if self.os_type == "windows":
                 res = subprocess.run(
                     ["powershell.exe", "-Command", f"Get-LocalUser -Name '{username}'"],
-                    capture_output=True
+                    capture_output=True,
+                    check=False,
                 )
                 return res.returncode == 0
             import pwd
+
             pwd.getpwnam(username)
             return True
         except (KeyError, ImportError):
@@ -104,14 +105,9 @@ class OSUserManager:
             return OSUser(username=username, is_created=True)
 
         import pwd
+
         info = pwd.getpwnam(username)
-        return OSUser(
-            username=username,
-            uid=info.pw_uid,
-            gid=info.pw_gid,
-            home_dir=info.pw_dir,
-            is_created=True
-        )
+        return OSUser(username=username, uid=info.pw_uid, gid=info.pw_gid, home_dir=info.pw_dir, is_created=True)
 
     def _create_linux_user(self, username: str, home_base: str | None) -> None:
         """Linux-specific user creation."""

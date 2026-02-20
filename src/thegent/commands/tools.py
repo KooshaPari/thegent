@@ -37,7 +37,7 @@ def tools_list(
     from rich.console import Console
     from rich.table import Table
 
-    from thegent.tools.borrow import ToolBorrower
+    from thegent.utils.borrow import ToolBorrower
 
     borrower = ToolBorrower()
     tools = borrower.list_available_tools()
@@ -72,8 +72,7 @@ def tools_borrow(
     tool_names: Annotated[
         str | None,
         typer.Argument(
-            help="Comma-separated tool names to borrow (e.g. thegent_run,thegent_ps). "
-                 "Omit to borrow all tools."
+            help="Comma-separated tool names to borrow (e.g. thegent_run,thegent_ps). Omit to borrow all tools."
         ),
     ] = None,
     output_dir: Annotated[
@@ -126,7 +125,7 @@ def tools_borrow(
     """
     from rich.console import Console
 
-    from thegent.tools.borrow import BorrowConfig, ToolBorrower
+    from thegent.utils.borrow import BorrowConfig, ToolBorrower
 
     console = Console()
     config = BorrowConfig(host=host, port=port)
@@ -153,7 +152,9 @@ def tools_borrow(
             merge=not no_merge,
         )
     except ValueError as exc:
-        console.print(f"[red]Error:[/red] {exc}")
+        from thegent.errors import print_error
+
+        print_error(str(exc))
         raise typer.Exit(1) from exc
 
     tool_label = ", ".join(names) if names else "all tools"
@@ -192,7 +193,7 @@ def tools_show(
     from rich.console import Console
     from rich.panel import Panel
 
-    from thegent.tools.borrow import ToolBorrower
+    from thegent.utils.borrow import ToolBorrower
 
     borrower = ToolBorrower()
     manifest = borrower.get_tool(name)
@@ -222,9 +223,7 @@ def tools_show(
 def tools_snippet(
     tool_names: Annotated[
         str | None,
-        typer.Argument(
-            help="Comma-separated tool names. Omit for all tools."
-        ),
+        typer.Argument(help="Comma-separated tool names. Omit for all tools."),
     ] = None,
     host: Annotated[
         str,
@@ -242,7 +241,7 @@ def tools_snippet(
         thegent tools snippet
         thegent tools snippet thegent_run,thegent_ps,thegent_ddg_search
     """
-    from thegent.tools.borrow import BorrowConfig, ToolBorrower
+    from thegent.utils.borrow import BorrowConfig, ToolBorrower
 
     config = BorrowConfig(host=host, port=port)
     borrower = ToolBorrower(config=config)

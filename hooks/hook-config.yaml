@@ -91,6 +91,12 @@ hooks:
     timeout: 60
     description: "Coordinate stop hooks"
 
+  # TTS notification hook - opt-in for event announcements
+  tts:
+    scope: all
+    timeout: 30
+    description: "Announce events using text-to-speech"
+
   # Teammate idle detection - run when teammate output received
   teammate-idle:
     scope: all

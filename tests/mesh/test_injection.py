@@ -16,7 +16,6 @@ import pytest
 
 from thegent.mesh.injection import ContextInjection, ShellInjection
 
-
 # ---------------------------------------------------------------------------
 # TGNT-P13.1 – tmux session detection and naming
 # ---------------------------------------------------------------------------

@@ -6,7 +6,7 @@ Semantically selects and injects only relevant tools into the active context.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, TypeAdapter
 

@@ -157,10 +157,7 @@ class DiskMonitor:
             if a.busy_time_ms is not None and b.busy_time_ms is not None:
                 busy_delta_ms = float(a.busy_time_ms - b.busy_time_ms)
             else:
-                busy_delta_ms = float(
-                    (a.read_time_ms - b.read_time_ms)
-                    + (a.write_time_ms - b.write_time_ms)
-                )
+                busy_delta_ms = float((a.read_time_ms - b.read_time_ms) + (a.write_time_ms - b.write_time_ms))
 
             # Clamp to [0, elapsed_ms] to handle counter wrap-arounds.
             busy_delta_ms = max(0.0, min(busy_delta_ms, elapsed_ms))

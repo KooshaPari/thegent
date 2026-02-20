@@ -1326,6 +1326,11 @@ fn run_hook_with_idle_timeout(
     idle_timeout: Duration,
     max_timeout: Duration,
 ) -> HookResult {
+    // MTSP-20: Native Rust hook execution (avoid shell bridge)
+    if hook_name == "quality-gate.sh" || hook_name == "security-pipeline.sh" || hook_name == "stop-dispatcher.sh" || hook_name == "stop-reconcile.sh" || hook_name == "complexity-ratchet.sh" || hook_name == "spec-verifier.sh" || hook_name == "test-maturity.sh" || hook_name == "suppression-blocker.sh" || hook_name == "pre-write-validator.sh" || hook_name == "post-edit-checker.sh" || hook_name == "task-completion-verifier.sh" || hook_name == "doc-location-guard.sh" || hook_name == "change-doc-tracker.sh" || hook_name == "friction-detector.sh" || hook_name == "agent-antipattern-detector.sh" {
+        return run_hook(hooks_dir, hook_name, extra_args, env_map, temp_path, Some(max_timeout));
+    }
+
     let script = hooks_dir.join(hook_name);
     if !script.exists() {
         return HookResult {
@@ -1525,11 +1530,37 @@ fn run_hook(
     timeout: Option<Duration>,
 ) -> HookResult {
     // MTSP-20: Native Rust hook execution (avoid shell bridge)
-    if hook_name == "quality-gate.sh" || hook_name == "security-pipeline.sh" || hook_name == "stop-dispatcher.sh" {
+    if hook_name == "quality-gate.sh" || hook_name == "security-pipeline.sh" || hook_name == "stop-dispatcher.sh" || hook_name == "stop-reconcile.sh" || hook_name == "complexity-ratchet.sh" || hook_name == "spec-verifier.sh" || hook_name == "test-maturity.sh" || hook_name == "suppression-blocker.sh" || hook_name == "pre-write-validator.sh" || hook_name == "post-edit-checker.sh" || hook_name == "task-completion-verifier.sh" || hook_name == "doc-location-guard.sh" || hook_name == "change-doc-tracker.sh" || hook_name == "friction-detector.sh" || hook_name == "agent-antipattern-detector.sh" || hook_name == "agileplus-cycle.sh" || hook_name == "teammate-reconcile.sh" || hook_name == "qa-artifact-quality-gate.sh" || hook_name == "qa-assurance-case-gate.sh" || hook_name == "qa-policy-engine.sh" || hook_name == "spec-preflight.sh" || hook_name == "prompt-submit-guard.sh" || hook_name == "subagent-quality-gate.sh" || hook_name == "pre-compact-snapshot.sh" || hook_name == "auto-checkpoint.sh" || hook_name == "task-completed.sh" || hook_name == "teammate-idle.sh" || hook_name == "harvest-idea-seeds-stop.sh" || hook_name == "harvest-pending-queue.sh" {
         let tool = match hook_name {
             "quality-gate.sh" => "quality-gate",
             "security-pipeline.sh" => "security-pipeline",
             "stop-dispatcher.sh" => "dispatch",
+            "stop-reconcile.sh" => "stop-reconcile",
+            "complexity-ratchet.sh" => "complexity-ratchet",
+            "spec-verifier.sh" => "spec-verify",
+            "test-maturity.sh" => "test-maturity",
+            "suppression-blocker.sh" => "suppression-blocker",
+            "pre-write-validator.sh" => "pre-write-validate",
+            "post-edit-checker.sh" => "post-edit-check",
+            "task-completion-verifier.sh" => "task-completion-verify",
+            "doc-location-guard.sh" => "doc-location-guard",
+            "change-doc-tracker.sh" => "change-doc-tracker",
+            "friction-detector.sh" => "friction-detect",
+            "agent-antipattern-detector.sh" => "antipattern-detect",
+            "agileplus-cycle.sh" => "agileplus-cycle",
+            "teammate-reconcile.sh" => "teammate-reconcile",
+            "qa-artifact-quality-gate.sh" => "qa-artifact-gate",
+            "qa-assurance-case-gate.sh" => "qa-assurance-gate",
+            "qa-policy-engine.sh" => "qa-policy-engine",
+            "spec-preflight.sh" => "spec-preflight",
+            "prompt-submit-guard.sh" => "prompt-submit-guard",
+            "subagent-quality-gate.sh" => "subagent-gate",
+            "pre-compact-snapshot.sh" => "pre-compact",
+            "auto-checkpoint.sh" => "pre-compact",
+            "task-completed.sh" => "task-completed",
+            "teammate-idle.sh" => "teammate-idle",
+            "harvest-idea-seeds-stop.sh" => "harvest",
+            "harvest-pending-queue.sh" => "harvest",
             _ => unreachable!(),
         };
         

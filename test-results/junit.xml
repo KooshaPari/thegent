@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="12.591963">
+<testsuite name="demo.spec.ts" timestamp="2026-02-20T05:23:06.029Z" hostname="chromium" tests="1" failures="0" skipped="0" time="6.669" errors="0">
+<testcase name="VitePress homepage loads and navigates" classname="demo.spec.ts" time="6.669">
+</testcase>
+</testsuite>
+</testsuites>

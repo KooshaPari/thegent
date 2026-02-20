@@ -20,9 +20,9 @@ import pytest
 from thegent.native.state_shm import (
     CircuitBreakerShm,
     XpTracker,
+    _category_int,
     _PurePythonBreakerStore,
     _PurePythonXpStore,
-    _category_int,
     is_native_available,
     open_shm,
 )

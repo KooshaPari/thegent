@@ -113,12 +113,14 @@ class TestClodeCommands:
         assert result.exit_code == 0
         assert calls == ["nim"]
 
-    def test_clode_install_links_force_rewrites_wrappers(self, tmp_path: Path) -> None:
-        """`thegent clode install-links --force` creates expected shim files."""
+    def test_clode_install_links_force_rewrites_wrappers(self, tmp_path: Path, monkeypatch) -> None:
+        """`thegent clode install-links --force` creates clode -> thegent-shims link."""
+        (tmp_path / "thegent-shims").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (tmp_path / "thegent-shims").chmod(0o755)
+        monkeypatch.setattr("thegent.clode_main.shutil.which", lambda _name: None)
+
         # Start with legacy files to ensure --force path is exercised.
         (tmp_path / "clode").write_text("legacy")
-        (tmp_path / "claudeglm").write_text("legacy")
-        (tmp_path / "claudemax").write_text("legacy")
         result = runner.invoke(
             app,
             [
@@ -129,11 +131,9 @@ class TestClodeCommands:
             ],
         )
         assert result.exit_code == 0
-        for name in ("clode", "claudeglm", "claudemax"):
-            wrapper = tmp_path / name
-            assert wrapper.exists()
-            assert wrapper.read_text(encoding="utf-8").startswith("#!/usr/bin/env sh")
-            assert "exec" in wrapper.read_text(encoding="utf-8")
+        wrapper = tmp_path / "clode"
+        assert wrapper.is_symlink()
+        assert wrapper.resolve() == (tmp_path / "thegent-shims").resolve()
 
     def test_clode_glm_policy_round_robin_cycles_and_cheapest(self, monkeypatch) -> None:
         """`thegent clode glm` routes through policy-defined backends."""

@@ -5,7 +5,6 @@ import random
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 class GitParallelismManager:
@@ -17,6 +16,15 @@ class GitParallelismManager:
         self.git_dir = project_root / ".git"
         self.mesh_root = Path("/tmp/agent-mesh")
         self.agent_index = self.mesh_root / f"index-{agent_id}"
+
+    def _get_ref_hash(self, ref: str) -> str | None:
+        """Get current hash for a ref."""
+        try:
+            return subprocess.check_output(
+                ["git", "rev-parse", ref], cwd=self.project_root, text=True
+            ).strip()
+        except subprocess.CalledProcessError:
+            return None
 
     def ensure_index(self) -> Path:
         """Create or refresh the per-agent index file (TGNT-P6.1)."""
@@ -88,7 +96,7 @@ class GitParallelismManager:
         base_delay = 0.1
 
         for i in range(max_retries):
-            try:
+            try:  # noqa: PERF203 -- intentional retry loop, max 5 iterations
                 # git update-ref <ref> <new_hash> <old_hash>
                 # Fails if <ref> is not currently <old_hash>
                 subprocess.run(
@@ -104,12 +112,8 @@ class GitParallelismManager:
                 time.sleep(delay)
 
                 # Refresh old_hash for next attempt
-                try:
-                    old_hash = subprocess.check_output(
-                        ["git", "rev-parse", ref], cwd=self.project_root, text=True
-                    ).strip()
-                except subprocess.CalledProcessError:
-                    # Ref might have been deleted?
+                old_hash = self._get_ref_hash(ref)
+                if old_hash is None:
                     return False
 
         return False

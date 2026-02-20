@@ -68,7 +68,7 @@ def _call_classifier(prompt_preview: str, model: str = "gemini-3-flash") -> dict
 
     last_err: Exception | None = None
     for model_str in model_candidates:
-        try:
+        try:  # noqa: PERF203 -- fallback chain pattern, trying multiple classifier models
             response = completion(
                 model=model_str,
                 messages=messages,

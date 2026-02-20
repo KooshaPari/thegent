@@ -204,7 +204,11 @@ def _send_keepalive_via_tmux() -> bool:
             try:
                 # Try to get current pane from tmux
                 result = subprocess.run(
-                    ["tmux", "display-message", "-p", "#{pane_id}"], capture_output=True, text=True, timeout=0.5
+                    ["tmux", "display-message", "-p", "#{pane_id}"],
+                    capture_output=True,
+                    text=True,
+                    timeout=0.5,
+                    check=False,
                 )
                 if result.returncode == 0:
                     tmux_pane = result.stdout.strip()

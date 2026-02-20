@@ -4,7 +4,7 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class MeshLogger:
@@ -15,15 +15,10 @@ class MeshLogger:
 
     def log(self, agent_id: str, event: str, data: dict | None = None):
         """Append a structured log entry."""
-        entry = {
-            "timestamp": time.time(),
-            "agent_id": agent_id,
-            "event": event,
-            "data": data or {}
-        }
+        entry = {"timestamp": time.time(), "agent_id": agent_id, "event": event, "data": data or {}}
         # PIPE_BUF aware atomic append (SCLI-P13.1)
         line = json.dumps(entry) + "\n"
-        if len(line) <= 4096: # PIPE_BUF limit for atomic write
+        if len(line) <= 4096:  # PIPE_BUF limit for atomic write
             with open(self.log_file, "a") as f:
                 f.write(line)
         else:
@@ -57,7 +52,7 @@ class MetricsAggregator:
             # Simple aggregation
             summary["agents"][agent_id] = {
                 "count": len(points),
-                "avg_value": sum(p["value"] for p in points) / len(points) if points else 0
+                "avg_value": sum(p["value"] for p in points) / len(points) if points else 0,
             }
         return summary
 

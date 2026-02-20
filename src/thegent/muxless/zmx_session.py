@@ -44,35 +44,27 @@ class ZmxSessionConfig:
     # @trace FR-SES-001
     """
 
-    binary_path: str = field(
-        default_factory=lambda: os.environ.get(_ZMX_BINARY_ENV_VAR, _DEFAULT_ZMX_BINARY)
-    )
+    binary_path: str = field(default_factory=lambda: _DEFAULT_ZMX_BINARY)
     max_sessions: int = 50
     session_ttl_s: int = 3600
 
     @classmethod
-    def from_env(cls) -> ZmxSessionConfig:
-        """Build a ZmxSessionConfig reading values from environment variables.
+    def from_settings(cls) -> ZmxSessionConfig:
+        """Build a ZmxSessionConfig reading values from settings."""
+        from thegent.config import ThegentSettings
 
-        Environment variables:
-            THGENT_ZMX_BINARY: Path or name of zmx binary (default: "zmx").
-            THGENT_ZMX_MAX_SESSIONS: Max concurrent sessions (default: 50).
-            THGENT_ZMX_SESSION_TTL: Session TTL in seconds (default: 3600).
-        """
-        binary_path = os.environ.get(_ZMX_BINARY_ENV_VAR, _DEFAULT_ZMX_BINARY)
-        max_sessions_raw = os.environ.get("THGENT_ZMX_MAX_SESSIONS", "50")
-        session_ttl_raw = os.environ.get("THGENT_ZMX_SESSION_TTL", "3600")
-        try:
-            max_sessions = int(max_sessions_raw)
-        except ValueError:
-            logger.warning("Invalid THGENT_ZMX_MAX_SESSIONS %r; using default 50", max_sessions_raw)
-            max_sessions = 50
-        try:
-            session_ttl_s = int(session_ttl_raw)
-        except ValueError:
-            logger.warning("Invalid THGENT_ZMX_SESSION_TTL %r; using default 3600", session_ttl_raw)
-            session_ttl_s = 3600
-        return cls(binary_path=binary_path, max_sessions=max_sessions, session_ttl_s=session_ttl_s)
+        settings = ThegentSettings()
+        binary_path = getattr(settings, "zmx_binary", _DEFAULT_ZMX_BINARY) or _DEFAULT_ZMX_BINARY
+        return cls(
+            binary_path=binary_path,
+            max_sessions=settings.zmx_max_sessions,
+            session_ttl_s=settings.zmx_session_ttl,
+        )
+
+    @classmethod
+    def from_env(cls) -> ZmxSessionConfig:
+        """Deprecated: Use from_settings() instead."""
+        return cls.from_settings()
 
 
 class ZmxSessionManager:
@@ -310,9 +302,7 @@ class ZmxSessionManager:
         """Try ``zmx list --format json``. Returns None if flag unsupported."""
         import json as _json
 
-        ok, stdout, stderr = self._run_capture(
-            [self._config.binary_path, "list", "--format", "json"]
-        )
+        ok, stdout, stderr = self._run_capture([self._config.binary_path, "list", "--format", "json"])
         if not ok:
             if "unknown" in stderr.lower() or "unrecognized" in stderr.lower():
                 return None
@@ -362,5 +352,5 @@ def make_zmx_session_manager(config: ZmxSessionConfig | None = None) -> ZmxSessi
     # @trace FR-SES-001
     """
     if config is None:
-        config = ZmxSessionConfig.from_env()
+        config = ZmxSessionConfig.from_settings()
     return ZmxSessionManager(config=config)

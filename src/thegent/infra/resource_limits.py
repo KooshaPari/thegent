@@ -71,16 +71,20 @@ class ResourceLimits:
             pass
         return self.DEFAULT_PROCESS_LIMIT
 
+    def _restore_single_limit(self, limit_name: str, soft: int, hard: int) -> None:
+        """Restore a single resource limit."""
+        try:
+            if limit_name == "nofile":
+                resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))
+            elif limit_name == "nproc" and hasattr(resource, "RLIMIT_NPROC"):
+                resource.setrlimit(resource.RLIMIT_NPROC, (soft, hard))
+        except Exception as e:
+            logger.warning(f"Could not restore {limit_name} limit: {e}")
+
     def restore_limits(self) -> None:
         """Restore original limits."""
         for limit_name, (soft, hard) in self._original_limits.items():
-            try:
-                if limit_name == "nofile":
-                    resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))
-                elif limit_name == "nproc" and hasattr(resource, "RLIMIT_NPROC"):
-                    resource.setrlimit(resource.RLIMIT_NPROC, (soft, hard))
-            except Exception as e:
-                logger.warning(f"Could not restore {limit_name} limit: {e}")
+            self._restore_single_limit(limit_name, soft, hard)
 
 
 # Global limits instance

@@ -113,9 +113,11 @@ def _is_agent_parent(cmd: str) -> bool:
         return True
     if "claude-code" in c or "claude code" in c or "clode" in c:
         return True
-    if exe in ("claude", "codex", "clode", "dex"):
+    if exe in ("claude", "codex", "clode", "dex", "ante", "anen", "antigma", "fanta"):
         return True
-    if exe.startswith(("claude", "clode")) or "/claude" in c:
+    if exe.startswith(("claude", "clode", "ante", "anen", "antigma", "fanta")) or any(
+        x in c for x in ("/claude", "/ante", "/anen", "/antigma", "/fanta")
+    ):
         return True
     if ("codex" in c and "codex" in exe) or "dex" in c:
         return True
@@ -186,7 +188,7 @@ def _is_agent_process(exe: str, cmd: str) -> bool:
             return True
         if "npm" in cmd_lower or "bun" in cmd_lower:
             return True
-    if exe_lower in ("droid", "roid", "claude", "clode", "codex", "dex"):
+    if exe_lower in ("droid", "roid", "claude", "clode", "codex", "dex", "ante", "anen", "antigma", "fanta"):
         return True
     if "cli-proxy" in cmd_lower or "process-compose" in cmd_lower:
         return True

@@ -23,15 +23,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from starlette.testclient import TestClient
+from typer.testing import CliRunner
 
 from thegent.adapters.acp_server import (
     ACP_DEFAULT_PORT,
     ACPServerAdapter,
     AgentSession,
     _rpc_error,
+    app as acp_cli_app,
 )
 from thegent.agents.base import AgentRunner, RunResult
 
+runner = CliRunner()
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
@@ -50,7 +53,7 @@ def _make_runner(stdout: str = "done", stderr: str = "", exit_code: int = 0, tim
     return runner
 
 
-@pytest.fixture()
+@pytest.fixture
 def adapter() -> ACPServerAdapter:
     """Return an ACPServerAdapter with no real agents loaded."""
     with patch("thegent.adapters.acp_server.get_runner", return_value=None), \
@@ -59,7 +62,7 @@ def adapter() -> ACPServerAdapter:
     return inst
 
 
-@pytest.fixture()
+@pytest.fixture
 def adapter_with_agent() -> tuple[ACPServerAdapter, AgentRunner]:
     """Return an adapter pre-loaded with a mock 'claude' runner."""
     runner = _make_runner(stdout="Hello from claude")
@@ -128,6 +131,36 @@ class TestRpcErrorHelper:
     def test_none_id_preserved(self) -> None:
         result = _rpc_error(None, -32700, "parse error")
         assert result["id"] is None
+
+
+class TestCliEntryPoint:
+    """CLI wiring for module entrypoint."""
+
+    def test_help_exits_zero(self) -> None:
+        result = runner.invoke(acp_cli_app, ["--help"])
+        assert result.exit_code == 0
+
+    def test_default_mode_runs_stdio(self) -> None:
+        with patch("thegent.adapters.acp_server.ACPServerAdapter") as mock_adapter_cls, patch(
+            "thegent.adapters.acp_server.asyncio.run"
+        ) as mock_asyncio_run:
+            result = runner.invoke(acp_cli_app, [])
+
+        assert result.exit_code == 0
+        mock_adapter = mock_adapter_cls.return_value
+        mock_asyncio_run.assert_called_once_with(mock_adapter.run_stdio.return_value)
+        mock_adapter.run_http.assert_not_called()
+
+    def test_http_mode_runs_http_server(self) -> None:
+        with patch("thegent.adapters.acp_server.ACPServerAdapter") as mock_adapter_cls, patch(
+            "thegent.adapters.acp_server.asyncio.run"
+        ) as mock_asyncio_run:
+            result = runner.invoke(acp_cli_app, ["--http", "--host", "0.0.0.0", "--port", str(ACP_DEFAULT_PORT + 1)])
+
+        assert result.exit_code == 0
+        mock_adapter = mock_adapter_cls.return_value
+        mock_adapter.run_http.assert_called_once_with(host="0.0.0.0", port=ACP_DEFAULT_PORT + 1)
+        mock_asyncio_run.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -438,7 +471,7 @@ class TestRpcUnknownMethod:
 class TestStarletteApp:
     """FR-ACP-001: HTTP endpoints via Starlette."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def client(self, adapter_with_agent: tuple) -> TestClient:
         inst, _ = adapter_with_agent
         app = inst.build_starlette_app()

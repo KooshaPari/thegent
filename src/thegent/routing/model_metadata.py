@@ -54,7 +54,7 @@ MODEL_METADATA: dict[str, dict[str, Any]] = {
         "provider": "gemini",
         "backend": "direct",
     },
-    "gemini-3-pro": {
+    "gemini-3.1-pro": {
         "context_window": 200000,
         "cost_per_mtok": 3.50,
         "provider": "gemini",

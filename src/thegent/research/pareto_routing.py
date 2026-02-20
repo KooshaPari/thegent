@@ -11,8 +11,11 @@ class ParetoRouting:
 
     def __init__(self) -> None:
         """Initialize Pareto routing."""
+        from thegent.config import get_settings
+
+        settings = get_settings()
         self.routes: dict[str, Any] = {}
-        self.hysteresis_threshold = 0.1
+        self.hysteresis_threshold = settings.routing_hysteresis_threshold
 
     def find_pareto_optimal(self, options: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Find Pareto-optimal options.

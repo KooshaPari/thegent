@@ -1,5 +1,6 @@
-"""Phase 1 & 2: Process Detection, Mesh Init, and IPC Primitives for Agent Mesh Coordination.
-"""
+"""Phase 1 & 2: Process Detection, Mesh Init, and IPC Primitives for Agent Mesh Coordination."""
+
+from __future__ import annotations
 
 import json
 import logging
@@ -7,7 +8,7 @@ import os
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import psutil
 import yaml
@@ -32,23 +33,28 @@ class MeshManager:
         for d in [self.agents_dir, self.queue_dir, self.tasks_dir, self.intents_dir, self.locks_dir]:
             d.mkdir(parents=True, exist_ok=True, mode=0o1777)
 
+    def _check_process(self, proc: psutil.Process, patterns: list[str]) -> dict[str, Any] | None:
+        """Check if a process matches patterns. Returns process info or None."""
+        try:
+            cmdline = " ".join(proc.info["cmdline"] or [])
+            if any(p in cmdline.lower() for p in patterns):
+                return {
+                    "pid": proc.info["pid"],
+                    "name": proc.info["name"],
+                    "cmdline": cmdline,
+                    "discovered_at": time.time(),
+                }
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+        return None
+
     def discover_agents(self, patterns: list[str]) -> list[dict[str, Any]]:
         """Discover agents based on process patterns."""
         discovered = []
         for proc in psutil.process_iter(["pid", "name", "cmdline"]):
-            try:
-                cmdline = " ".join(proc.info["cmdline"] or [])
-                if any(p in cmdline.lower() for p in patterns):
-                    discovered.append(
-                        {
-                            "pid": proc.info["pid"],
-                            "name": proc.info["name"],
-                            "cmdline": cmdline,
-                            "discovered_at": time.time(),
-                        }
-                    )
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
+            info = self._check_process(proc, patterns)
+            if info is not None:
+                discovered.append(info)
         return discovered
 
     def register_agent(self, agent_id: str, metadata: dict[str, Any]) -> None:

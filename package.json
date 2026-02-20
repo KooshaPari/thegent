@@ -14,7 +14,8 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "docs:pdf": "press-export-pdf docs"
+    "docs:pdf": "press-export-pdf docs",
+    "docs:validate": "python3 scripts/validate-code-examples.py"
   },
   "devDependencies": {
     "@orama/plugin-vitepress": "^3.1.18",

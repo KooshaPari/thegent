@@ -14,8 +14,7 @@ from unittest.mock import MagicMock, patch
 
 import click.exceptions
 import pytest
-
-from thegent.cli_impl import DagDocument
+from thegent.cli.commands.impl import DagDocument
 
 # typer.Exit inherits from click.exceptions.Exit (RuntimeError), not SystemExit
 _EXIT = (SystemExit, click.exceptions.Exit)
@@ -1092,7 +1091,7 @@ class TestSessionContractHealthReportCmdImpl:
         mock_settings.return_value.output_format = "json"
         result = _health_report_result()
 
-        with patch("thegent.cli_impl.session_contract_health_report_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_report_impl", return_value=result):
             from thegent.cli import session_contract_health_report_cmd
 
             session_contract_health_report_cmd(format="json")
@@ -1108,7 +1107,7 @@ class TestSessionContractHealthReportCmdImpl:
             issue_breakdown=[{"issue": "timeout", "count": 3}],
         )
 
-        with patch("thegent.cli_impl.session_contract_health_report_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_report_impl", return_value=result):
             from thegent.cli import session_contract_health_report_cmd
 
             session_contract_health_report_cmd(format=None)
@@ -1124,7 +1123,7 @@ class TestSessionContractHealthReportCmdImpl:
         output = tmp_path / "report.json"
 
         with (
-            patch("thegent.cli_impl.session_contract_health_report_impl", return_value=result),
+            patch("thegent.cli.commands.impl.session_contract_health_report_impl", return_value=result),
             patch("thegent.cli._write_report_export", return_value="json") as mock_write,
             patch("thegent.cli._infer_export_format", return_value="json"),
         ):
@@ -1146,7 +1145,7 @@ class TestSessionContractHealthGateCmdImpl:
         mock_settings.return_value.output_format = "json"
         result = _health_gate_result()
 
-        with patch("thegent.cli_impl.session_contract_health_gate_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_gate_impl", return_value=result):
             from thegent.cli import session_contract_health_gate_cmd
 
             session_contract_health_gate_cmd(format="json")
@@ -1159,7 +1158,7 @@ class TestSessionContractHealthGateCmdImpl:
         mock_settings.return_value.output_format = "rich"
         result = _health_gate_result(**{"pass": False, "status": "fail"})
 
-        with patch("thegent.cli_impl.session_contract_health_gate_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_gate_impl", return_value=result):
             from thegent.cli import session_contract_health_gate_cmd
 
             with pytest.raises(_EXIT):
@@ -1178,7 +1177,7 @@ class TestSessionContractHealthTrendCmdImpl:
         mock_settings.return_value.output_format = "json"
         result = _health_trend_result()
 
-        with patch("thegent.cli_impl.session_contract_health_trend_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_trend_impl", return_value=result):
             from thegent.cli import session_contract_health_trend_cmd
 
             session_contract_health_trend_cmd(format="json")
@@ -1191,7 +1190,7 @@ class TestSessionContractHealthTrendCmdImpl:
         mock_settings.return_value.output_format = "rich"
         result = _health_trend_result()
 
-        with patch("thegent.cli_impl.session_contract_health_trend_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.session_contract_health_trend_impl", return_value=result):
             from thegent.cli import session_contract_health_trend_cmd
 
             session_contract_health_trend_cmd(format=None)
@@ -1401,7 +1400,7 @@ class TestEscalateAddCmdImpl:
     @patch("thegent.cli.console")
     def test_basic(self, mock_console) -> None:
         # @trace FR-CLI-375
-        with patch("thegent.cli_impl.escalate_add_impl") as mock_impl:
+        with patch("thegent.cli.commands.impl.escalate_add_impl") as mock_impl:
             from thegent.cli import escalate_add_cmd
 
             escalate_add_cmd(run_id="run-1", reason="blocked", sla_minutes=30)
@@ -1416,7 +1415,7 @@ class TestEscalateListCmdImpl:
     @patch("thegent.cli.console")
     def test_empty_list(self, mock_console) -> None:
         # @trace FR-CLI-376
-        with patch("thegent.cli_impl.escalate_list_impl", return_value=[]):
+        with patch("thegent.cli.commands.impl.escalate_list_impl", return_value=[]):
             from thegent.cli import escalate_list_cmd
 
             escalate_list_cmd(format=None)
@@ -1436,7 +1435,7 @@ class TestEscalateListCmdImpl:
                 "past_sla": False,
             }
         ]
-        with patch("thegent.cli_impl.escalate_list_impl", return_value=items):
+        with patch("thegent.cli.commands.impl.escalate_list_impl", return_value=items):
             from thegent.cli import escalate_list_cmd
 
             escalate_list_cmd(format="json")
@@ -1449,7 +1448,7 @@ class TestEscalateResolveCmdImpl:
     @patch("thegent.cli.console")
     def test_resolve_success(self, mock_console) -> None:
         # @trace FR-CLI-378
-        with patch("thegent.cli_impl.escalate_resolve_impl", return_value=True):
+        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=True):
             from thegent.cli import escalate_resolve_cmd
 
             escalate_resolve_cmd(run_id="r1", resolution="fixed")
@@ -1458,7 +1457,7 @@ class TestEscalateResolveCmdImpl:
     @patch("thegent.cli.console")
     def test_resolve_not_found(self, mock_console) -> None:
         # @trace FR-CLI-379
-        with patch("thegent.cli_impl.escalate_resolve_impl", return_value=False):
+        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=False):
             from thegent.cli import escalate_resolve_cmd
 
             escalate_resolve_cmd(run_id="r-nonexist", resolution="fixed")
@@ -1473,7 +1472,7 @@ class TestSweepCmdImpl:
     def test_sweep_pass(self, mock_console) -> None:
         # @trace FR-CLI-380
         result = {"pass": True, "drift_issues": [], "past_sla_count": 0, "audit": None}
-        with patch("thegent.cli_impl.sweep_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.sweep_impl", return_value=result):
             from thegent.cli import sweep_cmd
 
             sweep_cmd(format=None)
@@ -1483,7 +1482,7 @@ class TestSweepCmdImpl:
     def test_sweep_fail_exits(self, mock_console) -> None:
         # @trace FR-CLI-381
         result = {"pass": False, "drift_issues": ["low confidence"], "past_sla_count": 2, "audit": None}
-        with patch("thegent.cli_impl.sweep_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.sweep_impl", return_value=result):
             from thegent.cli import sweep_cmd
 
             with pytest.raises(_EXIT):
@@ -1497,7 +1496,7 @@ class TestPurgeCmdImpl:
     @patch("thegent.cli.console")
     def test_dry_run(self, mock_console) -> None:
         # @trace FR-CLI-382
-        with patch("thegent.cli_impl.purge_impl", return_value={"purged": 5, "kept": 95}, create=True):
+        with patch("thegent.cli.commands.impl.purge_impl", return_value={"purged": 5, "kept": 95}, create=True):
             from thegent.cli import purge_cmd
 
             purge_cmd(dry_run=True)
@@ -1506,7 +1505,7 @@ class TestPurgeCmdImpl:
     @patch("thegent.cli.console")
     def test_actual_purge(self, mock_console) -> None:
         # @trace FR-CLI-383
-        with patch("thegent.cli_impl.purge_impl", return_value={"purged": 5, "kept": 95}, create=True):
+        with patch("thegent.cli.commands.impl.purge_impl", return_value={"purged": 5, "kept": 95}, create=True):
             from thegent.cli import purge_cmd
 
             purge_cmd(dry_run=False)
@@ -1526,7 +1525,7 @@ class TestDataProtectionCmdImpl:
             "masking_enabled": True,
             "retention_policy_days": 30,
         }
-        with patch("thegent.cli_impl.get_data_protection_status_impl", return_value=status):
+        with patch("thegent.cli.commands.impl.get_data_protection_status_impl", return_value=status):
             from thegent.cli import data_protection_cmd
 
             data_protection_cmd(format="json")
@@ -1540,7 +1539,7 @@ class TestDataProtectionCmdImpl:
             "masking_enabled": False,
             "retention_policy_days": 30,
         }
-        with patch("thegent.cli_impl.get_data_protection_status_impl", return_value=status):
+        with patch("thegent.cli.commands.impl.get_data_protection_status_impl", return_value=status):
             from thegent.cli import data_protection_cmd
 
             data_protection_cmd(format=None)
@@ -1571,7 +1570,7 @@ class TestObserveSummaryCmdImpl:
             },
             "escalation": {"backlog_count": 0, "past_sla_count": 0},
         }
-        with patch("thegent.cli_impl.observe_summary_impl", return_value=result):
+        with patch("thegent.cli.commands.impl.observe_summary_impl", return_value=result):
             from thegent.cli import observe_summary_cmd
 
             observe_summary_cmd(format="json")
@@ -1601,7 +1600,7 @@ class TestCockpitCmdImpl:
             patch("thegent.cli.RunRegistry", return_value=mock_registry),
             patch("thegent.execution.CircuitBreakerRegistry", return_value=mock_cb),
             patch("thegent.execution.CheckpointRegistry", return_value=mock_ckpt),
-            patch("thegent.cli_impl.ps_impl", return_value=[]),
+            patch("thegent.cli.commands.impl.ps_impl", return_value=[]),
         ):
             from thegent.cli import cockpit_cmd
 

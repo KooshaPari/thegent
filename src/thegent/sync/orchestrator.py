@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 _log = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ class RulesSyncComponent(SyncComponent):
         super().__init__("rules", "Sync CLAUDE.md to other platform-specific rule files.")
 
     async def sync(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        from thegent.cli_impl import rules_sync_impl
+        from thegent.cli.commands.impl import rules_sync_impl
 
         try:
             rules_sync_impl(force=force, check=dry_run)

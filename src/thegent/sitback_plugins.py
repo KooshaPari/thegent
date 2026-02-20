@@ -42,14 +42,21 @@ class SitbackPluginRegistry:
         """Register harness status provider (e.g. heliosShield). Returns None if unavailable."""
         self._harness_status_fn = fn
 
+    def _run_widget(self, name: str, fn: callable) -> dict[str, Any] | None:
+        """Run a single widget, returning result or None on failure."""
+        try:
+            return fn()
+        except Exception as e:
+            _log.warning("sitback widget %s failed: %s", name, e)
+            return None
+
     def get_widgets(self) -> dict[str, dict[str, Any]]:
         """Run all widgets, return {name: result}. Skips failures."""
         out: dict[str, dict[str, Any]] = {}
         for name, fn in self._widgets.items():
-            try:
-                out[name] = fn()
-            except Exception as e:
-                _log.warning("sitback widget %s failed: %s", name, e)
+            result = self._run_widget(name, fn)
+            if result is not None:
+                out[name] = result
         return out
 
     def get_startup_steps(self) -> list[str]:
@@ -129,7 +136,7 @@ def _load_py_plugin(path: Path, registry: SitbackPluginRegistry) -> None:
 def _harness_status_placeholder() -> dict[str, Any] | None:
     """Status provider for heliosShield harness integration (WP-10007)."""
     try:
-        from thegent.tools.terminal import thegent.mesh_status
+        from thegent.skills.terminal import heliosShield_status
 
         status = heliosShield_status()
         if "not found" not in status.lower():

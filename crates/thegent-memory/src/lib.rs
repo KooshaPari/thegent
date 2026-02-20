@@ -9,6 +9,7 @@
 pub mod client;
 pub mod error;
 pub mod types;
+pub mod cache;
 
 pub use client::SupermemoryClient;
 pub use error::{Error, Result};

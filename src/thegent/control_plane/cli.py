@@ -10,9 +10,10 @@ console = Console()
 @app.command("status")
 def control_plane_status() -> None:
     """Check the health and status of the control plane."""
-    import os
+    from thegent.config import ThegentSettings
 
-    cp_url = os.environ.get("THGENT_CONTROL_PLANE_URL")
+    settings = ThegentSettings()
+    cp_url = settings.control_plane_url
     if not cp_url:
         console.print(
             "[yellow]THGENT_CONTROL_PLANE_URL not set.[/yellow] System is running in [bold]embedded mode[/bold]."

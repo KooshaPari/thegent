@@ -107,6 +107,7 @@ class EnvConfigProvider:
         keys: list[str] | None = None,
     ) -> dict[str, Any]:
         from opentelemetry import trace
+
         tracer = trace.get_tracer("thegent.config_provider")
         with tracer.start_as_current_span("config.resolve") as span:
             span.set_attribute("thegent.config.source", "env")
@@ -121,8 +122,9 @@ class EnvConfigProvider:
 
 def get_config_provider() -> ConfigProvider:
     """Returns ConfigProvider. Phase 1: always EnvConfigProvider."""
-    url = os.environ.get("THGENT_CONTROL_PLANE_URL")
-    if url:
+    settings = ThegentSettings()
+    url = settings.control_plane_url
+    if url and url != "http://127.0.0.1:3848":  # Only use CP if explicitly configured
         try:
             from thegent.control_plane.client import ControlPlaneConfigProvider
 

@@ -11,13 +11,11 @@ import threading
 import time
 
 import pytest
-
 from thegent.orchestration.load_based_limits import (
     DeadlineMonitor,
     SoftDeadline,
     get_deadline_monitor,
 )
-
 
 # ---------------------------------------------------------------------------
 # SoftDeadline unit tests
@@ -350,7 +348,7 @@ class TestConcurrencyControllerSoftDeadline:
     def test_acquire_without_deadline_succeeds(self, tmp_path, monkeypatch):
         """acquire() without soft_deadline_s works as before."""
         monkeypatch.setattr(
-            "thegent.cli_impl.ps_impl",
+            "thegent.cli.commands.impl.ps_impl",
             lambda **kwargs: [],  # no active sessions
         )
         ctrl = self._make_controller(tmp_path)
@@ -359,7 +357,7 @@ class TestConcurrencyControllerSoftDeadline:
 
     def test_acquire_with_deadline_registers_in_monitor(self, tmp_path, monkeypatch):
         """acquire() with soft_deadline_s registers deadline when admitted."""
-        monkeypatch.setattr("thegent.cli_impl.ps_impl", lambda **kwargs: [])
+        monkeypatch.setattr("thegent.cli.commands.impl.ps_impl", lambda **kwargs: [])
         ctrl = self._make_controller(tmp_path)
 
         run_id = "deadline-test-run"
@@ -383,7 +381,7 @@ class TestConcurrencyControllerSoftDeadline:
         """When acquire() is blocked (slot limit hit), no deadline is registered."""
         # Return 100 running sessions so slot_limit is exceeded with max_concurrency=10
         running = [{"status": "running"}] * 100
-        monkeypatch.setattr("thegent.cli_impl.ps_impl", lambda **kwargs: running)
+        monkeypatch.setattr("thegent.cli.commands.impl.ps_impl", lambda **kwargs: running)
 
         ctrl = self._make_controller(tmp_path)
         run_id = "blocked-run"
@@ -397,7 +395,7 @@ class TestConcurrencyControllerSoftDeadline:
 
     def test_acquire_with_zero_deadline_skips_registration(self, tmp_path, monkeypatch):
         """soft_deadline_s=0 is treated as 'no deadline' (non-positive guard)."""
-        monkeypatch.setattr("thegent.cli_impl.ps_impl", lambda **kwargs: [])
+        monkeypatch.setattr("thegent.cli.commands.impl.ps_impl", lambda **kwargs: [])
         ctrl = self._make_controller(tmp_path)
         run_id = "zero-deadline"
         ctrl.acquire(owner="agent-d", run_id=run_id, soft_deadline_s=0.0)
@@ -405,7 +403,7 @@ class TestConcurrencyControllerSoftDeadline:
 
     def test_release_unregisters_deadline(self, tmp_path, monkeypatch):
         """release() removes the soft deadline from the monitor."""
-        monkeypatch.setattr("thegent.cli_impl.ps_impl", lambda **kwargs: [])
+        monkeypatch.setattr("thegent.cli.commands.impl.ps_impl", lambda **kwargs: [])
         ctrl = self._make_controller(tmp_path)
         run_id = "release-run"
         admitted = ctrl.acquire(owner="agent-e", run_id=run_id, soft_deadline_s=300.0)
@@ -418,7 +416,7 @@ class TestConcurrencyControllerSoftDeadline:
 
     def test_acquire_uses_owner_as_run_id_fallback(self, tmp_path, monkeypatch):
         """When run_id is empty, owner is used as the deadline key."""
-        monkeypatch.setattr("thegent.cli_impl.ps_impl", lambda **kwargs: [])
+        monkeypatch.setattr("thegent.cli.commands.impl.ps_impl", lambda **kwargs: [])
         ctrl = self._make_controller(tmp_path)
         admitted = ctrl.acquire(
             owner="fallback-owner",

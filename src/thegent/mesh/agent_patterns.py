@@ -4,7 +4,7 @@ import configparser
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     from .process_detection import detect_agents
@@ -22,6 +22,7 @@ roo = roo-code|roo
 kilo = kilo-code|kilo
 """
 
+
 def get_config_path() -> Path:
     """Get path to agents.conf."""
     # Priority: current dir, then ~/.heliosShield/agents.conf
@@ -37,6 +38,7 @@ def get_config_path() -> Path:
         home_conf.write_text(DEFAULT_AGENTS_CONF.strip())
 
     return home_conf
+
 
 def load_agent_patterns() -> dict[str, str]:
     """Load agent regex patterns from agents.conf."""
@@ -55,18 +57,21 @@ def load_agent_patterns() -> dict[str, str]:
         "cursor": r"cursor-agent|cursor",
         "thegent": r"thegent",
         "codex": r"codex",
-        "copilot": r"copilot"
+        "copilot": r"copilot",
     }
+
 
 def run_detection() -> list[dict[str, Any]]:
     """Load patterns and detect agents."""
     patterns = load_agent_patterns()
     return detect_agents(patterns)
 
+
 if __name__ == "__main__":
     # Handle direct execution without relative import issues
     import sys
     from pathlib import Path
+
     sys.path.append(str(Path(__file__).parent.parent))
     from thegent.mesh.agent_patterns import run_detection
 

@@ -133,8 +133,7 @@ class MacOSSandbox:
         template_path = self.get_profile_path(level)
         if template_path is None:
             raise FileNotFoundError(
-                f"Sandbox profile template not found for level {level.value!r} "
-                f"in {self._profile_dir}"
+                f"Sandbox profile template not found for level {level.value!r} in {self._profile_dir}"
             )
         template = template_path.read_text(encoding="utf-8")
 
@@ -202,23 +201,26 @@ class MacOSSandbox:
         return cls()
 
     @classmethod
-    def level_from_env(cls) -> SandboxLevel:
-        """Read ``THGENT_SANDBOX_LEVEL`` and return the corresponding level.
+    def level_from_settings(cls) -> SandboxLevel:
+        """Read sandbox level from ThegentSettings."""
+        from thegent.config import ThegentSettings
 
-        Returns :attr:`SandboxLevel.NONE` when the variable is unset or
-        contains an unrecognised value (with a warning logged).
-        """
-        raw = os.environ.get(SANDBOX_LEVEL_ENV_VAR, "").strip().lower()
-        if not raw:
+        settings = ThegentSettings()
+        raw = settings.sandbox_level.strip().lower() if settings.sandbox_level else "none"
+        if not raw or raw == "none":
             return SandboxLevel.NONE
         try:
             return SandboxLevel(raw)
         except ValueError:
             valid = [e.value for e in SandboxLevel]
             _log.warning(
-                "Unknown %s value %r; valid values: %s. Defaulting to 'none'.",
-                SANDBOX_LEVEL_ENV_VAR,
+                "Unknown sandbox_level value %r; valid values: %s. Defaulting to 'none'.",
                 raw,
                 valid,
             )
             return SandboxLevel.NONE
+
+    @classmethod
+    def level_from_env(cls) -> SandboxLevel:
+        """Deprecated: Use level_from_settings() instead. Kept for backwards compatibility."""
+        return cls.level_from_settings()

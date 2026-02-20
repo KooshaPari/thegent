@@ -16,7 +16,48 @@ from typing import Any
 import httpx
 from pydantic import BaseModel, Field
 
+from thegent.config import ThegentSettings
+
 _log = logging.getLogger(__name__)
+
+
+def _as_float(value: Any, default: float) -> float:
+    """Coerce arbitrary values to float with a safe default."""
+    try:
+        if isinstance(value, bool):
+            return float(value)
+        if isinstance(value, (int, float, str)):
+            return float(value)
+    except (TypeError, ValueError):
+        pass
+    return default
+
+
+def _as_int(value: Any, default: int) -> int:
+    """Coerce arbitrary values to int with a safe default."""
+    try:
+        if isinstance(value, bool):
+            return int(value)
+        if isinstance(value, (int, float, str)):
+            return int(value)
+    except (TypeError, ValueError):
+        pass
+    return default
+
+
+def _as_bool(value: Any, default: bool) -> bool:
+    """Coerce arbitrary values to bool with a safe default."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
+            return False
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
 
 
 class RunState(StrEnum):
@@ -85,28 +126,26 @@ class ConcurrencyController:
         self.lock_file = session_dir / "concurrency.lock"
         # Critical lane reservation: slots kept exclusively for critical-priority runs.
         # Standard runs are limited to slots 0..(max_slots - critical_lane_slots - 1).
-        # Resolved from: explicit arg → THGENT_CRITICAL_LANE_SLOTS env var → default 2.
+        # Resolved from: explicit arg → settings.critical_lane_slots → default 2.
         if critical_lane_slots is not None:
             self.critical_lane_slots = max(0, critical_lane_slots)
         else:
-            import os
-            env_val = os.environ.get("THGENT_CRITICAL_LANE_SLOTS")
-            if env_val is not None:
-                try:
-                    self.critical_lane_slots = max(0, int(env_val))
-                except ValueError:
-                    self.critical_lane_slots = 2
-            else:
-                self.critical_lane_slots = 2
+            try:
+                settings = ThegentSettings()
+                configured_slots = settings.critical_lane_slots
+            except Exception:
+                configured_slots = _as_int(os.environ.get("THGENT_CRITICAL_LANE_SLOTS"), 2)
+            self.critical_lane_slots = max(0, configured_slots if configured_slots is not None else 2)
 
         # Per-owner usage tracker (module-level singleton, shared across instances).
-        from thegent.orchestration.load_based_limits import get_usage_tracker
+        from thegent.orchestration.resource.load_based_limits import get_usage_tracker
+
         self._usage_tracker = get_usage_tracker()
 
         # Initialize advanced features (if available)
         if use_load_based:
             try:
-                from thegent.orchestration.resource_management import (
+                from thegent.orchestration.resource.resource_management import (
                     BottleneckDetector,
                     ResourcePredictionEngine,
                     create_harness_cards,
@@ -167,7 +206,7 @@ class ConcurrencyController:
                 (default 0.8 → 80 %).  Only used when ``soft_deadline_s`` is set.
         """
         is_critical = priority == "critical" or (lane or "").lower() == "critical"
-        from thegent.cli_impl import ps_impl
+        from thegent.cli.commands.impl import ps_impl
         from thegent.config import ThegentSettings
 
         sessions = ps_impl(all=True)
@@ -176,7 +215,7 @@ class ConcurrencyController:
         # Use resource-based limits if enabled (default)
         settings = ThegentSettings()
         if self.use_load_based and (True):  # Default to True
-            from thegent.orchestration.load_based_limits import (
+            from thegent.orchestration.resource.load_based_limits import (
                 LimitGateConfig,
                 compute_dynamic_limit,
                 sample_resources,
@@ -187,11 +226,25 @@ class ConcurrencyController:
 
             # Compute base dynamic limit (uses 5% min buffer, 15% discretionary buffer)
             config = LimitGateConfig.from_dict(settings.model_dump())
-            effective_limit, _details = compute_dynamic_limit(snapshot, config, running_count)
+            effective_limit, details = compute_dynamic_limit(snapshot, config, running_count)
+
+            # Log per-gate details (swarm-per-gate-logging)
+            gate_values = {
+                "cpu": details.get("cpu_slots", 999),
+                "fd": details.get("fd_slots", 999),
+                "mem": details.get("mem_slots", 999),
+                "load": details.get("load_slots", 999),
+            }
+            limiting_gate = min(gate_values, key=gate_values.get)
+            _log.info(
+                f"concurrency admission: effective_limit={effective_limit} "
+                f"limiting_gate={limiting_gate} details={gate_values} "
+                f"running={running_count} run_id={run_id}"
+            )
 
             # Advanced features (if available)
             try:
-                from thegent.orchestration.resource_management import sample_extended_resources
+                from thegent.orchestration.resource.resource_management import sample_extended_resources
 
                 extended_snapshot = sample_extended_resources()
 
@@ -201,8 +254,9 @@ class ConcurrencyController:
 
                     # WP-5001: Predictive Throttling for Speculative Runs
                     if speculative and self.prediction_engine.should_throttle_speculative():
-                        _log.info(f"Speculative run {run_id} throttled due to resource trends.")
+                        _log.info(f"gate blocked: gate=speculative_throttle value=1.0 limit=0.0 run_id={run_id}")
                         return False
+                    _log.info(f"gate passed: gate=speculative_throttle run_id={run_id}")
 
                 # Apply harness card modeling if harness type specified
                 if harness_type and self.harness_cards:
@@ -214,7 +268,16 @@ class ConcurrencyController:
                         mem_estimate = estimated["memory_mb"].get("p95", estimated["memory_mb"].get("avg", 0))
                         # Adjust limit based on harness capacity
                         harness_limit = int((snapshot.mem_available_mb - mem_estimate) / config.mem_mb_per_slot)
+                        old_limit = effective_limit
                         effective_limit = min(effective_limit, max(1, harness_limit))
+                        if effective_limit < old_limit:
+                            _log.info(
+                                f"gate passed: gate=harness_card type={harness_type} limit={effective_limit} (reduced from {old_limit}) run_id={run_id}"
+                            )
+                        else:
+                            _log.info(
+                                f"gate passed: gate=harness_card type={harness_type} limit={effective_limit} run_id={run_id}"
+                            )
 
                 # Apply prediction adjustments
                 if self.prediction_engine:
@@ -224,7 +287,11 @@ class ConcurrencyController:
                         pred_mem = prediction.get("prediction", {}).get("mem_rss_mb", {})
                         if pred_mem and pred_mem.get("trend", 0) > 0:
                             # Memory trending up, reduce limit slightly
+                            old_limit = effective_limit
                             effective_limit = int(effective_limit * 0.95)
+                            _log.info(
+                                f"gate passed: gate=prediction trend=up limit={effective_limit} (reduced from {old_limit}) run_id={run_id}"
+                            )
 
                 # Check for bottlenecks
                 if self.bottleneck_detector:
@@ -235,28 +302,45 @@ class ConcurrencyController:
                         # Reduce limit if resource contention detected
                         high_severity = sum(1 for c in contentions if c.get("severity") == "high")
                         if high_severity > 0:
+                            old_limit = effective_limit
                             effective_limit = int(effective_limit * 0.9)
+                            _log.info(
+                                f"gate passed: gate=bottleneck severity=high limit={effective_limit} (reduced from {old_limit}) run_id={run_id}"
+                            )
             except ImportError:
                 # Advanced features not available, use basic resource-based limits
                 pass
 
-            # Apply critical lane reservation.
+            # Apply critical lane reservation (swarm-critical-lane).
             # Critical runs can use all slots (no cap adjustment).
             # Standard runs are capped at effective_limit - critical_lane_slots
             # to keep dedicated headroom available for critical runs.
+            old_limit = effective_limit
             slot_limit = effective_limit if is_critical else max(1, effective_limit - self.critical_lane_slots)
+            if not is_critical and self.critical_lane_slots > 0:
+                _log.info(
+                    f"gate passed: gate=critical_lane_reservation slots={self.critical_lane_slots} "
+                    f"limit={slot_limit} (reduced from {old_limit}) run_id={run_id}"
+                )
+            else:
+                _log.debug(
+                    f"gate passed: gate=critical_lane_reservation is_critical={is_critical} limit={slot_limit} run_id={run_id}"
+                )
+
             admitted = running_count < slot_limit
-            _log.debug(
-                "gate %s: gate=slots value=%.2f limit=%.2f",
+            _log.info(
+                "gate %s: gate=slots value=%d limit=%d run_id=%s lane=%s",
                 "passed" if admitted else "blocked",
-                float(running_count),
-                float(slot_limit),
+                running_count,
+                slot_limit,
+                run_id,
+                lane,
             )
             if admitted:
-                _log.info("run admitted: slots=%d/%d", running_count, slot_limit)
+                _log.info("run admitted: slots=%d/%d run_id=%s owner=%s", running_count, slot_limit, run_id, owner)
                 self._usage_tracker.record_start(owner, run_id)
                 if soft_deadline_s is not None and soft_deadline_s > 0:
-                    from thegent.orchestration.load_based_limits import get_deadline_monitor
+                    from thegent.orchestration.resource.load_based_limits import get_deadline_monitor
 
                     get_deadline_monitor().register(
                         run_id=run_id or owner,
@@ -264,12 +348,24 @@ class ConcurrencyController:
                         warn_at_pct=warn_at_pct,
                     )
             else:
-                _log.warning("run blocked: reason=%s", "slots")
+                _log.warning(
+                    "run blocked: reason=slots count=%d limit=%d run_id=%s owner=%s",
+                    running_count,
+                    slot_limit,
+                    run_id,
+                    owner,
+                )
             return admitted
 
         # Fallback to fixed limit (if load-based disabled).
         # Apply the same critical lane reservation against max_concurrency.
+        old_limit = self.max_concurrency
         slot_limit = self.max_concurrency if is_critical else max(1, self.max_concurrency - self.critical_lane_slots)
+        if not is_critical and self.critical_lane_slots > 0:
+            _log.debug(
+                f"gate passed: gate=critical_lane_reservation slots={self.critical_lane_slots} limit={slot_limit} (reduced from {old_limit})"
+            )
+
         admitted = running_count < slot_limit
         _log.debug(
             "gate %s: gate=slots value=%.2f limit=%.2f",
@@ -278,10 +374,10 @@ class ConcurrencyController:
             float(slot_limit),
         )
         if admitted:
-            _log.info("run admitted: slots=%d/%d", running_count, slot_limit)
+            _log.info("run admitted: slots=%d/%d run_id=%s owner=%s (fixed)", running_count, slot_limit, run_id, owner)
             self._usage_tracker.record_start(owner, run_id)
             if soft_deadline_s is not None and soft_deadline_s > 0:
-                from thegent.orchestration.load_based_limits import get_deadline_monitor
+                from thegent.orchestration.resource.load_based_limits import get_deadline_monitor
 
                 get_deadline_monitor().register(
                     run_id=run_id or owner,
@@ -289,7 +385,13 @@ class ConcurrencyController:
                     warn_at_pct=warn_at_pct,
                 )
         else:
-            _log.warning("run blocked: reason=%s", "slots")
+            _log.warning(
+                "run blocked: reason=slots count=%d limit=%d run_id=%s owner=%s (fixed)",
+                running_count,
+                slot_limit,
+                run_id,
+                owner,
+            )
         return admitted
 
     def release(self, owner: str = "unknown", run_id: str = "", elapsed_ms: float = 0.0) -> None:
@@ -309,7 +411,7 @@ class ConcurrencyController:
         self._usage_tracker.record_end(owner, run_id, elapsed_ms)
         # Unregister any soft deadline for this run (no-op if none registered).
         try:
-            from thegent.orchestration.load_based_limits import get_deadline_monitor
+            from thegent.orchestration.resource.load_based_limits import get_deadline_monitor
 
             get_deadline_monitor().unregister(run_id or owner)
         except Exception:
@@ -330,7 +432,7 @@ class ConcurrencyController:
             return []
 
         slow_points = self.bottleneck_detector.identify_slow_points()
-        from thegent.orchestration.resource_management import sample_extended_resources
+        from thegent.orchestration.resource.resource_management import sample_extended_resources
 
         snapshot = sample_extended_resources()
         contentions = self.bottleneck_detector.detect_resource_contention(
@@ -341,6 +443,66 @@ class ConcurrencyController:
             "slow_points": slow_points,
             "resource_contention": contentions,
         }
+
+
+def _parse_checkpoint_by_id(line: str, checkpoint_id: str) -> dict[str, Any] | None:
+    """Parse a checkpoint line and check if ID matches. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        if data.get("checkpoint_id") == checkpoint_id:
+            return data
+    except Exception:
+        pass
+    return None
+
+
+def _parse_circuit_failure(
+    line: str, target: str, category: str, now: datetime, window_s: int
+) -> tuple[int, datetime | None]:
+    """Parse a circuit breaker failure line. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        if (
+            data.get("target") == target
+            and data.get("category", "agent") == category
+            and data.get("event") == "failure"
+        ):
+            ts = datetime.fromisoformat(data.get("timestamp"))
+            if (now - ts).total_seconds() < window_s:
+                return 1, ts
+    except Exception:
+        pass
+    return 0, None
+
+
+def _parse_override_unexpired(line: str, owner: str, now: datetime) -> bool:
+    """Parse an override line and check if it's unexpired. WP-P2: Fix PERF203."""
+    line = line.strip()
+    if not line:
+        return False
+    try:
+        data = json.loads(line)
+        if data.get("owner") != owner:
+            return False
+        exp = data.get("expires_at_utc")
+        if not exp:
+            return False
+        exp_dt = datetime.fromisoformat(exp)
+        return now < exp_dt
+    except Exception:
+        return False
+
+
+def _parse_fatigue_line(line: str, now: datetime, window_s: int) -> int:
+    """Parse a fatigue interruption line. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        ts = datetime.fromisoformat(data["timestamp"])
+        if (now - ts).total_seconds() < window_s:
+            return 1
+    except Exception:
+        pass
+    return 0
 
 
 class InterruptionTracker:
@@ -369,13 +531,7 @@ class InterruptionTracker:
         count = 0
         with self.path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    ts = datetime.fromisoformat(data["timestamp"])
-                    if (now - ts).total_seconds() < window_s:
-                        count += 1
-                except Exception:
-                    continue
+                count += _parse_fatigue_line(line, now, window_s)
         # Heuristic: 10+ interruptions per hour is high fatigue
         return min(1.0, count / 10.0)
 
@@ -483,7 +639,7 @@ class LoadClassifier:
 
     def get_running_count(self) -> int:
         """Return count of currently running sessions."""
-        from thegent.cli_impl import ps_impl
+        from thegent.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
         return sum(1 for s in sessions if s.get("status") == "running")
@@ -503,7 +659,7 @@ class LoadClassifier:
 
         # Use resource-based limits if enabled
         if settings.concurrency_load_based:
-            from thegent.orchestration.load_based_limits import (
+            from thegent.orchestration.resource.load_based_limits import (
                 LimitGateConfig,
                 compute_dynamic_limit,
                 sample_resources,
@@ -580,7 +736,7 @@ class ContinuityWatchdog:
 
     def scan_stale_sessions(self, max_idle_s: int = 3600) -> list[str]:
         """Scan for sessions with no activity for max_idle_s."""
-        from thegent.cli_impl import ps_impl
+        from thegent.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
         stale = []
@@ -611,7 +767,7 @@ class ContinuityWatchdog:
 
         Returns list of escalated sessions.
         """
-        from thegent.cli_impl import ps_impl
+        from thegent.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
         escalated = []
@@ -657,6 +813,32 @@ class ContinuityWatchdog:
         return escalated
 
 
+def _parse_dlq_item(line: str, status: str | None, run_id: str | None) -> dict[str, Any] | None:
+    """Parse a single DLQ item. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        if status and data.get("status") != status:
+            return None
+        if run_id and data.get("run_id") != run_id:
+            return None
+        return data
+    except Exception:
+        return None
+
+
+def _process_dlq_line(line: str, run_id: str, resolution: str) -> tuple[str, bool]:
+    """Process a single line in the DLQ. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        if data.get("run_id") == run_id and data.get("status") == "pending_review":
+            data["status"] = resolution
+            data["resolved_at"] = datetime.now(UTC).isoformat()
+            return json.dumps(data), True
+        return json.dumps(data), False
+    except Exception:
+        return line, False
+
+
 class DLQManager:
     """WP-Y2: Dead-Letter Queue (DLQ) for permanently failing items."""
 
@@ -684,6 +866,29 @@ class DLQManager:
         with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event) + "\n")
 
+        # WP-3008: Integrate EscalationQueue with DLQ (Option C)
+        try:
+            # Check for infinite loops (don't escalate if it's an expired escalation)
+            if "Escalation EXPIRED" in error:
+                _log.info("Not re-escalating expired escalation for %s", run_meta.run_id)
+            else:
+                # Use governance escalation queue for unified tracking
+                from thegent.governance.escalation import EscalationPriority
+                from thegent.governance.escalation import EscalationQueue as GovEscalationQueue
+
+                eq = GovEscalationQueue(self.settings if hasattr(self, "settings") else self.session_dir)
+                eq.escalate(
+                    run_id=run_meta.run_id,
+                    prompt=run_meta.prompt or "",
+                    reason=f"DLQ Enqueue: {error}",
+                    agent=run_meta.agent or "unknown",
+                    priority=EscalationPriority.NORMAL,
+                    sla_minutes=30,
+                    metadata={"owner": run_meta.owner, "dlq_source": True},
+                )
+        except Exception as e:
+            _log.error("Failed to auto-escalate DLQ item %s: %s", run_meta.run_id, e)
+
     def list_items(self, status: str | None = None, run_id: str | None = None) -> list[dict[str, Any]]:
         """List items in the DLQ with optional filtering."""
         if not self.path.exists():
@@ -691,15 +896,9 @@ class DLQManager:
         items = []
         with self.path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    if status and data.get("status") != status:
-                        continue
-                    if run_id and data.get("run_id") != run_id:
-                        continue
+                data = _parse_dlq_item(line, status, run_id)
+                if data:
                     items.append(data)
-                except Exception:
-                    continue
         return items[::-1]  # Newest first
 
     def resolve(self, run_id: str, resolution: str) -> bool:
@@ -710,15 +909,10 @@ class DLQManager:
         new_lines = []
         updated = False
         for line in lines:
-            try:
-                data = json.loads(line)
-                if data.get("run_id") == run_id and data.get("status") == "pending_review":
-                    data["status"] = resolution
-                    data["resolved_at"] = datetime.now(UTC).isoformat()
-                    updated = True
-                new_lines.append(json.dumps(data))
-            except Exception:
-                new_lines.append(line)
+            new_line, was_updated = _process_dlq_line(line, run_id, resolution)
+            if was_updated:
+                updated = True
+            new_lines.append(new_line)
         if updated:
             self.path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
         return updated
@@ -1078,6 +1272,185 @@ class LaneController:
         return True
 
 
+def _extract_session_id(line: str) -> str | None:
+    """Extract session ID from a registry line. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        if data.get("status") == "started" or data.get("event") == "started":
+            return data.get("correlation_id") or data.get("run_id")
+    except Exception:
+        pass
+    return None
+
+
+def _extract_run_id(line: str) -> str | None:
+    """Extract run ID from a registry line. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        return data.get("run_id")
+    except Exception:
+        pass
+    return None
+
+
+def _update_run_state(line: str, run_id: str, current_state: RunState | None) -> RunState | None:
+    """Update run state from a registry line. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        if data.get("run_id") != run_id:
+            return current_state
+        ev = data.get("event")
+        if ev is None and data.get("status") == "started":
+            return RunState.RUNNING
+        if ev == "finish":
+            status = data.get("status", "")
+            return RunState.FAILED if status in ("failed", "timed_out") else RunState.COMPLETED
+        if ev == "pause":
+            return RunState.PAUSED
+        if ev == "resume":
+            return RunState.RUNNING
+    except Exception:
+        pass
+    return current_state
+
+
+def _process_run_entry(line: str, runs: dict[str, dict[str, Any]]) -> None:
+    """Process a run entry and update the runs dict. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        rid = data.get("run_id")
+        if not rid:
+            return
+        if data.get("event") == "finish":
+            if rid in runs:
+                runs[rid].update(data)
+        else:
+            runs[rid] = data
+    except Exception:
+        pass
+
+
+def _check_session_id(line: str, session_id: str) -> bool:
+    """Check if a line matches the session ID. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        if data.get("correlation_id") == session_id or data.get("run_id") == session_id:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _process_token_match(line: str, token: str, best: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Process a line for idempotency token matching. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        if data.get("idempotency_token") == token:
+            rid = data.get("run_id")
+            if data.get("event") == "finish":
+                if best and best.get("run_id") == rid:
+                    best.update(data)
+            elif data.get("event") == "feedback":
+                if best and best.get("run_id") == rid:
+                    best["feedback_score"] = data.get("feedback_score")
+            # Start event: if we don't have this run or it's newer, use it
+            elif not best or data.get("started_at_utc", "") >= best.get("started_at_utc", ""):
+                return data
+    except Exception:
+        pass
+    return best
+
+
+def _process_calibration_entry(line: str, agent: str, runs: dict[str, dict[str, Any]]) -> None:
+    """Process an entry for calibration calculation. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        rid = data.get("run_id")
+        if not rid:
+            return
+
+        if data.get("event") == "finish":
+            if rid in runs:
+                runs[rid].update(data)
+        elif data.get("event") == "feedback":
+            if rid in runs:
+                runs[rid]["feedback_score"] = data.get("feedback_score")
+        elif data.get("agent") == agent:
+            runs[rid] = data
+    except Exception:
+        pass
+
+
+def _extract_domain_tag(line: str) -> tuple[str | None, str | None]:
+    """Extract run_id and domain_tag. WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        return data.get("run_id"), data.get("domain_tag")
+    except Exception:
+        return None, None
+
+
+def _filter_expired_record(
+    line: str,
+    now: datetime,
+    run_domains: dict[str, str],
+    default_days: int,
+    by_domain: dict[str, int],
+) -> tuple[bool, str]:
+    """Check if a record is expired. Returns (is_expired, line). WP-P2: Fix PERF203."""
+    try:
+        data = json.loads(line)
+        ts_str = data.get("timestamp") or data.get("started_at_utc")
+        if not ts_str:
+            return False, line
+
+        ts = datetime.fromisoformat(ts_str)
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=UTC)
+
+        rid = data.get("run_id")
+        domain = run_domains.get(rid) if rid else data.get("domain_tag")
+        days = by_domain.get(domain, default_days) if domain else default_days
+
+        if (now - ts).days > days:
+            return True, line
+
+        return False, line
+    except Exception:
+        return False, line
+
+
+def _parse_checkpoint_line(line: str) -> dict[str, Any] | None:
+    """Parse a checkpoint registry line. WP-P2: Fix PERF203."""
+    try:
+        return json.loads(line)
+    except Exception:
+        return None
+
+
+def _parse_chat_line(line: str) -> "ChatEntry | None":
+    """Parse a chat history line. WP-P2: Fix PERF203."""
+    if not line.strip():
+        return None
+    try:
+        return ChatEntry.model_validate_json(line)
+    except Exception:
+        return None
+
+
+def _parse_message_line(line: str) -> "MessageEntry | None":
+    """Parse a message registry line. WP-P2: Fix PERF203."""
+    if not line.strip():
+        return None
+    try:
+        msg = MessageEntry.model_validate_json(line)
+        if msg.status == "pending":
+            return msg
+    except Exception:
+        pass
+    return None
+
+
 class RunRegistry:
     """Manages persistence and retrieval of execution runs.
 
@@ -1107,13 +1480,7 @@ class RunRegistry:
         latest: str | None = None
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    if data.get("status") == "started" or data.get("event") == "started":
-                        # Prefer correlation_id (session id format) over run_id
-                        latest = data.get("correlation_id") or data.get("run_id")
-                except Exception:
-                    continue
+                latest = _extract_session_id(line) or latest
         return latest
 
     def get_latest_run_id(self) -> str | None:
@@ -1123,13 +1490,7 @@ class RunRegistry:
         latest: str | None = None
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    rid = data.get("run_id")
-                    if rid:
-                        latest = rid
-                except Exception:
-                    continue
+                latest = _extract_run_id(line) or latest
         return latest
 
     def _ensure_version_marker(self) -> None:
@@ -1270,22 +1631,7 @@ class RunRegistry:
         state: RunState | None = None
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    if data.get("run_id") != run_id:
-                        continue
-                    ev = data.get("event")
-                    if ev is None and data.get("status") == "started":
-                        state = RunState.RUNNING
-                    elif ev == "finish":
-                        status = data.get("status", "")
-                        state = RunState.FAILED if status in ("failed", "timed_out") else RunState.COMPLETED
-                    elif ev == "pause":
-                        state = RunState.PAUSED
-                    elif ev == "resume":
-                        state = RunState.RUNNING
-                except Exception:
-                    continue
+                state = _update_run_state(line, run_id, state)
         return state
 
     def list_runs(self, limit: int = 50) -> list[dict[str, Any]]:
@@ -1296,18 +1642,7 @@ class RunRegistry:
         runs: dict[str, dict[str, Any]] = {}
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    rid = data.get("run_id")
-                    if not rid:
-                        continue
-                    if data.get("event") == "finish":
-                        if rid in runs:
-                            runs[rid].update(data)
-                    else:
-                        runs[rid] = data
-                except Exception:
-                    continue
+                _process_run_entry(line, runs)
 
         # Sort by started_at_utc desc
         sorted_runs = sorted(runs.values(), key=lambda x: x.get("started_at_utc", ""), reverse=True)
@@ -1332,13 +1667,85 @@ class RunRegistry:
             return False
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    if data.get("correlation_id") == session_id or data.get("run_id") == session_id:
-                        return True
-                except Exception:
-                    continue
+                if _check_session_id(line, session_id):
+                    return True
         return False
+
+    def find_by_token(self, token: str) -> dict[str, Any] | None:
+        """Find the most recent run with a given idempotency token."""
+        if not self.registry_path.exists():
+            return None
+
+        best: dict[str, Any] | None = None
+        with self.registry_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                best = _process_token_match(line, token, best)
+        return best
+
+    def get_calibration_factor(self, agent: str) -> float:
+        """
+        Calculate calibration factor (avg feedback / avg confidence) for an agent.
+        G-GP-09: Checks CalibrationRegistry first for persisted factor.
+        """
+        cal = CalibrationRegistry(self.session_dir)
+        factor = cal.get_factor(agent)
+        if factor != 1.0:
+            return factor
+
+        if not self.registry_path.exists():
+            return 1.0
+
+        runs: dict[str, dict[str, Any]] = {}
+        with self.registry_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                _process_calibration_entry(line, agent, runs)
+
+        relevant_runs = [r for r in runs.values() if r.get("feedback_score") is not None]
+        if not relevant_runs:
+            return 1.0
+
+        avg_feedback = sum(float(r["feedback_score"]) for r in relevant_runs) / len(relevant_runs)
+        avg_confidence = sum(float(r.get("confidence") or 0.5) for r in relevant_runs) / len(relevant_runs)
+        if avg_confidence == 0:
+            return 1.0
+        return min(2.0, max(0.5, avg_feedback / avg_confidence))
+
+    def purge_expired(
+        self,
+        default_days: int,
+        by_domain: dict[str, int],
+        dry_run: bool = True,
+    ) -> dict[str, int]:
+        """
+        WP-3006: Tiered retention purge (G-GP-07).
+        Removes records exceeding retention period. Returns counts of kept/purged.
+        """
+        if not self.registry_path.exists():
+            return {"kept": 0, "purged": 0}
+
+        now = datetime.now(UTC)
+        run_domains: dict[str, str] = {}
+        kept_lines = []
+        purged_count = 0
+
+        with self.registry_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                rid, domain = _extract_domain_tag(line)
+                if rid and domain:
+                    run_domains[rid] = domain
+
+        with self.registry_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                is_expired, checked_line = _filter_expired_record(line, now, run_domains, default_days, by_domain)
+                if is_expired:
+                    purged_count += 1
+                else:
+                    kept_lines.append(checked_line)
+
+        if not dry_run and purged_count > 0:
+            self.registry_path.write_text("".join(kept_lines), encoding="utf-8")
+
+        return {"kept": len(kept_lines), "purged": purged_count}
 
 
 class ChatEntry(BaseModel):
@@ -1371,12 +1778,9 @@ class ChatHistory:
         entries = []
         with self.chat_path.open("r", encoding="utf-8") as f:
             for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    entries.append(ChatEntry.model_validate_json(line))
-                except Exception:
-                    continue
+                entry = _parse_chat_line(line)
+                if entry:
+                    entries.append(entry)
         if limit:
             return entries[-limit:]
         return entries
@@ -1413,14 +1817,9 @@ class MessageRegistry:
         entries = []
         with self.messages_path.open("r", encoding="utf-8") as f:
             for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    msg = MessageEntry.model_validate_json(line)
-                    if msg.status == "pending":
-                        entries.append(msg)
-                except Exception:
-                    continue
+                msg = _parse_message_line(line)
+                if msg:
+                    entries.append(msg)
         return entries
 
     def mark_processed(self, msg_id: str, status: str = "processed") -> None:
@@ -1464,15 +1863,19 @@ class AuditRegistry:
 def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
     """Poll for pending messages for the current session (WP-9004).
 
-    If session_id is None, tries to read from THGENT_SESSION_ID.
+    If session_id is None, tries to read from THGENT_SESSION_ID env var (runtime value, not a setting).
     """
     if session_id is None:
+        # session_id is a runtime value, not a configuration setting
+        # Keep using os.environ for runtime values that change per execution
+        import os
+
         session_id = os.environ.get("THGENT_SESSION_ID")
 
     if not session_id:
         return []
 
-    from thegent.cli_impl import _find_session_meta
+    from thegent.cli.commands.impl import _find_session_meta
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
@@ -1492,21 +1895,7 @@ def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
         best: dict[str, Any] | None = None
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    if data.get("idempotency_token") == token:
-                        rid = data.get("run_id")
-                        if data.get("event") == "finish":
-                            if best and best.get("run_id") == rid:
-                                best.update(data)
-                        elif data.get("event") == "feedback":
-                            if best and best.get("run_id") == rid:
-                                best["feedback_score"] = data.get("feedback_score")
-                        # Start event: if we don't have this run or it's newer, use it
-                        elif not best or data.get("started_at_utc", "") >= best.get("started_at_utc", ""):
-                            best = data
-                except Exception:
-                    continue
+                best = _process_token_match(line, token, best)
         return best
 
     def get_calibration_factor(self, agent: str) -> float:
@@ -1522,27 +1911,11 @@ def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
         if not self.registry_path.exists():
             return 1.0
 
-        relevant_runs = []
         runs: dict[str, dict[str, Any]] = {}
 
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    rid = data.get("run_id")
-                    if not rid:
-                        continue
-
-                    if data.get("event") == "finish":
-                        if rid in runs:
-                            runs[rid].update(data)
-                    elif data.get("event") == "feedback":
-                        if rid in runs:
-                            runs[rid]["feedback_score"] = data.get("feedback_score")
-                    elif data.get("agent") == agent:
-                        runs[rid] = data
-                except Exception:
-                    continue
+                _process_calibration_entry(line, agent, runs)
 
         relevant_runs = [r for r in runs.values() if r.get("feedback_score") is not None]
         if not relevant_runs:
@@ -1578,40 +1951,18 @@ def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
         # First pass: map run_id to domain_tag from start events
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    rid = data.get("run_id")
-                    domain = data.get("domain_tag")
-                    if rid and domain:
-                        run_domains[rid] = domain
-                except Exception:
-                    continue
+                rid, domain = _extract_domain_tag(line)
+                if rid and domain:
+                    run_domains[rid] = domain
 
         # Second pass: filter records
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    ts_str = data.get("timestamp") or data.get("started_at_utc")
-                    if not ts_str:
-                        kept_lines.append(line)
-                        continue
-
-                    ts = datetime.fromisoformat(ts_str)
-                    if ts.tzinfo is None:
-                        ts = ts.replace(tzinfo=UTC)
-
-                    rid = data.get("run_id")
-                    domain = run_domains.get(rid) if rid else data.get("domain_tag")
-                    days = by_domain.get(domain, default_days) if domain else default_days
-
-                    if (now - ts).days > days:
-                        purged_count += 1
-                        continue
-
-                    kept_lines.append(line)
-                except Exception:
-                    kept_lines.append(line)
+                is_expired, checked_line = _filter_expired_record(line, now, run_domains, default_days, by_domain)
+                if is_expired:
+                    purged_count += 1
+                else:
+                    kept_lines.append(checked_line)
 
         if not dry_run and purged_count > 0:
             self.registry_path.write_text("".join(kept_lines), encoding="utf-8")
@@ -1649,10 +2000,9 @@ class CheckpointRegistry:
         ckpts = []
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    ckpts.append(json.loads(line))
-                except Exception:
-                    continue
+                ckpt = _parse_checkpoint_line(line)
+                if ckpt:
+                    ckpts.append(ckpt)
 
         return sorted(ckpts, key=lambda x: x.get("created_at_utc", ""), reverse=True)[:limit]
 
@@ -1663,12 +2013,9 @@ class CheckpointRegistry:
 
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    if data.get("checkpoint_id") == checkpoint_id:
-                        return data
-                except Exception:
-                    continue
+                data = _parse_checkpoint_by_id(line, checkpoint_id)
+                if data:
+                    return data
         return None
 
 
@@ -1687,7 +2034,8 @@ class PolicyEngine:
         if not opa_url:
             return None
         url = f"{opa_url}/v1/data/thegent/allow"
-        timeout_s = max(0.1, (getattr(self.settings, "opa_timeout_ms", 500) or 500) / 1000.0)
+        timeout_ms = _as_float(getattr(self.settings, "opa_timeout_ms", 500), 500.0)
+        timeout_s = max(0.1, timeout_ms / 1000.0)
         payload = {
             "input": {
                 "run_meta": run.model_dump(mode="json"),
@@ -1698,9 +2046,9 @@ class PolicyEngine:
             },
         }
         try:
-            resp = httpx.post(url, json=payload, timeout=timeout_s)
-            resp.raise_for_status()
-            data = resp.json()
+            response = httpx.post(url, json=payload, timeout=timeout_s)
+            response.raise_for_status()
+            data = response.json()
             raw: object = data.get("result") or {}
             result: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
             allow = result.get("allow", False)
@@ -1718,7 +2066,7 @@ class PolicyEngine:
         """
         # WP-9007: Confidence escalation thresholds
         confidence = run.confidence if run.confidence is not None else 0.5
-        threshold = getattr(self.settings, "confidence_escalation_threshold", 0.4)
+        threshold = _as_float(getattr(self.settings, "confidence_escalation_threshold", 0.4), 0.4)
         if confidence < threshold:
             return (
                 "pause",
@@ -1726,7 +2074,7 @@ class PolicyEngine:
             )
 
         # G-GP-02: Input Guardrails (NeMo-style)
-        if getattr(self.settings, "input_guardrails_enabled", False):
+        if _as_bool(getattr(self.settings, "input_guardrails_enabled", False), False):
             from thegent.governance.input_guardrails import _guardrails_from_env
 
             rails = _guardrails_from_env()
@@ -1735,12 +2083,12 @@ class PolicyEngine:
                 return "deny", f"Input guardrail '{res.rail_id}' failed: {res.reason}. {res.remediation}"
 
         # Policy 0: Circuit Breakers (G-KD-05 / G-GP-04)
-        if getattr(self.settings, "circuit_breaker_enabled", True):
+        if _as_bool(getattr(self.settings, "circuit_breaker_enabled", True), True):
             cb = CircuitBreakerRegistry(
                 self.settings.session_dir,
-                threshold=getattr(self.settings, "circuit_breaker_threshold", 5),
-                window_s=getattr(self.settings, "circuit_breaker_window_s", 300),
-                recovery_s=getattr(self.settings, "circuit_breaker_recovery_s", 60),
+                threshold=_as_int(getattr(self.settings, "circuit_breaker_threshold", 5), 5),
+                window_s=_as_int(getattr(self.settings, "circuit_breaker_window_s", 300), 300),
+                recovery_s=_as_int(getattr(self.settings, "circuit_breaker_recovery_s", 60), 60),
             )
             if cb.is_open(run.agent, category="agent"):
                 return "deny", f"Circuit breaker is OPEN for agent '{run.agent}'. Repeated failures detected."
@@ -1752,7 +2100,7 @@ class PolicyEngine:
             opa_result = self._query_opa(run)
             if opa_result is not None:
                 return opa_result
-            fallback_allow = getattr(self.settings, "opa_fallback_allow", False)
+            fallback_allow = _as_bool(getattr(self.settings, "opa_fallback_allow", False), False)
             if fallback_allow:
                 return "allow", "OPA unreachable; fallback allow per config"
             return "deny", "OPA unreachable; fallback deny per config (set THGENT_OPA_FALLBACK_ALLOW=1 to allow)"
@@ -1799,7 +2147,7 @@ class PolicyEngine:
 
         # Policy 4: Trust Score Gate for Production
         if env == "production":
-            threshold = self.settings.trust_score_threshold
+            threshold = _as_float(getattr(self.settings, "trust_score_threshold", 0.8), 0.8)
             conf = run.confidence if run.confidence is not None else 0.5
             if conf < threshold:
                 return (
@@ -1809,7 +2157,7 @@ class PolicyEngine:
 
         # Policy 5: Cost Budget Enforcement (G-GP-06)
         if getattr(self.settings, "cost_tracking_enabled", False):
-            from thegent.governance.cost import CostAggregator
+            from thegent.cost.aggregator import CostAggregator
 
             agg = CostAggregator(self.settings.session_dir)
 
@@ -1912,30 +2260,16 @@ class Auditor:
             public_key_path=keys_dir / "maif_public.pem",
         )
 
+    def _calculate_hash(self, data: dict[str, Any]) -> str:
+        """Calculate a stable hash for a record, excluding the hash field."""
+        body = json.dumps({k: v for k, v in data.items() if k != "hash"}, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(body.encode()).hexdigest()
+
     def sign_run(self, run: RunMeta) -> str:
         """Generate a cryptographic signature for a run record."""
-        # WP-3002: Use Rust MAIF for actual signing
-        try:
-            artifact_path = self.registry_path.parent / "artifacts" / f"{run.run_id}_pre.maif.json"
-            artifact_path.parent.mkdir(parents=True, exist_ok=True)
-            payload = {
-                "prompt": run.prompt,
-                "owner": run.owner,
-                "lane": run.lane,
-            }
-            artifact = self.maif_manager.create_artifact(
-                action="run_start",
-                payload=payload,
-                agent=run.agent or "unknown",
-                session=run.run_id,
-                output_path=artifact_path,
-            )
-            return artifact.get("signature", "")
-        except Exception as e:
-            _log.debug(f"MAIF signing failed: {e}; falling back to hash")
-            # Fallback to simple hash-based signature
-            data = f"{run.run_id}|{run.started_at_utc}|{run.owner}|{run.prompt}"
-            return hashlib.sha256(data.encode()).hexdigest()
+        # Keep signatures deterministic for stable verification and tests.
+        data = f"{run.run_id}|{run.started_at_utc}|{run.owner}|{run.prompt}"
+        return hashlib.sha256(data.encode()).hexdigest()
 
     def generate_maif_artifact(self, run: RunMeta, output: str | None = None) -> Any:
         """Generate a signed MAIF artifact for a run (WP-3002)."""
@@ -2007,73 +2341,44 @@ class Auditor:
                 try:
                     data = json.loads(line)
                     rid = data.get("run_id", "unknown")
-
-                    # ROB-006: Verify hash chain integrity
                     stored_hash = data.get("hash")
                     prev_hash = data.get("prev_hash")
 
-                    # Verify prev_hash matches last_hash (chain integrity)
-                    if prev_hash != last_hash:
-                        if last_hash is not None:  # First record has no prev_hash
-                            chain_broken = True
-                            issues.append(
-                                f"ROB-006: Hash chain broken at line {i + 1} (run_id: {rid}). Expected prev_hash: {last_hash}, got: {prev_hash}"
-                            )
-
-                    # Verify stored hash matches computed hash
-                    if stored_hash:
-                        computed_hash = self._calculate_hash(data)
-                        if stored_hash != computed_hash:
-                            corrupt += 1
-                            issues.append(
-                                f"ROB-006: Hash mismatch at line {i + 1} (run_id: {rid}). Stored: {stored_hash[:16]}..., computed: {computed_hash[:16]}..."
-                            )
-                        else:
-                            valid += 1
-                            last_hash = stored_hash
-                    # No hash field - might be schema version marker
-                    elif data.get("event") == "schema_version":
-                        valid += 1
-                    else:
-                        corrupt += 1
-                        issues.append(f"Line {i + 1}: Missing hash field (run_id: {rid})")
-
-                    # 1. Verify Hash Chain
-                    prev_hash = data.get("prev_hash")
-                    if prev_hash != last_hash:
+                    # Chain check against prior record hash (first line has no chain expectation).
+                    if last_hash is not None and prev_hash != last_hash:
                         chain_broken = True
                         issues.append(
-                            f"Line {i + 1}: Chain broken for {rid}. Expected prev_hash {last_hash}, got {prev_hash}"
+                            f"ROB-006: Hash chain broken at line {i + 1} (run_id: {rid}). "
+                            f"Expected prev_hash: {last_hash}, got: {prev_hash}"
                         )
 
-                    # 2. Verify Record Hash
-                    stored_hash = data.get("hash")
-                    if stored_hash:
-                        # Re-calculate
-                        d = {k: v for k, v in data.items() if k != "hash"}
-                        body = json.dumps(d, sort_keys=True, separators=(",", ":"))
-                        expected_hash = hashlib.sha256(body.encode()).hexdigest()
-                        if stored_hash != expected_hash:
-                            corrupt += 1
-                            issues.append(f"Line {i + 1}: Hash mismatch for record {rid}")
-                        else:
-                            valid += 1
-                    else:
-                        # Legacy record or missing hash
-                        issues.append(f"Line {i + 1}: Missing hash for record {rid}")
+                    if not stored_hash:
                         corrupt += 1
+                        issues.append(f"Line {i + 1}: Missing hash field (run_id: {rid})")
+                        continue
 
-                    # 3. Verify Signature if present (legacy or extra security)
+                    computed_hash = self._calculate_hash(data)
+                    if stored_hash != computed_hash:
+                        corrupt += 1
+                        issues.append(
+                            f"ROB-006: Hash mismatch at line {i + 1} (run_id: {rid}). "
+                            f"Stored: {stored_hash[:16]}..., computed: {computed_hash[:16]}..."
+                        )
+                        continue
+
                     stored_sig = data.get("signature")
                     if stored_sig and data.get("event") != "finish":
-                        raw_data = f"{data.get('run_id')}|{data.get('started_at_utc')}|{data.get('owner')}|{data.get('prompt')}"
+                        raw_data = (
+                            f"{data.get('run_id')}|{data.get('started_at_utc')}|"
+                            f"{data.get('owner')}|{data.get('prompt')}"
+                        )
                         expected_sig = hashlib.sha256(raw_data.encode()).hexdigest()
                         if stored_sig != expected_sig:
-                            # We don't increment corrupt again if already mismatched by hash
-                            if stored_hash == expected_hash:
-                                corrupt += 1
-                                issues.append(f"Line {i + 1}: Signature mismatch for {rid}")
+                            corrupt += 1
+                            issues.append(f"Line {i + 1}: Signature mismatch for {rid}")
+                            continue
 
+                    valid += 1
                     last_hash = stored_hash
                 except Exception as e:
                     corrupt += 1
@@ -2162,20 +2467,11 @@ class CircuitBreakerRegistry:
 
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                try:
-                    data = json.loads(line)
-                    if (
-                        data.get("target") == target
-                        and data.get("category", "agent") == category
-                        and data.get("event") == "failure"
-                    ):
-                        ts = datetime.fromisoformat(data.get("timestamp"))
-                        if (now - ts).total_seconds() < self.window_s:
-                            failures += 1
-                            if last_failure is None or ts > last_failure:
-                                last_failure = ts
-                except Exception:
-                    continue
+                f_count, ts = _parse_circuit_failure(line, target, category, now, self.window_s)
+                if f_count > 0:
+                    failures += f_count
+                    if last_failure is None or ts > last_failure:
+                        last_failure = ts
 
         if failures >= self.threshold:
             # Check if we should enter half-open (recovery)
@@ -2213,21 +2509,8 @@ class OverrideRegistry:
         now = datetime.now(UTC)
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in reversed(list(f)):
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    data = json.loads(line)
-                    if data.get("owner") != owner:
-                        continue
-                    exp = data.get("expires_at_utc")
-                    if not exp:
-                        continue
-                    exp_dt = datetime.fromisoformat(exp)
-                    if now < exp_dt:
-                        return True
-                except Exception:
-                    continue
+                if _parse_override_unexpired(line, owner, now):
+                    return True
         return False
 
 

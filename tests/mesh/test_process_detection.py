@@ -20,7 +20,6 @@ import yaml
 from thegent.mesh.mesh import MeshManager
 from thegent.mesh.process_detection import detect_agents, get_processes
 
-
 # ---------------------------------------------------------------------------
 # TGNT-P12.1 - Process scanner / pattern matching
 # ---------------------------------------------------------------------------

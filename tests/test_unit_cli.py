@@ -9,14 +9,13 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from thegent import cli_impl
-from thegent.cli import (
+from thegent.cli.commands import impl as cli_impl
+from thegent.cli.commands.cli import logs_cmd, stop_cmd
+from thegent.cli.commands.impl import (
     _compose_owner_tag,
     _default_owner_tag,
     _resolve_cwd,
     _resolve_droids_dir,
-    logs_cmd,
-    stop_cmd,
 )
 from thegent.config import ThegentSettings
 from thegent.main import app
@@ -84,21 +83,21 @@ class TestResolveCwd:
         # @trace FR-CLI-002
         """Cwd inferred when .git exists."""
         (tmp_path / ".git").mkdir()
-        with patch("thegent.cli.Path.cwd", return_value=tmp_path):
+        with patch("thegent.cli.commands.impl.Path.cwd", return_value=tmp_path):
             assert _resolve_cwd(None) == tmp_path
 
     def test_infer_from_factory(self, tmp_path: Path) -> None:
         # @trace FR-CLI-002
         """Cwd inferred when .factory exists."""
         (tmp_path / ".factory").mkdir()
-        with patch("thegent.cli.Path.cwd", return_value=tmp_path):
+        with patch("thegent.cli.commands.impl.Path.cwd", return_value=tmp_path):
             assert _resolve_cwd(None) == tmp_path
 
     def test_infer_from_pyproject(self, tmp_path: Path) -> None:
         # @trace FR-CLI-002
         """Cwd inferred when pyproject.toml exists."""
         (tmp_path / "pyproject.toml").touch()
-        with patch("thegent.cli.Path.cwd", return_value=tmp_path):
+        with patch("thegent.cli.commands.impl.Path.cwd", return_value=tmp_path):
             assert _resolve_cwd(None) == tmp_path
 
     def test_infer_from_parent_factory(self, tmp_path: Path) -> None:
@@ -109,7 +108,7 @@ class TestResolveCwd:
         (parent / ".factory").mkdir()
         child = parent / "child"
         child.mkdir()
-        with patch("thegent.cli.Path.cwd", return_value=child):
+        with patch("thegent.cli.commands.impl.Path.cwd", return_value=child):
             assert _resolve_cwd(None) == parent
 
     def test_ambiguous_returns_none(self, tmp_path: Path) -> None:
@@ -123,7 +122,7 @@ class TestResolveCwd:
         assert not (bare / ".factory").exists()
         assert not (bare / "pyproject.toml").exists()
         assert not (bare.parent / ".factory").exists()
-        with patch("thegent.cli.Path.cwd", return_value=bare):
+        with patch("thegent.cli.commands.impl.Path.cwd", return_value=bare):
             result = _resolve_cwd(None)
         assert result is None
 
@@ -198,7 +197,7 @@ class TestSessionCommands:
             pid = 43210
 
         with (
-            patch("thegent.cli.subprocess.Popen", return_value=_Proc()),
+            patch("thegent.cli.commands.cli.subprocess.Popen", return_value=_Proc()),
             patch.dict(
                 "os.environ",
                 {
@@ -272,8 +271,8 @@ class TestSessionCommands:
             return calls["n"] == 1
 
         with patch.dict("os.environ", {"THGENT_SESSION_DIR": str(session_dir)}):
-            with patch("thegent.cli._is_pid_running", side_effect=fake_running):
-                with patch("thegent.cli.os.killpg") as killpg:
+            with patch("thegent.cli.commands.cli._is_pid_running", side_effect=fake_running):
+                with patch("thegent.cli.commands.cli.os.killpg") as killpg:
                     stop_cmd(sid, force=False, wind_down=True, grace=1)
                     killpg.assert_called_once()
 
@@ -292,10 +291,10 @@ class TestSessionCommands:
         (scoped / f"{sid}.json").write_text(json.dumps(meta), encoding="utf-8")
 
         with patch.dict("os.environ", {"THGENT_SESSION_DIR": str(session_dir)}):
-            with patch("thegent.cli._is_pid_running", return_value=True):
-                with patch("thegent.cli.os.killpg") as killpg:
-                    with patch("thegent.cli.time.sleep"):
-                        with patch("thegent.cli.time.time", side_effect=[0.0, 0.3, 0.7, 1.2]):
+            with patch("thegent.cli.commands.cli._is_pid_running", return_value=True):
+                with patch("thegent.cli.commands.cli.os.killpg") as killpg:
+                    with patch("thegent.cli.commands.cli.time.sleep"):
+                        with patch("thegent.cli.commands.cli.time.time", side_effect=[0.0, 0.3, 0.7, 1.2]):
                             stop_cmd(sid, force=False, wind_down=True, grace=1)
                             killpg.assert_called_once()
 
@@ -322,8 +321,8 @@ class TestSessionCommands:
             return t["now"]
 
         with patch.dict("os.environ", {"THGENT_SESSION_DIR": str(session_dir)}):
-            with patch("thegent.cli._is_pid_running", return_value=True):
-                with patch("thegent.cli.time.time", _fake_time), patch("thegent.cli.time.sleep"):
+            with patch("thegent.cli.commands.cli._is_pid_running", return_value=True):
+                with patch("thegent.cli.commands.cli.time.time", _fake_time), patch("thegent.cli.commands.cli.time.sleep"):
                     with pytest.raises(typer.Exit) as exc:
                         logs_cmd(session_id=sid, follow=True, tail=20, timeout=1)
         assert exc.value.exit_code == 124

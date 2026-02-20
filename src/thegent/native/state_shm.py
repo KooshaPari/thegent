@@ -47,13 +47,23 @@ _log = logging.getLogger(__name__)
 # Native extension probe
 # ---------------------------------------------------------------------------
 
-_NATIVE_ENABLED: bool = os.environ.get("THGENT_USE_NATIVE_SHM", "1").strip() not in ("0", "false", "no")
+
+def _is_native_enabled() -> bool:
+    """Check if native SHM is enabled via settings."""
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    return settings.use_native_shm
+
+
+_NATIVE_ENABLED: bool = _is_native_enabled()
 
 
 def _try_import_native() -> Any | None:
     """Attempt to import the optional thegent_shm Rust extension."""
     try:
         import thegent_shm
+
         return thegent_shm
     except ImportError:
         return None
@@ -92,6 +102,7 @@ def _category_int(category: str) -> int:
 # ---------------------------------------------------------------------------
 # Pure-Python fallback state
 # ---------------------------------------------------------------------------
+
 
 class _PurePythonBreakerStore:
     """In-process dict-backed circuit breaker state (fallback when native unavailable)."""
@@ -150,6 +161,7 @@ class _PurePythonXpStore:
 # ---------------------------------------------------------------------------
 # CircuitBreakerShm
 # ---------------------------------------------------------------------------
+
 
 class CircuitBreakerShm:
     """Circuit breaker state backed by memory-mapped Rust SHM or pure-Python fallback.
@@ -293,6 +305,7 @@ class CircuitBreakerShm:
 # XpTracker
 # ---------------------------------------------------------------------------
 
+
 class XpTracker:
     """Experience points / level tracker backed by memory-mapped Rust SHM or pure-Python.
 
@@ -384,6 +397,7 @@ class XpTracker:
 # ---------------------------------------------------------------------------
 # Convenience: open_shm factory
 # ---------------------------------------------------------------------------
+
 
 def open_shm(
     path: Path | str,

@@ -3,8 +3,8 @@
 import os
 import shutil
 import subprocess
+import sys
 from collections import Counter
-from collections.abc import Iterator
 from pathlib import Path
 
 import typer
@@ -27,9 +27,61 @@ app = typer.Typer(help="Codex-backed interactive agent CLI. Model-only routing (
 
 # Global flag for force YOLO mode (-f)
 _force_yolo: bool = False
+_native_mode: bool = False
 
 
-@app.callback(invoke_without_command=True)
+def _is_thegent_shim(path: str) -> bool:
+    p = Path(path)
+    if "thegent-shims" in p.name:
+        return True
+    try:
+        if p.is_symlink() and "thegent-shims" in os.readlink(p):
+            return True
+    except OSError:
+        pass
+    return False
+
+
+def _resolve_native_codex() -> str | None:
+    override = os.environ.get("THGENT_NATIVE_CODEX_BIN")
+    candidates: list[str] = []
+    if override:
+        candidates.append(override)
+    which_codex = shutil.which("codex")
+    if which_codex:
+        candidates.append(which_codex)
+    candidates.extend(
+        [
+            str(Path.home() / ".factory" / "bin" / "codex"),
+            str(Path("/opt/homebrew/bin/codex")),
+            str(Path("/usr/local/bin/codex")),
+            str(Path.home() / ".bun/bin/codex"),
+        ]
+    )
+    for candidate in candidates:
+        p = Path(candidate).expanduser()
+        if p.is_file() and os.access(p, os.X_OK) and not _is_thegent_shim(str(p)):
+            return str(p)
+    return None
+
+
+def _exec_native_codex(args: list[str] | None = None) -> None:
+    """Bypass cliproxy and exec native codex directly."""
+    codex_path = _resolve_native_codex()
+    if not codex_path:
+        console.print(
+            "[red]Error: native 'codex' CLI not found (or only thegent-shims was found).[/red]\n"
+            "[dim]Set THGENT_NATIVE_CODEX_BIN=/absolute/path/to/codex to force a specific binary.[/dim]"
+        )
+        raise typer.Exit(1)
+
+    cmd = [codex_path]
+    if args:
+        cmd.extend(args)
+    console.print("[bold green]Starting native Codex (proxy bypass)...[/bold green]")
+    os.execvpe(cmd[0], cmd, os.environ.copy())
+
+
 def _dex_global_callback(
     force: bool = typer.Option(
         False,
@@ -37,14 +89,23 @@ def _dex_global_callback(
         "--force-yolo",
         help="Force YOLO mode: skip permissions, disable sandbox and approvals",
     ),
+    native: bool = typer.Option(
+        False,
+        "--native",
+        help="Bypass cliproxy/thegent routing and run native codex directly",
+    ),
 ) -> None:
     """Global callback for dex - handles -f flag for force YOLO mode."""
-    global _force_yolo
+    global _force_yolo, _native_mode
     _force_yolo = force
+    _native_mode = native
     if force:
         # Update settings instance
         settings = _get_settings()
         settings.dex_force_yolo = True
+    if native:
+        passthrough = [arg for arg in sys.argv[1:] if arg not in {"--native", "--force-yolo", "-f"}]
+        _exec_native_codex(passthrough)
 
 
 def _get_settings():
@@ -141,29 +202,31 @@ def _resolve_provider_for_model(model_alias: str) -> str:
     return "nim"
 
 
-def _iter_install_targets() -> Iterator[tuple[str, str, str]]:
-    """Return shim targets: model-only, no provider filter."""
-    yield ("dex", "thegent dex", "dex")
-    yield ("dexcomposer", "thegent dex composer", "dexcomposer")
-    yield ("dexmax", "thegent dex max", "dexmax")
-    yield ("dexglm", "thegent dex glm", "dexglm")
-    yield ("dexhaiku", "thegent dex haiku", "dexhaiku")
-    yield ("dexopus", "thegent dex opus", "dexopus")
-    yield ("dexsonnet", "thegent dex sonnet", "dexsonnet")
-    yield ("dexstep", "thegent dex step", "dexstep")
-    yield ("dexflash", "thegent dex flash", "dexflash")
-    yield ("dexmini", "thegent dex mini", "dexmini")
-    yield ("dexfree", "thegent dex free", "dexfree")
+def _install_harness_link(bin_dir: Path, harness: str, force: bool = False) -> bool:
+    """Install a harness symlink to thegent-shims. Returns True when link is created/updated."""
+    shims_path = shutil.which("thegent-shims")
+    if not shims_path:
+        candidate = bin_dir / "thegent-shims"
+        if candidate.exists():
+            shims_path = str(candidate)
+    if not shims_path:
+        console.print(
+            "[red]thegent-shims not found.[/red] Install it first with: [dim]zsh scripts/install-thegent-shims.sh[/dim]"
+        )
+        raise typer.Exit(1)
 
+    target = bin_dir / harness
+    if target.exists() or target.is_symlink():
+        if not force:
+            return False
+        if target.is_dir() and not target.is_symlink():
+            from thegent.errors import print_error
 
-def _write_wrapper(path: Path, command: str, force: bool = False) -> bool:
-    """Write/update a shim wrapper. Returns True if a write occurred."""
-    if path.exists() and not force:
-        return False
+            print_error(f"{target} is a directory. Remove it before reinstalling.")
+            raise typer.Exit(1)
+        target.unlink()
 
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f'#!/usr/bin/env sh\nset -e\nexport THGENT_HARNESS="codex"\nexec {command} "$@"\n')
-    path.chmod(0o755)
+    target.symlink_to(Path(shims_path))
     return True
 
 
@@ -178,7 +241,9 @@ def _get_codex_env(provider: str, model: str) -> dict[str, str]:
     try:
         ensure_proxy_running(settings)
     except (RuntimeError, FileNotFoundError) as e:
-        console.print(f"[red]Error:[/red] {e}")
+        from thegent.errors import print_error
+
+        print_error(str(e))
         raise typer.Exit(1)
 
     # If using 'cursor' but no credentials, fallback to 'minimax' or 'glm'
@@ -304,6 +369,7 @@ def _run_codex_exec(
         env=env,
         cwd=str(cd.resolve()) if cd else None,
         timeout=300,
+        check=False,
     )
     raise typer.Exit(result.returncode)
 
@@ -385,7 +451,20 @@ def _bg_model_cmd(
 
 
 @app.callback(invoke_without_command=True)
-def default_dex(ctx: typer.Context) -> None:
+def default_dex(
+    ctx: typer.Context,
+    force: bool = typer.Option(
+        False,
+        "-f",
+        "--force-yolo",
+        help="Force YOLO mode: skip permissions, disable sandbox and approvals",
+    ),
+    native: bool = typer.Option(
+        False,
+        "--native",
+        help="Bypass cliproxy/thegent routing and run native codex directly",
+    ),
+) -> None:
     """Default: flash (gemini-3-flash) or model from first argument. Model-only, no provider filter.
 
     Usage:
@@ -395,6 +474,8 @@ def default_dex(ctx: typer.Context) -> None:
         dex [model]      # Uses specified model (max, glm, haiku, opus, sonnet, ultra, flash, mini, composer, step)
         dex [model] [prompt]  # Uses model with prompt
     """
+    _dex_global_callback(force=force, native=native)
+
     if ctx.invoked_subcommand is None:
         # Get arguments from typer context
         # Typer stores unparsed args in ctx.params or we need to get them differently
@@ -1076,28 +1157,21 @@ def install_links(
     bin_dir: Path = typer.Option(
         Path.home() / ".local" / "bin",
         "--bin-dir",
-        help="Directory to install command wrappers",
+        help="Directory to install harness shim symlink",
     ),
     force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing files"),
 ) -> None:
-    """Install dex shims: dex, dexmax, dexglm, dexhaiku, dexopus, dexsonnet, dexstep (model-only)."""
+    """Install/update dex -> thegent-shims harness shim under ~/.local/bin."""
     if not bin_dir.exists():
-        console.print(f"[red]Error: {bin_dir} does not exist.[/red]")
+        from thegent.errors import print_error
+
+        print_error(f"{bin_dir} does not exist.")
         raise typer.Exit(1)
 
-    installed = 0
-    for target_name, command, label in _iter_install_targets():
-        target = bin_dir / target_name
-        if _write_wrapper(target, command, force=force):
-            installed += 1
-            console.print(f"[green]Installed[/green] {target} -> {label}")
-        else:
-            console.print(f"[yellow]Skipping {target} (already exists). Use --force to overwrite.[/yellow]")
-
-    if installed:
-        console.print("[bold]Wrappers installed successfully.[/bold]")
-    elif not force:
-        console.print("[yellow]No wrappers updated.[/yellow]")
+    if _install_harness_link(bin_dir, "dex", force=force):
+        console.print(f"[green]Installed[/green] {bin_dir / 'dex'} -> thegent-shims")
+        return
+    console.print(f"[yellow]Skipping {bin_dir / 'dex'} (already exists). Use --force to overwrite.[/yellow]")
 
 
 if __name__ == "__main__":

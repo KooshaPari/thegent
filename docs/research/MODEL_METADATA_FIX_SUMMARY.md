@@ -98,11 +98,12 @@ All models now have complete metadata:
 ## Verification Steps
 
 1. **Check metadata registry**:
-   ```python
-   from thegent.routing.model_metadata import has_model_metadata, get_model_metadata
-   assert has_model_metadata("glm-5")
-   assert get_model_metadata("glm-5")["context_window"] == 128000
-   ```
+
+```python
+from thegent.routing.model_metadata import has_model_metadata, get_model_metadata
+assert has_model_metadata("glm-5")
+assert get_model_metadata("glm-5")["context_window"] == 128000
+```
 
 2. **Verify CLIProxy config**:
    - Check `~/.config/cli-proxy-api/cliproxy-config.yaml`

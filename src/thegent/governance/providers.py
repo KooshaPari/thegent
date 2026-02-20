@@ -173,8 +173,8 @@ _BUILTIN_PROVIDERS = [
         fallback_order=["claude-haiku-4.5"],
     ),
     ProviderConfig(
-        provider_id="gemini-3-pro",
-        name="Google Gemini 3 Pro",
+        provider_id="gemini-3.1-pro",
+        name="Google Gemini 3.1 Pro",
         provider_type=ProviderType.DIRECT,
         api_endpoint="https://generativelanguage.googleapis.com",
         auth_method="api_key",

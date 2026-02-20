@@ -1,7 +1,7 @@
 import pytest
 
 from thegent.agents.registry import LearningRegistry
-from thegent.governance.costs import BudgetAlert, CostCap, CostTracker
+from thegent.cost.aggregators import BudgetAlert, CostCap, CostTracker
 from thegent.governance.hitl import HITLManager
 from thegent.governance.policy import LearningSession, PolicyManager
 from thegent.planning.cost_predictor import CostPredictor

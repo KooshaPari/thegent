@@ -81,10 +81,7 @@ def audit_cmd(
             "dependencies": auditor.audit_dependencies,
         }
         if category not in dispatch:
-            console.print(
-                f"[red]Unknown category '{category}'. "
-                "Choose from: hooks, agents, config, dependencies[/red]"
-            )
+            console.print(f"[red]Unknown category '{category}'. Choose from: hooks, agents, config, dependencies[/red]")
             raise typer.Exit(1)
         from datetime import UTC, datetime
 
@@ -152,11 +149,7 @@ def audit_cmd(
         )
     else:
         console.print(table)
-        console.print(
-            f"\n[bold]Total:[/bold] {total}  "
-            f"[green]OK: {ok_count}[/green]  "
-            f"[red]Issues: {issue_count}[/red]"
-        )
+        console.print(f"\n[bold]Total:[/bold] {total}  [green]OK: {ok_count}[/green]  [red]Issues: {issue_count}[/red]")
         for status in AuditStatus:
             count = summary.get(status.value, 0)
             if count and status != AuditStatus.OK:

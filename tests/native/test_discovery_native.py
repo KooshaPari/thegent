@@ -38,7 +38,7 @@ pytestmark = pytest.mark.unit
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_sessions_json() -> list[dict[str, Any]]:
     return [
         {
@@ -51,7 +51,7 @@ def fake_sessions_json() -> list[dict[str, Any]]:
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_tools_json() -> list[dict[str, Any]]:
     return [
         {"tool": "claude", "available": True, "path": "/usr/local/bin/claude"},
@@ -66,7 +66,7 @@ def fake_tools_json() -> list[dict[str, Any]]:
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_processes_json() -> list[dict[str, Any]]:
     return [
         {
@@ -81,7 +81,7 @@ def fake_processes_json() -> list[dict[str, Any]]:
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_all_json(
     fake_sessions_json: list[dict],
     fake_tools_json: list[dict],
@@ -334,7 +334,7 @@ class TestDiscoveryClientErrorFallback:
 class TestDiscoveryClientFallbackPath:
     """DiscoveryClient methods when binary is absent always use Python fallback."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def fallback_client(self) -> DiscoveryClient:
         with patch("shutil.which", return_value=None), patch.dict(
             "os.environ", {DiscoveryClient.ENV_VAR: ""}, clear=False
@@ -539,6 +539,7 @@ class TestScanAgentProcessesIntegration:
 
     def test_falls_back_to_agent_scanner_when_no_native(self) -> None:
         import sys
+
         import thegent.discovery as discovery_mod
 
         discovery_mod._native_client = None

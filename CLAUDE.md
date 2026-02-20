@@ -4,6 +4,121 @@ These rules apply to ALL projects. Project-level CLAUDE.md files supplement (and
 
 ---
 
+# 🔒 CRITICAL SECURITY RULES - NEVER VIOLATE
+
+## ⛔ FORBIDDEN: Killing Agent or Terminal Processes
+
+**ABSOLUTELY FORBIDDEN** - Agents MUST NEVER kill other agent processes or terminal processes.
+
+### ❌ NEVER RUN THESE COMMANDS:
+```bash
+# FORBIDDEN - Killing cursor-agent (EXACT PATTERN YOU MUST NOT USE)
+ps -ao pid,command | grep "cursor-agent" | grep -v grep | grep -v 40690 | awk '{print $1}' | xargs kill -9
+ps | grep cursor-agent | xargs kill -9
+pkill cursor-agent
+killall cursor-agent
+
+# FORBIDDEN - Killing any agent process
+kill -9 <pid>  # where PID is cursor-agent, thegent, claude, codex, droid, etc.
+
+# FORBIDDEN - Killing shell/terminal processes  
+kill -9 <pid>  # where PID is bash, zsh, sh, ghostty, terminal, iterm, etc.
+```
+
+### ✅ CORRECT ALTERNATIVES:
+```bash
+# Safe cleanup of orphaned LSP/MCP processes
+thegent mcp prune
+
+# See what would be pruned (dry run)
+thegent mcp prune --dry-run
+
+# List active sessions
+thegent ps
+
+# Properly stop a session
+thegent stop <session_id>
+```
+
+### 🛡️ PROTECTED PROCESSES:
+The following processes are PROTECTED and MUST NEVER be killed:
+- **Agent processes**: `cursor-agent`, `thegent`, `claude`, `codex`, `droid`, `opencode`, `copilot`, `gemini`
+- **Shell processes**: `bash`, `zsh`, `sh`, `fish`, `tcsh`, `csh`
+- **Terminal emulators**: `ghostty`, `terminal`, `iterm`, `alacritty`, `kitty`, `wezterm`, `warp`
+
+### ⚠️ SECURITY ENFORCEMENT:
+- All commands are validated before execution
+- Commands attempting to kill protected processes will be **BLOCKED**
+- Violations are logged and reported
+- Rate limiting prevents abuse
+
+**If you need to clean up processes, use the safe pruning tools provided by thegent, NOT manual kill commands.**
+
+---
+
+## ⛔ FORBIDDEN: Fallbacks, Legacy Compatibility, and Silent Failures
+
+**ABSOLUTELY FORBIDDEN** - Agents MUST NEVER add fallbacks, legacy compatibility, or silent error handling.
+
+### ❌ NEVER ADD:
+- **Fallback code paths**: `try: new(); except: old()` or `try: fast(); except: slow()`
+- **Legacy compatibility shims**: `if legacy_flag: old(); else: new()`
+- **Backwards compatibility layers**: `def old(): warnings.warn(); return new()`
+- **Silent error handling**: `try: thing(); except: pass` or `try: thing(); except: return default`
+- **Error hiding**: `try: thing(); except: delete_from_db()` (hiding bugs)
+- **"Just in case" code**: Code added "just in case" something fails
+- **Import fallbacks**: `try: from X import Y; except: from Z import Y`
+- **Migration systems for simple changes**: Don't create versioning/migration for simple edits
+
+### ✅ CORRECT APPROACH:
+- **Code should FAIL and STOP** on errors - fail fast, fail loudly
+- **No fallbacks** unless explicitly requested (and even then, prefer fixing the root cause)
+- **No legacy compatibility** - Zero user debt = zero backwards compatibility
+- **No silent failures** - All errors must be visible and logged
+- **Fix bugs, don't hide them** - If something fails, fix it, don't work around it
+- **Verify parity BEFORE removal** - Always verify feature parity and migration completeness before removing code
+
+### 🎯 "Aim Towards" Framing:
+When removing code, frame it positively:
+```
+BAD: "Don't add fallbacks"
+GOOD: "Now that we have fully transitioned to a new system and it has been 
+confirmed to work as intended, let's clean out all backwards compatibility 
+and fallbacks so we have a DRY, modular system with clear and clean separation 
+of responsibilities. Once finished, we have a fresh system with no technical debt."
+```
+
+### ⚠️ AI AGENT PATTERN:
+AI coding agents (Claude, Codex, ChatGPT) have a **systemic tendency** to add fallbacks and legacy compatibility even when explicitly told not to. This is a known pattern requiring:
+- **Explicit rules** (like this section)
+- **"Aim towards" framing** (positive direction, not just "don't do X")
+- **Fail fast philosophy** (code should fail and stop)
+- **Parity verification** (verify before removal)
+- **CI checks** (automated detection of fallback patterns)
+
+### 🛡️ ENFORCEMENT:
+- All code is checked for fallback patterns
+- Commits with fallbacks will be flagged
+- Silent error handling is detected and blocked
+- Legacy compatibility code is identified and removed
+
+**Remember: Zero user debt = zero backwards compatibility. All changes are breaking changes by design. Code should fail fast and fail loudly, not silently work around problems.**
+
+---
+
+# Terminology (Layer Vocabulary)
+
+**For ease of communication.** See also: `docs/governance/TERMINOLOGY_LAYERS.md`
+
+| Term | Definition | Examples |
+|------|------------|----------|
+| **Harness** | The agent layer. May or may not come with a CLI, API, or other interface. | Codex CLI, Claude Code CLI, Claude Agent SDK, Factory Droid |
+| **LLM** | The model (as known). | GPT-5, Claude, Gemini, etc. |
+| **Presentation layer** | The UI layer of a harness. | Terminal UI, IDE panel, web UI |
+| **Various layers** | Layers between and around (routing, proxy, auth, orchestration). | CLIProxy, LiteLLM Router, thegent orchestration |
+
+---
+
 # Heavy Web Research Policy
 - Use DuckDuckGo (`thegent_ddg_search`) for comprehensive web research when local knowledge is insufficient.
 - **Deep Research Protocol**: For multi-source or blocked sites (Reddit, Google), use `docs/guides/DEEP_RESEARCH_PROTOCOL.md`.

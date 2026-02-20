@@ -44,8 +44,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import typer
-
-from thegent.cli_impl import (
+from thegent.cli.commands.impl import (
     DagDocument,
     _append_health_snapshot,
     _append_observe_summary_snapshot,
@@ -97,7 +96,7 @@ class TestResolveCwdCacheException:
     # @trace FR-CLI-400
     def test_cache_hit_returns_cached_value(self, tmp_path) -> None:
         """When the cache has a non-expired entry, the cached value is returned."""
-        from thegent.cli_impl import _CWD_CACHE
+        from thegent.cli.commands.impl import _CWD_CACHE
 
         project = tmp_path / "proj"
         project.mkdir()
@@ -113,7 +112,7 @@ class TestResolveCwdCacheException:
     # @trace FR-CLI-401
     def test_expired_cache_is_refreshed(self, tmp_path) -> None:
         """When the cache entry is expired, the resolution runs again."""
-        from thegent.cli_impl import _CWD_CACHE
+        from thegent.cli.commands.impl import _CWD_CACHE
 
         project = tmp_path / "proj2"
         project.mkdir()
@@ -327,7 +326,7 @@ class TestSessionScopeDirs:
         result = _session_scope_dirs(tmp_path, "my:key")
         # _scope_key("my:key") -> "my_key" but fallback dir is "mykey"
         # This tests the glob-miss + fallback-exists path
-        from thegent.cli_impl import _scope_key
+        from thegent.cli.commands.impl import _scope_key
 
         key = _scope_key("my:key")
         fb = tmp_path / key
@@ -345,7 +344,7 @@ class TestSessionStatusFor:
     def test_not_found_on_missing_session(self) -> None:
         settings = MagicMock()
         settings.session_dir = Path("/tmp/nonexistent_thegent_test")
-        with patch("thegent.cli_impl._find_session_meta", side_effect=typer.BadParameter("not found")):
+        with patch("thegent.cli.commands.impl._find_session_meta", side_effect=typer.BadParameter("not found")):
             result = _session_status_for("nonexistent", settings)
         assert result == "not_found"
 
@@ -355,8 +354,8 @@ class TestSessionStatusFor:
         meta = tmp_path / "sess.json"
         meta.write_text(json.dumps({"pid": 99999}))
         tmp_path / "sess.rc"
-        with patch("thegent.cli_impl._find_session_meta", return_value=meta):
-            with patch("thegent.cli_impl._is_pid_running", return_value=True):
+        with patch("thegent.cli.commands.impl._find_session_meta", return_value=meta):
+            with patch("thegent.cli.commands.impl._is_pid_running", return_value=True):
                 result = _session_status_for("sess", settings)
         assert result == "running"
 
@@ -367,8 +366,8 @@ class TestSessionStatusFor:
         meta.write_text(json.dumps({"pid": 12345}))
         rc = tmp_path / "sess.rc"
         rc.write_text("42\n")
-        with patch("thegent.cli_impl._find_session_meta", return_value=meta):
-            with patch("thegent.cli_impl._is_pid_running", return_value=False):
+        with patch("thegent.cli.commands.impl._find_session_meta", return_value=meta):
+            with patch("thegent.cli.commands.impl._is_pid_running", return_value=False):
                 result = _session_status_for("sess", settings)
         assert result == "exited:42"
 
@@ -377,8 +376,8 @@ class TestSessionStatusFor:
         settings = MagicMock()
         meta = tmp_path / "sess.json"
         meta.write_text(json.dumps({"pid": 12345}))
-        with patch("thegent.cli_impl._find_session_meta", return_value=meta):
-            with patch("thegent.cli_impl._is_pid_running", return_value=False):
+        with patch("thegent.cli.commands.impl._find_session_meta", return_value=meta):
+            with patch("thegent.cli.commands.impl._is_pid_running", return_value=False):
                 result = _session_status_for("sess", settings)
         assert result == "exited"
 
@@ -799,7 +798,7 @@ class TestClassifyObserveSummaryTrendHealth:
 class TestLoadObserveSummarySnapshots:
     # @trace FR-CLI-471
     def test_no_file_returns_empty(self) -> None:
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=Path("/nonexistent")):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=Path("/nonexistent")):
             result = _load_observe_summary_snapshots("sig1", "{}", 5)
         assert result == []
 
@@ -812,7 +811,7 @@ class TestLoadObserveSummarySnapshots:
             "captured_at_utc": "2025-01-01T00:00:00Z",
         }
         log_path.write_text(json.dumps(rec) + "\n")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_observe_summary_snapshots("sig-abc", "{}", 5)
         assert len(result) == 1
 
@@ -825,7 +824,7 @@ class TestLoadObserveSummarySnapshots:
             "captured_at_utc": "2025-01-01T00:00:00Z",
         }
         log_path.write_text(json.dumps(rec) + "\n")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_observe_summary_snapshots("sig-def", "{}", 5)
         assert len(result) == 1
 
@@ -839,7 +838,7 @@ class TestLoadObserveSummarySnapshots:
             "captured_at_utc": "2025-01-01T00:00:00Z",
         }
         log_path.write_text(json.dumps(rec) + "\n")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_observe_summary_snapshots("no-match", key_json, 5)
         assert len(result) == 1
 
@@ -855,7 +854,7 @@ class TestLoadObserveSummarySnapshots:
             }
             lines.append(json.dumps(rec))
         log_path.write_text("\n".join(lines) + "\n")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_observe_summary_snapshots("sig-x", "{}", 3)
         assert len(result) == 3
 
@@ -869,7 +868,7 @@ class TestLoadObserveSummarySnapshots:
             "",
         ]
         log_path.write_text("\n".join(lines) + "\n")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_observe_summary_snapshots("sig-z", "{}", 5)
         assert result == []
 
@@ -881,15 +880,15 @@ class TestLoadObserveSummarySnapshots:
 class TestCompactHealthSnapshotLog:
     # @trace FR-CLI-477
     def test_no_file_returns_early(self, tmp_path) -> None:
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=tmp_path / "missing.jsonl"):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=tmp_path / "missing.jsonl"):
             _compact_health_snapshot_log()
 
     # @trace FR-CLI-478
     def test_under_limit_no_trim(self, tmp_path) -> None:
         log_path = tmp_path / "snap.jsonl"
         log_path.write_text("line1\nline2\n")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
-            with patch("thegent.cli_impl._health_snapshot_max_lines", return_value=100):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
+            with patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=100):
                 _compact_health_snapshot_log()
         assert len(log_path.read_text().splitlines()) == 2
 
@@ -898,8 +897,8 @@ class TestCompactHealthSnapshotLog:
         log_path = tmp_path / "snap.jsonl"
         lines = [f"line{i}" for i in range(20)]
         log_path.write_text("\n".join(lines) + "\n")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
-            with patch("thegent.cli_impl._health_snapshot_max_lines", return_value=5):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
+            with patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=5):
                 _compact_health_snapshot_log()
         remaining = log_path.read_text().splitlines()
         assert len(remaining) == 5
@@ -973,7 +972,7 @@ class TestCoerceIssueTypes:
 class TestLoadPreviousHealthSnapshot:
     # @trace FR-CLI-490
     def test_no_file_returns_none(self) -> None:
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=Path("/nonexistent")):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=Path("/nonexistent")):
             assert _load_previous_health_snapshot({"type": "test"}) is None
 
     # @trace FR-CLI-491
@@ -982,7 +981,7 @@ class TestLoadPreviousHealthSnapshot:
         scope = {"type": "gate", "owner": "alice"}
         rec = {"record_type": "health_snapshot", "scope_key": scope, "blocked_ratio": 0.1}
         log_path.write_text(json.dumps(rec) + "\n")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_previous_health_snapshot(scope)
         assert result is not None
         assert result["blocked_ratio"] == 0.1
@@ -992,7 +991,7 @@ class TestLoadPreviousHealthSnapshot:
         log_path = tmp_path / "snap.jsonl"
         rec = {"record_type": "health_snapshot", "scope_key": {"type": "other"}}
         log_path.write_text(json.dumps(rec) + "\n")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             assert _load_previous_health_snapshot({"type": "gate"}) is None
 
     # @trace FR-CLI-493
@@ -1005,7 +1004,7 @@ class TestLoadPreviousHealthSnapshot:
             json.dumps({"record_type": "health_snapshot", "scope_key": scope, "val": 1}),
         ]
         log_path.write_text("\n".join(lines) + "\n")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_previous_health_snapshot(scope)
         assert result is not None
         assert result["val"] == 1
@@ -1167,8 +1166,8 @@ class TestAppendHealthSnapshot:
     # @trace FR-CLI-408
     def test_report_payload_extracts_issue_types(self, tmp_path) -> None:
         log_path = tmp_path / "snap.jsonl"
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
-            with patch("thegent.cli_impl._compact_health_snapshot_log"):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
+            with patch("thegent.cli.commands.impl._compact_health_snapshot_log"):
                 payload = {
                     "payload_type": "session_contract_health_report",
                     "issue_counts": {"misalign:provider": 2, "missing:model": 1},
@@ -1183,8 +1182,8 @@ class TestAppendHealthSnapshot:
     # @trace FR-CLI-409
     def test_gate_payload_extracts_from_blocked_sessions(self, tmp_path) -> None:
         log_path = tmp_path / "snap.jsonl"
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=log_path):
-            with patch("thegent.cli_impl._compact_health_snapshot_log"):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
+            with patch("thegent.cli.commands.impl._compact_health_snapshot_log"):
                 payload = {
                     "payload_type": "session_contract_health_gate",
                     "blocked_sessions": [
@@ -1206,7 +1205,7 @@ class TestAppendObserveSummarySnapshot:
     # @trace FR-CLI-410
     def test_oserror_on_write_handled(self) -> None:
         bad_path = Path("/nonexistent/dir/snap.jsonl")
-        with patch("thegent.cli_impl._health_snapshot_log_path", return_value=bad_path):
+        with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=bad_path):
             # Should not raise
             _append_observe_summary_snapshot(
                 payload={"generated_at_utc": "2025-01-01T00:00:00Z"},
@@ -1259,7 +1258,7 @@ class TestParseDagFullEdgeCases:
 @pytest.mark.unit
 class TestValidateDagDoneWithoutEvidence:
     # @trace FR-CLI-414
-    @patch("thegent.cli_impl._validate_agent", return_value=None)
+    @patch("thegent.cli.commands.impl._validate_agent", return_value=None)
     def test_done_without_evidence_flagged(self, mock_agent) -> None:
         doc = DagDocument(
             frontmatter={},
@@ -1272,7 +1271,7 @@ class TestValidateDagDoneWithoutEvidence:
         assert any("evidence" in e.lower() or "session_id" in e.lower() for e in errors)
 
     # @trace FR-CLI-415
-    @patch("thegent.cli_impl._validate_agent", return_value=None)
+    @patch("thegent.cli.commands.impl._validate_agent", return_value=None)
     def test_done_with_evidence_passes(self, mock_agent) -> None:
         doc = DagDocument(
             frontmatter={},
@@ -1549,7 +1548,7 @@ class TestGetServerMetaImpl:
 @pytest.mark.unit
 class TestGetDataProtectionStatusImpl:
     # @trace FR-CLI-441
-    @patch("thegent.cli_impl.ThegentSettings")
+    @patch("thegent.cli.commands.impl.ThegentSettings")
     def test_returns_status_dict(self, mock_settings_cls, tmp_path) -> None:
         session_dir = tmp_path / "sessions"
         session_dir.mkdir()
@@ -1561,7 +1560,7 @@ class TestGetDataProtectionStatusImpl:
         settings.retention_days_health = 365
         mock_settings_cls.return_value = settings
 
-        from thegent.cli_impl import get_data_protection_status_impl
+        from thegent.cli.commands.impl import get_data_protection_status_impl
 
         result = get_data_protection_status_impl()
         assert result["session_dir_exists"] is True
@@ -1569,7 +1568,7 @@ class TestGetDataProtectionStatusImpl:
         assert result["masking_enabled"] is True
 
     # @trace FR-CLI-442
-    @patch("thegent.cli_impl.ThegentSettings")
+    @patch("thegent.cli.commands.impl.ThegentSettings")
     def test_nonexistent_dir_reports_no_restriction(self, mock_settings_cls, tmp_path) -> None:
         session_dir = tmp_path / "nonexistent"
         settings = MagicMock()
@@ -1579,7 +1578,7 @@ class TestGetDataProtectionStatusImpl:
         settings.retention_days_health = 365
         mock_settings_cls.return_value = settings
 
-        from thegent.cli_impl import get_data_protection_status_impl
+        from thegent.cli.commands.impl import get_data_protection_status_impl
 
         result = get_data_protection_status_impl()
         assert result["session_dir_exists"] is False
@@ -1595,7 +1594,7 @@ class TestHealthSnapshotLogPath:
     def test_env_override(self, tmp_path) -> None:
         custom_path = tmp_path / "custom" / "snaps.jsonl"
         with patch.dict(os.environ, {"THGENT_HEALTH_SNAPSHOT_PATH": str(custom_path)}):
-            from thegent.cli_impl import _health_snapshot_log_path
+            from thegent.cli.commands.impl import _health_snapshot_log_path
 
             result = _health_snapshot_log_path()
         assert result == custom_path
@@ -1605,7 +1604,7 @@ class TestHealthSnapshotLogPath:
     def test_default_path(self) -> None:
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("THGENT_HEALTH_SNAPSHOT_PATH", None)
-            from thegent.cli_impl import _health_snapshot_log_path
+            from thegent.cli.commands.impl import _health_snapshot_log_path
 
             result = _health_snapshot_log_path()
         assert str(result).endswith("health-snapshots.jsonl")

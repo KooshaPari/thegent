@@ -64,9 +64,7 @@ class GpuMonitor:
     rather than raising.
     """
 
-    _NVIDIA_SMI_QUERY = (
-        "index,name,utilization.gpu,memory.used,memory.total,temperature.gpu"
-    )
+    _NVIDIA_SMI_QUERY = "index,name,utilization.gpu,memory.used,memory.total,temperature.gpu"
     _NVIDIA_SMI_FORMAT = "csv,noheader,nounits"
 
     # ------------------------------------------------------------------
@@ -143,11 +141,7 @@ class GpuMonitor:
                 util = pynvml.nvmlDeviceGetUtilizationRates(handle)
                 mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 try:
-                    temp: float | None = float(
-                        pynvml.nvmlDeviceGetTemperature(
-                            handle, pynvml.NVML_TEMPERATURE_GPU
-                        )
-                    )
+                    temp: float | None = float(pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU))
                 except Exception:
                     temp = None
                 gpus.append(

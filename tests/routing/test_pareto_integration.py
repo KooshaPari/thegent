@@ -48,7 +48,7 @@ class TestApplyParetoRouting:
     """
 
     def _call(self, **overrides):
-        from thegent.cli_impl import _apply_pareto_routing
+        from thegent.cli.commands.impl import _apply_pareto_routing
 
         defaults = {
             "agent": None,
@@ -195,11 +195,11 @@ class TestRunImplParetoIntegration:
         """run_impl must delegate to _apply_pareto_routing when routing='pareto'."""
         # @trace FR-ROU-001
         with patch(
-            "thegent.cli_impl._apply_pareto_routing",
+            "thegent.cli.commands.impl._apply_pareto_routing",
             return_value=(None, None, None, None),
         ) as mock_apply:
             try:
-                from thegent.cli_impl import run_impl
+                from thegent.cli.commands.impl import run_impl
 
                 run_impl(
                     agent=None,
@@ -218,11 +218,11 @@ class TestRunImplParetoIntegration:
         """run_impl with routing=None still calls _apply_pareto_routing (guard handled inside helper)."""
         # @trace FR-ROU-001
         with patch(
-            "thegent.cli_impl._apply_pareto_routing",
+            "thegent.cli.commands.impl._apply_pareto_routing",
             return_value=(None, None, None, None),
         ) as mock_apply:
             try:
-                from thegent.cli_impl import run_impl
+                from thegent.cli.commands.impl import run_impl
 
                 run_impl(
                     agent=None,
@@ -247,11 +247,11 @@ class TestBgImplParetoIntegration:
         """bg_impl must delegate to _apply_pareto_routing when routing='pareto'."""
         # @trace FR-ROU-001
         with patch(
-            "thegent.cli_impl._apply_pareto_routing",
+            "thegent.cli.commands.impl._apply_pareto_routing",
             return_value=(None, None, None, None),
         ) as mock_apply:
             try:
-                from thegent.cli_impl import bg_impl
+                from thegent.cli.commands.impl import bg_impl
 
                 bg_impl(
                     agent=None,

@@ -5,7 +5,6 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 class AuditManager:
@@ -25,7 +24,7 @@ class AuditManager:
                 subprocess.run(
                     ["git", "clone", "--shared", str(self.project_root), str(self.shadow_root)],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
             except subprocess.CalledProcessError:
                 subprocess.run(["git", "init"], cwd=self.shadow_root, check=True)
