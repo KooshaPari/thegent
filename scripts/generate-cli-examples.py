@@ -154,7 +154,12 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Generate CLI examples from Typer commands")
-    parser.add_argument("--cli-file", type=str, default="src/thegent/cli.py", help="CLI file path")
+    parser.add_argument(
+        "--cli-file",
+        type=str,
+        default="src/thegent/main.py",
+        help="CLI file path (current Typer entrypoint)",
+    )
     parser.add_argument("--output", type=str, default="docs/reference/cli-examples.md", help="Output file")
     parser.add_argument("--format", choices=["playground", "simple"], default="playground", help="Output format")
 
