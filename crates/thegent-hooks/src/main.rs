@@ -145,6 +145,7 @@ fn print_help() {
     println!("    verifier-dispute-eval   Native verifier dispute evaluator");
     println!("    agent-claim-eval        Native agent claim validator");
     println!("    claim-lifecycle-eval    Native claim lifecycle evaluator");
+    println!("    elicitation-closure-eval Native elicitation closure evaluator");
     println!("    methodology-eval        Native methodology attestation evaluator");
     println!("    artifact-quality-eval   Native artifact quality evaluator");
     println!("    playbook-contract-eval  Native playbook contract evaluator");
@@ -3195,6 +3196,196 @@ fn cmd_agent_claim_eval() {
     }
 }
 
+fn cmd_elicitation_closure_eval() {
+    let args: Vec<String> = env::args().collect();
+    let mut ledger_path: Option<String> = None;
+    let mut project_dir: Option<String> = None;
+    let mut adr_doc_path: Option<String> = None;
+    let mut report_path: Option<String> = None;
+
+    let mut i = 2usize;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--ledger" if i + 1 < args.len() => {
+                ledger_path = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--project-dir" if i + 1 < args.len() => {
+                project_dir = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--adr-doc" if i + 1 < args.len() => {
+                adr_doc_path = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--report" if i + 1 < args.len() => {
+                report_path = Some(args[i + 1].clone());
+                i += 2;
+            }
+            _ => {
+                eprintln!("ELICITATION_CLOSURE FAIL: usage: thegent-hooks elicitation-closure-eval --ledger <path> --project-dir <path> --adr-doc <path> --report <path>");
+                exit(2);
+            }
+        }
+    }
+
+    let ledger_path = ledger_path.unwrap_or_else(|| {
+        eprintln!("ELICITATION_CLOSURE FAIL: missing --ledger");
+        exit(2);
+    });
+    let project_dir = project_dir.unwrap_or_else(|| {
+        eprintln!("ELICITATION_CLOSURE FAIL: missing --project-dir");
+        exit(2);
+    });
+    let adr_doc_path = adr_doc_path.unwrap_or_else(|| {
+        eprintln!("ELICITATION_CLOSURE FAIL: missing --adr-doc");
+        exit(2);
+    });
+    let report_path = report_path.unwrap_or_else(|| {
+        eprintln!("ELICITATION_CLOSURE FAIL: missing --report");
+        exit(2);
+    });
+
+    let report_path_buf = PathBuf::from(&report_path);
+    if let Some(parent) = report_path_buf.parent() {
+        if let Err(e) = fs::create_dir_all(parent) {
+            eprintln!(
+                "ELICITATION_CLOSURE FAIL: cannot create report dir {}: {}",
+                parent.display(),
+                e
+            );
+            exit(2);
+        }
+    }
+
+    let ledger_path_buf = PathBuf::from(&ledger_path);
+    if !ledger_path_buf.is_file() {
+        let report_json = json!({
+            "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            "status": "not_applicable",
+            "error_count": 0,
+            "pass": true
+        });
+        let _ = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        );
+        exit(3);
+    }
+
+    let ledger_raw = match fs::read_to_string(&ledger_path_buf) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!(
+                "ELICITATION_CLOSURE FAIL: cannot read ledger {}: {}",
+                ledger_path_buf.display(),
+                e
+            );
+            exit(2);
+        }
+    };
+    let ledger_json: Value = match serde_json::from_str(&ledger_raw) {
+        Ok(v) => v,
+        Err(_) => {
+            let report_json = json!({
+                "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                "error_count": 1,
+                "reason": "invalid_ledger_json",
+                "pass": false
+            });
+            let _ = fs::write(
+                &report_path_buf,
+                serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+            );
+            exit(1);
+        }
+    };
+
+    let adr_content = fs::read_to_string(PathBuf::from(&adr_doc_path)).unwrap_or_default();
+    let progressed = [
+        "approved",
+        "claimed",
+        "evidence_submitted",
+        "verified",
+        "accepted",
+        "released",
+    ];
+
+    let mut violations: u64 = 0;
+    if let Some(items) = ledger_json.get("items").and_then(|v| v.as_array()) {
+        for item in items {
+            let state = item
+                .get("state")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_ascii_lowercase();
+            if !progressed.contains(&state.as_str()) {
+                continue;
+            }
+            let id = item.get("id").and_then(|v| v.as_str()).unwrap_or("");
+            let src = item.get("source").and_then(|v| v.as_str()).unwrap_or("");
+            if id.is_empty() || src.is_empty() || !src.ends_with(".md") || !PathBuf::from(src).is_file() {
+                continue;
+            }
+
+            let gen_item = PathBuf::from(&project_dir)
+                .join("contracts/items-generated")
+                .join(format!("{id}.json"));
+            if !gen_item.is_file() {
+                continue;
+            }
+            let gen_raw = fs::read_to_string(&gen_item).unwrap_or_default();
+            let gen_json: Value = match serde_json::from_str(&gen_raw) {
+                Ok(v) => v,
+                Err(_) => continue,
+            };
+
+            let oq_count = gen_json
+                .get("open_questions")
+                .and_then(|v| v.as_array())
+                .map(|arr| arr.len() as u64)
+                .unwrap_or(0);
+            if oq_count > 0 {
+                violations += 1;
+            }
+
+            if let Some(decisions) = gen_json.get("decisions").and_then(|v| v.as_array()) {
+                for decision in decisions {
+                    let adr = decision.as_str().unwrap_or("");
+                    if adr.is_empty() {
+                        continue;
+                    }
+                    if !adr.starts_with("ADR-") {
+                        violations += 1;
+                    } else if adr_content.is_empty() || !adr_content.contains(adr) {
+                        violations += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    let report_json = json!({
+        "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+        "error_count": violations,
+        "pass": violations == 0
+    });
+    if let Err(e) = fs::write(
+        &report_path_buf,
+        serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+    ) {
+        eprintln!(
+            "ELICITATION_CLOSURE FAIL: cannot write report {}: {}",
+            report_path_buf.display(),
+            e
+        );
+        exit(2);
+    }
+    if violations > 0 {
+        exit(1);
+    }
+}
+
 fn cmd_claim_lifecycle_eval() {
     let args: Vec<String> = env::args().collect();
     let mut statement_path: Option<String> = None;
@@ -4378,6 +4569,7 @@ fn main() {
         "verifier-dispute-eval" => cmd_verifier_dispute_eval(),
         "agent-claim-eval" => cmd_agent_claim_eval(),
         "claim-lifecycle-eval" => cmd_claim_lifecycle_eval(),
+        "elicitation-closure-eval" => cmd_elicitation_closure_eval(),
         "methodology-eval" => cmd_methodology_eval(),
         "artifact-quality-eval" => cmd_artifact_quality_eval(),
         "playbook-contract-eval" => cmd_playbook_contract_eval(),
