@@ -1,0 +1,69 @@
+"""Tests for thegent.mesh.git GitParallelismManager."""
+
+from __future__ import annotations
+
+import json
+import subprocess
+from pathlib import Path
+
+from thegent.mesh.git import GitParallelismManager
+
+
+def _init_git_repo(path: Path) -> None:
+    subprocess.run(["git", "init"], cwd=str(path), check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=str(path), check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=str(path), check=True, capture_output=True)
+    (path / "README.md").write_text("init\n")
+    subprocess.run(["git", "add", "."], cwd=str(path), check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "init"], cwd=str(path), check=True, capture_output=True)
+
+
+def test_related_overlap_sorted() -> None:
+    manager = GitParallelismManager(Path("."), "agent-test")
+    overlap = manager.related_overlap(
+        ["b.py", "a.py", "x.md"],
+        ["z.py", "a.py", "b.py"],
+    )
+    assert overlap == ["a.py", "b.py"]
+
+
+def test_queue_commit_conflict_writes_jsonl(tmp_path: Path) -> None:
+    _init_git_repo(tmp_path)
+    manager = GitParallelismManager(tmp_path, "agent-1")
+    queue_file = manager.queue_commit_conflict(
+        ref="refs/heads/main",
+        reason="related_change_overlap",
+        ours=["a.py"],
+        theirs=["a.py", "b.py"],
+        overlap=["a.py"],
+        old_hash="old",
+        new_hash="new",
+    )
+    assert queue_file.exists()
+    lines = queue_file.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 1
+    record = json.loads(lines[0])
+    assert record["reason"] == "related_change_overlap"
+    assert record["overlap"] == ["a.py"]
+
+
+def test_wait_for_index_lock_times_out(tmp_path: Path) -> None:
+    _init_git_repo(tmp_path)
+    manager = GitParallelismManager(tmp_path, "agent-2")
+    lock_file = tmp_path / ".git" / "index.lock"
+    lock_file.write_text("")
+    assert manager.wait_for_index_lock(timeout_s=0.2, poll_s=0.05) is False
+
+
+def test_changed_files_between_returns_list(tmp_path: Path) -> None:
+    _init_git_repo(tmp_path)
+    manager = GitParallelismManager(tmp_path, "agent-3")
+
+    (tmp_path / "a.txt").write_text("a\n")
+    subprocess.run(["git", "add", "a.txt"], cwd=str(tmp_path), check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "a"], cwd=str(tmp_path), check=True, capture_output=True)
+    head2 = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(tmp_path), text=True).strip()
+    head1 = subprocess.check_output(["git", "rev-parse", "HEAD~1"], cwd=str(tmp_path), text=True).strip()
+
+    changed = manager.changed_files_between(head1, head2)
+    assert "a.txt" in changed
