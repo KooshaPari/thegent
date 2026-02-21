@@ -196,6 +196,64 @@ class GitParallelismManager:
             f.write(json.dumps(entry) + "\n")
         return queue_path
 
+    def try_auto_merge_commit(self, ours_commit: str, theirs_commit: str, message: str) -> str | None:
+        """Attempt to create a synthetic 3-way merge commit.
+
+        Strategy:
+        1. Compute merge base between ours and theirs.
+        2. Use `git merge-tree --write-tree` to compute merged tree.
+        3. Create commit object with parents (theirs, ours).
+
+        Returns merged commit hash on success, else None.
+        """
+        try:
+            _ = subprocess.check_output(
+                ["git", "merge-base", ours_commit, theirs_commit],
+                cwd=self.project_root,
+                text=True,
+            ).strip()
+        except subprocess.CalledProcessError:
+            return None
+
+        # Prefer native merge-tree write-tree path.
+        try:
+            tree_out = subprocess.check_output(
+                ["git", "merge-tree", "--write-tree", ours_commit, theirs_commit],
+                cwd=self.project_root,
+                text=True,
+            ).strip()
+        except subprocess.CalledProcessError:
+            return None
+
+        if not tree_out:
+            return None
+
+        # merge-tree output first token is the merged tree hash.
+        tree_hash = tree_out.splitlines()[0].strip().split()[0]
+        if not tree_hash:
+            return None
+
+        try:
+            merge_msg = f"merge(auto): {message}"
+            commit_hash = subprocess.check_output(
+                [
+                    "git",
+                    "commit-tree",
+                    tree_hash,
+                    "-p",
+                    theirs_commit,
+                    "-p",
+                    ours_commit,
+                    "-m",
+                    merge_msg,
+                ],
+                cwd=self.project_root,
+                text=True,
+            ).strip()
+            return commit_hash or None
+        except subprocess.CalledProcessError:
+            return None
+
     def get_agent_status(self) -> str:
         """Show per-agent staged changes (SCLI-P4.5)."""
         self.ensure_index()

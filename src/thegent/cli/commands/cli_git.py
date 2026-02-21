@@ -184,6 +184,32 @@ def commit(
     overlap = manager.related_overlap(ours, theirs)
 
     if overlap:
+        console.print("[bold yellow]Related change overlap detected.[/bold yellow]")
+        console.print(f"[yellow]Overlap files:[/yellow] {', '.join(overlap)}")
+
+        # Strategy 1: attempt native 3-way merge commit for related overlap.
+        auto_merge_enabled = os.environ.get("THGENT_GIT_AUTO_MERGE_OVERLAP", "true").lower() in ("1", "true", "yes")
+        if auto_merge_enabled:
+            console.print("[cyan]Attempting auto 3-way merge strategy...[/cyan]")
+            merged_hash = manager.try_auto_merge_commit(new_hash, refreshed, message)
+            if merged_hash:
+                if manager.update_ref_cas(full_ref, merged_hash, refreshed):
+                    console.print(f"[bold green]Auto-merged overlap and updated {full_ref}![/bold green]")
+                    return
+                queue_file = manager.queue_commit_conflict(
+                    ref=full_ref,
+                    reason="overlap_auto_merge_cas_failed",
+                    ours=ours,
+                    theirs=theirs,
+                    overlap=overlap,
+                    old_hash=refreshed,
+                    new_hash=merged_hash,
+                )
+                console.print("[bold red]Auto-merge produced commit but CAS update failed.[/bold red]")
+                console.print(f"[yellow]Queued for manual resolution:[/yellow] {queue_file}")
+                raise typer.Exit(2)
+
+        # Strategy 2: queue + prompt for manual conflict handling.
         queue_file = manager.queue_commit_conflict(
             ref=full_ref,
             reason="related_change_overlap",
@@ -193,8 +219,6 @@ def commit(
             old_hash=old_hash,
             new_hash=refreshed,
         )
-        console.print("[bold yellow]Related change overlap detected.[/bold yellow]")
-        console.print(f"[yellow]Overlap files:[/yellow] {', '.join(overlap)}")
         console.print(f"[yellow]Queued for manual resolution:[/yellow] {queue_file}")
         console.print(
             "[yellow]Prompt:[/yellow] review overlap, merge/rebase if needed, then rerun `thegent git commit`."
