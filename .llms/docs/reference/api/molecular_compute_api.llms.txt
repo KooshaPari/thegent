@@ -1,0 +1,41 @@
+# molecular_compute_api
+
+Source: docs/reference/api/molecular_compute_api.md
+
+---
+
+# molecular_compute API Reference
+
+> **Source**: `src/thegent/work_packages/molecular_compute.py`
+
+WP-36003: Molecular Computing Simulation sandbox.
+
+---
+
+## MolecularComputeSandbox
+
+Sandbox for molecular computing simulation.
+
+### Methods
+
+#### MolecularComputeSandbox.simulate
+
+```
+simulate(self: Any, computation: dict[(str, Any)])
+```
+
+Simulate molecular computation.
+
+---
+
+---
+
+## simulate
+
+```
+simulate(self: Any, computation: dict[(str, Any)])
+```
+
+Simulate molecular computation.
+
+---

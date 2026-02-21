@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import typer
@@ -19,6 +21,8 @@ app = typer.Typer(
 )
 
 _MODEL_ALIAS: dict[str, str] = {
+    "dex": "gpt-5.3-codex",
+    "codex": "gpt-5.3-codex",
     "composer": "composer-1.5",
     "max": "MiniMax-M2.5",
     "glm": "zai-glm-5",
@@ -29,9 +33,47 @@ _MODEL_ALIAS: dict[str, str] = {
     "step3.5": "step-3.5-flash",
     "ultra": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
     "flash": "gemini-3-flash",
+    "high": "gpt-5.3-codex-high",
+    "xhigh": "gpt-5.3-codex-xhigh",
     "mini": "gpt-5-mini",
     "free": "gpt-5-mini",
 }
+
+
+def _is_thegent_shim(path: str) -> bool:
+    p = Path(path)
+    if "thegent-shims" in p.name:
+        return True
+    try:
+        if p.is_symlink() and "thegent-shims" in str(p.readlink()):
+            return True
+    except OSError:
+        pass
+    return False
+
+
+def _resolve_native_droid_cmd() -> str | None:
+    override = os.environ.get("THGENT_NATIVE_DROID_BIN")
+    candidates: list[str] = []
+    if override:
+        candidates.append(override)
+    candidates.extend(
+        [
+            str(Path.home() / ".factory" / "bin" / "droid"),
+            str(Path.home() / ".local" / "bin" / "droid"),
+            str(Path("/opt/homebrew/bin/droid")),
+            str(Path("/usr/local/bin/droid")),
+        ]
+    )
+    which_droid = shutil.which("droid")
+    if which_droid:
+        candidates.append(which_droid)
+
+    for candidate in candidates:
+        p = Path(candidate).expanduser()
+        if p.is_file() and os.access(p, os.X_OK) and not _is_thegent_shim(str(p)):
+            return str(p)
+    return None
 
 
 def _resolve_droid_cmd() -> str:
@@ -67,8 +109,28 @@ def _run_droid_with_alias(alias: str, passthrough_args: list[str]) -> None:
 
 
 @app.callback(invoke_without_command=True)
-def default_roid(ctx: typer.Context) -> None:
+def default_roid(
+    ctx: typer.Context,
+    native: bool = typer.Option(
+        False,
+        "--native",
+        help="Bypass cliproxy/thegent routing and run native droid directly",
+    ),
+) -> None:
     """Default roid behavior: flash model (gemini-3-flash)."""
+    if native:
+        droid_cmd = _resolve_native_droid_cmd()
+        if not droid_cmd:
+            console.print(
+                "[red]Error: native 'droid' CLI not found (or only thegent-shims was found).[/red]\n"
+                "[dim]Set THGENT_NATIVE_DROID_BIN=/absolute/path/to/droid to force a specific binary.[/dim]"
+            )
+            raise typer.Exit(1)
+        passthrough = [arg for arg in sys.argv[1:] if arg != "--native"]
+        cmd = [droid_cmd, *passthrough]
+        console.print("[bold green]Starting native Droid (proxy bypass)...[/bold green]")
+        os.execvpe(cmd[0], cmd, os.environ.copy())
+
     if ctx.invoked_subcommand is None:
         _run_droid_with_alias("flash", list(ctx.args))
 
@@ -118,6 +180,16 @@ def roid_flash(ctx: typer.Context) -> None:
     _run_droid_with_alias("flash", list(ctx.args))
 
 
+@app.command("high", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def roid_high(ctx: typer.Context) -> None:
+    _run_droid_with_alias("high", list(ctx.args))
+
+
+@app.command("xhigh", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def roid_xhigh(ctx: typer.Context) -> None:
+    _run_droid_with_alias("xhigh", list(ctx.args))
+
+
 @app.command("mini", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def roid_mini(ctx: typer.Context) -> None:
     _run_droid_with_alias("mini", list(ctx.args))
@@ -159,13 +231,16 @@ def _install_harness_link(bin_dir: Path, harness: str, force: bool = False) -> b
 @app.command("doctor")
 def roid_doctor(
     fix: bool = typer.Option(False, "--fix", "-f", help="Attempt to fix issues"),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", "-n", help="Show what fixes would be applied without making changes"
+    ),
 ) -> None:
     """Run thegent doctor (harness-equiv)."""
     import sys
 
     from thegent.doctor import run_doctor
 
-    success = run_doctor(fix=fix)
+    success = run_doctor(fix=fix, dry_run=dry_run)
     sys.exit(0 if success else 1)
 
 

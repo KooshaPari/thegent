@@ -5,11 +5,13 @@ This module allows a single program to orchestrate tasks across multiple Python 
 """
 
 import asyncio
+from asyncio import subprocess
 import contextlib
 import json
 import os
 import platform
 import sys
+import tempfile
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -41,10 +43,11 @@ class MultiRuntimeBridge:
     """Orchestrates tasks across multiple specialized Python processes with network-aware reliability."""
 
     def __init__(self, mesh_root: Path | None = None) -> None:
-        self.mesh_root = mesh_root or Path("/tmp/thegent-bridge")
+        self.mesh_root = mesh_root or (Path(tempfile.gettempdir()) / "thegent-bridge")
         self.mesh = IPCMesh(self.mesh_root)
         self.active_workers: dict[RuntimeType, Any] = {}
         self.worker_heartbeats: dict[RuntimeType, float] = {}
+        self._log_forwarder_tasks: set[asyncio.Task[None]] = set()
 
         # Network-aware tuning
         # macOS on Wi-Fi needs larger buffers and longer timeouts
@@ -65,14 +68,12 @@ class MultiRuntimeBridge:
             for runtime, process in list(self.active_workers.items()):
                 # Check if process is still running
                 if process.returncode is not None:
-                    print(f"[Bridge] Worker {runtime.name} died with code {process.returncode}. Restarting...")
                     del self.active_workers[runtime]
                     await self.start_worker(runtime)
 
                 # Check heartbeat (future implementation: workers write to SHM/file)
                 last_seen = self.worker_heartbeats.get(runtime, 0)
                 if last_seen > 0 and (time.time() - last_seen) > self.heartbeat_interval * 3:
-                    print(f"[Bridge] Worker {runtime.name} heartbeat timeout. Terminating...")
                     process.terminate()
 
             await asyncio.sleep(self.heartbeat_interval)
@@ -117,15 +118,16 @@ class MultiRuntimeBridge:
 
         try:
             process = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env
+                *cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
             )
             self.active_workers[runtime] = process
             self.worker_heartbeats[runtime] = time.time()
 
             # Log forwarding
-            asyncio.create_task(self._forward_logs(runtime, process))
+            log_forwarder_task = asyncio.create_task(self._forward_logs(runtime, process))
+            self._log_forwarder_tasks.add(log_forwarder_task)
+            log_forwarder_task.add_done_callback(self._log_forwarder_tasks.discard)
         except Exception as e:
-            print(f"[Bridge] Failed to start {runtime.name}: {e}")
             raise
 
     async def _forward_logs(self, runtime: RuntimeType, process: Any):
@@ -138,11 +140,11 @@ class MultiRuntimeBridge:
             if "[HEARTBEAT]" in text:
                 self.worker_heartbeats[runtime] = time.time()
             else:
-                print(f"[{runtime.name}] {text}")
+                pass
 
         err_data = await process.stderr.read()
         if err_data:
-            print(f"[{runtime.name} ERR] {err_data.decode().strip()}")
+            pass
 
         await process.wait()
         if runtime in self.active_workers:
@@ -155,7 +157,6 @@ class MultiRuntimeBridge:
         except Exception:
             # Fallback to CPython 3.14 if PyPy fails, or vice versa
             fallback = RuntimeType.CPYTHON_314 if task.runtime == RuntimeType.PYPY else RuntimeType.PYPY
-            print(f"[Bridge] {task.runtime.name} unavailable. Falling back to {fallback.name}")
             await self.start_worker(fallback)
             task.runtime = fallback
 
@@ -174,7 +175,7 @@ class MultiRuntimeBridge:
         }
         return runtime_queue.send(message)
 
-    async def _shutdown_worker(self, process: asyncio.subprocess.Process) -> None:
+    async def _shutdown_worker(self, process: subprocess.Process) -> None:
         """Gracefully shutdown a single worker process."""
         try:
             process.terminate()
@@ -188,8 +189,13 @@ class MultiRuntimeBridge:
         if self._monitor_task:
             self._monitor_task.cancel()
 
-        for runtime, process in list(self.active_workers.items()):
+        for task in list(self._log_forwarder_tasks):
+            task.cancel()
+        if self._log_forwarder_tasks:
+            await asyncio.gather(*self._log_forwarder_tasks, return_exceptions=True)
+            self._log_forwarder_tasks.clear()
+
+        for _runtime, process in list(self.active_workers.items()):
             await self._shutdown_worker(process)
 
         self.active_workers.clear()
-        print("[Bridge] All workers shutdown.")

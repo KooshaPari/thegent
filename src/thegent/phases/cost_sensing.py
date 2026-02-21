@@ -1,12 +1,12 @@
 """Cost sensing and learning test matrix."""
 
-from typing import Any
+from typing import Any, ClassVar
 
 
 class CostSensingTestMatrix:
     """Test matrix for cost sensing and learning."""
 
-    TESTS = [
+    TESTS: ClassVar[list[dict[str, Any]]] = [
         {"id": "AL-001", "name": "Baseline cost measurement", "status": "pending"},
         {"id": "AL-002", "name": "Cost prediction accuracy", "status": "pending"},
         {"id": "AL-003", "name": "Adaptive routing cost", "status": "pending"},

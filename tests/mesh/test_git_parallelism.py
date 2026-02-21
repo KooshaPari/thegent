@@ -7,7 +7,7 @@ heliosShield Phase 6: TGNT-P6
 from __future__ import annotations
 
 import subprocess
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import pytest
@@ -21,6 +21,9 @@ from thegent.mesh.git_parallelism import (
     _project_hash,
     _worktrees_supported,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Helpers

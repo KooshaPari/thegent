@@ -12,7 +12,7 @@
 |----------|--------|
 | **Bifrost** | Not used. No dependency. Design doc (LITELLM_CLIPROXY_BIFROST_HARMONY) recommends against for thegent (no Python SDK; agent-scale doesn't need 50x speed). |
 | **LiteLLM** | Not used. No dependency. WP-1001 (LiteLLM fallback chains) is "Not Started". Design recommends "Future LiteLLM" as in-process router. |
-| **CLIProxyAPIPlus** | Used. Go project at `../CLIProxyAPIPlus-fork/`. Holds auth (OAuth, API keys), API execution, model routing by config. |
+| **CLIProxyAPIPlus** | Used. Go project at `../cliproxyapi-plusplus/`. Holds auth (OAuth, API keys), API execution, model routing by config. |
 | **thegent** | Python. Config generation, credential copy from factory, agent selection, model mapping. No live TPS/latency/cost measurement. |
 
 ---

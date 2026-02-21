@@ -248,6 +248,10 @@ class WatcherDaemon:
         self._lock: threading.RLock = threading.RLock()
         self._observer: Observer = Observer()
         self._running: bool = False
+        cleanup_interval = os.getenv("THGENT_WATCHER_CLEANUP_INTERVAL_S", "3600")
+        self._cleanup_interval_s = max(int(cleanup_interval), 300)
+        self._cleanup_stop_event = threading.Event()
+        self._cleanup_thread: threading.Thread | None = None
 
         # watch_id -> (WatchSpec, _SpecHandler, watchdog_watch)
         self._watches: dict[str, tuple[WatchSpec, _SpecHandler, Any]] = {}
@@ -273,6 +277,13 @@ class WatcherDaemon:
                 return
             try:
                 self._observer.start()
+                self._cleanup_stop_event.clear()
+                self._cleanup_thread = threading.Thread(
+                    target=self._storage_cleanup_loop,
+                    name="thegent-watcher-cleanup",
+                    daemon=True,
+                )
+                self._cleanup_thread.start()
                 self._running = True
                 _log.info("WatcherDaemon started")
             except Exception as exc:
@@ -301,11 +312,16 @@ class WatcherDaemon:
             except Exception as exc:
                 _log.warning("WatcherDaemon observer stop error: %s", exc)
             self._running = False
+            self._cleanup_stop_event.set()
+            cleanup_thread = self._cleanup_thread
+            self._cleanup_thread = None
 
         try:
             self._observer.join(timeout=5.0)
         except Exception as exc:
             _log.warning("WatcherDaemon observer join error: %s", exc)
+        if cleanup_thread is not None:
+            cleanup_thread.join(timeout=5.0)
 
         _log.info("WatcherDaemon stopped")
 
@@ -390,6 +406,29 @@ class WatcherDaemon:
                 }
                 for wid, (spec, _, _) in self._watches.items()
             ]
+
+    def _storage_cleanup_loop(self) -> None:
+        """Periodically prune stale quality shadow directories and logs."""
+        from thegent.config import ThegentSettings
+        from thegent.orchestration.pruning.prune import prune_stale_shadow_and_logs
+
+        while not self._cleanup_stop_event.is_set():
+            try:
+                settings = ThegentSettings()
+                shadow_pruned, logs_pruned = prune_stale_shadow_and_logs(
+                    dry_run=False,
+                    shadow_max_age_hours=settings.quality_shadow_cleanup_hours,
+                    quality_log_max_age_days=settings.quality_log_retention_days,
+                )
+                if shadow_pruned or logs_pruned:
+                    _log.info(
+                        "WatcherDaemon storage cleanup removed %d stale shadow dirs and %d quality log files",
+                        shadow_pruned,
+                        logs_pruned,
+                    )
+            except Exception as exc:
+                _log.warning("WatcherDaemon storage cleanup failed: %s", exc)
+            self._cleanup_stop_event.wait(self._cleanup_interval_s)
 
 
 # ---------------------------------------------------------------------------

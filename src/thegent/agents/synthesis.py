@@ -7,7 +7,7 @@ import logging
 
 from pydantic import BaseModel
 
-from thegent.verification.symbolic import SymbolicExecutor
+from thegent.verification.symbolic import SymbolicRiskExplorer
 from thegent.verification.tool_safety import ToolSafetyChecker
 
 _log = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ class ProgramSynthesizer:
 
     def __init__(self, run_id: str) -> None:
         self.run_id = run_id
-        self.executor = SymbolicExecutor()
+        self.executor = SymbolicRiskExplorer(dag={})
         self.safety_checker = ToolSafetyChecker()
 
     def synthesize(self, prompt: str, formal_spec: str | None = None) -> SynthesisResult:

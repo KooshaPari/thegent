@@ -52,7 +52,7 @@ class SessionEventWatcher:
                 for callback in self.watcher._completion_callbacks:
                     try:
                         callback(session_id, exit_code)
-                    except Exception as e:
+                    except Exception as e:  # noqa: PERF203 - intentional per-item error handling
                         _log.error(f"Error in completion callback: {e}", exc_info=True)
 
         handler = CompletionHandler(self)

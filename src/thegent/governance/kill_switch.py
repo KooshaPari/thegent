@@ -4,7 +4,7 @@ exceeds human-defined safety bounds.
 """
 
 import logging
-import os
+from pathlib import Path
 
 _log = logging.getLogger(__name__)
 
@@ -13,13 +13,13 @@ class SafetyKillSwitch:
     """Hard-wired emergency stop for all agent processes."""
 
     def __init__(self, workspace_root: str) -> None:
-        self.root = workspace_root
-        self.trigger_file = os.path.join(workspace_root, ".thegent_kill")
+        self.root = Path(workspace_root)
+        self.trigger_file = self.root / ".thegent_kill"
 
     def activate(self, reason: str):
         """WP-39001: Trigger the global kill-switch."""
         _log.critical("ACTIVATE SAFETY KILL-SWITCH: %s", reason)
-        with open(self.trigger_file, "w") as f:
+        with self.trigger_file.open("w") as f:
             f.write(f"KILLED_AT: {time.time()}\nREASON: {reason}\n")
 
         # In a real system, this would broadcast a signal to all child processes
@@ -27,7 +27,7 @@ class SafetyKillSwitch:
 
     def check_status(self) -> bool:
         """Check if the system is currently halted."""
-        return os.path.exists(self.trigger_file)
+        return self.trigger_file.exists()
 
     def verify_alignment_drift(self, self_improvement_rate: float):
         """Monitor for dangerous recursive improvement speed."""

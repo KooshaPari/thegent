@@ -19,7 +19,7 @@ import time
 import uuid
 from pathlib import Path
 from threading import Lock
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import diskcache
 
@@ -85,7 +85,7 @@ class McpStorage:
             return default
         # Values are stored as JSON strings; decode on read.
         try:
-            return json.loads(raw)
+            return json.loads(cast("str", raw))
         except (json.JSONDecodeError, TypeError):
             _log.warning("McpStorage: corrupt value for key %r; returning default", key)
             return default

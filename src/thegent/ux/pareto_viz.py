@@ -25,17 +25,29 @@ class ParetoViz:
 
         # Mock Pareto logic for viz
         for r in routes:
-            speed = speed_map.get(r.provider, r.accuracy_score)  # fallback
-            quality = quality_map.get(r.provider, r.accuracy_score)
+            speed = speed_map.get(r.provider, r.accuracy_score if r.accuracy_score is not None else 0.5)
+            quality = quality_map.get(r.provider, r.accuracy_score if r.accuracy_score is not None else 0.5)
 
             # Simple check: is there any route that is better in ALL dimensions?
             is_pareto = True
             for other in routes:
                 if other == r:
                     continue
-                other_speed = speed_map.get(other.provider, other.accuracy_score)
-                other_quality = quality_map.get(other.provider, other.accuracy_score)
-                if other_speed >= speed and other_quality >= quality and other.cost_weight <= r.cost_weight:
+                other_speed = speed_map.get(
+                    other.provider, other.accuracy_score if other.accuracy_score is not None else 0.5
+                )
+                other_quality = quality_map.get(
+                    other.provider, other.accuracy_score if other.accuracy_score is not None else 0.5
+                )
+                if (
+                    other_speed is not None
+                    and speed is not None
+                    and other_speed >= speed
+                    and other_quality is not None
+                    and quality is not None
+                    and other_quality >= quality
+                    and other.cost_weight <= r.cost_weight
+                ):
                     if other_speed > speed or other_quality > quality or other.cost_weight < r.cost_weight:
                         is_pareto = False
                         break

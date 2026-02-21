@@ -1,7 +1,8 @@
 """Unit tests for WP-1001: Dependency-aware routing engine."""
 
 import pytest
-from thegent.orchestration.router import DependencyRouter
+
+from thegent.orchestration.execution.router import DependencyRouter
 
 
 def test_router_single_task():

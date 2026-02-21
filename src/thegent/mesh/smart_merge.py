@@ -291,7 +291,7 @@ def _merge_with_git_merge_file(
         return result.returncode == 0
 
     except (FileNotFoundError, OSError):
-        # git not available – last resort: just copy ours.
+        # git not available - last resort: just copy ours.
         with contextlib.suppress(OSError):
             output.write_bytes(ours.read_bytes())
         return False

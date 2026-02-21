@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class ConfigManager:
     """Configuration manager."""
 
-    def __init__(self, config_path: Path | None = None):
+    def __init__(self, config_path: Path | None = None) -> None:
         """Initialize config manager.
 
         Args:

@@ -15,17 +15,61 @@ app = typer.Typer(
 )
 
 # Modular Stream Registrations
-from thegent.cli.apps import audit, isolation, plan, run, sync, sys, team
+from thegent.cli.apps import (
+    audit,
+    bench,
+    domain,
+    enterprise,
+    govern,
+    isolation,
+    memory,
+    orchestrate,
+    plan,
+    queue,
+    registry,
+    routing,
+    rules,
+    run,
+    session,
+    skills,
+    sync,
+    sys,
+    team,
+)
+from thegent.cli.apps.project import install_project_app
 from thegent.mesh.main import app as mesh_app
 
 app.add_typer(run.app, name="run", help="Execution: Agent tasks, background runs, and history.")
+app.add_typer(bench.app, name="bench", help="Benchmark: run benchmark suites and persist result rows.")
 app.add_typer(sync.app, name="sync", help="Synchronization: Rules, DAG, work-stream, and catalog.")
+app.add_typer(skills.app, name="skill", help="Skills: Auto-discovery and management of agent skills.")
 app.add_typer(audit.app, name="audit", help="Integrity: System health, security, and planning risk.")
 app.add_typer(plan.app, name="plan", help="Roadmap: DAG tasks, work streams, and initiatives.")
+app.add_typer(queue.app, name="queue", help="Queue: Unified prompt queue for deferred tasks (FR-HAX-001).")
+app.add_typer(rules.app, name="rules", help="Rules: Cross-platform rules synchronization (FR-HAX-002).")
 app.add_typer(team.app, name="team", help="Swarm: Coordination, teammates, and hierarchy.")
+app.add_typer(domain.app, name="domain", help="Domain: mapping and tunnel advisor workflows (WL-124).")
+app.add_typer(govern.app, name="govern", help="Governance: approval/rejection and escalation decisions.")
 app.add_typer(sys.app, name="sys", help="System: Setup, MCP, LSP, and configuration.")
 app.add_typer(isolation.app, name="isolation", help="Isolation: Multi-tenancy, L1/L2 nesting, and SHM.")
 app.add_typer(mesh_app, name="mesh", help="Mesh: Local agent coordination, status, and discovery.")
+app.add_typer(install_project_app, name="install", help="Install: Thegent runtime assets into registered projects.")
+app.add_typer(
+    registry.app, name="registry", help="Registry: Agent capability index, recommendations, and health (WL-034)."
+)
+app.add_typer(
+    routing.app, name="routing", help="Routing: LiteLLM, Pareto router, and model-first routing control (WL-012)."
+)
+app.add_typer(
+    enterprise.app, name="enterprise", help="Enterprise: compliance, GDPR, org hierarchy, key rotation (WL-051)."
+)
+app.add_typer(memory.app, name="memory", help="Memory: agent memory logs, synthesis, and gardening (WL-060).")
+app.add_typer(session.app, name="session", help="Session: resume and inspect background sessions (WL-110).")
+app.add_typer(
+    orchestrate.app,
+    name="orchestrate",
+    help="Orchestrate: sub-agent goal decomposition and execution (WL-088).",
+)
 
 
 # Top-level Shortcuts
@@ -34,6 +78,105 @@ def quick_do(prompt: str = typer.Argument(..., help="Prompt to execute")):
     from thegent.cli.apps.run import run_agent
 
     run_agent(prompt=prompt)
+
+
+@app.command("review", help="WL-107: run a read-only review and validate structured findings.")
+def review_cmd(
+    prompt: str = typer.Argument(..., help="Review request prompt"),
+    agent: str | None = typer.Option(None, "--agent", help="Agent to run for review"),
+    model: str | None = typer.Option(None, "--model", help="LLM model override"),
+    format: str = typer.Option("rich", "--format", help="Output format: rich|json"),
+) -> None:
+    # @trace WL-107
+    from thegent.cli.commands.cli import _format_context_usage_line
+    from thegent.cli.commands.impl import review_impl
+
+    output_format = format.strip().lower()
+    if output_format not in {"rich", "json"}:
+        console.print(f"[red]Unsupported --format '{format}'. Use 'rich' or 'json'.[/red]")
+        raise typer.Exit(2)
+
+    try:
+        result = review_impl(prompt=prompt, agent=agent, model=model)
+    except ValueError as exc:
+        console.print(f"[red]Review output validation failed:[/red] {exc}")
+        raise typer.Exit(2) from exc
+
+    run_exit = result.get("exit_code", 1)
+    if run_exit not in (0, 1):
+        console.print(f"[red]Review run failed:[/red] {result.get('error', '')}")
+        raise typer.Exit(run_exit)
+
+    issues = result["issues"]
+    context_usage = result.get("context_usage")
+    if output_format == "json":
+        payload: dict[str, object] = {
+            "summary": result["summary"],
+            "overall_rating": result["overall_rating"],
+            "issues": issues,
+        }
+        if isinstance(context_usage, dict):
+            payload["context_usage"] = context_usage
+        console.print_json(data=payload)
+    else:
+        console.print(f"[bold]Summary:[/bold] {result['summary']}")
+        console.print(f"[bold]Overall Rating:[/bold] {result['overall_rating']}")
+        context_line = _format_context_usage_line(context_usage)
+        if context_line:
+            console.print(f"[dim]{context_line}[/dim]")
+        if issues:
+            for issue in issues:
+                console.print(
+                    f"- [{issue['severity']}] {issue['file']}:{issue['line']} - "
+                    f"{issue['message']} (fix: {issue['suggestion']})"
+                )
+        else:
+            console.print("[green]No issues found.[/green]")
+    raise typer.Exit(1 if issues else 0)
+
+
+@app.command("resume", help="Resume a session (shortcut for `thegent run resume`).")
+def resume_top_level(
+    session_id: str | None = typer.Argument(None, help="Session ID to resume (defaults to latest resumable)"),
+    prompt: str | None = typer.Option(None, "--prompt", help="Optional follow-up prompt to queue after resume"),
+    skill: list[str] | None = typer.Option(
+        None,
+        "--skill",
+        help="Activate skill instructions by name (repeatable) (WL-101).",
+    ),
+) -> None:
+    from thegent.cli.commands.cli import resume_cmd
+
+    if skill:
+        resume_cmd(session_id=session_id, prompt=prompt, skills=skill)
+        return
+    resume_cmd(session_id=session_id, prompt=prompt)
+
+
+@app.command("fork", help="WL-106: Fork a session (shortcut for `thegent run fork`).")
+def fork_top_level(
+    session_id: str = typer.Argument(..., help="Source session ID to fork"),
+    from_turn: int | None = typer.Option(
+        None,
+        "--from-turn",
+        min=1,
+        help="1-based turn cutoff to copy into the fork (defaults to full history)",
+    ),
+    new_session_id: str | None = typer.Option(None, "--new-session-id", help="Optional explicit ID for forked session"),
+) -> None:
+    from thegent.cli.apps.run import run_fork
+
+    run_fork(session_id=session_id, from_turn=from_turn, new_session_id=new_session_id)
+
+
+@app.command("rollback", help="WL-106: Roll back a session (shortcut for `thegent run rollback`).")
+def rollback_top_level(
+    session_id: str = typer.Argument(..., help="Session ID to roll back"),
+    n_turns: int = typer.Option(..., "--n-turns", min=1, help="Number of latest turns to remove"),
+) -> None:
+    from thegent.cli.apps.run import run_rollback
+
+    run_rollback(session_id=session_id, n_turns=n_turns)
 
 
 @app.command("ps", help="List active background sessions (shortcut for `thegent run ps`).")
@@ -79,6 +222,56 @@ def install_compat(
         url=url,
         install_service=install_service,
     )
+
+
+@app.command("domain-map", hidden=True)
+def domain_map_compat(
+    domain_name: str = typer.Argument(..., help="Domain or subdomain to expose."),
+    target: str = typer.Option("http://localhost:3847", "--target", "-t"),
+    mode: str = typer.Option("advisor", "--mode"),
+    registrar: str = typer.Option("porkbun", "--registrar"),
+    dns_provider: str = typer.Option("cloudflare", "--dns-provider"),
+    tunnel_name: str = typer.Option("thegent", "--tunnel-name"),
+    format: str = typer.Option("rich", "--format", "-F"),
+) -> None:
+    """Compatibility shim for legacy `thegent domain-map` usage."""
+    from thegent.cli.commands.domain_map import domain_map_cmd
+
+    domain_map_cmd(
+        domain=domain_name,
+        target=target,
+        mode=mode,
+        registrar=registrar,
+        dns_provider=dns_provider,
+        tunnel_name=tunnel_name,
+        format=format,
+    )
+
+
+@app.command("help", help="Show inline examples for a command.")
+def help_cmd(
+    command: str = typer.Argument(..., help="Command to show examples for"),
+) -> None:
+    """Show inline usage examples for COMMAND.
+
+    # @trace WL-040 WP-4004
+
+    Example::
+
+        thegent help run
+        thegent help plan
+        thegent help doctor
+    """
+    from thegent.cli.help_examples import show_help_examples
+
+    show_help_examples(command)
+
+
+@app.command("agent-server", help="Run thegent JSON-RPC agent server over stdio.")
+def agent_server_cmd() -> None:
+    from thegent.protocols.jsonrpc_agent_server import serve_stdio
+
+    raise typer.Exit(serve_stdio())
 
 
 @app.callback(invoke_without_command=True)

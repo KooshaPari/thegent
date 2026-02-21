@@ -26,7 +26,7 @@ if ThegentSettings().use_native_shm:
     try:
         import thegent_shm
 
-        thegent_shm.init_shm()
+        thegent_shm.py_init_shm()
         HAS_NATIVE_SHM = True
     except ImportError:
         pass

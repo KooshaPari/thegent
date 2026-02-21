@@ -4,6 +4,39 @@ These rules apply to ALL projects. Project-level CLAUDE.md files supplement (and
 
 ---
 
+# Instruction Architecture (Global vs Project)
+
+This file is the **global instruction index**. Keep it readable, stable, and link-first.
+
+## Layering and Precedence
+
+1. **System + developer prompts** (runtime/platform enforced)
+2. **Global CLAUDE** (`CLAUDE.md` + linked reference docs)
+3. **Project CLAUDE** (repo-local overrides and specifics)
+4. **Task artifacts** (`docs/plans/`, `docs/research/`, `docs/reports/`, `docs/reference/WORK_STREAM.md`)
+
+When layers conflict, higher precedence wins. Project docs should extend global policy, not duplicate it.
+
+## Canonical Roles
+
+| Artifact | Role | Content Rules |
+|----------|------|---------------|
+| `CLAUDE.md` | Global index and critical guardrails | Keep concise; route detail to doc map |
+| `docs/reference/CLAUDE_CORE_GUIDELINES.md` | Full global baseline | Long-form policy source |
+| `docs/reference/CLAUDE_THEGENT_RUNTIME_APPENDIX.md` | Runtime and project operations | thegent-specific execution details |
+| Project-local `CLAUDE.md` | Project overlays | Domain/runtime overrides, local commands |
+
+## Instruction Doc Map
+
+- Global baseline: `docs/reference/CLAUDE_CORE_GUIDELINES.md`
+- Runtime appendix: `docs/reference/CLAUDE_THEGENT_RUNTIME_APPENDIX.md`
+- Governance summary: `docs/governance/GOVERNANCE_SUMMARY.md`
+- Polyglot runtime policy: `docs/governance/POLYGLOT_RUNTIME_COVERAGE_AND_CONVERSION_MATRIX_2026-02-21.md`
+- Active execution ledger: `docs/reference/WORK_STREAM.md`
+- Current upgrade worklog: `docs/reports/2026-02-21-CLAUDE-INSTRUCTION-ARCHITECTURE-UPGRADE-WORKLOG.md`
+
+---
+
 # 🔒 CRITICAL SECURITY RULES - NEVER VIOLATE
 
 ## ⛔ FORBIDDEN: Killing Agent or Terminal Processes
@@ -427,7 +460,7 @@ For significant changes: create `docs/changes/{change-name}/` with `proposal.md`
 - **Test-First**: Write tests BEFORE implementation. Failing test MUST exist before bug fix. Test file before source file.
 - **Suppressions**: Zero new suppressions without inline justification (`# noqa: E501 -- reason`). `suppression-blocker.sh` BLOCKS violations.
 - **Spec Traceability**: All tests MUST reference FR ID via `@pytest.mark.requirement("FR-XXX-NNN")`, `# @trace FR-XXX-NNN`, or test name.
-- **Quality Gate**: `quality-gate.sh` runs on every Stop. Proactively run linters before finishing.
+- **Quality Gate**: `task quality` runs full strict pipeline (max-lines, lint, core-boundary, deprecated-aliases, instruction-architecture, harness-contracts, runtime-contracts). Always run `task quality` before stopping work.
 - **Static Analysis**: When scaffolding, copy templates from `~/.claude/templates/quality/` for detected stack.
 
 ## Coverage Targets
@@ -556,3 +589,135 @@ Canonical: `docs/reference/WORK_STREAM.md`. Claim before starting → mark COMPL
 | `thegent_loop_takeover` (MCP) | Agent injects prompt into running loop |
 
 **Ports:** MCP 3847, proxy 8317. Debug: `thegent run --debug` sets `THGENT_DEBUG=1`.
+
+---
+
+# Polyglot Runtime and Coverage Governance
+
+Canonical matrix: `docs/governance/POLYGLOT_RUNTIME_COVERAGE_AND_CONVERSION_MATRIX_2026-02-21.md`
+
+## Required Baseline
+
+1. Python: `uv` on CPython 3.14 (primary), PyPy 3.11 (secondary), CPython 3.13 (fallback compatibility lane).
+2. Rust: stable `fmt + clippy -D warnings + test`.
+3. Go: `go test ./...` and `go vet ./...` on supported version lanes.
+4. Zig: pinned stable `zig test`.
+5. Mojo: pinned version with parity checks against reference implementations.
+
+## Conversion/Refactor Rules
+
+1. Prefer refactor-in-place before full language conversion.
+2. Convert only when measured SLO/tooling triggers are met and documented.
+3. Every conversion requires baseline metrics, parity harness, and phased cutover plan.
+
+## Frontmatter/Backmatter Defaults
+
+1. Governance/spec docs must use standard frontmatter (`title/date/status/owner/tags`).
+2. Decision-heavy docs must include backmatter summary:
+- decision delta,
+- validation commands,
+- residual risks,
+- follow-up review date.
+
+## CLAUDE Filename/Size Policy
+
+1. Canonical file is `CLAUDE.md` (uppercase).
+2. Typo files like `calude.md` must be merged into canonical `CLAUDE.md` and removed.
+3. If `CLAUDE.md` grows beyond ~20k tokens:
+- keep `CLAUDE.md` as concise index/policy spine,
+- split detailed sections into `docs/docsets/claude/`,
+- maintain explicit links from canonical file.
+
+---
+
+# Context Documentation System
+
+thegent maintains **authoritative context docs** for all integrated technologies in `docs/context/`. These are not tutorials or marketing material — they are **precise technical references** for implementing against each technology.
+
+## Key Principles
+
+- **Before integration:** Check if `docs/context/{technology}.md` exists. If not, create it first.
+- **During implementation:** Reference the context doc for exact API shapes, auth requirements, and patterns.
+- **After research:** Update the relevant context doc with findings; move knowledge from `docs/research/` to `docs/context/` as tech is adopted.
+- **Standalone:** An AI agent should understand the tech from just the context doc, without external references.
+- **No hallucination:** Every claim is verifiable against official docs.
+
+## Organization
+
+| Location | Purpose |
+|----------|---------|
+| `docs/context/GOVERNANCE.md` | Standards, format, required sections, automation |
+| `docs/context/INDEX.md` | Catalog of all context docs by category and priority |
+| `docs/governance/CONTEXT_DOCS_PROCESS.md` | Step-by-step creation, update, and verification process |
+| `docs/context/{technology}.md` | Atomic context doc (single technology) |
+| `docs/context/{technology}/` | Doc set (multi-part documentation) |
+
+## Required Sections (Every Doc)
+
+All context docs MUST include:
+
+1. **Header** — What is it? Source URL + fetch date
+2. **What is {Tech}** — Definition, problem solved, capabilities, thegent integration
+3. **Key Concepts** — Domain-specific terminology (if applicable)
+4. **API/Interfaces** — Exact endpoint/method specs with request/response shapes
+5. **Authentication** — How to authenticate, where to get credentials
+6. **Code Examples** — 1-3 working examples for main use cases
+7. **Sources & References** — Complete citations with URLs and dates
+8. **Quick Reference** — One-page cheat sheet
+
+## Priority Coverage
+
+| Priority | Level | Examples | Status |
+|----------|-------|----------|--------|
+| **P0** | Critical | Ante, Claude Code, Codex, FastMCP, MCP, OpenRouter | 3/8 exist |
+| **P1** | High | WorkOS, AuthKit, Nix, process-compose | 1/8 exist |
+| **P2** | Optional | Stripe, PostHog, Grafana | Create on-demand |
+
+Check `docs/context/INDEX.md` for current coverage and roadmap.
+
+## Workflow
+
+### Create a New Context Doc
+
+1. Check if already exists: `ls docs/context/{technology}.md`
+2. Gather official sources (docs, GitHub, API responses)
+3. Extract technical specs (API, auth, concepts, examples)
+4. Write following template in `GOVERNANCE.md`
+5. Test all code examples
+6. Pass pre-write validation (all required sections present)
+7. Add to `docs/context/INDEX.md`
+
+See `docs/governance/CONTEXT_DOCS_PROCESS.md` for full process (2-4 hours).
+
+### Update an Existing Doc
+
+**Minor** (typo, date refresh): Direct edit, no review needed. Commit: `fix: update {tech} context doc - {description}`
+
+**Major** (API change, version bump): Fetch latest docs, update sections, test examples, request peer review. Commit: `update: {tech} context doc for v{version}`
+
+Refresh any doc > 90 days old. Mark stale docs with `⚠️ Possibly stale - last verified YYYY-MM-DD`.
+
+### Verify Before Using
+
+Before referencing a context doc in code:
+- Header has recent fetch date (< 6 months)
+- No `⚠️ Possibly stale` banner
+- Spot-check 3-5 API examples against official docs
+- Run at least one code example without modification
+
+## Automation
+
+**Pre-write validation** (on write/edit): Ensure doc has all required sections. Reject incomplete docs.
+
+**Weekly staleness check**: Scan all docs, create issues for docs > 90 days old.
+
+**Version release monitoring**: When technology version released, create issue to update context doc.
+
+## Cross-Reference
+
+Context docs link to each other. Common patterns:
+- Harness docs → SDK/protocol docs
+- Protocol docs → implementation examples
+- Auth docs → harness integration guides
+
+Search within `docs/context/INDEX.md` and linked docs; use Ctrl+F to navigate.

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class CrossProjectRegistry:
     """Unified persona registry."""
 
-    def __init__(self, registry_path: Path | None = None):
+    def __init__(self, registry_path: Path | None = None) -> None:
         """Initialize cross-project registry.
 
         Args:

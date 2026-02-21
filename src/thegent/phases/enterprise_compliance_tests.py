@@ -1,7 +1,7 @@
 """Phase15: Enterprise compliance test matrix (EC-001–EC-006)."""
 
 import logging
-from typing import Any
+from typing import Any, ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class EnterpriseComplianceTestMatrix:
     """Test matrix for enterprise compliance."""
 
-    TESTS = [
+    TESTS: ClassVar[list[dict[str, Any]]] = [
         {
             "id": "EC-001",
             "name": "GDPR: Right to erasure compliance",

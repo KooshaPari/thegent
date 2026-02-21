@@ -45,7 +45,7 @@ class WorkStreamSync:
             try:
                 task = parse_task_file(task_file)
                 tasks.append(task)
-            except Exception:
+            except Exception:  # noqa: PERF203 - intentional per-item error handling
                 continue
 
         # Build BACKLOG table rows

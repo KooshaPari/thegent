@@ -1,0 +1,69 @@
+# calibration_api
+
+Source: docs/reference/api/calibration_api.md
+
+---
+
+# calibration API Reference
+
+> **Source**: `src/thegent/ux/calibration.py`
+
+WP-4008: Feedback loops and confidence calibration.
+
+---
+
+## ConfidenceCalibrator
+
+Calibrates agent confidence scores based on operator feedback.
+
+### Methods
+
+#### ConfidenceCalibrator.__init__
+
+```
+__init__(self: Any, settings: ThegentSettings)
+```
+
+---
+
+#### ConfidenceCalibrator.calibrate
+
+```
+calibrate(self: Any, agent_name: str, raw_confidence: float)
+```
+
+Apply calibration bias to a raw confidence score.
+
+---
+
+#### ConfidenceCalibrator.record_feedback
+
+```
+record_feedback(self: Any, agent_name: str, provided_confidence: float, actual_success: bool)
+```
+
+Record feedback to update bias map.
+
+---
+
+---
+
+## calibrate
+
+```
+calibrate(self: Any, agent_name: str, raw_confidence: float)
+```
+
+Apply calibration bias to a raw confidence score.
+
+---
+
+## record_feedback
+
+```
+record_feedback(self: Any, agent_name: str, provided_confidence: float, actual_success: bool)
+```
+
+Record feedback to update bias map.
+
+---

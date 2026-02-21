@@ -1,0 +1,41 @@
+# bio_digital_api
+
+Source: docs/reference/api/bio_digital_api.md
+
+---
+
+# bio_digital API Reference
+
+> **Source**: `src/thegent/work_packages/bio_digital.py`
+
+WP-32002: Bio-Digital Confidence Calibration.
+
+---
+
+## BioDigitalCalibration
+
+Bio-digital confidence calibration.
+
+### Methods
+
+#### BioDigitalCalibration.calibrate
+
+```
+calibrate(self: Any, bio_signal: Any, digital_signal: Any)
+```
+
+Calibrate confidence between bio and digital signals.
+
+---
+
+---
+
+## calibrate
+
+```
+calibrate(self: Any, bio_signal: Any, digital_signal: Any)
+```
+
+Calibrate confidence between bio and digital signals.
+
+---

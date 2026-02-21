@@ -1,7 +1,6 @@
 """Automate work stream operations (read, parse, update)."""
 
 import logging
-import re
 from pathlib import Path
 from typing import Any
 

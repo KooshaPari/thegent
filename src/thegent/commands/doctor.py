@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import shutil
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -40,27 +41,38 @@ class DoctorRunner:
     """Runs environment checks and applies automatic fixes.
 
     Checks performed:
-      1. Python version >= 3.11
-      2. ANTHROPIC_API_KEY env var set
-      3. ~/.thegent/ directory exists
-      4. ~/.thegent/sessions/ directory exists
-      5. pyproject.toml present in cwd
-      6. ruff available on PATH
-      7. cargo available on PATH
-      8. ~/.config/thegent/ MCP config dir exists
+      1.  Python version >= 3.11
+      2.  ANTHROPIC_API_KEY env var set
+      3.  ~/.thegent/ directory exists
+      4.  ~/.thegent/ directory is writable (fix: chmod 700)
+      5.  ~/.thegent/sessions/ directory exists
+      6.  pyproject.toml present in cwd
+      7.  .thegent/config.yaml is valid YAML (fix: thegent config wizard)
+      8.  ruff available on PATH
+      9.  cargo available on PATH
+      10. ~/.config/thegent/ MCP config dir exists
+      11. .shadow-* stale directory cleanup
+      12. .shadow-* directory count > 50 warning
     """
 
     def run_checks(self) -> list[DoctorCheck]:
-        """Run all environment checks and return results."""
+        """Run all environment checks and return results.
+
+        # @trace WL-040 WP-4006
+        """
         checks: list[DoctorCheck] = []
         checks.append(self._check_python_version())
         checks.append(self._check_anthropic_api_key())
         checks.append(self._check_thegent_dir())
+        checks.append(self._check_thegent_dir_writable())
         checks.append(self._check_thegent_sessions_dir())
         checks.append(self._check_pyproject_toml())
+        checks.append(self._check_config_yaml())
         checks.append(self._check_ruff())
         checks.append(self._check_cargo())
         checks.append(self._check_mcp_config_dir())
+        checks.append(self._check_stale_shadow_dirs())
+        checks.append(self._check_shadow_dirs_count())
         return checks
 
     def apply_fixes(self, checks: list[DoctorCheck]) -> list[str]:
@@ -227,4 +239,148 @@ class DoctorRunner:
             message=f"MCP config dir {mcp_config_dir} does not exist",
             fixable=True,
             _fix_fn=_fix,
+        )
+
+    def _check_stale_shadow_dirs(self) -> DoctorCheck:
+        root = Path.cwd()
+        parent = root.parent
+        max_age_hours = int(os.environ.get("THGENT_SHADOW_STALE_HOURS", "24"))
+        cutoff_ts = time.time() - (max_age_hours * 3600)
+        stale: list[Path] = []
+        for p in parent.iterdir():
+            if not p.is_dir() or not p.name.startswith(".shadow-"):
+                continue
+            try:
+                if p.stat().st_mtime < cutoff_ts:
+                    stale.append(p)
+            except OSError:
+                continue
+
+        if not stale:
+            return DoctorCheck(
+                name="stale_shadow_dirs",
+                status="ok",
+                message=f"No stale .shadow-* dirs older than {max_age_hours}h in {parent}",
+            )
+
+        def _fix() -> str:
+            removed = 0
+            for d in stale:
+                shutil.rmtree(d, ignore_errors=False)
+                removed += 1
+            return f"Removed {removed} stale .shadow-* directories from {parent}"
+
+        return DoctorCheck(
+            name="stale_shadow_dirs",
+            status="warn",
+            message=f"Found {len(stale)} stale .shadow-* dirs older than {max_age_hours}h in {parent}",
+            fixable=True,
+            _fix_fn=_fix,
+        )
+
+    def _check_thegent_dir_writable(self) -> DoctorCheck:
+        """Check that ~/.thegent/ is writable and has correct permissions.
+
+        # @trace WL-040 WP-4006
+        """
+        thegent_dir = Path.home() / ".thegent"
+
+        if not thegent_dir.exists():
+            # The other check will catch the missing dir
+            return DoctorCheck(
+                name="thegent_dir_writable",
+                status="ok",
+                message="~/.thegent/ not yet created (will be fixed by thegent_home_dir check)",
+            )
+
+        if os.access(thegent_dir, os.W_OK):
+            return DoctorCheck(
+                name="thegent_dir_writable",
+                status="ok",
+                message=f"{thegent_dir} is writable",
+            )
+
+        def _fix() -> str:
+            import subprocess
+
+            subprocess.run(["chmod", "700", str(thegent_dir)], check=True, timeout=5)
+            return f"chmod 700 {thegent_dir}"
+
+        return DoctorCheck(
+            name="thegent_dir_writable",
+            status="error",
+            message=f"{thegent_dir} is not writable; agent operations will fail",
+            fixable=True,
+            _fix_fn=_fix,
+        )
+
+    def _check_config_yaml(self) -> DoctorCheck:
+        """Check that .thegent/config.yaml (if present) is valid YAML.
+
+        # @trace WL-040 WP-4006
+        """
+        config_path = Path.home() / ".thegent" / "config.yaml"
+
+        if not config_path.exists():
+            # Config file is optional — absence is not an error
+            return DoctorCheck(
+                name="config_yaml",
+                status="ok",
+                message=f"{config_path} not present (will be created on first run)",
+            )
+
+        try:
+            import yaml  # type: ignore[import-untyped]
+
+            with config_path.open("r", encoding="utf-8") as fh:
+                parsed = yaml.safe_load(fh)
+            if parsed is None or isinstance(parsed, dict):
+                return DoctorCheck(
+                    name="config_yaml",
+                    status="ok",
+                    message=f"{config_path} is valid YAML",
+                )
+            return DoctorCheck(
+                name="config_yaml",
+                status="warn",
+                message=f"{config_path} has unexpected type ({type(parsed).__name__}); expected mapping",
+                fixable=False,
+            )
+        except Exception as exc:
+            return DoctorCheck(
+                name="config_yaml",
+                status="error",
+                message=f"{config_path} is invalid YAML: {exc}. Run `thegent config wizard` to set up.",
+                fixable=False,
+            )
+
+    def _check_shadow_dirs_count(self) -> DoctorCheck:
+        """Warn if there are > 50 .shadow-* directories (potential resource leak).
+
+        # @trace WL-040 WP-4006
+        """
+        parent = Path.cwd().parent
+        try:
+            shadow_dirs = [p for p in parent.iterdir() if p.is_dir() and p.name.startswith(".shadow-")]
+        except OSError:
+            shadow_dirs = []
+
+        count = len(shadow_dirs)
+        threshold = int(os.environ.get("THGENT_SHADOW_COUNT_WARN", "50"))
+
+        if count <= threshold:
+            return DoctorCheck(
+                name="shadow_dirs_count",
+                status="ok",
+                message=f"{count} .shadow-* dir(s) in {parent} (threshold: {threshold})",
+            )
+
+        return DoctorCheck(
+            name="shadow_dirs_count",
+            status="warn",
+            message=(
+                f"High number of .shadow-* dirs: {count} in {parent}. "
+                "Consider running `thegent mcp prune --shadow-dirs` to clean up."
+            ),
+            fixable=False,
         )

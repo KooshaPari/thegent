@@ -1,12 +1,11 @@
 """Automated work stream operations (read, parse, update)."""
 
 import logging
-import re
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.utils.helpers import normalize_path, safe_read_file, safe_write_file
+from thegent.utils.helpers import safe_read_file, safe_write_file
 
 logger = logging.getLogger(__name__)
 

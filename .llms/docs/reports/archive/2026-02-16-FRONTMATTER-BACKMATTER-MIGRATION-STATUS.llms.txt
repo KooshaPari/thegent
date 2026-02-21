@@ -1,0 +1,134 @@
+# 2026-02-16-FRONTMATTER-BACKMATTER-MIGRATION-STATUS
+
+Source: docs/reports/archive/2026-02-16-FRONTMATTER-BACKMATTER-MIGRATION-STATUS.md
+
+---
+
+# Frontmatter/Backmatter Migration Status — Reality Check
+
+> **Date**: 2026-02-16  
+> **Purpose**: Verify Python frontmatter + Rust/Zig/Nim/Go backmatter migration status; reconcile plan "complete" claims with actual codebase state.
+
+---
+
+## Executive Summary
+
+**Plan says**: Phase 1 complete (BKM-01–04), Phase 2–3 pending.  
+**Reality**: Phase 1 is **partially complete**. BKM-02 (thegent-parser) integration is **missing** in Python; BKM-06 (thegent-git) is **partially done** (snapshot.py uses it). Several legacy patterns (subprocess, lsof, os.environ, shell) remain across 35+ files.
+
+---
+
+## 1. BKM Task Status (Plan vs Reality)
+
+| Task | Plan Status | Reality | Notes |
+|------|-------------|---------|-------|
+| **BKM-01** thegent-resources | ✅ Complete | ✅ Complete | load_based_limits.py integrates; fallback to psutil |
+| **BKM-02** thegent-parser | ✅ Complete | ✅ **Integrated** | contracts/parser.py and output_parser.py use `_get_native_parser()`; Rust crate has extract_xml_tags, strip_think_blocks, strip_noise; Python fallback when THGENT_USE_NATIVE_PARSER=0 or extension unavailable |
+| **BKM-03** thegent-crypto | ✅ Complete | ✅ Complete | governance/signatures.py uses `_get_native_crypto()` |
+| **BKM-04** load_based_limits | ✅ Complete | ✅ Complete | Uses thegent-resources when THGENT_USE_NATIVE_RESOURCES=1 |
+| **BKM-05** State-SHM | Pending | Pending | crates/thegent-shm exists; no Python integration |
+| **BKM-06** thegent-git | Pending | ⚠️ **Partially done** | forensics/snapshot.py uses thegent_git when available; subprocess fallback |
+| **BKM-07** hook-dispatcher secret scan | Pending | Pending | — |
+| **BKM-08** thegent-discovery | Pending | ⚠️ **Partially done** | discovery.py has `thegent_discovery` import path; config has THGENT_USE_NATIVE_DISCOVERY |
+| **BKM-09** thegent-watcher | Future | Crate exists | — |
+| **BKM-10** JSONL streaming | Future | Pending | — |
+| **BKM-11** Native governance scanner | Future | Pending | — |
+
+---
+
+## 2. Remaining Legacy Patterns
+
+### 2.1 Subprocess Spawns (45+ usages)
+
+| Location | Pattern | BKM Target |
+|----------|---------|------------|
+| `cliproxy_manager.py` | lsof, kill, launchctl | BKM-01 or thegent-sys |
+| `cli_impl.py` | lsof -p | BKM-01 |
+| `git_lock_manage.py` | lsof (lock check) | BKM-01 or custom |
+| `main.py` | lsof, ps, mdutil, subprocess | Various |
+| `forensics/snapshot.py` | git subprocess (fallback) | BKM-06 ✅ when native |
+| `discovery.py` | ps, git, npx | BKM-08 |
+| `git_parallelism.py` | git status, rev-parse | BKM-06 |
+| `orchestration/shadow.py` | git branch, merge | BKM-06 |
+| `infra/worktree.py` | git worktree | BKM-06 |
+| `governance/scanner.py` | ruff, bandit, etc. | BKM-11 |
+| `load_based_limits.py` | thegent-resources subprocess | BKM-01 ✅ (acceptable) |
+
+### 2.2 os.environ / os.getenv (35+ files)
+
+| Category | Files | Migration Target |
+|----------|-------|------------------|
+| Migrated | dex_main.py, heliosShield_bridge.py, config.py | ThegentSettings |
+| **Not migrated** | install.py, mcp_server.py, cli_impl.py, main.py, doctor.py, etc. | ThegentSettings |
+
+**Count**: ~35 files still use `os.environ` or `os.getenv` in src/thegent.
+
+### 2.3 Shell Scripts (258 .sh files)
+
+| Category | Count | Plan |
+|----------|-------|------|
+| hooks/lib/ | ~25 | FULL_SHELL_TO_RUST: common.sh, git-cache, git-wrapper → thegent-hooks |
+| hooks/*.sh (event) | ~80+ | Thin wrappers calling thegent-hooks |
+| scripts/ | ~40+ | Many KEEP SHELL (dev, one-off) |
+| Other | ~100+ | Templates, worktrees |
+
+**Plan**: FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md — migrate hot-path hooks to Rust; keep dev/ops scripts.
+
+### 2.4 Go (2 files)
+
+- `templates/quality/runtime/goleak-config.go` — test fixture for Go leak detection; not a migration target.
+
+### 2.5 TypeScript (27 files)
+
+- Mostly `docs/.vitepress/`, `playwright.config.ts`, templates — docs/tooling. Plan does not target TS migration.
+
+---
+
+## 3. Critical Gap: BKM-02 Parser Integration
+
+**Docs claim** (BKM_PHASE_1_COMPLETION_REPORT, FRONTMATTER_BACKMATTER_INTEGRATION_POINTS):
+
+- `contracts/parser.py` → `extract_tags()` with `_get_native_parser()`
+- `output_parser.py` → `strip_noise()`, `strip_think_blocks()` with `_get_native_parser()`
+
+**Actual code**:
+
+- `contracts/parser.py`: Pure Python `IncrementalXMLParser`; no native import.
+- `output_parser.py`: Pure Python regex; no native import.
+
+**Action**: Add `_get_native_parser()` and integration in both modules per FRONTMATTER_BACKMATTER_INTEGRATION_POINTS.md §1.2.
+
+---
+
+## 4. Crates That Exist vs Integrated
+
+| Crate | Exists | Python Integration |
+|-------|--------|---------------------|
+| thegent-resources | ✅ | ✅ load_based_limits |
+| thegent-parser | ✅ | ❌ Missing |
+| thegent-crypto | ✅ | ✅ signatures.py |
+| thegent-git | ✅ | ✅ snapshot.py |
+| thegent-discovery | ✅ | ⚠️ discovery.py (lazy import) |
+| thegent-shm | ✅ | ❌ |
+| thegent-watcher | ✅ | ❌ |
+| thegent-hooks | ✅ | hook-dispatcher (Rust) |
+| thegent-maif, path-resolve, tool-detect, etc. | ✅ | Various |
+
+---
+
+## 5. Recommended Next Actions
+
+1. **BKM-02 integration** (P1): Add `_get_native_parser()` to contracts/parser.py and output_parser.py; wire `extract_xml_tags`, `strip_noise`, `strip_think_blocks` with Python fallback.
+2. **Env migration** (P2): Migrate remaining ~13+ files from os.environ to ThegentSettings (per 2026-02-19-HOOK-FIX-AND-MIGRATION-COMPLETE.md).
+3. **Phase 2 BKM tasks** (P2): BKM-05 State-SHM, BKM-07 hook-dispatcher secret scan, BKM-08 discovery consolidation.
+4. **lsof replacement** (P3): cliproxy_manager, cli_impl, git_lock_manage still use lsof; consider thegent-resources or dedicated Rust binary for FD/process queries.
+
+---
+
+## 6. References
+
+- [PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md](../research/PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md)
+- [FRONTMATTER_BACKMATTER_INTEGRATION_POINTS.md](../reference/FRONTMATTER_BACKMATTER_INTEGRATION_POINTS.md)
+- [FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md](../plans/FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md)
+- [BKM_PHASE_1_COMPLETION_REPORT.md](./BKM_PHASE_1_COMPLETION_REPORT.md)
+- [2026-02-19-HOOK-FIX-AND-MIGRATION-COMPLETE.md](./2026-02-19-HOOK-FIX-AND-MIGRATION-COMPLETE.md)

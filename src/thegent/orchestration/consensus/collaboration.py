@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 from thegent.config import ThegentSettings
-from thegent.discovery import DiscoveryRegistry
+from thegent.discovery import list_discovered_agents
 
 _log = logging.getLogger(__name__)
 
@@ -16,16 +16,17 @@ class CollaborativeSession:
         self.settings = settings
         self.task_id = task_id
         self.participants: list[str] = []  # Agent names/IDs
-        self.registry = DiscoveryRegistry(settings.session_dir)
+        self._session_dir = settings.session_dir
 
     def recruit_participants(self, needed_capabilities: list[str]):
         """Recruit external agents based on capabilities (including P2P)."""
         # 1. Check local registry
         for cap in needed_capabilities:
-            matches = self.registry.find_by_capability(cap)
+            agents = list_discovered_agents(self._session_dir)
+            matches = [a for a in agents if cap in a.get("capabilities", [])]
             if matches:
-                self.participants.append(matches[0].agent)
-                _log.info("Recruited local %s for capability %s", matches[0].agent, cap)
+                self.participants.append(matches[0].get("agent", "unknown"))
+                _log.info("Recruited local %s for capability %s", matches[0].get("agent"), cap)
 
         # 2. WP-13003: Decentralized P2P recruitment
         from thegent.discovery.p2p.protocol import P2PDiscovery

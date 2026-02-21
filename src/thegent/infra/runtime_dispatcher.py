@@ -9,7 +9,7 @@ This module handles the 'splitting' of code into optimal paths for:
 import logging
 import sys
 from collections.abc import Callable
-from typing import Any, Dict, Optional, Union
+from typing import Any, Union
 
 logger = logging.getLogger(__name__)
 
@@ -161,8 +161,45 @@ except ImportError:
 
 
 def _python_route_logic(task: str, agents: list) -> Any:
-    # Pure python JIT-friendly logic
-    pass
+    """Pure python JIT-friendly routing logic - keyword-based task classification."""
+    task_lower = task.lower()
+
+    # Keywords for different agent types
+    code_keywords = ("implement", "code", "write", "refactor", "fix", "debug", "patch")
+    research_keywords = ("research", "search", "find", "explore", "analyze", "summarize")
+    plan_keywords = ("plan", "design", "architect", "spec", "document")
+
+    # Score each agent based on task affinity
+    best_agent = None
+    best_score = -1
+
+    for agent in agents:
+        agent_name = getattr(agent, "name", str(agent)).lower()
+        score = 0
+
+        if any(kw in task_lower for kw in code_keywords):
+            if "implementer" in agent_name or "coder" in agent_name:
+                score += 10
+            elif "agent" in agent_name:
+                score += 5
+
+        if any(kw in task_lower for kw in research_keywords):
+            if "research" in agent_name or "search" in agent_name:
+                score += 10
+
+        if any(kw in task_lower for kw in plan_keywords):
+            if "planner" in agent_name or "architect" in agent_name:
+                score += 10
+
+        # Default fallback scoring
+        if score == 0:
+            score = 1
+
+        if score > best_score:
+            best_score = score
+            best_agent = agent
+
+    return best_agent
 
 
 router_dispatcher = PerformanceModule("router")

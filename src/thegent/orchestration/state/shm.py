@@ -30,7 +30,7 @@ class SHMSystem:
                 import thegent_shm
 
                 # BKM-05: Use global init_shm and also instantiate interface if needed for direct calls
-                thegent_shm.init_shm(str(self.shm_path))
+                thegent_shm.py_init_shm(str(self.shm_path))
                 self._interface = thegent_shm.SHMInterface(str(self.shm_path))
                 _log.debug("Initialized native SHM at %s", self.shm_path)
             except ImportError:
@@ -58,7 +58,7 @@ class SHMSystem:
         if self._interface:
             self._interface.award_xp(amount)
 
-    def get_xp_state(self) -> dict[str, Any | None]:
+    def get_xp_state(self) -> dict[str, Any | None] | None:
         if self._interface:
             return self._interface.get_xp_state()
         return None

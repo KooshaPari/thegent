@@ -1,0 +1,41 @@
+# impact_simulation_api
+
+Source: docs/reference/api/impact_simulation_api.md
+
+---
+
+# impact_simulation API Reference
+
+> **Source**: `src/thegent/work_packages/impact_simulation.py`
+
+WP-29002: Societal Impact Simulation.
+
+---
+
+## SocietalImpactSimulator
+
+Simulate societal impact of actions.
+
+### Methods
+
+#### SocietalImpactSimulator.simulate
+
+```
+simulate(self: Any, action: dict[(str, Any)])
+```
+
+Simulate impact of an action.
+
+---
+
+---
+
+## simulate
+
+```
+simulate(self: Any, action: dict[(str, Any)])
+```
+
+Simulate impact of an action.
+
+---

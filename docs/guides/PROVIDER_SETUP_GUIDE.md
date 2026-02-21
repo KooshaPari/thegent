@@ -4,6 +4,13 @@ Per-provider OAuth, token-file, and refresh instructions for thegent + CLIProxyA
 
 ---
 
+## Primary cliproxy/provider docs
+
+- This guide: `docs/guides/PROVIDER_SETUP_GUIDE.md` (operational setup, login, routing, troubleshooting)
+- Public docsite provider quickstart: `docs/site/guide/providers.md`
+- Provider model catalog: `docs/reference/PROVIDER_MODEL_REFERENCE.md`
+- Adapter behavior: `docs/contracts/PROVIDER_ADAPTER_CONTRACTS.md` and `docs/contracts/FALLBACK_POLICY.md`
+
 ## Quick start: get proxy agents passing
 
 All providers use CLIProxyAPIPlus native config. Provider/model definitions are internal (no external config dependency):
@@ -51,23 +58,188 @@ All providers use `thegent cliproxy login <provider>`. **OAuth (preferred):** br
 
 ---
 
-## Cursor (cursor-api + zero-action)
+## Provider model mapping (practical)
 
-**thegent auto-injection:** When `THGENT_CURSOR_API_URL` and `THGENT_CURSOR_API_TOKEN` are set, thegent injects the cursor block at `thegent cliproxy ensure-config` / `thegent mcp up`:
-- **sk-... token** (from cursor-api `/build-key`): writes to `{auth-dir}/cursor-session-token.txt`, uses `token-file` (CLIProxyAPIPlus direct flow)
-- **AUTH_TOKEN** (for zero-action): uses `auth-token` (CLIProxyAPIPlus zero-action: IDE + `/tokens/add`)
+Use this table when choosing harness commands (`clode`, `dex`, `roid`) and cliproxy login targets.
 
-**Option A – Zero-action (recommended):** Log in to Cursor IDE only. Set `THGENT_CURSOR_API_TOKEN` to cursor-api `AUTH_TOKEN`:
+| Alias | Typical model ID | Primary provider route(s) | Login command |
+|-------|------------------|---------------------------|---------------|
+| `haiku` | `claude-haiku-4.5` | `claude`, `antigravity`, `codex`, `kiro` | `thegent cliproxy login claude` |
+| `opus` | `claude-opus-4.6` | `claude`, `antigravity`, `kiro` | `thegent cliproxy login claude` |
+| `sonnet` | `anthropic/claude-sonnet-4-20250514` | `openrouter` | `thegent cliproxy login claude` (or `openrouter` route config) |
+| `flash` | `gemini-3-flash` | `gemini` (or proxy-mapped alternatives) | `thegent cliproxy login gemini` |
+| `mini` | `gpt-5-mini` | `codex`/OpenAI-compatible routes | `thegent cliproxy login codex` |
+| `glm` | `glm-5` | `iflow`, `kilo`, `nim`, `minimax` (catalog dependent) | `thegent cliproxy login iflow` / `nim` / `minimax` |
+| `max` | `minimax-m2.5` | `minimax` | `thegent cliproxy login minimax` |
+| `composer` | Cursor/OpenAI-compatible model alias | `cursor` + configured backend route | `thegent cliproxy login cursor` |
+
+Check current resolved routing before long runs:
+
+```bash
+thegent resolve-model-route -M claude-haiku-4.5
+thegent resolve-model-route -M gemini-3-flash
+thegent list-models --provider minimax
+```
+
+## WL-118: Ollama alias normalization map
+
+For local Ollama routing, thegent normalizes these provider aliases to canonical `ollama` before route/model resolution:
+
+| Input alias | Canonical provider |
+|-------------|--------------------|
+| `ollama-local` | `ollama` |
+| `local-ollama` | `ollama` |
+| `ollama-localhost` | `ollama` |
+| `ollama@localhost` | `ollama` |
+
+Normalization is case-insensitive and trims surrounding whitespace, so values like ` OLLAMA-LOCAL ` and `local-ollama` resolve identically.
+
+## WL-118: `thegent doctor` Ollama remediation playbook
+
+Use `thegent doctor` to validate local Ollama routing prerequisites before running `--provider ollama`.
+
+| Doctor output signal | Meaning | Actionable remediation |
+|---|---|---|
+| `Ollama CLI not found in PATH` | `ollama` binary is missing | Install from `https://ollama.com/download`, then reopen shell and run `which ollama` |
+| `daemon is not reachable on 127.0.0.1:11434` | daemon not running/listening | Start daemon: `ollama serve`, then re-run `thegent doctor` |
+| `daemon probe timed out on 127.0.0.1:11434` | daemon hung or overloaded | Restart daemon and verify endpoint: `curl http://127.0.0.1:11434/api/tags` |
+| `reachable ... but no local models are installed` | daemon is up but model catalog empty | Pull at least one model, for example: `ollama pull llama3.3` |
+| `endpoint returned HTTP <code>` | daemon returned an API error | Check `ollama serve` logs, confirm `/api/tags` returns HTTP 200, then retry |
+
+Quick remediation loop:
+
+```bash
+thegent doctor
+ollama serve
+ollama pull llama3.3
+curl http://127.0.0.1:11434/api/tags
+thegent doctor
+```
+
+## API key env vars and auth mode
+
+| Env var | Used by | Typical mode |
+|---------|---------|--------------|
+| `ANTHROPIC_API_KEY` | Claude/Anthropic-compatible path | OAuth-derived token or direct key |
+| `OPENAI_API_KEY` | OpenAI/Codex-compatible path | OAuth-derived token, direct key, or `sk-dummy` for local proxy adapter flows |
+| `GOOGLE_API_KEY` | Gemini direct path | Direct API key |
+| `THGENT_ZEN_API_KEY` | Zen provider path | Direct API key |
+
+Notes:
+- For most cliproxy providers, preferred auth is `thegent cliproxy login <provider>` (OAuth/token-file).
+- API-key-only providers in this guide: `minimax`, `nim`.
+- For Codex CLI against local cliproxy, `OPENAI_BASE_URL=http://127.0.0.1:8317/v1` with a proxy-accepted key (`sk-dummy` in local adapter examples) is expected.
+
+## Adapter vs native behavior
+
+Use adapter mode when you want one endpoint and provider failover. Use native mode when you must bypass thegent/cliproxy routing.
+
+| Mode | What happens | Command pattern |
+|------|--------------|-----------------|
+| Adapter (default) | Harness routes through thegent + cliproxy provider model mapping | `clode haiku ...`, `dex flash ...`, `thegent run ...` |
+| Native bypass (`clode`) | Calls native Claude CLI directly | `clode --native` |
+| Native bypass (`dex`) | Calls native Codex CLI directly | `dex --native` |
+| Droid alias passthrough (`roid`) | Rewrites alias to droid model flag and forwards args | `roid flash ...` / `roid flash exec ...` |
+
+## Failover expectations
+
+- Routing policy is controlled by `THGENT_DEFAULT_ROUTING` and per-command `-R/--routing`.
+- `prefer_direct`: try direct/provider-native routes first.
+- `prefer_proxy`: bias proxy routes.
+- `failover`: attempt alternate provider routes for the same model family when primary route fails.
+- Adapter normalization fallback policy is controlled separately (`docs/contracts/FALLBACK_POLICY.md`), including strict providers and confidence thresholds.
+- Verify route behavior quickly with:
+
+```bash
+thegent run "Output only 1" -M gemini-3-flash -R failover
+thegent run "Output only 1" -M claude-haiku-4.5 -R prefer_direct
+```
+
+## clode / dex / roid practical examples
+
+### Interactive
+
+```bash
+# Claude harness (model alias)
+clode haiku
+
+# Codex harness (model alias)
+dex flash
+
+# Droid harness via alias
+roid flash
+```
+
+### Headless exec / CI-style
+
+```bash
+# clode headless print (validated by doctor check path)
+clode haiku --print "Respond with exactly: pong"
+
+# dex headless print (validated by doctor check path)
+dex flash --print "Respond with exactly: pong"
+
+# roid exec passthrough preflight (headless command path)
+roid flash exec --help
+```
+
+### Provider-specific routing checks before execution
+
+```bash
+thegent cliproxy login claude
+thegent cliproxy login codex
+thegent cliproxy login gemini
+thegent doctor
+```
+
+---
+
+## Cursor (cursor-api + zero-action) — Phase 2
+
+> G-CP-01 / G-CP-02 / G-CP-03 — implements the full Cursor dedicated block with
+> token-file provider, automatic refresh, and rebindExecutors (WL-018).
+
+### CLIProxy cursor: schema
+
+CLIProxyAPIPlus accepts a `cursor:` top-level key. Two auth variants:
+
+| Variant | When to use | Config key |
+|---------|-------------|------------|
+| `token-file` | sk-... from cursor-api `/build-key` | `token-file: "<path>"` |
+| `auth-token` | zero-action (IDE auto-injects) | `auth-token: "${CURSOR_API_AUTH_TOKEN}"` |
+
+### Option A — Zero-action (recommended)
+
+Log in to Cursor IDE only. Set `THGENT_CURSOR_API_TOKEN` to cursor-api `AUTH_TOKEN`:
 
 ```yaml
+# ~/.config/thegent/cliproxy-config.yaml
 cursor:
   - cursor-api-url: "http://127.0.0.1:3000"
     auth-token: "${CURSOR_API_AUTH_TOKEN}"   # Must match cursor-api AUTH_TOKEN env
 ```
 
-Token is auto-read from Cursor IDE storage (`state.vscdb`). No manual copy.
+Token is auto-read from Cursor IDE storage (`state.vscdb`). No manual copy required.
 
-**Option B – Manual (token-file):** Run cursor-api `/build-key`, put `sk-...` in a file:
+### Option B — token-file (Phase 2)
+
+Run cursor-api `/build-key`, write the `sk-...` token to a file:
+
+```bash
+# Step 1: start cursor-api (wisdgod)
+cursor-api --port 3000
+
+# Step 2: build a session key
+TOKEN=$(curl -s http://127.0.0.1:3000/build-key | jq -r .key)
+echo "$TOKEN" > ~/.cursor/session-token.txt
+chmod 600 ~/.cursor/session-token.txt
+
+# Step 3: set env vars (or add to ~/.config/thegent/cliproxy-config.yaml)
+export THGENT_CURSOR_API_URL=http://127.0.0.1:3000
+export THGENT_CURSOR_TOKEN_FILE=~/.cursor/session-token.txt
+```
+
+CLIProxy config (written automatically by `thegent cliproxy ensure-config`):
 
 ```yaml
 cursor:
@@ -75,7 +247,47 @@ cursor:
     cursor-api-url: "http://127.0.0.1:3000"
 ```
 
-**Refresh:** cursor-api `/tokens/refresh` (integrated when using token manager).
+### Token refresh (automatic)
+
+`CursorTokenProvider` re-reads the token file every `THGENT_CURSOR_TOKEN_REFRESH_INTERVAL`
+seconds (default 300). On mtime change the token is considered rotated.
+
+When the token rotates, `CursorExecutorManager.rebind_executors()` closes all active
+httpx sessions so the next request uses the new bearer token. No manual restart needed.
+
+```bash
+# Override refresh interval (e.g. 60 s for short-lived tokens)
+export THGENT_CURSOR_TOKEN_REFRESH_INTERVAL=60
+```
+
+### Verifying the connection
+
+```bash
+thegent run "Output only the number 1" cursor
+# Expected: exit 0, stdout contains "1"
+
+# Or via proxy health check
+curl -s http://127.0.0.1:8317/v1/models | jq '.models[] | select(.id | startswith("cursor"))'
+```
+
+### Auto-discovery
+
+When `THGENT_CURSOR_TOKEN_FILE` is not set, thegent probes these paths in order:
+
+1. `~/.cursor-server/session-token.txt`
+2. `~/.cursor/session-token.txt`
+3. `~/.config/cursor/session-token.txt`
+
+The first readable file wins.
+
+### Environment variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `THGENT_CURSOR_API_URL` | `http://127.0.0.1:3000` | cursor-api base URL |
+| `THGENT_CURSOR_API_TOKEN` | `` | sk-... or AUTH_TOKEN (written to token file when sk-...) |
+| `THGENT_CURSOR_TOKEN_FILE` | auto | Override token-file path |
+| `THGENT_CURSOR_TOKEN_REFRESH_INTERVAL` | 300 | Seconds between token re-reads |
 
 ---
 
@@ -257,106 +469,77 @@ export ZEN_API_KEY="<your-zen-key>"        # recognized as fallback
 
 ---
 
-## EXTENSION_SUMMARY
+## Troubleshooting by symptom
 
-**Extended on:** 2026-02-17  
-**Extended by:** Claude Code
+### Symptom: `OAuth credentials not found` / login prompts repeat
 
-### Changes Made
-1. Added practical implementation patterns
-2. Added configuration examples
-3. Enhanced cross-references to related documentation
-
-### Cross-References Added
-- Related research and implementation guides
-- WORK_STREAM.md for tracking
-
-### Practical Additions
-- Implementation templates
-- Configuration examples
-- Best practices
-
----
-
-## 12. Provider Troubleshooting
-
-### 12.1 OAuth Issues
-
-**Symptom:** OAuth fails, token not stored.
-
-**Solution:**
 ```bash
-# Check token storage location
-cat ~/.cli-proxy-api/tokens/*.json
-
-# Re-run OAuth with verbose
-thegent cliproxy login claude --verbose
-
-# Check proxy logs
-tail -f ~/.cli-proxy-api/logs/*.log
+thegent cliproxy login claude --force
+thegent cliproxy login codex --force
+thegent cliproxy login gemini --force
+thegent doctor
 ```
 
-### 12.2 API Key Issues
+Check token/config presence:
 
-**Symptom:** "Invalid API key" error.
-
-**Solution:**
 ```bash
-# Verify API key format
-echo $MINIMAX_API_KEY | head -c 10
+ls -la ~/.cli-proxy-api
+thegent cliproxy ensure-config
+thegent cliproxy restart
+```
 
-# Re-enter API key
+### Symptom: `Invalid API key` (MiniMax/NIM)
+
+```bash
 thegent cliproxy login minimax --force
-
-# Check key in config
-cat ~/.cli-proxy-api/config.toml | grep -A5 minimax
+thegent cliproxy login nim --force
+thegent cliproxy restart
+thegent list-models --provider minimax
 ```
 
-### 12.3 Token Refresh Issues
+### Symptom: model not found / wrong model-route provider
 
-**Symptom:** "Token expired" errors.
-
-**Solution:**
 ```bash
-# Refresh all tokens
-thegent cliproxy tokens refresh
-
-# Check token expiry
-thegent cliproxy tokens status
-
-# Manual OAuth re-login
-thegent cliproxy login claude
+thegent resolve-model-route -M glm-5
+thegent list-models --provider iflow
+thegent list-models --provider nim
 ```
 
----
+If route is wrong for your intent, explicitly pin provider/model in command options.
 
-## 13. Environment Variables Reference
+### Symptom: headless harness run times out
+
+```bash
+clode haiku --print "respond with pong"
+dex flash --print "respond with pong"
+roid flash exec --help
+```
+
+If still failing, check for active conflicting sessions and rerun:
+
+```bash
+thegent ps
+thegent doctor
+```
+
+### Symptom: Codex cannot talk to cliproxy
+
+```bash
+THGENT_CLIPROXY_ADAPTER=1 thegent mcp up
+thegent mgmt verify-codex-cliproxy
+```
+
+Manual sanity:
+
+```bash
+OPENAI_BASE_URL=http://127.0.0.1:8317/v1 OPENAI_API_KEY=sk-dummy codex exec - "Output only 1" --model gemini-3-flash
+```
+
+## Operational env vars
 
 | Variable | Purpose | Default |
-|----------|---------|----------|
-| `CLIPROXY_PORT` | Proxy port | 8317 |
-| `CLIPROXY_ADAPTER` | Enable adapter | 0 |
-| `THGENT_DEBUG` | Debug mode | 0 |
-| `THGENT_OUTPUT_FORMAT` | Output format | rich |
-
----
-
-## 14. Extension Summary
-
-**Extended on:** 2026-02-17  
-**Extended by:** Claude Code
-
-### Changes Made
-
-1. **Added Section 12:** Provider Troubleshooting
-   - OAuth issues
-   - API key issues
-   - Token refresh issues
-
-2. **Added Section 13:** Environment Variables Reference
-
-### Practical Additions
-
-- Debug commands for each issue type
-- Configuration verification commands
-- Environment variable reference table
+|----------|---------|---------|
+| `THGENT_DEFAULT_ROUTING` | Route policy (`prefer_direct`, `prefer_proxy`, `failover`) | `prefer_direct` |
+| `THGENT_DEBUG` | Enable debug tags and verbose diagnostics | `0` |
+| `THGENT_CLIPROXY_ADAPTER` | Enable Responses->Chat adapter for Codex via cliproxy | `0` |
+| `THGENT_CURSOR_TOKEN_REFRESH_INTERVAL` | Cursor token-file refresh cadence (seconds) | `300` |

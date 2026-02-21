@@ -1,0 +1,72 @@
+# config_provider_cp_api
+
+Source: docs/reference/api/config_provider_cp_api.md
+
+---
+
+# config_provider_cp API Reference
+
+> **Source**: `src/thegent/governance/config_provider_cp.py`
+
+WP-10002: ControlPlaneConfigProvider implementation for Control Plane Phase 2.
+
+---
+
+## ControlPlaneConfigProvider
+
+Connects to the long-running control-plane service for configuration.
+
+Applies full resolution order (request -&gt; session -&gt; tenant -&gt; stamp -&gt; global)
+server-side to ensure multi-tenant isolation.
+
+### Methods
+
+#### ControlPlaneConfigProvider.__init__
+
+```
+__init__(self: Any, url: str, timeout: float)
+```
+
+---
+
+#### ControlPlaneConfigProvider.get_tenant_config
+
+```
+get_tenant_config(self: Any, tenant_id: str)
+```
+
+Fetch raw tenant config via CP API.
+
+---
+
+#### ControlPlaneConfigProvider.resolve
+
+```
+resolve(self: Any, tenant_id: Any, session_id: Any, request_overrides: Any, keys: Any)
+```
+
+Resolve config via Control Plane API.
+
+---
+
+---
+
+## get_tenant_config
+
+```
+get_tenant_config(self: Any, tenant_id: str)
+```
+
+Fetch raw tenant config via CP API.
+
+---
+
+## resolve
+
+```
+resolve(self: Any, tenant_id: Any, session_id: Any, request_overrides: Any, keys: Any)
+```
+
+Resolve config via Control Plane API.
+
+---

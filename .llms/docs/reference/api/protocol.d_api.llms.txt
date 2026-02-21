@@ -1,0 +1,7541 @@
+# protocol.d_api
+
+Source: docs/reference/api/protocol.d_api.md
+
+---
+
+# protocol.d API Reference
+
+> **Source**: `.venv/lib/pypy3.11/site-packages/playwright/driver/package/types/protocol.d.ts`
+
+## Classes
+
+### contained
+
+Set if another request triggered this request (e.g. preflight).
+
+---
+
+### names
+
+Collects class names for the node with given id and all of it's child nodes.
+
+---
+
+### selectors
+
+The a component, which represents the number of ID selectors.
+
+---
+
+### variables
+
+Exception details.
+
+---
+
+## Interfaces
+
+### AXNode
+
+A node in the accessibility tree.
+
+---
+
+### AXProperty
+
+The text alternative of this node in the current context.
+
+---
+
+### AXRelatedNode
+
+Reason for the value being invalid, if it is.
+
+---
+
+### AXValue
+
+A single computed AX property.
+
+---
+
+### AXValueSource
+
+A single source for a computed AX property.
+
+---
+
+### Account
+
+Corresponds to IdentityRequestAccount
+
+---
+
+### AdFrameStatus
+
+Indicates whether a frame has been identified as an ad and why.
+
+---
+
+### AdScriptAncestry
+
+Id of scriptId's debugger.
+
+---
+
+### AddressField
+
+3-digit card verification code.
+
+---
+
+### AddressFields
+
+A list of address fields.
+
+---
+
+### AffectedCookie
+
+Information about a cookie that is affected by an inspector issue.
+
+---
+
+### AffectedFrame
+
+Information about the frame affected by an inspector issue.
+
+---
+
+### AffectedRequest
+
+Information about a request that is affected by an inspector issue.
+
+---
+
+### Animation
+
+Animation instance.
+
+---
+
+### AnimationEffect
+
+AnimationEffect instance
+
+---
+
+### AppManifestError
+
+Error while paring app manifest.
+
+---
+
+### AppManifestParsedProperties
+
+Parsed app manifest properties.
+
+---
+
+### AssociatedCookie
+
+The cookie object representing the cookie.
+
+---
+
+### AttributionReportingAggregatableDebugReportingData
+
+duration in seconds
+
+---
+
+### AttributionReportingFilterDataEntry
+
+Storage quota (bytes).
+
+---
+
+### AttributionReportingFilterPair
+
+duration in seconds
+
+---
+
+### AudioListener
+
+Protocol object for AudioListener
+
+---
+
+### AudioNode
+
+Protocol object for AudioNode
+
+---
+
+### AudioParam
+
+Protocol object for AudioParam
+
+---
+
+### AuthChallenge
+
+Authorization challenge for HTTP status code 401 or 407.
+
+---
+
+### AuthChallengeResponse
+
+Response to an AuthChallenge.
+
+---
+
+### BackForwardCacheBlockingDetails
+
+Types of not restored reasons for back-forward cache.
+
+---
+
+### BackForwardCacheNotRestoredExplanation
+
+Column number in the script (0-based).
+
+---
+
+### BackForwardCacheNotRestoredExplanationTree
+
+Not restored reason
+
+---
+
+### BackendNode
+
+Backend node with a friendly name.
+
+---
+
+### BaseAudioContext
+
+Protocol object for BaseAudioContext
+
+---
+
+### BlockPattern
+
+WebRTC packetReordering feature.
+
+---
+
+### BlockedSetCookieWithReason
+
+A cookie which was not stored from a response with the corresponding reason.
+
+---
+
+### BounceTrackingIssueDetails
+
+One of the deprecation names from third_party/blink/renderer/core/frame/deprecation/deprecation.json5
+
+---
+
+### Bounds
+
+Browser window bounds information
+
+---
+
+### BoxModel
+
+Box model.
+
+---
+
+### BoxStyle
+
+Style information for drawing a box.
+
+---
+
+### BreakLocation
+
+Line with match content.
+
+---
+
+### Bucket
+
+Chrome histogram bucket.
+
+---
+
+### BucketFileSystemLocator
+
+Files that are directly nested under this directory.
+
+---
+
+### CSSAnimationStyle
+
+CSS style coming from animations with the name of the animation.
+
+---
+
+### CSSAtRule
+
+CSS generic @rule representation.
+
+---
+
+### CSSComputedStyleProperty
+
+Rectangle height
+
+---
+
+### CSSContainerQuery
+
+CSS container query rule descriptor.
+
+---
+
+### CSSFunctionConditionNode
+
+CSS function conditional block representation.
+
+---
+
+### CSSFunctionRule
+
+CSS function at-rule representation.
+
+---
+
+### CSSKeyfram
+
+The prelude dashed-ident name
+
+---
+
+### CSSKeyframeRule
+
+CSS keyframe rule representation.
+
+---
+
+### CSSKeyframesRule
+
+CSS keyframes rule representation.
+
+---
+
+### CSSLayer
+
+CSS Layer at-rule descriptor.
+
+---
+
+### CSSLayerData
+
+CSS Layer data.
+
+---
+
+### CSSMedia
+
+CSS media rule descriptor.
+
+---
+
+### CSSPositionTryRule
+
+CSS @position-try rule representation.
+
+---
+
+### CSSProperty
+
+CSS property declaration data.
+
+---
+
+### CSSPropertyRegistration
+
+Representation of a custom property registration through CSS.registerProperty
+
+---
+
+### CSSPropertyRule
+
+CSS property at-rule representation.
+
+---
+
+### CSSRule
+
+CSS rule representation.
+
+---
+
+### CSSScope
+
+CSS Scope at-rule descriptor.
+
+---
+
+### CSSStartingStyle
+
+CSS Starting Style at-rule descriptor.
+
+---
+
+### CSSStyle
+
+CSS style representation.
+
+---
+
+### CSSStyleSheetHeader
+
+CSS stylesheet metainformation.
+
+---
+
+### CSSSupports
+
+CSS Supports at-rule descriptor.
+
+---
+
+### CSSTryRule
+
+CSS try rule representation.
+
+---
+
+### Cache
+
+Cache identifier.
+
+---
+
+### CachedResource
+
+Information about the cached resource.
+
+---
+
+### CachedResponse
+
+Cached response
+
+---
+
+### CertificateSecurityState
+
+Details about the security state of the page certificate.
+
+---
+
+### ChallengeEventDetails
+
+Session event details specific to challenges.
+
+---
+
+### CompilationCacheParams
+
+Per-script compilation cache parameters for `Page.produceCompilationCache`
+
+---
+
+### ComputedStyle
+
+A subset of the full ComputedStyle as defined by the request whitelist.
+
+---
+
+### ComputedStyleExtraFields
+
+Computed style property value.
+
+---
+
+### ConnectTiming
+
+Null for connected mode.
+
+---
+
+### ConsoleMessage
+
+Console message.
+
+---
+
+### ContainerQueryContainerHighlightConfig
+
+Identifier of the container node to highlight.
+
+---
+
+### ContainerQueryHighlightConfig
+
+The theme color defined in app manifest.
+
+---
+
+### ContextRealtimeData
+
+Fields in AudioContext that change in real-time.
+
+---
+
+### Cookie
+
+Cookie object
+
+---
+
+### CookieIssueDetails
+
+Link to table entry in third-party cookie migration readiness list.
+
+---
+
+### CookieIssueInsight
+
+Information about the suggested solution to a cookie issue.
+
+---
+
+### CookieParam
+
+Cookie parameter object
+
+---
+
+### CoverageRange
+
+Number of samples attributed to the source line.
+
+---
+
+### CreationEventDetails
+
+Session event details specific to creation.
+
+---
+
+### CreditCard
+
+Defines commands and events for Autofill.
+
+---
+
+### CustomPreview
+
+Unique object identifier (for non-primitive values).
+
+---
+
+### DOMCounter
+
+DOM object counter data.
+
+---
+
+### DOMNode
+
+A Node in the DOM tree.
+
+---
+
+### DataEntry
+
+Data entry.
+
+---
+
+### DatabaseWithObjectStores
+
+Database with an array of object stores.
+
+---
+
+### DebugSymbols
+
+Debug symbols available for a wasm script.
+
+---
+
+### DeepSerializedValue
+
+Represents deep serialized value.
+
+---
+
+### DeprecationIssueDetails
+
+Issues with the same errorType are aggregated in the frontend.
+
+---
+
+### DetachedElementInfo
+
+A structure to hold the top-level node of a detached tree and an array of its retained descendants.
+
+---
+
+### Devic
+
+See comments on `net::device_bound_sessions::SessionInclusionRules::origin_`.
+
+---
+
+### DeviceBoundSession
+
+A device bound session.
+
+---
+
+### DeviceBoundSessionCookieCraving
+
+A device bound session's cookie craving.
+
+---
+
+### DeviceBoundSessionInclusionRules
+
+A device bound session's inclusion rules.
+
+---
+
+### DeviceBoundSessionKey
+
+Unique identifier for a device bound session.
+
+---
+
+### DeviceBoundSessionUrlRule
+
+A device bound session's inclusion URL rule.
+
+---
+
+### DirectUDPMessage
+
+Unsigned int 8.
+
+---
+
+### DirectUDPSocketOptions
+
+Expected to be unsigned integer.
+
+---
+
+### Directory
+
+Size in bytes
+
+---
+
+### DisplayFeature
+
+Orientation angle.
+
+---
+
+### DocumentSnapshot
+
+Document snapshot.
+
+---
+
+### Domain
+
+Description of the protocol domain.
+
+---
+
+### DragData
+
+Title associated with a link. Only valid when `mimeType` == "text/uri-list".
+
+---
+
+### DragDataItem
+
+UTC time in seconds, counted from January 1, 1970.
+
+---
+
+### ElementAccessibilityIssueDetails
+
+This issue warns about errors in the select or summary element content model.
+
+---
+
+### EntryPreview
+
+Object subtype hint. Specified for `object` type values only.
+
+---
+
+### EventListener
+
+Object event listener.
+
+---
+
+### EventMetadata
+
+A key-value pair for additional event information to pass along.
+
+---
+
+### ExceptionDetails
+
+Embedder-specific auxiliary data likely matching {isDefault: boolean, type: 'default'|'isolated'|'worker', frameId: string}
+
+---
+
+### ExecutionContextDescription
+
+Description of an isolated world.
+
+---
+
+### FileFilter
+
+The URL of the script to produce a compilation cache entry for.
+
+---
+
+### FileHandlerAccept
+
+This domain allows interacting with the browser to control PWAs.
+
+---
+
+### FilledField
+
+Specified whether a filled field was done so by using the html autocomplete attribute or autofill heuristics.
+
+---
+
+### FilterEntry
+
+A filter used by target query/discovery/auto-attach operations.
+
+---
+
+### FlexContainerHighlightConfig
+
+Configuration data for the highlighting of Flex container elements.
+
+---
+
+### FlexItemHighlightConfig
+
+Configuration data for the highlighting of Flex item elements.
+
+---
+
+### FlexNodeHighlightConfig
+
+Identifier of the node to highlight.
+
+---
+
+### FontFace
+
+The default value.
+
+---
+
+### FontFamilies
+
+Generic font families collection.
+
+---
+
+### FontSizes
+
+Default font sizes.
+
+---
+
+### FontVariationAxis
+
+Information about font variation axes for variable fonts
+
+---
+
+### Frame
+
+Information about the Frame on the page.
+
+---
+
+### FrameResource
+
+Information about the Resource on the page.
+
+---
+
+### FrameResourceTree
+
+Information about the Frame hierarchy along with their cached resources.
+
+---
+
+### FrameTree
+
+Information about the Frame hierarchy.
+
+---
+
+### GPUDevice
+
+Describes a single graphics processor (GPU).
+
+---
+
+### GPUInfo
+
+Provides information about the GPU(s) on the system.
+
+---
+
+### GenericIssueDetails
+
+Depending on the concrete errorType, different properties are set.
+
+---
+
+### GridHighlightConfig
+
+Configuration data for the highlighting of Grid elements.
+
+---
+
+### GridNodeHighlightConfig
+
+Configurations for Persistent Grid Highlight
+
+---
+
+### Header
+
+The name of the cache.
+
+---
+
+### HeaderEntry
+
+Response HTTP header entry
+
+---
+
+### HighlightConfig
+
+Configuration data for the highlighting of page elements.
+
+---
+
+### HingeConfig
+
+Configuration for dual screen hinge
+
+---
+
+### Histogram
+
+Chrome histogram.
+
+---
+
+### ImageResource
+
+The image definition used in both icon and screenshot.
+
+---
+
+### InheritedAnimatedStyleEntry
+
+Inherited CSS style collection for animated styles from ancestor node.
+
+---
+
+### InheritedPseudoElementMatches
+
+Inherited pseudo element matches from pseudos of an ancestor node.
+
+---
+
+### InheritedStyleEntry
+
+Inherited CSS rule collection from ancestor node.
+
+---
+
+### Initiator
+
+Information about the request initiator.
+
+---
+
+### InlineTextBox
+
+Scroll offsets, set when this node is a Document.
+
+---
+
+### InsecureContentStatus
+
+Information about insecure content on the page.
+
+---
+
+### InspectorIssue
+
+An inspector issue reported from the back-end.
+
+---
+
+### InstallabilityError
+
+The installability error
+
+---
+
+### InstallabilityErrorArgument
+
+Default fixed font size.
+
+---
+
+### InternalPropertyDescriptor
+
+Object internal property descriptor. This property isn't normally visible in JavaScript code.
+
+---
+
+### IsolatedElementHighlightConfig
+
+The style of the descendants' borders.
+
+---
+
+### IsolationModeHighlightConfig
+
+Identifier of the isolated element to highlight.
+
+---
+
+### Key
+
+Key.
+
+---
+
+### KeyPath
+
+Key path.
+
+---
+
+### KeyRange
+
+Key range.
+
+---
+
+### KeyframeStyle
+
+Keyframe Style
+
+---
+
+### KeyframesRule
+
+Keyframes Rule
+
+---
+
+### LargestContentfulPaint
+
+See https://github.com/WICG/LargestContentfulPaint and largest_contentful_paint.idl
+
+---
+
+### Layer
+
+Information about a compositing layer.
+
+---
+
+### LayoutShift
+
+See https://wicg.github.io/layout-instability/#sec-layout-shift and layout_shift.idl
+
+---
+
+### LayoutShiftAttribution
+
+The URL of the image (may be trimmed).
+
+---
+
+### LayoutTreeNode
+
+Details of an element in the DOM tree with a LayoutObject.
+
+---
+
+### LayoutTreeSnapshot
+
+Table of details of an element in the DOM tree with a LayoutObject.
+
+---
+
+### LayoutViewport
+
+Layout viewport position and dimensions.
+
+---
+
+### LineStyle
+
+Style information for drawing a line.
+
+---
+
+### LoadNetworkResourceOptions
+
+Response headers.
+
+---
+
+### LoadNetworkResourcePageResult
+
+An object providing the result of a network resource load.
+
+---
+
+### Location
+
+Location in the source code.
+
+---
+
+### LogEntry
+
+Log entry.
+
+---
+
+### ManufacturerData
+
+Stores the manufacturer data
+
+---
+
+### MediaFeature
+
+Current posture of the device
+
+---
+
+### MediaQuery
+
+Media query descriptor.
+
+---
+
+### MediaQueryExpression
+
+Media query expression descriptor.
+
+---
+
+### Metric
+
+Run-time execution metric.
+
+---
+
+### Module
+
+Executable module information
+
+---
+
+### NameValue
+
+A name/value pair.
+
+---
+
+### NavigationEntry
+
+Navigation history entry.
+
+---
+
+### NetworkConditions
+
+List of content encodings supported by the backend.
+
+---
+
+### Node
+
+Physical scroll orientation
+
+---
+
+### NodeTreeSnapshot
+
+Table containing nodes.
+
+---
+
+### ObjectPreview
+
+Object containing abbreviated remote object value.
+
+---
+
+### ObjectStore
+
+Object store.
+
+---
+
+### ObjectStoreIndex
+
+Object store index.
+
+---
+
+### OriginTrialToken
+
+Status for an Origin Trial.
+
+---
+
+### P
+
+Stop violation reporting.
+
+---
+
+### PartitioningBlobURLIssueDetails
+
+The failure message for the failed request.
+
+---
+
+### PermissionElementIssueDetails
+
+This issue warns about improper usage of the <permission> element.
+
+---
+
+### PermissionsPolicyBlockLocator
+
+Reason for a permissions policy feature to be disabled.
+
+---
+
+### PictureTile
+
+Serialized fragment of layer picture along with its offset within the layer.
+
+---
+
+### PlatformFontUsage
+
+Information about amount of glyphs that were rendered with given font.
+
+---
+
+### Player
+
+Extra data attached to an error, such as an HRESULT, Video Codec, etc.
+
+---
+
+### PlayerError
+
+Corresponds to kMediaError
+
+---
+
+### PlayerEvent
+
+Corresponds to kMediaEventTriggered
+
+---
+
+### PlayerMessage
+
+Players will get an ID that is unique within the agent context.
+
+---
+
+### PlayerProperty
+
+Corresponds to kMediaPropertyChange
+
+---
+
+### PositionTi
+
+Profiling start timestamp in microseconds.
+
+---
+
+### PositionTickInfo
+
+Specifies a number of samples attributed to a certain source position.
+
+---
+
+### PostDataEntry
+
+Post data entry for HTTP request
+
+---
+
+### PrerenderMismatchedHeaders
+
+Information of headers to be displayed when the header mismatch occurred.
+
+---
+
+### ProcessInfo
+
+Represents process info.
+
+---
+
+### Profile
+
+Profile.
+
+---
+
+### ProfileNode
+
+If true, exposes internals of the snapshot.
+
+---
+
+### PromptDevice
+
+Device information displayed in a user prompt to select a device.
+
+---
+
+### PropertyDescriptor
+
+Preview of the key. Specified for map-like collection entries.
+
+---
+
+### PropertyPreview
+
+List of the entries. Specified for `map` and `set` subtype values only.
+
+---
+
+### PropertyRuleIssueDetails
+
+Contains additional info when the failure was due to a request.
+
+---
+
+### PseudoElementMatches
+
+CSS rule collection for a single pseudo style.
+
+---
+
+### RGBA
+
+A structure holding an RGBA color.
+
+---
+
+### RareStringData
+
+Data that is only present on rare nodes.
+
+---
+
+### Rect
+
+Rectangle.
+
+---
+
+### RefreshEventDetails
+
+Session event details specific to refresh.
+
+---
+
+### RelatedWebsiteSet
+
+A single Related Website Set object.
+
+---
+
+### RemoteLocati
+
+If not present, matches any type.
+
+---
+
+### RemoteObject
+
+Mirror object referencing original JavaScript object.
+
+---
+
+### ReportingApiEndpoint
+
+The number of delivery attempts made so far, not including an active attempt.
+
+---
+
+### ReportingApiReport
+
+An object representing a report generated by the Reporting API.
+
+---
+
+### Request
+
+HTTP request data.
+
+---
+
+### RequestPattern
+
+Request pattern for interception.
+
+---
+
+### ResolvedBreakpoint
+
+URL of the external symbol source.
+
+---
+
+### ResourceTiming
+
+Timing information for the request.
+
+---
+
+### Response
+
+HTTP response data.
+
+---
+
+### RuleMatch
+
+Match data for a CSS rule.
+
+---
+
+### RuleSet
+
+Corresponds to SpeculationRuleSet
+
+---
+
+### RuleUsage
+
+CSS coverage information.
+
+---
+
+### S
+
+Content box
+
+---
+
+### SafeAreaInsets
+
+This domain emulates different environments for the page.
+
+---
+
+### SafetyTipInfo
+
+True if the connection is using an obsolete SSL signature.
+
+---
+
+### SamplingHeapProfile
+
+Sampling profile.
+
+---
+
+### SamplingHeapProfileNode
+
+Sampling Heap Profile node. Holds callsite information, allocation statistics and child nodes.
+
+---
+
+### SamplingHeapProfileSample
+
+A single sample from a sampling profile.
+
+---
+
+### SamplingProfile
+
+Array of heap profile samples.
+
+---
+
+### SamplingProfileNode
+
+Heap profile sample.
+
+---
+
+### ScanEntry
+
+Stores the advertisement packet information that is sent by a Bluetooth device.
+
+---
+
+### ScanRecord
+
+Stores the byte data of the advertisement packet sent by a Bluetooth device.
+
+---
+
+### Scope
+
+Scope description.
+
+---
+
+### ScreenInfo
+
+Work area right inset in pixels. Default is 0;
+
+---
+
+### ScreenOrientation
+
+Screen orientation.
+
+---
+
+### ScreencastFrameMetadata
+
+Screencast frame metadata.
+
+---
+
+### ScreenshotParams
+
+Encoding options for a screenshot.
+
+---
+
+### Scri
+
+The fixed font-family.
+
+---
+
+### ScriptCoverage
+
+Coverage data for a JavaScript script.
+
+---
+
+### ScriptFontFamilies
+
+Font families collection for a script.
+
+---
+
+### ScriptPosition
+
+Location in the source code.
+
+---
+
+### ScrollRect
+
+Rectangle where scrolling happens on the main thread.
+
+---
+
+### ScrollSnapContainerHighlightConfig
+
+Identifier of the node to highlight.
+
+---
+
+### ScrollSnapHighlightConfig
+
+The padding highlight fill color (default: transparent).
+
+---
+
+### SearchMatch
+
+Search match for resource.
+
+---
+
+### SecurityDetails
+
+Security details about a request.
+
+---
+
+### SecurityOriginDetails
+
+Additional information about the frame document's security origin.
+
+---
+
+### SecurityStateExplanation
+
+An explanation of an factor contributing to the security state.
+
+---
+
+### SelectorList
+
+Selector list data.
+
+---
+
+### SerializationOptions
+
+Represents options for serialization. Overrides `generatePreview` and `returnByValue`.
+
+---
+
+### ServiceWorkerErrorMessage
+
+ServiceWorker error message.
+
+---
+
+### ServiceWorkerRegistration
+
+ServiceWorker registration.
+
+---
+
+### ServiceWorkerRouterInfo
+
+Source of service worker router.
+
+---
+
+### ServiceWorkerVersion
+
+ServiceWorker version.
+
+---
+
+### ShapeOutsideInfo
+
+CSS Shape Outside details.
+
+---
+
+### SharedS
+
+The chosen aggregation service deployment.
+
+---
+
+### SharedStorageAccessParams
+
+Any associated reporting metadata.
+
+---
+
+### SharedStorageEntry
+
+Struct for a single key-value pair in an origin's shared storage.
+
+---
+
+### SharedStorageMetadata
+
+Details for an origin's shared storage.
+
+---
+
+### SharedStoragePrivateAggregationConfig
+
+Current amount of bits of entropy remaining in the navigation budget.
+
+---
+
+### SharedStorageReportingMetadata
+
+Pair of reporting metadata details for a candidate URL for `selectURL()`.
+
+---
+
+### SharedStorageUrlWithMetadata
+
+Bundles a candidate URL with its reporting metadata.
+
+---
+
+### Shortcut
+
+Embed the ShareTargetParams
+
+---
+
+### ShorthandEntry
+
+End column of range (exclusive).
+
+---
+
+### SignedCertificateTimestamp
+
+Details of a signed certificate timestamp (SCT).
+
+---
+
+### SignedExchange
+
+Signed exchange signature validity Url.
+
+---
+
+### SignedExchangeError
+
+Information about a signed exchange response.
+
+---
+
+### SignedExchangeHeader
+
+The encoded certificates.
+
+---
+
+### SignedExchangeInfo
+
+Information about a signed exchange response.
+
+---
+
+### SignedExchangeSignature
+
+Stage at which to begin intercepting requests. Default is Request.
+
+---
+
+### Sink
+
+Array of object store data entries.
+
+---
+
+### Size
+
+Describes the width and height dimensions of an entity.
+
+---
+
+### SourceCodeLocation
+
+The frame that was blocked.
+
+---
+
+### SourceOrderConfig
+
+Configuration data for drawing the source order of an elements children.
+
+---
+
+### SourceRange
+
+Text range within a resource. All numbers are zero-based.
+
+---
+
+### Specificity
+
+Value text.
+
+---
+
+### StackTrace
+
+JavaScript script id.
+
+---
+
+### StackTraceId
+
+Unique identifier of current debugger.
+
+---
+
+### StickyPositionConstraint
+
+Sticky position constraints.
+
+---
+
+### StorageBucketInfo
+
+If not specified, it is the default bucket of the storageKey.
+
+---
+
+### StorageId
+
+DOM Storage identifier.
+
+---
+
+### StyleDeclarationEdit
+
+A descriptor of operation to mutate style declaration text.
+
+---
+
+### StylesheetLoadingIssueDetails
+
+This issue warns when a referenced stylesheet couldn't be loaded.
+
+---
+
+### TargetInfo
+
+Unique identifier of attached debugging session.
+
+---
+
+### TerminationEventDetails
+
+Session event details specific to termination.
+
+---
+
+### TextBoxSn
+
+The client rect of nodes. Only available when includeDOMRects is set to true
+
+---
+
+### TextBoxSnapshot
+
+The list of computed text opacities.
+
+---
+
+### TimelineEvent
+
+Score increment produced by this event.
+
+---
+
+### TouchPoint
+
+Database names for origin.
+
+---
+
+### TraceConfig
+
+Configuration for memory dump. Used only when "memory-infra" category is enabled.
+
+---
+
+### TrustTokenParams
+
+Source of serviceworker response.
+
+---
+
+### TrustTokens
+
+Storage usage (bytes).
+
+---
+
+### UsageForType
+
+Usage for a storage type.
+
+---
+
+### UserAgentBrandVersion
+
+Used to specify User Agent Client Hints to emulate. See https://wicg.github.io/ua-client-hints
+
+---
+
+### UserReidentificationIssueDetails
+
+The value of the property rule property that failed to parse
+
+---
+
+### Value
+
+Data for a simple selector (these are delimited by commas in a selector list).
+
+---
+
+### VideoDecodeAcceleratorCapability
+
+Height in pixels.
+
+---
+
+### VideoEncodeAcceleratorCapability
+
+Minimum video dimensions in pixels supported for this |profile|.
+
+---
+
+### ViewOrScrollTimeline
+
+Timeline instance
+
+---
+
+### Viewport
+
+Viewport for capturing screenshot.
+
+---
+
+### ViolationSetting
+
+Violation configuration setting.
+
+---
+
+### VisibleSecurityState
+
+Security state information about the page.
+
+---
+
+### VisualViewport
+
+Visual viewport position, dimensions, and scale.
+
+---
+
+### WasmDisassemblyChunk
+
+Column number in the script (0-based).
+
+---
+
+### WebSocketFrame
+
+WebSocket message data. This represents an entire WebSocket message, not just a fragmented frame as the name suggests.
+
+---
+
+### WebSocketRequest
+
+WebSocket request data.
+
+---
+
+### WebSocketResponse
+
+WebSocket response data.
+
+---
+
+### WindowControlsOverlayConfig
+
+Configuration for Window Controls Overlay
+
+---
+
+## Types
+
+### AXNodeId
+
+Unique accessibility node identifier.
+
+---
+
+### AXValueType
+
+Enum of possible property types.
+
+---
+
+### BackForwardCacheNotRestoredReason
+
+List of not restored reasons for back-forward cache.
+
+---
+
+### BlockedBy
+
+The url responsible for the call to an unsafe url.
+
+---
+
+### BlockedByResponseReason
+
+Optional because not every mixed content issue is necessarily linked to a frame.
+
+---
+
+### BlockedReason
+
+The reason why request was blocked.
+
+---
+
+### BrowserCommandId
+
+For "clipboard" permission, may specify allowWithoutSanitization.
+
+---
+
+### CentralState
+
+Indicates the various states of Central.
+
+---
+
+### CertificateErrorAction
+
+Always set to unknown.
+
+---
+
+### CertificateId
+
+An internal certificate ID value.
+
+---
+
+### CertificateTransparencyCompliance
+
+Whether the request complied with Certificate Transparency policy.
+
+---
+
+### ChannelCountMode
+
+Enum of AudioNode::ChannelCountMode from the spec
+
+---
+
+### CharacteristicWriteType
+
+Indicates the various types of characteristic write.
+
+---
+
+### ColorFormat
+
+The flex item highlight configuration (default: all transparent).
+
+---
+
+### CompatibilityMode
+
+Document compatibility mode.
+
+---
+
+### ConnectionType
+
+The underlying connection technology that the browser is supposedly using.
+
+---
+
+### ContextState
+
+Enum of AudioContextState from the spec
+
+---
+
+### ContextType
+
+Enum of BaseAudioContext types
+
+---
+
+### CookieBlockedReason
+
+Types of reasons why a cookie may not be sent with a request.
+
+---
+
+### CorsError
+
+The reason why request was blocked.
+
+---
+
+### CrossOriginIsolatedContextType
+
+Indicates whether the frame is cross-origin isolated and why it is the case.
+
+---
+
+### DOMBreakpointType
+
+List of popovers that were closed in order to respect popover stacking order.
+
+---
+
+### DeviceBoundSessionEventId
+
+A unique identifier for a device bound session event.
+
+---
+
+### DeviceBoundSessionFetchResult
+
+A fetch result for a device bound session creation or refresh.
+
+---
+
+### DialogType
+
+Device screen height in DIP.
+
+---
+
+### DisabledImageType
+
+Enum of image types that can be disabled.
+
+---
+
+### DisplayMode
+
+If user prefers opening the app in browser or an app window.
+
+---
+
+### ElementAccessibilityIssueReason
+
+The BlobURL that failed to load.
+
+---
+
+### ErrorReason
+
+Network level fetch failure reason.
+
+---
+
+### Events
+
+List of supported domains.
+
+---
+
+### GATTOperationType
+
+Indicates the various types of GATT event.
+
+---
+
+### GestureSourceType
+
+The plane angle between the X-Z plane and the plane containing both the stylus axis and the X axis, in degrees of the range [-90,90], a positive tiltY is towards the user (default: 0).
+
+---
+
+### GraphObjectId
+
+An unique ID for a graph object (AudioContext, AudioNode, AudioParam) in Web Audio API
+
+---
+
+### Headers
+
+Request / response headers as keys / values of JSON object.
+
+---
+
+### InspectMode
+
+The fill color for the mask covering non-isolated elements (default: transparent).
+
+---
+
+### InterceptionId
+
+Unique intercepted request identifier.
+
+---
+
+### InterestGroupAccessType
+
+Enum of interest group access types.
+
+---
+
+### InterestGroupAuctionEventType
+
+Enum of auction events.
+
+---
+
+### InterestGroupAuctionFetchType
+
+Enum of network fetches auctions can do.
+
+---
+
+### InterestGroupAuctionId
+
+Protected audience interest group auction identifier.
+
+---
+
+### Item
+
+DOM Storage item.
+
+---
+
+### LoaderId
+
+Unique loader identifier.
+
+---
+
+### LoginState
+
+This domain allows interacting with the FedCM dialog.
+
+---
+
+### MixedContentResolutionStatus
+
+The recommended solution to the issue.
+
+---
+
+### MonotonicTime
+
+Monotonically increasing time in seconds since an arbitrary point in the past.
+
+---
+
+### NavigationType
+
+The type of a frameNavigated event.
+
+---
+
+### NodeType
+
+Enum of AudioNode types
+
+---
+
+### PaintProfile
+
+Array of timings, one per paint step.
+
+---
+
+### PermissionElementIssueType
+
+Applies to NoisedCanvasReadback issue type.
+
+---
+
+### PermissionType
+
+The window state. Default to normal.
+
+---
+
+### PrerenderFinalStatus
+
+List of FinalStatus reasons for Prerender2.
+
+---
+
+### PrivacySandboxAPI
+
+Buckets.
+
+---
+
+### PropertyRuleIssueReason
+
+Source code position that referenced the failing stylesheet.
+
+---
+
+### PseudoType
+
+Pseudo element type.
+
+---
+
+### Quad
+
+The red component, in the [0-255] range.
+
+---
+
+### ReferrerPolicy
+
+The error id (e.g. 'manifest-missing-suitable-icon').
+
+---
+
+### Res
+
+Finished sending request.
+
+---
+
+### ResourcePriority
+
+Started receiving response headers.
+
+---
+
+### ResourceType
+
+Resource type as it was perceived by the rendering engine.
+
+---
+
+### RuleSetErrorType
+
+TODO(https://crbug.com/1425354): Replace this property with structured error.
+
+---
+
+### SafetyTipStatus
+
+True if the connection is using an obsolete SSL protocol.
+
+---
+
+### ScreenId
+
+Work area top inset in pixels. Default is 0;
+
+---
+
+### ScriptIdentifier
+
+Frame information for this tree item.
+
+---
+
+### SecureContextType
+
+Indicates whether the frame is a secure context and why it is the case.
+
+---
+
+### SetCookieBlockedReason
+
+Types of reasons why a cookie may not be stored from a response.
+
+---
+
+### ShadowRootType
+
+Shadow root type.
+
+---
+
+### SharedArrayBufferIssueType
+
+Specific directive that is violated, causing the CSP issue.
+
+---
+
+### StorageArea
+
+Storage areas.
+
+---
+
+### StreamCompression
+
+Compression type to use for traces returned via streams.
+
+---
+
+### StreamFormat
+
+Configuration for memory dump triggers. Used only when "memory-infra" category is enabled.
+
+---
+
+### StreamHandle
+
+Input/Output operations for streams produced by DevTools.
+
+---
+
+### This
+
+Identifies the frame that this event is related to. Empty for non-frame targets.
+
+---
+
+### TimeSinceEpoch
+
+UTC time in seconds, counted from January 1, 1970.
+
+---
+
+### Timestamp
+
+Identifier of the context where exception happened.
+
+---
+
+### UniqueDebuggerId
+
+Asynchronous JavaScript stack trace that preceded this stack, if available.
+
+---
+
+### UserReidentificationIssueType
+
+Source code position of the property rule.
+
+---
+
+### WindowState
+
+The state of the target window.
+
+---
+
+### acceptedPayload
+
+Informs that port was successfully bound and got a specified connection id.
+
+---
+
+### activateTargetParameters
+
+Activates (focuses) the target.
+
+---
+
+### addCompilationCacheReturnValue
+
+Base64-encoded data
+
+---
+
+### addCredentialParameters
+
+Adds the credential to the specified authenticator.
+
+---
+
+### addInspectedHeapObjectReturnValue
+
+Heap snapshot object id to be accessible by means of $x command line API.
+
+---
+
+### addRuleParameters
+
+The node id that has updated computed styles.
+
+---
+
+### addRuleReturnValue
+
+Text position of a new rule in the target style sheet.
+
+---
+
+### addScreenParameters
+
+Add a new screen to the device. Only supported in headless mode.
+
+---
+
+### addScreenReturnValue
+
+Indicates whether the screen is internal to the device or external, attached to the device. Default is false.
+
+---
+
+### addScriptToEvaluateOnLoadParameters
+
+Deprecated, please use addScriptToEvaluateOnNewDocument instead.
+
+---
+
+### addScriptToEvaluateOnNewDocumentParameters
+
+Evaluates given script in every frame upon creation (before loading frame's scripts).
+
+---
+
+### addServiceParameters
+
+Adds a service with |serviceUuid| to the peripheral with |address|.
+
+---
+
+### addVirtualAuthenticatorParameters
+
+Creates and adds a virtual authenticator.
+
+---
+
+### addressFormFilledPayload
+
+Emitted when an address form is filled.
+
+---
+
+### adoptedStyleSheetsModifiedPayload
+
+Fired when `Element`'s adoptedStyleSheets are modified.
+
+---
+
+### affectedByStartingStylesFlagUpdatedPayload
+
+Fired when a node's starting styles changes.
+
+---
+
+### animationCanceledPayload
+
+Event for when an animation has been cancelled.
+
+---
+
+### animationCreatedPayload
+
+Event for each animation that has been created.
+
+---
+
+### animationStartedPayload
+
+Event for animation that has been started.
+
+---
+
+### animationUpdatedPayload
+
+Event for animation that has been updated.
+
+---
+
+### attachToBrowserTargetParameters
+
+Attaches to the browser target, only uses flat sessionId mode.
+
+---
+
+### attachToTargetParameters
+
+Attaches to the target with given id.
+
+---
+
+### attachedToTargetPayload
+
+Issued when attached to target because of auto-attach or `attachToTarget` command.
+
+---
+
+### attributeModifiedPayload
+
+Fired when `Element`'s attribute is modified.
+
+---
+
+### attributeRemovedPayload
+
+Fired when `Element`'s attribute is removed.
+
+---
+
+### attributionReportingVerboseDebugReportSentPayload
+
+If result is `sent`, populated with net/HTTP status.
+
+---
+
+### audioListenerCreatedPayload
+
+Notifies that the construction of an AudioListener has finished.
+
+---
+
+### audioListenerWillBeDestroyedPayload
+
+Notifies that a new AudioListener has been created.
+
+---
+
+### audioNodeCreatedPayload
+
+Notifies that a new AudioNode has been created.
+
+---
+
+### audioNodeWillBeDestroyedPayload
+
+Notifies that an existing AudioNode has been destroyed.
+
+---
+
+### audioParamCreatedPayload
+
+Notifies that a new AudioParam has been created.
+
+---
+
+### audioParamWillBeDestroyedPayload
+
+Notifies that an existing AudioParam has been destroyed.
+
+---
+
+### autoAttachRelatedReturnValue
+
+Only targets matching filter will be attached.
+
+---
+
+### awaitPromiseParameters
+
+Add handler to promise with given promise object id.
+
+---
+
+### awaitPromiseReturnValue
+
+Identifier of the promise.
+
+---
+
+### backForwardCacheNotUsedPayload
+
+Loader identifier. Empty string if the request is fetched from worker.
+
+---
+
+### beginFrameParameters
+
+Optimize image encoding for speed, not for resulting size (defaults to false)
+
+---
+
+### bindParameters
+
+Request browser port binding.
+
+---
+
+### bindReturnValue
+
+Port number to bind.
+
+---
+
+### bindingCalledPayload
+
+Notification is issued every time when binding is called.
+
+---
+
+### breakpointResolvedPayload
+
+Actual breakpoint location.
+
+---
+
+### bringToFrontParameters
+
+Brings page to front (activates tab).
+
+---
+
+### cacheStorageContentUpdatedPayload
+
+A cache's contents have been modified.
+
+---
+
+### cacheStorageListUpdatedPayload
+
+A cache has been added/deleted.
+
+---
+
+### canClearBrowserCacheParameters
+
+Tells whether clearing browser cache is supported.
+
+---
+
+### canClearBrowserCookiesParameters
+
+Tells whether clearing browser cookies is supported.
+
+---
+
+### canEmulateNetworkConditionsParameters
+
+Tells whether emulation of network conditions is supported.
+
+---
+
+### canEmulateParameters
+
+Tells whether emulation is supported.
+
+---
+
+### cancelDownloadParameters
+
+Cancel a download if in progress
+
+---
+
+### cancelDownloadReturnValue
+
+BrowserContext to perform the action in. When omitted, default browser context is used.
+
+---
+
+### cancelDraggingParameters
+
+Cancels any active dragging in the page.
+
+---
+
+### cancelPromptParameters
+
+Cancel a prompt in response to a DeviceAccess.deviceRequestPrompted event.
+
+---
+
+### captureScreenshotParameters
+
+Capture page screenshot.
+
+---
+
+### captureScreenshotReturnValue
+
+Optimize image encoding for speed, not for resulting size (defaults to false)
+
+---
+
+### captureSnapshotParameters
+
+Base64-encoded image data.
+
+---
+
+### captureSnapshotReturnValue
+
+Format (defaults to mhtml).
+
+---
+
+### chain
+
+Identifier of the object to return properties for.
+
+---
+
+### characterDataModifiedPayload
+
+Mirrors `DOMCharacterDataModified` event.
+
+---
+
+### childNodeCountUpdatedPayload
+
+Fired when `Container`'s child node count has changed.
+
+---
+
+### childNodeInsertedPayload
+
+Mirrors `DOMNodeInserted` event.
+
+---
+
+### childNodeRemovedPayload
+
+Mirrors `DOMNodeRemoved` event.
+
+---
+
+### clearAcceptedEncodingsOverrideParameters
+
+Clears accepted encodings set by setAcceptedEncodings
+
+---
+
+### clearBrowserCacheParameters
+
+Clears browser cache.
+
+---
+
+### clearBrowserCookiesParameters
+
+Clears browser cookies.
+
+---
+
+### clearCompilationCacheParameters
+
+Clears seeded compilation cache.
+
+---
+
+### clearCookiesParameters
+
+Clears cookies.
+
+---
+
+### clearCookiesReturnValue
+
+Browser context to use when called on the browser endpoint.
+
+---
+
+### clearCredentialsParameters
+
+Clears all the credentials from the specified device.
+
+---
+
+### clearDataForOriginParameters
+
+Clears storage for origin.
+
+---
+
+### clearDataForOriginReturnValue
+
+Comma separated list of StorageType to clear.
+
+---
+
+### clearDataForStorageKeyParameters
+
+Clears storage for storage key.
+
+---
+
+### clearDataForStorageKeyReturnValue
+
+Comma separated list of StorageType to clear.
+
+---
+
+### clearDeviceMetricsOverrideParameters
+
+Clears the overridden device metrics.
+
+---
+
+### clearDeviceOrientationOverrideParameters
+
+Clears the overridden Device Orientation.
+
+---
+
+### clearEventsParameters
+
+Clears all stored data for the service.
+
+---
+
+### clearGeolocationOverrideParameters
+
+Clears the overridden Geolocation Position and Error.
+
+---
+
+### clearIdleOverrideParameters
+
+Clears Idle state overrides.
+
+---
+
+### clearMessagesParameters
+
+Does nothing.
+
+---
+
+### clearObjectStoreParameters
+
+Clears all entries from an object store.
+
+---
+
+### clearObjectStoreReturnValue
+
+Object store name.
+
+---
+
+### clearParameters
+
+Clears the log.
+
+---
+
+### clearSharedStorageEntriesParameters
+
+Clears all entries for a given origin's shared storage.
+
+---
+
+### clearStorageItemsParameters
+
+Clears extension storage in the given `storageArea`.
+
+---
+
+### clearStorageItemsReturnValue
+
+StorageArea to remove data from.
+
+---
+
+### closeParameters
+
+Tries to close page, running its beforeunload hooks, if any.
+
+---
+
+### closeReturnValue
+
+Handle of the stream to close.
+
+---
+
+### closeTargetParameters
+
+Closes the target. If the target is a page that gets closed too.
+
+---
+
+### collectClassNamesFromSubtreeReturnValue
+
+Id of the node to collect class names.
+
+---
+
+### collectClassNamesParameters
+
+Returns all class names from specified stylesheet.
+
+---
+
+### compilationCacheProducedPayload
+
+Issued for every compilation cache generated.
+
+---
+
+### compile
+
+Expression to compile.
+
+---
+
+### compileScriptParameters
+
+Compiles expression.
+
+---
+
+### compileScriptReturnValue
+
+Specifies whether the compiled script should be persisted.
+
+---
+
+### compositingReasonsParameters
+
+Provides the reasons why the given layer was composited.
+
+---
+
+### compositingReasonsReturnValue
+
+The id of the layer for which we want to get the reasons it was composited.
+
+---
+
+### computedStyleUpdatedPayload
+
+Identifier of the removed stylesheet.
+
+---
+
+### configureDurableMessagesReturnValue
+
+Per-resource buffer size in bytes to use when preserving network payloads (XHRs, etc).
+
+---
+
+### consoleAPICalledPayload
+
+Issued when console API was called.
+
+---
+
+### consoleProfileFinishedPayload
+
+Functions contained in the script that has coverage data.
+
+---
+
+### consoleProfileStartedPayload
+
+Sent when new profile recording is started using console.profile() call.
+
+---
+
+### contextChangedPayload
+
+Notifies that existing BaseAudioContext has changed some properties (id stays the same)..
+
+---
+
+### contextCreatedPayload
+
+Notifies that a new BaseAudioContext has been created.
+
+---
+
+### contextWillBeDestroyedPayload
+
+Notifies that an existing BaseAudioContext will be destroyed.
+
+---
+
+### continueInterceptedRequestReturnValue
+
+Response to a requestIntercepted with an authChallenge. Must not be set otherwise.
+
+---
+
+### continueRequestParameters
+
+Continues the request, optionally modifying some of its parameters.
+
+---
+
+### continueRequestReturnValue
+
+If set, overrides response interception behavior for this request.
+
+---
+
+### continueResponseReturnValue
+
+Response headers. If absent, original response headers will be used.
+
+---
+
+### continueToLocationParameters
+
+Continues execution until specific location is reached.
+
+---
+
+### continueToLocationReturnValue
+
+Location to continue to.
+
+---
+
+### continueWithAuthParameters
+
+Continues a request supplying authChallengeResponse following authRequired event.
+
+---
+
+### continueWithAuthReturnValue
+
+Response to  with an authChallenge.
+
+---
+
+### copyToParameters
+
+Class name list.
+
+---
+
+### copyToReturnValue
+
+Id of the element to drop the copy into.
+
+---
+
+### crashGpuProcessParameters
+
+Crashes GPU process.
+
+---
+
+### crashParameters
+
+Crashes renderer on the IO thread, generates minidumps.
+
+---
+
+### createBrowserContextReturnValue
+
+Proxy bypass list, similar to the one passed to --proxy-bypass-list
+
+---
+
+### createIsolatedWorldParameters
+
+Creates an isolated world for the given frame.
+
+---
+
+### createIsolatedWorldReturnValue
+
+An optional name which is reported in the Execution Context.
+
+---
+
+### createStyleSheetParameters
+
+Creates a new special "via-inspector" stylesheet in the frame with given `frameId`.
+
+---
+
+### createStyleSheetReturnValue
+
+Identifier of the frame where "via-inspector" stylesheet should be created.
+
+---
+
+### createTargetParameters
+
+Creates a new page.
+
+---
+
+### createTargetReturnValue
+
+Whether to create the target of type "tab".
+
+---
+
+### credentialAddedPayload
+
+Triggered when a credential is added to an authenticator.
+
+---
+
+### credentialAssertedPayload
+
+Triggered when a credential is used in a webauthn assertion.
+
+---
+
+### dataCollectedPayload
+
+An approximate number of events in the trace log.
+
+---
+
+### dataReceivedPayload
+
+Fired when data chunk was received over the network.
+
+---
+
+### deleteCacheParameters
+
+Deletes a cache.
+
+---
+
+### deleteCacheReturnValue
+
+Id of cache for deletion.
+
+---
+
+### deleteCookieParameters
+
+Deletes browser cookie with given name, domain and path.
+
+---
+
+### deleteCookieReturnValue
+
+URL to match cooke domain and path.
+
+---
+
+### deleteCookiesParameters
+
+Deletes browser cookies with matching name and url or domain/path/partitionKey pair.
+
+---
+
+### deleteCookiesReturnValue
+
+If specified, deletes only cookies with the exact path.
+
+---
+
+### deleteDatabaseParameters
+
+Deletes a database.
+
+---
+
+### deleteDatabaseReturnValue
+
+Database name.
+
+---
+
+### deleteEntryParameters
+
+Deletes a cache entry.
+
+---
+
+### deleteEntryReturnValue
+
+URL spec of the request.
+
+---
+
+### deleteObjectStoreEntriesParameters
+
+Delete a range of entries from an object store
+
+---
+
+### deleteObjectStoreEntriesReturnValue
+
+Range of entry keys to delete
+
+---
+
+### deleteSharedStorageEntryParameters
+
+Deletes entry for `key` (if it exists) for a given origin's shared storage.
+
+---
+
+### deleteStorageBucketParameters
+
+Deletes the Storage Bucket with the given storage key and bucket name.
+
+---
+
+### describeNodeParameters
+
+Id of the node clone.
+
+---
+
+### describeNodeReturnValue
+
+JavaScript object id of the node wrapper.
+
+---
+
+### detachFromTargetParameters
+
+Detaches session with given id.
+
+---
+
+### detachFromTargetReturnValue
+
+Deprecated.
+
+---
+
+### detachedFromTargetPayload
+
+Identifier assigned to the session used to send/receive messages.
+
+---
+
+### detachedPayload
+
+Fired when remote debugging connection is about to be terminated. Contains detach reason.
+
+---
+
+### details
+
+Whether this event was considered successful.
+
+---
+
+### deviceBoundSessionEventOccurredPayload
+
+Triggered when a device bound session event occurs.
+
+---
+
+### deviceBoundSessionsAddedPayload
+
+Triggered when the initial set of device bound sessions is added.
+
+---
+
+### deviceRequestPromptedPayload
+
+Display name as it appears in a device request user prompt.
+
+---
+
+### dialogShownPayload
+
+These two are only set if the loginState is signUp
+
+---
+
+### directTCPSocketAbortedPayload
+
+Fired when direct_socket.TCPSocket is aborted.
+
+---
+
+### directTCPSocketChunkReceivedPayload
+
+Fired when data is received from tcp direct socket stream.
+
+---
+
+### directTCPSocketChunkSentPayload
+
+Fired when data is sent to tcp direct socket stream.
+
+---
+
+### directTCPSocketClosedPayload
+
+Fired when direct_socket.TCPSocket is closed.
+
+---
+
+### directTCPSocketCreatedPayload
+
+Fired upon direct_socket.TCPSocket creation.
+
+---
+
+### directTCPSocketOpenedPayload
+
+Fired when direct_socket.TCPSocket connection is opened.
+
+---
+
+### directUDPSocketAbortedPayload
+
+Fired when direct_socket.UDPSocket is aborted.
+
+---
+
+### directUDPSocketChunkReceivedPayload
+
+Fired when message is received from udp direct socket stream.
+
+---
+
+### directUDPSocketChunkSentPayload
+
+Fired when message is sent to udp direct socket stream.
+
+---
+
+### directUDPSocketClosedPayload
+
+Fired when direct_socket.UDPSocket is closed.
+
+---
+
+### directUDPSocketCreatedPayload
+
+Fired upon direct_socket.UDPSocket creation.
+
+---
+
+### directUDPSocketOpenedPayload
+
+Fired when direct_socket.UDPSocket connection is opened.
+
+---
+
+### disableParameters
+
+Disables reporting of execution contexts creation.
+
+---
+
+### disassembleWasmModuleParameters
+
+Wasm bytecode.
+
+---
+
+### discardConsoleEntriesParameters
+
+Discards collected exceptions and console API calls.
+
+---
+
+### discardSearchResultsReturnValue
+
+Unique search session identifier.
+
+---
+
+### dispatchDragEventParameters
+
+Dispatches a drag event into the page.
+
+---
+
+### dispatchDragEventReturnValue
+
+X coordinate of the event relative to the main frame's viewport in CSS pixels.
+
+---
+
+### dispatchKeyEventParameters
+
+Dispatches a key event to the page.
+
+---
+
+### dispatchMouseEventParameters
+
+Dispatches a mouse event to the page.
+
+---
+
+### dispatchMouseEventReturnValue
+
+Pointer type (default: "mouse").
+
+---
+
+### dispatchTouchEventParameters
+
+Dispatches a touch event to the page.
+
+---
+
+### dispatchTouchEventReturnValue
+
+Time at which the event occurred.
+
+---
+
+### distributedNodesUpdatedPayload
+
+Called when distribution is changed.
+
+---
+
+### documentOpenedPayload
+
+Fired when opening document to write to.
+
+---
+
+### documentUpdatedPayload
+
+Fired when `Document` has been totally updated. Node ids are no longer valid.
+
+---
+
+### domContentEventFiredPayload
+
+Array of children frame
+
+---
+
+### downloadProgressPayload
+
+Suggested file name of the resource (the actual name of the file saved on disk may differ).
+
+---
+
+### downloadWillBeginPayload
+
+Id of the frame that has stopped loading.
+
+---
+
+### dragInterceptedPayload
+
+Bit field representing allowed drag operations. Copy = 1, Link = 2, Move = 16
+
+---
+
+### emulateNetworkConditionsByRuleReturnValue
+
+True to emulate internet disconnection.
+
+---
+
+### emulateNetworkConditionsReturnValue
+
+WebRTC packetReordering feature.
+
+---
+
+### emulateTouchFromMouseEventParameters
+
+Emulates touch event from the mouse event parameters.
+
+---
+
+### emulateTouchFromMouseEventReturnValue
+
+Number of times the mouse button was clicked (default: 0).
+
+---
+
+### enableDeviceBoundSessionsParameters
+
+Sets up tracking device bound sessions and fetching of initial set of sessions.
+
+---
+
+### enableDeviceBoundSessionsReturnValue
+
+Whether to enable or disable events.
+
+---
+
+### enableParameters
+
+Enables the WebAudio domain and starts sending context lifetime events.
+
+---
+
+### enableReportingApiReturnValue
+
+Whether to enable or disable events for the Reporting API
+
+---
+
+### enableReturnValue
+
+Time domain to use for collecting and reporting duration metrics.
+
+---
+
+### endParameters
+
+Stop trace events collection.
+
+---
+
+### entryAddedPayload
+
+Issued when new message was logged.
+
+---
+
+### evaluateOnCallFrameParameters
+
+Evaluates expression on a given call frame.
+
+---
+
+### evaluateOnCallFrameReturnValue
+
+Terminate execution after timing out (number of milliseconds).
+
+---
+
+### evaluateParameters
+
+Evaluates expression on global object.
+
+---
+
+### eventSourceMessageRe
+
+Request identifier.
+
+---
+
+### eventSourceMessageReceivedPayload
+
+Fired when EventSource message is received.
+
+---
+
+### exceptionRevokedPayload
+
+Issued when unhandled exception was revoked.
+
+---
+
+### exceptionThrownPayload
+
+Issued when exception was thrown and unhandled.
+
+---
+
+### executeBrowserCommandParameters
+
+Invoke custom browser commands used by telemetry.
+
+---
+
+### executionContextCreatedPayload
+
+Issued when new execution context is created.
+
+---
+
+### executionContextDestroyedPayload
+
+Issued when execution context is destroyed.
+
+---
+
+### executionContextsClearedPayload
+
+Issued when all executionContexts were cleared in browser
+
+---
+
+### exposeDev
+
+Always set to true. If an error occurs, the response indicates protocol error.
+
+---
+
+### exposeDevToolsProtocolReturnValue
+
+If true, inherits the current root session's permissions (default: false).
+
+---
+
+### failRequestParameters
+
+Causes the request to fail with specified reason.
+
+---
+
+### failRequestReturnValue
+
+Causes the request to fail with the given reason.
+
+---
+
+### fetchSchemefulSiteParameters
+
+Fetches the schemeful site for a specific origin.
+
+---
+
+### fetchSchemefulSiteReturnValue
+
+The URL origin.
+
+---
+
+### fileChooserOpenedPayload
+
+Emitted only when `page.interceptFileChooser` is enabled.
+
+---
+
+### focusParameters
+
+Focuses the given element.
+
+---
+
+### focusReturnValue
+
+JavaScript object id of the node wrapper.
+
+---
+
+### fontsUpdatedPayload
+
+New style text.
+
+---
+
+### for
+
+Signed exchange response signature.
+
+---
+
+### forcePseudoStateReturnValue
+
+Element pseudo classes to force when computing the element's style.
+
+---
+
+### forceShowPopoverParameters
+
+The anchor element of the given anchor query.
+
+---
+
+### forceShowPopoverReturnValue
+
+Id of the popover HTMLElement
+
+---
+
+### forceStartingStyleParameters
+
+Ensures that the given node is in its starting-style state.
+
+---
+
+### forceStartingStyleReturnValue
+
+Boolean indicating if this is on or off.
+
+---
+
+### forciblyPurgeJavaScriptMemoryParameters
+
+Simulate OomIntervention by purging V8 memory.
+
+---
+
+### frameAttachedPayload
+
+Fired when frame has been attached to its parent.
+
+---
+
+### frameClearedScheduledNavigationPayload
+
+Fired when frame no longer has a scheduled navigation.
+
+---
+
+### frameDetachedPayload
+
+Fired when frame has been detached from its parent.
+
+---
+
+### frameNavigatedPayload
+
+Fired once navigation of the frame has completed. Frame is now associated with the new loader.
+
+---
+
+### frameResizedPayload
+
+Frame object.
+
+---
+
+### frameScheduledNavigationPayload
+
+Fired when frame schedules a potential navigation.
+
+---
+
+### frameStartedLoadingPayload
+
+Fired when frame has started loading.
+
+---
+
+### frameStoppedLoadingPayload
+
+Fired when frame has stopped loading.
+
+---
+
+### frameSubtreeWillBeDetachedPayload
+
+Id of the frame that has been detached.
+
+---
+
+### fulfillRequestParameters
+
+Provides response to the request.
+
+---
+
+### generateTestReportParameters
+
+Generates a report for testing.
+
+---
+
+### generateTestReportReturnValue
+
+Specifies the endpoint group to deliver the report to.
+
+---
+
+### getAXNodeAndAncestorsReturnValue
+
+JavaScript object id of the node wrapper to get.
+
+---
+
+### getAdScriptAncestryParameters
+
+Recommendation for manifest's id attribute to match current id computed from start_url
+
+---
+
+### getAffectedUrlsForThirdPartyCookieMetadataReturnValue
+
+The list of embedded resource URLs from the page.
+
+---
+
+### getAnchorElementParameters
+
+Descendant nodes with container queries against the given container.
+
+---
+
+### getAnchorElementReturnValue
+
+Id of the positioned element from which to find the anchor.
+
+---
+
+### getAnimatedStylesForNodeParameters
+
+Attribute-defined element style (e.g. resulting from "width=20 height=100%").
+
+---
+
+### getAttributesParameters
+
+Returns attributes for the specified node.
+
+---
+
+### getAttributesReturnValue
+
+Id of the node to retrieve attributes for.
+
+---
+
+### getBackgroundColorsReturnValue
+
+Id of the node to get background colors for.
+
+---
+
+### getBoxModelParameters
+
+Returns boxes for the given node.
+
+---
+
+### getBoxModelReturnValue
+
+JavaScript object id of the node wrapper.
+
+---
+
+### getBrowserCommandLineParameters
+
+V8 version.
+
+---
+
+### getBrowserContextsParameters
+
+Returns all browser contexts created with `Target.createBrowserContext` method.
+
+---
+
+### getCategoriesParameters
+
+Gets supported tracing categories.
+
+---
+
+### getCertificateParameters
+
+Returns the DER-encoded certificate.
+
+---
+
+### getCertificateReturnValue
+
+Origin to get certificate for.
+
+---
+
+### getComputedStyleForNodeParameters
+
+Returns the computed style for a DOM node identified by `nodeId`.
+
+---
+
+### getContainerForNodeParameters
+
+Id of the node at given coordinates, only when enabled and requested document.
+
+---
+
+### getContentQuadsParameters
+
+Box model for the node.
+
+---
+
+### getContentQuadsReturnValue
+
+JavaScript object id of the node wrapper.
+
+---
+
+### getCookiesParameters
+
+Returns all browser cookies.
+
+---
+
+### getCookiesReturnValue
+
+Browser context to use when called on the browser endpoint.
+
+---
+
+### getCredentialsParameters
+
+Returns all the credentials stored in the given virtual authenticator.
+
+---
+
+### getCurrentTimeParameters
+
+Returns the current time of the an animation.
+
+---
+
+### getCurrentTimeReturnValue
+
+Id of animation.
+
+---
+
+### getDOMCountersForLeakDetectionParameters
+
+Retruns DOM object counters after preparing renderer for leak detection.
+
+---
+
+### getDOMCountersParameters
+
+Retruns current DOM object counters.
+
+---
+
+### getDetachedDomNodesParameters
+
+Returns list of detached nodes
+
+---
+
+### getDevToolsTargetReturnValue
+
+Page or tab target ID.
+
+---
+
+### getDirectoryParameters
+
+Path to the directory using each path component as an array item.
+
+---
+
+### getDocumentParameters
+
+Quads that describe node layout relative to viewport.
+
+---
+
+### getDomainsParameters
+
+Returns supported domains.
+
+---
+
+### getElementByRelationParameters
+
+Returns the NodeId of the matched element according to certain relations.
+
+---
+
+### getElementByRelationReturnValue
+
+Type of relation to get.
+
+---
+
+### getEncodedResponseReturnValue
+
+Whether to only return the size information (defaults to false).
+
+---
+
+### getEnvironmentVariablesParameters
+
+Returns the values of the default UA-defined environment variables used in env()
+
+---
+
+### getEventListenersParameters
+
+Returns event listeners of the given object.
+
+---
+
+### getEventListenersReturnVa
+
+Identifier of the object to return listeners for.
+
+---
+
+### getFeatureStateParameters
+
+Returns information about the feature state.
+
+---
+
+### getFileInfoParameters
+
+Creation stack trace, if available.
+
+---
+
+### getFileInfoReturnValue
+
+JavaScript object id of the node wrapper.
+
+---
+
+### getFlattenedDocumentParameters
+
+Resulting node.
+
+---
+
+### getFrameOwnerParameters
+
+Returns iframe node that owns iframe with the given domain.
+
+---
+
+### getFrameTreeParameters
+
+Returns present frame tree structure.
+
+---
+
+### getFullAXTreeParameters
+
+Fetches the entire accessibility tree for the root Document
+
+---
+
+### getGridHighlightObjectsForTestParameters
+
+For Persistent Grid testing.
+
+---
+
+### getGridHighlightObjectsForTestReturnValue
+
+Ids of the node to get highlight object for.
+
+---
+
+### getHeapObjectIdReturnValue
+
+Identifier of the object to get heap object id for.
+
+---
+
+### getHeapUsageParameters
+
+The isolate id.
+
+---
+
+### getHighlightObjectForTestParameters
+
+For testing.
+
+---
+
+### getHighlightObjectForTestReturn
+
+Id of the node to get highlight object for.
+
+---
+
+### getHighlightObjectForTestReturnValue
+
+Whether to show accessibility info (default: true).
+
+---
+
+### getHistogramParameters
+
+Get a Chrome histogram by name.
+
+---
+
+### getHistogramReturnValue
+
+If true, retrieve delta since last delta call.
+
+---
+
+### getHistogramsParameters
+
+Get Chrome histograms.
+
+---
+
+### getHistogramsReturnValue
+
+If true, retrieve delta since last delta call.
+
+---
+
+### getInfoParameters
+
+Returns information about the system.
+
+---
+
+### getInstallabilityErrorsParameters
+
+Parsed manifest properties. Deprecated, use manifest instead.
+
+---
+
+### getInterestGroupDetailsParameters
+
+Gets details for a named interest group.
+
+---
+
+### getIsolateIdParameters
+
+Returns the isolate id.
+
+---
+
+### getLayersForNodeParameters
+
+The stylesheet text.
+
+---
+
+### getLayoutMetricsParameters
+
+Returns metrics relating to the layouting of the page, such as viewport bounds/scale.
+
+---
+
+### getManifestIconsParameters
+
+Deprecated because it's not guaranteed that the returned icon is in fact the one used for PWA installation.
+
+---
+
+### getMatchedStylesForNodeParameters
+
+Returns requested styles for a DOM node identified by `nodeId`.
+
+---
+
+### getMediaQueriesParameters
+
+Returns all media queries parsed by the rendering engine.
+
+---
+
+### getMetadataParameters
+
+Gets metadata of an object store.
+
+---
+
+### getMetadataReturnValue
+
+Object store name.
+
+---
+
+### getMetricsParameters
+
+Retrieve current values of run-time metrics.
+
+---
+
+### getNavigationHistoryParame
+
+Deprecated size of scrollable area. Is in DP. Use `cssContentSize` instead.
+
+---
+
+### getNavigationHistoryParameters
+
+Returns navigation history for the current page.
+
+---
+
+### getNodeForLocationParameters
+
+Resulting nodes.
+
+---
+
+### getNodeForLocationReturnValue
+
+Whether to ignore pointer-events: none on elements and hit test them.
+
+---
+
+### getNodeStackTracesParameters
+
+Gets stack traces associated with a Node. As of now, only provides stack trace for Node creation.
+
+---
+
+### getNodeStackTracesReturnValue
+
+Id of the node to get stack traces for.
+
+---
+
+### getNodesForSubtreeByStyleParameters
+
+Finds nodes with a given computed style in a subtree.
+
+---
+
+### getNodesForSubtreeByStyleReturnValue
+
+The style to filter nodes by (includes nodes if any of properties matches).
+
+---
+
+### getObjectByHeapObjectIdParameters
+
+Id of the heap snapshot object corresponding to the passed remote object id.
+
+---
+
+### getObjectByHeapObjectIdReturnValue
+
+Symbolic group name that can be used to release multiple objects.
+
+---
+
+### getOriginTrialsParameters
+
+Get Origin Trials on given frame.
+
+---
+
+### getOsAppStateParameters
+
+Returns the following OS state for the given manifest id.
+
+---
+
+### getOuterHTMLParameters
+
+Returns node's HTML markup.
+
+---
+
+### getOuterHTMLReturnValue
+
+Include all shadow roots. Equals to false if not specified.
+
+---
+
+### getPartial
+
+Identifier of the node to get the partial accessibility tree for.
+
+---
+
+### getPartialAXTreeParameters
+
+Fetches the accessibility node and partial accessibility tree for this DOM node, if it exists.
+
+---
+
+### getPartialAXTreeReturnValue
+
+Whether to fetch this node's ancestors, siblings and children. Defaults to true.
+
+---
+
+### getPermissionsPolicyStateParameters
+
+Get Permissions Policy state on given frame.
+
+---
+
+### getPlaybackRateParameters
+
+Gets the playback rate of the document timeline.
+
+---
+
+### getPossibleBreakpointsParameters
+
+Exception details.
+
+---
+
+### getPossibleBreakpointsReturnValue
+
+Only consider locations which are in the same (non-nested) function as start.
+
+---
+
+### getPropertiesParameters
+
+Size in bytes of backing storage for array buffers and external strings.
+
+---
+
+### getPropertiesReturnValue
+
+If true, returns non-indexed properties only.
+
+---
+
+### getQueryingDescendantsForContainerParameters
+
+The container node for the given node, or null if not found.
+
+---
+
+### getQueryingDescendantsForContainerReturnValue
+
+Id of the container node to find querying descendants from.
+
+---
+
+### getRealtimeDataParameters
+
+Fetch the realtime data from the registered contexts.
+
+---
+
+### getRelatedWebsiteSetsParameters
+
+The number of reports that were sent.
+
+---
+
+### getRelayoutBoundaryParameters
+
+Returns the id of the nearest ancestor that is a relayout boundary.
+
+---
+
+### getRelayoutBoundaryReturnValue
+
+Id of the node.
+
+---
+
+### getRequestPostDataParameters
+
+Returns post data sent with the request. Returns an error when no data was sent with the request.
+
+---
+
+### getRequestPostDataReturnValue
+
+Identifier of the network request to get content for.
+
+---
+
+### getResourceContentParameters
+
+Returns content of the given resource.
+
+---
+
+### getResourceContentReturnValue
+
+URL of the resource to get content for.
+
+---
+
+### getResourceTreeParameters
+
+Returns present frame / resource tree structure.
+
+---
+
+### getResponseBodyForInterceptionParameters
+
+Returns content served for the given currently intercepted request.
+
+---
+
+### getResponseBodyForInterceptionReturnValue
+
+Identifier for the intercepted request to get body for.
+
+---
+
+### getResponseBodyParameters
+
+Returns content served for the given request.
+
+---
+
+### getResponseBodyReturnValue
+
+Identifier of the network request to get content for.
+
+---
+
+### getSamplingProfileParameters
+
+Evaluation result.
+
+---
+
+### getScreenInfosParameters
+
+Returns device's screen configuration.
+
+---
+
+### getScriptSourceParameters
+
+Returns source for the script with given id.
+
+---
+
+### getScriptSourceReturnValue
+
+Id of the script to get source for.
+
+---
+
+### getSearchResultsParameters
+
+Relayout boundary node id for the given node.
+
+---
+
+### getSearchResultsReturnValue
+
+End index of the search result to be returned.
+
+---
+
+### getSecurityIsolationStatusParameters
+
+Returns information about the COEP/COOP isolation status.
+
+---
+
+### getSecurityIsolationStatusReturnValue
+
+If no frameId is provided, the status of the target is provided.
+
+---
+
+### getSharedStorageEntriesParameters
+
+Gets the entries in an given origin's shared storage.
+
+---
+
+### getSharedStorageMetadataParameters
+
+Gets metadata for an origin's shared storage.
+
+---
+
+### getSn
+
+Whitelist of computed styles to return.
+
+---
+
+### getSnapshotReturnValue
+
+Whether to include UA shadow tree in the snapshot (default false).
+
+---
+
+### getSourceOrderHighlightObjectForTestParameters
+
+For Source Order Viewer testing.
+
+---
+
+### getSourceOrderHighlightObjectForTestReturnValue
+
+Id of the node to highlight.
+
+---
+
+### getStackTraceParameters
+
+Returns stack trace with given `stackTraceId`.
+
+---
+
+### getStorageItemsReturnValue
+
+Keys to retrieve.
+
+---
+
+### getStyleSheetTextParameters
+
+Returns the current textual content for a stylesheet.
+
+---
+
+### getTargetInfoParameters
+
+Returns information about a target.
+
+---
+
+### getTargetsParameters
+
+Retrieves a list of available targets.
+
+---
+
+### getTopLayerElementsParameters
+
+Query selector result.
+
+---
+
+### getTrackEventDescriptorParameters
+
+Return a descriptor for all available tracing categories.
+
+---
+
+### getUsageAndQuotaParameters
+
+Returns usage and quota in bytes.
+
+---
+
+### getUsageAndQuotaReturnValue
+
+Security origin.
+
+---
+
+### getVersionParameters
+
+Returns version information.
+
+---
+
+### getWasmBytecodeParameters
+
+This command is deprecated. Use getScriptSource instead.
+
+---
+
+### getWasmBytecodeReturnValue
+
+Id of the Wasm script to get source for.
+
+---
+
+### getWindowBoundsParameters
+
+Get position and size of the browser window.
+
+---
+
+### getWindowBoundsReturnValue
+
+Browser window id.
+
+---
+
+### getWindowForTargetParameters
+
+Get the browser window that contains the devtools target.
+
+---
+
+### getWindowForTargetReturnValue
+
+Devtools agent host id. If called as a part of the session, associated targetId is used.
+
+---
+
+### globalLexicalScopeNamesParameters
+
+Returns all let, const and class variables from global scope.
+
+---
+
+### globalLexicalScopeNamesReturnValue
+
+Specifies in which execution context to lookup global scope variables.
+
+---
+
+### grantPermissionsReturnValue
+
+BrowserContext to override permissions. When omitted, default browser context is used.
+
+---
+
+### handleCertificateErrorParameters
+
+Handles a certificate error that fired a certificateError event.
+
+---
+
+### handleCertificateErrorReturnValue
+
+The action to take on the certificate error.
+
+---
+
+### handleJavaScriptDialogParameters
+
+Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
+
+---
+
+### handleJavaScriptDialogReturnValue
+
+Whether to accept or dismiss the dialog.
+
+---
+
+### heapStatsUpdatePayload
+
+If heap objects tracking has been started then backend may send update for one or more fragments
+
+---
+
+### hideHighlightParameters
+
+Hides any highlight.
+
+---
+
+### highlightFrameReturnValue
+
+The content box highlight outline color (default: transparent).
+
+---
+
+### highlightNodeParameters
+
+Highlights DOM node.
+
+---
+
+### highlightNodeR
+
+A descriptor for the highlight appearance.
+
+---
+
+### highlightNodeReturnValue
+
+Selectors to highlight relevant nodes.
+
+---
+
+### highlightQuadParameters
+
+Highlights given quad. Coordinates are absolute with respect to the main frame viewport.
+
+---
+
+### highlightQuadReturnValue
+
+The highlight outline color (default: transparent).
+
+---
+
+### highlightRectParameters
+
+Highlights given rectangle.
+
+---
+
+### highlightRectReturnValue
+
+The highlight outline color (default: transparent).
+
+---
+
+### highlightSourceOrderReturnValue
+
+JavaScript object id of the node to be highlighted.
+
+---
+
+### hint
+
+Object type. Accessor means that the property itself is an accessor property.
+
+---
+
+### if
+
+Maximal aggregated upload throughput (bytes/sec).  -1 disables upload throttling.
+
+---
+
+### imeSetCompositionReturnValue
+
+replacement end
+
+---
+
+### indexedDBContentUpdatedPayload
+
+The origin's IndexedDB object store has been modified.
+
+---
+
+### indexedDBListUpdatedPayload
+
+The origin's IndexedDB database list has been modified.
+
+---
+
+### inlineStyleInvalidatedPayload
+
+Fired when `Element`'s inline style is modified via a CSS property modification.
+
+---
+
+### insertTextReturnValue
+
+The text to insert.
+
+---
+
+### inspectModeCanceledPayload
+
+Fired when user cancels the inspect mode.
+
+---
+
+### interestGroupAccessedPayload
+
+Storage bucket to update.
+
+---
+
+### interestGroupAuctionEventOccurredPayload
+
+For non-global events --- links to interestGroupAuctionEvent
+
+---
+
+### interestGroupAuctionNetworkRequestCreatedPayload
+
+Set for started and configResolved
+
+---
+
+### interstitialHiddenPayload
+
+Fired when interstitial page was hidden
+
+---
+
+### interstitialShownPayload
+
+Fired when interstitial page was shown
+
+---
+
+### javascriptDialogOpeningPayload
+
+User input in case of prompt.
+
+---
+
+### layerTreeDidChangePayload
+
+Clip rectangle.
+
+---
+
+### lifecycleEventPayload
+
+Default dialog prompt.
+
+---
+
+### loadCompletePayload
+
+The frame ID for the frame associated with this nodes document.
+
+---
+
+### loadEventFiredPayload
+
+Tree structure of reasons why the page could not be cached for each frame.
+
+---
+
+### loadNetworkResourceParameters
+
+Fetches the resource and returns the content.
+
+---
+
+### loadNetworkResourceReturnValue
+
+Options for the request.
+
+---
+
+### loadSnapshotParameters
+
+Returns the snapshot identifier.
+
+---
+
+### loadSnapshotReturnValue
+
+An array of tiles composing the snapshot.
+
+---
+
+### loadUnpackedReturnValue
+
+Absolute file path.
+
+---
+
+### loadingFailedPayload
+
+Fired when HTTP request has failed to load.
+
+---
+
+### loadingFinishedPayload
+
+Fired when HTTP request has finished loading.
+
+---
+
+### makeSnapshotParameters
+
+Returns the layer snapshot identifier.
+
+---
+
+### makeSnapshotReturnValue
+
+The id of the layer.
+
+---
+
+### markUndoableStateParameters
+
+Marks last undoable state.
+
+---
+
+### mediaQueryResultChangedPayload
+
+The web font that has loaded.
+
+---
+
+### messageAddedPayload
+
+Issued when new console message is added.
+
+---
+
+### metricsPayload
+
+Current values of the metrics.
+
+---
+
+### moveToParameters
+
+Moves node into the new container, places it before the given anchor.
+
+---
+
+### moveToReturnValue
+
+Id of the element to drop the moved node into.
+
+---
+
+### navigateParameters
+
+Navigates current page to the given URL.
+
+---
+
+### navigateReturnValue
+
+Referrer-policy used for the navigation.
+
+---
+
+### navigateToHistoryEntryParameters
+
+Navigates current page to the given history entry.
+
+---
+
+### navigateToHistoryEntryReturnValue
+
+Unique id of the entry to navigate to.
+
+---
+
+### navigatedWithinDocumentPayload
+
+Fired when same-document navigation happens, e.g. due to history API usage or anchor navigation.
+
+---
+
+### nextWasmDisassemblyChunkParameters
+
+The first chunk of disassembly.
+
+---
+
+### nodeHighlightRequestedPayload
+
+Fired when the node should be highlighted. This happens after call to `setInspectMode`.
+
+---
+
+### nodeParamConnectedPayload
+
+Notifies that an AudioNode is connected to an AudioParam.
+
+---
+
+### nodeParamDisconnectedPayload
+
+Notifies that an AudioNode is disconnected to an AudioParam.
+
+---
+
+### nodesConnectedPayload
+
+Notifies that two AudioNodes are connected.
+
+---
+
+### nodesDisconnectedPayload
+
+Notifies that AudioNodes are disconnected. The destination can be null, and it means all the outgoing connections from the source are disconnected.
+
+---
+
+### nodesUpdatedPayload
+
+The nodesUpdated event is sent every time a previously requested node has changed the in tree.
+
+---
+
+### of
+
+Frame id of originating window (is only set if target has an opener).
+
+---
+
+### openDevToolsParameters
+
+Opens a DevTools window for the target.
+
+---
+
+### openDevToolsReturnValue
+
+This can be the page or tab target ID.
+
+---
+
+### or
+
+Initiator URL, set for Parser type or for Script type (when script is importing module) or for SignedExchange type.
+
+---
+
+### overrideNetworkStateParameters
+
+Override the state of navigator.onLine and navigator.connection.
+
+---
+
+### overrideNetworkStateReturnValue
+
+Connection type if known.
+
+---
+
+### overrideQuotaForOriginParameters
+
+Override quota for the specified origin
+
+---
+
+### pauseOnAsyncCallReturnValue
+
+Debugger will pause when async call with given stack trace is started.
+
+---
+
+### pauseParameters
+
+Stops on the next JavaScript statement.
+
+---
+
+### pausedPayload
+
+Fired when the virtual machine stopped on breakpoint or exception or any other stop criteria.
+
+---
+
+### performSearchParameters
+
+New id of the moved node.
+
+---
+
+### performSearchReturnValue
+
+True to search in user agent shadow DOM.
+
+---
+
+### playerErrorsRaisedPayload
+
+Send a list of any errors that need to be delivered.
+
+---
+
+### playerMessagesLoggedPayload
+
+Send a list of any messages that need to be delivered.
+
+---
+
+### policyUpdatedPayload
+
+Fired once security policy has been updated.
+
+---
+
+### preciseCoverageDeltaUpdatePayload
+
+Profile title passed as an argument to console.profile().
+
+---
+
+### prefetchStatusUpdatedPayload
+
+Fired when a prefetch attempt is updated.
+
+---
+
+### preloadEnabledStateUpdatedPayload
+
+Fired when a preload enabled state is updated.
+
+---
+
+### preloadingAttemptSourcesUpdatedPayload
+
+Send a list of sources for all preloading attempts in a document.
+
+---
+
+### prepareForLeakDetectionParameters
+
+DOM object counters.
+
+---
+
+### prerenderStatusUpdatedPayload
+
+The frame id of the frame initiating prefetch.
+
+---
+
+### printToPDFParameters
+
+Print page as PDF.
+
+---
+
+### printToPDFReturnValue
+
+Whether or not to embed the document outline into the PDF.
+
+---
+
+### profileSnapshotParameters
+
+The id of the layer snapshot.
+
+---
+
+### profileSnapshotReturnValue
+
+The clip rectangle to apply when replaying the snapshot.
+
+---
+
+### pseudoElementAddedPayload
+
+Called when a pseudo element is added to an element.
+
+---
+
+### pseudoElementRemovedPayload
+
+Called when a pseudo element is removed from an element.
+
+---
+
+### pushNodeByPathToFrontendParameters
+
+Requests that the node is sent to the caller given its path. // FIXME, use XPath
+
+---
+
+### pushNodeByPathToFrontendReturnValue
+
+Path to node in the proprietary format.
+
+---
+
+### pushNodesByBackendIdsToFrontendParameters
+
+Requests that a batch of nodes is sent to the caller given their backend node ids.
+
+---
+
+### pushNodesByBackendIdsToFrontendReturnValue
+
+The array of backend node ids.
+
+---
+
+### queryAXTre
+
+Identifier of the node for the root to query.
+
+---
+
+### queryAXTreeReturnValue
+
+JavaScript object id of the node wrapper for the root to query.
+
+---
+
+### queryObjectsReturnValue
+
+Symbolic group name that can be used to release the results.
+
+---
+
+### querySelectorAllParameters
+
+Executes `querySelectorAll` on a given node.
+
+---
+
+### querySelectorAllReturnValue
+
+Selector string.
+
+---
+
+### querySelectorParameters
+
+Executes `querySelector` on a given node.
+
+---
+
+### querySelectorReturnValue
+
+Selector string.
+
+---
+
+### readParameters
+
+Read a chunk of the stream
+
+---
+
+### readReturnValue
+
+Maximum number of bytes to read (left upon the agent discretion if not specified).
+
+---
+
+### receivedMessageFromTargetPayload
+
+Deprecated.
+
+---
+
+### recordClockSyncMarkerParameters
+
+Record a clock sync marker in the trace.
+
+---
+
+### recordClockSyncMarkerReturnValue
+
+The ID of this clock sync marker
+
+---
+
+### recordingStateChangedPayload
+
+Called when the recording state for the service has been updated.
+
+---
+
+### redoParameters
+
+Re-does the last undone action.
+
+---
+
+### releaseAnimationsParameters
+
+Releases a set of animations to no longer be manipulated.
+
+---
+
+### releaseAnimationsReturnValue
+
+List of animation ids to seek.
+
+---
+
+### releaseObjectGroupParameters
+
+Releases all remote objects that belong to a given group.
+
+---
+
+### releaseObjectGroupReturnValue
+
+Symbolic object group name.
+
+---
+
+### releaseObjectParameters
+
+Releases remote object with given id.
+
+---
+
+### releaseObjectReturnValue
+
+Identifier of the object to release.
+
+---
+
+### releaseSnapshotParameters
+
+Releases layer snapshot captured by the back-end.
+
+---
+
+### releaseSnapshotReturnValue
+
+The id of the layer snapshot.
+
+---
+
+### reloadParameters
+
+Reloads given page optionally ignoring the cache.
+
+---
+
+### removeAttributeParameters
+
+Removes attribute with given name from an element with given id.
+
+---
+
+### removeAttributeReturnValue
+
+Name of the attribute to remove.
+
+---
+
+### removeBreakpointParameters
+
+Removes JavaScript breakpoint.
+
+---
+
+### removeCharacteristicParameters
+
+An identifier that uniquely represents this characteristic.
+
+---
+
+### removeCredentialParameters
+
+Removes a credential from the authenticator.
+
+---
+
+### removeDOMBreakpointParameters
+
+Removes DOM breakpoint that was set using `setDOMBreakpoint`.
+
+---
+
+### removeDescriptorParameters
+
+Removes the descriptor with |descriptorId| from the simulated central.
+
+---
+
+### removeEventListenerBreakpointReturnValue
+
+EventTarget interface name.
+
+---
+
+### removeInstrumentationBreakpointParameters
+
+Removes breakpoint on particular native event.
+
+---
+
+### removeInstrumentationBreakpointReturnValue
+
+Instrumentation name to stop on.
+
+---
+
+### removeNodeParameters
+
+Removes node with given id.
+
+---
+
+### removeNodeReturnValue
+
+Id of the node to remove.
+
+---
+
+### removeScreenParameters
+
+Remove screen from the device. Only supported in headless mode.
+
+---
+
+### removeScriptToEvaluateOnLoadParameters
+
+Deprecated, please use removeScriptToEvaluateOnNewDocument instead.
+
+---
+
+### removeScriptToEvaluateOnNewDocumentParameters
+
+Removes given script from the list.
+
+---
+
+### removeServiceParameters
+
+Removes the service respresented by |serviceId| from the simulated central.
+
+---
+
+### removeStorageItemsParameters
+
+Removes `keys` from extension storage in the given `storageArea`.
+
+---
+
+### removeStorageItemsReturnValue
+
+Keys to remove.
+
+---
+
+### removeVirtualAuthenticatorParameters
+
+Removes the given authenticator.
+
+---
+
+### removeXHRBreakpointParameters
+
+Removes breakpoint from XMLHttpRequest.
+
+---
+
+### removeXHRBreakpointReturnValue
+
+Resource URL substring.
+
+---
+
+### replaySnapshotParameters
+
+Replays the layer snapshot and returns the resulting bitmap.
+
+---
+
+### replaySnapshotReturnValue
+
+The last step to replay to (replay till the end if not specified).
+
+---
+
+### replayXHRReturnValue
+
+Identifier of XHR to replay.
+
+---
+
+### requestCacheNamesParameters
+
+Requests cache names.
+
+---
+
+### requestCacheNamesReturnValue
+
+Storage bucket. If not specified, it uses the default bucket.
+
+---
+
+### requestCachedResponseParameters
+
+Fetches cache entry.
+
+---
+
+### requestCachedResponseReturnValue
+
+headers of the request.
+
+---
+
+### requestChildNodesReturnValue
+
+Id of the node to get children for.
+
+---
+
+### requestDataParameters
+
+Requests data from object store or index.
+
+---
+
+### requestDataRet
+
+Database name.
+
+---
+
+### requestDataReturnValue
+
+Key range.
+
+---
+
+### requestDatabaseNamesParameters
+
+Requests database names for given security origin.
+
+---
+
+### requestDatabaseParameters
+
+Requests database with given name in given frame.
+
+---
+
+### requestDatabaseReturnValue
+
+Database name.
+
+---
+
+### requestEntriesParameters
+
+Requests data from cache.
+
+---
+
+### requestEntriesReturnValue
+
+If present, only return the entries containing this substring in the path
+
+---
+
+### requestInterceptedPayload
+
+Total number of bytes received for this request.
+
+---
+
+### requestMemoryDumpParameters
+
+Request a global memory dump.
+
+---
+
+### requestMemoryDumpReturnValue
+
+Specifies level of details in memory dump. Defaults to "detailed".
+
+---
+
+### requestNodeReturnValue
+
+JavaScript object id to convert into node.
+
+---
+
+### requestServedFromCachePayload
+
+Fired if request ended up loading from cache.
+
+---
+
+### requestWillBeSentPayload
+
+Fired when page is about to send HTTP request.
+
+---
+
+### resetNavigationHistoryParameters
+
+Resets navigation history for the current page.
+
+---
+
+### resetPageScaleFactorParameters
+
+Requests that page scale factor is reset to initial values.
+
+---
+
+### resetPermissionsParameters
+
+Reset all permission management for all origins.
+
+---
+
+### resetPermissionsReturnValue
+
+BrowserContext to reset permissions. When omitted, default browser context is used.
+
+---
+
+### resetSharedStorageBudgetParameters
+
+Resets the budget for `ownerOrigin` by clearing all budget withdrawals.
+
+---
+
+### resolveAnimationParameters
+
+Gets the remote object of the Animation.
+
+---
+
+### resolveAnimationReturnValue
+
+Animation id.
+
+---
+
+### resolveBlobParameters
+
+Set if the end-of-file condition occurred while reading.
+
+---
+
+### resolveNodeParameters
+
+Resolves the JavaScript node object for a given NodeId or BackendNodeId.
+
+---
+
+### resolveNodeReturnValue
+
+Execution context in which to resolve the node.
+
+---
+
+### resolveValuesReturnValue
+
+Pseudo element custom ident.
+
+---
+
+### resourceChangedPriorityPayload
+
+Fired when resource loading priority is changed
+
+---
+
+### responseReceivedPayload
+
+Fired when HTTP response is available.
+
+---
+
+### restartFrameReturnValue
+
+Call frame identifier to evaluate on.
+
+---
+
+### resumeParameters
+
+Resumes JavaScript execution.
+
+---
+
+### resumedPayload
+
+Fired when the virtual machine resumed execution.
+
+---
+
+### ruleSetUpdatedPayload
+
+Upsert. Currently, it is only emitted when a rule set added.
+
+---
+
+### runBounceTrackingMitigationsParameters
+
+Deletes state for sites identified as potential bounce trackers, immediately.
+
+---
+
+### runIfWaitingForDebuggerParameters
+
+Tells inspected instance to run if it was waiting for debugger to attach.
+
+---
+
+### runScriptParameters
+
+Runs script with given id in a given context.
+
+---
+
+### runScriptReturnValue
+
+Whether preview should be generated for the result.
+
+---
+
+### screencastFrameAckParameters
+
+Acknowledges that a screencast frame has been received by the frontend.
+
+---
+
+### screencastFrameAckReturnValue
+
+Frame number.
+
+---
+
+### screencastFramePayload
+
+Compressed image data requested by the `startScreencast`.
+
+---
+
+### screencastVisibilityChangedPayload
+
+Fired when the page with currently enabled screencast was shown or hidden `.
+
+---
+
+### screenshotRequestedPayload
+
+Fired when user asks to capture screenshot of some area on the page.
+
+---
+
+### scriptFailedToParsePayload
+
+Fired when virtual machine fails to parse the script.
+
+---
+
+### scriptParsedPayload
+
+The name the embedder supplied for this script.
+
+---
+
+### scrollIntoViewIfNeededParameters
+
+Node description.
+
+---
+
+### scrollIntoViewIfNeededReturnV
+
+Identifier of the node.
+
+---
+
+### scrollIntoViewIfNeededReturnValue
+
+JavaScript object id of the node wrapper.
+
+---
+
+### scrollableFlagUpdatedPayload
+
+Fired when a node's scrollability state changes.
+
+---
+
+### searchInContentParameters
+
+Searches for given string in script content.
+
+---
+
+### searchInContentReturnValue
+
+If true, treats string parameter as regex.
+
+---
+
+### searchInResourceParameters
+
+Searches for given string in resource content.
+
+---
+
+### searchInResourceReturnValue
+
+If true, treats string parameter as regex.
+
+---
+
+### searchInResponseBodyParameters
+
+Searches for given string in response content.
+
+---
+
+### searchInResponseBodyReturnValue
+
+If true, treats string parameter as regex.
+
+---
+
+### securityStateChangedPayload
+
+The security state of the page changed. No longer being sent.
+
+---
+
+### seekAnimationsParameters
+
+Seek a set of animations to a particular time within each animation.
+
+---
+
+### seekAnimationsReturnValue
+
+Set the current time of each animation.
+
+---
+
+### selectPromptParameters
+
+Select a device in response to a DeviceAccess.deviceRequestPrompted event.
+
+---
+
+### sendMessageToTargetParameters
+
+The list of targets.
+
+---
+
+### sendMessageToTargetReturnValue
+
+Deprecated.
+
+---
+
+### setAcceptedEncodingsParameters
+
+Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
+
+---
+
+### setAcceptedEncodingsReturnValue
+
+List of accepted content encodings.
+
+---
+
+### setAdBlockingEnabledParameters
+
+Enable Chrome's experimental ad filter on all sites.
+
+---
+
+### setAdBlockingEnabledReturnValue
+
+Whether to block ads.
+
+---
+
+### setAddressesParameters
+
+Set addresses so that developers can verify their forms implementation.
+
+---
+
+### setAsyncCallStackDepthParameters
+
+Enables or disables async call stacks tracking.
+
+---
+
+### setAttachDebugStackParameters
+
+Specifies whether to attach a page script stack id in requests
+
+---
+
+### setAttachDebugStackReturnValue
+
+Whether to attach a page script stack for debugging purpose.
+
+---
+
+### setAttributeValueParameters
+
+Sets attribute for an element with given id.
+
+---
+
+### setAttributeValueReturnValue
+
+Attribute value.
+
+---
+
+### setAttributesAsTextReturnValue
+
+Text with a number of attributes. Will parse this text using HTML parser.
+
+---
+
+### setAttributionReportingLocalTestingModeParameters
+
+https://wicg.github.io/attribution-reporting-api/
+
+---
+
+### setAttributionReportingLocalTestingModeReturnValue
+
+If enabled, noise is suppressed and reports are sent immediately.
+
+---
+
+### setAttributionReportingTrackingParameters
+
+Enables/disables issuing of Attribution Reporting events.
+
+---
+
+### setAutoAttachReturnValue
+
+Only targets matching filter will be attached.
+
+---
+
+### setAutoDarkModeOverrideParameters
+
+Automatically render all web contents using a dark theme.
+
+---
+
+### setAutomationOverrideParameters
+
+Allows overriding the automation flag.
+
+---
+
+### setAutomationOverrideReturnValue
+
+Whether the override should be enabled.
+
+---
+
+### setBlackboxExecutionContextsReturnValue
+
+Array of execution context unique ids for the debugger to ignore.
+
+---
+
+### setBlackboxPatternsReturnValue
+
+If true, also ignore scripts with no source url.
+
+---
+
+### setBlackboxedRangesReturnValue
+
+Id of the script.
+
+---
+
+### setBlockedURLsParameters
+
+Blocks URLs from loading.
+
+---
+
+### setBlockedURLsReturnValue
+
+URL patterns to block. Wildcards ('*') are allowed.
+
+---
+
+### setBreakOnCSPViolationParameters
+
+Sets breakpoint on particular CSP violations.
+
+---
+
+### setBreakOnCSPViolationReturnValue
+
+CSP Violations to stop upon.
+
+---
+
+### setBreakpointByUrlParameters
+
+Id of the created breakpoint for further reference.
+
+---
+
+### setBreakpointByUrlReturnValue
+
+Offset in the line to set breakpoint at.
+
+---
+
+### setBreakpointOnFunctionCallReturnValue
+
+Function object id.
+
+---
+
+### setBreakpointParameters
+
+Sets JavaScript breakpoint at a given location.
+
+---
+
+### setBreakpointReturnValue
+
+Location to set breakpoint in.
+
+---
+
+### setBreakpointsActiveParameters
+
+Activates / deactivates all breakpoints on the page.
+
+---
+
+### setBreakpointsActiveReturnValue
+
+New value for breakpoints active state.
+
+---
+
+### setBypassCSPParameters
+
+Enable page Content Security Policy by-passing.
+
+---
+
+### setBypassCSPReturnValue
+
+Whether to bypass page CSP.
+
+---
+
+### setBypassServiceWorkerParameters
+
+Toggles ignoring of service worker for each request.
+
+---
+
+### setBypassServiceWorkerReturnValue
+
+Bypass service worker and load from network.
+
+---
+
+### setCPUThrottlingRateParameters
+
+Enables CPU throttling to emulate slow CPUs.
+
+---
+
+### setCPUThrottlingRateReturnValue
+
+Throttling rate as a slowdown factor (1 is no throttle, 2 is 2x slowdown, etc).
+
+---
+
+### setCacheDisabledParameters
+
+Toggles ignoring cache for each request. If `true`, cache will not be used.
+
+---
+
+### setCacheDisabledReturnValue
+
+Cache disabled state.
+
+---
+
+### setChildNodesPayload
+
+The removed pseudo element id.
+
+---
+
+### setContainerQueryTextParameters
+
+Modifies the expression of a container query.
+
+---
+
+### setContentsSizeParameters
+
+Set size of the browser contents resizing browser window as necessary.
+
+---
+
+### setContentsSizeReturnValue
+
+Browser window id.
+
+---
+
+### setCookieControlsReturnValue
+
+Whether 3pc grace period exception should be enabled; false by default.
+
+---
+
+### setCookieParameters
+
+Sets a cookie with the given cookie data; may overwrite equivalent cookies if they exist.
+
+---
+
+### setCookieReturnValue
+
+Cookie partition key. If not set, the cookie will be set as not partitioned.
+
+---
+
+### setCookiesParameters
+
+Sets given cookies.
+
+---
+
+### setCookiesReturnValue
+
+Browser context to use when called on the browser endpoint.
+
+---
+
+### setDOMBreakpointParameters
+
+Sets breakpoint on particular operation with DOM.
+
+---
+
+### setDataSaverOverrideParameters
+
+Override the value of navigator.connection.saveData
+
+---
+
+### setDataSaverOverrideReturnValue
+
+Override value. Omitting the parameter disables the override.
+
+---
+
+### setDeviceMetricsOverrideReturnValue
+
+The viewport dimensions and scale. If not set, the override is cleared.
+
+---
+
+### setDeviceOrientationOverrideParameters
+
+Overrides the Device Orientation.
+
+---
+
+### setDeviceOrientationOverrideReturnValue
+
+Mock gamma
+
+---
+
+### setDisabledImageTypesReturnValue
+
+Image types to disable.
+
+---
+
+### setDiscoverTargetsReturnValue
+
+Whether to discover available targets.
+
+---
+
+### setDockTileParameters
+
+Set dock tile details, platform-specific.
+
+---
+
+### setDockTileReturnValue
+
+Png encoded image.
+
+---
+
+### setDocumentContentParameters
+
+Sets given markup as the document's HTML.
+
+---
+
+### setDocumentContentReturnValue
+
+HTML content to set.
+
+---
+
+### setDocumentCookieDisabledReturnValue
+
+Whether document.coookie API should be disabled.
+
+---
+
+### setDownloadBehaviorParameters
+
+Set the behavior when downloading a file.
+
+---
+
+### setDownloadBehaviorReturnValue
+
+The default path to save downloaded files to. This is required if behavior is set to 'allow'
+
+---
+
+### setEffectivePropertyValueForNodeParameters
+
+The list of node Ids that have their tracked computed styles updated.
+
+---
+
+### setEffectivePropertyValueForNodeReturnValue
+
+The element id for which to set property.
+
+---
+
+### setEmitTouchEventsForMouseReturnValue
+
+Touch/gesture events configuration. Default: current platform.
+
+---
+
+### setEmulatedMediaParameters
+
+Emulates the given media type or media feature for CSS media queries.
+
+---
+
+### setEmulatedMediaReturnValue
+
+Media features to emulate.
+
+---
+
+### setEmulatedOSTextScaleParameters
+
+Emulates the given OS text scale.
+
+---
+
+### setEmulatedVisionDeficiencyParameters
+
+Emulates the given vision deficiency.
+
+---
+
+### setExtraHTTPHeadersParameters
+
+Specifies whether to always send extra HTTP headers with the requests from this page.
+
+---
+
+### setExtraHTTPHeadersReturnValue
+
+Map with extra HTTP headers.
+
+---
+
+### setFileInputFilesParameters
+
+Sets files for the given file input element.
+
+---
+
+### setFileInputFilesReturnValue
+
+JavaScript object id of the node wrapper.
+
+---
+
+### setFocusEmulationEnabledParameters
+
+Enables or disables simulating a focused and active page.
+
+---
+
+### setFocusEmulationEnabledReturnValue
+
+Whether to enable to disable focus emulation.
+
+---
+
+### setFontFamiliesParameters
+
+Set generic font families.
+
+---
+
+### setFontFamiliesReturnValue
+
+Specifies font families to set for individual scripts.
+
+---
+
+### setFontSizesParameters
+
+Set default font sizes.
+
+---
+
+### setFontSizesReturnValue
+
+Specifies font sizes to set. If a font size is not specified, it won't be changed.
+
+---
+
+### setGeolocationOverrideReturnValue
+
+Mock accuracy
+
+---
+
+### setHardwareConcurrencyOverrideReturnValue
+
+Hardware concurrency to report
+
+---
+
+### setIdleOverrideParameters
+
+Overrides the Idle state.
+
+---
+
+### setIdleOverrideReturnValue
+
+Mock isScreenUnlocked
+
+---
+
+### setIgnoreCertificateErrorsParameters
+
+Enable/disable whether all certificate errors should be ignored.
+
+---
+
+### setIgnoreCertificateErrorsReturnValue
+
+If true, all certificate errors will be ignored.
+
+---
+
+### setIgnoreInputEventsParameters
+
+Ignores input events (useful while auditing page).
+
+---
+
+### setIgnoreInputEventsReturnValue
+
+Ignores input events processing when set to true.
+
+---
+
+### setInspectModeReturnValue
+
+Set an inspection mode.
+
+---
+
+### setInspectedNodeParameters
+
+The list of detached nodes
+
+---
+
+### setInspectedNodeReturnValue
+
+DOM node id to be accessible by means of $x command line API.
+
+---
+
+### setInstrumentationBreakpointParameters
+
+Sets instrumentation breakpoint.
+
+---
+
+### setInstrumentationBreakpointReturnValue
+
+Instrumentation name.
+
+---
+
+### setInterestGroupTrackingParameters
+
+Enables/Disables issuing of interestGroupAccessed events.
+
+---
+
+### setKeyframeKeyParameters
+
+Modifies the keyframe rule key text.
+
+---
+
+### setLifecycleEventsEnabledParameters
+
+Controls whether page will emit lifecycle events.
+
+---
+
+### setLifecycleEventsEnabledReturnValue
+
+If true, starts emitting lifecycle events.
+
+---
+
+### setLocalFontsEnabledParameters
+
+Enables/disables rendering of local CSS fonts (enabled by default).
+
+---
+
+### setLocaleOverrideParameters
+
+Overrides default host system locale with the specified one.
+
+---
+
+### setMediaTextParameters
+
+Modifies the rule selector.
+
+---
+
+### setNavigatorOverridesParameters
+
+Overrides value returned by the javascript navigator object.
+
+---
+
+### setNavigatorOverridesReturnValue
+
+The platform navigator.platform should return.
+
+---
+
+### setNodeNameParameters
+
+Sets node name for a node with given id.
+
+---
+
+### setNodeNameReturnValue
+
+New node's name.
+
+---
+
+### setNodeStackTracesEnabledParameters
+
+Sets if stack traces should be captured for Nodes. See `Node.getNodeStackTraces`. Default is disabled.
+
+---
+
+### setNodeStackTracesEnabledReturnValue
+
+Enable or disable.
+
+---
+
+### setNodeValueParameters
+
+Sets node value for a node with given id.
+
+---
+
+### setNodeValueReturnValue
+
+New node's value.
+
+---
+
+### setOuterHTMLParameters
+
+Sets node HTML markup, returns new node id.
+
+---
+
+### setOuterHTMLReturnValue
+
+Outer HTML markup to set.
+
+---
+
+### setPageScaleFactorParameters
+
+Sets a specified page scale factor.
+
+---
+
+### setPageScaleFactorReturnValue
+
+Page scale factor.
+
+---
+
+### setPauseOnExceptionsReturnValue
+
+Pause on exceptions mode.
+
+---
+
+### setPausedInDebuggerMessageReturnValue
+
+The message to display, also triggers resume and step over controls.
+
+---
+
+### setPausedParameters
+
+Sets the paused state of a set of animations.
+
+---
+
+### setPausedReturnValue
+
+Paused state to set to.
+
+---
+
+### setPermissionParameters
+
+Set permission settings for given embedding and embedded origins.
+
+---
+
+### setPermissionReturnValue
+
+Context to override. When omitted, default browser context is used.
+
+---
+
+### setPlaybackRateParameters
+
+Sets the playback rate of the document timeline.
+
+---
+
+### setPlaybackRateReturnValue
+
+Playback rate for animations on page
+
+---
+
+### setPressureNotificationsSuppressedParameters
+
+Enable/disable suppressing memory pressure notifications in all processes.
+
+---
+
+### setPressureNotificationsSuppressedReturnValue
+
+If true, memory pressure notifications will be suppressed.
+
+---
+
+### setPropertyRulePropertyNameParameters
+
+Modifies the property rule property name.
+
+---
+
+### setRecordingParameters
+
+Set the recording state for the service.
+
+---
+
+### setRemoteLocationsReturnValue
+
+List of remote locations.
+
+---
+
+### setResponseOverrideBitsParameters
+
+Resets parameters isBogusSignature, isBadUV, isBadUP to false if they are not present.
+
+---
+
+### setRuleSelectorParameters
+
+Modifies the rule selector.
+
+---
+
+### setSamplingIntervalParameters
+
+Changes CPU profiler sampling interval. Must be called before CPU profiles recording started.
+
+---
+
+### setSamplingIntervalReturnValue
+
+New sampling interval in microseconds.
+
+---
+
+### setScopeTextParameters
+
+Modifies the expression of a scope at-rule.
+
+---
+
+### setScriptExecutionDisabledParameters
+
+Switches script execution in the page.
+
+---
+
+### setScriptExecutionDisabledReturnValue
+
+Whether script execution should be disabled in the page.
+
+---
+
+### setScrollbarsHiddenReturnValue
+
+Whether scrollbars should be always hidden.
+
+---
+
+### setSharedStorageEntryParameters
+
+Sets entry with `key` and `value` for a given origin's shared storage.
+
+---
+
+### setSharedStorageTrackingParameters
+
+Enables/disables issuing of sharedStorageAccessed events.
+
+---
+
+### setShowAdHighlightsParameters
+
+Highlights owner element of all frames detected to be ads.
+
+---
+
+### setShowAdHighlightsReturnValue
+
+True for showing ad highlights
+
+---
+
+### setShowContainerQueryOverlaysReturnValue
+
+An array of node identifiers and descriptors for the highlight appearance.
+
+---
+
+### setShowDebugBordersParameters
+
+Requests that backend shows debug borders on layers
+
+---
+
+### setShowDebugBordersReturnValue
+
+True for showing debug borders
+
+---
+
+### setShowFPSCounterParameters
+
+Requests that backend shows the FPS counter
+
+---
+
+### setShowFPSCounterReturnValue
+
+True for showing the FPS counter
+
+---
+
+### setShowFlexOverlaysReturnValue
+
+An array of node identifiers and descriptors for the highlight appearance.
+
+---
+
+### setShowGridOverlaysParameters
+
+Highlight multiple elements with the CSS Grid overlay.
+
+---
+
+### setShowGridOverlaysReturnValue
+
+An array of node identifiers and descriptors for the highlight appearance.
+
+---
+
+### setShowHingeParameters
+
+Add a dual screen device hinge
+
+---
+
+### setShowHingeReturnValue
+
+hinge data, null means hideHinge
+
+---
+
+### setShowHitTestBordersParameters
+
+Deprecated, no longer has any effect.
+
+---
+
+### setShowHitTestBordersReturnValue
+
+True for showing hit-test borders
+
+---
+
+### setShowIsolatedElementsParameters
+
+Show elements in isolation mode with overlays.
+
+---
+
+### setShowIsolatedElementsReturnValue
+
+An array of node identifiers and descriptors for the highlight appearance.
+
+---
+
+### setShowLayoutShiftRegionsParameters
+
+Requests that backend shows layout shift regions
+
+---
+
+### setShowLayoutShiftRegionsReturnValue
+
+True for showing layout shift regions
+
+---
+
+### setShowPaintRectsParameters
+
+Requests that backend shows paint rectangles
+
+---
+
+### setShowPaintRectsReturnValue
+
+True for showing paint rectangles
+
+---
+
+### setShowScrollBottleneckRectsParameters
+
+Requests that backend shows scroll bottleneck rects
+
+---
+
+### setShowScrollBottleneckRectsReturnValue
+
+True for showing scroll bottleneck rects
+
+---
+
+### setShowScrollSnapOverlaysReturnValue
+
+An array of node identifiers and descriptors for the highlight appearance.
+
+---
+
+### setShowViewportSizeOnResizeParameters
+
+Paints viewport size upon main frame resize.
+
+---
+
+### setShowViewportSizeOnResizeReturnValue
+
+Whether to paint size or not.
+
+---
+
+### setShowWebVitalsParameters
+
+Deprecated, no longer has any effect.
+
+---
+
+### setShowWindowControlsOverlayParameters
+
+Show Window Controls Overlay for PWA
+
+---
+
+### setSimulatedCentralStateParameters
+
+Set the state of the simulated central.
+
+---
+
+### setSimulatedCentralStateReturnValue
+
+State of the simulated central.
+
+---
+
+### setSkipAllPausesParameters
+
+Makes page not interrupt on any pauses (breakpoint, exception, dom exception etc).
+
+---
+
+### setSkipAllPausesReturnValue
+
+New value for skip pauses state.
+
+---
+
+### setStorageBucketTrackingParameters
+
+Set tracking for a storage key's buckets.
+
+---
+
+### setStorageItemsReturnValue
+
+Values to set.
+
+---
+
+### setStyleSheetTextParameters
+
+Sets the new stylesheet text.
+
+---
+
+### setStyleTextsParameters
+
+Applies specified style edits one after another in the given order.
+
+---
+
+### setSupportsTextParameters
+
+Modifies the expression of a supports at-rule.
+
+---
+
+### setTimeDomainReturnValue
+
+Time domain
+
+---
+
+### setTimezoneOverrideParameters
+
+Overrides default host system timezone with the specified one.
+
+---
+
+### setTimingParameters
+
+Sets the timing of an animation node.
+
+---
+
+### setTouchEmulationEnabledParameters
+
+Toggles mouse event-based touch event emulation.
+
+---
+
+### setTouchEmulationEnabledReturnValue
+
+Touch/gesture events configuration. Default: current platform.
+
+---
+
+### setUserAgentOverrideParameters
+
+Allows overriding user agent with the given string.
+
+---
+
+### setUserAgentOverrideReturnValue
+
+To be sent in Sec-CH-UA-* headers and returned in navigator.userAgentData
+
+---
+
+### setVirtualTimePolicyReturnValue
+
+If set, base::Time::Now will be overridden to initially return this value.
+
+---
+
+### setVisibleSizeReturnValue
+
+Frame height (DIP).
+
+---
+
+### setWebLifecycleStateReturnValue
+
+Target lifecycle state
+
+---
+
+### setWindowBoundsParameters
+
+Set position and/or size of the browser window.
+
+---
+
+### setWindowBoundsReturnValue
+
+Browser window id.
+
+---
+
+### shadowRootPoppedPayload
+
+Child nodes array.
+
+---
+
+### sharedStorageWorkletOp
+
+Serialization of the origin owning the Shared Storage data.
+
+---
+
+### sharedStorageWorkletOperationExecutionFinishedPayload
+
+Serialization of the site owning the Shared Storage data.
+
+---
+
+### signedExchangeReceivedPayload
+
+Fired when a signed exchange was received over the network
+
+---
+
+### simulateGATTDisconnectionParameters
+
+Simulates a GATT disconnection from the peripheral with |address|.
+
+---
+
+### simulatePressureNotificationParameters
+
+Simulate a memory pressure notification in all processes.
+
+---
+
+### simulatePressureNotificationReturnValue
+
+Memory pressure level of the notification.
+
+---
+
+### startDesktopMirroringParameters
+
+Starts mirroring the desktop to the sink.
+
+---
+
+### startObservingParameters
+
+Enables event updates for the service.
+
+---
+
+### startParameters
+
+Start trace events collection.
+
+---
+
+### startPreciseCoverageReturnValue
+
+Allow the backend to send updates on its own initiative
+
+---
+
+### startReturnValue
+
+Backend type (defaults to `auto`)
+
+---
+
+### startRuleUsageTrackingParameters
+
+Enables the selector recording.
+
+---
+
+### startSamplingParameters
+
+Return the sampling profile being collected.
+
+---
+
+### startSamplingReturnValue
+
+Do not randomize intervals between samples.
+
+---
+
+### startScreencastParameters
+
+Starts sending each frame using the `screencastFrame` event.
+
+---
+
+### startScreencastReturnValue
+
+Send every n-th frame.
+
+---
+
+### startTabMirroringParameters
+
+Starts mirroring the tab to the sink.
+
+---
+
+### startViolationsReportParameters
+
+start violation reporting.
+
+---
+
+### startViolationsReportReturnValue
+
+Configuration for violations.
+
+---
+
+### stepOutParameters
+
+Steps out of the function call.
+
+---
+
+### stepOverParameters
+
+Steps over the statement.
+
+---
+
+### stopCastingParameters
+
+Stops the active Cast session on the sink.
+
+---
+
+### stopLoadingParameters
+
+Force the page stop all navigations and pending resource fetches.
+
+---
+
+### stopObservingParameters
+
+Disables event updates for the service.
+
+---
+
+### stopParameters
+
+Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
+
+---
+
+### stopPreciseCoverageParameters
+
+Recorded profile.
+
+---
+
+### stopSamplingParameters
+
+Stop collecting native memory profile.
+
+---
+
+### stopScreencastParameters
+
+Stops sending each frame in the `screencastFrame`.
+
+---
+
+### stopTrackingHeapObjectsParameters
+
+Recorded sampling heap profile.
+
+---
+
+### stopTrackingHeapObjectsReturnValue
+
+If true, exposes internals of the snapshot.
+
+---
+
+### storageBucketCreatedOrUpdatedPayload
+
+Serialization of the origin owning the Shared Storage data.
+
+---
+
+### streamResourceContentReturnValue
+
+Identifier of the request to stream.
+
+---
+
+### styleSheetAddedPayload
+
+Fired whenever an active document stylesheet is added.
+
+---
+
+### styleSheetChangedPayload
+
+Fired whenever a stylesheet is changed as a result of the client operation.
+
+---
+
+### styleSheetRemovedPayload
+
+Fired whenever an active document stylesheet is removed.
+
+---
+
+### synthesizePinchGestureParameters
+
+Synthesizes a pinch gesture over a time period by issuing appropriate touch events.
+
+---
+
+### synthesizeScrollGestureParameters
+
+Synthesizes a scroll gesture over a time period by issuing appropriate touch events.
+
+---
+
+### synthesizeScrollGestureReturnValue
+
+The name of the interaction markers to generate, if not empty (default: "").
+
+---
+
+### synthesizeTapGestureParameters
+
+Synthesizes a tap gesture over a time period by issuing appropriate touch events.
+
+---
+
+### takeComputedStyleUpdatesParameters
+
+Polls the next batch of computed style updates.
+
+---
+
+### takeHeapSnapshotReturnValue
+
+If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken.
+
+---
+
+### takeResponseBodyForInterceptionAsStreamPa
+
+Response body.
+
+---
+
+### takeResponseBodyForInterceptionAsStreamParameters
+
+True, if content was sent as base64.
+
+---
+
+### targetCrashedPayload
+
+Issued when a target has crashed.
+
+---
+
+### targetCreatedPayload
+
+Issued when a possible inspection target is created.
+
+---
+
+### targetDestroyedPayload
+
+Issued when a target is destroyed.
+
+---
+
+### targetInfoChangedPayload
+
+Termination error code.
+
+---
+
+### targetReloadedAfterCrashPayload
+
+Fired when debugging target has reloaded after crash
+
+---
+
+### timelineEventAddedPayload
+
+Sent when a performance timeline event is added. See reportPerformanceTimeline method.
+
+---
+
+### topLayerElementsUpdatedPayload
+
+Called when top layer elements are changed.
+
+---
+
+### trackCacheStorageForOriginParameters
+
+Registers origin to be notified when an update occurs to its cache storage list.
+
+---
+
+### trackCacheStorageForOriginReturnValue
+
+Security origin.
+
+---
+
+### trackCacheStorageForStorageKeyParameters
+
+Registers storage key to be notified when an update occurs to its cache storage list.
+
+---
+
+### trackCacheStorageForStorageKeyReturnValue
+
+Storage key.
+
+---
+
+### trackIndexedDBForOriginParameters
+
+Registers origin to be notified when an update occurs to its IndexedDB.
+
+---
+
+### trackIndexedDBForOriginReturnValue
+
+Security origin.
+
+---
+
+### trackIndexedDBForStorageKeyParameters
+
+Registers storage key to be notified when an update occurs to its IndexedDB.
+
+---
+
+### trackIndexedDBForStorageKeyReturnValue
+
+Storage key.
+
+---
+
+### triggerParameters
+
+Information about the fields that were filled
+
+---
+
+### triggerReturnValue
+
+Address to fill out the form. Address data is not saved. Mutually exclusive with `card`.
+
+---
+
+### undoParameters
+
+Undoes the last performed action.
+
+---
+
+### uninstallParameters
+
+Uninstalls the given manifest_id and closes any opened app windows.
+
+---
+
+### uninstallReturnValue
+
+Extension id.
+
+---
+
+### untrackCacheStorageForOriginParameters
+
+Unregisters origin from receiving notifications for cache storage.
+
+---
+
+### untrackCacheStorageForOriginReturnValue
+
+Security origin.
+
+---
+
+### untrackCacheStorageForStorageKeyParameters
+
+Unregisters storage key from receiving notifications for cache storage.
+
+---
+
+### untrackCacheStorageForStorageKeyReturnValue
+
+Storage key.
+
+---
+
+### untrackIndexedDBForOriginParameters
+
+Unregisters origin from receiving notifications for IndexedDB.
+
+---
+
+### untrackIndexedDBForOriginReturnValue
+
+Security origin.
+
+---
+
+### untrackIndexedDBForStorageKeyParameters
+
+Unregisters storage key from receiving notifications for IndexedDB.
+
+---
+
+### untrackIndexedDBForStorageKeyReturnValue
+
+Storage key.
+
+---
+
+### virtualTimeBudgetExpiredPayload
+
+Notification sent after the virtual time budget for the current VirtualTimePolicy has run out.
+
+---
+
+### visibleSecurityStateChangedPayload
+
+The security state of the page changed.
+
+---
+
+### waitForDebuggerParameters
+
+Pauses page execution. Can be resumed using generic Runtime.runIfWaitingForDebugger.
+
+---
+
+### webSocketClosedPayload
+
+Fired when WebSocket is closed.
+
+---
+
+### webSocketCreatedPayload
+
+Fired upon WebSocket creation.
+
+---
+
+### webSocketFrameErrorPayload
+
+Fired when WebSocket message error occurs.
+
+---
+
+### webSocketFrameReceivedPayload
+
+Fired when WebSocket message is received.
+
+---
+
+### webSocketFrameSentPayload
+
+Fired when WebSocket message is sent.
+
+---
+
+### webSocketHandshakeResponseReceivedPayload
+
+Fired when WebSocket handshake response becomes available.
+
+---
+
+### webSocketWillSendHandshakeRequestPayload
+
+Fired when WebSocket is about to initiate handshake.
+
+---
+
+### webTransportClosedPayload
+
+Fired when WebTransport is disposed.
+
+---
+
+### webTransportConnectionEstablishedPayload
+
+Fired when WebTransport handshake is finished.
+
+---
+
+### webTransportCreatedPayload
+
+Fired upon WebTransport creation.
+
+---
+
+### windowOpenPayload
+
+True if the page is visible.
+
+---
+
+### workerScriptLoadedPayload
+
+Fired on worker targets when main worker script and any imported scripts have been evaluated.
+
+---
+
+## Functions
+
+### argument
+
+Associated style declaration.
+
+---
+
+### as
+
+Start of range to search possible breakpoint locations in.
+
+---
+
+### at
+
+Values set by this node. If set, condition should not be set.
+
+---
+
+### bodies
+
+The total number of lines in the disassembly text.
+
+---
+
+### call
+
+The skipList specifies location ranges that should be skipped on step into.
+
+---
+
+### called
+
+Call frame identifier. This identifier is only valid while the virtual machine is paused.
+
+---
+
+### calls
+
+The id of the layer snapshot.
+
+---
+
+### conditional
+
+The parameter type.
+
+---
+
+### has
+
+Source ranges inside the function with coverage data.
+
+---
+
+### is
+
+New return value.
+
+---
+
+### may
+
+Child node ids.
+
+---
+
+### na
+
+Coverage data for a source range.
+
+---
+
+### name
+
+Stack entry for runtime errors and assertions.
+
+---
+
+### on
+
+Whether to throw an exception if side effect cannot be ruled out during evaluation.
+
+---
+
+### returns
+
+IDs of the tab targets created as the result.
+
+---
+
+### rule
+
+The condition text.
+
+---
+
+### rules
+
+Id of the first parent element that does not have display: contents.
+
+---
+
+### that
+
+Call frames for assertions or error messages.
+
+---
+
+### value
+
+Event handler function value.
+
+---
+
+### was
+
+List of the locations this breakpoint resolved into upon addition.
+
+---
+
+### which
+
+The value associated with the private property.
+
+---
+
+### with
+
+Exception details if stack strace is available.
+
+---

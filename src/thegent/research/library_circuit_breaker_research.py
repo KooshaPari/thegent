@@ -6,7 +6,7 @@ from typing import Any
 class LibraryCircuitBreakerResearch:
     """Research for pybreaker migration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize circuit breaker research."""
         self.migrated_files: list[str] = []
 

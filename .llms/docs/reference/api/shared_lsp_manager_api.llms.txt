@@ -1,0 +1,41 @@
+# shared_lsp_manager_api
+
+Source: docs/reference/api/shared_lsp_manager_api.md
+
+---
+
+# shared_lsp_manager API Reference
+
+> **Source**: `src/thegent/shared_lsp_manager.py`
+
+Shared LSP Server Manager (System-Wide First)
+
+Manages system-wide shared LSP servers, scoping down to per-project only when needed.
+
+---
+
+## ensure_shared_lsp_server
+
+```
+ensure_shared_lsp_server(project_root: Any, language: str)
+```
+
+Ensure shared LSP server is running (system-wide by default).
+
+Returns: stdio pipe path or socket path or None
+
+---
+
+## get_lsp_server_scope
+
+```
+get_lsp_server_scope(project_root: Any, language: str)
+```
+
+Determine LSP server scope (system-wide or project-scoped).
+
+Default: system-wide. Scope down only if project requires isolation.
+
+**Returns**: (scope_type, lockfile_path)
+
+---

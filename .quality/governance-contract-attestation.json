@@ -1,0 +1,15 @@
+{
+  "attestation_version": 1,
+  "generated_at": "2026-02-21T02:04:09Z",
+  "report_path": ".quality/governance-contract-report.json",
+  "report_sha256": "229f6ccd97b13ec32267d295548e16930b5739a467ac77c2bd1a211997cb2d26",
+  "provenance": {
+    "repository": "",
+    "workflow": "",
+    "run_id": "",
+    "run_attempt": "",
+    "ref": "",
+    "sha": "",
+    "job": ""
+  }
+}

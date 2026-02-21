@@ -1,60 +1,34 @@
 """Provider and Model Management - CLI, MCP, and programmatic CRUD for providers and models."""
-
-import json
-from pathlib import Path
 from typing import Any
 
 import httpx
-import yaml
 from rich.console import Console
 
 # from rich.formatted_text import FormattedText
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-console = Console()
-
 from thegent.agents.cliproxy_manager import _OAUTH_ONLY_PROVIDERS, _ensure_config
 from thegent.config import ThegentSettings
+from thegent.provider_model_manager_cliproxy import (
+    get_api_key_from_compat,
+    remove_openai_compat_entry,
+    upsert_openai_compat_entry,
+)
+from thegent.provider_model_manager_io import (
+    MODEL_DEFINITIONS_PATH as _MODEL_DEFINITIONS_PATH,
+    MODEL_INDICES_PATH as _MODEL_INDICES_PATH,
+    PROVIDER_DEFINITIONS_PATH as _PROVIDER_DEFINITIONS_PATH,
+    PROVIDER_MAPPING_PATH as _PROVIDER_MAPPING_PATH,
+    load_json as _load_json,
+    load_yaml as _load_yaml,
+    save_json as _save_json,
+    save_yaml as _save_yaml,
+    update_provider_mapping as _update_provider_mapping_file,
+)
+from thegent.provider_model_manager_sorting import sort_model_rows
 
 console = Console()
-
-# Paths to the definition files
-_CLIPROXY_DATA_DIR = Path(__file__).parent / "agents" / "cliproxy_data"
-_PROVIDER_DEFINITIONS_PATH = _CLIPROXY_DATA_DIR / "provider_definitions.json"
-_MODEL_DEFINITIONS_PATH = _CLIPROXY_DATA_DIR / "model_definitions.json"
-_PROVIDER_MAPPING_PATH = _CLIPROXY_DATA_DIR / "provider_mapping.json"
-_MODEL_INDICES_PATH = _CLIPROXY_DATA_DIR / "model_indices.json"
-
-
-def _load_json(path: Path) -> dict[str, Any]:
-    """Load JSON file."""
-    if not path.exists():
-        return {}
-    with open(path) as f:
-        return json.load(f)
-
-
-def _save_json(path: Path, data: dict[str, Any]) -> None:
-    """Save JSON file."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(data, f, indent=2)
-
-
-def _load_yaml(path: Path) -> dict[str, Any]:
-    """Load YAML file."""
-    if not path.exists():
-        return {}
-    with open(path) as f:
-        return yaml.safe_load(f) or {}
-
-
-def _save_yaml(path: Path, data: dict[str, Any]) -> None:
-    """Save YAML file."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w") as f:
-        yaml.dump(data, f, default_flow_style=False)
 
 
 # ============ PROVIDER CRUD ============
@@ -130,23 +104,13 @@ def add_provider(
         if not isinstance(compat, list):
             compat = []
 
-        # Check if provider already exists
-        found = False
-        for entry in compat:
-            if entry.get("name") == name:
-                entry["api-key-entries"] = [{"api-key": api_key}]
-                found = True
-                break
-
-        if not found:
-            compat.append(
-                {
-                    "name": name,
-                    "base-url": base_url,
-                    "api-key-entries": [{"api-key": api_key}],
-                    "models": [{"name": model, "alias": model}],
-                }
-            )
+        upsert_openai_compat_entry(
+            compat,
+            name=name,
+            base_url=base_url,
+            model=model,
+            api_key=api_key,
+        )
 
         config["openai-compatibility"] = compat
         _save_yaml(config_path, config)
@@ -206,24 +170,13 @@ def update_provider(
         config = _load_yaml(config_path)
 
         compat = config.get("openai-compatibility", [])
-        for entry in compat:
-            if entry.get("name") == name:
-                entry["api-key-entries"] = [{"api-key": api_key}]
-                break
-        else:
-            compat.append(
-                {
-                    "name": name,
-                    "base-url": base_url or providers[name].get("base_url", ""),
-                    "api-key-entries": [{"api-key": api_key}],
-                    "models": [
-                        {
-                            "name": model or providers[name].get("model", ""),
-                            "alias": model or providers[name].get("model", ""),
-                        }
-                    ],
-                }
-            )
+        upsert_openai_compat_entry(
+            compat,
+            name=name,
+            base_url=base_url or providers[name].get("base_url", ""),
+            model=model or providers[name].get("model", ""),
+            api_key=api_key,
+        )
 
         config["openai-compatibility"] = compat
         _save_yaml(config_path, config)
@@ -253,7 +206,7 @@ def delete_provider(name: str, remove_credentials: bool = True) -> tuple[bool, s
         config = _load_yaml(config_path)
 
         compat = config.get("openai-compatibility", [])
-        config["openai-compatibility"] = [e for e in compat if e.get("name") != name]
+        config["openai-compatibility"] = remove_openai_compat_entry(compat, name)
         _save_yaml(config_path, config)
 
     return True, f"Provider '{name}' deleted successfully"
@@ -261,22 +214,12 @@ def delete_provider(name: str, remove_credentials: bool = True) -> tuple[bool, s
 
 def _update_provider_mapping(name: str, is_openai_compat: bool = False, remove: bool = False) -> None:
     """Update provider_mapping.json."""
-    mapping = _load_json(_PROVIDER_MAPPING_PATH)
-
-    openai_list = mapping.get("openai_compat_providers", [])
-    native_list = mapping.get("cliproxy_native_providers", [])
-
-    if remove:
-        openai_list = [p for p in openai_list if p != name]
-        native_list = [p for p in native_list if p != name]
-    elif is_openai_compat and name not in openai_list:
-        openai_list.append(name)
-    elif not is_openai_compat and name not in native_list:
-        native_list.append(name)
-
-    mapping["openai_compat_providers"] = openai_list
-    mapping["cliproxy_native_providers"] = native_list
-    _save_json(_PROVIDER_MAPPING_PATH, mapping)
+    _update_provider_mapping_file(
+        _PROVIDER_MAPPING_PATH,
+        name,
+        is_openai_compat=is_openai_compat,
+        remove=remove,
+    )
 
 
 # ============ MODEL CRUD ============
@@ -448,20 +391,13 @@ def add_api_key(provider: str, api_key: str) -> tuple[bool, str]:
 
     compat = config.get("openai-compatibility", [])
 
-    # Update or add
-    for entry in compat:
-        if entry.get("name") == provider:
-            entry["api-key-entries"] = [{"api-key": api_key}]
-            break
-    else:
-        compat.append(
-            {
-                "name": provider,
-                "base-url": base_url,
-                "api-key-entries": [{"api-key": api_key}],
-                "models": [{"name": model, "alias": model}],
-            }
-        )
+    upsert_openai_compat_entry(
+        compat,
+        name=provider,
+        base_url=base_url,
+        model=model,
+        api_key=api_key,
+    )
 
     config["openai-compatibility"] = compat
     _save_yaml(config_path, config)
@@ -479,7 +415,7 @@ def remove_api_key(provider: str) -> tuple[bool, str]:
 
     compat = config.get("openai-compatibility", [])
     original_len = len(compat)
-    compat = [e for e in compat if e.get("name") != provider]
+    compat = remove_openai_compat_entry(compat, provider)
 
     if len(compat) == original_len:
         return False, f"No API key found for provider '{provider}'"
@@ -511,13 +447,7 @@ def validate_provider(name: str) -> tuple[bool, str, dict[str, Any]]:
     config = _load_yaml(config_path)
 
     compat = config.get("openai-compatibility", [])
-    api_key = None
-    for entry in compat:
-        if entry.get("name") == name:
-            entries = entry.get("api-key-entries", [])
-            if entries:
-                api_key = entries[0].get("api-key")
-            break
+    api_key = get_api_key_from_compat(compat, name)
 
     if not api_key:
         return False, "No API key configured", {"has_credentials": False}
@@ -690,21 +620,36 @@ def _form_add_provider() -> None:
         console.print(f"[red]{msg}[/red]")
 
 
-def _form_update_provider() -> None:
-    providers = list_providers()
+def _prompt_for_provider_selection(
+    providers: list[dict[str, Any]],
+    prompt_title: str,
+    empty_message: str,
+) -> dict[str, Any] | None:
+    """Prompt user to select a provider from a numbered list."""
     if not providers:
-        console.print("[yellow]No providers to update[/yellow]")
-        return
+        console.print(f"[yellow]{empty_message}[/yellow]")
+        return None
 
-    console.print("\n[bold]Select Provider to Update[/bold]")
-    for i, p in enumerate(providers):
-        console.print(f"  {i + 1}. {p.get('name')}")
+    console.print(f"\n[bold]{prompt_title}[/bold]")
+    for i, provider in enumerate(providers):
+        console.print(f"  {i + 1}. {provider.get('name')}")
 
     idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
     try:
-        provider = providers[int(idx) - 1]
+        return providers[int(idx) - 1]
     except (ValueError, IndexError):
         console.print("[red]Invalid selection[/red]")
+        return None
+
+
+def _form_update_provider() -> None:
+    providers = list_providers()
+    provider = _prompt_for_provider_selection(
+        providers,
+        prompt_title="Select Provider to Update",
+        empty_message="No providers to update",
+    )
+    if not provider:
         return
 
     name = provider.get("name")
@@ -729,19 +674,12 @@ def _form_update_provider() -> None:
 
 def _form_delete_provider() -> None:
     providers = list_providers()
-    if not providers:
-        console.print("[yellow]No providers to delete[/yellow]")
-        return
-
-    console.print("\n[bold]Select Provider to Delete[/bold]")
-    for i, p in enumerate(providers):
-        console.print(f"  {i + 1}. {p.get('name')}")
-
-    idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
-    try:
-        provider = providers[int(idx) - 1]
-    except (ValueError, IndexError):
-        console.print("[red]Invalid selection[/red]")
+    provider = _prompt_for_provider_selection(
+        providers,
+        prompt_title="Select Provider to Delete",
+        empty_message="No providers to delete",
+    )
+    if not provider:
         return
 
     if Confirm.ask(f"[bold]Delete provider '{provider.get('name')}'?[/bold]", default=False):
@@ -754,19 +692,12 @@ def _form_delete_provider() -> None:
 
 def _form_validate_provider() -> None:
     providers = list_providers()
-    if not providers:
-        console.print("[yellow]No providers to validate[/yellow]")
-        return
-
-    console.print("\n[bold]Select Provider to Validate[/bold]")
-    for i, p in enumerate(providers):
-        console.print(f"  {i + 1}. {p.get('name')}")
-
-    idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
-    try:
-        provider = providers[int(idx) - 1]
-    except (ValueError, IndexError):
-        console.print("[red]Invalid selection[/red]")
+    provider = _prompt_for_provider_selection(
+        providers,
+        prompt_title="Select Provider to Validate",
+        empty_message="No providers to validate",
+    )
+    if not provider:
         return
 
     console.print(f"\n[dim]Validating {provider.get('name')}...[/dim]")
@@ -798,19 +729,12 @@ def _form_list_credentials() -> None:
 
 def _form_add_api_key() -> None:
     providers = list_providers()
-    if not providers:
-        console.print("[yellow]No providers available[/yellow]")
-        return
-
-    console.print("\n[bold]Select Provider for API Key[/bold]")
-    for i, p in enumerate(providers):
-        console.print(f"  {i + 1}. {p.get('name')}")
-
-    idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
-    try:
-        provider = providers[int(idx) - 1]
-    except (ValueError, IndexError):
-        console.print("[red]Invalid selection[/red]")
+    provider = _prompt_for_provider_selection(
+        providers,
+        prompt_title="Select Provider for API Key",
+        empty_message="No providers available",
+    )
+    if not provider:
         return
 
     api_key = Prompt.ask(f"[bold]API Key for {provider.get('name')}[/bold]", password=True)
@@ -824,19 +748,12 @@ def _form_add_api_key() -> None:
 
 def _form_remove_api_key() -> None:
     providers = list_providers()
-    if not providers:
-        console.print("[yellow]No providers available[/yellow]")
-        return
-
-    console.print("\n[bold]Select Provider to Remove API Key[/bold]")
-    for i, p in enumerate(providers):
-        console.print(f"  {i + 1}. {p.get('name')}")
-
-    idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
-    try:
-        provider = providers[int(idx) - 1]
-    except (ValueError, IndexError):
-        console.print("[red]Invalid selection[/red]")
+    provider = _prompt_for_provider_selection(
+        providers,
+        prompt_title="Select Provider to Remove API Key",
+        empty_message="No providers available",
+    )
+    if not provider:
         return
 
     if Confirm.ask(f"[bold]Remove API key for '{provider.get('name')}'?[/bold]", default=False):
@@ -973,12 +890,7 @@ def list_model_indices(
                     }
                 )
 
-    if sort_by == "cost":
-        result.sort(key=lambda x: x.get("total_cost_per_1m") or float("inf"))
-    elif sort_by == "context":
-        result.sort(key=lambda x: x.get("context_limit") or 0, reverse=True)
-    elif sort_by == "speed":
-        result.sort(key=lambda x: x.get("tps") or 0, reverse=True)
+    sort_model_rows(result, sort_by)
 
     return result
 
@@ -1200,9 +1112,9 @@ def list_models_with_scores(
     weights = indices.get("benchmark_weights", {})
 
     result = []
-    prov_data = indices.get("providers", {})
+    providers_map = indices.get("providers", {})
 
-    for prov_name, prov_data in prov_data.items():
+    for prov_name, prov_data in providers_map.items():
         if provider and prov_name.lower() != provider.lower():
             continue
 
@@ -1238,15 +1150,7 @@ def list_models_with_scores(
                 }
             )
 
-    # Sort
-    if sort_by == "composite_score":
-        result.sort(key=lambda x: x.get("composite_score") or 0, reverse=True)
-    elif sort_by == "cost":
-        result.sort(key=lambda x: x.get("cost_per_1m") or float("inf"))
-    elif sort_by == "context":
-        result.sort(key=lambda x: x.get("context_limit") or 0, reverse=True)
-    elif sort_by == "tps":
-        result.sort(key=lambda x: x.get("tps") or 0, reverse=True)
+    sort_model_rows(result, sort_by)
 
     # Filter by minimum score
     if min_score is not None:

@@ -113,8 +113,7 @@ impl RiskCalculator {
     ///
     /// Maps dependency count to [0.0, 1.0] with 10 as max.
     pub fn assess_dependencies(&self, factors: &RiskFactors) -> f64 {
-        let dep_score = (factors.dependency_count as f64 / 10.0).min(1.0);
-        dep_score
+        (factors.dependency_count as f64 / 10.0).min(1.0)
     }
 
     /// Calculate composite risk score [0.0, 1.0].
@@ -136,7 +135,7 @@ impl RiskCalculator {
         }
 
         // Clamp to [0.0, 1.0]
-        score.min(1.0).max(0.0)
+        score.clamp(0.0, 1.0)
     }
 }
 

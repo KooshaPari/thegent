@@ -4,6 +4,58 @@
 
 ---
 
+## Questionnaire Snapshot
+
+| Field | Selected |
+|---|---|
+| `project_type` | `{{ project_type | default("service_api") }}` |
+| `runtime_profile` | `{{ runtime_profile | default("balanced") }}` |
+| `governance_mode` | `{{ governance_mode | default("standard") }}` |
+| `observability_stack` | `{{ observability_stack | default("otel_prometheus") }}` |
+| `deployment_target` | `{{ deployment_target | default("container_platform") }}` |
+| `quality_profile` | `{{ quality_profile | default("strict") }}` |
+
+Interfaces: `{{ interfaces | default("docs") }}`
+
+Summary hints: `{{ questionnaire_summary_hints | default("primary_user_flow,biggest_risk") }}`
+
+---
+
+## DX / AX / UX Baseline
+
+### DX
+- Keep local edit-to-feedback loops fast and reproducible.
+- Expose one canonical command path for lint, test, and build.
+- Fail loudly; do not hide degraded behavior.
+
+### AX
+- Agents own end-to-end delivery: edit, verify, and report evidence.
+- Prefer small, reversible patches with explicit validation.
+- Use reviewable plans for risky or cross-module changes.
+
+### UX
+- Every interface must define success and failure behavior.
+- Error output must explain what failed and the next action.
+- Documentation is a product surface and must stay operational.
+
+---
+
+## Project-Type Focus
+
+{% if project_type | default("service_api") == "cli_tool" -%}
+- Focus: deterministic commands, stable flags, and script-safe output.
+{% elif project_type | default("service_api") == "service_api" -%}
+- Focus: contract stability, idempotency, SLOs, and safe rollout.
+{% elif project_type | default("service_api") == "event_worker" -%}
+- Focus: queue safety, replay behavior, and backpressure handling.
+{% elif project_type | default("service_api") == "web_app" -%}
+- Focus: route-level state handling, latency, and release confidence.
+{% elif project_type | default("service_api") == "library_sdk" -%}
+- Focus: API compatibility, typed examples, and migration notes.
+{% endif -%}
+
+---
+
 ## Development Philosophy
 
 ### Extend, Never Duplicate
@@ -55,7 +107,7 @@
 ├── src/                    # Source code
 ├── tests/                  # Test files
 ├── docs/                   # Documentation
-│   └── .vitepress/        # VitePress docsite
+│   └── .vitepress/         # VitePress docsite
 ├── hooks/                  # Pre-commit hooks
 ├── scripts/                # Utility scripts
 ├── Taskfile.yml            # Build automation

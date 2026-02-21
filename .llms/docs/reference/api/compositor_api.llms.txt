@@ -1,0 +1,720 @@
+# compositor_api
+
+Source: docs/reference/api/compositor_api.md
+
+---
+
+# compositor API Reference
+
+> **Source**: `src/thegent/ui/compositor/compositor.py`
+
+Compositor - Panel lifecycle management with mount/unmount hooks and error boundaries.
+
+Provides:
+- Panel: Dataclass representing a named content panel with lifecycle callbacks
+  and an isolated error boundary (error_fallback, last_error, recover()).
+- Compositor: Manages a collection of panels, firing on_mount/on_unmount hooks
+  and rendering each panel behind its own error boundary so a failing panel
+  cannot crash the compositor.
+- Render caching: TTLCache-backed render cache keyed by (panel_name,
+  content_hash). Cache hits skip content_fn calls entirely. Error states are
+  cached with a shorter TTL (5 s) to avoid hammering a broken content_fn.
+- Render profiling: CompositorProfiler records per-panel render timing so
+  agents can detect slow renders, inspect averages, and generate summaries.
+
+---
+
+## CacheStats
+
+Statistics snapshot returned by :meth:`Compositor.cache_stats`.
+
+**Inherits from**: `TypedDict`
+
+---
+
+## Compositor
+
+Manages a collection of named panels with lifecycle hook support.
+
+Panels are stored in insertion order. Adding a panel fires its ``on_mount``
+hook; removing a panel fires its ``on_unmount`` hook. Hook exceptions are
+caught, logged, and do not propagate so that a misbehaving hook cannot crash
+the compositor.
+
+Each panel's render() call is wrapped by Panel's own error boundary so a
+failing panel produces a fallback string without crashing the compositor or
+affecting sibling panels.
+
+Render results are cached in a :class:`cachetools.TTLCache` keyed by
+``(panel_name, content_hash)`` where *content_hash* is an MD5 hex digest
+of the string returned by calling ``content_fn()``.  On a cache *hit* the
+stored string is returned immediately without invoking ``content_fn`` again.
+On a cache *miss* the panel is rendered via the normal error-boundary path
+and the result is stored.  Error fallback strings are cached with a shorter
+TTL (``error_ttl``) so that a recovered panel is retried promptly.
+
+### Methods
+
+#### Compositor.__init__
+
+```
+__init__(self: Any, ttl: float, error_ttl: float, maxsize: int)
+```
+
+Initialise an empty compositor with an optional render cache.
+
+**Parameters**:
+
+- `ttl`: Time-to-live in seconds for successful render entries.
+Defaults to 60 s.
+- `error_ttl`: Time-to-live in seconds for error-state fallback entries.
+Defaults to 5 s.
+- `maxsize`: Maximum number of entries in the render cache.
+Defaults to 256.
+
+---
+
+#### Compositor.add_panel
+
+```
+add_panel(self: Any, panel: Panel)
+```
+
+Add a panel and fire its on_mount hook.
+
+If a panel with the same name already exists it is replaced. The
+on_unmount hook of the *existing* panel is fired before the new panel's
+on_mount hook.  Any cached render output for the panel name is
+invalidated automatically.
+
+**Parameters**:
+
+- `panel`: The panel to add.
+
+---
+
+#### Compositor.cache_stats
+
+```
+cache_stats(self: Any)
+```
+
+Return a snapshot of cache performance counters.
+
+**Returns**: A :class:`CacheStats` mapping with keys ``hits``, ``misses``,
+and ``size`` (current number of entries across both caches).
+
+---
+
+#### Compositor.errored_panels
+
+```
+errored_panels(self: Any)
+```
+
+Return names of panels currently in an error state.
+
+---
+
+#### Compositor.get_panel
+
+```
+get_panel(self: Any, name: str)
+```
+
+Return a panel by name, or None if not found.
+
+**Parameters**:
+
+- `name`: Panel name.
+
+**Returns**: Panel instance or None.
+
+---
+
+#### Compositor.invalidate
+
+```
+invalidate(self: Any, panel_name: Any)
+```
+
+Invalidate cached render output.
+
+**Parameters**:
+
+- `panel_name`: If given, only entries for this panel are evicted.
+If *None*, the entire cache is cleared (all panels).
+
+---
+
+#### Compositor.panel_names
+
+```
+panel_names(self: Any)
+```
+
+Return an ordered list of current panel names.
+
+---
+
+#### Compositor.recover_all
+
+```
+recover_all(self: Any)
+```
+
+Clear error state for all panels.
+
+---
+
+#### Compositor.recover_panel
+
+```
+recover_panel(self: Any, name: str)
+```
+
+Clear error state for a single panel.
+
+**Parameters**:
+
+- `name`: Panel name.
+
+**Returns**: True if panel was found and recovered, False otherwise.
+
+---
+
+#### Compositor.remove_panel
+
+```
+remove_panel(self: Any, name: str)
+```
+
+Remove a panel by name and fire its on_unmount hook.
+
+Cache entries for the removed panel are invalidated automatically.
+
+**Parameters**:
+
+- `name`: The name of the panel to remove.
+
+**Returns**: ``True`` if the panel existed and was removed, ``False`` otherwise.
+
+---
+
+#### Compositor.render
+
+```
+render(self: Any)
+```
+
+Render all panels in insertion order using per-panel error boundaries.
+
+Each panel's error boundary (Panel.render()) is invoked independently.
+A failing panel returns a fallback string; other panels are unaffected.
+Results are served from the render cache where possible.
+
+**Returns**: A list of rendered strings, one per panel in insertion order.
+
+---
+
+#### Compositor.render_all
+
+```
+render_all(self: Any)
+```
+
+Render all panels and return a name -&gt; content mapping.
+
+Results are served from the render cache where possible.
+
+**Returns**: Dictionary mapping each panel name to its rendered string.
+
+---
+
+#### Compositor.render_panel
+
+```
+render_panel(self: Any, name: str)
+```
+
+Render a single panel by name.
+
+The result is served from the render cache if available.
+
+**Parameters**:
+
+- `name`: Panel name.
+
+**Returns**: Rendered string, or *None* if the panel does not exist.
+
+---
+
+---
+
+## CompositorProfiler
+
+Collects and reports render timing data for Compositor panels.
+
+Stores up to ``_PROFILER_MAXLEN`` (100) most-recent :class:`RenderProfile`
+records in a bounded :class:`collections.deque`.  All methods are
+synchronous and safe to call from the main thread; they do **not** mutate
+the profiles while iterating (a snapshot copy is taken where necessary).
+
+Typical usage::
+
+    profiler = CompositorProfiler()
+    profiler.record(RenderProfile("my-panel", render_time_ms=12.3, timestamp=time.time()))
+    slow = profiler.get_slowest(n=3)
+    avg = profiler.get_average("my-panel")
+    print(profiler.report())
+    profiler.clear()
+
+### Methods
+
+#### CompositorProfiler.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### CompositorProfiler.clear
+
+```
+clear(self: Any)
+```
+
+Remove all stored render profiles.
+
+---
+
+#### CompositorProfiler.get_average
+
+```
+get_average(self: Any, panel_id: Any)
+```
+
+Return the mean render time in milliseconds.
+
+**Parameters**:
+
+- `panel_id`: When given, only records for this panel are considered.
+When *None*, all records are used.
+
+**Returns**: Average ``render_time_ms`` across matching records, or ``0.0``
+when there are no matching records.
+
+---
+
+#### CompositorProfiler.get_slowest
+
+```
+get_slowest(self: Any, n: int)
+```
+
+Return the top-*n* profiles sorted by render time, slowest first.
+
+If fewer than *n* records exist all records are returned.
+
+**Parameters**:
+
+- `n`: Maximum number of profiles to return.  Defaults to 5.
+
+**Returns**: List of :class:`RenderProfile` instances in descending
+``render_time_ms`` order.
+
+---
+
+#### CompositorProfiler.record
+
+```
+record(self: Any, profile: RenderProfile)
+```
+
+Store a render profile record.
+
+If the deque is already at capacity the oldest entry is automatically
+evicted (standard :class:`deque` ``maxlen`` behaviour).
+
+**Parameters**:
+
+- `profile`: The :class:`RenderProfile` to store.
+
+---
+
+#### CompositorProfiler.record_count
+
+```
+record_count(self: Any)
+```
+
+Return the number of profiles currently stored.
+
+---
+
+#### CompositorProfiler.report
+
+```
+report(self: Any)
+```
+
+Return a human-readable summary of recorded render profiles.
+
+The report includes:
+- Total number of records.
+- Overall average render time.
+- The top-5 slowest renders with panel id, time, cache-hit status,
+  and ISO-formatted timestamp.
+
+**Returns**: Multi-line formatted string report.
+
+---
+
+---
+
+## Panel
+
+A named content panel with optional lifecycle hooks and an error boundary.
+
+### Methods
+
+#### Panel.has_error
+
+```
+has_error(self: Any)
+```
+
+True when the panel is in an error state (last render failed).
+
+---
+
+#### Panel.recover
+
+```
+recover(self: Any)
+```
+
+Clear the error state so the next render() retries content_fn.
+
+After calling recover() the panel is treated as if it never failed:
+``last_error`` is reset to *None*.  The next call to render() will
+invoke content_fn again and re-evaluate whether it succeeds or fails.
+
+---
+
+#### Panel.render
+
+```
+render(self: Any)
+```
+
+Render this panel, catching any exception raised by content_fn.
+
+On success the last_error is cleared (so a recovered panel that later
+succeeds reflects healthy state).  On failure last_error is recorded
+and the configured error_fallback (string, callable, or default) is
+returned without re-raising.
+
+**Returns**: Rendered string content, or fallback string on error.
+
+---
+
+---
+
+## RenderProfile
+
+Timing record for a single panel render.
+
+---
+
+## add_panel
+
+```
+add_panel(self: Any, panel: Panel)
+```
+
+Add a panel and fire its on_mount hook.
+
+If a panel with the same name already exists it is replaced. The
+on_unmount hook of the *existing* panel is fired before the new panel's
+on_mount hook.  Any cached render output for the panel name is
+invalidated automatically.
+
+**Parameters**:
+
+- `panel`: The panel to add.
+
+---
+
+## cache_stats
+
+```
+cache_stats(self: Any)
+```
+
+Return a snapshot of cache performance counters.
+
+**Returns**: A :class:`CacheStats` mapping with keys ``hits``, ``misses``,
+and ``size`` (current number of entries across both caches).
+
+---
+
+## clear
+
+```
+clear(self: Any)
+```
+
+Remove all stored render profiles.
+
+---
+
+## errored_panels
+
+```
+errored_panels(self: Any)
+```
+
+Return names of panels currently in an error state.
+
+---
+
+## get_average
+
+```
+get_average(self: Any, panel_id: Any)
+```
+
+Return the mean render time in milliseconds.
+
+**Parameters**:
+
+- `panel_id`: When given, only records for this panel are considered.
+When *None*, all records are used.
+
+**Returns**: Average ``render_time_ms`` across matching records, or ``0.0``
+when there are no matching records.
+
+---
+
+## get_panel
+
+```
+get_panel(self: Any, name: str)
+```
+
+Return a panel by name, or None if not found.
+
+**Parameters**:
+
+- `name`: Panel name.
+
+**Returns**: Panel instance or None.
+
+---
+
+## get_slowest
+
+```
+get_slowest(self: Any, n: int)
+```
+
+Return the top-*n* profiles sorted by render time, slowest first.
+
+If fewer than *n* records exist all records are returned.
+
+**Parameters**:
+
+- `n`: Maximum number of profiles to return.  Defaults to 5.
+
+**Returns**: List of :class:`RenderProfile` instances in descending
+``render_time_ms`` order.
+
+---
+
+## has_error
+
+```
+has_error(self: Any)
+```
+
+True when the panel is in an error state (last render failed).
+
+---
+
+## invalidate
+
+```
+invalidate(self: Any, panel_name: Any)
+```
+
+Invalidate cached render output.
+
+**Parameters**:
+
+- `panel_name`: If given, only entries for this panel are evicted.
+If *None*, the entire cache is cleared (all panels).
+
+---
+
+## panel_names
+
+```
+panel_names(self: Any)
+```
+
+Return an ordered list of current panel names.
+
+---
+
+## record
+
+```
+record(self: Any, profile: RenderProfile)
+```
+
+Store a render profile record.
+
+If the deque is already at capacity the oldest entry is automatically
+evicted (standard :class:`deque` ``maxlen`` behaviour).
+
+**Parameters**:
+
+- `profile`: The :class:`RenderProfile` to store.
+
+---
+
+## record_count
+
+```
+record_count(self: Any)
+```
+
+Return the number of profiles currently stored.
+
+---
+
+## recover
+
+```
+recover(self: Any)
+```
+
+Clear the error state so the next render() retries content_fn.
+
+After calling recover() the panel is treated as if it never failed:
+``last_error`` is reset to *None*.  The next call to render() will
+invoke content_fn again and re-evaluate whether it succeeds or fails.
+
+---
+
+## recover_all
+
+```
+recover_all(self: Any)
+```
+
+Clear error state for all panels.
+
+---
+
+## recover_panel
+
+```
+recover_panel(self: Any, name: str)
+```
+
+Clear error state for a single panel.
+
+**Parameters**:
+
+- `name`: Panel name.
+
+**Returns**: True if panel was found and recovered, False otherwise.
+
+---
+
+## remove_panel
+
+```
+remove_panel(self: Any, name: str)
+```
+
+Remove a panel by name and fire its on_unmount hook.
+
+Cache entries for the removed panel are invalidated automatically.
+
+**Parameters**:
+
+- `name`: The name of the panel to remove.
+
+**Returns**: ``True`` if the panel existed and was removed, ``False`` otherwise.
+
+---
+
+## render
+
+```
+render(self: Any)
+```
+
+Render all panels in insertion order using per-panel error boundaries.
+
+Each panel's error boundary (Panel.render()) is invoked independently.
+A failing panel returns a fallback string; other panels are unaffected.
+Results are served from the render cache where possible.
+
+**Returns**: A list of rendered strings, one per panel in insertion order.
+
+---
+
+## render_all
+
+```
+render_all(self: Any)
+```
+
+Render all panels and return a name -&gt; content mapping.
+
+Results are served from the render cache where possible.
+
+**Returns**: Dictionary mapping each panel name to its rendered string.
+
+---
+
+## render_panel
+
+```
+render_panel(self: Any, name: str)
+```
+
+Render a single panel by name.
+
+The result is served from the render cache if available.
+
+**Parameters**:
+
+- `name`: Panel name.
+
+**Returns**: Rendered string, or *None* if the panel does not exist.
+
+---
+
+## report
+
+```
+report(self: Any)
+```
+
+Return a human-readable summary of recorded render profiles.
+
+The report includes:
+- Total number of records.
+- Overall average render time.
+- The top-5 slowest renders with panel id, time, cache-hit status,
+  and ISO-formatted timestamp.
+
+**Returns**: Multi-line formatted string report.
+
+---

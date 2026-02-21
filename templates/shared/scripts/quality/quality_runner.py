@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""DAG-based quality runner with soft-fail.
+"""DAG-based quality runner with configurable fail mode.
 
 Uses config/quality-dag.yaml to run steps in dependency order. Parallel within each tier.
-If a step fails, dependents are skipped (soft-fail) but other branches continue.
-Writes .quality/logs/<step>.log, .quality/logs/<step>.exit, .quality/last-run.json.
+In soft mode, if a step fails, dependents are skipped but other branches continue.
+In hard mode, execution stops after the first failing tier and remaining steps are marked blocked.
+Writes .quality/logs/<step>.log, .quality/logs/<step>.exit, .quality/last-run.json, .quality/summary.md.
 
 Run from project root. Uses cwd as ROOT. Requires PyYAML.
 """
@@ -24,11 +25,12 @@ LOG_DIR: Path = Path(".quality") / "logs"
 LAST_RUN_JSON: Path = Path(".quality") / "last-run.json"
 PROGRESS_JSON: Path = Path(".quality") / "progress.json"
 DAG_CONFIG: Path = Path("config") / "quality-dag.yaml"
+SUMMARY_MD: Path = Path(".quality") / "summary.md"
 
 
 def _resolve_paths(root: Path | None = None, config: Path | None = None) -> None:
     """Set ROOT and derived paths from args/env."""
-    global ROOT, LOG_DIR, LAST_RUN_JSON, PROGRESS_JSON, DAG_CONFIG
+    global ROOT, LOG_DIR, LAST_RUN_JSON, PROGRESS_JSON, DAG_CONFIG, SUMMARY_MD
     r = os.environ.get("QUALITY_ROOT")
     if r:
         ROOT = Path(r).resolve()
@@ -41,6 +43,7 @@ def _resolve_paths(root: Path | None = None, config: Path | None = None) -> None
     LOG_DIR = ROOT / ".quality" / "logs"
     LAST_RUN_JSON = ROOT / ".quality" / "last-run.json"
     PROGRESS_JSON = ROOT / ".quality" / "progress.json"
+    SUMMARY_MD = ROOT / ".quality" / "summary.md"
 
 
 def _detect_stacks(root: Path) -> list[str]:
@@ -262,6 +265,7 @@ def run_step(
 
     _log(verbose, f"Starting {step_name}")
     start = time.perf_counter()
+    step_timeout = int(os.environ.get("QUALITY_STEP_TIMEOUT_SEC", "600"))
     try:
         proc = subprocess.run(
             command,
@@ -269,12 +273,12 @@ def run_step(
             cwd=cwd,
             capture_output=True,
             text=True,
-            timeout=600,
+            timeout=step_timeout,
         )
         out = proc.stdout + proc.stderr
         code = proc.returncode
     except subprocess.TimeoutExpired:
-        out = "timeout after 600s"
+        out = f"timeout after {step_timeout}s"
         code = 124
     except Exception as e:
         out = str(e)
@@ -315,13 +319,25 @@ def run_dag(
     results: dict[str, int | str],
     durations: dict[str, float],
     cwd: Path,
+    fail_mode: str = "soft",
     progress: bool = False,
     verbose: bool = False,
 ) -> None:
-    """Execute DAG with soft-fail: skip dependents of failed steps."""
+    """Execute DAG with soft/hard fail behavior."""
+    if fail_mode not in {"soft", "hard"}:
+        raise ValueError(f"Invalid fail_mode '{fail_mode}', expected 'soft' or 'hard'")
+
+    blocked_mode = False
     tiers = topological_tiers(steps)
 
     for tier in tiers:
+        if blocked_mode:
+            for name in tier:
+                results[name] = "blocked"
+            if progress:
+                _write_progress(results, [], durations)
+            continue
+
         # Filter: only run if all deps passed (0)
         to_run = []
         for name in tier:
@@ -337,7 +353,9 @@ def run_dag(
         if not to_run:
             continue
 
-        with ThreadPoolExecutor(max_workers=len(to_run)) as ex:
+        max_workers_cfg = int(os.environ.get("QUALITY_MAX_WORKERS", "4"))
+        max_workers = max(1, min(len(to_run), max_workers_cfg))
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
             futures = {
                 ex.submit(run_step, n, steps[n]["command"], cwd, verbose): n
                 for n in to_run
@@ -352,6 +370,9 @@ def run_dag(
 
         if progress:
             _write_progress(results, [], durations)
+
+        if fail_mode == "hard" and any(results.get(n) not in (0, "skipped") for n in to_run):
+            blocked_mode = True
 
 
 def _write_junit(
@@ -411,7 +432,11 @@ def write_last_run(
     """Write last-run.json for quality-report compatibility."""
     LAST_RUN_JSON.parent.mkdir(parents=True, exist_ok=True)
     durations = durations or {}
-    exit_codes = {k: (v if isinstance(v, int) else -1) for k, v in results.items()}
+    status_codes = {
+        "skipped": -1,
+        "blocked": -2,
+    }
+    exit_codes = {k: (v if isinstance(v, int) else status_codes.get(str(v), -3)) for k, v in results.items()}
     step_details = {
         k: {"code": exit_codes[k], "duration": durations.get(k, 0)}
         for k in exit_codes
@@ -426,12 +451,75 @@ def write_last_run(
     LAST_RUN_JSON.write_text(json.dumps(data, indent=2))
 
 
+def _status_counts(results: dict[str, int | str]) -> tuple[int, int, int, int]:
+    """Return (passed, failed, skipped, blocked)."""
+    passed = sum(1 for v in results.values() if v == 0)
+    failed = sum(1 for v in results.values() if isinstance(v, int) and v != 0)
+    skipped = sum(1 for v in results.values() if v == "skipped")
+    blocked = sum(1 for v in results.values() if v == "blocked")
+    return passed, failed, skipped, blocked
+
+
+def write_summary_report(
+    steps: dict[str, dict],
+    results: dict[str, int | str],
+    durations: dict[str, float],
+    fail_mode: str,
+) -> None:
+    """Write a markdown summary artifact for the latest run."""
+    SUMMARY_MD.parent.mkdir(parents=True, exist_ok=True)
+    started_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    passed, failed, skipped, blocked = _status_counts(results)
+    total_time = sum(durations.get(k, 0) for k in results)
+
+    lines = [
+        "# Quality Run Summary",
+        "",
+        f"- Timestamp: {started_at}",
+        f"- Fail mode: {fail_mode}",
+        f"- Passed: {passed}",
+        f"- Failed: {failed}",
+        f"- Skipped: {skipped}",
+        f"- Blocked: {blocked}",
+        f"- Total step runtime (sum): {total_time:.2f}s",
+        "",
+        "## Step Results",
+        "",
+        "| Step | Display | Status | Duration (s) |",
+        "| --- | --- | --- | ---: |",
+    ]
+
+    for name in sorted(results):
+        display = steps.get(name, {}).get("display", name)
+        value = results[name]
+        if value == "skipped":
+            status = "skipped"
+            duration = "0.00"
+        elif value == "blocked":
+            status = "blocked"
+            duration = "0.00"
+        else:
+            code = int(value)
+            status = "passed" if code == 0 else f"failed({code})"
+            duration = f"{durations.get(name, 0):.2f}"
+        lines.append(f"| {name} | {display} | {status} | {duration} |")
+
+    lines.append("")
+    lines.append("## Logs")
+    lines.append("")
+    lines.append("- Step logs: `.quality/logs/<step>.log`")
+    lines.append("- Last run JSON: `.quality/last-run.json`")
+    lines.append("")
+
+    SUMMARY_MD.write_text("\n".join(lines), encoding="utf-8")
+
+
 def main() -> int:
     """Run quality DAG."""
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="DAG-based quality runner with soft-fail. Auto-generates config if missing."
+        description="DAG-based quality runner with soft/hard fail modes. Auto-generates config if missing."
     )
     parser.add_argument("--tui", action="store_true", help="Write progress.json for TUI")
     parser.add_argument("--dry-run", action="store_true", help="Print tiers and commands, do not run")
@@ -442,6 +530,12 @@ def main() -> int:
     parser.add_argument("--config", type=Path, metavar="FILE", help="Path to quality-dag.yaml")
     parser.add_argument("--ci", action="store_true", help="CI mode: compact one-line summary, no verbose output")
     parser.add_argument("--junit", type=Path, metavar="FILE", help="Write JUnit XML report to file")
+    parser.add_argument(
+        "--fail-mode",
+        choices=["soft", "hard"],
+        default="soft",
+        help="Failure behavior: soft continues unrelated branches, hard stops after first failing tier",
+    )
     args = parser.parse_args()
 
     _resolve_paths(root=args.root, config=args.config)
@@ -464,10 +558,19 @@ def main() -> int:
 
     results: dict[str, int | str] = {}
     durations: dict[str, float] = {}
-    run_dag(steps, results, durations, ROOT, progress=args.tui, verbose=args.verbose)
+    run_dag(
+        steps,
+        results,
+        durations,
+        ROOT,
+        fail_mode=args.fail_mode,
+        progress=args.tui,
+        verbose=args.verbose,
+    )
 
-    failed = [k for k, v in results.items() if v != 0 and v != "skipped"]
+    failed = [k for k, v in results.items() if isinstance(v, int) and v != 0]
     write_last_run(results, failed, durations)
+    write_summary_report(steps, results, durations, args.fail_mode)
 
     # JUnit XML output
     if args.junit:
@@ -481,11 +584,6 @@ def main() -> int:
         else:
             print(f"quality: PASS ({passed} steps)", flush=True)
         return 0 if not failed else 1
-
-    # Run report if project has it (skip in CI)
-    report_script = ROOT / "scripts" / "shell" / "quality-report.sh"
-    if report_script.exists() and not args.ci:
-        subprocess.run(["bash", str(report_script)], cwd=ROOT, check=False)
 
     # Print failed logs for piping to agent (quality-a, quality-a-r-h)
     if failed and not args.ci:

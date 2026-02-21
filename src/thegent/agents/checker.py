@@ -2,7 +2,7 @@
 
 import json
 import logging
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel
@@ -72,9 +72,9 @@ class CheckerAgent:
 
     def decide(
         self,
-        governance_report: dict[str, Any, str],
+        governance_report: dict[str, Any],
         todo_spec: str,
-        wbs_status: dict[str, Any, str],
+        wbs_status: dict[str, Any],
         agent_response: str,
     ) -> CheckerResult:
         """Invoke the Checker Agent to make a decision."""

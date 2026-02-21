@@ -5,6 +5,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from thegent.utils.batch_ops import batch_read
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,6 +52,31 @@ class FRIndexSubcommands:
         self.index[str(file_path)] = entry
         logger.info(f"Indexed {file_path}: {len(fr_ids)} FR references")
         return entry
+
+    def index_files_batch(self, file_paths: list[Path]) -> dict[str, dict[str, Any]]:
+        """Index multiple files for FR references using batch read.
+
+        Args:
+            file_paths: Files to index
+
+        Returns:
+            Dictionary of index entries
+        """
+        # Batch read all files at once
+        file_contents = batch_read(file_paths)
+
+        for file_path, content in file_contents.items():
+            fr_ids = self.extract_fr_ids(content)
+
+            entry = {
+                "file": str(file_path),
+                "fr_ids": fr_ids,
+            }
+
+            self.index[str(file_path)] = entry
+            logger.info(f"Indexed {file_path}: {len(fr_ids)} FR references")
+
+        return self.index
 
     def get_fr_references(self, fr_id: str) -> list[str]:
         """Get files referencing an FR.

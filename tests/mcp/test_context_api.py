@@ -14,11 +14,13 @@ FR Traceability: @trace FR-MCP-CTX-001 through FR-MCP-CTX-006
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 fastmcp = pytest.importorskip("fastmcp", reason="fastmcp required for MCP Context API tests")
 

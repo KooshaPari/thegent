@@ -109,7 +109,6 @@ class TestConfirmBeforeAction:
     async def test_proceeds_when_user_confirms(self) -> None:
         """Wrapped function runs when elicitation returns True. # @trace FR-MCP-PATTERNS-001"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tool_patterns import confirm_before_action
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -132,7 +131,6 @@ class TestConfirmBeforeAction:
     async def test_raises_tool_aborted_when_user_declines(self) -> None:
         """ToolAborted is raised when elicitation returns False. # @trace FR-MCP-PATTERNS-001"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tool_patterns import ToolAborted, confirm_before_action
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -155,7 +153,6 @@ class TestConfirmBeforeAction:
     async def test_proceeds_when_elicitation_cancelled(self) -> None:
         """Cancelled elicitation (None) proceeds without confirmation (fail-open). # @trace FR-MCP-PATTERNS-001"""
         from fastmcp.server.context import DeclinedElicitation
-
         from thegent.mcp_tool_patterns import confirm_before_action
 
         declined = MagicMock(spec=DeclinedElicitation)
@@ -193,7 +190,6 @@ class TestConfirmBeforeAction:
     async def test_description_format_string_interpolated(self) -> None:
         """Format string uses kwargs from the decorated function. # @trace FR-MCP-PATTERNS-001"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tool_patterns import confirm_before_action
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -213,7 +209,6 @@ class TestConfirmBeforeAction:
     async def test_description_format_partial_missing_key_uses_raw(self) -> None:
         """Missing format key falls back to unformatted description. # @trace FR-MCP-PATTERNS-001"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tool_patterns import confirm_before_action
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -350,7 +345,6 @@ class TestChoiceWithRetry:
     async def test_valid_choice_proceeds(self) -> None:
         """Valid selection on first try proceeds with user_choice set. # @trace FR-MCP-PATTERNS-003"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tool_patterns import choice_with_retry
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -369,7 +363,6 @@ class TestChoiceWithRetry:
     async def test_retries_on_declined_selection(self) -> None:
         """Declined selection triggers retry until valid selection or abort. # @trace FR-MCP-PATTERNS-003"""
         from fastmcp.server.context import AcceptedElicitation, DeclinedElicitation
-
         from thegent.mcp_tool_patterns import choice_with_retry
 
         declined = MagicMock(spec=DeclinedElicitation)
@@ -393,7 +386,6 @@ class TestChoiceWithRetry:
     async def test_raises_tool_aborted_after_max_retries(self) -> None:
         """ToolAborted raised after all retries are exhausted. # @trace FR-MCP-PATTERNS-003"""
         from fastmcp.server.context import DeclinedElicitation
-
         from thegent.mcp_tool_patterns import ToolAborted, choice_with_retry
 
         declined = MagicMock(spec=DeclinedElicitation)
@@ -434,7 +426,6 @@ class TestChoiceWithRetry:
     async def test_retries_on_invalid_selection_not_in_options(self) -> None:
         """Invalid selection (not in options list) also triggers retry. # @trace FR-MCP-PATTERNS-003"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tool_patterns import choice_with_retry
 
         invalid_accepted = MagicMock(spec=AcceptedElicitation)
@@ -581,7 +572,6 @@ class TestRegisterToolPatternTools:
     def test_registration_succeeds(self) -> None:
         """register_tool_pattern_tools completes without raising. # @trace FR-MCP-PATTERNS-001"""
         from fastmcp import FastMCP
-
         from thegent.mcp_tool_patterns import register_tool_pattern_tools
 
         app = FastMCP("test-patterns")
@@ -591,7 +581,6 @@ class TestRegisterToolPatternTools:
     async def test_both_tools_registered(self) -> None:
         """Both thegent_delete_session and thegent_bulk_operation appear in registry. # @trace FR-MCP-PATTERNS-001"""
         from fastmcp import FastMCP
-
         from thegent.mcp_tool_patterns import register_tool_pattern_tools
 
         app = FastMCP("test-patterns-reg")
@@ -608,7 +597,6 @@ class TestRegisterToolPatternTools:
         import json
 
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tool_patterns import register_tool_pattern_tools
 
         tool_fns: dict[str, Any] = {}

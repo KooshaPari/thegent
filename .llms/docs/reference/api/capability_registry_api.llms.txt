@@ -1,0 +1,117 @@
+# capability_registry_api
+
+Source: docs/reference/api/capability_registry_api.md
+
+---
+
+# capability_registry API Reference
+
+> **Source**: `src/thegent/contracts/capability_registry.py`
+
+WP-10002: Capability registry service.
+
+Authoritative source for available capabilities, versions, and trust levels.
+
+---
+
+## Capability
+
+A registered system capability.
+
+---
+
+## CapabilityRegistry
+
+Central registry for managing and querying system capabilities.
+
+### Methods
+
+#### CapabilityRegistry.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### CapabilityRegistry.get_capability
+
+```
+get_capability(self: Any, cap_id: str)
+```
+
+Return capability metadata if found.
+
+---
+
+#### CapabilityRegistry.is_supported
+
+```
+is_supported(self: Any, cap_id: str, version: Any)
+```
+
+Check if a capability and version are supported.
+
+---
+
+#### CapabilityRegistry.list_capabilities
+
+```
+list_capabilities(self: Any)
+```
+
+List all registered capabilities.
+
+---
+
+#### CapabilityRegistry.register
+
+```
+register(self: Any, cap: Capability)
+```
+
+Register a new capability.
+
+---
+
+---
+
+## get_capability
+
+```
+get_capability(self: Any, cap_id: str)
+```
+
+Return capability metadata if found.
+
+---
+
+## is_supported
+
+```
+is_supported(self: Any, cap_id: str, version: Any)
+```
+
+Check if a capability and version are supported.
+
+---
+
+## list_capabilities
+
+```
+list_capabilities(self: Any)
+```
+
+List all registered capabilities.
+
+---
+
+## register
+
+```
+register(self: Any, cap: Capability)
+```
+
+Register a new capability.
+
+---

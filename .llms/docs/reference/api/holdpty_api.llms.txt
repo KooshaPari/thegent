@@ -1,0 +1,75 @@
+# holdpty_api
+
+Source: docs/reference/api/holdpty_api.md
+
+---
+
+# holdpty API Reference
+
+> **Source**: `src/thegent/utils/holdpty.py`
+
+PTY holder for headless interactive sessions (WP-9007).
+
+---
+
+## PTYHolder
+
+Wraps a process in a PTY and exposes it via a Unix socket.
+
+### Methods
+
+#### PTYHolder.__init__
+
+```
+__init__(self: Any, socket_path: Path, cmd: list[str], cwd: Any, env: Any)
+```
+
+---
+
+#### PTYHolder.start
+
+```
+start(self: Any)
+```
+
+Start the process and the proxy server.
+
+---
+
+#### PTYHolder.stop
+
+```
+stop(self: Any)
+```
+
+---
+
+---
+
+## start
+
+```
+start(self: Any)
+```
+
+Start the process and the proxy server.
+
+---
+
+## stop
+
+```
+stop(self: Any)
+```
+
+---
+
+## wrap_with_holdpty
+
+```
+wrap_with_holdpty(cmd: list[str], session_id: str, socket_path: Path)
+```
+
+Return a command that runs the original command via holdpty holder.
+
+---

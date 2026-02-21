@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class HeliosShieldBridge:
     """Fixed heliosShield bridge implementation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize helios shield bridge."""
         self.connected = False
 

@@ -37,7 +37,7 @@
 | Component | Location | Role |
 |-----------|----------|------|
 | **thegent** | `thegent/` | Agent orchestration, MCP server (3847), clode/claudemax shims |
-| **CLIProxyAPIPlus-fork** | `../CLIProxyAPIPlus-fork/` | Chat proxy (8317), OAuth, openai-compatibility, minimax/zai. Go project, build: `go build -o cli-proxy-api-plus ./cmd/server` |
+| **cliproxyapi-plusplus** | `../cliproxyapi-plusplus/` | Chat proxy (8317), OAuth, openai-compatibility, minimax/zai. Go project, build: `go build -o cli-proxy-api-plus ./cmd/server` |
 | **LiteLLM** | pheno-sdk, zen-mcp-server, agentapi | Multi-provider client, fallback chains, model discovery |
 | **Bifrost** | (Go project with extensions) | Alternative proxy/gateway with extension system |
 
@@ -97,7 +97,7 @@ Claude Code → LiteLLM Proxy (e.g. 4000) → CLIProxyAPIPlus (8317) or direct p
 1. **Fix claudemax base URL:** `CLIProxyAPIPlus` (8317) not MCP (3847) for chat.
 2. **Ensure env isolation:** `ANTHROPIC_API_KEY` from thegent overrides shell env; consider `--dangerously-skip-permissions` to avoid Claude Code key prompt.
 3. **Provider definitions:** Internal JSON; credentials via `thegent cliproxy login <provider>`.
-4. **Fork path:** `start_proxy.py` looks for `../CLIProxyAPIPlus-fork/cli-proxy-api-plus`; ensure `THGENT_CLIPROXY_BINARY` or build from fork.
+4. **Fork path:** `start_proxy.py` looks for `../cliproxyapi-plusplus/cli-proxy-api-plus`; ensure `THGENT_CLIPROXY_BINARY` or build from fork.
 
 ---
 
@@ -131,7 +131,7 @@ If LiteLLM is used for routing (e.g. pheno-sdk, zen-mcp-server):
 
 - [ ] `clode_main._get_claude_env`: use `cliproxy_port` (8317) for chat, not `mcp_port` (3847)
 - [ ] Verify `ANTHROPIC_API_KEY` override in subprocess env
-- [ ] Document `THGENT_CLIPROXY_BINARY` for fork: `../CLIProxyAPIPlus-fork/cli-proxy-api-plus` (or built binary path)
+- [ ] Document `THGENT_CLIPROXY_BINARY` for fork: `../cliproxyapi-plusplus/cli-proxy-api-plus` (or built binary path)
 - [ ] **Catalog–fork alignment:** Ensure nim routes work — fork has no native "nim"; needs openai-compatibility. See CATALOG_CLIPROXY_FORK_ALIGNMENT.md.
 - [ ] (Optional) LiteLLM config generator from `~/.factory/config.json`
 - [ ] (Optional) Bifrost extension for CLIProxy bridge

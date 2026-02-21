@@ -1,0 +1,16 @@
+# index
+
+Source: docs/docsets/agent/index.md
+
+---
+
+# Agent Operator Docset
+
+For teams running agent fleets, delegation, and governance-intensive workflows.
+
+## Operating Surfaces
+
+1. [Operating Model](./operating-model.md)
+2. Agent routing and harness strategy
+3. Policy and HITL governance
+4. Audit and traceability controls

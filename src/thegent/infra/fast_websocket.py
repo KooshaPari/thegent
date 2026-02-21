@@ -11,6 +11,9 @@ Performance improvements:
 - Automatic backend selection
 """
 
+from types import TracebackType
+from typing import Any
+
 try:
     import websockets
     from websockets.client import connect as ws_connect
@@ -39,8 +42,8 @@ class FastWebSocket:
         """
         self.url = url
         self.options = kwargs
-        self._ws = None
-        self._backend = None
+        self._ws: Any = None
+        self._backend: str | None = None
 
     async def connect_async(self) -> None:
         """Connect asynchronously using websockets library.
@@ -50,11 +53,15 @@ class FastWebSocket:
             - Better resource management
             - Non-blocking connection
         """
+        import asyncio
+
         if WEBSOCKETS_AVAILABLE:
             self._backend = "websockets"
             self._ws = await ws_connect(self.url, **self.options)
         elif WEBSOCKET_CLIENT_AVAILABLE:
-            raise NotImplementedError("websocket-client doesn't support async. Install 'websockets' for async support.")
+            # Fallback: run synchronous websocket-client in thread pool
+            self._backend = "websocket-client-async"
+            self._ws = await asyncio.to_thread(websocket.create_connection, self.url, **self.options)
         else:
             raise ImportError("No WebSocket library available. Install 'websockets' or 'websocket-client'.")
 
@@ -73,8 +80,12 @@ class FastWebSocket:
 
     async def send_async(self, data: str | bytes) -> None:
         """Send data asynchronously."""
+        import asyncio
+
         if self._backend == "websockets":
             await self._ws.send(data)
+        elif self._backend == "websocket-client-async":
+            await asyncio.to_thread(self._ws.send, data)
         else:
             raise RuntimeError("Not connected or wrong backend")
 
@@ -87,8 +98,12 @@ class FastWebSocket:
 
     async def recv_async(self) -> str | bytes:
         """Receive data asynchronously."""
+        import asyncio
+
         if self._backend == "websockets":
             return await self._ws.recv()
+        if self._backend == "websocket-client-async":
+            return await asyncio.to_thread(self._ws.recv)
         raise RuntimeError("Not connected or wrong backend")
 
     def recv_sync(self) -> str | bytes:
@@ -99,10 +114,12 @@ class FastWebSocket:
 
     async def close_async(self) -> None:
         """Close connection asynchronously."""
+        import asyncio
+
         if self._backend == "websockets":
             await self._ws.close()
-        elif self._backend == "websocket-client":
-            self._ws.close()
+        elif self._backend in ("websocket-client", "websocket-client-async"):
+            await asyncio.to_thread(self._ws.close)
 
     def close_sync(self) -> None:
         """Close connection synchronously."""
@@ -112,21 +129,31 @@ class FastWebSocket:
             # Can't close async websocket synchronously
             raise RuntimeError("Use close_async() for websockets backend")
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "FastWebSocket":
         """Async context manager entry."""
         await self.connect_async()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Async context manager exit."""
         await self.close_async()
 
-    def __enter__(self):
+    def __enter__(self) -> "FastWebSocket":
         """Sync context manager entry."""
         self.connect_sync()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Sync context manager exit."""
         self.close_sync()
 

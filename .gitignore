@@ -57,6 +57,11 @@ artifacts/
 .factory-seed/
 mcp_backup/
 
+# Thegent scanner cache dirs (WL-006: prevent disk saturation)
+.git-cache/
+.shadow-*/
+.worktrees/
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -1,0 +1,53 @@
+# 2026-02-19-VERSIONING-AND-SHADOW-AUDIT-PLAN
+
+Source: docs/plans/2026-02-19-VERSIONING-AND-SHADOW-AUDIT-PLAN.md
+
+---
+
+# Plan: Advanced Versioning & Shadow Audit System Implementation (2026-02-19)
+
+## 1. Overview
+This plan implements the design specified in `2026-02-19-ADVANCED-VERSIONING-AND-SHADOW-AUDIT-DESIGN.md`. It introduces a hierarchical versioning system for agent work and a secure, granular shadow system-level Git audit log.
+
+## 2. Phase 1: Core Hierarchy & Project Registry
+**Objective**: Establish the 5-tier hierarchy and the SQLite database to track it.
+
+- [ ] **T1.1: ProjectRegistry Database**
+    - Create `src/thegent/infra/project_registry.py`.
+    - Implement schema for `products`, `milestones`, `sprints`, `tasks`, and `episodes`.
+    - Link `episodes` to `episodic_log` in `memory_v2.db`.
+- [ ] **T1.2: Hierarchy Management CLI**
+    - Add `thegent plan milestone/sprint/task` commands to manage entities.
+    - Implement auto-linking of current agent runs to the "active" task.
+
+## 3. Phase 2: Shadow Audit Log (Git-based)
+**Objective**: Implement the granular, secure shadow git repository.
+
+- [ ] **T2.1: `ShadowAuditGit` Implementation**
+    - Create `src/thegent/orchestration/state/audit_log.py`.
+    - Implement `init_shadow_repo()` logic (hidden in `~/.thegent/audit/`).
+    - Implement `commit_transaction()` to capture every tool-induced filesystem change.
+- [ ] **T2.2: Secret Scrubbing Layer**
+    - Integrate `thegent.governance.native_secret_scan` into the audit log commit flow.
+    - Redact secrets from diffs before committing to shadow git.
+- [ ] **T2.3: Shadow Vault (Encrypted Storage)**
+    - Implement a local encrypted SQLite store for the original values of scrubbed secrets.
+    - Provide a secure recovery mechanism for authorized local users.
+
+## 4. Phase 3: Workflow Integration & Observability
+**Objective**: Wire the system into the agent execution loop and expose it to the user.
+
+- [ ] **T3.1: Episode Lifecycle Integration**
+    - Update `src/thegent/agents/base.py` (or runner) to wrap tasks in `EpisodeController`.
+    - Automatically trigger shadow commits on every successful tool call that modifies files.
+- [ ] **T3.2: Audit Log CLI**
+    - Implement `thegent audit log` to view granular transaction history.
+    - Implement `thegent audit diff <episode_id>` to show scrubbed changes.
+- [ ] **T3.3: Versioning Visualization**
+    - Add `thegent plan status --tree` to show the project hierarchy and its associated episodes.
+
+## 5. Success Metrics
+- **Granularity**: 1 commit per tool-induced change in the shadow log.
+- **Security**: 0 plain-text secrets in the shadow git history (100% scrubbing rate).
+- **Traceability**: Every agent run (Episode) is linked to a specific Task and Milestone.
+- **Performance**: Shadow commit overhead < 200ms per tool call.

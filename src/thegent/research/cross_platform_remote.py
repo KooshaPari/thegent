@@ -8,7 +8,7 @@ from thegent.compute.offload import ComputeOffload
 class CrossPlatformRemoteResearch:
     """Research for cross-platform remote compute."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cross-platform remote research."""
         self.offload = ComputeOffload()
 

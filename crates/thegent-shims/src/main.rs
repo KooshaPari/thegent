@@ -45,7 +45,7 @@ enum ShimCommand {
     },
     /// agent: Agent invocation shim
     Agent {
-        /// Agent name (codex, copilot, dex, claude, cursor, clode, roid, fanta)
+        /// Agent name (codex, copilot, dex, claude, cursor, clode, roid, droid, fanta, cline, roocode, opencode)
         name: String,
         /// Arguments to pass to the agent
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
@@ -131,7 +131,6 @@ fn run_git(args: &[String]) -> ExitCode {
             if let Ok(session_id) = env::var("SESSION_ID") {
                 cmd.env("SESSION_ID", &session_id);
             }
-            
             // Execute and propagate exit code
             let status = cmd.status().unwrap_or_else(|e| {
                 eprintln!("thegent-shims: failed to execute git: {}", e);
@@ -280,48 +279,50 @@ fn is_self_or_shim_wrapper(path: &Path) -> bool {
 }
 
 fn resolve_nonshim_binary(name: &str) -> Option<PathBuf> {
-    if let Ok(paths) = which::which_all(name) {
-        for path in paths {
-            if !is_self_or_shim_wrapper(&path) {
-                return Some(path);
-            }
+    if let Ok(path) =
+        which::which_in(name, Some(SAFE_PATH), env::current_dir().ok().unwrap_or_else(|| PathBuf::from(".")))
+    {
+        if !is_self_or_shim_wrapper(&path) {
+            return Some(path);
         }
     }
     None
 }
 
 fn resolve_agent(name: &str) -> Option<PathBuf> {
-    // Direct names first
-    if let Some(path) = resolve_nonshim_binary(name) {
-        return Some(path);
-    }
-    
-    // Fallback mappings
-    let fallback = match name.to_lowercase().as_str() {
-        "dex" => Some("codex"),
-        "clode" => Some("claude"),
-        "roid" => Some("droid"),
-        "anen" | "antigma" | "fanta" => Some("ante"),
-        "claude" => Some("claude"),
-        "cursor" => Some("cursor"),
-        "copilot" => Some("copilot"),
-        _ => None,
+    // Prefer canonical target binaries for alias wrappers before resolving the alias name itself.
+    let candidates: &[&str] = match name.to_lowercase().as_str() {
+        "dex" => &["codex"],
+        "clode" => &["claude"],
+        "roid" => &["droid"],
+        "droid" => &["droid"],
+        "fanta" => &["ante"],
+        "cline" => &["cline", "cursor-agent", "cursor"],
+        "roocode" => &["roocode", "roo", "cursor-agent", "cursor"],
+        "opencode" => &["opencode"],
+        "cursor" => &["cursor-agent", "cursor"],
+        "copilot" => &["copilot"],
+        "claude" => &["claude"],
+        "codex" => &["codex"],
+        _ => &[name],
     };
-    
-    if let Some(fb) = fallback {
-        if let Some(path) = resolve_nonshim_binary(fb) {
+
+    for candidate in candidates {
+        if let Some(path) = resolve_nonshim_binary(candidate) {
             return Some(path);
         }
-        if fb == "ante" {
-            if let Ok(home) = env::var("HOME") {
-                let candidate = PathBuf::from(home).join(".ante").join("bin").join("ante");
-                if candidate.is_file() {
-                    return Some(candidate);
-                }
+    }
+
+    // Home-local fallback for ante.
+    if matches!(name.to_lowercase().as_str(), "fanta") {
+        if let Ok(home) = env::var("HOME") {
+            let candidate = PathBuf::from(home).join(".ante").join("bin").join("ante");
+            if candidate.is_file() {
+                return Some(candidate);
             }
         }
     }
-    
+
     None
 }
 
@@ -343,7 +344,7 @@ fn inject_harness_defaults(name: &str, args: &[String]) -> Vec<String> {
                 out.insert(0, "--dangerously-skip-permissions".to_string());
             }
         }
-        "roid" | "anen" | "antigma" | "fanta" => {
+        "roid" | "droid" | "fanta" => {
             if out.first().map(String::as_str) == Some("exec") {
                 let has_skip = out.iter().any(|a| a == "--skip-permissions-unsafe");
                 let has_auto = out.iter().any(|a| a == "--auto");
@@ -357,23 +358,32 @@ fn inject_harness_defaults(name: &str, args: &[String]) -> Vec<String> {
     out
 }
 
+fn split_native_flag(args: &[String]) -> (bool, Vec<String>) {
+    let native_mode = args.iter().any(|a| a == "--native");
+    let filtered = args
+        .iter()
+        .filter(|a| a.as_str() != "--native")
+        .cloned()
+        .collect();
+    (native_mode, filtered)
+}
+
 /// Run agent with thegent integration
 fn run_agent(name: &str, args: &[String]) -> ExitCode {
+    let (native_mode, filtered) = split_native_flag(args);
+
     // Resolve the agent binary
     let agent_path = resolve_agent(name);
     
     match agent_path {
         Some(path) => {
             let mut cmd = safe_command(path.to_str().unwrap_or(name));
-            let passthrough_args: Vec<String> = if matches!(name, "dex" | "clode" | "roid" | "anen" | "antigma" | "fanta") {
-                let filtered: Vec<String> = args
-                    .iter()
-                    .filter(|a| a.as_str() != "--native")
-                    .cloned()
-                    .collect();
+            let passthrough_args: Vec<String> = if native_mode {
+                filtered
+            } else if matches!(name, "dex" | "clode" | "roid" | "droid" | "fanta") {
                 inject_harness_defaults(name, &filtered)
             } else {
-                args.to_vec()
+                filtered
             };
             cmd.args(&passthrough_args);
             
@@ -384,6 +394,11 @@ fn run_agent(name: &str, args: &[String]) -> ExitCode {
             if let Ok(session_id) = env::var("SESSION_ID") {
                 cmd.env("SESSION_ID", &session_id);
             }
+            // Scrub problematic malloc logging env vars from spawned agent processes.
+            // These vars can cause noisy stderr warnings on macOS in non-debuggable shells.
+            cmd.env_remove("MallocStackLogging");
+            cmd.env_remove("MallocStackLoggingNoCompact");
+            cmd.env_remove("MallocStackLoggingDirectory");
             
             // Execute and propagate exit code
             let status = cmd.status().unwrap_or_else(|e| {
@@ -575,9 +590,11 @@ fn main() -> ExitCode {
     if program_name == "dex"
         || program_name == "clode"
         || program_name == "roid"
-        || program_name == "anen"
-        || program_name == "antigma"
+        || program_name == "droid"
         || program_name == "fanta"
+        || program_name == "cline"
+        || program_name == "roocode"
+        || program_name == "opencode"
     {
         return run_agent(program_name, &args[1..].to_vec());
     } else if program_name == "thegent-git" {
@@ -600,7 +617,7 @@ fn main() -> ExitCode {
         let agent = program_name.strip_prefix("thegent-").unwrap();
         if matches!(
             agent,
-            "codex" | "copilot" | "dex" | "claude" | "cursor" | "clode" | "roid" | "anen" | "antigma" | "fanta"
+            "codex" | "copilot" | "dex" | "claude" | "cursor" | "clode" | "roid" | "droid" | "fanta" | "cline" | "roocode" | "opencode"
         ) {
             return run_agent(agent, &args[1..].to_vec());
         }
@@ -682,5 +699,87 @@ fn main() -> ExitCode {
         ShimCommand::Flock { args } => {
             run_flock(&args)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{inject_harness_defaults, split_native_flag};
+
+    fn v(args: &[&str]) -> Vec<String> {
+        args.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn split_native_flag_filters_only_native() {
+        let (native, filtered) = split_native_flag(&v(&["--native", "resume", "--last"]));
+        assert!(native);
+        assert_eq!(filtered, v(&["resume", "--last"]));
+    }
+
+    #[test]
+    fn split_native_flag_leaves_other_args_when_not_native() {
+        let (native, filtered) = split_native_flag(&v(&["resume", "--last"]));
+        assert!(!native);
+        assert_eq!(filtered, v(&["resume", "--last"]));
+    }
+
+    #[test]
+    fn inject_defaults_for_dex_includes_search_and_bypass() {
+        let out = inject_harness_defaults("dex", &v(&["resume"]));
+        assert!(out.contains(&"--search".to_string()));
+        assert!(out.contains(&"--dangerously-bypass-approvals-and-sandbox".to_string()));
+        assert!(out.contains(&"resume".to_string()));
+    }
+
+    #[test]
+    fn inject_defaults_for_dex_is_idempotent_for_existing_flags() {
+        let out = inject_harness_defaults(
+            "dex",
+            &v(&[
+                "--search",
+                "--dangerously-bypass-approvals-and-sandbox",
+                "resume",
+            ]),
+        );
+        let search_count = out.iter().filter(|a| a.as_str() == "--search").count();
+        let bypass_count = out
+            .iter()
+            .filter(|a| a.as_str() == "--dangerously-bypass-approvals-and-sandbox")
+            .count();
+        assert_eq!(search_count, 1);
+        assert_eq!(bypass_count, 1);
+    }
+
+    #[test]
+    fn inject_defaults_for_clode_adds_skip_permissions_once() {
+        let out = inject_harness_defaults("clode", &v(&["resume"]));
+        assert!(out.contains(&"--dangerously-skip-permissions".to_string()));
+        let out2 = inject_harness_defaults("clode", &v(&["--dangerously-skip-permissions", "resume"]));
+        let count = out2
+            .iter()
+            .filter(|a| a.as_str() == "--dangerously-skip-permissions")
+            .count();
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn inject_defaults_for_roid_exec_adds_skip_permissions_unsafe() {
+        let out = inject_harness_defaults("roid", &v(&["exec", "status"]));
+        assert_eq!(out[0], "exec");
+        assert_eq!(out[1], "--skip-permissions-unsafe");
+    }
+
+    #[test]
+    fn inject_defaults_for_droid_exec_adds_skip_permissions_unsafe() {
+        let out = inject_harness_defaults("droid", &v(&["exec", "status"]));
+        assert_eq!(out[0], "exec");
+        assert_eq!(out[1], "--skip-permissions-unsafe");
+    }
+
+    #[test]
+    fn inject_defaults_for_fanta_exec_does_not_add_when_auto_present() {
+        let out = inject_harness_defaults("fanta", &v(&["exec", "--auto", "status"]));
+        assert!(!out.iter().any(|a| a == "--skip-permissions-unsafe"));
     }
 }

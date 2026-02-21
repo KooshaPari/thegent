@@ -1,0 +1,72 @@
+# batch_ops_api
+
+Source: docs/reference/api/batch_ops_api.md
+
+---
+
+# batch_ops API Reference
+
+> **Source**: `src/thegent/utils/batch_ops.py`
+
+Batch file operations: read, write, delete.
+
+Thin wrappers over pathlib for batched multi-file operations.
+Delegates to pathlib.Path directly for maximum simplicity.
+
+# @trace FR-DX-001
+
+---
+
+## batch_delete
+
+```
+batch_delete(paths: list[Path])
+```
+
+Delete multiple files.
+
+**Parameters**:
+
+- `paths`: List of file paths to delete.
+
+**Raises**:
+
+- `FileNotFoundError`: If any path does not exist.
+
+---
+
+## batch_read
+
+```
+batch_read(paths: list[Path])
+```
+
+Read multiple files and return a mapping of path to content.
+
+**Parameters**:
+
+- `paths`: List of file paths to read.
+
+**Returns**: Dict mapping each path to its text content.
+
+**Raises**:
+
+- `FileNotFoundError`: If any path does not exist.
+
+---
+
+## batch_write
+
+```
+batch_write(pairs: list[tuple[(Path, str)]])
+```
+
+Write multiple files from a list of (path, content) pairs.
+
+Creates parent directories as needed.
+
+**Parameters**:
+
+- `pairs`: List of (path, content) tuples.
+
+---

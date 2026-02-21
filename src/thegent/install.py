@@ -1,28 +1,97 @@
 """Install module for managed installation and synchronization of thegent components."""
 
 import json
-import os
 import platform
 import shutil
 import subprocess
 import sys
-import time
 from datetime import UTC, datetime
-from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from thegent.config import ThegentSettings
 
-from pydantic import BaseModel, Field
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_random_exponential
 
 from thegent.infra import copy_file, copy_tree, run_subprocess_optimized
+from thegent.install_backups import (
+    backup_shell_config as _backup_shell_config,
+    cleanup_old_backups,
+    list_backups,
+    restore_shell_config,
+)
+from thegent.install_bundles import (
+    coerce_path as _coerce_path,
+    coerce_bundle_items as _coerce_bundle_items,
+    get_bundle_manifest_path,
+    get_default_bundle_manifest_path,
+    list_bundle_names,
+    load_bundle_manifest,
+    resolve_bundle_mode as _resolve_bundle_mode,
+    resolve_bundle_source as _resolve_bundle_source,
+    resolve_bundle_target as _resolve_bundle_target,
+    source_requires_pin_and_checksum as _source_requires_pin_and_checksum,
+    validate_bundle_manifest,
+)
+from thegent.install_constants import (
+    CLAUDE_CODE_FILES,
+    CLAUDE_MAPPING,
+    CURSOR_FILES,
+    EXCLUDE_DIRS,
+    FACTORY_FILES,
+    FACTORY_MAPPING,
+    ROOT_FILES,
+    SHELL_FILES,
+    SHELL_LOCAL_TEMPLATE,
+    THEGENT_TOOLS,
+    VALID_TARGETS,
+)
+from thegent.install_models import (
+    BundleItem,
+    BundleManifest,
+    ConfigManifest,
+    FileAction,
+    FileManifest,
+    InstallManifest,
+    InstallMode,
+)
+from thegent.install_powershell import (
+    POWERSHELL_HOOK_SENTINEL as _POWERSHELL_HOOK_SENTINEL,
+    POWERSHELL_MISE_HOOK,
+    detect_powershell_profile,
+    is_powershell_environment as _is_powershell_environment,
+    write_powershell_mise_hook,
+)
+from thegent.install_subprocess_utils import command_exists as _command_exists, run_command as _run_command
+
+__all__ = [
+    "CLAUDE_MAPPING",
+    "FACTORY_MAPPING",
+    "POWERSHELL_MISE_HOOK",
+    "ROOT_FILES",
+    "_POWERSHELL_HOOK_SENTINEL",
+    "BundleItem",
+    "BundleManifest",
+    "InstallMode",
+    "_coerce_bundle_items",
+    "_coerce_path",
+    "_resolve_bundle_mode",
+    "_resolve_bundle_source",
+    "_resolve_bundle_target",
+    "_source_requires_pin_and_checksum",
+    "cleanup_old_backups",
+    "get_bundle_manifest_path",
+    "get_default_bundle_manifest_path",
+    "list_backups",
+    "list_bundle_names",
+    "load_bundle_manifest",
+    "restore_shell_config",
+    "validate_bundle_manifest",
+]
 
 try:
     from thegent.mcp_manage import service_install, service_start, service_uninstall
@@ -306,46 +375,6 @@ def _service_plist_exists() -> bool:
 # --- System Dependencies Installation ---
 
 
-def _command_exists(cmd: str) -> bool:
-    """Check if a command exists in PATH."""
-    return shutil.which(cmd) is not None
-
-
-def _run_command(
-    cmd: list[str],
-    check: bool = False,
-    capture_output: bool = True,
-    retries: int = 3,
-    retry_delay: float = 1.0,
-) -> tuple[int, str, str]:
-    """Run a shell command with retry logic using tenacity. Returns (returncode, stdout, stderr)."""
-
-    @retry(
-        stop=stop_after_attempt(retries),
-        wait=wait_random_exponential(multiplier=retry_delay, min=retry_delay, max=10),
-        retry=retry_if_exception_type((subprocess.TimeoutExpired, Exception)),
-        reraise=True,
-    )
-    def _run_with_tenacity():
-        result = run_subprocess_optimized(cmd, check=check, capture_output=capture_output, timeout=300)
-        stdout_text = (
-            result.stdout.strip()
-            if isinstance(result.stdout, str)
-            else (result.stdout.decode("utf-8", errors="replace").strip() if result.stdout else "")
-        )
-        stderr_text = (
-            result.stderr.strip()
-            if isinstance(result.stderr, str)
-            else (result.stderr.decode("utf-8", errors="replace").strip() if result.stderr else "")
-        )
-        return result.returncode, stdout_text, stderr_text
-
-    try:
-        return _run_with_tenacity()
-    except Exception as e:
-        return 1, "", str(e) or "Command failed after retries"
-
-
 def install_homebrew(console: Console | None = None, dry_run: bool = False) -> tuple[bool, str]:
     """Install Homebrew if not present. Returns (success, message)."""
     if _command_exists("brew"):
@@ -366,30 +395,6 @@ def install_homebrew(console: Console | None = None, dry_run: bool = False) -> t
         # construct env dict locally: env = os.environ.copy(); env["PATH"] = ...
         return True, "Homebrew installed successfully"
     return False, f"Homebrew installation failed: {stderr or stdout}"
-
-
-def _backup_shell_config(hook_file: Path, console: Console | None = None) -> Path | None:
-    """Backup shell config file before modification. Returns backup path or None."""
-    if not hook_file.exists():
-        return None
-
-    backup_dir = Path.home() / ".thegent" / "backups"
-    backup_dir.mkdir(parents=True, exist_ok=True)
-
-    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-    backup_file = backup_dir / f"{hook_file.name}.{timestamp}.bak"
-
-    try:
-        import shutil
-
-        shutil.copy2(hook_file, backup_file)
-        if console:
-            console.print(f"[dim]Backed up {hook_file.name} to {backup_file}[/dim]")
-        return backup_file
-    except Exception as e:
-        if console:
-            console.print(f"[yellow]Could not backup {hook_file.name}: {e}[/yellow]")
-        return None
 
 
 def install_mise(
@@ -496,6 +501,12 @@ def install_mise(
                     console.print(f"[dim]Manually add to {shell_config_file}: {hook_cmd}[/dim]")
         elif console:
             console.print(f"[dim]Add to your shell config: {hook_cmd}[/dim]")
+
+        # PowerShell / Windows: also write pwsh activation hook when detected.
+        if _is_powershell_environment():
+            ps_profile = detect_powershell_profile()
+            write_powershell_mise_hook(ps_profile, console=console, dry_run=dry_run)
+
         return True, "mise installed via Homebrew"
     return False, f"mise installation failed: {stderr or stdout}"
 
@@ -676,78 +687,6 @@ def uninstall_system_dependencies(
     return results
 
 
-def restore_shell_config(backup_path: Path, console: Console | None = None) -> tuple[bool, str]:
-    """Restore shell config from backup. Returns (success, message)."""
-    if not backup_path.exists():
-        return False, f"Backup file not found: {backup_path}"
-
-    # Determine original file path from backup name
-    # Format: .zshenv.20260218_123456.bak
-    backup_name = backup_path.name
-    if ".bak" not in backup_name:
-        return False, "Invalid backup file format"
-
-    original_name = backup_name.rsplit(".", 2)[0]  # Remove .timestamp.bak
-    original_path = Path.home() / original_name
-
-    try:
-        import shutil
-
-        shutil.copy2(backup_path, original_path)
-        if console:
-            console.print(f"[green]✓[/green] Restored {original_name} from backup")
-        return True, f"Restored {original_name} from {backup_path.name}"
-    except Exception as e:
-        return False, f"Restore failed: {e}"
-
-
-def list_backups(console: Console | None = None) -> list[Path]:
-    """List all available backups. Returns list of backup paths."""
-    backup_dir = Path.home() / ".thegent" / "backups"
-    if not backup_dir.exists():
-        return []
-
-    backups = sorted(backup_dir.glob("*.bak"), key=lambda p: p.stat().st_mtime, reverse=True)
-    return backups
-
-
-def cleanup_old_backups(keep_count: int = 10, console: Console | None = None) -> tuple[int, list[str]]:
-    """Remove old backups, keeping only the most recent ones.
-
-    Args:
-        keep_count: Number of backups to keep (default: 10)
-        console: Rich console for output
-
-    Returns:
-        (removed_count, removed_files)
-    """
-    backups = list_backups(console)
-    if len(backups) <= keep_count:
-        return 0, []
-
-    to_remove = backups[keep_count:]
-    removed_files = []
-
-    def _remove_backup(backup: Path) -> str | None:
-        """Remove a single backup file. Returns filename if removed, None on error."""
-        try:
-            backup.unlink()
-            return backup.name
-        except Exception as e:
-            if console:
-                console.print(f"[yellow]Could not remove {backup.name}: {e}[/yellow]")
-            return None
-
-    for backup in to_remove:
-        name = _remove_backup(backup)
-        if name is not None:
-            removed_files.append(name)
-            if console:
-                console.print(f"[dim]Removed old backup: {name}[/dim]")
-
-    return len(removed_files), removed_files
-
-
 def clone_git_repo(
     repo_url: str,
     target_dir: Path,
@@ -787,6 +726,7 @@ def install_system_dependencies(
     install_mise_pkg: bool = True,
     use_nix: bool = False,
     git_repos: list[dict[str, str]] | None = None,
+    install_powershell: bool = False,
 ) -> dict[str, Any]:
     """Install system-wide dependencies: Homebrew, mise, git repos.
 
@@ -797,14 +737,20 @@ def install_system_dependencies(
         install_mise_pkg: Install mise if missing
         use_nix: Use Nix instead of Homebrew for mise
         git_repos: List of dicts with 'url', 'target', optional 'branch'
+        install_powershell: Write PowerShell mise activation hook explicitly.
+            When False (default), the hook is still written automatically
+            whenever ``_is_powershell_environment()`` returns True during
+            ``install_mise``.  Pass ``True`` to force the write regardless of
+            the detected environment (e.g. via ``thegent install --powershell``).
 
     Returns:
-        dict with 'homebrew', 'mise', 'git_repos' status
+        dict with 'homebrew', 'mise', 'git_repos', 'powershell' status
     """
     results: dict[str, Any] = {
         "homebrew": {"installed": False, "message": ""},
         "mise": {"installed": False, "message": ""},
         "git_repos": [],
+        "powershell": {"installed": False, "message": ""},
     }
 
     if install_homebrew_pkg:
@@ -829,6 +775,14 @@ def install_system_dependencies(
                 for verify_msg in verify_msgs:
                     console.print(f"  [dim]{verify_msg}[/dim]")
 
+    if install_powershell:
+        ps_profile = detect_powershell_profile()
+        ps_ok, ps_msg = write_powershell_mise_hook(ps_profile, console=console, dry_run=dry_run)
+        results["powershell"] = {"installed": ps_ok, "message": ps_msg}
+        if console and not dry_run:
+            status = "[green]✓[/green]" if ps_ok else "[red]✗[/red]"
+            console.print(f"{status} PowerShell: {ps_msg}")
+
     if git_repos:
         for repo_info in git_repos:
             url = repo_info.get("url", "")
@@ -846,274 +800,6 @@ def install_system_dependencies(
     return results
 
 
-# --- Models ---
-
-
-class InstallMode(StrEnum):
-    SMART = "smart"
-    EDITABLE = "editable"
-    FORCE = "force"
-    INTERACTIVE = "interactive"
-    UNDO = "undo"
-
-
-class FileAction(StrEnum):
-    COPIED = "copied"
-    SYMLINKED = "symlinked"
-    SKIPPED = "skipped"
-    BACKED_UP = "backed_up"
-    REMOVED = "removed"
-    CONFLICT = "conflict"
-    ERROR = "error"
-
-
-class FileManifest(BaseModel):
-    source: str
-    target: str
-    mode: str  # "copy" or "symlink"
-    mtime: float
-    backup: str | None = None
-    checksum: str | None = None
-
-
-class ConfigManifest(BaseModel):
-    file_path: str
-    key: str
-    original_value: Any = None
-    new_value: Any = None
-
-
-class InstallManifest(BaseModel):
-    version: int = 1
-    installed_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
-    files: dict[str, FileManifest] = {}  # target_path -> manifest
-    configs: list[ConfigManifest] = []
-
-
-class BundleItem(BaseModel):
-    source: str
-    target: str
-    mode: str = ""
-    pin: str | None = None
-    checksum: str | None = None
-
-
-class BundleManifest(BaseModel):
-    """Optional external manifest describing installable third-party bundles."""
-
-    bundles: dict[str, list[BundleItem]] = {}
-
-
-def get_default_bundle_manifest_path() -> Path:
-    """Default location for the third-party bundle manifest."""
-
-    return Path.home() / ".config" / "thegent" / "third_party_bundles.json"
-
-
-def get_bundle_manifest_path(bundle_manifest: Path | str | None = None) -> Path:
-    """Get the bundle manifest path.
-
-    Args:
-        bundle_manifest: Optional path to a bundle manifest file.
-
-    Returns:
-        The path to the bundle manifest file.
-    """
-    if bundle_manifest is not None:
-        return _coerce_path(str(bundle_manifest))
-    return get_default_bundle_manifest_path()
-
-
-def list_bundle_names(bundle_manifest: Path | str | None = None) -> list[str]:
-    """List available bundle names from the bundle manifest.
-
-    Args:
-        bundle_manifest: Optional path to a bundle manifest file.
-
-    Returns:
-        List of bundle names available in the bundle manifest.
-    """
-    manifest = load_bundle_manifest(bundle_manifest)
-    return list(manifest.keys())
-
-
-def validate_bundle_manifest(bundle_manifest: Path | str | None = None) -> tuple[bool, list[str]]:
-    """Validate a bundle manifest file.
-
-    Args:
-        bundle_manifest: Optional path to a bundle manifest file.
-
-    Returns:
-        Tuple of (is_valid, list of issues).
-    """
-    issues: list[str] = []
-    manifest_path = bundle_manifest or get_default_bundle_manifest_path()
-
-    if manifest_path and isinstance(manifest_path, (str, Path)):
-        path = Path(manifest_path) if not isinstance(manifest_path, Path) else manifest_path
-        if not path.exists():
-            issues.append(f"Bundle manifest not found: {path}")
-            return False, issues
-
-        try:
-            data = json.loads(path.read_text())
-        except (json.JSONDecodeError, OSError, ValueError) as e:
-            issues.append(f"Failed to parse bundle manifest: {e}")
-            return False, issues
-
-        if not isinstance(data, dict):
-            issues.append("Bundle manifest must be a JSON object")
-            return False, issues
-
-        bundles = data.get("bundles")
-        if not isinstance(bundles, dict):
-            issues.append("Bundle manifest must have a 'bundles' object")
-            return False, issues
-
-        for name, bundle in bundles.items():
-            if not isinstance(name, str):
-                issues.append("Bundle name must be a string")
-                continue
-            if not isinstance(bundle, dict):
-                issues.append(f"Bundle '{name}' must be an object")
-                continue
-            items = bundle.get("items")
-            if not isinstance(items, list):
-                issues.append(f"Bundle '{name}' must have an 'items' array")
-                continue
-            for i, item in enumerate(items):
-                if not isinstance(item, dict):
-                    issues.append(f"Bundle '{name}' item {i} must be an object")
-                    continue
-                if "source" not in item:
-                    issues.append(f"Bundle '{name}' item {i} missing 'source'")
-                if "target" not in item:
-                    issues.append(f"Bundle '{name}' item {i} missing 'target'")
-                source = item.get("source")
-                if isinstance(source, str) and _source_requires_pin_and_checksum(source):
-                    pin = item.get("pin")
-                    checksum = item.get("checksum")
-                    if not isinstance(pin, str) or not pin.strip():
-                        issues.append(f"Bundle '{name}' item {i} requires non-empty 'pin' for external source")
-                    if not isinstance(checksum, str) or not checksum.strip():
-                        issues.append(f"Bundle '{name}' item {i} requires non-empty 'checksum' for external source")
-
-    return len(issues) == 0, issues
-
-
-def _coerce_path(value: str) -> Path:
-    """Normalize and expand a user path token."""
-
-    return Path(os.path.expandvars(value)).expanduser()
-
-
-def _source_requires_pin_and_checksum(source: str) -> bool:
-    """Determine whether a source should include immutable pin and checksum metadata."""
-
-    normalized = source.strip().lower()
-    return normalized.startswith(("http://", "https://", "git+", "github:"))
-
-
-def load_bundle_manifest(path: Path | str | None = None) -> dict[str, list[dict[str, Any]]]:
-    """Load third-party bundle definitions from an external JSON manifest.
-
-    Expected schema:
-      {
-        "bundles": {
-          "name": {
-            "items": [
-              {"source": "...", "target": "...", "mode": "smart|force|editable"}
-            ]
-          }
-        }
-      }
-    """
-
-    manifest_path = _coerce_path(str(path)) if path is not None else get_default_bundle_manifest_path()
-
-    if not manifest_path.exists():
-        return {}
-
-    try:
-        data = json.loads(manifest_path.read_text())
-    except (json.JSONDecodeError, OSError, ValueError):
-        return {}
-
-    raw_bundles = data.get("bundles") if isinstance(data, dict) else None
-    if not isinstance(raw_bundles, dict):
-        return {}
-
-    bundles: dict[str, list[dict[str, Any]]] = {}
-    for name, bundle in raw_bundles.items():
-        if not isinstance(name, str):
-            continue
-        raw_items = bundle.get("items") if isinstance(bundle, dict) else bundle
-
-        if not isinstance(raw_items, list):
-            continue
-
-        items: list[dict[str, Any]] = []
-        for raw in raw_items:
-            if not isinstance(raw, dict):
-                continue
-
-            source = raw.get("source")
-            target = raw.get("target")
-            if not isinstance(source, str) or not isinstance(target, str):
-                continue
-
-            item: dict[str, Any] = {
-                "source": source.strip(),
-                "target": target.strip(),
-            }
-            mode = raw.get("mode")
-            if isinstance(mode, str) and mode.strip():
-                item["mode"] = mode.strip().lower()
-            else:
-                item["mode"] = ""
-            pin = raw.get("pin")
-            if isinstance(pin, str) and pin.strip():
-                item["pin"] = pin.strip()
-            checksum = raw.get("checksum")
-            if isinstance(checksum, str) and checksum.strip():
-                item["checksum"] = checksum.strip()
-            items.append(item)
-
-        if items:
-            bundles[name] = items
-
-    return bundles
-
-
-def _coerce_bundle_items(raw: dict[str, list[dict[str, Any]]]) -> BundleManifest:
-    """Normalize raw manifest payloads into a validated structure."""
-
-    normalized: dict[str, list[BundleItem]] = {}
-    for name, items in raw.items():
-        if not name or not isinstance(items, list):
-            continue
-        parsed_items: list[BundleItem] = []
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            source = item.get("source")
-            target = item.get("target")
-            if not isinstance(source, str) or not isinstance(target, str):
-                continue
-            parsed_items.append(
-                BundleItem(
-                    source=source.strip(),
-                    target=target.strip(),
-                    mode=str(item.get("mode", "")).strip().lower(),
-                    pin=str(item.get("pin")).strip() if isinstance(item.get("pin"), str) else None,
-                    checksum=str(item.get("checksum")).strip() if isinstance(item.get("checksum"), str) else None,
-                )
-            )
-        if parsed_items:
-            normalized[name] = parsed_items
-    return BundleManifest(bundles=normalized)
-
-
 def resolve_bundles(
     bundle_names: list[str] | None,
     bundle_manifest: Path | str | None,
@@ -1122,8 +808,10 @@ def resolve_bundles(
     cwd: Path,
     fallback_mode: InstallMode,
 ) -> list[tuple[Path, Path, InstallMode]]:
-    """Resolve selected bundles to install tuples."""
+    """Resolve selected bundles to install tuples.
 
+    Kept local to preserve test patch points in ``thegent.install``.
+    """
     selected = list(bundle_names or [])
     if not selected:
         return []
@@ -1158,169 +846,6 @@ def resolve_bundles(
             resolved_items.append((source, target, mode))
     return resolved_items
 
-
-def _resolve_bundle_mode(raw_mode: str, fallback: InstallMode) -> InstallMode:
-    """Convert a user-defined bundle mode into an InstallMode."""
-
-    normalized = (raw_mode or "").strip().lower()
-    if normalized in {"", "copy"}:
-        return fallback
-    if normalized == "symlink":
-        return InstallMode.EDITABLE
-    try:
-        return InstallMode(normalized)
-    except ValueError:
-        return fallback
-
-
-def _resolve_bundle_source(source: str, thegent_root: Path) -> Path:
-    """Resolve a bundle source path.
-
-    Supports:
-    - thegent:/relative/path -> resolved relative to thegent root
-    - home/absolute/env-expanded paths
-    - relative paths -> resolved relative to thegent root
-    """
-
-    normalized = source.strip()
-    if normalized.startswith("thegent:"):
-        normalized = normalized.split(":", 1)[1].lstrip("/")
-        return thegent_root / normalized
-
-    expanded = _coerce_path(normalized)
-    if expanded.is_absolute():
-        return expanded
-    return thegent_root / expanded
-
-
-def _resolve_bundle_target(target: str, *, home: Path, cwd: Path) -> Path:
-    """Resolve a bundle target path.
-
-    Allows templating with {home}, {cwd}, ${HOME}, ${CWD}.
-    Relative destinations are placed under the home directory.
-    """
-
-    normalized = target.strip()
-    normalized = normalized.replace("{home}", str(home)).replace("{HOME}", str(home))
-    normalized = normalized.replace("{cwd}", str(cwd)).replace("{CWD}", str(cwd))
-    normalized = normalized.replace("${HOME}", str(home)).replace("${CWD}", str(cwd))
-    normalized = os.path.expandvars(normalized)
-
-    expanded = _coerce_path(normalized)
-    if expanded.is_absolute():
-        return expanded
-    return home / expanded
-
-
-# --- Constants & Mappings ---
-
-# Valid targets
-VALID_TARGETS = {
-    "claude-code",
-    "claude-desktop",
-    "cursor",
-    "codex",
-    "droid",
-    "envrc",
-    "shell",
-    "harness",
-    "system",
-    "git-lock-cleanup",
-    "all",
-    "claude",
-    "factory",
-    "both",
-}
-
-# Shell config: source (in shell/) -> target (in home)
-SHELL_FILES = {
-    ".zshenv": ".zshenv",
-    ".zsh_bundle.zsh": ".zsh_bundle.zsh",
-    ".zsh_safeguards.zsh": ".zsh_safeguards.zsh",
-    ".zsh_optimization.zsh": ".zsh_optimization.zsh",
-    ".zsh_advanced.zsh": ".zsh_advanced.zsh",
-    ".zshrc": ".zshrc",
-}
-SHELL_LOCAL_TEMPLATE = "zshrc.local.template"  # Copy only if ~/.zshrc.local missing
-
-# Exclude list for file sync
-EXCLUDE_DIRS = {
-    "__pycache__",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".mypy_cache",
-    "history.jsonl",
-    "session-env",
-    "debug",
-    "todos",
-    "tasks",
-    "teams",
-    "shell-snapshots",
-    "file-history",
-    "paste-cache",
-    ".git",
-    ".venv",
-    "node_modules",
-}
-
-# Bundle definitions
-CLAUDE_CODE_FILES = {
-    "skills/thegent-skills": "skills/thegent-skills",
-    "skills/sitback-agent": "skills/sitback-agent",
-    "hooks": "hooks",
-    "templates": "templates",
-    "agents": "agents",
-    "commands": "commands",
-    "contracts": "contracts",
-    "CLAUDE.md": "CLAUDE.md",
-    "mcp_servers.json": "mcp_servers.json",
-    "qa-config.json": "qa-config.json",
-}
-
-# Cursor specific files
-CURSOR_FILES = {
-    "skills/thegent-skills": "skills-cursor/thegent-skills",
-}
-
-FACTORY_FILES = {
-    ".factory/hooks": "hooks",
-    ".factory/skills": "skills",
-    ".factory/commands": "commands",
-    ".factory/droids": "droids",
-    ".factory/plugins": "plugins",
-    ".factory/mcp.json": "mcp.json",
-    ".factory/config.json": "config.json",
-    ".factory/settings.json": "settings.json",
-}
-
-# MCP tools to auto-approve in Cursor
-THEGENT_TOOLS = [
-    "thegent_run",
-    "thegent_bg",
-    "thegent_ps",
-    "thegent_status",
-    "thegent_logs",
-    "thegent_inspect",
-    "thegent_stop",
-    "thegent_wait",
-    "thegent_list_agents",
-    "thegent_list_droids",
-    "thegent_list_models",
-    "thegent_dag_list",
-    "thegent_observe_summary",
-    "thegent_sitback_dashboard",
-    "thegent_session_contracts",
-    "thegent_session_contract_health_gate",
-    "thegent_session_contract_health_report",
-    "thegent_session_contract_health_trend",
-    "thegent_resolve_model_route",
-    "thegent_suggest_prompt",
-]
-
-CLAUDE_MAPPING = CLAUDE_CODE_FILES
-FACTORY_MAPPING = FACTORY_FILES
-
-ROOT_FILES = {"CLAUDE.md", "mcp_servers.json", "qa-config.json"}
 
 # --- Legacy Shims for Tests ---
 
@@ -1750,6 +1275,125 @@ def run_wizard(url: str | None = None) -> None:
         )
 
     console.print("\n[dim]Happy orchestrating![/dim]")
+
+
+def run_install_project(
+    project_selector: str | None = None,
+    template: str = "none",
+    mode: str = "smart",
+    dry_run: bool = False,
+    registry_path: Path | None = None,
+) -> dict:
+    """Install Thegent runtime assets into a registered project directory.
+
+    # @trace FR-TEN-001
+
+    Args:
+        project_selector: Project name, tenant_id, or path. If None, uses cwd.
+        template: Template overlay ("ag-dd" or "none").
+        mode: Install mode ("smart", "overwrite", "skip").
+        dry_run: If True, only show what would be changed.
+        registry_path: Optional custom registry path (used in tests for isolation).
+
+    Returns:
+        dict with keys: project_name, path, template, installed, skipped, errors.
+    """
+    from thegent.infra.project_tenancy import ProjectTenancy
+
+    if mode not in {"smart", "overwrite", "skip"}:
+        raise ValueError(f"Invalid install mode: {mode!r}. Must be: smart, overwrite, skip")
+
+    tenancy = ProjectTenancy(registry_path=registry_path) if registry_path is not None else ProjectTenancy()
+    record = None
+
+    if project_selector:
+        sel = project_selector.strip()
+        # Try name, then tenant_id, then path
+        record = tenancy.get_project(name=sel)
+        if record is None:
+            record = tenancy.get_project(tenant_id=sel)
+        if record is None:
+            candidate = Path(sel).expanduser().resolve()
+            if candidate.exists():
+                record = tenancy.get_project(path=candidate)
+        if record is None:
+            raise KeyError(f"No registered project found for selector: {sel!r}")
+    else:
+        cwd = Path.cwd()
+        record = tenancy.get_project(path=cwd)
+        if record is None:
+            raise KeyError(f"No registered project found for current directory: {cwd}")
+
+    project_path = Path(record.path)
+    thegent_dir = project_path / ".thegent"
+    errors: list[str] = []
+    installed: list[str] = []
+    skipped: list[str] = []
+
+    # Files to install into .thegent/
+    assets = {
+        "config.yaml": (
+            f"# Thegent project config\n"
+            f"tenant_id: {record.tenant_id}\n"
+            f"project_id: {record.project_id}\n"
+            f"project_name: {record.name}\n"
+        ),
+        "ownership.json": json.dumps(
+            {"tenant_id": record.tenant_id, "owner": "default", "project_id": record.project_id},
+            indent=2,
+        )
+        + "\n",
+        "templates.lock": json.dumps(
+            {
+                "template": record.template,
+                "version": record.template_version,
+                "locked_at": record.created_at,
+            },
+            indent=2,
+        )
+        + "\n",
+    }
+
+    if not dry_run:
+        thegent_dir.mkdir(parents=True, exist_ok=True)
+
+    for filename, content in assets.items():
+        dest = thegent_dir / filename
+        rel = f".thegent/{filename}"
+        if dry_run:
+            installed.append(f"(dry-run) {rel}")
+            continue
+
+        if dest.exists():
+            if mode == "skip":
+                skipped.append(rel)
+                continue
+            if mode == "smart":
+                existing = dest.read_text(encoding="utf-8")
+                if existing == content:
+                    skipped.append(rel)
+                    continue
+
+        dest.write_text(content, encoding="utf-8")
+        installed.append(rel)
+
+    # Optional AG-DD template overlay
+    template_installed: list[str] = []
+    template_skipped: list[str] = []
+    if template == "ag-dd" and not dry_run:
+        template_mode_map = {"smart": "smart", "overwrite": "overwrite", "skip": "skip"}
+        agdd_result = tenancy.spawn_template_agdd(project_path, mode=template_mode_map[mode])  # type: ignore[arg-type]
+        template_installed = agdd_result.installed
+        template_skipped = agdd_result.skipped + agdd_result.unchanged
+
+    return {
+        "project_name": record.name,
+        "path": record.path,
+        "template": template,
+        "installed": installed + template_installed,
+        "skipped": skipped + template_skipped,
+        "errors": errors,
+    }
 
 
 def run_install_system(

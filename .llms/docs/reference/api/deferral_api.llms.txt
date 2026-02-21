@@ -1,0 +1,109 @@
+# deferral_api
+
+Source: docs/reference/api/deferral_api.md
+
+---
+
+# deferral API Reference
+
+> **Source**: `src/thegent/orchestration/resilience/deferral.py`
+
+WP-5004: Non-critical deferral rules.
+
+---
+
+## DeferralManager
+
+Manages deferral of non-critical tasks under high load.
+
+### Methods
+
+#### DeferralManager.__init__
+
+```
+__init__(self: Any, settings: ThegentSettings)
+```
+
+---
+
+#### DeferralManager.defer_task
+
+```
+defer_task(self: Any, task_id: str, reason: str)
+```
+
+Record a task as deferred.
+
+---
+
+#### DeferralManager.list_deferred
+
+```
+list_deferred(self: Any)
+```
+
+List all currently deferred tasks.
+
+---
+
+#### DeferralManager.should_defer
+
+```
+should_defer(self: Any, task_priority: str, load_level: float)
+```
+
+Determine if a task should be deferred.
+
+Priority: P0 (critical) to P3 (low).
+
+---
+
+---
+
+## DeferralRule
+
+Rule for deferring non-critical tasks.
+
+### Methods
+
+#### DeferralRule.__init__
+
+```
+__init__(self: Any, id: str, condition: str, action: str)
+```
+
+---
+
+---
+
+## defer_task
+
+```
+defer_task(self: Any, task_id: str, reason: str)
+```
+
+Record a task as deferred.
+
+---
+
+## list_deferred
+
+```
+list_deferred(self: Any)
+```
+
+List all currently deferred tasks.
+
+---
+
+## should_defer
+
+```
+should_defer(self: Any, task_priority: str, load_level: float)
+```
+
+Determine if a task should be deferred.
+
+Priority: P0 (critical) to P3 (low).
+
+---

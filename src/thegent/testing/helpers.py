@@ -1,6 +1,7 @@
 """Testing helpers and utilities."""
 
 import logging
+from collections.abc import Callable
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ class TestHelpers:
         return all(key in dict1 and dict1[key] == dict2[key] for key in dict2)
 
     @staticmethod
-    def mock_async_function(result: Any):
+    def mock_async_function(result: Any) -> Callable[..., Any]:
         """Create a mock async function.
 
         Args:
@@ -33,7 +34,7 @@ class TestHelpers:
             Mock async function
         """
 
-        async def mock_fn(*args, **kwargs):
+        async def mock_fn(*args: Any, **kwargs: Any) -> Any:
             return result
 
         return mock_fn

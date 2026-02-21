@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import subprocess
 import time
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import pytest
@@ -18,6 +18,9 @@ from thegent.mesh.worktree import (
     BranchCollisionError,
     WorktreeManager,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Helpers

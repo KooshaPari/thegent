@@ -34,6 +34,34 @@ settings:
     task-completion: 15    # CAPPED: was 300s
     security-pipeline: 15   # CAPPED: was 600s
     agileplus-cycle: 10     # NEW: cap at 10s
+  # Regression spiral guard thresholds (consumed via env in governance-gates.sh)
+  # Override with env vars in CI/session:
+  # QA_SPIRAL_MAX_FAILED_TESTS, QA_SPIRAL_MAX_FLAKY_TESTS,
+  # QA_SPIRAL_MAX_MISSING_TEST_PAIRS, QA_SPIRAL_MAX_MISSING_TEST_TYPES,
+  # QA_SPIRAL_MAX_TEST_EVIDENCE_AGE_MINUTES, QA_SPIRAL_MAX_BUILD_EVIDENCE_AGE_MINUTES,
+  # QA_SPIRAL_MAX_E2E_EVIDENCE_AGE_MINUTES, QA_SPIRAL_STREAK_TRIGGER,
+  # QA_REQUIRE_E2E_FIRST, QA_REQUIRE_ENV_READY_FIRST,
+  # QA_SPIRAL_MAX_YELLOW_RETRIES, QA_SPIRAL_MAX_RED_RETRIES,
+  # QA_SPIRAL_YELLOW_COOLDOWN_MINUTES, QA_SPIRAL_RED_COOLDOWN_MINUTES,
+  # QA_SPIRAL_DIRECTIVE_GREEN, QA_SPIRAL_DIRECTIVE_YELLOW, QA_SPIRAL_DIRECTIVE_RED
+  regression_spiral_guard:
+    max_failed_tests: 10
+    max_flaky_tests: 8
+    max_missing_test_pairs: 0
+    max_missing_test_types: 0
+    max_test_evidence_age_minutes: 90
+    max_build_evidence_age_minutes: 90
+    max_e2e_evidence_age_minutes: 180
+    streak_trigger: 2
+    require_e2e_first: true
+    require_env_ready_first: true
+    max_yellow_retries: 2
+    max_red_retries: 2
+    yellow_cooldown_minutes: 30
+    red_cooldown_minutes: 60
+    directive_green: continue_delivery
+    directive_yellow: stabilize_before_new_changes
+    directive_red: hard_interrupt_remediate_now
 
 # Hook-specific configuration
 hooks:
@@ -115,6 +143,13 @@ hooks:
     timeout: 15
     description: "Update task status in TeamManager when completed"
 
+  # WL-098: PostAgentRun hook - block on governance vet reject
+  post-agent-run-vetter:
+    scope: all
+    timeout: 120
+    event: PostAgentRun
+    description: "Run post-run governance vetter"
+
   # AgilePlus governance cycle - runs on Stop to maintain health
   agileplus-cycle:
     scope: all
@@ -122,11 +157,29 @@ hooks:
     run_if: "\\.(py|sh|yaml|json)$"
     description: "Run AgilePlus governance cycle to maintain code health"
 
+  # Continuous spiral detection and interruption is enforced from governance-gates.sh
+  # (gate: regression-spiral-guard) and consumed by continuous-work-guard.sh.
+  regression-spiral-guard:
+    scope: all
+    timeout: 30
+    event: Stop
+    description: "Interrupt/remediate when regression or governance debt exceeds thresholds"
+
   # SCC Metrics - collect codebase stats
   scc-metrics:
     scope: all
     timeout: 30
     description: "Collect codebase metrics via scc"
+
+  # WL-006: Session cleanup with stale cache pruning and disk-usage guard
+  # Runs at Stop (session end) to remove .shadow-*, .git-cache, temp worktrees
+  # older than CACHE_MAX_AGE_DAYS (default 7) and resets quality-gate attempt
+  # counters so next session starts clean.
+  session-cleanup:
+    scope: all
+    timeout: 60
+    event: Stop
+    description: "Prune stale caches (.shadow-*, .git-cache, temp worktrees >7d) and abort quality gate if disk >90% (WL-006)"
 
 
 # File patterns for change detection

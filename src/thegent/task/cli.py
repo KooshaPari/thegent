@@ -52,7 +52,7 @@ def validate(
                     console.print(f"[red]✗[/red] {task_file_path.name}")
                     for error in result.errors[:3]:  # Show first 3 errors
                         console.print(f"  [red]{error.field}:[/red] {error.message}")
-            except Exception as e:
+            except Exception as e:  # noqa: PERF203 - intentional per-item error handling
                 invalid_count += 1
                 console.print(f"[red]✗[/red] {task_file_path.name}: {e}")
 
@@ -136,7 +136,7 @@ def list_tasks(
         try:
             task = parse_task_file(task_file)
             tasks.append(task)
-        except Exception:
+        except Exception:  # noqa: PERF203 - intentional per-item error handling
             continue
 
     # Apply filters

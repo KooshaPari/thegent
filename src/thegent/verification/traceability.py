@@ -48,8 +48,8 @@ class TraceabilityAuditor:
                 matches = re.findall(pattern, content)
                 found_ids.update(matches)
 
-        implemented = [id for id in expected_ids if id in found_ids]
-        missing = [id for id in expected_ids if id not in found_ids]
+        implemented = [requirement_id for requirement_id in expected_ids if requirement_id in found_ids]
+        missing = [requirement_id for requirement_id in expected_ids if requirement_id not in found_ids]
 
         coverage = (len(implemented) / len(expected_ids)) * 100 if expected_ids else 0.0
 
@@ -66,11 +66,11 @@ class TraceabilityAuditor:
         md += f"**Files Scanned**: {report.files_scanned}\n\n"
 
         md += "## ✅ Implemented IDs\n"
-        for id in sorted(report.implemented_ids):
-            md += f"- {id}\n"
+        for requirement_id in sorted(report.implemented_ids):
+            md += f"- {requirement_id}\n"
 
         md += "\n## ❌ Missing Implementation\n"
-        for id in sorted(report.missing_ids):
-            md += f"- {id}\n"
+        for requirement_id in sorted(report.missing_ids):
+            md += f"- {requirement_id}\n"
 
         return md

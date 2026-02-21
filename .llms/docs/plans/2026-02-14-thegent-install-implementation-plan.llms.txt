@@ -1,0 +1,584 @@
+# 2026-02-14-thegent-install-implementation-plan
+
+Source: docs/plans/2026-02-14-thegent-install-implementation-plan.md
+
+---
+
+# thegent install Implementation Plan
+
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** Add a `thegent install` CLI command that performs 1-click persistent installation and synchronization of all Claude Code configuration from thegent codebase to `~/.claude` and `~/.factory`.
+
+**Architecture:** New CLI subcommand implemented in `src/thegent/cli.py` with core logic in a new `src/thegent/install.py` module. Uses Click for CLI framework (already in project), handles file copying/symlinking with smart merge logic based on modification times.
+
+**Tech Stack:** Python, Click (existing), pathlib, shutil, os utilities
+
+---
+
+## Pre-requisites
+
+Check existing CLI structure:
+
+**Step 1: Examine current CLI setup**
+
+Run: `cat src/thegent/cli.py`
+Run: `grep -n "import\|@click" src/thegent/cli.py | head -30`
+
+---
+
+### Task 1: Create install.py module with core logic
+
+**Files:**
+- Create: `src/thegent/install.py`
+
+**Step 1: Write the failing test**
+
+```
+# tests/test_install.py
+import pytest
+import tempfile
+import os
+from pathlib import Path
+
+# Create a temporary directory structure to simulate thegent source
+@pytest.fixture
+def temp_gent_source(tmp_path):
+    src = tmp_path / "thegent"
+    src.mkdir()
+    (src / "skills").mkdir()
+    (src / "skills" / "test-skill").mkdir()
+    (src / "skills" / "test-skill" / "SKILL.md").write_text("# Test Skill")
+    (src / "hooks").mkdir()
+    (src / "hooks" / "test-hook.sh").write_text("#!/bin/bash\necho test")
+    return src
+
+@pytest.fixture
+def temp_target_dir(tmp_path):
+    return tmp_path / "target"
+
+def test_get_source_dest_mapping_returns_correct_paths(temp_gent_source):
+    from thegent.install import get_source_dest_mapping
+    
+    mapping = get_source_dest_mapping(temp_gent_source, "claude")
+    
+    assert "skills" in mapping
+    assert "hooks" in mapping
+
+def test_smart_copy_skips_user_modified_file(temp_gent_source, temp_target_dir):
+    from thegent.install import smart_copy_file
+    
+    target_dir = temp_target_dir / "skills"
+    target_dir.mkdir(parents=True)
+    target_file = target_dir / "test-skill" / "SKILL.md"
+    target_file.parent.mkdir(parents=True)
+    target_file.write_text("# User modified version")
+    
+    # Make target newer than source
+    import time
+    time.sleep(0.1)
+    source_file = temp_gent_source / "skills" / "test-skill" / "SKILL.md"
+    
+    result = smart_copy_file(source_file, target_file, verbose=False)
+    
+    assert result == "skipped"
+
+def test_smart_copy_copies_when_source_newer(temp_gent_source, temp_target_dir):
+    from thegent.install import smart_copy_file
+    
+    source_file = temp_gent_source / "skills" / "test-skill" / "SKILL.md"
+    target_file = temp_target_dir / "skills" / "test-skill" / "SKILL.md"
+    
+    result = smart_copy_file(source_file, target_file, verbose=False)
+    
+    assert result == "copied"
+    assert target_file.read_text() == "# Test Skill"
+```
+
+**Step 2: Run test to verify it fails**
+
+Run: `pytest tests/test_install.py -v 2>&1 | head -30`
+Expected: FAIL with "ModuleNotFoundError: No module named 'thegent.install'"
+
+**Step 3: Write minimal implementation**
+
+```
+# src/thegent/install.py
+"""Installation and synchronization module for Claude Code config."""
+
+import os
+import shutil
+import time
+from pathlib import Path
+from typing import Literal
+
+Target = Literal["claude", "factory", "both"]
+
+# Source (thegent) → Destination mapping
+# Note: Only syncing skills/agent-orchestra (unified skill - no redundancy)
+CLAUDE_MAPPING = {
+    "skills/agent-orchestra": "skills/agent-orchestra",
+    "hooks": "hooks",
+    "templates": "templates",
+    "agents": "agents",
+    "commands": "commands",
+    "contracts": "contracts",
+}
+
+# Agent skills - ONLY agent-orchestra (unified, no redundancy)
+AGENT_SKILL_DIRS = ["agent-orchestra"]
+
+FACTORY_MAPPING = {
+    ".factory/hooks": "hooks",
+    ".factory/skills": "skills",
+    ".factory/commands": "commands",
+    ".factory/droids": "droids",
+    ".factory/plugins": "plugins",
+    ".factory/mcp.json": "mcp.json",
+    ".factory/config.json": "config.json",
+    ".factory/settings.json": "settings.json",
+}
+
+# Files at root level
+ROOT_FILES = ["CLAUDE.md", "mcp_servers.json", "qa-config.json"]
+
+# Agent skills to sync from ~/.claude/skills to thegent (bidirectional)
+AGENT_SKILLS = ["codex-agent", "cursor-agent", "copilot-agent", "gemini-agent", "droid-agent"]
+
+EXCLUDE_DIRS = {
+    "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache",
+    "history.jsonl", "session-env", "debug", "todos", "tasks",
+    "teams", "shell-snapshots", "file-history", "paste-cache",
+}
+
+def get_home_dir() -> Path:
+    """Get user's home directory."""
+    return Path.home()
+
+def get_source_dest_mapping(thegent_root: Path, target: Target) -> dict[Path, Path]:
+    """Get mapping of source paths to destination paths."""
+    mapping = {}
+    home = get_home_dir()
+    
+    if target in ("claude", "both"):
+        claude_dir = home / ".claude"
+        for src_rel, dest_rel in CLAUDE_MAPPING.items():
+            src = thegent_root / src_rel
+            dest = claude_dir / dest_rel
+            if src.exists():
+                mapping[src] = dest
+        
+        # Root level files
+        for fname in ROOT_FILES:
+            src = thegent_root / fname
+            dest = home / ".claude" / fname
+            if src.exists():
+                mapping[src] = dest
+        
+        # .claude/plugins
+        plugins_src = thegent_root / ".claude" / "plugins"
+        plugins_dest = home / ".claude" / "plugins"
+        if plugins_src.exists():
+            mapping[plugins_src] = plugins_dest
+    
+    if target in ("factory", "both"):
+        factory_dir = home / ".factory"
+        for src_rel, dest_rel in FACTORY_MAPPING.items():
+            src = thegent_root / src_rel
+            dest = factory_dir / dest_rel
+            if src.exists():
+                mapping[src] = dest
+    
+    return mapping
+
+def should_exclude(path: Path) -> bool:
+    """Check if path should be excluded from sync."""
+    parts = path.parts
+    return any(excluded in parts for excluded in EXCLUDE_DIRS)
+
+def smart_copy_file(src: Path, dst: Path, verbose: bool = False) -> str:
+    """
+    Smart copy: only copy if source is newer or target doesn't exist.
+    
+    Returns: "copied" | "skipped" | "conflict"
+    """
+    if not src.exists():
+        return "skipped"
+    
+    # Ensure destination directory exists
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    
+    if not dst.exists():
+        shutil.copy2(src, dst)
+        if verbose:
+            print(f"  Copied: {dst}")
+        return "copied"
+    
+    # Both exist - compare modification times
+    src_mtime = src.stat().st_mtime
+    dst_mtime = dst.stat().st_mtime
+    
+    if dst_mtime > src_mtime:
+        # Target is newer - user modified, skip
+        if verbose:
+            print(f"  Skipped (user modified): {dst}")
+        return "skipped"
+    else:
+        # Source is newer - copy
+        shutil.copy2(src, dst)
+        if verbose:
+            print(f"  Copied (updated): {dst}")
+        return "copied"
+
+def create_symlink(src: Path, dst: Path, verbose: bool = False) -> str:
+    """Create symlink from dst to src."""
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    
+    if dst.exists() or dst.is_symlink():
+        dst.unlink()
+    
+    dst.symlink_to(src)
+    if verbose:
+        print(f"  Symlinked: {dst} -> {src}")
+    return "symlinked"
+
+def run_install(
+    target: Target = "both",
+    mode: str = "smart",
+    dry_run: bool = False,
+    verbose: bool = False,
+) -> dict:
+    """
+    Run the installation/synchronization.
+    
+    Args:
+        target: "claude", "factory", or "both"
+        mode: "smart", "editable", or "force"
+        dry_run: If True, only show what would happen
+        verbose: If True, show detailed progress
+    
+    Returns:
+        Dict with counts: {copied, skipped, conflicts, errors}
+    """
+    # Get thegent root (parent of src/)
+    thegent_root = Path(__file__).parent.parent.resolve()
+    
+    mapping = get_source_dest_mapping(thegent_root, target)
+    
+    counts = {"copied": 0, "skipped": 0, "conflicts": 0, "errors": 0}
+    
+    for src, dst in mapping.items():
+        try:
+            if src.is_dir():
+                # Process directory contents
+                for src_file in src.rglob("*"):
+                    if should_exclude(src_file):
+                        continue
+                    
+                    rel_path = src_file.relative_to(src)
+                    dst_file = dst / rel_path
+                    
+                    if dry_run:
+                        print(f"Would process: {dst_file}")
+                        continue
+                    
+                    if mode == "editable":
+                        result = create_symlink(src_file, dst_file, verbose)
+                    else:
+                        result = smart_copy_file(src_file, dst_file, verbose)
+                    
+                    if result == "copied":
+                        counts["copied"] += 1
+                    elif result == "skipped":
+                        counts["skipped"] += 1
+                    elif result == "conflict":
+                        counts["conflicts"] += 1
+            else:
+                # Single file
+                if dry_run:
+                    print(f"Would process: {dst}")
+                    continue
+                
+                if mode == "editable":
+                    result = create_symlink(src, dst, verbose)
+                else:
+                    result = smart_copy_file(src, dst, verbose)
+                
+                if result == "copied":
+                    counts["copied"] += 1
+                elif result == "skipped":
+                    counts["skipped"] += 1
+                elif result == "conflict":
+                    counts["conflicts"] += 1
+                    
+        except Exception as e:
+            counts["errors"] += 1
+            print(f"Error processing {src} -> {dst}: {e}")
+    
+    return counts
+```
+
+**Step 4: Run test to verify it passes**
+
+Run: `pytest tests/test_install.py -v`
+Expected: PASS
+
+**Step 5: Commit**
+
+```
+git add src/thegent/install.py tests/test_install.py
+git commit -m "feat: add install module with smart copy logic"
+```
+
+---
+
+### Task 2: Add CLI subcommand
+
+**Files:**
+- Modify: `src/thegent/cli.py`
+
+**Step 1: Examine current CLI structure**
+
+Run: `cat src/thegent/cli.py | head -80`
+
+**Step 2: Add the install subcommand**
+
+Add this to cli.py (find the appropriate place with existing @click.group):
+
+```
+@click.command(name="install")
+@click.option(
+    "-t", "--target",
+    type=click.Choice(["claude", "factory", "both"]),
+    default="both",
+    help="Target: claude|factory|both (default: both)",
+)
+@click.option(
+    "-e", "--editable",
+    is_flag=True,
+    help="Symlink install instead of copy (bi-directional sync)",
+)
+@click.option(
+    "-f", "--force",
+    is_flag=True,
+    help="Overwrite all files (no merge)",
+)
+@click.option(
+    "-n", "--dry-run",
+    is_flag=True,
+    help="Show what would happen without making changes",
+)
+@click.option(
+    "-v", "--verbose",
+    is_flag=True,
+    help="Show detailed progress",
+)
+def install_cmd(target, editable, force, dry_run, verbose):
+    """Install and synchronize Claude Code configuration to ~/.claude and ~/.factory."""
+    from thegent.install import run_install
+    
+    mode = "editable" if editable else ("force" if force else "smart")
+    
+    click.echo(f"=== thegent install ===")
+    click.echo(f"Target: {target}")
+    click.echo(f"Mode: {mode}")
+    if dry_run:
+        click.echo("Dry run: no changes will be made")
+    click.echo()
+    
+    counts = run_install(
+        target=target,
+        mode=mode,
+        dry_run=dry_run,
+        verbose=verbose,
+    )
+    
+    click.echo()
+    click.echo("Results:")
+    click.echo(f"  Copied:    {counts['copied']}")
+    click.echo(f"  Skipped:   {counts['skipped']}")
+    click.echo(f"  Conflicts: {counts['conflicts']}")
+    if counts['errors'] > 0:
+        click.echo(f"  Errors:    {counts['errors']}")
+```
+
+**Step 3: Register the command**
+
+Find where other commands are registered and add:
+```
+cli.add_command(install_cmd)
+```
+
+**Step 4: Test the CLI**
+
+Run: `python -m thegent install --help`
+Expected: Show help for install command
+
+Run: `python -m thegent install --dry-run --verbose`
+Expected: Show what would be synced without making changes
+
+**Step 5: Commit**
+
+```
+git add src/thegent/cli.py
+git commit -m "feat: add 'thegent install' CLI command"
+```
+
+---
+
+### Task 3: Add backup functionality for conflicts
+
+**Files:**
+- Modify: `src/thegent/install.py`
+- Modify: `tests/test_install.py`
+
+**Step 1: Write failing test**
+
+```
+def test_backup_creates_timestamped_backup(temp_gent_source, tmp_path, monkeypatch):
+    """When user has modified file, backup source version."""
+    from thegent.install import smart_copy_with_backup
+    
+    # Setup target with newer modification time
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+    target_file = target_dir / "test.txt"
+    target_file.write_text("user version")
+    
+    # Make target appear older to test copy behavior
+    import time
+    time.sleep(0.1)
+    
+    source_file = temp_gent_source / "test.txt"
+    source_file.write_text("source version")
+    
+    # Patch backup dir
+    backup_base = tmp_path / "backups"
+    
+    result = smart_copy_with_backup(source_file, target_file, backup_base, verbose=False)
+    
+    # Should copy since source is newer
+    assert result == "copied"
+    assert target_file.read_text() == "source version"
+```
+
+**Step 2: Add backup function**
+
+Add to install.py:
+
+```
+def backup_source(src: Path, backup_dir: Path, verbose: bool = False) -> Path:
+    """Backup source file to timestamped backup directory."""
+    from datetime import datetime
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_subdir = backup_dir / timestamp
+    backup_subdir.mkdir(parents=True, exist_ok=True)
+    
+    dst = backup_subdir / src.name
+    shutil.copy2(src, dst)
+    
+    if verbose:
+        print(f"  Backed up: {src} -> {dst}")
+    
+    return dst
+
+def smart_copy_with_backup(
+    src: Path, dst: Path, backup_dir: Path, verbose: bool = False
+) -> str:
+    """Smart copy with backup on conflict."""
+    if not src.exists():
+        return "skipped"
+    
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    
+    if not dst.exists():
+        shutil.copy2(src, dst)
+        return "copied"
+    
+    src_mtime = src.stat().st_mtime
+    dst_mtime = dst.stat().st_mtime
+    
+    if dst_mtime > src_mtime:
+        # User modified - backup source, keep target
+        backup_source(src, backup_dir, verbose)
+        return "conflict"
+    else:
+        shutil.copy2(src, dst)
+        return "copied"
+```
+
+**Step 3: Run tests**
+
+Run: `pytest tests/test_install.py -v`
+
+**Step 4: Commit**
+
+```
+git add src/thegent/install.py tests/test_install.py
+git commit -m "feat: add backup functionality for conflicts"
+```
+
+---
+
+### Task 4: Final integration test
+
+**Files:**
+- Test: Run actual install to verify end-to-end
+
+**Step 1: Run dry-run**
+
+```
+thegent install --dry-run --verbose --target both
+```
+
+**Step 2: Run actual install**
+
+```
+thegent install --verbose --target both
+```
+
+**Step 3: Verify files copied**
+
+```
+ls -la ~/.claude/skills/
+ls -la ~/.factory/hooks/
+```
+
+**Step 4: Commit final**
+
+```
+git commit -m "feat: complete thegent install command"
+```
+
+---
+
+## Summary of Files to Create/Modify
+
+| File | Action |
+|------|--------|
+| `src/thegent/install.py` | Create - core install logic |
+| `src/thegent/cli.py` | Modify - add install subcommand |
+| `tests/test_install.py` | Create - unit tests |
+
+## Testing Commands
+
+```
+# Run unit tests
+pytest tests/test_install.py -v
+
+# Dry run
+thegent install --dry-run --verbose
+
+# Actual install
+thegent install --verbose
+
+# Editable mode (symlinks)
+thegent install --editable --verbose
+```
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

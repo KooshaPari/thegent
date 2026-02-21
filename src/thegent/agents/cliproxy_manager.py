@@ -20,7 +20,7 @@ import httpx
 
 from thegent.config import ThegentSettings
 from thegent.infra.fast_subprocess import run_subprocess_optimized
-from thegent.infra.fast_yaml_parser import yaml_dump, yaml_load
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dumps
 
 
 # Lazy imports for better startup performance
@@ -454,7 +454,7 @@ def _ensure_config(settings: ThegentSettings) -> Path:
     _inject_cursor_into_cliproxy(config, settings)
     _inject_kiro_into_cliproxy(config, settings)
 
-    config_path.write_text(yaml_dump(config))
+    config_path.write_text(yaml_dumps(config))
     return config_path
 
 
@@ -860,7 +860,7 @@ def run_login_unified(
         return 1
 
     _inject_api_key_into_cliproxy(config, provider_lower, key, cfg)
-    config_path.write_text(yaml_dump(config, default_flow_style=False, sort_keys=False))
+    config_path.write_text(yaml_dumps(config, default_flow_style=False, sort_keys=False))
 
     # WP-Y13: Auto-restart proxy to "hot-reload" the new API key
     if kill_proxy(settings):

@@ -31,23 +31,23 @@ def main() -> int:
         print(f"   ✗ Failed to ensure config: {e}")
         return 1
 
-    # 2. Fix fork config if fork binary exists
+    # 2. Fix plusplus config if plusplus binary exists
     print()
-    print("2. Checking for CLIProxyAPIPlus-fork...")
-    fork_bin = ROOT.parent / "CLIProxyAPIPlus-fork" / "cli-proxy-api-plus"
-    fork_config = ROOT.parent / "CLIProxyAPIPlus-fork" / "config.yaml"
+    print("2. Checking for cliproxyapi-plusplus...")
+    plusplus_bin = ROOT.parent / "cliproxyapi-plusplus" / "cli-proxy-api-plus"
+    plusplus_config = ROOT.parent / "cliproxyapi-plusplus" / "config.yaml"
 
-    if fork_bin.exists():
-        print(f"   Found fork binary: {fork_bin}")
-        if not fork_config.exists():
-            print("   Creating fork config from thegent config...")
-            fork_config.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(config_path, fork_config)
-            print(f"   ✓ Created: {fork_config}")
+    if plusplus_bin.exists():
+        print(f"   Found plusplus binary: {plusplus_bin}")
+        if not plusplus_config.exists():
+            print("   Creating plusplus config from thegent config...")
+            plusplus_config.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(config_path, plusplus_config)
+            print(f"   ✓ Created: {plusplus_config}")
         else:
-            print("   ✓ Fork config already exists")
+            print("   ✓ plusplus config already exists")
     else:
-        print("   No fork binary found (skipping)")
+        print("   No plusplus binary found (skipping)")
 
     # 3. Stop any running CLIProxyAPI processes
     print()

@@ -1,0 +1,13 @@
+# compute_api
+
+Source: docs/reference/api/compute_api.md
+
+---
+
+# compute API Reference
+
+> **Source**: `src/thegent/compute/__init__.py`
+
+Compute offloading implementations.
+
+---

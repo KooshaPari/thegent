@@ -1,0 +1,101 @@
+# DAG_NODE_SERVICE_CONTRACT_CHECKLIST
+
+Source: docs/docset/DAG_NODE_SERVICE_CONTRACT_CHECKLIST.md
+
+---
+
+# DAG Node-to-Service Contract Checklist
+
+**Status:** Baseline  
+**Date:** 2026-02-14  
+**Source:** `thegent-dag-final.md`
+
+---
+
+## Purpose
+
+Maps DAG nodes from the final DAG specification to thegent CLI/MCP service contracts for verification and traceability.
+
+---
+
+## Core Execution DAG
+
+| Node | Description | Service Contract | CLI/MCP |
+|------|-------------|------------------|---------|
+| A0 | Intake Request | Run creation | `thegent run`, `thegent bg`, `thegent_run`, `thegent_bg` |
+| A1 | Classify Scope/Risk/Cost | Risk scoring | WP-0004; `confidence` param on run |
+| A2 | Schema Valid? | Contract validation | `validate_csm`, adapter conformance |
+| A4 | Hydrate Dependency Graph | DAG load | `thegent dag list`, `thegent_dag_list` |
+| A5 | Compute Priority and Confidence | Lane/confidence | `--lane`, `--confidence` |
+| A6 | Policy Pre-check Pass? | PolicyEngine | `PolicyEngine.evaluate()` in execution |
+| A7 | Governance Hold | Block + queue | Policy block; `thegent govern feedback` |
+| A8 | Route to Execution Lane | Routing | `thegent run`, model-first routing |
+| A10 | Execute in Bounded Envelope | Run execution | `thegent run`, `thegent bg`, timeout |
+| A11 | Evidence Complete? | Evidence check | DAG task `evidence` field |
+| A13 | Integrity and Regression Gate | History verify | `thegent history verify` |
+| A14 | Gate Pass? | Promotion gate | DAG status transitions |
+| A15 | Checkpoint Rollback | Rollback | `thegent plan rollback`, `thegent recover rollback` |
+| A16 | Promote Phase + Publish Summary | Status update | `dag update`, `dag sync` |
+| A18 | Close with Audit Artifact | Closure pack | `thegent closure-pack` |
+
+---
+
+## Recovery DAG
+
+| Node | Description | Service Contract | CLI/MCP |
+|------|-------------|------------------|---------|
+| R0 | Failure Detected | Run status | `thegent status`, `thegent ps` |
+| R3 | Select Recovery Playbook | Recovery actions | `thegent dag recover --action retry-failed\|clear-stuck\|reset-retries` |
+| R6 | Run Recovery with Idempotency Token | Reconcile | `thegent dag reconcile` |
+| R9 | Rollback + Oversight Queue | Rollback | `thegent plan rollback` |
+| R12 | Update Learning Registry | Feedback | `thegent govern feedback` |
+
+---
+
+## Governance DAG
+
+| Node | Description | Service Contract | CLI/MCP |
+|------|-------------|------------------|---------|
+| G0 | Action Proposed | Run request | `thegent run`, `thegent bg` |
+| G2 | Critical Action? | Lane check | `--lane critical` |
+| G4 | Standard Gate | PolicyEngine | Policy pre-check |
+| G8 | Approve and Emit Audit Event | Run registry | `RunRegistry`, `Auditor` |
+| G10 | Record Retention and TTL | Archive | `thegent archive` |
+
+---
+
+## Adaptive Scale DAG
+
+| Node | Description | Service Contract | CLI/MCP |
+|------|-------------|------------------|---------|
+| S0 | Ingress Rate Monitor | Benchmark | `thegent benchmark` |
+| S3 | Adaptive Control Mode | Circuit breaker | `CircuitBreakerRegistry` |
+| S6 | Issue Continuity Snapshot | Checkpoint | `thegent plan checkpoint` |
+
+---
+
+## Completion DAG
+
+| Node | Description | Service Contract | CLI/MCP |
+|------|-------------|------------------|---------|
+| C1 | Gate A-G Evidence Verified | History verify | `thegent history verify` |
+| C4 | Launch Readiness Review | Closure pack | `thegent closure-pack` |
+| C7 | Program Closure | Archive + signoff | `thegent archive`, closure-pack |
+
+---
+
+## Verification Checklist
+
+- [ ] Every critical DAG node has a mapped service contract
+- [ ] CLI parity with MCP tools where applicable
+- [ ] Policy gates enforced in execution path
+- [ ] Recovery playbooks executable via `dag recover`
+- [ ] Audit trail integrity via `history verify`
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [03-UNIFIED-DAG.md](../plans/03-UNIFIED-DAG.md) — DAG specification

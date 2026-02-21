@@ -1,18 +1,18 @@
 research-library-http|Replace urllib with httpx (7+ files)|P1|✅ Complete
 vitepress-playwright-setup|Set up Playwright for browser recordings|P1|✅ Complete
 docgen-sticky-nav|Implement sticky sidebar and header|P1|✅ Complete
-docgen-algolia-search|Integrate Algolia search with suggestions|P1|-
-docgen-content-tabs|Create content tabs component|P1|-
-docgen-api-typescript|Create TypeScript/JavaScript API generator|P1|-
-docgen-performance-code-split|Optimize code splitting for faster loads|P1|-
-docgen-performance-images|Image optimization (WebP/AVIF, lazy loading)|P1|-
-docgen-edit-links|Add edit-on-GitHub links|P1|-
-docgen-link-checker|Automated link checking|P1|-
-dx-improve-verbosity-batch-files|Batch file operations to reduce tool calls|P1|-
-dx-improve-path-handling|Normalize path handling across all operations|P1|-
-ax-improve-reusable-helpers|Create reusable helper library for common patterns|P1|-
-ax-improve-workstream-operations|Automate work stream operations (read, parse, update)|P1|-
-research-agent-hierarchy-mvp|Agent Hierarchy & Maximal MVP (SmolGents + codex/cc/droid harness)|P1|-
+docgen-algolia-search|Integrate Algolia search|P1|✅ Complete
+docgen-content-tabs|Content tabs component|P1|✅ Complete
+docgen-api-typescript|API generator|P1|✅ Complete
+docgen-performance-code-split|Code splitting|P1|✅ Complete
+docgen-performance-images|Image optimization (WebP/AVIF, lazy loading)|P1|✅ Complete
+docgen-edit-links|Edit links|P1|✅ Complete
+docgen-link-checker|Link checking|P1|✅ Complete
+dx-improve-verbosity-batch-files|Batch file operations to reduce tool calls|P1|✅ Complete
+dx-improve-path-handling|Normalize path handling across all operations|P1|✅ Complete
+ax-improve-reusable-helpers|Create reusable helper library for common patterns|P1|✅ Complete
+ax-improve-workstream-operations|Automate work stream operations (read, parse, update)|P1|✅ Complete
+research-agent-hierarchy-mvp|Agent Hierarchy & Maximal MVP (SmolGents + codex/cc/droid harness)|P1|✅ Complete
 research-remote-compute-impl|Implement thegent run --remote (Phase 4 compute offload)|P2|—
 research-library-diskcache|Replace scrapers cache with diskcache (1 file)|P2|✅ Complete
 research-library-psutil|Add psutil for resource monitoring (2 files)|P2|✅ Complete

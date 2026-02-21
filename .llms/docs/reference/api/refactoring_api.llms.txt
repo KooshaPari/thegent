@@ -1,0 +1,91 @@
+# refactoring_api
+
+Source: docs/reference/api/refactoring_api.md
+
+---
+
+# refactoring API Reference
+
+> **Source**: `src/thegent/agents/refactoring.py`
+
+WP-37002: Recursive Cognitive Refactoring.
+
+Allows agents to analyze their own reasoning chains and refactor their logic for better performance.
+
+---
+
+## CognitiveRefactorer
+
+Analyzes and optimizes agent 'thought patterns' or prompt hierarchies.
+
+### Methods
+
+#### CognitiveRefactorer.__init__
+
+```
+__init__(self: Any, agent_id: str)
+```
+
+---
+
+#### CognitiveRefactorer.analyze_reasoning_efficiency
+
+```
+analyze_reasoning_efficiency(self: Any, run_history: list[dict[(str, Any)]])
+```
+
+Analyze how efficiently the agent reaches a solution.
+
+---
+
+#### CognitiveRefactorer.apply_refactor
+
+```
+apply_refactor(self: Any, refactor_plan: str)
+```
+
+Update the agent's internal reasoning template.
+
+---
+
+#### CognitiveRefactorer.propose_refactor
+
+```
+propose_refactor(self: Any, efficiency_report: dict[(str, float)])
+```
+
+WP-37002: Generate a refactored 'cognitive template' (refined prompt instructions).
+
+---
+
+---
+
+## analyze_reasoning_efficiency
+
+```
+analyze_reasoning_efficiency(self: Any, run_history: list[dict[(str, Any)]])
+```
+
+Analyze how efficiently the agent reaches a solution.
+
+---
+
+## apply_refactor
+
+```
+apply_refactor(self: Any, refactor_plan: str)
+```
+
+Update the agent's internal reasoning template.
+
+---
+
+## propose_refactor
+
+```
+propose_refactor(self: Any, efficiency_report: dict[(str, float)])
+```
+
+WP-37002: Generate a refactored 'cognitive template' (refined prompt instructions).
+
+---

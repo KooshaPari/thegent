@@ -10,11 +10,7 @@ _log = logging.getLogger(__name__)
 
 def _supports_flock() -> bool:
     """Check if fcntl.flock is available (Unix)."""
-    try:
-        fcntl.flock
-        return True
-    except AttributeError:
-        return False
+    return hasattr(fcntl, "flock")
 
 
 class QueueLock:

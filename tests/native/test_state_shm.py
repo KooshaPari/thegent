@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import os
 import time
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,6 +26,9 @@ from thegent.native.state_shm import (
     is_native_available,
     open_shm,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Helper: force fallback (disable native module for unit tests)

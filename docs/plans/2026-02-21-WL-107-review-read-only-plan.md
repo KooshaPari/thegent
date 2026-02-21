@@ -1,0 +1,33 @@
+# WL-107 Implementation Plan (Read-Only Review Command)
+
+## Goal
+Implement `thegent review` as a read-only review turn with structured issue output and CI-friendly exit codes.
+
+## Current Block
+No dedicated review command path exists in `src/thegent/cli/apps/` and `src/thegent/cli/commands/` that forces read-only tool restrictions plus a stable output schema.
+
+## Ready-to-Implement Steps
+1. Add `review` command surface in `src/thegent/cli/apps/main.py` (or `src/thegent/cli/apps/run.py`) with args:
+- `prompt`
+- `--agent`
+- `--format rich|json`
+2. Add `review_impl` in `src/thegent/cli/commands/impl.py`:
+- enforce `mode="read-only"`
+- set constrained tool policy in prompt preamble (`read_file`, `glob`, `grep`, `web_search`)
+- inject required JSON schema for issue list + summary + rating.
+3. Add parser/validator module `src/thegent/agents/review_output.py`:
+- strict validation of `issues[]` fields (`file`, `line`, `severity`, `message`, `suggestion`)
+- fail loudly on invalid model output.
+4. Add CLI behavior in `src/thegent/cli/commands/cli.py`:
+- exit code `0` when no issues
+- exit code `1` when at least one issue
+- render table in rich mode.
+
+## Acceptance Criteria
+- `thegent review "..."` runs without write-capable mode.
+- JSON output always validates against the review schema.
+- Exit code semantics are deterministic for CI.
+
+## Validation Commands
+- `python -m py_compile src/thegent/cli/commands/impl.py src/thegent/cli/commands/cli.py src/thegent/agents/review_output.py`
+- `pytest -q tests/test_wl107_review_command.py`

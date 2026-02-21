@@ -4,7 +4,7 @@
 //! It uses three strategies:
 //! 1. Pattern-based: Detect changed file patterns (e.g., src/foo.rs → tests/test_foo.rs)
 //! 2. Import-based: Parse imports to find dependent tests
-//! 3. Coverage-based: Use coverage maps to identify affected tests (future)
+//! 3. Coverage-based: Use coverage maps to identify affected tests
 
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
@@ -308,10 +308,337 @@ impl Default for ImportDetector {
     }
 }
 
+/// Coverage-based test detection using coverage maps (e.g., from lcov, coverage.json).
+///
+/// This detector parses coverage data to identify which tests cover which source files,
+/// enabling precise test selection based on actual coverage relationships.
+pub struct CoverageDetector {
+    /// Map of source files to tests that cover them
+    coverage_map: HashMap<String, Vec<String>>,
+    /// Map of test files to source files they cover
+    test_to_sources: HashMap<String, Vec<String>>,
+    /// Whether coverage data is available
+    has_coverage_data: bool,
+}
+
+impl CoverageDetector {
+    pub fn new() -> Self {
+        Self {
+            coverage_map: HashMap::new(),
+            test_to_sources: HashMap::new(),
+            has_coverage_data: false,
+        }
+    }
+
+    /// Load coverage data from various formats.
+    ///
+    /// Supports:
+    /// - lcov.info files
+    /// - coverage.json (istanbul/nyc format)
+    /// - tarpaulin output (coverage.json)
+    pub fn load_coverage(&mut self, project_dir: &Path) -> Result<()> {
+        // Try lcov.info first
+        let lcov_path = project_dir.join("coverage").join("lcov.info");
+        if lcov_path.exists() {
+            self.parse_lcov(&lcov_path)?;
+            self.has_coverage_data = true;
+            return Ok(());
+        }
+
+        // Try coverage.json (istanbul/nyc format)
+        let coverage_json = project_dir.join("coverage").join("coverage-final.json");
+        if coverage_json.exists() {
+            self.parse_istanbul(&coverage_json)?;
+            self.has_coverage_data = true;
+            return Ok(());
+        }
+
+        // Try tarpaulin coverage
+        let tarpaulin_json = project_dir.join("tarpaulin-report.json");
+        if tarpaulin_json.exists() {
+            self.parse_tarpaulin(&tarpaulin_json)?;
+            self.has_coverage_data = true;
+            return Ok(());
+        }
+
+        // Try pytest-cov coverage
+        let pytest_cov = project_dir.join(".coverage");
+        if pytest_cov.exists() {
+            // .coverage is a binary format; we'd need to run `coverage xml` or `coverage json`
+            // For now, check for the XML export
+            let coverage_xml = project_dir.join("coverage.xml");
+            if coverage_xml.exists() {
+                self.parse_cobertura(&coverage_xml)?;
+                self.has_coverage_data = true;
+                return Ok(());
+            }
+        }
+
+        // No coverage data available
+        self.has_coverage_data = false;
+        Ok(())
+    }
+
+    /// Parse lcov.info format
+    fn parse_lcov(&mut self, path: &Path) -> Result<()> {
+        let content = fs::read_to_string(path)?;
+        let mut current_file: Option<String> = None;
+        let mut current_test: Option<String> = None;
+
+        for line in content.lines() {
+            if line.starts_with("SF:") {
+                // Source file
+                current_file = Some(line[3..].to_string());
+            } else if line.starts_with("TN:") {
+                // Test name (optional in lcov)
+                current_test = Some(line[3..].to_string());
+            } else if line.starts_with("DA:") && current_file.is_some() {
+                // Line data - indicates this file was covered
+                if let Some(ref source) = current_file {
+                    // Map source to test (if test name available)
+                    if let Some(ref test) = current_test {
+                        self.coverage_map
+                            .entry(source.clone())
+                            .or_insert_with(Vec::new)
+                            .push(test.clone());
+                        self.test_to_sources
+                            .entry(test.clone())
+                            .or_insert_with(Vec::new)
+                            .push(source.clone());
+                    } else {
+                        // No test name - assume generic coverage
+                        self.coverage_map
+                            .entry(source.clone())
+                            .or_insert_with(Vec::new);
+                    }
+                }
+            } else if line == "end_of_record" {
+                current_file = None;
+                current_test = None;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Parse istanbul/nyc coverage.json format
+    fn parse_istanbul(&mut self, path: &Path) -> Result<()> {
+        let content = fs::read_to_string(path)?;
+        let coverage: serde_json::Value = serde_json::from_str(&content)
+            .map_err(|e| AffectedTestsError::ParseError(format!("Invalid JSON: {}", e)))?;
+
+        if let Some(files) = coverage.as_object() {
+            for (file_path, data) in files {
+                // Normalize the file path
+                let normalized = self.normalize_path(file_path);
+
+                // Check if this file has any covered lines
+                if let Some(coverage_data) = data.as_object() {
+                    if let Some(lines) = coverage_data.get("l").and_then(|l| l.as_object()) {
+                        // If any line has count > 0, this file is covered
+                        let has_coverage = lines.values().any(|v| {
+                            v.as_u64().unwrap_or(0) > 0
+                        });
+
+                        if has_coverage {
+                            // Try to determine test from the path pattern
+                            if let Some(test_file) = self.infer_test_file(&normalized) {
+                                self.coverage_map
+                                    .entry(normalized.clone())
+                                    .or_insert_with(Vec::new)
+                                    .push(test_file.clone());
+                                self.test_to_sources
+                                    .entry(test_file)
+                                    .or_insert_with(Vec::new)
+                                    .push(normalized);
+                            } else {
+                                self.coverage_map
+                                    .entry(normalized)
+                                    .or_insert_with(Vec::new);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Parse tarpaulin JSON output
+    fn parse_tarpaulin(&mut self, path: &Path) -> Result<()> {
+        let content = fs::read_to_string(path)?;
+        let coverage: serde_json::Value = serde_json::from_str(&content)
+            .map_err(|e| AffectedTestsError::ParseError(format!("Invalid JSON: {}", e)))?;
+
+        if let Some(files) = coverage.as_object() {
+            for (file_path, data) in files {
+                let normalized = self.normalize_path(file_path);
+
+                // Tarpaulin format has covered lines info
+                if let Some(obj) = data.as_object() {
+                    if let Some(covered) = obj.get("covered").and_then(|c| c.as_u64()) {
+                        if covered > 0 {
+                            // File has coverage - map to test
+                            if let Some(test_file) = self.infer_test_file(&normalized) {
+                                self.coverage_map
+                                    .entry(normalized.clone())
+                                    .or_insert_with(Vec::new)
+                                    .push(test_file.clone());
+                                self.test_to_sources
+                                    .entry(test_file)
+                                    .or_insert_with(Vec::new)
+                                    .push(normalized);
+                            } else {
+                                self.coverage_map
+                                    .entry(normalized)
+                                    .or_insert_with(Vec::new);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Parse Cobertura XML format (used by pytest-cov, coverage.py)
+    fn parse_cobertura(&mut self, path: &Path) -> Result<()> {
+        let content = fs::read_to_string(path)?;
+
+        // Simple XML parsing without full XML parser
+        // Look for <class> elements with filename and line coverage
+        let class_re = Regex::new(r#"<class[^>]*filename="([^"]+)"[^>]*line-rate="([^"]+)"#)?;
+
+        for cap in class_re.captures_iter(&content) {
+            if let (Some(file_match), Some(rate_match)) = (cap.get(1), cap.get(2)) {
+                let file_path = file_match.as_str();
+                let line_rate: f64 = rate_match.as_str().parse().unwrap_or(0.0);
+
+                if line_rate > 0.0 {
+                    let normalized = self.normalize_path(file_path);
+
+                    if let Some(test_file) = self.infer_test_file(&normalized) {
+                        self.coverage_map
+                            .entry(normalized.clone())
+                            .or_insert_with(Vec::new)
+                            .push(test_file.clone());
+                        self.test_to_sources
+                            .entry(test_file)
+                            .or_insert_with(Vec::new)
+                            .push(normalized);
+                    } else {
+                        self.coverage_map
+                            .entry(normalized)
+                            .or_insert_with(Vec::new);
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Normalize a file path (remove leading ./, convert separators, etc.)
+    fn normalize_path(&self, path: &str) -> String {
+        let normalized = path.replace('\\', "/");
+        let normalized = normalized.trim_start_matches("./").to_string();
+        normalized
+    }
+
+    /// Infer test file from source file using common conventions
+    fn infer_test_file(&self, source_path: &str) -> Option<String> {
+        // Extract the base name without extension
+        let path = Path::new(source_path);
+        let stem = path.file_stem()?.to_str()?;
+
+        // Check common test file patterns
+        let parent = path.parent()?.to_str()?;
+
+        // If already in a test directory, it's a test file
+        if parent.contains("test") || parent.contains("spec") || parent.contains("__tests__") {
+            return Some(source_path.to_string());
+        }
+
+        // Generate candidate test paths based on file type
+        let ext = path.extension()?.to_str()?;
+
+        match ext {
+            "py" => {
+                Some(format!("tests/test_{}.py", stem))
+            }
+            "rs" => {
+                Some(format!("tests/{}_test.rs", stem))
+            }
+            "ts" | "tsx" | "js" | "jsx" => {
+                Some(format!("src/{}.test.{}", stem, ext))
+            }
+            _ => None,
+        }
+    }
+
+    /// Find tests that cover the changed source files
+    pub fn find_covering_tests(&self, changed_files: &[String]) -> Vec<String> {
+        let mut affected = HashSet::new();
+
+        for changed in changed_files {
+            let normalized = self.normalize_path(changed);
+
+            // Direct match
+            if let Some(tests) = self.coverage_map.get(&normalized) {
+                affected.extend(tests.clone());
+            }
+
+            // Try without leading path components
+            let filename = Path::new(&normalized)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(&normalized);
+
+            for (source, tests) in &self.coverage_map {
+                if source.ends_with(filename) {
+                    affected.extend(tests.clone());
+                }
+            }
+        }
+
+        let mut result: Vec<_> = affected.into_iter().collect();
+        result.sort();
+        result
+    }
+
+    /// Check if coverage data is available
+    pub fn has_coverage(&self) -> bool {
+        self.has_coverage_data
+    }
+
+    /// Get all source files with coverage data
+    pub fn covered_sources(&self) -> Vec<String> {
+        let mut sources: Vec<_> = self.coverage_map.keys().cloned().collect();
+        sources.sort();
+        sources
+    }
+
+    /// Get all tests with coverage data
+    pub fn tests_with_coverage(&self) -> Vec<String> {
+        let mut tests: Vec<_> = self.test_to_sources.keys().cloned().collect();
+        tests.sort();
+        tests
+    }
+}
+
+impl Default for CoverageDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Main affected tests analyzer
 pub struct AffectedTestsAnalyzer {
     pattern_detector: PatternDetector,
     import_detector: ImportDetector,
+    coverage_detector: CoverageDetector,
 }
 
 impl AffectedTestsAnalyzer {
@@ -319,6 +646,7 @@ impl AffectedTestsAnalyzer {
         Ok(Self {
             pattern_detector: PatternDetector::new()?,
             import_detector: ImportDetector::new(),
+            coverage_detector: CoverageDetector::new(),
         })
     }
 
@@ -332,6 +660,13 @@ impl AffectedTestsAnalyzer {
         // Build import graph if needed
         if matches!(strategy, DetectionStrategy::Import | DetectionStrategy::All) {
             self.import_detector.build_graph(project_dir)?;
+        }
+
+        // Load coverage data if needed
+        if matches!(strategy, DetectionStrategy::Coverage | DetectionStrategy::All) {
+            if let Err(e) = self.coverage_detector.load_coverage(project_dir) {
+                eprintln!("Warning: Failed to load coverage data: {}", e);
+            }
         }
 
         let mut affected_tests = HashSet::new();
@@ -352,6 +687,22 @@ impl AffectedTestsAnalyzer {
                 let tests = self.import_detector.find_dependent_tests(&module_names);
                 affected_tests.extend(tests);
             }
+            DetectionStrategy::Coverage => {
+                if self.coverage_detector.has_coverage() {
+                    let tests = self.coverage_detector.find_covering_tests(changed_files);
+                    affected_tests.extend(tests);
+                } else {
+                    eprintln!("Warning: No coverage data available, falling back to pattern-based detection");
+                    for changed in changed_files {
+                        let candidates = self.pattern_detector.find_test_candidates(changed);
+                        for candidate in candidates {
+                            if (project_dir.as_ref() as &Path).join(&candidate).exists() {
+                                affected_tests.insert(candidate);
+                            }
+                        }
+                    }
+                }
+            }
             DetectionStrategy::All => {
                 // Pattern-based
                 for changed in changed_files {
@@ -367,10 +718,12 @@ impl AffectedTestsAnalyzer {
                 let module_names = self.extract_module_names(changed_files);
                 let tests = self.import_detector.find_dependent_tests(&module_names);
                 affected_tests.extend(tests);
-            }
-            DetectionStrategy::Coverage => {
-                // TODO: Implement coverage-based detection
-                eprintln!("Coverage-based detection not yet implemented");
+
+                // Coverage-based
+                if self.coverage_detector.has_coverage() {
+                    let tests = self.coverage_detector.find_covering_tests(changed_files);
+                    affected_tests.extend(tests);
+                }
             }
         }
 

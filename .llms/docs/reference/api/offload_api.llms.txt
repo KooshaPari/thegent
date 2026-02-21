@@ -1,0 +1,126 @@
+# offload_api
+
+Source: docs/reference/api/offload_api.md
+
+---
+
+# offload API Reference
+
+> **Source**: `src/thegent/compute/offload.py`
+
+Compute Offloading Mac↔PC (WP-4001).
+
+Implements compute offloading between Mac and PC using Tailscale/SSH nodes.
+
+---
+
+## ComputeOffload
+
+Compute offloading between Mac and PC using Tailscale nodes (WP-4001).
+
+### Methods
+
+#### ComputeOffload.__init__
+
+```
+__init__(self: Any, nodes: Any, ssh_user: Any)
+```
+
+Initialize compute offload with remote executor.
+
+**Parameters**:
+
+- `nodes`: Optional list of node hostnames or IPs.
+- `ssh_user`: Optional SSH login user.
+
+---
+
+#### ComputeOffload.available_targets
+
+```
+available_targets(self: Any)
+```
+
+Return list of reachable targets.
+
+---
+
+#### ComputeOffload.offload
+
+```
+offload(self: Any, target_id: str, command: str, timeout_s: float)
+```
+
+Offload computation to target node.
+
+**Parameters**:
+
+- `target_id`: Target identifier (must be a registered host or in executor's node list)
+- `command`: Shell command to execute on the remote host
+- `timeout_s`: Execution timeout in seconds
+
+**Returns**: RemoteResult with exit code, stdout, and stderr.
+
+---
+
+#### ComputeOffload.register_target
+
+```
+register_target(self: Any, target_id: str, host: str, port: int)
+```
+
+Register an offload target.
+
+**Parameters**:
+
+- `target_id`: Target identifier
+- `host`: Host address
+- `port`: SSH port
+
+---
+
+---
+
+## available_targets
+
+```
+available_targets(self: Any)
+```
+
+Return list of reachable targets.
+
+---
+
+## offload
+
+```
+offload(self: Any, target_id: str, command: str, timeout_s: float)
+```
+
+Offload computation to target node.
+
+**Parameters**:
+
+- `target_id`: Target identifier (must be a registered host or in executor's node list)
+- `command`: Shell command to execute on the remote host
+- `timeout_s`: Execution timeout in seconds
+
+**Returns**: RemoteResult with exit code, stdout, and stderr.
+
+---
+
+## register_target
+
+```
+register_target(self: Any, target_id: str, host: str, port: int)
+```
+
+Register an offload target.
+
+**Parameters**:
+
+- `target_id`: Target identifier
+- `host`: Host address
+- `port`: SSH port
+
+---

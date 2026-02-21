@@ -1,0 +1,68 @@
+# replay_api
+
+Source: docs/reference/api/replay_api.md
+
+---
+
+# replay API Reference
+
+> **Source**: `src/thegent/commands/replay.py`
+
+CLI command: thegent replay [list | run | diff]
+
+Sub-commands for the SimulationReplayEngine:
+  list  — list available session files.
+  run   — replay a session, printing events to stdout.
+  diff  — compare two sessions and print a structured diff.
+
+---
+
+## replay_diff
+
+```
+replay_diff(session_a: Annotated[(str, Any)], session_b: Annotated[(str, Any)], sessions_root: Annotated[(Any, Any)], output_json: Annotated[(bool, Any)])
+```
+
+Compare two sessions and print a structured diff.
+
+Example::
+
+    thegent replay diff &lt;session_a_id&gt; &lt;session_b_id&gt;
+    thegent replay diff &lt;id_a&gt; &lt;id_b&gt; --json
+
+---
+
+## replay_list
+
+```
+replay_list(sessions_root: Annotated[(Any, Any)], output_json: Annotated[(bool, Any)])
+```
+
+List all available session files.
+
+Example::
+
+    thegent replay list
+    thegent replay list --json
+    thegent replay list --sessions-root /custom/path
+
+---
+
+## replay_run
+
+```
+replay_run(session_id: Annotated[(str, Any)], speed: Annotated[(float, Any)], sessions_root: Annotated[(Any, Any)], output_json: Annotated[(bool, Any)], from_event: Annotated[(int, Any)])
+```
+
+Replay a session, printing each event to stdout.
+
+SESSION_ID may be a bare session ID (matched by prefix), a path to the
+.json meta file, or a partial session stem.
+
+Example::
+
+    thegent replay run 20260219T231757Z-copilot-p21250-1f588a47
+    thegent replay run ./path/to/session.json --json
+    thegent replay run &lt;id&gt; --from 5 --speed 0
+
+---

@@ -21,7 +21,7 @@ console = Console()
 class ConfigWizard:
     """Interactive configuration wizard."""
 
-    def __init__(self, config_path: Path | None = None):
+    def __init__(self, config_path: Path | None = None) -> None:
         """Initialize the wizard.
 
         Args:

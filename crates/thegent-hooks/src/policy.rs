@@ -1,12 +1,13 @@
 /// Policy engine for governance rule evaluation
 use crate::types::{HookError, PolicyOutcome, PolicyRule, RuleType};
 use dashmap::DashMap;
-use lazy_static::lazy_static;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
-lazy_static! {
-    static ref POLICY_CACHE: Arc<DashMap<String, bool>> = Arc::new(DashMap::new());
+static POLICY_CACHE: OnceLock<Arc<DashMap<String, bool>>> = OnceLock::new();
+
+fn policy_cache() -> &'static Arc<DashMap<String, bool>> {
+    POLICY_CACHE.get_or_init(|| Arc::new(DashMap::new()))
 }
 
 pub struct PolicyEngine {
@@ -32,7 +33,7 @@ impl PolicyEngine {
             }
 
             let cache_key = format!("{}:{:?}", rule.id, context);
-            if let Some(cached) = POLICY_CACHE.get(&cache_key) {
+            if let Some(cached) = policy_cache().get(&cache_key) {
                 let passed = *cached;
                 outcomes.push(PolicyOutcome {
                     rule_id: rule.id.clone(),
@@ -48,7 +49,7 @@ impl PolicyEngine {
             }
 
             let passed = self.evaluate_rule(rule, context)?;
-            POLICY_CACHE.insert(cache_key, passed);
+            policy_cache().insert(cache_key, passed);
 
             outcomes.push(PolicyOutcome {
                 rule_id: rule.id.clone(),
@@ -205,12 +206,12 @@ impl PolicyEngine {
 
     /// Clear the policy cache
     pub fn clear_cache() {
-        POLICY_CACHE.clear();
+        policy_cache().clear();
     }
 
     /// Get cache hit rate
     pub fn cache_stats() -> (usize, usize) {
-        let size = POLICY_CACHE.len();
+        let size = policy_cache().len();
         (size, size) // Simplified: just return cache size
     }
 }

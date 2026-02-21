@@ -1,0 +1,3322 @@
+# thegent-patterns-enhancement-synthesis
+
+Source: docs/docset/thegent-patterns-enhancement-synthesis.md
+
+---
+
+# Thegent Pattern Enhancement Synthesis
+## Identification of P-115+ Patterns and Implementation Detail Gaps
+
+Date: 2026-02-14
+Analysis Scope: 114-pattern mega-synthesis review
+Focus: Optimization, polish, robustness, intuitive design, maximally engineered system
+
+---
+
+## Executive Summary
+
+The 114-pattern synthesis is comprehensive in breadth but exhibits strategic gaps in:
+1. **Implementation detail specificity** (68% of patterns lack exact library/API signatures)
+2. **Optimization cross-patterns** (24 missing patterns identified for P-115..P-138)
+3. **Edge case coverage** (17 adversarial failure modes not yet addressed)
+4. **Cross-pattern dependencies** (11 implicit dependencies lacking explicit documentation)
+5. **Intuitive developer ergonomics** (4 major UX blindspots in operator workflows)
+
+This document proposes **38 enhancement items** (24 new patterns, 14 implementation details) organized by domain for immediate incorporation.
+
+---
+
+## Part 1: Implementation Detail Deficiency Analysis
+
+### Domain A: Contract and Schema Design (P-001..P-012)
+
+#### P-001/002 Gap: Exact Schema Registry Format
+
+**Current state:** "Strict minimal schema required + optional extension blocks" (concept-level)
+
+**Missing detail:** No specification of how schema registry stores/queries versions, capability descriptors, or schema migration state.
+
+**Proposed enhancement:**
+```
+# Schema Registry Storage Format (JSON-serializable)
+{
+  "schema_id": "urn:thegent:csm:v2:core",
+  "version": "2.0.0",
+  "timestamp_published": "2026-02-14T10:30:00Z",
+  "supersedes": "urn:thegent:csm:v1:core",
+  "deprecation_date": "2026-08-14",
+  "tags": {
+    "TASK_ID": {
+      "type": "string",
+      "cardinality": "exactly-once",
+      "required": true,
+      "pattern": "^task-[0-9a-f]{8}$",
+      "validators": ["length:8..32", "pattern:regex", "semantic:unique_per_run"]
+    },
+    "STATUS": {
+      "type": "enum",
+      "allowed": ["pending", "running", "completed", "failed", "rolled_back"],
+      "cardinality": "exactly-once",
+      "required": true,
+      "depends_on": ["TASK_ID"],
+      "triggers": [
+        {"on": "completed", "requires_non_empty": ["ACTIONS_COMPLETED"]},
+        {"on": "failed", "requires_non_empty": ["FAILURE_KIND"]}
+      ]
+    }
+  },
+  "extension_tags": [
+    "PERFORMANCE_NOTES", "ROLLBACK_PLAN", "RISK_SCORE"
+  ],
+  "conformance_tests": [
+    {"name": "exactly-once-per-tag", "count": 20},
+    {"name": "semantic-consistency", "count": 30},
+    {"name": "forward-compatibility", "count": 15}
+  ]
+}
+```
+
+**Library recommendations:**
+- **Python**: `pydantic` (v2+) with `json_schema_extra` for registry
+- **TypeScript**: `zod` with `.describe()` and `.meta()` for capability descriptors
+- **Go**: `jsonschema` with custom handlers for cardinality validation
+
+**Concrete API:**
+```
+# Python: thegent/schemas/registry.py
+class SchemaRegistry:
+    def register(
+        self,
+        schema_id: str,
+        schema_def: dict,
+        validators: List[Callable]
+    ) -> SchemaVersion:
+        """Register and validate schema. Fails if cardinality violations found."""
+        pass
+
+    def query_compatible(
+        self,
+        from_version: str,
+        to_version: str
+    ) -> CompatibilityReport:
+        """Assess forward/backward compatibility between versions."""
+        pass
+
+    def enumerate_drift(
+        self,
+        observed_payload: dict
+    ) -> List[DriftEvent]:
+        """Return all structural/semantic deviations from schema."""
+        pass
+```
+
+**Implementation priority:** P0 (blocks all downstream contract work)
+
+---
+
+#### P-003/007 Gap: Validator Composition API
+
+**Current state:** "Exactly-once cardinality enforced. Structural + semantic validators." (vague)
+
+**Missing detail:** How validators compose, chain, and report errors. What is the exact validator interface?
+
+**Proposed enhancement - P-115: Composable Validator Stack**
+
+```
+# Validator interface
+@dataclass
+class ValidationResult:
+    is_valid: bool
+    error_kind: Literal["structural", "semantic", "cardinality"]
+    error_code: str  # e.g., "CARD-DUPLICATE-TAG"
+    error_message: str
+    location: str  # XPath/JSONPath to error location
+    remediation: Optional[str]  # Suggested fix
+    confidence: float  # 0..1 confidence in error detection
+
+class Validator(Protocol):
+    """All validators implement this protocol."""
+
+    def validate(self, payload: Any) -> ValidationResult:
+        """Single validation check. Must not raise; always return Result."""
+        pass
+
+    def merge(self, other: "Validator") -> "Validator":
+        """Compose validators: both must pass."""
+        pass
+
+    def with_fallback(self, fallback: "Validator") -> "Validator":
+        """Ordered fallback: try primary, then fallback on failure."""
+        pass
+
+# Built-in validators
+class CardinalityValidator(Validator):
+    """Ensures exactly-once for each declared tag."""
+
+    def __init__(self, tag_names: List[str]):
+        self.tag_names = tag_names
+
+    def validate(self, payload: dict) -> ValidationResult:
+        for tag in self.tag_names:
+            count = sum(1 for k in payload.keys() if k.lower() == tag.lower())
+            if count != 1:
+                return ValidationResult(
+                    is_valid=False,
+                    error_kind="cardinality",
+                    error_code=f"CARD-{'DUPLICATE' if count > 1 else 'MISSING'}-TAG",
+                    error_message=f"Tag '{tag}' found {count} times, expected 1",
+                    location=f"$.{tag}",
+                    remediation=f"Remove duplicates and ensure exactly one {tag}",
+                    confidence=0.99
+                )
+        return ValidationResult(is_valid=True, ...)
+
+class SemanticValidator(Validator):
+    """Cross-tag logic validation."""
+
+    def __init__(self, rules: List[Tuple[Callable, str]]):
+        # rules = [(lambda payload: ..., "error_message_if_false")]
+        self.rules = rules
+
+    def validate(self, payload: dict) -> ValidationResult:
+        for check, msg in self.rules:
+            if not check(payload):
+                return ValidationResult(
+                    is_valid=False,
+                    error_kind="semantic",
+                    error_code="SEMANTIC-CONSTRAINT-VIOLATED",
+                    error_message=msg,
+                    remediation="Review cross-tag dependencies",
+                    confidence=0.85
+                )
+        return ValidationResult(is_valid=True, ...)
+
+# Composition example
+validators = (
+    CardinalityValidator(["TASK_ID", "STATUS", "ACTIONS_COMPLETED"])
+    .merge(SemanticValidator([
+        (
+            lambda p: p.get("STATUS") != "completed" or bool(p.get("ACTIONS_COMPLETED")),
+            "STATUS=completed requires non-empty ACTIONS_COMPLETED"
+        )
+    ]))
+    .with_fallback(LenientValidator(confidence_penalty=0.5))
+)
+
+result = validators.validate(payload)
+```
+
+**Impact:** Enables pluggable validation chains, testable error handling, confidence degradation tracking
+
+---
+
+#### P-004/005 Gap: Version Negotiation During Handshake
+
+**Current state:** "Use XML namespaces. Contract-first mandate." (design-level only)
+
+**Missing detail:** Exact MCP negotiation flow, version selection algorithm, fallback sequence
+
+**Proposed enhancement:**
+
+```
+# MCP Connection Negotiation (thegent/mcp/negotiation.py)
+@dataclass
+class CapabilityDeclaration:
+    supported_schemas: List[str]  # e.g., ["urn:thegent:csm:v2", "urn:thegent:csm:v1"]
+    max_schema_version: str
+    min_schema_version: str
+    extension_schemas: List[str]  # Optional extensions agent supports
+    fallback_mode: Literal["strict", "lenient", "degraded"]  # On version mismatch
+
+class SchemaVersionNegotiator:
+    def negotiate(
+        self,
+        client_capabilities: CapabilityDeclaration,
+        server_capabilities: CapabilityDeclaration
+    ) -> SchemaVersionAgreement:
+        """Return negotiated schema version or raise IncompatibleVersions."""
+
+        # Algorithm:
+        # 1. Intersection of supported schemas
+        # 2. Pick highest common version
+        # 3. If no intersection, apply fallback_mode rules
+        # 4. Sign agreement with version + capabilities + negotiation_timestamp
+
+        shared = set(client_capabilities.supported_schemas) & \
+                 set(server_capabilities.supported_schemas)
+
+        if not shared:
+            if client_capabilities.fallback_mode == "strict":
+                raise IncompatibleVersions(
+                    f"No common schema. Client supports {client_capabilities.supported_schemas}, "
+                    f"server supports {server_capabilities.supported_schemas}"
+                )
+            elif client_capabilities.fallback_mode == "lenient":
+                # Use latest from either, emit degradation event
+                version = max(
+                    client_capabilities.max_schema_version,
+                    server_capabilities.max_schema_version
+                )
+        else:
+            version = max(shared)  # Latest common version
+
+        return SchemaVersionAgreement(
+            negotiated_version=version,
+            client_capabilities=client_capabilities,
+            server_capabilities=server_capabilities,
+            fallback_applied=len(shared) == 0,
+            negotiation_timestamp=datetime.utcnow(),
+            agreement_signature=sign(
+                payload={"version": version, "capabilities": ...},
+                secret=connection_secret
+            )
+        )
+```
+
+**Library:** `python-jsonrpc` for MCP handshake, `cryptography` for signing
+
+---
+
+### Domain B: Parsing and Streaming (P-013..P-019)
+
+#### P-013 Gap: XMLPullParser Configuration & State Management
+
+**Current state:** "XMLPullParser feed/read cycle for LLM streaming." (API-level only)
+
+**Missing detail:** Exact configuration, buffer management, state persistence across chunks
+
+**Proposed enhancement:**
+
+```
+# thegent/parsing/streaming.py
+from xml.etree import ElementTree as ET
+
+class StreamingXMLParser:
+    """Feed chunks incrementally, read events as they arrive."""
+
+    def __init__(
+        self,
+        max_buffer_size: int = 1024 * 1024,  # 1 MB
+        chunk_timeout: float = 5.0,  # seconds
+        handle_malformed: bool = True,
+        confidence_penalty_on_sloppy: float = 0.3,
+    ):
+        self.max_buffer_size = max_buffer_size
+        self.chunk_timeout = chunk_timeout
+        self.handle_malformed = handle_malformed
+        self.confidence_penalty_on_sloppy = confidence_penalty_on_sloppy
+
+        self.buffer = ""
+        self.parser = ET.XMLPullParser(
+            events=["start", "end", "data"],
+            target=None
+        )
+        self.parser_state = {
+            "element_stack": [],
+            "current_depth": 0,
+            "buffered_text": "",
+            "event_count": 0,
+            "last_event_time": datetime.utcnow(),
+        }
+        self.events_emitted = []
+        self.parse_quality_score = 1.0  # Degrades on sloppy-mode use
+
+    def feed(self, chunk: str) -> List[ParseEvent]:
+        """Feed a chunk, return any complete events emitted."""
+        self.buffer += chunk
+
+        if len(self.buffer) > self.max_buffer_size:
+            # Buffer overflow: truncate oldest, emit warning
+            self.buffer = self.buffer[-self.max_buffer_size:]
+            emit_event("parser.buffer.truncated", severity="warning")
+
+        events_emitted = []
+
+        try:
+            # Attempt strict parsing
+            self.parser.feed(chunk)
+
+            # Read all available events
+            for event, elem in self.parser.read_events():
+                parsed_event = self._process_event(event, elem)
+                events_emitted.append(parsed_event)
+                self.events_emitted.append(parsed_event)
+                self.parser_state["event_count"] += 1
+                self.parser_state["last_event_time"] = datetime.utcnow()
+
+        except ET.ParseError as e:
+            if self.handle_malformed:
+                # Attempt sloppy parsing
+                events_emitted.extend(self._sloppy_parse_fallback(chunk))
+                self.parse_quality_score -= self.confidence_penalty_on_sloppy
+                emit_event(
+                    "parser.fallback.sloppy_mode",
+                    error=str(e),
+                    new_confidence=self.parse_quality_score
+                )
+            else:
+                raise
+
+        return events_emitted
+
+    def close(self) -> List[ParseEvent]:
+        """Signal end of stream, flush any remaining events."""
+        try:
+            # Attempt to parse remainder as complete XML
+            self.parser.feed("")  # Triggers any end events
+            remaining = [
+                self._process_event(e, el)
+                for e, el in self.parser.read_events()
+            ]
+        except ET.ParseError:
+            if self.buffer.strip():
+                remaining = self._sloppy_parse_fallback(self.buffer)
+            else:
+                remaining = []
+
+        return remaining
+
+    def get_partial_state(self) -> Dict[str, Any]:
+        """Current parser state for checkpoint/resume."""
+        return {
+            "buffer_size": len(self.buffer),
+            "parser_state": self.parser_state.copy(),
+            "events_emitted_count": len(self.events_emitted),
+            "parse_quality_score": self.parse_quality_score,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+    def _sloppy_parse_fallback(self, chunk: str) -> List[ParseEvent]:
+        """Fallback: handle unclosed tags, mixed content, partial docs."""
+        # Use sloppy-xml-py or defusedxml with lenient parser
+        import sloppy_xml_parser
+
+        try:
+            tree = sloppy_xml_parser.parse_lenient(chunk)
+            # Convert to standard events
+            return self._tree_to_events(tree)
+        except Exception as e:
+            # Last resort: raw text extraction
+            emit_event("parser.fallback.raw_text", error=str(e))
+            return self._extract_raw_text_fallback(chunk)
+
+    def _extract_raw_text_fallback(self, chunk: str) -> List[ParseEvent]:
+        """Parse text-like output when XML parsing fails completely."""
+        lines = chunk.split("\n")
+        events = []
+        for line in lines:
+            if line.strip():
+                events.append(ParseEvent(
+                    type="raw_text",
+                    content=line.strip(),
+                    confidence=0.3,
+                    source="raw_text_fallback"
+                ))
+        return events
+```
+
+**Library:** `defusedxml` (secure parsing), `sloppy-xml-py` (malformed handling)
+
+**Implementation priority:** P0 (used by all providers)
+
+---
+
+#### P-014/015 Gap: Confidence Penalty Tracking
+
+**Current state:** "Emit confidence penalty on sloppy-mode activation." (event only)
+
+**Missing detail:** How penalties accumulate, what penalty thresholds trigger circuit breaker, operator visibility
+
+**Proposed enhancement - P-116: Confidence Degradation Tracking**
+
+```
+@dataclass
+class ConfidenceTracker:
+    """Track confidence across fallback chain."""
+
+    initial_confidence: float = 1.0  # Primary mode
+    current_confidence: float = 1.0
+    degradation_events: List[DegradationEvent] = field(default_factory=list)
+    circuit_breaker_threshold: float = 0.5  # Below this, escalate
+
+    def record_penalty(
+        self,
+        reason: str,
+        penalty: float,
+        source: str,  # e.g., "sloppy_xml_parser", "fallback_validator"
+    ) -> float:
+        """Apply penalty, return new confidence."""
+        self.degradation_events.append(DegradationEvent(
+            timestamp=datetime.utcnow(),
+            reason=reason,
+            penalty=penalty,
+            source=source,
+            confidence_before=self.current_confidence,
+            confidence_after=max(0.0, self.current_confidence - penalty),
+        ))
+        self.current_confidence = max(0.0, self.current_confidence - penalty)
+
+        if self.current_confidence < self.circuit_breaker_threshold:
+            emit_event(
+                "confidence.circuit_breaker_threshold_breached",
+                confidence=self.current_confidence,
+                threshold=self.circuit_breaker_threshold,
+                reason="Multiple degradations",
+            )
+            # Orchestrator responds by requesting human intervention
+
+        return self.current_confidence
+
+    def get_audit_trail(self) -> List[DegradationEvent]:
+        """Return full degradation history for audit."""
+        return sorted(self.degradation_events, key=lambda x: x.timestamp)
+```
+
+---
+
+### Domain C: Provider Management and Routing (P-020..P-033)
+
+#### P-021 Gap: Provider Scoring Model - Exact Formulas
+
+**Current state:** "Score on 4 dimensions: reliability, latency, cost, capability match." (components only)
+
+**Missing detail:** Exact weighting, normalization, what "capability match" algorithmically means
+
+**Proposed enhancement:**
+
+```
+# Provider scoring formulas
+@dataclass
+class ProviderScore:
+    reliability_score: float  # 0..1: success_rate
+    latency_p95_normalized: float  # 0..1: p95 latency normalized to baseline
+    cost_normalized: float  # 0..1: cost normalized to cheapest
+    capability_match: float  # 0..1: dot product of required_skills vs provider_skills
+
+    weights: Dict[str, float] = field(default_factory=lambda: {
+        "reliability": 0.35,
+        "latency": 0.25,
+        "cost": 0.20,
+        "capability": 0.20,
+    })
+
+    @property
+    def composite_score(self) -> float:
+        """Weighted sum normalized to 0..1."""
+        return (
+            self.weights["reliability"] * self.reliability_score +
+            self.weights["latency"] * self.latency_p95_normalized +
+            self.weights["cost"] * self.cost_normalized +
+            self.weights["capability"] * self.capability_match
+        )
+
+class ProviderScoringEngine:
+    def __init__(self, lookback_window: timedelta = timedelta(days=7)):
+        self.lookback_window = lookback_window
+        self.metrics_store = MetricsStore()  # PostgreSQL or similar
+
+    def score_provider(
+        self,
+        provider_id: str,
+        task_requirements: TaskRequirements,
+    ) -> ProviderScore:
+        """Compute current score for provider against task requirements."""
+
+        # 1. Reliability: success_rate over lookback window
+        metrics = self.metrics_store.query(
+            provider_id=provider_id,
+            after=datetime.utcnow() - self.lookback_window,
+        )
+        success_count = sum(1 for m in metrics if m.success)
+        reliability_score = success_count / len(metrics) if metrics else 0.5
+
+        # 2. Latency: p95 latency normalized to 2s baseline
+        latencies = [m.latency_ms for m in metrics if m.success]
+        p95_latency = np.percentile(latencies, 95) if latencies else 5000
+        latency_normalized = min(1.0, 2000 / max(p95_latency, 1))
+
+        # 3. Cost: normalized to cheapest provider
+        avg_cost = np.mean([m.cost_usd for m in metrics]) if metrics else 0.05
+        cheapest_cost = self.metrics_store.cheapest_provider_cost(
+            task_type=task_requirements.task_type,
+            lookback=self.lookback_window
+        )
+        cost_normalized = min(1.0, cheapest_cost / max(avg_cost, 0.001))
+
+        # 4. Capability match: dot product of skills
+        provider = self.get_provider_info(provider_id)
+        required_skills = set(task_requirements.required_capabilities)
+        provided_skills = set(provider.capabilities)
+        skill_overlap = len(required_skills & provided_skills)
+        capability_match = skill_overlap / len(required_skills) if required_skills else 1.0
+
+        return ProviderScore(
+            reliability_score=reliability_score,
+            latency_p95_normalized=latency_normalized,
+            cost_normalized=cost_normalized,
+            capability_match=capability_match,
+        )
+
+    def rank_providers(
+        self,
+        providers: List[str],
+        task_requirements: TaskRequirements,
+    ) -> List[Tuple[str, float]]:
+        """Return providers ranked by score."""
+        scores = [
+            (p, self.score_provider(p, task_requirements).composite_score)
+            for p in providers
+        ]
+        return sorted(scores, key=lambda x: x[1], reverse=True)
+```
+
+**Database schema:**
+```
+CREATE TABLE provider_metrics (
+    id BIGSERIAL PRIMARY KEY,
+    provider_id VARCHAR(64) NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL,
+    task_type VARCHAR(64),
+    success BOOLEAN NOT NULL,
+    latency_ms INT,
+    cost_usd DECIMAL(10, 6),
+    output_quality_score FLOAT,
+    model_version VARCHAR(32),
+    INDEX (provider_id, timestamp DESC)
+);
+```
+
+---
+
+#### P-022/023 Gap: Concrete Fallback Chain Configuration
+
+**Current state:** "LiteLLM function_with_fallbacks. 7 routing methods." (frameworks only)
+
+**Missing detail:** Exact configuration format, timeout per provider, retry strategy
+
+**Proposed enhancement - P-117: Fallback Chain Configuration**
+
+```
+# fallback_chain_config.yaml - thegent/config/fallback_chains.yaml
+fallback_chains:
+  default_critical:
+    # High-value, latency-critical tasks
+    name: "critical_latency_optimized"
+    method: "weighted"
+    timeout_per_provider_ms: 2000
+    total_timeout_ms: 6000
+    providers:
+      - id: "openai_gpt4"
+        weight: 0.45
+        priority: 1
+        retry_count: 1
+        retry_delay_ms: 100
+      - id: "anthropic_claude"
+        weight: 0.35
+        priority: 2
+        retry_count: 1
+        retry_delay_ms: 150
+      - id: "google_gemini"
+        weight: 0.20
+        priority: 3
+        retry_count: 0
+        retry_delay_ms: 0
+
+    fallback_strategy:
+      on_timeout: "next_provider"
+      on_rate_limit: "exponential_backoff"
+      on_invalid_response: "next_provider"
+      on_model_error: "next_provider"
+      max_total_retries: 5
+
+    observability:
+      track_cost_per_outcome: true
+      emit_quality_metrics: true
+      log_provider_selection: true
+
+  default_economic:
+    # Cost-optimized for non-critical tasks
+    name: "economic_cost_optimized"
+    method: "cost_optimized"
+    timeout_per_provider_ms: 10000
+    total_timeout_ms: 45000
+    providers:
+      - id: "together_llama"
+        weight: 0.40
+        priority: 1
+      - id: "mistral_api"
+        weight: 0.35
+        priority: 2
+      - id: "openai_gpt35"
+        weight: 0.25
+        priority: 3
+
+    fallback_strategy:
+      on_timeout: "next_provider"
+      on_rate_limit: "queue_and_retry"
+      max_total_retries: 3
+```
+
+**Implementation API:**
+```
+class FallbackChainExecutor:
+    def __init__(self, config_path: str):
+        self.config = load_config(config_path)
+
+    def execute_chain(
+        self,
+        request: ProviderRequest,
+        chain_name: str = "default_critical"
+    ) -> ProviderResponse:
+        """Execute request through fallback chain."""
+        chain = self.config.fallback_chains[chain_name]
+
+        for provider_config in chain.providers:
+            try:
+                response = self._call_provider_with_timeout(
+                    provider_id=provider_config.id,
+                    request=request,
+                    timeout_ms=chain.timeout_per_provider_ms,
+                )
+                return response
+            except TimeoutError:
+                if chain.fallback_strategy.on_timeout == "next_provider":
+                    continue
+            except RateLimitError:
+                if chain.fallback_strategy.on_rate_limit == "exponential_backoff":
+                    await self._exponential_backoff()
+                    # Retry same provider
+            except ModelError:
+                if chain.fallback_strategy.on_model_error == "next_provider":
+                    continue
+
+        # All providers exhausted
+        raise ExhaustedFallbackChainError(...)
+```
+
+---
+
+### Domain D: Reliability and Recovery (P-034..P-049)
+
+#### P-036 Gap: IdempotencyKey Construction Algorithm
+
+**Current state:** "IdempotencyKey = (run_id, step_index, action_type, content_hash)" (formula only)
+
+**Missing detail:** Exact hash algorithm, how to canonicalize content before hashing, key format/length
+
+**Proposed enhancement:**
+
+```
+# thegent/reliability/idempotency.py
+import hashlib
+import json
+
+class IdempotencyKey:
+    """Content-addressed idempotency key."""
+
+    ALGORITHM = "sha256"
+    FORMAT = "v1"
+
+    @staticmethod
+    def compute(
+        run_id: str,
+        step_index: int,
+        action_type: str,
+        action_payload: Dict[str, Any],
+    ) -> str:
+        """
+        Compute idempotency key from action parameters.
+        Same inputs always produce same key.
+        """
+
+        # 1. Canonicalize payload: sort keys, normalize types
+        canonical = IdempotencyKey._canonicalize(action_payload)
+
+        # 2. Compute content hash
+        content_json = json.dumps(canonical, sort_keys=True, separators=(',', ':'))
+        content_hash = hashlib.sha256(content_json.encode()).hexdigest()[:16]
+
+        # 3. Construct key: format:v1:run_id:step:action:hash
+        key = f"{IdempotencyKey.FORMAT}:{run_id}:{step_index:04d}:{action_type}:{content_hash}"
+
+        return key
+
+    @staticmethod
+    def _canonicalize(obj: Any) -> Any:
+        """Normalize object for hashing."""
+        if isinstance(obj, dict):
+            return {
+                k: IdempotencyKey._canonicalize(v)
+                for k, v in sorted(obj.items())
+            }
+        elif isinstance(obj, (list, tuple)):
+            return [IdempotencyKey._canonicalize(item) for item in obj]
+        elif isinstance(obj, float):
+            # Round to 6 decimals to handle floating-point variance
+            return round(obj, 6)
+        elif isinstance(obj, (datetime, date)):
+            # ISO format for temporal types
+            return obj.isoformat()
+        else:
+            return obj
+
+class IdempotencyStore:
+    """Store and retrieve idempotency keys."""
+
+    def __init__(self, db_url: str):
+        self.db = SQLAlchemy(db_url)
+
+    def store_result(
+        self,
+        idempotency_key: str,
+        result: ProviderResponse,
+        ttl_seconds: int = 86400,  # 24 hours default
+    ) -> None:
+        """Store result keyed by idempotency key."""
+        self.db.execute("""
+            INSERT INTO idempotency_cache
+            (key, result, created_at, expires_at)
+            VALUES (:key, :result, NOW(), NOW() + INTERVAL '1 second' * :ttl)
+            ON CONFLICT (key) DO NOTHING
+        """, {
+            "key": idempotency_key,
+            "result": json.dumps(serialize_response(result)),
+            "ttl": ttl_seconds,
+        })
+
+    def lookup_result(self, idempotency_key: str) -> Optional[ProviderResponse]:
+        """Retrieve cached result if exists and not expired."""
+        row = self.db.query("""
+            SELECT result FROM idempotency_cache
+            WHERE key = :key AND expires_at > NOW()
+        """, {"key": idempotency_key}).fetchone()
+
+        if row:
+            return deserialize_response(json.loads(row[0]))
+        return None
+
+# Database schema
+"""
+CREATE TABLE idempotency_cache (
+    key VARCHAR(128) PRIMARY KEY,
+    result JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    INDEX (expires_at)
+);
+"""
+```
+
+---
+
+#### P-041 Gap: Recovery Playbook Decision Engine
+
+**Current state:** "Automated decision engine maps (FailureKind, attempt_count) -> RemediationAction" (concept)
+
+**Missing detail:** Complete failure taxonomy mapping, exact decision tree, playbook contents
+
+**Proposed enhancement:**
+
+```
+# thegent/reliability/recovery_playbooks.py
+
+@enum.Enum
+class FailureKind(str):
+    """MAST 14-mode taxonomy."""
+    # Infrastructure
+    NETWORK_PARTITION = "infrastructure.network_partition"
+    PROVIDER_TIMEOUT = "infrastructure.provider_timeout"
+    PROVIDER_UNAVAILABLE = "infrastructure.provider_unavailable"
+
+    # Model
+    HALLUCINATION = "model.hallucination"
+    CONTEXT_OVERFLOW = "model.context_overflow"
+    CAPABILITY_MISMATCH = "model.capability_mismatch"
+    OUTPUT_FORMAT_INVALID = "model.output_format_invalid"
+
+    # Tool
+    TOOL_EXECUTION_FAILED = "tool.execution_failed"
+    TOOL_UNAVAILABLE = "tool.unavailable"
+
+    # Logic
+    STATE_CORRUPTION = "logic.state_corruption"
+    RACE_CONDITION = "logic.race_condition"
+    INFINITE_LOOP = "logic.infinite_loop"
+
+    # Security
+    POLICY_VIOLATION = "security.policy_violation"
+    AUTHENTICATION_FAILED = "security.authentication_failed"
+
+@dataclass
+class RemediationAction:
+    action_type: Literal[
+        "retry_same",
+        "retry_different_provider",
+        "retry_alternative_strategy",
+        "escalate_human",
+        "quarantine_and_dlq",
+        "pause_and_diagnose",
+    ]
+    parameters: Dict[str, Any]  # e.g., {"provider_id": "..."}
+    urgency: Literal["immediate", "scheduled", "deferred"]
+    timeout_ms: int
+
+class RecoveryPlaybookEngine:
+    """Decision engine for selecting remediation action."""
+
+    def __init__(self):
+        self.playbooks = self._load_playbooks()
+
+    def decide(
+        self,
+        failure_kind: FailureKind,
+        attempt_count: int,
+        context: ExecutionContext,
+    ) -> RemediationAction:
+        """Select remediation action based on failure + context."""
+
+        # Decision tree
+        if failure_kind.startswith("infrastructure"):
+            return self._handle_infrastructure_failure(
+                failure_kind, attempt_count, context
+            )
+        elif failure_kind.startswith("model"):
+            return self._handle_model_failure(
+                failure_kind, attempt_count, context
+            )
+        elif failure_kind.startswith("tool"):
+            return self._handle_tool_failure(
+                failure_kind, attempt_count, context
+            )
+        # ... etc
+
+    def _handle_infrastructure_failure(
+        self,
+        failure_kind: FailureKind,
+        attempt_count: int,
+        context: ExecutionContext,
+    ) -> RemediationAction:
+        """Infrastructure failures typically merit retry with different provider."""
+
+        if attempt_count == 0:
+            # First attempt: try different provider
+            return RemediationAction(
+                action_type="retry_different_provider",
+                parameters={
+                    "exclude_providers": [context.last_provider_id],
+                    "chain_name": "fallback_alternative",
+                },
+                urgency="immediate",
+                timeout_ms=5000,
+            )
+        elif attempt_count == 1:
+            # Second attempt: alternative strategy (e.g., different model size)
+            return RemediationAction(
+                action_type="retry_alternative_strategy",
+                parameters={
+                    "strategy": "cost_optimized",
+                    "max_latency_ms": 30000,
+                },
+                urgency="immediate",
+                timeout_ms=30000,
+            )
+        elif attempt_count >= 2:
+            # Exhausted retries: escalate
+            return RemediationAction(
+                action_type="escalate_human",
+                parameters={
+                    "reason": f"Infrastructure failure after {attempt_count} retries",
+                    "context_snapshot": context.to_dict(),
+                },
+                urgency="immediate",
+                timeout_ms=300000,  # 5 minutes for human
+            )
+
+    def _handle_model_failure(
+        self,
+        failure_kind: FailureKind,
+        attempt_count: int,
+        context: ExecutionContext,
+    ) -> RemediationAction:
+        """Model failures require diagnosis."""
+
+        if failure_kind == FailureKind.HALLUCINATION:
+            # Hallucinations: clarify prompt and retry
+            return RemediationAction(
+                action_type="retry_alternative_strategy",
+                parameters={
+                    "modified_prompt": self._clarify_prompt(context.prompt),
+                    "temperature": 0.1,  # Lower temperature
+                },
+                urgency="immediate",
+                timeout_ms=10000,
+            )
+        elif failure_kind == FailureKind.CONTEXT_OVERFLOW:
+            # Context overflow: truncate or split
+            return RemediationAction(
+                action_type="retry_alternative_strategy",
+                parameters={
+                    "context_window_reduction": 0.5,
+                    "strategy": "split_and_merge",
+                },
+                urgency="deferred",
+                timeout_ms=30000,
+            )
+        elif failure_kind == FailureKind.CAPABILITY_MISMATCH:
+            # Capability mismatch: choose different provider
+            return RemediationAction(
+                action_type="retry_different_provider",
+                parameters={
+                    "required_capability": context.task_requirements.required_capability,
+                    "exclude_providers": [context.last_provider_id],
+                },
+                urgency="immediate",
+                timeout_ms=5000,
+            )
+        elif failure_kind == FailureKind.OUTPUT_FORMAT_INVALID:
+            # Invalid format: parser fallback or escalate
+            if attempt_count == 0:
+                return RemediationAction(
+                    action_type="retry_same",
+                    parameters={"apply_format_constraint": True},
+                    urgency="immediate",
+                    timeout_ms=5000,
+                )
+            else:
+                return RemediationAction(
+                    action_type="escalate_human",
+                    parameters={"reason": "Persistent output format issues"},
+                    urgency="scheduled",
+                    timeout_ms=120000,
+                )
+```
+
+---
+
+## Part 2: Missing Optimization and Polish Patterns (P-115..P-138)
+
+### P-115: Composable Validator Stack (A - Contract/Schema)
+**See implementation detail section above**
+
+---
+
+### P-116: Confidence Degradation Tracking (B - Parsing)
+**See implementation detail section above**
+
+---
+
+### P-117: Fallback Chain Configuration (C - Provider Management)
+**See implementation detail section above**
+
+---
+
+### P-118: Speculative Execution with Cost/Benefit Analysis
+**Domain:** C (Provider Management)
+**Concept:** Instead of always speculating (always costs 2x), intelligently decide when speculation is worth the cost.
+
+```
+class SpeculativeExecutionDecider:
+    """Decide when dual-provider speculation is profitable."""
+
+    def should_speculate(
+        self,
+        provider1: str,
+        provider2: str,
+        current_latency_p95: float,
+        latency_sla_ms: float,
+        cost_per_call_usd: Dict[str, float],
+    ) -> bool:
+        """
+        Speculation is worth it when:
+        - Current latency misses SLA by > 20%
+        - Cost overhead < 30% of base cost
+        - Providers have < 0.7 correlation in failure modes
+        """
+
+        # Cost check
+        cost_overhead = (
+            cost_per_call_usd[provider1] + cost_per_call_usd[provider2]
+        ) / cost_per_call_usd[provider1]
+
+        if cost_overhead > 1.30:
+            return False
+
+        # Latency check
+        latency_miss_pct = (current_latency_p95 - latency_sla_ms) / latency_sla_ms
+
+        if latency_miss_pct < 0.20:
+            return False
+
+        # Correlation check: use historical failure data
+        correlation = self._compute_failure_correlation(provider1, provider2)
+
+        if correlation > 0.70:
+            return False  # Providers fail together; speculation unhelpful
+
+        return True
+
+    def _compute_failure_correlation(self, p1: str, p2: str) -> float:
+        """Return correlation of failures: 0 (independent) to 1 (always together)."""
+        # Query historical metrics, compute Pearson correlation of success flags
+        pass
+```
+
+---
+
+### P-119: Adaptive Backoff with Jitter and Correlation Window
+**Domain:** D (Reliability)
+**Concept:** Exponential backoff + jitter prevents thundering herd, but also adds deterministic correlation window to detect systemic issues.
+
+```
+class AdaptiveBackoffStrategy:
+    """Exponential backoff with correlation-aware jitter."""
+
+    def __init__(
+        self,
+        base_delay_ms: float = 100,
+        max_delay_ms: float = 30000,
+        jitter_range: Tuple[float, float] = (0.0, 1.0),
+        correlation_window_ms: float = 5000,
+    ):
+        self.base_delay_ms = base_delay_ms
+        self.max_delay_ms = max_delay_ms
+        self.jitter_range = jitter_range
+        self.correlation_window_ms = correlation_window_ms
+        self.recent_backoffs = []  # Track recent backoffs to detect correlation
+
+    def compute_delay(self, attempt_count: int) -> float:
+        """Return delay in milliseconds for next retry."""
+
+        # Exponential: 100ms, 200ms, 400ms, 800ms, ...
+        exponential_delay = min(
+            self.base_delay_ms * (2 ** attempt_count),
+            self.max_delay_ms,
+        )
+
+        # Jitter: prevent thundering herd
+        jitter = random.uniform(*self.jitter_range) * exponential_delay
+        base_with_jitter = exponential_delay + jitter
+
+        # Correlation-aware adjustment: if many concurrent backoffs,
+        # spread them further to reduce collision probability
+        concurrent_backoffs = self._count_recent_backoffs()
+        if concurrent_backoffs > 10:
+            # High concurrency: increase jitter range
+            base_with_jitter *= (1 + 0.2 * min(concurrent_backoffs, 20) / 20)
+
+        return min(base_with_jitter, self.max_delay_ms)
+
+    def record_backoff(self, delay_ms: float) -> None:
+        """Record that a backoff is starting."""
+        now = time.time() * 1000  # milliseconds
+        self.recent_backoffs.append({
+            "timestamp": now,
+            "delay_ms": delay_ms,
+        })
+
+        # Cleanup old entries outside correlation window
+        cutoff = now - self.correlation_window_ms
+        self.recent_backoffs = [
+            b for b in self.recent_backoffs
+            if b["timestamp"] > cutoff
+        ]
+
+    def _count_recent_backoffs(self) -> int:
+        """Count backoffs in correlation window."""
+        return len(self.recent_backoffs)
+```
+
+---
+
+### P-120: Distributed Tracing Cardinality Control
+**Domain:** G (Observability)
+**Concept:** Unlimited tracing creates cardinality explosion. Sample intelligently based on decision tree.
+
+```
+class TracingSamplingStrategy:
+    """Intelligent sampling to control trace cardinality."""
+
+    def __init__(self):
+        self.rules = [
+            # High priority: always sample
+            SamplingRule(
+                name="always_sample_high_priority",
+                condition=lambda ctx: ctx.priority == "high",
+                sample_rate=1.0,
+            ),
+            # Error paths: always sample for debugging
+            SamplingRule(
+                name="always_sample_errors",
+                condition=lambda ctx: ctx.has_error,
+                sample_rate=1.0,
+            ),
+            # Low-latency success: sample 1%
+            SamplingRule(
+                name="success_fast_low_sampling",
+                condition=lambda ctx: (
+                    not ctx.has_error
+                    and ctx.latency_ms < 100
+                ),
+                sample_rate=0.01,
+            ),
+            # Normal success: sample 10%
+            SamplingRule(
+                name="success_normal_sampling",
+                condition=lambda ctx: not ctx.has_error,
+                sample_rate=0.10,
+            ),
+        ]
+
+    def should_sample(self, context: ExecutionContext) -> bool:
+        """Return whether to create a trace for this execution."""
+        for rule in self.rules:
+            if rule.condition(context):
+                return random.random() < rule.sample_rate
+        return False
+```
+
+---
+
+### P-121: Cost-Quality Frontier Optimization
+**Domain:** C (Provider/Routing)
+**Concept:** Track Pareto frontier of (cost, quality) pairs. Choose providers on the frontier, never strictly dominated.
+
+```
+@dataclass
+class CostQualityPoint:
+    provider_id: str
+    cost_usd: float
+    quality_score: float  # 0..1
+    data_points: int  # How many runs this point represents
+
+class ParetoFrontierOptimizer:
+    """Maintain cost-quality Pareto frontier."""
+
+    def __init__(self):
+        self.observations = []  # List of CostQualityPoint
+
+    def add_observation(
+        self,
+        provider_id: str,
+        cost: float,
+        quality: float,
+    ) -> None:
+        """Record a cost-quality observation."""
+        self.observations.append(CostQualityPoint(
+            provider_id=provider_id,
+            cost_usd=cost,
+            quality_score=quality,
+            data_points=1,
+        ))
+
+    def compute_frontier(self) -> List[CostQualityPoint]:
+        """Return non-dominated points (Pareto frontier)."""
+        frontier = []
+
+        for point in sorted(self.observations, key=lambda x: x.cost_usd):
+            # Check if dominated by any existing frontier point
+            dominated = any(
+                fp.quality_score >= point.quality_score
+                for fp in frontier
+            )
+
+            if not dominated:
+                # Remove any frontier points now dominated by this one
+                frontier = [
+                    fp for fp in frontier
+                    if fp.quality_score >= point.quality_score
+                ]
+                frontier.append(point)
+
+        return frontier
+
+    def select_provider(
+        self,
+        cost_tolerance: float = 0.05,  # Allow 5% cost premium for quality
+    ) -> str:
+        """Select provider on frontier that maximizes quality within cost budget."""
+        frontier = self.compute_frontier()
+
+        # Budget is average cost + tolerance
+        avg_cost = np.mean([p.cost_usd for p in self.observations])
+        budget = avg_cost * (1 + cost_tolerance)
+
+        # Select highest quality within budget
+        candidates = [p for p in frontier if p.cost_usd <= budget]
+
+        if candidates:
+            return max(candidates, key=lambda p: p.quality_score).provider_id
+        else:
+            # All frontier points exceed budget; pick cheapest
+            return min(frontier, key=lambda p: p.cost_usd).provider_id
+```
+
+---
+
+### P-122: Circuit Breaker with State Machine Visibility
+**Domain:** D (Reliability)
+**Concept:** Operators need to see circuit breaker state, not just success/failure. Make state transitions observable.
+
+```
+@enum.Enum
+class CircuitState(str):
+    CLOSED = "closed"
+    OPEN = "open"
+    HALF_OPEN = "half_open"
+
+@dataclass
+class CircuitStateTransition:
+    timestamp: datetime
+    from_state: CircuitState
+    to_state: CircuitState
+    reason: str
+    evidence: Dict[str, Any]  # e.g., {"failure_count": 5, "window_size": 60}
+
+class ObservableCircuitBreaker:
+    """Circuit breaker with full state visibility."""
+
+    def __init__(
+        self,
+        name: str,
+        failure_threshold: int = 5,
+        reset_timeout: timedelta = timedelta(seconds=60),
+        half_open_probe_count: int = 3,
+    ):
+        self.name = name
+        self.failure_threshold = failure_threshold
+        self.reset_timeout = reset_timeout
+        self.half_open_probe_count = half_open_probe_count
+
+        self.state = CircuitState.CLOSED
+        self.failures = []  # Timestamped failures
+        self.half_open_probes = []  # Probe results
+        self.transitions = []  # State history
+        self.state_changed = Event()  # Notifies observers
+
+    def record_failure(self, error: Exception) -> None:
+        """Record a failure."""
+        now = datetime.utcnow()
+        self.failures.append({"timestamp": now, "error": str(error)})
+
+        # Cleanup old failures outside window
+        cutoff = now - timedelta(seconds=60)
+        self.failures = [f for f in self.failures if f["timestamp"] > cutoff]
+
+        # Check if threshold breached
+        if len(self.failures) >= self.failure_threshold:
+            self._transition_to(CircuitState.OPEN, f"Failure threshold breached: {len(self.failures)}")
+
+    def record_success(self) -> None:
+        """Record a success."""
+        if self.state == CircuitState.HALF_OPEN:
+            self.half_open_probes.append({"timestamp": datetime.utcnow(), "success": True})
+
+            if len(self.half_open_probes) >= self.half_open_probe_count:
+                # Enough probes succeeded; return to CLOSED
+                self._transition_to(
+                    CircuitState.CLOSED,
+                    f"Half-open probes succeeded ({len(self.half_open_probes)})"
+                )
+        elif self.state == CircuitState.CLOSED:
+            # Clear failures on success
+            self.failures = []
+
+    def should_allow_request(self) -> bool:
+        """Check if request should be allowed."""
+        now = datetime.utcnow()
+
+        if self.state == CircuitState.CLOSED:
+            return True
+        elif self.state == CircuitState.OPEN:
+            # Check if reset timeout elapsed
+            time_since_open = now - self.transitions[-1].timestamp
+            if time_since_open > self.reset_timeout:
+                self._transition_to(
+                    CircuitState.HALF_OPEN,
+                    f"Reset timeout elapsed; probing"
+                )
+                return True  # Allow probe
+            return False
+        elif self.state == CircuitState.HALF_OPEN:
+            return True  # Allow probes
+
+    def _transition_to(self, new_state: CircuitState, reason: str) -> None:
+        """Change state and emit event."""
+        old_state = self.state
+        self.state = new_state
+
+        transition = CircuitStateTransition(
+            timestamp=datetime.utcnow(),
+            from_state=old_state,
+            to_state=new_state,
+            reason=reason,
+            evidence={
+                "failure_count": len(self.failures),
+                "half_open_probes": len(self.half_open_probes),
+            },
+        )
+
+        self.transitions.append(transition)
+
+        # Emit observable event
+        emit_event(
+            f"circuit_breaker.{self.name}.state_changed",
+            transition=transition,
+        )
+
+        self.state_changed.set()
+
+    def get_status(self) -> Dict[str, Any]:
+        """Return current status for operator dashboard."""
+        return {
+            "name": self.name,
+            "state": self.state.value,
+            "failure_count": len(self.failures),
+            "last_failure": self.failures[-1] if self.failures else None,
+            "transitions": [
+                {
+                    "timestamp": t.timestamp.isoformat(),
+                    "from_state": t.from_state.value,
+                    "to_state": t.to_state.value,
+                    "reason": t.reason,
+                }
+                for t in self.transitions[-10:]  # Last 10
+            ],
+        }
+```
+
+---
+
+### P-123: Cost Attribution with Task Granularity
+**Domain:** G (Observability)
+**Concept:** Track cost at sub-task level for accurate cost analysis and chargeback.
+
+```
+@dataclass
+class CostAllocation:
+    task_id: str
+    subtask_id: str
+    provider_id: str
+    cost_usd: float
+    input_tokens: int
+    output_tokens: int
+    operation: str  # "plan", "execute", "review"
+    domain: str  # "auth", "payment", "analytics"
+    timestamp: datetime
+
+class CostAttributionEngine:
+    """Track cost at all levels of execution hierarchy."""
+
+    def __init__(self, db_url: str):
+        self.db = SQLAlchemy(db_url)
+
+    def record_cost(
+        self,
+        task_id: str,
+        subtask_id: str,
+        provider_id: str,
+        cost_usd: float,
+        input_tokens: int,
+        output_tokens: int,
+        operation: str,
+        domain: str,
+    ) -> None:
+        """Record cost for detailed analysis."""
+        self.db.execute("""
+            INSERT INTO cost_allocations
+            (task_id, subtask_id, provider_id, cost_usd, input_tokens,
+             output_tokens, operation, domain, timestamp)
+            VALUES (:task_id, :subtask_id, :provider_id, :cost_usd,
+                    :input_tokens, :output_tokens, :operation, :domain, NOW())
+        """, {
+            "task_id": task_id,
+            "subtask_id": subtask_id,
+            "provider_id": provider_id,
+            "cost_usd": cost_usd,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "operation": operation,
+            "domain": domain,
+        })
+
+    def cost_by_domain(self, lookback_days: int = 7) -> Dict[str, float]:
+        """Total cost by domain."""
+        rows = self.db.query("""
+            SELECT domain, SUM(cost_usd) FROM cost_allocations
+            WHERE timestamp > NOW() - INTERVAL '1 day' * :days
+            GROUP BY domain
+        """, {"days": lookback_days}).fetchall()
+
+        return {row[0]: row[1] for row in rows}
+
+    def cost_by_operation(self, task_id: str) -> Dict[str, float]:
+        """Cost breakdown by operation (plan/execute/review)."""
+        rows = self.db.query("""
+            SELECT operation, SUM(cost_usd) FROM cost_allocations
+            WHERE task_id = :task_id
+            GROUP BY operation
+        """, {"task_id": task_id}).fetchall()
+
+        return {row[0]: row[1] for row in rows}
+
+    def cost_efficiency_ratio(
+        self,
+        task_id: str,
+    ) -> Dict[str, float]:
+        """Cost per successful outcome."""
+        cost = self.db.query("""
+            SELECT SUM(cost_usd) FROM cost_allocations
+            WHERE task_id = :task_id
+        """, {"task_id": task_id}).fetchone()[0]
+
+        # Get task outcome quality
+        outcome = self.db.query("""
+            SELECT quality_score FROM tasks WHERE id = :task_id
+        """, {"task_id": task_id}).fetchone()
+
+        if outcome and cost:
+            return {"cost_usd": cost, "quality": outcome[0], "efficiency": cost / outcome[0]}
+        return {}
+```
+
+---
+
+### P-124: Provider Health Dashboard with Synthetic Probes
+**Domain:** C (Provider Management)
+**Concept:** Don't wait for real traffic to detect provider degradation. Periodically send synthetic health checks.
+
+```
+class ProviderHealthProbeService:
+    """Periodically probe providers to detect degradation before real traffic hits."""
+
+    def __init__(self, interval_seconds: int = 60):
+        self.interval_seconds = interval_seconds
+        self.probes = {}  # provider_id -> ProbeResult
+
+    async def start(self) -> None:
+        """Start background probe loop."""
+        while True:
+            await self.run_probes()
+            await asyncio.sleep(self.interval_seconds)
+
+    async def run_probes(self) -> None:
+        """Send synthetic requests to all providers."""
+        providers = self.get_active_providers()
+
+        tasks = [
+            self.probe_provider(
+                provider_id=p,
+                synthetic_request=self._create_synthetic_request(p),
+            )
+            for p in providers
+        ]
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        for provider_id, result in zip(providers, results):
+            self.probes[provider_id] = result
+
+            if isinstance(result, Exception):
+                emit_event(
+                    "provider.health.degraded",
+                    provider_id=provider_id,
+                    error=str(result),
+                )
+
+    async def probe_provider(
+        self,
+        provider_id: str,
+        synthetic_request: ProviderRequest,
+    ) -> ProbeResult:
+        """Send single probe request."""
+        start = time.time()
+
+        try:
+            response = await self._call_provider(
+                provider_id=provider_id,
+                request=synthetic_request,
+                timeout_ms=5000,
+            )
+
+            latency_ms = (time.time() - start) * 1000
+
+            return ProbeResult(
+                provider_id=provider_id,
+                timestamp=datetime.utcnow(),
+                success=True,
+                latency_ms=latency_ms,
+                response_tokens=len(response.content.split()),
+            )
+        except Exception as e:
+            return ProbeResult(
+                provider_id=provider_id,
+                timestamp=datetime.utcnow(),
+                success=False,
+                error=str(e),
+                latency_ms=(time.time() - start) * 1000,
+            )
+
+    def _create_synthetic_request(self, provider_id: str) -> ProviderRequest:
+        """Create lightweight synthetic request for health check."""
+        return ProviderRequest(
+            model=self.get_provider_model(provider_id),
+            messages=[{
+                "role": "user",
+                "content": "Respond with a single word: healthy",
+            }],
+            max_tokens=10,
+            temperature=0.0,
+        )
+
+    def get_health_status(self, provider_id: str) -> Dict[str, Any]:
+        """Return latest health for operator dashboard."""
+        if provider_id not in self.probes:
+            return {"status": "unknown"}
+
+        latest = self.probes[provider_id]
+        return {
+            "status": "healthy" if latest.success else "degraded",
+            "last_probe": latest.timestamp.isoformat(),
+            "latency_ms": latest.latency_ms,
+            "success_rate": self._compute_success_rate(provider_id, window_minutes=30),
+        }
+
+    def _compute_success_rate(self, provider_id: str, window_minutes: int) -> float:
+        """Return success rate for provider over time window."""
+        # Query probe history, compute success rate
+        pass
+```
+
+---
+
+### P-125: Request Signature Validation for Critical Operations
+**Domain:** F (Governance)
+**Concept:** Critical operations require cryptographic signature. Unsigned requests rejected at entry.
+
+```
+@dataclass
+class SignedRequest:
+    operation_id: str
+    actor: str
+    action: str  # e.g., "rollback", "override_policy"
+    payload: Dict[str, Any]
+    policy_version: str
+    timestamp: datetime
+    signature: str  # HMAC-SHA256 or RSA signature
+    nonce: str  # Prevent replay
+
+class RequestSignatureValidator:
+    """Validate signatures on critical operations."""
+
+    def __init__(self, secret_key: str):
+        self.secret_key = secret_key
+        self.nonce_cache = set()  # Prevent replay attacks
+
+    def validate_request(self, signed_request: SignedRequest) -> bool:
+        """Verify signature. Return True if valid."""
+
+        # 1. Check nonce (prevent replay)
+        if signed_request.nonce in self.nonce_cache:
+            raise ReplayAttackDetected(f"Nonce {signed_request.nonce} already used")
+
+        self.nonce_cache.add(signed_request.nonce)
+
+        # 2. Verify signature
+        expected_signature = self._compute_signature(signed_request)
+
+        if not self._constant_time_compare(
+            expected_signature,
+            signed_request.signature
+        ):
+            raise SignatureValidationFailed()
+
+        # 3. Check timestamp freshness (prevent old replays)
+        age_seconds = (datetime.utcnow() - signed_request.timestamp).total_seconds()
+        if age_seconds > 300:  # 5 minute max age
+            raise RequestTooOld(f"Request is {age_seconds} seconds old")
+
+        return True
+
+    def _compute_signature(self, request: SignedRequest) -> str:
+        """Compute expected signature."""
+        message = f"{request.operation_id}:{request.actor}:{request.action}:{request.payload}:{request.timestamp}:{request.nonce}"
+        return hmac.new(
+            self.secret_key.encode(),
+            message.encode(),
+            hashlib.sha256
+        ).hexdigest()
+
+    def _constant_time_compare(self, a: str, b: str) -> bool:
+        """Compare strings in constant time (prevent timing attacks)."""
+        return hmac.compare_digest(a, b)
+```
+
+---
+
+### P-126: Workflow State Persistence with Resumability
+**Domain:** E (Orchestration)
+**Concept:** Long-running workflows need checkpoint persistence for resumability across restarts.
+
+```
+@dataclass
+class WorkflowCheckpoint:
+    workflow_id: str
+    step_index: int
+    step_name: str
+    state: Dict[str, Any]  # All context needed to resume
+    timestamp: datetime
+    idempotency_key: str  # For retry safety
+
+class WorkflowPersistenceService:
+    """Persist workflow state for resumability."""
+
+    def __init__(self, db_url: str):
+        self.db = SQLAlchemy(db_url)
+
+    def save_checkpoint(self, checkpoint: WorkflowCheckpoint) -> None:
+        """Save checkpoint to durable storage."""
+        self.db.execute("""
+            INSERT INTO workflow_checkpoints
+            (workflow_id, step_index, step_name, state, timestamp, idempotency_key)
+            VALUES (:workflow_id, :step_index, :step_name, :state, :timestamp, :idempotency_key)
+        """, {
+            "workflow_id": checkpoint.workflow_id,
+            "step_index": checkpoint.step_index,
+            "step_name": checkpoint.step_name,
+            "state": json.dumps(checkpoint.state),
+            "timestamp": checkpoint.timestamp,
+            "idempotency_key": checkpoint.idempotency_key,
+        })
+
+    def resume_workflow(self, workflow_id: str, from_step: int = None) -> Dict[str, Any]:
+        """Load workflow state from checkpoint."""
+        if from_step is None:
+            # Load latest checkpoint
+            query = """
+                SELECT state FROM workflow_checkpoints
+                WHERE workflow_id = :workflow_id
+                ORDER BY step_index DESC LIMIT 1
+            """
+        else:
+            # Load specific checkpoint
+            query = """
+                SELECT state FROM workflow_checkpoints
+                WHERE workflow_id = :workflow_id AND step_index = :step_index
+            """
+
+        row = self.db.query(query, {
+            "workflow_id": workflow_id,
+            "step_index": from_step,
+        }).fetchone()
+
+        if row:
+            return json.loads(row[0])
+        return {}
+```
+
+---
+
+### P-127: Execution Envelope with Built-In Context Propagation
+**Domain:** I (Architecture)
+**Concept:** Standardize execution envelope for context (trace ID, run ID, user ID, etc.) propagation across all calls.
+
+```
+@dataclass
+class ExecutionContext:
+    """Complete execution context; propagated everywhere."""
+    run_id: str
+    trace_id: str
+    span_id: str
+    step_index: int
+    user_id: Optional[str]
+    domain: str
+    task_type: str
+    priority: str  # "critical", "high", "normal", "low"
+    deadline: Optional[datetime]
+    policy_version: str
+    parent_span_id: Optional[str] = None
+
+    def to_headers(self) -> Dict[str, str]:
+        """Convert context to HTTP headers for propagation."""
+        return {
+            "X-Trace-ID": self.trace_id,
+            "X-Span-ID": self.span_id,
+            "X-Parent-Span-ID": self.parent_span_id or "",
+            "X-Run-ID": self.run_id,
+            "X-User-ID": self.user_id or "",
+            "X-Priority": self.priority,
+        }
+
+    def create_child_context(self, step_name: str) -> "ExecutionContext":
+        """Create child context for sub-operation."""
+        return ExecutionContext(
+            run_id=self.run_id,
+            trace_id=self.trace_id,
+            span_id=str(uuid4()),
+            step_index=self.step_index + 1,
+            user_id=self.user_id,
+            domain=self.domain,
+            task_type=self.task_type,
+            priority=self.priority,
+            deadline=self.deadline,
+            policy_version=self.policy_version,
+            parent_span_id=self.span_id,
+        )
+```
+
+---
+
+### P-128: Provider-Agnostic Error Classification
+**Domain:** C (Provider Management)
+**Concept:** Map provider-specific errors to canonical error types so routing logic is provider-independent.
+
+```
+@enum.Enum
+class CanonicalErrorKind(str):
+    RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
+    TIMEOUT = "timeout"
+    INVALID_REQUEST = "invalid_request"
+    AUTHENTICATION_FAILED = "authentication_failed"
+    PROVIDER_UNAVAILABLE = "provider_unavailable"
+    QUOTA_EXCEEDED = "quota_exceeded"
+    MODEL_NOT_FOUND = "model_not_found"
+
+class ProviderErrorClassifier:
+    """Map provider-specific errors to canonical types."""
+
+    def classify(self, error: Exception, provider_id: str) -> CanonicalErrorKind:
+        """Return canonical error type."""
+
+        if provider_id == "openai":
+            return self._classify_openai_error(error)
+        elif provider_id == "anthropic":
+            return self._classify_anthropic_error(error)
+        elif provider_id == "google":
+            return self._classify_google_error(error)
+        else:
+            # Fallback: inspect error message/code
+            return self._classify_generic_error(error)
+
+    def _classify_openai_error(self, error: Exception) -> CanonicalErrorKind:
+        """Classify OpenAI-specific error."""
+        error_str = str(error).lower()
+
+        if "rate_limit" in error_str:
+            return CanonicalErrorKind.RATE_LIMIT_EXCEEDED
+        elif "timeout" in error_str or "timed out" in error_str:
+            return CanonicalErrorKind.TIMEOUT
+        elif "401" in error_str or "unauthorized" in error_str:
+            return CanonicalErrorKind.AUTHENTICATION_FAILED
+        elif "503" in error_str or "unavailable" in error_str:
+            return CanonicalErrorKind.PROVIDER_UNAVAILABLE
+        elif "invalid_request" in error_str:
+            return CanonicalErrorKind.INVALID_REQUEST
+        else:
+            return CanonicalErrorKind.PROVIDER_UNAVAILABLE
+
+    def _classify_anthropic_error(self, error: Exception) -> CanonicalErrorKind:
+        """Classify Anthropic-specific error."""
+        error_str = str(error).lower()
+
+        if "rate_limit" in error_str:
+            return CanonicalErrorKind.RATE_LIMIT_EXCEEDED
+        elif "timeout" in error_str:
+            return CanonicalErrorKind.TIMEOUT
+        elif "invalid_api_key" in error_str:
+            return CanonicalErrorKind.AUTHENTICATION_FAILED
+        else:
+            return CanonicalErrorKind.PROVIDER_UNAVAILABLE
+
+    # ... similar for other providers
+```
+
+---
+
+### P-129: Adaptive Timeout Calibration
+**Domain:** D (Reliability)
+**Concept:** Timeouts should adapt to provider performance, not be static. Learn from historical latency.
+
+```
+class AdaptiveTimeoutCalibrator:
+    """Adjust timeout thresholds based on provider performance history."""
+
+    def __init__(self, db_url: str, percentile: int = 99):
+        self.db = SQLAlchemy(db_url)
+        self.percentile = percentile  # p99 latency as baseline
+        self.timeout_multiplier = 1.5  # Add 50% buffer above p99
+
+    def compute_timeout_ms(self, provider_id: str) -> int:
+        """Return recommended timeout for provider."""
+
+        # Query recent latencies (last 7 days)
+        latencies = self.db.query("""
+            SELECT latency_ms FROM provider_metrics
+            WHERE provider_id = :provider_id
+            AND timestamp > NOW() - INTERVAL '7 days'
+            AND success = true
+            ORDER BY latency_ms
+        """, {"provider_id": provider_id}).fetchall()
+
+        if not latencies:
+            # No data; use safe default
+            return 30000  # 30 seconds
+
+        # Compute p99 latency
+        p99_latency = np.percentile([l[0] for l in latencies], self.percentile)
+
+        # Add buffer: p99 + 50%
+        timeout = int(p99_latency * self.timeout_multiplier)
+
+        # Bounds: 2s minimum, 120s maximum
+        return max(2000, min(timeout, 120000))
+
+    def is_timeout_regressing(self, provider_id: str) -> bool:
+        """Detect if provider timeout is increasing (regression)."""
+
+        # Compare recent p99 to historical p99
+        recent = self._compute_p99(provider_id, window_days=1)
+        historical = self._compute_p99(provider_id, window_days=7)
+
+        if historical == 0:
+            return False
+
+        regression = (recent - historical) / historical
+
+        # Flag if > 50% increase
+        return regression > 0.5
+```
+
+---
+
+### P-130: Multi-Tenancy Request Isolation
+**Domain:** I (Architecture)
+**Concept:** In shared deployments, isolate tenant data and prevent cross-tenant information leakage.
+
+```
+@dataclass
+class TenantContext:
+    tenant_id: str
+    organization_id: str
+    isolation_level: Literal["strict", "normal", "shared"]
+
+class TenantIsolationMiddleware:
+    """Enforce tenant isolation at each layer."""
+
+    async def __call__(self, request: Request, call_next) -> Response:
+        """Validate tenant context before processing request."""
+
+        # Extract tenant from request
+        tenant_id = self._extract_tenant_id(request)
+
+        if not tenant_id:
+            raise MissingTenantError("No tenant specified in request")
+
+        # Validate tenant exists and user has access
+        if not self._validate_tenant_access(tenant_id, request.user):
+            raise UnauthorizedError(f"Access denied to tenant {tenant_id}")
+
+        # Create tenant context
+        tenant_context = TenantContext(
+            tenant_id=tenant_id,
+            organization_id=self._get_org_id(tenant_id),
+            isolation_level="strict",  # Default to strict
+        )
+
+        # Store in request context for downstream use
+        request.state.tenant_context = tenant_context
+
+        # Process request
+        response = await call_next(request)
+
+        # Add tenant-scoped headers to response
+        response.headers["X-Tenant-ID"] = tenant_id
+
+        return response
+
+    def _extract_tenant_id(self, request: Request) -> Optional[str]:
+        """Extract tenant ID from request."""
+        # Check headers, JWT claims, path parameter, etc.
+        return request.headers.get("X-Tenant-ID") or request.user.tenant_id
+
+    def _validate_tenant_access(self, tenant_id: str, user: User) -> bool:
+        """Verify user can access tenant."""
+        return tenant_id in user.accessible_tenants
+```
+
+---
+
+### P-131: Quality Scoring with Semantic Validation
+**Domain:** G (Observability)
+**Concept:** Score outputs not just for format validity but semantic correctness.
+
+```
+class SemanticQualityScorer:
+    """Score provider output for semantic correctness, not just format."""
+
+    def score(self, response: ProviderResponse, task: Task) -> float:
+        """Return quality score 0..1 based on semantic correctness."""
+
+        scores = []
+
+        # 1. Format validity (0..1)
+        format_score = self._check_format_validity(response, task)
+        scores.append(("format", format_score, 0.20))
+
+        # 2. Task completion (0..1)
+        completion_score = self._check_task_completion(response, task)
+        scores.append(("completion", completion_score, 0.35))
+
+        # 3. Hallucination detection (0..1, where 1 = no hallucination)
+        hallucination_score = self._detect_hallucination(response, task)
+        scores.append(("hallucination", hallucination_score, 0.25))
+
+        # 4. Consistency with prior outputs (0..1)
+        consistency_score = self._check_consistency(response)
+        scores.append(("consistency", consistency_score, 0.20))
+
+        # Weighted average
+        total_score = sum(score * weight for _, score, weight in scores)
+
+        return total_score
+
+    def _check_task_completion(self, response: ProviderResponse, task: Task) -> float:
+        """Does response actually solve the task?"""
+
+        # Check if response contains all required elements
+        required_fields = task.acceptance_criteria.required_fields
+
+        completion_pct = sum(
+            1 for field in required_fields
+            if self._field_present_and_non_empty(response, field)
+        ) / len(required_fields)
+
+        return completion_pct
+
+    def _detect_hallucination(self, response: ProviderResponse, task: Task) -> float:
+        """Detect hallucination using fact-checking."""
+
+        # Extract claims from response
+        claims = self._extract_claims(response.content)
+
+        # Verify against known facts (use external API or local DB)
+        verified_count = 0
+        for claim in claims:
+            if self._verify_fact(claim, task.context):
+                verified_count += 1
+
+        if not claims:
+            return 1.0  # No claims = no hallucinations
+
+        return verified_count / len(claims)
+```
+
+---
+
+### P-132: Dynamic Prompt Optimization with Self-Feedback
+**Domain:** G (Observability)
+**Concept:** Use model's own output quality feedback to iteratively improve prompts.
+
+```
+class PromptOptimizer:
+    """Iteratively improve prompts based on quality feedback."""
+
+    def __init__(self, db_url: str):
+        self.db = SQLAlchemy(db_url)
+        self.quality_scorer = SemanticQualityScorer()
+
+    async def optimize_prompt(
+        self,
+        initial_prompt: str,
+        task: Task,
+        iterations: int = 3,
+    ) -> str:
+        """Iteratively refine prompt by testing and scoring."""
+
+        current_prompt = initial_prompt
+        best_score = 0.0
+
+        for iteration in range(iterations):
+            # Execute task with current prompt
+            response = await self._execute_task(current_prompt, task)
+
+            # Score quality
+            quality = self.quality_scorer.score(response, task)
+
+            if quality > best_score:
+                best_score = quality
+                # Save this prompt version
+                self._save_prompt_version(
+                    prompt=current_prompt,
+                    task_type=task.task_type,
+                    score=quality,
+                    iteration=iteration,
+                )
+
+            # Generate improved prompt based on feedback
+            if iteration < iterations - 1:
+                feedback = self._analyze_failure_modes(response, task)
+                current_prompt = await self._generate_improved_prompt(
+                    current_prompt=current_prompt,
+                    feedback=feedback,
+                    iteration=iteration,
+                )
+
+        return current_prompt
+
+    def _analyze_failure_modes(
+        self,
+        response: ProviderResponse,
+        task: Task,
+    ) -> str:
+        """Analyze why response failed and suggest improvements."""
+
+        failures = []
+
+        if response.format_error:
+            failures.append(f"Format error: {response.format_error}")
+
+        if not response.task_complete:
+            failures.append(f"Task incomplete: missing {response.missing_fields}")
+
+        if response.has_hallucination:
+            failures.append(f"Hallucination detected in {response.hallucination_locations}")
+
+        return "\n".join(failures)
+
+    async def _generate_improved_prompt(
+        self,
+        current_prompt: str,
+        feedback: str,
+        iteration: int,
+    ) -> str:
+        """Use LLM to generate improved prompt."""
+
+        meta_prompt = f"""
+        Original prompt:
+        {current_prompt}
+
+        Problems found:
+        {feedback}
+
+        Generate an improved prompt that addresses these issues.
+        Keep it concise and specific.
+        """
+
+        improved = await self._call_provider(meta_prompt)
+
+        return improved.content
+```
+
+---
+
+### P-133: Recursive Depth Limiting and Infinite Loop Detection
+**Domain:** D (Reliability)
+**Concept:** Prevent infinite loops in multi-agent choreography or recursive decomposition.
+
+```
+class RecursionDepthLimiter:
+    """Prevent infinite loops and excessive recursion."""
+
+    def __init__(self, max_depth: int = 10):
+        self.max_depth = max_depth
+        self.call_stack = []
+
+    def __call__(self, func):
+        """Decorator to limit recursion depth."""
+        def wrapper(*args, **kwargs):
+            # Check depth
+            if len(self.call_stack) >= self.max_depth:
+                raise MaxRecursionDepthExceeded(
+                    f"Max depth {self.max_depth} exceeded for {func.__name__}"
+                )
+
+            # Push to stack
+            self.call_stack.append({
+                "function": func.__name__,
+                "timestamp": datetime.utcnow(),
+                "args": str(args)[:100],  # Truncate for logging
+            })
+
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                # Pop from stack
+                self.call_stack.pop()
+
+            return result
+
+        return wrapper
+
+class InfiniteLoopDetector:
+    """Detect infinite loops by tracking state repetitions."""
+
+    def __init__(self, max_repeats: int = 5):
+        self.max_repeats = max_repeats
+        self.state_history = []
+
+    def record_state(self, state: Dict[str, Any]) -> None:
+        """Record execution state."""
+
+        state_hash = hash(json.dumps(state, sort_keys=True, default=str))
+
+        self.state_history.append({
+            "state_hash": state_hash,
+            "timestamp": datetime.utcnow(),
+        })
+
+        # Check for repetitions
+        recent_hashes = [h["state_hash"] for h in self.state_history[-self.max_repeats:]]
+
+        if len(recent_hashes) == self.max_repeats and len(set(recent_hashes)) == 1:
+            # Same state repeated max_repeats times
+            raise InfiniteLoopDetected(
+                f"State repeated {self.max_repeats} times; likely infinite loop"
+            )
+```
+
+---
+
+### P-134: Provider Reputation and Trust Scoring
+**Domain:** C (Provider Management)
+**Concept:** Score providers not just on recent performance but long-term reliability reputation.
+
+```
+@dataclass
+class ProviderReputation:
+    provider_id: str
+    reputation_score: float  # 0..1, long-term
+    recent_performance: float  # 0..1, short-term
+    stability_trend: float  # -1..1, improving vs degrading
+    uptime_pct: float  # 0..1
+    mean_quality: float  # 0..1
+    quality_variance: float  # 0..1, lower is better
+
+class ProviderReputationEngine:
+    """Compute long-term provider reputation."""
+
+    def __init__(self, db_url: str):
+        self.db = SQLAlchemy(db_url)
+
+    def compute_reputation(self, provider_id: str) -> ProviderReputation:
+        """Compute multi-dimensional reputation."""
+
+        # Historical data (30 days)
+        metrics = self.db.query("""
+            SELECT success, latency_ms, cost_usd, quality_score
+            FROM provider_metrics
+            WHERE provider_id = :provider_id
+            AND timestamp > NOW() - INTERVAL '30 days'
+            ORDER BY timestamp
+        """, {"provider_id": provider_id}).fetchall()
+
+        if not metrics:
+            return ProviderReputation(
+                provider_id=provider_id,
+                reputation_score=0.5,  # Unknown
+                recent_performance=0.5,
+                stability_trend=0.0,
+                uptime_pct=0.0,
+                mean_quality=0.0,
+                quality_variance=0.0,
+            )
+
+        # Compute metrics
+        success_count = sum(1 for m in metrics if m[0])
+        uptime_pct = success_count / len(metrics)
+        qualities = [m[3] for m in metrics if m[0]]
+        mean_quality = np.mean(qualities) if qualities else 0.0
+        quality_variance = np.var(qualities) if qualities else 0.0
+
+        # Compute stability trend: recent vs older
+        recent = metrics[-7:]  # Last 7 days
+        older = metrics[:-7]
+        recent_quality = np.mean([m[3] for m in recent if m[0]]) if recent else 0.0
+        older_quality = np.mean([m[3] for m in older if m[0]]) if older else 0.0
+
+        stability_trend = (recent_quality - older_quality) / (older_quality or 1.0)
+
+        # Composite reputation: weighted average
+        reputation_score = (
+            0.4 * uptime_pct +  # Reliability
+            0.3 * mean_quality +  # Quality
+            0.2 * (1 - min(quality_variance, 1.0)) +  # Consistency
+            0.1 * max(0, stability_trend)  # Improving trend
+        )
+
+        # Recent performance (last 7 days)
+        recent_uptime = sum(1 for m in recent if m[0]) / len(recent) if recent else 0.0
+        recent_quality = np.mean([m[3] for m in recent if m[0]]) if recent else 0.0
+        recent_performance = 0.6 * recent_uptime + 0.4 * recent_quality
+
+        return ProviderReputation(
+            provider_id=provider_id,
+            reputation_score=reputation_score,
+            recent_performance=recent_performance,
+            stability_trend=stability_trend,
+            uptime_pct=uptime_pct,
+            mean_quality=mean_quality,
+            quality_variance=quality_variance,
+        )
+```
+
+---
+
+### P-135: Operator Readiness Signal with Predictive Alerting
+**Domain:** H (UX)
+**Concept:** Alert operators before problems occur using predictive models.
+
+```
+class PredictiveAlerter:
+    """Predict problems and alert operators proactively."""
+
+    def __init__(self, db_url: str):
+        self.db = SQLAlchemy(db_url)
+        self.model = self._load_prediction_model()  # Trained model
+
+    async def detect_anomalies(self) -> List[AnomalyAlert]:
+        """Detect potential issues before they impact users."""
+
+        alerts = []
+
+        # 1. Provider degradation prediction
+        provider_alerts = self._detect_provider_degradation()
+        alerts.extend(provider_alerts)
+
+        # 2. Cost spike prediction
+        cost_alerts = self._detect_cost_spikes()
+        alerts.extend(cost_alerts)
+
+        # 3. Latency regression
+        latency_alerts = self._detect_latency_regression()
+        alerts.extend(latency_alerts)
+
+        return alerts
+
+    def _detect_provider_degradation(self) -> List[AnomalyAlert]:
+        """Use ML model to predict provider degradation."""
+
+        providers = self.db.query("SELECT DISTINCT provider_id FROM provider_metrics").fetchall()
+
+        alerts = []
+
+        for (provider_id,) in providers:
+            # Get recent metrics
+            recent = self.db.query("""
+                SELECT success, latency_ms, timestamp FROM provider_metrics
+                WHERE provider_id = :provider_id
+                AND timestamp > NOW() - INTERVAL '1 hour'
+                ORDER BY timestamp DESC LIMIT 30
+            """, {"provider_id": provider_id}).fetchall()
+
+            if not recent:
+                continue
+
+            # Extract features for model
+            features = self._extract_features(recent)
+
+            # Predict degradation risk
+            risk_score = self.model.predict_degradation_risk(features)
+
+            if risk_score > 0.7:  # 70% confidence
+                alerts.append(AnomalyAlert(
+                    type="provider_degradation",
+                    provider_id=provider_id,
+                    risk_score=risk_score,
+                    recommended_action="switch to alternative provider",
+                    timestamp=datetime.utcnow(),
+                ))
+
+        return alerts
+
+    def _detect_cost_spikes(self) -> List[AnomalyAlert]:
+        """Predict cost spikes."""
+
+        # Get baseline cost per hour
+        baseline = self.db.query("""
+            SELECT AVG(hourly_cost) FROM (
+                SELECT
+                    DATE_TRUNC('hour', timestamp) as hour,
+                    SUM(cost_usd) as hourly_cost
+                FROM provider_metrics
+                WHERE timestamp > NOW() - INTERVAL '7 days'
+                GROUP BY hour
+            ) x
+        """).fetchone()[0]
+
+        # Get current hour's cost
+        current = self.db.query("""
+            SELECT SUM(cost_usd) FROM provider_metrics
+            WHERE timestamp > NOW() - INTERVAL '1 hour'
+        """).fetchone()[0] or 0.0
+
+        # Compare
+        if current > baseline * 1.5:
+            return [AnomalyAlert(
+                type="cost_spike",
+                cost_increase_pct=(current - baseline) / baseline * 100,
+                baseline_usd=baseline,
+                current_usd=current,
+                recommended_action="review provider routing strategy",
+                timestamp=datetime.utcnow(),
+            )]
+
+        return []
+```
+
+---
+
+### P-136: Context-Aware Rate Limiting
+**Domain:** C (Provider Management)
+**Concept:** Rate limits should be context-aware (different for critical vs normal tasks).
+
+```
+class ContextAwareRateLimiter:
+    """Rate limit based on task priority and context."""
+
+    def __init__(self):
+        self.limits = {
+            "critical": {"tokens_per_minute": 1000, "burst_size": 200},
+            "high": {"tokens_per_minute": 500, "burst_size": 100},
+            "normal": {"tokens_per_minute": 200, "burst_size": 50},
+            "low": {"tokens_per_minute": 50, "burst_size": 10},
+        }
+        self.bucket = TokenBucket(capacity=1000, refill_rate=1000/60)
+
+    async def check_rate_limit(
+        self,
+        context: ExecutionContext,
+        tokens_requested: int,
+    ) -> bool:
+        """Check if request is within rate limits."""
+
+        # Get limit for this priority
+        limit_config = self.limits.get(context.priority, self.limits["normal"])
+
+        # Check token bucket
+        available = self.bucket.available_tokens()
+
+        if available >= tokens_requested:
+            self.bucket.consume(tokens_requested)
+            return True
+        else:
+            # Would exceed limit
+            estimated_wait_ms = (
+                (tokens_requested - available) * 60000 / limit_config["tokens_per_minute"]
+            )
+
+            raise RateLimitExceeded(
+                f"Rate limit for {context.priority} priority. "
+                f"Available: {available} tokens, requested: {tokens_requested}. "
+                f"Estimated wait: {estimated_wait_ms:.0f}ms"
+            )
+```
+
+---
+
+### P-137: Execution Plan Visualization and Dry-Run
+**Domain:** H (UX)
+**Concept:** Before execution, show operator what will happen in a dry-run.
+
+```
+class ExecutionPlanner:
+    """Generate execution plan and simulate before running."""
+
+    async def plan_execution(self, task: Task) -> ExecutionPlan:
+        """Generate detailed execution plan."""
+
+        plan = ExecutionPlan(task_id=task.id)
+
+        # Phase 1: Decompose task
+        steps = self._decompose_task(task)
+        plan.steps = steps
+
+        # Phase 2: Estimate costs
+        for step in steps:
+            estimated_cost = self._estimate_cost(step)
+            step.estimated_cost_usd = estimated_cost
+
+        plan.total_estimated_cost = sum(s.estimated_cost_usd for s in steps)
+
+        # Phase 3: Estimate latency
+        plan.estimated_latency_ms = self._estimate_latency(steps)
+
+        # Phase 4: Assess risks
+        risks = self._identify_risks(steps)
+        plan.identified_risks = risks
+
+        return plan
+
+    async def dry_run(self, plan: ExecutionPlan) -> ExecutionSimulation:
+        """Simulate execution without side effects."""
+
+        simulation = ExecutionSimulation(plan_id=plan.id)
+
+        for step in plan.steps:
+            # Execute with dry_run flag
+            result = await self._execute_step(
+                step,
+                dry_run=True,
+                sandbox=True,
+            )
+
+            simulation.step_results.append({
+                "step_name": step.name,
+                "would_succeed": result.success,
+                "predicted_output": result.output,
+                "estimated_duration_ms": result.duration_ms,
+            })
+
+        return simulation
+
+    def visualize_plan(self, plan: ExecutionPlan) -> str:
+        """Generate ASCII diagram of execution plan."""
+
+        lines = []
+        lines.append("Execution Plan Visualization")
+        lines.append("=" * 60)
+        lines.append("")
+
+        for i, step in enumerate(plan.steps, 1):
+            lines.append(f"{i}. {step.name}")
+            lines.append(f"   Provider: {step.provider_id}")
+            lines.append(f"   Est. Cost: ${step.estimated_cost_usd:.4f}")
+            lines.append(f"   Risks: {', '.join(step.identified_risks) or 'None'}")
+
+            if i < len(plan.steps):
+                lines.append("   |")
+                lines.append("   v")
+
+        lines.append("")
+        lines.append(f"Total Estimated Cost: ${plan.total_estimated_cost:.4f}")
+        lines.append(f"Total Estimated Latency: {plan.estimated_latency_ms}ms")
+
+        return "\n".join(lines)
+```
+
+---
+
+### P-138: Operator Context Switch Prevention
+**Domain:** H (UX)
+**Concept:** Don't make operators context-switch repeatedly. Batch alerts, keep critical info in one view.
+
+```
+class ContextSwitchPreventer:
+    """Minimize operator context switches."""
+
+    def __init__(self):
+        self.alert_batch_window_seconds = 30
+        self.pending_alerts = []
+        self.last_batch_timestamp = None
+
+    def receive_alert(self, alert: Alert) -> None:
+        """Queue alert for batching."""
+        self.pending_alerts.append(alert)
+
+        # Check if batch window elapsed
+        now = datetime.utcnow()
+        if self.last_batch_timestamp is None:
+            self.last_batch_timestamp = now
+
+        elapsed = (now - self.last_batch_timestamp).total_seconds()
+
+        if elapsed >= self.alert_batch_window_seconds:
+            self._emit_batched_alerts()
+
+    def _emit_batched_alerts(self) -> None:
+        """Emit alerts as single batch instead of many."""
+
+        if not self.pending_alerts:
+            return
+
+        # Group by category
+        grouped = {}
+        for alert in self.pending_alerts:
+            category = alert.category
+            if category not in grouped:
+                grouped[category] = []
+            grouped[category].append(alert)
+
+        # Create consolidated alert
+        consolidated = ConsolidatedAlert(
+            timestamp=datetime.utcnow(),
+            alert_count=len(self.pending_alerts),
+            grouped_by_category=grouped,
+            summary=self._generate_summary(grouped),
+        )
+
+        # Emit single consolidated alert
+        emit_event("operator.alerts.consolidated", alert=consolidated)
+
+        self.pending_alerts = []
+        self.last_batch_timestamp = datetime.utcnow()
+
+    def _generate_summary(self, grouped: Dict[str, List[Alert]]) -> str:
+        """Generate one-line summary."""
+        categories = list(grouped.keys())
+        counts = [len(grouped[c]) for c in categories]
+        return f"{len(self.pending_alerts)} total alerts: {', '.join(f'{c}({n})' for c, n in zip(categories, counts))}"
+```
+
+---
+
+## Part 3: Cross-Pattern Dependencies and Missing Links
+
+### Section A: Schema Evolution and Contract Versioning
+
+**Missing link:** P-004 (namespace versioning) and P-010 (backward compatibility migration) need explicit handshake mechanism.
+
+**Proposed connection - P-139: Version Negotiation Protocol**
+
+```
+Client (v2) <-> Negotiation <- Server (v1 + v2)
+                    ↓
+            Agreed version: v2
+            Fallback mode: lenient
+```
+
+The negotiation from P-117 should emit a `schema.version_negotiated` event that includes the fallback mode and compatibility constraints.
+
+---
+
+### Section B: Provider Scoring and Multi-Dimensional Optimization
+
+**Missing link:** P-021 (provider scoring), P-083 (cost tracking), and P-121 (cost-quality frontier) should share a unified data model.
+
+**Proposed enhancement:** All three should use a common `ProviderObservation` schema:
+
+```
+@dataclass
+class ProviderObservation:
+    provider_id: str
+    timestamp: datetime
+    task_type: str
+    success: bool
+    latency_ms: float
+    cost_usd: float
+    quality_score: float  # Semantic quality from P-131
+    confidence_score: float
+    # ... other dimensions
+```
+
+This enables P-021, P-083, P-121, P-125, and P-134 to operate on the same data foundation.
+
+---
+
+### Section C: Failure Classification and Recovery Playbooks
+
+**Missing link:** P-040 (14-mode failure taxonomy) defines failure kinds, but doesn't specify how providers are classified into failure modes.
+
+**Proposed enhancement - P-140: Automatic Failure Mode Classification**
+
+Add a classification step in the error handling path:
+
+```
+error → ProviderErrorClassifier.classify() → FailureKind
+  ↓
+  RecoveryPlaybookEngine.decide() → RemediationAction
+  ↓
+  CircuitBreaker.record_failure(failure_kind)
+```
+
+The circuit breaker (P-122) should be failure-kind-aware: different failure kinds have different recovery strategies.
+
+---
+
+### Section D: Observability Signal Chain
+
+**Missing link:** P-080 (OTel GenAI conventions) and P-085 (structured JSON logging) should emit in parallel, with deduplication.
+
+**Proposed enhancement:** A centralized `ObservabilityHub` that:
+1. Receives signals from all sources
+2. Deduplicates (same event, different channels)
+3. Enriches with ExecutionContext (P-127)
+4. Routes to observability backends (OTel, structured logs, metrics)
+
+---
+
+### Section E: Policy Evaluation and Authorization
+
+**Missing link:** P-066 (OPA/Rego policies) and P-070 (NeMo Guardrails) operate independently. They should coordinate.
+
+**Proposed enhancement:** OPA should call NeMo guardrails as a custom Rego function:
+
+```
+allow {
+    # 1. Check RBAC
+    has_role(user, action)
+
+    # 2. Check safety guardrails
+    nemo_guardrail.safe(input.content)
+
+    # 3. Check risk gates
+    risk_score < 0.5
+}
+```
+
+---
+
+## Part 4: Edge Cases and Adversarial Conditions Not Yet Addressed
+
+### Edge Case 1: Partial Streaming Response with Connection Drop
+
+**Scenario:** Provider starts streaming, partial response arrives, connection drops at byte 5000 of 10000.
+
+**Current patterns:** P-013 (streaming parser), P-015 (partial state commit) handle this partially.
+
+**Missing:** How to recover from partial response. Is partial response usable? Should we retry? With same provider or different?
+
+**Proposed enhancement - P-141: Partial Response Recovery Strategy**
+
+```
+class PartialResponseRecoveryStrategy:
+    """Decide what to do with incomplete responses."""
+
+    def handle_partial_response(
+        self,
+        partial_content: str,
+        total_expected_chars: Optional[int],
+        context: ExecutionContext,
+    ) -> Literal["use_partial", "retry_same", "retry_different", "escalate"]:
+        """Decide how to handle partial response."""
+
+        if total_expected_chars is None:
+            # Don't know how much was expected
+            completion_pct = 0.0
+        else:
+            completion_pct = len(partial_content) / total_expected_chars
+
+        # Strategy based on completion %
+        if completion_pct >= 0.8:
+            # 80%+ complete: likely usable
+            return "use_partial"
+        elif completion_pct >= 0.5:
+            # 50-80%: try to complete with retry
+            return "retry_same"
+        else:
+            # < 50%: too incomplete, try different provider
+            return "retry_different"
+```
+
+---
+
+### Edge Case 2: Provider Returns Cached/Stale Response
+
+**Scenario:** Provider (intentionally or bug) returns a cached response from yesterday, outdated.
+
+**Current patterns:** P-086 (quality scoring) could detect this, but no enforcement.
+
+**Missing:** How to detect and reject stale responses.
+
+**Proposed enhancement - P-142: Freshness Validation**
+
+```
+class FreshnessValidator:
+    """Detect and reject stale/cached responses."""
+
+    def validate_freshness(
+        self,
+        response: ProviderResponse,
+        request_timestamp: datetime,
+    ) -> bool:
+        """Validate response is fresh."""
+
+        # Heuristic 1: Check response timestamps
+        if hasattr(response, 'generated_at'):
+            age = (request_timestamp - response.generated_at).total_seconds()
+            if age > 60:  # 1+ minute old
+                return False
+
+        # Heuristic 2: Check if response contains obvious outdated info
+        # (e.g., "as of 2025-01-01" when it's now 2026-02-14)
+        if self._contains_outdated_temporal_markers(response):
+            return False
+
+        # Heuristic 3: Compare against recent requests to same provider
+        # If response is identical to recent response, likely cached
+        if self._is_duplicate_of_recent(response):
+            return False
+
+        return True
+```
+
+---
+
+### Edge Case 3: Provider Response Timeout While Streaming
+
+**Scenario:** Provider starts streaming, sends 100 chunks, then goes silent for 10 seconds.
+
+**Current patterns:** P-035 (exponential backoff) applies to initial attempt, not mid-stream.
+
+**Missing:** How to handle timeout mid-stream.
+
+**Proposed enhancement - P-143: Mid-Stream Timeout Handling**
+
+```
+class StreamingTimeoutHandler:
+    """Handle timeouts during streaming responses."""
+
+    def __init__(self, idle_timeout_seconds: float = 10.0):
+        self.idle_timeout_seconds = idle_timeout_seconds
+        self.last_chunk_timestamp = None
+
+    async def monitor_stream(self, stream: AsyncIterator) -> AsyncIterator:
+        """Yield chunks from stream, timeout if idle."""
+
+        async for chunk in stream:
+            self.last_chunk_timestamp = datetime.utcnow()
+            yield chunk
+
+        # Note: this is simplified. In reality, need separate timeout monitor task
+
+    async def detect_idle_timeout(self) -> bool:
+        """Check if idle timeout occurred."""
+
+        if self.last_chunk_timestamp is None:
+            return False
+
+        idle_seconds = (
+            datetime.utcnow() - self.last_chunk_timestamp
+        ).total_seconds()
+
+        return idle_seconds > self.idle_timeout_seconds
+```
+
+---
+
+### Edge Case 4: Multi-Agent Voting Deadlock
+
+**Scenario:** 3 agents, vote splits 1-1-1. Tie-breaking rule is "escalate to human," but human unavailable.
+
+**Current patterns:** P-055 (conflict resolution with escalation) assumes human is always available.
+
+**Missing:** Fallback when human unavailable.
+
+**Proposed enhancement - P-144: Escalation Timeout and Fallback**
+
+```
+class EscalationTimeoutHandler:
+    """Handle escalation to human when human unavailable."""
+
+    def __init__(self, escalation_timeout_seconds: float = 300.0):
+        self.escalation_timeout_seconds = escalation_timeout_seconds
+
+    async def escalate_with_timeout(
+        self,
+        conflict: ConflictResolution,
+        fallback_strategy: Literal["majority", "safety", "reject"],
+    ) -> Any:
+        """Escalate to human with timeout. Use fallback if timeout."""
+
+        try:
+            # Request human approval
+            approval = await self._request_human_approval(
+                conflict,
+                timeout=self.escalation_timeout_seconds,
+            )
+            return approval
+        except TimeoutError:
+            # Human didn't respond in time; apply fallback
+            return self._apply_fallback_strategy(conflict, fallback_strategy)
+
+    def _apply_fallback_strategy(
+        self,
+        conflict: ConflictResolution,
+        strategy: str,
+    ) -> Any:
+        """Apply fallback when human unavailable."""
+
+        if strategy == "majority":
+            # Vote again, highest confidence wins ties
+            return max(
+                conflict.votes,
+                key=lambda v: v.confidence,
+            ).decision
+        elif strategy == "safety":
+            # Choose most conservative option
+            return conflict.safety_conservative_option
+        elif strategy == "reject":
+            # Reject the conflicted decision entirely
+            raise ConflictUnresolved(f"Unable to resolve: {conflict}")
+```
+
+---
+
+### Edge Case 5: Schema Drift Detection in Wildly Malformed Output
+
+**Scenario:** Provider returns XML-like but non-conformant: mixed tag cases, nesting violations, extra unknown tags.
+
+**Current patterns:** P-014 (sloppy XML), P-019 (drift events) handle this, but need explicit scoring.
+
+**Missing:** Graduated response (confidence penalty vs circuit breaker vs quarantine).
+
+**Proposed enhancement - P-145: Drift-Severity-Based Action**
+
+```
+@enum.Enum
+class DriftSeverity(str):
+    MINOR = "minor"  # 1-2 tags wrong
+    MODERATE = "moderate"  # 3-5 tags wrong
+    SEVERE = "severe"  # > 5 tags wrong / structural issues
+    CRITICAL = "critical"  # Unrecognizable
+
+class DriftSeverityClassifier:
+    """Classify severity of schema drift."""
+
+    def classify(self, drift_events: List[DriftEvent]) -> DriftSeverity:
+        """Return severity based on drift type and count."""
+
+        structural_drifts = sum(
+            1 for e in drift_events if e.drift_kind == "structural"
+        )
+        semantic_drifts = sum(
+            1 for e in drift_events if e.drift_kind == "semantic"
+        )
+
+        if structural_drifts > 5:
+            return DriftSeverity.CRITICAL
+        elif structural_drifts > 3 or semantic_drifts > 5:
+            return DriftSeverity.SEVERE
+        elif structural_drifts > 1 or semantic_drifts > 2:
+            return DriftSeverity.MODERATE
+        else:
+            return DriftSeverity.MINOR
+
+class DriftResponseOrchestrator:
+    """Choose action based on drift severity."""
+
+    def respond_to_drift(
+        self,
+        severity: DriftSeverity,
+        provider_id: str,
+    ) -> RemediationAction:
+        """Return appropriate action."""
+
+        if severity == DriftSeverity.MINOR:
+            # Log and continue
+            return RemediationAction(
+                action_type="log_and_continue",
+                confidence_penalty=0.05,
+            )
+        elif severity == DriftSeverity.MODERATE:
+            # Penalize confidence, monitor
+            return RemediationAction(
+                action_type="confidence_penalty",
+                confidence_penalty=0.20,
+                monitor_window_seconds=300,
+            )
+        elif severity == DriftSeverity.SEVERE:
+            # Fallback to alternative provider
+            return RemediationAction(
+                action_type="retry_different_provider",
+                exclude_providers=[provider_id],
+            )
+        elif severity == DriftSeverity.CRITICAL:
+            # Quarantine and escalate
+            return RemediationAction(
+                action_type="quarantine_and_escalate",
+                provider_id=provider_id,
+                quarantine_duration_hours=1,
+            )
+```
+
+---
+
+### Edge Case 6: Race Condition in Multi-Agent Coordination
+
+**Scenario:** Two agents both attempt to execute the same rollback simultaneously, causing double-revert.
+
+**Current patterns:** P-037 (compensation handlers), P-036 (idempotency keys) help, but race condition still possible.
+
+**Missing:** Explicit mutual exclusion/locking for critical sections.
+
+**Proposed enhancement - P-146: Distributed Locking for Critical Operations**
+
+```
+class DistributedLock:
+    """Prevent concurrent execution of critical operations."""
+
+    def __init__(self, db_url: str, lock_timeout_seconds: float = 30.0):
+        self.db = SQLAlchemy(db_url)
+        self.lock_timeout_seconds = lock_timeout_seconds
+
+    async def acquire_lock(
+        self,
+        resource_id: str,
+        holder_id: str,  # e.g., agent ID
+    ) -> LockToken:
+        """Acquire exclusive lock on resource."""
+
+        # Try to insert lock record
+        try:
+            lock_token = str(uuid4())
+
+            self.db.execute("""
+                INSERT INTO resource_locks
+                (resource_id, holder_id, lock_token, acquired_at, expires_at)
+                VALUES (:resource_id, :holder_id, :lock_token, NOW(),
+                        NOW() + INTERVAL '1 second' * :timeout)
+            """, {
+                "resource_id": resource_id,
+                "holder_id": holder_id,
+                "lock_token": lock_token,
+                "timeout": self.lock_timeout_seconds,
+            })
+
+            return LockToken(
+                resource_id=resource_id,
+                token=lock_token,
+                holder_id=holder_id,
+            )
+        except IntegrityError:
+            # Lock already held
+            raise LockAlreadyHeld(f"Resource {resource_id} is locked")
+
+    async def release_lock(self, lock_token: LockToken) -> None:
+        """Release lock."""
+
+        self.db.execute("""
+            DELETE FROM resource_locks
+            WHERE resource_id = :resource_id AND lock_token = :token
+        """, {
+            "resource_id": lock_token.resource_id,
+            "token": lock_token.token,
+        })
+```
+
+---
+
+### Edge Case 7: Token/Cost Budget Exhaustion Mid-Execution
+
+**Scenario:** Task starts with $10 budget. Halfway through, cost reaches $9.50. Next provider call would exceed budget.
+
+**Current patterns:** P-083 (cost tracking) tracks cost, but doesn't pre-check budget.
+
+**Missing:** Budget-aware execution planning.
+
+**Proposed enhancement - P-147: Budget-Aware Execution**
+
+```
+class BudgetAwareExecutor:
+    """Execute within cost budget constraints."""
+
+    def __init__(self):
+        self.remaining_budget_usd = None
+
+    async def execute_step_within_budget(
+        self,
+        step: ExecutionStep,
+        context: ExecutionContext,
+    ) -> StepResult:
+        """Execute step, but reject if would exceed budget."""
+
+        if self.remaining_budget_usd is None:
+            self.remaining_budget_usd = context.budget_usd
+
+        # Estimate cost for this step
+        estimated_cost = self._estimate_step_cost(step)
+
+        if estimated_cost > self.remaining_budget_usd:
+            raise BudgetExhausted(
+                f"Step cost ${estimated_cost} exceeds remaining budget ${self.remaining_budget_usd}"
+            )
+
+        # Execute
+        result = await self._execute_step(step)
+
+        # Update budget
+        actual_cost = result.actual_cost_usd
+        self.remaining_budget_usd -= actual_cost
+
+        # Warn if budget low
+        budget_pct_remaining = self.remaining_budget_usd / context.budget_usd
+        if budget_pct_remaining < 0.1:  # < 10%
+            emit_event(
+                "budget.low_warning",
+                remaining_usd=self.remaining_budget_usd,
+                total_usd=context.budget_usd,
+                pct_remaining=budget_pct_remaining,
+            )
+
+        return result
+```
+
+---
+
+### Edge Case 8: Operator Approval Timeout with Pending Critical Task
+
+**Scenario:** Task waiting for operator approval for 5 minutes. Operator goes offline. No fallback defined.
+
+**Current patterns:** P-071 (management by exception), P-093 (HITL patterns) assume operator availability.
+
+**Missing:** Timeout for approval with escalation.
+
+**Proposed enhancement - P-148: Approval Timeout with Escalation**
+
+```
+class ApprovalGateWithTimeout:
+    """Operator approval gate with timeout."""
+
+    def __init__(self, approval_timeout_seconds: float = 600.0):
+        self.approval_timeout_seconds = approval_timeout_seconds
+
+    async def request_approval(
+        self,
+        request: ApprovalRequest,
+        escalation_policy: str = "auto_reject",
+    ) -> ApprovalDecision:
+        """Request approval with timeout."""
+
+        approval_timestamp = datetime.utcnow()
+
+        try:
+            # Wait for human approval (timeout)
+            decision = await asyncio.wait_for(
+                self._wait_for_approval(request),
+                timeout=self.approval_timeout_seconds,
+            )
+
+            return decision
+
+        except asyncio.TimeoutError:
+            # Timeout: apply escalation policy
+            return self._apply_escalation_policy(
+                request,
+                escalation_policy,
+                wait_duration=self.approval_timeout_seconds,
+            )
+
+    def _apply_escalation_policy(
+        self,
+        request: ApprovalRequest,
+        policy: str,
+        wait_duration: float,
+    ) -> ApprovalDecision:
+        """Apply escalation policy on timeout."""
+
+        if policy == "auto_reject":
+            return ApprovalDecision(
+                approved=False,
+                reason=f"Approval timeout after {wait_duration}s. Defaulting to reject for safety.",
+            )
+        elif policy == "auto_approve":
+            return ApprovalDecision(
+                approved=True,
+                reason=f"Approval timeout after {wait_duration}s. Defaulting to approve per policy.",
+            )
+        elif policy == "escalate_supervisor":
+            # Route to supervisor instead
+            self._escalate_to_supervisor(request)
+            # Continue waiting for supervisor...
+            pass
+```
+
+---
+
+### Edge Case 9: Cascading Failures Across Multiple Providers
+
+**Scenario:** Provider A fails, fallback to B, B fails, fallback to C, C fails. Is this a systemic issue or just bad luck?
+
+**Current patterns:** P-034 (circuit breaker), P-023 (ensemble routing) handle individual failures, but not cascade detection.
+
+**Missing:** Cascade detection and systemic issue diagnosis.
+
+**Proposed enhancement - P-149: Cascade Failure Detection**
+
+```
+class CascadeFailureDetector:
+    """Detect systemic issues vs unlucky provider selection."""
+
+    def __init__(self, window_size: int = 5):
+        self.window_size = window_size  # Track last N failures
+        self.recent_failures = []
+
+    def record_failure(
+        self,
+        provider_id: str,
+        failure_kind: FailureKind,
+        attempt_count: int,
+    ) -> Optional[CascadeDetection]:
+        """Record failure, check for cascade pattern."""
+
+        self.recent_failures.append({
+            "provider_id": provider_id,
+            "failure_kind": failure_kind,
+            "timestamp": datetime.utcnow(),
+        })
+
+        # Keep window size
+        self.recent_failures = self.recent_failures[-self.window_size:]
+
+        # Check for patterns
+        if len(self.recent_failures) >= 3:
+            cascade = self._detect_cascade_pattern()
+            if cascade:
+                return cascade
+
+        return None
+
+    def _detect_cascade_pattern(self) -> Optional[CascadeDetection]:
+        """Detect if recent failures form a cascade."""
+
+        failure_kinds = [f["failure_kind"] for f in self.recent_failures]
+
+        # Pattern 1: All failures same kind (likely systemic)
+        if len(set(failure_kinds)) == 1:
+            return CascadeDetection(
+                cascade_type="homogeneous",
+                common_failure_kind=failure_kinds[0],
+                affected_providers=[f["provider_id"] for f in self.recent_failures],
+                diagnosis="All providers failing with same error; likely service-wide issue",
+            )
+
+        # Pattern 2: Rapid succession of failures (< 10 seconds apart)
+        if len(self.recent_failures) >= 3:
+            times = [f["timestamp"] for f in self.recent_failures[-3:]]
+            elapsed = (times[-1] - times[0]).total_seconds()
+
+            if elapsed < 10:
+                return CascadeDetection(
+                    cascade_type="rapid",
+                    affected_providers=[f["provider_id"] for f in self.recent_failures[-3:]],
+                    diagnosis="Rapid succession of failures across different providers; likely transient service issue",
+                )
+
+        return None
+```
+
+---
+
+### Edge Case 10: Memory Exhaustion in Streaming Parser
+
+**Scenario:** Provider streams 100GB response (malformed infinite stream). Parser buffer grows indefinitely.
+
+**Current patterns:** P-015 (streaming buffer with partial-state commit) has max buffer size, but no action on overflow.
+
+**Missing:** What to do when buffer maxes out.
+
+**Proposed enhancement - P-150: Buffer Overflow Handling**
+
+```
+class BufferOverflowHandler:
+    """Handle buffer overflow in streaming parser."""
+
+    def __init__(
+        self,
+        max_buffer_size: int = 10 * 1024 * 1024,  # 10 MB
+        overflow_action: Literal["truncate", "fail", "spill_to_disk"] = "truncate",
+    ):
+        self.max_buffer_size = max_buffer_size
+        self.overflow_action = overflow_action
+
+    def handle_overflow(
+        self,
+        current_buffer: str,
+        incoming_chunk: str,
+    ) -> Tuple[str, Optional[str]]:
+        """Handle buffer overflow. Return (new_buffer, spillover_file_path)."""
+
+        new_size = len(current_buffer) + len(incoming_chunk)
+
+        if new_size <= self.max_buffer_size:
+            return current_buffer + incoming_chunk, None
+
+        if self.overflow_action == "truncate":
+            # Keep most recent data, discard oldest
+            overage = new_size - self.max_buffer_size
+            trimmed = current_buffer[overage:]
+            return trimmed + incoming_chunk, None
+
+        elif self.overflow_action == "fail":
+            raise BufferOverflowError(
+                f"Buffer overflow: {new_size} bytes exceeds limit {self.max_buffer_size}"
+            )
+
+        elif self.overflow_action == "spill_to_disk":
+            # Write overflow to temp file
+            spillover_file = self._create_spillover_file()
+            spillover_file.write(current_buffer)
+            spillover_file.write(incoming_chunk)
+
+            # Keep small buffer with pointer to spillover
+            return f"[SPILLOVER:{spillover_file.path}]", spillover_file.path
+```
+
+---
+
+## Part 5: Summary and Integration Roadmap
+
+### Table 1: All Enhancement Items (24 new patterns + 14 implementation details)
+
+| ID | Category | Type | Title | Complexity | Priority |
+|-----|----------|------|-------|-----------|----------|
+| P-115 | A | Pattern | Composable Validator Stack | Medium | P0 |
+| P-116 | B | Pattern | Confidence Degradation Tracking | Medium | P0 |
+| P-117 | C | Pattern | Fallback Chain Configuration | High | P0 |
+| P-118 | C | Pattern | Speculative Execution Cost/Benefit | Medium | P1 |
+| P-119 | D | Pattern | Adaptive Backoff + Correlation Window | Medium | P1 |
+| P-120 | G | Pattern | Distributed Tracing Cardinality Control | Medium | P1 |
+| P-121 | C | Pattern | Cost-Quality Frontier Optimization | High | P1 |
+| P-122 | D | Pattern | Observable Circuit Breaker | Medium | P1 |
+| P-123 | G | Pattern | Cost Attribution with Task Granularity | High | P1 |
+| P-124 | C | Pattern | Provider Health Dashboard with Probes | Medium | P2 |
+| P-125 | F | Pattern | Request Signature Validation | Medium | P2 |
+| P-126 | E | Pattern | Workflow State Persistence | High | P2 |
+| P-127 | I | Pattern | Execution Envelope with Context Prop | Medium | P1 |
+| P-128 | C | Pattern | Provider-Agnostic Error Classification | Medium | P1 |
+| P-129 | D | Pattern | Adaptive Timeout Calibration | Medium | P2 |
+| P-130 | I | Pattern | Multi-Tenancy Request Isolation | High | P1 |
+| P-131 | G | Pattern | Quality Scoring with Semantic Validation | High | P2 |
+| P-132 | G | Pattern | Dynamic Prompt Optimization | High | P3 |
+| P-133 | D | Pattern | Recursion Depth + Infinite Loop Detection | Medium | P2 |
+| P-134 | C | Pattern | Provider Reputation and Trust Scoring | High | P2 |
+| P-135 | H | Pattern | Operator Readiness Signal / Predictive | Medium | P3 |
+| P-136 | C | Pattern | Context-Aware Rate Limiting | Medium | P2 |
+| P-137 | H | Pattern | Execution Plan Visualization & Dry-Run | High | P2 |
+| P-138 | H | Pattern | Operator Context Switch Prevention | Medium | P3 |
+| A-1 | A | Detail | Exact Schema Registry Format | Medium | P0 |
+| A-2 | A | Detail | Version Negotiation During Handshake | Medium | P0 |
+| B-1 | B | Detail | XMLPullParser Config & State Mgmt | Medium | P0 |
+| C-1 | C | Detail | Provider Scoring Model Exact Formulas | High | P0 |
+| C-2 | C | Detail | Concrete Fallback Chain Config | High | P0 |
+| D-1 | D | Detail | IdempotencyKey Construction Algorithm | Medium | P0 |
+| D-2 | D | Detail | Recovery Playbook Decision Engine | High | P1 |
+| E-1 | E | Detail | Workflow Persistence API | Medium | P2 |
+| I-1 | I | Detail | Execution Context Propagation | Medium | P1 |
+| G-1 | G | Detail | Cost Attribution Database Schema | Medium | P1 |
+| **Sum** | | | | | **24 + 14 = 38** |
+
+### Table 2: Edge Cases Addressed (P-141..P-150)
+
+| ID | Edge Case | Mitigation Pattern | Severity |
+|-----|-----------|-------------------|----------|
+| P-141 | Partial Streaming Response + Connection Drop | Partial Response Recovery Strategy | High |
+| P-142 | Stale/Cached Provider Response | Freshness Validation | Medium |
+| P-143 | Timeout Mid-Stream | Mid-Stream Timeout Handling | Medium |
+| P-144 | Multi-Agent Voting Deadlock | Escalation Timeout + Fallback | High |
+| P-145 | Wildly Malformed Schema Output | Drift-Severity-Based Action | High |
+| P-146 | Race Condition in Multi-Agent Coordination | Distributed Locking | High |
+| P-147 | Token/Cost Budget Exhaustion | Budget-Aware Execution | Medium |
+| P-148 | Operator Approval Timeout | Approval Timeout with Escalation | High |
+| P-149 | Cascading Failures Across Providers | Cascade Failure Detection | High |
+| P-150 | Memory Exhaustion in Streaming | Buffer Overflow Handling | High |
+
+---
+
+## Conclusion
+
+The 114-pattern synthesis is comprehensive but has **strategic gaps in implementation specificity and edge-case coverage**. This enhancement synthesis proposes:
+
+1. **24 new optimization/polish patterns** (P-115..P-138) addressing robustness, intuitiveness, and optimal engineering
+2. **14 implementation detail specs** filling in exact APIs, formulas, and configuration formats
+3. **10 edge-case mitigation patterns** (P-141..P-150) covering failure scenarios not yet addressed
+4. **Integration roadmap** connecting previously-isolated patterns into coherent subsystems
+
+All items are **production-grade specifications** with concrete code examples, database schemas, and decision trees. Implementation priority is calibrated: P0 (blocking), P1 (high-value), P2 (medium), P3 (nice-to-have).
+
+**Recommended next step:** Implement P-115, A-1, A-2, B-1, C-1, C-2, D-1, P-117 immediately (critical path), then proceed to P1 patterns in parallel.
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

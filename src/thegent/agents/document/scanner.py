@@ -11,13 +11,14 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 
 @dataclass
 class ScanConfig:
     """Configuration for markdown file scanning."""
 
-    locations: dict[str, dict[str, any]] = field(default_factory=dict)
+    locations: dict[str, dict[str, Any]] = field(default_factory=dict)
     """Location configurations: {name: {path, recursive, max_depth, excludes}}"""
 
     exclude_patterns: set[str] = field(
@@ -124,7 +125,11 @@ class MarkdownScanner:
         """Save scan results to JSON file."""
         if output_path is None:
             timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
-            output_path = self.config.output_dir / f"scan_{timestamp}.json"
+            config_output_dir = self.config.output_dir
+            if config_output_dir is None:
+                msg = "output_dir is not configured"
+                raise ValueError(msg)
+            output_path = config_output_dir / f"scan_{timestamp}.json"
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -166,7 +171,7 @@ class MarkdownScanner:
 
         return output_path
 
-    def get_summary(self) -> dict[str, any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get summary statistics of scan results."""
         months = sorted(self.scan_results.keys(), reverse=True)
         total_files = sum(len(files) for month_data in self.scan_results.values() for files in month_data.values())

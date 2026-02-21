@@ -1,0 +1,89 @@
+# team_api
+
+Source: docs/reference/api/team_api.md
+
+---
+
+# team API Reference
+
+> **Source**: `src/thegent/cli/apps/team.py`
+
+Logical stream: Swarm Coordination and Teammates.
+
+---
+
+## team_create
+
+```
+team_create(name: str, agents: list[str], objective: str)
+```
+
+---
+
+## team_crew
+
+```
+team_crew(format: str)
+```
+
+---
+
+## team_delegate
+
+```
+team_delegate(prompt: str, teammate: str)
+```
+
+---
+
+## team_hierarchy
+
+```
+team_hierarchy(format: str)
+```
+
+---
+
+## team_list
+
+```
+team_list(format: str)
+```
+
+---
+
+## team_status
+
+```
+team_status(run_id: str)
+```
+
+---
+
+## teammates_delegate
+
+```
+teammates_delegate(teammate: str, task: str, parent_run_id: str)
+```
+
+---
+
+## teammates_list
+
+---
+
+## teammates_show
+
+```
+teammates_show(req_id: str)
+```
+
+---
+
+## teammates_status
+
+```
+teammates_status(run_id: str)
+```
+
+---

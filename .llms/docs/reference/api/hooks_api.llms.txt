@@ -1,0 +1,13 @@
+# hooks_api
+
+Source: docs/reference/api/hooks_api.md
+
+---
+
+# hooks API Reference
+
+> **Source**: `src/thegent/hooks/__init__.py`
+
+Hook enhancements.
+
+---

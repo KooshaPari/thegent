@@ -230,12 +230,7 @@ class TeamCoordinator:
         if coordination_mode == CoordinationMode.ADAPTIVE:
             # Choose mode based on task complexity
             complexity = self._evaluate_task_complexity(task, context)
-            if complexity >= 0.5:
-                # High complexity -> Hierarchical (more control)
-                target_mode = CoordinationMode.HIERARCHICAL
-            else:
-                # Low complexity -> Collaborative (faster, less overhead)
-                target_mode = CoordinationMode.COLLABORATIVE
+            target_mode = CoordinationMode.HIERARCHICAL if complexity >= 0.5 else CoordinationMode.COLLABORATIVE
 
             _log.info(
                 "Adaptive coordination: task complexity %.2f -> %s",

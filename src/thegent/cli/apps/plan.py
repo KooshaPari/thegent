@@ -1,7 +1,6 @@
 """Logical stream: Task and Dependency Planning."""
 
 from pathlib import Path
-from typing import List, Optional
 
 import typer
 from rich.console import Console
@@ -62,9 +61,9 @@ def plan_work_stream(
     limit: int = typer.Option(20, "--limit", "-l", help="Number of items to show"),
     format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)"),
 ):
-    from thegent.cli.commands.cli import workstream_list_cmd
+    from thegent.cli.commands.cli import plan_progress_cmd
 
-    workstream_list_cmd(limit=limit, format=format)
+    plan_progress_cmd(limit=limit, format=format)
 
 
 @app.command("analyze", help="Analyze planning continuity and PERT risk.")
@@ -120,6 +119,16 @@ def plan_complete(
     plan_complete_cmd(item_id=item_id, agent_id=agent_id, cd=cd)
 
 
+@app.command("verify-workstream", help="Verify WORK_STREAM coordination invariants.")
+def plan_verify_workstream(
+    cd: Path | None = typer.Option(None, "--cd", help="Working directory"),
+    format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)"),
+):
+    from thegent.cli.commands.cli import plan_verify_workstream_cmd
+
+    plan_verify_workstream_cmd(cd=cd, format=format)
+
+
 @app.command("progress", help="Show work stream progress summary.")
 def plan_progress(
     limit: int = typer.Option(10, "--limit", "-l", help="Number of items to show"),
@@ -128,3 +137,61 @@ def plan_progress(
     from thegent.cli.commands.cli import plan_progress_cmd
 
     plan_progress_cmd(limit=limit, format=format)
+
+
+# ---------------------------------------------------------------------------
+# Harness Terminal Status (integrated under plan for unified view)
+# ---------------------------------------------------------------------------
+
+
+@app.command("sessions", help="List all harness sessions across all agent types.")
+def plan_sessions(
+    harness: str | None = typer.Option(None, "--harness", "-h", help="Filter by harness type"),
+    format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)"),
+) -> None:
+    """List sessions from all agent harnesses."""
+    from thegent.cli.commands.impl import harness_interact_impl
+
+    if harness:
+        result = harness_interact_impl(harness=harness, action="list_sessions")
+    else:
+        from thegent.cli.commands.impl import harness_list_actions_impl
+        result = harness_list_actions_impl()
+        console.print("[cyan]Available harnesses:[/cyan] cursor, codex, claude, ante, droid")
+        console.print(f"[cyan]Actions:[/cyan] {result.get('actions', [])}")
+        return
+
+    if format == "json":
+        import json
+        console.print(json.dumps(result, indent=2))
+    else:
+        if result.get("success"):
+            console.print(result.get("stdout", ""))
+        else:
+            console.print(f"[red]Error:[/red] {result.get('error', '')}")
+
+
+@app.command("harness-status", help="Get status of all registered harness hosts.")
+def plan_harness_status(
+    format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)"),
+) -> None:
+    """Get status of all harness hosts."""
+    from thegent.cli.commands.impl import harness_list_actions_impl
+    from thegent.agents.unified_session_index import HarnessType
+
+    status = {
+        "harnesses": [h.value for h in HarnessType],
+        "actions": harness_list_actions_impl().get("actions", []),
+    }
+
+    if format == "json":
+        import json
+        console.print(json.dumps(status, indent=2))
+    else:
+        console.print("[cyan]Registered Harness Types:[/cyan]")
+        for h in status["harnesses"]:
+            console.print(f"  - {h}")
+        console.print("[cyan]Available Actions:[/cyan]")
+        for a in status["actions"]:
+            console.print(f"  - {a}")
+

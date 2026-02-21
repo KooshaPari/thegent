@@ -1,0 +1,152 @@
+# task_api
+
+Source: docs/reference/api/task_api.md
+
+---
+
+# task API Reference
+
+> **Source**: `src/thegent/agents/crew/task.py`
+
+Task data model with dependency support.
+
+---
+
+## Task
+
+Task definition with dependencies.
+
+Tasks can depend on other tasks, forming a DAG that is resolved
+topologically before execution.
+
+### Methods
+
+#### Task.add_dependency
+
+```
+add_dependency(self: Any, task_id: str)
+```
+
+Add a dependency on another task.
+
+---
+
+#### Task.is_ready
+
+```
+is_ready(self: Any, completed_tasks: set[str])
+```
+
+Check if all dependencies are completed.
+
+---
+
+#### Task.mark_completed
+
+```
+mark_completed(self: Any, result: Any)
+```
+
+Mark task as completed.
+
+---
+
+#### Task.mark_failed
+
+```
+mark_failed(self: Any, error: str)
+```
+
+Mark task as failed.
+
+---
+
+#### Task.mark_running
+
+```
+mark_running(self: Any)
+```
+
+Mark task as running.
+
+---
+
+#### Task.remove_dependency
+
+```
+remove_dependency(self: Any, task_id: str)
+```
+
+Remove a dependency.
+
+---
+
+---
+
+## TaskStatus
+
+Task execution status.
+
+**Inherits from**: `StrEnum`
+
+---
+
+## add_dependency
+
+```
+add_dependency(self: Any, task_id: str)
+```
+
+Add a dependency on another task.
+
+---
+
+## is_ready
+
+```
+is_ready(self: Any, completed_tasks: set[str])
+```
+
+Check if all dependencies are completed.
+
+---
+
+## mark_completed
+
+```
+mark_completed(self: Any, result: Any)
+```
+
+Mark task as completed.
+
+---
+
+## mark_failed
+
+```
+mark_failed(self: Any, error: str)
+```
+
+Mark task as failed.
+
+---
+
+## mark_running
+
+```
+mark_running(self: Any)
+```
+
+Mark task as running.
+
+---
+
+## remove_dependency
+
+```
+remove_dependency(self: Any, task_id: str)
+```
+
+Remove a dependency.
+
+---

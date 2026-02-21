@@ -1,12 +1,13 @@
 import json
 import os
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 
 def extract_safari_history(file_path: str, days: int = 2) -> list[dict[str, Any]]:
     """Extract and categorize Safari history from the last N days."""
-    if not os.path.exists(file_path):
+    if not Path(file_path).exists():
         return {}
 
     # Current time in usec (Safari uses usec since 1970)

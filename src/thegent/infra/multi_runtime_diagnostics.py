@@ -5,7 +5,7 @@ polyglot architecture.
 """
 
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -26,14 +26,11 @@ class RuntimeStatus:
     version: str | None = None
     path: str | None = None
     performance_tier: str | None = None  # "optimal", "good", "degraded", "unavailable"
-    issues: list[str] = None
-    recommendations: list[str] = None
+    issues: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
     def __post_init__(self):
-        if self.issues is None:
-            self.issues = []
-        if self.recommendations is None:
-            self.recommendations = []
+        pass
 
 
 def check_pypy() -> RuntimeStatus:
@@ -219,10 +216,7 @@ def check_go() -> RuntimeStatus:
 
     # Check for cliproxyapi-plusplus
     if status.available:
-        cliproxy_paths = [
-            Path("../cliproxyapi-plusplus"),
-            Path("../CLIProxyAPIPlus-fork"),
-        ]
+        cliproxy_paths = [Path("../cliproxyapi-plusplus")]
         found = False
         for path in cliproxy_paths:
             if path.exists() and (path / "cmd" / "server" / "main.go").exists():
@@ -431,7 +425,7 @@ def display_runtime_status(data: dict[str, Any]) -> None:
     table.add_column("Performance", style="magenta")
     table.add_column("Issues", style="red")
 
-    for name, status in statuses.items():
+    for status in statuses.values():
         status_icon = "✓" if status.available else "✗"
         status_text = "Available" if status.available else "Unavailable"
         performance = status.performance_tier or "unknown"

@@ -56,7 +56,7 @@ class FastFileOps:
                     # Copy metadata if requested
                     if preserve_metadata:
                         stat = src_path.stat()
-                        os.chmod(dst_path, stat.st_mode)
+                        dst_path.chmod(stat.st_mode)
                         os.utime(dst_path, (stat.st_atime, stat.st_mtime))
 
                     return
@@ -179,7 +179,7 @@ class FastFileOps:
         path_obj = Path(path)
         path_obj.mkdir(parents=True, exist_ok=True)
         if mode:
-            os.chmod(path_obj, mode)
+            path_obj.chmod(mode)
         return path_obj
 
 

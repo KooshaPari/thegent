@@ -1,0 +1,38 @@
+{
+  "schema_version": 2,
+  "changelog": [
+    {
+      "version": 1,
+      "date": "2026-02-21",
+      "note": "Initial replay fixture manifest for spiral trend band invariants."
+    },
+    {
+      "version": 2,
+      "date": "2026-02-20",
+      "note": "Canonical ordering + digest regeneration for governance fixture pipeline"
+    }
+  ],
+  "cases": [
+    {
+      "file": "green_stable.jsonl",
+      "expected_band": "green",
+      "min_pressure": 0.0,
+      "max_pressure": 0.1,
+      "latest_status": "healthy"
+    },
+    {
+      "file": "red_interrupt.jsonl",
+      "expected_band": "red",
+      "min_pressure": 0.75,
+      "max_pressure": 1.0,
+      "latest_status": "critical_interrupt"
+    },
+    {
+      "file": "yellow_recovery.jsonl",
+      "expected_band": "yellow",
+      "min_pressure": 0.45,
+      "max_pressure": 0.75,
+      "latest_status": "warning"
+    }
+  ]
+}

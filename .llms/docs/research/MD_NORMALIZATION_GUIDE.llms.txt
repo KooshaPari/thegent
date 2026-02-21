@@ -1,0 +1,49 @@
+# MD_NORMALIZATION_GUIDE
+
+Source: docs/research/MD_NORMALIZATION_GUIDE.md
+
+---
+
+# MD Documentation Normalization Guide
+
+> **Status**: Complete | **Date**: 2026-02-17  
+> **Purpose**: Guide for normalizing all MD docs with frontmatter, cross-links, and "See also" sections
+
+---
+
+## Normalization Checklist
+
+### 1. Frontmatter
+
+**Required Format**:
+```
+---
+title: Document Title
+status: Complete | Draft | In Progress
+date: YYYY-MM-DD
+purpose: Brief purpose statement
+---
+
+# Document Title
+```
+
+**Or Alternative** (if no frontmatter):
+```
+# Document Title
+
+> **Status**: Complete | **Date**: YYYY-MM-DD  
+> **Purpose**: Brief purpose statement
+```
+
+### 2. Cross-Links
+
+**Required Sections**:
+- Link to [WORK_STREAM.md](../reference/WORK_STREAM.md) if work items exist
+- Link to [RESEARCH_SEED_FRAGMENT_INVENTORY](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) if fragment/seed
+- Link to [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) if plan-related
+- Link to related research/plan documents
+
+### 3. "See Also" Section
+
+**Required Format**:
+```

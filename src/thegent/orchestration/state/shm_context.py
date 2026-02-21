@@ -6,6 +6,7 @@ import logging
 import mmap
 import os
 import tempfile
+from pathlib import Path
 
 _log = logging.getLogger(__name__)
 
@@ -15,11 +16,12 @@ class ZeroCopyContext:
 
     def __init__(self, size: int = 1024 * 1024) -> None:  # Default 1MB
         self.size = size
-        self.fd = tempfile.NamedTemporaryFile(delete=False)
+        fd_num, temp_path = tempfile.mkstemp()
+        self.fd = os.fdopen(fd_num, "w+b")
         self.fd.write(b"\0" * size)
         self.fd.flush()
         self.mm = mmap.mmap(self.fd.fileno(), size)
-        self.path = self.fd.name
+        self.path = Path(temp_path)
         _log.info("ZeroCopyContext initialized at: %s (Size: %d bytes)", self.path, size)
 
     def write_context(self, data: bytes, offset: int = 0):
@@ -38,8 +40,8 @@ class ZeroCopyContext:
         """Clean up resources."""
         self.mm.close()
         self.fd.close()
-        if os.path.exists(self.path):
-            os.unlink(self.path)
+        if self.path.exists():
+            self.path.unlink()
         _log.info("ZeroCopyContext closed and cleaned up")
 
 

@@ -1,0 +1,11 @@
+# cli-examples
+
+Source: docs/reference/cli-examples.md
+
+---
+
+# CLI Examples
+
+Interactive examples of thegent CLI commands.
+
+---

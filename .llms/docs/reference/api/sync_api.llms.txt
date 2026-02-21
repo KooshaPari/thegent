@@ -1,0 +1,93 @@
+# sync_api
+
+Source: docs/reference/api/sync_api.md
+
+---
+
+# sync API Reference
+
+> **Source**: `src/thegent/cli/apps/sync.py`
+
+Logical stream: System State Synchronization.
+
+---
+
+## sync_all
+
+```
+sync_all(components: Any, force: bool, dry_run: bool, format: str)
+```
+
+---
+
+## sync_catalog
+
+```
+sync_catalog(force: bool)
+```
+
+---
+
+## sync_dag
+
+```
+sync_dag(force: bool)
+```
+
+---
+
+## sync_pull
+
+```
+sync_pull(source: Any, force: bool) -> None
+```
+
+---
+
+## sync_push
+
+```
+sync_push(target: Any, force: bool) -> None
+```
+
+---
+
+## sync_reset
+
+```
+sync_reset(yes: bool) -> None
+```
+
+---
+
+## sync_rules
+
+```
+sync_rules(force: bool)
+```
+
+---
+
+## sync_status
+
+```
+sync_status(output_json: bool) -> None
+```
+
+---
+
+## sync_update
+
+```
+sync_update(components: Any, dry_run: bool, force: bool)
+```
+
+---
+
+## sync_work_stream
+
+```
+sync_work_stream(force: bool)
+```
+
+---

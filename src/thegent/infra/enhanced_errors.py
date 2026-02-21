@@ -26,12 +26,12 @@ class ErrorContext:
     what_happened: str
     why_it_happened: str
     how_to_fix: list[str]
-    related_files: list[Path] = None
-    related_config: dict[str, Any] = None
+    related_files: list[Path] | None = None
+    related_config: dict[str, Any] | None = None
     documentation_link: str | None = None
     command_suggestion: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.related_files is None:
             self.related_files = []
         if self.related_config is None:
@@ -46,7 +46,7 @@ class EnhancedError(Exception):
         message: str,
         context: ErrorContext | None = None,
         cause: Exception | None = None,
-    ):
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.context = context or ErrorContext(
@@ -96,7 +96,7 @@ class ConfigurationError(EnhancedError):
     """Error related to configuration issues."""
 
 
-class RuntimeError(EnhancedError):
+class InfraRuntimeError(EnhancedError):
     """Error related to runtime selection or execution."""
 
 
@@ -156,7 +156,7 @@ def create_config_error(message: str, config_file: Path, suggestion: str | None 
 
 def create_runtime_error(
     message: str, runtime: str, available_runtimes: list[str], suggestion: str | None = None
-) -> RuntimeError:
+) -> InfraRuntimeError:
     """Create a runtime error with context."""
     context = ErrorContext(
         error_type="RuntimeError",
@@ -172,7 +172,7 @@ def create_runtime_error(
         command_suggestion="thegent doctor --runtime",
         documentation_link="docs/architecture/RUNTIME_SELECTION_GUIDE.md",
     )
-    return RuntimeError(message, context=context)
+    return InfraRuntimeError(message, context=context)
 
 
 def create_dependency_error(message: str, dependency: str, install_command: str | None = None) -> DependencyError:
@@ -222,22 +222,56 @@ def create_network_error(message: str, endpoint: str | None = None, suggestion: 
 
 def error_report(error: Exception, include_traceback: bool = True) -> dict[str, Any]:
     """Generate a detailed error report for bug reporting."""
-    report = {
+    report: dict[str, Any] = {
         "error_type": type(error).__name__,
         "error_message": str(error),
         "python_version": sys.version,
         "platform": sys.platform,
     }
 
-    if isinstance(error, EnhancedError):
+    if isinstance(error, EnhancedError) and error.context is not None:
+        context = error.context
         report["context"] = {
-            "what_happened": error.context.what_happened,
-            "why_it_happened": error.context.why_it_happened,
-            "how_to_fix": error.context.how_to_fix,
-            "related_files": [str(f) for f in error.context.related_files],
+            "what_happened": context.what_happened,
+            "why_it_happened": context.why_it_happened,
+            "how_to_fix": context.how_to_fix,
+            "related_files": [str(f) for f in context.related_files] if context.related_files else [],
         }
 
     if include_traceback:
         report["traceback"] = traceback.format_exc()
 
     return report
+
+
+def format_error(exc: Exception) -> str:
+    """Convert common exceptions to actionable, user-friendly error messages.
+
+    # @trace WL-040 WP-4001
+
+    Maps well-known exception types to concise messages with suggestions.
+    For unrecognised exceptions the raw ``str(exc)`` is returned.
+
+    Args:
+        exc: The exception to convert.
+
+    Returns:
+        A human-readable, actionable error string.
+    """
+    if isinstance(exc, FileNotFoundError):
+        path = exc.filename or str(exc)
+        return f"File not found: {path}. Run `thegent doctor --fix` to repair."
+    if isinstance(exc, PermissionError):
+        path = exc.filename or str(exc)
+        return f"Permission denied: {path}. Check file permissions."
+    if isinstance(exc, ConnectionError):
+        # Best-effort extraction of host from error message
+        msg = str(exc)
+        # ConnectionError subclasses often include host/address in the message
+        host = msg.split("[Errno", maxsplit=1)[0].strip().strip("'\"") or "remote host"
+        return f"Cannot connect to {host}. Check network and `thegent status`."
+    if isinstance(exc, KeyError):
+        key = exc.args[0] if exc.args else str(exc)
+        return f"Missing config key: {key}. Run `thegent config wizard` to set up."
+    # Fallback: return the raw message
+    return str(exc)

@@ -112,7 +112,7 @@ class TestApplyParetoRouting:
         with patch(
             "thegent.routing.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE
         ) as mock_select:
-            agent, model, _, _ = self._call(agent="existing-agent")
+            agent, _model, _, _ = self._call(agent="existing-agent")
         assert not mock_select.called
         assert agent == "existing-agent"
 
@@ -124,7 +124,7 @@ class TestApplyParetoRouting:
         with patch(
             "thegent.routing.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE
         ) as mock_select:
-            agent, model, _, _ = self._call(model="some-model")
+            _agent, model, _, _ = self._call(model="some-model")
         assert not mock_select.called
         assert model == "some-model"
 

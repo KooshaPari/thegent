@@ -1,0 +1,41 @@
+# mgmt_manage_api
+
+Source: docs/reference/api/mgmt_manage_api.md
+
+---
+
+# mgmt_manage API Reference
+
+> **Source**: `src/thegent/mgmt_manage.py`
+
+Management commands for agent self-service: ensure proxy, verify Codex+CLIProxy.
+
+---
+
+## ensure_proxy
+
+```
+ensure_proxy(timeout_sec: float)
+```
+
+Ensure MCP + proxy are running. Starts via process-compose if needed.
+
+Returns (success, message).
+
+---
+
+## verify_codex_cliproxy
+
+```
+verify_codex_cliproxy(model: str, prompt: str, timeout_sec: float)
+```
+
+Verify Codex works with CLIProxy adapter.
+
+1. Ensures proxy is up (mcp up if needed)
+2. Runs `codex exec` against proxy
+3. Returns (success, message)
+
+Requires: codex CLI installed (npm i -g @openai/codex).
+
+---

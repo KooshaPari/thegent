@@ -6,7 +6,7 @@ import os
 import platform
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 from opentelemetry import trace

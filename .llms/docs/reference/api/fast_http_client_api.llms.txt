@@ -1,0 +1,187 @@
+# fast_http_client_api
+
+Source: docs/reference/api/fast_http_client_api.md
+
+---
+
+# fast_http_client API Reference
+
+> **Source**: `src/thegent/infra/fast_http_client.py`
+
+## FastHTTPClient
+
+High-performance HTTP client with automatic backend selection and connection pooling.
+
+OPT-004: Connection pooling for provider HTTP clients (40% connection overhead reduction).
+
+Backend priority (fastest first):
+1. curl_cffi (if installed) - 2-3x faster, libcurl-based
+2. httpx (modern, well-maintained) - good balance, supports connection pooling
+
+Connection pooling:
+- httpx: Uses persistent Client with connection pool
+- curl_cffi: Uses persistent session (implicit pooling)
+
+### Methods
+
+#### FastHTTPClient.__init__
+
+```
+__init__(self: Any, impersonate: Any)
+```
+
+Initialize HTTP client with connection pooling.
+
+**Parameters**:
+
+- `impersonate`: Browser to impersonate (curl_cffi only, e.g., "chrome", "safari")
+
+---
+
+#### FastHTTPClient.backend
+
+```
+backend(self: Any)
+```
+
+Get current backend name.
+
+---
+
+#### FastHTTPClient.close
+
+```
+close(self: Any)
+```
+
+Close connection pool.
+
+---
+
+#### FastHTTPClient.get
+
+```
+get(self: Any, url: str)
+```
+
+Perform GET request using connection pool (FR-LIB-001).
+
+---
+
+#### FastHTTPClient.post
+
+```
+post(self: Any, url: str)
+```
+
+Perform POST request using connection pool (FR-LIB-001).
+
+---
+
+#### FastHTTPClient.request
+
+```
+request(self: Any, method: str, url: str)
+```
+
+Perform HTTP request using connection pool and tenacity retries (FR-LIB-001).
+
+---
+
+---
+
+## backend
+
+```
+backend(self: Any)
+```
+
+Get current backend name.
+
+---
+
+## close
+
+```
+close(self: Any)
+```
+
+Close connection pool.
+
+---
+
+## get
+
+```
+get(self: Any, url: str)
+```
+
+Perform GET request using connection pool (FR-LIB-001).
+
+---
+
+## get_http_client
+
+```
+get_http_client(impersonate: Any)
+```
+
+Get global fast HTTP client instance.
+
+**Parameters**:
+
+- `impersonate`: Browser to impersonate (curl_cffi only)
+
+**Returns**: FastHTTPClient instance
+
+---
+
+## http_get
+
+```
+http_get(url: str)
+```
+
+Perform GET request using fastest available backend.
+
+---
+
+## http_post
+
+```
+http_post(url: str)
+```
+
+Perform POST request using fastest available backend.
+
+---
+
+## http_request
+
+```
+http_request(method: str, url: str)
+```
+
+Perform HTTP request using fastest available backend.
+
+---
+
+## post
+
+```
+post(self: Any, url: str)
+```
+
+Perform POST request using connection pool (FR-LIB-001).
+
+---
+
+## request
+
+```
+request(self: Any, method: str, url: str)
+```
+
+Perform HTTP request using connection pool and tenacity retries (FR-LIB-001).
+
+---

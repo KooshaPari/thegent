@@ -1,0 +1,175 @@
+# fast_file_watcher_api
+
+Source: docs/reference/api/fast_file_watcher_api.md
+
+---
+
+# fast_file_watcher API Reference
+
+> **Source**: `src/thegent/infra/fast_file_watcher.py`
+
+## FastFileWatcher
+
+High-performance file watcher with automatic backend selection.
+
+Backend priority (fastest first):
+1. watchfiles (if installed) - 5-10x faster, Rust-based
+2. watchdog (cross-platform fallback) - baseline performance
+
+### Methods
+
+#### FastFileWatcher.__init__
+
+```
+__init__(self: Any, path: Any, recursive: bool)
+```
+
+Initialize file watcher.
+
+**Parameters**:
+
+- `path`: Directory or file to watch
+- `recursive`: Whether to watch recursively
+
+---
+
+#### FastFileWatcher.backend
+
+```
+backend(self: Any)
+```
+
+Get current backend name.
+
+---
+
+#### FastFileWatcher.start
+
+```
+start(self: Any, event_handler: Any)
+```
+
+Start watching (watchdog backend).
+
+**Parameters**:
+
+- `event_handler`: Optional custom event handler
+
+---
+
+#### FastFileWatcher.stop
+
+```
+stop(self: Any)
+```
+
+Stop watching.
+
+---
+
+#### FastFileWatcher.watch
+
+```
+watch(self: Any, callback: Callable[(Any, None)])
+```
+
+Watch for file changes using watchfiles backend.
+
+**Parameters**:
+
+- `callback`: Function to call on changes
+- `**kwargs`: Additional options for watchfiles
+
+---
+
+---
+
+## SimpleHandler
+
+**Inherits from**: `FileSystemEventHandler`
+
+### Methods
+
+#### SimpleHandler.on_any_event
+
+```
+on_any_event(self: Any, event: FileSystemEvent)
+```
+
+---
+
+---
+
+## backend
+
+```
+backend(self: Any)
+```
+
+Get current backend name.
+
+---
+
+## on_any_event
+
+```
+on_any_event(self: Any, event: FileSystemEvent) -> None
+```
+
+---
+
+## start
+
+```
+start(self: Any, event_handler: Any)
+```
+
+Start watching (watchdog backend).
+
+**Parameters**:
+
+- `event_handler`: Optional custom event handler
+
+---
+
+## stop
+
+```
+stop(self: Any)
+```
+
+Stop watching.
+
+---
+
+## watch
+
+```
+watch(self: Any, callback: Callable[(Any, None)])
+```
+
+Watch for file changes using watchfiles backend.
+
+**Parameters**:
+
+- `callback`: Function to call on changes
+- `**kwargs`: Additional options for watchfiles
+
+---
+
+## watch_files
+
+```
+watch_files(path: Any, callback: Callable[(Any, None)], recursive: bool)
+```
+
+Watch files using fastest available backend (watchfiles preferred).
+
+**Parameters**:
+
+- `path`: Directory or file to watch
+- `callback`: Function to call on changes
+- `recursive`: Whether to watch recursively
+- `**kwargs`: Additional options
+
+---

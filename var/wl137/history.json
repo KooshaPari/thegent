@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "runs": [
+    {
+      "timestamp_utc": "2026-02-21T02:36:01.674455+00:00",
+      "targets": {
+        "thegent": {
+          "path": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+          "total_code": 430399,
+          "line_threshold_high": 500,
+          "line_threshold_critical": 1000,
+          "code_by_language": {
+            "Autoconf": 5,
+            "BASH": 65,
+            "CSS": 60,
+            "Forge Config": 81,
+            "Go": 11,
+            "HCL": 42,
+            "HTML": 509,
+            "INI": 62,
+            "JavaScript": 117,
+            "JSON": 10606,
+            "Makefile": 39,
+            "Markdown": 0,
+            "Mojo": 6,
+            "Nix": 258,
+            "PHP": 51,
+            "PowerShell": 204,
+            "Python": 276599,
+            "Ruby": 20,
+            "Rust": 29529,
+            "Shell": 8652,
+            "Plain Text": 0,
+            "TOML": 1513,
+            "TypeScript": 15560,
+            "Vue": 12,
+            "XML": 143,
+            "YAML": 4979,
+            "Zig": 161,
+            "Zsh": 805
+          },
+          "files_scanned": 3247,
+          "files_over_high": 103,
+          "files_over_critical": 31,
+          "top_files": [
+            {
+              "path": "src/thegent/cli/commands/cli.py",
+              "lines": 6726
+            },
+            {
+              "path": "src/thegent/cli/commands/impl.py",
+              "lines": 5981
+            },
+            {
+              "path": "tests/test_e2e_cli.py",
+              "lines": 5278
+            },
+            {
+              "path": "src/thegent/mcp/server.py",
+              "lines": 4214
+            },
+            {
+              "path": "crates/thegent-hooks/src/main.rs",
+              "lines": 3999
+            },
+            {
+              "path": "hooks/hook-dispatcher/src/main.rs",
+              "lines": 2752
+            },
+            {
+              "path": "src/thegent/execution.py",
+              "lines": 2260
+            },
+            {
+              "path": "hooks/governance-gates.sh",
+              "lines": 2247
+            },
+            {
+              "path": "src/thegent/doctor.py",
+              "lines": 2161
+            },
+            {
+              "path": "tests/test_unit_cli_impl_coverage_d.py",
+              "lines": 2108
+            }
+          ]
+        },
+        "trace": {
+          "path": "/Users/kooshapari/kush/trace",
+          "total_code": 3277,
+          "line_threshold_high": 500,
+          "line_threshold_critical": 1000,
+          "code_by_language": {
+            "JSON": 11,
+            "Markdown": 0,
+            "Shell": 1236,
+            "YAML": 1385
+          },
+          "files_scanned": 9,
+          "files_over_high": 1,
+          "files_over_critical": 0,
+          "top_files": [
+            {
+              "path": "scripts/quality/quality-gate.sh",
+              "lines": 591
+            },
+            {
+              "path": "scripts/agent-orchestrator.sh",
+              "lines": 403
+            },
+            {
+              "path": "hooks/suppress-isolated-classes.sh",
+              "lines": 101
+            },
+            {
+              "path": "hooks/suppress-direct-http.sh",
+              "lines": 93
+            },
+            {
+              "path": "hooks/suppress-print-statements.sh",
+              "lines": 91
+            },
+            {
+              "path": "hooks/suppress-hardcoded-strings.sh",
+              "lines": 66
+            },
+            {
+              "path": "hooks/suppress-custom-retry.sh",
+              "lines": 63
+            },
+            {
+              "path": "hooks/suppress-v2-files.sh",
+              "lines": 41
+            },
+            {
+              "path": ".claude/hooks/pre-validate-bash.sh",
+              "lines": 16
+            }
+          ]
+        }
+      },
+      "alerts": []
+    }
+  ]
+}

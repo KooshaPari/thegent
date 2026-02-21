@@ -6,7 +6,7 @@ from typing import Any
 class LibraryANSIResearch:
     """Research for rich migration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize ANSI research."""
         self.migrated_files: list[str] = []
 

@@ -47,7 +47,7 @@ def main() -> int:
     # Preflight: cliproxy build/config parity with task flow.
     uv_bin = _resolve_uv_bin()
 
-    if (repo_root.parent / "CLIProxyAPIPlus-fork").exists():
+    if (repo_root.parent / "cliproxyapi-plusplus").exists():
         _run_checked(["task", "cliproxy:build"], repo_root)
     _run_checked([uv_bin, "run", "thegent", "cliproxy", "ensure-config"], repo_root)
 

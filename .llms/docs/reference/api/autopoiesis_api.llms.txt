@@ -1,0 +1,80 @@
+# autopoiesis_api
+
+Source: docs/reference/api/autopoiesis_api.md
+
+---
+
+# autopoiesis API Reference
+
+> **Source**: `src/thegent/agents/autopoiesis.py`
+
+WP-37001: Self-Authoring Agent Architectures (Autopoiesis).
+
+Enables thegent to design, code, and deploy entire new agent personas autonomously.
+Uses recursive synthesis to evolve the system's own architecture.
+
+---
+
+## AgentPersonaSpec
+
+Specification for a new agent persona to be authored.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## AutopoiesisManager
+
+Orchestrates the self-authoring of agent architectures.
+
+### Methods
+
+#### AutopoiesisManager.__init__
+
+```
+__init__(self: Any, run_id: str)
+```
+
+---
+
+#### AutopoiesisManager.author_persona
+
+```
+author_persona(self: Any, spec: AgentPersonaSpec)
+```
+
+Autonomously author a new agent persona based on a purpose spec.
+
+---
+
+#### AutopoiesisManager.deploy_persona
+
+```
+deploy_persona(self: Any, synthesis: SynthesisResult)
+```
+
+Deploy the synthesized persona into the live registry.
+
+---
+
+---
+
+## author_persona
+
+```
+author_persona(self: Any, spec: AgentPersonaSpec)
+```
+
+Autonomously author a new agent persona based on a purpose spec.
+
+---
+
+## deploy_persona
+
+```
+deploy_persona(self: Any, synthesis: SynthesisResult)
+```
+
+Deploy the synthesized persona into the live registry.
+
+---

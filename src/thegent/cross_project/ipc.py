@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class CrossProjectIPC:
     """File-based IPC for cross-project agents."""
 
-    def __init__(self, ipc_dir: Path | None = None):
+    def __init__(self, ipc_dir: Path | None = None) -> None:
         """Initialize cross-project IPC.
 
         Args:

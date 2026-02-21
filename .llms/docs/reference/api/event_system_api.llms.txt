@@ -1,0 +1,91 @@
+# event_system_api
+
+Source: docs/reference/api/event_system_api.md
+
+---
+
+# event_system API Reference
+
+> **Source**: `src/thegent/events/event_system.py`
+
+Event system for thegent.
+
+---
+
+## EventSystem
+
+Event system for pub/sub.
+
+### Methods
+
+#### EventSystem.__init__
+
+```
+__init__(self: Any)
+```
+
+Initialize event system.
+
+---
+
+#### EventSystem.emit
+
+```
+emit(self: Any, event_type: str, data: Any)
+```
+
+Emit an event.
+
+**Parameters**:
+
+- `event_type`: Event type
+- `data`: Event data
+
+---
+
+#### EventSystem.subscribe
+
+```
+subscribe(self: Any, event_type: str, handler: Callable)
+```
+
+Subscribe to event type.
+
+**Parameters**:
+
+- `event_type`: Event type
+- `handler`: Handler function
+
+---
+
+---
+
+## emit
+
+```
+emit(self: Any, event_type: str, data: Any)
+```
+
+Emit an event.
+
+**Parameters**:
+
+- `event_type`: Event type
+- `data`: Event data
+
+---
+
+## subscribe
+
+```
+subscribe(self: Any, event_type: str, handler: Callable)
+```
+
+Subscribe to event type.
+
+**Parameters**:
+
+- `event_type`: Event type
+- `handler`: Handler function
+
+---

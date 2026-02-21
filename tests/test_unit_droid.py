@@ -119,7 +119,7 @@ class TestDroidRunner:
         assert "Droid not found" in result.stderr
         assert result.timed_out is False
 
-    @patch("thegent.agents.droid.subprocess.run")
+    @patch("thegent.agents.droid.run_subprocess_optimized")
     def test_run_success(self, mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-005
         runner = self._make_runner(tmp_path)
@@ -137,7 +137,7 @@ class TestDroidRunner:
         assert result.stdout == "task completed"
         mock_run.assert_called_once()
 
-    @patch("thegent.agents.droid.subprocess.run")
+    @patch("thegent.agents.droid.run_subprocess_optimized")
     def test_run_write_mode_sets_auto_low(self, mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-006
         runner = self._make_runner(tmp_path)
@@ -151,7 +151,7 @@ class TestDroidRunner:
         assert "--auto" in cmd
         assert "low" in cmd
 
-    @patch("thegent.agents.droid.subprocess.run")
+    @patch("thegent.agents.droid.run_subprocess_optimized")
     def test_run_full_mode_sets_auto_high(self, mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-006
         runner = self._make_runner(tmp_path)
@@ -165,7 +165,28 @@ class TestDroidRunner:
         assert "--auto" in cmd
         assert "high" in cmd
 
-    @patch("thegent.agents.droid.subprocess.run", side_effect=FileNotFoundError)
+    @patch("thegent.agents.droid.run_subprocess_optimized")
+    def test_run_minimax_forces_stream_output_format(self, mock_run: MagicMock, tmp_path: Path) -> None:
+        # @trace FR-DRD-006
+        droids_dir = tmp_path / "droids"
+        droids_dir.mkdir()
+        runner = DroidRunner(
+            droid_name="test-droid",
+            droids_dir=droids_dir,
+            droid_cmd="droid",
+            model="custom:minimax-m2.5",
+        )
+        droid_file = runner.droids_dir / "test-droid.md"
+        droid_file.write_text("# Droid")
+
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        runner.run(prompt="test", cwd=tmp_path, mode="full", timeout=30, use_stream=False)
+
+        cmd = mock_run.call_args[0][0]
+        assert "--output-format" in cmd
+        assert "stream-json" in cmd
+
+    @patch("thegent.agents.droid.run_subprocess_optimized", side_effect=FileNotFoundError)
     def test_run_missing_binary(self, _mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-007
         runner = self._make_runner(tmp_path)
@@ -177,7 +198,7 @@ class TestDroidRunner:
         assert "droid CLI not found" in result.stderr
 
     @patch(
-        "thegent.agents.droid.subprocess.run",
+        "thegent.agents.droid.run_subprocess_optimized",
         side_effect=subprocess.TimeoutExpired(cmd="droid", timeout=30),
     )
     def test_run_timeout(self, _mock_run: MagicMock, tmp_path: Path) -> None:
@@ -191,7 +212,7 @@ class TestDroidRunner:
         assert result.timed_out is True
         assert "timed out" in result.stderr
 
-    @patch("thegent.agents.droid.subprocess.run")
+    @patch("thegent.agents.droid.run_subprocess_optimized")
     def test_run_strips_ansi_from_output(self, mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-009
         runner = self._make_runner(tmp_path)
@@ -242,7 +263,7 @@ class TestCodexRunner:
         assert result.exit_code == 1
         assert "Droid not found" in result.stderr
 
-    @patch("thegent.agents.droid.subprocess.run")
+    @patch("thegent.agents.droid.run_subprocess_optimized")
     def test_run_success_sends_prompt_via_stdin(self, mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-012
         runner = self._make_runner(tmp_path)
@@ -258,7 +279,7 @@ class TestCodexRunner:
         assert "# Codex Droid" in call_kwargs["input"]
         assert "do it" in call_kwargs["input"]
 
-    @patch("thegent.agents.droid.subprocess.run")
+    @patch("thegent.agents.droid.run_subprocess_optimized")
     def test_run_write_mode_sets_sandbox(self, mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-013
         runner = self._make_runner(tmp_path)
@@ -272,7 +293,7 @@ class TestCodexRunner:
         assert "--sandbox" in cmd
         assert "workspace-write" in cmd
 
-    @patch("thegent.agents.droid.subprocess.run")
+    @patch("thegent.agents.droid.run_subprocess_optimized")
     def test_run_full_mode_sets_full_auto(self, mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-013
         runner = self._make_runner(tmp_path)
@@ -285,7 +306,7 @@ class TestCodexRunner:
         cmd = mock_run.call_args[0][0]
         assert "--full-auto" in cmd
 
-    @patch("thegent.agents.droid.subprocess.run", side_effect=FileNotFoundError)
+    @patch("thegent.agents.droid.run_subprocess_optimized", side_effect=FileNotFoundError)
     def test_run_missing_codex_binary(self, _mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-014
         runner = self._make_runner(tmp_path)
@@ -297,7 +318,7 @@ class TestCodexRunner:
         assert "Codex CLI not found" in result.stderr
 
     @patch(
-        "thegent.agents.droid.subprocess.run",
+        "thegent.agents.droid.run_subprocess_optimized",
         side_effect=subprocess.TimeoutExpired(cmd="codex", timeout=60),
     )
     def test_run_timeout(self, _mock_run: MagicMock, tmp_path: Path) -> None:
@@ -357,7 +378,7 @@ class TestCustomCliRunner:
         assert result.exit_code == 1
         assert "Droid not found" in result.stderr
 
-    @patch("thegent.agents.droid.subprocess.run")
+    @patch("thegent.agents.droid.run_subprocess_optimized")
     def test_run_success(self, mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-018
         runner = self._make_runner(tmp_path)
@@ -369,7 +390,7 @@ class TestCustomCliRunner:
         assert result.exit_code == 0
         assert result.stdout == "output"
 
-    @patch("thegent.agents.droid.subprocess.run", side_effect=FileNotFoundError)
+    @patch("thegent.agents.droid.run_subprocess_optimized", side_effect=FileNotFoundError)
     def test_run_missing_custom_binary(self, _mock_run: MagicMock, tmp_path: Path) -> None:
         # @trace FR-DRD-019
         runner = self._make_runner(tmp_path)
@@ -381,7 +402,7 @@ class TestCustomCliRunner:
         assert "Custom CLI not found" in result.stderr
 
     @patch(
-        "thegent.agents.droid.subprocess.run",
+        "thegent.agents.droid.run_subprocess_optimized",
         side_effect=subprocess.TimeoutExpired(cmd="mycli", timeout=30),
     )
     def test_run_timeout(self, _mock_run: MagicMock, tmp_path: Path) -> None:

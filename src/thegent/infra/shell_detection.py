@@ -73,6 +73,6 @@ def get_fast_command_prefix(shell_type: ShellType) -> list[str]:
     exe = get_shell_executable(shell_type)
     if shell_type == ShellType.CMD:
         return [exe, "/c"]
-    if shell_type == ShellType.DASH or shell_type == ShellType.BASH or shell_type == ShellType.ZSH:
+    if shell_type in (ShellType.DASH, ShellType.BASH, ShellType.ZSH):
         return [exe, "-c"]
     return [exe, "-c"]  # Default fallback

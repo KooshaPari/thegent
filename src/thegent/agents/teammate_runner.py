@@ -27,7 +27,6 @@ class TeammateRunner(AgentRunner):
         # Discover teammate metadata
         mgr = TeammateManager(self._settings.cache_dir / "teammates.json")
         personas = mgr.list_personas()
-        print(f"DEBUG: Available personas: {[p.id for p in personas]}")
         self.persona = next((p for p in personas if p.id == teammate_id), None)
 
         if not self.persona:

@@ -17,8 +17,7 @@ from __future__ import annotations
 
 import json
 import subprocess
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -29,6 +28,9 @@ from thegent.native.discovery_native import (
     _fallback_sessions,
     _fallback_tools,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 pytestmark = pytest.mark.unit
 

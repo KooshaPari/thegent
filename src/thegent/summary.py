@@ -69,10 +69,7 @@ def _parse_log_entry(line: str, start_dt: datetime, end_dt: datetime) -> dict[st
             ts_str = data.get("timestamp")
             if ts_str:
                 # handle various timestamp formats
-                if ts_str.endswith("Z"):
-                    ts = datetime.fromisoformat(ts_str)
-                else:
-                    ts = datetime.fromisoformat(ts_str)
+                ts = datetime.fromisoformat(ts_str)
 
                 if ts.tzinfo is None:
                     ts = ts.replace(tzinfo=UTC)

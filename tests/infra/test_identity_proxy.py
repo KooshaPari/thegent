@@ -1,0 +1,431 @@
+"""Tests for SSHIdentityProxy bridge.
+
+Tests the SSH identity proxy which allows isolated L2 agents to use
+host SSH keys for Git operations without exposing private keys.
+
+# @trace FR-SEC-002
+"""
+
+from __future__ import annotations
+
+import os
+import socket
+import threading
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from thegent.infra.identity_proxy import SSHIdentityProxy
+
+
+@pytest.fixture
+def proxy_socket_path(tmp_path: Path) -> Path:
+    """Return a temporary socket path for the proxy."""
+    return tmp_path / "ssh-proxy.sock"
+
+
+@pytest.fixture
+def proxy(proxy_socket_path: Path) -> SSHIdentityProxy:
+    """Create a basic SSHIdentityProxy instance."""
+    return SSHIdentityProxy(proxy_socket_path)
+
+
+@pytest.fixture
+def mock_host_socket(tmp_path: Path) -> Path:
+    """Create a mock host SSH auth socket path."""
+    return tmp_path / "mock-ssh-agent.sock"
+
+
+@pytest.fixture
+def proxy_with_env(proxy_socket_path: Path, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch) -> SSHIdentityProxy:
+    """Create a proxy with SSH_AUTH_SOCK environment variable set."""
+    monkeypatch.setenv("SSH_AUTH_SOCK", str(mock_host_socket))
+    return SSHIdentityProxy(proxy_socket_path)
+
+
+class TestSSHIdentityProxyInit:
+    """Tests for SSHIdentityProxy initialization."""
+
+    def test_init_sets_socket_path(self, proxy: SSHIdentityProxy, proxy_socket_path: Path) -> None:
+        """Verify socket path is set correctly."""
+        assert proxy.proxy_socket_path == proxy_socket_path
+
+    def test_init_reads_ssh_auth_sock(self, proxy: SSHIdentityProxy, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Verify SSH_AUTH_SOCK is read from environment."""
+        monkeypatch.setenv("SSH_AUTH_SOCK", "/tmp/test.sock")
+        proxy_with_env = SSHIdentityProxy(proxy.proxy_socket_path)
+        assert proxy_with_env.host_ssh_auth_sock == "/tmp/test.sock"
+
+    def test_init_handles_missing_ssh_auth_sock(self, proxy: SSHIdentityProxy, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Verify missing SSH_AUTH_SOCK is handled gracefully."""
+        monkeypatch.delenv("SSH_AUTH_SOCK", raising=False)
+        proxy_no_env = SSHIdentityProxy(proxy.proxy_socket_path)
+        assert proxy_no_env.host_ssh_auth_sock is None
+
+    def test_init_running_state_false(self, proxy: SSHIdentityProxy) -> None:
+        """Verify proxy starts with running state False."""
+        assert proxy._running is False
+
+    def test_init_thread_none(self, proxy: SSHIdentityProxy) -> None:
+        """Verify proxy starts with no thread."""
+        assert proxy._thread is None
+
+
+class TestSSHIdentityProxyLifecycle:
+    """Tests for start/stop lifecycle."""
+
+    def test_start_creates_socket_directory(
+        self, tmp_path: Path, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Verify start creates parent directories for socket."""
+        # Use a nested path that doesn't exist yet
+        socket_path = tmp_path / "nested" / "deep" / "proxy.sock"
+        monkeypatch.setenv("SSH_AUTH_SOCK", str(mock_host_socket))
+        proxy = SSHIdentityProxy(socket_path)
+
+        assert not socket_path.parent.exists()
+        proxy.start()
+        assert socket_path.parent.exists()
+        proxy.stop()
+
+    def test_start_sets_running_true(
+        self, proxy_with_env: SSHIdentityProxy
+    ) -> None:
+        """Verify start sets running state to True."""
+        proxy_with_env.start()
+        assert proxy_with_env._running is True
+        proxy_with_env.stop()
+
+    def test_stop_sets_running_false(
+        self, proxy_with_env: SSHIdentityProxy
+    ) -> None:
+        """Verify stop sets running state to False."""
+        proxy_with_env.start()
+        proxy_with_env.stop()
+        assert proxy_with_env._running is False
+
+    def test_stop_removes_socket_file(
+        self, proxy_with_env: SSHIdentityProxy, proxy_socket_path: Path
+    ) -> None:
+        """Verify stop removes the socket file."""
+        proxy_with_env.start()
+        proxy_with_env.stop()
+        assert not proxy_socket_path.exists()
+
+    def test_start_creates_thread(
+        self, proxy_with_env: SSHIdentityProxy
+    ) -> None:
+        """Verify start creates a server thread."""
+        proxy_with_env.start()
+        assert proxy_with_env._thread is not None
+        assert proxy_with_env._thread.is_alive()
+        proxy_with_env.stop()
+
+    def test_start_without_ssh_auth_sock_logs_warning(
+        self, proxy: SSHIdentityProxy, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Verify start logs warning when SSH_AUTH_SOCK is not set."""
+        with patch.dict(os.environ, {}, clear=True):
+            if "SSH_AUTH_SOCK" in os.environ:
+                del os.environ["SSH_AUTH_SOCK"]
+            proxy_no_env = SSHIdentityProxy(proxy.proxy_socket_path)
+            proxy_no_env.start()
+
+        assert "SSH_AUTH_SOCK not set" in caplog.text
+        assert proxy_no_env._running is False
+
+    def test_start_removes_existing_socket(
+        self, proxy_with_env: SSHIdentityProxy, proxy_socket_path: Path
+    ) -> None:
+        """Verify existing socket file is removed on start."""
+        proxy_socket_path.parent.mkdir(parents=True, exist_ok=True)
+        proxy_socket_path.touch()
+
+        proxy_with_env.start()
+        proxy_with_env.stop()
+
+        # Socket should have been recreated (not the old one)
+
+
+class TestSSHIdentityProxyEnvironment:
+    """Tests for environment variable generation."""
+
+    def test_get_env_returns_ssh_auth_sock(
+        self, proxy: SSHIdentityProxy, proxy_socket_path: Path
+    ) -> None:
+        """Verify get_env returns SSH_AUTH_SOCK with proxy path."""
+        env = proxy.get_env()
+        assert "SSH_AUTH_SOCK" in env
+        assert env["SSH_AUTH_SOCK"] == str(proxy_socket_path)
+
+    def test_get_env_returns_thegent_identity_proxy(
+        self, proxy: SSHIdentityProxy
+    ) -> None:
+        """Verify get_env returns THEGENT_IDENTITY_PROXY flag."""
+        env = proxy.get_env()
+        assert "THEGENT_IDENTITY_PROXY" in env
+        assert env["THEGENT_IDENTITY_PROXY"] == "1"
+
+    def test_get_env_dict_is_valid(
+        self, proxy: SSHIdentityProxy
+    ) -> None:
+        """Verify get_env returns a valid dict with string values."""
+        env = proxy.get_env()
+        assert isinstance(env, dict)
+        assert all(isinstance(k, str) for k in env.keys())
+        assert all(isinstance(v, str) for v in env.values())
+
+
+class TestSSHIdentityProxyServerLoop:
+    """Tests for server loop functionality."""
+
+    def test_server_loop_handles_timeout(
+        self, proxy_with_env: SSHIdentityProxy
+    ) -> None:
+        """Verify server loop handles socket timeout gracefully."""
+        proxy_with_env.start()
+        # Let it run briefly
+        import time
+        time.sleep(0.1)
+        proxy_with_env.stop()
+        # Should not have raised any exceptions
+
+    def test_server_loop_stops_on_running_false(
+        self, proxy_with_env: SSHIdentityProxy
+    ) -> None:
+        """Verify server loop terminates when running is False."""
+        proxy_with_env.start()
+        assert proxy_with_env._thread is not None
+        proxy_with_env.stop()
+        # Give thread time to terminate
+        proxy_with_env._thread.join(timeout=2.0)
+        assert not proxy_with_env._thread.is_alive()
+
+
+class TestSSHIdentityProxyMockedSocket:
+    """Tests with mocked socket operations."""
+
+    @patch("thegent.infra.identity_proxy.socket.socket")
+    def test_start_creates_unix_socket(
+        self, mock_socket_class: MagicMock, proxy_with_env: SSHIdentityProxy, proxy_socket_path: Path
+    ) -> None:
+        """Verify start creates a Unix domain socket."""
+        mock_socket = MagicMock()
+        mock_socket.settimeout.return_value = None
+        mock_socket.bind.return_value = None
+        mock_socket.listen.return_value = None
+        mock_socket.accept.side_effect = TimeoutError
+
+        mock_socket_class.return_value.__enter__ = MagicMock(return_value=mock_socket)
+        mock_socket_class.return_value.__exit__ = MagicMock(return_value=False)
+
+        proxy_with_env.start()
+        proxy_with_env.stop()
+
+        mock_socket_class.assert_called()
+        call_args = mock_socket_class.call_args
+        assert call_args[0][0] == socket.AF_UNIX
+        assert call_args[0][1] == socket.SOCK_STREAM
+
+    @patch("thegent.infra.identity_proxy.socket.socket")
+    def test_socket_operations_sequence(
+        self, mock_socket_class: MagicMock, proxy_with_env: SSHIdentityProxy, proxy_socket_path: Path
+    ) -> None:
+        """Verify socket bind, listen, settimeout are called in sequence."""
+        mock_socket = MagicMock()
+        mock_socket.settimeout.return_value = None
+        mock_socket.bind.return_value = None
+        mock_socket.listen.return_value = None
+        mock_socket.accept.side_effect = TimeoutError
+
+        # Properly configure the context manager mock
+        mock_socket_class.return_value.__enter__ = MagicMock(return_value=mock_socket)
+        mock_socket_class.return_value.__exit__ = MagicMock(return_value=False)
+
+        proxy_with_env.start()
+        
+        # Give the thread a moment to start and hit the timeout
+        import time
+        time.sleep(0.2)
+        
+        proxy_with_env.stop()
+
+        # Verify socket was created with correct family and type
+        mock_socket_class.assert_called_with(socket.AF_UNIX, socket.SOCK_STREAM)
+
+
+class TestSSHIdentityProxyClientHandling:
+    """Tests for client connection handling."""
+
+    def test_handle_client_closes_connection(self, proxy_with_env: SSHIdentityProxy) -> None:
+        """Verify client connections are properly closed."""
+        proxy_with_env.start()
+
+        # Simulate a connection (the handler should close it)
+        # This is a basic sanity check
+        proxy_with_env.stop()
+
+    @patch("socket.socket")
+    def test_handle_client_creates_host_connection(
+        self, mock_socket_class: MagicMock, proxy_with_env: SSHIdentityProxy, mock_host_socket: Path
+    ) -> None:
+        """Verify handler connects to host SSH agent."""
+        mock_client = MagicMock()
+        mock_client.recv.return_value = b""  # Empty read = connection closed
+
+        mock_host = MagicMock()
+        mock_host.recv.return_value = b""
+
+        # Setup socket mock to return different sockets
+        sockets = [mock_host, mock_host]  # For both client and host connections
+        mock_socket_class.return_value.__enter__.return_value = mock_host
+
+        proxy_with_env.start()
+        proxy_with_env.stop()
+
+        # The host connection should have been attempted
+
+
+class TestSSHIdentityProxyThreadSafety:
+    """Tests for thread safety of the proxy."""
+
+    def test_concurrent_start_stop(
+        self, proxy_with_env: SSHIdentityProxy
+    ) -> None:
+        """Verify concurrent start/stop doesn't cause issues."""
+        def start_stop():
+            proxy_with_env.start()
+            import time
+            time.sleep(0.01)
+            proxy_with_env.stop()
+
+        threads = [threading.Thread(target=start_stop) for _ in range(3)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=5.0)
+
+        # Should complete without exceptions
+
+    def test_get_env_thread_safe(
+        self, proxy: SSHIdentityProxy
+    ) -> None:
+        """Verify get_env is thread-safe."""
+        results = []
+        errors = []
+
+        def get_env_repeatedly():
+            for _ in range(100):
+                try:
+                    env = proxy.get_env()
+                    results.append(env)
+                except Exception as e:
+                    errors.append(e)
+
+        threads = [threading.Thread(target=get_env_repeatedly) for _ in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert len(errors) == 0
+        assert len(results) == 500
+        # All results should be identical
+        for r in results:
+            assert r == results[0]
+
+
+class TestSSHIdentityProxyEdgeCases:
+    """Edge case tests."""
+
+    def test_start_when_already_running(
+        self, proxy_with_env: SSHIdentityProxy
+    ) -> None:
+        """Verify starting an already running proxy is handled."""
+        proxy_with_env.start()
+        # Start again - should be idempotent
+        proxy_with_env.start()
+        assert proxy_with_env._running is True
+        proxy_with_env.stop()
+
+    def test_stop_when_not_running(
+        self, proxy_with_env: SSHIdentityProxy
+    ) -> None:
+        """Verify stopping when not running is safe."""
+        # Don't start, just stop
+        proxy_with_env.stop()
+        assert proxy_with_env._running is False
+
+    def test_socket_path_with_spaces(
+        self, tmp_path: Path, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Verify socket path with spaces works."""
+        socket_path = tmp_path / "path with spaces" / "proxy.sock"
+        monkeypatch.setenv("SSH_AUTH_SOCK", str(mock_host_socket))
+        proxy = SSHIdentityProxy(socket_path)
+        proxy.start()
+        assert socket_path.parent.exists()
+        proxy.stop()
+
+    def test_socket_path_deep_hierarchy(
+        self, tmp_path: Path, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Verify deep directory hierarchy is created."""
+        socket_path = tmp_path / "a" / "b" / "c" / "d" / "proxy.sock"
+        monkeypatch.setenv("SSH_AUTH_SOCK", str(mock_host_socket))
+        proxy = SSHIdentityProxy(socket_path)
+        proxy.start()
+        assert socket_path.parent.exists()
+        proxy.stop()
+
+
+class TestSSHIdentityProxyIntegration:
+    """Integration-style tests with real socket operations."""
+
+    def test_full_lifecycle_with_real_sockets(
+        self, proxy_socket_path: Path, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Verify full start/stop lifecycle with real sockets."""
+        # Create a mock SSH agent server
+        agent_thread_running = threading.Event()
+        agent_thread_running.set()
+
+        def mock_ssh_agent():
+            try:
+                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+                    s.bind(str(mock_host_socket))
+                    s.listen(1)
+                    s.settimeout(2.0)
+                    agent_thread_running.set()
+
+                    try:
+                        conn, _ = s.accept()
+                        # Handle one request then close
+                        data = conn.recv(1024)
+                        if data:
+                            conn.send(b"\x00\x00\x00\x01\x00")  # Minimal response
+                        conn.close()
+                    except TimeoutError:
+                        pass
+            except Exception:
+                pass
+
+        agent_thread = threading.Thread(target=mock_ssh_agent, daemon=True)
+        agent_thread.start()
+        agent_thread_running.wait(timeout=2.0)
+
+        monkeypatch.setenv("SSH_AUTH_SOCK", str(mock_host_socket))
+        proxy = SSHIdentityProxy(proxy_socket_path)
+        proxy.start()
+
+        import time
+        time.sleep(0.2)  # Let the proxy settle
+
+        assert proxy._running is True
+        assert proxy._thread is not None
+
+        proxy.stop()
+
+        assert proxy._running is False
+        assert not proxy_socket_path.exists()

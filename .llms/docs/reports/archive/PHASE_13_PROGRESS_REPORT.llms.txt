@@ -1,0 +1,44 @@
+# PHASE_13_PROGRESS_REPORT
+
+Source: docs/reports/archive/PHASE_13_PROGRESS_REPORT.md
+
+---
+
+# Phase 13: Policy Federation Progress Report
+
+## 1. Overview
+The basic foundation for Phase 13 (Policy Federation) has been implemented, including the namespace model, resolution hierarchy, jurisdiction mapping, and conflict arbitration.
+
+## 2. Completed Work Packages
+
+| ID | Task | Status | Details |
+|----|------|--------|---------|
+| WP-13001 | Namespace Model | ✓ | `PolicyNamespace` and resolution hierarchy implemented. |
+| WP-13002 | Jurisdiction Mapping | ✓ | Region to profile mapping (EU-AI-ACT, US-SEC) with constraint overlays. |
+| WP-13003 | Consent Relay | ✓ | Provenance-tracked approval handoff between namespaces. |
+| WP-13004 | Conflict Arbitration | ✓ | "Most restrictive wins" arbitration strategy. |
+| WP-13005 | Federation Health | ✓ | Discovery and health status reporting. |
+| WP-13006 | CLI Registration | ✓ | `thegent govern federation list/status` commands added. |
+
+## 3. Technical Artifacts
+- **Core Logic**: `src/thegent/governance/federation.py`
+- **Policy Engine Integration**: `src/thegent/contracts/policy.py`
+- **CLI Commands**: `src/thegent/main.py`
+- **Tests**: `tests/test_unit_governance_federation.py` (6 tests passing)
+- **Documentation**: 
+  - `docs/research/phase13-policy-federation-surface-map.md`
+  - `docs/research/phase13-tenant-boundary-test-matrix.md`
+  - `docs/research/phase13-cost-sensitivity-experiment-plan.md`
+  - `docs/research/phase13-compliance-profile-mapping.md`
+  - `docs/research/ADR-013-POLICY-FEDERATION.md`
+
+## 4. Next Steps
+- Implement `WP-13007`: OPA/OPAL integration for federated policy distribution.
+- Implement `WP-13008`: Cross-tenant usage limit aggregation.
+- Expand `thegent govern federation join/leave` CLI commands.
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

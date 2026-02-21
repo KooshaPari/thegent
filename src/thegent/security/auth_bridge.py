@@ -52,7 +52,7 @@ class AuthBridge:
                 return None
             return resp.json().get("access_token")
 
-    async def get_user_info(self, access_token: str) -> dict[str, Any | None]:
+    async def get_user_info(self, access_token: str) -> dict[str, Any | None] | None:
         """Retrieve user info from OIDC provider."""
         if not self.config:
             return None

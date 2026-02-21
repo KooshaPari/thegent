@@ -1,0 +1,25 @@
+# black_box_proxy_api
+
+Source: docs/reference/api/black_box_proxy_api.md
+
+---
+
+# black_box_proxy API Reference
+
+> **Source**: `src/thegent/agents/black_box_proxy.py`
+
+## BlackBoxProxy
+
+Universal proxy for external agents.
+
+### Methods
+
+#### BlackBoxProxy.__init__
+
+```
+__init__(self: Any, agent_cmd: list[str], policy_enforcer: Any)
+```
+
+---
+
+---

@@ -81,6 +81,11 @@ def _load_ssh_user_from_settings() -> str | None:
     return settings.remote_ssh_user
 
 
+# Aliases expected by tests
+_load_nodes_from_env = _load_nodes_from_settings
+_load_ssh_user_from_env = _load_ssh_user_from_settings
+
+
 class RemoteExecutor:
     """Executes tasks on remote Tailscale nodes via SSH.
 

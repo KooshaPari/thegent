@@ -5,7 +5,6 @@ Implements strategies to reduce token usage while maintaining context quality.
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class ContextOptimizer:
     DEFAULT_MAX_TOKENS = 50000
     DEFAULT_TARGET_TOKENS = 30000
 
-    def __init__(self, max_tokens: int | None = None, target_tokens: int | None = None):
+    def __init__(self, max_tokens: int | None = None, target_tokens: int | None = None) -> None:
         self.max_tokens = max_tokens or self.DEFAULT_MAX_TOKENS
         self.target_tokens = target_tokens or self.DEFAULT_TARGET_TOKENS
 

@@ -280,3 +280,405 @@ class ComplianceExporter:
             return []
         # Return list of relevant file names
         return [f.name for f in self.session_dir.iterdir() if f.suffix in (".json", ".jsonl")]
+
+
+# ---------------------------------------------------------------------------
+# WL-051: SOC-2 evidence store, GDPR retention, audit export
+# ---------------------------------------------------------------------------
+# @trace WL-051
+
+import logging as _logging
+from datetime import timedelta as _timedelta
+from typing import Literal as _Literal
+
+from pydantic import BaseModel as _BaseModel
+from pydantic import ConfigDict as _ConfigDict
+from pydantic import Field as _Field
+
+_wl051_log = _logging.getLogger(__name__ + ".wl051")
+
+EvidenceKind = _Literal[
+    "agent_decision",
+    "human_approval",
+    "policy_evaluation",
+    "data_access",
+    "key_rotation",
+    "consent_recorded",
+    "purge_executed",
+    "org_created",
+    "org_tenant_added",
+]
+
+
+class ComplianceEvidence(_BaseModel):
+    """Single tamper-evident compliance evidence record (WL-051)."""
+
+    model_config = _ConfigDict(extra="forbid", frozen=True)
+
+    evidence_id: str = _Field(min_length=1)
+    kind: EvidenceKind
+    actor: str = _Field(min_length=1)
+    resource: str = _Field(default="")
+    payload: dict = _Field(default_factory=dict)
+    timestamp_utc: str = _Field(min_length=1)
+    prev_hash: str = _Field(default="")
+    entry_hash: str = _Field(default="")
+
+    @staticmethod
+    def compute_hash(entry: dict, prev_hash: str) -> str:
+        """Compute SHA-256 hash over canonical JSON + prev_hash."""
+        canon = json.dumps(entry, sort_keys=True, ensure_ascii=True)
+        payload_str = f"{canon}:{prev_hash}"
+        return hashlib.sha256(payload_str.encode()).hexdigest()
+
+
+class EvidenceStore:
+    """Append-only JSONL evidence store with hash-chain integrity (SOC-2, WL-051).
+
+    Each record's entry_hash covers the record content + the previous record's
+    entry_hash, forming a tamper-evident chain.  verify_integrity() walks the
+    full chain and raises ValueError on any mismatch.
+    """
+
+    def __init__(self, store_path: Path) -> None:
+        self.store_path = Path(store_path)
+        self._last_hash: str = ""
+
+    def append(
+        self,
+        *,
+        kind: EvidenceKind,
+        actor: str,
+        resource: str = "",
+        payload: Optional[dict] = None,
+        evidence_id: Optional[str] = None,
+    ) -> ComplianceEvidence:
+        """Append a new evidence record and return it."""
+        import uuid as _uuid
+
+        ts = datetime.now(UTC).isoformat()
+        eid = evidence_id or _uuid.uuid4().hex[:16]
+        raw_payload = payload or {}
+
+        hashable: dict = {
+            "evidence_id": eid,
+            "kind": kind,
+            "actor": actor,
+            "resource": resource,
+            "payload": raw_payload,
+            "timestamp_utc": ts,
+            "prev_hash": self._last_hash,
+        }
+        entry_hash = ComplianceEvidence.compute_hash(hashable, self._last_hash)
+
+        evidence = ComplianceEvidence(
+            evidence_id=eid,
+            kind=kind,
+            actor=actor,
+            resource=resource,
+            payload=raw_payload,
+            timestamp_utc=ts,
+            prev_hash=self._last_hash,
+            entry_hash=entry_hash,
+        )
+
+        self.store_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.store_path.open("a", encoding="utf-8") as f:
+            f.write(evidence.model_dump_json() + "\n")
+
+        self._last_hash = entry_hash
+        _wl051_log.info("Evidence appended: kind=%s actor=%s id=%s", kind, actor, eid)
+        return evidence
+
+    def list_all(self) -> list:
+        """Return all evidence records in append order."""
+        if not self.store_path.exists():
+            return []
+        records = []
+        with self.store_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                records.append(ComplianceEvidence.model_validate_json(line))
+        return records
+
+    def list_since(self, cutoff_utc: datetime) -> list:
+        """Return evidence records created at or after cutoff_utc."""
+        return [r for r in self.list_all() if datetime.fromisoformat(r.timestamp_utc) >= cutoff_utc]
+
+    def purge_older_than(self, days: int) -> int:
+        """Remove records older than `days` days. Returns count purged.
+
+        The surviving records are rewritten with a rebuilt hash chain so
+        integrity checks still pass after purge.
+        """
+        if days < 0:
+            raise ValueError(f"days must be non-negative, got {days}")
+        cutoff = datetime.now(UTC) - _timedelta(days=days)
+        all_records = self.list_all()
+        surviving = [r for r in all_records if datetime.fromisoformat(r.timestamp_utc) >= cutoff]
+        purged_count = len(all_records) - len(surviving)
+
+        if purged_count == 0:
+            return 0
+
+        self.store_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.store_path.with_suffix(".jsonl.tmp")
+        prev_hash = ""
+        with tmp.open("w", encoding="utf-8") as f:
+            for rec in surviving:
+                hashable: dict = {
+                    "evidence_id": rec.evidence_id,
+                    "kind": rec.kind,
+                    "actor": rec.actor,
+                    "resource": rec.resource,
+                    "payload": rec.payload,
+                    "timestamp_utc": rec.timestamp_utc,
+                    "prev_hash": prev_hash,
+                }
+                new_hash = ComplianceEvidence.compute_hash(hashable, prev_hash)
+                rebuilt = ComplianceEvidence(
+                    evidence_id=rec.evidence_id,
+                    kind=rec.kind,
+                    actor=rec.actor,
+                    resource=rec.resource,
+                    payload=rec.payload,
+                    timestamp_utc=rec.timestamp_utc,
+                    prev_hash=prev_hash,
+                    entry_hash=new_hash,
+                )
+                f.write(rebuilt.model_dump_json() + "\n")
+                prev_hash = new_hash
+
+        tmp.replace(self.store_path)
+        self._last_hash = prev_hash
+        _wl051_log.info("Evidence purge: removed %d records older than %d days", purged_count, days)
+        return purged_count
+
+    def verify_integrity(self) -> bool:
+        """Walk the hash chain and return True if all hashes are consistent."""
+        records = self.list_all()
+        prev_hash = ""
+        for rec in records:
+            hashable: dict = {
+                "evidence_id": rec.evidence_id,
+                "kind": rec.kind,
+                "actor": rec.actor,
+                "resource": rec.resource,
+                "payload": rec.payload,
+                "timestamp_utc": rec.timestamp_utc,
+                "prev_hash": prev_hash,
+            }
+            expected = ComplianceEvidence.compute_hash(hashable, prev_hash)
+            if expected != rec.entry_hash:
+                _wl051_log.error(
+                    "Integrity check failed at evidence_id=%s expected=%s got=%s",
+                    rec.evidence_id,
+                    expected,
+                    rec.entry_hash,
+                )
+                return False
+            prev_hash = rec.entry_hash
+        return True
+
+
+class RetentionPolicy(_BaseModel):
+    """Policy definition for GDPR data retention (WL-051)."""
+
+    model_config = _ConfigDict(extra="forbid", frozen=True)
+
+    policy_id: str = _Field(min_length=1)
+    tenant_id: str = _Field(min_length=1)
+    data_category: str = _Field(min_length=1)
+    retention_days: int = _Field(ge=0)
+    consent_required: bool = False
+    created_at: str = _Field(min_length=1)
+
+
+class ConsentRecord(_BaseModel):
+    """Tracks consent granted by a data subject (GDPR Art. 7, WL-051)."""
+
+    model_config = _ConfigDict(extra="forbid", frozen=True)
+
+    consent_id: str = _Field(min_length=1)
+    tenant_id: str = _Field(min_length=1)
+    subject_id: str = _Field(min_length=1)
+    data_category: str = _Field(min_length=1)
+    granted: bool
+    granted_at: str = _Field(min_length=1)
+    withdrawn_at: Optional[str] = None
+
+
+class RetentionEnforcer:
+    """Enforces GDPR retention policies with consent tracking (WL-051).
+
+    Data store layout (base_dir):
+        policies.jsonl   — retention policy records
+        consent.jsonl    — consent records
+        purge_log.jsonl  — purge execution audit trail
+    """
+
+    def __init__(self, base_dir: Path) -> None:
+        self.base_dir = Path(base_dir)
+        self._policies_path = self.base_dir / "policies.jsonl"
+        self._consent_path = self.base_dir / "consent.jsonl"
+        self._purge_log_path = self.base_dir / "purge_log.jsonl"
+
+    def add_policy(self, policy: RetentionPolicy) -> None:
+        """Register a retention policy (idempotent on policy_id)."""
+        existing = {p.policy_id for p in self.list_policies()}
+        if policy.policy_id in existing:
+            raise ValueError(f"RetentionPolicy already exists: {policy.policy_id}")
+        self._append_jsonl(self._policies_path, policy.model_dump(mode="json"))
+        _wl051_log.info("Retention policy added: %s tenant=%s", policy.policy_id, policy.tenant_id)
+
+    def list_policies(self) -> list:
+        return [RetentionPolicy.model_validate(r) for r in self._read_jsonl(self._policies_path)]
+
+    def get_policy(self, policy_id: str) -> RetentionPolicy:
+        for p in self.list_policies():
+            if p.policy_id == policy_id:
+                return p
+        raise KeyError(f"RetentionPolicy not found: {policy_id}")
+
+    def record_consent(self, record: ConsentRecord) -> None:
+        """Append a consent record."""
+        self._append_jsonl(self._consent_path, record.model_dump(mode="json"))
+
+    def list_consents(self, tenant_id: Optional[str] = None) -> list:
+        records = [ConsentRecord.model_validate(r) for r in self._read_jsonl(self._consent_path)]
+        if tenant_id is not None:
+            records = [r for r in records if r.tenant_id == tenant_id]
+        return records
+
+    def has_active_consent(self, *, tenant_id: str, subject_id: str, data_category: str) -> bool:
+        """Return True if a non-withdrawn consent exists for the subject+category."""
+        for rec in self.list_consents(tenant_id=tenant_id):
+            if rec.subject_id == subject_id and rec.data_category == data_category:
+                if rec.granted and rec.withdrawn_at is None:
+                    return True
+        return False
+
+    def purge_tenant_data(
+        self,
+        *,
+        tenant_id: str,
+        evidence_store: EvidenceStore,
+    ) -> dict:
+        """Apply all retention policies for a tenant and purge expired evidence.
+
+        Raises RuntimeError if consent is required but missing.
+        Returns a summary dict with purge counts per policy.
+        """
+        policies = [p for p in self.list_policies() if p.tenant_id == tenant_id]
+        if not policies:
+            raise KeyError(f"No retention policies for tenant: {tenant_id}")
+
+        summary: dict = {"tenant_id": tenant_id, "purged_by_policy": {}, "total_purged": 0}
+
+        for policy in policies:
+            if policy.consent_required:
+                has_consent = any(
+                    c.granted and c.withdrawn_at is None
+                    for c in self.list_consents(tenant_id=tenant_id)
+                    if c.data_category == policy.data_category
+                )
+                if not has_consent:
+                    raise RuntimeError(
+                        f"Consent required but missing for tenant={tenant_id} category={policy.data_category}"
+                    )
+
+            purged = evidence_store.purge_older_than(policy.retention_days)
+            summary["purged_by_policy"][policy.policy_id] = purged
+            summary["total_purged"] = summary["total_purged"] + purged
+
+            purge_entry: dict = {
+                "timestamp_utc": datetime.now(UTC).isoformat(),
+                "tenant_id": tenant_id,
+                "policy_id": policy.policy_id,
+                "data_category": policy.data_category,
+                "retention_days": policy.retention_days,
+                "records_purged": purged,
+            }
+            self._append_jsonl(self._purge_log_path, purge_entry)
+            evidence_store.append(
+                kind="purge_executed",
+                actor="retention_enforcer",
+                resource=f"tenant:{tenant_id}",
+                payload=purge_entry,
+            )
+
+        return summary
+
+    def _append_jsonl(self, path: Path, record: dict) -> None:
+        self.base_dir.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record) + "\n")
+
+    def _read_jsonl(self, path: Path) -> list:
+        if not path.exists():
+            return []
+        results = []
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                results.append(json.loads(line))
+        return results
+
+
+class AuditExporter:
+    """Export compliance evidence as structured JSON for regulators (WL-051)."""
+
+    def __init__(self, evidence_store: EvidenceStore) -> None:
+        self._store = evidence_store
+
+    def export_json(
+        self,
+        *,
+        output_path: Optional[Path] = None,
+        since_days: Optional[int] = None,
+        kind_filter: Optional[list] = None,
+    ) -> dict:
+        """Export evidence to a structured JSON document.
+
+        Args:
+            output_path: If provided, write JSON to this path.
+            since_days: If provided, only include records from the last N days.
+            kind_filter: If provided, only include records of these kinds.
+
+        Returns the export dict regardless of whether output_path is set.
+        """
+        if since_days is not None:
+            cutoff = datetime.now(UTC) - _timedelta(days=since_days)
+            records = self._store.list_since(cutoff)
+        else:
+            records = self._store.list_all()
+
+        if kind_filter is not None:
+            records = [r for r in records if r.kind in kind_filter]
+
+        integrity_ok = self._store.verify_integrity()
+
+        export: dict = {
+            "schema_version": "1.0",
+            "export_format": "thegent_compliance_evidence_v1",
+            "generated_at_utc": datetime.now(UTC).isoformat(),
+            "integrity_verified": integrity_ok,
+            "record_count": len(records),
+            "filters_applied": {
+                "since_days": since_days,
+                "kind_filter": kind_filter,
+            },
+            "evidence": [r.model_dump(mode="json") for r in records],
+        }
+
+        if output_path is not None:
+            out = Path(output_path)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(json.dumps(export, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            _wl051_log.info("Audit export written to %s (%d records)", out, len(records))
+
+        return export

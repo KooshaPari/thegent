@@ -14,8 +14,21 @@ class ExecutionPath(Enum):
 
 # Immutable provider classifications
 NATIVE_CLI_PROVIDERS: Final[frozenset[str]] = frozenset({"codex", "claude", "opencode"})
-API_KEY_PROVIDERS: Final[frozenset[str]] = frozenset({"minimax", "nim", "glm", "kilo", "zen"})
+API_KEY_PROVIDERS: Final[frozenset[str]] = frozenset({"minimax", "nim", "glm", "kilo", "zen", "openrouter", "ollama"})
 LOGIN_AUTH_PROVIDERS: Final[frozenset[str]] = frozenset({"antigravity", "cursor", "kiro", "gemini", "copilot"})
+
+_PROVIDER_ALIASES: Final[dict[str, str]] = {
+    "ollama-local": "ollama",
+    "local-ollama": "ollama",
+    "ollama-localhost": "ollama",
+    "ollama@localhost": "ollama",
+}
+
+
+def normalize_provider_name(provider: str) -> str:
+    """Normalize provider aliases into canonical routing names."""
+    value = (provider or "").strip().lower()
+    return _PROVIDER_ALIASES.get(value, value)
 
 
 def get_execution_path(provider: str) -> ExecutionPath:
@@ -27,8 +40,9 @@ def get_execution_path(provider: str) -> ExecutionPath:
     Returns:
         ExecutionPath enum value
     """
-    if provider in NATIVE_CLI_PROVIDERS:
+    normalized = normalize_provider_name(provider)
+    if normalized in NATIVE_CLI_PROVIDERS:
         return ExecutionPath.NATIVE_CLI
-    if provider in API_KEY_PROVIDERS:
+    if normalized in API_KEY_PROVIDERS:
         return ExecutionPath.LITELLM_API
     return ExecutionPath.CLIPROXY_API

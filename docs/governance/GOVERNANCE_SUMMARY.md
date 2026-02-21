@@ -1,144 +1,89 @@
 # Architectural Governance Summary
 
-**Date:** February 19, 2026  
 **Status:** Active  
-**Purpose:** Quick overview of governance framework
+**Scope:** Mandatory harness contract gates for merge readiness
 
----
+## Core Rule
 
-## 🎯 Core Principle
+Merge only when both mandatory harness contract gates pass.
 
-**Zero User Debt = Zero Backwards Compatibility**
+## CI Section
 
-Since we have no external users, we maintain zero backwards compatibility. All changes are breaking changes by design.
+- The `quality` workflow job is fail-closed for harness gates.
+- CI always executes both mandatory gates, captures each exit code, and fails the job if either gate fails.
+- The quality lane remains limited to these mandatory harness gates; no extra governance lanes are required there.
 
-**🛡️ Critical Safety Rule: Always verify parity/migrations BEFORE removals**
+## Mandatory Harness Contract Gates
 
-This acts as a regression guard to prevent breaking changes.
+- `task quality:sitback-contracts`
+- `task quality:harness-model-contracts`
 
----
+## Deterministic Benchmark Governance (WL-079)
 
-## 📚 Documents
+- CI must run deterministic benchmark smoke via `task bench:smoke:ci`.
+- The CI step `Deterministic benchmark smoke` must call the task wrapper only; do not inline raw `cargo bench` in workflow YAML.
+- The benchmark command must stay offline and locked:
+  `CARGO_NET_OFFLINE=true cargo bench --locked --manifest-path crates/Cargo.toml -p thegent-router --bench audit_bench`
+- PR readiness is blocked if the CI step named `Deterministic benchmark smoke` is missing from `.github/workflows/ci.yml`.
 
-### 1. **ARCHITECTURAL_GOVERNANCE.md** (Full Policy)
-- Complete governance framework
-- Decision methodology
-- **Parity verification process (regression guard)**
-- **AI agent pattern handling**
-- Detection & enforcement
-- Implementation plan
+## Contract Verification Evidence
 
-### 2. **BACKWARDS_COMPAT_AUDIT_2026-02-19.md** (Current State)
-- Audit findings
-- Removal plan (with parity verification)
-- Detection commands
+Use this compact checklist to verify the contract gates and document outcomes.
 
-### 3. **DECISION_METHODOLOGY.md** (Quick Reference)
-- Decision trees
-- Quick checklist
-- Anti-patterns vs good patterns
-- **Parity verification requirement**
-- **AI agent pattern considerations**
+| Check | Command | Expected outcome |
+|---|---|---|
+| Sitback contracts gate | `task quality:sitback-contracts` | Exit code `0`; contract suite reports pass |
+| Harness model contracts gate | `task quality:harness-model-contracts` | Exit code `0`; contract suite reports pass |
+| Gate list present in governance summary | `rg -n "task quality:(sitback-contracts|harness-model-contracts)" docs/governance/GOVERNANCE_SUMMARY.md` | Exactly 2 matches |
+| Evidence subsection present | `rg -n "^## Contract Verification Evidence$" docs/governance/GOVERNANCE_SUMMARY.md` | Exactly 1 match |
 
-### 4. **PARITY_VERIFICATION_TEMPLATE.md** (Template)
-- Template for parity verification
-- Feature comparison checklist
-- Migration completeness checklist
-- Test verification checklist
+## Quick Links
 
-### 5. **AI_AGENT_PATTERNS_RESEARCH.md** (Research)
-- Reddit community research findings
-- Systemic AI agent patterns
-- Solutions and best practices
-- Integration with governance framework
+- Full policy: `docs/governance/ARCHITECTURAL_GOVERNANCE.md`
+- Contract definitions: `docs/governance/METRIC_CONTRACTS.md`
+- WBS coordination: `docs/reference/WBS_AGENT_PROGRESS.md`
 
----
+## Batch-1 Agent-6 Verification Note (2026-02-21)
+- Command: `uv run pytest -k inject_proxy_models tests/routing/test_request_extensions.py`
+- Signal: PASS (`7 passed, 12 deselected`)
 
-## 🚫 Never Do (Anti-Patterns)
+## Regression-Spiral Guardrail (2026-02-21)
+- After every batch merge, run `task quality:harness-contracts:list-check` first, then run both mandatory gates: `task quality:sitback-contracts` and `task quality:harness-model-contracts`.
+- Treat merge readiness as blocked until all three commands exit with code `0` in the post-merge run.
 
-1. ❌ **Silent fallbacks** (AI agents love these!)
-   - `try: thing(); except: pass` or `try: thing(); except: return default`
-   - Code should fail and stop, not silently work around problems
+## Operator Checklist (List-Check vs Quick vs Full)
 
-2. ❌ Remove code without parity verification
-3. ❌ Remove code without migration completeness
-4. ❌ Backwards compatibility shims
-5. ❌ Legacy compatibility layers
-6. ❌ Deprecated code with warnings
-7. ❌ Import fallbacks
-8. ❌ Error hiding (hiding bugs instead of fixing them)
-9. ❌ Backup files in repo
-10. ❌ Exact duplication
+| Chain | Command | Use when |
+|---|---|---|
+| List-check only | `task quality:harness-contracts:list-check` | Verify harness contract task names are present before running any gate chain |
+| Smoke alias | `task quality:list-check` | Run the same list-check through the short alias for a quick preflight |
+| Quick harness chain | `task quality:harness-contracts:quick` | Run a fast local harness sanity check before commit |
+| Full harness chain | `task quality:harness-contracts` | Run merge-readiness and post-merge harness verification |
 
----
+## Runtime Modularization Matrix (WL-130)
 
-## ✅ Always Do (Good Patterns)
+Source: `contracts/runtime/runtime-modularization-matrix.json`
+Last Updated: 2026-02-21
 
-1. ✅ **VERIFY PARITY FIRST** before removing code
-2. ✅ **VERIFY MIGRATION COMPLETE** before removing code
-3. ✅ **RUN PARITY TESTS** before removing code
-4. ✅ **FAIL FAST, FAIL LOUDLY** - Code should fail and stop, not silently work around
-5. ✅ **"AIM TOWARDS" FRAMING** - Frame removals positively, explain goals and why
-6. ✅ **EXPLICIT RULES** - Put rules in AGENTS.md/CLAUDE.md, reference in prompts
-7. ✅ Remove deprecated code (after parity verified)
-8. ✅ Consolidate duplicates (after parity verified)
-9. ✅ Use strategy pattern for variations
-10. ✅ Document performance fallbacks (only if performance-critical)
-11. ✅ Use git for version history
+| Workload | Current | Target | Priority | Status |
+|----------|---------|--------|----------|--------|
+| CLI dispatch | Python monolith (cli.py, impl.py) | Python frontmatter + Rust helpers | P0 | in_progress |
+| Policy/gate evaluation | Mixed Python + shell (hooks pipeline) | Rust backmatter (thegent-hooks) | P0 | in_progress |
+| MCP transport/tool registry | Python monolith (mcp/server.py) | Python thin transport + Rust utilities | P1 | planned |
+| Low-level memory/layout primitives | Zig POC interop | Zig ABI contract (thegent-zmx-interop) | P2 | planned |
+| Deterministic scoring/ranking kernels | Placeholder Python/Mojo bridge | Mojo kernel contracts | P2 | planned |
 
----
+> Machine-readable contract: `contracts/runtime/runtime-modularization-matrix.json`
 
-## 📋 Quick Decision Guide
+## Runtime Matrix (B90 Wave-2)
 
-**Before removing ANY code:**
-1. ✅ **VERIFY PARITY:** New implementation has all features?
-2. ✅ **VERIFY MIGRATION:** All callers migrated?
-3. ✅ **VERIFY TESTS:** Parity tests pass?
-4. ✅ **VERIFY DOCUMENTATION:** Parity verified documented?
+The polyglot runtime modularization matrix is maintained at `contracts/runtime/runtime-modularization-matrix.json`.
 
-**Then:**
-- **Is this backwards compatibility?** → **REMOVE** (after parity check)
-- **Is this a compatibility fallback?** → **REMOVE** (after parity check)
-- **Is this exact duplication?** → **CONSOLIDATE** (after parity check)
-- **Is this a backup file?** → **DELETE**
-- **Is this deprecated code?** → **DELETE** (after parity check)
+| Runtime | Workload | Status |
+|---------|----------|--------|
+| Python  | parse_model_suffix baseline | done |
+| Rust    | parse_model_suffixes (PyO3) | in_progress |
+| Zig     | ABI contract v1.0.0 | in_progress |
+| Mojo    | deterministic kernel smoke | in_progress |
 
----
-
-## 🔍 Current Audit Status
-
-**Found:**
-- 1 legacy directory (`cli/legacy/`)
-- 5+ deprecated tool stubs
-- 10+ backup files
-- 2+ import fallbacks
-
-**Action:** See `BACKWARDS_COMPAT_AUDIT_2026-02-19.md` for removal plan
-
----
-
-## 📊 Metrics
-
-**Target:**
-- Legacy directories: 0
-- Deprecated files: 0
-- Backup files: 0
-- Import fallbacks: 0 (except performance)
-
----
-
-## 🎯 Next Steps
-
-1. **Read:** `ARCHITECTURAL_GOVERNANCE.md` for full policy
-2. **Review:** `BACKWARDS_COMPAT_AUDIT_2026-02-19.md` for current state
-3. **Use:** `DECISION_METHODOLOGY.md` for daily decisions
-4. **Use:** `PARITY_VERIFICATION_TEMPLATE.md` before removals
-5. **Execute:** Phase 1 removal plan (with parity verification)
-
----
-
-**Quick Links:**
-- Full Policy: `docs/governance/ARCHITECTURAL_GOVERNANCE.md`
-- Audit Report: `docs/governance/BACKWARDS_COMPAT_AUDIT_2026-02-19.md`
-- Decision Guide: `docs/governance/DECISION_METHODOLOGY.md`
-- Parity Template: `docs/governance/PARITY_VERIFICATION_TEMPLATE.md`
+For promotion criteria, see `docs/governance/POLYGLOT_RUNTIME_COVERAGE_AND_CONVERSION_MATRIX_2026-02-21.md`.

@@ -1,0 +1,39 @@
+# CONVERSATION_DUMP_2026-02-19
+
+Source: docs/research/CONVERSATION_DUMP_2026-02-19.md
+
+---
+
+# Conversation Dump 2026-02-19T13:52:00Z
+
+## Issues Addressed
+- **System Overload**: Detected critical system overload (Load Avg > 290) due to autonomous loop and high concurrency of agent sessions across multiple conversations.
+- **Redundant Agents**: Identified and attempted to terminate redundant background sessions resolving the same escalation.
+- **Python CLI Errors**: Fixed `UnboundLocalError: sys` in `cli_impl.py` and `NameError: Optional` in `main.py`.
+- **Rust Hook Migration**: Verified that most `impl-hook-rust-*` subcommands are already implemented in the `thegent-hooks` binary.
+
+## Fixes Applied
+- Added `import sys` inside `bg_impl` in `src/thegent/cli_impl.py` to prevent shadowing/unbound errors.
+- Added `Optional, List, Union` imports to `src/thegent/main.py` for type hinting.
+- Implemented `thegent-maif` Rust crate (`crates/thegent-maif/`) with CLI (keygen, sign, verify) and passing unit tests.
+- Claimed P1 items in `docs/reference/WORK_STREAM.md` to prevent duplication.
+- Performed emergency `pkill -9` on `thegent`, `node`, and `python3` to recover system from catastrophic load.
+
+## Research Findings
+- The `thegent-hooks` binary already includes subcommands for `breaker`, `debounce`, `incremental`, `learning`, `fr-index`, `affected-tests`, and `prewarm/report`.
+- The system was experiencing a "storm" of agents resolving the same escalation, likely triggered by the `AutoLaunchSystem` and `plan loop`.
+- The workspace is shared by multiple concurrent agents from different conversations, contributing to cumulative load.
+
+## Plans
+- **Stability**: Wait for system load to drop below 5.0 before resuming background tasks.
+- **MAIF**: Integrate `thegent-maif` Rust crate into the main `AgentRunner` and `ExecutionEngine`.
+- **Rust Hooks**: Roll out Phase 2 opt-in for the Rust hooks binary.
+- **Backlog**: Proceed with P1 items (`SmolGents`, `Supermemory`, `FastMCP`) sequentially rather than in parallel to manage load.
+
+## Open Questions
+- Why did `killall` report "No matching processes" while `ps` showed many orphan zsh/hook-dispatcher processes? (Likely due to slow system response or process state).
+- Should the `AutoLaunchSystem` have a global lock or more aggressive load-based throttling to prevent storms?
+
+## Cursor-Agent Recovery Note
+- The system experienced an extreme slowdown. Several `thegent bg` commands were issued but their success is uncertain due to the subsequent emergency cleanup.
+- Check `thegent ps` once system is stable to verify if any intended agents survived or need re-dispatching.

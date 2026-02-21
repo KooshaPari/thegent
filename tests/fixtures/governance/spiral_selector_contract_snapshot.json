@@ -1,0 +1,53 @@
+{
+  "schema_version": 2,
+  "changelog": [
+    {
+      "version": 1,
+      "date": "2026-02-21",
+      "note": "Initial selector JSON contract snapshot."
+    },
+    {
+      "version": 2,
+      "date": "2026-02-20",
+      "note": "Canonical ordering + digest regeneration for governance fixture pipeline"
+    }
+  ],
+  "cases": [
+    {
+      "input": "   ",
+      "expected": {
+        "raw": "   ",
+        "cleaned_raw": "",
+        "canonical": "",
+        "selected_mode": false
+      }
+    },
+    {
+      "input": " , , ",
+      "expected": {
+        "raw": " , , ",
+        "cleaned_raw": ",,",
+        "canonical": "",
+        "selected_mode": true
+      }
+    },
+    {
+      "input": " regression_spiral_guard , reliability , regression_spiral_guard ",
+      "expected": {
+        "raw": " regression_spiral_guard , reliability , regression_spiral_guard ",
+        "cleaned_raw": "regression_spiral_guard,reliability,regression_spiral_guard",
+        "canonical": "regression_spiral_guard,reliability",
+        "selected_mode": true
+      }
+    },
+    {
+      "input": "regression_spiral_guard;rm -rf /",
+      "expected": {
+        "raw": "regression_spiral_guard;rm -rf /",
+        "cleaned_raw": "regression_spiral_guard;rm-rf/",
+        "canonical": "regression_spiral_guard;rm-rf/",
+        "selected_mode": true
+      }
+    }
+  ]
+}

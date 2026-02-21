@@ -1,0 +1,332 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#content-area"
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - generic [ref=e9]:
+              - link "Ante home page light logo" [ref=e10] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e11]: Ante home page
+                - img "light logo" [ref=e12]
+              - button "Toggle dark mode" [ref=e13] [cursor=pointer]:
+                - generic [ref=e14]:
+                  - img [ref=e15]
+                  - img [ref=e22]
+            - generic [ref=e27]:
+              - button "Open search" [ref=e28] [cursor=pointer]:
+                - generic [ref=e29]:
+                  - img [ref=e30]
+                  - generic [ref=e33]: Search...
+                - generic [ref=e34]: ⌘K
+              - button "Toggle assistant panel" [ref=e35] [cursor=pointer]:
+                - img [ref=e36]
+            - generic [ref=e40]:
+              - list
+              - generic [ref=e41]:
+                - heading "Getting Started" [level=5] [ref=e43]
+                - list [ref=e44]:
+                  - listitem [ref=e45]:
+                    - link "Overview" [ref=e46] [cursor=pointer]:
+                      - /url: /start/overview
+                      - generic [ref=e48]: Overview
+                  - listitem [ref=e49]:
+                    - link "Quickstart" [ref=e50] [cursor=pointer]:
+                      - /url: /start/quickstart
+                      - generic [ref=e52]: Quickstart
+                  - listitem [ref=e53]:
+                    - link "Eval & Benchmark" [ref=e54] [cursor=pointer]:
+                      - /url: /start/eval
+                      - generic [ref=e56]: Eval & Benchmark
+              - generic [ref=e57]:
+                - heading "Concepts" [level=5] [ref=e59]
+                - list [ref=e60]:
+                  - listitem [ref=e61]:
+                    - link "Core Concepts & Protocol" [ref=e62] [cursor=pointer]:
+                      - /url: /concepts/core-concepts
+                      - generic [ref=e64]: Core Concepts & Protocol
+                  - listitem [ref=e65]:
+                    - link "Architecture" [ref=e66] [cursor=pointer]:
+                      - /url: /concepts/architecture
+                      - generic [ref=e68]: Architecture
+              - generic [ref=e69]:
+                - heading "Agent Org" [level=5] [ref=e71]
+                - list [ref=e72]:
+                  - listitem [ref=e73]:
+                    - link "Agent Organization (Experimental)" [ref=e74] [cursor=pointer]:
+                      - /url: /agent-org
+                      - generic [ref=e76]: Agent Organization (Experimental)
+              - generic [ref=e77]:
+                - heading "Offline Mode" [level=5] [ref=e79]
+                - list [ref=e80]:
+                  - listitem [ref=e81]:
+                    - link "Offline Mode (Experimental)" [ref=e82] [cursor=pointer]:
+                      - /url: /offline
+                      - generic [ref=e84]: Offline Mode (Experimental)
+              - generic [ref=e85]:
+                - heading "Usage" [level=5] [ref=e87]
+                - list [ref=e88]:
+                  - listitem [ref=e89]:
+                    - link "Interactive TUI" [ref=e90] [cursor=pointer]:
+                      - /url: /usage/tui
+                      - generic [ref=e92]: Interactive TUI
+                  - listitem [ref=e93]:
+                    - link "Headless Mode" [ref=e94] [cursor=pointer]:
+                      - /url: /usage/headless
+                      - generic [ref=e96]: Headless Mode
+              - generic [ref=e97]:
+                - heading "Extensibility" [level=5] [ref=e99]
+                - list [ref=e100]:
+                  - listitem [ref=e101]:
+                    - link "Skills" [ref=e102] [cursor=pointer]:
+                      - /url: /extend/skills
+                      - generic [ref=e104]: Skills
+                  - listitem [ref=e105]:
+                    - link "Sub-Agents" [ref=e106] [cursor=pointer]:
+                      - /url: /extend/subagents
+                      - generic [ref=e108]: Sub-Agents
+              - generic [ref=e109]:
+                - heading "Configuration" [level=5] [ref=e111]
+                - list [ref=e112]:
+                  - listitem [ref=e113]:
+                    - link "Model & Provider Catalog" [ref=e114] [cursor=pointer]:
+                      - /url: /configuration/catalog
+                      - generic [ref=e116]: Model & Provider Catalog
+                  - listitem [ref=e117]:
+                    - link "Preferences" [ref=e118] [cursor=pointer]:
+                      - /url: /configuration/preference
+                      - generic [ref=e120]: Preferences
+                  - listitem [ref=e121]:
+                    - link "Adding a 3rd Party Provider" [ref=e122] [cursor=pointer]:
+                      - /url: /configuration/third-party-provider
+                      - generic [ref=e124]: Adding a 3rd Party Provider
+              - generic [ref=e125]:
+                - heading "Memory" [level=5] [ref=e127]
+                - list [ref=e128]:
+                  - listitem [ref=e129]:
+                    - link "Memory" [ref=e130] [cursor=pointer]:
+                      - /url: /memory
+                      - generic [ref=e132]: Memory
+              - generic [ref=e133]:
+                - heading "Reference" [level=5] [ref=e135]
+                - list [ref=e136]:
+                  - listitem [ref=e137]:
+                    - link "Tools" [ref=e138] [cursor=pointer]:
+                      - /url: /tools
+                      - generic [ref=e140]: Tools
+          - list [ref=e141]:
+            - listitem [ref=e142]:
+              - link "Website" [ref=e143] [cursor=pointer]:
+                - /url: https://antigma.ai
+                - img [ref=e144]
+                - generic [ref=e146]: Website
+                - img [ref=e147]
+            - listitem [ref=e150]:
+              - link "Discord" [ref=e151] [cursor=pointer]:
+                - /url: https://discord.gg/pqhj3DNGz2
+                - img [ref=e152]
+                - generic [ref=e154]: Discord
+                - img [ref=e155]
+            - listitem [ref=e158]:
+              - link "GitHub" [ref=e159] [cursor=pointer]:
+                - /url: https://github.com/AntigmaLabs/ante-preview
+                - img [ref=e160]
+                - generic [ref=e162]: GitHub
+                - img [ref=e163]
+            - listitem
+        - generic [ref=e166]:
+          - link "Ante Preview" [ref=e169] [cursor=pointer]:
+            - /url: /start/overview
+            - text: Ante Preview
+          - generic [ref=e171]:
+            - banner [ref=e172]:
+              - generic [ref=e173]:
+                - generic [ref=e174]: Getting Started
+                - heading "Quickstart" [level=1] [ref=e176]
+              - paragraph [ref=e178]: Install Ante and start using it in under a minute
+            - generic [ref=e179]:
+              - heading "Navigate to header Prerequisites" [level=2] [ref=e180]:
+                - link "Navigate to header" [ref=e181] [cursor=pointer]:
+                  - /url: "#prerequisites"
+                  - img [ref=e183]
+                - generic [ref=e185] [cursor=pointer]: Prerequisites
+              - list [ref=e186]:
+                - listitem [ref=e187]:
+                  - text: An API key or subscription from at least one LLM provider (Anthropic, OpenAI, etc.) — or use
+                  - link "offline mode" [ref=e188] [cursor=pointer]:
+                    - /url: /offline
+                  - text: with no API key
+              - heading "Navigate to header Installation" [level=2] [ref=e189]:
+                - link "Navigate to header" [ref=e190] [cursor=pointer]:
+                  - /url: "#installation"
+                  - img [ref=e192]
+                - generic [ref=e194] [cursor=pointer]: Installation
+              - generic [ref=e195]:
+                - img "Info" [ref=e197]
+                - generic [ref=e199]: Installation instructions coming soon.
+              - heading "Navigate to header Quick examples" [level=2] [ref=e200]:
+                - link "Navigate to header" [ref=e201] [cursor=pointer]:
+                  - /url: "#quick-examples"
+                  - img [ref=e203]
+                - generic [ref=e205] [cursor=pointer]: Quick examples
+              - heading "Navigate to header Interactive session" [level=3] [ref=e206]:
+                - link "Navigate to header" [ref=e207] [cursor=pointer]:
+                  - /url: "#interactive-session"
+                  - img [ref=e209]
+                - generic [ref=e211] [cursor=pointer]: Interactive session
+              - generic [ref=e212]:
+                - generic [ref=e213]:
+                  - generic [ref=e214]:
+                    - button "Copy the contents from the code block" [ref=e215] [cursor=pointer]:
+                      - img [ref=e216]
+                    - generic [ref=e219]: Copy
+                  - generic [ref=e220]:
+                    - button "Ask AI" [ref=e221] [cursor=pointer]:
+                      - img [ref=e222]
+                    - generic [ref=e225]: Ask AI
+                - code [ref=e229]:
+                  - generic [ref=e230]: "# Launch the TUI — chat with the agent, approve tool calls, view diffs"
+                  - generic [ref=e231]: ante
+              - heading "Navigate to header Headless one-shot" [level=3] [ref=e232]:
+                - link "Navigate to header" [ref=e233] [cursor=pointer]:
+                  - /url: "#headless-one-shot"
+                  - img [ref=e235]
+                - generic [ref=e237] [cursor=pointer]: Headless one-shot
+              - generic [ref=e238]:
+                - generic [ref=e239]:
+                  - generic [ref=e240]:
+                    - button "Copy the contents from the code block" [ref=e241] [cursor=pointer]:
+                      - img [ref=e242]
+                    - generic [ref=e245]: Copy
+                  - generic [ref=e246]:
+                    - button "Ask AI" [ref=e247] [cursor=pointer]:
+                      - img [ref=e248]
+                    - generic [ref=e251]: Ask AI
+                - code [ref=e255]:
+                  - generic [ref=e256]: "# Run a task and exit"
+                  - generic [ref=e257]: ante -p "add error handling to src/main.rs"
+              - heading "Navigate to header Pipe input from stdin" [level=3] [ref=e258]:
+                - link "Navigate to header" [ref=e259] [cursor=pointer]:
+                  - /url: "#pipe-input-from-stdin"
+                  - img [ref=e261]
+                - generic [ref=e263] [cursor=pointer]: Pipe input from stdin
+              - generic [ref=e264]:
+                - generic [ref=e265]:
+                  - generic [ref=e266]:
+                    - button "Copy the contents from the code block" [ref=e267] [cursor=pointer]:
+                      - img [ref=e268]
+                    - generic [ref=e271]: Copy
+                  - generic [ref=e272]:
+                    - button "Ask AI" [ref=e273] [cursor=pointer]:
+                      - img [ref=e274]
+                    - generic [ref=e277]: Ask AI
+                - code [ref=e281]:
+                  - generic [ref=e282]: "# Pipe file contents for analysis"
+                  - generic [ref=e283]: cat src/lib.rs | ante -p "review this code for bugs"
+              - heading "Navigate to header Use a different provider" [level=3] [ref=e284]:
+                - link "Navigate to header" [ref=e285] [cursor=pointer]:
+                  - /url: "#use-a-different-provider"
+                  - img [ref=e287]
+                - generic [ref=e289] [cursor=pointer]: Use a different provider
+              - generic [ref=e290]:
+                - generic [ref=e291]:
+                  - generic [ref=e292]:
+                    - button "Copy the contents from the code block" [ref=e293] [cursor=pointer]:
+                      - img [ref=e294]
+                    - generic [ref=e297]: Copy
+                  - generic [ref=e298]:
+                    - button "Ask AI" [ref=e299] [cursor=pointer]:
+                      - img [ref=e300]
+                    - generic [ref=e303]: Ask AI
+                - code [ref=e307]:
+                  - generic [ref=e308]: "# Override model and provider"
+                  - generic [ref=e309]: ante --provider openai --model gpt-4o -p "refactor this function"
+              - heading "Navigate to header Skip tool approvals" [level=3] [ref=e310]:
+                - link "Navigate to header" [ref=e311] [cursor=pointer]:
+                  - /url: "#skip-tool-approvals"
+                  - img [ref=e313]
+                - generic [ref=e315] [cursor=pointer]: Skip tool approvals
+              - generic [ref=e316]:
+                - generic [ref=e317]:
+                  - generic [ref=e318]:
+                    - button "Copy the contents from the code block" [ref=e319] [cursor=pointer]:
+                      - img [ref=e320]
+                    - generic [ref=e323]: Copy
+                  - generic [ref=e324]:
+                    - button "Ask AI" [ref=e325] [cursor=pointer]:
+                      - img [ref=e326]
+                    - generic [ref=e329]: Ask AI
+                - code [ref=e333]:
+                  - generic [ref=e334]: "# YOLO mode — auto-approve all tool calls"
+                  - generic [ref=e335]: ante --yolo "fix all clippy warnings"
+              - heading "Navigate to header What’s next?" [level=2] [ref=e336]:
+                - link "Navigate to header" [ref=e337] [cursor=pointer]:
+                  - /url: "#what’s-next"
+                  - img [ref=e339]
+                - generic [ref=e341] [cursor=pointer]: What’s next?
+              - generic [ref=e342]:
+                - link "TUI Guide Master the interactive terminal interface." [ref=e343] [cursor=pointer]:
+                  - /url: /usage/tui
+                  - generic [ref=e344]:
+                    - img [ref=e346]
+                    - generic [ref=e347]:
+                      - heading "TUI Guide" [level=2] [ref=e348]
+                      - generic [ref=e350]: Master the interactive terminal interface.
+                - link "Headless Mode All CLI flags and output formats." [ref=e351] [cursor=pointer]:
+                  - /url: /usage/headless
+                  - generic [ref=e352]:
+                    - img [ref=e354]
+                    - generic [ref=e355]:
+                      - heading "Headless Mode" [level=2] [ref=e356]
+                      - generic [ref=e358]: All CLI flags and output formats.
+                - link "Offline Mode Run models locally with no internet." [ref=e359] [cursor=pointer]:
+                  - /url: /offline
+                  - generic [ref=e360]:
+                    - img [ref=e362]
+                    - generic [ref=e363]:
+                      - heading "Offline Mode" [level=2] [ref=e364]
+                      - generic [ref=e366]: Run models locally with no internet.
+                - link "Skills Extend Ante with portable Agent Skills." [ref=e367] [cursor=pointer]:
+                  - /url: /extend/skills
+                  - generic [ref=e368]:
+                    - img [ref=e370]
+                    - generic [ref=e371]:
+                      - heading "Skills" [level=2] [ref=e372]
+                      - generic [ref=e374]: Extend Ante with portable Agent Skills.
+            - generic [ref=e376]:
+              - link "Previous" [ref=e377] [cursor=pointer]:
+                - /url: /start/overview
+                - img [ref=e378]
+                - generic [ref=e380]: Previous
+              - link "Eval & Benchmark How Ante approaches evaluation, and why we chose Terminal Bench as our primary benchmark Next" [ref=e381] [cursor=pointer]:
+                - /url: /start/eval
+                - generic [ref=e382]:
+                  - generic [ref=e383]:
+                    - generic [ref=e384]: Eval & Benchmark
+                    - generic [ref=e385]: How Ante approaches evaluation, and why we chose Terminal Bench as our primary benchmark
+                  - generic [ref=e387]:
+                    - generic [ref=e388]: Next
+                    - img [ref=e389]
+            - contentinfo [ref=e391]:
+              - link "Powered by" [ref=e394] [cursor=pointer]:
+                - /url: https://www.mintlify.com?utm_campaign=poweredBy&utm_medium=referral&utm_source=antigmalabs
+                - generic [ref=e395]: Powered by
+                - img [ref=e396]
+      - generic [ref=e408]:
+        - generic [ref=e409]:
+          - generic [ref=e410]:
+            - img [ref=e411]
+            - generic [ref=e415]: Assistant
+          - generic [ref=e416]:
+            - button [ref=e417] [cursor=pointer]:
+              - img [ref=e418]
+            - button [ref=e423] [cursor=pointer]:
+              - img [ref=e424]
+        - generic [ref=e430]: Responses are generated using AI and may contain mistakes.
+        - generic [ref=e435]:
+          - textbox "Ask a question..." [ref=e436]
+          - button "Send message" [disabled] [ref=e437]:
+            - img [ref=e438]
+  - alert [ref=e440]

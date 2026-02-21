@@ -430,7 +430,7 @@
     "min_lines": 5,
     "min_tokens": 50,
     "max_percentage": 5,
-    "ignore_patterns": ["**/node_modules/**", "**/__pycache__/**", "**/vendor/**"]
+    "ignore_patterns": ["**/node_modules/**", "**/__pycache__/**", "**/vendor/**", "**/.shadow-*/**", "**/.git-cache/**", "**/.worktrees/**", "**/.venv/**", "**/.venv-*/**", "**/target/**", "**/dist/**", "**/build/**", "**/*.lock", "**/*.min.js"]
   },
   "sbom": {
     "enabled": true,

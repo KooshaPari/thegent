@@ -440,7 +440,7 @@ crun (Orchestration + DSL)
 - **Python**: 70% of projects (thegent, atoms-mcp-prod, heliosShield, bloc, trace, crun, smolgents, 4sgm)
 - **TypeScript**: 20% of projects (plangent, kimaki)
 - **Rust**: 10% (thegent extensions, heliosShield harness-native)
-- **Go**: <5% (CLIProxyAPIPlus-fork)
+- **Go**: <5% (cliproxyapi-plusplus)
 
 ### 4.2 Framework Distribution
 

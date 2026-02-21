@@ -40,8 +40,8 @@ impl HysteresisManager {
 
     /// Create a new hysteresis manager with custom parameters.
     pub fn with_config(band_width: f64, dwell_time: Duration, max_dwell: Duration, override_threshold: f64) -> Self {
-        assert!(band_width >= 0.0 && band_width <= 0.5, "band_width must be in [0.0, 0.5]");
-        assert!(override_threshold >= 0.0 && override_threshold <= 1.0, "override_threshold must be in [0.0, 1.0]");
+        assert!((0.0..=0.5).contains(&band_width), "band_width must be in [0.0, 0.5]");
+        assert!((0.0..=1.0).contains(&override_threshold), "override_threshold must be in [0.0, 1.0]");
         assert!(dwell_time < max_dwell, "dwell_time must be < max_dwell");
 
         Self {

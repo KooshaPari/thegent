@@ -344,7 +344,7 @@ def _offers_from_catalog(
         effective_max_cost = min(max_cost_weight, 1.0)
         _log.debug("Degraded mode: capping max_cost_weight to %.1f", effective_max_cost)
 
-    for model_id, route_list in routes_map.items():
+    for model_id, route_list in routes_map.items():  # type: ignore[union-attr]
         if not isinstance(route_list, list):
             continue
         for r in route_list:

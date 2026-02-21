@@ -1,0 +1,191 @@
+# models_tui_api
+
+Source: docs/reference/api/models_tui_api.md
+
+---
+
+# models_tui API Reference
+
+> **Source**: `src/thegent/ui/models_tui.py`
+
+## ModelAddModal
+
+Modal for adding a new model route.
+
+### Methods
+
+#### ModelAddModal.compose
+
+```
+compose(self: Any)
+```
+
+---
+
+#### ModelAddModal.on_button_pressed
+
+```
+on_button_pressed(self: Any, event: Button.Pressed)
+```
+
+---
+
+---
+
+## ModelsTUI
+
+TUI for managing custom models.
+
+**Inherits from**: `App`
+
+### Methods
+
+#### ModelsTUI.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### ModelsTUI.action_add_model
+
+```
+action_add_model(self: Any)
+```
+
+---
+
+#### ModelsTUI.action_delete_model
+
+```
+action_delete_model(self: Any)
+```
+
+---
+
+#### ModelsTUI.compose
+
+```
+compose(self: Any)
+```
+
+---
+
+#### ModelsTUI.load_data
+
+```
+load_data(self: Any)
+```
+
+---
+
+#### ModelsTUI.on_button_pressed
+
+```
+on_button_pressed(self: Any, event: Button.Pressed)
+```
+
+---
+
+#### ModelsTUI.on_mount
+
+```
+on_mount(self: Any)
+```
+
+---
+
+#### ModelsTUI.refresh_list
+
+```
+refresh_list(self: Any)
+```
+
+---
+
+#### ModelsTUI.save_data
+
+```
+save_data(self: Any)
+```
+
+---
+
+---
+
+## action_add_model
+
+```
+action_add_model(self: Any) -> None
+```
+
+---
+
+## action_delete_model
+
+```
+action_delete_model(self: Any) -> None
+```
+
+---
+
+## compose
+
+```
+compose(self: Any) -> ComposeResult
+```
+
+---
+
+## handle_add
+
+```
+handle_add(result: Any) -> None
+```
+
+---
+
+## load_data
+
+```
+load_data(self: Any) -> None
+```
+
+---
+
+## models_tui_main
+
+---
+
+## on_button_pressed
+
+```
+on_button_pressed(self: Any, event: Button.Pressed) -> None
+```
+
+---
+
+## on_mount
+
+```
+on_mount(self: Any) -> None
+```
+
+---
+
+## refresh_list
+
+```
+refresh_list(self: Any) -> None
+```
+
+---
+
+## save_data
+
+```
+save_data(self: Any) -> None
+```
+
+---

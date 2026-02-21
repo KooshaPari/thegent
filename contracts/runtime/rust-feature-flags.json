@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "generated": "2026-02-21",
+  "flags": [
+    {
+      "name": "zmx_abi_contract_version",
+      "crate": "thegent-zmx-interop",
+      "value": "1.0.0",
+      "description": "ZMX ABI contract version. Increment on ABI-breaking changes. Must match contracts/runtime/zig_abi_contract_v1.json 'version' field.",
+      "promotion_gate": "tests/test_wl132_zig_abi_contract.py"
+    },
+    {
+      "name": "parse_model_suffixes_enabled",
+      "crate": "thegent-parser",
+      "value": true,
+      "description": "Enable PyO3 Rust-backed model suffix parser. False falls back to Python. Feature is always compiled in; this flag documents the intent for routing layer.",
+      "promotion_gate": "tests/routing/test_wl131_parser_parity.py"
+    },
+    {
+      "name": "zmx_native_ffi",
+      "crate": "thegent-zmx-interop",
+      "value": false,
+      "description": "Cargo feature 'zmx-native': enables C ABI FFI linking against libzmx. Default off; subprocess fallback used when off. Set to true only in environments with libzmx installed.",
+      "promotion_gate": "tests/test_wl132_zig_abi_contract.py"
+    }
+  ]
+}

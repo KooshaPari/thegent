@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
 import pytest
 
-from thegent.governance.backlog import BacklogItem, BacklogManager, BacklogStatus
 from thegent.cost.aggregator_controller import BudgetTier, CostController
+from thegent.governance.backlog import BacklogItem, BacklogManager, BacklogStatus
 
 pytestmark = pytest.mark.unit
 

@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from thegent.utils.batch_ops import batch_read, batch_write
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,15 +47,18 @@ class PlanConsolidation:
         if not output_file:
             output_file = self.plans_dir / "CONSOLIDATED_PLAN.md"
 
-        consolidated_content = ["# Consolidated Plan\n"]
+        # Batch read all plan files at once
+        file_contents = batch_read(plan_files)
 
+        consolidated_content = ["# Consolidated Plan\n"]
         for plan_file in plan_files:
-            content = plan_file.read_text()
+            content = file_contents.get(plan_file, "")
             consolidated_content.append(f"## {plan_file.name}\n")
             consolidated_content.append(content)
             consolidated_content.append("\n---\n")
 
-        output_file.write_text("\n".join(consolidated_content))
+        # Batch write the consolidated output
+        batch_write([(output_file, "\n".join(consolidated_content))])
 
         return {
             "plans_consolidated": len(plan_files),

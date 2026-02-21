@@ -74,7 +74,7 @@ class ConsensusManager:
             counts[val_str] = counts.get(val_str, 0) + 1
             proposal_map[val_str] = p
 
-        winner_val = max(counts, key=counts.get)
+        winner_val = max(counts, key=lambda k: counts.get(k, 0))
         return proposal_map[winner_val]
 
 

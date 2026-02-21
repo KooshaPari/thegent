@@ -84,7 +84,7 @@ def audit_costs(format: str = typer.Option("rich", "--format", "-F")):
 
 @app.command("journal", help="Manage git journal for micro-commit audit trail.")
 def audit_journal(
-    action: str = typer.Argument("list", help="Action (list|status|snapshot|prune|show|watch|attest|stats)"),
+    action: str = typer.Argument("list", help="Action (list|status|snapshot|prune|show|watch|attest|stats|stream)"),
     session_id: str | None = typer.Option(None, "--session", "-s", help="Session ID"),
     path: str = typer.Option(".", "--path", "-p", help="Repository path"),
     max_age: int = typer.Option(30, "--max-age", "-a", help="Max age in days for prune"),
@@ -92,6 +92,9 @@ def audit_journal(
     attest: bool = typer.Option(False, "--attest", help="Enable cryptographic attestation"),
     batch_size: int = typer.Option(10, "--batch", "-b", help="Batch size for commits"),
     enhanced: bool = typer.Option(True, "--enhanced/--basic", help="Use enhanced journal"),
+    stream: bool = typer.Option(False, "--stream", help="Enable Kafka event streaming"),
+    bootstrap_servers: str = typer.Option("localhost:9092", "--kafka-servers", help="Kafka bootstrap servers"),
+    topic: str = typer.Option("thegent-audit-events", "--kafka-topic", help="Kafka topic for events"),
 ):
     """Manage git journal for micro-commit audit trail.
 

@@ -101,6 +101,17 @@ impl GrepShim {
                         rg_args.push(args[i].clone());
                     }
                 }
+                // Grep recursive bundles: rg is recursive by default, so strip -r/-R and keep only meaningful suffixes.
+                "-r" | "-R" | "-rE" => {}
+                "-rn" => rg_args.push("-n".to_string()),
+                "-ro" | "-roE" => rg_args.push("-o".to_string()),
+                "-rH" => rg_args.push("-H".to_string()),
+                "-rHo" | "-rHoE" => {
+                    rg_args.push("-H".to_string());
+                    rg_args.push("-o".to_string());
+                }
+                "-rEl" => rg_args.push("-l".to_string()),
+                "-rEh" => rg_args.push("-h".to_string()),
                 _ => {
                     // Pass through all other args (safe - Command avoids shell interpretation)
                     rg_args.push(arg.clone());

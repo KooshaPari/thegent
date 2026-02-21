@@ -1,0 +1,49 @@
+# main_api
+
+Source: docs/reference/api/main_api.md
+
+---
+
+# main API Reference
+
+> **Source**: `src/thegent/cli/apps/main.py`
+
+Thegent 3.0: Unified Agent Orchestration Entry Point.
+
+Consolidates all legacy command sprawl into a clean, logical hierarchy.
+
+---
+
+## install_compat
+
+```
+install_compat(target: str, mode: str, dry_run: bool, verbose: bool, url: Any, install_service: bool)
+```
+
+Run installer flows previously exposed as `thegent install`.
+
+---
+
+## main_welcome
+
+```
+main_welcome(ctx: typer.Context)
+```
+
+---
+
+## quick_do
+
+```
+quick_do(prompt: str)
+```
+
+---
+
+## quick_ps
+
+```
+quick_ps(all_sessions: bool, owner: Any, format: str, include_contract: bool)
+```
+
+---

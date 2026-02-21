@@ -1,5 +1,7 @@
 """Reusable helper library for common patterns."""
 
+import contextlib
+import functools
 import logging
 from collections.abc import Callable
 from pathlib import Path
@@ -12,6 +14,48 @@ logger = logging.getLogger(__name__)
 
 class ReusableHelpers:
     """Collection of reusable helper functions."""
+
+    @staticmethod
+    def error_handler(func: Callable) -> Callable:
+        """Decorator that logs exceptions and returns a safe default.
+
+        For methods returning ``list`` the default is ``[]``.
+        For methods returning ``bool`` the default is ``False``.
+        For all other return types the default is ``None``.
+
+        This decorator wraps the function so that unhandled exceptions are
+        logged at ERROR level and a sensible empty/falsy value is returned
+        instead of propagating the exception.
+
+        Args:
+            func: The method to wrap.
+
+        Returns:
+            Wrapped callable.
+        """
+        hints = {}
+        with contextlib.suppress(AttributeError):
+            hints = func.__annotations__
+
+        return_hint = hints.get("return", None)
+
+        @functools.wraps(func)
+        def _wrapper(*args: Any, **kwargs: Any) -> Any:
+            try:
+                return func(*args, **kwargs)
+            except Exception as exc:
+                logger.error("Error in %s: %s", func.__name__, exc)
+                # Return sensible default based on annotation
+                if return_hint is not None:
+                    if return_hint in (list, "list[dict[str, Any]]") or (
+                        isinstance(return_hint, str) and return_hint.startswith("list")
+                    ):
+                        return []
+                    if return_hint is bool or return_hint == "bool":
+                        return False
+                return None
+
+        return _wrapper
 
     @staticmethod
     def safe_execute(func: Callable, *args, **kwargs) -> tuple[Any, Exception | None]:

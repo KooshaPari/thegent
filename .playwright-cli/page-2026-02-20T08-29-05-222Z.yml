@@ -1,0 +1,625 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#content-area"
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - generic [ref=e9]:
+              - link "Ante home page light logo" [ref=e10] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e11]: Ante home page
+                - img "light logo" [ref=e12]
+              - button "Toggle dark mode" [ref=e13] [cursor=pointer]:
+                - generic [ref=e14]:
+                  - img [ref=e15]
+                  - img [ref=e22]
+            - generic [ref=e27]:
+              - button "Open search" [ref=e28] [cursor=pointer]:
+                - generic [ref=e29]:
+                  - img [ref=e30]
+                  - generic [ref=e33]: Search...
+                - generic [ref=e34]: ⌘K
+              - button "Toggle assistant panel" [ref=e35] [cursor=pointer]:
+                - img [ref=e36]
+            - generic [ref=e40]:
+              - list
+              - generic [ref=e41]:
+                - heading "Getting Started" [level=5] [ref=e43]
+                - list [ref=e44]:
+                  - listitem [ref=e45]:
+                    - link "Overview" [ref=e46] [cursor=pointer]:
+                      - /url: /start/overview
+                      - generic [ref=e48]: Overview
+                  - listitem [ref=e49]:
+                    - link "Quickstart" [ref=e50] [cursor=pointer]:
+                      - /url: /start/quickstart
+                      - generic [ref=e52]: Quickstart
+                  - listitem [ref=e53]:
+                    - link "Eval & Benchmark" [ref=e54] [cursor=pointer]:
+                      - /url: /start/eval
+                      - generic [ref=e56]: Eval & Benchmark
+              - generic [ref=e57]:
+                - heading "Concepts" [level=5] [ref=e59]
+                - list [ref=e60]:
+                  - listitem [ref=e61]:
+                    - link "Core Concepts & Protocol" [ref=e62] [cursor=pointer]:
+                      - /url: /concepts/core-concepts
+                      - generic [ref=e64]: Core Concepts & Protocol
+                  - listitem [ref=e65]:
+                    - link "Architecture" [ref=e66] [cursor=pointer]:
+                      - /url: /concepts/architecture
+                      - generic [ref=e68]: Architecture
+              - generic [ref=e69]:
+                - heading "Agent Org" [level=5] [ref=e71]
+                - list [ref=e72]:
+                  - listitem [ref=e73]:
+                    - link "Agent Organization (Experimental)" [ref=e74] [cursor=pointer]:
+                      - /url: /agent-org
+                      - generic [ref=e76]: Agent Organization (Experimental)
+              - generic [ref=e77]:
+                - heading "Offline Mode" [level=5] [ref=e79]
+                - list [ref=e80]:
+                  - listitem [ref=e81]:
+                    - link "Offline Mode (Experimental)" [ref=e82] [cursor=pointer]:
+                      - /url: /offline
+                      - generic [ref=e84]: Offline Mode (Experimental)
+              - generic [ref=e85]:
+                - heading "Usage" [level=5] [ref=e87]
+                - list [ref=e88]:
+                  - listitem [ref=e89]:
+                    - link "Interactive TUI" [ref=e90] [cursor=pointer]:
+                      - /url: /usage/tui
+                      - generic [ref=e92]: Interactive TUI
+                  - listitem [ref=e93]:
+                    - link "Headless Mode" [ref=e94] [cursor=pointer]:
+                      - /url: /usage/headless
+                      - generic [ref=e96]: Headless Mode
+              - generic [ref=e97]:
+                - heading "Extensibility" [level=5] [ref=e99]
+                - list [ref=e100]:
+                  - listitem [ref=e101]:
+                    - link "Skills" [ref=e102] [cursor=pointer]:
+                      - /url: /extend/skills
+                      - generic [ref=e104]: Skills
+                  - listitem [ref=e105]:
+                    - link "Sub-Agents" [ref=e106] [cursor=pointer]:
+                      - /url: /extend/subagents
+                      - generic [ref=e108]: Sub-Agents
+              - generic [ref=e109]:
+                - heading "Configuration" [level=5] [ref=e111]
+                - list [ref=e112]:
+                  - listitem [ref=e113]:
+                    - link "Model & Provider Catalog" [ref=e114] [cursor=pointer]:
+                      - /url: /configuration/catalog
+                      - generic [ref=e116]: Model & Provider Catalog
+                  - listitem [ref=e117]:
+                    - link "Preferences" [ref=e118] [cursor=pointer]:
+                      - /url: /configuration/preference
+                      - generic [ref=e120]: Preferences
+                  - listitem [ref=e121]:
+                    - link "Adding a 3rd Party Provider" [ref=e122] [cursor=pointer]:
+                      - /url: /configuration/third-party-provider
+                      - generic [ref=e124]: Adding a 3rd Party Provider
+              - generic [ref=e125]:
+                - heading "Memory" [level=5] [ref=e127]
+                - list [ref=e128]:
+                  - listitem [ref=e129]:
+                    - link "Memory" [ref=e130] [cursor=pointer]:
+                      - /url: /memory
+                      - generic [ref=e132]: Memory
+              - generic [ref=e133]:
+                - heading "Reference" [level=5] [ref=e135]
+                - list [ref=e136]:
+                  - listitem [ref=e137]:
+                    - link "Tools" [ref=e138] [cursor=pointer]:
+                      - /url: /tools
+                      - generic [ref=e140]: Tools
+          - list [ref=e141]:
+            - listitem [ref=e142]:
+              - link "Website" [ref=e143] [cursor=pointer]:
+                - /url: https://antigma.ai
+                - img [ref=e144]
+                - generic [ref=e146]: Website
+                - img [ref=e147]
+            - listitem [ref=e150]:
+              - link "Discord" [ref=e151] [cursor=pointer]:
+                - /url: https://discord.gg/pqhj3DNGz2
+                - img [ref=e152]
+                - generic [ref=e154]: Discord
+                - img [ref=e155]
+            - listitem [ref=e158]:
+              - link "GitHub" [ref=e159] [cursor=pointer]:
+                - /url: https://github.com/AntigmaLabs/ante-preview
+                - img [ref=e160]
+                - generic [ref=e162]: GitHub
+                - img [ref=e163]
+            - listitem [ref=e532]:
+              - button "Log Out" [ref=e533] [cursor=pointer]:
+                - listitem [ref=e534]:
+                  - link "Log Out" [ref=e535]:
+                    - /url: "#"
+                    - generic [ref=e537]: Log Out
+                    - img [ref=e538]
+            - listitem
+        - generic [ref=e166]:
+          - link "Ante Preview" [ref=e169] [cursor=pointer]:
+            - /url: /start/overview
+            - text: Ante Preview
+          - generic [ref=e171]:
+            - banner [ref=e172]:
+              - generic [ref=e173]:
+                - generic [ref=e174]: Concepts
+                - heading "Core Concepts & Protocol" [level=1] [ref=e176]
+              - paragraph [ref=e542]: Ante’s fundamental abstractions, and the Op/Evt message protocol that connects them
+            - generic [ref=e179]:
+              - generic [ref=e543]: Ante models agent interactions as a hierarchy of concepts, connected by a typed message-passing protocol.
+              - heading "Navigate to header Concept hierarchy" [level=2] [ref=e544]:
+                - link "Navigate to header" [ref=e545] [cursor=pointer]:
+                  - /url: "#concept-hierarchy"
+                  - img [ref=e547]
+                - generic [ref=e549] [cursor=pointer]: Concept hierarchy
+              - generic [ref=e550]:
+                - generic [ref=e551]:
+                  - generic [ref=e552]:
+                    - button "Copy the contents from the code block" [ref=e553] [cursor=pointer]:
+                      - img [ref=e554]
+                    - generic [ref=e557]: Copy
+                  - generic [ref=e558]:
+                    - button "Ask AI" [ref=e559] [cursor=pointer]:
+                      - img [ref=e560]
+                    - generic [ref=e563]: Ask AI
+                - code [ref=e567]:
+                  - generic [ref=e568]: Project
+                  - generic [ref=e569]: └── Session
+                  - generic [ref=e570]: └── Task
+                  - generic [ref=e571]: └── Turn
+                  - generic [ref=e572]: └── Step
+              - table [ref=e575]:
+                - rowgroup [ref=e576]:
+                  - row "Concept Description" [ref=e577]:
+                    - columnheader "Concept" [ref=e578]
+                    - columnheader "Description" [ref=e579]
+                - rowgroup [ref=e580]:
+                  - row "Project A git repo or root directory. Can have multiple sessions." [ref=e581]:
+                    - cell "Project" [ref=e582]:
+                      - strong [ref=e583]: Project
+                    - cell "A git repo or root directory. Can have multiple sessions." [ref=e584]
+                  - row "Session One episode of interaction between user and Ante. Manages dialog state, token usage, and context compaction." [ref=e585]:
+                    - cell "Session" [ref=e586]:
+                      - strong [ref=e587]: Session
+                    - cell "One episode of interaction between user and Ante. Manages dialog state, token usage, and context compaction." [ref=e588]
+                  - row "Task One piece of work the user wants to accomplish. Can span multiple turns." [ref=e589]:
+                    - cell "Task" [ref=e590]:
+                      - strong [ref=e591]: Task
+                    - cell "One piece of work the user wants to accomplish. Can span multiple turns." [ref=e592]
+                  - row "Turn One back-and-forth with the agent. Starts with user input, ends with agent message or approval request." [ref=e593]:
+                    - cell "Turn" [ref=e594]:
+                      - strong [ref=e595]: Turn
+                    - cell "One back-and-forth with the agent. Starts with user input, ends with agent message or approval request." [ref=e596]
+                  - row "Step One interaction from agent with LLM. Handles tool calls and other mechanics." [ref=e597]:
+                    - cell "Step" [ref=e598]:
+                      - strong [ref=e599]: Step
+                    - cell "One interaction from agent with LLM. Handles tool calls and other mechanics." [ref=e600]
+              - generic [ref=e601]:
+                - img "Note" [ref=e603]
+                - generic [ref=e606]: Generally, if there is no approval interruption, one task consists of one turn.
+              - 'heading "Navigate to header Protocol: Ops and Events" [level=2] [ref=e607]':
+                - link "Navigate to header" [ref=e608] [cursor=pointer]:
+                  - /url: "#protocol-ops-and-events"
+                  - img [ref=e610]
+                - generic [ref=e612] [cursor=pointer]: "Protocol: Ops and Events"
+              - generic [ref=e613]:
+                - text: Ante uses a message-passing protocol between the client (TUI or headless runner) and the daemon. Operations (
+                - code [ref=e614]: Op
+                - text: ) flow from client to daemon, and events (
+                - code [ref=e615]: Evt
+                - text: ) flow from daemon to client.
+              - heading "Navigate to header Message IDs" [level=3] [ref=e616]:
+                - link "Navigate to header" [ref=e617] [cursor=pointer]:
+                  - /url: "#message-ids"
+                  - img [ref=e619]
+                - generic [ref=e621] [cursor=pointer]: Message IDs
+              - generic [ref=e622]:
+                - text: Every message has a custom
+                - code [ref=e623]: Id
+                - text: "type with a 4-byte prefix for tracing:"
+              - list [ref=e624]:
+                - listitem [ref=e625]:
+                  - code [ref=e626]: op_
+                  - text: — operations
+                - listitem [ref=e627]:
+                  - code [ref=e628]: evt_
+                  - text: — events
+                - listitem [ref=e629]:
+                  - code [ref=e630]: ses_
+                  - text: — sessions
+                - listitem [ref=e631]:
+                  - code [ref=e632]: step_
+                  - text: — steps
+              - heading "Navigate to header Operations reference" [level=2] [ref=e633]:
+                - link "Navigate to header" [ref=e634] [cursor=pointer]:
+                  - /url: "#operations-reference"
+                  - img [ref=e636]
+                - generic [ref=e638] [cursor=pointer]: Operations reference
+              - table [ref=e641]:
+                - rowgroup [ref=e642]:
+                  - row "Op Fields Description" [ref=e643]:
+                    - columnheader "Op" [ref=e644]
+                    - columnheader "Fields" [ref=e645]
+                    - columnheader "Description" [ref=e646]
+                - rowgroup [ref=e647]:
+                  - row "NewSession model, provider, policy, streaming, config Initialize a new session" [ref=e648]:
+                    - cell "NewSession" [ref=e649]:
+                      - code [ref=e650]: NewSession
+                    - cell "model, provider, policy, streaming, config" [ref=e651]
+                    - cell "Initialize a new session" [ref=e652]
+                  - row "UserInput String Submit a user prompt" [ref=e653]:
+                    - cell "UserInput" [ref=e654]:
+                      - code [ref=e655]: UserInput
+                    - cell "String" [ref=e656]
+                    - cell "Submit a user prompt" [ref=e657]
+                  - row "ApprovalResponse allow/deny Respond to tool approval request" [ref=e658]:
+                    - cell "ApprovalResponse" [ref=e659]:
+                      - code [ref=e660]: ApprovalResponse
+                    - cell "allow/deny" [ref=e661]
+                    - cell "Respond to tool approval request" [ref=e662]
+                  - row "SlashCommand skill name, args Invoke a skill" [ref=e663]:
+                    - cell "SlashCommand" [ref=e664]:
+                      - code [ref=e665]: SlashCommand
+                    - cell "skill name, args" [ref=e666]
+                    - cell "Invoke a skill" [ref=e667]
+                  - row "OfflineMode OfflineModeOp Offline mode operations" [ref=e668]:
+                    - cell "OfflineMode" [ref=e669]:
+                      - code [ref=e670]: OfflineMode
+                    - cell "OfflineModeOp" [ref=e671]
+                    - cell "Offline mode operations" [ref=e672]
+                  - row "Interrupt — Abort the current task" [ref=e673]:
+                    - cell "Interrupt" [ref=e674]:
+                      - code [ref=e675]: Interrupt
+                    - cell "—" [ref=e676]
+                    - cell "Abort the current task" [ref=e677]
+                  - row "Shutdown — Clean shutdown" [ref=e678]:
+                    - cell "Shutdown" [ref=e679]:
+                      - code [ref=e680]: Shutdown
+                    - cell "—" [ref=e681]
+                    - cell "Clean shutdown" [ref=e682]
+              - heading "Navigate to header Events reference" [level=2] [ref=e683]:
+                - link "Navigate to header" [ref=e684] [cursor=pointer]:
+                  - /url: "#events-reference"
+                  - img [ref=e686]
+                - generic [ref=e688] [cursor=pointer]: Events reference
+              - table [ref=e691]:
+                - rowgroup [ref=e692]:
+                  - row "Evt Fields Description" [ref=e693]:
+                    - columnheader "Evt" [ref=e694]
+                    - columnheader "Fields" [ref=e695]
+                    - columnheader "Description" [ref=e696]
+                - rowgroup [ref=e697]:
+                  - row "SessionInit metadata Session is ready" [ref=e698]:
+                    - cell "SessionInit" [ref=e699]:
+                      - code [ref=e700]: SessionInit
+                    - cell "metadata" [ref=e701]
+                    - cell "Session is ready" [ref=e702]
+                  - row "TaskStarted id A new task has begun" [ref=e703]:
+                    - cell "TaskStarted" [ref=e704]:
+                      - code [ref=e705]: TaskStarted
+                    - cell "id" [ref=e706]
+                    - cell "A new task has begun" [ref=e707]
+                  - row "TaskFinished id, error, is_interrupted Task completed or failed" [ref=e708]:
+                    - cell "TaskFinished" [ref=e709]:
+                      - code [ref=e710]: TaskFinished
+                    - cell "id, error, is_interrupted" [ref=e711]
+                    - cell "Task completed or failed" [ref=e712]
+                  - row "AgentMessage String Text response from agent" [ref=e713]:
+                    - cell "AgentMessage" [ref=e714]:
+                      - code [ref=e715]: AgentMessage
+                    - cell "String" [ref=e716]
+                    - cell "Text response from agent" [ref=e717]
+                  - row "Thinking String Chain-of-thought content" [ref=e718]:
+                    - cell "Thinking" [ref=e719]:
+                      - code [ref=e720]: Thinking
+                    - cell "String" [ref=e721]
+                    - cell "Chain-of-thought content" [ref=e722]
+                  - row "MessageDelta String Streaming content chunk" [ref=e723]:
+                    - cell "MessageDelta" [ref=e724]:
+                      - code [ref=e725]: MessageDelta
+                    - cell "String" [ref=e726]
+                    - cell "Streaming content chunk" [ref=e727]
+                  - row "ToolCallStarted tool_use Tool execution began" [ref=e728]:
+                    - cell "ToolCallStarted" [ref=e729]:
+                      - code [ref=e730]: ToolCallStarted
+                    - cell "tool_use" [ref=e731]
+                    - cell "Tool execution began" [ref=e732]
+                  - row "ToolCallFinished result Tool execution completed" [ref=e733]:
+                    - cell "ToolCallFinished" [ref=e734]:
+                      - code [ref=e735]: ToolCallFinished
+                    - cell "result" [ref=e736]
+                    - cell "Tool execution completed" [ref=e737]
+                  - row "ToolCallCancelled — Tool execution was cancelled" [ref=e738]:
+                    - cell "ToolCallCancelled" [ref=e739]:
+                      - code [ref=e740]: ToolCallCancelled
+                    - cell "—" [ref=e741]
+                    - cell "Tool execution was cancelled" [ref=e742]
+                  - row "RequestApproval tool_use Agent needs permission" [ref=e743]:
+                    - cell "RequestApproval" [ref=e744]:
+                      - code [ref=e745]: RequestApproval
+                    - cell "tool_use" [ref=e746]
+                    - cell "Agent needs permission" [ref=e747]
+                  - row "UsageUpdate tokens, cost Token/cost tracking" [ref=e748]:
+                    - cell "UsageUpdate" [ref=e749]:
+                      - code [ref=e750]: UsageUpdate
+                    - cell "tokens, cost" [ref=e751]
+                    - cell "Token/cost tracking" [ref=e752]
+                  - row "Info String Informational message" [ref=e753]:
+                    - cell "Info" [ref=e754]:
+                      - code [ref=e755]: Info
+                    - cell "String" [ref=e756]
+                    - cell "Informational message" [ref=e757]
+                  - row "Error String Error message" [ref=e758]:
+                    - cell "Error" [ref=e759]:
+                      - code [ref=e760]: Error
+                    - cell "String" [ref=e761]
+                    - cell "Error message" [ref=e762]
+              - heading "Navigate to header Flow examples" [level=2] [ref=e763]:
+                - link "Navigate to header" [ref=e764] [cursor=pointer]:
+                  - /url: "#flow-examples"
+                  - img [ref=e766]
+                - generic [ref=e768] [cursor=pointer]: Flow examples
+              - heading "Navigate to header Basic UI flow" [level=3] [ref=e769]:
+                - link "Navigate to header" [ref=e770] [cursor=pointer]:
+                  - /url: "#basic-ui-flow"
+                  - img [ref=e772]
+                - generic [ref=e774] [cursor=pointer]: Basic UI flow
+              - generic [ref=e775]: "A single user input followed by a 2-turn task:"
+              - generic [ref=e776]:
+                - generic [ref=e777]:
+                  - button "Pan up" [ref=e778] [cursor=pointer]:
+                    - img [ref=e779]
+                  - button "Zoom in" [ref=e781] [cursor=pointer]:
+                    - img [ref=e782]
+                  - button "Pan left" [ref=e785] [cursor=pointer]:
+                    - img [ref=e786]
+                  - button "Reset view" [ref=e788] [cursor=pointer]:
+                    - img [ref=e789]
+                  - button "Pan right" [ref=e792] [cursor=pointer]:
+                    - img [ref=e793]
+                  - button "Pan down" [ref=e795] [cursor=pointer]:
+                    - img [ref=e796]
+                  - button "Zoom out" [ref=e798] [cursor=pointer]:
+                    - img [ref=e799]
+                - img "Mermaid diagram" [ref=e802]:
+                  - document [ref=e803]:
+                    - generic [ref=e806]: "\"LLM Provider\""
+                    - generic [ref=e809]: "\"Daemon\""
+                    - generic [ref=e812]: "\"UI\""
+                    - generic [ref=e817]: LLM
+                    - generic [ref=e820]: Task
+                    - generic [ref=e823]: Session
+                    - generic [ref=e826]: Core
+                    - generic [ref=e829]: User
+                    - generic [ref=e833]: LLM
+                    - generic [ref=e837]: Task
+                    - generic [ref=e841]: Session
+                    - generic [ref=e845]: Core
+                    - generic [ref=e849]: User
+                    - generic [ref=e854]: Turn 1
+                    - generic [ref=e857]: Turn 2
+                    - generic [ref=e858]: Op::NewSession
+                    - generic [ref=e859]: "1"
+                    - generic [ref=e860]: Create session
+                    - generic [ref=e861]: "2"
+                    - generic [ref=e862]: Evt::SessionInit
+                    - generic [ref=e863]: "3"
+                    - generic [ref=e864]: Op::UserInput
+                    - generic [ref=e865]: "4"
+                    - generic [ref=e866]: Start task
+                    - generic [ref=e867]: "5"
+                    - generic [ref=e868]: Evt::TaskStarted
+                    - generic [ref=e869]: "6"
+                    - generic [ref=e870]: prompt
+                    - generic [ref=e871]: "7"
+                    - generic [ref=e872]: response (exec)
+                    - generic [ref=e873]: "8"
+                    - generic [ref=e874]: Evt::RequestApproval
+                    - generic [ref=e875]: "9"
+                    - generic [ref=e876]: Op::ApprovalResponse(allow)
+                    - generic [ref=e877]: "10"
+                    - generic [ref=e878]: Evt::ToolCallStarted
+                    - generic [ref=e879]: "11"
+                    - generic [ref=e880]: exec
+                    - generic [ref=e882]: "12"
+                    - generic [ref=e883]: Evt::ToolCallFinished
+                    - generic [ref=e884]: "13"
+                    - generic [ref=e885]: stdout
+                    - generic [ref=e886]: "14"
+                    - generic [ref=e887]: response (patch)
+                    - generic [ref=e888]: "15"
+                    - generic [ref=e889]: apply patch (auto-approved)
+                    - generic [ref=e891]: "16"
+                    - generic [ref=e892]: success
+                    - generic [ref=e893]: "17"
+                    - generic [ref=e894]: response (msg + completed)
+                    - generic [ref=e895]: "18"
+                    - generic [ref=e896]: Evt::AgentMessage
+                    - generic [ref=e897]: "19"
+                    - generic [ref=e898]: Evt::TurnComplete
+                    - generic [ref=e899]: "20"
+                    - generic [ref=e900]: Evt::TaskFinished
+                    - generic [ref=e901]: "21"
+              - heading "Navigate to header Task interruption" [level=3] [ref=e902]:
+                - link "Navigate to header" [ref=e903] [cursor=pointer]:
+                  - /url: "#task-interruption"
+                  - img [ref=e905]
+                - generic [ref=e907] [cursor=pointer]: Task interruption
+              - generic [ref=e908]: "Interrupting a task and continuing with additional user input:"
+              - generic [ref=e909]:
+                - generic [ref=e910]:
+                  - button "Pan up" [ref=e911] [cursor=pointer]:
+                    - img [ref=e912]
+                  - button "Zoom in" [ref=e914] [cursor=pointer]:
+                    - img [ref=e915]
+                  - button "Pan left" [ref=e918] [cursor=pointer]:
+                    - img [ref=e919]
+                  - button "Reset view" [ref=e921] [cursor=pointer]:
+                    - img [ref=e922]
+                  - button "Pan right" [ref=e925] [cursor=pointer]:
+                    - img [ref=e926]
+                  - button "Pan down" [ref=e928] [cursor=pointer]:
+                    - img [ref=e929]
+                  - button "Zoom out" [ref=e931] [cursor=pointer]:
+                    - img [ref=e932]
+                - img "Mermaid diagram" [ref=e935]:
+                  - document [ref=e936]:
+                    - generic [ref=e939]: "\"LLM Provider\""
+                    - generic [ref=e942]: "\"Daemon\""
+                    - generic [ref=e945]: "\"UI\""
+                    - generic [ref=e948]: LLM
+                    - generic [ref=e951]: Task2
+                    - generic [ref=e954]: Task1
+                    - generic [ref=e957]: Session
+                    - generic [ref=e960]: User
+                    - generic [ref=e964]: LLM
+                    - generic [ref=e968]: Task2
+                    - generic [ref=e972]: Task1
+                    - generic [ref=e976]: Session
+                    - generic [ref=e980]: User
+                    - generic [ref=e985]: Op::UserInput
+                    - generic [ref=e986]: "1"
+                    - generic [ref=e987]: Start task
+                    - generic [ref=e988]: "2"
+                    - generic [ref=e989]: Evt::TaskStarted
+                    - generic [ref=e990]: "3"
+                    - generic [ref=e991]: prompt
+                    - generic [ref=e992]: "4"
+                    - generic [ref=e993]: response (exec)
+                    - generic [ref=e994]: "5"
+                    - generic [ref=e995]: exec (auto-approved)
+                    - generic [ref=e997]: "6"
+                    - generic [ref=e998]: Evt::TurnComplete
+                    - generic [ref=e999]: "7"
+                    - generic [ref=e1000]: stdout
+                    - generic [ref=e1001]: "8"
+                    - generic [ref=e1002]: response (exec)
+                    - generic [ref=e1003]: "9"
+                    - generic [ref=e1004]: exec (auto-approved)
+                    - generic [ref=e1006]: "10"
+                    - generic [ref=e1007]: Op::Interrupt
+                    - generic [ref=e1008]: "11"
+                    - generic [ref=e1009]: Evt::Error("interrupted")
+                    - generic [ref=e1010]: "12"
+                    - generic [ref=e1011]: Op::UserInput w/ last_response_id
+                    - generic [ref=e1012]: "13"
+                    - generic [ref=e1013]: Start task
+                    - generic [ref=e1014]: "14"
+                    - generic [ref=e1015]: Evt::TaskStarted
+                    - generic [ref=e1016]: "15"
+                    - generic [ref=e1017]: prompt + Task1 last_response_id
+                    - generic [ref=e1018]: "16"
+                    - generic [ref=e1019]: response (exec)
+                    - generic [ref=e1020]: "17"
+                    - generic [ref=e1021]: exec (auto-approved)
+                    - generic [ref=e1023]: "18"
+                    - generic [ref=e1024]: Evt::TurnComplete
+                    - generic [ref=e1025]: "19"
+                    - generic [ref=e1026]: stdout
+                    - generic [ref=e1027]: "20"
+                    - generic [ref=e1028]: msg + completed
+                    - generic [ref=e1029]: "21"
+                    - generic [ref=e1030]: Evt::AgentMessage
+                    - generic [ref=e1031]: "22"
+                    - generic [ref=e1032]: Evt::TurnComplete
+                    - generic [ref=e1033]: "23"
+                    - generic [ref=e1034]: Evt::TaskFinished
+                    - generic [ref=e1035]: "24"
+              - heading "Navigate to header Context management" [level=2] [ref=e1036]:
+                - link "Navigate to header" [ref=e1037] [cursor=pointer]:
+                  - /url: "#context-management"
+                  - img [ref=e1039]
+                - generic [ref=e1041] [cursor=pointer]: Context management
+              - generic [ref=e1042]: "Ante automatically manages context windows:"
+              - list [ref=e1043]:
+                - listitem [ref=e1044]:
+                  - strong [ref=e1045]: Token budget
+                  - text: — Each turn tracks token usage against the model’s context limit
+                - listitem [ref=e1046]:
+                  - strong [ref=e1047]: Auto-compaction
+                  - text: — When the dialog approaches the context limit, Ante uses the LLM to summarize the conversation history, preserving important context while freeing tokens
+                - listitem [ref=e1048]:
+                  - strong [ref=e1049]: Tool result trimming
+                  - text: — Large tool outputs are automatically trimmed to fit within budget
+              - heading "Navigate to header Permissions" [level=2] [ref=e1050]:
+                - link "Navigate to header" [ref=e1051] [cursor=pointer]:
+                  - /url: "#permissions"
+                  - img [ref=e1053]
+                - generic [ref=e1055] [cursor=pointer]: Permissions
+              - generic [ref=e1056]: "Ante has a permission system that gates tool execution:"
+              - table [ref=e1059]:
+                - rowgroup [ref=e1060]:
+                  - row "Policy Behavior" [ref=e1061]:
+                    - columnheader "Policy" [ref=e1062]
+                    - columnheader "Behavior" [ref=e1063]
+                - rowgroup [ref=e1064]:
+                  - row "Default Tools marked requires_approval prompt the user before execution" [ref=e1065]:
+                    - cell "Default" [ref=e1066]:
+                      - code [ref=e1067]: Default
+                    - cell "Tools marked requires_approval prompt the user before execution" [ref=e1068]:
+                      - text: Tools marked
+                      - code [ref=e1069]: requires_approval
+                      - text: prompt the user before execution
+                  - row "Yolo All tools execute without approval" [ref=e1070]:
+                    - cell "Yolo" [ref=e1071]:
+                      - code [ref=e1072]: Yolo
+                    - cell "All tools execute without approval" [ref=e1073]
+              - generic [ref=e1074]:
+                - text: In the TUI, you approve or deny each tool call interactively. In headless mode,
+                - code [ref=e1075]: "--yolo"
+                - text: is implied (all tools auto-approved).
+              - generic [ref=e1076]:
+                - text: Tools like
+                - code [ref=e1077]: Bash
+                - text: and
+                - code [ref=e1078]: Write
+                - text: require approval by default, while read-only tools like
+                - code [ref=e1079]: Read
+                - text: ","
+                - code [ref=e1080]: Glob
+                - text: ", and"
+                - code [ref=e1081]: Grep
+                - text: do not.
+            - generic [ref=e467]:
+              - link "Previous" [ref=e468] [cursor=pointer]:
+                - /url: /start/eval
+                - img [ref=e469]
+                - generic [ref=e471]: Previous
+              - link "Architecture Ante's client-daemon architecture, provider system, and tool framework Next" [ref=e472] [cursor=pointer]:
+                - /url: /concepts/architecture
+                - generic [ref=e473]:
+                  - generic [ref=e474]:
+                    - generic [ref=e475]: Architecture
+                    - generic [ref=e476]: Ante's client-daemon architecture, provider system, and tool framework
+                  - generic [ref=e478]:
+                    - generic [ref=e479]: Next
+                    - img [ref=e480]
+            - contentinfo [ref=e482]:
+              - link "Powered by" [ref=e485] [cursor=pointer]:
+                - /url: https://www.mintlify.com?utm_campaign=poweredBy&utm_medium=referral&utm_source=antigmalabs
+                - generic [ref=e486]: Powered by
+                - img [ref=e487]
+      - generic [ref=e499]:
+        - generic [ref=e500]:
+          - generic [ref=e501]:
+            - img [ref=e502]
+            - generic [ref=e506]: Assistant
+          - generic [ref=e507]:
+            - button [ref=e508] [cursor=pointer]:
+              - img [ref=e509]
+            - button [ref=e514] [cursor=pointer]:
+              - img [ref=e515]
+        - generic [ref=e521]: Responses are generated using AI and may contain mistakes.
+        - generic [ref=e526]:
+          - textbox "Ask a question..." [ref=e527]
+          - button "Send message" [disabled] [ref=e528]:
+            - img [ref=e529]
+  - alert [ref=e531]

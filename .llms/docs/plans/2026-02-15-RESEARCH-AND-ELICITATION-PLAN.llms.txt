@@ -1,0 +1,303 @@
+# 2026-02-15-RESEARCH-AND-ELICITATION-PLAN
+
+Source: docs/plans/2026-02-15-RESEARCH-AND-ELICITATION-PLAN.md
+
+---
+
+# Research and Elicitation Plan — 2026-02-15
+
+**Purpose:** Synthesize best items from tooling audit, lifecycle design, and WBS; elicit rich questions for prioritization.  
+**Status:** Active (expanded)  
+**Scope:** Tooling, optimization, lifecycle/checker, observability, intuitive design, holistic engineering, harmonious integration
+
+---
+
+### Quick Summary
+
+- **Decisions:** Hard mode (checker-only kill), gemini flash default (configurable), preset YAML, stop via env+MCP, full takeover UX, all surfaces, persist for audit, trace replay, unify loop_mode.
+- **Principles:** Intuitive (progressive disclosure, single mental model); holistic (end-to-end, failure-aware, observable); harmonious (Progressive Disclosure, 4-pane cockpit, HITL, cost routing, audit).
+- **Execution:** 9 steps; CheckerContext schema first; robustness (timeout, fallback, circuit breaker); edge cases documented.
+
+---
+
+## 0. Design Principles (Intuitive, Maximal, Harmonious)
+
+### 0.1 Intuitive Design
+
+| Principle | Meaning | Application to Lifecycle/Checker |
+|-----------|---------|----------------------------------|
+| **Progressive disclosure** | Show summary first; expand on demand (ADR-008, ADR-014) | Takeover: Tier 1 (summary) → Tier 2 (WBS, governance) → Tier 3 (full trace) |
+| **Single mental model** | One concept, one name, one behavior | `loop_mode` unified across AgilePlus, LifecycleController, agent_deployer |
+| **Discoverable** | Operators find features without docs | CLI `thegent loop --help` shows `--loop-mode soft\|hard`; MCP tools self-describe |
+| **Predictable** | Same input → same behavior (when deterministic) | Preset match → deterministic prompt; no match → checker (LLM) |
+| **Reversible** | Human can undo or override | Soft mode: STOP; takeover: human injects; audit: trace replay |
+| **Consistent surfaces** | Same data, same schema, across CLI/MCP/dashboard | Checker context schema reused in takeover, audit, trace replay |
+
+### 0.2 Maximal / Holistic Engineering
+
+| Principle | Meaning | Application |
+|-----------|---------|-------------|
+| **End-to-end** | Design for full flow, not isolated steps | Preset → Checker → Worker → Audit → Replay; no orphan states |
+| **Failure-aware** | Every path has a defined failure mode (MAST 14-mode) | Checker timeout → CONTINUE or escalate; preset load fail → built-in fallback |
+| **Observable** | Every decision point emits structured events | Checker decision → OTel span; takeover → audit event; preset match → log |
+| **Recoverable** | State can be resumed or replayed | Checkpoint before checker; trace replay; takeover context persisted |
+| **Boundary-respecting** | No layer violations (tach, ADRs) | Checker in agents/; governance report from governance/; no circular deps |
+| **Cost-conscious** | Checker uses cheap model; presets avoid LLM when possible | Default gemini flash; preset-first routing minimizes checker calls |
+
+### 0.3 Harmonious Design with Other Features
+
+| Feature | Integration Point | Harmony Rule |
+|---------|-------------------|--------------|
+| **Progressive Disclosure (ADR-008)** | Takeover UX | Tier 1: "Checker decided X. Take over?" → Tier 2: governance + WBS → Tier 3: full trace |
+| **4-Pane Cockpit (P-090)** | Stream + Details panes | Stream: condensed worker output; Details: checker context when takeover active |
+| **Sitback widgets** | `register_widget` | Lifecycle widget: session state, checker context, takeover input; same schema as MCP |
+| **HITL patterns (HAC)** | Supervisory Loop, HaaT | Lifecycle takeover = Supervisory Loop; checker RE_PROMPT can trigger HaaT `ask_human` |
+| **Autonomy Gradient** | Cockpit dial | Soft loop = respects human override; Hard loop = checker-only (Guarded/Manual autonomy) |
+| **Cost-aware routing (WP-5003)** | Checker model selection | `checker_agent` participates in cost_quality policy; checker calls counted in budget |
+| **Governance / PolicyEngine** | Checker inputs | Governance report flows from PolicyEngine; checker KILL on policy denial |
+| **Audit trail (ADR-005, ADR-012)** | Takeover, checker decisions | Every checker decision + takeover event → hash-chained audit |
+| **Trace replay** | Checker context persistence | Replay uses same CheckerContext schema; enables "what checker saw" replay |
+| **Handoff packet (P-006)** | Session handoff | Takeover context = handoff packet subset; enables operator-to-operator handoff |
+| **Work stream** | Task claiming | Loop session linked to WORK_STREAM item; completion updates CLAIMED→COMPLETED |
+| **Circuit breaker** | Checker provider | Checker uses resilience layer; circuit open → fallback or CONTINUE |
+
+---
+
+## 1. Current State Summary
+
+### 1.1 What’s Implemented
+
+| Area | Status | Location |
+|------|--------|----------|
+| **Lifecycle loop** | ✓ | `agents/loop_controller.py` — `LifecycleController`, `run_loop()` |
+| **Preset-first routing** | ✓ | `match_preset(combined)` before checker; skip checker when match |
+| **Checker agent** | ✓ | `agents/checker.py` — `CheckerAgent.decide()` |
+| **Soft mode** | ✓ | `LoopMode.SOFT` — STOP signal in output stops loop |
+| **Human takeover** | ✓ | `loop-send`, `takeover`, `thegent_loop_takeover` (MCP) |
+| **Preset catalog** | ✓ | `agents/presets.py` — write_tests, write_docs, add_polish, continue |
+| **Cost-aware routing** | ✓ | WP-5003 done — cost_quality policy, budget shaping |
+| **Config check** | ✓ | `thegent config check` |
+| **Route probe** | ✓ | `thegent route-probe` |
+
+### 1.2 Gaps vs Design (12-LIFECYCLE-LOOP-DESIGN.md)
+
+| Gap | Design | Current | Effort |
+|-----|--------|---------|--------|
+| **Hard loop mode** | Checker kill only; no human override | Only SOFT implemented | Small |
+| **Checker model** | Codex headless gemini flash | `antigravity` (default) | Small |
+| **Preset catalog** | YAML/JSON config | Hardcoded in `presets.py` | Medium |
+| **Human sees checker context** | Same view for human and checker | Unclear — takeover UX may not show governance/WBS/response | Medium |
+| **LLM fallback** | When no preset match → LLM | ✓ Checker is LLM fallback; flow correct | — |
+| **Doc naming** | 12-RALPH-WIGGUM in index | File is `12-LIFECYCLE-LOOP-DESIGN.md` | Trivial |
+
+---
+
+## 2. Best Items (Prioritized)
+
+### 2.1 Tooling & Optimization (from TOOLING_AND_OPTIMIZATION_AUDIT)
+
+| ID | Item | Priority | Effort | Impact |
+|----|------|----------|--------|--------|
+| **WP-5005** | Continuity watchdog (heartbeat 30s, session resumption) | P1 | 6–10 calls | Long-running reliability |
+| **QW-008** | OTel span attributes (resolved provider/model post-route) | P2 | 1–2 calls | Observability |
+| **ROB-001** | Sloppy XML recovery for unclosed tags | P0 | 3 calls | 90%+ malformed output |
+| **run-diff** | `thegent run-diff <a> <b>` — compare execution traces | P3 | Medium | Debugging |
+| **trace replay** | `thegent trace replay <run_id>` | P3 | Medium | Reproducibility |
+| **WP-5006** | Handoff integrity (snapshot validation, ownership transfer) | P2 | 6–10 calls | Multi-agent handoff |
+
+### 2.2 Lifecycle & Checker (from 12-LIFECYCLE-LOOP-DESIGN)
+
+| ID | Item | Priority | Effort | Impact |
+|----|------|----------|--------|--------|
+| **Hard mode** | `loop_mode: hard` — checker kill only | P2 | Small | Compliance/audit scenarios |
+| **Checker model config** | `checker_agent` in config (gemini flash vs antigravity) | P2 | Small | Cost/latency tuning |
+| **Preset catalog YAML** | Move presets to config/plugin | P3 | Medium | Extensibility |
+| **Human takeover context** | Dashboard shows governance, WBS, response before human input | P1 | Medium | HITL quality |
+
+### 2.3 Observability Overhaul (Design §5.2)
+
+| Component | Requirement | Status |
+|-----------|-------------|--------|
+| Dashboard | Real-time session state, condensed stream, input field for takeover | Partial |
+| Governance report | Visible to checker (and human when takeover) | Checker yes; human unclear |
+| WBS status | Phased view with completion %, blocked items | Partial |
+| Checker context | Same view for auto-checker and human-in-place | Gap |
+
+---
+
+## 3. Elicitation Questions (Rich)
+
+### 3.1 Lifecycle & Checker
+
+1. **Soft vs hard default** — Should the default loop mode be `soft` (human can always stop) or `hard` (checker-only kill for audit/compliance)? When would you choose hard?
+
+2. **Checker model** — Design specifies “codex headless gemini flash”; code uses `antigravity`. Should we:
+   - (a) Make it configurable (`checker_agent` in config)?
+   - (b) Switch default to gemini flash?
+   - (c) Keep antigravity and document the choice?
+
+3. **Preset catalog location** — Keep in code (`presets.py`) or move to YAML/plugin config? Trade-off: code = versioned with app; YAML = operator-customizable without code change.
+
+4. **Stop signal format** — Currently: `STOP` in agent output (soft mode). Should we also support:
+   - Environment variable (e.g. `THGENT_LOOP_STOP=1`)?
+   - MCP tool call (`thegent_loop_stop`)?
+   - Special token in stream (e.g. `<STOP/>`)?
+
+### 3.2 Human Takeover & Observability
+
+5. **Human takeover UX** — When a human takes over via `loop-send` or `takeover`, should they:
+   - (a) See the full checker context (governance report, WBS, agent response) before entering their prompt?
+   - (b) Just get an input field with minimal context?
+   - (c) Get a progressive disclosure (summary first, expand for full context)?
+
+6. **Takeover surface** — Where should human takeover live?
+   - Cursor Composer inline?
+   - Separate dashboard (Sitback cockpit)?
+   - MCP tool only (`thegent_loop_takeover`)?
+   - All of the above?
+
+7. **Checker context persistence** — When human takes over, should we persist the checker context (governance, WBS, response) for audit/replay, or is in-memory sufficient?
+
+### 3.3 Tooling & Next WP
+
+8. **Next WP priority** — Given WP-5002, 5003 done, which is next?
+   - **WP-5005** (Continuity watchdog) — heartbeat, resumption
+   - **WP-5006** (Handoff integrity) — snapshot validation
+   - **Phase B** (QW-008, dx-audit, coverage-based test selection)
+   - **ROB-001** (Sloppy XML recovery) — robustness
+
+9. **run-diff / trace replay** — How important are these for your workflow? Debugging multi-run issues? Compliance/audit? Or lower priority?
+
+10. **Observability overhaul scope** — Should we treat “same context for human and checker” as a Phase 4 UX epic, or tackle it incrementally (e.g. MCP tool that returns checker context for takeover)?
+
+### 3.4 Design & Docs
+
+11. **12-LIFECYCLE vs 12-RALPH-WIGGUM** — Master index references `12-RALPH-WIGGUM-CHECKER-AGENT-DESIGN.md` but file is `12-LIFECYCLE-LOOP-DESIGN.md`. Rename for consistency, or keep lifecycle (more generic)?
+
+12. **AgilePlus vs Lifecycle** — `governance/agileplus.py` has `lifecycle_mode: soft`; `loop_controller` has `LoopMode.SOFT/HARD`. Should these share a single `loop_mode` concept, or stay separate (AgilePlus = governance cycle, Lifecycle = agent loop)?
+
+---
+
+## 4. Decisions (2026-02-15)
+
+| Question | Decision |
+|----------|----------|
+| **Soft vs hard default** | Checker-only kill (hard mode) |
+| **Checker model** | Default gemini flash; configurable via `checker_agent` |
+| **Preset catalog** | Move to YAML/plugin |
+| **Stop signal** | Also support env var + MCP tool (in addition to STOP in output) |
+| **Human takeover UX** | Full context (governance, WBS, response) before human input |
+| **Takeover surface** | All: Composer inline, Sitback dashboard, MCP tool |
+| **Checker context persistence** | Persist for audit/replay |
+| **Trace replay** | Important |
+| **Doc naming** | Keep lifecycle/cycleloop (not RALPH-WIGGUM) |
+| **AgilePlus vs Lifecycle** | Unify `loop_mode` concept |
+
+---
+
+## 5. Implementation Plan (from Decisions)
+
+### 5.1 Decision → Implementation Matrix
+
+| Decision | Implementation | Acceptance Criteria |
+|----------|----------------|---------------------|
+| **Checker-only kill (hard)** | Add `LoopMode.HARD`; in hard mode, ignore STOP in output; only checker KILL stops | `--loop-mode hard` ignores STOP; only checker KILL terminates |
+| **Default gemini flash, configurable** | Config `checker_agent: gemini-flash` (default); `CheckerAgent(agent_name=settings.checker_agent)` | `thegent config check` validates checker_agent; fallback if runner missing |
+| **Preset catalog → YAML/plugin** | `presets.yaml` or plugin dir; loader in `presets.py`; fallback to built-in | Load from `~/.thegent/presets.yaml` or `./presets.yaml`; built-in if missing |
+| **Stop signal: env var + MCP** | `THGENT_LOOP_STOP=1`; MCP tool `thegent_loop_stop <session_id>` | Env checked each iteration; MCP writes stop flag; both work in soft mode |
+| **Full UX for takeover** | MCP/CLI return checker context (governance, WBS, response) before human input | `thegent_loop_takeover` returns `CheckerContext`; human sees before prompt |
+| **All takeover surfaces** | Composer inline, Sitback widget, MCP `thegent_loop_takeover` — all show full context | Same `CheckerContext` schema in all three; Sitback widget uses `register_widget` |
+| **Persist for audit** | Write checker context to `takeover.json` or audit ledger on takeover | Append to audit trail; hash-chained; queryable for replay |
+| **Trace replay** | Prioritize `thegent trace replay <run_id>` in roadmap | Replay consumes persisted checker context; WP in Phase 4 |
+| **Unify loop_mode** | Shared `loop_mode` enum/config between `AgilePlusLoop` and `LifecycleController` | Single `LoopMode` in `agents/loop_controller.py`; AgilePlus imports it |
+
+### 5.2 Shared Schema: CheckerContext
+
+Used by checker, takeover, audit, replay, Sitback widget. Single source of truth.
+
+```
+CheckerContext:
+  session_id: str
+  iteration: int
+  governance_report: dict | str
+  todo_spec: str
+  wbs_status: dict
+  agent_response: str
+  checker_decision: re_prompt | continue | kill | null  # null when human takeover
+  human_takeover: bool
+  timestamp_utc: str
+```
+
+### 5.3 Robustness Additions
+
+| Area | Addition | Rationale |
+|------|----------|-----------|
+| **Checker timeout** | 30s timeout; on timeout → CONTINUE (conservative) or configurable | Prevents loop stall on checker provider failure |
+| **Preset load failure** | If YAML/plugin load fails → use built-in catalog; log warning | Never block loop start |
+| **Stop signal race** | Env + MCP both write to same atomic flag file | Avoid split-brain; single source of truth |
+| **Takeover idempotency** | If human sends while checker running → queue or reject with clear message | Prevents duplicate injection |
+| **Circuit breaker** | Checker uses `get_runner` → resilience layer; circuit open → CONTINUE | Aligns with P-034, ADR-006 |
+| **Audit schema** | CheckerContext + event_type (checker_decision | human_takeover | loop_stop) | Enables forensic replay |
+
+### 5.4 Harmonious Integration Checklist
+
+| Integration | Action |
+|-------------|--------|
+| **Progressive disclosure** | `thegent_loop_takeover` returns `CheckerContext`; UI tiers: summary → detail → trace |
+| **4-pane cockpit** | Stream pane: worker output; Details pane: CheckerContext when takeover active |
+| **Sitback** | `register_widget("lifecycle", fn)` → CheckerContext + takeover input; same schema |
+| **Cost routing** | Add checker calls to budget; `checker_agent` in cost_quality policy |
+| **Audit** | Emit `CheckerContext` on every checker decision + takeover; hash chain |
+| **Trace replay** | Replay deserializes `CheckerContext` from audit; show "what checker saw" |
+| **Unify loop_mode** | `AgilePlusLoop(lifecycle_mode=...)` → `LoopMode(...)`; `agent_deployer` same |
+
+### 5.5 Execution Order (Robustified)
+
+1. **Hard mode + checker config** — Foundation; unblock compliance use cases
+2. **Unify loop_mode** — Single enum; AgilePlus, agent_deployer, LifecycleController
+3. **CheckerContext schema** — Define once; used everywhere
+4. **Preset YAML** — Extensibility; fallback to built-in
+5. **Stop signal (env + MCP)** — Multiple stop paths; atomic flag
+6. **Full takeover UX** — MCP returns CheckerContext; CLI same
+7. **Persist for audit** — CheckerContext → audit trail; hash chain
+8. **Sitback widget** — Dashboard parity with MCP
+9. **Trace replay** — Consume audit; WP in Phase 4
+
+### 5.6 Dependencies & Prerequisites
+
+| Item | Depends On | Blocks |
+|------|------------|--------|
+| CheckerContext schema | — | Takeover UX, audit, replay, Sitback |
+| Hard mode | — | Compliance workflows |
+| Unify loop_mode | LoopMode.HARD exists | AgilePlus, agent_deployer refactor |
+| Preset YAML | — | Operator customization |
+| Stop signal (env+MCP) | Session ID in loop state | Soft-mode stop from external process |
+| Full takeover UX | CheckerContext schema | Sitback widget, audit |
+| Persist for audit | Audit trail (ADR-012) | Trace replay |
+| Trace replay | Persisted CheckerContext, audit | Phase 4 WP |
+
+### 5.7 Edge Cases & Failure Modes
+
+| Scenario | Handling |
+|----------|----------|
+| Checker provider down | Circuit breaker → CONTINUE or escalate; never block loop |
+| Preset YAML malformed | Fallback to built-in; log error; continue |
+| Human takeover during checker call | Queue human input; apply after checker returns; or reject with "wait" |
+| STOP file + env + MCP all set | Any one triggers stop (soft mode); idempotent |
+| Hard mode + human wants to stop | Human must use escalation (WP-4009); not direct stop |
+| Checker returns invalid JSON | Retry once; then CONTINUE; log |
+| Session dies mid-loop | Continuity watchdog (WP-5005) detects; handoff packet for resume |
+
+---
+
+## 6. Cross-References
+
+| Doc | Purpose |
+|-----|---------|
+| [TOOLING_AND_OPTIMIZATION_AUDIT](../reference/TOOLING_AND_OPTIMIZATION_AUDIT.md) | Quick wins, WP-5005, ROB-001 |
+| [12-LIFECYCLE-LOOP-DESIGN](./12-LIFECYCLE-LOOP-DESIGN.md) | Cycleloop/checker design (source) |
+| [HAC_AND_HITL_PATTERNS](../reference/HAC_AND_HITL_PATTERNS.md) | Supervisory Loop, HaaT, autonomy |
+| [SITBACK_PLUGINS](../guides/SITBACK_PLUGINS.md) | Widget API for lifecycle dashboard |
+| [PHASE_4_COCKPIT_UX_DEPTH](../reference/PHASE_4_COCKPIT_UX_DEPTH.md) | 4-pane layout, progressive disclosure |
+| [05-ARCHITECTURE](../plans/05-ARCHITECTURE.md) | ADRs, patterns, module boundaries |
+| [02-UNIFIED-WBS](./02-UNIFIED-WBS.md) | WP-5005, 5006, Phase 4 UX |

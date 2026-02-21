@@ -1,8 +1,5 @@
 """Logical stream: Swarm Coordination and Teammates."""
 
-from pathlib import Path
-from typing import List, Optional
-
 import typer
 from rich.console import Console
 
@@ -55,32 +52,25 @@ def teammates_show(
 def team_create(
     name: str = typer.Argument(..., help="Team name"),
     agents: list[str] = typer.Argument(..., help="Agents to include in the swarm"),
-    objective: str = typer.Option("", "--objective", "-o", help="Team primary objective"),
 ):
     from thegent.cli.commands.cli import team_create_cmd
 
-    team_create_cmd(name=name, agents=agents, objective=objective)
+    team_create_cmd(name=name, teammates=",".join(agents) if agents else None)
 
 
 @app.command("list", help="List active agent swarms.")
 def team_list(format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)")):
-    from thegent.cli.commands.cli import team_list_cmd
-
-    team_list_cmd(format=format)
+    console.print("[yellow]Team list is not yet implemented.[/yellow]")
 
 
 @app.command("hierarchy", help="Show current agent management hierarchy.")
 def team_hierarchy(format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)")):
-    from thegent.cli.commands.cli import hierarchy_status_cmd
-
-    hierarchy_status_cmd(format=format)
+    console.print("[yellow]Team hierarchy is not yet implemented.[/yellow]")
 
 
 @app.command("crew", help="List hierarchical agent crews.")
 def team_crew(format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)")):
-    from thegent.cli.commands.cli import crew_list_cmd
-
-    crew_list_cmd(format=format)
+    console.print("[yellow]Team crew is not yet implemented.[/yellow]")
 
 
 # Shortcuts for common teammate ops at top level of team stream

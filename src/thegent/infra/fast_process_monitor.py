@@ -98,7 +98,9 @@ class FastProcessMonitor:
             data = cmdline_path.read_bytes()
             if not data:
                 return ""
-            return " ".join(data.split(b"\x00")[:-1]).decode("utf-8", errors="replace")
+            # Split by null byte, filter empty strings, decode each part
+            parts = [part.decode("utf-8", errors="replace") for part in data.split(b"\x00") if part]
+            return " ".join(parts)
         except (OSError, PermissionError, UnicodeDecodeError):
             return None
 

@@ -13,7 +13,7 @@ This indicates that something is evaluating directory contents as commands, like
 
 ## Root Cause
 
-1. **CLIProxyAPI config missing**: CLIProxyAPI is trying to load `/Users/kooshapari/temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/config.yaml` which doesn't exist
+1. **CLIProxyAPI config missing**: CLIProxyAPI is trying to load `/Users/kooshapari/temp-PRODVERCEL/485/kush/cliproxyapi-plusplus/config.yaml` which doesn't exist
 2. **Shell wrapper corruption**: A wrapper script or hook is incorrectly evaluating directory contents
 
 ## Immediate Fix (Do This First)
@@ -30,9 +30,9 @@ mkdir -p ~/.config/thegent
 python -m thegent.main cliproxy ensure-config
 
 # If fork binary exists, copy config to fork location
-if [ -f "../CLIProxyAPIPlus-fork/cli-proxy-api-plus" ]; then
-    mkdir -p ../CLIProxyAPIPlus-fork
-    cp ~/.config/thegent/cliproxy-config.yaml ../CLIProxyAPIPlus-fork/config.yaml
+if [ -f "../cliproxyapi-plusplus/cli-proxy-api-plus" ]; then
+    mkdir -p ../cliproxyapi-plusplus
+    cp ~/.config/thegent/cliproxy-config.yaml ../cliproxyapi-plusplus/config.yaml
 fi
 ```
 

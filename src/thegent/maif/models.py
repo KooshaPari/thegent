@@ -63,7 +63,7 @@ class MAIFArtifact(BaseModel):
 
     @field_validator("id")
     @classmethod
-    def validate_id(cls, v):
+    def validate_id(cls, v: str) -> str:
         """Validate artifact ID is valid hex string."""
         try:
             int(v, 16)
@@ -75,7 +75,7 @@ class MAIFArtifact(BaseModel):
 
     @field_validator("timestamp")
     @classmethod
-    def validate_timestamp(cls, v):
+    def validate_timestamp(cls, v: int) -> int:
         """Validate timestamp is positive integer."""
         if v <= 0:
             raise ValueError("Timestamp must be positive")
@@ -83,7 +83,7 @@ class MAIFArtifact(BaseModel):
 
     @field_validator("input_hash", "output_hash", "previous_hash")
     @classmethod
-    def validate_hash(cls, v):
+    def validate_hash(cls, v: str) -> str:
         """Validate hash is valid SHA-256 hex string or empty."""
         if v == "":
             return v  # Empty string allowed for previous_hash
@@ -97,7 +97,7 @@ class MAIFArtifact(BaseModel):
 
     @field_validator("signature")
     @classmethod
-    def validate_signature(cls, v):
+    def validate_signature(cls, v: str) -> str:
         """Validate signature is valid hex string or empty."""
         if v == "":
             return v  # Empty string allowed before signing

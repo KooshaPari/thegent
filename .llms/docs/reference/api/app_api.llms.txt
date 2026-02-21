@@ -1,0 +1,424 @@
+# app_api
+
+Source: docs/reference/api/app_api.md
+
+---
+
+# app API Reference
+
+> **Source**: `src/thegent/ui/compositor/app.py`
+
+CompositApp - Main Textual application for the TUI compositor.
+
+---
+
+## CompositApp
+
+Main TUI Compositor application.
+
+Features:
+- Menubar with file/edit/view/tools/help menus
+- Statusbar with session info and pane count
+- Container for terminal panes
+- Key bindings for pane management
+- Lifecycle hooks for pane initialization/cleanup
+- Error boundaries for crash recovery
+
+**Inherits from**: `App`
+
+### Methods
+
+#### CompositApp.__init__
+
+```
+__init__(self: Any, session_state: SessionState | None)
+```
+
+Initialize CompositApp.
+
+**Parameters**:
+
+- `session_state`: Optional session state for persistence
+
+---
+
+#### CompositApp.action_close_pane
+
+```
+action_close_pane(self: Any)
+```
+
+Close the current pane.
+
+Wrapped with error boundaries.
+Decrements pane count (if &gt; 1) and updates statusbar.
+
+---
+
+#### CompositApp.action_focus_next
+
+```
+action_focus_next(self: Any)
+```
+
+Focus the next pane.
+
+Wrapped with error boundaries.
+Cycles focus through available panes.
+
+---
+
+#### CompositApp.action_new_pane
+
+```
+action_new_pane(self: Any)
+```
+
+Create a new terminal pane.
+
+Wrapped with error boundaries to catch pane creation failures.
+Increments pane count and updates statusbar.
+
+---
+
+#### CompositApp.action_quit
+
+```
+action_quit(self: Any)
+```
+
+Quit the application.
+
+Cleans up resources and exits.
+
+---
+
+#### CompositApp.action_retry_pane
+
+```
+action_retry_pane(self: Any)
+```
+
+Retry rendering the current pane.
+
+Clears error state and attempts to re-render.
+
+---
+
+#### CompositApp.action_split_horizontal
+
+```
+action_split_horizontal(self: Any)
+```
+
+Split the current pane horizontally.
+
+Wrapped with error boundaries.
+Increments pane count and updates statusbar.
+
+---
+
+#### CompositApp.action_split_vertical
+
+```
+action_split_vertical(self: Any)
+```
+
+Split the current pane vertically.
+
+Wrapped with error boundaries.
+Increments pane count and updates statusbar.
+
+---
+
+#### CompositApp.compose
+
+```
+compose(self: Any)
+```
+
+Compose the app layout.
+
+**Returns**: Header widget
+Main pane container
+Statusbar widget
+Footer widget
+
+---
+
+#### CompositApp.on_mount
+
+```
+on_mount(self: Any)
+```
+
+Called when the app is mounted.
+
+Lifecycle hook that:
+- Sets window title and subtitle
+- Initializes pane count
+- Spawns shell processes for panes
+- Sets up IPC/message passing
+- Initializes state tracking
+
+---
+
+#### CompositApp.on_panel_mounted
+
+```
+on_panel_mounted(self: Any, message: PanelMounted)
+```
+
+Handle PanelMounted message from terminal panes.
+
+---
+
+#### CompositApp.on_panel_unmounted
+
+```
+on_panel_unmounted(self: Any, message: PanelUnmounted)
+```
+
+Handle PanelUnmounted message from terminal panes.
+
+---
+
+#### CompositApp.on_unmount
+
+```
+on_unmount(self: Any)
+```
+
+Called when the app is about to unmount.
+
+Lifecycle hook that:
+- Gracefully terminates all child processes
+- Cleans up IPC channels
+- Saves session state
+
+---
+
+---
+
+## ErrorBoundary
+
+Error boundary widget for displaying pane render errors.
+
+**Inherits from**: `Static`
+
+### Methods
+
+#### ErrorBoundary.__init__
+
+```
+__init__(self: Any, error_message: str, error_type: str, stack_trace: str, pane_id: str)
+```
+
+Initialize error boundary.
+
+**Parameters**:
+
+- `error_message`: Human-readable error message
+- `error_type`: Type of error (e.g., "Render Error", "Process Error")
+- `stack_trace`: Full stack trace for debugging
+- `pane_id`: ID of the pane that failed
+
+---
+
+#### ErrorBoundary.render
+
+```
+render(self: Any)
+```
+
+Render error panel.
+
+---
+
+---
+
+## Statusbar
+
+Custom status bar showing session and pane information.
+
+**Inherits from**: `Static`
+
+### Methods
+
+#### Statusbar.render
+
+```
+render(self: Any)
+```
+
+Render status bar content.
+
+---
+
+---
+
+## action_close_pane
+
+```
+action_close_pane(self: Any)
+```
+
+Close the current pane.
+
+Wrapped with error boundaries.
+Decrements pane count (if &gt; 1) and updates statusbar.
+
+---
+
+## action_focus_next
+
+```
+action_focus_next(self: Any)
+```
+
+Focus the next pane.
+
+Wrapped with error boundaries.
+Cycles focus through available panes.
+
+---
+
+## action_new_pane
+
+```
+action_new_pane(self: Any)
+```
+
+Create a new terminal pane.
+
+Wrapped with error boundaries to catch pane creation failures.
+Increments pane count and updates statusbar.
+
+---
+
+## action_quit
+
+```
+action_quit(self: Any)
+```
+
+Quit the application.
+
+Cleans up resources and exits.
+
+---
+
+## action_retry_pane
+
+```
+action_retry_pane(self: Any)
+```
+
+Retry rendering the current pane.
+
+Clears error state and attempts to re-render.
+
+---
+
+## action_split_horizontal
+
+```
+action_split_horizontal(self: Any)
+```
+
+Split the current pane horizontally.
+
+Wrapped with error boundaries.
+Increments pane count and updates statusbar.
+
+---
+
+## action_split_vertical
+
+```
+action_split_vertical(self: Any)
+```
+
+Split the current pane vertically.
+
+Wrapped with error boundaries.
+Increments pane count and updates statusbar.
+
+---
+
+## compose
+
+```
+compose(self: Any)
+```
+
+Compose the app layout.
+
+**Returns**: Header widget
+Main pane container
+Statusbar widget
+Footer widget
+
+---
+
+## on_mount
+
+```
+on_mount(self: Any)
+```
+
+Called when the app is mounted.
+
+Lifecycle hook that:
+- Sets window title and subtitle
+- Initializes pane count
+- Spawns shell processes for panes
+- Sets up IPC/message passing
+- Initializes state tracking
+
+---
+
+## on_panel_mounted
+
+```
+on_panel_mounted(self: Any, message: PanelMounted)
+```
+
+Handle PanelMounted message from terminal panes.
+
+---
+
+## on_panel_unmounted
+
+```
+on_panel_unmounted(self: Any, message: PanelUnmounted)
+```
+
+Handle PanelUnmounted message from terminal panes.
+
+---
+
+## on_unmount
+
+```
+on_unmount(self: Any)
+```
+
+Called when the app is about to unmount.
+
+Lifecycle hook that:
+- Gracefully terminates all child processes
+- Cleans up IPC channels
+- Saves session state
+
+---
+
+## render
+
+```
+render(self: Any)
+```
+
+Render status bar content.
+
+---

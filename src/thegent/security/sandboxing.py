@@ -3,10 +3,9 @@ Includes bubblewrap (Linux) and seatbelt (macOS) profile generation, and 5-tier 
 """
 
 import logging
-import os
 import platform
-import subprocess
 from pathlib import Path
+from typing import ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ class SandboxProvider:
 class AutonomyEnforcer:
     """Enforces 5-tier autonomy levels."""
 
-    TIERS = {1: "read", 2: "worktree", 3: "git", 4: "shared", 5: "production"}
+    TIERS: ClassVar[dict[int, str]] = {1: "read", 2: "worktree", 3: "git", 4: "shared", 5: "production"}
 
     def classify_operation(self, command: str, target: str) -> int:
         """Determine required tier for an operation."""

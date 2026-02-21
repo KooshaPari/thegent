@@ -1,0 +1,113 @@
+# governance_dlq_api
+
+Source: docs/reference/api/governance_dlq_api.md
+
+---
+
+# governance_dlq API Reference
+
+> **Source**: `src/thegent/research/governance_dlq.py`
+
+Governance escalation queue with DLQ integration.
+
+---
+
+## EscalationQueueDLQ
+
+Escalation queue with dead letter queue integration.
+
+### Methods
+
+#### EscalationQueueDLQ.__init__
+
+```
+__init__(self: Any)
+```
+
+Initialize escalation queue.
+
+---
+
+#### EscalationQueueDLQ.enqueue
+
+```
+enqueue(self: Any, item: dict[(str, Any)])
+```
+
+Add item to escalation queue.
+
+**Parameters**:
+
+- `item`: Item to enqueue
+
+---
+
+#### EscalationQueueDLQ.move_to_dlq
+
+```
+move_to_dlq(self: Any, item: dict[(str, Any)], reason: str)
+```
+
+Move item to dead letter queue.
+
+**Parameters**:
+
+- `item`: Item to move
+- `reason`: Reason for moving to DLQ
+
+---
+
+#### EscalationQueueDLQ.process
+
+```
+process(self: Any)
+```
+
+Process next item from queue.
+
+**Returns**: Processed item or None
+
+---
+
+---
+
+## enqueue
+
+```
+enqueue(self: Any, item: dict[(str, Any)])
+```
+
+Add item to escalation queue.
+
+**Parameters**:
+
+- `item`: Item to enqueue
+
+---
+
+## move_to_dlq
+
+```
+move_to_dlq(self: Any, item: dict[(str, Any)], reason: str)
+```
+
+Move item to dead letter queue.
+
+**Parameters**:
+
+- `item`: Item to move
+- `reason`: Reason for moving to DLQ
+
+---
+
+## process
+
+```
+process(self: Any)
+```
+
+Process next item from queue.
+
+**Returns**: Processed item or None
+
+---

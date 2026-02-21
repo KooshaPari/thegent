@@ -131,6 +131,29 @@ class TestCommandBuilding:
         assert "--cd" in cmd
         assert str(tmp_path) in cmd
 
+    @patch("thegent.agents.codex_proxy.ensure_proxy_running", return_value="http://localhost:8317/v1")
+    @patch("thegent.agents.codex_proxy._resolve_codex", return_value="/usr/bin/codex")
+    @patch("thegent.agents.codex_proxy._run_with_retry")
+    def test_image_paths_add_repeatable_image_flags(self, mock_retry, mock_resolve, mock_proxy) -> None:
+        """WL-114: codex proxy runner forwards repeatable --image flags."""
+        mock_retry.return_value = make_run_result(exit_code=0, stdout="ok")
+
+        runner = CodexProxyRunner(agent_name="codex")
+        runner.run(
+            prompt="test",
+            cwd=None,
+            mode="read-only",
+            timeout=60,
+            image_paths=["/tmp/a.png", "https://example.com/b.jpg"],
+        )
+
+        cmd = mock_retry.call_args.args[0]
+        assert cmd.count("--image") == 2
+        first = cmd.index("--image")
+        second = cmd.index("--image", first + 1)
+        assert cmd[first + 1] == "/tmp/a.png"
+        assert cmd[second + 1] == "https://example.com/b.jpg"
+
 
 # ---------------------------------------------------------------------------
 # Run method with mock subprocess

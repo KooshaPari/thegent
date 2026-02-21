@@ -14,7 +14,7 @@ import re
 from dataclasses import dataclass
 from datetime import UTC
 from enum import Enum
-from typing import Optional
+from typing import ClassVar
 
 _log = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class Seed:
     context: str | None = None  # Additional context
     detected_by: str | None = None  # Detection method (pattern, llm, manual)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Normalize source to always be a SeedSource enum."""
         if isinstance(self.source, str):
             self.source = SeedSource(self.source)
@@ -78,7 +78,7 @@ class SeedDetector:
     """Detects idea seeds using pattern matching and optional LLM classification."""
 
     # Explicit seed markers - high confidence
-    EXPLICIT_PATTERNS = [
+    EXPLICIT_PATTERNS: ClassVar[tuple[str, ...]] = (
         r"(?i)\bwhat\s+if\b",  # What if ...
         r"(?i)\bconsider\b",  # Consider ...
         r"(?i)\bwe\s+should\b",  # We should ...
@@ -91,18 +91,18 @@ class SeedDetector:
         r"(?i)\bin\s+the\s+future\b",  # In the future
         r"(?i)\beventually\b",  # Eventually
         r"(?i)\bstretch\s+goal\b",  # Stretch goal
-    ]
+    )
 
     # Code quality markers - medium confidence
-    CODE_QUALITY_PATTERNS = [
+    CODE_QUALITY_PATTERNS: ClassVar[tuple[str, ...]] = (
         r"^(?:[ \t]*)#\s*(?:TODO|FIXME|XXX|HACK|NOTE):",  # Code comments
         r"@pytest\.mark\.skip(?:if)?\(",  # Skipped tests
         r"\.skip\(",  # Skip markers
         r"pending|not implemented|stub",  # Common placeholders
-    ]
+    )
 
     # Design/architecture patterns - medium confidence
-    DESIGN_PATTERNS = [
+    DESIGN_PATTERNS: ClassVar[tuple[str, ...]] = (
         r"(?i)\barchitecture\b",
         r"(?i)\bdesign\b",
         r"(?i)\brefactor",
@@ -112,7 +112,7 @@ class SeedDetector:
         r"(?i)\bsecurity\b",
         r"(?i)\breliability\b",
         r"(?i)\bmaintainability\b",
-    ]
+    )
 
     def __init__(self, use_llm: bool = False) -> None:
         """Initialize detector.

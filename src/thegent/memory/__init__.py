@@ -22,6 +22,7 @@ from .supermemory_client import (
     SupermemoryClient,
     SupermemoryConfigError,
 )
+from .supermemory_provider import SupermemoryProvider, SupermemoryUnavailableError
 
 __all__ = [
     "L1Cache",
@@ -38,4 +39,6 @@ __all__ = [
     "SupermemoryAPIError",
     "SupermemoryClient",
     "SupermemoryConfigError",
+    "SupermemoryProvider",
+    "SupermemoryUnavailableError",
 ]

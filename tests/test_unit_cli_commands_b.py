@@ -14,6 +14,7 @@ from unittest.mock import MagicMock, patch
 
 import click.exceptions
 import pytest
+
 from thegent.cli.commands.impl import DagDocument
 
 # typer.Exit inherits from click.exceptions.Exit (RuntimeError), not SystemExit

@@ -1,7 +1,7 @@
 """Phase13: Tenant boundary test matrix (TB-001–TB-005)."""
 
 import logging
-from typing import Any
+from typing import Any, ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class TenantBoundaryTestMatrix:
     """Test matrix for tenant boundary validation."""
 
-    TESTS = [
+    TESTS: ClassVar[list[dict[str, Any]]] = [
         {
             "id": "TB-001",
             "name": "Isolation: Tenant A cannot access Tenant B data",

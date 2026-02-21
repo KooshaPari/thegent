@@ -1,0 +1,92 @@
+# information_life_api
+
+Source: docs/reference/api/information_life_api.md
+
+---
+
+# information_life API Reference
+
+> **Source**: `src/thegent/agents/information_life.py`
+
+WP-44001: Pure Information Persona Encoding.
+
+Encodes an agent's 'soul' (weights, value vectors, and memory) into a substrate-independent
+information format. Allows for migration between model architectures or digital-to-analog bridges.
+
+---
+
+## InformationPersona
+
+Substrate-independent encoding of an agent identity.
+
+### Methods
+
+#### InformationPersona.__init__
+
+```
+__init__(self: Any, agent_id: str)
+```
+
+---
+
+#### InformationPersona.check_integrity
+
+```
+check_integrity(self: Any)
+```
+
+Calculate the information entropy of the persona encoding.
+
+---
+
+#### InformationPersona.decode_persona
+
+```
+decode_persona(self: Any, encoded_data: str)
+```
+
+Reconstruct persona from an information stream.
+
+---
+
+#### InformationPersona.encode_persona
+
+```
+encode_persona(self: Any)
+```
+
+WP-44001: Serialize persona into a high-density, portable format.
+
+---
+
+---
+
+## check_integrity
+
+```
+check_integrity(self: Any)
+```
+
+Calculate the information entropy of the persona encoding.
+
+---
+
+## decode_persona
+
+```
+decode_persona(self: Any, encoded_data: str)
+```
+
+Reconstruct persona from an information stream.
+
+---
+
+## encode_persona
+
+```
+encode_persona(self: Any)
+```
+
+WP-44001: Serialize persona into a high-density, portable format.
+
+---

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.orchestration.dag_prioritization import (
+from thegent.orchestration.execution.dag_prioritization import (
     DagCycleError,
     DagPrioritizer,
     DagTask,

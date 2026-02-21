@@ -49,6 +49,12 @@ def _resolve_codex_cmd(cmd: str) -> str:
     )
 
 
+def _model_requires_streaming(model: str) -> bool:
+    """Return True when the target model/provider requires streamed responses."""
+    lowered = model.strip().lower()
+    return "minimax" in lowered
+
+
 class DroidRunner(AgentRunner):
     """Runs droids via Factory droid exec."""
 
@@ -57,7 +63,7 @@ class DroidRunner(AgentRunner):
         droid_name: str,
         droids_dir: Path,
         droid_cmd: str = "droid",
-        model: str = "custom:MiniMax-M2.5",
+        model: str = "custom:minimax-m2.5",
         use_litellm_router: bool | None = None,
     ) -> None:
         self.droid_name = droid_name
@@ -79,6 +85,7 @@ class DroidRunner(AgentRunner):
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
         env: dict[str, str] | None = None,
+        image_paths: list[str] | None = None,
     ) -> RunResult:
         """Run droid via droid exec."""
         # Route via LiteLLM Router if enabled
@@ -106,7 +113,7 @@ class DroidRunner(AgentRunner):
             cmd = [self._droid_cmd, "exec", "-f", tmp_path, "--model", self._model]
             if cwd:
                 cmd.extend(["--cwd", str(cwd)])
-            if use_stream:
+            if use_stream or _model_requires_streaming(self._model):
                 cmd.extend(["--output-format", "stream-json"])
             if mode == "write":
                 cmd.extend(["--auto", "low"])
@@ -207,7 +214,15 @@ class DroidRunner(AgentRunner):
             # Handle response
             if use_stream:
                 stdout_collector = []
-                for chunk in result.response:
+                response_iter = result.response
+                if response_iter is None:
+                    return RunResult(
+                        exit_code=1,
+                        stdout="",
+                        stderr="No response from router",
+                        timed_out=False,
+                    )
+                for chunk in response_iter:
                     content = ""
                     if hasattr(chunk, "choices") and chunk.choices:
                         delta = chunk.choices[0].delta
@@ -231,13 +246,14 @@ class DroidRunner(AgentRunner):
                     timed_out=False,
                 )
             content = ""
-            if hasattr(result.response, "choices") and result.response.choices:
-                content = result.response.choices[0].message.content
-            elif isinstance(result.response, dict):
-                choices = result.response.get("choices", [])
-                if choices:
-                    message = choices[0].get("message", {})
-                    content = message.get("content", "")
+            if result.response is not None:
+                if hasattr(result.response, "choices") and result.response.choices:
+                    content = result.response.choices[0].message.content
+                elif isinstance(result.response, dict):
+                    choices = result.response.get("choices", [])
+                    if choices:
+                        message = choices[0].get("message", {})
+                        content = message.get("content", "")
 
             return RunResult(
                 exit_code=0,
@@ -285,6 +301,7 @@ class CodexRunner(AgentRunner):
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
         env: dict[str, str] | None = None,
+        image_paths: list[str] | None = None,
     ) -> RunResult:
         """Run droid via codex exec."""
         # Route via LiteLLM Router if enabled
@@ -413,7 +430,15 @@ class CodexRunner(AgentRunner):
             # Handle response
             if use_stream:
                 stdout_collector = []
-                for chunk in result.response:
+                response_iter = result.response
+                if response_iter is None:
+                    return RunResult(
+                        exit_code=1,
+                        stdout="",
+                        stderr="No response from router",
+                        timed_out=False,
+                    )
+                for chunk in response_iter:
                     content = ""
                     if hasattr(chunk, "choices") and chunk.choices:
                         delta = chunk.choices[0].delta
@@ -437,13 +462,14 @@ class CodexRunner(AgentRunner):
                     timed_out=False,
                 )
             content = ""
-            if hasattr(result.response, "choices") and result.response.choices:
-                content = result.response.choices[0].message.content
-            elif isinstance(result.response, dict):
-                choices = result.response.get("choices", [])
-                if choices:
-                    message = choices[0].get("message", {})
-                    content = message.get("content", "")
+            if result.response is not None:
+                if hasattr(result.response, "choices") and result.response.choices:
+                    content = result.response.choices[0].message.content
+                elif isinstance(result.response, dict):
+                    choices = result.response.get("choices", [])
+                    if choices:
+                        message = choices[0].get("message", {})
+                        content = message.get("content", "")
 
             return RunResult(
                 exit_code=0,
@@ -494,6 +520,7 @@ class CustomCliRunner(AgentRunner):
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
         env: dict[str, str] | None = None,
+        image_paths: list[str] | None = None,
     ) -> RunResult:
         """Run droid via custom CLI. Prompt sent via stdin; expects --model and --cd support."""
         droid_path = self.droids_dir / f"{self.droid_name}.md"
@@ -573,7 +600,7 @@ def get_droid_runner(
     droids_dir: Path,
     *,
     droid_cmd: str = "droid",
-    droid_model: str = "custom:MiniMax-M2.5",
+    droid_model: str = "custom:minimax-m2.5",
     codex_cmd: str = "codex",
     codex_model: str = "gpt-5.3-codex-spark-xhigh",
     custom_cmd: str = "",

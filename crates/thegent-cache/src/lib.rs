@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
@@ -200,14 +199,18 @@ mod tests {
     }
 }
 
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::types::PyModule;
 
+#[cfg(feature = "python")]
 #[pyclass]
 struct PythonCache {
     cache: Cache<String, String>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl PythonCache {
     #[new]
@@ -257,6 +260,7 @@ impl PythonCache {
     }
 }
 
+#[cfg(feature = "python")]
 #[pymodule]
 fn thegent_cache(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PythonCache>()?;

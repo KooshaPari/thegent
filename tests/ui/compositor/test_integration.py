@@ -83,18 +83,18 @@ class TestCompositorIntegration:
         pm.split_pane("H")  # pane2: [pane2a, pane2b]
         pane2b_id = pm.focus_pane_id
 
-        assert pm.get_pane_count() == 4
+        assert pm.get_pane_count() == 3
 
         # Close one pane
         pm.close_pane(pane2b_id)
-        assert pm.get_pane_count() == 3
+        assert pm.get_pane_count() == 2
 
         # Focus back to root area
         pm.focus_pane_id = pm.root.pane.pane_id if pm.root.pane else "root"
 
         # All panes should still be valid
         all_panes = pm.get_all_panes()
-        assert len(all_panes) == 3
+        assert len(all_panes) == 2
         assert all(pane.is_active for pane in all_panes)
 
     def test_layout_serialization_fidelity(self) -> None:

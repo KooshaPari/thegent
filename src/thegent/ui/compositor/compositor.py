@@ -535,7 +535,7 @@ class Compositor:
         Returns:
             32-character lowercase hex string.
         """
-        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()  # noqa: S324 -- cache key only, not security-critical
+        return hashlib.sha256(content.encode()).hexdigest()
 
     def _render_cached(self, panel: Panel) -> str:
         """Render *panel* with cache lookup and render-time profiling.

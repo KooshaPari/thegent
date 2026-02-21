@@ -36,11 +36,12 @@ class SmartMerge:
         except (subprocess.CalledProcessError, FileNotFoundError):
             # Fallback to standard 3-way merge if mergiraf fails or missing
             try:
-                subprocess.run(
-                    ["git", "merge-file", "-p", str(ours), str(base), str(theirs)],
-                    check=True,
-                    stdout=open(output, "wb"),
-                )
+                with output.open("wb") as out_file:
+                    subprocess.run(
+                        ["git", "merge-file", "-p", str(ours), str(base), str(theirs)],
+                        check=True,
+                        stdout=out_file,
+                    )
                 return True
             except subprocess.CalledProcessError:
                 return False
@@ -91,9 +92,12 @@ class SmartMerge:
         ext = path_a.suffix.lower()
         if ext == ".json":
             try:
-                subprocess.run(
-                    ["jq", "-s", ".[0] * .[1]", str(path_a), str(path_b)], check=True, stdout=open(output, "wb")
-                )
+                with output.open("wb") as out_file:
+                    subprocess.run(
+                        ["jq", "-s", ".[0] * .[1]", str(path_a), str(path_b)],
+                        check=True,
+                        stdout=out_file,
+                    )
                 return True
             except (subprocess.CalledProcessError, FileNotFoundError):
                 return False
@@ -119,12 +123,12 @@ class SmartMerge:
 
     def _deep_merge(self, a: dict, b: dict) -> dict:
         """Deep merge two dictionaries."""
-        for key in b:
+        for key, value in b.items():
             if key in a:
-                if isinstance(a[key], dict) and isinstance(b[key], dict):
-                    self._deep_merge(a[key], b[key])
+                if isinstance(a[key], dict) and isinstance(value, dict):
+                    self._deep_merge(a[key], value)
                 else:
-                    a[key] = b[key]
+                    a[key] = value
             else:
-                a[key] = b[key]
+                a[key] = value
         return a

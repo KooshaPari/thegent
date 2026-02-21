@@ -367,7 +367,7 @@ class TraceRecorder:
         for record in batch:
             try:
                 self.trace_file.write_record(record)
-            except Exception as e:
+            except Exception as e:  # noqa: PERF203 - intentional per-item error handling
                 logger.error(f"Error writing record: {e}")
 
     def get_trace_file_size(self) -> int:
@@ -414,7 +414,7 @@ class TraceCleanup:
                     trace_file.unlink()
                     deleted_count += 1
                     logger.info(f"Deleted expired trace: {trace_file.name}")
-            except Exception as e:
+            except Exception as e:  # noqa: PERF203 - intentional per-item error handling
                 logger.error(f"Error deleting trace {trace_file.name}: {e}")
 
         return deleted_count

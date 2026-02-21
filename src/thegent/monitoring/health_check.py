@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class HealthChecker:
     """Health check system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize health checker."""
         self.checks: dict[str, callable] = {}
 

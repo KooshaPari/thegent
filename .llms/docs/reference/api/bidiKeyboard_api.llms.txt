@@ -1,0 +1,19 @@
+# bidiKeyboard_api
+
+Source: docs/reference/api/bidiKeyboard_api.md
+
+---
+
+# bidiKeyboard API Reference
+
+> **Source**: `.venv/lib/pypy3.11/site-packages/playwright/driver/package/lib/server/bidi/third_party/bidiKeyboard.js`
+
+## Constants
+
+### getBidiKeyValue
+
+Copyright 2024 Google Inc.
+Modifications copyright (c) Microsoft Corporation.
+SPDX-License-Identifier: Apache-2.0
+
+---

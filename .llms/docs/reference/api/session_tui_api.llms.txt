@@ -1,0 +1,129 @@
+# session_tui_api
+
+Source: docs/reference/api/session_tui_api.md
+
+---
+
+# session_tui API Reference
+
+> **Source**: `src/thegent/ux/session_tui.py`
+
+Rich TUI for session management with subagent monitoring and control.
+
+---
+
+## SessionTUI
+
+Rich-based TUI for session management with subagent monitoring.
+
+### Methods
+
+#### SessionTUI.__init__
+
+```
+__init__(self: Any, session_id: Any)
+```
+
+---
+
+#### SessionTUI.manage_session
+
+```
+manage_session(self: Any, session_id: str, action: str)
+```
+
+Manage a session (stop, pause, resume, logs).
+
+---
+
+#### SessionTUI.render_session_view
+
+```
+render_session_view(self: Any, session_id: str)
+```
+
+Render detailed view for a specific session.
+
+---
+
+#### SessionTUI.render_sessions_list
+
+```
+render_sessions_list(self: Any)
+```
+
+Render list of all sessions.
+
+---
+
+#### SessionTUI.show
+
+```
+show(self: Any, session_id: Any)
+```
+
+Show session view (single session or list).
+
+---
+
+#### SessionTUI.watch
+
+```
+watch(self: Any, session_id: Any, interval: float)
+```
+
+Watch sessions live with auto-refresh.
+
+---
+
+---
+
+## manage_session
+
+```
+manage_session(self: Any, session_id: str, action: str)
+```
+
+Manage a session (stop, pause, resume, logs).
+
+---
+
+## render_session_view
+
+```
+render_session_view(self: Any, session_id: str)
+```
+
+Render detailed view for a specific session.
+
+---
+
+## render_sessions_list
+
+```
+render_sessions_list(self: Any)
+```
+
+Render list of all sessions.
+
+---
+
+## show
+
+```
+show(self: Any, session_id: Any)
+```
+
+Show session view (single session or list).
+
+---
+
+## watch
+
+```
+watch(self: Any, session_id: Any, interval: float)
+```
+
+Watch sessions live with auto-refresh.
+
+---

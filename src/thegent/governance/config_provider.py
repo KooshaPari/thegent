@@ -44,11 +44,7 @@ class EnvConfigProvider:
     ) -> dict[str, Any]:
         settings = ThegentSettings()
         # Filter keys if requested
-        if keys:
-            base = {k: getattr(settings, k) for k in keys if hasattr(settings, k)}
-        else:
-            # Export all non-private fields
-            base = settings.model_dump()
+        base = {k: getattr(settings, k) for k in keys if hasattr(settings, k)} if keys else settings.model_dump()
 
         # Merge overrides
         if request_overrides:

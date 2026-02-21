@@ -12,6 +12,7 @@ Phase 1 includes:
 
 from thegent.compositor.app import CompositApp
 from thegent.compositor.components import (
+    DiffViewerPanel,
     FooterStatusBar,
     HeaderWidget,
     MetricsPanel,
@@ -37,6 +38,7 @@ from thegent.compositor.terminal_pane import TerminalPane
 __all__ = [
     # App and management
     "CompositApp",
+    "DiffViewerPanel",
     "Direction",
     "FooterStatusBar",
     "HeaderWidget",

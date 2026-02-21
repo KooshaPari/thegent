@@ -1,0 +1,67 @@
+# demo-gif-example
+
+Source: docs/examples/demo-gif-example.md
+
+---
+
+# Demo GIF Examples
+
+This page demonstrates how to use the DemoGif component.
+
+---
+
+## CLI Demo
+
+---
+
+## Web Demo
+
+---
+
+## Creating Demo GIFs
+
+### Using VHS (Terminal Recordings)
+
+1. Create a `.tape` file in `docs/demos/cli/`:
+
+```
+Output cli-demo.gif
+Set FontSize 14
+Set Width 1200
+Set Height 600
+Set Theme "Catppuccin Mocha"
+
+Type "thegent run codex 'Hello world'"
+Sleep 500ms
+Enter
+Sleep 2s
+```
+
+2. Generate GIF:
+```
+./scripts/generate-demo-gifs.sh
+```
+
+### Using Playwright (Browser Recordings)
+
+1. Create a `.ts` file in `docs/demos/web/`:
+
+```
+import { test } from '@playwright/test'
+
+test('demo', async ({ page }) => {
+  await page.goto('https://example.com')
+  // ... record interactions
+})
+```
+
+2. Generate GIF:
+```
+npx playwright test --gif
+```
+
+---
+
+**See Also**: 
+- [VITEPRESS_USAGE_GUIDE.md](../guides/VITEPRESS_USAGE_GUIDE.md)
+- [AUTOMATED_DEMOS.md](../guides/AUTOMATED_DEMOS.md)

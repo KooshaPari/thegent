@@ -44,8 +44,8 @@ class ProcessHandle:
             except subprocess.TimeoutExpired:
                 return False
             return True
-        except Exception as e:
-            logger.warning(f"Error terminating process {self.pid}: {e}")
+        except Exception:
+            logger.warning(f"Error terminating process {self.pid}")
             return False
 
     def get_psutil_process(self) -> psutil.Process | None:
@@ -259,8 +259,8 @@ class ProcessRegistry:
             return cleaned
         except psutil.NoSuchProcess:
             return 0
-        except Exception as e:
-            logger.warning(f"Error cleaning up process tree for PID {pid}: {e}")
+        except Exception:
+            logger.warning(f"Error cleaning up process tree for PID {pid}")
             return 0
 
     def get_stats(self) -> dict:

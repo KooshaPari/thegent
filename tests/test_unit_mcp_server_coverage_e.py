@@ -1,4 +1,4 @@
-"""Unit tests targeting remaining uncovered lines in thegent.mcp_server.
+"""Unit tests targeting remaining uncovered lines in thegent.mcp.server.
 
 Covers: model-first routing in thegent_run, CWD/owner elicitation branches,
 progress reporting, include_contract response building, thegent_bg route policy
@@ -20,7 +20,7 @@ import pytest
 fastmcp = pytest.importorskip("fastmcp", reason="fastmcp required for MCP server tests")
 
 
-import thegent.mcp_server as _mcp_mod
+import thegent.mcp.server as _mcp_mod
 
 if TYPE_CHECKING:
     from fastmcp.tools.tool import ToolResult
@@ -166,8 +166,8 @@ class TestThegentRunModelFirst:
 
     # @trace FR-MCP-200
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server.run_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server.run_impl")
     async def test_model_only_resolves_route(self, mock_run_impl: MagicMock, mock_cwd: MagicMock) -> None:
         """When model is given without agent, resolve_route picks agent."""
         mock_run_impl.return_value = {
@@ -222,8 +222,8 @@ class TestThegentRunModelFirst:
 
     # @trace FR-MCP-202
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server.run_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server.run_impl")
     async def test_model_only_with_include_contract(self, mock_run_impl: MagicMock, mock_cwd: MagicMock) -> None:
         """Model-first with include_contract resolves route contract."""
         mock_run_impl.return_value = {
@@ -257,8 +257,8 @@ class TestThegentRunModelFirst:
 
     # @trace FR-MCP-203
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server.run_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server.run_impl")
     async def test_model_only_include_contract_no_route_contract(
         self, mock_run_impl: MagicMock, mock_cwd: MagicMock
     ) -> None:
@@ -395,8 +395,8 @@ class TestThegentRunModelAndAgent:
 
     # @trace FR-MCP-208
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server.run_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server.run_impl")
     async def test_model_and_agent_with_include_contract(self, mock_run_impl: MagicMock, mock_cwd: MagicMock) -> None:
         """Model+agent with include_contract resolves route contract."""
         mock_run_impl.return_value = {
@@ -438,8 +438,8 @@ class TestThegentRunCwdElicitation:
 
     # @trace FR-MCP-209
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
-    @patch("thegent.mcp_server.run_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server.run_impl")
     async def test_accepted_elicitation_continues(self, mock_run_impl: MagicMock, mock_cwd: MagicMock) -> None:
         """Accepted CWD elicitation proceeds with the run."""
         mock_run_impl.return_value = {
@@ -463,7 +463,7 @@ class TestThegentRunCwdElicitation:
 
     # @trace FR-MCP-210
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
     async def test_declined_elicitation_returns_error(self, mock_cwd: MagicMock) -> None:
         """Declined CWD elicitation returns error."""
         declined = _make_elicitation("declined")
@@ -482,7 +482,7 @@ class TestThegentRunCwdElicitation:
 
     # @trace FR-MCP-211
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
     async def test_cancelled_elicitation_returns_error(self, mock_cwd: MagicMock) -> None:
         """Cancelled CWD elicitation returns error."""
         cancelled = _make_elicitation("cancelled")
@@ -501,7 +501,7 @@ class TestThegentRunCwdElicitation:
 
     # @trace FR-MCP-212
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
     async def test_ambiguous_elicitation_returns_error(self, mock_cwd: MagicMock) -> None:
         """Ambiguous/unknown elicitation type returns error."""
         ambiguous = _make_elicitation("ambiguous")
@@ -530,8 +530,8 @@ class TestThegentRunIncludeContract:
 
     # @trace FR-MCP-213
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server.run_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server.run_impl")
     async def test_include_contract_builds_payload(self, mock_run_impl: MagicMock, mock_cwd: MagicMock) -> None:
         """include_contract=True without model still builds routing in payload."""
         mock_run_impl.return_value = {
@@ -556,8 +556,8 @@ class TestThegentRunIncludeContract:
 
     # @trace FR-MCP-214
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server.run_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server.run_impl")
     async def test_include_contract_full_mode_no_schema(self, mock_run_impl: MagicMock, mock_cwd: MagicMock) -> None:
         """include_contract with full=True omits extraction_schema_version."""
         mock_run_impl.return_value = {
@@ -592,9 +592,9 @@ class TestThegentBgCwdElicitation:
 
     # @trace FR-MCP-215
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
-    @patch("thegent.mcp_server._default_owner_tag", return_value="auto-owner")
-    @patch("thegent.mcp_server.bg_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server._default_owner_tag", return_value="auto-owner")
+    @patch("thegent.mcp.server.bg_impl")
     async def test_bg_accepted_elicitation(
         self, mock_bg_impl: MagicMock, mock_owner: MagicMock, mock_cwd: MagicMock
     ) -> None:
@@ -617,7 +617,7 @@ class TestThegentBgCwdElicitation:
 
     # @trace FR-MCP-216
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
     async def test_bg_declined_elicitation(self, mock_cwd: MagicMock) -> None:
         """Declined CWD elicitation in bg returns error."""
         declined = _make_elicitation("declined")
@@ -637,7 +637,7 @@ class TestThegentBgCwdElicitation:
 
     # @trace FR-MCP-217
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
     async def test_bg_cancelled_elicitation(self, mock_cwd: MagicMock) -> None:
         """Cancelled CWD elicitation in bg returns error."""
         cancelled = _make_elicitation("cancelled")
@@ -657,7 +657,7 @@ class TestThegentBgCwdElicitation:
 
     # @trace FR-MCP-218
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
     async def test_bg_ambiguous_elicitation(self, mock_cwd: MagicMock) -> None:
         """Ambiguous CWD elicitation in bg returns error."""
         ambiguous = _make_elicitation("ambiguous")
@@ -687,9 +687,9 @@ class TestThegentBgRoutePolicy:
 
     # @trace FR-MCP-219
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server._default_owner_tag", return_value="owner")
-    @patch("thegent.mcp_server.bg_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server._default_owner_tag", return_value="owner")
+    @patch("thegent.mcp.server.bg_impl")
     async def test_bg_invalid_policy_defaults(
         self, mock_bg_impl: MagicMock, mock_owner: MagicMock, mock_cwd: MagicMock
     ) -> None:
@@ -711,9 +711,9 @@ class TestThegentBgRoutePolicy:
 
     # @trace FR-MCP-220
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server._default_owner_tag", return_value="owner")
-    @patch("thegent.mcp_server.bg_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server._default_owner_tag", return_value="owner")
+    @patch("thegent.mcp.server.bg_impl")
     async def test_bg_routing_param_sets_child_routing(
         self, mock_bg_impl: MagicMock, mock_owner: MagicMock, mock_cwd: MagicMock
     ) -> None:
@@ -735,9 +735,9 @@ class TestThegentBgRoutePolicy:
 
     # @trace FR-MCP-221
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server._default_owner_tag", return_value="owner")
-    @patch("thegent.mcp_server.bg_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server._default_owner_tag", return_value="owner")
+    @patch("thegent.mcp.server.bg_impl")
     async def test_bg_failover_policy_sets_flag(
         self, mock_bg_impl: MagicMock, mock_owner: MagicMock, mock_cwd: MagicMock
     ) -> None:
@@ -773,9 +773,9 @@ class TestThegentBgOwnerElicitation:
 
     # @trace FR-MCP-222
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
-    @patch("thegent.mcp_server._default_owner_tag", return_value="fallback-owner")
-    @patch("thegent.mcp_server.bg_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server._default_owner_tag", return_value="fallback-owner")
+    @patch("thegent.mcp.server.bg_impl")
     async def test_bg_owner_declined_uses_default(
         self, mock_bg_impl: MagicMock, mock_owner_tag: MagicMock, mock_cwd: MagicMock
     ) -> None:
@@ -798,7 +798,7 @@ class TestThegentBgOwnerElicitation:
 
     # @trace FR-MCP-223
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
     async def test_bg_owner_cancelled_returns_error(self, mock_cwd: MagicMock) -> None:
         """Cancelled owner elicitation returns error."""
         accepted_cwd = _make_elicitation("accepted", data="/tmp/elicited")
@@ -819,9 +819,9 @@ class TestThegentBgOwnerElicitation:
 
     # @trace FR-MCP-224
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
-    @patch("thegent.mcp_server._default_owner_tag", return_value="default-owner")
-    @patch("thegent.mcp_server.bg_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server._default_owner_tag", return_value="default-owner")
+    @patch("thegent.mcp.server.bg_impl")
     async def test_bg_owner_ambiguous_uses_default(
         self, mock_bg_impl: MagicMock, mock_owner_tag: MagicMock, mock_cwd: MagicMock
     ) -> None:
@@ -854,9 +854,9 @@ class TestThegentBgIncludeContract:
 
     # @trace FR-MCP-225
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server._default_owner_tag", return_value="owner")
-    @patch("thegent.mcp_server.bg_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server._default_owner_tag", return_value="owner")
+    @patch("thegent.mcp.server.bg_impl")
     async def test_bg_include_contract_resolved(
         self, mock_bg_impl: MagicMock, mock_owner: MagicMock, mock_cwd: MagicMock
     ) -> None:
@@ -883,9 +883,9 @@ class TestThegentBgIncludeContract:
 
     # @trace FR-MCP-226
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
-    @patch("thegent.mcp_server._default_owner_tag", return_value="owner")
-    @patch("thegent.mcp_server.bg_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server._default_owner_tag", return_value="owner")
+    @patch("thegent.mcp.server.bg_impl")
     async def test_bg_include_contract_lookup_exception(
         self, mock_bg_impl: MagicMock, mock_owner: MagicMock, mock_cwd: MagicMock
     ) -> None:
@@ -1086,8 +1086,8 @@ class TestThegentDagListAcceptedElicitation:
 
     # @trace FR-MCP-234
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
-    @patch("thegent.mcp_server.dag_list_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server.dag_list_impl")
     async def test_dag_list_accepted_elicitation(self, mock_dag: MagicMock, mock_cwd: MagicMock) -> None:
         """Accepted CWD elicitation proceeds with DAG list."""
         mock_dag.return_value = {"frontmatter": {"project": "test"}, "tasks": [{"id": "T1"}]}
@@ -1116,7 +1116,7 @@ class TestThegentRunProgressReporting:
 
     # @trace FR-MCP-235
     @pytest.mark.asyncio
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/test"))
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/test"))
     async def test_run_reports_progress_and_closes_sse(self, mock_cwd: MagicMock) -> None:
         """When run takes long enough, report_progress and close_sse_stream are called."""
         import time as time_mod
@@ -1152,9 +1152,9 @@ class TestThegentRunProgressReporting:
             await original_sleep(0.01)
 
         with (
-            patch("thegent.mcp_server.run_impl", side_effect=sync_run_impl),
-            patch("thegent.mcp_server.time.perf_counter", side_effect=fake_perf_counter),
-            patch("thegent.mcp_server.asyncio.sleep", side_effect=fast_sleep),
+            patch("thegent.mcp.server.run_impl", side_effect=sync_run_impl),
+            patch("thegent.mcp.server.time.perf_counter", side_effect=fake_perf_counter),
+            patch("thegent.mcp.server.asyncio.sleep", side_effect=fast_sleep),
         ):
             result = await _mcp_mod.thegent_run(
                 prompt="long task",

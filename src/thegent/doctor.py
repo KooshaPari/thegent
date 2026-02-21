@@ -16,6 +16,20 @@ from rich.panel import Panel
 from rich.table import Table
 
 from thegent.config import ThegentSettings
+from thegent.doctor_dependencies import check_dependencies as _check_dependencies_impl
+from thegent.doctor_models import CheckResult
+from thegent.doctor_project_root import detect_project_root
+from thegent.doctor_setup_checks import (
+    check_configuration as _check_configuration_impl,
+    check_connectivity as _check_connectivity_impl,
+    check_isolation as _check_isolation_impl,
+    ensure_mcp_running as _ensure_mcp_running_impl,
+)
+from thegent.doctor_shell_nix import (
+    check_nix as _check_nix_impl,
+    check_nix_daemon_status as _check_nix_daemon_status_impl,
+    check_shell as _check_shell_impl,
+)
 from thegent.infra import run_subprocess_optimized
 
 if TYPE_CHECKING:
@@ -27,18 +41,9 @@ console = Console()
 _project_root_cache: Path | None = None
 
 
-class CheckResult:
-    def __init__(self, name: str, category: str) -> None:
-        self.name = name
-        self.category = category
-        self.status: str = "pending"  # ok, warn, fail
-        self.message: str = ""
-        self.details: str | None = None
-        self.fix_hint: str | None = None
-
-
 def run_doctor(
     fix: bool = False,
+    dry_run: bool = False,
     runtime: bool = False,
     network: bool = False,
     processes: bool = False,
@@ -49,6 +54,7 @@ def run_doctor(
 
     Args:
         fix: Attempt to fix detected issues
+        dry_run: Show what fixes would be applied without making changes
         runtime: Show multi-runtime diagnostics
         network: Check network connectivity
         processes: Check process health
@@ -58,15 +64,7 @@ def run_doctor(
     console.print(Panel("[bold cyan]Thegent Doctor[/bold cyan]\n[dim]Comprehensive environment health check[/dim]"))
 
     # Project Root Detection
-    project_root = Path.cwd()
-    if not (project_root / "src" / "thegent").exists():
-        # Try to find root by looking up
-        curr = project_root
-        while curr.parent != curr:
-            if (curr / "src" / "thegent").exists():
-                project_root = curr
-                break
-            curr = curr.parent
+    project_root = detect_project_root(Path.cwd())
 
     if project_root != Path.cwd():
         console.print(f"[yellow]Note: Running from sub-directory. Detected project root at: {project_root}[/yellow]\n")
@@ -78,53 +76,55 @@ def run_doctor(
 
     results: list[CheckResult] = []
 
-    # Category: Dependencies
-    results.extend(_check_dependencies(deps=deps))
+    # @trace WL-040 WP-4005 — spinner wraps the check collection phase
+    from rich.progress import Progress, SpinnerColumn, TextColumn
 
-    # Category: Configuration
-    results.extend(_check_configuration())
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=True,
+    ) as _prog:
+        _task = _prog.add_task("Running health checks...", total=None)
 
-    # Category: Isolation & Persistence
-    results.extend(_check_isolation())
-
-    # Category: Connectivity
-    results.extend(_check_connectivity())
-
-    # Category: Environment & Shims
-    results.extend(_check_environment())
-
-    # Category: Shim Binaries (thegent-hooks, thegent-shims)
-    results.extend(_check_shim_binaries())
-
-    # Category: Shell (full setup)
-    results.extend(_check_shell())
-
-    # Category: Nix Support
-    results.extend(_check_nix())
-
-    # Category: Providers & Headless (ROB-016)
-    results.extend(_check_providers())
-    results.extend(_check_headless())
-
-    # Category: Runtime Infrastructure
-    results.extend(_check_runtime_infrastructure())
-
-    # Category: Process Analysis & Leak Detection
-    results.extend(_check_process_leaks())
-
-    # Category: MCP Tools & Sessions
-    results.extend(_check_mcp_tools())
-    results.extend(_check_sessions())
-
-    # Category: Project hints
-    results.extend(_check_project_hints())
-
-    # Category: Performance
-    results.extend(_check_performance())
+        # Category: Dependencies
+        results.extend(_check_dependencies(deps=deps))
+        _prog.update(_task, description="Checking configuration...")
+        results.extend(_check_configuration())
+        _prog.update(_task, description="Checking isolation...")
+        results.extend(_check_isolation())
+        _prog.update(_task, description="Checking connectivity...")
+        results.extend(_check_connectivity())
+        _prog.update(_task, description="Checking environment...")
+        results.extend(_check_environment())
+        _prog.update(_task, description="Checking shim binaries...")
+        results.extend(_check_shim_binaries())
+        _prog.update(_task, description="Checking shell...")
+        results.extend(_check_shell())
+        _prog.update(_task, description="Checking Nix support...")
+        results.extend(_check_nix())
+        _prog.update(_task, description="Checking providers & headless...")
+        results.extend(_check_providers())
+        results.extend(_check_ollama())
+        results.extend(_check_headless())
+        _prog.update(_task, description="Checking runtime infrastructure...")
+        results.extend(_check_runtime_infrastructure())
+        _prog.update(_task, description="Checking processes...")
+        results.extend(_check_process_leaks())
+        _prog.update(_task, description="Checking MCP tools & sessions...")
+        results.extend(_check_mcp_tools())
+        results.extend(_check_sessions())
+        _prog.update(_task, description="Checking project hints...")
+        results.extend(_check_project_hints())
+        _prog.update(_task, description="Checking performance...")
+        results.extend(_check_performance())
 
     # Apply fixes if requested
     if fix:
-        _apply_fixes(results)
+        fix_report = _apply_fixes(results, dry_run=dry_run)
+        # Display fix report
+        if fix_report:
+            _display_fix_report(fix_report, dry_run=dry_run)
 
     # Display results
     success = _display_results(results)
@@ -185,379 +185,27 @@ def run_doctor(
 
 
 def _check_dependencies(deps: bool = False) -> list[CheckResult]:
-    res_list = []
-
-    # Node.js
-    r = CheckResult("Node.js", "Dependencies")
-    node_path = shutil.which("node")
-    if node_path:
-        try:
-            result = run_subprocess_optimized(["node", "--version"], capture_output=True, timeout=5)
-            if result.returncode == 0 and result.stdout:
-                ver = (
-                    result.stdout.strip()
-                    if isinstance(result.stdout, str)
-                    else result.stdout.decode("utf-8", errors="replace").strip()
-                )
-                r.status = "ok"
-                r.message = f"Found Node.js {ver} at {node_path}"
-        except Exception as e:
-            r.status = "warn"
-            r.message = f"Node.js found but failed to get version: {e}"
-    else:
-        r.status = "fail"
-        r.message = "Node.js not found in PATH"
-        r.fix_hint = "Install Node.js (v18+) from https://nodejs.org/"
-    res_list.append(r)
-
-    # Claude Code
-    r = CheckResult("Claude Code CLI", "Dependencies")
-    claude_path = shutil.which("claude")
-    if claude_path:
-        try:
-            # claude --version might be slow, just check existence for now
-            r.status = "ok"
-            r.message = f"Found 'claude' at {claude_path}"
-        except Exception:
-            r.status = "ok"
-            r.message = f"Found 'claude' at {claude_path}"
-    else:
-        r.status = "fail"
-        r.message = "Claude Code CLI ('claude') not found in PATH"
-        r.fix_hint = "Install via: npm install -g @anthropic-ai/claude-code"
-    res_list.append(r)
-
-    # Codex
-    r = CheckResult("Codex CLI", "Dependencies")
-    codex_path = shutil.which("codex")
-    if codex_path:
-        r.status = "ok"
-        r.message = f"Found 'codex' at {codex_path}"
-    else:
-        r.status = "warn"
-        r.message = "Codex CLI ('codex') not found in PATH"
-        r.fix_hint = "Install via: npm install -g @openai/codex"
-    res_list.append(r)
-
-    # CLIProxyAPIPlus
-    r = CheckResult("CLIProxyAPIPlus", "Dependencies")
-    proxy_path = shutil.which("cli-proxy-api-plus")
-    if proxy_path:
-        r.status = "ok"
-        r.message = f"Found 'cli-proxy-api-plus' at {proxy_path}"
-    else:
-        r.status = "fail"
-        r.message = "CLIProxyAPIPlus binary not found in PATH"
-        r.fix_hint = "Download and install from thegent repository or releases."
-    res_list.append(r)
-
-    # Tools: git required; rg, fd, jq optional (install for 10x speedup)
-    from thegent.errors import get_install_hint
-
-    for tool, name, optional in [
-        ("rg", "ripgrep", True),
-        ("fd", "fd-find", True),
-        ("git", "Git", False),
-        ("jq", "jq", True),
-    ]:
-        r = CheckResult(name, "Dependencies")
-        path = shutil.which(tool)
-        if path:
-            r.status = "ok"
-            r.message = f"Found '{tool}' at {path}"
-        else:
-            r.status = "warn"  # All as warn for graceful degradation
-            r.message = f"'{tool}' not found" + (" (optional — install for 10x speedup)" if optional else " in PATH")
-            r.fix_hint = get_install_hint(tool)
-        res_list.append(r)
-
-    project_root = _project_root_cache or Path.cwd()
-    has_mise_toml = (project_root / ".mise.toml").exists()
-    has_pyproject = (project_root / "pyproject.toml").exists()
-    has_brewfile = (project_root / "Brewfile").exists()
-
-    r = CheckResult("mise", "Dependencies")
-    mise_path = shutil.which("mise")
-    if mise_path:
-        r.status = "ok"
-        r.message = f"Found 'mise' at {mise_path}"
-    elif has_mise_toml:
-        r.status = "fail"
-        r.message = "mise is required by repo policy (.mise.toml present) but not found"
-        r.fix_hint = "Install with Homebrew (`brew install mise`) or Nix (`nix profile install nixpkgs#mise`)."
-    else:
-        r.status = "warn"
-        r.message = "mise not found"
-        r.fix_hint = "Install mise for consistent runtime pinning."
-    res_list.append(r)
-
-    r = CheckResult("uv", "Dependencies")
-    uv_path = shutil.which("uv")
-    if uv_path:
-        r.status = "ok"
-        r.message = f"Found 'uv' at {uv_path}"
-    elif has_pyproject:
-        r.status = "fail"
-        r.message = "uv is required by repo workflow (pyproject.toml present) but not found"
-        r.fix_hint = "Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
-    else:
-        r.status = "warn"
-        r.message = "uv not found"
-        r.fix_hint = "Install uv for faster Python dependency management."
-    res_list.append(r)
-
-    if platform.system() == "Darwin":
-        r = CheckResult("Homebrew", "Dependencies")
-        brew_path = shutil.which("brew")
-        if brew_path:
-            r.status = "ok"
-            r.message = f"Found 'brew' at {brew_path}"
-        elif has_brewfile:
-            r.status = "fail"
-            r.message = "Homebrew is required by repo setup (Brewfile present) but not found"
-            r.fix_hint = 'Install Homebrew: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-        else:
-            r.status = "warn"
-            r.message = "Homebrew not found"
-            r.fix_hint = "Install Homebrew for macOS host dependency management."
-        res_list.append(r)
-
-    if deps and mise_path:
-        r = CheckResult("mise doctor", "Dependencies")
-        try:
-            result = run_subprocess_optimized(["mise", "doctor"], capture_output=True, timeout=20)
-            if result.returncode == 0:
-                r.status = "ok"
-                r.message = "mise doctor: OK"
-            else:
-                stderr = (
-                    result.stderr if isinstance(result.stderr, str) else result.stderr.decode("utf-8", errors="replace")
-                )
-                r.status = "warn"
-                r.message = "mise doctor reported issues"
-                r.details = (stderr or "unknown issue")[:300]
-                r.fix_hint = "Run `mise doctor` directly and address reported configuration issues."
-        except Exception as e:
-            r.status = "warn"
-            r.message = f"Failed to run mise doctor: {e}"
-        res_list.append(r)
-
-    if deps and platform.system() == "Darwin" and has_brewfile and shutil.which("brew"):
-        r = CheckResult("brew bundle check", "Dependencies")
-        try:
-            result = run_subprocess_optimized(
-                ["brew", "bundle", "check", "--file", str(project_root / "Brewfile")],
-                capture_output=True,
-                timeout=30,
-            )
-            if result.returncode == 0:
-                r.status = "ok"
-                r.message = "brew bundle check: OK"
-            else:
-                stdout = (
-                    result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
-                )
-                r.status = "warn"
-                r.message = "brew bundle check reported missing packages"
-                r.details = (stdout or "bundle drift detected")[:300]
-                r.fix_hint = "Run `brew bundle --file Brewfile` from repo root."
-        except Exception as e:
-            r.status = "warn"
-            r.message = f"Failed to run brew bundle check: {e}"
-        res_list.append(r)
-
-    return res_list
+    return _check_dependencies_impl(
+        check_result_cls=CheckResult,
+        deps=deps,
+        project_root=_project_root_cache or Path.cwd(),
+    )
 
 
 def _check_configuration() -> list[CheckResult]:
-    res_list = []
-    settings = ThegentSettings()
-    project_root = _project_root_cache or Path.cwd()
-
-    # OAuth Providers (NO API keys needed - OAuth only)
-    # Providers that support OAuth: claude, codex, gemini, copilot, antigravity, iflow, kiro, kilo, roo, qwen, kimi
-    from thegent.agents.cliproxy_manager import _OAUTH_AUTH_PREFIXES, _has_oauth_credentials
-
-    oauth_providers = list(_OAUTH_AUTH_PREFIXES.keys())
-    oauth_providers.extend(["gemini"])  # gemini uses email-projectId.json pattern
-
-    # Check OAuth credentials - at least ONE provider must be configured
-    configured_providers = []
-    for provider in sorted(set(oauth_providers)):
-        if _has_oauth_credentials(settings, provider):
-            configured_providers.append(provider)
-
-    r = CheckResult("OAuth Providers", "Configuration")
-    if configured_providers:
-        r.status = "ok"
-        r.message = f"OAuth credentials found for: {', '.join(configured_providers)}"
-    else:
-        r.status = "fail"  # Required - at least one OAuth provider must be configured
-        r.message = "No OAuth providers configured (OAuth is required, API keys are not used)"
-        r.fix_hint = "Run: thegent cliproxy login <provider> (e.g., claude, codex, gemini)"
-    res_list.append(r)
-
-    # Note: API keys are NOT checked for OAuth providers - OAuth is the only method
-
-    # CLIProxy Config
-    r = CheckResult("CLIProxy Config", "Configuration")
-    config_path = settings.cliproxy_config_path.expanduser().resolve()
-    if config_path.exists():
-        try:
-            with open(config_path) as f:
-                cfg = yaml.safe_load(f)
-            if isinstance(cfg, dict):
-                r.status = "ok"
-                r.message = f"Config found at {config_path}"
-                # Check for OAuth providers (not API key providers)
-                from thegent.agents.cliproxy_manager import _OAUTH_AUTH_PREFIXES, _has_oauth_credentials
-
-                oauth_providers = list(_OAUTH_AUTH_PREFIXES.keys())
-                configured_count = sum(1 for p in oauth_providers if _has_oauth_credentials(settings, p))
-                if configured_count > 0:
-                    r.message += f" ({configured_count} OAuth provider(s) configured)"
-                else:
-                    r.status = "fail"  # Required - at least one provider must be configured
-                    r.message += " (no OAuth providers configured)"
-                    r.fix_hint = "Run: thegent cliproxy login <provider> (e.g., claude, codex, gemini)"
-            else:
-                r.status = "fail"
-                r.message = f"Config at {config_path} is invalid YAML"
-        except Exception as e:
-            r.status = "fail"
-            r.message = f"Failed to read config at {config_path}: {e}"
-    else:
-        r.status = "fail"
-        r.message = f"CLIProxy config not found: {config_path}"
-        r.fix_hint = "Run: thegent setup (or create the config file manually)"
-    res_list.append(r)
-
-    return res_list
+    return _check_configuration_impl(check_result_cls=CheckResult)
 
 
 def _check_isolation() -> list[CheckResult]:
-    res_list = []
-    settings = ThegentSettings()
-
-    # CLAUDE_CONFIG_DIR
-    r = CheckResult("Claude Config Isolation", "Isolation")
-    cache_dir = Path.home() / ".cache" / "thegent" / "claude-config"
-    if cache_dir.exists() and cache_dir.is_dir():
-        r.status = "ok"
-        r.message = f"Isolated config directory exists: {cache_dir}"
-
-        # Check for essential symlinks
-        missing_links = []
-        for item in [".claude.json", "__store.db"]:
-            if not (cache_dir / item).exists():
-                missing_links.append(item)
-
-        if missing_links:
-            r.status = "warn"
-            r.message += f" (missing: {', '.join(missing_links)})"
-            r.fix_hint = "Run 'clode' once to initialize symlinks."
-    else:
-        r.status = "warn"
-        r.message = f"Isolated config directory not found: {cache_dir}"
-        r.fix_hint = "It will be created automatically on first 'clode' run."
-    res_list.append(r)
-
-    return res_list
+    return _check_isolation_impl(check_result_cls=CheckResult)
 
 
 def _ensure_mcp_running(settings: ThegentSettings, timeout: int = 30) -> bool:
-    """Ensure MCP server and CLIProxy are running. Returns True if started successfully."""
-    mcp_url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
-    try:
-        resp = httpx.get(mcp_url, timeout=2.0)
-        if resp.status_code == 200:
-            return True  # Already running
-    except Exception:
-        pass
-
-    # Try to start MCP + proxy via process-compose
-    console.print("[yellow]MCP server not running. Starting automatically...[/yellow]")
-    try:
-        from thegent.mcp_manage import mcp_up
-
-        success, msg = mcp_up()
-        if success:
-            # Wait for it to become ready
-            for _ in range(timeout * 2):  # Check for timeout seconds
-                time.sleep(0.5)
-                try:
-                    resp = httpx.get(mcp_url, timeout=1.0)
-                    if resp.status_code == 200:
-                        console.print("[green]MCP server started successfully.[/green]")
-                        return True
-                except Exception:
-                    continue
-            console.print("[red]Timeout waiting for MCP server to start.[/red]")
-            return False
-        console.print(f"[red]Failed to start MCP server: {msg}[/red]")
-        return False
-    except Exception as e:
-        console.print(f"[red]Failed to start MCP server: {e}[/red]")
-        return False
+    return _ensure_mcp_running_impl(settings=settings, console=console, timeout=timeout)
 
 
 def _check_connectivity(auto_start: bool = True) -> list[CheckResult]:
-    res_list = []
-    settings = ThegentSettings()
-
-    # MCP Server
-    r = CheckResult("MCP Server", "Connectivity")
-    mcp_url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
-    try:
-        resp = httpx.get(mcp_url, timeout=2.0)
-        if resp.status_code == 200:
-            r.status = "ok"
-            r.message = f"MCP server reachable at {mcp_url}"
-        else:
-            r.status = "warn"
-            r.message = f"MCP server returned {resp.status_code} at {mcp_url}"
-            r.details = "Suspicion Level: LOW\nMCP server returned non-200 status."
-            if auto_start:
-                if _ensure_mcp_running(settings):
-                    r.message = "MCP server started"
-                    r.status = "ok"
-                else:
-                    r.fix_hint = "Run: thegent mcp up"
-            else:
-                r.fix_hint = "Run: thegent serve (or thegent mcp up)"
-    except Exception as e:
-        r.status = "warn"
-        r.message = f"MCP server not reachable: {e}"
-        r.details = "Suspicion Level: LOW\nMCP server is not running."
-        if auto_start:
-            if _ensure_mcp_running(settings):
-                r.message = "MCP server started"
-                r.status = "ok"
-            else:
-                r.fix_hint = "Run: thegent mcp up"
-        else:
-            r.fix_hint = "Run: thegent serve (or thegent mcp up)"
-    res_list.append(r)
-
-    # CLIProxy
-    r = CheckResult("CLIProxy", "Connectivity")
-    proxy_url = "http://127.0.0.1:8317/v1/models"
-    try:
-        resp = httpx.get(proxy_url, timeout=2.0)
-        if resp.status_code == 200:
-            r.status = "ok"
-            r.message = "CLIProxy reachable at http://127.0.0.1:8317"
-        else:
-            r.status = "warn"
-            r.message = f"CLIProxy returned {resp.status_code} at {proxy_url}"
-            r.fix_hint = "Run: thegent mcp up (starts proxy + MCP)"
-    except Exception:
-        r.status = "warn"
-        r.message = "CLIProxy not currently running"
-        r.fix_hint = "Run: thegent mcp up (starts proxy + MCP)"
-    res_list.append(r)
-
-    return res_list
+    return _check_connectivity_impl(check_result_cls=CheckResult, console=console, auto_start=auto_start)
 
 
 def _check_environment() -> list[CheckResult]:
@@ -838,222 +486,15 @@ def _check_shim_binaries() -> list[CheckResult]:
 
 
 def _check_shell() -> list[CheckResult]:
-    """Comprehensive shell setup checks: configs, plugins, prompt, runtime."""
-    res_list: list[CheckResult] = []
-    home = Path.home()
-
-    # Core configs (thegent-managed)
-    for name, path in [
-        (".zshenv", home / ".zshenv"),
-        (".zshrc", home / ".zshrc"),
-        (".zsh_bundle.zsh", home / ".zsh_bundle.zsh"),
-    ]:
-        r = CheckResult(name, "Shell")
-        if path.exists():
-            try:
-                content = path.read_text()
-                if "thegent" in content or "THEGENT" in content:
-                    r.status = "ok"
-                    r.message = f"{name} present (thegent-managed)"
-                else:
-                    r.status = "warn"
-                    r.message = f"{name} exists but may not be thegent-managed"
-            except OSError:
-                r.status = "warn"
-                r.message = f"{name} exists (unreadable)"
-        else:
-            r.status = "fail"
-            r.message = f"{name} missing"
-            r.fix_hint = "Run: thegent install -t shell"
-        res_list.append(r)
-
-    # zshrc.local (user plugins — optional but recommended)
-    r = CheckResult(".zshrc.local", "Shell")
-    zshrc_local = home / ".zshrc.local"
-    if zshrc_local.exists():
-        r.status = "ok"
-        r.message = "~/.zshrc.local present (plugins, prompt, runtime)"
-    else:
-        r.status = "warn"
-        r.message = "~/.zshrc.local missing (no fnm/mise, fzf-tab, prompt)"
-        r.fix_hint = "Run: thegent install -t shell  (creates from template)"
-    res_list.append(r)
-
-    # Plugins
-    plugins_dir = home / ".zsh" / "plugins"
-    for plugin in ["fzf-tab", "zsh-autosuggestions", "fast-syntax-highlighting"]:
-        r = CheckResult(f"Plugin: {plugin}", "Shell")
-        if (plugins_dir / plugin).exists():
-            r.status = "ok"
-            r.message = f"{plugin} installed"
-        else:
-            r.status = "warn"
-            r.message = f"{plugin} not installed"
-            r.fix_hint = "Run: thegent install -t shell  (or: ./scripts/install_zsh_plugins.sh)"
-        res_list.append(r)
-
-    # Prompt (starship or powerlevel10k)
-    r = CheckResult("Prompt", "Shell")
-    has_starship = shutil.which("starship") is not None
-    has_p10k = (home / ".zsh" / "themes" / "powerlevel10k").exists()
-    if has_starship or has_p10k:
-        r.status = "ok"
-        r.message = "starship" if has_starship else "powerlevel10k"
-    else:
-        r.status = "warn"
-        r.message = "No prompt (starship/p10k)"
-        r.fix_hint = "brew install starship  or  git clone powerlevel10k to ~/.zsh/themes/"
-    res_list.append(r)
-
-    # Runtime (mise or fnm)
-    r = CheckResult("Runtime (Node)", "Shell")
-    has_mise = shutil.which("mise") is not None
-    has_fnm = shutil.which("fnm") is not None
-    if has_mise or has_fnm:
-        r.status = "ok"
-        r.message = "mise" if has_mise else "fnm"
-    else:
-        r.status = "warn"
-        r.message = "No Node version manager (mise/fnm)"
-        r.fix_hint = "brew install mise  or  brew install fnm"
-    res_list.append(r)
-
-    return res_list
+    return _check_shell_impl(check_result_cls=CheckResult)
 
 
 def _check_nix_daemon_status() -> tuple[bool, str]:
-    """Check if Nix daemon is running. Returns (is_running, status_message)."""
-    if platform.system() == "Darwin":
-        # macOS: use launchctl
-        try:
-            result = run_subprocess_optimized(
-                ["launchctl", "list"],
-                check=False,
-                capture_output=True,
-                timeout=5,
-            )
-            if result.returncode == 0 and result.stdout:
-                output = (
-                    result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
-                )
-                if "com.determinate.nix-daemon" in output or "nix-daemon" in output.lower():
-                    return True, "Running (launchd)"
-                # Also check for determinate-nixd process
-                if "determinate-nixd" in output.lower():
-                    return True, "Running (determinate-nixd)"
-            return False, "Not running (launchd)"
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            return False, "Cannot check (launchctl not available)"
-    elif platform.system() == "Linux":
-        # Linux: use systemctl
-        try:
-            result = run_subprocess_optimized(
-                ["systemctl", "--user", "status", "nix-daemon"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            if result.returncode == 0:
-                return True, "Running (systemd)"
-            return False, "Not running (systemd)"
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            return False, "Cannot check (systemctl not available)"
-    return False, "Unknown platform"
+    return _check_nix_daemon_status_impl()
 
 
 def _check_nix() -> list[CheckResult]:
-    """Check Nix-related setup. Shows warnings (not failures) for optional Nix dependency."""
-    res_list = []
-    nix_path = shutil.which("nix")
-
-    # Nix command
-    r = CheckResult("Nix Installed", "Nix Support")
-    if nix_path:
-        try:
-            result = run_subprocess_optimized(["nix", "--version"], capture_output=True, timeout=5)
-            if result.returncode == 0 and result.stdout:
-                ver = (
-                    result.stdout.strip()
-                    if isinstance(result.stdout, str)
-                    else result.stdout.decode("utf-8", errors="replace").strip()
-                )
-                r.status = "ok"
-                r.message = f"Found Nix: {ver}"
-        except subprocess.TimeoutExpired:
-            r.status = "warn"
-            r.message = "Nix command timed out"
-            r.fix_hint = "Nix may be initializing. Try again in a moment."
-        except Exception:
-            # Try alternative method to verify Nix
-            if Path("/nix/var/nix/profiles/default/bin/nix").exists():
-                r.status = "ok"
-                r.message = "Found Nix (Determinate Systems)"
-            else:
-                r.status = "ok"
-                r.message = "Found Nix in PATH"
-    # Check if Nix is installed but not in PATH (may need shell reload)
-    elif Path("/nix/var/nix/profiles/default/bin/nix").exists():
-        r.status = "warn"
-        r.message = "Nix installed but not in PATH"
-        r.fix_hint = "Reload shell or run: . ~/.zshenv"
-    else:
-        r.status = "warn"  # Warning, not failure - Nix is optional
-        r.message = "Nix not found (optional)"
-        r.fix_hint = "Install Nix from https://nixos.org/ or use Determinate Systems installer."
-    res_list.append(r)
-
-    # Nix daemon status (only check if Nix is installed)
-    if nix_path:
-        r = CheckResult("Nix Daemon", "Nix Support")
-        daemon_running, daemon_msg = _check_nix_daemon_status()
-        if daemon_running:
-            r.status = "ok"
-            r.message = daemon_msg
-        else:
-            r.status = "warn"  # Warning, not failure
-            r.message = daemon_msg
-            r.fix_hint = "Nix daemon may start automatically when needed"
-        res_list.append(r)
-
-    # flake.nix (only checked if Nix is installed)
-    r = CheckResult("Flake config", "Nix Support")
-    project_root = _project_root_cache or Path.cwd()
-    flake_path = project_root / "flake.nix"
-    try:
-        if flake_path.exists():
-            r.status = "ok"
-            r.message = "flake.nix exists"
-        elif nix_path:
-            # Only fail if Nix is installed but flake.nix is missing
-            r.status = "fail"  # Required if Nix is installed
-            r.message = "flake.nix missing (required for Nix development environment)"
-            r.fix_hint = "Create flake.nix or remove Nix if not using it"
-        else:
-            # Nix not installed - this is fine, just skip the check
-            r.status = "ok"
-            r.message = "flake.nix not needed (Nix not installed)"
-    except Exception:
-        r.status = "fail"
-        r.message = "Could not check flake.nix (permission error)"
-    res_list.append(r)
-
-    # direnv / .envrc
-    r = CheckResult("direnv integration", "Nix Support")
-    if Path(".envrc").exists():
-        r.status = "ok"
-        r.message = ".envrc exists"
-        if not shutil.which("direnv"):
-            r.status = "warn"  # Warning, not failure
-            r.message += " but 'direnv' command not found"
-            r.fix_hint = "Install direnv: brew install direnv"
-    else:
-        r.status = "warn"  # Warning, not failure
-        r.message = ".envrc missing"
-        r.fix_hint = "Run: thegent install (to regenerate environment files)"
-    res_list.append(r)
-
-    return res_list
+    return _check_nix_impl(check_result_cls=CheckResult, project_root=_project_root_cache or Path.cwd())
 
 
 def _get_configured_providers_from_cliproxy() -> set[str]:
@@ -1231,6 +672,67 @@ def _check_providers() -> list[CheckResult]:
             r.message = f"Failed to fetch providers: {e}"
             r.details = f"Error details: {str(e)[:200]}"
             r.fix_hint = "Ensure CLIProxy is running: thegent mcp up"
+        res_list.append(r)
+
+    return res_list
+
+
+def _check_ollama() -> list[CheckResult]:
+    """Check Ollama daemon availability and local models.
+
+    WL-118: Ollama local model provider check.
+    """
+    res_list: list[CheckResult] = []
+
+    # First check if Ollama binary exists
+    r = CheckResult("Ollama CLI", "Providers")
+    ollama_path = shutil.which("ollama")
+    if not ollama_path:
+        r.status = "warn"
+        r.message = "Ollama CLI ('ollama') not found in PATH"
+        r.fix_hint = "Install Ollama: https://ollama.com/download"
+        res_list.append(r)
+        return res_list
+
+    r.status = "ok"
+    r.message = f"Found 'ollama' at {ollama_path}"
+    res_list.append(r)
+
+    # Now check if the daemon is running
+    r = CheckResult("Ollama Daemon", "Providers")
+    try:
+        from thegent.routing.ollama_provider import is_ollama_available, get_available_models
+
+        if is_ollama_available():
+            r.status = "ok"
+            r.message = "Ollama daemon is running at localhost:11434"
+            res_list.append(r)
+
+            # Also get available models
+            r_models = CheckResult("Ollama Models", "Providers")
+            try:
+                models = get_available_models()
+                if models:
+                    r_models.status = "ok"
+                    r_models.message = f"Available models: {', '.join(models[:5])}"
+                    if len(models) > 5:
+                        r_models.message += f" (+{len(models) - 5} more)"
+                else:
+                    r_models.status = "warn"
+                    r_models.message = "Daemon running but no models installed"
+                    r_models.fix_hint = "Pull models with: ollama pull llama3.3"
+            except Exception as e:
+                r_models.status = "warn"
+                r_models.message = f"Could not fetch models: {e}"
+            res_list.append(r_models)
+        else:
+            r.status = "warn"
+            r.message = "Ollama daemon not running at localhost:11434"
+            r.fix_hint = "Start with: ollama serve"
+            res_list.append(r)
+    except Exception as e:
+        r.status = "warn"
+        r.message = f"Could not check Ollama status: {e}"
         res_list.append(r)
 
     return res_list
@@ -1822,6 +1324,83 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
         r.message = f"Could not get resource stats: {e}"
     res_list.append(r)
 
+    # WL-118: Ollama local provider reachability
+    r = CheckResult("Ollama Local Provider", "Runtime Infrastructure")
+
+    def _set_ollama_result(*, status: str, severity: str, message: str, fix_hint: str | None = None) -> None:
+        r.status = status
+        r.severity = severity
+        r.message = message
+        r.fix_hint = fix_hint
+
+    ollama_bin = shutil.which("ollama")
+    if ollama_bin is None:
+        _set_ollama_result(
+            status="warn",
+            severity="warning",
+            message="Ollama CLI not found in PATH; local ollama provider runs are unavailable.",
+            fix_hint=(
+                "Install Ollama from https://ollama.com/download, then run "
+                "`ollama serve` and `ollama pull llama3.3`."
+            ),
+        )
+        res_list.append(r)
+    else:
+        try:
+            resp = httpx.get("http://127.0.0.1:11434/api/tags", timeout=2.0)
+            if resp.status_code == 200:
+                body = resp.json() if resp.content else {}
+                models = body.get("models") if isinstance(body, dict) else None
+                model_count = len(models) if isinstance(models, list) else 0
+                if model_count == 0:
+                    _set_ollama_result(
+                        status="warn",
+                        severity="warning",
+                        message=f"Ollama daemon reachable via {ollama_bin}, but no local models are installed.",
+                        fix_hint=(
+                            "Pull at least one model (for example: `ollama pull llama3.3`) "
+                            "before `thegent run --provider ollama`."
+                        ),
+                    )
+                else:
+                    _set_ollama_result(
+                        status="ok",
+                        severity="info",
+                        message=f"Ollama daemon reachable via {ollama_bin} with {model_count} model(s) installed.",
+                    )
+            else:
+                _set_ollama_result(
+                    status="warn",
+                    severity="warning",
+                    message=f"Ollama daemon check failed: endpoint returned HTTP {resp.status_code}.",
+                    fix_hint="Restart Ollama (`ollama serve`) and verify http://127.0.0.1:11434/api/tags responds.",
+                )
+        except httpx.TimeoutException:
+            _set_ollama_result(
+                status="warn",
+                severity="error",
+                message=f"Ollama CLI found at {ollama_bin}, but daemon probe timed out on 127.0.0.1:11434.",
+                fix_hint="Start/restart local daemon with `ollama serve`.",
+            )
+        except httpx.ConnectError:
+            _set_ollama_result(
+                status="warn",
+                severity="warning",
+                message=f"Ollama CLI found at {ollama_bin}, but daemon is not reachable on 127.0.0.1:11434.",
+                fix_hint="Start local daemon with `ollama serve` and retry `thegent doctor`.",
+            )
+        except Exception as e:
+            _set_ollama_result(
+                status="warn",
+                severity="error",
+                message=f"Ollama validation failed ({type(e).__name__}).",
+                fix_hint=(
+                    "Ensure `ollama serve` is running and a model is installed "
+                    "(for example: `ollama pull llama3.3`)."
+                ),
+            )
+    res_list.append(r)
+
     # Process Registry
     r = CheckResult("Process Registry", "Runtime Infrastructure")
     try:
@@ -2054,6 +1633,27 @@ def _check_project_hints() -> list[CheckResult]:
             r.fix_hint = "Run: thegent setup --hooks"
             res_list.append(r)
 
+    # Stale shadow worktrees from prior agent runs can saturate disk and slow quality scans.
+    shadow_max_age_hours = int(os.environ.get("THGENT_SHADOW_STALE_HOURS", "24"))
+    cutoff = time.time() - (shadow_max_age_hours * 3600)
+    stale_shadow_count = 0
+    for p in project_root.parent.glob(".shadow-*"):
+        if not p.is_dir():
+            continue
+        try:
+            if p.stat().st_mtime < cutoff:
+                stale_shadow_count += 1
+        except OSError:
+            continue
+    if stale_shadow_count > 0:
+        r = CheckResult("Stale Shadow Dirs", "Project")
+        r.status = "warn"
+        r.message = (
+            f"Detected {stale_shadow_count} stale .shadow-* dirs older than {shadow_max_age_hours}h near project root"
+        )
+        r.fix_hint = "Run: thegent mcp prune --dry-run"
+        res_list.append(r)
+
     return res_list
 
 
@@ -2091,32 +1691,67 @@ def _check_performance() -> list[CheckResult]:
     return res_list
 
 
-def _apply_fixes(results: list[CheckResult]) -> None:
-    """Attempt to automatically fix issues based on fix_hint strings."""
+def _apply_fixes(results: list[CheckResult], dry_run: bool = False) -> list[dict]:
+    """Attempt to automatically fix issues based on fix_hint strings.
+
+    Args:
+        results: List of CheckResult objects from health checks
+        dry_run: If True, only show what would be fixed without making changes
+
+    Returns:
+        List of dicts containing fix report entries with: check_name, status, action, result
+    """
+    fix_report: list[dict] = []
     fixes_applied = 0
     fixes_failed = 0
 
-    console.print("\n[bold cyan]Attempting automatic fixes...[/bold cyan]\n")
+    from rich.progress import Progress, SpinnerColumn, TextColumn
+
+    mode_text = "Would apply (dry-run)" if dry_run else "Attempting automatic fixes"
+    console.print(f"\n[bold cyan]{mode_text}...[/bold cyan]\n")
+
+    fixable = [r for r in results if r.status in ("fail", "warn") and r.fix_hint]
+    if not fixable:
+        console.print("[dim]No fixable issues found.[/dim]")
+        return fix_report
 
     for r in results:
         if r.status in ("fail", "warn") and r.fix_hint:
             # Parse fix hints and attempt fixes
             hint = r.fix_hint.strip()
+            fix_action = ""
+            fix_result = ""
 
             # Handle mkdir -p (e.g. "Create manually: mkdir -p /path")
             if "mkdir" in hint and "-p" in hint:
                 m = re.search(r"mkdir\s+-p\s+(\S+)", hint)
                 if m:
                     path = Path(m.group(1)).expanduser()
-                    try:
-                        path.mkdir(parents=True, exist_ok=True)
-                        fixes_applied += 1
-                        console.print(f"[green]  ✓ Fixed: {r.name} (created {path})[/green]")
-                        r.status = "ok"
-                        r.message = f"Created: {path}"
-                    except Exception as e:
-                        fixes_failed += 1
-                        console.print(f"[red]  ✗ Failed: {r.name} - {e}[/red]")
+                    fix_action = f"mkdir -p {path}"
+                    if not dry_run:
+                        try:
+                            path.mkdir(parents=True, exist_ok=True)
+                            fixes_applied += 1
+                            console.print(f"[green]  ✓ Fixed: {r.name} (created {path})[/green]")
+                            r.status = "ok"
+                            r.message = f"Created: {path}"
+                            fix_result = "success"
+                        except Exception as e:
+                            fixes_failed += 1
+                            console.print(f"[red]  ✗ Failed: {r.name} - {e}[/red]")
+                            fix_result = f"failed: {e}"
+                    else:
+                        console.print(f"[cyan]  ↪ Dry-run: {r.name} would create {path}[/cyan]")
+                        fix_result = "dry-run: would create"
+                    fix_report.append(
+                        {
+                            "check_name": r.name,
+                            "category": r.category,
+                            "status": "success" if fix_result == "success" or "dry-run" in fix_result else "failed",
+                            "action": fix_action,
+                            "result": fix_result,
+                        }
+                    )
                     continue
 
             # Skip hints that require manual intervention
@@ -2128,6 +1763,15 @@ def _apply_fixes(results: list[CheckResult]) -> None:
                     # These are actionable commands
                     pass
                 else:
+                    fix_report.append(
+                        {
+                            "check_name": r.name,
+                            "category": r.category,
+                            "status": "skipped",
+                            "action": hint,
+                            "result": "manual intervention required",
+                        }
+                    )
                     continue
 
             # Extract command from fix hints
@@ -2166,59 +1810,157 @@ def _apply_fixes(results: list[CheckResult]) -> None:
                             is_safe_removal = True
 
                     if any(d in cmd_parts[0].lower() for d in dangerous) and not is_safe_removal:
-                        console.print(f"[yellow]⚠ Skipping potentially dangerous fix: {cmd}[/yellow]")
+                        fix_report.append(
+                            {
+                                "check_name": r.name,
+                                "category": r.category,
+                                "status": "skipped",
+                                "action": cmd,
+                                "result": "dangerous - skipped",
+                            }
+                        )
                         continue
 
-                    # Execute safe commands
+                    fix_action = cmd
+                    # Execute safe commands  # @trace WL-040 WP-4005
                     try:
-                        console.print(f"[dim]  Fixing {r.name}: {cmd}[/dim]")
-
-                        # Handle thegent commands specially
-                        if cmd_parts[0] == "thegent":
-                            result = run_subprocess_optimized(
-                                cmd_parts,
-                                capture_output=True,
-                                timeout=30,
-                                cwd=_project_root_cache or None,
-                            )
-                            if result.returncode == 0:
-                                fixes_applied += 1
-                                console.print(f"[green]  ✓ Fixed: {r.name}[/green]")
-                            else:
-                                fixes_failed += 1
-                                stderr_text = (
-                                    result.stderr
-                                    if isinstance(result.stderr, str)
-                                    else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
-                                )
-                                console.print(f"[red]  ✗ Failed: {r.name} - {stderr_text[:100]}[/red]")
+                        if dry_run:
+                            console.print(f"[cyan]  ↪ Dry-run: {r.name} would run: {cmd}[/cyan]")
+                            fix_result = "dry-run: would execute"
                         else:
-                            # For other commands, check if they're safe to run
-                            safe_commands = ["mkdir", "chmod", "touch"]
-                            if cmd_parts[0] in safe_commands:
+                            console.print(f"[dim]  Fixing {r.name}: {cmd}[/dim]")
+
+                            # Handle thegent commands specially
+                            if cmd_parts[0] == "thegent":
                                 result = run_subprocess_optimized(
                                     cmd_parts,
                                     capture_output=True,
-                                    timeout=10,
+                                    timeout=30,
+                                    cwd=_project_root_cache or None,
                                 )
                                 if result.returncode == 0:
                                     fixes_applied += 1
                                     console.print(f"[green]  ✓ Fixed: {r.name}[/green]")
+                                    fix_result = "success"
                                 else:
                                     fixes_failed += 1
-                                    console.print(f"[red]  ✗ Failed: {r.name}[/red]")
+                                    stderr_text = (
+                                        result.stderr
+                                        if isinstance(result.stderr, str)
+                                        else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
+                                    )
+                                    console.print(f"[red]  ✗ Failed: {r.name} - {stderr_text[:100]}[/red]")
+                                    fix_result = f"failed: {stderr_text[:100]}"
                             else:
-                                # For unknown commands, just log
-                                console.print(f"[yellow]  ⚠ Manual fix required: {cmd}[/yellow]")
+                                # For other commands, check if they're safe to run
+                                safe_commands = ["mkdir", "chmod", "touch"]
+                                if cmd_parts[0] in safe_commands:
+                                    result = run_subprocess_optimized(
+                                        cmd_parts,
+                                        capture_output=True,
+                                        timeout=10,
+                                    )
+                                    if result.returncode == 0:
+                                        fixes_applied += 1
+                                        console.print(f"[green]  ✓ Fixed: {r.name}[/green]")
+                                        fix_result = "success"
+                                    else:
+                                        fixes_failed += 1
+                                        console.print(f"[red]  ✗ Failed: {r.name}[/red]")
+                                        fix_result = "failed"
+                                else:
+                                    # For unknown commands, just log as skipped
+                                    console.print(f"[yellow]  ⚠ Manual fix required: {cmd}[/yellow]")
+                                    fix_result = "manual intervention required"
+
                     except subprocess.TimeoutExpired:
                         fixes_failed += 1
                         console.print(f"[red]  ✗ Timeout fixing: {r.name}[/red]")
+                        fix_result = "timeout"
                     except Exception as e:
                         fixes_failed += 1
                         console.print(f"[red]  ✗ Error fixing {r.name}: {e}[/red]")
+                        fix_result = f"error: {e}"
+
+                    fix_report.append(
+                        {
+                            "check_name": r.name,
+                            "category": r.category,
+                            "status": "success"
+                            if fix_result == "success" or "dry-run" in fix_result
+                            else fix_result.split(":")[0]
+                            if ":" in fix_result
+                            else "failed",
+                            "action": fix_action,
+                            "result": fix_result,
+                        }
+                    )
 
     if fixes_applied > 0 or fixes_failed > 0:
         console.print(f"\n[bold]Fix Summary:[/bold] {fixes_applied} applied, {fixes_failed} failed\n")
+
+    return fix_report
+
+
+def _display_fix_report(fix_report: list[dict], dry_run: bool = False) -> None:
+    """Display a formatted fix report.
+
+    Args:
+        fix_report: List of dicts containing fix entries
+        dry_run: Whether this was a dry-run
+    """
+    if not fix_report:
+        return
+
+    from rich.table import Table
+
+    mode = "[dim](DRY-RUN)[/dim] " if dry_run else ""
+    table = Table(title=f"{mode}Fix Report", box=None, show_header=True)
+    table.add_column("Category", style="dim")
+    table.add_column("Check", style="bold")
+    table.add_column("Action")
+    table.add_column("Status")
+
+    for entry in fix_report:
+        status_str = (
+            "[green]✓[/green]"
+            if entry["status"] == "success"
+            else "[yellow]↪[/yellow]"
+            if "dry-run" in entry["status"]
+            else "[red]✗[/red]"
+        )
+        if entry["status"] == "skipped":
+            status_str = "[dim]⊘[/dim]"
+
+        table.add_row(
+            entry.get("category", ""),
+            entry["check_name"],
+            entry["action"][:50] + "..." if len(entry["action"]) > 50 else entry["action"],
+            status_str,
+        )
+
+    console.print("\n")
+    console.print(table)
+
+    # Summary
+    success_count = sum(1 for e in fix_report if e["status"] == "success")
+    failed_count = sum(1 for e in fix_report if e["status"] in ("failed", "error", "timeout"))
+    skipped_count = sum(1 for e in fix_report if e["status"] in ("skipped", "manual"))
+    dry_run_count = sum(1 for e in fix_report if "dry-run" in e["status"])
+
+    summary_parts = []
+    if dry_run:
+        summary_parts.append(f"[cyan]{dry_run_count} would be fixed[/cyan]")
+    else:
+        if success_count:
+            summary_parts.append(f"[green]{success_count} fixed[/green]")
+        if failed_count:
+            summary_parts.append(f"[red]{failed_count} failed[/red]")
+    if skipped_count:
+        summary_parts.append(f"[dim]{skipped_count} skipped[/dim]")
+
+    if summary_parts:
+        console.print(f"[bold]Summary:[/bold] {', '.join(summary_parts)}")
 
 
 def _display_results(results: list[CheckResult]) -> bool:
@@ -2226,10 +1968,17 @@ def _display_results(results: list[CheckResult]) -> bool:
     table.add_column("Category", style="dim")
     table.add_column("Check", style="bold")
     table.add_column("Status")
+    table.add_column("Severity")
     table.add_column("Message")
 
     # All failures count against success - no features are optional
     all_ok = True
+    severity_labels = {
+        "info": "[cyan]info[/cyan]",
+        "warning": "[yellow]warning[/yellow]",
+        "error": "[red]error[/red]",
+        "critical": "[bold red]critical[/bold red]",
+    }
     for r in results:
         status_str = "[green]ok[/green]"
         if r.status == "warn":
@@ -2238,13 +1987,57 @@ def _display_results(results: list[CheckResult]) -> bool:
             status_str = "[red]fail[/red]"
             all_ok = False
 
-        table.add_row(r.category, r.name, status_str, r.message)
+        severity_str = severity_labels.get(r.severity, r.severity)
+        table.add_row(r.category, r.name, status_str, severity_str, r.message)
         if r.fix_hint:
-            table.add_row("", "", "", f"[dim]Hint: {r.fix_hint}[/dim]")
+            table.add_row("", "", "", "", f"[dim]Hint: {r.fix_hint}[/dim]")
         if r.details:
-            table.add_row("", "", "", f"[dim]{r.details}[/dim]")
+            table.add_row("", "", "", "", f"[dim]{r.details}[/dim]")
 
     console.print(table)
+
+    status_counts = {
+        "ok": sum(1 for r in results if r.status == "ok"),
+        "warn": sum(1 for r in results if r.status == "warn"),
+        "fail": sum(1 for r in results if r.status == "fail"),
+    }
+    severity_counts = {
+        "info": sum(1 for r in results if r.severity == "info"),
+        "warning": sum(1 for r in results if r.severity == "warning"),
+        "error": sum(1 for r in results if r.severity == "error"),
+        "critical": sum(1 for r in results if r.severity == "critical"),
+    }
+    console.print(
+        "[bold]Summary:[/bold] "
+        f"{status_counts['ok']} ok, {status_counts['warn']} warn, {status_counts['fail']} fail | "
+        "severity "
+        f"info={severity_counts['info']}, warning={severity_counts['warning']}, "
+        f"error={severity_counts['error']}, critical={severity_counts['critical']}"
+    )
+
+    actionable_hints: list[str] = []
+    normalized_hints: set[str] = set()
+    hint_pairs: list[tuple[str, str]] = []
+
+    def _normalize_hint_for_dedupe(raw_hint: str) -> str:
+        collapsed = " ".join(raw_hint.split()).casefold().strip()
+        return collapsed.rstrip(" .;:!?")
+
+    for r in results:
+        if r.status in {"warn", "fail"} and r.fix_hint:
+            normalized_hint = _normalize_hint_for_dedupe(r.fix_hint)
+            if normalized_hint not in normalized_hints:
+                normalized_hints.add(normalized_hint)
+                hint_pairs.append((normalized_hint, r.fix_hint.strip()))
+    actionable_hints = [hint for _, hint in sorted(hint_pairs, key=lambda pair: pair[0])]
+    if actionable_hints:
+        console.print("[bold]Actionable hints:[/bold]")
+        shown_hints = actionable_hints[:3]
+        for idx, hint in enumerate(shown_hints, start=1):
+            console.print(f"[dim]- [{idx}/{len(shown_hints)}] {hint}[/dim]")
+        remaining_hints = len(actionable_hints) - len(shown_hints)
+        if remaining_hints > 0:
+            console.print(f"[dim]- ... and {remaining_hints} more actionable hint(s)[/dim]")
 
     # Provider Matrix Summary (ROB-016)
     providers = [r for r in results if r.category == "Providers"]

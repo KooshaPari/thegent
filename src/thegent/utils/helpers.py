@@ -54,7 +54,7 @@ def batch_file_operations(
                     batch_results.append(path.exists())
                 else:
                     batch_results.append(None)
-            except Exception as e:
+            except Exception as e:  # noqa: PERF203 - intentional per-item error handling
                 logger.error(f"Error in batch operation {op_type}: {e}")
                 batch_results.append(None)
         results.extend(batch_results)
@@ -292,3 +292,33 @@ def safe_write_file(
     except Exception as e:
         logger.error(f"Error writing file {path}: {e}")
         return False
+
+
+def read_json(path: str | Path) -> Any:
+    """Read and parse a JSON file. Raises FileNotFoundError or ValueError on error."""
+    import json
+
+    p = normalize_path(path)
+    content = p.read_text(encoding="utf-8")
+    return json.loads(content)
+
+
+def write_json(path: str | Path, data: Any, *, indent: int = 2) -> None:
+    """Serialize *data* as JSON and write to *path*, creating parent dirs as needed."""
+    import json
+
+    p = normalize_path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(data, indent=indent), encoding="utf-8")
+
+
+def find_project_root(start: str | Path | None = None) -> Path:
+    """Walk up from *start* (default: cwd) to find a directory containing pyproject.toml.
+
+    Raises FileNotFoundError if no project root is found.
+    """
+    current = normalize_path(start) if start else Path.cwd()
+    for directory in [current, *current.parents]:
+        if (directory / "pyproject.toml").exists():
+            return directory
+    raise FileNotFoundError(f"No pyproject.toml found in {current} or any parent directory")

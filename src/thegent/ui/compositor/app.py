@@ -10,10 +10,10 @@ from textual.containers import Vertical
 from textual.widgets import Footer, Header, RichLog, Static
 
 from thegent.ui.compositor.pane_manager import PaneManager
-from thegent.ui.compositor.terminal_pane import PanelMounted, PanelUnmounted
 
 if TYPE_CHECKING:
     from thegent.ui.compositor.session_state import SessionState
+    from thegent.ui.compositor.terminal_pane import PanelMounted, PanelUnmounted
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +139,7 @@ class CompositApp(App):
     }
     """
 
-    BINDINGS = [
+    BINDINGS = (
         ("ctrl+n", "new_pane", "New Pane"),
         ("ctrl+v", "split_vertical", "Split V"),
         ("ctrl+h", "split_horizontal", "Split H"),
@@ -147,7 +147,7 @@ class CompositApp(App):
         ("ctrl+l", "focus_next", "Focus Next"),
         ("ctrl+r", "retry_pane", "Retry"),
         ("ctrl+q", "quit", "Quit"),
-    ]
+    )
 
     def __init__(self, session_state: "SessionState | None" = None) -> None:
         """Initialize CompositApp.
@@ -310,7 +310,7 @@ class CompositApp(App):
         """
         try:
             # Get all leaf nodes (actual panes)
-            leaves = self.pane_manager._get_all_leaves(node)
+            leaves = self._collect_leaf_nodes(node)
 
             for leaf in leaves:
                 pane_id = leaf.pane_id
@@ -328,6 +328,17 @@ class CompositApp(App):
 
         except Exception as e:
             logger.error(f"Error during pane cleanup: {e}")
+
+    def _collect_leaf_nodes(self, node: "PaneManager.PaneNode | None") -> list["PaneManager.PaneNode"]:
+        """Collect pane leaf nodes in depth-first order."""
+        if node is None:
+            return []
+        if node.is_leaf:
+            return [node]
+        leaves: list[PaneManager.PaneNode] = []
+        for child in node.children:
+            leaves.extend(self._collect_leaf_nodes(child))
+        return leaves
 
     def _handle_mount_error(self, error: Exception) -> None:
         """Handle errors during mount.
@@ -387,9 +398,7 @@ class CompositApp(App):
             if new_pane_id not in self._pane_widgets:
                 self._initialize_pane_widget(new_pane_id)
 
-            self._pane_count = (
-                len(self.pane_manager._get_all_leaves(self.pane_manager.root)) if self.pane_manager.root else 1
-            )
+            self._pane_count = len(self._collect_leaf_nodes(self.pane_manager.root)) if self.pane_manager.root else 1
             self._update_statusbar()
 
         except Exception as e:
@@ -413,7 +422,7 @@ class CompositApp(App):
             if new_node:
                 # Initialize widget for new pane
                 self._initialize_pane_widget(new_node.pane_id)
-                self._pane_count = len(self.pane_manager._get_all_leaves(self.pane_manager.root))
+                self._pane_count = len(self._collect_leaf_nodes(self.pane_manager.root))
                 self._update_statusbar()
 
         except Exception as e:
@@ -437,7 +446,7 @@ class CompositApp(App):
             if new_node:
                 # Initialize widget for new pane
                 self._initialize_pane_widget(new_node.pane_id)
-                self._pane_count = len(self.pane_manager._get_all_leaves(self.pane_manager.root))
+                self._pane_count = len(self._collect_leaf_nodes(self.pane_manager.root))
                 self._update_statusbar()
 
         except Exception as e:
@@ -463,7 +472,7 @@ class CompositApp(App):
 
             if self.pane_manager.close_pane():
                 self._pane_count = (
-                    len(self.pane_manager._get_all_leaves(self.pane_manager.root)) if self.pane_manager.root else 1
+                    len(self._collect_leaf_nodes(self.pane_manager.root)) if self.pane_manager.root else 1
                 )
                 self._update_statusbar()
 

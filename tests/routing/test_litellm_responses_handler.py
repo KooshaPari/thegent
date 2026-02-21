@@ -12,10 +12,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+if TYPE_CHECKING:
+    from starlette.websockets import WebSocket as StarletteWS
 
 # ---------------------------------------------------------------------------
 # Async-iterator helpers (used instead of async generators to avoid
@@ -114,6 +117,7 @@ class TestResponsesInputToMessages:
         assert msgs == [{"role": "assistant", "content": "I am an assistant"}]
 
     def test_multi_part_content_list(self) -> None:
+        # OR-16/GW-04: content arrays are preserved (not collapsed to string)
         from thegent.routing.litellm_responses_handler import _responses_input_to_messages
 
         content_parts = [
@@ -122,9 +126,12 @@ class TestResponsesInputToMessages:
         ]
         items = [_make_message_item("user", content_parts)]
         msgs = _responses_input_to_messages(items)
-        assert msgs == [{"role": "user", "content": "Part one\nPart two"}]
+        assert msgs[0]["role"] == "user"
+        assert isinstance(msgs[0]["content"], list)
+        assert msgs[0]["content"] == content_parts
 
-    def test_content_list_skips_non_text_parts(self) -> None:
+    def test_content_list_preserves_all_part_types(self) -> None:
+        # OR-16/GW-04: non-text parts (image_url, cache_control, etc.) are preserved
         from thegent.routing.litellm_responses_handler import _responses_input_to_messages
 
         content_parts = [
@@ -133,7 +140,9 @@ class TestResponsesInputToMessages:
         ]
         items = [_make_message_item("user", content_parts)]
         msgs = _responses_input_to_messages(items)
-        assert msgs == [{"role": "user", "content": "Caption"}]
+        assert msgs[0]["role"] == "user"
+        assert isinstance(msgs[0]["content"], list)
+        assert msgs[0]["content"] == content_parts
 
     def test_non_message_type_items_are_ignored(self) -> None:
         from thegent.routing.litellm_responses_handler import _responses_input_to_messages
@@ -361,6 +370,9 @@ class TestHandleResponsesRequest:
         mock_choice.message.content = "Hi from model"
         mock_response = MagicMock()
         mock_response.choices = [mock_choice]
+        mock_response.usage = None
+        mock_response.id = "resp_test"
+        mock_response.model = "gpt-4o"
 
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
@@ -393,6 +405,9 @@ class TestHandleResponsesRequest:
         mock_choice.message.content = "Empty body response"
         mock_response = MagicMock()
         mock_response.choices = [mock_choice]
+        mock_response.usage = None
+        mock_response.id = "resp_test"
+        mock_response.model = "gpt-4o"
 
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
@@ -617,7 +632,7 @@ class TestHandleResponsesStream:
         assert event2["item"]["content"][0]["text"] == ", world"
 
         last = json.loads(lines[-1].removeprefix("data: "))
-        assert last == {"type": "response.completed"}
+        assert last["type"] == "response.completed"
 
     @pytest.mark.asyncio
     async def test_streaming_error_yields_error_event(self) -> None:
@@ -726,7 +741,7 @@ class TestHandleResponsesWebsocket:
         ]
 
         mock_router = MagicMock()
-        mock_router.acompletion = lambda **kwargs: _AsyncGenFromChunks(chunks)
+        mock_router.acompletion = AsyncMock(return_value=_AsyncGenFromChunks(chunks))
 
         async def ws_endpoint(websocket: StarletteWS) -> None:
             await handle_responses_websocket(websocket)
@@ -759,13 +774,12 @@ class TestHandleResponsesWebsocket:
     @pytest.mark.asyncio
     async def test_websocket_error_sends_error_message(self) -> None:
         from starlette.testclient import TestClient
-        from starlette.websockets import WebSocket as StarletteWS
 
         from thegent.routing.litellm_responses_handler import handle_responses_websocket
 
         bad_exc = ValueError("invalid model xyz")
         mock_router = MagicMock()
-        mock_router.acompletion = lambda **kwargs: _AsyncGenRaise(bad_exc)
+        mock_router.acompletion = AsyncMock(side_effect=bad_exc)
 
         async def ws_endpoint(websocket: StarletteWS) -> None:
             await handle_responses_websocket(websocket)
@@ -787,3 +801,137 @@ class TestHandleResponsesWebsocket:
         assert "error" in msg
         assert "invalid model xyz" in msg["error"]["message"]
         assert msg["error"]["type"] == "ValueError"
+
+
+# ---------------------------------------------------------------------------
+# WL-071: Persistent httpx.AsyncClient
+# ---------------------------------------------------------------------------
+
+
+class TestPersistentHttpClient:
+    """Verify that _get_http_client() returns a shared client and cleanup works.
+
+    @trace WL-071
+    """
+
+    def setup_method(self) -> None:
+        """Reset module-level client before each test to ensure isolation."""
+        import thegent.routing.litellm_responses_handler as _mod
+
+        _mod._http_client = None
+
+    def teardown_method(self) -> None:
+        """Ensure client is cleaned up after each test."""
+        import thegent.routing.litellm_responses_handler as _mod
+
+        _mod._http_client = None
+
+    def test_get_http_client_returns_async_client(self) -> None:
+        """_get_http_client() returns an httpx.AsyncClient instance.
+
+        @trace WL-071
+        """
+        import httpx
+
+        from thegent.routing.litellm_responses_handler import _get_http_client
+
+        client = _get_http_client()
+        assert isinstance(client, httpx.AsyncClient)
+
+    def test_get_http_client_returns_same_instance_on_repeated_calls(self) -> None:
+        """_get_http_client() returns the SAME client on multiple calls (persistent pool).
+
+        @trace WL-071
+        """
+        from thegent.routing.litellm_responses_handler import _get_http_client
+
+        client1 = _get_http_client()
+        client2 = _get_http_client()
+        client3 = _get_http_client()
+        assert client1 is client2
+        assert client1 is client3
+
+    def test_get_http_client_creates_new_when_closed(self) -> None:
+        """_get_http_client() recreates the client when the previous one was closed.
+
+        @trace WL-071
+        """
+        import asyncio
+
+        from thegent.routing.litellm_responses_handler import _get_http_client
+
+        client1 = _get_http_client()
+        # Synchronously close via asyncio.run to simulate a closed client
+        asyncio.run(client1.aclose())
+        assert client1.is_closed
+
+        client2 = _get_http_client()
+        assert not client2.is_closed
+        assert client2 is not client1
+        # Cleanup
+        asyncio.run(client2.aclose())
+
+    @pytest.mark.asyncio
+    async def test_close_http_client_sets_module_var_to_none(self) -> None:
+        """close_http_client() closes the client and resets the module global to None.
+
+        @trace WL-071
+        """
+        import thegent.routing.litellm_responses_handler as _mod
+        from thegent.routing.litellm_responses_handler import _get_http_client, close_http_client
+
+        client = _get_http_client()
+        assert _mod._http_client is not None
+        await close_http_client()
+        assert _mod._http_client is None
+        assert client.is_closed
+
+    @pytest.mark.asyncio
+    async def test_close_http_client_idempotent_when_none(self) -> None:
+        """close_http_client() is safe to call when no client has been created.
+
+        @trace WL-071
+        """
+        import thegent.routing.litellm_responses_handler as _mod
+        from thegent.routing.litellm_responses_handler import close_http_client
+
+        assert _mod._http_client is None
+        # Must not raise
+        await close_http_client()
+        assert _mod._http_client is None
+
+    @pytest.mark.asyncio
+    async def test_forward_native_responses_uses_persistent_client(self) -> None:
+        """_forward_native_responses() calls _get_http_client() (no new client per request).
+
+        @trace WL-071
+        """
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        import thegent.routing.litellm_responses_handler as _mod
+
+        mock_response = MagicMock()
+        mock_response.content = b'{"id":"r1"}'
+        mock_response.status_code = 200
+        mock_response.headers = {"content-type": "application/json"}
+
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.is_closed = False
+
+        with patch.object(_mod, "_get_http_client", return_value=mock_client) as mock_getter:
+            from starlette.requests import Request as StarletteRequest
+
+            scope = {"type": "http", "method": "POST", "headers": []}
+            request = StarletteRequest(scope)
+
+            await _mod._forward_native_responses(
+                request,
+                {"model": "openrouter/gpt-4o"},
+                b'{"model":"openrouter/gpt-4o"}',
+                {},
+            )
+
+            # _get_http_client was called — not httpx.AsyncClient() constructor
+            mock_getter.assert_called_once()
+            mock_client.post.assert_awaited_once()

@@ -1,4 +1,4 @@
-"""Deep unit tests for thegent.mcp_server covering missing coverage lines.
+"""Deep unit tests for thegent.mcp.server covering missing coverage lines.
 
 Targets: CWD resolution, owner resolution, lifespan, DAG tools,
 resource implementations, health endpoint, HTTP app, run(), _stable_json,
@@ -19,7 +19,7 @@ import pytest
 fastmcp = pytest.importorskip("fastmcp", reason="fastmcp required for MCP server tests")
 
 
-import thegent.mcp_server as _mcp_mod
+import thegent.mcp.server as _mcp_mod
 
 if TYPE_CHECKING:
     from fastmcp.tools.tool import ToolResult
@@ -55,7 +55,7 @@ def _text_content(result: ToolResult | str) -> str:
 
 
 def _inject_missing_names() -> None:
-    """Inject _resolve_cwd, _default_owner_tag, and elicitation types into thegent.mcp_server.
+    """Inject _resolve_cwd, _default_owner_tag, and elicitation types into thegent.mcp.server.
 
     These names are used in the module's tool functions but are not imported at
     the module level. We inject stubs so that patching targets are available.
@@ -272,7 +272,7 @@ class TestResourceSessionMeta:
     """Tests for resource_session_meta."""
 
     # @trace FR-MCP-070
-    @patch("thegent.mcp_server.status_impl")
+    @patch("thegent.mcp.server.status_impl")
     def test_returns_json_for_session(self, mock_status: MagicMock) -> None:
         """Returns JSON string with session metadata."""
         mock_status.return_value = {"session_id": "abc", "status": "running", "pid": 1234}
@@ -283,7 +283,7 @@ class TestResourceSessionMeta:
         mock_status.assert_called_once_with(session_id="abc", include_contract=False)
 
     # @trace FR-MCP-071
-    @patch("thegent.mcp_server.status_impl")
+    @patch("thegent.mcp.server.status_impl")
     def test_returns_json_with_contract(self, mock_status: MagicMock) -> None:
         """Passes include_contract flag through."""
         mock_status.return_value = {"session_id": "abc", "contract": {}}
@@ -296,7 +296,7 @@ class TestResourceSessionLogs:
     """Tests for resource_session_logs."""
 
     # @trace FR-MCP-072
-    @patch("thegent.mcp_server.logs_impl")
+    @patch("thegent.mcp.server.logs_impl")
     def test_returns_log_text(self, mock_logs: MagicMock) -> None:
         """Returns plain text log content."""
         mock_logs.return_value = "line 1\nline 2\n"
@@ -305,7 +305,7 @@ class TestResourceSessionLogs:
         mock_logs.assert_called_once_with(session_id="abc", tail=None, stderr=False)
 
     # @trace FR-MCP-073
-    @patch("thegent.mcp_server.logs_impl")
+    @patch("thegent.mcp.server.logs_impl")
     def test_returns_stderr_with_tail(self, mock_logs: MagicMock) -> None:
         """Passes stderr and tail params through."""
         mock_logs.return_value = "error line"
@@ -318,7 +318,7 @@ class TestResourceAgents:
     """Tests for resource_agents."""
 
     # @trace FR-MCP-074
-    @patch("thegent.mcp_server.list_agents_impl")
+    @patch("thegent.mcp.server.list_agents_impl")
     def test_returns_agent_list(self, mock_agents: MagicMock) -> None:
         """Returns JSON array of agents."""
         mock_agents.return_value = [{"name": "claude", "backend": "anthropic"}]
@@ -346,7 +346,7 @@ class TestResourceSessionContracts:
     """Tests for resource_session_contracts."""
 
     # @trace FR-MCP-076
-    @patch("thegent.mcp_server.session_contract_audit_impl")
+    @patch("thegent.mcp.server.session_contract_audit_impl")
     def test_returns_audit_data(self, mock_audit: MagicMock) -> None:
         """Returns JSON audit payload."""
         mock_audit.return_value = {"total": 5, "missing": 1, "sessions": []}
@@ -356,7 +356,7 @@ class TestResourceSessionContracts:
         mock_audit.assert_called_once_with(owner=None, all=False, missing_only=False, summary_only=False, strict=False)
 
     # @trace FR-MCP-077
-    @patch("thegent.mcp_server.session_contract_audit_impl")
+    @patch("thegent.mcp.server.session_contract_audit_impl")
     def test_passes_all_params(self, mock_audit: MagicMock) -> None:
         """Passes all parameters through to impl."""
         mock_audit.return_value = {"total": 0}
@@ -499,7 +499,7 @@ class TestThegentSessionContractsTool:
     """Tests for thegent_session_contracts tool."""
 
     # @trace FR-MCP-090
-    @patch("thegent.mcp_server.session_contract_audit_impl")
+    @patch("thegent.mcp.server.session_contract_audit_impl")
     def test_session_contracts_default_params(self, mock_impl: MagicMock) -> None:
         """Returns audit payload with default params."""
         mock_impl.return_value = {"total": 3, "sessions": [], "missing": 0}
@@ -509,7 +509,7 @@ class TestThegentSessionContractsTool:
         mock_impl.assert_called_once_with(owner=None, all=False, missing_only=False, summary_only=False, strict=False)
 
     # @trace FR-MCP-091
-    @patch("thegent.mcp_server.session_contract_audit_impl")
+    @patch("thegent.mcp.server.session_contract_audit_impl")
     def test_session_contracts_with_filters(self, mock_impl: MagicMock) -> None:
         """Passes filter params to impl."""
         mock_impl.return_value = {"total": 1, "sessions": []}
@@ -517,7 +517,7 @@ class TestThegentSessionContractsTool:
         mock_impl.assert_called_once_with(owner="me", all=True, missing_only=True, summary_only=True, strict=True)
 
     # @trace FR-MCP-092
-    @patch("thegent.mcp_server.session_contract_audit_impl")
+    @patch("thegent.mcp.server.session_contract_audit_impl")
     def test_session_contracts_has_execution_time(self, mock_impl: MagicMock) -> None:
         """Result meta includes execution_time_ms."""
         mock_impl.return_value = {"total": 0}
@@ -637,8 +637,8 @@ class TestThegentDagListDeep:
     """Deep tests for thegent_dag_list elicitation branches."""
 
     # @trace FR-MCP-051
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
-    @patch("thegent.mcp_server.dag_list_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server.dag_list_impl")
     def test_dag_list_declined_elicitation(self, mock_dag: MagicMock, mock_cwd: MagicMock) -> None:
         """Returns error when user declines CWD elicitation."""
         try:
@@ -661,8 +661,8 @@ class TestThegentDagListDeep:
         asyncio.run(_run())
 
     # @trace FR-MCP-052
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
-    @patch("thegent.mcp_server.dag_list_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server.dag_list_impl")
     def test_dag_list_cancelled_elicitation(self, mock_dag: MagicMock, mock_cwd: MagicMock) -> None:
         """Returns error when CWD elicitation is cancelled."""
         try:
@@ -684,8 +684,8 @@ class TestThegentDagListDeep:
         asyncio.run(_run())
 
     # @trace FR-MCP-053
-    @patch("thegent.mcp_server._resolve_cwd", return_value=None)
-    @patch("thegent.mcp_server.dag_list_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=None)
+    @patch("thegent.mcp.server.dag_list_impl")
     def test_dag_list_ambiguous_elicitation(self, mock_dag: MagicMock, mock_cwd: MagicMock) -> None:
         """Returns error for unrecognized elicitation type."""
         ambiguous = MagicMock()
@@ -702,8 +702,8 @@ class TestThegentDagListDeep:
         asyncio.run(_run())
 
     # @trace FR-MCP-054
-    @patch("thegent.mcp_server._resolve_cwd", return_value=Path("/tmp/project"))
-    @patch("thegent.mcp_server.dag_list_impl")
+    @patch("thegent.mcp.server._resolve_cwd", return_value=Path("/tmp/project"))
+    @patch("thegent.mcp.server.dag_list_impl")
     def test_dag_list_with_resolved_cwd(self, mock_dag: MagicMock, mock_cwd: MagicMock) -> None:
         """Returns DAG data when CWD resolves successfully."""
         mock_dag.return_value = {"frontmatter": {"project": "test"}, "tasks": [{"id": "T1"}]}
@@ -867,7 +867,7 @@ class TestResourceMeta:
     """Tests for resource_meta."""
 
     # @trace FR-MCP-062
-    @patch("thegent.mcp_server.get_server_meta_impl")
+    @patch("thegent.mcp.server.get_server_meta_impl")
     def test_returns_server_metadata(self, mock_meta: MagicMock) -> None:
         """Returns JSON with server meta."""
         mock_meta.return_value = {"version": "1.0.0", "capabilities": ["run", "bg"]}
@@ -887,7 +887,7 @@ class TestResourceDagDeep:
     """Tests for resource_dag."""
 
     # @trace FR-MCP-063
-    @patch("thegent.mcp_server.dag_list_impl")
+    @patch("thegent.mcp.server.dag_list_impl")
     def test_resource_dag_empty_tasks(self, mock_dag: MagicMock) -> None:
         """Returns empty tasks array."""
         mock_dag.return_value = {"frontmatter": {}, "tasks": []}
@@ -907,7 +907,7 @@ class TestResourceObserveSummaryDeep:
     """Tests for resource_observe_summary."""
 
     # @trace FR-MCP-064
-    @patch("thegent.mcp_server.observe_summary_impl")
+    @patch("thegent.mcp.server.observe_summary_impl")
     def test_returns_stable_json(self, mock_impl: MagicMock) -> None:
         """Returns _stable_json serialized payload."""
         mock_impl.return_value = {"status": "ok", "kpis": {}, "drift": {}}
@@ -928,7 +928,7 @@ class TestResourceSessionContractHealthTrend:
     """Tests for resource_session_contract_health_trend."""
 
     # @trace FR-MCP-065
-    @patch("thegent.mcp_server.session_contract_health_trend_impl")
+    @patch("thegent.mcp.server.session_contract_health_trend_impl")
     def test_returns_trend_data(self, mock_impl: MagicMock) -> None:
         """Returns trend payload with stable JSON."""
         mock_impl.return_value = {"snapshots": [], "delta_summary": {}, "payload_type": "trend"}
@@ -948,7 +948,7 @@ class TestThegentSessionContractHealthTrendTool:
     """Tests for thegent_session_contract_health_trend tool."""
 
     # @trace FR-MCP-066
-    @patch("thegent.mcp_server.session_contract_health_trend_impl")
+    @patch("thegent.mcp.server.session_contract_health_trend_impl")
     def test_trend_tool_returns_payload(self, mock_impl: MagicMock) -> None:
         """Returns trend payload as ToolResult."""
         mock_impl.return_value = {
@@ -968,7 +968,7 @@ class TestThegentSessionContractHealthTrendTool:
             assert "execution_time_ms" in meta
 
     # @trace FR-MCP-067
-    @patch("thegent.mcp_server.session_contract_health_trend_impl")
+    @patch("thegent.mcp.server.session_contract_health_trend_impl")
     def test_trend_tool_with_custom_params(self, mock_impl: MagicMock) -> None:
         """Passes custom params through."""
         mock_impl.return_value = {
@@ -1004,7 +1004,7 @@ class TestThegentObserveSummaryDeep:
     """Deep meta verification for thegent_observe_summary tool."""
 
     # @trace FR-MCP-068
-    @patch("thegent.mcp_server.observe_summary_impl")
+    @patch("thegent.mcp.server.observe_summary_impl")
     def test_observe_meta_has_kpi_fields(self, mock_impl: MagicMock) -> None:
         """Verifies meta includes KPI-derived fields."""
         mock_impl.return_value = {
@@ -1049,7 +1049,7 @@ class TestResourceSessionsDeep:
     """Deep tests for resource_sessions."""
 
     # @trace FR-MCP-069
-    @patch("thegent.mcp_server.ps_impl")
+    @patch("thegent.mcp.server.ps_impl")
     def test_resource_sessions_passes_include_contract(self, mock_ps: MagicMock) -> None:
         """Passes include_contract flag through."""
         mock_ps.return_value = []
@@ -1067,7 +1067,7 @@ class TestThegentListDroids:
     """Tests for thegent_list_droids tool."""
 
     # @trace FR-MCP-070
-    @patch("thegent.mcp_server.list_droids_impl")
+    @patch("thegent.mcp.server.list_droids_impl")
     def test_list_droids_with_cd(self, mock_impl: MagicMock) -> None:
         """Lists droids with explicit cd."""
         mock_impl.return_value = ["droid-a", "droid-b"]
@@ -1077,7 +1077,7 @@ class TestThegentListDroids:
         assert result.structured_content == {"droids": ["droid-a", "droid-b"]}
 
     # @trace FR-MCP-071
-    @patch("thegent.mcp_server.list_droids_impl")
+    @patch("thegent.mcp.server.list_droids_impl")
     def test_list_droids_with_default_cwd(self, mock_impl: MagicMock) -> None:
         """Uses default_cwd when cd is None."""
         mock_impl.return_value = []
@@ -1095,7 +1095,7 @@ class TestThegentListModelsDeep:
     """Deep tests for thegent_list_models tool."""
 
     # @trace FR-MCP-072
-    @patch("thegent.mcp_server.list_models_impl")
+    @patch("thegent.mcp.server.list_models_impl")
     def test_list_models_with_by_model(self, mock_impl: MagicMock) -> None:
         """Passes by_model flag through."""
         mock_impl.return_value = {"claude-sonnet-4": ["anthropic", "cursor"]}
@@ -1141,7 +1141,7 @@ class TestResourceSessionContractHealthGateDeep:
     """Deep tests for resource_session_contract_health_gate."""
 
     # @trace FR-MCP-075
-    @patch("thegent.mcp_server.session_contract_health_gate_impl")
+    @patch("thegent.mcp.server.session_contract_health_gate_impl")
     def test_uses_stable_json(self, mock_impl: MagicMock) -> None:
         """Output uses _stable_json for deterministic serialization."""
         mock_impl.return_value = {"z_field": 1, "a_field": 2, "pass": True}
@@ -1151,7 +1151,7 @@ class TestResourceSessionContractHealthGateDeep:
         assert keys == sorted(keys)
 
     # @trace FR-MCP-076
-    @patch("thegent.mcp_server.session_contract_health_gate_impl")
+    @patch("thegent.mcp.server.session_contract_health_gate_impl")
     def test_passes_regression_params(self, mock_impl: MagicMock) -> None:
         """Passes no_worse_than_baseline and regression_tolerance."""
         mock_impl.return_value = {"pass": True}

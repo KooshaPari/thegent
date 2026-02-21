@@ -1,12 +1,15 @@
 """Pruning and resource management logic."""
 
+import contextlib
 import logging
 import os
+import re
 import signal
+import shutil
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -19,6 +22,29 @@ from thegent.skills.terminal import capture_tmux_pane, list_tmux_panes, send_to_
 console = Console()
 logger = logging.getLogger(__name__)
 
+_TARGET_PATTERNS: tuple[str, ...] = (
+    "pyright-langserver",
+    "typescript-language-server",
+    "tsserver.js",
+    "@playwright/mcp",
+    "context7-mcp",
+    "octocode-mcp",
+    "next-devtools-mcp",
+    "sequential-thinking",
+    "cc-status",
+)
+
+
+def _is_mcp_candidate(cmd: str) -> bool:
+    """True if command line clearly matches known MCP/LSP server processes."""
+    low = cmd.lower()
+    if any(pat in low for pat in _TARGET_PATTERNS):
+        return True
+    # Restrict generic runtimes to explicit MCP/LSP contexts.
+    if re.search(r"\b(node|npm|bun|deno)\b", low) and re.search(r"\b(mcp|langserver|lsp|tsserver)\b", low):
+        return True
+    return False
+
 
 def mcp_prune(
     force: bool = False,
@@ -26,6 +52,8 @@ def mcp_prune(
     parent_pid: int | None = None,
     interactive: bool = True,
     caller_info: str | None = None,
+    shadow_max_age_hours: int = 24,
+    quality_log_max_age_days: int = 7,
 ) -> None:
     """Kill redundant agent-related Node.js processes (LSPs, MCP servers).
 
@@ -45,25 +73,6 @@ def mcp_prune(
     )
     if not dry_run:
         console.print(f"[dim]Pruning triggered by: {trigger_info}[/dim]")
-
-    # Patterns for redundant processes (LSPs, MCPs only - NOT user shells)
-    # NOTE: bash/zsh/sh are intentionally excluded to prevent killing user terminals
-    patterns = [
-        "pyright-langserver",
-        "typescript-language-server",
-        "tsserver.js",
-        "@playwright/mcp",
-        "context7-mcp",
-        "cc-status",
-        "octocode-mcp",
-        "next-devtools-mcp",
-        "sequential-thinking",
-        # Shell patterns removed: "bash", "zsh", "sh" - these kill user terminals!
-        "node",
-        "npm",
-        "bun",
-        "deno",
-    ]
 
     try:
         res = run_subprocess_optimized(
@@ -154,15 +163,8 @@ def mcp_prune(
                 candidates.append({"pid": pid_i, "ppid": ppid_i, "cmd": cmd, "rss_kb": rss_kb, "tty": tty_map[pid_i]})
             continue
 
-        # Match only LSP/MCP processes, NOT user shells (bash/zsh/sh removed)
-        match_categories = ("node", "npm", "bun", "deno", "cc-status")
-        if any(x in cmd_lower for x in match_categories):
-            for p in patterns:
-                if p in cmd:
-                    candidates.append(
-                        {"pid": pid_i, "ppid": ppid_i, "cmd": cmd, "rss_kb": rss_kb, "tty": tty_map[pid_i]}
-                    )
-                    break
+        if _is_mcp_candidate(cmd):
+            candidates.append({"pid": pid_i, "ppid": ppid_i, "cmd": cmd, "rss_kb": rss_kb, "tty": tty_map[pid_i]})
 
     # Filter to orphans
     if parent_pid:
@@ -175,6 +177,16 @@ def mcp_prune(
     if not to_kill:
         if not dry_run:
             console.print("[green]No redundant agent processes found.[/green]")
+        shadow_pruned, logs_pruned = prune_stale_shadow_and_logs(
+            dry_run=dry_run,
+            shadow_max_age_hours=shadow_max_age_hours,
+            quality_log_max_age_days=quality_log_max_age_days,
+        )
+        if shadow_pruned or logs_pruned:
+            action = "would remove" if dry_run else "removed"
+            console.print(
+                f"[green]Storage prune {action}: {shadow_pruned} shadow dirs, {logs_pruned} quality logs.[/green]"
+            )
         return
 
     # Sort by RSS
@@ -255,6 +267,17 @@ def mcp_prune(
         console.print(f"[yellow]Skipped {skipped_terminal_count} terminal-attached processes (protected).[/yellow]")
         logger.info(f"THEGENT PRUNE: Protected {skipped_terminal_count} terminal-attached processes from pruning")
 
+    shadow_pruned, logs_pruned = prune_stale_shadow_and_logs(
+        dry_run=dry_run,
+        shadow_max_age_hours=shadow_max_age_hours,
+        quality_log_max_age_days=quality_log_max_age_days,
+    )
+    if shadow_pruned or logs_pruned:
+        action = "would remove" if dry_run else "removed"
+        console.print(
+            f"[green]Storage prune {action}: {shadow_pruned} shadow dirs, {logs_pruned} quality logs.[/green]"
+        )
+
 
 def kill_process(pid: int) -> bool:
     """Kill process with SIGTERM then SIGKILL if needed."""
@@ -284,6 +307,60 @@ def prompt_tty_kill(pid: int, cmd: str, tty: str) -> bool:
         return False
     except:
         return False
+
+
+def prune_stale_shadow_and_logs(
+    dry_run: bool,
+    shadow_max_age_hours: int,
+    quality_log_max_age_days: int,
+    root: Path | None = None,
+) -> tuple[int, int]:
+    """Prune stale .shadow-* dirs and aged .quality/logs files.
+
+    Returns:
+        Tuple of (shadow_dirs_pruned, quality_logs_pruned).
+    """
+    project_root = root.resolve() if root else Path.cwd().resolve()
+    parent = project_root.parent
+    now = time.time()
+    shadow_cutoff = now - (shadow_max_age_hours * 3600)
+    log_cutoff = now - (quality_log_max_age_days * 86400)
+
+    shadow_removed = 0
+    for p in parent.glob(".shadow-*"):
+        if not p.is_dir():
+            continue
+        try:
+            if p.stat().st_mtime >= shadow_cutoff:
+                continue
+        except OSError:
+            continue
+        if dry_run:
+            logger.info("DRY-RUN stale shadow prune candidate: %s", p)
+        else:
+            with contextlib.suppress(Exception):
+                shutil.rmtree(p)
+        shadow_removed += 1
+
+    logs_removed = 0
+    logs_dir = project_root / ".quality" / "logs"
+    if logs_dir.exists():
+        for f in logs_dir.rglob("*"):
+            if not f.is_file():
+                continue
+            try:
+                if f.stat().st_mtime >= log_cutoff:
+                    continue
+            except OSError:
+                continue
+            if dry_run:
+                logger.info("DRY-RUN stale quality log prune candidate: %s", f)
+            else:
+                with contextlib.suppress(Exception):
+                    f.unlink()
+            logs_removed += 1
+
+    return shadow_removed, logs_removed
 
 
 def show_interactive_prune_menu(pid: int, cmd: str, tty: str, pane: Any):
@@ -323,7 +400,5 @@ def show_interactive_prune_menu(pid: int, cmd: str, tty: str, pane: Any):
         "",
     ]
 
-    try:
+    with contextlib.suppress(BaseException):
         subprocess.run(menu_cmd, check=False)
-    except:
-        pass

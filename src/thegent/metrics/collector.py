@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class MetricsCollector:
     """Metrics collection."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize metrics collector."""
         self.metrics: dict[str, list[float]] = {}
 
@@ -44,3 +44,32 @@ class MetricsCollector:
             "max": max(values),
             "avg": sum(values) / len(values),
         }
+
+    def emit_slo_stub(
+        self,
+        metric_name: str,
+        value: float,
+        *,
+        threshold: float | None = None,
+        lane: str = "fast-lane",
+    ) -> dict[str, Any]:
+        """Build an SLO metric payload without external transport.
+
+        WL-135 stub: this method intentionally only structures data so that
+        downstream dashboard/report wiring can be added incrementally.
+        """
+        status = "unknown"
+        if threshold is not None:
+            status = "pass" if value <= threshold else "fail"
+
+        payload: dict[str, Any] = {
+            "emitter": "wl135-slo-stub",
+            "metric_name": metric_name,
+            "value": value,
+            "threshold": threshold,
+            "status": status,
+            "lane": lane,
+            "timestamp_unix": time.time(),
+        }
+        logger.info("slo_stub_emit metric=%s value=%s status=%s", metric_name, value, status)
+        return payload

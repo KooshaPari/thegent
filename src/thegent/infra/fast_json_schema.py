@@ -75,6 +75,7 @@ class FastJSONSchemaValidator:
         """
         if self._backend == "fastjsonschema":
             # fastjsonschema raises ValueError on validation failure
+            assert self._compiled_validator is not None
             try:
                 self._compiled_validator(instance)
             except ValueError as e:

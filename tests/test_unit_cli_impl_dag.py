@@ -13,6 +13,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from thegent.cli.commands.impl import (
     HEALTH_PAYLOAD_SCHEMA_VERSION,
     DagDocument,
@@ -313,25 +314,21 @@ class TestSerializeDag:
 class TestDagRunCmd:
     """Tests for dag_run_cmd via mocking."""
 
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._get_ready_task_ids", return_value=["T2"])
-    @patch("thegent.cli.resolve_agent", side_effect=lambda x: x)
-    @patch("thegent.cli.bg_cmd", return_value="session-abc")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._atomic_write")
-    @patch("thegent.cli.dag_reconcile_cmd")
-    @patch("thegent.cli._dag_update_task", return_value=True)
-    @patch("thegent.cli._resolve_prompt", return_value="do thing 2")
+    @patch("thegent.cli.commands.impl._resolve_cwd")
+    @patch("thegent.cli.services.run_dag_helpers.parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl._get_ready_task_ids", return_value=["T2"])
+    @patch("thegent.cli.commands.impl.bg_impl", return_value={"session_id": "session-abc"})
+    @patch("thegent.cli.commands.dag_impl._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands.dag_impl._atomic_write")
+    @patch("thegent.cli.commands.dag_impl._dag_update_task", return_value=True)
+    @patch("thegent.cli.commands.dag_impl._resolve_prompt", return_value="do thing 2")
     def test_spawns_ready_tasks(
         self,
         mock_resolve_prompt,
         mock_dag_update,
-        mock_reconcile,
         mock_write,
         mock_serialize,
         mock_bg,
-        mock_resolve_agent,
         mock_ready,
         mock_parse,
         mock_cwd,
@@ -339,23 +336,30 @@ class TestDagRunCmd:
     ) -> None:
         # @trace FR-CLI-166
         mock_cwd.return_value = tmp_path
-        dag_file = _write_dag(tmp_path, DAG_CONTENT_DONE)
-        mock_parse.return_value = _parse_dag_full(dag_file)
+        _write_dag(tmp_path, DAG_CONTENT_DONE)
+        mock_parse.return_value = DagDocument(
+            frontmatter={"version": "1", "project": "test-proj", "owner": "alice"},
+            tasks=[
+                {"id": "T1", "agent": "claude", "prompt": "do thing 1", "depends_on": "-", "status": "done"},
+                {"id": "T2", "agent": "claude", "prompt": "do thing 2", "depends_on": "T1", "status": "pending"},
+            ],
+            before_table="## Tasks\n\n",
+            after_table="",
+            table_headers=["id", "agent", "prompt", "depends_on", "status"],
+        )
 
         from thegent.cli import dag_run_cmd
 
         dag_run_cmd(cd=tmp_path, dry_run=False)
         mock_bg.assert_called()
 
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._get_ready_task_ids", return_value=["T2"])
-    @patch("thegent.cli.dag_reconcile_cmd")
-    @patch("thegent.cli._resolve_prompt", return_value="do thing 2")
+    @patch("thegent.cli.commands.impl._resolve_cwd")
+    @patch("thegent.cli.services.run_dag_helpers.parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl._get_ready_task_ids", return_value=["T2"])
+    @patch("thegent.cli.commands.dag_impl._resolve_prompt", return_value="do thing 2")
     def test_dry_run_no_spawn(
         self,
         mock_resolve_prompt,
-        mock_reconcile,
         mock_ready,
         mock_parse,
         mock_cwd,
@@ -368,15 +372,14 @@ class TestDagRunCmd:
 
         from thegent.cli import dag_run_cmd
 
-        with patch("thegent.cli.bg_cmd") as mock_bg:
+        with patch("thegent.cli.commands.impl.bg_impl") as mock_bg:
             dag_run_cmd(cd=tmp_path, dry_run=True)
             mock_bg.assert_not_called()
 
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._get_ready_task_ids", return_value=[])
-    @patch("thegent.cli.dag_reconcile_cmd")
-    def test_no_ready_tasks(self, mock_reconcile, mock_ready, mock_parse, mock_cwd, tmp_path) -> None:
+    @patch("thegent.cli.commands.impl._resolve_cwd")
+    @patch("thegent.cli.services.run_dag_helpers.parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl._get_ready_task_ids", return_value=[])
+    def test_no_ready_tasks(self, mock_ready, mock_parse, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-168
         mock_cwd.return_value = tmp_path
         dag_file = _write_dag(tmp_path, DAG_CONTENT)
@@ -396,16 +399,16 @@ class TestDagRunCmd:
 class TestDagSyncCmd:
     """Tests for dag_sync_cmd status updates."""
 
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli._find_session_meta")
-    @patch("thegent.cli._read_session_meta", return_value={"pid": "99999"})
-    @patch("thegent.cli._is_pid_running", return_value=False)
-    @patch("thegent.cli._session_paths")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._atomic_write")
-    @patch("thegent.cli._default_owner_tag", return_value="test:owner")
+    @patch("thegent.cli.commands.impl._resolve_cwd")
+    @patch("thegent.cli.commands.dag_impl._parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl.ThegentSettings")
+    @patch("thegent.cli.commands.impl._find_session_meta")
+    @patch("thegent.cli.commands.impl._read_session_meta", return_value={"pid": "99999"})
+    @patch("thegent.cli.commands.impl._is_pid_running", return_value=False)
+    @patch("thegent.cli.commands.impl._session_paths")
+    @patch("thegent.cli.commands.dag_impl._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands.dag_impl._atomic_write")
+    @patch("thegent.cli.commands.impl._default_owner_tag", return_value="test:owner")
     def test_sync_marks_done(
         self,
         mock_owner,
@@ -466,12 +469,12 @@ class TestDagSyncCmd:
 class TestDagReconcileCmd:
     """Tests for dag_reconcile_cmd stuck task cleanup."""
 
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli._session_status_for", return_value="exited:0")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._atomic_write")
+    @patch("thegent.cli.commands.plan_cmds._resolve_cwd")
+    @patch("thegent.cli.commands.plan_cmds._parse_dag_full")
+    @patch("thegent.cli.commands.plan_cmds.ThegentSettings")
+    @patch("thegent.cli.commands.plan_cmds._session_status_for", return_value="exited:0")
+    @patch("thegent.cli.commands.plan_cmds._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands.plan_cmds._atomic_write")
     def test_reconcile_stuck_running_to_pending(
         self, mock_write, mock_serialize, mock_status, mock_settings, mock_parse, mock_cwd, tmp_path
     ) -> None:
@@ -503,9 +506,9 @@ class TestDagReconcileCmd:
 
         assert doc.tasks[0]["status"] == "pending"
 
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli.ThegentSettings")
+    @patch("thegent.cli.commands.plan_cmds._resolve_cwd")
+    @patch("thegent.cli.commands.plan_cmds._parse_dag_full")
+    @patch("thegent.cli.commands.plan_cmds.ThegentSettings")
     def test_reconcile_no_running_no_change(self, mock_settings, mock_parse, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-171
         mock_cwd.return_value = tmp_path
@@ -538,10 +541,10 @@ class TestDagReconcileCmd:
 class TestDagCheckpointCmd:
     """Tests for dag_checkpoint_cmd."""
 
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli.ThegentSettings")
+    @patch("thegent.cli.commands.plan_cmds._resolve_cwd")
+    @patch("thegent.cli.commands.plan_cmds.ThegentSettings")
     @patch("thegent.execution.CheckpointRegistry")
-    @patch("thegent.cli._default_owner_tag", return_value="test:owner")
+    @patch("thegent.cli.commands.plan_cmds._default_owner_tag", return_value="test:owner")
     def test_checkpoint_creation(self, mock_owner, mock_registry_cls, mock_settings, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-172
         mock_cwd.return_value = tmp_path
@@ -571,10 +574,10 @@ class TestDagCheckpointCmd:
 class TestDagRollbackCmd:
     """Tests for dag_rollback_cmd."""
 
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli.ThegentSettings")
+    @patch("thegent.cli.commands.plan_cmds._resolve_cwd")
+    @patch("thegent.cli.commands.plan_cmds.ThegentSettings")
     @patch("thegent.execution.CheckpointRegistry")
-    @patch("thegent.cli._atomic_write")
+    @patch("thegent.cli.commands.plan_cmds._atomic_write")
     def test_rollback_to_checkpoint(self, mock_write, mock_registry_cls, mock_settings, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-173
         mock_cwd.return_value = tmp_path
@@ -596,8 +599,8 @@ class TestDagRollbackCmd:
         written_content = mock_write.call_args[0][1]
         assert written_content == "## Restored DAG content"
 
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli.ThegentSettings")
+    @patch("thegent.cli.commands.plan_cmds._resolve_cwd")
+    @patch("thegent.cli.commands.plan_cmds.ThegentSettings")
     @patch("thegent.execution.CheckpointRegistry")
     def test_rollback_missing_checkpoint(self, mock_registry_cls, mock_settings, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-174
@@ -635,9 +638,9 @@ class TestDagRecoverCmd:
         )
 
     @patch("thegent.cli.commands.impl._resolve_cwd")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._atomic_write")
+    @patch("thegent.cli.commands.dag_impl._parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands.dag_impl._atomic_write")
     def test_retry_failed(self, mock_write, mock_serialize, mock_parse, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-175
         mock_cwd.return_value = tmp_path
@@ -659,9 +662,9 @@ class TestDagRecoverCmd:
         assert doc.tasks[1]["status"] == "done"
 
     @patch("thegent.cli.commands.impl._resolve_cwd")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._atomic_write")
+    @patch("thegent.cli.commands.dag_impl._parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands.dag_impl._atomic_write")
     def test_clear_stuck(self, mock_write, mock_serialize, mock_parse, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-176
         mock_cwd.return_value = tmp_path
@@ -681,9 +684,9 @@ class TestDagRecoverCmd:
         assert doc.tasks[0]["status"] == "pending"
 
     @patch("thegent.cli.commands.impl._resolve_cwd")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._atomic_write")
+    @patch("thegent.cli.commands.dag_impl._parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands.dag_impl._atomic_write")
     def test_reset_retries(self, mock_write, mock_serialize, mock_parse, mock_cwd, tmp_path) -> None:
         # @trace FR-CLI-177
         mock_cwd.return_value = tmp_path
@@ -719,8 +722,8 @@ class TestDagRecoverCmd:
 class TestDagProbeCmd:
     """Tests for dag_probe_cmd regression detection."""
 
-    @patch("thegent.cli._dag_path")
-    @patch("thegent.cli.ThegentSettings")
+    @patch("thegent.cli.commands.plan_cmds._dag_path")
+    @patch("thegent.cli.commands.plan_cmds.ThegentSettings")
     @patch("thegent.execution.CheckpointRegistry")
     def test_probe_no_drift(self, mock_registry_cls, mock_settings, mock_dag_path, tmp_path) -> None:
         # @trace FR-CLI-178
@@ -739,8 +742,8 @@ class TestDagProbeCmd:
 
         dag_probe_cmd(cd=tmp_path)
 
-    @patch("thegent.cli._dag_path")
-    @patch("thegent.cli.ThegentSettings")
+    @patch("thegent.cli.commands.plan_cmds._dag_path")
+    @patch("thegent.cli.commands.plan_cmds.ThegentSettings")
     @patch("thegent.execution.CheckpointRegistry")
     def test_probe_drift_detected(self, mock_registry_cls, mock_settings, mock_dag_path, tmp_path) -> None:
         # @trace FR-CLI-179
@@ -769,7 +772,7 @@ class TestDagProbeCmd:
 class TestBuildContinuationPrompt:
     """Tests for _build_continuation_prompt."""
 
-    @patch("thegent.cli.commands.impl._load_prior_session_output", return_value="prior output text")
+    @patch("thegent.cli.commands.session_impl._load_prior_session_output", return_value="prior output text")
     def test_prompt_includes_prior_context(self, mock_load) -> None:
         # @trace FR-CLI-180
         settings = MagicMock()
@@ -778,7 +781,7 @@ class TestBuildContinuationPrompt:
         assert "do next thing" in result
         assert "Continuing from prior session" in result
 
-    @patch("thegent.cli.commands.impl._load_prior_session_output", return_value="")
+    @patch("thegent.cli.commands.session_impl._load_prior_session_output", return_value="")
     def test_prompt_no_prior_output(self, mock_load) -> None:
         # @trace FR-CLI-181
         settings = MagicMock()
@@ -791,7 +794,7 @@ class TestBuildContinuationPrompt:
         result = _build_continuation_prompt(settings, "", "do next thing")
         assert result == "do next thing"
 
-    @patch("thegent.cli.commands.impl._load_prior_session_output", side_effect=["output A", "output B"])
+    @patch("thegent.cli.commands.session_impl._load_prior_session_output", side_effect=["output A", "output B"])
     def test_prompt_multiple_sessions(self, mock_load) -> None:
         # @trace FR-CLI-183
         settings = MagicMock()
@@ -810,9 +813,9 @@ class TestBuildContinuationPrompt:
 class TestHealthReportImpl:
     """Tests for session_contract_health_report_impl."""
 
-    @patch("thegent.cli.commands.impl.session_contract_audit_impl")
-    @patch("thegent.cli.commands.impl._load_previous_health_snapshot", return_value=None)
-    @patch("thegent.cli.commands.impl._append_health_snapshot")
+    @patch("thegent.cli.commands.session_impl.session_contract_audit_impl")
+    @patch("thegent.cli.commands.session_impl._load_previous_health_snapshot", return_value=None)
+    @patch("thegent.cli.commands.session_impl._append_health_snapshot")
     def test_report_all_healthy(self, mock_append, mock_prev, mock_audit) -> None:
         # @trace FR-CLI-184
         mock_audit.return_value = {
@@ -837,9 +840,9 @@ class TestHealthReportImpl:
         assert result["blocked_count"] == 0
         assert result["payload_type"] == "session_contract_health_report"
 
-    @patch("thegent.cli.commands.impl.session_contract_audit_impl")
-    @patch("thegent.cli.commands.impl._load_previous_health_snapshot", return_value=None)
-    @patch("thegent.cli.commands.impl._append_health_snapshot")
+    @patch("thegent.cli.commands.session_impl.session_contract_audit_impl")
+    @patch("thegent.cli.commands.session_impl._load_previous_health_snapshot", return_value=None)
+    @patch("thegent.cli.commands.session_impl._append_health_snapshot")
     def test_report_with_blockers(self, mock_append, mock_prev, mock_audit) -> None:
         # @trace FR-CLI-185
         mock_audit.return_value = {
@@ -879,9 +882,9 @@ class TestHealthReportImpl:
 class TestHealthGateImpl:
     """Tests for session_contract_health_gate_impl."""
 
-    @patch("thegent.cli.commands.impl.session_contract_audit_impl")
-    @patch("thegent.cli.commands.impl._load_previous_health_snapshot", return_value=None)
-    @patch("thegent.cli.commands.impl._append_health_snapshot")
+    @patch("thegent.cli.commands.session_impl.session_contract_audit_impl")
+    @patch("thegent.cli.commands.session_impl._load_previous_health_snapshot", return_value=None)
+    @patch("thegent.cli.commands.session_impl._append_health_snapshot")
     def test_gate_pass(self, mock_append, mock_prev, mock_audit) -> None:
         # @trace FR-CLI-186
         mock_audit.return_value = {
@@ -904,9 +907,9 @@ class TestHealthGateImpl:
         assert result["pass"] is True
         assert result["status"] == "passed"
 
-    @patch("thegent.cli.commands.impl.session_contract_audit_impl")
-    @patch("thegent.cli.commands.impl._load_previous_health_snapshot", return_value=None)
-    @patch("thegent.cli.commands.impl._append_health_snapshot")
+    @patch("thegent.cli.commands.session_impl.session_contract_audit_impl")
+    @patch("thegent.cli.commands.session_impl._load_previous_health_snapshot", return_value=None)
+    @patch("thegent.cli.commands.session_impl._append_health_snapshot")
     def test_gate_fail(self, mock_append, mock_prev, mock_audit) -> None:
         # @trace FR-CLI-187
         mock_audit.return_value = {
@@ -960,8 +963,8 @@ class TestHealthGateImpl:
 class TestHealthTrendImpl:
     """Tests for session_contract_health_trend_impl."""
 
-    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
-    @patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=5000)
+    @patch("thegent.cli.commands.session_impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.session_impl._health_snapshot_max_lines", return_value=5000)
     def test_trend_empty_snapshots(self, mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-188
         snap_path = tmp_path / "snapshots.jsonl"
@@ -976,8 +979,8 @@ class TestHealthTrendImpl:
         assert result["snapshot_count"] == 0
         assert result["latest"] is None
 
-    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
-    @patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=5000)
+    @patch("thegent.cli.commands.session_impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.session_impl._health_snapshot_max_lines", return_value=5000)
     def test_trend_reads_existing_snapshots(self, mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-189
         snap_path = tmp_path / "snapshots.jsonl"
@@ -1013,6 +1016,7 @@ class TestHealthTrendImpl:
     def test_trend_invalid_payload_type(self) -> None:
         # @trace FR-CLI-190
         import typer
+
         from thegent.cli.commands.impl import session_contract_health_trend_impl
 
         with pytest.raises(typer.BadParameter):
@@ -1213,8 +1217,8 @@ class TestObserveSummaryImpl:
 class TestCockpitCmd:
     """Tests for cockpit_cmd."""
 
-    @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.execution.RunRegistry")
+    @patch("thegent.cli.commands.infra_cmds.ThegentSettings")
+    @patch("thegent.cli.commands.infra_cmds.RunRegistry")
     @patch("thegent.execution.CircuitBreakerRegistry")
     @patch("thegent.execution.CheckpointRegistry")
     @patch("thegent.cli.commands.impl.ps_impl")
@@ -1250,8 +1254,8 @@ class TestCockpitCmd:
 class TestFeedbackCmd:
     """Tests for feedback_cmd."""
 
-    @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli.RunRegistry")
+    @patch("thegent.cli.commands.session_cmds.ThegentSettings")
+    @patch("thegent.cli.commands.session_cmds.RunRegistry")
     def test_feedback_recording(self, mock_rr_cls, mock_settings) -> None:
         # @trace FR-CLI-153
         mock_rr = MagicMock()
@@ -1263,8 +1267,8 @@ class TestFeedbackCmd:
 
         mock_rr.register_feedback.assert_called_once_with("run-123", 0.9, "good run")
 
-    @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli.RunRegistry")
+    @patch("thegent.cli.commands.session_cmds.ThegentSettings")
+    @patch("thegent.cli.commands.session_cmds.RunRegistry")
     def test_feedback_no_note(self, mock_rr_cls, mock_settings) -> None:
         # @trace FR-CLI-154
         mock_rr = MagicMock()

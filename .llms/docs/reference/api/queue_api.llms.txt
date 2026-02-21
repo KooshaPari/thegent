@@ -1,0 +1,113 @@
+# queue_api
+
+Source: docs/reference/api/queue_api.md
+
+---
+
+# queue API Reference
+
+> **Source**: `src/thegent/task_queue/queue.py`
+
+Task queue system.
+
+---
+
+## TaskQueue
+
+Task queue implementation.
+
+### Methods
+
+#### TaskQueue.__init__
+
+```
+__init__(self: Any)
+```
+
+Initialize task queue.
+
+---
+
+#### TaskQueue.complete
+
+```
+complete(self: Any, task_id: str)
+```
+
+Mark task as complete.
+
+**Parameters**:
+
+- `task_id`: Task identifier
+
+---
+
+#### TaskQueue.dequeue
+
+```
+dequeue(self: Any)
+```
+
+Dequeue a task.
+
+**Returns**: Task tuple or None
+
+---
+
+#### TaskQueue.enqueue
+
+```
+enqueue(self: Any, task_id: str, task: dict[(str, Any)])
+```
+
+Enqueue a task.
+
+**Parameters**:
+
+- `task_id`: Task identifier
+- `task`: Task dictionary
+
+---
+
+---
+
+## complete
+
+```
+complete(self: Any, task_id: str)
+```
+
+Mark task as complete.
+
+**Parameters**:
+
+- `task_id`: Task identifier
+
+---
+
+## dequeue
+
+```
+dequeue(self: Any)
+```
+
+Dequeue a task.
+
+**Returns**: Task tuple or None
+
+---
+
+## enqueue
+
+```
+enqueue(self: Any, task_id: str, task: dict[(str, Any)])
+```
+
+Enqueue a task.
+
+**Parameters**:
+
+- `task_id`: Task identifier
+- `task`: Task dictionary
+
+---

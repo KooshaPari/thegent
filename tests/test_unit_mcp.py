@@ -11,6 +11,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
+from thegent.cli.commands.cli import _scope_key
 from thegent.cli.commands.impl import (
     bg_impl,
     dag_list_impl,
@@ -20,7 +22,7 @@ from thegent.cli.commands.impl import (
     session_meta_impl,
     status_impl,
 )
-from thegent.mcp_server import (
+from thegent.mcp.server import (
     resource_observe_summary,
     resource_session_contract_health_trend,
     thegent_observe_summary,
@@ -28,8 +30,6 @@ from thegent.mcp_server import (
     thegent_session_contract_health_report,
     thegent_session_contract_health_trend,
 )
-
-from thegent.cli import _scope_key
 
 
 class _Proc:
@@ -214,7 +214,7 @@ class TestObserveSummaryMCPContracts:
             captured.update(kwargs)
             return payload
 
-        with patch("thegent.mcp_server.observe_summary_impl", side_effect=_fake_impl):
+        with patch("thegent.mcp.server.observe_summary_impl", side_effect=_fake_impl):
             raw = resource_observe_summary(
                 limit=25,
                 drift_window=9,
@@ -258,7 +258,7 @@ class TestObserveSummaryMCPContracts:
             "status": "healthy",
             "alerts": [],
         }
-        with patch("thegent.mcp_server.observe_summary_impl", return_value=payload):
+        with patch("thegent.mcp.server.observe_summary_impl", return_value=payload):
             result = thegent_observe_summary(
                 limit=25,
                 drift_window=9,
@@ -419,7 +419,7 @@ class TestMCPHealthPolicyTrendContract:
             "top_blocked_count": 1,
             "blocked_sessions_cap": 200,
         }
-        with patch("thegent.mcp_server.session_contract_health_gate_impl", return_value=payload):
+        with patch("thegent.mcp.server.session_contract_health_gate_impl", return_value=payload):
             result = thegent_session_contract_health_gate(policy_profile="strict_ci")
         assert result.meta["policy_profile"] == "strict_ci"
         assert result.meta["status"] == "blocked"
@@ -442,7 +442,7 @@ class TestMCPHealthPolicyTrendContract:
             "blocked_count": 0,
             "top_blocked_count": 0,
         }
-        with patch("thegent.mcp_server.session_contract_health_report_impl", return_value=payload):
+        with patch("thegent.mcp.server.session_contract_health_report_impl", return_value=payload):
             result = thegent_session_contract_health_report(policy_profile="warn_only")
         assert result.meta["policy_profile"] == "warn_only"
         assert result.meta["status"] == "passed"
@@ -518,7 +518,7 @@ class TestMCPHealthPolicyTrendContract:
             "compat_aliases_count": 7,
             "snapshots": [],
         }
-        with patch("thegent.mcp_server.session_contract_health_trend_impl", return_value=payload):
+        with patch("thegent.mcp.server.session_contract_health_trend_impl", return_value=payload):
             result = thegent_session_contract_health_trend(payload_type="session_contract_health_report")
         content = result.content
         if isinstance(content, list) and content:
@@ -618,7 +618,7 @@ class TestMCPHealthPolicyTrendContract:
             "compat_aliases_count": 1,
             "snapshots": [],
         }
-        with patch("thegent.mcp_server.session_contract_health_trend_impl", return_value=payload):
+        with patch("thegent.mcp.server.session_contract_health_trend_impl", return_value=payload):
             result = thegent_session_contract_health_trend(payload_type="session_contract_health_report")
         expected_hash = hashlib.sha256(str(None).encode("utf-8")).hexdigest()
         assert result.meta["snapshot_health_volatility"] is None
@@ -678,7 +678,7 @@ class TestMCPHealthPolicyTrendContract:
         }
         expected_latest_issue_types_json = json.dumps(["abc"])
         expected_latest_issue_types_hash = hashlib.sha256(expected_latest_issue_types_json.encode("utf-8")).hexdigest()
-        with patch("thegent.mcp_server.session_contract_health_trend_impl", return_value=payload):
+        with patch("thegent.mcp.server.session_contract_health_trend_impl", return_value=payload):
             result = thegent_session_contract_health_trend(payload_type="session_contract_health_report")
         assert result.meta["latest_issue_types_count"] == 1
         assert result.meta["latest_issue_types_csv"] == "abc"
@@ -696,7 +696,7 @@ class TestMCPHealthPolicyTrendContract:
             "delta_summary": {"blocked_ratio_delta": 0.2, "blocked_count_delta": 2},
             "snapshots": [],
         }
-        with patch("thegent.mcp_server.session_contract_health_trend_impl", return_value=payload):
+        with patch("thegent.mcp.server.session_contract_health_trend_impl", return_value=payload):
             raw = resource_session_contract_health_trend(payload_type="session_contract_health_gate")
         data = json.loads(raw)
         assert data["trend_payload_type"] == "session_contract_health_gate"
@@ -738,7 +738,7 @@ class TestMCPObserveSummaryContract:
             "payload_type": "observe_summary",
             "payload_schema_version": "observe-summary-schema-v1",
         }
-        with patch("thegent.mcp_server.observe_summary_impl", return_value=payload):
+        with patch("thegent.mcp.server.observe_summary_impl", return_value=payload):
             result = thegent_observe_summary(
                 limit=321,
                 drift_window=17,
@@ -782,7 +782,7 @@ class TestMCPObserveSummaryContract:
             "payload_type": "observe_summary",
             "payload_schema_version": "observe-summary-schema-v1",
         }
-        with patch("thegent.mcp_server.observe_summary_impl", return_value=payload):
+        with patch("thegent.mcp.server.observe_summary_impl", return_value=payload):
             raw = resource_observe_summary(limit=100, drift_window=30, provider="cursor", trend_samples=3)
         data = json.loads(raw)
         assert data["status"] == "healthy"

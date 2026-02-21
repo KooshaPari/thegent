@@ -1,6 +1,7 @@
 """WorkflowEngine for multi-crew stages."""
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from .crew import Crew
 from .executor import CrewExecutor, ExecutionResult
@@ -31,7 +32,7 @@ class WorkflowEngine:
     def __init__(self) -> None:
         """Initialize WorkflowEngine."""
         self.stages: list[CrewStage] = []
-        self.results: dict[str, dict[str, ExecutionResult]] = {}  # stage_id -> {crew_id -> results}
+        self.results: dict[str, Any] = {}  # stage_id -> {crew_id -> results}
 
     def add_stage(self, stage: CrewStage) -> None:
         """Add a stage to the workflow."""
@@ -84,7 +85,7 @@ class WorkflowEngine:
 
         for crew in stage.crews:
             executor = CrewExecutor(crew)
-            results = executor.execute()
+            results: dict[str, ExecutionResult] = executor.execute()
             stage_results[crew.id] = results
 
         self.results[stage.id] = stage_results

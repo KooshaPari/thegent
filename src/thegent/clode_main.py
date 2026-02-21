@@ -1,6 +1,5 @@
 """Claude-backed interactive agent CLI (clode)."""
 
-import contextlib
 import os
 import shutil
 import subprocess
@@ -12,6 +11,23 @@ from typing import Any
 import typer
 
 from thegent.agents.cliproxy_manager import fetch_provider_metrics
+from thegent.clode_args import clode_passthrough_args as _clode_passthrough_args_impl
+from thegent.clode_args import free_extra_args as _free_extra_args_impl
+from thegent.clode_binary_discovery import find_claude as _find_claude_impl
+from thegent.clode_binary_discovery import is_thegent_shim as _is_thegent_shim_impl
+from thegent.clode_config_isolation import ensure_claude_config_isolation as _ensure_claude_config_isolation_impl
+from thegent import clode_glm_policy as _clode_glm_policy
+from thegent import clode_model_routing as _clode_model_routing
+from thegent.clode_glm_policy import (
+    InvalidPolicyError,
+    glm_offer_backends as _glm_offer_backends_impl,
+    resolve_clode_token as _resolve_clode_token_impl,
+    validate_policy as _validate_policy_impl,
+)
+from thegent.clode_model_routing import (
+    model_for_provider as _model_for_provider_impl,
+    resolve_provider_for_model as _resolve_provider_for_model_impl,
+)
 
 # Import thegent CLI commands to reuse them.
 # Lazy imports used in commands to speed up CLI startup.
@@ -44,64 +60,23 @@ class LazyConsole:
 console = LazyConsole()
 app = typer.Typer(help="Claude-backed interactive agent CLI (clode)")
 
-_GLM_OFFER_SET: tuple[str, ...] = ("nim", "kilo", "minimax", "glm")
-_GLM_OFFER_COST: dict[str, float] = {
-    "nim": 0.22,
-    "kilo": 0.28,
-    "minimax": 0.36,
-    "glm": 0.80,
-}
-
-# Model-first aliases: pick model → auto-balance across providers
-_MODEL_ALIAS: dict[str, str] = {
-    "comp": "composer-1",
-    "composer": "composer-1.5",
-    "haiku": "claude-haiku-4.5",
-    "opus": "claude-opus-4.6",
-    "opus1m": "claude-opus-4.6-1m",
-    "sonnet": "anthropic/claude-sonnet-4-20250514",
-    "glm": "glm-5",
-    "glm5": "glm-5",
-    "max": "minimax-m2.5",
-    "m2.5": "minimax-m2.5",
-    "step": "step-3.5-flash",
-    "flash": "gemini-3-flash",
-    "mini": "gpt-5-mini",
-}
-_MODEL_PROVIDER_SETS: dict[str, tuple[str, ...]] = {
-    "composer-1": ("cursor",),
-    "composer-1.5": ("cursor",),
-    "glm-5": ("glm", "kilo", "nim", "minimax"),
-    "minimax-m2.5": ("minimax", "kilo"),
-    "claude-haiku-4.5": ("claude", "antigravity", "codex", "kiro"),
-    "claude-opus-4.6": ("claude", "antigravity", "kiro"),
-    "anthropic/claude-sonnet-4-20250514": ("openrouter",),
-    "step-3.5-flash": ("nim",),
-    "gemini-3-flash": ("gemini",),
-    "gpt-5-mini": ("copilot",),
-}
-_MODEL_COUNTER: Counter[str] = Counter()
-
-
-_GLM_PREFERRED_BACKENDS: frozenset[str] = frozenset({"glm", "kilo", "nim", "minimax", "openrouter"})
+_GLM_OFFER_SET = _clode_glm_policy.GLM_OFFER_SET
+_GLM_OFFER_COST = _clode_glm_policy.GLM_OFFER_COST
+_GLM_PREFERRED_BACKENDS = _clode_glm_policy.GLM_PREFERRED_BACKENDS
+_MODEL_ALIAS = _clode_model_routing.MODEL_ALIAS
+_MODEL_PROVIDER_SETS = _clode_model_routing.MODEL_PROVIDER_SETS
+_MODEL_COUNTER = _clode_model_routing.MODEL_COUNTER
+_MODEL_PROVIDERS = _clode_model_routing.MODEL_PROVIDERS
+_CLODE_PROVIDER_MODEL = _clode_model_routing.CLODE_PROVIDER_MODEL
 _GLM_POLICY_COUNTER: Counter[str] = Counter()
 
 
 def _glm_offer_backends() -> tuple[str, ...]:
-    """Return GLM offer set in deterministic order."""
-    return _GLM_OFFER_SET
+    return _glm_offer_backends_impl()
 
 
 def _is_thegent_shim(path: str) -> bool:
-    p = Path(path)
-    if "thegent-shims" in p.name:
-        return True
-    try:
-        if p.is_symlink() and "thegent-shims" in os.readlink(p):
-            return True
-    except OSError:
-        pass
-    return False
+    return _is_thegent_shim_impl(path)
 
 
 @app.callback(invoke_without_command=True)
@@ -155,146 +130,42 @@ def _install_harness_link(bin_dir: Path, harness: str, force: bool = False) -> b
 
 def _resolve_provider_for_model(model_alias: str) -> str:
     """Resolve provider for model-first routing. Round-robin across available providers."""
-    canonical = _MODEL_ALIAS.get(model_alias.lower(), model_alias)
-    providers = _MODEL_PROVIDER_SETS.get(canonical)
-    if not providers:
-        return "nim"  # fallback
-    idx = _MODEL_COUNTER[canonical]
-    selected = providers[idx % len(providers)]
-    _MODEL_COUNTER[canonical] = (idx + 1) % len(providers)
-    return selected
+    return _resolve_provider_for_model_impl(model_alias)
 
 
 def _validate_policy(policy: str) -> str:
-    normalized = (policy or "round_robin").strip().lower()
-    allowed = {"round_robin", "cheapest", "prefer_proxy", "prefer_direct", "failover"}
-    if normalized not in allowed:
-        console.print(
-            "[red]Invalid policy. Allowed: round_robin | cheapest | prefer_proxy | prefer_direct | failover.[/red]"
-        )
-        raise typer.Exit(1)
-    return normalized
+    try:
+        return _validate_policy_impl(policy)
+    except InvalidPolicyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
 
 
 def _resolve_clode_token(provider: str, prefer: str, policy: str) -> str:
     """Resolve provider token for ANTHROPIC_API_KEY."""
-    prefer_auth = (prefer or "auto").strip().lower()
-    policy_name = _validate_policy(policy)
-
-    if provider != "glm":
-        return provider
-    if prefer_auth in _GLM_PREFERRED_BACKENDS:
-        return prefer_auth
-    if policy_name == "round_robin":
-        idx = _GLM_POLICY_COUNTER[provider]
-        backends = _glm_offer_backends()
-        selected_backend = backends[idx % len(backends)]
-        _GLM_POLICY_COUNTER[provider] = (idx + 1) % len(_GLM_OFFER_SET)
-        return selected_backend
-    if policy_name == "cheapest":
-        metrics = fetch_provider_metrics()
-        backends = _glm_offer_backends()
-
-        def cost_key(b: str) -> tuple[float, float, str]:
-            fallback = _GLM_OFFER_COST.get(b, 999.0)
-            m = (metrics or {}).get(b, {})
-            cost = m.get("cost_per_1k_output") or m.get("cost_per_1k_input")
-            if cost is None or cost <= 0:
-                cost = fallback
-            sr = m.get("success_rate", 1.0)
-            return (cost, -sr, b)
-
-        return min(backends, key=cost_key)
-    return f"glm:{policy_name}"
+    try:
+        return _resolve_clode_token_impl(
+            provider,
+            prefer,
+            policy,
+            _GLM_POLICY_COUNTER,  # type: ignore[arg-type]
+            fetch_provider_metrics,
+        )
+    except InvalidPolicyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
 
 
 # Minimax clode guidance: only when model-router-harness pairing aligns (clode + minimax/kilo + MiniMax-M2.5)
 MINIMAX_CLODE_GUIDANCE_URL = "https://platform.minimax.io/docs/coding-plan/claude-code"
 
-# Model -> providers. Align with catalog and CLIProxyAPIPlus.
-# NIM (NVIDIA NIM) provides glm-5 and step-3.5-flash, NOT minimax.
-_MODEL_PROVIDERS: dict[str, tuple[str, ...]] = {
-    "composer-1": ("cursor",),
-    "composer-1.5": ("cursor",),
-    "minimax-m2.5": ("minimax", "kilo"),
-    "deepseek-v3.2": ("kilo", "nim"),
-    "glm-5": ("glm", "kilo", "nim"),
-    "step-3.5-flash": ("nim",),
-    "claude-haiku-4.5": ("claude", "antigravity", "codex", "kiro"),
-    "claude-opus-4.6": ("claude", "antigravity", "kiro"),
-    "claude-opus-4.6-1m": ("claude", "antigravity", "kiro"),
-    "anthropic/claude-sonnet-4-20250514": ("openrouter",),
-}
-
-
 def _model_for_provider(provider: str) -> str:
     """Default model for a provider (derived from model->provider mapping)."""
-    if provider == "kiro":
-        return "claude-haiku-4.5"
-    for model, providers in _MODEL_PROVIDERS.items():
-        if provider in providers:
-            return model
-    return "minimax-m2.5"
-
-
-# Provider-native model names. NIM serves glm-5 and step-3.5-flash, not MiniMax.
-# free = copilot gpt-5-mini (base free tier). flash = gemini-3-flash.
-_CLODE_PROVIDER_MODEL: dict[str, str] = {
-    "cursor": "composer-1.5",
-    "nim": "glm-5",
-    "minimax": "MiniMax-M2.5",
-    "kilo": "MiniMax-M2.5",
-    "glm": "glm-5",
-    "openrouter": "anthropic/claude-sonnet-4-20250514",
-    "copilot": "gpt-5-mini",
-    "gemini": "gemini-3-flash",
-}
+    return _model_for_provider_impl(provider)
 
 
 def _ensure_claude_config_isolation(config_dir: Path) -> None:
-    """Ensure isolated config dir has links to global state to skip onboarding and persist sessions."""
-    global_dir = Path.home() / ".claude"
-    global_json = Path.home() / ".claude.json"
-
-    # 1. Onboarding state (~/.claude.json)
-    target_json = config_dir / ".claude.json"
-    if global_json.exists() and not target_json.exists():
-        with contextlib.suppress(OSError):
-            target_json.symlink_to(global_json)
-
-    if global_dir.exists():
-        # 2. Settings (Copy to isolate auth, but keep theme/permissions)
-        target_settings = config_dir / "settings.json"
-        if not target_settings.exists():
-            global_settings = global_dir / "settings.json"
-            if global_settings.exists():
-                try:
-                    import json
-
-                    data = json.loads(global_settings.read_text())
-                    target_settings.write_text(json.dumps(data, indent=2))
-                except Exception:
-                    pass
-
-        # 3. All other state in ~/.claude/ (tasks, todos, projects, session-env, history, etc.)
-        for item in global_dir.iterdir():
-            if item.name == "settings.json":
-                continue
-            target = config_dir / item.name
-            # If target exists and is NOT a symlink, it might be a partial state Claude created.
-            # Wipe it so we can link the real global state.
-            if target.exists() and not target.is_symlink():
-                try:
-                    if target.is_dir():
-                        shutil.rmtree(target)
-                    else:
-                        target.unlink()
-                except OSError:
-                    pass
-
-            if not target.exists():
-                with contextlib.suppress(OSError):
-                    target.symlink_to(item, target_is_directory=item.is_dir())
+    _ensure_claude_config_isolation_impl(config_dir)
 
 
 def _get_claude_env(provider: str, model_override: str | None = None) -> dict[str, str]:
@@ -347,39 +218,17 @@ def _clode_passthrough_args(
     output_format: str | None = None,
     continue_session: bool = False,
 ) -> list[str]:
-    """Build extra args for claude from passthrough options."""
-    args: list[str] = []
-    if cd:
-        args.extend(["--add-dir", str(cd.resolve())])
-    if debug:
-        args.append("--debug")
-    if add_dir:
-        for d in add_dir:
-            args.extend(["--add-dir", d])
-    if output_format:
-        args.extend(["--output-format", output_format])
-    if continue_session:
-        args.append("--continue")
-    return args
+    return _clode_passthrough_args_impl(
+        cd=cd,
+        debug=debug,
+        add_dir=add_dir,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
 
 
 def _find_claude(*, require_native: bool = False) -> str | None:
-    """Return path to claude CLI, or None. Checks PATH and common install dirs."""
-    override = os.environ.get("THGENT_NATIVE_CLAUDE_BIN") if require_native else None
-    candidates: list[Path] = []
-    if override:
-        candidates.append(Path(override).expanduser())
-    p = shutil.which("claude")
-    if p:
-        candidates.append(Path(p))
-    for d in (Path("/opt/homebrew/bin"), Path("/usr/local/bin"), Path("~/.bun/bin").expanduser()):
-        candidates.append(d / "claude")
-    for cand in candidates:
-        if cand.is_file() and os.access(cand, os.X_OK):
-            if require_native and _is_thegent_shim(str(cand)):
-                continue
-            return str(cand)
-    return None
+    return _find_claude_impl(require_native=require_native)
 
 
 def _ensure_claude_installed(suggest_dex: bool = False, require_native: bool = False) -> str:
@@ -1045,6 +894,64 @@ def clode_mini(
     )
 
 
+@app.command("high")
+def clode_high(
+    provider: str | None = _provider_opt(),
+    resume: str | None = typer.Option(None, "--resume", "-r", help="Resume session by ID"),
+    cd: Path | None = typer.Option(None, "--cd", "-C", help="Working directory"),
+    print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
+    add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
+    continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
+    prompt: str | None = typer.Argument(None, help="Startup prompt"),
+) -> None:
+    """Codex 5.3 high."""
+    _run_model_interactive(
+        "high",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
+
+
+@app.command("xhigh")
+def clode_xhigh(
+    provider: str | None = _provider_opt(),
+    resume: str | None = typer.Option(None, "--resume", "-r", help="Resume session by ID"),
+    cd: Path | None = typer.Option(None, "--cd", "-C", help="Working directory"),
+    print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
+    add_dir: list[str] = typer.Option([], "--add-dir", help="Additional directories (repeatable)"),
+    output_format: str | None = typer.Option(
+        None, "--output-format", help="Output format when --print: text, json, stream-json"
+    ),
+    continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
+    prompt: str | None = typer.Argument(None, help="Startup prompt"),
+) -> None:
+    """Codex 5.3 xhigh."""
+    _run_model_interactive(
+        "xhigh",
+        provider=provider,
+        resume=resume,
+        prompt=prompt,
+        cd=cd,
+        print_mode=print_mode,
+        debug=debug,
+        add_dir=add_dir or None,
+        output_format=output_format,
+        continue_session=continue_session,
+    )
+
+
 @app.command("free")
 def clode_free(
     resume: str | None = typer.Option(None, "--resume", "-r", help="Resume session by ID"),
@@ -1085,7 +992,7 @@ app.command("history")(history_cmd)
 @app.command("run")
 def clode_run_global(
     model_alias: str = typer.Argument(
-        ..., help="Model: comp, composer, max, glm, haiku, opus, opus1m, sonnet, step, flash, mini"
+        ..., help="Model: dex, high, xhigh, comp, composer, max, glm, haiku, opus, opus1m, sonnet, step, flash, mini"
     ),
     prompt: str = typer.Argument(..., help="Task prompt"),
     cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
@@ -1109,7 +1016,7 @@ def clode_run_global(
 @app.command("bg")
 def clode_bg_global(
     model_alias: str = typer.Argument(
-        ..., help="Model: comp, composer, max, glm, haiku, opus, opus1m, sonnet, step, flash, mini"
+        ..., help="Model: dex, high, xhigh, comp, composer, max, glm, haiku, opus, opus1m, sonnet, step, flash, mini"
     ),
     prompt: str = typer.Argument(..., help="Task prompt"),
     cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
@@ -1134,14 +1041,11 @@ def clode_bg_global(
 
 
 def _free_extra_args(resume: str | None, prompt: str | None) -> list[str]:
-    args: list[str] = []
-    if not _is_triggered_by_agent_process():
-        args.append("--dangerously-skip-permissions")
-    if resume:
-        args.extend(["--resume", resume])
-    if prompt:
-        args.append(prompt)
-    return args
+    return _free_extra_args_impl(
+        triggered_by_agent=_is_triggered_by_agent_process(),
+        resume=resume,
+        prompt=prompt,
+    )
 
 
 @app.command("glm")
@@ -1343,6 +1247,8 @@ def _run_sitback_claude(
 
 # Model aliases for sitback --model (claude and dex)
 _SITBACK_MODEL_ALIAS: dict[str, str] = {
+    "dex": "gpt-5.3-codex",
+    "codex": "gpt-5.3-codex",
     "comp": "composer-1",
     "composer": "composer-1.5",
     "max": "minimax-m2.5",
@@ -1355,11 +1261,16 @@ _SITBACK_MODEL_ALIAS: dict[str, str] = {
     "sonnet": "anthropic/claude-sonnet-4-20250514",
     "step": "step-3.5-flash",
     "flash": "gemini-3-flash",
+    "high": "gpt-5.3-codex-high",
+    "xhigh": "gpt-5.3-codex-xhigh",
     "mini": "gpt-5-mini",
     "free": "gpt-5-mini",
 }
 # Provider-native names for Claude Code (ANTHROPIC_MODEL)
 _CLAUDE_NATIVE_MODEL: dict[str, str] = {
+    "gpt-5.3-codex": "gpt-5.3-codex",
+    "gpt-5.3-codex-high": "gpt-5.3-codex-high",
+    "gpt-5.3-codex-xhigh": "gpt-5.3-codex-xhigh",
     "composer-1": "composer-1",
     "composer-1.5": "composer-1.5",
     "minimax-m2.5": "MiniMax-M2.5",
@@ -1512,7 +1423,7 @@ def sitback_cmd(
         None,
         "--model",
         "-M",
-        help="Shared model alias: composer, max, glm, haiku, opus, sonnet, step, flash, mini, free.",
+        help="Shared model alias: dex, high, xhigh, composer, max, glm, haiku, opus, sonnet, step, flash, mini, free.",
     ),
     dex: bool = typer.Option(
         False,
@@ -1596,7 +1507,8 @@ def sitback_cmd(
         console.print(f"[red]Invalid profile '{profile}'. Allowed: {', '.join(valid_profiles)}[/red]")
         raise typer.Exit(1)
 
-    model_alias = (model or "flash").strip().lower()
+    default_model = "dex" if resolved_harness == "codex" else "flash"
+    model_alias = (model or default_model).strip().lower()
     canonical = _SITBACK_MODEL_ALIAS.get(model_alias, model_alias)
     env = os.environ.copy()
     env["THGENT_SITBACK"] = "1"
@@ -1731,13 +1643,16 @@ def sitback_cmd(
 @app.command("doctor")
 def clode_doctor(
     fix: bool = typer.Option(False, "--fix", "-f", help="Attempt to fix issues"),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", "-n", help="Show what fixes would be applied without making changes"
+    ),
 ) -> None:
     """Run thegent doctor (harness-equiv)."""
     import sys
 
     from thegent.doctor import run_doctor
 
-    success = run_doctor(fix=fix)
+    success = run_doctor(fix=fix, dry_run=dry_run)
     sys.exit(0 if success else 1)
 
 

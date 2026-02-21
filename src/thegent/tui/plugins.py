@@ -11,7 +11,7 @@ import importlib.util
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -310,7 +310,7 @@ class BuiltinPlugins:
 
         return StatusPlugin(info)
 
-    PLUGINS = {
+    PLUGINS: ClassVar[dict[str, Any]] = {
         "terminal": create_terminal_plugin,
         "dialog": create_dialog_plugin,
         "status": create_status_plugin,

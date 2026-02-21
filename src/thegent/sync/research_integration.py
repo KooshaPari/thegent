@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from thegent.utils.batch_ops import batch_read
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,16 +33,16 @@ class ResearchIntegration:
         logger.info(f"Found {len(research_files)} research documents")
         return research_files
 
-    def extract_items(self, research_file: Path) -> list[dict[str, Any]]:
-        """Extract work items from research document.
+    def extract_items(self, content: str, research_file: Path) -> list[dict[str, Any]]:
+        """Extract work items from research document content.
 
         Args:
+            content: File content
             research_file: Research document path
 
         Returns:
             List of extracted items
         """
-        content = research_file.read_text()
         items = []
 
         # Simple extraction - would use more sophisticated parsing
@@ -64,10 +66,14 @@ class ResearchIntegration:
             Integration results
         """
         research_files = self.scan_research_docs()
-        all_items = []
 
+        # Batch read all research files at once
+        file_contents = batch_read(research_files)
+
+        all_items = []
         for research_file in research_files:
-            items = self.extract_items(research_file)
+            content = file_contents.get(research_file, "")
+            items = self.extract_items(content, research_file)
             all_items.extend(items)
 
         return {

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use serde_json::Value;
+use std::collections::{BTreeSet, HashMap};
 use std::env;
 use std::fs;
 use std::io::{BufRead, BufReader, IsTerminal, Read, Write};
@@ -11,6 +12,16 @@ use std::thread;
 use std::time::{Duration, Instant};
 use regex::Regex;
 use std::sync::OnceLock;
+
+mod contract;
+mod dispatch;
+mod governance_fs;
+mod io;
+
+use crate::contract::{HookInput, Mode};
+use crate::dispatch::dispatch_notification;
+use crate::governance_fs::{count_ai_slop, count_todos, scan_deep_nesting, scan_large_files, scan_secrets};
+use crate::io::{find_in_path, first_available, resolve_hooks_dir};
 
 // ---------------------------------------------------------------------------
 // Secret scanning types and registry (BKM-07)
@@ -132,6 +143,490 @@ struct GovernanceScanOutput {
     violation_count: usize,
     /// The list of individual violations.
     violations: Vec<GovernanceViolation>,
+}
+
+#[derive(Serialize)]
+struct SpiralConfigOutput {
+    source: String,
+    max_failed_tests: String,
+    max_flaky_tests: String,
+    max_missing_test_pairs: String,
+    max_missing_test_types: String,
+    max_test_evidence_age_minutes: String,
+    max_build_evidence_age_minutes: String,
+    max_e2e_evidence_age_minutes: String,
+    streak_trigger: String,
+    require_e2e_first: String,
+    require_env_ready_first: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct SpiralMetricRecord {
+    generated_at: String,
+    #[serde(default)]
+    session_id: String,
+    #[serde(default)]
+    status: String,
+    #[serde(default)]
+    severity: String,
+    #[serde(default)]
+    reason: String,
+    #[serde(default)]
+    violations: i64,
+    #[serde(default)]
+    streak: i64,
+    #[serde(default)]
+    interrupt: bool,
+    #[serde(default)]
+    metrics: Value,
+}
+
+#[derive(Serialize)]
+struct SpiralTrendOutput {
+    source_file: String,
+    samples_total: usize,
+    window_used: usize,
+    breach_count: usize,
+    breach_rate: f64,
+    interrupt_count: usize,
+    max_streak: i64,
+    open_breach_streak: usize,
+    mttr_proxy_cycles: Option<f64>,
+    violations_delta: i64,
+    stale_test_evidence_events: usize,
+    stale_build_evidence_events: usize,
+    stale_e2e_evidence_events: usize,
+    pressure_score: f64,
+    policy_band: String,
+    latest_status: String,
+    latest_severity: String,
+    latest_generated_at: String,
+}
+
+#[derive(Serialize)]
+struct SpiralSelectorOutput {
+    raw: String,
+    cleaned_raw: String,
+    canonical: String,
+    selected_mode: bool,
+}
+
+impl Default for SpiralConfigOutput {
+    fn default() -> Self {
+        Self {
+            source: "defaults".to_string(),
+            max_failed_tests: "10".to_string(),
+            max_flaky_tests: "8".to_string(),
+            max_missing_test_pairs: "0".to_string(),
+            max_missing_test_types: "0".to_string(),
+            max_test_evidence_age_minutes: "90".to_string(),
+            max_build_evidence_age_minutes: "90".to_string(),
+            max_e2e_evidence_age_minutes: "180".to_string(),
+            streak_trigger: "2".to_string(),
+            require_e2e_first: "true".to_string(),
+            require_env_ready_first: "true".to_string(),
+        }
+    }
+}
+
+fn read_spiral_metrics(path: &str) -> Vec<SpiralMetricRecord> {
+    let content = match fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => return Vec::new(),
+    };
+
+    content
+        .lines()
+        .filter_map(|line| {
+            if line.trim().is_empty() {
+                return None;
+            }
+            serde_json::from_str::<SpiralMetricRecord>(line).ok()
+        })
+        .collect()
+}
+
+fn build_spiral_trend(records: &[SpiralMetricRecord], source_file: &str, window: usize) -> SpiralTrendOutput {
+    if records.is_empty() {
+        return SpiralTrendOutput {
+            source_file: source_file.to_string(),
+            samples_total: 0,
+            window_used: 0,
+            breach_count: 0,
+            breach_rate: 0.0,
+            interrupt_count: 0,
+            max_streak: 0,
+            open_breach_streak: 0,
+            mttr_proxy_cycles: None,
+            violations_delta: 0,
+            stale_test_evidence_events: 0,
+            stale_build_evidence_events: 0,
+            stale_e2e_evidence_events: 0,
+            pressure_score: 0.0,
+            policy_band: "green".to_string(),
+            latest_status: "none".to_string(),
+            latest_severity: "none".to_string(),
+            latest_generated_at: String::new(),
+        };
+    }
+
+    let window_used = window.min(records.len());
+    let slice = &records[records.len() - window_used..];
+
+    let mut breach_count = 0usize;
+    let mut interrupt_count = 0usize;
+    let mut max_streak = 0i64;
+    let mut recovery_segments: Vec<usize> = Vec::new();
+    let mut current_breach_run = 0usize;
+
+    for rec in slice {
+        if rec.violations > 0 {
+            breach_count += 1;
+            current_breach_run += 1;
+        } else if current_breach_run > 0 {
+            recovery_segments.push(current_breach_run);
+            current_breach_run = 0;
+        }
+        if rec.interrupt {
+            interrupt_count += 1;
+        }
+        if rec.streak > max_streak {
+            max_streak = rec.streak;
+        }
+    }
+
+    let open_breach_streak = current_breach_run;
+    let mttr_proxy_cycles = if recovery_segments.is_empty() {
+        None
+    } else {
+        let sum: usize = recovery_segments.iter().sum();
+        Some(sum as f64 / recovery_segments.len() as f64)
+    };
+
+    let first = slice.first().unwrap();
+    let last = slice.last().unwrap();
+    let breach_rate = if window_used == 0 {
+        0.0
+    } else {
+        breach_count as f64 / window_used as f64
+    };
+
+    let stale_event_count = |key: &str| -> usize {
+        slice
+            .iter()
+            .filter(|rec| {
+                rec.metrics
+                    .get(key)
+                    .and_then(|v| v.as_i64())
+                    .map(|v| v > 0)
+                    .unwrap_or(false)
+            })
+            .count()
+    };
+
+    let stale_test_evidence_events = stale_event_count("stale_test_evidence");
+    let stale_build_evidence_events = stale_event_count("stale_build_evidence");
+    let stale_e2e_evidence_events = stale_event_count("stale_e2e_evidence");
+
+    let interrupt_rate = if window_used == 0 {
+        0.0
+    } else {
+        interrupt_count as f64 / window_used as f64
+    };
+    let stale_total = stale_test_evidence_events + stale_build_evidence_events + stale_e2e_evidence_events;
+    let stale_rate = if window_used == 0 {
+        0.0
+    } else {
+        stale_total as f64 / (window_used as f64 * 3.0)
+    };
+    let streak_pressure = if max_streak <= 0 {
+        0.0
+    } else {
+        (max_streak as f64 / 3.0).min(1.0)
+    };
+    let violations_delta_pressure = if last.violations > first.violations {
+        ((last.violations - first.violations) as f64 / 3.0).min(1.0)
+    } else {
+        0.0
+    };
+    let pressure_score =
+        (0.40 * breach_rate) +
+        (0.20 * interrupt_rate) +
+        (0.20 * stale_rate) +
+        (0.15 * streak_pressure) +
+        (0.05 * violations_delta_pressure);
+    let policy_band = if pressure_score >= 0.75 {
+        "red"
+    } else if pressure_score >= 0.45 {
+        "yellow"
+    } else {
+        "green"
+    };
+
+    SpiralTrendOutput {
+        source_file: source_file.to_string(),
+        samples_total: records.len(),
+        window_used,
+        breach_count,
+        breach_rate,
+        interrupt_count,
+        max_streak,
+        open_breach_streak,
+        mttr_proxy_cycles,
+        violations_delta: last.violations - first.violations,
+        stale_test_evidence_events,
+        stale_build_evidence_events,
+        stale_e2e_evidence_events,
+        pressure_score,
+        policy_band: policy_band.to_string(),
+        latest_status: last.status.clone(),
+        latest_severity: last.severity.clone(),
+        latest_generated_at: last.generated_at.clone(),
+    }
+}
+
+fn canonicalize_selector_csv(raw: &str) -> SpiralSelectorOutput {
+    let cleaned_raw: String = raw.chars().filter(|c| !c.is_whitespace()).collect();
+    let mut set = BTreeSet::<String>::new();
+    if !cleaned_raw.is_empty() {
+        for token in cleaned_raw.split(',') {
+            if token.is_empty() {
+                continue;
+            }
+            set.insert(token.to_string());
+        }
+    }
+    let canonical = set.into_iter().collect::<Vec<_>>().join(",");
+    SpiralSelectorOutput {
+        raw: raw.to_string(),
+        cleaned_raw: cleaned_raw.clone(),
+        canonical,
+        selected_mode: !cleaned_raw.is_empty(),
+    }
+}
+
+fn parse_spiral_config_from_hook_yaml(content: &str) -> SpiralConfigOutput {
+    let mut cfg = SpiralConfigOutput::default();
+    let mut in_settings = false;
+    let mut in_spiral = false;
+
+    for raw in content.lines() {
+        let line = raw.trim_end();
+        if line.trim().is_empty() || line.trim_start().starts_with('#') {
+            continue;
+        }
+        if !in_settings {
+            if line.trim() == "settings:" {
+                in_settings = true;
+            }
+            continue;
+        }
+        if line.trim() == "hooks:" {
+            break;
+        }
+        if !in_spiral {
+            if line.starts_with("  regression_spiral_guard:") {
+                in_spiral = true;
+            }
+            continue;
+        }
+        // next top-level setting under settings block
+        if line.starts_with("  ") && !line.starts_with("    ") {
+            in_spiral = false;
+            continue;
+        }
+        if !line.starts_with("    ") {
+            continue;
+        }
+        let mut parts = line.trim().splitn(2, ':');
+        let key = parts.next().unwrap_or("").trim();
+        let value = parts.next().unwrap_or("").trim();
+        if value.is_empty() {
+            continue;
+        }
+        match key {
+            "max_failed_tests" => cfg.max_failed_tests = value.to_string(),
+            "max_flaky_tests" => cfg.max_flaky_tests = value.to_string(),
+            "max_missing_test_pairs" => cfg.max_missing_test_pairs = value.to_string(),
+            "max_missing_test_types" => cfg.max_missing_test_types = value.to_string(),
+            "max_test_evidence_age_minutes" => cfg.max_test_evidence_age_minutes = value.to_string(),
+            "max_build_evidence_age_minutes" => cfg.max_build_evidence_age_minutes = value.to_string(),
+            "max_e2e_evidence_age_minutes" => cfg.max_e2e_evidence_age_minutes = value.to_string(),
+            "streak_trigger" => cfg.streak_trigger = value.to_string(),
+            "require_e2e_first" => cfg.require_e2e_first = value.to_ascii_lowercase(),
+            "require_env_ready_first" => cfg.require_env_ready_first = value.to_ascii_lowercase(),
+            _ => {}
+        }
+    }
+
+    cfg.source = if in_settings { "hook-config".to_string() } else { cfg.source };
+    cfg
+}
+
+#[cfg(test)]
+mod spiral_config_tests {
+    use super::parse_spiral_config_from_hook_yaml;
+
+    #[test]
+    fn spiral_parser_returns_defaults_when_block_missing() {
+        let cfg = parse_spiral_config_from_hook_yaml("settings:\n  cache_ttl: 600\nhooks:\n  x: y\n");
+        assert_eq!(cfg.max_failed_tests, "10");
+        assert_eq!(cfg.max_flaky_tests, "8");
+        assert_eq!(cfg.max_test_evidence_age_minutes, "90");
+        assert_eq!(cfg.max_build_evidence_age_minutes, "90");
+        assert_eq!(cfg.max_e2e_evidence_age_minutes, "180");
+        assert_eq!(cfg.require_e2e_first, "true");
+    }
+
+    #[test]
+    fn spiral_parser_reads_values() {
+        let cfg = parse_spiral_config_from_hook_yaml(
+            "settings:\n  regression_spiral_guard:\n    max_failed_tests: 21\n    max_flaky_tests: 13\n    max_missing_test_pairs: 2\n    max_missing_test_types: 1\n    max_test_evidence_age_minutes: 45\n    max_build_evidence_age_minutes: 60\n    max_e2e_evidence_age_minutes: 120\n    streak_trigger: 4\n    require_e2e_first: false\n    require_env_ready_first: true\nhooks:\n  x: y\n",
+        );
+        assert_eq!(cfg.max_failed_tests, "21");
+        assert_eq!(cfg.max_flaky_tests, "13");
+        assert_eq!(cfg.max_missing_test_pairs, "2");
+        assert_eq!(cfg.max_missing_test_types, "1");
+        assert_eq!(cfg.max_test_evidence_age_minutes, "45");
+        assert_eq!(cfg.max_build_evidence_age_minutes, "60");
+        assert_eq!(cfg.max_e2e_evidence_age_minutes, "120");
+        assert_eq!(cfg.streak_trigger, "4");
+        assert_eq!(cfg.require_e2e_first, "false");
+        assert_eq!(cfg.require_env_ready_first, "true");
+    }
+
+    #[test]
+    fn spiral_parser_ignores_blank_values() {
+        let cfg = parse_spiral_config_from_hook_yaml(
+            "settings:\n  regression_spiral_guard:\n    max_failed_tests:\n    max_flaky_tests: 5\nhooks:\n  x: y\n",
+        );
+        assert_eq!(cfg.max_failed_tests, "10");
+        assert_eq!(cfg.max_flaky_tests, "5");
+    }
+}
+
+#[cfg(test)]
+mod spiral_trend_tests {
+    use super::{build_spiral_trend, SpiralMetricRecord};
+    use serde_json::json;
+
+    #[test]
+    fn trend_handles_empty_records() {
+        let out = build_spiral_trend(&[], "x.jsonl", 20);
+        assert_eq!(out.samples_total, 0);
+        assert_eq!(out.breach_count, 0);
+        assert_eq!(out.breach_rate, 0.0);
+        assert_eq!(out.mttr_proxy_cycles, None);
+        assert_eq!(out.pressure_score, 0.0);
+        assert_eq!(out.policy_band, "green");
+    }
+
+    #[test]
+    fn trend_computes_core_metrics() {
+        let rec = |ts: &str, violations: i64, streak: i64, interrupt: bool, status: &str, stale_test: i64, stale_build: i64, stale_e2e: i64| SpiralMetricRecord {
+            generated_at: ts.to_string(),
+            session_id: "s".to_string(),
+            status: status.to_string(),
+            severity: if violations > 0 { "warning".to_string() } else { "info".to_string() },
+            reason: "".to_string(),
+            violations,
+            streak,
+            interrupt,
+            metrics: json!({
+                "stale_test_evidence": stale_test,
+                "stale_build_evidence": stale_build,
+                "stale_e2e_evidence": stale_e2e,
+            }),
+        };
+        let data = vec![
+            rec("t1", 1, 1, false, "warning", 1, 0, 0),
+            rec("t2", 2, 2, true, "critical_interrupt", 0, 1, 0),
+            rec("t3", 0, 0, false, "healthy", 0, 0, 0),
+            rec("t4", 1, 1, false, "warning", 0, 0, 1),
+            rec("t5", 0, 0, false, "healthy", 0, 0, 0),
+        ];
+        let out = build_spiral_trend(&data, "x.jsonl", 50);
+        assert_eq!(out.samples_total, 5);
+        assert_eq!(out.window_used, 5);
+        assert_eq!(out.breach_count, 3);
+        assert!((out.breach_rate - 0.6).abs() < 1e-9);
+        assert_eq!(out.interrupt_count, 1);
+        assert_eq!(out.max_streak, 2);
+        assert_eq!(out.open_breach_streak, 0);
+        assert_eq!(out.mttr_proxy_cycles, Some(1.5));
+        assert_eq!(out.violations_delta, -1);
+        assert_eq!(out.stale_test_evidence_events, 1);
+        assert_eq!(out.stale_build_evidence_events, 1);
+        assert_eq!(out.stale_e2e_evidence_events, 1);
+        assert!((out.pressure_score - 0.42).abs() < 1e-9);
+        assert_eq!(out.policy_band, "green");
+        assert_eq!(out.latest_status, "healthy");
+    }
+
+    #[test]
+    fn trend_maps_red_policy_band_for_high_pressure() {
+        let rec = |ts: &str, violations: i64, streak: i64, interrupt: bool| SpiralMetricRecord {
+            generated_at: ts.to_string(),
+            session_id: "s".to_string(),
+            status: if interrupt { "critical_interrupt".to_string() } else { "warning".to_string() },
+            severity: if interrupt { "critical".to_string() } else { "warning".to_string() },
+            reason: "".to_string(),
+            violations,
+            streak,
+            interrupt,
+            metrics: json!({
+                "stale_test_evidence": 1,
+                "stale_build_evidence": 1,
+                "stale_e2e_evidence": 1,
+            }),
+        };
+        let data = vec![
+            rec("t1", 2, 2, true),
+            rec("t2", 3, 3, true),
+            rec("t3", 4, 4, true),
+            rec("t4", 5, 5, true),
+        ];
+        let out = build_spiral_trend(&data, "x.jsonl", 50);
+        assert!(out.pressure_score >= 0.75);
+        assert_eq!(out.policy_band, "red");
+    }
+}
+
+#[cfg(test)]
+mod spiral_selector_tests {
+    use super::canonicalize_selector_csv;
+
+    #[test]
+    fn selector_csv_canonicalizes_sort_and_dedupe() {
+        let out = canonicalize_selector_csv(" reliability,regression_spiral_guard,reliability ");
+        assert_eq!(out.cleaned_raw, "reliability,regression_spiral_guard,reliability");
+        assert_eq!(out.canonical, "regression_spiral_guard,reliability");
+        assert!(out.selected_mode);
+    }
+
+    #[test]
+    fn selector_csv_keeps_malformed_token_for_fail_closed_validation() {
+        let out = canonicalize_selector_csv("regression_spiral_guard;rm -rf /");
+        assert_eq!(out.cleaned_raw, "regression_spiral_guard;rm-rf/");
+        assert_eq!(out.canonical, "regression_spiral_guard;rm-rf/");
+        assert!(out.selected_mode);
+    }
+
+    #[test]
+    fn selector_csv_empty_tokens_only_stays_selected_mode_with_empty_canonical() {
+        let out = canonicalize_selector_csv(" , , ");
+        assert_eq!(out.cleaned_raw, ",,");
+        assert_eq!(out.canonical, "");
+        assert!(out.selected_mode);
+    }
+
+    #[test]
+    fn selector_csv_blank_input_disables_selected_mode() {
+        let out = canonicalize_selector_csv("   ");
+        assert_eq!(out.cleaned_raw, "");
+        assert_eq!(out.canonical, "");
+        assert!(!out.selected_mode);
+    }
 }
 
 /// Return the lazily-initialized noqa-with-justification regex (positive match = has justification).
@@ -429,8 +924,133 @@ fn cmd_governance(args: &[String]) -> ExitCode {
             if found { ExitCode::from(1) } else { ExitCode::from(0) }
         }
 
+        "spiral-config" => {
+            // args: governance spiral-config [path] [--format env|json]
+            let mut cfg_path = "hooks/hook-config.yaml".to_string();
+            let mut out_format = "json".to_string();
+            let mut i = 3usize;
+            while i < args.len() {
+                match args[i].as_str() {
+                    "--format" if i + 1 < args.len() => {
+                        out_format = args[i + 1].clone();
+                        i += 2;
+                    }
+                    s if !s.starts_with("--") => {
+                        cfg_path = s.to_string();
+                        i += 1;
+                    }
+                    _ => {
+                        i += 1;
+                    }
+                }
+            }
+
+            let mut cfg = SpiralConfigOutput::default();
+            if let Ok(content) = fs::read_to_string(&cfg_path) {
+                cfg = parse_spiral_config_from_hook_yaml(&content);
+            }
+
+            if out_format == "env" {
+                println!("CFG_SPIRAL_MAX_FAILED_TESTS={}", cfg.max_failed_tests);
+                println!("CFG_SPIRAL_MAX_FLAKY_TESTS={}", cfg.max_flaky_tests);
+                println!("CFG_SPIRAL_MAX_MISSING_TEST_PAIRS={}", cfg.max_missing_test_pairs);
+                println!("CFG_SPIRAL_MAX_MISSING_TEST_TYPES={}", cfg.max_missing_test_types);
+                println!("CFG_SPIRAL_MAX_TEST_EVIDENCE_AGE_MINUTES={}", cfg.max_test_evidence_age_minutes);
+                println!("CFG_SPIRAL_MAX_BUILD_EVIDENCE_AGE_MINUTES={}", cfg.max_build_evidence_age_minutes);
+                println!("CFG_SPIRAL_MAX_E2E_EVIDENCE_AGE_MINUTES={}", cfg.max_e2e_evidence_age_minutes);
+                println!("CFG_SPIRAL_STREAK_TRIGGER={}", cfg.streak_trigger);
+                println!("CFG_REQUIRE_E2E_FIRST={}", cfg.require_e2e_first);
+                println!("CFG_REQUIRE_ENV_READY_FIRST={}", cfg.require_env_ready_first);
+                println!("CFG_SPIRAL_SOURCE={}", cfg.source);
+            } else {
+                println!("{}", serde_json::to_string(&cfg).unwrap());
+            }
+            ExitCode::from(0)
+        }
+
+        "spiral-trend" => {
+            // args: governance spiral-trend [path] [--window N]
+            let mut metrics_path = ".claude/verification/regression-spiral-metrics.jsonl".to_string();
+            let mut window = 50usize;
+            let mut i = 3usize;
+            while i < args.len() {
+                match args[i].as_str() {
+                    "--window" if i + 1 < args.len() => {
+                        window = args[i + 1].parse::<usize>().unwrap_or(50);
+                        i += 2;
+                    }
+                    s if !s.starts_with("--") => {
+                        metrics_path = s.to_string();
+                        i += 1;
+                    }
+                    _ => i += 1,
+                }
+            }
+
+            let records = read_spiral_metrics(&metrics_path);
+            let trend = build_spiral_trend(&records, &metrics_path, window);
+            println!("{}", serde_json::to_string(&trend).unwrap());
+            ExitCode::from(0)
+        }
+
+        "spiral-selector" => {
+            // args: governance spiral-selector [raw_selector] [--format csv|json]
+            let mut raw_selector = String::new();
+            let mut out_format = "json".to_string();
+            let mut seen_selector = false;
+            let mut i = 3usize;
+            while i < args.len() {
+                match args[i].as_str() {
+                    "--format" if i + 1 < args.len() => {
+                        out_format = args[i + 1].clone();
+                        i += 2;
+                    }
+                    "--format" => {
+                        eprintln!("governance spiral-selector: --format requires a value (csv|json)");
+                        return ExitCode::from(2);
+                    }
+                    s if s.starts_with("--") => {
+                        eprintln!("governance spiral-selector: unknown flag: {}", s);
+                        return ExitCode::from(2);
+                    }
+                    s if !s.starts_with("--") => {
+                        if seen_selector {
+                            eprintln!(
+                                "governance spiral-selector: too many positional arguments (expected at most 1 raw selector)"
+                            );
+                            return ExitCode::from(2);
+                        }
+                        raw_selector = s.to_string();
+                        seen_selector = true;
+                        i += 1;
+                    }
+                    _ => i += 1,
+                }
+            }
+
+            if out_format != "csv" && out_format != "json" {
+                eprintln!(
+                    "governance spiral-selector: invalid --format value: {} (expected csv|json)",
+                    out_format
+                );
+                return ExitCode::from(2);
+            }
+            if raw_selector.chars().any(|c| c.is_control()) {
+                eprintln!("governance spiral-selector: control characters are not allowed in selector input");
+                return ExitCode::from(2);
+            }
+
+            let out = canonicalize_selector_csv(&raw_selector);
+            if out_format == "csv" {
+                println!("{}", out.canonical);
+            } else {
+                println!("{}", serde_json::to_string(&out).unwrap());
+            }
+            ExitCode::from(0)
+        }
+
         _ => {
-            eprintln!("usage: hook-dispatcher governance <scan|check-contract> ...");
+            eprintln!("usage: hook-dispatcher governance <scan|check-contract|spiral-config|spiral-trend|spiral-selector> ...");
             ExitCode::from(1)
         }
     }
@@ -514,38 +1134,6 @@ impl WorkerPool {
 
 // ---------------------------------------------------------------------------
 // Input schema
-// ---------------------------------------------------------------------------
-
-#[derive(Deserialize, Serialize)]
-struct HookInput {
-    tool_name: Option<String>,
-    tool_input: Option<serde_json::Value>,
-    session_id: Option<String>,
-    project_dir: Option<String>,
-    cwd: Option<String>,
-}
-
-// ---------------------------------------------------------------------------
-// Mode enum — all Claude Code hook event types
-// ---------------------------------------------------------------------------
-
-#[derive(Clone, Copy, PartialEq)]
-enum Mode {
-    Pretool,       // PreToolUse: sequential, fail-fast (blocking)
-    Posttool,      // PostToolUse: parallel, advisory
-    Stop,          // Stop: parallel with timeout, propagate exit code
-    SessionStart,  // SessionStart: sequential, advisory
-    PromptSubmit,  // UserPromptSubmit: sequential, blocking (fail-fast)
-    SubagentStart, // SubagentStart: single script, advisory
-    SubagentStop,  // SubagentStop: single script, advisory
-    PreCompact,    // PreCompact: sequential, advisory
-    SessionEnd,    // SessionEnd: single script, advisory
-    TaskCompleted, // TaskCompleted: single script, advisory
-    TeammateIdle,  // TeammateIdle: single script, advisory (exit 2 sentinel)
-}
-
-// ---------------------------------------------------------------------------
-// Temp file RAII guard
 // ---------------------------------------------------------------------------
 
 struct TempFile {
@@ -744,7 +1332,7 @@ fn run_governance_scan(project_dir: &str) -> i32 {
     }
 
     // 6. Secret Detection (Dimension 6)
-    let secret_count = scan_secrets(project_path);
+    let secret_count = scan_secrets(project_path, get_secret_regexes());
     if secret_count > 0 {
         eprintln!("GOVERNANCE [Dimension 6: Security]: detected {} potential secret(s)", secret_count);
         violation_count += 1;
@@ -772,198 +1360,9 @@ fn run_governance_scan(project_dir: &str) -> i32 {
     0
 }
 
-fn count_ai_slop(dir: &Path) -> usize {
-    let mut count = 0;
-    let slop_patterns = ["As an AI", "I cannot", "I apologize", "I'm sorry, but", "As a language model"];
-    
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if name == "node_modules" || name == ".git" || name == ".venv" || name == "target" || name == "__pycache__" {
-                    continue;
-                }
-                count += count_ai_slop(&path);
-            } else if path.is_file() {
-                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                if ext == "py" || ext == "js" || ext == "ts" || ext == "rs" || ext == "go" || ext == "md" {
-                    if let Ok(content) = fs::read_to_string(&path) {
-                        for p in &slop_patterns {
-                            count += content.matches(p).count();
-                        }
-                    }
-                }
-            }
-        }
-    }
-    count
-}
-
-fn scan_secrets(dir: &Path) -> usize {
-    let mut count = 0;
-    
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if name == "node_modules" || name == ".git" || name == ".venv" || name == "target" || name == "__pycache__" || name == "dist" {
-                    continue;
-                }
-                count += scan_secrets(&path);
-            } else if path.is_file() {
-                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                if ext == "env" || ext == "json" || ext == "py" || ext == "js" || ext == "ts" || ext == "yaml" || ext == "yml" || ext == "toml" || ext == "xml" {
-                    if let Ok(content) = fs::read_to_string(&path) {
-                        for regex in get_secret_regexes().iter() {
-                            if regex.is_match(&content) {
-                                count += 1;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    count
-}
-
-fn scan_deep_nesting(dir: &Path, limit: usize) -> Vec<PathBuf> {
-    let mut results = Vec::new();
-    fn recurse(dir: &Path, depth: usize, limit: usize, results: &mut Vec<PathBuf>) {
-        if depth > limit {
-            results.push(dir.to_path_buf());
-            return;
-        }
-        if let Ok(entries) = fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                    if name == "node_modules" || name == ".git" || name == ".venv" || name == "target" || name == "__pycache__" {
-                        continue;
-                    }
-                    recurse(&path, depth + 1, limit, results);
-                }
-            }
-        }
-    }
-    recurse(dir, 0, limit, &mut results);
-    results
-}
-
-fn scan_large_files(dir: &Path, large_files: &mut Vec<PathBuf>, threshold: u64) {
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if name == "node_modules" || name == ".git" || name == ".venv" || name == "target" || name == "__pycache__" {
-                    continue;
-                }
-                scan_large_files(&path, large_files, threshold);
-            } else if path.is_file() {
-                if let Ok(metadata) = entry.metadata() {
-                    if metadata.len() > threshold {
-                        large_files.push(path);
-                    }
-                }
-            }
-        }
-    }
-}
-
-fn count_todos(dir: &Path) -> usize {
-    let mut count = 0;
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if name == "node_modules" || name == ".git" || name == ".venv" || name == "target" || name == "__pycache__" {
-                    continue;
-                }
-                count += count_todos(&path);
-            } else if path.is_file() {
-                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                if ext == "py" || ext == "js" || ext == "ts" || ext == "rs" || ext == "go" || ext == "sh" {
-                    if let Ok(content) = fs::read_to_string(&path) {
-                        count += content.matches("TODO").count();
-                        count += content.matches("FIXME").count();
-                    }
-                }
-            }
-        }
-    }
-    count
-}
-
 // ---------------------------------------------------------------------------
 // Tool lookup helper (native PATH scan, no subprocess)
 // ---------------------------------------------------------------------------
-
-fn find_in_path(executable: &str) -> Option<String> {
-    if let Ok(path_var) = env::var("PATH") {
-        for path in env::split_paths(&path_var) {
-            let exe_path = path.join(executable);
-            if exe_path.is_file() {
-                return Some(exe_path.to_string_lossy().to_string());
-            }
-            if cfg!(target_os = "windows") {
-                let with_exe = path.join(format!("{}.exe", executable));
-                if with_exe.is_file() {
-                    return Some(with_exe.to_string_lossy().to_string());
-                }
-            }
-        }
-    }
-    None
-}
-
-fn first_available(names: &[&str]) -> String {
-    for name in names {
-        if let Some(path) = find_in_path(name) {
-            return path;
-        }
-    }
-    String::new()
-}
-
-// ---------------------------------------------------------------------------
-// Resolve hooks directory
-// ---------------------------------------------------------------------------
-
-fn resolve_hooks_dir() -> PathBuf {
-    // 1. HOOKS_DIR env var
-    if let Ok(dir) = env::var("HOOKS_DIR") {
-        return PathBuf::from(dir);
-    }
-    // 2. Derive from binary location: go up to hooks/
-    //    binary could be at hooks/hook-dispatcher/target/release/hook-dispatcher
-    //    or at ~/.claude/bin/hook-dispatcher (symlinked or copied)
-    if let Ok(exe) = env::current_exe() {
-        // Walk ancestors looking for a directory that contains *.sh hook files
-        let mut dir = exe.parent().map(|p| p.to_path_buf());
-        for _ in 0..5 {
-            if let Some(ref d) = dir {
-                // Check if this directory looks like the hooks dir
-                if d.join("pretool-dispatcher.sh").exists()
-                    || d.join("doc-location-guard.sh").exists()
-                {
-                    return d.clone();
-                }
-                dir = d.parent().map(|p| p.to_path_buf());
-            } else {
-                break;
-            }
-        }
-    }
-    // 3. Fallback: ~/.claude/hooks/
-    let home = env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
-    PathBuf::from(format!("{home}/.claude/hooks"))
-}
 
 // ---------------------------------------------------------------------------
 // Read skip hooks from .claude.qa-local.json
@@ -1203,6 +1602,7 @@ fn build_env(
         Mode::SessionEnd => "sessionend",
         Mode::TaskCompleted => "taskcompleted",
         Mode::TeammateIdle => "teammateidle",
+        Mode::PostAgentRun => "postagentrun",
     };
     env_map.insert("HOOK_MODE".into(), mode_str.into());
 
@@ -2085,36 +2485,6 @@ fn run_single_advisory(
     0
 }
 
-fn dispatch_notification(
-    hooks_dir: &Path,
-    env_map: &HashMap<String, String>,
-    event: &str,
-    severity: &str,
-    title: &str,
-    message: &str,
-) {
-    let script = hooks_dir.join("notify-agent-event.sh");
-    if !script.exists() {
-        return;
-    }
-    let mut cmd = Command::new(script);
-    cmd.arg("--event")
-        .arg(event)
-        .arg("--severity")
-        .arg(severity)
-        .arg("--title")
-        .arg(title)
-        .arg("--message")
-        .arg(message)
-        .current_dir(env_map.get("PROJECT_DIR").cloned().unwrap_or_default())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
-    for (k, v) in env_map {
-        cmd.env(k, v);
-    }
-    let _ = cmd.spawn();
-}
-
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -2124,7 +2494,7 @@ fn main() -> ExitCode {
     if args.len() < 2 {
         eprintln!(
             "usage: hook-dispatcher <pretool|posttool|stop|sessionstart|promptsubmit|\
-             subagentstart|subagentstop|precompact|sessionend|taskcompleted|teammateidle|\
+             subagentstart|subagentstop|precompact|sessionend|taskcompleted|teammateidle|postagentrun|\
              scan-secrets|governance>"
         );
         return ExitCode::from(1);
@@ -2152,6 +2522,7 @@ fn main() -> ExitCode {
         "sessionend" => Mode::SessionEnd,
         "taskcompleted" => Mode::TaskCompleted,
         "teammateidle" => Mode::TeammateIdle,
+        "postagentrun" => Mode::PostAgentRun,
         other => {
             eprintln!("unknown mode: {other}");
             return ExitCode::from(1);
@@ -2525,6 +2896,17 @@ fn main() -> ExitCode {
                 );
             }
             ExitCode::from(result.rc as u8)
+        }
+
+        // -----------------------------------------------------------------
+        // PostAgentRun: single script, blocking
+        // -----------------------------------------------------------------
+        Mode::PostAgentRun => {
+            let hooks: Vec<(&str, &[&str])> = vec![
+                ("post-agent-run-vetter.sh", &[]),
+            ];
+            let rc = run_combined_blocking(&hooks, &hooks_dir, &env_map, &temp_file.path);
+            ExitCode::from(rc as u8)
         }
     }
 }

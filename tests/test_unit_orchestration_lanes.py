@@ -5,7 +5,7 @@ Traces to: FR-019 (Adaptive load controls with critical lane protection).
 
 from __future__ import annotations
 
-from thegent.orchestration.lanes import (
+from thegent.orchestration.execution.lanes import (
     LANE_PRIORITIES,
     LANE_URGENCY,
     URGENCY_CRITICAL,

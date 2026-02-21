@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import ClassVar
 
 
 class ProviderType(Enum):
@@ -53,8 +54,8 @@ class ProviderRegistry:
     Implements singleton pattern with class-level registry.
     """
 
-    _registry: dict[str, ProviderConfig] = {}
-    _initialized = False
+    _registry: ClassVar[dict[str, ProviderConfig]] = {}
+    _initialized: ClassVar[bool] = False
 
     @classmethod
     def register(cls, config: ProviderConfig) -> None:
@@ -191,13 +192,13 @@ def _initialize_registry() -> None:
 
     Called once during module import to populate the default registry.
     """
-    if ProviderRegistry._initialized:
+    if ProviderRegistry._initialized:  # noqa: SLF001 -- intentional access to ClassVar sentinel on own class
         return
 
     for provider_config in _BUILTIN_PROVIDERS:
         ProviderRegistry.register(provider_config)
 
-    ProviderRegistry._initialized = True
+    ProviderRegistry._initialized = True  # noqa: SLF001 -- intentional access to ClassVar sentinel on own class
 
 
 # Initialize registry on module import

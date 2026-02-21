@@ -10,7 +10,6 @@ Traces to: FR-SYNC-021 through FR-SYNC-040
 from __future__ import annotations
 
 import os
-from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
@@ -22,6 +21,9 @@ from thegent.commands.sync import (
     SyncOperationStatus,
     SyncResult,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Shared fixtures / helpers

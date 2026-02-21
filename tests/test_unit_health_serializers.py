@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from thegent.cli import (
+from thegent.cli.commands.cli import (
     _serialize_health_gate_csv,
     _serialize_health_gate_jsonl,
     _serialize_health_gate_md,

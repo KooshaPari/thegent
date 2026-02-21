@@ -10,8 +10,7 @@ Covers:
 from __future__ import annotations
 
 import time
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,6 +18,9 @@ import yaml
 
 from thegent.mesh.mesh import MeshManager
 from thegent.mesh.process_detection import detect_agents, get_processes
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # TGNT-P12.1 - Process scanner / pattern matching

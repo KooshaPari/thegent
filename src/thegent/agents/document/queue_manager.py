@@ -92,7 +92,7 @@ class QueueManager:
         with open(self.state_file, "w") as f:
             json.dump(self.state.to_dict(), f, indent=2)
 
-    def load_queue(self) -> dict:
+    def load_queue(self) -> dict | None:
         """Load queue data from file."""
         if self.queue_data is None:
             with open(self.queue_file) as f:

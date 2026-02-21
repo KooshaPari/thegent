@@ -3,7 +3,6 @@ Includes AGENT.md template system, tool-specific context symlinks, and dynamic u
 """
 
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
@@ -59,7 +58,7 @@ Shared Resources: {shared_resources}
 
             if not target_path.exists():
                 try:
-                    os.symlink(source_name, target_path)
+                    target_path.symlink_to(source_name)
                     logger.info(f"Created context symlink for {agent_type}: {target_name} -> {source_name}")
                 except OSError as e:
                     logger.error(f"Failed to create symlink: {e}")

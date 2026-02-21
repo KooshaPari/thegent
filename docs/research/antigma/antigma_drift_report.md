@@ -1,0 +1,33 @@
+# Antigma Docs vs Runtime Drift Report
+
+- Generated: 2026-02-20T08:35:22.734249+00:00
+- Runtime binary: `/Users/kooshapari/.ante/bin/ante`
+- Runtime version: `ante 0.0.preview6`
+
+## Auth Flow Evidence
+
+- Login endpoint evidence:
+  - `[POST] https://docs.antigma.ai/login/callback/password => [200]`
+  - `[POST] https://docs.antigma.ai/login/callback/password => [200]`
+  - `[GET] https://docs.antigma.ai/_mintlify/navigation => [200]`
+  - `[GET] https://docs.antigma.ai/_mintlify/api/user => [200]`
+  - `[POST] https://docs.antigma.ai/_mintlify/api/search-api-key => [200]`
+
+## Headless Flag Drift
+
+- Docs flags count: `10`
+- Runtime flags count: `10`
+- Missing in runtime: `none`
+- Undocumented runtime flags: `none`
+
+## Provider Drift
+
+- Docs provider IDs: `anthropic, gemini, local, open-router, openai, openai-response, xai`
+- Runtime providers: `anthropic, local, open-router, openai, openai-response, xai`
+- In docs but not runtime: `gemini`
+- In runtime but not docs: `none`
+
+## Artifacts
+
+- Inventory JSON: `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/docs/research/antigma/antigma_inventory.json`
+- Network log: `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.playwright-cli/network-2026-02-20T08-34-31-227Z.log`

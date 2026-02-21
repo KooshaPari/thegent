@@ -61,8 +61,36 @@ class SessionScraper:
                                         prompts.append(entry["prompt"])
                                     elif "user" in entry and isinstance(entry["user"], str):
                                         prompts.append(entry["user"])
-                    except Exception as e:
+                    except Exception as e:  # noqa: PERF203 - intentional per-item error handling
                         logger.error(f"Error reading history file {f}: {e}")
+
+        return list(set(prompts))
+
+    def scrape_ante_history(self) -> list[str]:
+        """Scrape prompts from Ante user_input_history.jsonl."""
+        import json
+
+        prompts = []
+        history_file = Path.home() / ".ante" / "user_input_history.jsonl"
+
+        if not history_file.exists():
+            return prompts
+
+        try:
+            with open(history_file) as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        data = json.loads(line)
+                        if isinstance(data, dict) and "prompt" in data:
+                            prompt = data["prompt"]
+                            if isinstance(prompt, str) and prompt:
+                                prompts.append(prompt)
+                    except json.JSONDecodeError:
+                        logger.debug(f"Failed to parse JSONL line: {line}")
+        except Exception as e:
+            logger.error(f"Error reading Ante history file {history_file}: {e}")
 
         return list(set(prompts))
 
@@ -71,4 +99,5 @@ class SessionScraper:
         all_prompts = []
         all_prompts.extend(self.scrape_tmux_prompts())
         all_prompts.extend(self.scrape_claude_history())
+        all_prompts.extend(self.scrape_ante_history())
         return list(set(all_prompts))

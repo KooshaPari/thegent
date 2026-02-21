@@ -229,6 +229,22 @@ class TestBuildCmdVariants:
         idx = cmd.index("--model")
         assert cmd[idx + 1] == "gpt-5.3-turbo"
 
+    def test_build_cmd_codex_image_flags(self) -> None:
+        """WL-114: codex command includes repeatable --image args."""
+        runner = DirectAgentRunner("codex")
+        cmd = runner._build_cmd(
+            Path("/workspace"),
+            True,
+            "gpt-5.3-turbo",
+            "read-only",
+            image_paths=["/tmp/a.png", "https://example.com/b.jpg"],
+        )
+        assert cmd.count("--image") == 2
+        first = cmd.index("--image")
+        second = cmd.index("--image", first + 1)
+        assert cmd[first + 1] == "/tmp/a.png"
+        assert cmd[second + 1] == "https://example.com/b.jpg"
+
     def test_build_cmd_cursor_agent_model_override(self) -> None:
         # @trace FR-AGT-002
         """cursor-agent command includes --model with override value."""

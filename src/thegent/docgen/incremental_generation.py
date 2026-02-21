@@ -7,6 +7,8 @@ from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from thegent.utils.batch_ops import batch_read
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,9 +74,13 @@ class IncrementalGenerator:
         """
         changed = []
 
+        # Batch read all files at once to compute hashes
+        file_contents = batch_read(files)
+
         for file_path in files:
             file_str = str(file_path)
-            current_hash = self._file_hash(file_path)
+            content = file_contents.get(file_path, "")
+            current_hash = hashlib.sha256(content.encode()).hexdigest()
 
             if file_str not in self.manifest["files"]:
                 # New file

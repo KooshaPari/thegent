@@ -1,0 +1,218 @@
+# GIT_INDEX_LOCK_MULTITENANCY_IMPLEMENTATION_WBS
+
+Source: docs/plans/GIT_INDEX_LOCK_MULTITENANCY_IMPLEMENTATION_WBS.md
+
+---
+
+# Git Index.Lock & True Multi-Tenancy — Phased Implementation WBS
+
+**Date:** 2026-02-18  
+**Status:** Implementation Ready  
+**Extends:** [GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md](../research/GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md)
+
+---
+
+## Executive Summary
+
+| Phase | Description | Duration | Effort | Priority |
+|-------|-------------|----------|--------|----------|
+| **Phase 1** | Read-path zero lock (E4) + graceful degradation (E6) | 1 day | 4–6h | P0 |
+| **Phase 2** | Stale lock daemon (lock-cleanup + lsof) | 1–2 days | 6–8h | P0 |
+| **Phase 3** | System git wrapper + circuit breaker | 2–3 days | 10–14h | P1 |
+| **Phase 4** | Agent system user layout | 2 days | 8–10h | P1 |
+| **Phase 5** | Gitoxide (gix) integration | 3–5 days | 16–24h | P2 |
+
+**Total Effort:** ~44–62 agent-hours  
+**Architectural principle:** True multi-tenancy (shared repo, many agents) is primary; worktrees optional.
+
+---
+
+## Phase 1: Read-Path Zero Lock + Graceful Degradation
+
+**Goal:** Reduce lock creation from our own code; fail clearly when lock can't be acquired.
+
+### WBS 1.1 — GIT_OPTIONAL_LOCKS=0 for git_cached
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 1.1.1 | Set `GIT_OPTIONAL_LOCKS=0` when invoking git for read-only commands | `hooks/lib/git-cache.sh` | — | 1h |
+| 1.1.2 | Add read-only command list: status, diff, ls-files, rev-parse, log, show, name-rev, symbolic-ref, branch, tag, remote, config, ls-tree, cat-file, describe | same | 1.1.1 | 0.5h |
+| 1.1.3 | Export env before `"$_git" "$@"` for those commands | same | 1.1.2 | 0.5h |
+
+**Implementation note:** In `git_cached()`, before `timeout 5 "$_git" "$@"`, parse first arg; if read-only, run with `GIT_OPTIONAL_LOCKS=0` in env.
+
+### WBS 1.2 — GIT_OPTIONAL_LOCKS for common.sh git()
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 1.2.1 | When delegating read-only to git (no git_cached), pass `--no-optional-locks` for status | `hooks/lib/common.sh` | — | 1h |
+| 1.2.2 | Add `--no-optional-locks` injection for status/diff when calling THEGENT_GIT_BIN directly | same | 1.2.1 | 0.5h |
+
+### WBS 1.3 — Graceful degradation (E6)
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 1.3.1 | Support `THEGENT_GIT_LOCK_RETRY=0` to skip wait (fail fast for CI) | `hooks/lib/git-wrapper.sh`, `hooks/lib/common.sh` | — | 1h |
+| 1.3.2 | On max retries, exit 128 with message: "GIT-MUTEX: Lock held. Run 'thegent git lock-cleanup' or wait." | same | 1.3.1 | 0.5h |
+| 1.3.3 | Document `THEGENT_GIT_LOCK_RETRY` in config reference | `docs/reference/` | 1.3.2 | 0.5h |
+
+---
+
+## Phase 2: Stale Lock Daemon
+
+**Goal:** Periodic cleanup of stale index.lock; mtime + lsof for safe removal.
+
+### WBS 2.1 — thegent git lock-cleanup command ✅
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 2.1.1 | Add `thegent git lock-cleanup` subcommand | `src/thegent/git_lock_manage.py`, `main.py` | — | 2h |
+| 2.1.2 | Options: `--path <dir>`, `--max-age <seconds>` (default 60), `--dry-run` | same | 2.1.1 | 1h |
+| 2.1.3 | Scan for `.git/index.lock` under path(s): cwd, PROJECT_DIR, config scan_paths | same | 2.1.2 | 1h |
+| 2.1.4 | For each lock: if mtime ≥ max_age, run `lsof`; if no holder, `rm -f` | same | 2.1.3 | 1.5h |
+| 2.1.5 | Cross-platform: macOS `stat -f %m`, Linux `stat -c %Y`; `lsof` fallback if missing | same | 2.1.4 | 0.5h |
+
+### WBS 2.2 — Lock-cleanup daemon (launchd/systemd) ✅
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 2.2.1 | Create `lock_cleanup_install`, `lock_cleanup_start`, `lock_cleanup_stop`, `lock_cleanup_status`, `lock_cleanup_uninstall` | `src/thegent/git_lock_manage.py` | — | 3h |
+| 2.2.2 | launchd: Run `thegent git lock-cleanup` every 5 min (StartInterval=300) | same | 2.2.1 | 1h |
+| 2.2.3 | systemd: Timer unit + service; same interval | same | 2.2.2 | 1h |
+| 2.2.4 | Add `thegent git lock-cleanup service install|start|stop|status|uninstall` | `main.py` | 2.2.3 | 1h |
+
+### WBS 2.3 — Preemptive cleanup (E1) ✅
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 2.3.1 | Add `.envrc` template snippet: `thegent git lock-cleanup --path . 2>/dev/null \|\| true` before `use flake` | `thegent/shell/envrc.home.template` | 2.1.1 | 0.5h |
+| 2.3.2 | Document in DIRENV_FIX and plan | `docs/research/` | 2.3.1 | 0.5h |
+
+---
+
+## Phase 3: System-Level Git Wrapper + Circuit Breaker
+
+**Goal:** Universalize lock handling so nix, direnv, agents use our wrapper; add circuit breaker for contention.
+
+### WBS 3.1 — install-shims --system
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 3.1.1 | Add `--system` / `--prefix <path>` to `install-shims` | `src/thegent/main.py` | — | 2h |
+| 3.1.2 | When `--system`: install to `/usr/local/bin` (or prefix); requires write permission | same | 3.1.1 | 1h |
+| 3.1.3 | Backup real git to `git.bin`; install wrapper as `git`; wrapper uses `THEGENT_GIT_BIN` or `git.bin` in same dir | same | 3.1.2 | 2h |
+| 3.1.4 | Add `install-shims --system --uninstall` to restore | same | 3.1.3 | 1h |
+| 3.1.5 | Document in INSTALLATION.md / docs | `docs/` | 3.1.4 | 1h |
+
+### WBS 3.2 — Circuit breaker (E3)
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 3.2.1 | On lock-wait timeout, write `.git/thegent.lock.failures` with timestamp | `hooks/lib/git-wrapper.sh`, `common.sh` | — | 1.5h |
+| 3.2.2 | If failures ≥ 3 in last 5 min, run `thegent git lock-cleanup --path $repo_root` (or inline), then retry once | same | 3.2.1 | 2h |
+| 3.2.3 | Reset failure count on success | same | 3.2.2 | 0.5h |
+
+---
+
+## Phase 4: Agent System User Layout
+
+**Goal:** Hooks + git wrapper discoverable when thegent runs as system user (launchd/systemd).
+
+### WBS 4.1 — Install target layout
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 4.1.1 | Add `thegent install --target system` (or `--prefix /opt/thegent`) | `src/thegent/install.py` | — | 2h |
+| 4.1.2 | Layout: `$PREFIX/bin/thegent`, `$PREFIX/bin/git` (wrapper), `$PREFIX/share/thegent/hooks/` | same | 4.1.1 | 2h |
+| 4.1.3 | Config: `$PREFIX/etc/thegent/config.yaml` or `/etc/thegent/config.yaml` | same | 4.1.2 | 1h |
+| 4.1.4 | Data: `/var/lib/thegent` (sessions, cache, run registry) | same | 4.1.3 | 1h |
+
+### WBS 4.2 — Agent service PATH
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 4.2.1 | launchd plist: `PATH=/opt/thegent/bin:/usr/bin:/bin` | `mcp_manage.py` or similar | 4.1.1 | 1h |
+| 4.2.2 | systemd unit: `Environment="PATH=/opt/thegent/bin:/usr/bin:/bin"` | same | 4.2.1 | 1h |
+| 4.2.3 | Hook discovery: THGENT_ROOT or `$(dirname $(which thegent))/../share/thegent/hooks` | `hooks/` | 4.2.2 | 1h |
+
+---
+
+## Phase 5: Gitoxide (gix) Integration
+
+**Goal:** Use gix for read-only ops in hooks; 2x–6.75x faster; no index.lock for status/diff.
+
+### WBS 5.1 — gix dependency and feature gate
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 5.1.1 | Add `gix` dependency (≥0.17.0 for CVE-2025-22620 fix) | `Cargo.toml` (thegent-git or thegent-hooks) | — | 1h |
+| 5.1.2 | Feature gate: `[features] gix = ["gix-status", "gix-diff"]` | same | 5.1.1 | 0.5h |
+
+### WBS 5.2 — gix in git_cached / hooks
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 5.2.1 | Implement git_cached path: cache miss → try gix status/diff → fallback to git | `hooks/lib/git-cache.sh` or Rust hook | 5.1.2 | 4h |
+| 5.2.2 | gix status: map to `gix status` output format | same | 5.2.1 | 2h |
+| 5.2.3 | Fallback for sparse repos, core.fsmonitor (per Starship) | same | 5.2.2 | 2h |
+| 5.2.4 | Benchmarks: compare git vs gix for status/diff on typical repo | tests | 5.2.3 | 2h |
+
+### WBS 5.3 — Documentation and rollout
+
+| ID | Task | File | Depends | Effort |
+|----|------|------|---------|--------|
+| 5.3.1 | Document gix opt-out if needed | `docs/` | 5.2.4 | 0.5h |
+| 5.3.2 | Add to GIT_TOOLING_AUDIT Phase 5/6 completion | `docs/research/GIT_TOOLING_AUDIT_AND_PLAN.md` | 5.3.1 | 0.5h |
+
+---
+
+## Dependency Graph
+
+```
+Phase 1 (E4, E6) ─────────────────────────────────────────────────────────────┐
+       │                                                                       │
+       ▼                                                                       │
+Phase 2 (lock-cleanup) ◄── 2.1.1 (git lock-cleanup cmd) depends on 1.3.2 msg  │
+       │                                                                       │
+       ▼                                                                       │
+Phase 3 (system wrapper, circuit breaker) ◄── 3.2.2 depends on 2.1.1          │
+       │                                                                       │
+       ▼                                                                       │
+Phase 4 (agent layout) ◄── can run parallel to Phase 3                         │
+       │                                                                       │
+       ▼                                                                       │
+Phase 5 (gix) ◄── independent; can start after Phase 1                         │
+```
+
+---
+
+## Task Summary by Phase
+
+| Phase | Tasks | Total Effort |
+|-------|-------|--------------|
+| 1 | 1.1.1–1.1.3, 1.2.1–1.2.2, 1.3.1–1.3.3 | 4–6h |
+| 2 | 2.1.1–2.1.5, 2.2.1–2.2.4, 2.3.1–2.3.2 | 6–8h |
+| 3 | 3.1.1–3.1.5, 3.2.1–3.2.3 | 10–14h |
+| 4 | 4.1.1–4.1.4, 4.2.1–4.2.3 | 8–10h |
+| 5 | 5.1.1–5.1.2, 5.2.1–5.2.4, 5.3.1–5.3.2 | 16–24h |
+
+---
+
+## Acceptance Criteria
+
+| Phase | Done When |
+|-------|-----------|
+| 1 | `git_cached status` uses `GIT_OPTIONAL_LOCKS=0`; `THEGENT_GIT_LOCK_RETRY=0` fails fast; exit 128 with clear message |
+| 2 | `thegent git lock-cleanup` removes stale locks (mtime + lsof); daemon runs every 5 min |
+| 3 | `thegent install-shims --system` installs wrapper; circuit breaker runs cleanup after 3 failures |
+| 4 | `thegent install --target system` creates layout; agent service PATH has thegent bin first |
+| 5 | git_cached uses gix for status/diff when available; fallback for sparse/fsmonitor |
+
+---
+
+## References
+
+- [GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md](../research/GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md)
+- [GIT_TOOLING_AUDIT_AND_PLAN.md](../research/GIT_TOOLING_AUDIT_AND_PLAN.md)
+- [DIRENV_FIX_2026-02-18.md](../research/DIRENV_FIX_2026-02-18.md)
+- [AGENT_OS_PRINCIPALS_DEPTH.md](../reference/AGENT_OS_PRINCIPALS_DEPTH.md)

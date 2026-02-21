@@ -102,7 +102,7 @@ class MeshIPC:
         """Release mkdir lock."""
         lock_path = self.locks_dir / name
         if lock_path.exists():
-            os.rmdir(lock_path)
+            lock_path.rmdir()
 
     def send_message(self, agent_id: str, message: dict[str, Any]) -> None:
         """Send message via Maildir-like queue."""

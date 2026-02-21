@@ -28,6 +28,7 @@ go run main.go
 
 - [API Reference](./api/)
 - [Guides](./guides/)
+- [Governance Matrix](./governance/POLYGLOT_RUNTIME_DECISION_MATRIX.md)
 - [Changelog](../CHANGELOG.md)
 
 ## Contributing

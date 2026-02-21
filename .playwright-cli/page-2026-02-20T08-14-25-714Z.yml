@@ -1,0 +1,491 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#content-area"
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - generic [ref=e9]:
+              - link "Ante home page light logo" [ref=e10] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e11]: Ante home page
+                - img "light logo" [ref=e12]
+              - button "Toggle dark mode" [ref=e13] [cursor=pointer]:
+                - generic [ref=e14]:
+                  - img [ref=e15]
+                  - img [ref=e22]
+            - generic [ref=e27]:
+              - button "Open search" [ref=e28] [cursor=pointer]:
+                - generic [ref=e29]:
+                  - img [ref=e30]
+                  - generic [ref=e33]: Search...
+                - generic [ref=e34]: ⌘K
+              - button "Toggle assistant panel" [ref=e35] [cursor=pointer]:
+                - img [ref=e36]
+            - generic [ref=e40]:
+              - list
+              - generic [ref=e41]:
+                - heading "Getting Started" [level=5] [ref=e43]
+                - list [ref=e44]:
+                  - listitem [ref=e45]:
+                    - link "Overview" [ref=e46] [cursor=pointer]:
+                      - /url: /start/overview
+                      - generic [ref=e48]: Overview
+                  - listitem [ref=e49]:
+                    - link "Quickstart" [ref=e50] [cursor=pointer]:
+                      - /url: /start/quickstart
+                      - generic [ref=e52]: Quickstart
+                  - listitem [ref=e53]:
+                    - link "Eval & Benchmark" [ref=e54] [cursor=pointer]:
+                      - /url: /start/eval
+                      - generic [ref=e56]: Eval & Benchmark
+              - generic [ref=e57]:
+                - heading "Concepts" [level=5] [ref=e59]
+                - list [ref=e60]:
+                  - listitem [ref=e61]:
+                    - link "Core Concepts & Protocol" [ref=e62] [cursor=pointer]:
+                      - /url: /concepts/core-concepts
+                      - generic [ref=e64]: Core Concepts & Protocol
+                  - listitem [ref=e65]:
+                    - link "Architecture" [ref=e66] [cursor=pointer]:
+                      - /url: /concepts/architecture
+                      - generic [ref=e68]: Architecture
+              - generic [ref=e69]:
+                - heading "Agent Org" [level=5] [ref=e71]
+                - list [ref=e72]:
+                  - listitem [ref=e73]:
+                    - link "Agent Organization (Experimental)" [ref=e74] [cursor=pointer]:
+                      - /url: /agent-org
+                      - generic [ref=e76]: Agent Organization (Experimental)
+              - generic [ref=e77]:
+                - heading "Offline Mode" [level=5] [ref=e79]
+                - list [ref=e80]:
+                  - listitem [ref=e81]:
+                    - link "Offline Mode (Experimental)" [ref=e82] [cursor=pointer]:
+                      - /url: /offline
+                      - generic [ref=e84]: Offline Mode (Experimental)
+              - generic [ref=e85]:
+                - heading "Usage" [level=5] [ref=e87]
+                - list [ref=e88]:
+                  - listitem [ref=e89]:
+                    - link "Interactive TUI" [ref=e90] [cursor=pointer]:
+                      - /url: /usage/tui
+                      - generic [ref=e92]: Interactive TUI
+                  - listitem [ref=e93]:
+                    - link "Headless Mode" [ref=e94] [cursor=pointer]:
+                      - /url: /usage/headless
+                      - generic [ref=e96]: Headless Mode
+              - generic [ref=e97]:
+                - heading "Extensibility" [level=5] [ref=e99]
+                - list [ref=e100]:
+                  - listitem [ref=e101]:
+                    - link "Skills" [ref=e102] [cursor=pointer]:
+                      - /url: /extend/skills
+                      - generic [ref=e104]: Skills
+                  - listitem [ref=e105]:
+                    - link "Sub-Agents" [ref=e106] [cursor=pointer]:
+                      - /url: /extend/subagents
+                      - generic [ref=e108]: Sub-Agents
+              - generic [ref=e109]:
+                - heading "Configuration" [level=5] [ref=e111]
+                - list [ref=e112]:
+                  - listitem [ref=e113]:
+                    - link "Model & Provider Catalog" [ref=e114] [cursor=pointer]:
+                      - /url: /configuration/catalog
+                      - generic [ref=e116]: Model & Provider Catalog
+                  - listitem [ref=e117]:
+                    - link "Preferences" [ref=e118] [cursor=pointer]:
+                      - /url: /configuration/preference
+                      - generic [ref=e120]: Preferences
+                  - listitem [ref=e121]:
+                    - link "Adding a 3rd Party Provider" [ref=e122] [cursor=pointer]:
+                      - /url: /configuration/third-party-provider
+                      - generic [ref=e124]: Adding a 3rd Party Provider
+              - generic [ref=e125]:
+                - heading "Memory" [level=5] [ref=e127]
+                - list [ref=e128]:
+                  - listitem [ref=e129]:
+                    - link "Memory" [ref=e130] [cursor=pointer]:
+                      - /url: /memory
+                      - generic [ref=e132]: Memory
+              - generic [ref=e133]:
+                - heading "Reference" [level=5] [ref=e135]
+                - list [ref=e136]:
+                  - listitem [ref=e137]:
+                    - link "Tools" [ref=e138] [cursor=pointer]:
+                      - /url: /tools
+                      - generic [ref=e140]: Tools
+          - list [ref=e141]:
+            - listitem [ref=e142]:
+              - link "Website" [ref=e143] [cursor=pointer]:
+                - /url: https://antigma.ai
+                - img [ref=e144]
+                - generic [ref=e146]: Website
+                - img [ref=e147]
+            - listitem [ref=e150]:
+              - link "Discord" [ref=e151] [cursor=pointer]:
+                - /url: https://discord.gg/pqhj3DNGz2
+                - img [ref=e152]
+                - generic [ref=e154]: Discord
+                - img [ref=e155]
+            - listitem [ref=e158]:
+              - link "GitHub" [ref=e159] [cursor=pointer]:
+                - /url: https://github.com/AntigmaLabs/ante-preview
+                - img [ref=e160]
+                - generic [ref=e162]: GitHub
+                - img [ref=e163]
+            - listitem
+        - generic [ref=e166]:
+          - link "Ante Preview" [ref=e169] [cursor=pointer]:
+            - /url: /start/overview
+            - text: Ante Preview
+          - generic [ref=e171]:
+            - banner [ref=e172]:
+              - generic [ref=e173]:
+                - generic [ref=e174]: Extensibility
+                - heading "Skills" [level=1] [ref=e176]
+              - paragraph [ref=e178]: Give Ante new capabilities with Agent Skills — the open format for portable agent expertise
+            - generic [ref=e179]:
+              - generic [ref=e180]:
+                - text: Skills are folders of instructions, scripts, and resources that extend Ante’s capabilities. They follow the open
+                - link "Agent Skills" [ref=e181] [cursor=pointer]:
+                  - /url: https://agentskills.io
+                - text: format, making them portable across compatible agent products.
+              - heading "Navigate to header Creating a skill" [level=2] [ref=e182]:
+                - link "Navigate to header" [ref=e183] [cursor=pointer]:
+                  - /url: "#creating-a-skill"
+                  - img [ref=e185]
+                - generic [ref=e187] [cursor=pointer]: Creating a skill
+              - generic [ref=e188]:
+                - text: A skill is a directory containing a
+                - code [ref=e189]: SKILL.md
+                - text: "file:"
+              - generic [ref=e190]:
+                - generic [ref=e191]:
+                  - generic [ref=e192]:
+                    - button "Copy the contents from the code block" [ref=e193] [cursor=pointer]:
+                      - img [ref=e194]
+                    - generic [ref=e197]: Copy
+                  - generic [ref=e198]:
+                    - button "Ask AI" [ref=e199] [cursor=pointer]:
+                      - img [ref=e200]
+                    - generic [ref=e203]: Ask AI
+                - code [ref=e207]:
+                  - generic [ref=e208]: commit/
+                  - generic [ref=e209]: └── SKILL.md
+              - generic [ref=e210]:
+                - code [ref=e211]: SKILL.md
+                - text: "uses YAML frontmatter followed by Markdown instructions:"
+              - generic [ref=e212]:
+                - generic [ref=e213]:
+                  - generic [ref=e214]:
+                    - button "Copy the contents from the code block" [ref=e215] [cursor=pointer]:
+                      - img [ref=e216]
+                    - generic [ref=e219]: Copy
+                  - generic [ref=e220]:
+                    - button "Ask AI" [ref=e221] [cursor=pointer]:
+                      - img [ref=e222]
+                    - generic [ref=e225]: Ask AI
+                - code [ref=e229]:
+                  - generic [ref=e230]: "---"
+                  - generic [ref=e231]: "name: commit"
+                  - generic [ref=e232]: "description: Create a git commit with a descriptive message following conventional commit format."
+                  - generic [ref=e233]: "---"
+                  - generic [ref=e234]: Look at the current git diff and create a commit with a clear,
+                  - generic [ref=e235]: descriptive message that follows conventional commit format.
+                  - generic [ref=e236]: "Use `git add` to stage relevant files first."
+              - 'heading "Navigate to header Example: review skill with tools and references" [level=3] [ref=e237]':
+                - link "Navigate to header" [ref=e238] [cursor=pointer]:
+                  - /url: "#example-review-skill-with-tools-and-references"
+                  - img [ref=e240]
+                - generic [ref=e242] [cursor=pointer]: "Example: review skill with tools and references"
+              - generic [ref=e243]:
+                - generic [ref=e244]:
+                  - generic [ref=e245]:
+                    - button "Copy the contents from the code block" [ref=e246] [cursor=pointer]:
+                      - img [ref=e247]
+                    - generic [ref=e250]: Copy
+                  - generic [ref=e251]:
+                    - button "Ask AI" [ref=e252] [cursor=pointer]:
+                      - img [ref=e253]
+                    - generic [ref=e256]: Ask AI
+                - code [ref=e260]:
+                  - generic [ref=e261]: review/
+                  - generic [ref=e262]: ├── SKILL.md
+                  - generic [ref=e263]: └── references/
+                  - generic [ref=e264]: └── checklist.md
+              - generic [ref=e265]:
+                - generic [ref=e266]:
+                  - generic [ref=e267]:
+                    - button "Copy the contents from the code block" [ref=e268] [cursor=pointer]:
+                      - img [ref=e269]
+                    - generic [ref=e272]: Copy
+                  - generic [ref=e273]:
+                    - button "Ask AI" [ref=e274] [cursor=pointer]:
+                      - img [ref=e275]
+                    - generic [ref=e278]: Ask AI
+                - code [ref=e282]:
+                  - generic [ref=e283]: "---"
+                  - generic [ref=e284]: "name: review"
+                  - generic [ref=e285]: "description: Review code changes for bugs, security issues, and style. Use when the user asks for a code review."
+                  - generic [ref=e286]: "allowed-tools:"
+                  - generic [ref=e287]: "- Read"
+                  - generic [ref=e288]: "- Glob"
+                  - generic [ref=e289]: "- Grep"
+                  - generic [ref=e290]: "---"
+                  - generic [ref=e291]: "Review the code at $ARGUMENTS for:"
+                  - generic [ref=e292]: "- Bugs and logic errors"
+                  - generic [ref=e293]: "- Security vulnerabilities"
+                  - generic [ref=e294]: "- Style and idiom issues"
+                  - generic [ref=e295]: "- Missing error handling"
+                  - generic [ref=e296]: See [checklist](references/checklist.md) for the full review checklist.
+                  - generic [ref=e297]: Provide a summary with specific line references.
+              - heading "Navigate to header Skill directories" [level=2] [ref=e298]:
+                - link "Navigate to header" [ref=e299] [cursor=pointer]:
+                  - /url: "#skill-directories"
+                  - img [ref=e301]
+                - generic [ref=e303] [cursor=pointer]: Skill directories
+              - table [ref=e306]:
+                - rowgroup [ref=e307]:
+                  - row "Directory Scope" [ref=e308]:
+                    - columnheader "Directory" [ref=e309]
+                    - columnheader "Scope" [ref=e310]
+                - rowgroup [ref=e311]:
+                  - row "~/.ante/skills/ User-level (available in all projects)" [ref=e312]:
+                    - cell "~/.ante/skills/" [ref=e313]:
+                      - code [ref=e314]: ~/.ante/skills/
+                    - cell "User-level (available in all projects)" [ref=e315]
+                  - row "agents/skills/ Project-level (available in this project)" [ref=e316]:
+                    - cell "agents/skills/" [ref=e317]:
+                      - code [ref=e318]: agents/skills/
+                    - cell "Project-level (available in this project)" [ref=e319]
+                  - row ".ante/skills/ Project-level (available in this project)" [ref=e320]:
+                    - cell ".ante/skills/" [ref=e321]:
+                      - code [ref=e322]: .ante/skills/
+                    - cell "Project-level (available in this project)" [ref=e323]
+                  - row ".claude/skills/ Project-level (available in this project)" [ref=e324]:
+                    - cell ".claude/skills/" [ref=e325]:
+                      - code [ref=e326]: .claude/skills/
+                    - cell "Project-level (available in this project)" [ref=e327]
+              - heading "Navigate to header SKILL.md frontmatter" [level=2] [ref=e328]:
+                - link "Navigate to header" [ref=e329] [cursor=pointer]:
+                  - /url: "#skill-md-frontmatter"
+                  - img [ref=e331]
+                - generic [ref=e333] [cursor=pointer]: SKILL.md frontmatter
+              - generic [ref=e334]:
+                - text: Every
+                - code [ref=e335]: SKILL.md
+                - text: must start with a YAML frontmatter block delimited by
+                - code [ref=e336]: "---"
+                - text: . The block can be empty, but the delimiters are required.
+              - table [ref=e339]:
+                - rowgroup [ref=e340]:
+                  - row "Field Required Default Description" [ref=e341]:
+                    - columnheader "Field" [ref=e342]
+                    - columnheader "Required" [ref=e343]
+                    - columnheader "Default" [ref=e344]
+                    - columnheader "Description" [ref=e345]
+                - rowgroup [ref=e346]:
+                  - row "name No Parent directory name Identifier for the skill. If omitted, the skill directory name is used." [ref=e347]:
+                    - cell "name" [ref=e348]:
+                      - code [ref=e349]: name
+                    - cell "No" [ref=e350]
+                    - cell "Parent directory name" [ref=e351]
+                    - cell "Identifier for the skill. If omitted, the skill directory name is used." [ref=e352]
+                  - row "description No First paragraph of body What this skill does and when to use it. If omitted, extracted from the first paragraph of the Markdown body." [ref=e353]:
+                    - cell "description" [ref=e354]:
+                      - code [ref=e355]: description
+                    - cell "No" [ref=e356]
+                    - cell "First paragraph of body" [ref=e357]
+                    - cell "What this skill does and when to use it. If omitted, extracted from the first paragraph of the Markdown body." [ref=e358]
+                  - row "argument-hint No — Hint text shown to the user for expected arguments (e.g. <path>)." [ref=e359]:
+                    - cell "argument-hint" [ref=e360]:
+                      - code [ref=e361]: argument-hint
+                    - cell "No" [ref=e362]
+                    - cell "—" [ref=e363]
+                    - cell "Hint text shown to the user for expected arguments (e.g. <path>)." [ref=e364]:
+                      - text: Hint text shown to the user for expected arguments (e.g.
+                      - code [ref=e365]: <path>
+                      - text: ).
+                  - row "user-invocable No true Whether the skill can be invoked by the user via slash command. Set to false for skills intended only for model invocation." [ref=e366]:
+                    - cell "user-invocable" [ref=e367]:
+                      - code [ref=e368]: user-invocable
+                    - cell "No" [ref=e369]
+                    - cell "true" [ref=e370]:
+                      - code [ref=e371]: "true"
+                    - cell "Whether the skill can be invoked by the user via slash command. Set to false for skills intended only for model invocation." [ref=e372]:
+                      - text: Whether the skill can be invoked by the user via slash command. Set to
+                      - code [ref=e373]: "false"
+                      - text: for skills intended only for model invocation.
+                  - row "disable-model-invocation No false When true, prevents the model from invoking this skill automatically." [ref=e374]:
+                    - cell "disable-model-invocation" [ref=e375]:
+                      - code [ref=e376]: disable-model-invocation
+                    - cell "No" [ref=e377]
+                    - cell "false" [ref=e378]:
+                      - code [ref=e379]: "false"
+                    - cell "When true, prevents the model from invoking this skill automatically." [ref=e380]:
+                      - text: When
+                      - code [ref=e381]: "true"
+                      - text: ", prevents the model from invoking this skill automatically."
+                  - row "allowed-tools No — YAML list of pre-approved tools the skill can use (e.g. Read, Grep, Bash(git diff -- *))." [ref=e382]:
+                    - cell "allowed-tools" [ref=e383]:
+                      - code [ref=e384]: allowed-tools
+                    - cell "No" [ref=e385]
+                    - cell "—" [ref=e386]
+                    - cell "YAML list of pre-approved tools the skill can use (e.g. Read, Grep, Bash(git diff -- *))." [ref=e387]:
+                      - text: YAML list of pre-approved tools the skill can use (e.g.
+                      - code [ref=e388]: Read
+                      - text: ","
+                      - code [ref=e389]: Grep
+                      - text: ","
+                      - code [ref=e390]: Bash(git diff -- *)
+                      - text: ).
+                  - row "metadata No — Arbitrary key-value pairs for additional metadata." [ref=e391]:
+                    - cell "metadata" [ref=e392]:
+                      - code [ref=e393]: metadata
+                    - cell "No" [ref=e394]
+                    - cell "—" [ref=e395]
+                    - cell "Arbitrary key-value pairs for additional metadata." [ref=e396]
+              - heading "Navigate to header Optional directories" [level=2] [ref=e397]:
+                - link "Navigate to header" [ref=e398] [cursor=pointer]:
+                  - /url: "#optional-directories"
+                  - img [ref=e400]
+                - generic [ref=e402] [cursor=pointer]: Optional directories
+              - generic [ref=e403]:
+                - text: Skills can include additional resources alongside
+                - code [ref=e404]: SKILL.md
+                - text: ":"
+              - generic [ref=e405]:
+                - generic [ref=e406]:
+                  - generic [ref=e407]:
+                    - button "Copy the contents from the code block" [ref=e408] [cursor=pointer]:
+                      - img [ref=e409]
+                    - generic [ref=e412]: Copy
+                  - generic [ref=e413]:
+                    - button "Ask AI" [ref=e414] [cursor=pointer]:
+                      - img [ref=e415]
+                    - generic [ref=e418]: Ask AI
+                - code [ref=e422]:
+                  - generic [ref=e423]: my-skill/
+                  - generic [ref=e424]: "├── SKILL.md # Required — instructions"
+                  - generic [ref=e425]: "├── scripts/ # Executable code the agent can run"
+                  - generic [ref=e426]: "├── references/ # Additional docs loaded on demand"
+                  - generic [ref=e427]: "└── assets/ # Templates, schemas, data files"
+              - list [ref=e428]:
+                - listitem [ref=e429]:
+                  - strong [ref=e430]:
+                    - code [ref=e431]: scripts/
+                  - text: — Self-contained scripts (Python, Bash, etc.) the agent can execute
+                - listitem [ref=e432]:
+                  - strong [ref=e433]:
+                    - code [ref=e434]: references/
+                  - text: — Detailed documentation loaded only when needed, keeping the main instructions lean
+                - listitem [ref=e435]:
+                  - strong [ref=e436]:
+                    - code [ref=e437]: assets/
+                  - text: — Static resources like templates, schemas, or lookup tables
+              - heading "Navigate to header How skills are discovered" [level=2] [ref=e438]:
+                - link "Navigate to header" [ref=e439] [cursor=pointer]:
+                  - /url: "#how-skills-are-discovered"
+                  - img [ref=e441]
+                - generic [ref=e443] [cursor=pointer]: How skills are discovered
+              - generic [ref=e444]:
+                - text: Skills are discovered from multiple directories in precedence order.
+                - strong [ref=e445]: Later directories override earlier ones
+                - text: "if they share a skill name:"
+              - list [ref=e446]:
+                - listitem [ref=e447]: System-level (built-in skills)
+                - listitem [ref=e448]:
+                  - code [ref=e449]: ~/.ante/skills/
+                  - text: (user-level)
+                - listitem [ref=e450]:
+                  - code [ref=e451]: agents/skills/
+                  - text: (project-level)
+                - listitem [ref=e452]:
+                  - code [ref=e453]: .ante/skills/
+                  - text: (project-level)
+                - listitem [ref=e454]:
+                  - code [ref=e455]: .claude/skills/
+                  - text: (project-level)
+              - generic [ref=e456]: A project-level skill overrides a user-level skill of the same name. If multiple project-level directories contain a skill with the same name, the one discovered last wins.
+              - heading "Navigate to header Using skills" [level=2] [ref=e457]:
+                - link "Navigate to header" [ref=e458] [cursor=pointer]:
+                  - /url: "#using-skills"
+                  - img [ref=e460]
+                - generic [ref=e462] [cursor=pointer]: Using skills
+              - generic [ref=e463]: "Invoke a skill during a session with the slash syntax:"
+              - generic [ref=e464]:
+                - generic [ref=e465]:
+                  - generic [ref=e466]:
+                    - button "Copy the contents from the code block" [ref=e467] [cursor=pointer]:
+                      - img [ref=e468]
+                    - generic [ref=e471]: Copy
+                  - generic [ref=e472]:
+                    - button "Ask AI" [ref=e473] [cursor=pointer]:
+                      - img [ref=e474]
+                    - generic [ref=e477]: Ask AI
+                - code [ref=e481]:
+                  - generic [ref=e482]: /commit
+              - generic [ref=e483]: "Or with arguments:"
+              - generic [ref=e484]:
+                - generic [ref=e485]:
+                  - generic [ref=e486]:
+                    - button "Copy the contents from the code block" [ref=e487] [cursor=pointer]:
+                      - img [ref=e488]
+                    - generic [ref=e491]: Copy
+                  - generic [ref=e492]:
+                    - button "Ask AI" [ref=e493] [cursor=pointer]:
+                      - img [ref=e494]
+                    - generic [ref=e497]: Ask AI
+                - code [ref=e501]:
+                  - generic [ref=e502]: /review src/core/session.rs
+              - generic [ref=e503]:
+                - text: The
+                - code [ref=e504]: $ARGUMENTS
+                - text: placeholder in the skill instructions will be replaced with whatever you pass after the skill name.
+              - heading "Navigate to header Learn more" [level=2] [ref=e505]:
+                - link "Navigate to header" [ref=e506] [cursor=pointer]:
+                  - /url: "#learn-more"
+                  - img [ref=e508]
+                - generic [ref=e510] [cursor=pointer]: Learn more
+              - generic [ref=e511]:
+                - text: The Agent Skills format is an open standard supported by multiple agent products. See the
+                - link "full specification" [ref=e512] [cursor=pointer]:
+                  - /url: https://agentskills.io/specification
+                - text: for details on naming conventions, progressive disclosure, and validation.
+            - generic [ref=e514]:
+              - link "Previous" [ref=e515] [cursor=pointer]:
+                - /url: /usage/headless
+                - img [ref=e516]
+                - generic [ref=e518]: Previous
+              - link "Sub-Agents Delegate complex tasks to specialized sub-agents Next" [ref=e519] [cursor=pointer]:
+                - /url: /extend/subagents
+                - generic [ref=e520]:
+                  - generic [ref=e521]:
+                    - generic [ref=e522]: Sub-Agents
+                    - generic [ref=e523]: Delegate complex tasks to specialized sub-agents
+                  - generic [ref=e525]:
+                    - generic [ref=e526]: Next
+                    - img [ref=e527]
+            - contentinfo [ref=e529]:
+              - link "Powered by" [ref=e532] [cursor=pointer]:
+                - /url: https://www.mintlify.com?utm_campaign=poweredBy&utm_medium=referral&utm_source=antigmalabs
+                - generic [ref=e533]: Powered by
+                - img [ref=e534]
+      - generic [ref=e546]:
+        - generic [ref=e547]:
+          - generic [ref=e548]:
+            - img [ref=e549]
+            - generic [ref=e553]: Assistant
+          - generic [ref=e554]:
+            - button [ref=e555] [cursor=pointer]:
+              - img [ref=e556]
+            - button [ref=e561] [cursor=pointer]:
+              - img [ref=e562]
+        - generic [ref=e568]: Responses are generated using AI and may contain mistakes.
+        - generic [ref=e573]:
+          - textbox "Ask a question..." [ref=e574]
+          - button "Send message" [disabled] [ref=e575]:
+            - img [ref=e576]
+  - alert [ref=e578]

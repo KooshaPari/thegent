@@ -42,8 +42,8 @@ class TailscaleConfig(BaseSettings):
         populate_by_name=True,
     )
 
-    api_key: str | None = Field(None, alias="THGENT_TAILSCALE_API_KEY")
-    tailnet: str = Field("personal", alias="THGENT_TAILSCALE_TAILNET")
+    api_key: str | None = Field(default=None, validation_alias="THGENT_TAILSCALE_API_KEY")
+    tailnet: str = Field(default="personal", validation_alias="THGENT_TAILSCALE_TAILNET")
     timeout_s: float = 10.0
 
 

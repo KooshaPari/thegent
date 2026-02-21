@@ -1,0 +1,139 @@
+# leasing_api
+
+Source: docs/reference/api/leasing_api.md
+
+---
+
+# leasing API Reference
+
+> **Source**: `src/thegent/orchestration/resource/leasing.py`
+
+## EditLease
+
+### Methods
+
+#### EditLease.is_expired
+
+```
+is_expired(self: Any)
+```
+
+---
+
+---
+
+## EditLeaseManager
+
+MTSP-11: Centralized edit lease management for multi-tenant agent environments.
+
+Prevents agent-on-agent edit collisions by providing advisory locks with TTL.
+
+### Methods
+
+#### EditLeaseManager.__init__
+
+```
+__init__(self: Any, state_dir: Path)
+```
+
+---
+
+#### EditLeaseManager.acquire
+
+```
+acquire(self: Any, path: str, agent_id: str, duration: float, force: bool)
+```
+
+Acquire an advisory lease on a file path.
+
+---
+
+#### EditLeaseManager.check
+
+```
+check(self: Any, path: str, agent_id: Any)
+```
+
+Check if a path is currently leased by another agent.
+
+---
+
+#### EditLeaseManager.prune
+
+```
+prune(self: Any)
+```
+
+Remove all expired leases.
+
+---
+
+#### EditLeaseManager.release
+
+```
+release(self: Any, path: str, agent_id: str)
+```
+
+Release a lease if held by the agent.
+
+---
+
+---
+
+## acquire
+
+```
+acquire(self: Any, path: str, agent_id: str, duration: float, force: bool)
+```
+
+Acquire an advisory lease on a file path.
+
+---
+
+## check
+
+```
+check(self: Any, path: str, agent_id: Any)
+```
+
+Check if a path is currently leased by another agent.
+
+---
+
+## get_lease_manager
+
+```
+get_lease_manager(state_dir: Path)
+```
+
+Return shared in-memory EditLeaseManager. MTSP-14: zero-latency lock coordination.
+
+---
+
+## is_expired
+
+```
+is_expired(self: Any) -> bool
+```
+
+---
+
+## prune
+
+```
+prune(self: Any)
+```
+
+Remove all expired leases.
+
+---
+
+## release
+
+```
+release(self: Any, path: str, agent_id: str)
+```
+
+Release a lease if held by the agent.
+
+---

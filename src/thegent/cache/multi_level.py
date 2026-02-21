@@ -152,7 +152,7 @@ class MultiLevelCache:
         result: dict[str, Any] = {"l1_size": l1_len, "l1_maxsize": self._l1.maxsize}
         if self._l2 is not None:
             with contextlib.suppress(Exception):
-                result["l2_size"] = len(self._l2)
+                result["l2_size"] = len(self._l2)  # type: ignore[arg-type]
                 result["l2_volume_bytes"] = self._l2.volume()
         else:
             result["l2_size"] = 0
@@ -188,7 +188,7 @@ def cached_multi(cache: MultiLevelCache):
 
     def decorator(func):
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any):
             try:
                 key = (func.__qualname__, args, tuple(sorted(kwargs.items())))
                 # Verify hashability (tuple of kwargs items may contain unhashable values)
@@ -206,7 +206,8 @@ def cached_multi(cache: MultiLevelCache):
                 cache.set(key, result)
             return result
 
-        wrapper.cache = cache  # expose cache for introspection / clearing
+        # Type annotation for introspection
+        wrapper.cache = cache  # type: ignore[attr-defined]
         return wrapper
 
     return decorator

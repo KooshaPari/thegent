@@ -507,6 +507,70 @@ class TestScrapeMinimax:
 
 
 # ---------------------------------------------------------------------------
+# scrape_ante
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestScrapeAnte:
+    """Tests for scrape_ante (Ante harness model discovery)."""
+
+    @patch("thegent.models.ante_scraper.Path.home")
+    def test_returns_model_from_settings(self, mock_home: MagicMock) -> None:
+        # @trace FR-MOD-031
+        """scrape_ante extracts model from ~/.ante/settings.json."""
+        mock_settings_path = MagicMock()
+        mock_settings_path.exists.return_value = True
+        mock_home.return_value = MagicMock(__truediv__=lambda self, x: (
+            mock_settings_path if x == ".ante" else MagicMock()
+        ))
+
+        settings_data = {
+            "model": {"name": "claude-sonnet-4-5"},
+            "provider": "anthropic-subscription",
+        }
+
+        with patch("builtins.open", create=True) as mock_open:
+            mock_open.return_value.__enter__.return_value.read.return_value = json.dumps(settings_data)
+            from thegent.models.scrapers import scrape_ante
+
+            result = scrape_ante()
+            assert isinstance(result, list)
+
+    @patch("thegent.models.ante_scraper.Path.home")
+    def test_returns_fallback_when_settings_missing(self, mock_home: MagicMock) -> None:
+        # @trace FR-MOD-032
+        """scrape_ante returns default when ~/.ante/settings.json not found."""
+        mock_settings_path = MagicMock()
+        mock_settings_path.exists.return_value = False
+        mock_home.return_value = MagicMock(__truediv__=lambda self, x: (
+            mock_settings_path if x == ".ante" else MagicMock()
+        ))
+
+        from thegent.models.scrapers import scrape_ante
+
+        result = scrape_ante()
+        assert result == ["claude-haiku-4-5"]
+
+    @patch("thegent.models.ante_scraper.Path.home")
+    def test_handles_malformed_settings_json(self, mock_home: MagicMock) -> None:
+        # @trace FR-MOD-033
+        """scrape_ante returns default when settings.json is malformed."""
+        mock_settings_path = MagicMock()
+        mock_settings_path.exists.return_value = True
+        mock_home.return_value = MagicMock(__truediv__=lambda self, x: (
+            mock_settings_path if x == ".ante" else MagicMock()
+        ))
+
+        with patch("builtins.open", create=True) as mock_open:
+            mock_open.return_value.__enter__.return_value.read.side_effect = ValueError("invalid json")
+            from thegent.models.scrapers import scrape_ante
+
+            result = scrape_ante()
+            assert result == ["claude-haiku-4-5"]
+
+
+# ---------------------------------------------------------------------------
 # get_scraped_catalog
 # ---------------------------------------------------------------------------
 

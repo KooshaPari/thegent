@@ -43,6 +43,12 @@ repos:
         language: system
         pass_filenames: false
 
+      - id: max-lines-gate
+        name: Canonical Max-Lines Gate
+        entry: task quality:max-lines
+        language: system
+        pass_filenames: false
+
       - id: tach
         name: Architectural Boundary Check
         entry: tach check

@@ -1,7 +1,5 @@
 """Thegent Isolation: Multi-tenancy and Sandboxing Control."""
 
-from typing import List, Optional
-
 import typer
 from rich.console import Console
 

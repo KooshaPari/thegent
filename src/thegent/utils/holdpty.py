@@ -62,7 +62,7 @@ class PTYHolder:
             try:
                 conn, _ = self.server_sock.accept()
                 self._handle_connection(conn)
-            except TimeoutError:
+            except TimeoutError:  # noqa: PERF203 - intentional per-item error handling
                 continue
             except Exception:
                 break

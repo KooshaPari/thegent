@@ -6,7 +6,7 @@ from typing import Any
 class LibraryYAMLResearch:
     """Research for ruamel.yaml migration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize YAML research."""
         self.migrated_files: list[str] = []
 

@@ -56,7 +56,7 @@ class TUICompositor:
 
         for pane in panes:
             pane_type = "Claude" if is_claude_code_pane(pane) else "Shell"
-            table.add_row(pane.pane_id, pane.session_name, pane.path, pane_type)
+            table.add_row(pane.pane_id, pane.session_name, pane.pane_current_path, pane_type)
         if not panes:
             table.add_row("-", "-", "No panes detected", "-")
         return table

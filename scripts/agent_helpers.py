@@ -411,6 +411,7 @@ def run_quality_check(
                 capture_output=True,
                 text=True,
                 timeout=timeout,
+                check=False,
             )
             output = (proc.stdout or "") + (proc.stderr or "")
             return proc.returncode == 0, output

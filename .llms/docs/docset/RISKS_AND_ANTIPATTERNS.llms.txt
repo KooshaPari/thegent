@@ -1,0 +1,821 @@
+# RISKS_AND_ANTIPATTERNS
+
+Source: docs/docset/RISKS_AND_ANTIPATTERNS.md
+
+---
+
+# Thegent Risks and Anti-Patterns Catalog
+
+**Date:** 2026-02-14
+**Status:** Comprehensive risk register, anti-pattern inventory, and failure taxonomy
+**Source:** Mega-synthesis (Section 3.7, 5.2, 8.3), gaps report, and reliability research
+**Audience:** Architects, engineers, operators, governance teams
+
+---
+
+## Part 1: Anti-Pattern Catalog (15 Critical Anti-Patterns)
+
+Anti-patterns identified across the kush ecosystem and industry state-of-the-art. Each entry includes detection, prevention, and correct alternatives.
+
+### AP-001: Schema-Last Development
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-001 |
+| **Name** | Schema-Last Development |
+| **Where Observed** | XML research, task-tool proto development |
+| **Risk Level** | Critical |
+| **Description** | Contracts (XML tags, JSON fields) are inferred from code rather than defined first. Documentation and code diverge. Integration partners attempt to conform to doc; code rejects them. |
+| **Detection** | Mismatch between documented contract (e.g., `xml_contract.md`) and enforced contract (e.g., `task_graph.py:135-161`). Schema validation logic is reactive, added after failures occur. |
+| **Prevention** | **Contract-first mandate (P-005):** Schema is the source of truth. Docs are generated from schema. Code validates against schema. Integration tests verify doc/code/contract alignment before any API call. |
+| **Remediation** | 1) Extract canonical schema from code. 2) Publish as OpenAPI/JSON Schema. 3) Generate docs from schema. 4) Add conformance test suite (P-019) to CI/CD. 5) Establish schema governance (P-009). |
+| **Correct Pattern** | P-005 (Contract-First Mandate), P-006 (Code-Is-Contract), P-009 (Schema Governance) |
+| **Test Case** | For every provider adapter: validate that documented XML tags match code-enforced tags. Flag missing, extra, or type-mismatch errors. |
+
+### AP-002: Doc-Code Mismatch as Authority
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-002 |
+| **Name** | Doc-Code Mismatch as Authority |
+| **Where Observed** | task-tool: `xml_contract.md` specifies PascalCase `<TaskUpdate>` but code enforces snake_case `<task_graph>` |
+| **Risk Level** | Critical |
+| **Description** | Documentation and code define different contracts. Neither is canonical. Users/integrators receive conflicting signals. Silent validation failures leave debugging ambiguous. |
+| **Detection** | Contract mismatch tests fail on integration. Documentation examples fail against actual API. Code silently rejects payloads. |
+| **Prevention** | **Code-is-contract principle (P-006):** Code is the authoritative contract. Documentation is generated from code (docstrings, type hints, validator metadata). Schema mismatch is a build error. |
+| **Remediation** | 1) Codify task-tool's 18-tag vocabulary in Python TypedDict with strict validation. 2) Mark schema as version 1.0. 3) Generate `xml_contract.md` from code. 4) Add bidirectional test: doc -> code -> doc must round-trip. |
+| **Correct Pattern** | P-006 (Code-Is-Contract), P-019 (Conformance Test Suite) |
+| **Test Case** | For each documented tag: write a test that (a) sends documented example, (b) verifies code accepts it, (c) round-trips to schema. Any divergence fails build. |
+
+### AP-003: Regex-Only XML Parsing
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-003 |
+| **Name** | Regex-Only XML Parsing |
+| **Where Observed** | Zen `agent_xml_enhancer.py`, legacy agent response parsers |
+| **Risk Level** | High |
+| **Description** | XML is parsed via regex instead of proper XML parser. Malformed XML (nesting errors, truncation, duplicate tags, mixed case) causes silent parse failures or incorrect extraction. Fallback heuristics obscure real errors. |
+| **Detection** | XML with nested tags, escaped quotes, CDATA sections, or partial/truncated output causes parse failures. Confidence scores degrade silently. |
+| **Prevention** | **XMLPullParser with streaming fallback (P-013, P-014):** Use iterparse or sax-like parser for streaming XML. Accumulate partial XML in buffer. On parse failure, emit partial results with confidence degradation event (P-016). Use sloppy-xml library for tolerant parsing of malformed output. |
+| **Remediation** | 1) Replace regex extraction with XMLPullParser. 2) Implement streaming buffer (Zen's fastmcp_agent_client.py pattern). 3) Add golden corpus tests (40-50 adversarial XML examples). 4) Log confidence degradation on every fallback. |
+| **Correct Pattern** | P-013 (XMLPullParser), P-014 (Streaming Buffer), P-016 (Confidence Degradation), P-015 (Sloppy-XML Fallback) |
+| **Test Case** | 40-50 adversarial XML payloads: nesting errors, truncation, duplicate tags, mixed case, CDATA, escape sequences. Parser must extract best-effort results without crashes or silent failures. |
+
+### AP-004: Single-Provider Routing
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-004 |
+| **Name** | Single-Provider Routing (No Fallback) |
+| **Where Observed** | Thegent current architecture, naive agent systems |
+| **Risk Level** | Critical |
+| **Description** | Agent calls are routed to a single provider. If that provider fails (outage, rate limit, quota), the entire system fails. No fallback, no failover, no graceful degradation. |
+| **Detection** | Provider outage causes 100% error rate. System has no awareness of alternative providers. Retry logic does not switch providers. |
+| **Prevention** | **Function-with-fallbacks chains (P-022):** Each agent call specifies [primary_provider, secondary_provider, ...]. Request is tried on primary; on failure (timeout, rate limit, error), retry on next provider with backoff. Fallback chain is configurable per task. |
+| **Remediation** | 1) Implement function_with_fallbacks pattern from Pheno-SDK. 2) Define provider fallback chains in agent config. 3) Add scoring model (P-080): rank providers by reliability_score, latency_p95, cost, capability_match. 4) Route to best-scored provider; fallback to next. |
+| **Correct Pattern** | P-022 (Function-with-Fallbacks), P-080 (Provider Scoring) |
+| **Test Case** | Inject provider failures (timeout, 503). Verify system automatically failovers to secondary provider. Verify fallback chain exhaustion triggers circuit breaker and DLQ. |
+
+### AP-005: Flat Failure Taxonomy
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-005 |
+| **Name** | Flat Failure Taxonomy |
+| **Where Observed** | Original 7-class taxonomy, many agent systems |
+| **Risk Level** | High |
+| **Description** | All failures are classified into a small taxonomy (e.g., 7 classes). A hallucination is treated same as a tool crash is treated same as a network timeout. Recovery strategies are one-size-fits-all and often incorrect. Wrong recovery is applied, wasting resources and prolonging outage. |
+| **Detection** | Recovery playbook efficacy is low (<60%). Retries succeed <50% of the time. Logs show "retry" applied to permanent failures. |
+| **Prevention** | **MAST 14-mode taxonomy with mapped playbooks (P-040, P-041):** 14 failure modes covering infrastructure (3), model (4), tool (2), logic (3), security (2). Each mode has a distinct recovery strategy. Classifier routes failure to appropriate playbook. |
+| **Remediation** | 1) Adopt MAST 14-mode (see Section 4 below). 2) Implement failure classifier that inspects error message, stack, and context. 3) Map each mode to recovery playbook. 4) Log mode + playbook for every failure. 5) Measure recovery playbook hit rate (target >= 80%). |
+| **Correct Pattern** | P-040 (MAST 14-Mode), P-041 (Recovery Playbook Selection) |
+| **Test Case** | 14 failure scenarios (1 per mode). For each, verify correct playbook is selected and executed. Measure recovery success rate; alert if < 80%. |
+
+### AP-006: Infinite Retry Without DLQ
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-006 |
+| **Name** | Infinite Retry Without Dead-Letter Queue |
+| **Where Observed** | Common in agent systems, legacy tenacity configs |
+| **Risk Level** | Critical |
+| **Description** | Failed tasks are retried indefinitely. No circuit breaker, no DLQ, no escape hatch. System exhausts resources (threads, memory, API quotas). Pipeline stalls. Operator must manually kill tasks. |
+| **Detection** | Task queue grows unbounded. Retry counts climb into thousands. Memory usage grows. API quotas are exhausted by retry storm. |
+| **Prevention** | **Dead-Letter Queue with poison pill detection (P-042):** After N retries (e.g., 3), move to DLQ. Track content_hash; if same content fails across multiple runs/contexts, mark as poison pill. DLQ provides manual review interface with replay capability. |
+| **Remediation** | 1) Add retry budget: max 3 attempts per task. 2) On exhaustion, route to DLQ instead of retry queue. 3) Implement poison pill detector: if content_hash appears in DLQ > 2x, quarantine. 4) Add DLQ replay UI with manual approval. 5) Monitor DLQ depth; alert if > 100. |
+| **Correct Pattern** | P-042 (Dead-Letter Queue), P-036 (Idempotency Tokens), P-043 (Poison Pill Detection) |
+| **Test Case** | Force task to fail 5x. Verify it moves to DLQ after 3 retries. Verify replay capability. Verify poison pill detection if re-enqueued. |
+
+### AP-007: Code-Embedded Policy
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-007 |
+| **Name** | Code-Embedded Policy |
+| **Where Observed** | Common in agent systems, legacy governance |
+| **Risk Level** | High |
+| **Description** | Policy logic (e.g., "agents can only use tools X, Y, Z") is hardcoded in application code. Policy changes require code review, deployment, and restart. Policy is not auditable or versioned. |
+| **Detection** | Policy change requires PR + deploy. No policy versioning. No audit trail of policy decisions. |
+| **Prevention** | **Declarative OPA/Rego with OPAL distribution (P-066, P-067):** Policy is written in Rego declarative language. Stored in policy registry. Evaluated at decision time via OPA server (<5ms latency target). OPAL distributes policy changes to all agents without deploy. Every decision is logged with policy version. |
+| **Remediation** | 1) Write governance policies in OPA/Rego (tool approval, cost limits, provider constraints). 2) Deploy OPA server. 3) Add policy evaluation gate to agent execution (P-056). 4) Log policy version + decision for every choice. 5) Implement policy version control in Git. |
+| **Correct Pattern** | P-066 (OPA Policy Engine), P-067 (OPAL Distribution), P-056 (Tool Approval Loop) |
+| **Test Case** | Change policy: deny tool X. Verify policy is evaluated without deploy. Verify decision logged with policy version. Verify audit trail shows timestamp + decision + rationale. |
+
+### AP-008: Confidence Without Calibration
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-008 |
+| **Name** | Confidence Scores Without Calibration |
+| **Where Observed** | Common in agent systems, LLM output scoring |
+| **Risk Level** | High |
+| **Description** | System outputs confidence scores (e.g., 0-100%) for decisions, but scores are uncalibrated. A score of 80% is not actually 80% likely to succeed. Operators trust meaningless numbers. Operator override rate is high. Distrust erodes over time. |
+| **Detection** | Histogram of confidence scores vs. actual outcomes: distribution is flat or inverted (high confidence, low success). Operator override rate > 50%. |
+| **Prevention** | **Calibration curves with historical tracking (P-098):** For each decision class (e.g., "provider selection", "cost-cutting"), maintain calibration curve: confidence -> actual success rate. Periodically recalibrate (weekly) against historical data. Display both raw score and calibrated probability. |
+| **Remediation** | 1) Collect 1000s of (confidence, outcome) pairs. 2) Fit isotonic regression or Platt scaling to derive calibration curve. 3) Publish calibration curve in operator dashboard. 4) Display "80% confidence => 73% actual success (calibrated)". 5) Recalibrate weekly. |
+| **Correct Pattern** | P-098 (Calibration Curves), P-092 (Progressive Disclosure) |
+| **Test Case** | Generate 1000 decisions with confidence scores. Compare histogram of scores vs. actual outcomes. Verify calibration error < 5%. Display calibration curve; operator should report meaningful. |
+
+### AP-009: Recovery Within Failing Agent
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-009 |
+| **Name** | Recovery Logic Embedded in Failing Agent |
+| **Where Observed** | Jack Vanlightly "Recovery: Mechanisms, Guarantees, Limits" research |
+| **Risk Level** | High |
+| **Description** | Agent detects its own failure and attempts to recover (rollback, retry, rephrase). But if the agent's cognition is corrupted (hallucination, context overflow, logic error), recovery logic may also be corrupted. Agent may compound the error or hide it. Recovery is unreliable. |
+| **Detection** | Recovery attempts increase failure rate. Manual intervention required after "automatic" recovery. Logs show recovery attempted but failure persisted. |
+| **Prevention** | **External recovery service (P-100):** A separate, minimal recovery service observes agent execution. On failure, recovery service (not agent) decides next action. Recovery service is stateless, immutable, testable. Agent cannot hide or compound failures. |
+| **Remediation** | 1) Implement external failure observer (state machine + recovery engine). 2) Observer polls agent status, checkpoints, and logs. 3) On failure, observer (not agent) executes recovery playbook. 4) Observer decides: retry, escalate, checkpoint+rollback, DLQ. 5) Log all recovery decisions in immutable audit log. |
+| **Correct Pattern** | P-100 (External Recovery Service), P-041 (Recovery Playbook Selection), P-065 (State Machine) |
+| **Test Case** | Corrupt agent state (e.g., hallucination in context). Agent attempts self-recovery. Observer detects corruption and disables agent-driven recovery. Verify recovery service takes control. |
+
+### AP-010: Alert Storm Without Correlation
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-010 |
+| **Name** | Alert Storm Without Correlation |
+| **Where Observed** | Common in observability, legacy monitoring |
+| **Risk Level** | High |
+| **Description** | One real failure (e.g., provider outage) triggers 100s of alerts (one per retrying task). Operator is overwhelmed. Signal-to-noise ratio is so low that real issues are missed. Operator fatigue sets in. |
+| **Detection** | Alert volume > 10/hr. Operator reports "noise". Real issues are missed. Alert acknowledgment rate is low. |
+| **Prevention** | **Correlation-first with dedup windows (P-094):** Alerts are grouped by root cause (provider, component, time window). Deduplicate identical alerts within 30s window. Show count ("1000 tasks failed on provider X") not individual alerts. Surface root cause, not symptoms. |
+| **Remediation** | 1) Group alerts by component + error_code + time window (30s). 2) Show aggregated count. 3) Implement alert correlation: trace failed tasks back to provider/infrastructure/policy. 4) Alert on root cause only. 5) Monitor alert volume; alert if > 5/hr. |
+| **Correct Pattern** | P-094 (Correlation and Dedup), P-086 (Root Cause Analysis) |
+| **Test Case** | Inject provider failure affecting 1000 tasks. Verify alerts are grouped into 1-2 high-level alerts (not 1000). Verify operator dashboard shows root cause clearly. |
+
+### AP-011: All-or-Nothing Rollback
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-011 |
+| **Name** | All-or-Nothing Rollback |
+| **Where Observed** | Common in distributed systems, legacy deployment strategies |
+| **Risk Level** | High |
+| **Description** | When a deployment or configuration change causes issues, entire system is rolled back. This may fix the new problem but cause a *secondary* incident (e.g., revert loses recent good changes, stalls in-flight work, or corrupts state). |
+| **Detection** | Rollback causes new failures. RTO (recovery time objective) is high. Operator hesitates to rollback. |
+| **Prevention** | **Graduated rollback with selective revert (P-112, P-113):** Instead of reverting all changes, revert only the problematic change. Use canary deployment (P-082) to validate changes. If issue detected, revert that cohort, not entire system. |
+| **Remediation** | 1) Implement blue-green deployment with traffic split. 2) Route small % of traffic to green (new version). 3) Monitor error rate on green; if exceeds threshold, shift traffic back to blue. 4) Do NOT revert all state; revert only the change. 5) Log all rollback decisions. |
+| **Correct Pattern** | P-112 (Selective Revert), P-113 (Graduated Rollback), P-082 (Canary Deployment) |
+| **Test Case** | Deploy change affecting 10% of tasks. Inject failure in 5% of new tasks. Verify system automatically routes those tasks back to old version. Verify no data loss. Verify error rate recovers. |
+
+### AP-012: Implicit State Changes
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-012 |
+| **Name** | Implicit State Changes (Unauditable Behavior) |
+| **Where Observed** | Ad-hoc multi-agent coordination, legacy agent systems |
+| **Risk Level** | High |
+| **Description** | State transitions (agent status, task status, checkpoint state) happen implicitly during execution. No explicit state machine. State changes are not logged. Behavior is unreproducible. Debugging is hard. |
+| **Detection** | System state changes cannot be traced. Replay does not reproduce same behavior. Debugging requires reading code flow instead of state logs. |
+| **Prevention** | **Explicit state machine with transition guards (P-065):** All state transitions are explicit, named, logged. State machine is a first-class artifact (drawn, documented, tested). Transitions are guarded (precondition checks). Invalid transitions are rejected. Every state change is logged with timestamp + actor + reason. |
+| **Remediation** | 1) Define state machine diagram (state + transitions). 2) Implement state machine validator. 3) Log every transition with (from_state, to_state, trigger, actor, timestamp). 4) Add tests for valid/invalid transitions. 5) Use for debugging: replay state log to reproduce behavior. |
+| **Correct Pattern** | P-065 (State Machine), P-039 (Time-Travel Debugging), P-016 (Confidence Degradation) |
+| **Test Case** | Execute agent workflow. Capture state transition log. Replay log; verify same behavior reproduced. Attempt invalid transition; verify rejected. |
+
+### AP-013: One-Size-Fits-All Display
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-013 |
+| **Name** | One-Size-Fits-All UI Display |
+| **Where Observed** | Common in dashboards, legacy operator cockpits |
+| **Risk Level** | Medium |
+| **Description** | Dashboard shows all metrics, all details for all user personas (developer, SRE, executive, domain expert). Some users are overwhelmed; others don't find what they need. Progressive disclosure is absent. |
+| **Detection** | User surveys: 30% find dashboard "too detailed", 30% find it "not detailed enough", 40% find it "confusing". Average time to find metric is > 2 min. |
+| **Prevention** | **Persona-based progressive disclosure (P-092):** Dashboard renders differently based on user persona. Developer sees code + error traces. SRE sees metrics + alerts. Executive sees KPIs + health. Expandable sections reveal more detail on demand. |
+| **Remediation** | 1) Define 4 personas (Developer, SRE, Executive, Domain Expert). 2) For each persona, specify info hierarchy (essential, important, optional, advanced). 3) Implement dashboard with persona selector. 4) Use Tier 1/2/3 progressive disclosure (P-092). 5) A/B test; verify time-to-insight improves. |
+| **Correct Pattern** | P-092 (Progressive Disclosure), P-093 (Persona-Based Defaults) |
+| **Test Case** | Open dashboard as different personas. Verify essential info is visible in <1s. Verify advanced sections are expandable. Verify irrelevant metrics are hidden. |
+
+### AP-014: Hardcoded Resilience Logic
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-014 |
+| **Name** | Hardcoded Resilience Logic |
+| **Where Observed** | Common in microservices, legacy agent code |
+| **Risk Level** | Medium |
+| **Description** | Retry logic, circuit breaker thresholds, timeouts, backoff strategies are hardcoded in source code. Changes require code edit + deploy. Cannot be tested independently. Cannot be swapped (e.g., exponential backoff vs. linear backoff). |
+| **Detection** | Resilience behavior cannot be changed without code review + deploy. Testing resilience requires elaborate mocking. Different services have different hardcoded thresholds (inconsistent). |
+| **Prevention** | **Dependency-injected resilience stack (P-044):** Resilience policies (retry, circuit breaker, timeout, backoff) are injected at runtime. Specified in config files or policy engine. Different services can share same policy spec. Policies can be swapped without code change. |
+| **Remediation** | 1) Define resilience policy schema: { retry: { max_attempts, backoff_strategy }, circuit_breaker: { failure_threshold, timeout }, ... }. 2) Implement DI container to inject policies. 3) Load policies from config file or OPA. 4) Implement provider-specific policy overrides. 5) Test resilience policies independently. |
+| **Correct Pattern** | P-044 (DI-Composed Resilience Stack), P-014 (Streaming Buffer), P-041 (Recovery Playbook Selection) |
+| **Test Case** | Define 3 resilience policies (aggressive, balanced, conservative). Swap policies without code change. Inject failures; verify each policy behaves correctly. |
+
+### AP-015: Endpoint Explosion
+
+| Field | Content |
+|-------|---------|
+| **ID** | AP-015 |
+| **Name** | Endpoint Explosion (Inconsistent API Surface) |
+| **Where Observed** | Common in API design, legacy agent systems |
+| **Risk Level** | Medium |
+| **Description** | System exposes 20+ endpoints with inconsistent naming, argument order, behavior. Each endpoint has its own quirks. Integration is tedious. Inconsistencies introduce bugs. Maintenance burden is high. |
+| **Detection** | API reference has 20+ endpoints. Developers report learning curve > 1 day. Common mistakes (wrong argument order, forgetting required param). Inconsistent error formats. |
+| **Prevention** | **Consolidated tools with operation enums (P-012):** Instead of 20 endpoints, provide 5 consolidated tools. Each tool accepts an `operation` enum (e.g., `run`, `bg`, `ps`, `stop`, `logs`). Arguments are consistent across operations. Error format is uniform. |
+| **Remediation** | 1) Group related endpoints into tools (e.g., session_management: create/list/resume/delete). 2) Define `operation` enum. 3) Implement single handler per tool that dispatches on operation. 4) Standardize error format. 5) Generate docs from tool definition (no manual sync). |
+| **Correct Pattern** | P-012 (Consolidated Tools), P-005 (Contract-First) |
+| **Test Case** | Query all endpoints. Verify: (a) each takes consistent argument order, (b) error formats match, (c) operations group logically, (d) docs auto-generate correctly. |
+
+---
+
+## Part 2: Critical Integration Points (12 Integration Risks)
+
+High-risk connections between major components. Failure in any of these integration points cascades to system-wide outage.
+
+### IP-001: CSM Schema <-> Provider Adapters
+
+**Components:** WP-X2 (Canonical Structured Model), WP-X5 (Provider adapters)
+
+**Risk Description:** Canonical Schema (CSM) defines data contract across providers. Each provider adapter must emit CSM-conformant output. If schema drifts (new field in CSM not mapped by adapter), adapter silently ignores or crashes.
+
+**Impact if Failure Occurs:** Schema divergence is silent. Integration tests pass locally but fail in prod. Operator cannot correlate fields across providers. Data is lost or corrupted mid-pipeline.
+
+**Mitigation Strategy:**
+- Conformance test suite (P-019): for each provider, generate golden corpus of 50+ real responses. Verify each response maps to CSM without data loss.
+- Drift alarms (P-010): on every adapter output, validate CSM conformance. If validation fails, emit degradation event (P-016) and route to DLQ.
+- Schema versioning: CSM version + adapter version must be compatible. Compatibility matrix is checked at startup.
+
+**Monitoring Approach:**
+- Metric: `schema_conformance_rate` (% of adapter outputs that pass CSM validation). Target: 100%. Alert if < 99%.
+- Metric: `schema_drift_events` (count of schema divergences detected). Alert if > 0.
+
+**Rollback Plan:** If CSM change breaks adapters, revert CSM. Notify adapter teams. Coordinate multi-team rollout of CSM + adapter versions.
+
+### IP-002: Contract Registry <-> Routing Engine
+
+**Components:** WP-X1 (Contract registry), WP-1001 (Routing engine)
+
+**Risk Description:** Routing engine consults contract registry to determine provider capabilities. If registry is stale or version mismatch, routing logic misroutes. E.g., routing to provider that claims capability X but does not actually support X (version mismatch).
+
+**Impact if Failure Occurs:** Requests routed to incompatible providers. Failures cascade. SLA misses. Customer impact.
+
+**Mitigation Strategy:**
+- Capability negotiation at connection time (P-062): on every provider connection, query provider's advertised capabilities. Verify version compatibility. Cache for 5 min.
+- Contract version pinning: routing engine specifies required CSM version. Provider must match. Reject mismatches.
+- Fallback chain: if primary provider rejects request (version mismatch), try secondary provider.
+
+**Monitoring Approach:**
+- Metric: `contract_mismatch_errors` (count of "provider rejected capability" errors). Alert if > 1/min.
+- Metric: `routing_success_rate` (% of requests successfully routed on first attempt). Target: 99%. Alert if < 95%.
+
+**Rollback Plan:** If contract change breaks routing, revert contract. Require manual provider config update + restart.
+
+### IP-003: Policy Engine <-> Governance Gates
+
+**Components:** WP-3001 (OPA policy engine), WP-Y5 (Governance gates in execution)
+
+**Risk Description:** Governance gates (tool approval, cost limits, rate limits) rely on policy engine evaluation. If policy evaluation is slow (> 5ms target), gates become bottleneck. If policy is wrong, gates either over-restrict (block valid tasks) or under-restrict (allow invalid tasks).
+
+**Impact if Failure Occurs:** If gates are slow: throughput tanks. If gates are wrong: policy bypass, compliance breach, cost overage, security incident.
+
+**Mitigation Strategy:**
+- OPA compiled partial evaluation (< 5ms target): pre-compile frequently-evaluated policies. Use partial evaluation to reduce runtime interpretation overhead.
+- Policy test coverage: every policy rule has test cases. Coverage >= 80%.
+- Policy versioning: every policy change is versioned, reviewed, and tested before distribution.
+
+**Monitoring Approach:**
+- Metric: `policy_evaluation_latency_p99` (99th percentile latency). Target: < 5ms. Alert if > 10ms.
+- Metric: `policy_bypass_rate` (count of requests that should have been blocked but weren't). Alert if > 0.
+- Metric: `policy_coverage` (% of policies with tests). Target: 100%. Alert if < 80%.
+
+**Rollback Plan:** If policy change breaks gates, revert policy. Notify ops team. Re-evaluate all in-flight tasks with old policy.
+
+### IP-004: Checkpoint Service <-> Recovery Playbooks
+
+**Components:** WP-2001 (Checkpoint service), WP-2004 (Recovery playbooks)
+
+**Risk Description:** Checkpoints record execution state at key points. Recovery playbooks use checkpoints to rollback on failure. If checkpoint is stale/corrupt/missing, rollback fails. Agent resumes from bad state. Inconsistency cascades.
+
+**Impact if Failure Occurs:** Rollback fails silently. Agent resumes with inconsistent state. Results are corrupted. Manual recovery required. Data loss.
+
+**Mitigation Strategy:**
+- Idempotency tokens (P-036): every action is tagged with (run_id, step_index, action_type, content_hash). Recovery playbooks use tokens to ensure no duplicate execution.
+- Compensation handlers (P-037): if rollback fails, compensation handler explicitly undoes partial changes.
+- Checkpoint integrity checks: on every checkpoint, compute hash. On restore, verify hash. Reject corrupt checkpoints.
+
+**Monitoring Approach:**
+- Metric: `checkpoint_integrity_rate` (% of checkpoints that verify correctly on restore). Target: 100%. Alert if < 99%.
+- Metric: `rollback_success_rate` (% of rollbacks completing within SLA). Target: 99%. Alert if < 95%.
+
+**Rollback Plan:** If checkpoint service fails, DLQ affected tasks. Manual recovery required. Contact support.
+
+### IP-005: Cost Tracking <-> Routing Decisions
+
+**Components:** WP-Y4 (Cost tracking), WP-5003 (Cost-based routing)
+
+**Risk Description:** Routing engine makes decisions based on cost (prefer cheaper provider). If cost tracking is inaccurate or delayed, routing may over-optimize for cost and under-optimize for quality. SLA misses. Customer impact.
+
+**Impact if Failure Occurs:** Cost obsession degrades quality. SLA miss rate climbs. Customer complaints. Churn.
+
+**Mitigation Strategy:**
+- Cost-per-quality ratio guard (P-083): define acceptable cost-quality tradeoff. Routing engine must not degrade quality by > 5% even if cost savings is > 50%.
+- Cost prediction with confidence intervals: cost tracker reports 95% confidence interval. Routing uses upper bound to avoid surprises.
+- Cost audit: monthly reconcile predicted cost vs. actual billed cost. Alert if > 10% divergence.
+
+**Monitoring Approach:**
+- Metric: `cost_per_successful_task` (actual cost). Alert if > 120% budget.
+- Metric: `quality_impact_from_cost_optimization` (SLA miss rate delta). Alert if > 5%.
+- Metric: `cost_prediction_accuracy` (predicted vs. actual). Target: < 10% divergence.
+
+**Rollback Plan:** If cost optimization breaks quality SLA, disable cost-based routing. Use quality-first routing until cost tracking is fixed.
+
+### IP-006: TRAFFIC KPIs <-> Operator Cockpit
+
+**Components:** WP-Y7 (TRAFFIC metrics), WP-4001 (Operator cockpit UI)
+
+**Risk Description:** Cockpit displays TRAFFIC KPIs in real-time. If KPI data is stale (> 30s old), operator decisions are based on outdated info. Operator may miss active incidents. May make wrong decisions.
+
+**Impact if Failure Occurs:** Stale data leads to delayed incident response. Operator frustration. Wrong remediation actions. SLA miss.
+
+**Mitigation Strategy:**
+- State freshness checks (P-117): cockpit verifies data age before display. If data > 60s old, display stale warning. If > 120s, do not display (too risky).
+- AG-UI deltas protocol (P-114): push updates to cockpit instead of pull. Cockpit receives fresh data as it arrives.
+- Metric backfill on gap: if cockpit is offline, backfill missing KPI data on reconnect.
+
+**Monitoring Approach:**
+- Metric: `kpi_data_latency` (age of KPI data in dashboard). Target: < 10s. Alert if > 30s.
+- Metric: `cockpit_update_latency` (time from KPI generation to display). Target: < 500ms. Alert if > 1s.
+
+**Rollback Plan:** If KPI pipeline breaks, display "data unavailable" in cockpit. Fall back to manual status checks.
+
+### IP-007: Multi-Agent Modes <-> Governance
+
+**Components:** WP-Y1 (Multi-agent modes), WP-3001 (Governance)
+
+**Risk Description:** Agents can run in 3 modes (sequential, parallel, hierarchical). Each mode has different control flow. If governance gates are not applied uniformly across modes, some modes may bypass policy. Policy enforcement becomes inconsistent.
+
+**Impact if Failure Occurs:** Policy bypass via mode selection. Unauthorized tool use. Cost overage. Compliance breach.
+
+**Mitigation Strategy:**
+- Tool approval loop for all mode outputs (P-056): every agent action (regardless of mode) must pass governance gate before execution. No exceptions.
+- Mode selection policy: OPA policy specifies which modes are allowed given task type + cost budget + security context.
+
+**Monitoring Approach:**
+- Metric: `policy_bypass_by_mode` (count of policy bypasses per mode). Alert if any mode > 0.
+- Metric: `tool_approval_rate` (% of agent actions that passed gate). Target: 100%. Alert if < 99%.
+
+**Rollback Plan:** If governance gate breaks in mode X, disable mode X. Fall back to sequential mode until fixed.
+
+### IP-008: Parser Fallback <-> Observability
+
+**Components:** WP-X3 (Parser with fallback), WP-Y6 (Observability)
+
+**Risk Description:** Parser attempts primary parse (XMLPullParser). On failure, falls back to regex extraction with confidence degradation (P-016). If observability does not log every fallback, silent degradation occurs. Operator is unaware of data quality erosion.
+
+**Impact if Failure Occurs:** Silent degradation. Data quality declines without operator awareness. Downstream systems receive degraded data. Errors cascade.
+
+**Mitigation Strategy:**
+- Confidence degradation events on every fallback (P-016): on parser fallback, emit event with {source, target, confidence_before, confidence_after, reason}. Log in observability system.
+- Alert on degradation threshold: if average confidence falls below 90%, alert operator.
+
+**Monitoring Approach:**
+- Metric: `parser_fallback_rate` (% of parser invocations that fall back). Alert if > 5%.
+- Metric: `average_parse_confidence` (average confidence score). Target: >= 95%. Alert if < 90%.
+
+**Rollback Plan:** If parser quality degrades, disable fallback to strict mode. Reject malformed input. Manual review required for rejection.
+
+### IP-009: Provider Scoring <-> Chaos Testing
+
+**Components:** WP-Y8 (Chaos testing), WP-1001 (Provider scoring)
+
+**Risk Description:** Provider scores are computed based on historical reliability, latency, cost. Scores are used for routing. If chaos testing injects failures, do scores change? If not, routing may rely on stale scores. If scores are too reactive, routing oscillates.
+
+**Impact if Failure Occurs:** Routing decision quality is poor. Chaos test results do not reflect real behavior. Scores become unreliable. Routing fails under real stress.
+
+**Mitigation Strategy:**
+- Chaos injects failures into scoring model (P-043): when chaos test runs, scores are recomputed in real-time. Chaos provides synthetic failure events to scorer. Scores adapt. Routing adapts.
+- Score damping: scores change gradually (exponential moving average). Avoid oscillation.
+
+**Monitoring Approach:**
+- Metric: `provider_score_stability` (variability of scores over time). Target: low variance. Alert if scores change > 50% in 1 min.
+- Metric: `chaos_test_score_correlation` (do scores predicted by chaos match reality post-deployment?). Target: > 80% correlation.
+
+**Rollback Plan:** If chaos testing breaks scores, revert to static scores. Disable adaptive routing until fixed.
+
+### IP-010: Prompt Hierarchy <-> Policy Engine
+
+**Components:** WP-Y5 (Prompt hierarchy: system > user > agent), WP-3001 (Policy engine)
+
+**Risk Description:** Prompts are hierarchical: system-level > user-level > agent-level. Lower levels inherit constraints from higher. If lower level can override upper level without guard, policy bypass occurs. E.g., agent prompt says "ignore cost limits".
+
+**Impact if Failure Occurs:** Policy bypass via prompt override. Cost overage. Unauthorized behavior. Compliance breach.
+
+**Mitigation Strategy:**
+- Bounded override: lower levels can only override if explicitly whitelisted in policy. Overrides are logged with justification.
+- Prompt hierarchy as data: prompts are not hardcoded; they're versioned and stored in policy engine. Easier to audit and enforce.
+
+**Monitoring Approach:**
+- Metric: `prompt_override_rate` (% of prompt overrides). Alert if > 1%.
+- Metric: `policy_breach_via_prompt` (count of policies breached via prompt injection/override). Alert if > 0.
+
+**Rollback Plan:** If prompt override exploits are discovered, revert to strict hierarchy (no overrides). Audit all recent prompts.
+
+### IP-011: Handoff Protocol <-> Continuity Watchdog
+
+**Components:** WP-4006 (Handoff protocol), WP-5005 (Continuity watchdog)
+
+**Risk Description:** When an agent hands off a task to another agent, continuity watchdog must confirm the incoming agent received the handoff. If confirmation is not sent, watchdog may re-execute the task (duplicate execution) or lose the task (no execution).
+
+**Impact if Failure Occurs:** Duplicate execution (cost overage, state corruption). Or: task lost (SLA miss, data loss). Either way, consistency is broken.
+
+**Mitigation Strategy:**
+- Incoming-owner confirmation required (P-111): outgoing agent sends handoff. Incoming agent receives and confirms within SLA. If no confirmation within 10s, watchdog re-sends. Idempotency tokens (P-036) prevent duplicate execution.
+
+**Monitoring Approach:**
+- Metric: `handoff_confirmation_rate` (% of handoffs confirmed on time). Target: 100%. Alert if < 99%.
+- Metric: `duplicate_execution_rate` (count of duplicate executions detected by idempotency check). Alert if > 0.
+
+**Rollback Plan:** If handoff protocol breaks, watchdog forces re-execution of unconfirmed tasks. May cause duplicate execution; idempotency tokens should prevent state corruption.
+
+### IP-012: Dead-Letter Queue <-> Recovery Playbooks
+
+**Components:** WP-Y2 (DLQ), WP-2004 (Recovery playbooks)
+
+**Risk Description:** Failed tasks are routed to DLQ. Recovery playbooks should periodically replay DLQ items. If replay does not happen automatically, DLQ items accumulate forever. Poison pills are never detected.
+
+**Impact if Failure Occurs:** DLQ grows unbounded. Failed tasks are never retried. Customer impact. Resource waste.
+
+**Mitigation Strategy:**
+- Manual review interface + scheduled replay sweep (P-042): DLQ provides UI for operator review. Scheduled job replays selected DLQ items every 24h. If same item fails again, mark as poison pill and escalate.
+
+**Monitoring Approach:**
+- Metric: `dlq_size` (number of items in DLQ). Alert if > 100.
+- Metric: `dlq_replay_success_rate` (% of replayed items that succeed). Target: > 50%. Alert if < 30%.
+- Metric: `poison_pill_detection_rate` (% of DLQ items marked as poison pills). Alert if > 20%.
+
+**Rollback Plan:** If DLQ replay breaks, disable automatic replay. Require manual operator approval for replay. Escalate DLQ size to management.
+
+---
+
+## Part 3: Risk Register (30+ Risks)
+
+Comprehensive risk register covering technical, operational, integration, security, compliance, and performance dimensions. Each risk has likelihood, impact, mitigation, and owner.
+
+| Risk ID | Category | Description | Likelihood | Impact | Risk Score | Mitigation | Owner (WP) | Status |
+|---------|----------|-------------|------------|--------|------------|-----------|-----------|--------|
+| R-001 | Technical | Contract drift between CSM and provider adapters | Medium | High | 12 | Conformance test suite (P-019) + drift alarms (P-010) | WP-X2 | In Progress |
+| R-002 | Technical | Parser fallback silently degrades data quality | Medium | High | 12 | Confidence degradation events on every fallback (P-016) | WP-X3 | In Progress |
+| R-003 | Integration | Version mismatch between contract registry and routing engine | Low | High | 6 | Capability negotiation at connection time (P-062) | WP-X1 | Pending |
+| R-004 | Technical | Schema-last development leads to integration failures | High | High | 16 | Contract-first mandate (P-005) + code-is-contract (P-006) | WP-0002 | Pending |
+| R-005 | Technical | Flat failure taxonomy prevents correct recovery | High | High | 16 | MAST 14-mode taxonomy (P-040, P-041) | WP-2005 | Pending |
+| R-006 | Operational | Infinite retry without DLQ exhausts resources | High | Critical | 18 | DLQ + poison pill detection (P-042) | WP-Y2 | Pending |
+| R-007 | Operational | Policy embedded in code cannot be changed without deploy | Medium | High | 12 | Declarative OPA/Rego policy (P-066, P-067) | WP-3001 | In Progress |
+| R-008 | Security | Policy bypass via prompt injection | Medium | High | 12 | Bounded prompt override + hierarchy enforcement (P-059) | WP-Y5 | Pending |
+| R-009 | Security | Hallucination in recovery logic corrupts rollback | Medium | High | 12 | External recovery service (P-100) | WP-2004 | Pending |
+| R-010 | Operational | Alert storm overwhelms operator | High | Medium | 12 | Correlation-first with dedup windows (P-094) | WP-Y6 | Pending |
+| R-011 | Technical | All-or-nothing rollback causes secondary incidents | Medium | High | 12 | Graduated rollback (P-113) + selective revert (P-112) | WP-5001 | Pending |
+| R-012 | Operational | Implicit state changes make system unreproducible | Medium | High | 12 | Explicit state machine (P-065) | WP-1001 | In Progress |
+| R-013 | Operational | Confidence scores without calibration erode operator trust | Medium | Medium | 8 | Calibration curves (P-098) | WP-Y7 | Pending |
+| R-014 | Integration | Stale KPI data in operator cockpit leads to wrong decisions | Low | High | 6 | State freshness checks (P-117) + AG-UI deltas (P-114) | WP-4001 | Pending |
+| R-015 | Operational | UI overwhelms some personas, underwhelms others | Medium | Low | 4 | Persona-based progressive disclosure (P-092) | WP-4002 | Pending |
+| R-016 | Technical | Hardcoded resilience logic cannot be tested/swapped | Low | Medium | 4 | DI-composed resilience stack (P-044) | WP-1003 | Pending |
+| R-017 | Integration | Endpoint explosion makes API inconsistent and hard to use | Low | Medium | 4 | Consolidated tools (P-012) | WP-0001 | Pending |
+| R-018 | Technical | XML parsing fails on malformed LLM output | Medium | High | 12 | XMLPullParser + sloppy-xml fallback (P-013, P-014) | WP-X3 | Pending |
+| R-019 | Technical | Single provider routing has no fallback on outage | High | Critical | 18 | Function-with-fallbacks (P-022) + provider scoring (P-080) | WP-1001 | Pending |
+| R-020 | Operational | Circuit breaker thresholds are misconfigured | Medium | High | 12 | Threshold tuning via chaos tests (P-043) + monitoring | WP-2003 | Pending |
+| R-021 | Integration | Checkpoint service corruption breaks rollback | Low | Critical | 9 | Checkpoint integrity checks (P-104) + compensation handlers (P-037) | WP-2001 | In Progress |
+| R-022 | Operational | Cost tracking inaccuracy drives wrong routing decisions | Medium | Medium | 8 | Cost-per-quality ratio guard (P-083) | WP-Y4 | Pending |
+| R-023 | Security | Data exfiltration via compromised agent | Low | Critical | 9 | Data quarantine (P-013 variant) + audit (P-088) | WP-3001 | Pending |
+| R-024 | Compliance | Audit trail of policy decisions is missing | Medium | High | 12 | Immutable policy decision log (P-089) | WP-Y5 | Pending |
+| R-025 | Performance | Policy evaluation latency becomes bottleneck | Low | Medium | 4 | OPA compiled partial evaluation < 5ms (P-066) | WP-3001 | In Progress |
+| R-026 | Operational | Handoff between agents loses/duplicates task | Low | High | 6 | Idempotency tokens (P-036) + confirmation protocol (P-111) | WP-4006 | Pending |
+| R-027 | Operational | Recovery playbook never executes due to policy gate delay | Low | High | 6 | Policy gate within recovery SLA (P-041 + tuning) | WP-2004 | Pending |
+| R-028 | Integration | Multi-agent mode X allows policy bypass | Low | High | 6 | Tool approval loop for all outputs (P-056) | WP-Y1 | Pending |
+| R-029 | Operational | Operator fatigue due to cognitive overload | Medium | Medium | 8 | Progressive disclosure (P-092) + automation (P-095) | WP-4001 | Pending |
+| R-030 | Technical | Agent goal drift due to context overflow | Medium | High | 12 | MAST mode F-06 recovery + checkpointing (P-038) | WP-2001 | In Progress |
+| R-031 | Operational | DLQ items never replayed, poison pills accumulate | Medium | High | 12 | Scheduled DLQ replay sweep (P-042) + monitoring | WP-Y2 | Pending |
+| R-032 | Security | Prompt injection succeeds due to no validation | Medium | High | 12 | Prompt sanitization (P-085) + guardrails (P-086) | WP-Y5 | Pending |
+
+---
+
+## Part 4: MAST 14-Mode Failure Taxonomy
+
+Comprehensive failure classification system covering infrastructure, model, tool, logic, and security dimensions. Each mode includes recovery playbook, escalation path, and SLA targets.
+
+| Mode | Category | Description | Recovery Strategy | Escalation Path | Detection SLA | Resolution SLA |
+|------|----------|-------------|-------------------|-----------------|-------------|-----------|
+| **F-01** | Infrastructure | Network partition / timeout | Retry with exponential backoff. If > 3 retries, failover to secondary provider or DLQ. | Escalate to infrastructure team if 2+ providers affected. | < 5s | < 60s |
+| **F-02** | Infrastructure | Storage failure (DB, cache) | Failover to replica. Checkpoint recovery from last known good state. Replayer re-executes from checkpoint. | Escalate to DBA if replica also unavailable. | < 2s | < 120s |
+| **F-03** | Infrastructure | Rate limit exceeded | Apply backpressure to request queue. Reduce concurrency. Rotate to secondary provider. Resume after cooldown. | If cooldown > 5 min, alert on-call. Consider quota increase. | < 1s | < 300s |
+| **F-04** | Model | Hallucination / factual error | Re-prompt with grounding data (context, facts). Add validation step to check output against facts. If still fails, escalate to human review. | Escalate to model team if > 10% hallucination rate. | < 5s | < 60s |
+| **F-05** | Model | Refusal / safety filter | Rephrase request with softened language. Try alternative provider with different safety tuning. If still refused, mark as impossible and return honest "cannot do" response. | If > 50% refusal rate, review prompt for adversarial content. | < 5s | < 30s |
+| **F-06** | Model | Context overflow | Summarize input. Reduce context window. Retry with compressed context. If still fails, split task into subtasks. | Alert if > 5% overflow rate. Consider longer-context model. | < 5s | < 90s |
+| **F-07** | Model | Output format violation | Re-prompt with schema example + validation. Parse with lenient parser (sloppy-xml). If still invalid, escalate to human. | Track format violations per provider. Alert if > 5% rate. | < 5s | < 60s |
+| **F-08** | Tool | Tool execution failure | Retry tool. Try alternative tool for same goal. If no alternative, DLQ. Manual review. | Alert on-call if > 2 attempts exhausted. | < 2s | < 60s |
+| **F-09** | Tool | Tool misuse (wrong tool for task) | Re-plan: query tool registry for correct tool. Execute correct tool. If re-plan fails, DLQ + manual review. | Alert if > 10% tool misuse rate. | < 5s | < 120s |
+| **F-10** | Logic | Goal drift (agent diverges from objective) | Checkpoint rollback to last known good state. Re-prompt with original objective. Add guardrails to prevent drift. | Alert on-call if drift detected > 3x in 1 hour. | < 5s | < 120s |
+| **F-11** | Logic | Infinite loop / oscillation | Detect via step counter (break at 100 steps). Checkpoint rollback. Force termination. Escalate to human. | Alert on-call immediately. | < 2s | < 60s |
+| **F-12** | Logic | Conflicting sub-agent outputs | Invoke conflict resolution protocol: majority vote with confidence weighting. If tie, escalate to human. | Log all conflicts. Alert if > 10% conflict rate. | < 5s | < 90s |
+| **F-13** | Security | Prompt injection detected | Quarantine agent + session. Audit all recent outputs. Flag outputs for manual review. Block injected prompts. | Escalate to security team immediately. | < 1s | < 600s |
+| **F-14** | Security | Data exfiltration attempt | Block request. Audit all recent data accesses. Trace flow of sensitive data. Log incident. | Escalate to security + compliance teams. Incident response. | < 1s | < 3600s |
+
+### Recovery Playbook Execution Example
+
+**Failure:** Agent exceeds context window (F-06).
+
+1. **Detect** (< 5s): Model returns "context_length_exceeded" error.
+2. **Classify** (< 1s): MAST mode F-06.
+3. **Retrieve playbook** (< 1s): Fetch F-06 recovery playbook from policy engine.
+4. **Execute playbook** (< 90s target):
+   - Summarize input to 50% of original size.
+   - Retry with compressed context.
+   - If success, log recovery + confidence score.
+   - If still fail, split task into 2 subtasks. Queue each independently.
+5. **Monitor**: Track F-06 occurrences. If > 5%/day, alert to upgrade to longer-context model.
+6. **Escalation**: If > 10%/day, page on-call model team.
+
+---
+
+## Part 5: Design for Robustness
+
+Principles and patterns to make thegent resilient to failures, with clear blast radius containment and graceful degradation.
+
+### 5.1 Fail-Fast Principles
+
+- **Detect failures immediately**: Do not wait for downstream consumer to fail. Fail at the source.
+- **Loud failures**: Every failure is logged with full context (error, stack, state). No silent errors.
+- **Typed failures**: Errors are classified (F-01 through F-14). Not generic "Exception" or "Error".
+- **Fail closed (security)**: On security failure, deny by default. Fail open only for availability failures.
+
+**Implementation:**
+- Add typed exception hierarchy: `class F01NetworkTimeout(RecoveryPlaybook)`, `class F04Hallucination(RecoveryPlaybook)`, etc.
+- Every exception carries recovery playbook. Catch-all handlers invoke playbook automatically.
+- Log every exception with {exception_type, playbook, result}.
+
+### 5.2 Graceful Degradation Strategies
+
+Reduce functionality instead of failing completely.
+
+| Degradation Level | Example | Impact |
+|-------------------|---------|--------|
+| Level 0 (Full) | All providers available, caches hot, policies enforced | 100% quality |
+| Level 1 (Reduced) | 1 provider down, use fallback. Skip non-critical policies. | 90% quality, +5% latency |
+| Level 2 (Minimal) | 2+ providers down, use single provider. Core policies only. | 70% quality, +20% latency |
+| Level 3 (Offline) | All providers down. Return cached/stale response. | 50% quality, +100% latency. Warn operator. |
+
+**Implementation:**
+- Define degradation levels in config: { level, policies_enforced, providers_available, cache_age_max }.
+- Monitor health of each component. Detect when level must drop.
+- Alert operator when degradation level > 1. Escalate if > 2.
+
+### 5.3 Blast Radius Containment
+
+Isolate failures to prevent cascading.
+
+**Principle:** Failure in component A must not crash component B.
+
+| Boundary | Isolation Mechanism |
+|----------|-------------------|
+| Provider boundary | Circuit breaker per provider. Provider failure does not affect others. |
+| Agent boundary | Agent sandbox. Agent crash does not affect orchestrator. Resource limits (CPU, memory, tokens). |
+| Policy boundary | Policy gate isolation. Policy gate delay does not block recovery. Async policy eval with timeout. |
+| Session boundary | Session state isolation. One session's crash does not affect others. |
+| Task boundary | Task DLQ isolation. Failed task does not block other tasks. |
+
+**Implementation:**
+- Implement circuit breaker (P-025) per provider: open after 3 failures in 10s, half-open after 30s, close after 3 successes.
+- Resource limits: agent gets max 1GB RAM, 100s CPU per run, 10k tokens per call.
+- Async policy eval with 100ms timeout. On timeout, allow by default (fail open for availability).
+- Session watchdog monitors for stale sessions. Cleans up after SLA.
+
+### 5.4 Defense-in-Depth Layers
+
+Multiple layers of protection. A single layer failure is not catastrophic.
+
+| Layer | Mechanism | Target SLA |
+|-------|-----------|-----------|
+| Layer 1: Input validation | Schema validation, type checking, sanitization | Reject invalid < 1ms |
+| Layer 2: Access control | Policy gate, RBAC, audit | Deny unauthorized < 5ms |
+| Layer 3: Execution isolation | Sandbox, resource limits, timeouts | Contain failures < 2s |
+| Layer 4: State protection | Checkpointing, idempotency tokens, compensation | Recover consistent state < 10s |
+| Layer 5: Observability | Logging, tracing, alerting, correlation | Detect failures < 5s |
+
+**Implementation:**
+- Middleware stack ordered as: rate limit -> validate -> auth -> execute -> checkpoint -> log (Zen pattern).
+- Each layer is independently testable.
+- Each layer can fail without bringing down others.
+
+### 5.5 Circuit Breaker Placement Guide
+
+Deploy circuit breakers at critical integration points to prevent cascading failures.
+
+| Integration Point | Circuit Breaker Target | Open Threshold | Half-Open Timeout |
+|-------------------|----------------------|-----------------|-------------------|
+| Provider call | Each provider (gemini, copilot, etc.) | 3 failures in 10s | 30s |
+| Policy gate | OPA server | 5 failures in 30s | 60s |
+| Checkpoint storage | PostgreSQL / Redis | 2 failures in 10s | 30s |
+| Handoff protocol | Incoming agent response | 2 failures per handoff | 10s |
+| DLQ replay | Replay task execution | 3 failures per item | Per-item basis |
+
+**Implementation:**
+```
+# Example: Provider circuit breaker
+breaker = CircuitBreaker(
+    failure_threshold=3,
+    recovery_timeout=30s,
+    expected_exception=ProviderError,
+)
+with breaker:
+    response = provider.call(request)
+```
+
+### 5.6 Dead-Letter Queue Placement Guide
+
+Route failed items to DLQ for manual recovery instead of retry storm.
+
+| Component | DLQ Trigger | Max Retries | Resolution SLA |
+|-----------|------------|------------|-----------------|
+| Agent execution | Unrecoverable error (F-13, F-14) | 0 (immediate) | < 600s (manual) |
+| Task tool | Recoverable error exhausted | 3 | < 300s (manual or auto-replay) |
+| Provider call | All fallbacks exhausted | 3 per provider | < 60s (fall back to DLQ) |
+| Checkpoint recovery | Checkpoint corrupt | 1 | < 120s (manual) |
+| Policy evaluation | Policy rule undefined | 0 (immediate) | < 300s (fix policy + replay) |
+
+**Implementation:**
+- Define DLQ topic per component: `dlq_agent`, `dlq_task_tool`, `dlq_provider`, etc.
+- Track poison pills: if content_hash appears > 2x, escalate to "requires_investigation" queue.
+- Scheduled replay sweep: every 24h, replay DLQ items with retries.
+- UI for manual review + approval before replay.
+
+---
+
+## Part 6: Design for Intuition
+
+Principles for making thegent easy to understand and operate, with clear communication of system state and operator confidence.
+
+### 6.1 Progressive Disclosure Implementation Guide
+
+Reveal information gradually based on user need and expertise level.
+
+**Tier 1 (Essential):** What is happening right now?
+- Active sessions (count)
+- Overall health (green / yellow / red)
+- Top errors (1-2)
+- Action buttons (pause, resume, debug)
+
+**Tier 2 (Important):** Why did this happen?
+- Expanded error details
+- Recent state transitions (last 5)
+- Related alerts + correlations
+- Recovery playbook status
+
+**Tier 3 (Advanced):** How can I fix it?
+- Full state dump (checkpoint, logs, trace)
+- Replay/debug tools
+- Policy + scoring details
+- Custom actions (force retry, DLQ inspect, manual override)
+
+**Persona Defaults:**
+
+| Persona | Tier 1 | Tier 2 | Tier 3 |
+|---------|--------|--------|--------|
+| Executive | ✓ | ✗ | ✗ |
+| SRE | ✓ | ✓ | ✓ |
+| Developer | ✓ | ✓ | ✓ |
+| Domain Expert | ✓ | Partial | ✗ |
+
+**Implementation:**
+- UI has 3 tabs: Overview, Details, Advanced.
+- Persona selector in settings. Save preference.
+- Non-default tiers render collapsed with "expand" button.
+
+### 6.2 Confidence Communication Standards
+
+Tell operators what the system believes and why.
+
+**Confidence Score Format:**
+- "85% confidence that provider X is best choice (based on historical latency p95=100ms, cost=$0.01, reliability=99.9%)"
+- Show calibration: "85% confidence ≈ 81% actual success (from 1000 historical decisions)"
+- Show data freshness: "Confidence computed 30s ago. May be stale."
+
+**Confidence Degradation Disclosure:**
+- When parser falls back to regex: "Output parsed with 60% confidence (malformed XML). May have extraction errors."
+- When checkpoint is used instead of live state: "State is 5min old. Live state unavailable."
+
+**Implementation:**
+- Every decision carries {confidence, calibration, freshness, reasoning} metadata.
+- UI displays all 4 fields, not just confidence number.
+- Train operator to trust calibrated probability, not raw confidence.
+
+### 6.3 Error Message Design Guidelines
+
+Make errors actionable and understandable, not cryptic.
+
+**Bad:** `ExecutionError: F-04 at step 5`
+
+**Good:** `Model Hallucination Detected (F-04). Agent claimed "file X contains Y" but fact-check found X does not exist. Recovery: re-prompting with grounded facts. Attempt 1 of 3. ETA: 30s.`
+
+**Message Format:**
+1. **What?** Clear one-liner (what error class)
+2. **Why?** Brief explanation (what went wrong)
+3. **Where?** Component + step (context for debugging)
+4. **When?** Timestamp + duration (temporal context)
+5. **Next?** Recovery action + ETA (what happens now)
+6. **Learn more?** Link to runbook or details panel (more info if needed)
+
+**Implementation:**
+- Define message template per error class.
+- Log message in user-friendly format (not stack trace).
+- Provide link to full error details (expandable panel).
+
+### 6.4 Operator Mental Model Alignment
+
+Design UI to match operator's conceptual model of "what is thegent?"
+
+**Model 1: "Task Factory"** (Sequential view)
+- Operator thinks: "I give thegent a task. It breaks it into steps. Each step either succeeds or fails. Final result."
+- UI: Timeline view (task -> steps -> result). Show state transitions.
+
+**Model 2: "Multi-Agent Workspace"** (Agent view)
+- Operator thinks: "Multiple agents work on tasks. They coordinate. Sometimes they conflict."
+- UI: Agent roster (who's working, what status). Collaboration graph (which agents communicate).
+
+**Model 3: "Policy Enforcer"** (Governance view)
+- Operator thinks: "Thegent enforces policies. Some tasks are allowed, some blocked. Costs are tracked."
+- UI: Policy audit log. Cost breakdown. "Blocked because:" explanations.
+
+**Default UI:** Combine all 3 views. Let operator switch focus as needed.
+
+**Implementation:**
+- Tab 1: Task timeline (Model 1)
+- Tab 2: Agent roster + collaboration (Model 2)
+- Tab 3: Policy audit + cost tracking (Model 3)
+
+### 6.5 Feedback Loop Design
+
+Make the system's decisions visible and learnable.
+
+**Feedback Loop:**
+1. **Operator action** (e.g., disable provider X)
+2. **System response** (routing changes, performance impacts)
+3. **Outcome** (did it help? Cost? Quality?)
+4. **Operator learning** (update mental model)
+
+**Implementation:**
+- Decision journal: log every significant decision (routing, retry, rollback, policy) with rationale.
+- A/B outcome tracking: compare outcomes of decisions (did disabling provider X improve SLA?).
+- Recommendations: "Based on your recent actions, consider: Y." (ML-driven suggestions)
+- Feedback interface: operator can mark recommendations as "helpful" / "not helpful". System learns.
+
+**Example:**
+- Operator: disables provider X (too costly)
+- System: routing shifts to provider Y
+- Outcome: costs down 30%, latency up 5%
+- Operator feedback: "Good trade-off. Keep it."
+- System learns: cost is more important than latency for this operator
+
+---
+
+## Part 7: Cross-References and Related Documents
+
+This document is part of the thegent specification system. Key related documents:
+
+| Document | Purpose | Mapping |
+|----------|---------|---------|
+| `PATTERNS.md` | Design patterns (P-001 through P-120+) | Every mitigation references a pattern ID |
+| `thegent-prd-final.md` | Product requirements | Risks are organized by PRD section (e.g., reliability, UX) |
+| `thegent-wbs-final.md` | Work breakdown structure | Each risk owns WP(s) responsible for mitigation |
+| `thegent-dag-final.md` | Dependency graph | Integration risks are at integration point nodes |
+| `FUNCTIONAL_REQUIREMENTS.md` | FR traceability | Each FR has test coverage checking for related risks |
+| `ADR.md` | Architecture decisions | ADRs justify anti-pattern avoidance |
+
+### Cross-Reference Map
+
+- **R-001, R-002, R-003** (Contract/schema risks) → PATTERNS `P-005, P-006, P-019` → WPs `X2, X3, X5` → PRD §3 (Integration)
+- **R-005** (Flat failure taxonomy) → PATTERNS `P-040, P-041` → WP `2005` → PRD §6 (Reliability)
+- **R-006** (Infinite retry) → PATTERNS `P-042, P-036` → WP `Y2` → PRD §6 (Reliability)
+- **R-007, R-008, R-024** (Policy risks) → PATTERNS `P-066, P-067, P-089` → WP `3001` → PRD §8 (Governance)
+- **R-010, R-013, R-015, R-029** (Operator experience) → PATTERNS `P-092, P-098, P-094` → WPs `4001, 4002` → PRD §9 (UX)
+
+---
+
+**Document Status:** Final
+**Last Updated:** 2026-02-14
+**Owner:** WP-2005 (Reliability) + WP-3001 (Governance) + WP-4001 (UX)
+**Next Review:** Upon PRD/WBS change, quarterly risk re-assessment

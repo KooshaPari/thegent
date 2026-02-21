@@ -10,7 +10,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
 
@@ -36,16 +36,12 @@ app = typer.Typer(
 
 async def worker_loop(mesh_root: Path, runtime_name: str):
     queue_path = mesh_root / "queue" / runtime_name.lower()
-    print(f"Worker {runtime_name} initialized. PID: {os.getpid()}. Queue: {queue_path}")
-    print(f"[{runtime_name}] sys.version: {sys.version}")
-    print(f"[{runtime_name}] sys.implementation: {sys.implementation.name}")
 
     queue = MaildirQueue(queue_path)
 
     # Initialize SHM if available
     if HAS_SHM:
         init_shm(str(mesh_root / "state.shm"))
-        print(f"[{runtime_name}] SHM linked.")
 
     # Platform-specific heartbeat tuning
     is_wifi = os.environ.get("THEGENT_NETWORK_TIER") == "wifi"
@@ -56,7 +52,6 @@ async def worker_loop(mesh_root: Path, runtime_name: str):
         # 1. Emit Heartbeat
         now = time.time()
         if now - last_heartbeat > heartbeat_interval:
-            print(f"[HEARTBEAT] {now}")
             last_heartbeat = now
 
             # Record health metrics to SHM
@@ -72,15 +67,13 @@ async def worker_loop(mesh_root: Path, runtime_name: str):
         # 2. Check for new tasks
         result = queue.receive()
         if result:
-            msg_id, message = result
+            _msg_id, message = result
             if message.get("type") == "task":
                 task_id = message["task_id"]
                 module_name = message["module"]
                 func_name = message["function"]
                 args = message.get("args", [])
                 kwargs = message.get("kwargs", {})
-
-                print(f"[{runtime_name}] Executing task {task_id}: {module_name}.{func_name}")
 
                 try:
                     # Dynamic Import and Execution
@@ -108,7 +101,6 @@ async def worker_loop(mesh_root: Path, runtime_name: str):
                     )
 
                 except Exception as e:
-                    print(f"[{runtime_name}] Task {task_id} failed: {e}")
                     result_path = mesh_root / "results" / f"{task_id}.json"
                     result_path.write_text(json.dumps({"status": "error", "error": str(e), "runtime": runtime_name}))
 

@@ -1,6 +1,7 @@
 """RouterManager with multi-runtime optimized backends."""
 
 import logging
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -68,7 +69,7 @@ class RouterManager:
 
         from .router_logic import RouteMetrics
 
-        manager = SharedStateManager(mesh_root or Path("/tmp/thegent-bridge"))
+        manager = SharedStateManager(mesh_root or (Path(tempfile.gettempdir()) / "thegent-bridge"))
         mesh_metrics = manager.get_all_metrics()
 
         for provider, data in mesh_metrics.items():

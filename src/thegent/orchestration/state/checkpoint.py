@@ -21,6 +21,6 @@ def list_checkpoints(session_dir: Path, limit: int = 20) -> list[dict[str, objec
     return CheckpointRegistry(session_dir).list_checkpoints(limit=limit)
 
 
-def get(session_dir: Path, checkpoint_id: str) -> dict[str, object | None]:
+def get(session_dir: Path, checkpoint_id: str) -> dict[str, object | None] | None:
     """Retrieve a checkpoint by ID."""
     return CheckpointRegistry(session_dir).get_checkpoint(checkpoint_id)

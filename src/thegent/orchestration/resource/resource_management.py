@@ -549,7 +549,7 @@ def sample_extended_resources() -> ExtendedResourceSnapshot:
         snapshot.mem_rss_mb = proc.memory_info().rss / (1024 * 1024)
         vmem = psutil.virtual_memory()
         snapshot.mem_available_mb = vmem.available / (1024 * 1024)
-        snapshot.cpu_count = psutil.cpu_count()
+        snapshot.cpu_count = psutil.cpu_count() or 1
         snapshot.load_1m, snapshot.load_5m, snapshot.load_15m = psutil.getloadavg()
 
         # Extended indices
@@ -566,11 +566,13 @@ def sample_extended_resources() -> ExtendedResourceSnapshot:
         for conn in connections:
             if conn.status == psutil.CONN_ESTABLISHED:
                 established_count += 1
-            if conn.type == psutil.SOCK_STREAM:
+            import socket
+
+            if conn.type == socket.SOCK_STREAM:
                 tcp_count += 1
-            elif conn.type == psutil.SOCK_DGRAM:
+            elif conn.type == socket.SOCK_DGRAM:
                 udp_count += 1
-            elif conn.type == psutil.SOCK_SEQPACKET:
+            elif conn.type == socket.SOCK_SEQPACKET:
                 unix_count += 1
         snapshot.tcp_connections = tcp_count
         snapshot.udp_connections = udp_count
@@ -620,7 +622,7 @@ def sample_extended_resources() -> ExtendedResourceSnapshot:
         try:
             io_counters = proc.io_counters()
             if io_counters:
-                snapshot.page_faults = io_counters.read_chars + io_counters.write_chars  # Approximate
+                snapshot.page_faults = getattr(io_counters, "read_chars", 0) + getattr(io_counters, "write_chars", 0)  # Approximate; Linux-only attrs
         except (psutil.NoSuchProcess, psutil.AccessDenied, AttributeError):
             snapshot.page_faults = 0
 

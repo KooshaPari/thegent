@@ -80,13 +80,19 @@ class CostAggregator:
 
     session_dir: Path
 
-    def daily_total(self, owner: str) -> float:
-        """Sum cost_usd for owner's runs today. Returns 0.0 if no cost tracking."""
+    def daily_total(self, owner: str | None, days: int = 1) -> float:
+        """Sum cost_usd for owner's runs over the past ``days`` days.
+
+        Returns 0.0 if no cost tracking. When ``days=1`` (default) only today's
+        runs are included; higher values look back that many calendar days.
+        """
         # Scaffolding: read from run_registry.jsonl finish events with cost_usd
         registry_path = self.session_dir / "run_registry.jsonl"
         if not registry_path.exists():
             return 0.0
-        today = datetime.now(UTC).date().isoformat()
+        from datetime import timedelta
+
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         total = 0.0
         try:
             with registry_path.open("r", encoding="utf-8") as f:
@@ -96,9 +102,14 @@ class CostAggregator:
                     try:
                         data = json.loads(line)
                         if data.get("event") == "finish" and data.get("cost_usd") is not None:
-                            ts = data.get("ended_at_utc", data.get("timestamp", ""))[:10]
-                            if ts == today:
-                                total += float(data["cost_usd"])
+                            ts_str = data.get("ended_at_utc", data.get("timestamp", ""))
+                            if ts_str:
+                                try:
+                                    ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                                    if ts >= cutoff:
+                                        total += float(data["cost_usd"])
+                                except ValueError:
+                                    continue
                     except Exception:
                         continue
         except Exception:

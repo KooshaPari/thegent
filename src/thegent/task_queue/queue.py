@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class TaskQueue:
     """Task queue implementation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize task queue."""
         self.queue: deque = deque()
         self.processing: set[str] = set()

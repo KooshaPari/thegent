@@ -85,7 +85,6 @@ class TestElicitConfirmation:
     async def test_accepted_true(self) -> None:
         """AcceptedElicitation with data=True returns True. # @trace FR-MCP-ELICIT-001"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tools_elicitation import elicit_confirmation
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -101,7 +100,6 @@ class TestElicitConfirmation:
     async def test_accepted_false(self) -> None:
         """AcceptedElicitation with data=False returns False. # @trace FR-MCP-ELICIT-001"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tools_elicitation import elicit_confirmation
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -116,7 +114,6 @@ class TestElicitConfirmation:
     async def test_declined_returns_none(self) -> None:
         """DeclinedElicitation returns None. # @trace FR-MCP-ELICIT-001"""
         from fastmcp.server.context import DeclinedElicitation
-
         from thegent.mcp_tools_elicitation import elicit_confirmation
 
         declined = MagicMock(spec=DeclinedElicitation)
@@ -130,7 +127,6 @@ class TestElicitConfirmation:
     async def test_cancelled_returns_none(self) -> None:
         """CancelledElicitation returns None. # @trace FR-MCP-ELICIT-001"""
         from fastmcp.server.context import CancelledElicitation
-
         from thegent.mcp_tools_elicitation import elicit_confirmation
 
         cancelled = MagicMock(spec=CancelledElicitation)
@@ -165,7 +161,6 @@ class TestElicitChoice:
     async def test_accepted_returns_selected_option(self) -> None:
         """AcceptedElicitation returns the chosen string. # @trace FR-MCP-ELICIT-002"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tools_elicitation import elicit_choice
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -182,7 +177,6 @@ class TestElicitChoice:
     async def test_declined_returns_none(self) -> None:
         """Declined elicitation returns None. # @trace FR-MCP-ELICIT-002"""
         from fastmcp.server.context import DeclinedElicitation
-
         from thegent.mcp_tools_elicitation import elicit_choice
 
         declined = MagicMock(spec=DeclinedElicitation)
@@ -196,7 +190,6 @@ class TestElicitChoice:
     async def test_cancelled_returns_none(self) -> None:
         """Cancelled elicitation returns None. # @trace FR-MCP-ELICIT-002"""
         from fastmcp.server.context import CancelledElicitation
-
         from thegent.mcp_tools_elicitation import elicit_choice
 
         cancelled = MagicMock(spec=CancelledElicitation)
@@ -242,7 +235,6 @@ class TestElicitText:
     async def test_accepted_returns_text(self) -> None:
         """AcceptedElicitation with str data returns the string. # @trace FR-MCP-ELICIT-003"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tools_elicitation import elicit_text
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -258,7 +250,6 @@ class TestElicitText:
     async def test_placeholder_injected_into_prompt(self) -> None:
         """Placeholder is appended to prompt message. # @trace FR-MCP-ELICIT-003"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tools_elicitation import elicit_text
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -276,7 +267,6 @@ class TestElicitText:
     async def test_no_placeholder_prompt_unchanged(self) -> None:
         """Without placeholder, prompt is sent as-is. # @trace FR-MCP-ELICIT-003"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tools_elicitation import elicit_text
 
         accepted = MagicMock(spec=AcceptedElicitation)
@@ -292,7 +282,6 @@ class TestElicitText:
     async def test_declined_returns_none(self) -> None:
         """Declined elicitation returns None. # @trace FR-MCP-ELICIT-003"""
         from fastmcp.server.context import DeclinedElicitation
-
         from thegent.mcp_tools_elicitation import elicit_text
 
         declined = MagicMock(spec=DeclinedElicitation)
@@ -322,7 +311,6 @@ class TestElicitText:
 def _build_mcp_with_elicitation_tools() -> Any:
     """Instantiate a FastMCP app with elicitation tools registered."""
     from fastmcp import FastMCP
-
     from thegent.mcp_tools_elicitation import register_elicitation_tools
 
     mcp_app = FastMCP("test-elicitation")
@@ -338,7 +326,6 @@ class TestMCPToolConfirmation:
     async def test_confirmation_accepted_true(self) -> None:
         """Tool returns confirmed=true when elicit_confirmation returns True. # @trace FR-MCP-ELICIT-004"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tools_elicitation import register_elicitation_tools
 
         tool_fns: dict[str, Any] = {}
@@ -368,7 +355,6 @@ class TestMCPToolConfirmation:
     async def test_confirmation_declined(self) -> None:
         """Tool returns confirmed=null and status declined_or_cancelled when user declines. # @trace FR-MCP-ELICIT-004"""
         from fastmcp.server.context import DeclinedElicitation
-
         from thegent.mcp_tools_elicitation import register_elicitation_tools
 
         tool_fns: dict[str, Any] = {}
@@ -425,7 +411,6 @@ class TestMCPToolChoice:
     async def test_choice_accepted(self) -> None:
         """Tool returns chosen option when accepted. # @trace FR-MCP-ELICIT-005"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tools_elicitation import register_elicitation_tools
 
         tool_fns: dict[str, Any] = {}
@@ -509,7 +494,6 @@ class TestMCPToolText:
     async def test_text_accepted(self) -> None:
         """Tool returns entered text when accepted. # @trace FR-MCP-ELICIT-006"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tools_elicitation import register_elicitation_tools
 
         tool_fns: dict[str, Any] = {}
@@ -539,7 +523,6 @@ class TestMCPToolText:
     async def test_text_with_placeholder(self) -> None:
         """Placeholder is forwarded to elicit_text. # @trace FR-MCP-ELICIT-006"""
         from fastmcp.server.context import AcceptedElicitation
-
         from thegent.mcp_tools_elicitation import register_elicitation_tools
 
         tool_fns: dict[str, Any] = {}
@@ -574,7 +557,6 @@ class TestMCPToolText:
     async def test_text_declined_returns_null(self) -> None:
         """Declined returns text=null. # @trace FR-MCP-ELICIT-006"""
         from fastmcp.server.context import DeclinedElicitation
-
         from thegent.mcp_tools_elicitation import register_elicitation_tools
 
         tool_fns: dict[str, Any] = {}
@@ -635,7 +617,6 @@ class TestRegisterElicitationTools:
     def test_registration_succeeds(self) -> None:
         """register_elicitation_tools completes without raising. # @trace FR-MCP-ELICIT-007"""
         from fastmcp import FastMCP
-
         from thegent.mcp_tools_elicitation import register_elicitation_tools
 
         app = FastMCP("test-reg")
@@ -645,7 +626,6 @@ class TestRegisterElicitationTools:
     async def test_all_three_tools_registered(self) -> None:
         """All three elicitation tools appear in the FastMCP tool registry. # @trace FR-MCP-ELICIT-007"""
         from fastmcp import FastMCP
-
         from thegent.mcp_tools_elicitation import register_elicitation_tools
 
         app = FastMCP("test-reg2")

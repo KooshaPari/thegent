@@ -86,9 +86,8 @@ _DIMENSION_CONFIG: dict[str, tuple[str, str]] = {
 # Dimensions that must complete before others can start.
 _ORDERING_RULES: list[tuple[str, str]] = [
     # security before everything else (handled specially below)
-    ("lint_violations", "test_coverage")(  # lint fix before test writing
-        "technical_debt", "test_coverage"
-    )  # complexity refactoring before test writing
+    ("lint_violations", "test_coverage"),  # lint fix before test writing
+    ("technical_debt", "test_coverage"),  # complexity refactoring before test writing
 ]
 
 

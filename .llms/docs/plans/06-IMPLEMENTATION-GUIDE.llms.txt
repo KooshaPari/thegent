@@ -1,0 +1,541 @@
+# 06-IMPLEMENTATION-GUIDE
+
+Source: docs/plans/06-IMPLEMENTATION-GUIDE.md
+
+---
+
+# 06 — Implementation Guide
+
+> Cross-ref: [00-MASTER-INDEX](./00-MASTER-INDEX.md) | [05-ARCH](./05-ARCHITECTURE.md) | [01-STATE](./01-PROJECT-STATE.md)
+
+---
+
+## CLI Structure
+
+The CLI uses typer with subcommand groups (apps):
+
+```
+thegent run                       # Root command (also: thegent orchestrate run)
+thegent orchestrate run|bg|ps|...
+thegent govern contracts|verify|...
+thegent recover reconcile|rollback|...
+thegent observe history|kpis|...
+thegent plan list|validate|...
+```
+
+When adding a new command:
+
+1. Define the impl function in `cli_impl.py` with return type annotation
+2. Add the CLI handler in `main.py`:
+   ```
+   @app.command()
+   @some_app.command()  # Optional: add to subcommand group too
+   def command_name(arg1: str, arg2: int = typer.Option(10, "--arg2")) -> None:
+       """Short docstring."""
+       result = command_name_impl(arg1, arg2)
+       console.print(format_result(result))
+   ```
+3. Add the MCP tool in `mcp_server.py`:
+   ```
+   @mcp.tool(annotations={"readOnlyHint": True})
+   def thegent_command_name(arg1: str, arg2: int = 10) -> ToolResult:
+       start_time = time.perf_counter()
+       result = command_name_impl(arg1, arg2)
+       elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+       return ToolResult(content=json.dumps(result), meta={"execution_time_ms": elapsed_ms})
+   ```
+
+---
+
+## Code Conventions
+
+### Python Style
+- **Line length**: 120 (ruff)
+- **Target**: Python 3.12+
+- **Type hints**: Required on all public functions
+- **Models**: Pydantic v2 BaseModel for all data contracts
+- **Async**: Use `asyncio.to_thread` for sync-to-async wrapping
+- **Imports**: Sorted by ruff; enforce layer boundaries (see [05-ARCH](./05-ARCHITECTURE.md))
+
+### Naming
+- **Files**: snake_case (e.g., `failure_modes.py`)
+- **Classes**: PascalCase (e.g., `CircuitBreaker`)
+- **Functions**: snake_case (e.g., `evaluate_policy`)
+- **Constants**: UPPER_SNAKE (e.g., `MAX_RETRY_COUNT`)
+- **WP references**: Comment with `# WP-XXXX` at module level
+
+### Error Handling
+- Fail loudly — no silent swallowing
+- Use typed exceptions (defined in module or imported):
+  - Contract parsing: `XMLParseError`, `MalformedTagError`, `TruncatedParseError`, `InvalidTagError`
+  - Validation: `SemanticValidationError`, `InvariantViolation`
+  - Resilience: `TransientAgentError`, `UsageLimitError`, `CircuitOpenError`
+  - Custom: Define per-module (e.g., `PolicyViolationError`, `ContractDriftError` for future phases)
+- Include context: `raise PolicyViolationError(f"gate={gate_id}, reason={reason}")`
+- Never use bare `except:` or generic `except Exception:` — always catch specific types
+- Example: `except (XMLParseError, MalformedTagError) as e: logger.error(...); raise`
+
+### Testing
+- Test file mirrors source: `src/thegent/foo.py` → `tests/test_unit_foo.py`
+- FR trace comments: `# @trace FR-XXX-NNN`
+- Use pytest markers: `@pytest.mark.integration`, `@pytest.mark.e2e`
+
+---
+
+## Key Abstractions
+
+### 1. RunRegistry (exists: `execution.py`)
+
+Persistent store for execution metadata. Key methods:
+
+```
+# Current capabilities (DONE):
+registry.start_run(run_id, agent, prompt, owner, cd, ...) -> RunMeta
+registry.finish_run(run_id, exit_code, duration_s, status)
+registry.list_runs(owner=None, limit=50) -> list[RunMeta]
+registry.get_run(run_id) -> RunMeta | None
+
+# State enum (for state-aware orchestration):
+class RunState(str, Enum):
+    RUNNING = "running"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+# Audit trail:
+registry.emit_event(event: OrchestrationEvent) -> event_hash  # hash-chained
+registry.verify_integrity() -> bool  # SHA256 hash verification
+```
+
+### 2. ContractRegistry (exists: `contracts/registry.py`)
+
+Versioned contract definitions for structured outputs. Key methods:
+
+```
+# Current capabilities (DONE):
+registry.register(contract_version: ContractVersion) -> None
+registry.get(contract_id: str, version: str | None = None) -> ContractVersion | None
+registry.list_versions() -> list[ContractVersion]
+registry.is_compatible(from_version: str, to_version: str) -> bool
+
+# Contract versions (pre-registered):
+"csm-v1"       # Canonical Structured Message (unified schema)
+"task-tool-18" # Task-tool 18-tag XML contract
+"zen-rich-v1"  # Zen rich protocol (status, progress, actions, files, quality)
+
+# Get singleton:
+registry = get_registry()  # Global ContractRegistry instance
+```
+
+### 3. OutputAdapter (exists: `contracts/adapters.py`)
+
+Provider-specific output normalization to CanonicalStructuredMessage:
+
+```
+@runtime_checkable
+class OutputAdapter(Protocol):
+    """Normalize raw provider output to CSM."""
+
+    @property
+    def provider(self) -> str:
+        """Provider identifier (e.g. 'gemini', 'claude', 'copilot')."""
+        ...
+
+    def normalize(self, raw: str | dict[str, Any],
+                  context: dict[str, Any] | None = None) -> AdapterResult:
+        """Normalize raw provider output to CanonicalStructuredMessage.
+
+        Args:
+            raw: Raw stdout string or parsed dict from provider.
+            context: Optional context (run_id, task_id, etc.).
+
+        Returns:
+            AdapterResult with:
+            - csm: CanonicalStructuredMessage
+            - confidence: float (0.0-1.0, adapter confidence in parse)
+            - parse_errors: list[str] (parse_truncated, no_xml_tags_detected, etc.)
+            - source_provider: str
+        """
+        ...
+
+# Base implementation for XML outputs:
+class XMLOutputAdapter:
+    """Parses XML-structured agent output (e.g. <RESULT>, <ACTION>, <FILES>)."""
+    def __init__(self, provider_name: str): ...
+    def normalize(self, raw: str | dict, context: dict | None = None) -> AdapterResult: ...
+```
+
+### 4. PolicyEngine (NEW: `governance/policy_engine.py`)
+
+Pre-check gate evaluator:
+
+```
+class PolicyEngine:
+    def evaluate(self, action: ProposedAction) -> PolicyVerdict:
+        """Evaluate action against all active policies.
+
+        Returns PolicyVerdict with:
+        - allowed: bool
+        - reason_code: str
+        - required_evidence: list[str]
+        - override_eligible: bool
+        """
+
+    def check_drift(self) -> list[DriftFinding]:
+        """Detect policy drift from baseline."""
+```
+
+### 5. CircuitBreaker (extend: `agents/resilience.py`)
+
+Three-state circuit breaker per subsystem:
+
+```
+class CircuitBreaker:
+    def __init__(self, name: str, failure_threshold: int = 5,
+                 recovery_timeout: float = 30.0):
+        self.state: Literal["closed", "open", "half_open"] = "closed"
+
+    def call(self, func, *args, **kwargs):
+        """Execute func with circuit breaker protection."""
+
+    def record_success(self): ...
+    def record_failure(self, error: Exception): ...
+```
+
+### 6. CheckpointService (NEW: `orchestration/checkpoint.py`)
+
+DAG state snapshots and rollback:
+
+```
+class CheckpointService:
+    def create(self, run_id: str, dag_state: DAGState) -> CheckpointID:
+        """Snapshot current DAG state."""
+
+    def rollback(self, run_id: str, checkpoint_id: CheckpointID) -> DAGState:
+        """Restore DAG to checkpoint state."""
+
+    def list(self, run_id: str) -> list[CheckpointMeta]:
+        """List available checkpoints for a run."""
+```
+
+---
+
+## Module Structure
+
+### Existing Modules
+```
+src/thegent/
+├── agents/                 # Provider integrations and resilience
+│   ├── cliproxy_manager.py
+│   ├── resilience.py       # CircuitBreaker, retry logic
+│   └── providers.py        # Agent/provider definitions
+├── contracts/              # Data contracts and validation
+│   ├── adapters.py         # OutputAdapter protocol
+│   ├── csm.py              # CanonicalStructuredMessage
+│   ├── parser.py           # XML/JSON parsing
+│   ├── registry.py         # Contract versioning
+│   ├── telemetry.py        # Contract health tracking
+│   └── validation.py       # CSM validation
+├── models/                 # Model catalog and routing
+│   ├── catalog.py          # ModelCatalog, routing
+│   └── routes.py           # Route contracts
+├── planning/               # DAG and PERT simulation
+│   ├── dag.py              # DAG parsing and management
+│   ├── simulation.py       # PERT, resources, continuity
+│   └── checker.py          # Validation and reconciliation
+├── cli_impl.py             # All command implementations
+├── config.py               # Configuration (ThegentSettings)
+├── execution.py            # RunRegistry, RunMeta, RunState
+├── main.py                 # CLI command definitions (typer)
+├── mcp_server.py           # MCP tools and resources
+└── output_parser.py        # Output parsing and extraction
+```
+
+### Modules to Create (Next Phases)
+```
+src/thegent/
+├── orchestration/          # Phase 1-2 (routing, execution, recovery) — WP-1001..1008, WP-2001..2008
+│   ├── router.py           # WP-1001: Dependency-aware routing
+│   ├── lanes.py            # WP-1002: Priority/urgency lanes
+│   ├── phases.py           # WP-1004: Phase transitions
+│   ├── evidence.py         # WP-1005: Evidence capture
+│   ├── checkpoint.py       # WP-2001: Checkpoint/rollback (extends DAG checkpointing)
+│   ├── playbooks.py        # WP-2004: Recovery playbooks
+│   ├── failure_modes.py    # WP-2005: MAST 14-mode taxonomy
+│   ├── probes.py           # WP-2006: Regression probes
+│   ├── oversight.py        # WP-2008: Human oversight routing
+│   ├── dlq.py              # WP-Y2: Dead-letter queue
+│   ├── concurrency.py      # WP-5001: Adaptive concurrency
+│   ├── burst.py            # WP-5002: Burst classification
+│   ├── deferral.py         # WP-5004: Non-critical deferral
+│   ├── cost.py             # WP-Y4: Cost tracking
+│   └── prompts.py          # WP-Y5: Hierarchical prompts
+├── governance/             # Phase 3 (policy, audit, compliance) — WP-3001..3008
+│   ├── policy_engine.py    # WP-3001: OPA/Rego evaluator
+│   ├── signatures.py       # WP-3002: Action signatures
+│   ├── overrides.py        # WP-3003: TTL overrides
+│   ├── audit.py            # WP-3004: Immutable audit trail
+│   ├── drift.py            # WP-3005: Policy drift detection
+│   ├── retention.py        # WP-3006: Evidence retention
+│   ├── trust.py            # WP-3007: Trust boundaries
+│   └── escalation.py       # WP-3008: Escalation SLA
+└── ux/                     # Phase 4 (operator experience) — WP-4001..4008, WP-Y7
+    ├── cockpit.py           # WP-4001: Operator cockpit
+    ├── explanations.py      # WP-4002: Explanation tiers
+    ├── fallback_ui.py       # WP-4003: Safe fallback
+    ├── alerts.py            # WP-4004: Alert fatigue controls
+    ├── replay.py            # WP-4007: Decision replay
+    ├── calibration.py       # WP-4008: Confidence calibration
+    └── kpis.py              # WP-Y7: TRAFFIC KPI dashboard
+```
+
+---
+
+## Implementation Patterns
+
+### Pattern 1: New CLI Command + MCP Tool Parity
+
+Every new capability gets both CLI and MCP exposure:
+
+```
+# In relevant files: import these at module level
+from typing import Any
+import json
+import time
+from fastmcp.tools.tool import ToolResult
+from pathlib import Path
+
+# 1. Implementation function in cli_impl.py (src/thegent/cli_impl.py)
+def some_capability_impl(arg1: str, arg2: int = 10) -> dict[str, Any]:
+    """Pure logic, returns data. No printing."""
+    result = do_work(arg1, arg2)
+    return {"status": "ok", "data": result}
+
+# 2. CLI command in main.py (uses typer, prints via console)
+@app.command()
+def some_capability(arg1: str, arg2: int = 10) -> None:
+    from rich.console import Console
+    result = some_capability_impl(arg1, arg2)
+    console = Console()
+    console.print(format_result(result))
+
+# 3. MCP tool in mcp_server.py (optional async, timing-aware, returns ToolResult)
+# Use async if tool needs to elicit from client or run tasks. Otherwise use sync.
+
+# Sync example (simple, no elicitation):
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
+def thegent_some_capability(arg1: str, arg2: int = 10) -> ToolResult:
+    start_time = time.perf_counter()
+    result = some_capability_impl(arg1, arg2)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(
+        content=json.dumps(result),
+        structured_content=result,
+        meta={"execution_time_ms": elapsed_ms}
+    )
+
+# Async example (needs elicitation or async work):
+@mcp.tool(annotations={"readOnlyHint": False})
+async def thegent_some_async_capability(arg1: str,
+                                       ctx: Context = CurrentContext()) -> ToolResult:
+    start_time = time.perf_counter()
+    # Can elicit from user or await async work
+    if not arg1:
+        elicitation = await ctx.elicit("Enter arg1:", response_type=str)
+        if isinstance(elicitation, AcceptedElicitation):
+            arg1 = elicitation.data
+        else:
+            return ToolResult(content=json.dumps({"error": "No arg1"}))
+
+    result = await asyncio.to_thread(some_capability_impl, arg1)
+    elapsed_ms = int((time.perf_counter() - start_time) * 1000)
+    return ToolResult(content=json.dumps(result), meta={"execution_time_ms": elapsed_ms})
+```
+
+### Pattern 2: Pydantic Data Contract
+
+All data structures use Pydantic v2:
+
+```
+from pydantic import BaseModel, Field
+
+class PolicyVerdict(BaseModel):
+    allowed: bool
+    reason_code: str = Field(description="Machine-readable decision code")
+    required_evidence: list[str] = Field(default_factory=list)
+    override_eligible: bool = False
+    evaluated_at_us: int = Field(default_factory=lambda: int(time.time() * 1e6))
+
+    # Serialize deterministically for hashing
+    def canonical_bytes(self) -> bytes:
+        return json.dumps(self.model_dump(), sort_keys=True).encode()
+```
+
+### Pattern 3: Hash-Chained Event Emission (RunRegistry)
+
+For immutable audit trail integrity, use RunRegistry:
+
+```
+import hashlib
+import json
+from thegent.execution import RunRegistry, RunMeta
+from pathlib import Path
+
+registry = RunRegistry(session_dir=Path("~/.thegent/sessions").expanduser())
+
+# All events are hash-chained automatically:
+run = RunMeta(run_id="run_abc123", agent="claude", prompt="...", owner="user:proj", cwd="/path")
+registry.register_start(run)  # Computes run.prev_hash from last record, run.hash for this record
+
+# ... later ...
+registry.register_end(run_id="run_abc123", exit_code=0, status="completed",
+                     ended_at_utc="2025-02-14T10:00:00+00:00", duration_s=1.23)
+
+# For manual event emission (pause/resume/feedback), hash-chaining is built-in:
+registry.register_pause(run_id="run_abc123", reason="user_requested",
+                       continuity_snapshot={"checkpoint_id": "ckpt_xyz"})
+
+# Verify integrity:
+valid = registry.verify_integrity()  # Re-computes all hashes, checks chain
+```
+
+Key design:
+- All events stored as JSONL (one JSON per line)
+- Each event has `prev_hash` (from prior line) + `hash` (of this event's fields)
+- Stable JSON serialization: `json.dumps(data, sort_keys=True, separators=(",", ":"))`
+- Verification: re-compute each line's hash, ensure `line_N.hash == line_N+1.prev_hash`
+
+### Pattern 4: Circuit Breaker Integration
+
+Wrap provider calls with circuit breaker (three states: closed → open → half_open):
+
+```
+from thegent.agents.resilience import CircuitBreaker
+
+breakers = {
+    "gemini": CircuitBreaker("gemini", failure_threshold=3, recovery_timeout=30),
+    "claude": CircuitBreaker("claude", failure_threshold=5, recovery_timeout=60),
+}
+
+def call_provider(provider: str, prompt: str) -> str:
+    breaker = breakers.get(provider)
+    if breaker and breaker.state == "open":
+        raise CircuitOpenError(f"Circuit open for {provider}")
+    try:
+        result = breaker.call(_raw_call, provider, prompt) if breaker else _raw_call(provider, prompt)
+        return result
+    except Exception as e:
+        if breaker:
+            breaker.record_failure(e)
+        raise
+```
+
+### Pattern 5: Adapter + Fallback with Confidence Degradation
+
+When structured contract parsing fails, degrade gracefully with reduced confidence:
+
+```
+from thegent.contracts.adapters import XMLOutputAdapter, AdapterResult
+from thegent.contracts.csm import CanonicalStructuredMessage, CSMStatus
+
+def normalize_output(provider: str, raw: str, context: dict | None = None) -> AdapterResult:
+    """Try adapter first, degrade to fallback with confidence penalty."""
+    context = context or {}
+
+    # Try provider-specific adapter
+    adapter = XMLOutputAdapter(provider)
+    result = adapter.normalize(raw, context)
+
+    if result.confidence >= 0.7:  # MIN_CONFIDENCE threshold
+        return result
+
+    # Fallback: Extract condensed form (basic pattern matching)
+    fallback_csm = CanonicalStructuredMessage(
+        task_id=context.get("task_id", ""),
+        run_id=context.get("run_id", ""),
+        status=CSMStatus.COMPLETED if "success" in raw.lower() else CSMStatus.PENDING,
+        source_contract="fallback",
+        raw_payload={"raw_output": raw[:500]},  # Truncate for storage
+    )
+
+    # Penalize confidence: 50% of adapter result, capped at 0.4
+    fallback_confidence = min(0.4, result.confidence * 0.5)
+
+    return AdapterResult(
+        csm=fallback_csm,
+        confidence=fallback_confidence,
+        parse_errors=result.parse_errors + ["fallback_mode"],
+        source_provider=provider,
+    )
+```
+
+---
+
+## File Modification Guide
+
+When implementing work packages, these are the primary files to modify:
+
+| WP Range | Primary Files | Secondary Files |
+|----------|--------------|-----------------|
+| WP-0001..0005 | `execution.py`, `config.py`, `models/` | `cli_impl.py`, `main.py` |
+| WP-X1..X8 | `contracts/registry.py`, `contracts/adapters.py` | `cli_impl.py`, `mcp_server.py` |
+| WP-1001..1008 | `orchestration/*.py` (NEW) | `cli_impl.py`, `main.py` |
+| WP-2001..2008 | `orchestration/*.py`, `agents/resilience.py` | `execution.py` |
+| WP-3001..3008 | `governance/*.py` (NEW) | `cli_impl.py`, `main.py` |
+| WP-4001..4008 | `ux/*.py` (NEW) | `cli_impl.py`, `main.py`, `mcp_server.py` |
+| WP-5001..5008 | `orchestration/*.py`, `models/catalog.py` | `execution.py`, `config.py` |
+| WP-6001..6008 | `docs/`, `tests/` | — |
+| WP-Y1..Y8 | Mixed (see WBS) | — |
+
+Key integration points:
+- **CLI commands**: Add to `main.py` (typer @app.command), wrap impl function call
+- **MCP tools**: Add to `mcp_server.py` (@mcp.tool decorator), call impl function, measure elapsed_ms
+- **Implementation**: Add to `cli_impl.py` (pure functions, no printing, return dict/list)
+- **Config**: Extend `config.py` for ThegentSettings if adding new env vars or settings
+
+---
+
+## Quality Checklist (Per Work Package)
+
+Before marking any WP as complete:
+
+### Code Organization
+- [ ] Implementation in correct module (`src/thegent/...`)
+- [ ] CLI command in `main.py` (typer @app.command, no logic, calls _impl)
+- [ ] MCP tool in `mcp_server.py` (@mcp.tool, async-capable, timing-aware)
+- [ ] Implementation in `cli_impl.py` (pure function, returns dict/list, no printing)
+- [ ] Configuration in `config.py` if adding env vars (ThegentSettings subclass)
+
+### Type Safety & Contracts
+- [ ] All public functions have type hints
+- [ ] Pydantic BaseModel for all data structures
+- [ ] Return type annotations (avoid -> Any, use -> dict[str, ...])
+- [ ] Typed exceptions (not bare Exception or except:)
+
+### Testing & Traceability
+- [ ] Unit tests in `tests/test_unit_*.py`
+- [ ] Integration tests if cross-module (`tests/test_integration_*.py`)
+- [ ] FR trace comments: `# @trace FR-XXX-NNN` or decorator
+- [ ] Test names descriptive: `def test_some_feature_when_condition_then_result()`
+
+### Code Quality
+- [ ] No print statements in _impl functions (use return values)
+- [ ] No f-strings in error messages (use f"error: {var}" with context)
+- [ ] ruff lint clean: `ruff check src/thegent/`
+- [ ] mypy passes: `mypy src/thegent/`
+- [ ] Line length <= 120 chars
+- [ ] Imports sorted and checked by ruff
+
+### Documentation
+- [ ] Module docstring with purpose
+- [ ] Function docstrings with Args, Returns
+- [ ] Complex logic has inline comments (why, not what)
+- [ ] WP reference in module: `# WP-XXXX`
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](./00-MASTER-INDEX.md) — plan index
+- [05-ARCHITECTURE.md](./05-ARCHITECTURE.md) — architecture overview

@@ -4,6 +4,7 @@ import os
 import platform
 import re
 import subprocess
+from pathlib import Path
 from typing import Any
 
 
@@ -17,8 +18,9 @@ def get_processes() -> list[dict[str, Any]]:
 
     if system == "linux":
         # Linux /proc scan
-        for pid_str in os.listdir("/proc"):
-            if not pid_str.isdigit():
+        for pid_path in Path("/proc").iterdir():
+            pid_str = pid_path.name
+            if not pid_path.is_dir() or not pid_str.isdigit():
                 continue
             pid = int(pid_str)
             try:

@@ -57,7 +57,7 @@ async def _safe_elicit(ctx: Any, message: str, response_type: Any) -> Any:
 def _try_import_accepted_elicitation() -> type | None:
     """Import AcceptedElicitation without suppression; return None if unavailable."""
     try:
-        from fastmcp.server.context import AcceptedElicitation
+        from fastmcp.server.elicitation import AcceptedElicitation
 
         return AcceptedElicitation
     except ImportError:
@@ -381,9 +381,10 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
         try:
             schema = json.loads(schema_json)
             # Simple dynamic model creation from schema (minimal support)
-            DynamicModel = create_model(
-                "DynamicElicitationModel", **dict.fromkeys(schema.get("properties", {}), (Any, ...))
-            )
+            properties = schema.get("properties", {})
+            # create_model expects field definitions as (type, ...) tuples
+            fields: dict[str, Any] = dict.fromkeys(properties, (Any, ...))
+            DynamicModel = create_model("DynamicElicitationModel", **fields)  # type: ignore[arg-type]
             value = await elicit_structured(ctx, message, DynamicModel)
         except Exception as e:
             _log.error("thegent_elicit_structured: error creating dynamic model: %s", e)

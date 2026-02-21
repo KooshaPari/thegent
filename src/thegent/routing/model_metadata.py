@@ -190,6 +190,196 @@ MODEL_METADATA: dict[str, dict[str, Any]] = {
         "provider": "cursor-agent",
         "backend": "direct",
     },
+    # OpenRouter aliases (canonical thegent alias -> OpenRouter model ID)
+    "anthropic/claude-opus-4-6": {
+        "context_window": 200000,
+        "cost_per_mtok": 15.00,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "anthropic/claude-sonnet-4-6": {
+        "context_window": 200000,
+        "cost_per_mtok": 3.00,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "anthropic/claude-haiku-4-5-20251001": {
+        "context_window": 200000,
+        "cost_per_mtok": 0.50,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "openai/gpt-4o": {
+        "context_window": 128000,
+        "cost_per_mtok": 2.50,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "google/gemini-2.0-flash-001": {
+        "context_window": 1000000,
+        "cost_per_mtok": 0.15,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "google/gemini-2.5-flash-preview": {
+        "context_window": 1000000,
+        "cost_per_mtok": 0.15,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "google/gemini-pro-1.5": {
+        "context_window": 200000,
+        "cost_per_mtok": 3.50,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    # OpenAI via OpenRouter
+    "openai/gpt-4o-mini": {
+        "context_window": 128000,
+        "cost_per_mtok": 0.15,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "openai/gpt-4-turbo": {
+        "context_window": 128000,
+        "cost_per_mtok": 3.00,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "openai/o3": {
+        "context_window": 200000,
+        "cost_per_mtok": 10.00,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "openai/o3-mini": {
+        "context_window": 200000,
+        "cost_per_mtok": 1.00,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "openai/o4-mini": {
+        "context_window": 200000,
+        "cost_per_mtok": 0.50,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    # DeepSeek via OpenRouter
+    "deepseek/deepseek-chat": {
+        "context_window": 64000,
+        "cost_per_mtok": 0.50,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    "deepseek/deepseek-r1": {
+        "context_window": 64000,
+        "cost_per_mtok": 0.50,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    # NVIDIA NIM via OpenRouter
+    "nvidia/llama-3.1-nemotron-ultra-253b-v1": {
+        "context_window": 128000,
+        "cost_per_mtok": 0.20,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    # Qwen via OpenRouter
+    "qwen/qwen-2.5-coder-32b-instruct": {
+        "context_window": 32000,
+        "cost_per_mtok": 0.30,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    # MiniMax via OpenRouter
+    "minimax/minimax-01": {
+        "context_window": 128000,
+        "cost_per_mtok": 0.40,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    # Zhipu GLM via OpenRouter
+    "zhipu/glm-4-9b": {
+        "context_window": 128000,
+        "cost_per_mtok": 0.40,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    # Kimi/Moonshot via OpenRouter
+    "moonshot/moonshot-v1-128k": {
+        "context_window": 128000,
+        "cost_per_mtok": 0.50,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    # Anthropic Claude via OpenRouter (additional variants)
+    "anthropic/claude-sonnet-4-5": {
+        "context_window": 200000,
+        "cost_per_mtok": 3.00,
+        "provider": "openrouter",
+        "backend": "direct",
+    },
+    # Ollama local models — zero cloud cost
+    "llama3.3": {
+        "context_window": 128000,
+        "cost_per_mtok": 0.0,
+        "provider": "ollama",
+        "backend": "direct",
+    },
+    "llama3.2": {
+        "context_window": 128000,
+        "cost_per_mtok": 0.0,
+        "provider": "ollama",
+        "backend": "direct",
+    },
+    "llama3.1": {
+        "context_window": 128000,
+        "cost_per_mtok": 0.0,
+        "provider": "ollama",
+        "backend": "direct",
+    },
+    "llama3": {
+        "context_window": 8192,
+        "cost_per_mtok": 0.0,
+        "provider": "ollama",
+        "backend": "direct",
+    },
+    "qwen2.5-coder": {
+        "context_window": 32768,
+        "cost_per_mtok": 0.0,
+        "provider": "ollama",
+        "backend": "direct",
+    },
+    "mistral": {
+        "context_window": 32768,
+        "cost_per_mtok": 0.0,
+        "provider": "ollama",
+        "backend": "direct",
+    },
+    "codellama": {
+        "context_window": 16384,
+        "cost_per_mtok": 0.0,
+        "provider": "ollama",
+        "backend": "direct",
+    },
+    "deepseek-coder-v2": {
+        "context_window": 131072,
+        "cost_per_mtok": 0.0,
+        "provider": "ollama",
+        "backend": "direct",
+    },
+    "phi4": {
+        "context_window": 16384,
+        "cost_per_mtok": 0.0,
+        "provider": "ollama",
+        "backend": "direct",
+    },
+    "gemma3": {
+        "context_window": 8192,
+        "cost_per_mtok": 0.0,
+        "provider": "ollama",
+        "backend": "direct",
+    },
 }
 
 

@@ -1,0 +1,453 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#content-area"
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - generic [ref=e9]:
+              - link "Ante home page light logo" [ref=e10] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e11]: Ante home page
+                - img "light logo" [ref=e12]
+              - button "Toggle dark mode" [ref=e13] [cursor=pointer]:
+                - generic [ref=e14]:
+                  - img [ref=e15]
+                  - img [ref=e22]
+            - generic [ref=e27]:
+              - button "Open search" [ref=e28] [cursor=pointer]:
+                - generic [ref=e29]:
+                  - img [ref=e30]
+                  - generic [ref=e33]: Search...
+                - generic [ref=e34]: ⌘K
+              - button "Toggle assistant panel" [ref=e35] [cursor=pointer]:
+                - img [ref=e36]
+            - generic [ref=e40]:
+              - list
+              - generic [ref=e41]:
+                - heading "Getting Started" [level=5] [ref=e43]
+                - list [ref=e44]:
+                  - listitem [ref=e45]:
+                    - link "Overview" [ref=e46] [cursor=pointer]:
+                      - /url: /start/overview
+                      - generic [ref=e48]: Overview
+                  - listitem [ref=e49]:
+                    - link "Quickstart" [ref=e50] [cursor=pointer]:
+                      - /url: /start/quickstart
+                      - generic [ref=e52]: Quickstart
+                  - listitem [ref=e53]:
+                    - link "Eval & Benchmark" [ref=e54] [cursor=pointer]:
+                      - /url: /start/eval
+                      - generic [ref=e56]: Eval & Benchmark
+              - generic [ref=e57]:
+                - heading "Concepts" [level=5] [ref=e59]
+                - list [ref=e60]:
+                  - listitem [ref=e61]:
+                    - link "Core Concepts & Protocol" [ref=e62] [cursor=pointer]:
+                      - /url: /concepts/core-concepts
+                      - generic [ref=e64]: Core Concepts & Protocol
+                  - listitem [ref=e65]:
+                    - link "Architecture" [ref=e66] [cursor=pointer]:
+                      - /url: /concepts/architecture
+                      - generic [ref=e68]: Architecture
+              - generic [ref=e69]:
+                - heading "Agent Org" [level=5] [ref=e71]
+                - list [ref=e72]:
+                  - listitem [ref=e73]:
+                    - link "Agent Organization (Experimental)" [ref=e74] [cursor=pointer]:
+                      - /url: /agent-org
+                      - generic [ref=e76]: Agent Organization (Experimental)
+              - generic [ref=e77]:
+                - heading "Offline Mode" [level=5] [ref=e79]
+                - list [ref=e80]:
+                  - listitem [ref=e81]:
+                    - link "Offline Mode (Experimental)" [ref=e82] [cursor=pointer]:
+                      - /url: /offline
+                      - generic [ref=e84]: Offline Mode (Experimental)
+              - generic [ref=e85]:
+                - heading "Usage" [level=5] [ref=e87]
+                - list [ref=e88]:
+                  - listitem [ref=e89]:
+                    - link "Interactive TUI" [ref=e90] [cursor=pointer]:
+                      - /url: /usage/tui
+                      - generic [ref=e92]: Interactive TUI
+                  - listitem [ref=e93]:
+                    - link "Headless Mode" [ref=e94] [cursor=pointer]:
+                      - /url: /usage/headless
+                      - generic [ref=e96]: Headless Mode
+              - generic [ref=e97]:
+                - heading "Extensibility" [level=5] [ref=e99]
+                - list [ref=e100]:
+                  - listitem [ref=e101]:
+                    - link "Skills" [ref=e102] [cursor=pointer]:
+                      - /url: /extend/skills
+                      - generic [ref=e104]: Skills
+                  - listitem [ref=e105]:
+                    - link "Sub-Agents" [ref=e106] [cursor=pointer]:
+                      - /url: /extend/subagents
+                      - generic [ref=e108]: Sub-Agents
+              - generic [ref=e109]:
+                - heading "Configuration" [level=5] [ref=e111]
+                - list [ref=e112]:
+                  - listitem [ref=e113]:
+                    - link "Model & Provider Catalog" [ref=e114] [cursor=pointer]:
+                      - /url: /configuration/catalog
+                      - generic [ref=e116]: Model & Provider Catalog
+                  - listitem [ref=e117]:
+                    - link "Preferences" [ref=e118] [cursor=pointer]:
+                      - /url: /configuration/preference
+                      - generic [ref=e120]: Preferences
+                  - listitem [ref=e121]:
+                    - link "Adding a 3rd Party Provider" [ref=e122] [cursor=pointer]:
+                      - /url: /configuration/third-party-provider
+                      - generic [ref=e124]: Adding a 3rd Party Provider
+              - generic [ref=e125]:
+                - heading "Memory" [level=5] [ref=e127]
+                - list [ref=e128]:
+                  - listitem [ref=e129]:
+                    - link "Memory" [ref=e130] [cursor=pointer]:
+                      - /url: /memory
+                      - generic [ref=e132]: Memory
+              - generic [ref=e133]:
+                - heading "Reference" [level=5] [ref=e135]
+                - list [ref=e136]:
+                  - listitem [ref=e137]:
+                    - link "Tools" [ref=e138] [cursor=pointer]:
+                      - /url: /tools
+                      - generic [ref=e140]: Tools
+          - list [ref=e141]:
+            - listitem [ref=e142]:
+              - link "Website" [ref=e143] [cursor=pointer]:
+                - /url: https://antigma.ai
+                - img [ref=e144]
+                - generic [ref=e146]: Website
+                - img [ref=e147]
+            - listitem [ref=e150]:
+              - link "Discord" [ref=e151] [cursor=pointer]:
+                - /url: https://discord.gg/pqhj3DNGz2
+                - img [ref=e152]
+                - generic [ref=e154]: Discord
+                - img [ref=e155]
+            - listitem [ref=e158]:
+              - link "GitHub" [ref=e159] [cursor=pointer]:
+                - /url: https://github.com/AntigmaLabs/ante-preview
+                - img [ref=e160]
+                - generic [ref=e162]: GitHub
+                - img [ref=e163]
+            - listitem
+        - generic [ref=e166]:
+          - link "Ante Preview" [ref=e169] [cursor=pointer]:
+            - /url: /start/overview
+            - text: Ante Preview
+          - generic [ref=e171]:
+            - banner [ref=e172]:
+              - generic [ref=e173]:
+                - generic [ref=e174]: Configuration
+                - heading "Model & Provider Catalog" [level=1] [ref=e176]
+              - paragraph [ref=e178]: Available models and providers supported by Ante
+            - generic [ref=e179]:
+              - generic [ref=e180]: Ante is provider-agnostic. Each provider implements a common interface for sending prompts and receiving streaming responses. Providers are resolved from a catalog at session init time.
+              - heading "Navigate to header Providers" [level=2] [ref=e181]:
+                - link "Navigate to header" [ref=e182] [cursor=pointer]:
+                  - /url: "#providers"
+                  - img [ref=e184]
+                - generic [ref=e186] [cursor=pointer]: Providers
+              - table [ref=e189]:
+                - rowgroup [ref=e190]:
+                  - row "Provider Wire Format Models" [ref=e191]:
+                    - columnheader "Provider" [ref=e192]
+                    - columnheader "Wire Format" [ref=e193]
+                    - columnheader "Models" [ref=e194]
+                - rowgroup [ref=e195]:
+                  - row "Anthropic Messages API Claude family" [ref=e196]:
+                    - cell "Anthropic" [ref=e197]
+                    - cell "Messages API" [ref=e198]
+                    - cell "Claude family" [ref=e199]
+                  - row "OpenAI Chat Completions / Responses GPT-4o, o1, etc." [ref=e200]:
+                    - cell "OpenAI" [ref=e201]
+                    - cell "Chat Completions / Responses" [ref=e202]
+                    - cell "GPT-4o, o1, etc." [ref=e203]
+                  - row "Gemini Gemini API Gemini family" [ref=e204]:
+                    - cell "Gemini" [ref=e205]
+                    - cell "Gemini API" [ref=e206]
+                    - cell "Gemini family" [ref=e207]
+                  - row "Grok OpenAI-compatible Grok models" [ref=e208]:
+                    - cell "Grok" [ref=e209]
+                    - cell "OpenAI-compatible" [ref=e210]
+                    - cell "Grok models" [ref=e211]
+                  - row "Open Router OpenAI-compatible Multiple providers" [ref=e212]:
+                    - cell "Open Router" [ref=e213]
+                    - cell "OpenAI-compatible" [ref=e214]
+                    - cell "Multiple providers" [ref=e215]
+                  - row "Local llama.cpp GGUF models" [ref=e216]:
+                    - cell "Local" [ref=e217]
+                    - cell "llama.cpp" [ref=e218]
+                    - cell "GGUF models" [ref=e219]
+              - heading "Navigate to header Provider identifiers" [level=3] [ref=e220]:
+                - link "Navigate to header" [ref=e221] [cursor=pointer]:
+                  - /url: "#provider-identifiers"
+                  - img [ref=e223]
+                - generic [ref=e225] [cursor=pointer]: Provider identifiers
+              - generic [ref=e226]:
+                - text: Use these identifiers with
+                - code [ref=e227]: "--provider"
+                - text: "or in your settings file:"
+              - table [ref=e230]:
+                - rowgroup [ref=e231]:
+                  - row "ID Provider" [ref=e232]:
+                    - columnheader "ID" [ref=e233]
+                    - columnheader "Provider" [ref=e234]
+                - rowgroup [ref=e235]:
+                  - row "anthropic Anthropic (Claude)" [ref=e236]:
+                    - cell "anthropic" [ref=e237]:
+                      - code [ref=e238]: anthropic
+                    - cell "Anthropic (Claude)" [ref=e239]
+                  - row "openai OpenAI (GPT)" [ref=e240]:
+                    - cell "openai" [ref=e241]:
+                      - code [ref=e242]: openai
+                    - cell "OpenAI (GPT)" [ref=e243]
+                  - row "openai-response OpenAI Responses API" [ref=e244]:
+                    - cell "openai-response" [ref=e245]:
+                      - code [ref=e246]: openai-response
+                    - cell "OpenAI Responses API" [ref=e247]
+                  - row "gemini Google Gemini" [ref=e248]:
+                    - cell "gemini" [ref=e249]:
+                      - code [ref=e250]: gemini
+                    - cell "Google Gemini" [ref=e251]
+                  - row "open-router Open Router" [ref=e252]:
+                    - cell "open-router" [ref=e253]:
+                      - code [ref=e254]: open-router
+                    - cell "Open Router" [ref=e255]
+                  - row "xai Grok (xAI)" [ref=e256]:
+                    - cell "xai" [ref=e257]:
+                      - code [ref=e258]: xai
+                    - cell "Grok (xAI)" [ref=e259]
+                  - row "local Local models via llama.cpp" [ref=e260]:
+                    - cell "local" [ref=e261]:
+                      - code [ref=e262]: local
+                    - cell "Local models via llama.cpp" [ref=e263]
+              - heading "Navigate to header Models" [level=2] [ref=e264]:
+                - link "Navigate to header" [ref=e265] [cursor=pointer]:
+                  - /url: "#models"
+                  - img [ref=e267]
+                - generic [ref=e269] [cursor=pointer]: Models
+              - heading "Navigate to header Anthropic (Claude)" [level=3] [ref=e270]:
+                - link "Navigate to header" [ref=e271] [cursor=pointer]:
+                  - /url: "#anthropic-claude"
+                  - img [ref=e273]
+                - generic [ref=e275] [cursor=pointer]: Anthropic (Claude)
+              - generic [ref=e276]: The default provider. Supports the full Claude model family through the Messages API.
+              - generic [ref=e277]:
+                - generic [ref=e278]:
+                  - generic [ref=e279]:
+                    - button "Copy the contents from the code block" [ref=e280] [cursor=pointer]:
+                      - img [ref=e281]
+                    - generic [ref=e284]: Copy
+                  - generic [ref=e285]:
+                    - button "Ask AI" [ref=e286] [cursor=pointer]:
+                      - img [ref=e287]
+                    - generic [ref=e290]: Ask AI
+                - code [ref=e294]:
+                  - generic [ref=e295]: ante --provider anthropic --model claude-sonnet-4-5-20250514
+              - heading "Navigate to header OpenAI" [level=3] [ref=e296]:
+                - link "Navigate to header" [ref=e297] [cursor=pointer]:
+                  - /url: "#openai"
+                  - img [ref=e299]
+                - generic [ref=e301] [cursor=pointer]: OpenAI
+              - generic [ref=e302]: Supports GPT models through both the Chat Completions API and the Responses API.
+              - generic [ref=e303]:
+                - generic [ref=e304]:
+                  - generic [ref=e305]:
+                    - button "Copy the contents from the code block" [ref=e306] [cursor=pointer]:
+                      - img [ref=e307]
+                    - generic [ref=e310]: Copy
+                  - generic [ref=e311]:
+                    - button "Ask AI" [ref=e312] [cursor=pointer]:
+                      - img [ref=e313]
+                    - generic [ref=e316]: Ask AI
+                - code [ref=e320]:
+                  - generic [ref=e321]: "# Chat Completions API"
+                  - generic [ref=e322]: ante --provider openai --model gpt-4o
+                  - generic [ref=e323]: "# Responses API"
+                  - generic [ref=e324]: ante --provider openai-response --model gpt-4o
+              - heading "Navigate to header Google Gemini" [level=3] [ref=e325]:
+                - link "Navigate to header" [ref=e326] [cursor=pointer]:
+                  - /url: "#google-gemini"
+                  - img [ref=e328]
+                - generic [ref=e330] [cursor=pointer]: Google Gemini
+              - generic [ref=e331]: Supports Gemini models through the Gemini API.
+              - generic [ref=e332]:
+                - generic [ref=e333]:
+                  - generic [ref=e334]:
+                    - button "Copy the contents from the code block" [ref=e335] [cursor=pointer]:
+                      - img [ref=e336]
+                    - generic [ref=e339]: Copy
+                  - generic [ref=e340]:
+                    - button "Ask AI" [ref=e341] [cursor=pointer]:
+                      - img [ref=e342]
+                    - generic [ref=e345]: Ask AI
+                - code [ref=e349]:
+                  - generic [ref=e350]: ante --provider gemini --model gemini-2.5-pro
+              - heading "Navigate to header Grok (xAI)" [level=3] [ref=e351]:
+                - link "Navigate to header" [ref=e352] [cursor=pointer]:
+                  - /url: "#grok-xai"
+                  - img [ref=e354]
+                - generic [ref=e356] [cursor=pointer]: Grok (xAI)
+              - generic [ref=e357]: Uses the OpenAI-compatible wire format.
+              - generic [ref=e358]:
+                - generic [ref=e359]:
+                  - generic [ref=e360]:
+                    - button "Copy the contents from the code block" [ref=e361] [cursor=pointer]:
+                      - img [ref=e362]
+                    - generic [ref=e365]: Copy
+                  - generic [ref=e366]:
+                    - button "Ask AI" [ref=e367] [cursor=pointer]:
+                      - img [ref=e368]
+                    - generic [ref=e371]: Ask AI
+                - code [ref=e375]:
+                  - generic [ref=e376]: ante --provider xai --model grok-3
+              - heading "Navigate to header Open Router" [level=3] [ref=e377]:
+                - link "Navigate to header" [ref=e378] [cursor=pointer]:
+                  - /url: "#open-router"
+                  - img [ref=e380]
+                - generic [ref=e382] [cursor=pointer]: Open Router
+              - generic [ref=e383]:
+                - text: Access multiple providers through a single API via
+                - link "Open Router" [ref=e384] [cursor=pointer]:
+                  - /url: https://openrouter.ai/
+                - text: .
+              - generic [ref=e385]:
+                - generic [ref=e386]:
+                  - generic [ref=e387]:
+                    - button "Copy the contents from the code block" [ref=e388] [cursor=pointer]:
+                      - img [ref=e389]
+                    - generic [ref=e392]: Copy
+                  - generic [ref=e393]:
+                    - button "Ask AI" [ref=e394] [cursor=pointer]:
+                      - img [ref=e395]
+                    - generic [ref=e398]: Ask AI
+                - code [ref=e402]:
+                  - generic [ref=e403]: ante --provider open-router --model anthropic/claude-sonnet-4-5
+              - heading "Navigate to header Local models" [level=3] [ref=e404]:
+                - link "Navigate to header" [ref=e405] [cursor=pointer]:
+                  - /url: "#local-models"
+                  - img [ref=e407]
+                - generic [ref=e409] [cursor=pointer]: Local models
+              - generic [ref=e410]:
+                - text: Run GGUF models locally via the built-in llama.cpp engine. No API keys or internet required. See
+                - link "Offline Mode" [ref=e411] [cursor=pointer]:
+                  - /url: /offline
+                - text: for setup details.
+              - generic [ref=e412]:
+                - generic [ref=e413]:
+                  - generic [ref=e414]:
+                    - button "Copy the contents from the code block" [ref=e415] [cursor=pointer]:
+                      - img [ref=e416]
+                    - generic [ref=e419]: Copy
+                  - generic [ref=e420]:
+                    - button "Ask AI" [ref=e421] [cursor=pointer]:
+                      - img [ref=e422]
+                    - generic [ref=e425]: Ask AI
+                - code [ref=e429]:
+                  - generic [ref=e430]: ante --provider local
+              - heading "Navigate to header Authentication" [level=2] [ref=e431]:
+                - link "Navigate to header" [ref=e432] [cursor=pointer]:
+                  - /url: "#authentication"
+                  - img [ref=e434]
+                - generic [ref=e436] [cursor=pointer]: Authentication
+              - generic [ref=e437]: "Each provider requires its own authentication method:"
+              - table [ref=e440]:
+                - rowgroup [ref=e441]:
+                  - row "Provider Auth Method" [ref=e442]:
+                    - columnheader "Provider" [ref=e443]
+                    - columnheader "Auth Method" [ref=e444]
+                - rowgroup [ref=e445]:
+                  - row "Anthropic ANTHROPIC_API_KEY env var or OAuth" [ref=e446]:
+                    - cell "Anthropic" [ref=e447]
+                    - cell "ANTHROPIC_API_KEY env var or OAuth" [ref=e448]:
+                      - code [ref=e449]: ANTHROPIC_API_KEY
+                      - text: env var or OAuth
+                  - row "OpenAI OPENAI_API_KEY env var or OAuth" [ref=e450]:
+                    - cell "OpenAI" [ref=e451]
+                    - cell "OPENAI_API_KEY env var or OAuth" [ref=e452]:
+                      - code [ref=e453]: OPENAI_API_KEY
+                      - text: env var or OAuth
+                  - row "Gemini GEMINI_API_KEY env var" [ref=e454]:
+                    - cell "Gemini" [ref=e455]
+                    - cell "GEMINI_API_KEY env var" [ref=e456]:
+                      - code [ref=e457]: GEMINI_API_KEY
+                      - text: env var
+                  - row "Grok XAI_API_KEY env var" [ref=e458]:
+                    - cell "Grok" [ref=e459]
+                    - cell "XAI_API_KEY env var" [ref=e460]:
+                      - code [ref=e461]: XAI_API_KEY
+                      - text: env var
+                  - row "Open Router OPEN_ROUTER_API_KEY env var" [ref=e462]:
+                    - cell "Open Router" [ref=e463]
+                    - cell "OPEN_ROUTER_API_KEY env var" [ref=e464]:
+                      - code [ref=e465]: OPEN_ROUTER_API_KEY
+                      - text: env var
+                  - row "Local No authentication needed" [ref=e466]:
+                    - cell "Local" [ref=e467]
+                    - cell "No authentication needed" [ref=e468]
+              - generic [ref=e469]:
+                - img "Tip" [ref=e471]
+                - generic [ref=e474]: Anthropic and OpenAI also support interactive OAuth flows through the TUI.
+              - heading "Navigate to header Selecting a provider" [level=2] [ref=e475]:
+                - link "Navigate to header" [ref=e476] [cursor=pointer]:
+                  - /url: "#selecting-a-provider"
+                  - img [ref=e478]
+                - generic [ref=e480] [cursor=pointer]: Selecting a provider
+              - generic [ref=e481]: "You can set your provider in three ways (in order of precedence):"
+              - list [ref=e482]:
+                - listitem [ref=e483]:
+                  - strong [ref=e484]: CLI flag
+                  - text: —
+                  - code [ref=e485]: ante --provider anthropic --model claude-sonnet-4-5-20250514
+                - listitem [ref=e486]:
+                  - strong [ref=e487]: Settings file
+                  - text: — Set
+                  - code [ref=e488]: provider
+                  - text: and
+                  - code [ref=e489]: model
+                  - text: in
+                  - code [ref=e490]: ~/.ante/settings.json
+                - listitem [ref=e491]:
+                  - strong [ref=e492]: Built-in default
+                  - text: — Anthropic with Claude Sonnet
+            - generic [ref=e494]:
+              - link "Previous" [ref=e495] [cursor=pointer]:
+                - /url: /extend/subagents
+                - img [ref=e496]
+                - generic [ref=e498]: Previous
+              - link "Preferences Settings file, environment variables, and directory structure Next" [ref=e499] [cursor=pointer]:
+                - /url: /configuration/preference
+                - generic [ref=e500]:
+                  - generic [ref=e501]:
+                    - generic [ref=e502]: Preferences
+                    - generic [ref=e503]: Settings file, environment variables, and directory structure
+                  - generic [ref=e505]:
+                    - generic [ref=e506]: Next
+                    - img [ref=e507]
+            - contentinfo [ref=e509]:
+              - link "Powered by" [ref=e512] [cursor=pointer]:
+                - /url: https://www.mintlify.com?utm_campaign=poweredBy&utm_medium=referral&utm_source=antigmalabs
+                - generic [ref=e513]: Powered by
+                - img [ref=e514]
+      - generic [ref=e526]:
+        - generic [ref=e527]:
+          - generic [ref=e528]:
+            - img [ref=e529]
+            - generic [ref=e533]: Assistant
+          - generic [ref=e534]:
+            - button [ref=e535] [cursor=pointer]:
+              - img [ref=e536]
+            - button [ref=e541] [cursor=pointer]:
+              - img [ref=e542]
+        - generic [ref=e548]: Responses are generated using AI and may contain mistakes.
+        - generic [ref=e553]:
+          - textbox "Ask a question..." [ref=e554]
+          - button "Send message" [disabled] [ref=e555]:
+            - img [ref=e556]
+  - alert [ref=e558]

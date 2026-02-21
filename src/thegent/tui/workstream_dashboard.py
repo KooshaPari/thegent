@@ -7,7 +7,7 @@ import asyncio
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from textual import on, work
 from textual.app import App, ComposeResult
@@ -25,7 +25,7 @@ _log = logging.getLogger(__name__)
 class StatsPanel(Static):
     """Statistics panel showing key metrics."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.stats: dict[str, Any] = {}
 
@@ -63,7 +63,7 @@ Total Cost:  [bold]${total_cost:.4f}[/bold]
 class SessionsTable(DataTable):
     """Table showing active sessions."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.add_columns("Session ID", "Agent", "Status", "Item ID", "Started", "Lane")
 
@@ -108,7 +108,7 @@ class SessionsTable(DataTable):
 class WorkstreamItemsTable(DataTable):
     """Table showing workstream items."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.add_columns("ID", "Status", "Priority", "Source", "Title")
 
@@ -145,7 +145,7 @@ class WorkstreamItemsTable(DataTable):
 class ConcurrencyPanel(Static):
     """Panel showing concurrency limits and usage."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.running = 0
         self.limit = 0
@@ -184,7 +184,7 @@ Usage:       {color}{usage_pct:.1f}%[/]
 class KPIPanel(Static):
     """KPI panel showing TRAFFIC metrics."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.kpis: dict[str, Any] = {}
 
@@ -212,7 +212,7 @@ Integrity:   [blue]{self.kpis.get("integrity", 1.0):.1%}[/blue]
 class ReputationTable(DataTable):
     """Table showing agent reputation scores."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.add_columns("Agent", "Trust Score", "Status")
 
@@ -228,7 +228,7 @@ class ReputationTable(DataTable):
 class DependenciesTable(DataTable):
     """Table showing item dependencies."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.add_columns("Item ID", "Depends On", "Status")
 
@@ -246,7 +246,7 @@ class DependenciesTable(DataTable):
 class XPTable(DataTable):
     """Table showing agent XP and levels."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.add_columns("Agent", "XP", "Level", "Trust Score")
 
@@ -265,7 +265,7 @@ class XPTable(DataTable):
 class GardenerPanel(Static):
     """Panel showing auto-launch system health and gardening status."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.health_data: dict[str, Any] = {}
 
@@ -324,13 +324,13 @@ class WorkstreamDashboard(App):
     }
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar[tuple[tuple[str, str, str], ...]] = (
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh"),
         ("g", "garden", "Garden"),
-    ]
+    )
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.settings = ThegentSettings()
         self.db = WorkstreamDB(settings=self.settings)

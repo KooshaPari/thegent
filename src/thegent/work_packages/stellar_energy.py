@@ -1,7 +1,5 @@
 """WP-42001: Stellar Energy Harvesting Bridge (Sim)."""
 
-from typing import Any
-
 
 class StellarEnergyBridge:
     """Bridge for stellar energy harvesting simulation."""

@@ -24,6 +24,8 @@ The bootstrap runs: install thegent → `install -t all` → `install-shims` →
 
 Use these roles consistently across macOS/Linux/Windows and across devices:
 
+> **Control-plane note:** treat `thegent` as your declarative environment-management/install control plane ("nixfiles"-style). Runtime/tool dependencies remain pinned and executed by their native ecosystems; thegent governs installation targets, policy, and cross-platform orchestration.
+
 - `mise`: runtime/version manager for language toolchains (Python/Node/Go/etc.) using repo pins (`.mise.toml`).
 - `uv`: Python package + virtualenv manager for project dependencies and CLI installs.
 - `Homebrew` (`Brewfile`): macOS system package manager for host tools.
@@ -332,6 +334,21 @@ thegent install-shims --prefix /opt/thegent
 ```
 
 This installs the git wrapper to `$prefix/bin` for nix/direnv compatibility. Use `--system` for `/usr/local` or `--prefix /custom/path` for a custom install root.
+
+### Agent Harness Shim Install
+
+To install the Rust harness shims directly:
+
+```bash
+zsh scripts/install-thegent-shims.sh
+```
+
+This installs `thegent-shims` plus user-facing harness wrappers in `~/.local/bin`:
+
+- `dex -> codex` (adds `--search` and codex bypass flag unless `--native`)
+- `clode -> claude` (adds skip-permissions flag unless `--native`)
+- `roid -> droid` and `fanta -> ante` (exec path adds unsafe skip flag unless `--native`)
+- `cline`, `roocode`, `opencode` passthrough wrappers
 
 ---
 

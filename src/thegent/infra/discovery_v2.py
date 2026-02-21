@@ -7,7 +7,8 @@ import os
 import time
 from datetime import UTC, datetime, timezone
 from pathlib import Path
-from typing import Any
+from collections.abc import Callable
+from typing import Any, ClassVar
 
 import psutil
 import yaml
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 class AgentScanner:
     """Scans for agent processes using specific patterns."""
 
-    AGENT_PATTERNS = {
+    AGENT_PATTERNS: ClassVar[dict[str, list[str]]] = {
         "claude": ["claude-code", "claude"],
         "aider": ["aider"],
         "cursor": ["cursor-agent", "cursor-api"],
@@ -77,7 +78,7 @@ class HeartbeatMonitor:
                 stale.append(f.stem)
         return stale
 
-    def cleanup_stale(self, callback: callable | None = None):
+    def cleanup_stale(self, callback: "Callable[..., Any] | None" = None):
         """Cleanup stale agent records."""
         stale_ids = self.get_stale_agents()
         for agent_id in stale_ids:

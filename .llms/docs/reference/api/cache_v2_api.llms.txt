@@ -1,0 +1,221 @@
+# cache_v2_api
+
+Source: docs/reference/api/cache_v2_api.md
+
+---
+
+# cache_v2 API Reference
+
+> **Source**: `src/thegent/infra/cache_v2.py`
+
+Phase 9: Request Coalescing v2 implementation.
+
+Includes Singleflight, inotify cache invalidation, and heat-based LRU.
+
+---
+
+## CacheInvalidator
+
+inotify-based cache invalidation.
+
+### Methods
+
+#### CacheInvalidator.__init__
+
+```
+__init__(self: Any, cache: Any)
+```
+
+---
+
+#### CacheInvalidator.stop
+
+```
+stop(self: Any)
+```
+
+---
+
+#### CacheInvalidator.watch
+
+```
+watch(self: Any, directory: Path)
+```
+
+---
+
+---
+
+## CacheV2
+
+Async-friendly TTL cache used by newer infra modules.
+
+### Methods
+
+#### CacheV2.__init__
+
+```
+__init__(self: Any, root: Path, namespace: str)
+```
+
+---
+
+---
+
+## CrossProcessSingleflight
+
+Implementation of Singleflight pattern across processes using file locks.
+
+### Methods
+
+#### CrossProcessSingleflight.__init__
+
+```
+__init__(self: Any, coordination_dir: Path)
+```
+
+---
+
+#### CrossProcessSingleflight.do
+
+```
+do(self: Any, key: str, func: Callable[(Any, Any)], ttl: int)
+```
+
+Execute func for key, coalescing concurrent calls across processes.
+
+---
+
+---
+
+## Handler
+
+**Inherits from**: `watchdog.events.FileSystemEventHandler`
+
+### Methods
+
+#### Handler.__init__
+
+```
+__init__(self: Any, cache: Any)
+```
+
+---
+
+#### Handler.on_modified
+
+```
+on_modified(self: Any, event: Any)
+```
+
+---
+
+---
+
+## HeatBasedLRU
+
+LRU cache with heat-based eviction (frequency + decay).
+
+### Methods
+
+#### HeatBasedLRU.__init__
+
+```
+__init__(self: Any, capacity: int, decay_factor: float)
+```
+
+---
+
+#### HeatBasedLRU.get
+
+```
+get(self: Any, key: str)
+```
+
+---
+
+#### HeatBasedLRU.put
+
+```
+put(self: Any, key: str, value: Any)
+```
+
+---
+
+---
+
+## Singleflight
+
+Implementation of Singleflight pattern to prevent duplicate requests.
+
+### Methods
+
+#### Singleflight.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### Singleflight.do
+
+```
+do(self: Any, key: str, func: Callable[(Any, Any)])
+```
+
+Execute func for key, coalescing concurrent calls.
+
+---
+
+---
+
+## do
+
+```
+do(self: Any, key: str, func: Callable[(Any, Any)], ttl: int)
+```
+
+Execute func for key, coalescing concurrent calls across processes.
+
+---
+
+## get
+
+```
+get(self: Any, key: str) -> Any
+```
+
+---
+
+## on_modified
+
+```
+on_modified(self: Any, event: Any)
+```
+
+---
+
+## put
+
+```
+put(self: Any, key: str, value: Any)
+```
+
+---
+
+## stop
+
+```
+stop(self: Any)
+```
+
+---
+
+## watch
+
+```
+watch(self: Any, directory: Path)
+```
+
+---

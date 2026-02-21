@@ -2,9 +2,7 @@
 
 import hashlib
 import json
-import os
 import threading
-import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -51,7 +49,6 @@ class MeshCache:
             return None
 
         # Update heat (exponential decay simulation)
-        now = time.time()
         self.heat_map[key] = self.heat_map.get(key, 0) * 0.9 + 1.0
 
         with open(cache_file) as f:
@@ -73,7 +70,7 @@ class MeshCache:
         if not self.heat_map:
             return
 
-        coldest_key = min(self.heat_map, key=self.heat_map.get)
+        coldest_key = min(self.heat_map, key=lambda k: self.heat_map.get(k, 0))
         cache_file = self.cache_dir / f"{coldest_key}.json"
         if cache_file.exists():
             cache_file.unlink()
@@ -83,7 +80,7 @@ class MeshCache:
         """Invalidate cache entries affected by file changes (SCLI-P7.2)."""
         # In this implementation, we assume keys might be hashes of file paths
         count = 0
-        file_hash = hashlib.md5(file_path.encode()).hexdigest()
+        file_hash = hashlib.sha256(file_path.encode()).hexdigest()
         for cache_file in self.cache_dir.glob(f"*{file_hash}*"):
             cache_file.unlink()
             count += 1

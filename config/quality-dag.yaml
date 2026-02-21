@@ -1,20 +1,10 @@
 version: 1
 steps:
-  py-lint:
+  instruction-architecture:
     deps: []
-    command: task py:lint
-    display: Python lint
-  py-type:
-    deps: []
-    command: task py:typecheck
-    display: Python type
-  py-test:
-    deps:
-    - py-lint
-    - py-type
-    command: task py:test
-    display: Python test
-  bash-lint:
-    deps: []
-    command: task bash:lint
-    display: Bash lint
+    command: task quality:instruction-architecture
+    display: Instruction architecture contracts
+  quality:
+    deps: [instruction-architecture]
+    command: task quality
+    display: Canonical umbrella quality suite

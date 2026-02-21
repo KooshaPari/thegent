@@ -1,0 +1,33 @@
+# isolation_api
+
+Source: docs/reference/api/isolation_api.md
+
+---
+
+# isolation API Reference
+
+> **Source**: `src/thegent/cli/apps/isolation.py`
+
+Thegent Isolation: Multi-tenancy and Sandboxing Control.
+
+---
+
+## isolation_check
+
+```
+isolation_check(mode: str)
+```
+
+Check the status of the isolation system.
+
+---
+
+## isolation_share_run
+
+```
+isolation_share_run(command: list[str], tenant_id: str, role: Any)
+```
+
+Run a command shared across tenants using CLI-Share debouncing.
+
+---

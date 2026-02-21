@@ -34,5 +34,11 @@ This document tracks the "Why" behind the core architectural shifts in `thegent`
 - **Status**: **ACCEPTED**
 - **Consequence**: Tampering is detectable via `verify_chain()` in O(n) time. No database or external service dependency. No concurrent-writer safety (single writer per session dir). Full detail: [ADR-015-immutable-audit-ledger.md](./docs/reference/ADR-015-immutable-audit-ledger.md)
 
+## ADR-016: Two Python Surfaces (Core Runtime vs Tooling/Test)
+- **Context**: WL-120/WL-136 identified mixed-purpose Python surfaces that increased runtime coupling and slowed decomposition progress.
+- **Decision**: Ratify two explicit Python surfaces and require command domains to import extracted implementation modules directly (for example, `dag_impl.py`, `work_stream_impl.py`) instead of routing through `impl.py` where extraction exists.
+- **Status**: **ACCEPTED**
+- **Consequence**: Core/runtime paths can be measured and reduced independently, while tooling/test surfaces remain isolated from fast-lane runtime checks. Full detail: [ADR-016-two-python-surfaces.md](./docs/reference/ADR-016-two-python-surfaces.md)
+
 ---
 *Cross-ref: [ARCHITECTURE.md](./docs/plans/05-ARCHITECTURE.md)*

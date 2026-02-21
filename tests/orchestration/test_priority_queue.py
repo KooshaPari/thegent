@@ -23,8 +23,8 @@ from queue import Empty, Full
 
 import pytest
 
-from thegent.orchestration.lanes import LANE_PRIORITIES, Lane, LaneModel
-from thegent.orchestration.priority_queue import (
+from thegent.orchestration.execution.lanes import LANE_PRIORITIES, Lane, LaneModel
+from thegent.orchestration.execution.priority_queue import (
     QueuedRun,
     RunPriorityQueue,
     make_priority_queue,

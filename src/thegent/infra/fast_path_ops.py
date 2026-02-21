@@ -31,7 +31,9 @@ class FastPathOps:
             - os.path.join: Faster than Path() for simple joins
             - Optimized for common cases
         """
-        return os.path.join(*parts)
+        if not parts:
+            return ""
+        return str(Path(parts[0]).joinpath(*parts[1:]))
 
     @staticmethod
     def exists(path: str | Path) -> bool:
@@ -47,7 +49,7 @@ class FastPathOps:
             - os.path.exists: Fast existence check
             - Avoids Path overhead for simple checks
         """
-        return os.path.exists(str(path))
+        return Path(path).exists()
 
     @staticmethod
     def is_file(path: str | Path) -> bool:
@@ -59,7 +61,7 @@ class FastPathOps:
         Returns:
             True if path is a file
         """
-        return os.path.isfile(str(path))
+        return Path(path).is_file()
 
     @staticmethod
     def is_dir(path: str | Path) -> bool:
@@ -71,7 +73,7 @@ class FastPathOps:
         Returns:
             True if path is a directory
         """
-        return os.path.isdir(str(path))
+        return Path(path).is_dir()
 
     @staticmethod
     def normalize(path: str) -> str:
@@ -99,7 +101,7 @@ class FastPathOps:
         Returns:
             Absolute path
         """
-        return os.path.abspath(path)
+        return str(Path(path).resolve(strict=False))
 
     @staticmethod
     def basename(path: str | Path) -> str:
@@ -111,7 +113,13 @@ class FastPathOps:
         Returns:
             Basename (filename)
         """
-        return os.path.basename(str(path))
+        path_str = str(path)
+        separators = [os.sep]
+        if os.altsep:
+            separators.append(os.altsep)
+        if path_str.endswith(tuple(separators)):
+            return ""
+        return Path(path_str).name
 
     @staticmethod
     def dirname(path: str | Path) -> str:
@@ -123,7 +131,23 @@ class FastPathOps:
         Returns:
             Directory name
         """
-        return os.path.dirname(str(path))
+        path_str = str(path)
+        separators = [os.sep]
+        if os.altsep:
+            separators.append(os.altsep)
+        separator_chars = "".join(separators)
+
+        if path_str.endswith(tuple(separators)):
+            stripped = path_str.rstrip(separator_chars)
+            if stripped:
+                return stripped
+            if path_str.startswith(tuple(separators)):
+                return os.sep
+            return ""
+
+        parent = Path(path_str).parent
+        parent_str = str(parent)
+        return "" if parent_str == "." else parent_str
 
     @staticmethod
     def split(path: str | Path) -> tuple[str, str]:
@@ -147,7 +171,14 @@ class FastPathOps:
         Returns:
             Tuple of (base, extension)
         """
-        return os.path.splitext(str(path))
+        path_str = str(path)
+        path_obj = Path(path_str)
+        extension = path_obj.suffix
+        if extension:
+            return str(path_obj.with_suffix("")), extension
+        if path_obj.name not in {".", ".."} and path_obj.name.endswith("."):
+            return path_str[:-1], "."
+        return path_str, ""
 
 
 # Convenience functions

@@ -370,7 +370,7 @@ def scrape_gemini() -> list[str]:
                 matches = re.findall(r"gemini-[a-zA-Z0-9.-]+", stdout_text)
                 if matches:
                     return list(dict.fromkeys(matches))
-        except (FileNotFoundError, subprocess.TimeoutExpired):
+        except (FileNotFoundError, subprocess.TimeoutExpired):  # noqa: PERF203 - intentional per-item error handling
             continue
     return fallback
 
@@ -397,7 +397,7 @@ def scrape_claude() -> list[str]:
                         out.append(m)
                 if len(out) > 3:
                     return out
-        except (FileNotFoundError, subprocess.TimeoutExpired):
+        except (FileNotFoundError, subprocess.TimeoutExpired):  # noqa: PERF203 - intentional per-item error handling
             continue
     return fallback
 
@@ -407,13 +407,22 @@ def scrape_minimax_from_proxy() -> list[str]:
     return ["minimax-m2.5"]
 
 
+def scrape_ante() -> list[str]:
+    """Scrape Ante agent available models from settings.json."""
+    from thegent.models.ante_scraper import scrape_ante_models
+
+    return scrape_ante_models()
+
+
 # Registry: provider -> scraper callable (settings) -> list[str]. Phase 12.
 # SA2: gemini, SA3: claude, SA4: cursor/copilot, SA5: antigravity/minimax/glm (via scrape_proxy in scrape_all)
+# SA6: ante (Ante agent harness)
 SCRAPER_REGISTRY: dict[str, ModelScraper] = {
     "cursor-agent": lambda settings=None: scrape_cursor(),
     "copilot": lambda settings=None: scrape_copilot(),
     "gemini": lambda settings=None: scrape_gemini(),
     "claude": lambda settings=None: scrape_claude(),
+    "ante": lambda settings=None: scrape_ante(),
 }
 
 
@@ -497,6 +506,14 @@ async def scrape_all_async(settings: ThegentSettings | None = None) -> dict[str,
         except Exception:
             return ("claude", [settings.default_claude_model])
 
+    def _scrape_ante() -> tuple[str, list[str]]:
+        try:
+            ante_models = scrape_ante()
+            filtered_ante = filter_models_for_provider("ante", ante_models) if ante_models else []
+            return ("ante", filtered_ante or ["claude-haiku-4-5"])
+        except Exception:
+            return ("ante", ["claude-haiku-4-5"])
+
     # OPT-005: Use asyncio.gather for parallel async execution (3-5x faster)
     # Wrap sync functions in async using asyncio.to_thread (Python 3.9+) or run_in_executor
     async def _scrape_cursor_async() -> tuple[str, list[str]]:
@@ -534,6 +551,13 @@ async def scrape_all_async(settings: ThegentSettings | None = None) -> dict[str,
             else await asyncio.get_event_loop().run_in_executor(None, _scrape_claude)
         )
 
+    async def _scrape_ante_async() -> tuple[str, list[str]]:
+        return (
+            await asyncio.to_thread(_scrape_ante)
+            if hasattr(asyncio, "to_thread")
+            else await asyncio.get_event_loop().run_in_executor(None, _scrape_ante)
+        )
+
     # OPT-005: Parallel execution with asyncio.gather
     results = await asyncio.gather(
         _scrape_cursor_async(),
@@ -541,6 +565,7 @@ async def scrape_all_async(settings: ThegentSettings | None = None) -> dict[str,
         _scrape_copilot_async(),
         _scrape_gemini_async(),
         _scrape_claude_async(),
+        _scrape_ante_async(),
         return_exceptions=True,
     )
 

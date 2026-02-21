@@ -254,7 +254,9 @@ class TestConfigureMergirafDriver:
         driver = driver_lines[0]
         assert "mergiraf" in driver
         assert "--git" in driver
-        assert "%O" in driver and "%A" in driver and "%B" in driver
+        assert "%O" in driver
+        assert "%A" in driver
+        assert "%B" in driver
 
     def test_gitattributes_created_with_extensions(self, tmp_path):
         """configure_mergiraf_driver writes .gitattributes entries for .py/.rs/.ts/.js."""

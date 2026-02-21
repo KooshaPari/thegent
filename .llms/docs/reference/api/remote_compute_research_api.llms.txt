@@ -1,0 +1,55 @@
+# remote_compute_research_api
+
+Source: docs/reference/api/remote_compute_research_api.md
+
+---
+
+# remote_compute_research API Reference
+
+> **Source**: `src/thegent/research/remote_compute_research.py`
+
+Research: Implement thegent run --remote.
+
+---
+
+## RemoteComputeImplResearch
+
+Research for remote compute implementation.
+
+### Methods
+
+#### RemoteComputeImplResearch.__init__
+
+```
+__init__(self: Any)
+```
+
+Initialize remote compute research.
+
+---
+
+#### RemoteComputeImplResearch.test_remote_execution
+
+```
+test_remote_execution(self: Any)
+```
+
+Test remote execution.
+
+**Returns**: Test results
+
+---
+
+---
+
+## test_remote_execution
+
+```
+test_remote_execution(self: Any)
+```
+
+Test remote execution.
+
+**Returns**: Test results
+
+---

@@ -330,13 +330,13 @@ def register_modes(mcp: "FastMCP") -> None:
         path = candidates[0] if candidates else None
         from thegent.utils.helpers import read_file_optimized
 
-        content = read_file_optimized(path)
-        if content is None:
+        if path is None:
             return ToolResult(
                 content=json.dumps({"error": "Protocol not found or empty", "mode": mode, "name": name}),
                 structured_content={"error": "Protocol not found or empty", "mode": mode, "name": name},
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
+        content = read_file_optimized(path)
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
             content=content,

@@ -1,0 +1,93 @@
+# worker_pool_api
+
+Source: docs/reference/api/worker_pool_api.md
+
+---
+
+# worker_pool API Reference
+
+> **Source**: `src/thegent/orchestration/execution/worker_pool.py`
+
+MTSP-06: Persistent Python Worker Pool.
+
+Reduces interpreter startup latency by keeping warm processes alive.
+
+---
+
+## PersistentWorkerPool
+
+A pool of persistent Python processes for executing tasks (MTSP-06).
+
+### Methods
+
+#### PersistentWorkerPool.__init__
+
+```
+__init__(self: Any, size: Any)
+```
+
+---
+
+#### PersistentWorkerPool.get_instance
+
+```
+get_instance(cls: Any, size: Any)
+```
+
+---
+
+#### PersistentWorkerPool.start
+
+```
+start(self: Any)
+```
+
+Initialize the process pool.
+
+---
+
+#### PersistentWorkerPool.stop
+
+```
+stop(self: Any)
+```
+
+Shut down the pool.
+
+---
+
+---
+
+## get_instance
+
+```
+get_instance(cls: Any, size: Any) -> PersistentWorkerPool
+```
+
+---
+
+## get_worker_pool
+
+Helper for dependency injection.
+
+---
+
+## start
+
+```
+start(self: Any)
+```
+
+Initialize the process pool.
+
+---
+
+## stop
+
+```
+stop(self: Any)
+```
+
+Shut down the pool.
+
+---

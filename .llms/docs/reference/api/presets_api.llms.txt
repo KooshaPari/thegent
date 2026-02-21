@@ -1,0 +1,45 @@
+# presets_api
+
+Source: docs/reference/api/presets_api.md
+
+---
+
+# presets API Reference
+
+> **Source**: `src/thegent/agents/presets.py`
+
+Preset prompt catalog for Lifecycle loops.
+
+---
+
+## PresetEntry
+
+Entry in the preset catalog.
+
+---
+
+## get_preset
+
+```
+get_preset(preset_id: str)
+```
+
+Return preset entry by id.
+
+---
+
+## list_presets
+
+Return all presets for CLI/MCP discovery.
+
+---
+
+## match_preset
+
+```
+match_preset(text: str)
+```
+
+Match text against preset trigger keywords.
+
+---

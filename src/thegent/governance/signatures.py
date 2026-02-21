@@ -8,6 +8,7 @@ import hashlib
 import hmac
 import importlib.util
 import logging
+import os
 from datetime import datetime
 from typing import Any
 
@@ -18,6 +19,7 @@ from thegent.config import ThegentSettings
 _log = logging.getLogger(__name__)
 
 _thegent_crypto: Any = None
+SIGNING_KEY_ENV_VAR = "THGENT_GOVERNANCE_SIGNING_KEY"
 
 
 def _get_native_crypto() -> Any:
@@ -36,6 +38,18 @@ def _get_native_crypto() -> Any:
     return None
 
 
+def _resolve_signing_key(signing_key: str | None) -> str:
+    if signing_key:
+        return signing_key
+
+    env_key = os.getenv(SIGNING_KEY_ENV_VAR)
+    if env_key:
+        return env_key
+
+    msg = f"Missing required signing key. Set {SIGNING_KEY_ENV_VAR} or pass signing_key explicitly."
+    raise ValueError(msg)
+
+
 def _canonical_json(data: dict[str, Any]) -> bytes:
     """Canonical JSON (sorted keys) for hashing/signing. Uses orjson for ~10x speedup."""
     return orjson.dumps(data, option=orjson.OPT_SORT_KEYS)
@@ -50,26 +64,28 @@ def generate_artifact_hash(data: dict[str, Any]) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
-def sign_artifact(data: dict[str, Any], secret_key: str = "thegent-secret") -> str:
+def sign_artifact(data: dict[str, Any], signing_key: str | None = None) -> str:
     """Produce a provenance signature for an artifact using HMAC-SHA256."""
     canonical = _canonical_json(data)
+    key = _resolve_signing_key(signing_key)
     native = _get_native_crypto()
     if native is not None:
-        return native.sign_artifact_bytes(canonical, secret_key)
+        return native.sign_artifact_bytes(canonical, key)
     return hmac.new(
-        secret_key.encode("utf-8"),
+        key.encode("utf-8"),
         canonical,
         hashlib.sha256,
     ).hexdigest()
 
 
-def verify_signature(data: dict[str, Any], signature: str, secret_key: str = "thegent-secret") -> bool:
+def verify_signature(data: dict[str, Any], signature: str, signing_key: str | None = None) -> bool:
     """Verify the provenance signature of an artifact."""
+    key = _resolve_signing_key(signing_key)
     canonical = _canonical_json(data)
     native = _get_native_crypto()
     if native is not None:
-        return native.verify_signature_bytes(canonical, signature, secret_key)
-    expected = sign_artifact(data, secret_key)
+        return native.verify_signature_bytes(canonical, signature, key)
+    expected = sign_artifact(data, key)
     return hmac.compare_digest(expected, signature)
 
 
@@ -78,8 +94,7 @@ class ArtifactSigner:
 
     def __init__(self, settings: ThegentSettings | None = None) -> None:
         self.settings = settings or ThegentSettings()
-        # In a real impl, this would load a private key from a secure store
-        self.secret_key = "thegent-governance-key"
+        self.signing_key = _resolve_signing_key(None)
 
     def create_signed_artifact(self, artifact_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Create a signed artifact with metadata."""
@@ -91,7 +106,7 @@ class ArtifactSigner:
                 "timestamp": datetime.now().isoformat(),
             },
         }
-        envelope["signature"] = sign_artifact(envelope, self.secret_key)
+        envelope["signature"] = sign_artifact(envelope, self.signing_key)
         return envelope
 
     def verify_envelope(self, envelope: dict[str, Any]) -> bool:
@@ -100,7 +115,7 @@ class ArtifactSigner:
             return False
 
         signature = envelope.pop("signature")
-        is_valid = verify_signature(envelope, signature, self.secret_key)
+        is_valid = verify_signature(envelope, signature, self.signing_key)
         # Restore signature for further use
         envelope["signature"] = signature
         return is_valid

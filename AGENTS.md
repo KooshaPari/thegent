@@ -297,7 +297,7 @@ docs/
 # Opinionated Quality Enforcement
 
 - Enforce opinionated styling to a strict degree.
-- Programmatic enforcement must guard against bad quality and antipatterns.
+- **Quality Gate**: Always run `task quality` (full strict pipeline: max-lines, lint, core-boundary, deprecated-aliases, instruction-architecture, harness-contracts, runtime-contracts) before stopping work.
 - Rather than disables or ignores, fix code properly.
 - Use project linters, formatters, and type checkers. Never bypass them.
 
@@ -925,18 +925,18 @@ thegent is an **MCP server + agent hook system** for governing AI agent lifecycl
 
 | Task | Purpose |
 |------|---------|
-| `task setup` | Install deps, build cliproxy fork (if present), ensure config, install shims |
+| `task setup` | Install deps, build cliproxy plusplus source, ensure config, install shims |
 | `task dev` | Build cliproxy, ensure config, start MCP + proxy (TUI) |
 | `task dev:bg` | Same as dev, background |
 | `task dev:down` | Stop all services |
 | `task dev:logs` | Follow service logs |
-| `task cliproxy:build` | Build `../CLIProxyAPIPlus-fork/cli-proxy-api-plus` |
+| `task cliproxy:build` | Build `../cliproxyapi-plusplus/cli-proxy-api-plus` |
 | `task cliproxy:ensure-config` | Ensure cliproxy config (port, auth-dir) |
 | `task cliproxy:start`, `stop`, `restart` | Proxy lifecycle |
 
-**Proxy binary**: `scripts/start_proxy_dev.sh` uses the fork binary when built (`task cliproxy:build`), else falls back to `cli-proxy-api-plus` from PATH. process-compose runs this wrapper for the proxy process.
+**Proxy binary**: `scripts/start_proxy_dev.sh` uses the plusplus binary when built (`task cliproxy:build`), else falls back to `cli-proxy-api-plus` from PATH. process-compose runs this wrapper for the proxy process.
 
-**Ports**: MCP 3847, proxy 8317. Fork at `../CLIProxyAPIPlus-fork`; metrics at `GET /v1/metrics/providers`.
+**Ports**: MCP 3847, proxy 8317. Canonical source at `../cliproxyapi-plusplus`; metrics at `GET /v1/metrics/providers`.
 
 **Debug**: `thegent run --debug` / `thegent bg --debug` sets `THGENT_DEBUG=1`; proxy gets `-debug` when env set. See `docs/plans/DEBUG_TAGS_AND_METRICS.md`.
 
@@ -987,7 +987,7 @@ Idea/task prompts, quality green, and "next thing to do" are wired at multiple l
 
 **Unified work stream**: Single source of truth is `docs/reference/WORK_STREAM.md`. All agents read it for work items; claim in CLAIMED before starting; update COMPLETED when done. Incorporator agent (`work-stream-incorporator`) merges fragments from plans, research, specs into the stream. See [UNIFIED_WORK_STREAM_DESIGN.md](docs/reference/UNIFIED_WORK_STREAM_DESIGN.md).
 
-**Idea/task** → dump research to docs/research/, specs to docs/docset/, work items to unified stream. **Quality green** → `task quality-a-r`. **Next item** → `thegent_do_next` (or read WORK_STREAM.md), pick highest-priority, execute via `thegent_run`/`thegent_bg` with `prompt_suggestion`. **Gardening** → check gov traceability, tests, plan items; dispatch; converge to empty backlog and complete green (`thegent govern go health`, `go cycle`, `task quality-a-r`).
+**Idea/task** → dump research to docs/research/, specs to docs/docset/, work items to unified stream. **Quality green** → `task quality`. **Next item** → `thegent_do_next` (or read WORK_STREAM.md), pick highest-priority, execute via `thegent_run`/`thegent_bg` with `prompt_suggestion`. **Gardening** → check gov traceability, tests, plan items; dispatch; converge to empty backlog and complete green (`thegent govern go health`, `go cycle`, `task quality`).
 
 ### Lifecycle Loops
 

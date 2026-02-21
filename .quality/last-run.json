@@ -1,33 +1,19 @@
 {
-  "timestamp": "2026-02-19T13:15:07Z",
+  "timestamp": "2026-02-21T11:36:58Z",
   "steps": {
-    "py-type": 201,
-    "py-lint": 201,
-    "bash-lint": 201,
-    "py-test": -1
+    "instruction-architecture": 0,
+    "quality": 0
   },
   "step_details": {
-    "py-type": {
-      "code": 201,
-      "duration": 1.7445250419987133
+    "instruction-architecture": {
+      "code": 0,
+      "duration": 0.31352891599999566
     },
-    "py-lint": {
-      "code": 201,
-      "duration": 4.446051458000511
-    },
-    "bash-lint": {
-      "code": 201,
-      "duration": 17.42943933300012
-    },
-    "py-test": {
-      "code": -1,
-      "duration": 0
+    "quality": {
+      "code": 0,
+      "duration": 27.87180829099998
     }
   },
-  "failed_steps": [
-    "py-type",
-    "py-lint",
-    "bash-lint"
-  ],
-  "ok": false
+  "failed_steps": [],
+  "ok": true
 }

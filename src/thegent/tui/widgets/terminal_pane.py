@@ -7,6 +7,7 @@ Supports subprocess execution and output display.
 from __future__ import annotations
 
 import asyncio
+from asyncio import subprocess
 import contextlib
 import fcntl
 import os
@@ -89,7 +90,7 @@ class TerminalPane(Widget):
         super().__init__(**kwargs)
         self.config = config or TerminalConfig()
         self._master_fd: int | None = None
-        self._process: asyncio.subprocess.Process | None = None
+        self._process: subprocess.Process | None = None
         self._output_buffer: list[str] = []
         self._output_lines: list[str] = []
         self._max_lines: int = 1000

@@ -62,7 +62,7 @@ class MultiTierCache:
 
         # L3: diskcache (persistent)
         if l3_path and DISKCACHE_AVAILABLE:
-            self.l3 = diskcache.Cache(l3_path)
+            self.l3: diskcache.Cache | None = diskcache.Cache(l3_path)
         else:
             self.l3 = None
 
@@ -150,7 +150,9 @@ class MultiTierCache:
 
         if self.l3:
             try:
-                stats["l3_size"] = len(self.l3)
+                # diskcache.Cache.__len__ has type Any|Constant - use object().__len__ bypass
+                # or count keys directly
+                stats["l3_size"] = sum(1 for _ in self.l3.iterkeys()) if hasattr(self.l3, "iterkeys") else 0
                 stats["l3_volume"] = self.l3.volume()
             except Exception:
                 stats["l3_size"] = 0

@@ -670,7 +670,7 @@ def get_run_state(self, run_id: str) -> RunState | None: ...
 
 **Issue:** No Cursor dedicated block (token provider, refresh, rebindExecutors).
 
-**Remediation:** Implement Phase 2 in CLIProxyAPIPlus-fork:
+**Remediation:** Implement Phase 2 in cliproxyapi-plusplus:
 - `cursor:` schema definition
 - Token provider integration
 - Cursor API refresh mechanism

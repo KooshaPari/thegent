@@ -6,7 +6,7 @@ from typing import Any
 class LibraryRetryResearch:
     """Research for tenacity retry migration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize library retry research."""
         self.migrated_files: list[str] = []
 

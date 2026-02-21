@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class NativeGovernanceScanner:
     """Native governance scanner with obfuscated triggers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize native governance scanner."""
         self.triggers: list[str] = []
         self.obfuscated_patterns: list[str] = []

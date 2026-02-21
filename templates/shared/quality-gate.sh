@@ -7,6 +7,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${1:-.}"
 FAIL=0
+GITLEAKS_MAX_MB="${GITLEAKS_MAX_MB:-5}"
+GITLEAKS_TIMEOUT_SEC="${GITLEAKS_TIMEOUT_SEC:-180}"
+QUALITY_SHADOW_CLEANUP_HOURS="${QUALITY_SHADOW_CLEANUP_HOURS:-24}"
+QUALITY_LOG_RETENTION_DAYS="${QUALITY_LOG_RETENTION_DAYS:-7}"
 
 echo "=== Quality Gate ==="
 echo "Project: $PROJECT_ROOT"
@@ -90,7 +94,16 @@ run_bash() {
 
 # Secrets check (all stacks)
 echo "--- Secrets Detection ---"
-gitleaks detect --no-banner --no-git -s "$PROJECT_ROOT" 2>/dev/null || echo "gitleaks skipped"
+gitleaks detect --no-banner --no-git -s "$PROJECT_ROOT" \
+  --max-target-megabytes "$GITLEAKS_MAX_MB" \
+  --timeout "$GITLEAKS_TIMEOUT_SEC" \
+  --ignore-path "$PROJECT_ROOT/.shadow-*" \
+  --ignore-path "$PROJECT_ROOT/.git-cache" \
+  --ignore-path "$PROJECT_ROOT/.worktrees" \
+  --ignore-path "$PROJECT_ROOT/node_modules" \
+  --ignore-path "$PROJECT_ROOT/.venv" \
+  --ignore-path "$PROJECT_ROOT/target" \
+  2>/dev/null || echo "gitleaks skipped"
 echo ""
 
 # Run per-stack checks
@@ -107,13 +120,51 @@ done
 echo "--- AI Slop Detection ---"
 SLOP=0
 for pattern in "TODO: implement" "TODO: add" "lorem ipsum" "As an AI" "I cannot" "I apologize"; do
-  if grep -rn "$pattern" --include="*.py" --include="*.ts" --include="*.go" --include="*.sh" "$PROJECT_ROOT" 2>/dev/null | grep -v node_modules | grep -v .git | grep -v __pycache__; then
+  if rg -n "$pattern" \
+    -g "*.py" -g "*.ts" -g "*.go" -g "*.sh" \
+    -g "!.git/**" -g "!.git-cache/**" -g "!.shadow-*/**" -g "!.worktrees/**" \
+    -g "!node_modules/**" -g "!.venv/**" -g "!.venv-*/**" -g "!__pycache__/**" \
+    -g "!target/**" -g "!dist/**" -g "!build/**" -g "!.quality/**" -g "!.playwright-cli/**" \
+    "$PROJECT_ROOT" 2>/dev/null; then
     echo "WARNING: Found '$pattern'"
     SLOP=1
   fi
 done
 [[ "$SLOP" -eq 0 ]] && echo "No AI slop detected"
 echo ""
+
+# WL-030: Periodic cleanup of stale .shadow-* dirs and .quality/logs retention
+cleanup_stale_artifacts() {
+  local root="$1"
+  local shadow_age_hours="$2"
+  local log_retention_days="$3"
+
+  echo "--- Artifact Cleanup ---"
+
+  # Remove .shadow-* directories older than QUALITY_SHADOW_CLEANUP_HOURS
+  local removed_shadow=0
+  while IFS= read -r -d '' shadow_dir; do
+    rm -rf "$shadow_dir"
+    removed_shadow=$((removed_shadow + 1))
+  done < <(find "$root" -maxdepth 1 -name '.shadow-*' -type d \
+    -mmin "+$((shadow_age_hours * 60))" -print0 2>/dev/null)
+  echo "Removed $removed_shadow stale .shadow-* directories (older than ${shadow_age_hours}h)"
+
+  # Remove .quality/logs files older than QUALITY_LOG_RETENTION_DAYS
+  local log_dir="$root/.quality/logs"
+  local removed_logs=0
+  if [[ -d "$log_dir" ]]; then
+    while IFS= read -r -d '' log_file; do
+      rm -f "$log_file"
+      removed_logs=$((removed_logs + 1))
+    done < <(find "$log_dir" -maxdepth 1 -type f \
+      -mtime "+${log_retention_days}" -print0 2>/dev/null)
+  fi
+  echo "Removed $removed_logs .quality/logs files older than ${log_retention_days}d"
+  echo ""
+}
+
+cleanup_stale_artifacts "$PROJECT_ROOT" "$QUALITY_SHADOW_CLEANUP_HOURS" "$QUALITY_LOG_RETENTION_DAYS"
 
 # Summary
 echo "=== Quality Gate Result ==="

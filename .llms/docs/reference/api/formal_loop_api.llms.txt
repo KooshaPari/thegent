@@ -1,0 +1,71 @@
+# formal_loop_api
+
+Source: docs/reference/api/formal_loop_api.md
+
+---
+
+# formal_loop API Reference
+
+> **Source**: `src/thegent/verification/formal_loop.py`
+
+WP-18004: Automated Formal Verification Loop.
+
+Continously runs symbolic execution and logical verification on the active plan.
+
+---
+
+## FormalVerificationLoop
+
+Automated loop that periodically verifies the agent's plan for logical consistency.
+
+### Methods
+
+#### FormalVerificationLoop.__init__
+
+```
+__init__(self: Any, plan_dag: Any)
+```
+
+---
+
+#### FormalVerificationLoop.get_history
+
+```
+get_history(self: Any)
+```
+
+Return history of verification passes.
+
+---
+
+#### FormalVerificationLoop.run
+
+```
+run(self: Any, start_task: str)
+```
+
+Execute a formal verification pass.
+
+---
+
+---
+
+## get_history
+
+```
+get_history(self: Any)
+```
+
+Return history of verification passes.
+
+---
+
+## run
+
+```
+run(self: Any, start_task: str)
+```
+
+Execute a formal verification pass.
+
+---

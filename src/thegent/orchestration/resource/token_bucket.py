@@ -11,7 +11,6 @@ Environment variables:
 from __future__ import annotations
 
 import logging
-import os
 import threading
 import time
 from dataclasses import dataclass
@@ -148,16 +147,16 @@ class TokenBucket:
             self._apply_refill()
             if self._tokens >= tokens:
                 self._tokens -= tokens
-                _slog.debug(
+                _slog.debug(  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
                     "token_bucket.consumed",
-                    tokens=tokens,
-                    remaining=self._tokens,
+                    tokens=tokens,  # pyright: ignore[reportCallIssue]
+                    remaining=self._tokens,  # pyright: ignore[reportCallIssue]
                 )
                 return True
-            _slog.debug(
+            _slog.debug(  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
                 "token_bucket.insufficient",
-                requested=tokens,
-                available=self._tokens,
+                requested=tokens,  # pyright: ignore[reportCallIssue]
+                available=self._tokens,  # pyright: ignore[reportCallIssue]
             )
             return False
 
@@ -217,10 +216,10 @@ class TokenBucket:
                 self._apply_refill()
                 if self._tokens >= tokens:
                     self._tokens -= tokens
-                    _slog.debug(
+                    _slog.debug(  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
                         "token_bucket.blocking_consumed",
-                        tokens=tokens,
-                        remaining=self._tokens,
+                        tokens=tokens,  # pyright: ignore[reportCallIssue]
+                        remaining=self._tokens,  # pyright: ignore[reportCallIssue]
                     )
                     return True
 
@@ -306,10 +305,10 @@ class RateLimitedSwarmRunner:
         size = float(settings.rate_bucket_size)
         config = TokenBucketConfig(capacity=size, refill_rate=rate)
         self._bucket = TokenBucket(config)
-        _slog.info(
+        _slog.info(  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
             "rate_limited_runner.configured",
-            refill_rate=rate,
-            capacity=size,
+            refill_rate=rate,  # pyright: ignore[reportCallIssue]
+            capacity=size,  # pyright: ignore[reportCallIssue]
         )
         return self
 

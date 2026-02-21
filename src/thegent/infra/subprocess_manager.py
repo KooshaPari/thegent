@@ -111,7 +111,7 @@ class SubprocessManager:
                 stdout, stderr = proc.communicate()
                 raise subprocess.TimeoutExpired(
                     cmd=args,
-                    timeout=timeout,
+                    timeout=timeout if timeout is not None else 0.0,
                     output=stdout,
                     stderr=stderr,
                 )
