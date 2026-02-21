@@ -84,7 +84,7 @@ def test_runtime_matrix_v2_all_entries_have_id(matrix_v2: dict) -> None:
     """Every workload entry must have an 'id' field."""
     workloads = matrix_v2.get("workloads", [])
     for i, entry in enumerate(workloads):
-        assert "id" in entry and entry["id"], (
+        assert entry.get("id"), (
             f"Workload entry at index {i} is missing 'id' field"
         )
 

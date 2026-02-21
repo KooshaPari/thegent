@@ -19,7 +19,7 @@ def _init_git_repo(path: Path) -> None:
 
 
 def test_related_overlap_sorted() -> None:
-    manager = GitParallelismManager(Path("."), "agent-test")
+    manager = GitParallelismManager(Path(), "agent-test")
     overlap = manager.related_overlap(
         ["b.py", "a.py", "x.md"],
         ["z.py", "a.py", "b.py"],

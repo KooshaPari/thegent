@@ -247,8 +247,8 @@ def harness_register_host_impl(
 
 
 __all__ = [
+    "harness_get_command_impl",
     "harness_interact_impl",
     "harness_list_actions_impl",
-    "harness_get_command_impl",
     "harness_register_host_impl",
 ]

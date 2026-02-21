@@ -132,6 +132,7 @@ filterwarnings = [
     "ignore:cannot collect test class 'TestPassCheck':pytest.PytestCollectionWarning",
     "ignore:cannot collect test class 'TestPassVetterCheck':pytest.PytestCollectionWarning",
     "ignore:cannot collect test class 'TestApp' because it has a __init__ constructor:pytest.PytestCollectionWarning",
+    "ignore:Default value .* is not JSON serializable; excluding default from JSON schema.*:pydantic.json_schema.PydanticJsonSchemaWarning",
 ]
 
 [tool.thegent.pytest_lanes]

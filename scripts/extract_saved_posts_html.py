@@ -4,10 +4,10 @@ import os
 def main():
     path = "/Users/kooshapari/Downloads/Ramlord (u:PlasmusAng) - Reddit.webarchive"
     target_url = "https://www.reddit.com/user/PlasmusAng/saved/"
-    
+
     with open(path, 'rb') as f:
         plist = plistlib.load(f)
-    
+
     main_resource = plist.get('WebMainResource')
     if main_resource and main_resource.get('WebResourceURL') == target_url:
         print("Found main resource matching target URL.")
@@ -22,14 +22,14 @@ def main():
     subresources = plist.get('WebSubresources', [])
     for res in subresources:
         if res.get('WebResourceURL') == target_url:
-            print(f"Found subresource matching target URL.")
+            print("Found subresource matching target URL.")
             data = res.get('WebResourceData')
             if data:
                 with open('data/research/saved_posts_sub.html', 'wb') as f:
                     f.write(data)
                 print("Wrote subresource data to data/research/saved_posts_sub.html")
                 return
-    
+
     print("Target URL not found in WebMainResource or WebSubresources.")
 
 if __name__ == "__main__":

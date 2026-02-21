@@ -264,7 +264,7 @@ class AcpMcpBridge:
         try:
             # FastMCP's list_tools() is async; cast to Any for sync introspection
             # (callers may provide a duck-typed or mocked mcp_app).
-            tools = cast(Any, self._mcp_app).list_tools()
+            tools = cast("Any", self._mcp_app).list_tools()
         except Exception as exc:
             logger.warning("get_mcp_tool_manifest: failed to introspect tools: %s", exc)
             return []

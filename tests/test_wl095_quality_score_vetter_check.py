@@ -778,7 +778,7 @@ def test_five_criteria_rubric_all_pass():
         pass_threshold=0.6,
         min_criterion_score=3,
     )
-    scores = {k: 5 for k in rubric}
+    scores = dict.fromkeys(rubric, 5)
     mock_resp = _make_litellm_response(scores=scores, pass_verdict=True)
     with patch("litellm.acompletion", new=AsyncMock(return_value=mock_resp)):
         result = _run(check.check("run-24", "great output", {"task": "complex task"}))

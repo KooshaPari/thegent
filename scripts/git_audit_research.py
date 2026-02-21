@@ -22,11 +22,11 @@ def main():
     for query in SEARCHES:
         print(f"Searching: {query}")
         results[query] = ddg_search(query, max_results=8)
-    
+
     # Save results
     with open("git_audit_research_results.json", "w") as f:
         json.dump(results, f, indent=2)
-    
+
     print("\n=== RESULTS ===\n")
     for query, hits in results.items():
         print(f"\n## {query}")

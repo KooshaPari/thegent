@@ -44,27 +44,27 @@ class _FakeSettings:
         return self._session_dir
 
 
-@pytest.fixture()
+@pytest.fixture
 def tmp_session(tmp_path: Path) -> Path:
     return tmp_path
 
 
-@pytest.fixture()
+@pytest.fixture
 def settings_enabled(tmp_session: Path) -> _FakeSettings:
     return _FakeSettings(hitl_enabled=True, session_dir=str(tmp_session))
 
 
-@pytest.fixture()
+@pytest.fixture
 def settings_disabled(tmp_session: Path) -> _FakeSettings:
     return _FakeSettings(hitl_enabled=False, session_dir=str(tmp_session))
 
 
-@pytest.fixture()
+@pytest.fixture
 def engine_enabled(settings_enabled: _FakeSettings, tmp_session: Path) -> PolicyEngine:
     return PolicyEngine(settings=settings_enabled, session_dir=tmp_session)
 
 
-@pytest.fixture()
+@pytest.fixture
 def engine_disabled(settings_disabled: _FakeSettings, tmp_session: Path) -> PolicyEngine:
     return PolicyEngine(settings=settings_disabled, session_dir=tmp_session)
 

@@ -20,8 +20,6 @@ from thegent.core.rules_sync import (
     _replace_managed_section,
 )
 
-if TYPE_CHECKING:
-    pass
 
 # ---------------------------------------------------------------------------
 # Helpers

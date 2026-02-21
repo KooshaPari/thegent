@@ -29,7 +29,7 @@ if __name__ == "__main__":
             print(f"  {i}. {r.get('title', 'N/A')}")
             print(f"     {r.get('href', 'N/A')}")
             print(f"     {r.get('body', 'N/A')[:200]}...")
-    
+
     # Save results
     output_file = Path(__file__).parent / "search_results.json"
     with open(output_file, "w") as f:

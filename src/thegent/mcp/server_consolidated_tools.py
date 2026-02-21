@@ -1,7 +1,5 @@
 """Consolidated MCP tools with intuitive parameter-based actions to reduce tool count."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any, Literal
 
@@ -43,16 +41,15 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
 
         if action == "search":
             return await ddg_search_impl(query=query, num_results=num_results, ctx=ctx)
-        elif action == "scrape":
+        if action == "scrape":
             return await scrape_url_impl(url=url, use_playwright=True, ctx=ctx)
-        elif action == "reddit":
+        if action == "reddit":
             return reddit_search_impl(query=query, num_results=num_results)
-        elif action == "deep":
+        if action == "deep":
             return deep_research_impl(query=query, subreddits=None)
-        elif action == "suggest":
+        if action == "suggest":
             return await suggest_prompt_impl(raw_prompt=query, ctx=ctx)
-        else:
-            return ToolResult(content=f"Unknown action: {action}")
+        return ToolResult(content=f"Unknown action: {action}")
 
     # -------------------------------------------------------------------------
     # thegent_queue: Unified queue operations
@@ -92,22 +89,21 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
 
         if action == "add":
             return queue_add_impl(prompt=prompt, project=project)
-        elif action == "list":
+        if action == "list":
             return queue_list_impl(project=project, all_items=all_items)
-        elif action == "next":
+        if action == "next":
             return queue_next_impl(project=project)
-        elif action == "done":
+        if action == "done":
             return queue_done_impl(item_id=item_id)
-        elif action == "claim":
+        if action == "claim":
             return queue_claim_impl(item_id=item_id, lease_seconds=lease_seconds)
-        elif action == "release":
+        if action == "release":
             return queue_release_impl(item_id=item_id)
-        elif action == "edit":
+        if action == "edit":
             return queue_edit_impl(item_id=item_id, new_prompt=prompt)
-        elif action == "extend":
+        if action == "extend":
             return queue_extend_lease_impl(item_id=item_id, lease_seconds=lease_seconds)
-        else:
-            return ToolResult(content=f"Unknown action: {action}")
+        return ToolResult(content=f"Unknown action: {action}")
 
     # -------------------------------------------------------------------------
     # thegent_session: Unified session management
@@ -152,16 +148,15 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             sessions = ps_impl(all=all, owner=owner, agent=agent, status=status, limit=limit)
             import json
             return ToolResult(content=json.dumps(sessions, indent=2))
-        elif action == "show":
+        if action == "show":
             return session_show_impl(session_id=session_id, ps_impl=ps_impl)
-        elif action == "logs":
+        if action == "logs":
             return session_logs_impl(session_id=session_id, stderr=stderr, ps_impl=ps_impl)
-        elif action == "send":
+        if action == "send":
             return session_send_impl(session_id=session_id, message=message, ps_impl=ps_impl)
-        elif action == "attach":
+        if action == "attach":
             return session_attach_hint_impl(session_id=session_id)
-        else:
-            return ToolResult(content=f"Unknown action: {action}")
+        return ToolResult(content=f"Unknown action: {action}")
 
     # -------------------------------------------------------------------------
     # thegent_workstream: Unified workstream operations
@@ -198,20 +193,19 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             result = do_next_impl(cd=cwd, limit=limit)
             import json
             return ToolResult(content=json.dumps(result, indent=2))
-        elif action == "claim":
+        if action == "claim":
             result = work_stream_claim_impl(item_id=item_id, agent_id=agent_id, cd=cwd)
             import json
             return ToolResult(content=json.dumps(result, indent=2))
-        elif action == "complete":
+        if action == "complete":
             result = work_stream_complete_impl(item_id=item_id, agent_id=agent_id, cd=cwd)
             import json
             return ToolResult(content=json.dumps(result, indent=2))
-        elif action == "progress":
+        if action == "progress":
             from thegent.cli.commands.cli import plan_progress_cmd
             # Just return a simple message since progress_cmd prints
             return ToolResult(content="Use 'thegent plan progress' CLI command")
-        else:
-            return ToolResult(content=f"Unknown action: {action}")
+        return ToolResult(content=f"Unknown action: {action}")
 
     return (
         thegent_web,
