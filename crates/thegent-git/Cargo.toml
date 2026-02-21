@@ -4,31 +4,38 @@ version = "0.1.0"
 edition = "2021"
 description = "BKM-06: thegent-git Rust extension (gitoxide for HEAD/status/diff)"
 
-[lib]
-name = "thegent_git"
-crate-type = ["cdylib"]
-
 [[bin]]
 name = "thegent-git"
 path = "src/main.rs"
 required-features = ["cli"]
 
+[lib]
+name = "thegent_git"
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
-gix = { version = "0.79.0", default-features = false, features = [
+git2 = "0.20.4"
+gix = { version = "0.79.0", optional = true, default-features = false, features = [
     "max-performance-safe",
     "status",
     "dirwalk",
 ] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
-pyo3 = { version = "0.23.4", features = ["extension-module"] }
-clap = { version = "4.5.23", features = ["derive"], optional = true }
+simd-json = { version = "0.14.3", features = ["serde"] }
+pyo3 = { version = "0.23.4", features = ["extension-module"], optional = true }
+clap = { version = "4.5", features = ["derive"], optional = true }
 
 [features]
-default = []
+# gix is now the default backend (pure Rust, no C deps, SIMD perf).
+# Disable with --no-default-features to fall back to git2 (libgit2).
+default = ["gix"]
+python = ["pyo3"]
+gix = ["dep:gix"]
 cli = ["dep:clap"]
 
 [profile.release]
-opt-level = 3
+opt-level = "z"
 lto = true
+strip = true
 codegen-units = 1
