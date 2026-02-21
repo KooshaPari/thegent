@@ -28,7 +28,7 @@ if __name__ == "__main__":
         results = ddg_search(query, max_results=8)
         all_results[query] = results
         print(f"  Found {len(results)} results")
-    
+
     # Save results
     output_file = Path(__file__).parent / "git_audit_search_results.json"
     with open(output_file, "w") as f:

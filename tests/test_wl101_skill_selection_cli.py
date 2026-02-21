@@ -156,7 +156,7 @@ def test_wl101_skills_list_json_output(monkeypatch: pytest.MonkeyPatch, capsys: 
 
 
 def test_wl101_skills_list_json_output_empty(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-    monkeypatch.setattr("thegent.cli.apps.skills.discover_skills", lambda: [])
+    monkeypatch.setattr("thegent.cli.apps.skills.discover_skills", list)
     skills_list(json_output=True)
     stdout = capsys.readouterr().out
     assert stdout.strip() == "[]"

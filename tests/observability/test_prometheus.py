@@ -27,7 +27,7 @@ def _reset_singleton():
     reset_metrics_collector()
 
 
-@pytest.fixture()
+@pytest.fixture
 def collector() -> MetricsCollector:
     """Return a fresh MetricsCollector for each test."""
     return MetricsCollector()

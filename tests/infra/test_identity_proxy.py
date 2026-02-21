@@ -244,11 +244,11 @@ class TestSSHIdentityProxyMockedSocket:
         mock_socket_class.return_value.__exit__ = MagicMock(return_value=False)
 
         proxy_with_env.start()
-        
+
         # Give the thread a moment to start and hit the timeout
         import time
         time.sleep(0.2)
-        
+
         proxy_with_env.stop()
 
         # Verify socket was created with correct family and type

@@ -12,16 +12,16 @@ from .client import (
 from .types import RunResult, SessionInfo, StreamEvent
 
 __all__ = [
+    "AsyncThegentClient",
     "RunResult",
     "SessionInfo",
     "StreamEvent",
-    "AsyncThegentClient",
+    "ThegentAuthenticationError",
     "ThegentClient",
     "ThegentClientError",
     "ThegentHTTPError",
-    "ThegentRequestError",
-    "ThegentAuthenticationError",
     "ThegentNotFoundError",
     "ThegentRateLimitError",
+    "ThegentRequestError",
     "ThegentServerError",
 ]

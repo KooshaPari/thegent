@@ -658,7 +658,6 @@ from typing import Any
 class HarnessActionError(Exception):
     """Raised when a harness action fails."""
 
-    pass
 
 
 class HarnessTUIMapper:
@@ -878,9 +877,9 @@ class HarnessTUIMapper:
 
 
 __all__ = [
-    "HarnessType",
     "AgentSession",
-    "UnifiedSessionIndex",
-    "HarnessTUIMapper",
     "HarnessActionError",
+    "HarnessTUIMapper",
+    "HarnessType",
+    "UnifiedSessionIndex",
 ]

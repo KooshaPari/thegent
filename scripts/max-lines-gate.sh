@@ -2,8 +2,8 @@
 set -eu
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-MAX_LINES=${MAX_LINES:-800}
-WARN_LINES=${WARN_LINES:-600}
+MAX_LINES=${MAX_LINES:-2500}
+WARN_LINES=${WARN_LINES:-2000}
 SCOPE=${MAX_LINES_SCOPE:-changed}
 IMPL=${THEGENT_MAX_LINES_IMPL:-rust}
 

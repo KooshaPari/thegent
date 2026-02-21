@@ -31,7 +31,7 @@ def validate_python_examples(md_file: Path) -> list[str]:
                 continue # It's a valid signature/parameter list
             except SyntaxError:
                 pass
-            
+
             try:
                 # Try wrapping in a def and see if it works
                 # This handles 'func(a: int)' by making it 'def func(a: int): pass'

@@ -377,7 +377,7 @@ class SubAgentDispatcher:
             runner = get_runner(runner_name)
             if runner is not None:
                 try:
-                    _run = cast(Any, runner.run)
+                    _run = cast("Any", runner.run)
                     run_result = await asyncio.to_thread(
                         _run,
                         task.prompt,

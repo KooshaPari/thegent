@@ -237,7 +237,7 @@ def test_journal_contract_orchestration_events_returns_structured_payload(monkey
 
     queue = _Queue([_Event({"id": "e1"}), _Event({"id": "e2"})])
 
-    import thegent.orchestration.event_queue as event_queue
+    from thegent.orchestration import event_queue
 
     monkeypatch.setattr(event_queue, "get_global_event_queue", lambda: queue)
 

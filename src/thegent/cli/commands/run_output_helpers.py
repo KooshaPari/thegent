@@ -61,8 +61,7 @@ def _grounding_domains(urls: list[str], *, max_domains: int = 3) -> str | None:
     seen: set[str] = set()
     for url in urls:
         netloc = urlsplit(url).netloc.lower()
-        if netloc.startswith("www."):
-            netloc = netloc[4:]
+        netloc = netloc.removeprefix("www.")
         if not netloc or netloc in seen:
             continue
         seen.add(netloc)

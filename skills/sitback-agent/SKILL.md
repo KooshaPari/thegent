@@ -277,6 +277,39 @@ When started with `thegent sitback --skill <name>`, `THGENT_SITBACK_SKILL` is se
 
 **Use MCP tools first:** `thegent_harness_interact`, `thegent_harness_list_actions`, `thegent_harness_register_host`. CLI fallback: `thegent run attach`, `thegent plan sessions`.
 
+### Consolidated MCP Tools (Reduce Tool Count)
+
+| Tool | Actions | Description |
+|------|---------|-------------|
+| `thegent_web` | search, scrape, reddit, deep, suggest | Unified web research (5→1) |
+| `thegent_queue` | add, list, next, done, claim, release, edit, extend | Unified queue ops (8→1) |
+| `thegent_session` | list, show, logs, send, attach | Unified session mgmt (5→1) |
+| `thegent_workstream` | do-next, claim, complete, progress | Unified workstream (4→1) |
+
+### Example: thegent_web
+```python
+# DDG search
+thegent_web(action="search", query="latest python", num_results=5)
+
+# Scrape URL
+thegent_web(action="scrape", url="https://example.com")
+
+# Deep research
+thegent_web(action="deep", query="AI trends 2025")
+```
+
+### Example: thegent_queue
+```python
+# Add to queue
+thegent_queue(action="add", prompt="Fix bug #123")
+
+# Get next
+thegent_queue(action="next")
+
+# Mark done
+thegent_queue(action="done", item_id="abc-123")
+```
+
 ### Supported Harnesses (integrated under agent/run/plan/govern)
 - `cursor` — Cursor IDE agent
 - `codex` — Codex CLI agent  

@@ -30,7 +30,7 @@ if __name__ == "__main__":
             print(f"     {r.get('href', 'N/A')}")
             body = r.get('body', 'N/A')
             print(f"     {body[:300]}...")
-    
+
     # Save results
     output_file = Path(__file__).parent / "git_tools_2026_search_results.json"
     with open(output_file, "w") as f:

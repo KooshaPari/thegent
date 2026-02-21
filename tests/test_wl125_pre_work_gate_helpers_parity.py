@@ -97,7 +97,6 @@ def test_wl125_work_stream_pre_work_gate_wrappers_delegate(monkeypatch) -> None:
 
     def _fake_enforce(project_dir: Path):
         called["enforce_project_dir"] = project_dir
-        return None
 
     monkeypatch.setattr(
         "thegent.cli.commands.work_stream_impl.pre_work_gate_helpers.pre_work_gate_defaults",

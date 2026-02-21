@@ -40,7 +40,7 @@ ARRAY_SCHEMA = {
 }
 
 
-@pytest.fixture()
+@pytest.fixture
 def schema_file(tmp_path: Path) -> Path:
     """Write SIMPLE_SCHEMA to a temp file and return its path."""
     p = tmp_path / "schema.json"
@@ -48,7 +48,7 @@ def schema_file(tmp_path: Path) -> Path:
     return p
 
 
-@pytest.fixture()
+@pytest.fixture
 def string_schema_file(tmp_path: Path) -> Path:
     """Write STRING_SCHEMA to a temp file and return its path."""
     p = tmp_path / "string_schema.json"
@@ -56,7 +56,7 @@ def string_schema_file(tmp_path: Path) -> Path:
     return p
 
 
-@pytest.fixture()
+@pytest.fixture
 def array_schema_file(tmp_path: Path) -> Path:
     """Write ARRAY_SCHEMA to a temp file and return its path."""
     p = tmp_path / "array_schema.json"

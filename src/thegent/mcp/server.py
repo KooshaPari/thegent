@@ -35,6 +35,7 @@ from thegent.mcp import server_journal_tools as _server_journal_tools
 from thegent.mcp import server_ops_tools as _server_ops_tools
 from thegent.mcp import server_planning_tools as _server_planning_tools
 from thegent.mcp import server_research_tools as _server_research_tools
+from thegent.mcp import server_consolidated_tools as _server_consolidated_tools
 from thegent.mcp import server_resource_routes as _server_resource_routes
 from thegent.mcp import server_runtime_entry as _server_runtime_entry
 from thegent.mcp import server_stable_json as _shared_stable_json
@@ -597,6 +598,18 @@ _registered_workstream_governance_tools = _server_tools_workstream_governance.re
 ) = _server_research_tools.register_research_tools(
     mcp=mcp,
     server_tools_research=_server_tools_research,
+    logger=_log,
+)
+
+
+# --- Consolidated Tools (reduced tool count via parameter-based actions) ---
+(
+    thegent_web,
+    thegent_queue,
+    thegent_session,
+    thegent_workstream,
+) = _server_consolidated_tools.register_consolidated_tools(
+    mcp=mcp,
     logger=_log,
 )
 

@@ -35,7 +35,7 @@ def test_agent_server_command_uses_serve_stdio_exit_code(monkeypatch) -> None:
         calls.append(object())
         return 7
 
-    import thegent.protocols.jsonrpc_agent_server as jsonrpc_agent_server
+    from thegent.protocols import jsonrpc_agent_server
 
     monkeypatch.setattr(jsonrpc_agent_server, "serve_stdio", _fake_serve_stdio)
     result = CliRunner().invoke(main_app, ["agent-server"])

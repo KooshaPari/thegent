@@ -164,11 +164,10 @@ def plan_sessions(
     if format == "json":
         import json
         console.print(json.dumps(result, indent=2))
+    elif result.get("success"):
+        console.print(result.get("stdout", ""))
     else:
-        if result.get("success"):
-            console.print(result.get("stdout", ""))
-        else:
-            console.print(f"[red]Error:[/red] {result.get('error', '')}")
+        console.print(f"[red]Error:[/red] {result.get('error', '')}")
 
 
 @app.command("harness-status", help="Get status of all registered harness hosts.")

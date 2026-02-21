@@ -293,12 +293,12 @@ def test_policy_scope_values_ordered_correctly() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def fed_base(tmp_path: Path) -> Path:
     return tmp_path / "fed_store"
 
 
-@pytest.fixture()
+@pytest.fixture
 def fed_manager(fed_base: Path) -> FederatedPolicyManager:
     return FederatedPolicyManager(base_dir=fed_base, session_dir=fed_base)
 

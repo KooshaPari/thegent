@@ -79,7 +79,7 @@ def test_register_ops_tools_registers_expected_names() -> None:
         ),
         stable_json=lambda payload: payload,
         error_result=lambda message, hint=None: {"error": message, "hint": hint},
-        list_agents_impl=lambda: [],
+        list_agents_impl=list,
         list_models_impl=lambda provider=None: [],
         observe_summary_impl=lambda **kwargs: kwargs,
         session_contract_audit_impl=lambda **kwargs: kwargs,
