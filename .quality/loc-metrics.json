@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-02-21T11:30:48.329841+00:00",
+  "timestamp": "2026-02-21T13:27:35.740908+00:00",
   "source_dir": "src/thegent",
-  "total_files": 1111,
-  "total_loc": 162539,
+  "total_files": 1136,
+  "total_loc": 163902,
   "by_module": {
     "__init__.py": 2,
     "acp": 425,
     "adapters": 1014,
-    "agents": 11473,
+    "agents": 11472,
     "anen_main.py": 227,
     "api_client": 33,
     "artifacts": 1537,
@@ -16,7 +16,7 @@
     "bench": 187,
     "cache": 820,
     "cache_management": 54,
-    "cli": 22627,
+    "cli": 23812,
     "cliproxy_adapter.py": 776,
     "cliproxy_error_utils.py": 35,
     "cliproxy_header_utils.py": 36,
@@ -73,7 +73,7 @@
     "forensics": 78,
     "git_lock_manage.py": 249,
     "govern": 1155,
-    "governance": 9760,
+    "governance": 9756,
     "governance_alert_parser.py": 65,
     "hooks": 561,
     "ide": 458,
@@ -95,7 +95,7 @@
     "lsp": 813,
     "maif": 1075,
     "main.py": 50,
-    "mcp": 11047,
+    "mcp": 11149,
     "memory": 2202,
     "mesh": 2913,
     "metrics": 61,
@@ -113,7 +113,7 @@
     "output_parser.py": 453,
     "parser.py": 57,
     "phases": 418,
-    "planning": 3181,
+    "planning": 3262,
     "platform_paths.py": 34,
     "prompts": 104,
     "prompts.py": 561,
@@ -168,14 +168,6 @@
   },
   "top5_largest_files": [
     {
-      "file": "src/thegent/cli/commands/impl.py",
-      "loc": 3061
-    },
-    {
-      "file": "src/thegent/mcp/server.py",
-      "loc": 2781
-    },
-    {
       "file": "src/thegent/execution.py",
       "loc": 2048
     },
@@ -184,11 +176,19 @@
       "loc": 1692
     },
     {
-      "file": "src/thegent/cli/commands/session_impl.py",
-      "loc": 1497
+      "file": "src/thegent/clode_main.py",
+      "loc": 1436
+    },
+    {
+      "file": "src/thegent/install.py",
+      "loc": 1427
+    },
+    {
+      "file": "src/thegent/audit/shadow_audit_git.py",
+      "loc": 1387
     }
   ],
-  "oversized_functions_count": 789,
+  "oversized_functions_count": 798,
   "oversized_functions": [
     {
       "file": "src/thegent/acp/client.py",
@@ -333,9 +333,9 @@
   ],
   "tokei_summary": {
     "source": "tokei",
-    "total_loc": 167086,
-    "blanks": 31131,
-    "comments": 7415
+    "total_loc": 168323,
+    "blanks": 31325,
+    "comments": 7290
   },
   "thresholds": {
     "max_function_lines": 40

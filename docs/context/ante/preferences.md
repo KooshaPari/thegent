@@ -92,7 +92,7 @@ Copy
 Ask AI
 .claude/
 └── projects/
-    └── <path>/
+    └── `<path>`/
         └── memory/
             └── MEMORY.md   # Auto-memory for this project
 
@@ -103,7 +103,7 @@ Temporary files
 Copy
 
 Ask AI
-/tmp/ante/<project-hash>/   # Temp files scoped per project
+/tmp/ante/`<project-hash>`/   # Temp files scoped per project
 
 ​
 

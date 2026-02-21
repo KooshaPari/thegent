@@ -59,27 +59,27 @@ CLI reference
 Copy
 
 Ask AI
-ante [OPTIONS] [--prompt <PROMPT>]
+ante [OPTIONS] [--prompt `<PROMPT>`]
 
 Flag
 Description
--p, --prompt <PROMPT>
+-p, --prompt `<PROMPT>`
 The prompt to run
--m, --model <MODEL>
+-m, --model ``<MODEL>``
 Override the model name
---provider <PROVIDER>
+--provider ``<PROVIDER>``
 Override the API provider
 --yolo
 Skip all tool approval prompts
---output-format <FORMAT>
+--output-format ``<FORMAT>``
 Output format: json, human, minimal (default: minimal)
---system-prompt <PROMPT>
+--system-prompt `<PROMPT>`
 Replace the default system prompt entirely
---append-system-prompt <TEXT>
+--append-system-prompt ``<TEXT>``
 Append text to the system prompt
---allowed-tools <TOOLS>...
+--allowed-tools ``<TOOLS>``...
 Only allow these tools (space-separated)
---disallowed-tools <TOOLS>...
+--disallowed-tools ``<TOOLS>``...
 Disallow these tools (space-separated)
 --check
 Run a verification pass after the main task completes

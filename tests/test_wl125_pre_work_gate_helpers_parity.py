@@ -1,8 +1,24 @@
 from __future__ import annotations
 
+import importlib.util
+import sys
 from pathlib import Path
 
 from thegent.cli.commands import impl, work_stream_impl
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "scripts" / "check_instruction_architecture.py"
+
+
+def _load_architecture_module():
+    spec = importlib.util.spec_from_file_location("instruction_architecture_check", SCRIPT)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_wl125_impl_pre_work_gate_wrappers_delegate(monkeypatch) -> None:
@@ -146,3 +162,26 @@ def test_wl125_work_stream_pre_work_gate_wrappers_delegate(monkeypatch) -> None:
         "config_source": "defaults",
     }
     assert called["enforce_project_dir"] == Path("/tmp/project")
+
+
+def test_wl125_orchestration_wrapper_contract_parity() -> None:
+    mod = _load_architecture_module()
+    expected = {
+        "do_next_impl",
+        "wait_next_impl",
+        "spawn_next_impl",
+        "work_stream_claim_impl",
+        "work_stream_complete_impl",
+        "incorporate_impl",
+        "_validate_task_and_record_errors",
+        "continuity_snapshot_impl",
+    }
+    assert set(mod.ORCHESTRATION_WRAPPER_CONTRACTS) == expected
+    assert set(mod.ORCHESTRATION_WRAPPER_CONTRACTS.values()) == expected
+
+
+def test_wl125_command_modules_expose_orchestration_wrapper_names() -> None:
+    mod = _load_architecture_module()
+    for wrapper_name in mod.ORCHESTRATION_WRAPPER_CONTRACTS:
+        assert hasattr(impl, wrapper_name)
+        assert hasattr(work_stream_impl, wrapper_name)

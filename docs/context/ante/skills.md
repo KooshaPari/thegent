@@ -109,7 +109,7 @@ What this skill does and when to use it. If omitted, extracted from the first pa
 argument-hint
 No
 —
-Hint text shown to the user for expected arguments (e.g. <path>).
+Hint text shown to the user for expected arguments (e.g. `<path>`).
 user-invocable
 No
 true
