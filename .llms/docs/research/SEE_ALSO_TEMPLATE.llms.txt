@@ -1,0 +1,16 @@
+# SEE_ALSO_TEMPLATE
+
+Source: docs/research/SEE_ALSO_TEMPLATE.md
+
+---
+
+# "See Also" Section Template
+
+> **Purpose**: Standard template for consistent "See Also" sections across all documentation
+
+---
+
+## Standard Template
+
+```
+---

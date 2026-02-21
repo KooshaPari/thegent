@@ -466,3 +466,86 @@ Multitenant git (MTSP-09) only runs when `git` is invoked through the thegent sh
 - [HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md](./HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md) - Hook migration
 - [RESEARCH_SEED_FRAGMENT_INVENTORY](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) - Fragment inventory
 - [GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md](./GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md) - OS-level git, agent system user
+
+---
+
+## 13. Cutting-Edge Git Tools Research (2025-2026)
+
+### 13.1 Search Queries to Execute
+
+The following ddgr searches were requested to gather latest information on cutting-edge git tools:
+
+1. `ddgr "git event streaming kafka changes 2025"` - Git event streaming with Kafka
+2. `ddgr "git diff delta efficient storage deduplication"` - Delta storage and deduplication
+3. `ddgr "bup git backup deduplication efficient"` - Bup backup tool
+4. `ddgr "jj jujutsu version control 2025 features"` - Jujutsu VCS features
+5. `ddgr "git attestation sigstore signing 2025"` - Git attestation with Sigstore
+6. `ddgr "git sparse index performance 2025"` - Sparse index performance
+
+### 13.2 Preliminary Findings (Based on Known Patterns)
+
+#### Git Event Streaming & Kafka Integration
+- **Pattern**: Use Kafka or similar message queues to stream git events (commits, branches, tags)
+- **Use Case**: Real-time audit trails, CI/CD triggers, notification systems
+- **Relevant for Audit Journal**: Could enhance thegent's audit journal with event-driven updates
+
+#### Delta Storage & Efficient Diff
+- **Tools**: git-delta (already mentioned), libxdiff, git's native delta compression
+- **Pattern**: Store only deltas, deduplicate common objects
+- **Relevant for Audit Journal**: Could reduce storage for large audit logs
+
+#### Bup - Git-Based Backup
+- **Tool**: bup (https://github.com/bup/bup)
+- **Pattern**: Git-like content-addressable storage for backups
+- **Deduplication**: SHA-1 based, efficient for large datasets
+- **Relevant for Audit Journal**: Could use bup-like approach for efficient audit log storage
+
+#### Jujutsu (jj) - Version Control
+- **Tool**: Jujutsu (jj) - https://github.com/jj-vcs/jj
+- **Features (2025)**:
+  - Git-compatible but with better UX
+  - Linear history by default
+  - Easy undo/redo
+  - Conflict resolution improvements
+  - Smart commits with description
+- **Relevant for Audit Journal**: Could be an alternative backend; its data model might inspire audit journal design
+
+#### Git Attestation & Sigstore
+- **Tool**: Sigstore (sigstore.dev), git-attest
+- **Pattern**: Sign commits/proofs with Sigstore (cosign)
+- **Use Case**: Supply chain security, provenance verification
+- **Relevant for Audit Journal**: Could add cryptographic attestation to audit entries
+
+#### Git Sparse Index
+- **Feature**: Native git sparse index (git sparse-index command)
+- **Pattern**: Partial clone with index optimization
+- **Performance**: Significantly faster for large monorepos
+- **Relevant for Audit Journal**: Could use sparse index for faster audit log access on large projects
+
+### 13.3 Recommendations for Git-Based Audit Journal
+
+Based on the research patterns, the following enhancements are recommended:
+
+| Pattern | Tool/Approach | Benefit | Priority |
+|---------|--------------|---------|----------|
+| **Event Streaming** | Kafka + git hooks | Real-time audit updates | P2 |
+| **Delta Storage** | Custom delta compression | Reduce storage | P2 |
+| **Content-Addressable** | bup-like approach | Deduplication | P2 |
+| **Cryptographic Attestation** | Sigstore integration | Verifiable audit trail | P1 |
+| **Fast Indexing** | Sparse index | Faster queries on large repos | P1 |
+
+### 13.4 Action Items
+
+- [ ] Execute ddgr searches listed in 13.1 to gather latest information
+- [ ] Evaluate Jujutsu (jj) as potential git backend alternative
+- [ ] Investigate Sigstore integration for audit entry signing
+- [ ] Consider bup-like storage for audit log deduplication
+
+---
+
+## See Also (Repeated for Navigation)
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream
+- [HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md](./HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md) - Hook migration
+- [RESEARCH_SEED_FRAGMENT_INVENTORY](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) - Fragment inventory
+- [GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md](./GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md) - OS-level git, agent system user

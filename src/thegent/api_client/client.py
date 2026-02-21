@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class APIClient:
     """API client."""
 
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str) -> None:
         """Initialize API client.
 
         Args:

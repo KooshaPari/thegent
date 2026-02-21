@@ -469,3 +469,121 @@ class ProgressIndicator(Static):
         self.total = total
         if message:
             self.message = message
+
+
+class DiffViewerPanel(ScrollableContainer):
+    """Display unified diff with ANSI color highlighting.
+
+    Features:
+    - Renders unified diff with color coding (green for additions, red for deletions)
+    - Line number display
+    - Scrollable view for large diffs
+    - Syntax highlighting for diff meta (headers, hunks)
+    """
+
+    DEFAULT_CSS = """
+    DiffViewerPanel {
+        width: 1fr;
+        height: 1fr;
+        border: solid $primary;
+        background: $panel;
+        layout: vertical;
+    }
+
+    .diff-header {
+        width: 1fr;
+        height: auto;
+        color: $accent;
+        text-style: bold;
+    }
+
+    .diff-hunk {
+        width: 1fr;
+        height: auto;
+        color: $text-muted;
+    }
+
+    .diff-add {
+        width: 1fr;
+        height: auto;
+        color: $success;
+    }
+
+    .diff-del {
+        width: 1fr;
+        height: auto;
+        color: $error;
+    }
+
+    .diff-context {
+        width: 1fr;
+        height: auto;
+        color: $text;
+    }
+
+    .diff-meta {
+        width: 1fr;
+        height: auto;
+        color: $text-muted;
+        text-style: dim;
+    }
+    """
+
+    def __init__(self, title: str = "Diff Viewer", **kwargs) -> None:
+        """Initialize the diff viewer panel.
+
+        Args:
+            title: Panel title
+        """
+        super().__init__(**kwargs)
+        self.title = title
+
+    def compose(self):
+        """Compose the diff viewer panel."""
+        yield Static(f"📄 {self.title}", id="diff-header", classes="widget-header")
+        yield RichLog(id="diff-content", wrap=False, highlight=False)
+
+    def set_diff(self, unified_diff: str) -> None:
+        """Set and render a unified diff string.
+
+        Args:
+            unified_diff: Unified diff string to display
+        """
+        log_widget = self.query_one("#diff-content", RichLog)
+        log_widget.clear()
+
+        for line in unified_diff.splitlines():
+            styled_line = self._style_diff_line(line)
+            log_widget.write(styled_line)
+
+    def _style_diff_line(self, line: str) -> Text:
+        """Style a single diff line with appropriate colors.
+
+        Args:
+            line: A single line from the diff
+
+        Returns:
+            Rich Text with styling applied
+        """
+        if line.startswith("---") or line.startswith("+++"):
+            # File header lines
+            return Text(line, style="dim cyan")
+        if line.startswith("@@"):
+            # Hunk headers
+            return Text(line, style="yellow bold")
+        if line.startswith("+"):
+            # Additions - green
+            return Text(line, style="green")
+        if line.startswith("-"):
+            # Deletions - red
+            return Text(line, style="red")
+        if line.startswith("\\"):
+            # No newline at end warning
+            return Text(line, style="dim italic")
+        # Context lines
+        return Text(line, style="white")
+
+    def clear(self) -> None:
+        """Clear the diff viewer."""
+        log_widget = self.query_one("#diff-content", RichLog)
+        log_widget.clear()

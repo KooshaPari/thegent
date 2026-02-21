@@ -48,7 +48,8 @@ def config_show_cmd(
         raise typer.Exit(0)
 
     try:
-        settings = ThegentSettings(_env_file=str(path))
+        # Use _env_file private parameter for pydantic-settings v2
+        settings = ThegentSettings(_env_file=str(path))  # type: ignore[call-arg]
 
         table = Table(title="Current Configuration", show_header=True, header_style="bold cyan")
         table.add_column("Setting", style="cyan")

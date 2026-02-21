@@ -32,6 +32,9 @@ environment:
   - THGENT_MCP_MOUNT_SEQUENTIAL_THINKING=0
   - THGENT_MCP_MOUNT_NEXT_DEVTOOLS=0
   - THGENT_SERENA_URL=http://127.0.0.1:3848/mcp
+  # Worker Pool (MTSP-06)
+  - THGENT_WORKER_POOL_SIZE=${THGENT_WORKER_POOL_SIZE:-4}
+  - THGENT_WORKER_IDLE_TIMEOUT=${THGENT_WORKER_IDLE_TIMEOUT:-300}
 
 processes:
   server:
@@ -84,6 +87,45 @@ processes:
       success_threshold: 1
       failure_threshold: 3
     log_location: .process-compose/logs/control-plane.log
+
+  # Worker Pool (MTSP-06): persistent warm Python workers to eliminate ~300ms startup latency.
+  # Pool size is configurable via THGENT_WORKER_POOL_SIZE (default 4).
+  worker-pool:
+    command: python3
+    args:
+      - -c
+      - |
+        import asyncio, os, logging, signal
+        from thegent.core.worker_pool import get_worker_pool
+        logging.basicConfig(level=logging.INFO)
+        pool_size = int(os.environ.get("THGENT_WORKER_POOL_SIZE", "4"))
+        idle_timeout = int(os.environ.get("THGENT_WORKER_IDLE_TIMEOUT", "300"))
+        async def main():
+            pool = get_worker_pool(pool_size=pool_size, idle_timeout=idle_timeout)
+            await pool.start()
+            stop_event = asyncio.Event()
+            loop = asyncio.get_running_loop()
+            loop.add_signal_handler(signal.SIGTERM, stop_event.set)
+            loop.add_signal_handler(signal.SIGINT, stop_event.set)
+            await stop_event.wait()
+            await pool.stop()
+        asyncio.run(main())
+    working_dir: .
+    availability:
+      restart: on_failure
+      max_restarts: 5
+      backoff_seconds: 2
+    readiness_probe:
+      exec:
+        command: sh
+        args: ["-c", "true"]
+      initial_delay_seconds: 3
+      period_seconds: 30
+    log_location: .process-compose/logs/worker-pool.log
+    log_length: 2000
+    depends_on:
+      server:
+        condition: process_healthy
 
   # Serena: only runs when THGENT_MCP_MOUNT_SERENA=1. When disabled, sleeps to avoid restart loops.
   serena:

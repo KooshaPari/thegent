@@ -23,10 +23,12 @@ def models_list():
     """List all models in the catalog (static + custom)."""
     from rich.table import Table
 
+    from typing import cast
+
     from thegent.models.catalog import ModelCatalog
 
-    catalog = ModelCatalog.to_contract_view(use_scraped=False)
-    routes = catalog.get("routes", {})
+    catalog: dict[str, object] = ModelCatalog.to_contract_view(use_scraped=False)
+    routes: dict[str, list[dict[str, object]]] = cast("dict[str, list[dict[str, object]]]", catalog.get("routes", {}))
 
     table = Table(title="Model Catalog (Static + Custom)")
     table.add_column("Model ID", style="cyan")

@@ -33,13 +33,13 @@ from thegent.memory.manager import MemoryManager
 from thegent.observability.analytics import AnalyticsIntegration
 from thegent.observability.egress import EgressEvent, SIEMEgress
 from thegent.orchestration.execution.lanes import Lane, LaneModel
+from thegent.orchestration.execution.worker_pool import PersistentWorkerPool
 from thegent.orchestration.resilience.deferral import DeferralManager
 from thegent.orchestration.resource.load_based_limits import (
     compute_dynamic_limit,
     sample_resources,
 )
 from thegent.orchestration.state.session_watcher import SessionEventWatcher
-from thegent.orchestration.execution.worker_pool import PersistentWorkerPool
 from thegent.planning.work_stream import WorkStreamManager
 from thegent.planning.workstream_db import WorkstreamDB
 from thegent.routing.task_router import TaskCategory, TaskRouter
@@ -49,6 +49,67 @@ from thegent.team.coordination import TeamCoordinator
 from thegent.ux.alerts import AlertFatigueController, InterruptionKind
 
 _log = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Agent throttle API (FR-ORCH-001)
+# ---------------------------------------------------------------------------
+
+from dataclasses import dataclass as _dataclass
+
+
+@_dataclass
+class _ThrottleResult:
+    """Result of agent throttle check."""
+
+    action: str  # "ok", "warn", "throttle", "hard_stop"
+    count: int
+    limit: int
+    message: str
+
+
+def get_active_agent_count() -> int:
+    """Return count of currently active agent processes."""
+    import psutil
+
+    count = 0
+    for proc in psutil.process_iter(["name", "cmdline"]):
+        try:
+            name = proc.info.get("name", "") or ""
+            if any(agent in name for agent in ("cursor-agent", "thegent", "claude", "codex", "droid")):
+                count += 1
+        except (psutil.NoSuchProcess, psutil.AccessDenied):  # noqa: PERF203 - intentional per-item error handling
+            pass
+    return count
+
+
+def check_agent_throttle(
+    count: int | None = None,
+    warn_at: int = 20,
+    throttle_at: int = 50,
+    hard_stop_at: int = 80,
+) -> _ThrottleResult:
+    """Check current agent count against throttle thresholds.
+
+    Returns a _ThrottleResult with action in: "ok", "warn", "throttle", "hard_stop".
+    """
+    if count is None:
+        count = get_active_agent_count()
+    if count >= hard_stop_at:
+        return _ThrottleResult(
+            action="hard_stop", count=count, limit=hard_stop_at, message=f"Hard stop: {count} agents >= {hard_stop_at}"
+        )
+    if count >= throttle_at:
+        return _ThrottleResult(
+            action="throttle", count=count, limit=throttle_at, message=f"Throttle: {count} agents >= {throttle_at}"
+        )
+    if count >= warn_at:
+        return _ThrottleResult(
+            action="warn", count=count, limit=warn_at, message=f"Warning: {count} agents >= {warn_at}"
+        )
+    return _ThrottleResult(
+        action="ok", count=count, limit=warn_at, message=f"OK: {count} agents below warn threshold {warn_at}"
+    )
 
 
 class AutoLaunchSystem:
@@ -112,6 +173,7 @@ class AutoLaunchSystem:
         self.alert_fatigue = AlertFatigueController(self.settings)
         self.analytics = AnalyticsIntegration(provider="plausible", site_id=self.settings.analytics_site_id)
         self.siem_egress = SIEMEgress(endpoint_url=self.settings.siem_endpoint_url)
+        self._background_tasks: set[Any] = set()
 
         # Start event watcher
         self.event_watcher.start()
@@ -302,7 +364,9 @@ class AutoLaunchSystem:
             # If already running in an event loop, create a task
             loop = asyncio.get_event_loop()
             if loop.is_running():
-                loop.create_task(self._try_launch_next())
+                task = loop.create_task(self._try_launch_next())
+                self._background_tasks.add(task)
+                task.add_done_callback(self._background_tasks.discard)
             else:
                 loop.run_until_complete(self._try_launch_next())
 
@@ -328,6 +392,21 @@ class AutoLaunchSystem:
             from thegent.cli.commands.impl import do_next_impl
 
             result = do_next_impl(limit=10)
+            if result.get("governance_blocked"):
+                self.record_event(
+                    "governance_blocked",
+                    payload={
+                        "surface": "auto_launch.do_next_fallback",
+                        "governance_blocked": True,
+                        "remediation": result.get("remediation"),
+                        "governance_block": result.get("governance_block"),
+                    },
+                )
+                _log.warning(
+                    "Auto-launch fallback blocked by governance gate: %s",
+                    result.get("remediation", result.get("error", "unknown")),
+                )
+                return
             if "error" in result or not result.get("next_items"):
                 return
             ready_items = result["next_items"]
@@ -386,7 +465,9 @@ class AutoLaunchSystem:
 
         # Sync components before launch if needed
         try:
-            self.sync_orchestrator.sync()
+            import asyncio
+
+            asyncio.get_event_loop().run_until_complete(self.sync_orchestrator.sync_all())
         except Exception as e:
             _log.warning(f"Component sync failed before launch: {e}")
 
@@ -515,10 +596,21 @@ class AutoLaunchSystem:
             return
 
         agent_id = "auto-launch"
-        try:
-            self.workstream_manager.claim(item_id, agent_id)
-        except Exception as e:
-            _log.warning(f"Failed to claim {item_id}: {e}")
+        from thegent.cli.commands.impl import work_stream_claim_impl
+
+        claim_result = work_stream_claim_impl(item_id, agent_id, cd=Path.cwd())
+        if not claim_result.get("success", False):
+            payload = {
+                "surface": "auto_launch.claim_start",
+                "item_id": item_id,
+                "governance_blocked": bool(claim_result.get("governance_blocked")),
+                "remediation": claim_result.get("remediation"),
+                "governance_block": claim_result.get("governance_block"),
+                "error": claim_result.get("error"),
+            }
+            self.record_event("claim_failed", item_id=item_id, payload=payload)
+            _log.warning("Auto-launch claim blocked for %s: %s", item_id, claim_result.get("error", "claim failed"))
+            return
 
         # Use bg_impl directly for the specific item
         from thegent.cli.commands.impl import bg_impl
@@ -713,7 +805,9 @@ class AutoLaunchSystem:
                         try:
                             loop = asyncio.get_event_loop()
                             if loop.is_running():
-                                loop.create_task(self.run_gardening_cycle())
+                                task = loop.create_task(self.run_gardening_cycle())
+                                self._background_tasks.add(task)
+                                task.add_done_callback(self._background_tasks.discard)
                             else:
                                 loop.run_until_complete(self.run_gardening_cycle())
                         except RuntimeError:

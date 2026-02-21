@@ -6,10 +6,10 @@ without exposing private keys to the guest environment.
 
 import logging
 import os
+import select
 import socket
 import threading
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -57,10 +57,10 @@ class SSHIdentityProxy:
             s.settimeout(1.0)
 
             while self._running:
-                try:  # noqa: PERF203 -- socket accept loop, exception handling required for timeout
+                try:
                     conn, _addr = s.accept()
                     threading.Thread(target=self._handle_client, args=(conn,), daemon=True).start()
-                except TimeoutError:
+                except TimeoutError:  # noqa: PERF203 -- socket accept loop, timeout handling required
                     continue
                 except Exception as e:
                     if self._running:
@@ -68,6 +68,7 @@ class SSHIdentityProxy:
 
     def _handle_client(self, client_conn: socket.socket) -> None:
         """Forward requests to the host SSH agent."""
+        assert self.host_ssh_auth_sock is not None  # guaranteed by start() guard
         try:
             with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as host_conn:
                 host_conn.connect(self.host_ssh_auth_sock)
@@ -87,16 +88,15 @@ class SSHIdentityProxy:
                         pass
                     return True
 
+                sockets = [client_conn, host_conn]
                 while self._running:
-                    # Very basic pump - in production, use select/poll
-                    if not _forward_recv(client_conn, host_conn):
+                    readable, _, exceptional = select.select(sockets, [], sockets, 1.0)
+                    if exceptional:
                         break
-                    if not _forward_recv(host_conn, client_conn):
-                        break
-
-                    import time
-
-                    time.sleep(0.001)  # Avoid 100% CPU
+                    for sock in readable:
+                        src, dst = (client_conn, host_conn) if sock is client_conn else (host_conn, client_conn)
+                        if not _forward_recv(src, dst):
+                            return
         except Exception as e:
             logger.error(f"Proxy handler error: {e}")
         finally:

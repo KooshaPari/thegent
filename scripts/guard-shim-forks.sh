@@ -134,7 +134,7 @@ shim_target() {
   fi
 }
 
-status=0
+exit_code=0
 for tool in "${TARGETS[@]}"; do
   shim="$BIN_DIR/$tool"
   [[ -x "$shim" ]] || continue
@@ -146,18 +146,18 @@ for tool in "${TARGETS[@]}"; do
   if ! is_text_shim "$target_path"; then
     if [[ "$(basename "$target_path")" == "runtime-dispatch" || "$(basename "$target_path")" == "ultra-shim" ]]; then
       if ! flag_if_binary_hangs "$tool"; then
-        status=1
+        exit_code=1
       fi
     fi
     continue
   fi
 
   if ! flag_if_bad_dispatch "$target_path" "$tool"; then
-    status=1
+    exit_code=1
   fi
 
   if ! flag_wrong_tool_dispatch "$target_path" "$tool"; then
-    status=1
+    exit_code=1
   fi
 
   # Legacy ultra-shims may use a fixed dispatch path; only validate TOOL_NAME
@@ -167,9 +167,9 @@ for tool in "${TARGETS[@]}"; do
       ! grep -Fq 'TOOL_NAME="$(basename "${0##*/}")"' "$target_path" \
       && ! grep -Fq 'TOOL_NAME="$(basename "$0")"' "$target_path"; then
       echo "FORK-GUARD BLOCK: $shim (ultra-shim target) lacks basename-driven dispatch"
-      status=1
+      exit_code=1
     fi
   fi
 done
 
-exit "$status"
+exit "$exit_code"

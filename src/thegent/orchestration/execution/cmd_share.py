@@ -52,7 +52,7 @@ class CommandSharer:
             return self._run_fresh(command, cwd, env, output_path)
 
         # 2. Try to acquire SHM lock
-        import thegent_shm
+        import thegent_shm  # type: ignore[import-not-found]  # optional native extension
 
         conflict = thegent_shm.try_acquire_cmd_lock(cmd_hash=cmd_hash, pid=os.getpid(), output_path=str(output_path))
 

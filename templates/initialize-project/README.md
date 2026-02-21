@@ -1,12 +1,11 @@
 # Initialize-Project Template
 
-This template provides a unified way to scaffold new projects with all the necessary tooling.
+Opinionated Copier template for bootstrapping projects with practical defaults for DX (developer experience), AX (agent experience), and UX (user experience).
 
 ## Usage
 
 ### Prerequisites
 
-Install copier:
 ```bash
 pip install copier
 ```
@@ -14,47 +13,52 @@ pip install copier
 ### Initialize a New Project
 
 ```bash
-# Copy the template to a new directory
 copier copy thegent/templates/initialize-project ./my-new-project
-
-# Or with all options specified
-copier copy thegent/templates/initialize-project ./my-new-project \
-  --project-name="my-project" \
-  --project-description="A description" \
-  --language="python" \
-  --include-docs=true \
-  --include-ci=true
 ```
 
-## Options
+Use the interactive questionnaire and pick the profile that matches your actual runtime and delivery risk.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `project_name` | str | my-project | Name of the project |
-| `project_description` | str | A new project | One-line description |
-| `author` | str | "" | Author name |
-| `language` | str | python | Primary language (python, typescript, go, bash) |
-| `include_docs` | bool | true | Include VitePress docsite |
-| `include_ci` | bool | true | Include GitHub Actions CI |
-| `include_docker` | bool | false | Include Docker setup |
-| `include_hooks` | bool | true | Include pre-commit hooks |
+## Questionnaire Fields
+
+| Field | Why it matters |
+|---|---|
+| `project_type` | Chooses the operating model for DX/AX/UX expectations |
+| `runtime_profile` | Tunes latency/throughput/cost assumptions |
+| `governance_mode` | Sets review and traceability strictness |
+| `observability_stack` | Defines incident detection and debugging quality |
+| `deployment_target` | Aligns build/release flow with runtime destination |
+| `interfaces` | Declares external surfaces you must support |
+| `quality_profile` | Sets the default test and gate intensity |
+| `questionnaire_summary_hints` | Injects explicit planning prompts into `CLAUDE.md` |
+
+## How To Answer: Project-Type Matrix
+
+| Project type | Runtime profile | Governance | Observability | Deployment | Interfaces | Quality | Summary hints |
+|---|---|---|---|---|---|---|---|
+| `cli_tool` | `balanced` | `standard` | `minimal_logs` | `local_only` | `cli,docs` | `strict` | `primary_user_flow,biggest_risk` |
+| `service_api` | `low_latency` | `standard` | `otel_prometheus` | `container_platform` | `http_api,docs` | `strict` | `primary_user_flow,biggest_risk,rollback_plan` |
+| `event_worker` | `throughput` | `strict` | `otel_prometheus` | `serverless` | `events,docs` | `critical` | `biggest_risk,rollback_plan,cost_guardrails` |
+| `web_app` | `low_latency` | `standard` | `sentry_first` | `edge` | `web_ui,http_api,docs` | `strict` | `primary_user_flow,biggest_risk,onboarding` |
+| `library_sdk` | `cost_optimized` | `strict` | `minimal_logs` | `package_registry` | `sdk,docs` | `critical` | `primary_user_flow,onboarding,rollback_plan` |
+
+Notes:
+- If users wait on requests, bias toward `low_latency` plus `strict` or `critical` quality.
+- If jobs queue and drain, bias toward `throughput` plus `critical` quality.
+- If you choose `strict` governance, do not choose `fast_iterate` quality.
 
 ## What Gets Created
 
-Based on selected options, creates:
-
-- `CLAUDE.md` - Project-specific agent instructions
+- `CLAUDE.md` - Project-specific instructions with DX/AX/UX contract
+- `docs/governance/POLYGLOT_RUNTIME_DECISION_MATRIX.md` - Runtime and test governance baseline
 - `Taskfile.yml` - Build automation with language-specific tasks
-- `.gitignore` - Language-appropriate gitignore
-- `.env.example` - Environment variable template
-- `docs/` - VitePress docsite (if include_docs=true)
-- `.github/workflows/ci.yml` - CI workflow (if include_ci=true)
-- `hooks/` - Pre-commit hooks (if include_hooks=true)
-- Docker files (if include_docker=true)
+- `.gitignore` - Language-appropriate ignore file
+- `.env.example` - Environment template
+- `docs/` - VitePress docsite (if `include_docs=true`)
+- `.github/workflows/ci.yml` - CI workflow (if `include_ci=true`)
+- `hooks/` - Pre-commit hooks (if `include_hooks=true`)
+- Docker files (if `include_docker=true`)
 
 ## Manual Template Selection
-
-Instead of using copier, you can manually select templates:
 
 ```bash
 # CLAUDE.md template

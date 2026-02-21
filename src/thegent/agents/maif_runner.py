@@ -9,6 +9,7 @@ from thegent.execution import RunMeta
 
 if TYPE_CHECKING:
     from thegent.orchestration.execution.engine import ExecutionEngine
+    from thegent.routing.route_executor import RoutingDecision
 
 _log = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class MAIFAgentRunner(AgentRunner):
         owner: str = "unknown",
         agent_name: str = "unknown",
         **kwargs: Any,
-    ) -> RunResult:
+    ) -> tuple[RunResult, "RoutingDecision"]:
         """Run the agent and generate MAIF artifacts.
 
         This method overloads the base run() to accept metadata required for MAIF.

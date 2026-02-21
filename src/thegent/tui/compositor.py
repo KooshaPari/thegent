@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal
@@ -17,7 +17,10 @@ from textual.theme import Theme
 from textual.widgets import Footer, Header, Static
 
 from .layouts.base import BaseLayout
+from .widgets.interactive_input import InteractiveInputWidget
 from .widgets.menubar import MenubarWidget
+from .widgets.table_widget import TableWidget
+from .widgets.timeline_widget import TimelineWidget
 
 _log = logging.getLogger(__name__)
 
@@ -41,7 +44,7 @@ class CompositorApp(App):
     """Main TUI application for thegent."""
 
     # Theme configuration
-    CSS_THEMES = [
+    CSS_THEMES: ClassVar[list[Any]] = [
         Theme(
             name="thegent-dark",
             primary="#00ff00",  # Terminal green
@@ -124,7 +127,7 @@ class CompositorApp(App):
     }
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[tuple[str, str, str]]] = [
         # Navigation
         ("f1", "focus_next", "Focus Next Pane"),
         ("f2", "focus_prev", "Focus Previous Pane"),
@@ -153,12 +156,15 @@ class CompositorApp(App):
         with Horizontal(id="main"):
             with Container(id="output-pane"):
                 yield Static("Agent Output", classes="pane-header")
+                yield TimelineWidget(id="timeline-widget")
                 yield Static("Waiting for agent...\n", id="output-content", classes="agent-output")
+                yield InteractiveInputWidget(on_submit=self._handle_prompt_submit, id="interactive-input-widget")
 
             if self._sidebar_visible:
                 with Container(id="sidebar"):
                     yield Static("Status", classes="pane-header")
                     yield Static(id="status-content", classes="status-content")
+                    yield TableWidget(id="task-table-widget")
 
         yield Footer()
 
@@ -167,7 +173,41 @@ class CompositorApp(App):
         _log.info("TUI Compositor started")
         self.update_title()
         self.update_status()
+        self._init_widgets()
         self.set_focus(None)  # Focus first available
+
+    def _init_widgets(self) -> None:
+        """Initialize dynamic widget contents for WL-017 defaults."""
+        with self.app.batch_update():
+            try:
+                timeline = self.query_one("#timeline-widget", TimelineWidget)
+                timeline.add_event("Compositor started.")
+            except QueryError:
+                pass
+            try:
+                table = self.query_one("#task-table-widget", TableWidget)
+                table.set_columns(["ID", "State", "Owner"])
+                table.set_rows(
+                    [
+                        ("session", "ready", self.context.session_id or "n/a"),
+                        ("agent", "ready", self.context.agent_name or "thegent"),
+                    ]
+                )
+            except QueryError:
+                pass
+
+    def _handle_prompt_submit(self, prompt: str) -> None:
+        """Handle prompt submissions from the interactive input widget."""
+        try:
+            output = self.query_one("#output-content", Static)
+            output.update(f"{output.renderable}\n> {prompt}")
+        except QueryError:
+            pass
+        try:
+            timeline = self.query_one("#timeline-widget", TimelineWidget)
+            timeline.add_event(f"Prompt submitted ({len(prompt)} chars)")
+        except QueryError:
+            pass
 
     def update_title(self) -> None:
         """Update window title."""

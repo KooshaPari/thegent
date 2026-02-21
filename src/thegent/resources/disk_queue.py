@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class DiskQueueDepth:
     """Disk queue depth monitoring."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize disk queue depth."""
 
     def get_queue_depth(self, device: str) -> float:

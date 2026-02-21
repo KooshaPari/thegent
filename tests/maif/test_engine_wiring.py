@@ -7,9 +7,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from thegent.agents.base import AgentRunner, RunResult
+from thegent.agents.maif_runner import MAIFAgentRunner
 from thegent.execution import RunMeta
 from thegent.orchestration.execution.engine import ExecutionEngine
-from thegent.agents.maif_runner import MAIFAgentRunner
 
 
 class MockRunner(AgentRunner):
@@ -46,11 +46,11 @@ def test_execution_engine_generates_artifacts(mock_settings, temp_session_dir):
     with patch("thegent.execution.Auditor.sign_run") as mock_sign, \
          patch("thegent.execution.Auditor.generate_maif_artifact") as mock_gen, \
          patch("thegent.execution.Auditor.persist_maif_artifact") as mock_persist:
-        
+
         mock_gen.return_value = {"id": "art_123", "session_id": "run_test_123"}
-        
+
         result = engine.execute(runner, run_meta)
-        
+
         assert result.stdout == "Mock output"
         mock_sign.assert_called_once_with(run_meta)
         mock_gen.assert_called_once()
@@ -62,9 +62,9 @@ def test_maif_agent_runner_wiring(mock_settings):
     # We need to patch ExecutionEngine inside MAIFAgentRunner or pass a mocked one
     mock_engine = MagicMock(spec=ExecutionEngine)
     maif_runner = MAIFAgentRunner(runner=inner_runner, engine=mock_engine)
-    
+
     maif_runner.run(prompt="Hello", agent_name="claude", owner="bob")
-    
+
     mock_engine.execute.assert_called_once()
     call_args = mock_engine.execute.call_args[1]
     assert call_args["runner"] == inner_runner

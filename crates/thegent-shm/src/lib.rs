@@ -1,10 +1,12 @@
-use pyo3::prelude::*;
 use std::sync::Mutex;
 use memmap2::MmapMut;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 use once_cell::sync::Lazy;
+
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
 
 // Constants for SHM layout
 const MAX_BREAKERS: usize = 256;
@@ -40,21 +42,21 @@ struct BreakerState {
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-struct ProviderState {
-    name: [u8; 32],
-    request_count: u64,
-    success_count: u64,
-    failure_count: u64,
-    latency_p50_ms: u32,
-    success_rate: f32,
-    last_updated: f64,
+pub struct ProviderState {
+    pub name: [u8; 32],
+    pub request_count: u64,
+    pub success_count: u64,
+    pub failure_count: u64,
+    pub latency_p50_ms: u32,
+    pub success_rate: f32,
+    pub last_updated: f64,
 }
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-struct XPState {
-    total_xp: u64,
-    level: u32,
+pub struct XPState {
+    pub total_xp: u64,
+    pub level: u32,
 }
 
 #[repr(C)]
@@ -68,59 +70,60 @@ struct ResourceMetrics {
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-struct RaceResult {
-    race_id: [u8; 64],
-    agent_id: [u8; 64],
-    run_id: [u8; 64],
-    status: [u8; 16],
-    duration_ms: u64,
-    score: f32,
-    timestamp: f64,
+pub struct RaceResult {
+    pub race_id: [u8; 64],
+    pub agent_id: [u8; 64],
+    pub run_id: [u8; 64],
+    pub status: [u8; 16],
+    pub duration_ms: u64,
+    pub score: f32,
+    pub timestamp: f64,
 }
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-struct CommandLock {
-    cmd_hash: [u8; 64],
-    pid: u32,
-    status: [u8; 16],
-    output_path: [u8; 256],
-    start_time: f64,
+pub struct CommandLock {
+    pub cmd_hash: [u8; 64],
+    pub pid: u32,
+    pub status: [u8; 16],
+    pub output_path: [u8; 256],
+    pub start_time: f64,
 }
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-struct RouterMetricsState {
-    total_decisions: u64,
-    lifecycle_count: u64,
-    thegent_count: u64,
-    route_changes: u64,
-    hysteresis_activations: u64,
+pub struct RouterMetricsState {
+    pub total_decisions: u64,
+    pub lifecycle_count: u64,
+    pub thegent_count: u64,
+    pub route_changes: u64,
+    pub hysteresis_activations: u64,
 }
 
-#[pyclass]
+// ---------------------------------------------------------------------------
+// Core SHM Interface struct (used by both Rust callers and PyO3)
+// ---------------------------------------------------------------------------
+
+#[cfg_attr(feature = "python", pyclass)]
 pub struct SHMInterface {
     mmap: MmapMut,
 }
 
-#[pymethods]
 impl SHMInterface {
-    #[new]
-    #[pyo3(signature = (path))]
-    fn new(path: String) -> PyResult<Self> {
-        let path = PathBuf::from(path);
+    pub fn open(path: impl Into<PathBuf>) -> std::io::Result<Self> {
+        let path = path.into();
         let file = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
+            .truncate(false)
             .open(&path)?;
         file.set_len(SHM_SIZE as u64)?;
-
         let mmap = unsafe { MmapMut::map_mut(&file)? };
         Ok(SHMInterface { mmap })
     }
 
-    fn update_provider(&mut self, name: String, request_count: u64, success_count: u64, latency_ms: u32) -> PyResult<()> {
+    pub fn do_update_provider(&mut self, name: String, request_count: u64, success_count: u64, latency_ms: u32) -> std::io::Result<()> {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
         let mut name_bytes = [0u8; 32];
         let len = name.len().min(32);
@@ -150,13 +153,13 @@ impl SHMInterface {
                 if target_idx.is_none() { target_idx = Some(i); }
                 continue;
             }
-            if slot == &name_bytes {
+            if *slot == name_bytes {
                 target_idx = Some(i);
                 break;
             }
         }
 
-        let idx = target_idx.ok_or_else(|| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("Provider slots full"))?;
+        let idx = target_idx.ok_or_else(|| std::io::Error::other("Provider slots full"))?;
         let start = PROVIDER_OFFSET + (idx * PROVIDER_SLOT_SIZE);
         let end = start + std::mem::size_of::<ProviderState>();
         let bytes: &[u8] = unsafe {
@@ -169,32 +172,7 @@ impl SHMInterface {
         Ok(())
     }
 
-    fn get_provider_metrics(&self, py: Python<'_>, name: String) -> PyResult<Option<PyObject>> {
-        let mut name_bytes = [0u8; 32];
-        let len = name.len().min(32);
-        name_bytes[..len].copy_from_slice(&name.as_bytes()[..len]);
-
-        for i in 0..MAX_PROVIDERS {
-            let start = PROVIDER_OFFSET + (i * PROVIDER_SLOT_SIZE);
-            let slot = &self.mmap[start..start + 32];
-            if slot == &name_bytes {
-                let end = start + std::mem::size_of::<ProviderState>();
-                let state: &ProviderState = unsafe { &*(self.mmap[start..end].as_ptr() as *const ProviderState) };
-                
-                let dict = pyo3::types::PyDict::new(py);
-                dict.set_item("request_count", state.request_count)?;
-                dict.set_item("success_count", state.success_count)?;
-                dict.set_item("latency_ms", state.latency_p50_ms)?;
-                dict.set_item("success_rate", state.success_rate)?;
-                dict.set_item("last_updated", state.last_updated)?;
-                return Ok(Some(dict.into_any().unbind()));
-            }
-        }
-        Ok(None)
-    }
-
-    // ... (rest of existing methods adapted to new offsets) ...
-    fn record_failure(&mut self, target: String, category: i32) -> PyResult<()> {
+    pub fn do_record_failure(&mut self, target: String, category: i32) -> std::io::Result<()> {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
         let target_bytes = target.as_bytes();
         let mut target_fixed = [0u8; 128];
@@ -219,9 +197,9 @@ impl SHMInterface {
             }
         }
 
-        let (idx, mut state) = if let Some((i, s)) = found_idx { (i, s) } 
+        let (idx, mut state) = if let Some((i, s)) = found_idx { (i, s) }
                                else if let Some(i) = first_empty { (i, BreakerState { target: target_fixed, category, failures: 0, last_failure: 0.0 }) }
-                               else { return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM Breaker slots full")); };
+                               else { return Err(std::io::Error::other("SHM Breaker slots full")); };
 
         state.failures += 1;
         state.last_failure = now;
@@ -232,11 +210,502 @@ impl SHMInterface {
         Ok(())
     }
 
-    fn award_xp(&mut self, amount: u64) -> PyResult<()> {
+    pub fn do_award_xp(&mut self, amount: u64) -> std::io::Result<()> {
         let mut state = self.get_xp_state_internal();
         state.total_xp += amount;
         state.level = (state.total_xp / 1000) as u32 + 1;
-        self.save_xp_state(state)
+        self.save_xp_state_internal(state)
+    }
+
+    pub fn do_set_health_score(&mut self, score: f64) -> std::io::Result<()> {
+        let bytes = score.to_le_bytes();
+        self.mmap[HEALTH_OFFSET..HEALTH_OFFSET+8].copy_from_slice(&bytes);
+        Ok(())
+    }
+
+    pub fn do_get_health_score(&self) -> f64 {
+        let mut bytes = [0u8; 8];
+        bytes.copy_from_slice(&self.mmap[HEALTH_OFFSET..HEALTH_OFFSET+8]);
+        f64::from_le_bytes(bytes)
+    }
+
+    pub fn do_record_resource_usage(&mut self, pid: u32, cpu_usage: f32, memory_kb: u64) -> std::io::Result<()> {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
+        let state = ResourceMetrics { pid, cpu_usage, memory_kb, timestamp: now };
+        let start = RESOURCE_OFFSET;
+        let end = RESOURCE_OFFSET + std::mem::size_of::<ResourceMetrics>();
+        let bytes: &[u8] = unsafe { std::slice::from_raw_parts((&state as *const ResourceMetrics) as *const u8, std::mem::size_of::<ResourceMetrics>()) };
+        self.mmap[start..end].copy_from_slice(bytes);
+        Ok(())
+    }
+
+    pub fn do_update_router_metrics(&mut self, lifecycle_inc: u64, thegent_inc: u64, changes_inc: u64, hysteresis_inc: u64) -> std::io::Result<()> {
+        let start = ROUTER_METRICS_OFFSET;
+        let end = start + std::mem::size_of::<RouterMetricsState>();
+        let metrics: &mut RouterMetricsState = unsafe { &mut *(self.mmap[start..end].as_ptr() as *mut RouterMetricsState) };
+        metrics.total_decisions += lifecycle_inc + thegent_inc;
+        metrics.lifecycle_count += lifecycle_inc;
+        metrics.thegent_count += thegent_inc;
+        metrics.route_changes += changes_inc;
+        metrics.hysteresis_activations += hysteresis_inc;
+        Ok(())
+    }
+
+    pub fn do_get_xp_state(&self) -> XPState {
+        self.get_xp_state_internal()
+    }
+
+    pub fn do_get_provider_metrics(&self, name: &str) -> Option<ProviderState> {
+        let mut name_bytes = [0u8; 32];
+        let len = name.len().min(32);
+        name_bytes[..len].copy_from_slice(&name.as_bytes()[..len]);
+        for i in 0..MAX_PROVIDERS {
+            let start = PROVIDER_OFFSET + (i * PROVIDER_SLOT_SIZE);
+            let slot = &self.mmap[start..start + 32];
+            if *slot == name_bytes {
+                let end = start + std::mem::size_of::<ProviderState>();
+                let state: &ProviderState = unsafe { &*(self.mmap[start..end].as_ptr() as *const ProviderState) };
+                return Some(*state);
+            }
+        }
+        None
+    }
+
+    pub fn do_get_router_metrics(&self) -> RouterMetricsState {
+        let start = ROUTER_METRICS_OFFSET;
+        let end = start + std::mem::size_of::<RouterMetricsState>();
+        unsafe { *(self.mmap[start..end].as_ptr() as *const RouterMetricsState) }
+    }
+
+    fn get_xp_state_internal(&self) -> XPState {
+        let start = XP_OFFSET;
+        let end = start + std::mem::size_of::<XPState>();
+        let slot = &self.mmap[start..end];
+        let state: &XPState = unsafe { &*(slot.as_ptr() as *const XPState) };
+        if state.level == 0 { return XPState { total_xp: 0, level: 1 }; }
+        *state
+    }
+
+    fn save_xp_state_internal(&mut self, state: XPState) -> std::io::Result<()> {
+        let start = XP_OFFSET;
+        let end = start + std::mem::size_of::<XPState>();
+        let bytes: &[u8] = unsafe { std::slice::from_raw_parts((&state as *const XPState) as *const u8, std::mem::size_of::<XPState>()) };
+        self.mmap[start..end].copy_from_slice(bytes);
+        Ok(())
+    }
+
+    // ========================================================================
+    // Race Track Operations
+    // ========================================================================
+
+    /// Record a race result.
+    ///
+    /// # Arguments
+    /// * `race_id` - Unique identifier for the race
+    /// * `agent_id` - Agent that participated
+    /// * `run_id` - Run identifier
+    /// * `status` - Status string (e.g., "completed", "failed")
+    /// * `duration_ms` - Duration in milliseconds
+    /// * `score` - Score achieved
+    pub fn do_record_race_result(
+        &mut self,
+        race_id: &str,
+        agent_id: &str,
+        run_id: &str,
+        status: &str,
+        duration_ms: u64,
+        score: f32,
+    ) -> std::io::Result<usize> {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
+
+        let mut race_id_bytes = [0u8; 64];
+        let mut agent_id_bytes = [0u8; 64];
+        let mut run_id_bytes = [0u8; 64];
+        let mut status_bytes = [0u8; 16];
+
+        let race_len = race_id.len().min(64);
+        let agent_len = agent_id.len().min(64);
+        let run_len = run_id.len().min(64);
+        let status_len = status.len().min(16);
+
+        race_id_bytes[..race_len].copy_from_slice(&race_id.as_bytes()[..race_len]);
+        agent_id_bytes[..agent_len].copy_from_slice(&agent_id.as_bytes()[..agent_len]);
+        run_id_bytes[..run_len].copy_from_slice(&run_id.as_bytes()[..run_len]);
+        status_bytes[..status_len].copy_from_slice(&status.as_bytes()[..status_len]);
+
+        // Find first empty slot or slot with same race_id
+        let mut target_idx = None;
+        for i in 0..RACE_COUNT {
+            let start = RACE_OFFSET + (i * RACE_SLOT_SIZE);
+            let slot = &self.mmap[start..start + 64];
+            if slot[0] == 0 {
+                if target_idx.is_none() { target_idx = Some(i); }
+                continue;
+            }
+            if *slot == race_id_bytes {
+                target_idx = Some(i);
+                break;
+            }
+        }
+
+        let idx = target_idx.ok_or_else(|| {
+            std::io::Error::other("Race result slots full")
+        })?;
+
+        let result = RaceResult {
+            race_id: race_id_bytes,
+            agent_id: agent_id_bytes,
+            run_id: run_id_bytes,
+            status: status_bytes,
+            duration_ms,
+            score,
+            timestamp: now,
+        };
+
+        let start = RACE_OFFSET + (idx * RACE_SLOT_SIZE);
+        let end = start + std::mem::size_of::<RaceResult>();
+        let bytes: &[u8] = unsafe {
+            std::slice::from_raw_parts(
+                (&result as *const RaceResult) as *const u8,
+                std::mem::size_of::<RaceResult>(),
+            )
+        };
+        self.mmap[start..end].copy_from_slice(bytes);
+        Ok(idx)
+    }
+
+    /// Get a race result by index.
+    pub fn do_get_race_result(&self, idx: usize) -> Option<RaceResult> {
+        if idx >= RACE_COUNT {
+            return None;
+        }
+        let start = RACE_OFFSET + (idx * RACE_SLOT_SIZE);
+        let end = start + std::mem::size_of::<RaceResult>();
+        let state: &RaceResult = unsafe { &*(self.mmap[start..end].as_ptr() as *const RaceResult) };
+        if state.race_id[0] == 0 {
+            return None;
+        }
+        Some(*state)
+    }
+
+    /// Find a race result by race_id.
+    pub fn do_find_race_result(&self, race_id: &str) -> Option<(usize, RaceResult)> {
+        let mut race_id_bytes = [0u8; 64];
+        let len = race_id.len().min(64);
+        race_id_bytes[..len].copy_from_slice(&race_id.as_bytes()[..len]);
+
+        for i in 0..RACE_COUNT {
+            let start = RACE_OFFSET + (i * RACE_SLOT_SIZE);
+            let slot = &self.mmap[start..start + 64];
+            if *slot == race_id_bytes {
+                let end = start + std::mem::size_of::<RaceResult>();
+                let state: &RaceResult = unsafe { &*(self.mmap[start..end].as_ptr() as *const RaceResult) };
+                return Some((i, *state));
+            }
+        }
+        None
+    }
+
+    /// List all non-empty race results.
+    pub fn do_list_race_results(&self) -> Vec<(usize, RaceResult)> {
+        let mut results = Vec::new();
+        for i in 0..RACE_COUNT {
+            if let Some(result) = self.do_get_race_result(i) {
+                results.push((i, result));
+            }
+        }
+        results
+    }
+
+    /// Clear a race result by index.
+    pub fn do_clear_race_result(&mut self, idx: usize) -> std::io::Result<()> {
+        if idx >= RACE_COUNT {
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Index out of range"));
+        }
+        let start = RACE_OFFSET + (idx * RACE_SLOT_SIZE);
+        self.mmap[start..start + RACE_SLOT_SIZE].fill(0);
+        Ok(())
+    }
+
+    // ========================================================================
+    // Command Cache Operations
+    // ========================================================================
+
+    /// Acquire a lock for a command execution.
+    ///
+    /// # Arguments
+    /// * `cmd_hash` - Hash of the command to lock
+    /// * `pid` - Process ID acquiring the lock
+    ///
+    /// # Returns
+    /// The slot index where the lock was acquired, or error if slots are full
+    /// or the command is already locked by another process.
+    pub fn do_acquire_command_lock(
+        &mut self,
+        cmd_hash: &str,
+        pid: u32,
+    ) -> std::io::Result<usize> {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
+
+        let mut cmd_hash_bytes = [0u8; 64];
+        let len = cmd_hash.len().min(64);
+        cmd_hash_bytes[..len].copy_from_slice(&cmd_hash.as_bytes()[..len]);
+
+        // Check if already locked by another process
+        for i in 0..CMD_CACHE_COUNT {
+            let start = CMD_CACHE_OFFSET + (i * CMD_CACHE_SLOT_SIZE);
+            let slot = &self.mmap[start..start + 64];
+            if *slot == cmd_hash_bytes {
+                let end = start + std::mem::size_of::<CommandLock>();
+                let existing: &CommandLock = unsafe {
+                    &*(self.mmap[start..end].as_ptr() as *const CommandLock)
+                };
+                if existing.pid != 0 && existing.pid != pid {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::ResourceBusy,
+                        "Command is locked by another process",
+                    ));
+                }
+                // Same process can re-acquire (update lock)
+                let lock = CommandLock {
+                    cmd_hash: cmd_hash_bytes,
+                    pid,
+                    status: *b"running\0\0\0\0\0\0\0\0\0",
+                    output_path: [0u8; 256],
+                    start_time: now,
+                };
+                let bytes: &[u8] = unsafe {
+                    std::slice::from_raw_parts(
+                        (&lock as *const CommandLock) as *const u8,
+                        std::mem::size_of::<CommandLock>(),
+                    )
+                };
+                self.mmap[start..end].copy_from_slice(bytes);
+                return Ok(i);
+            }
+        }
+
+        // Find empty slot
+        for i in 0..CMD_CACHE_COUNT {
+            let start = CMD_CACHE_OFFSET + (i * CMD_CACHE_SLOT_SIZE);
+            let slot = &self.mmap[start..start + 64];
+            if slot[0] == 0 {
+                let lock = CommandLock {
+                    cmd_hash: cmd_hash_bytes,
+                    pid,
+                    status: *b"running\0\0\0\0\0\0\0\0\0",
+                    output_path: [0u8; 256],
+                    start_time: now,
+                };
+                let end = start + std::mem::size_of::<CommandLock>();
+                let bytes: &[u8] = unsafe {
+                    std::slice::from_raw_parts(
+                        (&lock as *const CommandLock) as *const u8,
+                        std::mem::size_of::<CommandLock>(),
+                    )
+                };
+                self.mmap[start..end].copy_from_slice(bytes);
+                return Ok(i);
+            }
+        }
+
+        Err(std::io::Error::other("Command cache slots full"))
+    }
+
+    /// Release a command lock.
+    pub fn do_release_command_lock(&mut self, cmd_hash: &str, pid: u32) -> std::io::Result<()> {
+        let mut cmd_hash_bytes = [0u8; 64];
+        let len = cmd_hash.len().min(64);
+        cmd_hash_bytes[..len].copy_from_slice(&cmd_hash.as_bytes()[..len]);
+
+        for i in 0..CMD_CACHE_COUNT {
+            let start = CMD_CACHE_OFFSET + (i * CMD_CACHE_SLOT_SIZE);
+            let slot = &self.mmap[start..start + 64];
+            if *slot == cmd_hash_bytes {
+                let end = start + std::mem::size_of::<CommandLock>();
+                let existing: &CommandLock = unsafe {
+                    &*(self.mmap[start..end].as_ptr() as *const CommandLock)
+                };
+                if existing.pid != pid {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::PermissionDenied,
+                        "Lock owned by different process",
+                    ));
+                }
+                self.mmap[start..start + CMD_CACHE_SLOT_SIZE].fill(0);
+                return Ok(());
+            }
+        }
+
+        Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Command lock not found",
+        ))
+    }
+
+    /// Get command lock status.
+    pub fn do_get_command_lock(&self, cmd_hash: &str) -> Option<CommandLock> {
+        let mut cmd_hash_bytes = [0u8; 64];
+        let len = cmd_hash.len().min(64);
+        cmd_hash_bytes[..len].copy_from_slice(&cmd_hash.as_bytes()[..len]);
+
+        for i in 0..CMD_CACHE_COUNT {
+            let start = CMD_CACHE_OFFSET + (i * CMD_CACHE_SLOT_SIZE);
+            let slot = &self.mmap[start..start + 64];
+            if *slot == cmd_hash_bytes {
+                let end = start + std::mem::size_of::<CommandLock>();
+                let state: &CommandLock = unsafe {
+                    &*(self.mmap[start..end].as_ptr() as *const CommandLock)
+                };
+                return Some(*state);
+            }
+        }
+        None
+    }
+
+    /// Update command lock status and output path.
+    pub fn do_update_command_lock(
+        &mut self,
+        cmd_hash: &str,
+        pid: u32,
+        status: &str,
+        output_path: &str,
+    ) -> std::io::Result<()> {
+        let mut cmd_hash_bytes = [0u8; 64];
+        let len = cmd_hash.len().min(64);
+        cmd_hash_bytes[..len].copy_from_slice(&cmd_hash.as_bytes()[..len]);
+
+        for i in 0..CMD_CACHE_COUNT {
+            let start = CMD_CACHE_OFFSET + (i * CMD_CACHE_SLOT_SIZE);
+            let slot = &self.mmap[start..start + 64];
+            if *slot == cmd_hash_bytes {
+                let end = start + std::mem::size_of::<CommandLock>();
+                let existing: &mut CommandLock = unsafe {
+                    &mut *(self.mmap[start..end].as_mut_ptr() as *mut CommandLock)
+                };
+                if existing.pid != pid {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::PermissionDenied,
+                        "Lock owned by different process",
+                    ));
+                }
+
+                // Update status
+                let mut status_bytes = [0u8; 16];
+                let status_len = status.len().min(16);
+                status_bytes[..status_len].copy_from_slice(&status.as_bytes()[..status_len]);
+                existing.status = status_bytes;
+
+                // Update output path
+                let mut path_bytes = [0u8; 256];
+                let path_len = output_path.len().min(256);
+                path_bytes[..path_len].copy_from_slice(&output_path.as_bytes()[..path_len]);
+                existing.output_path = path_bytes;
+
+                return Ok(());
+            }
+        }
+
+        Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Command lock not found",
+        ))
+    }
+
+    /// List all active command locks.
+    pub fn do_list_command_locks(&self) -> Vec<(usize, CommandLock)> {
+        let mut locks = Vec::new();
+        for i in 0..CMD_CACHE_COUNT {
+            let start = CMD_CACHE_OFFSET + (i * CMD_CACHE_SLOT_SIZE);
+            let slot = &self.mmap[start..start + 64];
+            if slot[0] != 0 {
+                let end = start + std::mem::size_of::<CommandLock>();
+                let state: &CommandLock = unsafe {
+                    &*(self.mmap[start..end].as_ptr() as *const CommandLock)
+                };
+                if state.pid != 0 {
+                    locks.push((i, *state));
+                }
+            }
+        }
+        locks
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Global SHM management (usable from Rust without pyo3)
+// ---------------------------------------------------------------------------
+
+pub fn init_global_shm(path: &str) -> std::io::Result<()> {
+    let interface = SHMInterface::open(path)?;
+    let mut global = GLOBAL_SHM.lock().unwrap();
+    *global = Some(interface);
+    Ok(())
+}
+
+/// Update router metrics in global SHM.
+///
+/// If global SHM is not initialized, this is a no-op (returns Ok).
+/// Callers should initialize SHM via `init_global_shm` before routing.
+pub fn update_router_metrics(lifecycle_inc: u64, thegent_inc: u64, changes_inc: u64, hysteresis_inc: u64) -> std::io::Result<()> {
+    let mut global = GLOBAL_SHM.lock().unwrap();
+    if let Some(ref mut shm) = *global {
+        shm.do_update_router_metrics(lifecycle_inc, thegent_inc, changes_inc, hysteresis_inc)
+    } else {
+        Ok(())
+    }
+}
+
+// ---------------------------------------------------------------------------
+// PyO3 Python extension module (only compiled with --features python)
+// ---------------------------------------------------------------------------
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl SHMInterface {
+    #[new]
+    #[pyo3(signature = (path))]
+    fn new(path: String) -> PyResult<Self> {
+        SHMInterface::open(path).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
+    }
+
+    fn update_provider(&mut self, name: String, request_count: u64, success_count: u64, latency_ms: u32) -> PyResult<()> {
+        self.do_update_provider(name, request_count, success_count, latency_ms)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
+    }
+
+    fn get_provider_metrics(&self, py: Python<'_>, name: String) -> PyResult<Option<PyObject>> {
+        let mut name_bytes = [0u8; 32];
+        let len = name.len().min(32);
+        name_bytes[..len].copy_from_slice(&name.as_bytes()[..len]);
+
+        for i in 0..MAX_PROVIDERS {
+            let start = PROVIDER_OFFSET + (i * PROVIDER_SLOT_SIZE);
+            let slot = &self.mmap[start..start + 32];
+            if *slot == name_bytes {
+                let end = start + std::mem::size_of::<ProviderState>();
+                let state: &ProviderState = unsafe { &*(self.mmap[start..end].as_ptr() as *const ProviderState) };
+
+                let dict = pyo3::types::PyDict::new(py);
+                dict.set_item("request_count", state.request_count)?;
+                dict.set_item("success_count", state.success_count)?;
+                dict.set_item("latency_ms", state.latency_p50_ms)?;
+                dict.set_item("success_rate", state.success_rate)?;
+                dict.set_item("last_updated", state.last_updated)?;
+                return Ok(Some(dict.into_any().unbind()));
+            }
+        }
+        Ok(None)
+    }
+
+    fn record_failure(&mut self, target: String, category: i32) -> PyResult<()> {
+        self.do_record_failure(target, category)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
+    }
+
+    fn award_xp(&mut self, amount: u64) -> PyResult<()> {
+        self.do_award_xp(amount)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
     }
 
     fn get_xp_state(&self, py: Python<'_>) -> PyResult<Option<PyObject>> {
@@ -248,37 +717,22 @@ impl SHMInterface {
     }
 
     fn set_health_score(&mut self, score: f64) -> PyResult<()> {
-        let bytes = score.to_le_bytes();
-        self.mmap[HEALTH_OFFSET..HEALTH_OFFSET+8].copy_from_slice(&bytes);
-        Ok(())
+        self.do_set_health_score(score)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
     }
 
     fn get_health_score(&self) -> PyResult<f64> {
-        let mut bytes = [0u8; 8];
-        bytes.copy_from_slice(&self.mmap[HEALTH_OFFSET..HEALTH_OFFSET+8]);
-        Ok(f64::from_le_bytes(bytes))
+        Ok(self.do_get_health_score())
     }
 
     fn record_resource_usage(&mut self, pid: u32, cpu_usage: f32, memory_kb: u64) -> PyResult<()> {
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
-        let state = ResourceMetrics { pid, cpu_usage, memory_kb, timestamp: now };
-        let start = RESOURCE_OFFSET;
-        let end = RESOURCE_OFFSET + std::mem::size_of::<ResourceMetrics>();
-        let bytes: &[u8] = unsafe { std::slice::from_raw_parts((&state as *const ResourceMetrics) as *const u8, std::mem::size_of::<ResourceMetrics>()) };
-        self.mmap[start..end].copy_from_slice(bytes);
-        Ok(())
+        self.do_record_resource_usage(pid, cpu_usage, memory_kb)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
     }
 
     fn update_router_metrics(&mut self, lifecycle_inc: u64, thegent_inc: u64, changes_inc: u64, hysteresis_inc: u64) -> PyResult<()> {
-        let start = ROUTER_METRICS_OFFSET;
-        let end = start + std::mem::size_of::<RouterMetricsState>();
-        let metrics: &mut RouterMetricsState = unsafe { &mut *(self.mmap[start..end].as_ptr() as *mut RouterMetricsState) };
-        metrics.total_decisions += lifecycle_inc + thegent_inc;
-        metrics.lifecycle_count += lifecycle_inc;
-        metrics.thegent_count += thegent_inc;
-        metrics.route_changes += changes_inc;
-        metrics.hysteresis_activations += hysteresis_inc;
-        Ok(())
+        self.do_update_router_metrics(lifecycle_inc, thegent_inc, changes_inc, hysteresis_inc)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
     }
 
     fn get_router_metrics(&self, py: Python<'_>) -> PyResult<PyObject> {
@@ -295,148 +749,554 @@ impl SHMInterface {
     }
 }
 
-impl SHMInterface {
-    fn get_xp_state_internal(&self) -> XPState {
-        let start = XP_OFFSET;
-        let end = start + std::mem::size_of::<XPState>();
-        let slot = &self.mmap[start..end];
-        let state: &XPState = unsafe { &*(slot.as_ptr() as *const XPState) };
-        if state.level == 0 { return XPState { total_xp: 0, level: 1 }; }
-        *state
-    }
-
-    fn save_xp_state(&mut self, state: XPState) -> PyResult<()> {
-        let start = XP_OFFSET;
-        let end = start + std::mem::size_of::<XPState>();
-        let bytes: &[u8] = unsafe { std::slice::from_raw_parts((&state as *const XPState) as *const u8, std::mem::size_of::<XPState>()) };
-        self.mmap[start..end].copy_from_slice(bytes);
-        Ok(())
-    }
-}
-
+#[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(signature = (path=None))]
-fn init_shm(path: Option<String>) -> PyResult<()> {
+fn py_init_shm(path: Option<String>) -> PyResult<()> {
     let path = path.unwrap_or_else(|| "state.shm".to_string());
-    let interface = SHMInterface::new(path)?;
-    let mut global = GLOBAL_SHM.lock().unwrap();
-    *global = Some(interface);
-    Ok(())
+    init_global_shm(&path).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
 }
 
+
+
+#[cfg(feature = "python")]
 #[pyfunction]
-fn update_provider(name: String, request_count: u64, success_count: u64, latency_ms: u32) -> PyResult<()> {
+fn py_update_provider(name: String, request_count: u64, success_count: u64, latency_ms: u32) -> PyResult<()> {
     let mut global = GLOBAL_SHM.lock().unwrap();
     if let Some(interface) = global.as_mut() {
-        interface.update_provider(name, request_count, success_count, latency_ms)
+        interface.do_update_provider(name, request_count, success_count, latency_ms)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
     } else {
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
     }
 }
 
+
+
+#[cfg(feature = "python")]
 #[pyfunction]
-fn get_provider_metrics(py: Python<'_>, name: String) -> PyResult<Option<PyObject>> {
+fn py_get_provider_metrics(py: Python<'_>, name: String) -> PyResult<Option<PyObject>> {
     let global = GLOBAL_SHM.lock().unwrap();
     if let Some(interface) = global.as_ref() {
-        interface.get_provider_metrics(py, name)
+        let mut name_bytes = [0u8; 32];
+        let len = name.len().min(32);
+        name_bytes[..len].copy_from_slice(&name.as_bytes()[..len]);
+        for i in 0..MAX_PROVIDERS {
+            let start = PROVIDER_OFFSET + (i * PROVIDER_SLOT_SIZE);
+            let slot = &interface.mmap[start..start + 32];
+            if *slot == name_bytes {
+                let end = start + std::mem::size_of::<ProviderState>();
+                let state: &ProviderState = unsafe { &*(interface.mmap[start..end].as_ptr() as *const ProviderState) };
+                let dict = pyo3::types::PyDict::new(py);
+                dict.set_item("request_count", state.request_count)?;
+                dict.set_item("success_count", state.success_count)?;
+                dict.set_item("latency_ms", state.latency_p50_ms)?;
+                dict.set_item("success_rate", state.success_rate)?;
+                dict.set_item("last_updated", state.last_updated)?;
+                return Ok(Some(dict.into_any().unbind()));
+            }
+        }
+        Ok(None)
     } else {
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
     }
 }
 
+
+
+#[cfg(feature = "python")]
 #[pyfunction]
-fn record_failure(target: String, category: i32) -> PyResult<()> {
+fn py_record_failure(target: String, category: i32) -> PyResult<()> {
     let mut global = GLOBAL_SHM.lock().unwrap();
     if let Some(interface) = global.as_mut() {
-        interface.record_failure(target, category)
+        interface.do_record_failure(target, category)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
     } else {
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
     }
 }
 
+
+
+#[cfg(feature = "python")]
 #[pyfunction]
-fn award_xp(amount: u64) -> PyResult<()> {
+fn py_award_xp(amount: u64) -> PyResult<()> {
     let mut global = GLOBAL_SHM.lock().unwrap();
     if let Some(interface) = global.as_mut() {
-        interface.award_xp(amount)
+        interface.do_award_xp(amount)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
     } else {
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
     }
 }
 
+
+
+#[cfg(feature = "python")]
 #[pyfunction]
-fn get_xp_state(py: Python<'_>) -> PyResult<Option<PyObject>> {
+fn py_get_xp_state(py: Python<'_>) -> PyResult<Option<PyObject>> {
     let global = GLOBAL_SHM.lock().unwrap();
     if let Some(interface) = global.as_ref() {
-        interface.get_xp_state(py)
+        let state = interface.get_xp_state_internal();
+        let dict = pyo3::types::PyDict::new(py);
+        dict.set_item("total_xp", state.total_xp)?;
+        dict.set_item("level", state.level)?;
+        Ok(Some(dict.into_any().unbind()))
     } else {
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
     }
 }
 
+
+
+#[cfg(feature = "python")]
 #[pyfunction]
-fn set_health_score(score: f64) -> PyResult<()> {
+fn py_set_health_score(score: f64) -> PyResult<()> {
     let mut global = GLOBAL_SHM.lock().unwrap();
     if let Some(interface) = global.as_mut() {
-        interface.set_health_score(score)
+        interface.do_set_health_score(score)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
     } else {
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
     }
 }
 
+
+
+#[cfg(feature = "python")]
 #[pyfunction]
-fn get_health_score() -> PyResult<f64> {
+fn py_get_health_score() -> PyResult<f64> {
     let global = GLOBAL_SHM.lock().unwrap();
     if let Some(interface) = global.as_ref() {
-        interface.get_health_score()
+        Ok(interface.do_get_health_score())
     } else {
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
     }
 }
 
+
+
+#[cfg(feature = "python")]
 #[pyfunction]
-fn record_resource_usage(pid: u32, cpu_usage: f32, memory_kb: u64) -> PyResult<()> {
+fn py_record_resource_usage(pid: u32, cpu_usage: f32, memory_kb: u64) -> PyResult<()> {
     let mut global = GLOBAL_SHM.lock().unwrap();
     if let Some(interface) = global.as_mut() {
-        interface.record_resource_usage(pid, cpu_usage, memory_kb)
+        interface.do_record_resource_usage(pid, cpu_usage, memory_kb)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
     } else {
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
     }
 }
 
+
+
+#[cfg(feature = "python")]
 #[pyfunction]
-fn update_router_metrics(lifecycle_inc: u64, thegent_inc: u64, changes_inc: u64, hysteresis_inc: u64) -> PyResult<()> {
-    let mut global = GLOBAL_SHM.lock().unwrap();
-    if let Some(interface) = global.as_mut() {
-        interface.update_router_metrics(lifecycle_inc, thegent_inc, changes_inc, hysteresis_inc)
-    } else {
-        Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
-    }
+fn py_update_router_metrics(lifecycle_inc: u64, thegent_inc: u64, changes_inc: u64, hysteresis_inc: u64) -> PyResult<()> {
+    update_router_metrics(lifecycle_inc, thegent_inc, changes_inc, hysteresis_inc)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
 }
 
+
+
+#[cfg(feature = "python")]
 #[pyfunction]
-fn get_router_metrics(py: Python<'_>) -> PyResult<PyObject> {
+fn py_get_router_metrics(py: Python<'_>) -> PyResult<PyObject> {
     let global = GLOBAL_SHM.lock().unwrap();
     if let Some(interface) = global.as_ref() {
-        interface.get_router_metrics(py)
+        let start = ROUTER_METRICS_OFFSET;
+        let end = start + std::mem::size_of::<RouterMetricsState>();
+        let metrics: &RouterMetricsState = unsafe { &*(interface.mmap[start..end].as_ptr() as *const RouterMetricsState) };
+        let dict = pyo3::types::PyDict::new(py);
+        dict.set_item("total_decisions", metrics.total_decisions)?;
+        dict.set_item("lifecycle_count", metrics.lifecycle_count)?;
+        dict.set_item("thegent_count", metrics.thegent_count)?;
+        dict.set_item("route_changes", metrics.route_changes)?;
+        dict.set_item("hysteresis_activations", metrics.hysteresis_activations)?;
+        Ok(dict.into_any().unbind())
     } else {
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>("SHM not initialized"))
     }
 }
 
+
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn thegent_shm(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SHMInterface>()?;
-    m.add_function(wrap_pyfunction!(init_shm, m)?)?;
-    m.add_function(wrap_pyfunction!(update_provider, m)?)?;
-    m.add_function(wrap_pyfunction!(get_provider_metrics, m)?)?;
-    m.add_function(wrap_pyfunction!(record_failure, m)?)?;
-    m.add_function(wrap_pyfunction!(award_xp, m)?)?;
-    m.add_function(wrap_pyfunction!(get_xp_state, m)?)?;
-    m.add_function(wrap_pyfunction!(set_health_score, m)?)?;
-    m.add_function(wrap_pyfunction!(get_health_score, m)?)?;
-    m.add_function(wrap_pyfunction!(record_resource_usage, m)?)?;
-    m.add_function(wrap_pyfunction!(update_router_metrics, m)?)?;
-    m.add_function(wrap_pyfunction!(get_router_metrics, m)?)?;
+    m.add_function(wrap_pyfunction!(py_init_shm, m)?)?;
+    m.add_function(wrap_pyfunction!(py_update_provider, m)?)?;
+    m.add_function(wrap_pyfunction!(py_get_provider_metrics, m)?)?;
+    m.add_function(wrap_pyfunction!(py_record_failure, m)?)?;
+    m.add_function(wrap_pyfunction!(py_award_xp, m)?)?;
+    m.add_function(wrap_pyfunction!(py_get_xp_state, m)?)?;
+    m.add_function(wrap_pyfunction!(py_set_health_score, m)?)?;
+    m.add_function(wrap_pyfunction!(py_get_health_score, m)?)?;
+    m.add_function(wrap_pyfunction!(py_record_resource_usage, m)?)?;
+    m.add_function(wrap_pyfunction!(py_update_router_metrics, m)?)?;
+    m.add_function(wrap_pyfunction!(py_get_router_metrics, m)?)?;
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
+
+    /// Helper to create a temporary SHM file for testing
+    fn create_test_shm() -> (SHMInterface, NamedTempFile) {
+        let temp_file = NamedTempFile::new().expect("create temp file");
+        let shm = SHMInterface::open(temp_file.path()).expect("open shm");
+        (shm, temp_file)
+    }
+
+    // ========================================================================
+    // Race Track Tests
+    // ========================================================================
+
+    #[test]
+    fn test_record_race_result() {
+        let (mut shm, _temp) = create_test_shm();
+
+        let result = shm.do_record_race_result(
+            "race-001",
+            "agent-alpha",
+            "run-12345",
+            "completed",
+            1500,
+            0.95,
+        );
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 0); // First slot
+    }
+
+    #[test]
+    fn test_get_race_result() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_record_race_result(
+            "race-001",
+            "agent-alpha",
+            "run-12345",
+            "completed",
+            1500,
+            0.95,
+        ).unwrap();
+
+        let result = shm.do_get_race_result(0);
+        assert!(result.is_some());
+
+        let race = result.unwrap();
+        assert!(race.race_id.starts_with(b"race-001"));
+        assert!(race.agent_id.starts_with(b"agent-alpha"));
+        assert_eq!(race.duration_ms, 1500);
+        assert!((race.score - 0.95).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_get_race_result_empty_slot() {
+        let (shm, _temp) = create_test_shm();
+
+        let result = shm.do_get_race_result(0);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_find_race_result() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_record_race_result(
+            "race-find-test",
+            "agent-beta",
+            "run-99999",
+            "running",
+            500,
+            0.0,
+        ).unwrap();
+
+        let found = shm.do_find_race_result("race-find-test");
+        assert!(found.is_some());
+
+        let (idx, race) = found.unwrap();
+        assert_eq!(idx, 0);
+        assert!(race.run_id.starts_with(b"run-99999"));
+    }
+
+    #[test]
+    fn test_find_race_result_not_found() {
+        let (shm, _temp) = create_test_shm();
+
+        let found = shm.do_find_race_result("nonexistent");
+        assert!(found.is_none());
+    }
+
+    #[test]
+    fn test_list_race_results() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Record multiple races
+        shm.do_record_race_result("race-a", "agent-1", "run-1", "completed", 100, 0.9).unwrap();
+        shm.do_record_race_result("race-b", "agent-2", "run-2", "failed", 200, 0.0).unwrap();
+        shm.do_record_race_result("race-c", "agent-3", "run-3", "completed", 300, 0.85).unwrap();
+
+        let results = shm.do_list_race_results();
+        assert_eq!(results.len(), 3);
+    }
+
+    #[test]
+    fn test_list_race_results_empty() {
+        let (shm, _temp) = create_test_shm();
+
+        let results = shm.do_list_race_results();
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_clear_race_result() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_record_race_result("race-to-clear", "agent-x", "run-x", "done", 100, 1.0).unwrap();
+
+        let clear_result = shm.do_clear_race_result(0);
+        assert!(clear_result.is_ok());
+
+        let result = shm.do_get_race_result(0);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_clear_race_result_invalid_index() {
+        let (mut shm, _temp) = create_test_shm();
+
+        let result = shm.do_clear_race_result(RACE_COUNT + 10);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_update_existing_race_result() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Record initial result
+        shm.do_record_race_result("race-update", "agent-1", "run-1", "running", 0, 0.0).unwrap();
+
+        // Update same race
+        shm.do_record_race_result("race-update", "agent-1", "run-1", "completed", 1000, 0.99).unwrap();
+
+        let results = shm.do_list_race_results();
+        assert_eq!(results.len(), 1); // Should still be just one result
+
+        let race = shm.do_get_race_result(0).unwrap();
+        assert_eq!(race.duration_ms, 1000);
+    }
+
+    // ========================================================================
+    // Command Cache Tests
+    // ========================================================================
+
+    #[test]
+    fn test_acquire_command_lock() {
+        let (mut shm, _temp) = create_test_shm();
+
+        let result = shm.do_acquire_command_lock("cmd-hash-123", 1001);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 0); // First slot
+    }
+
+    #[test]
+    fn test_get_command_lock() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_acquire_command_lock("cmd-test-lock", 2001).unwrap();
+
+        let lock = shm.do_get_command_lock("cmd-test-lock");
+        assert!(lock.is_some());
+
+        let lock = lock.unwrap();
+        assert_eq!(lock.pid, 2001);
+        assert!(lock.cmd_hash.starts_with(b"cmd-test-lock"));
+    }
+
+    #[test]
+    fn test_get_command_lock_not_found() {
+        let (shm, _temp) = create_test_shm();
+
+        let lock = shm.do_get_command_lock("nonexistent");
+        assert!(lock.is_none());
+    }
+
+    #[test]
+    fn test_release_command_lock() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_acquire_command_lock("cmd-to-release", 3001).unwrap();
+
+        let release_result = shm.do_release_command_lock("cmd-to-release", 3001);
+        assert!(release_result.is_ok());
+
+        let lock = shm.do_get_command_lock("cmd-to-release");
+        assert!(lock.is_none());
+    }
+
+    #[test]
+    fn test_release_command_lock_wrong_pid() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_acquire_command_lock("cmd-wrong-pid", 4001).unwrap();
+
+        // Try to release with different PID
+        let result = shm.do_release_command_lock("cmd-wrong-pid", 9999);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::PermissionDenied);
+
+        // Lock should still exist
+        let lock = shm.do_get_command_lock("cmd-wrong-pid");
+        assert!(lock.is_some());
+    }
+
+    #[test]
+    fn test_release_command_lock_not_found() {
+        let (mut shm, _temp) = create_test_shm();
+
+        let result = shm.do_release_command_lock("nonexistent", 1001);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    fn test_update_command_lock() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_acquire_command_lock("cmd-to-update", 5001).unwrap();
+
+        let update_result = shm.do_update_command_lock("cmd-to-update", 5001, "completed", "/tmp/output.txt");
+        assert!(update_result.is_ok());
+
+        let lock = shm.do_get_command_lock("cmd-to-update").unwrap();
+        assert!(lock.status.starts_with(b"completed"));
+        assert!(lock.output_path.starts_with(b"/tmp/output.txt"));
+    }
+
+    #[test]
+    fn test_update_command_lock_wrong_pid() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_acquire_command_lock("cmd-update-wrong", 6001).unwrap();
+
+        let result = shm.do_update_command_lock("cmd-update-wrong", 9999, "failed", "/dev/null");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::PermissionDenied);
+    }
+
+    #[test]
+    fn test_list_command_locks() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_acquire_command_lock("lock-a", 101).unwrap();
+        shm.do_acquire_command_lock("lock-b", 102).unwrap();
+        shm.do_acquire_command_lock("lock-c", 103).unwrap();
+
+        let locks = shm.do_list_command_locks();
+        assert_eq!(locks.len(), 3);
+    }
+
+    #[test]
+    fn test_list_command_locks_empty() {
+        let (shm, _temp) = create_test_shm();
+
+        let locks = shm.do_list_command_locks();
+        assert!(locks.is_empty());
+    }
+
+    #[test]
+    fn test_acquire_already_locked_command() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Acquire lock with PID 7001
+        shm.do_acquire_command_lock("already-locked", 7001).unwrap();
+
+        // Try to acquire same command with different PID
+        let result = shm.do_acquire_command_lock("already-locked", 7002);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::ResourceBusy);
+    }
+
+    #[test]
+    fn test_reacquire_same_pid() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Acquire lock
+        shm.do_acquire_command_lock("reacquire-test", 8001).unwrap();
+
+        // Same PID should be able to re-acquire
+        let result = shm.do_acquire_command_lock("reacquire-test", 8001);
+        assert!(result.is_ok());
+    }
+
+    // ========================================================================
+    // Existing SHM functionality tests
+    // ========================================================================
+
+    #[test]
+    fn test_xp_operations() {
+        let (mut shm, _temp) = create_test_shm();
+
+        let initial = shm.do_get_xp_state();
+        assert_eq!(initial.level, 1); // Default level
+
+        shm.do_award_xp(500).unwrap();
+        let after_award = shm.do_get_xp_state();
+        assert_eq!(after_award.total_xp, 500);
+        assert_eq!(after_award.level, 1);
+
+        shm.do_award_xp(500).unwrap();
+        let level_up = shm.do_get_xp_state();
+        assert_eq!(level_up.total_xp, 1000);
+        assert_eq!(level_up.level, 2);
+    }
+
+    #[test]
+    fn test_health_score() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_set_health_score(0.85).unwrap();
+        let score = shm.do_get_health_score();
+        assert!((score - 0.85).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_provider_metrics() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_update_provider("openai".to_string(), 100, 95, 150).unwrap();
+
+        let metrics = shm.do_get_provider_metrics("openai");
+        assert!(metrics.is_some());
+
+        let provider = metrics.unwrap();
+        assert_eq!(provider.request_count, 100);
+        assert_eq!(provider.success_count, 95);
+        assert_eq!(provider.failure_count, 5);
+        assert_eq!(provider.latency_p50_ms, 150);
+        assert!((provider.success_rate - 0.95).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_router_metrics() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_update_router_metrics(5, 10, 2, 1).unwrap();
+
+        let metrics = shm.do_get_router_metrics();
+        assert_eq!(metrics.total_decisions, 15);
+        assert_eq!(metrics.lifecycle_count, 5);
+        assert_eq!(metrics.thegent_count, 10);
+        assert_eq!(metrics.route_changes, 2);
+        assert_eq!(metrics.hysteresis_activations, 1);
+    }
 }

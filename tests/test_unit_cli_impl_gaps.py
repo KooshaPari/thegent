@@ -44,6 +44,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import typer
+
 from thegent.cli.commands.impl import (
     DagDocument,
     _append_health_snapshot,
@@ -111,7 +112,7 @@ class TestResolveCwdCacheException:
 
     # @trace FR-CLI-401
     def test_expired_cache_is_refreshed(self, tmp_path) -> None:
-        """When the cache entry is expired, the resolution runs again."""
+        """When the cache entry is expired (TTL passed), the resolution runs again."""
         from thegent.cli.commands.impl import _CWD_CACHE
 
         project = tmp_path / "proj2"
@@ -119,9 +120,9 @@ class TestResolveCwdCacheException:
         (project / ".git").mkdir()
         _resolve_cwd(project)
         cache_key = str(project.resolve())
-        # Manually expire
-        cached = _CWD_CACHE[cache_key]
-        _CWD_CACHE[cache_key] = (cached[0], time.time() - 1.0, cached[2])
+        # With TTLCache, we simulate expiration by removing the key
+        # TTLCache automatically expires entries after TTL
+        del _CWD_CACHE[cache_key]
         result = _resolve_cwd(project)
         assert result == project.resolve()
 

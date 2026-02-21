@@ -9,6 +9,7 @@ import logging
 import re
 import subprocess
 from collections import defaultdict
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timezone
 from enum import Enum
@@ -460,7 +461,7 @@ class AuditFramework:
         ]
 
         for py_file in self.project_path.rglob("*.py"):
-            try:
+            with suppress(Exception):
                 content = py_file.read_text()
                 for pattern, title, severity in perf_patterns:
                     if re.search(pattern, content):
@@ -475,8 +476,6 @@ class AuditFramework:
                                 recommendation="Consider optimization",
                             )
                         )
-            except Exception:
-                pass
 
         result.findings = findings
         result.summary = {

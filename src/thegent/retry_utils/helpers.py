@@ -1,38 +1,34 @@
-"""Retry helper utilities."""
+"""Retry helper utilities — thin wrapper around tenacity."""
+
+from __future__ import annotations
 
 import logging
-import time
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
 
 class RetryHelpers:
-    """Retry helper utilities."""
+    """Retry helper utilities backed by tenacity."""
 
     @staticmethod
     def retry_with_backoff(
-        func: Callable,
+        func: Callable[[], Any],
         max_attempts: int = 3,
         backoff_factor: float = 2.0,
     ) -> Any:
-        """Retry function with exponential backoff.
+        """Retry callable with exponential backoff via tenacity.
 
-        Args:
-            func: Function to retry
-            max_attempts: Maximum attempts
-            backoff_factor: Backoff factor
-
-        Returns:
-            Function result
+        Raises the original exception after exhausting all attempts.
         """
-        for attempt in range(max_attempts):
-            try:  # noqa: PERF203 -- intentional retry loop with backoff
-                return func()
-            except Exception as e:
-                if attempt == max_attempts - 1:
-                    raise
-                wait_time = backoff_factor**attempt
-                logger.warning(f"Attempt {attempt + 1} failed, retrying in {wait_time}s")
-                time.sleep(wait_time)
+        decorated = retry(
+            stop=stop_after_attempt(max_attempts),
+            wait=wait_exponential(multiplier=backoff_factor, min=backoff_factor),
+            reraise=True,
+        )(func)
+        return decorated()

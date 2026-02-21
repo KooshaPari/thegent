@@ -1,0 +1,13 @@
+# muxless API Reference
+
+> **Source**: `src/thegent/muxless/__init__.py`
+
+Muxless agent session persistence via zmx.
+
+Provides ZmxSessionManager and ZmxSessionConfig for managing agent sessions
+without requiring tmux or screen multiplexers.
+
+# @trace FR-SES-001
+
+---
+

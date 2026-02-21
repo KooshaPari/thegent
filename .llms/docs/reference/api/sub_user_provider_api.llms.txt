@@ -1,0 +1,120 @@
+# sub_user_provider_api
+
+Source: docs/reference/api/sub_user_provider_api.md
+
+---
+
+# sub_user_provider API Reference
+
+> **Source**: `src/thegent/isolation/sub_user_provider.py`
+
+Sub-user isolation provider implementation.
+
+---
+
+## SubUserIsolationProvider
+
+Optimized isolation provider using persistent UID pools,
+
+VFS-backed home directories, and resource guardrails.
+
+Supports L1/L2 nesting via OSUserManager.
+
+**Inherits from**: `IsolationProvider`
+
+### Methods
+
+#### SubUserIsolationProvider.__init__
+
+```
+__init__(self: Any, base_home_dir: str, base_uid: int, uid_pool_size: int, state_dir: Any, skel_dir: Any, enable_l1_nesting: bool)
+```
+
+Initialize SubUserIsolationProvider.
+
+**Parameters**:
+
+- `base_home_dir`: Base directory for tenant home directories
+- `base_uid`: Starting UID for tenant allocation
+- `uid_pool_size`: Maximum number of tenants (pool size)
+- `state_dir`: Directory for persistence (defaults to base_home_dir/.state)
+- `skel_dir`: Skeleton directory for home dir templates
+- `enable_l1_nesting`: Whether to use real OS users for L1 identity
+
+---
+
+#### SubUserIsolationProvider.allocate_tenant
+
+```
+allocate_tenant(self: Any, tenant_id: str, agent_id: Any, role: Any)
+```
+
+Allocate resources for a tenant using persistent UID pool and VFS.
+
+Supports optional L1 OS User creation.
+
+---
+
+#### SubUserIsolationProvider.cleanup_tenant
+
+```
+cleanup_tenant(self: Any, context: TenantContext)
+```
+
+Clean up resources allocated for a tenant.
+
+---
+
+#### SubUserIsolationProvider.execute_in_context
+
+```
+execute_in_context(self: Any, context: TenantContext, command: list, timeout_sec: int, limits: Any, share: bool)
+```
+
+Execute a command in the tenant's isolated context with resource guardrails.
+
+If 'share' is True, uses CommandSharer to debounce and attach to existing runs.
+
+---
+
+---
+
+## allocate_tenant
+
+```
+allocate_tenant(self: Any, tenant_id: str, agent_id: Any, role: Any)
+```
+
+Allocate resources for a tenant using persistent UID pool and VFS.
+
+Supports optional L1 OS User creation.
+
+---
+
+## cleanup_tenant
+
+```
+cleanup_tenant(self: Any, context: TenantContext)
+```
+
+Clean up resources allocated for a tenant.
+
+---
+
+## execute_in_context
+
+```
+execute_in_context(self: Any, context: TenantContext, command: list, timeout_sec: int, limits: Any, share: bool)
+```
+
+Execute a command in the tenant's isolated context with resource guardrails.
+
+If 'share' is True, uses CommandSharer to debounce and attach to existing runs.
+
+---
+
+## preexec_fn
+
+Apply POSIX resource limits before execution.
+
+---

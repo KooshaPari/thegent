@@ -5,7 +5,7 @@ WP-5001: Multi-provider racing, adaptive timeouts, cost-quality tradeoffs.
 
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
@@ -27,7 +27,7 @@ class SpeculativeConfig:
     """Configuration for speculative execution."""
 
     strategy: SpeculativeStrategy = SpeculativeStrategy.RACE_FIRST
-    providers: list[str] = None  # List of providers to race
+    providers: list[str] = field(default_factory=list)  # List of providers to race
     timeout_ms: int = 5000
     quality_threshold: float = 0.8
     cost_budget_usd: float = 0.01

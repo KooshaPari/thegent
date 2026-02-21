@@ -3,9 +3,9 @@
 Handles PTY allocation, shell spawning, and input/output management for individual terminal panes.
 """
 
-import os
 import select
 import subprocess
+from pathlib import Path
 
 from textual.widgets import Static
 
@@ -38,7 +38,7 @@ class TerminalPane(Static):
         """
         super().__init__()
         self.pane_id = pane_id
-        self.working_dir = os.path.expanduser(working_dir)
+        self.working_dir = str(Path(working_dir).expanduser())
         self.process: subprocess.Popen | None = None
         self.output_buffer: str = ""
         self.is_active = True
@@ -61,7 +61,7 @@ class TerminalPane(Static):
 
         try:
             # Ensure shell exists
-            if not os.path.exists(shell):
+            if not Path(shell).exists():
                 shell = "/bin/sh"
 
             # For Textual, we'll use a simple subprocess approach

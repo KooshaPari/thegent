@@ -289,6 +289,9 @@ def _validate_provider() -> None:
         return
 
     name = provider.get("name")
+    if not name:
+        console.print("[red]Invalid provider selection.[/red]")
+        return
     console.print(f"\n[dim]Validating {name}...[/dim]")
     success, msg, details = validate_provider(name)
     if success:

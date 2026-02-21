@@ -1,0 +1,43 @@
+# checkpoint_api
+
+Source: docs/reference/api/checkpoint_api.md
+
+---
+
+# checkpoint API Reference
+
+> **Source**: `src/thegent/orchestration/state/checkpoint.py`
+
+Checkpoint/rollback service ops (WP-2001, FR-006).
+
+---
+
+## create
+
+```
+create(session_dir: Path, reason: str, dag_content: str, owner: str)
+```
+
+Create a checkpoint.
+
+---
+
+## get
+
+```
+get(session_dir: Path, checkpoint_id: str)
+```
+
+Retrieve a checkpoint by ID.
+
+---
+
+## list_checkpoints
+
+```
+list_checkpoints(session_dir: Path, limit: int)
+```
+
+List recent checkpoints.
+
+---

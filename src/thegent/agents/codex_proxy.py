@@ -1,25 +1,79 @@
-"""Codex via CLIProxyAPIPlus - claude, codex, gemini, copilot, antigravity through our proxy. Native gemini/copilot swapped to Codex (proxy API)."""
+"""Codex via CLIProxyAPIPlus - multi-agent support.
 
+Runs claude, codex, gemini, copilot, antigravity through CLIProxyAPIPlus.
+Native gemini/copilot swapped to Codex (proxy API).
+"""
+
+import json
 import logging
 import os
 import shutil
 import subprocess
+import tempfile
 import threading
 import time
 from collections.abc import Callable
+from contextlib import suppress
+from dataclasses import dataclass
 from pathlib import Path
+from uuid import uuid4
 
 from thegent.agents.base import AgentRunner, RunResult
+from thegent.agents.context_compactor import ContextCompactionResult, ContextCompactor
 from thegent.agents.cliproxy_manager import ensure_proxy_running
 from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
 from thegent.config import ThegentSettings
 from thegent.discovery import _is_triggered_by_agent_process
-from thegent.infra.power import wrap_with_caffeinate
+from thegent.governance.post_agent_run_hook import _dispatch_post_agent_run_hook
 from thegent.routing.models import TaskMetadata
 from thegent.routing.provider_types import ExecutionPath, get_execution_path
 from thegent.utils import strip_ansi
 
 logger = logging.getLogger(__name__)
+_MALLOC_STACK_NOISE = "MallocStackLogging: can't turn off malloc stack logging because it was not enabled."
+_LITELLM_CONTEXT_WINDOW_MAX = 50_000
+
+# Instance tracking for concurrent execution monitoring
+_instance_counter = 0
+_instance_counter_lock = threading.Lock()
+
+
+def _normalize_context_usage_ratio(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+@dataclass
+class CodexResult:
+    """Structured result from Codex execution with token usage and model info.
+
+    # @trace FR-AGT-001
+    """
+
+    text: str
+    exit_code: int
+    tokens_in: int = 0
+    tokens_out: int = 0
+    model: str = ""
+    duration_ms: int = 0
+    instance_id: str = ""
+    error_type: str | None = None
+
+
+class CodexInstanceError(Exception):
+    """Raised when concurrent instance limit exceeded."""
+
+
+class CodexAuthError(Exception):
+    """Raised on authentication failures."""
+
+
+class CodexSandboxError(Exception):
+    """Raised on sandbox/permission errors."""
+
+
+class CodexModelError(Exception):
+    """Raised on model-specific errors."""
+
 
 # Agent -> default model. All proxy agents use CLIProxyAPIPlus (merged into one proxy).
 _PROXY_MODEL: dict[str, str] = {
@@ -39,6 +93,119 @@ _PROXY_MODEL: dict[str, str] = {
 }
 
 
+def _get_next_instance_id() -> str:
+    """Get unique instance ID and increment counter.
+
+    # @trace FR-AGT-002
+    """
+    global _instance_counter
+    with _instance_counter_lock:
+        _instance_counter += 1
+        return f"codex-{uuid4().hex[:8]}"
+
+
+def _check_and_track_instance(max_concurrent: int) -> None:
+    """Verify concurrent instance count doesn't exceed max.
+
+    Raises CodexInstanceError if limit exceeded.
+
+    # @trace FR-AGT-002
+    """
+    with _instance_counter_lock:
+        if _instance_counter > max_concurrent:
+            raise CodexInstanceError(
+                f"Concurrent instance limit ({max_concurrent}) exceeded. Current: {_instance_counter}"
+            )
+
+
+def _create_isolated_home(instance_id: str, base_dir: Path | None = None) -> Path:
+    """Create isolated CODEX_HOME directory for instance.
+
+    Args:
+        instance_id: Unique instance identifier
+        base_dir: Optional base directory; defaults to ~/.codex/agents/
+
+    Returns:
+        Path to isolated home directory
+
+    # @trace FR-AGT-001
+    """
+    if base_dir is None:
+        base_dir = Path.home() / ".codex" / "agents"
+    isolated_home = base_dir / instance_id
+    isolated_home.mkdir(parents=True, exist_ok=True)
+    return isolated_home
+
+
+def _parse_jsonl_output(output: str) -> tuple[str, int, int, str]:
+    """Parse JSONL output from Codex to extract tokens and metadata.
+
+    Returns tuple: (text, tokens_in, tokens_out, model)
+
+    # @trace FR-AGT-003
+    """
+    tokens_in = 0
+    tokens_out = 0
+    model = ""
+    text_parts = []
+
+    for line in output.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+            # Extract token usage if present
+            if "usage" in obj:
+                usage = obj["usage"]
+                tokens_in = usage.get("prompt_tokens", 0)
+                tokens_out = usage.get("completion_tokens", 0)
+            # Extract model if present
+            if "model" in obj:
+                model = obj["model"]
+            # Extract text content if present
+            if obj.get("choices"):
+                choice = obj["choices"][0]
+                if "text" in choice:
+                    text_parts.append(choice["text"])
+                elif "delta" in choice and "content" in choice["delta"]:
+                    text_parts.append(choice["delta"]["content"])
+                elif "message" in choice and "content" in choice["message"]:
+                    text_parts.append(choice["message"]["content"])
+        except json.JSONDecodeError:
+            # Non-JSON lines are appended as text
+            if line:
+                text_parts.append(line)
+
+    return "".join(text_parts), tokens_in, tokens_out, model
+
+
+def _write_config_override(config_overrides: dict[str, str], temp_dir: Path) -> Path:
+    """Write temporary config.toml with overrides.
+
+    Args:
+        config_overrides: Config key-value pairs
+        temp_dir: Temporary directory for config file
+
+    Returns:
+        Path to written config file
+
+    # @trace FR-AGT-004
+    """
+    config_path = temp_dir / "config.toml"
+    lines = []
+    for key, value in config_overrides.items():
+        # Basic TOML formatting; quote string values
+        if isinstance(value, bool):
+            lines.append(f"{key} = {'true' if value else 'false'}")
+        elif isinstance(value, (int, float)):
+            lines.append(f"{key} = {value}")
+        else:
+            lines.append(f'{key} = "{value}"')
+    config_path.write_text("\n".join(lines))
+    return config_path
+
+
 def _resolve_codex() -> str:
     """Resolve codex CLI path."""
     found = shutil.which("codex")
@@ -48,6 +215,68 @@ def _resolve_codex() -> str:
     if local.exists():
         return str(local)
     return "codex"
+
+
+def _isolate_codex_state(agent_index: int, shared_auth: Path | None = None) -> Path:
+    """Prepare isolated Codex state directory for multi-agent use.
+
+    Each agent gets its own ~/.codex home to avoid SQLite contention.
+    Auth token is symlinked from shared location to reduce duplication.
+
+    Args:
+        agent_index: Unique agent identifier (0-9 for pool of 10)
+        shared_auth: Path to shared auth file (e.g., ~/.codex/auth)
+
+    Returns:
+        Path to isolated Codex home directory
+
+    # @trace FR-AGT-005
+    """
+    instance_home = Path(tempfile.gettempdir()) / f"codex-agent-{agent_index}"
+    instance_home.mkdir(parents=True, exist_ok=True)
+
+    codex_dir = instance_home / ".codex"
+    codex_dir.mkdir(parents=True, exist_ok=True)
+
+    # Link auth if provided (read-only, shared token)
+    if shared_auth and shared_auth.exists():
+        auth_link = codex_dir / "auth"
+        if not auth_link.exists():
+            with suppress(OSError, FileExistsError):
+                auth_link.symlink_to(shared_auth)
+
+    return instance_home
+
+
+def _build_config_flags(config: dict[str, str | int | bool] | None) -> list[str]:
+    """Build -c flags for Codex config injection.
+
+    Args:
+        config: Dict of config key=value pairs
+
+    Returns:
+        List of ['-c', 'key=value', '-c', 'key=value', ...] flags
+
+    # @trace FR-AGT-004
+    """
+    flags = []
+    if not config:
+        return flags
+
+    for key, value in config.items():
+        if isinstance(value, bool):
+            val_str = "true" if value else "false"
+        elif isinstance(value, str):
+            val_str = value
+        else:
+            val_str = str(value)
+        flags.extend(["-c", f"{key}={val_str}"])
+
+    return flags
+
+
+def _is_ignorable_stderr_line(line: str) -> bool:
+    return _MALLOC_STACK_NOISE in line
 
 
 def _run_with_activity_monitoring(
@@ -60,7 +289,11 @@ def _run_with_activity_monitoring(
     on_stdout: Callable[[str], None] | None,
     on_stderr: Callable[[str], None] | None,
 ) -> RunResult:
-    """Run codex with activity-based hang detection. Kills only when no stdout/stderr for max_idle_seconds (hung), or when max_wall_time exceeded (if > 0)."""
+    """Run codex with activity-based hang detection.
+
+    Kills only when no output for max_idle_seconds (hung) or max_wall_time
+    exceeded (if > 0).
+    """
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -84,16 +317,18 @@ def _run_with_activity_monitoring(
         with lock:
             last_activity["t"] = time.monotonic()
 
-    def _drain(stream, collector: list[str], cb: Callable[[str], None] | None) -> None:
+    def _drain(stream, collector: list[str], cb: Callable[[str], None] | None, filter_noise: bool) -> None:
         for line in stream:
             clean = strip_ansi(line)
+            if filter_noise and _is_ignorable_stderr_line(clean):
+                continue
             collector.append(clean)
             _on_chunk(clean)
             if cb:
                 cb(clean.rstrip("\n"))
 
-    t_out = threading.Thread(target=_drain, args=(proc.stdout, out_lines, on_stdout), daemon=True)
-    t_err = threading.Thread(target=_drain, args=(proc.stderr, err_lines, on_stderr), daemon=True)
+    t_out = threading.Thread(target=_drain, args=(proc.stdout, out_lines, on_stdout, False), daemon=True)
+    t_err = threading.Thread(target=_drain, args=(proc.stderr, err_lines, on_stderr, True), daemon=True)
     t_out.start()
     t_err.start()
 
@@ -174,7 +409,15 @@ def _run_with_retry(
 
 
 class CodexProxyRunner(AgentRunner):
-    """Runs claude, codex, gemini, copilot, antigravity via Codex CLI pointing at our CLIProxyAPIPlus. gemini/copilot route via proxy (no native CLI)."""
+    """Runs agents via Codex CLI pointing at CLIProxyAPIPlus.
+
+    Supports multi-agent on-device workflows with:
+    - Instance isolation via CODEX_HOME (isolated SQLite state)
+    - Resource-aware spawning with max_concurrent limits
+    - Structured JSONL output parsing (tokens, model, cost)
+    - Config injection via temporary config.toml files
+    - Typed error handling (AuthError, SandboxError, etc.)
+    """
 
     def __init__(
         self,
@@ -182,6 +425,11 @@ class CodexProxyRunner(AgentRunner):
         settings: ThegentSettings | None = None,
         model: str = "",
         use_litellm_router: bool | None = None,
+        codex_home: Path | None = None,
+        memory_limit_mb: int = 512,
+        max_concurrent_instances: int = 8,
+        config_overrides: dict[str, str] | None = None,
+        keep_isolated_home: bool = False,
     ) -> None:
         if agent_name not in _PROXY_MODEL:
             raise ValueError(f"Unknown proxy agent: {agent_name}")
@@ -191,82 +439,85 @@ class CodexProxyRunner(AgentRunner):
         self._use_litellm_router = (
             use_litellm_router if use_litellm_router is not None else self._settings.use_litellm_router
         )
+        self.codex_home = codex_home
+        self.memory_limit_mb = memory_limit_mb
+        self.max_concurrent_instances = max_concurrent_instances
+        self.config_overrides = config_overrides or {}
+        self.keep_isolated_home = keep_isolated_home
+        self.instance_id = _get_next_instance_id()
 
-    def run(
+    def run_lightweight(
         self,
         prompt: str,
         cwd: Path | None,
-        mode: str,
-        timeout: int,
+        timeout: int = 600,
         *,
+        agent_index: int = 0,
         use_stream: bool = True,
         live_output: bool = False,
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
         agent_model: str | None = None,
-        enable_search: bool = True,
-        run_id: str | None = None,
+        config: dict[str, str | int | bool] | None = None,
         env: dict[str, str] | None = None,
     ) -> RunResult:
-        model = agent_model or self._model
+        """Run Codex in lightweight mode optimized for multi-agent orchestration.
 
-        # Route via LiteLLM Router if enabled and not zen
-        if self._use_litellm_router and self.agent_name != "zen":
-            return self._run_via_litellm_router(
-                prompt, cwd, mode, timeout, model, use_stream, live_output, on_stdout, on_stderr, env=env
-            )
+        Automatically isolates state, uses workspace-write sandbox, and enables JSON streaming.
+        Suitable for running 5-10 concurrent instances on a single machine.
+
+        Args:
+            prompt: User task/prompt
+            cwd: Working directory
+            timeout: Timeout in seconds (default 10 min for lightweight tasks)
+            agent_index: Unique agent ID (0-9 for pool of 10) for state isolation
+            use_stream: Whether to use JSON streaming (default True)
+            live_output: Callback-based live output (default False)
+            on_stdout: Callback for stdout lines
+            on_stderr: Callback for stderr lines
+            agent_model: Override default model
+            config: Additional Codex config overrides (dict of key=value)
+            env: Additional environment variables
+
+        Returns:
+            RunResult with exit code, stdout, stderr, timed_out flag
+
+        # @trace FR-AGT-005
+        """
+        # Isolate state directory
+        isolated_home = _isolate_codex_state(agent_index)
 
         full_env = os.environ.copy()
         if env:
             full_env.update(env)
+        full_env["HOME"] = str(isolated_home)
 
-        if self.agent_name == "zen":
-            base_url = (self._settings.zen_base_url or "https://api.opencode.ai").rstrip("/")
-            api_key = (
-                self._settings.zen_api_key or os.environ.get("OPENCODE_API_KEY") or os.environ.get("ZEN_API_KEY") or ""
-            ).strip()
-            if not api_key:
-                return RunResult(
-                    exit_code=1,
-                    stdout="",
-                    stderr=(
-                        "Zen API key missing. Set THGENT_ZEN_API_KEY (or OPENCODE_API_KEY / ZEN_API_KEY) "
-                        "to use provider=zen."
-                    ),
-                    timed_out=False,
-                )
-            full_env["OPENAI_BASE_URL"] = base_url
-            full_env["OPENAI_API_KEY"] = api_key
-        else:
-            try:
-                base_url = ensure_proxy_running(self._settings)
-            except (FileNotFoundError, RuntimeError) as e:
-                return RunResult(
-                    exit_code=1,
-                    stdout="",
-                    stderr=str(e),
-                    timed_out=False,
-                )
-            full_env["OPENAI_BASE_URL"] = base_url.rstrip("/")
-            full_env["OPENAI_API_KEY"] = "sk-dummy"
+        model = agent_model or self._model
+
+        # Lightweight config defaults
+        lightweight_config: dict[str, str | int | bool] = {
+            "agent.mode": "lightweight",
+            "performance.disable_semantic_indexing": "true",
+            "context.max_context_window": "50000",
+        }
+        if config:
+            lightweight_config.update(config)
 
         codex_cmd = _resolve_codex()
-        cmd = [codex_cmd, "exec", "-", "--skip-git-repo-check"]
-        if not _is_triggered_by_agent_process():
-            cmd.append("--dangerously-bypass-approvals-and-sandbox")
-        # codex no longer supports a top-level --search flag; leave search disabled by default
-        # if enable_search:
-        #     cmd.append("--search")
+        cmd = [codex_cmd, "exec", "-", "--skip-git-repo-check", "--dangerously-bypass-approvals-and-sandbox"]
+
+        # Add lightweight config flags
+        cmd.extend(_build_config_flags(lightweight_config))
+
         if cwd:
             cmd.extend(["--cd", str(cwd)])
         if use_stream:
             cmd.append("--json")
         if model:
             cmd.extend(["--model", model])
-        if mode == "write":
-            cmd.extend(["--sandbox", "workspace-write"])
-        elif mode == "full":
-            cmd.extend(["--full-auto"])
+
+        # Always use workspace-write for lightweight (safer than full-auto)
+        cmd.extend(["--sandbox", "workspace-write"])
 
         try:
             return _run_with_retry(
@@ -297,6 +548,225 @@ class CodexProxyRunner(AgentRunner):
                 stderr=f"Agent timed out after {timeout}s",
                 timed_out=True,
             )
+
+    def run(
+        self,
+        prompt: str,
+        cwd: Path | None,
+        mode: str,
+        timeout: int,
+        *,
+        use_stream: bool = True,
+        live_output: bool = False,
+        on_stdout: Callable[[str], None] | None = None,
+        on_stderr: Callable[[str], None] | None = None,
+        agent_model: str | None = None,
+        enable_search: bool = True,
+        run_id: str | None = None,
+        session_id: str | None = None,
+        image_paths: list[str] | None = None,
+        audio_paths: list[str] | None = None,
+        env: dict[str, str] | None = None,
+    ) -> RunResult:
+        model = agent_model or self._model
+
+        # WL-116: Handle audio transcript inputs
+        audio_transcript: str | None = None
+        if audio_paths:
+            from thegent.agents.audio_inputs import build_codex_audio_include, inject_transcript_into_prompt, load_transcripts
+            audio_transcript, _audio_sources = load_transcripts(audio_paths)
+            if audio_transcript:
+                # Inject transcript into prompt for Codex
+                prompt = inject_transcript_into_prompt(prompt, audio_transcript)
+                logger.info("WL-116: Injected audio transcript into Codex prompt")
+
+        # Check concurrent instance limit (Improvement 2)
+        try:
+            _check_and_track_instance(self.max_concurrent_instances)
+        except CodexInstanceError as e:
+            return RunResult(
+                exit_code=1,
+                stdout="",
+                stderr=str(e),
+                timed_out=False,
+            )
+
+        # Route via LiteLLM Router if enabled and not zen
+        if self._use_litellm_router and self.agent_name != "zen":
+            result = self._run_via_litellm_router(
+                prompt, cwd, mode, timeout, model, use_stream, live_output, on_stdout, on_stderr, env=env
+            )
+            # WL-116: Add audio_transcript to result if audio was processed
+            if audio_transcript:
+                result = RunResult(
+                    exit_code=result.exit_code,
+                    stdout=result.stdout,
+                    stderr=result.stderr,
+                    timed_out=result.timed_out,
+                    context_tokens_used=result.context_tokens_used,
+                    context_window_max=result.context_window_max,
+                    context_usage_ratio=result.context_usage_ratio,
+                    audio_transcript=audio_transcript,
+                    grounding_sources=result.grounding_sources,
+                )
+            return result
+
+        full_env = os.environ.copy()
+        if env:
+            full_env.update(env)
+
+        # Set up instance isolation (Improvement 1)
+        isolated_home = None
+        if self.codex_home is None:
+            isolated_home = _create_isolated_home(self.instance_id)
+            full_env["CODEX_HOME"] = str(isolated_home)
+        else:
+            full_env["CODEX_HOME"] = str(self.codex_home)
+
+        # Prepare config override file (Improvement 4)
+        temp_dir = None
+        try:
+            if self.config_overrides:
+                temp_dir = Path(tempfile.mkdtemp(prefix="codex_config_"))
+                _write_config_override(self.config_overrides, temp_dir)
+                # Set env var to point to config directory
+                full_env["CODEX_CONFIG_DIR"] = str(temp_dir)
+
+            if self.agent_name == "zen":
+                base_url = (self._settings.zen_base_url or "https://api.opencode.ai").rstrip("/")
+                api_key_env = (
+                    self._settings.zen_api_key
+                    or os.environ.get("OPENCODE_API_KEY")
+                    or os.environ.get("ZEN_API_KEY")
+                    or ""
+                ).strip()
+                api_key = api_key_env
+                if not api_key:
+                    return RunResult(
+                        exit_code=1,
+                        stdout="",
+                        stderr=(
+                            "Zen API key missing. Set THGENT_ZEN_API_KEY (or OPENCODE_API_KEY / ZEN_API_KEY) "
+                            "to use provider=zen."
+                        ),
+                        timed_out=False,
+                    )
+                full_env["OPENAI_BASE_URL"] = base_url
+                full_env["OPENAI_API_KEY"] = api_key
+            else:
+                try:
+                    base_url = ensure_proxy_running(self._settings)
+                except (FileNotFoundError, RuntimeError) as e:
+                    return RunResult(
+                        exit_code=1,
+                        stdout="",
+                        stderr=str(e),
+                        timed_out=False,
+                    )
+                full_env["OPENAI_BASE_URL"] = base_url.rstrip("/")
+                full_env["OPENAI_API_KEY"] = "sk-dummy"
+
+            # Set memory limit via ulimit (macOS/Linux) (Improvement 2)
+            if self.memory_limit_mb > 0:
+                # Note: ulimit is applied via shell; this is passed as env var for subprocess awareness
+                full_env["CODEX_MEMORY_LIMIT_MB"] = str(self.memory_limit_mb)
+
+            codex_cmd = _resolve_codex()
+            cmd = [codex_cmd, "exec", "-", "--skip-git-repo-check"]
+            if not _is_triggered_by_agent_process():
+                cmd.append("--dangerously-bypass-approvals-and-sandbox")
+            # codex no longer supports a top-level --search flag; leave search disabled by default
+            # if enable_search:
+            #     cmd.append("--search")
+            if cwd:
+                cmd.extend(["--cd", str(cwd)])
+            if use_stream:
+                cmd.append("--json")
+            if model:
+                cmd.extend(["--model", model])
+            if mode == "write":
+                cmd.extend(["--sandbox", "workspace-write"])
+            elif mode == "full":
+                cmd.extend(["--full-auto"])
+            for image_path in image_paths or []:
+                cmd.extend(["--image", image_path])
+
+            # @trace WL-038 — capture result so $defer directives can be post-processed
+            _inner_result: RunResult
+            try:
+                _inner_result = _run_with_retry(
+                    cmd,
+                    prompt,
+                    cwd,
+                    timeout,
+                    full_env,
+                    max_idle_seconds=self._settings.max_idle_seconds,
+                    max_wall_time=self._settings.max_wall_time,
+                    live_output=live_output,
+                    on_stdout=on_stdout,
+                    on_stderr=on_stderr,
+                )
+            except TransientAgentError as e:
+                _inner_result = e.result
+            except FileNotFoundError:
+                _inner_result = RunResult(
+                    exit_code=1,
+                    stdout="",
+                    stderr=("codex CLI not found. Install: npm i -g @openai/codex\nOr add codex to PATH."),
+                    timed_out=False,
+                )
+            except subprocess.TimeoutExpired:
+                _inner_result = RunResult(
+                    exit_code=124,
+                    stdout="",
+                    stderr=f"Agent timed out after {timeout}s",
+                    timed_out=True,
+                )
+
+            # WL-116: Add audio_transcript to result if audio was processed
+            if audio_transcript:
+                _inner_result = RunResult(
+                    exit_code=_inner_result.exit_code,
+                    stdout=_inner_result.stdout,
+                    stderr=_inner_result.stderr,
+                    timed_out=_inner_result.timed_out,
+                    context_tokens_used=_inner_result.context_tokens_used,
+                    context_window_max=_inner_result.context_window_max,
+                    context_usage_ratio=_inner_result.context_usage_ratio,
+                    audio_transcript=audio_transcript,
+                    grounding_sources=_inner_result.grounding_sources,
+                )
+
+            if run_id is not None or session_id is not None:
+                _dispatch_post_agent_run_hook(
+                    result=_inner_result,
+                    run_id=run_id,
+                    session_id=session_id,
+                    cwd=cwd,
+                    extra_context={
+                        "agent": self.agent_name,
+                        "model": model,
+                        "mode": mode,
+                        "timeout_seconds": timeout,
+                        "use_stream": use_stream,
+                        "enable_search": enable_search,
+                    },
+                )
+            return self._process_output_deferrals(_inner_result, cwd=cwd)
+        finally:
+            # Clean up isolated home if not keeping for debugging (Improvement 1)
+            if isolated_home and not self.keep_isolated_home:
+                try:
+                    shutil.rmtree(isolated_home)
+                except OSError as e:
+                    logger.warning(f"Failed to clean up isolated home {isolated_home}: {e}")
+
+            # Clean up temp config directory (Improvement 4)
+            if temp_dir:
+                try:
+                    shutil.rmtree(temp_dir)
+                except OSError as e:
+                    logger.warning(f"Failed to clean up temp config {temp_dir}: {e}")
 
     def _run_via_litellm_router(
         self,
@@ -337,7 +807,7 @@ class CodexProxyRunner(AgentRunner):
                 # or handle it as Codex expects. Since we're emulating Codex,
                 # we'll collect it for now unless we implement full SSE.
                 stdout_collector = []
-                for chunk in result.response:
+                for chunk in result.response or []:
                     content = ""
                     if hasattr(chunk, "choices") and chunk.choices:
                         delta = chunk.choices[0].delta
@@ -362,8 +832,11 @@ class CodexProxyRunner(AgentRunner):
                     timed_out=False,
                 )
             content = ""
-            if hasattr(result.response, "choices") and result.response.choices:
-                content = result.response.choices[0].message.content
+            _resp_choices = getattr(result.response, "choices", None)
+            if _resp_choices:
+                choice = _resp_choices[0]
+                msg = getattr(choice, "message", None) or getattr(choice, "delta", None)
+                content = getattr(msg, "content", None) or ""
             elif isinstance(result.response, dict):
                 choices = result.response.get("choices", [])
                 if choices:
@@ -400,6 +873,7 @@ class CodexProxyRunner(AgentRunner):
         on_stderr: Callable[[str], None] | None = None,
         enable_search: bool = True,
         run_id: str | None = None,
+        session_id: str | None = None,
     ) -> RunResult:
         """Run agent using resolved routing from TaskMetadata.
 
@@ -417,18 +891,36 @@ class CodexProxyRunner(AgentRunner):
             RunResult from execution
         """
         # Determine provider and model from metadata
-        provider = metadata.resolved_provider if metadata else self.agent_name
-        model = metadata.resolved_model_alias if metadata else self._model
+        provider: str = ((metadata.resolved_provider if metadata else None) or self.agent_name) or ""
+        model: str = ((metadata.resolved_model_alias if metadata else None) or self._model) or ""
 
         # Determine execution path
         exec_path = get_execution_path(provider)
 
         if exec_path == ExecutionPath.NATIVE_CLI:
-            return self._execute_native_cli(prompt, cwd, mode, timeout, model)
+            return self._execute_native_cli(prompt, cwd, mode, timeout, model, run_id=run_id, session_id=session_id)
         if exec_path == ExecutionPath.LITELLM_API:
-            return self._execute_litellm_api(prompt, cwd, mode, timeout, provider, model)
+            return self._execute_litellm_api(
+                prompt,
+                cwd,
+                mode,
+                timeout,
+                provider,
+                model,
+                run_id=run_id,
+                session_id=session_id,
+            )
         # CLIProxyAPIPlus path (default)
-        return self.run(prompt, cwd, mode, timeout, agent_model=model, use_stream=use_stream)
+        return self.run(
+            prompt,
+            cwd,
+            mode,
+            timeout,
+            agent_model=model,
+            use_stream=use_stream,
+            run_id=run_id,
+            session_id=session_id,
+        )
 
     def _execute_native_cli(
         self,
@@ -437,10 +929,12 @@ class CodexProxyRunner(AgentRunner):
         mode: str,
         timeout: int,
         model: str,
+        run_id: str | None = None,
+        session_id: str | None = None,
     ) -> RunResult:
         """Execute via native codex CLI (for codex provider)."""
         # Current implementation uses codex CLI already
-        return self.run(prompt, cwd, mode, timeout, agent_model=model)
+        return self.run(prompt, cwd, mode, timeout, agent_model=model, run_id=run_id, session_id=session_id)
 
     def _execute_litellm_api(
         self,
@@ -450,6 +944,8 @@ class CodexProxyRunner(AgentRunner):
         timeout: int,
         provider: str,
         model: str,
+        run_id: str | None = None,
+        session_id: str | None = None,
     ) -> RunResult:
         """Execute via LiteLLM direct API (for API key providers).
 
@@ -496,18 +992,34 @@ class CodexProxyRunner(AgentRunner):
             )
 
         logger.info(f"Calling LiteLLM API: {model_string}")
+        messages, compaction = self._prepare_litellm_messages(
+            prompt=prompt,
+            cwd=cwd,
+            mode=mode,
+            model=model,
+        )
+        normalized_usage_ratio = _normalize_context_usage_ratio(compaction.usage_ratio)
+        estimated_tokens = round(normalized_usage_ratio * _LITELLM_CONTEXT_WINDOW_MAX)
 
         try:
             response = completion(
                 model=model_string,
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
                 api_key=api_key,
                 timeout=timeout,
             )
 
-            # Extract response content from LiteLLM response
-            # LiteLLM returns a ModelResponse with choices containing message content
-            content = response.choices[0].message.content
+            # Extract response content from LiteLLM response.
+            # LiteLLM returns ModelResponse (non-streaming) with choices[0].message,
+            # but the union type also includes CustomStreamWrapper/StreamingChoices
+            # which uses .delta instead of .message and may lack .choices entirely.
+            # Use getattr throughout to safely handle both response shapes.
+            choices = getattr(response, "choices", None)
+            choice = choices[0] if choices else None
+            message_or_delta = (
+                (getattr(choice, "message", None) or getattr(choice, "delta", None)) if choice is not None else None
+            )
+            content = getattr(message_or_delta, "content", None)
 
             logger.info(f"LiteLLM API call successful: {model_string}")
             return RunResult(
@@ -515,6 +1027,9 @@ class CodexProxyRunner(AgentRunner):
                 stdout=content or "",
                 stderr="",
                 timed_out=False,
+                context_tokens_used=estimated_tokens,
+                context_window_max=_LITELLM_CONTEXT_WINDOW_MAX,
+                context_usage_ratio=normalized_usage_ratio,
             )
 
         except Exception as e:
@@ -529,7 +1044,36 @@ class CodexProxyRunner(AgentRunner):
                 stdout="",
                 stderr=f"LiteLLM API error: {error_msg}",
                 timed_out=is_timeout,
+                context_tokens_used=estimated_tokens,
+                context_window_max=_LITELLM_CONTEXT_WINDOW_MAX,
+                context_usage_ratio=normalized_usage_ratio,
             )
+
+    def _prepare_litellm_messages(
+        self,
+        *,
+        prompt: str,
+        cwd: Path | None,
+        mode: str,
+        model: str,
+        context_window_max: int = _LITELLM_CONTEXT_WINDOW_MAX,
+    ) -> tuple[list[dict[str, str]], ContextCompactionResult]:
+        """Build Litellm messages and compact optional skill context when needed."""
+        turns: list[dict[str, str]] = [
+            {"role": "system", "content": "You are running inside the thegent codex proxy runner."},
+        ]
+
+        skill_suffix = self.get_skill_prompt_suffix().strip()
+        if skill_suffix:
+            turns.append({"role": "system", "content": skill_suffix})
+
+        turns.append({"role": "system", "content": f"Execution agent={self.agent_name} model={model}"})
+        turns.append({"role": "system", "content": f"Execution mode={mode} cwd={cwd or Path.cwd()}."})
+        turns.append({"role": "user", "content": prompt})
+
+        compactor = ContextCompactor()
+        compaction = compactor.compact(turns, context_window_max)
+        return compaction.turns, compaction
 
     @staticmethod
     def _get_api_key_env(provider: str) -> str:

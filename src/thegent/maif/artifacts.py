@@ -13,13 +13,108 @@ import sqlite3
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 _log = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# High-level MAIFArtifact dataclass (for test_maif.py API)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class MAIFArtifact:
+    """Mutable artifact record used by MAIFManager and tests.
+
+    Attributes:
+        action_type: Type of agent action recorded.
+        payload: Action payload dict.
+        agent_id: Agent that performed the action.
+        session_id: Session in which the action occurred.
+        artifact_id: Unique identifier (auto-generated if not supplied).
+        signature: Base64-encoded RSA signature; None until signed.
+        timestamp: ISO-8601 timestamp.
+        chain_of_thought: Optional chain-of-thought text.
+        verification_key_id: Optional key identifier.
+        previous_artifact_id: ID of the prior artifact in the chain.
+    """
+
+    action_type: str
+    payload: dict[str, Any]
+    agent_id: str
+    session_id: str
+    artifact_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    signature: str | None = None
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    chain_of_thought: str | None = None
+    verification_key_id: str | None = None
+    previous_artifact_id: str | None = None
+
+
+def generate_key_pair() -> tuple[rsa.RSAPrivateKey, rsa.RSAPublicKey]:
+    """Generate an RSA key pair for signing MAIF artifacts.
+
+    Returns:
+        Tuple of (private_key, public_key).
+    """
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    return private_key, private_key.public_key()
+
+
+def sign_artifact(artifact: MAIFArtifact, private_key: rsa.RSAPrivateKey) -> str:
+    """Sign a MAIFArtifact in-place and return the base64-encoded signature.
+
+    Sets artifact.signature to the computed signature string.
+
+    Args:
+        artifact: The artifact to sign (mutated in-place).
+        private_key: RSA private key used for signing.
+
+    Returns:
+        Base64-encoded signature string.
+    """
+    canonical = json.dumps(
+        {"payload": artifact.payload, "timestamp": artifact.timestamp, "agent_id": artifact.agent_id},
+        sort_keys=True,
+    )
+    message_hash = hashlib.sha256(canonical.encode()).digest()
+    raw_signature = private_key.sign(message_hash, padding.PKCS1v15(), hashes.SHA256())
+    sig_str = base64.b64encode(raw_signature).decode()
+    artifact.signature = sig_str
+    return sig_str
+
+
+def verify_artifact(artifact: MAIFArtifact, public_key: rsa.RSAPublicKey) -> bool:
+    """Verify a MAIFArtifact's signature.
+
+    Args:
+        artifact: Artifact to verify.
+        public_key: RSA public key corresponding to the signing private key.
+
+    Returns:
+        True if the signature is valid, False otherwise.
+    """
+    if artifact.signature is None:
+        return False
+    try:
+        raw_signature = base64.b64decode(artifact.signature)
+        canonical = json.dumps(
+            {"payload": artifact.payload, "timestamp": artifact.timestamp, "agent_id": artifact.agent_id},
+            sort_keys=True,
+        )
+        message_hash = hashlib.sha256(canonical.encode()).digest()
+        public_key.verify(raw_signature, message_hash, padding.PKCS1v15(), hashes.SHA256())
+        return True
+    except Exception as exc:
+        _log.debug("MAIF artifact verification failed: %s", exc)
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -56,8 +151,8 @@ def save_private_key(private_key: rsa.RSAPrivateKey, path: Path, password: bytes
 # ---------------------------------------------------------------------------
 
 
-def sign_artifact(payload: dict[str, Any], timestamp: str, agent_id: str, private_key: rsa.RSAPrivateKey) -> str:
-    """Sign artifact with RSA private key (MAIF)."""
+def _sign_artifact_dict(payload: dict[str, Any], timestamp: str, agent_id: str, private_key: rsa.RSAPrivateKey) -> str:
+    """Sign raw artifact dict fields with RSA private key (MAIF internal)."""
     # Create canonical payload
     canonical = json.dumps({"payload": payload, "timestamp": timestamp, "agent_id": agent_id}, sort_keys=True)
 
@@ -70,8 +165,8 @@ def sign_artifact(payload: dict[str, Any], timestamp: str, agent_id: str, privat
     return base64.b64encode(signature).decode()
 
 
-def verify_artifact(artifact: dict[str, Any], public_key: rsa.RSAPublicKey) -> bool:
-    """Verify artifact signature (MAIF)."""
+def _verify_artifact_dict(artifact: dict[str, Any], public_key: rsa.RSAPublicKey) -> bool:
+    """Verify raw artifact dict signature (MAIF internal)."""
     try:
         signature = base64.b64decode(artifact["signature"])
 

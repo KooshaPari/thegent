@@ -14,6 +14,7 @@ from unittest.mock import MagicMock, patch
 import click.exceptions
 import pytest
 import typer
+
 from thegent.cli.commands.impl import DagDocument
 
 _EXIT = (SystemExit, click.exceptions.Exit)

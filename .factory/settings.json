@@ -69,7 +69,7 @@
   "autonomyLevel": "auto-high",
   "specSaveEnabled": true,
   "sessionDefaultSettings": {
-    "model": "minimax-m2.5",
+    "model": "custom:minimax-m2.5",
     "reasoningEffort": "medium",
     "autonomyMode": "auto-high"
   },
@@ -105,13 +105,13 @@
       "provider": "generic-chat-completion-api"
     },
     {
-      "model": "MiniMax-M2.5",
-      "id": "custom:Minimax-M2.5-3",
+      "model": "minimax-m2.5",
+      "id": "custom:minimax-m2.5-3",
       "index": 3,
       "baseUrl": "https://api.minimax.io/anthropic",
       "apiKey": "sk-cp-gPIgSPD1rxNMDQqvb4nYNj0HE4HfElst4cbyJQby9eMhod_1FU5OVTh1KisjFDPoPSngE-R_WwHAhA4ehgzqoIKhaXfipS-1CmEjUqCTPk2brR2Fq6PH0OA",
-      "displayName": "Minimax M2.5",
-      "maxOutputTokens": 64000,
+      "displayName": "minimax-m2.5-byok",
+      "maxOutputTokens": 8192,
       "noImageSupport": false,
       "provider": "anthropic"
     },

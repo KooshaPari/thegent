@@ -1,0 +1,99 @@
+# prewarm_report_api
+
+Source: docs/reference/api/prewarm_report_api.md
+
+---
+
+# prewarm_report API Reference
+
+> **Source**: `src/thegent/hooks/prewarm_report.py`
+
+Implement prewarm and report subcommands (caching + JSON reports).
+
+---
+
+## PrewarmReportSubcommands
+
+Prewarm and report subcommands.
+
+### Methods
+
+#### PrewarmReportSubcommands.__init__
+
+```
+__init__(self: Any, cache_dir: Any)
+```
+
+Initialize prewarm/report.
+
+**Parameters**:
+
+- `cache_dir`: Cache directory
+
+---
+
+#### PrewarmReportSubcommands.prewarm
+
+```
+prewarm(self: Any, targets: list[str])
+```
+
+Prewarm cache for targets.
+
+**Parameters**:
+
+- `targets`: List of targets to prewarm
+
+**Returns**: Prewarm results
+
+---
+
+#### PrewarmReportSubcommands.report
+
+```
+report(self: Any, output_file: Any)
+```
+
+Generate JSON report.
+
+**Parameters**:
+
+- `output_file`: Output file path
+
+**Returns**: Path to report file
+
+---
+
+---
+
+## prewarm
+
+```
+prewarm(self: Any, targets: list[str])
+```
+
+Prewarm cache for targets.
+
+**Parameters**:
+
+- `targets`: List of targets to prewarm
+
+**Returns**: Prewarm results
+
+---
+
+## report
+
+```
+report(self: Any, output_file: Any)
+```
+
+Generate JSON report.
+
+**Parameters**:
+
+- `output_file`: Output file path
+
+**Returns**: Path to report file
+
+---

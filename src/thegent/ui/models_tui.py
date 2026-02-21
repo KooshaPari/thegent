@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import yaml
 from textual.app import App, ComposeResult
@@ -123,7 +123,7 @@ class ModelsTUI(App):
     }
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Any]] = [
         Binding("q", "quit", "Quit"),
         Binding("a", "add_model", "Add Model"),
         Binding("d", "delete_model", "Delete Selected"),

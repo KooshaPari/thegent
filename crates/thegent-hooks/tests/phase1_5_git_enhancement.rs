@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::thread;
+use std::os::unix::process::ExitStatusExt;
 
 fn unique_dir(name: &str) -> PathBuf {
     let nanos = SystemTime::now()

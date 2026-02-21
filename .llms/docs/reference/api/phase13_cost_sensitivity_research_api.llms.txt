@@ -1,0 +1,55 @@
+# phase13_cost_sensitivity_research_api
+
+Source: docs/reference/api/phase13_cost_sensitivity_research_api.md
+
+---
+
+# phase13_cost_sensitivity_research API Reference
+
+> **Source**: `src/thegent/research/phase13_cost_sensitivity_research.py`
+
+Research: Phase13 cost-sensitivity experiment framework.
+
+---
+
+## Phase13CostSensitivityResearch
+
+Research for cost sensitivity experiments.
+
+### Methods
+
+#### Phase13CostSensitivityResearch.__init__
+
+```
+__init__(self: Any)
+```
+
+Initialize cost sensitivity research.
+
+---
+
+#### Phase13CostSensitivityResearch.run_research_experiment
+
+```
+run_research_experiment(self: Any)
+```
+
+Run a research experiment.
+
+**Returns**: Experiment results
+
+---
+
+---
+
+## run_research_experiment
+
+```
+run_research_experiment(self: Any)
+```
+
+Run a research experiment.
+
+**Returns**: Experiment results
+
+---

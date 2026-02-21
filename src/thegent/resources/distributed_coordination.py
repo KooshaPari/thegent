@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class DistributedResourceCoordination:
     """Distributed resource coordination."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize distributed coordination."""
         self.coordinators: dict[str, Any] = {}
 

@@ -1,0 +1,362 @@
+# thegent-phase10-12-execution-bundles-playbook
+
+Source: docs/docset/thegent-phase10-12-execution-bundles-playbook.md
+
+---
+
+# Thegent Phase 10–12 Execution Bundles Playbook
+
+**Status:** Full-depth execution draft (Chunk 2)  
+**Date:** 2026-02-15  
+**Scope:** Phase 10 to 12 issue queue execution in chunked bundles, with explicit lock dependencies, artifact contracts, and fallback controls.
+
+## 0) Purpose
+
+This playbook turns the phase 10–12 issue queue into implementation bundles that are ready for direct ticket creation and parallel team execution.
+
+- Primary objective: move from issue list to execution-safe slices with measurable entry, exit, and rollback criteria.
+- Governing assumption: this runs after Chunk A or equivalent interface-foundation work is completed or under canary with feature flag lock.
+- Non-goal: code implementation in this turn.
+
+## 1) Bundle-level lock model
+
+All bundles below must obey the same lock sequence and quality bar:
+
+1. Hard dependency lock:
+   - All WP dependencies must be merged and green in predecessor bundles.
+2. Evidence lock:
+   - Mandatory evidence artifact exists with digest and `run_id`.
+3. Gate lock:
+   - Pre-gate checklist updated before dependent bundle starts.
+4. Rollback lock:
+   - Rollback manifest for every artifact-changing bundle.
+5. Kill switch lock:
+   - Toggle path for immediate disable available before enabling runtime changes.
+
+## 2) Global execution constraints (all bundles)
+
+### 2.1 Immutable controls
+
+- No bundle may alter control behavior without:
+  - explicit flag `phase10.interface_v2`, `phase11.autotune`, `phase12.hardening`.
+  - changelog entry in `artifacts/phase{10|11|12}/*/chunk_lock.ndjson`.
+- For every artifact emitted by the bundle include:
+  - `artifact_id`, `run_id`, `wp_id`, `bundle_id`, `created_at`, `sha256`.
+
+### 2.2 Observability requirements
+
+Each bundle must write:
+
+- `policy_version`
+- `policy_digest`
+- `dispatch_path_hash` (when applicable)
+- `owner_team`
+- `rollback_token` if runtime changes are active
+
+### 2.3 Evidence naming convention
+
+- Bundle artifact root: `artifacts/phaseXX/chunk_{bundle_id}/`.
+- Evidence manifest name: `bundle_evidence_manifest.ndjson`.
+- Human signoff name: `chunk_{bundle_id}_signoff.md`.
+
+### 2.4 Cross-bundle hard blockers
+
+- WP-11001 cannot begin until `WP-10003` and `WP-10007` are fully green.
+- WP-12001 cannot begin until `WP-11001` and `WP-11010` are validated.
+- WP-12010 requires all previous 9 closure-critical WPs to have passed gates.
+
+## 3) Bundle B — Trust and conformance (WP-10004 to WP-10010)
+
+**Bundle ID:** `phase10_bundle_b`  
+**Owner:** Security, Platform, Governance, Docs
+
+### 3.1 Scope
+
+- WP-10004 Adapter admission and trust policy
+- WP-10005 Endpoint consolidation and aliases
+- WP-10006 Unknown-operation migration UX
+- WP-10007 Dispatch traceability and audit context
+- WP-10008 Plugin lifecycle and conformance checks
+- WP-10009 API evolution controls
+- WP-10010 Cross-phase operations operator documentation
+
+### 3.2 Entry criteria
+
+- Chunk A acceptance artifact available for:
+  - `operation_envelope_v2`
+  - deterministic dispatch baseline
+- `WP-10003` and `WP-10006` green and traceable.
+- CI preflight pass for interface parity tests is available.
+
+### 3.3 In-bundle acceptance matrix
+
+| WP | Required tests | Artifact | Hard stop condition |
+|----|----------------|----------|--------------------|
+| WP-10004 | TestAdapterTrustPolicy | adapter_trust_gate.ndjson | Untrusted adapter in critical lane without explicit override |
+| WP-10005 | TestOperationSurfaceConsolidation | operation_coverage_matrix.ndjson | CLI and MCP operation sets mismatch |
+| WP-10006 | TestMigrationHintRenderer | unknown_operation_hints.ndjson | Unknown operation without migration alternative |
+| WP-10007 | TestDispatchTraceEvent | dispatch_trace_schema.ndjson | Missing trace fields or policy digest |
+| WP-10008 | TestAdapterConformanceLifecycle | plugin_conformance_reports.ndjson | Nonconformant plugin activated |
+| WP-10009 | TestCompatibilityMatrixPolicy | compatibility_matrix.ndjson | Incompatible version allowed by registry |
+| WP-10010 | TestOperationsDocsGeneration | operations_ops_guide.ndjson | Operator cannot reproduce documented flow |
+
+### 3.4 Implementation task sequence
+
+1. Security: implement trust gate service + deny list enforcement for critical lanes.
+2. Platform: complete endpoint enumeration and alias map from capability registry.
+3. Runtime: add migration hint branch for unknown operation and route to docs.
+4. Governance: add immutable dispatch trace schema and evidence indexes.
+5. QA: add conformance runner path for adapter lifecycle.
+6. Docs: publish canonical operation runbook with examples.
+
+### 3.5 Bundle-specific rollback
+
+- Feature flag: keep `phase10.interface_v2` ON only for internal canary.
+- If any conformance mismatch appears:
+  1. disable trust policy hot path,
+  2. rollback to last stable operation mapping snapshot,
+  3. emit `bundle_b_regression.md` and request governance review.
+
+### 3.6 Exit criteria
+
+- All seven WPs pass and evidence manifest is signed.
+- Cross-interface operation flow tested on CLI + MCP with zero high-impact mismatch.
+- Dispatcher audit query returns immutable rows for the bundle window.
+
+## 4) Bundle C — Predictive control baseline (WP-11001 to WP-11005)
+
+**Bundle ID:** `phase11_bundle_c`  
+**Owner:** SRE, Core Runtime, Product, QA
+
+### 4.1 Scope
+
+- WP-11001 SLO regulator loop controller
+- WP-11002 Forecasting engine hardening
+- WP-11003 Predictor confidence calibration
+- WP-11004 Preemption and saturation policies
+- WP-11005 Self-healing recommendation engine
+
+### 4.2 Entry criteria
+
+- Bundle B final signoff and G10 readiness note present.
+- Dispatch telemetry includes policy/version metadata.
+- Controlled canary runway with non-critical workloads available.
+
+### 4.3 Core control contracts
+
+- `FR-076..079` must map to code modules via explicit config names:
+  - `slo_regulator`, `forecast_engine`, `confidence_calibration`, `saturation_guard`, `self_heal_recommender`
+- all control events include:
+  - `control_signal_id`
+  - `confidence_score`
+  - `owner_team`
+  - `rollback_vector`
+
+### 4.4 In-bundle acceptance matrix
+
+| WP | Required tests | Artifact | Hard stop condition |
+|----|----------------|----------|--------------------|
+| WP-11001 | TestSLORegulator | slo_regulator_events.ndjson | Oscillation > 1/min in canary stability window |
+| WP-11002 | TestForecastEngineRun | forecast_quality.ndjson | Forecast confidence missing p50/p80/p95 values |
+| WP-11003 | TestCalibrationDrift | calibration_drift.ndjson | Calibration drift under threshold not enforced |
+| WP-11004 | TestPreemptiveSaturationPolicy | preemption_policy_events.ndjson | Saturation policy escalates without rollout control |
+| WP-11005 | TestSelfHealRecommendation | self_heal_recommendations.ndjson | Recommendation lacks rollback metadata |
+
+### 4.5 Task graph
+
+1. Add regulator controller with hysteresis and bounded action deltas.
+2. Build forecast service contract with confidence fields and latency budgets.
+3. Add calibration monitor + pause gating at low confidence.
+4. Add preemption policy with saturation avoidance and queue guard.
+5. Build recommendation engine with owner + rationale + rollback in every result.
+
+### 4.6 Kill-switch and rollback
+
+- If controller causes oscillation:
+  - set `phase11.autotune=false`
+  - persist `autotune_disable_reason.ndjson`
+  - keep forecast path in read-only diagnostic mode until reviewed.
+- If recommendation actions fail audit:
+  - disable recommendation auto-apply.
+  - require operator ACK for all self-heal actions.
+
+### 4.7 Exit criteria
+
+- G11 precheck notes complete.
+- All tests above pass with stability criteria.
+- Evidence ready for `WP-11010` evidence pack.
+
+## 5) Bundle D — Controlled adaptation and governance hardening (WP-11006 to WP-11010)
+
+**Bundle ID:** `phase11_bundle_d`  
+**Owner:** Orchestration, Product, Security
+
+### 5.1 Scope
+
+- WP-11006 Adaptive task shaping
+- WP-11007 Continuity risk predictor
+- WP-11008 Learning loop and policy guardrails
+- WP-11009 Safe-mode action governance
+- WP-11010 Forecast and control evidence pack
+
+### 5.2 Entry criteria
+
+- Bundle C control primitives green and reviewed.
+- Policy approval path for runtime parameter changes is implemented.
+- Continuity windows and shift calendar available from planning inputs.
+
+### 5.3 Bundle flow
+
+1. Add task shaping actions only for whitelisted risk domains.
+2. Add continuity predictor with pre-shift and freeze-window alarms.
+3. Wrap all learning updates in signed policy flow.
+4. Implement safe-mode transitions with expiry and audit.
+5. Create evidence pack with deterministic ordering and manifest reference.
+
+### 5.4 Acceptance matrix
+
+| WP | Required tests | Artifact | Hard stop condition |
+|----|----------------|----------|--------------------|
+| WP-11006 | TestAdaptiveTaskShaping | adaptive_shaping.ndjson | Shaping action without policy owner rationale |
+| WP-11007 | TestContinuityRiskPredictor | continuity_risk.ndjson | Handoff predictor not producing risk windows |
+| WP-11008 | TestLearningLoopGovernance | learning_loop.ndjson | Auto-parameter change without signed policy |
+| WP-11009 | TestSafeModeGovernance | safe_mode_governance.ndjson | Safe-mode state loss on repeated transitions |
+| WP-11010 | TestEvidencePackEmit11 | g11_readiness_pack.ndjson | Missing control evidence or manifest checksum |
+
+### 5.5 Fail-safe conditions
+
+- Any control action without explicit owner context disables adaptive shaping and self-heal in that window.
+- Safe-mode mismatch between policy and runtime state requires immediate rollback and manual reconciliation.
+
+### 5.6 Exit criteria
+
+- G11 pass.
+- Continuous adaptation actions limited to approved paths only.
+- Evidence pack produced in the required format for signoff.
+
+## 6) Bundle E — Explainability and replay hardening (WP-12001 to WP-12006)
+
+**Bundle ID:** `phase12_bundle_e`  
+**Owner:** Product, UX, Core Runtime, Compliance
+
+### 6.1 Scope
+
+- WP-12001 Explainability contract implementation
+- WP-12002 Escalation fatigue and noise control
+- WP-12003 Replay sandbox hardening
+- WP-12004 What-if branch governance
+- WP-12005 Handoff confidence and continuity envelope
+- WP-12006 Evidence graph and export bundling
+
+### 6.2 Entry criteria
+
+- G11 evidence pack complete.
+- Rollback workflow and persona context models available.
+- Replay state stores include immutable run lineage.
+
+### 6.3 Acceptance matrix
+
+| WP | Required tests | Artifact | Hard stop condition |
+|----|----------------|----------|--------------------|
+| WP-12001 | TestExplainabilityContract | explainability_bundle.ndjson | Summary/detail/trace mismatch |
+| WP-12002 | TestFatigueControlRules | fatigue_controls.ndjson | Non-blocking alerts not suppressed by policy |
+| WP-12003 | TestReplaySandboxMutationGuard | replay_safety.ndjson | State mutation in non-execute replay |
+| WP-12004 | TestWhatIfBranchEngine | what_if_branching.ndjson | Branch results non-deterministic for same input |
+| WP-12005 | TestHandoffConfidenceGate | handoff_continuity.ndjson | Handoff proceeds without required confidence |
+| WP-12006 | TestEvidenceGraphPackaging | evidence_graph.ndjson | Evidence graph has dangling edges |
+
+### 6.4 Critical invariants
+
+- Explainability output must be derived from one schema ID for all channels.
+- Replay mode default remains read-only.
+- Evidence graph must include continuity and governance edges for critical actions.
+
+### 6.5 Bundle exit criteria
+
+- G12 precheck pack (for replay and explainability) green.
+- `evidence_graph.ndjson` validates against manifest schema.
+- Export pipeline returns stable checksum on two consecutive runs.
+
+## 7) Bundle F — Persona, packaging, closure (WP-12007 to WP-12010)
+
+**Bundle ID:** `phase12_bundle_f`  
+**Owner:** Product, Security, Documentation, Program Lead
+
+### 7.1 Scope
+
+- WP-12007 Persona profiles and access constraints
+- WP-12008 Operational learning assets
+- WP-12009 Release docs packaging automation
+- WP-12010 Phase 10–12 closure and handoff note
+
+### 7.2 Entry criteria
+
+- Bundle E G12 precheck has passed.
+- Packaging manifests from phase 12 are complete and deterministic.
+- Handoff stakeholders are identified and invited.
+
+### 7.3 Bundle plan
+
+1. Add persona policies and defaults at runtime decision boundaries.
+2. Generate anti-fatigue coaching and runbook artifacts.
+3. Add one-command release pack compiler from manifest and artifact sources.
+4. Write signed finality bundle with owner approvals and evidence index.
+
+### 7.4 Acceptance matrix
+
+| WP | Required tests | Artifact | Hard stop condition |
+|----|----------------|----------|--------------------|
+| WP-12007 | TestPersonaProfiles | persona_profiles.ndjson | Persona constraints not enforced consistently |
+| WP-12008 | TestLearningAssetGeneration | operational_learning_assets.ndjson | New operator cannot complete continuity drill |
+| WP-12009 | TestReleasePackCompiler | release_pack_summary.ndjson | Export missing manifest or checksum |
+| WP-12010 | TestPhase10to12Finality | phase10_12_finality_bundle.md | Final note missing owner signatures |
+
+### 7.5 Closure governance
+
+- Requires signed notes from: Program lead, Security, Product, SRE.
+- Finality bundle must include:
+  - artifact checklist,
+  - known residual risk list,
+  - deferred non-critical fixes with owners.
+
+### 7.6 Exit criteria
+
+- G12 signed.
+- Finality bundle published and archived under `artifacts/phase12/`.
+- No open blockers in `WBS_TO_ISSUE_IMPORT_MATRIX.md` for WP-12007..12010.
+
+## 8) Inter-bundle dependency map and sequencing
+
+```
+Chunk B -> Chunk C -> Chunk D -> Chunk E -> Chunk F
+```
+
+- Chunk B gates every later chunk by policy and dispatch integrity.
+- Chunk C cannot start unless registry and dispatch trace paths are stable.
+- Chunk D consumes output from C for continuity and control evidence.
+- Chunk E is independent of D except for readiness and runline artifacts.
+- Chunk F is hard-close and should be scheduled with governance and product reviews.
+
+## 9) Default next-turn execution order
+
+If resuming this chunked plan in sequence:
+
+1. Chunk B, including all trust + conformance controls.
+2. Chunk C, with strict loop and forecast instrumentation.
+3. Chunk D, for adaptation governance and evidence pack completion.
+4. Chunk E, for explainability/replay hardening.
+5. Chunk F, closure and release artifact lock.
+
+## 10) Reproducibility checklist
+
+- [ ] evidence_manifest_id exists for each bundle artifact file.
+- [ ] gate checklist entries updated with timestamp and owner.
+- [ ] rollback token and kill-switch path documented before runtime enablement.
+- [ ] all artifacts have sha256 written to `bundle_release_manifest.ndjson`.
+- [ ] final index references are updated in `thegent-plan-final-index.md`.
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

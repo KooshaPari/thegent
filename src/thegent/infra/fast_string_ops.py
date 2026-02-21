@@ -82,7 +82,7 @@ class FastStringOps:
         return 0.0
 
     @staticmethod
-    def regex_search(pattern: str, text: str, **kwargs) -> re.Match | None:
+    def regex_search(pattern: str, text: str, **kwargs) -> "regex.Match[str] | re.Match[str] | None":
         """Search using regex library (faster for complex patterns).
 
         Args:
@@ -130,7 +130,7 @@ def fuzzy_ratio(str1: str, str2: str) -> float:
     return FastStringOps.fuzzy_ratio(str1, str2)
 
 
-def regex_search(pattern: str, text: str, **kwargs) -> re.Match | None:
+def regex_search(pattern: str, text: str, **kwargs):
     """Search using optimized regex."""
     return FastStringOps.regex_search(pattern, text, **kwargs)
 

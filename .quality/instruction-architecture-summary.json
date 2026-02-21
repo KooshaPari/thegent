@@ -1,0 +1,16 @@
+{
+  "by_kind": {},
+  "checked": {
+    "doc_map_source": "CLAUDE.md",
+    "pre_work_gate_command_modules": [
+      "src/thegent/cli/commands/impl.py",
+      "src/thegent/cli/commands/work_stream_impl.py"
+    ],
+    "templates": [
+      "templates/claude/CLAUDE.md.template",
+      "templates/initialize-project/{{ project_name }}/CLAUDE.md"
+    ]
+  },
+  "finding_count": 0,
+  "ok": true
+}

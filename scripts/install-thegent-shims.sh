@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # thegent-shims installation script
-# Installs thegent-shims binary and creates harness symlinks (dex, clode, roid, fanta, antigma)
+# Installs thegent-shims binary and creates harness symlinks
 
 set -euo pipefail
 
@@ -111,11 +111,24 @@ create_symlinks() {
     echo -e "${GREEN}Installing ${BINARY_NAME} to ${INSTALL_DIR}/${BINARY_NAME}${NC}"
     ln -sf "$binary_path" "${INSTALL_DIR}/${BINARY_NAME}"
 
-    local harnesses=("dex" "clode" "roid" "fanta" "antigma")
+    local harnesses=("dex" "clode" "roid" "fanta" "antigma" "cline" "roocode" "opencode")
     for harness in "${harnesses[@]}"; do
         link="${INSTALL_DIR}/${harness}"
         echo -e "${GREEN}Creating harness shim: ${link}${NC}"
         ln -sf "${INSTALL_DIR}/${BINARY_NAME}" "$link"
+    done
+}
+
+# Warn when a harness is shadowed by another binary earlier in PATH.
+check_path_collisions() {
+    local harness
+    local resolved
+    for harness in dex clode roid fanta antigma cline roocode opencode; do
+        resolved="$(command -v "$harness" 2>/dev/null || true)"
+        if [[ -n "$resolved" && "$resolved" != "${INSTALL_DIR}/${harness}" ]]; then
+            echo -e "${YELLOW}Warning: '${harness}' resolves to ${resolved} (not ${INSTALL_DIR}/${harness}).${NC}"
+            echo -e "${YELLOW}Add '${INSTALL_DIR}' earlier in PATH to use thegent-shims for '${harness}'.${NC}"
+        fi
     done
 }
 
@@ -142,6 +155,7 @@ main() {
     
     # Create symlinks
     create_symlinks "$binary_path"
+    check_path_collisions
     
     echo ""
     echo -e "${GREEN}=== Installation Complete ===${NC}"
@@ -153,6 +167,9 @@ main() {
     echo "  - roid -> thegent-shims"
     echo "  - fanta -> thegent-shims"
     echo "  - antigma -> thegent-shims"
+    echo "  - cline -> thegent-shims"
+    echo "  - roocode -> thegent-shims"
+    echo "  - opencode -> thegent-shims"
     echo ""
     echo "Usage:"
     echo "  dex --help"
@@ -160,6 +177,9 @@ main() {
     echo "  roid --help"
     echo "  fanta --help"
     echo "  antigma --help"
+    echo "  cline --help"
+    echo "  roocode --help"
+    echo "  opencode --help"
 }
 
 main "$@"

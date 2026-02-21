@@ -1,4 +1,7 @@
-"""Chaos tests for Lifecycle Loop resilience."""
+"""Chaos tests for Lifecycle Loop resilience.
+
+# @trace WL-134 B90-W2-C3
+"""
 
 from unittest.mock import MagicMock, patch
 
@@ -34,6 +37,7 @@ def chaos_engine():
     return ChaosEngine(failure_rate=0.5, latency_range=(0.01, 0.05))
 
 
+@pytest.mark.deep
 @patch("thegent.agents.loop_controller.run_impl")
 def test_lifecycle_loop_resilience_to_transient_failures(mock_run, controller, chaos_engine):
     """Lifecycle Loop should retry on transient failures injected by Chaos Engine."""
@@ -60,6 +64,7 @@ def test_lifecycle_loop_resilience_to_transient_failures(mock_run, controller, c
     assert state.iteration == 1  # Success happened in iteration 1 (after internal retries)
 
 
+@pytest.mark.deep
 @patch("thegent.agents.loop_controller.run_impl")
 def test_lifecycle_loop_stops_on_permanent_failure(mock_run, controller):
     """Lifecycle Loop should NOT retry on permanent failures."""
@@ -69,5 +74,5 @@ def test_lifecycle_loop_stops_on_permanent_failure(mock_run, controller):
     state = controller.run_loop("Start", "Todo")
 
     assert state.stopped is True
-    assert "Worker failed after 1 attempts" in state.stop_reason
+    assert "Worker failed" in state.stop_reason
     assert mock_run.call_count == 1

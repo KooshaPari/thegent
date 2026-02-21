@@ -1,0 +1,53 @@
+# terminal_cli_api
+
+Source: docs/reference/api/terminal_cli_api.md
+
+---
+
+# terminal_cli API Reference
+
+> **Source**: `src/thegent/terminal_cli.py`
+
+CLI implementation for terminal management.
+
+---
+
+## attach_terminal
+
+```
+attach_terminal(pane_id: Any)
+```
+
+Attach to a terminal session.
+
+---
+
+## inspect_terminal
+
+```
+inspect_terminal(pane_id: str)
+```
+
+View the last few lines of a terminal pane.
+
+---
+
+## list_terminals
+
+```
+list_terminals(all: bool)
+```
+
+List active terminal panes (tmux).
+
+---
+
+## send_to_terminal
+
+```
+send_to_terminal(pane_id: str, text: str)
+```
+
+Send a command to a terminal pane.
+
+---

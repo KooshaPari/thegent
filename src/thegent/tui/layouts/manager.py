@@ -72,7 +72,7 @@ class LayoutManager:
                     metadata=data.get("metadata", {}),
                 )
                 self._layouts[state.name] = state
-            except Exception:
+            except Exception:  # noqa: PERF203 - intentional per-item error handling
                 pass
 
     def _save(self, state: LayoutState) -> None:

@@ -1,0 +1,21 @@
+# infra_api
+
+Source: docs/reference/api/infra_api.md
+
+---
+
+# infra API Reference
+
+> **Source**: `src/thegent/infra/__init__.py`
+
+Infrastructure modules for thegent.
+
+This package contains infrastructure utilities including:
+- Runtime dispatcher for multi-runtime support
+- Performance optimizations
+- Error handling
+- Progress indicators
+- Configuration management
+- Multi-runtime diagnostics
+
+---

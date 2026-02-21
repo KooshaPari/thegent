@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 _log = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class GardeningManager:
     """
 
     # Gardening steps in rotation order
-    STEPS = [
+    STEPS: ClassVar[list[str]] = [
         "govern_health",
         "backlog_check",
         "test_failures",
@@ -33,6 +33,8 @@ class GardeningManager:
         "quality_check",
         "dag_sync",
         "smart_prune",
+        "shadow_cleanup",
+        "garden",  # WL-060: Automated documentation synthesis
     ]
 
     def __init__(self, project_root: Path | None = None) -> None:
@@ -255,6 +257,55 @@ class GardeningManager:
             _log.error(f"Error in smart_prune gardening: {e}")
             return {"success": False, "error": str(e)}
 
+    async def run_shadow_cleanup(self) -> dict[str, Any]:
+        """Prune stale .shadow-* directories older than 7 days.
+
+        # @trace WL-036
+
+        Returns:
+            Dict with shadow_removed count and success flag.
+        """
+        from thegent.orchestration.pruning.prune import _prune_stale_shadow_and_logs
+
+        shadow_removed, logs_removed = _prune_stale_shadow_and_logs(
+            dry_run=False,
+            shadow_max_age_hours=7 * 24,  # 7 days
+            quality_log_max_age_days=7,
+        )
+        _log.info("GardeningManager shadow_cleanup: removed %d shadow dirs, %d logs", shadow_removed, logs_removed)
+        return {
+            "success": True,
+            "shadow_removed": shadow_removed,
+            "logs_removed": logs_removed,
+            "needs_attention": False,
+        }
+
+    async def run_garden(self) -> dict[str, Any]:
+        """Run automated documentation synthesis via GardenerAgent.
+
+        # @trace WL-060
+
+        Returns:
+            Dict with docs_checked, docs_updated, items_found, success flag.
+        """
+        from thegent.agents.gardener import GardenerAgent
+
+        agent = GardenerAgent(dry_run=False, project_root=self.project_root)
+        result = agent.run()
+        _log.info(
+            "GardeningManager garden: checked=%d updated=%d items=%d",
+            result.docs_checked,
+            result.docs_updated,
+            len(result.items_found),
+        )
+        return {
+            "success": True,
+            "docs_checked": result.docs_checked,
+            "docs_updated": result.docs_updated,
+            "items_found": result.items_found,
+            "needs_attention": result.docs_updated > 0,
+        }
+
     async def run_step(self, step: str) -> dict[str, Any]:
         """Run a single gardening step.
 
@@ -274,6 +325,8 @@ class GardeningManager:
             "dag_sync": self.check_dag_sync,
             "session_discovery": self._session_discovery,  # Placeholder
             "smart_prune": self.run_smart_prune,
+            "shadow_cleanup": self.run_shadow_cleanup,
+            "garden": self.run_garden,  # WL-060: Automated documentation synthesis
         }
 
         handler = step_handlers.get(step)

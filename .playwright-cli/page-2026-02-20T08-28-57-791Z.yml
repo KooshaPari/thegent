@@ -1,0 +1,327 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#content-area"
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - generic [ref=e9]:
+              - link "Ante home page light logo" [ref=e10] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e11]: Ante home page
+                - img "light logo" [ref=e12]
+              - button "Toggle dark mode" [ref=e13] [cursor=pointer]:
+                - generic [ref=e14]:
+                  - img [ref=e15]
+                  - img [ref=e22]
+            - generic [ref=e27]:
+              - button "Open search" [ref=e28] [cursor=pointer]:
+                - generic [ref=e29]:
+                  - img [ref=e30]
+                  - generic [ref=e33]: Search...
+                - generic [ref=e34]: ⌘K
+              - button "Toggle assistant panel" [ref=e35] [cursor=pointer]:
+                - img [ref=e36]
+            - generic [ref=e40]:
+              - list
+              - generic [ref=e41]:
+                - heading "Getting Started" [level=5] [ref=e43]
+                - list [ref=e44]:
+                  - listitem [ref=e45]:
+                    - link "Overview" [ref=e46] [cursor=pointer]:
+                      - /url: /start/overview
+                      - generic [ref=e48]: Overview
+                  - listitem [ref=e49]:
+                    - link "Quickstart" [ref=e50] [cursor=pointer]:
+                      - /url: /start/quickstart
+                      - generic [ref=e52]: Quickstart
+                  - listitem [ref=e53]:
+                    - link "Eval & Benchmark" [ref=e54] [cursor=pointer]:
+                      - /url: /start/eval
+                      - generic [ref=e56]: Eval & Benchmark
+              - generic [ref=e57]:
+                - heading "Concepts" [level=5] [ref=e59]
+                - list [ref=e60]:
+                  - listitem [ref=e61]:
+                    - link "Core Concepts & Protocol" [ref=e62] [cursor=pointer]:
+                      - /url: /concepts/core-concepts
+                      - generic [ref=e64]: Core Concepts & Protocol
+                  - listitem [ref=e65]:
+                    - link "Architecture" [ref=e66] [cursor=pointer]:
+                      - /url: /concepts/architecture
+                      - generic [ref=e68]: Architecture
+              - generic [ref=e69]:
+                - heading "Agent Org" [level=5] [ref=e71]
+                - list [ref=e72]:
+                  - listitem [ref=e73]:
+                    - link "Agent Organization (Experimental)" [ref=e74] [cursor=pointer]:
+                      - /url: /agent-org
+                      - generic [ref=e76]: Agent Organization (Experimental)
+              - generic [ref=e77]:
+                - heading "Offline Mode" [level=5] [ref=e79]
+                - list [ref=e80]:
+                  - listitem [ref=e81]:
+                    - link "Offline Mode (Experimental)" [ref=e82] [cursor=pointer]:
+                      - /url: /offline
+                      - generic [ref=e84]: Offline Mode (Experimental)
+              - generic [ref=e85]:
+                - heading "Usage" [level=5] [ref=e87]
+                - list [ref=e88]:
+                  - listitem [ref=e89]:
+                    - link "Interactive TUI" [ref=e90] [cursor=pointer]:
+                      - /url: /usage/tui
+                      - generic [ref=e92]: Interactive TUI
+                  - listitem [ref=e93]:
+                    - link "Headless Mode" [ref=e94] [cursor=pointer]:
+                      - /url: /usage/headless
+                      - generic [ref=e96]: Headless Mode
+              - generic [ref=e97]:
+                - heading "Extensibility" [level=5] [ref=e99]
+                - list [ref=e100]:
+                  - listitem [ref=e101]:
+                    - link "Skills" [ref=e102] [cursor=pointer]:
+                      - /url: /extend/skills
+                      - generic [ref=e104]: Skills
+                  - listitem [ref=e105]:
+                    - link "Sub-Agents" [ref=e106] [cursor=pointer]:
+                      - /url: /extend/subagents
+                      - generic [ref=e108]: Sub-Agents
+              - generic [ref=e109]:
+                - heading "Configuration" [level=5] [ref=e111]
+                - list [ref=e112]:
+                  - listitem [ref=e113]:
+                    - link "Model & Provider Catalog" [ref=e114] [cursor=pointer]:
+                      - /url: /configuration/catalog
+                      - generic [ref=e116]: Model & Provider Catalog
+                  - listitem [ref=e117]:
+                    - link "Preferences" [ref=e118] [cursor=pointer]:
+                      - /url: /configuration/preference
+                      - generic [ref=e120]: Preferences
+                  - listitem [ref=e121]:
+                    - link "Adding a 3rd Party Provider" [ref=e122] [cursor=pointer]:
+                      - /url: /configuration/third-party-provider
+                      - generic [ref=e124]: Adding a 3rd Party Provider
+              - generic [ref=e125]:
+                - heading "Memory" [level=5] [ref=e127]
+                - list [ref=e128]:
+                  - listitem [ref=e129]:
+                    - link "Memory" [ref=e130] [cursor=pointer]:
+                      - /url: /memory
+                      - generic [ref=e132]: Memory
+              - generic [ref=e133]:
+                - heading "Reference" [level=5] [ref=e135]
+                - list [ref=e136]:
+                  - listitem [ref=e137]:
+                    - link "Tools" [ref=e138] [cursor=pointer]:
+                      - /url: /tools
+                      - generic [ref=e140]: Tools
+          - list [ref=e141]:
+            - listitem [ref=e142]:
+              - link "Website" [ref=e143] [cursor=pointer]:
+                - /url: https://antigma.ai
+                - img [ref=e144]
+                - generic [ref=e146]: Website
+                - img [ref=e147]
+            - listitem [ref=e150]:
+              - link "Discord" [ref=e151] [cursor=pointer]:
+                - /url: https://discord.gg/pqhj3DNGz2
+                - img [ref=e152]
+                - generic [ref=e154]: Discord
+                - img [ref=e155]
+            - listitem [ref=e158]:
+              - link "GitHub" [ref=e159] [cursor=pointer]:
+                - /url: https://github.com/AntigmaLabs/ante-preview
+                - img [ref=e160]
+                - generic [ref=e162]: GitHub
+                - img [ref=e163]
+            - listitem
+        - generic [ref=e166]:
+          - link "Ante Preview" [ref=e169] [cursor=pointer]:
+            - /url: /start/overview
+            - text: Ante Preview
+          - generic [ref=e171]:
+            - banner [ref=e172]:
+              - generic [ref=e173]:
+                - generic [ref=e174]: Usage
+                - heading "Interactive TUI" [level=1] [ref=e176]
+              - paragraph [ref=e178]: Using Ante’s rich terminal user interface
+            - generic [ref=e179]:
+              - generic [ref=e180]: "Launch Ante without a prompt to enter the interactive TUI:"
+              - generic [ref=e181]:
+                - generic [ref=e182]:
+                  - generic [ref=e183]:
+                    - button "Copy the contents from the code block" [ref=e184] [cursor=pointer]:
+                      - img [ref=e185]
+                    - generic [ref=e188]: Copy
+                  - generic [ref=e189]:
+                    - button "Ask AI" [ref=e190] [cursor=pointer]:
+                      - img [ref=e191]
+                    - generic [ref=e194]: Ask AI
+                - code [ref=e198]:
+                  - generic [ref=e199]: ante
+              - heading "Navigate to header Overview" [level=2] [ref=e200]:
+                - link "Navigate to header" [ref=e201] [cursor=pointer]:
+                  - /url: "#overview"
+                  - img [ref=e203]
+                - generic [ref=e205] [cursor=pointer]: Overview
+              - generic [ref=e206]:
+                - text: The TUI is built with
+                - link "ratatui" [ref=e207] [cursor=pointer]:
+                  - /url: https://ratatui.rs/
+                - text: and provides a rich chat interface directly in your terminal. It renders inline (up to 24 lines) and uses debounced rendering at approximately 100fps for smooth output.
+              - heading "Navigate to header Key features" [level=2] [ref=e208]:
+                - link "Navigate to header" [ref=e209] [cursor=pointer]:
+                  - /url: "#key-features"
+                  - img [ref=e211]
+                - generic [ref=e213] [cursor=pointer]: Key features
+              - heading "Navigate to header Chat interface" [level=3] [ref=e214]:
+                - link "Navigate to header" [ref=e215] [cursor=pointer]:
+                  - /url: "#chat-interface"
+                  - img [ref=e217]
+                - generic [ref=e219] [cursor=pointer]: Chat interface
+              - generic [ref=e220]: The main view shows a conversation between you and the agent. Type your prompt in the input area and press Enter to send. The agent’s responses stream in real-time with markdown rendering.
+              - heading "Navigate to header Tool approval" [level=3] [ref=e221]:
+                - link "Navigate to header" [ref=e222] [cursor=pointer]:
+                  - /url: "#tool-approval"
+                  - img [ref=e224]
+                - generic [ref=e226] [cursor=pointer]: Tool approval
+              - generic [ref=e227]:
+                - text: When the agent wants to execute a tool that requires approval (like
+                - code [ref=e228]: Bash
+                - text: or
+                - code [ref=e229]: Write
+                - text: "), you’ll see an approval prompt. You can:"
+              - list [ref=e230]:
+                - listitem [ref=e231]:
+                  - strong [ref=e232]: Allow
+                  - text: the tool call
+                - listitem [ref=e233]:
+                  - strong [ref=e234]: Deny
+                  - text: it and the agent will adjust its approach
+              - heading "Navigate to header Diff view" [level=3] [ref=e235]:
+                - link "Navigate to header" [ref=e236] [cursor=pointer]:
+                  - /url: "#diff-view"
+                  - img [ref=e238]
+                - generic [ref=e240] [cursor=pointer]: Diff view
+              - generic [ref=e241]: When the agent proposes file edits, Ante switches to a fullscreen diff view on an alternate screen. You can review the exact changes before approving.
+              - heading "Navigate to header Model and provider selection" [level=3] [ref=e242]:
+                - link "Navigate to header" [ref=e243] [cursor=pointer]:
+                  - /url: "#model-and-provider-selection"
+                  - img [ref=e245]
+                - generic [ref=e247] [cursor=pointer]: Model and provider selection
+              - generic [ref=e248]: Use the built-in selectors to switch models or providers during a session without restarting.
+              - heading "Navigate to header Theme selection" [level=3] [ref=e249]:
+                - link "Navigate to header" [ref=e250] [cursor=pointer]:
+                  - /url: "#theme-selection"
+                  - img [ref=e252]
+                - generic [ref=e254] [cursor=pointer]: Theme selection
+              - generic [ref=e255]: Ante includes a theme system for consistent styling. Choose a theme through the theme dialog.
+              - heading "Navigate to header Keyboard shortcuts" [level=2] [ref=e256]:
+                - link "Navigate to header" [ref=e257] [cursor=pointer]:
+                  - /url: "#keyboard-shortcuts"
+                  - img [ref=e259]
+                - generic [ref=e261] [cursor=pointer]: Keyboard shortcuts
+              - table [ref=e264]:
+                - rowgroup [ref=e265]:
+                  - row "Key Action" [ref=e266]:
+                    - columnheader "Key" [ref=e267]
+                    - columnheader "Action" [ref=e268]
+                - rowgroup [ref=e269]:
+                  - row "Enter Send message" [ref=e270]:
+                    - cell "Enter" [ref=e271]:
+                      - code [ref=e272]: Enter
+                    - cell "Send message" [ref=e273]
+                  - row "Ctrl+C Interrupt current task / Exit" [ref=e274]:
+                    - cell "Ctrl+C" [ref=e275]:
+                      - code [ref=e276]: Ctrl+C
+                    - cell "Interrupt current task / Exit" [ref=e277]
+                  - row "Escape Cancel current input" [ref=e278]:
+                    - cell "Escape" [ref=e279]:
+                      - code [ref=e280]: Escape
+                    - cell "Cancel current input" [ref=e281]
+              - heading "Navigate to header CLI flags for TUI mode" [level=2] [ref=e282]:
+                - link "Navigate to header" [ref=e283] [cursor=pointer]:
+                  - /url: "#cli-flags-for-tui-mode"
+                  - img [ref=e285]
+                - generic [ref=e287] [cursor=pointer]: CLI flags for TUI mode
+              - generic [ref=e288]: "You can customize the TUI session with flags:"
+              - generic [ref=e289]:
+                - generic [ref=e290]:
+                  - generic [ref=e291]:
+                    - button "Copy the contents from the code block" [ref=e292] [cursor=pointer]:
+                      - img [ref=e293]
+                    - generic [ref=e296]: Copy
+                  - generic [ref=e297]:
+                    - button "Ask AI" [ref=e298] [cursor=pointer]:
+                      - img [ref=e299]
+                    - generic [ref=e302]: Ask AI
+                - code [ref=e306]:
+                  - generic [ref=e307]: "# Use a specific model"
+                  - generic [ref=e308]: ante --model claude-sonnet-4-5-20250514
+                  - generic [ref=e309]: "# Use a specific provider"
+                  - generic [ref=e310]: ante --provider openai
+                  - generic [ref=e311]: "# Override the system prompt"
+                  - generic [ref=e312]: ante --system-prompt "You are a Python expert"
+                  - generic [ref=e313]: "# Append to the system prompt"
+                  - generic [ref=e314]: ante --append-system-prompt "Always use type hints"
+                  - generic [ref=e315]: "# Restrict available tools"
+                  - generic [ref=e316]: ante --allowed-tools Read Grep Glob
+                  - generic [ref=e317]: "# Remove specific tools"
+                  - generic [ref=e318]: ante --disallowed-tools Bash Write
+              - heading "Navigate to header Streaming" [level=2] [ref=e319]:
+                - link "Navigate to header" [ref=e320] [cursor=pointer]:
+                  - /url: "#streaming"
+                  - img [ref=e322]
+                - generic [ref=e324] [cursor=pointer]: Streaming
+              - generic [ref=e325]:
+                - text: Streaming is enabled by default in TUI mode for real-time response rendering. To disable it, set the
+                - code [ref=e326]: ANTE_DISABLE_STREAMING
+                - text: "environment variable:"
+              - generic [ref=e327]:
+                - generic [ref=e328]:
+                  - generic [ref=e329]:
+                    - button "Copy the contents from the code block" [ref=e330] [cursor=pointer]:
+                      - img [ref=e331]
+                    - generic [ref=e334]: Copy
+                  - generic [ref=e335]:
+                    - button "Ask AI" [ref=e336] [cursor=pointer]:
+                      - img [ref=e337]
+                    - generic [ref=e340]: Ask AI
+                - code [ref=e344]:
+                  - generic [ref=e345]: ANTE_DISABLE_STREAMING=1 ante
+            - generic [ref=e347]:
+              - link "Previous" [ref=e348] [cursor=pointer]:
+                - /url: /offline
+                - img [ref=e349]
+                - generic [ref=e351]: Previous
+              - link "Headless Mode Run Ante as a non-interactive CLI for scripting and CI pipelines Next" [ref=e352] [cursor=pointer]:
+                - /url: /usage/headless
+                - generic [ref=e353]:
+                  - generic [ref=e354]:
+                    - generic [ref=e355]: Headless Mode
+                    - generic [ref=e356]: Run Ante as a non-interactive CLI for scripting and CI pipelines
+                  - generic [ref=e358]:
+                    - generic [ref=e359]: Next
+                    - img [ref=e360]
+            - contentinfo [ref=e362]:
+              - link "Powered by" [ref=e365] [cursor=pointer]:
+                - /url: https://www.mintlify.com?utm_campaign=poweredBy&utm_medium=referral&utm_source=antigmalabs
+                - generic [ref=e366]: Powered by
+                - img [ref=e367]
+      - generic [ref=e379]:
+        - generic [ref=e380]:
+          - generic [ref=e381]:
+            - img [ref=e382]
+            - generic [ref=e386]: Assistant
+          - generic [ref=e387]:
+            - button [ref=e388] [cursor=pointer]:
+              - img [ref=e389]
+            - button [ref=e394] [cursor=pointer]:
+              - img [ref=e395]
+        - generic [ref=e401]: Responses are generated using AI and may contain mistakes.
+        - generic [ref=e406]:
+          - textbox "Ask a question..." [ref=e407]
+          - button "Send message" [disabled] [ref=e408]:
+            - img [ref=e409]
+  - alert [ref=e411]

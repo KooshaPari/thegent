@@ -10,16 +10,14 @@ Implements multiple layers of protection:
 - Context window management
 """
 
-import hashlib
 import logging
 import os
 import re
+import tempfile
 import time
-from collections import defaultdict
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -33,42 +31,46 @@ class SecurityInvariant:
     """System invariants that must always hold true."""
 
     # Processes that must NEVER be killed
-    PROTECTED_PROCESSES: set[str] = {
-        "cursor-agent",
-        "cursor agent",
-        "thegent",
-        "claude",
-        "codex",
-        "droid",
-        "opencode",
-        "copilot",
-        "gemini",
-        "bash",
-        "zsh",
-        "sh",
-        "ghostty",
-        "terminal",
-        "iterm",
-        "alacritty",
-        "kitty",
-        "wezterm",
-        "warp",
-    }
+    PROTECTED_PROCESSES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "cursor-agent",
+            "cursor agent",
+            "thegent",
+            "claude",
+            "codex",
+            "droid",
+            "opencode",
+            "copilot",
+            "gemini",
+            "bash",
+            "zsh",
+            "sh",
+            "ghostty",
+            "terminal",
+            "iterm",
+            "alacritty",
+            "kitty",
+            "wezterm",
+            "warp",
+        }
+    )
 
     # Commands that are NEVER allowed
-    FORBIDDEN_COMMANDS: set[str] = {
-        "rm -rf /",
-        "rm -rf /*",
-        "dd if=",
-        "mkfs",
-        "fdisk",
-        "format",
-        "del /f /s /q",
-        "format c:",
-    }
+    FORBIDDEN_COMMANDS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "rm -rf /",
+            "rm -rf /*",
+            "dd if=",
+            "mkfs",
+            "fdisk",
+            "format",
+            "del /f /s /q",
+            "format c:",
+        }
+    )
 
     # Dangerous patterns
-    DANGEROUS_PATTERNS: list[tuple[str, str]] = [
+    DANGEROUS_PATTERNS: ClassVar[tuple[tuple[str, str], ...]] = (
         (r"kill.*-9.*cursor", "Killing cursor-agent processes"),
         (r"kill.*-9.*thegent", "Killing thegent processes"),
         (r"rm.*-rf.*\/", "Recursive delete of root"),
@@ -76,7 +78,7 @@ class SecurityInvariant:
         (r"sudo.*rm.*-rf", "Sudo recursive delete"),
         (r"xargs.*kill", "Bulk process killing"),
         (r"pkill.*cursor", "Killing cursor processes"),
-    ]
+    )
 
     # Maximum command length (prevent buffer overflow attempts)
     MAX_COMMAND_LENGTH: int = 10000
@@ -121,7 +123,7 @@ class RateLimit:
 class RateLimiter:
     """Rate limiter for operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.limits: dict[str, RateLimit] = {}
 
     def add_limit(self, key: str, max_calls: int, window_seconds: int):
@@ -209,7 +211,9 @@ class CommandValidator:
         # Prevent directory traversal
         if ".." in path or path.startswith("/"):
             # Allow absolute paths but log warning
-            if path.startswith("/") and not path.startswith("/tmp") and not path.startswith("/var/tmp"):
+            tmp_dir = str(Path(tempfile.gettempdir()).resolve())
+            alt_tmp_dir = str((Path(tmp_dir).parent / "var" / Path(tmp_dir).name).resolve())
+            if path.startswith("/") and not path.startswith((tmp_dir, alt_tmp_dir)):
                 logger.warning(f"Absolute path access: {path}")
 
         # Remove dangerous characters
@@ -299,7 +303,7 @@ class SecretManager:
     """Manages secrets using environment variables."""
 
     # Map of secret names to environment variable names
-    SECRET_ENV_MAP: dict[str, str] = {
+    SECRET_ENV_MAP: ClassVar[dict[str, str]] = {
         "openai_api_key": "OPENAI_API_KEY",
         "anthropic_api_key": "ANTHROPIC_API_KEY",
         "openrouter_api_key": "OPENROUTER_API_KEY",
@@ -336,7 +340,7 @@ class SecretManager:
 class Guardrails:
     """Main guardrails orchestrator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.validator = CommandValidator()
         self.token_optimizer = TokenOptimizer()
         self.secret_manager = SecretManager()
@@ -360,10 +364,7 @@ class Guardrails:
             return False, None, error
 
         # Sanitize if list
-        if isinstance(cmd, list):
-            sanitized = " ".join(cmd)
-        else:
-            sanitized = cmd
+        sanitized = " ".join(cmd) if isinstance(cmd, list) else cmd
 
         return True, sanitized, None
 

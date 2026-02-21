@@ -69,13 +69,13 @@ class TransactionManager:
                     else:
                         op.undo(*op.args, **op.kwargs)
                     op.status = "reverted"
-                except Exception as rollback_err:
+                except Exception as rollback_err:  # noqa: PERF203 - intentional per-item error handling
                     _log.critical("Rollback FAILED for op %s: %s", op.description, rollback_err)
             return False
 
 
 def apply_multi_file_transaction(
-    changes: list[tuple[Path, str], str],
+    changes: list[tuple[Path, str]],
     cwd: Path | None = None,
     git_commit: bool = False,
     commit_message: str = "thegent: atomic multi-file apply",

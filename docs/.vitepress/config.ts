@@ -38,12 +38,18 @@ const config = defineConfig({
       // VitePress bundles its own vite; cast required to resolve dual-vite Plugin type mismatch
       imagetools({
         defaultDirectives: (url) => {
+          // Image optimization: WebP/AVIF conversion, lazy loading handled by browser
           if (url.searchParams.has('format')) {
             return new URLSearchParams({
-              format: url.searchParams.get('format') || 'webp',
+              format: url.searchParams.get('format') || 'avif',
+              as: 'picture',
             })
           }
-          return new URLSearchParams()
+          // Default to AVIF with WebP fallback for better compression
+          return new URLSearchParams({
+            format: 'avif',
+            as: 'picture',
+          })
         }
       }) as any
     ],

@@ -1,0 +1,159 @@
+# artifacts_api
+
+Source: docs/reference/api/artifacts_api.md
+
+---
+
+# artifacts API Reference
+
+> **Source**: `src/thegent/maif/artifacts.py`
+
+MAIF (Model-Aware Information Flow) action artifacts.
+
+Provides signed, immutable records of agent actions (WP-3002).
+
+---
+
+## MAIFArtifact
+
+Represents a signed MAIF artifact.
+
+---
+
+## MAIFArtifactStore
+
+SQLite-backed storage for MAIF artifacts (FR-MAIF-001).
+
+### Methods
+
+#### MAIFArtifactStore.__init__
+
+```
+__init__(self: Any, db_path: Path)
+```
+
+---
+
+#### MAIFArtifactStore.get
+
+```
+get(self: Any, artifact_id: str)
+```
+
+Retrieve artifact by ID.
+
+---
+
+#### MAIFArtifactStore.store
+
+```
+store(self: Any, artifact: MAIFArtifact)
+```
+
+Store artifact in local cache.
+
+---
+
+---
+
+## MAIFHook
+
+Intercepts agent actions to record MAIF artifacts (WP-3002).
+
+### Methods
+
+#### MAIFHook.__init__
+
+```
+__init__(self: Any, artifact_store: MAIFArtifactStore, private_key: rsa.RSAPrivateKey, agent_id: str, session_id: str)
+```
+
+---
+
+#### MAIFHook.record_action
+
+```
+record_action(self: Any, action_type: str, payload: dict[(str, Any)], chain_of_thought: Any)
+```
+
+Record an action as a signed MAIF artifact.
+
+---
+
+---
+
+## generate_signing_key
+
+Generate RSA key pair for signing (MAIF).
+
+---
+
+## get
+
+```
+get(self: Any, artifact_id: str)
+```
+
+Retrieve artifact by ID.
+
+---
+
+## load_private_key
+
+```
+load_private_key(path: Path, password: Any)
+```
+
+Load private key from PEM file.
+
+---
+
+## record_action
+
+```
+record_action(self: Any, action_type: str, payload: dict[(str, Any)], chain_of_thought: Any)
+```
+
+Record an action as a signed MAIF artifact.
+
+---
+
+## save_private_key
+
+```
+save_private_key(private_key: rsa.RSAPrivateKey, path: Path, password: Any)
+```
+
+Save private key to PEM file.
+
+---
+
+## sign_artifact
+
+```
+sign_artifact(artifact: MAIFArtifact, private_key: rsa.RSAPrivateKey)
+```
+
+Sign a MAIFArtifact with RSA private key (MAIF).
+
+---
+
+## store
+
+```
+store(self: Any, artifact: MAIFArtifact)
+```
+
+Store artifact in local cache.
+
+---
+
+## verify_artifact
+
+```
+verify_artifact(artifact: MAIFArtifact, public_key: rsa.RSAPublicKey)
+```
+
+Verify a MAIFArtifact signature (MAIF).
+
+---

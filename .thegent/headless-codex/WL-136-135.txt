@@ -1,0 +1,26 @@
+# WL-136 + WL-135 Integration Plan (local fallback)
+
+## Goal
+Integrate core/tooling boundary enforcement (WL-136) with CI metrics dashboard emissions (WL-135).
+
+## Task wiring
+1. Extend `scripts/wl137_weekly_diagnosis.py` CI summary with stable fields for runtime LOC, top files, and drift deltas.
+2. Add boundary checks to ensure runtime core paths and tooling/test paths stay separated.
+3. Wire dashboard + boundary checks into CI lanes (fast for contracts, nightly for deep checks).
+4. Keep `docs/reference/WORK_STREAM.md` synced with lane ownership and current blockers.
+
+## Required CI summary fields
+- `timestamp_utc`
+- per-target `total_code`
+- per-target `runtime_loc`
+- per-target `top_files`
+- per-target `drift` (`total_code_delta`, hotspot deltas)
+
+## Boundary checks
+- Surface map: runtime core directories vs tooling/test directories.
+- Fail on unapproved cross-surface dependency ingress.
+- Emit machine-readable report for CI summary.
+
+## Validation
+- `uv run python scripts/wl137_weekly_diagnosis.py --config config/wl137-diagnosis.toml --history var/wl137/history.json --report /tmp/wl137.md --ci-summary /tmp/wl135-ci.json --dry-run`
+- `cat /tmp/wl135-ci.json | head -n 80`

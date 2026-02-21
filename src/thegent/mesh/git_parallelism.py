@@ -21,12 +21,14 @@ import time
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from thegent.mesh.smart_merge import SmartMerger
+
+from io import TextIOWrapper
 
 _log = logging.getLogger(__name__)
 
@@ -99,7 +101,7 @@ class WorktreeContext:
     path: Path
     branch: str
     project_root: Path
-    _pool_ref: object = field(compare=False, repr=False, default=None)
+    _pool_ref: WorktreePool | None = field(compare=False, repr=False, default=None)
 
     def commit_all(self, message: str) -> str | None:
         """Stage all changes in the worktree and create a git commit.
@@ -141,7 +143,7 @@ class _PoolStateLock:
 
     def __init__(self, state_path: Path) -> None:
         self._path = state_path
-        self._fh = None
+        self._fh: TextIOWrapper | None = None
 
     def __enter__(self) -> _PoolStateLock:
         self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -166,6 +168,7 @@ class _PoolStateLock:
 
     def read(self) -> dict[str, str]:
         """Parse ``key=value`` state file into dict."""
+        assert self._fh is not None
         self._fh.seek(0)
         state: dict[str, str] = {}
         for line in self._fh:

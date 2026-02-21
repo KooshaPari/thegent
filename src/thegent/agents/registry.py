@@ -1,11 +1,16 @@
 """Agent registry."""
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from thegent.agents.codex_proxy import CodexProxyRunner
 from thegent.agents.cursor_api_runner import CursorApiRunner
 from thegent.agents.direct_agents import DirectAgentRunner
+
+if TYPE_CHECKING:
+    from thegent.agents.teammate_runner import TeammateRunner
 
 AGENT_NAMES = [
     "gemini",
@@ -80,7 +85,7 @@ def _resolve_agent(agent_name: str) -> str:
 
 def get_runner(
     agent_name: str,
-) -> DirectAgentRunner | CodexProxyRunner | CursorApiRunner | None:
+) -> DirectAgentRunner | CodexProxyRunner | CursorApiRunner | TeammateRunner | None:
     """Get runner for agent. Returns None for unknown."""
     canonical = _resolve_agent(agent_name)
     if canonical in _DIRECT_AGENTS:

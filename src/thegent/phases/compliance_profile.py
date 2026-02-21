@@ -1,12 +1,12 @@
 """Compliance profile mapping (EU-AI-ACT, US-SEC, SOX, GDPR)."""
 
-from typing import Any
+from typing import Any, ClassVar
 
 
 class ComplianceProfile:
     """Compliance profile mapping."""
 
-    PROFILES = {
+    PROFILES: ClassVar[dict[str, Any]] = {
         "eu-ai-act": {
             "name": "EU AI Act",
             "requirements": ["risk_assessment", "transparency", "human_oversight"],

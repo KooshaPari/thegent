@@ -1,0 +1,193 @@
+# thegent-phase10-12-bundle-b-sprint-playbook
+
+Source: docs/docset/thegent-phase10-12-bundle-b-sprint-playbook.md
+
+---
+
+# Thegent Phase 10–12 Bundle B Sprint Playbook
+
+**Status:** Operational playbook (Bundle B focus)  
+**Date:** 2026-02-15  
+**Scope:** Concrete execution plan for `phase10_bundle_b` with per-day tasks, checklists, PR template, and failure handling.
+
+## 0) Bundle B objective
+
+Bundle B executes `WP-10004` through `WP-10010`, converting trust policy, interface parity, migration UX, conformance, and operator documentation into production-grade, audit-backed changes.
+
+## 1) Why Bundle B first for this next cycle?
+
+- It hardens interface and capability boundaries before any auto-optimization control changes.
+- It closes the most integration-sensitive risks before phase11 control stack goes live.
+- It provides stable evidence traceability required for G10 and all later bundles.
+
+## 2) Suggested sprint cadence
+
+- Sprint length: 2 weeks (10 business days), with explicit midpoint and close gates.
+- Team shape:
+  - Daytime core: 1 runtime engineer + 1 platform engineer + 1 QA engineer.
+  - Async governance review window: end of Days 5 and 10.
+
+### Day-by-day plan
+
+#### Day 1: Kickoff and lock
+
+- Verify:
+  - `phase10_bundle_b` is marked `Ready`.
+  - Chunk A lock evidence present and accepted.
+  - Feature flags state and kill-switch paths documented.
+- Create PR branches for all Bundle B WPs in same feature branch or split by subdomain.
+- Set up `artifacts/phase10/chunk_b/` directory with:
+  - `chunk_b_signoff.md` template
+  - `bundle_evidence_manifest.ndjson` template
+  - baseline `bundle_b_risk_log.md`.
+
+#### Day 2: WP-10004 — trust boundary baseline
+
+- Implement trust scorer and policy evaluator.
+- Add denylist + reason codes for critical lanes.
+- Add tests:
+  - `TestAdapterTrustPolicy`
+  - critical-lane adapter deny scenarios.
+- Update evidence:
+  - `artifacts/phase10/chunk_b/adapter_trust_gate.ndjson`
+  - `artifacts/phase10/chunk_b/trust_path_manifest.ndjson`.
+
+#### Day 3: WP-10005 — endpoint parity + alias map
+
+- Generate canonical operation registry from CLI and MCP.
+- Resolve alias precedence ordering.
+- Add operation coverage assertions.
+- Update evidence:
+  - `artifacts/phase10/chunk_b/operation_coverage_matrix.ndjson`
+  - `artifacts/phase10/chunk_b/alias_contract.ndjson`
+
+#### Day 4: WP-10006 — unknown-op migration UX
+
+- Add structured migration hints to unknown operation path.
+- Include `suggested_operation_alt`, `suggested_migration_version`.
+- Add docs link fallback in both interfaces.
+- Update evidence:
+  - `artifacts/phase10/chunk_b/unknown_operation_hints.ndjson`
+  - `artifacts/phase10/chunk_b/unknown_op_story_cases.ndjson`.
+
+#### Day 5: WP-10007 — traceability instrumentation
+
+- Add immutable dispatch trace metadata fields:
+  - `dispatch_path`, `policy_version`, `policy_digest`, `dispatch_path_hash`.
+- Expose retrieval endpoint/filter for immutable run lookup.
+- Update evidence:
+  - `artifacts/phase10/chunk_b/dispatch_trace_schema.ndjson`
+  - `artifacts/phase10/chunk_b/dispatch_trace_readiness.ndjson`.
+
+#### Day 6: WP-10008 — plugin lifecycle harness
+
+- Add plugin registration + conformance gating pipeline.
+- Add non-critical activation for failed conformance.
+- Update evidence:
+  - `artifacts/phase10/chunk_b/plugin_conformance_reports.ndjson`
+  - `artifacts/phase10/chunk_b/plugin_conformance_runner_report.md`.
+
+#### Day 7: WP-10009 — compatibility matrix and migration CLI
+
+- Add deterministic compatibility matrix checks.
+- Return machine-actionable errors for unsupported combinations.
+- Add migration CLI and tests for downgrade/upgrade edges.
+- Update evidence:
+  - `artifacts/phase10/chunk_b/compatibility_matrix.ndjson`
+  - `artifacts/phase10/chunk_b/compatibility_cli_report.md`.
+
+#### Day 8: WP-10010 — operations operator documentation
+
+- Publish runbook + operation examples from canonical schema.
+- Verify reproducible doc generation command.
+- Include unknown-operation workflow and migration path examples.
+- Update evidence:
+  - `artifacts/phase10/chunk_b/operations_ops_guide.ndjson`
+  - `artifacts/phase10/chunk_b/operations_docs_contract_check.json`.
+
+#### Day 9: Integration pass and block clearing
+
+- Run end-to-end tests:
+  - `TestOperationSurfaceConsolidation`
+  - `TestUnknownOperationFlow`
+  - `TestDispatchTraceEvent`
+  - `TestCompatibilityCrossPhase`
+- Repair any failures with explicit ownership.
+- Update:
+  - `artifacts/phase10/chunk_b/chunk_b_signoff.md`
+  - `artifacts/phase10/chunk_b/g10_candidate_readiness.md`.
+
+#### Day 10: G10 pre-gate review and freeze
+
+- Finalize evidence manifest with checksums.
+- Run `bundle b` final checklist and move to `Ready for Gate`.
+- If any hard stop, apply rollback plan:
+  - disable trust gate path,
+  - keep feature flag off,
+  - isolate rollback artifacts.
+
+## 3) Bundle B PR checklist
+
+Each PR must include:
+
+- Scope statement with WP IDs.
+- Required artifact path list.
+- Test list and pass status.
+- Kill-switch and rollback token.
+- Evidence manifest row (JSON).
+
+Suggested PR title convention:
+
+`phase10: bundle-b(WP-10004..10010) trust+parity + traceability`
+
+## 4) Failure and recovery matrix
+
+| Failure | Immediate action | Recovery action | Gate impact |
+|---|---|---|---|
+| CLI/MCP mismatch on parity | Pause bundle merge | Reconcile operation registry and alias map | G10 blocked |
+| Unknown operation has no migration hint | Add migration fallback + tests | Redo WP-10006 scenarios with fixture set | G10 blocked |
+| Dispatch trace missing policy digest | Add digest field + schema migration | Rebuild traceer and replay canary | G10 blocked |
+| Adapter conformance false-positive | Freeze plugin lifecycle changes | Tighten conformance criteria + manual validation | G10 blocked |
+| Compatibility matrix false-negative | Increase matrix test coverage | Adjust evaluator and error taxonomy | G10 blocked |
+
+## 5) Bundle-level acceptance gates
+
+- `TestAdapterTrustPolicy` passes on both interfaces.
+- `TestOperationSurfaceConsolidation` shows identical operation coverage.
+- `TestMigrationHintRenderer` returns migration alternatives for all unknown paths.
+- `TestDispatchTraceEvent` includes all required fields in trace retrieval.
+- `TestAdapterConformanceLifecycle` passes with noncritical lane fallback semantics.
+- `TestCompatibilityMatrixPolicy` blocks unsupported versions.
+- `TestOperationsDocsGeneration` generates operator-executable docs.
+
+## 6) Signoff package content
+
+Before moving to `Bundle QA`, include:
+
+- `chunk_b_signoff.md`
+- `bundle_b_risk_log.md`
+- `bundle_evidence_manifest.ndjson`
+- `g10_candidate_readiness.md`
+- All test run IDs and artifacts.
+
+## 7) WBS and gate references for Bundle B
+
+- WBS link: `WP-10004..WP-10010`
+- PRD link: `FR-070..FR-074` in `thegent-phase10-12-optimal-design-prd.md`
+- Readiness link: `thegent-phase10-12-test-readiness-pack.md`
+- Matrix link: `WBS_TO_ISSUE_IMPORT_MATRIX.md`
+
+## 8) Exit if partial success only
+
+If only partial WPs are green by Day 10:
+
+- Keep `phase10.interface_v2` at default off in prod.
+- Move only fully completed and tested WPs to `Ready for Gate`.
+- Create explicit split tickets for deferred WPs.
+- Keep all open WPs in Bundle B until remaining risks are resolved.
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

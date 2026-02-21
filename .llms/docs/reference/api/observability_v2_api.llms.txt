@@ -1,0 +1,121 @@
+# observability_v2_api
+
+Source: docs/reference/api/observability_v2_api.md
+
+---
+
+# observability_v2 API Reference
+
+> **Source**: `src/thegent/observability/observability_v2.py`
+
+Phase 18: Observability v2 implementation.
+
+Includes JSONL structured logging, advanced metrics, and mesh management CLI.
+
+---
+
+## AdvancedMetrics
+
+Aggregates advanced metrics per agent and command.
+
+### Methods
+
+#### AdvancedMetrics.__init__
+
+```
+__init__(self: Any, metrics_file: Path)
+```
+
+---
+
+#### AdvancedMetrics.record
+
+```
+record(self: Any, agent_id: str, command: str, duration: float, success: bool)
+```
+
+---
+
+---
+
+## JSONLFormatter
+
+Formats log records as JSONL.
+
+**Inherits from**: `logging.Formatter`
+
+### Methods
+
+#### JSONLFormatter.format
+
+```
+format(self: Any, record: Any)
+```
+
+---
+
+---
+
+## MeshCLI
+
+CLI functions for mesh management.
+
+### Methods
+
+#### MeshCLI.status
+
+```
+status(mesh_dir: Path)
+```
+
+Show summary status of the agent mesh.
+
+---
+
+#### MeshCLI.tasks
+
+```
+tasks(mesh_dir: Path)
+```
+
+Show status of tasks in the mesh.
+
+---
+
+---
+
+## format
+
+```
+format(self: Any, record: Any)
+```
+
+---
+
+## record
+
+```
+record(self: Any, agent_id: str, command: str, duration: float, success: bool)
+```
+
+---
+
+## status
+
+```
+status(mesh_dir: Path)
+```
+
+Show summary status of the agent mesh.
+
+---
+
+## tasks
+
+```
+tasks(mesh_dir: Path)
+```
+
+Show status of tasks in the mesh.
+
+---

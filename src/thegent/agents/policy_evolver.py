@@ -47,7 +47,7 @@ class PolicyEvolver:
                 {
                     "principle_id": "P-TIMEOUT-ADAPT",
                     "action": "increase_timeout",
-                    "reason": f"Timeouts constitute {failure_counts.get('timeout') / len(failures):.1%} of recent failures.",
+                    "reason": f"Timeouts constitute {failure_counts.get('timeout', 0) / len(failures):.1%} of recent failures.",
                     "suggested_value": 600,
                 }
             )

@@ -125,7 +125,7 @@ class LayoutConstraints:
     margin: Margin = None
     flex_grow: float = 1.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default padding and margin."""
         if self.padding is None:
             self.padding = Padding()

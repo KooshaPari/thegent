@@ -75,7 +75,7 @@ def _call_classifier(prompt_preview: str, model: str = "gemini-3-flash") -> dict
                 max_tokens=128,
                 timeout=15,
             )
-            content = (response.choices[0].message.content or "").strip()
+            content = (response.choices[0].message.content or "").strip()  # type: ignore[union-attr]
             # Strip markdown code blocks if present
             if content.startswith("```"):
                 content = content.split("```")[1]
@@ -84,7 +84,7 @@ def _call_classifier(prompt_preview: str, model: str = "gemini-3-flash") -> dict
             data = json.loads(content)
             if isinstance(data, dict) and "complexity" in data:
                 return data
-        except Exception as e:
+        except Exception as e:  # noqa: PERF203 - intentional per-item error handling
             last_err = e
             _log.debug("Classifier model %s failed: %s", model_str, e)
             continue

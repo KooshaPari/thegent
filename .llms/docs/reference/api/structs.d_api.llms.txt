@@ -1,0 +1,23 @@
+# structs.d_api
+
+Source: docs/reference/api/structs.d_api.md
+
+---
+
+# structs.d API Reference
+
+> **Source**: `.venv/lib/pypy3.11/site-packages/playwright/driver/package/types/structs.d.ts`
+
+## Types
+
+### EvaluationArgument
+
+Can be converted to JSON, but may also contain JSHandles.
+
+---
+
+### Serializable
+
+Can be converted to JSON
+
+---

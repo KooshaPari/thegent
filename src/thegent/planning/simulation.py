@@ -376,3 +376,29 @@ class ForecastAuditor:
         recent_mape = sum(e["error_pct"] for e in recent) / 1000.0
 
         return recent_mape > threshold
+
+
+class SimulationEngine:
+    """WP-16001: Engine for replaying execution traces in sandbox mode."""
+
+    def __init__(self, registry: Any) -> None:
+        self.registry = registry
+
+    def simulate_what_if(self, run_id: str, target_env: str = "sandbox") -> dict[str, Any]:
+        """Simulate a what-if scenario for a given run in a target environment."""
+        runs = self.registry.list_runs(limit=1000)
+        run = next((r for r in runs if r.get("run_id") == run_id), None)
+        if run is None:
+            return {"status": "error", "reason": f"Run {run_id} not found"}
+
+        constraints_applied = []
+        if target_env == "sandbox":
+            constraints_applied.append("sandbox_isolation")
+
+        return {
+            "status": "success",
+            "allowed": True,
+            "reason": f"Simulated in {target_env}",
+            "constraints_applied": constraints_applied,
+            "run_id": run_id,
+        }

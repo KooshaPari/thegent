@@ -1644,7 +1644,15 @@ Resume a background session (register resume event).
 <details>
 <summary>Full documentation</summary>
 
-Resume a background session (register resume event).
+Resume a background session using the stable WL-110 state contract.
+
+- With no `--session-id`, `thegent` selects the most recent resumable `state.json`
+  under `~/.thegent/sessions/*/state.json`.
+- A resumable state contract must include non-empty string values for:
+  - `session_id`
+  - `run_id`
+- Malformed state contracts are skipped during auto-selection and rejected when
+  explicitly targeted.
 
 </details>
 
@@ -1829,6 +1837,45 @@ Examples:
 </details>
 
 <CodePlayground lang='bash' code='thegent setup --api-key VALUE --model VALUE --openrouter-key VALUE ...' />
+
+---
+
+## `thegent sys setup project scaffold`
+
+Bootstrap a new project from initialize-project presets.
+
+<details>
+<summary>Full documentation</summary>
+
+Preset scaffold command with profile defaults and optional tenancy/runtime wiring.
+
+Examples:
+  thegent sys setup project scaffold ./my-service --profile service_api
+  thegent sys setup project scaffold ./my-service --profile service_api --dry-run --json
+  thegent sys setup project scaffold ./my-service --profile service_api --register --install-runtime
+
+</details>
+
+<CodePlayground lang='bash' code='thegent sys setup project scaffold DESTINATION --profile VALUE --name VALUE --description VALUE --language VALUE --register --install-runtime --dry-run --json' />
+
+---
+
+## `thegent sys setup project scaffold-profiles`
+
+List available scaffold preset profiles.
+
+<details>
+<summary>Full documentation</summary>
+
+Show supported profile names and optionally emit JSON.
+
+Examples:
+  thegent sys setup project scaffold-profiles
+  thegent sys setup project scaffold-profiles --json
+
+</details>
+
+<CodePlayground lang='bash' code='thegent sys setup project scaffold-profiles --json' />
 
 ---
 
@@ -2217,4 +2264,3 @@ Get workstream statistics.
 <CodePlayground lang='bash' code='thegent workstream-stats' />
 
 ---
-

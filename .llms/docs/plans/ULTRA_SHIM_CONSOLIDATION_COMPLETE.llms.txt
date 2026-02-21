@@ -1,0 +1,231 @@
+# ULTRA_SHIM_CONSOLIDATION_COMPLETE
+
+Source: docs/plans/ULTRA_SHIM_CONSOLIDATION_COMPLETE.md
+
+---
+
+# Runtime Dispatch Consolidation & Fork Fix: Complete
+
+> **Status**: Implementation Complete | **Date**: 2026-02-16  
+> **Purpose**: Consolidated all shims into unified Rust binary (`runtime-dispatch`) with fork failure fixes
+
+---
+
+## What Was Consolidated
+
+### 1. Shell Wrappers + Go Binary → Rust Binary
+
+**Before**: Multiple implementations:
+- Shell scripts: `hooks/lib/grep-wrapper.sh`, `hooks/lib/git-wrapper.sh`, `hooks/lib/fd-wrapper.sh`
+- Go binary: `~/.local/bin/ultra-shim.go` (fork exhaustion issues)
+- Separate shims for different tools
+
+**After**: All logic consolidated into `crates/thegent-runtime/src/main.rs`:
+- `handle_grep()` - grep → rg routing
+- `handle_git()` - git caching
+- `handle_find()` - find → fd routing
+- `handle_ls()`, `handle_du()`, `handle_cat()` - file operations
+- `handle_node()`, `handle_npm()`, `handle_npx()` - Node.js tools
+- `handle_python()`, `handle_pip()` - Python tools
+- Unified caching, indexing, and fork-safe execution
+
+### 2. Fork Failure Fixes
+
+**Fixed Functions**:
+- `runAndCacheSafe()` - Added fork failure detection, circuit breaker, fallback to `syscall.Exec`
+- `tryIndexSafe()` - Uses absolute path to real grep, avoids recursive interception
+- `resolveRealSafe()` - Filters non-executables, checks shebang, excludes project directories
+
+### 3. Circuit Breaker Pattern
+
+**Implementation**:
+- Detects fork failures (3+ failures opens circuit)
+- 30-second cooldown before reset
+- Falls back to direct `syscall.Exec` when circuit is open
+- Environment variable tracking: `ULTRA_SHIM_FORK_FAILURES`
+
+### 4. Bypass Mechanisms
+
+**Environment Variables**:
+- `BYPASS_ULTRA_SHIM=1` - Completely bypass shim
+- `USE_FAST_FIND=0` - Disable find acceleration
+- `USE_FAST_GREP=0` - Disable grep acceleration
+- `USE_FAST_GIT=0` - Disable git acceleration
+- `USE_FAST_CAT=0` - Disable cat acceleration
+- `USE_FAST_DU=0` - Disable du acceleration
+- `USE_FAST_LS=0` - Disable ls acceleration
+
+---
+
+## Key Improvements
+
+### 1. Fork Safety
+
+**Before**:
+```
+func runAndCache(...) {
+    cmd := exec.Command(path, args...)  // FORKS - can fail
+    output, err := cmd.CombinedOutput()
+    // No error handling for fork failures
+}
+```
+
+**After**:
+```
+func runAndCacheSafe(...) {
+    // Check circuit breaker
+    if circuitOpen { /* fallback to Exec */ }
+    
+    // Try fork
+    cmd := exec.Command(path, args...)
+    output, err := cmd.CombinedOutput()
+    
+    // Detect fork failures
+    if isForkError(err) {
+        // Update circuit breaker
+        // Fall back to syscall.Exec (no fork)
+    }
+}
+```
+
+### 2. Recursive Interception Prevention
+
+**Before**:
+```
+cmd := exec.Command("grep", "-E", grepPattern, indexPath)  // May be intercepted!
+```
+
+**After**:
+```
+grepPath := resolveRealSafe("grep", "")  // Absolute path to real grep
+if grepPath == "" {
+    grepPath = "/usr/bin/grep"  // Fallback
+}
+cmd := exec.Command(grepPath, "-E", grepPattern, indexPath)
+```
+
+### 3. PATH Corruption Fix
+
+**Before**:
+```
+func resolveReal(name, self string) string {
+    // Could return Python files from src/
+}
+```
+
+**After**:
+```
+func resolveRealSafe(name, self string) string {
+    // Only checks safe paths: /opt/homebrew/bin, /usr/local/bin, /usr/bin, /bin
+    // Verifies executable bit or shebang
+    // Excludes project directories
+}
+```
+
+---
+
+## Compilation & Installation
+
+### Compile
+
+```
+cd /Users/kooshapari/.local/bin/
+go build -o ultra-shim ultra-shim.go
+```
+
+### Install (Symlink to Tools)
+
+```
+# Create symlinks for each tool
+ln -sf ultra-shim find
+ln -sf ultra-shim grep
+ln -sf ultra-shim git
+ln -sf ultra-shim cat
+ln -sf ultra-shim ls
+ln -sf ultra-shim du
+ln -sf ultra-shim node
+ln -sf ultra-shim npm
+ln -sf ultra-shim npx
+ln -sf ultra-shim python
+ln -sf ultra-shim python3
+ln -sf ultra-shim pip
+ln -sf ultra-shim pip3
+```
+
+### Or Use Single Binary
+
+The shim detects which tool it is via `filepath.Base(os.Args[0])`, so you can:
+1. Copy `ultra-shim` to each tool name: `cp ultra-shim find`, `cp ultra-shim grep`, etc.
+2. Or use symlinks (recommended)
+
+---
+
+## Testing
+
+### Test Fork Failure Handling
+
+```
+# Simulate fork exhaustion
+ulimit -u 10
+find ~/.codex -type f
+# Should fall back to direct exec, not fail
+```
+
+### Test Circuit Breaker
+
+```
+# Trigger multiple fork failures
+for i in {1..5}; do find ~/.codex -type f; done
+# Should open circuit after 3 failures, then reset after 30s
+```
+
+### Test Bypass
+
+```
+# Bypass shim
+export BYPASS_ULTRA_SHIM=1
+find ~/.codex -type f
+# Should use real find directly
+```
+
+---
+
+## Migration from Shell Wrappers
+
+### Hooks Can Still Use Shell Wrappers
+
+The shell wrappers in `hooks/lib/` can remain for backward compatibility, but new code should rely on the Go shim.
+
+### Gradual Migration
+
+1. **Phase 1**: Ultra-shim handles all tool interception
+2. **Phase 2**: Shell wrappers become thin wrappers that call real binaries
+3. **Phase 3**: Remove shell wrappers (optional)
+
+---
+
+## Performance Improvements
+
+1. **No Fork Overhead**: Uses `syscall.Exec` for simple cases (replaces process, no fork)
+2. **Circuit Breaker**: Prevents repeated fork failures
+3. **Caching**: Still works when forks succeed
+4. **Indexing**: Uses absolute paths to avoid recursive interception
+
+---
+
+## Next Steps
+
+1. **Compile**: `go build -o ultra-shim ultra-shim.go`
+2. **Install**: Create symlinks or copies
+3. **Test**: Verify fork failure handling works
+4. **Monitor**: Check `ULTRA_SHIM_FORK_FAILURES` env var
+
+---
+
+**Status**: ✅ Complete | **Last Updated**: 2026-02-16
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

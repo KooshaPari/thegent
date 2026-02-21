@@ -5,6 +5,8 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Literal, cast, get_args
 
+from thegent.routing.provider_types import normalize_provider_name
+
 # Canonical model ID -> list of routes (provider, backend, model_alias, priority)
 # Lower priority = prefer first when using prefer_direct
 RoutePolicy = Literal["prefer_direct", "prefer_proxy", "failover", "round_robin", "cheapest", "pareto"]
@@ -80,6 +82,15 @@ def _build_static_catalog() -> dict[str, list[Route]]:
         ("antigravity", "proxy", "claude-opus-4.6-1m", 10, 1.3),
         ("minimax", "proxy", "minimax-m2.5", 0, 0.4),
         ("glm", "proxy", "glm-5", 0, 0.4),
+        ("ollama", "direct", "llama3.3", 0, 0.0),
+        ("ollama", "direct", "llama3.2", 0, 0.0),
+        ("ollama", "direct", "llama3.1", 0, 0.0),
+        ("ollama", "direct", "qwen2.5-coder", 0, 0.0),
+        ("ollama", "direct", "mistral", 0, 0.0),
+        ("ollama", "direct", "codellama", 0, 0.0),
+        ("ollama", "direct", "deepseek-coder-v2", 0, 0.0),
+        ("ollama", "direct", "phi4", 0, 0.0),
+        ("ollama", "direct", "gemma3", 0, 0.0),
         ("roo", "proxy", "roo-default", 0, 0.5),
         ("kilo", "proxy", "kilo-default", 0, 0.5),
     ]
@@ -517,8 +528,10 @@ def resolve_route(
     - quality_floor: Minimum quality threshold (0-1) for cost_quality routing.
     - lane: Execution lane (reserved for future routing strategies).
     """
+    normalized_provider_hint = normalize_provider_name(provider_hint) if provider_hint else None
+
     # OPT-020: Check cache first (multi-tier if available)
-    cache_key = _make_route_cache_key(model_id, provider_hint, policy, quality_floor, lane)
+    cache_key = _make_route_cache_key(model_id, normalized_provider_hint, policy, quality_floor, lane)
     if _USE_MULTI_TIER_CACHE:
         cached_result = _ROUTE_CACHE.get(cache_key)
         if cached_result is not None:
@@ -533,9 +546,9 @@ def resolve_route(
     if not routes:
         return None
 
-    if provider_hint:
+    if normalized_provider_hint:
         for r in routes:
-            if r.provider == provider_hint:
+            if r.provider == normalized_provider_hint:
                 return (r.provider, r.model_alias)
         return None
 

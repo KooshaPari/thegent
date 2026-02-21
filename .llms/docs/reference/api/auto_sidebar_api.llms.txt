@@ -1,0 +1,83 @@
+# auto_sidebar_api
+
+Source: docs/reference/api/auto_sidebar_api.md
+
+---
+
+# auto_sidebar API Reference
+
+> **Source**: `src/thegent/docgen/auto_sidebar.py`
+
+Auto-generate sidebar from directory structure.
+
+---
+
+## AutoSidebarGenerator
+
+Generate sidebar automatically from directory structure.
+
+### Methods
+
+#### AutoSidebarGenerator.__init__
+
+```
+__init__(self: Any, docs_root: Path)
+```
+
+Initialize auto-sidebar generator.
+
+**Parameters**:
+
+- `docs_root`: Root directory of documentation
+
+---
+
+#### AutoSidebarGenerator.generate_sidebar_config
+
+```
+generate_sidebar_config(self: Any)
+```
+
+Generate sidebar configuration.
+
+**Returns**: Sidebar configuration list
+
+---
+
+#### AutoSidebarGenerator.scan_structure
+
+```
+scan_structure(self: Any)
+```
+
+Scan directory structure.
+
+**Returns**: Structure dictionary
+
+---
+
+---
+
+## generate_sidebar_config
+
+```
+generate_sidebar_config(self: Any)
+```
+
+Generate sidebar configuration.
+
+**Returns**: Sidebar configuration list
+
+---
+
+## scan_structure
+
+```
+scan_structure(self: Any)
+```
+
+Scan directory structure.
+
+**Returns**: Structure dictionary
+
+---

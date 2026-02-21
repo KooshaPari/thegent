@@ -1,0 +1,131 @@
+# roid_main_api
+
+Source: docs/reference/api/roid_main_api.md
+
+---
+
+# roid_main API Reference
+
+> **Source**: `src/thegent/roid_main.py`
+
+Roid CLI: Factory Droid-backed interactive harness with dex/clode-style aliases.
+
+---
+
+## default_roid
+
+```
+default_roid(ctx: typer.Context)
+```
+
+Default roid behavior: flash model (gemini-3-flash).
+
+---
+
+## install_links
+
+```
+install_links(bin_dir: Path, force: bool)
+```
+
+Install/update roid -&gt; thegent-shims harness shim under ~/.local/bin.
+
+---
+
+## roid_composer
+
+```
+roid_composer(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_doctor
+
+```
+roid_doctor(fix: bool)
+```
+
+Run thegent doctor (harness-equiv).
+
+---
+
+## roid_flash
+
+```
+roid_flash(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_free
+
+```
+roid_free(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_glm
+
+```
+roid_glm(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_haiku
+
+```
+roid_haiku(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_max
+
+```
+roid_max(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_mini
+
+```
+roid_mini(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_opus
+
+```
+roid_opus(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_sonnet
+
+```
+roid_sonnet(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_step
+
+```
+roid_step(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_ultra
+
+```
+roid_ultra(ctx: typer.Context) -> None
+```
+
+---

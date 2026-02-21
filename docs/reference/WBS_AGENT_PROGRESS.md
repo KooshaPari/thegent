@@ -28,6 +28,78 @@
 
 ---
 
+## Harness-Contract Package (Batch-1 Agent-5)
+
+| Item | Scope | Status | Evidence Location |
+|----|----|----|----|
+| HC-1 | Governance summary aligned to mandatory harness contract gates | DONE | `docs/governance/GOVERNANCE_SUMMARY.md` |
+| HC-2 | Contract verification evidence subsection (commands + expected outcomes) | DONE | `docs/governance/GOVERNANCE_SUMMARY.md` |
+| HC-3 | WBS harness-contract progress rows updated with clear status | DONE | `docs/reference/WBS_AGENT_PROGRESS.md` |
+| HC-4 | Date-stable wording pass (no relative time language) | DONE | `docs/governance/GOVERNANCE_SUMMARY.md` |
+| HC-5 | Link/anchor grep validation completed and reportable | DONE | `docs/governance/GOVERNANCE_SUMMARY.md`, `docs/reference/WBS_AGENT_PROGRESS.md` |
+
+---
+
+## Batch-2 Agent-6 Package
+
+| Item | Scope | Status | Evidence Location |
+|----|----|----|----|
+| B2-A6-1 | Batch-2 package rows added with explicit status placeholders | DONE | `docs/reference/WBS_AGENT_PROGRESS.md` |
+| B2-A6-2 | Regression-spiral governance note added (post-merge list-check + gates) | DONE | `docs/governance/GOVERNANCE_SUMMARY.md` |
+| B2-A6-3 | Wording pass for concrete, date-stable language | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+| B2-A6-4 | Duplicate section-header check for owned files | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+| B2-A6-5 | Anchor/section-name grep validation for newly added sections | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+
+---
+
+## Batch-3 Agent-6 Package
+
+| Item | Scope | Status | Evidence Location |
+|----|----|----|----|
+| B3-A6-1 | Batch-3 package rows added with explicit status values | DONE | `docs/reference/WBS_AGENT_PROGRESS.md` |
+| B3-A6-2 | Regression note command names aligned to canonical Taskfile targets | DONE | `docs/governance/GOVERNANCE_SUMMARY.md` |
+| B3-A6-3 | Operator runbook mini-section added with a 3-command sequence | DONE | `docs/governance/GOVERNANCE_SUMMARY.md` |
+| B3-A6-4 | Duplicate-header and stable-wording pass completed for owned files | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+| B3-A6-5 | Grep validation checks completed with reportable line references | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+
+---
+
+## Cycle-2 Batch-A Agent-6 Package
+
+| Item | Scope | Status | Evidence Location |
+|----|----|----|----|
+| C2-BA-A6-1 | Added Cycle-2 Batch-A package section with five work-item rows | DONE | `docs/reference/WBS_AGENT_PROGRESS.md` |
+| C2-BA-A6-2 | Added compact operator checklist for quick vs full harness chains | DONE | `docs/governance/GOVERNANCE_SUMMARY.md` |
+| C2-BA-A6-3 | Aligned checklist command names to exact Taskfile targets | DONE | `docs/governance/GOVERNANCE_SUMMARY.md`, `Taskfile.yml` |
+| C2-BA-A6-4 | Verified section-title uniqueness in owned files (no duplicate section names) | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+| C2-BA-A6-5 | Completed grep-based validation with reportable line references | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+
+---
+
+## Cycle-2 Batch-B Agent-6 Package
+
+| Item | Scope | Status | Evidence Location |
+|----|----|----|----|
+| C2-BB-A6-1 | Added Cycle-2 Batch-B progress section with five work-item rows | DONE | `docs/reference/WBS_AGENT_PROGRESS.md` |
+| C2-BB-A6-2 | Added one concise operator checklist for list-check vs quick vs full harness chains | DONE | `docs/governance/GOVERNANCE_SUMMARY.md` |
+| C2-BB-A6-3 | Aligned checklist command names to exact Taskfile targets | DONE | `docs/governance/GOVERNANCE_SUMMARY.md`, `Taskfile.yml` |
+| C2-BB-A6-4 | Confirmed wording uses static language (no relative date/time phrasing) | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+| C2-BB-A6-5 | Completed grep-based validation and prepared reportable line references | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+
+---
+
+## Cycle-2 Batch-C Agent-6 Package
+
+| Item | Scope | Status | Evidence Location |
+|----|----|----|----|
+| C2-BC-A6-1 | Added Cycle-2 Batch-C progress section with five work-item rows | DONE | `docs/reference/WBS_AGENT_PROGRESS.md` |
+| C2-BC-A6-2 | Added smoke-alias mini runbook row to the operator checklist | DONE | `docs/governance/GOVERNANCE_SUMMARY.md` |
+| C2-BC-A6-3 | Verified checklist command names match exact Taskfile targets and alias names | DONE | `docs/governance/GOVERNANCE_SUMMARY.md`, `Taskfile.yml` |
+| C2-BC-A6-4 | Confirmed headers remain non-duplicated and wording remains static | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+| C2-BC-A6-5 | Completed grep validation with reportable line references | DONE | `docs/reference/WBS_AGENT_PROGRESS.md`, `docs/governance/GOVERNANCE_SUMMARY.md` |
+
+---
+
 ## CLAIMED (in progress — do not pick)
 
 | WP | Agent | Started |
@@ -51,12 +123,6 @@
 | item-B | auto-launch | 2026-02-19T11:41:50.577637+00:00 |
 | item-B | auto-launch | 2026-02-19T11:46:19.784412+00:00 |
 | research-cross-platform-remote | auto-launch | 2026-02-19T11:51:49.993397+00:00 |
-| impl-unified-agent-registry | kooshapari-93875 | 2026-02-19T13:24:36.288439+00:00 |
-| impl-unified-agent-registry | kooshapari-82493 | 2026-02-19T13:34:33.148363+00:00 |
-| heliosShield-git-parallelism | kooshapari-41389 | 2026-02-19T13:38:22.778845+00:00 |
-| heliosShield-task-queue | kooshapari-45938 | 2026-02-19T13:38:28.774011+00:00 |
-| adr-015-immutable-ledger | kooshapari-48597 | 2026-02-19T13:38:33.387911+00:00 |
-| cache-multi-level | kooshapari-52192 | 2026-02-19T13:38:39.615562+00:00 |
 ## COMPLETED (this session / recent)
 
 | WP | Agent | Completed |
@@ -113,6 +179,7 @@
 | item-xp-1 | auto-launch | 2026-02-19T11:41:36.421523+00:00 |
 | item-xp-1 | auto-launch | 2026-02-19T11:45:53.730053+00:00 |
 | item-xp-1 | auto-launch | 2026-02-19T11:51:36.441897+00:00 |
+| occ-verify-clean | kooshapari-43046 | 2026-02-20T12:26:23.864659+00:00 |
 ## See also
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog

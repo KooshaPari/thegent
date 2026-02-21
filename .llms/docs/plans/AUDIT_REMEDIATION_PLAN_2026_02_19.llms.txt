@@ -1,0 +1,70 @@
+# AUDIT_REMEDIATION_PLAN_2026_02_19
+
+Source: docs/plans/AUDIT_REMEDIATION_PLAN_2026_02_19.md
+
+---
+
+# thegent: Audit Remediation & Expansion Plan (2026-02-19)
+
+## 1. Overview
+This plan addresses the gaps identified in the `AUDIT_AND_GAP_REPORT_2026_02_19.md`, specifically focused on documentation consolidation, shell/OS parity, and DX improvements.
+
+## 2. Phase 1: Documentation Consolidation (Current Sprint)
+
+### T1: Research Fragments → Complete Research Docs
+- [x] Consolidate all session, cross-platform, and hook-rust research fragments.
+- [x] Create `thegent/docs/research/RESEARCH_CONSOLIDATED.md`.
+- [x] Create individual deep-dive docs for each major concept (Supermemory, Pareto, etc.).
+
+### T2: Fragmented Guides → Complete Guides
+- [x] Consolidate all shell and cross-platform guides into `thegent/docs/guides/COMPLETE_USER_GUIDE.md`.
+- [x] Create a single, unified `thegent/docs/guides/QUICK_START.md`.
+- [x] Update `thegent/README.md` to point to the new consolidated guides.
+
+### T3: Master Index & Work Stream Alignment
+- [x] Synchronize `00-MASTER-INDEX.md` with current file structure.
+- [x] Update `WORK_STREAM.md` with DONE status for all Batch 8/9/10 items.
+- [x] Archive completed batch reports into a `thegent/docs/reports/archive/` directory.
+
+## 3. Phase 2: Shell & OS Infrastructure
+
+### S1: Shell Detection & Dual-Shell Strategy
+- [x] Implement `src/thegent/infra/shell_detection.py` with `get_preferred_shell()`.
+- [x] Add `THGENT_AGENT_SHELL` and `THGENT_HOOK_SHELL` to `ThegentSettings`.
+- [x] Update hook dispatcher to use shell detection, particularly for Windows (WSL vs Pwsh).
+
+### S2: hook-dispatcher (Rust)
+- [x] Initialize `hooks/hook-dispatcher/` as a Rust project.
+- [x] Implement `detect_shell`, `resolve_hook`, and `run_hook` in Rust for minimal overhead (< 50ms).
+- [x] Update `thegent install` to compile and install the dispatcher if `cargo` is present.
+
+### S3: OS-Level User Creation Adapters
+- [x] Create `src/thegent/infra/os_user_adapter.py`.
+- [x] Implement `create_os_user()` for Linux (`useradd`), macOS (`dscl`), and Windows (`New-LocalUser`).
+- [x] Handle permission checks and sudo/admin requirement reporting.
+
+## 4. Phase 3: Remote Compute & Advanced OS Integration
+
+### R1: Remote Execution detail
+- [ ] Implement `thegent run --remote <host>` using SSH.
+- [ ] Create a `RemoteExecutionManager` to handle session registry sync and log streaming from remote hosts.
+- [ ] Define `~/.thegent/remote_hosts.yaml` for host definitions.
+
+### R2: Desktop & Session Awareness
+- [ ] Add macOS Space detection (`get_current_space()`) to `desktop_automation/macos.py`.
+- [ ] Add Windows Session detection (`get_active_session_id()`) to `desktop_automation/windows.py`.
+- [ ] Implement `is_user_active()` to prevent automation during active user sessions.
+
+### R3: Internal Search Engine
+- [ ] Prototyping Orama Search integration for the documentation site.
+- [ ] Index all `.md` files in `docs/` for quick CLI-based search (`thegent search <term>`).
+
+## 5. Success Metrics
+- **90% Reduction** in fragmented research files (via consolidation).
+- **100% Cross-platform hook compatibility** (via dual-shell strategy).
+- **< 100ms Overhead** for remote command dispatch.
+- **Unified Work Stream** that accurately reflects current state at all times.
+
+---
+**Prepared by**: thegent-mesh-agent
+**Date**: 2026-02-19

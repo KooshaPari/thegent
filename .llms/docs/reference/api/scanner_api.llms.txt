@@ -1,0 +1,160 @@
+# scanner_api
+
+Source: docs/reference/api/scanner_api.md
+
+---
+
+# scanner API Reference
+
+> **Source**: `src/thegent/agents/document/scanner.py`
+
+Markdown File Scanner
+
+Scans directories for markdown files, organizing them by modification date
+and location. Supports configurable scan parameters and exclusion patterns.
+
+---
+
+## MarkdownScanner
+
+Scans directories for markdown files and organizes by date/location.
+
+### Methods
+
+#### MarkdownScanner.__init__
+
+```
+__init__(self: Any, config: ScanConfig)
+```
+
+---
+
+#### MarkdownScanner.get_file_date
+
+```
+get_file_date(self: Any, filepath: Path)
+```
+
+Get file modification date as YYYY-MM.
+
+---
+
+#### MarkdownScanner.get_summary
+
+```
+get_summary(self: Any)
+```
+
+Get summary statistics of scan results.
+
+---
+
+#### MarkdownScanner.save_results
+
+```
+save_results(self: Any, output_path: Any)
+```
+
+Save scan results to JSON file.
+
+---
+
+#### MarkdownScanner.scan
+
+```
+scan(self: Any)
+```
+
+Perform scan of all configured locations.
+
+---
+
+#### MarkdownScanner.scan_directory
+
+```
+scan_directory(self: Any, base_path: str, recursive: bool, max_depth: Any)
+```
+
+Scan directory for .md files.
+
+---
+
+#### MarkdownScanner.should_exclude
+
+```
+should_exclude(self: Any, filepath: Path)
+```
+
+Check if filepath should be excluded.
+
+---
+
+---
+
+## ScanConfig
+
+Configuration for markdown file scanning.
+
+### Methods
+
+---
+
+## get_file_date
+
+```
+get_file_date(self: Any, filepath: Path)
+```
+
+Get file modification date as YYYY-MM.
+
+---
+
+## get_summary
+
+```
+get_summary(self: Any)
+```
+
+Get summary statistics of scan results.
+
+---
+
+## save_results
+
+```
+save_results(self: Any, output_path: Any)
+```
+
+Save scan results to JSON file.
+
+---
+
+## scan
+
+```
+scan(self: Any)
+```
+
+Perform scan of all configured locations.
+
+---
+
+## scan_directory
+
+```
+scan_directory(self: Any, base_path: str, recursive: bool, max_depth: Any)
+```
+
+Scan directory for .md files.
+
+---
+
+## should_exclude
+
+```
+should_exclude(self: Any, filepath: Path)
+```
+
+Check if filepath should be excluded.
+
+---

@@ -34,7 +34,7 @@ class FastUUID:
             - Optimized for high-frequency generation
         """
         if FASTUUID_AVAILABLE:
-            return fastuuid.uuid4()
+            return uuid.UUID(str(fastuuid.uuid4()))
         return uuid.uuid4()
 
     @staticmethod
@@ -54,7 +54,7 @@ class FastUUID:
             UUID object
         """
         if FASTUUID_AVAILABLE:
-            return fastuuid.uuid1()
+            return uuid.UUID(str(fastuuid.uuid1()))
         return uuid.uuid1()
 
     @staticmethod

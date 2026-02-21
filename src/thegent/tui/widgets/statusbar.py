@@ -32,6 +32,26 @@ class StatusItem:
         return f"{self.label}: {self.value}"
 
 
+def compute_context_usage_display(
+    used: int | None,
+    max_val: int | None,
+) -> tuple[str, str | None]:
+    """Compute display text and class for context usage."""
+    if used is None or max_val is None or max_val == 0:
+        return "N/A", None
+
+    ratio = used / max_val
+    used_display = f"{used // 1000}k" if used >= 1000 else str(used)
+    max_display = f"{max_val // 1000}k" if max_val >= 1000 else str(max_val)
+    display = f"{used_display}/{max_display}"
+
+    if ratio < 0.6:
+        return display, "ctx-green"
+    if ratio < 0.8:
+        return display, "ctx-yellow"
+    return display, "ctx-red"
+
+
 class StatusbarWidget(Widget):
     """Status bar showing session and agent status."""
 
@@ -40,6 +60,9 @@ class StatusbarWidget(Widget):
     agent_name: reactive[str | None] = reactive[str | None](None)
     agent_status: reactive[str] = reactive[str]("idle")
     cwd: reactive[str] = reactive[str]("")
+    # WL-108: Context usage tracking
+    context_tokens_used: reactive[int | None] = reactive[int | None](None)
+    context_window_max: reactive[int | None] = reactive[int | None](None)
 
     DEFAULT_CSS = """
     StatusbarWidget {
@@ -79,6 +102,18 @@ class StatusbarWidget(Widget):
         color: $text-muted;
         padding: 0 1;
     }
+
+    StatusbarWidget .ctx-green {
+        color: $success;
+    }
+
+    StatusbarWidget .ctx-yellow {
+        color: $warning;
+    }
+
+    StatusbarWidget .ctx-red {
+        color: $error;
+    }
     """
 
     def __init__(self, **kwargs) -> None:
@@ -98,6 +133,10 @@ class StatusbarWidget(Widget):
         yield Static("│", classes="separator")
         yield Static("Status:", classes="status-section")
         yield Static(id="status-value", classes="status-value status-section status-active")
+        yield Static("│", classes="separator")
+        # WL-108: Context usage display
+        yield Static("CTX:", classes="status-section")
+        yield Static(id="ctx-value", classes="status-value status-section")
         yield Static("│", classes="separator")
         yield Static("CWD:", classes="status-section")
         yield Static(id="cwd-value", classes="status-value status-section")
@@ -155,6 +194,30 @@ class StatusbarWidget(Widget):
             # Truncate if too long
             display = value if len(value) <= 40 else f"...{value[-37:]}"
             cwd.update(display)
+        except Exception:
+            pass
+
+    def watch_context_tokens_used(self, value: int | None) -> None:
+        """Update context tokens display."""
+        self._update_context_display()
+
+    def watch_context_window_max(self, value: int | None) -> None:
+        """Update context window max display."""
+        self._update_context_display()
+
+    def _update_context_display(self) -> None:
+        """Update the context usage display with color coding."""
+        try:
+            ctx = self.query_one("#ctx-value", Static)
+            display, css_class = compute_context_usage_display(
+                self.context_tokens_used,
+                self.context_window_max,
+            )
+            ctx.update(display)
+
+            ctx.remove_class("ctx-green", "ctx-yellow", "ctx-red")
+            if css_class is not None:
+                ctx.add_class(css_class)
         except Exception:
             pass
 

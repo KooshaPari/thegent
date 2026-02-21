@@ -800,9 +800,8 @@ class TestRunImplCircuitBreakerAndRunnerFactory:
     # @trace FR-EXEC-613
     def test_runner_factory_wraps_and_records_failure(self, tmp_path) -> None:
         """The wrapped runner records circuit breaker failures on nonzero exit (lines 2012-2018)."""
-        from thegent.cli.commands.impl import run_impl
-
         from thegent.agents.base import RunResult
+        from thegent.cli.commands.impl import run_impl
 
         fail_result = RunResult(stdout="out", stderr="err", exit_code=1, timed_out=False)
         mock_runner = MagicMock()
@@ -842,9 +841,8 @@ class TestRunImplCircuitBreakerAndRunnerFactory:
     # @trace FR-EXEC-613b
     def test_runner_factory_success_path(self, tmp_path) -> None:
         """The wrapped runner with model injection (lines 2008-2018, 2020-2026)."""
-        from thegent.cli.commands.impl import run_impl
-
         from thegent.agents.base import RunResult
+        from thegent.cli.commands.impl import run_impl
 
         success_result = RunResult(stdout="ok", stderr="", exit_code=0, timed_out=False)
         mock_runner = MagicMock()
@@ -1295,7 +1293,11 @@ class TestHealthTrendMaxItemsBreak:
     def test_limit_stops_at_max_items(self, mock_path, mock_max, tmp_path) -> None:
         """When snapshots reach limit, line 2996 breaks."""
         # Build scope key matching default params
-        from thegent.cli.commands.impl import _health_scope_key, _resolve_health_policy, session_contract_health_trend_impl
+        from thegent.cli.commands.impl import (
+            _health_scope_key,
+            _resolve_health_policy,
+            session_contract_health_trend_impl,
+        )
 
         policy = _resolve_health_policy(None, False, 1.0)
         scope_payload = {
@@ -1340,7 +1342,11 @@ class TestHealthTrendTsParseError:
     @patch("thegent.cli.commands.impl._health_snapshot_log_path")
     def test_invalid_timestamp_window_none(self, mock_path, mock_max, tmp_path) -> None:
         """When timestamps can't be parsed, snapshot_window_seconds=None (lines 3013-3014)."""
-        from thegent.cli.commands.impl import _health_scope_key, _resolve_health_policy, session_contract_health_trend_impl
+        from thegent.cli.commands.impl import (
+            _health_scope_key,
+            _resolve_health_policy,
+            session_contract_health_trend_impl,
+        )
 
         policy = _resolve_health_policy(None, False, 1.0)
         scope_payload = {
@@ -1384,7 +1390,11 @@ class TestHealthTrendDensity:
     @patch("thegent.cli.commands.impl._health_snapshot_log_path")
     def test_density_computed(self, mock_path, mock_max, tmp_path) -> None:
         """When window > 0 and snapshots exist, snapshot_density_per_hour is computed (line 3050)."""
-        from thegent.cli.commands.impl import _health_scope_key, _resolve_health_policy, session_contract_health_trend_impl
+        from thegent.cli.commands.impl import (
+            _health_scope_key,
+            _resolve_health_policy,
+            session_contract_health_trend_impl,
+        )
 
         policy = _resolve_health_policy(None, False, 1.0)
         scope_payload = {

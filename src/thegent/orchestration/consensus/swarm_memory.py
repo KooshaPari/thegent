@@ -7,7 +7,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from thegent.orchestration.state.memory import DualMemory
+from thegent.orchestration.state.memory import MemorySystem
 
 _log = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ _log = logging.getLogger(__name__)
 class SwarmMemoryConsolidator:
     """Synthesizes memory artifacts from multiple agents into a unified view."""
 
-    def __init__(self, swarm_id: str, local_memory: DualMemory) -> None:
+    def __init__(self, swarm_id: str, local_memory: MemorySystem) -> None:
         self.swarm_id = swarm_id
         self.local_memory = local_memory
         self.consolidated_path = f"swarm_memory_{swarm_id}.json"
@@ -26,9 +26,15 @@ class SwarmMemoryConsolidator:
 
         unified_artifacts = {}
 
-        # 1. Start with local artifacts
-        for artifact in self.local_memory.list_artifacts():
-            unified_artifacts[artifact["id"]] = artifact
+        # 1. Start with local fragments
+        for fragment in self.local_memory.get_recent(limit=500):
+            unified_artifacts[fragment.id] = {
+                "id": fragment.id,
+                "timestamp": fragment.timestamp,
+                "content": fragment.content,
+                "category": fragment.category,
+                "agent": fragment.source_agent,
+            }
 
         # 2. Merge peer artifacts
         for peer_mem in peer_memories:

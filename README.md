@@ -83,6 +83,38 @@ thegent install-shims
 thegent setup --hooks
 ```
 
+### Automated Tool Management with mise
+
+thegent integrates with [mise](https://mise.jdx.dev/) for automated, per-project tool version management. mise replaces manual `nvm`, `pyenv`, and `rbenv` usage with a single, fast tool that activates automatically when you enter a project directory.
+
+**Install mise and register shell hooks automatically:**
+
+```bash
+thegent install --system-deps
+```
+
+This installs mise via Homebrew (or Nix with `--nix`), then writes the activation hook into your shell config (`~/.zshenv`, `~/.bashrc`, `config.fish`, etc.) so tools activate automatically in every new shell.
+
+**Manual mise setup:**
+
+```bash
+# Via Homebrew
+brew install mise
+echo 'eval "$(mise activate zsh)"' >> ~/.zshenv
+
+# Verify setup
+thegent install --verify-mise
+
+# Remove mise shell hooks without uninstalling mise
+thegent install --uninstall-mise-hooks
+```
+
+**Dry-run (no system changes):**
+
+```bash
+thegent install --system-deps --dry-run
+```
+
 ---
 
 ## 🛠️ Usage
@@ -90,11 +122,32 @@ thegent setup --hooks
 | Command | Description |
 |---------|-------------|
 | `thegent run <prompt>` | Execute a task in the foreground with a specific agent/model. |
+| `thegent run <prompt> --skill <name>` | Execute with selected skill instructions (repeat `--skill` to stack). |
 | `thegent bg <prompt>` | Start a background agent session. |
 | `thegent ps` | List active and historical agent sessions. |
+| `thegent skill list` | List discovered skills available for `--skill` selection. |
+| `thegent skill select <name>` | Validate a skill and print exact `--skill` usage for run flows. |
 | `thegent plan loop` | Continuously process work items from the unified work stream. |
 | `thegent plan do-next` | Find the next actionable items from project plans and specs. |
 | `thegent doctor` | Verify environment health and fix performance bottlenecks. |
+
+Harness wrappers (`dex`, `clode`, `roid`, `droid`) route through `thegent-shims`.
+Use `--native` to bypass wrapper-injected defaults/proxy routing and call the underlying native CLI directly.
+
+Skill UX examples:
+
+```bash
+thegent skill list
+thegent skill select thegent-skills
+thegent run agent "run with selected skill" --skill thegent-skills
+```
+
+Unknown skill handling is explicit and non-silent:
+
+```bash
+thegent skill select missing-skill
+# Skill not found: missing-skill
+```
 
 ---
 
@@ -131,6 +184,7 @@ thegent setup --hooks
 
 ## 📚 Documentation
 
+- **[Public Docsite](./docs/site/)** — VitePress-powered public documentation. Run locally with `bun run dev` from `docs/site/`. See [docs/site/README.md](./docs/site/README.md) for full setup instructions.
 - **[Docsets](./docs/docsets/)** — Audience-based documentation tracks.
   - [Developer (Internal)](./docs/docsets/developer/internal/)
   - [Developer (External)](./docs/docsets/developer/external/)
@@ -139,6 +193,7 @@ thegent setup --hooks
 - **[Quick Start Guide](./docs/guides/QUICK_START.md)** — Get up and running in 5 minutes.
 - **[Complete User Guide](./docs/guides/COMPLETE_USER_GUIDE.md)** — Deep dive into features.
 - **[Installation Guide](./docs/guides/INSTALLATION.md)** — Advanced setup options.
+- **[Provider Setup Guide](./docs/guides/PROVIDER_SETUP_GUIDE.md)** — cliproxy login, provider/model routing, adapter vs native behavior, and troubleshooting.
 - **[Architecture Overview](./docs/reference/ARCHITECTURE_LAYERS.md)** — Design layers and internals.
 - **[Research Index](./docs/research/RESEARCH_CONSOLIDATED.md)** — Findings and experiments.
 

@@ -3,8 +3,8 @@
 import logging
 import time
 from collections.abc import Callable
-from enum import Enum, StrEnum
-from typing import Any, Optional
+from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn, TimeRemainingColumn
@@ -257,8 +257,7 @@ class LifecycleController:
                 try:
                     from thegent.cli.commands.impl import dag_status_impl
 
-                    wbs_status_data = dag_status_impl(self.settings.cwd)
-                    wbs_status = json.dumps(wbs_status_data, indent=2)
+                    wbs_status = dag_status_impl(self.settings.cwd)
 
                     if on_progress:
                         on_progress(

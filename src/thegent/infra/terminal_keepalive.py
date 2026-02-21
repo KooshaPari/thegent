@@ -10,6 +10,8 @@ This module provides a robust keepalive mechanism that:
 - Provides detailed logging for debugging
 """
 
+from typing import Any
+
 import logging
 import os
 import sys
@@ -27,7 +29,7 @@ except ImportError:
     logger.debug("psutil not available, terminal detection will be limited")
 
 
-def _get_parent_terminal_info() -> dict[str, any] | None:
+def _get_parent_terminal_info() -> dict[str, Any] | None:
     """Get information about the parent terminal process.
 
     Uses multiple detection methods for robustness:
@@ -437,7 +439,7 @@ class TerminalKeepalive:
             except Exception as e:
                 logger.error(f"Error stopping keepalive thread: {e}")
 
-    def get_stats(self) -> dict[str, any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get keepalive statistics.
 
         Returns:
@@ -458,7 +460,7 @@ class TerminalKeepalive:
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, _exc_val, _exc_tb):
         """Context manager exit."""
         self.stop()
 

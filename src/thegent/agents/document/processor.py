@@ -28,7 +28,7 @@ class ProcessingResult:
 
     filepath: str
     status: ProcessingStatus
-    metadata: dict[str, Any] = None
+    metadata: dict[str, Any] | None = None
     error: str | None = None
     processing_time: float | None = None
 

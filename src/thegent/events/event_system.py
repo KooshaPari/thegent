@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class EventSystem:
     """Event system for pub/sub."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize event system."""
         self.subscribers: dict[str, list[Callable]] = {}
 

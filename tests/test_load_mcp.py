@@ -9,6 +9,7 @@ import concurrent.futures
 import time
 
 import pytest
+
 from thegent.cli.commands.impl import list_models_impl, ps_impl
 
 

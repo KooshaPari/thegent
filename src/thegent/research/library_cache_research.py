@@ -6,7 +6,7 @@ from typing import Any
 class LibraryCacheResearch:
     """Research for cachetools migration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize library cache research."""
         self.migrated_files: list[str] = []
 

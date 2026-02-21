@@ -1,13 +1,13 @@
 """Policy federation surface map (FederatedPolicyEngine)."""
 
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 
 class FederatedPolicyEngine:
     """Federated policy engine for multi-tenant coordination."""
 
     # Static registry to simulate shared policy storage across engine instances
-    _global_policies: dict[str, dict[str, Any]] = {}
+    _global_policies: ClassVar[dict[str, dict[str, Any]]] = {}
 
     def __init__(self, namespace: str) -> None:
         """Initialize federated policy engine for a specific namespace."""

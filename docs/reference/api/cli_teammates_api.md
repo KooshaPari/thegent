@@ -1,0 +1,44 @@
+# cli_teammates API Reference
+
+> **Source**: `src/thegent/cli/commands/cli_teammates.py`
+
+CLI commands for Teammate delegation and swarm management (WP-16001/2).
+
+---
+
+## delegate_task
+
+```python
+delegate_task(teammate: str, task: str, parent_run_id: str)
+```
+
+Delegate a task to a teammate agent with handoff integrity verification (WP-16002).
+
+---
+
+## list_teammates
+
+List all available teammate personas discovered from agents/ directory.
+
+---
+
+## show_delegation
+
+```python
+show_delegation(req_id: str)
+```
+
+Show detailed status and result for a specific delegation.
+
+---
+
+## swarm_status
+
+```python
+swarm_status(run_id: str)
+```
+
+Monitor the status of the teammate swarm (WP-16002).
+
+---
+

@@ -22,18 +22,18 @@ thegent is an **MCP server + agent hook system** for governing AI agent lifecycl
 
 | Task | Purpose |
 |------|---------|
-| `task setup` | Install deps, build cliproxy fork (if present), ensure config, install shims |
+| `task setup` | Install deps, build cliproxy plusplus source, ensure config, install shims |
 | `task dev` | Build cliproxy, ensure config, start MCP + proxy (TUI) |
 | `task dev:bg` | Same as dev, background |
 | `task dev:down` | Stop all services |
 | `task dev:logs` | Follow service logs |
-| `task cliproxy:build` | Build `../CLIProxyAPIPlus-fork/cli-proxy-api-plus` |
+| `task cliproxy:build` | Build `../cliproxyapi-plusplus/cli-proxy-api-plus` |
 | `task cliproxy:ensure-config` | Ensure cliproxy config (port, auth-dir) |
 | `task cliproxy:start`, `stop`, `restart` | Proxy lifecycle |
 
-**Proxy binary**: `scripts/start_proxy_dev.sh` uses the fork binary when built (`task cliproxy:build`), else falls back to `cli-proxy-api-plus` from PATH. process-compose runs this wrapper for the proxy process.
+**Proxy binary**: `scripts/start_proxy_dev.sh` uses the plusplus binary when built (`task cliproxy:build`), else falls back to `cli-proxy-api-plus` from PATH. process-compose runs this wrapper for the proxy process.
 
-**Ports**: MCP 3847, proxy 8317. Fork at `../CLIProxyAPIPlus-fork`; metrics at `GET /v1/metrics/providers`.
+**Ports**: MCP 3847, proxy 8317. Canonical source at `../cliproxyapi-plusplus`; metrics at `GET /v1/metrics/providers`.
 
 **Debug**: `thegent run --debug` / `thegent bg --debug` sets `THGENT_DEBUG=1`; proxy gets `-debug` when env set. See `docs/plans/DEBUG_TAGS_AND_METRICS.md`.
 

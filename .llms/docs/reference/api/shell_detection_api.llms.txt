@@ -1,0 +1,51 @@
+# shell_detection_api
+
+Source: docs/reference/api/shell_detection_api.md
+
+---
+
+# shell_detection API Reference
+
+> **Source**: `src/thegent/infra/shell_detection.py`
+
+Shell detection and preferred shell strategy for cross-platform execution.
+
+---
+
+## ShellType
+
+**Inherits from**: `str, Enum`
+
+---
+
+## get_fast_command_prefix
+
+```
+get_fast_command_prefix(shell_type: ShellType)
+```
+
+Get the command prefix for the fastest execution on the given shell type.
+
+---
+
+## get_preferred_shell
+
+```
+get_preferred_shell(performance: bool)
+```
+
+Determine the best shell for the current platform and user configuration.
+
+If performance=True, prioritizes shells with the lowest startup overhead (dash/cmd).
+
+---
+
+## get_shell_executable
+
+```
+get_shell_executable(shell_type: ShellType)
+```
+
+Get the full path to the shell executable.
+
+---

@@ -1,0 +1,71 @@
+# audit_api
+
+Source: docs/reference/api/audit_api.md
+
+---
+
+# audit API Reference
+
+> **Source**: `src/thegent/cli/apps/audit.py`
+
+Logical stream: System Integrity and Health Audit.
+
+---
+
+## audit_all
+
+```
+audit_all(types: Any, fix: bool, severity: str, format: str)
+```
+
+---
+
+## audit_costs
+
+```
+audit_costs(format: str)
+```
+
+---
+
+## audit_doctor
+
+```
+audit_doctor(fix: bool)
+```
+
+---
+
+## audit_fatigue
+
+---
+
+## audit_plan
+
+Heavy audit of the plan: PLAN.md, WORK_STREAM.md, and DAG consistency.
+
+---
+
+## audit_registry
+
+```
+audit_registry(format: str)
+```
+
+---
+
+## audit_security
+
+```
+audit_security(format: str)
+```
+
+---
+
+## audit_sweep
+
+```
+audit_sweep(format: str)
+```
+
+---

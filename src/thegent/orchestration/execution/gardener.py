@@ -53,4 +53,4 @@ Produce a set of proposed documentation edits.
             timeout=300,
         )
 
-        return result.output if hasattr(result, "output") else str(result)
+        return result.stdout if hasattr(result, "stdout") else str(result)

@@ -1,0 +1,13 @@
+# ux_api
+
+Source: docs/reference/api/ux_api.md
+
+---
+
+# ux API Reference
+
+> **Source**: `src/thegent/ux/__init__.py`
+
+Thegent UX module — terminal user-experience helpers.
+
+---

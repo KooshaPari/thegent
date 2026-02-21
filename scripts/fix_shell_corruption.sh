@@ -37,15 +37,15 @@ EOF
     echo "   ✓ Created config at $CLIPROXY_CONFIG"
 fi
 
-# 3. Check for fork config issue
+# 3. Check for cliproxy plusplus config issue
 echo ""
-echo "3. Checking CLIProxyAPIPlus-fork config..."
-FORK_CONFIG="../CLIProxyAPIPlus-fork/config.yaml"
-if [ -f "../CLIProxyAPIPlus-fork/cli-proxy-api-plus" ] && [ ! -f "$FORK_CONFIG" ]; then
-    echo "   ⚠️  Fork binary exists but config missing, creating..."
-    mkdir -p "$(dirname "$FORK_CONFIG")"
-    cp "$CLIPROXY_CONFIG" "$FORK_CONFIG" 2>/dev/null || true
-    echo "   ✓ Created fork config"
+echo "3. Checking cliproxyapi-plusplus config..."
+PLUSPLUS_CONFIG="../cliproxyapi-plusplus/config.yaml"
+if [ -f "../cliproxyapi-plusplus/cli-proxy-api-plus" ] && [ ! -f "$PLUSPLUS_CONFIG" ]; then
+    echo "   ⚠️  plusplus binary exists but config missing, creating..."
+    mkdir -p "$(dirname "$PLUSPLUS_CONFIG")"
+    cp "$CLIPROXY_CONFIG" "$PLUSPLUS_CONFIG" 2>/dev/null || true
+    echo "   ✓ Created plusplus config"
 fi
 
 # 4. Provide reset instructions

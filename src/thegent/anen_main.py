@@ -22,6 +22,8 @@ app = typer.Typer(
 )
 
 _MODEL_ALIAS: dict[str, str] = {
+    "dex": "gpt-5.3-codex",
+    "codex": "gpt-5.3-codex",
     "composer": "composer-1.5",
     "max": "MiniMax-M2.5",
     "glm": "zai-glm-5",
@@ -32,6 +34,8 @@ _MODEL_ALIAS: dict[str, str] = {
     "step3.5": "step-3.5-flash",
     "ultra": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
     "flash": GEMINI_FLASH_MODEL,
+    "high": "gpt-5.3-codex-high",
+    "xhigh": "gpt-5.3-codex-xhigh",
     "mini": "gpt-5-mini",
     "free": "gpt-5-mini",
 }
@@ -90,7 +94,7 @@ def _is_thegent_wrapper(path: Path) -> bool:
         pass
 
     try:
-        if path.is_symlink() and "thegent-shims" in os.readlink(path):
+        if path.is_symlink() and "thegent-shims" in str(path.readlink()):
             return True
     except OSError:
         pass
@@ -182,6 +186,16 @@ def anen_flash(ctx: typer.Context) -> None:
     _run_anen_with_alias("flash", list(ctx.args))
 
 
+@app.command("high", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def anen_high(ctx: typer.Context) -> None:
+    _run_anen_with_alias("high", list(ctx.args))
+
+
+@app.command("xhigh", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def anen_xhigh(ctx: typer.Context) -> None:
+    _run_anen_with_alias("xhigh", list(ctx.args))
+
+
 @app.command("mini", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def anen_mini(ctx: typer.Context) -> None:
     _run_anen_with_alias("mini", list(ctx.args))
@@ -195,7 +209,7 @@ def anen_free(ctx: typer.Context) -> None:
 @app.command("exec", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def anen_exec(
     ctx: typer.Context,
-    model: str = typer.Option("flash", "-m", "--model", help="Model alias (max, glm, flash, etc.)"),
+    model: str = typer.Option("flash", "-m", "--model", help="Model alias (dex, high, xhigh, max, glm, flash, etc.)"),
     prompt: str = typer.Argument(..., help="Prompt to run headlessly"),
 ) -> None:
     """Run Antigma headlessly with model alias mapping."""
@@ -233,13 +247,16 @@ def _install_harness_link(bin_dir: Path, harness: str, force: bool = False) -> b
 @app.command("doctor")
 def anen_doctor(
     fix: bool = typer.Option(False, "--fix", "-f", help="Attempt to fix issues"),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", "-n", help="Show what fixes would be applied without making changes"
+    ),
 ) -> None:
     """Run thegent doctor (harness-equiv)."""
     import sys
 
     from thegent.doctor import run_doctor
 
-    success = run_doctor(fix=fix)
+    success = run_doctor(fix=fix, dry_run=dry_run)
     sys.exit(0 if success else 1)
 
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.orchestration.hybrid_coordination import CoordinationMetrics, CoordinationMode, HybridCoordinationStrategy
+from thegent.coordination.hybrid_coordination import CoordinationMetrics, CoordinationMode, HybridCoordinationStrategy
 
 # ---------------------------------------------------------------------------
 # Fixtures

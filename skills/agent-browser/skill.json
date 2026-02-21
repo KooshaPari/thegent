@@ -1,0 +1,6 @@
+{
+  "name": "agent-browser",
+  "description": "Managed Agent Browser workflow for auth journeys and repeatable browser tasks.",
+  "version": "1.0.0",
+  "entrypoint": "thegent browser"
+}

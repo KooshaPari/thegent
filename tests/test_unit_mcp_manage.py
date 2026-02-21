@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
-from thegent.mcp_manage import (
+
+from thegent.mcp.manage import (
     DEFAULT_MCP_URL,
     _ensure_mcp_servers,
     _get_mcp_url,
@@ -152,7 +153,7 @@ class TestInstallToCodex:
         """Creates codex MCP config at expected path."""
         codex_dir = tmp_path / ".codex"
         config_path = codex_dir / "mcp.json"
-        with patch("thegent.mcp_manage.Path.home", return_value=tmp_path):
+        with patch("thegent.mcp.manage.Path.home", return_value=tmp_path):
             install_to_codex(url="http://localhost:3847/mcp")
         assert config_path.exists()
         data = json.loads(config_path.read_text())
@@ -181,7 +182,7 @@ class TestInstallToClaudeCode:
     def test_creates_config(self, tmp_path: Path) -> None:
         # @trace FR-MCP-003
         """Creates .claude.json at home directory."""
-        with patch("thegent.mcp_manage.Path.home", return_value=tmp_path):
+        with patch("thegent.mcp.manage.Path.home", return_value=tmp_path):
             result = install_to_claude_code(url="http://test:5555/mcp")
         assert result is True
         config_path = tmp_path / ".claude.json"
@@ -194,7 +195,7 @@ class TestInstallToClaudeCode:
         """Merges into existing .claude.json config."""
         existing = {"mcpServers": {"existing": {"url": "http://x"}}, "other_key": 42}
         (tmp_path / ".claude.json").write_text(json.dumps(existing))
-        with patch("thegent.mcp_manage.Path.home", return_value=tmp_path):
+        with patch("thegent.mcp.manage.Path.home", return_value=tmp_path):
             install_to_claude_code()
         data = json.loads((tmp_path / ".claude.json").read_text())
         assert "existing" in data["mcpServers"]
@@ -235,7 +236,7 @@ class TestInstallToClient:
     def test_claude_code_dispatch(self, tmp_path: Path) -> None:
         # @trace FR-MCP-003
         """Dispatches to claude-code installer."""
-        with patch("thegent.mcp_manage.Path.home", return_value=tmp_path):
+        with patch("thegent.mcp.manage.Path.home", return_value=tmp_path):
             ok, msg = install_to_client("claude-code", DEFAULT_MCP_URL)
         assert ok is True
         assert "claude-code" in msg
@@ -243,7 +244,7 @@ class TestInstallToClient:
     def test_handles_install_exception(self, tmp_path: Path) -> None:
         # @trace FR-MCP-003
         """Returns failure tuple when installer raises."""
-        with patch("thegent.mcp_manage.install_to_codex", side_effect=PermissionError("denied")):
+        with patch("thegent.mcp.manage.install_to_codex", side_effect=PermissionError("denied")):
             ok, msg = install_to_client("codex", DEFAULT_MCP_URL)
         assert ok is False
         assert "denied" in msg
@@ -258,7 +259,7 @@ class TestInstallToClient:
 class TestServiceInstall:
     """Tests for service_install."""
 
-    @patch("thegent.mcp_manage.platform.system", return_value="Linux")
+    @patch("thegent.mcp.manage.platform.system", return_value="Linux")
     def test_non_macos_fails(self, mock_sys: MagicMock) -> None:
         # @trace FR-MCP-003
         """service_install fails on non-macOS."""
@@ -266,15 +267,15 @@ class TestServiceInstall:
         assert ok is False
         assert "macOS" in msg
 
-    @patch("thegent.mcp_manage.platform.system", return_value="Darwin")
+    @patch("thegent.mcp.manage.platform.system", return_value="Darwin")
     def test_macos_creates_plist(self, mock_sys: MagicMock, tmp_path: Path) -> None:
         # @trace FR-MCP-003
         """On macOS, creates plist and cache directory."""
         plist_path = tmp_path / "Library" / "LaunchAgents" / "com.thegent.mcp.plist"
         cache_dir = tmp_path / ".cache" / "thegent"
         with (
-            patch("thegent.mcp_manage._launchd_plist_path", return_value=plist_path),
-            patch("thegent.mcp_manage.Path.home", return_value=tmp_path),
+            patch("thegent.mcp.manage._launchd_plist_path", return_value=plist_path),
+            patch("thegent.mcp.manage.Path.home", return_value=tmp_path),
         ):
             ok, _msg = service_install()
         assert ok is True
@@ -287,38 +288,38 @@ class TestServiceInstall:
 class TestServiceStartStop:
     """Tests for service_start and service_stop."""
 
-    @patch("thegent.mcp_manage.platform.system", return_value="Linux")
+    @patch("thegent.mcp.manage.platform.system", return_value="Linux")
     def test_start_non_macos(self, mock_sys: MagicMock) -> None:
         # @trace FR-MCP-003
         """service_start fails on non-macOS."""
         ok, _msg = service_start()
         assert ok is False
 
-    @patch("thegent.mcp_manage.platform.system", return_value="Linux")
+    @patch("thegent.mcp.manage.platform.system", return_value="Linux")
     def test_stop_non_macos(self, mock_sys: MagicMock) -> None:
         # @trace FR-MCP-003
         """service_stop fails on non-macOS."""
         ok, _msg = service_stop()
         assert ok is False
 
-    @patch("thegent.mcp_manage.platform.system", return_value="Darwin")
+    @patch("thegent.mcp.manage.platform.system", return_value="Darwin")
     def test_start_not_installed(self, mock_sys: MagicMock, tmp_path: Path) -> None:
         # @trace FR-MCP-003
         """service_start fails when plist does not exist."""
         plist = tmp_path / "nonexistent.plist"
-        with patch("thegent.mcp_manage._launchd_plist_path", return_value=plist):
+        with patch("thegent.mcp.manage._launchd_plist_path", return_value=plist):
             ok, msg = service_start()
         assert ok is False
         assert "not installed" in msg.lower()
 
-    @patch("thegent.mcp_manage.platform.system", return_value="Darwin")
-    @patch("thegent.mcp_manage.subprocess.run")
+    @patch("thegent.mcp.manage.platform.system", return_value="Darwin")
+    @patch("thegent.mcp.manage.subprocess.run")
     def test_stop_with_plist(self, mock_run: MagicMock, mock_sys: MagicMock, tmp_path: Path) -> None:
         # @trace FR-MCP-003
         """service_stop calls launchctl unload when plist exists."""
         plist = tmp_path / "com.thegent.mcp.plist"
         plist.write_text("<plist/>")
-        with patch("thegent.mcp_manage._launchd_plist_path", return_value=plist):
+        with patch("thegent.mcp.manage._launchd_plist_path", return_value=plist):
             ok, msg = service_stop()
         assert ok is True
         assert msg == "Stopped"
@@ -329,21 +330,21 @@ class TestServiceStartStop:
 class TestServiceUninstall:
     """Tests for service_uninstall."""
 
-    @patch("thegent.mcp_manage.platform.system", return_value="Linux")
+    @patch("thegent.mcp.manage.platform.system", return_value="Linux")
     def test_non_macos(self, mock_sys: MagicMock) -> None:
         # @trace FR-MCP-003
         """Fails on non-macOS."""
         ok, _msg = service_uninstall()
         assert ok is False
 
-    @patch("thegent.mcp_manage.platform.system", return_value="Darwin")
-    @patch("thegent.mcp_manage.subprocess.run")
+    @patch("thegent.mcp.manage.platform.system", return_value="Darwin")
+    @patch("thegent.mcp.manage.subprocess.run")
     def test_removes_plist(self, mock_run: MagicMock, mock_sys: MagicMock, tmp_path: Path) -> None:
         # @trace FR-MCP-003
         """Uninstall removes plist file."""
         plist = tmp_path / "com.thegent.mcp.plist"
         plist.write_text("<plist/>")
-        with patch("thegent.mcp_manage._launchd_plist_path", return_value=plist):
+        with patch("thegent.mcp.manage._launchd_plist_path", return_value=plist):
             ok, _msg = service_uninstall()
         assert ok is True
         assert not plist.exists()
@@ -373,7 +374,7 @@ class TestServiceStatus:
         assert ok is True
         assert "Running" in msg
 
-    @patch("thegent.mcp_manage.platform.system", return_value="Linux")
+    @patch("thegent.mcp.manage.platform.system", return_value="Linux")
     def test_not_running_on_linux(self, mock_sys: MagicMock) -> None:
         # @trace FR-MCP-003
         """Non-macOS with failed HTTP returns not running."""
@@ -394,7 +395,7 @@ class TestServiceStatus:
 class TestMcpUp:
     """Tests for mcp_up."""
 
-    @patch("thegent.mcp_manage._process_compose_path", return_value=None)
+    @patch("thegent.mcp.manage._process_compose_path", return_value=None)
     def test_no_compose_file(self, mock_path: MagicMock) -> None:
         # @trace FR-MCP-003
         """Returns failure when process-compose.yaml not found."""
@@ -402,8 +403,8 @@ class TestMcpUp:
         assert ok is False
         assert "not found" in msg.lower()
 
-    @patch("thegent.mcp_manage.shutil.which", return_value=None)
-    @patch("thegent.mcp_manage._process_compose_path")
+    @patch("thegent.mcp.manage.shutil.which", return_value=None)
+    @patch("thegent.mcp.manage._process_compose_path")
     def test_no_process_compose_binary(self, mock_path: MagicMock, mock_which: MagicMock, tmp_path: Path) -> None:
         # @trace FR-MCP-003
         """Returns failure when process-compose binary not installed."""
@@ -419,7 +420,7 @@ class TestMcpUp:
 class TestMcpDown:
     """Tests for mcp_down."""
 
-    @patch("thegent.mcp_manage._process_compose_path", return_value=None)
+    @patch("thegent.mcp.manage._process_compose_path", return_value=None)
     def test_no_compose_file(self, mock_path: MagicMock) -> None:
         # @trace FR-MCP-003
         """Returns failure when process-compose.yaml not found."""
@@ -427,8 +428,8 @@ class TestMcpDown:
         assert ok is False
         assert "not found" in msg.lower()
 
-    @patch("thegent.mcp_manage.shutil.which", return_value=None)
-    @patch("thegent.mcp_manage._process_compose_path")
+    @patch("thegent.mcp.manage.shutil.which", return_value=None)
+    @patch("thegent.mcp.manage._process_compose_path")
     def test_no_process_compose_binary(self, mock_path: MagicMock, mock_which: MagicMock, tmp_path: Path) -> None:
         # @trace FR-MCP-003
         """Returns failure when process-compose binary not installed."""

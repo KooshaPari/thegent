@@ -14,7 +14,7 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import TYPE_CHECKING, Any, Optional, Protocol
 
 import typer
 from pydantic import BaseModel
@@ -63,6 +63,7 @@ class TriggerProtocol(Protocol):
 
     def start(self) -> None: ...
     def stop(self) -> None: ...
+    def run(self, force: bool = False) -> Any: ...
 
 
 class WatchdogTrigger:
@@ -108,8 +109,8 @@ class WatchdogTrigger:
         self._use_watchfiles = WATCHFILES_AVAILABLE
         # Fallback to watchdog if watchfiles not available
         if not self._use_watchfiles and WATCHDOG_AVAILABLE:
-            self._observer: Observer | None = None
-            self._handler: _WatchdogEventHandler | None = None
+            self._observer: "Observer | None" = None  # type: ignore[valid-type]
+            self._handler: FileSystemEventHandler | None = None  # type: ignore[valid-type]
         else:
             self._observer = None
             self._handler = None
@@ -162,6 +163,11 @@ class WatchdogTrigger:
         elif self._observer is not None:
             self._observer.stop()
             self._observer.join()
+
+    def run(self, force: bool = False) -> Any:
+        """Run a single governance cycle (for watchdog, triggers immediately)."""
+        _log.info("Watchdog trigger: running one cycle (force=%s)", force)
+        return self.loop.run_once(force=force)
 
     def _watchfiles_loop(self) -> None:
         """Watch files using watchfiles (fast Rust-based backend)."""
@@ -356,6 +362,11 @@ class TimerTrigger:
         self._running = False
         self._stop_event.set()
 
+    def run(self, force: bool = False) -> Any:
+        """Run a single governance cycle (for timer, triggers immediately)."""
+        _log.info("Timer trigger: running one cycle (force=%s)", force)
+        return self.loop.run_once(force=force)
+
     def _timer_loop(self) -> None:
         """Run timer loop."""
         cycles_run = 0
@@ -400,6 +411,12 @@ class ManualTrigger:
         loop: Any,
     ) -> None:
         self.loop = loop
+
+    def start(self) -> None:
+        """Start the trigger (no-op for manual mode)."""
+
+    def stop(self) -> None:
+        """Stop the trigger (no-op for manual mode)."""
 
     def run(self, force: bool = False) -> Any:
         """Run a single governance cycle."""
@@ -455,6 +472,11 @@ class HealthThresholdTrigger:
     def stop(self) -> None:
         """Stop health monitoring."""
         self._shutdown = True
+
+    def run(self, force: bool = False) -> Any:
+        """Run a single governance cycle (for health threshold, triggers immediately)."""
+        _log.info("Health threshold trigger: running one cycle (force=%s)", force)
+        return self.loop.run_once(force=force)
 
 
 def create_trigger(

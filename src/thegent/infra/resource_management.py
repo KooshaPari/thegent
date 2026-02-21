@@ -36,23 +36,61 @@ class ResourceManager:
             logger.error(f"Failed to apply resource limits: {e}")
 
     def monitor_usage(self, pid: int) -> dict[str, Any]:
-        """Monitor current resource usage of a process."""
+        """Monitor current resource usage of a process and record to SHM."""
         try:
             proc = psutil.Process(pid)
             mem_info = proc.memory_info()
+            cpu_percent = proc.cpu_percent(interval=0.1)
             fd_count = proc.num_fds()
             children = proc.children(recursive=True)
+
+            # Record to SHM for global observability
+            try:
+                from thegent_shm import record_resource_usage
+
+                record_resource_usage(pid, cpu_percent, mem_info.rss // 1024)
+            except (ImportError, RuntimeError):
+                pass
 
             return {
                 "pid": pid,
                 "memory_rss": mem_info.rss,
-                "memory_vms": mem_info.vms,
+                "cpu_percent": cpu_percent,
                 "fd_count": fd_count,
                 "child_count": len(children),
                 "status": proc.status(),
             }
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return {"error": "Process not accessible"}
+
+
+class ResourcePredictionEngine:
+    """Predicts future resource usage based on historical Harness Cards and trends."""
+
+    def __init__(self) -> None:
+        self.history: list[dict[str, Any]] = []
+
+    def predict_spawn_impact(self, harness_type: str, current_free_mb: int) -> bool:
+        """Return True if spawning the agent is safe based on predicted impact."""
+        # Simple heuristic: T3 isolation adds ~128MB overhead
+        predicted_usage = 512  # Default
+        if "claude" in harness_type.lower():
+            predicted_usage = 1024
+        elif "cursor" in harness_type.lower():
+            predicted_usage = 768
+
+        # Safety buffer
+        if (current_free_mb - predicted_usage) < 256:
+            logger.warning(f"Predictive throttle: Spawning {harness_type} may cause OOM.")
+            return False
+        return True
+
+    def record_actual(self, harness_type: str, actual_mb: int):
+        """Record actual usage for future predictions."""
+        self.history.append({"harness": harness_type, "mb": actual_mb})
+        # Keep last 100 entries
+        if len(self.history) > 100:
+            self.history = self.history[-100:]
 
 
 class FDBudget:

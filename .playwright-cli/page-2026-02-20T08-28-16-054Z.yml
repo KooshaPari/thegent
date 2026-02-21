@@ -1,0 +1,14 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - img "light logo" [ref=e7]
+      - generic [ref=e8]:
+        - heading "Access Restricted" [level=6] [ref=e9]
+        - paragraph [ref=e10]: To gain access to this doc, provide your access code below.
+      - generic [ref=e11]:
+        - generic [ref=e13]:
+          - generic [ref=e14]: Enter access code
+          - textbox "Enter access code" [ref=e15]:
+            - /placeholder: Your access code...
+        - button "Access" [ref=e17] [cursor=pointer]
+  - alert [ref=e18]

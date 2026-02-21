@@ -22,7 +22,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from thegent.orchestration.token_bucket import (
+from thegent.orchestration.resource.token_bucket import (
     RateLimitedSwarmRunner,
     TokenBucket,
     TokenBucketConfig,

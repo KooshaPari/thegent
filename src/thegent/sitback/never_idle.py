@@ -13,7 +13,7 @@ import logging
 import threading
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 from thegent.sitback.gardening import GardeningManager
 from thegent.sitback.watchdog import BackgroundTaskWatcher
@@ -32,7 +32,7 @@ class NeverIdleLoop:
     """
 
     # Gardening steps in rotation order
-    GARDENING_STEPS = [
+    GARDENING_STEPS: ClassVar[list[str]] = [
         "govern_health",  # thegent govern go health
         "backlog_check",  # Check pending backlog
         "test_failures",  # Check recent test failures
@@ -42,6 +42,8 @@ class NeverIdleLoop:
         "quality_check",  # task quality-a-r
         "dag_sync",  # thegent dag sync
         # "smart_prune",  # DISABLED: Intelligent resource reclamation - too aggressive, kills terminals
+        "shadow_cleanup",  # WL-036: Prune stale .shadow-* dirs older than 7 days
+        "garden",  # WL-060: Automated documentation synthesis
     ]
 
     def __init__(
@@ -69,6 +71,16 @@ class NeverIdleLoop:
         self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
 
+        # WL-072: Persistent event loop running in a dedicated daemon thread.
+        # Avoids creating/destroying an event loop on every gardening tick.
+        self._async_loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
+        self._async_thread: threading.Thread = threading.Thread(
+            target=self._async_loop.run_forever,
+            daemon=True,
+            name="never-idle-async",
+        )
+        self._async_thread.start()
+
         # Initialize components
         self._watcher = BackgroundTaskWatcher(session_dir)
         self._gardening = GardeningManager(project_root)
@@ -78,7 +90,7 @@ class NeverIdleLoop:
 
         # State tracking
         self._findings: dict[str, Any] = {}
-        self._last_completion: dict[str, Any | None] = None
+        self._last_completion: dict[str, Any | None] | None = None
 
     def register_wake_callback(self, callback: WakeCallback) -> None:
         """Register a callback to be called when background task completes.
@@ -102,7 +114,7 @@ class NeverIdleLoop:
         """Return gardening findings that need attention."""
         return self._findings.copy()
 
-    def get_last_completion(self) -> dict[str, Any | None]:
+    def get_last_completion(self) -> dict[str, Any | None] | None:
         """Return last background task completion info."""
         return self._last_completion
 
@@ -119,7 +131,7 @@ class NeverIdleLoop:
             _log.info("Never-idle loop started with %ds interval", self.sleep_interval)
 
     def stop(self) -> None:
-        """Stop the never-idle loop."""
+        """Stop the never-idle loop and tear down the persistent async event loop."""
         with self._lock:
             if not self._running:
                 _log.warning("Never-idle loop not running")
@@ -128,7 +140,11 @@ class NeverIdleLoop:
             self._running = False
             if self._thread:
                 self._thread.join(timeout=5)
-            _log.info("Never-idle loop stopped")
+
+        # WL-072: Shut down the dedicated async loop after the sync thread stops.
+        self._async_loop.call_soon_threadsafe(self._async_loop.stop)
+        self._async_thread.join(timeout=5)
+        _log.info("Never-idle loop stopped")
 
     def _run_loop(self) -> None:
         """Main loop runner (runs in background thread)."""
@@ -156,9 +172,13 @@ class NeverIdleLoop:
         if completions:
             self._handle_wake(completions)
 
-        # 2. Run next gardening step
+        # 2. Run next gardening step.
+        # WL-072 (Option C): Submit coroutine to the persistent event loop running in
+        # self._async_thread via run_coroutine_threadsafe. This reuses the event loop
+        # across all ticks instead of creating and destroying one per asyncio.run() call.
         step = self.GARDENING_STEPS[self._current_step]
-        result = asyncio.run(self._gardening.run_step(step))
+        future = asyncio.run_coroutine_threadsafe(self._gardening.run_step(step), self._async_loop)
+        result = future.result(timeout=300)
 
         # Store findings for items needing attention
         if result.get("needs_attention"):
@@ -183,7 +203,7 @@ class NeverIdleLoop:
         for callback in self._wake_callbacks:
             try:
                 callback(completions)
-            except Exception as e:
+            except Exception as e:  # noqa: PERF203 - intentional per-item error handling
                 _log.warning("Wake callback error: %s", e)
 
     def get_status(self) -> dict[str, Any]:

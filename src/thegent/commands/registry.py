@@ -93,13 +93,37 @@ def registry_search(
 
 
 @app.command("list")
-def registry_list() -> None:
-    """List all personas in the cross-project registry."""
+def registry_list(
+    format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)"),
+) -> None:
+    """List all personas in the cross-project registry.
+
+    # @trace WL-040 WP-4002
+    """
+    import json
+    import sys
+
     reg = _load_registry()
     records = reg.get_all()
 
     if not records:
-        console.print("[yellow]Registry is empty. Run 'thegent registry register <dir>' first.[/yellow]")
+        if format == "json":
+            sys.stdout.write(json.dumps([]) + "\n")
+        else:
+            console.print("[yellow]Registry is empty. Run 'thegent registry register <dir>' first.[/yellow]")
+        return
+
+    if format == "json":
+        data = [
+            {
+                "name": r.name,
+                "project": str(r.project_root),
+                "capabilities": list(r.capabilities) if r.capabilities else [],
+                "last_seen": r.last_seen.strftime("%Y-%m-%d %H:%M"),
+            }
+            for r in sorted(records, key=lambda x: (str(x.project_root), x.name))
+        ]
+        sys.stdout.write(json.dumps(data) + "\n")
         return
 
     table = Table(title="Cross-Project Persona Registry")

@@ -1,0 +1,121 @@
+# shm_api
+
+Source: docs/reference/api/shm_api.md
+
+---
+
+# shm API Reference
+
+> **Source**: `src/thegent/orchestration/state/shm.py`
+
+## SHMSystem
+
+Wrapper for thegent_shm Rust extension.
+
+### Methods
+
+#### SHMSystem.award_xp
+
+```
+award_xp(self: Any, amount: int)
+```
+
+---
+
+#### SHMSystem.get_xp_state
+
+```
+get_xp_state(self: Any)
+```
+
+---
+
+#### SHMSystem.is_native_active
+
+```
+is_native_active(self: Any)
+```
+
+---
+
+#### SHMSystem.is_open
+
+```
+is_open(self: Any, target: str, category: str, threshold: int, window_s: int, recovery_s: int)
+```
+
+---
+
+#### SHMSystem.record_failure
+
+```
+record_failure(self: Any, target: str, category: str)
+```
+
+---
+
+#### SHMSystem.set_level
+
+```
+set_level(self: Any, level: int)
+```
+
+---
+
+---
+
+## award_xp
+
+```
+award_xp(self: Any, amount: int)
+```
+
+---
+
+## get_shm_system
+
+```
+get_shm_system(session_dir: Path) -> SHMSystem
+```
+
+---
+
+## get_xp_state
+
+```
+get_xp_state(self: Any) -> dict[(str, Any)]
+```
+
+---
+
+## is_native_active
+
+```
+is_native_active(self: Any) -> bool
+```
+
+---
+
+## is_open
+
+```
+is_open(self: Any, target: str, category: str, threshold: int, window_s: int, recovery_s: int) -> bool
+```
+
+---
+
+## record_failure
+
+```
+record_failure(self: Any, target: str, category: str)
+```
+
+---
+
+## set_level
+
+```
+set_level(self: Any, level: int)
+```
+
+---

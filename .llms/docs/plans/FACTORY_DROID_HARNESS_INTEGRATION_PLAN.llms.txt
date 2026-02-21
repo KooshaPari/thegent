@@ -1,0 +1,628 @@
+# FACTORY_DROID_HARNESS_INTEGRATION_PLAN
+
+Source: docs/plans/FACTORY_DROID_HARNESS_INTEGRATION_PLAN.md
+
+---
+
+# Factory Droid Harness Integration Plan
+
+**Purpose:** Integrate Factory Droid as a **3rd primary harness** alongside Claude Code and Codex, achieving full feature parity across all three platforms. Extends the existing `CODEX_DONUT_HARNESS_PLAN.md` with Factory Droid-specific implementation details.
+
+**Context:** Existing architecture supports Claude Code (15 hooks, native) and Codex (wrapper + notify hook). Factory Droid has `DroidRunner` infrastructure but lacks full harness integration. This plan adds Factory Droid to the unified architecture.
+
+**References:**
+- [CODEX_DONUT_HARNESS_PLAN.md](./CODEX_DONUT_HARNESS_PLAN.md) — unified architecture for all 3 harnesses
+- [CLAUDE_CODE_FEATURE_PARITY_AUDIT.md](../research/CLAUDE_CODE_FEATURE_PARITY_AUDIT.md) — full feature audit matrix
+- [MULTI_PLATFORM_PARITY_MASTER_PLAN.md](./MULTI_PLATFORM_PARITY_MASTER_PLAN.md) — complete parity matrix
+- [MULTI_PLATFORM_DEEP_DIVE.md](../research/MULTI_PLATFORM_DEEP_DIVE.md) — schemas, configs, transcript formats
+- [CODEX_HOOKS_AND_EXTENSION_OPTIONS.md](../research/CODEX_HOOKS_AND_EXTENSION_OPTIONS.md)
+- [USER_QUEUE_TUI_AND_AGENT_POLL.md](../research/USER_QUEUE_TUI_AND_AGENT_POLL.md)
+- [CLAUDE_CODE_QUEUE_PENDING_BLOCKING.md](../research/CLAUDE_CODE_QUEUE_PENDING_BLOCKING.md)
+
+---
+
+## 0. Unified Architecture (All 3 Harnesses)
+
+### 0.1 Shared Components (Agent-Agnostic)
+
+| Component | Purpose | Used By |
+|-----------|---------|---------|
+| **Queue storage** | `.thegent/prompt_queue.jsonl` (project) or `~/.thegent/prompt_queue.jsonl` (global) | Claude Code, Codex, Factory Droid |
+| **Queue MCP tools** | `thegent_queue_list`, `claim`, `done`, `add`, `edit`, `release`, `extend_lease` | All |
+| **Queue TUI** | `thegent queue tui` — add/edit/list in separate terminal | All |
+| **Harvest logic** | `harvest-idea-seeds.sh`, `harvest-pending-queue.sh` | All |
+| **Handoff output** | `docs/research/pending-handoff.md` or `.thegent/next-session-prompts.md` | All |
+| **Escalation** | `thegent govern escalate` for `$block` | All |
+| **Droid resolution** | `.factory/droids/*.md` personas | Factory Droid only |
+
+### 0.2 Agent-Specific Adapters
+
+| Agent | Prompt Intercept | Session Stop | Per-Turn |
+|-------|------------------|--------------|----------|
+| **Claude Code** | UserPromptSubmit → `prompt-submit-guard` | Stop → `harvest-pending-queue` | — |
+| **Codex** | `run_impl` preprocessor; wrapper exit (interactive) | Wrapper exit → harvest | `notify` → `codex-notify` |
+| **Factory Droid** | `run_impl` preprocessor; wrapper exit | Wrapper exit → harvest | — |
+
+### 0.3 Current State Matrix
+
+| Feature | Claude Code | Codex | Factory Droid |
+|---------|-------------|-------|---------------|
+| **Hooks** | 15 native | Wrapper + notify | Partial (DroidRunner exists) |
+| **Queue** | UserPromptSubmit + Stop | run_impl + wrapper | run_impl (needs implementation) |
+| **Headless mode** | `claude -p` | `codex exec -` | `droid exec -f` |
+| **Interactive mode** | `claude` | `codex` | — (Droid is headless-only) |
+| **Droid resolution** | N/A | N/A | `~/.local/bin/droid`, `~/.factory/bin/droid` |
+| **Rules** | CLAUDE.md, skills | `.codex/skills` | `.factory/droids` |
+| **Unified rules** | — | **thegent rules sync** → all platforms | Same |
+
+### 0.4 DroidRunner Infrastructure (Already Exists)
+
+```
+# src/thegent/agents/droid.py
+class DroidRunner(AgentRunner):
+    """Runs droids via Factory droid exec."""
+
+class CodexRunner(AgentRunner):
+    """Runs droids via OpenAI Codex CLI (codex exec)."""
+
+class CustomCliRunner(AgentRunner):
+    """Runs droids via generic custom CLI."""
+
+def get_droid_runner(backend, droid_name, droids_dir, ...) -> AgentRunner:
+    """Factory: return appropriate droid runner."""
+```
+
+---
+
+## 1. Factory Droid Architecture
+
+### 1.1 Entry Points
+
+| Mode | Entry | Prompt Source | thegent Control |
+|------|-------|---------------|-----------------|
+| **Headless** | `droid exec -f <file>` | Prompt file (temp) | **Full** — we own file creation |
+| **Interactive** | — | — | Droid is headless-only |
+| **thegent integration** | `thegent run -M droid:<name> "prompt"` | CLI argument | **Full** |
+
+### 1.2 Droid Resolution
+
+```
+def _resolve_droid_cmd(cmd: str) -> str:
+    """Resolve droid command."""
+    return _resolve_cmd(
+        cmd,
+        candidates=[
+            Path.home() / ".local" / "bin" / "droid",
+            Path.home() / ".factory" / "bin" / "droid",
+        ],
+    )
+```
+
+**Environment variables:**
+- `THGENT_DROID_CMD` — override droid command path
+- `THGENT_DROID_MODEL` — default model for droid runs
+- `THGENT_DROID_BACKEND` — `droid` (default), `codex`, or `custom`
+
+### 1.3 Droid Persona Format
+
+```
+---
+name: <droid-name>
+description: "..."
+tools: [Read, Grep, Glob, Create, Edit, Execute, Todo, WebSearch, FetchUrl]
+version: v1
+model: inherit  # or specific model
+---
+```
+
+**Paths:**
+- Default: `~/.factory/droids/`
+- Override: `THGENT_DROID_DIR` environment variable
+
+---
+
+## 2. Feature Parity Matrix
+
+### 2.1 Core Features
+
+| Feature | Claude Code | Codex | Factory Droid | Implementation |
+|---------|-------------|-------|---------------|----------------|
+| **Queue storage** | `.thegent/prompt_queue.jsonl` | Same | Same | Shared |
+| **$defer/$pending** | Native | run_impl | run_impl | Same logic |
+| **$block** | Native | run_impl | run_impl | Same logic |
+| **$idea** | Native | harvest | harvest | Same logic |
+| **Harvest on stop** | Native | Wrapper exit | Wrapper exit | Same logic |
+| **Session handoff** | Native | Wrapper exit | Wrapper exit | Same logic |
+| **Headless mode** | `claude -p` | `codex exec -` | `droid exec -f` | Different CLI |
+| **Interactive mode** | `claude` | `codex` | N/A | Not applicable |
+| **MCP tools** | Native | Same | Same | Shared |
+| **Rules sync** | CLAUDE.md | `.codex/skills` | `.factory/droids` | Platform-specific |
+
+### 2.2 Lifecycle Features
+
+| Feature | Claude Code | Codex | Factory Droid |
+|---------|-------------|-------|---------------|
+| **Loop support** | Native | Via wrapper | Via wrapper |
+| **Teams/teammates** | Native | Phase 6 | Same |
+| **Continuation** | `--resume` | N/A | Via prompt file |
+| **Re-prompt** | Native | run_impl | run_impl |
+
+### 2.3 Platform-Specific Capabilities
+
+| Capability | Claude Code | Codex | Factory Droid |
+|-----------|-------------|-------|---------------|
+| **Model selection** | `--model` | `--model` | `--model` |
+| **Sandboxing** | Native | `--sandbox` | Container support |
+| **Streaming** | Native | `--output-format stream-json` | `--output-format stream-json` |
+| **Auto mode** | Native | `--auto low/high` | `--auto low/high` |
+| **Working directory** | `--cwd` | `--cwd` | `--cwd` |
+
+---
+
+## 3. Implementation Phases
+
+### Phase 1: Foundation (Factory Droid)
+
+| Task | Description | Effort | Status |
+|------|-------------|--------|--------|
+| 1.1 | Verify `DroidRunner` infrastructure in `droid.py` | Small | Done |
+| 1.2 | Add Factory Droid to `AGENT_NAMES` in `registry.py` | Small | Pending |
+| 1.3 | Implement `droid` backend in `get_runner()` | Small | Pending |
+| 1.4 | Add `$defer/$block/$idea` preprocessor to `run_impl` for droid | Small | Pending |
+| 1.5 | Add harvest on droid exit to wrapper | Small | Pending |
+| 1.6 | Add droid to fallback chain | Small | Pending |
+
+**File changes:**
+- `src/thegent/agents/registry.py` — add `droid` to names and fallback chain
+- `src/thegent/cli_impl.py` — add droid preprocessor logic
+- `src/thegent/agents/droid.py` — verify/improve DroidRunner
+
+### Phase 2: Queue Integration (Factory Droid)
+
+| Task | Description | Effort | Status |
+|------|-------------|--------|--------|
+| 2.1 | `run_impl` for droid: detect `$defer`, append to queue | Small | Pending |
+| 2.2 | `run_impl` for droid: detect `$block`, escalate | Small | Pending |
+| 2.3 | `run_impl` for droid: detect `$idea`, save to harvest | Small | Pending |
+| 2.4 | On droid exit: run `harvest-pending-queue.sh` | Small | Pending |
+| 2.5 | Session handoff: load from `.thegent/next-session-prompts.md` | Small | Pending |
+
+**Logic (shared with Codex):**
+```
+def _preprocess_droid_prompt(prompt: str, cwd: Path) -> tuple[str, str]:
+    """Parse prompt for flags. Returns (action, modified_prompt)."""
+    if "$defer" in prompt or "$pending" in prompt:
+        return "defer", prompt.replace("$defer", "").replace("$pending", "").strip()
+    if "$block" in prompt:
+        return "block", prompt.replace("$block", "").strip()
+    if "$idea" in prompt:
+        return "idea", prompt.replace("$idea", "").strip()
+    return "execute", prompt
+```
+
+### Phase 3: Full Harness Integration
+
+| Task | Description | Effort | Status |
+|------|-------------|--------|--------|
+| 3.1 | Add `thegent run -M droid:<name> "prompt"` support | Small | Pending |
+| 3.2 | Add `THGENT_DROID_BACKEND` support (`droid`, `codex`, `custom`) | Small | Pending |
+| 3.3 | Add `THGENT_DROID_MODEL` default model | Small | Pending |
+| 3.4 | Add `THGENT_DROID_DIR` droids directory override | Small | Pending |
+| 3.5 | Integrate with `thegent queue` CLI commands | Small | Pending |
+| 3.6 | Add droid to `thegent agents` list | Small | Pending |
+
+### Phase 4: Advanced Features
+
+| Task | Description | Effort | Status |
+|------|-------------|--------|--------|
+| 4.1 | **Droid as teammate** in agent teams | Medium | Pending |
+| 4.2 | **Rules injection** into droid prompts | Small | Pending |
+| 4.3 | **Loop support** — droid in lifecycle loop | Medium | Pending |
+| 4.4 | **MCP tools** — droid-specific tools | Small | Pending |
+| 4.5 | **Telemetry** — droid run metrics | Small | Pending |
+
+---
+
+## 4. Runner Architecture
+
+### 4.1 DroidRunner Details
+
+```
+class DroidRunner(AgentRunner):
+    """Runs droids via Factory droid exec."""
+
+    def __init__(
+        self,
+        droid_name: str,
+        droids_dir: Path,
+        droid_cmd: str = "droid",
+        model: str = "gemini-3-flash",
+    ) -> None:
+        self.droid_name = droid_name
+        self.droids_dir = droids_dir.expanduser().resolve()
+        self._droid_cmd = _resolve_droid_cmd(droid_cmd)
+        self._model = model
+
+    def run(
+        self,
+        prompt: str,
+        cwd: Path | None,
+        mode: str,
+        timeout: int,
+        *,
+        use_stream: bool = True,
+        live_output: bool = False,
+        on_stdout: Callable[[str], None] | None = None,
+        on_stderr: Callable[[str], None] | None = None,
+        run_id: str | None = None,
+    ) -> RunResult:
+        """Run droid via droid exec."""
+        # Implementation: create temp prompt file, run droid exec, capture output
+```
+
+### 4.2 Command Construction
+
+```
+cmd = [
+    self._droid_cmd,
+    "exec",
+    "-f", tmp_path,  # Prompt file
+    "--model", self._model,
+]
+if cwd:
+    cmd.extend(["--cwd", str(cwd)])
+if use_stream:
+    cmd.extend(["--output-format", "stream-json"])
+if mode == "write":
+    cmd.extend(["--auto", "low"])
+elif mode == "full":
+    cmd.extend(["--auto", "high"])
+```
+
+### 4.3 Error Handling
+
+| Error | Handling |
+|-------|----------|
+| Droid not found | Return `RunResult` with install instructions |
+| Droid timeout | Return `RunResult` with timeout flag |
+| Prompt file error | Clean up temp file, return error |
+| Non-zero exit | Capture stderr, return in `RunResult` |
+
+---
+
+## 5. Integration with Existing Components
+
+### 5.1 Registry Integration
+
+```
+# src/thegent/agents/registry.py
+
+AGENT_NAMES = [
+    # ... existing names ...
+    "droid",  # Add Factory Droid
+]
+
+# Fallback chain - add droid as fallback option
+_PROVIDER_FALLBACK_CHAIN: list[list[str]] = [
+    # ... existing chains ...
+    ["headless_agent", "droid", "interactive_agent"],  # Add droid fallback
+]
+
+def get_runner(agent_name: str) -> Any:
+    # ... existing logic ...
+    if canonical == "droid":
+        # Parse droid:name format
+        if ":" in agent_name:
+            droid_name, _, model = agent_name.partition(":")
+            return DroidRunner(droid_name, droids_dir, model=model or "gemini-3-flash")
+        return DroidRunner(agent_name, droids_dir)
+```
+
+### 5.2 CLI Integration
+
+```
+# src/thegent/cli_impl.py
+
+def run_impl(mode: str, prompt: str, **kwargs) -> RunResult:
+    """Run agent with prompt."""
+    # Preprocess for droid, codex, claude
+    if mode.startswith("droid:"):
+        action, prompt = _preprocess_droid_prompt(prompt)
+        if action == "defer":
+            queue_add(prompt, project=kwargs.get("cwd"))
+            return RunResult(exit_code=0, stdout="Queued.", stderr="")
+        elif action == "block":
+            escalate(prompt)
+            return RunResult(exit_code=1, stdout="", stderr="Blocked.")
+        elif action == "idea":
+            save_idea(prompt)
+            return RunResult(exit_code=0, stdout="Idea saved.", stderr="")
+    
+    # Execute normally
+    runner = get_runner(mode)
+    result = runner.run(prompt, **kwargs)
+    
+    # Harvest on exit
+    harvest_pending_queue()
+    return result
+```
+
+### 5.3 Queue Integration
+
+```
+# src/thegent/queue/storage.py
+
+def queue_add(prompt: str, project: str | None = None) -> None:
+    """Add to queue."""
+    entry = {
+        "ts": datetime.utcnow().isoformat(),
+        "prompt": prompt,
+        "project": project,
+        "claimed_by": None,
+        "lease_expires_at": None,
+    }
+    queue_path = _get_queue_path(project)
+    with open(queue_path, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+def harvest_pending_queue() -> None:
+    """Flush queue to handoff file."""
+    # ... existing implementation ...
+```
+
+---
+
+## 6. MCP Tools for Factory Droid
+
+### 6.1 Existing Tools (Shared)
+
+| Tool | Description | Used By |
+|------|-------------|---------|
+| `thegent_run` | Run agent with prompt | All |
+| `thegent_bg` | Run agent in background | All |
+| `thegent_queue_list` | List pending queue items | All |
+| `thegent_queue_claim` | Claim queue item | All |
+| `thegent_queue_done` | Mark queue item done | All |
+| `thegent_agents_list` | List available agents | All |
+
+### 6.2 Droid-Specific Tools (Future)
+
+| Tool | Description |
+|------|-------------|
+| `thegent_droid_list` | List available droids |
+| `thegent_droid_run` | Run specific droid |
+| `thegent_droid_info` | Get droid metadata |
+
+---
+
+## 7. Testing Strategy
+
+### 7.1 Unit Tests
+
+| Component | Test |
+|----------|------|
+| `DroidRunner.run()` | Happy path, timeout, not found |
+| `_preprocess_droid_prompt()` | `$defer`, `$block`, `$idea`, normal |
+| `get_runner("droid:name")` | DroidRunner instantiation |
+| `queue_add()` / `queue_list()` | Queue operations |
+
+### 7.2 Integration Tests
+
+| Component | Test |
+|----------|------|
+| `thegent run -M droid:worker "prompt"` | End-to-end droid run |
+| `thegent run -M droid:worker "$defer test"` | Queue defer |
+| `thegent run -M droid:worker "$block test"` | Escalation |
+| Droid exit → harvest | Harvest on exit |
+
+### 7.3 Test Fixtures
+
+```
+# tests/conftest.py
+
+@pytest.fixture
+def droid_runner():
+    """DroidRunner with temp droid file."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        droids_dir = Path(tmpdir)
+        # Create test droid
+        (droids_dir / "test-droid.md").write_text("""
+---
+name: test-droid
+description: Test droid
+tools: [Read, Execute]
+---
+Test droid persona.
+""")
+        yield DroidRunner("test-droid", droids_dir)
+```
+
+---
+
+## 8. File Layout
+
+```
+thegent/
+├── src/thegent/
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   ├── registry.py       # + droid to AGENT_NAMES, fallback chain
+│   │   ├── droid.py         # DroidRunner (exists)
+│   │   └── base.py          # AgentRunner base
+│   ├── cli_impl.py          # + droid preprocessor
+│   ├── queue/
+│   │   ├── storage.py       # queue_add, harvest (shared)
+│   │   └── cli.py           # queue add|list|edit (shared)
+│   ├── mcp_server.py        # + droid-specific tools (future)
+│   └── dex_main.py          # + droid wrapper (future)
+├── .factory/droids/         # Factory droid personas
+├── tests/
+│   ├── test_unit_droid.py   # DroidRunner tests
+│   └── test_integration_droid.py  # E2E tests
+└── docs/
+    └── plans/
+        └── FACTORY_DROID_HARNESS_INTEGRATION_PLAN.md  # this file
+```
+
+---
+
+## 9. Configuration
+
+### 9.1 Environment Variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `THGENT_DROID_CMD` | Droid command path | `droid` |
+| `THGENT_DROID_DIR` | Droids directory | `~/.factory/droids/` |
+| `THGENT_DROID_MODEL` | Default model | `gemini-3-flash` |
+| `THGENT_DROID_BACKEND` | Backend (`droid`, `codex`, `custom`) | `droid` |
+| `THGENT_DROID_CODEX_CMD` | Codex command for droid backend | `codex` |
+| `THGENT_DROID_CUSTOM_CMD` | Custom CLI for droid backend | `` |
+
+### 9.2 Config File (Future)
+
+```
+# ~/.thegent/config.toml or project .thegent/config.toml
+
+[droid]
+default_model = "gemini-3-flash"
+default_backend = "droid"
+droids_dir = "~/.factory/droids/"
+timeout = 300
+
+[droid.backends.droid]
+cmd = "droid"
+
+[droid.backends.codex]
+cmd = "codex"
+
+[droid.backends.custom]
+cmd = "~/.local/bin/custom-cli"
+```
+
+---
+
+## 10. Success Criteria
+
+### Phase 1 (Foundation)
+- [ ] `DroidRunner` infrastructure verified
+- [ ] `droid` added to `AGENT_NAMES` and fallback chain
+- [ ] `get_runner("droid:name")` returns `DroidRunner`
+
+### Phase 2 (Queue Integration)
+- [ ] `$defer` appends to `.thegent/prompt_queue.jsonl`
+- [ ] `$block` escalates via `thegent govern escalate`
+- [ ] `$idea` saves to harvest buffer
+- [ ] Droid exit triggers `harvest-pending-queue.sh`
+
+### Phase 3 (Full Harness)
+- [ ] `thegent run -M droid:worker "prompt"` works
+- [ ] `THGENT_DROID_*` env vars respected
+- [ ] Droid appears in `thegent agents` list
+- [ ] `thegent queue` commands work with droid
+
+### Phase 4 (Advanced)
+- [ ] Droid as teammate in agent teams
+- [ ] Rules injected into droid prompts
+- [ ] Droid runs in lifecycle loop
+- [ ] Droid-specific MCP tools available
+
+---
+
+## 11. Risks and Mitigations
+
+| Risk | Mitigation |
+|------|------------|
+| Droid CLI not installed | Clear error message with install instructions |
+| Droid version mismatch | Version check, graceful fallback |
+| Droids directory missing | Create default or use `THGENT_DROID_DIR` |
+| Queue file corruption | Append-only, atomic writes, lock file |
+| Droid timeout | Configurable timeout, timeout flag in `RunResult` |
+
+---
+
+## 12. Appendix A: DroidRunner API Reference
+
+```
+from thegent.agents.droid import DroidRunner, get_droid_runner
+from pathlib import Path
+
+# Direct instantiation
+runner = DroidRunner(
+    droid_name="worker",
+    droids_dir=Path("~/.factory/droids"),
+    droid_cmd="droid",
+    model="gemini-3-flash",
+)
+
+# Run droid
+result = runner.run(
+    prompt="Fix the bug in auth.py",
+    cwd=Path("/project"),
+    mode="write",  # "write", "full", "read"
+    timeout=300,
+    use_stream=True,
+)
+
+# Factory function
+runner = get_droid_runner(
+    backend="droid",  # "droid", "codex", "custom"
+    droid_name="worker",
+    droids_dir=Path("~/.factory/droids"),
+    droid_cmd="droid",
+    droid_model="gemini-3-flash",
+)
+```
+
+---
+
+## 13. Appendix B: Migration from Old Pattern
+
+**Old pattern (if exists):**
+```
+# Direct subprocess
+subprocess.run(["droid", "exec", "-f", prompt_file, "--model", model])
+```
+
+**New pattern:**
+```
+# Using DroidRunner
+runner = DroidRunner(droid_name, droids_dir, model=model)
+result = runner.run(prompt, cwd, mode, timeout)
+```
+
+**Benefits:**
+- Unified `AgentRunner` interface
+- Consistent error handling
+- Streaming support
+- Callback support (`on_stdout`, `on_stderr`)
+- Metrics integration
+
+---
+
+## 14. Appendix C: Cross-Reference to Existing Plans
+
+| Document | Purpose | Relation |
+|----------|---------|----------|
+| `CODEX_DONUT_HARNESS_PLAN.md` | Unified architecture for all 3 harnesses | This plan extends it |
+| `CLAUDE_CODE_FEATURE_PARITY_AUDIT.md` | Feature audit matrix | Used for parity targets |
+| `MULTI_PLATFORM_PARITY_MASTER_PLAN.md` | Complete parity matrix | Reference for all platforms |
+| `MULTI_PLATFORM_DEEP_DIVE.md` | Schemas, configs, formats | Implementation details |
+| `USER_QUEUE_TUI_AND_AGENT_POLL.md` | Queue TUI design | Queue implementation |
+| `CLAUDE_CODE_QUEUE_PENDING_BLOCKING.md` | Queue semantics | Queue behavior |
+
+---
+
+## 15. Appendix D: Quick Reference for Implementers
+
+| Need | File / Command |
+|------|----------------|
+| DroidRunner | `src/thegent/agents/droid.py` |
+| Registry | `src/thegent/agents/registry.py` |
+| CLI integration | `src/thegent/cli_impl.py` |
+| Queue storage | `src/thegent/queue/storage.py` |
+| Run droid | `thegent run -M droid:<name> "prompt"` |
+| List droids | `thegent agents` |
+| Queue status | `thegent queue list` |
+| Droid install | `curl -fsSL https://app.factory.ai/cli | sh` |
+| Environment | `THGENT_DROID_CMD`, `THGENT_DROID_MODEL`, `THGENT_DROID_DIR` |

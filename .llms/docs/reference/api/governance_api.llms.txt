@@ -1,0 +1,13 @@
+# governance_api
+
+Source: docs/reference/api/governance_api.md
+
+---
+
+# governance API Reference
+
+> **Source**: `src/thegent/governance/__init__.py`
+
+Governance modules: cost, policy, sandbox, economic routing (G-GP, WP-5003).
+
+---

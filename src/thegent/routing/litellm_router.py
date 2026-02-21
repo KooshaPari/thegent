@@ -17,14 +17,26 @@ import logging
 import os
 import time
 from dataclasses import dataclass
+from threading import Lock
 from typing import TYPE_CHECKING, Any
 
-from litellm import Router
+from cachetools import TTLCache
+from litellm.router import Router
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 from thegent.models.catalog import Route, _get_catalog
+from thegent.routing.circuit_breaker import (
+    ProviderCircuitBreakerRegistry,
+    get_healthy_deployments,
+)
+from thegent.routing.harness_model_mapping import CANONICAL_TO_OPENROUTER
+from thegent.routing.model_metadata import (
+    get_all_models_with_metadata,
+    get_model_metadata,
+    has_model_metadata,
+)
 from thegent.routing.provider_types import (
     NATIVE_CLI_PROVIDERS,
     ExecutionPath,
@@ -33,24 +45,9 @@ from thegent.routing.provider_types import (
 
 logger = logging.getLogger(__name__)
 
-# Import model metadata registry
-try:
-    from thegent.routing.model_metadata import (
-        get_all_models_with_metadata,
-        get_model_metadata,
-        has_model_metadata,
-    )
-except ImportError:
-    # Fallback if module doesn't exist yet
-    def get_model_metadata(model_id: str) -> dict[str, Any] | None:
-        return None
-
-    def has_model_metadata(model_id: str) -> bool:
-        return False
-
-    def get_all_models_with_metadata() -> list[str]:
-        return []
-
+# OpenRouter attribution defaults — overridden via environment variables
+_OPENROUTER_HTTP_REFERER_DEFAULT = "https://thegent.dev"
+_OPENROUTER_SITE_NAME_DEFAULT = "thegent"
 
 # Model context windows for validation (in tokens)
 # Source: provider documentation as of 2026-02
@@ -131,6 +128,14 @@ class RouterConfig:
     fallback_enabled: bool = True
 
 
+def _get_openrouter_attribution_headers() -> dict[str, str]:
+    """Build OpenRouter attribution headers from environment or defaults."""
+    return {
+        "HTTP-Referer": os.environ.get("OPENROUTER_HTTP_REFERER", _OPENROUTER_HTTP_REFERER_DEFAULT),
+        "X-Title": os.environ.get("OPENROUTER_SITE_NAME", _OPENROUTER_SITE_NAME_DEFAULT),
+    }
+
+
 def _route_to_litellm_config(route: Route) -> dict[str, Any]:
     """Convert a catalog Route to LiteLLM model_list config.
 
@@ -154,6 +159,8 @@ def _route_to_litellm_config(route: Route) -> dict[str, Any]:
             "claude": "anthropic",
             "minimax": "minimax",
             "glm": "zhipu",
+            "openrouter": "openrouter",
+            "ollama": "ollama",
         }
         litellm_provider = provider_mapping.get(provider, provider)
 
@@ -179,6 +186,13 @@ def _route_to_litellm_config(route: Route) -> dict[str, Any]:
     if get_execution_path(provider) == ExecutionPath.CLIPROXY_API or route.backend_type == "proxy":
         config["litellm_params"]["api_base"] = "http://localhost:8317/v1"
 
+    # OpenRouter routes directly to its API endpoint with attribution headers
+    if provider == "openrouter":
+        config["litellm_params"]["api_base"] = "https://openrouter.ai/api/v1"
+        config["litellm_params"]["extra_headers"] = _get_openrouter_attribution_headers()
+    elif provider == "ollama":
+        config["litellm_params"]["api_base"] = "http://127.0.0.1:11434/v1"
+
     return config
 
 
@@ -189,8 +203,40 @@ def _get_api_key_env(provider: str) -> str:
         "nim": "NVIDIA_API_KEY",
         "glm": "ZHIPU_API_KEY",
         "kilo": "KILO_API_KEY",
+        "openrouter": "OPENROUTER_API_KEY",
+        "ollama": "OLLAMA_API_KEY",
     }
     return mapping.get(provider, f"{provider.upper()}_API_KEY")
+
+
+def build_openrouter_model_entry(
+    model_alias: str,
+    openrouter_model_id: str,
+    api_key: str | None = None,
+) -> dict[str, Any]:
+    """Build a LiteLLM model_list entry for an OpenRouter model.
+
+    Args:
+        model_alias: The alias to use as model_name (e.g., "or/claude-opus-4.6")
+        openrouter_model_id: The OpenRouter model ID in provider/model format
+            (e.g., "anthropic/claude-opus-4-6")
+        api_key: Optional API key; if None, reads from OPENROUTER_API_KEY env var
+
+    Returns:
+        LiteLLM model_list entry dict for the OpenRouter model
+    """
+    resolved_api_key = api_key if api_key is not None else os.environ.get("OPENROUTER_API_KEY", "dummy-key")
+    attribution_headers = _get_openrouter_attribution_headers()
+
+    return {
+        "model_name": model_alias,
+        "litellm_params": {
+            "model": f"openrouter/{openrouter_model_id}",
+            "api_key": resolved_api_key,
+            "api_base": "https://openrouter.ai/api/v1",
+            "extra_headers": attribution_headers,
+        },
+    }
 
 
 def build_litellm_model_list() -> list[dict[str, Any]]:
@@ -199,6 +245,9 @@ def build_litellm_model_list() -> list[dict[str, Any]]:
     Excludes NATIVE_CLI_PROVIDERS (codex, claude).
     Routes API_KEY_PROVIDERS directly.
     Routes LOGIN_AUTH_PROVIDERS via CLIProxyAPIPlus.
+
+    Also appends OpenRouter model entries from CANONICAL_TO_OPENROUTER under
+    "or/<alias>" aliases to avoid conflicts with catalog model names.
 
     Returns:
         List of LiteLLM model_list entries
@@ -221,6 +270,15 @@ def build_litellm_model_list() -> list[dict[str, Any]]:
 
             config = _route_to_litellm_config(route)
             model_list.append(config)
+
+    # Add OpenRouter model entries from CANONICAL_TO_OPENROUTER under "or/" prefix
+    seen_or_aliases: set[str] = set()
+    for canonical_alias, openrouter_model_id in CANONICAL_TO_OPENROUTER.items():
+        or_alias = f"or/{canonical_alias}"
+        if or_alias in seen_or_aliases:
+            continue
+        seen_or_aliases.add(or_alias)
+        model_list.append(build_openrouter_model_entry(or_alias, openrouter_model_id))
 
     return model_list
 
@@ -325,17 +383,66 @@ def get_router_config() -> RouterConfig:
         return RouterConfig()
 
 
-def get_litellm_router(policy: str = "cost-based-routing") -> Router:
-    """Get configured LiteLLM Router instance.
+# TTLCache for get_litellm_router: keyed by policy, reuse router for 5 minutes
+# maxsize=1 since we only need one cached router instance
+_router_cache: TTLCache = TTLCache(maxsize=1, ttl=300)
+_router_lock = Lock()
+
+# TTLCache for build_dynamic_fallback_router model list caching
+_model_list_cache: TTLCache = TTLCache(maxsize=1, ttl=300)
+
+# Track previous circuit breaker states for cache invalidation
+_previous_cb_states: dict[str, str] = {}
+
+
+def invalidate_router_cache() -> None:
+    """Invalidate the cached LiteLLM Router instance.
+
+    Call when external state (e.g. circuit breaker) changes and the
+    cached router should be rebuilt on the next ``get_litellm_router()`` call.
+    """
+    with _router_lock:
+        _router_cache.clear()
+        _model_list_cache.clear()
+    logger.debug("Router cache manually invalidated")
+
+
+def _invalidate_router_cache_on_circuit_breaker_change() -> None:
+    """Check circuit breaker states and invalidate cache if they changed.
+
+    When any provider's circuit breaker state changes (e.g., opens or closes),
+    the cached router becomes stale because it was built with a model list
+    filtered based on the previous circuit breaker states.
+    """
+    global _previous_cb_states
+
+    try:
+        registry = ProviderCircuitBreakerRegistry.get_instance()
+        current_states = registry.all_states()
+
+        # Check if any state changed
+        if current_states != _previous_cb_states:
+            # State changed - invalidate both caches
+            _router_cache.clear()
+            _model_list_cache.clear()
+            _previous_cb_states = current_states.copy()
+            logger.debug("Circuit breaker state changed, invalidated router and model list caches")
+    except Exception:
+        # On any error, don't block - just skip invalidation
+        pass
+
+
+def _build_litellm_router(policy: str) -> Router:
+    """Build a fresh LiteLLM Router instance.
 
     Args:
         policy: Routing policy (cost-based-routing, fastest, round_robin, latency-based-routing)
 
     Returns:
-        Configured LiteLLM Router
+        Newly constructed LiteLLM Router
     """
     config = get_router_config()
-    model_list = build_litellm_model_list()
+    model_list = get_healthy_deployments(build_litellm_model_list())
 
     # Map thegent policy names to LiteLLM policy names
     policy_mapping = {
@@ -368,6 +475,115 @@ def get_litellm_router(policy: str = "cost-based-routing") -> Router:
         chains = build_fallback_chains()
         # Convert to LiteLLM format: list of dicts
         router_kwargs["fallbacks"] = [{model: fallbacks} for model, fallbacks in chains.items()]
+
+    return Router(**router_kwargs)
+
+
+def get_litellm_router(policy: str = "cost-based-routing") -> Router:
+    """Get configured LiteLLM Router instance.
+
+    Returns a cached instance; construction is throttled to once per 5 minutes
+    per policy value via TTLCache so the expensive build path is not hit on
+    every call.
+
+    Args:
+        policy: Routing policy (cost-based-routing, fastest, round_robin, latency-based-routing)
+
+    Returns:
+        Configured LiteLLM Router (possibly shared from cache)
+    """
+    # Check and invalidate cache if circuit breaker state changed
+    _invalidate_router_cache_on_circuit_breaker_change()
+
+    with _router_lock:
+        if policy not in _router_cache:
+            _router_cache[policy] = _build_litellm_router(policy)
+        return _router_cache[policy]
+
+
+def build_dynamic_fallback_router(models: list[str], base_policy: str = "cost-based-routing") -> Router:
+    """Build a LiteLLM Router with a dynamic model fallback chain.
+
+    Results are cached for 5 minutes (same TTL as main router) to avoid
+    rebuilding the model list on every call. Cache is invalidated when
+    circuit breaker state changes.
+
+    Args:
+        models: Ordered list of model names to try (first = primary, rest = fallbacks)
+        base_policy: LiteLLM routing strategy
+
+    Returns:
+        Router configured with the given fallback chain
+    """
+    if not models:
+        msg = "build_dynamic_fallback_router: models list must not be empty"
+        raise ValueError(msg)
+
+    # Check and invalidate cache if circuit breaker state changed
+    _invalidate_router_cache_on_circuit_breaker_change()
+
+    # Create cache key from models tuple and base_policy
+    cache_key = (tuple(models), base_policy)
+
+    # Try to get from cache first
+    with _router_lock:
+        if cache_key in _model_list_cache:
+            filtered_model_list = _model_list_cache[cache_key]
+        else:
+            config = get_router_config()
+            full_model_list = build_litellm_model_list()
+
+            # Build a set of known model names for fast lookup
+            known_model_names: set[str] = {entry["model_name"] for entry in full_model_list}
+
+            # Filter full model list to only the requested models, preserving order.
+            # For any model not in the catalog, create a minimal passthrough config so
+            # LiteLLM can attempt to call it and fail loudly rather than silently skip.
+            filtered_model_list = []
+            seen: set[str] = set()
+            for model_name in models:
+                if model_name in seen:
+                    continue
+                seen.add(model_name)
+                if model_name in known_model_names:
+                    for entry in full_model_list:
+                        if entry["model_name"] == model_name:
+                            filtered_model_list.append(entry)
+                            break
+                else:
+                    filtered_model_list.append(
+                        {
+                            "model_name": model_name,
+                            "litellm_params": {
+                                "model": f"openai/{model_name}",
+                                "api_key": "dummy-key",
+                                "api_base": "http://localhost:8317/v1",
+                            },
+                        }
+                    )
+
+            # Exclude deployments whose provider circuit breaker is OPEN
+            filtered_model_list = get_healthy_deployments(filtered_model_list)
+
+            # Cache the filtered model list
+            _model_list_cache[cache_key] = filtered_model_list
+
+    config = get_router_config()
+
+    primary = models[0]
+    fallback_models = models[1:]
+
+    router_kwargs: dict[str, Any] = {
+        "model_list": filtered_model_list,
+        "routing_strategy": base_policy,
+        "num_retries": config.num_retries,
+        "timeout": config.timeout,
+        "retry_after": config.retry_after,
+        "cooldown_time": config.cooldown_time,
+    }
+
+    if fallback_models:
+        router_kwargs["fallbacks"] = [{primary: fallback_models}]
 
     return Router(**router_kwargs)
 
@@ -511,31 +727,34 @@ class EnhancedRouter:
 
         # Make the request
         try:
+            effective_model: str = selected_model or "unknown"
             if stream and self._config.enable_streaming:
                 response = self._router.completion(
-                    model=selected_model,
+                    model=effective_model,
                     messages=[{"role": "user", "content": prompt}],
                     stream=True,
                     **kwargs,
                 )
             else:
                 response = self._router.completion(
-                    model=selected_model,
+                    model=effective_model,
                     messages=[{"role": "user", "content": prompt}],
                     **kwargs,
                 )
 
             latency_ms = (time.time() - start_time) * 1000
 
-            # Extract metadata from response
-            model_used = getattr(response, "model", selected_model) if response else selected_model
+            # Extract metadata from response — narrow to str
+            _raw_model = getattr(response, "model", None) if response else None
+            model_used: str = str(_raw_model) if _raw_model else effective_model
             provider = self._extract_provider(model_used)
 
             # Track tokens and cost
             tokens_used = 0
             cost_usd = 0.0
-            if response and hasattr(response, "usage"):
-                tokens_used = getattr(response.usage, "total_tokens", 0)
+            response_usage = getattr(response, "usage", None) if response else None
+            if response_usage is not None:
+                tokens_used = getattr(response_usage, "total_tokens", 0)
                 # LiteLLM calculates cost internally; we estimate here
                 cost_usd = self._estimate_cost(model_used, tokens_used)
 
@@ -545,8 +764,8 @@ class EnhancedRouter:
                     provider=provider,
                     model=model_used,
                     usage={
-                        "prompt_tokens": getattr(response.usage, "prompt_tokens", 0) if response else 0,
-                        "completion_tokens": getattr(response.usage, "completion_tokens", 0) if response else 0,
+                        "prompt_tokens": getattr(response_usage, "prompt_tokens", 0) if response_usage else 0,
+                        "completion_tokens": getattr(response_usage, "completion_tokens", 0) if response_usage else 0,
                     },
                     cost=cost_usd,
                     latency_ms=latency_ms,
@@ -600,7 +819,7 @@ class EnhancedRouter:
                         result = self.route(prompt, model=fallback_model, stream=stream, **kwargs)
                         result.is_fallback = True
                         return result
-                    except Exception as fb_e:
+                    except Exception as fb_e:  # noqa: PERF203 - intentional per-item error handling
                         logger.warning("Fallback %s failed: %s", fallback_model, fb_e)
                         continue
 
@@ -639,7 +858,7 @@ class EnhancedRouter:
             Stream chunks from the model
         """
         result = self.route(prompt, model=model, stream=True, **kwargs)
-        if result.success and hasattr(result.response, "__iter__"):
+        if result.success and result.response is not None and hasattr(result.response, "__iter__"):
             yield from result.response
         else:
             raise RuntimeError(result.error or "Streaming failed")
@@ -748,6 +967,20 @@ class EnhancedRouter:
                         logger.debug("Model metadata not found for %s", model_name)
         except Exception as e:
             logger.debug("Could not validate model metadata: %s", e)
+
+
+def get_circuit_breaker_status() -> dict[str, str]:
+    """Return current circuit breaker state for all tracked providers.
+
+    Queries the global :class:`ProviderCircuitBreakerRegistry` singleton and
+    returns a snapshot of every registered provider's current state.
+
+    Returns:
+        Dict mapping provider name to state string: ``"closed"``, ``"open"``,
+        or ``"half-open"``.
+    """
+    registry = ProviderCircuitBreakerRegistry.get_instance()
+    return registry.all_states()
 
 
 # Global enhanced router instance

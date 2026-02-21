@@ -2,7 +2,7 @@
 
 import html
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class InputSanitizer:
@@ -14,27 +14,27 @@ class InputSanitizer:
     MAX_URL_LENGTH = 2048
 
     # Dangerous patterns
-    SQL_INJECTION_PATTERNS = [
+    SQL_INJECTION_PATTERNS = (
         r"(\bOR\b|\bAND\b).*=.*",
         r"(\bUNION\b|\bSELECT\b).*FROM",
         r"(\bDROP\b|\bDELETE\b|\bINSERT\b).*TABLE",
         r"--.*$",  # SQL comment
         r";.*--",  # SQL injection
-    ]
+    )
 
-    XSS_PATTERNS = [
+    XSS_PATTERNS = (
         r"<script[^>]*>.*?</script>",
         r"javascript:",
         r"onerror\s*=",
         r"onclick\s*=",
         r"onload\s*=",
-    ]
+    )
 
-    COMMAND_INJECTION_PATTERNS = [
+    COMMAND_INJECTION_PATTERNS = (
         r"[;&|`].*\$\(.*\)",  # Command chaining
         r"\$\{.*\}.*",  # Variable expansion
         r"`.*`",  # Backtick execution
-    ]
+    )
 
     @staticmethod
     def sanitize_string(value: str, max_length: int | None = None) -> str:
@@ -78,26 +78,17 @@ class InputSanitizer:
     def detect_sql_injection(value: str) -> bool:
         """Detect SQL injection attempts."""
         value_upper = value.upper()
-        for pattern in InputSanitizer.SQL_INJECTION_PATTERNS:
-            if re.search(pattern, value_upper, re.IGNORECASE):
-                return True
-        return False
+        return any(re.search(pattern, value_upper, re.IGNORECASE) for pattern in InputSanitizer.SQL_INJECTION_PATTERNS)
 
     @staticmethod
     def detect_xss(value: str) -> bool:
         """Detect XSS attempts."""
-        for pattern in InputSanitizer.XSS_PATTERNS:
-            if re.search(pattern, value, re.IGNORECASE):
-                return True
-        return False
+        return any(re.search(pattern, value, re.IGNORECASE) for pattern in InputSanitizer.XSS_PATTERNS)
 
     @staticmethod
     def detect_command_injection(value: str) -> bool:
         """Detect command injection attempts."""
-        for pattern in InputSanitizer.COMMAND_INJECTION_PATTERNS:
-            if re.search(pattern, value):
-                return True
-        return False
+        return any(re.search(pattern, value) for pattern in InputSanitizer.COMMAND_INJECTION_PATTERNS)
 
     @staticmethod
     def sanitize_input(value: Any, input_type: str = "string") -> tuple[Any, str | None]:

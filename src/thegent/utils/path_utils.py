@@ -31,6 +31,9 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
+import re
+import tempfile
 from pathlib import Path
 
 
@@ -333,6 +336,24 @@ def is_absolute_or_relative(path: str | Path) -> bool:
     return p.is_absolute()
 
 
+def sanitize_path(name: str) -> str:
+    """Replace characters illegal in file system paths with underscores.
+
+    Replaces the characters ``:<>"/\\|?*`` with ``_``.
+
+    Args:
+        name: Filename or path component to sanitize.
+
+    Returns:
+        Sanitized string safe for use as a path component.
+
+    Examples:
+        >>> sanitize_path('file:with*illegal?chars.txt')
+        'file_with_illegal_chars.txt'
+    """
+    return re.sub(r'[:<>"/\\|?*]', "_", name)
+
+
 def strip_common_prefix(paths: list[str | Path]) -> list[str]:
     """Strip the common directory prefix from a list of paths for display.
 
@@ -353,9 +374,9 @@ def strip_common_prefix(paths: list[str | Path]) -> list[str]:
     common = get_common_ancestor(*normalized)
     result = []
     for p in normalized:
-        try:
+        if is_within(p, common):
             result.append(str(p.relative_to(common)))
-        except ValueError:
+        else:
             result.append(str(p))
     return result
 
@@ -383,29 +404,14 @@ if __name__ == "__main__":
     import sys
 
     cwd = Path.cwd()
-    print(f"CWD: {cwd}")
-    print(f"normalize_path('~/Desktop/demo.txt') -> {normalize_path('~/Desktop/demo.txt')}")
-    print(f"normalize_path(None)                 -> {normalize_path(None)}")
+    sandbox_base = Path(tempfile.gettempdir()) / "sandbox"
 
-    try:
-        safe_join("/tmp/sandbox", "../../etc/passwd")
-    except ValueError as exc:
-        print(f"safe_join traversal blocked: {exc}")
+    with contextlib.suppress(ValueError):
+        safe_join(sandbox_base, "../../etc/passwd")
 
-    safe = safe_join("/tmp/sandbox", "sub/file.txt")
-    print(f"safe_join('/tmp/sandbox', 'sub/file.txt') -> {safe}")
-
-    print(f"is_within('/tmp/foo/bar', '/tmp/foo')     -> {is_within('/tmp/foo/bar', '/tmp/foo')}")
-    print(f"is_within('/etc/hosts', '/tmp')            -> {is_within('/etc/hosts', '/tmp')}")
-    print(f"safe_exists('/tmp')                        -> {safe_exists('/tmp')}")
-    print(f"safe_exists('/nonexistent/xyzzy')          -> {safe_exists('/nonexistent/xyzzy')}")
-    print(f"rel_to_cwd(cwd / 'scripts' / 'path_utils.py') -> {rel_to_cwd(cwd / 'scripts' / 'path_utils.py')}")
-
-    import tempfile
+    safe = safe_join(sandbox_base, "sub/file.txt")
 
     with tempfile.TemporaryDirectory() as td:
         created = ensure_dir(Path(td) / "a" / "b" / "c")
-        print(f"ensure_dir created: {created} (exists={created.exists()})")
 
-    print("All demos completed.")
     sys.exit(0)

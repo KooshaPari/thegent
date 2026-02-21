@@ -1,0 +1,33 @@
+{
+  "threshold": 5,
+  "reporters": [
+    "console"
+  ],
+  "gitignore": true,
+  "noSymlinks": true,
+  "maxLines": 1000,
+  "maxSize": "250kb",
+  "ignore": [
+    "**/.git/**",
+    "**/.git-cache/**",
+    "**/.shadow-*/**",
+    "**/.worktrees/**",
+    "**/.quality/**",
+    "**/.playwright-cli/**",
+    "**/.factory/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/.venv-*/**",
+    "**/venv/**",
+    "**/__pycache__/**",
+    "**/target/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.mypy_cache/**",
+    "**/.ruff_cache/**",
+    "**/.pytest_cache/**",
+    "**/.coverage*",
+    "**/*.lock",
+    "**/*.min.js"
+  ]
+}

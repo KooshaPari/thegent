@@ -1,8 +1,8 @@
 """Multi-tenant coordination implementation."""
 
 import logging
-import os
 import platform
+from pathlib import Path
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -43,13 +43,10 @@ class MultiTenantCoordinator:
         Returns:
             Path to isolated directory
         """
-        base_path = os.path.expanduser("~/.thegent/tenants")
-        tenant_path = os.path.join(base_path, tenant_id)
-
-        if not os.path.exists(tenant_path):
-            os.makedirs(tenant_path, exist_ok=True)
-
-        return tenant_path
+        base_path = Path("~/.thegent/tenants").expanduser()
+        tenant_path = base_path / tenant_id
+        tenant_path.mkdir(parents=True, exist_ok=True)
+        return str(tenant_path)
 
     def dispatch_command(self, tenant_id: str, command: str) -> dict[str, Any]:
         """Dispatch a command to a specific tenant.

@@ -30,3 +30,138 @@ thegent is a production-ready CLI and framework for managing AI agent workflows,
 - Rust extensions handle hot paths; core logic remains in Python.
 
 For full details, see [llms-full.txt](llms-full.txt).
+
+---
+
+## ANTE: Another Terminal Agent
+
+> A lightweight, native Rust terminal AI agent by Antigma Labs. Provider-agnostic, security-focused, built for simplicity and performance.
+
+### Overview
+
+ANTE is a self-contained CLI agent that operates in your terminal, built from the ground up in native Rust for security, performance, and resistance to AI-generated slop. It emphasizes a tight, minimal core with low cognitive load for both users and developers.
+
+### Key Principles
+
+- **Maintain tight & tiny core** - Only essential features, avoid feature bloat
+- **Minimize cognitive load** - Simple interface for users and developers
+- **Minimal dependencies** - Both runtime and build-time dependencies kept low
+- **Principled agent organization** - Clear, scalable patterns
+- **Close training-inference loop** - Alignment between learning and execution
+
+### Architecture
+
+ANTE uses a clean **client-daemon architecture**:
+- **Client**: User-facing layer (TUI with ratatui or headless CLI)
+- **Daemon**: Core engine managing sessions, LLM dispatch, tool scheduling
+- **Transport**: Tokio async channels with message ID tracing
+- **Isolation**: Each session is independent, enabling safe parallelization
+
+### LLM Providers
+
+ANTE is **provider-agnostic**. Supported:
+- **Anthropic** (Claude family) - Messages API
+- **OpenAI** (GPT-4o, o1) - Chat Completions
+- **Gemini** (Gemini family) - Native API
+- **Grok** (Grok models) - OpenAI-compatible wire
+- **Open Router** (multi-provider) - Gateway
+- **Local** (GGUF models) - Via llama.cpp for offline
+
+Provider resolution at session init. Override via CLI flags or persistent settings.
+
+### Core Entities
+
+- **Sessions**: Isolated execution contexts with independent state and memory
+- **Tasks**: Units of work within a session
+- **Turns**: Individual agent-user exchanges with tool execution
+- **Steps**: Sub-operations (tool calls, approvals, completions)
+
+### Built-in Tools
+
+**File I/O**: Read, Write, Edit, Glob, Grep
+
+**Shell**: Bash (approval required), BashOutput, KillShell
+
+**Built-in**: Task (spawn sub-agent), TodoWrite, WebFetch, WebSearch
+
+Tool filtering via allowlist/denylist at session level.
+
+### Advanced Features
+
+- **Skills**: Extend ANTE with custom capabilities (user-level, project-level)
+- **Sub-Agents**: Spawn independent agents for hierarchical task decomposition
+- **Memory**: Persistent long-term memory with semantic search and auto-compaction
+- **Offline Mode**: Local LLM support for offline operation (experimental)
+- **Eval & Benchmark**: Built-in evaluation and performance benchmarking
+- **Agent Organization**: Structure agents at scale with routing and resource allocation (experimental)
+- **Third-Party Providers**: Plugin custom LLM providers
+
+### Interface Modes
+
+- **Interactive TUI**: Rich ratatui-based terminal interface with real-time streaming, history navigation, multi-pane layout
+- **Headless Mode**: CLI for scripts, CI/CD pipelines, automation; streaming or buffered output
+
+### Configuration & Storage
+
+- **Settings**: `~/.ante/settings.json` (model, provider, theme, preferences)
+- **Skills**: `~/.ante/skills/` (user-level) or `.ante/skills/` (project-local)
+- **Sub-agents**: `~/.ante/agents/` (user-level) or `.ante/agents/` (project-local)
+- **Project Config**: `.ante/` (local overrides)
+- **Temp Files**: `/tmp/ante/` (per-project scoped)
+- **Override**: `ANTE_HOME` environment variable
+
+### Command Examples
+
+```bash
+ante                                    # Interactive session
+ante run "Your prompt"                  # One-shot execution
+ante task "Your task"                   # Headless mode
+ante config set provider openai         # Configure provider
+ante sessions                           # List sessions
+ante resume <session-id>                # Resume session
+```
+
+### Integration with thegent
+
+ANTE can integrate as:
+1. **Provider Option**: Available harness for task execution
+2. **Sub-agent Driver**: thegent spawning ANTE for specialized work
+3. **Skill Extension**: ANTE skills in thegent's skill catalog
+4. **Model Gateway**: ANTE provider system for multi-model support
+
+### Performance & Limits
+
+- **Context Limit**: ~100K tokens (configurable, auto-compaction at limit)
+- **First Token**: 200-800ms (provider-dependent)
+- **Streaming**: Real-time token delivery
+- **Memory**: ~50-200MB baseline, ~1-10MB per session
+- **Tool Overhead**: <100ms typical
+
+### Documentation
+
+See `/docs/context/ante/` for comprehensive guides:
+- `overview.md` - What ANTE is and core principles
+- `quickstart.md` - Installation and first use
+- `core-concepts.md` - Sessions, tasks, turns, protocol
+- `architecture.md` - System design and components
+- `interactive-tui.md` - Terminal interface guide
+- `headless-mode.md` - Scripting and CI/CD integration
+- `skills.md` - Extending with custom skills
+- `sub-agents.md` - Agent spawning and coordination
+- `tools.md` - Tool system and custom tools
+- `memory.md` - Persistence and retrieval
+- `model-provider-catalog.md` - Available LLMs
+- `preferences.md` - Configuration and settings
+- `offline-mode.md` - Offline operation
+- `third-party-providers.md` - Custom provider integration
+- `agent-organization.md` - Scaling agents (experimental)
+- `eval-benchmark.md` - Testing and evaluation
+
+### Resources
+
+- **ANTE Docs**: https://docs.useante.com/
+- **GitHub**: https://github.com/antigmaplex/ante
+- **Antigma Labs**: https://antigmalabs.com/
+- **Status**: Preview / Under Active Development (macOS, Linux only)
+
+---

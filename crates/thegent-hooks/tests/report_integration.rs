@@ -146,7 +146,7 @@ mod report_integration_tests {
         // Verify counts
         assert_eq!(stats["files_processed"], 100);
         assert_eq!(stats["tests_failed"], 5);
-        assert_eq!(stats["tests_passed"] + stats["tests_failed"], 500);
+        assert_eq!(stats["tests_passed"].as_u64().unwrap() + stats["tests_failed"].as_u64().unwrap(), 500);
     }
 
     #[test]

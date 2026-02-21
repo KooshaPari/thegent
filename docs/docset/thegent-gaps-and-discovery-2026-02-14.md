@@ -24,7 +24,7 @@
 
 | ID | Item | Status | Notes |
 |----|------|--------|-------|
-| C1 | **Phase 2: Cursor dedicated block** | ✓ Done | CLIProxyAPIPlus-fork: CursorKey, synthesizeCursorKeys, cursorAddToken, config.example, PROVIDER_SETUP_GUIDE |
+| C1 | **Phase 2: Cursor dedicated block** | ✓ Done | cliproxyapi-plusplus: CursorKey, synthesizeCursorKeys, cursorAddToken, config.example, PROVIDER_SETUP_GUIDE |
 | C2 | **Phase 1: Fix Cursor config** | Done | config.example has cursor block; note: "Do NOT use api-key-entries" |
 | C3 | **Phase 1: Regenerate patch** | N/A | Fork has cursor; patch for upstream PR if needed |
 

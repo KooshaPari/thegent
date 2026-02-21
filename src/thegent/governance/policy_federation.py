@@ -147,7 +147,7 @@ class GovernancePolicyFederation:
             federated_engine: Federated policy engine (creates new if None)
             cache_ttl: Cache TTL in seconds (default: 300)
         """
-        self.federated_engine = federated_engine or FederatedPolicyEngine()
+        self.federated_engine = federated_engine or FederatedPolicyEngine(namespace="default")
         self.escalation_queue = EscalationQueue()
         self.cache = PolicyCache(ttl_seconds=cache_ttl)
         self.conflict_resolver = GovernanceConflictResolver()

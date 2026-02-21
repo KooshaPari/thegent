@@ -66,7 +66,7 @@ thegent mcp migrate-unimount codex
 
 The shell corruption was caused by:
 
-1. **Missing CLIProxyAPI config**: When CLIProxyAPI tried to load `/Users/kooshapari/temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/config.yaml` and it didn't exist, it caused errors
+1. **Missing CLIProxyAPI config**: When CLIProxyAPI tried to load `/Users/kooshapari/temp-PRODVERCEL/485/kush/cliproxyapi-plusplus/config.yaml` and it didn't exist, it caused errors
 2. **Config errors propagating**: These errors caused command wrapping issues
 3. **Directory evaluation**: Something was evaluating directory contents as commands (likely a wrapper script or hook)
 
@@ -104,7 +104,7 @@ cat /tmp/test_clean.txt
 ls -la ~/.config/thegent/cliproxy-config.yaml
 
 # Check fork config (if fork exists)
-ls -la ../CLIProxyAPIPlus-fork/config.yaml
+ls -la ../cliproxyapi-plusplus/config.yaml
 
 # Test proxy starts
 thegent mcp up

@@ -1,0 +1,69 @@
+# kpis_api
+
+Source: docs/reference/api/kpis_api.md
+
+---
+
+# kpis API Reference
+
+> **Source**: `src/thegent/ux/kpis.py`
+
+WP-Y7: TRAFFIC KPI dashboard.
+
+---
+
+## KPIDashboard
+
+Aggregates and displays TRAFFIC KPIs (Throughput, Reliability, Availability, Finance, Fatigue, Integrity, Continuity).
+
+### Methods
+
+#### KPIDashboard.__init__
+
+```
+__init__(self: Any, settings: ThegentSettings)
+```
+
+---
+
+#### KPIDashboard.get_metrics
+
+```
+get_metrics(self: Any)
+```
+
+Aggregate KPIs from various subsystems.
+
+---
+
+#### KPIDashboard.render_summary
+
+```
+render_summary(self: Any)
+```
+
+Render a text-based KPI summary.
+
+---
+
+---
+
+## get_metrics
+
+```
+get_metrics(self: Any)
+```
+
+Aggregate KPIs from various subsystems.
+
+---
+
+## render_summary
+
+```
+render_summary(self: Any)
+```
+
+Render a text-based KPI summary.
+
+---

@@ -1,0 +1,1394 @@
+# types.d_api
+
+Source: docs/reference/api/types.d_api.md
+
+---
+
+# types.d API Reference
+
+> **Source**: `.venv/lib/pypy3.11/site-packages/playwright/driver/package/types/types.d.ts`
+
+## Classes
+
+### TimeoutError
+
+- extends: [Error]
+
+TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g.
+[locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) or
+[browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
+
+```
+const playwright = require('playwright');
+
+(async () => {
+const browser = await playwright.chromium.launch();
+const context = await browser.newContext();
+const page = await context.newPage();
+try {
+await page.locator('text=Foo').click({
+timeout: 100,
+});
+} catch (error) {
+if (error instanceof playwright.errors.TimeoutError)
+console.log('Timeout!');
+}
+await browser.close();
+})();
+```
+
+---
+
+### is
+
+WebView package identifier.
+
+---
+
+### operates
+
+Defines custom attribute name to be used in
+[page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used
+by default.
+
+---
+
+### represents
+
+The page that produced this unhandled exception, if any.
+
+---
+
+## Interfaces
+
+### APIRequest
+
+Exposes API that can be used for the Web API testing. This class is used for creating
+[APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) instance which in turn can be used for
+sending web requests. An instance of this class can be obtained via
+[playwright.request](https://playwright.dev/docs/api/class-playwright#playwright-request). For more information see
+[APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext).
+
+---
+
+### APIRequestContext
+
+This API is used for the Web API testing. You can use it to trigger API endpoints, configure micro-services,
+prepare environment or the service to your e2e test.
+
+Each Playwright browser context has associated with it
+[APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) instance which shares cookie storage
+with the browser context and can be accessed via
+[browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) or
+[page.request](https://playwright.dev/docs/api/class-page#page-request). It is also possible to create a new
+APIRequestContext instance manually by calling
+[apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context).
+
+**Cookie management**
+
+[APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) returned by
+[browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) and
+[page.request](https://playwright.dev/docs/api/class-page#page-request) shares cookie storage with the
+corresponding [BrowserContext](https://playwright.dev/docs/api/class-browsercontext). Each API request will have
+`Cookie` header populated with the values from the browser context. If the API response contains `Set-Cookie`
+header it will automatically update [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) cookies
+and requests made from the page will pick them up. This means that if you log in using this API, your e2e test will
+be logged in and vice versa.
+
+If you want API requests to not interfere with the browser cookies you should create a new
+[APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) by calling
+[apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context). Such
+`APIRequestContext` object will have its own isolated cookie storage.
+
+---
+
+### APIResponse
+
+[APIResponse](https://playwright.dev/docs/api/class-apiresponse) class represents responses returned by
+[apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
+and similar methods.
+
+---
+
+### Android
+
+Playwright has **experimental** support for Android automation. This includes Chrome for Android and Android
+WebView.
+
+*Requirements*
+- Android device or AVD Emulator.
+- [ADB daemon](https://developer.android.com/studio/command-line/adb) running and authenticated with your device.
+Typically running `adb devices` is all you need to do.
+- [`Chrome 87`](https://play.google.com/store/apps/details?id=com.android.chrome) or newer installed on the
+device
+- "Enable command line on non-rooted devices" enabled in `chrome://flags`.
+
+*Known limitations*
+- Raw USB operation is not yet supported, so you need ADB.
+- Device needs to be awake to produce screenshots. Enabling "Stay awake" developer mode will help.
+- We didn't run all the tests against the device, so not everything works.
+
+*How to run*
+
+An example of the Android automation script would be:
+
+```
+const { _android: android } = require('playwright');
+
+(async () => {
+// Connect to the device.
+const [device] = await android.devices();
+console.log(`Model: ${device.model()}`);
+console.log(`Serial: ${device.serial()}`);
+// Take screenshot of the whole device.
+await device.screenshot({ path: 'device.png' });
+
+{
+// --------------------- WebView -----------------------
+
+// Launch an application with WebView.
+await device.shell('am force-stop org.chromium.webview_shell');
+await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
+// Get the WebView.
+const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
+
+// Fill the input box.
+await device.fill({
+res: 'org.chromium.webview_shell:id/url_field',
+}, 'github.com/microsoft/playwright');
+await device.press({
+res: 'org.chromium.webview_shell:id/url_field',
+}, 'Enter');
+
+// Work with WebView's page as usual.
+const page = await webview.page();
+await page.waitForNavigation({ url: /.*microsoft\/playwright.*\/ });
+console.log(await page.title());
+}
+
+{
+// --------------------- Browser -----------------------
+
+// Launch Chrome browser.
+await device.shell('am force-stop com.android.chrome');
+const context = await device.launchBrowser();
+
+// Use BrowserContext as usual.
+const page = await context.newPage();
+await page.goto('https://webkit.org/');
+console.log(await page.evaluate(() => window.location.href));
+await page.screenshot({ path: 'page.png' });
+
+await context.close();
+}
+
+// Close the device.
+await device.close();
+})();
+```
+
+---
+
+### AndroidDevice
+
+[AndroidDevice](https://playwright.dev/docs/api/class-androiddevice) represents a connected device, either real
+hardware or emulated. Devices can be obtained using
+[android.devices([options])](https://playwright.dev/docs/api/class-android#android-devices).
+
+---
+
+### AndroidInput
+
+Currently open WebViews.
+
+---
+
+### AndroidSocket
+
+[AndroidSocket](https://playwright.dev/docs/api/class-androidsocket) is a way to communicate with a process
+launched on the [AndroidDevice](https://playwright.dev/docs/api/class-androiddevice). Use
+[androidDevice.open(command)](https://playwright.dev/docs/api/class-androiddevice#android-device-open) to open a
+socket.
+
+---
+
+### AndroidWebView
+
+[AndroidWebView](https://playwright.dev/docs/api/class-androidwebview) represents a WebView open on the
+[AndroidDevice](https://playwright.dev/docs/api/class-androiddevice). WebView is usually obtained using
+[androidDevice.webView(selector[, options])](https://playwright.dev/docs/api/class-androiddevice#android-device-web-view).
+
+---
+
+### Browse
+
+When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+element, the call throws an exception.
+
+---
+
+### Browser
+
+A Browser is created via
+[browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). An example
+of using a [Browser](https://playwright.dev/docs/api/class-browser) to create a
+[Page](https://playwright.dev/docs/api/class-page):
+
+```
+const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+
+(async () => {
+const browser = await firefox.launch();
+const page = await browser.newPage();
+await page.goto('https://example.com');
+await browser.close();
+})();
+```
+
+---
+
+### BrowserContextOptions
+
+Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+option in the config, or by using the
+[browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+
+---
+
+### BrowserServer
+
+Contains the URL of the response.
+
+---
+
+### BrowserType
+
+BrowserType provides methods to launch a specific browser instance or connect to an existing one. The following is
+a typical example of using Playwright to drive automation:
+
+```
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+
+(async () => {
+const browser = await chromium.launch();
+const page = await browser.newPage();
+await page.goto('https://example.com');
+// other actions...
+await browser.close();
+})();
+```
+
+---
+
+### CDPSession
+
+The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
+- protocol methods can be called with `session.send` method.
+- protocol events can be subscribed to with `session.on` method.
+
+Useful links:
+- Documentation on DevTools Protocol can be found here:
+[DevTools Protocol Viewer](https://chromedevtools.github.io/devtools-protocol/).
+- Getting Started with DevTools Protocol:
+https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md
+
+```
+const client = await page.context().newCDPSession(page);
+await client.send('Animation.enable');
+client.on('Animation.animationCreated', () => console.log('Animation created!'));
+const response = await client.send('Animation.getPlaybackRate');
+console.log('playback rate is ' + response.playbackRate);
+await client.send('Animation.setPlaybackRate', {
+playbackRate: response.playbackRate / 2
+});
+```
+
+---
+
+### Clock
+
+Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Learn
+more about [clock emulation](https://playwright.dev/docs/clock).
+
+Note that clock is installed for the entire [BrowserContext](https://playwright.dev/docs/api/class-browsercontext),
+so the time in all the pages and iframes is controlled by the same clock.
+
+---
+
+### ConnectOptions
+
+Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass
+`0` to disable timeout.
+
+---
+
+### ConnectOverCDPOption
+
+Optional password to use if HTTP proxy requires authentication.
+
+---
+
+### ConnectOverCDPOptions
+
+If specified, traces are saved into this directory.
+
+---
+
+### Cookie
+
+Non-negative accuracy value. Defaults to `0`.
+
+---
+
+### Coverage
+
+Coverage gathers information about parts of JavaScript and CSS that were used by the page.
+
+An example of using JavaScript coverage to produce Istanbul report for page load:
+
+**NOTE** Coverage APIs are only supported on Chromium-based browsers.
+
+```
+const { chromium } = require('playwright');
+const v8toIstanbul = require('v8-to-istanbul');
+
+(async () => {
+const browser = await chromium.launch();
+const page = await browser.newPage();
+await page.coverage.startJSCoverage();
+await page.goto('https://chromium.org');
+const coverage = await page.coverage.stopJSCoverage();
+for (const entry of coverage) {
+const converter = v8toIstanbul('', 0, { source: entry.source });
+await converter.load();
+converter.applyCoverage(entry.functions);
+console.log(JSON.stringify(converter.toIstanbul()));
+}
+await browser.close();
+})();
+```
+
+---
+
+### Dialog
+
+[Dialog](https://playwright.dev/docs/api/class-dialog) objects are dispatched by page via the
+[page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) event.
+
+An example of using `Dialog` class:
+
+```
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+
+(async () => {
+const browser = await chromium.launch();
+const page = await browser.newPage();
+page.on('dialog', async dialog => {
+console.log(dialog.message());
+await dialog.dismiss();
+});
+await page.evaluate(() => alert('1'));
+await browser.close();
+})();
+```
+
+**NOTE** Dialogs are dismissed automatically, unless there is a
+[page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listener. When listener is
+present, it **must** either
+[dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
+[dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
+will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
+dialog, and actions like click will never finish.
+
+---
+
+### Download
+
+[Download](https://playwright.dev/docs/api/class-download) objects are dispatched by page via the
+[page.on('download')](https://playwright.dev/docs/api/class-page#page-event-download) event.
+
+All the downloaded files belonging to the browser context are deleted when the browser context is closed.
+
+Download event is emitted once the download starts. Download path becomes available once download completes.
+
+```
+// Start waiting for download before clicking. Note no await.
+const downloadPromise = page.waitForEvent('download');
+await page.getByText('Download file').click();
+const download = await downloadPromise;
+
+// Wait for the download process to complete and save the downloaded file somewhere.
+await download.saveAs('/path/to/save/at/' + download.suggestedFilename());
+```
+
+---
+
+### Electron
+
+Playwright has **experimental** support for Electron automation. You can access electron namespace via:
+
+```
+const { _electron } = require('playwright');
+```
+
+An example of the Electron automation script would be:
+
+```
+const { _electron: electron } = require('playwright');
+
+(async () => {
+// Launch Electron app.
+const electronApp = await electron.launch({ args: ['main.js'] });
+
+// Evaluation expression in the Electron context.
+const appPath = await electronApp.evaluate(async ({ app }) => {
+// This runs in the main Electron process, parameter here is always
+// the result of the require('electron') in the main app script.
+return app.getAppPath();
+});
+console.log(appPath);
+
+// Get the first window that the app opens, wait if necessary.
+const window = await electronApp.firstWindow();
+// Print the title.
+console.log(await window.title());
+// Capture a screenshot.
+await window.screenshot({ path: 'intro.png' });
+// Direct Electron console to Node terminal.
+window.on('console', console.log);
+// Click button.
+await window.click('text=Click me');
+// Exit app.
+await electronApp.close();
+})();
+```
+
+**Supported Electron versions are:**
+- v12.2.0+
+- v13.4.0+
+- v14+
+
+**Known issues:**
+
+If you are not able to launch Electron and it will end up in timeouts during launch, try the following:
+- Ensure that `nodeCliInspect`
+([FuseV1Options.EnableNodeCliInspectArguments](https://www.electronjs.org/docs/latest/tutorial/fuses#nodecliinspect))
+fuse is **not** set to `false`.
+
+---
+
+### ElementHandle
+
+- extends: [JSHandle](https://playwright.dev/docs/api/class-jshandle)
+
+ElementHandle represents an in-page DOM element. ElementHandles can be created with the
+[page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector) method.
+
+**NOTE** The use of ElementHandle is discouraged, use [Locator](https://playwright.dev/docs/api/class-locator)
+objects and web-first assertions instead.
+
+```
+const hrefElement = await page.$('a');
+await hrefElement.click();
+```
+
+ElementHandle prevents DOM element from garbage collection unless the handle is disposed with
+[jsHandle.dispose()](https://playwright.dev/docs/api/class-jshandle#js-handle-dispose). ElementHandles are
+auto-disposed when their origin frame gets navigated.
+
+ElementHandle instances can be used as an argument in
+[page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector)
+and [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) methods.
+
+The difference between the [Locator](https://playwright.dev/docs/api/class-locator) and ElementHandle is that the
+ElementHandle points to a particular element, while [Locator](https://playwright.dev/docs/api/class-locator)
+captures the logic of how to retrieve an element.
+
+In the example below, handle points to a particular DOM element on page. If that element changes text or is used by
+React to render an entirely different component, handle is still pointing to that very DOM element. This can lead
+to unexpected behaviors.
+
+```
+const handle = await page.$('text=Submit');
+// ...
+await handle.hover();
+await handle.click();
+```
+
+With the locator, every time the `element` is used, up-to-date DOM element is located in the page using the
+selector. So in the snippet below, underlying DOM element is going to be located twice.
+
+```
+const locator = page.getByText('Submit');
+// ...
+await locator.hover();
+await locator.click();
+```
+
+---
+
+### ElementHandleWaitForSelectorOptions
+
+Specify screenshot type, defaults to `png`.
+
+---
+
+### FileChooser
+
+[FileChooser](https://playwright.dev/docs/api/class-filechooser) objects are dispatched by the page in the
+[page.on('filechooser')](https://playwright.dev/docs/api/class-page#page-event-file-chooser) event.
+
+```
+// Start waiting for file chooser before clicking. Note no await.
+const fileChooserPromise = page.waitForEvent('filechooser');
+await page.getByText('Upload file').click();
+const fileChooser = await fileChooserPromise;
+await fileChooser.setFiles(path.join(__dirname, 'myfile.pdf'));
+```
+
+---
+
+### FrameLocator
+
+FrameLocator represents a view to the `iframe` on the page. It captures the logic sufficient to retrieve the
+`iframe` and locate elements in that iframe. FrameLocator can be created with either
+[locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame),
+[page.frameLocator(selector)](https://playwright.dev/docs/api/class-page#page-frame-locator) or
+[locator.frameLocator(selector)](https://playwright.dev/docs/api/class-locator#locator-frame-locator) method.
+
+```
+const locator = page.locator('#my-frame').contentFrame().getByText('Submit');
+await locator.click();
+```
+
+**Strictness**
+
+Frame locators are strict. This means that all operations on frame locators will throw if more than one element
+matches a given selector.
+
+```
+// Throws if there are several frames in DOM:
+await page.locator('.result-frame').contentFrame().getByRole('button').click();
+
+// Works because we explicitly tell locator to pick the first frame:
+await page.locator('.result-frame').contentFrame().first().getByRole('button').click();
+```
+
+**Converting Locator to FrameLocator**
+
+If you have a [Locator](https://playwright.dev/docs/api/class-locator) object pointing to an `iframe` it can be
+converted to [FrameLocator](https://playwright.dev/docs/api/class-framelocator) using
+[locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame).
+
+**Converting FrameLocator to Locator**
+
+If you have a [FrameLocator](https://playwright.dev/docs/api/class-framelocator) object it can be converted to
+[Locator](https://playwright.dev/docs/api/class-locator) pointing to the same `iframe` using
+[frameLocator.owner()](https://playwright.dev/docs/api/class-framelocator#frame-locator-owner).
+
+---
+
+### Geolocation
+
+This option only applies to the requests sent from corresponding
+[APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+`WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+
+---
+
+### HTTPCredentials
+
+page height in pixels.
+
+---
+
+### JSHandle
+
+JSHandle represents an in-page JavaScript object. JSHandles can be created with the
+[page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) method.
+
+```
+const windowHandle = await page.evaluateHandle(() => window);
+// ...
+```
+
+JSHandle prevents the referenced JavaScript object being garbage collected unless the handle is exposed with
+[jsHandle.dispose()](https://playwright.dev/docs/api/class-jshandle#js-handle-dispose). JSHandles are auto-disposed
+when their origin frame gets navigated or the parent context gets destroyed.
+
+JSHandle instances can be used as an argument in
+[page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector),
+[page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) and
+[page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+methods.
+
+---
+
+### Keyboard
+
+Keyboard provides an api for managing a virtual keyboard. The high level api is
+[keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type), which takes raw
+characters and generates proper `keydown`, `keypress`/`input`, and `keyup` events on your page.
+
+For finer control, you can use [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down),
+[keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up), and
+[keyboard.insertText(text)](https://playwright.dev/docs/api/class-keyboard#keyboard-insert-text) to manually fire
+events as if they were generated from a real keyboard.
+
+An example of holding down `Shift` in order to select and delete some text:
+
+```
+await page.keyboard.type('Hello World!');
+await page.keyboard.press('ArrowLeft');
+
+await page.keyboard.down('Shift');
+for (let i = 0; i < ' World'.length; i++)
+await page.keyboard.press('ArrowLeft');
+await page.keyboard.up('Shift');
+
+await page.keyboard.press('Backspace');
+// Result text will end up saying 'Hello!'
+```
+
+An example of pressing uppercase `A`
+
+```
+await page.keyboard.press('Shift+KeyA');
+// or
+await page.keyboard.press('Shift+A');
+```
+
+An example to trigger select-all with the keyboard
+
+```
+await page.keyboard.press('ControlOrMeta+A');
+```
+
+---
+
+### LaunchOptions
+
+Fired when the websocket has an error.
+
+---
+
+### Locator
+
+Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent a
+way to find element(s) on the page at any moment. A locator can be created with the
+[page.locator(selector[, options])](https://playwright.dev/docs/api/class-page#page-locator) method.
+
+[Learn more about locators](https://playwright.dev/docs/locators).
+
+---
+
+### LocatorScreenshotOptions
+
+Maximum time in milliseconds to wait for the connection to be established. Defaults to `0` (no timeout).
+
+---
+
+### Logger
+
+Playwright generates a lot of logs and they are accessible via the pluggable logger sink.
+
+```
+const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+
+(async () => {
+const browser = await chromium.launch({
+logger: {
+isEnabled: (name, severity) => name === 'api',
+log: (name, severity, message, args) => console.log(`${name} ${message}`)
+}
+});
+// ...
+})();
+```
+
+---
+
+### Mouse
+
+The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
+
+**NOTE** If you want to debug where the mouse moved, you can use the [Trace viewer](https://playwright.dev/docs/trace-viewer-intro) or
+[Playwright Inspector](https://playwright.dev/docs/running-tests). A red dot showing the location of the mouse will be shown for every
+mouse action.
+
+Every `page` object has its own Mouse, accessible with
+[page.mouse](https://playwright.dev/docs/api/class-page#page-mouse).
+
+```
+// Using ‘page.mouse’ to trace a 100x100 square.
+await page.mouse.move(0, 0);
+await page.mouse.down();
+await page.mouse.move(0, 100);
+await page.mouse.move(100, 100);
+await page.mouse.move(100, 0);
+await page.mouse.move(0, 0);
+await page.mouse.up();
+```
+
+---
+
+### PageScreenshotOptions
+
+Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+`actionTimeout` option in the config, or by using the
+[browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+
+---
+
+### PageWaitForFu
+
+When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+element, the call throws an exception.
+
+---
+
+### PageWaitForFunctionOptions
+
+Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+option in the config, or by using the
+[browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+
+---
+
+### PageWaitForSelectorOptions
+
+Unix time in seconds.
+
+---
+
+### Request
+
+Whenever the page sends a request for a network resource the following sequence of events are emitted by
+[Page](https://playwright.dev/docs/api/class-page):
+- [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) emitted when the request is
+issued by the page.
+- [page.on('response')](https://playwright.dev/docs/api/class-page#page-event-response) emitted when/if the
+response status and headers are received for the request.
+- [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished) emitted
+when the response body is downloaded and the request is complete.
+
+If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response'
+event), the  [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#page-event-request-failed) event
+is emitted.
+
+**NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
+will complete with `'requestfinished'` event.
+
+If request gets a 'redirect' response, the request is successfully finished with the `requestfinished` event, and a
+new request is  issued to a redirected url.
+
+---
+
+### Response
+
+[Response](https://playwright.dev/docs/api/class-response) class represents responses which are received by page.
+
+---
+
+### Route
+
+Whenever a network route is set up with
+[page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+[browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route),
+the `Route` object allows to handle the route.
+
+Learn more about [networking](https://playwright.dev/docs/network).
+
+---
+
+### Selectors
+
+A request to be routed.
+
+---
+
+### Touchscreen
+
+The Touchscreen class operates in main-frame CSS pixels relative to the top-left corner of the viewport. Methods on
+the touchscreen can only be used in browser contexts that have been initialized with `hasTouch` set to true.
+
+This class is limited to emulating tap gestures. For examples of other gestures simulated by manually dispatching
+touch events, see the [emulating legacy touch events](https://playwright.dev/docs/touch-events) page.
+
+---
+
+### Tracing
+
+API for collecting and saving Playwright traces. Playwright traces can be opened in
+[Trace Viewer](https://playwright.dev/docs/trace-viewer) after Playwright script runs.
+
+**NOTE** You probably want to
+[enable tracing in your config file](https://playwright.dev/docs/api/class-testoptions#test-options-trace) instead
+of using `context.tracing`.
+
+The `context.tracing` API captures browser operations and network activity, but it doesn't record test assertions
+(like `expect` calls). We recommend
+[enabling tracing through Playwright Test configuration](https://playwright.dev/docs/api/class-testoptions#test-options-trace),
+which includes those assertions and provides a more complete trace for debugging test failures.
+
+Start recording a trace before performing actions. At the end, stop tracing and save it to a file.
+
+```
+const browser = await chromium.launch();
+const context = await browser.newContext();
+await context.tracing.start({ screenshots: true, snapshots: true });
+const page = await context.newPage();
+await page.goto('https://playwright.dev');
+expect(page.url()).toBe('https://playwright.dev');
+await context.tracing.stop({ path: 'trace.zip' });
+```
+
+---
+
+### Video
+
+When browser context is created with the `recordVideo` option, each page has a video object associated with it.
+
+```
+console.log(await page.video().path());
+```
+
+---
+
+### ViewportSize
+
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+
+**NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+by the operating system. It makes the execution of the tests non-deterministic.
+
+---
+
+### WebSocket
+
+The [WebSocket](https://playwright.dev/docs/api/class-websocket) class represents WebSocket connections within a
+page. It provides the ability to inspect and manipulate the data being transmitted and received.
+
+If you want to intercept or modify WebSocket frames, consider using
+[WebSocketRoute](https://playwright.dev/docs/api/class-websocketroute).
+
+---
+
+### WebSocketRoute
+
+Whenever a [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) route is set up with
+[page.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-page#page-route-web-socket) or
+[browserContext.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-web-socket),
+the `WebSocketRoute` object allows to handle the WebSocket, like an actual server would do.
+
+**Mocking**
+
+By default, the routed WebSocket will not connect to the server. This way, you can mock entire communication over
+the WebSocket. Here is an example that responds to a `"request"` with a `"response"`.
+
+```
+await page.routeWebSocket('wss://example.com/ws', ws => {
+ws.onMessage(message => {
+if (message === 'request')
+ws.send('response');
+});
+});
+```
+
+Since we do not call
+[webSocketRoute.connectToServer()](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-connect-to-server)
+inside the WebSocket route handler, Playwright assumes that WebSocket will be mocked, and opens the WebSocket
+inside the page automatically.
+
+Here is another example that handles JSON messages:
+
+```
+await page.routeWebSocket('wss://example.com/ws', ws => {
+ws.onMessage(message => {
+const json = JSON.parse(message);
+if (json.request === 'question')
+ws.send(JSON.stringify({ response: 'answer' }));
+});
+});
+```
+
+**Intercepting**
+
+Alternatively, you may want to connect to the actual server, but intercept messages in-between and modify or block
+them. Calling
+[webSocketRoute.connectToServer()](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-connect-to-server)
+returns a server-side `WebSocketRoute` instance that you can send messages to, or handle incoming messages.
+
+Below is an example that modifies some messages sent by the page to the server. Messages sent from the server to
+the page are left intact, relying on the default forwarding.
+
+```
+await page.routeWebSocket('/ws', ws => {
+const server = ws.connectToServer();
+ws.onMessage(message => {
+if (message === 'request')
+server.send('request2');
+else
+server.send(message);
+});
+});
+```
+
+After connecting to the server, all **messages are forwarded** between the page and the server by default.
+
+However, if you call
+[webSocketRoute.onMessage(handler)](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-on-message)
+on the original route, messages from the page to the server **will not be forwarded** anymore, but should instead
+be handled by the
+[`handler`](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-on-message-option-handler).
+
+Similarly, calling
+[webSocketRoute.onMessage(handler)](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-on-message)
+on the server-side WebSocket will **stop forwarding messages** from the server to the page, and
+[`handler`](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-on-message-option-handler) should
+take care of them.
+
+The following example blocks some messages in both directions. Since it calls
+[webSocketRoute.onMessage(handler)](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-on-message)
+in both directions, there is no automatic forwarding at all.
+
+```
+await page.routeWebSocket('/ws', ws => {
+const server = ws.connectToServer();
+ws.onMessage(message => {
+if (message !== 'blocked-from-the-page')
+server.send(message);
+});
+server.onMessage(message => {
+if (message !== 'blocked-from-the-server')
+ws.send(message);
+});
+});
+```
+
+---
+
+## Types
+
+### AndroidElementInfo
+
+Convenience method that returns all the opened windows.
+
+---
+
+### DeviceDescriptor
+
+URL of the WebSocket created in the page.
+
+---
+
+### Devices
+
+Specify screenshot type, defaults to `png`.
+
+---
+
+### PageWaitForSelectorOptionsNotHidden
+
+Copyright (c) Microsoft Corporation.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+---
+
+### and
+
+Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+
+---
+
+### as
+
+New request issued by the browser if the server responded with redirect.
+
+**Usage**
+
+This method is the opposite of
+[request.redirectedFrom()](https://playwright.dev/docs/api/class-request#request-redirected-from):
+
+```
+console.log(request.redirectedFrom().redirectedTo() === request); // true
+```
+
+---
+
+### given
+
+Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
+async listeners to complete or to ignore subsequent errors from these listeners.
+
+---
+
+### of
+
+Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables
+forced colors emulation.
+
+---
+
+### the
+
+Dispatches a `keydown` event.
+
+[`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) can specify the intended
+[keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
+to generate the text for. A superset of the
+[`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) values can be found
+[here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+
+`F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+`Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`,
+etc.
+
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`,
+`ControlOrMeta`. `ControlOrMeta` resolves to `Control` on Windows and Linux and to `Meta` on macOS.
+
+Holding down `Shift` will type the text that corresponds to the
+[`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) in the upper case.
+
+If [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) is a single character, it is
+case-sensitive, so the values `a` and `A` will generate different respective texts.
+
+If [`key`](https://playwright.dev/docs/api/class-keyboard#keyboard-down-option-key) is a modifier key, `Shift`,
+`Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier active. To release the modifier
+key, use [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
+
+After the key is pressed once, subsequent calls to
+[keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) will have
+[repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key,
+use [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
+
+**NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
+
+---
+
+### to
+
+Response headers. Header values will be converted to a string.
+
+---
+
+### will
+
+Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+Defaults to `false`.
+
+---
+
+## Functions
+
+### call
+
+[ConsoleMessage](https://playwright.dev/docs/api/class-consolemessage) objects are dispatched by page via the
+[page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) event. For each console message
+logged in the page there will be corresponding event in the Playwright context.
+
+```
+// Listen for all console logs
+page.on('console', msg => console.log(msg.text()));
+
+// Listen for all console events and handle errors
+page.on('console', msg => {
+if (msg.type() === 'error')
+console.log(`Error text: "${msg.text()}"`);
+});
+
+// Get the next console log
+const msgPromise = page.waitForEvent('console');
+await page.evaluate(() => {
+console.log('hello', 42, { foo: 'bar' });  // Issue console.log inside the page
+});
+const msg = await msgPromise;
+
+// Deconstruct console log arguments
+await msg.args()[0].jsonValue(); // hello
+await msg.args()[1].jsonValue(); // 42
+```
+
+---
+
+### called
+
+If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those
+URLs are returned.
+
+---
+
+### passed
+
+Returns the return value of
+[`pageFunction`](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-option-expression).
+
+If the function passed to the
+[electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
+returns a [Promise], then
+[electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
+would wait for the promise to resolve and return its value.
+
+If the function passed to the
+[electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
+returns a non-[Serializable] value, then
+[electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
+returns `undefined`. Playwright also supports transferring some additional values that are not serializable by
+`JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
+[`pageFunction`](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-option-expression).
+
+---
+
+### that
+
+Selectors can be used to install custom selector engines. See [extensibility](https://playwright.dev/docs/extensibility) for more
+information.
+
+---
+
+## Constants
+
+### banana
+
+Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
+passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+`<article><div>Playwright</div></article>`.
+
+---
+
+### browser
+
+Dispatches a `keyup` event.
+
+---
+
+### browserServer
+
+Optional port to establish ADB server connection. Default to `5037`.
+
+---
+
+### button
+
+When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+`modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+are pressed.
+
+---
+
+### chromium
+
+This object can be used to launch or connect to Chromium, returning instances of
+[Browser](https://playwright.dev/docs/api/class-browser).
+
+---
+
+### context
+
+Only removes cookies with the given path.
+
+---
+
+### count
+
+Returns a [FrameLocator](https://playwright.dev/docs/api/class-framelocator) object pointing to the same `iframe`
+as this locator.
+
+Useful when you have a [Locator](https://playwright.dev/docs/api/class-locator) object obtained somewhere, and
+later on would like to interact with the content inside the frame.
+
+For a reverse operation, use
+[frameLocator.owner()](https://playwright.dev/docs/api/class-framelocator#frame-locator-owner).
+
+**Usage**
+
+```
+const locator = page.locator('iframe[name="embedded"]');
+// ...
+const frameLocator = locator.contentFrame();
+await frameLocator.getByRole('button').click();
+```
+
+---
+
+### electronApp
+
+Returns downloaded url.
+
+---
+
+### fileChooserPromise
+
+If specified, traces are saved into this directory.
+
+---
+
+### firefox
+
+This object can be used to launch or connect to Firefox, returning instances of
+[Browser](https://playwright.dev/docs/api/class-browser).
+
+---
+
+### frame
+
+Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+option in the config, or by using the
+[browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+
+---
+
+### frameUrl
+
+Human-readable error message, e.g. `'net::ERR_FAILED'`.
+
+---
+
+### handle
+
+The `jsHandle.dispose` method stops referencing the element handle.
+
+---
+
+### headers
+
+Aborts the route's request.
+- `'aborted'` - An operation was aborted (due to user action)
+- `'accessdenied'` - Permission to access a resource, other than the network, was denied
+- `'addressunreachable'` - The IP address is unreachable. This usually means that there is no route to the
+specified host or network.
+- `'blockedbyclient'` - The client chose to block the request.
+- `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are
+not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
+- `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
+- `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
+- `'connectionfailed'` - A connection attempt failed.
+- `'connectionrefused'` - A connection attempt was refused.
+- `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
+- `'internetdisconnected'` - The Internet connection has been lost.
+- `'namenotresolved'` - The host name could not be resolved.
+- `'timedout'` - An operation timed out.
+- `'failed'` - A generic failure occurred.
+
+---
+
+### locator
+
+Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+option in the config, or by using the
+[browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+
+---
+
+### request
+
+Exposes API that can be used for the Web API testing.
+
+---
+
+### requestFinishedPromise
+
+Total number of bytes from the start of the HTTP response message until (and including) the double CRLF before the
+body.
+
+---
+
+### requestPromise
+
+When to consider operation succeeded, defaults to `load`. Events can be either:
+- `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+- `'load'` - consider operation to be finished when the `load` event is fired.
+- `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+- `'commit'` - consider operation to be finished when network response is received and the document started
+loading.
+
+---
+
+### response
+
+If set changes the request URL. New URL must have same protocol as original one. Changing the URL won't affect the
+route matching, all the routes are matched using the original request URL.
+
+---
+
+### responsePromise
+
+Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can
+be changed by using the
+[page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) method.
+
+---
+
+### rowLocator
+
+Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+option in the config, or by using the
+[browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+
+---
+
+### selectors
+
+Selectors can be used to install custom selector engines. See [extensibility](https://playwright.dev/docs/extensibility) for more
+information.
+
+---
+
+### source
+
+Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+option in the config, or by using the
+[browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+
+---
+
+### v8toIstanbul
+
+The web worker or service worker that produced this console message, if any. Note that console messages from web
+workers also have non-null
+[consoleMessage.page()](https://playwright.dev/docs/api/class-consolemessage#console-message-page).
+
+---
+
+### values
+
+This event is issued when the application process has been terminated.
+
+---
+
+### webkit
+
+This object can be used to launch or connect to WebKit, returning instances of
+[Browser](https://playwright.dev/docs/api/class-browser).
+
+---
+
+### windowHandle
+
+Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
+
+---

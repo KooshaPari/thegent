@@ -40,17 +40,6 @@ def main() -> int:
     config_path = tmp_config
 
     binary = _resolve_binary(settings)
-    if not Path(binary).exists():
-        alt = Path.cwd().parent / "CLIProxyAPIPlus-fork" / "cli-proxy-api-plus"
-        if alt.exists():
-            binary = str(alt)
-            # Ensure config exists before using fork binary (fork looks for config.yaml in its dir)
-            fork_config = alt.parent / "config.yaml"
-            if not fork_config.exists() and config_path.exists():
-                # Copy thegent config to fork location if fork binary is used
-                import shutil
-
-                shutil.copy2(config_path, fork_config)
 
     if not Path(binary).exists() and "/" not in binary:
         for segment in os.environ.get("PATH", "").split(":"):

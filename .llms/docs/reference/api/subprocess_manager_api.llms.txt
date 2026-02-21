@@ -1,0 +1,75 @@
+# subprocess_manager_api
+
+Source: docs/reference/api/subprocess_manager_api.md
+
+---
+
+# subprocess_manager API Reference
+
+> **Source**: `src/thegent/infra/subprocess_manager.py`
+
+Resource-aware subprocess management with automatic cleanup.
+
+---
+
+## SubprocessManager
+
+Manager for subprocess lifecycle with resource tracking.
+
+### Methods
+
+#### SubprocessManager.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### SubprocessManager.popen
+
+```
+popen(self: Any, args: list[str], name: str)
+```
+
+Context manager for subprocess.Popen with automatic cleanup.
+
+---
+
+#### SubprocessManager.run
+
+```
+run(self: Any, args: list[str], name: str, timeout: Any)
+```
+
+Run subprocess with resource tracking.
+
+---
+
+---
+
+## get_subprocess_manager
+
+Get global subprocess manager.
+
+---
+
+## popen
+
+```
+popen(self: Any, args: list[str], name: str)
+```
+
+Context manager for subprocess.Popen with automatic cleanup.
+
+---
+
+## run
+
+```
+run(self: Any, args: list[str], name: str, timeout: Any)
+```
+
+Run subprocess with resource tracking.
+
+---

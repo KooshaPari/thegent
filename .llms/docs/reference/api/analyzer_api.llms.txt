@@ -1,0 +1,88 @@
+# analyzer_api
+
+Source: docs/reference/api/analyzer_api.md
+
+---
+
+# analyzer API Reference
+
+> **Source**: `src/thegent/agents/document/analyzer.py`
+
+Document Analyzer
+
+Analyzes markdown files to categorize, extract metadata, and identify
+patterns or characteristics.
+
+---
+
+## DocumentAnalysis
+
+Analysis results for a document.
+
+### Methods
+
+#### DocumentAnalysis.to_dict
+
+```
+to_dict(self: Any)
+```
+
+Convert to dictionary.
+
+---
+
+---
+
+## DocumentAnalyzer
+
+Analyzes markdown documents.
+
+### Methods
+
+#### DocumentAnalyzer.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### DocumentAnalyzer.analyze
+
+```
+analyze(self: Any, filepath: Path)
+```
+
+Analyze a markdown file.
+
+---
+
+---
+
+## DocumentCategory
+
+Categories for documents.
+
+**Inherits from**: `Enum`
+
+---
+
+## analyze
+
+```
+analyze(self: Any, filepath: Path)
+```
+
+Analyze a markdown file.
+
+---
+
+## to_dict
+
+```
+to_dict(self: Any)
+```
+
+Convert to dictionary.
+
+---

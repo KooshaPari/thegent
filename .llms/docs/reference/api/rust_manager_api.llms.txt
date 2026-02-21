@@ -1,0 +1,89 @@
+# rust_manager_api
+
+Source: docs/reference/api/rust_manager_api.md
+
+---
+
+# rust_manager API Reference
+
+> **Source**: `src/thegent/maif/rust_manager.py`
+
+MAIF Artifact Manager using Rust binary.
+
+---
+
+## RustMAIFManager
+
+Manager that delegates MAIF operations to the Rust binary.
+
+### Methods
+
+#### RustMAIFManager.__init__
+
+```
+__init__(self: Any, binary_path: Path, private_key_path: Path, public_key_path: Path)
+```
+
+---
+
+#### RustMAIFManager.create_artifact
+
+```
+create_artifact(self: Any, action: str, payload: dict[(str, Any)], agent: str, session: str, output_path: Path)
+```
+
+Create and sign a MAIF artifact using the Rust binary.
+
+---
+
+#### RustMAIFManager.ensure_keys
+
+```
+ensure_keys(self: Any, bits: int)
+```
+
+Ensure RSA keys exist, generate if not.
+
+---
+
+#### RustMAIFManager.verify_artifact
+
+```
+verify_artifact(self: Any, artifact_path: Path)
+```
+
+Verify a MAIF artifact using the Rust binary.
+
+---
+
+---
+
+## create_artifact
+
+```
+create_artifact(self: Any, action: str, payload: dict[(str, Any)], agent: str, session: str, output_path: Path)
+```
+
+Create and sign a MAIF artifact using the Rust binary.
+
+---
+
+## ensure_keys
+
+```
+ensure_keys(self: Any, bits: int)
+```
+
+Ensure RSA keys exist, generate if not.
+
+---
+
+## verify_artifact
+
+```
+verify_artifact(self: Any, artifact_path: Path)
+```
+
+Verify a MAIF artifact using the Rust binary.
+
+---

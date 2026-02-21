@@ -1,0 +1,26 @@
+# agent_patterns API Reference
+
+> **Source**: `src/thegent/mesh/agent_patterns.py`
+
+Regex-based agent detection using agents.conf.
+
+---
+
+## get_config_path
+
+Get path to agents.conf.
+
+---
+
+## load_agent_patterns
+
+Load agent regex patterns from agents.conf.
+
+---
+
+## run_detection
+
+Load patterns and detect agents.
+
+---
+

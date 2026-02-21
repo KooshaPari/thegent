@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from thegent.orchestration.redis_concurrency import (
+from thegent.orchestration.consensus.redis_concurrency import (
     RedisConcurrencyController,
     RedisConfig,
     _InMemoryStore,

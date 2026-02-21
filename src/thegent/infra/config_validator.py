@@ -20,7 +20,7 @@ console = Console()
 class ConfigValidator:
     """Configuration validator."""
 
-    def __init__(self, config_path: Path | None = None):
+    def __init__(self, config_path: Path | None = None) -> None:
         """Initialize the validator.
 
         Args:

@@ -7,12 +7,15 @@ from __future__ import annotations
 
 import threading
 import time
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from thegent.cache.multi_level import _DISKCACHE_AVAILABLE, MultiLevelCache, cached_multi
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Fixtures

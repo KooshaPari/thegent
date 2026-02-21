@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from thegent.anen_main import app as app
+from thegent.anen_main import app
 
 # Expose fanta as a first-class harness entrypoint while reusing
 # the full Antigma command surface implemented in anen_main.

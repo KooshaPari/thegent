@@ -170,7 +170,7 @@ def _fallback_processes(pattern: str | None = None) -> list[dict[str, Any]]:
                         "run_time_s": 0,
                     }
                 )
-        except Exception:
+        except Exception:  # noqa: PERF203 - intentional per-item error handling
             continue
 
     return found

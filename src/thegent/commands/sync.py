@@ -231,6 +231,119 @@ class SyncCommand:
                 errors=[str(exc)],
             )
 
+    def sync_rules(self, dry_run: bool = False) -> OperationResult:
+        """Delegate to ``thegent rules sync`` (RulesSyncManager).
+
+        Thin wrapper that calls ``RulesSyncManager.sync_all()`` so that
+        ``thegent sync rules`` is a convenience alias for ``thegent rules sync``.
+
+        # @trace WL-037
+
+        Args:
+            dry_run: If True, report what would be written without writing.
+
+        Returns:
+            OperationResult with per-platform sync record details.
+        """
+        t0 = time.monotonic()
+        op = "rules"
+
+        from thegent.core.rules_sync import RulesSyncManager
+
+        manager = RulesSyncManager()
+        try:
+            result = manager.sync_all(self._root, dry_run=dry_run)
+        except Exception as exc:
+            _log.warning("sync_rules failed: %s", exc, exc_info=True)
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.FAILED,
+                message=f"Rules sync failed: {exc}",
+                duration=time.monotonic() - t0,
+                errors=[str(exc)],
+            )
+
+        files = result.files_dry_run if dry_run else result.files_written
+        status = SyncOperationStatus.DRY_RUN if dry_run else SyncOperationStatus.SUCCESS
+        changes = [str(p) for p in files]
+        msg = (
+            f"Rules sync dry-run: would write {len(files)} file(s)."
+            if dry_run
+            else f"Rules synced: {len(files)} file(s) written."
+        )
+        return OperationResult(
+            operation=op,
+            status=status,
+            message=msg,
+            duration=time.monotonic() - t0,
+            details={"rules_loaded": result.rules_loaded, "files": changes},
+            changes=changes,
+            errors=result.errors,
+        )
+
+    def sync_research(self, dry_run: bool = False) -> OperationResult:
+        """Run ``plan incorporate`` then update WORK_STREAM.md BACKLOG from research fragments.
+
+        Scans ``docs/research/`` and ``docs/plans/`` for new work items and
+        appends them to the BACKLOG section of WORK_STREAM.md, preserving any
+        existing CLAIMED and COMPLETED entries.
+
+        # @trace WL-037
+
+        Args:
+            dry_run: If True, report what would be merged without writing.
+
+        Returns:
+            OperationResult with item counts and change details.
+        """
+        t0 = time.monotonic()
+        op = "research"
+
+        try:
+            # Step 1 — use incorporate_impl (same as ``thegent plan incorporate``)
+            from thegent.cli.commands.impl import incorporate_impl
+
+            inc_result = incorporate_impl(cd=self._root, dry_run=dry_run)
+            inc_merged: int = inc_result.get("merged", 0)
+            if "error" in inc_result and not dry_run:
+                _log.warning("incorporate_impl returned error: %s", inc_result["error"])
+
+            # Step 2 — scan research/ and plans/ markdown for additional checkbox items
+            research_fragments = self._discover_research_fragments()
+            research_incorporated = 0
+            if not dry_run:
+                research_incorporated = self._incorporate_into_work_stream(research_fragments)
+
+            total = inc_merged + research_incorporated
+            status = SyncOperationStatus.DRY_RUN if dry_run else SyncOperationStatus.SUCCESS
+            msg = (
+                f"Research sync dry-run: would incorporate {len(research_fragments)} fragment(s)."
+                if dry_run
+                else f"Research synced: {total} item(s) incorporated into WORK_STREAM.md."
+            )
+            return OperationResult(
+                operation=op,
+                status=status,
+                message=msg,
+                duration=time.monotonic() - t0,
+                details={
+                    "incorporate_merged": inc_merged,
+                    "research_fragments_found": len(research_fragments),
+                    "research_incorporated": research_incorporated,
+                    "total_incorporated": total,
+                },
+                changes=[f"incorporated: {it}" for it in research_fragments[:research_incorporated]],
+            )
+        except Exception as exc:
+            _log.warning("sync_research failed: %s", exc, exc_info=True)
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.FAILED,
+                message=f"Research sync failed: {exc}",
+                duration=time.monotonic() - t0,
+                errors=[str(exc)],
+            )
+
     def sync_config(self, dry_run: bool = False) -> OperationResult:
         """Refresh ThegentSettings from the current environment.
 
@@ -583,6 +696,9 @@ class SyncCommand:
         t0 = time.monotonic()
         op = "pull"
 
+        from thegent.config import ThegentSettings
+
+        settings = ThegentSettings()
         effective_source = source or settings.sync_remote
 
         _log.info("sync pull invoked: source=%s", effective_source)
@@ -737,3 +853,20 @@ class SyncCommand:
                     if key:
                         names.add(key)
             return names
+
+    def _discover_research_fragments(self) -> list[str]:
+        """Scan docs/research/ and docs/plans/ for checkbox fragment lines.
+
+        # @trace WL-037
+        """
+        scan_dirs = [
+            self._root / "docs" / "research",
+            self._root / "docs" / "plans",
+        ]
+        fragments: list[str] = []
+        for d in scan_dirs:
+            if not d.exists():
+                continue
+            for md_file in sorted(d.glob("*.md")):
+                self._extract_fragments_from_file(fragments, md_file)
+        return fragments

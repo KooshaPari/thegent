@@ -3,20 +3,30 @@
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from typer.testing import CliRunner
 
+from thegent.agents.routing_contracts import GEMINI_FLASH_MODEL, GEMINI_FLASH_PROVIDER
 from thegent.dex_main import (
     _DEX_BYPASS_FLAG,
     _MODEL_ALIAS,
+    _run_model_cmd,
     _resolve_provider_for_model,
     app,
+    default_dex,
 )
 
 runner = CliRunner()
 
 
+def _normalized_output(output: str) -> str:
+    return " ".join(output.split())
+
+
 def test_model_alias_mapping() -> None:
     """Model aliases map to canonical IDs."""
+    assert _MODEL_ALIAS["dex"] == "gpt-5.3-codex"
+    assert _MODEL_ALIAS["codex"] == "gpt-5.3-codex"
     assert _MODEL_ALIAS["composer"] == "composer-1.5"
     assert _MODEL_ALIAS["max"] == "minimax-m2.5"
     assert _MODEL_ALIAS["glm"] == "glm-5"
@@ -24,6 +34,9 @@ def test_model_alias_mapping() -> None:
     assert _MODEL_ALIAS["opus"] == "claude-opus-4.6"
     assert _MODEL_ALIAS["sonnet"] == "claude-sonnet-4.5"
     assert _MODEL_ALIAS["step"] == "step-3.5-flash"
+    assert _MODEL_ALIAS["flash"] == GEMINI_FLASH_MODEL
+    assert _MODEL_ALIAS["high"] == "gpt-5.3-codex-high"
+    assert _MODEL_ALIAS["xhigh"] == "gpt-5.3-codex-xhigh"
     assert _MODEL_ALIAS["mini"] == "gpt-5-mini"
 
 
@@ -58,6 +71,13 @@ def test_resolve_provider_step_uses_nim() -> None:
 def test_resolve_provider_mini_uses_copilot() -> None:
     """GPT-5-mini routes to copilot."""
     assert _resolve_provider_for_model("mini") == "copilot"
+
+
+def test_resolve_provider_dex_uses_codex() -> None:
+    """Codex 5.3 aliases route to codex provider."""
+    assert _resolve_provider_for_model("dex") == "codex"
+    assert _resolve_provider_for_model("high") == "codex"
+    assert _resolve_provider_for_model("xhigh") == "codex"
 
 
 def test_resolve_provider_max_round_robins() -> None:
@@ -103,7 +123,7 @@ def test_dex_composer_uses_composer_model() -> None:
         assert result.exit_code == 0
         run_interactive.assert_called_once_with(
             "composer",
-            extra_args=[],
+            extra_args=["--search"],
             dangerously_bypass=True,
         )
 
@@ -114,7 +134,7 @@ def test_dex_max_forwards_bypass_flag() -> None:
         assert result.exit_code == 0
         run_interactive.assert_called_once_with(
             "max",
-            extra_args=[],
+            extra_args=["--search"],
             dangerously_bypass=True,
         )
 
@@ -125,7 +145,7 @@ def test_dex_glm_uses_glm_model() -> None:
         assert result.exit_code == 0
         run_interactive.assert_called_once_with(
             "glm",
-            extra_args=[],
+            extra_args=["--search"],
             dangerously_bypass=True,
         )
 
@@ -136,7 +156,7 @@ def test_dex_haiku_uses_haiku_model() -> None:
         assert result.exit_code == 0
         run_interactive.assert_called_once_with(
             "haiku",
-            extra_args=[],
+            extra_args=["--search"],
             dangerously_bypass=True,
         )
 
@@ -147,7 +167,7 @@ def test_dex_opus_uses_opus_model() -> None:
         assert result.exit_code == 0
         run_interactive.assert_called_once_with(
             "opus",
-            extra_args=[],
+            extra_args=["--search"],
             dangerously_bypass=True,
         )
 
@@ -158,7 +178,7 @@ def test_dex_sonnet_uses_sonnet_model() -> None:
         assert result.exit_code == 0
         run_interactive.assert_called_once_with(
             "sonnet",
-            extra_args=[],
+            extra_args=["--search"],
             dangerously_bypass=True,
         )
 
@@ -170,7 +190,36 @@ def test_dex_ultra_uses_ultra_model() -> None:
         assert result.exit_code == 0
         run_interactive.assert_called_once_with(
             "ultra",
-            extra_args=[],
+            extra_args=["--search"],
+            dangerously_bypass=True,
+        )
+
+
+def test_default_dex_uses_flash_model() -> None:
+    with patch("thegent.dex_main._run_codex_interactive") as run_interactive:
+        result = runner.invoke(app, [])
+        assert result.exit_code == 0
+        run_interactive.assert_called_once_with("flash", extra_args=[_DEX_BYPASS_FLAG])
+
+
+def test_dex_high_uses_codex_high_model() -> None:
+    with patch("thegent.dex_main._run_codex_interactive") as run_interactive:
+        result = runner.invoke(app, ["high"])
+        assert result.exit_code == 0
+        run_interactive.assert_called_once_with(
+            "high",
+            extra_args=["--search"],
+            dangerously_bypass=True,
+        )
+
+
+def test_dex_xhigh_uses_codex_xhigh_model() -> None:
+    with patch("thegent.dex_main._run_codex_interactive") as run_interactive:
+        result = runner.invoke(app, ["xhigh"])
+        assert result.exit_code == 0
+        run_interactive.assert_called_once_with(
+            "xhigh",
+            extra_args=["--search"],
             dangerously_bypass=True,
         )
 
@@ -184,7 +233,122 @@ def test_dex_run_accepts_mini_model() -> None:
         assert run_cmd.call_args[0][0] == "mini"
 
 
-def test_dex_run_rejects_unknown_model() -> None:
-    result = runner.invoke(app, ["run", "unknown", "prompt"])
+def test_dex_run_dex_uses_codex_canonical_model() -> None:
+    with patch("thegent.cli.run_cmd") as run_cmd:
+        result = runner.invoke(app, ["run", "dex", "hello"])
+    assert result.exit_code == 0
+    run_cmd.assert_called_once()
+    assert run_cmd.call_args.kwargs["model"] == "gpt-5.3-codex"
+
+
+def test_dex_bg_dex_uses_codex_canonical_model() -> None:
+    with patch("thegent.cli.bg_cmd") as bg_cmd:
+        result = runner.invoke(app, ["bg", "dex", "hello"])
+    assert result.exit_code == 0
+    bg_cmd.assert_called_once()
+    assert bg_cmd.call_args.kwargs["model"] == "gpt-5.3-codex"
+
+
+@pytest.mark.parametrize(
+    ("subcommand", "model_alias", "canonical_model"),
+    [
+        ("run", "high", "gpt-5.3-codex-high"),
+        ("bg", "high", "gpt-5.3-codex-high"),
+        ("run", "xhigh", "gpt-5.3-codex-xhigh"),
+        ("bg", "xhigh", "gpt-5.3-codex-xhigh"),
+    ],
+)
+def test_dex_run_bg_high_xhigh_use_expected_canonical_models(
+    subcommand: str, model_alias: str, canonical_model: str
+) -> None:
+    target = "thegent.cli.run_cmd" if subcommand == "run" else "thegent.cli.bg_cmd"
+    with patch(target) as model_cmd:
+        result = runner.invoke(app, [subcommand, model_alias, "hello"])
+    assert result.exit_code == 0
+    model_cmd.assert_called_once()
+    assert model_cmd.call_args.kwargs["model"] == canonical_model
+
+
+@pytest.mark.parametrize(
+    ("model_alias", "canonical_model", "provider"),
+    [
+        ("dex", "gpt-5.3-codex", "codex"),
+        ("high", "gpt-5.3-codex-high", "codex"),
+        ("xhigh", "gpt-5.3-codex-xhigh", "codex"),
+        ("flash", GEMINI_FLASH_MODEL, GEMINI_FLASH_PROVIDER),
+    ],
+)
+def test_dex_alias_parity_resolves_expected_models_and_providers(
+    model_alias: str, canonical_model: str, provider: str
+) -> None:
+    assert _MODEL_ALIAS[model_alias] == canonical_model
+    assert _resolve_provider_for_model(model_alias) == provider
+
+
+@pytest.mark.parametrize(
+    ("argv", "expected_model", "expected_extra_args"),
+    [
+        (["dex", "unknown-token", "hello"], "flash", [_DEX_BYPASS_FLAG, "unknown-token", "hello"]),
+        (["dex"], "flash", [_DEX_BYPASS_FLAG]),
+        (["dex", "dex", "hello"], "dex", [_DEX_BYPASS_FLAG, "hello"]),
+        (["dex", "high", "hello"], "high", [_DEX_BYPASS_FLAG, "hello"]),
+        (["dex", "xhigh", "hello"], "xhigh", [_DEX_BYPASS_FLAG, "hello"]),
+    ],
+)
+def test_default_dex_callback_uses_flash_table_driven(
+    argv: list[str], expected_model: str, expected_extra_args: list[str]
+) -> None:
+    ctx = type("Ctx", (), {"invoked_subcommand": None})()
+    with patch("sys.argv", argv), patch("thegent.dex_main._run_codex_interactive") as run_interactive:
+        default_dex(ctx, force=False, native=False)  # type: ignore[arg-type]
+    run_interactive.assert_called_once_with(expected_model, extra_args=expected_extra_args)
+
+
+def test_default_dex_direct_callback_explicit_flags_do_not_trigger_native_exec() -> None:
+    """Regression: direct callback invocation should not hit native exec via OptionInfo defaults."""
+    ctx = type("Ctx", (), {"invoked_subcommand": None})()
+    with patch("sys.argv", ["dex"]), patch("thegent.dex_main._exec_native_codex") as exec_native, patch(
+        "thegent.dex_main._run_codex_interactive"
+    ) as run_interactive:
+        default_dex(ctx, force=False, native=False)  # type: ignore[arg-type]
+
+    exec_native.assert_not_called()
+    run_interactive.assert_called_once_with("flash", extra_args=[_DEX_BYPASS_FLAG])
+
+
+@pytest.mark.parametrize("subcommand", ["run", "bg"])
+def test_dex_unknown_model_policy_rejects_for_run_and_bg(subcommand: str) -> None:
+    result = runner.invoke(app, [subcommand, "unknown-model", "prompt"])
+    normalized_output = _normalized_output(result.output)
     assert result.exit_code == 1
-    assert "Unknown model" in result.output
+    assert "Unknown model 'unknown-model'" in normalized_output
+    assert "Allowed: dex, high, xhigh, max, glm, haiku, opus, sonnet, ultra, flash, mini" in normalized_output
+
+
+def test_dex_bg_unknown_model_policy_rejects() -> None:
+    result = runner.invoke(app, ["bg", "unknown-model", "prompt"])
+    normalized_output = _normalized_output(result.output)
+    assert result.exit_code == 1
+    assert "Unknown model 'unknown-model'" in normalized_output
+    assert "Allowed: dex, high, xhigh, max, glm, haiku, opus, sonnet, ultra, flash, mini" in normalized_output
+
+
+def test_dex_resume_passthrough_args() -> None:
+    with patch("thegent.dex_main._exec_native_codex") as exec_native:
+        result = runner.invoke(app, ["resume", "--", "--last"])
+    assert result.exit_code == 0
+    exec_native.assert_called_once_with(["resume", "--last"])
+
+
+def test_dex_fork_passthrough_no_args() -> None:
+    with patch("thegent.dex_main._exec_native_codex") as exec_native:
+        result = runner.invoke(app, ["fork"])
+    assert result.exit_code == 0
+    exec_native.assert_called_once_with(["fork"])
+
+
+def test_run_model_cmd_normalizes_alias_case() -> None:
+    with patch("thegent.cli.run_cmd") as run_cmd:
+        _run_model_cmd("CoMp", "hello")
+    run_cmd.assert_called_once()
+    assert run_cmd.call_args.kwargs["model"] == "composer-1.5"

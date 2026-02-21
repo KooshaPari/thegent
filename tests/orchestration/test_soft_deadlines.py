@@ -11,7 +11,8 @@ import threading
 import time
 
 import pytest
-from thegent.orchestration.load_based_limits import (
+
+from thegent.orchestration.resource.load_based_limits import (
     DeadlineMonitor,
     SoftDeadline,
     get_deadline_monitor,

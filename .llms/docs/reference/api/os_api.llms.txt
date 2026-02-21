@@ -1,0 +1,13 @@
+# os_api
+
+Source: docs/reference/api/os_api.md
+
+---
+
+# os API Reference
+
+> **Source**: `src/thegent/os/__init__.py`
+
+OS-level adapters.
+
+---

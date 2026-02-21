@@ -1,0 +1,203 @@
+# ANTE: Headless Mode
+
+> Extracted from Ante docs. Fetched 2026-02-20
+
+Ante home page
+
+Search...
+
+
+
+Navigation
+
+Usage
+
+Headless Mode
+Usage
+Headless Mode
+Run Ante as a non-interactive CLI for scripting and CI pipelines
+Headless mode runs Ante without the TUI — it processes a prompt, executes the task, and exits. This is ideal for scripting, CI/CD pipelines, and automated workflows.
+​
+
+Basic usage
+Provide a prompt as an argument:
+
+Copy
+
+Ask AI
+ante "explain what this project does"
+
+Or via the -p / --prompt flag:
+
+Copy
+
+Ask AI
+ante --prompt "add tests for the auth module"
+
+​
+
+Stdin input
+Pipe content from stdin:
+
+Copy
+
+Ask AI
+cat src/main.rs | ante "review this code for bugs"
+
+Combine stdin with a prompt argument:
+
+Copy
+
+Ask AI
+echo "function add(a, b) { return a + b }" | ante "add TypeScript types"
+
+When both stdin and a prompt argument are provided, they are concatenated (stdin first, then the prompt).
+​
+
+CLI reference
+
+Copy
+
+Ask AI
+ante [OPTIONS] [--prompt <PROMPT>]
+
+Flag
+Description
+-p, --prompt <PROMPT>
+The prompt to run
+-m, --model <MODEL>
+Override the model name
+--provider <PROVIDER>
+Override the API provider
+--yolo
+Skip all tool approval prompts
+--output-format <FORMAT>
+Output format: json, human, minimal (default: minimal)
+--system-prompt <PROMPT>
+Replace the default system prompt entirely
+--append-system-prompt <TEXT>
+Append text to the system prompt
+--allowed-tools <TOOLS>...
+Only allow these tools (space-separated)
+--disallowed-tools <TOOLS>...
+Disallow these tools (space-separated)
+--check
+Run a verification pass after the main task completes
+​
+
+Output formats
+​
+
+Minimal (default)
+Shows only agent messages, info, and errors:
+
+Copy
+
+Ask AI
+ante "what does this project do"
+
+​
+
+Human
+Shows all events in a human-readable format with ANSI colors:
+
+Copy
+
+Ask AI
+ante --output-format human "fix the type error in main.rs"
+
+​
+
+JSON
+Outputs every event as a JSON object (one per line), suitable for machine consumption:
+
+Copy
+
+Ask AI
+ante --output-format json "list all TODO comments" | jq '.event'
+
+​
+
+Verification check
+The --check flag runs a second pass after the main task, asking the agent to review its own work:
+
+Copy
+
+Ask AI
+ante --check "refactor the auth module to use async/await"
+
+The verification pass will:
+Review what was accomplished against the original request
+Complete anything missing or incomplete
+Optimize where possible without affecting correctness
+​
+
+Context enrichment
+In headless mode, Ante automatically appends the current directory’s folder structure to your prompt. This gives the agent awareness of the project layout without you needing to describe it.
+​
+
+Headless behavior notes
+Streaming is disabled — Responses are buffered for cleaner output
+Yolo policy is implied — All tool calls are auto-approved (no interactive prompts)
+Authentication is checked eagerly — If the provider isn’t authenticated, Ante exits immediately with an error
+​
+
+Examples
+​
+
+CI: lint and fix
+
+Copy
+
+Ask AI
+ante --yolo "run cargo clippy and fix all warnings"
+
+​
+
+Code generation
+
+Copy
+
+Ask AI
+ante --model claude-sonnet-4-5-20250514 --check \
+  "add comprehensive unit tests for src/core/session.rs"
+
+​
+
+Restricted tools
+
+Copy
+
+Ask AI
+# Read-only analysis — no file writes or shell access
+ante --allowed-tools Read Glob Grep \
+  "analyze the codebase architecture and summarize it"
+
+​
+
+Pipe a diff for review
+
+Copy
+
+Ask AI
+git diff HEAD~1 | ante "review this diff for bugs and security issues"
+
+
+Previous
+Skills
+
+Next
+
+Powered by
+
+
+
+Assistant
+
+
+
+Responses are generated using AI and may contain mistakes.
+
+
+
+

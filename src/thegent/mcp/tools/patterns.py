@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 from fastmcp.tools.tool import ToolResult
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
-from thegent.mcp_tools_elicitation import elicit_choice, elicit_confirmation
+from thegent.mcp.tools.elicitation import elicit_choice, elicit_confirmation
 
 _log = logging.getLogger(__name__)
 

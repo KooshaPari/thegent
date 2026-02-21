@@ -1,0 +1,339 @@
+- generic [ref=e2]:
+  - link "Skip to main content" [ref=e3] [cursor=pointer]:
+    - /url: "#content-area"
+  - generic [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - generic [ref=e9]:
+            - link "Ante home page light logo" [ref=e10] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e11]: Ante home page
+              - img "light logo" [ref=e12]
+            - button "Toggle dark mode" [ref=e13] [cursor=pointer]:
+              - generic [ref=e14]:
+                - img [ref=e15]
+                - img [ref=e22]
+          - generic [ref=e27]:
+            - button "Open search" [ref=e28] [cursor=pointer]:
+              - generic [ref=e29]:
+                - img [ref=e30]
+                - generic [ref=e33]: Search...
+              - generic [ref=e34]: ⌘K
+            - button "Toggle assistant panel" [ref=e35] [cursor=pointer]:
+              - img [ref=e36]
+          - generic:
+            - list
+        - list [ref=e40]:
+          - listitem [ref=e41]:
+            - link "Website" [ref=e42] [cursor=pointer]:
+              - /url: https://antigma.ai
+              - img [ref=e43]
+              - generic [ref=e45]: Website
+              - img [ref=e46]
+          - listitem [ref=e49]:
+            - link "Discord" [ref=e50] [cursor=pointer]:
+              - /url: https://discord.gg/pqhj3DNGz2
+              - img [ref=e51]
+              - generic [ref=e53]: Discord
+              - img [ref=e54]
+          - listitem [ref=e57]:
+            - link "GitHub" [ref=e58] [cursor=pointer]:
+              - /url: https://github.com/AntigmaLabs/ante-preview
+              - img [ref=e59]
+              - generic [ref=e61]: GitHub
+              - img [ref=e62]
+          - listitem
+      - generic [ref=e66]:
+        - banner [ref=e67]:
+          - generic [ref=e68]:
+            - generic [ref=e69]: Reference
+            - heading "Tools" [level=1] [ref=e71]
+          - paragraph [ref=e73]: Reference for all built-in tools available to the agent
+        - generic [ref=e74]:
+          - generic [ref=e75]: Tools are the capabilities available to the agent during a session. Each tool has a name, description, input schema, and an approval requirement.
+          - heading "Navigate to header File I/O" [level=2] [ref=e76]:
+            - link "Navigate to header" [ref=e77] [cursor=pointer]:
+              - /url: "#file-i/o"
+              - img [ref=e79]
+            - generic [ref=e81] [cursor=pointer]: File I/O
+          - heading "Navigate to header Read" [level=3] [ref=e82]:
+            - link "Navigate to header" [ref=e83] [cursor=pointer]:
+              - /url: "#read"
+              - img [ref=e85]
+            - generic [ref=e87] [cursor=pointer]: Read
+          - generic [ref=e88]: Read file contents. Supports text files, images (PNG, JPG), PDFs, and Jupyter notebooks.
+          - list [ref=e89]:
+            - listitem [ref=e90]:
+              - strong [ref=e91]: Approval required
+              - text: ": No"
+            - listitem [ref=e92]:
+              - strong [ref=e93]: Key inputs
+              - text: ":"
+              - code [ref=e94]: file_path
+              - text: (absolute path), optional
+              - code [ref=e95]: offset
+              - text: and
+              - code [ref=e96]: limit
+              - text: for large files
+          - heading "Navigate to header Write" [level=3] [ref=e97]:
+            - link "Navigate to header" [ref=e98] [cursor=pointer]:
+              - /url: "#write"
+              - img [ref=e100]
+            - generic [ref=e102] [cursor=pointer]: Write
+          - generic [ref=e103]: Create or overwrite a file.
+          - list [ref=e104]:
+            - listitem [ref=e105]:
+              - strong [ref=e106]: Approval required
+              - text: ": Yes"
+            - listitem [ref=e107]:
+              - strong [ref=e108]: Key inputs
+              - text: ":"
+              - code [ref=e109]: file_path
+              - text: ","
+              - code [ref=e110]: content
+          - heading "Navigate to header Edit" [level=3] [ref=e111]:
+            - link "Navigate to header" [ref=e112] [cursor=pointer]:
+              - /url: "#edit"
+              - img [ref=e114]
+            - generic [ref=e116] [cursor=pointer]: Edit
+          - generic [ref=e117]:
+            - text: Perform exact string replacements in files. Finds
+            - code [ref=e118]: old_string
+            - text: and replaces it with
+            - code [ref=e119]: new_string
+            - text: .
+          - list [ref=e120]:
+            - listitem [ref=e121]:
+              - strong [ref=e122]: Approval required
+              - text: ": Yes"
+            - listitem [ref=e123]:
+              - strong [ref=e124]: Key inputs
+              - text: ":"
+              - code [ref=e125]: file_path
+              - text: ","
+              - code [ref=e126]: old_string
+              - text: ","
+              - code [ref=e127]: new_string
+              - text: ", optional"
+              - code [ref=e128]: replace_all
+          - heading "Navigate to header Glob" [level=3] [ref=e129]:
+            - link "Navigate to header" [ref=e130] [cursor=pointer]:
+              - /url: "#glob"
+              - img [ref=e132]
+            - generic [ref=e134] [cursor=pointer]: Glob
+          - generic [ref=e135]:
+            - text: Find files matching a glob pattern (e.g.,
+            - code [ref=e136]: "**/*.rs"
+            - text: ","
+            - code [ref=e137]: src/**/*.ts
+            - text: ).
+          - list [ref=e138]:
+            - listitem [ref=e139]:
+              - strong [ref=e140]: Approval required
+              - text: ": No"
+            - listitem [ref=e141]:
+              - strong [ref=e142]: Key inputs
+              - text: ":"
+              - code [ref=e143]: pattern
+              - text: ", optional"
+              - code [ref=e144]: path
+              - text: (search directory)
+          - heading "Navigate to header Grep" [level=3] [ref=e145]:
+            - link "Navigate to header" [ref=e146] [cursor=pointer]:
+              - /url: "#grep"
+              - img [ref=e148]
+            - generic [ref=e150] [cursor=pointer]: Grep
+          - generic [ref=e151]: Search file contents with regex patterns. Built on ripgrep.
+          - list [ref=e152]:
+            - listitem [ref=e153]:
+              - strong [ref=e154]: Approval required
+              - text: ": No"
+            - listitem [ref=e155]:
+              - strong [ref=e156]: Key inputs
+              - text: ":"
+              - code [ref=e157]: pattern
+              - text: (regex), optional
+              - code [ref=e158]: path
+              - text: ","
+              - code [ref=e159]: glob
+              - text: filter,
+              - code [ref=e160]: type
+              - text: filter,
+              - code [ref=e161]: output_mode
+          - heading "Navigate to header Shell" [level=2] [ref=e162]:
+            - link "Navigate to header" [ref=e163] [cursor=pointer]:
+              - /url: "#shell"
+              - img [ref=e165]
+            - generic [ref=e167] [cursor=pointer]: Shell
+          - heading "Navigate to header Bash" [level=3] [ref=e168]:
+            - link "Navigate to header" [ref=e169] [cursor=pointer]:
+              - /url: "#bash"
+              - img [ref=e171]
+            - generic [ref=e173] [cursor=pointer]: Bash
+          - generic [ref=e174]: Execute shell commands with optional timeout (default 2 minutes, max 10 minutes).
+          - list [ref=e175]:
+            - listitem [ref=e176]:
+              - strong [ref=e177]: Approval required
+              - text: ": Yes"
+            - listitem [ref=e178]:
+              - strong [ref=e179]: Key inputs
+              - text: ":"
+              - code [ref=e180]: command
+              - text: ", optional"
+              - code [ref=e181]: description
+              - text: ","
+              - code [ref=e182]: timeout
+          - heading "Navigate to header BashOutput" [level=3] [ref=e183]:
+            - link "Navigate to header" [ref=e184] [cursor=pointer]:
+              - /url: "#bashoutput"
+              - img [ref=e186]
+            - generic [ref=e188] [cursor=pointer]: BashOutput
+          - generic [ref=e189]: Read output from a running or completed background shell.
+          - list [ref=e190]:
+            - listitem [ref=e191]:
+              - strong [ref=e192]: Approval required
+              - text: ": No"
+            - listitem [ref=e193]:
+              - strong [ref=e194]: Key inputs
+              - text: ":"
+              - code [ref=e195]: id
+              - text: (shell identifier)
+          - heading "Navigate to header KillShell" [level=3] [ref=e196]:
+            - link "Navigate to header" [ref=e197] [cursor=pointer]:
+              - /url: "#killshell"
+              - img [ref=e199]
+            - generic [ref=e201] [cursor=pointer]: KillShell
+          - generic [ref=e202]: Terminate a background shell process.
+          - list [ref=e203]:
+            - listitem [ref=e204]:
+              - strong [ref=e205]: Approval required
+              - text: ": No"
+            - listitem [ref=e206]:
+              - strong [ref=e207]: Key inputs
+              - text: ":"
+              - code [ref=e208]: id
+              - text: (shell identifier)
+          - heading "Navigate to header Builtin" [level=2] [ref=e209]:
+            - link "Navigate to header" [ref=e210] [cursor=pointer]:
+              - /url: "#builtin"
+              - img [ref=e212]
+            - generic [ref=e214] [cursor=pointer]: Builtin
+          - heading "Navigate to header Task" [level=3] [ref=e215]:
+            - link "Navigate to header" [ref=e216] [cursor=pointer]:
+              - /url: "#task"
+              - img [ref=e218]
+            - generic [ref=e220] [cursor=pointer]: Task
+          - generic [ref=e221]: Spawn a sub-agent to handle complex, multi-step tasks autonomously.
+          - list [ref=e222]:
+            - listitem [ref=e223]:
+              - strong [ref=e224]: Approval required
+              - text: ": No"
+            - listitem [ref=e225]:
+              - strong [ref=e226]: Key inputs
+              - text: ":"
+              - code [ref=e227]: prompt
+              - text: ","
+              - code [ref=e228]: subagent_type
+          - heading "Navigate to header TodoWrite" [level=3] [ref=e229]:
+            - link "Navigate to header" [ref=e230] [cursor=pointer]:
+              - /url: "#todowrite"
+              - img [ref=e232]
+            - generic [ref=e234] [cursor=pointer]: TodoWrite
+          - generic [ref=e235]: Manage a task list for tracking progress on multi-step work.
+          - list [ref=e236]:
+            - listitem [ref=e237]:
+              - strong [ref=e238]: Approval required
+              - text: ": No"
+            - listitem [ref=e239]:
+              - strong [ref=e240]: Key inputs
+              - text: ":"
+              - code [ref=e241]: todos
+              - text: (list of items with id, content, status)
+          - heading "Navigate to header WebFetch" [level=3] [ref=e242]:
+            - link "Navigate to header" [ref=e243] [cursor=pointer]:
+              - /url: "#webfetch"
+              - img [ref=e245]
+            - generic [ref=e247] [cursor=pointer]: WebFetch
+          - generic [ref=e248]: Fetch content from a URL and process it.
+          - list [ref=e249]:
+            - listitem [ref=e250]:
+              - strong [ref=e251]: Approval required
+              - text: ": No"
+            - listitem [ref=e252]:
+              - strong [ref=e253]: Key inputs
+              - text: ":"
+              - code [ref=e254]: url
+              - text: ","
+              - code [ref=e255]: prompt
+              - text: (what to extract)
+          - heading "Navigate to header WebSearch" [level=3] [ref=e256]:
+            - link "Navigate to header" [ref=e257] [cursor=pointer]:
+              - /url: "#websearch"
+              - img [ref=e259]
+            - generic [ref=e261] [cursor=pointer]: WebSearch
+          - generic [ref=e262]: Search the web and return results.
+          - list [ref=e263]:
+            - listitem [ref=e264]:
+              - strong [ref=e265]: Approval required
+              - text: ": No"
+            - listitem [ref=e266]:
+              - strong [ref=e267]: Key inputs
+              - text: ":"
+              - code [ref=e268]: query
+          - heading "Navigate to header Tool filtering" [level=2] [ref=e269]:
+            - link "Navigate to header" [ref=e270] [cursor=pointer]:
+              - /url: "#tool-filtering"
+              - img [ref=e272]
+            - generic [ref=e274] [cursor=pointer]: Tool filtering
+          - generic [ref=e275]: "Control which tools are available in a session:"
+          - generic [ref=e276]:
+            - generic [ref=e277]:
+              - generic [ref=e278]:
+                - button "Copy the contents from the code block" [ref=e279] [cursor=pointer]:
+                  - img [ref=e280]
+                - generic [ref=e283]: Copy
+              - generic [ref=e284]:
+                - button "Ask AI" [ref=e285] [cursor=pointer]:
+                  - img [ref=e286]
+                - generic [ref=e289]: Ask AI
+            - code [ref=e293]:
+              - generic [ref=e294]: "# Only allow these tools"
+              - generic [ref=e295]: ante --allowed-tools Read Glob Grep "analyze the code"
+              - generic [ref=e296]: "# Remove these tools"
+              - generic [ref=e297]: ante --disallowed-tools Bash Write "read-only analysis"
+          - generic [ref=e298]: "Supports ToolMatcher syntax for fine-grained control:"
+          - generic [ref=e299]:
+            - generic [ref=e300]:
+              - generic [ref=e301]:
+                - button "Copy the contents from the code block" [ref=e302] [cursor=pointer]:
+                  - img [ref=e303]
+                - generic [ref=e306]: Copy
+              - generic [ref=e307]:
+                - button "Ask AI" [ref=e308] [cursor=pointer]:
+                  - img [ref=e309]
+                - generic [ref=e312]: Ask AI
+            - code [ref=e316]:
+              - generic [ref=e317]: "# Allow Bash but only for specific patterns"
+              - generic [ref=e318]: ante --allowed-tools "Read" "Bash(cargo test)" "Bash(cargo clippy)"
+        - contentinfo [ref=e319]:
+          - link "Powered by" [ref=e322] [cursor=pointer]:
+            - /url: https://www.mintlify.com?utm_campaign=poweredBy&utm_medium=referral&utm_source=antigmalabs
+            - generic [ref=e323]: Powered by
+            - img [ref=e324]
+    - generic [ref=e336]:
+      - generic [ref=e337]:
+        - generic [ref=e338]:
+          - img [ref=e339]
+          - generic [ref=e343]: Assistant
+        - generic [ref=e344]:
+          - button [ref=e345] [cursor=pointer]:
+            - img [ref=e346]
+          - button [ref=e351] [cursor=pointer]:
+            - img [ref=e352]
+      - generic [ref=e358]: Responses are generated using AI and may contain mistakes.
+      - generic [ref=e363]:
+        - textbox [ref=e364]:
+          - /placeholder: Ask a question...
+        - button [disabled] [ref=e365]:
+          - img [ref=e366]

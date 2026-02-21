@@ -1,0 +1,364 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#content-area"
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - generic [ref=e9]:
+              - link "Ante home page light logo" [ref=e10] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e11]: Ante home page
+                - img "light logo" [ref=e12]
+              - button "Toggle dark mode" [ref=e13] [cursor=pointer]:
+                - generic [ref=e14]:
+                  - img [ref=e15]
+                  - img [ref=e22]
+            - generic [ref=e27]:
+              - button "Open search" [ref=e28] [cursor=pointer]:
+                - generic [ref=e29]:
+                  - img [ref=e30]
+                  - generic [ref=e33]: Search...
+                - generic [ref=e34]: ⌘K
+              - button "Toggle assistant panel" [ref=e35] [cursor=pointer]:
+                - img [ref=e36]
+            - generic [ref=e40]:
+              - list
+              - generic [ref=e41]:
+                - heading "Getting Started" [level=5] [ref=e43]
+                - list [ref=e44]:
+                  - listitem [ref=e45]:
+                    - link "Overview" [ref=e46] [cursor=pointer]:
+                      - /url: /start/overview
+                      - generic [ref=e48]: Overview
+                  - listitem [ref=e49]:
+                    - link "Quickstart" [ref=e50] [cursor=pointer]:
+                      - /url: /start/quickstart
+                      - generic [ref=e52]: Quickstart
+                  - listitem [ref=e53]:
+                    - link "Eval & Benchmark" [ref=e54] [cursor=pointer]:
+                      - /url: /start/eval
+                      - generic [ref=e56]: Eval & Benchmark
+              - generic [ref=e57]:
+                - heading "Concepts" [level=5] [ref=e59]
+                - list [ref=e60]:
+                  - listitem [ref=e61]:
+                    - link "Core Concepts & Protocol" [ref=e62] [cursor=pointer]:
+                      - /url: /concepts/core-concepts
+                      - generic [ref=e64]: Core Concepts & Protocol
+                  - listitem [ref=e65]:
+                    - link "Architecture" [ref=e66] [cursor=pointer]:
+                      - /url: /concepts/architecture
+                      - generic [ref=e68]: Architecture
+              - generic [ref=e69]:
+                - heading "Agent Org" [level=5] [ref=e71]
+                - list [ref=e72]:
+                  - listitem [ref=e73]:
+                    - link "Agent Organization (Experimental)" [ref=e74] [cursor=pointer]:
+                      - /url: /agent-org
+                      - generic [ref=e76]: Agent Organization (Experimental)
+              - generic [ref=e77]:
+                - heading "Offline Mode" [level=5] [ref=e79]
+                - list [ref=e80]:
+                  - listitem [ref=e81]:
+                    - link "Offline Mode (Experimental)" [ref=e82] [cursor=pointer]:
+                      - /url: /offline
+                      - generic [ref=e84]: Offline Mode (Experimental)
+              - generic [ref=e85]:
+                - heading "Usage" [level=5] [ref=e87]
+                - list [ref=e88]:
+                  - listitem [ref=e89]:
+                    - link "Interactive TUI" [ref=e90] [cursor=pointer]:
+                      - /url: /usage/tui
+                      - generic [ref=e92]: Interactive TUI
+                  - listitem [ref=e93]:
+                    - link "Headless Mode" [ref=e94] [cursor=pointer]:
+                      - /url: /usage/headless
+                      - generic [ref=e96]: Headless Mode
+              - generic [ref=e97]:
+                - heading "Extensibility" [level=5] [ref=e99]
+                - list [ref=e100]:
+                  - listitem [ref=e101]:
+                    - link "Skills" [ref=e102] [cursor=pointer]:
+                      - /url: /extend/skills
+                      - generic [ref=e104]: Skills
+                  - listitem [ref=e105]:
+                    - link "Sub-Agents" [ref=e106] [cursor=pointer]:
+                      - /url: /extend/subagents
+                      - generic [ref=e108]: Sub-Agents
+              - generic [ref=e109]:
+                - heading "Configuration" [level=5] [ref=e111]
+                - list [ref=e112]:
+                  - listitem [ref=e113]:
+                    - link "Model & Provider Catalog" [ref=e114] [cursor=pointer]:
+                      - /url: /configuration/catalog
+                      - generic [ref=e116]: Model & Provider Catalog
+                  - listitem [ref=e117]:
+                    - link "Preferences" [ref=e118] [cursor=pointer]:
+                      - /url: /configuration/preference
+                      - generic [ref=e120]: Preferences
+                  - listitem [ref=e121]:
+                    - link "Adding a 3rd Party Provider" [ref=e122] [cursor=pointer]:
+                      - /url: /configuration/third-party-provider
+                      - generic [ref=e124]: Adding a 3rd Party Provider
+              - generic [ref=e125]:
+                - heading "Memory" [level=5] [ref=e127]
+                - list [ref=e128]:
+                  - listitem [ref=e129]:
+                    - link "Memory" [ref=e130] [cursor=pointer]:
+                      - /url: /memory
+                      - generic [ref=e132]: Memory
+              - generic [ref=e133]:
+                - heading "Reference" [level=5] [ref=e135]
+                - list [ref=e136]:
+                  - listitem [ref=e137]:
+                    - link "Tools" [ref=e138] [cursor=pointer]:
+                      - /url: /tools
+                      - generic [ref=e140]: Tools
+          - list [ref=e141]:
+            - listitem [ref=e142]:
+              - link "Website" [ref=e143] [cursor=pointer]:
+                - /url: https://antigma.ai
+                - img [ref=e144]
+                - generic [ref=e146]: Website
+                - img [ref=e147]
+            - listitem [ref=e150]:
+              - link "Discord" [ref=e151] [cursor=pointer]:
+                - /url: https://discord.gg/pqhj3DNGz2
+                - img [ref=e152]
+                - generic [ref=e154]: Discord
+                - img [ref=e155]
+            - listitem [ref=e158]:
+              - link "GitHub" [ref=e159] [cursor=pointer]:
+                - /url: https://github.com/AntigmaLabs/ante-preview
+                - img [ref=e160]
+                - generic [ref=e162]: GitHub
+                - img [ref=e163]
+            - listitem [ref=e487]:
+              - button "Log Out" [ref=e488] [cursor=pointer]:
+                - listitem [ref=e489]:
+                  - link "Log Out" [ref=e490]:
+                    - /url: "#"
+                    - generic [ref=e492]: Log Out
+                    - img [ref=e493]
+            - listitem
+        - generic [ref=e166]:
+          - link "Ante Preview" [ref=e169] [cursor=pointer]:
+            - /url: /start/overview
+            - text: Ante Preview
+          - generic [ref=e171]:
+            - banner [ref=e172]:
+              - generic [ref=e173]:
+                - generic [ref=e174]: Configuration
+                - heading "Adding a 3rd Party Provider" [level=1] [ref=e176]
+              - paragraph [ref=e497]: Connect Ante to third-party and custom LLM providers
+            - generic [ref=e179]:
+              - generic [ref=e498]: Ante supports connecting to third-party LLM providers beyond the built-in catalog. Any provider that exposes an OpenAI-compatible API can be used with Ante.
+              - heading "Navigate to header Using Open Router" [level=2] [ref=e499]:
+                - link "Navigate to header" [ref=e500] [cursor=pointer]:
+                  - /url: "#using-open-router"
+                  - img [ref=e502]
+                - generic [ref=e504] [cursor=pointer]: Using Open Router
+              - generic [ref=e505]:
+                - text: The easiest way to access third-party models is through
+                - link "Open Router" [ref=e506] [cursor=pointer]:
+                  - /url: https://openrouter.ai/
+                - text: ", which provides a unified API for hundreds of models from different providers."
+              - list [ref=e507]:
+                - listitem [ref=e508]:
+                  - generic [ref=e511]:
+                    - generic [ref=e512]: "1"
+                    - link "Navigate to header" [ref=e514] [cursor=pointer]:
+                      - /url: "#"
+                      - img [ref=e516]
+                  - generic [ref=e518]:
+                    - paragraph [ref=e519]: Get an Open Router API key
+                    - generic [ref=e521]:
+                      - text: Sign up at
+                      - link "openrouter.ai" [ref=e522] [cursor=pointer]:
+                        - /url: https://openrouter.ai/
+                      - text: and generate an API key.
+                - listitem [ref=e523]:
+                  - generic [ref=e526]:
+                    - generic [ref=e527]: "2"
+                    - link "Navigate to header" [ref=e529] [cursor=pointer]:
+                      - /url: "#"
+                      - img [ref=e531]
+                  - generic [ref=e533]:
+                    - paragraph [ref=e534]: Set your API key
+                    - generic [ref=e536]:
+                      - generic [ref=e537]:
+                        - generic [ref=e538]:
+                          - button "Copy the contents from the code block" [ref=e539] [cursor=pointer]:
+                            - img [ref=e540]
+                          - generic [ref=e543]: Copy
+                        - generic [ref=e544]:
+                          - button "Ask AI" [ref=e545] [cursor=pointer]:
+                            - img [ref=e546]
+                          - generic [ref=e549]: Ask AI
+                      - code [ref=e553]:
+                        - generic [ref=e554]: export OPEN_ROUTER_API_KEY="sk-or-..."
+                - listitem [ref=e555]:
+                  - generic [ref=e558]:
+                    - generic [ref=e559]: "3"
+                    - link "Navigate to header" [ref=e561] [cursor=pointer]:
+                      - /url: "#"
+                      - img [ref=e563]
+                  - generic [ref=e565]:
+                    - paragraph [ref=e566]: Select a model
+                    - generic [ref=e567]:
+                      - generic [ref=e568]:
+                        - text: Browse
+                        - link "Open Router’s model list" [ref=e569] [cursor=pointer]:
+                          - /url: https://openrouter.ai/models
+                        - text: "and use the model identifier:"
+                      - generic [ref=e570]:
+                        - generic [ref=e571]:
+                          - generic [ref=e572]:
+                            - button "Copy the contents from the code block" [ref=e573] [cursor=pointer]:
+                              - img [ref=e574]
+                            - generic [ref=e577]: Copy
+                          - generic [ref=e578]:
+                            - button "Ask AI" [ref=e579] [cursor=pointer]:
+                              - img [ref=e580]
+                            - generic [ref=e583]: Ask AI
+                        - code [ref=e587]:
+                          - generic [ref=e588]: ante --provider open-router --model anthropic/claude-sonnet-4-5
+              - heading "Navigate to header OpenAI-compatible providers" [level=2] [ref=e589]:
+                - link "Navigate to header" [ref=e590] [cursor=pointer]:
+                  - /url: "#openai-compatible-providers"
+                  - img [ref=e592]
+                - generic [ref=e594] [cursor=pointer]: OpenAI-compatible providers
+              - generic [ref=e595]: Many LLM providers expose an OpenAI-compatible API (e.g., Together AI, Fireworks, Groq Cloud, Perplexity). You can connect to these through the OpenAI provider by setting a custom base URL.
+              - list [ref=e596]:
+                - listitem [ref=e597]:
+                  - generic [ref=e600]:
+                    - generic [ref=e601]: "1"
+                    - link "Navigate to header" [ref=e603] [cursor=pointer]:
+                      - /url: "#"
+                      - img [ref=e605]
+                  - generic [ref=e607]:
+                    - paragraph [ref=e608]: Set the base URL
+                    - generic [ref=e609]:
+                      - generic [ref=e610]: "Point the OpenAI provider to your chosen service:"
+                      - generic [ref=e611]:
+                        - generic [ref=e612]:
+                          - generic [ref=e613]:
+                            - button "Copy the contents from the code block" [ref=e614] [cursor=pointer]:
+                              - img [ref=e615]
+                            - generic [ref=e618]: Copy
+                          - generic [ref=e619]:
+                            - button "Ask AI" [ref=e620] [cursor=pointer]:
+                              - img [ref=e621]
+                            - generic [ref=e624]: Ask AI
+                        - code [ref=e628]:
+                          - generic [ref=e629]: export OPENAI_API_BASE="https://api.together.xyz/v1"
+                - listitem [ref=e630]:
+                  - generic [ref=e633]:
+                    - generic [ref=e634]: "2"
+                    - link "Navigate to header" [ref=e636] [cursor=pointer]:
+                      - /url: "#"
+                      - img [ref=e638]
+                  - generic [ref=e640]:
+                    - paragraph [ref=e641]: Set your API key
+                    - generic [ref=e643]:
+                      - generic [ref=e644]:
+                        - generic [ref=e645]:
+                          - button "Copy the contents from the code block" [ref=e646] [cursor=pointer]:
+                            - img [ref=e647]
+                          - generic [ref=e650]: Copy
+                        - generic [ref=e651]:
+                          - button "Ask AI" [ref=e652] [cursor=pointer]:
+                            - img [ref=e653]
+                          - generic [ref=e656]: Ask AI
+                      - code [ref=e660]:
+                        - generic [ref=e661]: export OPENAI_API_KEY="your-provider-api-key"
+                - listitem [ref=e662]:
+                  - generic [ref=e665]:
+                    - generic [ref=e666]: "3"
+                    - link "Navigate to header" [ref=e668] [cursor=pointer]:
+                      - /url: "#"
+                      - img [ref=e670]
+                  - generic [ref=e672]:
+                    - paragraph [ref=e673]: Run with the OpenAI provider
+                    - generic [ref=e675]:
+                      - generic [ref=e676]:
+                        - generic [ref=e677]:
+                          - button "Copy the contents from the code block" [ref=e678] [cursor=pointer]:
+                            - img [ref=e679]
+                          - generic [ref=e682]: Copy
+                        - generic [ref=e683]:
+                          - button "Ask AI" [ref=e684] [cursor=pointer]:
+                            - img [ref=e685]
+                          - generic [ref=e688]: Ask AI
+                      - code [ref=e692]:
+                        - generic [ref=e693]: ante --provider openai --model meta-llama/Llama-3-70b-chat-hf
+              - heading "Navigate to header Local models" [level=2] [ref=e694]:
+                - link "Navigate to header" [ref=e695] [cursor=pointer]:
+                  - /url: "#local-models"
+                  - img [ref=e697]
+                - generic [ref=e699] [cursor=pointer]: Local models
+              - generic [ref=e700]:
+                - text: For fully offline usage with local GGUF models via the built-in llama.cpp engine, see
+                - link "Offline Mode" [ref=e701] [cursor=pointer]:
+                  - /url: /offline
+                - text: .
+              - generic [ref=e702]:
+                - generic [ref=e703]:
+                  - generic [ref=e704]:
+                    - button "Copy the contents from the code block" [ref=e705] [cursor=pointer]:
+                      - img [ref=e706]
+                    - generic [ref=e709]: Copy
+                  - generic [ref=e710]:
+                    - button "Ask AI" [ref=e711] [cursor=pointer]:
+                      - img [ref=e712]
+                    - generic [ref=e715]: Ask AI
+                - code [ref=e719]:
+                  - generic [ref=e720]: ante --provider local
+              - heading "Navigate to header Tips" [level=2] [ref=e721]:
+                - link "Navigate to header" [ref=e722] [cursor=pointer]:
+                  - /url: "#tips"
+                  - img [ref=e724]
+                - generic [ref=e726] [cursor=pointer]: Tips
+              - generic [ref=e727]:
+                - img "Tip" [ref=e729]
+                - generic [ref=e732]: When using third-party providers, make sure the model you select supports tool use (function calling). Ante relies on tool use for its agent capabilities.
+              - generic [ref=e733]:
+                - img "Warning" [ref=e735]
+                - generic [ref=e738]: Not all models work equally well as coding agents. Models need strong instruction following and tool use support. If you experience issues, try a larger or more capable model.
+            - generic [ref=e422]:
+              - link "Previous" [ref=e423] [cursor=pointer]:
+                - /url: /configuration/preference
+                - img [ref=e424]
+                - generic [ref=e426]: Previous
+              - link "Memory Persistent auto-memory that carries context across conversations Next" [ref=e427] [cursor=pointer]:
+                - /url: /memory
+                - generic [ref=e428]:
+                  - generic [ref=e429]:
+                    - generic [ref=e430]: Memory
+                    - generic [ref=e431]: Persistent auto-memory that carries context across conversations
+                  - generic [ref=e433]:
+                    - generic [ref=e434]: Next
+                    - img [ref=e435]
+            - contentinfo [ref=e437]:
+              - link "Powered by" [ref=e440] [cursor=pointer]:
+                - /url: https://www.mintlify.com?utm_campaign=poweredBy&utm_medium=referral&utm_source=antigmalabs
+                - generic [ref=e441]: Powered by
+                - img [ref=e442]
+      - generic [ref=e454]:
+        - generic [ref=e455]:
+          - generic [ref=e456]:
+            - img [ref=e457]
+            - generic [ref=e461]: Assistant
+          - generic [ref=e462]:
+            - button [ref=e463] [cursor=pointer]:
+              - img [ref=e464]
+            - button [ref=e469] [cursor=pointer]:
+              - img [ref=e470]
+        - generic [ref=e476]: Responses are generated using AI and may contain mistakes.
+        - generic [ref=e481]:
+          - textbox "Ask a question..." [ref=e482]
+          - button "Send message" [disabled] [ref=e483]:
+            - img [ref=e484]
+  - alert [ref=e486]

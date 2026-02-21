@@ -6,6 +6,7 @@ from thegent.routing.provider_types import (
     NATIVE_CLI_PROVIDERS,
     ExecutionPath,
     get_execution_path,
+    normalize_provider_name,
 )
 
 
@@ -40,6 +41,33 @@ class TestProviderClassification:
     def test_kilo_is_api_key(self):
         """Kilo uses LiteLLM direct API."""
         assert get_execution_path("kilo") == ExecutionPath.LITELLM_API
+
+    def test_ollama_is_litellm_api(self):
+        """Ollama uses LiteLLM execution path."""
+        assert get_execution_path("ollama") == ExecutionPath.LITELLM_API
+
+    def test_ollama_local_alias_normalizes(self):
+        """`ollama-local` is accepted as alias for `ollama`."""
+        assert normalize_provider_name("ollama-local") == "ollama"
+        assert get_execution_path("ollama-local") == ExecutionPath.LITELLM_API
+
+    @pytest.mark.parametrize("alias", ["local-ollama", "ollama-localhost", "ollama@localhost"])
+    def test_additional_ollama_aliases_normalize(self, alias: str):
+        """WL-118: additional local aliases normalize to canonical provider."""
+        assert normalize_provider_name(alias) == "ollama"
+        assert get_execution_path(alias) == ExecutionPath.LITELLM_API
+
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [
+            ("  OLLAMA-LOCAL ", "ollama"),
+            (" Local-Ollama", "ollama"),
+            ("\tollama@localhost\n", "ollama"),
+        ],
+    )
+    def test_ollama_alias_normalization_handles_case_and_whitespace(self, raw: str, expected: str):
+        """WL-118: alias normalization should be deterministic for shell/user inputs."""
+        assert normalize_provider_name(raw) == expected
 
     def test_unknown_provider_is_login_auth(self):
         """Unknown providers default to CLIProxyAPIPlus."""

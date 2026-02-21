@@ -1,0 +1,185 @@
+# NEW_PROVIDERS_AUTH_RESEARCH
+
+Source: docs/plans/NEW_PROVIDERS_AUTH_RESEARCH.md
+
+---
+
+# New Providers Auth Research & Plan
+
+**Status:** Research (superseded by [CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md](./CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md))  
+**Date:** 2026-02-14  
+**Scope:** Cursor, MiniMax, Roo, Kilo – auth patterns and CLIProxyAPIPlus integration
+
+**Principle:** All providers have equal parity with native ones (Kiro, Gemini, Claude, Codex): dedicated config blocks, OAuth/token-file, refresh.
+
+## Summary
+
+**Cursor, MiniMax, Roo, Kilo** are CLIs/IDEs with associated LLM clients. Many provide **their own auth with free models** (login protocols, free credits, optional API keys). The current `openai-compatibility` config with `api-key-entries` is **not** the right fit for login-based providers. Research and plan required before implementation.
+
+**Existing web attempts:** CLIProxyAPI-Extended (Kiro/Antigravity), CLIProxyAPI #573 (Cursor support), cliproxy-installer (Cursor, Claude Code, OpenCode).
+
+---
+
+## 1. Cursor – Login Protocol (Not API Key)
+
+### Auth Flow
+
+- **No static API key.** User must log in at [cursor.com](https://www.cursor.com).
+- **Token source:** Browser cookie `WorkosCursorSessionToken` (JWT + checksum).
+- **cursor-api (wisdgod):** Acts as proxy. User provides session token via:
+  - `/build-key` – converts token+checksum → short-lived API keys (`sk-...`)
+  - `/tokens/add` – registers token for cursor-api to use
+- **Token lifecycle:** Session tokens expire; `/tokens/refresh` needed.
+
+### CLIProxyAPIPlus Fit
+
+| Config pattern | Fit? | Notes |
+|----------------|------|-------|
+| `openai-compatibility` + `api-key-entries` | ✗ | Keys from `/build-key` expire; not static |
+| Token-file / OAuth (like Kiro) | ✓ | Needs token refresh, session management |
+| Dedicated `cursor:` block | ✓ | Similar to `kiro:` with `token-file`, `access-token`, `refresh-token` |
+
+### Recommendation
+
+- Add a **cursor** config block (like `kiro`) with:
+  - `token-file` – path to persisted Cursor session token
+  - Or `access-token` + `refresh-token` if cursor-api exposes refresh
+- Or integrate with cursor-api’s `/tokens/add` + `/tokens/refresh` as a token provider.
+- **Do not** document Cursor as `openai-compatibility` with `api-key`.
+
+---
+
+## 2. MiniMax – OAuth + API Key (like GLM)
+
+### Known
+
+- **API:** `api.minimax.io` / `platform.minimax.io`
+- **Auth:** MiniMax offers **OAuth in tandem with API key** – similar to GLM.
+- **Existing in fork:** Via iFlow (OAuth) and Kiro (AWS).
+
+### CLIProxyAPIPlus Fit
+
+| Config pattern | Fit? | Notes |
+|----------------|------|-------|
+| `openai-compatibility` + `api-key-entries` | ✓ | For API-key-only usage |
+| Dedicated `minimax:` block (OAuth) | ✓ | For OAuth flow, like GLM/Kiro |
+
+### Recommendation
+
+- Support both: `openai-compatibility` for API key, and a dedicated `minimax:` block for OAuth (token-file, access/refresh) if/when needed.
+
+---
+
+## 3. Roo Code – AI Coding Agent (DuckDuckGo)
+
+### Known
+
+- **Roo Code:** [RooCodeInc/Roo-Code](https://github.com/RooCodeInc/Roo-Code), [roocode.com](https://roocode.com)
+- **CLI:** [drumnation/roo-code-cli](https://github.com/drumnation/roo-code-cli), [mayalabsio/Roo-Code-With-CLI](https://github.com/mayalabsio/Roo-Code-With-CLI)
+- **Docs:** [docs.roocode.com](https://docs.roocode.com)
+- **Auth:** Integrates with any OpenAI-compatible or custom API/model; Cloud agents (Roo Code Cloud).
+- **Note:** ROO.AI/Driveroo (driveroo.com) is a different product (fleet/inspection); Roo Code is the coding agent.
+
+### Open Questions
+
+- Free tier / own auth? Cloud agents vs bring-your-own-API?
+- Fit for CLIProxy as upstream proxy?
+
+---
+
+## 4. Kilo (Kilo Code) – Free Models, API Keys Optional (DuckDuckGo)
+
+### Known
+
+- **Source:** [Kilo-Org/kilocode](https://github.com/Kilo-Org/kilocode), [kilo.ai](https://kilo.ai)
+- **CLI:** [kilo.ai/cli](https://kilo.ai/cli), [kilo.ai/docs/code-with-ai/platforms/cli](https://kilo.ai/docs/code-with-ai/platforms/cli)
+- **Auth:** API keys optional; Kilo Code API Provider gives free credits ($20), identity verification.
+- **Free usage:** [kilo.ai/docs/getting-started/using-kilo-for-free](https://kilo.ai/docs/getting-started/using-kilo-for-free), [free-and-budget-models](https://kilo.ai/docs/code-with-ai/agents/free-and-budget-models)
+- **Stats:** #1 on OpenRouter, 1.5M+ Kilo Coders, 500+ models.
+
+### Open Questions
+
+- Kilo Code provider: login/OAuth or just free credits with signup?
+- Can CLIProxy sit between Kilo CLI and backends?
+
+---
+
+## 5. Existing Web Attempts (DuckDuckGo)
+
+### Cursor
+
+| Project | What | Relevance |
+|---------|------|-----------|
+| [router-for-me/CLIProxyAPI #573](https://github.com/router-for-me/CLIProxyAPI/issues/573) | Cursor support request – "force cursor to call models through local proxy" | Cursor + CLIProxy |
+| [router-for-me/CLIProxyAPIPlus #198](https://github.com/router-for-me/CLIProxyAPIPlus/issues/198) | Cursor CLI / Auth support – Cursor subscription as provider, auth storage like Codex | Cursor auth integration |
+| [forum.cursor.com – proxy setup](https://forum.cursor.com/t/how-to-set-up-a-proxy-for-cursor/83585) | mitmproxy + Cursor – TLS handshake issues with api2.cursor.sh | Proxy challenges |
+| [forum.cursor.com – CLI proxy](https://forum.cursor.com/t/cursor-cli-with-proxy/133724) | Cursor CLI + http_proxy/https_proxy – env vars don't work | CLI proxy config |
+| [wisdgod/cursor-api](https://github.com/wisdgod/cursor-api) | OpenAI-compatible proxy to Cursor backend; token management | Primary cursor-api |
+| [cursor.com/docs/enterprise/network-configuration](https://cursor.com/docs/enterprise/network-configuration) | Enterprise proxy, firewalls, encryption | Official docs |
+
+### MiniMax
+
+| Project | What | Relevance |
+|---------|------|-----------|
+| [platform.minimax.io – OpenAI API](https://platform.minimax.io/docs/api-reference/text-openai-api) | MiniMax native OpenAI-compatible API | Direct integration |
+| [0xSero/minimax-m2-proxy](https://github.com/0xSero/minimax-m2-proxy) | Translation proxy: MiniMax-M2 → OpenAI/Anthropic APIs; tool-calling, reasoning | Self-hosted MiniMax-M2 |
+| [LLM-Red-Team/minimax-free-api](https://github.com/LLM-Red-Team/minimax-free-api) | Proxy: OpenAI format → Hailuo AI; token management | Free API proxy |
+| [LiteLLM – MiniMax-M2.5](https://docs.litellm.ai/blog/minimax_m2_5) | Day 0 support via LiteLLM AI Gateway | Gateway option |
+| [ai-sdk.dev – MiniMax provider](https://ai-sdk.dev/providers/community-providers/minimax) | createMinimax (Anthropic), createMinimaxOpenAI | SDK integration |
+| [minimax-m2.com/docs/api](https://minimax-m2.com/docs/api) | RESTful OpenAI/Anthropic-style API | Alternative deployment |
+
+### Factory Droid
+
+| Project | What | Relevance |
+|---------|------|-----------|
+| [router-for-me/CLIProxyAPIDocs – Factory Droid](https://deepwiki.com/router-for-me/CLIProxyAPIDocs/6.4-factory-droid-configuration) | Official Factory Droid + CLIProxyAPI config | Canonical docs |
+| [chandika – Factory + CLIProxyAPI gist](https://gist.github.com/chandika/c4b64c5b8f5e29f6112021d46c159fdd) | Droid + Claude Code Max (OAuth) via CLIProxyAPI | OAuth instead of API keys |
+| [ObaidUr-Rahmaan – same pattern](https://gist.github.com/ObaidUr-Rahmaan/131b2cf6c87da191fa01a697f9d60027) | Droid + Claude/Codex subscription via CLIProxyAPI | Community guide |
+| [xkonjin/droid-proxy-setup](https://github.com/xkonjin/droid-proxy-setup) | Auto-start CLIProxyAPI for Droid; Claude Pro Max, ChatGPT Pro Max, Antigravity | Setup automation |
+| [xkonjin – CLIProxy setup gist](https://gist.github.com/xkonjin/d65abd20d98d113b1c0a447d7a7862ce) | Factory Droid + CLIProxyAPI (Claude OAuth) – verified Jan 2026 | Working config |
+| [ben-vargas – Droid config gist](https://gist.github.com/ben-vargas/c41cdf36736d802f04b8e6b54aa2d6ec) | Droid + CLIProxyAPI for ChatGPT/Claude/Gemini | Multi-provider |
+| [edlsh/ai-cli-proxy-api](https://github.com/edlsh/ai-cli-proxy-api) | CLIProxyAPI fork for Factory + Amp; USING_WITH_FACTORY_AND_AMP.md | Fork with guides |
+| [tiendung/ai-cli-proxy-api](https://github.com/tiendung/ai-cli-proxy-api) | Same enhancement – Factory + Amp | Another fork |
+
+### Other
+
+| Project | What | Relevance |
+|---------|------|-----------|
+| [mrsuperei/CLIProxyAPI-Extended](https://github.com/mrsuperei/CLIProxyAPI-Extended) | Kiro, Antigravity; Canonical IR | Proxy |
+| [khmuhtadin/cliproxy-installer](https://github.com/khmuhtadin/cliproxy-installer) | Installer for Cursor, Claude Code, OpenCode, Droid | Setup |
+| [julianromli/CLIProxyAPIPlus-Easy-Installation](https://github.com/julianromli/CLIProxyAPIPlus-Easy-Installation) | Droid, Claude Code, Cursor | OAuth + proxy |
+
+---
+
+## 7. Auth Pattern Matrix
+
+| Provider | Auth type | CLIProxyAPIPlus config | Status |
+|----------|-----------|------------------------|--------|
+| OpenRouter | API key | `openai-compatibility` | ✓ Implemented |
+| Cursor | Session token (login) | Dedicated `cursor:` block (like Kiro) | ✗ Wrong docs; needs plan |
+| MiniMax | OAuth + API key (like GLM) | `openai-compatibility` or dedicated block | Both supported |
+| Kilo | Free credits / optional API key | TBD | Research Kilo provider auth |
+| Roo Code | OpenAI-compat / Cloud | TBD | Research |
+| Kiro | OAuth (token-file, access/refresh) | `kiro:` | ✓ Reference |
+
+---
+
+## 8. Action Items
+
+1. **Cursor:** Remove `api-key-entries` from Cursor config example; add note that Cursor uses login protocol. Design `cursor:` config block (token-file / token refresh). Polish and optimize cursor-api integration for CLIProxy.
+2. **MiniMax:** Supports OAuth + API key (like GLM). Keep `openai-compatibility` for API key; add dedicated `minimax:` block for OAuth if needed.
+3. **Roo Code:** Research Cloud vs bring-your-own-API; CLI integration.
+4. **Kilo:** Research Kilo Code provider auth (free credits flow); CLI as proxy target.
+
+---
+
+## 9. References
+
+- [wisdgod/cursor-api](https://github.com/wisdgod/cursor-api) – Token management, `/build-key`, `/tokens/add`, `/tokens/refresh`
+- [eisbaw/cursor_api_demo](https://github.com/eisbaw/cursor_api_demo) – Python client
+- [Jordan-Jarvis/cursor-grpc](https://github.com/Jordan-Jarvis/cursor-grpc) – Proto definitions
+- [zhifac/code_of_c_u_r_s_o_r](https://github.com/zhifac/code_of_c_u_r_s_o_r) – Tokenizer docs
+- [Kilo-Org/kilocode](https://github.com/Kilo-Org/kilocode) – Kilo Code, API keys optional
+- [RooCodeInc/Roo-Code](https://github.com/RooCodeInc/Roo-Code) – Roo Code
+- [mrsuperei/CLIProxyAPI-Extended](https://github.com/mrsuperei/CLIProxyAPI-Extended) – Kiro/Antigravity
+- CLIProxyAPIPlus `kiro:` config – OAuth/token-file pattern

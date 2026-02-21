@@ -2,7 +2,7 @@
 Formally defines roles, permissions, and access checks.
 """
 
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 from thegent.governance.personas import PersonaManager

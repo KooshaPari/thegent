@@ -13,6 +13,7 @@ Performance improvements:
 """
 
 import asyncio
+from asyncio import subprocess
 import os
 import shutil
 import subprocess
@@ -181,8 +182,8 @@ class FastSubprocess:
 
         # Set up stdout/stderr
         if capture_output:
-            kwargs.setdefault("stdout", asyncio.subprocess.PIPE)
-            kwargs.setdefault("stderr", asyncio.subprocess.PIPE)
+            kwargs.setdefault("stdout", subprocess.PIPE)
+            kwargs.setdefault("stderr", subprocess.PIPE)
 
         # SECURITY: Validate command safety before execution
         _validate_command_safety(cmd)
@@ -211,10 +212,10 @@ class FastSubprocess:
         start_time = time.time()
         try:
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
-        except asyncio.TimeoutExpired:
+        except asyncio.TimeoutError:
             process.kill()
             await process.wait()
-            raise subprocess.TimeoutExpired(cmd, timeout)
+            raise subprocess.TimeoutExpired(cmd, timeout if timeout is not None else 0.0)
 
         duration = time.time() - start_time
 
@@ -224,7 +225,8 @@ class FastSubprocess:
         if stderr:
             stderr = stderr.decode("utf-8", errors="replace")
 
-        result = subprocess.CompletedProcess(cmd, process.returncode, stdout or "", stderr or "")
+        returncode = process.returncode if process.returncode is not None else 0
+        result = subprocess.CompletedProcess(cmd, returncode, stdout or "", stderr or "")
 
         # WP-22001: Record in context-aware history
         _record_history(

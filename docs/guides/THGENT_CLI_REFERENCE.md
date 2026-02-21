@@ -187,6 +187,59 @@ thegent review "Review auth.py for security issues"
 thegent code "Implement user authentication"
 ```
 
+### `thegent review` Exit Codes (CI-Friendly)
+
+`thegent review` is designed for automation gates:
+
+| Exit Code | Meaning |
+|---|---|
+| `0` | Review completed and found no issues |
+| `1` | Review completed and found one or more issues |
+| `2` | Review output contract invalid (schema/JSON violation) |
+| other non-zero | Underlying runner failure propagated as-is |
+
+**CI Example**:
+```bash
+thegent review "Review src/ for correctness" --format json
+```
+- parse JSON output for issue details
+- fail pipeline on any non-zero code
+- structured review JSON must include `summary`, `overall_rating`, and `issues` (legacy `rating` alias is rejected)
+
+### `--image` Capability Matrix Note (WL-114)
+
+Image input guards use the model capability matrix in
+`src/thegent/agents/cliproxy_data/model_indices.json`.
+
+- `--image` is allowed only on image-capable agent paths
+- if `--model` is provided, that model must advertise `vision: true` (or `modalities.vision: true`)
+- non-vision models fail fast with a non-zero error
+- duplicate `--image` inputs are normalized to a unique ordered set before dispatch
+
+### Wave 11 Contract Hardening Notes (WL-107/108/109/110/114)
+
+- `WL-107` (`thegent review`): `overall_rating` must be an integer `0..100`; boolean values are rejected as schema violations.
+- `WL-108` (context usage payload): invalid ratio values (for example `NaN`/bool/non-numeric) are ignored in favor of computed `used/max`, and negative usage is rejected from payload emission.
+- `WL-109` (MCP LSP symbol lookup): symbol matches are normalized to strict objects (`name`, `kind`, `file_path`, `line`, `character`); malformed entries fail loudly.
+- `WL-110` (`thegent resume`): latest-session auto-selection now tolerates mixed naive/offset ISO timestamps by normalizing to UTC before ordering.
+- `WL-114` (`--image`): non-string image inputs are rejected early with a clear contract error.
+
+### Wave 12 Contract Hardening Notes (WL-107/108/109/110/114)
+
+- `WL-107` (`thegent review`): `issues[].line` now rejects boolean values explicitly to preserve the integer-only line contract.
+- `WL-108` (context usage payload): payload emission now rejects invalid states where `used > max`.
+- `WL-109` (MCP LSP symbol lookup): symbol `file_path` values are normalized with whitespace trimming before contract validation/output.
+- `WL-110` (`thegent resume`): latest-session and resume contract strings (`session_id`, `run_id`) are normalized via trimming before selection/registration.
+- `WL-114` (`--image` forwarding args): codex `--image` argument builder now rejects empty or non-string path values.
+
+### Wave 13 Contract Hardening Notes (WL-107/108/109/110/114)
+
+- `WL-107` (`thegent review`): validated string fields are now normalized with trimming (`summary`, `issues[].file`, `issues[].message`, `issues[].suggestion`) before returning contract output.
+- `WL-108` (context usage payload): externally supplied ratio values are now accepted only when consistent with `used/max`; inconsistent ratios are ignored in favor of computed usage.
+- `WL-109` (MCP LSP symbol lookup): fractional float coordinates for symbol match positions now fail loudly instead of being silently truncated.
+- `WL-110` (`thegent session list`): state/registry contract strings are now normalized via trimming for listed `session_id`/`run_id` values.
+- `WL-114` (`--image` forwarding args): codex `--image` argument emission now trims path values to keep forwarded args canonical.
+
 ---
 
 ## Work Stream Integration

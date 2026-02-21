@@ -354,6 +354,7 @@ mod tests {
         let config = RouterConfig {
             low_threshold: 0.25,
             high_threshold: 0.75,
+            ..RouterConfig::default()
         };
         let router = ParetoRouter::with_config(config);
         assert_eq!(router.config.low_threshold, 0.25);
@@ -366,6 +367,7 @@ mod tests {
         let config = RouterConfig {
             low_threshold: 0.75,
             high_threshold: 0.25, // Invalid: low > high
+            ..RouterConfig::default()
         };
         ParetoRouter::with_config(config);
     }
@@ -538,6 +540,7 @@ mod tests {
         let config = RouterConfig {
             low_threshold: 0.0,
             high_threshold: 1.0,
+            ..RouterConfig::default()
         };
         let router = ParetoRouter::with_config(config);
 

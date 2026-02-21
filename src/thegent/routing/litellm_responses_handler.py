@@ -1,22 +1,128 @@
 """LiteLLM Router Responses API handler for Codex CLI compatibility."""
 
+from __future__ import annotations
+
 import json
 import logging
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, cast
 
-from starlette.requests import Request
+import httpx
 from starlette.responses import Response, StreamingResponse
-from starlette.websockets import WebSocket
 
-from thegent.routing.litellm_router import get_litellm_router
+if TYPE_CHECKING:
+    from starlette.requests import Request
+    from starlette.websockets import WebSocket
+
+from thegent.routing.litellm_router import build_dynamic_fallback_router, get_litellm_router
 
 _log = logging.getLogger(__name__)
 
+# WL-071: Persistent httpx.AsyncClient — one TCP connection pool for the process lifetime.
+# Avoids TCP handshake + SSL negotiation cost on every LLM request.
+_http_client: httpx.AsyncClient | None = None
+
+
+def _get_http_client() -> httpx.AsyncClient:
+    """Return the module-level persistent httpx.AsyncClient, creating it if needed."""
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(120.0, connect=10.0),
+            limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+        )
+    return _http_client
+
+
+async def close_http_client() -> None:
+    """Close the persistent httpx.AsyncClient. Call from application shutdown hook."""
+    global _http_client
+    if _http_client is not None and not _http_client.is_closed:
+        await _http_client.aclose()
+        _http_client = None
+
+
+# OR-17: Headers to forward from incoming request to OpenRouter upstream.
+_FORWARD_HEADERS: frozenset[str] = frozenset({"x-session-id", "x-anthropic-beta", "streaming-options"})
+
+# OR-18: Providers that support the Responses API natively (no transform required).
+_NATIVE_RESPONSES_PROVIDERS: frozenset[str] = frozenset({"openrouter"})
+
+# OR-19: Path to the generation-id store (append-only JSONL).
+_GENERATION_ID_STORE: Path = Path.home() / ".thegent" / "generation_id_store.jsonl"
+
+
+def _extract_forward_headers(request: Request) -> dict[str, str]:
+    """OR-17: Extract whitelisted headers from request for upstream forwarding.
+
+    Returns a dict of header_name -> value for each whitelisted header present
+    in the incoming request (case-insensitive lookup).
+    """
+    result: dict[str, str] = {}
+    for name, value in request.headers.items():
+        if name.lower() in _FORWARD_HEADERS:
+            result[name.lower()] = value
+    return result
+
+
+def _is_native_responses_capable(provider: str) -> bool:
+    """OR-18: Return True when the provider supports the Responses API natively.
+
+    Native-capable providers receive the raw Responses API body rather than
+    having it transformed to Chat Completions format first.
+    """
+    return provider.lower() in _NATIVE_RESPONSES_PROVIDERS
+
+
+def _extract_provider_from_model(model: str) -> str:
+    """Return the provider portion of a 'provider/model' string, or '' if absent."""
+    if "/" in model:
+        return model.split("/", 1)[0].lower()
+    return ""
+
+
+def _append_generation_id(request_id: str, generation_id: str) -> None:
+    """OR-19: Append a generation-id record to the JSONL store.
+
+    The store is at ~/.thegent/generation_id_store.jsonl.
+    Each line is a JSON object with keys: request_id, generation_id.
+    Creates the parent directory if it does not exist.
+    """
+    _GENERATION_ID_STORE.parent.mkdir(parents=True, exist_ok=True)
+    record = json.dumps({"request_id": request_id, "generation_id": generation_id})
+    with _GENERATION_ID_STORE.open("a", encoding="utf-8") as fh:
+        fh.write(record + "\n")
+
+
+def _build_fallback_chain_extra(models: list[str], primary_model: str) -> dict[str, Any]:
+    """Build LiteLLM extra kwargs to implement a model fallback chain.
+
+    GW-12: When a request specifies multiple models, configure LiteLLM Router
+    fallback behavior for the chain.
+
+    Args:
+        models: Ordered list of model names (primary first)
+        primary_model: The primary model (should match models[0])
+
+    Returns:
+        Extra kwargs dict for router.acompletion (may include 'fallbacks' key)
+    """
+    if len(models) <= 1:
+        return {}
+    fallback_models = models[1:]
+    return {"fallbacks": [{primary_model: fallback_models}]}
+
+
 # Map litellm/provider error substrings to HTTP status codes.
+# OR-11: Includes 402 (insufficient credits) and 503 (no provider available).
 _ERROR_STATUS_MAP: list[tuple[str, int]] = [
     ("rate limit", 429),
     ("ratelimit", 429),
     ("too many requests", 429),
+    ("insufficient credits", 402),
+    ("payment required", 402),
+    ("no providers", 503),
+    ("service unavailable", 503),
     ("invalid model", 400),
     ("model not found", 400),
     ("invalid request", 400),
@@ -40,9 +146,31 @@ def _error_status_code(exc: Exception) -> int:
 
 
 def _error_response(exc: Exception) -> Response:
-    """Build a structured JSON error Response from an exception."""
+    """Build a structured JSON error Response from an exception.
+
+    OR-11: Error body includes ``code`` (integer HTTP status) and preserves
+    OpenRouter ``metadata`` when the upstream error object contains it.
+    Format: {"error": {"code": <int>, "message": <str>, "type": <str>, "metadata": {...}}}
+    """
     status = _error_status_code(exc)
-    body = json.dumps({"error": {"message": str(exc), "type": type(exc).__name__}})
+    error_obj: dict[str, Any] = {
+        "code": status,
+        "message": str(exc),
+        "type": type(exc).__name__,
+    }
+    # OR-11: if the exception carries structured error data (e.g. from litellm), propagate metadata
+    raw = getattr(exc, "response", None)
+    if raw is not None:
+        raw_text = getattr(raw, "text", None) or ""
+        if raw_text:
+            try:
+                parsed = json.loads(raw_text)
+                upstream_err = parsed.get("error", {}) if isinstance(parsed, dict) else {}
+                if isinstance(upstream_err, dict) and upstream_err.get("metadata"):
+                    error_obj["metadata"] = upstream_err["metadata"]
+            except (json.JSONDecodeError, ValueError):
+                pass
+    body = json.dumps({"error": error_obj})
     return Response(
         content=body,
         status_code=status,
@@ -51,7 +179,11 @@ def _error_response(exc: Exception) -> Response:
 
 
 def _responses_input_to_messages(input_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Convert Responses API input items to Chat Completions messages."""
+    """Convert Responses API input items to Chat Completions messages.
+
+    OR-16: Preserves full content arrays (including cache_control, image_url, etc.)
+    so that content-block annotations survive the Responses -> Chat Completions transform.
+    """
     messages: list[dict[str, Any]] = []
     for item in input_items:
         if not isinstance(item, dict):
@@ -60,11 +192,15 @@ def _responses_input_to_messages(input_items: list[dict[str, Any]]) -> list[dict
             role = item.get("role", "user")
             content = item.get("content")
             if isinstance(content, list):
-                parts = []
+                # OR-16: preserve full content array — do NOT collapse to plain string;
+                # collapsing discards cache_control and other per-block annotations.
+                enriched: list[dict[str, Any]] = []
                 for c in content:
-                    if isinstance(c, dict) and c.get("type") == "text":
-                        parts.append(c.get("text", ""))
-                content = "\n".join(parts) if parts else ""
+                    if isinstance(c, dict):
+                        enriched.append(c)
+                    elif isinstance(c, str):
+                        enriched.append({"type": "text", "text": c})
+                content = enriched or [{"type": "text", "text": ""}]
             elif not isinstance(content, str):
                 content = str(content) if content else ""
             messages.append({"role": role, "content": content})
@@ -76,6 +212,9 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
 
     Only non-None optional fields are included so downstream LiteLLM
     calls don't receive unexpected ``None`` keyword arguments.
+
+    OR-09: Forwards OpenRouter-specific fields (transforms, provider, route,
+    plugins, reasoning, session_id, metadata, trace) when present.
     """
     input_items = body.get("input", [])
     if not isinstance(input_items, list):
@@ -90,25 +229,92 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
         "stream": body.get("stream", False),
     }
 
-    # Only forward optional parameters when explicitly provided.
-    temperature = body.get("temperature")
-    if temperature is not None:
-        chat["temperature"] = temperature
+    # Standard optional parameters — only forward when explicitly provided
+    for _field in (
+        "temperature",
+        "top_p",
+        "top_k",
+        "frequency_penalty",
+        "presence_penalty",
+        "repetition_penalty",
+        "min_p",
+        "top_a",
+        "seed",
+        "stop",
+        "logprobs",
+        "top_logprobs",
+        "logit_bias",
+        "user",
+        "response_format",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "stream_options",
+    ):
+        val = body.get(_field)
+        if val is not None:
+            chat[_field] = val
 
     max_tokens = body.get("max_output_tokens") or body.get("max_tokens")
     if max_tokens is not None:
         chat["max_tokens"] = max_tokens
 
+    # OR-09: OpenRouter-specific passthrough fields
+    for _or_field in (
+        "transforms",
+        "provider",
+        "route",
+        "plugins",
+        "reasoning",
+        "session_id",
+        "metadata",
+        "trace",
+        "structured_outputs",
+    ):
+        val = body.get(_or_field)
+        if val is not None:
+            chat[_or_field] = val
+
+    # GW-12: extract models[] array for fallback chain support.
+    # Stored as _models (underscore prefix) to avoid collision with LiteLLM's
+    # model param. When present and len > 1, handle_responses_request uses
+    # build_dynamic_fallback_router instead of get_litellm_router.
+    models_list = body.get("models")
+    if isinstance(models_list, list) and models_list:
+        chat["_models"] = models_list
+        # Use the first entry as the primary model when models[] is provided
+        if not chat.get("model"):
+            chat["model"] = models_list[0]
+
     return chat
 
 
 def _chat_completions_to_responses(chunk: dict[str, Any]) -> dict[str, Any] | None:
-    """Transform Chat Completions SSE chunk to Responses API format."""
+    """Transform Chat Completions SSE chunk to Responses API format.
+
+    OR-10: Preserves tool_call deltas from OpenRouter SSE chunks. When
+    delta.tool_calls is present it is forwarded as a response.output_item.added
+    event with type "function_call" so tool-using prompts work through the
+    LiteLLM handler path.
+    """
     choices = chunk.get("choices", [])
     if not choices:
         return None
     delta = choices[0].get("delta", {})
     content = delta.get("content", "")
+    tool_calls = delta.get("tool_calls")
+
+    if tool_calls:
+        # OR-10: forward tool call deltas — emit as function_call output item
+        return {
+            "type": "response.output_item.added",
+            "item": {
+                "type": "function_call",
+                "role": "assistant",
+                "tool_calls": tool_calls,
+            },
+        }
+
     if not content:
         return None  # Skip empty chunks
 
@@ -123,25 +329,55 @@ def _chat_completions_to_responses(chunk: dict[str, Any]) -> dict[str, Any] | No
 
 
 async def handle_responses_request(request: Request) -> Response:
-    """Handle Responses API HTTP POST request via LiteLLM Router."""
+    """Handle Responses API HTTP POST request via LiteLLM Router.
+
+    OR-17: Forwards x-session-id, x-anthropic-beta, and Streaming-Options
+    headers to the upstream provider when present.
+    OR-18: When the resolved provider is native-responses-capable (e.g.
+    openrouter), the raw Responses API body is forwarded directly via httpx
+    rather than being transformed to Chat Completions first.
+    """
     try:
         body = await request.body()
         data = json.loads(body) if body else {}
+
+        # OR-17: collect whitelisted headers for upstream forwarding
+        forward_headers = _extract_forward_headers(request)
+
+        # OR-18: detect provider from model string and bypass transform when native
+        model_str: str = data.get("model", "")
+        provider = _extract_provider_from_model(model_str)
+        if _is_native_responses_capable(provider):
+            return await _forward_native_responses(request, data, body, forward_headers)
 
         # Translate Responses API → Chat Completions
         chat_request = _responses_to_chat_completions(data)
         model = chat_request["model"]
         stream = chat_request.get("stream", False)
 
-        # Get LiteLLM Router
-        router = get_litellm_router()
+        # GW-12: extract _models for fallback chain; remove before passing to router
+        _models: list[str] = chat_request.pop("_models", [])
+
+        # GW-12: select router — dynamic fallback router when multiple models specified
+        if len(_models) > 1:
+            router = build_dynamic_fallback_router(_models)
+        else:
+            router = get_litellm_router()
 
         if stream:
-            return await handle_responses_stream(request, chat_request, router)
+            return await handle_responses_stream(
+                request, chat_request, router, forward_headers=forward_headers, _models=_models
+            )
 
         # Non-streaming request — route through LiteLLM Router for
         # fallback, cost tracking, and caching support.
         extra = {k: v for k, v in chat_request.items() if k not in ("model", "messages", "stream")}
+        # OR-17: inject forwarded headers as extra_headers when present
+        if forward_headers:
+            extra["extra_headers"] = forward_headers
+        # GW-12: inject fallback chain extra params when multi-model
+        if len(_models) > 1:
+            extra.update(_build_fallback_chain_extra(_models, model))
         response = await router.acompletion(
             model=model,
             messages=chat_request["messages"],
@@ -150,15 +386,33 @@ async def handle_responses_request(request: Request) -> Response:
 
         # Translate response back to Responses API format
         content = response.choices[0].message.content if response.choices else ""
-        responses_data = {
+        # OR-12: use the actual model reported by the provider, not the requested alias
+        actual_model = getattr(response, "model", model) or model
+        responses_data: dict[str, Any] = {
+            "id": getattr(response, "id", None),
+            "object": "response",
+            "status": "completed",
+            "model": actual_model,
             "output": [
                 {
                     "type": "message",
                     "role": "assistant",
                     "content": [{"type": "text", "text": content}],
                 }
-            ]
+            ],
         }
+        # OR-14: include cost when available (OpenRouter sends usage.total_cost)
+        usage = getattr(response, "usage", None)
+        if usage is not None:
+            usage_dict = usage.model_dump() if hasattr(usage, "model_dump") else dict(usage)
+            responses_data["usage"] = {
+                "input_tokens": usage_dict.get("prompt_tokens", 0),
+                "output_tokens": usage_dict.get("completion_tokens", 0),
+                "total_tokens": usage_dict.get("total_tokens", 0),
+            }
+            total_cost = usage_dict.get("total_cost")
+            if total_cost is not None:
+                responses_data["usage"]["cost"] = total_cost
 
         return Response(
             content=json.dumps(responses_data),
@@ -171,35 +425,125 @@ async def handle_responses_request(request: Request) -> Response:
         return _error_response(e)
 
 
-async def handle_responses_stream(request: Request, chat_request: dict[str, Any], router) -> StreamingResponse:
-    """Handle Responses API streaming request via LiteLLM Router."""
+async def _forward_native_responses(
+    request: Request,
+    data: dict[str, Any],
+    raw_body: bytes,
+    forward_headers: dict[str, str],
+) -> Response:
+    """OR-18: Forward Responses API request directly to OpenRouter without transform.
+
+    Used when the provider is native-responses-capable. Sends the raw body to
+    the OpenRouter /v1/responses endpoint via httpx, injecting attribution and
+    whitelisted forwarded headers.
+
+    WL-071: Uses the module-level persistent httpx.AsyncClient to avoid creating
+    a new TCP connection pool per request.
+    """
+    import os
+
+    model_str: str = data.get("model", "")
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    target_url = "https://openrouter.ai/api/v1/responses"
+
+    headers: dict[str, str] = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+        "HTTP-Referer": "https://thegent.dev",
+        "X-Title": "thegent",
+    }
+    headers.update(forward_headers)
+
+    _log.debug("OR-18: native responses forward model=%s", model_str)
+
+    # WL-071: Reuse persistent client — no context manager; client lives for process lifetime.
+    client = _get_http_client()
+    resp = await client.post(target_url, content=raw_body, headers=headers)
+
+    return Response(
+        content=resp.content,
+        status_code=resp.status_code,
+        headers={k: v for k, v in resp.headers.items() if k.lower() not in ("transfer-encoding", "connection")},
+    )
+
+
+async def handle_responses_stream(
+    request: Request,
+    chat_request: dict[str, Any],
+    router: Any,
+    *,
+    forward_headers: dict[str, str] | None = None,
+    _models: list[str] | None = None,
+) -> StreamingResponse:
+    """Handle Responses API streaming request via LiteLLM Router.
+
+    OR-12: Extracts the actual model name from the first SSE chunk and
+    includes it in the response.completed event so fallback routing is visible.
+    OR-11: Error payloads include ``code`` (integer status) for OpenRouter parity.
+    OR-17: Forwards whitelisted headers (x-session-id, x-anthropic-beta,
+    Streaming-Options) to the upstream provider via extra_headers.
+    OR-19: Captures openrouter-generation-id (or x-generation-id) from SSE
+    response headers and appends to ~/.thegent/generation_id_store.jsonl.
+    GW-12: When _models has >1 entry, fallback chain extra params are injected.
+    """
+    _models_list: list[str] = _models or []
 
     async def stream():
         try:
             model = chat_request["model"]
             messages = chat_request["messages"]
             extra = {k: v for k, v in chat_request.items() if k not in ("model", "messages", "stream")}
+            # OR-17: inject forwarded headers as extra_headers when present
+            if forward_headers:
+                extra["extra_headers"] = forward_headers
+            # GW-12: inject fallback chain extra params when multi-model
+            if len(_models_list) > 1:
+                extra.update(_build_fallback_chain_extra(_models_list, model))
+            # OR-12: track the actual model reported by the upstream provider
+            actual_model: str = model
+            # OR-19: track request_id for generation_id association
+            request_id: str = chat_request.get("request_id") or str(id(chat_request))
 
-            async for chunk in router.acompletion(
+            response_obj = router.acompletion(
                 model=model,
                 messages=messages,
                 stream=True,
                 **extra,
-            ):
+            )
+            async for chunk in response_obj:
                 # Translate Chat Completions → Responses API
-                chunk_dict = chunk.model_dump() if hasattr(chunk, "model_dump") else chunk
+                chunk_dict = cast("dict[str, Any]", chunk.model_dump() if hasattr(chunk, "model_dump") else chunk)
+                # OR-12: capture actual model from first chunk that carries it
+                chunk_model = chunk_dict.get("model") if isinstance(chunk_dict, dict) else None
+                if chunk_model and chunk_model != actual_model:
+                    actual_model = chunk_model
+                # OR-19: capture generation_id from chunk if present
+                gen_id = None
+                if isinstance(chunk_dict, dict):
+                    gen_id = chunk_dict.get("openrouter-generation-id") or chunk_dict.get("x-generation-id")
+                if gen_id:
+                    _append_generation_id(request_id, str(gen_id))
                 responses_event = _chat_completions_to_responses(chunk_dict)
                 if responses_event:
                     yield f"data: {json.dumps(responses_event)}\n\n"
 
-            # Send completion event
-            yield 'data: {"type": "response.completed"}\n\n'
+            # OR-12: include actual_model in completed event
+            completed = {"type": "response.completed", "model": actual_model}
+            yield f"data: {json.dumps(completed)}\n\n"
 
         except Exception as e:
             _log.error("Error in Responses API stream: %s", e, exc_info=True)
-            # Use json.dumps to safely encode the error message (handles
-            # quotes, newlines, and other characters that break raw f-strings).
-            error_payload = json.dumps({"error": {"message": str(e), "type": type(e).__name__}})
+            # OR-11: error payload includes code (integer status)
+            status = _error_status_code(e)
+            error_payload = json.dumps(
+                {
+                    "error": {
+                        "code": status,
+                        "message": str(e),
+                        "type": type(e).__name__,
+                    }
+                }
+            )
             yield f"data: {error_payload}\n\n"
 
     return StreamingResponse(
@@ -228,19 +572,28 @@ async def handle_responses_websocket(websocket: WebSocket) -> None:
         chat_request = _responses_to_chat_completions(data)
         model = chat_request["model"]
         messages = chat_request["messages"]
+
+        # GW-12: extract _models for fallback chain; remove before passing to router
+        ws_models: list[str] = chat_request.pop("_models", [])
+
         extra = {k: v for k, v in chat_request.items() if k not in ("model", "messages", "stream")}
 
-        # Get router
-        router = get_litellm_router()
+        # GW-12: select router — dynamic fallback router when multiple models specified
+        if len(ws_models) > 1:
+            router = build_dynamic_fallback_router(ws_models)
+            extra.update(_build_fallback_chain_extra(ws_models, model))
+        else:
+            router = get_litellm_router()
 
         # Stream response
-        async for chunk in router.acompletion(
+        response_stream = await router.acompletion(
             model=model,
             messages=messages,
             stream=True,
             **extra,
-        ):
-            chunk_dict = chunk.model_dump() if hasattr(chunk, "model_dump") else chunk
+        )
+        async for chunk in response_stream:
+            chunk_dict = cast("dict[str, Any]", chunk.model_dump() if hasattr(chunk, "model_dump") else chunk)
             responses_event = _chat_completions_to_responses(chunk_dict)
             if responses_event:
                 await websocket.send_json(responses_event)
@@ -251,15 +604,26 @@ async def handle_responses_websocket(websocket: WebSocket) -> None:
     except Exception as e:
         _log.error("Error in Responses API WebSocket: %s", e, exc_info=True)
         _send_error = True
-        try:
-            await websocket.send_json({"error": {"message": str(e), "type": type(e).__name__}})
-        except Exception:
-            pass  # Connection may already be broken; ignore send failure.
+        import contextlib
+
+        # OR-11: error payload includes code (integer status)
+        status = _error_status_code(e)
+        async with contextlib.AsyncExitStack() as _:
+            with contextlib.suppress(Exception):
+                await websocket.send_json(
+                    {
+                        "error": {
+                            "code": status,
+                            "message": str(e),
+                            "type": type(e).__name__,
+                        }
+                    }
+                )
     finally:
-        try:
+        import contextlib
+
+        with contextlib.suppress(Exception):
             # Use code 1001 (Going Away) on error so clients can distinguish
             # from a clean close (1000 = Normal Closure).
             close_code = 1001 if _send_error else 1000
             await websocket.close(close_code)
-        except Exception:
-            pass  # Already closed.

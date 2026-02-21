@@ -1,0 +1,43 @@
+# WL-102 Implementation Slice Plan: `thegent-sdk` Public API
+
+## Scope
+- Deliver a minimal, typed SDK package skeleton without changing runtime server behavior.
+- Keep this slice low-risk and implementation-ready for a follow-up execution pass.
+
+## Proposed Package Layout
+- `packages/thegent-sdk/pyproject.toml`
+- `packages/thegent-sdk/src/thegent_sdk/__init__.py`
+- `packages/thegent-sdk/src/thegent_sdk/client.py`
+- `packages/thegent-sdk/src/thegent_sdk/types.py`
+- `packages/thegent-sdk/src/thegent_sdk/py.typed`
+- `packages/thegent-sdk/tests/test_client.py`
+
+## API Contract (Slice 1)
+- `ThegentClient(base_url: str, api_key: str | None = None)`
+- `run(prompt: str, model: str | None = None, provider: str | None = None, **opts) -> RunResult`
+- `list_sessions() -> list[SessionInfo]`
+
+## Out-of-Scope for This Slice
+- Streaming API (`run_streamed`) and resume semantics.
+- Publishing to PyPI.
+- Cross-version compatibility matrix.
+
+## Implementation Steps
+1. Scaffold package and lock minimal dependencies (`httpx`, typing only).
+2. Add typed DTOs (`TypedDict` or dataclasses) for `RunResult` and `SessionInfo`.
+3. Implement HTTP client wrapper with explicit non-2xx failures.
+4. Add unit tests with mocked HTTP responses for success/failure paths.
+5. Wire CI lane command for package-only tests.
+
+## Validation Commands
+- `uv run pytest -q packages/thegent-sdk/tests/test_client.py`
+- `uv run python -m py_compile packages/thegent-sdk/src/thegent_sdk/client.py`
+
+## Risks
+- Endpoint contract drift between SDK assumptions and MCP HTTP gateway routes.
+- Authentication shape mismatch (header name/value format).
+
+## Exit Criteria
+- Package imports cleanly.
+- 10+ deterministic unit tests pass.
+- Public symbols exported from `thegent_sdk.__init__`.

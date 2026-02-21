@@ -73,16 +73,22 @@ def _make_mock_acp_client(result: ACPResult | None = None, side_effect: Exceptio
 
 
 def _make_mock_mcp_app(tools: dict[str, Any] | None = None) -> MagicMock:
-    """Create a mock FastMCP app with get_tools().
+    """Create a mock FastMCP app with list_tools().
 
     Args:
-        tools: Dict of tool_name -> tool_obj to return from get_tools().
+        tools: Dict of tool_name -> tool_obj to return from list_tools() as
+               a list of objects with .name set to the key.
 
     Returns:
         Mock FastMCP application.
     """
     app = MagicMock()
+    tool_list = []
+    for name, tool_obj in (tools or {}).items():
+        tool_obj.name = name
+        tool_list.append(tool_obj)
     app.get_tools.return_value = tools or {}
+    app.list_tools.return_value = tool_list
     return app
 
 

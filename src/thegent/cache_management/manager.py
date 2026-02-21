@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class CacheManager:
     """Cache management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cache manager."""
         self.caches: dict[str, dict[str, Any]] = {}
 

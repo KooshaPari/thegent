@@ -118,7 +118,7 @@ tasks:
       - brew install zig || echo "Zig install via brew failed"
       - command -v rustup >/dev/null 2>&1 || (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh)
       - task: polyglot:build
-      - echo "Mojo installation requires manual step: https://docs.modular.com/mojo/manual/get-started/"
+      - 'echo "Mojo installation requires manual step: https://docs.modular.com/mojo/manual/get-started/"'
 
   polyglot:build:
     desc: "Build all native polyglot extensions (Rust, Go)"
@@ -245,10 +245,31 @@ tasks:
     cmds:
       - uv run pytest -m unit
 
-  test:cov:
-    desc: "Run tests with coverage (80% threshold)"
+  test:fast-lane:
+    desc: "Run fast pytest lane (WL-134): fail-fast, exclude slow/integration/e2e/load markers."
     cmds:
-      - uv run pytest -q
+      - uv run pytest -c pytest-fast.ini
+
+  test:fast:
+    desc: "Run tests marked @pytest.mark.fast only (WL-134 B90-W2-A4)."
+    cmds:
+      - uv run pytest -m fast -q
+
+  test:nightly-lane:
+    desc: "Run deep pytest lane (WL-134): slow/integration/e2e/load markers."
+    cmds:
+      - uv run pytest -q -m "slow or integration or e2e or load"
+
+  test:deep:
+    desc: "Run deep-marked tests (WL-134): tests tagged @pytest.mark.deep."
+    cmds:
+      - uv run pytest -m deep -q --timeout=300
+
+  test:gate:
+    desc: "Run fast lane then deep lane; fail fast on error before deep (WL-134)."
+    cmds:
+      - task: test:fast-lane
+      - task: test:deep
 
   coverage-index:
     desc: "Build coverage_affected_map.json for P7 coverage-based test selection"
@@ -272,7 +293,7 @@ tasks:
     desc: "Run all linters"
     cmds:
       - task: lint:python
-      - task: lint:type
+      - task: typecheck
       - task: lint:dead-code
       - task: lint:shell
       - task: lint:arch
@@ -284,12 +305,6 @@ tasks:
     cmds:
       - uv run ruff check . --output-format=grouped
       - uv run ruff format --check .
-
-  lint:type:
-    desc: "Fast static type checking (ty + zuban)"
-    cmds:
-      - uv run ty check src/
-      - uv run zuban check src/ --disable-error-code call-overload --disable-error-code unreachable --disable-error-code assignment --disable-error-code var-annotated --disable-error-code override --disable-error-code return-value --disable-error-code arg-type --disable-error-code union-attr --disable-error-code dict-item --disable-error-code misc --disable-error-code no-redef --disable-error-code call-arg --disable-error-code operator
 
   lint:strict:
     desc: "Strict type checking (basedpyright + mypy) - recommended for CI/commit"
@@ -344,9 +359,10 @@ tasks:
   # -- Type checking alias --
 
   typecheck:
-    desc: "Run type checker"
+    desc: "Run canonical fast type checker lane (ty + zuban)"
     cmds:
-      - task: lint:type
+      - uv run ty check src/
+      - uv run zuban check src/ --disable-error-code call-overload --disable-error-code unreachable --disable-error-code assignment --disable-error-code var-annotated --disable-error-code override --disable-error-code return-value --disable-error-code arg-type --disable-error-code union-attr --disable-error-code dict-item --disable-error-code misc --disable-error-code no-redef --disable-error-code call-arg --disable-error-code operator
 
   # -- Security --
 
@@ -367,86 +383,141 @@ tasks:
 
   # -- Quality gates --
 
+  quality:sitback-contracts:
+    desc: "Run sitback harness contracts"
+    cmds:
+      - uv run pytest -q tests/test_unit_clode_main.py
+
+  quality:harness-model-contracts:
+    desc: "Run harness model contracts"
+    cmds:
+      - uv run pytest -q tests/routing/test_request_extensions.py -k "inject_proxy_models"
+
+  quality:list-check:
+    desc: "Run harness contracts list check alias"
+    cmds:
+      - task: quality:harness-contracts:list-check
+
+  quality:harness-contracts:list-check:
+    desc: "Verify harness contract task names are listed"
+    cmds:
+      - task --list | rg -F "quality:sitback-contracts"
+      - task --list | rg -F "quality:harness-model-contracts"
+      - task --list | rg -F "quality:harness-contracts"
+      - task --list | rg -F "quality:harness-contracts:smoke"
+      - task --list | rg -F "quality:harness-contracts:quick"
+      - task --list | rg -F "quality:list-check"
+
+  quality:harness-contracts:smoke:
+    desc: "Run smoke harness contract checks"
+    cmds:
+      - task: quality:harness-model-contracts
+
+  quality:harness-contracts:quick:
+    desc: "Run quick harness contract checks"
+    cmds:
+      - task: quality:harness-contracts:list-check
+      - task: quality:harness-model-contracts
+
+  quality:harness-contracts:
+    desc: "Run canonical harness contract chain"
+    cmds:
+      - task: quality:harness-contracts:list-check
+      - task: quality:sitback-contracts
+      - task: quality:harness-model-contracts
+
+  quality:runtime-contracts:zig-abi:
+    desc: "Run Zig ABI production contract gates (WL-132)."
+    cmds:
+      - uv run python scripts/validate_zig_abi_contract.py --contract contracts/runtime/zig_abi_contract_v1.json
+      - uv run python scripts/check_zig_abi_artifact.py --contract contracts/runtime/zig_abi_contract_v1.json --symbols-file tests/fixtures/runtime/zig_abi_symbols_fixture.txt --error-envelope-json tests/fixtures/runtime/zig_abi_error_envelope_fixture.json
+      - uv run pytest -q tests/test_zig_abi_contract_validation.py tests/test_wl132_zig_abi_contract.py
+
+  quality:runtime-contracts:mojo-kernel:
+    desc: "Run Mojo deterministic kernel contract gates (WL-133)."
+    cmds:
+      - uv run pytest -q tests/test_mojo_kernel_contract_v1.py tests/test_mojo_score_rank_harness.py tests/mojo/test_wl133_mojo_kernel_smoke.py
+
+  quality:runtime-contracts:
+    desc: "Run canonical runtime contract chain (WL-132/WL-133)."
+    cmds:
+      - task: quality:runtime-contracts:zig-abi
+      - task: quality:runtime-contracts:mojo-kernel
+
   quality:
-    desc: "Run full quality pipeline (lint, typecheck, test, traceability, dx-audit)"
-    cmds:
-      - task: quality_project
-
-  gate:
-    desc: "Run full 9-gate quality system"
-    cmds:
-      - task: quality:gate
-
-  quality_project:
-    desc: "Run project-specific quality gate (comprehensive)"
+    desc: "Run full strict quality pipeline (max-lines/lint/type/test/traceability)"
     cmds:
       - task: shims:guard
       - task: shims:probe
+      - task: quality:max-lines
+      - task: quality:core-boundary:strict
+      - task: quality:deprecated-aliases:strict
+      - task: quality:instruction-architecture
+      - task: quality:harness-contracts
+      - task: quality:runtime-contracts
       - task: lint
+
+  quality:strict-full:
+    desc: "Alias for quality (full strict pipeline)"
+    cmds:
+      - task: quality
       - task: lint:strict
       - task: test
       - task: test:pyramid
       - zsh scripts/traceability-validator.sh
       - zsh scripts/dx-audit.sh
 
+  metrics:loc:
+    desc: "Collect LOC/complexity metrics for src/thegent/ and write to .quality/loc-metrics.json (WL-135)."
+    cmds:
+      - uv run python scripts/collect_loc_metrics.py
+
+  slo:check:
+    desc: "Check SLO pass/fail gate (exits 1 if any red metric)"
+    cmds:
+      - uv run python scripts/check_slo_gate.py
+
+  metrics:slo:emit-stub:
+    desc: "Emit WL-135 SLO metric stub payload (JSON + optional JSONL append)."
+    cmds:
+      - uv run python scripts/emit_wl135_slo_stub.py --metric cli_help_p95_ms --value 0 --threshold 250 --lane fast-lane --jsonl var/metrics/slo_stub_metrics.jsonl
+
+  quality:max-lines:
+    desc: "Run max-lines gate via canonical developer task path (WL-122)."
+    cmds:
+      - MAX_LINES=${MAX_LINES:-1000} WARN_LINES=${WARN_LINES:-800} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} sh scripts/max-lines-gate.sh
+
+  quality:core-boundary:
+    desc: "Advisory check for thegent-core import boundary (WL-121)."
+    cmds:
+      - uv run python scripts/check_thegent_core_boundary.py
+
+  quality:core-boundary:strict:
+    desc: "Strict check for thegent-core import boundary (WL-121 CI mode)."
+    cmds:
+      - uv run python scripts/check_thegent_core_boundary.py --strict
+
+  quality:deprecated-aliases:
+    desc: "Audit deprecated quality aliases and print replacement suggestions (WL-123)."
+    cmds:
+      - uv run python scripts/check_deprecated_quality_aliases.py --format migration
+
+  quality:deprecated-aliases:strict:
+    desc: "Fail if deprecated aliases remain or canonical quality commands are missing (WL-123)."
+    cmds:
+      - uv run python scripts/check_deprecated_quality_aliases.py --strict
+
+  quality:instruction-architecture:
+    desc: "Validate instruction doc-map links, anchors, and CLAUDE overlay template sections (WL-139 Phase A-D)."
+    cmds:
+      - uv run python scripts/check_instruction_architecture.py --strict
+
   # -- Quality fix (format + lint --fix) --
 
-  quality-fix:
-    desc: "Format + ruff check --fix (safe fixes only)"
+  quality:fix:runner:
+    desc: "Run canonical quality fix runner (ruff format + safe fixes)"
     cmds:
       - zsh scripts/quality-fix-agent.sh
-
-  quality-fix-d:
-    desc: "Format + ruff check --fix --unsafe-fixes"
-    cmds:
-      - zsh scripts/quality-fix-agent.sh -d
-
-  quality-fix-a:
-    desc: "Quality fix; on fail pipe output to copilot/cursor-agent (interactive)"
-    cmds:
-      - zsh scripts/quality-fix-agent.sh -a
-
-  quality-fix-a-d:
-    desc: "Quality fix with unsafe; on fail pipe to copilot/cursor-agent (interactive)"
-    cmds:
-      - zsh scripts/quality-fix-agent.sh -a -d
-
-  quality-fix-a-h:
-    desc: "Quality fix; on fail pipe to thegent (headless)"
-    cmds:
-      - zsh scripts/quality-fix-agent.sh -a -h
-
-  quality-fix-a-d-h:
-    desc: "Quality fix with unsafe; on fail pipe to thegent (headless)"
-    cmds:
-      - zsh scripts/quality-fix-agent.sh -a -d -h
-
-  # Full quality + agent on fail
-  quality-a:
-    desc: "Full quality; on fail show output and pipe to copilot"
-    cmds:
-      - zsh scripts/quality-agent.sh
-
-  quality-a-r:
-    desc: "Full quality; on fail pipe to copilot and reload until green"
-    cmds:
-      - zsh scripts/quality-agent.sh -r
-
-  quality-a-h:
-    desc: "Full quality; on fail pipe to thegent (headless)"
-    cmds:
-      - zsh scripts/quality-agent.sh -h
-
-  # Ruff-only aliases
-  quality-a-d:
-    desc: "Alias: quality-fix-a-d (ruff unsafe + copilot)"
-    cmds:
-      - task: quality-fix-a-d
-
-  quality-a-d-h:
-    desc: "Alias: quality-fix-a-d-h (ruff unsafe + thegent)"
-    cmds:
-      - task: quality-fix-a-d-h
 
   # -- Hooks --
 
@@ -583,6 +654,11 @@ tasks:
 
   # -- Benchmarks (Hook Rust Migration) --
 
+  bench:
+    desc: "Run Python benchmark suite with regression check (fails CI on >15% mean regression)"
+    cmds:
+      - uv run pytest benchmarks/ --benchmark-compare=benchmarks/baseline.json --benchmark-compare-fail=mean:15%
+
   bench:setup:
     desc: "Setup benchmarking environment (hyperfine, dependencies)"
     cmds:
@@ -596,6 +672,21 @@ tasks:
           fi
         fi
       - mkdir -p benchmarks/results
+
+  bench:baseline:refresh:
+    desc: "WL-078 refresh benchmark baseline snapshot (benchmarks/baseline.json)"
+    cmds:
+      - uv run python scripts/benchmark_python_suite.py --iterations 50000 --output benchmarks/baseline.json --overwrite
+
+  bench:rust:audit:
+    desc: "Run deterministic Rust audit benchmark (offline + locked)"
+    cmds:
+      - CARGO_NET_OFFLINE=true cargo bench --locked --manifest-path crates/Cargo.toml -p thegent-router --bench audit_bench
+
+  bench:smoke:ci:
+    desc: "Deterministic benchmark smoke for CI docs/checklist"
+    cmds:
+      - uv run pytest -q tests/test_wl079_audit_bench.py
 
   bench:comprehensive:
     desc: "Run comprehensive hook benchmark suite (all scenarios)"

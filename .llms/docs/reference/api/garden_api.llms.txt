@@ -1,0 +1,105 @@
+# garden_api
+
+Source: docs/reference/api/garden_api.md
+
+---
+
+# garden API Reference
+
+> **Source**: `src/thegent/memory/garden.py`
+
+WP-11002: Gardener Synthesis Phase 2 - Memory Garden implementation.
+
+---
+
+## GardenCluster
+
+---
+
+## MemoryGarden
+
+Manages clusters of idea seeds for long-term memory synthesis.
+
+### Methods
+
+#### MemoryGarden.__init__
+
+```
+__init__(self: Any, garden_path: Path)
+```
+
+---
+
+#### MemoryGarden.add_to_cluster
+
+```
+add_to_cluster(self: Any, cluster_id: str, seed: Seed)
+```
+
+---
+
+#### MemoryGarden.find_best_cluster
+
+```
+find_best_cluster(self: Any, seed: Seed)
+```
+
+Find the best cluster for a seed based on keyword matching.
+
+---
+
+#### MemoryGarden.save
+
+```
+save(self: Any)
+```
+
+---
+
+#### MemoryGarden.synthesize
+
+```
+synthesize(self: Any)
+```
+
+Generate a markdown report of the current garden state.
+
+---
+
+---
+
+## add_to_cluster
+
+```
+add_to_cluster(self: Any, cluster_id: str, seed: Seed) -> None
+```
+
+---
+
+## find_best_cluster
+
+```
+find_best_cluster(self: Any, seed: Seed)
+```
+
+Find the best cluster for a seed based on keyword matching.
+
+---
+
+## save
+
+```
+save(self: Any) -> None
+```
+
+---
+
+## synthesize
+
+```
+synthesize(self: Any)
+```
+
+Generate a markdown report of the current garden state.
+
+---

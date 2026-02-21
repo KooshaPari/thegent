@@ -12,6 +12,7 @@ FR Traceability: FR-VER-003 (shadow audit log with secret scrubbing)
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -20,6 +21,8 @@ import re
 import sqlite3
 import subprocess
 import uuid
+from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -679,6 +682,77 @@ class GitJournal:
 
         return pruned
 
+    @classmethod
+    def gc(cls, repo_root: Path | str, *, aggressive: bool = False) -> dict[str, Any]:
+        """Run git gc on audit refs to pack loose objects.
+
+        This class method garbage collects all audit refs in the repository,
+        reducing storage usage by packing loose objects.
+
+        Args:
+            repo_root: Path to git repository root
+            aggressive: If True, run more thorough garbage collection
+
+        Returns:
+            Dictionary with gc results including success status and statistics
+        """
+        from datetime import timedelta
+
+        repo_root = Path(repo_root).resolve()
+
+        log.info("GitJournal.gc: starting gc on audit refs (aggressive=%s)", aggressive)
+
+        results: dict[str, Any] = {
+            "success": False,
+            "sessions_found": 0,
+            "sessions_collected": 0,
+            "aggressive": aggressive,
+        }
+
+        try:
+            # Get all audit sessions
+            sessions = cls.list_sessions(repo_root)
+            results["sessions_found"] = len(sessions)
+
+            # Run git gc on the repository
+            cmd = ["git", "gc"]
+            if aggressive:
+                cmd.append("--aggressive")
+            cmd.extend(["--prune=now"])
+
+            gc_result = subprocess.run(
+                cmd,
+                cwd=repo_root,
+                capture_output=True,
+                timeout=180,
+            )
+
+            results["gc_returncode"] = gc_result.returncode
+            results["success"] = gc_result.returncode == 0
+
+            if gc_result.stderr:
+                results["stderr"] = gc_result.stderr.decode()[:500]  # Truncate for safety
+
+            # Optionally prune old sessions
+            pruned = cls.prune_old_sessions(repo_root, max_age_days=0)
+            results["sessions_collected"] = pruned
+
+            log.info(
+                "GitJournal.gc: completed sessions=%d pruned=%d success=%s",
+                len(sessions),
+                pruned,
+                results["success"],
+            )
+
+        except subprocess.TimeoutExpired:
+            log.error("GitJournal.gc: timeout")
+            results["error"] = "timeout"
+        except Exception as e:
+            log.error("GitJournal.gc: error %s", e)
+            results["error"] = str(e)
+
+        return results
+
 
 # ---------------------------------------------------------------------------
 # Enhanced GitJournal with P1 features
@@ -706,6 +780,7 @@ class GitJournalEnhanced(GitJournal):
         enable_watching: bool = False,
         enable_attestation: bool = False,
         batch_size: int = 10,
+        cache_size: int = 1000,
     ) -> None:
         """Initialize enhanced git journal.
 
@@ -717,6 +792,7 @@ class GitJournalEnhanced(GitJournal):
             enable_watching: Enable real-time file watching
             enable_attestation: Enable cryptographic attestation
             batch_size: Number of changes to batch before commit
+            cache_size: Maximum entries in LRU blob cache (default: 1000)
         """
         super().__init__(
             repo_root,
@@ -729,8 +805,16 @@ class GitJournalEnhanced(GitJournal):
         self.enable_attestation = enable_attestation
         self.batch_size = batch_size
 
-        # Performance optimizations
-        self._blob_cache: dict[bytes, str] = {}  # content hash -> sha
+        # CAS optimization: LRU blob cache with configurable size
+        self._cache_size = cache_size
+        self._blob_cache: OrderedDict[bytes, str] = OrderedDict()  # content hash -> sha
+        self._cache_hits = 0
+        self._cache_misses = 0
+
+        # Content deduplication registry
+        self._content_registry: dict[str, str] = {}  # dedup key -> blob sha
+
+        # Pending changes for batching
         self._pending_changes: list[tuple[str, Optional[bytes], str, Optional[dict]]] = []
         self._attestations: list[dict[str, Any]] = []
 
@@ -743,11 +827,12 @@ class GitJournalEnhanced(GitJournal):
         self._native_scanner_available = self._check_native_scanner()
 
         log.info(
-            "GitJournalEnhanced.init session=%s watching=%s attestation=%s native_scanner=%s",
+            "GitJournalEnhanced.init session=%s watching=%s attestation=%s native_scanner=%s cache_size=%d",
             session_id,
             enable_watching,
             enable_attestation,
             self._native_scanner_available,
+            cache_size,
         )
 
     def _check_native_scanner(self) -> bool:
@@ -970,17 +1055,84 @@ class GitJournalEnhanced(GitJournal):
         except Exception as e:
             log.debug("File event handling error: %s", e)
 
+    def _get_dedup_key(self, content: bytes) -> str:
+        """Generate a deduplication key from content.
+
+        Uses SHA-256 of content for content-addressable dedup.
+        """
+        return hashlib.sha256(content).hexdigest()
+
     def _hash_object_cached(self, content: bytes) -> str:
-        """Hash object with caching for performance."""
-        # Use content hash as cache key
+        """Hash object with LRU caching, deduplication, and hit/miss tracking.
+
+        CAS optimization:
+        1. Check content deduplication registry first
+        2. Check LRU cache (move to end on hit)
+        3. Store in git DB and update cache (with LRU eviction)
+        """
+        # Step 1: Content deduplication - check if we already have this content
+        dedup_key = self._get_dedup_key(content)
+        if dedup_key in self._content_registry:
+            existing_sha = self._content_registry[dedup_key]
+            log.debug("CAS: dedup hit for key=%s sha=%s", dedup_key[:8], existing_sha[:8])
+            return existing_sha
+
+        # Step 2: Check LRU cache
         content_hash = hashlib.sha256(content).digest()
 
         if content_hash in self._blob_cache:
-            return self._blob_cache[content_hash]
+            # Cache hit - move to end (most recently used)
+            self._blob_cache.move_to_end(content_hash)
+            self._cache_hits += 1
+            sha = self._blob_cache[content_hash]
 
+            # Also register for deduplication
+            self._content_registry[dedup_key] = sha
+
+            log.debug("CAS: cache hit sha=%s", sha[:8])
+            return sha
+
+        self._cache_misses += 1
+
+        # Step 3: Store in git DB
         sha = self._hash_object(content)
+
+        # Evict oldest entry if cache is full (LRU eviction)
+        if len(self._blob_cache) >= self._cache_size:
+            oldest_key = next(iter(self._blob_cache))
+            del self._blob_cache[oldest_key]
+            log.debug("CAS: evicted oldest entry, cache_size=%d", len(self._blob_cache))
+
+        # Add to LRU cache (at end = most recently used)
         self._blob_cache[content_hash] = sha
+
+        # Register for content deduplication
+        self._content_registry[dedup_key] = sha
+
+        log.debug("CAS: cached new sha=%s cache_size=%d", sha[:8], len(self._blob_cache))
         return sha
+
+    def get_cache_stats(self) -> dict[str, Any]:
+        """Get cache statistics for monitoring."""
+        total_requests = self._cache_hits + self._cache_misses
+        hit_rate = (self._cache_hits / total_requests * 100) if total_requests > 0 else 0.0
+
+        return {
+            "cache_hits": self._cache_hits,
+            "cache_misses": self._cache_misses,
+            "hit_rate_percent": round(hit_rate, 2),
+            "cache_size": len(self._blob_cache),
+            "cache_max": self._cache_size,
+            "dedup_registry_size": len(self._content_registry),
+        }
+
+    def clear_cache(self) -> None:
+        """Clear the LRU blob cache and deduplication registry."""
+        self._blob_cache.clear()
+        self._content_registry.clear()
+        self._cache_hits = 0
+        self._cache_misses = 0
+        log.info("GitJournalEnhanced: cache cleared")
 
     def _create_attestation(self, commit_sha: str, content_hash: str) -> dict[str, Any]:
         """Create cryptographic attestation for a commit."""
@@ -1131,10 +1283,139 @@ class GitJournalEnhanced(GitJournal):
 
         return final_sha
 
+    def gc(self, *, aggressive: bool = False) -> dict[str, Any]:
+        """Run git gc to pack loose objects in the audit ref namespace.
+
+        Args:
+            aggressive: If True, run more thorough garbage collection
+
+        Returns:
+            Dictionary with gc results
+        """
+        log.info("GitJournalEnhanced.gc: starting gc (aggressive=%s)", aggressive)
+
+        try:
+            # Run git gc on the repository
+            cmd = ["git", "gc"]
+            if aggressive:
+                cmd.append("--aggressive")
+            cmd.extend(["--prune=now", "--quiet"])
+
+            result = subprocess.run(
+                cmd,
+                cwd=self.repo_root,
+                capture_output=True,
+                timeout=120,
+            )
+
+            success = result.returncode == 0
+            stderr = result.stderr.decode() if result.stderr else ""
+
+            log.info(
+                "GitJournalEnhanced.gc: completed success=%s stderr=%s",
+                success,
+                stderr[:200] if stderr else "",
+            )
+
+            return {
+                "success": success,
+                "aggressive": aggressive,
+                "stderr": stderr,
+            }
+
+        except subprocess.TimeoutExpired:
+            log.error("GitJournalEnhanced.gc: timeout")
+            return {"success": False, "aggressive": aggressive, "error": "timeout"}
+        except Exception as e:
+            log.error("GitJournalEnhanced.gc: error %s", e)
+            return {"success": False, "aggressive": aggressive, "error": str(e)}
+
+    def optimize_storage(self) -> dict[str, Any]:
+        """Optimize storage by running git maintenance and repacking.
+
+        This method performs comprehensive storage optimization:
+        1. Repacks objects into packfiles
+        2. Runs git gc
+        3. Clears stale cache entries
+        4. Returns optimization statistics
+
+        Returns:
+            Dictionary with optimization results
+        """
+        log.info("GitJournalEnhanced.optimize_storage: starting")
+
+        results: dict[str, Any] = {
+            "success": False,
+            "cache_before": len(self._blob_cache),
+            "dedup_before": len(self._content_registry),
+        }
+
+        try:
+            # Step 1: Run git repack
+            repack_result = subprocess.run(
+                ["git", "repack", "-ad", "--quiet"],
+                cwd=self.repo_root,
+                capture_output=True,
+                timeout=120,
+            )
+            results["repack_success"] = repack_result.returncode == 0
+
+            # Step 2: Run git gc
+            gc_result = self.gc(aggressive=False)
+            results["gc_success"] = gc_result.get("success", False)
+
+            # Step 3: Prune unreachable objects
+            prune_result = subprocess.run(
+                ["git", "prune", "--expire=now", "--verbose"],
+                cwd=self.repo_root,
+                capture_output=True,
+                timeout=60,
+            )
+            results["prune_success"] = prune_result.returncode == 0
+
+            # Step 4: Clear stale cache entries (optional optimization)
+            stale_removed = 0
+            if len(self._blob_cache) > self._cache_size:
+                stale_removed = len(self._blob_cache) - self._cache_size
+                # Keep only the most recent entries
+                while len(self._blob_cache) > self._cache_size:
+                    self._blob_cache.popitem(last=False)
+
+            results["stale_entries_removed"] = stale_removed
+
+            # Get cache stats after optimization
+            cache_stats = self.get_cache_stats()
+            results["cache_after"] = len(self._blob_cache)
+            results["dedup_after"] = len(self._content_registry)
+            results["cache_stats"] = cache_stats
+            results["success"] = True
+
+            log.info(
+                "GitJournalEnhanced.optimize_storage: completed "
+                "cache_before=%d cache_after=%d dedup_before=%d dedup_after=%d",
+                results["cache_before"],
+                results["cache_after"],
+                results["dedup_before"],
+                results["dedup_after"],
+            )
+
+        except Exception as e:
+            log.error("GitJournalEnhanced.optimize_storage: error %s", e)
+            results["error"] = str(e)
+
+        return results
+
     def get_performance_stats(self) -> dict[str, Any]:
-        """Get performance statistics."""
+        """Get performance statistics including cache hit/miss tracking."""
+        cache_stats = self.get_cache_stats()
+
         return {
             "blob_cache_size": len(self._blob_cache),
+            "blob_cache_max": self._cache_size,
+            "cache_hits": cache_stats["cache_hits"],
+            "cache_misses": cache_stats["cache_misses"],
+            "cache_hit_rate_percent": cache_stats["hit_rate_percent"],
+            "dedup_registry_size": len(self._content_registry),
             "pending_changes": len(self._pending_changes),
             "attestations": len(self._attestations),
             "native_scanner": self._native_scanner_available,
@@ -1146,9 +1427,6 @@ class GitJournalEnhanced(GitJournal):
 # ---------------------------------------------------------------------------
 # Async GitJournal for high-performance scenarios
 # ---------------------------------------------------------------------------
-
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 
 
 class GitJournalAsync:
@@ -1221,10 +1499,316 @@ class GitJournalAsync:
         return getattr(self._journal, name)
 
 
+# ---------------------------------------------------------------------------
+# GitJournalStreaming: Kafka event streaming for audit events
+# ---------------------------------------------------------------------------
+
+# Try to import kafka-python, fallback to None if not available
+_KAFKA_AVAILABLE = False
+_KafkaProducer = None
+
+try:
+    from kafka import KafkaProducer as _KafkaProducer
+    from kafka.errors import KafkaError
+
+    _KAFKA_AVAILABLE = True
+except ImportError:
+    _KafkaProducer = None
+    KafkaError = Exception  # Placeholder for type hints
+
+
+class GitJournalStreaming(GitJournalEnhanced):
+    """Enhanced GitJournal with Kafka event streaming.
+
+    Streams file_change and snapshot events to a Kafka topic for
+    real-time event processing and downstream consumers.
+
+    Features:
+    - Streams file_change events to Kafka topic
+    - Streams snapshot events to Kafka topic
+    - Event schema: session_id, commit_sha, file_path, action, timestamp
+    - Configurable bootstrap_servers and topic
+    - Graceful degradation if kafka-python not installed
+
+    Usage:
+        journal = GitJournalStreaming(
+            repo_root,
+            session_id,
+            bootstrap_servers="localhost:9092",
+            topic="thegent-audit-events",
+        )
+        journal.record_file_change(path, content, action="modified")
+        journal.finalize_session()
+    """
+
+    def __init__(
+        self,
+        repo_root: Path | str,
+        session_id: str,
+        *,
+        track_secrets: bool = True,
+        auto_commit: bool = True,
+        enable_watching: bool = False,
+        enable_attestation: bool = False,
+        batch_size: int = 10,
+        bootstrap_servers: str = "localhost:9092",
+        topic: str = "thegent-audit-events",
+        enable_streaming: bool = True,
+    ) -> None:
+        """Initialize streaming git journal.
+
+        Args:
+            repo_root: Path to git repository root
+            session_id: Unique session identifier
+            track_secrets: Whether to track/scrub secrets
+            auto_commit: Whether to auto-commit on changes
+            enable_watching: Enable real-time file watching
+            enable_attestation: Enable cryptographic attestation
+            batch_size: Number of changes to batch before commit
+            bootstrap_servers: Kafka broker addresses
+            topic: Kafka topic for streaming events
+            enable_streaming: Whether to enable Kafka streaming
+        """
+        super().__init__(
+            repo_root,
+            session_id,
+            track_secrets=track_secrets,
+            auto_commit=auto_commit,
+            enable_watching=enable_watching,
+            enable_attestation=enable_attestation,
+            batch_size=batch_size,
+        )
+
+        self.bootstrap_servers = bootstrap_servers
+        self.topic = topic
+        self.enable_streaming = enable_streaming and _KAFKA_AVAILABLE
+
+        # Kafka producer (lazy initialization)
+        self._producer: Optional[Any] = None
+        self._streaming_enabled = False
+
+        # Event tracking
+        self._events_streamed = 0
+
+        # Initialize producer if enabled
+        if self.enable_streaming:
+            self._init_producer()
+
+        log.info(
+            "GitJournalStreaming.init session=%s topic=%s kafka=%s",
+            session_id,
+            topic,
+            _KAFKA_AVAILABLE and enable_streaming,
+        )
+
+    def _init_producer(self) -> None:
+        """Initialize Kafka producer with graceful degradation."""
+        if not _KAFKA_AVAILABLE:
+            log.warning("GitJournalStreaming: kafka-python not installed, streaming disabled")
+            self._streaming_enabled = False
+            return
+
+        try:
+            self._producer = _KafkaProducer(
+                bootstrap_servers=self.bootstrap_servers,
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+                key_serializer=lambda k: k.encode("utf-8") if k else None,
+                acks="all",
+                retries=3,
+                max_in_flight_requests_per_connection=1,
+            )
+            self._streaming_enabled = True
+            log.info("GitJournalStreaming: connected to Kafka at %s", self.bootstrap_servers)
+        except KafkaError as e:
+            log.warning("GitJournalStreaming: failed to connect to Kafka: %s", e)
+            self._streaming_enabled = False
+            self._producer = None
+
+    def _stream_event(self, event_type: str, event_data: dict[str, Any]) -> None:
+        """Stream an event to Kafka topic.
+
+        Args:
+            event_type: Type of event (file_change, snapshot)
+            event_data: Event payload
+        """
+        if not self._streaming_enabled or self._producer is None:
+            return
+
+        try:
+            # Build event with schema
+            event = {
+                "event_type": event_type,
+                "session_id": self.session_id,
+                "timestamp": datetime.now(UTC).isoformat(),
+                "data": event_data,
+            }
+
+            # Send to Kafka
+            future = self._producer.send(
+                self.topic,
+                key=self.session_id,
+                value=event,
+            )
+
+            # Wait for send to complete (with timeout)
+            future.get(timeout=5)
+            self._events_streamed += 1
+
+            log.debug("GitJournalStreaming: streamed %s event to %s", event_type, self.topic)
+
+        except KafkaError as e:
+            log.warning("GitJournalStreaming: failed to stream event: %s", e)
+        except Exception as e:
+            log.warning("GitJournalStreaming: error streaming event: %s", e)
+
+    def record_file_change(
+        self,
+        file_path: str | Path,
+        content: Optional[bytes] = None,
+        *,
+        action: str = "modified",
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> str:
+        """Record a file change and stream to Kafka.
+
+        Overrides parent to add Kafka streaming.
+        """
+        rel_path = str(Path(file_path).relative_to(self.repo_root) if Path(file_path).is_absolute() else file_path)
+
+        # Call parent implementation
+        commit_sha = super().record_file_change(
+            file_path,
+            content,
+            action=action,
+            metadata=metadata,
+        )
+
+        # Stream event to Kafka (only if we actually committed)
+        if commit_sha and self._streaming_enabled:
+            event_data = {
+                "commit_sha": commit_sha,
+                "file_path": rel_path,
+                "action": action,
+                "repo_root": str(self.repo_root),
+            }
+            if metadata:
+                event_data["metadata"] = metadata
+
+            self._stream_event("file_change", event_data)
+
+        return commit_sha
+
+    def record_snapshot(self, message: str = "snapshot") -> str:
+        """Create a snapshot and stream to Kafka.
+
+        Overrides parent to add Kafka streaming.
+        """
+        commit_sha = super().record_snapshot(message)
+
+        if commit_sha and self._streaming_enabled:
+            # Get file count from tree
+            file_count = len(self._current_tree)
+
+            event_data = {
+                "commit_sha": commit_sha,
+                "message": message,
+                "file_count": file_count,
+                "repo_root": str(self.repo_root),
+            }
+
+            self._stream_event("snapshot", event_data)
+
+        return commit_sha
+
+    def _flush_batch(self) -> str:
+        """Flush pending changes and stream batch event.
+
+        Overrides parent to add Kafka streaming for batch events.
+        """
+        commit_sha = super()._flush_batch()
+
+        if commit_sha and self._streaming_enabled and self._pending_changes:
+            # Stream batch completion event
+            event_data = {
+                "commit_sha": commit_sha,
+                "changes_count": len(self._pending_changes),
+                "changes": [
+                    {"file_path": path, "action": action}
+                    for path, _, action, _ in self._pending_changes
+                ],
+            }
+
+            self._stream_event("batch", event_data)
+
+        return commit_sha
+
+    def finalize_session(self, message: str = "session complete") -> str:
+        """Finalize session with streaming event.
+
+        Overrides parent to add Kafka streaming for session completion.
+        """
+        commit_sha = super().finalize_session(message)
+
+        if commit_sha and self._streaming_enabled:
+            event_data = {
+                "final_commit_sha": commit_sha,
+                "message": message,
+                "events_streamed": self._events_streamed,
+                "total_files": len(self._current_tree),
+            }
+
+            self._stream_event("session_complete", event_data)
+
+        # Flush Kafka producer
+        if self._producer is not None:
+            try:
+                self._producer.flush(timeout=5)
+            except Exception as e:
+                log.warning("GitJournalStreaming: failed to flush producer: %s", e)
+
+        log.info(
+            "GitJournalStreaming.finalize_session sha=%s events_streamed=%d",
+            commit_sha[:8] if commit_sha else "none",
+            self._events_streamed,
+        )
+
+        return commit_sha
+
+    def get_streaming_stats(self) -> dict[str, Any]:
+        """Get streaming statistics."""
+        return {
+            "kafka_available": _KAFKA_AVAILABLE,
+            "streaming_enabled": self._streaming_enabled,
+            "bootstrap_servers": self.bootstrap_servers,
+            "topic": self.topic,
+            "events_streamed": self._events_streamed,
+        }
+
+    def close(self) -> None:
+        """Close Kafka producer connection."""
+        if self._producer is not None:
+            try:
+                self._producer.close(timeout=5)
+                log.info("GitJournalStreaming: closed Kafka producer")
+            except Exception as e:
+                log.warning("GitJournalStreaming: error closing producer: %s", e)
+            finally:
+                self._producer = None
+
+    def __del__(self) -> None:
+        """Ensure producer is closed on deletion."""
+        if self._producer is not None:
+            try:
+                self._producer.close(timeout=1)
+            except Exception:
+                pass
+
+
 __all__ = [
     "AuditEntry",
     "GitJournal",
     "GitJournalAsync",
     "GitJournalEnhanced",
+    "GitJournalStreaming",
     "ShadowAuditGit",
 ]

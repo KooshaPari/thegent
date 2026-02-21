@@ -1,0 +1,95 @@
+# incremental_api
+
+Source: docs/reference/api/incremental_api.md
+
+---
+
+# incremental API Reference
+
+> **Source**: `src/thegent/hooks/incremental.py`
+
+Implement incremental-check/record subcommands (manifest-based).
+
+---
+
+## IncrementalSubcommands
+
+Incremental check/record subcommands.
+
+### Methods
+
+#### IncrementalSubcommands.__init__
+
+```
+__init__(self: Any, manifest_path: Any)
+```
+
+Initialize incremental subcommands.
+
+**Parameters**:
+
+- `manifest_path`: Manifest file path
+
+---
+
+#### IncrementalSubcommands.check
+
+```
+check(self: Any, file_path: Path)
+```
+
+Check if file needs processing.
+
+**Parameters**:
+
+- `file_path`: File to check
+
+**Returns**: True if needs processing
+
+---
+
+#### IncrementalSubcommands.record
+
+```
+record(self: Any, file_path: Path)
+```
+
+Record file as processed.
+
+**Parameters**:
+
+- `file_path`: File to record
+
+---
+
+---
+
+## check
+
+```
+check(self: Any, file_path: Path)
+```
+
+Check if file needs processing.
+
+**Parameters**:
+
+- `file_path`: File to check
+
+**Returns**: True if needs processing
+
+---
+
+## record
+
+```
+record(self: Any, file_path: Path)
+```
+
+Record file as processed.
+
+**Parameters**:
+
+- `file_path`: File to record
+
+---

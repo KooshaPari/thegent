@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class PlangentSubagents:
     """Plangent sub-agents integration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize plangent subagents."""
         self.subagents: dict[str, Any] = {}
 

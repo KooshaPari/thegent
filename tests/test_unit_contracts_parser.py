@@ -2,6 +2,7 @@
 
 import pytest
 
+import thegent.contracts.parser as parser_module
 from thegent.contracts.parser import (
     IncrementalXMLParser,
     extract_tags,
@@ -211,6 +212,28 @@ class TestExtractTags:
     def test_extract_from_empty_string(self) -> None:
         # @trace FR-CTR-002
         assert extract_tags("") == {}
+
+    def test_extract_tags_prefers_native_parser_when_available(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # @trace FR-CTR-002
+        class _Native:
+            @staticmethod
+            def extract_xml_tags(text: str, allowed_tags=None, case_sensitive=False):  # noqa: ANN001
+                assert text == "<STATUS>ok</STATUS>"
+                return {"STATUS": "native-ok"}
+
+        monkeypatch.setattr(parser_module, "_get_native_parser", lambda: _Native())
+        assert extract_tags("<STATUS>ok</STATUS>") == {"STATUS": "native-ok"}
+
+    def test_extract_tags_falls_back_when_native_parser_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # @trace FR-CTR-002
+        class _NativeFail:
+            @staticmethod
+            def extract_xml_tags(_text: str, allowed_tags=None, case_sensitive=False):  # noqa: ANN001
+                raise RuntimeError("native failure")
+
+        monkeypatch.setattr(parser_module, "_get_native_parser", lambda: _NativeFail())
+        text = "<STATUS>ok</STATUS><SUMMARY>done</SUMMARY>"
+        assert extract_tags(text) == {"STATUS": "ok", "SUMMARY": "done"}
 
 
 @pytest.mark.unit

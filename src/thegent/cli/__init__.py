@@ -2,6 +2,15 @@
 
 # Expose command functions for backward compatibility
 from .commands.cli import (
+    _serialize_health_report_csv,
+    _serialize_health_report_jsonl,
+    _serialize_health_report_md,
+    _serialize_health_trend_csv,
+    _serialize_health_trend_jsonl,
+    _serialize_health_trend_md,
+    _write_health_gate_export,
+    _write_health_trend_export,
+    _write_report_export,
     archive_cmd,
     audit_verify_cmd,
     benchmark_cmd,
@@ -84,6 +93,7 @@ from .commands.cli import (
     purge_cmd,
     resolve_model_route_cmd,
     resume_cmd,
+    session_fork_cmd,
     retry_cmd,
     rules_sync_cmd,
     run_cmd,
@@ -91,6 +101,7 @@ from .commands.cli import (
     session_contract_health_report_cmd,
     session_contract_health_trend_cmd,
     session_contracts_cmd,
+    session_rollback_cmd,
     setup_cmd,
     sitback_dashboard_cmd,
     status_cmd,

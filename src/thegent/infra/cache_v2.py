@@ -8,7 +8,7 @@ import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 try:
     import watchdog.events
@@ -206,7 +206,7 @@ class HeatBasedLRU:
             self.heat[k] *= self.decay_factor**elapsed
             self.last_access[k] = now
 
-        victim = min(self.heat, key=self.heat.get)
+        victim = min(self.heat, key=lambda k: self.heat.get(k, 0.0))
         del self.cache[victim]
         del self.heat[victim]
         del self.last_access[victim]

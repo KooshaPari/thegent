@@ -1,0 +1,13 @@
+# cross_platform_api
+
+Source: docs/reference/api/cross_platform_api.md
+
+---
+
+# cross_platform API Reference
+
+> **Source**: `src/thegent/cross_platform/__init__.py`
+
+Cross-platform implementations.
+
+---

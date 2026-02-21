@@ -1,0 +1,325 @@
+# QUALITY_ASSURANCE
+
+Source: docs/guides/QUALITY_ASSURANCE.md
+
+---
+
+# Quality Assurance Guide
+
+> Quality standards, testing patterns, and verification procedures for thegent
+
+---
+
+## 1. Quality Standards
+
+### 1.1 Code Quality Targets
+
+| Metric | Target | Current |
+|--------|--------|---------|
+| Line Coverage | 80% | 78% |
+| Branch Coverage | 70% | 65% |
+| Type Errors | 0 | 12 |
+| Lint Errors | 0 | 3 |
+| Security Issues | 0 | 0 |
+
+### 1.2 Quality Gates
+
+All code must pass:
+
+1. **Syntax Check** - Python type checking with pyright
+2. **Linting** - ruff check and format
+3. **Tests** - pytest with >80% coverage
+4. **Security** - bandit scan
+5. **Architecture** - import-linter validation
+
+---
+
+## 2. Running Quality Checks
+
+### 2.1 Full Quality Gate
+
+```
+# Run all quality checks
+task quality
+
+# Or step by step
+task lint          # Linting
+task typecheck     # Type checking
+task test          # Tests
+task security      # Security scan
+task architecture  # Architecture validation
+```
+
+### 2.2 Individual Checks
+
+```
+# Linting
+ruff check src/
+ruff format --check src/
+
+# Type checking
+pyright src/
+
+# Tests with coverage
+pytest --cov=src --cov-report=term-missing
+
+# Security scan
+bandit -r src/
+
+# Architecture
+import-linter
+```
+
+---
+
+## 3. Pre-commit Hooks
+
+### 3.1 Setup
+
+```
+# Install pre-commit hooks
+pre-commit install
+
+# Run manually
+pre-commit run --all-files
+
+# Skip specific hooks
+pre-commit run --files src/thegent/cli.py --hook-stage manual
+```
+
+### 3.2 Configuration
+
+```
+# .pre-commit-config.yaml
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff Check
+        entry: ruff check
+        language: system
+        types: [python]
+      
+      - id: ruff-format
+        name: Ruff Format
+        entry: ruff format --check
+        language: system
+        types: [python]
+      
+      - id: pyright
+        name: Type Check
+        entry: pyright
+        language: system
+        types: [python]
+```
+
+---
+
+## 4. Test Quality Standards
+
+### 4.1 Test Naming
+
+```
+# Pattern: test_<module>_<function>_<case>.py
+
+# Good examples
+test_user_creation.py
+test_cli_run_valid_input.py
+test_resilience_retry_exponential_backoff.py
+
+# Bad examples
+test_mymodule.py           # Too generic
+test_function.py          # Too generic
+test_a_b_c.py             # Unclear
+```
+
+### 4.2 Test Organization
+
+```
+# tests/test_cli/
+test_cli/
+├── __init__.py
+├── conftest.py           # Shared fixtures
+├── test_run.py          # CLI run command
+├── test_serve.py        # CLI serve command
+└── test_mcp.py          # CLI MCP commands
+```
+
+### 4.3 FR Traceability
+
+```
+@pytest.mark.requirement("FR-CORE-001")
+@pytest.mark.requirement("FR-CLI-005")
+def test_cli_run_basic():
+    """Test basic CLI run functionality."""
+    # ...
+```
+
+---
+
+## 5. Security Standards
+
+### 5.1 Secrets Handling
+
+**Never commit secrets.** Use environment variables:
+
+```
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    api_key: str = ""
+    
+    @classmethod
+    def from_env(cls):
+        return cls()  # Reads from environment
+```
+
+### 5.2 Security Scanning
+
+```
+# Run security scans
+bandit -r src/          # Find security issues
+safety check            # Check dependencies
+trivy fs .              # Container scanning
+
+# CI integration
+bandit --config .bandit.yaml --recursive src/
+```
+
+---
+
+## 6. Performance Standards
+
+### 6.1 Performance Targets
+
+| Operation | Target | Current |
+|-----------|--------|---------|
+| CLI startup | < 1s | 0.8s |
+| Hook execution | < 100ms | 85ms |
+| MCP tool call | < 50ms | 42ms |
+| Memory usage | < 100MB | 78MB |
+
+### 6.2 Performance Testing
+
+```
+import pytest
+import time
+
+@pytest.mark.performance
+def test_hook_execution_time():
+    """Test hook executes within time limit."""
+    start = time.perf_counter()
+    result = execute_hook()
+    elapsed = time.perf_counter() - start
+    
+    assert elapsed < 0.1, f"Hook took {elapsed:.3f}s (target: 0.1s)"
+```
+
+---
+
+## 7. Documentation Quality
+
+### 7.1 Docstring Standards
+
+```
+def calculate_metrics(values: list[float]) -> dict[str, float]:
+    """
+    Calculate statistical metrics for a list of values.
+    
+    Args:
+        values: List of numeric values to analyze
+        
+    Returns:
+        Dictionary with mean, median, std_dev, min, max
+        
+    Raises:
+        ValueError: If values list is empty
+        
+    Example:
+        >>> calculate_metrics([1, 2, 3, 4, 5])
+        {'mean': 3.0, 'median': 3.0, 'std_dev': 1.41}
+    """
+    if not values:
+        raise ValueError("Values list cannot be empty")
+    
+    n = len(values)
+    mean = sum(values) / n
+    # ...
+```
+
+### 7.2 README Standards
+
+Every module should have:
+
+```
+# Module Name
+
+## Overview
+Brief description of module purpose.
+
+## Usage
+Code examples showing how to use.
+
+## Configuration
+Environment variables and settings.
+
+## Testing
+How to run tests for this module.
+
+## Related
+Links to related modules and documentation.
+```
+
+---
+
+## 8. Code Review Checklist
+
+### 8.1 Pre-Review Checklist
+
+- [ ] Code passes all quality gates
+- [ ] Tests added/updated
+- [ ] Documentation updated
+- [ ] No TODO comments
+- [ ] No hardcoded secrets
+- [ ] Type hints added
+- [ ] Error handling complete
+
+### 8.2 Review Questions
+
+1. Does the code follow project conventions?
+2. Are there any security concerns?
+3. Is the code testable?
+4. Are error messages helpful?
+5. Is the code maintainable?
+
+---
+
+## 9. Extension Summary
+
+**Extended on:** 2026-02-17  
+**Extended by:** Claude Code
+
+### Changes Made
+
+1. **Added Section 1:** Quality Standards (coverage targets, gates)
+2. **Added Section 2:** Running Quality Checks (commands)
+3. **Added Section 3:** Pre-commit Hooks (configuration)
+4. **Added Section 4:** Test Quality Standards (naming, organization)
+5. **Added Section 5:** Security Standards (secrets, scanning)
+6. **Added Section 6:** Performance Standards (targets, testing)
+7. **Added Section 7:** Documentation Quality (docstrings, README)
+8. **Added Section 8:** Code Review Checklist
+
+### Cross-References Added
+
+- pytest documentation
+- ruff documentation
+- bandit documentation
+- pydantic-settings documentation
+
+### Practical Additions
+
+- Complete quality checklist
+- Performance testing examples
+- Code review checklist
+- Documentation templates

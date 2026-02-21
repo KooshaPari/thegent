@@ -54,6 +54,9 @@ class DiscoveredAgent(BaseModel):
     command: str | None = None
     args_preview: str | None = None
     tmux_pane: str | None = None
+    session_id: str | None = None
+    token_usage: dict | None = None
+    mcp_errors: list[str] = Field(default_factory=list)
 
 
 def get_current_agent_id() -> str:
@@ -96,6 +99,9 @@ def register_discovered_agent(
     command: str | None = None,
     args_preview: str | None = None,
     session_dir: Path | None = None,
+    session_id: str | None = None,
+    token_usage: dict | None = None,
+    mcp_errors: list[str] | None = None,
 ) -> Path:
     """Register or update a discovered agent in the session directory."""
     from thegent.config import ThegentSettings
@@ -129,6 +135,14 @@ def register_discovered_agent(
         agent_data = DiscoveredAgent(
             pid=pid, ppid=ppid, agent=agent, cwd=cwd, command=command, args_preview=args_preview
         ).model_dump()
+
+    # Store new optional fields
+    if session_id:
+        agent_data["session_id"] = session_id
+    if token_usage:
+        agent_data["token_usage"] = token_usage
+    if mcp_errors:
+        agent_data["mcp_errors"] = mcp_errors
 
     # Try to find associated tmux pane
     from thegent.skills.terminal import list_tmux_panes

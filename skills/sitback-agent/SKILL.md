@@ -270,3 +270,31 @@ Example: `thegent sitback --agent minimax` (you) or `thegent sitback -a kilo` (d
 ## Skill Override
 
 When started with `thegent sitback --skill <name>`, `THGENT_SITBACK_SKILL` is set. Claude Code loads `~/.claude/skills/<name>/SKILL.md`. To compose: create a custom skill that references this protocol for dashboard steps.
+
+---
+
+## Harness Terminal Management
+
+**Use MCP tools first:** `thegent_harness_interact`, `thegent_harness_list_actions`, `thegent_harness_register_host`. CLI fallback: `thegent run attach`, `thegent plan sessions`.
+
+### Supported Harnesses (integrated under agent/run/plan/govern)
+- `cursor` — Cursor IDE agent
+- `codex` — Codex CLI agent  
+- `claude` — Claude CLI agent
+- `ante` — Ante agent
+- `droid` — Droid agent
+
+### Unified CLI Commands
+| Command | Description |
+|---------|-------------|
+| `thegent run attach <harness> <session_id>` | Attach to harness terminal |
+| `thegent run send <harness> <prompt>` | Send prompt to harness |
+| `thegent plan sessions [--harness type]` | List harness sessions |
+| `thegent plan harness-status` | Show registered hosts |
+| `thegent govern register-host <host_id> <harness> --prefix "ssh user@host"` | Register remote host |
+
+### MCP Tools
+- `thegent_harness_interact` - Execute harness actions
+- `thegent_harness_list_actions` - List actions
+- `thegent_harness_get_command` - Get command template
+- `thegent_harness_register_host` - Register host devices

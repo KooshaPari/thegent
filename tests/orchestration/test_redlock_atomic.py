@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from thegent.orchestration.redlock_atomic import (
+from thegent.orchestration.consensus.redlock_atomic import (
     RedlockAcquireResult,
     RedlockController,
     _InMemoryLockState,

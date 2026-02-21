@@ -42,7 +42,21 @@ def is_agent_in_cmd(cmd: str) -> bool:
         )
     ):
         return True
-    if exe in ("claude", "codex", "clode", "dex", "droid", "roid", "anen", "antigma", "fanta", "ante", "opencode", "copilot", "gemini"):
+    if exe in (
+        "claude",
+        "codex",
+        "clode",
+        "dex",
+        "droid",
+        "roid",
+        "anen",
+        "antigma",
+        "fanta",
+        "ante",
+        "opencode",
+        "copilot",
+        "gemini",
+    ):
         return True
     if exe.startswith(("claude", "clode", "droid", "roid", "anen", "antigma", "fanta", "ante", "opencode")) or any(
         x in c for x in ("/claude", "/droid", "/anen", "/antigma", "/fanta", "/ante", "/opencode")

@@ -1,0 +1,41 @@
+# virtualized_consciousness_api
+
+Source: docs/reference/api/virtualized_consciousness_api.md
+
+---
+
+# virtualized_consciousness API Reference
+
+> **Source**: `src/thegent/work_packages/virtualized_consciousness.py`
+
+WP-44003: Virtualized Consciousness Bridge.
+
+---
+
+## VirtualizedConsciousnessBridge
+
+Bridge for virtualized consciousness.
+
+### Methods
+
+#### VirtualizedConsciousnessBridge.virtualize
+
+```
+virtualize(self: Any, consciousness_state: dict[(str, Any)])
+```
+
+Virtualize consciousness state.
+
+---
+
+---
+
+## virtualize
+
+```
+virtualize(self: Any, consciousness_state: dict[(str, Any)])
+```
+
+Virtualize consciousness state.
+
+---

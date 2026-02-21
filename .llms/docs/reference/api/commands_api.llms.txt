@@ -1,0 +1,13 @@
+# commands_api
+
+Source: docs/reference/api/commands_api.md
+
+---
+
+# commands API Reference
+
+> **Source**: `src/thegent/commands/__init__.py`
+
+Thegent commands package.
+
+---

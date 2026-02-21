@@ -1,0 +1,13 @@
+# routing_contracts_api
+
+Source: docs/reference/api/routing_contracts_api.md
+
+---
+
+# routing_contracts API Reference
+
+> **Source**: `src/thegent/agents/routing_contracts.py`
+
+Shared routing contracts used by dex/clode entrypoints.
+
+---

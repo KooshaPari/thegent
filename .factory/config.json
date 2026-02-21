@@ -22,12 +22,12 @@
       "provider": "generic-chat-completion-api"
     },
 		{
-			"model_display_name": "Minimax M2.5",
-			"model": "MiniMax-M2.5",
+			"model_display_name": "minimax-m2.5-byok",
+			"model": "minimax-m2.5",
 			"base_url": "https://api.minimax.io/anthropic",
 			"api_key": "sk-cp-gPIgSPD1rxNMDQqvb4nYNj0HE4HfElst4cbyJQby9eMhod_1FU5OVTh1KisjFDPoPSngE-R_WwHAhA4ehgzqoIKhaXfipS-1CmEjUqCTPk2brR2Fq6PH0OA",
 			"provider": "anthropic",
-			"max_tokens": 64000
+			"max_tokens": 8192
 		},
 		 {
       "model_display_name": "GLM-4.6 [Z.AI]",

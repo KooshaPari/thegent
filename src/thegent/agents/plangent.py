@@ -5,18 +5,39 @@ The PlangentPlanner decomposes a goal into a directed acyclic graph (DAG)
 of sub-tasks, and the PlangentExecutor dispatches each ready node to a
 caller-supplied runner (sync or async).
 
+When a plan is an OrchestrationPlan, execute_async() delegates to
+SubAgentDispatcher.dispatch_plan() instead of the caller-supplied runner.
+Results are collected via ResultAggregator and node statuses updated
+accordingly.
+
+LLMPlangentPlanner is a subclass of PlangentPlanner that overrides
+_generate_sub_tasks() to use a FlashAgent LLM call for structured
+decomposition. Output is validated against OrchestrationPlan schema.
+The explicit fallback strategy (model unavailable → parent heuristic)
+is documented: this is a deliberate design decision for the planning
+path only, where partial decomposition is worse than no decomposition.
+
 # @trace FR-AGT-020
+# @trace WL-084
+# @trace WL-087
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
+
+from thegent.agents.flash_agent import FlashAgent, FlashAgentConfig
+
+if TYPE_CHECKING:
+    from thegent.orchestration.dispatcher import SubAgentDispatcher
+    from thegent.orchestration.plan import OrchestrationPlan
 
 _log = logging.getLogger(__name__)
 
@@ -299,6 +320,47 @@ class PlangentPlanner:
 
 
 # ---------------------------------------------------------------------------
+# Internal helpers for OrchestrationPlan execution path
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class _AggregatorMessage:
+    """Minimal duck-type compatible with ResultAggregator.add() expectations.
+
+    ResultAggregator reads ``.message_type`` from each item it aggregates.
+    Using this lightweight dataclass avoids importing InterAgentMessage here
+    (which would create a circular dependency via the orchestration package).
+
+    # @trace WL-084
+    """
+
+    sender_id: str
+    recipient_id: str
+    message_type: str
+    payload: dict[str, Any]
+
+
+def _make_aggregator_message(
+    *,
+    sender_id: str,
+    recipient_id: str,
+    message_type: str,
+    payload: dict[str, Any],
+) -> _AggregatorMessage:
+    """Construct an _AggregatorMessage for use with ResultAggregator.
+
+    # @trace WL-084
+    """
+    return _AggregatorMessage(
+        sender_id=sender_id,
+        recipient_id=recipient_id,
+        message_type=message_type,
+        payload=payload,
+    )
+
+
+# ---------------------------------------------------------------------------
 # PlangentExecutor
 # ---------------------------------------------------------------------------
 
@@ -389,20 +451,67 @@ class PlangentExecutor:
     # Async execution
     # ------------------------------------------------------------------
 
-    async def execute_async(self, plan: Plan, runner: Callable[[PlanNode], Any]) -> Plan:
+    async def execute_async(
+        self,
+        plan: Plan,
+        runner: Callable[[PlanNode], Any],
+        dispatcher: SubAgentDispatcher | None = None,
+    ) -> Plan:
         """Execute *plan* asynchronously.
 
-        Ready tasks in each wave are dispatched concurrently via
-        ``asyncio.gather``.  The runner may be a plain coroutine function
-        or a synchronous callable (wrapped in ``asyncio.to_thread``).
+        When *plan* is an :class:`~thegent.orchestration.plan.OrchestrationPlan`,
+        execution is delegated to a
+        :class:`~thegent.orchestration.dispatcher.SubAgentDispatcher`.  The
+        dispatcher replaces the inline *runner* callback for this path.  If
+        *dispatcher* is not provided, one is built automatically using
+        :meth:`~thegent.agents.capability_index.CapabilityIndex.get`.
+        Results are collected via
+        :class:`~thegent.orchestration.aggregator.ResultAggregator` and the
+        aggregation summary is stored in ``plan.metadata["aggregation"]``.
+
+        When *plan* is a plain :class:`Plan`, the caller-supplied *runner*
+        callback is used unchanged via ``asyncio.gather`` (original behaviour).
 
         Args:
             plan: The :class:`Plan` to execute.
             runner: Async coroutine ``async (PlanNode) -> str`` or sync
-                ``(PlanNode) -> str`` invoked for each ready node.
+                ``(PlanNode) -> str`` invoked for each ready node when plan
+                is a plain :class:`Plan`.  Ignored for
+                :class:`OrchestrationPlan`.
+            dispatcher: Optional
+                :class:`~thegent.orchestration.dispatcher.SubAgentDispatcher`
+                used when *plan* is an
+                :class:`~thegent.orchestration.plan.OrchestrationPlan`.  When
+                ``None`` and the plan is an ``OrchestrationPlan``, a dispatcher
+                is constructed automatically.
 
         Returns:
             The mutated *plan* with updated node statuses.
+
+        # @trace WL-084
+        """
+        # Inline import to avoid circular imports: the orchestration package
+        # imports from thegent.agents.plangent, so a top-level import of
+        # thegent.orchestration.plan here would create a cycle.
+        from thegent.orchestration.plan import OrchestrationPlan  # noqa: PLC0415
+
+        if isinstance(plan, OrchestrationPlan):
+            return await self._execute_orchestration_async(plan, dispatcher)
+
+        return await self._execute_plain_async(plan, runner)
+
+    # ------------------------------------------------------------------
+    # Private: plain Plan path (original runner-callback behaviour)
+    # ------------------------------------------------------------------
+
+    async def _execute_plain_async(
+        self,
+        plan: Plan,
+        runner: Callable[[PlanNode], Any],
+    ) -> Plan:
+        """Execute a plain :class:`Plan` using the caller-supplied *runner*.
+
+        # @trace WL-084
         """
         _log.info("Async-executing plan %s (%d nodes)", plan.id, len(plan.nodes))
 
@@ -412,7 +521,7 @@ class PlangentExecutor:
                 _log.warning("No ready tasks; plan %s may be deadlocked (async)", plan.id)
                 break
 
-            # Mark all ready nodes as running before dispatching
+            # Mark all ready nodes as running before dispatching.
             for node in ready:
                 node.status = "running"
 
@@ -445,3 +554,498 @@ class PlangentExecutor:
             len(plan.failed_ids),
         )
         return plan
+
+    # ------------------------------------------------------------------
+    # Private: OrchestrationPlan path via SubAgentDispatcher
+    # ------------------------------------------------------------------
+
+    async def _execute_orchestration_async(
+        self,
+        plan: Any,  # OrchestrationPlan; typed Any to satisfy forward-ref constraint
+        dispatcher: SubAgentDispatcher | None,
+    ) -> Plan:
+        """Execute an OrchestrationPlan via SubAgentDispatcher + ResultAggregator.
+
+        Delegates all node dispatch to ``SubAgentDispatcher.dispatch_plan()``,
+        feeds each ``DispatchResult`` into a ``ResultAggregator``, maps results
+        back onto plan node statuses (``done`` / ``failed``), and stores the
+        aggregation summary in ``plan.metadata["aggregation"]``.
+
+        Errors are propagated loudly — no silent failure handling.
+
+        # @trace WL-084
+        """
+        from thegent.orchestration.aggregator import ResultAggregator  # noqa: PLC0415
+        from thegent.orchestration.dispatcher import (  # noqa: PLC0415
+            SubAgentDispatcher as _SubAgentDispatcher,
+        )
+
+        if dispatcher is None:
+            from thegent.agents.capability_index import CapabilityIndex  # noqa: PLC0415
+
+            dispatcher = _SubAgentDispatcher(capability_index=CapabilityIndex.get())
+
+        _log.info(
+            "Orchestration-dispatching plan %s (%d nodes) via SubAgentDispatcher",
+            plan.id,
+            len(plan.nodes),
+        )
+
+        dispatch_results = await dispatcher.dispatch_plan(plan)
+
+        aggregator = ResultAggregator()
+
+        for node in plan.nodes:
+            dispatch_result = dispatch_results.get(node.id)
+            if dispatch_result is None:
+                # A node may be missing from dispatch_results if the plan has
+                # no nodes or a topological deadlock left some unreachable.
+                # Fail loudly — do not silently skip.
+                error_msg = f"No DispatchResult returned for node {node.id} in plan {plan.id}"
+                _log.error(error_msg)
+                self.planner.mark_failed(plan, node.id, error_msg)
+                aggregator.add(
+                    _make_aggregator_message(
+                        sender_id=node.id,
+                        recipient_id=plan.id,
+                        message_type="error",
+                        payload={"error": error_msg, "node_id": node.id},
+                    ),
+                    node_id=node.id,
+                )
+                if self.fail_fast:
+                    plan.metadata["aggregation"] = aggregator.aggregate()
+                    _log.info("fail_fast=True; stopping orchestration plan %s", plan.id)
+                    return plan
+                continue
+
+            if dispatch_result.success:
+                aggregator.add(
+                    _make_aggregator_message(
+                        sender_id=node.id,
+                        recipient_id=plan.id,
+                        message_type="result",
+                        payload={"output": dispatch_result.output, "node_id": node.id},
+                    ),
+                    node_id=node.id,
+                )
+                self.planner.mark_done(plan, node.id, dispatch_result.output)
+            else:
+                error_msg = dispatch_result.error or f"Dispatch failed for node {node.id}"
+                aggregator.add(
+                    _make_aggregator_message(
+                        sender_id=node.id,
+                        recipient_id=plan.id,
+                        message_type="error",
+                        payload={"error": error_msg, "node_id": node.id},
+                    ),
+                    node_id=node.id,
+                )
+                self.planner.mark_failed(plan, node.id, error_msg)
+                _log.error("Node %s failed in orchestration plan %s: %s", node.id, plan.id, error_msg)
+                if self.fail_fast:
+                    plan.metadata["aggregation"] = aggregator.aggregate()
+                    _log.info(
+                        "fail_fast=True; stopping orchestration plan %s after node %s",
+                        plan.id,
+                        node.id,
+                    )
+                    return plan
+
+        agg_result = aggregator.aggregate()
+        plan.metadata["aggregation"] = agg_result
+
+        _log.info(
+            "Orchestration plan %s complete: %d done, %d failed — aggregation passed=%s",
+            plan.id,
+            len(plan.done_ids),
+            len(plan.failed_ids),
+            agg_result["passed"],
+        )
+        return plan
+
+
+# ---------------------------------------------------------------------------
+# LLMPlangentPlanner
+# ---------------------------------------------------------------------------
+
+#: JSON schema that LLM output must satisfy.  Each node entry requires an
+#: ``id`` (str), ``task`` (str), ``agent_hint`` (str | null),
+#: ``deps`` (list[str]), and ``budget_tokens`` (int | null).
+_LLM_NODE_REQUIRED_KEYS: frozenset[str] = frozenset({"id", "task", "agent_hint", "deps", "budget_tokens"})
+
+#: System prompt template instructing the model to produce structured JSON.
+#: Curly braces used as JSON example must be doubled for str.format() escaping.
+_DECOMPOSITION_SYSTEM_PROMPT = """\
+You are a precise task decomposition assistant.
+Decompose the given goal into a sequence of concrete sub-tasks for an AI agent team.
+IMPORTANT: Respond ONLY with a single JSON object — no markdown, no prose before or after.
+
+Required format:
+{{
+  "nodes": [
+    {{
+      "id": "<unique short id, e.g. t1>",
+      "task": "<concise task description>",
+      "agent_hint": "<suggested agent persona, e.g. 'coder', 'researcher', or null>",
+      "deps": ["<id of dependency>"],
+      "budget_tokens": <integer token budget or null>
+    }}
+  ]
+}}
+
+Rules:
+- ids must be unique within the list.
+- deps must reference ids that appear earlier in the list (DAG, no cycles).
+- Produce between 2 and {max_depth} nodes.
+- If you cannot decompose meaningfully, produce at least 2 generic steps.
+"""
+
+
+@dataclass
+class _LLMNodeSpec:
+    """Intermediate parsed representation of one LLM-produced node spec.
+
+    # @trace WL-087
+    """
+
+    id: str
+    task: str
+    agent_hint: str | None
+    deps: list[str]
+    budget_tokens: int | None
+
+
+def _parse_llm_response(raw: str) -> list[_LLMNodeSpec]:
+    """Parse and validate the raw LLM JSON response into node specs.
+
+    Args:
+        raw: Raw string returned by the LLM.
+
+    Returns:
+        List of :class:`_LLMNodeSpec` objects.
+
+    Raises:
+        ValueError: If the JSON is malformed, missing the ``nodes`` key,
+            or any node entry is missing required keys or has wrong types.
+
+    # @trace WL-087
+    """
+    raw = raw.strip()
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"LLM output is not valid JSON: {exc}\nRaw output: {raw!r}") from exc
+
+    if not isinstance(parsed, dict):
+        raise ValueError(f"LLM output must be a JSON object, got {type(parsed).__name__!r}")
+
+    nodes_raw = parsed.get("nodes")
+    if nodes_raw is None:
+        raise ValueError("LLM output JSON is missing required key 'nodes'")
+    if not isinstance(nodes_raw, list):
+        raise ValueError(f"LLM output 'nodes' must be a list, got {type(nodes_raw).__name__!r}")
+    if len(nodes_raw) == 0:
+        raise ValueError("LLM output 'nodes' list must not be empty")
+
+    specs: list[_LLMNodeSpec] = []
+    for idx, entry in enumerate(nodes_raw):
+        if not isinstance(entry, dict):
+            raise ValueError(f"nodes[{idx}] must be a JSON object, got {type(entry).__name__!r}")
+
+        missing = _LLM_NODE_REQUIRED_KEYS - entry.keys()
+        if missing:
+            raise ValueError(f"nodes[{idx}] is missing required keys: {sorted(missing)}")
+
+        node_id = entry["id"]
+        if not isinstance(node_id, str) or not node_id.strip():
+            raise ValueError(f"nodes[{idx}].id must be a non-empty string, got {node_id!r}")
+
+        task = entry["task"]
+        if not isinstance(task, str) or not task.strip():
+            raise ValueError(f"nodes[{idx}].task must be a non-empty string, got {task!r}")
+
+        agent_hint = entry["agent_hint"]
+        if agent_hint is not None and not isinstance(agent_hint, str):
+            raise ValueError(f"nodes[{idx}].agent_hint must be a string or null, got {agent_hint!r}")
+
+        deps = entry["deps"]
+        if not isinstance(deps, list):
+            raise ValueError(f"nodes[{idx}].deps must be a list, got {type(deps).__name__!r}")
+        for dep in deps:
+            if not isinstance(dep, str):
+                raise ValueError(f"nodes[{idx}].deps entries must be strings, got {dep!r}")
+
+        budget_tokens = entry["budget_tokens"]
+        if budget_tokens is not None and not isinstance(budget_tokens, int):
+            raise ValueError(f"nodes[{idx}].budget_tokens must be an int or null, got {budget_tokens!r}")
+
+        specs.append(
+            _LLMNodeSpec(
+                id=node_id.strip(),
+                task=task.strip(),
+                agent_hint=agent_hint,
+                deps=deps,
+                budget_tokens=budget_tokens,
+            )
+        )
+
+    return specs
+
+
+def _specs_to_plan_nodes(specs: list[_LLMNodeSpec]) -> list[PlanNode]:
+    """Convert validated LLM node specs into :class:`PlanNode` objects.
+
+    The LLM uses its own short ``id`` namespace (e.g. ``"t1"``).  This
+    function allocates real UUIDs for each node and remaps dependency
+    references accordingly.
+
+    Args:
+        specs: Validated list of :class:`_LLMNodeSpec` from
+            :func:`_parse_llm_response`.
+
+    Returns:
+        List of :class:`PlanNode` ready for insertion into a :class:`Plan`.
+
+    # @trace WL-087
+    """
+    # Build mapping from LLM-local id → real UUID so deps can be resolved.
+    llm_id_to_uuid: dict[str, str] = {spec.id: str(uuid.uuid4()) for spec in specs}
+
+    nodes: list[PlanNode] = []
+    for spec in specs:
+        resolved_deps = [llm_id_to_uuid[dep] for dep in spec.deps if dep in llm_id_to_uuid]
+        metadata: dict[str, Any] = {}
+        if spec.agent_hint is not None:
+            metadata["agent_hint"] = spec.agent_hint
+        if spec.budget_tokens is not None:
+            metadata["budget_tokens"] = spec.budget_tokens
+
+        node = PlanNode(
+            id=llm_id_to_uuid[spec.id],
+            task=spec.task,
+            depends_on=resolved_deps,
+            metadata=metadata,
+        )
+        nodes.append(node)
+
+    return nodes
+
+
+class LLMPlangentPlanner(PlangentPlanner):
+    """PlangentPlanner subclass that uses a FlashAgent LLM call for decomposition.
+
+    Overrides ``_generate_sub_tasks()`` to call a cheap model (haiku/flash)
+    via :class:`~thegent.agents.flash_agent.FlashAgent`, parse its JSON
+    output, and validate it against the OrchestrationPlan node schema.
+
+    Fallback strategy (explicit, documented):
+        When the model is unavailable (FlashAgent returns ``success=False``
+        due to timeout or connectivity), the planner falls back to the
+        parent :class:`PlangentPlanner` heuristic decomposition.  This is
+        an intentional design decision: for the planning path, a degraded
+        heuristic plan is acceptable when the LLM is unreachable.  The
+        fallback is logged at WARNING level so it is always visible.
+        Schema validation failures are NOT subject to fallback — they raise
+        ``ValueError`` immediately (fail loud, fail fast).
+
+    # @trace WL-087
+    """
+
+    def __init__(
+        self,
+        *,
+        model: str = "claude-haiku-4.5",
+        timeout_s: float = 30.0,
+        max_tokens: int = 1024,
+        separator: str = ".",
+        max_nodes_per_level: int = 5,
+    ) -> None:
+        """Initialise the LLM-backed planner.
+
+        Args:
+            model: LiteLLM model identifier for the decomposition call.
+                Defaults to ``claude-haiku-4.5`` (cheap, fast).
+            timeout_s: Timeout in seconds for the FlashAgent call.
+            max_tokens: Maximum tokens the LLM may produce.
+            separator: Forwarded to :class:`PlangentPlanner`.
+            max_nodes_per_level: Forwarded to :class:`PlangentPlanner`.
+
+        # @trace WL-087
+        """
+        super().__init__(separator=separator, max_nodes_per_level=max_nodes_per_level)
+        self._model = model
+        self._timeout_s = timeout_s
+        self._max_tokens = max_tokens
+
+    # ------------------------------------------------------------------
+    # Override
+    # ------------------------------------------------------------------
+
+    def _generate_sub_tasks(self, goal: str, max_depth: int) -> list[str]:
+        """Decompose *goal* into sub-task strings via an LLM call.
+
+        Calls :class:`~thegent.agents.flash_agent.FlashAgent` with a
+        structured prompt that asks for a JSON breakdown of the goal.
+        The JSON is parsed and validated; on success the task strings are
+        extracted and returned to the parent :meth:`decompose` method.
+
+        Fallback (model unavailable only):
+            If FlashAgent returns ``success=False`` (timeout / connectivity),
+            the parent heuristic is used and a WARNING is emitted.
+
+        Raises:
+            ValueError: If the LLM responds but its output fails schema
+                validation.  This is a hard failure (no fallback).
+
+        Args:
+            goal: The (stripped) goal string.
+            max_depth: Hint for maximum decomposition depth; forwarded to
+                the prompt.
+
+        Returns:
+            Ordered list of sub-task strings ready for :meth:`decompose`.
+
+        # @trace WL-087
+        """
+        nodes = asyncio.run(self._generate_plan_nodes(goal, max_depth))
+        if nodes is None:
+            # Model unavailable — explicit fallback to heuristic (documented above).
+            _log.warning(
+                "LLMPlangentPlanner: FlashAgent unavailable for goal=%r; "
+                "falling back to heuristic decomposition (model=%s, timeout=%.1fs)",
+                goal,
+                self._model,
+                self._timeout_s,
+            )
+            return super()._generate_sub_tasks(goal, max_depth)
+
+        # Schema validation succeeded; return task strings.
+        return [node.task for node in nodes]
+
+    # ------------------------------------------------------------------
+    # Async helper — can be called directly for OrchestrationPlan output
+    # ------------------------------------------------------------------
+
+    async def decompose_to_orchestration_plan(self, goal: str, max_depth: int = 3) -> "Any":
+        """Decompose *goal* directly into an OrchestrationPlan with full metadata.
+
+        Unlike :meth:`decompose`, which loses agent_hint / budget_tokens when
+        converting back through the string list, this method builds the plan
+        directly from the validated :class:`_LLMNodeSpec` objects.
+
+        Args:
+            goal: High-level goal statement.
+            max_depth: Hint for maximum decomposition depth.
+
+        Returns:
+            An :class:`~thegent.orchestration.plan.OrchestrationPlan` with
+            nodes populated from the LLM response, or a plan produced by the
+            parent heuristic when the model is unavailable.
+
+        Raises:
+            ValueError: If the LLM output fails schema validation.
+
+        # @trace WL-087
+        """
+        from thegent.orchestration.plan import OrchestrationPlan  # noqa: PLC0415
+
+        if not goal or not goal.strip():
+            raise ValueError("goal must be a non-empty string")
+
+        goal = goal.strip()
+        nodes = await self._generate_plan_nodes(goal, max_depth)
+
+        if nodes is None:
+            _log.warning(
+                "LLMPlangentPlanner: FlashAgent unavailable for goal=%r; "
+                "falling back to heuristic for OrchestrationPlan (model=%s)",
+                goal,
+                self._model,
+            )
+            # Heuristic path: call parent's _generate_sub_tasks directly to
+            # avoid asyncio.run() nesting (decompose() calls asyncio.run inside
+            # _generate_sub_tasks(), which would fail in an async context).
+            sub_tasks = PlangentPlanner._generate_sub_tasks(self, goal, max_depth)
+            oplan = OrchestrationPlan(goal=goal)
+            prev_id: str | None = None
+            for task_text in sub_tasks[: self._max_nodes_per_level * max_depth]:
+                node = PlanNode(task=task_text, depends_on=[prev_id] if prev_id else [])
+                oplan.nodes.append(node)
+                prev_id = node.id
+            return oplan
+
+        oplan = OrchestrationPlan(goal=goal, nodes=nodes)
+        _log.debug(
+            "LLMPlangentPlanner: decomposed goal=%r into %d OrchestrationPlan nodes",
+            goal,
+            len(oplan.nodes),
+        )
+        return oplan
+
+    # ------------------------------------------------------------------
+    # Private
+    # ------------------------------------------------------------------
+
+    async def _generate_plan_nodes(
+        self, goal: str, max_depth: int
+    ) -> list[PlanNode] | None:
+        """Call FlashAgent, parse response, and return validated PlanNodes.
+
+        Returns ``None`` when the model is unavailable (FlashAgent timeout /
+        connectivity failure).  Raises ``ValueError`` on schema validation
+        failures — those are hard errors regardless of model availability.
+
+        Args:
+            goal: The (stripped) goal string.
+            max_depth: Depth hint forwarded to the prompt.
+
+        Returns:
+            List of :class:`PlanNode` on success, or ``None`` when the model
+            is unavailable.
+
+        Raises:
+            ValueError: If LLM output fails schema validation.
+
+        # @trace WL-087
+        """
+        prompt = (
+            _DECOMPOSITION_SYSTEM_PROMPT.format(max_depth=max(2, max_depth))
+            + f"\n\nGoal to decompose:\n{goal}"
+        )
+
+        config = FlashAgentConfig(
+            task_prompt=prompt,
+            model=self._model,
+            timeout_s=self._timeout_s,
+            max_tokens=self._max_tokens,
+        )
+
+        agent = FlashAgent()
+        result = await agent.run(config)
+
+        if not result.success:
+            # Model unavailable — caller decides on fallback.
+            _log.warning(
+                "LLMPlangentPlanner: FlashAgent call unsuccessful "
+                "(agent_id=%s, elapsed=%.2fs)",
+                result.agent_id,
+                result.elapsed_s,
+            )
+            return None
+
+        _log.debug(
+            "LLMPlangentPlanner: FlashAgent returned %d chars (agent_id=%s)",
+            len(result.output),
+            result.agent_id,
+        )
+
+        # Parse + validate — ValueError propagates to caller as hard failure.
+        specs = _parse_llm_response(result.output)
+        nodes = _specs_to_plan_nodes(specs)
+
+        _log.debug(
+            "LLMPlangentPlanner: validated %d nodes from LLM output",
+            len(nodes),
+        )
+        return nodes

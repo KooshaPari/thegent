@@ -1,0 +1,236 @@
+# 12-LIFECYCLE-LOOP-DESIGN
+
+Source: docs/plans/12-LIFECYCLE-LOOP-DESIGN.md
+
+---
+
+# 12 — Cycleloop Loops & Checker Agent Design
+
+**Purpose:** Design agent controls for soft/hard Cycleloop loops, checker-agent pattern, preset prompt routing, LLM fallback, and human takeover.  
+**Date:** 2026-02-16  
+**Status:** Design proposal  
+**Scope:** Agent orchestration, HITL, observability overhaul
+
+> Cross-ref: [00-MASTER-INDEX](./00-MASTER-INDEX.md) | [05-ARCH](./05-ARCHITECTURE.md) | [10-DISPATCH](./10-SUBAGENT-DISPATCH.md)
+
+---
+
+## 1. Executive Summary
+
+Thegent's agent controls must support:
+
+1. **Cycleloop loops** (soft and hard) — Repetitive agent cycles feeding fixed or routed prompts until a stop signal
+2. **Checker agent** — Parent agent that receives governance report, todo spec, phased WBS, agent response; decides re-prompt, continue, or kill session
+3. **Preset prompt routing** — Simple matching to items like "write tests", "write docs", "add polish", "continue"
+4. **LLM fallback** — When deterministic routing fails, use codex headless gemini flash (thegent) for re-prompt
+5. **Human takeover** — Simultaneous observability and interaction; when human takes over, checker receives same context; human input flows through
+
+---
+
+## 2. Cycleloop Loops
+
+### 2.1 Definition
+
+A **Cycleloop loop** is a control pattern where an agent repeatedly executes a cycle (typically feeding a fixed prompt) until a stop condition. Named for the "I'm helping!" repetition until explicitly stopped.
+
+### 2.2 Soft vs Hard
+
+| Variant | Behavior | Stop condition |
+|---------|----------|----------------|
+| **Soft** | Can be overridden by human at any time; returns fixed prompt awaiting stop signal you define | Human stop, checker "kill", timeout, or explicit stop signal |
+| **Hard** | Enforced until explicit stop; head LLM (checker) decides when to kill session | Checker "kill" decision only (or configurable override) |
+
+### 2.3 Simpler First Methods
+
+**Method A: Fixed prompt + stop signal**
+- Continuously return fixed prompt
+- Await stop signal (e.g., `STOP`, human keystroke, checker decision)
+- No routing; single prompt until stopped
+
+**Method B: Preset prompt routing**
+- Route between items: "write tests", "write docs", "add polish", "continue"
+- Matching and routing services/systems select next prompt
+- Deterministic routing; fallback to LLM when no match
+
+---
+
+## 3. Checker Agent (Head LLM)
+
+### 3.1 Role
+
+The **checker agent** is the parent/head that:
+- Receives: governance report, initial todo spec, phased WBS with statuses, final agent response (condensed stream)
+- Decides: what response to give (re-prompt, continue, kill session)
+- Guided by: robust system prompt and role instructions
+
+### 3.2 Inputs to Checker
+
+| Input | Source | Purpose |
+|-------|--------|---------|
+| Governance report | PolicyEngine, escalation queue | Policy denials, overrides, evidence gaps |
+| Initial todo spec | Planner / WBS | Original task breakdown |
+| Phased WBS with statuses | DAG / execution | Progress, blocked tasks, completed |
+| Final agent response | Worker agent | Condensed stream, summary, artifacts |
+| Human input (if takeover) | Session takeover | Human-entered response when operator intervenes |
+
+### 3.3 Checker Decisions
+
+| Decision | Meaning | Next action |
+|----------|---------|-------------|
+| **Re-prompt** | Worker needs different instruction | Route to preset or LLM-generated prompt |
+| **Continue** | Worker should keep going | Feed next preset or same fixed prompt |
+| **Kill session** | Terminate this session | Stop loop; emit final state; optional handoff |
+
+### 3.4 Head LLM Selection
+
+- **Primary:** Codex headless gemini flash (thegent) — fast, cheap, sufficient for routing/decision
+- **Fallback:** When checker itself fails or needs higher quality, escalate to stronger model
+
+---
+
+## 4. Preset Prompt Routing
+
+### 4.1 Routing Service
+
+- **Input:** Current state (WBS status, last response, governance flags)
+- **Output:** Next prompt ID or prompt text
+- **Matching:** Keyword/pattern match → preset ID (e.g., `write_tests`, `write_docs`, `add_polish`, `continue`)
+
+### 4.2 Preset Catalog
+
+```
+presets:
+  write_tests:
+    prompt: "Write unit tests for the changed modules. Cover edge cases."
+    trigger_keywords: ["test", "coverage", "pytest"]
+  write_docs:
+    prompt: "Update documentation for the modified components."
+    trigger_keywords: ["doc", "readme", "guide"]
+  add_polish:
+    prompt: "Add polish: error messages, type hints, docstrings."
+    trigger_keywords: ["polish", "refine", "cleanup"]
+  continue:
+    prompt: "Continue with the next item in the WBS."
+    trigger_keywords: ["continue", "next", "proceed"]
+  default:
+    prompt: "Review the current state and suggest next action."
+```
+
+### 4.3 Fallback to LLM
+
+When no preset matches:
+- Invoke codex headless gemini flash (thegent)
+- Input: governance report, WBS status, last response
+- Output: Generated re-prompt for worker
+- Cache result for similar states (optional)
+
+---
+
+## 5. Human Takeover & Observability
+
+### 5.1 Takeover Flow
+
+1. Human observes session (dashboard, logs, condensed stream)
+2. Human enters response in input field (sudden fill)
+3. **Checker receives** same context as auto-mode: governance report, todo spec, WBS, agent response
+4. **Human input** is treated as checker decision — injected as the "response to give"
+5. Worker receives human's input as next prompt/instruction
+
+### 5.2 Observability Overhaul
+
+All observability must support **simultaneous human observability and interaction**:
+
+| Component | Requirement |
+|-----------|-------------|
+| Dashboard | Real-time session state, condensed stream, input field for takeover |
+| Governance report | Visible to checker (and human when takeover) |
+| WBS status | Phased view with completion %, blocked items |
+| Agent response | Condensed stream; full trace on demand |
+| Checker context | Same view for auto-checker and human-in-place |
+
+### 5.3 Event Flow
+
+```
+Worker Agent → (response) → Checker Agent
+                    ↑
+Human (optional) ──┘  [injects response when takeover]
+```
+
+When human takes over:
+- Checker's "decision" is replaced by human input
+- Human sees checker's context (governance, WBS, response)
+- Human's input flows to worker as next prompt
+
+---
+
+## 6. Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Cycleloop Loop Controller                  │
+│  (soft: human-overridable | hard: checker-only kill)              │
+├─────────────────────────────────────────────────────────────────┤
+│  Preset Router ──→ [write_tests|write_docs|add_polish|continue]   │
+│       │                                                            │
+│       └── no match ──→ LLM Fallback (codex headless gemini flash)  │
+├─────────────────────────────────────────────────────────────────┤
+│  Checker Agent (Head LLM)                                         │
+│  Inputs: governance_report, todo_spec, WBS_status, agent_response │
+│  Outputs: re_prompt | continue | kill_session                     │
+│       │                                                            │
+│       └── Human takeover: human input replaces checker output     │
+├─────────────────────────────────────────────────────────────────┤
+│  Worker Agent ──→ (condensed stream, artifacts) ──→ Checker      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 7. Implementation Phases
+
+### Phase 1: Preset Routing (Simple)
+- [ ] Preset catalog (YAML/JSON)
+- [ ] Keyword matching → preset ID
+- [ ] Fixed prompt loop with stop signal
+- [ ] CLI: `thegent loop --preset write_tests --stop-signal STOP`
+
+### Phase 2: Checker Agent
+- [ ] Checker agent invocation (codex headless gemini flash)
+- [ ] Input assembly: governance, WBS, response
+- [ ] Decision parsing: re_prompt | continue | kill
+- [ ] Wire checker into loop controller
+
+### Phase 3: LLM Fallback
+- [ ] When preset router returns no match → call LLM
+- [ ] LLM generates re-prompt from context
+- [ ] Optional: cache by state hash
+
+### Phase 4: Human Takeover
+- [ ] Dashboard input field for human response
+- [ ] Inject human input as checker output
+- [ ] Observability: same context for human and checker
+- [ ] Session takeover flag in state
+
+### Phase 5: Soft vs Hard Loops
+- [ ] Config: `loop_mode: soft | hard`
+- [ ] Soft: human stop, checker kill, timeout
+- [ ] Hard: checker kill only (or configurable override)
+
+---
+
+## 8. Cross-References
+
+- **Implementation plan:** [2026-02-15-RESEARCH-AND-ELICITATION-PLAN.md](./2026-02-15-RESEARCH-AND-ELICITATION-PLAN.md) — decisions, CheckerContext schema, robustness, harmonious integration
+- **HITL Patterns:** P-093 (4 HITL patterns), docs/plans/05-ARCHITECTURE.md § HITL Approval
+- **Orchestration Modes:** orchestration_modes.py (REVIEW_LOOP aligns with checker)
+- **Governance:** PolicyEngine, escalation queue, governance report
+- **Sitback:** docs/guides/SITBACK_PLUGINS.md — dashboard, widgets, human observability
+
+---
+
+## 9. Open Questions
+
+1. **Stop signal format** — Environment variable? Special token in stream? MCP tool call?
+2. **Checker model** — Always gemini flash, or configurable?
+3. **Preset catalog location** — Config file, MCP resource, or plugin?
+4. **Human takeover UX** — Cursor Composer inline? Separate dashboard? MCP tool?

@@ -1,0 +1,46 @@
+# events_api
+
+Source: docs/reference/api/events_api.md
+
+---
+
+# events API Reference
+
+> **Source**: `src/thegent/contracts/events.py`
+
+Canonical event schemas for orchestration audit trail (WP-0002).
+
+Provides formal Pydantic models for chunk, evidence, and policy events
+used in run registry, telemetry, and compliance evidence retention.
+
+---
+
+## ChunkEvent
+
+Canonical schema for streaming output chunk events.
+
+Used when persisting or emitting partial parser/agent output.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## EvidenceEvent
+
+Canonical schema for evidence artifact events.
+
+Links runs/tasks to evidence (session_id, hash, artifact type).
+
+**Inherits from**: `BaseModel`
+
+---
+
+## PolicyEvent
+
+Canonical schema for policy decision events.
+
+Records allow/deny/warn with reason and policy gate id.
+
+**Inherits from**: `BaseModel`
+
+---

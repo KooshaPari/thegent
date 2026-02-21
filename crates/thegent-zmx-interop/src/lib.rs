@@ -44,6 +44,33 @@ pub use error::ZmxError;
 
 mod error;
 
+/// Versioned ABI contract for the Zig interop surface (integer form).
+pub const ABI_CONTRACT_VERSION: u32 = 1;
+
+/// Semantic version string for the Zig ABI contract.
+///
+/// Must match the `"version"` field in `contracts/runtime/zig_abi_contract_v1.json`.
+pub const ZMX_ABI_CONTRACT_VERSION: &str = "1.0.0";
+
+/// Validate that the compiled-in ABI contract version matches the expected value.
+///
+/// Call this at startup or in CI to assert that the Rust crate and the JSON
+/// contract file are in sync.
+///
+/// # Errors
+///
+/// Returns `Err(String)` when the versions do not match.
+pub fn check_abi_contract_version(expected: &str) -> Result<(), String> {
+    if ZMX_ABI_CONTRACT_VERSION == expected {
+        Ok(())
+    } else {
+        Err(format!(
+            "ABI contract version mismatch: compiled-in version is {:?}, expected {:?}",
+            ZMX_ABI_CONTRACT_VERSION, expected
+        ))
+    }
+}
+
 /// C ABI declarations for the zmx Zig library.
 ///
 /// These symbols are exported by zmx using Zig's `export fn` keyword which
@@ -338,6 +365,61 @@ mod tests {
     fn parse_trims_whitespace() {
         let result = parse_session_list("  alpha  \n  beta  \n");
         assert_eq!(result, vec!["alpha", "beta"]);
+    }
+
+    #[test]
+    fn abi_contract_version_is_non_zero() {
+        assert!(ABI_CONTRACT_VERSION > 0);
+    }
+
+    // --- WL-132 B90-W2-B3: ZMX_ABI_CONTRACT_VERSION string assertions ------
+
+    #[test]
+    fn test_zmx_abi_contract_version_is_semver_string() {
+        // Must be a non-empty string in X.Y.Z form.
+        let parts: Vec<&str> = ZMX_ABI_CONTRACT_VERSION.split('.').collect();
+        assert_eq!(
+            parts.len(),
+            3,
+            "ZMX_ABI_CONTRACT_VERSION must be X.Y.Z; got {:?}",
+            ZMX_ABI_CONTRACT_VERSION
+        );
+        for part in &parts {
+            assert!(
+                part.parse::<u32>().is_ok(),
+                "Each part must be a non-negative integer; got {:?}",
+                part
+            );
+        }
+    }
+
+    #[test]
+    fn test_abi_version_matches_contract() {
+        // The version embedded in the binary must match what the JSON contract
+        // declares.  In CI the contract file is at
+        // contracts/runtime/zig_abi_contract_v1.json with "version": "1.0.0".
+        let expected = "1.0.0";
+        assert_eq!(
+            check_abi_contract_version(expected),
+            Ok(()),
+            "ZMX_ABI_CONTRACT_VERSION does not match the expected contract version {expected:?}"
+        );
+    }
+
+    #[test]
+    fn test_check_abi_contract_version_ok_on_match() {
+        assert!(check_abi_contract_version(ZMX_ABI_CONTRACT_VERSION).is_ok());
+    }
+
+    #[test]
+    fn test_check_abi_contract_version_err_on_mismatch() {
+        let result = check_abi_contract_version("9.9.9");
+        assert!(result.is_err(), "Expected Err on version mismatch");
+        let msg = result.unwrap_err();
+        assert!(
+            msg.contains("9.9.9"),
+            "Error message should mention the expected version"
+        );
     }
 
     // --- subprocess fallback (only when zmx-native is NOT enabled) ---------

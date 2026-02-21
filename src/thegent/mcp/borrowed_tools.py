@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class BorrowedMCPTools:
     """MCP tools borrowed from thegent for other projects."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize borrowed MCP tools."""
         self.tools: dict[str, Any] = {}
 

@@ -1,0 +1,228 @@
+# thegent-phase10-12-test-readiness-pack
+
+Source: docs/docset/thegent-phase10-12-test-readiness-pack.md
+
+---
+
+# Thegent Phase 10–12 Test and Readiness Pack
+
+**Status:** Finalized test and readiness pack  
+**Date:** 2026-02-15  
+**Scope:** Test matrix and gate evidence for Phases 10–12.
+
+This pack is the test companion to:
+- `thegent-phase10-12-optimal-design-prd.md`
+- `thegent-wbs-phase10-12.md`
+- `thegent-dag-phase10-12-extension.md`
+
+## 1) Testing strategy
+
+Focus areas:
+- Interface convergence and dispatch determinism.
+- Predictive/optimization behavior under controlled workloads.
+- Explainability, replay safety, and artifact packaging correctness.
+- Governance and operational hardening for low-noise autonomous controls.
+
+## 2) Phase 10 test matrix
+
+### 2.1 Unit tests
+
+| WP | Test class | Focus | Expected outcome |
+|---|---|---|---|
+| WP-10001 | `TestOperationEnvelopeV2Schema` | schema shape, version negotiation, invalid envelope errors | Uniform validation across CLI/MCP entrypoints |
+| WP-10002 | `TestCapabilityRegistryService` | registry read/write, trust metadata, TTL behavior | Stable versions and compatible capabilities |
+| WP-10003 | `TestDispatchDeterminism` | same input yields same dispatch route every run | Determinism across repeated runs |
+| WP-10004 | `TestAdapterTrustPolicy` | trust scoring and denylist behavior | High-risk adapter blocked on critical lanes |
+| WP-10005 | `TestOperationSurfaceConsolidation` | endpoint equivalence and alias parity | CLI and MCP expose same operation coverage |
+| WP-10006 | `TestMigrationHintRenderer` | unsupported op guidance and fallback options | Actionable migration suggestion returned |
+| WP-10007 | `TestDispatchTraceEvent` | trace fields completeness | Immutable dispatch trace schema present |
+| WP-10008 | `TestAdapterConformanceLifecycle` | plugin registration and conformance gating | Unconforming plugin never enabled |
+| WP-10009 | `TestCompatibilityMatrixPolicy` | matrix mismatch handling | Explicit migration/version message |
+| WP-10010 | `TestOperationsDocsGeneration` | generated docs/examples match runtime schema | Docs compile and contain sample calls |
+
+### 2.2 Integration tests
+
+| WP | Test class | Focus | Expected outcome |
+|---|---|---|---|
+| WP-10001/10003 | `TestEnvelopeToDispatchEndToEnd` | CLI and MCP end-to-end operations | Dispatch and policy trace produced identically |
+| WP-10004/10008 | `TestAdapterLifecycleRun` | plugin registration + critical lane invocation | Failed plugin blocked; approved adapter passes |
+| WP-10005/10006 | `TestUnknownOperationFlow` | unsupported operation in each interface | Migration hints and explicit route alternatives |
+| WP-10007/10009 | `TestCompatibilityCrossPhase` | compatibility matrix under simulated upgrade | Unsupported versions blocked, compatible fallback active |
+
+### 2.3 Phase 10 artifacts
+
+- `artifacts/phase10/dispatch_trace_schema.ndjson`
+- `artifacts/phase10/compatibility_matrix.ndjson`
+- `artifacts/phase10/operations_consolidation.ndjson`
+
+### 2.4 Phase 10 non-functional testing
+
+| Concern | Test case | Requirement |
+|---|---|---|
+| Latency | `BenchmarkDispatchDeterminismP95` | Dispatch + registry lookup + trace emit p95 ≤ 60ms |
+| Contract churn | `TestCompatibilityDiffFuzzer` | Schema diffs produce structured migration hints |
+| Safety | `TestUnknownOperationFailureMode` | No critical-lane execution on unknown op |
+| Policy consistency | `TestPolicyDigestConsistency` | `policy_version`, `policy_digest` present in all dispatch traces |
+| Rollback readiness | `TestRollbackManifestCoverage` | Rollback metadata exists for each runtime-affecting WP |
+
+---
+
+## 3) Phase 11 test matrix
+
+### 3.1 Unit tests
+
+| WP | Test class | Focus | Expected outcome |
+|---|---|---|---|
+| WP-11001 | `TestSLORegulator` | loop thresholds and anti-oscillation | Stability under oscillation scenarios |
+| WP-11002 | `TestForecastEngineRun` | p50/p80/p95 production with bounded latency | Forecast output shape and validity |
+| WP-11003 | `TestCalibrationDrift` | calibration alerts and gating | Gated actions on low confidence |
+| WP-11004 | `TestPreemptiveSaturationPolicy` | provider saturation avoidance | Non-blocking preemption suggestions |
+| WP-11005 | `TestSelfHealRecommendation` | recommendation ranking + rollback metadata | Recommendations include assumptions |
+| WP-11006 | `TestAdaptiveTaskShaping` | split/merge logic and governance checks | Shaping only when policy permits |
+| WP-11007 | `TestContinuityRiskPredictor` | pre-shift continuity risk detection | Predicted risk raises continuity tasks |
+| WP-11008 | `TestLearningLoopGovernance` | policy guardrails on learning updates | No parameter update without approval |
+| WP-11009 | `TestSafeModeGovernance` | safe-mode entry/exit and expiry behavior | Safe mode tracked and reversible |
+| WP-11010 | `TestEvidencePackEmit11` | evidence pack completeness and schema | Readiness pack generated for G11 |
+
+### 3.2 Integration tests
+
+| WP | Test class | Focus | Expected outcome |
+|---|---|---|---|
+| WP-11001/11002/11003 | `TestForecastLoopIntegration` | telemetry + forecast + calibration in one path | Forecast and action logged end-to-end |
+| WP-11005/11008 | `TestSelfHealControlFlow` | suggestions -> approval -> apply -> rollback | Closed-loop flow complete, auditable |
+| WP-11006/11007 | `TestReshapeUnderSurge` | adaptive shaping + continuity risk | Throughput preserved, continuity checkpoints created |
+
+### 3.3 Phase 11 artifacts
+
+- `artifacts/phase11/slo_regulator_events.ndjson`
+- `artifacts/phase11/forecast_quality.ndjson`
+- `artifacts/phase11/self_heal_recommendations.ndjson`
+- `artifacts/phase11/continuity_risk.ndjson`
+
+### 3.4 Phase 11 non-functional testing
+
+| Concern | Test case | Requirement |
+|---|---|---|
+| Oscillation | `LoadStepResponseChaosSpec` | No sustained oscillation pattern above threshold |
+| Calibration drift | `TestCalibrationDriftProperty` | Forecast confidence recalibrates on drift windows |
+| Safe-mode integrity | `TestSafeModeReentry` | Re-enter/exit safe mode without event loss |
+| Throughput under control | `BenchmarkSLOControllerThroughput` | Controller loop overhead < 3% under surge |
+| Explainability of actions | `TestActionReasoningCompleteness` | Every recommended action has rationale + expected impact |
+| Recovery latency | `TestControlRollbackLatency` | Revert control changes within 2 minutes |
+
+---
+
+## 4) Phase 12 test matrix
+
+### 4.1 Unit tests
+
+| WP | Test class | Focus | Expected outcome |
+|---|---|---|---|
+| WP-12001 | `TestExplainabilityContract` | summary/detail/trace schema consistency | Single source-of-truth schema ID |
+| WP-12002 | `TestFatigueControlRules` | suppression and override behavior | Non-critical noise suppression only |
+| WP-12003 | `TestReplaySandboxMutationGuard` | read-only enforcement | Mutation blocked without execute mode |
+| WP-12004 | `TestWhatIfBranchEngine` | branch generation and compare output | Branch results deterministic |
+| WP-12005 | `TestHandoffConfidenceGate` | handoff confirmation and snapshot quality | Continue blocked until confirmed |
+| WP-12006 | `TestEvidenceGraphPackaging` | evidence graph closure and edge completeness | Deterministic manifest and manifest checksum |
+| WP-12007 | `TestPersonaProfiles` | profile restrictions and defaults | Persona-specific limits enforced |
+| WP-12008 | `TestLearningAssetGeneration` | runbooks and coaching artifacts | New operator drill passes with baseline assets |
+| WP-12009 | `TestReleasePackCompiler` | compile PRD/WBS/test artifacts from manifest | Export includes all required artifacts |
+| WP-12010 | `TestPhase10to12Finality` | final gate and artifact completeness | Closure artifact signed and verifiable |
+
+### 4.2 Integration tests
+
+| WP | Test class | Focus | Expected outcome |
+|---|---|---|---|
+| WP-12001/12003 | `TestExplainabilityReplayIntegration` | explainability for replay and what-if operations | Summary/detail/trace remain aligned |
+| WP-12004/12005 | `TestHandoffReplayReadiness` | what-if scenario with handoff guardrails | No unsafe handoff path and clear recovery option |
+| WP-12006/12009 | `TestEvidencePackagingFlow` | packer end-to-end with manifest | Export reproducible and checksum verified |
+| WP-12007/12010 | `TestPersonaAndReadinessGate` | persona behavior + final gate verification | Correct owner and policy behavior for critical actions |
+
+### 4.3 Phase 12 artifacts
+
+- `artifacts/phase12/explainability_bundle.ndjson`
+- `artifacts/phase12/replay_safety.ndjson`
+- `artifacts/phase12/evidence_graph.ndjson`
+- `artifacts/phase12/release_pack_summary.ndjson`
+
+### 4.4 Phase 12 non-functional testing
+
+| Concern | Test case | Requirement |
+|---|---|---|
+| Replay safety | `TestReplayMutationProperty` | Reads-only by default is invariant under fuzzing |
+| Evidence integrity | `TestEvidenceGraphCompleteness` | Evidence graph has no dangling edges in audit-critical runs |
+| Persona constraints | `TestPersonaConstraintCoverage` | Persona-policy enforcement for all persona IDs |
+| Packaging reproducibility | `TestReleasePackDeterministicBuild` | Repeated export from same repo state produces identical checksum |
+| Escalation quality | `TestEscalationEvidenceCompleteness` | 99% escalations include rationale + confidence + owner |
+| Fatigue controls | `TestFatigueSuppressionAccuracy` | Critical alerts are not suppressed while reducing low-priority noise |
+
+---
+
+## 5) Gate readiness checklist
+
+### G10
+- [ ] Dispatch determinism evidence (WP-10001..10010)
+- [ ] Unknown-operation migration and compatibility responses validated
+- [ ] Registry health and trust behavior green
+
+### G11
+- [ ] Forecast calibration and controller stability evidence
+- [ ] Safe-mode and self-heal action traces complete
+- [ ] No unstable control transitions in canary window
+
+### G12
+- [ ] Replay safety guard rails validated (no-state mutation)
+- [ ] Explainability bundles complete and schema-stable
+- [ ] Evidence packaging export reproducible and checksum-verified
+
+## 6) Readiness matrix by evidence owner
+
+| Gate | Evidence owner | Evidence | Artifact |
+|---|---|---|---|
+| G10 | Platform + Governance | Dispatch determinism + unknown-op migration proof | `artifacts/phase10/*` |
+| G11 | SRE + Operations | Forecast, control, continuity, self-heal evidence | `artifacts/phase11/*` |
+| G12 | Compliance + Product | Replay safety and evidence graph integrity, pack exports | `artifacts/phase12/*` |
+
+## 7) Test execution order and cadence
+
+### 7.1 Recommended execution order
+
+1. **Phase 10 unit/integration baseline:** Phase 10 unit suite + 10 critical interface integration cases.
+2. **G10 readiness lock:** run all G10 checks and freeze interface flags until green.
+3. **Phase 11 control stack:** phase 11 unit suite + chaos and soak in non-production shadow.
+4. **G11 readiness lock:** control simulation must run 7-day stability window.
+5. **Phase 12 hardening:** explainability and replay safety suite, full evidence graph export.
+6. **G12 readiness lock:** deterministic export and compliance checks.
+
+### 7.2 Execution environment profile
+
+- **Local fast:** unit tests + static checks.
+- **Canary:** full integration suites + feature-flagged control path.
+- **Shadow:** simulation traffic with replay and control loops at 10–20% workload.
+- **Production warm window:** signed gate review + read-only verification.
+
+## 8) Test environment and observability hardening
+
+- Standardize trace correlation across all tests with `run_id`, `phase_id`, `wp_id`, `gate_id`.
+- Emit synthetic drift events monthly to validate compatibility fallback.
+- Add explicit assertion for:
+  - `policy_version` presence,
+  - `dispatch_path_hash`,
+  - `evidence_manifest_id`,
+  - `rollback_token`.
+- Archive all phase-specific outputs to dedicated NDJSON locations and `closure_summary.ndjson`.
+
+## 6) Recommended implementation chunking
+
+1. **Chunk A:** WP-10001 → WP-10003 + WP-10006 + determinism tests.
+2. **Chunk B:** WP-10004 → WP-10010 + compatibility and dispatch artifacts.
+3. **Chunk C:** WP-11001 → WP-11005 + predictive loop and calibration tests.
+4. **Chunk D:** WP-11006 → WP-11010 + resilience and control governance tests.
+5. **Chunk E:** WP-12001 → WP-12006 + explainability and evidence integrity tests.
+6. **Chunk F:** WP-12007 → WP-12010 + persona tests and final pack compile/review.
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

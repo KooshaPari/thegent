@@ -1,12 +1,28 @@
 """Pydantic settings for thegent."""
 
-import json
 import os
 from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from thegent.config_defaults import (
+    DEFAULT_MAC_KEEP_AWAKE_AGENTS,
+    DEFAULT_SANDBOX_ENV_ALLOWLIST,
+    default_cost_budget_by_category,
+    default_hitl_checkpoints,
+    default_mac_keep_awake_agents,
+    default_sandbox_env_allowlist,
+    expanded_path_factory,
+)
+from thegent.config_parsers import (
+    parse_bool_or_env_flag,
+    parse_csv_or_list,
+    parse_first_nonempty_env,
+    parse_optional_path,
+    parse_retention_by_domain,
+    parse_shell_path,
+)
 
 
 class ThegentSettings(BaseSettings):
@@ -20,11 +36,11 @@ class ThegentSettings(BaseSettings):
     )
 
     factory_skills_dir: Path = Field(
-        default_factory=lambda: Path("~/.factory/skills").expanduser(),
+        default_factory=expanded_path_factory("~/.factory/skills"),
         description="Factory skills directory",
     )
     factory_droids_dir: Path = Field(
-        default_factory=lambda: Path("~/.factory/droids").expanduser(),
+        default_factory=expanded_path_factory("~/.factory/droids"),
         description="Factory droids directory",
     )
     cursor_agent_cmd: str = Field(
@@ -139,11 +155,11 @@ class ThegentSettings(BaseSettings):
         description="Models cache TTL in seconds (5–60 min); THGENT_MODELS_CACHE_TTL_SEC",
     )
     cache_dir: Path = Field(
-        default_factory=lambda: Path("~/.cache/thegent").expanduser(),
+        default_factory=expanded_path_factory("~/.cache/thegent"),
         description="Global cache directory for thegent",
     )
     session_dir: Path = Field(
-        default_factory=lambda: Path("~/.cache/thegent/sessions").expanduser(),
+        default_factory=expanded_path_factory("~/.cache/thegent/sessions"),
         description="Session metadata/log directory for background runs",
     )
     retention_days_sessions: int = Field(
@@ -203,17 +219,7 @@ class ThegentSettings(BaseSettings):
     @field_validator("retention_by_domain", mode="before")
     @classmethod
     def _parse_retention_by_domain(cls, v: object) -> dict[str, int]:
-        if isinstance(v, str):
-            try:
-                parsed = json.loads(v)
-                if isinstance(parsed, dict):
-                    return {str(k): int(val) if isinstance(val, (int, float, str)) else 0 for k, val in parsed.items()}
-                return {}
-            except (json.JSONDecodeError, ValueError, TypeError):
-                return {}
-        if isinstance(v, dict):
-            return {str(k): int(val) if isinstance(val, (int, float, str)) else 0 for k, val in v.items()}
-        return {}
+        return parse_retention_by_domain(v)
 
     # WP-3001: Policy Evaluation & Normalization
     normalization_policy_allow_fallback: bool = Field(
@@ -280,12 +286,7 @@ class ThegentSettings(BaseSettings):
         description="Budget utilization threshold for warnings (0.8 = 80%) (THGENT_ROUTING_BUDGET_WARNING_THRESHOLD)",
     )
     cost_budget_by_category: dict[str, float] = Field(
-        default_factory=lambda: {
-            "fast": 50.0,
-            "normal": 200.0,
-            "complex": 150.0,
-            "high_complex": 50.0,
-        },
+        default_factory=default_cost_budget_by_category,
         description="Per-category MTD budgets in USD (THGENT_COST_BUDGET_BY_CATEGORY JSON)",
     )
     # WP-5003: Cost-aware routing
@@ -457,15 +458,15 @@ class ThegentSettings(BaseSettings):
         description="Port for thegent's CLIProxyAPIPlus proxy (THGENT_CLIPROXY_PORT)",
     )
     cliproxy_auth_dir: Path = Field(
-        default_factory=lambda: Path("~/.cli-proxy-api").expanduser(),
+        default_factory=expanded_path_factory("~/.cli-proxy-api"),
         description="Auth dir for OAuth tokens (shared with vibeproxy); THGENT_CLIPROXY_AUTH_DIR",
     )
     cliproxy_config_path: Path = Field(
-        default_factory=lambda: Path("~/.config/thegent/cliproxy-config.yaml").expanduser(),
+        default_factory=expanded_path_factory("~/.config/thegent/cliproxy-config.yaml"),
         description="Generated config for CLIProxyAPIPlus (THGENT_CLIPROXY_CONFIG_PATH)",
     )
     custom_models_path: Path = Field(
-        default_factory=lambda: Path("~/.config/thegent/custom_models.yaml").expanduser(),
+        default_factory=expanded_path_factory("~/.config/thegent/custom_models.yaml"),
         description="Path to custom models configuration (THGENT_CUSTOM_MODELS_PATH)",
     )
     cliproxy_adapter: bool = Field(
@@ -479,6 +480,22 @@ class ThegentSettings(BaseSettings):
     cursor_api_token: str = Field(
         default="",
         description="Bearer token for cursor-api; set THGENT_CURSOR_API_TOKEN (from /build-key or AUTH_TOKEN)",
+    )
+    cursor_token_file: str = Field(
+        default="",
+        description=(
+            "Path to file containing the Cursor sk-... session token "
+            "(G-CP-01: Phase 2 token-file provider). "
+            "Overrides THGENT_CURSOR_API_TOKEN when set. "
+            "Auto-discovered from ~/.cursor-server/ when empty. "
+            "THGENT_CURSOR_TOKEN_FILE"
+        ),
+    )
+    cursor_token_refresh_interval: int = Field(
+        default=300,
+        ge=30,
+        le=3600,
+        description="How often (seconds) to re-read the cursor token file (G-CP-01); THGENT_CURSOR_TOKEN_REFRESH_INTERVAL",
     )
     environment: str = Field(
         default="development",
@@ -509,7 +526,7 @@ class ThegentSettings(BaseSettings):
         description="Enable human-in-the-loop (HITL) checkpoints (G-GP-05)",
     )
     hitl_checkpoints: list[str] = Field(
-        default_factory=lambda: ["pre_execution"],
+        default_factory=default_hitl_checkpoints,
         description="List of checkpoints where HITL should pause: pre_execution, post_execution",
     )
     mcp_auth_mode: str = Field(
@@ -623,18 +640,14 @@ class ThegentSettings(BaseSettings):
 
     # G-GP-08: Sandboxing (optional Phase 2)
     sandbox_env_allowlist: list[str] = Field(
-        default_factory=lambda: ["PATH", "HOME", "LANG", "USER", "TERM", "PYTHONUNBUFFERED"],
+        default_factory=default_sandbox_env_allowlist,
         description="Environment variables allowed in the agent sandbox (THGENT_SANDBOX_ENV_ALLOWLIST)",
     )
 
     @field_validator("sandbox_env_allowlist", mode="before")
     @classmethod
     def _parse_env_allowlist(cls, v: object) -> list[str]:
-        if isinstance(v, str):
-            return [s.strip() for s in v.split(",") if s.strip()]
-        if isinstance(v, list):
-            return [str(s) for s in v]
-        return ["PATH", "HOME", "LANG", "USER", "TERM", "PYTHONUNBUFFERED"]
+        return parse_csv_or_list(v, DEFAULT_SANDBOX_ENV_ALLOWLIST)
 
     # G-GP-02: Input Guardrails
     prompt_max_chars: int = Field(
@@ -819,100 +832,55 @@ class ThegentSettings(BaseSettings):
     @classmethod
     def _parse_zen_api_key(cls, v: object) -> str:
         """Read zen_api_key from THGENT_ZEN_API_KEY, OPENCODE_API_KEY, or ZEN_API_KEY."""
-        import os
-
-        if isinstance(v, str) and v:
-            return v
-        # Try multiple env vars (in order of preference)
-        for env_var in ["THGENT_ZEN_API_KEY", "OPENCODE_API_KEY", "ZEN_API_KEY"]:
-            val = os.environ.get(env_var, "").strip()
-            if val:
-                return val
-        return ""
+        return parse_first_nonempty_env(v, ["THGENT_ZEN_API_KEY", "OPENCODE_API_KEY", "ZEN_API_KEY"])
 
     @field_validator("virtual_env", mode="before")
     @classmethod
     def _parse_virtual_env(cls, v: object) -> Path | None:
         """Auto-detect VIRTUAL_ENV from system if not explicitly set."""
-        import os
-
-        if isinstance(v, (str, Path)) and v:
-            return Path(v) if isinstance(v, str) else v
-        # Auto-detect from system VIRTUAL_ENV
-        venv_path = os.environ.get("VIRTUAL_ENV")
-        return Path(venv_path) if venv_path else None
+        return parse_optional_path(v, "VIRTUAL_ENV")
 
     @field_validator("shell_path", mode="before")
     @classmethod
     def _parse_shell_path(cls, v: object) -> str:
         """Auto-detect SHELL from system if not explicitly set."""
-        import os
-
-        if isinstance(v, str) and v and v != "/bin/zsh":
-            return v
-        # Auto-detect from system SHELL
-        shell = os.environ.get("SHELL", "/bin/zsh")
-        return shell or "/bin/zsh"
+        return parse_shell_path(v, "SHELL", "/bin/zsh")
 
     @field_validator("appdata_path", mode="before")
     @classmethod
     def _parse_appdata_path(cls, v: object) -> Path | None:
         """Auto-detect APPDATA from system on Windows if not explicitly set."""
-        import os
-
-        if isinstance(v, (str, Path)) and v:
-            return Path(v) if isinstance(v, str) else v
-        # Auto-detect from system APPDATA (Windows only)
-        appdata = os.environ.get("APPDATA")
-        return Path(appdata) if appdata else None
+        return parse_optional_path(v, "APPDATA")
 
     @field_validator("check_leaks", mode="before")
     @classmethod
     def _parse_check_leaks(cls, v: object) -> bool:
         """Parse CHECK_LEAKS environment variable."""
-        import os
-
-        if isinstance(v, bool):
-            return v
-        if isinstance(v, str):
-            return v.lower() in ("1", "true", "yes", "on")
-        # Auto-detect from system CHECK_LEAKS
-        return os.environ.get("CHECK_LEAKS") == "1"
+        return parse_bool_or_env_flag(v, "CHECK_LEAKS")
 
     @field_validator("testing_mode", mode="before")
     @classmethod
     def _parse_testing_mode(cls, v: object) -> bool:
         """Parse THGENT_TESTING environment variable."""
-        import os
+        return parse_bool_or_env_flag(v, "THGENT_TESTING")
 
-        if isinstance(v, bool):
-            return v
-        if isinstance(v, str):
-            return v.lower() in ("1", "true", "yes", "on")
-        # Auto-detect from system THGENT_TESTING
-        return os.environ.get("THGENT_TESTING") == "1"
-
-    heliosShield_enabled: bool = Field(
+    helios_shield_enabled: bool = Field(
         default=True,
-        description="Enable heliosShield bridge (THGENT_heliosShield_ENABLED)",
+        description="Enable heliosShield bridge (THGENT_HELIOS_SHIELD_ENABLED)",
     )
     mac_keep_awake: bool = Field(
         default=True,
         description="Keep Mac awake during claude/codex runs (caffeinate; THGENT_MAC_KEEP_AWAKE)",
     )
     mac_keep_awake_agents: list[str] = Field(
-        default=["claude", "codex", "cursor-agent", "opencode", "cursor-api", "droid", "gemini", "copilot"],
+        default_factory=default_mac_keep_awake_agents,
         description="Agents that trigger caffeinate when mac_keep_awake (THGENT_MAC_KEEP_AWAKE_AGENTS)",
     )
 
     @field_validator("mac_keep_awake_agents", mode="before")
     @classmethod
     def _parse_mac_keep_awake_agents(cls, v: object) -> list[str]:
-        if isinstance(v, str):
-            return [s.strip() for s in v.split(",") if s.strip()]
-        if isinstance(v, list):
-            return [str(s) for s in v]
-        return ["claude", "codex", "cursor-agent", "opencode", "cursor-api", "droid", "gemini", "copilot"]
+        return parse_csv_or_list(v, DEFAULT_MAC_KEEP_AWAKE_AGENTS)
 
     config_dir_override: Path | None = Field(
         default=None,
@@ -1095,6 +1063,94 @@ class ThegentSettings(BaseSettings):
         description="Override threshold for thegent-router hysteresis; THGENT_ROUTER_HYSTERESIS_OVERRIDE",
     )
 
+    # Phase 3 router configuration (WL-012)
+    # Env vars: THGENT_ROUTER_BAND_WIDTH, THGENT_ROUTER_DWELL_TIME,
+    #           THGENT_ROUTER_MAX_DWELL, THGENT_ROUTER_OVERRIDE_THRESHOLD,
+    #           THGENT_ROUTER_AUDIT_PATH
+    # (Prefix THGENT_ applied automatically by SettingsConfigDict env_prefix.)
+    router_band_width: float = Field(
+        default=0.15,
+        ge=0.0,
+        le=0.5,
+        description=("Hysteresis band width for thegent-router Phase 3. Env: THGENT_ROUTER_BAND_WIDTH."),
+    )
+    router_dwell_time: int = Field(
+        default=300,
+        ge=0,
+        le=86400,
+        description=("Minimum dwell time (seconds) before a routing switch is allowed. Env: THGENT_ROUTER_DWELL_TIME."),
+    )
+    router_max_dwell: int = Field(
+        default=1800,
+        ge=0,
+        le=86400,
+        description=(
+            "Maximum dwell time (seconds) before a forced routing re-evaluation. Env: THGENT_ROUTER_MAX_DWELL."
+        ),
+    )
+    router_override_threshold: float = Field(
+        default=0.20,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Risk delta required to override dwell and force an immediate routing switch. "
+            "Env: THGENT_ROUTER_OVERRIDE_THRESHOLD."
+        ),
+    )
+    router_audit_path: str = Field(
+        default="",
+        description=(
+            "Path to routing_audit.jsonl. Defaults to <session_dir>/routing_audit.jsonl "
+            "if empty. Env: THGENT_ROUTER_AUDIT_PATH."
+        ),
+    )
+
+    # WL-030: Quality gate DAG runner bounds
+    quality_max_workers: int = Field(
+        default=4,
+        ge=1,
+        le=32,
+        description=(
+            "Maximum concurrent quality gate DAG step workers (WL-030). "
+            "Caps the ThreadPoolExecutor in quality_runner.py. "
+            "QUALITY_MAX_WORKERS"
+        ),
+        alias="QUALITY_MAX_WORKERS",
+    )
+    quality_step_timeout_sec: int = Field(
+        default=600,
+        ge=10,
+        le=3600,
+        description=(
+            "Per-step timeout in seconds for quality gate DAG steps (WL-030). "
+            "Each subprocess.run call is bounded by this value. "
+            "QUALITY_STEP_TIMEOUT_SEC"
+        ),
+        alias="QUALITY_STEP_TIMEOUT_SEC",
+    )
+    quality_shadow_cleanup_hours: int = Field(
+        default=24,
+        ge=1,
+        le=720,
+        description=(
+            "Age threshold in hours for stale .shadow-* directory cleanup (WL-030). "
+            "Directories older than this are removed by quality-gate.sh cleanup. "
+            "QUALITY_SHADOW_CLEANUP_HOURS"
+        ),
+        alias="QUALITY_SHADOW_CLEANUP_HOURS",
+    )
+    quality_log_retention_days: int = Field(
+        default=7,
+        ge=1,
+        le=365,
+        description=(
+            "Retention in days for .quality/logs files (WL-030). "
+            "Log files older than this are removed by quality-gate.sh cleanup. "
+            "QUALITY_LOG_RETENTION_DAYS"
+        ),
+        alias="QUALITY_LOG_RETENTION_DAYS",
+    )
+
     # AgilePlus autonomous governance loop
     agileplus_enabled: bool = Field(
         default=False,
@@ -1248,7 +1304,7 @@ class ThegentSettings(BaseSettings):
     )
 
     harness_root: Path = Field(
-        default_factory=lambda: Path("~/.agent-harness").expanduser(),
+        default_factory=expanded_path_factory("~/.agent-harness"),
         description="heliosShield harness root directory (HARNESS_ROOT)",
     )
 

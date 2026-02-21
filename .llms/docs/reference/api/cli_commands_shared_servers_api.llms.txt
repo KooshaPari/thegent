@@ -1,0 +1,43 @@
+# cli_commands_shared_servers_api
+
+Source: docs/reference/api/cli_commands_shared_servers_api.md
+
+---
+
+# cli_commands_shared_servers API Reference
+
+> **Source**: `src/thegent/cli/commands/cli_commands_shared_servers.py`
+
+CLI Commands for Shared Server Management
+
+---
+
+## shared_health
+
+```
+shared_health(project_root: str)
+```
+
+Check health of shared servers.
+
+---
+
+## shared_scope
+
+```
+shared_scope(project_root: str)
+```
+
+Show server scope (system-wide or project-scoped).
+
+---
+
+## shared_status
+
+```
+shared_status(project_root: str)
+```
+
+Show status of shared servers.
+
+---

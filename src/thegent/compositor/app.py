@@ -4,6 +4,8 @@ Provides the CompositApp class which manages the overall UI layout including
 header, footer, and pane management.
 """
 
+from typing import ClassVar
+
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical
 from textual.widgets import Footer, Header, Static
@@ -81,7 +83,7 @@ class CompositApp(Vertical):
     TITLE = "Thegent Compositor"
     SUB_TITLE = "Multi-pane terminal interface"
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list] = [
         ("ctrl+n", "new_pane", "New Pane"),
         ("ctrl+h", "split_horizontal", "Split H"),
         ("ctrl+v", "split_vertical", "Split V"),

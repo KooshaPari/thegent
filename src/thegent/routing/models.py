@@ -23,6 +23,8 @@ class TaskMetadata:
     estimated_duration_s: float = 0.0
     reasoning: str = ""
     signals: dict[str, Any] = field(default_factory=dict)
+    resolved_provider: str | None = None
+    resolved_model_alias: str | None = None
 
 
 @dataclass

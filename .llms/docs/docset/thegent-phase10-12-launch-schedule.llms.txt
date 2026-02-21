@@ -1,0 +1,114 @@
+# thegent-phase10-12-launch-schedule
+
+Source: docs/docset/thegent-phase10-12-launch-schedule.md
+
+---
+
+# Thegent Phase 10–12 Launch Schedule (Day-by-Day Execution Plan)
+
+**Status:** Operational draft
+**Date:** 2026-02-15
+**Scope:** Day-by-day execution, ownership, and signoff artifacts for Phases 10–12.
+
+## 0) Assumptions
+
+- Workweek: 5 days
+- Timebox: 11-week run (55 business days) including gate windows and signoff.
+- Feature flags:
+  - `phase10.interface_v2`
+  - `phase11.autotune`
+  - `phase12.hardening`
+- All changes behind flags until corresponding gate is approved.
+- Evidence artifacts are written to `artifacts/phase10`, `artifacts/phase11`, and `artifacts/phase12`.
+
+## 1) Day-by-day plan
+
+| Day | Work focus | Primary WPs | Owner(s) | Gates / Signoff artifact |
+|---|---|---|---|---|
+| Day 1 | Kickoff, baseline verification, enable plan trackers, finalize issue queue | `WP-10001`, `WP-10002` | Program lead + PM + Platform lead | Project kickoff memo, risk register baseline, WIP plan in WBS |
+| Day 2 | Implement operation envelope schema v2 and registry foundation | `WP-10001`, `WP-10002` | Platform lead + Contracts owner | `artifacts/phase10/operation_envelope_v2.ndjson`, `artifacts/phase10/capability_registry_service.ndjson` |
+| Day 3 | Deterministic dispatch graph and parity tracing baseline | `WP-10003` | Core runtime | `artifacts/phase10/dispatch_graph_pathing.ndjson` |
+| Day 4 | Unknown-op migration and dispatch consistency hardening | `WP-10003`, `WP-10006` | Core runtime + UX | `artifacts/phase10/unknown_operation_hints.ndjson`; initial parity checklist |
+| Day 5 | Trust policy + adapter gating implementation | `WP-10004` | Security + Governance | `artifacts/phase10/adapter_trust_gate.ndjson`; gate precheck note |
+| Day 6 | Endpoint consolidation and alias matrix + docs update | `WP-10005`, `WP-10010` | Platform/API + Docs | `artifacts/phase10/operation_coverage_matrix.ndjson` |
+| Day 7 | Traceability event schema + dispatch audit path | `WP-10007` | Governance | `artifacts/phase10/dispatch_trace_schema.ndjson`; audit trace sample |
+| Day 8 | Adapter conformance harness and compatibility matrix design | `WP-10008`, `WP-10009` | Platform/API + QA | `artifacts/phase10/plugin_conformance_reports.ndjson`, `artifacts/phase10/compatibility_matrix.ndjson` |
+| Day 9 | Day-buffer + integration patching and regression pass for phase 10 | `WP-10001..WP-10010` | Platform + QA | Readiness checklist candidate for G10 |
+| Day 10 | G10 readiness review + canary dry-run | `WP-10001..WP-10010` | Governance lead + Program lead | Signed `G10 Readiness Note`, canary evidence bundle |
+
+| Day 11 | SLO controller implementation and forecast architecture | `WP-11001`, `WP-11002` | SRE/Operations | `artifacts/phase11/slo_regulator_events.ndjson`, `artifacts/phase11/forecast_quality.ndjson` |
+| Day 12 | Forecast calibration and confidence threshold controls | `WP-11003`, `WP-11004` | QA + Governance + Core routing | Calibration check report |
+| Day 13 | Self-heal recommendation engine MVP + policy gating | `WP-11005` | Governance + Product | `artifacts/phase11/self_heal_recommendations.ndjson` |
+| Day 14 | Adaptive task shaping and continuity model | `WP-11006`, `WP-11007` | Orchestration + Product | `artifacts/phase11/task_shaping_events.ndjson`, `artifacts/phase11/continuity_risk.ndjson` |
+| Day 15 | Learning loop + policy guardrails + safe-mode governance | `WP-11008`, `WP-11009` | Governance + Security | `artifacts/phase11/learning_loop.ndjson`, `artifacts/phase11/safe_mode_governance.ndjson` |
+| Day 16 | Phase 11 evidence pack assembly and stability simulation prep | `WP-11010` | QA + Docs | `artifacts/phase11/g11_readiness_pack.ndjson` draft |
+| Day 17 | G11 simulation window boot (7-day precondition start) + canary gate note | `WP-11001..WP-11010` | SRE Lead + Governance lead + PM | Simulation dashboard baseline, `G11 Pre-Run Cert` |
+| Day 18 | Explainability contract and persona-level policy surfaces | `WP-12001`, `WP-12007` | Product + UX + Security | `artifacts/phase12/explainability_bundle.ndjson`, `artifacts/phase12/persona_profiles.ndjson` |
+| Day 19 | Replay sandbox hardening and what-if baseline branching | `WP-12003`, `WP-12004` | Core runtime + Governance | `artifacts/phase12/replay_safety.ndjson`, `artifacts/phase12/what_if_branching.ndjson` |
+| Day 20 | Fatigue controls + handoff confidence controls | `WP-12002`, `WP-12005` | SRE + Product + Governance | `artifacts/phase12/fatigue_controls.ndjson`, `artifacts/phase12/handoff_continuity.ndjson` |
+| Day 21 | Evidence graph export and packaging pipeline | `WP-12006`, `WP-12009` | Compliance + Documentation | `artifacts/phase12/evidence_graph.ndjson`, `artifacts/phase12/release_pack_summary.ndjson` |
+| Day 22 | Closure artifact draft, operational learning assets, final gate rehearsal | `WP-12008`, `WP-12010` | Program lead + Docs + Governance | `artifacts/phase12/phase10_12_finality_bundle.md` draft |
+| Day 23 | G11 final signoff checkpoint (7-day stability review) + freeze tuning | `WP-11001..WP-11010` | Governance + SRE | Formal `G11 Gate Approval` (signed) |
+| Day 24 | Start and complete G12 evidence lock rehearsal | `WP-12001..WP-12010` | Compliance + Product | Replay/export validation evidence set |
+| Day 25 | Full integration smoke in canary with all phase 10–12 paths | `All phase 10–12` | Cross-functional | Canary smoke report |
+| Day 26 | Production shadow run (1% workload) with gate flags off in noncritical paths | `All phase 10–12` | Ops + SRE | Shadow run report + escalation exercise result |
+| Day 27 | Final G12 signoff package review | `All phase 10–12` | Program + Governance + Security + Product | `G12 Gate Signoff` + signed closure note |
+| Day 28 | Release candidate lock and rollback drill exercise | `All phase 10–12` | Program lead + On-call lead | Rollback drill report; evidence manifest checksum |
+| Day 29 | Operator training drill and runbook verification | `WP-12008..WP-12010` | Product + Docs + Ops | Drill report: continuity handoff + escalation flow complete |
+| Day 30 | Launch decision meeting and 14-day post-launch monitoring plan handoff | `All phase 10–12` | Program lead + PM + SRE | Launch readiness memo + post-launch monitoring runbook |
+
+## 2) Gate-to-day map
+
+- **G10 target date:** Day 10 (initial) / Day 13 (final evidence stabilization)
+- **G11 target date:** Day 23
+- **G12 target date:** Day 27
+
+## 3) Owner commitment matrix
+
+| Owner group | Daily responsibility band | Escalation threshold |
+|---|---|---|
+| Program lead | Day 1, 10, 23, 27, 30 | Any missed gate artifact in two consecutive days |
+| Platform/API | Day 2–10 | Dispatch parity mismatch > 1 |
+| Security/Governance | Day 5, 7, 23, 27 | Any unresolved denylist/trace policy gap |
+| SRE/Operations | Day 11–17, 25–26 | Canaries with unstable oscillation events |
+| Product/UX | Day 1, 18, 20, 29 | Explainability mismatch in any operator-facing path |
+| QA/Compliance | Day 9, 16, 24, 27 | Any failing required test in gate checklists |
+
+## 4) Signoff artifacts and approvals
+
+### Required for **G10**
+- `artifacts/phase10/dispatch_trace_schema.ndjson`
+- `artifacts/phase10/compatibility_matrix.ndjson`
+- Signed note: `artifacts/phase10/g10_signoff_note.md`
+
+### Required for **G11**
+- `artifacts/phase11/slo_regulator_events.ndjson`
+- `artifacts/phase11/forecast_quality.ndjson`
+- `artifacts/phase11/self_heal_recommendations.ndjson`
+- Signed note: `artifacts/phase11/g11_signoff_note.md`
+
+### Required for **G12**
+- `artifacts/phase12/evidence_graph.ndjson`
+- `artifacts/phase12/replay_safety.ndjson`
+- `artifacts/phase12/release_pack_summary.ndjson`
+- Signed note: `artifacts/phase12/g12_signoff_note.md`
+
+## 5) Predefined acceptance criteria for launch day
+
+- 1 week of stable post-gate canary (no critical incidents related to phase10-12).
+- 100% test coverage completion for required matrices in `thegent-phase10-12-test-readiness-pack.md`.
+- Deterministic release pack reproducibility from clean `git` state with checksum lock.
+- Final handoff brief signed by Product, Security, and Platform leads.
+
+## 6) Contingency and recovery
+
+- If G10 misses target: continue only phase 10 fixes; freeze chunks 110xx.
+- If G11 enters oscillation: disable control actions (`phase11.autotune` off), continue explainability/readiness work.
+- If G12 replay safety fails: disable mode `phase12.hardening`, continue replay safety hardening under canary.
+- If launch artifacts diverge: delay launch by 1 day and rerun reproducibility script with manifest lock.
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

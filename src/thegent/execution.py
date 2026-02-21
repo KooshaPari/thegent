@@ -17,47 +17,50 @@ import httpx
 from pydantic import BaseModel, Field
 
 from thegent.config import ThegentSettings
+from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
+from thegent.execution_coercion_helpers import as_float as _as_float_impl
+from thegent.execution_coercion_helpers import as_int as _as_int_impl
+from thegent.execution_event_builders import (
+    build_feedback_event,
+    build_finish_event,
+    build_pause_event,
+    build_resume_event,
+    build_schema_marker_event,
+)
+from thegent.execution_hash_helpers import calculate_stable_record_hash
+from thegent.execution_jsonl_parsers import parse_checkpoint_by_id as _parse_checkpoint_by_id_impl
+from thegent.execution_jsonl_parsers import parse_checkpoint_line as _parse_checkpoint_line_impl
+from thegent.execution_jsonl_parsers import parse_circuit_failure as _parse_circuit_failure_impl
+from thegent.execution_jsonl_parsers import parse_dlq_item as _parse_dlq_item_impl
+from thegent.execution_jsonl_parsers import parse_fatigue_line as _parse_fatigue_line_impl
+from thegent.execution_jsonl_parsers import parse_override_unexpired as _parse_override_unexpired_impl
+from thegent.execution_jsonl_parsers import process_dlq_line as _process_dlq_line_impl
+from thegent.execution_run_scan_helpers import check_session_id as _check_session_id_impl
+from thegent.execution_run_scan_helpers import extract_domain_tag as _extract_domain_tag_impl
+from thegent.execution_run_scan_helpers import extract_run_id as _extract_run_id_impl
+from thegent.execution_run_scan_helpers import extract_session_id as _extract_session_id_impl
+from thegent.execution_run_scan_helpers import filter_expired_record as _filter_expired_record_impl
+from thegent.execution_run_scan_helpers import process_calibration_entry as _process_calibration_entry_impl
+from thegent.execution_run_scan_helpers import process_run_entry as _process_run_entry_impl
+from thegent.execution_run_scan_helpers import process_token_match as _process_token_match_impl
+from thegent.execution_run_scan_helpers import update_run_state as _update_run_state_impl
 
 _log = logging.getLogger(__name__)
 
 
 def _as_float(value: Any, default: float) -> float:
     """Coerce arbitrary values to float with a safe default."""
-    try:
-        if isinstance(value, bool):
-            return float(value)
-        if isinstance(value, (int, float, str)):
-            return float(value)
-    except (TypeError, ValueError):
-        pass
-    return default
+    return _as_float_impl(value, default)
 
 
 def _as_int(value: Any, default: int) -> int:
     """Coerce arbitrary values to int with a safe default."""
-    try:
-        if isinstance(value, bool):
-            return int(value)
-        if isinstance(value, (int, float, str)):
-            return int(value)
-    except (TypeError, ValueError):
-        pass
-    return default
+    return _as_int_impl(value, default)
 
 
 def _as_bool(value: Any, default: bool) -> bool:
     """Coerce arbitrary values to bool with a safe default."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        normalized = value.strip().lower()
-        if normalized in {"1", "true", "yes", "on"}:
-            return True
-        if normalized in {"0", "false", "no", "off"}:
-            return False
-    if isinstance(value, (int, float)):
-        return bool(value)
-    return default
+    return _as_bool_impl(value, default)
 
 
 class RunState(StrEnum):
@@ -98,6 +101,34 @@ class IdempotencyManager:
         """Check if key exists in registry; return True if already executed."""
         run = registry.find_by_token(key)
         return run is not None and run.get("status") == "completed"
+
+
+class ContinuityPacket(BaseModel):
+    """Compressed essence of session progress for cross-session handoffs (L3/L4).
+
+    # @trace FR-HAX-004
+    """
+
+    intent: str
+    """High-level goal of the session."""
+
+    decisions: list[str] = Field(default_factory=list)
+    """Key decisions made during the session."""
+
+    risks: list[str] = Field(default_factory=list)
+    """Identified risks or blockers."""
+
+    context_hashes: dict[str, str] = Field(default_factory=dict)
+    """SHA-256 hashes of referenced context files keyed by path string."""
+
+    token_count: int = 0
+    """Approximate token count (rough estimate)."""
+
+    session_id: str = Field(default_factory=lambda: "")
+    """Session ID this packet belongs to."""
+
+    created_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+    """ISO-8601 timestamp when the packet was created."""
 
 
 class ConcurrencyController:
@@ -426,7 +457,7 @@ class ConcurrencyController:
         all_stats = self._usage_tracker.get_all_stats()
         return {owner: stats.to_dict() for owner, stats in all_stats.items()}
 
-    def get_bottlenecks(self) -> list[dict[str, Any]]:
+    def get_bottlenecks(self) -> dict[str, Any]:
         """Get current bottlenecks and slow points."""
         if not hasattr(self, "bottleneck_detector"):
             return []
@@ -447,62 +478,24 @@ class ConcurrencyController:
 
 def _parse_checkpoint_by_id(line: str, checkpoint_id: str) -> dict[str, Any] | None:
     """Parse a checkpoint line and check if ID matches. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        if data.get("checkpoint_id") == checkpoint_id:
-            return data
-    except Exception:
-        pass
-    return None
+    return _parse_checkpoint_by_id_impl(line, checkpoint_id)
 
 
 def _parse_circuit_failure(
     line: str, target: str, category: str, now: datetime, window_s: int
 ) -> tuple[int, datetime | None]:
     """Parse a circuit breaker failure line. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        if (
-            data.get("target") == target
-            and data.get("category", "agent") == category
-            and data.get("event") == "failure"
-        ):
-            ts = datetime.fromisoformat(data.get("timestamp"))
-            if (now - ts).total_seconds() < window_s:
-                return 1, ts
-    except Exception:
-        pass
-    return 0, None
+    return _parse_circuit_failure_impl(line, target, category, now, window_s)
 
 
 def _parse_override_unexpired(line: str, owner: str, now: datetime) -> bool:
     """Parse an override line and check if it's unexpired. WP-P2: Fix PERF203."""
-    line = line.strip()
-    if not line:
-        return False
-    try:
-        data = json.loads(line)
-        if data.get("owner") != owner:
-            return False
-        exp = data.get("expires_at_utc")
-        if not exp:
-            return False
-        exp_dt = datetime.fromisoformat(exp)
-        return now < exp_dt
-    except Exception:
-        return False
+    return _parse_override_unexpired_impl(line, owner, now)
 
 
 def _parse_fatigue_line(line: str, now: datetime, window_s: int) -> int:
     """Parse a fatigue interruption line. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        ts = datetime.fromisoformat(data["timestamp"])
-        if (now - ts).total_seconds() < window_s:
-            return 1
-    except Exception:
-        pass
-    return 0
+    return _parse_fatigue_line_impl(line, now, window_s)
 
 
 class InterruptionTracker:
@@ -606,6 +599,39 @@ class HandoffManager:
         with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event) + "\n")
         return True
+
+    def get_snapshot(self, snapshot_id: str) -> dict[str, Any] | None:
+        """Retrieve a specific handoff snapshot by ID."""
+        if not self.path.exists():
+            return None
+        with self.path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                data = json.loads(line)
+                if data.get("snapshot_id") == snapshot_id and data.get("event_type") != "handoff_confirmed":
+                    return data
+        return None
+
+    def list_pending_snapshots(self, limit: int = 10) -> list[dict[str, Any]]:
+        """List pending (unconfirmed) handoff snapshots."""
+        if not self.path.exists():
+            return []
+        snapshots: list[dict[str, Any]] = []
+        confirmed: set[str] = set()
+        with self.path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                data = json.loads(line)
+                if data.get("event_type") == "handoff_confirmed":
+                    confirmed.add(data["snapshot_id"])
+                elif "snapshot_id" in data:
+                    snapshots.append(data)
+        pending = [s for s in snapshots if s["snapshot_id"] not in confirmed]
+        return pending[:limit]
 
     def is_handoff_enforced(self, run_id: str) -> bool:
         """WP-9004: Check if a run is blocked by a pending handoff confirmation."""
@@ -724,6 +750,43 @@ class DeferralQueue:
         with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event) + "\n")
 
+    def list_deferred(self) -> list[dict[str, Any]]:
+        """List all currently deferred tasks."""
+        if not self.path.exists():
+            return []
+        items: list[dict[str, Any]] = []
+        with self.path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                data = json.loads(line)
+                if data.get("status") == "deferred":
+                    items.append(data)
+        return items
+
+    def resume(self, run_id: str) -> bool:
+        """Resume a deferred task by marking it as resumed."""
+        if not self.path.exists():
+            return False
+        lines: list[str] = []
+        found = False
+        with self.path.open("r", encoding="utf-8") as f:
+            for line in f:
+                stripped = line.strip()
+                if not stripped:
+                    lines.append(line)
+                    continue
+                data = json.loads(stripped)
+                if data.get("run_id") == run_id and data.get("status") == "deferred":
+                    data["status"] = "resumed"
+                    found = True
+                lines.append(json.dumps(data) + "\n")
+        if found:
+            with self.path.open("w", encoding="utf-8") as f:
+                f.writelines(lines)
+        return found
+
 
 class ContinuityWatchdog:
     """WP-5005: Background watchdog for stale ownership and automatic handoffs.
@@ -815,28 +878,12 @@ class ContinuityWatchdog:
 
 def _parse_dlq_item(line: str, status: str | None, run_id: str | None) -> dict[str, Any] | None:
     """Parse a single DLQ item. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        if status and data.get("status") != status:
-            return None
-        if run_id and data.get("run_id") != run_id:
-            return None
-        return data
-    except Exception:
-        return None
+    return _parse_dlq_item_impl(line, status, run_id)
 
 
 def _process_dlq_line(line: str, run_id: str, resolution: str) -> tuple[str, bool]:
     """Process a single line in the DLQ. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        if data.get("run_id") == run_id and data.get("status") == "pending_review":
-            data["status"] = resolution
-            data["resolved_at"] = datetime.now(UTC).isoformat()
-            return json.dumps(data), True
-        return json.dumps(data), False
-    except Exception:
-        return line, False
+    return _process_dlq_line_impl(line, run_id, resolution)
 
 
 class DLQManager:
@@ -1274,120 +1321,42 @@ class LaneController:
 
 def _extract_session_id(line: str) -> str | None:
     """Extract session ID from a registry line. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        if data.get("status") == "started" or data.get("event") == "started":
-            return data.get("correlation_id") or data.get("run_id")
-    except Exception:
-        pass
-    return None
+    return _extract_session_id_impl(line)
 
 
 def _extract_run_id(line: str) -> str | None:
     """Extract run ID from a registry line. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        return data.get("run_id")
-    except Exception:
-        pass
-    return None
+    return _extract_run_id_impl(line)
 
 
 def _update_run_state(line: str, run_id: str, current_state: RunState | None) -> RunState | None:
     """Update run state from a registry line. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        if data.get("run_id") != run_id:
-            return current_state
-        ev = data.get("event")
-        if ev is None and data.get("status") == "started":
-            return RunState.RUNNING
-        if ev == "finish":
-            status = data.get("status", "")
-            return RunState.FAILED if status in ("failed", "timed_out") else RunState.COMPLETED
-        if ev == "pause":
-            return RunState.PAUSED
-        if ev == "resume":
-            return RunState.RUNNING
-    except Exception:
-        pass
-    return current_state
+    return _update_run_state_impl(line, run_id, current_state, RunState)
 
 
 def _process_run_entry(line: str, runs: dict[str, dict[str, Any]]) -> None:
     """Process a run entry and update the runs dict. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        rid = data.get("run_id")
-        if not rid:
-            return
-        if data.get("event") == "finish":
-            if rid in runs:
-                runs[rid].update(data)
-        else:
-            runs[rid] = data
-    except Exception:
-        pass
+    _process_run_entry_impl(line, runs)
 
 
 def _check_session_id(line: str, session_id: str) -> bool:
     """Check if a line matches the session ID. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        if data.get("correlation_id") == session_id or data.get("run_id") == session_id:
-            return True
-    except Exception:
-        pass
-    return False
+    return _check_session_id_impl(line, session_id)
 
 
 def _process_token_match(line: str, token: str, best: dict[str, Any] | None) -> dict[str, Any] | None:
     """Process a line for idempotency token matching. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        if data.get("idempotency_token") == token:
-            rid = data.get("run_id")
-            if data.get("event") == "finish":
-                if best and best.get("run_id") == rid:
-                    best.update(data)
-            elif data.get("event") == "feedback":
-                if best and best.get("run_id") == rid:
-                    best["feedback_score"] = data.get("feedback_score")
-            # Start event: if we don't have this run or it's newer, use it
-            elif not best or data.get("started_at_utc", "") >= best.get("started_at_utc", ""):
-                return data
-    except Exception:
-        pass
-    return best
+    return _process_token_match_impl(line, token, best)
 
 
 def _process_calibration_entry(line: str, agent: str, runs: dict[str, dict[str, Any]]) -> None:
     """Process an entry for calibration calculation. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        rid = data.get("run_id")
-        if not rid:
-            return
-
-        if data.get("event") == "finish":
-            if rid in runs:
-                runs[rid].update(data)
-        elif data.get("event") == "feedback":
-            if rid in runs:
-                runs[rid]["feedback_score"] = data.get("feedback_score")
-        elif data.get("agent") == agent:
-            runs[rid] = data
-    except Exception:
-        pass
+    _process_calibration_entry_impl(line, agent, runs)
 
 
 def _extract_domain_tag(line: str) -> tuple[str | None, str | None]:
     """Extract run_id and domain_tag. WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        return data.get("run_id"), data.get("domain_tag")
-    except Exception:
-        return None, None
+    return _extract_domain_tag_impl(line)
 
 
 def _filter_expired_record(
@@ -1398,34 +1367,12 @@ def _filter_expired_record(
     by_domain: dict[str, int],
 ) -> tuple[bool, str]:
     """Check if a record is expired. Returns (is_expired, line). WP-P2: Fix PERF203."""
-    try:
-        data = json.loads(line)
-        ts_str = data.get("timestamp") or data.get("started_at_utc")
-        if not ts_str:
-            return False, line
-
-        ts = datetime.fromisoformat(ts_str)
-        if ts.tzinfo is None:
-            ts = ts.replace(tzinfo=UTC)
-
-        rid = data.get("run_id")
-        domain = run_domains.get(rid) if rid else data.get("domain_tag")
-        days = by_domain.get(domain, default_days) if domain else default_days
-
-        if (now - ts).days > days:
-            return True, line
-
-        return False, line
-    except Exception:
-        return False, line
+    return _filter_expired_record_impl(line, now, run_domains, default_days, by_domain)
 
 
 def _parse_checkpoint_line(line: str) -> dict[str, Any] | None:
     """Parse a checkpoint registry line. WP-P2: Fix PERF203."""
-    try:
-        return json.loads(line)
-    except Exception:
-        return None
+    return _parse_checkpoint_line_impl(line)
 
 
 def _parse_chat_line(line: str) -> "ChatEntry | None":
@@ -1497,11 +1444,7 @@ class RunRegistry:
         """Write a version marker if the file is new."""
         if not self.registry_path.exists():
             self.session_dir.mkdir(parents=True, exist_ok=True)
-            marker = {
-                "event": "schema_version",
-                "version": self.SCHEMA_VERSION,
-                "timestamp": datetime.now(UTC).isoformat(),
-            }
+            marker = build_schema_marker_event(self.SCHEMA_VERSION)
             marker["hash"] = self._calculate_hash(marker)
             with self.registry_path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(marker) + "\n")
@@ -1526,11 +1469,7 @@ class RunRegistry:
 
     def _calculate_hash(self, data: dict[str, Any]) -> str:
         """Calculate a stable hash for a record, excluding the hash itself."""
-        # Create a copy and remove the 'hash' field if it exists
-        d = {k: v for k, v in data.items() if k != "hash"}
-        # Use stable JSON serialization
-        body = json.dumps(d, sort_keys=True, separators=(",", ":"))
-        return hashlib.sha256(body.encode()).hexdigest()
+        return calculate_stable_record_hash(data)
 
     def register_start(self, run: RunMeta) -> None:
         """Record the start of a run with hash chaining."""
@@ -1555,36 +1494,32 @@ class RunRegistry:
         duration_s: float,
         error_class: str | None = None,
         cost_usd: float | None = None,
+        event_details: dict[str, Any] | None = None,
     ) -> None:
         """Update a run with completion metadata and hash chaining. G-GP-06: cost_usd optional."""
-        event = {
-            "run_id": run_id,
-            "event": "finish",
-            "exit_code": exit_code,
-            "status": status,
-            "ended_at_utc": ended_at_utc,
-            "duration_s": duration_s,
-            "error_class": error_class,
-            "timestamp": ended_at_utc,
-            "prev_hash": self._get_last_hash(),
-        }
-        if cost_usd is not None:
-            event["cost_usd"] = cost_usd
+        event = build_finish_event(
+            run_id=run_id,
+            exit_code=exit_code,
+            status=status,
+            ended_at_utc=ended_at_utc,
+            duration_s=duration_s,
+            error_class=error_class,
+            prev_hash=self._get_last_hash(),
+            cost_usd=cost_usd,
+            event_details=event_details,
+        )
         event["hash"] = self._calculate_hash(event)
         with self.registry_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event) + "\n")
 
     def register_feedback(self, run_id: str, score: float, note: str | None = None) -> None:
         """Record operator feedback for a run with hash chaining."""
-        timestamp = datetime.now(UTC).isoformat()
-        event = {
-            "run_id": run_id,
-            "event": "feedback",
-            "feedback_score": score,
-            "feedback_note": note,
-            "timestamp": timestamp,
-            "prev_hash": self._get_last_hash(),
-        }
+        event = build_feedback_event(
+            run_id=run_id,
+            score=score,
+            note=note,
+            prev_hash=self._get_last_hash(),
+        )
         event["hash"] = self._calculate_hash(event)
         with self.registry_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event) + "\n")
@@ -1596,15 +1531,12 @@ class RunRegistry:
         continuity_snapshot: dict[str, Any] | None = None,
     ) -> None:
         """Record run pause for state-aware orchestration (G-KD-03)."""
-        timestamp = datetime.now(UTC).isoformat()
-        event = {
-            "run_id": run_id,
-            "event": "pause",
-            "reason": reason,
-            "continuity_snapshot": continuity_snapshot or {},
-            "timestamp": timestamp,
-            "prev_hash": self._get_last_hash(),
-        }
+        event = build_pause_event(
+            run_id=run_id,
+            reason=reason,
+            continuity_snapshot=continuity_snapshot,
+            prev_hash=self._get_last_hash(),
+        )
         event["hash"] = self._calculate_hash(event)
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.registry_path.open("a", encoding="utf-8") as f:
@@ -1612,13 +1544,7 @@ class RunRegistry:
 
     def register_resume(self, run_id: str) -> None:
         """Record run resume for state-aware orchestration (G-KD-03)."""
-        timestamp = datetime.now(UTC).isoformat()
-        event = {
-            "run_id": run_id,
-            "event": "resume",
-            "timestamp": timestamp,
-            "prev_hash": self._get_last_hash(),
-        }
+        event = build_resume_event(run_id=run_id, prev_hash=self._get_last_hash())
         event["hash"] = self._calculate_hash(event)
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.registry_path.open("a", encoding="utf-8") as f:
@@ -2025,6 +1951,46 @@ class PolicyEngine:
     def __init__(self, settings: Any) -> None:
         self.settings = settings
 
+    def _emit_await_approval(
+        self,
+        run: RunMeta,
+        reason: str,
+        policy: str = "require_human_approval.policy_gate",
+    ) -> None:
+        """Append await_approval governance event to JSONL audit log."""
+        session_dir = Path(getattr(self.settings, "session_dir", "~/.thegent/sessions")).expanduser().resolve()
+        path = session_dir / "governance_events.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        event = {
+            "event_type": "await_approval",
+            "event_id": f"hitl_{uuid.uuid4().hex[:8]}",
+            "run_id": run.run_id,
+            "policy": policy,
+            "owner": run.owner,
+            "agent": run.agent,
+            "lane": run.lane,
+            "reason": reason,
+            "checkpoint": "pre_execution",
+            "environment": getattr(self.settings, "environment", "development"),
+            "status": "pending",
+            "emitted_at_utc": datetime.now(UTC).isoformat(),
+        }
+        try:
+            with path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(event, sort_keys=True))
+                fh.write("\n")
+        except OSError as exc:
+            _log.warning("failed to write governance await_approval event: %s", exc)
+
+    @staticmethod
+    def _requires_human_approval(run: RunMeta) -> bool:
+        """Detect explicit HITL requirement from run metadata/contracts."""
+        if run.constraint_violations and any(v == "require_human_approval" for v in run.constraint_violations):
+            return True
+        if run.task_metadata and bool(run.task_metadata.get("require_human_approval")):
+            return True
+        return False
+
     def _query_opa(self, run: RunMeta) -> tuple[str, str] | None:
         """
         G-GP-01: Optional OPA integration. POST to /v1/data/thegent/allow.
@@ -2064,13 +2030,21 @@ class PolicyEngine:
         Returns (result, reason) where result is 'allow', 'deny', or 'warn'.
         G-GP-01: When THGENT_OPA_URL is set, delegates to OPA first; falls back to Python logic on failure.
         """
+        # G-GP-05: Explicit HITL gate from task/contract metadata.
+        if self._requires_human_approval(run):
+            reason = "Run requires explicit human approval."
+            self._emit_await_approval(run, reason, policy="require_human_approval.metadata")
+            return "pause", reason
+
         # WP-9007: Confidence escalation thresholds
         confidence = run.confidence if run.confidence is not None else 0.5
         threshold = _as_float(getattr(self.settings, "confidence_escalation_threshold", 0.4), 0.4)
         if confidence < threshold:
+            reason = f"Confidence {confidence:.2f} below escalation threshold {threshold:.2f}. Manual review required."
+            self._emit_await_approval(run, reason, policy="require_human_approval.low_confidence")
             return (
                 "pause",
-                f"Confidence {confidence:.2f} below escalation threshold {threshold:.2f}. Manual review required.",
+                reason,
             )
 
         # G-GP-02: Input Guardrails (NeMo-style)
@@ -2142,7 +2116,9 @@ class PolicyEngine:
             if getattr(self.settings, "hitl_enabled", False) and "pre_execution" in getattr(
                 self.settings, "hitl_checkpoints", []
             ):
-                return "pause", f"{run.lane.capitalize()} action requires HITL approval due to missing confidence."
+                reason = f"{run.lane.capitalize()} action requires HITL approval due to missing confidence."
+                self._emit_await_approval(run, reason, policy="require_human_approval.missing_confidence")
+                return "pause", reason
             return "warn", f"{run.lane.capitalize()} actions should ideally carry a confidence score."
 
         # Policy 4: Trust Score Gate for Production
@@ -2262,8 +2238,7 @@ class Auditor:
 
     def _calculate_hash(self, data: dict[str, Any]) -> str:
         """Calculate a stable hash for a record, excluding the hash field."""
-        body = json.dumps({k: v for k, v in data.items() if k != "hash"}, sort_keys=True, separators=(",", ":"))
-        return hashlib.sha256(body.encode()).hexdigest()
+        return calculate_stable_record_hash(data)
 
     def sign_run(self, run: RunMeta) -> str:
         """Generate a cryptographic signature for a run record."""

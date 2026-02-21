@@ -39,13 +39,13 @@ EOF
         echo "Created config at $CONFIG_FILE"
     fi
     
-    # Fix fork config if needed
-    FORK_BIN="$ROOT/../CLIProxyAPIPlus-fork/cli-proxy-api-plus"
-    FORK_CONFIG="$ROOT/../CLIProxyAPIPlus-fork/config.yaml"
-    if [ -f "$FORK_BIN" ] && [ ! -f "$FORK_CONFIG" ]; then
-        mkdir -p "$(dirname "$FORK_CONFIG")"
-        cp "$CONFIG_FILE" "$FORK_CONFIG"
-        echo "Created fork config at $FORK_CONFIG"
+    # Fix plusplus config if needed
+    PLUSPLUS_BIN="$ROOT/../cliproxyapi-plusplus/cli-proxy-api-plus"
+    PLUSPLUS_CONFIG="$ROOT/../cliproxyapi-plusplus/config.yaml"
+    if [ -f "$PLUSPLUS_BIN" ] && [ ! -f "$PLUSPLUS_CONFIG" ]; then
+        mkdir -p "$(dirname "$PLUSPLUS_CONFIG")"
+        cp "$CONFIG_FILE" "$PLUSPLUS_CONFIG"
+        echo "Created plusplus config at $PLUSPLUS_CONFIG"
     fi
 }
 

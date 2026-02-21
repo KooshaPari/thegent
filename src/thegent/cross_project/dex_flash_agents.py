@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class DexFlashAgents:
     """Dex flash agents port."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize dex flash agents."""
         self.agents: dict[str, Any] = {}
 

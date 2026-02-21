@@ -96,11 +96,23 @@ class EvidenceLedger:
         body = json.dumps(d, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(body.encode()).hexdigest()
 
-    def record(self, event_type: str, cycle_id: str, payload: dict[str, Any]) -> str:
+    def record(self, event_type: str, cycle_id: str, payload: dict[str, Any] | None = None, **kwargs: Any) -> str:
         """Record an evidence event with hash chaining.
 
         Returns the hash of the newly recorded event.
+
+        Args:
+            event_type: Type of event being recorded
+            cycle_id: ID of the cycle
+            payload: Optional dict payload (if not provided, kwargs are used)
+            **kwargs: Additional fields to include in payload
         """
+        # Merge payload and kwargs
+        if payload is None:
+            payload = kwargs
+        elif kwargs:
+            payload = {**payload, **kwargs}
+
         event = EvidenceEvent(
             event_type=event_type,
             cycle_id=cycle_id,
@@ -176,4 +188,4 @@ class EvidenceLedger:
 
     def link_to_graph(self, graph: EvidenceGraph, event_hash: str, artifact_id: str) -> None:
         """Link an evidence event to an artifact in the EvidenceGraph."""
-        graph.add_link(event_hash, artifact_id, "produced_by")
+        graph.add_link(event_hash, artifact_id)

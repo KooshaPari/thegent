@@ -1,0 +1,362 @@
+# thegent-phase3-6-crosswave-bridge-and-continuity-plan
+
+Source: docs/docset/thegent-phase3-6-crosswave-bridge-and-continuity-plan.md
+
+---
+
+# Thegent Phase 3–6 Cross-Wave Bridge and Continuity Plan
+
+**Status:** Strategic-operational bridge artifact  
+**Date:** 2026-02-15  
+**Scope:** Converts phases 3–6 outputs into a stable bridge for phases 7–12 without semantic breakage.
+
+## 1) Purpose
+
+This document makes continuity explicit across execution waves:
+
+- **Wave A:** foundation and governance (phases 0–2)
+- **Wave B:** consolidation and hardening (phases 3–6)
+- **Wave C:** expansion and optimization (phases 7–12)
+
+Phases 3–6 created most of the non-regression scaffolding and control primitives. This bridge defines what must remain true before phase transitions, and how to keep it true while implementing phase 10–12 work.
+
+## 2) What "continuity" means for this codebase
+
+Continuity must preserve four dimensions simultaneously:
+
+1. **Contract continuity**
+   - schema invariants, service boundaries, and CLI contract compatibility.
+2. **Operational continuity**
+   - telemetry, kill-switches, test gates, and alert semantics.
+3. **Governance continuity**
+   - evidence flow, sign-off discipline, gate lock controls.
+4. **Learning continuity**
+   - no context loss in runbooks, policies, and release knowledge.
+
+If any dimension degrades, phase handoff is paused.
+
+## 3) Inputs that feed the bridge
+
+These are mandatory when planning or executing phase 3–6 to 10–12 migration:
+
+- `thegent-wbs-final.md`
+- `thegent-dag-final.md`
+- `thegent-prd-final.md`
+- `thegent-phase3-6-full-depth-execution-prd.md`
+- `thegent-phase7-9-next-wave-prd.md`
+- `thegent-phase10-12-optimal-design-prd.md`
+- `thegent-wbs-phase10-12.md`
+- `thegent-dag-phase10-12-extension.md`
+- `thegent-gaps-and-discovery-2026-02-14.md`
+- `thegent-cross-analysis-matrix-2026-02-14.md`
+
+## 4) Explicit bridge assumptions from earlier WPs
+
+### 4.1 Phases 3–6 hard requirements
+
+- canonical event naming and traceability must remain intact
+- feature flags and safety overrides must remain explicit and auditable
+- no silent route decisions without evidence-backed reasons
+- PRD coverage cannot decrease in any migration slice
+
+### 4.2 Control requirements inherited by later phases
+
+- every runtime-affecting behavior has an owner and rollback plan
+- any adaptation policy emits control events with confidence metadata
+- policy change paths include canary-first behavior
+- closure evidence is versioned and signed
+
+## 5) Continuity contract matrix
+
+### 5.1 Contract row format
+
+Each row below is a non-negotiable bridge checkpoint:
+
+- `artifact_family`
+- `source` (phase 3–6 artifact)
+- `target` (phase 7–12 artifact)
+- `continuity check`
+- `mandatory by`
+
+| Artifact family | Source | Target | Continuity check | Mandatory by |
+|---|---|---|---|---|
+| event model | Phase 3–6 schema references | DAG extensions in phase10–12 | event_id format stable and monotonic | phase7-9 start |
+| safety policy | phase 3–6 hard-stop + override rules | phase10–12 hard-stop matrix | no rule removed without migration note | phase10 start |
+| evidence graph | phase 3–6 traceability pack | phase10–12 master ledger | each WP has forward links | phase10 start |
+| orchestration | phase 3–6 workboard/queue | phase10–12 issue-board seed | dependency edges preserved | phase10 start |
+| test gates | phase 3–6 test baseline | phase10–12 readiness packs | baseline tests remain green | phase10 gate |
+
+### 5.2 Non-regression policy
+
+No continuity row can be marked satisfied if:
+
+- source evidence is not linked from the target artifact,
+- target artifact adds incompatible assumptions,
+- owner signatures are stale or absent,
+- evidence checksum verification fails.
+
+## 6) Cross-wave dependency lock
+
+Represented lock vector:
+
+```
+L = {
+  "phase3_contracts": true,
+  "phase4_safety": true,
+  "phase5_scalability": true,
+  "phase6_governance": true,
+  "phase7_preconditions": false,
+  "phase10_preconditions": false
+}
+```
+
+Release advance rule:
+
+- `if any(L.phase3_contracts..phase6_governance) == false` → block all future-wave production changes.
+
+## 7) Phased continuity schedule
+
+### 7.1 Pre-Phase7 bridge window
+
+- reconcile PRD delta across phase3–6 closure and phase7 scope
+- run continuity scan against phase3–6 artifacts
+- freeze all global default behavior changes until gate lock checks pass
+
+### 7.2 Phase7–9 handoff window
+
+- run one-hour sync between phase6 closure owner and phase7 lead
+- migrate issue queue identifiers to new schema if needed
+- run migration script with dry-run, then deterministic replay
+- preserve known-good seed snapshots
+
+### 7.3 Phase10–12 readiness window
+
+- instantiate policy-as-code, dashboard, orchestrator stack before enabling runtime-phase transitions
+- run dependency lock check for all WP-10001..WP-12010 against bridge locks
+- enable canary path and verify no backward contract violation
+
+## 8) Continuity threat model
+
+### 8.1 Threats carried from phases 3–6
+
+| Threat class | Symptom | Bridge control |
+|---|---|---|
+| Contract drift | WP mapping changed in seed without corresponding WBS update | cross-source consistency checks |
+| Safety blind spot | safety policy bypassed by new connector behavior | hard-stop + policy precedence |
+| Evidence decay | old evidence links not revalidating | evidence TTL + checksum revalidation |
+| Governance fatigue | repeated skip of signoffs for speed | dual approver rules + audit lock |
+
+### 8.2 Mitigations
+
+- continuous diff detection of critical artifacts
+- explicit migration PR templates
+- lock-step signoff workflow
+- mandatory evidence TTL alerts
+
+## 9) Continuity validation checklist
+
+### 9.1 Before any Phase 7+ gate
+
+- WBS/WP row continuity preserved from phase3–6 baseline
+- all critical event fields preserved
+- safety override semantics preserved in new matrix
+- test baseline remains green in no-new-failure mode
+
+### 9.2 Before Phase10 gate
+
+- `G03..G06` evidence packages signed with closure timestamp
+- migration notes reference all changed control points
+- no unresolved policy precedence conflicts
+- crosswave dependency matrix lock for interfaces/flags
+
+### 9.3 Before any production toggle
+
+- rollback token for each runtime-affecting WP available
+- hard-stop tests from both legacy and phase10–12 matrices pass
+- evidence freshness < 24h for all active rows
+- incident playbook ownership matrix present
+
+## 10) Continuity scripts (practical)
+
+### 10.1 `bridge_reconcile.py` (pseudocode)
+
+```
+def reconcile_bridge(legacy_artifacts, new_artifacts):
+    # map by canonical IDs
+    checks = [
+        compare_contracts,
+        compare_safety_rules,
+        compare_owner_signoff,
+        compare_evidence_graphs,
+        compare_dependency_edges,
+    ]
+    report = []
+    for chk in checks:
+        result = chk(legacy_artifacts, new_artifacts)
+        report.append(result)
+    return aggregate(report)
+
+def compare_contracts(legacy, current):
+    legacy_events = set(legacy["events"])
+    current_events = set(current["events"])
+    missing = legacy_events - current_events
+    return {"ok": len(missing) == 0, "missing_events": sorted(missing)}
+
+def compare_safety_rules(legacy, current):
+    legacy_rules = map_rules(legacy["hard_stop_matrix"])
+    current_rules = map_rules(current["hard_stop_matrix"])
+    if not legacy_rules.issubset(current_rules):
+        return {"ok": False, "detail": "missing legacy safety rules"}
+    return {"ok": True}
+```
+
+### 10.2 `gate_blocker_scan.sh` (operational sketch)
+
+```
+#!/usr/bin/env bash
+set -euo pipefail
+legacy_gate_file=$1
+current_gate_file=$2
+
+echo "Running contract continuity scan"
+python3 scripts/bridge_reconcile.py "$legacy_gate_file" "$current_gate_file" | tee bridge-report.ndjson
+python3 scripts/check_evidence_freshness.py --max-hours 24 artifacts
+python3 scripts/verify_owner_signoff.py thegent-phase10-12-master-traceability-ledger.md
+```
+
+## 11) Child-agent orchestration for bridge work
+
+Use child agent lanes so continuity work is safe and fast:
+
+- **Lane A — Canonical evidence**
+  - verify PRD/WBS/DAG references are still valid
+- **Lane B — Policy migration**
+  - compare hard-stop and rollback semantics
+- **Lane C — Tooling contracts**
+  - validate connector schema and transition behavior
+- **Lane D — Test continuity**
+  - rerun core phase3–6 suites and readiness pack deltas
+- **Lane E — Documentation integrity**
+  - confirm index and runbook references remain linked and current
+
+Each lane emits:
+- lane status
+- blockers
+- pass evidence
+- dependency implications
+
+## 12) Incident template for bridge regressions
+
+```
+BRIDGE-INCIDENT:
+  id: BRIDGE-YYYYMMDD-#####
+  phase_origin: [3|4|5|6|7|10|11|12]
+  phase_target: [7|8|9|10|11|12]
+  severity: P0|P1|P2
+  category: contract|safety|governance|evidence|tooling
+  summary: <short>
+  impact: <runtime / planning / release / evidence>
+  blocked_wps: [WP-...]
+  root_cause_hint: <expected>
+  mitigation:
+    - corrective_action: <action>
+    - owner: <owner>
+    - due_at: <timestamp>
+  resolution_required:
+    - continuity_lock: "released"
+    - evidence_revalidated: true
+```
+
+## 13) PRD↔WBS continuity checks
+
+Run this three-level check:
+
+### 13.1 Coverage continuity
+
+- all phase3–6 FR coverage that is required by phase10–12 remains present
+- no FR disappears unless replaced with explicit delta rationale
+
+### 13.2 Sequence continuity
+
+- predecessor links preserved
+- new dependencies only appended, never mutated unless migration approved
+
+### 13.3 Signoff continuity
+
+- phase3–6 closure signoffs cannot be orphaned
+- any re-closure must include `continuity_owner` + governance lead signature
+
+## 14) Deployment posture for phase10–12 based on bridge outcomes
+
+### 14.1 Green posture
+
+- all checks pass
+- zero high-severity bridge incidents in last 7 days
+- canary and policy path stable for one full cycle
+
+### 14.2 Amber posture
+
+- non-blocking docs or telemetry mismatches only
+- mitigation plan accepted and timeboxed
+- delayed gate movement only
+
+### 14.3 Red posture
+
+- missing owner signoff, broken safety constraints, or unresolved bridge P1/P0
+- gate movement suspended
+- manual operations lock engaged
+
+## 15) Metrics for continuity health
+
+- `contract_preservation_ratio`: required contracts still active in target wave
+- `bridge_incident_rate`: incidents per 1,000 ticket transitions
+- `evidence_staleness_hours`: max and P95
+- `owner_availability_ratio`: active owners vs blocked states
+- `hard_stop_regression_count`: hard-stop class introduced due to new wave
+
+Target thresholds:
+
+- ratio >= 0.98
+- incidents <= 0.2/1000 transitions
+- staleness <= 24h
+- owner ratio >= 0.95
+- hard-stop regression <= 1 per quarter gate cycle
+
+## 16) Exit criteria for Wave-B to Wave-C continuity
+
+Execution can pass from phases 3–6 governance closure into phases 7–12 if:
+
+- all five artifact families above pass continuity checks
+- no unresolved crosswave drift
+- bridge incident backlog < 1 open P1/P0
+- policy and board engines demonstrate one dry-run-to-live deterministic parity run
+
+If criteria fail:
+
+- freeze all non-critical runtime work
+- execute Lane A + Lane B (evidence and policy migration)
+- issue new bridge incident and update plan with corrected lock gates
+
+## 17) Immediate action pack (first 24 hours)
+
+1. Build continuity matrix from `thegent-wbs-final.md` and `thegent-phase10-12-optimal-design-prd.md`.
+2. Run precheck script using phase3–6 artifacts.
+3. Attach output to dashboard and board pin.
+4. Fix only red-critical continuity rows first (contract and safety).
+5. Confirm phase10 preconditions and only then unlock runtime adaptation WPs.
+
+## 18) Practical references
+
+- For concrete phase3–6 implementation details use `thegent-phase3-6-full-depth-execution-prd.md`.
+- For transition details to phase7–9 review `thegent-phase7-9-next-wave-prd.md` and `thegent-wbs-phase7-9.md`.
+- For full phase10–12 governance and control checks use:
+  - `thegent-phase10-12-hard-stop-and-rollback-matrix.md`
+  - `thegent-phase10-12-drift-reconciliation-playbook.md`
+  - `thegent-phase10-12-policy-as-code-and-automation-contract.md`
+  - `thegent-phase10-12-orchestrator-tooling-stack.md`
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

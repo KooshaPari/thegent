@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from thegent.adapters.acp_client import ACPClient, ACPClientError, ACPResult, ACPServerUnreachableError
 
@@ -262,13 +262,15 @@ class AcpMcpBridge:
 
         descriptors: list[dict[str, Any]] = []
         try:
-            tools = self._mcp_app.get_tools()
+            # FastMCP's list_tools() is async; cast to Any for sync introspection
+            # (callers may provide a duck-typed or mocked mcp_app).
+            tools = cast(Any, self._mcp_app).list_tools()
         except Exception as exc:
             logger.warning("get_mcp_tool_manifest: failed to introspect tools: %s", exc)
             return []
 
-        for tool_name, tool_obj in tools.items():
-            descriptor = self._build_descriptor(tool_name, tool_obj)
+        for tool_obj in tools:
+            descriptor = self._build_descriptor(getattr(tool_obj, "name", str(tool_obj)), tool_obj)
             descriptors.append(descriptor.to_dict())
 
         logger.debug("get_mcp_tool_manifest: returning %d descriptors", len(descriptors))

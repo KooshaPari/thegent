@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import pytest
@@ -21,6 +21,9 @@ from thegent.mesh.coordination import (
     OptimisticConcurrencyControl,
     predict_merge_conflicts,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # SCLI-P6.2: HLCTimestamp

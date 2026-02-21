@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal
@@ -52,7 +52,7 @@ class CompositorApp(App):
     """
 
     # Theme configuration
-    CSS_THEMES = [
+    CSS_THEMES: ClassVar[list[Any]] = [
         Theme(
             name="thegent-dark",
             primary="#00ff00",  # Terminal green
@@ -135,7 +135,7 @@ class CompositorApp(App):
     }
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[tuple[str, str, str]]] = [
         # Pane management
         ("ctrl+n", "new_pane", "New Pane"),
         ("ctrl+v", "split_vertical", "Split Vert"),

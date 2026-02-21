@@ -1,0 +1,89 @@
+# queue_tui_api
+
+Source: docs/reference/api/queue_tui_api.md
+
+---
+
+# queue_tui API Reference
+
+> **Source**: `src/thegent/ux/queue_tui.py`
+
+WP-7002: Queue TUI for managing deferred prompts.
+
+---
+
+## QueueTUI
+
+Rich-based TUI for the prompt queue.
+
+### Methods
+
+#### QueueTUI.__init__
+
+```
+__init__(self: Any, session_dir: Path)
+```
+
+---
+
+#### QueueTUI.render_table
+
+```
+render_table(self: Any)
+```
+
+Render the queue as a Rich Table.
+
+---
+
+#### QueueTUI.show
+
+```
+show(self: Any)
+```
+
+Show the queue once.
+
+---
+
+#### QueueTUI.watch
+
+```
+watch(self: Any, interval: float)
+```
+
+Watch the queue live.
+
+---
+
+---
+
+## render_table
+
+```
+render_table(self: Any)
+```
+
+Render the queue as a Rich Table.
+
+---
+
+## show
+
+```
+show(self: Any)
+```
+
+Show the queue once.
+
+---
+
+## watch
+
+```
+watch(self: Any, interval: float)
+```
+
+Watch the queue live.
+
+---

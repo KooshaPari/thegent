@@ -1,0 +1,69 @@
+# launch_api
+
+Source: docs/reference/api/launch_api.md
+
+---
+
+# launch API Reference
+
+> **Source**: `src/thegent/ux/launch.py`
+
+WP-6007: Post-launch observation and rollback reserve.
+
+---
+
+## LaunchObserver
+
+Observes system health post-launch and manages rollback triggers.
+
+### Methods
+
+#### LaunchObserver.__init__
+
+```
+__init__(self: Any, settings: ThegentSettings)
+```
+
+---
+
+#### LaunchObserver.check_health
+
+```
+check_health(self: Any)
+```
+
+Check post-launch health metrics.
+
+---
+
+#### LaunchObserver.trigger_rollback
+
+```
+trigger_rollback(self: Any, reason: str)
+```
+
+Trigger an emergency rollback to the last stable state.
+
+---
+
+---
+
+## check_health
+
+```
+check_health(self: Any)
+```
+
+Check post-launch health metrics.
+
+---
+
+## trigger_rollback
+
+```
+trigger_rollback(self: Any, reason: str)
+```
+
+Trigger an emergency rollback to the last stable state.
+
+---

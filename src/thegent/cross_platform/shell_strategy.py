@@ -46,7 +46,9 @@ class DualShellStrategy:
                 )
             else:
                 # POSIX shell execution (bash/zsh)
-                result = subprocess.run(command, shell=True, capture_output=capture_output, text=True, check=False)
+                result = subprocess.run(
+                    ["/bin/sh", "-c", command], capture_output=capture_output, text=True, check=False
+                )
 
             return {
                 "shell": self.shell,

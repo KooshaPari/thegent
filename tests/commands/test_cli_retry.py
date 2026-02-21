@@ -17,6 +17,7 @@ import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from thegent.cli.commands.impl import (
     _EAGAIN_ERRNOS,
     _backoff_delay,
@@ -67,13 +68,13 @@ class TestSpawnWithEagainRetry:
 
     def _make_popen_args(self) -> dict:
         """Return minimal keyword args for _spawn_with_eagain_retry."""
-        return dict(
-            cwd="/tmp",
-            env={"PATH": "/usr/bin"},
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        return {
+            "cwd": "/tmp",
+            "env": {"PATH": "/usr/bin"},
+            "stdin": subprocess.DEVNULL,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE,
+        }
 
     def test_succeeds_on_first_attempt(self) -> None:
         mock_proc = MagicMock(spec=subprocess.Popen)

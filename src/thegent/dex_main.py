@@ -10,11 +10,18 @@ from pathlib import Path
 import typer
 
 from thegent.agents.routing_contracts import GEMINI_FLASH_MODEL, GEMINI_FLASH_PROVIDER
+from thegent.dex_cli_helpers import (
+    add_filtered_interactive_args,
+    build_codex_exec_command,
+    canonical_model,
+    extract_dex_command_args,
+    resolve_codex_cli_path,
+)
 from thegent.infra.power import wrap_with_caffeinate
 
 
 class LazyConsole:
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> object:
         from rich.console import Console
 
         global console
@@ -35,7 +42,7 @@ def _is_thegent_shim(path: str) -> bool:
     if "thegent-shims" in p.name:
         return True
     try:
-        if p.is_symlink() and "thegent-shims" in os.readlink(p):
+        if p.is_symlink() and "thegent-shims" in str(p.readlink()):
             return True
     except OSError:
         pass
@@ -128,6 +135,8 @@ def _should_bypass_approvals() -> bool:
 # Model alias -> canonical model ID. Routing is model-first, not provider.
 # Lazy imports used in commands to speed up CLI startup.
 _MODEL_ALIAS: dict[str, str] = {
+    "dex": "gpt-5.3-codex",
+    "codex": "gpt-5.3-codex",
     "composer": "composer-1.5",
     "composer1.5": "composer-1.5",
     "comp": "composer-1.5",
@@ -142,6 +151,8 @@ _MODEL_ALIAS: dict[str, str] = {
     "step": "step-3.5-flash",
     "step3.5": "step-3.5-flash",
     "flash": GEMINI_FLASH_MODEL,
+    "high": "gpt-5.3-codex-high",
+    "xhigh": "gpt-5.3-codex-xhigh",
     "mini": "gpt-5-mini",
     "gpt5mini": "gpt-5-mini",
 }
@@ -169,7 +180,7 @@ _DEX_BYPASS_FLAG = "--dangerously-bypass-approvals-and-sandbox"
 
 def _resolve_provider_for_model(model_alias: str) -> str:
     """Resolve provider for model-first routing. Round-robin across available providers."""
-    canonical = _MODEL_ALIAS.get(model_alias.lower(), model_alias)
+    canonical = canonical_model(model_alias, _MODEL_ALIAS)
 
     if canonical == "composer-1.5":
         return _CURSOR_OFFER_SET[0]
@@ -195,6 +206,8 @@ def _resolve_provider_for_model(model_alias: str) -> str:
         return "nim"
     if canonical == "gpt-5-mini":
         return "copilot"
+    if canonical in ("gpt-5.3-codex", "gpt-5.3-codex-high", "gpt-5.3-codex-xhigh"):
+        return "codex"
     if canonical == GEMINI_FLASH_MODEL:
         return GEMINI_FLASH_PROVIDER
 
@@ -281,6 +294,10 @@ def _get_codex_env(provider: str, model: str) -> dict[str, str]:
     env["OPENAI_BASE_URL"] = base
     env["OPENAI_API_KEY"] = provider
     env["API_TIMEOUT_MS"] = "300000"
+    # macOS: suppress repeated malloc stack logging noise inherited from parent shells.
+    env.pop("MallocStackLogging", None)
+    env.pop("MallocStackLoggingNoCompact", None)
+    env.pop("MallocStackLoggingDirectory", None)
     # Prepend ~/.local/bin so codex's internal git invocations use thegent git shim
     # (avoids "git: '/opt/homebrew/bin/codex' is not a git command")
     local_bin = str(Path.home() / ".local" / "bin")
@@ -332,33 +349,28 @@ def _run_codex_exec(
     dangerously_bypass: bool = True,
 ) -> None:
     """Run Codex non-interactively (headless) via exec subcommand."""
-    canonical = _MODEL_ALIAS.get(model_alias.lower(), model_alias)
+    canonical = canonical_model(model_alias, _MODEL_ALIAS)
     provider = _resolve_provider_for_model(model_alias)
     env = _get_codex_env(provider, canonical)
 
-    codex_path = shutil.which("codex")
-    if not codex_path:
-        local = Path.home() / ".local" / "bin" / "codex"
-        codex_path = str(local) if local.exists() else None
+    codex_path = resolve_codex_cli_path()
     if not codex_path:
         console.print("[red]Error: 'codex' CLI not found in PATH.[/red]")
         console.print("[dim]Install it via: npm i -g @openai/codex[/dim]")
         raise typer.Exit(1)
 
-    cmd = [codex_path, "exec", "--skip-git-repo-check"]
-    if dangerously_bypass and _should_bypass_approvals():
-        cmd.append(_DEX_BYPASS_FLAG)
-    cmd.extend(["--model", canonical])
-    if cd:
-        cmd.extend(["-C", str(cd.resolve())])
-    if add_dir:
-        for d in add_dir:
-            cmd.extend(["--add-dir", d])
-    if sandbox:
-        cmd.extend(["--sandbox", sandbox])
-    if full_auto:
-        cmd.append("--full-auto")
-    cmd.append(prompt)
+    cmd = build_codex_exec_command(
+        codex_path,
+        canonical,
+        prompt,
+        cd=cd,
+        add_dir=add_dir,
+        sandbox=sandbox,
+        full_auto=full_auto,
+        dangerously_bypass=dangerously_bypass,
+        bypass_approved=_should_bypass_approvals(),
+        bypass_flag=_DEX_BYPASS_FLAG,
+    )
 
     # Wrap with caffeinate to prevent sleep on macOS
     cmd = wrap_with_caffeinate(cmd, "codex")
@@ -380,14 +392,11 @@ def _run_codex_interactive(
     dangerously_bypass: bool = True,
 ) -> None:
     """Start an interactive Codex session. Model-first routing."""
-    canonical = _MODEL_ALIAS.get(model_alias.lower(), model_alias)
+    canonical = canonical_model(model_alias, _MODEL_ALIAS)
     provider = _resolve_provider_for_model(model_alias)
 
     env = _get_codex_env(provider, canonical)
-    codex_path = shutil.which("codex")
-    if not codex_path:
-        local = Path.home() / ".local" / "bin" / "codex"
-        codex_path = str(local) if local.exists() else None
+    codex_path = resolve_codex_cli_path()
     if not codex_path:
         console.print("[red]Error: 'codex' (Codex) CLI not found in PATH.[/red]")
         console.print("[dim]Install it via: npm i -g @openai/codex[/dim]")
@@ -400,10 +409,7 @@ def _run_codex_interactive(
     if dangerously_bypass and _should_bypass_approvals():
         cmd.append(_DEX_BYPASS_FLAG)
     cmd.extend(["--model", canonical])
-    if extra_args:
-        for arg in extra_args:
-            if arg not in (_DEX_BYPASS_FLAG, "--yolo") and not arg.startswith("--model"):
-                cmd.append(arg)
+    add_filtered_interactive_args(cmd, extra_args, _DEX_BYPASS_FLAG)
 
     # Wrap with caffeinate to prevent sleep on macOS
     cmd = wrap_with_caffeinate(cmd, "codex")
@@ -422,7 +428,7 @@ def _run_model_cmd(
     """Run model-first (no provider). Uses thegent run -M <model>."""
     from thegent.cli import run_cmd
 
-    canonical = _MODEL_ALIAS.get(model_alias.lower(), model_alias)
+    canonical = canonical_model(model_alias, _MODEL_ALIAS)
     run_cmd(agent=None, prompt=prompt, cd=cd, mode=mode, timeout=timeout, model=canonical)
 
 
@@ -437,7 +443,7 @@ def _bg_model_cmd(
     """Bg model-first (no provider). Uses thegent bg -M <model>."""
     from thegent.cli import bg_cmd
 
-    canonical = _MODEL_ALIAS.get(model_alias.lower(), model_alias)
+    canonical = canonical_model(model_alias, _MODEL_ALIAS)
     bg_cmd(
         agent=None,
         prompt=prompt,
@@ -469,30 +475,16 @@ def default_dex(
 
     Usage:
         dex              # Uses flash model (default)
+        dex dex          # Uses codex 5.3 non-spark model (alias)
         dex flash        # Uses flash model (via subcommand)
         dex max          # Uses max model (via subcommand or positional)
-        dex [model]      # Uses specified model (max, glm, haiku, opus, sonnet, ultra, flash, mini, composer, step)
+        dex [model]      # Uses specified model (dex, high, xhigh, max, glm, haiku, opus, sonnet, ultra, flash, mini, composer, step)
         dex [model] [prompt]  # Uses model with prompt
     """
     _dex_global_callback(force=force, native=native)
 
     if ctx.invoked_subcommand is None:
-        # Get arguments from typer context
-        # Typer stores unparsed args in ctx.params or we need to get them differently
-        import sys
-
-        # Find 'dex' in sys.argv and get remaining args
-        cmd_args = []
-        try:
-            # Look for 'dex' command in argv
-            for i, arg in enumerate(sys.argv):
-                if "dex" in arg and (arg.endswith("dex") or arg == "dex" or "/dex" in arg):
-                    # Get everything after 'dex'
-                    if i + 1 < len(sys.argv):
-                        cmd_args = sys.argv[i + 1 :]
-                    break
-        except Exception:
-            pass
+        cmd_args = extract_dex_command_args(sys.argv)
 
         # If no args, use default flash model
         if not cmd_args:
@@ -899,6 +891,86 @@ def dex_flash(
     )
 
 
+@app.command("high")
+def dex_high(
+    dangerously_bypass: bool = typer.Option(
+        True,
+        "--dangerously-bypass-approvals-and-sandbox",
+        "--yolo",
+        help="Bypass approvals and sandbox (default: True)",
+    ),
+    resume: str | None = typer.Option(None, "--resume", "-r", help="Resume session by ID"),
+    cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
+    print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
+    add_dir: list[str] = typer.Option(None, "--add-dir", help="Additional directories (repeatable)"),
+    sandbox: str | None = typer.Option(
+        None, "--sandbox", "-s", help="Sandbox: read-only, workspace-write, danger-full-access"
+    ),
+    full_auto: bool = typer.Option(False, "--full-auto", help="Convenience: -a on-request, --sandbox workspace-write"),
+    search: bool = typer.Option(True, "--search", help="Enable web search"),
+    no_alt_screen: bool = typer.Option(False, "--no-alt-screen", help="Disable alternate screen mode"),
+    continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
+    prompt: str | None = typer.Argument(None, help="Startup prompt"),
+) -> None:
+    """Codex 5.3 high."""
+    _run_codex_interactive_with_opts(
+        "high",
+        dangerously_bypass,
+        resume,
+        cd,
+        print_mode,
+        debug,
+        add_dir,
+        sandbox,
+        full_auto,
+        search,
+        no_alt_screen,
+        continue_session,
+        prompt,
+    )
+
+
+@app.command("xhigh")
+def dex_xhigh(
+    dangerously_bypass: bool = typer.Option(
+        True,
+        "--dangerously-bypass-approvals-and-sandbox",
+        "--yolo",
+        help="Bypass approvals and sandbox (default: True)",
+    ),
+    resume: str | None = typer.Option(None, "--resume", "-r", help="Resume session by ID"),
+    cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
+    print_mode: bool = typer.Option(False, "--print", "-p", help="Headless: print response and exit"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug mode"),
+    add_dir: list[str] = typer.Option(None, "--add-dir", help="Additional directories (repeatable)"),
+    sandbox: str | None = typer.Option(
+        None, "--sandbox", "-s", help="Sandbox: read-only, workspace-write, danger-full-access"
+    ),
+    full_auto: bool = typer.Option(False, "--full-auto", help="Convenience: -a on-request, --sandbox workspace-write"),
+    search: bool = typer.Option(True, "--search", help="Enable web search"),
+    no_alt_screen: bool = typer.Option(False, "--no-alt-screen", help="Disable alternate screen mode"),
+    continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
+    prompt: str | None = typer.Argument(None, help="Startup prompt"),
+) -> None:
+    """Codex 5.3 xhigh."""
+    _run_codex_interactive_with_opts(
+        "xhigh",
+        dangerously_bypass,
+        resume,
+        cd,
+        print_mode,
+        debug,
+        add_dir,
+        sandbox,
+        full_auto,
+        search,
+        no_alt_screen,
+        continue_session,
+        prompt,
+    )
+
+
 @app.command("mini")
 def dex_mini(
     dangerously_bypass: bool = typer.Option(
@@ -984,17 +1056,19 @@ _DEX_RUN_MODELS: frozenset[str] = frozenset(set(_MODEL_ALIAS.keys()) | set(_MODE
 
 @app.command("run")
 def dex_run(
-    model_alias: str = typer.Argument(..., help="Model: max, glm, haiku, opus, sonnet, ultra, flash, mini"),
+    model_alias: str = typer.Argument(
+        ..., help="Model: dex, high, xhigh, max, glm, haiku, opus, sonnet, ultra, flash, mini"
+    ),
     prompt: str = typer.Argument(..., help="Task prompt"),
     cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
     mode: str = typer.Option("write", "--mode", "-m", help="Union[write, read]-only"),
     timeout: int = typer.Option(90, "--timeout", "-t", help="Timeout in seconds"),
 ) -> None:
     """Run a task. Model-first, no provider filter."""
-    canonical = _MODEL_ALIAS.get(model_alias.lower(), model_alias)
+    canonical = canonical_model(model_alias, _MODEL_ALIAS)
     if canonical not in _DEX_RUN_MODELS and model_alias.lower() not in _DEX_RUN_MODELS:
         console.print(
-            f"[red]Unknown model '{model_alias}'. Allowed: max, glm, haiku, opus, sonnet, ultra, flash, mini[/red]"
+            f"[red]Unknown model '{model_alias}'. Allowed: dex, high, xhigh, max, glm, haiku, opus, sonnet, ultra, flash, mini[/red]"
         )
         raise typer.Exit(1)
     _run_model_cmd(model_alias, prompt, cd=cd, mode=mode, timeout=timeout)
@@ -1002,7 +1076,9 @@ def dex_run(
 
 @app.command("bg")
 def dex_bg(
-    model_alias: str = typer.Argument(..., help="Model: max, glm, haiku, opus, sonnet, ultra, flash, mini"),
+    model_alias: str = typer.Argument(
+        ..., help="Model: dex, high, xhigh, max, glm, haiku, opus, sonnet, ultra, flash, mini"
+    ),
     prompt: str = typer.Argument(..., help="Task prompt"),
     cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
     mode: str = typer.Option("write", "--mode", "-m", help="Union[write, read]-only"),
@@ -1010,10 +1086,10 @@ def dex_bg(
     owner: str | None = typer.Option(None, "--owner", "-o", help="Owner tag"),
 ) -> None:
     """Start a background task. Model-first, no provider filter."""
-    canonical = _MODEL_ALIAS.get(model_alias.lower(), model_alias)
+    canonical = canonical_model(model_alias, _MODEL_ALIAS)
     if canonical not in _DEX_RUN_MODELS and model_alias.lower() not in _DEX_RUN_MODELS:
         console.print(
-            f"[red]Unknown model '{model_alias}'. Allowed: max, glm, haiku, opus, sonnet, ultra, flash, mini[/red]"
+            f"[red]Unknown model '{model_alias}'. Allowed: dex, high, xhigh, max, glm, haiku, opus, sonnet, ultra, flash, mini[/red]"
         )
         raise typer.Exit(1)
     _bg_model_cmd(model_alias, prompt, cd=cd, mode=mode, timeout=timeout, owner=owner)
@@ -1065,6 +1141,22 @@ def dex_status(
     from thegent.cli import status_cmd
 
     status_cmd(session_id=session_id, format=format, include_contract=include_contract)
+
+
+@app.command("resume")
+def dex_resume(
+    args: list[str] = typer.Argument(None, help="Optional native codex resume args (e.g. --last or <session-id>)"),
+) -> None:
+    """Passthrough to native `codex resume` for human-facing session continuation."""
+    _exec_native_codex(["resume", *(args or [])])
+
+
+@app.command("fork")
+def dex_fork(
+    args: list[str] = typer.Argument(None, help="Optional native codex fork args (e.g. --last or <session-id>)"),
+) -> None:
+    """Passthrough to native `codex fork` for human-facing session continuation."""
+    _exec_native_codex(["fork", *(args or [])])
 
 
 @app.command("stop")
@@ -1142,13 +1234,16 @@ def dex_history(
 @app.command("doctor")
 def dex_doctor(
     fix: bool = typer.Option(False, "--fix", "-f", help="Attempt to fix issues"),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", "-n", help="Show what fixes would be applied without making changes"
+    ),
 ) -> None:
     """Run thegent doctor (harness-equiv)."""
     import sys
 
     from thegent.doctor import run_doctor
 
-    success = run_doctor(fix=fix)
+    success = run_doctor(fix=fix, dry_run=dry_run)
     sys.exit(0 if success else 1)
 
 

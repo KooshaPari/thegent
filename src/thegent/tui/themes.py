@@ -295,7 +295,7 @@ class ThemeManager:
                 data = json.loads(theme_file.read_text())
                 theme = ThemeDefinition.from_dict(data)
                 self._themes[theme.name] = theme
-            except Exception:
+            except Exception:  # noqa: PERF203 - intentional per-item error handling
                 pass
 
     def _save_custom(self, theme: ThemeDefinition) -> None:

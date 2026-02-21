@@ -35,7 +35,7 @@ class MemoryFragment:
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
     scope: FrictionScope | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-    id: str = field(default_factory=lambda: hex(int(time.time() * 1000))[2:])
+    id: str = field(default_factory=lambda: f"{int(time.time() * 1000):x}")
 
 
 class MemorySystem:

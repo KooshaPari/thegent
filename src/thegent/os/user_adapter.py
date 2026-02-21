@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class OSUserAdapter:
     """Cross-platform OS user creation adapter."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize OS user adapter."""
         self.system = platform.system()
 

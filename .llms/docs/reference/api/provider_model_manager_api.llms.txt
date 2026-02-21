@@ -1,0 +1,357 @@
+# provider_model_manager_api
+
+Source: docs/reference/api/provider_model_manager_api.md
+
+---
+
+# provider_model_manager API Reference
+
+> **Source**: `src/thegent/provider_model_manager.py`
+
+Provider and Model Management - CLI, MCP, and programmatic CRUD for providers and models.
+
+---
+
+## add_api_key
+
+```
+add_api_key(provider: str, api_key: str)
+```
+
+Add API key for a provider.
+
+---
+
+## add_common_alias
+
+```
+add_common_alias(alias: str)
+```
+
+Add a common model alias that works across providers.
+
+---
+
+## add_custom_benchmark
+
+```
+add_custom_benchmark(provider: str, model: str, benchmark_name: str, score: float, category: str, description: str)
+```
+
+Add a custom benchmark entry for a model.
+
+**Parameters**:
+
+- `provider`: Provider name
+- `model`: Model name
+- `benchmark_name`: Name of the benchmark
+- `score`: Score (0-1)
+- `category`: Category (coding, reasoning, general, etc.)
+- `description`: Optional description
+
+**Returns**: (success, message)
+
+---
+
+## add_model_alias
+
+```
+add_model_alias(provider: str, model: str, alias: str)
+```
+
+Add a model alias for a provider.
+
+---
+
+## add_model_index
+
+```
+add_model_index(provider: str, model: str, context_limit: Any, output_limit: Any, cost_per_1m_input: Any, cost_per_1m_output: Any, tps: Any, latency_first_token: Any, reasoning: Any, vision: Any, swebench: Any, termbench: Any, notes: Any)
+```
+
+Add or update model index data.
+
+---
+
+## add_model_modality
+
+```
+add_model_modality(provider: str, model: str, modality: str, value: Any)
+```
+
+Add or update a modality/feature flag for a model.
+
+**Parameters**:
+
+- `provider`: Provider name
+- `model`: Model name
+- `modality`: Modality/feature name
+- `value`: Value (true/false or custom string)
+
+**Returns**: (success, message)
+
+---
+
+## add_provider
+
+```
+add_provider(name: str, base_url: str, model: str, login_url: Any, login_instructions: Any, display_name: Any, extra_aliases: Any, api_key: Any, base_url_env: Any)
+```
+
+Add a new provider.
+
+---
+
+## calculate_composite_score
+
+```
+calculate_composite_score(benchmarks: dict[(str, float)], weights: Any)
+```
+
+Calculate composite performance score from benchmarks.
+
+Uses available benchmarks only - missing benchmarks don't penalize.
+Results are normalized to 0-100 scale.
+
+**Parameters**:
+
+- `benchmarks`: Dict of benchmark_name -&gt; score (0-1)
+- `weights`: Optional custom weights for benchmarks
+
+**Returns**: Composite score 0-100, or None if no benchmarks available
+
+---
+
+## delete_provider
+
+```
+delete_provider(name: str, remove_credentials: bool)
+```
+
+Delete a provider.
+
+---
+
+## discover_models
+
+```
+discover_models(provider: Any)
+```
+
+Discover available models from provider APIs.
+
+---
+
+## fuzzy_search_models
+
+```
+fuzzy_search_models(query: str, fields: Any, provider: Any, limit: int)
+```
+
+Fuzzy search models by query string.
+
+Simple fuzzy matching - matches query as substring in any field.
+
+**Parameters**:
+
+- `query`: Search query
+- `fields`: Fields to search (default: provider, model, notes)
+- `provider`: Optional provider filter
+- `limit`: Maximum results
+
+**Returns**: List of matching models
+
+---
+
+## get_model_indices
+
+```
+get_model_indices(provider: Any, model: Any)
+```
+
+Get model indices (context limits, cost, speed, benchmarks).
+
+---
+
+## get_model_modalities
+
+```
+get_model_modalities(provider: Any, model: Any)
+```
+
+Get model modalities/feature flags.
+
+**Parameters**:
+
+- `provider`: Optional provider filter
+- `model`: Optional model filter
+
+**Returns**: Dict of models with their modalities
+
+---
+
+## get_provider
+
+```
+get_provider(name: str)
+```
+
+Get a specific provider.
+
+---
+
+## list_available_modalities
+
+List all available modality definitions.
+
+---
+
+## list_credentials
+
+List all configured credentials (without showing actual keys).
+
+---
+
+## list_model_indices
+
+```
+list_model_indices(provider: Any, sort_by: str, include_all: bool)
+```
+
+List models with their indices, sorted by specified criteria.
+
+---
+
+## list_models
+
+```
+list_models(provider: Any)
+```
+
+List all models, optionally filtered by provider.
+
+---
+
+## list_models_with_scores
+
+```
+list_models_with_scores(provider: Any, min_score: Any, modality: Any, sort_by: str)
+```
+
+List models with composite performance scores.
+
+**Parameters**:
+
+- `provider`: Optional provider filter
+- `min_score`: Minimum composite score filter
+- `modality`: Only include models with this modality enabled
+- `sort_by`: Sort by 'composite_score', 'cost', 'context', 'tps'
+
+**Returns**: List of models with computed composite scores
+
+---
+
+## list_providers
+
+```
+list_providers(include_credentials: bool)
+```
+
+List all configured providers.
+
+---
+
+## remove_api_key
+
+```
+remove_api_key(provider: str)
+```
+
+Remove API key for a provider.
+
+---
+
+## remove_common_alias
+
+```
+remove_common_alias(alias: str)
+```
+
+Remove a common model alias.
+
+---
+
+## remove_model_alias
+
+```
+remove_model_alias(provider: str, alias: str)
+```
+
+Remove a model alias from a provider.
+
+---
+
+## remove_model_index
+
+```
+remove_model_index(provider: str, model: str)
+```
+
+Remove model index data.
+
+---
+
+## run_provider_form
+
+Interactive form for provider management.
+
+---
+
+## search_by_modalities
+
+```
+search_by_modalities(required_modalities: list[str], excluded_modalities: Any, provider: Any, sort_by: str)
+```
+
+Search models by modality requirements.
+
+**Parameters**:
+
+- `required_modalities`: List of modalities that must be enabled
+- `excluded_modalities`: List of modalities that must NOT be enabled
+- `provider`: Optional provider filter
+- `sort_by`: Sort field
+
+**Returns**: Matching models
+
+---
+
+## search_models_by_capability
+
+```
+search_models_by_capability(capability: str, min_context: Any, max_cost_per_1m: Any, min_tps: Any)
+```
+
+Search models by capability (reasoning, vision, swebench, termbench).
+
+---
+
+## update_provider
+
+```
+update_provider(name: str, base_url: Any, model: Any, login_url: Any, login_instructions: Any, display_name: Any, extra_aliases: Any, api_key: Any, base_url_env: Any)
+```
+
+Update an existing provider.
+
+---
+
+## validate_provider
+
+```
+validate_provider(name: str)
+```
+
+Validate a provider by testing connectivity.
+
+---

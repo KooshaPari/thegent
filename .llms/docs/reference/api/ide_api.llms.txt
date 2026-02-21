@@ -1,0 +1,13 @@
+# ide_api
+
+Source: docs/reference/api/ide_api.md
+
+---
+
+# ide API Reference
+
+> **Source**: `src/thegent/ide/__init__.py`
+
+IDE integration infrastructure for thegent.
+
+---

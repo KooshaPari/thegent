@@ -78,11 +78,13 @@ def _cleanup_runtime_infrastructure() -> None:
             logger.debug("Resource monitor stopped")
 
         if _resource_limits:
-            if hasattr(_resource_limits, "restore"):
-                _resource_limits.restore()
+            restore_fn = getattr(_resource_limits, "restore", None)
+            reset_fn = getattr(_resource_limits, "reset", None)
+            if restore_fn is not None:
+                restore_fn()
                 logger.debug("Resource limits restored")
-            elif hasattr(_resource_limits, "reset"):
-                _resource_limits.reset()
+            elif reset_fn is not None:
+                reset_fn()
                 logger.debug("Resource limits reset")
 
         _initialized = False

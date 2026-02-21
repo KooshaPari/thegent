@@ -1,0 +1,13 @@
+{
+  "max_lines_per_file": 1000,
+  "exclude": [
+    "tests/**",
+    "migrations/**",
+    "*.min.js",
+    "node_modules/**",
+    "dist/**",
+    ".venv/**",
+    "target/**",
+    "vendor/**"
+  ]
+}

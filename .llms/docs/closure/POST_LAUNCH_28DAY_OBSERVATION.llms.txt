@@ -1,0 +1,58 @@
+# POST_LAUNCH_28DAY_OBSERVATION
+
+Source: docs/closure/POST_LAUNCH_28DAY_OBSERVATION.md
+
+---
+
+# Post-Launch 28-Day Observation Plan
+
+**Program:** thegent Orchestration Optimization  
+**Start date:** 2026-02-16  
+**End date:** 2026-03-15  
+**Owner:** Operations Lead
+
+## 1) Objective
+
+Monitor stability, rollback readiness, policy integrity, and operator feedback for 28 days after launch.
+
+## 2) Observation windows
+
+- Days 1–7: high-frequency monitoring and triage
+- Days 8–14: trend stabilization
+- Days 15–21: incident pattern tuning
+- Days 22–28: closure handoff and threshold reset
+
+## 3) Daily checks
+
+- [x] No increase in `FallbackRate` and `Interruption Burden` (observed within baseline 3.1% / 4.7%)
+- [x] Policy drift and signature verification alerts not elevated
+- [x] Continuity handoff checks completed for critical runs
+- [x] Rollback reserve remains ready and tested
+
+## 4) Weekly checks
+
+- [x] SLA report signed by reliability (Week 1 signed 2026-02-22)
+- [x] CAPA (corrective actions) list reviewed and triaged
+- [x] UX/operator feedback review (top 5 friction points) completed
+
+## 5) Acceptance at day 28
+
+- No unresolved SEV-1/SEV-2 events (`0` open)
+- KPI baselines remain within tolerance bands
+- No critical compliance exceptions
+- One approved CAPA closure list with owners and deadlines (CAPA-028A, CAPA-028B, CAPA-028C)
+
+## 6) Communication plan
+
+- Daily update to operations channel
+- Weekly executive digest
+- Final day-28 summary for leadership and governance
+- Day-28 artifact handoff to governance/compliance archive
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [PHASE6_READINESS_REPORT.md](./PHASE6_READINESS_REPORT.md) — Phase 6 readiness

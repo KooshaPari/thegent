@@ -115,9 +115,8 @@ class TerminalPane(Static):
                 stdin=pty_slave,
                 stdout=pty_slave,
                 stderr=pty_slave,
-                preexec_fn=os.setsid,  # Create new session
                 cwd=str(cwd),
-                start_new_session=False,
+                start_new_session=True,
             )
 
             # Close slave in parent (only parent uses master)

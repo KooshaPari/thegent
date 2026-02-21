@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from textual.containers import Horizontal
 from textual.reactive import reactive
@@ -49,7 +49,7 @@ class MenubarWidget(Widget):
     }
     """
 
-    MENUS = [
+    MENUS: ClassVar[list[tuple[str, list[tuple[str, str | None]]]]] = [
         (
             "File",
             [

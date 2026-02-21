@@ -56,7 +56,7 @@ class SessionPersistence:
                     state=data.get("state", {}),
                 )
                 self._sessions[session.session_id] = session
-            except Exception:
+            except Exception:  # noqa: PERF203 - intentional per-item error handling
                 pass
 
     def _save_session(self, session: SessionInfo) -> None:
@@ -196,7 +196,7 @@ class SessionPersistence:
                 if last_active.timestamp() < cutoff:
                     self.delete_session(session_id)
                     deleted += 1
-            except Exception:
+            except Exception:  # noqa: PERF203 - intentional per-item error handling
                 pass
 
         return deleted
@@ -217,7 +217,7 @@ class SessionPersistence:
                     recent_24h += 1
                 if age_hours < 168:  # 7 days
                     recent_7d += 1
-            except Exception:
+            except Exception:  # noqa: PERF203 - intentional per-item error handling
                 pass
 
         return {

@@ -1,0 +1,85 @@
+# DOCGEN_DOCSITE_RESEARCH_SUMMARY
+
+Source: docs/research/DOCGEN_DOCSITE_RESEARCH_SUMMARY.md
+
+---
+
+# Documentation Generation & Site System — Research Summary
+
+> **Status**: Research Complete | **Date**: 2026-02-18  
+> **Purpose**: Summary of research findings and recommendations
+
+---
+
+## Research Scope
+
+1. ✅ Web research on VitePress, MkDocs Material, Fumadocs
+2. ✅ Audit of MkDocs implementations in kush projects
+3. ✅ Deep audit of current VitePress implementation
+4. ✅ Feature comparison matrix
+5. ✅ Performance analysis
+6. ✅ Best practices research
+
+---
+
+## Key Findings
+
+### 1. VitePress Strengths
+
+- **Performance**: SPA model provides fast navigation
+- **DX**: Instant HMR, Vue-enhanced markdown
+- **Modern Stack**: Vue 3 + Vite
+- **TypeScript**: Native TypeScript support
+
+### 2. MkDocs Material Strengths
+
+- **Features**: Extensive plugin ecosystem
+- **Navigation**: Advanced navigation patterns
+- **API Docs**: mkdocstrings for auto-generation
+- **Content**: Rich markdown extensions
+
+### 3. Current Gaps
+
+- **Search**: Limited to local search
+- **Navigation**: Missing tabs, sections, sticky nav
+- **API Docs**: Basic generation vs mkdocstrings
+- **Content**: Missing tabs, annotations, tooltips
+- **Performance**: Can be optimized further
+
+---
+
+## Recommendations
+
+### Immediate (P1)
+
+1. **Add Navigation Tabs** - Native VitePress support
+2. **Integrate Algolia Search** - Better search experience
+3. **Enhance API Generator** - mkdocstrings-like functionality
+4. **Add Content Tabs** - Better content organization
+5. **Optimize Performance** - Code splitting, images, fonts
+
+### Short-term (P2)
+
+1. **Versioning Support** - Version switcher
+2. **Analytics** - Google Analytics / Plausible
+3. **Code Annotation** - Line-by-line annotations
+4. **Math Support** - KaTeX integration
+
+### Long-term (P3)
+
+1. **Accessibility** - Full WCAG compliance
+2. **Testing** - Automated link/code validation
+3. **Metrics** - Documentation coverage tracking
+
+---
+
+## Implementation Priority
+
+**Phase 1** (Week 1): Quick wins - Navigation, Content tabs, Math  
+**Phase 2** (Week 2): Search & Navigation enhancements  
+**Phase 3** (Weeks 3-4): API documentation improvements  
+**Phase 4** (Week 5): Performance optimizations  
+**Phase 5** (Week 6): Developer experience  
+**Phase 6** (Week 7): Quality & testing
+
+---

@@ -1,5 +1,6 @@
 """Orchestration: phase transitions, lanes, evidence, recovery (WP-1004, WP-1005, WP-1002, WP-2001+)."""
 
+from thegent.orchestration.budget_tracker import BudgetExceededError, BudgetTracker
 from thegent.coordination.hybrid_coordination import (
     CoordinationMetrics,
     CoordinationMode,
@@ -81,6 +82,8 @@ from thegent.orchestration.strategies.speculative_strategies import (
 __all__ = [
     "PHASE_TRANSITIONS",
     "BottleneckDetector",
+    "BudgetExceededError",
+    "BudgetTracker",
     "ChunkConfig",
     "CoordinationMetrics",
     "CoordinationMode",

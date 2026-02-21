@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import signal
+import sys
 import time
 from typing import Any, Optional
 
@@ -51,6 +52,45 @@ from thegent.skills.terminal import capture_tmux_pane, list_tmux_panes, send_to_
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Module-level constants referenced by tests and pruning logic
+# ---------------------------------------------------------------------------
+
+IDLE_COUNT_THRESHOLD: int = 2
+IDLE_THRESHOLD_SECONDS: float = 60.0
+
+PROTECTED_PROCESS_NAMES: frozenset[str] = frozenset(
+    {
+        "cursor-agent",
+        "thegent",
+        "claude",
+        "codex",
+        "droid",
+        "opencode",
+        "copilot",
+        "gemini",
+        "bash",
+        "zsh",
+        "sh",
+        "fish",
+        "tcsh",
+        "csh",
+        "ghostty",
+        "terminal",
+        "iterm",
+        "alacritty",
+        "kitty",
+        "wezterm",
+        "warp",
+    }
+)
+
+
+def _is_protected_process(name: str) -> bool:
+    """Return True if the process name/cmdline matches a protected process."""
+    base = os.path.basename(name.split(maxsplit=1)[0]) if name else ""
+    return base in PROTECTED_PROCESS_NAMES or any(p in base for p in PROTECTED_PROCESS_NAMES)
+
 
 @dataclass
 class SessionSnapshot:
@@ -67,7 +107,7 @@ class SessionSnapshot:
 class SmartPruner:
     """Intelligent agent resource reclaimer."""
 
-    def __init__(self, project_root: Path | None = None):
+    def __init__(self, project_root: Path | None = None) -> None:
         self.settings = ThegentSettings()
         self.project_root = project_root or Path.cwd()
         self.state_file = Path.home() / ".thegent" / "smart_prune_state.json"
@@ -146,10 +186,7 @@ class SmartPruner:
         ]
 
         last_chunk = output[-1000:]
-        for marker in markers:
-            if re.search(marker, last_chunk, re.MULTILINE | re.IGNORECASE):
-                return True
-        return False
+        return any(re.search(marker, last_chunk, re.MULTILINE | re.IGNORECASE) for marker in markers)
 
     def run_cycle(self, force_prune: bool = False, reprompt: bool = True) -> dict[str, Any]:
         """Run one pruning cycle."""
@@ -228,7 +265,7 @@ class SmartPruner:
                 snap.last_output = output
 
             snap.last_check_time = now
-            is_idle = snap.idle_count >= 2  # 2 consecutive unchanged outputs (assuming 30s interval)
+            is_idle = snap.idle_count >= IDLE_COUNT_THRESHOLD
 
             # 2. Completion Detection
             is_complete = self.detect_completion(output)
@@ -269,7 +306,7 @@ class SmartPruner:
                     if pane:
                         sent = send_to_tmux_pane(pane.pane_id, msg)
 
-                    if not sent and self.settings.platform == "darwin":
+                    if not sent and sys.platform == "darwin":
                         # Fallback: macOS Desktop Automation (AppleScript)
                         try:
                             from thegent.automation.macos_desktop import MacOSDesktopAutomation
@@ -311,7 +348,7 @@ class SmartPruner:
         agent = session.get("agent", "unknown")
 
         # If it's a TTY-attached session, try interactive pause/kill
-        if tty and self.settings.platform == "darwin":
+        if tty and sys.platform == "darwin":
             # Attempt interactive prompt if in tmux
             if pane:
                 self._show_interactive_menu(session, pane)
@@ -335,7 +372,7 @@ class SmartPruner:
             try:
                 from thegent.cli.commands.impl import stop_impl
 
-                stop_impl(run_id=session["id"])
+                stop_impl(session_id=session["id"])
             except:
                 pass
 

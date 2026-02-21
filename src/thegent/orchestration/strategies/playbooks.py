@@ -44,7 +44,9 @@ def execute_playbook_step(
         from thegent.execution import EscalationQueue
 
         eq = EscalationQueue(session_dir)
-        eq.add(run_id=run_id, agent=ctx.get("agent", ""), reason=str(ctx.get("reason", "playbook_escalation")))
+        eq.add(
+            run_id=run_id, agent=str(ctx.get("agent", "") or ""), reason=str(ctx.get("reason", "playbook_escalation"))
+        )
         return {"step": step, "status": "escalated"}
     if step == "dlq_enqueue":
         from thegent.execution import DLQManager, RunMeta

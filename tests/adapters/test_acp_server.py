@@ -30,6 +30,8 @@ from thegent.adapters.acp_server import (
     ACPServerAdapter,
     AgentSession,
     _rpc_error,
+)
+from thegent.adapters.acp_server import (
     app as acp_cli_app,
 )
 from thegent.agents.base import AgentRunner, RunResult
@@ -208,7 +210,7 @@ class TestHandleAcpMessage:
 
     @pytest.mark.asyncio
     async def test_task_returns_result(self, adapter_with_agent: tuple) -> None:
-        inst, runner = adapter_with_agent
+        inst, _runner = adapter_with_agent
         response = await inst.handle_acp_message(
             {"type": "task", "payload": {"agent": "claude", "prompt": "hi"}, "agent_id": "caller-1"}
         )

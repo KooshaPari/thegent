@@ -9,13 +9,11 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 import typer
 from rich.console import Console
-from rich.table import Table
 
-from thegent.infra.git_parallelism import GitParallelismManager
+from thegent.mesh.git import GitParallelismManager
 from thegent.native.git_native import GitNative
 
 app = typer.Typer(
@@ -127,6 +125,21 @@ def commit(
     aid = agent_id or get_agent_id()
     manager = GitParallelismManager(project_root, aid)
 
+    # Multi-tenant guard: do not spin forever on shared index lock.
+    if not manager.wait_for_index_lock(timeout_s=8.0):
+        ours = manager.staged_files()
+        queue_file = manager.queue_commit_conflict(
+            ref=ref,
+            reason="index_lock_contention",
+            ours=ours,
+            theirs=[],
+            overlap=[],
+        )
+        console.print("[bold yellow]Git index is locked by another tenant/agent.[/bold yellow]")
+        console.print(f"[yellow]Queued commit request:[/yellow] {queue_file}")
+        console.print("[yellow]Prompt:[/yellow] resolve current git writer, then retry `thegent git commit`.")
+        raise typer.Exit(2)
+
     # Auto-resolve ref name
     full_ref = ref
     if not ref.startswith("refs/"):
@@ -156,12 +169,81 @@ def commit(
     console.print(f"Updating [bold]{full_ref}[/bold] from {old_hash[:8]} to {new_hash[:8]}...")
     if manager.update_ref_cas(full_ref, new_hash, old_hash):
         console.print(f"[bold green]Successfully updated {full_ref}![/bold green]")
-    else:
-        console.print("[bold red]Update collision detected![/bold red]")
-        console.print(
-            "[yellow]The reference moved while we were committing. You may need to merge/rebase and retry.[/yellow]"
-        )
+        return
+
+    # CAS moved: resolve if unrelated, queue+prompt if related.
+    refreshed = manager._get_ref_hash(full_ref)
+    if not refreshed:
+        console.print("[bold red]Ref update failed and ref cannot be resolved.[/bold red]")
         raise typer.Exit(1)
+
+    ours = manager.staged_files()
+    theirs = manager.changed_files_between(old_hash, refreshed)
+    overlap = manager.related_overlap(ours, theirs)
+
+    if overlap:
+        console.print("[bold yellow]Related change overlap detected.[/bold yellow]")
+        console.print(f"[yellow]Overlap files:[/yellow] {', '.join(overlap)}")
+
+        # Strategy 1: attempt native 3-way merge commit for related overlap.
+        auto_merge_enabled = os.environ.get("THGENT_GIT_AUTO_MERGE_OVERLAP", "true").lower() in ("1", "true", "yes")
+        if auto_merge_enabled:
+            console.print("[cyan]Attempting auto 3-way merge strategy...[/cyan]")
+            merged_hash = manager.try_auto_merge_commit(new_hash, refreshed, message)
+            if merged_hash:
+                if manager.update_ref_cas(full_ref, merged_hash, refreshed):
+                    console.print(f"[bold green]Auto-merged overlap and updated {full_ref}![/bold green]")
+                    return
+                queue_file = manager.queue_commit_conflict(
+                    ref=full_ref,
+                    reason="overlap_auto_merge_cas_failed",
+                    ours=ours,
+                    theirs=theirs,
+                    overlap=overlap,
+                    old_hash=refreshed,
+                    new_hash=merged_hash,
+                )
+                console.print("[bold red]Auto-merge produced commit but CAS update failed.[/bold red]")
+                console.print(f"[yellow]Queued for manual resolution:[/yellow] {queue_file}")
+                raise typer.Exit(2)
+
+        # Strategy 2: queue + prompt for manual conflict handling.
+        queue_file = manager.queue_commit_conflict(
+            ref=full_ref,
+            reason="related_change_overlap",
+            ours=ours,
+            theirs=theirs,
+            overlap=overlap,
+            old_hash=old_hash,
+            new_hash=refreshed,
+        )
+        console.print(f"[yellow]Queued for manual resolution:[/yellow] {queue_file}")
+        console.print(
+            "[yellow]Prompt:[/yellow] review overlap, merge/rebase if needed, then rerun `thegent git commit`."
+        )
+        raise typer.Exit(2)
+
+    # No overlap: auto-resolve by rebuilding commit against refreshed parent, then CAS again.
+    console.print("[cyan]Ref moved without overlapping files; auto-resolving commit parent...[/cyan]")
+    new_hash_resolved = manager.create_commit_from_index(message, parent_ref=full_ref)
+    if not new_hash_resolved:
+        console.print("[red]Failed to rebuild commit object for auto-resolution.[/red]")
+        raise typer.Exit(1)
+    if manager.update_ref_cas(full_ref, new_hash_resolved, refreshed):
+        console.print(f"[bold green]Auto-resolved and updated {full_ref}![/bold green]")
+    else:
+        queue_file = manager.queue_commit_conflict(
+            ref=full_ref,
+            reason="cas_retry_exhausted",
+            ours=ours,
+            theirs=theirs,
+            overlap=[],
+            old_hash=refreshed,
+            new_hash=new_hash_resolved,
+        )
+        console.print("[bold red]Update collision persists after auto-resolution.[/bold red]")
+        console.print(f"[yellow]Queued for retry/resolution:[/yellow] {queue_file}")
+        raise typer.Exit(2)
 
 
 @app.command("merge")

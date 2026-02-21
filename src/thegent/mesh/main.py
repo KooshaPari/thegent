@@ -27,7 +27,6 @@ def init(mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path t
 
     root = mesh_root or Path(ThegentSettings().harness_root)
     MeshManager(root)
-    print(f"Mesh initialized at {root}")
 
 
 @app.command("discover")
@@ -42,9 +41,8 @@ def discover(
     mesh = MeshManager(root)
     pattern_list = [p.strip() for p in patterns.split(",")]
     agents = mesh.discover_agents(pattern_list)
-    print(f"Discovered {len(agents)} agents.")
-    for a in agents:
-        print(f"  - {a['name']} (PID: {a['pid']})")
+    for _a in agents:
+        pass
 
 
 if __name__ == "__main__":

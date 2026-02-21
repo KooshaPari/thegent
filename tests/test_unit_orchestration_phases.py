@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from thegent.orchestration.phases import (
+from thegent.orchestration.execution.phases import (
     PhaseTransitionContract,
     validate_transition,
 )

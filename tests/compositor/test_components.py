@@ -7,6 +7,7 @@ import pytest
 from textual.app import App, ComposeResult
 
 from thegent.compositor.components import (
+    DiffViewerPanel,
     FooterStatusBar,
     HeaderWidget,
     MetricsPanel,
@@ -173,6 +174,31 @@ class TestProgressIndicator:
         rendered = widget.render()
         assert "50%" in rendered
         assert "Processing" in rendered
+
+
+class TestDiffViewerPanel:
+    """Tests for DiffViewerPanel line styling."""
+
+    def test_style_diff_line_colors(self):
+        """WL-100: additions/deletions/hunks are color-coded."""
+        panel = DiffViewerPanel()
+        add = panel._style_diff_line("+added")
+        delete = panel._style_diff_line("-deleted")
+        hunk = panel._style_diff_line("@@ -1 +1 @@")
+        header = panel._style_diff_line("+++ b/file.py")
+        context = panel._style_diff_line(" context")
+
+        assert add.plain == "+added"
+        assert delete.plain == "-deleted"
+        assert hunk.plain == "@@ -1 +1 @@"
+        assert header.plain == "+++ b/file.py"
+        assert context.plain == " context"
+
+        assert str(add.style) == "green"
+        assert str(delete.style) == "red"
+        assert str(hunk.style) == "yellow bold"
+        assert str(header.style) == "dim cyan"
+        assert str(context.style) == "white"
 
 
 if __name__ == "__main__":

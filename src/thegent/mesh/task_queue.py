@@ -7,7 +7,6 @@ Tasks stranded in `cur/` after a crash are visible via `list_pending()`.
 
 import json
 import logging
-import os
 import time
 import uuid
 from pathlib import Path
@@ -91,7 +90,7 @@ class MaildirQueue:
 
         # Write to tmp first, then atomically rename into new/
         tmp_path.write_text(json.dumps(envelope), encoding="utf-8")
-        os.rename(tmp_path, new_path)
+        tmp_path.rename(new_path)
 
         _log.debug("enqueue task=%s priority=%d", task_id, priority)
         return task_id
@@ -121,7 +120,7 @@ class MaildirQueue:
             new_path = self._new / task_id
             cur_path = self._cur / task_id
             try:
-                os.rename(new_path, cur_path)
+                new_path.rename(cur_path)
             except FileNotFoundError:
                 # Another worker claimed it between our listing and our rename;
                 # try the next candidate.
@@ -167,7 +166,7 @@ class MaildirQueue:
         cur_path = self._cur / task_id
         new_path = self._new / task_id
         try:
-            os.rename(cur_path, new_path)
+            cur_path.rename(new_path)
             _log.debug("nack task=%s (returned to new/)", task_id)
         except FileNotFoundError:
             _log.debug("nack task=%s not found in cur/", task_id)

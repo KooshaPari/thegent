@@ -44,8 +44,8 @@ class SyncthingConfig(BaseSettings):
       THGENT_SYNCTHING_URL     — Base URL of the Syncthing REST API
     """
 
-    api_key: str | None = Field(None, alias="THGENT_SYNCTHING_API_KEY")
-    base_url: str = Field("http://localhost:8384", alias="THGENT_SYNCTHING_URL")
+    api_key: str | None = Field(default=None, validation_alias="THGENT_SYNCTHING_API_KEY")
+    base_url: str = Field(default="http://localhost:8384", validation_alias="THGENT_SYNCTHING_URL")
 
     model_config = {"populate_by_name": True}
 
@@ -274,3 +274,166 @@ class SyncthingManager:
         data: dict[str, Any] = await self._get("/rest/db/status", folder=folder_id)
         logger.debug("Sync status for folder %r: state=%r", folder_id, data.get("state"))
         return data
+
+    async def completion(self, folder_id: str, device_id: str) -> dict[str, Any]:
+        """Return completion percentage for a folder on a specific device.
+
+        Polls ``GET /rest/db/completion`` which returns the sync fraction
+        for ``folder_id`` relative to ``device_id``.
+
+        Args:
+            folder_id: The Syncthing folder ID.
+            device_id: The peer device ID to query completion for.
+
+        Returns:
+            Raw completion dict (keys: ``completion``, ``globalBytes``, etc.)
+
+        Raises:
+            SyncthingError: On API or connection error.
+        """
+        data: dict[str, Any] = await self._get(
+            "/rest/db/completion",
+            folder=folder_id,
+            device=device_id,
+        )
+        logger.debug(
+            "Completion for folder %r device %r: %.1f%%",
+            folder_id,
+            device_id,
+            data.get("completion", 0),
+        )
+        return data
+
+
+# ---------------------------------------------------------------------------
+# WP-5002: Workspace sync helper
+# ---------------------------------------------------------------------------
+
+
+class SyncthingWorkspaceSync:
+    """High-level helper for workspace synchronisation via Syncthing (WP-5002).
+
+    Wraps :class:`SyncthingManager` to provide push/pull operations tied to
+    the compute offload lifecycle.
+
+    Args:
+        manager: Optional :class:`SyncthingManager` to use. A default instance
+            is created when ``None``.
+        poll_interval_s: How often (seconds) to poll completion during pull.
+        completion_threshold: Minimum completion percentage (0–100) to consider
+            a folder fully synced.
+    """
+
+    def __init__(
+        self,
+        manager: SyncthingManager | None = None,
+        poll_interval_s: float = 2.0,
+        completion_threshold: float = 99.0,
+    ) -> None:
+        self._mgr = manager or SyncthingManager()
+        self._poll_interval_s = poll_interval_s
+        self._completion_threshold = completion_threshold
+
+    async def push(self, local_path: str, remote_peers: list[str]) -> str:
+        """Share *local_path* as a Syncthing folder with all *remote_peers*.
+
+        Creates (or ensures existence of) a Syncthing folder for *local_path*
+        and shares it with all provided peer device IDs.
+
+        Args:
+            local_path: Absolute filesystem path of the workspace to share.
+            remote_peers: List of Syncthing device IDs of the remote peers.
+
+        Returns:
+            The Syncthing folder ID used for the share (derived from the
+            last component of *local_path*).
+
+        Raises:
+            SyncthingError: On API or connection error.
+        """
+        import os
+
+        folder_id = f"thegent-ws-{os.path.basename(local_path.rstrip('/'))}"
+
+        # Check if folder already exists to avoid duplicate adds
+        existing = await self._mgr.get_folders()
+        existing_ids = {f.folder_id for f in existing}
+
+        if folder_id not in existing_ids:
+            await self._mgr.add_folder(
+                folder_id=folder_id,
+                path=local_path,
+                label=f"thegent workspace: {local_path}",
+                device_ids=remote_peers,
+            )
+            logger.info(
+                "SyncthingWorkspaceSync.push: shared %r as folder %r with %d peers",
+                local_path,
+                folder_id,
+                len(remote_peers),
+            )
+        else:
+            logger.debug(
+                "SyncthingWorkspaceSync.push: folder %r already exists, skipping add",
+                folder_id,
+            )
+
+        return folder_id
+
+    async def pull(
+        self,
+        folder_id: str,
+        device_id: str | None = None,
+        timeout_s: float = 120.0,
+    ) -> bool:
+        """Wait until a Syncthing folder reaches the completion threshold.
+
+        Polls ``GET /rest/db/completion`` (when *device_id* is provided) or
+        ``GET /rest/db/status`` (local state) until the folder is in sync.
+
+        Args:
+            folder_id: The Syncthing folder ID to wait for.
+            device_id: Optional peer device ID.  When provided, waits for the
+                remote peer to reach completion; otherwise waits for local sync.
+            timeout_s: Maximum seconds to wait.
+
+        Returns:
+            ``True`` when sync completed within the timeout, ``False`` otherwise.
+
+        Raises:
+            SyncthingError: On API or connection error.
+        """
+        import asyncio
+
+        deadline = asyncio.get_event_loop().time() + timeout_s
+
+        while asyncio.get_event_loop().time() < deadline:
+            if device_id is not None:
+                data = await self._mgr.completion(folder_id, device_id)
+                pct: float = float(data.get("completion", 0))
+            else:
+                status = await self._mgr.sync_status(folder_id)
+                state = str(status.get("state", "")).lower()
+                pct = 100.0 if state == "idle" else 0.0
+
+            if pct >= self._completion_threshold:
+                logger.info(
+                    "SyncthingWorkspaceSync.pull: folder %r reached %.1f%% completion",
+                    folder_id,
+                    pct,
+                )
+                return True
+
+            logger.debug(
+                "SyncthingWorkspaceSync.pull: folder %r at %.1f%%, waiting...",
+                folder_id,
+                pct,
+            )
+            await asyncio.sleep(self._poll_interval_s)
+
+        logger.warning(
+            "SyncthingWorkspaceSync.pull: folder %r did not sync within %.0fs",
+            folder_id,
+            timeout_s,
+        )
+        return False

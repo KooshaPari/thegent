@@ -56,7 +56,8 @@ class TestEnqueue:
         """Each call returns a distinct non-empty task ID."""
         id1 = queue.enqueue({"work": "a"})
         id2 = queue.enqueue({"work": "b"})
-        assert id1 and id2
+        assert id1
+        assert id2
         assert id1 != id2
 
     def test_task_file_appears_in_new(self, queue: MaildirQueue) -> None:
@@ -144,9 +145,12 @@ class TestDequeue:
         second = queue.dequeue()
         third = queue.dequeue()
 
-        assert first is not None and first["id"] == id_low
-        assert second is not None and second["id"] == id_mid
-        assert third is not None and third["id"] == id_high
+        assert first is not None
+        assert first["id"] == id_low
+        assert second is not None
+        assert second["id"] == id_mid
+        assert third is not None
+        assert third["id"] == id_high
 
     def test_fifo_within_same_priority(self, queue: MaildirQueue) -> None:
         """Within the same priority, oldest task is dequeued first."""
@@ -157,8 +161,10 @@ class TestDequeue:
         result1 = queue.dequeue()
         result2 = queue.dequeue()
 
-        assert result1 is not None and result1["id"] == id_first
-        assert result2 is not None and result2["id"] == id_second
+        assert result1 is not None
+        assert result1["id"] == id_first
+        assert result2 is not None
+        assert result2["id"] == id_second
 
     def test_dequeue_multiple_tasks(self, queue: MaildirQueue) -> None:
         """All enqueued tasks can be dequeued exactly once."""

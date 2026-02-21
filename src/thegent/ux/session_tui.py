@@ -2,7 +2,6 @@
 
 import os
 import signal
-from pathlib import Path
 from typing import Any
 
 import psutil
@@ -95,7 +94,7 @@ class SessionTUI:
                                 "create_time": child.create_time(),
                             }
                         )
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):  # noqa: PERF203 - intentional per-item error handling
                         continue
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
@@ -351,7 +350,7 @@ class SessionTUI:
                 m = _read_session_meta(meta_path)
                 run_id = m.get("run_id")
                 if run_id:
-                    registry.register_pause(run_id)
+                    registry.register_pause(run_id, reason="user_pause")
                 return {"success": True, "message": f"Session {session_id} marked as paused"}
 
             if action == "resume":

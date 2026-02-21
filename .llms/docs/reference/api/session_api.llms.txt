@@ -1,0 +1,13 @@
+# session_api
+
+Source: docs/reference/api/session_api.md
+
+---
+
+# session API Reference
+
+> **Source**: `src/thegent/session/__init__.py`
+
+Session persistence backends for thegent agent sessions.
+
+---

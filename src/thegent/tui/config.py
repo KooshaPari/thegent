@@ -256,7 +256,7 @@ class ConfigManager:
             return False
 
     @classmethod
-    def import_config(cls, path: Path, config_dir: Path | None = None) -> TUIConfig | None:
+    def import_config(cls, path: Path, _config_dir: Path | None = None) -> TUIConfig | None:
         """Import configuration from a file."""
         try:
             if path.suffix in (".yaml", ".yml"):

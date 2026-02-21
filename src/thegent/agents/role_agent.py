@@ -26,7 +26,6 @@ class RoleAgentRunner(AgentRunner):
         live_output: bool = False,
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
-        run_id: str | None = None,
         env: dict[str, str] | None = None,
     ) -> RunResult:
         role_prompt = get_role_prompt(self.role)
@@ -41,6 +40,5 @@ class RoleAgentRunner(AgentRunner):
             live_output=live_output,
             on_stdout=on_stdout,
             on_stderr=on_stderr,
-            run_id=run_id,
             env=env,
         )

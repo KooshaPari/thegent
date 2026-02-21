@@ -1,0 +1,102 @@
+# cache_api
+
+Source: docs/reference/api/cache_api.md
+
+---
+
+# cache API Reference
+
+> **Source**: `src/thegent/utils/cache.py`
+
+## ResourceCache
+
+WP-DX-023: Simple ETag-based caching for FastMCP resources.
+
+Hybrid caching strategy:
+- In-memory: TTLCache for fast access (cachetools handles TTL automatically)
+- File-based: Persistent storage across sessions (manual JSON file I/O)
+- ETag: Change detection for cache invalidation
+
+### Methods
+
+#### ResourceCache.__init__
+
+```
+__init__(self: Any, cache_dir: Path, ttl_seconds: int, max_memory_items: int)
+```
+
+---
+
+#### ResourceCache.clear
+
+```
+clear(self: Any)
+```
+
+Clear both in-memory and file-based cache.
+
+---
+
+#### ResourceCache.enable_invalidation
+
+```
+enable_invalidation(self: Any, directory: Path)
+```
+
+Enable real-time cache invalidation based on file changes (TGNT-P9.2).
+
+---
+
+#### ResourceCache.get
+
+```
+get(self: Any, key: str)
+```
+
+---
+
+#### ResourceCache.set
+
+```
+set(self: Any, key: str, payload: Any)
+```
+
+---
+
+---
+
+## clear
+
+```
+clear(self: Any)
+```
+
+Clear both in-memory and file-based cache.
+
+---
+
+## enable_invalidation
+
+```
+enable_invalidation(self: Any, directory: Path)
+```
+
+Enable real-time cache invalidation based on file changes (TGNT-P9.2).
+
+---
+
+## get
+
+```
+get(self: Any, key: str) -> Any
+```
+
+---
+
+## set
+
+```
+set(self: Any, key: str, payload: Any) -> str
+```
+
+---

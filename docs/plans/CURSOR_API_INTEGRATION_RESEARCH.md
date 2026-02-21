@@ -1,6 +1,6 @@
 # Cursor API Integration Research & Plan
 
-**Status:** Implemented (thegent + CLIProxyAPIPlus fork); unified plan: [CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md](./CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md)  
+**Status:** Implemented (thegent + cliproxyapi-plusplus); unified plan: [CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md](./CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md)  
 **Date:** 2026-02-14  
 **Scope:** Evaluate 4 Cursor-related repos for thegent integration
 
@@ -15,12 +15,12 @@
 - **Scraper:** `scrape_cursor_api()` fetches `/v1/models` from cursor-api
 - **Usage:** `thegent run cursor-api "..."` or model-first routing with `--provider cursor-api`
 
-### CLIProxyAPIPlus fork (done)
+### cliproxyapi-plusplus (done)
 
 - **Channel:** `cursor` – static model definitions via `GetCursorModels()`
 - **Executor:** Uses existing `OpenAICompatExecutor`; add `name: "cursor"` to `openai-compatibility` in config
 - **Models:** claude-4.5-opus-high-thinking, claude-4.5-opus-high, claude-4.5-sonnet-thinking, claude-4-sonnet, gpt-4o, gpt-5.1-codex, default
-- **Patch:** `CLIProxyAPIPlus-fork/patches/cursor-channel.patch` for upstream PR
+- **Patch:** `cliproxyapi-plusplus/patches/cursor-channel.patch` for upstream PR
 - **Config example:** `config.example.yaml` includes cursor setup under openai-compatibility
 
 ---

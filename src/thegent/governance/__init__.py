@@ -65,3 +65,25 @@ __all__ += [
 ]
 
 from thegent.governance.native_scanner import NativeGovernanceScanner
+from thegent.governance.vetter import (
+    RuffVetterCheck,
+    TestPassVetterCheck,
+    VetterCheck,
+    VetterCheckResult,
+    VetterOutcome,
+    VetterPolicy,
+    VetterResult,
+    VetterSeverity,
+)
+
+__all__ += [
+    # Vetter core types (FR-VET-090) and WL-097 code checks
+    "RuffVetterCheck",
+    "TestPassVetterCheck",
+    "VetterCheck",
+    "VetterCheckResult",
+    "VetterOutcome",
+    "VetterPolicy",
+    "VetterResult",
+    "VetterSeverity",
+]

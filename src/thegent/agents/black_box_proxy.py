@@ -7,6 +7,7 @@ Supports stdio, HTTP, and LSP interception to enforce thegent's policies externa
 
 import asyncio
 import logging
+from asyncio import subprocess
 from collections.abc import Callable
 
 _log = logging.getLogger(__name__)
@@ -18,16 +19,16 @@ class BlackBoxProxy:
     def __init__(self, agent_cmd: list[str], policy_enforcer: Callable | None = None) -> None:
         self.agent_cmd = agent_cmd
         self.policy_enforcer = policy_enforcer
-        self.process: asyncio.subprocess.Process | None = None
+        self.process: subprocess.Process | None = None
 
     async def start(self):
         """Launch the black-box agent as a subprocess with intercepted I/O."""
         _log.info("Launching black-box agent: %s", " ".join(self.agent_cmd))
         self.process = await asyncio.create_subprocess_exec(
             *self.agent_cmd,
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
 
     async def send_input(self, input_data: str) -> str:

@@ -110,7 +110,7 @@ def _wrap_with_harness(cmd: list[str], agent_name: str | None = None) -> list[st
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
-    if not settings.heliosShield_enabled:
+    if not settings.helios_shield_enabled:
         return cmd
 
     # Phase 2/3: Prefer thegent-hooks Rust harness
@@ -182,15 +182,40 @@ class DirectAgentRunner(AgentRunner):
         on_stdout: Callable[[str], None] | None = None,
         on_stderr: Callable[[str], None] | None = None,
         agent_model: str | None = None,
+        image_paths: list[str] | None = None,
+        audio_paths: list[str] | None = None,
         env: dict[str, str] | None = None,
     ) -> RunResult:
         model = agent_model or self._default_model
 
+        # WL-116: Handle audio transcript inputs
+        audio_transcript: str | None = None
+        if audio_paths:
+            from thegent.agents.audio_inputs import inject_transcript_into_prompt, load_transcripts
+            audio_transcript, _audio_sources = load_transcripts(audio_paths)
+            if audio_transcript:
+                # Inject transcript into prompt for direct agents
+                prompt = inject_transcript_into_prompt(prompt, audio_transcript)
+
         # Route via LiteLLM Router if enabled and not opencode
         if self._use_litellm_router and self.agent_name != "opencode":
-            return self._run_via_litellm_router(
+            result = self._run_via_litellm_router(
                 prompt, cwd, mode, timeout, model, use_stream, live_output, on_stdout, on_stderr, env=env
             )
+            # WL-116: Add audio_transcript to result if audio was processed
+            if audio_transcript:
+                result = RunResult(
+                    exit_code=result.exit_code,
+                    stdout=result.stdout,
+                    stderr=result.stderr,
+                    timed_out=result.timed_out,
+                    context_tokens_used=result.context_tokens_used,
+                    context_window_max=result.context_window_max,
+                    context_usage_ratio=result.context_usage_ratio,
+                    audio_transcript=audio_transcript,
+                    grounding_sources=result.grounding_sources,
+                )
+            return result
 
         # WP-Y6: OTel GenAI Instrumentation
         from thegent.observability.otel_instrumentation import instrument_genai_call
@@ -208,8 +233,14 @@ class DirectAgentRunner(AgentRunner):
             model=model,
             system=system_map.get(self.agent_name),
         ) as span:
-            cmd = self._build_cmd(cwd, use_stream, model, mode)
-            stdin_input = prompt if self._uses_stdin else None
+            cmd = self._build_cmd(cwd, use_stream, model, mode, image_paths=image_paths)
+            # WL-114: Claude Code CLI receives images via --input-format stream-json JSONL stdin.
+            if self._uses_stdin and self.agent_name == "claude" and image_paths:
+                from thegent.agents.image_inputs import build_claude_stdin_with_images
+
+                stdin_input: str | None = build_claude_stdin_with_images(prompt, image_paths)
+            else:
+                stdin_input = prompt if self._uses_stdin else None
             if not self._uses_stdin:
                 if self.agent_name == "gemini":
                     cmd.extend(["-p", prompt])
@@ -223,21 +254,22 @@ class DirectAgentRunner(AgentRunner):
                 cmd = _wrap_with_harness(cmd, agent_name=self.agent_name)
             cmd = wrap_with_caffeinate(cmd, self.agent_name)
 
+            # @trace WL-038 — capture result so $defer directives can be post-processed
+            _dr: RunResult
             try:
                 if live_output:
-                    result = self._run_live(cmd, cwd, timeout, stdin_input, on_stdout, on_stderr, env=env)
+                    _dr = self._run_live(cmd, cwd, timeout, stdin_input, on_stdout, on_stderr, env=env)
                 else:
-                    result = self._run_capture(cmd, cwd, timeout, stdin_input, env=env)
+                    _dr = self._run_capture(cmd, cwd, timeout, stdin_input, env=env)
 
-                span.set_attribute("exit_code", result.exit_code)
-                return result
+                span.set_attribute("exit_code", _dr.exit_code)
             except FileNotFoundError:
                 env_hint = (
                     "THGENT_CURSOR_AGENT_CMD"
                     if self._cli_name == "cursor-agent"
                     else f"THGENT_{self._cli_name.upper().replace('-', '_')}_CMD"
                 )
-                res = RunResult(
+                _dr = RunResult(
                     exit_code=1,
                     stdout="",
                     stderr=(
@@ -246,10 +278,9 @@ class DirectAgentRunner(AgentRunner):
                     timed_out=False,
                 )
                 span.set_attribute("exit_code", 1)
-                cast("Any", span).record_exception(FileNotFoundError(res.stderr))
-                return res
+                cast("Any", span).record_exception(FileNotFoundError(_dr.stderr))
             except subprocess.TimeoutExpired:
-                res = RunResult(
+                _dr = RunResult(
                     exit_code=124,
                     stdout="",
                     stderr=f"Agent timed out after {timeout}s",
@@ -257,7 +288,22 @@ class DirectAgentRunner(AgentRunner):
                 )
                 span.set_attribute("exit_code", 124)
                 span.set_attribute("timed_out", True)
-                return res
+
+            # WL-116: Add audio_transcript to result if audio was processed
+            if audio_transcript:
+                _dr = RunResult(
+                    exit_code=_dr.exit_code,
+                    stdout=_dr.stdout,
+                    stderr=_dr.stderr,
+                    timed_out=_dr.timed_out,
+                    context_tokens_used=_dr.context_tokens_used,
+                    context_window_max=_dr.context_window_max,
+                    context_usage_ratio=_dr.context_usage_ratio,
+                    audio_transcript=audio_transcript,
+                    grounding_sources=_dr.grounding_sources,
+                )
+
+            return self._process_output_deferrals(_dr, cwd=cwd)
 
     def _run_via_litellm_router(
         self,
@@ -298,7 +344,15 @@ class DirectAgentRunner(AgentRunner):
                 # or handle it as expected. Since we're emulating direct CLIs,
                 # we'll collect it for now unless we implement full SSE.
                 stdout_collector = []
-                for chunk in result.response:
+                response_iter = result.response
+                if response_iter is None:
+                    return RunResult(
+                        exit_code=1,
+                        stdout="",
+                        stderr="No response from router",
+                        timed_out=False,
+                    )
+                for chunk in response_iter:
                     content = ""
                     if hasattr(chunk, "choices") and chunk.choices:
                         delta = chunk.choices[0].delta
@@ -323,13 +377,14 @@ class DirectAgentRunner(AgentRunner):
                     timed_out=False,
                 )
             content = ""
-            if hasattr(result.response, "choices") and result.response.choices:
-                content = result.response.choices[0].message.content
-            elif isinstance(result.response, dict):
-                choices = result.response.get("choices", [])
-                if choices:
-                    message = choices[0].get("message", {})
-                    content = message.get("content", "")
+            if result.response is not None:
+                if hasattr(result.response, "choices") and result.response.choices:
+                    content = result.response.choices[0].message.content
+                elif isinstance(result.response, dict):
+                    choices = result.response.get("choices", [])
+                    if choices:
+                        message = choices[0].get("message", {})
+                        content = message.get("content", "")
 
             return RunResult(
                 exit_code=0,
@@ -354,6 +409,8 @@ class DirectAgentRunner(AgentRunner):
         use_stream: bool,
         model: str,
         mode: str,
+        *,
+        image_paths: list[str] | None = None,
     ) -> list[str]:
         cmd = [self._cli_cmd]
 
@@ -369,6 +426,8 @@ class DirectAgentRunner(AgentRunner):
                 cmd.extend(["--sandbox", "workspace-write"])
             elif mode == "full":
                 cmd.extend(["--full-auto"])
+            for image_path in image_paths or []:
+                cmd.extend(["--image", image_path])
             return cmd
 
         if self.agent_name == "cursor-agent":
@@ -392,6 +451,9 @@ class DirectAgentRunner(AgentRunner):
                 cmd.append("--verbose")  # required with --print + stream-json
             if model:
                 cmd.extend(["--model", model])
+            # WL-114: image content blocks require stream-json input format.
+            if image_paths:
+                cmd.extend(["--input-format", "stream-json"])
             return cmd
 
         if self.agent_name == "copilot":
