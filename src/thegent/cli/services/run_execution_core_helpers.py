@@ -959,6 +959,7 @@ def bg_impl_core(
     mode: str,
     timeout: int,
     full: bool,
+    droid: str | None = None,
     model: str | None = None,
     provider: str | None = None,
     owner: str | None = None,
@@ -981,6 +982,7 @@ def bg_impl_core(
     debug: bool = False,
     task_id: str | None = None,
     remote: str | None = None,
+    image_paths: list[str] | None = None,
     config_provider: "ConfigProvider | None" = None,
     tenant_id: str | None = None,
     impl_ns: Any | None = None,
@@ -1441,5 +1443,4 @@ def bg_impl_core(
         "log_path": str(p["stdout"]),
         "owner": owner_tag,
     }
-
 

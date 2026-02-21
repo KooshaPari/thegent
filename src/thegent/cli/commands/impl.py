@@ -1134,8 +1134,8 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
 
 
 def _validate_task_and_record_errors(tf: Path, validation_errors: list[dict[str, Any]]) -> None:
-    """Backward-compatible wrapper for extracted post-run surface helper service."""
-    run_post_surface_helpers.validate_task_and_record_errors(tf=tf, validation_errors=validation_errors)
+    """Backward-compatible wrapper for shared work-stream orchestration service."""
+    work_stream_orchestration._validate_task_and_record_errors(tf=tf, validation_errors=validation_errors)
 
 
 def continuity_snapshot_impl(
@@ -1144,13 +1144,12 @@ def continuity_snapshot_impl(
     state_summary: dict[str, Any] | None = None,
     next_steps: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Backward-compatible wrapper for extracted post-run surface helper service."""
-    return run_post_surface_helpers.continuity_snapshot_impl(
+    """Backward-compatible wrapper for shared work-stream orchestration service."""
+    return work_stream_orchestration.continuity_snapshot_impl(
         owner=owner,
         run_ids=run_ids,
         state_summary=state_summary,
         next_steps=next_steps,
-        settings_factory=ThegentSettings,
     )
 
 

@@ -70,6 +70,33 @@ PRE_WORK_GATE_LITERAL_BLOCKLIST: tuple[str, ...] = (
     "Refresh e2e evidence:",
 )
 
+ORCHESTRATION_WRAPPER_COMMAND_MODULES: tuple[Path, ...] = PRE_WORK_GATE_COMMAND_MODULES
+
+ORCHESTRATION_WRAPPER_CONTRACTS: dict[str, str] = {
+    "do_next_impl": "do_next_impl",
+    "wait_next_impl": "wait_next_impl",
+    "spawn_next_impl": "spawn_next_impl",
+    "work_stream_claim_impl": "work_stream_claim_impl",
+    "work_stream_complete_impl": "work_stream_complete_impl",
+    "incorporate_impl": "incorporate_impl",
+    "_validate_task_and_record_errors": "_validate_task_and_record_errors",
+    "continuity_snapshot_impl": "continuity_snapshot_impl",
+}
+
+MCP_SERVER_PATH = ROOT / "src" / "thegent" / "mcp" / "server.py"
+MCP_SERVER_MAX_LINES = 500
+MCP_SERVER_REQUIRED_WIRING_STRINGS: tuple[str, ...] = (
+    "_server_execution_tools.register_execution_tools(",
+    "_server_control_tools.register_control_tools(",
+    "_server_planning_tools.register_planning_tools(",
+    "_server_terminal_tools.register_terminal_tools(",
+    "_server_research_tools.register_research_tools(",
+    "_server_ops_tools.register_ops_tools(",
+    "_server_optional_tools.register_optional_tools(",
+)
+MCP_SERVER_MAX_TOP_LEVEL_FUNCTIONS = 8
+MCP_SERVER_MAX_MCP_TOOL_DECORATORS = 2
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -97,6 +124,17 @@ def _strip_docstring(body: list[ast.stmt]) -> list[ast.stmt]:
 def _extract_name(node: ast.expr) -> str | None:
     if isinstance(node, ast.Name):
         return node.id
+    return None
+
+
+def _safe_attr_name(node: ast.expr) -> str | None:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        base = _safe_attr_name(node.value)
+        if base is None:
+            return None
+        return f"{base}.{node.attr}"
     return None
 
 
@@ -200,6 +238,106 @@ def _validate_wrapper_delegation(
     return None
 
 
+def _validate_orchestration_wrapper_delegation(
+    *,
+    module_path: Path,
+    wrapper_name: str,
+    helper_name: str,
+) -> Finding | None:
+    module_ast = _load_ast(module_path)
+    if module_ast is None:
+        return Finding(
+            kind="orchestration_wrapper_module_missing",
+            path=_display_path(module_path),
+            message="Required command module for orchestration wrapper governance is missing.",
+        )
+
+    target: ast.FunctionDef | None = None
+    for node in module_ast.body:
+        if isinstance(node, ast.FunctionDef) and node.name == wrapper_name:
+            target = node
+            break
+    if target is None:
+        return Finding(
+            kind="orchestration_wrapper_missing",
+            path=_display_path(module_path),
+            message=f"Missing required orchestration wrapper `{wrapper_name}` in command module.",
+        )
+
+    body = _strip_docstring(target.body)
+    if len(body) != 1:
+        return Finding(
+            kind="orchestration_wrapper_logic_leak",
+            path=_display_path(module_path),
+            message=(
+                f"Orchestration business logic is banned from command modules; "
+                f"`{wrapper_name}` must contain only direct delegation."
+            ),
+        )
+
+    call_expr: ast.Call | None = None
+    stmt = body[0]
+    if (isinstance(stmt, ast.Return) and stmt.value is not None and isinstance(stmt.value, ast.Call)) or (isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call)):
+        call_expr = stmt.value
+
+    if call_expr is None:
+        return Finding(
+            kind="orchestration_wrapper_logic_leak",
+            path=_display_path(module_path),
+            message=f"Wrapper `{wrapper_name}` must delegate with a single direct call.",
+        )
+
+    if not (
+        isinstance(call_expr.func, ast.Attribute)
+        and isinstance(call_expr.func.value, ast.Name)
+        and call_expr.func.value.id == "work_stream_orchestration"
+        and call_expr.func.attr == helper_name
+    ):
+        return Finding(
+            kind="orchestration_wrapper_logic_leak",
+            path=_display_path(module_path),
+            message=(
+                f"Wrapper `{wrapper_name}` must delegate directly to "
+                f"`work_stream_orchestration.{helper_name}`."
+            ),
+        )
+
+    expected_params = [arg.arg for arg in target.args.posonlyargs + target.args.args + target.args.kwonlyargs]
+    passed_params: list[str] = []
+    for arg in call_expr.args:
+        arg_name = _extract_name(arg)
+        if arg_name is None:
+            return Finding(
+                kind="orchestration_wrapper_logic_leak",
+                path=_display_path(module_path),
+                message=f"Wrapper `{wrapper_name}` must pass through parameters without transformation.",
+            )
+        passed_params.append(arg_name)
+    for kw in call_expr.keywords:
+        if kw.arg is None:
+            return Finding(
+                kind="orchestration_wrapper_logic_leak",
+                path=_display_path(module_path),
+                message=f"Wrapper `{wrapper_name}` must not use **kwargs in orchestration delegation.",
+            )
+        kw_value_name = _extract_name(kw.value)
+        if kw_value_name is None or kw_value_name != kw.arg:
+            return Finding(
+                kind="orchestration_wrapper_logic_leak",
+                path=_display_path(module_path),
+                message=f"Wrapper `{wrapper_name}` must pass `{kw.arg}` through unchanged.",
+            )
+        passed_params.append(kw.arg)
+
+    if sorted(expected_params) != sorted(passed_params):
+        return Finding(
+            kind="orchestration_wrapper_logic_leak",
+            path=_display_path(module_path),
+            message=f"Wrapper `{wrapper_name}` must pass through all original parameters unchanged.",
+        )
+    return None
+
+
 def validate_pre_work_gate_command_module(
     *,
     module_path: Path,
@@ -250,6 +388,129 @@ def validate_pre_work_gate_governance(
     findings: list[Finding] = []
     for module_path in command_modules:
         findings.extend(validate_pre_work_gate_command_module(module_path=module_path))
+    return findings
+
+
+def validate_orchestration_wrapper_command_module(
+    *,
+    module_path: Path,
+    wrapper_contracts: dict[str, str] | None = None,
+) -> list[Finding]:
+    contracts = wrapper_contracts or ORCHESTRATION_WRAPPER_CONTRACTS
+    findings: list[Finding] = []
+
+    if not module_path.exists():
+        findings.append(
+            Finding(
+                kind="orchestration_wrapper_module_missing",
+                path=_display_path(module_path),
+                message="Required command module for orchestration wrapper governance is missing.",
+            )
+        )
+        return findings
+
+    for wrapper_name, helper_name in contracts.items():
+        finding = _validate_orchestration_wrapper_delegation(
+            module_path=module_path,
+            wrapper_name=wrapper_name,
+            helper_name=helper_name,
+        )
+        if finding is not None:
+            findings.append(finding)
+    return findings
+
+
+def validate_orchestration_wrapper_governance(
+    command_modules: tuple[Path, ...] = ORCHESTRATION_WRAPPER_COMMAND_MODULES,
+) -> list[Finding]:
+    findings: list[Finding] = []
+    for module_path in command_modules:
+        findings.extend(validate_orchestration_wrapper_command_module(module_path=module_path))
+    return findings
+
+
+def validate_mcp_server_boundary(
+    *,
+    server_path: Path = MCP_SERVER_PATH,
+    max_lines: int = MCP_SERVER_MAX_LINES,
+    required_wiring_strings: tuple[str, ...] = MCP_SERVER_REQUIRED_WIRING_STRINGS,
+    max_top_level_functions: int = MCP_SERVER_MAX_TOP_LEVEL_FUNCTIONS,
+    max_mcp_tool_decorators: int = MCP_SERVER_MAX_MCP_TOOL_DECORATORS,
+) -> list[Finding]:
+    findings: list[Finding] = []
+
+    if not server_path.exists():
+        findings.append(
+            Finding(
+                kind="mcp_server_missing",
+                path=_display_path(server_path),
+                message="MCP server boundary target is missing.",
+            )
+        )
+        return findings
+
+    content = server_path.read_text(encoding="utf-8")
+    line_count = len(content.splitlines())
+    if line_count > max_lines:
+        findings.append(
+            Finding(
+                kind="mcp_server_line_ceiling",
+                path=_display_path(server_path),
+                message=f"server.py line count {line_count} exceeds ceiling {max_lines}.",
+            )
+        )
+
+    for wiring in required_wiring_strings:
+        if wiring not in content:
+            findings.append(
+                Finding(
+                    kind="mcp_server_wiring_missing",
+                    path=_display_path(server_path),
+                    message=f"Missing required MCP extraction wiring: {wiring}",
+                )
+            )
+
+    module_ast = _load_ast(server_path)
+    if module_ast is None:
+        return findings
+
+    top_level_functions = [
+        node
+        for node in module_ast.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ]
+    if len(top_level_functions) > max_top_level_functions:
+        findings.append(
+            Finding(
+                kind="mcp_server_top_level_functions",
+                path=_display_path(server_path),
+                message=(
+                    f"server.py exposes {len(top_level_functions)} top-level functions; "
+                    f"expected <= {max_top_level_functions} in extracted architecture."
+                ),
+            )
+        )
+
+    mcp_tool_decorator_count = 0
+    for node in ast.walk(module_ast):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        for decorator in node.decorator_list:
+            if not isinstance(decorator, ast.Call):
+                continue
+            if _safe_attr_name(decorator.func) == "mcp.tool":
+                mcp_tool_decorator_count += 1
+    if mcp_tool_decorator_count > max_mcp_tool_decorators:
+        findings.append(
+            Finding(
+                kind="mcp_server_tool_decorator_count",
+                path=_display_path(server_path),
+                message=(
+                    f"server.py defines {mcp_tool_decorator_count} @mcp.tool decorators; "
+                    f"expected <= {max_mcp_tool_decorators}."
+                ),
+            )
+        )
     return findings
 
 
@@ -366,6 +627,8 @@ def run_checks() -> list[Finding]:
     findings.extend(validate_doc_map_links(CLAUDE_PATH))
     findings.extend(validate_required_sections())
     findings.extend(validate_pre_work_gate_governance())
+    findings.extend(validate_orchestration_wrapper_governance())
+    findings.extend(validate_mcp_server_boundary())
     return findings
 
 
@@ -381,6 +644,10 @@ def build_summary(findings: list[Finding]) -> dict[str, object]:
             "doc_map_source": str(CLAUDE_PATH.relative_to(ROOT)),
             "templates": [str(path.relative_to(ROOT)) for path in REQUIRED_SECTIONS],
             "pre_work_gate_command_modules": [str(path.relative_to(ROOT)) for path in PRE_WORK_GATE_COMMAND_MODULES],
+            "orchestration_wrapper_command_modules": [
+                str(path.relative_to(ROOT)) for path in ORCHESTRATION_WRAPPER_COMMAND_MODULES
+            ],
+            "mcp_server_boundary_target": str(MCP_SERVER_PATH.relative_to(ROOT)),
         },
     }
 

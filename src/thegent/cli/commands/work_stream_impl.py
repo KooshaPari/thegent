@@ -437,15 +437,8 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
 
 
 def _validate_task_and_record_errors(tf: Path, validation_errors: list[dict[str, Any]]) -> None:
-    """Validate a single task file and record errors safely."""
-    from thegent.task.validator import validate_task_file
-
-    try:
-        result = validate_task_file(tf)
-        if not result.valid:
-            validation_errors.append({"file": str(tf.name), "errors": result.errors})
-    except Exception as e:
-        validation_errors.append({"file": str(tf.name), "error": str(e)})
+    """Backward-compatible wrapper for shared work-stream orchestration service."""
+    work_stream_orchestration._validate_task_and_record_errors(tf=tf, validation_errors=validation_errors)
 
 
 def continuity_snapshot_impl(
@@ -454,32 +447,10 @@ def continuity_snapshot_impl(
     state_summary: dict[str, Any] | None = None,
     next_steps: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Create a continuity snapshot for shift handoff (WP-1009).
-
-    Args:
-        owner: Current owner tag
-        run_ids: List of run IDs to include in snapshot
-        state_summary: Optional state summary dictionary
-        next_steps: Optional list of next steps
-
-    Returns:
-        Dictionary with snapshot_id and metadata
-    """
-    from thegent.config import ThegentSettings
-    from thegent.execution import HandoffManager
-
-    settings = ThegentSettings()
-    hm = HandoffManager(settings.session_dir)
-
-    snapshot_id = hm.create_snapshot(
-        owner,
-        run_ids,
+    """Backward-compatible wrapper for shared work-stream orchestration service."""
+    return work_stream_orchestration.continuity_snapshot_impl(
+        owner=owner,
+        run_ids=run_ids,
+        state_summary=state_summary,
+        next_steps=next_steps,
     )
-
-    return {
-        "snapshot_id": snapshot_id,
-        "owner": owner,
-        "run_ids": run_ids,
-        "state_summary": state_summary,
-        "next_steps": next_steps,
-    }

@@ -2,6 +2,11 @@
   "by_kind": {},
   "checked": {
     "doc_map_source": "CLAUDE.md",
+    "mcp_server_boundary_target": "src/thegent/mcp/server.py",
+    "orchestration_wrapper_command_modules": [
+      "src/thegent/cli/commands/impl.py",
+      "src/thegent/cli/commands/work_stream_impl.py"
+    ],
     "pre_work_gate_command_modules": [
       "src/thegent/cli/commands/impl.py",
       "src/thegent/cli/commands/work_stream_impl.py"

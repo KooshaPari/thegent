@@ -334,3 +334,29 @@ def _validate_task_and_record_errors(tf: Path, validation_errors: list[dict[str,
             validation_errors.append({"file": str(tf.name), "errors": result.errors})
     except Exception as e:
         validation_errors.append({"file": str(tf.name), "error": str(e)})
+
+
+def continuity_snapshot_impl(
+    owner: str,
+    run_ids: list[str],
+    state_summary: dict[str, Any] | None = None,
+    next_steps: list[str] | None = None,
+) -> dict[str, Any]:
+    """Create a continuity snapshot for shift handoff (WP-1009)."""
+    from thegent.execution import HandoffManager
+
+    settings = ThegentSettings()
+    hm = HandoffManager(settings.session_dir)
+
+    snapshot_id = hm.create_snapshot(
+        owner,
+        run_ids,
+    )
+
+    return {
+        "snapshot_id": snapshot_id,
+        "owner": owner,
+        "run_ids": run_ids,
+        "state_summary": state_summary,
+        "next_steps": next_steps,
+    }

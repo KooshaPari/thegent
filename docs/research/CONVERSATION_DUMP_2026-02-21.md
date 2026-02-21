@@ -313,3 +313,52 @@ The fix: replace cli.py body with a 109-line pure re-export shim.
 - `test_apps_main.py::test_install_compat`: Unrelated CLI argument issue
 - `test_doctor.py::test_run_checks_returns_eight_items`: Doctor checks grew from 8→12
 - `test_git_journal_async.py::test_error_invalid_repo_path`: Error handling changed
+
+---
+
+## Session 2: Full Kush Audit (10 Parallel Haiku Agents)
+
+**Time**: ~2026-02-21T13:10-13:17 UTC
+**Method**: TeamCreate + 10 parallel Explore agents (Haiku)
+**Outputs**: `thegent/TECH_STACK_AUDIT.md`, `thegent/LIBRARY_DECISION_LOG.md`
+
+### Research Findings
+
+**thegent Core (Agent 1)**: Library-first 100%, all 32 deps active. 3 overlapping cache impls (DualCache/MultiLevelCache/MultiTierCache) — consolidate to cache/core.py. Custom rate limiter (198 LOC) justified — `limits` lib is unmaintained.
+
+**thegent CLI/Agents/Hooks (Agent 2)**: CRITICAL — `hooks/lib/common.sh` missing, referenced by agileplus-cycle.sh → runtime crash. `specs.py:30` hardcoded absolute path. 8-12 redundant agent personas.
+
+**thegent Infra/Routing/MCP (Agent 3)**: 143 files, 31,427 LOC. 86% justified custom domain logic. Gap: raw logging.getLogger() in infra, no tenacity in infra layer.
+
+**thegent Templates (Agent 4)**: Language CI/CD only 22% coverage. Missing: Go CI, Rust Taskfile, DevContainer (0%), Nix (0%). 8 inconsistent process-compose copies, no canonical template.
+
+**thegent Tests/Quality (Agent 5)**: 725 test files, 95%+ coverage, 106 FR contracts, 400+ @pytest.mark.requirement tags. Test maturity Level 5/5.
+
+**trace Stack (Agent 6)**: 40+ MCP tools implemented. Full OTel (Jaeger+Prometheus+Grafana+Loki). Temporal 1.7.0. Dev paused at MSW GraphQL blocker. See `.AWAITING_TEAM_LEAD_CLARIFICATION.txt` + `.BLOCKER_FIX_INSTRUCTIONS.md`.
+
+**trace Architecture (Agent 7)**: Go Echo REST (17 routes) + gRPC port 9091 + Python FastAPI. PostgreSQL 17+ pgvector + Neo4j 5.0+. WorkOS AuthKit (tests disabled). 8 stubs incomplete when paused.
+
+**trace Library/Integration (Agent 8)**: Zero thegent imports — standalone. 36 libs, 0 custom core impls. loguru+structlog logging. NATS messaging.
+
+**zen-mcp/atoms/pheno (Agent 9)**: zen-mcp error_handler.py:133-247 has mature @with_retry + @with_circuit_breaker decorators — adopt in thegent. 7 ICache/IModelProvider protocol files. PostgreSQL replaced Redis for cache. atoms-mcp: FastMCP 2.13.1+ (MCP SDK 1.21.1 excluded — bug #2422). pheno-sdk: hypothesis property-based testing from day 1.
+
+**Remaining Projects (Agent 10)**: zuban (emerging mypy alt, widely adopted), basedpyright (replacing pyrightconfig), msgspec (faster pydantic), NATS (nats-py in crun+trace), Prefect (workflow alt to Temporal in crun), networkx/rustworkx (DAG libs in crun), instructor (structured LLM output in atoms.tech).
+
+### Action Items (Priority)
+
+1. CRITICAL: Create `hooks/lib/common.sh`
+2. CRITICAL: Fix `specs.py:30` hardcoded path
+3. HIGH: Consolidate 3 cache impls → cache/core.py
+4. HIGH: Consolidate 8-12 redundant agent personas
+5. MED: Migrate logging.getLogger() → structlog in infra
+6. MED: Add canonical process-compose template (8 copies exist)
+7. MED: Go CI + Rust Taskfile templates
+8. MED: Add zuban + basedpyright to quality templates
+9. LOW: Adopt zen-mcp decorator pattern
+10. LOW: Copy trace OTel stack to thegent
+
+### trace Resume Checklist
+- Read `.AWAITING_TEAM_LEAD_CLARIFICATION.txt`
+- Read `.BLOCKER_FIX_INSTRUCTIONS.md`
+- Resolve MSW GraphQL blocker (34 vs 65+ test target)
+- Add cachetools + pybreaker to trace
