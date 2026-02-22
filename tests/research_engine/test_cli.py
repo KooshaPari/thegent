@@ -1,10 +1,8 @@
 """Tests for research_engine CLI — @trace FR-RES-040"""
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from research_engine.cli import app
