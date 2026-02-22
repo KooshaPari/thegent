@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, ClassVar
 
 
 @dataclass
@@ -25,11 +25,10 @@ class CrossConnectorVerifier:
     """Verify status/priority consistency across all connectors per cycle."""
 
     # Fields that must be consistent across connectors
-    CRITICAL_FIELDS = {"status", "priority"}
+    CRITICAL_FIELDS: ClassVar[set[str]] = {"status", "priority"}
 
     def __init__(self) -> None:
         """Initialize the cross-connector verifier."""
-        pass
 
     def compare(
         self, connector_a_state: dict[str, Any], connector_b_state: dict[str, Any]
