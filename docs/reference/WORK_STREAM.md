@@ -2255,7 +2255,7 @@ Add per-item provenance stamps for reflected updates in local markdown.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-221] Connector Quota Budgets
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** governance, budget
 **Effort:** S
@@ -2266,7 +2266,7 @@ Add per-connector quota budgets for controlled write/read consumption.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-241] Auth Expiry Detector
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** auth, reliability
 **Effort:** S
@@ -2277,7 +2277,7 @@ Detect impending connector auth expiration and emit proactive renewal warnings.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-261] Sync Policy Audit Command
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** governance, cli
 **Effort:** S
@@ -2288,7 +2288,7 @@ Add audit command to validate runtime behavior against sync-policy contract.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-281] Team Ownership Registry
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** governance, ops
 **Effort:** S
@@ -2838,7 +2838,7 @@ Detect divergent remote states across connectors for the same board item.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-272] Local Status Transition History Log
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** audit, history
 **Effort:** S
@@ -3355,7 +3355,7 @@ Define GA/default-on criteria and final readiness review checklist.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-202] Anti-Flap Status Hysteresis
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** reliability, sync
 **Effort:** S

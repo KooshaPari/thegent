@@ -31,7 +31,7 @@ def free_extra_args(*, triggered_by_agent: bool, resume: str | None, prompt: str
     """Build free-mode extra args and preserve existing skip-permission behavior."""
     args: list[str] = []
     if not triggered_by_agent:
-        args.append("--dangerously-skip-permissions")
+        args.append("--force")
     if resume:
         args.extend(["--resume", resume])
     if prompt:

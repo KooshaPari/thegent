@@ -583,6 +583,19 @@ All MD docs will be:
 - [x] Added `Platform Decision Matrix` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
 - [x] Added `Rollout Constraints` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
 
+### Wave 10 — Completed (10 items)
+
+- [x] Added `Escalation Response SLAs` section in `docs/research/SESSION_RESEARCH_COMPLETE.md`.
+- [x] Added `Daily Validation Set` section in `docs/research/SESSION_RESEARCH_COMPLETE.md`.
+- [x] Added `Closure Evidence Ledger` section in `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md`.
+- [x] Added `Handoff Checklist` section in `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md`.
+- [x] Added `Archive Rotation Policy` section in `docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md`.
+- [x] Added `Staleness Detection Commands` section in `docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md`.
+- [x] Added `Priority Exception Rules` section in `docs/research/CONVERSATION_DUMP_2026-02-16.md`.
+- [x] Added `Recovery Verification Gate` section in `docs/research/CONVERSATION_DUMP_2026-02-16.md`.
+- [x] Added `Platform Readiness Checklist` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Cutover Guardrails` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+
 ---
 
 *This TODO will be updated as expansion progresses.*

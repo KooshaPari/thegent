@@ -201,7 +201,7 @@ class WorkstreamParser:
         re.MULTILINE,
     )
 
-    STATUS_PATTERN = re.compile(r"\*\*Status:\*\*\s+(\w+)")
+    STATUS_PATTERN = re.compile(r"\*\*Status:\*\*\s+(.+?)(?:\n|$)")
     PRIORITY_PATTERN = re.compile(r"\*\*Priority:\*\*\s+(\w+)")
     AREA_PATTERN = re.compile(r"\*\*Area:\*\*\s+([\w\s,]+)")
     BLOCKED_BY_PATTERN = re.compile(r"\*\*Blocked by:\*\*\s+(.+?)(?:\n|$)")
@@ -245,7 +245,7 @@ class WorkstreamParser:
 
             # Extract fields
             status_match = cls.STATUS_PATTERN.search(section)
-            status = status_match.group(1) if status_match else "BACKLOG"
+            status = status_match.group(1).strip() if status_match else "BACKLOG"
 
             priority_match = cls.PRIORITY_PATTERN.search(section)
             priority = priority_match.group(1) if priority_match else "P2"
