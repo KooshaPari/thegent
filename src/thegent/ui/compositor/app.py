@@ -1,7 +1,7 @@
 """CompositApp - Main Textual application for the TUI compositor."""
 
 import logging
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, ClassVar, Protocol, cast
 
 from rich.panel import Panel
 from textual.app import App, ComposeResult
@@ -144,7 +144,7 @@ class CompositApp(App):
     }
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar = [
         ("ctrl+n", "new_pane", "New Pane"),
         ("ctrl+v", "split_vertical", "Split V"),
         ("ctrl+h", "split_horizontal", "Split H"),
@@ -323,7 +323,7 @@ class CompositApp(App):
                     widget = self._pane_widgets[pane_id]
                     if hasattr(widget, "close"):
                         try:
-                            cast(_Closeable, widget).close()
+                            cast("_Closeable", widget).close()
                             logger.debug(f"Closed pane: {pane_id}")
                         except Exception as e:
                             logger.error(f"Error closing pane {pane_id}: {e}")
@@ -472,7 +472,7 @@ class CompositApp(App):
             if pane_id and pane_id in self._pane_widgets:
                 widget = self._pane_widgets[pane_id]
                 if hasattr(widget, "close"):
-                    cast(_Closeable, widget).close()
+                    cast("_Closeable", widget).close()
                 del self._pane_widgets[pane_id]
 
             if self.pane_manager.close_pane():

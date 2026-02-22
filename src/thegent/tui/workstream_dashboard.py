@@ -5,7 +5,7 @@ Real-time monitoring dashboard for workstream items, sessions, and auto-launch s
 
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, ClassVar
 
 from textual import work
 from textual.app import App, ComposeResult
@@ -321,7 +321,7 @@ class WorkstreamDashboard(App):
     }
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar = [
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh"),
         ("g", "garden", "Garden"),
