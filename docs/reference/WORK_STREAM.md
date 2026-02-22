@@ -13,6 +13,8 @@
 2. **When starting**: Append to CLAIMED (ID, Agent, Started). Use unique agent_id.
 3. **When completing**: Remove from CLAIMED; add to COMPLETED; update source plan if applicable.
 4. **Incorporator**: Run `thegent plan incorporate` to merge new fragments from plans, research, specs.
+5. **Sync loop**: Use `thegent sync work-stream` before planning, and run `thegent sync autopilot --once` plus `thegent sync autopilot-status` to keep remote boards aligned.
+6. **GitHub backlog bootstrap**: Use `task sync:bootstrap-gh` to create/reuse the sync-system issue/project board track.
 
 ---
 
@@ -2527,7 +2529,7 @@ Define rollout scorecard and go/no-go thresholds for enterprise adoption.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-282] Connector Maintenance Calendar Ingestion
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** scheduling, connectors
 **Effort:** S
@@ -2538,7 +2540,7 @@ Ingest connector maintenance windows from config to avoid planned outages.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-283] Large-Range Partition Planner
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** scale, scheduling
 **Effort:** M
@@ -2549,7 +2551,7 @@ Plan WL-range partitions dynamically for very large workstreams.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-284] Rolling Checkpoint Resume
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** reliability, resume
 **Effort:** M
@@ -2571,7 +2573,7 @@ Detect abnormal mutation spikes and trigger protective throttling/escalation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-286] Adaptive Per-Connector Rate Limiter
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** performance, reliability
 **Effort:** M
@@ -2582,7 +2584,7 @@ Implement adaptive rate limits by connector and operation class.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-287] Label/Tag Parity
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** metadata, sync
 **Effort:** S
@@ -2593,7 +2595,7 @@ Synchronize labels/tags with parity across local and remote trackers.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-288] Local Tag Taxonomy Validator
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** validation, docs
 **Effort:** S
@@ -2604,7 +2606,7 @@ Validate local workstream tags against approved taxonomy.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-289] Duplicate Title Guard
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** integrity, governance
 **Effort:** S
@@ -2615,7 +2617,7 @@ Add strict duplicate-title checks with explicit exception policy.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-290] Local SLA Annotation Sync
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** sla, docs
 **Effort:** S
@@ -2626,7 +2628,7 @@ Reflect SLA metadata into local markdown block annotations.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-291] Open Blockers Digest
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** reporting, ops
 **Effort:** S
@@ -2637,7 +2639,7 @@ Generate per-cycle digest of currently open blockers and dependencies.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-292] Queue Pruning Lifecycle
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** maintenance, queue
 **Effort:** S
