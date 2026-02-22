@@ -280,6 +280,8 @@ class GitJournal:
             auto_commit: Whether to auto-commit on record_file_change
         """
         self.repo_root = Path(repo_root).resolve()
+        if not self.repo_root.exists():
+            raise FileNotFoundError(f"Repository path does not exist: {self.repo_root}")
         self.session_id = session_id
         self.track_secrets = track_secrets
         self.auto_commit = auto_commit
