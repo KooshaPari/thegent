@@ -2068,11 +2068,14 @@ See `docs/research/CONVERSATION_DUMP_2026-02-21_DESKTOP_AUTOMATION.md` for compr
 
 Harmonize session memory system: every prompt logged with exact text + agent synthesis, research/planning separate, work stream traceable.
 
-- Created PRD: `docs/plans/2026-02-21-SESSION_MEMORY_SYSTEM.md`
-- Existing: `src/thegent/research/always_dumps.py`, `src/thegent/memory/seed_storage.py`
-- Need: Enhance conversation dumper with prompt/synthesis fields, create directory structure, wire into lifecycle
+- Enhanced ConversationRecord with agent_synthesis field
+- Updated ConversationDumper methods to support agent_synthesis parameter
+- Enhanced SessionScraper with TypedDict event schemas (SessionSnapshotCreatedEvent, SessionSnapshotFailedEvent)
+- Added trigger normalization, UUID generation, and event logging utilities
+- Implemented snapshot event logging (created/failed) with request_event_id support
+- All 72 unit tests passing: test_unit_always_write_dumps.py, test_unit_session_scraper.py, test_conversation_dumper.py, test_session_manager.py, test_memory_manager.py
 
-**Evidence:** `docs/plans/2026-02-21-SESSION_MEMORY_SYSTEM.md`
+**Evidence:** Tests passing (72/72); Implementation: `src/thegent/orchestration/state/session_scraper.py`, `src/thegent/session/conversation_dumper.py`; Spec: `docs/plans/2026-02-21-SESSION_MEMORY_SYSTEM.md`
 
 ### [WL-156] Enhanced Session Scraper (Rich Extraction)
 **Status:** COMPLETED
@@ -2155,7 +2158,7 @@ Integrate the generated CLIProxyAPI++ board/import artifacts into thegent unifie
 - Board artifacts: `cliproxyapi-plusplus/docs/planning/`
 
 ### [WL-159] Cross-Repo Board Sync Operationalization
-**Status:** IN PROGRESS
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** tooling, operations
 **Effort:** S
@@ -2163,11 +2166,22 @@ Integrate the generated CLIProxyAPI++ board/import artifacts into thegent unifie
 
 Operationalize repeatable board update/import flow using native tooling and explicit command docs.
 
-- Added Go utility in cliproxy++: `cliproxyapi-plusplus/cmd/boardsync/main.go`
-- Added `Taskfile.yml` command `board:sync` delegating to Go utility
-- Updated docs to use native sync path in `cliproxyapi-plusplus/docs/planning/board-workflow.md`
+**Implementation:** Python-native operationalization with CLI and Taskfile integration.
 
-**Evidence:** `cliproxyapi-plusplus/cmd/boardsync/main.go`
+- Added `thegent sync board` command in `src/thegent/cli/apps/sync.py` (sync_board subcommand)
+- Added `SyncCommand.sync_board()` method in `src/thegent/commands/sync.py` with work-stream parsing and platform stubs
+- Added `task board:sync` and `task board:sync:dry-run` commands to `Taskfile.yml`
+- Created comprehensive workflow docs: `docs/reference/BOARD_SYNC_WORKFLOW.md`
+- Created test suite: `tests/test_wl159_board_sync.py` (12 tests, all passing)
+- Supports GitHub Projects and Linear platforms with environment config (THGENT_BOARD_ID, THGENT_BOARD_SOURCE)
+- Dry-run mode for validation before sync
+
+**Evidence:**
+- `src/thegent/cli/apps/sync.py:278-310` (sync board CLI command)
+- `src/thegent/commands/sync.py:865-980` (SyncCommand.sync_board implementation)
+- `Taskfile.yml` (board:sync and board:sync:dry-run tasks)
+- `docs/reference/BOARD_SYNC_WORKFLOW.md` (complete workflow documentation)
+- `tests/test_wl159_board_sync.py` (12 passing tests)
 
 ### [WL-160] Full Automatic Workstream Reflection (GitHub Projects + Linear)
 **Status:** IN PROGRESS
