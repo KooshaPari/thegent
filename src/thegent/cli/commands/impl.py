@@ -590,9 +590,41 @@ def run_impl(
     output_schema: str | None = None, image_paths: list[str] | None = None, audio_files: list[str] | None = None,
     google_grounding: bool = False,
 ) -> dict[str, Any]:
+    import asyncio
     from thegent.cli.services import run_execution_core_helpers
+    from thegent.memory.memory_manager import MemoryManager
 
-    return run_execution_core_helpers.run_impl_core(agent=agent, prompt=prompt, cd=cd, mode=mode, timeout=timeout, full=full, live=live, model=model, provider=provider, run_id=run_id, owner=owner, include_contract=include_contract, route_contract=route_contract, route_request=route_request, lane=lane, confidence=confidence, override_reason=override_reason, contract_version=contract_version, domain=domain, idempotency_token=idempotency_token, correlation_id=correlation_id, speculative=speculative, arbitration=arbitration, routing=routing, enable_search=enable_search, debug=debug, task_id=task_id, shadow=shadow, lock=lock, remote=remote, config_provider=config_provider, tenant_id=tenant_id, previous_session_id=previous_session_id, reasoning_effort=reasoning_effort, output_schema=output_schema, image_paths=image_paths, audio_files=audio_files, google_grounding=google_grounding, impl_ns=sys.modules[__name__])
+    # Initialize memory manager (no-op if API key not set)
+    _mem_mgr = MemoryManager()
+
+    # Load agent context before run
+    context_results = []
+    if _mem_mgr.enabled:
+        context_results = asyncio.run(_mem_mgr.load_context(agent or "default"))
+
+    # Execute the core run
+    result = run_execution_core_helpers.run_impl_core(
+        agent=agent, prompt=prompt, cd=cd, mode=mode, timeout=timeout, full=full, live=live,
+        model=model, provider=provider, run_id=run_id, owner=owner, include_contract=include_contract,
+        route_contract=route_contract, route_request=route_request, lane=lane, confidence=confidence,
+        override_reason=override_reason, contract_version=contract_version, domain=domain,
+        idempotency_token=idempotency_token, correlation_id=correlation_id, speculative=speculative,
+        arbitration=arbitration, routing=routing, enable_search=enable_search, debug=debug,
+        task_id=task_id, shadow=shadow, lock=lock, remote=remote, config_provider=config_provider,
+        tenant_id=tenant_id, previous_session_id=previous_session_id, reasoning_effort=reasoning_effort,
+        output_schema=output_schema, image_paths=image_paths, audio_files=audio_files,
+        google_grounding=google_grounding, impl_ns=sys.modules[__name__]
+    )
+
+    # Save discoveries after successful run
+    if _mem_mgr.enabled and result.get("exit_code") == 0:
+        run_id_str = result.get("run_id", "unknown")
+        summary = f"Agent {agent}: completed run {run_id_str}"
+        asyncio.run(_mem_mgr.save_discovery(agent or "default", summary))
+
+    return result
+
+
 
 
 def bg_impl(
