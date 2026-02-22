@@ -8,6 +8,7 @@ import inspect
 import sys
 import typing
 from pathlib import Path
+from typing import Any, cast
 
 import typer
 
@@ -253,7 +254,7 @@ def snapshot_daily_index_cmd(
 
     project_path = project or Path.cwd()
     scraper = SessionScraper(project_path)
-    payload = _snapshot_payload_kwargs(
+    payload_raw = _snapshot_payload_kwargs(
         snapshot_daily_index_payload,
         scraper=scraper,
         limit=limit,
@@ -261,14 +262,19 @@ def snapshot_daily_index_cmd(
         tag=tag,
         since=since,
     )
+    payload = cast(dict[str, typing.Any], payload_raw)
     if _normalize_output_format(format) == "json":
         sys.stdout.write(json.dumps(payload) + "\n")
         return
-    console.print(f"[bold cyan]Snapshot Daily Index[/bold cyan]: {len(payload.get('days', []))} day(s)")
+    days_list = payload.get("days", [])
+    if not isinstance(days_list, list):
+        days_list = []
+    console.print(f"[bold cyan]Snapshot Daily Index[/bold cyan]: {len(days_list)} day(s)")
     for day_payload in payload.get("days", []):
-        snapshots = day_payload.get("snapshots") if "snapshots" in day_payload else day_payload.get("count", 0)
+        day_dict = cast(dict[str, typing.Any], day_payload)
+        snapshots = day_dict.get("snapshots") if "snapshots" in day_dict else day_dict.get("count", 0)
         console.print(
-            f"- {day_payload.get('day')}: snapshots={snapshots} latest={day_payload.get('latest_captured_at') or '?'}"
+            f"- {day_dict.get('day')}: snapshots={snapshots} latest={day_dict.get('latest_captured_at') or '?'}"
         )
 
 
@@ -297,16 +303,17 @@ def snapshot_daily_totals_cmd(
     if _normalize_output_format(format) == "json":
         sys.stdout.write(json.dumps(payload) + "\n")
         return
+    payload_dict = cast(dict[str, Any], payload)
     console.print(
         "[bold cyan]Snapshot Daily Totals[/bold cyan] "
-        f"days={payload.get('total_days', 0)} snapshots={payload.get('total_snapshots', 0)} "
-        f"prompts={payload.get('total_prompts', 0)} commands={payload.get('total_commands', 0)} "
-        f"files={payload.get('total_files', 0)}"
+        f"days={payload_dict.get('total_days', 0)} snapshots={payload_dict.get('total_snapshots', 0)} "
+        f"prompts={payload_dict.get('total_prompts', 0)} commands={payload_dict.get('total_commands', 0)} "
+        f"files={payload_dict.get('total_files', 0)}"
     )
-    if payload.get("filters"):
-        console.print(f"[dim]Filters:[/dim] {payload['filters']}")
-    if payload.get("generated_at"):
-        console.print(f"[dim]Generated:[/dim] {payload['generated_at']}")
+    if payload_dict.get("filters"):
+        console.print(f"[dim]Filters:[/dim] {payload_dict['filters']}")
+    if payload_dict.get("generated_at"):
+        console.print(f"[dim]Generated:[/dim] {payload_dict['generated_at']}")
 
 
 def snapshot_daily_export_cmd(

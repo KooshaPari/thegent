@@ -38,6 +38,7 @@ class ConversationRecord:
     model: str
     prompt: str
     response: str
+    agent_synthesis: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_markdown(self) -> str:
@@ -53,8 +54,11 @@ class ConversationRecord:
             meta += f"**Metadata:** {json.dumps(self.metadata, indent=2)}\n"
         meta += "\n## Prompt\n\n"
         prompt_block = f"{self.prompt}\n\n"
-        response_block = f"## Response\n\n{self.response}\n"
-        return header + meta + prompt_block + response_block
+        response_block = f"## Response\n\n{self.response}\n\n"
+        synthesis_block = ""
+        if self.agent_synthesis:
+            synthesis_block = f"## Agent Synthesis\n\n{self.agent_synthesis}\n"
+        return header + meta + prompt_block + response_block + synthesis_block
 
     def to_json(self) -> dict[str, Any]:
         """Convert conversation to JSON-serializable dict.
@@ -68,6 +72,7 @@ class ConversationRecord:
             "model": self.model,
             "prompt": self.prompt,
             "response": self.response,
+            "agent_synthesis": self.agent_synthesis,
             "metadata": self.metadata,
         }
 
@@ -113,6 +118,7 @@ class ConversationDumper:
         model: str,
         prompt: str,
         response: str,
+        agent_synthesis: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> Path:
         """Dump a conversation to a file.
@@ -139,6 +145,7 @@ class ConversationDumper:
             model=model,
             prompt=prompt,
             response=response,
+            agent_synthesis=agent_synthesis,
             metadata=metadata or {},
         )
 
@@ -162,6 +169,7 @@ class ConversationDumper:
         model: str,
         prompt: str,
         response: str,
+        agent_synthesis: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> Path:
         """Dump a conversation to a JSON file.
@@ -188,6 +196,7 @@ class ConversationDumper:
             model=model,
             prompt=prompt,
             response=response,
+            agent_synthesis=agent_synthesis,
             metadata=metadata or {},
         )
 
@@ -274,6 +283,7 @@ class ConversationDumper:
                     model=data["model"],
                     prompt=data["prompt"],
                     response=data["response"],
+                    agent_synthesis=data.get("agent_synthesis"),
                     metadata=data.get("metadata", {}),
                 )
 

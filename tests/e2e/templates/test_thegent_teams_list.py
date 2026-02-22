@@ -1,7 +1,7 @@
 """
-E2E test for: thegent teams list
+E2E test for: thegent team list
 
-Agent Journey: Agent executes thegent teams list command
+Agent Journey: Agent executes thegent team list command
 Expected Behavior: Command executes successfully and returns expected output
 """
 
@@ -15,21 +15,21 @@ runner = CliRunner()
 
 @pytest.mark.e2e
 class TestTeamsList:
-    """E2E tests for thegent teams list command."""
+    """E2E tests for thegent team list command."""
 
     def test_teams_list_exits_zero(self) -> None:
-        """thegent teams list exits with code 0."""
+        """thegent team list exits with code 0."""
         result = runner.invoke(app, ["teams", "list"])
         assert result.exit_code == 0, f"Command failed: {result.stdout} {result.stderr}"
 
     def test_teams_list_produces_output(self) -> None:
-        """thegent teams list produces expected output."""
+        """thegent team list produces expected output."""
         result = runner.invoke(app, ["teams", "list"])
         assert result.exit_code == 0
         # TODO: Add specific output assertions based on command behavior
         assert len(result.stdout) > 0 or len(result.stderr) == 0
 
     def test_teams_list_help_exits_zero(self) -> None:
-        """thegent teams list --help exits with code 0."""
+        """thegent team list --help exits with code 0."""
         result = runner.invoke(app, ["teams", "list", "--help"])
         assert result.exit_code == 0

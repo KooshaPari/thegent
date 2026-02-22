@@ -30,10 +30,10 @@ def update_cargo_toml(file_path):
     try:
         with open(file_path, 'r') as f:
             content = f.read()
-        
+
         original_content = content
         updated = False
-        
+
         # Update each dependency
         for dep, latest_version in LATEST_VERSIONS.items():
             # Pattern 1: dep = "version"
@@ -44,7 +44,7 @@ def update_cargo_toml(file_path):
             if new_content != content:
                 content = new_content
                 updated = True
-            
+
             # Pattern 2: dep = { version = "version", ... }
             pattern2 = rf'({dep}\s*=\s*{{\s*version\s*=\s*")([\d.]+)(")'
             def repl2(m):
@@ -53,7 +53,7 @@ def update_cargo_toml(file_path):
             if new_content != content:
                 content = new_content
                 updated = True
-        
+
         if updated:
             with open(file_path, 'w') as f:
                 f.write(content)
@@ -66,21 +66,21 @@ def update_cargo_toml(file_path):
 
 def main():
     base_path = Path("/Users/kooshapari/temp-PRODVERCEL/485/kush")
-    
+
     # Find all Cargo.toml files
     cargo_files = list(base_path.rglob("Cargo.toml"))
-    
+
     # Filter out venv and .venv directories
     cargo_files = [f for f in cargo_files if ".venv" not in str(f) and "venv" not in str(f)]
-    
+
     print(f"Found {len(cargo_files)} Cargo.toml files")
     print("Updating dependencies...")
-    
+
     updated_count = 0
     for cargo_file in cargo_files:
         if update_cargo_toml(cargo_file):
             updated_count += 1
-    
+
     print(f"\nUpdated {updated_count} files")
     print("\nNext steps:")
     print("1. Run 'cargo update' in each workspace")

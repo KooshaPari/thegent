@@ -1,14 +1,59 @@
 import json
 import logging
 import re
+import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, TypedDict
 
 from thegent.skills.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes
 
 logger = logging.getLogger(__name__)
+
+
+class SessionScrapeRequestEvent(TypedDict, total=False):
+    event_name: Literal["session.scraper.snapshot.requested"]
+    version: Literal["v1"]
+    event_id: str
+    occurred_at: str
+    trigger: str
+    project_root: str
+    tags: list[str]
+    since: str
+    max_prompts: int
+
+
+class SnapshotSummary(TypedDict):
+    prompts: int
+    commands: int
+    files: int
+    facts: int
+    decisions: int
+    tags: int
+    sources: list[str]
+
+
+class SessionSnapshotCreatedEvent(TypedDict):
+    event_name: Literal["session.scraper.snapshot.created"]
+    version: Literal["v1"]
+    event_id: str
+    request_event_id: str
+    occurred_at: str
+    snapshot_id: str
+    snapshot_path: str
+    summary: SnapshotSummary
+
+
+class SessionSnapshotFailedEvent(TypedDict, total=False):
+    event_name: Literal["session.scraper.snapshot.failed"]
+    version: Literal["v1"]
+    event_id: str
+    request_event_id: str
+    occurred_at: str
+    error_code: Literal["SCRAPER_IO", "SCRAPER_PARSE", "SCRAPER_RUNTIME"]
+    error_message: str
+    partial_snapshot_path: str
 
 
 @dataclass
@@ -51,6 +96,20 @@ class SessionScraper:
     def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         self.default_snapshot_dir = self.project_root / "docs" / "dumps" / "session-snapshots"
+        self.default_event_log = self.default_snapshot_dir / "events.jsonl"
+
+    @staticmethod
+    def _normalize_trigger(trigger: str) -> str:
+        value = trigger.strip()
+        return value or "manual"
+
+    @staticmethod
+    def _new_event_id() -> str:
+        return str(uuid.uuid4())
+
+    @staticmethod
+    def _now_iso() -> str:
+        return datetime.now(tz=timezone.utc).isoformat()
 
     def _extract_structured_signals(self, content: str) -> tuple[list[str], list[str], list[str], list[str], list[str], list[str]]:
         prompts: list[str] = []
@@ -73,9 +132,7 @@ class SessionScraper:
             elif "?" in line and len(line) > 10 and not line.lower().startswith("agent"):
                 prompts.append(line)
 
-            if line.startswith("$ "):
-                commands.append(line[2:].strip())
-            elif line.startswith("> ") and any(token in line for token in ("git ", "rg ", "python ", "cargo ", "npm ", "uv ")):
+            if line.startswith("$ ") or (line.startswith("> ") and any(token in line for token in ("git ", "rg ", "python ", "cargo ", "npm ", "uv "))):
                 commands.append(line[2:].strip())
 
             lowered = line.lower()
@@ -180,6 +237,7 @@ class SessionScraper:
         """Collect a rich, structured session snapshot for memory/documentation pipelines."""
         now = datetime.now(tz=timezone.utc)
         snapshot_id = now.strftime("snapshot-%Y%m%dT%H%M%S%fZ")
+        normalized_trigger = self._normalize_trigger(trigger)
 
         prompts: list[str] = []
         commands: list[str] = []
@@ -215,7 +273,7 @@ class SessionScraper:
 
         return SessionSnapshot(
             snapshot_id=snapshot_id,
-            trigger=trigger,
+            trigger=normalized_trigger,
             captured_at=now.isoformat(),
             project_root=str(self.project_root),
             prompts=_dedupe_keep_order(prompts),
@@ -227,14 +285,68 @@ class SessionScraper:
             sources=_dedupe_keep_order(sources),
         )
 
-    def persist_snapshot(self, trigger: str = "manual", out_dir: Path | None = None) -> Path:
+    def emit_snapshot_event(
+        self,
+        event: SessionSnapshotCreatedEvent | SessionSnapshotFailedEvent,
+        *,
+        event_log: Path | None = None,
+    ) -> Path:
+        target = event_log or self.default_event_log
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(event, ensure_ascii=False) + "\n")
+        return target
+
+    def persist_snapshot(
+        self,
+        trigger: str = "manual",
+        out_dir: Path | None = None,
+        *,
+        request_event_id: str | None = None,
+        event_log: Path | None = None,
+    ) -> Path:
         """Persist a structured snapshot as JSON and return its path."""
-        snapshot = self.collect_snapshot(trigger=trigger)
-        target_dir = out_dir or self.default_snapshot_dir / datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
-        target_dir.mkdir(parents=True, exist_ok=True)
-        path = target_dir / f"{snapshot.snapshot_id}.json"
-        path.write_text(json.dumps(snapshot.to_dict(), indent=2), encoding="utf-8")
-        return path
+        request_id = request_event_id or self._new_event_id()
+        normalized_trigger = self._normalize_trigger(trigger)
+        try:
+            snapshot = self.collect_snapshot(trigger=normalized_trigger)
+            target_dir = out_dir or self.default_snapshot_dir / datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+            target_dir.mkdir(parents=True, exist_ok=True)
+            path = target_dir / f"{snapshot.snapshot_id}.json"
+            path.write_text(json.dumps(snapshot.to_dict(), indent=2), encoding="utf-8")
+
+            created_event: SessionSnapshotCreatedEvent = {
+                "event_name": "session.scraper.snapshot.created",
+                "version": "v1",
+                "event_id": self._new_event_id(),
+                "request_event_id": request_id,
+                "occurred_at": self._now_iso(),
+                "snapshot_id": snapshot.snapshot_id,
+                "snapshot_path": str(path),
+                "summary": {
+                    "prompts": len(snapshot.prompts),
+                    "commands": len(snapshot.commands),
+                    "files": len(snapshot.files),
+                    "facts": len(snapshot.facts),
+                    "decisions": len(snapshot.decisions),
+                    "tags": len(snapshot.tags),
+                    "sources": list(snapshot.sources),
+                },
+            }
+            self.emit_snapshot_event(created_event, event_log=event_log)
+            return path
+        except Exception as exc:
+            failed_event: SessionSnapshotFailedEvent = {
+                "event_name": "session.scraper.snapshot.failed",
+                "version": "v1",
+                "event_id": self._new_event_id(),
+                "request_event_id": request_id,
+                "occurred_at": self._now_iso(),
+                "error_code": "SCRAPER_RUNTIME",
+                "error_message": str(exc),
+            }
+            self.emit_snapshot_event(failed_event, event_log=event_log)
+            raise
 
     def list_snapshots(
         self,
@@ -270,8 +382,7 @@ class SessionScraper:
 
     def prune_snapshots(self, max_keep: int = 500, root_dir: Path | None = None) -> int:
         """Delete oldest snapshot JSON files beyond max_keep and return deleted count."""
-        if max_keep < 0:
-            max_keep = 0
+        max_keep = max(max_keep, 0)
         valid_paths = self.list_snapshots(limit=10_000_000, root_dir=root_dir)
         if len(valid_paths) <= max_keep:
             return 0

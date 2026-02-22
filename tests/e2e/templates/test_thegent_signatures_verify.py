@@ -1,7 +1,7 @@
 """
-E2E test for: thegent signatures verify
+E2E test for: thegent audit all
 
-Agent Journey: Agent executes thegent signatures verify command
+Agent Journey: Agent executes thegent audit all command
 Expected Behavior: Command executes successfully and returns expected output
 """
 
@@ -15,21 +15,21 @@ runner = CliRunner()
 
 @pytest.mark.e2e
 class TestSignaturesVerify:
-    """E2E tests for thegent signatures verify command."""
+    """E2E tests for thegent audit all command."""
 
     def test_signatures_verify_exits_zero(self) -> None:
-        """thegent signatures verify exits with code 0."""
+        """thegent audit all exits with code 0."""
         result = runner.invoke(app, ["signatures", "verify"])
         assert result.exit_code == 0, f"Command failed: {result.stdout} {result.stderr}"
 
     def test_signatures_verify_produces_output(self) -> None:
-        """thegent signatures verify produces expected output."""
+        """thegent audit all produces expected output."""
         result = runner.invoke(app, ["signatures", "verify"])
         assert result.exit_code == 0
         # TODO: Add specific output assertions based on command behavior
         assert len(result.stdout) > 0 or len(result.stderr) == 0
 
     def test_signatures_verify_help_exits_zero(self) -> None:
-        """thegent signatures verify --help exits with code 0."""
+        """thegent audit all --help exits with code 0."""
         result = runner.invoke(app, ["signatures", "verify", "--help"])
         assert result.exit_code == 0

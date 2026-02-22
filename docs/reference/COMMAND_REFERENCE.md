@@ -280,5 +280,5 @@ pytest --pdb tests/test_routing.py
 
 ---
 
-**Last updated**: 2026-02-20  
+**Last updated**: 2026-02-20
 For more information, see [Documentation Hub](./docs/README.md)

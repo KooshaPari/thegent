@@ -13,8 +13,10 @@ from . import models
 
 console = Console()
 app = typer.Typer(help="Synchronize rules, DAG, and model catalog.")
+gh_project_app = typer.Typer(help="GitHub Project v2 sync helpers (optional; disabled by default).")
 
 app.add_typer(models.app, name="models", help="Manage custom models and providers.")
+app.add_typer(gh_project_app, name="gh-project", help="Bidirectional sync with GitHub Projects v2.")
 
 
 @app.command("all", help="Synchronize all system components.")
@@ -273,3 +275,140 @@ def sync_reset(
         raise typer.Exit(1)
 
     console.print(f"[green]{op.message}[/green]")
+
+
+@gh_project_app.command("status", help="Show GitHub Project sync readiness from THGENT_GH_PROJECT_* settings.")
+def gh_project_status(
+    output_format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)."),
+) -> None:
+    from thegent.config import ThegentSettings
+    from thegent.integrations.gh_project_sync import config_from_settings, status
+
+    result = status(config_from_settings(ThegentSettings()))
+    if output_format == "json":
+        import json
+
+        console.print(json.dumps({"ok": result.ok, "message": result.message, "details": result.details, "errors": result.errors}))
+        return
+
+    color = "green" if result.ok else "red"
+    console.print(f"[{color}]{result.message}[/{color}]")
+    for key, value in result.details.items():
+        console.print(f"  [dim]{key}={value}[/dim]")
+    for err in result.errors:
+        console.print(f"[red]  {err}[/red]")
+    if not result.ok:
+        raise typer.Exit(1)
+
+
+@gh_project_app.command("sync", help="Run pull/push/both synchronization planning against GitHub Project and local WORK_STREAM.")
+def gh_project_sync(
+    direction: str = typer.Option("both", "--direction", "-d", help="Sync direction: pull|push|both."),
+    project: Path | None = typer.Option(None, "--project", "-p", help="Project root (default: cwd)."),
+    dry_run: bool = typer.Option(True, "--dry-run/--apply", help="Dry-run by default; use --apply to execute."),
+    output_format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)."),
+) -> None:
+    from thegent.config import ThegentSettings
+    from thegent.integrations.gh_project_sync import config_from_settings, sync_bidirectional
+
+    normalized_direction = direction.strip().lower()
+    if normalized_direction not in {"pull", "push", "both"}:
+        console.print(f"[red]Invalid --direction: {direction}. Use pull|push|both.[/red]")
+        raise typer.Exit(2)
+
+    result = sync_bidirectional(
+        config_from_settings(ThegentSettings()),
+        direction=normalized_direction,  # type: ignore[arg-type]
+        project_root=(project or Path.cwd()).resolve(),
+        dry_run=dry_run,
+    )
+    if output_format == "json":
+        import json
+
+        console.print(json.dumps({"ok": result.ok, "message": result.message, "details": result.details, "errors": result.errors}))
+        if not result.ok:
+            raise typer.Exit(1)
+        return
+
+    color = "green" if result.ok else "red"
+    console.print(f"[{color}]{result.message}[/{color}]")
+    for key, value in result.details.items():
+        console.print(f"  [dim]{key}={value}[/dim]")
+    for err in result.errors:
+        console.print(f"[red]  {err}[/red]")
+    if not result.ok:
+        raise typer.Exit(1)
+
+
+@gh_project_app.command("export", help="Export GitHub Project items to CSV.")
+def gh_project_export(
+    output: Path = typer.Option(..., "--output", "-o", help="CSV output path."),
+    limit: int = typer.Option(500, "--limit", "-L", min=1, max=5000, help="Maximum items to fetch."),
+) -> None:
+    from thegent.config import ThegentSettings
+    from thegent.integrations.gh_project_sync import config_from_settings, export_csv
+
+    result = export_csv(config_from_settings(ThegentSettings()), output=output, limit=limit)
+    color = "green" if result.ok else "red"
+    console.print(f"[{color}]{result.message}[/{color}]")
+    for key, value in result.details.items():
+        console.print(f"  [dim]{key}={value}[/dim]")
+    for err in result.errors:
+        console.print(f"[red]  {err}[/red]")
+    if not result.ok:
+        raise typer.Exit(1)
+
+
+@gh_project_app.command("import", help="Import CSV rows into GitHub Project items (URL or draft issue title).")
+def gh_project_import(  # noqa: A001 - typer command name should stay `import`
+    input_path: Path = typer.Option(..., "--input", "-i", help="CSV input path."),
+    dry_run: bool = typer.Option(True, "--dry-run/--apply", help="Dry-run by default; use --apply to execute."),
+) -> None:
+    from thegent.config import ThegentSettings
+    from thegent.integrations.gh_project_sync import config_from_settings, import_csv_items
+
+    result = import_csv_items(config_from_settings(ThegentSettings()), input_path=input_path, dry_run=dry_run)
+    color = "green" if result.ok else "red"
+    console.print(f"[{color}]{result.message}[/{color}]")
+    for key, value in result.details.items():
+        console.print(f"  [dim]{key}={value}[/dim]")
+    for err in result.errors:
+        console.print(f"[red]  {err}[/red]")
+    if not result.ok:
+        raise typer.Exit(1)
+
+
+@app.command("autopilot", help="Run automatic bidirectional sync for WORK_STREAM.md <-> GitHub Projects <-> Linear.")
+def sync_autopilot(
+    once: bool = typer.Option(False, "--once", help="Run one cycle and exit."),
+    interval_sec: int | None = typer.Option(None, "--interval", "-i", min=10, help="Polling interval in seconds."),
+    project: Path | None = typer.Option(None, "--project", "-p", help="Project root (default: cwd)."),
+    allow_disabled: bool = typer.Option(
+        False,
+        "--allow-disabled",
+        help="Exit successfully when autosync is disabled (useful for background service composition).",
+    ),
+) -> None:
+    from thegent.config import ThegentSettings
+    from thegent.integrations.workstream_autosync import run_autosync_loop
+
+    settings = ThegentSettings()
+    if not settings.workstream_autosync_enabled:
+        if allow_disabled:
+            console.print("[yellow]workstream autosync disabled; exiting (allow-disabled).[/yellow]")
+            return
+        console.print(
+            "[red]workstream autosync disabled. Set THGENT_WORKSTREAM_AUTOSYNC_ENABLED=1 to enable.[/red]"
+        )
+        raise typer.Exit(1)
+
+    effective_interval = interval_sec or settings.workstream_autosync_interval_sec
+    root = (project or Path.cwd()).resolve()
+    mode = "single-run" if once else f"daemon ({effective_interval}s interval)"
+    console.print(f"[green]Starting workstream autosync: {mode}[/green]")
+    run_autosync_loop(
+        settings=settings,
+        project_root=root,
+        once=once,
+        interval_sec=effective_interval,
+    )
