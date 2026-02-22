@@ -3712,7 +3712,7 @@ Add strict mode that fails loudly on unknown remote states or unmapped field val
 **Implementation:** `src/thegent/integrations/strict_mapping.py` with `StrictMappingError`, `StrictMappingConfig`, and `StrictMappingValidator`. Tests: `tests/test_wl190_strict_mapping.py` (14 tests, all passing).
 
 ### [WL-191] Connector Mapping Cache
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** performance, config
 **Effort:** M
@@ -3721,6 +3721,8 @@ Add strict mode that fails loudly on unknown remote states or unmapped field val
 Cache GitHub field IDs and Linear state mappings to avoid repetitive discovery calls.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/connector_mapping_cache.py` with `MappingEntry` dataclass and `ConnectorMappingCache` class. Tests: `tests/integrations/test_wl191_connector_mapping_cache.py` (14 tests, all passing).
 
 ### [WL-192] Startup Scope/Reachability Validation
 **Status:** COMPLETED
@@ -3865,7 +3867,7 @@ Reflect pulled GitHub status changes into local markdown with explicit sync-cycl
 **Implementation:** `src/thegent/integrations/gh_pull_audit.py` with `PullReflectionAuditEntry` dataclass and `PullReflectionAuditLog` class. Persists to `docs/reference/gh_pull_audit.jsonl`. Tests: `tests/test_wl163_gh_pull_audit.py` (7 tests).
 
 ### [WL-164] Linear State Mapping Table
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** linear, sync
 **Effort:** M
@@ -3874,6 +3876,8 @@ Reflect pulled GitHub status changes into local markdown with explicit sync-cycl
 Implement explicit state ID mapping for Todo/In Progress/Done with fail-fast validation.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/linear_graphql.py` with `build_linear_state_mapping()` function. Tests: `tests/test_wl164_linear_state_mapping.py` (2 tests, all passing).
 
 ### [WL-165] Linear Priority Round-Trip
 **Status:** COMPLETED
@@ -3888,7 +3892,7 @@ Add full priority round-trip between local P-levels and Linear priority semantic
 **Implementation:** `src/thegent/integrations/linear_priority.py` with `LinearPriority` and `LocalPriority` enums, `linear_to_local()` and `local_to_linear()` converters with stable round-trip. Tests: `tests/test_wl165_linear_priority.py` (23 tests).
 
 ### [WL-166] Idempotency Index Cache
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** sync, cache
 **Effort:** M
@@ -3897,6 +3901,8 @@ Add full priority round-trip between local P-levels and Linear priority semantic
 Persist a local dedup/index cache to enforce idempotent external writes across cycles.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/idempotency_cache.py` with `IdempotencyRecord` dataclass and `IdempotencyCache` class. Tests: `tests/test_wl166_idempotency_cache.py` (19 tests, all passing).
 
 ### [WL-167] Remote Archive/Delete Policy
 **Status:** COMPLETED
@@ -3925,7 +3931,7 @@ Add selective sync filters by area, status, priority, and WL prefix ranges.
 **Implementation:** `src/thegent/integrations/sync_scope_filter.py` with `SyncScopeFilter` class supporting include/exclude patterns via substring matching. Provides `matches()` and `filter()` methods for scope validation. Tests: `tests/test_wl168_sync_scope_filter.py` (15 tests, all passing).
 
 ### [WL-169] API Rate-Limit Backoff Controls
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** reliability, sync
 **Effort:** M
@@ -3934,6 +3940,8 @@ Add selective sync filters by area, status, priority, and WL prefix ranges.
 Implement unified backoff and bounded retry policy for GitHub/Linear API pressure handling.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/rate_limit_backoff.py` with `RateLimitConfig` dataclass and `RateLimitBackoffManager` class. Tests: `tests/test_wl169_rate_limit_backoff.py` (22 tests, all passing).
 
 ### [WL-170] Error Budget and Escalation Thresholds
 **Status:** COMPLETED
