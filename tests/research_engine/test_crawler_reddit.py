@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 
 def _make_submission(title: str, url: str, score: int, selftext: str = "") -> MagicMock:
     """Create mock Reddit submission."""

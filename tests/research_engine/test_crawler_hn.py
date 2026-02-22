@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 
 def test_hn_crawler_fetch_returns_items() -> None:
     """Fetch returns list of ResearchItem with correct source and score."""
