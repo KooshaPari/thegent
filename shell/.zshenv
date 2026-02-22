@@ -17,9 +17,9 @@ if [[ -n "${AGENT_ID:-}" || -n "${heliosShield_AGENT_CONTEXT:-}" || -n "${helios
 fi
 
 # Core PATH policy for fast runtime and local tools.
-# Miniforge3 (Python 3.12) takes precedence over system Python
+# Homebrew-managed Miniforge (Python 3.13) takes precedence over system Python
 path=(
-  "$HOME/miniforge3/bin"
+  "/opt/homebrew/Caskroom/miniforge/base/bin"
   "$HOME/.local/bin"
   "$HOME/bin"
   "/opt/homebrew/bin"

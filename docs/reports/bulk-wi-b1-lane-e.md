@@ -89,7 +89,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3410] lsp_tools line 106 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -98,7 +98,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3411] lsp_tools line 110 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -107,7 +107,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3412] lsp_tools line 114 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -116,7 +116,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3413] lsp_tools line 158 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -125,7 +125,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3414] manage line 274 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -134,7 +134,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3415] manage line 306 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -143,7 +143,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3416] rest_to_mcp line 19 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -152,7 +152,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3417] rest_to_mcp line 76 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -161,7 +161,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3418] rest_to_mcp line 88 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -170,7 +170,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3419] rest_to_mcp line 89 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S

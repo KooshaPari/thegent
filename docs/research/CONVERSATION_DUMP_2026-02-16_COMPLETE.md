@@ -754,3 +754,17 @@ None currently
 - Reopen if shell/shim fixes regress in `thegent/src/thegent/install.py` or related zsh setup paths.
 - Reopen if cross-document links in this dump or listed references become stale or broken.
 - Reopen if carry-forward tickets remain unstarted beyond the next planning cycle checkpoint.
+
+## Verification Artifacts Index
+
+- Shell/shim fix loci verified in `thegent/src/thegent/install.py` and `thegent/shell/.zshenv`.
+- Architecture evidence captured in `../plans/UNIFIED_SYSTEM_APPLICATION_PLAN.md` and `../plans/HYBRID_ENV_IMPLEMENTATION_PLAN.md`.
+- Carry-forward traceability anchored in `../reference/WORK_STREAM.md` and the `Carry-Forward Tickets` table above.
+- Cross-reference integrity bounded by the links in `## 12. Cross-References` and `## See Also`.
+
+## Deferred Actions Queue
+
+- Execute CF-01: export Cursor chat history and attach archive linkage into `WORK_STREAM.md`.
+- Execute CF-02: start Compute Offloading Phase 1 by implementing SSH setup and remote run scaffolding.
+- Execute CF-03: start TUI compositor build kickoff with Textual plus Zellij/tmux integration.
+- Run a post-implementation closure pass to clear reopen risk and update carry-forward states.

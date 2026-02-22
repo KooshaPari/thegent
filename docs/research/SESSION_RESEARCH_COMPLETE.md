@@ -1706,3 +1706,20 @@ Each concept is ready for implementation with clear guidance, code examples, and
 - Implementation templates
 - Configuration examples
 - Best practices
+
+## Gate Escalation Ladder
+
+| Level | Trigger | Owner | Timebox | Required Action |
+|-------|---------|-------|---------|-----------------|
+| L1 | First gate failure in current loop | Implementer | 15 min | Reproduce locally, patch root cause, rerun failing gate |
+| L2 | Same gate fails twice after fix attempt | Pair reviewer | 30 min | Run focused review, narrow blast radius, approve corrective path |
+| L3 | Gate blocked by cross-stream dependency | Stream lead | 60 min | Reprioritize dependent item, assign unblock task, publish decision |
+| L4 | Blocker threatens weekly closure target | Program owner | Same day | Declare escalation, lock new scope, execute recovery plan |
+
+## Weekly Closure Rhythm
+
+- Monday: Select top closure candidates, confirm owners, and freeze non-critical intake.
+- Tuesday: Drive implementation on prioritized items and clear L1/L2 gate failures.
+- Wednesday: Run midweek health sweep (`task quality`, governance checks) and re-sequence blockers.
+- Thursday: Close validation loops, update workstream status, and finalize evidence links.
+- Friday: Execute closure review, mark DONE items, and queue next-week first actions.

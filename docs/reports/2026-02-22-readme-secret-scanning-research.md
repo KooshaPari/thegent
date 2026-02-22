@@ -163,6 +163,182 @@ Use one canonical skeleton across quality/agent repos:
 5. Add `docs/security/SECRET_SCANNING_RUNBOOK.md` with explicit rotation/closure workflow.
 6. Add a PR checklist item: “README commands verified against current CLI.”
 
+## Extended Research: Code Quality + Security Sniffer Landscape
+
+### Taxonomy (what to combine, not choose singly)
+- Secret sniffers: detect hardcoded keys/tokens/passwords.
+- SAST sniffers: code-pattern and dataflow analysis for vulnerabilities.
+- SCA sniffers: known vulnerable dependencies and advisories.
+- IaC sniffers: Terraform/K8s/Docker/Helm misconfigurations.
+- Container and artifact sniffers: image/package vulnerabilities.
+- SBOM sniffers: component inventory + downstream vulnerability correlation.
+- Quality sniffers: style, correctness, maintainability, dead code.
+
+### Tooling Matrix (primary-source backed)
+| Category | Tools | Strongest use | Caveats |
+|---|---|---|---|
+| Secrets | `gitleaks`, `trufflehog`, `detect-secrets`, `ggshield` | Shift-left prevention + history sweeps + incident triage | Need bypass/ignore governance; pre-commit alone is bypassable |
+| SAST | `CodeQL`, `Semgrep` | High-confidence security findings in PR/CI; custom queries/rules | Tuning required to control noise and runtime |
+| Python security AST | `bandit` | Lightweight Python-focused checks | Narrow scope vs full dataflow engines |
+| Quality linting | `ruff` | Fast Python lint + many rules, good dev-loop fit | Needs profile selection to avoid style wars |
+| SCA (deps) | `OSV-Scanner`, `pip-audit`, `OWASP Dependency-Check` | Dependency CVE visibility from lockfiles/SBOM/env | Different ecosystems and advisory sources vary in precision |
+| IaC | `trivy config`, `checkov`, `snyk iac` | Prevent cloud misconfig before deploy | Policy tuning and suppressions are required to be sustainable |
+| Containers | `trivy image/fs`, `grype` | Container and filesystem vuln scanning in CI/release | DB freshness and base-image churn affect stability |
+| SBOM | `syft` | CycloneDX/SPDX generation for transparency/compliance | SBOM generation alone is not risk scoring; pair with vuln scanners |
+
+### Recommended layered stack for Thegent-like repos
+1. Local dev gate (fast, deterministic):
+- `pre-commit` with `ruff`, `bandit` (Python paths), and `gitleaks`.
+
+2. PR gate (balanced strictness):
+- `Semgrep` + `CodeQL` (where available) for security code scanning.
+- `pip-audit`/`OSV-Scanner` for dependency checks.
+- `trivy config` for IaC and `trivy fs` for repo-level vuln+secret checks on high-risk directories.
+
+3. Merge/main gate:
+- Secret scan diff and full repo check, fail on new high-confidence leaks.
+- Container scan (`trivy image` or `grype`) for built artifacts.
+
+4. Nightly/deep lane:
+- Historical/verified secret sweep (`trufflehog --results=verified`-style workflow).
+- SBOM generation (`syft`) + vuln correlation.
+- Trend report: findings by class, time-to-remediate, false-positive ratio.
+
+### “Sniffer” governance model (required for long-term signal quality)
+- One suppression policy: who can suppress, required reason, expiry date.
+- Distinguish:
+  - false positive,
+  - accepted risk,
+  - compensating control,
+  - temporary waiver.
+- Force ownership on every waiver (team + expiry).
+- Automatically fail CI on expired waivers.
+
+### Metrics that actually matter
+- New-secrets-per-week (target: zero).
+- Mean time to rotate exposed credential.
+- Vulnerability reopening rate after “fix”.
+- False-positive rate per scanner and rule family.
+- Scan runtime budget per lane (dev, PR, nightly).
+
+### Practical adoption order (low-friction to high-leverage)
+1. `pre-commit` foundation (`ruff` + `gitleaks` + optional `bandit`).
+2. PR SCA (`pip-audit`/`OSV-Scanner`) and IaC (`trivy config`).
+3. Add Semgrep and/or CodeQL with scoped rulesets.
+4. Add container + SBOM pipeline (`trivy/grype` + `syft`).
+5. Add nightly verified secret and historical scans (`trufflehog`).
+
+### Minimal starter command contract (example)
+```bash
+# Local developer pass
+pre-commit run --all-files
+
+# PR lane
+semgrep scan --config auto
+python -m pip_audit
+osv-scanner -r .
+trivy config .
+
+# Artifact lane
+syft dir:. -o cyclonedx-json > sbom.cdx.json
+trivy fs --scanners vuln,misconfig,secret .
+```
+
+### Additional source links for this extended section
+- Semgrep docs: https://semgrep.dev/docs/
+- CodeQL docs: https://docs.github.com/en/code-security/concepts/code-scanning/codeql/about-code-scanning-with-codeql
+- Trivy docs: https://trivy.dev/docs/
+- OSV-Scanner docs: https://google.github.io/osv-scanner-v1/usage/
+- Syft: https://github.com/anchore/syft
+- Grype docs: https://oss.anchore.com/docs/architecture/grype/
+- Checkov: https://www.checkov.io/
+- Bandit docs: https://bandit.readthedocs.io/
+- Ruff rules: https://docs.astral.sh/ruff/rules/
+- pip-audit: https://github.com/pypa/pip-audit
+- OWASP Dependency-Check: https://owasp.org/www-project-dependency-check/
+- pre-commit framework: https://pre-commit.com/
+- ggshield docs: https://docs.gitguardian.com/ggshield-docs/integrations/overview
+
+## Focus Expansion: Generated Code Quality + Performance Sniffers
+
+### Why generated code needs a different quality stack
+- Generated code often passes syntax/lint but fails on architecture and behavior:
+  - duplicated logic,
+  - dead/unreachable branches,
+  - over-complex functions,
+  - accidental O(n^2) paths,
+  - flaky tests,
+  - weak assertions (“assert exists” instead of behavior checks).
+
+### Anti-pattern classes and best-fit sniffers/testers
+| Failure class | Sniffers/testers | Notes |
+|---|---|---|
+| Bug-prone code patterns | `ruff` (bugbear/simplify/perf rule families), `pylint` | Catch suspicious constructs and maintainability hazards early |
+| Type contract drift | `mypy` (or pyright) | Generated code frequently violates implicit contracts |
+| Dead code / orphan branches | `vulture` | High leverage after large AI-generated diffs |
+| Complexity explosion | `radon` + `xenon` thresholds | Enforce cyclomatic limits to prevent unreadable code |
+| Security anti-patterns | `bandit`, `semgrep` | Combine lightweight AST checks with broader pattern rules |
+| Dependency risk | `pip-audit`, `osv-scanner` | Generated code often introduces unnecessary/new deps |
+| Behavioral blind spots | `hypothesis` (property-based tests) | Exposes edge cases missed by example-based tests |
+| Weak test quality | `mutmut` (mutation testing) | Detects tests that pass despite logic changes |
+| Performance regression | `pytest-benchmark` (+ baseline compare) | Catch generated slow paths before merge |
+| Flake/nondeterminism | `pytest-randomly`, `pytest-timeout`, rerun policy | Stabilize CI and expose order dependencies |
+
+### Thegent-oriented lane design (quality/perf-heavy)
+1. Local lane (<90s target):
+- `ruff`, `mypy` (changed modules), `pytest -q -k <changed_scope> --maxfail=1`.
+
+2. PR lane (blocking):
+- `ruff`, `mypy`, `bandit`, `vulture` (changed paths), selected `semgrep` profiles.
+- `pytest` with coverage floor on touched packages.
+- `pytest-benchmark` smoke benchmarks on key hot paths (routing/session parsing/io).
+
+3. Nightly lane (deep):
+- `mutmut` on priority modules.
+- `hypothesis` suites and fuzz-like property checks.
+- full complexity + dead-code trend report.
+
+### Generated-code acceptance gates (recommended)
+- Gate A: No new high-severity lints/security findings.
+- Gate B: Type check clean for touched modules.
+- Gate C: No complexity delta beyond threshold for touched functions.
+- Gate D: Mutation score floor for changed critical modules.
+- Gate E: Benchmark regression threshold (example: p95 > +10% fails).
+
+### Minimal command set for anti-pattern/perf enforcement
+```bash
+# Static quality
+ruff check .
+mypy src
+vulture src tests
+radon cc src -s -a
+
+# Security/static patterns
+bandit -q -r src
+semgrep scan --config auto src
+
+# Behavioral quality
+pytest -q
+pytest --benchmark-only
+mutmut run
+```
+
+### Practical implementation notes
+- Start with warning-mode reports for `vulture`, `radon`, and `mutmut`; switch to fail mode once baselines are established.
+- Keep generated code in normal review flow: no bypass branch for “AI-generated” changes.
+- Require explicit test intent in PRs: which behavior is protected, which anti-pattern was prevented.
+
+### Additional source links for quality/perf focus
+- Pylint: https://pylint.pycqa.org/
+- Mypy: https://mypy.readthedocs.io/en/stable/
+- Vulture: https://github.com/jendrikseipp/vulture
+- Radon: https://radon.readthedocs.io/en/latest/
+- Hypothesis: https://hypothesis.readthedocs.io/
+- mutmut: https://mutmut.readthedocs.io/
+- pytest-benchmark: https://pytest-benchmark.readthedocs.io/en/latest/
+- Staticcheck (Go): https://staticcheck.dev/docs/
+- SonarSource rules: https://rules.sonarsource.com/
+
 ## Definition of Done (for rollout)
 - README contract enforced in CI for selected repos.
 - Secret scanning active in pre-commit + CI + scheduled lane.
