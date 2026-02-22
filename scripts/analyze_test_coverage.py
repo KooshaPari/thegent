@@ -24,6 +24,24 @@ TESTS_DIR = PROJECT_ROOT / "tests"
 MAIN_PY = SRC_DIR / "main.py"
 CLI_COMMANDS_PY = SRC_DIR / "cli" / "commands" / "cli.py"
 
+_FORCE_ALIASES = {
+    "--force",
+    "--force-yolo",
+    "-f",
+}
+_DANGEROUS_BYPASS_ALIASES = {
+    "--dangerously-skip-permissions",
+    "--dangerously-bypass-approvals-and-sandbox",
+}
+
+
+def _canonicalize_flag(token: str) -> str:
+    """Return canonical token identity for flag aliases."""
+    return {
+        "--force-yolo": "--force",
+        "--yolo": "--force",
+    }.get(token, token)
+
 
 def extract_cli_commands_from_main() -> list[dict[str, Any]]:
     """Extract all CLI commands from the real Typer app."""
@@ -60,6 +78,35 @@ def extract_cli_commands_from_main() -> list[dict[str, Any]]:
     return commands
 
 
+def _normalize_command_path(raw_args: list[Any], known_commands: set[str]) -> str | None:
+    """Normalize a runner invocation into a known canonical command path."""
+    normalized_tokens: list[str] = []
+
+    for arg in raw_args:
+        token = str(arg).strip()
+        if not token:
+            continue
+        canonical_token = _canonicalize_flag(token)
+        if canonical_token.startswith("-"):
+            # Ignore all command-line flags for command-path matching.
+            # This includes force aliases and dangerous bypass aliases used by clode/dex.
+            if canonical_token in _FORCE_ALIASES or canonical_token in _DANGEROUS_BYPASS_ALIASES:
+                pass
+            continue
+
+        normalized_tokens.append(canonical_token)
+
+    if normalized_tokens and normalized_tokens[0] == "thegent":
+        normalized_tokens = normalized_tokens[1:]
+
+    for length in range(len(normalized_tokens), 0, -1):
+        candidate = " ".join(normalized_tokens[:length])
+        if candidate in known_commands:
+            return candidate
+
+    return None
+
+
 def extract_cli_functions_from_cli() -> list[str]:
     """Extract all CLI command functions from the canonical CLI command module."""
     functions = []
@@ -74,15 +121,21 @@ def extract_cli_functions_from_cli() -> list[str]:
     return sorted(set(functions))
 
 
-def find_e2e_tests() -> dict[str, list[str]]:
+def find_e2e_tests(command_paths: set[str] | None = None) -> dict[str, list[str]]:
     """Find all E2E tests and map them to commands."""
     e2e_tests = defaultdict(list)
+    if command_paths is None:
+        command_paths = {cmd["full_path"].replace("thegent ", "") for cmd in extract_cli_commands_from_main()}
 
     # Check both old and new test locations
     test_files = []
     e2e_dir = TESTS_DIR / "e2e"
     if e2e_dir.exists():
         test_files.extend(e2e_dir.glob("test_*.py"))
+    else:
+        # Tests without an e2e directory are typically unit-focused fixtures; include them
+        # when present so unit-focused fixtures remain discoverable.
+        test_files.extend(TESTS_DIR.glob("test_*.py"))
 
     # Also check the old test file if it exists
     old_test_file = TESTS_DIR / "test_e2e_cli.py"
@@ -108,14 +161,9 @@ def find_e2e_tests() -> dict[str, list[str]]:
             if not isinstance(cmd_args, list):
                 continue
 
-            # Remove flags (anything starting with -- or -) to get the base command
-            base_cmd_args = [str(arg) for arg in cmd_args if str(arg) and not str(arg).startswith("-")]
-
-            if not base_cmd_args:
+            full_cmd = _normalize_command_path(cmd_args, command_paths)
+            if not full_cmd:
                 continue
-
-            # The full command path (excluding thegent)
-            full_cmd = " ".join(base_cmd_args)
 
             # Find the test function name
             test_start = content.rfind("def test_", 0, match.start())

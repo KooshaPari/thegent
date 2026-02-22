@@ -395,7 +395,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3144] e2e templates test_thegent_research_deep:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -404,7 +404,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3145] e2e templates test_thegent_route:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -413,7 +413,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3146] e2e templates test_thegent_rules_sync:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -422,7 +422,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3147] e2e templates test_thegent_signatures_list:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -431,7 +431,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3148] e2e templates test_thegent_signatures_verify:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -440,7 +440,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3149] e2e templates test_thegent_sitback_dashboard:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -449,7 +449,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3150] e2e templates test_thegent_takeover:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -458,7 +458,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3151] e2e templates test_thegent_team_add_task:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -467,7 +467,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3152] e2e templates test_thegent_team_create:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -476,7 +476,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3153] e2e templates test_thegent_team_list_tasks:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -485,7 +485,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3154] e2e templates test_thegent_teammates_delegate:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -494,7 +494,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3155] e2e templates test_thegent_teammates_list:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -503,7 +503,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3156] e2e templates test_thegent_teammates_status:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -512,7 +512,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3157] e2e templates test_thegent_teams_add_member:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -521,7 +521,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3158] e2e templates test_thegent_teams_list:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -530,7 +530,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3159] e2e templates test_thegent_teams_remove_member:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -539,7 +539,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3160] e2e templates test_thegent_teams_show:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -548,7 +548,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3161] e2e templates test_thegent_trust_status:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -557,7 +557,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3162] e2e templates test_thegent_upgrade:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -566,7 +566,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3163] e2e templates test_thegent_wait_next:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -575,7 +575,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3164] e2e templates test_thegent_workstream_dashboard:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -584,7 +584,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3165] e2e templates test_thegent_workstream_launch:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -593,7 +593,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3166] e2e templates test_thegent_workstream_query:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -602,7 +602,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3167] e2e templates test_thegent_workstream_stats:29 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -611,7 +611,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3168] e2e test_cli_runner_extracts:19 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -620,7 +620,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Strengthen this test by replacing placeholder logic with explicit assertions and realistic fixtures.
 
 ### [WL-3169] e2e test_command_surface:20 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -629,7 +629,7 @@ Strengthen this test by replacing placeholder logic with explicit assertions and
 Strengthen this test by replacing placeholder logic with explicit assertions and realistic fixtures.
 
 ### [WL-3170] e2e test_command_surface:24 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -638,7 +638,7 @@ Strengthen this test by replacing placeholder logic with explicit assertions and
 Strengthen this test by replacing placeholder logic with explicit assertions and realistic fixtures.
 
 ### [WL-3171] e2e test_command_surface:28 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -647,7 +647,7 @@ Strengthen this test by replacing placeholder logic with explicit assertions and
 Strengthen this test by replacing placeholder logic with explicit assertions and realistic fixtures.
 
 ### [WL-3172] e2e test_template_bdd:53 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -656,7 +656,7 @@ Strengthen this test by replacing placeholder logic with explicit assertions and
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3173] e2e test_template_bdd:62 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -665,7 +665,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3174] e2e test_template_bdd:91 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -674,7 +674,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3175] e2e test_template_bdd:120 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -683,7 +683,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3176] governance test_compliance_profiles:22 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -692,7 +692,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Replace placeholder usage with production-like fixture data and assert the resulting behavior.
 
 ### [WL-3177] governance test_native_governance_scan:58 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -701,7 +701,7 @@ Replace placeholder usage with production-like fixture data and assert the resul
 Remove or narrow this skip by wiring deterministic preconditions so the path runs in CI.
 
 ### [WL-3178] governance test_native_governance_scan:173 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -710,7 +710,7 @@ Remove or narrow this skip by wiring deterministic preconditions so the path run
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3179] governance test_native_governance_scan:180 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -719,7 +719,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Resolve the FIXME path and add strict assertions that verify the corrected behavior.
 
 ### [WL-3180] governance test_native_governance_scan:184 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -728,7 +728,7 @@ Resolve the FIXME path and add strict assertions that verify the corrected behav
 Resolve the FIXME path and add strict assertions that verify the corrected behavior.
 
 ### [WL-3181] governance test_native_governance_scan:204 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -737,7 +737,7 @@ Resolve the FIXME path and add strict assertions that verify the corrected behav
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3182] governance test_native_governance_scan:213 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -746,7 +746,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3183] governance test_native_governance_scan:222 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -755,7 +755,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3184] governance test_native_governance_scan:365 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -764,7 +764,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3185] governance test_native_governance_scan:436 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -773,7 +773,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3186] governance test_native_governance_scan:448 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -782,7 +782,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Implement the TODO with concrete output/side-effect assertions for the targeted behavior.
 
 ### [WL-3187] governance test_native_secret_scan:322 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -791,7 +791,7 @@ Implement the TODO with concrete output/side-effect assertions for the targeted 
 Remove or narrow this skip by wiring deterministic preconditions so the path runs in CI.
 
 ### [WL-3188] infra test_fast_websocket:72 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -800,7 +800,7 @@ Remove or narrow this skip by wiring deterministic preconditions so the path run
 Strengthen this test by replacing placeholder logic with explicit assertions and realistic fixtures.
 
 ### [WL-3189] infra test_fast_websocket:101 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -809,7 +809,7 @@ Strengthen this test by replacing placeholder logic with explicit assertions and
 Strengthen this test by replacing placeholder logic with explicit assertions and realistic fixtures.
 
 ### [WL-3190] infra test_fast_websocket:120 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -818,7 +818,7 @@ Strengthen this test by replacing placeholder logic with explicit assertions and
 Strengthen this test by replacing placeholder logic with explicit assertions and realistic fixtures.
 
 ### [WL-3191] infra test_identity_proxy:410 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -827,7 +827,7 @@ Strengthen this test by replacing placeholder logic with explicit assertions and
 Strengthen this test by replacing placeholder logic with explicit assertions and realistic fixtures.
 
 ### [WL-3192] infra test_identity_proxy:412 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -836,7 +836,7 @@ Strengthen this test by replacing placeholder logic with explicit assertions and
 Strengthen this test by replacing placeholder logic with explicit assertions and realistic fixtures.
 
 ### [WL-3193] infra test_resource_prediction:308 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -845,7 +845,7 @@ Strengthen this test by replacing placeholder logic with explicit assertions and
 Strengthen this test by replacing placeholder logic with explicit assertions and realistic fixtures.
 
 ### [WL-3194] mcp test_elicitation:6 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -854,7 +854,7 @@ Strengthen this test by replacing placeholder logic with explicit assertions and
 Replace placeholder usage with production-like fixture data and assert the resulting behavior.
 
 ### [WL-3195] mcp test_elicitation:250 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -863,7 +863,7 @@ Replace placeholder usage with production-like fixture data and assert the resul
 Replace placeholder usage with production-like fixture data and assert the resulting behavior.
 
 ### [WL-3196] mcp test_elicitation:260 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -872,7 +872,7 @@ Replace placeholder usage with production-like fixture data and assert the resul
 Replace placeholder usage with production-like fixture data and assert the resulting behavior.
 
 ### [WL-3197] mcp test_elicitation:261 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -881,7 +881,7 @@ Replace placeholder usage with production-like fixture data and assert the resul
 Replace placeholder usage with production-like fixture data and assert the resulting behavior.
 
 ### [WL-3198] mcp test_elicitation:267 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -890,7 +890,7 @@ Replace placeholder usage with production-like fixture data and assert the resul
 Replace placeholder usage with production-like fixture data and assert the resulting behavior.
 
 ### [WL-3199] mcp test_elicitation:268 follow-up
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
