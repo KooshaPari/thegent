@@ -27,7 +27,7 @@ class TestComplianceSnapshotSchedulerInit:
         """Scheduler creates snapshot directory."""
         snap_dir = tmp_path / "snapshots"
         assert not snap_dir.exists()
-        scheduler = ComplianceSnapshotScheduler(snap_dir)
+        _scheduler = ComplianceSnapshotScheduler(snap_dir)
         assert snap_dir.exists()
 
     def test_init_with_string_path(self, tmp_path: Path) -> None:
@@ -210,9 +210,9 @@ class TestListSnapshots:
     def test_list_snapshots_multiple(self, tmp_path: Path) -> None:
         """Multiple snapshots are listed in order."""
         scheduler = ComplianceSnapshotScheduler(tmp_path)
-        path1 = scheduler.take_snapshot([{"id": "1"}])
-        path2 = scheduler.take_snapshot([{"id": "2"}])
-        path3 = scheduler.take_snapshot([{"id": "3"}])
+        _path1 = scheduler.take_snapshot([{"id": "1"}])
+        _path2 = scheduler.take_snapshot([{"id": "2"}])
+        _path3 = scheduler.take_snapshot([{"id": "3"}])
 
         snapshots = scheduler.list_snapshots()
         assert len(snapshots) == 3
