@@ -273,3 +273,38 @@ def sync_reset(
         raise typer.Exit(1)
 
     console.print(f"[green]{op.message}[/green]")
+
+
+@app.command("board", help="Synchronize GitHub Projects/Linear board state. (WL-159)")
+def sync_board(
+    board_id: str | None = typer.Option(None, "--board", "-b", help="Board ID (GitHub project number or Linear key)."),
+    source: str | None = typer.Option("github", "--source", "-s", help="Board source: github|linear (default: github)."),
+    dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Report changes without writing."),
+    project: Path | None = typer.Option(None, "--project", "-p", help="Project root (default: cwd)."),
+):
+    """``thegent sync board`` — synchronize cross-repo board state.
+
+    Operationalize repeatable board update/import flow using native tooling.
+    Syncs local WORK_STREAM.md status with GitHub Projects or Linear issues.
+
+    # @trace WL-159
+    """
+    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+
+    root = (project or Path.cwd()).resolve()
+    cmd = SyncCommand(project_root=root)
+    op = cmd.sync_board(board_id=board_id, source=source, dry_run=dry_run)
+
+    if op.status == SyncOperationStatus.FAILED:
+        console.print(f"[red]board sync failed: {op.message}[/red]")
+        for err in op.errors:
+            console.print(f"[red]  {err}[/red]")
+        raise typer.Exit(1)
+
+    if dry_run:
+        console.print(f"[yellow]Dry-run: {op.message}[/yellow]")
+    else:
+        console.print(f"[green]{op.message}[/green]")
+
+    for change in op.changes[:20]:
+        console.print(f"  [dim]{change}[/dim]")

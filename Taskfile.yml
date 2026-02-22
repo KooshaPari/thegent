@@ -224,6 +224,34 @@ tasks:
     cmds:
       - uv run thegent cliproxy stop
 
+  # -- Board Sync (WL-159) --
+
+  board:sync:
+    desc: "Synchronize WORK_STREAM.md with GitHub Projects or Linear board (WL-159)"
+    cmds:
+      - |
+        BOARD_ID="${THGENT_BOARD_ID:-}"
+        BOARD_SOURCE="${THGENT_BOARD_SOURCE:-github}"
+        if [ -z "$BOARD_ID" ]; then
+          echo "Usage: task board:sync [-- --board <id>] [--source github|linear] [--dry-run]"
+          echo "Or set THGENT_BOARD_ID and THGENT_BOARD_SOURCE environment variables."
+          exit 1
+        fi
+        uv run thegent sync board --board "$BOARD_ID" --source "$BOARD_SOURCE"
+
+  board:sync:dry-run:
+    desc: "Preview board sync changes without writing (WL-159)"
+    cmds:
+      - |
+        BOARD_ID="${THGENT_BOARD_ID:-}"
+        BOARD_SOURCE="${THGENT_BOARD_SOURCE:-github}"
+        if [ -z "$BOARD_ID" ]; then
+          echo "Usage: task board:sync:dry-run [-- --board <id>] [--source github|linear]"
+          echo "Or set THGENT_BOARD_ID and THGENT_BOARD_SOURCE environment variables."
+          exit 1
+        fi
+        uv run thegent sync board --board "$BOARD_ID" --source "$BOARD_SOURCE" --dry-run
+
   # -- Mgmt (agent self-service) --
 
   mgmt:ensure-proxy:
