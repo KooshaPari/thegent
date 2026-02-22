@@ -94,6 +94,14 @@ class TestConversationRecord:
         assert json_data["response"] == "I'm doing well, thank you!"
         assert json_data["metadata"]["temperature"] == 0.7
 
+    def test_to_markdown_with_agent_synthesis(self, sample_record):
+        """Markdown includes agent synthesis section when present."""
+        sample_record.agent_synthesis = "Summarize blockers and next actions."
+        markdown = sample_record.to_markdown()
+
+        assert "## Agent Synthesis" in markdown
+        assert "Summarize blockers and next actions." in markdown
+
 
 # ---------------------------------------------------------------------------
 # ConversationDumper initialization
@@ -229,6 +237,19 @@ class TestDumpConversationJson:
         assert data["model"] == "claude"
         assert data["prompt"] == "prompt"
         assert data["response"] == "response"
+
+    def test_json_dump_includes_agent_synthesis(self, dumper):
+        """JSON dump persists optional agent synthesis field."""
+        path = dumper.dump_conversation_json(
+            conversation_id="json-conv-003",
+            model="claude",
+            prompt="prompt",
+            response="response",
+            agent_synthesis="action plan summary",
+        )
+
+        data = json.loads(path.read_text())
+        assert data["agent_synthesis"] == "action plan summary"
 
 
 # ---------------------------------------------------------------------------
