@@ -30,6 +30,19 @@ from thegent.utils import strip_ansi
 
 logger = logging.getLogger(__name__)
 _MALLOC_STACK_NOISE = "MallocStackLogging: can't turn off malloc stack logging because it was not enabled."
+
+__all__ = [
+    "CodexAuthError",
+    "CodexInstanceError",
+    "CodexModelError",
+    "CodexProxyRunner",
+    "CodexResult",
+    "CodexSandboxError",
+    "_check_and_track_instance",
+    "_create_isolated_home",
+    "_parse_jsonl_output",
+    "_write_config_override",
+]
 _LITELLM_CONTEXT_WINDOW_MAX = 50_000
 
 # Instance tracking for concurrent execution monitoring
@@ -368,42 +381,42 @@ def _run_with_retry(
 
 def _parse_jsonl_output(output: str) -> tuple[str, int, int, str]:
     """Parse JSONL output from Codex. Returns (text, tokens_in, tokens_out, model).
-    
+
     Handles:
     - Simple JSON lines with choices[0].text
     - Streaming deltas with choices[0].delta.content
     - Token usage from usage.prompt_tokens and usage.completion_tokens
     - Model name from model field
     - Mixed JSON and plain text lines (plain text is included in output)
-    
+
     Args:
         output: JSONL string (multiple JSON objects separated by newlines)
-        
+
     Returns:
         Tuple of (combined_text, prompt_tokens, completion_tokens, model_name)
         where tokens default to 0 and model defaults to ""
     """
     import json
-    
+
     text = ""
     tokens_in = 0
     tokens_out = 0
     model = ""
-    
+
     if not output:
         return text, tokens_in, tokens_out, model
-    
+
     for line in output.split("\n"):
         if not line.strip():
             continue
-        
+
         try:
             data = json.loads(line)
         except json.JSONDecodeError:
             # Handle plain text lines (e.g., stderr mixed in)
             text += line
             continue
-        
+
         # Extract text from choices[0].text or choices[0].delta.content
         if "choices" in data and len(data["choices"]) > 0:
             choice = data["choices"][0]
@@ -413,7 +426,7 @@ def _parse_jsonl_output(output: str) -> tuple[str, int, int, str]:
                 text += choice["delta"]["content"]
             elif "message" in choice and "content" in choice["message"]:
                 text += choice["message"]["content"]
-        
+
         # Extract token usage (last occurrence wins)
         if "usage" in data:
             usage = data["usage"]
@@ -421,11 +434,11 @@ def _parse_jsonl_output(output: str) -> tuple[str, int, int, str]:
                 tokens_in = usage["prompt_tokens"]
             if "completion_tokens" in usage:
                 tokens_out = usage["completion_tokens"]
-        
+
         # Extract model name (last occurrence wins)
         if "model" in data:
             model = data["model"]
-    
+
     return text, tokens_in, tokens_out, model
 
 

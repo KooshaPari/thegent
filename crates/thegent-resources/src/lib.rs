@@ -232,3 +232,70 @@ pub fn sample() -> ResourceSnapshot {
         load_15m,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sample_returns_valid_snapshot() {
+        let snapshot = sample();
+
+        // FD usage should be reasonable
+        assert!(snapshot.fd_limit > 0, "FD limit should be positive");
+        assert!(snapshot.fd_used <= snapshot.fd_limit, "FD used should not exceed limit");
+
+        // Memory values should be non-negative
+        assert!(snapshot.mem_rss_mb >= 0.0, "RSS memory should be non-negative");
+        assert!(snapshot.mem_available_mb >= 0.0, "Available memory should be non-negative");
+
+        // CPU count should be at least 1
+        assert!(snapshot.cpu_count >= 1, "CPU count should be at least 1");
+
+        // Load averages should be non-negative
+        assert!(snapshot.load_1m >= 0.0, "Load 1m should be non-negative");
+        assert!(snapshot.load_5m >= 0.0, "Load 5m should be non-negative");
+        assert!(snapshot.load_15m >= 0.0, "Load 15m should be non-negative");
+    }
+
+    #[test]
+    fn test_snapshot_debug() {
+        let snapshot = sample();
+        // Verify Debug trait is implemented
+        let debug_str = format!("{:?}", snapshot);
+        assert!(debug_str.contains("fd_used"));
+        assert!(debug_str.contains("mem_rss_mb"));
+        assert!(debug_str.contains("cpu_count"));
+    }
+
+    #[test]
+    fn test_snapshot_serialization() {
+        let snapshot = sample();
+        // Verify Serialize trait works
+        let json = serde_json::to_string(&snapshot);
+        assert!(json.is_ok(), "Should serialize to JSON");
+
+        let json_str = json.unwrap();
+        assert!(json_str.contains("fd_used"));
+        assert!(json_str.contains("mem_rss_mb"));
+    }
+
+    #[test]
+    fn test_fd_limit_is_reasonable() {
+        let snapshot = sample();
+        // FD limit is typically between 256 and millions
+        assert!(snapshot.fd_limit >= 256, "FD limit should be at least 256");
+        assert!(snapshot.fd_limit <= 10_000_000, "FD limit should be reasonable");
+    }
+
+    #[test]
+    fn test_memory_snapshot_consistency() {
+        let snapshot1 = sample();
+        let snapshot2 = sample();
+
+        // Two consecutive samples should have similar values
+        // (memory shouldn't change drastically in microseconds)
+        let mem_diff = (snapshot1.mem_rss_mb - snapshot2.mem_rss_mb).abs();
+        assert!(mem_diff < 100.0, "Memory shouldn't change drastically between samples");
+    }
+}

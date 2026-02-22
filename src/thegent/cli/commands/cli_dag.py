@@ -353,7 +353,7 @@ def dag_ready_cmd(cd: Path | None = None, format: str | None = None) -> None:
         console.print(tbl)
 
 
-def dag_reconcile_cmd(cd: Path | None = None) -> None:  # pyright: ignore[reportUnusedFunction] -- typer callback
+def dag_reconcile_cmd(cd: Path | None = None) -> None:
     """Reconcile DAG state with reality (clean up stuck 'running' tasks)."""
     cwd = _resolve_cwd(cd)
     if cwd is None:
