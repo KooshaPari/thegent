@@ -13,8 +13,10 @@ from . import models
 
 console = Console()
 app = typer.Typer(help="Synchronize rules, DAG, and model catalog.")
+gh_project_app = typer.Typer(help="GitHub Project v2 sync helpers (optional; disabled by default).")
 
 app.add_typer(models.app, name="models", help="Manage custom models and providers.")
+app.add_typer(gh_project_app, name="gh-project", help="Bidirectional sync with GitHub Projects v2.")
 
 
 @app.command("all", help="Synchronize all system components.")

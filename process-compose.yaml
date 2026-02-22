@@ -35,6 +35,8 @@ environment:
   # Worker Pool (MTSP-06)
   - THGENT_WORKER_POOL_SIZE=${THGENT_WORKER_POOL_SIZE:-4}
   - THGENT_WORKER_IDLE_TIMEOUT=${THGENT_WORKER_IDLE_TIMEOUT:-300}
+  - THGENT_WORKSTREAM_AUTOSYNC_ENABLED=${THGENT_WORKSTREAM_AUTOSYNC_ENABLED:-0}
+  - THGENT_WORKSTREAM_AUTOSYNC_INTERVAL_SEC=${THGENT_WORKSTREAM_AUTOSYNC_INTERVAL_SEC:-60}
 
 processes:
   server:
@@ -123,6 +125,25 @@ processes:
       period_seconds: 30
     log_location: .process-compose/logs/worker-pool.log
     log_length: 2000
+    depends_on:
+      server:
+        condition: process_healthy
+
+  workstream-autosync:
+    command: python3
+    args:
+      - -m
+      - thegent.main
+      - sync
+      - autopilot
+      - --allow-disabled
+    working_dir: .
+    availability:
+      restart: on_failure
+      max_restarts: 10
+      backoff_seconds: 2
+    log_location: .process-compose/logs/workstream-autosync.log
+    log_length: 3000
     depends_on:
       server:
         condition: process_healthy
