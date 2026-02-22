@@ -1,6 +1,5 @@
 """Integration tests for agent_roles end-to-end flow. @trace FR-AGT-050"""
 import pytest
-from pathlib import Path
 
 from agent_roles.spec import AgentRoleSpec
 from agent_roles.renderer import RoleRenderer
