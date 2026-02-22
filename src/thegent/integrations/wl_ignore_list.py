@@ -25,18 +25,20 @@ class WLIgnoreList:
 
         Args:
             wl_id: The workload ID to ignore.
+
         """
         self._ignored.add(wl_id)
-        logger.debug(f"Added {wl_id} to ignore list (total: {len(self._ignored)})")
+        logger.debug("Added %s to ignore list (total: %s)", wl_id, len(self._ignored))
 
     def remove(self, wl_id: str) -> None:
         """Remove a workload ID from the ignore list.
 
         Args:
             wl_id: The workload ID to remove.
+
         """
         self._ignored.discard(wl_id)
-        logger.debug(f"Removed {wl_id} from ignore list (total: {len(self._ignored)})")
+        logger.debug("Removed %s from ignore list (total: %s)", wl_id, len(self._ignored))
 
     def is_ignored(self, wl_id: str) -> bool:
         """Check if a workload ID is in the ignore list.
@@ -65,7 +67,9 @@ class WLIgnoreList:
 
         Returns:
             List containing only the non-ignored IDs from the input.
+
         """
         result = [wl_id for wl_id in wl_ids if wl_id not in self._ignored]
-        logger.debug(f"Filtered {len(wl_ids)} IDs: {len(result)} remaining after removing {len(wl_ids) - len(result)} ignored")
+        removed_count = len(wl_ids) - len(result)
+        logger.debug("Filtered %s IDs: %s remaining after removing %s ignored", len(wl_ids), len(result), removed_count)
         return result

@@ -14,6 +14,8 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+_INVALID_BATCH_SIZE = "batch_size must be >= 1"
+
 
 @dataclass
 class WriteRequest:
@@ -34,23 +36,26 @@ class ExternalWriteBatcher:
 
         Raises:
             ValueError: If batch_size < 1.
+
         """
         if batch_size < 1:
-            raise ValueError("batch_size must be >= 1")
+            msg = _INVALID_BATCH_SIZE
+            raise ValueError(msg)
 
         self._batch_size = batch_size
         self._pending: list[WriteRequest] = []
 
-        logger.debug(f"Initialized external write batcher with batch_size={batch_size}")
+        logger.debug("Initialized external write batcher with batch_size=%s", batch_size)
 
     def add(self, request: WriteRequest) -> None:
         """Add a write request to the pending buffer.
 
         Args:
             request: The write request to add.
+
         """
         self._pending.append(request)
-        logger.debug(f"Added write request for record {request.record_id}, pending={len(self._pending)}")
+        logger.debug("Added write request for record %s, pending=%s", request.record_id, len(self._pending))
 
     def flush(self) -> list[list[WriteRequest]]:
         """Flush pending requests into batches.
@@ -69,10 +74,11 @@ class ExternalWriteBatcher:
         for i in range(0, len(self._pending), self._batch_size):
             batch = self._pending[i : i + self._batch_size]
             batches.append(batch)
-            logger.debug(f"Created batch with {len(batch)} requests")
+            logger.debug("Created batch with %s requests", len(batch))
 
         self._pending = []
-        logger.debug(f"Flushed {len(batches)} batches ({sum(len(b) for b in batches)} total requests)")
+        total = sum(len(b) for b in batches)
+        logger.debug("Flushed %s batches (%s total requests)", len(batches), total)
         return batches
 
     def pending_count(self) -> int:

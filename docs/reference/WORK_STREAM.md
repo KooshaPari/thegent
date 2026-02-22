@@ -3749,15 +3749,17 @@ Expose separate timeout controls for GitHub and Linear operations.
 **Implementation:** `src/thegent/integrations/connector_timeout.py` with `ConnectorTimeoutConfig` and `ConnectorTimeoutRegistry`. Tests: `tests/test_wl193_connector_timeout.py` (16 tests, all passing).
 
 ### [WL-194] Connector Circuit Breakers
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** resilience, sync
 **Effort:** M
-**Blocked by:** breaker policy tuning
+**Blocked by:** none
 
 Add per-connector circuit breakers to isolate repeated failures without silent degradation.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/connector_circuit_breaker.py` with `CircuitState` enum and `ConnectorCircuitBreaker` (state transitions: CLOSED -> OPEN -> HALF_OPEN). Tests: `tests/test_wl194_connector_circuit_breaker.py` (35 tests, all passing).
 
 ### [WL-195] Reflection Decision Event Log
 **Status:** COMPLETED
@@ -3773,35 +3775,41 @@ Log every reflection decision with before/after values and connector provenance.
 **Implementation:** `src/thegent/integrations/reflection_event_log.py` with `ReflectionDecision` and `ReflectionEventLog` (persists to JSONL). Tests: `tests/test_wl195_reflection_event_log.py` (14 tests, all passing).
 
 ### [WL-196] Prometheus Metrics Export
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** observability, metrics
 **Effort:** M
-**Blocked by:** metrics endpoint conventions
+**Blocked by:** none
 
 Add Prometheus-compatible metrics export for sync health and throughput.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/prometheus_metrics.py` with `MetricSample` dataclass and `PrometheusMetricsExporter` (text format export with label handling). Tests: `tests/test_wl196_prometheus_metrics.py` (24 tests, all passing).
+
 ### [WL-197] Sync Policy File Contract
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** governance, config
 **Effort:** M
-**Blocked by:** schema finalization
+**Blocked by:** none
 
 Define `.thegent/sync-policy.yaml` for conflict precedence, strictness, and connector rules.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/sync_policy_contract.py` extended with `SyncPolicyContract` and `SyncPolicyValidator` (WL-197: simple mode; retains full YAML loading for compatibility). Tests: `tests/test_wl197_sync_policy_contract.py` (14 tests, all passing).
+
 ### [WL-198] End-to-End Replay Fixture
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tests, e2e
 **Effort:** M
-**Blocked by:** fixture data curation
+**Blocked by:** none
 
 Create e2e replay fixtures for full local->remote->local reflection cycles.
+
+**Implementation:** `src/thegent/integrations/e2e_replay_fixture.py` with `ReplayEvent` and `E2EReplayFixture` (event recording, replay, and management). Tests: `tests/test_wl198_e2e_replay_fixture.py` (21 tests, all passing).
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 

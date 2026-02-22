@@ -12,6 +12,9 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+_INVALID_DEFAULT_TIMEOUT = "default_timeout must be > 0"
+_INVALID_TIMEOUT_SECONDS = "timeout_seconds must be > 0"
+
 
 @dataclass
 class ConnectorTimeoutConfig:
@@ -32,14 +35,16 @@ class ConnectorTimeoutRegistry:
 
         Raises:
             ValueError: If default_timeout <= 0.
+
         """
         if default_timeout <= 0:
-            raise ValueError("default_timeout must be > 0")
+            msg = _INVALID_DEFAULT_TIMEOUT
+            raise ValueError(msg)
 
         self._default_timeout = default_timeout
         self._timeouts: dict[str, float] = {}
 
-        logger.debug(f"Initialized ConnectorTimeoutRegistry with default_timeout={default_timeout}s")
+        logger.debug("Initialized ConnectorTimeoutRegistry with default_timeout=%s", default_timeout)
 
     def set_timeout(self, connector_id: str, timeout_seconds: float) -> None:
         """Set the timeout for a specific connector.
@@ -50,12 +55,14 @@ class ConnectorTimeoutRegistry:
 
         Raises:
             ValueError: If timeout_seconds <= 0.
+
         """
         if timeout_seconds <= 0:
-            raise ValueError("timeout_seconds must be > 0")
+            msg = _INVALID_TIMEOUT_SECONDS
+            raise ValueError(msg)
 
         self._timeouts[connector_id] = timeout_seconds
-        logger.debug(f"Set timeout for {connector_id} to {timeout_seconds}s")
+        logger.debug("Set timeout for %s to %s", connector_id, timeout_seconds)
 
     def get_timeout(self, connector_id: str) -> float:
         """Get the timeout for a connector.
@@ -75,9 +82,10 @@ class ConnectorTimeoutRegistry:
 
         Args:
             connector_id: The connector identifier.
+
         """
         self._timeouts.pop(connector_id, None)
-        logger.debug(f"Removed custom timeout for {connector_id}, will use default")
+        logger.debug("Removed custom timeout for %s, will use default", connector_id)
 
     def all_configs(self) -> list[ConnectorTimeoutConfig]:
         """Get all configured timeouts.
