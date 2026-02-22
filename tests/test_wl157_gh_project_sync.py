@@ -233,7 +233,7 @@ class TestSyncToGithub:
         assert mock_run.call_count == 0
 
     @patch("thegent.integrations.gh_project_sync._run_gh_command")
-    def test_write_only_config_allows_sync(self, mock_run, valid_config):
+    def test_write_only_config_allows_sync(self, _mock_run, _valid_config):
         """Write-only config should allow write."""
         config = GHProjectConfig(
             enabled=True,
@@ -242,9 +242,6 @@ class TestSyncToGithub:
             direction="write_only",
             standalone_mode=True,
         )
-        mock_data = {"title": "My Project", "url": "https://github.com/users/kooshapari/projects/1"}
-        mock_run.return_value = (0, json.dumps(mock_data), "")
-
         workstream = [{"id": "WL-001", "title": "Task"}]
         result = sync_to_github(config, workstream)
         # Should not raise and should return result
