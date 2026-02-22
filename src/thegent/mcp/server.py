@@ -220,6 +220,8 @@ mcp.add_transform(ResourcesAsTools(cast("Any", mcp)))
 mcp.add_transform(PromptsAsTools(cast("Any", mcp)))
 (list_providers, get_provider, add_provider, update_provider, delete_provider, list_credentials, add_api_key, remove_api_key, validate_provider, discover_models, list_models, add_model_alias, remove_model_alias) = _server_tools_provider_models.register_provider_model_tools(mcp=mcp)
 (journal_create_session, journal_record_change, journal_snapshot, journal_get_log, journal_list_sessions, journal_finalize, journal_prune, journal_create_enhanced, journal_start_watching, journal_get_attestations, journal_get_stats, journal_record_async, journal_flush_batch, thegent_orchestration_events,) = _server_journal_tools.register_journal_tools(mcp=mcp, logger=_log)
+from docs_engine.mcp.tools import register_tools as _register_doc_tools
+(_doc_new, _doc_search, _doc_list, _doc_export, _doc_sidebar, _doc_semantic, _doc_changelog) = _register_doc_tools(mcp)
 (health, _get_event_store, thegent_acp_invoke, http_app, http_app_factory, run) = _server_runtime_entry.register_runtime_entry(mcp=mcp, health_response=health_response, create_event_store=create_event_store, create_http_app=create_http_app, bearer_auth_middleware=BearerAuthMiddleware, log=_log, parse_acp_payload=parse_acp_payload, format_acp_response=format_acp_response, run_server=run_server, settings_factory=ThegentSettings, http_app_factory_import_path="thegent.mcp_server:http_app_factory")
 if __name__ == "__main__":
     cast(Any, run)()
