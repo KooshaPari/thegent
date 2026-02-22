@@ -1,6 +1,5 @@
 """Integration tests for research_engine end-to-end flow. @trace FR-RES-050"""
 import pytest
-from pathlib import Path
 from datetime import datetime, timezone
 
 from research_engine.schema import ResearchItem
