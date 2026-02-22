@@ -1,6 +1,7 @@
 """Unit tests for clode command wiring and shim-link installation."""
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -53,7 +54,7 @@ class _HealthyResp:
     is_success = True
 
 
-def _mock_sitback_health() -> tuple[object, object]:
+def _mock_sitback_health() -> tuple[Any, Any]:
     return (
         patch.object(clode_main_module, "_get_settings", return_value=_SitbackSettings()),
         patch("httpx.get", return_value=_HealthyResp()),
