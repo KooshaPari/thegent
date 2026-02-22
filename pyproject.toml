@@ -202,7 +202,7 @@ ignore = [
     "UP045", "UP037", "RUF010", "FURB110", "PLC0207", "TC003", "F821",
     "PLW0108", "DTZ011",
     # Additional non-blocking issues
-    "TC002", "UP035", "S311", "PIE810", "PERF203"
+    "TC001", "TC002", "UP035", "S311", "PIE810", "PERF203"
 ]
 
 [tool.ruff.lint.per-file-ignores]

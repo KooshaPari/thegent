@@ -1,0 +1,61 @@
+# tests/research_engine/test_digest.py
+# @trace FR-RE-011
+"""DigestGenerator — markdown digest rendering tests."""
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pytest
+
+from research_engine.schema import ResearchItem
+from research_engine.store import ResearchStore
+
+
+@pytest.fixture
+def populated_store(tmp_path: Path) -> ResearchStore:
+    """Create a store with 5 sample research items."""
+    store = ResearchStore(tmp_path / "research.db")
+    for i in range(5):
+        store.upsert(
+            ResearchItem.from_url(
+                url=f"https://example.com/{i}",
+                source="hn",  # type: ignore
+                title=f"Item {i}: Python MCP",
+                summary=f"Summary of item {i}",
+                score=100 - i * 10,
+                tags=["python", "mcp"],
+                fetched_at=datetime.now(timezone.utc),
+                relevance=0.9 - i * 0.1,
+            )
+        )
+    return store
+
+
+def test_digest_generates_markdown(populated_store: ResearchStore) -> None:
+    """Digest produces markdown with items, titles, and URLs."""
+    from research_engine.digest import DigestGenerator
+
+    gen = DigestGenerator(populated_store)
+    md = gen.generate(hours=24, limit=10)
+    assert "## Research Digest" in md
+    assert "Item 0" in md
+    assert "https://example.com/0" in md
+
+
+def test_digest_respects_limit(populated_store: ResearchStore) -> None:
+    """Digest respects the limit parameter."""
+    from research_engine.digest import DigestGenerator
+
+    gen = DigestGenerator(populated_store)
+    md = gen.generate(hours=24, limit=2)
+    assert md.count("https://example.com/") == 2
+
+
+def test_digest_empty_store(tmp_path: Path) -> None:
+    """Digest handles empty store gracefully."""
+    from research_engine.digest import DigestGenerator
+
+    store = ResearchStore(tmp_path / "empty.db")
+    gen = DigestGenerator(store)
+    md = gen.generate(hours=24, limit=10)
+    assert "## Research Digest" in md
+    assert "No new items" in md
