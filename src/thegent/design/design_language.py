@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Any
 
+from rich.theme import Theme
+
 from thegent.thg_platform import Platform, detect_platform
 
 __all__ = ["DesignLanguage", "DesignToken"]
@@ -97,8 +99,35 @@ class DesignLanguage:
     def apply_to_cli(self) -> None:
         """Apply design language to CLI.
 
-        Configures Rich console with design tokens.
-        This is a placeholder - full implementation would configure
-        Rich console styles based on tokens.
+        Configures a Rich Theme map from design tokens and stores it in
+        ``self.cli_theme`` for CLI surfaces to consume.
         """
-        # Placeholder - would configure Rich console
+        plat = detect_platform()
+        platform_name = {
+            Platform.MACOS: "macos",
+            Platform.WINDOWS: "windows",
+            Platform.LINUX: "linux",
+        }.get(plat, "linux")
+
+        primary = self._token_or("color.primary", "#4CAF50")
+        error = self._token_or("color.error", "#F44336")
+        warning = self._token_or("color.warning", "#FF9800")
+        success = self._token_or("color.success", primary)
+        info = self._token_or("color.info", "#2196F3")
+        mono = self._token_or("font.mono", "monospace")
+        system_font = self.get_token("font.system", platform=platform_name) or self._token_or("font.system", "sans")
+
+        styles = {
+            "primary": f"bold {primary}",
+            "error": f"bold {error}",
+            "warning": f"bold {warning}",
+            "success": f"bold {success}",
+            "info": info,
+            "code": mono,
+            "body": system_font,
+        }
+        self.cli_theme = Theme(styles)
+
+    def _token_or(self, name: str, default: Any) -> Any:
+        value = self.get_token(name)
+        return default if value is None else value

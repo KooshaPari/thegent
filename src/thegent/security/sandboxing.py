@@ -3,6 +3,7 @@ Includes bubblewrap (Linux) and seatbelt (macOS) profile generation, and 5-tier 
 """
 
 import logging
+import os
 import platform
 from pathlib import Path
 from typing import ClassVar
@@ -26,17 +27,27 @@ class SandboxProvider:
 
     def _bwrap_wrap(self, command: list[str], tier: int) -> list[str]:
         """Bubblewrap wrapper for Linux."""
-        args = ["bwrap", "--unshare-all", "--dev", "/dev", "--proc", "/proc"]
-
-        if tier >= 1:  # Read
-            args.extend(["--ro-bind", "/", "/"])
-
-        if tier >= 2:  # Worktree
-            # Would bind specifically to worktree
-            pass
+        args = ["bwrap", "--unshare-all", "--dev", "/dev", "--proc", "/proc", "--die-with-parent"]
 
         if tier >= 5:  # Production
             args.extend(["--bind", "/", "/"])
+            return [*args, "--", *command]
+
+        if tier >= 2:  # Worktree
+            worktree = Path(os.environ.get("THGENT_SANDBOX_WORKTREE", str(Path.cwd()))).expanduser().resolve()
+            args.extend(["--bind", str(worktree), str(worktree), "--chdir", str(worktree)])
+            allowed_reads = [
+                p.strip() for p in os.environ.get("THGENT_SANDBOX_ALLOWED_READS", "/usr,/bin,/lib,/lib64").split(",")
+            ]
+            for read_path in allowed_reads:
+                if not read_path:
+                    continue
+                rp = Path(read_path).expanduser()
+                if rp.exists():
+                    args.extend(["--ro-bind", str(rp), str(rp)])
+            args.extend(["--tmpfs", "/tmp", "--tmpfs", "/var/tmp"])
+        elif tier >= 1:  # Read-only full filesystem for baseline read tier
+            args.extend(["--ro-bind", "/", "/"])
 
         return [*args, "--", *command]
 

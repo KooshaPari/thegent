@@ -212,8 +212,28 @@ class TestDiskcacheFallback:
         with patch("thegent.cache.multi_level._DISKCACHE_AVAILABLE", False):
             cache = MultiLevelCache(l1_maxsize=10, l1_ttl=60, l2_dir=tmp_path / "cache")
             assert not cache.l2_available
+            assert cache.l2_init_status["reason"] == "diskcache_unavailable"
             cache.set("key", "value")
             assert cache.get("key") == "value"
+
+    def test_l2_init_status_permission_denied(self, tmp_path: Path) -> None:
+        with patch("pathlib.Path.mkdir", side_effect=PermissionError("nope")):
+            cache = MultiLevelCache(l1_maxsize=10, l1_ttl=60, l2_dir=tmp_path / "cache")
+        assert cache.l2_available is False
+        assert cache.l2_init_status["reason"] == "directory_error"
+
+    def test_l2_init_status_open_failed(self, tmp_path: Path) -> None:
+        with patch("diskcache.Cache", side_effect=RuntimeError("disk fail")):
+            cache = MultiLevelCache(l1_maxsize=10, l1_ttl=60, l2_dir=tmp_path / "cache")
+        assert cache.l2_available is False
+        assert cache.l2_init_status["reason"] == "open_failed"
+
+    def test_l2_init_status_invalid_path_file(self, tmp_path: Path) -> None:
+        invalid_path = tmp_path / "not_a_dir"
+        invalid_path.write_text("x", encoding="utf-8")
+        cache = MultiLevelCache(l1_maxsize=10, l1_ttl=60, l2_dir=invalid_path)
+        assert cache.l2_available is False
+        assert cache.l2_init_status["reason"] == "directory_error"
 
 
 # ---------------------------------------------------------------------------

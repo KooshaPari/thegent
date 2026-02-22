@@ -2,8 +2,45 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import time
 from typing import Any
+
+_LOG = logging.getLogger(__name__)
+_WARNING_LIMIT = 3
+_warning_count = 0
+_transform_diagnostics: dict[str, Any] = {
+    "failure_count": 0,
+    "last_failure_type": None,
+    "last_error_type": None,
+    "last_error_message": None,
+}
+
+
+def get_transform_models_diagnostics() -> dict[str, Any]:
+    """Return diagnostics for transform_models_response failures."""
+    return dict(_transform_diagnostics)
+
+
+def reset_transform_models_diagnostics() -> None:
+    """Reset transform diagnostics (test helper)."""
+    global _warning_count
+    _warning_count = 0
+    _transform_diagnostics["failure_count"] = 0
+    _transform_diagnostics["last_failure_type"] = None
+    _transform_diagnostics["last_error_type"] = None
+    _transform_diagnostics["last_error_message"] = None
+
+
+def _record_transform_failure(failure_type: str, exc: Exception) -> None:
+    global _warning_count
+    _transform_diagnostics["failure_count"] = int(_transform_diagnostics["failure_count"]) + 1
+    _transform_diagnostics["last_failure_type"] = failure_type
+    _transform_diagnostics["last_error_type"] = type(exc).__name__
+    _transform_diagnostics["last_error_message"] = str(exc)
+    _warning_count += 1
+    if _warning_count <= _WARNING_LIMIT:
+        _LOG.warning("transform_models_response failed (%s): %s", failure_type, type(exc).__name__)
 
 
 def _compute_models_etag(models: list[dict[str, Any]]) -> str:
@@ -56,9 +93,15 @@ def transform_models_response(
     try:
         raw = bytes(content) if isinstance(content, memoryview) else content
         payload = json.loads(raw.decode(errors="replace"))
+        if not isinstance(payload, dict):
+            exc = TypeError(f"expected object payload, got {type(payload).__name__}")
+            _record_transform_failure("payload_not_object", exc)
+            return None
         # Extract model list from either "data" (OpenAI format) or "models" (Codex format)
         models = payload.get("data") or payload.get("models") or []
         if not isinstance(models, list):
+            exc = TypeError(f"expected list models payload, got {type(models).__name__}")
+            _record_transform_failure("models_not_list", exc)
             return None
 
         # OR-15: inject OpenRouter proxy models when requested
@@ -127,6 +170,8 @@ def transform_models_response(
         body = json.dumps(result).encode()
         etag = _compute_models_etag(models)
         return body, etag
-    except (json.JSONDecodeError, TypeError):
-        pass
+    except json.JSONDecodeError as exc:
+        _record_transform_failure("json_decode_error", exc)
+    except TypeError as exc:
+        _record_transform_failure("type_error", exc)
     return None

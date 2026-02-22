@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from thegent.infra import get_cache, yaml_load, yaml_loads
+from thegent.infra import get_cache, yaml_dump, yaml_load, yaml_loads
 from thegent.platform_paths import get_config_dir
 
 __all__ = ["UnifiedConfigManager"]
@@ -43,6 +43,7 @@ class UnifiedConfigManager:
             ("plan", Path("PLAN.md")),
         ]
         self.unified_config: dict[str, dict[str, Any]] = {}
+        self.last_sync_conflicts: dict[str, dict[str, Any]] = {}
         self._load_unified_config()
 
     def _load_unified_config(self) -> None:
@@ -155,12 +156,94 @@ class UnifiedConfigManager:
     def sync_configs(self) -> None:
         """Synchronize configurations across systems.
 
-        Ensures consistency between different configuration sources.
-        This is a simplified version - full implementation would
-        handle conflicts and merge strategies.
+        Applies deterministic precedence rules:
+        ``thegent > manage > workstream > plan``.
+        When conflicts are detected, the higher-priority value wins and
+        reconciled values are persisted back to source files.
         """
-        # For now, this is a placeholder
-        # Full implementation would:
-        # 1. Detect conflicts
-        # 2. Apply merge strategy
-        # 3. Update source files if needed
+        precedence = ["thegent", "manage", "workstream", "plan"]
+        flattened: dict[str, dict[str, Any]] = {}
+        for system_name in precedence:
+            source = self.unified_config.get(system_name)
+            if isinstance(source, dict):
+                flattened[system_name] = self._flatten_config(source)
+            else:
+                flattened[system_name] = {}
+
+        merged_flat: dict[str, Any] = {}
+        conflicts: dict[str, dict[str, Any]] = {}
+        all_keys = sorted({key for per_system in flattened.values() for key in per_system.keys()})
+        for key in all_keys:
+            seen_values = {
+                system_name: flattened[system_name][key] for system_name in precedence if key in flattened[system_name]
+            }
+            for system_name in precedence:
+                if key in flattened[system_name]:
+                    merged_flat[key] = flattened[system_name][key]
+                    break
+            unique_values = {repr(v) for v in seen_values.values()}
+            if len(unique_values) > 1:
+                conflicts[key] = seen_values
+
+        self.last_sync_conflicts = conflicts
+
+        merged = self._unflatten_config(merged_flat)
+        self.unified_config = {name: merged.copy() for name in precedence if name in self.unified_config}
+
+        for system_name, config_path in self.config_sources:
+            if system_name not in self.unified_config:
+                continue
+            if config_path.suffix == ".yaml":
+                self._persist_yaml(config_path, self.unified_config[system_name])
+            elif config_path.suffix == ".md":
+                self._persist_markdown_frontmatter(config_path, self.unified_config[system_name])
+
+        if _USE_UNIFIED_CACHE:
+            _UNIFIED_CONFIG_CACHE.set("unified_config", self.unified_config, ttl=300)
+
+    def _flatten_config(self, config: dict[str, Any], prefix: str = "") -> dict[str, Any]:
+        flattened: dict[str, Any] = {}
+        for key in sorted(config.keys()):
+            value = config[key]
+            full_key = f"{prefix}.{key}" if prefix else key
+            if isinstance(value, dict):
+                flattened.update(self._flatten_config(value, prefix=full_key))
+            else:
+                flattened[full_key] = value
+        return flattened
+
+    def _unflatten_config(self, flattened: dict[str, Any]) -> dict[str, Any]:
+        unflattened: dict[str, Any] = {}
+        for key in sorted(flattened.keys()):
+            parts = key.split(".")
+            current = unflattened
+            for part in parts[:-1]:
+                next_value = current.get(part)
+                if not isinstance(next_value, dict):
+                    next_value = {}
+                    current[part] = next_value
+                current = next_value
+            current[parts[-1]] = flattened[key]
+        return unflattened
+
+    def _persist_yaml(self, path: Path, reconciled: dict[str, Any]) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        rendered = yaml_dump(reconciled, default_flow_style=False, sort_keys=True) or ""
+        existing = path.read_text(encoding="utf-8") if path.exists() else ""
+        if existing != rendered:
+            path.write_text(rendered, encoding="utf-8")
+
+    def _persist_markdown_frontmatter(self, path: Path, reconciled: dict[str, Any]) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        existing = path.read_text(encoding="utf-8") if path.exists() else ""
+        fm = yaml_dump(reconciled, default_flow_style=False, sort_keys=True) or ""
+        rendered_frontmatter = f"---\n{fm}---\n"
+
+        if existing.startswith("---\n"):
+            replaced = re.sub(r"^---\n.*?\n---\n?", rendered_frontmatter, existing, count=1, flags=re.DOTALL)
+            target_content = replaced
+        else:
+            target_content = rendered_frontmatter + existing
+
+        if existing != target_content:
+            path.write_text(target_content, encoding="utf-8")

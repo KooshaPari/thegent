@@ -72,6 +72,10 @@ class AsyncObservabilityLogger:
         try:
             self._queue.put_nowait(event)
         except queue.Full:
+            if not hasattr(self, "_dropped_events"):
+                self._dropped_events = 0
+            if not hasattr(self, "_last_drop_log_at"):
+                self._last_drop_log_at = 0.0
             self._dropped_events += 1
             now = time.monotonic()
             if now - self._last_drop_log_at >= self.DROP_LOG_INTERVAL_SEC:
@@ -151,9 +155,9 @@ class AsyncObservabilityLogger:
     def diagnostics(self) -> dict[str, int]:
         """Return queue/worker diagnostics for saturation and handler errors."""
         return {
-            "dropped_events": self._dropped_events,
-            "handled_events": self._handled_events,
-            "handler_failures": self._handler_failures,
+            "dropped_events": int(getattr(self, "_dropped_events", 0)),
+            "handled_events": int(getattr(self, "_handled_events", 0)),
+            "handler_failures": int(getattr(self, "_handler_failures", 0)),
             "queue_size": self._queue.qsize(),
         }
 

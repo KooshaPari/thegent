@@ -2675,7 +2675,7 @@ Sign connector capability cache entries and enforce TTL renewal.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-294] Policy What-If Simulation
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** governance, cli
 **Effort:** S
@@ -2684,9 +2684,10 @@ Sign connector capability cache entries and enforce TTL renewal.
 Add policy simulation command for hypothetical sync policy changes.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Batch evidence:** `docs/reports/2026-02-22-wave70-batch1-wl293-297.md`
 
 ### [WL-295] Pull Pagination Resilience Tests
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** tests, connectors
 **Effort:** M
@@ -2695,9 +2696,10 @@ Add policy simulation command for hypothetical sync policy changes.
 Test multi-page remote pull behavior with pagination edge cases.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Batch evidence:** `docs/reports/2026-02-22-wave70-batch1-wl293-297.md`
 
 ### [WL-296] Restore Verifier
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** rollback, reliability
 **Effort:** S
@@ -2706,9 +2708,10 @@ Test multi-page remote pull behavior with pagination edge cases.
 Verify rollback/restore outputs match checkpoint expectations.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Batch evidence:** `docs/reports/2026-02-22-wave70-batch1-wl293-297.md`
 
 ### [WL-297] Connector Cost Accounting
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** cost, observability
 **Effort:** S
@@ -2717,6 +2720,7 @@ Verify rollback/restore outputs match checkpoint expectations.
 Track per-connector API usage/cost metrics for budgeting.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Batch evidence:** `docs/reports/2026-02-22-wave70-batch1-wl293-297.md`
 
 ### [WL-298] Enterprise Topology Cookbook
 **Status:** COMPLETED (2026-02-22)

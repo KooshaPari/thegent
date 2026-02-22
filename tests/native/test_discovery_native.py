@@ -269,11 +269,27 @@ class TestDiscoveryClientErrorFallback:
         client = self._make_native_client(tmp_path)
         with (
             patch.object(client, "_run", return_value=None),
-            patch("thegent.native.discovery_native._fallback_sessions", return_value=[]) as mock_fb,
+            patch(
+                "thegent.native.discovery_native._fallback_sessions",
+                return_value={"sessions": [], "fallback": {"status": "ok"}},
+            ) as mock_fb,
         ):
             result = client.sessions()
         mock_fb.assert_called_once()
         assert result == []
+
+    def test_sessions_fallback_records_metadata(self, tmp_path: Path) -> None:
+        client = self._make_native_client(tmp_path)
+        with (
+            patch.object(client, "_run", return_value=None),
+            patch(
+                "thegent.native.discovery_native._fallback_sessions",
+                return_value={"sessions": [], "fallback": {"status": "probe_failed", "error_type": "tmux_missing"}},
+            ),
+        ):
+            result = client.sessions()
+        assert result == []
+        assert client.last_fallback_metadata["sessions"]["error_type"] == "tmux_missing"
 
     def test_tools_falls_back_on_none(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
@@ -297,7 +313,10 @@ class TestDiscoveryClientErrorFallback:
         client = self._make_native_client(tmp_path)
         with (
             patch.object(client, "_run", return_value=None),
-            patch("thegent.native.discovery_native._fallback_sessions", return_value=[]),
+            patch(
+                "thegent.native.discovery_native._fallback_sessions",
+                return_value={"sessions": [], "fallback": {"status": "ok"}},
+            ),
             patch("thegent.native.discovery_native._fallback_tools", return_value=[]),
             patch("thegent.native.discovery_native._fallback_processes", return_value=[]),
         ):
@@ -363,7 +382,7 @@ class TestDiscoveryClientFallbackPath:
     def test_sessions_delegates_to_fallback(self, fallback_client: DiscoveryClient) -> None:
         with patch(
             "thegent.native.discovery_native._fallback_sessions",
-            return_value=[{"session_name": "s1"}],
+            return_value={"sessions": [{"session_name": "s1"}], "fallback": {"status": "ok"}},
         ) as mock_fb:
             result = fallback_client.sessions()
         mock_fb.assert_called_once()
@@ -382,12 +401,15 @@ class TestDiscoveryClientFallbackPath:
 
     def test_all_delegates_to_fallback(self, fallback_client: DiscoveryClient) -> None:
         with (
-            patch("thegent.native.discovery_native._fallback_sessions", return_value=[]),
+            patch(
+                "thegent.native.discovery_native._fallback_sessions",
+                return_value={"sessions": [], "fallback": {"status": "ok"}},
+            ),
             patch("thegent.native.discovery_native._fallback_tools", return_value=[]),
             patch("thegent.native.discovery_native._fallback_processes", return_value=[]),
         ):
             result = fallback_client.all()
-        assert set(result.keys()) == {"sessions", "tools", "processes"}
+        assert set(result.keys()) == {"sessions", "tools", "processes", "fallback_metadata"}
 
 
 # ---------------------------------------------------------------------------

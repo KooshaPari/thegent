@@ -125,9 +125,7 @@ class TestConflictQueueEnqueue:
             queue.enqueue(None)  # type: ignore
 
     @pytest.mark.requirement("WL-205")
-    def test_enqueue_empty_conflict_id_raises_error(
-        self, queue: ConflictQueue
-    ) -> None:
+    def test_enqueue_empty_conflict_id_raises_error(self, queue: ConflictQueue) -> None:
         """enqueue raises ValueError for empty conflict_id."""
         now = datetime.now(timezone.utc)
         entry = ConflictEntry(
@@ -168,9 +166,7 @@ class TestConflictQueueDequeue:
         return queue
 
     @pytest.mark.requirement("WL-205")
-    def test_dequeue_returns_first_unresolved(
-        self, queue_with_entries: ConflictQueue
-    ) -> None:
+    def test_dequeue_returns_first_unresolved(self, queue_with_entries: ConflictQueue) -> None:
         """dequeue returns first unresolved entry in FIFO order."""
         entry = queue_with_entries.dequeue()
 
@@ -254,9 +250,7 @@ class TestConflictQueueResolve:
         return queue
 
     @pytest.mark.requirement("WL-205")
-    def test_resolve_marks_as_resolved(
-        self, queue_with_entries: ConflictQueue
-    ) -> None:
+    def test_resolve_marks_as_resolved(self, queue_with_entries: ConflictQueue) -> None:
         """resolve marks entry as resolved."""
         queue_with_entries.resolve("CONF-001")
 
@@ -271,9 +265,7 @@ class TestConflictQueueResolve:
         assert resolved_entry.resolved is True
 
     @pytest.mark.requirement("WL-205")
-    def test_resolve_not_found_raises_error(
-        self, queue_with_entries: ConflictQueue
-    ) -> None:
+    def test_resolve_not_found_raises_error(self, queue_with_entries: ConflictQueue) -> None:
         """resolve raises KeyError for non-existent conflict_id."""
         with pytest.raises(KeyError, match="not found"):
             queue_with_entries.resolve("CONF-999")

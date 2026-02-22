@@ -26,6 +26,24 @@ _RESOLVE_KEYS = [
 ]
 
 logger = logging.getLogger(__name__)
+_last_provider_metadata: dict[str, Any] = {
+    "source": "env",
+    "degraded": False,
+    "control_plane_configured": False,
+    "dependency_missing": False,
+    "error_type": None,
+    "error_message": None,
+}
+
+
+def _attach_provider_metadata(provider: Any, metadata: dict[str, Any]) -> ConfigProvider:
+    provider.provider_metadata = dict(metadata)
+    return provider
+
+
+def get_last_provider_metadata() -> dict[str, Any]:
+    """Return metadata for the most recent provider selection."""
+    return dict(_last_provider_metadata)
 
 
 def _settings_to_dict(keys: list[str] | None) -> dict[str, Any]:
@@ -85,16 +103,45 @@ class EnvConfigProvider:
 
 def get_config_provider() -> ConfigProvider:
     """Returns ConfigProvider. Phase 1: always EnvConfigProvider."""
+    global _last_provider_metadata
     settings = ThegentSettings()
     url = settings.control_plane_url
     if url and url != "http://127.0.0.1:3848":  # Only use CP if explicitly configured
         try:
             from thegent.control_plane.client import ControlPlaneConfigProvider
 
-            return ControlPlaneConfigProvider(url)
+            metadata = {
+                "source": "control_plane",
+                "degraded": False,
+                "control_plane_configured": True,
+                "dependency_missing": False,
+                "error_type": None,
+                "error_message": None,
+            }
+            _last_provider_metadata = metadata
+            return _attach_provider_metadata(ControlPlaneConfigProvider(url), metadata)
         except ImportError as exc:
+            metadata = {
+                "source": "env",
+                "degraded": True,
+                "control_plane_configured": True,
+                "dependency_missing": True,
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+            }
+            _last_provider_metadata = metadata
             logger.warning(
-                "Failed to import control-plane config provider from thegent.control_plane.client: %s",
+                "Control-plane configured but provider import failed; using EnvConfigProvider: %s",
                 exc,
             )
-    return EnvConfigProvider()
+            return _attach_provider_metadata(EnvConfigProvider(), metadata)
+    metadata = {
+        "source": "env",
+        "degraded": False,
+        "control_plane_configured": False,
+        "dependency_missing": False,
+        "error_type": None,
+        "error_message": None,
+    }
+    _last_provider_metadata = metadata
+    return _attach_provider_metadata(EnvConfigProvider(), metadata)

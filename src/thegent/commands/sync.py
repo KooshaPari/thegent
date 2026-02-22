@@ -7,6 +7,7 @@ subcommands: all, work-stream, config, agents, hooks.
 from __future__ import annotations
 
 import contextlib
+import shutil
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -629,9 +630,9 @@ class SyncCommand:
     def push(self, target: str | None = None) -> OperationResult:
         """Push local state to remote.
 
-        Stubs the remote push operation.  When a remote sync backend is
-        wired up, this method will serialise the local agent config, settings
-        snapshot, and hook registrations and upload them to ``target``.
+        Uploads agent and hook artifacts to a filesystem-backed remote target.
+        The target is treated as a directory path and receives files under:
+        ``<target>/.thegent/sync_push/``.
 
         Args:
             target: Optional remote target identifier (URL, host, or alias).
@@ -639,7 +640,7 @@ class SyncCommand:
                     environment variable, if set.
 
         Returns:
-            OperationResult indicating the push was accepted (or stubbed).
+            OperationResult with per-file transfer outcomes.
         """
         t0 = time.monotonic()
         op = "push"
@@ -651,22 +652,77 @@ class SyncCommand:
 
         _log.info("sync push invoked: target=%s", effective_target)
 
-        # Stub: collect what would be pushed
         local_agents = self._discover_agent_files()
         hook_scripts = sorted(self._discover_hook_scripts())
-        files_would_push = [f"agents/{a}.md" for a in local_agents] + [f"hooks/{h}.sh" for h in hook_scripts]
+        relative_files = [Path("agents") / f"{a}.md" for a in local_agents] + [
+            Path("hooks") / f"{h}.sh" for h in hook_scripts
+        ]
+
+        target_dir = self._resolve_sync_target(effective_target)
+        if target_dir is None:
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.FAILED,
+                message=f"Push failed: unreachable target '{effective_target}'.",
+                duration=time.monotonic() - t0,
+                details={"target": effective_target, "transfers": []},
+                errors=[f"Unreachable target: {effective_target!r}"],
+            )
+
+        export_root = target_dir / ".thegent" / "sync_push"
+        export_root.mkdir(parents=True, exist_ok=True)
+
+        transfers: list[dict[str, str]] = []
+        failed = 0
+        for rel_path in relative_files:
+            src = self._root / rel_path
+            dst = export_root / rel_path
+            try:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                transfers.append(
+                    {
+                        "file": str(rel_path),
+                        "source": str(src),
+                        "destination": str(dst),
+                        "status": "success",
+                    }
+                )
+            except Exception as exc:
+                failed += 1
+                transfers.append(
+                    {
+                        "file": str(rel_path),
+                        "source": str(src),
+                        "destination": str(dst),
+                        "status": "failed",
+                        "error": f"{type(exc).__name__}: {exc}",
+                    }
+                )
+
+        successful = len(transfers) - failed
+        status = SyncOperationStatus.SUCCESS if failed == 0 else SyncOperationStatus.FAILED
+        message = (
+            f"Pushed {successful}/{len(transfers)} file(s) to '{target_dir}'."
+            if failed == 0
+            else f"Push partially failed: {successful}/{len(transfers)} file(s) uploaded to '{target_dir}'."
+        )
+        errors = [t["error"] for t in transfers if t.get("status") == "failed" and "error" in t]
 
         return OperationResult(
             operation=op,
-            status=SyncOperationStatus.SUCCESS,
-            message=f"[stub] Would push {len(files_would_push)} file(s) to '{effective_target}'.",
+            status=status,
+            message=message,
             duration=time.monotonic() - t0,
             details={
-                "target": effective_target,
-                "files_would_push": files_would_push,
-                "stub": True,
+                "target": str(target_dir),
+                "files_total": len(transfers),
+                "files_uploaded": successful,
+                "files_failed": failed,
+                "transfers": transfers,
             },
-            changes=[f"push: {f}" for f in files_would_push],
+            errors=errors,
+            changes=[f"push: {t['file']}" for t in transfers if t.get("status") == "success"],
         )
 
     def pull(self, source: str | None = None) -> OperationResult:
@@ -812,6 +868,19 @@ class SyncCommand:
         if not self._hooks_dir.exists():
             return set()
         return {f.stem for f in self._hooks_dir.glob("*.sh")}
+
+    def _resolve_sync_target(self, target: str) -> Path | None:
+        raw = (target or "").strip()
+        if not raw or raw == "<local-stub>":
+            return None
+        try:
+            resolved = Path(raw).expanduser().resolve()
+            if resolved.exists() and not resolved.is_dir():
+                return None
+            resolved.mkdir(parents=True, exist_ok=True)
+            return resolved
+        except Exception:
+            return None
 
     def _parse_hook_config_names(self) -> set[str]:
         """Parse hook names from hook-config.yaml ``hooks:`` section.
