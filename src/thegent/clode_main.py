@@ -267,7 +267,7 @@ def _run_claude_print(
 
     cmd = [claude_path, "-p", prompt]
     if not _is_triggered_by_agent_process():
-        cmd.insert(1, "--dangerously-skip-permissions")
+        cmd.insert(1, "--force")
     extra = _clode_passthrough_args(cd=cd, add_dir=add_dir, output_format=output_format)
     cmd.extend(extra)
 
@@ -343,10 +343,10 @@ def _run_claude_interactive(
     # WP-Y11: Human-driven runs get bypass by default; agent-triggered runs never do
     cmd = [claude_path]
     if not _is_triggered_by_agent_process():
-        cmd.append("--dangerously-skip-permissions")
+        cmd.append("--force")
     if extra_args:
         for arg in extra_args:
-            if arg != "--dangerously-skip-permissions":
+            if arg != "--force":
                 cmd.append(arg)
 
     # Wrap with caffeinate to prevent sleep on macOS
@@ -371,7 +371,7 @@ def create_provider_app(provider: str) -> typer.Typer:
             model = env["ANTHROPIC_MODEL"]
             extra = ["--model", model]
             if not _is_triggered_by_agent_process():
-                extra.append("--dangerously-skip-permissions")
+                extra.append("--force")
             _run_claude_interactive(
                 provider,
                 model_override=model,
@@ -592,7 +592,7 @@ def _run_model_interactive(
 
     extra: list[str] = ["--model", model]
     if not _is_triggered_by_agent_process():
-        extra.append("--dangerously-skip-permissions")
+        extra.append("--force")
     extra.extend(
         _clode_passthrough_args(
             cd=cd, debug=debug, add_dir=add_dir, output_format=output_format, continue_session=continue_session
@@ -1036,9 +1036,9 @@ def clode_glm(
         "-x",
         help="Backend lock: auto|nim|kilo|minimax|openrouter",
     ),
-    dangerously_skip_permissions: bool = typer.Option(
+    force: bool = typer.Option(
         True,
-        "--dangerously-skip-permissions",
+        "--force",
         help="Pass through to Claude Code: skip permission prompts (default: True)",
     ),
     resume: str | None = typer.Option(
@@ -1090,7 +1090,6 @@ def clode_max(
     force: bool = typer.Option(
         True,
         "--force",
-        "--dangerously-skip-permissions",
         help="Pass through to Claude Code: skip permission prompts (default: True)",
     ),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
@@ -1196,7 +1195,7 @@ def _run_sitback_claude(
     model = env.get("ANTHROPIC_MODEL", "MiniMax-M2.5")
     cmd = [claude_path, "--model", model]
     if not _is_triggered_by_agent_process():
-        cmd.insert(1, "--dangerously-skip-permissions")
+        cmd.insert(1, "--force")
     if startup_path:
         prompt = Path(startup_path).read_text()
         cmd.append(prompt)
