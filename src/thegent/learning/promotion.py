@@ -5,7 +5,6 @@ import logging
 from datetime import UTC, datetime
 
 from thegent.infra import yaml_dump, yaml_load
-from thegent.models.catalog import _get_catalog, normalize_model_id
 from thegent.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
@@ -24,6 +23,8 @@ class ModelPromoter:
             self._update_model_tier(model_id, "production")
 
     def _update_model_tier(self, model_id: str, new_tier: str):
+        from thegent.models.catalog import _get_catalog, normalize_model_id
+
         normalized = normalize_model_id(model_id)
         catalog = _get_catalog()
         if normalized not in catalog:
