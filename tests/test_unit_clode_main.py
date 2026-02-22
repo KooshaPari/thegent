@@ -704,7 +704,7 @@ def test_run_claude_interactive_exec_path_and_env_handshake() -> None:
     ):
         _run_claude_interactive("openrouter")
         execvpe.assert_called_once()
-        args, _kwargs = execvpe.call_args
+        args, _ = execvpe.call_args
         assert args[0] == "/usr/bin/claude"
         assert args[1] == ["/usr/bin/claude"]
         assert args[2]["ANTHROPIC_BASE_URL"] == "http://127.0.0.1:3847/v1"
