@@ -1346,6 +1346,61 @@ class ThegentSettings(BaseSettings):
         default=None,
         description="CLIProxy backend URL for proxy setup (THGENT_CLIPROXY_BACKEND_URL)",
     )
+    gh_project_sync_enabled: bool = Field(
+        default=False,
+        description="Enable GitHub Project v2 sync helpers (THGENT_GH_PROJECT_SYNC_ENABLED)",
+    )
+    gh_project_owner: str = Field(
+        default="",
+        description="GitHub owner/user/org for Project v2 sync (THGENT_GH_PROJECT_OWNER)",
+    )
+    gh_project_number: int = Field(
+        default=0,
+        ge=0,
+        description="GitHub Project v2 number for sync; 0 disables target (THGENT_GH_PROJECT_NUMBER)",
+    )
+    gh_project_direction: Literal["pull", "push", "both"] = Field(
+        default="both",
+        description="Default GitHub Project sync direction (THGENT_GH_PROJECT_DIRECTION)",
+    )
+    gh_project_standalone_mode: bool = Field(
+        default=False,
+        description="Run GH project sync in standalone mode with gh + local files only (THGENT_GH_PROJECT_STANDALONE_MODE)",
+    )
+    workstream_autosync_enabled: bool = Field(
+        default=False,
+        description="Enable automatic bidirectional sync between WORK_STREAM.md and external trackers (THGENT_WORKSTREAM_AUTOSYNC_ENABLED)",
+    )
+    workstream_autosync_interval_sec: int = Field(
+        default=60,
+        ge=10,
+        le=3600,
+        description="Polling interval in seconds for sync autopilot loop (THGENT_WORKSTREAM_AUTOSYNC_INTERVAL_SEC)",
+    )
+    linear_sync_enabled: bool = Field(
+        default=False,
+        description="Enable Linear synchronization in autopilot loop (THGENT_LINEAR_SYNC_ENABLED)",
+    )
+    linear_api_key: str = Field(
+        default="",
+        description="Linear API key for GraphQL synchronization (THGENT_LINEAR_API_KEY)",
+    )
+    linear_team_id: str = Field(
+        default="",
+        description="Linear team ID for issue synchronization (THGENT_LINEAR_TEAM_ID)",
+    )
+    linear_project_id: str = Field(
+        default="",
+        description="Optional Linear project ID filter for synchronization (THGENT_LINEAR_PROJECT_ID)",
+    )
+    linear_direction: Literal["pull", "push", "both"] = Field(
+        default="both",
+        description="Default Linear sync direction (THGENT_LINEAR_DIRECTION)",
+    )
+    linear_api_url: str = Field(
+        default="https://api.linear.app/graphql",
+        description="Linear GraphQL endpoint (THGENT_LINEAR_API_URL)",
+    )
     check_leaks: bool = Field(
         default=False,
         description="Enable resource leak checks in tests (CHECK_LEAKS)",

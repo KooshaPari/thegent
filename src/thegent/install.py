@@ -133,8 +133,8 @@ def setup_hooks(cwd: Path | None = None, dry_run: bool = False, verbose: bool = 
 
     # Map git hook names to thegent hook scripts
     hook_map = {
-        "pre-commit": "quality-gate.sh",  # Primary; fallback to pre-commit-docs if project has docs
-        "pre-push": "quality-gate.sh",
+        "pre-commit": "pre-commit.sh",
+        "pre-push": "pre-push.sh",
     }
 
     for hook_name, default_script in hook_map.items():
@@ -157,14 +157,24 @@ def _setup_git_hook(
     hook_script = hooks_src / default_script
     if not hook_script.exists():
         hook_script = next(
-            (hooks_src / s for s in ("pre-commit-docs.sh", "quality-gate.sh") if (hooks_src / s).exists()), None
+            (
+                hooks_src / s
+                for s in (
+                    "pre-commit.sh",
+                    "pre-push.sh",
+                    "pre-commit-docs.sh",
+                    "quality-gate.sh",
+                )
+                if (hooks_src / s).exists()
+            ),
+            None,
         )
     if not hook_script or not hook_script.exists():
         return
     wrapper = f"""#!/bin/sh
 # thegent setup --hooks
 set -e
-exec sh "{hook_script}" "$@"
+exec "{hook_script}" "$@"
 """
     if dry_run:
         counts["installed"] += 1
