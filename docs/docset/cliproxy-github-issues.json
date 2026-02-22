@@ -1987,8 +1987,9 @@
       "updated_at": "2026-02-09T09:05:58Z",
       "comments": 2,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 114
+      "thegent_status": "done",
+      "board_id": 114,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3914870687,
@@ -2004,8 +2005,9 @@
       "updated_at": "2026-02-09T12:09:03Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 115
+      "thegent_status": "done",
+      "board_id": 115,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3914439564,
@@ -2021,8 +2023,9 @@
       "updated_at": "2026-02-09T04:54:54Z",
       "comments": 0,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 116
+      "thegent_status": "done",
+      "board_id": 116,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3914395945,
@@ -2072,8 +2075,9 @@
       "updated_at": "2026-02-09T08:11:19Z",
       "comments": 2,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 119
+      "thegent_status": "done",
+      "board_id": 119,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3912940422,
@@ -2106,8 +2110,9 @@
       "updated_at": "2026-02-08T17:47:58Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 121
+      "thegent_status": "done",
+      "board_id": 121,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3912084036,
@@ -2345,8 +2350,9 @@
       "updated_at": "2026-02-06T22:43:17Z",
       "comments": 4,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 135
+      "thegent_status": "done",
+      "board_id": 135,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3906924084,
@@ -2362,8 +2368,9 @@
       "updated_at": "2026-02-06T14:05:13Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 136
+      "thegent_status": "done",
+      "board_id": 136,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3906441873,
@@ -2379,8 +2386,9 @@
       "updated_at": "2026-02-06T13:26:11Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 137
+      "thegent_status": "done",
+      "board_id": 137,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3905359381,
@@ -2396,8 +2404,9 @@
       "updated_at": "2026-02-06T08:31:08Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 138
+      "thegent_status": "done",
+      "board_id": 138,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3905354766,
@@ -2515,8 +2524,9 @@
       "updated_at": "2026-02-06T08:40:00Z",
       "comments": 14,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 145
+      "thegent_status": "done",
+      "board_id": 145,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3903367934,
@@ -2532,8 +2542,9 @@
       "updated_at": "2026-02-05T22:29:30Z",
       "comments": 2,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 146
+      "thegent_status": "done",
+      "board_id": 146,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3903285480,
@@ -2549,8 +2560,9 @@
       "updated_at": "2026-02-05T21:08:22Z",
       "comments": 3,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 147
+      "thegent_status": "done",
+      "board_id": 147,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3902876617,
@@ -2566,8 +2578,9 @@
       "updated_at": "2026-02-05T19:29:14Z",
       "comments": 1,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 148
+      "thegent_status": "done",
+      "board_id": 148,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3902466130,
@@ -2583,8 +2596,9 @@
       "updated_at": "2026-02-07T01:56:06Z",
       "comments": 0,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 149
+      "thegent_status": "done",
+      "board_id": 149,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3901974997,
@@ -2617,8 +2631,9 @@
       "updated_at": "2026-02-10T07:22:11Z",
       "comments": 5,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 151
+      "thegent_status": "done",
+      "board_id": 151,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3900254601,
