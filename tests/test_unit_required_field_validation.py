@@ -19,4 +19,3 @@ def test_validate_required_fields_passes_when_all_present():
 def test_validate_required_fields_raises_for_missing_fields():
     with pytest.raises(ValueError, match="missing required fields: f2"):
         validate_required_fields(required_fields={"f1", "f2"}, available_fields={"f1"})
-

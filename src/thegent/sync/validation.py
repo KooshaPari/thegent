@@ -11,4 +11,3 @@ def validate_required_fields(*, required_fields: set[str], available_fields: set
     if not missing:
         return
     raise ValueError(f"missing required fields: {', '.join(missing)}")
-

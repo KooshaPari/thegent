@@ -1,5 +1,6 @@
 ### [WL-4600] linux_virtual_desktop line 65 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -8,7 +9,8 @@
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4601] linux_virtual_desktop line 78 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -17,7 +19,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4602] linux_virtual_desktop line 91 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -26,7 +29,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4603] linux_virtual_desktop line 103 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -35,7 +39,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4604] linux_virtual_desktop line 115 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -44,7 +49,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4605] linux_virtual_desktop line 127 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -53,7 +59,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4606] linux_virtual_desktop line 195 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -62,7 +69,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4607] linux_virtual_desktop line 250 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -71,7 +79,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4608] linux_virtual_desktop line 313 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -80,7 +89,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4609] linux_virtual_desktop line 362 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -89,7 +99,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4610] linux_virtual_desktop line 403 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -98,7 +109,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4611] macos_virtual_desktop line 60 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -107,7 +119,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4612] macos_virtual_desktop line 135 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -116,7 +129,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4613] macos_virtual_desktop line 167 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -125,7 +139,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4614] macos_virtual_desktop line 186 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -134,7 +149,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4615] macos_virtual_desktop line 187 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -143,7 +159,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4616] macos_virtual_desktop line 215 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -152,7 +169,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4617] macos_virtual_desktop line 216 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -161,7 +179,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4618] macos_virtual_desktop line 235 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -170,7 +189,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4619] macos_virtual_desktop line 236 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S

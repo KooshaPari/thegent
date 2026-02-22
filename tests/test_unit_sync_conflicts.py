@@ -46,4 +46,3 @@ def test_render_conflict_surface_only_shows_unresolved():
     assert len(lines) == 1
     assert "c1" in lines[0]
     assert "action=manual_review" in lines[0]
-

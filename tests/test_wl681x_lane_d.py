@@ -303,7 +303,7 @@ def test_wl6819_tier2_bwrap_has_worktree_bind_and_no_root_bind(tmp_path: Path, m
     args = provider.wrap_command(["echo", "hi"], tier=2)
     assert "--bind" in args
     assert str(worktree) in args
-    assert ["--ro-bind", "/", "/"] != args[0:3]
+    assert args[0:3] != ["--ro-bind", "/", "/"]
 
     tier1 = provider.wrap_command(["echo", "hi"], tier=1)
     assert "--ro-bind" in tier1

@@ -97,19 +97,34 @@ def _ensure_labels(repo: str, dry_run: bool) -> None:
     labels = {"sync-system": "0052CC", "agent-workflow": "5319E7"}
     existing = {
         row.get("name")
-        for row in _run_json(["gh", "label", "list", "--repo", repo, "--limit", "200", "--json", "name"], dry_run=dry_run)
+        for row in _run_json(
+            ["gh", "label", "list", "--repo", repo, "--limit", "200", "--json", "name"], dry_run=dry_run
+        )
     }
     for label, color in labels.items():
         if label in existing:
             continue
         _run(
-            ["gh", "label", "create", label, "--repo", repo, "--color", color, "--description", "Sync workflow execution track"],
+            [
+                "gh",
+                "label",
+                "create",
+                label,
+                "--repo",
+                repo,
+                "--color",
+                color,
+                "--description",
+                "Sync workflow execution track",
+            ],
             dry_run=dry_run,
         )
 
 
 def _ensure_project(owner: str, title: str, dry_run: bool) -> int:
-    projects = _run_json(["gh", "project", "list", "--owner", owner, "--limit", "200", "--format", "json"], dry_run=dry_run)
+    projects = _run_json(
+        ["gh", "project", "list", "--owner", owner, "--limit", "200", "--format", "json"], dry_run=dry_run
+    )
     for project in projects:
         if project.get("title") == title:
             number = int(project["number"])
@@ -120,7 +135,9 @@ def _ensure_project(owner: str, title: str, dry_run: bool) -> int:
         _run(["gh", "project", "create", "--owner", owner, "--title", title], dry_run=True)
         return 0
     try:
-        output = _run(["gh", "project", "create", "--owner", owner, "--title", title, "--format", "json"], dry_run=False)
+        output = _run(
+            ["gh", "project", "create", "--owner", owner, "--title", title, "--format", "json"], dry_run=False
+        )
         data = json.loads(output)
         number = int(data["number"])
         print(f"Created project #{number}: {title}")
@@ -224,7 +241,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Create/seed sync-system GH issues and project board.")
     parser.add_argument("--owner", required=True, help="GitHub owner or org (e.g. KooshaPari)")
     parser.add_argument("--repo", required=True, help="Repository slug (e.g. KooshaPari/thegent)")
-    parser.add_argument("--project-title", default="thegent Sync System Deep Integration", help="Project title to create/reuse")
+    parser.add_argument(
+        "--project-title", default="thegent Sync System Deep Integration", help="Project title to create/reuse"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print commands without writing")
     args = parser.parse_args()
 

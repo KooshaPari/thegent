@@ -27,4 +27,3 @@ def test_assert_writes_allowed_raises_when_frozen(tmp_path):
     controller.freeze(reason="incident", actor="lane7")
     with pytest.raises(RuntimeError, match="sync writes frozen"):
         controller.assert_writes_allowed()
-

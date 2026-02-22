@@ -16,7 +16,6 @@ _SUGGESTIONS = {
 }
 
 
-
 def suggest_remediation(failure_code: str) -> str:
     """Return deterministic remediation guidance for known sync failures."""
     if not failure_code or not failure_code.strip():

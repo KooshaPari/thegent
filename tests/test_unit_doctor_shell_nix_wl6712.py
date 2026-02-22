@@ -76,4 +76,4 @@ def test_check_nix_success_reports_ok(monkeypatch: pytest.MonkeyPatch, tmp_path:
 
     nix = results[0]
     assert nix.status == "ok"
-    assert "Found Nix: nix (Nix) 2.23.1" == nix.message
+    assert nix.message == "Found Nix: nix (Nix) 2.23.1"

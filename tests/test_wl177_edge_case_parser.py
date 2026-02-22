@@ -164,7 +164,7 @@ class TestEdgeCaseParser:
     def test_parse_many_with_failures(self) -> None:
         """Test parse_many with some invalid inputs."""
         parser = EdgeCaseParser()
-        inputs = ['{"a": 1}', 'invalid', '{"c": 3}']
+        inputs = ['{"a": 1}', "invalid", '{"c": 3}']
         results = parser.parse_many(inputs)
         assert len(results) == 3
         assert results[0].error is None
@@ -182,7 +182,7 @@ class TestEdgeCaseParser:
     def test_failures_filters_correctly(self) -> None:
         """Test failures method filters out successful parses."""
         parser = EdgeCaseParser()
-        inputs = ['{"a": 1}', 'invalid', '{"c": 3}', 'bad json']
+        inputs = ['{"a": 1}', "invalid", '{"c": 3}', "bad json"]
         results = parser.parse_many(inputs)
         failures = EdgeCaseParser.failures(results)
         assert len(failures) == 2

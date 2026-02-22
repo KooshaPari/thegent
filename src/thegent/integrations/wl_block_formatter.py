@@ -12,7 +12,6 @@ _WL_HEADER = re.compile(r"^### \[(WL-\d+)\] (.+)$")
 _REQUIRED_META = ("Status", "Priority", "Area", "Effort", "Blocked by")
 
 
-
 def normalize_wl_block(block: str) -> str:
     """Normalize a WL markdown block into canonical metadata order."""
     lines = [ln.rstrip() for ln in block.strip().splitlines() if ln.strip()]

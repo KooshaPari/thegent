@@ -65,4 +65,3 @@ def test_journal_read_all_fails_loud_on_invalid_json(tmp_path):
 
     with pytest.raises(ValueError, match="invalid journal line 1"):
         journal.read_all()
-

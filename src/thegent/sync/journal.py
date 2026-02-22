@@ -87,4 +87,3 @@ class LocalDecisionJournal:
 
     def read_replayable(self) -> list[SyncDecisionEntry]:
         return [entry for entry in self.read_all() if entry.replayable]
-

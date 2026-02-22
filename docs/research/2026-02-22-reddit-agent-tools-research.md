@@ -202,4 +202,3 @@ The strongest repeated signal is not a single winner tool. It is process quality
 - instrumentation-first observability
 - selective use of multi-agent parallelism
 - pragmatic cost-tiering between local and premium models
-

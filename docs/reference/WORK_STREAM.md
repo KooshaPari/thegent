@@ -2910,7 +2910,7 @@ Add CI thresholds that fail on autosync latency/throughput regressions.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-276] Artifact Redaction Pipeline
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** security, compliance
 **Effort:** S
@@ -2921,7 +2921,7 @@ Redact sensitive fields from reports/artifacts using policy-driven rules.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-277] Artifact Format Versioning
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** compatibility, artifacts
 **Effort:** S
@@ -2932,7 +2932,7 @@ Add explicit versioning to export/import/report artifact schemas.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-278] Operator Command Aliases
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** cli, ergonomics
 **Effort:** S
@@ -2965,7 +2965,7 @@ Define enterprise rollout checklist for multi-team autosync adoption.
 **Evidence:** `docs/checklists/AUTOSYNC_ENTERPRISE_ROLLOUT_CHECKLIST.md`
 
 ### [WL-242] Immutable Cycle Manifest
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** audit, reproducibility
 **Effort:** S

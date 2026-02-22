@@ -45,4 +45,3 @@ def test_run_checks_includes_autosync_ga_readiness(tmp_path):
     ):
         checks = runner.run_checks()
     assert any(check.name == "autosync_ga_readiness" for check in checks)
-

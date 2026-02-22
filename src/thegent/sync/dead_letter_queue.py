@@ -218,7 +218,9 @@ class RemoteWriteDeadLetterQueue:
             and (board_id is None or entry.board_id == board_id)
         ]
 
-    def candidates_for_replay(self, *, now: datetime, source: str | None = None, board_id: str | None = None) -> list[RemoteWriteDeadLetterRecord]:
+    def candidates_for_replay(
+        self, *, now: datetime, source: str | None = None, board_id: str | None = None
+    ) -> list[RemoteWriteDeadLetterRecord]:
         return sorted(
             [entry for entry in self.pending(source=source, board_id=board_id) if entry.is_due(now=now)],
             key=lambda entry: (entry.next_attempt_at_dt, entry.attempts, entry.entry_id),

@@ -44,7 +44,9 @@ class TestChecks:
     """Tests for check_* helpers."""
 
     def test_check_mojo_records_probe_error(self):
-        with patch("thegent.infra.multi_runtime_diagnostics.run_subprocess_optimized", side_effect=RuntimeError("mojo missing")):
+        with patch(
+            "thegent.infra.multi_runtime_diagnostics.run_subprocess_optimized", side_effect=RuntimeError("mojo missing")
+        ):
             result = check_mojo()
 
         assert result.available is False
@@ -52,7 +54,9 @@ class TestChecks:
         assert "Mojo check failed: mojo missing" in result.issues
 
     def test_check_zig_records_probe_error(self):
-        with patch("thegent.infra.multi_runtime_diagnostics.run_subprocess_optimized", side_effect=RuntimeError("zig missing")):
+        with patch(
+            "thegent.infra.multi_runtime_diagnostics.run_subprocess_optimized", side_effect=RuntimeError("zig missing")
+        ):
             result = check_zig()
 
         assert result.available is False

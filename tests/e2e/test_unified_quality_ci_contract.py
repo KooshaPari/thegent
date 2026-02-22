@@ -30,9 +30,9 @@ def test_ci_workflow_has_quality_unified_job_on_pr_and_schedule() -> None:
 
 def test_ci_workflow_sets_mode_from_event_and_runs_unified_task() -> None:
     text = CI_WORKFLOW.read_text(encoding="utf-8")
-    assert 'export QUALITY_UNIFIED_MODE=nightly' in text
-    assert 'export QUALITY_UNIFIED_MODE=pr' in text
-    assert 'task quality:ci:unified' in text
+    assert "export QUALITY_UNIFIED_MODE=nightly" in text
+    assert "export QUALITY_UNIFIED_MODE=pr" in text
+    assert "task quality:ci:unified" in text
 
 
 def test_ci_workflow_uploads_unified_sarif_feeds() -> None:

@@ -20,7 +20,4 @@ def enforce_max_changes_per_cycle(*, attempted_changes: int, config: SyncEngineC
     if config.max_changes_per_cycle <= 0:
         raise ValueError("max_changes_per_cycle must be positive")
     if attempted_changes > config.max_changes_per_cycle:
-        raise RuntimeError(
-            f"max changes exceeded: attempted={attempted_changes} max={config.max_changes_per_cycle}"
-        )
-
+        raise RuntimeError(f"max changes exceeded: attempted={attempted_changes} max={config.max_changes_per_cycle}")

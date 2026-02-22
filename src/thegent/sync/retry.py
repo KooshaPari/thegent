@@ -26,4 +26,3 @@ def operation_mode(*, write_failures: int, policy: RetryPolicy) -> str:
     if policy.pull_only_on_failure and write_failures > 0:
         return "pull-only"
     return "bidirectional"
-

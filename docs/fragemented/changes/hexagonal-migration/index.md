@@ -5,4 +5,3 @@
 * `proposal.md`
 
 ## Subdirectories
-

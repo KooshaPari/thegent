@@ -44,4 +44,3 @@ def render_conflict_surface(conflicts: list[SyncConflict]) -> list[str]:
             f"field={conflict.field} action={action}"
         )
     return lines
-

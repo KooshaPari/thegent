@@ -23,9 +23,7 @@ class _FakeResponse:
         return self.payload
 
 
-def test_wl179_sync_to_linear_upsert(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_wl179_sync_to_linear_upsert(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """# @trace WL-179"""
     posted_queries: list[str] = []
     posted_inputs: list[dict[str, Any]] = []

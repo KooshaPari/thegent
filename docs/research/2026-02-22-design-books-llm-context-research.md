@@ -105,4 +105,3 @@ Scope: Consolidated from user-provided search intents and Reddit threads.
 5. Refactoring UI
 6. Diátaxis (for doc structure)
 7. Context-Engineering repositories (for LLM-specific practices)
-

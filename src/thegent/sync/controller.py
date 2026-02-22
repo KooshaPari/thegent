@@ -54,4 +54,3 @@ class SyncController:
         if state is None:
             return
         raise RuntimeError(f"sync writes frozen by {state.actor}: {state.reason}")
-

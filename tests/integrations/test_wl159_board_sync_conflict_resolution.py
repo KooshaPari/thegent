@@ -75,7 +75,7 @@ class TestBoardSyncConflictResolution:
                         enabled=True,
                         mode="enforce",
                         board_id="acme:42",
-                    )
+                    ),
                 ),
             )
             mp.setattr(cmd, "_fetch_remote_statuses", _fake_fetch_remote_statuses)
@@ -137,7 +137,7 @@ class TestBoardSyncConflictResolution:
                         enabled=True,
                         mode="enforce",
                         board_id="acme:42",
-                    )
+                    ),
                 ),
             )
             mp.setattr(cmd, "_fetch_remote_statuses", _fake_fetch_remote_statuses)

@@ -1000,6 +1000,7 @@ class WorkstreamAutosyncRunner:
         self._last_cycle_fingerprint: str | None = None
         self._slo_alerts: list[str] = []
         self._last_slo_escalation_signature: str | None = None
+        self._cycle_failure_recorded = False
         self._local_orphan_report: dict[str, Any] = {
             "local_ids": [],
             "mapped_remote_ids": [],
@@ -1515,6 +1516,11 @@ class WorkstreamAutosyncRunner:
         metadata_state: dict[str, Any],
     ) -> dict[str, Any]:
         """Build immutable incident snapshot payload for the current cycle."""
+        snapshot_age_seconds = self._latest_snapshot_age_seconds()
+        snapshot_stale = (
+            snapshot_age_seconds is not None and snapshot_age_seconds > self.config.autosync_stale_snapshot_seconds
+        )
+        slo_alerts = self._evaluate_slo_state()
         policy_hash = hashlib.sha1(
             json.dumps(
                 {
@@ -1529,6 +1535,10 @@ class WorkstreamAutosyncRunner:
         return {
             "captured_at": datetime.now(timezone.utc).isoformat(),
             "items_count": items_count,
+            "snapshot_age_seconds": snapshot_age_seconds,
+            "snapshot_stale": snapshot_stale,
+            "slo_alerts": slo_alerts,
+            "error_budget": self._error_budget.get_stats(),
             "policy_hash": policy_hash,
             "connector_health": [probe.to_dict() for probe in self._last_connector_probe],
             "metadata": metadata_state,
@@ -1543,6 +1553,17 @@ class WorkstreamAutosyncRunner:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(snapshot, sort_keys=True) + "\n")
+
+    def _finalize_incident_snapshot(self, *, items_count: int, metadata_state: dict[str, Any]) -> None:
+        """Persist incident snapshot and act on SLO alerts."""
+        self._latest_incident_snapshot = self._build_incident_snapshot_bundle(
+            items_count=items_count,
+            metadata_state=metadata_state,
+        )
+        self._append_incident_snapshot(self._latest_incident_snapshot)
+        self._slo_alerts = list(self._latest_incident_snapshot.get("slo_alerts", []))
+        for reason in self._slo_alerts:
+            self._maybe_enqueue_escalation(reason)
 
     def _update_next_cycle_interval(self, *, items_count: int) -> None:
         """Compute and set next-cycle interval."""
@@ -1569,6 +1590,7 @@ class WorkstreamAutosyncRunner:
         no_op = False
         no_op_reason: str | None = None
         cycle_items: list[WorkstreamItem] = []
+        self._cycle_failure_recorded = False
         writer_lock_owner: str | None = None
         writer_lock_acquired = False
         cycle_decisions: dict[str, Any] = {
@@ -1629,12 +1651,12 @@ class WorkstreamAutosyncRunner:
                 }
                 self.total_cycles += 1
                 self.last_error = None
+                self._error_budget.record_success()
                 self._update_next_cycle_interval(items_count=0)
-                self._latest_incident_snapshot = self._build_incident_snapshot_bundle(
+                self._finalize_incident_snapshot(
                     items_count=0,
                     metadata_state=self._metadata_state(),
                 )
-                self._append_incident_snapshot(self._latest_incident_snapshot)
                 self._metrics.record_autosync_cycle(
                     items_count=0,
                     ignored_count=len(self._last_ignored_item_ids),
@@ -1706,12 +1728,12 @@ class WorkstreamAutosyncRunner:
                 }
                 self.total_cycles += 1
                 self.last_error = None
+                self._error_budget.record_success()
                 self._update_next_cycle_interval(items_count=len(items))
-                self._latest_incident_snapshot = self._build_incident_snapshot_bundle(
+                self._finalize_incident_snapshot(
                     items_count=len(items),
                     metadata_state=self._metadata_state(),
                 )
-                self._append_incident_snapshot(self._latest_incident_snapshot)
                 self._metrics.record_autosync_cycle(
                     items_count=len(items),
                     ignored_count=len(self._last_ignored_item_ids),
@@ -1815,12 +1837,13 @@ class WorkstreamAutosyncRunner:
             self.total_cycles += 1
             self.last_error = None
             self._last_cycle_fingerprint = cycle_fingerprint
+            if not self._cycle_failure_recorded:
+                self._error_budget.record_success()
             self._update_next_cycle_interval(items_count=len(items))
-            self._latest_incident_snapshot = self._build_incident_snapshot_bundle(
+            self._finalize_incident_snapshot(
                 items_count=len(items),
                 metadata_state=metadata_state,
             )
-            self._append_incident_snapshot(self._latest_incident_snapshot)
             self._metrics.record_autosync_cycle(
                 items_count=len(items),
                 ignored_count=len(self._last_ignored_item_ids),
@@ -1860,12 +1883,14 @@ class WorkstreamAutosyncRunner:
             logger.error("Failed to perform sync cycle: %s", e, exc_info=True)
             self.total_cycles += 1
             self.last_error = str(e)
+            if not self._cycle_failure_recorded:
+                self._error_budget.record_failure()
+                self._cycle_failure_recorded = True
             self._update_next_cycle_interval(items_count=0)
-            self._latest_incident_snapshot = self._build_incident_snapshot_bundle(
+            self._finalize_incident_snapshot(
                 items_count=0,
                 metadata_state=self._metadata_state(),
             )
-            self._append_incident_snapshot(self._latest_incident_snapshot)
             self._metrics.record_autosync_cycle(
                 items_count=0,
                 ignored_count=len(self._last_ignored_item_ids),
@@ -2044,12 +2069,26 @@ class WorkstreamAutosyncRunner:
             op.items_failed = max(0, op.items_processed - op.items_successful)
             op.errors.append(str(e))
             if self.config.standalone_mode:
+                await self._record_failure(
+                    connector="github",
+                    direction="write",
+                    item_id=op.operation_id,
+                    message=str(e),
+                )
                 return
             raise
         except Exception as e:
             logger.error("Unexpected GitHub write sync failure: %s", e, exc_info=True)
             op.items_failed = max(0, op.items_processed - op.items_successful)
             op.errors.append(str(e))
+            if self.config.standalone_mode:
+                await self._record_failure(
+                    connector="github",
+                    direction="write",
+                    item_id=op.operation_id,
+                    message=str(e),
+                )
+                return
             if self.config.standalone_mode:
                 return
             raise
@@ -2073,6 +2112,7 @@ class WorkstreamAutosyncRunner:
 
         try:
             op.items_processed = len(items)
+            local_status_by_id = {item.item_id: item.status.upper() for item in items}
             if self.config.dry_run:
                 logger.info("Dry-run: skip GitHub read reflection (%d items)", len(items))
             else:
@@ -2087,6 +2127,7 @@ class WorkstreamAutosyncRunner:
                 remote_items = result.get("items", [])
                 target_ids = {item.item_id for item in items}
                 status_updates: dict[str, str] = {}
+                close_failures = 0
                 if isinstance(remote_items, list):
                     for remote_item in remote_items:
                         if not isinstance(remote_item, dict):
@@ -2095,6 +2136,18 @@ class WorkstreamAutosyncRunner:
                         remote_status = str(remote_item.get("status") or "").strip().upper()
                         if remote_item_id in target_ids and remote_status:
                             status_updates[remote_item_id] = remote_status
+                            if remote_status == "COMPLETED" and local_status_by_id.get(remote_item_id) != "COMPLETED":
+                                if self.config.github_auto_close_issues:
+                                    issue_refs = extract_github_issue_refs(remote_item)
+                                    if issue_refs:
+                                        close_result = close_or_comment_github_issue_refs(
+                                            issue_refs,
+                                            close_comment=self.config.github_auto_close_comment,
+                                        )
+                                        close_errors = close_result.get("errors", [])
+                                        if close_errors:
+                                            close_failures += len(close_errors)
+                                            op.errors.extend(str(error) for error in close_errors)
 
                 status_updates = self._build_remote_reflection_status_updates(
                     local_items=items,
@@ -2106,10 +2159,17 @@ class WorkstreamAutosyncRunner:
                     if updated_content != content:
                         work_stream_path.write_text(updated_content, encoding="utf-8")
                 op.items_successful = len(status_updates)
+                op.items_failed = max(0, op.items_processed - op.items_successful) + close_failures
                 errors = result.get("errors", [])
                 if isinstance(errors, list):
                     op.errors.extend(str(error) for error in errors)
-            op.items_failed = max(0, op.items_processed - op.items_successful)
+            if self.config.standalone_mode and close_failures:
+                await self._record_failure(
+                    connector="github",
+                    direction="read",
+                    item_id=op.operation_id,
+                    message="github auto-close issue update failed",
+                )
 
             op.completed_at = datetime.now(timezone.utc)
             op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
@@ -2119,11 +2179,25 @@ class WorkstreamAutosyncRunner:
             logger.error("Failed to sync from GitHub: %s", e, exc_info=True)
             op.errors.append(str(e))
             if self.config.standalone_mode:
+                await self._record_failure(
+                    connector="github",
+                    direction="read",
+                    item_id=op.operation_id,
+                    message=str(e),
+                )
+            if self.config.standalone_mode:
                 return
             raise
         except Exception as e:
             logger.error("Unexpected GitHub read sync failure: %s", e, exc_info=True)
             op.errors.append(str(e))
+            if self.config.standalone_mode:
+                await self._record_failure(
+                    connector="github",
+                    direction="read",
+                    item_id=op.operation_id,
+                    message=str(e),
+                )
             if self.config.standalone_mode:
                 return
             raise
@@ -2565,6 +2639,8 @@ class WorkstreamAutosyncRunner:
         digest = hashlib.sha1(f"{connector}:{direction}:{item_id}:{message}".encode()).hexdigest()[:12]
         operation_id = f"{connector}-{direction}-{item_id}-{digest}"
         retry_class = self._classify_retry(message)
+        self._error_budget.record_failure()
+        self._cycle_failure_recorded = True
         self._failure_queue.push(
             operation_id=operation_id,
             connector=connector,
@@ -2852,6 +2928,21 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
     explicit_enabled = os.getenv("THGENT_WORKSTREAM_AUTOSYNC_ENABLED")
     repo_previously_opted_in = parse_bool(os.getenv("THGENT_WORKSTREAM_AUTOSYNC_PREVIOUS_OPT_IN"), default=False)
     migration_phase = os.getenv("THGENT_WORKSTREAM_AUTOSYNC_MIGRATION_PHASE", "phase1-detect").strip().lower()
+    error_budget_max_consecutive_failures = parse_int(
+        os.getenv("THGENT_AUTOSYNC_ERROR_BUDGET_MAX_CONSECUTIVE_FAILURES", "3"),
+        default=3,
+    )
+    error_budget_max_failure_rate = parse_float(
+        os.getenv("THGENT_AUTOSYNC_ERROR_BUDGET_MAX_FAILURE_RATE", "0.5"),
+        default=0.5,
+    )
+    error_budget_escalation_after = parse_int(
+        os.getenv("THGENT_AUTOSYNC_ERROR_BUDGET_ESCALATION_AFTER", "5"), default=5
+    )
+    autosync_stale_snapshot_seconds = parse_int(
+        os.getenv("THGENT_AUTOSYNC_STALE_SNAPSHOT_SECONDS", "3600"),
+        default=3600,
+    )
     enabled = (
         parse_bool(explicit_enabled)
         if explicit_enabled is not None
@@ -2966,4 +3057,8 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
         rate_limit_multiplier=parse_float(os.getenv("THGENT_AUTOSYNC_RATE_LIMIT_MULTIPLIER"), default=2.0),
         standalone_mode=parse_bool(os.getenv("THGENT_AUTOSYNC_STANDALONE_MODE"), default=True),
         shadow_mode=parse_bool(os.getenv("THGENT_WORKSTREAM_AUTOSYNC_SHADOW_MODE")),
+        error_budget_max_consecutive_failures=error_budget_max_consecutive_failures,
+        error_budget_max_failure_rate=error_budget_max_failure_rate,
+        error_budget_escalation_after=error_budget_escalation_after,
+        autosync_stale_snapshot_seconds=autosync_stale_snapshot_seconds,
     )

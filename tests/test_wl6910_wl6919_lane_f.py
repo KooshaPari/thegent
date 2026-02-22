@@ -33,7 +33,9 @@ def _touch(path: Path) -> None:
 
 
 def _bootstrap_shared_mcp(monkeypatch: pytest.MonkeyPatch) -> None:
-    fake_manage = SimpleNamespace(mcp_up=lambda: None, _get_mcp_url=lambda *_args, **_kwargs: "http://127.0.0.1:3847/mcp")
+    fake_manage = SimpleNamespace(
+        mcp_up=lambda: None, _get_mcp_url=lambda *_args, **_kwargs: "http://127.0.0.1:3847/mcp"
+    )
     monkeypatch.setitem(sys.modules, "thegent.mcp.manage", fake_manage)
     monkeypatch.setattr(
         subprocess,
@@ -185,7 +187,9 @@ def test_wl6913_get_thegent_root_installed_package_success(monkeypatch: pytest.M
 
 
 def test_wl6913_get_thegent_root_import_failure_falls_back(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(install_module, "import_module", lambda _name: (_ for _ in ()).throw(ModuleNotFoundError("no pkg")))
+    monkeypatch.setattr(
+        install_module, "import_module", lambda _name: (_ for _ in ()).throw(ModuleNotFoundError("no pkg"))
+    )
 
     root = install_module._get_thegent_root()
 
@@ -205,7 +209,9 @@ def test_wl6914_shared_mcp_stale_lockfile_cleanup_success(monkeypatch: pytest.Mo
     monkeypatch.setattr(shared_mcp_manager.Path, "home", lambda: tmp_path)
     _scope, lockfile = shared_mcp_manager.get_server_scope()
     lockfile.write_text(json.dumps({"pid": 424242, "port": 3847}), encoding="utf-8")
-    monkeypatch.setattr(shared_mcp_manager.os, "kill", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError(ESRCH, "")))
+    monkeypatch.setattr(
+        shared_mcp_manager.os, "kill", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError(ESRCH, ""))
+    )
     _bootstrap_shared_mcp(monkeypatch)
 
     is_new, url = shared_mcp_manager.ensure_shared_mcp_server()
@@ -288,7 +294,10 @@ def test_wl6917_session_tui_missing_meta_sets_diagnostic() -> None:
     ):
         mp.setattr("thegent.ux.session_tui.session_meta_impl", lambda _sid: {"pid": 0, "status": "exited"})
         mp.setattr(SessionTUI, "_get_subagents_for_session", lambda self, _sid: [])
-        mp.setattr("thegent.ux.session_tui._find_session_meta", lambda _settings, _sid: (_ for _ in ()).throw(FileNotFoundError("missing")))
+        mp.setattr(
+            "thegent.ux.session_tui._find_session_meta",
+            lambda _settings, _sid: (_ for _ in ()).throw(FileNotFoundError("missing")),
+        )
         details = tui._get_session_details("sess-missing")
 
     assert details.get("degraded") is True
@@ -303,7 +312,10 @@ def test_wl6917_session_tui_path_error_sets_diagnostic() -> None:
     ):
         mp.setattr("thegent.ux.session_tui.session_meta_impl", lambda _sid: {"pid": 0, "status": "exited"})
         mp.setattr(SessionTUI, "_get_subagents_for_session", lambda self, _sid: [])
-        mp.setattr("thegent.ux.session_tui._find_session_meta", lambda _settings, _sid: (_ for _ in ()).throw(ValueError("bad path")))
+        mp.setattr(
+            "thegent.ux.session_tui._find_session_meta",
+            lambda _settings, _sid: (_ for _ in ()).throw(ValueError("bad path")),
+        )
         details = tui._get_session_details("sess-path")
 
     assert details.get("degraded") is True
@@ -360,7 +372,9 @@ def test_wl6918_get_resource_path_path_detection_error_falls_back(monkeypatch: p
 
     monkeypatch.setattr(resources.Path, "resolve", _boom_resolve)
     monkeypatch.setattr(config_module, "ThegentSettings", lambda: SimpleNamespace(dev=False))
-    monkeypatch.setattr(resources.pkg_resources, "path", lambda *_args, **_kwargs: (_ for _ in ()).throw(FileNotFoundError("no pkg")))
+    monkeypatch.setattr(
+        resources.pkg_resources, "path", lambda *_args, **_kwargs: (_ for _ in ()).throw(FileNotFoundError("no pkg"))
+    )
 
     path = resources.get_resource_path("contracts/dag.json")
 

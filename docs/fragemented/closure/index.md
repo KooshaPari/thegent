@@ -10,4 +10,3 @@
 * `SLO_CERTIFICATION_MATRIX.md`
 
 ## Subdirectories
-

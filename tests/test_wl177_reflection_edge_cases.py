@@ -43,14 +43,7 @@ def test_wl177_linear_status_from_name_only() -> None:
 
 def test_wl177_sync_sla_annotations_updates_and_appends() -> None:
     """# @trace WL-177"""
-    text = (
-        "### [WL-701] Item One\n"
-        "**Status:** BACKLOG\n"
-        "**SLA:** 2h\n"
-        "\n"
-        "### [WL-702] Item Two\n"
-        "**Status:** IN PROGRESS\n"
-    )
+    text = "### [WL-701] Item One\n**Status:** BACKLOG\n**SLA:** 2h\n\n### [WL-702] Item Two\n**Status:** IN PROGRESS\n"
     items = [
         WorkstreamItem(
             item_id="WL-701",

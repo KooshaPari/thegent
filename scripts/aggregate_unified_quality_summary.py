@@ -17,7 +17,7 @@ DEFAULT_COMPONENTS: list[tuple[str, str]] = [
     ("generated_python_json", "artifacts/quality/generated-python-antipatterns.json"),
     ("generated_python_sarif", "artifacts/quality/generated-python-antipatterns.sarif"),
     ("mutation_perf_pilot", "artifacts/quality/mutation-perf-pilot.json"),
-    ("control_plane_readiness", "artifacts/quality/control-plane-readiness.json")
+    ("control_plane_readiness", "artifacts/quality/control-plane-readiness.json"),
 ]
 
 

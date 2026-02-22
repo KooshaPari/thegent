@@ -28,4 +28,3 @@
 * `TEST_COVERAGE_CRITICAL_GAP.md`
 
 ## Subdirectories
-

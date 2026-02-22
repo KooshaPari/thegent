@@ -47,9 +47,7 @@ class LinearSyncIntegrationSuite:
         """Initialize the integration test suite."""
         self._tests: list[tuple[str, Callable[[], bool], str]] = []
 
-    def add_test(
-        self, name: str, test_fn: Callable[[], bool], details: str = ""
-    ) -> None:
+    def add_test(self, name: str, test_fn: Callable[[], bool], details: str = "") -> None:
         """Register a new integration test.
 
         Args:
@@ -70,9 +68,7 @@ class LinearSyncIntegrationSuite:
         for test_name, test_fn, test_details in self._tests:
             try:
                 passed = test_fn()
-                result = LinearSyncTestResult(
-                    test_name=test_name, passed=passed, details=test_details
-                )
+                result = LinearSyncTestResult(test_name=test_name, passed=passed, details=test_details)
             except Exception as e:
                 result = LinearSyncTestResult(
                     test_name=test_name,

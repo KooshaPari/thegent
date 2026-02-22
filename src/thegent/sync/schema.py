@@ -22,4 +22,3 @@ def detect_schema_drift(*, mapped_fields: set[str], remote_fields: set[str]) -> 
     missing = sorted(mapped_fields - remote_fields)
     unexpected = sorted(remote_fields - mapped_fields)
     return SchemaDriftReport(missing_fields=missing, unexpected_fields=unexpected)
-
