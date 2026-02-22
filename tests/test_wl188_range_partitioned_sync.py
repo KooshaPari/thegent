@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.integrations.range_partitioned_sync import RangePartitionedSync, SyncPartition
+from thegent.integrations.range_partitioned_sync import RangePartitionedSync
 
 
 @pytest.mark.requirement("WL-188")
