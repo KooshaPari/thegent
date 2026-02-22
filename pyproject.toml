@@ -45,6 +45,7 @@ dependencies = [
     "tomlkit>=0.13.2",
     "rtoml>=0.12.0",
     "tomli>=2.2.1",
+    "tomli_w>=1.0.0",
     "cachetools>=5.5.2",
     "diskcache>=5.6.3",
     "watchdog>=6.0.0",
@@ -63,6 +64,7 @@ dependencies = [
     "extism>=1.0.2; platform_system == 'Darwin' and platform_machine == 'arm64'",
     "ujson; implementation_name == 'pypy'",
     "orjson; implementation_name == 'cpython'",
+    "Pillow>=10.0.0",
     "structlog>=24.0.0",
 ]
 
@@ -101,7 +103,7 @@ fanta = "thegent.rust_wrappers:fanta"
 antigma = "thegent.rust_wrappers:antigma"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/thegent"]
+packages = ["src/thegent", "src/research_engine"]
 
 [tool.hatch.version]
 source = "vcs"
