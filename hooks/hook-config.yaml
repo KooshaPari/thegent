@@ -113,6 +113,12 @@ hooks:
     timeout: 15
     description: "Run spotlight-exclude once per env (macOS) to reduce mds_stores"
 
+  # Research context injection on SessionStart - opt-in via THGENT_RESEARCH_INJECT_ON_SESSION_START=1
+  session-start-research-inject:
+    scope: all
+    timeout: 30
+    description: "Inject recent research context into agent session for awareness"
+
   # Stop reconcile - always run (coordinates all hooks)
   stop-reconcile:
     scope: all
