@@ -12,13 +12,12 @@ log = structlog.get_logger(__name__)
 
 
 def inject_session_context(
-    store: "ResearchStore", *, topics: list[str], hours: int = 24, limit: int = 10
+    store: "ResearchStore", *, hours: int = 24, limit: int = 10
 ) -> str:
     """Return a markdown snippet of recent research to inject into session context.
 
     Args:
         store: ResearchStore instance to query.
-        topics: List of topic tags to filter (not yet used for filtering).
         hours: Look back this many hours. Defaults to 24.
         limit: Maximum items to return. Defaults to 10.
 
