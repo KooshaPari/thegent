@@ -14,6 +14,9 @@ import Breadcrumb from './components/Breadcrumb.vue'
 import Tooltip from './components/Tooltip.vue'
 import CodeAnnotation from './components/CodeAnnotation.vue'
 import OpenAPI from './components/OpenAPI.vue'
+import DocStatusBadge from './components/DocStatusBadge.vue'
+import AuditTimeline from './components/AuditTimeline.vue'
+import KBGraph from './components/KBGraph.vue'
 import './custom.css'
 
 // Client-side script for tabs behavior
@@ -87,6 +90,9 @@ export default {
     app.component('Tooltip', Tooltip)
     app.component('CodeAnnotation', CodeAnnotation)
     app.component('OpenAPI', OpenAPI)
+    app.component('DocStatusBadge', DocStatusBadge)
+    app.component('AuditTimeline', AuditTimeline)
+    app.component('KBGraph', KBGraph)
   },
   scripts: [
     {
