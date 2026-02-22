@@ -244,12 +244,12 @@ class TestMutationSpikeDetectorCheckAndRecord:
         detector.record(10)
         detector.record(10)
 
-        baseline_before = 10.0
+        _baseline_before = 10.0
         detector.record(50)  # Manually add outlier
         baseline_after = 20.0  # (10 + 10 + 10 + 50) / 4
 
         # Now check_and_record should use updated baseline
-        is_spike, recorded_baseline = detector.check_and_record(30)
+        _is_spike, recorded_baseline = detector.check_and_record(30)
 
         # recorded_baseline should reflect state BEFORE this call
         assert recorded_baseline == baseline_after
