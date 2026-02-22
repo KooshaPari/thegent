@@ -90,9 +90,7 @@ class TestSyncPolicyValidatorValid:
     def test_validate_version_with_semver(self):
         """Validate policy with semantic version."""
         validator = SyncPolicyValidator()
-        policy = SyncPolicyContract(
-            version="1.2.3", allowed_connectors=["stripe"]
-        )
+        policy = SyncPolicyContract(version="1.2.3", allowed_connectors=["stripe"])
 
         errors = validator.validate(policy)
 

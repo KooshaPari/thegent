@@ -84,6 +84,12 @@ def shell_status() -> None:
     console.print(env_table)
 
 
+@shell_app.command("stat")
+def shell_status_alias() -> None:
+    """Alias for shell status."""
+    shell_status()
+
+
 @shell_app.command("profile")
 def shell_profile(
     enable: bool = typer.Option(False, "--enable", help="Enable profiling"),
@@ -119,6 +125,15 @@ def shell_profile(
         console.print("[green]Profiling is enabled.[/green]")
     else:
         console.print("[yellow]Profiling is disabled.[/yellow]")
+
+
+@shell_app.command("prof")
+def shell_profile_alias(
+    enable: bool = typer.Option(False, "--enable", help="Enable profiling"),
+    disable: bool = typer.Option(False, "--disable", help="Disable profiling"),
+) -> None:
+    """Alias for shell profile."""
+    shell_profile(enable=enable, disable=disable)
 
 
 @shell_app.command("clear-cache")
@@ -207,12 +222,21 @@ def shell_doctor(fix: bool = typer.Option(False, "--fix", help="Attempt to fix i
             issues.append("ls is aliased to tree/recursive output")
             if fix:
                 fixes.append("Safeguards should fix this automatically")
-    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError, OSError) as exc:
+    except subprocess.TimeoutExpired as exc:
         reason = _classify_subprocess_probe_error(exc)
-        issues.append(f"Alias probe failed: {reason[:180]}")
-        warnings.append(f"Alias probe skipped: {reason[:180]}")
+        warnings.append(
+            f"Alias probe timed out: {reason}. Check zsh startup time and rerun: thegent shell doctor --fix"
+        )
         if fix:
-            fixes.append("Verify zsh/alias probing and rerun: thegent shell doctor")
+            fixes.append("Increase shell probe timeout or skip alias checks temporarily.")
+    except (FileNotFoundError, subprocess.SubprocessError, OSError) as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        warnings.append(
+            f"Alias probe unavailable ({reason}). Verify zsh is installed and runnable, "
+            "then rerun: thegent shell doctor."
+        )
+        if fix:
+            fixes.append("Install or fix zsh in PATH, then rerun: thegent shell doctor.")
 
     # Check cache directory permissions
     cache_dir = Path.home() / ".cache" / "thegent"
@@ -236,6 +260,12 @@ def shell_doctor(fix: bool = typer.Option(False, "--fix", help="Attempt to fix i
             console.print(f"  • {warning}")
     if not issues and not warnings:
         console.print("[green]✓ No issues found. Shell environment is healthy.[/green]")
+
+
+@shell_app.command("doc")
+def shell_doctor_alias(fix: bool = typer.Option(False, "--fix", help="Attempt to fix issues")) -> None:
+    """Alias for shell doctor."""
+    shell_doctor(fix=fix)
 
 
 @shell_app.command("benchmark")
@@ -527,14 +557,9 @@ def shell_platform() -> None:
         else:
             table.add_row("Zsh Status", f"Execution failed (exit {result.returncode})")
             table.add_row("Zsh Version", "Unknown")
-    except FileNotFoundError:
-        table.add_row("Zsh Status", "Not installed")
-        table.add_row("Zsh Version", "Unknown")
-    except subprocess.TimeoutExpired:
-        table.add_row("Zsh Status", "Probe timed out")
-        table.add_row("Zsh Version", "Unknown")
-    except (subprocess.SubprocessError, OSError) as exc:
-        table.add_row("Zsh Status", f"Probe failed ({type(exc).__name__})")
+    except (FileNotFoundError, subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        table.add_row("Zsh Status", f"Probe failed ({reason})")
         table.add_row("Zsh Version", "Unknown")
 
     console.print(table)

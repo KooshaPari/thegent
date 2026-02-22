@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import re
+
 
 class BoardIdCollisionError(Exception):
     """Exception raised when board ID collisions are detected."""
@@ -59,6 +61,21 @@ class BoardIdRegistry:
     def clear(self) -> None:
         """Clear all registered board IDs."""
         self._registry.clear()
+
+
+_LEGACY_BOARD_ID_PATTERN = re.compile(r"^(?:wl[-_ ]?)?(\d+)$|^board[-_ ]?(\d+)$", re.IGNORECASE)
+
+
+def migrate_legacy_board_id(legacy_id: str) -> str:
+    """Convert legacy board IDs to canonical WL namespace IDs."""
+    token = legacy_id.strip()
+    match = _LEGACY_BOARD_ID_PATTERN.fullmatch(token)
+    if not match:
+        raise ValueError(f"Unsupported legacy board ID: {legacy_id}")
+    numeric_part = match.group(1) or match.group(2)
+    if numeric_part is None:
+        raise ValueError(f"Unable to parse legacy board ID: {legacy_id}")
+    return f"WL-{int(numeric_part)}"
 
 
 def validate_no_collisions(registry: BoardIdRegistry) -> None:

@@ -12,7 +12,14 @@ import pytest
 from thegent.integrations.conflict_queue import (
     ConflictEntry,
     ConflictQueue,
+    classify_conflict,
 )
+
+
+@pytest.fixture
+def queue() -> ConflictQueue:
+    """Provide a ConflictQueue instance."""
+    return ConflictQueue()
 
 
 class TestConflictEntryCreation:
@@ -75,11 +82,6 @@ class TestConflictQueueInit:
 class TestConflictQueueEnqueue:
     """Test ConflictQueue.enqueue operations."""
 
-    @pytest.fixture
-    def queue(self) -> ConflictQueue:
-        """Provide a ConflictQueue instance."""
-        return ConflictQueue()
-
     @pytest.mark.requirement("WL-205")
     def test_enqueue_single_entry(self, queue: ConflictQueue) -> None:
         """enqueue adds entry to queue."""
@@ -98,6 +100,40 @@ class TestConflictQueueEnqueue:
 
         assert queue.size() == 1
         assert len(queue.all_entries()) == 1
+        queued = queue.all_entries()[0]
+        assert queued.category == "content_drift"
+        assert queued.severity == "medium"
+        assert queued.owner_domain == "source-control"
+
+    @pytest.mark.requirement("WL-269")
+    def test_enqueue_assigns_state_conflict_high_severity(self, queue: ConflictQueue) -> None:
+        """enqueue classifies status/priority conflicts as high severity."""
+        now = datetime.now(timezone.utc)
+        entry = ConflictEntry(
+            conflict_id="CONF-STATE",
+            wl_id="WL-401",
+            field="status",
+            local_value="BACKLOG",
+            remote_value="COMPLETED",
+            connector="linear",
+            created_at=now,
+        )
+        queue.enqueue(entry)
+        queued = queue.all_entries()[0]
+        assert queued.category == "state_divergence"
+        assert queued.severity == "high"
+        assert queued.owner_domain == "planning"
+
+
+class TestConflictClassification:
+    """Test conflict triage classifier utility."""
+
+    @pytest.mark.requirement("WL-269")
+    def test_classify_conflict_for_schema_field(self) -> None:
+        category, severity, owner = classify_conflict(field="custom_field", connector="jira", wl_id="WL-300")
+        assert category == "schema_mismatch"
+        assert severity == "low"
+        assert owner == "operations"
 
     @pytest.mark.requirement("WL-205")
     def test_enqueue_multiple_entries(self, queue: ConflictQueue) -> None:

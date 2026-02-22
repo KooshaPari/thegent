@@ -124,7 +124,7 @@ class TestDeadLetterQueueEnqueue:
         for i in range(3):
             entry = DeadLetterEntry(
                 entry_id=f"DLQ-{i}",
-                wl_id=f"WL-{100+i}",
+                wl_id=f"WL-{100 + i}",
                 connector="linear",
                 operation="sync_field",
                 payload={"field": f"value_{i}"},
@@ -202,40 +202,46 @@ class TestDeadLetterQueuePending:
         now = datetime.now(timezone.utc)
 
         # Entry with 0 retries (pending)
-        queue.enqueue(DeadLetterEntry(
-            entry_id="DLQ-pending-1",
-            wl_id="WL-1",
-            connector="github",
-            operation="write_item",
-            payload={},
-            error="Error",
-            created_at=now,
-            retry_count=0,
-        ))
+        queue.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-pending-1",
+                wl_id="WL-1",
+                connector="github",
+                operation="write_item",
+                payload={},
+                error="Error",
+                created_at=now,
+                retry_count=0,
+            )
+        )
 
         # Entry with 2 retries (pending)
-        queue.enqueue(DeadLetterEntry(
-            entry_id="DLQ-pending-2",
-            wl_id="WL-2",
-            connector="github",
-            operation="write_item",
-            payload={},
-            error="Error",
-            created_at=now,
-            retry_count=2,
-        ))
+        queue.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-pending-2",
+                wl_id="WL-2",
+                connector="github",
+                operation="write_item",
+                payload={},
+                error="Error",
+                created_at=now,
+                retry_count=2,
+            )
+        )
 
         # Entry with 3 retries (resolved)
-        queue.enqueue(DeadLetterEntry(
-            entry_id="DLQ-resolved-1",
-            wl_id="WL-3",
-            connector="linear",
-            operation="write_item",
-            payload={},
-            error="Error",
-            created_at=now,
-            retry_count=3,
-        ))
+        queue.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-resolved-1",
+                wl_id="WL-3",
+                connector="linear",
+                operation="write_item",
+                payload={},
+                error="Error",
+                created_at=now,
+                retry_count=3,
+            )
+        )
 
         yield queue, store_path
         tmpdir.cleanup()
@@ -267,16 +273,18 @@ class TestDeadLetterQueueMarkRetried:
         queue = DeadLetterQueue(store_path)
 
         now = datetime.now(timezone.utc)
-        queue.enqueue(DeadLetterEntry(
-            entry_id="DLQ-test",
-            wl_id="WL-1",
-            connector="github",
-            operation="write_item",
-            payload={},
-            error="Error",
-            created_at=now,
-            retry_count=0,
-        ))
+        queue.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-test",
+                wl_id="WL-1",
+                connector="github",
+                operation="write_item",
+                payload={},
+                error="Error",
+                created_at=now,
+                retry_count=0,
+            )
+        )
 
         yield queue, store_path
         tmpdir.cleanup()
@@ -321,39 +329,45 @@ class TestDeadLetterQueuePurgeResolved:
         now = datetime.now(timezone.utc)
 
         # Pending
-        queue.enqueue(DeadLetterEntry(
-            entry_id="DLQ-p1",
-            wl_id="WL-1",
-            connector="github",
-            operation="write_item",
-            payload={},
-            error="Error",
-            created_at=now,
-            retry_count=0,
-        ))
+        queue.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-p1",
+                wl_id="WL-1",
+                connector="github",
+                operation="write_item",
+                payload={},
+                error="Error",
+                created_at=now,
+                retry_count=0,
+            )
+        )
 
         # Resolved (retry_count >= max_retries)
-        queue.enqueue(DeadLetterEntry(
-            entry_id="DLQ-r1",
-            wl_id="WL-2",
-            connector="github",
-            operation="write_item",
-            payload={},
-            error="Error",
-            created_at=now,
-            retry_count=2,
-        ))
+        queue.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-r1",
+                wl_id="WL-2",
+                connector="github",
+                operation="write_item",
+                payload={},
+                error="Error",
+                created_at=now,
+                retry_count=2,
+            )
+        )
 
-        queue.enqueue(DeadLetterEntry(
-            entry_id="DLQ-r2",
-            wl_id="WL-3",
-            connector="linear",
-            operation="write_item",
-            payload={},
-            error="Error",
-            created_at=now,
-            retry_count=3,
-        ))
+        queue.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-r2",
+                wl_id="WL-3",
+                connector="linear",
+                operation="write_item",
+                payload={},
+                error="Error",
+                created_at=now,
+                retry_count=3,
+            )
+        )
 
         yield queue, store_path
         tmpdir.cleanup()

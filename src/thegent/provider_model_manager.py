@@ -471,8 +471,56 @@ def validate_provider(name: str) -> tuple[bool, str, dict[str, Any]]:
             f"HTTP {resp.status_code}: {resp.text[:100]}",
             {"has_credentials": True, "status_code": resp.status_code},
         )
-    except Exception as e:
-        return False, str(e), {"has_credentials": True, "error": True}
+    except httpx.TimeoutException as exc:
+        _LOG.warning(
+            "provider_probe_failed",
+            extra={"provider": name, "failure_type": "timeout", "failure_detail": str(exc)},
+        )
+        return (
+            False,
+            f"Provider probe timed out: {exc}",
+            {"has_credentials": True, "error": True, "failure_type": "timeout", "error_message": str(exc)},
+        )
+    except httpx.ConnectError as exc:
+        _LOG.warning(
+            "provider_probe_failed",
+            extra={"provider": name, "failure_type": "connect_error", "failure_detail": str(exc)},
+        )
+        return (
+            False,
+            f"Provider probe failed to connect: {exc}",
+            {
+                "has_credentials": True,
+                "error": True,
+                "failure_type": "connect_error",
+                "error_message": str(exc),
+            },
+        )
+    except httpx.NetworkError as exc:
+        _LOG.warning(
+            "provider_probe_failed",
+            extra={"provider": name, "failure_type": "network_error", "failure_detail": str(exc)},
+        )
+        return (
+            False,
+            f"Provider probe network error: {exc}",
+            {
+                "has_credentials": True,
+                "error": True,
+                "failure_type": "network_error",
+                "error_message": str(exc),
+            },
+        )
+    except httpx.HTTPError as exc:
+        _LOG.warning(
+            "provider_probe_failed",
+            extra={"provider": name, "failure_type": "http_error", "failure_detail": str(exc)},
+        )
+        return (
+            False,
+            f"Provider probe failed: {exc}",
+            {"has_credentials": True, "error": True, "failure_type": "http_error", "error_message": str(exc)},
+        )
 
 
 # ============ DISCOVERY ============
@@ -586,6 +634,18 @@ def discover_models(
     except httpx.TimeoutException as exc:
         status.update({"status": "error", "failure_type": "timeout", "error_message": str(exc)})
         _LOG.warning("cliproxy_model_discovery_timeout", extra={"failure_detail": str(exc), **warning_extra})
+    except httpx.ConnectError as exc:
+        status.update({"status": "error", "failure_type": "connect_error", "error_message": str(exc)})
+        _LOG.warning(
+            "cliproxy_model_discovery_connect_error",
+            extra={"failure_detail": str(exc), **warning_extra},
+        )
+    except httpx.NetworkError as exc:
+        status.update({"status": "error", "failure_type": "network_error", "error_message": str(exc)})
+        _LOG.warning(
+            "cliproxy_model_discovery_network_error",
+            extra={"failure_detail": str(exc), **warning_extra},
+        )
     except httpx.HTTPError as exc:
         status.update({"status": "error", "failure_type": "http_error", "error_message": str(exc)})
         _LOG.warning("cliproxy_model_discovery_http_error", extra={"failure_detail": str(exc), **warning_extra})

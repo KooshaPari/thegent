@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from datetime import datetime, timezone
+from typing import Any
 
 from research_engine.store import ResearchStore
 
@@ -57,3 +59,25 @@ class DigestGenerator:
             lines.append("")
 
         return "\n".join(lines)
+
+
+def build_hourly_change_digest(events: list[dict[str, Any]]) -> dict[str, Any]:
+    """Build an hourly digest grouped by connector, action, and outcome."""
+    buckets: dict[str, dict[str, dict[str, int]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    for event in events:
+        timestamp = str(event.get("timestamp", "")).strip()
+        connector = str(event.get("connector", "unknown")).strip() or "unknown"
+        action = str(event.get("action", "unknown")).strip() or "unknown"
+        outcome = str(event.get("outcome", "unknown")).strip() or "unknown"
+        if not timestamp:
+            raise ValueError("each event must include a timestamp")
+        hour_bucket = datetime.fromisoformat(timestamp.replace("Z", "+00:00")).strftime("%Y-%m-%dT%H:00:00Z")
+        buckets[hour_bucket][connector][f"{action}:{outcome}"] += 1
+
+    normalized: dict[str, Any] = {}
+    for hour in sorted(buckets):
+        normalized[hour] = {}
+        for connector in sorted(buckets[hour]):
+            normalized[hour][connector] = dict(sorted(buckets[hour][connector].items()))
+
+    return {"bucket": "hourly", "hours": normalized}

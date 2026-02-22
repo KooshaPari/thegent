@@ -14,21 +14,27 @@ const algoliaAppId = process.env.VITEPRESS_ALGOLIA_APP_ID
 const algoliaApiKey = process.env.VITEPRESS_ALGOLIA_API_KEY
 const algoliaIndexName = process.env.VITEPRESS_ALGOLIA_INDEX_NAME
 const hasAlgolia = Boolean(algoliaAppId && algoliaApiKey && algoliaIndexName)
+const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'thegent'
+const isCi = process.env.GITHUB_ACTIONS === 'true'
 
 const config = defineConfig({
   title: 'thegent',
   description: 'AI Agent Governance & MCP Server',
-  base: '/thegent/',
+  base: isCi ? `/${repoName}/` : '/',
   appearance: true,
   lastUpdated: true,
 
   // Exclude problematic directories from the build
   srcExclude: [
     'docset/**',
+    'fragemented/**',
     'plans/**',
     'research/**',
+    'reports/**',
     'reference/api/**',
+    'reference/WORK_STREAM.md',
     'context/**',
+    'contracts/TEST_HEALTH_DASHBOARD.md',
   ],
 
   // Disable dead link check (links are external or cross-project)
@@ -55,7 +61,6 @@ const config = defineConfig({
       }) as any
     ],
     build: {
-      outDir: './dist',
       assetsDir: 'assets',
       rollupOptions: {
         output: {
@@ -147,7 +152,7 @@ const config = defineConfig({
             indexName: algoliaIndexName as string,
           },
         }
-      : { provider: 'local' },
+      : undefined,
     outline: 'deep',
 
     editLink: {

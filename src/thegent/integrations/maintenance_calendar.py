@@ -23,6 +23,7 @@ class MaintenanceWindow:
     start: datetime
     end: datetime
     reason: str
+    project: str = "default"
 
 
 class MaintenanceCalendar:
@@ -55,6 +56,20 @@ class MaintenanceCalendar:
             at = datetime.now(timezone.utc)
 
         return any(window.connector == connector and window.start <= at <= window.end for window in self._windows)
+
+    def is_project_in_blackout(self, project: str, connector: str, at: datetime | None = None) -> bool:
+        """Check if a project-scoped blackout window is active."""
+        if at is None:
+            at = datetime.now(timezone.utc)
+
+        project_key = project.strip().lower()
+        connector_key = connector.strip().lower()
+        return any(
+            window.project.strip().lower() == project_key
+            and window.connector.strip().lower() == connector_key
+            and window.start <= at <= window.end
+            for window in self._windows
+        )
 
     def upcoming_windows(self, connector: str, after: datetime | None = None) -> list[MaintenanceWindow]:
         """Get upcoming maintenance windows for a connector.
@@ -99,8 +114,16 @@ class MaintenanceCalendar:
                 start=start,
                 end=end,
                 reason=item["reason"],
+                project=str(item.get("project", "default")),
             )
             self.add_window(window)
+
+    def load_project_blackout_config(self, project: str, config: list[dict]) -> None:
+        """Load project-scoped blackout windows."""
+        for item in config:
+            item_with_project = dict(item)
+            item_with_project["project"] = project
+            self.load_from_config([item_with_project])
 
     def list_connectors(self) -> list[str]:
         """Get a sorted list of all connectors with maintenance windows.
@@ -110,3 +133,9 @@ class MaintenanceCalendar:
         """
         connectors = {window.connector for window in self._windows}
         return sorted(connectors)
+
+
+def format_maintenance_banner(*, connector: str, reason: str, project: str = "default") -> str:
+    """Render a deterministic maintenance banner string."""
+    normalized_reason = reason.strip() or "scheduled maintenance"
+    return f"[MAINTENANCE] project={project} connector={connector} reason={normalized_reason}"

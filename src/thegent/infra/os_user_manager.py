@@ -50,7 +50,7 @@ class OSUserManager:
             elif self.os_type == "windows":
                 self._create_windows_user(username, home_base)
             else:
-                raise NotImplementedError(f"OS User creation not supported on {self.os_type}")
+                raise RuntimeError(f"OS User creation not supported on {self.os_type}")
 
             return self._get_user_info(username)
         except Exception as e:

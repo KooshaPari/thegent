@@ -1,0 +1,16 @@
+# Docsets
+
+Purpose-built documentation sets for different technical audiences.
+
+## Developer
+
+- [Internal Developer Docset](./developer/internal/)
+- [External Developer Docset](./developer/external/)
+
+## User
+
+- [Technical User Docset](./user/)
+
+## Agent
+
+- [Agent Operator Docset](./agent/)

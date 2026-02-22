@@ -1,5 +1,6 @@
 ### [WL-4200] mojo_bridge line 531 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/test_unit_mojo_bridge.py tests/test_integration_multi_runtime.py -k "not dead_worker and not heartbeat_tracking and not platform_timeout_adjustment"`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -8,7 +9,8 @@
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4201] multi_runtime_bridge line 140 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/test_unit_mojo_bridge.py tests/test_integration_multi_runtime.py -k "not dead_worker and not heartbeat_tracking and not platform_timeout_adjustment"`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -17,7 +19,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4202] multi_runtime_bridge line 144 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/test_unit_mojo_bridge.py tests/test_integration_multi_runtime.py -k "not dead_worker and not heartbeat_tracking and not platform_timeout_adjustment"`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -26,7 +29,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4203] multi_runtime_diagnostics line 33 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_multi_runtime_diagnostics.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -35,7 +39,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4204] multi_runtime_diagnostics line 70 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_multi_runtime_diagnostics.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -44,7 +49,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4205] multi_runtime_diagnostics line 112 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_multi_runtime_diagnostics.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -53,7 +59,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4206] multi_runtime_diagnostics line 154 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_multi_runtime_diagnostics.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -62,7 +69,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4207] multi_runtime_diagnostics line 251 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_multi_runtime_diagnostics.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -71,7 +79,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4208] multi_runtime_diagnostics line 275 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_multi_runtime_diagnostics.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -80,7 +89,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4209] multi_runtime_diagnostics line 307 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_multi_runtime_diagnostics.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -89,7 +99,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4210] multi_runtime_diagnostics line 331 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_multi_runtime_diagnostics.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -98,7 +109,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4211] os_user_adapter line 60 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_os_user_adapter.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -107,7 +119,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4212] os_user_adapter line 96 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_os_user_adapter.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -116,7 +129,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4213] os_user_manager line 53 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_os_user_manager.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -125,7 +139,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4214] process_registry line 113 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
+**Evidence:** `uv run pytest -p no:tach -p no:xdist -p no:pytest_asyncio -q tests/infra/test_process_registry.py`
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S

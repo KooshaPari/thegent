@@ -211,6 +211,10 @@ def spawn_next_impl(
                         err["governance_blocked"] = True
                         err["remediation"] = claim_result.get("remediation")
                         err["governance_block"] = claim_result.get("governance_block")
+                    if claim_result.get("dependency_blocked"):
+                        err["dependency_blocked"] = True
+                        err["blocked_by"] = claim_result.get("blocked_by", [])
+                        err["remediation"] = claim_result.get("remediation")
                     errors.append(err)
                     continue
             except Exception as e:

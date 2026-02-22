@@ -7,12 +7,15 @@ See docs/governance/COST_GOVERNANCE_DESIGN.md.
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Default $ per MTok (combined I/O, optimized for Pareto routing)
 # Standardized to price per 1 Million tokens
@@ -58,8 +61,8 @@ class CostEstimator:
                 metadata = get_model_metadata(model)
                 if metadata and "cost_per_mtok" in metadata:
                     price_per_m = metadata["cost_per_mtok"]
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("Failed to read model metadata for pricing (%s): %s", model, exc)
 
         # Fallback to local pricing table
         if price_per_m is None and model and model in self.pricing_mtok:
@@ -112,8 +115,8 @@ class CostAggregator:
                                     continue
                     except Exception:
                         continue
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Failed to read monthly total from %s: %s", registry_path, exc)
         return total
 
     def get_mtd_total(self) -> float:
@@ -138,8 +141,8 @@ class CostAggregator:
                                 total += float(data["cost_usd"])
                     except Exception:
                         continue
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Failed to read category monthly total from %s: %s", registry_path, exc)
         return total
 
     def get_category_mtd_total(self, category: str) -> float:
@@ -175,8 +178,8 @@ class CostAggregator:
                                 total += float(data["cost_usd"])
                     except Exception:
                         continue
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Failed to read category monthly total from %s: %s", registry_path, exc)
         return total
 
     def get_all_categories_mtd(self) -> dict[str, float]:

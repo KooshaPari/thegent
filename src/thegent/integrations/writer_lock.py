@@ -14,6 +14,7 @@ is suitable for single-machine, single-repository environments.
 
 import json
 import logging
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -81,11 +82,9 @@ class SingleWriterLock:
         Raises:
             WriterLockAcquisitionError: If the lock file cannot be created.
         """
-        # If lock already exists and owned by someone else, return False
-        if self.is_locked() and self.get_owner() != owner_id:
-            return False
+        if self.is_locked():
+            return self.get_owner() == owner_id
 
-        # Create parent directory if needed
         self.lock_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
@@ -93,12 +92,14 @@ class SingleWriterLock:
                 "owner": owner_id,
                 "acquired_at": datetime.now(timezone.utc).isoformat(),
             }
-            self.lock_path.write_text(
-                json.dumps(lock_data, indent=2),
-                encoding="utf-8",
-            )
+            flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+            fd = os.open(self.lock_path, flags, 0o644)
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(json.dumps(lock_data, indent=2))
             logger.debug("Lock acquired by %s at %s", owner_id, self.lock_path)
             return True
+        except FileExistsError:
+            return self.get_owner() == owner_id
         except Exception as e:
             logger.error("Failed to acquire lock: %s", e)
             raise WriterLockAcquisitionError(f"Failed to acquire lock: {e}") from e

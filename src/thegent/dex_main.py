@@ -45,8 +45,8 @@ def _is_thegent_shim(path: str) -> bool:
     try:
         if p.is_symlink() and "thegent-shims" in str(p.readlink()):
             return True
-    except OSError:
-        pass
+    except OSError as exc:
+        raise RuntimeError(f"Failed to inspect codex symlink at {p}") from exc
     return False
 
 

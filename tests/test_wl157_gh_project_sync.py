@@ -243,6 +243,7 @@ class TestSyncToGithub:
             standalone_mode=True,
         )
         workstream = [{"id": "WL-001", "title": "Task"}]
+        mock_run.return_value = (0, json.dumps({"id": "item-1"}), "")
         result = sync_to_github(config, workstream)
         # Should not raise and should return result
         assert "items_created" in result or "items_synced" in result
@@ -425,10 +426,56 @@ class TestImportFromCsv:
         with tempfile.TemporaryDirectory() as tmpdir:
             csv_path = Path(tmpdir) / "import.csv"
             csv_path.write_text("id,title\n1,Task\n")
+            _mock_run.return_value = (0, json.dumps({"id": "item-1"}), "")
             result = import_from_csv(config, csv_path)
 
             # Should not raise; may have zero items or some items
             assert "items_imported" in result
+
+    @patch("thegent.integrations.gh_project_sync._run_gh_command")
+    def test_sync_to_github_updates_priority_and_status_fields(self, mock_run):
+        """WL-162: status and priority must be pushed to project fields."""
+        config = GHProjectConfig(
+            enabled=True,
+            owner="kooshapari",
+            number=1,
+            direction="write_only",
+            standalone_mode=True,
+        )
+        workstream = [{"item_id": "WL-162", "title": "Parity", "status": "IN PROGRESS", "priority": "P1"}]
+
+        def side_effect(args, capture=True):
+            _ = capture
+            if args[:3] == ["project", "view", "1"]:
+                return (0, json.dumps({"id": "PVT_123"}), "")
+            if args[:3] == ["project", "item-list", "1"]:
+                return (0, "[]", "")
+            if args[:3] == ["project", "field-list", "1"]:
+                payload = [
+                    {"id": "F_STATUS", "name": "Status", "options": [{"id": "OPT_IN_PROGRESS", "name": "In Progress"}]},
+                    {"id": "F_PRIORITY", "name": "Priority", "options": [{"id": "OPT_HIGH", "name": "High"}]},
+                ]
+                return (0, json.dumps(payload), "")
+            if args[:3] == ["project", "item-create", "1"]:
+                return (0, json.dumps({"id": "ITEM_1"}), "")
+            if args[:3] == ["project", "item-edit", "--id"]:
+                return (0, "", "")
+            raise AssertionError(f"Unexpected gh call: {args}")
+
+        mock_run.side_effect = side_effect
+        result = sync_to_github(config, workstream)
+
+        assert result["items_synced"] == 1
+        field_edit_calls = [
+            call.args[0]
+            for call in mock_run.call_args_list
+            if call.args
+            and isinstance(call.args[0], list)
+            and call.args[0][:3] == ["project", "item-edit", "--id"]
+            and "--field-id" in call.args[0]
+        ]
+        assert any("F_STATUS" in call for call in field_edit_calls)
+        assert any("F_PRIORITY" in call for call in field_edit_calls)
 
     @patch("thegent.integrations.gh_project_sync._run_gh_command")
     def test_disabled_config_returns_early(self, mock_run, disabled_config):

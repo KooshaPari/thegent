@@ -1,0 +1,63 @@
+# Conversation Dump — 2026-02-18
+
+**Purpose:** Persist research, plans, and decisions from agent conversations.
+**Source:** Cursor/Claude conversation
+**Date:** 2026-02-18
+
+---
+
+## 1. Plan Loop + Manual Work (Session)
+
+### User Request
+- Use thegent for initial task to complete all work packages
+- Run `thegent plan loop` to process backlog
+- Work manually while monitoring
+
+### Actions Taken
+1. **Started plan loop**: `thegent plan loop` — runs continuously, gets next item from do-next, spawns `thegent free` in background, repeats
+2. **Monitoring**: Plan loop spawned many sessions for `vitepress-api-docs-generator` (same item repeatedly)
+3. **Manual work**: Reviewed WORK_STREAM, checked next items; verified docgen-sticky-nav and docgen-edit-links already implemented in VitePress config
+
+### Observations
+- **Plan loop behavior**: Loop keeps spawning vitepress-api-docs-generator — item may be failing or not completing, causing re-pick
+- **Already complete**: docgen-sticky-nav (Layout.vue has sticky VPNav + VPSidebar), docgen-edit-links (editLink in config.ts)
+- **research-library-http**: urllib→httpx migration marked complete in LIBRARY_REPLACEMENT_PHASE_DWBS; src has no urllib (tests still patch it)
+
+### Fix Applied (2026-02-18)
+**Root cause**: `do_next_impl` excluded only CLAIMED items, not COMPLETED. Items in COMPLETED were still returned, causing the plan loop to re-spawn the same item.
+
+**Fix**: Added `if item_id in completed: continue` in `do_next_impl` (cli_impl.py). Now do-next correctly skips both claimed and completed items.
+
+**Result**: Plan loop will now progress through the backlog (docgen-api-python-enhanced, impl-agent-crew-maximal-mvp, research-hook-rust-gix, etc.) instead of getting stuck on vitepress-api-docs-generator.
+
+### Next Steps
+- Run `thegent mcp prune --force` if session count is high (26+ sessions = ~1–2 GB)
+
+---
+
+## 2. Work Stream Status (Snapshot)
+
+... (rest of section 2)
+
+---
+
+## 3. Deep Research Protocol & Blocking Fixes (2026-02-18)
+
+### Issues Addressed
+- **Reddit/Google blocking**: AI agents are often blocked by Reddit and Google when using standard search tools.
+- **Narrow Research Scope**: Agents often focus on direct links too early, missing broad context.
+
+### Fixes Applied
+1. **DRP Doc**: Created `docs/guides/DEEP_RESEARCH_PROTOCOL.md` defining a 4-phase systematic approach.
+2. **New Tools**:
+   - `thegent_reddit_search`: Resilience-focused Reddit search (API-ready).
+   - `thegent_scrape_url`: Playwright-backed stealth scraping to bypass bot detection.
+   - `thegent_deep_research`: Orchestrator for the protocol.
+3. **Governance**: Updated `CLAUDE.md` to mandate DRP for complex research.
+4. **Dependencies**: Added `praw`, `playwright`, and `duckduckgo-search` to `pyproject.toml`.
+
+### Next Steps
+- User to provide `THGENT_REDDIT_CLIENT_ID` and `THGENT_REDDIT_CLIENT_SECRET` for optimal Reddit API access.
+- Finalize Playwright installation: `playwright install chromium`.
+
+**Last Updated:** 2026-02-18

@@ -75,16 +75,18 @@ class TestDeadLetterReplayEngineReplayOne:
         dlq = DeadLetterQueue(store_path)
 
         now = datetime.now(timezone.utc)
-        dlq.enqueue(DeadLetterEntry(
-            entry_id="DLQ-replay-1",
-            wl_id="WL-100",
-            connector="github",
-            operation="write_item",
-            payload={"title": "Updated Title"},
-            error="Original error",
-            created_at=now,
-            retry_count=0,
-        ))
+        dlq.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-replay-1",
+                wl_id="WL-100",
+                connector="github",
+                operation="write_item",
+                payload={"title": "Updated Title"},
+                error="Original error",
+                created_at=now,
+                retry_count=0,
+            )
+        )
 
         engine = DeadLetterReplayEngine(dlq)
         yield engine, dlq, store_path
@@ -189,38 +191,44 @@ class TestDeadLetterReplayEngineReplayAll:
         now = datetime.now(timezone.utc)
 
         # Add 2 pending and 1 resolved
-        dlq.enqueue(DeadLetterEntry(
-            entry_id="DLQ-p1",
-            wl_id="WL-1",
-            connector="github",
-            operation="write_item",
-            payload={},
-            error="Error",
-            created_at=now,
-            retry_count=0,
-        ))
+        dlq.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-p1",
+                wl_id="WL-1",
+                connector="github",
+                operation="write_item",
+                payload={},
+                error="Error",
+                created_at=now,
+                retry_count=0,
+            )
+        )
 
-        dlq.enqueue(DeadLetterEntry(
-            entry_id="DLQ-p2",
-            wl_id="WL-2",
-            connector="linear",
-            operation="write_item",
-            payload={},
-            error="Error",
-            created_at=now,
-            retry_count=1,
-        ))
+        dlq.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-p2",
+                wl_id="WL-2",
+                connector="linear",
+                operation="write_item",
+                payload={},
+                error="Error",
+                created_at=now,
+                retry_count=1,
+            )
+        )
 
-        dlq.enqueue(DeadLetterEntry(
-            entry_id="DLQ-resolved",
-            wl_id="WL-3",
-            connector="github",
-            operation="write_item",
-            payload={},
-            error="Error",
-            created_at=now,
-            retry_count=3,
-        ))
+        dlq.enqueue(
+            DeadLetterEntry(
+                entry_id="DLQ-resolved",
+                wl_id="WL-3",
+                connector="github",
+                operation="write_item",
+                payload={},
+                error="Error",
+                created_at=now,
+                retry_count=3,
+            )
+        )
 
         engine = DeadLetterReplayEngine(dlq)
         yield engine, dlq

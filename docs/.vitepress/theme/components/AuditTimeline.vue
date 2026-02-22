@@ -14,7 +14,7 @@ const entries = ref<AuditEntry[]>([])
 
 onMounted(async () => {
   try {
-    const mod = await import('../data/audit-log.json')
+    const mod = await import('../../data/audit-log.json')
     entries.value = mod.default ?? mod
   } catch {
     entries.value = []

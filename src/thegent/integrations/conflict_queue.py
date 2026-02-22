@@ -11,6 +11,30 @@ from dataclasses import dataclass
 from datetime import datetime
 
 
+def classify_conflict(*, field: str, connector: str, wl_id: str) -> tuple[str, str, str]:
+    """Classify conflict routing fields deterministically."""
+    normalized_field = field.strip().lower()
+    normalized_connector = connector.strip().lower()
+    normalized_wl = wl_id.strip().upper()
+
+    if normalized_field in {"status", "state", "priority"}:
+        category = "state_divergence"
+        severity = "high"
+    elif normalized_field in {"title", "description", "body"}:
+        category = "content_drift"
+        severity = "medium"
+    else:
+        category = "schema_mismatch"
+        severity = "low"
+
+    owner_domain = "operations"
+    if normalized_connector in {"github", "gitlab"}:
+        owner_domain = "source-control"
+    elif normalized_connector == "linear":
+        owner_domain = "planning"
+    return category, severity, owner_domain
+
+
 @dataclass
 class ConflictEntry:
     """Represents a single conflict in the queue.
@@ -34,6 +58,9 @@ class ConflictEntry:
     connector: str
     created_at: datetime
     resolved: bool = False
+    category: str = ""
+    severity: str = ""
+    owner_domain: str = ""
 
 
 class ConflictQueue:
@@ -61,6 +88,16 @@ class ConflictQueue:
 
         if not entry.conflict_id:
             raise ValueError("conflict_id cannot be empty")
+
+        if not entry.category or not entry.severity or not entry.owner_domain:
+            category, severity, owner_domain = classify_conflict(
+                field=entry.field,
+                connector=entry.connector,
+                wl_id=entry.wl_id,
+            )
+            entry.category = category
+            entry.severity = severity
+            entry.owner_domain = owner_domain
 
         self._queue.append(entry)
 

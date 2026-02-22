@@ -19,7 +19,7 @@ mkdir -p "$OUTPUT_DIR"
 
 # Build main branch (current)
 echo "Building main version..."
-pnpm docs:build
+bun run docs:build
 
 # Copy to main directory
 mkdir -p "$OUTPUT_DIR/main"

@@ -56,9 +56,7 @@ class TestSyncScopeFilterMatches:
     @pytest.mark.requirement("WL-168")
     def test_matches_include_and_exclude_combined(self):
         """matches() applies both include and exclude patterns."""
-        f = SyncScopeFilter(
-            include_patterns=["prod"], exclude_patterns=["backup"]
-        )
+        f = SyncScopeFilter(include_patterns=["prod"], exclude_patterns=["backup"])
 
         assert f.matches("prod-db") is True
         assert f.matches("prod-backup") is False
@@ -134,13 +132,9 @@ class TestSyncScopeFilterFilter:
     @pytest.mark.requirement("WL-168")
     def test_filter_combined_patterns(self):
         """filter() applies both include and exclude."""
-        f = SyncScopeFilter(
-            include_patterns=["user"], exclude_patterns=["backup"]
-        )
+        f = SyncScopeFilter(include_patterns=["user"], exclude_patterns=["backup"])
 
-        result = f.filter(
-            ["user-123", "user-backup", "item", "user-active", "backup"]
-        )
+        result = f.filter(["user-123", "user-backup", "item", "user-active", "backup"])
 
         assert result == ["user-123", "user-active"]
 
@@ -196,9 +190,7 @@ class TestSyncScopeFilterEdgeCases:
     @pytest.mark.requirement("WL-168")
     def test_filter_overlapping_patterns(self):
         """filter() handles overlapping include/exclude patterns correctly."""
-        f = SyncScopeFilter(
-            include_patterns=["prod"], exclude_patterns=["prod-backup"]
-        )
+        f = SyncScopeFilter(include_patterns=["prod"], exclude_patterns=["prod-backup"])
 
         result = f.filter(["prod-app", "prod-backup", "prod-data"])
 

@@ -1,0 +1,142 @@
+# cost API Reference
+
+> **Source**: `src/thegent/governance/cost.py`
+
+Cost governance scaffolding (G-GP-06).
+
+CostEstimator and CostAggregator for per-run cost tracking.
+See docs/governance/COST_GOVERNANCE_DESIGN.md.
+
+---
+
+## CostAggregator
+
+Daily cost rollup by owner. G-GP-06 Phase 4.
+
+### Methods
+
+#### CostAggregator.daily_total
+
+```python
+daily_total(self: Any, owner: str)
+```
+
+Sum cost_usd for owner's runs today. Returns 0.0 if no cost tracking.
+
+---
+
+#### CostAggregator.get_all_categories_mtd
+
+```python
+get_all_categories_mtd(self: Any)
+```
+
+Get MTD cost totals for all categories.
+
+**Returns**: Dictionary mapping category names to MTD costs
+
+---
+
+#### CostAggregator.get_category_mtd_total
+
+```python
+get_category_mtd_total(self: Any, category: str)
+```
+
+Sum cost_usd for a specific category this month.
+
+**Parameters**:
+
+- `category`: Task category (fast/normal/complex/high_complex)
+
+**Returns**: Total cost in USD for the category this month
+
+---
+
+#### CostAggregator.get_mtd_total
+
+```python
+get_mtd_total(self: Any)
+```
+
+Sum cost_usd for all runs this month. G-GP-06 Phase 4.
+
+---
+
+---
+
+## CostEstimator
+
+Estimate run cost from metadata. WP-5003: Cost-aware routing integration.
+
+### Methods
+
+#### CostEstimator.estimate
+
+```python
+estimate(self: Any, model: Any, tokens_total: int, prompt_length: int)
+```
+
+Estimate cost in USD. Uses pricing table or heuristic fallback.
+
+---
+
+---
+
+## daily_total
+
+```python
+daily_total(self: Any, owner: str)
+```
+
+Sum cost_usd for owner's runs today. Returns 0.0 if no cost tracking.
+
+---
+
+## estimate
+
+```python
+estimate(self: Any, model: Any, tokens_total: int, prompt_length: int)
+```
+
+Estimate cost in USD. Uses pricing table or heuristic fallback.
+
+---
+
+## get_all_categories_mtd
+
+```python
+get_all_categories_mtd(self: Any)
+```
+
+Get MTD cost totals for all categories.
+
+**Returns**: Dictionary mapping category names to MTD costs
+
+---
+
+## get_category_mtd_total
+
+```python
+get_category_mtd_total(self: Any, category: str)
+```
+
+Sum cost_usd for a specific category this month.
+
+**Parameters**:
+
+- `category`: Task category (fast/normal/complex/high_complex)
+
+**Returns**: Total cost in USD for the category this month
+
+---
+
+## get_mtd_total
+
+```python
+get_mtd_total(self: Any)
+```
+
+Sum cost_usd for all runs this month. G-GP-06 Phase 4.
+
+---

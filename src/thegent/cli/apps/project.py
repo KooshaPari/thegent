@@ -174,6 +174,27 @@ def scaffold_greenfield(
     name: Annotated[str, typer.Option("--name", help="Project name (defaults to destination name)")] = "",
     description: Annotated[str, typer.Option("--description", "-d", help="Project description")] = "",
     language: Annotated[str, typer.Option("--language", "-l", help="Primary language")] = "python",
+    include_act: Annotated[
+        bool,
+        typer.Option(
+            "--include-act/--no-include-act",
+            help="Forward local GitHub Actions emulation assets flag",
+        ),
+    ] = True,
+    include_qa_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-qa-tools/--no-include-qa-tools",
+            help="Forward QA tooling preset flag",
+        ),
+    ] = True,
+    include_pm_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-pm-tools/--no-include-pm-tools",
+            help="Forward PM tooling preset flag",
+        ),
+    ] = True,
     register: Annotated[bool, typer.Option("--register", help="Register scaffolded project tenancy")] = False,
     install_runtime: Annotated[
         bool,
@@ -196,6 +217,9 @@ def scaffold_greenfield(
         name=name,
         description=description,
         language=language,
+        include_act=include_act,
+        include_qa_tools=include_qa_tools,
+        include_pm_tools=include_pm_tools,
         register=register,
         install_runtime=install_runtime,
         tenant=tenant,
@@ -413,6 +437,27 @@ def setup_project_greenfield(
     name: Annotated[str, typer.Option("--name", help="Project name (defaults to destination name)")] = "",
     description: Annotated[str, typer.Option("--description", "-d", help="Project description")] = "",
     language: Annotated[str, typer.Option("--language", "-l", help="Primary language")] = "python",
+    include_act: Annotated[
+        bool,
+        typer.Option(
+            "--include-act/--no-include-act",
+            help="Forward local GitHub Actions emulation assets flag",
+        ),
+    ] = True,
+    include_qa_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-qa-tools/--no-include-qa-tools",
+            help="Forward QA tooling preset flag",
+        ),
+    ] = True,
+    include_pm_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-pm-tools/--no-include-pm-tools",
+            help="Forward PM tooling preset flag",
+        ),
+    ] = True,
     register: Annotated[bool, typer.Option("--register", help="Register scaffolded project tenancy")] = False,
     install_runtime: Annotated[
         bool,
@@ -435,6 +480,9 @@ def setup_project_greenfield(
         name=name,
         description=description,
         language=language,
+        include_act=include_act,
+        include_qa_tools=include_qa_tools,
+        include_pm_tools=include_pm_tools,
         register=register,
         install_runtime=install_runtime,
         tenant=tenant,
@@ -594,7 +642,15 @@ _SCAFFOLD_PROFILES: dict[str, dict[str, object]] = {
 _DEFAULT_TEMPLATE_VERSION = "1.0.0"
 
 
-def _build_scaffold_data(profile: str, name: str, description: str, language: str) -> dict[str, object]:
+def _build_scaffold_data(
+    profile: str,
+    name: str,
+    description: str,
+    language: str,
+    include_act: bool = True,
+    include_qa_tools: bool = True,
+    include_pm_tools: bool = True,
+) -> dict[str, object]:
     """Return Copier data-file payload for a scaffold preset profile."""
     if profile not in _SCAFFOLD_PROFILES:
         valid = ", ".join(sorted(_SCAFFOLD_PROFILES))
@@ -608,6 +664,9 @@ def _build_scaffold_data(profile: str, name: str, description: str, language: st
         "include_docs": True,
         "include_ci": True,
         "include_hooks": True,
+        "include_act": include_act,
+        "include_qa_tools": include_qa_tools,
+        "include_pm_tools": include_pm_tools,
         **profile_defaults,
     }
 
@@ -794,7 +853,7 @@ def project_migrate(
     else:
         if existing and lock_state and lock_state[1] != existing.template_version:
             reconcile_updates["template_version"] = lock_state[1]
-        if template not in {"auto", existing.template}:
+        if template != "auto":
             reconcile_updates["template"] = template
 
     registration: dict[str, object] = {}
@@ -1081,6 +1140,27 @@ def project_scaffold(
     name: Annotated[str, typer.Option("--name", "-n", help="Project name override")] = "",
     description: Annotated[str, typer.Option("--description", "-d", help="Project description")] = "",
     language: Annotated[str, typer.Option("--language", "-l", help="Primary language")] = "python",
+    include_act: Annotated[
+        bool,
+        typer.Option(
+            "--include-act/--no-include-act",
+            help="Include local GitHub Actions emulation assets",
+        ),
+    ] = True,
+    include_qa_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-qa-tools/--no-include-qa-tools",
+            help="Include lightweight QA tooling presets and workflows",
+        ),
+    ] = True,
+    include_pm_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-pm-tools/--no-include-pm-tools",
+            help="Include PM/workstream tooling presets",
+        ),
+    ] = True,
     register: Annotated[bool, typer.Option("--register", help="Register scaffolded project tenancy")] = False,
     install_runtime: Annotated[
         bool,
@@ -1113,6 +1193,9 @@ def project_scaffold(
             name=project_name,
             description=project_description,
             language=language,
+            include_act=include_act,
+            include_qa_tools=include_qa_tools,
+            include_pm_tools=include_pm_tools,
         )
     except ValueError as exc:
         console.print(f"[red]Error: {exc}[/red]")
@@ -1196,6 +1279,9 @@ def project_scaffold(
         "profile": profile,
         "project_name": project_name,
         "language": language,
+        "include_act": include_act,
+        "include_qa_tools": include_qa_tools,
+        "include_pm_tools": include_pm_tools,
         "dry_run": dry_run,
         "register": register,
         "tenant_id": effective_tenant,

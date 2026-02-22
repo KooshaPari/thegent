@@ -61,7 +61,15 @@ class OSUserAdapter:
 
         success, next_uid = self._run_privileged(["dscl", ".", "-list", "/Users", "UniqueID"])
         if success:
-            uids = [int(u.split()[1]) for u in next_uid.splitlines() if len(u.split()) > 1]
+            uids = []
+            for value in next_uid.splitlines():
+                parts = value.split()
+                if len(parts) < 2:
+                    continue
+                try:
+                    uids.append(int(parts[1]))
+                except ValueError:
+                    continue
             uid = str(max(uids) + 1) if uids else "505"
 
         commands = [
@@ -93,7 +101,11 @@ class OSUserAdapter:
         if home_dir:
             # Setting home dir on Windows is usually done via WMI or Registry,
             # New-LocalUser doesn't have a direct parameter for it.
-            pass
+            safe_home = str(home_dir).replace('"', '\\"')
+            ps_cmd = (
+                f'{ps_cmd} ; New-Item -ItemType Directory -Path "{safe_home}" -Force | Out-Null ; '
+                f'Set-LocalUser -Name "{username}" -HomeDirectory "{safe_home}"'
+            )
 
         cmd = ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", ps_cmd]
 

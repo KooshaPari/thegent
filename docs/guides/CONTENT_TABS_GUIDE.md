@@ -57,21 +57,21 @@ Use the `::: tabs` container syntax in markdown files:
 ::: tabs
 
 ::: tab python
-```python
+~~~~python
 print("hello")
-```
+~~~~
 :::
 
 ::: tab javascript
-```javascript
+~~~~javascript
 console.log("hello")
-```
+~~~~
 :::
 
 ::: tab typescript
-```typescript
+~~~~typescript
 console.log("hello")
-```
+~~~~
 :::
 
 :::

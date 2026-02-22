@@ -172,7 +172,7 @@ class UnifiedConfigManager:
 
         merged_flat: dict[str, Any] = {}
         conflicts: dict[str, dict[str, Any]] = {}
-        all_keys = sorted({key for per_system in flattened.values() for key in per_system.keys()})
+        all_keys = sorted({key for per_system in flattened.values() for key in per_system})
         for key in all_keys:
             seen_values = {
                 system_name: flattened[system_name][key] for system_name in precedence if key in flattened[system_name]

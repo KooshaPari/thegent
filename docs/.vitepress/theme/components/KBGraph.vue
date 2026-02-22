@@ -14,7 +14,7 @@ const nodes = ref<KBNode[]>([])
 
 onMounted(async () => {
   try {
-    const mod = await import('../data/kb-graph.json')
+    const mod = await import('../../data/kb-graph.json')
     const data = mod.default ?? mod
     nodes.value = data.nodes ?? []
   } catch {

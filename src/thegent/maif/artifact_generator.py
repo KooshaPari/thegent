@@ -7,7 +7,9 @@ MAIF artifacts with hash chain tracking.
 import logging
 import time
 import uuid
+from difflib import HtmlDiff
 
+from thegent.integrations.confidential_report import ConfidentialReportFilter
 from thegent.maif.crypto import SigningKey, hash_data
 from thegent.maif.models import ActionType, MAIFArtifact
 
@@ -68,6 +70,7 @@ class MAIFArtifactGenerator:
         # Compute input/output hashes
         input_hash = hash_data(input_data)
         output_hash = hash_data(output_data)
+        metadata_payload = ConfidentialReportFilter.redact_artifact_payload(metadata or {})
 
         # Create unsigned artifact
         artifact = MAIFArtifact(
@@ -80,7 +83,7 @@ class MAIFArtifactGenerator:
             output_hash=output_hash,
             previous_hash=prev_hash,
             signature="",  # Will be filled after signing
-            metadata=metadata or {},
+            metadata=metadata_payload,
         )
 
         # Sign the artifact
@@ -116,3 +119,19 @@ class MAIFArtifactGenerator:
         if session_id in self.last_hash:
             del self.last_hash[session_id]
             logger.debug(f"Reset hash chain for session {session_id}")
+
+    @staticmethod
+    def build_html_diff_artifact(local_snapshot: dict, remote_snapshot: dict) -> str:
+        """Create a deterministic side-by-side HTML diff artifact."""
+        import json
+
+        local_json = json.dumps(local_snapshot, indent=2, sort_keys=True).splitlines()
+        remote_json = json.dumps(remote_snapshot, indent=2, sort_keys=True).splitlines()
+        return HtmlDiff(tabsize=2, wrapcolumn=120).make_file(
+            fromlines=local_json,
+            tolines=remote_json,
+            fromdesc="local",
+            todesc="remote",
+            context=False,
+            numlines=0,
+        )

@@ -23,9 +23,7 @@ class TestFieldParityReport:
     @pytest.mark.requirement("WL-162")
     def test_report_creation_in_parity(self):
         """FieldParityReport with matching values has in_parity=True."""
-        report = FieldParityReport(
-            field_name="title", github_value="Foo", local_value="Foo", in_parity=True
-        )
+        report = FieldParityReport(field_name="title", github_value="Foo", local_value="Foo", in_parity=True)
 
         assert report.field_name == "title"
         assert report.github_value == "Foo"
@@ -132,9 +130,7 @@ class TestGitHubFieldParityChecker:
     def test_out_of_parity_empty_list(self):
         """out_of_parity() returns empty list when all in parity."""
         checker = GitHubFieldParityChecker()
-        reports = checker.check_all(
-            {"field1": ("val", "val"), "field2": ("x", "x")}
-        )
+        reports = checker.check_all({"field1": ("val", "val"), "field2": ("x", "x")})
 
         out_of_sync = checker.out_of_parity(reports)
 

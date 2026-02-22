@@ -10,6 +10,7 @@ import pytest
 from thegent.integrations.cross_connector_verifier import (
     ConsistencyViolation,
     CrossConnectorVerifier,
+    SplitBrainFinding,
 )
 
 
@@ -211,3 +212,28 @@ class TestCrossConnectorVerifier:
         violations = verifier.compare(state_a, state_b)
 
         assert violations == []
+
+    @pytest.mark.requirement("WL-271")
+    def test_detect_split_brain_finds_divergent_fingerprints(self):
+        """# @trace WL-271 — split-brain detector reports divergent connector states."""
+        verifier = CrossConnectorVerifier()
+        states = [
+            {"wl_id": "WL-500", "connector_name": "github", "status": "BACKLOG", "priority": "P1"},
+            {"wl_id": "WL-500", "connector_name": "linear", "status": "COMPLETED", "priority": "P1"},
+        ]
+        findings = verifier.detect_split_brain(states)
+        assert len(findings) == 1
+        assert isinstance(findings[0], SplitBrainFinding)
+        assert findings[0].wl_id == "WL-500"
+        assert findings[0].connectors == ["github", "linear"]
+
+    @pytest.mark.requirement("WL-271")
+    def test_detect_split_brain_ignores_equal_fingerprints(self):
+        """# @trace WL-271 — split-brain detector ignores equivalent states."""
+        verifier = CrossConnectorVerifier()
+        states = [
+            {"wl_id": "WL-501", "connector_name": "github", "status": "BACKLOG", "priority": "P1"},
+            {"wl_id": "WL-501", "connector_name": "linear", "status": "BACKLOG", "priority": "P1"},
+        ]
+        findings = verifier.detect_split_brain(states)
+        assert findings == []

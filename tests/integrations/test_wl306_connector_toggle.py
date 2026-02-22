@@ -7,7 +7,10 @@ from __future__ import annotations
 
 import pytest
 
+from thegent.integrations.capability_alerts import ConnectorSLAEvaluator, ConnectorSLAThresholds
 from thegent.integrations.connector_toggle import ConnectorToggleRegistry
+from thegent.integrations.error_budget import ErrorBudgetTracker
+from thegent.integrations.pipeline_percentiles import PipelinePercentileTracker
 
 
 class TestConnectorToggleRegistry:
@@ -164,3 +167,48 @@ class TestConnectorToggleRegistry:
         assert registry.is_enabled("github") is False
         assert registry.is_enabled("linear") is True
         assert registry.is_enabled("slack") is True
+
+
+class TestConnectorSLATracking:
+    """Tests for WL-233 connector SLA latency/error budget tracking."""
+
+    @pytest.mark.requirement("WL-306")
+    def test_sla_within_threshold(self) -> None:
+        tracker = PipelinePercentileTracker()
+        for value in (110.0, 120.0, 115.0, 105.0, 118.0):
+            tracker.record("github", value, "cycle-a")
+        budget = ErrorBudgetTracker()
+        for _ in range(20):
+            budget.record_success()
+        budget.record_failure()
+        evaluator = ConnectorSLAEvaluator()
+        result = evaluator.evaluate(
+            connector_name="github",
+            latency_summary=tracker.summary("github"),
+            error_budget_stats=budget.get_stats(),
+            thresholds=ConnectorSLAThresholds(p95_latency_ms=300.0, max_failure_rate=0.10),
+        )
+        assert result["within_sla"] is True
+        assert result["breaches"] == []
+
+    @pytest.mark.requirement("WL-306")
+    def test_sla_breach_latency_and_error_budget(self) -> None:
+        tracker = PipelinePercentileTracker()
+        for value in (200.0, 220.0, 260.0, 280.0, 400.0):
+            tracker.record("linear", value, "cycle-b")
+        budget = ErrorBudgetTracker()
+        for _ in range(3):
+            budget.record_success()
+        for _ in range(3):
+            budget.record_failure()
+        evaluator = ConnectorSLAEvaluator()
+        result = evaluator.evaluate(
+            connector_name="linear",
+            latency_summary=tracker.summary("linear"),
+            error_budget_stats=budget.get_stats(),
+            thresholds=ConnectorSLAThresholds(p95_latency_ms=250.0, max_failure_rate=0.20),
+        )
+        assert result["within_sla"] is False
+        assert len(result["breaches"]) == 2
+        assert "latency breach" in result["breaches"][0] or "latency breach" in result["breaches"][1]
+        assert "failure rate breach" in result["breaches"][0] or "failure rate breach" in result["breaches"][1]

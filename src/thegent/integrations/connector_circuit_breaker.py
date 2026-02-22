@@ -51,10 +51,7 @@ class ConnectorCircuitBreaker:
         self._state = CircuitState.CLOSED
         self._opened_at: datetime | None = None
 
-        logger.debug(
-            f"Initialized circuit breaker: threshold={failure_threshold}, "
-            f"timeout={recovery_timeout_seconds}s"
-        )
+        logger.debug(f"Initialized circuit breaker: threshold={failure_threshold}, timeout={recovery_timeout_seconds}s")
 
     def record_failure(self) -> None:
         """Record a failure and update circuit state.
@@ -68,8 +65,7 @@ class ConnectorCircuitBreaker:
             self._state = CircuitState.OPEN
             self._opened_at = datetime.now(timezone.utc)
             logger.warning(
-                f"Circuit breaker opened after {self._failure_count} failures "
-                f"(threshold={self._failure_threshold})"
+                f"Circuit breaker opened after {self._failure_count} failures (threshold={self._failure_threshold})"
             )
         elif self._state == CircuitState.HALF_OPEN:
             self._state = CircuitState.OPEN

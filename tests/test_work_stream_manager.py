@@ -258,6 +258,80 @@ def test_claim_success_uses_all_not_any(tmp_path: Path, monkeypatch) -> None:
     assert result["success"] is False, "claim() must return success=False when any file write fails (all() semantics)"
 
 
+def test_claim_blocks_when_dependencies_unmet(tmp_path: Path) -> None:
+    _write_coordination_files(tmp_path)
+    work_stream_path = tmp_path / "docs" / "reference" / "WORK_STREAM.md"
+    work_stream_path.write_text(
+        "\n".join(
+            [
+                "# Unified Work Stream",
+                "",
+                "## BACKLOG",
+                "| ID | Title | Depends |",
+                "|----|-------|---------|",
+                "| wp-1 | Prereq | - |",
+                "| wp-2 | Blocked item | wp-1 |",
+                "",
+                "## CLAIMED",
+                "| ID | Agent | Started |",
+                "|----|-------|---------|",
+                "| *(none)*",
+                "",
+                "## COMPLETED",
+                "| ID | Agent | Completed |",
+                "|----|-------|-----------|",
+                "| *(none)*",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    manager = WorkStreamManager(ThegentSettings(), base_dir=tmp_path)
+    result = manager.claim("wp-2", "agent-1")
+
+    assert result["success"] is False
+    assert result["dependency_blocked"] is True
+    assert result["blocked_by"] == ["wp-1"]
+    assert result["actions"] == []
+
+
+def test_claim_allows_when_dependency_is_completed(tmp_path: Path) -> None:
+    _write_coordination_files(tmp_path)
+    work_stream_path = tmp_path / "docs" / "reference" / "WORK_STREAM.md"
+    work_stream_path.write_text(
+        "\n".join(
+            [
+                "# Unified Work Stream",
+                "",
+                "## BACKLOG",
+                "| ID | Title | Depends |",
+                "|----|-------|---------|",
+                "| wp-1 | Prereq | - |",
+                "| wp-2 | Ready item | wp-1 |",
+                "",
+                "## CLAIMED",
+                "| ID | Agent | Started |",
+                "|----|-------|---------|",
+                "| *(none)*",
+                "",
+                "## COMPLETED",
+                "| ID | Agent | Completed |",
+                "|----|-------|-----------|",
+                "| wp-1 | agent-0 | 2026-01-02T00:00:00Z |",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    manager = WorkStreamManager(ThegentSettings(), base_dir=tmp_path)
+    result = manager.claim("wp-2", "agent-1")
+
+    assert result["success"] is True
+    assert "dependency_blocked" not in result
+
+
 def test_verify_work_stream_invariants_detects_claimed_completed_overlap(tmp_path: Path) -> None:
     _write_coordination_files(tmp_path)
     work_stream_path = tmp_path / "docs" / "reference" / "WORK_STREAM.md"

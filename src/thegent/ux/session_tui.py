@@ -37,13 +37,38 @@ class SessionTUI:
     def _get_subagents_for_session(self, session_id: str) -> list[dict[str, Any]]:
         """Get subagents (child processes) for a session."""
         self._last_diag = None
+
+        def _record_subagent_failure(extra: dict[str, Any]) -> None:
+            self._last_diag = {
+                "component": "subagents",
+                "session_id": session_id,
+                **extra,
+            }
+            _LOG.warning("session_tui_subagent_probe_failed", extra=self._last_diag)
+
         try:
             meta = session_meta_impl(session_id)
             if "error" in meta:
+                _record_subagent_failure(
+                    {
+                        "failure_type": "metadata_error",
+                        "error_message": str(meta.get("error")),
+                    }
+                )
                 return []
 
-            pid = meta.get("pid", 0)
-            if not pid or not _is_pid_running(pid):
+            try:
+                pid = meta.get("pid", 0)
+                if not pid or not _is_pid_running(pid):
+                    return []
+            except Exception as exc:
+                _record_subagent_failure(
+                    {
+                        "failure_type": "pid_probe_failed",
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc),
+                    }
+                )
                 return []
 
             # QOL: Enhanced human-only monitoring
@@ -102,23 +127,23 @@ class SessionTUI:
                     except (psutil.NoSuchProcess, psutil.AccessDenied):  # noqa: PERF203 - intentional per-item error handling
                         continue
             except (psutil.NoSuchProcess, psutil.AccessDenied) as exc:
-                self._last_diag = {
-                    "component": "subagents",
-                    "session_id": session_id,
-                    "error_type": type(exc).__name__,
-                    "error_message": str(exc),
-                }
-                _LOG.warning("session_tui_subagent_probe_failed", extra=self._last_diag)
+                _record_subagent_failure(
+                    {
+                        "failure_type": "child_enumeration_failed",
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc),
+                    }
+                )
 
             return subagents
         except Exception as exc:
-            self._last_diag = {
-                "component": "subagents",
-                "session_id": session_id,
-                "error_type": type(exc).__name__,
-                "error_message": str(exc),
-            }
-            _LOG.warning("session_tui_subagent_probe_failed", extra=self._last_diag)
+            _record_subagent_failure(
+                {
+                    "failure_type": "enumeration_failed",
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                }
+            )
             return []
 
     def _get_session_details(self, session_id: str) -> dict[str, Any]:

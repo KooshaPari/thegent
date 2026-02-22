@@ -67,11 +67,7 @@ class ProductionReadinessGate:
         Returns:
             List of missing check names.
         """
-        return [
-            check_name
-            for check_name in self.REQUIRED
-            if check_name not in self._checks
-        ]
+        return [check_name for check_name in self.REQUIRED if check_name not in self._checks]
 
     def failed_checks(self) -> list[str]:
         """Get list of checks that were added but failed.
@@ -79,11 +75,7 @@ class ProductionReadinessGate:
         Returns:
             List of failed check names.
         """
-        return [
-            check_name
-            for check_name in self._checks
-            if not self._checks[check_name].passed
-        ]
+        return [check_name for check_name in self._checks if not self._checks[check_name].passed]
 
     def report(self) -> dict:
         """Generate a readiness report.
@@ -96,11 +88,7 @@ class ProductionReadinessGate:
             - 'missing': list of missing check names
         """
         ready = self.evaluate()
-        passed = [
-            check_name
-            for check_name in self._checks
-            if self._checks[check_name].passed
-        ]
+        passed = [check_name for check_name in self._checks if self._checks[check_name].passed]
 
         return {
             "ready": ready,

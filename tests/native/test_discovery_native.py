@@ -295,19 +295,31 @@ class TestDiscoveryClientErrorFallback:
         client = self._make_native_client(tmp_path)
         with (
             patch.object(client, "_run", return_value=None),
-            patch("thegent.native.discovery_native._fallback_tools", return_value=[]) as mock_fb,
+            patch(
+                "thegent.native.discovery_native._fallback_tools",
+                return_value={"tools": [], "fallback": {"status": "probe_failed", "error_type": "path_probe_missing"}},
+            ) as mock_fb,
         ):
             result = client.tools()
         mock_fb.assert_called_once()
+        assert result == []
+        assert client.last_fallback_metadata["tools"]["status"] == "degraded"
+        assert client.last_fallback_metadata["tools"]["error_type"] == "path_probe_missing"
 
     def test_processes_falls_back_on_none(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
         with (
             patch.object(client, "_run", return_value=None),
-            patch("thegent.native.discovery_native._fallback_processes", return_value=[]) as mock_fb,
+            patch(
+                "thegent.native.discovery_native._fallback_processes",
+                return_value={"processes": [], "fallback": {"status": "probe_failed", "error_type": "psutil_missing"}},
+            ) as mock_fb,
         ):
             result = client.processes()
         mock_fb.assert_called_once()
+        assert result == []
+        assert client.last_fallback_metadata["processes"]["status"] == "degraded"
+        assert client.last_fallback_metadata["processes"]["error_type"] == "psutil_missing"
 
     def test_all_falls_back_on_none(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
@@ -317,13 +329,45 @@ class TestDiscoveryClientErrorFallback:
                 "thegent.native.discovery_native._fallback_sessions",
                 return_value={"sessions": [], "fallback": {"status": "ok"}},
             ),
-            patch("thegent.native.discovery_native._fallback_tools", return_value=[]),
-            patch("thegent.native.discovery_native._fallback_processes", return_value=[]),
+            patch(
+                "thegent.native.discovery_native._fallback_tools",
+                return_value={"tools": [], "fallback": {"status": "ok"}},
+            ),
+            patch(
+                "thegent.native.discovery_native._fallback_processes",
+                return_value={"processes": [], "fallback": {"status": "ok"}},
+            ),
         ):
             result = client.all()
         assert "sessions" in result
         assert "tools" in result
         assert "processes" in result
+        assert result["fallback_metadata"]["sessions"]["status"] == "degraded"
+        assert result["fallback_metadata"]["tools"]["status"] == "degraded"
+        assert result["fallback_metadata"]["processes"]["status"] == "degraded"
+
+    def test_all_falls_back_on_timeout_with_native_metadata(self, tmp_path: Path) -> None:
+        client = self._make_native_client(tmp_path)
+        with (
+            patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="thegent-discovery", timeout=15)),
+            patch(
+                "thegent.native.discovery_native._fallback_sessions",
+                return_value={"sessions": [], "fallback": {"status": "ok"}},
+            ),
+            patch(
+                "thegent.native.discovery_native._fallback_tools",
+                return_value={"tools": [], "fallback": {"status": "ok"}},
+            ),
+            patch(
+                "thegent.native.discovery_native._fallback_processes",
+                return_value={"processes": [], "fallback": {"status": "ok"}},
+            ),
+        ):
+            result = client.all()
+        assert client.last_run_diagnostics is not None
+        assert client.last_run_diagnostics["error_type"] == "timeout"
+        assert result["fallback_metadata"]["sessions"]["native_run"]["status"] == "error"
+        assert result["fallback_metadata"]["tools"]["native_run"]["error_type"] == "timeout"
 
     def test_run_timeout_returns_none(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
@@ -397,7 +441,7 @@ class TestDiscoveryClientFallbackPath:
     def test_processes_delegates_to_fallback(self, fallback_client: DiscoveryClient) -> None:
         with patch("thegent.native.discovery_native._fallback_processes", return_value=[]) as mock_fb:
             fallback_client.processes(pattern="custom")
-        mock_fb.assert_called_once_with("custom")
+        mock_fb.assert_called_once_with("custom", include_meta=True)
 
     def test_all_delegates_to_fallback(self, fallback_client: DiscoveryClient) -> None:
         with (
@@ -488,6 +532,13 @@ class TestFallbackTools:
 
         assert len(tools) == len(_PROBE_TOOLS)
 
+    def test_include_meta_returns_payload(self) -> None:
+        with patch("shutil.which", side_effect=lambda t: f"/usr/bin/{t}" if t == "git" else None):
+            payload = _fallback_tools(include_meta=True)
+        assert payload["fallback"]["status"] == "ok"
+        assert payload["fallback"]["tools_count"] == len(payload["tools"])
+        assert payload["fallback"]["available_count"] == 1
+
 
 class TestFallbackProcesses:
     """_fallback_processes — psutil scanning."""
@@ -528,8 +579,10 @@ class TestFallbackProcesses:
         assert 300 not in pids
 
     def test_invalid_pattern_returns_empty(self) -> None:
-        result = _fallback_processes(pattern="[invalid(regex")
-        assert result == []
+        payload = _fallback_processes(pattern="[invalid(regex", include_meta=True)
+        assert payload["processes"] == []
+        assert payload["fallback"]["error_type"] == "invalid_pattern"
+        assert payload["fallback"]["status"] == "probe_failed"
 
     def test_handles_access_denied(self) -> None:
         import psutil as _psutil
@@ -551,8 +604,10 @@ class TestFallbackProcesses:
         import sys
 
         monkeypatch.setitem(sys.modules, "psutil", None)
-        result = _fallback_processes()
-        assert result == []
+        payload = _fallback_processes(include_meta=True)
+        assert payload["processes"] == []
+        assert payload["fallback"]["error_type"] == "psutil_missing"
+        assert payload["fallback"]["status"] == "probe_failed"
 
 
 # ---------------------------------------------------------------------------

@@ -116,12 +116,14 @@ class StaleItemDetector:
                 age_seconds = (now - last_activity).total_seconds()
                 age_days = age_seconds / (24 * 3600)
 
-                stale_items.append(StaleItem(
-                    wl_id=wl_id,
-                    last_activity=last_activity,
-                    age_days=age_days,
-                    connector=connector,
-                ))
+                stale_items.append(
+                    StaleItem(
+                        wl_id=wl_id,
+                        last_activity=last_activity,
+                        age_days=age_days,
+                        connector=connector,
+                    )
+                )
 
         return stale_items
 

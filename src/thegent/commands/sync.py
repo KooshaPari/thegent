@@ -7,6 +7,9 @@ subcommands: all, work-stream, config, agents, hooks.
 from __future__ import annotations
 
 import contextlib
+import json
+import os
+import re
 import shutil
 import time
 from dataclasses import dataclass, field
@@ -17,7 +20,24 @@ from typing import Any
 
 import structlog
 
+from thegent.observability.prometheus import get_metrics_collector
+from thegent.utils.workstream_ops import _atomic_write, _locked_file_access
+from thegent.sync.dead_letter_queue import (
+    DEFAULT_BOARD_DEAD_LETTER_BACKOFF_MULTIPLIER,
+    DEFAULT_BOARD_DEAD_LETTER_MAX_ATTEMPTS,
+    DEFAULT_BOARD_DEAD_LETTER_RETRY_DELAY_SECONDS,
+    RemoteWriteDeadLetterQueue,
+)
+
 _log = structlog.get_logger(__name__)
+
+
+def render_maintenance_banner(*, maintenance_active: bool, connector: str, reason: str = "") -> str:
+    """Render maintenance banner used by sync command/report output."""
+    if not maintenance_active:
+        return ""
+    normalized_reason = reason.strip() or "scheduled maintenance"
+    return f"[MAINTENANCE] connector={connector} reason={normalized_reason}"
 
 
 # ---------------------------------------------------------------------------
@@ -113,6 +133,15 @@ class SyncResult:
             "total_duration": self.total_duration,
             "operations": [op.to_dict() for op in self.operations],
         }
+
+
+@dataclass
+class _RemoteWriteDeadLetterQueueConfig:
+    """Configuration for remote write dead-letter retry metadata."""
+
+    max_attempts: int = DEFAULT_BOARD_DEAD_LETTER_MAX_ATTEMPTS
+    retry_interval_seconds: float = DEFAULT_BOARD_DEAD_LETTER_RETRY_DELAY_SECONDS
+    backoff_multiplier: float = DEFAULT_BOARD_DEAD_LETTER_BACKOFF_MULTIPLIER
 
 
 # ---------------------------------------------------------------------------
@@ -728,9 +757,8 @@ class SyncCommand:
     def pull(self, source: str | None = None) -> OperationResult:
         """Pull remote state locally.
 
-        Stubs the remote pull operation.  When a remote sync backend is
-        wired up, this method will download the canonical agent config and
-        settings from ``source`` and apply them locally.
+        Pulls agent/hook/config state from a local source directory and applies
+        it to the current project.
 
         Args:
             source: Optional remote source identifier (URL, host, or alias).
@@ -738,7 +766,7 @@ class SyncCommand:
                     environment variable, if set.
 
         Returns:
-            OperationResult indicating the pull was accepted (or stubbed).
+            OperationResult describing applied files and any failures.
         """
         t0 = time.monotonic()
         op = "pull"
@@ -748,18 +776,91 @@ class SyncCommand:
         settings = ThegentSettings()
         effective_source = source or settings.sync_remote
 
-        _log.info("sync pull invoked: source=%s", effective_source)
+        if not effective_source or effective_source == "<local-stub>":
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.FAILED,
+                message="Pull failed: source is required.",
+                duration=time.monotonic() - t0,
+                errors=["source is required"],
+            )
 
+        source_dir = Path(effective_source).expanduser().resolve()
+        if not source_dir.exists() or not source_dir.is_dir():
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.FAILED,
+                message=f"Pull failed: source '{source_dir}' is not a directory.",
+                duration=time.monotonic() - t0,
+                details={"source": str(source_dir)},
+                errors=[f"invalid source directory: {source_dir}"],
+            )
+
+        _log.info("sync pull invoked: source=%s", source_dir)
+
+        files: list[Path] = []
+        agent_dir = source_dir / "agents"
+        if agent_dir.is_dir():
+            files.extend(sorted(agent_dir.glob("*.md")))
+        hook_dir = source_dir / "hooks"
+        if hook_dir.is_dir():
+            files.extend(sorted(hook_dir.glob("*.sh")))
+        config_path = source_dir / "config.yaml"
+        if config_path.exists():
+            files.append(config_path)
+
+        transfers: list[dict[str, str]] = []
+        failed = 0
+        for src in files:
+            rel_path = src.relative_to(source_dir)
+            dst = self._root / rel_path
+            if not src.exists():
+                continue
+            try:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                transfers.append(
+                    {
+                        "file": str(rel_path),
+                        "source": str(src),
+                        "destination": str(dst),
+                        "status": "success",
+                    }
+                )
+            except Exception as exc:  # pragma: no cover - defensive
+                failed += 1
+                transfers.append(
+                    {
+                        "file": str(rel_path),
+                        "source": str(src),
+                        "destination": str(dst),
+                        "status": "failed",
+                        "error": f"{type(exc).__name__}: {exc}",
+                    }
+                )
+
+        successful = len(transfers) - failed
+        status = SyncOperationStatus.SUCCESS if failed == 0 else SyncOperationStatus.FAILED
+        message = (
+            f"Pulled {successful}/{len(transfers)} file(s) from '{source_dir}'."
+            if failed == 0
+            else f"Pull partially failed: {successful}/{len(transfers)} file(s) from '{source_dir}'."
+        )
+        errors = [t["error"] for t in transfers if t.get("status") == "failed" and "error" in t]
         return OperationResult(
             operation=op,
-            status=SyncOperationStatus.SUCCESS,
-            message=f"[stub] Would pull state from '{effective_source}'. No remote backend configured.",
+            status=status,
+            message=message,
             duration=time.monotonic() - t0,
             details={
-                "source": effective_source,
-                "files_pulled": [],
-                "stub": True,
+                "source": str(source_dir),
+                "files_total": len(transfers),
+                "files_pulled": successful,
+                "files_failed": failed,
+                "transfers": transfers,
             },
+            errors=errors,
+            changes=[f"pull: {t['file']}" for t in transfers if t.get("status") == "success"],
         )
 
     def reset(self) -> OperationResult:
@@ -833,29 +934,59 @@ class SyncCommand:
             pass
 
     def _incorporate_into_work_stream(self, items: list[str]) -> int:
-        """Append new items to WORK_STREAM.md (deduplication by content).
+        """Append new items to WORK_STREAM.md (idempotent dedupe by content/WL ID).
 
         Returns the number of items actually appended.
         """
+        existing_content = ""
         if not items:
             return 0
 
-        existing_content = ""
-        if self._work_stream.exists():
-            with contextlib.suppress(OSError):
-                existing_content = self._work_stream.read_text(encoding="utf-8")
+        try:
+            with _locked_file_access(self._work_stream):
+                with contextlib.suppress(OSError):
+                    existing_content = self._work_stream.read_text(encoding="utf-8")
 
-        new_items = [it for it in items if it not in existing_content]
-        if not new_items:
+                existing_wl_ids = self._extract_wl_ids(existing_content)
+                seen_new_wl_ids: set[str] = set()
+                new_items: list[str] = []
+                for item in items:
+                    if item in existing_content:
+                        continue
+                    wl_id = self._extract_single_wl_id(item)
+                    if wl_id and (wl_id in existing_wl_ids or wl_id in seen_new_wl_ids):
+                        continue
+                    if wl_id:
+                        seen_new_wl_ids.add(wl_id)
+                    new_items.append(item)
+                if not new_items:
+                    return 0
+
+                self._work_stream.parent.mkdir(parents=True, exist_ok=True)
+                separator = "\n\n<!-- auto-incorporated by thegent sync work-stream -->\n"
+                output = existing_content
+                if output and not output.endswith("\n"):
+                    output += "\n"
+                output += separator
+                for it in new_items:
+                    output += f"{it}\n"
+
+                _atomic_write(self._work_stream, output)
+                return len(new_items)
+        except BlockingIOError:
+            _log.warning("Work stream sync write skipped: another process holds the WORK_STREAM write lock.")
             return 0
 
-        self._work_stream.parent.mkdir(parents=True, exist_ok=True)
-        with self._work_stream.open("a", encoding="utf-8") as fh:
-            fh.write("\n\n<!-- auto-incorporated by thegent sync work-stream -->\n")
-            for it in new_items:
-                fh.write(f"{it}\n")
+    @staticmethod
+    def _extract_wl_ids(content: str) -> set[str]:
+        """Extract normalized WL IDs from text content."""
+        return {match.group(1).upper() for match in re.finditer(r"\b(WL-\d+)\b", content, flags=re.IGNORECASE)}
 
-        return len(new_items)
+    @staticmethod
+    def _extract_single_wl_id(line: str) -> str | None:
+        """Extract the first normalized WL ID from one line, if present."""
+        match = re.search(r"\b(WL-\d+)\b", line, flags=re.IGNORECASE)
+        return match.group(1).upper() if match else None
 
     def _discover_agent_files(self) -> list[str]:
         """Return stem names of all .md files in the agents/ directory."""
@@ -931,7 +1062,182 @@ class SyncCommand:
                 self._extract_fragments_from_file(fragments, md_file)
         return fragments
 
-    def sync_board(self, board_id: str | None = None, source: str = "github", dry_run: bool = False) -> OperationResult:
+    def _load_sync_policy_contract_if_present(self):
+        """Load sync policy contract when configured on disk."""
+        from thegent.integrations.sync_policy_contract import (
+            load_sync_policy_contract,
+            resolve_sync_policy_path,
+        )
+
+        path = resolve_sync_policy_path(project_root=self._root)
+        if not path.exists():
+            return None
+        return load_sync_policy_contract(project_root=self._root)
+
+    def _dead_letter_queue_path(self) -> Path:
+        """Resolve dead-letter queue path for board write failures."""
+        env_override = os.getenv("THGENT_SYNC_DEAD_LETTER_PATH", "").strip()
+        if env_override:
+            return Path(env_override).expanduser().resolve()
+        return (self._root / "docs" / "reference" / "workstream_remote_writes_dead_letter.jsonl").resolve()
+
+    def _dead_letter_queue(self) -> RemoteWriteDeadLetterQueue:
+        env_max_attempts = os.getenv("THGENT_SYNC_DEAD_LETTER_MAX_ATTEMPTS", "").strip()
+        env_base_delay = os.getenv("THGENT_SYNC_DEAD_LETTER_INITIAL_RETRY_SECONDS", "").strip()
+        env_multiplier = os.getenv("THGENT_SYNC_DEAD_LETTER_BACKOFF_MULTIPLIER", "").strip()
+
+        max_attempts = DEFAULT_BOARD_DEAD_LETTER_MAX_ATTEMPTS
+        if env_max_attempts:
+            max_attempts = int(env_max_attempts)
+
+        retry_interval = DEFAULT_BOARD_DEAD_LETTER_RETRY_DELAY_SECONDS
+        if env_base_delay:
+            retry_interval = float(env_base_delay)
+
+        multiplier = DEFAULT_BOARD_DEAD_LETTER_BACKOFF_MULTIPLIER
+        if env_multiplier:
+            multiplier = float(env_multiplier)
+
+        return RemoteWriteDeadLetterQueue(
+            self._dead_letter_queue_path(),
+            max_attempts=max_attempts,
+            retry_interval_seconds=retry_interval,
+            backoff_multiplier=multiplier,
+        )
+
+    @staticmethod
+    def _extract_item_id_from_error(raw_error: str) -> str | None:
+        """Extract WL ID from adapter error string."""
+        match = re.match(r"^\s*(WL-\d+)\s*:", raw_error, flags=re.IGNORECASE)
+        return match.group(1).upper() if match else None
+
+    def _record_remote_write_dead_letters(
+        self,
+        *,
+        source: str,
+        board_id: str,
+        work_stream_items: list[dict[str, str]],
+        errors: list[str],
+    ) -> int:
+        """Append failed remote write attempts to dead-letter queue."""
+        if not errors:
+            return 0
+
+        item_index = {item["id"]: item for item in work_stream_items if "id" in item}
+        queue = self._dead_letter_queue()
+
+        written = 0
+        for raw_error in errors:
+            item_id = self._extract_item_id_from_error(raw_error)
+            if item_id is None or item_id not in item_index:
+                continue
+            queue.enqueue(
+                source=source,
+                board_id=board_id,
+                item=item_index[item_id],
+                error=raw_error,
+            )
+            written += 1
+        return written
+
+    def replay_dead_letters(
+        self,
+        *,
+        source: str | None = None,
+        board_id: str | None = None,
+        limit: int = 50,
+        dry_run: bool = False,
+    ) -> OperationResult:
+        """Replay pending remote-write dead letters."""
+        t0 = time.monotonic()
+        op = "dead-letter-replay"
+        try:
+            queue = self._dead_letter_queue()
+            entries = queue.candidates_for_replay(
+                now=datetime.now(UTC),
+                source=source,
+                board_id=board_id,
+            )
+        except Exception as exc:
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.FAILED,
+                message=f"Failed to load dead-letter queue: {exc}",
+                duration=time.monotonic() - t0,
+                errors=[str(exc)],
+            )
+
+        candidates = list(entries[:limit])
+
+        if dry_run:
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.DRY_RUN,
+                message=f"Dead-letter replay dry-run: {len(candidates)} record(s) selected.",
+                duration=time.monotonic() - t0,
+                details={"selected": len(candidates), "source": source, "board_id": board_id},
+                changes=[
+                    f"[dry-run] replay {entry.source}:{entry.item.get('id', '<unknown>')}" for entry in candidates
+                ],
+            )
+
+        replayed = 0
+        failed = 0
+        replay_errors: list[str] = []
+        full_entries = queue.load()
+        updated_entries_by_id: dict[str, Any] = {}
+        for entry in candidates:
+            item = entry.item
+            current_entry = entry
+            try:
+                result = self._perform_board_sync(entry.board_id, entry.source, [item])
+                if int(result.get("failed", 0)) == 0 and result.get("updated_items"):
+                    current_entry = entry.mark_success(now=datetime.now(UTC))
+                    replayed += 1
+                else:
+                    current_entry = entry.mark_failed(now=datetime.now(UTC))
+                    failed += 1
+                    item_id = item.get("id", "<unknown>")
+                    replay_errors.append(f"{item_id}: replay failed")
+            except Exception as exc:
+                current_entry = entry.mark_failed(now=datetime.now(UTC))
+                failed += 1
+                item_id = item.get("id", "<unknown>")
+                replay_errors.append(f"{item_id}: {exc}")
+            updated_entries_by_id[current_entry.entry_id] = current_entry
+
+        if updated_entries_by_id:
+            for idx, current in enumerate(full_entries):
+                replacement = updated_entries_by_id.get(current.entry_id)
+                if replacement is not None:
+                    full_entries[idx] = replacement
+            queue.write(full_entries)
+
+        status = SyncOperationStatus.SUCCESS if failed == 0 else SyncOperationStatus.FAILED
+        return OperationResult(
+            operation=op,
+            status=status,
+            message=f"Dead-letter replay complete: replayed={replayed}, failed={failed}.",
+            duration=time.monotonic() - t0,
+            details={"replayed": replayed, "failed": failed, "selected": len(candidates)},
+            changes=[
+                f"replayed: {entry.item.get('id', '<unknown>')}"
+                for entry in candidates
+                if updated_entries_by_id.get(entry.entry_id, entry).status == "replayed"
+            ],
+            errors=replay_errors,
+        )
+
+    def sync_board(
+        self,
+        board_id: str | None = None,
+        source: str = "github",
+        dry_run: bool = False,
+        shadow_mode: bool = False,
+        wl_start: int | None = None,
+        wl_end: int | None = None,
+        write_batch_size: int = 50,
+    ) -> OperationResult:
         """Synchronize local WORK_STREAM.md with GitHub Projects or Linear board.
 
         Operationalizes repeatable cross-repo board sync using native tooling.
@@ -944,73 +1250,172 @@ class SyncCommand:
                       If None, uses THGENT_BOARD_ID env var.
             source: Board source platform: github | linear (default: github)
             dry_run: If True, report what would be synced without writing.
+            wl_start: Optional WL numeric lower bound (inclusive).
+            wl_end: Optional WL numeric upper bound (inclusive).
+            write_batch_size: Max items per external write batch.
 
         Returns:
             OperationResult with board sync details and change count.
         """
         t0 = time.monotonic()
-        op = f"board (source={source})"
+        normalized_source = (source or "").strip().lower()
+        op = f"board (source={normalized_source})"
+        collector = get_metrics_collector()
 
         from thegent.config import ThegentSettings
 
+        def _record_cycle_status(status: str) -> None:
+            collector.record_board_sync_cycle(
+                source=normalized_source,
+                status=status,
+                duration_seconds=time.monotonic() - t0,
+            )
+
         try:
+            maintenance_banner = render_maintenance_banner(
+                maintenance_active=os.getenv("THGENT_SYNC_MAINTENANCE_ACTIVE", "").strip().lower()
+                in {"1", "true", "yes", "on"},
+                connector=normalized_source,
+                reason=os.getenv("THGENT_SYNC_MAINTENANCE_REASON", ""),
+            )
             settings = ThegentSettings()
+            policy_contract = self._load_sync_policy_contract_if_present()
+            connector_policy = None
+            if policy_contract is not None:
+                connector_policy = policy_contract.connector_policy(normalized_source)
+                if not connector_policy.enabled or connector_policy.mode == "disabled":
+                    _record_cycle_status("skipped")
+                    return OperationResult(
+                        operation=op,
+                        status=SyncOperationStatus.SKIPPED,
+                        message=f"Board sync skipped: connector {normalized_source} disabled by sync policy.",
+                        duration=time.monotonic() - t0,
+                        details={"source": normalized_source, "board_id": board_id},
+                    )
+
+            if wl_start is not None and wl_end is not None and wl_start > wl_end:
+                raise ValueError(f"Invalid WL range: wl_start ({wl_start}) must be <= wl_end ({wl_end}).")
+            if write_batch_size <= 0:
+                raise ValueError(f"Invalid write_batch_size: {write_batch_size}. Must be > 0.")
 
             # Resolve board ID from parameter, env, or config
-            effective_board_id = board_id or getattr(settings, "board_id", None)
+            policy_board_id = connector_policy.board_id if connector_policy is not None else None
+            effective_board_id = board_id or policy_board_id or getattr(settings, "board_id", None)
             if not effective_board_id:
+                _record_cycle_status("skipped")
                 return OperationResult(
                     operation=op,
                     status=SyncOperationStatus.SKIPPED,
                     message="Board sync skipped: no board_id configured (set THGENT_BOARD_ID or pass --board).",
                     duration=time.monotonic() - t0,
-                    details={"source": source, "board_id": None},
+                    details={"source": normalized_source, "board_id": None},
                 )
 
             # Parse WORK_STREAM.md status lines
             work_stream_items = self._parse_work_stream_items()
+            work_stream_items = self._filter_items_by_wl_range(
+                work_stream_items,
+                wl_start=wl_start,
+                wl_end=wl_end,
+            )
             if not work_stream_items:
+                _record_cycle_status("success")
                 return OperationResult(
                     operation=op,
                     status=SyncOperationStatus.SUCCESS,
                     message="Board sync: no work stream items found to sync.",
                     duration=time.monotonic() - t0,
-                    details={"source": source, "board_id": effective_board_id, "items": 0},
-                    changes=[],
+                    details={"source": normalized_source, "board_id": effective_board_id, "items": 0},
+                    changes=[maintenance_banner] if maintenance_banner else [],
                 )
 
-            if dry_run:
+            conflict_precedence = self._resolve_conflict_precedence(policy_contract)
+            remote_statuses = self._fetch_remote_statuses(
+                board_id=effective_board_id,
+                source=normalized_source,
+                work_stream_items=work_stream_items,
+            )
+            reconciled_items = self._reconcile_remote_statuses(
+                work_stream_items=work_stream_items,
+                remote_statuses=remote_statuses,
+                conflict_precedence=conflict_precedence,
+            )
+            reconciled_count = sum(
+                1
+                for original, reconciled in zip(work_stream_items, reconciled_items)
+                if original.get("status", "BACKLOG") != reconciled.get("status", "BACKLOG")
+            )
+
+            if dry_run or shadow_mode:
+                _record_cycle_status("success")
                 return OperationResult(
                     operation=op,
                     status=SyncOperationStatus.DRY_RUN,
-                    message=f"Board sync dry-run: would sync {len(work_stream_items)} item(s) to {source}.",
+                    message=(
+                        f"Board sync {'shadow-mode' if shadow_mode else 'dry-run'}: "
+                        f"would sync {len(reconciled_items)} item(s) to {normalized_source}."
+                    ),
                     duration=time.monotonic() - t0,
                     details={
-                        "source": source,
+                        "source": normalized_source,
                         "board_id": effective_board_id,
-                        "items_to_sync": len(work_stream_items),
+                        "items_to_sync": len(reconciled_items),
+                        "shadow_mode": shadow_mode,
+                        "wl_start": wl_start,
+                        "wl_end": wl_end,
+                        "write_batch_size": write_batch_size,
+                        "conflict_precedence": conflict_precedence,
+                        "reconciled_items": reconciled_count,
                     },
-                    changes=[f"[dry-run] {item['id']}: {item['status']}" for item in work_stream_items[:10]],
+                    changes=([maintenance_banner] if maintenance_banner else [])
+                    + self._render_human_readable_dry_run_diffs(
+                        reconciled_items,
+                        remote_statuses=remote_statuses,
+                    )[:20],
                 )
 
             # Perform actual sync (platform-specific logic)
-            sync_result = self._perform_board_sync(effective_board_id, source, work_stream_items)
+            sync_result = self._perform_board_sync(
+                effective_board_id,
+                normalized_source,
+                reconciled_items,
+                write_batch_size=write_batch_size,
+            )
+            dead_letters_written = self._record_remote_write_dead_letters(
+                source=normalized_source,
+                board_id=effective_board_id,
+                work_stream_items=work_stream_items,
+                errors=[str(err) for err in sync_result.get("errors", [])],
+            )
 
+            _record_cycle_status("success")
             return OperationResult(
                 operation=op,
                 status=SyncOperationStatus.SUCCESS,
-                message=f"Board sync complete: {sync_result['synced']} item(s) updated on {source}.",
+                message=f"{maintenance_banner} "
+                f"Board sync complete: {sync_result['synced']} item(s) updated on {normalized_source}."
+                if maintenance_banner
+                else f"Board sync complete: {sync_result['synced']} item(s) updated on {normalized_source}.",
                 duration=time.monotonic() - t0,
                 details={
-                    "source": source,
+                    "source": normalized_source,
                     "board_id": effective_board_id,
                     "items_synced": sync_result["synced"],
                     "items_failed": sync_result.get("failed", 0),
+                    "batches": sync_result.get("batches", 0),
+                    "wl_start": wl_start,
+                    "wl_end": wl_end,
+                    "write_batch_size": write_batch_size,
+                    "conflict_precedence": conflict_precedence,
+                    "reconciled_items": reconciled_count,
+                    "dead_letters_written": dead_letters_written,
                 },
                 changes=[f"synced: {item['id']}" for item in sync_result.get("updated_items", [])[:20]],
+                errors=[str(err) for err in sync_result.get("errors", [])],
             )
         except Exception as exc:
             _log.warning("sync_board failed: %s", exc, exc_info=True)
+            _record_cycle_status("failed")
             return OperationResult(
                 operation=op,
                 status=SyncOperationStatus.FAILED,
@@ -1030,14 +1435,13 @@ class SyncCommand:
 
         try:
             content = self._work_stream.read_text(encoding="utf-8")
-            # Simple regex-based extraction of ### [WL-NNN] lines and status
-            import re
+            content = self._normalize_wl_headers_for_sync(content)
 
             for line in content.splitlines():
                 # Match: ### [WL-NNN] Title
-                match = re.match(r"^###\s+\[([WL-]+\d+)\]\s+(.+)$", line)
+                match = re.match(r"^###\s+\[(WL-\d+)\]\s+(.+)$", line)
                 if match:
-                    item_id = match.group(1)
+                    item_id = match.group(1).upper()
                     title = match.group(2)
                     items.append({"id": item_id, "title": title, "status": "BACKLOG"})
                 # Match: **Status:** IN PROGRESS | COMPLETED | BACKLOG
@@ -1052,26 +1456,233 @@ class SyncCommand:
         return items
 
     def _perform_board_sync(
-        self, board_id: str, source: str, work_stream_items: list[dict[str, str]]
+        self,
+        board_id: str,
+        source: str,
+        work_stream_items: list[dict[str, str]],
+        *,
+        write_batch_size: int = 50,
     ) -> dict[str, Any]:
-        """Perform platform-specific board sync (GitHub Projects or Linear).
-
-        Currently returns stub result. Real implementation would call GitHub API or Linear API.
+        """Perform platform-specific board sync through source adapters.
 
         Args:
             board_id: Board ID (project number or key)
             source: Platform: github | linear
             work_stream_items: List of work items to sync
+            write_batch_size: Max items per external write batch.
 
         Returns:
-            dict with keys: synced (count), failed (count), updated_items (list)
+            dict with keys: synced (count), failed (count), updated_items (list), errors (list)
         """
-        # Stub: real implementation would call GitHub Projects API or Linear API
-        _log.info("board_sync: source=%s board=%s items=%d", source, board_id, len(work_stream_items))
+        from thegent.sync.board_adapters import resolve_board_adapter
+
+        adapter = resolve_board_adapter(source)
+        _log.info(
+            "board_sync: source=%s board=%s items=%d batch_size=%d",
+            source,
+            board_id,
+            len(work_stream_items),
+            write_batch_size,
+        )
+
+        batches = self._partition_write_batches(work_stream_items, write_batch_size)
+        synced = 0
+        failed = 0
+        updated_items: list[dict[str, str]] = []
+        errors: list[str] = []
+        for batch in batches:
+            batch_result = adapter.sync(board_id=board_id, work_stream_items=batch)
+            batch_errors = [str(err) for err in batch_result.get("errors", [])]
+            batch_updated = batch_result.get("updated_items", [])
+            batch_synced = int(batch_result.get("synced", len(batch_updated)))
+            batch_failed = int(batch_result.get("failed", len(batch_errors)))
+
+            synced += batch_synced
+            failed += batch_failed
+            updated_items.extend(batch_updated)
+            errors.extend(batch_errors)
 
         return {
-            "synced": len(work_stream_items),
-            "failed": 0,
-            "updated_items": work_stream_items,
-            "stub": True,
+            "synced": synced,
+            "failed": failed,
+            "updated_items": updated_items,
+            "errors": errors,
+            "batches": len(batches),
         }
+
+    @staticmethod
+    def _resolve_conflict_precedence(policy_contract: Any) -> str:
+        """Resolve status conflict precedence for sync writes."""
+        if policy_contract is None:
+            return "board_id_first"
+        return policy_contract.conflict_precedence
+
+    @staticmethod
+    def _normalize_status(status: str) -> str:
+        """Normalize a status value for status reconciliation."""
+        return (status or "BACKLOG").strip().upper().replace(" ", "_")
+
+    def _fetch_remote_statuses(
+        self,
+        *,
+        board_id: str,
+        source: str,
+        work_stream_items: list[dict[str, str]],
+    ) -> dict[str, str]:
+        """Read remote status snapshots for configured work-stream items."""
+        from thegent.sync.board_adapters import resolve_board_adapter
+
+        adapter = resolve_board_adapter(source)
+        status_map = adapter.fetch_remote_status(board_id=board_id, work_stream_items=work_stream_items)
+        normalized: dict[str, str] = {}
+        for item_id, status in status_map.items():
+            normalized[item_id.upper()] = self._normalize_status(str(status))
+        return normalized
+
+    @staticmethod
+    def _reconcile_remote_statuses(
+        *,
+        work_stream_items: list[dict[str, str]],
+        remote_statuses: dict[str, str],
+        conflict_precedence: str,
+    ) -> list[dict[str, str]]:
+        """Return new items after applying conflict precedence between local and remote."""
+        if conflict_precedence not in {"local_wins", "remote_wins", "board_id_first"}:
+            conflict_precedence = "board_id_first"
+
+        reconciled: list[dict[str, str]] = []
+        for item in work_stream_items:
+            local_status = SyncCommand._normalize_status(item.get("status", "BACKLOG"))
+            item_id = (item.get("id", "") or "").upper()
+            remote_status = remote_statuses.get(item_id)
+            resolved_status = remote_status if conflict_precedence == "remote_wins" and remote_status else local_status
+
+            resolved = dict(item)
+            resolved["status"] = resolved_status
+            reconciled.append(resolved)
+
+        return reconciled
+
+    @staticmethod
+    def _partition_write_batches(items: list[dict[str, str]], batch_size: int) -> list[list[dict[str, str]]]:
+        """Split outgoing sync writes into deterministic fixed-size batches."""
+        if batch_size <= 0:
+            raise ValueError(f"batch_size must be > 0; got {batch_size}")
+        return [items[index : index + batch_size] for index in range(0, len(items), batch_size)]
+
+    @staticmethod
+    def _wl_numeric_id(wl_id: str) -> int | None:
+        match = re.search(r"\bWL-(\d+)\b", wl_id, flags=re.IGNORECASE)
+        if not match:
+            return None
+        return int(match.group(1))
+
+    def _filter_items_by_wl_range(
+        self,
+        items: list[dict[str, str]],
+        *,
+        wl_start: int | None,
+        wl_end: int | None,
+    ) -> list[dict[str, str]]:
+        """Filter work-stream items to an inclusive WL numeric range."""
+        if wl_start is None and wl_end is None:
+            return items
+
+        filtered: list[dict[str, str]] = []
+        for item in items:
+            wl_num = self._wl_numeric_id(item.get("id", ""))
+            if wl_num is None:
+                continue
+            if wl_start is not None and wl_num < wl_start:
+                continue
+            if wl_end is not None and wl_num > wl_end:
+                continue
+            filtered.append(item)
+        return filtered
+
+    @staticmethod
+    def _render_human_readable_dry_run_diffs(
+        items: list[dict[str, str]],
+        *,
+        remote_statuses: dict[str, str] | None = None,
+    ) -> list[str]:
+        """Render local->remote field deltas for dry-run output."""
+        remote_lookup = remote_statuses or {}
+        lines: list[str] = []
+        for item in items:
+            wl_id = item.get("id", "<unknown>")
+            title = item.get("title", "")
+            status = item.get("status", "BACKLOG")
+            remote_status = remote_lookup.get(wl_id.upper(), "<unknown>")
+            lines.append(
+                f"[dry-run] {wl_id}: title remote=<unknown> -> local={title!r}; "
+                f"status remote={remote_status} -> local={status}"
+            )
+        return lines
+
+    @staticmethod
+    def _normalize_wl_headers_for_sync(content: str) -> str:
+        """Normalize common malformed WL headers for sync parsing paths."""
+        header_pattern = re.compile(
+            r"^(?P<prefix>\s*###\s+)(?:\[\s*)?(?P<wl>WL)\s*[-_ ]?\s*(?P<num>\d+)\s*\]?\s+(?P<title>.+?)\s*$",
+            flags=re.IGNORECASE,
+        )
+        normalized_lines: list[str] = []
+        for line in content.splitlines():
+            match = header_pattern.match(line)
+            if not match:
+                normalized_lines.append(line)
+                continue
+            normalized_lines.append(f"{match.group('prefix')}[WL-{match.group('num')}] {match.group('title').strip()}")
+        return "\n".join(normalized_lines)
+
+    def migrate_legacy_board_ids(self, legacy_ids: list[str], dry_run: bool = False) -> OperationResult:
+        """Migrate legacy board IDs to canonical WL-* IDs."""
+        from thegent.integrations.board_id_guard import migrate_legacy_board_id
+        from thegent.integrations.board_id_uniqueness import validate_unique_board_ids
+
+        t0 = time.monotonic()
+        operation = "board-migrate"
+        try:
+            migrated_ids = [migrate_legacy_board_id(raw_id) for raw_id in legacy_ids]
+            validate_unique_board_ids(migrated_ids)
+            changes = [f"{legacy} -> {canonical}" for legacy, canonical in zip(legacy_ids, migrated_ids, strict=False)]
+            return OperationResult(
+                operation=operation,
+                status=SyncOperationStatus.DRY_RUN if dry_run else SyncOperationStatus.SUCCESS,
+                message=f"Migrated {len(migrated_ids)} board ID(s) to canonical WL namespace.",
+                duration=time.monotonic() - t0,
+                details={"migrated_ids": migrated_ids, "dry_run": dry_run},
+                changes=changes,
+            )
+        except Exception as exc:
+            return OperationResult(
+                operation=operation,
+                status=SyncOperationStatus.FAILED,
+                message=f"Board ID migration failed: {exc}",
+                duration=time.monotonic() - t0,
+                errors=[str(exc)],
+            )
+
+    def detect_remote_orphans(self, remote_ids: list[str]) -> OperationResult:
+        """Detect remote items that have no local WORK_STREAM representation."""
+        from thegent.integrations.sync_auditor import SyncAuditor
+
+        t0 = time.monotonic()
+        operation = "remote-orphans"
+        local_ids = [item["id"] for item in self._parse_work_stream_items()]
+        report = SyncAuditor.detect_remote_orphans(remote_ids=remote_ids, local_ids=local_ids)
+        has_orphans = len(report.orphan_ids) > 0
+        return OperationResult(
+            operation=operation,
+            status=SyncOperationStatus.FAILED if has_orphans else SyncOperationStatus.SUCCESS,
+            message=(
+                f"Detected {len(report.orphan_ids)} remote orphan item(s)."
+                if has_orphans
+                else "No remote orphan items detected."
+            ),
+            duration=time.monotonic() - t0,
+            details=report.to_dict(),
+            changes=[f"orphan: {item_id}" for item_id in report.orphan_ids],
+            errors=[f"remote orphan detected: {item_id}" for item_id in report.orphan_ids],
+        )

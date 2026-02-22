@@ -81,11 +81,77 @@ def find_regressions(
     return regressions
 
 
+def evaluate_benchmark_gates(
+    baseline_payload: dict[str, Any],
+    current_payload: dict[str, Any],
+    *,
+    max_regression_pct: float,
+    max_throughput_drop_pct: float,
+    require_complete_baseline: bool = False,
+) -> dict[str, Any]:
+    """Evaluate latency and throughput regression gates."""
+    regressions = find_regressions(
+        baseline_payload,
+        current_payload,
+        max_regression_pct=max_regression_pct,
+        require_complete_baseline=require_complete_baseline,
+    )
+    if not isfinite(max_throughput_drop_pct) or max_throughput_drop_pct < 0:
+        raise ValueError("max_throughput_drop_pct must be finite and >= 0")
+
+    def _throughput(payload: dict[str, Any]) -> float | None:
+        benchmarks = payload.get("benchmarks")
+        if not isinstance(benchmarks, list):
+            return None
+        elapsed_total = 0.0
+        iterations_total = 0
+        for row in benchmarks:
+            if not isinstance(row, dict):
+                continue
+            elapsed = row.get("elapsed_seconds")
+            iterations = row.get("iterations")
+            if isinstance(elapsed, bool) or isinstance(iterations, bool):
+                continue
+            try:
+                elapsed_value = float(elapsed)
+                iterations_value = int(iterations)
+            except (TypeError, ValueError):
+                continue
+            if elapsed_value <= 0 or iterations_value <= 0:
+                continue
+            elapsed_total += elapsed_value
+            iterations_total += iterations_value
+        if elapsed_total <= 0 or iterations_total <= 0:
+            return None
+        return iterations_total / elapsed_total
+
+    baseline_tp = _throughput(baseline_payload)
+    current_tp = _throughput(current_payload)
+    throughput_gate = {
+        "baseline_ops_per_second": baseline_tp,
+        "current_ops_per_second": current_tp,
+        "drop_pct": None,
+        "threshold_pct": max_throughput_drop_pct,
+        "failed": False,
+    }
+    if baseline_tp is not None and current_tp is not None and baseline_tp > 0:
+        drop_pct = ((baseline_tp - current_tp) / baseline_tp) * 100.0
+        throughput_gate["drop_pct"] = round(drop_pct, 2)
+        throughput_gate["failed"] = drop_pct > max_throughput_drop_pct
+
+    return {
+        "ok": len(regressions) == 0 and throughput_gate["failed"] is False,
+        "latency_regressions": regressions,
+        "throughput_gate": throughput_gate,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check WL-078 benchmark regression threshold.")
     parser.add_argument("--baseline", type=Path, default=Path("benchmarks/baseline.json"))
     parser.add_argument("--current", type=Path, default=Path("benchmarks/results/python/latest.json"))
     parser.add_argument("--max-regression-pct", type=float, default=15.0)
+    parser.add_argument("--max-throughput-drop-pct", type=float, default=10.0)
     parser.add_argument(
         "--require-complete-baseline",
         action="store_true",
@@ -94,19 +160,32 @@ def main() -> int:
     args = parser.parse_args()
     if not isfinite(args.max_regression_pct) or args.max_regression_pct < 0:
         parser.error("--max-regression-pct must be finite and >= 0")
+    if not isfinite(args.max_throughput_drop_pct) or args.max_throughput_drop_pct < 0:
+        parser.error("--max-throughput-drop-pct must be finite and >= 0")
 
     baseline_payload = json.loads(args.baseline.read_text(encoding="utf-8"))
     current_payload = json.loads(args.current.read_text(encoding="utf-8"))
-    regressions = find_regressions(
+    gate = evaluate_benchmark_gates(
         baseline_payload,
         current_payload,
         max_regression_pct=args.max_regression_pct,
+        max_throughput_drop_pct=args.max_throughput_drop_pct,
         require_complete_baseline=args.require_complete_baseline,
     )
-    if regressions:
-        print(json.dumps({"ok": False, "regressions": regressions}, indent=2))
+    if not gate["ok"]:
+        print(json.dumps(gate, indent=2))
         return 1
-    print(json.dumps({"ok": True, "max_regression_pct": args.max_regression_pct}, indent=2))
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "max_regression_pct": args.max_regression_pct,
+                "max_throughput_drop_pct": args.max_throughput_drop_pct,
+                "throughput_gate": gate["throughput_gate"],
+            },
+            indent=2,
+        )
+    )
     return 0
 
 

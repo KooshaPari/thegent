@@ -1,6 +1,7 @@
 """WP-13001: Work stream and WBS automation manager."""
 
 import logging
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,14 @@ class WorkStreamManager:
     def claim(self, item_id: str, agent_id: str) -> dict[str, Any]:
         """Claim an item across all coordination files."""
         results = {"item_id": item_id, "agent_id": agent_id, "actions": []}
+        blocked_by = self._unmet_dependencies_for_item(item_id)
+        if blocked_by:
+            results["success"] = False
+            results["dependency_blocked"] = True
+            results["blocked_by"] = blocked_by
+            results["error"] = f"Cannot claim {item_id}; unmet dependencies: {', '.join(blocked_by)}"
+            results["remediation"] = "Complete all listed dependency items first, then retry claim."
+            return results
 
         # 1. Update WORK_STREAM.md
         if self.work_stream_path.exists():
@@ -290,3 +299,125 @@ class WorkStreamManager:
         new_content = "\n".join(new_lines) + "\n"
         write_success = safe_write_file(self.wbs_path, new_content, expected_version=version)
         return updated and write_success
+
+    def _unmet_dependencies_for_item(self, item_id: str) -> list[str]:
+        from thegent.utils.helpers import safe_read_file_with_version
+
+        dependencies: list[str] = []
+        completed_ids: set[str] = set()
+
+        if self.work_stream_path.exists():
+            work_stream_content, _ = safe_read_file_with_version(self.work_stream_path)
+            if work_stream_content:
+                dependencies.extend(self._extract_backlog_table_dependencies(work_stream_content, item_id))
+                dependencies.extend(self._extract_narrative_blocked_by_dependencies(work_stream_content, item_id))
+                completed_ids.update(self._extract_section_ids(work_stream_content, "## COMPLETED"))
+
+        completed_ids.update(self._extract_wbs_done_ids())
+        normalized_deps = self._normalize_dependency_ids(dependencies)
+        return [dep for dep in normalized_deps if dep not in completed_ids]
+
+    def _extract_backlog_table_dependencies(self, content: str, item_id: str) -> list[str]:
+        lines = content.splitlines()
+        in_backlog = False
+        header_cells: list[str] | None = None
+
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("## BACKLOG"):
+                in_backlog = True
+                continue
+            if in_backlog and stripped.startswith("## "):
+                break
+            if not in_backlog or not stripped.startswith("|"):
+                continue
+
+            raw_cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+            if not header_cells and any(cell.upper() == "ID" for cell in raw_cells):
+                header_cells = [cell.lower() for cell in raw_cells]
+                continue
+            if all(not cell or set(cell) <= {"-", ":"} for cell in raw_cells):
+                continue
+            if not header_cells:
+                continue
+
+            row_id = raw_cells[0] if raw_cells else ""
+            if row_id != item_id:
+                continue
+            dep_index = self._dependency_column_index(header_cells)
+            if dep_index is None or dep_index >= len(raw_cells):
+                return []
+            return self._parse_dependency_cell(raw_cells[dep_index])
+
+        return []
+
+    def _extract_narrative_blocked_by_dependencies(self, content: str, item_id: str) -> list[str]:
+        lines = content.splitlines()
+        section_start = None
+
+        heading_pattern = re.compile(r"^#{2,6}\s+\[(?P<id>[^\]]+)\]")
+        for index, line in enumerate(lines):
+            match = heading_pattern.match(line.strip())
+            if match and match.group("id").strip() == item_id:
+                section_start = index + 1
+                break
+        if section_start is None:
+            return []
+
+        blocked_pattern = re.compile(r"^\*\*Blocked by:\*\*\s*(?P<deps>.+)$", re.IGNORECASE)
+        for line in lines[section_start:]:
+            stripped = line.strip()
+            if stripped.startswith("### [") or stripped.startswith("## "):
+                break
+            match = blocked_pattern.match(stripped)
+            if match:
+                return self._parse_dependency_cell(match.group("deps"))
+        return []
+
+    def _extract_wbs_done_ids(self) -> set[str]:
+        from thegent.utils.helpers import safe_read_file_with_version
+
+        done: set[str] = set()
+        if not self.wbs_path.exists():
+            return done
+
+        content, _ = safe_read_file_with_version(self.wbs_path)
+        if not content:
+            return done
+
+        for line in content.splitlines():
+            if not line.strip().startswith("|"):
+                continue
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            if len(cells) < 3:
+                continue
+            if cells[0].upper() == "WP ID":
+                continue
+            if set(cells[0]) <= {"-", ":"}:
+                continue
+            status = cells[2].upper()
+            if status in {"DONE", "COMPLETED"}:
+                done.add(cells[0])
+        return done
+
+    def _dependency_column_index(self, headers: list[str]) -> int | None:
+        for idx, header in enumerate(headers):
+            normalized = header.replace("_", " ").strip()
+            if normalized in {"depends", "depends on", "blocked by", "dependencies"}:
+                return idx
+        return None
+
+    def _parse_dependency_cell(self, value: str) -> list[str]:
+        tokens = [token.strip() for token in value.replace(";", ",").split(",")]
+        return [token for token in tokens if token and token not in {"-", "—", "none", "None"}]
+
+    def _normalize_dependency_ids(self, deps: list[str]) -> list[str]:
+        normalized: list[str] = []
+        for dep in deps:
+            cleaned = dep.strip()
+            if not cleaned:
+                continue
+            if cleaned.startswith("✅"):
+                cleaned = cleaned.lstrip("✅").strip()
+            normalized.append(cleaned)
+        return sorted(dict.fromkeys(normalized))
