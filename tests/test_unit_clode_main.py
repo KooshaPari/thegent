@@ -700,7 +700,7 @@ def test_run_claude_interactive_exec_path_and_env_handshake() -> None:
         patch("thegent.clode_main._ensure_claude_config_isolation"),
         patch("thegent.clode_main._ensure_claude_installed", return_value="/usr/bin/claude"),
         patch("thegent.clode_main._is_triggered_by_agent_process", return_value=True),
-        patch("thegent.clode_main.wrap_with_caffeinate", side_effect=lambda cmd, _tool: cmd),
+        patch("thegent.clode_main.wrap_with_caffeinate", side_effect=lambda cmd, _: cmd),
         patch("thegent.clode_main.os.execvpe") as execvpe,
     ):
         _run_claude_interactive("openrouter")
