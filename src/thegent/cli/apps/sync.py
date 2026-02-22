@@ -362,8 +362,8 @@ def sync_autopilot(
         "--interval",
         "-i",
         help="Cycle interval in seconds (default: 300).",
-        ge=10,
-        le=3600,
+        min=10,
+        max=3600,
     ),
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Report actions without executing."),
     output_format: str = typer.Option(
@@ -384,7 +384,6 @@ def sync_autopilot(
     # @trace WL-160
     """
     import json
-    import os
 
     from thegent.integrations.workstream_autosync import (
         WorkstreamAutosyncRunner,
@@ -441,7 +440,7 @@ def sync_autopilot(
                 console.print(f"  Processed: {op['items_processed']} items")
                 console.print(f"  Successful: {op['items_successful']} items")
                 if op["errors"]:
-                    console.print(f"  [red]Errors:[/red]")
+                    console.print("  [red]Errors:[/red]")
                     for err in op["errors"][:3]:
                         console.print(f"    {err}")
     else:
