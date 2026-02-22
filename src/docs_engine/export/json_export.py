@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-008
 """
+
 from __future__ import annotations
 
 import json

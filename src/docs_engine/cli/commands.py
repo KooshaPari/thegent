@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-006
 """
+
 from __future__ import annotations
 
 import os
@@ -94,6 +95,29 @@ def export_cmd(
     out = _docs_root() / out_dir
     JsonExporter(db_path=_db_path(), out_dir=out).export_all()
     typer.echo(f"Exported audit-log, kb-graph, sprint-board to {out}")
+
+
+@app.command("changelog")
+def changelog_cmd(
+    output: str = typer.Option("CHANGELOG.md", "--output", "-o", help="Output path for CHANGELOG.md"),
+    repo: str = typer.Option(".", "--repo", help="Repository root"),
+) -> None:
+    """Regenerate CHANGELOG.md via git-cliff and index it."""
+    from docs_engine.git.cliff import CliffRunner
+
+    runner = CliffRunner(repo_root=Path(repo), db_path=_db_path())
+    dest = runner.run(output=Path(output))
+    typer.echo(f"CHANGELOG written to {dest}")
+
+
+@app.command("semantic")
+def semantic_cmd() -> None:
+    """Run nightly semantic knowledge extractor over conversation dumps."""
+    from docs_engine.semantic.indexer import SemanticIndexer
+
+    indexer = SemanticIndexer(docs_root=_docs_root(), db_path=_db_path())
+    count = indexer.run()
+    typer.echo(f"Extracted {count} new KB items from conversation dumps.")
 
 
 @app.command("sidebar")
