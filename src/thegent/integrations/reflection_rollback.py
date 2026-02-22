@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -79,10 +79,16 @@ class ReflectionRollbackManager:
             cycle_id=cycle_id,
         )
 
-        # Persist snapshot
+        # Persist snapshot (exclude _created_at from serialization)
         self._snapshots_dir.mkdir(parents=True, exist_ok=True)
         snapshot_file = self._snapshots_dir / f"{snapshot_id}.json"
-        snapshot_file.write_text(json.dumps(asdict(snapshot), indent=2), encoding="utf-8")
+        snapshot_dict = {
+            "snapshot_id": snapshot.snapshot_id,
+            "timestamp": snapshot.timestamp,
+            "work_stream_content": snapshot.work_stream_content,
+            "cycle_id": snapshot.cycle_id,
+        }
+        snapshot_file.write_text(json.dumps(snapshot_dict, indent=2), encoding="utf-8")
 
         return snapshot
 
