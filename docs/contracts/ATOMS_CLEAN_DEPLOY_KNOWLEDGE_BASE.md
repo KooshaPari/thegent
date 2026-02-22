@@ -11,8 +11,8 @@ It codifies the canonical path and operational defaults used by this repo's auto
 
 | Surface | Source | Status |
 |---|---|---|
-| Clean entrypoint | `Taskfile.yml` -> `clean` target | Canonical | 
-| Clean CLI command | `cli.py` -> `clean()` (`atoms clean`) | Canonical | 
+| Clean entrypoint | `Taskfile.yml` -> `clean` target | Canonical |
+| Clean CLI command | `cli.py` -> `clean()` (`atoms clean`) | Canonical |
 | Vercel deployment config | `vercel.json` | Canonical |
 | Deployment guide | `docs/DEPLOYMENT_GUIDE.md` | Canonical |
 | Cloud Run helper | `scripts/deploy_gcp.sh` | Non-canonical (legacy helper)

@@ -87,4 +87,3 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 **Blocked by:** none
 **Source:** [thegent/docs/reference/WORK_STREAM.md:10177]
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
-

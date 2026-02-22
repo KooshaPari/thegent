@@ -1,7 +1,7 @@
 """
-E2E test for: thegent orchestrate run-diff
+E2E test for: thegent orchestrate run
 
-Agent Journey: Agent executes thegent orchestrate run-diff command
+Agent Journey: Agent executes thegent orchestrate run command
 Expected Behavior: Command executes successfully and returns expected output
 """
 
@@ -15,21 +15,21 @@ runner = CliRunner()
 
 @pytest.mark.e2e
 class TestOrchestrateRunDiff:
-    """E2E tests for thegent orchestrate run-diff command."""
+    """E2E tests for thegent orchestrate run command."""
 
     def test_orchestrate_run_diff_exits_zero(self) -> None:
-        """thegent orchestrate run-diff exits with code 0."""
+        """thegent orchestrate run exits with code 0."""
         result = runner.invoke(app, ["orchestrate", "run-diff"])
         assert result.exit_code == 0, f"Command failed: {result.stdout} {result.stderr}"
 
     def test_orchestrate_run_diff_produces_output(self) -> None:
-        """thegent orchestrate run-diff produces expected output."""
+        """thegent orchestrate run produces expected output."""
         result = runner.invoke(app, ["orchestrate", "run-diff"])
         assert result.exit_code == 0
         # TODO: Add specific output assertions based on command behavior
         assert len(result.stdout) > 0 or len(result.stderr) == 0
 
     def test_orchestrate_run_diff_help_exits_zero(self) -> None:
-        """thegent orchestrate run-diff --help exits with code 0."""
+        """thegent orchestrate run --help exits with code 0."""
         result = runner.invoke(app, ["orchestrate", "run-diff", "--help"])
         assert result.exit_code == 0

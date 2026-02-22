@@ -6,6 +6,19 @@
 
 ---
 
+## Cross-Links to 2026-02-16 Consolidation
+
+- Chronology reference: `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md#chronology-table`
+- Decisions reference: `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md#decisions-log`
+
+## Related Closure Artifacts
+- Wave-3 closure note: `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md#completion-note-wave-3-lane-a`
+- Wave-3 recovery gap report: `docs/research/RECOVERY_TRANSCRIPT_GAP_REPORT_2026-02-16.md`
+- Wave-3 ADR capture: `docs/research/ARCH_DECISIONS_2026-02-16.md`
+- Wave-3 dump enforcement spec: `docs/research/DUMP_PERSISTENCE_ENFORCEMENT_2026-02-16.md`
+
+---
+
 ## 1. Plan Loop + Manual Work (Session)
 
 ### User Request

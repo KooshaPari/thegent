@@ -130,6 +130,7 @@ thegent install --system-deps --dry-run
 | `thegent plan loop` | Continuously process work items from the unified work stream. |
 | `thegent plan do-next` | Find the next actionable items from project plans and specs. |
 | `thegent doctor` | Verify environment health and fix performance bottlenecks. |
+| `thegent sync autopilot` | Automatic bi-directional sync: `WORK_STREAM.md` <-> GitHub Projects <-> Linear. |
 
 Harness wrappers (`dex`, `clode`, `roid`, `droid`) route through `thegent-shims`.
 Use `--native` to bypass wrapper-injected defaults/proxy routing and call the underlying native CLI directly.
@@ -147,6 +148,42 @@ Unknown skill handling is explicit and non-silent:
 ```bash
 thegent skill select missing-skill
 # Skill not found: missing-skill
+```
+
+### Workstream Autosync (GitHub Projects + Linear)
+
+Enable fully automatic reflections so agents can stay unaware of board plumbing:
+
+```text
+THGENT_WORKSTREAM_AUTOSYNC_ENABLED=1
+THGENT_WORKSTREAM_AUTOSYNC_INTERVAL_SEC=60
+
+THGENT_GH_PROJECT_SYNC_ENABLED=1
+THGENT_GH_PROJECT_OWNER=<org-or-user>
+THGENT_GH_PROJECT_NUMBER=<project-number>
+
+THGENT_LINEAR_SYNC_ENABLED=1
+THGENT_LINEAR_API_KEY=<linear-api-key>
+THGENT_LINEAR_TEAM_ID=<linear-team-id>
+```
+
+Run once:
+
+```text
+thegent sync autopilot --once
+```
+
+Run continuously:
+
+```text
+thegent sync autopilot --interval 60
+```
+
+Task entrypoints:
+
+```text
+task sync:autopilot
+task sync:autopilot:once
 ```
 
 ---
@@ -190,6 +227,7 @@ thegent skill select missing-skill
   - [Developer (External)](./docs/docsets/developer/external/)
   - [Technical User](./docs/docsets/user/)
   - [Agent Operator](./docs/docsets/agent/)
+- **[CLIProxyAPI Issue Board](./docs/docset/CLIProxyAPI_ISSUE_BOARD.md)** — 961 tracked GitHub issues from CLIProxyAPI/Plus with thegent solutions.
 - **[Quick Start Guide](./docs/guides/QUICK_START.md)** — Get up and running in 5 minutes.
 - **[Complete User Guide](./docs/guides/COMPLETE_USER_GUIDE.md)** — Deep dive into features.
 - **[Installation Guide](./docs/guides/INSTALLATION.md)** — Advanced setup options.

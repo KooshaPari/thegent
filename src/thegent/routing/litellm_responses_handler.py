@@ -55,7 +55,7 @@ def _get_http_client() -> httpx.AsyncClient:
             timeout=httpx.Timeout(120.0, connect=10.0),
             limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
         )
-    return _http_client
+    return cast(httpx.AsyncClient, _http_client)
 
 
 async def close_http_client() -> None:
@@ -505,7 +505,7 @@ async def handle_responses_request(request: Request) -> Response:
 
 
 async def _forward_native_responses(
-    request: Request,
+    _request: Request,
     data: dict[str, Any],
     raw_body: bytes,
     forward_headers: dict[str, str],
@@ -554,7 +554,7 @@ async def _forward_native_responses(
 
 
 async def handle_responses_stream(
-    request: Request,
+    _request: Request,
     chat_request: dict[str, Any],
     router: Any,
     *,

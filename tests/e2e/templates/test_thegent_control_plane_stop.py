@@ -1,7 +1,7 @@
 """
-E2E test for: thegent control_plane stop
+E2E test for: thegent sys cp stop
 
-Agent Journey: Agent executes thegent control_plane stop command
+Agent Journey: Agent executes thegent sys cp stop command
 Expected Behavior: Command executes successfully and returns expected output
 """
 
@@ -15,21 +15,21 @@ runner = CliRunner()
 
 @pytest.mark.e2e
 class TestControl_planeStop:
-    """E2E tests for thegent control_plane stop command."""
+    """E2E tests for thegent sys cp stop command."""
 
     def test_control_plane_stop_exits_zero(self) -> None:
-        """thegent control_plane stop exits with code 0."""
+        """thegent sys cp stop exits with code 0."""
         result = runner.invoke(app, ["control_plane", "stop"])
         assert result.exit_code == 0, f"Command failed: {result.stdout} {result.stderr}"
 
     def test_control_plane_stop_produces_output(self) -> None:
-        """thegent control_plane stop produces expected output."""
+        """thegent sys cp stop produces expected output."""
         result = runner.invoke(app, ["control_plane", "stop"])
         assert result.exit_code == 0
         # TODO: Add specific output assertions based on command behavior
         assert len(result.stdout) > 0 or len(result.stderr) == 0
 
     def test_control_plane_stop_help_exits_zero(self) -> None:
-        """thegent control_plane stop --help exits with code 0."""
+        """thegent sys cp stop --help exits with code 0."""
         result = runner.invoke(app, ["control_plane", "stop", "--help"])
         assert result.exit_code == 0

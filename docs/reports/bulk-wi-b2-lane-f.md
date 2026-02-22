@@ -897,4 +897,3 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 **Blocked by:** none
 **Source:** [thegent/crates/thegent-hooks/src/main.rs:1805]
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
-
