@@ -46,14 +46,14 @@ def test_registry_get_all() -> None:
         source = "hn"
         tier = "hourly"
 
-        def fetch(self, topics: list[str]) -> list[ResearchItem]:
+        def fetch(self, _topics: list[str]) -> list[ResearchItem]:
             return []
 
     class B(BaseCrawler):
         source = "arxiv"
         tier = "daily"
 
-        def fetch(self, topics: list[str]) -> list[ResearchItem]:
+        def fetch(self, _topics: list[str]) -> list[ResearchItem]:
             return []
 
     r = CrawlerRegistry()
