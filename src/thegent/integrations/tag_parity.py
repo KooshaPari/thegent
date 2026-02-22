@@ -115,9 +115,7 @@ class TagParityChecker:
         for item in items:
             required_keys = {"wl_id", "local_tags", "remote_tags"}
             if not all(key in item for key in required_keys):
-                raise ValueError(
-                    f"Item missing required keys. Must have: {required_keys}"
-                )
+                raise ValueError(f"Item missing required keys. Must have: {required_keys}")
 
             result = self.check(
                 wl_id=item["wl_id"],

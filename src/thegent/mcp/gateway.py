@@ -27,7 +27,11 @@ Response:
 
 from __future__ import annotations
 
+import json
 import logging
+import os
+import shlex
+import subprocess
 import threading
 import time
 from dataclasses import dataclass
@@ -93,11 +97,7 @@ class McpGateway:
             return self._servers.get(server_id)
 
     def execute(self, call: McpToolCall) -> McpToolResult:
-        """Execute a tool call. Returns McpToolResult with error set on failure.
-
-        For now: stub executor that records the call and returns a placeholder result.
-        Actual subprocess/MCP invocation is deferred to a future integration.
-        """
+        """Execute a tool call. Returns McpToolResult with error set on failure."""
         start = time.monotonic()
         config = self.get_server(call.server_id)
         if config is None:
@@ -110,20 +110,122 @@ class McpGateway:
                 duration_ms=duration_ms,
                 error=f"Unknown server_id: {call.server_id!r}",
             )
+        timeout_sec = min(call.timeout_sec, config.timeout_sec)
+        request = {
+            "jsonrpc": "2.0",
+            "id": "thegent-gateway",
+            "method": "tools/call",
+            "params": {
+                "name": call.tool,
+                "arguments": call.arguments,
+            },
+        }
+        command = shlex.split(config.command)
+        env = os.environ.copy()
+        env.update(config.env)
+        try:
+            completed = subprocess.run(
+                command,
+                input=json.dumps(request),
+                capture_output=True,
+                text=True,
+                timeout=timeout_sec,
+                check=False,
+                env=env,
+            )
+        except FileNotFoundError:
+            duration_ms = (time.monotonic() - start) * 1000.0
+            return McpToolResult(
+                result=None,
+                server_id=call.server_id,
+                tool=call.tool,
+                duration_ms=duration_ms,
+                error=f"transport_error: command not found ({command[0]!r})",
+            )
+        except subprocess.TimeoutExpired:
+            duration_ms = (time.monotonic() - start) * 1000.0
+            return McpToolResult(
+                result=None,
+                server_id=call.server_id,
+                tool=call.tool,
+                duration_ms=duration_ms,
+                error=f"transport_error: timeout after {timeout_sec:.1f}s",
+            )
+        except Exception as exc:
+            duration_ms = (time.monotonic() - start) * 1000.0
+            return McpToolResult(
+                result=None,
+                server_id=call.server_id,
+                tool=call.tool,
+                duration_ms=duration_ms,
+                error=f"transport_error: {type(exc).__name__}: {exc}",
+            )
+
         duration_ms = (time.monotonic() - start) * 1000.0
-        _log.debug(
-            "Stub execute: server=%s tool=%s args=%s",
-            call.server_id,
-            call.tool,
-            call.arguments,
-        )
+        parsed = self._parse_mcp_response(completed.stdout)
+        if parsed.get("error"):
+            normalized_error = self._normalize_tool_error(
+                server_id=call.server_id,
+                tool=call.tool,
+                error_payload=parsed["error"],
+            )
+            return McpToolResult(
+                result=None,
+                server_id=call.server_id,
+                tool=call.tool,
+                duration_ms=duration_ms,
+                error=normalized_error,
+            )
+
+        if completed.returncode != 0 and parsed.get("result") is None:
+            stderr = (completed.stderr or "").strip()
+            return McpToolResult(
+                result=None,
+                server_id=call.server_id,
+                tool=call.tool,
+                duration_ms=duration_ms,
+                error=f"transport_error: exit_code={completed.returncode} {stderr}".strip(),
+            )
+
         return McpToolResult(
-            result={"status": "ok", "tool": call.tool},
+            result=parsed.get("result"),
             server_id=call.server_id,
             tool=call.tool,
             duration_ms=duration_ms,
             error="",
         )
+
+    def _parse_mcp_response(self, stdout: str) -> dict[str, object]:
+        payload = {"result": None, "error": None}
+        for raw_line in stdout.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            try:
+                data = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(data, dict):
+                continue
+            if "error" in data:
+                payload["error"] = data.get("error")
+            if "result" in data:
+                payload["result"] = data.get("result")
+        return payload
+
+    def _normalize_tool_error(self, server_id: str, tool: str, error_payload: object) -> str:
+        if isinstance(error_payload, dict):
+            code = error_payload.get("code")
+            message = str(error_payload.get("message", "")).strip()
+            lowered = message.lower()
+            if code == -32601 or "method not found" in lowered or "unknown tool" in lowered:
+                return f"Unknown tool '{tool}' on server '{server_id}'"
+            return message or f"MCP tool error on '{server_id}:{tool}'"
+        text = str(error_payload).strip()
+        lowered = text.lower()
+        if "method not found" in lowered or "unknown tool" in lowered:
+            return f"Unknown tool '{tool}' on server '{server_id}'"
+        return text or f"MCP tool error on '{server_id}:{tool}'"
 
 
 _gateway: McpGateway | None = None

@@ -92,9 +92,7 @@ class SignedCapabilityCache:
             raise ValueError("signature cannot be empty")
 
         now = datetime.now(timezone.utc)
-        expires_at = datetime.fromtimestamp(
-            now.timestamp() + self._ttl_seconds, tz=timezone.utc
-        )
+        expires_at = datetime.fromtimestamp(now.timestamp() + self._ttl_seconds, tz=timezone.utc)
 
         capability = SignedCapability(
             capability_id=capability_id,
@@ -168,9 +166,7 @@ class SignedCapabilityCache:
 
         capability = self._capabilities[capability_id]
         now = datetime.now(timezone.utc)
-        expires_at = datetime.fromtimestamp(
-            now.timestamp() + self._ttl_seconds, tz=timezone.utc
-        )
+        expires_at = datetime.fromtimestamp(now.timestamp() + self._ttl_seconds, tz=timezone.utc)
 
         # Update in place
         capability.signature = signature
@@ -217,11 +213,7 @@ class SignedCapabilityCache:
         Returns:
             Number of capabilities removed.
         """
-        expired_ids = [
-            cap_id
-            for cap_id in self._capabilities
-            if self.is_expired(cap_id)
-        ]
+        expired_ids = [cap_id for cap_id in self._capabilities if self.is_expired(cap_id)]
 
         for cap_id in expired_ids:
             del self._capabilities[cap_id]

@@ -1,8 +1,29 @@
 """Cross-platform detection and utilities."""
 
+import logging
 import os
 import platform
 from enum import Enum
+
+_LOG = logging.getLogger(__name__)
+_PROC_VERSION_WARNING_LIMIT = 3
+_platform_diagnostics: dict[str, object] = {
+    "proc_version_read_failures": 0,
+    "last_proc_version_error_type": None,
+    "last_proc_version_error_message": None,
+}
+
+
+def get_platform_detection_diagnostics() -> dict[str, object]:
+    """Return diagnostics for platform detection edge cases."""
+    return dict(_platform_diagnostics)
+
+
+def reset_platform_detection_diagnostics() -> None:
+    """Reset platform detection diagnostics (test helper)."""
+    _platform_diagnostics["proc_version_read_failures"] = 0
+    _platform_diagnostics["last_proc_version_error_type"] = None
+    _platform_diagnostics["last_proc_version_error_message"] = None
 
 
 class Platform(Enum):
@@ -37,8 +58,16 @@ def detect_platform() -> Platform:
                     version_info = f.read().lower()
                     if "microsoft" in version_info or "wsl" in version_info:
                         return Platform.WSL2
-            except OSError:
-                pass
+            except OSError as exc:
+                failures = int(_platform_diagnostics["proc_version_read_failures"]) + 1
+                _platform_diagnostics["proc_version_read_failures"] = failures
+                _platform_diagnostics["last_proc_version_error_type"] = type(exc).__name__
+                _platform_diagnostics["last_proc_version_error_message"] = str(exc)
+                if failures <= _PROC_VERSION_WARNING_LIMIT:
+                    _LOG.warning(
+                        "detect_platform: failed to read /proc/version (%s); continuing with env-based detection",
+                        type(exc).__name__,
+                    )
 
         # Also check for WSL2-specific environment variables
         if os.environ.get("WSL_DISTRO_NAME") or os.environ.get("WSL_INTEROP"):

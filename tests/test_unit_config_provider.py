@@ -4,7 +4,7 @@ import builtins
 
 import pytest
 
-from thegent.config_provider import EnvConfigProvider, get_config_provider
+from thegent.config_provider import EnvConfigProvider, get_config_provider, get_last_provider_metadata
 
 
 @pytest.mark.unit
@@ -48,6 +48,8 @@ class TestGetConfigProvider:
         monkeypatch.delenv("THGENT_CONTROL_PLANE_URL", raising=False)
         p = get_config_provider()
         assert isinstance(p, EnvConfigProvider)
+        metadata = get_last_provider_metadata()
+        assert metadata["control_plane_configured"] is False
 
     def test_returns_env_provider_when_cp_import_fails(self, monkeypatch, caplog) -> None:
         """When CP URL set but ControlPlaneConfigProvider not available, falls back to Env."""
@@ -62,4 +64,7 @@ class TestGetConfigProvider:
         monkeypatch.setattr(builtins, "__import__", fake_import)
         p = get_config_provider()
         assert isinstance(p, EnvConfigProvider)
-        assert "Failed to import control-plane config provider" in caplog.text
+        metadata = get_last_provider_metadata()
+        assert metadata["control_plane_configured"] is True
+        assert metadata["dependency_missing"] is True
+        assert "provider import failed" in caplog.text

@@ -428,6 +428,14 @@ class TestLintUnified:
                 results = acc.lint([Path()], fast=True)
         assert results == []
 
+    def test_returns_unavailable_status_when_neither_available(self) -> None:
+        acc = LintingAccelerator()
+        with patch.object(acc, "is_oxlint_available", return_value=False):
+            with patch.object(acc, "is_eslint_available", return_value=False):
+                result = acc.lint([Path()], fast=True, include_status=True)
+        assert result["status"] == "unavailable"
+        assert result["results"] == []
+
     def test_passes_oxlint_config_through(self) -> None:
         acc = LintingAccelerator()
         captured: list[Path | None] = []
