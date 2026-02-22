@@ -45,7 +45,7 @@ class TestCrossConnectorVerifier:
         verifier = CrossConnectorVerifier()
 
         assert verifier is not None
-        assert CrossConnectorVerifier.CRITICAL_FIELDS == {"status", "priority"}
+        assert {"status", "priority"} == CrossConnectorVerifier.CRITICAL_FIELDS
 
     @pytest.mark.requirement("WL-301")
     def test_compare_identical_states(self):

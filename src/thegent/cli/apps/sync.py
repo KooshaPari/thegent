@@ -278,7 +278,9 @@ def sync_reset(
 @app.command("board", help="Synchronize GitHub Projects/Linear board state. (WL-159)")
 def sync_board(
     board_id: str | None = typer.Option(None, "--board", "-b", help="Board ID (GitHub project number or Linear key)."),
-    source: str | None = typer.Option("github", "--source", "-s", help="Board source: github|linear (default: github)."),
+    source: str | None = typer.Option(
+        "github", "--source", "-s", help="Board source: github|linear (default: github)."
+    ),
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Report changes without writing."),
     project: Path | None = typer.Option(None, "--project", "-p", help="Project root (default: cwd)."),
 ):
@@ -350,7 +352,9 @@ def sync_audit(
 def sync_rollback(
     list_snapshots: bool = typer.Option(False, "--list", "-l", help="List available snapshots."),
     snapshot_id: str | None = typer.Option(None, "--snapshot", "-s", help="Snapshot ID to restore."),
-    work_stream: Path | None = typer.Option(None, "--work-stream", "-w", help="Path to WORK_STREAM.md (default: docs/reference/WORK_STREAM.md)."),
+    work_stream: Path | None = typer.Option(
+        None, "--work-stream", "-w", help="Path to WORK_STREAM.md (default: docs/reference/WORK_STREAM.md)."
+    ),
 ):
     """``thegent sync rollback`` — manage work stream snapshots.
 
@@ -394,9 +398,7 @@ def sync_rollback(
     ),
 )
 def sync_autopilot(
-    once: bool = typer.Option(
-        False, "--once", "-1", help="Run single cycle and exit (for testing)."
-    ),
+    once: bool = typer.Option(False, "--once", "-1", help="Run single cycle and exit (for testing)."),
     interval: int = typer.Option(
         300,
         "--interval",
@@ -446,14 +448,8 @@ def sync_autopilot(
             "[yellow]Autopilot not enabled. Set THGENT_WORKSTREAM_AUTOSYNC_ENABLED=true "
             "and configure at least one platform:[/yellow]"
         )
-        console.print(
-            "  GitHub: THGENT_GITHUB_ENABLED=true THGENT_GITHUB_OWNER=... "
-            "THGENT_GITHUB_PROJECT_NUMBER=..."
-        )
-        console.print(
-            "  Linear:  THGENT_LINEAR_ENABLED=true THGENT_LINEAR_API_KEY=... "
-            "THGENT_LINEAR_TEAM_KEY=..."
-        )
+        console.print("  GitHub: THGENT_GITHUB_ENABLED=true THGENT_GITHUB_OWNER=... THGENT_GITHUB_PROJECT_NUMBER=...")
+        console.print("  Linear:  THGENT_LINEAR_ENABLED=true THGENT_LINEAR_API_KEY=... THGENT_LINEAR_TEAM_KEY=...")
         raise typer.Exit(0)
 
     console.print(
@@ -540,7 +536,7 @@ def sync_autopilot_status(
         try:
             with open(status_file) as f:
                 status = json.load(f)
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             status = default_status
     else:
         status = default_status
