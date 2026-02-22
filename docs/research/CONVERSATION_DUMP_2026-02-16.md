@@ -196,3 +196,41 @@ Is prior research on linking desktop PC via compute offloading still present?
 ### Practical Additions
 - Dump templates
 - Conversation configurations
+
+## Gap Prioritization Heuristics
+
+| Gap Type | Signal | Priority | Recovery Action |
+|---------|--------|----------|-----------------|
+| Blocking unknown | Cannot execute next planned step without missing fact | P0 | Resolve immediately with one targeted source-of-truth check |
+| Contradictory state | Two docs/notes disagree on current behavior | P0 | Reconcile by validating live behavior, then mark one canonical |
+| Dependency blind spot | Upstream/downstream owner, interface, or handoff unclear | P1 | Identify owner + contract and record decision in backlog/workstream |
+| Validation missing | Change exists but no deterministic verification evidence | P1 | Add a minimal proof command/output and attach to closure note |
+| Nice-to-know context | Historical rationale not needed for execution or verification | P3 | Defer; do not block recovery closure |
+
+- Tie-breaker: prioritize the gap that shortens time-to-verifiable-closure the most.
+- Batch rule: close all P0 gaps before opening new implementation branches.
+
+## Recovery Stop Conditions
+
+- Stop when each open recovery item has: owner, next action, and due marker recorded.
+- Stop when all P0/P1 gaps have either a verified fix or explicit defer decision.
+- Stop when the current path has one reproducible validation artifact (command + observed result).
+- Stop when backlog/workstream state matches repository reality with no unresolved contradictions.
+- Stop when remaining work is execution, not discovery (no unanswered blocking questions).
+
+## Recovery Ownership Matrix
+
+| Scope | Accountable Owner | Decision Right | Required Artifact Before Close |
+|------|--------------------|----------------|--------------------------------|
+| Recovery command path (`thegent` runtime, shims, launcher) | Runtime Maintainer | Approves behavior and fallback semantics | Passing focused validation command with captured output |
+| Planning and backlog truth (`WORK_STREAM`, plan docs) | Recovery Coordinator | Sets canonical priority and sequencing | Updated backlog row with owner, next action, and dependency status |
+| Evidence and docs integrity (conversation dumps, recovery notes) | Documentation Owner | Accepts evidence quality and completeness | Timestamped evidence block linked to exact file/section |
+| Cross-team handoff risks (external blockers, dependencies) | Incident Lead | Escalates defer vs proceed | Logged handoff decision with named downstream owner |
+
+## Evidence Freeze Rules
+
+- Freeze evidence at each recovery milestone by recording command, timestamp, and observed result together.
+- Do not rewrite prior evidence lines; append corrections as superseding entries with explicit reason.
+- Treat unresolved contradictions as open incidents until one canonical source is validated and tagged.
+- Reject closure if any P0/P1 item lacks both an owner and a verifiable artifact.
+- Require one final reconciliation pass confirming `WORK_STREAM` state matches repository reality.

@@ -895,3 +895,21 @@ class RemoteExecutor:
 ### Practical Additions
 - Research templates
 - Implementation examples
+
+## Platform Decision Matrix
+
+| Execution Surface | macOS | Linux | Windows | WSL2 | Decision |
+|---|---|---|---|---|---|
+| Local shell + process control | Native (`zsh`/`bash`) | Native (`bash`) | Native (`pwsh`/`cmd`) | Linux shell on Windows host | Keep one command abstraction with per-OS adapters |
+| Desktop automation | Stable (AX API) | Stable (X11/Wayland-dependent) | Stable (UIA/Win32) | Not supported natively | Run desktop flows only on true host OS |
+| User/session isolation | Per-user accounts | Per-user + namespaces | Per-user sessions | Inherits Windows boundary | Use OS-native account/session model; avoid WSL2 for UI isolation |
+| Remote execution | SSH first-class | SSH first-class | SSH + WinRM fallback | SSH to Linux VM/context | Standardize on SSH transport with capability probes |
+| CI validation target | macOS runner | Linux runner | Windows runner | Optional compatibility lane | Gate release on tri-OS pass; WSL2 informational only |
+
+## Rollout Constraints
+
+- Ship execution features only when macOS, Linux, and Windows parity tests all pass.
+- Treat WSL2 as compute-only; block desktop automation and UI-dependent acceptance there.
+- Require explicit capability checks (shell, permissions, display/session) before task start.
+- Maintain per-platform retry/backoff defaults; do not share one global timeout profile.
+- Roll out in phases: shell + isolation, then desktop automation, then remote orchestration.

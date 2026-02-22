@@ -557,6 +557,32 @@ All MD docs will be:
 - [x] Added `Recovery SLA Matrix` section in `docs/research/RECOVERY_TRANSCRIPT_GAP_REPORT_2026-02-16.md`.
 - [x] Added `Non-Recoverable Evidence Policy` section in `docs/research/RECOVERY_TRANSCRIPT_GAP_REPORT_2026-02-16.md`.
 
+### Wave 8 — Completed (10 items)
+
+- [x] Added `Gate Failure Playbook` section in `docs/research/SESSION_RESEARCH_COMPLETE.md`.
+- [x] Added `Execution Cadence Calendar` section in `docs/research/SESSION_RESEARCH_COMPLETE.md`.
+- [x] Added `Carry-Forward Tickets` section in `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md`.
+- [x] Added `Reopen Conditions` section in `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md`.
+- [x] Added `Decision Change Log Template` section in `docs/research/ARCH_DECISIONS_2026-02-16.md`.
+- [x] Added `Decision Acceptance Checklist` section in `docs/research/ARCH_DECISIONS_2026-02-16.md`.
+- [x] Added `Evidence Retention Rules` section in `docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md`.
+- [x] Added `Dry-Run Commands` section in `docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md`.
+- [x] Added `Gap Prioritization Heuristics` section in `docs/research/CONVERSATION_DUMP_2026-02-16.md`.
+- [x] Added `Recovery Stop Conditions` section in `docs/research/CONVERSATION_DUMP_2026-02-16.md`.
+
+### Wave 9 — Completed (10 items)
+
+- [x] Added `Gate Escalation Ladder` section in `docs/research/SESSION_RESEARCH_COMPLETE.md`.
+- [x] Added `Weekly Closure Rhythm` section in `docs/research/SESSION_RESEARCH_COMPLETE.md`.
+- [x] Added `Verification Artifacts Index` section in `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md`.
+- [x] Added `Deferred Actions Queue` section in `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md`.
+- [x] Added `Archive Hygiene Checklist` section in `docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md`.
+- [x] Added `Retention Verification Commands` section in `docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md`.
+- [x] Added `Recovery Ownership Matrix` section in `docs/research/CONVERSATION_DUMP_2026-02-16.md`.
+- [x] Added `Evidence Freeze Rules` section in `docs/research/CONVERSATION_DUMP_2026-02-16.md`.
+- [x] Added `Platform Decision Matrix` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Rollout Constraints` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+
 ---
 
 *This TODO will be updated as expansion progresses.*

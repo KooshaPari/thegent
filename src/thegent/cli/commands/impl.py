@@ -598,9 +598,9 @@ def run_impl(
     _mem_mgr = MemoryManager()
 
     # Load agent context before run
-    context_results = []
+    _context_results = []
     if _mem_mgr.enabled:
-        context_results = asyncio.run(_mem_mgr.load_context(agent or "default"))
+        _context_results = asyncio.run(_mem_mgr.load_context(agent or "default"))
 
     # Execute the core run
     result = run_execution_core_helpers.run_impl_core(

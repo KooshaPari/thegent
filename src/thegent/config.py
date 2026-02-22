@@ -1355,6 +1355,29 @@ class ThegentSettings(BaseSettings):
         description="Testing mode flag; set automatically in test environment (THGENT_TESTING)",
     )
 
+    # WL-157: GitHub Projects Bidirectional Sync
+    gh_project_sync_enabled: bool = Field(
+        default=False,
+        description="Enable bidirectional GitHub Projects v2 sync (THGENT_GH_PROJECT_SYNC_ENABLED)",
+    )
+    gh_project_owner: str = Field(
+        default="",
+        description="GitHub project owner (username or org; THGENT_GH_PROJECT_OWNER)",
+    )
+    gh_project_number: int = Field(
+        default=0,
+        ge=0,
+        description="GitHub project number (v2 projects only; THGENT_GH_PROJECT_NUMBER)",
+    )
+    gh_project_direction: str = Field(
+        default="bidirectional",
+        description="Sync direction: read_only, write_only, bidirectional (THGENT_GH_PROJECT_DIRECTION)",
+    )
+    gh_project_standalone_mode: bool = Field(
+        default=True,
+        description="Standalone-safe mode: skip gracefully when disabled or gh auth missing (THGENT_GH_PROJECT_STANDALONE_MODE)",
+    )
+
 
 def get_settings() -> ThegentSettings:
     """Helper to get cached settings."""

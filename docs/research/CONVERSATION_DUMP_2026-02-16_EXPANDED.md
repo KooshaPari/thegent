@@ -778,3 +778,36 @@ Add to [WORK_STREAM.md](../reference/WORK_STREAM.md) BACKLOG:
 - Implementation templates
 - Configuration examples
 - Best practices
+
+## Evidence Retention Rules
+
+| Evidence Type | Retention Window | Store Path | Required Command |
+|---|---|---|---|
+| Command output logs | 30 days | `thegent/logs/` | `mkdir -p thegent/logs && script -q thegent/logs/session-$(date +%Y%m%d-%H%M%S).log` |
+| Test artifacts (junit/coverage) | 14 days | `thegent/artifacts/tests/` | `mkdir -p thegent/artifacts/tests && cp -f .coverage thegent/artifacts/tests/ 2>/dev/null || true` |
+| Research snapshots | 90 days | `thegent/docs/research/archive/` | `mkdir -p thegent/docs/research/archive && cp -f thegent/docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md thegent/docs/research/archive/` |
+| Verification command transcripts | 30 days | `thegent/artifacts/verify/` | `mkdir -p thegent/artifacts/verify && task quality | tee thegent/artifacts/verify/quality-$(date +%Y%m%d-%H%M%S).log` |
+
+- Purge expired logs weekly: `find thegent/logs thegent/artifacts/tests thegent/artifacts/verify -type f -mtime +30 -delete`
+- Purge expired research snapshots monthly: `find thegent/docs/research/archive -type f -mtime +90 -delete`
+
+## Dry-Run Commands
+
+- Preview stale evidence files: `find thegent/logs thegent/artifacts/tests thegent/artifacts/verify -type f -mtime +30 -print`
+- Preview stale research snapshots: `find thegent/docs/research/archive -type f -mtime +90 -print`
+- Preview files to archive before copy: `ls -lh thegent/docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md`
+- Preview quality pipeline without mutation: `task quality --dry 2>/dev/null || task -l`
+
+## Archive Hygiene Checklist
+
+- Run weekly purge for 30-day evidence: `find thegent/logs thegent/artifacts/tests thegent/artifacts/verify -type f -mtime +30 -delete`
+- Run monthly purge for 90-day research snapshots: `find thegent/docs/research/archive -type f -mtime +90 -delete`
+- Capture a fresh session log before cleanup: `mkdir -p thegent/logs && script -q thegent/logs/session-$(date +%Y%m%d-%H%M%S).log`
+- Re-archive the expanded dump after edits: `mkdir -p thegent/docs/research/archive && cp -f thegent/docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md thegent/docs/research/archive/`
+
+## Retention Verification Commands
+
+- Verify evidence files older than 30 days: `find thegent/logs thegent/artifacts/tests thegent/artifacts/verify -type f -mtime +30 -print`
+- Verify research snapshots older than 90 days: `find thegent/docs/research/archive -type f -mtime +90 -print`
+- Verify latest archive copy timestamp: `ls -lhtr thegent/docs/research/archive | tail -n 5`
+- Verify retained verification transcripts: `find thegent/artifacts/verify -type f -name 'quality-*.log' -print | sort`

@@ -88,14 +88,16 @@ def register_tools(mcp: Any) -> tuple:
         Returns:
             String with count of items crawled.
         """
+        from pathlib import Path
+
         from research_engine.crawlers.registry import CrawlerRegistry
         from research_engine.store import ResearchStore
         from research_engine.topics import TopicExtractor
 
         store = ResearchStore(_GLOBAL_DB)
         if topics is None:
-            topics = TopicExtractor().extract()
-        registry = CrawlerRegistry.instance()
+            topics = TopicExtractor(project_root=Path.cwd()).extract()
+        registry = CrawlerRegistry()
         count = 0
         for crawler in registry.get_all():
             for item in crawler.fetch(topics):
@@ -112,8 +114,8 @@ def register_tools(mcp: Any) -> tuple:
         """
         from research_engine.topics import TopicExtractor
 
-        topics = TopicExtractor().extract()
-        return "\n".join(f"- {t}" for t in topics) if topics else "No topics detected."
+        topics = TopicExtractor(project_root=Path.cwd()).extract()
+        return "\\n".join(f"- {t}" for t in topics) if topics else "No topics detected."
 
     @mcp.tool("thegent_research_sync")
     def thegent_research_sync(project_db: str, min_relevance: float = 0.5) -> str:

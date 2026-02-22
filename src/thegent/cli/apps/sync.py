@@ -293,7 +293,7 @@ def sync_board(
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
-    op = cmd.sync_board(board_id=board_id, source=source, dry_run=dry_run)
+    op = cmd.sync_board(board_id=board_id, source=source or "github", dry_run=dry_run)
 
     if op.status == SyncOperationStatus.FAILED:
         console.print(f"[red]board sync failed: {op.message}[/red]")
