@@ -100,17 +100,22 @@ class BoardArtifactParser:
             with open(file_path, encoding="utf-8") as f:
                 lines = f.readlines()
 
-            in_table = False
+            found_separator = False
             for line in lines:
                 if "|" not in line:
                     continue
 
-                # Skip header separator
-                if all(c in "|-: " for c in line):
-                    in_table = True
+                # Skip header separator line (all chars in "|-: ")
+                line_stripped = line.strip()
+                if all(c in "|-: " for c in line_stripped):
+                    found_separator = True
                     continue
 
-                if not in_table or not line.strip().startswith("|"):
+                # Skip header row (line with "ID" in first column)
+                if not found_separator:
+                    continue
+
+                if not line_stripped.startswith("|"):
                     continue
 
                 # Parse table row
@@ -175,7 +180,7 @@ class BoardArtifactIntegrator:
         Returns:
             Dict mapping artifact type to file path
         """
-        artifacts = {}
+        artifacts: dict[str, Path] = {}
         if not self.board_artifacts_dir.exists():
             return artifacts
 

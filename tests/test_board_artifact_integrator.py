@@ -357,12 +357,12 @@ class TestWL158Integration:
         json_items = parser.parse_json(json_file)
         assert len(json_items) == 1
 
-        # Test MD parsing
+        # Test MD parsing (with minimum required columns for board table)
         md_file = tmp_path / "test.md"
         md_file.write_text(
-            "| ID | Title |\n"
-            "|----|----||\n"
-            "| M-1 | Task |\n"
+            "| ID | Title | Status |\n"
+            "|-----|-------|--------|\n"
+            "| M-1 | Task | BACKLOG |\n"
         )
         md_items = parser.parse_markdown(md_file)
         assert len(md_items) == 1

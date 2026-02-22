@@ -1668,6 +1668,26 @@ Each concept is ready for implementation with clear guidance, code examples, and
 
 ---
 
+## Gate Failure Playbook
+
+| Gate | Failure Signal | Immediate Action | Recovery Command | Exit Criteria |
+|------|----------------|------------------|------------------|---------------|
+| Quality Gate | `task quality` exits non-zero | Freeze feature edits and isolate first failing rule | `task quality` | Full pipeline passes with zero suppressions |
+| Test Gate | Targeted or suite tests fail | Reproduce with smallest failing scope, then patch root cause | `python -m pytest -q` | Failing tests pass and no new regressions |
+| Governance Health | `thegent govern go health` reports blockers | Triage failing contract, update mapped implementation/doc | `thegent govern go health` | Health report returns green status |
+| Workstream Closure | Item done but not reflected in tracking | Sync completion in canonical stream and related references | `thegent_do_next` | No stale CLAIMED items; next actionable item returned |
+
+## Execution Cadence Calendar
+
+| Cadence | Focus | Command Set | Deliverable |
+|--------|-------|-------------|-------------|
+| Session Start (0-10 min) | Baseline state + backlog target | `pwd && git status -s && thegent_do_next` | Confirmed task target and clean execution scope |
+| Build Loop (10-45 min) | Implement one scoped increment | `task quality` (or focused check before full pass) | One validated increment with no gate debt |
+| Verification Loop (45-55 min) | Full validation + governance sync | `task quality && thegent govern go health` | Green quality and governance checks |
+| Session Close (55-60 min) | Tracking + handoff update | Update `WORK_STREAM.md` and related status docs | Closed loop with explicit DONE/next-item state |
+
+---
+
 ## 7. EXTENSION_SUMMARY
 
 **Extended on:** 2026-02-17
