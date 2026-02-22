@@ -1,0 +1,86 @@
+{
+  "generated_at": "2026-02-22T02:46:05.060576Z",
+  "scope": {
+    "wl120": "src/thegent total python LOC (git day-end snapshots)",
+    "wl136": "core-boundary zones from config/thegent_core_boundary.toml (git day-end snapshots)"
+  },
+  "method": {
+    "loc_definition": "non-blank, non-comment lines from .py files",
+    "daily_sources": [
+      "git commit snapshot for 2026-02-19",
+      "git commit snapshot for 2026-02-20",
+      "git commit snapshot for 2026-02-21",
+      "working tree snapshot for 2026-02-22"
+    ],
+    "note": "Snapshots use git history only to avoid contamination from unrelated uncommitted worktree edits."
+  },
+  "snapshots": [
+    {
+      "date": "2026-02-19",
+      "source": "git_commit",
+      "commit": "8a0f7e9e1f7d7f99aab2a2fdb34ae5a08ea17148",
+      "total_loc": 122545,
+      "core_boundary_loc": 6790
+    },
+    {
+      "date": "2026-02-20",
+      "source": "git_commit",
+      "commit": "ab9cabd1840d6f2cff21e1d41c0477eb8acf14b7",
+      "total_loc": 117587,
+      "core_boundary_loc": 7913
+    },
+    {
+      "date": "2026-02-21",
+      "source": "git_commit",
+      "commit": "885bc9b2f57dfb7f0a43d01f720f35fa866b9fd3",
+      "total_loc": 163294,
+      "core_boundary_loc": 12533
+    },
+    {
+      "date": "2026-02-22",
+      "source": "working_tree_snapshot",
+      "commit": "6e4b4ed07abc7cab56ce39faa133f5bd58549f7c",
+      "total_loc": 213119,
+      "core_boundary_loc": 12620,
+      "monolith_files": {
+        "cli.py": {
+          "loc": 63,
+          "ceiling": 2000,
+          "status": "WELL_BELOW"
+        },
+        "impl.py": {
+          "loc": 765,
+          "ceiling": 2000,
+          "status": "WELL_BELOW"
+        },
+        "server.py": {
+          "loc": 227,
+          "ceiling": 500,
+          "status": "BELOW"
+        }
+      },
+      "test_status": {
+        "dag_tests_passed": 92,
+        "dag_collection_errors": 0,
+        "regression_status": "FIXED"
+      }
+    }
+  ],
+  "trend": {
+    "total_loc_values": [
+      122545,
+      117587,
+      163294,
+      213119
+    ],
+    "core_boundary_loc_values": [
+      6790,
+      7913,
+      12533,
+      12620
+    ],
+    "wl120_three_day_decline_met": false,
+    "wl136_core_decline_met": false,
+    "notes": "2026-02-22: Total LOC increase (+45.8K) driven by research_engine/agent_roles additions in separate commits (not monolith-related). Monolith ceilings all met: cli.py 63/2000, impl.py 765/2000, server.py 227/500. Test regressions from extraction fixed (92/92 tests pass, 0 collection errors)."
+  }
+}
