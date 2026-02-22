@@ -98,7 +98,7 @@ class TestReflectionRollbackManager:
 
     @pytest.mark.requirement("WL-185")
     def test_list_snapshots_multiple(
-        self, manager: ReflectionRollbackManager, work_stream_file: Path, tmp_path: Path
+        self, manager: ReflectionRollbackManager, work_stream_file: Path
     ) -> None:
         """list_snapshots returns all snapshots, sorted by timestamp (newest first)."""
         # Take first snapshot
