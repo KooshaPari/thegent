@@ -1695,6 +1695,40 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | SCLI-P7.1 | free-lane | 2026-02-22T10:19:16.878817+00:00 |
 | SCLI-P7.3 | free-lane | 2026-02-22T10:19:16.922848+00:00 |
 | SCLI-P13.2 | free-lane | 2026-02-22T10:19:16.960185+00:00 |
+| deferral-run_c56546ff | wave10to50 | 2026-02-22T10:37:35.474098+00:00 |
+| ~~heliosShield-smart-merge~~ | wave10to50 | 2026-02-22T10:37:35.595531+00:00 |
+| ~~compositor-caching~~ | wave10to50 | 2026-02-22T10:37:35.719598+00:00 |
+| ~~compositor-perf-profiling~~ | wave10to50 | 2026-02-22T10:37:35.867829+00:00 |
+| ~~compositor-cli-integration~~ | wave10to50 | 2026-02-22T10:37:36.290426+00:00 |
+| ~~ux-linting-accelerator~~ | wave10to50 | 2026-02-22T10:37:36.438243+00:00 |
+| ~~ux-terminal-keepalive~~ | wave10to50 | 2026-02-22T10:37:36.579491+00:00 |
+| ~~swarm-redis-concurrency~~ | wave10to50 | 2026-02-22T10:37:36.748083+00:00 |
+| ~~swarm-dag-prioritization~~ | wave10to50 | 2026-02-22T10:37:36.854031+00:00 |
+| ~~tenacity-migrate-cli~~ | wave10to50 | 2026-02-22T10:37:36.970240+00:00 |
+| ~~tenacity-migrate-loop~~ | wave10to50 | 2026-02-22T10:37:37.147191+00:00 |
+| ~~shell-consolidate-configs~~ | wave10to50 | 2026-02-22T10:37:37.259016+00:00 |
+| ~~bkm-10-jsonl-parser~~ | wave10to50 | 2026-02-22T10:37:37.354327+00:00 |
+| ~~acp-client-adapter~~ | wave10to50 | 2026-02-22T10:37:37.483613+00:00 |
+| ~~acp-mcp-bridge~~ | wave10to50 | 2026-02-22T10:37:37.577303+00:00 |
+| ~~resource-gpu-utilization~~ | wave10to50 | 2026-02-22T10:37:37.663916+00:00 |
+| ~~resource-network-bandwidth~~ | wave10to50 | 2026-02-22T10:37:37.775674+00:00 |
+| ~~fastmcp-elicitation-api~~ | wave10to50 | 2026-02-22T10:37:37.940501+00:00 |
+| ~~fastmcp-task-mode~~ | wave10to50 | 2026-02-22T10:37:38.072983+00:00 |
+| ~~research-governance-override-events~~ | wave10to50 | 2026-02-22T10:37:38.179504+00:00 |
+| ~~impl-pareto-router~~ | wave10to50 | 2026-02-22T10:37:38.326236+00:00 |
+| ~~impl-cost-aware-router~~ | wave10to50 | 2026-02-22T10:37:38.499392+00:00 |
+| ~~setup-tailscale-nodes~~ | wave10to50 | 2026-02-22T10:37:38.635044+00:00 |
+| ~~impl-library-phase1~~ | wave10to50 | 2026-02-22T10:37:38.759130+00:00 |
+| ~~prototype-federated-policy~~ | wave10to50 | 2026-02-22T10:37:38.883073+00:00 |
+| escalation-run_73623383 | wave10to50 | 2026-02-22T10:38:31.817391+00:00 |
+| escalation-run_56fb8042 | wave10to50 | 2026-02-22T10:38:31.880773+00:00 |
+| escalation-run_8aa7347a | wave10to50 | 2026-02-22T10:38:31.943953+00:00 |
+| deferral-run_b22258ca | wave10to50 | 2026-02-22T10:38:32.010869+00:00 |
+| deferral-run_2b97f82d | wave10to50 | 2026-02-22T10:38:32.078636+00:00 |
+| deferral-run_5ea86c0f | wave10to50 | 2026-02-22T10:38:32.206115+00:00 |
+| deferral-run_a0752f34 | wave10to50 | 2026-02-22T10:38:32.273281+00:00 |
+| deferral-run_def_f33667b2 | wave10to50 | 2026-02-22T10:38:32.337874+00:00 |
+| deferral-run_def_6ea77086 | wave10to50 | 2026-02-22T10:38:32.403838+00:00 |
 ## COMPLETED (historical reference)
 
 > All items below were completed by various agents between 2026-02-18 and 2026-02-20. See WORK_STREAM prior version for full entries with completion notes.

@@ -542,4 +542,21 @@ All MD docs will be:
 
 ---
 
+## Execution Waves (Recent)
+
+### Wave 7 — Completed (10 items)
+
+- [x] Added `Dependency Risk Heatmap` section in `docs/research/SESSION_RESEARCH_COMPLETE.md`.
+- [x] Added `Command Ownership Map` section in `docs/research/SESSION_RESEARCH_COMPLETE.md`.
+- [x] Added `Audit Trail Links` section in `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md`.
+- [x] Added `Next Session Bootstrap` section in `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md`.
+- [x] Added `Decision Debt Register` section in `docs/research/ARCH_DECISIONS_2026-02-16.md`.
+- [x] Added `Supersession Protocol` section in `docs/research/ARCH_DECISIONS_2026-02-16.md`.
+- [x] Added `Failure Taxonomy` section in `docs/research/DUMP_PERSISTENCE_ENFORCEMENT_2026-02-16.md`.
+- [x] Added `Enforcement Escalation Matrix` section in `docs/research/DUMP_PERSISTENCE_ENFORCEMENT_2026-02-16.md`.
+- [x] Added `Recovery SLA Matrix` section in `docs/research/RECOVERY_TRANSCRIPT_GAP_REPORT_2026-02-16.md`.
+- [x] Added `Non-Recoverable Evidence Policy` section in `docs/research/RECOVERY_TRANSCRIPT_GAP_REPORT_2026-02-16.md`.
+
+---
+
 *This TODO will be updated as expansion progresses.*
