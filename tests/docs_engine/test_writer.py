@@ -54,3 +54,17 @@ def test_adr_template_rendered(tmp_path):
     assert "## Context" in content
     assert "## Decision" in content
     assert "## Rationale" in content
+
+
+def test_render_body_without_template_raises(tmp_path):
+    import docs_engine.capture.writer as writer_module
+
+    temp_templates = tmp_path / "templates"
+    temp_templates.mkdir()
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(writer_module, "_TEMPLATES_DIR", temp_templates)
+    writer = DocWriter(docs_root=tmp_path / "docs", db_path=tmp_path / "test.db")
+    with pytest.raises(ValueError, match="Missing template"):
+        writer.new(DocType.RESEARCH, title="No template available")
+
+    monkeypatch.undo()

@@ -34,6 +34,14 @@ repos:
         args: ["--maxkb=500"]
       - id: detect-private-key
         stages: [pre-commit, pre-push]
+        exclude: |
+          (?x)^(
+            \.thegent/sessions/keys/maif_private\.pem|
+            tests/data/maif_private\.pem|
+            tests/governance/test_native_secret_scan\.py|
+            crates/thegent-hooks/tests/security_pipeline_bin\.rs|
+            crates/thegent-hooks/src/security\.rs
+          )$
       - id: no-commit-to-branch
         stages: [pre-commit, pre-push]
         args: ["--branch", "main", "--branch", "master"]

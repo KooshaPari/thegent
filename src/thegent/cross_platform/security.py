@@ -68,8 +68,11 @@ class CrossPlatformSecurity:
             if proc.info["name"] in ["nc", "ncat", "socat"]:
                 result["status"] = "warn"
                 result["vulnerabilities"].append(f"Suspicious process found: {proc.info['name']}")
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
+        except (psutil.NoSuchProcess, psutil.AccessDenied) as exc:
+            result["status"] = "warn"
+            result["vulnerabilities"].append(f"Process inspection failed: {exc!s}")
+            result["recommendations"].append("Review process visibility/permissions and rerun security checks")
+            logger.warning("Security process inspection failed for pid=%s: %s", proc.pid, exc)
 
     def harden(self, target: str) -> bool:
         """Harden system or application.

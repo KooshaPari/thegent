@@ -1,10 +1,13 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 # Pre-commit hook to build VitePress docs when docs/ changes
 # Exit on error
 set -e
 
 # Check if docs/ has changes
-if ! git diff --cached --name-only | grep -q "^docs/"; then
+if ! {
+  git diff --cached --name-only;
+  git diff --name-only;
+} | rg '^docs/' >/dev/null 2>&1; then
   echo "No docs changes detected, skipping docsite build."
   exit 0
 fi

@@ -37,6 +37,7 @@ class PromptQueue:
     def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
         self.queue_path = session_dir / "prompt_queue.jsonl"
+        self.retry_path = session_dir / "prompt_retry_queue.jsonl"
 
     def append(self, prompt: str, project: str, agent: str | None = None) -> int:
         """Append a new prompt to the queue."""
@@ -170,3 +171,59 @@ class PromptQueue:
             entry["prompt"] = prompt
             lock.write_entries(entries)
             return True
+
+    def enqueue_retry(
+        self,
+        *,
+        operation_id: str,
+        failure_class: str,
+        prompt: str,
+        project: str,
+        agent: str | None = None,
+    ) -> bool:
+        """Store selective retry record for transient failures.
+
+        Returns:
+            True when inserted, False if duplicate exists.
+        """
+        if not operation_id.strip():
+            raise ValueError("operation_id cannot be empty")
+        if not failure_class.strip():
+            raise ValueError("failure_class cannot be empty")
+        record_key = f"{operation_id}:{failure_class.strip().lower()}"
+        self.session_dir.mkdir(parents=True, exist_ok=True)
+        existing = _parse_entries(self.retry_path)
+        for _idx, row in existing:
+            if row.get("key") == record_key and row.get("status") == "pending":
+                return False
+        entry = {
+            "key": record_key,
+            "operation_id": operation_id,
+            "failure_class": failure_class.strip().lower(),
+            "prompt": prompt,
+            "project": project,
+            "agent": agent,
+            "status": "pending",
+            "ts": datetime.now(UTC).isoformat(),
+        }
+        with self.retry_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry) + "\n")
+        return True
+
+    def mark_retry_acknowledged(self, *, operation_id: str) -> int:
+        """Mark pending retry records for operation as acknowledged."""
+        if not self.retry_path.exists():
+            return 0
+        updated = 0
+        entries = [row for _idx, row in _parse_entries(self.retry_path)]
+        for entry in entries:
+            if entry.get("operation_id") != operation_id:
+                continue
+            if entry.get("status") == "pending":
+                entry["status"] = "acknowledged"
+                updated += 1
+        self.retry_path.write_text(
+            "".join(json.dumps(entry) + "\n" for entry in entries),
+            encoding="utf-8",
+        )
+        return updated

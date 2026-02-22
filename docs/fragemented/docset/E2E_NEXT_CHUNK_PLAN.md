@@ -1,0 +1,159 @@
+# E2E Next Chunk Plan — Full-Phase Mega Chunk
+
+**Goal:** Add a large batch of E2E tests in one chunk (15–25+ tests across 8–12 classes).
+
+---
+
+## Prerequisite Fix
+
+- **Import fix:** Add `plan_analyze_cmd` to `main.py` imports from `thegent.cli` so `plan analyze` works.
+
+---
+
+## 1. Plan Analyze Execution (2–3 tests)
+
+| Test | Command | Notes |
+|------|---------|-------|
+| plan analyze --help | `plan analyze --help` | Exits 0 |
+| plan analyze exits 0 | `plan analyze --cd <project>` | With empty/valid DAG |
+| plan analyze --pert | `plan analyze --pert --cd <project>` | PERT overlay |
+
+---
+
+## 2. Govern Verify / Show-Policy / Feedback Execution (4–5 tests)
+
+| Test | Command | Notes |
+|------|---------|-------|
+| govern verify | `govern verify` | Alias for history verify, exits 0 |
+| govern verify --format json | `govern verify --format json` | JSON output |
+| govern show-policy | `govern show-policy` | Alias for policy show |
+| govern feedback | `govern feedback <run_id> <score>` | Needs valid run_id or mock |
+| govern closure-pack | `govern closure-pack --cd <no-dag>` | Exits nonzero or 0 |
+
+---
+
+## 3. Observe KPIs / Modes / Operations Execution (4–5 tests)
+
+| Test | Command | Notes |
+|------|---------|-------|
+| observe kpis | `observe kpis` | Fallback KPIs, deterministic |
+| modes | `modes` | List orchestration modes |
+| operations --operation plan | `operations --operation plan` | Filter by plan |
+| operations --format json | `operations --format json` | JSON output |
+| data-protection | `govern data-protection` or direct | If deterministic |
+
+---
+
+## 4. Pause / Resume Alias Execution (2–3 tests)
+
+| Test | Command | Notes |
+|------|---------|-------|
+| orchestrate pause unknown | `orchestrate pause session_unknown` | Exits nonzero |
+| orchestrate resume unknown | `orchestrate resume session_unknown` | Exits nonzero |
+| recover pause / resume | If aliases exist | Same pattern |
+
+---
+
+## 5. Orchestrate Run / Bg Help and Dry Execution (3–4 tests)
+
+| Test | Command | Notes |
+|------|---------|-------|
+| orchestrate run --help | `orchestrate run --help` | Exits 0 |
+| orchestrate bg --help | `orchestrate bg --help` | Exits 0 |
+| orchestrate run (unknown agent) | `orchestrate run "test" nonexistent --cd <project>` | Exits 1 |
+| orchestrate bg (unknown agent) | Same pattern | Exits 1 |
+
+---
+
+## 6. Cliproxy / MCP / Login Help Execution (4–5 tests)
+
+| Test | Command | Notes |
+|------|---------|-------|
+| cliproxy login --help | `cliproxy login --help` | Exits 0 |
+| orchestrate login --help | `orchestrate login --help` | Exits 0 |
+| mcp install --help | `mcp install --help` | Exits 0 |
+| mcp up --help | `mcp up --help` | Exits 0 |
+| mcp down --help | `mcp down --help` | Exits 0 |
+
+---
+
+## 7. Plan List Format / Dag List Format Alias (2–3 tests)
+
+| Test | Command | Notes |
+|------|---------|-------|
+| plan list --format md | `plan list --format md --cd <project>` | Table output |
+| plan list empty | `plan list --cd <empty-dag>` | No tasks |
+
+---
+
+## 8. Govern Conformance (Already Added — Verify)
+
+| Test | Command | Notes |
+|------|---------|-------|
+| govern conformance | `govern conformance` | Adapter suite |
+| govern conformance --format json | `govern conformance --format json` | JSON |
+
+---
+
+## 9. History / History-Events Alias Execution (2–3 tests)
+
+| Test | Command | Notes |
+|------|---------|-------|
+| observe history --limit | `observe history --limit 3` | Alias for history list |
+| history events --format json | `history events --format json --limit 3` | JSON |
+| govern verify --format json | `govern verify --format json` | Alias |
+
+---
+
+## 10. Closure-Pack / Archive / Benchmark Execution (3 tests)
+
+| Test | Command | Notes |
+|------|---------|-------|
+| closure-pack --cd no-dag | `closure-pack --cd <bare>` | Exits 1 (no DAG) |
+| govern closure-pack --help | `govern closure-pack --help` | Exits 0 |
+| archive --days 1 | `archive --days 1` | Exits 0 |
+
+---
+
+## Summary: Test Classes for Mega Chunk
+
+| # | Class Name | Tests |
+|---|------------|-------|
+| 1 | TestPlanAnalyzeExecution | 3 |
+| 2 | TestGovernVerifyShowPolicyFeedbackExecution | 4 |
+| 3 | TestObserveKpisModesOperationsExecution | 4 |
+| 4 | TestOrchestratePauseResumeAlias | 2 |
+| 5 | TestOrchestrateRunBgHelpAndUnknownAgent | 4 |
+| 6 | TestCliproxyMcpLoginHelpExecution | 5 |
+| 7 | TestPlanListFormatExecution | 2 |
+| 8 | TestGovernConformanceExecution | 2 (already added) |
+| 9 | TestHistoryEventsAliasExecution | 2 |
+| 10 | TestClosurePackArchiveExecution | 3 |
+
+**Total: ~31 tests across 10 classes**
+
+---
+
+## Execution Order
+
+1. Fix `plan_analyze_cmd` import in `main.py`.
+2. Add all test classes to `tests/test_e2e_cli.py`.
+3. Run full E2E suite; fix any failures.
+4. Update implementation log as Chunk 287 (Full Phase: Mega E2E Batch).
+
+---
+
+## Notes
+
+- All tests use `tmp_path` and `monkeypatch` for `THGENT_SESSION_DIR` where needed.
+- Tests are read-only and deterministic; no agents, no network.
+- Use `@pytest.mark.e2e` on all classes.
+- Prefer `assert result.exit_code == 0` or expected nonzero; avoid brittle output parsing where possible.
+
+---
+
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
+- [07-TEST-STRATEGY.md](../plans/07-TEST-STRATEGY.md) — test strategy

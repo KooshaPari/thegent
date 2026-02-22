@@ -80,9 +80,7 @@ class TestOnboardingWizard:
         assert all(isinstance(s, OnboardingStep) for s in steps)
 
     @pytest.mark.requirement("WL-218")
-    def test_get_steps_all_incomplete_initially(
-        self, wizard: OnboardingWizard
-    ) -> None:
+    def test_get_steps_all_incomplete_initially(self, wizard: OnboardingWizard) -> None:
         """Initially, all steps are incomplete."""
         steps = wizard.get_steps()
 
@@ -112,9 +110,7 @@ class TestOnboardingWizard:
         assert steps[1].completed is True
 
     @pytest.mark.requirement("WL-218")
-    def test_next_incomplete_returns_first(
-        self, wizard: OnboardingWizard
-    ) -> None:
+    def test_next_incomplete_returns_first(self, wizard: OnboardingWizard) -> None:
         """next_incomplete returns the first incomplete step."""
         next_step = wizard.next_incomplete()
 
@@ -122,9 +118,7 @@ class TestOnboardingWizard:
         assert next_step.step_id == "configure_connectors"
 
     @pytest.mark.requirement("WL-218")
-    def test_next_incomplete_after_completing_one(
-        self, wizard: OnboardingWizard
-    ) -> None:
+    def test_next_incomplete_after_completing_one(self, wizard: OnboardingWizard) -> None:
         """next_incomplete skips completed steps."""
         wizard.complete_step("configure_connectors")
         next_step = wizard.next_incomplete()
@@ -133,9 +127,7 @@ class TestOnboardingWizard:
         assert next_step.step_id == "validate_auth"
 
     @pytest.mark.requirement("WL-218")
-    def test_next_incomplete_returns_none_when_complete(
-        self, wizard: OnboardingWizard
-    ) -> None:
+    def test_next_incomplete_returns_none_when_complete(self, wizard: OnboardingWizard) -> None:
         """next_incomplete returns None when all steps are completed."""
         for step_dict in OnboardingWizard.STEPS:
             wizard.complete_step(step_dict["step_id"])
@@ -164,9 +156,7 @@ class TestOnboardingWizard:
         assert total == 6
 
     @pytest.mark.requirement("WL-218")
-    def test_progress_after_completing_steps(
-        self, wizard: OnboardingWizard
-    ) -> None:
+    def test_progress_after_completing_steps(self, wizard: OnboardingWizard) -> None:
         """progress returns correct counts as steps are completed."""
         wizard.complete_step("configure_connectors")
         wizard.complete_step("validate_auth")

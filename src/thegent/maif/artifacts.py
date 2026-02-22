@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 _log = logging.getLogger(__name__)
+MAIF_ARTIFACT_SCHEMA_VERSION = "wl277.maif.v1"
+SUPPORTED_MAIF_ARTIFACT_SCHEMA_VERSIONS = {MAIF_ARTIFACT_SCHEMA_VERSION}
 
 
 # ---------------------------------------------------------------------------
@@ -56,6 +58,16 @@ class MAIFArtifact:
     chain_of_thought: str | None = None
     verification_key_id: str | None = None
     previous_artifact_id: str | None = None
+
+
+def require_supported_schema_version(payload: dict[str, Any]) -> str:
+    """Validate required schema_version field for MAIF artifacts."""
+    schema_version = payload.get("schema_version")
+    if not isinstance(schema_version, str) or not schema_version:
+        raise ValueError("MAIF artifact payload missing required schema_version")
+    if schema_version not in SUPPORTED_MAIF_ARTIFACT_SCHEMA_VERSIONS:
+        raise ValueError(f"Unsupported MAIF artifact schema_version: {schema_version}")
+    return schema_version
 
 
 def generate_key_pair() -> tuple[rsa.RSAPrivateKey, rsa.RSAPublicKey]:

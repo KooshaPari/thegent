@@ -30,6 +30,9 @@ Use the interactive questionnaire and pick the profile that matches your actual 
 | `interfaces` | Declares external surfaces you must support |
 | `quality_profile` | Sets the default test and gate intensity |
 | `questionnaire_summary_hints` | Injects explicit planning prompts into `CLAUDE.md` |
+| `include_act` | Adds local GH Actions emulation script and act-oriented workflow task |
+| `include_qa_tools` | Adds QA tooling bootstrap tasks and quality-gate integration |
+| `include_pm_tools` | Adds PM/workstream helper tasks and workflow check tasks |
 
 ## How To Answer: Project-Type Matrix
 
@@ -55,7 +58,11 @@ Notes:
 - `.env.example` - Environment template
 - `docs/` - VitePress docsite (if `include_docs=true`)
 - `.github/workflows/ci.yml` - CI workflow (if `include_ci=true`)
+- `scripts/ci_local_gha.sh` - Local GH Actions emulation via `act` (if `include_act=true`).
+  Set `THGENT_ACT_DOCKERLESS=1` for dockerless local job mapping (no Docker required).
 - `hooks/` - Pre-commit hooks (if `include_hooks=true`)
+- `Quality` task presets under `Taskfile` and templates shared quality targets (if `include_qa_tools=true`)
+- `PM/Devops` helper tasks in Taskfile (if `include_pm_tools=true`)
 - Docker files (if `include_docker=true`)
 
 ## Manual Template Selection

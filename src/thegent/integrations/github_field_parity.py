@@ -21,9 +21,7 @@ class FieldParityReport:
 class GitHubFieldParityChecker:
     """Checks and reports on GitHub field update parity."""
 
-    def check(
-        self, field_name: str, github_value: str | None, local_value: str | None
-    ) -> FieldParityReport:
+    def check(self, field_name: str, github_value: str | None, local_value: str | None) -> FieldParityReport:
         """Check parity for a single field.
 
         Args:
@@ -42,9 +40,7 @@ class GitHubFieldParityChecker:
             in_parity=in_parity,
         )
 
-    def check_all(
-        self, fields: dict[str, tuple[str | None, str | None]]
-    ) -> list[FieldParityReport]:
+    def check_all(self, fields: dict[str, tuple[str | None, str | None]]) -> list[FieldParityReport]:
         """Check parity for multiple fields.
 
         Args:
@@ -59,9 +55,7 @@ class GitHubFieldParityChecker:
             reports.append(report)
         return reports
 
-    def out_of_parity(
-        self, reports: list[FieldParityReport]
-    ) -> list[FieldParityReport]:
+    def out_of_parity(self, reports: list[FieldParityReport]) -> list[FieldParityReport]:
         """Filter reports to only those out of parity.
 
         Args:

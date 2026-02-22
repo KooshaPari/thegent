@@ -687,7 +687,15 @@ class EnhancedRouter:
             RoutingResult with response and metadata
         """
         start_time = time.time()
-        selected_model = model
+        queue_metadata = kwargs.pop("queue_metadata", None)
+        if model is None and isinstance(queue_metadata, dict):
+            preferred_model = queue_metadata.get("model") or queue_metadata.get("preferred_model")
+            if isinstance(preferred_model, str) and preferred_model.strip():
+                selected_model = preferred_model.strip()
+            else:
+                selected_model = None
+        else:
+            selected_model = model
         is_fallback = False
 
         # Validate model metadata availability (silent check, no warning spam)

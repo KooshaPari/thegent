@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
 import platform
 import shutil
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -339,16 +341,46 @@ def _process_compose_path() -> Path | None:
         return None
 
 
+def _http_ok(url: str, timeout: float = 1.0) -> bool:
+    try:
+        import httpx
+
+        response = httpx.get(url, timeout=timeout)
+        return response.status_code < 500
+    except Exception:
+        return False
+
+
+def _services_healthy(settings: ThegentSettings) -> bool:
+    mcp_url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
+    proxy_port = int(os.getenv("THGENT_CLIPROXY_PORT", "8317"))
+    proxy_url = f"http://127.0.0.1:{proxy_port}/v1/models"
+    return _http_ok(mcp_url) and _http_ok(proxy_url)
+
+
+def _wait_for_services_healthy(settings: ThegentSettings, timeout_seconds: float = 20.0) -> bool:
+    deadline = time.monotonic() + max(0.1, timeout_seconds)
+    while time.monotonic() < deadline:
+        if _services_healthy(settings):
+            return True
+        time.sleep(0.5)
+    return _services_healthy(settings)
+
+
 def mcp_up(reload: bool = False) -> tuple[bool, str]:
     """Start MCP + proxy via process-compose. Returns (success, message)."""
     from thegent.errors import ConfigError, get_install_hint
 
+    settings = ThegentSettings()
     pc = _process_compose_path()
     if pc is None:
         return False, "process-compose.yaml not found. Run from thegent project root."
     proc = shutil.which("process-compose")
     if not proc:
         raise ConfigError("process-compose not installed.", get_install_hint("process-compose"))
+
+    if not reload and _services_healthy(settings):
+        return True, "MCP + proxy already healthy; skipping duplicate startup."
 
     # Handle reload: if True, stop first
     if reload:
@@ -373,6 +405,8 @@ def mcp_up(reload: bool = False) -> tuple[bool, str]:
             else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
         )
         return False, stderr_text or stdout_text or "process-compose up failed"
+    if not _wait_for_services_healthy(settings):
+        return False, "process-compose up completed but health probes did not converge in time."
     return True, f"MCP + proxy {'restarted' if reload else 'started'} (process-compose). MCP: {pc.parent}"
 
 
@@ -386,7 +420,7 @@ def mcp_down() -> tuple[bool, str]:
         return False, "process-compose not installed"
     # down connects to running server; must run from project dir
     result = run_subprocess_optimized(
-        [proc, "down"],
+        [proc, "-f", str(pc), "down"],
         check=False,
         cwd=pc.parent,
         capture_output=True,

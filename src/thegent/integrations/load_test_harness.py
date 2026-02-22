@@ -36,9 +36,7 @@ class LoadTestHarness:
         return items
 
     @staticmethod
-    def run_batch(
-        items: list[dict[str, Any]], batch_size: int
-    ) -> list[list[dict[str, Any]]]:
+    def run_batch(items: list[dict[str, Any]], batch_size: int) -> list[list[dict[str, Any]]]:
         """Split items into batches.
 
         Args:

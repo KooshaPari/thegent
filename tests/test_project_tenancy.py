@@ -650,6 +650,9 @@ class TestSetupProjectScaffoldCli:
             payload = json.loads(data_file.read_text(encoding="utf-8"))
             captured["project_type"] = payload["project_type"]
             captured["interfaces"] = payload["interfaces"]
+            captured["include_act"] = payload["include_act"]
+            captured["include_qa_tools"] = payload["include_qa_tools"]
+            captured["include_pm_tools"] = payload["include_pm_tools"]
 
         monkeypatch.setattr("thegent.cli.apps.project.subprocess.run", _fake_run)
 
@@ -658,6 +661,9 @@ class TestSetupProjectScaffoldCli:
         assert result.exit_code == 0, result.output
         assert captured["project_type"] == "service_api"
         assert captured["interfaces"] == ["http_api", "docs"]
+        assert captured["include_act"] is True
+        assert captured["include_qa_tools"] is True
+        assert captured["include_pm_tools"] is True
         cmd = captured["cmd"]
         assert isinstance(cmd, list)
         assert cmd[0:3] == ["uvx", "copier", "copy"]
@@ -679,6 +685,43 @@ class TestSetupProjectScaffoldCli:
         assert payload["dry_run"] is True
         assert payload["copier_cmd"] == []
         assert not dest.exists()
+
+    def test_scaffold_flags_disable_optional_assets(
+        self, cli_runner: CliRunner, project_cli, tmp_path: Path, monkeypatch
+    ) -> None:
+        captured: dict[str, object] = {}
+
+        def _fake_run(cmd: list[str], check: bool) -> None:
+            from pathlib import Path
+
+            assert check is True
+            captured["cmd"] = cmd
+            data_file = Path(cmd[5])
+            payload = json.loads(data_file.read_text(encoding="utf-8"))
+            captured["include_act"] = payload["include_act"]
+            captured["include_qa_tools"] = payload["include_qa_tools"]
+            captured["include_pm_tools"] = payload["include_pm_tools"]
+
+        monkeypatch.setattr("thegent.cli.apps.project.subprocess.run", _fake_run)
+
+        dest = tmp_path / "scaffold-disable-flags"
+        result = cli_runner.invoke(
+            project_cli,
+            [
+                "scaffold",
+                str(dest),
+                "--profile",
+                "service_api",
+                "--no-include-act",
+                "--no-include-qa-tools",
+                "--no-include-pm-tools",
+            ],
+        )
+
+        assert result.exit_code == 0, result.output
+        assert captured["include_act"] is False
+        assert captured["include_qa_tools"] is False
+        assert captured["include_pm_tools"] is False
 
     def test_scaffold_registers_project_tenancy(
         self, cli_runner: CliRunner, project_cli, tmp_path: Path, monkeypatch

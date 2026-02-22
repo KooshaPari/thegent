@@ -108,9 +108,9 @@ class ProcessRegistry:
         try:
             signal.signal(signal.SIGTERM, self._signal_handler)
             signal.signal(signal.SIGINT, self._signal_handler)
-        except (ValueError, OSError):
+        except (ValueError, OSError) as exc:
             # Signal handlers may not work in all contexts (e.g., threads)
-            pass
+            logger.debug(f"Signal registration failed: {exc}")
 
         self._cleanup_registered = True
 

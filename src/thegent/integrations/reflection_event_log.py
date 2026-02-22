@@ -11,6 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from thegent.docgen.code_annotation import CodeAnnotationGenerator
+
 
 @dataclass
 class ReflectionDecision:
@@ -33,6 +35,8 @@ class ReflectionDecision:
     connector: str
     timestamp: str
     cycle_id: str
+    direction: str = "remote_to_local"
+    mutation_id: str = ""
 
 
 class ReflectionEventLog:
@@ -52,6 +56,7 @@ class ReflectionEventLog:
 
         self.log_path = log_path
         self._events: list[ReflectionDecision] = []
+        self._annotation_generator = CodeAnnotationGenerator(annotation_format="json")
         self._load_existing_events()
 
     def _load_existing_events(self) -> None:
@@ -84,6 +89,17 @@ class ReflectionEventLog:
         # Append to JSONL file
         with open(self.log_path, "a") as f:
             event_dict = asdict(decision)
+            event_dict["annotation"] = self._annotation_generator.format_reflection_annotation(
+                {
+                    "schema": "reflection-annotation-v1",
+                    "wl_id": decision.wl_id,
+                    "connector": decision.connector,
+                    "direction": decision.direction,
+                    "decision": decision.decision_type,
+                    "mutation_id": decision.mutation_id or f"{decision.wl_id}:{decision.cycle_id}",
+                    "timestamp": decision.timestamp,
+                }
+            )
             f.write(json.dumps(event_dict) + "\n")
 
     def read_all(self) -> list[ReflectionDecision]:

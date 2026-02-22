@@ -124,27 +124,51 @@ def _fallback_sessions(*, include_meta: bool = False) -> list[dict[str, Any]] | 
     return payload if include_meta else sessions
 
 
-def _fallback_tools() -> list[dict[str, Any]]:
+def _fallback_tools(*, include_meta: bool = False) -> list[dict[str, Any]] | dict[str, Any]:
     """Collect tool availability from PATH lookup."""
     tools: list[dict[str, Any]] = []
+    available = 0
     for tool in _PROBE_TOOLS:
         path = shutil.which(tool)
         tools.append({"tool": tool, "available": path is not None, "path": path})
-    return tools
+        if path is not None:
+            available += 1
+
+    metadata: dict[str, Any] = {
+        "source": "path_probe",
+        "status": "ok",
+        "tools_count": len(_PROBE_TOOLS),
+        "available_count": available,
+        "command_count": len(tools),
+    }
+    payload: dict[str, Any] = {"tools": tools, "fallback": metadata}
+    return payload if include_meta else tools
 
 
-def _fallback_processes(pattern: str | None = None) -> list[dict[str, Any]]:
+def _fallback_processes(
+    pattern: str | None = None, *, include_meta: bool = False
+) -> list[dict[str, Any]] | dict[str, Any]:
     """Collect matching processes with psutil."""
+    metadata: dict[str, Any] = {
+        "source": "psutil",
+        "status": "ok",
+        "process_count": 0,
+        "pattern": pattern or _DEFAULT_PATTERN,
+    }
     try:
         import psutil
     except Exception:
-        return []
+        metadata.update({"status": "probe_failed", "error_type": "psutil_missing"})
+        payload: dict[str, Any] = {"processes": [], "fallback": metadata}
+        return payload if include_meta else payload["processes"]
 
     patt = pattern or _DEFAULT_PATTERN
     try:
         regex = re.compile(patt, re.IGNORECASE)
     except re.error:
-        return []
+        metadata.update({"status": "probe_failed", "error_type": "invalid_pattern"})
+        payload = {"processes": [], "fallback": metadata}
+        return payload if include_meta else payload["processes"]
 
     now = time.time()
     matched: list[dict[str, Any]] = []
@@ -173,7 +197,9 @@ def _fallback_processes(pattern: str | None = None) -> list[dict[str, Any]]:
             )
         except Exception:
             continue
-    return matched
+    metadata["process_count"] = len(matched)
+    payload = {"processes": matched, "fallback": metadata}
+    return payload if include_meta else matched
 
 
 class DiscoveryClient:
@@ -200,13 +226,51 @@ class DiscoveryClient:
     def last_fallback_metadata(self) -> dict[str, Any]:
         return dict(self._last_fallback_metadata)
 
+    def _normalize_fallback_payload(self, component: str, payload: Any) -> list[dict[str, Any]]:
+        items: Any = []
+        fallback_payload: dict[str, Any] | None = None
+        if isinstance(payload, dict):
+            if component in payload and isinstance(payload[component], list):
+                items = payload[component]
+            fallback_payload = payload.get("fallback")
+            if not isinstance(fallback_payload, dict):
+                fallback_payload = None
+        elif isinstance(payload, list):
+            items = payload
+
+        self._last_fallback_metadata[component] = self._fallback_metadata(component, fallback_payload)
+        if isinstance(items, list):
+            return items
+        return []
+
     def _record_run_diagnostic(self, payload: dict[str, Any], *, log_warning: bool = False) -> None:
         self._last_run_diagnostics = payload
         if log_warning:
             _log.warning("discovery_native_run_failed %s", payload)
 
+    def _fallback_metadata(self, component: str, fallback_payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        metadata: dict[str, Any] = {
+            "component": component,
+            "status": "degraded",
+            "source": "native_fallback",
+        }
+        if fallback_payload is not None:
+            merged_payload = {k: v for k, v in fallback_payload.items() if k != "status"}
+            metadata.update(merged_payload)
+
+        if self.is_native:
+            if self.last_run_diagnostics:
+                metadata["native_run"] = self.last_run_diagnostics
+            elif self.binary_path is not None:
+                metadata["native_run"] = {"status": "not_executed", "reason": "unexpected_payload_shape"}
+        else:
+            metadata["native_run"] = {"status": "disabled", "reason": "missing_discovery_binary"}
+
+        return metadata
+
     def _run(self, *args: str) -> Any | None:
         if not self.is_native or self.binary_path is None:
+            self._last_run_diagnostics = None
             return None
         try:
             proc = subprocess.run(
@@ -281,14 +345,18 @@ class DiscoveryClient:
     def sessions(self) -> list[dict[str, Any]]:
         out = self._run("sessions") if self.is_native else None
         if isinstance(out, list):
+            self._last_fallback_metadata.pop("sessions", None)
             return out
         payload = _fallback_sessions(include_meta=True)
-        self._last_fallback_metadata["sessions"] = payload["fallback"]
-        return payload["sessions"]
+        return self._normalize_fallback_payload("sessions", payload)
 
     def tools(self) -> list[dict[str, Any]]:
         out = self._run("tools") if self.is_native else None
-        return out if isinstance(out, list) else _fallback_tools()
+        if isinstance(out, list):
+            self._last_fallback_metadata.pop("tools", None)
+            return out
+        payload = _fallback_tools(include_meta=True)
+        return self._normalize_fallback_payload("tools", payload)
 
     def processes(self, pattern: str | None = None) -> list[dict[str, Any]]:
         out = (
@@ -296,7 +364,11 @@ class DiscoveryClient:
             if (self.is_native and pattern)
             else (self._run("processes") if self.is_native else None)
         )
-        return out if isinstance(out, list) else _fallback_processes(pattern)
+        if isinstance(out, list):
+            self._last_fallback_metadata.pop("processes", None)
+            return out
+        payload = _fallback_processes(pattern, include_meta=True)
+        return self._normalize_fallback_payload("processes", payload)
 
     def all(self, pattern: str | None = None) -> dict[str, Any]:
         out = (
@@ -307,11 +379,12 @@ class DiscoveryClient:
         if isinstance(out, dict):
             return out
         session_payload = _fallback_sessions(include_meta=True)
-        self._last_fallback_metadata["sessions"] = session_payload["fallback"]
+        tools_payload = _fallback_tools(include_meta=True)
+        processes_payload = _fallback_processes(pattern, include_meta=True)
         return {
-            "sessions": session_payload["sessions"],
-            "tools": _fallback_tools(),
-            "processes": _fallback_processes(pattern),
+            "sessions": self._normalize_fallback_payload("sessions", session_payload),
+            "tools": self._normalize_fallback_payload("tools", tools_payload),
+            "processes": self._normalize_fallback_payload("processes", processes_payload),
             "fallback_metadata": dict(self._last_fallback_metadata),
         }
 

@@ -1,6 +1,5 @@
 import type MarkdownIt from 'markdown-it'
 import type { RuleBlock } from 'markdown-it/lib/parser_block'
-import { ContentTabs } from '../theme/components/ContentTabs.vue'
 
 /**
  * Parse tab definitions from markdown content
@@ -21,25 +20,122 @@ import { ContentTabs } from '../theme/components/ContentTabs.vue'
  */
 function parseTabsContent(content: string): { tabs: Array<{id: string, label: string, content: string}> } {
   const tabs: Array<{id: string, label: string, content: string}> = []
+  const lines = content.split(/\r?\n/)
+  let inTab = false
+  let currentId = ''
+  let currentContent: string[] = []
 
-  // Split by ::: tab pattern
-  const tabRegex = /:::\s*tab\s+(\S+)([\s\S]*?):::/g
-  let match
+  const tabStart = /^:::\s*tab\s+(.+?)\s*$/
+  const tabEnd = /^:::\s*$/
 
-  while ((match = tabRegex.exec(content)) !== null) {
-    const id = match[1]
-    const tabContent = match[2].trim()
-    tabs.push({ id, label: id, content: tabContent })
+  for (const line of lines) {
+    const startMatch = line.match(tabStart)
+    if (startMatch) {
+      if (inTab && currentContent.length > 0) {
+        const content = currentContent.join('\n').trim()
+        tabs.push({ id: currentId, label: currentId, content })
+      }
+
+      inTab = true
+      currentId = startMatch[1].trim()
+      currentContent = []
+      continue
+    }
+
+    if (inTab && tabEnd.test(line)) {
+      const content = currentContent.join('\n').trim()
+      tabs.push({ id: currentId, label: currentId, content })
+      inTab = false
+      currentId = ''
+      currentContent = []
+      continue
+    }
+
+    if (inTab) {
+      currentContent.push(line)
+    }
+  }
+
+  if (inTab && currentContent.length > 0) {
+    const content = currentContent.join('\n').trim()
+    tabs.push({ id: currentId, label: currentId, content })
   }
 
   return { tabs }
 }
 
+function normalizeTabId(rawId: string): string {
+  return rawId
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]/g, '')
+}
+
 export function contentTabsPlugin(md: MarkdownIt) {
+  const parseTabsBlock = (state: {
+    src: string
+    bMarks: number[]
+    eMarks: number[]
+    tShift: number[]
+  }, startLine: number, endLine: number) => {
+    const tabStart = /^:::\s*tab\s+(.+?)\s*$/
+    const tabsStart = /^:::\s*tabs\s*$/
+    const tabsEnd = /^:::\s*$/
+
+    let closingLine = -1
+    let line = startLine + 1
+    let depth = 1
+    let inTab = false
+
+    for (; line <= endLine; line++) {
+      const lineStart = state.bMarks[line] + state.tShift[line]
+      const lineEnd = state.eMarks[line]
+      const lineContent = state.src.slice(lineStart, lineEnd)
+
+      if (tabsStart.test(lineContent) && line !== startLine) {
+        depth += 1
+        continue
+      }
+
+      if (tabsEnd.test(lineContent)) {
+        if (inTab) {
+          inTab = false
+          continue
+        }
+
+        if (depth <= 1) {
+          closingLine = line
+          break
+        }
+
+        depth -= 1
+        continue
+      }
+
+      if (tabStart.test(lineContent)) {
+        inTab = true
+        continue
+      }
+    }
+
+    if (closingLine === -1) {
+      return { content: '', tabs: [], closingLine: -1 }
+    }
+
+    const rawContent = state.src.slice(
+      state.bMarks[startLine + 1],
+      state.bMarks[closingLine]
+    )
+    const { tabs } = parseTabsContent(rawContent)
+
+    return { content: rawContent, tabs, closingLine }
+  }
+
   // Create custom container for tabs
   const tabsContainer: RuleBlock = (state, startLine, endLine, silent) => {
     const start = state.bMarks[startLine] + state.tShift[startLine]
-    const max = state.eMarks[endLine]
+    const max = state.eMarks[startLine]
     const line = state.src.slice(start, max)
 
     // Check for ::: tabs opening
@@ -52,63 +148,30 @@ export function contentTabsPlugin(md: MarkdownIt) {
     }
 
     // Find the closing :::
-    let closingLine = -1
-    let contentStart = startLine + 1
-
-    for (let i = startLine + 1; i <= endLine; i++) {
-      const lineStart = state.bMarks[i] + state.tShift[i]
-      const lineContent = state.src.slice(lineStart, state.eMarks[i])
-
-      if (lineContent.match(/^:::\s*$/)) {
-        closingLine = i
-        break
-      }
-    }
+    const parsed = parseTabsBlock(state, startLine, endLine)
+    const closingLine = parsed.closingLine
+    const { tabs } = parsed
 
     if (closingLine === -1) {
       return false
     }
 
     // Get the content between opening and closing
-    const rawContent = state.src.slice(
-      state.bMarks[contentStart],
-      state.bMarks[closingLine]
-    )
-
-    // Parse tab content
-    const { tabs } = parseTabsContent(rawContent)
+    if (tabs.length === 0) {
+      return false
+    }
 
     // Generate a unique ID for this tabs instance
     const tabsId = `tabs-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
-    // Build the component HTML
-    const tabsHtml = []
-    tabsHtml.push(`<div class="content-tabs-wrapper" data-tabs-id="${tabsId}">`)
-    tabsHtml.push(`<ContentTabs :tabs='${JSON.stringify(tabs)}'>`)
-
-    tabs.forEach((tab, index) => {
-      const slotName = `tab-${tab.id}`
-      tabsHtml.push(`<template #${slotName}>`)
-      // Process markdown content for each tab
-      const tempState = state.md.parse(tab.content, {})
-      tabsHtml.push(state.md.renderer.render(tempState, {}, {}))
-      tabsHtml.push(`</template>`)
-    })
-
-    tabsHtml.push('</ContentTabs>')
-    tabsHtml.push('</div>')
-
-    // Create token for the opening tag
-    const token = state.push('tabs_container_open', 'div', 1)
-    token.attrSet('class', 'content-tabs-wrapper')
-    token.attrSet('data-tabs-id', tabsId)
-    token.map = [startLine, closingLine]
+    // Remove temporary HTML token from output and emit marker token only.
 
     // We need to render the component inline - use a simpler approach
     // Just mark the section with special markers that Vue can pick up
     const markerToken = state.push('tabs_marker', '', 0)
     markerToken.content = JSON.stringify({ tabs, tabsId })
     markerToken.map = [startLine, closingLine]
+    state.line = closingLine + 1
 
     return true
   }
@@ -123,10 +186,13 @@ export function contentTabsPlugin(md: MarkdownIt) {
     const token = tokens[idx]
     try {
       const data = JSON.parse(token.content)
-      const tabs = data.tabs.map((t: {id: string, label: string}) => ({
-        id: t.id,
-        label: t.label.charAt(0).toUpperCase() + t.label.slice(1)
-      }))
+      const tabs = data.tabs.map((t: {id: string, label: string}) => {
+        const id = normalizeTabId(t.id)
+        return {
+          id,
+          label: t.label.charAt(0).toUpperCase() + t.label.slice(1)
+        }
+      })
 
       // Generate the Vue component HTML with pre-rendered content
       let html = `<div class="content-tabs-wrapper" data-tabs-id="${data.tabsId}">`
@@ -143,8 +209,9 @@ export function contentTabsPlugin(md: MarkdownIt) {
 
       data.tabs.forEach((tab: {id: string, label: string, content: string}, idx: number) => {
         const display = idx === 0 ? 'block' : 'none'
-        html += `<div class="tab-body" data-tab="${tab.id}" style="display: ${display}">`
-        html += tab.content
+        const normalizedId = normalizeTabId(tab.id)
+        html += `<div class="tab-body" data-tab="${normalizedId}" style="display: ${display}">`
+        html += md.render(tab.content)
         html += `</div>`
       })
 

@@ -1,0 +1,220 @@
+# WBS-to-Issue Import Matrix
+
+**Status:** Baseline
+**Date:** 2026-02-15
+**Source:** `docs/docset/thegent-wbs-final.md`
+
+---
+
+## Purpose
+
+Maps work packages from the final WBS to issue/ticket identifiers for execution tracking and import into project management systems.
+
+---
+
+## Phase 0: Foundation and Baseline
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-0001 | Baseline telemetry contracts and run IDs | — | Done (Chunk 219) |
+| WP-0002 | Canonical schemas for chunk/evidence/policy events | — | Done (contracts package) |
+| WP-0003 | Planner dependency graph normalization | — | Done |
+| WP-0004 | Initial risk and confidence scoring framework | — | Done |
+| WP-0005 | Program operating model and ownership map | — | Done |
+
+---
+
+## Phase 1: Core Routing and Deterministic Execution
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-1001 | Dependency-aware routing engine | — | Done |
+| WP-1002 | Priority and urgency lane model | — | Done |
+| WP-1003 | Idempotent execution envelope | — | Done |
+| WP-1004 | Deterministic phase transition contracts | — | Done |
+| WP-1005 | Evidence capture at every promotion gate | — | Done |
+| WP-1006 | Conflict arbitration rules and quorum policy | — | Done |
+| WP-1007 | Child-task routing policy by capability and confidence | — | Done |
+| WP-1008 | Replay-safe run history and correlation IDs | — | Done |
+
+---
+
+## Phase 2: Reliability and Recovery Hardening
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-2001 | Checkpoint/rollback service | — | Done |
+| WP-2002 | Retry strategy with adaptive backoff and guardrails | — | Done |
+| WP-2003 | Circuit breakers for tool/model/storage classes | — | Done |
+| WP-2004 | Recovery playbook automation and idempotency tokens | — | Done |
+| WP-2005 | Failure taxonomy and recurrence clustering | — | Done |
+| WP-2006 | Regression prevention probes at pre-promote stage | — | Done |
+| WP-2007 | Evidence completeness linting | — | Done |
+| WP-2008 | Controlled oversight path for repeated failures | — | Done |
+
+---
+
+## Phase 3: Governance and Security Enforcement
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-3001 | Policy pre-check and gate evaluator | — | Done |
+| WP-3002 | Signed action artifacts for critical operations | — | Done |
+| WP-3003 | Override path with TTL and revalidation rules | — | Done |
+| WP-3004 | Immutable audit trail and query interface | — | Done |
+| WP-3005 | Policy drift detection and sweep automation | — | Done |
+| WP-3006 | Compliance evidence retention by domain | — | Done |
+| WP-3007 | Trust boundary checks for environment transitions | — | Done |
+| WP-3008 | Escalation SLA and governance queue operations | — | Done |
+
+---
+
+## Phase 4: Human-Centered UX and Explainability
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-4001 | Operator cockpit summary model | — | Done |
+| WP-4002 | Concise and detailed explanation tiers | — | Done |
+| WP-4003 | One-click safe fallback options | — | Done |
+| WP-4004 | Interruption taxonomy and fatigue controls | — | Done |
+| WP-4005 | State freshness checks and stale-state prevention | — | Done |
+| WP-4006 | Continuity handoff summaries across shifts | — | Done |
+| WP-4007 | Decision replay and rationale snapshots | — | Done |
+| WP-4008 | Feedback loops and confidence calibration | — | Done |
+
+---
+
+## Phase 5: Adaptive Scale and Continuity Automation
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-5001 | Adaptive concurrency controller | — | Done |
+| WP-5002 | Burst load classification and safe-mode controls | — | Done |
+| WP-5003 | Cost-aware routing and workload shaping | — | Done |
+| WP-5004 | Non-critical deferral rules with explicit ETA | — | Done |
+| WP-5005 | Long-running continuity watchdog | — | Pending |
+| WP-5006 | Handoff integrity enforcement | — | Pending |
+| WP-5007 | Recovery under sustained load drills | — | Done |
+| WP-5008 | Load-aware recommendation tuning | — | Done |
+
+---
+
+## Phase 6: Enterprise Readiness and Launch Closure
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-6001 | End-to-end dress rehearsal | — | Done |
+| WP-6002 | Security and compliance signoff package | closure-pack | Done |
+| WP-6003 | Reliability and SLO certification | — | Done |
+| WP-6004 | Runbook finalization and on-call readiness | RUNBOOK.md | Done |
+| WP-6005 | KPI baselines and launch thresholds | — | Done |
+| WP-6006 | Decommission/sunset plan for temporary controls | DECOMMISSIONING_PLAN.md | Done |
+| WP-6007 | Post-launch observation and rollback reserve | — | Pending |
+| WP-6008 | Formal closure and successor roadmap | — | Done |
+
+---
+
+## Phase 7: Convergence and Predictive Reliability
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-7001 | Contract capability negotiation protocol | — | Planned |
+| WP-7002 | Contract namespace registry and negotiation metadata | — | Planned |
+| WP-7003 | Canonical parser state machine for streaming/chunks | — | Planned |
+| WP-7004 | Partial-state commit guard and recovery protocol | — | Planned |
+| WP-7005 | Semantic validator policy layer | — | Planned |
+| WP-7006 | Adapter conformance suite v1 (4 providers) | — | Planned |
+| WP-7007 | Fallback confidence scoring and downgrade path | — | Planned |
+| WP-7008 | Dual-read / dual-write migration controller | — | Planned |
+| WP-7009 | Contract health dashboard and trend alerting | — | Planned |
+| WP-7010 | Contract drift remediation policy hooks | — | Planned |
+
+## Phase 8: Predictive Reliability and Load Intelligence
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-8001 | Plan graph extraction for risk simulation | — | Planned |
+| WP-8002 | Monte Carlo / PERT uncertainty engine integration | — | Planned |
+| WP-8003 | Bottleneck and contention analyzer | — | Planned |
+| WP-8004 | Reschedule recommendation service | — | Planned |
+| WP-8005 | Predictive continuity risk model | — | Planned |
+| WP-8006 | Surge watcher and preemptive safe-mode control | — | Planned |
+| WP-8007 | Adaptive routing budget guard | — | Planned |
+| WP-8008 | Simulation-backed runbook authoring | — | Planned |
+| WP-8009 | Intervention automation policy | — | Planned |
+| WP-8010 | Forecast accuracy audit and calibration | — | Planned |
+
+## Phase 9: Productized Operations and Ecosystem Extension
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-9001 | Unified operations surface (operation protocol v1) | — | Planned |
+| WP-9002 | Explainability stack (summary/detail/trace) | — | Planned |
+| WP-9003 | Replay and sandbox environment isolation | — | Planned |
+| WP-9004 | Continuity handoff enforcement in workflow | — | Planned |
+| WP-9005 | Universal tool adapter layer | — | Planned |
+| WP-9006 | Decision replay and what-if simulation | — | Planned |
+| WP-9007 | Confidence governance and escalation thresholds | — | Planned |
+| WP-9008 | Operator safety controls and fallback UI | — | Planned |
+| WP-9009 | Evidence continuity and audit linkage | — | Planned |
+| WP-9010 | Documentation and training package for phase 7–9 | — | Planned |
+
+## Phase 10: Adaptive Interface and Tool Ecosystem Convergence
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-10001 | Operation envelope schema v2 | THEGENT-WP-10001 | Planned |
+| WP-10002 | Capability registry service | THEGENT-WP-10002 | Planned |
+| WP-10003 | Dispatch graph implementation | THEGENT-WP-10003 | Planned |
+| WP-10004 | Adapter admission and trust policy | THEGENT-WP-10004 | Planned |
+| WP-10005 | Endpoint consolidation and aliases | THEGENT-WP-10005 | Planned |
+| WP-10006 | Unknown-operation migration UX | THEGENT-WP-10006 | Planned |
+| WP-10007 | Dispatch traceability and audit context | THEGENT-WP-10007 | Planned |
+| WP-10008 | Plugin lifecycle and conformance checks | THEGENT-WP-10008 | Planned |
+| WP-10009 | Backward-compatible API evolution controls | THEGENT-WP-10009 | Planned |
+| WP-10010 | Cross-phase operations operator documentation | THEGENT-WP-10010 | Planned |
+
+## Phase 11: Autonomous Optimization and Predictive Resilience
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-11001 | SLO regulator loop controller | THEGENT-WP-11001 | Planned |
+| WP-11002 | Forecasting engine hardening | THEGENT-WP-11002 | Planned |
+| WP-11003 | Predictor confidence calibration | THEGENT-WP-11003 | Planned |
+| WP-11004 | Preemption and saturation avoidance policies | THEGENT-WP-11004 | Planned |
+| WP-11005 | Self-healing recommendation engine | THEGENT-WP-11005 | Planned |
+| WP-11006 | Adaptive task shaping | THEGENT-WP-11006 | Planned |
+| WP-11007 | Continuity risk predictor | THEGENT-WP-11007 | Planned |
+| WP-11008 | Learning loop and policy guardrails | THEGENT-WP-11008 | Planned |
+| WP-11009 | Safe-mode action governance | THEGENT-WP-11009 | Planned |
+| WP-11010 | Forecast and control evidence pack | THEGENT-WP-11010 | Planned |
+
+## Phase 12: Enterprise-Grade Intuition, Explainability, and Hardening
+
+| WP ID | Description | Issue ID | Status |
+|-------|-------------|----------|--------|
+| WP-12001 | Explainability contract implementation | THEGENT-WP-12001 | Planned |
+| WP-12002 | Escalation fatigue and noise control | THEGENT-WP-12002 | Planned |
+| WP-12003 | Replay sandbox hardening | THEGENT-WP-12003 | Planned |
+| WP-12004 | What-if simulation and branch governance | THEGENT-WP-12004 | Planned |
+| WP-12005 | Handoff confidence and continuity envelope | THEGENT-WP-12005 | Planned |
+| WP-12006 | Evidence graph and export bundling | THEGENT-WP-12006 | Planned |
+| WP-12007 | Persona profiles and access constraints | THEGENT-WP-12007 | Planned |
+| WP-12008 | Operational learning assets | THEGENT-WP-12008 | Planned |
+| WP-12009 | Automation of release docs packaging | THEGENT-WP-12009 | Planned |
+| WP-12010 | Phase 10–12 closure and handoff note | THEGENT-WP-12010 | Planned |
+
+---
+
+## Import Notes
+
+- **Issue ID**: Use the `THEGENT-WP-####` pre-mapped key convention when importing into GitHub Issues, Jira, Linear, etc.
+- **Status**: Done = implemented; Planned = ready for execution; Pending = blocked or partially complete.
+- Use WP ID as prefix for issue keys (e.g. `THEGENT-WP-3006`).
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

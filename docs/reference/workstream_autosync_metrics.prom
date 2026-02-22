@@ -1,0 +1,28 @@
+# HELP thegent_autosync_cycle_outcomes_total Total autosync cycles by outcome
+# TYPE thegent_autosync_cycle_outcomes_total counter
+thegent_autosync_cycle_outcomes_total{status="success"} 1
+# HELP thegent_autosync_cycles_total Total autosync cycles
+# TYPE thegent_autosync_cycles_total counter
+thegent_autosync_cycles_total 2
+# HELP thegent_autosync_items_total Total autosync items observed
+# TYPE thegent_autosync_items_total counter
+thegent_autosync_items_total{kind="processed"} 1
+# HELP thegent_autosync_cycle_health Autosync cycle health (1=ok, 0=degraded)
+# TYPE thegent_autosync_cycle_health gauge
+thegent_autosync_cycle_health 0
+# HELP thegent_autosync_cycle_duration_seconds Autosync cycle duration in seconds
+# TYPE thegent_autosync_cycle_duration_seconds histogram
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="0.005"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="0.01"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="0.025"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="0.05"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="0.1"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="0.25"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="0.5"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="1"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="2.5"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="5"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="10"} 1
+thegent_autosync_cycle_duration_seconds_bucket{status="success",le="+Inf"} 1
+thegent_autosync_cycle_duration_seconds_count{status="success"} 1
+thegent_autosync_cycle_duration_seconds_sum{status="success"} 0.00402171

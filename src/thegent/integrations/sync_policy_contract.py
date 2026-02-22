@@ -114,9 +114,7 @@ class SyncPolicyValidator:
             errors.append("version must be non-empty")
 
         # Validate allowed_connectors (simple mode) or connectors (full mode)
-        connectors = policy.allowed_connectors or (
-            list(policy.connectors.keys()) if policy.connectors else []
-        )
+        connectors = policy.allowed_connectors or (list(policy.connectors.keys()) if policy.connectors else [])
         if not connectors:
             errors.append("allowed_connectors must be non-empty")
 

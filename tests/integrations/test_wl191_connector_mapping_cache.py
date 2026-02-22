@@ -151,3 +151,41 @@ class TestConnectorMappingCache:
         cache.invalidate("github", "status")
         assert cache.get("github", "status") is None
         assert cache.get("linear", "status") == "linear_field_1"
+
+    @pytest.mark.requirement("WL-191")
+    def test_list_cached_wl_ids(self, cache: ConnectorMappingCache) -> None:
+        """list_cached_wl_ids returns connector-scoped WL mappings only."""
+        cache.put("github", "WL-191", "gh_1")
+        cache.put("github", "status", "gh_status")
+        cache.put("linear", "WL-193", "linear_1")
+
+        assert cache.list_cached_wl_ids("github") == ["WL-191"]
+        assert cache.list_cached_wl_ids("linear") == ["WL-193"]
+
+    @pytest.mark.requirement("WL-191")
+    def test_put_empty_field_id_raises(self, cache: ConnectorMappingCache) -> None:
+        """put fails loudly when field_id is empty."""
+        with pytest.raises(ValueError, match="field_id cannot be empty"):
+            cache.put("github", "status", "   ")
+
+    @pytest.mark.requirement("WL-265")
+    def test_bootstrap_required_true_when_missing_required_fields(self, cache: ConnectorMappingCache) -> None:
+        """bootstrap_required returns True when required fields are missing."""
+        cache.put("github", "status", "field_status")
+        assert cache.bootstrap_required("github", ["status", "priority"]) is True
+
+    @pytest.mark.requirement("WL-265")
+    def test_bootstrap_persists_required_mappings(self, cache: ConnectorMappingCache) -> None:
+        """bootstrap writes mappings and satisfies bootstrap_required."""
+        cache.bootstrap("github", {"status": "f1", "priority": "f2"})
+        assert cache.bootstrap_required("github", ["status", "priority"]) is False
+        assert cache.get("github", "status") == "f1"
+        assert cache.get("github", "priority") == "f2"
+
+    @pytest.mark.requirement("WL-270")
+    def test_get_with_status_marks_stale_entries(self, cache: ConnectorMappingCache) -> None:
+        """get_with_status returns explicit stale marker for expired entries."""
+        cache.put("github", "status", "field_1", ttl_seconds=0)
+        payload = cache.get_with_status("github", "status")
+        assert payload["field_id"] is None
+        assert payload["status"] == "stale"

@@ -12,6 +12,7 @@ any external dependency. prometheus_client is NOT required.
 from __future__ import annotations
 
 import threading
+from pathlib import Path
 from typing import Any, ClassVar
 
 METRIC_HELP: dict[str, tuple[str, str]] = {
@@ -23,6 +24,19 @@ METRIC_HELP: dict[str, tuple[str, str]] = {
     "thegent_cache_misses_total": ("counter", "Total cache misses"),
     "thegent_circuit_breaker_open": ("gauge", "Circuit breaker state (1=open, 0=closed)"),
     "thegent_errors_total": ("counter", "Total LLM gateway errors"),
+    "thegent_autosync_cycles_total": ("counter", "Total autosync cycles"),
+    "thegent_autosync_items_total": ("counter", "Total autosync items observed"),
+    "thegent_autosync_connector_operations_total": ("counter", "Total autosync connector operations"),
+    "thegent_autosync_connector_operation_duration_seconds": (
+        "histogram",
+        "Autosync connector operation duration in seconds",
+    ),
+    "thegent_board_sync_cycles_total": ("counter", "Total board sync cycles by source and status"),
+    "thegent_board_sync_cycle_duration_seconds": ("histogram", "Board sync cycle duration in seconds"),
+    "thegent_autosync_cycle_outcomes_total": ("counter", "Total autosync cycles by outcome"),
+    "thegent_autosync_cycle_duration_seconds": ("histogram", "Autosync cycle duration in seconds"),
+    "thegent_autosync_circuit_open_total": ("counter", "Autosync operations blocked by open connector circuits"),
+    "thegent_autosync_cycle_health": ("gauge", "Autosync cycle health (1=ok, 0=degraded)"),
 }
 
 
@@ -177,6 +191,55 @@ class MetricsCollector:
             1.0 if is_open else 0.0,
         )
 
+    def record_autosync_cycle(self, *, items_count: int, ignored_count: int, had_error: bool) -> None:
+        """Record one autosync cycle aggregate."""
+        self.inc("thegent_autosync_cycles_total", {})
+        self.inc("thegent_autosync_items_total", {"kind": "processed"}, float(items_count))
+        if ignored_count:
+            self.inc("thegent_autosync_items_total", {"kind": "ignored"}, float(ignored_count))
+        self.set_gauge("thegent_autosync_cycle_health", {}, 0.0 if had_error else 1.0)
+
+    def record_autosync_connector_operation(
+        self,
+        *,
+        connector: str,
+        direction: str,
+        result: str,
+        duration_seconds: float,
+    ) -> None:
+        """Record one autosync connector operation."""
+        labels = {
+            "connector": connector,
+            "direction": direction,
+            "result": result,
+        }
+        self.inc("thegent_autosync_connector_operations_total", labels)
+        self.observe(
+            "thegent_autosync_connector_operation_duration_seconds",
+            {"connector": connector, "direction": direction},
+            duration_seconds,
+        )
+
+    def record_autosync_circuit_open(self, *, connector: str, direction: str) -> None:
+        """Record a connector operation blocked by an open circuit."""
+        self.inc(
+            "thegent_autosync_circuit_open_total",
+            {"connector": connector, "direction": direction},
+        )
+
+    def record_board_sync_cycle(self, *, source: str, status: str, duration_seconds: float) -> None:
+        """Record one board sync cycle and duration."""
+        self.inc(
+            "thegent_board_sync_cycles_total",
+            {"source": source, "status": status},
+        )
+        self.observe("thegent_board_sync_cycle_duration_seconds", {"source": source}, duration_seconds)
+
+    def record_autosync_cycle_result(self, *, status: str, duration_seconds: float) -> None:
+        """Record one autosync cycle outcome and duration."""
+        self.inc("thegent_autosync_cycle_outcomes_total", {"status": status})
+        self.observe("thegent_autosync_cycle_duration_seconds", {"status": status}, duration_seconds)
+
     def render_text(self) -> str:
         """Render all metrics in Prometheus text format 0.0.4.
 
@@ -250,6 +313,11 @@ class MetricsCollector:
                     lines.append(f"{name}_sum {total:g}")
 
         return "\n".join(lines) + ("\n" if lines else "")
+
+    def export_text_file(self, output_path: Path) -> None:
+        """Write rendered Prometheus text to a file."""
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(self.render_text(), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------

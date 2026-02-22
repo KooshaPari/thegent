@@ -133,6 +133,7 @@ class TestCircuitBreakerSuccess:
 
         # Trigger transition to half-open
         import time
+
         time.sleep(0.02)
         assert cb.is_open() is False  # Transitions to HALF_OPEN
         assert cb.state == CircuitState.HALF_OPEN
@@ -156,6 +157,7 @@ class TestCircuitBreakerRecovery:
         assert cb.is_open() is True
 
         import time
+
         time.sleep(0.02)
 
         assert cb.is_open() is False  # is_open() triggers state check
@@ -170,6 +172,7 @@ class TestCircuitBreakerRecovery:
         assert cb.state == CircuitState.OPEN
 
         import time
+
         time.sleep(0.02)
 
         # Trigger half-open check
@@ -233,6 +236,7 @@ class TestCircuitBreakerProperties:
 
         # Wait for timeout to expire
         import time
+
         time.sleep(0.02)
 
         # Trigger half-open by calling is_open()

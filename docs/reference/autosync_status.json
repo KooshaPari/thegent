@@ -1,0 +1,92 @@
+{
+  "last_cycle_at": "2026-02-22T23:32:36.496644+00:00",
+  "total_cycles": 1,
+  "last_error": null,
+  "health": "ok",
+  "runner": {
+    "enabled": true,
+    "is_running": false,
+    "last_sync_time": "2026-02-22T23:32:36.495183+00:00",
+    "github_enabled": true,
+    "linear_enabled": false,
+    "last_operation": null,
+    "open_blockers": [],
+    "failure_queue_size": 27,
+    "next_cycle_interval_seconds": 300,
+    "connector_health": [
+      {
+        "connector": "github",
+        "status": "healthy",
+        "reason": null
+      }
+    ],
+    "metadata": {
+      "status": "fresh",
+      "age_seconds": 0
+    },
+    "correlation_id": "8b70b08b-4fc0-44a0-841c-cb3f9b8f9056",
+    "local_orphan_report": {
+      "local_ids": [
+        "WL-189",
+        "WL-196"
+      ],
+      "mapped_remote_ids": [],
+      "local_orphan_ids": [
+        "WL-189",
+        "WL-196"
+      ],
+      "orphan_count": 2
+    },
+    "ignored_wl_ids": [],
+    "scope_filtered_wl_ids": [],
+    "no_op_summary": null,
+    "trend_sample": null
+  },
+  "open_blockers": [],
+  "failure_queue_size": 27,
+  "checkpoint": null,
+  "connector_health": [
+    {
+      "connector": "github",
+      "status": "healthy",
+      "reason": null
+    }
+  ],
+  "next_cycle_interval_seconds": 300,
+  "incident_snapshot": {
+    "captured_at": "2026-02-22T23:32:36.496156+00:00",
+    "items_count": 2,
+    "policy_hash": "2e9e6033105acd2d226cceed532a2784296cc127",
+    "connector_health": [
+      {
+        "connector": "github",
+        "status": "healthy",
+        "reason": null
+      }
+    ],
+    "metadata": {
+      "status": "fresh",
+      "age_seconds": 0
+    },
+    "last_error": null,
+    "failure_queue_size": 27,
+    "mutation_summary": null
+  },
+  "correlation_id": "8b70b08b-4fc0-44a0-841c-cb3f9b8f9056",
+  "local_orphan_report": {
+    "local_ids": [
+      "WL-189",
+      "WL-196"
+    ],
+    "mapped_remote_ids": [],
+    "local_orphan_ids": [
+      "WL-189",
+      "WL-196"
+    ],
+    "orphan_count": 2
+  },
+  "ignored_wl_ids": [],
+  "scope_filtered_wl_ids": [],
+  "no_op_summary": null,
+  "trend_sample": null
+}

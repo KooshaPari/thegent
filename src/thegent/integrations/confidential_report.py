@@ -6,6 +6,7 @@ Provides report sensitivity levels and field redaction for confidential data.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, ClassVar, cast
@@ -28,6 +29,15 @@ class ConfidentialReportFilter:
         "api_key",
         "auth",
         "credential",
+    }
+    REDACT_VALUE_PATTERNS: ClassVar[tuple[re.Pattern[str], ...]] = (
+        re.compile(r"(?i)\b(gh[pousr]_[a-z0-9]{8,}|sk-[a-z0-9]{8,}|xox[baprs]-[a-z0-9-]{8,})\b"),
+        re.compile(r"(?i)\b(bearer\s+[a-z0-9._-]{8,})\b"),
+    )
+    REDACTION_POLICY: ClassVar[dict[str, str]] = {
+        "field_substring_policy": "match-any(REDACT_FIELDS)",
+        "value_regex_policy": "match-any(REDACT_VALUE_PATTERNS)",
+        "replacement": "[REDACTED]",
     }
 
     @classmethod
@@ -70,6 +80,8 @@ class ConfidentialReportFilter:
             return result
         if isinstance(obj, list):
             return [cls._redact_recursive(item) for item in obj]
+        if isinstance(obj, str) and cls._is_redact_value(obj):
+            return "[REDACTED]"
         return obj
 
     @classmethod
@@ -86,6 +98,11 @@ class ConfidentialReportFilter:
         """
         key_lower = key.lower()
         return any(field in key_lower for field in cls.REDACT_FIELDS)
+
+    @classmethod
+    def _is_redact_value(cls, value: str) -> bool:
+        """Check if a string value matches sensitive token patterns."""
+        return any(pattern.search(value) is not None for pattern in cls.REDACT_VALUE_PATTERNS)
 
     @classmethod
     def wrap_report(cls, report: dict[str, Any], sensitivity: ReportSensitivity, report_id: str) -> dict[str, Any]:
@@ -106,3 +123,8 @@ class ConfidentialReportFilter:
             "data": redacted_data,
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
+
+    @classmethod
+    def redact_artifact_payload(cls, payload: Any) -> Any:
+        """Apply deterministic redaction to arbitrary artifact payloads."""
+        return cls._redact_recursive(payload)

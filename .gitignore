@@ -70,3 +70,6 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Local GH Actions emulation artifacts
+.github/act-events/

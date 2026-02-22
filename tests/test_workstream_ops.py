@@ -3,6 +3,7 @@
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -89,6 +90,33 @@ class TestWorkStreamOps:
         assert progress["total"] == 3  # WS-001, WS-002, WS-003
         assert progress["completed"] == 1  # WS-003 is already completed
         assert progress["backlog"] == 2  # WS-001, WS-002
+
+    def test_claim_item_returns_false_when_lock_contention(self, work_stream_file: Path) -> None:
+        """Return false when the file lock cannot be acquired."""
+        ops = WorkStreamOps(base_dir=work_stream_file.parent)
+        ops.work_stream_path = work_stream_file
+
+        with patch(
+            "thegent.utils.workstream_ops._locked_file_access", side_effect=BlockingIOError(11, "resource unavailable")
+        ):
+            success = ops.claim_item("WS-006", "Test-Agent")
+
+        assert success is False
+        assert "| WS-006 | Test-Agent |" not in work_stream_file.read_text()
+
+    def test_complete_item_returns_false_when_lock_contention(self, work_stream_file: Path) -> None:
+        """Return false when complete cannot acquire write lock."""
+        ops = WorkStreamOps(base_dir=work_stream_file.parent)
+        ops.work_stream_path = work_stream_file
+
+        with patch(
+            "thegent.utils.workstream_ops._locked_file_access", side_effect=BlockingIOError(11, "resource unavailable")
+        ):
+            success = ops.complete_item("WS-001", "Test-Agent")
+
+        assert success is False
+        content = work_stream_file.read_text()
+        assert "| WS-001 | Test-Agent |" not in content
 
     def test_find_work_stream_fallback(self, tmp_path: Path) -> None:
         """Test fallback location for find_work_stream."""

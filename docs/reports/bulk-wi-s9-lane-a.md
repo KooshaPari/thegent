@@ -1,47 +1,52 @@
 ### [WL-5790] governance_fs line 127 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
 **Blocked by:** none
 **Source:** [thegent/docs/reports/bulk-wi-b1-lane-f.md:496]
-Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
+Implemented explicit directory traversal errors in TODO scanning (`count_todos`) with fail-fast IO handling.
+**Evidence:** `cd hooks/hook-dispatcher && cargo test -q count_todos` (4 passed).
 
 ### [WL-5791] governance_fs line 137 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
 **Blocked by:** none
 **Source:** [thegent/docs/reports/bulk-wi-b1-lane-f.md:505]
-Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
+Implemented explicit propagation for recursive TODO scan descent and IO failures (`count_todos`) instead of silent skipping.
+**Evidence:** `cd hooks/hook-dispatcher && cargo test -q count_todos` (4 passed).
 
 ### [WL-5792] governance_fs line 142 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
 **Blocked by:** none
 **Source:** [thegent/docs/reports/bulk-wi-b1-lane-f.md:514]
-Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
+Implemented explicit TODO/FIXME file-read path with `?` semantics and concrete failure propagation.
+**Evidence:** `cd hooks/hook-dispatcher && cargo test -q count_todos::tests::count_todos_is_empty_for_unsupported_extensions` (1 passed).
 
 ### [WL-5793] governance_fs line 143 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
 **Blocked by:** none
 **Source:** [thegent/docs/reports/bulk-wi-b1-lane-f.md:523]
-Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
+Implemented regex-based token counting (`\\b(TODO|FIXME)\\b`) to avoid placeholder-style substring false positives.
+**Evidence:** `cd hooks/hook-dispatcher && cargo test -q count_todos::tests::count_todos_ignores_markers_without_boundaries` (1 passed).
 
 ### [WL-5794] main line 23 backlog marker
-**Status:** OPEN
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
 **Blocked by:** none
 **Source:** [thegent/docs/reports/bulk-wi-b1-lane-f.md:532]
-Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
+`run_governance_scan` now handles TODO scan failures explicitly and exits governance non-zero when TODO scanning fails.
+**Evidence:** `cd hooks/hook-dispatcher && cargo test -q` (4 passed, including module integration that exercises error paths).
 
 ### [WL-5795] main line 650 backlog marker
 **Status:** OPEN

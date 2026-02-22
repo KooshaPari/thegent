@@ -61,16 +61,18 @@ class DeadLetterQueue:
         Args:
             entry: The DeadLetterEntry to persist.
         """
-        line = json.dumps({
-            "entry_id": entry.entry_id,
-            "wl_id": entry.wl_id,
-            "connector": entry.connector,
-            "operation": entry.operation,
-            "payload": entry.payload,
-            "error": entry.error,
-            "created_at": entry.created_at.isoformat(),
-            "retry_count": entry.retry_count,
-        })
+        line = json.dumps(
+            {
+                "entry_id": entry.entry_id,
+                "wl_id": entry.wl_id,
+                "connector": entry.connector,
+                "operation": entry.operation,
+                "payload": entry.payload,
+                "error": entry.error,
+                "created_at": entry.created_at.isoformat(),
+                "retry_count": entry.retry_count,
+            }
+        )
         with open(self.store_path, "a") as f:
             f.write(line + "\n")
 
@@ -109,10 +111,7 @@ class DeadLetterQueue:
         Returns:
             List of DeadLetterEntry objects eligible for replay.
         """
-        return [
-            e for e in self.read_all()
-            if e.retry_count < self.max_retries
-        ]
+        return [e for e in self.read_all() if e.retry_count < self.max_retries]
 
     def mark_retried(self, entry_id: str) -> None:
         """Increment retry_count for an entry and rewrite file.
@@ -138,16 +137,18 @@ class DeadLetterQueue:
         # Rewrite entire file
         with open(self.store_path, "w") as f:
             for entry in all_entries:
-                line = json.dumps({
-                    "entry_id": entry.entry_id,
-                    "wl_id": entry.wl_id,
-                    "connector": entry.connector,
-                    "operation": entry.operation,
-                    "payload": entry.payload,
-                    "error": entry.error,
-                    "created_at": entry.created_at.isoformat(),
-                    "retry_count": entry.retry_count,
-                })
+                line = json.dumps(
+                    {
+                        "entry_id": entry.entry_id,
+                        "wl_id": entry.wl_id,
+                        "connector": entry.connector,
+                        "operation": entry.operation,
+                        "payload": entry.payload,
+                        "error": entry.error,
+                        "created_at": entry.created_at.isoformat(),
+                        "retry_count": entry.retry_count,
+                    }
+                )
                 f.write(line + "\n")
 
     def purge_resolved(self) -> int:
@@ -163,16 +164,18 @@ class DeadLetterQueue:
         # Rewrite file with only pending entries
         with open(self.store_path, "w") as f:
             for entry in pending_entries:
-                line = json.dumps({
-                    "entry_id": entry.entry_id,
-                    "wl_id": entry.wl_id,
-                    "connector": entry.connector,
-                    "operation": entry.operation,
-                    "payload": entry.payload,
-                    "error": entry.error,
-                    "created_at": entry.created_at.isoformat(),
-                    "retry_count": entry.retry_count,
-                })
+                line = json.dumps(
+                    {
+                        "entry_id": entry.entry_id,
+                        "wl_id": entry.wl_id,
+                        "connector": entry.connector,
+                        "operation": entry.operation,
+                        "payload": entry.payload,
+                        "error": entry.error,
+                        "created_at": entry.created_at.isoformat(),
+                        "retry_count": entry.retry_count,
+                    }
+                )
                 f.write(line + "\n")
 
         return removed_count

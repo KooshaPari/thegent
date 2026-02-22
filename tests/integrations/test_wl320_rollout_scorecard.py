@@ -9,7 +9,10 @@ import pytest
 
 from thegent.integrations.rollout_scorecard import (
     RolloutScorecard,
+    RolloutProfile,
     ScorecardCheck,
+    load_rollout_profile,
+    validate_rollout_profile,
 )
 
 
@@ -285,3 +288,34 @@ class TestRolloutScorecardSummary:
 
         auth_check = next(c for c in summary["checks"] if c["name"] == "auth_scopes")
         assert auth_check["details"] == ""
+
+
+class TestStagedRolloutProfiles:
+    """Tests for WL-239 staged rollout profiles."""
+
+    @pytest.mark.requirement("WL-320")
+    def test_load_dev_staging_prod_profiles(self) -> None:
+        dev = load_rollout_profile("dev")
+        staging = load_rollout_profile("staging")
+        prod = load_rollout_profile("prod")
+        assert dev.name == "dev"
+        assert staging.name == "staging"
+        assert prod.name == "prod"
+        assert dev.max_failure_rate > prod.max_failure_rate
+
+    @pytest.mark.requirement("WL-320")
+    def test_profile_loader_rejects_unknown_profile(self) -> None:
+        with pytest.raises(ValueError, match="Unsupported rollout profile"):
+            load_rollout_profile("qa")
+
+    @pytest.mark.requirement("WL-320")
+    def test_validate_profile_requires_prod_safety_defaults(self) -> None:
+        unsafe = RolloutProfile(
+            name="prod",
+            max_failure_rate=0.05,
+            max_p95_latency_ms=1000.0,
+            require_manual_approval=True,
+            auto_rollback_enabled=False,
+        )
+        with pytest.raises(ValueError, match="must enable auto_rollback"):
+            validate_rollout_profile(unsafe)

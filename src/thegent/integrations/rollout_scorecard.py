@@ -29,6 +29,60 @@ class ScorecardCheck:
     details: str = ""
 
 
+@dataclass(frozen=True)
+class RolloutProfile:
+    """Environment rollout profile with strict defaults."""
+
+    name: str
+    max_failure_rate: float
+    max_p95_latency_ms: float
+    require_manual_approval: bool
+    auto_rollback_enabled: bool
+
+
+ROLLOUT_PROFILES: dict[str, RolloutProfile] = {
+    "dev": RolloutProfile(
+        name="dev",
+        max_failure_rate=0.20,
+        max_p95_latency_ms=2000.0,
+        require_manual_approval=False,
+        auto_rollback_enabled=False,
+    ),
+    "staging": RolloutProfile(
+        name="staging",
+        max_failure_rate=0.08,
+        max_p95_latency_ms=1200.0,
+        require_manual_approval=True,
+        auto_rollback_enabled=True,
+    ),
+    "prod": RolloutProfile(
+        name="prod",
+        max_failure_rate=0.02,
+        max_p95_latency_ms=800.0,
+        require_manual_approval=True,
+        auto_rollback_enabled=True,
+    ),
+}
+
+
+def load_rollout_profile(name: str) -> RolloutProfile:
+    """Load one of the supported staged rollout profiles."""
+    normalized = name.strip().lower()
+    if normalized not in ROLLOUT_PROFILES:
+        raise ValueError(f"Unsupported rollout profile: {name}")
+    return ROLLOUT_PROFILES[normalized]
+
+
+def validate_rollout_profile(profile: RolloutProfile) -> None:
+    """Validate rollout profile thresholds and safety settings."""
+    if profile.max_failure_rate <= 0 or profile.max_failure_rate >= 1:
+        raise ValueError(f"Invalid max_failure_rate for profile {profile.name}: {profile.max_failure_rate}")
+    if profile.max_p95_latency_ms <= 0:
+        raise ValueError(f"Invalid max_p95_latency_ms for profile {profile.name}: {profile.max_p95_latency_ms}")
+    if profile.name in {"staging", "prod"} and not profile.auto_rollback_enabled:
+        raise ValueError(f"{profile.name} profile must enable auto_rollback")
+
+
 class RolloutScorecard:
     """Enterprise rollout scorecard for release readiness assessment.
 

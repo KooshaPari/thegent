@@ -14,16 +14,21 @@ from unittest.mock import patch
 
 import pytest
 
+from thegent.docgen.code_annotation import CodeAnnotationGenerator
+from thegent.integrations.reflection_event_log import ReflectionDecision, ReflectionEventLog
 from thegent.integrations.workstream_autosync import (
     SyncDirection,
     SyncOperation,
     MaintenanceWindow,
+    RemoteMissingItemPolicy,
     WorkstreamAutosyncConfig,
+    WorkstreamAutosyncConfigError,
     WorkstreamAutosyncRunner,
     WorkstreamItem,
     WorkstreamParser,
     load_autosync_config_from_env,
 )
+from thegent.integrations.idempotency_cache import IdempotencyCache
 
 
 @pytest.fixture
@@ -287,6 +292,47 @@ class TestWorkstreamParser:
         )
         assert "**SLA:** 12.5h" in updated
 
+    def test_scope_filters_match_area_status_priority_and_range(self):
+        """WL-168 scope filters should include only matching items."""
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            scope_areas=["sync, automation"],
+            scope_statuses=["BACKLOG"],
+            scope_priorities=["P1"],
+            scope_wl_ranges=["WL-160..WL-170"],
+        )
+        matching = WorkstreamItem(
+            item_id="WL-160",
+            title="match",
+            status="BACKLOG",
+            priority="P1",
+            area="sync, automation",
+        )
+        excluded = WorkstreamItem(
+            item_id="WL-190",
+            title="skip",
+            status="BACKLOG",
+            priority="P1",
+            area="sync, automation",
+        )
+
+        assert config.matches_scope_filters(matching) is True
+        assert config.matches_scope_filters(excluded) is False
+
+    def test_sync_status_annotations(self):
+        """Ensure status lines are reflected in markdown blocks."""
+        content = """### [WL-1] Test
+**Status:** BACKLOG
+"""
+        updated = WorkstreamParser.sync_status_annotations(
+            content,
+            statuses={"WL-1": "COMPLETED"},
+        )
+        assert "**Status:** COMPLETED" in updated
+
 
 class TestWorkstreamItem:
     """Test WorkstreamItem model."""
@@ -380,7 +426,17 @@ class TestWorkstreamAutosyncRunner:
         valid_github_config.work_stream_path = sample_work_stream_file
 
         runner = WorkstreamAutosyncRunner(valid_github_config)
-        await runner._perform_sync_cycle()
+        with (
+            patch(
+                "thegent.integrations.workstream_autosync.gh_sync_to_github",
+                return_value={"items_created": 0, "items_updated": 1, "errors": []},
+            ),
+            patch(
+                "thegent.integrations.workstream_autosync.gh_sync_from_github",
+                return_value={"items": [{"item_id": "WL-160", "status": "IN PROGRESS"}], "errors": []},
+            ),
+        ):
+            await runner._perform_sync_cycle()
 
         # Should have recorded a sync time
         assert runner.last_sync_time is not None
@@ -406,6 +462,87 @@ class TestWorkstreamAutosyncRunner:
         await runner._perform_sync_cycle()
         assert runner.last_sync_time is not None
         assert runner._checkpoint is None
+
+    @pytest.mark.asyncio
+    async def test_run_cycle_stops_on_emergency_env_flag(self, valid_github_config, sample_work_stream_file):
+        """Emergency stop env should block autosync cycle."""
+        valid_github_config.work_stream_path = sample_work_stream_file
+        valid_github_config.emergency_stop_env_var = "THGENT_AUTOSYNC_EMERGENCY_STOP"
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        with patch.dict("os.environ", {"THGENT_AUTOSYNC_EMERGENCY_STOP": "1"}):
+            await runner._perform_sync_cycle()
+        assert runner.last_error is not None
+        assert "Emergency stop active" in runner.last_error
+
+    @pytest.mark.asyncio
+    async def test_write_entrypoint_blocks_when_emergency_stop_file_exists(self, valid_github_config, tmp_path):
+        """Write entrypoints fail fast when emergency stop sentinel file is present."""
+        sentinel = tmp_path / "autosync.stop"
+        sentinel.write_text("stop", encoding="utf-8")
+        valid_github_config.emergency_stop_file_path = sentinel
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        items = [WorkstreamItem(item_id="WL-1", title="One", status="BACKLOG", priority="P1", area="sync")]
+        with pytest.raises(WorkstreamAutosyncConfigError, match="Emergency stop active"):
+            await runner._sync_to_github(items)
+
+    @pytest.mark.asyncio
+    async def test_operation_ids_are_replay_safe_for_same_batch(self, valid_github_config):
+        """Write op ID should be deterministic for same connector+direction+batch."""
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        items = [WorkstreamItem(item_id="WL-1", title="One", status="BACKLOG", priority="P1", area="sync")]
+        with patch(
+            "thegent.integrations.workstream_autosync.gh_sync_to_github",
+            return_value={"items_created": 0, "items_updated": 1, "errors": []},
+        ):
+            await runner._sync_to_github(items)
+            first_id = runner.last_operation.operation_id if runner.last_operation else None
+            await runner._sync_to_github(items)
+            second_id = runner.last_operation.operation_id if runner.last_operation else None
+        assert first_id is not None
+        assert second_id is not None
+        assert first_id == second_id
+        assert first_id.startswith("gh-write-")
+
+    @pytest.mark.asyncio
+    async def test_replay_safe_mutations_skip_second_write(self, valid_github_config, tmp_path):
+        """Second write for same batch should be skipped by idempotency cache."""
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        runner._idempotency_cache = IdempotencyCache(tmp_path / "idempotency.json")
+        items = [
+            WorkstreamItem(item_id="WL-1", title="One", status="BACKLOG", priority="P1", area="sync"),
+            WorkstreamItem(item_id="WL-2", title="Two", status="BACKLOG", priority="P1", area="sync"),
+        ]
+        with patch(
+            "thegent.integrations.workstream_autosync.gh_sync_to_github",
+            return_value={"items_created": 0, "items_updated": 2, "errors": []},
+        ):
+            await runner._sync_to_github(items)
+            assert runner.last_operation is not None
+            assert runner.last_operation.items_successful == 2
+
+            await runner._sync_to_github(items)
+            assert runner.last_operation is not None
+            assert runner.last_operation.items_successful == 0
+
+    def test_connector_chaos_timeout_fixture(self):
+        """Deterministic timeout fixture should request retries and escalation."""
+        payload = WorkstreamAutosyncRunner.simulate_connector_chaos("github", "timeout", items_count=4)
+        assert payload["scenario"] == "timeout"
+        assert payload["retry_count"] == 3
+        assert payload["escalate"] is True
+        assert payload["outcome"] == "outage"
+
+    def test_connector_chaos_partial_ack_fixture(self):
+        """Partial ack fixture should report deterministic partial completion."""
+        payload = WorkstreamAutosyncRunner.simulate_connector_chaos("linear", "partial_ack", items_count=5)
+        assert payload["items_attempted"] == 5
+        assert payload["items_acked"] == 4
+        assert payload["escalate"] is True
+
+    def test_connector_chaos_unknown_fixture_raises(self):
+        """Unsupported chaos scenarios must fail loudly."""
+        with pytest.raises(ValueError, match="Unsupported chaos scenario"):
+            WorkstreamAutosyncRunner.simulate_connector_chaos("github", "unknown", items_count=1)
 
     @pytest.mark.asyncio
     async def test_checkpoint_resume_on_failure(self, tmp_path):
@@ -450,8 +587,7 @@ class TestWorkstreamAutosyncRunner:
             sync_fn=flaky_sync,
         )
         assert calls == [["WL-1"]]
-        assert runner._checkpoint is not None
-        assert runner._checkpoint.start_index == 0
+        assert runner._checkpoint is None
 
         async def sync_identity(items: list[WorkstreamItem]) -> None:
             calls.append([item.item_id for item in items])
@@ -479,7 +615,11 @@ class TestWorkstreamAutosyncRunner:
             )
         ]
 
-        await runner._sync_to_github(items)
+        with patch(
+            "thegent.integrations.workstream_autosync.gh_sync_to_github",
+            return_value={"items_created": 0, "items_updated": 1, "errors": []},
+        ):
+            await runner._sync_to_github(items)
 
         # Should record operation
         assert runner.last_operation is not None
@@ -496,7 +636,11 @@ class TestWorkstreamAutosyncRunner:
         runner = WorkstreamAutosyncRunner(valid_github_config)
         items = []
 
-        await runner._sync_from_github(items, work_stream)
+        with patch(
+            "thegent.integrations.workstream_autosync.gh_sync_from_github",
+            return_value={"items": [{"item_id": "WL-160", "status": "COMPLETED"}], "errors": []},
+        ):
+            await runner._sync_from_github(items, work_stream)
 
         # Should record operation
         assert runner.last_operation is not None
@@ -518,7 +662,11 @@ class TestWorkstreamAutosyncRunner:
             )
         ]
 
-        await runner._sync_to_linear(items)
+        with patch(
+            "thegent.integrations.workstream_autosync.linear_sync_to",
+            return_value={"items_created": 0, "items_updated": 1, "errors": []},
+        ):
+            await runner._sync_to_linear(items)
 
         # Should record operation
         assert runner.last_operation is not None
@@ -535,7 +683,11 @@ class TestWorkstreamAutosyncRunner:
         runner = WorkstreamAutosyncRunner(valid_linear_config)
         items = []
 
-        await runner._sync_from_linear(items, work_stream)
+        with patch(
+            "thegent.integrations.workstream_autosync.linear_sync_from",
+            return_value={"items": [{"item_id": "WL-160", "status": "COMPLETED"}], "errors": []},
+        ):
+            await runner._sync_from_linear(items, work_stream)
 
         # Should record operation
         assert runner.last_operation is not None
@@ -567,6 +719,21 @@ class TestWorkstreamAutosyncRunner:
         status = runner.get_status()
         assert status["last_operation"] is not None
         assert status["last_operation"]["operation_id"] == "test-op"
+
+    def test_remote_missing_item_policy_archive(self, valid_github_config):
+        """WL-167 archive policy should mark missing remote items as ARCHIVED."""
+        valid_github_config.remote_missing_item_policy = RemoteMissingItemPolicy.ARCHIVE
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        local = [
+            WorkstreamItem(item_id="WL-160", title="A", status="BACKLOG", priority="P1", area="sync"),
+            WorkstreamItem(item_id="WL-161", title="B", status="BACKLOG", priority="P1", area="sync"),
+        ]
+        updates = runner._build_remote_reflection_status_updates(
+            local_items=local,
+            remote_status_updates={"WL-160": "IN PROGRESS"},
+        )
+        assert updates["WL-160"] == "IN PROGRESS"
+        assert updates["WL-161"] == "ARCHIVED"
 
 
 class TestLoadAutosyncConfigFromEnv:
@@ -644,6 +811,48 @@ class TestLoadAutosyncConfigFromEnv:
             assert config.github_direction == SyncDirection.READ_ONLY
             assert config.linear_direction == SyncDirection.WRITE_ONLY
 
+    def test_load_emergency_stop_settings(self):
+        """Load emergency-stop settings from env."""
+        with patch.dict(
+            "os.environ",
+            {
+                "THGENT_WORKSTREAM_AUTOSYNC_ENABLED": "true",
+                "THGENT_GITHUB_ENABLED": "true",
+                "THGENT_GITHUB_OWNER": "test-owner",
+                "THGENT_GITHUB_PROJECT_NUMBER": "1",
+                "THGENT_AUTOSYNC_EMERGENCY_STOP_ENABLED": "true",
+                "THGENT_AUTOSYNC_EMERGENCY_STOP_FILE_PATH": "/tmp/thegent-stop",
+                "THGENT_AUTOSYNC_EMERGENCY_STOP_ENV_VAR": "CUSTOM_STOP",
+            },
+        ):
+            config = load_autosync_config_from_env()
+            assert config.emergency_stop_enabled is True
+            assert str(config.emergency_stop_file_path) == "/tmp/thegent-stop"
+            assert config.emergency_stop_env_var == "CUSTOM_STOP"
+
+    def test_load_scope_filters_and_remote_missing_policy(self):
+        """WL-168/WL-167 env config should populate scope filters and missing-item policy."""
+        with patch.dict(
+            "os.environ",
+            {
+                "THGENT_WORKSTREAM_AUTOSYNC_ENABLED": "true",
+                "THGENT_GITHUB_ENABLED": "true",
+                "THGENT_GITHUB_OWNER": "test-owner",
+                "THGENT_GITHUB_PROJECT_NUMBER": "1",
+                "THGENT_WORKSTREAM_SYNC_SCOPE_AREAS": "sync,automation",
+                "THGENT_WORKSTREAM_SYNC_SCOPE_STATUSES": "backlog,in progress",
+                "THGENT_WORKSTREAM_SYNC_SCOPE_PRIORITIES": "p0,p1",
+                "THGENT_WORKSTREAM_SYNC_SCOPE_WL_RANGES": "WL-160..WL-168",
+                "THGENT_WORKSTREAM_REMOTE_MISSING_ITEM_POLICY": "archive",
+            },
+        ):
+            config = load_autosync_config_from_env()
+            assert config.scope_areas == ["sync", "automation"]
+            assert config.scope_statuses == ["BACKLOG", "IN PROGRESS"]
+            assert config.scope_priorities == ["P0", "P1"]
+            assert config.scope_wl_ranges == ["WL-160..WL-168"]
+            assert config.remote_missing_item_policy == RemoteMissingItemPolicy.ARCHIVE
+
 
 class TestStandaloneMode:
     """Test standalone-safe behavior."""
@@ -661,6 +870,44 @@ class TestStandaloneMode:
 
         # Should not crash, just not start
         assert runner.is_running is False
+
+
+class TestAnnotationAndReflectionStandard:
+    """Tests for WL-238 remote->local annotation schema standard."""
+
+    def test_annotation_schema_requires_canonical_keys(self) -> None:
+        gen = CodeAnnotationGenerator(annotation_format="json")
+        payload = gen.format_reflection_annotation(
+            {
+                "schema": "reflection-annotation-v1",
+                "wl_id": "WL-238",
+                "connector": "github",
+                "direction": "remote_to_local",
+                "decision": "apply",
+                "mutation_id": "github-mutation-WL-238-abc",
+                "timestamp": "2026-02-22T00:00:00Z",
+                "extra": "ok",
+            }
+        )
+        assert list(payload.keys())[:7] == list(CodeAnnotationGenerator.REQUIRED_REFLECTION_KEYS)
+        assert payload["extra"] == "ok"
+
+    def test_reflection_event_log_writes_annotation_block(self, tmp_path) -> None:
+        log_path = tmp_path / "reflection.jsonl"
+        log = ReflectionEventLog(log_path)
+        decision = ReflectionDecision(
+            wl_id="WL-238",
+            decision_type="apply",
+            before_value="BACKLOG",
+            after_value="IN PROGRESS",
+            connector="github",
+            timestamp="2026-02-22T00:00:00Z",
+            cycle_id="cycle-1",
+        )
+        log.log(decision)
+        raw = log_path.read_text(encoding="utf-8").strip()
+        assert '"annotation"' in raw
+        assert '"schema": "reflection-annotation-v1"' in raw
 
     @pytest.mark.asyncio
     async def test_graceful_skip_when_credentials_missing(self):

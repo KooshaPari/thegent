@@ -12,6 +12,7 @@ import contextlib
 import importlib
 import inspect
 import json
+import logging
 import os
 import platform
 import shutil
@@ -22,6 +23,8 @@ from pathlib import Path
 from typing import Any
 
 from thegent.infra.cache_v2 import CacheV2
+
+logger = logging.getLogger(__name__)
 
 
 class MojoNotAvailableError(Exception):
@@ -528,8 +531,9 @@ Visit https://docs.modular.com/mojo/manual/install/ for platform-specific instru
 
     async def shutdown(self) -> None:
         """Clean up resources."""
-        # Clear cache if needed
+        logger.debug("Shutting down MojoBridge cache at %s", self.cache_root)
         await self._cache.clear_expired()
+        await self._cache.clear()
 
 
 # Global bridge instance

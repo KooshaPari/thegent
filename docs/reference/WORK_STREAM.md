@@ -4002,7 +4002,7 @@ Add periodic mismatch scanner for local workstream versus external tracker recor
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-175] Single-Writer Lock Discipline
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** concurrency, reliability
 **Effort:** M
@@ -4025,7 +4025,7 @@ Harden startup/restart semantics and operator docs for long-running autosync ser
 **Implementation:** `src/thegent/integrations/process_compose_ops.py`, tests in `tests/test_wl176_process_compose_ops.py`
 
 ### [WL-177] Parser/Reflection Edge-Case Unit Tests
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tests, parser
 **Effort:** M
@@ -4036,7 +4036,7 @@ Add unit coverage for malformed markdown blocks and status reflection edge cases
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-178] GitHub Sync Integration Tests
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tests, github
 **Effort:** M
@@ -4047,7 +4047,7 @@ Add integration tests validating pull/push behavior against mocked GitHub CLI re
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-179] Linear Sync Integration Tests
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tests, linear
 **Effort:** M

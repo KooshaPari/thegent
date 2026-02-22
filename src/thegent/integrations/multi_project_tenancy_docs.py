@@ -24,9 +24,7 @@ class MultiProjectTenancyDocs:
         """Initialize the documentation registry."""
         self._entries: dict[str, TenancyDocEntry] = {}
 
-    def register(
-        self, project_id: str, namespace: str, description: str = ""
-    ) -> TenancyDocEntry:
+    def register(self, project_id: str, namespace: str, description: str = "") -> TenancyDocEntry:
         """Register a project's tenancy namespace in documentation.
 
         Args:
@@ -37,9 +35,7 @@ class MultiProjectTenancyDocs:
         Returns:
             The created TenancyDocEntry.
         """
-        entry = TenancyDocEntry(
-            project_id=project_id, namespace=namespace, description=description
-        )
+        entry = TenancyDocEntry(project_id=project_id, namespace=namespace, description=description)
         self._entries[project_id] = entry
         return entry
 

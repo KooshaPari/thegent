@@ -57,9 +57,7 @@ class TenantNamespaceResolver:
         """
         prefix = f"{self.tenant_id}:"
         if not namespaced_key.startswith(prefix):
-            raise ValueError(
-                f"Key '{namespaced_key}' does not belong to tenant '{self.tenant_id}'"
-            )
+            raise ValueError(f"Key '{namespaced_key}' does not belong to tenant '{self.tenant_id}'")
         return namespaced_key[len(prefix) :]
 
     def is_owned(self, namespaced_key: str) -> bool:

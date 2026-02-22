@@ -13,6 +13,9 @@ from thegent.config import ThegentSettings
 from thegent.execution import RunRegistry
 
 _log = logging.getLogger(__name__)
+_PARSE_DETAIL_LIMIT = 120
+_PARSE_LINE_LIMIT = 140
+_PARSE_SAMPLE_LIMIT = 5
 
 
 @dataclass
@@ -31,12 +34,16 @@ class LogParseStats:
     out_of_window: int = 0
     unsupported_type: int = 0
     sampled_errors: list[str] = field(default_factory=list)
-    sample_limit: int = 5
+    sample_limit: int = _PARSE_SAMPLE_LIMIT
 
     def sample(self, kind: str, detail: str, line: str) -> None:
         if len(self.sampled_errors) >= self.sample_limit:
             return
-        self.sampled_errors.append(f"{kind}: {detail[:100]} | line={line.strip()[:120]}")
+        safe_detail = (detail or "").strip().replace("\n", " ")
+        safe_line = (line or "").strip().replace("\n", " ")
+        self.sampled_errors.append(
+            f"{kind}: {safe_detail[:_PARSE_DETAIL_LIMIT]} | line={safe_line[:_PARSE_LINE_LIMIT]}"
+        )
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -100,6 +107,9 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
     since = start_dt.isoformat()
     until = end_dt.isoformat()
     cmd = ["git", "log", f"--since={since}", f"--until={until}", "--pretty=format:%h %ad %s", "--date=short"]
+    no_commit_errors = [
+        "does not have any commits yet",
+    ]
     try:
         res = subprocess.run(cmd, cwd=str(project_path), capture_output=True, text=True, check=False)
     except OSError as exc:
@@ -108,6 +118,10 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
         return GitCommitsResult(commits=[], status="error", error=error)
 
     if res.returncode != 0:
+        stderr = (res.stderr or "").strip().lower()
+        if any(marker in stderr for marker in no_commit_errors):
+            return GitCommitsResult(commits=[], status="empty", error=None)
+
         error = {
             "type": "git_log_failed",
             "message": (res.stderr.strip() or f"git log exited with status {res.returncode}")[:200],

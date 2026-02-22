@@ -1,0 +1,280 @@
+# Thegent Phase 10–12 Execution Workboard (Chunk 4)
+
+**Status:** Full-depth operational workboard draft
+**Date:** 2026-02-15
+**Scope:** Practical execution governance for implementing and stabilizing Bundle B–F, including board structure, gate gates, and rollback-runbook steps.
+
+## 1) Why this exists
+
+The prior artifacts define **what** to do. This workboard defines **how to run it**:
+
+- which tickets are truly DoR (Definition of Readiness),
+- which are DoD-ready at each gate,
+- what evidence is mandatory before starting the next dependent work,
+- what operators should do when controls regress.
+
+## 2) Workboard columns and meanings
+
+Use these columns exactly in your issue tracker:
+
+1. `Backlog` — planned, unstarted, no owner assigned.
+2. `Ready` — complete DoR, dependencies met, evidence artifacts linked.
+3. `In Progress` — implementation started, branch created, PR in flight.
+4. `In Review` — tests added, evidence captured, waiting for gate reviewer.
+5. `Blockers` — blocked by dependency, failing gate, or environment issue.
+6. `Bundle QA` — all acceptance tests executed in deterministic order.
+7. `Ready for Gate` — pre-gate checklist complete, awaiting gate signoff.
+8. `Done` — closed, merged, evidence hash recorded.
+
+## 3) Definition of Readiness (DoR) by bundle
+
+### Bundle B (Phase 10 trust/conformance)
+
+- Parent chunk lock artifacts exist for Chunk A or equivalent.
+- Preflight tests:
+  - `TestOperationEnvelopeV2Schema`
+  - `TestDispatchDeterminism`
+- `artifacts/phase10/chunk_b/` manifest path exists.
+- Dependents recorded:
+  - `WP-10003` complete and stable.
+- Feature flags: `phase10.interface_v2` remains `off` in prod unless G10 note signed.
+
+### Bundle C (Phase 11 control baseline)
+
+- Bundle B in `Done`.
+- `phase10_bundle_b` signoff note present.
+- Policy logs include:
+  - `policy_version`
+  - `policy_digest`
+  - `rollback_vector` for control actions
+- All control changes gated by `phase11.autotune`.
+
+### Bundle D (Phase 11 governance hardening)
+
+- Bundle C pre-check and G11 draft readiness.
+- Safety review passed for adaptive changes (canary-only approved).
+- Shift calendar + continuity windows available in planning config.
+- `policy_override_required=true` for auto-optimization paths.
+
+### Bundle E (Phase 12 hardening)
+
+- Bundle D evidence pack ready and traceable.
+- Replay store integrity checks done in canary.
+- `phase12.hardening` gated by explicit command and policy flag.
+
+### Bundle F (Bundle closure)
+
+- Bundles B–E complete with positive gate preconditions.
+- Documentation pipeline stable for one full deterministic run.
+- All owner signatures captured for finality.
+
+## 4) Workboard template per Work Package (WIP model)
+
+Use this template for each WP in the tracker row description.
+
+```text
+WP: WP-XXXX
+Bundle: phaseXX_bundle_x
+Owner Team:
+Owner Contact:
+Dependencies:
+  - Hard: WP-...
+  - Evidence: artifact files
+Status dependencies:
+  - Upstream gate: G10 / G11 / G12 as applicable
+DoR checks:
+  - Evidence manifest exists
+  - Kill switch documented
+  - Rollback plan attached
+Acceptance:
+  - Required tests list
+  - Must-pass gate artifacts
+Risk:
+  - Top 1-2 risk with mitigation
+```
+
+## 5) Dependency lock table (Execution lock)
+
+| Source WP | Must-complete before start | Hard reason |
+|---|---|---|
+| WP-10004 | WP-10002 | trust metadata needed for deny policy |
+| WP-10005 | WP-10003 | alias map requires deterministic dispatch |
+| WP-10006 | WP-10003 | migration hints use dispatch result shape |
+| WP-10007 | WP-10003, WP-10004, WP-10005 | audit context depends on both policy and operation set |
+| WP-10008 | WP-10002, WP-10007 | conformance requires registry + traceability |
+| WP-10009 | WP-10001, WP-10003 | version migration built on envelope/dispatch |
+| WP-10010 | WP-10003, WP-10005, WP-10009 | docs require stable and migration-safe interface |
+| WP-11001 | WP-10003, WP-10007 | control loops require trace context |
+| WP-11002 | WP-11001 | predictor architecture depends on controller signals |
+| WP-11003 | WP-11002 | calibration monitor consumes forecast output |
+| WP-11004 | WP-11001, WP-11002 | saturation policy depends on regulator/forecast |
+| WP-11005 | WP-11003, WP-11004 | recommendations include confidence + saturation |
+| WP-11006 | WP-11004 | shaping actions need preemption policy baseline |
+| WP-11007 | WP-11006 | continuity signals from shaping state |
+| WP-11008 | WP-11003, WP-11007 | policy guardrail requires both prediction and continuity |
+| WP-11009 | WP-11008 | safe-mode requires approved learning policy |
+| WP-11010 | WP-11001, WP-11002, WP-11005, WP-11008, WP-11009 | evidence package across all control dimensions |
+| WP-12001 | WP-11001, WP-11010 | explainability depends on control evidence |
+| WP-12002 | WP-12001 | fatigue controls require explainability schema |
+| WP-12003 | WP-12001 | replay hardening from same output contracts |
+| WP-12004 | WP-12003 | what-if branching requires sandbox safety |
+| WP-12005 | WP-12003, WP-12004 | handoff safety depends on replay/branch model |
+| WP-12006 | WP-12005 | evidence graph includes continuity edges |
+| WP-12007 | WP-12005 | persona constraints need handoff context |
+| WP-12008 | WP-12007 | learning assets depend on finalized persona defaults |
+| WP-12009 | WP-12006, WP-12008 | export manifest requires evidence graph + assets |
+| WP-12010 | WP-12009, WP-11010, G10,G11,G12 | closure must include all gate evidence |
+
+## 6) Critical gating checklist (expanded)
+
+### G10 checklist
+
+- [ ] `WP-10001` schema + `WP-10003` determinism green.
+- [ ] `WP-10004` trust gate prevents untrusted critical-lane execution.
+- [ ] `WP-10007` traceability includes `policy_version` and `dispatch_path_hash`.
+- [ ] `WP-10006` migration hints for 100% unknown operation paths.
+- [ ] `WP-10009` compatibility responses are deterministic.
+- [ ] Evidence manifest signed + checksummed.
+- [ ] `phase10.interface_v2` stays disabled in production.
+
+### G11 checklist
+
+- [ ] `WP-11001..11005` control stability profile reviewed after canary soak.
+- [ ] Oscillation prevention holds (`TestSLORegulator` thresholds).
+- [ ] Calibration confidence floor applied with pause behavior.
+- [ ] `WP-11008` policy-guarded parameter changes only.
+- [ ] `WP-11010` evidence pack reproducible from same input run.
+- [ ] Rollback path for each control lever tested.
+
+### G12 checklist
+
+- [ ] `WP-12001..12006` explainability + evidence graph integrity green.
+- [ ] Replay mutation safety proven in negative tests.
+- [ ] Handoff confidence gate blocks low-confidence continuity transitions.
+- [ ] `WP-12009` release pack deterministic checksum.
+- [ ] No unresolved high-risk residuals before finality.
+
+## 7) Kill-switch runbook
+
+### Universal controls
+
+- `phase10.interface_v2` (interface and dispatch)
+- `phase11.autotune` (control and forecast application)
+- `phase12.hardening` (replay changes, persona actions, packaging path)
+- `thegent.global_autonomy` (optional top-level global safety toggle)
+
+### Trigger conditions
+
+- Any unknown operation mismatch in critical lane.
+- Evidence manifest absent for runtime-affecting PR.
+- Oscillation event > 1/min sustained for two consecutive windows.
+- Replay mutation event outside execute mode.
+- Handoff confidence gate failed for critical handoff.
+
+### Standard response
+
+1. Set relevant feature flag false.
+2. Publish incident note with scope/time.
+3. Add issue tag `rollback-invoke`.
+4. Run diagnostics and produce postmortem artifact before re-enabling.
+
+## 8) Evidence manifest schema (minimum)
+
+Every bundle artifact must include these fields:
+
+```json
+{
+  "artifact_id": "wp-<id>-<slug>",
+  "wp_id": "WP-xxxxx",
+  "run_id": "uuid-or-execution-id",
+  "bundle_id": "phase10_bundle_b",
+  "created_at": "2026-02-15T00:00:00Z",
+  "owner_team": "Platform",
+  "sha256": "hex",
+  "policy_version": "string",
+  "policy_digest": "sha256:...",
+  "evidence_manifest_id": "manifest-uuid"
+}
+```
+
+Optional for control WPs:
+
+```json
+{
+  "dispatch_path_hash": "string",
+  "rollback_token": "rb-token",
+  "control_signal_id": "string",
+  "confidence_score": 0.0
+}
+```
+
+## 9) Risk register with assigned mitigations (execution mode)
+
+### R-01 dispatch divergence
+
+- Symptom: CLI and MCP route differently under same input.
+- Prevention: run `TestEnvelopeToDispatchEndToEnd` on every dispatch touching PR.
+- Mitigation: freeze interface changes; run canonical replay on seed corpus.
+
+### R-02 oscillation loop
+
+- Symptom: repeated control toggles within 60-second windows.
+- Prevention: anti-oscillation hysteresis and confidence floor.
+- Mitigation: disable `phase11.autotune` and revert to static config.
+
+### R-03 replay mutation regression
+
+- Symptom: state change in read-only mode.
+- Prevention: explicit execute-mode assertion at all replay entrypoints.
+- Mitigation: hard disable replay writes and trigger G12 hold.
+
+### R-04 persona action leakage
+
+- Symptom: user action bypasses persona constraints under fallback path.
+- Prevention: persona policy applied at decision boundary.
+- Mitigation: force persona policy unit tests and signed gate.
+
+### R-05 evidence drift
+
+- Symptom: missing traceability fields in new events.
+- Prevention: schema contract tests in CI for all generated artifacts.
+- Mitigation: block merge and re-run evidence generation.
+
+## 10) QA sequence by day with artifact checkpoints
+
+For each block of 2–3 WPs:
+
+1. Implement all planned code changes in branch.
+2. Run targeted unit + integration tests.
+3. Append evidence manifest in bundle folder.
+4. Record gate precondition check in signoff note.
+5. Move tickets to `Bundle QA`.
+6. Run non-functional/performance smoke.
+7. Request gate review and transition to `Done`.
+
+## 11) Tracker automation checklist
+
+- Add board automation:
+  - move to `Ready` when all DoR checks completed;
+  - move to `Bundle QA` when all required tests pass in PR status checks.
+- Add mandatory PR check:
+  - requires `evidence_manifest_id` link in ticket body;
+  - requires kill-switch path mention.
+- Add release guard:
+  - no PR to default branch for phase 10–12 WPs unless corresponding flag is off or explicit canary approval attached.
+
+## 12) Cross-document next links
+
+- Use `thegent-phase10-12-implementation-bundles-playbook.md` for lock and bundle-level rules.
+- Use `thegent-phase10-12-implementation-ticket-templates.md` for exact ticket body text.
+- Use `thegent-phase10-12-implementation-issue-queue.md` for authoritative WP ownership and dependencies.
+- Use `thegent-phase10-12-test-readiness-pack.md` for concrete test names and mappings.
+- Use `thegent-phase10-12-launch-schedule.md` for calendar cadence.
+
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

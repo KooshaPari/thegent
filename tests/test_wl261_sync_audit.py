@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -152,3 +153,80 @@ class TestSyncAuditor:
 
         assert is_valid is False
         assert any("gitlab" in issue and "Missing policy mode" in issue for issue in issues)
+
+    @pytest.mark.requirement("WL-197")
+    def test_load_policy_contract_maps_connector_fields(self, tmp_path: Path):
+        """load_policy_contract reads .thegent/sync-policy.yaml into audit surfaces."""
+        policy_path = tmp_path / ".thegent" / "sync-policy.yaml"
+        policy_path.parent.mkdir(parents=True, exist_ok=True)
+        policy_path.write_text(
+            """
+schema_version: sync-policy/v1
+conflict_precedence: board_id_first
+strict_mode: true
+connectors:
+  github:
+    enabled: true
+    mode: enforce
+    direction: bidirectional
+    quota_daily: 123
+tenancy:
+  mode: single_project
+  default_tenant: tenant-default
+  projects: []
+""".strip(),
+            encoding="utf-8",
+        )
+
+        auditor = SyncAuditor()
+        contract = auditor.load_policy_contract(project_root=tmp_path)
+
+        assert contract.schema_version == "sync-policy/v1"
+        assert auditor._enabled_connectors == ["github"]
+        assert auditor._quota_budgets == {"github": 123}
+        assert auditor._policy_modes == {"github": "enforce"}
+
+    @pytest.mark.requirement("WL-261")
+    def test_signed_audit_artifact_chain_verifies(self):
+        """Signed audit artifact chain should verify when untouched."""
+        auditor = SyncAuditor()
+        auditor.append_artifact(
+            sync_id="sync-1",
+            source="github",
+            operator="autosync",
+            cycle_number=1,
+            secret="lane6-secret",
+        )
+        auditor.append_artifact(
+            sync_id="sync-2",
+            source="linear",
+            operator="autosync",
+            cycle_number=2,
+            secret="lane6-secret",
+        )
+        ok, reason = auditor.verify_artifact_chain("lane6-secret")
+        assert ok is True
+        assert reason == ""
+
+    @pytest.mark.requirement("WL-261")
+    def test_signed_audit_artifact_chain_detects_tamper(self):
+        """Chain verification must fail after tampering."""
+        auditor = SyncAuditor()
+        auditor.append_artifact(
+            sync_id="sync-1",
+            source="github",
+            operator="autosync",
+            cycle_number=1,
+            secret="lane6-secret",
+        )
+        auditor.append_artifact(
+            sync_id="sync-2",
+            source="linear",
+            operator="autosync",
+            cycle_number=2,
+            secret="lane6-secret",
+        )
+        auditor._artifact_chain[1].signature = "tampered"  # noqa: SLF001 -- test-only tamper simulation
+        ok, reason = auditor.verify_artifact_chain("lane6-secret")
+        assert ok is False
+        assert "signature verification failed" in reason

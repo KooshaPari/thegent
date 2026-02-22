@@ -109,13 +109,15 @@ class DesignLanguage:
             Platform.LINUX: "linux",
         }.get(plat, "linux")
 
-        primary = self._token_or("color.primary", "#4CAF50")
-        error = self._token_or("color.error", "#F44336")
-        warning = self._token_or("color.warning", "#FF9800")
-        success = self._token_or("color.success", primary)
-        info = self._token_or("color.info", "#2196F3")
-        mono = self._token_or("font.mono", "monospace")
-        system_font = self.get_token("font.system", platform=platform_name) or self._token_or("font.system", "sans")
+        primary = self._required_token("color.primary")
+        error = self._required_token("color.error")
+        warning = self._required_token("color.warning")
+        success = self._required_token("color.success")
+        info = self._required_token("color.info")
+        mono = self._required_token("font.mono")
+        system_font = self.get_token("font.system", platform=platform_name)
+        if system_font is None:
+            raise KeyError(f"Missing required token: font.system ({platform_name})")
 
         styles = {
             "primary": f"bold {primary}",
@@ -129,6 +131,8 @@ class DesignLanguage:
         self.cli_theme = Theme(styles)
         self.cli_typography = {"mono": mono, "system": system_font}
 
-    def _token_or(self, name: str, default: Any) -> Any:
+    def _required_token(self, name: str) -> Any:
         value = self.get_token(name)
-        return default if value is None else value
+        if value is None:
+            raise KeyError(f"Missing required token: {name}")
+        return value

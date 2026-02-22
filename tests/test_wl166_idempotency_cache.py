@@ -112,6 +112,20 @@ class TestIdempotencyCacheBasic:
             assert cache.check(f"op-{i:03d}")
 
     @pytest.mark.requirement("WL-166")
+    def test_check_content_index(self, tmp_path: Path) -> None:
+        """Equivalent connector+wl+hash content should be indexed."""
+        cache = IdempotencyCache(cache_path=tmp_path / "cache.json")
+        cache.record(
+            operation_id="op-idx-001",
+            wl_id="WL-166",
+            connector="github",
+            content_hash="abc123",
+        )
+
+        assert cache.check_content("github", "WL-166", "abc123")
+        assert not cache.check_content("github", "WL-166", "different")
+
+    @pytest.mark.requirement("WL-166")
     def test_invalidate_operation(self, tmp_path: Path) -> None:
         """Test removing an operation from the cache."""
         cache = IdempotencyCache(cache_path=tmp_path / "cache.json")
@@ -286,3 +300,14 @@ class TestIdempotencyCacheInspection:
         records = cache.get_all_records()
         assert len(records) == 3
         assert records[0].operation_id in {"op-001", "op-002", "op-003"}
+
+    @pytest.mark.requirement("WL-166")
+    def test_replay_mutation_id_record_is_stable(self, tmp_path: Path) -> None:
+        """Re-recording same mutation_id should overwrite, not duplicate."""
+        cache = IdempotencyCache(cache_path=tmp_path / "cache.json")
+        cache.record("mutation-id-1", "WL-231", "github", "hash-a")
+        cache.record("mutation-id-1", "WL-231", "github", "hash-b")
+        records = cache.get_all_records()
+        assert len(records) == 1
+        assert records[0].operation_id == "mutation-id-1"
+        assert records[0].content_hash == "hash-b"

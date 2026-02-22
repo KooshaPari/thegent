@@ -18,6 +18,17 @@ if TYPE_CHECKING:
 app = typer.Typer(help="System audit: detect drift between declared config and actual state.")
 
 
+def validate_autosync_profile_drift(
+    profiles: dict[str, dict[str, str]],
+    required_keys: set[str],
+    allowlist: set[str] | None = None,
+) -> tuple[bool, dict[str, list[str]]]:
+    """Validate dev/staging/prod autosync profile parity."""
+    from thegent.phases.compliance_profile import validate_profile_drift
+
+    return validate_profile_drift(profiles=profiles, required_keys=required_keys, allowlist=allowlist)
+
+
 @app.callback(invoke_without_command=True)
 def audit_cmd(
     ctx: typer.Context,

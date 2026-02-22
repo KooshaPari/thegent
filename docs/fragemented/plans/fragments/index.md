@@ -1,0 +1,11 @@
+# Consolidated Index
+
+## Files
+
+* `LANE_STRATEGY_MATRIX.md`
+* `NO_REGRESSION_ENFORCEMENT.md`
+* `PERF_OPTIMIZATION_PLAYBOOK.md`
+* `ROLLOUT_AND_OPERATIONS.md`
+
+## Subdirectories
+

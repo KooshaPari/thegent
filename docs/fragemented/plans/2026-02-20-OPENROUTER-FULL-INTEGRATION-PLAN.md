@@ -1,0 +1,528 @@
+# OpenRouter Full Integration Plan
+
+> **Date**: 2026-02-20
+> **Status**: READY FOR IMPLEMENTATION
+> **Research Basis**: 5 completed research agents + 1 context doc
+>
+> Research docs produced:
+> - `docs/research/OPENROUTER_API_RESEARCH_2026-02-20.md`
+> - `docs/research/OPENROUTER_GAP_ANALYSIS_2026-02-20.md`
+> - `docs/research/OPENROUTER_FEATURES_RESEARCH_2026-02-20.md`
+> - `docs/research/OPENROUTER_PROXY_AUDIT_2026-02-20.md`
+> - `docs/research/OPENROUTER_MODELS_RESEARCH_2026-02-20.md`
+> - `docs/context/openrouter.md`
+
+---
+
+## Goal
+
+Make the thegent CLIProxy fully compatible with OpenRouter as a backend, passing 100% of proxy tests with an OpenRouter backend URL. Implement all OpenRouter-specific features that enhance agent capabilities.
+
+---
+
+## Key Architecture Notes (from research)
+
+| Fact | Implication |
+|------|-------------|
+| OpenRouter base URL: `https://openrouter.ai/api/v1` | Path rewriting must handle `api/v1` prefix (not just `/v1`) |
+| OpenRouter model IDs: `provider/model-name` | Need thegent alias → OpenRouter ID mapping |
+| OpenRouter natively supports `/api/v1/responses` Beta | Can forward Responses API directly instead of translating |
+| `usage.cost` IS in every response (USD) | No async lookup needed for basic cost display |
+| SSE emits `: OPENROUTER PROCESSING` keep-alive comments | Must skip non-`data:` lines in SSE parser |
+| `transforms: ["middle-out"]` auto-applied to ≤8,192 ctx models | Proxy must forward `transforms` field |
+| Content arrays must NOT be collapsed (breaks `cache_control`) | `_responses_to_chat_completions` must preserve content arrays |
+| `delta.tool_calls` currently dropped in transform mode | Need to forward tool call deltas in SSE state machine |
+| WebSocket drops `Authorization` header (line 661) | P0 bug: WS → OpenRouter gets 401 |
+| `provider_types.py` missing `"openrouter"` | Routing falls to wrong code path |
+
+---
+
+## Phase 1: Discovery (DONE)
+
+All research completed. Moving directly to Design.
+
+---
+
+## Phase 2: Design (DONE — captured here)
+
+---
+
+## Phase 3: Build
+
+### Task DAG
+
+| Phase | Task ID | Description | File(s) | Priority | Depends On |
+|-------|---------|-------------|---------|----------|------------|
+| 3 | OR-01 | Fix WS Authorization header drop | `cliproxy_adapter.py:661` | P0 | — |
+| 3 | OR-02 | Add `openrouter` to API_KEY_PROVIDERS | `routing/provider_types.py` | P0 | — |
+| 3 | OR-03 | Add OpenRouter to LiteLLM router config | `routing/litellm_router.py` | P0 | OR-02 |
+| 3 | OR-04 | Add thegent→OpenRouter model ID mappings | `routing/harness_model_mapping.py` | P0 | — |
+| 3 | OR-05 | Add OpenRouter model IDs to model_metadata | `routing/model_metadata.py` | P0 | — |
+| 3 | OR-06 | Fix `verify=False` for HTTPS backends | `cliproxy_adapter.py` | P0 | — |
+| 3 | OR-07 | Fix SSE keep-alive comment parsing | `cliproxy_adapter.py` | P0 | — |
+| 3 | OR-08 | Add HTTP-Referer + X-Title headers | `cliproxy_adapter.py` | P1 | — |
+| 3 | OR-09 | Forward OR-specific fields in Responses transform | `cliproxy_adapter.py` | P1 | — |
+| 3 | OR-10 | Fix tool call streaming in transform mode | `cliproxy_adapter.py` | P1 | — |
+| 3 | OR-11 | Fix OpenRouter error format (code + metadata) | `cliproxy_adapter.py` | P1 | — |
+| 3 | OR-12 | Propagate actual model from SSE chunks | `cliproxy_adapter.py` | P1 | — |
+| 3 | OR-13 | Handle 402/408/502/503 error codes | `cliproxy_adapter.py` | P1 | — |
+| 3 | OR-14 | Add usage.cost to response.completed event | `cliproxy_adapter.py` | P1 | — |
+| 3 | OR-15 | Fix models endpoint: inject missing proxy models | `cliproxy_adapter.py` | P1 | OR-05 |
+| 3 | OR-16 | Preserve content arrays in Responses transform | `cliproxy_adapter.py` | P1 | — |
+| 3 | OR-17 | Forward x-session-id, x-anthropic-beta, SO header | `cliproxy_adapter.py` | P2 | — |
+| 3 | OR-18 | Native Responses API forwarding for OR backend | `cliproxy_adapter.py` | P2 | OR-07 |
+| 3 | OR-19 | Capture openrouter-generation-id for cost lookup | `cliproxy_adapter.py` | P2 | — |
+
+---
+
+## Detailed Task Specifications
+
+### OR-01: Fix WebSocket Authorization Header Drop
+
+**File**: `src/thegent/cliproxy_adapter.py`
+**Location**: ~line 661 in WebSocket responses handler
+**Issue**: Headers dict is hardcoded to only `Content-Type` and `Accept`, discarding client's `Authorization` header.
+
+**Current code** (approximate):
+```python
+headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
+```
+
+**Fix**:
+```python
+headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
+ws_auth = websocket.headers.get("authorization")
+if ws_auth:
+    headers["Authorization"] = ws_auth
+# Also forward any x-session-id for OR observability
+ws_session = websocket.headers.get("x-session-id")
+if ws_session:
+    headers["x-session-id"] = ws_session
+```
+
+---
+
+### OR-02: Add `openrouter` to API_KEY_PROVIDERS
+
+**File**: `src/thegent/routing/provider_types.py`
+
+Add `"openrouter"` to whatever set/list `API_KEY_PROVIDERS` is. This ensures OpenRouter traffic goes through the API key injection path, not the CLIProxy path.
+
+---
+
+### OR-03: Add OpenRouter to LiteLLM Router Config
+
+**File**: `src/thegent/routing/litellm_router.py`
+
+1. Add to `_get_api_key_env()`:
+```python
+"openrouter": "OPENROUTER_API_KEY",
+```
+
+2. Add OpenRouter model entries in the model list with:
+```python
+{
+    "model_name": "google/gemini-2.0-flash-001",
+    "litellm_params": {
+        "model": "openrouter/google/gemini-2.0-flash-001",
+        "api_base": "https://openrouter.ai/api/v1",
+        "api_key": os.environ.get("OPENROUTER_API_KEY"),
+    }
+}
+```
+Add entries for at least: `google/gemini-2.0-flash-001`, `anthropic/claude-sonnet-4-5-20251022`, `openai/gpt-4o`, `openai/gpt-4o-mini`, `meta-llama/llama-3.3-70b-instruct`.
+
+---
+
+### OR-04: Add thegent → OpenRouter Model ID Mappings
+
+**File**: `src/thegent/routing/harness_model_mapping.py`
+
+Add an `OPENROUTER_MODEL_MAP` dict and register it for the `openrouter` provider:
+
+```python
+OPENROUTER_MODEL_MAP = {
+    # thegent alias → OpenRouter canonical ID
+    "claude-sonnet-4.5": "anthropic/claude-sonnet-4-5-20251022",
+    "claude-sonnet-4-5": "anthropic/claude-sonnet-4-5-20251022",
+    "claude-opus-4.5": "anthropic/claude-opus-4-5",
+    "claude-haiku-4.5": "anthropic/claude-haiku-4-5-20251001",
+    "gemini-3-flash": "google/gemini-2.0-flash-001",
+    "gemini-2-flash": "google/gemini-2.0-flash-001",
+    "gpt-5-mini": "openai/gpt-4o-mini",
+    "gpt-4o": "openai/gpt-4o",
+    "gpt-4o-mini": "openai/gpt-4o-mini",
+    "glm-5": "thudm/glm-4-plus",  # best available mapping
+    "llama-3.3-70b": "meta-llama/llama-3.3-70b-instruct",
+}
+```
+
+Also update `resolve_model_for_provider(model, provider)` to use this map when provider is `"openrouter"`.
+
+---
+
+### OR-05: Add OpenRouter Model IDs to model_metadata
+
+**File**: `src/thegent/routing/model_metadata.py`
+
+Add entries for commonly used OpenRouter model IDs so the Codex model cache check passes:
+
+```python
+"google/gemini-2.0-flash-001": ModelMetadata(
+    context_window=1_048_576,
+    input_modalities=["text", "image"],
+    output_modalities=["text"],
+    ...
+),
+"anthropic/claude-sonnet-4-5-20251022": ModelMetadata(
+    context_window=200_000,
+    ...
+),
+# etc. for each model in OR-04 map
+```
+
+---
+
+### OR-06: Fix verify=False for HTTPS Backends
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+In `_proxy_request()` (~line 308), change:
+```python
+verify=False
+```
+to:
+```python
+verify=True
+```
+
+Note: if this breaks any existing tests that mock HTTPS, update the tests to use `respx` or `httpx.MockTransport` instead of `verify=False`.
+
+---
+
+### OR-07: Fix SSE Keep-Alive Comment Parsing
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+In the SSE line parser in `_proxy_stream()`, add a guard for comment lines:
+```python
+for line in response.iter_lines():
+    if line.startswith(":"):  # keep-alive comment, e.g. ": OPENROUTER PROCESSING"
+        continue
+    if not line.startswith("data:"):
+        continue
+    ...
+```
+
+---
+
+### OR-08: Add HTTP-Referer + X-Title Headers
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+Add to both `_proxy_request()` and `_proxy_stream()` outgoing headers:
+```python
+# OpenRouter attribution headers (optional but recommended)
+# Skip for non-OpenRouter backends; detect by checking if backend URL contains openrouter
+if "openrouter" in backend_url:
+    out_headers.setdefault("HTTP-Referer", "https://github.com/thegent/thegent")
+    out_headers.setdefault("X-Title", "thegent CLIProxy")
+```
+
+OR: add to `cliproxy_manager.py` provider config injection so it's done at startup for OR backends.
+
+---
+
+### OR-09: Forward OpenRouter-Specific Fields in Responses→ChatCompletions Transform
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+In `_responses_to_chat_completions()`, pass through these fields if present in the input:
+```python
+OR_PASSTHROUGH_FIELDS = [
+    "provider",      # ProviderPreferences object
+    "models",        # fallback model array
+    "transforms",    # ["middle-out"] or []
+    "route",         # routing strategy
+    "plugins",       # web search, file-parser, response-healing
+    "reasoning",     # extended thinking
+    "trace",         # debug
+    "x_session_id",  # becomes x-session-id header
+]
+
+for field in OR_PASSTHROUGH_FIELDS:
+    if field in input_body:
+        output["chat"]["extra_body"] = output["chat"].get("extra_body", {})
+        output["chat"]["extra_body"][field] = input_body[field]
+```
+
+Note: `extra_body` is how LiteLLM passes unknown fields to the upstream. If using direct httpx, just copy them into the request JSON directly.
+
+---
+
+### OR-10: Fix Tool Call Streaming in Transform Mode
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+In `_extract_delta_content()` (or equivalent SSE chunk handler in `_ResponsesStreamState`), handle `delta.tool_calls`:
+
+```python
+def _extract_delta_content(delta: dict) -> tuple[str, list | None]:
+    """Returns (text_delta, tool_calls_delta)"""
+    text = delta.get("content") or ""
+    tool_calls = delta.get("tool_calls")  # list of tool call delta objects
+    return text, tool_calls
+```
+
+In `_ResponsesStreamState.feed()`, when `tool_calls` are present:
+1. Accumulate them across chunks (OpenAI streams tool calls in fragments)
+2. In `response.output_item.added`, emit a `tool_call` output item
+3. In `response.output_text.delta` equivalent for tool calls, emit `response.function_call_arguments.delta`
+4. In `closing_events()`, include `tool_calls` in the `output` array
+
+---
+
+### OR-11: Fix OpenRouter Error Format
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+When a non-2xx response comes back from OpenRouter, preserve the full error body instead of replacing it with a generic message. OpenRouter error format:
+```json
+{
+  "error": {
+    "code": 402,
+    "message": "Insufficient credits",
+    "metadata": {
+      "provider_name": "Anthropic",
+      "raw": {...}
+    }
+  }
+}
+```
+
+Current code (`_proxy_stream()` lines 382–386) replaces this with `"Backend {status_code}"`. Fix to pass through the original error body.
+
+---
+
+### OR-12: Propagate Actual Model from SSE Chunks
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+In `_ResponsesStreamState`, when processing the first SSE chunk (`response.created` equivalent):
+```python
+if chunk.get("model"):
+    self.model = chunk["model"]  # use actual routed model, not requested model
+```
+
+This ensures `response.completed` reports the model that actually handled the request (important when OpenRouter falls back).
+
+---
+
+### OR-13: Handle 402/408/502/503 Error Codes
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+Add to `_ERROR_STATUS_MAP` (or equivalent):
+```python
+402: "payment_required",      # Insufficient OpenRouter credits
+408: "request_timeout",       # Backend timeout
+502: "provider_unavailable",  # Provider down
+503: "no_provider_available", # No provider matches routing requirements
+```
+
+---
+
+### OR-14: Add usage.cost to response.completed Event
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+In `_ResponsesStreamState.closing_events()`, when building the `response.completed` event's `usage` object:
+```python
+usage = {
+    "input_tokens": self.prompt_tokens,
+    "output_tokens": self.completion_tokens,
+}
+if self.usage_cost is not None:
+    usage["cost"] = self.usage_cost  # USD from OpenRouter
+
+# In feed(), when processing final SSE chunk with usage:
+usage_data = chunk.get("usage", {})
+self.prompt_tokens = usage_data.get("prompt_tokens", 0)
+self.completion_tokens = usage_data.get("completion_tokens", 0)
+self.usage_cost = usage_data.get("cost")  # OpenRouter USD field
+```
+
+---
+
+### OR-15: Fix Models Endpoint — Inject Missing Proxy Models
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+In `_transform_models_response()`, after fetching models from the backend:
+1. Get the set of returned model IDs
+2. For any model in `MODEL_METADATA` (or a configured model list) not in the backend's response, synthesize a Codex-format entry and append it
+3. This ensures `gemini-3-flash`, `glm-5`, etc. always appear in the model list even if the backend doesn't list them
+
+```python
+def _inject_missing_models(models: list[dict], known_models: dict) -> list[dict]:
+    existing_ids = {m.get("slug") or m.get("id") for m in models}
+    for alias, meta in known_models.items():
+        if alias not in existing_ids:
+            models.append(_synthetic_codex_model(alias, meta))
+    return models
+```
+
+---
+
+### OR-16: Preserve Content Arrays in Responses Transform
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+In `_responses_to_chat_completions()`, when converting `input` items to `messages`:
+- If `content` is already a list (multipart), keep it as a list
+- Only convert to a string if it's already a plain string
+- Preserve `cache_control` objects within content array items
+
+This is critical for Anthropic prompt caching via OpenRouter.
+
+---
+
+### OR-17: Forward Special Headers
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+In `_proxy_request()` and `_proxy_stream()`, when building outgoing headers, forward:
+```python
+FORWARD_HEADERS = [
+    "x-session-id",                  # OpenRouter observability grouping
+    "x-anthropic-beta",              # Anthropic beta feature flags
+    "structured-outputs-2025-11-13", # Required for strict tool use on OR
+]
+for h in FORWARD_HEADERS:
+    if h in client_headers:
+        out_headers[h] = client_headers[h]
+```
+
+---
+
+### OR-18: Native Responses API Forwarding for OpenRouter Backend (P2)
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+When the backend URL is OpenRouter (contains `openrouter.ai`), the `/v1/responses` endpoint can be forwarded directly to `/api/v1/responses` (OpenRouter's native Responses API Beta), instead of translating to `/v1/chat/completions`.
+
+```python
+async def proxy_handler(request: Request, backend: str, path: str):
+    is_openrouter = "openrouter.ai" in backend
+
+    if path == "/v1/responses":
+        if is_openrouter:
+            # Forward natively — OR supports Responses API directly
+            or_path = "/api/v1/responses" if "/api/v1" not in backend else "/responses"
+            return await _proxy_stream(body, headers, backend, or_path, transform_responses=False)
+        else:
+            # Translate to chat completions for other backends
+            return await _proxy_stream(body, headers, backend, "/chat/completions", transform_responses=True)
+```
+
+---
+
+### OR-19: Capture openrouter-generation-id (P2)
+
+**File**: `src/thegent/cliproxy_adapter.py`
+
+In streaming response handler, capture the `openrouter-generation-id` response header and log it for async cost reconciliation:
+
+```python
+gen_id = response.headers.get("openrouter-generation-id")
+if gen_id:
+    _log.debug("openrouter generation id: %s", gen_id)
+    # Future: write to session telemetry for async cost lookup
+```
+
+---
+
+## Phase 4: Test/Validate
+
+### Tests to Write/Update
+
+| Test File | What to Test |
+|-----------|-------------|
+| `tests/routing/test_models_endpoint.py` | Inject missing models, OR model ID format, x-models-etag with OR IDs |
+| `tests/routing/test_litellm_responses_handler.py` | OR model mapping, OPENROUTER_API_KEY injection |
+| NEW: `tests/routing/test_openrouter_integration.py` | WS auth header forwarding, keep-alive comment skip, usage.cost field, tool call delta, error format preservation, content array preservation |
+| `tests/test_unit_router.py` | `openrouter` in API_KEY_PROVIDERS, model ID mapping |
+
+### Integration Smoke Test (with real OR key)
+```bash
+# Start proxy pointed at OpenRouter
+OPENROUTER_API_KEY=sk-or-... thegent proxy start --backend openrouter
+
+# Test 1: HTTP SSE
+curl -s -N http://localhost:8317/v1/responses \
+  -H "Authorization: Bearer sk-or-..." \
+  -d '{"model": "google/gemini-2.0-flash-001", "input": "say hello", "stream": true}'
+
+# Test 2: WebSocket
+# (use codex CLI or websocket test client)
+
+# Test 3: Models
+curl http://localhost:8317/v1/models -H "Authorization: Bearer sk-or-..." | jq .models | head -5
+
+# Test 4: Provider routing
+curl -s http://localhost:8317/v1/chat/completions \
+  -H "Authorization: Bearer sk-or-..." \
+  -d '{"model": "anthropic/claude-sonnet-4-5-20251022", "messages": [...], "provider": {"order": ["anthropic"]}, "stream": true}'
+```
+
+---
+
+## Phase 5: Deploy/Handoff
+
+1. Update `docs/guides/` with OpenRouter setup guide (API key, model IDs, proxy config)
+2. Update `WORK_STREAM.md` to mark OpenRouter items completed
+3. Update `provider_definitions.json` if any config changes needed
+
+---
+
+## Priority Order for Implementation
+
+**Batch 1 (P0 — do first, unblocks everything):**
+- OR-01 (WS auth header)
+- OR-02 (provider_types.py)
+- OR-06 (verify=False fix)
+- OR-07 (SSE keep-alive)
+
+**Batch 2 (P0 continued — routing infrastructure):**
+- OR-03 (LiteLLM router)
+- OR-04 (model ID mappings)
+- OR-05 (model metadata)
+
+**Batch 3 (P1 — feature completeness):**
+- OR-08 (attribution headers)
+- OR-09 (OR fields in transform)
+- OR-10 (tool call streaming)
+- OR-11 (error format)
+- OR-12 (actual model propagation)
+- OR-13 (error codes)
+- OR-14 (usage.cost)
+- OR-15 (inject missing models)
+- OR-16 (content array preservation)
+
+**Batch 4 (P2 — enhancements):**
+- OR-17 (special headers)
+- OR-18 (native OR Responses API)
+- OR-19 (generation ID capture)
+
+---
+
+## Files Modified Summary
+
+| File | Tasks | Change Type |
+|------|-------|-------------|
+| `src/thegent/cliproxy_adapter.py` | OR-01,06,07,08,09,10,11,12,13,14,15,16,17,18,19 | Multiple focused edits |
+| `src/thegent/routing/provider_types.py` | OR-02 | Add `"openrouter"` to set |
+| `src/thegent/routing/litellm_router.py` | OR-03 | Add OR key + model entries |
+| `src/thegent/routing/harness_model_mapping.py` | OR-04 | Add OPENROUTER_MODEL_MAP |
+| `src/thegent/routing/model_metadata.py` | OR-05 | Add OR-format model IDs |
+| `tests/routing/test_openrouter_integration.py` | all | New test file |

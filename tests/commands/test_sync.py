@@ -223,36 +223,49 @@ class TestSyncPush:
     def test_push_succeeds_with_default_target(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-028
         cmd = _make_cmd(tmp_path)
-        op = cmd.push()
+        target = tmp_path / "remote"
+        target.mkdir()
+        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": str(target)}):
+            op = cmd.push()
         assert op.ok is True
         assert op.operation == "push"
 
     def test_push_with_explicit_target(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-029
         cmd = _make_cmd(tmp_path)
-        op = cmd.push(target="https://sync.example.com")
+        target = tmp_path / "explicit-target"
+        target.mkdir()
+        op = cmd.push(target=str(target))
         assert op.ok is True
-        assert op.details["target"] == "https://sync.example.com"
+        assert op.details["target"] == str(target.resolve())
 
     def test_push_respects_env_var(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-029
         cmd = _make_cmd(tmp_path)
-        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": "remote-server"}):
+        target = tmp_path / "remote-server"
+        target.mkdir()
+        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": str(target)}):
             op = cmd.push()
-        assert op.details["target"] == "remote-server"
+        assert op.details["target"] == str(target.resolve())
 
     def test_push_env_var_overridden_by_explicit_target(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-029
         cmd = _make_cmd(tmp_path)
-        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": "remote-server"}):
-            op = cmd.push(target="explicit-target")
-        assert op.details["target"] == "explicit-target"
+        env_target = tmp_path / "env-target"
+        explicit_target = tmp_path / "explicit-target"
+        env_target.mkdir()
+        explicit_target.mkdir()
+        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": str(env_target)}):
+            op = cmd.push(target=str(explicit_target))
+        assert op.details["target"] == str(explicit_target.resolve())
 
     def test_push_lists_agent_files_in_changes(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-030
         _agent_dir(tmp_path, ["alpha", "beta"])
         cmd = _make_cmd(tmp_path)
-        op = cmd.push()
+        target = tmp_path / "remote"
+        target.mkdir()
+        op = cmd.push(target=str(target))
         change_paths = [c.replace("push: ", "") for c in op.changes]
         assert any("agents/alpha.md" in p for p in change_paths)
         assert any("agents/beta.md" in p for p in change_paths)
@@ -261,20 +274,25 @@ class TestSyncPush:
         # @trace FR-SYNC-030
         _hooks_dir(tmp_path, ["quality-gate"])
         cmd = _make_cmd(tmp_path)
-        op = cmd.push()
+        target = tmp_path / "remote"
+        target.mkdir()
+        op = cmd.push(target=str(target))
         assert any("hooks/quality-gate.sh" in c for c in op.changes)
 
-    def test_push_stub_flag_set(self, tmp_path: Path) -> None:
+    def test_push_fails_for_unreachable_default_target(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-031
         cmd = _make_cmd(tmp_path)
         op = cmd.push()
-        assert op.details.get("stub") is True
+        assert op.ok is False
+        assert "unreachable target" in op.message.lower()
 
     def test_push_message_contains_file_count(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-031
         _agent_dir(tmp_path, ["agent-a"])
         cmd = _make_cmd(tmp_path)
-        op = cmd.push()
+        target = tmp_path / "remote"
+        target.mkdir()
+        op = cmd.push(target=str(target))
         assert "1" in op.message  # at least 1 file (the agent)
 
 
@@ -291,45 +309,57 @@ class TestSyncPull:
         op = cmd.pull()
         assert isinstance(op, OperationResult)
 
-    def test_pull_succeeds_with_default_source(self, tmp_path: Path) -> None:
+    def test_pull_fails_without_source(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-032
         cmd = _make_cmd(tmp_path)
         op = cmd.pull()
-        assert op.ok is True
+        assert op.ok is False
         assert op.operation == "pull"
+        assert "source is required" in op.message.lower()
 
-    def test_pull_with_explicit_source(self, tmp_path: Path) -> None:
+    def test_pull_with_explicit_source_directory(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-033
+        src = tmp_path / "remote"
+        (src / "agents").mkdir(parents=True)
+        (src / "hooks").mkdir(parents=True)
+        (src / "agents" / "agent-a.md").write_text("# from remote\n", encoding="utf-8")
+        (src / "hooks" / "quality-gate.sh").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (src / "config.yaml").write_text("k: v\n", encoding="utf-8")
         cmd = _make_cmd(tmp_path)
-        op = cmd.pull(source="https://sync.example.com")
+        op = cmd.pull(source=str(src))
         assert op.ok is True
-        assert op.details["source"] == "https://sync.example.com"
+        assert op.details["source"] == str(src.resolve())
+        assert op.details["files_pulled"] >= 3
+        assert (tmp_path / "agents" / "agent-a.md").exists()
+        assert (tmp_path / "hooks" / "quality-gate.sh").exists()
+        assert (tmp_path / "config.yaml").exists()
 
     def test_pull_respects_env_var(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-033
+        src = tmp_path / "env-remote"
+        src.mkdir()
         cmd = _make_cmd(tmp_path)
-        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": "remote-server"}):
+        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": str(src)}):
             op = cmd.pull()
-        assert op.details["source"] == "remote-server"
+        assert op.details["source"] == str(src.resolve())
 
     def test_pull_env_var_overridden_by_explicit_source(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-033
+        env_src = tmp_path / "env-src"
+        explicit_src = tmp_path / "explicit-src"
+        env_src.mkdir()
+        explicit_src.mkdir()
         cmd = _make_cmd(tmp_path)
-        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": "should-be-ignored"}):
-            op = cmd.pull(source="explicit-source")
-        assert op.details["source"] == "explicit-source"
+        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": str(env_src)}):
+            op = cmd.pull(source=str(explicit_src))
+        assert op.details["source"] == str(explicit_src.resolve())
 
-    def test_pull_stub_flag_set(self, tmp_path: Path) -> None:
+    def test_pull_fails_for_invalid_source(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-034
         cmd = _make_cmd(tmp_path)
-        op = cmd.pull()
-        assert op.details.get("stub") is True
-
-    def test_pull_files_pulled_is_empty_stub(self, tmp_path: Path) -> None:
-        # @trace FR-SYNC-034
-        cmd = _make_cmd(tmp_path)
-        op = cmd.pull()
-        assert op.details["files_pulled"] == []
+        op = cmd.pull(source=str(tmp_path / "missing"))
+        assert op.ok is False
+        assert "not a directory" in op.message.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -512,3 +542,55 @@ class TestSyncCLIRegistration:
         result = runner.invoke(sync_app, ["reset", "--help"])
         assert result.exit_code == 0
         assert "--yes" in result.output
+
+    def test_bootstrap_gh_command_exists(self) -> None:
+        # @trace WL-037
+        from typer.testing import CliRunner
+
+        from thegent.main import sync_app
+
+        runner = CliRunner()
+        result = runner.invoke(sync_app, ["--help"])
+        assert result.exit_code == 0
+        assert "bootstrap-gh" in result.output
+
+    def test_bootstrap_gh_subcommand_help(self) -> None:
+        # @trace WL-037
+        from typer.testing import CliRunner
+
+        from thegent.main import sync_app
+
+        runner = CliRunner()
+        result = runner.invoke(sync_app, ["bootstrap-gh", "--help"])
+        assert result.exit_code == 0
+        assert "--owner" in result.output
+        assert "--repo" in result.output
+
+    def test_bootstrap_gh_invokes_script(self) -> None:
+        # @trace WL-037
+        from typer.testing import CliRunner
+
+        from thegent.main import sync_app
+
+        runner = CliRunner()
+        fake_module = type("BootstrapModule", (), {})()
+        fake_module.bootstrap_sync_workflow_project = lambda **kwargs: {
+            "prepared_count": 10,
+            "project_number": 7,
+        }
+
+        with patch("thegent.cli.apps.sync._load_bootstrap_sync_module", return_value=fake_module):
+            result = runner.invoke(
+                sync_app,
+                [
+                    "bootstrap-gh",
+                    "--owner",
+                    "example",
+                    "--repo",
+                    "example/repo",
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert "Prepared 10 sync workflow issues" in result.output
+        assert "Project number: 7" in result.output

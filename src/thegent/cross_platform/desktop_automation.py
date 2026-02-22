@@ -120,8 +120,9 @@ class DesktopAutomationProvider:
                 parts = result.stdout.strip().split(", ")
                 if len(parts) >= 4:
                     return (int(parts[2]), int(parts[3]))
-            except Exception:
-                pass
+                raise RuntimeError(f"Unexpected macOS desktop bounds output: {result.stdout!r}")
+            except Exception as exc:
+                raise RuntimeError("Failed to read macOS screen size via osascript") from exc
 
         elif self.system == "Windows":
             # Windows: Use PowerShell
@@ -131,7 +132,8 @@ class DesktopAutomationProvider:
                 lines = result.stdout.strip().splitlines()
                 if len(lines) >= 2:
                     return (int(lines[0]), int(lines[1]))
-            except Exception:
-                pass
+                raise RuntimeError(f"Unexpected Windows screen-size output: {result.stdout!r}")
+            except Exception as exc:
+                raise RuntimeError("Failed to read Windows screen size via PowerShell") from exc
 
-        return (1920, 1080)
+        raise NotImplementedError(f"Screen size detection is not implemented for platform: {self.system}")

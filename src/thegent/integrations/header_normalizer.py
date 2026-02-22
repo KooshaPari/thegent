@@ -147,15 +147,9 @@ class WLHeaderNormalizer:
 
         # Normalize each field
         normalized_record = record.copy()
-        normalized_record["title"] = WLHeaderNormalizer.normalize_title(
-            record["title"]
-        )
-        normalized_record["status"] = WLHeaderNormalizer.normalize_status(
-            record["status"]
-        )
-        normalized_record["priority"] = WLHeaderNormalizer.normalize_priority(
-            record["priority"]
-        )
+        normalized_record["title"] = WLHeaderNormalizer.normalize_title(record["title"])
+        normalized_record["status"] = WLHeaderNormalizer.normalize_status(record["status"])
+        normalized_record["priority"] = WLHeaderNormalizer.normalize_priority(record["priority"])
 
         # Determine if anything changed
         changed = normalized_record != record

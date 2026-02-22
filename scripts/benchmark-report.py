@@ -96,6 +96,7 @@ def build_report(
         "|---|---|---|---:|---:|---:|",
     ]
     summary_scenarios: list[dict[str, Any]] = []
+    mode_rows: dict[str, list[tuple[float, float]]] = {"cold": [], "warm": []}
 
     for scenario in scenarios:
         base = baseline.get(scenario)
@@ -103,6 +104,10 @@ def build_report(
         speedup: float | None = None
         if base is not None and cur is not None and cur.mean_seconds > 0:
             speedup = round(base.mean_seconds / cur.mean_seconds, 4)
+            if scenario.endswith("_cold"):
+                mode_rows["cold"].append((base.mean_seconds, cur.mean_seconds))
+            if scenario.endswith("_warm"):
+                mode_rows["warm"].append((base.mean_seconds, cur.mean_seconds))
 
         lines.append(
             "| "
@@ -146,12 +151,35 @@ def build_report(
             }
         )
 
+    lines.append("")
+    lines.append("## Mode Split Aggregates")
+    lines.append("")
+    lines.append("| Mode | Baseline Mean (ms) | Current Mean (ms) | Speedup |")
+    lines.append("|---|---:|---:|---:|")
+    mode_aggregates: dict[str, dict[str, float] | None] = {}
+    for mode in ("cold", "warm"):
+        pairs = mode_rows[mode]
+        if not pairs:
+            lines.append(f"| {mode} | N/A | N/A | N/A |")
+            mode_aggregates[mode] = None
+            continue
+        base_mean = sum(p[0] for p in pairs) / len(pairs)
+        cur_mean = sum(p[1] for p in pairs) / len(pairs)
+        speedup = base_mean / cur_mean if cur_mean > 0 else 0.0
+        lines.append(f"| {mode} | {base_mean * 1000.0:.3f} | {cur_mean * 1000.0:.3f} | {speedup:.2f}x |")
+        mode_aggregates[mode] = {
+            "baseline_mean_seconds": round(base_mean, 6),
+            "current_mean_seconds": round(cur_mean, 6),
+            "speedup": round(speedup, 4),
+        }
+
     summary = {
         "generated_at_utc": generated_at,
         "title": title,
         "baseline_dir": str(baseline_dir),
         "current_dir": str(current_dir),
         "scenarios": summary_scenarios,
+        "mode_aggregates": mode_aggregates,
     }
     lines.append("")
     return "\n".join(lines), summary

@@ -73,12 +73,14 @@ class DryRunRenderer:
 
             # Only add diff if values differ
             if local_value != remote_value:
-                diffs.append(FieldDiff(
-                    field=field,
-                    local_value=local_value,
-                    remote_value=remote_value,
-                    direction="local→remote",  # default direction
-                ))
+                diffs.append(
+                    FieldDiff(
+                        field=field,
+                        local_value=local_value,
+                        remote_value=remote_value,
+                        direction="local→remote",  # default direction
+                    )
+                )
 
         return DryRunDiff(
             wl_id=wl_id,

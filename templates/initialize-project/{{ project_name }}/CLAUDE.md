@@ -209,6 +209,14 @@ task docs:build
 │   └── .vitepress/         # VitePress docsite
 {% endif -%}
 ├── hooks/                  # Pre-commit hooks
+{% if include_act -%}
+├── scripts/                # CI simulation and local utility scripts
+│   └── ci_local_gha.sh     # Local `act` runner
+{% endif -%}
+{% if include_pm_tools -%}
+├── docs/reference/         # Work stream and PM-oriented operations docs
+│   └── WORK_STREAM.md
+{% endif -%}
 ├── Taskfile.yml            # Build automation
 ├── CLAUDE.md               # This file
 {% if include_ci -%}
