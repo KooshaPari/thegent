@@ -234,8 +234,9 @@
       "updated_at": "2026-02-21T19:30:33Z",
       "comments": 2,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 13
+      "thegent_status": "done",
+      "board_id": 13,
+      "thegent_solution": "Fixed OAuth endpoints in cliproxyapi-plusplus - updated to oauth.qwen.ai"
     },
     {
       "id": 3967670686,
@@ -914,8 +915,9 @@
       "updated_at": "2026-02-13T10:17:14Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 53
+      "thegent_status": "done",
+      "board_id": 53,
+      "thegent_solution": "Already fixed - converts invalid signatures to redacted_thinking"
     },
     {
       "id": 3936420407,
