@@ -246,8 +246,7 @@ harvest_cursor() {
         fi
         [[ "$has_idea" != "true" && "$has_defer" != "true" ]] && continue
         local ts_iso session_id
-        local current_jsonl="$jsonl"
-        session_id=$(basename "$current_jsonl" .jsonl)
+        session_id=$(basename "$jsonl" .jsonl)
         ts_iso=$(date -u +%Y%m%dT%H%M%SZ)
         if [[ "$has_defer" == "true" ]]; then
           local handoff

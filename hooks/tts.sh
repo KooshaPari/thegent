@@ -3,8 +3,8 @@
 # Usage: hook-dispatcher tts '{"content": "message to speak"}'
 
 HOOK_NAME="TTS"
-# Using absolute path to common.sh relative to script
-source "${(%):-%x:h}/lib/common.sh"
+# shellcheck source=lib/common.sh
+source "$0:h/lib/common.sh"
 hook_init
 
 # Extract content to speak

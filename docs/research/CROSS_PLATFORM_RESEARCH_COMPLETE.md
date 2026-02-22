@@ -972,3 +972,18 @@ class RemoteExecutor:
 - Block release if any tier-1 platform (macOS, Linux, Windows) has a failed or missing parity gate result.
 - Block release on unresolved cross-platform severity-1/2 defects affecting execution correctness, isolation, or rollback safety.
 - Block release when observability minimums (per-OS success rate, timeout rate, and rollback signal coverage) are incomplete.
+
+## OS-Specific Failure Patterns
+
+- **macOS:** Accessibility/TCC permission revocations and non-interactive launch contexts cause desktop actions to fail despite healthy shell probes.
+- **Linux:** Display backend variance (X11 vs Wayland), missing DBus/session bus, or namespace/policy drift breaks UI and isolation checks.
+- **Windows:** Mixed shell semantics (`pwsh`/`cmd`), UAC/session boundaries, and WinRM policy drift create transport and privilege inconsistencies.
+- **WSL2:** Host/guest boundary mismatches make UI/session assertions unreliable; restrict to compute-only and host-routed validation.
+
+## Cross-Env Validation Sequence
+
+1. Validate release candidate hash consistency across macOS, Linux, and Windows runners before functional checks.
+2. Run shell + transport smoke tests (SSH/WinRM as applicable) with per-OS telemetry capture and threshold checks.
+3. Execute host-native session/isolation and UI capability probes; hard-block desktop acceptance in WSL2.
+4. Run parity regression suites and compare outcome equivalence for execution, isolation, retries, and artifacts.
+5. Approve staged rollout only if tri-OS gates pass and rollback signals remain armed; otherwise block and remediate.

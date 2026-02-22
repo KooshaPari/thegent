@@ -11,9 +11,9 @@ or integrated with tenacity decorators for automatic retry.
 import logging
 import random
 from dataclasses import dataclass
+from typing import ClassVar
 
 from tenacity import (
-    retry_if_exception,
     retry_if_result,
     stop_after_attempt,
     wait_exponential,
@@ -70,7 +70,7 @@ class RateLimitBackoffManager:
     """Manager for rate-limit backoff and retry configuration."""
 
     # HTTP status codes indicating rate limiting
-    RATE_LIMIT_CODES = {429, 503}
+    RATE_LIMIT_CODES: ClassVar[set[int]] = {429, 503}
 
     def __init__(self, config: RateLimitConfig | None = None):
         """Initialize the rate-limit manager.

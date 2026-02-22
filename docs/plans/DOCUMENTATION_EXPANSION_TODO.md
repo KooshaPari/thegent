@@ -687,6 +687,19 @@ All MD docs will be:
 - [x] Added `Platform SLA Expectations` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
 - [x] Added `Portability Verification Steps` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
 
+### Wave 18 — Completed (10 items)
+
+- [x] Added `Service Restart Checklist` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Health Probe Commands` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Breaking Change Review` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Rollback Ownership Matrix` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `OS-Specific Failure Patterns` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Cross-Env Validation Sequence` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Lane Starvation Signals` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Recovery Dispatch Order` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Resource Snapshot Cadence` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+- [x] Added `Degradation Response Commands` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+
 ---
 
 *This TODO will be updated as expansion progresses.*

@@ -742,3 +742,17 @@ print(f"Allowed: {allowed}, Violations: {violations}")
 - Memory regression: available memory `< 1024 MB` across `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
 - FD regression: FD usage `>= 80%` on repeated `thegent observe resources` checks.
 - Trend regression: two threshold breaches in one day from `logs/resource_baseline.log` review.
+
+## Resource Snapshot Cadence
+
+- Hourly quick sample: `thegent observe resources`.
+- Shift baseline (start/end): `mkdir -p logs && thegent observe resources >> logs/resource_snapshots.log`.
+- Peak-window sampling: `for i in 1 2 3; do date; thegent observe resources; sleep 10; done`.
+- Daily review command: `tail -n 50 logs/resource_snapshots.log`.
+
+## Degradation Response Commands
+
+- Confirm degradation: `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+- Shed idle load: `thegent mcp prune --dry-run && thegent mcp prune`.
+- Throttle active pressure: `thegent ps` then `thegent stop <session_id>`.
+- Verify recovery gate: `for i in 1 2 3; do thegent observe resources; sleep 10; done`.

@@ -29,13 +29,9 @@ logger = logging.getLogger(__name__)
 class WriterLockError(Exception):
     """Base exception for writer lock operations."""
 
-    pass
-
 
 class WriterLockAcquisitionError(WriterLockError):
     """Raised when lock acquisition fails."""
-
-    pass
 
 
 # ---------------------------------------------------------------------------

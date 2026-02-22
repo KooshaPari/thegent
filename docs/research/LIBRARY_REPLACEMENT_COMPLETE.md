@@ -1033,3 +1033,31 @@ Acceptance checklist:
 - [ ] Primary owner and SRE both approve production readiness.
 - [ ] Legacy library usage scan returns zero in-scope references.
 - [ ] Decommission/removal ticket is created with owner and due date.
+
+## Breaking Change Review
+
+| Review Item | Required Check | Evidence Link |
+|---|---|---|
+| API/CLI contract impact | Confirm changed inputs/outputs and documented migration path | PR diff + migration note |
+| Data/state compatibility | Validate no irreversible schema/state break without guarded path | Migration test report |
+| Operational blast radius | Verify rollback trigger, alert thresholds, and owner paging path | Runbook + on-call plan |
+| Consumer communication | Confirm affected teams are notified with cutover window | Announcement artifact |
+
+Review checklist:
+- [ ] Every breaking surface is listed with owner and impact severity.
+- [ ] Backward-incompatible behaviors have explicit mitigation steps.
+- [ ] Cutover cannot proceed without linked evidence for all rows.
+
+## Rollback Ownership Matrix
+
+| Rollback Phase | Primary Owner | Backup Owner | Decision SLA |
+|---|---|---|---|
+| Trigger decision | Service owner | SRE lead | ≤10 minutes from trigger |
+| Execution command | On-call engineer | Platform engineer | ≤15 minutes from decision |
+| Validation and comms | Incident commander | Product/eng liaison | ≤30 minutes from execution |
+| Post-rollback follow-up | Repo maintainer | Tech lead | ≤1 business day |
+
+Ownership checklist:
+- [ ] Primary and backup owners are named before cutover starts.
+- [ ] Pager/escalation path is verified for all owners.
+- [ ] Decision SLA and execution timestamps are recorded in incident notes.

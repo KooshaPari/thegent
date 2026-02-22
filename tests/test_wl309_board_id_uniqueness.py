@@ -90,7 +90,7 @@ class TestUniquenesEnforcer:
         enforcer = UniquenesEnforcer()
 
         context = {"source": "github", "project": "my-project"}
-        enforcer.register_id("BOARD-003", context=context)
+        enforcer.register_id("BOARD-003", _context=context)
 
         assert enforcer.is_registered("BOARD-003") is True
 

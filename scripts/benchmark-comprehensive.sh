@@ -99,7 +99,7 @@ fi
 
 if [[ "$DRY_RUN" == "1" ]]; then
   echo "{}" >"$SUMMARY_PATH"
-  echo "# Dry Run\n" >"$REPORT_PATH"
+  printf '# Dry Run\n' >"$REPORT_PATH"
 fi
 
 cat >"$MANIFEST_PATH" <<EOF
