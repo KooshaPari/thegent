@@ -1002,3 +1002,19 @@ class DebugMiddleware(Middleware):
 - **T+5–10 min**: Service owner joins; roll back to last-known-good if error rate remains elevated.
 - **T+10–20 min**: Platform/SRE joins for infra checks; run `curl -fsS http://localhost:8000/ready` and transport smoke tests.
 - **T+20+ min**: Escalate to incident commander, open status comms, and assign owner/date for corrective action.
+
+## Service Restart Checklist
+
+- Freeze deploys and announce restart window in the incident channel.
+- Capture baseline before restart: `date -u && systemctl status thegent-mcp --no-pager | head -n 20`.
+- Restart cleanly: `systemctl restart thegent-mcp`.
+- Confirm process recovery: `systemctl is-active thegent-mcp && systemctl status thegent-mcp --no-pager | head -n 20`.
+- Unfreeze deploys only after probes and one MCP smoke call succeed.
+
+## Health Probe Commands
+
+- Liveness: `curl -fsS http://localhost:8000/health`.
+- Readiness: `curl -fsS http://localhost:8000/ready`.
+- MCP endpoint check: `curl -fsS http://localhost:8000/mcp/health`.
+- Tool registry sanity: `curl -fsS http://localhost:8000/mcp/list_tools | jq '.tools | length'`.
+- Quick error tail after restart: `journalctl -u thegent-mcp -n 100 --no-pager | rg -n "error|timeout|exception"`.

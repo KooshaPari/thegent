@@ -18,7 +18,7 @@ fi
 # Get task description
 DESC=$(task --list-all 2>/dev/null | grep -E "^\* $TASK" | sed 's/^\* [^:]*: //' || echo "No description")
 
-echo "[bold cyan]$TASK[/bold cyan]"
+echo "[bold cyan]${TASK}[/bold cyan]"
 echo "$DESC"
 echo ""
 

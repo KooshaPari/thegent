@@ -711,3 +711,17 @@ print(result)
 - Require one final integration pass on merged scope with command + result captured in the closeout note.
 - Confirm no unresolved `Critical`/`High` blockers remain; otherwise continue wave in reduced unblock mode.
 - Publish a shutdown summary including completed tasks, deferred tasks, residual risks, and first actions for next wave.
+
+## Lane Starvation Signals
+
+- No commit, handoff, or status change for one checkpoint on a lane with ready dependencies.
+- Two or more downstream lanes wait on one upstream owner for a full checkpoint.
+- Lane queue age exceeds 2x swarm median while at least one owner is idle.
+- Repeated unblock pings (>2) occur without a concrete next action or ETA.
+
+## Recovery Dispatch Order
+
+- Dispatch 1: Assign a temporary unblock owner to the highest-impact blocked upstream lane.
+- Dispatch 2: Move one idle owner to the oldest starved downstream lane with ready inputs.
+- Dispatch 3: Split oversized tasks (>1 checkpoint estimate) into atomic subtasks and re-queue immediately.
+- Dispatch 4: Reserve one lane for integration risk burn-down before starting new feature lanes.

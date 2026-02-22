@@ -23,7 +23,7 @@ class TestAutopilotStatusCommand:
         runner = CliRunner()
 
         # This will use the default status
-        result = runner.invoke(app, ["autopilot-status", "--format", "rich"])
+        result = runner.invoke(app, ["sync", "autopilot-status", "--format", "rich"])
 
         assert result.exit_code == 0
         assert "Autopilot Status" in result.stdout
@@ -33,7 +33,7 @@ class TestAutopilotStatusCommand:
         """# @trace WL-171 — autopilot-status with JSON output format."""
         runner = CliRunner()
 
-        result = runner.invoke(app, ["autopilot-status", "--format", "json"])
+        result = runner.invoke(app, ["sync", "autopilot-status", "--format", "json"])
 
         assert result.exit_code == 0
         # Try parsing the JSON output
@@ -49,7 +49,7 @@ class TestAutopilotStatusCommand:
         """# @trace WL-171 — autopilot-status with rich output format."""
         runner = CliRunner()
 
-        result = runner.invoke(app, ["autopilot-status", "--format", "rich"])
+        result = runner.invoke(app, ["sync", "autopilot-status", "--format", "rich"])
 
         assert result.exit_code == 0
         # Should contain status table headers
@@ -80,12 +80,12 @@ class TestAutopilotStatusCommand:
             with open(status_path, "w") as f:
                 json.dump(status_data, f)
 
-            result = runner.invoke(app, ["autopilot-status", "--format", "json"])
+            result = runner.invoke(app, ["sync", "autopilot-status", "--format", "json"])
 
         assert result.exit_code == 0
 
     @pytest.mark.requirement("WL-171")
-    def test_autopilot_status_with_degraded_health(self, _tmp_path: Path) -> None:
+    def test_autopilot_status_with_degraded_health(self, _tmp_path):
         """# @trace WL-171 — autopilot-status displays degraded health."""
         runner = CliRunner()
 
@@ -103,12 +103,12 @@ class TestAutopilotStatusCommand:
             with open(status_path, "w") as f:
                 json.dump(status_data, f)
 
-            result = runner.invoke(app, ["autopilot-status", "--format", "json"])
+            result = runner.invoke(app, ["sync", "autopilot-status", "--format", "json"])
 
         assert result.exit_code == 0
 
     @pytest.mark.requirement("WL-171")
-    def test_autopilot_status_with_down_health(self, _tmp_path: Path) -> None:
+    def test_autopilot_status_with_down_health(self, _tmp_path):
         """# @trace WL-171 — autopilot-status displays down health."""
         runner = CliRunner()
 
@@ -126,12 +126,12 @@ class TestAutopilotStatusCommand:
             with open(status_path, "w") as f:
                 json.dump(status_data, f)
 
-            result = runner.invoke(app, ["autopilot-status", "--format", "json"])
+            result = runner.invoke(app, ["sync", "autopilot-status", "--format", "json"])
 
         assert result.exit_code == 0
 
     @pytest.mark.requirement("WL-171")
-    def test_autopilot_status_with_malformed_json(self, _tmp_path: Path) -> None:
+    def test_autopilot_status_with_malformed_json(self, _tmp_path):
         """# @trace WL-171 — autopilot-status handles malformed JSON gracefully."""
         runner = CliRunner()
 
@@ -144,7 +144,7 @@ class TestAutopilotStatusCommand:
             with open(status_path, "w") as f:
                 f.write("{invalid json content")
 
-            result = runner.invoke(app, ["autopilot-status", "--format", "rich"])
+            result = runner.invoke(app, ["sync", "autopilot-status", "--format", "rich"])
 
         # Should still succeed and use defaults
         assert result.exit_code == 0

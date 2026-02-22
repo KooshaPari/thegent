@@ -39,6 +39,45 @@ class JournalEntry:
     timestamp: str
     replayable: bool
 
+    @staticmethod
+    def create_entry(
+        cycle_id: str,
+        wl_id: str,
+        decision: str,
+        rationale: str,
+        before_state: dict[str, Any],
+        after_state: dict[str, Any],
+        replayable: bool = True,
+    ) -> JournalEntry:
+        """Factory method to create a new JournalEntry.
+
+        Args:
+            cycle_id: Associated cycle ID.
+            wl_id: Work stream item ID.
+            decision: Decision type/name.
+            rationale: Explanation.
+            before_state: State before decision.
+            after_state: State after decision.
+            replayable: Whether the decision can be replayed (default: True).
+
+        Returns:
+            A new JournalEntry with auto-generated ID and timestamp.
+        """
+        entry_id = str(uuid.uuid4())[:8]
+        timestamp = datetime.now(timezone.utc).isoformat()
+
+        return JournalEntry(
+            entry_id=entry_id,
+            cycle_id=cycle_id,
+            wl_id=wl_id,
+            decision=decision,
+            rationale=rationale,
+            before_state=before_state,
+            after_state=after_state,
+            timestamp=timestamp,
+            replayable=replayable,
+        )
+
 
 class DecisionJournal:
     """Journal for recording and replaying decisions made to work stream items."""
@@ -133,42 +172,3 @@ class DecisionJournal:
                 return entry
 
         raise ValueError(f"Journal entry not found: {entry_id}")
-
-    @staticmethod
-    def create_entry(
-        cycle_id: str,
-        wl_id: str,
-        decision: str,
-        rationale: str,
-        before_state: dict[str, Any],
-        after_state: dict[str, Any],
-        replayable: bool = True,
-    ) -> JournalEntry:
-        """Factory method to create a new JournalEntry.
-
-        Args:
-            cycle_id: Associated cycle ID.
-            wl_id: Work stream item ID.
-            decision: Decision type/name.
-            rationale: Explanation.
-            before_state: State before decision.
-            after_state: State after decision.
-            replayable: Whether the decision can be replayed (default: True).
-
-        Returns:
-            A new JournalEntry with auto-generated ID and timestamp.
-        """
-        entry_id = str(uuid.uuid4())[:8]
-        timestamp = datetime.now(timezone.utc).isoformat()
-
-        return JournalEntry(
-            entry_id=entry_id,
-            cycle_id=cycle_id,
-            wl_id=wl_id,
-            decision=decision,
-            rationale=rationale,
-            before_state=before_state,
-            after_state=after_state,
-            timestamp=timestamp,
-            replayable=replayable,
-        )

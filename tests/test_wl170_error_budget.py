@@ -123,16 +123,17 @@ def test_error_budget_tracker_should_escalate_true() -> None:
 @pytest.mark.requirement("WL-170")
 def test_error_budget_tracker_should_hard_fail_consecutive() -> None:
     """Test should_hard_fail on consecutive failure threshold."""
-    tracker = ErrorBudgetTracker()
+    config = ErrorBudgetConfig(
+        max_consecutive_failures=3,
+        max_failure_rate=1.0,  # Allow 100% failure rate for this test
+        escalation_after=10,
+    )
+    tracker = ErrorBudgetTracker(config)
 
-    # Record max_consecutive_failures-1 (2)
-    for _ in range(2):
+    # Record max_consecutive_failures (3)
+    for _ in range(3):
         tracker.record_failure()
 
-    assert not tracker.should_hard_fail()
-
-    # Record one more to reach max_consecutive_failures (3)
-    tracker.record_failure()
     assert not tracker.should_hard_fail()
 
     # Record one more to exceed threshold

@@ -3583,7 +3583,7 @@ Detect items that have no local or remote movement beyond configured age thresho
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
 ### [WL-183] Board-ID Collision Guard
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** S
@@ -3592,6 +3592,7 @@ Detect items that have no local or remote movement beyond configured age thresho
 Detect duplicate board IDs across connectors and hard-fail the cycle when collisions occur.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/board_id_guard.py` with `BoardIdCollisionError`, `BoardIdRegistry`, and `validate_no_collisions()`. Tests: `tests/test_wl183_board_id_guard.py` (14 tests).
 
 ### [WL-184] WL Header Normalization Pass
 **Status:** BACKLOG
@@ -3800,7 +3801,7 @@ Push status and priority updates to GitHub Project fields instead of only draft 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-163] GitHub Pull Reflection Audit Trail
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** github, workstream
 **Effort:** S
@@ -3809,6 +3810,7 @@ Push status and priority updates to GitHub Project fields instead of only draft 
 Reflect pulled GitHub status changes into local markdown with explicit sync-cycle audit notes.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/gh_pull_audit.py` with `PullReflectionAuditEntry` dataclass and `PullReflectionAuditLog` class. Persists to `docs/reference/gh_pull_audit.jsonl`. Tests: `tests/test_wl163_gh_pull_audit.py` (7 tests).
 
 ### [WL-164] Linear State Mapping Table
 **Status:** BACKLOG
@@ -3822,7 +3824,7 @@ Implement explicit state ID mapping for Todo/In Progress/Done with fail-fast val
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-165] Linear Priority Round-Trip
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** linear, sync
 **Effort:** S
@@ -3831,6 +3833,7 @@ Implement explicit state ID mapping for Todo/In Progress/Done with fail-fast val
 Add full priority round-trip between local P-levels and Linear priority semantics.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/linear_priority.py` with `LinearPriority` and `LocalPriority` enums, `linear_to_local()` and `local_to_linear()` converters with stable round-trip. Tests: `tests/test_wl165_linear_priority.py` (23 tests).
 
 ### [WL-166] Idempotency Index Cache
 **Status:** BACKLOG
@@ -3877,7 +3880,7 @@ Implement unified backoff and bounded retry policy for GitHub/Linear API pressur
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-170] Error Budget and Escalation Thresholds
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** reliability, ops
 **Effort:** S
@@ -3886,6 +3889,7 @@ Implement unified backoff and bounded retry policy for GitHub/Linear API pressur
 Add hard-fail thresholds and escalation behavior for repeated autosync failures.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/error_budget.py` with `ErrorBudgetConfig` and `ErrorBudgetTracker` classes. Tracks consecutive/total failures, supports escalation and hard-fail decisions. Tests: `tests/test_wl170_error_budget.py` (14 tests).
 
 ### [WL-171] Autopilot Status Command
 **Status:** BACKLOG
