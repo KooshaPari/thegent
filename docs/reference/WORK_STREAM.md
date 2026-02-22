@@ -2307,7 +2307,7 @@ Add ownership registry with escalation contacts for each sync domain.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-301] Cross-Connector Consistency Verifier
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** M
@@ -2395,7 +2395,7 @@ Record explicit remote write confirmations in cycle reports.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-309] Strict Board-ID Uniqueness
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** integrity, governance
 **Effort:** S
@@ -3418,7 +3418,7 @@ Add maintenance controls to pause and resume automatic sync safely.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-207] Full-Rescan Scheduler
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** reliability, scheduler
 **Effort:** S
@@ -3892,7 +3892,7 @@ Add hard-fail thresholds and escalation behavior for repeated autosync failures.
 **Implementation:** `src/thegent/integrations/error_budget.py` with `ErrorBudgetConfig` and `ErrorBudgetTracker` classes. Tracks consecutive/total failures, supports escalation and hard-fail decisions. Tests: `tests/test_wl170_error_budget.py` (14 tests).
 
 ### [WL-171] Autopilot Status Command
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** cli, ux
 **Effort:** S
@@ -3925,7 +3925,7 @@ Emit structured metrics per autosync cycle for dashboarding and alerting.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-174] Local-vs-Remote Integrity Scanner
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** M

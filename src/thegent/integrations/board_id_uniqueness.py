@@ -46,8 +46,7 @@ class UniquenesEnforcer:
         if self.policy.enforce_global_uniqueness:
             if board_id in self._registry:
                 raise DuplicateBoardIdError(
-                    f"Board ID '{board_id}' is already registered. "
-                    f"Duplicate board IDs are not allowed."
+                    f"Board ID '{board_id}' is already registered. Duplicate board IDs are not allowed."
                 )
 
         self._registry.add(board_id)
