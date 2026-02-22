@@ -45,7 +45,6 @@ class IntegrityScanner:
 
     def __init__(self) -> None:
         """Initialize the integrity scanner."""
-        pass
 
     def scan(
         self,
@@ -68,10 +67,12 @@ class IntegrityScanner:
         """
         mismatches: list[IntegrityMismatch] = []
 
-        # Build remote lookup by id
-        remote_by_id: dict[str, dict[str, Any]] = {
-            item.get("id"): item for item in remote_items if item.get("id")
-        }
+        # Build remote lookup by id (only items with non-None id)
+        remote_by_id: dict[str, dict[str, Any]] = {}
+        for item in remote_items:
+            item_id = item.get("id")
+            if item_id:
+                remote_by_id[str(item_id)] = item
 
         # Compare fields for each local item
         for local_item in local_items:

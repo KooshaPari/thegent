@@ -10,10 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from thegent.integrations.writer_lock import (
-    SingleWriterLock,
-    WriterLockAcquisitionError,
-)
+from thegent.integrations.writer_lock import SingleWriterLock
 
 
 # ---------------------------------------------------------------------------
