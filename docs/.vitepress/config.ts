@@ -4,7 +4,7 @@ import { imagetools } from 'vite-imagetools'
 import { crossProjectLinks } from './plugins/cross-project-links'
 import { contentTabsPlugin } from './plugins/content-tabs'
 import { videoEmbedPlugin } from './plugins/video-embed'
-import { sidebar } from './sidebar'
+import { sidebar } from './sidebar-auto'
 import { createRequire } from 'module'
 
 const require = createRequire(import.meta.url)
