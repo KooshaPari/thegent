@@ -910,3 +910,31 @@ Both runtimes could support:
 - Exercise failover: force primary-path failure and confirm secondary execution within the SLA response window.
 - Export logs/traces/artifacts from each platform and verify replayability in a neutral analysis workflow.
 - Record blocking deltas (auth, tool compatibility, packaging) and require mitigation owners before defaulting a platform.
+
+## Platform Compliance Checks
+
+- Run a weekly control sweep: access reviews, data-retention policy checks, and audit-log export validation.
+- Gate releases on a compliance checklist pass (security controls, policy mappings, incident runbook freshness).
+- Require monthly evidence bundles (config snapshots, control test output, exception register) in versioned storage.
+- Escalate any failed control within one business day with owner, mitigation, and re-test date.
+
+## Lifecycle Exit Signals
+
+- Trigger exit review after two consecutive SLA misses or repeated P1 incidents in a 30-day window.
+- Initiate migration planning when total platform cost exceeds forecast by >20% for two billing cycles.
+- Open an exit track immediately for material policy/legal changes that break required compliance posture.
+- Start cutover when portability drills fail twice without remediation closure by the committed deadline.
+
+## Platform Change Approval Gates
+
+- Require a written change brief (scope, risk, rollback, owner) before any platform switch enters implementation.
+- Enforce a three-check gate: security/compliance sign-off, SRE runbook readiness, and successful portability drill evidence.
+- Block production cutover unless pilot SLOs are met for 7 consecutive days with no unresolved Sev-1/Sev-2 incidents.
+- Approve only with dated go/no-go notes and explicit rollback trigger thresholds captured in the release record.
+
+## Retirement Readiness Signals
+
+- Mark a platform retirement-ready only after 100% of critical workflows run successfully on the replacement path for 14 days.
+- Confirm secret/token revocation plan, data export completion, and audit-log retention mapping before shutdown scheduling.
+- Require zero open high-severity defects tagged to the retirement scope and named owners for all medium-severity items.
+- Execute a final dry-run decommission checklist and archive signed completion evidence before disabling the old platform.

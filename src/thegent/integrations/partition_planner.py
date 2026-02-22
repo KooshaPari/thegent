@@ -71,17 +71,12 @@ class PartitionPlanner:
             current_start = partition_end
             partition_id += 1
 
-        logger.debug(
-            f"Planned {len(partitions)} partitions for {total_items} items "
-            f"with max size {max_partition_size}"
-        )
+        logger.debug(f"Planned {len(partitions)} partitions for {total_items} items with max size {max_partition_size}")
 
         return partitions
 
     @staticmethod
-    def partition_for(
-        item_index: int, partitions: list[Partition]
-    ) -> Partition | None:
+    def partition_for(item_index: int, partitions: list[Partition]) -> Partition | None:
         """Find which partition an item belongs to.
 
         Args:

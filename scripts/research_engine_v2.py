@@ -10,12 +10,44 @@ OUTPUT_FILE = "data/research/all_processed_reddit.json"
 BATCH_SIZE = 2000
 MAX_SUCCESSES = 2000
 
+
 def fetch_reddit_post(url: str) -> dict:
     # Priority subreddits
-    priority_subreddits = ["ClaudeAI", "ClaudeCode", "AI_Agents", "mcp", "LocalLLaMA", "golang", "Python", "zsh", "Supabase", "cursor", "nextjs", "LangChain"]
+    priority_subreddits = [
+        "ClaudeAI",
+        "ClaudeCode",
+        "AI_Agents",
+        "mcp",
+        "LocalLLaMA",
+        "golang",
+        "Python",
+        "zsh",
+        "Supabase",
+        "cursor",
+        "nextjs",
+        "LangChain",
+    ]
 
     # Noise subreddits to skip
-    skip_subreddits = ["ASU", "ASUOnline", "ApplyingToCollege", "AskSF", "AskLosAngeles", "ArsenalFC", "Apartmentliving", "BeyondWonderlandPNW", "BoJackHorseman", "CRedit", "CitiesSkylines", "worldnews", "CVS", "theydidthemath", "tmobile", "threejs", "thinkpad"]
+    skip_subreddits = [
+        "ASU",
+        "ASUOnline",
+        "ApplyingToCollege",
+        "AskSF",
+        "AskLosAngeles",
+        "ArsenalFC",
+        "Apartmentliving",
+        "BeyondWonderlandPNW",
+        "BoJackHorseman",
+        "CRedit",
+        "CitiesSkylines",
+        "worldnews",
+        "CVS",
+        "theydidthemath",
+        "tmobile",
+        "threejs",
+        "thinkpad",
+    ]
 
     if any(f"/r/{s}/" in url for s in skip_subreddits):
         return {"error": "Skipping non-technical/noisy subreddit"}
@@ -29,10 +61,7 @@ def fetch_reddit_post(url: str) -> dict:
 
     try:
         result = subprocess.run(
-            ["curl", "-L", "-A", DEFAULT_USER_AGENT, "-s", clean_url],
-            capture_output=True,
-            text=True,
-            timeout=15
+            ["curl", "-L", "-A", DEFAULT_USER_AGENT, "-s", clean_url], capture_output=True, text=True, timeout=15
         )
         if result.returncode != 0:
             return {"error": f"Curl error: {result.stderr}"}
@@ -44,21 +73,21 @@ def fetch_reddit_post(url: str) -> dict:
             if len(data) > 1:
                 for child in data[1]["data"]["children"][:5]:
                     if child.get("kind") == "t1":
-                        comments.append({
-                            "author": child["data"].get("author"),
-                            "body": child["data"].get("body", "")[:500]
-                        })
+                        comments.append(
+                            {"author": child["data"].get("author"), "body": child["data"].get("body", "")[:500]}
+                        )
 
             return {
                 "title": post_info.get("title"),
                 "subreddit": post_info.get("subreddit"),
                 "selftext": post_info.get("selftext", ""),
                 "url": url,
-                "comments": comments
+                "comments": comments,
             }
     except Exception as e:
         return {"error": str(e)}
     return {"error": "Unknown error or unparseable JSON"}
+
 
 def main():
     if not os.path.exists(LINKS_FILE):
@@ -80,7 +109,7 @@ def main():
     remaining_links = [l for l in all_links if l not in processed_urls]
 
     # Prioritize subreddits and recency
-    remaining_links.reverse() # Recent first
+    remaining_links.reverse()  # Recent first
 
     priority_links = []
     other_links = []
@@ -108,7 +137,7 @@ def main():
             print(f"Reached MAX_SUCCESSES ({MAX_SUCCESSES}). Batch stopping.")
             break
 
-        print(f"[{i+1}/{len(to_process)}] Fetching: {link}")
+        print(f"[{i + 1}/{len(to_process)}] Fetching: {link}")
         result = fetch_reddit_post(link)
 
         if "error" in result:
@@ -120,8 +149,8 @@ def main():
                 consecutive_json_errors = 0
 
             if consecutive_json_errors > 10:
-                 print("Too many consecutive JSON errors. Stopping early.")
-                 break
+                print("Too many consecutive JSON errors. Stopping early.")
+                break
         else:
             processed_data.append(result)
             success_count += 1
@@ -131,12 +160,13 @@ def main():
             with open(OUTPUT_FILE, "w") as f:
                 json.dump(processed_data, f, indent=2)
 
-        time.sleep(3.0) # Conservative sleep
+        time.sleep(3.0)  # Conservative sleep
 
     with open(OUTPUT_FILE, "w") as f:
         json.dump(processed_data, f, indent=2)
 
     print(f"Batch complete. Success: {success_count}.")
+
 
 if __name__ == "__main__":
     main()

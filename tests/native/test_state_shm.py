@@ -53,6 +53,7 @@ def _fallback_xp(tmp_path: Path) -> XpTracker:
 # _category_int
 # ---------------------------------------------------------------------------
 
+
 class TestCategoryInt:
     """FR-ROB-003: Category mapping helpers."""
 
@@ -70,6 +71,7 @@ class TestCategoryInt:
 # ---------------------------------------------------------------------------
 # _PurePythonBreakerStore
 # ---------------------------------------------------------------------------
+
 
 class TestPurePythonBreakerStore:
     """Unit tests for the pure-Python fallback breaker store."""
@@ -135,6 +137,7 @@ class TestPurePythonBreakerStore:
 # _PurePythonXpStore
 # ---------------------------------------------------------------------------
 
+
 class TestPurePythonXpStore:
     """FR-XP-001: Pure-Python XP store unit tests."""
 
@@ -172,6 +175,7 @@ class TestPurePythonXpStore:
 # ---------------------------------------------------------------------------
 # CircuitBreakerShm (fallback path)
 # ---------------------------------------------------------------------------
+
 
 class TestCircuitBreakerShmFallback:
     """FR-ROB-003/004: CircuitBreakerShm via pure-Python fallback."""
@@ -242,6 +246,7 @@ class TestCircuitBreakerShmFallback:
 # XpTracker (fallback path)
 # ---------------------------------------------------------------------------
 
+
 class TestXpTrackerFallback:
     """FR-XP-001: XpTracker via pure-Python fallback."""
 
@@ -273,6 +278,7 @@ class TestXpTrackerFallback:
 # open_shm convenience factory (fallback path)
 # ---------------------------------------------------------------------------
 
+
 class TestOpenShmFactory:
     """Integration test for open_shm with fallback."""
 
@@ -296,6 +302,7 @@ class TestOpenShmFactory:
 # is_native_available
 # ---------------------------------------------------------------------------
 
+
 class TestIsNativeAvailable:
     """Probe function for native extension availability."""
 
@@ -305,6 +312,7 @@ class TestIsNativeAvailable:
 
     def test_matches_module_presence(self) -> None:
         import thegent.native.state_shm as _mod
+
         assert is_native_available() == (_mod._native_module is not None)
 
 
@@ -318,6 +326,7 @@ if os.environ.get("THGENT_ENFORCE_NATIVE_SHM_TESTS", "0") == "1" and not is_nati
 # ---------------------------------------------------------------------------
 # Native path smoke test (skipped if extension unavailable)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not is_native_available(), reason="thegent_shm native extension not compiled")
 class TestCircuitBreakerShmNative:
@@ -348,6 +357,7 @@ class TestCircuitBreakerShmNative:
 # ---------------------------------------------------------------------------
 # Environment variable control
 # ---------------------------------------------------------------------------
+
 
 class TestEnvVarControl:
     """THGENT_USE_NATIVE_SHM=0 should force fallback even if native present."""

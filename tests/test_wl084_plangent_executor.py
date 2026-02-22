@@ -84,11 +84,7 @@ class _StubDispatcher:
 
     async def dispatch_plan(self, plan: Plan) -> dict[str, DispatchResult]:
         """Return the canned results filtered to the plan's node IDs."""
-        return {
-            node.id: self._results[node.id]
-            for node in plan.nodes
-            if node.id in self._results
-        }
+        return {node.id: self._results[node.id] for node in plan.nodes if node.id in self._results}
 
 
 # ---------------------------------------------------------------------------

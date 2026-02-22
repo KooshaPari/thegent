@@ -9,7 +9,6 @@ import json
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -36,7 +35,7 @@ class ConnectorMappingCache:
 
     DEFAULT_CACHE_FILE = Path("docs/reference/connector_mapping_cache.json")
 
-    def __init__(self, cache_file: Optional[Path] = None) -> None:
+    def __init__(self, cache_file: Path | None = None) -> None:
         """Initialize the mapping cache.
 
         Args:
@@ -90,7 +89,7 @@ class ConnectorMappingCache:
         elapsed = current_time - entry.cached_at
         return elapsed > entry.ttl_seconds
 
-    def get(self, connector: str, field_name: str) -> Optional[str]:
+    def get(self, connector: str, field_name: str) -> str | None:
         """Get cached field_id for a connector+field_name pair.
 
         Returns None if not cached, expired, or not found.

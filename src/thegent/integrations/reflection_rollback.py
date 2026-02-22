@@ -10,7 +10,6 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -28,7 +27,7 @@ class RollbackSnapshot:
     timestamp: str
     work_stream_content: str
     cycle_id: str
-    _created_at: Optional[datetime] = field(default=None, init=False, repr=False)
+    _created_at: datetime | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         """Parse timestamp into datetime for convenience."""
@@ -43,7 +42,7 @@ class ReflectionRollbackManager:
 
     SNAPSHOTS_DIR = Path("docs/reference/rollback_snapshots")
 
-    def __init__(self, snapshots_dir: Optional[Path] = None) -> None:
+    def __init__(self, snapshots_dir: Path | None = None) -> None:
         """Initialize the rollback manager.
 
         Args:

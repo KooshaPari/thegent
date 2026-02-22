@@ -59,7 +59,7 @@ echo ""
 if [[ ${#MISSING_H1[@]} -gt 0 ]]; then
     echo -e "${YELLOW}⚠️  Missing frontmatter/H1 (${#MISSING_H1[@]} files):${NC}"
     for file in "${MISSING_H1[@]}"; do
-        echo "   - ${file#$DOCS_DIR/}"
+        echo "   - ${file#"$DOCS_DIR"/}"
     done
     echo ""
 else
@@ -70,7 +70,7 @@ fi
 if [[ ${#MISSING_SEE_ALSO[@]} -gt 0 ]]; then
     echo -e "${YELLOW}⚠️  Missing 'See also' section (${#MISSING_SEE_ALSO[@]} files):${NC}"
     for file in "${MISSING_SEE_ALSO[@]}"; do
-        echo "   - ${file#$DOCS_DIR/}"
+        echo "   - ${file#"$DOCS_DIR"/}"
     done
     echo ""
 else

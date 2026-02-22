@@ -281,10 +281,12 @@ class TestRunDoctorFix:
                                                                 "thegent.doctor._check_sessions", return_value=[]
                                                             ):
                                                                 with patch(
-                                                                    "thegent.doctor._check_project_hints", return_value=[]
+                                                                    "thegent.doctor._check_project_hints",
+                                                                    return_value=[],
                                                                 ):
                                                                     with patch(
-                                                                        "thegent.doctor._check_performance", return_value=[]
+                                                                        "thegent.doctor._check_performance",
+                                                                        return_value=[],
                                                                     ):
                                                                         # Test that dry_run parameter is accepted
                                                                         result = run_doctor(fix=False, dry_run=True)
@@ -313,10 +315,12 @@ class TestRunDoctorFix:
                                                                 "thegent.doctor._check_sessions", return_value=[]
                                                             ):
                                                                 with patch(
-                                                                    "thegent.doctor._check_project_hints", return_value=[]
+                                                                    "thegent.doctor._check_project_hints",
+                                                                    return_value=[],
                                                                 ):
                                                                     with patch(
-                                                                        "thegent.doctor._check_performance", return_value=[]
+                                                                        "thegent.doctor._check_performance",
+                                                                        return_value=[],
                                                                     ):
                                                                         # Test fix=True with dry_run=True
                                                                         result = run_doctor(fix=True, dry_run=True)

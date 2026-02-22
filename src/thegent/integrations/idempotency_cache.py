@@ -14,7 +14,6 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +76,7 @@ class IdempotencyCache:
 
     DEFAULT_CACHE_PATH = Path("docs/reference/idempotency_cache.json")
 
-    def __init__(self, cache_path: Optional[Path] = None):
+    def __init__(self, cache_path: Path | None = None):
         """Initialize the cache.
 
         Args:

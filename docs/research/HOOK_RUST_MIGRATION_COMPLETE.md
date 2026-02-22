@@ -1045,3 +1045,33 @@ impl GitManager {
 - Recover: switch to last known-good Rust build; if needed, execute shell fallback.
 - Verify: rerun hook matrix plus parity checks before resuming promotions.
 - Close out: log incident timeline, root cause, and hardening actions in runbook.
+
+## Rust Hook Metrics Baseline
+
+- Record pre-cutover baseline: `p50/p95 latency`, `error rate`, `cache hit rate`, and `timeout count` per hook type.
+- Gate rollout on concrete limits: latency regression `<=20%`, error rate `<=0.5%`, and zero contract-diff failures.
+- Capture 60-minute steady-state windows for `dev`, `staging`, and `prod-canary` before promotion.
+- Store baseline and post-cutover snapshots in the cutover log with timestamp + release SHA.
+
+## Rollback Verification Commands
+
+- Verify active binary: `thegent-hooks --version`
+- Run parity matrix: `./hooks/test-hook-matrix.sh --baseline ./tmp/hook-baseline.json`
+- Check health metrics: `./scripts/hook-metrics-check.sh --max-latency-regression 20 --max-error-rate 0.5`
+- Execute rollback switch: `./scripts/hook-runtime-switch.sh --to last-known-good`
+- Confirm rollback parity: `./hooks/test-hook-matrix.sh --compare ./tmp/hook-baseline.json`
+
+## Hook Cutover Roll-Forward Steps
+
+- Confirm rollback point exists and `thegent-hooks --version` matches approved release.
+- Promote in order (`dev` → `staging` → `prod-canary` → `prod`) only after 60-minute stable metrics per stage.
+- Gate each promotion on hook-matrix parity and thresholds (`p95` regression `<=20%`, error rate `<=0.5%`).
+- Keep rollout paused on any contract mismatch, telemetry gap, or repeated crash until fixed and revalidated.
+
+## Crash Recovery Commands
+
+- `thegent-hooks --version`
+- `./scripts/hook-runtime-switch.sh --to last-known-good`
+- `./hooks/test-hook-matrix.sh --compare ./tmp/hook-baseline.json`
+- `./scripts/hook-metrics-check.sh --max-latency-regression 20 --max-error-rate 0.5`
+- `./scripts/hook-runtime-switch.sh --to approved-release && ./hooks/test-hook-matrix.sh --compare ./tmp/hook-baseline.json`

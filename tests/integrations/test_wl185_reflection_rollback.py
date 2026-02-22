@@ -63,9 +63,7 @@ class TestReflectionRollbackManager:
         return ws
 
     @pytest.mark.requirement("WL-185")
-    def test_take_snapshot(
-        self, manager: ReflectionRollbackManager, work_stream_file: Path
-    ) -> None:
+    def test_take_snapshot(self, manager: ReflectionRollbackManager, work_stream_file: Path) -> None:
         """Can take a snapshot of work stream content."""
         snapshot = manager.take_snapshot(work_stream_file)
 
@@ -81,9 +79,7 @@ class TestReflectionRollbackManager:
             manager.take_snapshot(Path("/nonexistent/WORK_STREAM.md"))
 
     @pytest.mark.requirement("WL-185")
-    def test_take_snapshot_persists_to_disk(
-        self, manager: ReflectionRollbackManager, work_stream_file: Path
-    ) -> None:
+    def test_take_snapshot_persists_to_disk(self, manager: ReflectionRollbackManager, work_stream_file: Path) -> None:
         """Snapshots are persisted to disk."""
         snapshot = manager.take_snapshot(work_stream_file)
         snapshot_file = manager._snapshots_dir / f"{snapshot.snapshot_id}.json"
@@ -97,9 +93,7 @@ class TestReflectionRollbackManager:
         assert result == []
 
     @pytest.mark.requirement("WL-185")
-    def test_list_snapshots_multiple(
-        self, manager: ReflectionRollbackManager, work_stream_file: Path
-    ) -> None:
+    def test_list_snapshots_multiple(self, manager: ReflectionRollbackManager, work_stream_file: Path) -> None:
         """list_snapshots returns all snapshots, sorted by timestamp (newest first)."""
         # Take first snapshot
         snap1 = manager.take_snapshot(work_stream_file)
@@ -115,9 +109,7 @@ class TestReflectionRollbackManager:
         assert snapshots[1].snapshot_id == snap1.snapshot_id
 
     @pytest.mark.requirement("WL-185")
-    def test_rollback_to(
-        self, manager: ReflectionRollbackManager, work_stream_file: Path, tmp_path: Path
-    ) -> None:
+    def test_rollback_to(self, manager: ReflectionRollbackManager, work_stream_file: Path, tmp_path: Path) -> None:
         """Can restore work stream from a snapshot."""
         # Take initial snapshot
         original_content = "# Original content"
@@ -142,9 +134,7 @@ class TestReflectionRollbackManager:
             manager.rollback_to("nonexistent", ws)
 
     @pytest.mark.requirement("WL-185")
-    def test_cleanup_old_snapshots(
-        self, manager: ReflectionRollbackManager, work_stream_file: Path
-    ) -> None:
+    def test_cleanup_old_snapshots(self, manager: ReflectionRollbackManager, work_stream_file: Path) -> None:
         """cleanup_old_snapshots keeps only N most recent."""
         # Create 7 snapshots
         snapshots = []

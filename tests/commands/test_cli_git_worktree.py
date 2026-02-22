@@ -6,6 +6,7 @@ import sys
 # Skip entire test module if thegent_git native extension is not available
 if importlib.util.find_spec("thegent_git") is None:
     import pytest
+
     pytest.skip("thegent-git native extension not installed", allow_module_level=True)
 
 import json
@@ -17,6 +18,7 @@ from typer.testing import CliRunner
 from thegent.cli.commands.cli_git import app
 
 runner = CliRunner()
+
 
 def test_git_worktree_status_shows_active_agents(tmp_path: Path) -> None:
     """`thegent git worktree status` prints active pooled agents."""

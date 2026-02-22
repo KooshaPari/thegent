@@ -166,10 +166,7 @@ class TestMcpPruneShadowIntegration:
         ensuring shadow cleanup is invoked.
         """
         # Simulate ps output with a node process that will match as a candidate
-        fake_ps_output = (
-            "  PID  PPID TTY    RSS COMMAND\n"
-            "99999  1    ??    1000 node /fake/pyright-langserver\n"
-        )
+        fake_ps_output = "  PID  PPID TTY    RSS COMMAND\n99999  1    ??    1000 node /fake/pyright-langserver\n"
         with (
             patch("thegent.orchestration.pruning.prune.run_subprocess_optimized") as mock_ps,
             patch("thegent.orchestration.pruning.prune._prune_stale_shadow_and_logs") as mock_shadow,

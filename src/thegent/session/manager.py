@@ -69,9 +69,7 @@ class SessionManager:
         source = self.get_session(session_id)
         cutoff = len(source.turns) if from_turn is None else from_turn
         if cutoff < 0 or cutoff > len(source.turns):
-            raise InvalidTurnIndexError(
-                f"from_turn out of range: {cutoff} (valid: 0..{len(source.turns)})"
-            )
+            raise InvalidTurnIndexError(f"from_turn out of range: {cutoff} (valid: 0..{len(source.turns)})")
 
         fork_id = new_session_id or str(uuid.uuid4())
         if fork_id in self._sessions:

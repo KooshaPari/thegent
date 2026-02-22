@@ -67,8 +67,7 @@ def validate_explicit_ollama_provider(*, provider: str | None, model: str | None
 
     if not available_models:
         return (
-            "Ollama provider is reachable but no local models are installed. "
-            "Install one with `ollama pull llama3.3`."
+            "Ollama provider is reachable but no local models are installed. Install one with `ollama pull llama3.3`."
         )
 
     requested = resolve_ollama_model(normalize_model_id(model))

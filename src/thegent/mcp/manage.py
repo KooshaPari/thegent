@@ -442,10 +442,9 @@ def _resolve_client_paths(
     resolved_workspace = workspace.resolve() if workspace else None
 
     if normalized_client == "cursor":
-        return (
-            ([resolved_workspace / ".cursor" / "mcp.json"] if resolved_workspace else [])
-            + [Path.home() / ".cursor" / "mcp.json"]
-        )
+        return ([resolved_workspace / ".cursor" / "mcp.json"] if resolved_workspace else []) + [
+            Path.home() / ".cursor" / "mcp.json"
+        ]
     if normalized_client == "droid":
         return [(resolved_workspace or Path.cwd()) / ".factory" / "mcp.json"]
     if normalized_client == "claude-code":
@@ -702,4 +701,5 @@ def remove_playwright_from_client(
     """Shorthand to remove playwright from a single client."""
     return remove_servers_from_client(client, ["playwright"], workspace=workspace)
 
-__all__ = ["_get_mcp_url", "DEFAULT_MCP_URL", "MCP_CLIENT_PATHS"]
+
+__all__ = ["DEFAULT_MCP_URL", "MCP_CLIENT_PATHS", "_get_mcp_url"]

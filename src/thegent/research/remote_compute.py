@@ -1,6 +1,7 @@
 """Remote compute implementation for thegent run --remote."""
 
 import logging
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -34,7 +35,8 @@ class RemoteComputeClient:
         """
         ssh_cmd = ["ssh", "-p", str(self.remote_port), self.remote_host]
 
-        full_command = f"cd {cwd} && {command}" if cwd else command
+        command_segment = f"sh -lc {shlex.quote(command)}"
+        full_command = f"cd {shlex.quote(str(cwd))} && {command_segment}" if cwd else command_segment
 
         ssh_cmd.append(full_command)
 

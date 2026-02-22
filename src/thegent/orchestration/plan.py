@@ -165,7 +165,7 @@ class OrchestrationPlan(Plan):
             if isinstance(tokens, int):
                 total_tokens += tokens
             time_s = node.metadata.get(BUDGET_TIME_S)
-            if isinstance(time_s, (int, float)):
+            if isinstance(time_s, (int | float)):
                 total_time += float(time_s)
         return {"budget_tokens": total_tokens, "budget_time_s": total_time}
 

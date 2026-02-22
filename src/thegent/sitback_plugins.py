@@ -82,7 +82,7 @@ def get_registry() -> SitbackPluginRegistry:
     global _registry
     if _registry is None:
         _registry = SitbackPluginRegistry()
-        _registry.register_harness_status(_harness_status_placeholder)
+        _registry.register_harness_status(_probe_harness_status)
         _discover_plugins(_registry)
     return _registry
 
@@ -133,24 +133,47 @@ def _load_py_plugin(path: Path, registry: SitbackPluginRegistry) -> None:
         _log.warning("sitback plugin %s failed: %s", path.name, e)
 
 
-def _harness_status_placeholder() -> dict[str, Any] | None:
-    """Status provider for heliosShield harness integration (WP-10007)."""
-    try:
-        from thegent.skills.terminal import heliosShield_status
-
-        status = heliosShield_status()
-        if "not found" not in status.lower():
-            return {
-                "status": "available",
-                "message": "heliosShield Harness active",
-                "raw": status,
-            }
-    except Exception:
-        pass
-
-    # Fallback to checking settings
+def _probe_harness_status() -> dict[str, Any]:
+    """Probe heliosShield harness and classify availability outcomes."""
     from thegent.config import ThegentSettings
 
-    if ThegentSettings().sitback_harness:
-        return {"status": "placeholder", "message": "heliosShield Harness requested but not found"}
-    return None
+    if not ThegentSettings().sitback_harness:
+        return {
+            "status": "unavailable",
+            "reason": "disabled_by_config",
+            "message": "heliosShield harness probe disabled by configuration.",
+        }
+
+    try:
+        from thegent.skills.terminal import heliosShield_status
+    except ImportError as exc:
+        return {
+            "status": "unavailable",
+            "reason": "dependency_missing",
+            "message": "heliosShield harness dependency is not installed.",
+            "error": str(exc),
+        }
+
+    try:
+        status = heliosShield_status()
+    except Exception as exc:
+        return {
+            "status": "error",
+            "reason": "runtime_failure",
+            "message": "heliosShield harness probe raised an exception.",
+            "error": str(exc),
+        }
+
+    if "not found" in status.lower():
+        return {
+            "status": "unavailable",
+            "reason": "dependency_missing",
+            "message": "heliosShield harness requested but not found.",
+            "raw": status,
+        }
+    return {
+        "status": "available",
+        "reason": "ok",
+        "message": "heliosShield harness active.",
+        "raw": status,
+    }

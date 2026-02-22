@@ -1,4 +1,5 @@
 """MCP tools for research_engine — 6 tools. @trace FR-RES-031"""
+
 from __future__ import annotations
 
 from pathlib import Path

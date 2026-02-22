@@ -80,8 +80,7 @@ class AgentRunner:
     ) -> RunResult:
         """Run the agent with the given prompt and options."""
         raise TypeError(
-            f"{self.__class__.__name__}.run() is abstract and must be implemented by"
-            " a concrete AgentRunner subclass"
+            f"{self.__class__.__name__}.run() is abstract and must be implemented by a concrete AgentRunner subclass"
         )
 
     def activate_skill(self, name: str) -> str:

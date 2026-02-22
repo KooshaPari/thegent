@@ -28,24 +28,57 @@ _LOG = logging.getLogger(__name__)
 _CLIPROXY_DATA_DIR = Path(__file__).parent / "cliproxy_data"
 
 _PROXY_READY_TIMEOUT = 5
+_LAST_PROVIDER_METRICS_STATUS: dict[str, Any] = {"status": "not_requested", "metrics": None}
+
+
+class ProviderDefinitionsLoadError(ValueError):
+    """Typed validation error for provider definition JSON loading."""
+
+    def __init__(self, name: str, reason: str, *, path: Path, cause: Exception | None = None) -> None:
+        self.name = name
+        self.reason = reason
+        self.path = path
+        self.cause = cause
+        message = f"{name}: {reason} ({path})"
+        super().__init__(message)
 
 
 def _load_json(name: str) -> dict[str, Any]:
-    """Load JSON from cliproxy_data. Returns {} on missing/invalid."""
+    """Load and validate JSON object from cliproxy_data.
+
+    Raises ProviderDefinitionsLoadError on missing file, invalid JSON, I/O errors,
+    and non-object JSON payloads.
+    """
     path = _CLIPROXY_DATA_DIR / name
     if not path.exists():
-        return {}
+        raise ProviderDefinitionsLoadError(name, "missing_file", path=path)
     try:
         data = json.loads(path.read_text())
-        return data if isinstance(data, dict) else {}
-    except (json.JSONDecodeError, OSError):
-        return {}
+    except json.JSONDecodeError as exc:
+        raise ProviderDefinitionsLoadError(name, "invalid_json", path=path, cause=exc) from exc
+    except OSError as exc:
+        raise ProviderDefinitionsLoadError(name, "read_error", path=path, cause=exc) from exc
+
+    if not isinstance(data, dict):
+        raise ProviderDefinitionsLoadError(name, "invalid_shape", path=path)
+    return data
 
 
 def _get_provider_definitions() -> dict[str, Any]:
     """Load provider definitions from internal JSON."""
-    return _load_json("provider_definitions.json")
-
+    try:
+        return _load_json("provider_definitions.json")
+    except ProviderDefinitionsLoadError as exc:
+        _LOG.warning(
+            "provider_definitions_load_failed",
+            extra={
+                "file": exc.name,
+                "reason": exc.reason,
+                "path": str(exc.path),
+                "cause": str(exc.cause) if exc.cause else "",
+            },
+        )
+        return {}
 
 
 _PROXY_CHECK_TIMEOUT = 2
@@ -638,8 +671,7 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
                 return base_url
 
         raise RuntimeError(
-            "CLIProxy adapter is enabled, but /v1/responses adapter surface did not become ready "
-            f"at {base_url}."
+            f"CLIProxy adapter is enabled, but /v1/responses adapter surface did not become ready at {base_url}."
         )
 
     binary = _resolve_binary(settings)
@@ -677,16 +709,74 @@ def start_proxy_managed(settings: ThegentSettings) -> tuple[subprocess.Popen[byt
 
 def fetch_provider_metrics(settings: ThegentSettings | None = None) -> dict[str, dict] | None:
     """Fetch per-provider metrics from CLIProxyAPIPlus GET /v1/metrics/providers."""
+    global _LAST_PROVIDER_METRICS_STATUS  # noqa: PLW0603
     settings = settings or ThegentSettings()
     url = f"http://127.0.0.1:{settings.cliproxy_port}/v1/metrics/providers"
     try:
         resp = httpx.get(url, timeout=2)
-        if not resp.is_success:
-            return None
-        data = resp.json()
-        return data if isinstance(data, dict) else None
-    except Exception:
+    except httpx.TimeoutException as exc:
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "timeout",
+            "metrics": None,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
         return None
+    except httpx.NetworkError as exc:
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "network_error",
+            "metrics": None,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+        return None
+    except httpx.HTTPError as exc:
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "http_error",
+            "metrics": None,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+        return None
+
+    if not resp.is_success:
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "endpoint_unavailable",
+            "metrics": None,
+            "http_status": resp.status_code,
+        }
+        return None
+
+    try:
+        data = resp.json()
+    except json.JSONDecodeError as exc:
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "invalid_json",
+            "metrics": None,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+        return None
+
+    if isinstance(data, dict):
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "ok",
+            "metrics": data,
+            "provider_count": len(data),
+        }
+        return data
+
+    _LAST_PROVIDER_METRICS_STATUS = {
+        "status": "invalid_payload_shape",
+        "metrics": None,
+        "payload_type": type(data).__name__,
+    }
+    return None
+
+
+def get_last_provider_metrics_status() -> dict[str, Any]:
+    """Return status metadata from the latest provider metrics fetch."""
+    return dict(_LAST_PROVIDER_METRICS_STATUS)
 
 
 def kill_proxy(settings: ThegentSettings) -> bool:

@@ -425,9 +425,7 @@ class TestStreamingSSEResponseFormat:
             client = TestClient(app, raise_server_exceptions=False)
             body = json.dumps(_make_responses_body(stream=True)).encode()
             resp = client.post("/v1/responses", content=body, headers={"Content-Type": "application/json"})
-        events_parsed = [
-            json.loads(e.strip().removeprefix("data: ")) for e in resp.text.split("\n\n") if e.strip()
-        ]
+        events_parsed = [json.loads(e.strip().removeprefix("data: ")) for e in resp.text.split("\n\n") if e.strip()]
         content_events = [e for e in events_parsed if e.get("type") == "response.output_item.added"]
         assert len(content_events) == 3
 

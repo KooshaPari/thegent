@@ -23,9 +23,7 @@ def get_template_path() -> Path:
     return template_path
 
 
-def render_template(
-    date: str, reviewer: str, environment: str, connectors: list[str]
-) -> str:
+def render_template(date: str, reviewer: str, environment: str, connectors: list[str]) -> str:
     """Render the sign-off template with provided values.
 
     Reads the template and fills in the Summary section with the provided values.

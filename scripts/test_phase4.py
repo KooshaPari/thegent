@@ -26,10 +26,13 @@ async def test_dependencies():
     print("Setting up dependency test data...")
     # Item A: No dependencies
     item_a = "item-A"
-    db.execute_query(f"""
+    db.execute_query(
+        """
         INSERT OR REPLACE INTO workstream_items (item_id, title, status, priority)
-        VALUES ('{item_a}', 'Task A', 'pending', 'P1')
-    """)
+        VALUES (?, 'Task A', 'pending', 'P1')
+        """,
+        (item_a,),
+    )
 
     # Debug: check items in DB
     items = db.execute_query("SELECT * FROM workstream_items")
@@ -37,12 +40,16 @@ async def test_dependencies():
 
     # Item B: Depends on A
     item_b = "item-B"
-    db.execute_query(f"""
-        INSERT OR REPLACE INTO workstream_items (item_id, title, status, priority)
-        VALUES ('{item_b}', 'Task B', 'pending', 'P1')
-    """)
     db.execute_query(
-        f"INSERT OR IGNORE INTO dependencies (item_id, depends_on_item_id) VALUES ('{item_b}', '{item_a}')"
+        """
+        INSERT OR REPLACE INTO workstream_items (item_id, title, status, priority)
+        VALUES (?, 'Task B', 'pending', 'P1')
+        """,
+        (item_b,),
+    )
+    db.execute_query(
+        "INSERT OR IGNORE INTO dependencies (item_id, depends_on_item_id) VALUES (?, ?)",
+        (item_b, item_a),
     )
 
     print("\nChecking ready items before A is completed...")
@@ -57,7 +64,8 @@ async def test_dependencies():
 
     print("\nMarking Item A as completed...")
     db.execute_query(
-        f"UPDATE workstream_items SET status = 'completed', completed_at = '{datetime.now(UTC).isoformat()}' WHERE item_id = '{item_a}'"
+        "UPDATE workstream_items SET status = 'completed', completed_at = ? WHERE item_id = ?",
+        (datetime.now(UTC).isoformat(), item_a),
     )
 
     print("Checking ready items after A is completed...")

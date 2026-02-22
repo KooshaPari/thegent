@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import contextlib
 import functools
+import logging
 import threading
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,8 @@ try:
     _DISKCACHE_AVAILABLE = True
 except ImportError:
     _DISKCACHE_AVAILABLE = False
+
+_LOG = logging.getLogger(__name__)
 
 
 class MultiLevelCache:
@@ -56,16 +59,47 @@ class MultiLevelCache:
         self._l1: TTLCache = TTLCache(maxsize=l1_maxsize, ttl=l1_ttl)
         self._l1_lock = threading.Lock()
         self._l2_ttl = l2_ttl
+        self._l2_init_status: dict[str, Any] = {
+            "enabled": False,
+            "reason": "disabled",
+        }
 
         # L2: diskcache is optional; silently degrade to L1-only if unavailable or disabled
         self._l2: diskcache.Cache | None = None
-        if l2_dir is not None and _DISKCACHE_AVAILABLE:
+        if l2_dir is None:
+            self._l2_init_status = {"enabled": False, "reason": "not_configured"}
+        elif not _DISKCACHE_AVAILABLE:
+            self._l2_init_status = {"enabled": False, "reason": "diskcache_unavailable"}
+        else:
             l2_path = Path(l2_dir)
             try:
                 l2_path.mkdir(parents=True, exist_ok=True)
-                self._l2 = diskcache.Cache(str(l2_path))
-            except Exception:
+            except (PermissionError, OSError) as exc:
                 self._l2 = None
+                self._l2_init_status = {
+                    "enabled": False,
+                    "reason": "directory_error",
+                    "error_type": type(exc).__name__,
+                    "detail": str(exc)[:200],
+                }
+                _LOG.warning("multilevel_cache_l2_disabled %s", self._l2_init_status)
+            else:
+                try:
+                    self._l2 = diskcache.Cache(str(l2_path))
+                    self._l2_init_status = {
+                        "enabled": True,
+                        "reason": "ok",
+                        "path": str(l2_path),
+                    }
+                except (PermissionError, OSError, ValueError, RuntimeError) as exc:
+                    self._l2 = None
+                    self._l2_init_status = {
+                        "enabled": False,
+                        "reason": "open_failed",
+                        "error_type": type(exc).__name__,
+                        "detail": str(exc)[:200],
+                    }
+                    _LOG.warning("multilevel_cache_l2_disabled %s", self._l2_init_status)
 
     # ------------------------------------------------------------------
     # Public API
@@ -147,6 +181,11 @@ class MultiLevelCache:
         with contextlib.suppress(Exception):
             return Path(self._l2.directory)
         return None
+
+    @property
+    def l2_init_status(self) -> dict[str, Any]:
+        """Return initialization metadata for L2 activation/degradation."""
+        return dict(self._l2_init_status)
 
     def stats(self) -> dict[str, Any]:
         """Return a snapshot of current cache occupancy."""

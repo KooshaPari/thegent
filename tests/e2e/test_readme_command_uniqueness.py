@@ -99,8 +99,7 @@ def _test_path_tokens(snippet: str) -> list[str]:
 
 def _command_table_rows(text: str) -> list[tuple[str, str]]:
     return [
-        (goal.strip(), snippet.strip())
-        for goal, snippet in re.findall(r"\|\s*([^|]+?)\s*\|\s*`([^`]+)`\s*\|", text)
+        (goal.strip(), snippet.strip()) for goal, snippet in re.findall(r"\|\s*([^|]+?)\s*\|\s*`([^`]+)`\s*\|", text)
     ]
 
 
@@ -122,7 +121,9 @@ def test_full_bundle_row_contains_each_governance_test_exactly_once() -> None:
     assert not duplicate_paths, "Full bundle command should not repeat test paths: " + ", ".join(duplicate_paths)
 
     missing_paths = [path for path in FULL_E2E_GOVERNANCE_TEST_PATHS if counts[path] != 1]
-    assert not missing_paths, "Full bundle command must include each governance test exactly once: " + ", ".join(missing_paths)
+    assert not missing_paths, "Full bundle command must include each governance test exactly once: " + ", ".join(
+        missing_paths
+    )
 
     unexpected_paths = [path for path in path_tokens if path not in FULL_E2E_GOVERNANCE_TEST_PATHS]
     assert not unexpected_paths, "Full bundle command contains unexpected test paths: " + ", ".join(unexpected_paths)
@@ -132,8 +133,7 @@ def test_full_bundle_readme_and_split_hygiene_path_sequences_match_exactly() -> 
     readme_paths = _test_path_tokens(_full_bundle_command_snippet(_readme_text()))
     split_hygiene_paths = _test_path_tokens(test_split_hygiene.REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND)
     assert readme_paths == split_hygiene_paths, (
-        "README full bundle path sequence must match "
-        "test_split_hygiene.REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND exactly"
+        "README full bundle path sequence must match test_split_hygiene.REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND exactly"
     )
 
 
@@ -151,9 +151,7 @@ def test_full_bundle_first_and_last_path_sentinels_are_stable() -> None:
 def test_full_bundle_path_count_matches_required_governance_test_entries() -> None:
     readme_paths = _test_path_tokens(_full_bundle_command_snippet(_readme_text()))
     required_test_entry_count = sum(
-        1
-        for path in test_split_hygiene.REQUIRED_E2E_GOVERNANCE_FILES
-        if path.name.startswith("test_")
+        1 for path in test_split_hygiene.REQUIRED_E2E_GOVERNANCE_FILES if path.name.startswith("test_")
     )
     assert len(readme_paths) == required_test_entry_count, (
         "README full bundle path count must match the number of test_* entries in "
@@ -163,9 +161,7 @@ def test_full_bundle_path_count_matches_required_governance_test_entries() -> No
 
 def test_full_bundle_readme_path_sequence_is_lexicographically_sorted() -> None:
     readme_paths = _test_path_tokens(_full_bundle_command_snippet(_readme_text()))
-    assert readme_paths == sorted(readme_paths), (
-        "README full bundle path sequence must be lexicographically sorted"
-    )
+    assert readme_paths == sorted(readme_paths), "README full bundle path sequence must be lexicographically sorted"
 
 
 def test_full_bundle_path_list_matches_full_governance_tuple_membership_exactly() -> None:
@@ -184,9 +180,8 @@ def test_full_bundle_includes_alias_trio_in_canonical_adjacent_order() -> None:
     )
     counts = Counter(readme_paths)
     missing_or_duplicate = [path for path in alias_trio if counts[path] != 1]
-    assert not missing_or_duplicate, (
-        "README full bundle must include each alias trio path exactly once: "
-        + ", ".join(missing_or_duplicate)
+    assert not missing_or_duplicate, "README full bundle must include each alias trio path exactly once: " + ", ".join(
+        missing_or_duplicate
     )
 
     start_idx = readme_paths.index(alias_trio[0])
@@ -200,9 +195,7 @@ def test_full_bundle_row_has_no_duplicate_non_path_tokens_excluding_initial_pyte
     assert tokens[:2] == ["pytest", "-q"], "README full bundle command must begin with `pytest -q`"
 
     non_path_tokens = [token for token in tokens if not (token.startswith("tests/") and token.endswith(".py"))]
-    duplicate_non_path_tokens = [
-        token for token, count in Counter(non_path_tokens[2:]).items() if count > 1
-    ]
+    duplicate_non_path_tokens = [token for token, count in Counter(non_path_tokens[2:]).items() if count > 1]
     assert not duplicate_non_path_tokens, (
         "README full bundle command must not repeat non-path tokens after `pytest -q`: "
         + ", ".join(duplicate_non_path_tokens)
@@ -218,9 +211,7 @@ def test_full_bundle_row_has_no_trailing_non_path_tokens_after_first_path() -> N
     assert first_path_index is not None, "README full bundle command must include at least one test path token"
 
     trailing_non_path_tokens = [
-        token
-        for token in tokens[first_path_index + 1 :]
-        if not (token.startswith("tests/") and token.endswith(".py"))
+        token for token in tokens[first_path_index + 1 :] if not (token.startswith("tests/") and token.endswith(".py"))
     ]
     assert not trailing_non_path_tokens, (
         "README full bundle command must not include non-path tokens after the first test path token: "
@@ -256,9 +247,7 @@ def test_readme_full_bundle_includes_single_file_direct_rows_exactly_once() -> N
 
     assert direct_single_file_paths, "README should contain direct single-file governance rows"
 
-    missing_or_duplicate = [
-        path for path in direct_single_file_paths if bundle_counts[path] != 1
-    ]
+    missing_or_duplicate = [path for path in direct_single_file_paths if bundle_counts[path] != 1]
     assert not missing_or_duplicate, (
         "README full bundle path list must include each direct single-file row path exactly once: "
         + ", ".join(missing_or_duplicate)
@@ -269,9 +258,8 @@ def test_full_bundle_command_has_no_duplicated_path_basenames() -> None:
     path_tokens = _test_path_tokens(_full_bundle_command_snippet(_readme_text()))
     basename_counts = Counter(Path(path).name for path in path_tokens)
     duplicate_basenames = [name for name, count in basename_counts.items() if count > 1]
-    assert not duplicate_basenames, (
-        "README full bundle command must not duplicate test path basenames: "
-        + ", ".join(sorted(duplicate_basenames))
+    assert not duplicate_basenames, "README full bundle command must not duplicate test path basenames: " + ", ".join(
+        sorted(duplicate_basenames)
     )
 
 
@@ -281,9 +269,7 @@ def test_full_bundle_row_and_split_constant_share_path_count_and_basename_multis
     assert len(readme_paths) == len(split_paths), (
         "README full bundle row and split hygiene constant must have identical path counts"
     )
-    assert Counter(Path(path).name for path in readme_paths) == Counter(
-        Path(path).name for path in split_paths
-    ), (
+    assert Counter(Path(path).name for path in readme_paths) == Counter(Path(path).name for path in split_paths), (
         "README full bundle row and split hygiene constant must share identical path basename multisets"
     )
 
@@ -291,12 +277,9 @@ def test_full_bundle_row_and_split_constant_share_path_count_and_basename_multis
 def test_full_bundle_path_basenames_are_globally_unique() -> None:
     readme_paths = _test_path_tokens(_full_bundle_command_snippet(_readme_text()))
     readme_basenames = [Path(path).name for path in readme_paths]
-    duplicate_basenames = sorted(
-        basename for basename, count in Counter(readme_basenames).items() if count > 1
-    )
+    duplicate_basenames = sorted(basename for basename, count in Counter(readme_basenames).items() if count > 1)
     assert len(readme_basenames) == len(set(readme_basenames)), (
-        "README full bundle path basenames must be globally unique; duplicates: "
-        + ", ".join(duplicate_basenames)
+        "README full bundle path basenames must be globally unique; duplicates: " + ", ".join(duplicate_basenames)
     )
 
 
@@ -318,9 +301,8 @@ def test_full_bundle_alias_trio_appears_once_each_in_increasing_index_order() ->
     )
     counts = Counter(readme_paths)
     missing_or_duplicate = [path for path in alias_trio if counts[path] != 1]
-    assert not missing_or_duplicate, (
-        "README full bundle must include each alias trio path exactly once: "
-        + ", ".join(missing_or_duplicate)
+    assert not missing_or_duplicate, "README full bundle must include each alias trio path exactly once: " + ", ".join(
+        missing_or_duplicate
     )
 
     alias_indices = [readme_paths.index(path) for path in alias_trio]

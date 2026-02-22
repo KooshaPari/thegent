@@ -15,7 +15,7 @@ _T = TypeVar("_T")
 
 def _unwrap_typer_default(value: _T) -> _T:
     """Return concrete default value when command function is called directly in Python."""
-    if isinstance(value, (OptionInfo, ArgumentInfo)):
+    if isinstance(value, (OptionInfo | ArgumentInfo)):
         return cast("_T", value.default)
     return value
 

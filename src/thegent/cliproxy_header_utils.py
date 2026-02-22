@@ -13,11 +13,7 @@ def sanitize_outbound_request_headers(request_headers: dict[str, Any]) -> dict[s
 
 def filter_inbound_response_headers(response_headers: dict[str, Any]) -> dict[str, str]:
     """Drop hop-by-hop response headers before returning to clients."""
-    return {
-        k: str(v)
-        for k, v in response_headers.items()
-        if k.lower() not in ("transfer-encoding", "connection")
-    }
+    return {k: str(v) for k, v in response_headers.items() if k.lower() not in ("transfer-encoding", "connection")}
 
 
 def extract_websocket_forward_headers(websocket_headers: dict[str, str]) -> dict[str, str]:

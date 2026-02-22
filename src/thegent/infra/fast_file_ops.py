@@ -15,7 +15,48 @@ Performance improvements:
 import os
 import shutil
 import sys
+from collections import defaultdict
+from errno import ENOSYS, EOPNOTSUPP, EPERM, ENOTSUP
+from logging import getLogger
 from pathlib import Path
+
+SEND_FILE_THRESHOLD_BYTES = 10_000_000
+_SEND_FILE_FALLBACK_COUNTS: defaultdict[str, int] = defaultdict(int)
+_log = getLogger(__name__)
+
+
+def _sendfile_fallback_reason(exc: BaseException) -> str:
+    if isinstance(exc, AttributeError):
+        return "unsupported"
+    if isinstance(exc, PermissionError):
+        return "permission"
+    if isinstance(exc, OSError):
+        if exc.errno in {ENOSYS, ENOTSUP, EOPNOTSUPP}:
+            return "unsupported"
+        if exc.errno == EPERM:
+            return "permission"
+        return "os_error"
+    return type(exc).__name__
+
+
+def _record_sendfile_fallback(exc: BaseException, src: Path, dst: Path) -> None:
+    reason = _sendfile_fallback_reason(exc)
+    _SEND_FILE_FALLBACK_COUNTS[reason] += 1
+    _log.warning(
+        "sendfile fallback engaged: reason=%s src=%s dst=%s error=%s",
+        reason,
+        src,
+        dst,
+        str(exc)[:200],
+    )
+
+
+def get_sendfile_fallback_counts() -> dict[str, int]:
+    return dict(_SEND_FILE_FALLBACK_COUNTS)
+
+
+def reset_sendfile_fallback_counts() -> None:
+    _SEND_FILE_FALLBACK_COUNTS.clear()
 
 
 class FastFileOps:
@@ -46,7 +87,7 @@ class FastFileOps:
         # Use sendfile() on Linux for large files (zero-copy, much faster)
         if sys.platform == "linux" and src_path.is_file():
             file_size = src_path.stat().st_size
-            if file_size > 10_000_000:  # > 10MB
+            if file_size > SEND_FILE_THRESHOLD_BYTES:  # > 10MB
                 try:
                     with open(src_path, "rb") as fsrc:
                         with open(dst_path, "wb") as fdst:
@@ -60,9 +101,9 @@ class FastFileOps:
                         os.utime(dst_path, (stat.st_atime, stat.st_mtime))
 
                     return
-                except (OSError, AttributeError):
+                except (OSError, AttributeError) as exc:
                     # Fallback to shutil if sendfile fails
-                    pass
+                    _record_sendfile_fallback(exc, src_path, dst_path)
 
         # Standard copy (works on all platforms, preserves metadata)
         if preserve_metadata:

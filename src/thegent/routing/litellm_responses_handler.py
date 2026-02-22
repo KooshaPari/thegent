@@ -36,19 +36,18 @@ def _get_http_client() -> httpx.AsyncClient:
             timeout=httpx.Timeout(120.0, connect=10.0),
             limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
         )
-    else:
-        # Rebind if a class-level mock replaced AsyncClient between calls.
-        if isinstance(async_client_type, type):
-            if not isinstance(_http_client, async_client_type):
-                _http_client = None
-            else:
-                is_closed = getattr(_http_client, "is_closed", False)
-                if isinstance(is_closed, bool) and is_closed:
-                    _http_client = None
-        else:
-            # If ``AsyncClient`` is currently mocked (non-type), avoid returning
-            # a stale client from before mocking began.
+    # Rebind if a class-level mock replaced AsyncClient between calls.
+    elif isinstance(async_client_type, type):
+        if not isinstance(_http_client, async_client_type):
             _http_client = None
+        else:
+            is_closed = getattr(_http_client, "is_closed", False)
+            if isinstance(is_closed, bool) and is_closed:
+                _http_client = None
+    else:
+        # If ``AsyncClient`` is currently mocked (non-type), avoid returning
+        # a stale client from before mocking began.
+        _http_client = None
 
     if _http_client is None:
         _http_client = httpx.AsyncClient(
@@ -207,7 +206,7 @@ def _to_json_compatible(value: Any, _seen: set[int] | None = None) -> Any:
     if _seen is None:
         _seen = set()
 
-    if isinstance(value, (Base,)):
+    if isinstance(value, Base):
         # Prevent recursive traversal through unittest mock internals.
         return str(value)
 
@@ -221,7 +220,7 @@ def _to_json_compatible(value: Any, _seen: set[int] | None = None) -> Any:
     if isinstance(value, (str, int, float, bool)):
         return value
 
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, (list | tuple)):
         _seen.add(value_id)
         return [_to_json_compatible(item, _seen) for item in value]
 
@@ -231,10 +230,7 @@ def _to_json_compatible(value: Any, _seen: set[int] | None = None) -> Any:
         except Exception:
             return str(value)
         _seen.add(value_id)
-        return {
-            str(k): _to_json_compatible(v, _seen)
-            for k, v in items
-        }
+        return {str(k): _to_json_compatible(v, _seen) for k, v in items}
 
     if hasattr(value, "model_dump"):
         try:
@@ -541,7 +537,9 @@ async def _forward_native_responses(
     aenter = getattr(client, "__aenter__", None)
     if callable(aenter):
         entered_client = aenter()
-        post_target = cast(httpx.AsyncClient, await entered_client if inspect.isawaitable(entered_client) else entered_client)
+        post_target = cast(
+            "httpx.AsyncClient", await entered_client if inspect.isawaitable(entered_client) else entered_client
+        )
 
     post_result = post_target.post(target_url, content=raw_body, headers=headers)
     resp = await post_result if inspect.isawaitable(post_result) else post_result
@@ -682,9 +680,9 @@ async def handle_responses_websocket(websocket: WebSocket) -> None:
         )
         response_stream: AsyncIterable[Any]
         if inspect.isawaitable(raw_response_stream):
-            response_stream = cast(AsyncIterable[Any], await cast(Awaitable[Any], raw_response_stream))
+            response_stream = cast("AsyncIterable[Any]", await cast("Awaitable[Any]", raw_response_stream))
         else:
-            response_stream = cast(AsyncIterable[Any], raw_response_stream)
+            response_stream = cast("AsyncIterable[Any]", raw_response_stream)
         async for chunk in response_stream:
             chunk_dict = cast("dict[str, Any]", chunk.model_dump() if hasattr(chunk, "model_dump") else chunk)
             responses_event = _chat_completions_to_responses(chunk_dict)

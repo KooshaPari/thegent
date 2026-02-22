@@ -120,8 +120,8 @@ class GovernanceConflictResolver:
         """
         if key in {"cost_cap", "sla_minutes"}:
             return (
-                isinstance(new_value, (int, float))
-                and isinstance(current_value, (int, float))
+                isinstance(new_value, (int | float))
+                and isinstance(current_value, (int | float))
                 and new_value < current_value
             )
         if key == "allow":

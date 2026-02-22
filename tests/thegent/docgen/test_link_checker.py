@@ -33,6 +33,7 @@ def temp_docs(tmp_path):
 
     return docs
 
+
 @pytest.mark.asyncio
 async def test_find_links(temp_docs):
     """Test finding links in a file."""
@@ -42,6 +43,7 @@ async def test_find_links(temp_docs):
         assert links[0]["url"] == "page2.md"
         assert links[1]["url"] == "sub/page3.md"
 
+
 @pytest.mark.asyncio
 async def test_check_internal_link_valid(temp_docs):
     """Test checking valid internal links."""
@@ -50,12 +52,14 @@ async def test_check_internal_link_valid(temp_docs):
         assert result["valid"] is True
         assert result["type"] == "internal"
 
+
 @pytest.mark.asyncio
 async def test_check_internal_link_broken(temp_docs):
     """Test checking broken internal links."""
     async with DocLinkChecker(base_dir=temp_docs) as checker:
         result = checker.check_internal_link("missing.md", temp_docs / "page1.md")
         assert result["valid"] is False
+
 
 @pytest.mark.asyncio
 async def test_check_external_link(temp_docs):
@@ -66,6 +70,7 @@ async def test_check_external_link(temp_docs):
         result = await checker.check_external_link("https://github.com")
         assert "status_code" in result or "error" in result
 
+
 @pytest.mark.asyncio
 async def test_ignore_patterns(temp_docs):
     """Test ignoring links based on patterns."""
@@ -75,6 +80,7 @@ async def test_ignore_patterns(temp_docs):
         (temp_docs / "local.md").write_text("[Local](http://localhost:8080)")
         links = checker.find_links(temp_docs / "local.md")
         assert len(links) == 0
+
 
 @pytest.mark.asyncio
 async def test_check_directory(temp_docs):

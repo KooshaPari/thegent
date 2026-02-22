@@ -68,7 +68,7 @@ class PTYHolder:
         """Proxy between the socket and the PTY master."""
         conn.setblocking(False)
         assert self.master_fd is not None, "PTY master_fd must be set before handling connections"
-        master_fd: int = cast(int, self.master_fd)
+        master_fd: int = cast("int", self.master_fd)
 
         while not self._stop_event.is_set():
             r, _, _ = select.select([master_fd, conn], [], [], 0.1)
@@ -98,7 +98,7 @@ class PTYHolder:
         import sys
 
         assert self.master_fd is not None, "PTY master_fd must be set before mirroring stdout"
-        master_fd: int = cast(int, self.master_fd)
+        master_fd: int = cast("int", self.master_fd)
 
         while not self._stop_event.is_set():
             try:

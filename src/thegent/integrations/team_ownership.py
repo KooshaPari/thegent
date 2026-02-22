@@ -11,7 +11,6 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -30,9 +29,7 @@ class TeamOwnership:
     team: str
     owner: str
     backup_owner: str
-    assigned_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    assigned_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 class OwnershipRegistry:
@@ -66,9 +63,7 @@ class OwnershipRegistry:
         """Persist ownership data to disk."""
         with open(self.registry_path, "w") as f:
             # Convert dataclass instances to dicts
-            data_to_save = {
-                wl_id: asdict(ownership) for wl_id, ownership in self._data.items()
-            }
+            data_to_save = {wl_id: asdict(ownership) for wl_id, ownership in self._data.items()}
             json.dump(data_to_save, f, indent=2)
 
     def register(self, ownership: TeamOwnership) -> None:
@@ -80,7 +75,7 @@ class OwnershipRegistry:
         self._data[ownership.wl_id] = ownership
         self._save()
 
-    def get_owner(self, wl_id: str) -> Optional[TeamOwnership]:
+    def get_owner(self, wl_id: str) -> TeamOwnership | None:
         """Get ownership record for a work item.
 
         Args:

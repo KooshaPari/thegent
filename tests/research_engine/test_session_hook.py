@@ -1,4 +1,5 @@
 """Tests for research_engine.session_hook — @trace FR-RES-030"""
+
 from datetime import datetime
 from unittest.mock import MagicMock
 

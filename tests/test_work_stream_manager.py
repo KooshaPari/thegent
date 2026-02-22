@@ -78,7 +78,9 @@ def test_claim_fails_if_any_coordination_write_fails(tmp_path: Path, monkeypatch
 
     from thegent.utils import helpers
 
-    def _fake_safe_write(path: str | Path, content: str, expected_version: str | None = None, encoding: str = "utf-8") -> bool:
+    def _fake_safe_write(
+        path: str | Path, content: str, expected_version: str | None = None, encoding: str = "utf-8"
+    ) -> bool:
         return Path(path).name != "WORK_STREAM.md"
 
     monkeypatch.setattr(helpers, "safe_write_file", _fake_safe_write)
@@ -121,7 +123,9 @@ def test_complete_fails_when_remove_step_write_fails(tmp_path: Path, monkeypatch
 
     calls = {"work_stream": 0}
 
-    def _fake_safe_write(path: str | Path, content: str, expected_version: str | None = None, encoding: str = "utf-8") -> bool:
+    def _fake_safe_write(
+        path: str | Path, content: str, expected_version: str | None = None, encoding: str = "utf-8"
+    ) -> bool:
         if Path(path).name == "WORK_STREAM.md":
             calls["work_stream"] += 1
             return calls["work_stream"] != 1
@@ -251,9 +255,7 @@ def test_claim_success_uses_all_not_any(tmp_path: Path, monkeypatch) -> None:
 
     # Even though WBS_AGENT_PROGRESS.md write succeeds, the overall claim
     # must fail because WORK_STREAM.md write failed.
-    assert result["success"] is False, (
-        "claim() must return success=False when any file write fails (all() semantics)"
-    )
+    assert result["success"] is False, "claim() must return success=False when any file write fails (all() semantics)"
 
 
 def test_verify_work_stream_invariants_detects_claimed_completed_overlap(tmp_path: Path) -> None:

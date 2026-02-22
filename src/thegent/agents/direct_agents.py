@@ -192,6 +192,7 @@ class DirectAgentRunner(AgentRunner):
         audio_transcript: str | None = None
         if audio_paths:
             from thegent.agents.audio_inputs import inject_transcript_into_prompt, load_transcripts
+
             audio_transcript, _audio_sources = load_transcripts(audio_paths)
             if audio_transcript:
                 # Inject transcript into prompt for direct agents

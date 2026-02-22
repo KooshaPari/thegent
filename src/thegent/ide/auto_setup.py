@@ -9,6 +9,36 @@ from thegent.lsp.jetbrains_cli import JetBrainsCLI
 
 logger = logging.getLogger(__name__)
 
+_GHOSTTY_BLOCK_BEGIN = "# >>> thegent managed: ghostty shell integration >>>"
+_GHOSTTY_BLOCK_END = "# <<< thegent managed: ghostty shell integration <<<"
+_GHOSTTY_BLOCK_BODY = """# Ghostty shell integration
+if [[ "$TERM_PROGRAM" == "Ghostty" ]] || command -v ghostty >/dev/null 2>&1; then
+    export GHOSTTY_SHELL_INTEGRATION=1
+fi
+"""
+
+
+def _render_ghostty_managed_block() -> str:
+    return f"{_GHOSTTY_BLOCK_BEGIN}\n{_GHOSTTY_BLOCK_BODY}{_GHOSTTY_BLOCK_END}\n"
+
+
+def _upsert_managed_block(content: str, *, begin_marker: str, end_marker: str, replacement_block: str) -> str:
+    start = content.find(begin_marker)
+    if start == -1:
+        base = content.rstrip("\n")
+        if base:
+            return f"{base}\n\n{replacement_block}"
+        return replacement_block
+
+    end = content.find(end_marker, start)
+    if end == -1:
+        raise ValueError(f"Managed block begin marker found without matching end marker: {begin_marker}")
+
+    end_idx = end + len(end_marker)
+    if end_idx < len(content) and content[end_idx] == "\n":
+        end_idx += 1
+    return f"{content[:start]}{replacement_block}{content[end_idx:]}"
+
 
 def auto_setup_jetbrains_integration(auto_install: bool = True) -> dict[str, Any]:
     """Auto-setup JetBrains integration (detect IDE, verify CLI access, auto-install if needed).
@@ -182,26 +212,22 @@ def auto_setup_ghostty_shell_integration(auto_configure: bool = True) -> dict[st
     if auto_configure and shell_rc.exists():
         try:
             content = shell_rc.read_text()
-            # Check if already configured
-            if "GHOSTTY_SHELL_INTEGRATION" in content or "ghostty shell integration" in content.lower():
+            desired_block = _render_ghostty_managed_block()
+            updated = _upsert_managed_block(
+                content,
+                begin_marker=_GHOSTTY_BLOCK_BEGIN,
+                end_marker=_GHOSTTY_BLOCK_END,
+                replacement_block=desired_block,
+            )
+            if updated != content:
+                shell_rc.write_text(updated)
+                shell_integration_added = True
+                logger.info("Updated managed Ghostty shell integration block in ~/.zshrc")
+            else:
                 return {
                     "success": True,
                     "message": "Ghostty shell integration already configured",
                 }
-
-            # Add Ghostty shell integration
-            integration_block = """
-# Ghostty shell integration
-if [[ "$TERM_PROGRAM" == "Ghostty" ]] || command -v ghostty >/dev/null 2>&1; then
-    export GHOSTTY_SHELL_INTEGRATION=1
-fi
-"""
-            # Append if not already present
-            if "GHOSTTY_SHELL_INTEGRATION" not in content:
-                with shell_rc.open("a") as f:
-                    f.write(integration_block)
-                shell_integration_added = True
-                logger.info("Added Ghostty shell integration to ~/.zshrc")
         except Exception as e:
             logger.warning(f"Failed to auto-configure Ghostty: {e}")
 

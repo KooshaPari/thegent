@@ -756,3 +756,34 @@ print(f"Allowed: {allowed}, Violations: {violations}")
 - Shed idle load: `thegent mcp prune --dry-run && thegent mcp prune`.
 - Throttle active pressure: `thegent ps` then `thegent stop <session_id>`.
 - Verify recovery gate: `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+
+## Saturation Mitigation Ladder
+
+- **Level 1 (Detect):** `thegent observe resources`.
+- **Level 2 (Confirm):** `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+- **Level 3 (Shed idle load):** `thegent mcp prune --dry-run && thegent mcp prune`.
+- **Level 4 (Throttle active load):** `thegent ps` then `thegent stop <session_id>` (largest first).
+- **Level 5 (Stabilize gate):** repeat 3-sample loop; continue only after thresholds clear.
+
+## Resource Triage Checklist
+
+- Capture snapshot: `thegent observe resources`.
+- Classify bottleneck: CPU (`load_1m`), memory (`available_mb`), FD (`fd_used/fd_limit`).
+- Pick first action: prune (`thegent mcp prune`) or stop (`thegent stop <session_id>`).
+- Re-check after action: `thegent observe resources`.
+- Exit condition: 3 clean samples from `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+
+## Capacity Reserve Rules
+
+- Maintain headroom target: `thegent observe resources` and keep CPU `<70%`, memory `>1024 MB`, FD `<70%`.
+- Enforce reserve gate before new load: `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+- If reserve is below target, free capacity first: `thegent mcp prune --dry-run && thegent mcp prune`.
+- If still below target, reduce active sessions: `thegent ps` then `thegent stop <session_id>`.
+
+## Incident Stabilization Commands
+
+- Capture incident baseline: `thegent observe resources`.
+- Confirm sustained saturation: `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+- Shed idle pressure immediately: `thegent mcp prune --dry-run && thegent mcp prune`.
+- Triage and stop highest offenders: `thegent ps` then `thegent stop <session_id>`.
+- Validate stabilization before resume: `for i in 1 2 3; do thegent observe resources; sleep 10; done`.

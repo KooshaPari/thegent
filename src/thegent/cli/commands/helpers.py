@@ -10,7 +10,7 @@ from thegent.config import ThegentSettings
 from thegent.execution import RunRegistry
 
 
-__all__ = ["_safe_dict", "_safe_list", "_resolve_run_id", "_resolve_session_id"]
+__all__ = ["_resolve_run_id", "_resolve_session_id", "_safe_dict", "_safe_list"]
 
 
 def _safe_dict(val: object) -> dict[str, Any]:

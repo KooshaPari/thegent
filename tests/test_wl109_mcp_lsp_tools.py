@@ -219,7 +219,9 @@ def test_lsp_diagnostics_tool_maps_unavailable_backend_error(tmp_path: Path) -> 
     assert "Configure THGENT_LSP_ADAPTER=python-ast" in result["remediation"]
 
 
-def test_lsp_diagnostics_tool_maps_unsupported_adapter_remediation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_lsp_diagnostics_tool_maps_unsupported_adapter_remediation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     file_path = tmp_path / "a.py"
     file_path.write_text("x = 1\n", encoding="utf-8")
     monkeypatch.setenv("THGENT_LSP_ADAPTER", "unknown")

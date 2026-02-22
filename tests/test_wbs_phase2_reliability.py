@@ -396,6 +396,4 @@ class TestCircuitBreakerAndLoopTimeout:
 
         # Circuit is open; CircuitOpenError must bubble, not be masked as ProviderLoopTimeout
         with pytest.raises(CircuitOpenError):
-            await run_with_provider_loop_timeout(
-                _loop_with_open_breaker(), timeout_sec=5, context="integration"
-            )
+            await run_with_provider_loop_timeout(_loop_with_open_breaker(), timeout_sec=5, context="integration")

@@ -1,7 +1,8 @@
 import os
 import sys
+from pathlib import Path
 
-sys.path.append(os.path.abspath("src"))
+sys.path.append(str(Path("src").resolve()))
 try:
     import thegent.cli
 

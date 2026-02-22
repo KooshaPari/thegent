@@ -67,10 +67,7 @@ def test_wait_for_index_lock_removes_stale_lock(tmp_path: Path) -> None:
     stale_time = time.time() - 120
     os.utime(lock_file, (stale_time, stale_time))
 
-    assert (
-        manager.wait_for_index_lock(timeout_s=0.2, poll_s=0.05, stale_after_s=60.0, allow_stale_cleanup=True)
-        is True
-    )
+    assert manager.wait_for_index_lock(timeout_s=0.2, poll_s=0.05, stale_after_s=60.0, allow_stale_cleanup=True) is True
     assert not lock_file.exists()
 
 
@@ -85,8 +82,7 @@ def test_wait_for_index_lock_respects_open_lock_holder(tmp_path: Path, monkeypat
     os.utime(lock_file, (stale_time, stale_time))
 
     assert (
-        manager.wait_for_index_lock(timeout_s=0.2, poll_s=0.05, stale_after_s=60.0, allow_stale_cleanup=True)
-        is False
+        manager.wait_for_index_lock(timeout_s=0.2, poll_s=0.05, stale_after_s=60.0, allow_stale_cleanup=True) is False
     )
     assert lock_file.exists()
 

@@ -54,7 +54,7 @@ class CommandSharer:
         import thegent_shm  # type: ignore[import-not-found]  # optional native extension
 
         _shm: object = thegent_shm
-        conflict = getattr(_shm, "try_acquire_cmd_lock")(cmd_hash=cmd_hash, pid=os.getpid(), output_path=str(output_path))
+        conflict = _shm.try_acquire_cmd_lock(cmd_hash=cmd_hash, pid=os.getpid(), output_path=str(output_path))  # type: ignore[attr-defined]
 
         if conflict:
             # 3. Command is already running! Attach to it.
@@ -65,10 +65,10 @@ class CommandSharer:
         try:
             result = self._run_fresh(command, cwd, env, output_path)
             status = "completed" if result["returncode"] == 0 else "failed"
-            getattr(_shm, "release_cmd_lock")(cmd_hash, status)
+            _shm.release_cmd_lock(cmd_hash, status)  # type: ignore[attr-defined]
             return result
         except Exception as _e:
-            getattr(_shm, "release_cmd_lock")(cmd_hash, "failed")
+            _shm.release_cmd_lock(cmd_hash, "failed")  # type: ignore[attr-defined]
             raise
 
     def _run_fresh(self, command: list[str], cwd: Path, env: dict | None, output_path: Path) -> dict:

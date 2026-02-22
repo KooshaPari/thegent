@@ -10,6 +10,7 @@ Verifies:
 
 # @trace WL-124
 """
+
 from __future__ import annotations
 
 import importlib
@@ -258,6 +259,7 @@ EXPECTED_SHARED_NAMES = [
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _import(module_name: str) -> types.ModuleType:
     """Import a module by name, fail loudly on any error."""
     return importlib.import_module(module_name)
@@ -267,6 +269,7 @@ def _import(module_name: str) -> types.ModuleType:
 # Tests: Domain submodule importability
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize("module_name", DOMAIN_MODULES)
 def test_domain_module_importable(module_name: str) -> None:
     """Each domain submodule must be importable without errors.
@@ -274,14 +277,13 @@ def test_domain_module_importable(module_name: str) -> None:
     # @trace WL-124
     """
     mod = _import(module_name)
-    assert isinstance(mod, types.ModuleType), (
-        f"{module_name} did not import as a module"
-    )
+    assert isinstance(mod, types.ModuleType), f"{module_name} did not import as a module"
 
 
 # ---------------------------------------------------------------------------
 # Tests: __all__ consistency — every listed name is actually defined
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("module_name", DOMAIN_MODULES)
 def test_all_names_defined_in_module(module_name: str) -> None:
@@ -292,14 +294,13 @@ def test_all_names_defined_in_module(module_name: str) -> None:
     mod = _import(module_name)
     assert hasattr(mod, "__all__"), f"{module_name} must define __all__"
     missing = [name for name in mod.__all__ if not hasattr(mod, name)]
-    assert not missing, (
-        f"{module_name}.__all__ lists names not defined in module: {missing}"
-    )
+    assert not missing, f"{module_name}.__all__ lists names not defined in module: {missing}"
 
 
 # ---------------------------------------------------------------------------
 # Tests: Contract — expected exports present in each domain
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     ("module_name", "expected_names"),
@@ -312,14 +313,13 @@ def test_expected_exports_present(module_name: str, expected_names: list[str]) -
     """
     mod = _import(module_name)
     for name in expected_names:
-        assert hasattr(mod, name), (
-            f"{module_name} is missing expected export: {name}"
-        )
+        assert hasattr(mod, name), f"{module_name} is missing expected export: {name}"
 
 
 # ---------------------------------------------------------------------------
 # Tests: Backward compatibility — all domain exports accessible from cli.py
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     "expected_name",
@@ -333,14 +333,13 @@ def test_backward_compat_via_cli_module(expected_name: str) -> None:
     # @trace WL-124
     """
     cli = _import(CLI_MODULE)
-    assert hasattr(cli, expected_name), (
-        f"thegent.cli.commands.cli missing re-exported name: {expected_name}"
-    )
+    assert hasattr(cli, expected_name), f"thegent.cli.commands.cli missing re-exported name: {expected_name}"
 
 
 # ---------------------------------------------------------------------------
 # Tests: Shared infrastructure module
 # ---------------------------------------------------------------------------
+
 
 def test_cli_shared_importable() -> None:
     """_cli_shared must import without errors.
@@ -358,14 +357,13 @@ def test_cli_shared_exports_expected_names(name: str) -> None:
     # @trace WL-124
     """
     mod = _import(SHARED_MODULE)
-    assert hasattr(mod, name), (
-        f"thegent.cli.commands._cli_shared missing expected name: {name}"
-    )
+    assert hasattr(mod, name), f"thegent.cli.commands._cli_shared missing expected name: {name}"
 
 
 # ---------------------------------------------------------------------------
 # Tests: No circular imports
 # ---------------------------------------------------------------------------
+
 
 def test_no_circular_imports_shared_then_domains() -> None:
     """Importing _cli_shared followed by all domain modules must not fail.
@@ -393,6 +391,7 @@ def test_no_circular_imports_domains_then_cli() -> None:
 # Tests: CLI module (cli.py) still importable and not broken
 # ---------------------------------------------------------------------------
 
+
 def test_cli_module_importable() -> None:
     """thegent.cli.commands.cli must be importable as before the split.
 
@@ -410,32 +409,29 @@ def test_cli_module_wildcard_import_works() -> None:
     cli = _import(CLI_MODULE)
     # Spot-check a sample of well-known names from each domain
     spot_check = [
-        "run_cmd",       # run_cmds
-        "ps_cmd",        # session_cmds
+        "run_cmd",  # run_cmds
+        "ps_cmd",  # session_cmds
         "govern_approve_cmd",  # governance_cmds
-        "dag_validate_cmd",    # plan_cmds
-        "list_models_cmd",     # model_cmds
-        "config_check_cmd",    # infra_cmds
-        "handoff_cmd",         # team_cmds
+        "dag_validate_cmd",  # plan_cmds
+        "list_models_cmd",  # model_cmds
+        "config_check_cmd",  # infra_cmds
+        "handoff_cmd",  # team_cmds
     ]
     for name in spot_check:
-        assert hasattr(cli, name), (
-            f"thegent.cli.commands.cli missing spot-check name: {name}"
-        )
+        assert hasattr(cli, name), f"thegent.cli.commands.cli missing spot-check name: {name}"
 
 
 # ---------------------------------------------------------------------------
 # Tests: Domain module count (guard against silent drops)
 # ---------------------------------------------------------------------------
 
+
 def test_expected_domain_module_count() -> None:
     """Exactly 7 domain submodules must exist (WL-124 specification).
 
     # @trace WL-124
     """
-    assert len(DOMAIN_MODULES) == 7, (
-        f"Expected 7 domain modules, got {len(DOMAIN_MODULES)}: {DOMAIN_MODULES}"
-    )
+    assert len(DOMAIN_MODULES) == 7, f"Expected 7 domain modules, got {len(DOMAIN_MODULES)}: {DOMAIN_MODULES}"
 
 
 def test_total_exported_names_count() -> None:
@@ -444,14 +440,13 @@ def test_total_exported_names_count() -> None:
     # @trace WL-124
     """
     total = sum(len(v) for v in EXPECTED_EXPORTS.values())
-    assert total == 173, (
-        f"Expected 173 total exported names across all domains, got {total}"
-    )
+    assert total == 173, f"Expected 173 total exported names across all domains, got {total}"
 
 
 # ---------------------------------------------------------------------------
 # Tests: Callable — each exported command function must be callable
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     ("module_name", "fn_name"),
@@ -469,6 +464,4 @@ def test_command_functions_are_callable(module_name: str, fn_name: str) -> None:
     """
     mod = _import(module_name)
     fn = getattr(mod, fn_name)
-    assert callable(fn), (
-        f"{module_name}.{fn_name} is not callable (expected a function/command)"
-    )
+    assert callable(fn), f"{module_name}.{fn_name} is not callable (expected a function/command)"

@@ -31,8 +31,12 @@ tracking #wl155 #session-memory
         "thegent.orchestration.state.session_scraper.capture_tmux_pane",
         lambda pane_id, last_lines=150: sample_capture,
     )
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: [])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: [])
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: []
+    )
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: []
+    )
 
     snapshot = scraper.collect_snapshot(trigger="tool_use")
 
@@ -50,9 +54,13 @@ tracking #wl155 #session-memory
 def test_persist_snapshot_writes_json(monkeypatch, tmp_path: Path) -> None:
     scraper = SessionScraper(project_root=tmp_path)
 
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", lambda: [])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: ["p1"])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: ["p2"])
+    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", list)
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: ["p1"]
+    )
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: ["p2"]
+    )
 
     out_dir = tmp_path / "snapshots"
     path = scraper.persist_snapshot(trigger="periodic", out_dir=out_dir)
@@ -68,9 +76,13 @@ def test_persist_snapshot_emits_created_event(monkeypatch, tmp_path: Path) -> No
     scraper = SessionScraper(project_root=tmp_path)
     event_log = tmp_path / "events.jsonl"
 
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", lambda: [])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: ["p1"])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: [])
+    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", list)
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: ["p1"]
+    )
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: []
+    )
 
     request_id = "req-123"
     snapshot_path = scraper.persist_snapshot(
@@ -247,9 +259,13 @@ def test_snapshot_created_event_payload_schema_validation(monkeypatch, tmp_path:
     scraper = SessionScraper(project_root=tmp_path)
     event_log = tmp_path / "events.jsonl"
 
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", lambda: [])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: ["prompt1"])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: [])
+    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", list)
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: ["prompt1"]
+    )
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: []
+    )
 
     request_id = "req-evt-001"
     scraper.persist_snapshot(
@@ -323,9 +339,13 @@ def test_trigger_normalization_applied_to_persisted_snapshot(monkeypatch, tmp_pa
     scraper = SessionScraper(project_root=tmp_path)
     out_dir = tmp_path / "snapshots"
 
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", lambda: [])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: [])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: [])
+    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", list)
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: []
+    )
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: []
+    )
 
     # Test valid triggers per schema
     for trigger in ["manual", "hook:pre-commit", "hook:post-test", "timer:15m", "session:end"]:

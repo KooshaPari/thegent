@@ -114,9 +114,7 @@ class TestJournalStatus:
 class TestJournalSnapshot:
     def test_snapshot_with_session(self, mock_git_journal) -> None:
         """Test creating snapshot with explicit session ID."""
-        result = runner.invoke(
-            audit.app, ["journal", "snapshot", "--session", "test-session-1", "--batch", "5"]
-        )
+        result = runner.invoke(audit.app, ["journal", "snapshot", "--session", "test-session-1", "--batch", "5"])
         assert result.exit_code == 0
         assert "snapshot" in result.output.lower()
         assert "test-session-1" in result.output
@@ -129,9 +127,7 @@ class TestJournalSnapshot:
 
     def test_snapshot_with_flags(self, mock_git_journal) -> None:
         """Test snapshot with --watch and --attest flags."""
-        result = runner.invoke(
-            audit.app, ["journal", "snapshot", "--watch", "--attest", "--batch", "20"]
-        )
+        result = runner.invoke(audit.app, ["journal", "snapshot", "--watch", "--attest", "--batch", "20"])
         assert result.exit_code == 0
         assert "snapshot" in result.output.lower() or "Created" in result.output
 

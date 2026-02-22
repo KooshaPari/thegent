@@ -58,7 +58,17 @@ def test_generate_fixtures_is_deterministic(tmp_path: Path) -> None:
 def test_run_fails_loudly_without_mojo(tmp_path: Path) -> None:
     fixture_root = tmp_path / "fixtures"
     generated = _run_harness(
-        ["generate-fixtures", "--output-root", str(fixture_root), "--small-cases", "2", "--medium-cases", "2", "--large-cases", "2"]
+        [
+            "generate-fixtures",
+            "--output-root",
+            str(fixture_root),
+            "--small-cases",
+            "2",
+            "--medium-cases",
+            "2",
+            "--large-cases",
+            "2",
+        ]
     )
     assert generated.returncode == 0, generated.stderr
 
@@ -85,7 +95,17 @@ def test_run_fails_loudly_without_mojo(tmp_path: Path) -> None:
 def test_run_smoke_with_fake_mojo(tmp_path: Path) -> None:
     fixture_root = tmp_path / "fixtures"
     generated = _run_harness(
-        ["generate-fixtures", "--output-root", str(fixture_root), "--small-cases", "6", "--medium-cases", "2", "--large-cases", "2"]
+        [
+            "generate-fixtures",
+            "--output-root",
+            str(fixture_root),
+            "--small-cases",
+            "6",
+            "--medium-cases",
+            "2",
+            "--large-cases",
+            "2",
+        ]
     )
     assert generated.returncode == 0, generated.stderr
 
@@ -149,7 +169,17 @@ print(json.dumps({
 def test_run_enforces_promotion_gate_by_default(tmp_path: Path) -> None:
     fixture_root = tmp_path / "fixtures"
     generated = _run_harness(
-        ["generate-fixtures", "--output-root", str(fixture_root), "--small-cases", "6", "--medium-cases", "2", "--large-cases", "2"]
+        [
+            "generate-fixtures",
+            "--output-root",
+            str(fixture_root),
+            "--small-cases",
+            "6",
+            "--medium-cases",
+            "2",
+            "--large-cases",
+            "2",
+        ]
     )
     assert generated.returncode == 0, generated.stderr
 

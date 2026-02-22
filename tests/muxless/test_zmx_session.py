@@ -222,28 +222,20 @@ class TestCreateSession:
         assert call_args[:3] == ["zmx", "new", "agent-abc"]
         assert "/bin/sh" in call_args
 
-    def test_returns_empty_string_when_zmx_unavailable(
-        self, manager_unavailable: ZmxSessionManager
-    ) -> None:
+    def test_returns_empty_string_when_zmx_unavailable(self, manager_unavailable: ZmxSessionManager) -> None:
         result = manager_unavailable.create_session("sess", ["/bin/sh"])
         assert result == ""
 
-    def test_returns_empty_string_when_zmx_new_fails(
-        self, manager_available: ZmxSessionManager
-    ) -> None:
+    def test_returns_empty_string_when_zmx_new_fails(self, manager_available: ZmxSessionManager) -> None:
         with patch("subprocess.run", return_value=_fail_run()):
             result = manager_available.create_session("fail-sess", ["/bin/sh"])
         assert result == ""
 
-    def test_returns_empty_string_for_empty_session_id(
-        self, manager_available: ZmxSessionManager
-    ) -> None:
+    def test_returns_empty_string_for_empty_session_id(self, manager_available: ZmxSessionManager) -> None:
         result = manager_available.create_session("", ["/bin/sh"])
         assert result == ""
 
-    def test_returns_empty_string_for_empty_command(
-        self, manager_available: ZmxSessionManager
-    ) -> None:
+    def test_returns_empty_string_for_empty_command(self, manager_available: ZmxSessionManager) -> None:
         result = manager_available.create_session("sess", [])
         assert result == ""
 
@@ -313,15 +305,11 @@ class TestCaptureOutput:
             result = manager_available.capture_output("sess", lines=50)
         assert result == "line1\nline2\n"
 
-    def test_returns_empty_string_when_zmx_unavailable(
-        self, manager_unavailable: ZmxSessionManager
-    ) -> None:
+    def test_returns_empty_string_when_zmx_unavailable(self, manager_unavailable: ZmxSessionManager) -> None:
         result = manager_unavailable.capture_output("sess")
         assert result == ""
 
-    def test_returns_empty_string_on_capture_failure(
-        self, manager_available: ZmxSessionManager
-    ) -> None:
+    def test_returns_empty_string_on_capture_failure(self, manager_available: ZmxSessionManager) -> None:
         with patch("subprocess.run", return_value=_fail_run()):
             result = manager_available.capture_output("sess")
         assert result == ""
@@ -393,9 +381,7 @@ class TestSendInput:
 class TestListSessions:
     """Tests for list_sessions().  # @trace FR-SES-001"""
 
-    def test_returns_empty_list_when_zmx_unavailable(
-        self, manager_unavailable: ZmxSessionManager
-    ) -> None:
+    def test_returns_empty_list_when_zmx_unavailable(self, manager_unavailable: ZmxSessionManager) -> None:
         result = manager_unavailable.list_sessions()
         assert result == []
 
@@ -412,9 +398,7 @@ class TestListSessions:
             result = manager_available.list_sessions()
         assert result == ["aaa", "mmm", "zzz"]
 
-    def test_falls_back_to_text_when_json_flag_unsupported(
-        self, manager_available: ZmxSessionManager
-    ) -> None:
+    def test_falls_back_to_text_when_json_flag_unsupported(self, manager_available: ZmxSessionManager) -> None:
         json_fail = _fail_run(stderr="unknown flag --format")
         text_ok = _ok_run("sess-x  running  1234\nsess-y  detached  5678")
         with patch("subprocess.run", side_effect=[json_fail, text_ok]):
@@ -422,9 +406,7 @@ class TestListSessions:
         assert "sess-x" in result
         assert "sess-y" in result
 
-    def test_returns_empty_list_on_zmx_list_failure(
-        self, manager_available: ZmxSessionManager
-    ) -> None:
+    def test_returns_empty_list_on_zmx_list_failure(self, manager_available: ZmxSessionManager) -> None:
         json_fail = _fail_run(stderr="unknown flag --format")
         list_fail = _fail_run()
         with patch("subprocess.run", side_effect=[json_fail, list_fail]):
@@ -604,15 +586,13 @@ class TestMakeZmxSessionManager:
 class TestSessionLifecycle:
     """Integration-style tests for the full session lifecycle.  # @trace FR-SES-001"""
 
-    def test_full_lifecycle_with_mocked_subprocess(
-        self, manager_available: ZmxSessionManager
-    ) -> None:
+    def test_full_lifecycle_with_mocked_subprocess(self, manager_available: ZmxSessionManager) -> None:
         json_with_session = json.dumps([{"name": "lifecycle-sess"}])
         run_returns = [
-            _ok_run(),                          # create: zmx new
-            _ok_run(json_with_session),         # list: zmx list --format json
+            _ok_run(),  # create: zmx new
+            _ok_run(json_with_session),  # list: zmx list --format json
             _ok_run("output line 1\noutput 2"),  # capture
-            _ok_run(),                          # destroy: zmx kill
+            _ok_run(),  # destroy: zmx kill
         ]
         with patch("subprocess.run", side_effect=run_returns):
             created = manager_available.create_session("lifecycle-sess", ["/bin/sh"])
@@ -627,9 +607,7 @@ class TestSessionLifecycle:
             destroyed = manager_available.destroy_session("lifecycle-sess")
             assert destroyed is True
 
-    def test_session_not_created_does_not_appear_in_list(
-        self, manager_available: ZmxSessionManager
-    ) -> None:
+    def test_session_not_created_does_not_appear_in_list(self, manager_available: ZmxSessionManager) -> None:
         create_fail = _fail_run()
         empty_list = _ok_run("[]")
         with patch("subprocess.run", side_effect=[create_fail, empty_list]):

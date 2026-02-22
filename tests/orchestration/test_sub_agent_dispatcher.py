@@ -93,9 +93,7 @@ class TestSubAgentDispatcherBudget:
         """dispatch() calls budget_tracker.check() when budget_tracker provided."""
         tracker = BudgetTracker(budgets={"req-1": 10_000})
         index = CapabilityIndex()
-        dispatcher = SubAgentDispatcher(
-            capability_index=index, budget_tracker=tracker
-        )
+        dispatcher = SubAgentDispatcher(capability_index=index, budget_tracker=tracker)
         request = _make_request(request_id="req-1")
         result = dispatcher.dispatch(request)
         # Should succeed without raising
@@ -107,9 +105,7 @@ class TestSubAgentDispatcherBudget:
         # Pre-exhaust the budget by recording 1 token (1 > 0 raises on record,
         # so we use check() path: budget=0, any tokens>0 will exceed)
         index = CapabilityIndex()
-        dispatcher = SubAgentDispatcher(
-            capability_index=index, budget_tracker=tracker
-        )
+        dispatcher = SubAgentDispatcher(capability_index=index, budget_tracker=tracker)
         request = _make_request(request_id="req-1")
         with pytest.raises(BudgetExceededError):
             dispatcher.dispatch(request)

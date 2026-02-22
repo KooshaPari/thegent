@@ -31,9 +31,7 @@ class UnifiedWorkerDaemon:
         self.task_pool = TaskWorkerPool(max_workers=4)
         self._running = False
         # WL-085: Use the provided queue or the process-global queue.
-        self._event_queue: SubAgentEventQueue = (
-            event_queue if event_queue is not None else get_global_event_queue()
-        )
+        self._event_queue: SubAgentEventQueue = event_queue if event_queue is not None else get_global_event_queue()
         self._event_consumer_task: asyncio.Task | None = None  # type: ignore[type-arg]
 
     async def start(self) -> None:

@@ -11,17 +11,20 @@ def main():
     found = set()
     for m in matches:
         url = urllib.parse.unquote(m)
-        if url.startswith('http') and "duckduckgo.com" not in url:
+        if url.startswith("http") and "duckduckgo.com" not in url:
             if url not in found:
                 print(url)
                 found.add(url)
 
     # Also find any raw links that look like GitHub or Dev.to
-    raw_links = re.findall(r'https?://(?:github\.com|dev\.to|medium\.com|hashnode\.com|arxiv\.org)/[^\s"\'<>]+', content)
+    raw_links = re.findall(
+        r'https?://(?:github\.com|dev\.to|medium\.com|hashnode\.com|arxiv\.org)/[^\s"\'<>]+', content
+    )
     for url in raw_links:
         if url not in found:
             print(url)
             found.add(url)
+
 
 if __name__ == "__main__":
     main()

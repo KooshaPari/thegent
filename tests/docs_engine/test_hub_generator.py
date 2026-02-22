@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-013
 """
+
 from docs_engine.hub.generator import HubGenerator
 
 

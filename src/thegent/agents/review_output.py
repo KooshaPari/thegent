@@ -61,7 +61,12 @@ def validate_review_output(payload: dict[str, Any]) -> dict[str, Any]:
 
     summary = _require_non_empty_string(payload, "summary")
     overall_rating = payload.get("overall_rating")
-    if isinstance(overall_rating, bool) or not isinstance(overall_rating, int) or overall_rating < 0 or overall_rating > 100:
+    if (
+        isinstance(overall_rating, bool)
+        or not isinstance(overall_rating, int)
+        or overall_rating < 0
+        or overall_rating > 100
+    ):
         raise ValueError("'overall_rating' must be an integer in [0, 100].")
 
     issues = payload.get("issues")

@@ -54,9 +54,7 @@ def _failing_check(name: str, message: str = "fix this") -> Any:
     """Async VetterCheck mock that always fails. # @trace WL-096"""
     check = MagicMock()
     check.name = name
-    check.check = AsyncMock(
-        return_value=VetterCheckResult(check_name=name, passed=False, message=message)
-    )
+    check.check = AsyncMock(return_value=VetterCheckResult(check_name=name, passed=False, message=message))
     return check
 
 
@@ -64,9 +62,7 @@ def _passing_check(name: str) -> Any:
     """Async VetterCheck mock that always passes. # @trace WL-096"""
     check = MagicMock()
     check.name = name
-    check.check = AsyncMock(
-        return_value=VetterCheckResult(check_name=name, passed=True)
-    )
+    check.check = AsyncMock(return_value=VetterCheckResult(check_name=name, passed=True))
     return check
 
 
@@ -183,9 +179,7 @@ async def test_enqueued_prompt_contains_correct_round_number(tmp_path: Path) -> 
 async def test_enqueued_prompt_contains_failed_check_id(tmp_path: Path) -> None:
     """Enqueued prompt contains the failed check name. # @trace WL-096"""
     queue = _make_queue()
-    orch = _make_orch(
-        tmp_path, {"style_check": _failing_check("style_check", "Too long")}, prompt_queue=queue
-    )
+    orch = _make_orch(tmp_path, {"style_check": _failing_check("style_check", "Too long")}, prompt_queue=queue)
     policy = VetterPolicy(checks=["style_check"], max_revision_rounds=3)
 
     await orch.evaluate(
@@ -207,9 +201,7 @@ async def test_enqueued_prompt_contains_hint_text(tmp_path: Path) -> None:
     """Enqueued prompt contains the revision hint from the check message. # @trace WL-096"""
     queue = _make_queue()
     hint = "Please split into smaller functions"
-    orch = _make_orch(
-        tmp_path, {"style": _failing_check("style", hint)}, prompt_queue=queue
-    )
+    orch = _make_orch(tmp_path, {"style": _failing_check("style", hint)}, prompt_queue=queue)
     policy = VetterPolicy(checks=["style"], max_revision_rounds=3)
 
     await orch.evaluate(
@@ -536,9 +528,7 @@ async def test_exhausted_rounds_escalation_event_written_to_jsonl(tmp_path: Path
         prompt_queue=queue,
         hitl_workflow=hitl,
     )
-    policy = VetterPolicy(
-        checks=["check"], max_revision_rounds=1, on_fail="escalate", escalation_lane="urgent"
-    )
+    policy = VetterPolicy(checks=["check"], max_revision_rounds=1, on_fail="escalate", escalation_lane="urgent")
 
     await orch.evaluate(
         result=MagicMock(output="some diff"),

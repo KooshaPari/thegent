@@ -9,6 +9,7 @@ Tests cover:
 - Autosync command-line interface
 """
 
+from datetime import datetime, timezone, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -16,6 +17,7 @@ import pytest
 from thegent.integrations.workstream_autosync import (
     SyncDirection,
     SyncOperation,
+    MaintenanceWindow,
     WorkstreamAutosyncConfig,
     WorkstreamAutosyncRunner,
     WorkstreamItem,
@@ -189,6 +191,102 @@ class TestWorkstreamParser:
         assert len(items) == 1
         assert items[0].blocked_by == "WL-099"
 
+    def test_parse_tags_and_sla(self, tmp_path):
+        """Parse tags and SLA metadata."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """### [WL-100] Test Tags
+**Status:** BACKLOG
+**Tags:** urgent, critical, UI
+**SLA:** 6h
+"""
+        )
+
+        items = WorkstreamParser.parse_items(work_stream)
+        assert len(items) == 1
+        assert items[0].tags == ["urgent", "critical", "ui"]
+        assert items[0].sla_hours == 6.0
+
+    def test_open_blocker_digest(self):
+        """Build digest for blocked open items."""
+        items = [
+            WorkstreamItem(
+                item_id="WL-1",
+                title="A",
+                status="IN PROGRESS",
+                priority="P1",
+                area="core",
+                blocked_by="WL-2",
+            ),
+            WorkstreamItem(
+                item_id="WL-2",
+                title="B",
+                status="COMPLETED",
+                priority="P1",
+                area="core",
+                blocked_by="WL-3",
+            ),
+            WorkstreamItem(
+                item_id="WL-3",
+                title="C",
+                status="BACKLOG",
+                priority="P1",
+                area="core",
+                blocked_by="none",
+            ),
+        ]
+
+        digest = WorkstreamParser.open_blocker_digest(items)
+
+        assert digest == ["WL-1:A -> WL-2"]
+
+    def test_duplicate_titles(self):
+        """Detect duplicate item titles."""
+        items = [
+            WorkstreamItem(item_id="WL-1", title="same", status="BACKLOG", priority="P1", area="core"),
+            WorkstreamItem(item_id="WL-2", title="same", status="BACKLOG", priority="P1", area="core"),
+            WorkstreamItem(item_id="WL-3", title="unique", status="BACKLOG", priority="P1", area="core"),
+        ]
+
+        duplicates = WorkstreamParser.duplicate_titles(items)
+        assert len(duplicates) == 1
+        assert duplicates[0][0] == "same"
+
+    def test_validate_tags_and_partitioning(self):
+        """Validate tags and partition ranges."""
+        items = [
+            WorkstreamItem(item_id="WL-1", title="a", status="BACKLOG", priority="P1", area="core", tags=["api"]),
+            WorkstreamItem(item_id="WL-2", title="b", status="BACKLOG", priority="P1", area="core", tags=["ui"]),
+            WorkstreamItem(item_id="WL-3", title="c", status="BACKLOG", priority="P1", area="core", tags=["infra"]),
+        ]
+        is_valid, invalid = WorkstreamParser.validate_tags(items, allowed_tags=["api", "ui"], strict=False)
+        assert is_valid is True
+        assert invalid == ["infra"]
+
+        is_valid, invalid = WorkstreamParser.validate_tags(items, allowed_tags=["api", "ui"], strict=True)
+        assert is_valid is False
+        assert invalid == ["infra"]
+
+        partitions = WorkstreamParser.split_items(items, partition_size=2)
+        assert len(partitions) == 2
+        assert len(partitions[0]) == 2
+        assert len(partitions[1]) == 1
+
+    def test_sync_sla_annotations(self, tmp_path):
+        """Ensure SLA values are reflected in markdown blocks."""
+        content = """### [WL-1] Test
+**Status:** BACKLOG
+"""
+        updated = WorkstreamParser.sync_sla_annotations(
+            content,
+            items=[
+                WorkstreamItem(
+                    item_id="WL-1", title="Test", status="BACKLOG", priority="P1", area="core", sla_hours=12.5
+                )
+            ],
+        )
+        assert "**SLA:** 12.5h" in updated
+
 
 class TestWorkstreamItem:
     """Test WorkstreamItem model."""
@@ -286,6 +384,85 @@ class TestWorkstreamAutosyncRunner:
 
         # Should have recorded a sync time
         assert runner.last_sync_time is not None
+
+    @pytest.mark.asyncio
+    async def test_run_cycle_skips_maintenance(self, valid_github_config, sample_work_stream_file):
+        """Run cycle should skip connectors in maintenance window."""
+        now = datetime.now(timezone.utc)
+        valid_github_config.work_stream_path = sample_work_stream_file
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+
+        async def boom(_items):
+            raise RuntimeError("should not run")
+
+        runner._sync_to_github = boom  # type: ignore[method-assign]
+        valid_github_config.maintenance_windows = [
+            MaintenanceWindow(
+                connector="github",
+                start_utc=now - timedelta(minutes=1),
+                end_utc=now + timedelta(minutes=1),
+            )
+        ]
+        await runner._perform_sync_cycle()
+        assert runner.last_sync_time is not None
+        assert runner._checkpoint is None
+
+    @pytest.mark.asyncio
+    async def test_checkpoint_resume_on_failure(self, tmp_path):
+        """Resume sync from checkpoint after a partition failure."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """### [WL-1] One
+**Status:** BACKLOG
+
+### [WL-2] Two
+**Status:** BACKLOG
+
+### [WL-3] Three
+**Status:** BACKLOG
+"""
+        )
+
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            max_partition_size=1,
+            checkpoint_file_path=tmp_path / "checkpoint.json",
+            standalone_mode=True,
+        )
+        config.should_sync_github()
+        runner = WorkstreamAutosyncRunner(config)
+        runner.config.work_stream_path = work_stream
+
+        calls = []
+
+        async def flaky_sync(items: list[WorkstreamItem]) -> None:
+            calls.append([item.item_id for item in items])
+            if len(calls) == 1:
+                raise RuntimeError("flaky")
+
+        await runner._sync_in_partitions(
+            connector="github",
+            direction="write",
+            items=WorkstreamParser.parse_items(work_stream),
+            sync_fn=flaky_sync,
+        )
+        assert calls == [["WL-1"]]
+        assert runner._checkpoint is not None
+        assert runner._checkpoint.start_index == 0
+
+        async def sync_identity(items: list[WorkstreamItem]) -> None:
+            calls.append([item.item_id for item in items])
+
+        await runner._sync_in_partitions(
+            connector="github",
+            direction="write",
+            items=WorkstreamParser.parse_items(work_stream),
+            sync_fn=sync_identity,
+        )
+        assert calls == [["WL-1"], ["WL-1"], ["WL-2"], ["WL-3"]]
 
     @pytest.mark.asyncio
     async def test_sync_to_github(self, valid_github_config):

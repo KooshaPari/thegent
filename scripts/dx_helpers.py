@@ -9,8 +9,8 @@ import sys
 from pathlib import Path
 
 
-def test_imports(modules: list[str], verbose: bool = False) -> bool:
-    """Test if modules can be imported (replaces verbose python3 -c commands).
+def check_imports(modules: list[str], verbose: bool = False) -> bool:
+    """Check if modules can be imported (replaces verbose python3 -c commands).
 
     Args:
         modules: List of module names to test
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         if sys.argv[1] == "test-imports":
             modules = sys.argv[2:] if len(sys.argv) > 2 else ["thegent.infra"]
-            success = test_imports(modules, verbose=True)
+            success = check_imports(modules, verbose=True)
             sys.exit(0 if success else 1)
         elif sys.argv[1] == "workstream":
             count = int(sys.argv[2]) if len(sys.argv) > 2 else 5

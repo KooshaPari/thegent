@@ -111,9 +111,9 @@ def _apply_jurisdiction_overlay(base: dict[str, Any], profile_name: str) -> dict
         if k not in result:
             result[k] = v
         elif k in _RESTRICTIVE_MIN_KEYS:
-            result[k] = min(result[k], v) if isinstance(result[k], (int, float)) else v
+            result[k] = min(result[k], v) if isinstance(result[k], (int | float)) else v
         elif k in _RESTRICTIVE_MAX_KEYS:
-            result[k] = max(result[k], v) if isinstance(result[k], (int, float)) else v
+            result[k] = max(result[k], v) if isinstance(result[k], (int | float)) else v
         elif k in _RESTRICTIVE_OR_KEYS:
             result[k] = result[k] or v
         else:
@@ -382,11 +382,11 @@ class FederatedPolicyManager:
     def _most_restrictive(self, key: str, a: Any, b: Any) -> tuple[Any, str]:
         """Return (chosen_value, rule_description) for the more restrictive of a and b."""
         if key in _RESTRICTIVE_MIN_KEYS:
-            if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+            if isinstance(a, (int | float)) and isinstance(b, (int | float)):
                 chosen = min(a, b)
                 return chosen, "min_value (lower is more restrictive)"
         if key in _RESTRICTIVE_MAX_KEYS:
-            if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+            if isinstance(a, (int | float)) and isinstance(b, (int | float)):
                 chosen = max(a, b)
                 return chosen, "max_value (higher is more restrictive)"
         if key in _RESTRICTIVE_OR_KEYS:

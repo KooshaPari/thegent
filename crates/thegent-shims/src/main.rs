@@ -514,7 +514,13 @@ fn dex_proxy_env_defaults() -> (Option<String>, Option<String>) {
     let base_url = env::var("OPENAI_BASE_URL").ok();
     let api_key = env::var("OPENAI_API_KEY").ok();
 
-    let default_base = if base_url.as_deref().map(str::is_empty).unwrap_or(true) {
+    let should_reset_base = base_url
+        .as_deref()
+        .map(str::trim)
+        .map(|value| value.is_empty() || value.contains(":3847") || value.ends_with("/mcp"))
+        .unwrap_or(true);
+
+    let default_base = if should_reset_base {
         Some("http://127.0.0.1:8317/v1".to_string())
     } else {
         None
@@ -927,7 +933,8 @@ mod tests {
 
     use super::{
         dex_proxy_env_defaults, inject_force_alias, inject_harness_defaults, normalize_harness_command_labels,
-        normalize_harness_exec_legacy_args, split_force_flag, split_native_flag, inject_native_force_alias,
+        normalize_harness_exec_legacy_args, should_inject_proxy_env_defaults, split_force_flag, split_native_flag,
+        inject_native_force_alias,
     };
 
     fn v(args: &[&str]) -> Vec<String> {
@@ -1180,6 +1187,21 @@ mod tests {
         }
         let (base, key) = dex_proxy_env_defaults();
         assert!(base.is_none());
+        assert!(key.is_none());
+        unsafe {
+            env::remove_var("OPENAI_BASE_URL");
+            env::remove_var("OPENAI_API_KEY");
+        }
+    }
+
+    #[test]
+    fn dex_proxy_env_defaults_overrides_mcp_port_base_url() {
+        unsafe {
+            env::set_var("OPENAI_BASE_URL", "http://127.0.0.1:3847/mcp");
+            env::set_var("OPENAI_API_KEY", "sk-live");
+        }
+        let (base, key) = dex_proxy_env_defaults();
+        assert_eq!(base.as_deref(), Some("http://127.0.0.1:8317/v1"));
         assert!(key.is_none());
         unsafe {
             env::remove_var("OPENAI_BASE_URL");

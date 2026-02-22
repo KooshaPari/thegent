@@ -154,9 +154,7 @@ def classify_observe_summary_trend_health(
 ) -> dict[str, Any]:
     policy: dict[str, Any] = {
         "healthy_threshold": parse_observe_summary_env_int("THGENT_OBSERVE_SUMMARY_TREND_HEALTH_GOOD_THRESHOLD", 95),
-        "warning_threshold": parse_observe_summary_env_int(
-            "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_WARNING_THRESHOLD", 80
-        ),
+        "warning_threshold": parse_observe_summary_env_int("THGENT_OBSERVE_SUMMARY_TREND_HEALTH_WARNING_THRESHOLD", 80),
         "degraded_threshold": parse_observe_summary_env_int(
             "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_DEGRADED_THRESHOLD", 50
         ),
@@ -459,7 +457,7 @@ def _coerce_issue_types(value: Any) -> list[str]:
         return []
     if isinstance(value, dict):
         return [str(v) for v in value]
-    if isinstance(value, (list, tuple, set)):
+    if isinstance(value, (list | tuple | set)):
         return [str(v) for v in value]
     return [str(value)]
 

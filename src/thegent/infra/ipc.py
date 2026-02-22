@@ -215,7 +215,7 @@ class QueueNotifier:
     def _wait_with_watchfiles(self, timeout: float) -> tuple[QueueEvent, ...]:
         watch_fn = watch
         if watch_fn is None:
-            return tuple()
+            return ()
         stop = threading.Event()
         timer = threading.Timer(timeout, stop.set)
         events: list[QueueEvent] = []
@@ -249,7 +249,7 @@ class QueueNotifier:
             if current != previous:
                 # We can't type-narrow exact change deltas without an underlying watcher.
                 return (QueueEvent(str(self.queue_dir / "new"), True, "unknown"),)
-        return tuple()
+        return ()
 
 
 class IntentBroadcaster:
@@ -260,7 +260,9 @@ class IntentBroadcaster:
         self.intents_dir = self.mesh_root / "var" / "intents"
         self.intents_dir.mkdir(parents=True, exist_ok=True, mode=0o1777)
 
-    def broadcast(self, agent_id: str, intent: str, target: str, operation: str = "read", metadata: dict[str, Any] | None = None) -> str:
+    def broadcast(
+        self, agent_id: str, intent: str, target: str, operation: str = "read", metadata: dict[str, Any] | None = None
+    ) -> str:
         """Write a typed intent record and return the intent ID."""
         intent_id = f"{int(time.time())}.{uuid.uuid4().hex}"
         payload = {

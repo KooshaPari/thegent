@@ -54,9 +54,7 @@ class PolicyChecksumDriftDetector:
         json_str = json.dumps(policy_data, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
 
-    def record_baseline(
-        self, policy_id: str, policy_data: dict, cycle_id: str
-    ) -> PolicyChecksum:
+    def record_baseline(self, policy_id: str, policy_data: dict, cycle_id: str) -> PolicyChecksum:
         """Record a baseline checksum for a policy.
 
         Args:
@@ -75,9 +73,7 @@ class PolicyChecksumDriftDetector:
             timestamp=datetime.now(timezone.utc),
         )
         self._baselines[policy_id] = baseline
-        logger.debug(
-            f"Recorded baseline for policy {policy_id} (checksum: {checksum})"
-        )
+        logger.debug(f"Recorded baseline for policy {policy_id} (checksum: {checksum})")
         return baseline
 
     def check_drift(self, policy_id: str, current_data: dict) -> bool:
@@ -104,8 +100,7 @@ class PolicyChecksumDriftDetector:
 
         if has_drift:
             logger.warning(
-                f"Drift detected in policy {policy_id}: "
-                f"baseline {baseline_checksum} != current {current_checksum}"
+                f"Drift detected in policy {policy_id}: baseline {baseline_checksum} != current {current_checksum}"
             )
         else:
             logger.debug(f"No drift in policy {policy_id}")

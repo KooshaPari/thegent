@@ -1,6 +1,7 @@
 """Tests for runtime matrix sync into governance summary (WL-130 B90-W3-E3).
 # @trace WL-130 B90-W3-E3
 """
+
 from __future__ import annotations
 
 from pathlib import Path

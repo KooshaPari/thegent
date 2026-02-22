@@ -1,5 +1,6 @@
 """Rich TUI for session management with subagent monitoring and control."""
 
+import logging
 import os
 import signal
 from typing import Any
@@ -21,6 +22,8 @@ from thegent.cli.commands.impl import (
 )
 from thegent.config import ThegentSettings
 
+_LOG = logging.getLogger(__name__)
+
 
 class SessionTUI:
     """Rich-based TUI for session management with subagent monitoring."""
@@ -29,9 +32,11 @@ class SessionTUI:
         self.session_id = session_id
         self.console = Console()
         self.settings = ThegentSettings()
+        self._last_diag: dict[str, Any] | None = None
 
     def _get_subagents_for_session(self, session_id: str) -> list[dict[str, Any]]:
         """Get subagents (child processes) for a session."""
+        self._last_diag = None
         try:
             meta = session_meta_impl(session_id)
             if "error" in meta:
@@ -96,11 +101,24 @@ class SessionTUI:
                         )
                     except (psutil.NoSuchProcess, psutil.AccessDenied):  # noqa: PERF203 - intentional per-item error handling
                         continue
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
+            except (psutil.NoSuchProcess, psutil.AccessDenied) as exc:
+                self._last_diag = {
+                    "component": "subagents",
+                    "session_id": session_id,
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                }
+                _LOG.warning("session_tui_subagent_probe_failed", extra=self._last_diag)
 
             return subagents
-        except Exception:
+        except Exception as exc:
+            self._last_diag = {
+                "component": "subagents",
+                "session_id": session_id,
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+            }
+            _LOG.warning("session_tui_subagent_probe_failed", extra=self._last_diag)
             return []
 
     def _get_session_details(self, session_id: str) -> dict[str, Any]:
@@ -111,6 +129,9 @@ class SessionTUI:
 
         # Add subagents
         meta["subagents"] = self._get_subagents_for_session(session_id)
+        if self._last_diag:
+            meta["degraded"] = True
+            meta.setdefault("diagnostics", {})["subagents"] = self._last_diag
 
         # Add log paths
         try:
@@ -120,9 +141,28 @@ class SessionTUI:
                 "stdout": str(session_dir / f"{session_id}.stdout.log"),
                 "stderr": str(session_dir / f"{session_id}.stderr.log"),
             }
-        except Exception:
-            pass
-
+        except FileNotFoundError as exc:
+            diag = {
+                "component": "log_paths",
+                "session_id": session_id,
+                "failure_type": "meta_missing",
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+            }
+            _LOG.warning("session_tui_log_path_resolution_failed", extra=diag)
+            meta["degraded"] = True
+            meta.setdefault("diagnostics", {})["log_paths"] = diag
+        except (RuntimeError, ValueError, TypeError, OSError) as exc:
+            diag = {
+                "component": "log_paths",
+                "session_id": session_id,
+                "failure_type": "path_resolution_error",
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+            }
+            _LOG.warning("session_tui_log_path_resolution_failed", extra=diag)
+            meta["degraded"] = True
+            meta.setdefault("diagnostics", {})["log_paths"] = diag
         return meta
 
     def render_session_view(self, session_id: str) -> Layout:
@@ -135,12 +175,13 @@ class SessionTUI:
         # Header
         status = details.get("status", "unknown")
         status_color = "green" if status == "running" else "yellow" if "exited" in status else "red"
+        degraded_badge = " | [bold yellow]DEGRADED[/bold yellow]" if details.get("degraded") else ""
         layout["header"].update(
             Panel(
                 f"[bold cyan]Session:[/bold cyan] {session_id[:20]}... | "
                 f"[bold]Status:[/bold] [{status_color}]{status}[/{status_color}] | "
                 f"[bold]Agent:[/bold] {details.get('agent', '?')} | "
-                f"[bold]PID:[/bold] {details.get('pid', 'N/A')}",
+                f"[bold]PID:[/bold] {details.get('pid', 'N/A')}{degraded_badge}",
                 border_style="cyan",
             )
         )

@@ -3,6 +3,7 @@
 
 import json
 import sys
+import logging
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -19,20 +20,22 @@ SEARCHES = [
 ]
 
 if __name__ == "__main__":
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     all_results = {}
     for query, max_results in SEARCHES:
-        print(f"\n=== Searching: {query} ===")
+        logger.info("=== Searching: %s ===", query)
         results = ddg_search(query, max_results=max_results)
         all_results[query] = results
-        print(f"Found {len(results)} results")
+        logger.info("Found %s results", len(results))
         for i, r in enumerate(results[:5], 1):
-            print(f"  {i}. {r.get('title', 'N/A')}")
-            print(f"     {r.get('href', 'N/A')}")
-            body = r.get('body', 'N/A')
-            print(f"     {body[:300]}...")
+            logger.info("  %s. %s", i, r.get("title", "N/A"))
+            logger.info("     %s", r.get("href", "N/A"))
+            body = r.get("body", "N/A")
+            logger.info("     %s...", body[:300])
 
     # Save results
     output_file = Path(__file__).parent / "git_tools_2026_search_results.json"
     with open(output_file, "w") as f:
         json.dump(all_results, f, indent=2)
-    print(f"\n\nResults saved to {output_file}")
+    logger.info("Results saved to %s", output_file)

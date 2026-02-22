@@ -30,9 +30,11 @@ def test_manual_mode_runs_once_with_health_targets(tmp_path: Path) -> None:
         error=None,
     )
 
-    with patch("thegent.governance.agileplus.AgilePlusLoop"), patch(
-        "thegent.governance.triggers.create_trigger", return_value=trigger
-    ), patch("thegent.governance.triggers.signal.signal"):
+    with (
+        patch("thegent.governance.agileplus.AgilePlusLoop"),
+        patch("thegent.governance.triggers.create_trigger", return_value=trigger),
+        patch("thegent.governance.triggers.signal.signal"),
+    ):
         result = runner.invoke(
             triggers_app,
             [

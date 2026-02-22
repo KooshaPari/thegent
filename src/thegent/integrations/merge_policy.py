@@ -87,9 +87,7 @@ class LocalEditMerger:
             return local_value
         if self.policy.strategy == MergeStrategy.FAIL_ON_CONFLICT:
             if local_value != remote_value:
-                raise MergeConflict(
-                    f"Conflict on field '{field}': local={local_value!r}, remote={remote_value!r}"
-                )
+                raise MergeConflict(f"Conflict on field '{field}': local={local_value!r}, remote={remote_value!r}")
             return local_value
         raise ValueError(f"Unknown merge strategy: {self.policy.strategy}")
 

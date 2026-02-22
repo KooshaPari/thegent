@@ -34,6 +34,7 @@ from thegent.compute.tailscale import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_status_json(peers: dict[str, Any] | None = None) -> str:
     """Return a minimal ``tailscale status --json`` payload."""
     return json.dumps({"Version": "1.60.0", "Peer": peers or {}})
@@ -219,7 +220,9 @@ class TestListNodes:
 
     # @trace FR-COMPUTE-004
     @patch("thegent.compute.tailscale.shutil.which", return_value="/usr/bin/tailscale")
-    @patch("thegent.compute.tailscale.subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="tailscale", timeout=10))
+    @patch(
+        "thegent.compute.tailscale.subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="tailscale", timeout=10)
+    )
     def test_raises_on_timeout(self, _run: MagicMock, _which: MagicMock) -> None:
         """list_nodes raises TailscaleError when subprocess times out."""
         with pytest.raises(TailscaleError, match="timed out"):

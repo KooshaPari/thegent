@@ -1,4 +1,5 @@
 """Route payload helpers for model_cmds."""
+
 from __future__ import annotations
 
 from typing import Any

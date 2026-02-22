@@ -700,6 +700,58 @@ All MD docs will be:
 - [x] Added `Resource Snapshot Cadence` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
 - [x] Added `Degradation Response Commands` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
 
+### Wave 19 — Completed (10 items)
+
+- [x] Added `Platform Compliance Checks` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Lifecycle Exit Signals` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Hotspot Detection Rules` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Cache Reset Decision Tree` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Schema Compatibility Checks` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Service Recovery Timeline` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Dependency Ownership Map` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Change Freeze Exceptions` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Escalation Ownership Map` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Lane Cooldown Policy` section in `docs/research/SWARM_COMPLETE.md`.
+
+### Wave 20 — Completed (10 items)
+
+- [x] Added `Recovery Escalation Thresholds` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Post-Incident Checklist` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Rust Hook Metrics Baseline` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Rollback Verification Commands` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Platform Drift Signals` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Release Coordination Matrix` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Saturation Mitigation Ladder` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+- [x] Added `Resource Triage Checklist` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+- [x] Added `Dependency Risk Scoring` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Replacement Freeze Checklist` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+
+### Wave 21 — Completed (10 items)
+
+- [x] Added `Platform Change Approval Gates` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Retirement Readiness Signals` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Cache Drift Triage Steps` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Warm Cache Verification` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Tool Contract Guardrails` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Runtime Dependency Checks` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Lane Handoff Readiness` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Swarm Exit Checklist` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Capacity Reserve Rules` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+- [x] Added `Incident Stabilization Commands` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+
+### Wave 22 — Completed (10 items)
+
+- [x] Added `Throughput Guardrails` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Fallback-Free Failure Policy` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Upgrade Blast Radius Map` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Verification Signoff Matrix` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Compatibility Debt Signals` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Parity Exit Criteria` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Hook Cutover Roll-Forward Steps` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Crash Recovery Commands` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Lane Timeout Policy` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Escalation Acknowledgement Rules` section in `docs/research/SWARM_COMPLETE.md`.
+
 ---
 
 *This TODO will be updated as expansion progresses.*

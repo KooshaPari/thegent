@@ -1018,3 +1018,55 @@ class DebugMiddleware(Middleware):
 - MCP endpoint check: `curl -fsS http://localhost:8000/mcp/health`.
 - Tool registry sanity: `curl -fsS http://localhost:8000/mcp/list_tools | jq '.tools | length'`.
 - Quick error tail after restart: `journalctl -u thegent-mcp -n 100 --no-pager | rg -n "error|timeout|exception"`.
+
+## Schema Compatibility Checks
+
+- Pin and diff tool schemas before rollout: `curl -fsS http://localhost:8000/mcp/list_tools | jq -S '.tools[] | {name,inputSchema}' > /tmp/schemas.current.json && diff -u config/mcp/schemas.pinned.json /tmp/schemas.current.json`.
+- Run contract/parity tests together: `python -m pytest tests/mcp/test_tool_contracts.py tests/mcp/test_parity.py -q`.
+- Block promotion if any required field changed without migration notes in release docs.
+
+## Service Recovery Timeline
+
+- **T+0–3 min:** Freeze deploys, capture scope, and run probes: `curl -fsS http://localhost:8000/health && curl -fsS http://localhost:8000/ready`.
+- **T+3–8 min:** If failures persist, restart service and validate registry: `systemctl restart thegent-mcp && curl -fsS http://localhost:8000/mcp/list_tools | jq '.tools|length'`.
+- **T+8–15 min:** If still degraded, roll back to last-known-good artifact and rerun transport smoke: `python -m pytest tests/mcp/test_transport_health.py -q`.
+
+## Recovery Escalation Thresholds
+
+- Escalate to service owner if `initialize`/`call_tool` failures stay above `1%` for `5` minutes.
+- Escalate to platform/SRE if readiness fails `3` checks in a row: `for i in 1 2 3; do curl -fsS http://localhost:8000/ready || true; sleep 20; done`.
+- Escalate to incident commander immediately on schema drift: `curl -fsS http://localhost:8000/mcp/list_tools | jq -S . > /tmp/live.json && diff -u config/mcp/list_tools.manifest.json /tmp/live.json`.
+
+## Post-Incident Checklist
+
+- Record closure evidence: `date -u && git rev-parse HEAD && journalctl -u thegent-mcp -n 150 --no-pager | tail -n 80`.
+- Confirm recovery guardrails: `python -m pytest tests/mcp/test_transport_health.py tests/mcp/test_registration_drift.py -q`.
+- Publish follow-ups with owner/date and rollback decision in the incident doc before unfreezing deploys.
+
+## Tool Contract Guardrails
+
+- Generate current tool contract snapshot: `curl -fsS http://localhost:8000/mcp/list_tools | jq -S '.tools[] | {name,inputSchema}' > /tmp/tool-contracts.current.json`.
+- Compare against pinned contract baseline: `diff -u config/mcp/tool-contracts.pinned.json /tmp/tool-contracts.current.json`.
+- Gate merges with focused contract test: `python -m pytest tests/mcp/test_tool_contracts.py -q`.
+- Require release note + owner approval before promoting any schema/name change.
+
+## Runtime Dependency Checks
+
+- Verify required runtime libs at startup: `python -m pip check`.
+- Assert key binaries are present and versioned: `python --version && jq --version && curl --version | head -n 1`.
+- Run dependency health smoke before deploy: `python -m pytest tests/mcp/test_transport_health.py -q`.
+- Fail deployment if any check fails; capture evidence in incident/release log.
+
+## Throughput Guardrails
+
+- Enforce worker and queue caps before rollout: `rg -n "max_workers|max_concurrency|queue" config/`.
+- Gate deployment on latency and timeout tests: `python -m pytest tests/mcp -k "latency or timeout or concurrency" -q`.
+- Watch live saturation indicators during canary: `rg -n "queue|backlog|p95|p99|timeout" logs/mcp*.log | tail -n 80`.
+- Pause promotion if p95 grows `>30%` over baseline for `10` minutes; reduce concurrency and retest.
+
+## Fallback-Free Failure Policy
+
+- Treat any tool error as terminal for the request; do not retry through alternate handlers or legacy paths.
+- Fail fast on drift or schema mismatches: `python -m pytest tests/mcp/test_registration_drift.py tests/mcp/test_tool_contracts.py -q`.
+- Block merge when fallback patterns appear: `rg -n "except: pass|except Exception|fallback|legacy|compat" thegent/`.
+- Require explicit rollback or fix-forward decision in incident notes before resuming deploys.

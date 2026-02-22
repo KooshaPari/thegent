@@ -18,6 +18,7 @@ def register_harness_tools(
         Tuple of (thegent_harness_interact, thegent_harness_list_actions,
                   thegent_harness_get_command, thegent_harness_register_host)
     """
+
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     async def thegent_harness_interact(
         harness: str,
@@ -130,11 +131,13 @@ def harness_interact_impl(
     try:
         harness_type = HarnessType(harness.lower())
     except ValueError:
-        return json.dumps({
-            "success": False,
-            "error": f"Unknown harness: {harness}. Valid: {[h.value for h in HarnessType]}",
-            "harness": harness,
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"Unknown harness: {harness}. Valid: {[h.value for h in HarnessType]}",
+                "harness": harness,
+            }
+        )
 
     try:
         mapper = HarnessTUIMapper()
@@ -147,12 +150,14 @@ def harness_interact_impl(
         )
         return json.dumps(result, indent=2)
     except HarnessActionError as e:
-        return json.dumps({
-            "success": False,
-            "error": str(e),
-            "harness": harness,
-            "action": action,
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": str(e),
+                "harness": harness,
+                "action": action,
+            }
+        )
 
 
 def harness_list_actions_impl() -> str:
@@ -163,10 +168,12 @@ def harness_list_actions_impl() -> str:
     """
     mapper = HarnessTUIMapper()
     actions = mapper.list_actions()
-    return json.dumps({
-        "actions": actions,
-        "count": len(actions),
-    })
+    return json.dumps(
+        {
+            "actions": actions,
+            "count": len(actions),
+        }
+    )
 
 
 def harness_get_command_impl(
@@ -186,21 +193,27 @@ def harness_get_command_impl(
     try:
         harness_type = HarnessType(harness.lower())
     except ValueError:
-        return json.dumps({
-            "error": f"Unknown harness: {harness}",
-        })
+        return json.dumps(
+            {
+                "error": f"Unknown harness: {harness}",
+            }
+        )
 
     mapper = HarnessTUIMapper()
     cmd = mapper.get_command(harness_type, action)
     if cmd is None:
-        return json.dumps({
-            "error": f"No command for action={action} harness={harness}",
-        })
-    return json.dumps({
-        "harness": harness,
-        "action": action,
-        "command": cmd,
-    })
+        return json.dumps(
+            {
+                "error": f"No command for action={action} harness={harness}",
+            }
+        )
+    return json.dumps(
+        {
+            "harness": harness,
+            "action": action,
+            "command": cmd,
+        }
+    )
 
 
 def harness_register_host_impl(
@@ -224,10 +237,12 @@ def harness_register_host_impl(
     try:
         harness_type = HarnessType(harness.lower())
     except ValueError:
-        return json.dumps({
-            "success": False,
-            "error": f"Unknown harness: {harness}",
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"Unknown harness: {harness}",
+            }
+        )
 
     mapper = HarnessTUIMapper()
     mapper.register_host(
@@ -236,12 +251,14 @@ def harness_register_host_impl(
         command_prefix=command_prefix,
         custom_actions=custom_actions,
     )
-    return json.dumps({
-        "success": True,
-        "host_id": host_id,
-        "harness": harness,
-        "command_prefix": command_prefix,
-    })
+    return json.dumps(
+        {
+            "success": True,
+            "host_id": host_id,
+            "harness": harness,
+            "command_prefix": command_prefix,
+        }
+    )
 
 
 __all__ = [

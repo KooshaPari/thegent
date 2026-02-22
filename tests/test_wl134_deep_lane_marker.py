@@ -51,10 +51,7 @@ class TestDeepMarkerUsage:
             content = py_file.read_text()
             if "@pytest.mark.deep" in content:
                 deep_files.append(str(py_file))
-        assert len(deep_files) >= 1, (
-            f"No test files found with @pytest.mark.deep. "
-            f"Expected at least one in {TESTS_DIR}"
-        )
+        assert len(deep_files) >= 1, f"No test files found with @pytest.mark.deep. Expected at least one in {TESTS_DIR}"
 
     def test_deep_tests_are_collectible(self) -> None:
         """pytest --collect-only -m deep must exit 0 (collect without error)."""

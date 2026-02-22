@@ -54,10 +54,10 @@ class TestContentTabs:
         # Check for key elements
         assert '<div class="content-tabs vp-raw">' in html
         assert 'role="tablist"' in html
-        assert 'Tab 1' in html
-        assert 'Tab 2' in html
-        assert 'Content 1' in html
-        assert 'Content 2' in html
+        assert "Tab 1" in html
+        assert "Tab 2" in html
+        assert "Content 1" in html
+        assert "Content 2" in html
 
         # Check for active state
         assert 'class="tab-button active" role="tab" aria-selected="true" aria-controls="panel-0" id="tab-0"' in html

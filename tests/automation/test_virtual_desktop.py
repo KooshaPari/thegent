@@ -113,13 +113,15 @@ class TestDesktopSession:
         provider = MagicMock()
         provider.name = "test"
         provider.supports_gpu = True
-        provider.capture_screen = AsyncMock(return_value=ScreenFrame(
-            timestamp=0,
-            width=1920,
-            height=1080,
-            bytes_per_pixel=4,
-            data=b"x" * 100,
-        ))
+        provider.capture_screen = AsyncMock(
+            return_value=ScreenFrame(
+                timestamp=0,
+                width=1920,
+                height=1080,
+                bytes_per_pixel=4,
+                data=b"x" * 100,
+            )
+        )
         provider.inject_input = AsyncMock(return_value=True)
         return provider
 
@@ -249,6 +251,7 @@ def test_get_desktop_manager_singleton():
     """Test that get_desktop_manager returns singleton."""
     # Need to reset the global manager first
     import thegent.automation.virtual_desktop as vd
+
     original_manager = vd._manager
     vd._manager = None
 

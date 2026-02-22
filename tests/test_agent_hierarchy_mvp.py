@@ -101,9 +101,16 @@ def populated_manager() -> AgentHierarchyManager:
 class TestAgentCapabilityEnum:
     def test_all_expected_capabilities_exist(self):
         expected = {
-            "CODE", "RESEARCH", "REVIEW", "TEST",
-            "DEPLOY", "PLAN", "SECURITY", "DATA",
-            "DOCUMENTATION", "ORCHESTRATE",
+            "CODE",
+            "RESEARCH",
+            "REVIEW",
+            "TEST",
+            "DEPLOY",
+            "PLAN",
+            "SECURITY",
+            "DATA",
+            "DOCUMENTATION",
+            "ORCHESTRATE",
         }
         actual = {c.name for c in AgentCapability}
         assert expected.issubset(actual)
@@ -167,9 +174,19 @@ class TestAgentNode:
     def test_to_dict_contains_required_keys(self):
         node = AgentNode(agent_id="n1", capabilities={AgentCapability.PLAN})
         d = node.to_dict()
-        required = {"agent_id", "capabilities", "model", "name", "description",
-                    "parent_id", "children", "state", "active_task_count",
-                    "total_tasks_completed", "metadata"}
+        required = {
+            "agent_id",
+            "capabilities",
+            "model",
+            "name",
+            "description",
+            "parent_id",
+            "children",
+            "state",
+            "active_task_count",
+            "total_tasks_completed",
+            "metadata",
+        }
         assert required.issubset(d.keys())
 
 
@@ -369,10 +386,7 @@ class TestExecuteParallel:
     def test_parallel_preserves_order(self, manager):
         manager.spawn_agent({AgentCapability.CODE}, agent_id="a1")
         task_ids = ["t1", "t2", "t3"]
-        tasks = [
-            {"agent_id": "a1", "task_description": f"task {tid}", "task_id": tid}
-            for tid in task_ids
-        ]
+        tasks = [{"agent_id": "a1", "task_description": f"task {tid}", "task_id": tid} for tid in task_ids]
         results = manager.execute_parallel(tasks)
         result_ids = [r.task_id for r in results]
         assert result_ids == task_ids
@@ -387,9 +401,7 @@ class TestExecuteParallel:
 
         m = AgentHierarchyManager(task_executor=_alternating)
         m.spawn_agent({AgentCapability.CODE}, agent_id="a1")
-        tasks = [
-            {"agent_id": "a1", "task_description": f"t{i}"} for i in range(4)
-        ]
+        tasks = [{"agent_id": "a1", "task_description": f"t{i}"} for i in range(4)]
         results = m.execute_parallel(tasks)
         successes = [r.success for r in results]
         assert True in successes

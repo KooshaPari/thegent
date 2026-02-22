@@ -331,6 +331,7 @@ class TestSyncAllWithNewOps:
         ops_called: list[str] = []
 
         for name in ("sync_work_stream", "sync_config", "sync_agents", "sync_hooks"):
+
             def _record(dry_run: bool = False, _n: str = name) -> OperationResult:
                 ops_called.append(_n)
                 return OperationResult(_n, SyncOperationStatus.SUCCESS)

@@ -1,4 +1,5 @@
 """Catalog/list-model helpers for model_cmds."""
+
 from __future__ import annotations
 
 from collections.abc import Callable

@@ -460,16 +460,17 @@ class ConcurrencyController:
     def get_bottlenecks(self) -> dict[str, Any]:
         """Get current bottlenecks and slow points."""
         if self.bottleneck_detector is None:
-            return {}
+            return {
+                "detector_available": False,
+                "reason": "bottleneck_detector_unavailable",
+            }
 
         slow_points = self.bottleneck_detector.identify_slow_points()
         from thegent.orchestration.resource.resource_management import sample_extended_resources
 
         snapshot = sample_extended_resources()
         harness_cards = self.harness_cards if self.harness_cards is not None else {}
-        contentions = self.bottleneck_detector.detect_resource_contention(
-            snapshot, harness_cards
-        )
+        contentions = self.bottleneck_detector.detect_resource_contention(snapshot, harness_cards)
 
         return {
             "slow_points": slow_points,
@@ -1781,11 +1782,19 @@ class AuditRegistry:
             f.write(entry.model_dump_json() + "\n")
 
 
-def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
+_LAST_POLL_MESSAGES_META: dict[str, Any] = {"status": "not_checked"}
+
+
+def poll_session_messages(
+    session_id: str | None = None,
+    *,
+    include_meta: bool = False,
+) -> list[MessageEntry] | dict[str, Any]:
     """Poll for pending messages for the current session (WP-9004).
 
     If session_id is None, tries to read from THGENT_SESSION_ID env var (runtime value, not a setting).
     """
+    global _LAST_POLL_MESSAGES_META  # noqa: PLW0603
     if session_id is None:
         # session_id is a runtime value, not a configuration setting
         # Keep using os.environ for runtime values that change per execution
@@ -1794,7 +1803,9 @@ def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
         session_id = os.environ.get("THGENT_SESSION_ID")
 
     if not session_id:
-        return []
+        _LAST_POLL_MESSAGES_META = {"status": "missing_session_id"}
+        payload = {"messages": [], "meta": dict(_LAST_POLL_MESSAGES_META)}
+        return payload if include_meta else []
 
     from thegent.cli.commands.impl import _find_session_meta
     from thegent.config import ThegentSettings
@@ -1804,9 +1815,51 @@ def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
         meta_path = _find_session_meta(settings, session_id)
         msg_path = meta_path.parent / f"{session_id}.messages.jsonl"
         registry = MessageRegistry(msg_path)
-        return registry.list_pending()
-    except Exception:
-        return []
+        messages = registry.list_pending()
+        _LAST_POLL_MESSAGES_META = {
+            "status": "ok",
+            "session_id": session_id,
+            "pending_count": len(messages),
+            "messages_path": str(msg_path),
+        }
+        payload = {"messages": messages, "meta": dict(_LAST_POLL_MESSAGES_META)}
+        return payload if include_meta else messages
+    except FileNotFoundError as exc:
+        _LAST_POLL_MESSAGES_META = {
+            "status": "meta_missing",
+            "session_id": session_id,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+    except PermissionError as exc:
+        _LAST_POLL_MESSAGES_META = {
+            "status": "unreadable_messages",
+            "session_id": session_id,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+    except ValueError as exc:
+        _LAST_POLL_MESSAGES_META = {
+            "status": "parser_failure",
+            "session_id": session_id,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+    except OSError as exc:
+        _LAST_POLL_MESSAGES_META = {
+            "status": "io_failure",
+            "session_id": session_id,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+
+    payload = {"messages": [], "meta": dict(_LAST_POLL_MESSAGES_META)}
+    return payload if include_meta else []
+
+
+def get_last_poll_session_messages_meta() -> dict[str, Any]:
+    """Return diagnostics metadata for the latest poll_session_messages call."""
+    return dict(_LAST_POLL_MESSAGES_META)
 
 
 class CheckpointRegistry:

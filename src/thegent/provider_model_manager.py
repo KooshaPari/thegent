@@ -1,4 +1,6 @@
 """Provider and Model Management - CLI, MCP, and programmatic CRUD for providers and models."""
+
+import logging
 from pathlib import Path
 from typing import Any, cast
 
@@ -30,6 +32,7 @@ from thegent.provider_model_manager_io import (
 from thegent.provider_model_manager_sorting import sort_model_rows
 
 console = Console()
+_LOG = logging.getLogger(__name__)
 
 
 # ============ PROVIDER CRUD ============
@@ -475,9 +478,35 @@ def validate_provider(name: str) -> tuple[bool, str, dict[str, Any]]:
 # ============ DISCOVERY ============
 
 
-def discover_models(provider: str | None = None) -> list[dict[str, Any]]:
-    """Discover available models from provider APIs."""
-    results = []
+def discover_models(
+    provider: str | None = None,
+    *,
+    include_status: bool = False,
+) -> list[dict[str, Any]] | dict[str, Any]:
+    """Discover available models from provider APIs.
+
+    When include_status=True, returns:
+    {
+      "models": [...],
+      "discovery": {
+          "status": "ok"|"error"|"invalid_payload",
+          "failure_type": str|None,
+          "error_message": str|None,
+          "url": str,
+          "malformed_count": int,
+      }
+    }
+    """
+    results: list[dict[str, Any]] = []
+    status: dict[str, Any] = {
+        "status": "ok",
+        "failure_type": None,
+        "error_message": None,
+        "url": "http://127.0.0.1:8317/v1/models",
+        "malformed_count": 0,
+        "provider": provider,
+    }
+    warning_extra = {"provider": provider}
     settings = ThegentSettings()
     config_path = _ensure_config(settings)
     _config = _load_yaml(config_path)
@@ -486,13 +515,47 @@ def discover_models(provider: str | None = None) -> list[dict[str, Any]]:
 
     # Check CLIProxy for available models
     try:
-        resp = httpx.get("http://127.0.0.1:8317/v1/models", timeout=5.0)
+        resp = httpx.get(status["url"], timeout=5.0)
         if resp.status_code == 200:
             data = resp.json()
+            if not isinstance(data, dict):
+                status.update(
+                    {
+                        "status": "invalid_payload",
+                        "failure_type": "payload_not_object",
+                        "error_message": "top-level JSON is not an object",
+                    }
+                )
+                _LOG.warning(
+                    "cliproxy_model_discovery_invalid_payload",
+                    extra={"failure_type": "payload_not_object", **warning_extra},
+                )
+                payload = {"models": results, "discovery": status}
+                return payload if include_status else results
             models = data.get("models", []) or data.get("data", [])
+            if not isinstance(models, list):
+                status.update(
+                    {
+                        "status": "invalid_payload",
+                        "failure_type": "models_not_list",
+                        "error_message": "models/data field is not a list",
+                    }
+                )
+                _LOG.warning(
+                    "cliproxy_model_discovery_invalid_payload",
+                    extra={"failure_type": "models_not_list", **warning_extra},
+                )
+                payload = {"models": results, "discovery": status}
+                return payload if include_status else results
 
             for m in models:
+                if not isinstance(m, dict):
+                    status["malformed_count"] += 1
+                    continue
                 owned_by = m.get("owned_by", "unknown")
+                if not isinstance(owned_by, str):
+                    status["malformed_count"] += 1
+                    continue
                 if provider and owned_by.lower() != provider.lower():
                     continue
                 results.append(
@@ -502,11 +565,39 @@ def discover_models(provider: str | None = None) -> list[dict[str, Any]]:
                         "object": m.get("object"),
                         "created": m.get("created"),
                     }
+                )  # record-level malformed entries are dropped, not fatal
+            if status["malformed_count"]:
+                _LOG.warning(
+                    "cliproxy_model_discovery_malformed_entries",
+                    extra={"malformed_count": status["malformed_count"], **warning_extra},
                 )
-    except Exception:
-        pass
+        else:
+            status.update(
+                {
+                    "status": "error",
+                    "failure_type": "http_status",
+                    "error_message": f"HTTP {resp.status_code}",
+                }
+            )
+            _LOG.warning(
+                "cliproxy_model_discovery_http_error",
+                extra={"status_code": resp.status_code, **warning_extra},
+            )
+    except httpx.TimeoutException as exc:
+        status.update({"status": "error", "failure_type": "timeout", "error_message": str(exc)})
+        _LOG.warning("cliproxy_model_discovery_timeout", extra={"failure_detail": str(exc), **warning_extra})
+    except httpx.HTTPError as exc:
+        status.update({"status": "error", "failure_type": "http_error", "error_message": str(exc)})
+        _LOG.warning("cliproxy_model_discovery_http_error", extra={"failure_detail": str(exc), **warning_extra})
+    except ValueError as exc:
+        status.update({"status": "invalid_payload", "failure_type": "json_decode", "error_message": str(exc)})
+        _LOG.warning(
+            "cliproxy_model_discovery_json_decode_error",
+            extra={"failure_detail": str(exc), **warning_extra},
+        )
 
-    return results
+    payload = {"models": results, "discovery": status}
+    return payload if include_status else results
 
 
 # ============ CLI INTERFACE ============
@@ -662,7 +753,7 @@ def _form_update_provider() -> None:
     model = Prompt.ask("[bold]New model[/bold] (leave empty to keep current)", default=provider.get("model", ""))
 
     success, msg = update_provider(
-        name=cast(str, name),
+        name=cast("str", name),
         base_url=base_url or None,
         model=model or None,
     )
@@ -684,7 +775,7 @@ def _form_delete_provider() -> None:
         return
 
     if Confirm.ask(f"[bold]Delete provider '{provider.get('name')}'?[/bold]", default=False):
-        success, msg = delete_provider(cast(str, provider.get("name")))
+        success, msg = delete_provider(cast("str", provider.get("name")))
         if success:
             console.print(f"[green]{msg}[/green]")
         else:
@@ -702,7 +793,7 @@ def _form_validate_provider() -> None:
         return
 
     console.print(f"\n[dim]Validating {provider.get('name')}...[/dim]")
-    success, msg, _details = validate_provider(cast(str, provider.get("name")))
+    success, msg, _details = validate_provider(cast("str", provider.get("name")))
 
     if success:
         console.print(f"[green]✓ {msg}[/green]")
@@ -740,7 +831,7 @@ def _form_add_api_key() -> None:
 
     api_key = Prompt.ask(f"[bold]API Key for {provider.get('name')}[/bold]", password=True)
 
-    success, msg = add_api_key(cast(str, provider.get("name")), api_key)
+    success, msg = add_api_key(cast("str", provider.get("name")), api_key)
     if success:
         console.print(f"[green]{msg}[/green]")
     else:
@@ -758,7 +849,7 @@ def _form_remove_api_key() -> None:
         return
 
     if Confirm.ask(f"[bold]Remove API key for '{provider.get('name')}'?[/bold]", default=False):
-        success, msg = remove_api_key(cast(str, provider.get("name")))
+        success, msg = remove_api_key(cast("str", provider.get("name")))
         if success:
             console.print(f"[green]{msg}[/green]")
         else:
@@ -767,9 +858,15 @@ def _form_remove_api_key() -> None:
 
 def _form_discover_models() -> None:
     console.print("\n[dim]Discovering models from CLIProxy...[/dim]")
-    models = discover_models()
+    discovery = cast("dict[str, Any]", discover_models(include_status=True))
+    models = cast("list[dict[str, Any]]", discovery.get("models", []))
+    status = cast("dict[str, Any]", discovery.get("discovery", {}))
 
     if not models:
+        if status.get("status") != "ok":
+            console.print(
+                f"[yellow]Discovery degraded:[/yellow] {status.get('failure_type', 'unknown')} - {status.get('error_message', '')}"
+            )
         console.print("[yellow]No models discovered (is CLIProxy running?)[/yellow]")
         return
 
@@ -986,10 +1083,10 @@ def search_models_by_capability(
             continue
         # Check benchmark scores
         if capability == "swebench":
-            if not m.get("swebench") or cast(float, m.get("swebench")) < 0.4:
+            if not m.get("swebench") or cast("float", m.get("swebench")) < 0.4:
                 continue
         if capability == "termbench":
-            if not m.get("termbench") or cast(float, m.get("termbench")) < 0.45:
+            if not m.get("termbench") or cast("float", m.get("termbench")) < 0.45:
                 continue
 
         # Check filters

@@ -756,9 +756,7 @@ class TestThreadSafety:
             lock = threading.Lock()
 
             def add_one() -> None:
-                spec = WatchSpec(
-                    root=tmp_path, patterns=["*"], recursive=False, callback=lambda ev: None
-                )
+                spec = WatchSpec(root=tmp_path, patterns=["*"], recursive=False, callback=lambda ev: None)
                 wid = daemon.add_watch(spec)
                 with lock:
                     ids.append(wid)

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 
 class QuotaExhaustedError(Exception):
@@ -21,7 +20,7 @@ class ConnectorQuota:
     connector_name: str
     daily_limit: int
     used_today: int = 0
-    reset_at: Optional[datetime] = None
+    reset_at: datetime | None = None
 
     def __post_init__(self) -> None:
         """Initialize reset_at if not provided."""
@@ -104,9 +103,7 @@ class QuotaBudgetManager:
         self._check_and_reset_if_needed(quota)
 
         if quota.remaining() < n:
-            raise QuotaExhaustedError(
-                f"Insufficient quota for {connector!r}: need {n}, have {quota.remaining()}"
-            )
+            raise QuotaExhaustedError(f"Insufficient quota for {connector!r}: need {n}, have {quota.remaining()}")
 
         quota.used_today += n
 

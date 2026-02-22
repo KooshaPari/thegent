@@ -6,6 +6,7 @@ Exits 1 if the file is stale, missing, or has an invalid timestamp.
 
 # @trace WL-135 B90-W3-C3
 """
+
 from __future__ import annotations
 
 import json

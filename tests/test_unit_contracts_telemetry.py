@@ -410,6 +410,7 @@ class TestTelemetryCorruptedLines:
         stats = tel.get_stats()
         assert stats["total"] == 1
         assert stats["success_rate"] == 1.0
+        assert stats["parse_errors"] == 2
 
     def test_get_fallback_kpis_corrupted_lines(self, tmp_path) -> None:
         # @trace FR-CTR-007
@@ -418,8 +419,23 @@ class TestTelemetryCorruptedLines:
         tel.record_normalization("r1", "copilot", "xml-tags", 1.0, True)
         with tel.telemetry_path.open("a", encoding="utf-8") as f:
             f.write("corrupted line\n")
+            f.write("{broken\n")
         kpis = tel.get_fallback_kpis()
         assert kpis["total"] == 1
+        assert tel.malformed_line_count >= 2
+
+    def test_get_stats_tracks_parse_errors_and_provider_skips(self, tmp_path) -> None:
+        # @trace FR-CTR-007
+        tel = ContractTelemetry(tmp_path)
+        tel.record_normalization("r1", "copilot", "xml-tags", 1.0, True)
+        tel.record_normalization("r2", "gemini", "xml-tags", 0.7, True)
+        with tel.telemetry_path.open("a", encoding="utf-8") as f:
+            f.write("not-json\n")
+            f.write('{"provider":')
+        stats = tel.get_stats(provider="copilot")
+        assert stats["total"] == 1
+        assert stats["provider_skips"] == 1
+        assert stats["parse_errors"] == 2
 
     def test_detect_drift_corrupted_lines(self, tmp_path) -> None:
         # @trace FR-CTR-006

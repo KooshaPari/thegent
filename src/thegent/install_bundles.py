@@ -100,7 +100,7 @@ def validate_bundle_manifest(bundle_manifest: Path | str | None = None) -> tuple
     issues: list[str] = []
     manifest_path = bundle_manifest or get_default_bundle_manifest_path()
 
-    if manifest_path and isinstance(manifest_path, (str, Path)):
+    if manifest_path and isinstance(manifest_path, (str | Path)):
         path = Path(manifest_path) if not isinstance(manifest_path, Path) else manifest_path
         if not path.exists():
             issues.append(f"Bundle manifest not found: {path}")

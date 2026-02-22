@@ -1,7 +1,6 @@
 """Sticky sidebar and header for documentation."""
 
 
-
 class StickyNav:
     """Sticky navigation component for documentation."""
 

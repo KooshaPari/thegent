@@ -44,9 +44,7 @@ def _passing_check(name: str) -> Any:
     """Return an async VetterCheck mock that always passes. # @trace WL-092"""
     check = MagicMock()
     check.name = name
-    check.check = AsyncMock(
-        return_value=VetterCheckResult(check_name=name, passed=True)
-    )
+    check.check = AsyncMock(return_value=VetterCheckResult(check_name=name, passed=True))
     return check
 
 
@@ -54,9 +52,7 @@ def _failing_check(name: str, message: str = "failed") -> Any:
     """Return an async VetterCheck mock that always fails. # @trace WL-092"""
     check = MagicMock()
     check.name = name
-    check.check = AsyncMock(
-        return_value=VetterCheckResult(check_name=name, passed=False, message=message)
-    )
+    check.check = AsyncMock(return_value=VetterCheckResult(check_name=name, passed=False, message=message))
     return check
 
 

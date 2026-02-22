@@ -77,17 +77,13 @@ def test_fixture_file_has_required_fields() -> None:
 def test_fixture_has_at_least_five_cases() -> None:
     """Fixture must have at least 5 deterministic cases."""
     data = _load_fixtures()
-    assert len(data["cases"]) >= 5, (
-        f"Expected >= 5 fixture cases, got {len(data['cases'])}"
-    )
+    assert len(data["cases"]) >= 5, f"Expected >= 5 fixture cases, got {len(data['cases'])}"
 
 
 def test_fixture_kernel_name() -> None:
     """Fixture kernel must be score_rank_v1."""
     data = _load_fixtures()
-    assert data["kernel"] == "score_rank_v1", (
-        f"Expected kernel='score_rank_v1', got {data['kernel']!r}"
-    )
+    assert data["kernel"] == "score_rank_v1", f"Expected kernel='score_rank_v1', got {data['kernel']!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -120,14 +116,9 @@ def test_python_reference_all_success_cases() -> None:
         )
 
         if result["score"] != expected["score"]:
-            failures.append(
-                f"{cid}: expected score={expected['score']}, got={result['score']} "
-                f"(input={inp})"
-            )
+            failures.append(f"{cid}: expected score={expected['score']}, got={result['score']} (input={inp})")
         if result["success"] is not expected["success"]:
-            failures.append(
-                f"{cid}: expected success={expected['success']}, got={result['success']}"
-            )
+            failures.append(f"{cid}: expected success={expected['success']}, got={result['success']}")
 
     assert not failures, "Python reference formula failures:\n" + "\n".join(failures)
 
@@ -151,9 +142,7 @@ def test_f7_fixture_marks_as_failure() -> None:
     data = _load_fixtures()
     case_007 = next((c for c in data["cases"] if c["case_id"] == "det_007"), None)
     assert case_007 is not None, "det_007 fixture case missing"
-    assert case_007["expected_output"]["success"] is False, (
-        "det_007 must have success=false (contract-missing case)"
-    )
+    assert case_007["expected_output"]["success"] is False, "det_007 must have success=false (contract-missing case)"
 
 
 # ---------------------------------------------------------------------------
@@ -191,9 +180,7 @@ async def test_mojo_bridge_dispatch_success_cases() -> None:
         )
         result = await bridge.dispatch(task)
 
-        assert result.get("success") is True, (
-            f"{cid}: MojoBridge dispatch returned success=False: {result}"
-        )
+        assert result.get("success") is True, f"{cid}: MojoBridge dispatch returned success=False: {result}"
         assert result.get("score") == expected["score"], (
             f"{cid}: score mismatch: expected={expected['score']}, got={result.get('score')}"
         )
@@ -204,15 +191,16 @@ async def test_mojo_bridge_dispatch_success_cases() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("cost,quality,latency,expected_score", [
-    (1.2, 1.2, 1.2, 1.0),    # F5: above upper bound -> clamped to 1.0
-    (-0.5, 0.2, 0.1, 0.0),   # F6: negative -> clamped to 0.0
-    (0.0, 0.0, 0.0, 0.0),    # F2: all zeros -> exactly 0.0
-    (1.0, 1.0, 1.0, 1.0),    # F1: all ones -> exactly 1.0
-])
-def test_python_boundary_cases(
-    cost: float, quality: float, latency: float, expected_score: float
-) -> None:
+@pytest.mark.parametrize(
+    "cost,quality,latency,expected_score",
+    [
+        (1.2, 1.2, 1.2, 1.0),  # F5: above upper bound -> clamped to 1.0
+        (-0.5, 0.2, 0.1, 0.0),  # F6: negative -> clamped to 0.0
+        (0.0, 0.0, 0.0, 0.0),  # F2: all zeros -> exactly 0.0
+        (1.0, 1.0, 1.0, 1.0),  # F1: all ones -> exactly 1.0
+    ],
+)
+def test_python_boundary_cases(cost: float, quality: float, latency: float, expected_score: float) -> None:
     """Python reference must correctly clamp boundary cases."""
     result = _python_score(cost=cost, quality=quality, latency=latency)
     assert result["score"] == expected_score, (

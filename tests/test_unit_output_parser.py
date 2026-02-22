@@ -157,6 +157,23 @@ class TestExtractCondensedThinkBlocks:
         assert "<think>" not in result
         assert "internal reasoning" not in result
 
+    def test_native_think_strip_failure_logs_and_uses_regex_fallback(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        # @trace FR-OUT-003
+        import thegent.output_parser as output_parser_module
+
+        class _NativeFail:
+            @staticmethod
+            def strip_think_blocks(_text: str) -> str:
+                raise RuntimeError("native strip failed")
+
+        text = "Before <think>outer <think>inner</think> tail</think> After"
+        monkeypatch.setattr(output_parser_module, "_get_native_parser", lambda: _NativeFail())
+        caplog.set_level("DEBUG", logger="thegent.output_parser")
+        assert output_parser_module._strip_think_blocks(text) == output_parser_module._THINK_RE.sub("", text).strip()
+        assert "Native think-strip failed; using regex fallback" in caplog.text
+
 
 @pytest.mark.unit
 class TestExtractCondensedWorkerReport:

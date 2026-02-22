@@ -16,6 +16,5 @@ def test_unsupported_canonical_targets_are_absent_on_real_app() -> None:
     assert _DELIBERATELY_UNSUPPORTED_CANONICAL_PREFIXES
     for path in sorted(_DELIBERATELY_UNSUPPORTED_CANONICAL_PREFIXES):
         assert not command_path_exists(app, list(path)), (
-            "Unsupported canonical target unexpectedly resolves on real app; "
-            f"remove from unsupported set: {path!r}"
+            f"Unsupported canonical target unexpectedly resolves on real app; remove from unsupported set: {path!r}"
         )

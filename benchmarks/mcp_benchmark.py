@@ -17,9 +17,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-_AUTH_MODULE_PATH = (
-    Path(__file__).resolve().parents[1] / "src" / "thegent" / "mcp" / "server" / "auth.py"
-)
+_AUTH_MODULE_PATH = Path(__file__).resolve().parents[1] / "src" / "thegent" / "mcp" / "server" / "auth.py"
 
 
 def _load_auth_module():

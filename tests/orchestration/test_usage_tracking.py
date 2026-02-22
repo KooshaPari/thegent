@@ -283,7 +283,9 @@ class TestConcurrencyControllerUsageIntegration:
         assert admitted is True
         assert cc._usage_tracker.get_stats("agent-x").active_count == 1
 
-    def test_acquire_does_not_call_record_start_when_blocked(self, cc: ConcurrencyController) -> None:  # @trace FR-ORC-001
+    def test_acquire_does_not_call_record_start_when_blocked(
+        self, cc: ConcurrencyController
+    ) -> None:  # @trace FR-ORC-001
         # Fill all 5 slots so the next acquire is blocked.
         with _patch_sessions(5):
             admitted = cc.acquire(owner="agent-y", run_id="run-002")

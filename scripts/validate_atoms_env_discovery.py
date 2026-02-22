@@ -75,7 +75,7 @@ def parse_env_file(path: Path) -> dict[str, str]:
         if not raw or raw.startswith("#") or "=" not in raw:
             continue
         key, value = raw.split("=", 1)
-        values[key.strip()] = value.strip().strip("\"").strip("'")
+        values[key.strip()] = value.strip().strip('"').strip("'")
     return values
 
 
@@ -191,7 +191,7 @@ def main() -> int:
     parser.add_argument(
         "--repo",
         required=True,
-        choices=tuple([*REPO_CONTRACTS.keys(), "atoms-agent"]),
+        choices=(*REPO_CONTRACTS.keys(), "atoms-agent"),
         help="Repository target (atoms-mcp-prod or atomsagent)",
     )
     parser.add_argument(

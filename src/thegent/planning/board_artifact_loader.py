@@ -60,20 +60,23 @@ class BoardArtifactLoader:
         json_file = self._find_file("*.json")
         if json_file:
             try:
-                self._load_json(json_file)
+                metadata, slices = self._parse_json(json_file)
+                self.metadata = metadata
+                self.slices = slices
                 result["loaded"].append(str(json_file))
             except Exception as e:
-                result["errors"].append(f"JSON load error: {e}")
+                result["errors"].append(f"{json_file}: JSON load error ({type(e).__name__}): {e}")
                 result["success"] = False
 
         # Load CSV (contains board items)
         csv_file = self._find_file("*BOARD*2026*.csv")
         if csv_file:
             try:
-                self._load_csv(csv_file)
+                items = self._parse_csv(csv_file)
+                self.items = items
                 result["loaded"].append(str(csv_file))
             except Exception as e:
-                result["errors"].append(f"CSV load error: {e}")
+                result["errors"].append(f"{csv_file}: CSV load error ({type(e).__name__}): {e}")
                 result["success"] = False
 
         # Load markdown for reference (metadata only, not parsed)
@@ -88,16 +91,17 @@ class BoardArtifactLoader:
         matches = list(self.board_dir.glob(pattern))
         return matches[0] if matches else None
 
-    def _load_json(self, json_file: Path) -> None:
-        """Load JSON board artifact with metadata and execution slices."""
+    def _parse_json(self, json_file: Path) -> tuple[dict[str, Any], list[ExecutionSlice]]:
+        """Parse JSON board artifact with metadata and execution slices."""
         with open(json_file) as f:
             data = json.load(f)
 
-        self.metadata = data.get("board_metadata", {})
+        metadata = data.get("board_metadata", {})
 
         # Parse slices from JSON
+        slices: list[ExecutionSlice] = []
         for slice_data in data.get("execution_slices", []):
-            self.slices.append(
+            slices.append(
                 ExecutionSlice(
                     slice_id=slice_data["slice_id"],
                     name=slice_data["name"],
@@ -108,10 +112,12 @@ class BoardArtifactLoader:
                 )
             )
 
-        _log.info(f"Loaded {len(self.slices)} execution slices from JSON")
+        _log.info("Loaded %s execution slices from JSON", len(slices))
+        return metadata, slices
 
-    def _load_csv(self, csv_file: Path) -> None:
-        """Load CSV board artifact containing board items."""
+    def _parse_csv(self, csv_file: Path) -> list[BoardItem]:
+        """Parse CSV board artifact containing board items."""
+        items: list[BoardItem] = []
         with open(csv_file) as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -126,9 +132,10 @@ class BoardArtifactLoader:
                     effort_estimate=row["effort_estimate"],
                     completion_pct=int(row["completion_pct"]),
                 )
-                self.items.append(item)
+                items.append(item)
 
-        _log.info(f"Loaded {len(self.items)} board items from CSV")
+        _log.info("Loaded %s board items from CSV", len(items))
+        return items
 
     def map_to_workstream(self) -> dict[str, Any]:
         """Map loaded board items to thegent WORK_STREAM.md reference entries.
@@ -203,8 +210,6 @@ class BoardArtifactLoader:
             "timestamp": datetime.now(UTC).isoformat(),
             "slices": slice_status,
             "overall_completion_pct": (
-                sum(s["completion_pct"] for s in slice_status.values()) // len(slice_status)
-                if slice_status
-                else 0
+                sum(s["completion_pct"] for s in slice_status.values()) // len(slice_status) if slice_status else 0
             ),
         }

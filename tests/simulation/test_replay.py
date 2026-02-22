@@ -255,9 +255,7 @@ def test_replay_empty_session(tmp_path: Path) -> None:
 
 def test_replay_from_event_starts_at_index(tmp_path: Path) -> None:
     """FR-REPLAY-002: replay_from_event(idx=2) skips the first 2 events."""
-    events = [
-        ReplayEvent(timestamp=float(i), event_type="response", data={"n": i}) for i in range(5)
-    ]
+    events = [ReplayEvent(timestamp=float(i), event_type="response", data={"n": i}) for i in range(5)]
     session = ReplaySession(session_id="from-event", events=events)
     engine = _make_engine(tmp_path)
     result = list(engine.replay_from_event(session, 2))

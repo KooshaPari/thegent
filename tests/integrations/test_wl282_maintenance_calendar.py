@@ -55,9 +55,7 @@ class TestMaintenanceCalendar:
         )
         calendar.add_window(window)
 
-        windows = calendar.upcoming_windows(
-            "github", after=datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-        )
+        windows = calendar.upcoming_windows("github", after=datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc))
         assert len(windows) == 1
         assert windows[0].connector == "github"
 
@@ -76,9 +74,7 @@ class TestMaintenanceCalendar:
         assert calendar.is_in_maintenance("github", at=at) is True
 
     @pytest.mark.requirement("WL-282")
-    def test_is_in_maintenance_false_before(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_is_in_maintenance_false_before(self, calendar: MaintenanceCalendar) -> None:
         """is_in_maintenance returns False before window."""
         window = MaintenanceWindow(
             connector="github",
@@ -92,9 +88,7 @@ class TestMaintenanceCalendar:
         assert calendar.is_in_maintenance("github", at=at) is False
 
     @pytest.mark.requirement("WL-282")
-    def test_is_in_maintenance_false_after(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_is_in_maintenance_false_after(self, calendar: MaintenanceCalendar) -> None:
         """is_in_maintenance returns False after window."""
         window = MaintenanceWindow(
             connector="github",
@@ -108,9 +102,7 @@ class TestMaintenanceCalendar:
         assert calendar.is_in_maintenance("github", at=at) is False
 
     @pytest.mark.requirement("WL-282")
-    def test_is_in_maintenance_default_now(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_is_in_maintenance_default_now(self, calendar: MaintenanceCalendar) -> None:
         """is_in_maintenance uses current UTC time by default."""
         window = MaintenanceWindow(
             connector="github",
@@ -124,9 +116,7 @@ class TestMaintenanceCalendar:
         assert calendar.is_in_maintenance("github") is False
 
     @pytest.mark.requirement("WL-282")
-    def test_is_in_maintenance_boundary_start(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_is_in_maintenance_boundary_start(self, calendar: MaintenanceCalendar) -> None:
         """is_in_maintenance returns True at window start boundary."""
         window = MaintenanceWindow(
             connector="github",
@@ -140,9 +130,7 @@ class TestMaintenanceCalendar:
         assert calendar.is_in_maintenance("github", at=at) is True
 
     @pytest.mark.requirement("WL-282")
-    def test_is_in_maintenance_boundary_end(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_is_in_maintenance_boundary_end(self, calendar: MaintenanceCalendar) -> None:
         """is_in_maintenance returns True at window end boundary."""
         window = MaintenanceWindow(
             connector="github",
@@ -156,9 +144,7 @@ class TestMaintenanceCalendar:
         assert calendar.is_in_maintenance("github", at=at) is True
 
     @pytest.mark.requirement("WL-282")
-    def test_is_in_maintenance_wrong_connector(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_is_in_maintenance_wrong_connector(self, calendar: MaintenanceCalendar) -> None:
         """is_in_maintenance returns False for different connector."""
         window = MaintenanceWindow(
             connector="github",
@@ -213,9 +199,7 @@ class TestMaintenanceCalendar:
         assert windows[0].start < windows[1].start
 
     @pytest.mark.requirement("WL-282")
-    def test_upcoming_windows_filters_by_connector(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_upcoming_windows_filters_by_connector(self, calendar: MaintenanceCalendar) -> None:
         """upcoming_windows only returns windows for specified connector."""
         window_github = MaintenanceWindow(
             connector="github",
@@ -239,9 +223,7 @@ class TestMaintenanceCalendar:
         assert windows[0].connector == "github"
 
     @pytest.mark.requirement("WL-282")
-    def test_upcoming_windows_filters_by_after(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_upcoming_windows_filters_by_after(self, calendar: MaintenanceCalendar) -> None:
         """upcoming_windows filters windows that start after 'after' time."""
         window_past = MaintenanceWindow(
             connector="github",
@@ -262,14 +244,10 @@ class TestMaintenanceCalendar:
         windows = calendar.upcoming_windows("github", after=after)
 
         assert len(windows) == 1
-        assert windows[0].start == datetime(
-            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
-        )
+        assert windows[0].start == datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc)
 
     @pytest.mark.requirement("WL-282")
-    def test_upcoming_windows_default_after_now(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_upcoming_windows_default_after_now(self, calendar: MaintenanceCalendar) -> None:
         """upcoming_windows uses current UTC time by default."""
         window = MaintenanceWindow(
             connector="github",
@@ -283,9 +261,7 @@ class TestMaintenanceCalendar:
         assert len(windows) == 0
 
     @pytest.mark.requirement("WL-282")
-    def test_load_from_config_single_window(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_load_from_config_single_window(self, calendar: MaintenanceCalendar) -> None:
         """Can load maintenance windows from config dict."""
         config = [
             {
@@ -304,9 +280,7 @@ class TestMaintenanceCalendar:
         assert windows[0].reason == "Database maintenance"
 
     @pytest.mark.requirement("WL-282")
-    def test_load_from_config_multiple_windows(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_load_from_config_multiple_windows(self, calendar: MaintenanceCalendar) -> None:
         """Can load multiple maintenance windows from config."""
         config = [
             {
@@ -332,9 +306,7 @@ class TestMaintenanceCalendar:
         assert len(linear_windows) == 1
 
     @pytest.mark.requirement("WL-282")
-    def test_load_from_config_missing_keys(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_load_from_config_missing_keys(self, calendar: MaintenanceCalendar) -> None:
         """load_from_config raises ValueError for missing required keys."""
         config = [
             {
@@ -347,9 +319,7 @@ class TestMaintenanceCalendar:
             calendar.load_from_config(config)
 
     @pytest.mark.requirement("WL-282")
-    def test_load_from_config_invalid_datetime(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_load_from_config_invalid_datetime(self, calendar: MaintenanceCalendar) -> None:
         """load_from_config raises ValueError for invalid datetime format."""
         config = [
             {
@@ -384,9 +354,7 @@ class TestMaintenanceCalendar:
         assert connectors == ["github"]
 
     @pytest.mark.requirement("WL-282")
-    def test_list_connectors_multiple_sorted(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_list_connectors_multiple_sorted(self, calendar: MaintenanceCalendar) -> None:
         """list_connectors returns all connectors, sorted alphabetically."""
         window_github = MaintenanceWindow(
             connector="github",
@@ -414,9 +382,7 @@ class TestMaintenanceCalendar:
         assert connectors == ["github", "linear", "slack"]
 
     @pytest.mark.requirement("WL-282")
-    def test_list_connectors_duplicates_deduplicated(
-        self, calendar: MaintenanceCalendar
-    ) -> None:
+    def test_list_connectors_duplicates_deduplicated(self, calendar: MaintenanceCalendar) -> None:
         """list_connectors returns unique connectors even with multiple windows."""
         window1 = MaintenanceWindow(
             connector="github",

@@ -151,7 +151,9 @@ class TestStepTimeout:
         _, code, _ = runner_mod.run_step("timeout-step", "sleep 10", tmp_project)
         assert code == 124, f"Expected timeout exit code 124, got {code}"
 
-    def test_run_step_succeeds_within_timeout(self, runner_mod, monkeypatch: pytest.MonkeyPatch, tmp_project: Path) -> None:
+    def test_run_step_succeeds_within_timeout(
+        self, runner_mod, monkeypatch: pytest.MonkeyPatch, tmp_project: Path
+    ) -> None:
         """run_step must succeed when step completes within timeout."""
         monkeypatch.setenv("QUALITY_STEP_TIMEOUT_SEC", "10")
         runner_mod._resolve_paths(root=tmp_project)
@@ -191,13 +193,13 @@ class TestStaleShadowCleanup:
         assert _QUALITY_GATE_SH.exists(), f"quality-gate.sh not found at {_QUALITY_GATE_SH}"
         content = _QUALITY_GATE_SH.read_text()
         assert "QUALITY_SHADOW_CLEANUP_HOURS" in content
-        assert ':-24}' in content or '"${QUALITY_SHADOW_CLEANUP_HOURS:-24}"' in content or ":-24}" in content
+        assert ":-24}" in content or '"${QUALITY_SHADOW_CLEANUP_HOURS:-24}"' in content or ":-24}" in content
 
     def test_quality_gate_sh_defines_log_retention_days(self) -> None:
         """quality-gate.sh must read QUALITY_LOG_RETENTION_DAYS with default 7."""
         content = _QUALITY_GATE_SH.read_text()
         assert "QUALITY_LOG_RETENTION_DAYS" in content
-        assert ':-7}' in content or '"${QUALITY_LOG_RETENTION_DAYS:-7}"' in content or ":-7}" in content
+        assert ":-7}" in content or '"${QUALITY_LOG_RETENTION_DAYS:-7}"' in content or ":-7}" in content
 
     def test_cleanup_removes_old_shadow_dirs(self, tmp_path: Path) -> None:
         """cleanup_stale_artifacts must remove .shadow-* dirs older than the threshold."""

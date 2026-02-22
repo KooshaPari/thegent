@@ -90,8 +90,8 @@ def test_format_bar_ansi_contains_escape_codes() -> None:
     """# @trace WL-108 — ANSI format_bar wraps text in color escapes + reset."""
     budget = ContextBudget(used=500, max=1000)  # 50% → green
     bar = budget.format_bar(ansi=True)
-    assert "\033[32m" in bar   # green open
-    assert "\033[0m" in bar    # reset close
+    assert "\033[32m" in bar  # green open
+    assert "\033[0m" in bar  # reset close
     assert "[CTX: " in bar
 
 
@@ -99,14 +99,14 @@ def test_format_bar_ansi_yellow() -> None:
     """# @trace WL-108 — 70% usage produces yellow ANSI code."""
     budget = ContextBudget(used=700, max=1000)
     bar = budget.format_bar(ansi=True)
-    assert "\033[33m" in bar   # yellow
+    assert "\033[33m" in bar  # yellow
 
 
 def test_format_bar_ansi_red() -> None:
     """# @trace WL-108 — 85% usage produces red ANSI code."""
     budget = ContextBudget(used=850, max=1000)
     bar = budget.format_bar(ansi=True)
-    assert "\033[31m" in bar   # red
+    assert "\033[31m" in bar  # red
 
 
 def test_format_bar_small_values_no_k_suffix() -> None:
@@ -207,7 +207,7 @@ def test_indicator_returns_ansi_string_when_data_present() -> None:
     bar = context_budget_indicator(result, ansi=True)
     assert bar is not None
     assert "[CTX: " in bar
-    assert "\033[" in bar   # some ANSI code present
+    assert "\033[" in bar  # some ANSI code present
 
 
 def test_indicator_plain_text_no_ansi() -> None:

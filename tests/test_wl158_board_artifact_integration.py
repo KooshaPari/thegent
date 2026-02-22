@@ -203,6 +203,78 @@ class TestBoardArtifactLoader:
         # Verify overall completion (average of 45, 28, 0)
         assert status["overall_completion_pct"] == 24
 
+    def test_load_all_malformed_json_keeps_state_deterministic(self, board_artifacts_dir: Path) -> None:
+        loader = BoardArtifactLoader(board_artifacts_dir)
+
+        # Preload a good state.
+        first = loader.load_all()
+        assert first["success"] is True
+        initial_metadata = dict(loader.metadata)
+        initial_slices = list(loader.slices)
+
+        # Corrupt the JSON artifact and rerun.
+        json_file = board_artifacts_dir / "CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json"
+        json_file.write_text("{bad json", encoding="utf-8")
+        second = loader.load_all()
+
+        assert second["success"] is False
+        assert any("JSON load error" in err for err in second["errors"])
+        assert any(str(json_file) in err for err in second["errors"])
+        assert any("JSONDecodeError" in err for err in second["errors"])
+        # Existing slices/metadata remain intact because parsing is isolated.
+        assert loader.metadata == initial_metadata
+        assert loader.slices == initial_slices
+
+    def test_load_all_malformed_json_with_valid_csv_loads_items(self, board_artifacts_dir: Path) -> None:
+        json_file = board_artifacts_dir / "CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json"
+        json_file.write_text("{bad json", encoding="utf-8")
+
+        loader = BoardArtifactLoader(board_artifacts_dir)
+        result = loader.load_all()
+
+        assert result["success"] is False
+        assert len(loader.items) == 6
+        assert loader.slices == []
+        assert loader.metadata == {}
+
+    def test_load_all_keeps_state_clean_on_malformed_json(self, board_artifacts_dir: Path) -> None:
+        """Malformed JSON should report error without mutating slices/metadata."""
+        json_file = board_artifacts_dir / "CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json"
+        json_file.write_text('{"board_metadata": {"name": "bad"', encoding="utf-8")
+
+        loader = BoardArtifactLoader(board_artifacts_dir)
+        result = loader.load_all()
+
+        assert result["success"] is False
+        assert any(str(json_file) in err for err in result["errors"])
+        assert loader.metadata == {}
+        assert loader.slices == []
+        # CSV still loads successfully and remains independent
+        assert len(loader.items) == 6
+
+    def test_load_all_keeps_state_clean_on_partial_csv_failure(self, board_artifacts_dir: Path) -> None:
+        """CSV parse failure should not preserve already-parsed rows."""
+        csv_file = board_artifacts_dir / "CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.csv"
+        csv_file.write_text(
+            "\n".join(
+                [
+                    "board_id,item_title,status,priority,lead_agent,mapped_wl,slice,effort_estimate,completion_pct",
+                    "CLIPROXY-001,Good Item,In Progress,P0,agent,WL-001,A,M,10",
+                    "CLIPROXY-002,Bad Item,In Progress,P0,agent,WL-002,A,M,not-a-number",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        loader = BoardArtifactLoader(board_artifacts_dir)
+        result = loader.load_all()
+
+        assert result["success"] is False
+        assert any(str(csv_file) in err for err in result["errors"])
+        assert loader.items == []
+        # JSON still loads successfully and remains independent
+        assert len(loader.slices) == 3
+
 
 class TestBoardItemDataClass:
     """Test BoardItem data class."""

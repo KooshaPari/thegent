@@ -83,9 +83,7 @@ class AdaptiveRateLimiter:
         self._limits[connector] = new_limit
         self._last_updated[connector] = datetime.now(timezone.utc)
 
-        logger.debug(
-            f"Recorded throttle for {connector}: {current_limit} -> {new_limit} rpm"
-        )
+        logger.debug(f"Recorded throttle for {connector}: {current_limit} -> {new_limit} rpm")
 
     def record_success(self, connector: str) -> None:
         """Record a successful request and increase the limit.
@@ -101,9 +99,7 @@ class AdaptiveRateLimiter:
         self._limits[connector] = new_limit
         self._last_updated[connector] = datetime.now(timezone.utc)
 
-        logger.debug(
-            f"Recorded success for {connector}: {current_limit} -> {new_limit} rpm"
-        )
+        logger.debug(f"Recorded success for {connector}: {current_limit} -> {new_limit} rpm")
 
     def get_state(self, connector: str) -> RateLimitState:
         """Get the current state of a connector's rate limit.
@@ -115,9 +111,7 @@ class AdaptiveRateLimiter:
             Current rate limit state for the connector.
         """
         rpm = self.get_limit(connector)
-        last_updated = self._last_updated.get(
-            connector, datetime.now(timezone.utc)
-        )
+        last_updated = self._last_updated.get(connector, datetime.now(timezone.utc))
 
         return RateLimitState(
             connector=connector,

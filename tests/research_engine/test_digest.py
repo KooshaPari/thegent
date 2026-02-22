@@ -1,6 +1,7 @@
 # tests/research_engine/test_digest.py
 # @trace FR-RE-011
 """DigestGenerator — markdown digest rendering tests."""
+
 from datetime import datetime, timezone
 from pathlib import Path
 

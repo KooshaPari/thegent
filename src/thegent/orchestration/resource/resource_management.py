@@ -622,7 +622,9 @@ def sample_extended_resources() -> ExtendedResourceSnapshot:
         try:
             io_counters = proc.io_counters()
             if io_counters:
-                snapshot.page_faults = getattr(io_counters, "read_chars", 0) + getattr(io_counters, "write_chars", 0)  # Approximate; Linux-only attrs
+                snapshot.page_faults = getattr(io_counters, "read_chars", 0) + getattr(
+                    io_counters, "write_chars", 0
+                )  # Approximate; Linux-only attrs
         except (psutil.NoSuchProcess, psutil.AccessDenied, AttributeError):
             snapshot.page_faults = 0
 

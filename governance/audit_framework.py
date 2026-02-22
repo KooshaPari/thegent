@@ -248,7 +248,9 @@ class AuditFramework:
 
         return result
 
-    def _scan_file_for_secrets(self, py_file: Path, findings: list[AuditFinding], patterns: list[tuple[str, str]]) -> None:
+    def _scan_file_for_secrets(
+        self, py_file: Path, findings: list[AuditFinding], patterns: list[tuple[str, str]]
+    ) -> None:
         """Scan a single file for hardcoded secrets."""
         try:
             content = py_file.read_text()

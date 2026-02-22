@@ -48,15 +48,12 @@ class GHProjectSyncError(Exception):
     """Base exception for GitHub Projects sync errors."""
 
 
-
 class GHProjectAuthError(GHProjectSyncError):
     """Authentication/authorization error (e.g., missing project scope)."""
 
 
-
 class GHProjectNotFoundError(GHProjectSyncError):
     """Project not found error."""
-
 
 
 def _check_gh_command() -> bool:
@@ -99,9 +96,7 @@ def _run_gh_command(args: list[str], capture: bool = True) -> tuple[int, str, st
         if result.returncode == 1:
             stderr_lower = result.stderr.lower()
             if "auth" in stderr_lower or "permission" in stderr_lower or "project" in stderr_lower:
-                raise GHProjectAuthError(
-                    f"GitHub authentication issue: {result.stderr[:200]}"
-                )
+                raise GHProjectAuthError(f"GitHub authentication issue: {result.stderr[:200]}")
 
         if result.returncode != 0:
             raise GHProjectSyncError(f"gh command failed: {result.stderr[:200]}")
@@ -187,9 +182,7 @@ def sync_to_github(
     """
     if not config.is_valid() or not config.can_write():
         if config.standalone_mode:
-            logger.debug(
-                "GH Project sync not configured or read-only; skipping write sync"
-            )
+            logger.debug("GH Project sync not configured or read-only; skipping write sync")
             return {"items_synced": 0, "reason": "not_writable"}
         raise GHProjectSyncError("GitHub project not writable")
 
@@ -243,9 +236,7 @@ def sync_from_github(config: GHProjectConfig) -> dict[str, Any]:
     """
     if not config.is_valid() or not config.can_read():
         if config.standalone_mode:
-            logger.debug(
-                "GH Project sync not configured or write-only; skipping read sync"
-            )
+            logger.debug("GH Project sync not configured or write-only; skipping read sync")
             return {"items_imported": 0, "reason": "not_readable"}
         raise GHProjectSyncError("GitHub project not readable")
 

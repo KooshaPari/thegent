@@ -4,6 +4,7 @@ E2E test for: thegent project scaffold-profiles
 Agent Journey: Agent executes thegent project scaffold-profiles command
 Expected Behavior: Command executes successfully and returns expected output
 """
+
 import pytest
 from typer.testing import CliRunner
 
@@ -18,17 +19,17 @@ class TestProjectScaffoldProfiles:
 
     def test_project_scaffold_profiles_exits_zero(self) -> None:
         """thegent project scaffold-profiles exits with code 0."""
-        result = runner.invoke(app, ['project', 'scaffold-profiles'])
+        result = runner.invoke(app, ["project", "scaffold-profiles"])
         assert result.exit_code == 0, f"Command failed: {result.stdout} {result.stderr}"
 
     def test_project_scaffold_profiles_produces_output(self) -> None:
         """thegent project scaffold-profiles produces expected output."""
-        result = runner.invoke(app, ['project', 'scaffold-profiles'])
+        result = runner.invoke(app, ["project", "scaffold-profiles"])
         assert result.exit_code == 0
         # TODO: Add specific output assertions based on command behavior
         assert len(result.stdout) > 0 or len(result.stderr) == 0
 
     def test_project_scaffold_profiles_help_exits_zero(self) -> None:
         """thegent project scaffold-profiles --help exits with code 0."""
-        result = runner.invoke(app, ['project', 'scaffold-profiles', '--help'])
+        result = runner.invoke(app, ["project", "scaffold-profiles", "--help"])
         assert result.exit_code == 0

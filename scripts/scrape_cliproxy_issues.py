@@ -20,9 +20,7 @@ OUTPUT_DIR = Path(__file__).parent.parent / "docs" / "docset"
 OUTPUT_FILE = OUTPUT_DIR / "cliproxy-github-issues.json"
 
 
-def fetch_github_issues(
-    owner: str, repo: str, state: str = "all", per_page: int = 100
-) -> list[dict[str, Any]]:
+def fetch_github_issues(owner: str, repo: str, state: str = "all", per_page: int = 100) -> list[dict[str, Any]]:
     """Fetch all issues from a GitHub repository."""
     issues = []
     page = 1
@@ -109,22 +107,24 @@ def process_issues(issues: list[dict], source_repo: str) -> list[dict]:
         if "pull_request" in issue:
             continue
 
-        processed.append({
-            "id": issue["id"],
-            "number": issue["number"],
-            "title": issue["title"],
-            "body": issue.get("body", "")[:500] if issue.get("body") else "",
-            "state": issue["state"],
-            "html_url": issue["html_url"],
-            "source_repo": source_repo,
-            "author": issue.get("user", {}).get("login", "unknown"),
-            "labels": [l["name"] for l in issue.get("labels", [])],
-            "created_at": issue["created_at"],
-            "updated_at": issue["updated_at"],
-            "comments": issue.get("comments", 0),
-            "category": categorize_issue(issue),
-            "thegent_status": "pending",
-        })
+        processed.append(
+            {
+                "id": issue["id"],
+                "number": issue["number"],
+                "title": issue["title"],
+                "body": issue.get("body", "")[:500] if issue.get("body") else "",
+                "state": issue["state"],
+                "html_url": issue["html_url"],
+                "source_repo": source_repo,
+                "author": issue.get("user", {}).get("login", "unknown"),
+                "labels": [l["name"] for l in issue.get("labels", [])],
+                "created_at": issue["created_at"],
+                "updated_at": issue["updated_at"],
+                "comments": issue.get("comments", 0),
+                "category": categorize_issue(issue),
+                "thegent_status": "pending",
+            }
+        )
 
     return processed
 
@@ -162,9 +162,9 @@ def main():
                 "enhancement": len([i for i in all_issues if i["category"] == "enhancement"]),
                 "qol": len([i for i in all_issues if i["category"] == "qol"]),
                 "other": len([i for i in all_issues if i["category"] == "other"]),
-            }
+            },
         },
-        "issues": all_issues
+        "issues": all_issues,
     }
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

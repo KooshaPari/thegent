@@ -106,6 +106,7 @@ class TestTransientRetry:
 
     def test_reraises_original_exception(self):
         """Should re-raise original exception (not wrap in RuntimeError)."""
+
         @transient_retry(max_attempts=1, min_wait=0.01, max_wait=0.05)
         def always_fails():
             raise ValueError("specific error")
@@ -324,6 +325,7 @@ class TestUserInputRetry:
 
     def test_only_retries_on_value_error(self):
         """Should only retry on ValueError (not other exceptions)."""
+
         @user_input_retry(max_attempts=3)
         def raises_type_error():
             raise TypeError("Unexpected error")
@@ -462,6 +464,7 @@ class TestResilienceIntegration:
 
     def test_retry_error_preserves_original_exception(self):
         """Should re-raise original exception directly."""
+
         @transient_retry(max_attempts=1, min_wait=0.01, max_wait=0.05)
         def custom_error():
             raise RuntimeError("Custom error message")
@@ -473,6 +476,7 @@ class TestResilienceIntegration:
 
     def test_decorators_do_not_silently_swallow_errors(self):
         """Should never silently catch errors; must raise or retry explicitly."""
+
         @transient_retry(max_attempts=1, min_wait=0.01, max_wait=0.05)
         def always_raises():
             raise ValueError("Should be visible")

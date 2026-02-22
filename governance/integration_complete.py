@@ -69,9 +69,7 @@ class GovernanceIntegration:
         # Step 2: Analyze each project
         project_assessments = {}
         for project_path in projects:
-            self._process_project(
-                project_path, setup_governance, assess_quality, run_audits, project_assessments
-            )
+            self._process_project(project_path, setup_governance, assess_quality, run_audits, project_assessments)
 
         # Step 6: Generate tasks for research completion
         if generate_tasks:

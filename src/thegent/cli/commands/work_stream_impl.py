@@ -21,8 +21,6 @@ from thegent.cli.services import pre_work_gate_helpers
 from thegent.cli.services import work_stream_orchestration
 
 
-
-
 # ---------------------------------------------------------------------------
 # Public API: do-next, wait-next, spawn-next, claim, complete, incorporate
 # ---------------------------------------------------------------------------
@@ -135,7 +133,6 @@ def work_stream_complete_impl(item_id: str, agent_id: str, cd: Path | None = Non
 def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str, Any]:
     """Backward-compatible wrapper for shared work-stream orchestration service."""
     return work_stream_orchestration.incorporate_impl(cd=cd, dry_run=dry_run)
-
 
 
 def continuity_snapshot_impl(

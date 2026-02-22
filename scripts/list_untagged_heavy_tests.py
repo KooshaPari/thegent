@@ -72,11 +72,7 @@ def main() -> int:
     threshold = args.min_source_loc
     max_count = max(0, args.max_count)
 
-    filtered = [
-        item
-        for item in records
-        if isinstance(item.get("source_loc"), int) and item["source_loc"] >= threshold
-    ]
+    filtered = [item for item in records if isinstance(item.get("source_loc"), int) and item["source_loc"] >= threshold]
     filtered.sort(key=lambda item: item.get("source_loc", 0), reverse=True)
     if max_count:
         filtered = filtered[:max_count]

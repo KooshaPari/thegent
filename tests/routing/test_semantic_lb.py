@@ -41,14 +41,15 @@ class _MockProvider:
 def _unit(x: float, y: float, z: float) -> list[float]:
     """Return a 3-component unit vector."""
     import math
+
     norm = math.sqrt(x * x + y * y + z * z)
     return [x / norm, y / norm, z / norm]
 
 
 # Two clearly similar (aligned) and one orthogonal vector
-_VEC_CODE = _unit(1.0, 0.0, 0.0)    # coding direction
-_VEC_CHAT = _unit(0.0, 1.0, 0.0)    # chat direction
-_VEC_ORTH = _unit(0.0, 0.0, 1.0)    # orthogonal
+_VEC_CODE = _unit(1.0, 0.0, 0.0)  # coding direction
+_VEC_CHAT = _unit(0.0, 1.0, 0.0)  # chat direction
+_VEC_ORTH = _unit(0.0, 0.0, 1.0)  # orthogonal
 
 
 def _coding_capabilities() -> list[ModelCapability]:
@@ -59,12 +60,14 @@ def _coding_capabilities() -> list[ModelCapability]:
 
 
 def _coding_provider() -> _MockProvider:
-    return _MockProvider({
-        "coding desc": _VEC_CODE,
-        "chat desc": _VEC_CHAT,
-        "write a python function": _VEC_CODE,  # clearly coding
-        "tell me a joke": _VEC_CHAT,           # clearly chat
-    })
+    return _MockProvider(
+        {
+            "coding desc": _VEC_CODE,
+            "chat desc": _VEC_CHAT,
+            "write a python function": _VEC_CODE,  # clearly coding
+            "tell me a joke": _VEC_CHAT,  # clearly chat
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -154,11 +157,13 @@ def test_semantic_lb_min_similarity_filters() -> None:
 @pytest.mark.requirement("FR-AROUTE-061")
 def test_add_capability() -> None:
     """Adding a capability after init is reflected in route."""
-    provider = _MockProvider({
-        "reasoning desc": _unit(0.9, 0.1, 0.0),
-        "do complex reasoning": _unit(0.9, 0.1, 0.0),
-        "coding desc": _VEC_CODE,
-    })
+    provider = _MockProvider(
+        {
+            "reasoning desc": _unit(0.9, 0.1, 0.0),
+            "do complex reasoning": _unit(0.9, 0.1, 0.0),
+            "coding desc": _VEC_CODE,
+        }
+    )
     lb = SemanticLoadBalancer(
         [ModelCapability(model="code-model", description="coding desc", provider="openai")],
         provider=provider,

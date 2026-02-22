@@ -5,8 +5,8 @@ or semantic drift in agent outputs. Emits schema.drift.structural and
 schema.drift.semantic events per G-RV-07.
 """
 
-import contextlib
 import json
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -16,6 +16,8 @@ EVENT_NORMALIZATION = "normalization"
 EVENT_SCHEMA_DRIFT_STRUCTURAL = "schema.drift.structural"
 EVENT_SCHEMA_DRIFT_SEMANTIC = "schema.drift.semantic"
 
+_log = logging.getLogger(__name__)
+
 
 class ContractTelemetry:
     """Tracks contract normalization events and drift."""
@@ -23,11 +25,21 @@ class ContractTelemetry:
     def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
         self.telemetry_path = session_dir / "contract_telemetry.jsonl"
+        self.malformed_line_count = 0
 
     def _parse_event_line(self, events: list[dict[str, Any]], line: str) -> None:
         """Parse a telemetry event line safely."""
-        with contextlib.suppress(Exception):
-            events.append(json.loads(line))
+        line = line.strip()
+        if not line:
+            return
+        try:
+            data = json.loads(line)
+        except json.JSONDecodeError:
+            self.malformed_line_count += 1
+            _log.debug("Skipping malformed telemetry line: %s", line[:200])
+            return
+        if isinstance(data, dict):
+            events.append(data)
 
     def record_normalization(
         self,
@@ -120,22 +132,48 @@ class ContractTelemetry:
     def get_stats(self, limit: int = 100, provider: str | None = None) -> dict[str, Any]:
         """Calculate statistics on recent normalization events."""
         if not self.telemetry_path.exists():
-            return {"total": 0, "success_rate": 0.0, "fallback_rate": 0.0, "avg_confidence": 0.0}
+            return {
+                "total": 0,
+                "success_rate": 0.0,
+                "fallback_rate": 0.0,
+                "avg_confidence": 0.0,
+                "parse_errors": 0,
+                "provider_skips": 0,
+                "by_provider": {},
+            }
 
         events = []
+        parse_errors = 0
+        provider_skips = 0
         with self.telemetry_path.open("r", encoding="utf-8") as f:
             for line in f:
+                line = line.strip()
+                if not line:
+                    continue
                 try:
                     data = json.loads(line)
-                    if provider and data.get("provider") != provider:
-                        continue
-                    events.append(data)
-                except Exception:
+                except json.JSONDecodeError:
+                    parse_errors += 1
                     continue
+                if not isinstance(data, dict):
+                    parse_errors += 1
+                    continue
+                if provider and data.get("provider") != provider:
+                    provider_skips += 1
+                    continue
+                events.append(data)
 
         recent = events[-limit:]
         if not recent:
-            return {"total": 0, "success_rate": 0.0, "fallback_rate": 0.0, "avg_confidence": 0.0}
+            return {
+                "total": 0,
+                "success_rate": 0.0,
+                "fallback_rate": 0.0,
+                "avg_confidence": 0.0,
+                "parse_errors": parse_errors,
+                "provider_skips": provider_skips,
+                "by_provider": {},
+            }
 
         total = len(recent)
         successes = sum(1 for e in recent if e.get("success"))
@@ -147,6 +185,8 @@ class ContractTelemetry:
             "success_rate": successes / total,
             "fallback_rate": fallbacks / total,
             "avg_confidence": avg_conf,
+            "parse_errors": parse_errors,
+            "provider_skips": provider_skips,
             "by_provider": self._group_by(recent, "provider"),
         }
 

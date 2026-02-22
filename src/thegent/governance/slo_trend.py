@@ -73,9 +73,7 @@ def _parse_jsonl_line(line: str, line_number: int) -> SloMetric:
         cross_boundary_import_edges=float(record["cross_boundary_import_edges"]),
         cli_help_p95_ms=float(record["cli_help_p95_ms"]),
         run_command_p95_ms=float(record["run_command_p95_ms"]),
-        decomposition_checkpoint_pass_rate=float(
-            record["decomposition_checkpoint_pass_rate"]
-        ),
+        decomposition_checkpoint_pass_rate=float(record["decomposition_checkpoint_pass_rate"]),
         timestamp=str(record["timestamp"]),
         source=str(record["source"]),
     )
@@ -91,8 +89,7 @@ def load_trend(path: str | Path = _DEFAULT_JSONL_PATH, window_days: int = 7) -> 
     jsonl_path = Path(path)
     if not jsonl_path.exists():
         raise FileNotFoundError(
-            f"SLO metrics JSONL file not found: {jsonl_path}. "
-            "Run the SLO emitter first to populate it."
+            f"SLO metrics JSONL file not found: {jsonl_path}. Run the SLO emitter first to populate it."
         )
 
     cutoff = datetime.now(UTC) - timedelta(days=window_days)
@@ -107,9 +104,7 @@ def load_trend(path: str | Path = _DEFAULT_JSONL_PATH, window_days: int = 7) -> 
         try:
             ts = datetime.fromisoformat(metric.timestamp)
         except ValueError as exc:
-            raise ValueError(
-                f"Line {line_number}: cannot parse timestamp '{metric.timestamp}' — {exc}"
-            ) from exc
+            raise ValueError(f"Line {line_number}: cannot parse timestamp '{metric.timestamp}' — {exc}") from exc
         if ts.tzinfo is None:
             ts = ts.replace(tzinfo=UTC)
         if ts >= cutoff:

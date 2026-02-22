@@ -204,6 +204,7 @@ class RemoteDispatchBackend:
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 import concurrent.futures
+
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
                     future = pool.submit(
                         asyncio.run,
@@ -211,9 +212,7 @@ class RemoteDispatchBackend:
                     )
                     agent_result = future.result(timeout=request.timeout_seconds)
             else:
-                agent_result = loop.run_until_complete(
-                    self._pool_manager.submit(agent_task, local_path)
-                )
+                agent_result = loop.run_until_complete(self._pool_manager.submit(agent_task, local_path))
         except Exception as exc:
             _log.error("remote_dispatch: pool_manager.submit failed: %s", exc)
             return SubAgentResult(

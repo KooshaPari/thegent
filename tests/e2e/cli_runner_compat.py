@@ -10,9 +10,7 @@ from typer.testing import CliRunner
 
 from tests.e2e.command_surface import command_path_exists
 
-COMMAND_SURFACE_DRIFT_SKIP_MESSAGE = (
-    "Command surface drift: CLI command alias is unavailable in current app wiring."
-)
+COMMAND_SURFACE_DRIFT_SKIP_MESSAGE = "Command surface drift: CLI command alias is unavailable in current app wiring."
 ATTEMPTED_ARGV_COMMAND_PATH_PREFIX = "Attempted argv command path:"
 
 
@@ -44,10 +42,7 @@ def _build_command_surface_drift_skip_message(*args: Any, **kwargs: Any) -> str:
     else:
         command_path = str(argv)
 
-    return (
-        f"{COMMAND_SURFACE_DRIFT_SKIP_MESSAGE} "
-        f"{ATTEMPTED_ARGV_COMMAND_PATH_PREFIX} {command_path}"
-    )
+    return f"{COMMAND_SURFACE_DRIFT_SKIP_MESSAGE} {ATTEMPTED_ARGV_COMMAND_PATH_PREFIX} {command_path}"
 
 
 _ALIAS_REWRITE_PREFIXES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (

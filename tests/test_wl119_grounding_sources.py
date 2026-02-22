@@ -92,7 +92,10 @@ def test_run_registry_finish_event_can_persist_grounding_sources(tmp_path: Path)
         audio_sources=[],
         context_usage_ratio=0.55,
     )
-    assert event_details == {"grounding_sources": ["https://a.example/1", "https://b.example/2"], "context_usage_ratio": 0.55}
+    assert event_details == {
+        "grounding_sources": ["https://a.example/1", "https://b.example/2"],
+        "context_usage_ratio": 0.55,
+    }
     registry.register_end(
         run_id="run-grounding",
         exit_code=0,

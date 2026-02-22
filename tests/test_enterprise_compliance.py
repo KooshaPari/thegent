@@ -47,7 +47,9 @@ from thegent.infra.org_tenancy import OrgNamespace, OrgRegistry
 _runner = CliRunner()
 
 
-def _make_policy(policy_id: str, tenant_id: str, retention_days: int, consent_required: bool = False) -> RetentionPolicy:
+def _make_policy(
+    policy_id: str, tenant_id: str, retention_days: int, consent_required: bool = False
+) -> RetentionPolicy:
     # @trace WL-051
     return RetentionPolicy(
         policy_id=policy_id,
@@ -718,10 +720,14 @@ class TestEnterpriseCLI:
         result = _runner.invoke(
             enterprise_app,
             [
-                "compliance", "audit-export",
-                "--evidence", str(evidence_path),
-                "--output", str(output_path),
-                "--format", "json",
+                "compliance",
+                "audit-export",
+                "--evidence",
+                str(evidence_path),
+                "--output",
+                str(output_path),
+                "--format",
+                "json",
             ],
         )
         assert result.exit_code == 0

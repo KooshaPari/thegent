@@ -126,8 +126,7 @@ def validate_contract_data(contract: dict[str, Any]) -> None:
     missing_readiness_tests = sorted(REQUIRED_READINESS_TESTS - set(required_tests))
     if missing_readiness_tests:
         raise ContractValidationError(
-            "contract.validation.required_tests missing readiness gates: "
-            + ", ".join(missing_readiness_tests)
+            "contract.validation.required_tests missing readiness gates: " + ", ".join(missing_readiness_tests)
         )
 
 

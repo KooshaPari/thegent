@@ -42,9 +42,7 @@ def test_cli_tooling_module_imports_cleanly() -> None:
 def test_command_exists_in_cli_tooling(cmd_name: str) -> None:
     """Each tooling command must be defined in cli_tooling.py."""
     mod = importlib.import_module("thegent.cli.commands.cli_tooling")
-    assert hasattr(mod, cmd_name), (
-        f"cli_tooling.py missing expected tooling command: {cmd_name}"
-    )
+    assert hasattr(mod, cmd_name), f"cli_tooling.py missing expected tooling command: {cmd_name}"
 
 
 @pytest.mark.parametrize("cmd_name", TOOLING_COMMAND_NAMES)
@@ -83,8 +81,7 @@ def test_cli_imports_tooling_aliases() -> None:
     alias_names = [f"_tooling_{name}" for name in TOOLING_COMMAND_NAMES]
     for alias in alias_names:
         assert hasattr(mod, alias), (
-            f"cli.py missing re-export alias: {alias}. "
-            "Ensure cli.py imports from cli_tooling.py."
+            f"cli.py missing re-export alias: {alias}. Ensure cli.py imports from cli_tooling.py."
         )
 
 

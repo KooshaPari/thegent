@@ -309,7 +309,9 @@ def test_red_policy_band_forces_interrupt_and_fail_closed(tmp_path: Path) -> Non
         ),
     ],
 )
-def test_spiral_directive_parity_by_band(tmp_path: Path, scenario: str, expected_band: str, expected_directive: str, kwargs: dict) -> None:
+def test_spiral_directive_parity_by_band(
+    tmp_path: Path, scenario: str, expected_band: str, expected_directive: str, kwargs: dict
+) -> None:
     _, report, metric, state, alert = _run_governance(tmp_path, **kwargs)
     assert report["policy_band"] == expected_band
     assert report["remediation_directive"] == expected_directive

@@ -151,7 +151,11 @@ def _run_once(
 
 def _load_artifacts(verify_dir: Path) -> tuple[dict, dict, dict, dict | None, list[dict]]:
     report = json.loads((verify_dir / "regression-spiral-guard.json").read_text(encoding="utf-8"))
-    metric_lines = [line for line in (verify_dir / "regression-spiral-metrics.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    metric_lines = [
+        line
+        for line in (verify_dir / "regression-spiral-metrics.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     metric = json.loads(metric_lines[-1])
     all_metrics = [json.loads(line) for line in metric_lines]
     state = json.loads((verify_dir / "regression-spiral-state.json").read_text(encoding="utf-8"))

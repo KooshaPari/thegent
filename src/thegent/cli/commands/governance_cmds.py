@@ -1,4 +1,5 @@
 """Thegent CLI governance commands domain - extracted from cli.py (WL-124)."""
+
 # @trace WL-124
 from __future__ import annotations
 
@@ -36,6 +37,7 @@ from thegent.cli.commands.governance_health_helpers import (
     extract_dimension_values,
     resolve_band_value,
 )
+
 
 def data_protection_cmd(format: str | None = None) -> None:
     """Show status of data protection and privacy controls."""
@@ -248,7 +250,6 @@ def sweep_cmd(
     if result.get("audit") and result["audit"].get("status") not in ("passed", "empty"):
         parts.append(f"[red]Audit:[/red] {result['audit'].get('status', 'failed')}")
     if parts:
-
         console.print(Panel("\n".join(parts), title="Policy Drift Sweep (WP-3005)", border_style="red"))
     raise typer.Exit(1)
 
@@ -563,9 +564,7 @@ def govern_go_watch_cmd(
             )
 
             cycles_run += 1
-            console.print(
-                f"Cycle {cycles_run} ({cycle_id}): score={health.score:.2f}, band={health_band_value}"
-            )
+            console.print(f"Cycle {cycles_run} ({cycle_id}): score={health.score:.2f}, band={health_band_value}")
 
             if max_cycles is not None and cycles_run >= max_cycles:
                 break
@@ -619,7 +618,6 @@ def policy_purge_cmd(dry_run: bool = True) -> None:
         console.print(f"[green]Purged {res['purged']} records (kept {res['kept']}).[/green]")
 
 
-
 def contracts_registry_cmd(format: str | None = None) -> None:
     """Show the contract registry and compatibility matrix."""
     from rich.console import Console
@@ -660,7 +658,6 @@ def contracts_registry_cmd(format: str | None = None) -> None:
     console.print(table)
 
 
-
 def migration_cmd(contract_id: str, version: str, format: str | None = None) -> None:
     """Evaluate migration status for a contract version."""
     from rich.console import Console
@@ -688,7 +685,6 @@ def migration_cmd(contract_id: str, version: str, format: str | None = None) -> 
         border_style=color,
     )
     console.print(panel)
-
 
 
 def drift_cmd(
@@ -737,7 +733,6 @@ def drift_cmd(
             border_style="red",
         )
         console.print(panel)
-
 
 
 def contracts_conformance_cmd(
@@ -790,7 +785,6 @@ def contracts_conformance_cmd(
         import typer
 
         raise typer.Exit(1)
-
 
 
 def trust_status_cmd(format: str | None = None) -> None:
@@ -1202,4 +1196,41 @@ def discovery_scan_cmd(
     elif format == "json":
         console.print_json(data={"registered": registered, "count": len(registered)})
 
-__all__ = ['audit_verify_cmd', 'compliance_plugin_check_cmd', 'compliance_redact_cmd', 'compliance_report_cmd', 'compliance_siem_test_cmd', 'contracts_conformance_cmd', 'contracts_registry_cmd', 'data_protection_cmd', 'discovery_parse_cmd', 'discovery_register_cmd', 'discovery_scan_cmd', 'drift_cmd', 'escalate_add_cmd', 'escalate_approve_cmd', 'escalate_list_cmd', 'escalate_resolve_cmd', 'govern_approve_cmd', 'govern_configure_cmd', 'govern_cost_cmd', 'govern_go_cycle_cmd', 'govern_go_health_cmd', 'govern_go_status_cmd', 'govern_go_watch_cmd', 'govern_list_pending_cmd', 'govern_reject_cmd', 'guardrails_check_cmd', 'guardrails_show_cmd', 'migration_cmd', 'policy_check_cmd', 'policy_purge_cmd', 'policy_show_cmd', 'signatures_list_cmd', 'signatures_verify_cmd', 'sweep_cmd', 'trust_status_cmd']
+
+__all__ = [
+    "audit_verify_cmd",
+    "compliance_plugin_check_cmd",
+    "compliance_redact_cmd",
+    "compliance_report_cmd",
+    "compliance_siem_test_cmd",
+    "contracts_conformance_cmd",
+    "contracts_registry_cmd",
+    "data_protection_cmd",
+    "discovery_parse_cmd",
+    "discovery_register_cmd",
+    "discovery_scan_cmd",
+    "drift_cmd",
+    "escalate_add_cmd",
+    "escalate_approve_cmd",
+    "escalate_list_cmd",
+    "escalate_resolve_cmd",
+    "govern_approve_cmd",
+    "govern_configure_cmd",
+    "govern_cost_cmd",
+    "govern_go_cycle_cmd",
+    "govern_go_health_cmd",
+    "govern_go_status_cmd",
+    "govern_go_watch_cmd",
+    "govern_list_pending_cmd",
+    "govern_reject_cmd",
+    "guardrails_check_cmd",
+    "guardrails_show_cmd",
+    "migration_cmd",
+    "policy_check_cmd",
+    "policy_purge_cmd",
+    "policy_show_cmd",
+    "signatures_list_cmd",
+    "signatures_verify_cmd",
+    "sweep_cmd",
+    "trust_status_cmd",
+]

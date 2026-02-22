@@ -215,8 +215,7 @@ def test_session_sticky_consistent() -> None:
 def test_session_sticky_different_sessions() -> None:
     """Different session_ids can map to different deployments."""
     deployments = [
-        DeploymentConfig(provider="openai", model="gpt-4o", api_base=f"https://ep{i}.openai.com/v1")
-        for i in range(5)
+        DeploymentConfig(provider="openai", model="gpt-4o", api_base=f"https://ep{i}.openai.com/v1") for i in range(5)
     ]
     pool = DeploymentPool(name="gpt-4o", deployments=deployments)
     manager = DeploymentPoolManager([pool])

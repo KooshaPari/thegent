@@ -121,9 +121,4 @@ def find_by_keyword(keyword: str) -> list[SymptomEntry]:
     """
     keyword_lower = keyword.lower()
     matrix = get_symptom_matrix()
-    return [
-        entry
-        for entry in matrix
-        if keyword_lower in entry.symptom.lower()
-        or keyword_lower in entry.cause.lower()
-    ]
+    return [entry for entry in matrix if keyword_lower in entry.symptom.lower() or keyword_lower in entry.cause.lower()]

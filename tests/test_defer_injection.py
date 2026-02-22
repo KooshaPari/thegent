@@ -431,9 +431,7 @@ class TestDirectAgentRunnerDeferral:
                     with patch("thegent.infra.power.wrap_with_caffeinate", side_effect=lambda c, _: c):
                         # Bypass LiteLLM router
                         runner._use_litellm_router = False
-                        with patch(
-                            "thegent.observability.otel_instrumentation.instrument_genai_call"
-                        ) as mock_instr:
+                        with patch("thegent.observability.otel_instrumentation.instrument_genai_call") as mock_instr:
                             mock_span = MagicMock()
                             mock_instr.return_value.__enter__ = MagicMock(return_value=mock_span)
                             mock_instr.return_value.__exit__ = MagicMock(return_value=False)

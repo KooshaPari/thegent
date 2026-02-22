@@ -11,6 +11,7 @@ from pathlib import Path
 
 import typer
 import yaml
+from yaml import YAMLError
 
 from docs_engine.capture.writer import DocWriter
 from docs_engine.db.indexer import DocIndexer
@@ -68,21 +69,40 @@ def index_cmd(action: str = typer.Argument("rebuild", help="Action: rebuild")) -
     indexer = DocIndexer(_db_path())
     indexer.init_schema()
     count = 0
+    skipped = 0
+    skip_reasons: list[str] = []
     for md_file in _docs_root().rglob("*.md"):
         try:
-            text = md_file.read_text()
-            if not text.startswith("---"):
-                continue
-            parts = re.split(r"^---\s*$", text, maxsplit=2, flags=re.MULTILINE)
-            if len(parts) < 2:
-                continue
+            text = md_file.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            skipped += 1
+            skip_reasons.append(f"{md_file}: read error ({type(exc).__name__}): {exc}")
+            continue
+
+        if not text.startswith("---"):
+            continue
+
+        parts = re.split(r"^---\s*$", text, maxsplit=2, flags=re.MULTILINE)
+        if len(parts) < 3:
+            skipped += 1
+            skip_reasons.append(f"{md_file}: malformed frontmatter (missing closing '---')")
+            continue
+
+        try:
             fm = yaml.safe_load(parts[1])
-            if fm and "type" in fm:
-                indexer.upsert_doc(str(md_file.relative_to(_docs_root())), fm)
-                count += 1
-        except Exception:  # noqa: BLE001 -- scanning unknown files, skip bad ones
-            pass
+        except YAMLError as exc:
+            skipped += 1
+            skip_reasons.append(f"{md_file}: frontmatter parse error ({type(exc).__name__}): {exc}")
+            continue
+
+        if fm and "type" in fm:
+            indexer.upsert_doc(str(md_file.relative_to(_docs_root())), fm)
+            count += 1
+
     typer.echo(f"Indexed {count} documents.")
+    typer.echo(f"Skipped {skipped} files.")
+    for reason in skip_reasons:
+        typer.echo(f"- {reason}")
 
 
 @app.command("export")

@@ -3,6 +3,7 @@
 Git Audit Journaling Research Script
 Run: python scripts/git_audit_research.py
 """
+
 import json
 from thegent.skills.research import ddg_search
 
@@ -16,6 +17,7 @@ SEARCHES = [
     "merkle tree git commits verification",
     "git alternates object sharing multiple repos",
 ]
+
 
 def main():
     results = {}
@@ -34,6 +36,7 @@ def main():
             print(f"- {h.get('title', 'N/A')}")
             print(f"  {h.get('href', h.get('url', 'N/A'))}")
             print(f"  {h.get('body', '')[:200]}...")
+
 
 if __name__ == "__main__":
     main()

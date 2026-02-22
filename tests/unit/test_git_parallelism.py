@@ -1,6 +1,7 @@
 """Test suite for git parallelism worktree pool management.
 @trace FR-MESH-001
 """
+
 import pytest
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
@@ -45,9 +46,10 @@ class TestWorktreeContext:
             branch="agent/agent-1",
             project_root=Path("/tmp/project"),
         )
-        with patch("thegent.mesh.git_parallelism._run") as mock_run, patch(
-            "subprocess.check_output"
-        ) as mock_check_output:
+        with (
+            patch("thegent.mesh.git_parallelism._run") as mock_run,
+            patch("subprocess.check_output") as mock_check_output,
+        ):
             mock_run.return_value = MagicMock(returncode=0)
             mock_check_output.return_value = "abc123def456"
             result = ctx.commit_all("test commit")
@@ -96,11 +98,11 @@ class TestWorktreePool:
     def test_pool_init_basic(self):
         """WorktreePool initialization."""
         project_root = Path("/tmp/project")
-        with patch(
-            "thegent.mesh.git_parallelism._git_available", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._worktrees_supported", return_value=True
-        ), patch("pathlib.Path.mkdir"):
+        with (
+            patch("thegent.mesh.git_parallelism._git_available", return_value=True),
+            patch("thegent.mesh.git_parallelism._worktrees_supported", return_value=True),
+            patch("pathlib.Path.mkdir"),
+        ):
             pool = WorktreePool(project_root)
             assert pool.target_branch == "HEAD"
 
@@ -108,11 +110,11 @@ class TestWorktreePool:
     def test_pool_init_with_custom_target_branch(self):
         """WorktreePool initialization with custom target branch."""
         project_root = Path("/tmp/project")
-        with patch(
-            "thegent.mesh.git_parallelism._git_available", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._worktrees_supported", return_value=True
-        ), patch("pathlib.Path.mkdir"):
+        with (
+            patch("thegent.mesh.git_parallelism._git_available", return_value=True),
+            patch("thegent.mesh.git_parallelism._worktrees_supported", return_value=True),
+            patch("pathlib.Path.mkdir"),
+        ):
             pool = WorktreePool(project_root, target_branch="main")
             assert pool.target_branch == "main"
 
@@ -120,13 +122,11 @@ class TestWorktreePool:
     def test_pool_acquire_worktree_basic(self):
         """WorktreePool.acquire_worktree() creates isolated worktree for agent."""
         project_root = Path("/tmp/project")
-        with patch(
-            "thegent.mesh.git_parallelism._git_available", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._worktrees_supported", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._PoolStateLock"
-        ) as mock_lock_class:
+        with (
+            patch("thegent.mesh.git_parallelism._git_available", return_value=True),
+            patch("thegent.mesh.git_parallelism._worktrees_supported", return_value=True),
+            patch("thegent.mesh.git_parallelism._PoolStateLock") as mock_lock_class,
+        ):
             mock_lock = MagicMock()
             mock_lock.__enter__.return_value = mock_lock
             mock_lock.__exit__.return_value = None
@@ -152,13 +152,11 @@ class TestWorktreePool:
     def test_pool_acquire_worktree_existing(self):
         """WorktreePool.acquire_worktree() reuses existing worktree for agent."""
         project_root = Path("/tmp/project")
-        with patch(
-            "thegent.mesh.git_parallelism._git_available", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._worktrees_supported", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._PoolStateLock"
-        ) as mock_lock_class:
+        with (
+            patch("thegent.mesh.git_parallelism._git_available", return_value=True),
+            patch("thegent.mesh.git_parallelism._worktrees_supported", return_value=True),
+            patch("thegent.mesh.git_parallelism._PoolStateLock") as mock_lock_class,
+        ):
             mock_lock = MagicMock()
             mock_lock.__enter__.return_value = mock_lock
             mock_lock.__exit__.return_value = None
@@ -175,13 +173,11 @@ class TestWorktreePool:
     def test_pool_release_worktree_basic(self):
         """WorktreePool.release_worktree() merges and removes worktree."""
         project_root = Path("/tmp/project")
-        with patch(
-            "thegent.mesh.git_parallelism._git_available", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._worktrees_supported", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._PoolStateLock"
-        ) as mock_lock_class:
+        with (
+            patch("thegent.mesh.git_parallelism._git_available", return_value=True),
+            patch("thegent.mesh.git_parallelism._worktrees_supported", return_value=True),
+            patch("thegent.mesh.git_parallelism._PoolStateLock") as mock_lock_class,
+        ):
             mock_lock = MagicMock()
             mock_lock.__enter__.return_value = mock_lock
             mock_lock.__exit__.return_value = None
@@ -198,13 +194,11 @@ class TestWorktreePool:
     def test_pool_release_worktree_not_held(self):
         """WorktreePool.release_worktree() returns False if agent holds no worktree."""
         project_root = Path("/tmp/project")
-        with patch(
-            "thegent.mesh.git_parallelism._git_available", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._worktrees_supported", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._PoolStateLock"
-        ) as mock_lock_class:
+        with (
+            patch("thegent.mesh.git_parallelism._git_available", return_value=True),
+            patch("thegent.mesh.git_parallelism._worktrees_supported", return_value=True),
+            patch("thegent.mesh.git_parallelism._PoolStateLock") as mock_lock_class,
+        ):
             mock_lock = MagicMock()
             mock_lock.__enter__.return_value = mock_lock
             mock_lock.__exit__.return_value = None
@@ -219,13 +213,11 @@ class TestWorktreePool:
     def test_pool_context_manager(self):
         """WorktreePool.worktree() context manager acquires and releases."""
         project_root = Path("/tmp/project")
-        with patch(
-            "thegent.mesh.git_parallelism._git_available", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._worktrees_supported", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._PoolStateLock"
-        ) as mock_lock_class:
+        with (
+            patch("thegent.mesh.git_parallelism._git_available", return_value=True),
+            patch("thegent.mesh.git_parallelism._worktrees_supported", return_value=True),
+            patch("thegent.mesh.git_parallelism._PoolStateLock") as mock_lock_class,
+        ):
             mock_lock = MagicMock()
             mock_lock.__enter__.return_value = mock_lock
             mock_lock.__exit__.return_value = None
@@ -240,9 +232,10 @@ class TestWorktreePool:
                 project_root=project_root,
             )
 
-            with patch.object(
-                pool, "acquire_worktree", return_value=ctx
-            ), patch.object(pool, "release_worktree", return_value=True) as mock_release:
+            with (
+                patch.object(pool, "acquire_worktree", return_value=ctx),
+                patch.object(pool, "release_worktree", return_value=True) as mock_release,
+            ):
                 with pool.worktree("agent-1") as acquired_ctx:
                     assert acquired_ctx.agent_id == "agent-1"
                 mock_release.assert_called_once_with("agent-1")
@@ -251,13 +244,11 @@ class TestWorktreePool:
     def test_pool_active_agents(self):
         """WorktreePool.active_agents() lists currently held worktrees."""
         project_root = Path("/tmp/project")
-        with patch(
-            "thegent.mesh.git_parallelism._git_available", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._worktrees_supported", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._PoolStateLock"
-        ) as mock_lock_class:
+        with (
+            patch("thegent.mesh.git_parallelism._git_available", return_value=True),
+            patch("thegent.mesh.git_parallelism._worktrees_supported", return_value=True),
+            patch("thegent.mesh.git_parallelism._PoolStateLock") as mock_lock_class,
+        ):
             mock_lock = MagicMock()
             mock_lock.__enter__.return_value = mock_lock
             mock_lock.__exit__.return_value = None
@@ -277,14 +268,11 @@ class TestWorktreePool:
     def test_pool_cleanup_stale(self):
         """WorktreePool.cleanup_stale() removes entries for non-existent paths."""
         project_root = Path("/tmp/project")
-        with patch(
-            "thegent.mesh.git_parallelism._git_available", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._worktrees_supported", return_value=True
-        ), patch(
-            "thegent.mesh.git_parallelism._PoolStateLock"
-        ) as mock_lock_class, patch(
-            "pathlib.Path.mkdir"
+        with (
+            patch("thegent.mesh.git_parallelism._git_available", return_value=True),
+            patch("thegent.mesh.git_parallelism._worktrees_supported", return_value=True),
+            patch("thegent.mesh.git_parallelism._PoolStateLock") as mock_lock_class,
+            patch("pathlib.Path.mkdir"),
         ):
             mock_lock = MagicMock()
             mock_lock.__enter__.return_value = mock_lock
@@ -296,13 +284,12 @@ class TestWorktreePool:
             mock_lock_class.return_value = mock_lock
 
             pool = WorktreePool(project_root)
-            with patch.object(pool, "_git_worktree_remove", return_value=True), patch.object(
-                pool, "_try_delete_branch"
+            with (
+                patch.object(pool, "_git_worktree_remove", return_value=True),
+                patch.object(pool, "_try_delete_branch"),
             ):
                 # Mock the Path.exists checks in cleanup_stale
-                with patch(
-                    "thegent.mesh.git_parallelism.Path.exists"
-                ) as mock_path_exists:
+                with patch("thegent.mesh.git_parallelism.Path.exists") as mock_path_exists:
                     mock_path_exists.side_effect = [False, True]
                     removed = pool.cleanup_stale()
                     # Note: removed count may vary based on mocking depth
@@ -338,10 +325,11 @@ class TestHelpers:
     def test_atomic_write_creates_file(self):
         """_atomic_write() creates file with content atomically."""
         target = Path("/tmp/target.txt")
-        with patch("tempfile.mkstemp") as mock_mkstemp, patch(
-            "os.fdopen"
-        ) as mock_fdopen, patch("os.replace") as mock_replace, patch(
-            "pathlib.Path.mkdir"
+        with (
+            patch("tempfile.mkstemp") as mock_mkstemp,
+            patch("os.fdopen") as mock_fdopen,
+            patch("os.replace") as mock_replace,
+            patch("pathlib.Path.mkdir"),
         ):
             mock_mkstemp.return_value = (99, "/tmp/.tmp-xyz")
             mock_file = MagicMock()

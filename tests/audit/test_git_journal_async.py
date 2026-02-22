@@ -70,6 +70,7 @@ def git_repo(tmp_path: Path) -> Path:
 def session_id() -> str:
     """Generate a unique session ID for tests."""
     import uuid
+
     return f"test-session-{uuid.uuid4().hex[:8]}"
 
 
