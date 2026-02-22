@@ -1213,6 +1213,13 @@ Wave-3 final extraction slice (2026-02-21, post-verification):
 - [x] Trend evidence work is migrated to weekly WL-137 diagnosis cadence to avoid day-bound blocking; LOC trend post-2026-02-21: `122545 -> 117587 -> 163294 -> 167815` shows +45.7K spike on 2026-02-21 (new agent/research modules) breaking 3-day decline criterion. Monolith extractions delivered (cli.py 49 LOC, impl.py 561 LOC, server.py 228 LOC), but total codebase growth requires continued refactoring focus. Source: `docs/reports/artifacts/wl120-wl136-loc-trend-2026-02-21.json`.
 - [x] Completion criteria status (governance decision, 2026-02-21): **MET** for WL-120 deliverable scope (monolith ceilings + decomposition execution), with trend continuity monitored under WL-137.
 
+**2026-02-22 progress note:**
+- Monolith file census (working tree snapshot): `cli.py` 63 LOC, `impl.py` 765 LOC, `server.py` 227 LOC — all below ceilings.
+- Test regression from extraction: FIXED (92/92 dag tests pass, 0 collection errors).
+- Total codebase LOC increased to 213,119 (+45.8K from 2026-02-21) due to research_engine/agent_roles additions in separate commits, NOT monolith growth.
+- Monolith-specific WL-120 acceptance criteria fully satisfied. Continued monitoring via WL-137 weekly diagnosis.
+- Updated artifact: `docs/reports/artifacts/wl120-wl136-loc-trend-2026-02-21.json` with 2026-02-22 monolith file snapshot and test status.
+
 ---
 
 ### [WL-121] thegent-core Boundary Spec and Ownership Map
