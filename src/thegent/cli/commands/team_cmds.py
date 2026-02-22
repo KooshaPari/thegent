@@ -265,7 +265,7 @@ def snapshot_daily_index_cmd(
     if _normalize_output_format(format) == "json":
         sys.stdout.write(json.dumps(payload) + "\n")
         return
-    days_list = cast(list[Any], payload.get('days', []))
+    days_list = cast("list[Any]", payload.get('days', []))
     console.print(f"[bold cyan]Snapshot Daily Index[/bold cyan]: {len(days_list)} day(s)")
     for day_payload in days_list:
         snapshots = day_payload.get("snapshots") if "snapshots" in day_payload else day_payload.get("count", 0)
