@@ -3,7 +3,7 @@
 # pytest prepend importmode inserts tests/ at sys.path[0] when collecting package
 # directories with __init__.py, which would shadow src/research_engine.
 # Pre-loading the correct package here prevents the shadow.
-import importlib
+import importlib.util
 import sys
 from pathlib import Path
 

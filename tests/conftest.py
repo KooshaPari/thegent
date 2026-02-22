@@ -13,8 +13,8 @@ _src = str(Path(__file__).parent.parent / "src")
 if _src not in sys.path:
     sys.path.insert(0, _src)
 
-import importlib as _importlib  # noqa: E402
-import importlib.util as _importlib_util  # noqa: E402
+import importlib.util  # noqa: E402
+
 
 def _preload_src_package(name: str) -> None:
     """Load a package from src/ into sys.modules before any sys.path mutation."""
@@ -23,10 +23,10 @@ def _preload_src_package(name: str) -> None:
     pkg_path = Path(__file__).parent.parent / "src" / name / "__init__.py"
     if not pkg_path.exists():
         return
-    spec = _importlib_util.spec_from_file_location(name, pkg_path)
+    spec = importlib.util.spec_from_file_location(name, pkg_path)
     if spec is None or spec.loader is None:
         return
-    mod = _importlib_util.module_from_spec(spec)
+    mod = importlib.util.module_from_spec(spec)
     mod.__path__ = [str(pkg_path.parent)]  # type: ignore[attr-defined]
     sys.modules[name] = mod
     spec.loader.exec_module(mod)  # type: ignore[attr-defined]

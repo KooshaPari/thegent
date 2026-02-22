@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import ClassVar, Literal
 
 from pydantic import BaseModel, Field
