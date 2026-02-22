@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 
 class ReportSensitivity(str, Enum):
@@ -31,9 +31,7 @@ class ConfidentialReportFilter:
     }
 
     @classmethod
-    def redact(
-        cls, data: dict[str, Any], sensitivity: ReportSensitivity
-    ) -> dict[str, Any]:
+    def redact(cls, data: dict[str, Any], sensitivity: ReportSensitivity) -> dict[str, Any]:
         """Redact sensitive fields from data if confidential.
 
         For CONFIDENTIAL reports, recursively replaces values for keys
@@ -50,7 +48,7 @@ class ConfidentialReportFilter:
         if sensitivity == ReportSensitivity.PUBLIC:
             return data
 
-        return cls._redact_recursive(data)
+        return cast("dict[str, Any]", cls._redact_recursive(data))
 
     @classmethod
     def _redact_recursive(cls, obj: Any) -> Any:
@@ -90,9 +88,7 @@ class ConfidentialReportFilter:
         return any(field in key_lower for field in cls.REDACT_FIELDS)
 
     @classmethod
-    def wrap_report(
-        cls, report: dict[str, Any], sensitivity: ReportSensitivity, report_id: str
-    ) -> dict[str, Any]:
+    def wrap_report(cls, report: dict[str, Any], sensitivity: ReportSensitivity, report_id: str) -> dict[str, Any]:
         """Wrap a report with metadata and redaction.
 
         Args:

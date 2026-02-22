@@ -89,7 +89,7 @@ class ContextInjection:
             link_path = self.project_root / name
             if not link_path.exists():
                 try:
-                    os.symlink(target, link_path)
+                    link_path.symlink_to(target)
                     links.append(link_path)
                 except OSError:
                     pass
