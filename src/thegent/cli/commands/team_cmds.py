@@ -431,7 +431,7 @@ def explain_cmd(run_id: str | None = None) -> None:
 
 def fallbacks_cmd(run_id: str | None = None) -> None:
     """Show safe fallback options for a failed or blocked run (WP-4003)."""
-    _rid = _resolve_run_id(run_id)
+    run_id = _resolve_run_id(run_id)
     settings = ThegentSettings()
     from thegent.agents.state_machine import FallbackStateMachine
     from thegent.execution import RunRegistry
@@ -479,7 +479,6 @@ def handoff_cmd(owner: str) -> None:
     registry = RunRegistry(settings.session_dir)
     runs = registry.list_runs(limit=50)
     run_ids = [r["run_id"] for r in runs if r.get("status") == "running"]
-    completed = [r for r in runs if r.get("status") == "completed"]
     failed = [r for r in runs if r.get("status") == "failed"]
 
     # WP-3008: Include pending escalation run_ids in handoff snapshot
@@ -488,15 +487,6 @@ def handoff_cmd(owner: str) -> None:
     past_sla = escalate_list_impl(past_sla_only=True, limit=50)
 
     # WP-4006: State, evidence, next steps
-    _state_summary = {
-        "running_count": len(run_ids),
-        "escalation_backlog": len(escalation_run_ids),
-        "past_sla_count": len(past_sla),
-    }
-    _evidence_summary = [
-        {"run_id": r.get("run_id"), "status": r.get("status"), "agent": r.get("agent")}
-        for r in (completed[-5:] + failed[-5:])
-    ]
     next_steps: list[str] = []
     if past_sla:
         next_steps.append(f"Resolve {len(past_sla)} past-SLA escalation(s)")
