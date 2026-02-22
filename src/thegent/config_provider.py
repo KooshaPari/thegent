@@ -37,7 +37,11 @@ _last_provider_metadata: dict[str, Any] = {
 
 
 def _attach_provider_metadata(provider: Any, metadata: dict[str, Any]) -> ConfigProvider:
-    provider.provider_metadata = dict(metadata)
+    try:
+        provider.provider_metadata = dict(metadata)
+    except (AttributeError, TypeError):
+        if isinstance(provider, dict):
+            provider["provider_metadata"] = dict(metadata)
     return provider
 
 

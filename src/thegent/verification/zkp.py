@@ -8,7 +8,7 @@ import logging
 import random
 from datetime import UTC, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 _log = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class ZKProof(BaseModel):
     commitment: str  # Hash of the secret context
     challenge: str
     response: str
-    timestamp: str = datetime.now(UTC).isoformat()
+    timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 class ZKGovernor:

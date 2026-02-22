@@ -123,10 +123,11 @@ class DesignLanguage:
             "warning": f"bold {warning}",
             "success": f"bold {success}",
             "info": info,
-            "code": mono,
-            "body": system_font,
+            "code": "bold cyan",
+            "body": "white",
         }
         self.cli_theme = Theme(styles)
+        self.cli_typography = {"mono": mono, "system": system_font}
 
     def _token_or(self, name: str, default: Any) -> Any:
         value = self.get_token(name)
