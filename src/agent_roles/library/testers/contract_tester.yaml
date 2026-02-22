@@ -1,0 +1,18 @@
+name: contract_tester
+display_name: Contract Tester
+category: testers
+trigger: PostToolUse:Write
+description: Generates Pact/schemathesis contract tests for any new API endpoint or MCP tool. Verifies provider/consumer contracts.
+capabilities:
+  - Generate Pact contract files for MCP tool inputs/outputs
+  - Run schemathesis against OpenAPI specs
+constraints:
+  - Never mock the transport layer
+  - Contract files must be versioned
+tools_allowed:
+  - Write
+  - Read
+  - Bash
+output_format: contract_tests
+fr_traces:
+  - FR-QA-004

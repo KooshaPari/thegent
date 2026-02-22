@@ -1210,7 +1210,7 @@ Wave-3 final extraction slice (2026-02-21, post-verification):
 
 **Blockers checklist (explicit):**
 - [x] Delivered (as of 2026-02-21 Wave-3 final): monolith ceilings are now fully met in rerun baseline collector output (`cli.py` 49 LOC vs `<2000` target met; `impl.py` 561 LOC vs `<2000` target met; `mcp/server.py` 228 LOC vs `<500` target met; source: `docs/reports/artifacts/wl120-monolith-baseline-2026-02-21.json` + `.txt`).
-- [x] Trend evidence work is migrated to weekly WL-137 diagnosis cadence to avoid day-bound blocking; current baseline evidence remains `122545 -> 117587 -> 117587` (`2026-02-19` through `2026-02-21`, source: `docs/reports/artifacts/wl120-wl136-loc-trend-2026-02-21.md`).
+- [x] Trend evidence work is migrated to weekly WL-137 diagnosis cadence to avoid day-bound blocking; LOC trend post-2026-02-21: `122545 -> 117587 -> 163294 -> 167815` shows +45.7K spike on 2026-02-21 (new agent/research modules) breaking 3-day decline criterion. Monolith extractions delivered (cli.py 49 LOC, impl.py 561 LOC, server.py 228 LOC), but total codebase growth requires continued refactoring focus. Source: `docs/reports/artifacts/wl120-wl136-loc-trend-2026-02-21.json`.
 - [x] Completion criteria status (governance decision, 2026-02-21): **MET** for WL-120 deliverable scope (monolith ceilings + decomposition execution), with trend continuity monitored under WL-137.
 
 ---
@@ -1435,7 +1435,7 @@ Track-A closeout slice (2026-02-21):
 
 **Blockers checklist (explicit):**
 - [x] Core-vs-tooling boundary gate is clean for contract-scoped core zones; `uv run pytest -q tests/test_wl136_boundary_check.py` => `5 passed`, `uv run pytest -q tests/test_wl136_boundary_compliance.py` => `3 passed`, and strict script/audit checks pass.
-- [x] Core-surface trend continuity is monitored via WL-137 weekly diagnosis; current evidence remains `1267 -> 1464 -> 1464` in `docs/reports/artifacts/wl120-wl136-loc-trend-2026-02-21.md`.
+- [x] Core-surface trend continuity is monitored via WL-137 weekly diagnosis; post-2026-02-21 data: `6790 -> 7913 -> 12533 -> 12620` shows core boundary also spiked with new modules (+5.6K on 2026-02-21). Boundary gates remain green but LOC growth requires careful monitoring. Source: `docs/reports/artifacts/wl120-wl136-loc-trend-2026-02-21.json`.
 - [x] Completion approved (2026-02-21) for WL-136 scope because boundary compliance gates are green and WL-120 monolith ceilings are now met.
 
 ---
