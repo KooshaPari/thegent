@@ -740,3 +740,17 @@ None currently
 ### Practical Additions
 - Planning templates
 - Roadmap configurations
+
+## Carry-Forward Tickets
+
+| Ticket | Carry-Forward Scope | Current State |
+| --- | --- | --- |
+| CF-01 | Cursor chat history export + archive linkage | Pending manual export |
+| CF-02 | Compute offloading Phase 1 (SSH + remote run scaffolding) | Architecture complete; implementation pending |
+| CF-03 | TUI compositor build kickoff (Textual + Zellij/tmux integration) | Research complete; execution pending |
+
+## Reopen Conditions
+
+- Reopen if shell/shim fixes regress in `thegent/src/thegent/install.py` or related zsh setup paths.
+- Reopen if cross-document links in this dump or listed references become stale or broken.
+- Reopen if carry-forward tickets remain unstarted beyond the next planning cycle checkpoint.

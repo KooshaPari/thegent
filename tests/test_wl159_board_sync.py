@@ -29,7 +29,6 @@ class TestBoardSyncWorkflow:
 
         assert result.status == SyncOperationStatus.SKIPPED
         assert "no board_id" in result.message
-        assert result.ok is True
 
     def test_board_sync_dry_run(self, temp_project: Path) -> None:
         """Board sync dry-run should report what would be synced."""

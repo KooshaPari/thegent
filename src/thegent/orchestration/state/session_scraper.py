@@ -239,6 +239,7 @@ class SessionScraper:
         """Collect a rich, structured session snapshot for memory/documentation pipelines."""
         now = datetime.now(tz=timezone.utc)
         snapshot_id = now.strftime("snapshot-%Y%m%dT%H%M%S%fZ")
+        normalized_trigger = self._normalize_trigger(trigger)
 
         prompts: list[str] = []
         commands: list[str] = []
@@ -274,7 +275,7 @@ class SessionScraper:
 
         return SessionSnapshot(
             snapshot_id=snapshot_id,
-            trigger=trigger,
+            trigger=normalized_trigger,
             captured_at=now.isoformat(),
             project_root=str(self.project_root),
             prompts=_dedupe_keep_order(prompts),

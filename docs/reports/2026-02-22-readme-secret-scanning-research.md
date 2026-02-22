@@ -27,7 +27,21 @@
 ## Constraint Note (Reddit)
 - Direct retrieval of the linked Reddit thread (`/r/devsecops/comments/1np3svv/secret_scanning`) was blocked by Reddit anti-bot/network policy from this environment.
 - Response code page included a block code and required interactive auth/developer credentials.
-- Result: recommendations below for secret scanning are grounded in primary vendor/tool docs, not Reddit thread text.
+- Fallback used: indexed crawl result of the exact URL via search aggregation, which returned thread content and comments (published Wednesday, September 24, 2025).
+
+## Reddit Thread Addendum (`/r/devsecops/comments/1np3svv/secret_scanning`)
+Recovered thread highlights:
+- Consensus: do not rely on SAST alone for secrets; use dedicated secret scanning.
+- Typical architecture repeatedly recommended:
+  - Pre-commit/pre-push lightweight secret checks.
+  - CI/CD full scans.
+  - Continuous org/repo monitoring for drift and late leaks.
+- Tradeoff pattern discussed:
+  - `gitleaks`: fast, lightweight, configurable, good pipeline fit, no secret validation.
+  - `trufflehog`: deeper multi-backend + validation capabilities, better for historical sweeps and reducing noise when verification is enabled.
+  - SaaS platforms (GitGuardian/others): stronger dashboards/compliance workflows and triage UX.
+- Key operational insight from comments: detection is only step one; remediation/rotation, history cleanup, and false-positive management dominate long-term effort.
+- Additional point raised by tool practitioners: benchmark scanners with realistic secrets and validity-aware methods; fake-only test sets can mislead tool selection.
 
 ## Audit Findings
 
@@ -128,6 +142,13 @@ Use one canonical skeleton across quality/agent repos:
 
 5. Incident runbook:
 - Standard playbook: detect -> validate -> rotate/revoke -> purge history if needed -> close alert with reason.
+
+6. Scanner benchmarking discipline (from thread + tool docs):
+- Use representative corpora, include valid/invalid secret samples, and score:
+  - precision (false-positive rate),
+  - recall on known leaks,
+  - time-to-signal in CI,
+  - remediation burden (triage time per finding).
 
 ### Baseline and false-positive policy
 - Allow baseline only for brownfield onboarding, with an expiration date.

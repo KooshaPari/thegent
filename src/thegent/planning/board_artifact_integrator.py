@@ -30,6 +30,12 @@ class BoardArtifactParser:
                 reader = csv.DictReader(f)
                 for row in reader:
                     if row:
+                        depends_on = row.get("depends_on", "").strip()
+                        depends_on = None if (not depends_on or depends_on == "-") else depends_on
+
+                        evidence = row.get("evidence", "").strip()
+                        evidence = None if (not evidence or evidence == "-") else evidence
+
                         items.append({
                             "id": row.get("id", "").strip(),
                             "title": row.get("title", "").strip(),
@@ -37,8 +43,8 @@ class BoardArtifactParser:
                             "priority": row.get("priority", "P2").upper(),
                             "source": row.get("source", "BOARD").upper(),
                             "effort": row.get("effort", "M").upper(),
-                            "depends_on": row.get("depends_on", "").strip() or None,
-                            "evidence": row.get("evidence", "").strip() or None,
+                            "depends_on": depends_on,
+                            "evidence": evidence,
                         })
         except Exception as e:
             _log.error(f"Failed to parse CSV {file_path}: {e}")
@@ -117,6 +123,12 @@ class BoardArtifactParser:
                 if not item_id or item_id.startswith("ID"):
                     continue
 
+                depends_on = parts[6] if len(parts) > 6 else None
+                depends_on = None if (not depends_on or depends_on == "-") else depends_on
+
+                evidence = parts[7] if len(parts) > 7 else None
+                evidence = None if (not evidence or evidence == "-") else evidence
+
                 items.append({
                     "id": item_id,
                     "title": parts[1] if len(parts) > 1 else "",
@@ -124,8 +136,8 @@ class BoardArtifactParser:
                     "priority": (parts[3] if len(parts) > 3 else "P2").upper(),
                     "source": (parts[4] if len(parts) > 4 else "BOARD").upper(),
                     "effort": (parts[5] if len(parts) > 5 else "M").upper(),
-                    "depends_on": parts[6] if len(parts) > 6 else None,
-                    "evidence": parts[7] if len(parts) > 7 else None,
+                    "depends_on": depends_on,
+                    "evidence": evidence,
                 })
         except Exception as e:
             _log.error(f"Failed to parse Markdown {file_path}: {e}")
