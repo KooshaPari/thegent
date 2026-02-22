@@ -3967,7 +3967,7 @@ Add `thegent sync autopilot status` command with health, lag, and last-cycle sum
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-172] Autopilot Doctor Command
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** cli, diagnostics
 **Effort:** S
@@ -3976,9 +3976,10 @@ Add `thegent sync autopilot status` command with health, lag, and last-cycle sum
 Add `thegent sync autopilot doctor` to validate credentials, scopes, and field mappings.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/autopilot_doctor.py`, tests in `tests/test_wl172_autopilot_doctor.py`
 
 ### [WL-173] Cycle Metrics Emission
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** observability, metrics
 **Effort:** S
@@ -3987,6 +3988,7 @@ Add `thegent sync autopilot doctor` to validate credentials, scopes, and field m
 Emit structured metrics per autosync cycle for dashboarding and alerting.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/cycle_metrics.py`, tests in `tests/test_wl173_cycle_metrics.py`
 
 ### [WL-174] Local-vs-Remote Integrity Scanner
 **Status:** COMPLETED
@@ -4011,7 +4013,7 @@ Enforce one active autosync writer per project using explicit lock semantics.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-176] Process-Compose Operational Hardening
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** operations, docs
 **Effort:** S
@@ -4020,6 +4022,7 @@ Enforce one active autosync writer per project using explicit lock semantics.
 Harden startup/restart semantics and operator docs for long-running autosync service mode.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/process_compose_ops.py`, tests in `tests/test_wl176_process_compose_ops.py`
 
 ### [WL-177] Parser/Reflection Edge-Case Unit Tests
 **Status:** BACKLOG
@@ -4055,7 +4058,7 @@ Add integration tests for Linear GraphQL cycle behavior with deterministic fixtu
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-180] Zero-Touch Operator Quick Start
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** docs, onboarding
 **Effort:** S
@@ -4064,6 +4067,7 @@ Add integration tests for Linear GraphQL cycle behavior with deterministic fixtu
 Publish quick-start docs for unattended board reflection setup and verification commands.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/zero_touch_quickstart.py`, tests in `tests/test_wl180_zero_touch_quickstart.py`
 
 
 <!-- auto-incorporated by thegent sync work-stream -->
