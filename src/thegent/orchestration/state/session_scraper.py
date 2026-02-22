@@ -307,7 +307,7 @@ class SessionScraper:
 
             # Emit created event if event_log specified
             if event_log:
-                event: SessionSnapshotCreatedEvent = {
+                created_event: SessionSnapshotCreatedEvent = {
                     "event_name": "session.scraper.snapshot.created",
                     "version": "v1",
                     "event_id": self._new_event_id(),
@@ -327,13 +327,13 @@ class SessionScraper:
                 }
                 event_log.parent.mkdir(parents=True, exist_ok=True)
                 with open(event_log, "a") as f:
-                    f.write(json.dumps(event) + "\n")
+                    f.write(json.dumps(created_event) + "\n")
 
             return path
         except Exception as e:
             # Emit failed event if event_log specified
             if event_log:
-                event: SessionSnapshotFailedEvent = {
+                failed_event: SessionSnapshotFailedEvent = {
                     "event_name": "session.scraper.snapshot.failed",
                     "version": "v1",
                     "event_id": self._new_event_id(),
@@ -344,7 +344,7 @@ class SessionScraper:
                 }
                 event_log.parent.mkdir(parents=True, exist_ok=True)
                 with open(event_log, "a") as f:
-                    f.write(json.dumps(event) + "\n")
+                    f.write(json.dumps(failed_event) + "\n")
             raise
 
     def list_snapshots(
