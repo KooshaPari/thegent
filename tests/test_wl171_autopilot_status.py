@@ -85,7 +85,7 @@ class TestAutopilotStatusCommand:
         assert result.exit_code == 0
 
     @pytest.mark.requirement("WL-171")
-    def test_autopilot_status_with_degraded_health(self, _tmp_path: Path) -> None:
+    def test_autopilot_status_with_degraded_health(self) -> None:
         """# @trace WL-171 — autopilot-status displays degraded health."""
         runner = CliRunner()
 
@@ -108,7 +108,7 @@ class TestAutopilotStatusCommand:
         assert result.exit_code == 0
 
     @pytest.mark.requirement("WL-171")
-    def test_autopilot_status_with_down_health(self, _tmp_path: Path) -> None:
+    def test_autopilot_status_with_down_health(self) -> None:
         """# @trace WL-171 — autopilot-status displays down health."""
         runner = CliRunner()
 
@@ -131,7 +131,7 @@ class TestAutopilotStatusCommand:
         assert result.exit_code == 0
 
     @pytest.mark.requirement("WL-171")
-    def test_autopilot_status_with_malformed_json(self, _tmp_path: Path) -> None:
+    def test_autopilot_status_with_malformed_json(self) -> None:
         """# @trace WL-171 — autopilot-status handles malformed JSON gracefully."""
         runner = CliRunner()
 
