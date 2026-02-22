@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -65,7 +66,9 @@ class TestDeadLetterReplayEngineReplayOne:
     """Test DeadLetterReplayEngine.replay_one operations."""
 
     @pytest.fixture
-    def engine_with_entry(self) -> tuple[DeadLetterReplayEngine, DeadLetterQueue, Path]:
+    def engine_with_entry(
+        self,
+    ) -> Generator[tuple[DeadLetterReplayEngine, DeadLetterQueue, Path], None, None]:
         """Provide engine with pre-loaded entry."""
         tmpdir = TemporaryDirectory()
         store_path = Path(tmpdir.name) / "queue.jsonl"
@@ -93,7 +96,7 @@ class TestDeadLetterReplayEngineReplayOne:
         engine_with_entry: tuple[DeadLetterReplayEngine, DeadLetterQueue, Path],
     ) -> None:
         """replay_one with successful handler returns success."""
-        engine, dlq, _ = engine_with_entry
+        engine, _dlq, _ = engine_with_entry
 
         def always_succeeds(entry: DeadLetterEntry) -> bool:
             return True
@@ -134,6 +137,7 @@ class TestDeadLetterReplayEngineReplayOne:
         result = engine.replay_one("DLQ-replay-1", always_raises)
 
         assert result.success is False
+        assert result.error is not None
         assert "Handler error" in result.error
 
     @pytest.mark.requirement("WL-214")
@@ -150,6 +154,7 @@ class TestDeadLetterReplayEngineReplayOne:
         result = engine.replay_one("DLQ-nonexistent", dummy_handler)
 
         assert result.success is False
+        assert result.error is not None
         assert "not found" in result.error
 
     @pytest.mark.requirement("WL-214")
@@ -173,7 +178,9 @@ class TestDeadLetterReplayEngineReplayAll:
     """Test DeadLetterReplayEngine.replay_all operations."""
 
     @pytest.fixture
-    def engine_with_multiple(self) -> tuple[DeadLetterReplayEngine, DeadLetterQueue]:
+    def engine_with_multiple(
+        self,
+    ) -> Generator[tuple[DeadLetterReplayEngine, DeadLetterQueue], None, None]:
         """Provide engine with multiple pending entries."""
         tmpdir = TemporaryDirectory()
         store_path = Path(tmpdir.name) / "queue.jsonl"

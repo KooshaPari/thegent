@@ -29,8 +29,9 @@
       "updated_at": "2026-02-22T10:13:41Z",
       "comments": 0,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 1
+      "thegent_status": "done",
+      "board_id": 1,
+      "thegent_solution": "Added util.SanitizeFunctionName to gemini translators"
     },
     {
       "id": 3972170148,

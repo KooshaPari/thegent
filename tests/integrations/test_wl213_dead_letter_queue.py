@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -85,7 +86,7 @@ class TestDeadLetterQueueEnqueue:
     """Test DeadLetterQueue.enqueue operations."""
 
     @pytest.fixture
-    def dlq(self) -> tuple[DeadLetterQueue, Path]:
+    def dlq(self) -> Generator[tuple[DeadLetterQueue, Path], None, None]:
         """Provide a DeadLetterQueue and temp store path."""
         tmpdir = TemporaryDirectory()
         store_path = Path(tmpdir.name) / "queue.jsonl"
@@ -140,7 +141,7 @@ class TestDeadLetterQueueRead:
     """Test DeadLetterQueue.read_all operations."""
 
     @pytest.fixture
-    def dlq_with_entries(self) -> tuple[DeadLetterQueue, Path]:
+    def dlq_with_entries(self) -> Generator[tuple[DeadLetterQueue, Path], None, None]:
         """Provide a DeadLetterQueue with pre-loaded entries."""
         tmpdir = TemporaryDirectory()
         store_path = Path(tmpdir.name) / "queue.jsonl"
@@ -192,7 +193,7 @@ class TestDeadLetterQueuePending:
     """Test DeadLetterQueue.pending operations."""
 
     @pytest.fixture
-    def dlq_with_mixed_retries(self) -> tuple[DeadLetterQueue, Path]:
+    def dlq_with_mixed_retries(self) -> Generator[tuple[DeadLetterQueue, Path], None, None]:
         """Provide DLQ with both pending and resolved entries."""
         tmpdir = TemporaryDirectory()
         store_path = Path(tmpdir.name) / "queue.jsonl"
@@ -259,7 +260,7 @@ class TestDeadLetterQueueMarkRetried:
     """Test DeadLetterQueue.mark_retried operations."""
 
     @pytest.fixture
-    def dlq_single_entry(self) -> tuple[DeadLetterQueue, Path]:
+    def dlq_single_entry(self) -> Generator[tuple[DeadLetterQueue, Path], None, None]:
         """Provide DLQ with single entry."""
         tmpdir = TemporaryDirectory()
         store_path = Path(tmpdir.name) / "queue.jsonl"
@@ -286,7 +287,7 @@ class TestDeadLetterQueueMarkRetried:
         dlq_single_entry: tuple[DeadLetterQueue, Path],
     ) -> None:
         """mark_retried increments retry_count and persists."""
-        queue, store_path = dlq_single_entry
+        queue, _store_path = dlq_single_entry
 
         queue.mark_retried("DLQ-test")
 
@@ -311,7 +312,7 @@ class TestDeadLetterQueuePurgeResolved:
     """Test DeadLetterQueue.purge_resolved operations."""
 
     @pytest.fixture
-    def dlq_with_resolved(self) -> tuple[DeadLetterQueue, Path]:
+    def dlq_with_resolved(self) -> Generator[tuple[DeadLetterQueue, Path], None, None]:
         """Provide DLQ with mix of pending and resolved entries."""
         tmpdir = TemporaryDirectory()
         store_path = Path(tmpdir.name) / "queue.jsonl"
