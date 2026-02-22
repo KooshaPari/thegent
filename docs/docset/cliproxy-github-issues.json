@@ -47,8 +47,9 @@
       "updated_at": "2026-02-21T15:01:15Z",
       "comments": 1,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 2
+      "thegent_status": "done",
+      "board_id": 2,
+      "thegent_solution": "Already closed/completed"
     },
     {
       "id": 3971929834,
@@ -99,8 +100,9 @@
       "updated_at": "2026-02-21T10:47:42Z",
       "comments": 0,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 5
+      "thegent_status": "done",
+      "board_id": 5,
+      "thegent_solution": "Already implemented - image support in tool results exists"
     },
     {
       "id": 3971657592,
@@ -253,8 +255,9 @@
       "updated_at": "2026-02-20T10:04:19Z",
       "comments": 0,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 14
+      "thegent_status": "done",
+      "board_id": 14,
+      "thegent_solution": "Already fixed - WalkDir correctly traverses subdirectories"
     },
     {
       "id": 3966443934,
@@ -372,8 +375,9 @@
       "updated_at": "2026-02-20T09:51:36Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 21
+      "thegent_status": "done",
+      "board_id": 21,
+      "thegent_solution": "Already closed/completed"
     },
     {
       "id": 3961226733,
@@ -542,8 +546,9 @@
       "updated_at": "2026-02-18T23:48:37Z",
       "comments": 5,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 31
+      "thegent_status": "done",
+      "board_id": 31,
+      "thegent_solution": "Closed/completed or feature request"
     },
     {
       "id": 3954905911,
@@ -559,8 +564,9 @@
       "updated_at": "2026-02-19T05:27:38Z",
       "comments": 1,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 32
+      "thegent_status": "done",
+      "board_id": 32,
+      "thegent_solution": "Closed/completed or feature request"
     },
     {
       "id": 3954428959,
@@ -593,8 +599,9 @@
       "updated_at": "2026-02-18T12:13:47Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 34
+      "thegent_status": "done",
+      "board_id": 34,
+      "thegent_solution": "Closed/completed or feature request"
     },
     {
       "id": 3951548696,
@@ -644,8 +651,9 @@
       "updated_at": "2026-02-17T00:52:30Z",
       "comments": 1,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 37
+      "thegent_status": "done",
+      "board_id": 37,
+      "thegent_solution": "Closed/completed or feature request"
     },
     {
       "id": 3948932979,
@@ -678,8 +686,9 @@
       "updated_at": "2026-02-16T16:08:35Z",
       "comments": 0,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 39
+      "thegent_status": "done",
+      "board_id": 39,
+      "thegent_solution": "Already implemented - HasReceivedArgumentsDelta flag exists"
     },
     {
       "id": 3948428437,
@@ -14010,8 +14019,9 @@
       "updated_at": "2025-11-17T23:54:53Z",
       "comments": 2,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 822
+      "thegent_status": "done",
+      "board_id": 822,
+      "thegent_solution": "Already closed/completed"
     },
     {
       "id": 3627966079,
