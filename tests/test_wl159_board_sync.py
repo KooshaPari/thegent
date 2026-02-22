@@ -4,6 +4,7 @@
 """
 
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -15,7 +16,7 @@ class TestBoardSyncWorkflow:
     """Test suite for board sync operationalization."""
 
     @pytest.fixture
-    def temp_project(self) -> Path:
+    def temp_project(self) -> Generator[Path, None, None]:
         """Create temporary project structure for testing."""
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -205,7 +206,7 @@ class TestBoardSyncErrorHandling:
     """Test error handling in board sync."""
 
     @pytest.fixture
-    def temp_project(self) -> Path:
+    def temp_project(self) -> Generator[Path, None, None]:
         """Create temporary project structure."""
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
