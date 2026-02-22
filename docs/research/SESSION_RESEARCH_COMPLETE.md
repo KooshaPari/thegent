@@ -1723,3 +1723,19 @@ Each concept is ready for implementation with clear guidance, code examples, and
 - Wednesday: Run midweek health sweep (`task quality`, governance checks) and re-sequence blockers.
 - Thursday: Close validation loops, update workstream status, and finalize evidence links.
 - Friday: Execute closure review, mark DONE items, and queue next-week first actions.
+
+## Escalation Response SLAs
+
+| Escalation Level | Initial Acknowledgement | Technical Triage Complete | Comms Update Cadence | Containment Target |
+|------------------|-------------------------|----------------------------|----------------------|--------------------|
+| L1 | 10 minutes | 30 minutes | Every 60 minutes | Same working session |
+| L2 | 15 minutes | 45 minutes | Every 45 minutes | Within 4 hours |
+| L3 | 20 minutes | 60 minutes | Every 30 minutes | Within same business day |
+| L4 | 30 minutes | 90 minutes | Every 15 minutes | Immediate scope freeze + recovery plan in 2 hours |
+
+## Daily Validation Set
+
+- Run `task quality` and record pass/fail with timestamp.
+- Run `python -m pytest -q` for regression detection on current branch.
+- Run `thegent govern go health` and log any red/yellow contracts.
+- Run `thegent_do_next` and clear stale CLAIMED ownership before close.

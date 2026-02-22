@@ -234,11 +234,12 @@ def fork_top_level(
     from_turn: int | None = typer.Option(
         None,
         "--from-turn",
-        min=1,
         help="1-based turn cutoff to copy into the fork (defaults to full history)",
     ),
     new_session_id: str | None = typer.Option(None, "--new-session-id", help="Optional explicit ID for forked session"),
 ) -> None:
+    if from_turn is not None and from_turn < 1:
+        raise typer.BadParameter("from_turn must be 1 or greater", param_hint="--from-turn")
     from thegent.cli.apps.run import run_fork
 
     run_fork(session_id=session_id, from_turn=from_turn, new_session_id=new_session_id)
@@ -247,8 +248,10 @@ def fork_top_level(
 @app.command("rollback", help="WL-106: Roll back a session (shortcut for `thegent run rollback`).")
 def rollback_top_level(
     session_id: str = typer.Argument(..., help="Session ID to roll back"),
-    n_turns: int = typer.Option(..., "--n-turns", min=1, help="Number of latest turns to remove"),
+    n_turns: int = typer.Option(..., "--n-turns", help="Number of latest turns to remove"),
 ) -> None:
+    if n_turns < 1:
+        raise typer.BadParameter("n-turns must be 1 or greater", param_hint="--n-turns")
     from thegent.cli.apps.run import run_rollback
 
     run_rollback(session_id=session_id, n_turns=n_turns)

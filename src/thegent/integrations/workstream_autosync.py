@@ -197,7 +197,7 @@ class WorkstreamParser:
     """Parse WORK_STREAM.md and extract work items."""
 
     ITEM_PATTERN = re.compile(
-        r"^###\s+\[([WL]-\d+)\]\s+(.+?)$",
+        r"^###\s+\[(WL-\d+)\]\s+(.+?)$",
         re.MULTILINE,
     )
 
