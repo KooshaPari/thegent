@@ -34,13 +34,13 @@ def register_tools(mcp) -> None:  # noqa: ANN001 -- mcp is a FastMCP instance; t
         path = writer.new(DocType(doc_type), title=title)
         return str(path)
 
-    def doc_search(query: str) -> str:
-        """Search docs index by title keyword, returns JSON-serialisable results."""
-        return str(DocQueries(_db_path()).search(query))
+    def doc_search(query: str) -> list[dict]:
+        """Search docs index by title keyword."""
+        return DocQueries(_db_path()).search(query)
 
-    def doc_list(doc_type: str) -> str:
-        """List all docs of the given type, returns JSON-serialisable results."""
-        return str(DocQueries(_db_path()).get_by_type(doc_type))
+    def doc_list(doc_type: str) -> list[dict]:
+        """List all docs of the given type."""
+        return DocQueries(_db_path()).get_by_type(doc_type)
 
     def doc_export(out_dir: str = "docs/.vitepress/data") -> str:
         """Export JSON snapshots for VitePress data loaders."""
