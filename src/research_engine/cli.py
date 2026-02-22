@@ -40,7 +40,6 @@ def topics() -> None:
 @app.command()
 def crawl() -> None:
     """Trigger an immediate one-shot crawl of all sources."""
-    store = ResearchStore(_GLOBAL_DB)
     topics = TopicExtractor(project_root=Path.cwd()).extract()
     scheduler = TieredScheduler(_GLOBAL_DB, topics)
     typer.echo("Crawling all sources…")

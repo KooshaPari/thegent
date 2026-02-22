@@ -8,7 +8,7 @@ a single sync cycle or across consecutive cycles.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 
@@ -71,7 +71,7 @@ class HysteresisGate:
         Returns:
             True if transition should be applied, False if blocked by hysteresis.
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Get or initialize transition history for this WL item
         if wl_id not in self._transition_history:
@@ -129,6 +129,6 @@ class HysteresisGate:
             _TransitionRecord(
                 from_status=from_status,
                 to_status=to_status,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
             )
         )
