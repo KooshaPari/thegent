@@ -193,3 +193,55 @@ def test_empty_directory_returns_empty_daily_summary_and_exports_valid_markdown(
     assert md_path.exists()
     assert "# Snapshot Daily Index" in content
     assert "- (none)" in content
+
+
+def test_request_event_id_propagation_from_request_to_created_and_failed_events(monkeypatch, tmp_path: Path) -> None:
+    """
+    WL-156 Regression: Validate request_event_id propagates from persist_snapshot request
+    through to both snapshot.created and snapshot.failed events.
+    """
+    scraper = SessionScraper(project_root=tmp_path)
+    event_log_created = tmp_path / "events-created.jsonl"
+    event_log_failed = tmp_path / "events-failed.jsonl"
+
+    # Test 1: request_event_id propagation on SUCCESS
+    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", lambda: [])
+    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: ["p1"])
+    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: [])
+
+    request_id_success = "req-propagation-success-001"
+    scraper.persist_snapshot(
+        trigger="manual",
+        out_dir=tmp_path / "snapshots-success",
+        request_event_id=request_id_success,
+        event_log=event_log_created,
+    )
+
+    events_created = [json.loads(line) for line in event_log_created.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert len(events_created) == 1
+    assert events_created[0]["event_name"] == "session.scraper.snapshot.created"
+    assert events_created[0]["request_event_id"] == request_id_success
+    assert events_created[0]["event_id"] != request_id_success, "event_id should be distinct from request_event_id"
+
+    # Test 2: request_event_id propagation on FAILURE
+    def _raise_on_collect(self, trigger: str = "manual"):
+        raise IOError("simulated IO error")
+
+    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.collect_snapshot", _raise_on_collect)
+
+    request_id_fail = "req-propagation-fail-001"
+    try:
+        scraper.persist_snapshot(
+            trigger="hook:pre-commit",
+            out_dir=tmp_path / "snapshots-failed",
+            request_event_id=request_id_fail,
+            event_log=event_log_failed,
+        )
+    except IOError:
+        pass
+
+    events_failed = [json.loads(line) for line in event_log_failed.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert len(events_failed) == 1
+    assert events_failed[0]["event_name"] == "session.scraper.snapshot.failed"
+    assert events_failed[0]["request_event_id"] == request_id_fail
+    assert events_failed[0]["event_id"] != request_id_fail, "event_id should be distinct from request_event_id"
