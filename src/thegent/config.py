@@ -1378,6 +1378,55 @@ class ThegentSettings(BaseSettings):
         description="Standalone-safe mode: skip gracefully when disabled or gh auth missing (THGENT_GH_PROJECT_STANDALONE_MODE)",
     )
 
+    # WL-160: Workstream Autosync (GitHub Projects + Linear)
+    workstream_autosync_enabled: bool = Field(
+        default=False,
+        description="Enable automatic workstream reflection background cycle (THGENT_WORKSTREAM_AUTOSYNC_ENABLED)",
+    )
+    workstream_autosync_interval: int = Field(
+        default=300,
+        ge=10,
+        le=3600,
+        description="Cycle interval in seconds (THGENT_WORKSTREAM_AUTOSYNC_INTERVAL)",
+    )
+    github_enabled: bool = Field(
+        default=False,
+        description="Enable GitHub Projects sync for workstream autosync (THGENT_GITHUB_ENABLED)",
+    )
+    github_owner: str = Field(
+        default="",
+        description="GitHub repository owner for workstream autosync (THGENT_GITHUB_OWNER)",
+    )
+    github_project_number: int = Field(
+        default=0,
+        ge=0,
+        description="GitHub project number for workstream autosync (THGENT_GITHUB_PROJECT_NUMBER)",
+    )
+    github_direction: str = Field(
+        default="bidirectional",
+        description="GitHub sync direction: read_only, write_only, bidirectional (THGENT_GITHUB_DIRECTION)",
+    )
+    linear_enabled: bool = Field(
+        default=False,
+        description="Enable Linear sync for workstream autosync (THGENT_LINEAR_ENABLED)",
+    )
+    linear_api_key: str = Field(
+        default="",
+        description="Linear API key for workstream autosync (THGENT_LINEAR_API_KEY)",
+    )
+    linear_team_key: str = Field(
+        default="",
+        description="Linear team key for workstream autosync (THGENT_LINEAR_TEAM_KEY)",
+    )
+    linear_direction: str = Field(
+        default="bidirectional",
+        description="Linear sync direction: read_only, write_only, bidirectional (THGENT_LINEAR_DIRECTION)",
+    )
+    workstream_autosync_standalone_mode: bool = Field(
+        default=True,
+        description="Standalone-safe mode for autosync: skip gracefully on errors (THGENT_AUTOSYNC_STANDALONE_MODE)",
+    )
+
 
 def get_settings() -> ThegentSettings:
     """Helper to get cached settings."""

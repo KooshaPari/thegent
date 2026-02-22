@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -158,4 +158,4 @@ def get_current_timestamp() -> str:
     Returns:
         ISO 8601 formatted timestamp.
     """
-    return datetime.utcnow().isoformat() + "Z"
+    return datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z")

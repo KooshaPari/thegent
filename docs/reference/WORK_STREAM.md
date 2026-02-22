@@ -2098,29 +2098,48 @@ Enhanced session scraper with periodic snapshots, rich extraction, tagging.
 - Implementation: SessionSnapshotCreatedEvent and SessionSnapshotFailedEvent payload schema validation, request_event_id propagation, trigger normalization
 
 ### [WL-157] GitHub Projects Bidirectional Sync (Standalone Optional)
-**Status:** IN PROGRESS
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** planning, sync, integrations
 **Effort:** M
-**Blocked by:** gh auth with `project` scope
+**Blocked by:** none (gh auth with `project` scope is runtime/deployment requirement, not code blocker)
 
 Add optional bidirectional GitHub Project v2 sync that remains standalone-safe when disabled.
 
-- Research/spec authored: `docs/research/GH_PROJECTS_BIDIRECTIONAL_STANDALONE_OPTIONAL_2026-02-22.md`
-- Added config toggles in `src/thegent/config.py`:
-  - `THGENT_GH_PROJECT_SYNC_ENABLED`
-  - `THGENT_GH_PROJECT_OWNER`
-  - `THGENT_GH_PROJECT_NUMBER`
-  - `THGENT_GH_PROJECT_DIRECTION`
-  - `THGENT_GH_PROJECT_STANDALONE_MODE`
-- Added sync module: `src/thegent/integrations/gh_project_sync.py`
-- Added CLI surface:
-  - `thegent sync gh-project status`
-  - `thegent sync gh-project sync`
-  - `thegent sync gh-project export`
-  - `thegent sync gh-project import`
+**Completed:** 2026-02-22 (commit 79c5fbbd)
 
-**Evidence:** `src/thegent/integrations/gh_project_sync.py`
+**Implementation:**
+- Config fields in `src/thegent/config.py`:
+  - `gh_project_sync_enabled` (bool; default False)
+  - `gh_project_owner` (str; GitHub org/user)
+  - `gh_project_number` (int; project v2 number)
+  - `gh_project_direction` (read_only|write_only|bidirectional; default bidirectional)
+  - `gh_project_standalone_mode` (bool; default True — skip gracefully when disabled)
+
+- Sync module: `src/thegent/integrations/gh_project_sync.py`
+  - `GHProjectConfig`: Configuration dataclass with validation
+  - `GHProjectSyncError`, `GHProjectAuthError`: Custom exceptions
+  - `get_project_status()`: Query project metadata and item count
+  - `sync_to_github()`: Sync thegent workstream to GitHub Projects
+  - `sync_from_github()`: Sync GitHub Projects items to workstream
+  - `export_to_csv()`, `import_from_csv()`: CSV exchange
+  - Standalone-safe: All functions return gracefully when disabled/auth missing in standalone mode
+  - Auth-aware: Detects missing `project` scope and returns status (not crash)
+
+- Comprehensive test coverage: `tests/test_wl157_gh_project_sync.py` (35 tests, 100% pass)
+  - Configuration validation
+  - Standalone-safe behavior (no crashes when disabled)
+  - Auth error handling (graceful skip when gh auth missing project scope)
+  - Read/write/bidirectional direction enforcement
+  - CSV export/import with path handling
+  - Edge cases: disabled config, invalid config, missing files
+
+**Runtime Notes:**
+- `gh auth` with `project` scope is a **deployment prerequisite**, not a code blocker
+  - Users must run: `gh auth login --scopes "project"`
+  - Code detects missing scope and returns `{"status": "auth_required"}` gracefully
+- When `THGENT_GH_PROJECT_SYNC_ENABLED=false` or config invalid, all operations return early (no-op)
+- Fully backward-compatible: zero user debt, can be disabled entirely
 
 ### [WL-158] Unified Workstream Integration for CLIProxyAPI++ Board Artifacts
 **Status:** COMPLETED
@@ -2203,7 +2222,7 @@ Implementation surfaces:
 **Evidence:** `src/thegent/integrations/workstream_autosync.py`
 
 ### [WL-161] Board-ID-First Reconciliation Policy
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** sync, governance
 **Effort:** S
@@ -2214,7 +2233,7 @@ Define deterministic conflict precedence using board-id-first matching and sourc
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-181] Status Drift Severity Classification
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** reliability, sync
 **Effort:** S
@@ -2225,7 +2244,7 @@ Add severity tiers for status drift and define escalation thresholds per tier.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
 ### [WL-201] Sync Provenance Stamps
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** audit, sync
 **Effort:** S

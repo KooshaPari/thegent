@@ -61,8 +61,7 @@ class ReconciliationPolicy:
         if not self.title_fallback_enabled:
             if not has_board_id:
                 raise ValueError(
-                    "Record has no board_id and title_fallback_enabled=False; "
-                    "title-only records are rejected"
+                    "Record has no board_id and title_fallback_enabled=False; title-only records are rejected"
                 )
 
         # If fallback enabled, title-only records are acceptable
@@ -92,6 +91,4 @@ def create_default_policy() -> ReconciliationPolicy:
     Returns:
         A policy with board_id_first mode and no title fallback.
     """
-    return ReconciliationPolicy(
-        mode=ReconciliationMode.BOARD_ID_FIRST, title_fallback_enabled=False
-    )
+    return ReconciliationPolicy(mode=ReconciliationMode.BOARD_ID_FIRST, title_fallback_enabled=False)

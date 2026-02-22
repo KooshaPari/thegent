@@ -239,7 +239,7 @@ def test_registry_json_format_valid(tmp_path):
     assert "WL-351" in data
 
     # Each entry should have the required fields
-    for wl_id, entry in data.items():
+    for entry in data.values():
         assert "wl_id" in entry
         assert "team" in entry
         assert "owner" in entry

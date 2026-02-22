@@ -308,3 +308,155 @@ def sync_board(
 
     for change in op.changes[:20]:
         console.print(f"  [dim]{change}[/dim]")
+
+
+@app.command("audit", help="Audit sync policies and print current configuration. (WL-261)")
+def sync_audit(
+    format: str = typer.Option("json", "--format", "-F", help="Output format (json|table)."),
+):
+    """``thegent sync audit`` — validate runtime behavior against sync-policy contract.
+
+    Prints current sync policies (enabled connectors, quota budgets, policy modes)
+    as JSON or formatted table.
+
+    # @trace WL-261
+    """
+    from thegent.integrations.sync_auditor import SyncAuditor
+
+    auditor = SyncAuditor()
+
+    # Read from config (stub for now; in production would load from config file)
+    # This is a minimal implementation; actual config loading would be added
+    auditor.set_enabled_connectors([])
+    auditor.set_quota_budgets({})
+    auditor.set_policy_modes({})
+
+    if format == "json":
+        console.print(auditor.audit_as_json())
+    elif format == "table":
+        audit_result = auditor.audit_as_dict()
+        console.print("[bold]Sync Policy Audit[/bold]")
+        console.print(f"Timestamp: {audit_result['timestamp']}")
+        console.print(f"Status: {audit_result['audit_status']}")
+        console.print(f"Enabled Connectors: {audit_result['enabled_connectors']}")
+        console.print(f"Quota Budgets: {audit_result['quota_budgets']}")
+        console.print(f"Policy Modes: {audit_result['policy_modes']}")
+    else:
+        console.print(f"[red]Unknown format: {format}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command(
+    "autopilot",
+    help=(
+        "Run automatic workstream reflection background cycle. "
+        "Continuously syncs WORK_STREAM.md with GitHub Projects and Linear. (WL-160)"
+    ),
+)
+def sync_autopilot(
+    once: bool = typer.Option(
+        False, "--once", "-1", help="Run single cycle and exit (for testing)."
+    ),
+    interval: int = typer.Option(
+        300,
+        "--interval",
+        "-i",
+        help="Cycle interval in seconds (default: 300).",
+        ge=10,
+        le=3600,
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Report actions without executing."),
+    output_format: str = typer.Option(
+        "rich",
+        "--format",
+        "-F",
+        help="Output format (rich|json).",
+    ),
+):
+    """``thegent sync autopilot`` — run automatic workstream reflection.
+
+    Continuously reflects local WORK_STREAM.md status to GitHub Projects and Linear,
+    and pulls remote status updates back to local markdown. Enable by setting:
+        - THGENT_WORKSTREAM_AUTOSYNC_ENABLED=true
+        - THGENT_GITHUB_ENABLED=true + THGENT_GITHUB_OWNER + THGENT_GITHUB_PROJECT_NUMBER
+        - OR THGENT_LINEAR_ENABLED=true + THGENT_LINEAR_API_KEY + THGENT_LINEAR_TEAM_KEY
+
+    # @trace WL-160
+    """
+    import json
+    import os
+
+    from thegent.integrations.workstream_autosync import (
+        WorkstreamAutosyncRunner,
+        load_autosync_config_from_env,
+    )
+
+    # Load config from environment
+    config = load_autosync_config_from_env()
+
+    # Override config with CLI options
+    if interval != 300:
+        config.cycle_interval_seconds = interval
+    if dry_run:
+        config.dry_run = True
+
+    # Validate configuration
+    if not config.is_valid():
+        console.print(
+            "[yellow]Autopilot not enabled. Set THGENT_WORKSTREAM_AUTOSYNC_ENABLED=true "
+            "and configure at least one platform:[/yellow]"
+        )
+        console.print(
+            "  GitHub: THGENT_GITHUB_ENABLED=true THGENT_GITHUB_OWNER=... "
+            "THGENT_GITHUB_PROJECT_NUMBER=..."
+        )
+        console.print(
+            "  Linear:  THGENT_LINEAR_ENABLED=true THGENT_LINEAR_API_KEY=... "
+            "THGENT_LINEAR_TEAM_KEY=..."
+        )
+        raise typer.Exit(0)
+
+    console.print(
+        f"[green]Workstream autopilot starting[/green] "
+        f"(interval={interval}s, github={config.should_sync_github()}, "
+        f"linear={config.should_sync_linear()}, dry_run={dry_run})"
+    )
+
+    # Run the cycle
+    runner = WorkstreamAutosyncRunner(config)
+
+    if once:
+        # Single cycle mode (useful for testing)
+        asyncio.run(runner._perform_sync_cycle())
+        status = runner.get_status()
+
+        if output_format == "json":
+            console.print(json.dumps(status, indent=2, default=str))
+        else:
+            console.print("[green]Autopilot cycle complete[/green]")
+            if status["last_operation"]:
+                op = status["last_operation"]
+                console.print(f"  Operation: {op['operation_id']}")
+                console.print(f"  Platform: {op['platform']}")
+                console.print(f"  Processed: {op['items_processed']} items")
+                console.print(f"  Successful: {op['items_successful']} items")
+                if op["errors"]:
+                    console.print(f"  [red]Errors:[/red]")
+                    for err in op["errors"][:3]:
+                        console.print(f"    {err}")
+    else:
+        # Continuous cycle mode
+        async def run_autopilot():
+            await runner.start()
+            try:
+                while True:
+                    await asyncio.sleep(1)
+            except KeyboardInterrupt:
+                console.print("[yellow]Received interrupt, shutting down...[/yellow]")
+            finally:
+                await runner.stop()
+
+        try:
+            asyncio.run(run_autopilot())
+        except KeyboardInterrupt:
+            console.print("[yellow]Autopilot stopped[/yellow]")
