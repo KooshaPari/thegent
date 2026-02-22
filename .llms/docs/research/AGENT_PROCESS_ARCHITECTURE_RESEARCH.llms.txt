@@ -6,8 +6,8 @@ Source: docs/research/AGENT_PROCESS_ARCHITECTURE_RESEARCH.md
 
 # Agent Process Architecture — Research Note
 
-> **Purpose**: Research note on agent runtime process usage (zsh, agent-shell, agent process) and multi-tenant optimization. Applies to Cursor IDE, Codex (OpenAI) from terminal, and similar runtimes.  
-> **Status**: Research | **Date**: 2026-02-16  
+> **Purpose**: Research note on agent runtime process usage (zsh, agent-shell, agent process) and multi-tenant optimization. Applies to Cursor IDE, Codex (OpenAI) from terminal, and similar runtimes.
+> **Status**: Research | **Date**: 2026-02-16
 > **Trigger**: User observation — "Closing this window will terminate... 4 zsh, 2 cursor-shell, 1 cursor-agent per 1 cursor-agent proc is a lot right, multi tenant system perhaps needed"
 
 ---
@@ -118,7 +118,7 @@ The process appears as `cursor-shell` in the OS (upstream name, AI-chosen). We u
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

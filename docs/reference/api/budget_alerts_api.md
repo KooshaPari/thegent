@@ -138,4 +138,3 @@ Get total spend in the current hour.
 Calculated by scanning the aggregate.jsonl log.
 
 ---
-

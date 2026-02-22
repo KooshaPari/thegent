@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import json
 from pathlib import Path
 from typing import Any
+
+_log = logging.getLogger(__name__)
 
 
 def parse_work_stream_md(work_stream_path: Path) -> dict[str, Any]:
@@ -131,7 +134,8 @@ def priority_sort_key(priority: str) -> int:
         try:
             return int(priority[1:])
         except ValueError:
-            pass
+            _log.debug("Invalid priority '%s'; defaulting sort priority to 999.", priority)
+            return 999
     return 999
 
 
@@ -197,8 +201,8 @@ def collect_queued_items(settings: Any, limit: int) -> tuple[list[dict[str, Any]
             )
         if pending_items:
             sources.append("PROMPT_QUEUE")
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("Failed to collect prompt-queue items: %s", exc)
 
     try:
         from thegent.execution import EscalationQueue
@@ -221,8 +225,8 @@ def collect_queued_items(settings: Any, limit: int) -> tuple[list[dict[str, Any]
             )
         if past_sla:
             sources.append("ESCALATION")
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("Failed to collect escalation queue items: %s", exc)
 
     try:
         from thegent.orchestration.resilience.deferral import DeferralManager
@@ -272,8 +276,8 @@ def collect_queued_items(settings: Any, limit: int) -> tuple[list[dict[str, Any]
                         continue
         if any(i.get("source") == "DEFERRAL" for i in items):
             sources.append("DEFERRAL")
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("Failed to collect deferral queue items: %s", exc)
 
     try:
         from thegent.governance.backlog import BacklogManager
@@ -296,7 +300,7 @@ def collect_queued_items(settings: Any, limit: int) -> tuple[list[dict[str, Any]
             )
         if pending:
             sources.append("BACKLOG")
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("Failed to collect backlog items: %s", exc)
 
     return items, sources

@@ -38,4 +38,3 @@ strip_ansi(text: str)
 Remove ANSI escape sequences from text. Uses rich Text.from_ansi().plain.
 
 ---
-

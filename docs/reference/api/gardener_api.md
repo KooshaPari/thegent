@@ -23,4 +23,3 @@ __init__(self: Any, project_root: Path)
 ---
 
 ---
-

@@ -362,6 +362,35 @@ class TestOllamaModelMetadata:
         assert has_model_metadata("qwen2.5-coder")
 
 
+class TestModelMetadataAliases:
+    """Tests for backend/provider alias metadata normalization."""
+
+    def test_codex_minimax_alias_resolves_to_minimax_metadata(self) -> None:
+        """Backend aliases like codex-MiniMax-M2.5 resolve to minimax metadata."""
+        from thegent.routing.model_metadata import get_model_metadata
+
+        assert get_model_metadata("codex-MiniMax-M2.5") is not None
+        meta = get_model_metadata("codex-MiniMax-M2.5")
+        assert meta is not None
+        assert meta["provider"] == "minimax"
+
+    def test_codex_minimax_alias_with_provider_prefix_resolves(self) -> None:
+        """Provider wrapper prefixes like custom:codex-MiniMax-M2.5 resolve too."""
+        from thegent.routing.model_metadata import get_model_metadata
+
+        meta = get_model_metadata("custom:codex-MiniMax-M2.5")
+        assert meta is not None
+        assert meta["provider"] == "minimax"
+
+    def test_codex_lowercase_minimax_alias_resolves(self) -> None:
+        """Lowercase codex minimax alias resolves to minimax metadata."""
+        from thegent.routing.model_metadata import get_model_metadata
+
+        meta = get_model_metadata("codex-minimax-m2.5")
+        assert meta is not None
+        assert meta["provider"] == "minimax"
+
+
 # ---------------------------------------------------------------------------
 # provider_types: ollama normalization and execution path
 # ---------------------------------------------------------------------------

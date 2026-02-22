@@ -6,9 +6,9 @@ Source: docs/changes/research-library-cache/README.md
 
 # Research: Standardized Caching Library (cachetools)
 
-**Status**: Research Complete, Ready for Implementation  
-**Change**: research-library-cache  
-**Date**: 2026-02-18  
+**Status**: Research Complete, Ready for Implementation
+**Change**: research-library-cache
+**Date**: 2026-02-18
 
 ## Overview
 
@@ -244,22 +244,22 @@ pytest tests/ --cov=src/ --cov-fail-under=80
 
 ## Common Questions
 
-**Q: Is cachetools already a dependency?**  
+**Q: Is cachetools already a dependency?**
 A: Yes! Check `pyproject.toml` — already listed as `cachetools>=5.3.3`. Proposal recommends pinning to `==6.0.0` for consistency.
 
-**Q: What if we find no custom caches?**  
+**Q: What if we find no custom caches?**
 A: Mark as WONTFIX. Archive documentation. Focus on preventing future custom implementations.
 
-**Q: What if we find >10 custom caches?**  
+**Q: What if we find >10 custom caches?**
 A: Still feasible (larger timeline, 45-60 min). Parallelize Phase 4 across multiple agents.
 
-**Q: Can we parallelize the work?**  
+**Q: Can we parallelize the work?**
 A: Yes! Phases 1-3 must be sequential. Phase 4 (per-cache replacement) can run in parallel. Phase 5 aggregates results. Phase 6 finalizes.
 
-**Q: What if a custom cache has edge cases?**  
+**Q: What if a custom cache has edge cases?**
 A: Write a baseline test first (before replacing). This captures current behavior. Compare behavior before/after to ensure compatibility.
 
-**Q: Do we need to update documentation?**  
+**Q: Do we need to update documentation?**
 A: Yes. Tasks 6.1 updates the Library-First Audit and project CLAUDE.md. Docs creation happens in Task 2.2.
 
 ---
@@ -327,7 +327,7 @@ A: Yes. Tasks 6.1 updates the Library-First Audit and project CLAUDE.md. Docs cr
 
 ---
 
-**Status**: ✅ Research Complete  
-**Readiness**: 🟢 Ready for Implementation  
-**Approval**: Pending (start with Phase 1)  
+**Status**: ✅ Research Complete
+**Readiness**: 🟢 Ready for Implementation
+**Approval**: Pending (start with Phase 1)
 **Archive**: Move to `docs/changes/archive/` after merge

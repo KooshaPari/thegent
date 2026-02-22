@@ -10,6 +10,7 @@ from thegent.agents.cliproxy_manager import (
     _binary_available,
     ensure_proxy_running,
     run_login,
+    run_login_unified,
     start_proxy_managed,
 )
 from thegent.config import ThegentSettings
@@ -160,6 +161,65 @@ class TestRunLogin:
         assert str(fake_binary) in cmd or "cli-proxy-api-plus" in str(cmd)
         assert "-config" in cmd
         assert "-claude-login" in cmd
+
+
+@pytest.mark.unit
+class TestRunLoginUnified:
+    """Tests for run_login_unified behavior."""
+
+    @patch("thegent.agents.cliproxy_manager.kill_proxy", return_value=False)
+    @patch("thegent.agents.cliproxy_manager._inject_api_key_into_cliproxy")
+    @patch("thegent.agents.cliproxy_manager._get_factory_api_key")
+    @patch("thegent.agents.cliproxy_manager._has_provider_credentials", return_value=False)
+    @patch("thegent.agents.cliproxy_manager._ensure_config")
+    def test_run_login_unified_uses_factory_key_when_configured(
+        self,
+        mock_ensure: MagicMock,
+        mock_has_credentials: MagicMock,
+        mock_factory: MagicMock,
+        mock_inject: MagicMock,
+        mock_kill: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        # @trace FR-AGT-006
+        """run_login_unified reuses factory API key when skip_if_configured is true."""
+        config_path = tmp_path / "cliproxy-config.yaml"
+        config_path.write_text("port: 8317")
+        mock_ensure.return_value = config_path
+        mock_factory.return_value = ("abc", "/tmp/factory.json")
+
+        rc = run_login_unified(ThegentSettings(), "roo")
+
+        assert rc == 0
+        mock_inject.assert_called_once()
+        mock_kill.assert_called_once()
+
+    @patch("thegent.agents.cliproxy_manager.webbrowser.open", return_value=True)
+    @patch("thegent.agents.cliproxy_manager._inject_api_key_into_cliproxy")
+    @patch("thegent.agents.cliproxy_manager._get_factory_api_key")
+    @patch("thegent.agents.cliproxy_manager._has_provider_credentials", return_value=False)
+    @patch("thegent.agents.cliproxy_manager._ensure_config")
+    def test_run_login_unified_returns_skip_when_no_key(
+        self,
+        mock_ensure: MagicMock,
+        mock_has_credentials: MagicMock,
+        mock_factory: MagicMock,
+        mock_inject: MagicMock,
+        mock_web_open: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        # @trace FR-AGT-006
+        """run_login_unified returns 1 when user skips API key entry."""
+        config_path = tmp_path / "cliproxy-config.yaml"
+        config_path.write_text("port: 8317")
+        mock_ensure.return_value = config_path
+        mock_factory.return_value = (None, None)
+
+        rc = run_login_unified(ThegentSettings(), "roo", prompt_func=lambda prompt: "")
+
+        assert rc == 1
+        mock_inject.assert_not_called()
+        mock_web_open.assert_called_once()
 
 
 @pytest.mark.unit

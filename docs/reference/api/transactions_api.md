@@ -64,4 +64,3 @@ If git_commit=True and cwd is a git repo, stages and commits as a single transac
 **Returns**: (success, message)
 
 ---
-

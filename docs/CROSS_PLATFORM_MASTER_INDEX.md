@@ -2,8 +2,8 @@
 
 **Purpose:** Master index of all cross-platform desktop automation documentation.
 
-**Date:** 2026-02-16  
-**Status:** Master Index  
+**Date:** 2026-02-16
+**Status:** Master Index
 **Last Updated:** 2026-02-16
 
 ---

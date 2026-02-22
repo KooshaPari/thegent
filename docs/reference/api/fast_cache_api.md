@@ -230,4 +230,3 @@ stats(self: Any)
 Get cache statistics.
 
 ---
-

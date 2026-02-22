@@ -63,4 +63,3 @@ find_best_value(self: Any, task_id: str, capabilities: list[str], max_budget: fl
 WP-35001: Run an arbitrage cycle to find the highest value provider.
 
 ---
-

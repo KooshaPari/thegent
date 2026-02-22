@@ -21,4 +21,3 @@ Get Serena MCP configuration based on detected backend.
 **Returns**: Dict with command and args for Serena MCP server
 
 ---
-

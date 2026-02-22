@@ -210,4 +210,3 @@ seconds and derives:
 snapshots.  Returns ``[]`` when psutil is unavailable.
 
 ---
-

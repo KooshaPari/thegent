@@ -6,8 +6,8 @@ Source: docs/reference/E2E_TEST_IMPLEMENTATION_PLAN.md
 
 # E2E Test Implementation Plan
 
-**Date**: 2026-02-19  
-**Status**: 🚀 IN PROGRESS  
+**Date**: 2026-02-19
+**Status**: 🚀 IN PROGRESS
 **Target**: 100% E2E coverage (234 commands remaining)
 
 ---
@@ -16,7 +16,7 @@ Source: docs/reference/E2E_TEST_IMPLEMENTATION_PLAN.md
 
 ### Batch 1: Core Execution Commands
 - [ ] `thegent run` - Main execution command
-- [ ] `thegent bg` - Background execution  
+- [ ] `thegent bg` - Background execution
 - [ ] `thegent logs` - Log retrieval
 - [ ] `thegent status` - Status checks
 - [ ] `thegent doctor` - Health checks
@@ -82,17 +82,17 @@ For each command, create E2E tests following this pattern:
 @pytest.mark.e2e
 class TestCommandName:
     """E2E tests for thegent <command>."""
-    
+
     def test_command_help_exits_zero(self) -> None:
         """<command> --help exits with code 0."""
         result = runner.invoke(app, ["<command>", "--help"])
         assert result.exit_code == 0
-    
+
     def test_command_exits_zero(self) -> None:
         """<command> exits with code 0."""
         result = runner.invoke(app, ["<command>"])
         assert result.exit_code == 0
-    
+
     def test_command_produces_expected_output(self) -> None:
         """<command> produces expected output."""
         result = runner.invoke(app, ["<command>"])

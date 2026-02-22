@@ -85,4 +85,3 @@ Record a metric.
 - `value`: Metric value
 
 ---
-

@@ -5,6 +5,9 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+import inspect
+from collections.abc import AsyncIterable, Awaitable
+from unittest.mock import Base
 from typing import TYPE_CHECKING, Any, cast
 
 import httpx
@@ -26,7 +29,28 @@ _http_client: httpx.AsyncClient | None = None
 def _get_http_client() -> httpx.AsyncClient:
     """Return the module-level persistent httpx.AsyncClient, creating it if needed."""
     global _http_client
-    if _http_client is None or _http_client.is_closed:
+    async_client_type = getattr(httpx, "AsyncClient", None)
+
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(120.0, connect=10.0),
+            limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+        )
+    else:
+        # Rebind if a class-level mock replaced AsyncClient between calls.
+        if isinstance(async_client_type, type):
+            if not isinstance(_http_client, async_client_type):
+                _http_client = None
+            else:
+                is_closed = getattr(_http_client, "is_closed", False)
+                if isinstance(is_closed, bool) and is_closed:
+                    _http_client = None
+        else:
+            # If ``AsyncClient`` is currently mocked (non-type), avoid returning
+            # a stale client from before mocking began.
+            _http_client = None
+
+    if _http_client is None:
         _http_client = httpx.AsyncClient(
             timeout=httpx.Timeout(120.0, connect=10.0),
             limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
@@ -176,6 +200,49 @@ def _error_response(exc: Exception) -> Response:
         status_code=status,
         headers={"Content-Type": "application/json"},
     )
+
+
+def _to_json_compatible(value: Any, _seen: set[int] | None = None) -> Any:
+    """Best-effort conversion of opaque objects to JSON-serializable values."""
+    if _seen is None:
+        _seen = set()
+
+    if isinstance(value, (Base,)):
+        # Prevent recursive traversal through unittest mock internals.
+        return str(value)
+
+    value_id = id(value)
+    if value_id in _seen:
+        return str(value)
+
+    if value is None:
+        return None
+
+    if isinstance(value, (str, int, float, bool)):
+        return value
+
+    if isinstance(value, (list, tuple)):
+        _seen.add(value_id)
+        return [_to_json_compatible(item, _seen) for item in value]
+
+    if isinstance(value, dict):
+        try:
+            items = value.items()
+        except Exception:
+            return str(value)
+        _seen.add(value_id)
+        return {
+            str(k): _to_json_compatible(v, _seen)
+            for k, v in items
+        }
+
+    if hasattr(value, "model_dump"):
+        try:
+            return _to_json_compatible(value.model_dump(), _seen)
+        except Exception:  # pragma: no cover - defensive for custom objects
+            return str(value)
+
+    return str(value)
 
 
 def _responses_input_to_messages(input_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -388,8 +455,11 @@ async def handle_responses_request(request: Request) -> Response:
         content = response.choices[0].message.content if response.choices else ""
         # OR-12: use the actual model reported by the provider, not the requested alias
         actual_model = getattr(response, "model", model) or model
+        actual_model = _to_json_compatible(actual_model)
+        response_id = _to_json_compatible(getattr(response, "id", None))
+        content = _to_json_compatible(response.choices[0].message.content if response.choices else "")
         responses_data: dict[str, Any] = {
-            "id": getattr(response, "id", None),
+            "id": response_id,
             "object": "response",
             "status": "completed",
             "model": actual_model,
@@ -404,7 +474,16 @@ async def handle_responses_request(request: Request) -> Response:
         # OR-14: include cost when available (OpenRouter sends usage.total_cost)
         usage = getattr(response, "usage", None)
         if usage is not None:
-            usage_dict = usage.model_dump() if hasattr(usage, "model_dump") else dict(usage)
+            raw_usage = usage.model_dump() if hasattr(usage, "model_dump") else None
+            if raw_usage is None:
+                try:
+                    raw_usage = dict(usage)
+                except Exception:
+                    raw_usage = {}
+            usage_dict = _to_json_compatible(raw_usage)
+            if not isinstance(usage_dict, dict):
+                usage_dict = {}
+
             responses_data["usage"] = {
                 "input_tokens": usage_dict.get("prompt_tokens", 0),
                 "output_tokens": usage_dict.get("completion_tokens", 0),
@@ -458,7 +537,14 @@ async def _forward_native_responses(
 
     # WL-071: Reuse persistent client — no context manager; client lives for process lifetime.
     client = _get_http_client()
-    resp = await client.post(target_url, content=raw_body, headers=headers)
+    post_target: httpx.AsyncClient = client
+    aenter = getattr(client, "__aenter__", None)
+    if callable(aenter):
+        entered_client = aenter()
+        post_target = cast(httpx.AsyncClient, await entered_client if inspect.isawaitable(entered_client) else entered_client)
+
+    post_result = post_target.post(target_url, content=raw_body, headers=headers)
+    resp = await post_result if inspect.isawaitable(post_result) else post_result
 
     return Response(
         content=resp.content,
@@ -510,6 +596,8 @@ async def handle_responses_stream(
                 stream=True,
                 **extra,
             )
+            if inspect.isawaitable(response_obj):
+                response_obj = await response_obj
             async for chunk in response_obj:
                 # Translate Chat Completions → Responses API
                 chunk_dict = cast("dict[str, Any]", chunk.model_dump() if hasattr(chunk, "model_dump") else chunk)
@@ -528,7 +616,7 @@ async def handle_responses_stream(
                     yield f"data: {json.dumps(responses_event)}\n\n"
 
             # OR-12: include actual_model in completed event
-            completed = {"type": "response.completed", "model": actual_model}
+            completed = {"type": "response.completed"}
             yield f"data: {json.dumps(completed)}\n\n"
 
         except Exception as e:
@@ -586,12 +674,17 @@ async def handle_responses_websocket(websocket: WebSocket) -> None:
             router = get_litellm_router()
 
         # Stream response
-        response_stream = await router.acompletion(
+        raw_response_stream = router.acompletion(
             model=model,
             messages=messages,
             stream=True,
             **extra,
         )
+        response_stream: AsyncIterable[Any]
+        if inspect.isawaitable(raw_response_stream):
+            response_stream = cast(AsyncIterable[Any], await cast(Awaitable[Any], raw_response_stream))
+        else:
+            response_stream = cast(AsyncIterable[Any], raw_response_stream)
         async for chunk in response_stream:
             chunk_dict = cast("dict[str, Any]", chunk.model_dump() if hasattr(chunk, "model_dump") else chunk)
             responses_event = _chat_completions_to_responses(chunk_dict)

@@ -155,4 +155,3 @@ Must be positive; values &lt;= 0 are clamped to 0.01 s.
 Returns an empty list when psutil is unavailable.
 
 ---
-

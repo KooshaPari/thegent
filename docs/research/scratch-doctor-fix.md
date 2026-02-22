@@ -1,7 +1,7 @@
 # Proactive Doctor --fix Feature - Implementation Status
 
-> **WORK_STREAM ID:** scratch-doctor-fix  
-> **Priority:** P2  
+> **WORK_STREAM ID:** scratch-doctor-fix
+> **Priority:** P2
 > **Status:** ✅ Complete
 
 ## Summary
@@ -31,14 +31,14 @@ The proactive `doctor --fix` feature is implemented in `src/thegent/doctor.py`:
 def run_doctor(fix: bool = False) -> bool:
     """Run all health checks and report results."""
     # ... run checks ...
-    
+
     # Apply fixes if requested
     if fix:
         _apply_fixes(results)
-    
+
     # Display results
     success = _display_results(results)
-    
+
     return success
 ```
 

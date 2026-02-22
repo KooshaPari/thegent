@@ -52,7 +52,7 @@ CI parity note:
 - CI runs that canonical command through the DAG runner (`quality:dag:ci:junit`) to produce `.quality/summary.md`, `.quality/last-run.json`, and JUnit XML.
 
 Quality alias migration note (WL-123):
-- Deprecated aliases (for example `quality-a*`, `quality-fix*`, `quality:full`) are retired in favor of canonical commands.
+- Deprecated aliases (for example `quality-a*`, `quality-fix*`) are retired in favor of canonical commands.
 - Replacement mapping is source-controlled in `config/deprecated_quality_aliases.json`.
 - Audit locally with `task quality:deprecated-aliases`.
 - Enforce in strict mode with `task quality:deprecated-aliases:strict` (non-zero exit if deprecated aliases remain).
@@ -259,13 +259,13 @@ repos:
         entry: ruff check
         language: system
         types: [python]
-      
+
       - id: ruff-format
         name: Ruff Format
         entry: ruff format --check
         language: system
         types: [python]
-      
+
       - id: pyright
         name: Type Check
         entry: pyright
@@ -328,7 +328,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     api_key: str = ""
-    
+
     @classmethod
     def from_env(cls):
         return cls()  # Reads from environment
@@ -371,7 +371,7 @@ def test_hook_execution_time():
     start = time.perf_counter()
     result = execute_hook()
     elapsed = time.perf_counter() - start
-    
+
     assert elapsed < 0.1, f"Hook took {elapsed:.3f}s (target: 0.1s)"
 ```
 
@@ -385,23 +385,23 @@ def test_hook_execution_time():
 def calculate_metrics(values: list[float]) -> dict[str, float]:
     """
     Calculate statistical metrics for a list of values.
-    
+
     Args:
         values: List of numeric values to analyze
-        
+
     Returns:
         Dictionary with mean, median, std_dev, min, max
-        
+
     Raises:
         ValueError: If values list is empty
-        
+
     Example:
         >>> calculate_metrics([1, 2, 3, 4, 5])
         {'mean': 3.0, 'median': 3.0, 'std_dev': 1.41}
     """
     if not values:
         raise ValueError("Values list cannot be empty")
-    
+
     n = len(values)
     mean = sum(values) / n
     # ...
@@ -460,7 +460,7 @@ Links to related modules and documentation.
 
 ## 9. Extension Summary
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

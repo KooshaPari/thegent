@@ -96,4 +96,3 @@ validate_action(self: Any, action_description: str, tags: set[str])
 Validate an agent's intended action against the constitution.
 
 ---
-

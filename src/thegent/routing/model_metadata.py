@@ -1,6 +1,7 @@
 """Model metadata registry for all models."""
 
 from typing import Any
+from thegent.routing.harness_model_mapping import resolve_model_for_backend
 
 # Comprehensive model metadata registry
 MODEL_METADATA: dict[str, dict[str, Any]] = {
@@ -383,6 +384,49 @@ MODEL_METADATA: dict[str, dict[str, Any]] = {
 }
 
 
+def _normalize_model_id_token(model_id: str) -> str:
+    """Normalize model IDs to token-comparable form."""
+    return model_id.lower().replace("-", "").replace(".", "").replace("/", "").replace("_", "")
+
+
+def _model_id_candidates(model_id: str) -> list[str]:
+    """Return increasingly specific candidate IDs for lookup.
+
+    Handles provider/custom prefixes and mixed namespace styles
+    without requiring a strict one-to-one match.
+    """
+    raw = model_id.strip()
+    if not raw:
+        return []
+
+    candidates: list[str] = []
+    queue: list[str] = [raw]
+    seen: set[str] = set()
+
+    while queue:
+        candidate = queue.pop(0)
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        candidates.append(candidate)
+
+        lower = candidate.strip().lower()
+
+        # Prefix-stripping for transport wrappers (custom:, provider:, openrouter/, etc.)
+        if ":" in candidate:
+            queue.append(candidate.split(":", 1)[1].strip())
+        if "/" in candidate:
+            queue.append(candidate.split("/", 1)[1].strip())
+
+        for sep in ("-", "_"):
+            for prefix in ("openrouter", "custom", "provider", "thegent", "codex"):
+                marker = f"{prefix}{sep}"
+                if lower.startswith(marker):
+                    queue.append(candidate[len(marker) :].strip())
+
+    return candidates
+
+
 def get_model_metadata(model_id: str) -> dict[str, Any] | None:
     """Get comprehensive metadata for a model.
 
@@ -392,17 +436,20 @@ def get_model_metadata(model_id: str) -> dict[str, Any] | None:
     Returns:
         Model metadata dict or None if not found
     """
-    # Direct lookup
-    if model_id in MODEL_METADATA:
-        return MODEL_METADATA[model_id]
+    resolved_model_id = resolve_model_for_backend(model_id)
+    candidates = _model_id_candidates(resolved_model_id)
+    if resolved_model_id != model_id:
+        candidates.extend(_model_id_candidates(model_id))
 
-    # Normalize and try variations
-    normalized = model_id.lower().replace("-", "").replace(".", "").replace("/", "").replace("_", "")
+    for candidate in candidates:
+        if candidate in MODEL_METADATA:
+            return MODEL_METADATA[candidate]
 
-    for key, metadata in MODEL_METADATA.items():
-        key_normalized = key.lower().replace("-", "").replace(".", "").replace("/", "").replace("_", "")
-        if key_normalized == normalized:
-            return metadata
+    normalized_map = {_normalize_model_id_token(key): metadata for key, metadata in MODEL_METADATA.items()}
+    for candidate in candidates:
+        normalized_candidate = _normalize_model_id_token(candidate)
+        if normalized_candidate in normalized_map:
+            return normalized_map[normalized_candidate]
 
     return None
 

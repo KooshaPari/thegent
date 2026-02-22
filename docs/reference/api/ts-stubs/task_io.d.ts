@@ -12,4 +12,3 @@ export declare class TaskOutput extends BaseModel {
 
 export declare class TaskSpec extends BaseModel {
 }
-

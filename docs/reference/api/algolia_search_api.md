@@ -77,4 +77,3 @@ Render search component HTML.
 **Returns**: HTML string
 
 ---
-

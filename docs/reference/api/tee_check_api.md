@@ -81,4 +81,3 @@ Raise error if not running in TEE and environment requires it.
 Helper for governance audit emission.
 
 ---
-

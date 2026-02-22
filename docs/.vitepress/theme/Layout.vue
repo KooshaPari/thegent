@@ -34,7 +34,7 @@ const { frontmatter, page } = useData()
     <template #page-bottom>
       <slot name="page-bottom" />
     </template>
-    
+
     <!-- Global Components -->
     <ToastContainer />
     <BackToTop />

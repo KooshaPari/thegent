@@ -449,4 +449,3 @@ Get tool artifact generator.
 **Returns**: ToolArtifactGenerator instance
 
 ---
-

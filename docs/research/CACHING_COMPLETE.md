@@ -1,7 +1,7 @@
 # Caching, Indexing & Pre-warming Complete Practical Guide
 
 > **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
-> **Related**: 
+> **Related**:
 > - [Caching Indexing Prewarming Deep Research](./CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md)
 > - [Library Replacement Complete](./LIBRARY_REPLACEMENT_COMPLETE.md)
 > - [Process Optimization Plan](../plans/PROCESS_OPTIMIZATION_PLAN.md)
@@ -99,7 +99,7 @@ import json
 
 class MultiLevelCache:
     """Multi-level cache with memory → disk → network fallback."""
-    
+
     def __init__(
         self,
         memory_size: int = 1000,
@@ -110,17 +110,17 @@ class MultiLevelCache:
     ):
         # Level 1: Memory cache
         self.memory_cache = TTLCache(maxsize=memory_size, ttl=memory_ttl)
-        
+
         # Level 2: Disk cache
         self.disk_cache = dc.Cache(disk_path)
         self.disk_ttl = disk_ttl
-        
+
         # Level 3: Network cache (optional)
         self.redis_client = None
         if redis_url:
             import redis
             self.redis_client = redis.from_url(redis_url)
-    
+
     def _make_key(self, namespace: str, *args, **kwargs) -> str:
         """Generate cache key from namespace and arguments."""
         key_data = {
@@ -130,15 +130,15 @@ class MultiLevelCache:
         }
         key_str = json.dumps(key_data, sort_keys=True)
         return hashlib.sha256(key_str.encode()).hexdigest()
-    
+
     def get(self, namespace: str, *args, **kwargs) -> Optional[Any]:
         """Get value from cache, checking all levels."""
         key = self._make_key(namespace, *args, **kwargs)
-        
+
         # Level 1: Memory cache
         if key in self.memory_cache:
             return self.memory_cache[key]
-        
+
         # Level 2: Disk cache
         disk_key = f"{namespace}:{key}"
         if disk_key in self.disk_cache:
@@ -146,7 +146,7 @@ class MultiLevelCache:
             # Promote to memory cache
             self.memory_cache[key] = value
             return value
-        
+
         # Level 3: Network cache (if available)
         if self.redis_client:
             redis_key = f"thegent:{namespace}:{key}"
@@ -157,20 +157,20 @@ class MultiLevelCache:
                 self.disk_cache[disk_key] = value
                 self.memory_cache[key] = value
                 return value
-        
+
         return None
-    
+
     def set(self, namespace: str, value: Any, *args, **kwargs) -> None:
         """Set value in all cache levels."""
         key = self._make_key(namespace, *args, **kwargs)
-        
+
         # Level 1: Memory cache
         self.memory_cache[key] = value
-        
+
         # Level 2: Disk cache
         disk_key = f"{namespace}:{key}"
         self.disk_cache.set(disk_key, value, expire=self.disk_ttl)
-        
+
         # Level 3: Network cache (if available)
         if self.redis_client:
             redis_key = f"thegent:{namespace}:{key}"
@@ -179,7 +179,7 @@ class MultiLevelCache:
                 self.disk_ttl,
                 json.dumps(value),
             )
-    
+
     def clear(self, namespace: Optional[str] = None) -> None:
         """Clear cache, optionally for a specific namespace."""
         if namespace:
@@ -190,12 +190,12 @@ class MultiLevelCache:
             ]
             for k in keys_to_remove:
                 del self.memory_cache[k]
-            
+
             # Clear disk cache entries for namespace
             for key in list(self.disk_cache):
                 if key.startswith(f"{namespace}:"):
                     del self.disk_cache[key]
-            
+
             # Clear Redis entries for namespace
             if self.redis_client:
                 pattern = f"thegent:{namespace}:*"
@@ -226,7 +226,7 @@ def get_git_status(cwd: str) -> dict:
     cached = cache.get("git", cwd=cwd)
     if cached:
         return cached
-    
+
     # Compute git status
     result = subprocess.run(
         ["git", "status", "--porcelain"],
@@ -235,7 +235,7 @@ def get_git_status(cwd: str) -> dict:
         text=True,
     )
     status = {"output": result.stdout, "returncode": result.returncode}
-    
+
     # Cache result
     cache.set("git", status, cwd=cwd)
     return status
@@ -267,12 +267,12 @@ from typing import List, Optional
 
 class FileIndex:
     """File index with SQLite backend."""
-    
+
     def __init__(self, index_path: str = "~/.cache/thegent/file-index.db"):
         self.index_path = Path(index_path).expanduser()
         self.index_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
-    
+
     def _init_db(self) -> None:
         """Initialize SQLite database."""
         conn = sqlite3.connect(self.index_path)
@@ -299,30 +299,30 @@ class FileIndex:
         """)
         conn.commit()
         conn.close()
-    
+
     def index_directory(self, root: Path, max_age: int = 300) -> None:
         """Index directory, skipping if index is fresh."""
         root = Path(root).resolve()
-        
+
         # Check if index is fresh
         conn = sqlite3.connect(self.index_path)
         cursor = conn.execute("""
             SELECT MAX(indexed_at) FROM file_index WHERE parent = ?
         """, (str(root),))
         result = cursor.fetchone()
-        
+
         if result and result[0]:
             last_indexed = datetime.fromtimestamp(result[0])
             if datetime.now() - last_indexed < timedelta(seconds=max_age):
                 conn.close()
                 return  # Index is fresh
-        
+
         # Index directory
         now = int(datetime.now().timestamp())
         for path in root.rglob("*"):
             if path.is_symlink():
                 continue
-            
+
             conn.execute("""
                 INSERT OR REPLACE INTO file_index
                 (path, name, extension, size, mtime, is_dir, parent, indexed_at)
@@ -337,10 +337,10 @@ class FileIndex:
                 str(path.parent),
                 now,
             ))
-        
+
         conn.commit()
         conn.close()
-    
+
     def find_files(
         self,
         pattern: str,
@@ -349,26 +349,26 @@ class FileIndex:
     ) -> List[Path]:
         """Find files matching pattern."""
         conn = sqlite3.connect(self.index_path)
-        
+
         query = "SELECT path FROM file_index WHERE is_dir = 0"
         params = []
-        
+
         if root:
             query += " AND path LIKE ?"
             params.append(f"{root}%")
-        
+
         if extension:
             query += " AND extension = ?"
             params.append(extension)
-        
+
         if pattern:
             query += " AND name LIKE ?"
             params.append(f"%{pattern}%")
-        
+
         cursor = conn.execute(query, params)
         results = [Path(row[0]) for row in cursor.fetchall()]
         conn.close()
-        
+
         return results
 ```
 
@@ -380,16 +380,16 @@ from watchdog.events import FileSystemEventHandler
 
 class FileIndexWatcher(FileSystemEventHandler):
     """Watch for file system changes and invalidate index."""
-    
+
     def __init__(self, file_index: FileIndex):
         self.file_index = file_index
         self.observer = Observer()
-    
+
     def on_created(self, event):
         """Handle file creation."""
         if not event.is_directory:
             self.file_index.index_directory(Path(event.src_path).parent)
-    
+
     def on_deleted(self, event):
         """Handle file deletion."""
         if not event.is_directory:
@@ -397,17 +397,17 @@ class FileIndexWatcher(FileSystemEventHandler):
             conn.execute("DELETE FROM file_index WHERE path = ?", (event.src_path,))
             conn.commit()
             conn.close()
-    
+
     def on_modified(self, event):
         """Handle file modification."""
         if not event.is_directory:
             self.file_index.index_directory(Path(event.src_path).parent)
-    
+
     def watch(self, path: Path):
         """Start watching directory."""
         self.observer.schedule(self, str(path), recursive=True)
         self.observer.start()
-    
+
     def stop(self):
         """Stop watching."""
         self.observer.stop()
@@ -445,12 +445,12 @@ from pathlib import Path
 
 class PredictivePrewarmer:
     """Predictive pre-warming based on usage patterns."""
-    
+
     def __init__(self, history_path: str = "~/.cache/thegent/prewarm-history.json"):
         self.history_path = Path(history_path).expanduser()
         self.history_path.parent.mkdir(parents=True, exist_ok=True)
         self.history = self._load_history()
-    
+
     def _load_history(self) -> Dict:
         """Load pre-warm history."""
         if self.history_path.exists():
@@ -461,59 +461,59 @@ class PredictivePrewarmer:
             "command_patterns": {},
             "last_prewarm": None,
         }
-    
+
     def _save_history(self) -> None:
         """Save pre-warm history."""
         with open(self.history_path, "w") as f:
             json.dump(self.history, f, indent=2)
-    
+
     def record_command(self, command: str, cwd: str) -> None:
         """Record command execution."""
         now = datetime.now()
         hour = now.hour
-        
+
         # Record time pattern
         if hour not in self.history["time_patterns"]:
             self.history["time_patterns"][hour] = []
         self.history["time_patterns"][hour].append(command)
-        
+
         # Record command pattern
         if command not in self.history["command_patterns"]:
             self.history["command_patterns"][command] = []
         self.history["command_patterns"][command].append(cwd)
-        
+
         self._save_history()
-    
+
     def predict_next_commands(self, current_command: str) -> List[str]:
         """Predict next likely commands based on history."""
         if current_command not in self.history["command_patterns"]:
             return []
-        
+
         # Find common follow-up commands
         follow_ups = {}
         for cwd in self.history["command_patterns"][current_command]:
             # Find next command in same directory
             # (simplified - would need full command history)
             pass
-        
+
         return sorted(follow_ups.items(), key=lambda x: x[1], reverse=True)[:5]
-    
+
     def prewarm_by_time(self) -> List[str]:
         """Pre-warm based on time of day."""
         now = datetime.now()
         hour = now.hour
-        
+
         if hour not in self.history["time_patterns"]:
             return []
-        
+
         # Get most common commands for this hour
         commands = self.history["time_patterns"][hour]
         command_counts = {}
         for cmd in commands:
             command_counts[cmd] = command_counts.get(cmd, 0) + 1
-        
+
         return sorted(command_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-    
+
     def prewarm(self, cache: MultiLevelCache) -> None:
         """Execute predictive pre-warming."""
         # Time-based pre-warming
@@ -521,7 +521,7 @@ class PredictivePrewarmer:
         for cmd, _ in time_commands:
             # Pre-warm command (simplified)
             pass
-        
+
         self.history["last_prewarm"] = datetime.now().isoformat()
         self._save_history()
 ```
@@ -533,11 +533,11 @@ def prewarm_targets(cache: MultiLevelCache, cwd: Path) -> None:
     """Pre-warm common targets."""
     # Git status
     get_git_status(str(cwd))
-    
+
     # File index
     index = FileIndex()
     index.index_directory(cwd)
-    
+
     # Common greps
     common_patterns = ["TODO", "FIXME", "XXX"]
     for pattern in common_patterns:
@@ -557,31 +557,31 @@ from typing import Dict, Tuple
 
 class FrecencyScore:
     """Frecency scoring (frequency × recency)."""
-    
+
     def __init__(self):
         self.scores: Dict[str, Tuple[int, datetime]] = {}  # path -> (score, last_access)
-    
+
     def record_access(self, path: str) -> None:
         """Record access to path."""
         now = datetime.now()
-        
+
         if path in self.scores:
             score, last_access = self.scores[path]
             # Increase score
             score += 1
         else:
             score = 1
-        
+
         self.scores[path] = (score, now)
-    
+
     def get_frecency(self, path: str) -> float:
         """Calculate frecency score for path."""
         if path not in self.scores:
             return 0.0
-        
+
         score, last_access = self.scores[path]
         age = datetime.now() - last_access
-        
+
         # Age multipliers (zoxide-style)
         if age < timedelta(hours=1):
             multiplier = 4.0
@@ -591,9 +591,9 @@ class FrecencyScore:
             multiplier = 0.5
         else:
             multiplier = 0.25
-        
+
         return score * multiplier
-    
+
     def get_top_paths(self, n: int = 10) -> List[Tuple[str, float]]:
         """Get top N paths by frecency."""
         frecencies = [
@@ -660,10 +660,10 @@ def make_versioned_key(namespace: str, tool: str, *args, **kwargs) -> str:
 ```python
 class CacheInvalidator(FileSystemEventHandler):
     """Invalidate cache on file system events."""
-    
+
     def __init__(self, cache: MultiLevelCache):
         self.cache = cache
-    
+
     def on_modified(self, event):
         """Invalidate cache on file modification."""
         if event.src_path.endswith(".git/index"):
@@ -686,25 +686,25 @@ from pathlib import Path
 
 class MemoryMappedIndex:
     """Memory-mapped file index for zero-copy access."""
-    
+
     def __init__(self, index_path: Path):
         self.index_path = index_path
         self.mmap = None
         self._open_mmap()
-    
+
     def _open_mmap(self) -> None:
         """Open memory-mapped file."""
         if not self.index_path.exists():
             self.index_path.touch()
-        
+
         with open(self.index_path, "r+b") as f:
             self.mmap = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-    
+
     def search(self, pattern: bytes) -> List[int]:
         """Search for pattern in memory-mapped file (zero-copy)."""
         if not self.mmap:
             return []
-        
+
         results = []
         start = 0
         while True:
@@ -713,7 +713,7 @@ class MemoryMappedIndex:
                 break
             results.append(pos)
             start = pos + 1
-        
+
         return results
 ```
 
@@ -728,7 +728,7 @@ async def async_cache_get(cache_path: Path, key: str) -> Optional[bytes]:
     key_path = cache_path / key
     if not key_path.exists():
         return None
-    
+
     async with aio_open(key_path, "rb") as f:
         return await f.read()
 
@@ -773,14 +773,14 @@ def prewarm(
     """Pre-warm caches."""
     cache = MultiLevelCache()
     cwd = Path.cwd()
-    
+
     if "git" in targets:
         get_git_status_cached(str(cwd))
-    
+
     if "index" in targets:
         index = FileIndex()
         index.index_directory(cwd)
-    
+
     if predictive:
         prewarmer = PredictivePrewarmer()
         prewarmer.prewarm(cache)
@@ -918,7 +918,7 @@ print(f"Indexed files: {cursor.fetchone()[0]}")
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

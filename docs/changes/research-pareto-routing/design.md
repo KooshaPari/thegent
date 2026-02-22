@@ -99,7 +99,7 @@ pub struct ParetoRouter {
     hysteresis_band: (f64, f64),  // (low, high)
     dwell_time: Duration,         // Typically 5 minutes
     max_dwell: Duration,          // Typically 30 minutes
-    
+
     // Tracking state
     current_modes: std::collections::HashMap<String, SessionState>,
     metrics: RouterMetrics,
@@ -156,7 +156,7 @@ impl RiskCalculator {
         let cost_factor = self.assess_cost(task);
         let dependency_factor = self.assess_dependencies(task);
         let security_factor = if task.security_sensitive { 0.3 } else { 0.0 };
-        
+
         // Composite score
         let score = (
             complexity_score * self.complexity_weight +
@@ -164,7 +164,7 @@ impl RiskCalculator {
             dependency_factor * self.dependency_weight +
             security_factor  // Non-negotiable security addition
         ).min(1.0).max(0.0);
-        
+
         RiskAssessment {
             score,
             complexity: complexity_score,
@@ -178,7 +178,7 @@ impl RiskCalculator {
             },
         }
     }
-    
+
     fn assess_complexity(&self, task: &Task) -> f64 {
         match task.complexity {
             Complexity::Simple => 0.1,
@@ -187,14 +187,14 @@ impl RiskCalculator {
             Complexity::VeryComplex => 0.95,
         }
     }
-    
+
     fn assess_cost(&self, task: &Task) -> f64 {
         // Map cost in cents to 0.0-1.0 scale
         // 0-10 cents → 0.0, 100+ cents → 1.0
         let cost = task.estimated_cost_cents as f64;
         (cost / 100.0).min(1.0)
     }
-    
+
     fn assess_dependencies(&self, task: &Task) -> f64 {
         // 0 deps → 0.0, 5+ deps → 1.0
         (task.external_dependencies.len() as f64 / 5.0).min(1.0)
@@ -232,29 +232,29 @@ impl HysteresisManager {
         if !self.in_hysteresis_band(new_risk_score) {
             return (true, HysteresisReason::OutsideBand);
         }
-        
+
         // Case 2: In band, check dwell time
         if let Some(switched_at) = state.switched_at {
             if switched_at.elapsed() < self.dwell_time {
                 return (false, HysteresisReason::DwellTimeActive);
             }
         }
-        
+
         // Case 3: Exceeded max dwell → force re-evaluation
         if let Some(entered_at) = state.entered_band_at {
             if entered_at.elapsed() > self.max_dwell {
                 return (true, HysteresisReason::MaxDwellExceeded);
             }
         }
-        
+
         // Case 4: Large risk change (>0.2) → override dwell
         if (new_risk_score - old_risk_score).abs() > 0.2 {
             return (true, HysteresisReason::LargeRiskChange);
         }
-        
+
         (false, HysteresisReason::DwellActive)
     }
-    
+
     fn in_hysteresis_band(&self, score: f64) -> bool {
         score >= self.band_low && score <= self.band_high
     }
@@ -282,7 +282,7 @@ impl ParetoRouter {
         max_dwell: Duration,
     ) -> Self {
         let hysteresis_band = (low_threshold, high_threshold);
-        
+
         Self {
             low_risk_threshold: low_threshold,
             high_risk_threshold: high_threshold,
@@ -293,7 +293,7 @@ impl ParetoRouter {
             metrics: RouterMetrics::default(),
         }
     }
-    
+
     pub fn route(
         &mut self,
         session_id: &str,
@@ -304,11 +304,11 @@ impl ParetoRouter {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         // Get or create session state
         let old_state = self.current_modes.get(session_id).cloned();
         let old_risk = risk.score; // Simplified; real impl tracks previous
-        
+
         // Hysteresis check
         let hysteresis_mgr = HysteresisManager {
             band_low: self.hysteresis_band.0,
@@ -316,7 +316,7 @@ impl ParetoRouter {
             dwell_time: self.dwell_time,
             max_dwell: self.max_dwell,
         };
-        
+
         let (should_switch, reason) = if let Some(state) = &old_state {
             hysteresis_mgr.should_switch(
                 &HysteresisState {
@@ -331,7 +331,7 @@ impl ParetoRouter {
         } else {
             (true, HysteresisReason::OutsideBand)
         };
-        
+
         // Determine mode
         let new_mode = if should_switch {
             if risk.score < self.low_risk_threshold {
@@ -349,7 +349,7 @@ impl ParetoRouter {
                 RoutingMode::Lifecycle
             }
         };
-        
+
         // Update state
         let switched = old_state.as_ref().map(|s| s.mode) != Some(new_mode);
         if switched {
@@ -362,7 +362,7 @@ impl ParetoRouter {
             );
             self.metrics.route_changes += 1;
         }
-        
+
         // Update metrics
         match new_mode {
             RoutingMode::Lifecycle => self.metrics.lifecycle_count += 1,
@@ -372,7 +372,7 @@ impl ParetoRouter {
         if reason != HysteresisReason::DwellActive {
             self.metrics.hysteresis_activations += 1;
         }
-        
+
         RoutingDecision {
             task_id: task.id.clone(),
             mode: new_mode,
@@ -391,7 +391,7 @@ impl ParetoRouter {
             timestamp: now,
         }
     }
-    
+
     pub fn get_metrics(&self) -> RouterMetrics {
         self.metrics.clone()
     }
@@ -422,11 +422,11 @@ class RouteExecutor(Protocol):
 
 class LifecycleExecutor:
     """Fast, automated execution for low-risk tasks"""
-    
+
     def __init__(self, model="gpt-5-mini", timeout_sec=60):
         self.model = model
         self.timeout_sec = timeout_sec
-    
+
     async def execute(self, task: Task) -> TaskResult:
         """Execute task with minimal planning/review"""
         # Direct execution via MCP or local agent
@@ -442,30 +442,30 @@ class LifecycleExecutor:
                 task_id=task.id,
                 error="Execution exceeded time limit",
             )
-    
+
     async def _run_task(self, task: Task) -> TaskResult:
         # Dispatch to fast agent
         pass
 
 class TheGentExecutor:
     """Plan-heavy, review-heavy execution for high-risk tasks"""
-    
+
     def __init__(self, planner_model="claude-opus", timeout_sec=300):
         self.planner_model = planner_model
         self.timeout_sec = timeout_sec
-    
+
     async def execute(self, task: Task) -> TaskResult:
         """Execute task with planning, implementation, review"""
         try:
             # Phase 1: Plan
             plan = await self._plan(task)
-            
+
             # Phase 2: Implement
             result = await self._implement(task, plan)
-            
+
             # Phase 3: Review
             review = await self._review(task, plan, result)
-            
+
             return TaskResult(
                 status="success",
                 task_id=task.id,
@@ -479,15 +479,15 @@ class TheGentExecutor:
                 task_id=task.id,
                 error=str(e),
             )
-    
+
     async def _plan(self, task: Task) -> Plan:
         # Invoke planner
         pass
-    
+
     async def _implement(self, task: Task, plan: Plan) -> Implementation:
         # Execute plan
         pass
-    
+
     async def _review(self, task: Task, plan: Plan, impl: Implementation) -> Review:
         # Operator review
         pass
@@ -500,7 +500,7 @@ class TheGentExecutor:
 
 class RoutingOrchestrator:
     """Main orchestrator for Pareto routing"""
-    
+
     def __init__(self):
         self.router = thegent_router.ParetoRouter(
             low_threshold=0.3,
@@ -508,35 +508,35 @@ class RoutingOrchestrator:
             dwell_time_secs=300,  # 5 minutes
             max_dwell_secs=1800,  # 30 minutes
         )
-        
+
         self.lifecycle_executor = LifecycleExecutor()
         self.thegent_executor = TheGentExecutor()
-        
+
         self.audit_logger = AuditLogger()
-    
+
     async def route_and_execute(self, task: Task, session_id: str) -> TaskResult:
         """Main entry point: route task and execute"""
-        
+
         # Step 1: Assess risk
         risk = self._assess_risk(task)
-        
+
         # Step 2: Route
         decision = self.router.route(session_id, task, risk)
-        
+
         # Step 3: Log decision
         await self.audit_logger.log_routing_decision(decision, risk)
-        
+
         # Step 4: Execute via appropriate route
         if decision.mode == thegent_router.RoutingMode.Lifecycle:
             result = await self.lifecycle_executor.execute(task)
         else:  # TheGent
             result = await self.thegent_executor.execute(task)
-        
+
         # Step 5: Log result
         await self.audit_logger.log_task_result(task.id, decision, result)
-        
+
         return result
-    
+
     def _assess_risk(self, task: Task) -> thegent_router.RiskAssessment:
         """Convert Python task to Rust risk assessment"""
         risk_calc = thegent_router.RiskCalculator(
@@ -544,7 +544,7 @@ class RoutingOrchestrator:
             cost_weight=0.35,
             dependency_weight=0.25,
         )
-        
+
         rust_task = thegent_router.Task(
             id=task.id,
             title=task.title,
@@ -555,9 +555,9 @@ class RoutingOrchestrator:
             security_sensitive=task.is_security_sensitive(),
             tags=task.tags,
         )
-        
+
         return risk_calc.assess_risk(rust_task)
-    
+
     def _map_complexity(self, task: Task) -> thegent_router.Complexity:
         if "simple" in task.tags.lower():
             return thegent_router.Complexity.Simple
@@ -567,7 +567,7 @@ class RoutingOrchestrator:
             return thegent_router.Complexity.Complex
         else:
             return thegent_router.Complexity.VeryComplex
-    
+
     def get_routing_stats(self) -> dict:
         """Get routing metrics for monitoring"""
         metrics = self.router.get_metrics()
@@ -591,10 +591,10 @@ class RoutingOrchestrator:
 
 class AuditLogger:
     """Log routing decisions for compliance and debugging"""
-    
+
     def __init__(self, log_path="logs/routing.jsonl"):
         self.log_path = log_path
-    
+
     async def log_routing_decision(
         self,
         decision: thegent_router.RoutingDecision,
@@ -619,11 +619,11 @@ class AuditLogger:
                 if decision.dwell_remaining else None
             ),
         }
-        
+
         # Write to log file
         with open(self.log_path, "a") as f:
             f.write(json.dumps(entry) + "\n")
-    
+
     async def log_task_result(
         self,
         task_id: str,
@@ -639,7 +639,7 @@ class AuditLogger:
             "status": result.status,
             "error": result.error or None,
         }
-        
+
         with open(self.log_path, "a") as f:
             f.write(json.dumps(entry) + "\n")
 ```
@@ -660,7 +660,7 @@ class Task:
     complexity_tag: str  # "simple", "moderate", "complex", "very_complex"
     dependencies: List[str]  # External service/API names
     tags: List[str]
-    
+
     def is_security_sensitive(self) -> bool:
         return any(tag in ("security", "auth", "crypto") for tag in self.tags)
 ```
@@ -785,6 +785,6 @@ log_level = "info"
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-02-18  
+**Document Version**: 1.0
+**Last Updated**: 2026-02-18
 **Status**: Ready for implementation

@@ -6,11 +6,11 @@ Source: docs/plans/SYNC_UPDATE_COMMAND_AND_SYSTEM_AUDIT_PLAN.md
 
 # Sync/Update Command & Full System Audit Plan
 
-**Purpose:** Design and implement unified `thegent sync`/`update` command with full system research, audit, and integration with work stream plans and research.  
-**Status:** Design & Research Phase  
-**Date:** 2026-02-18  
-**Priority:** P1  
-**Depends:** —  
+**Purpose:** Design and implement unified `thegent sync`/`update` command with full system research, audit, and integration with work stream plans and research.
+**Status:** Design & Research Phase
+**Date:** 2026-02-18
+**Priority:** P1
+**Depends:** —
 **Related:** [WORK_STREAM.md](../reference/WORK_STREAM.md), [UNIFIED_WORK_STREAM_DESIGN.md](../reference/UNIFIED_WORK_STREAM_DESIGN.md), [RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md](../research/RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md)
 
 ---
@@ -87,7 +87,7 @@ Create a unified `thegent sync`/`update` command that orchestrates all synchroni
 # Unified sync command
 thegent sync [OPTIONS] [COMPONENTS...]
 
-# Unified update command  
+# Unified update command
 thegent update [OPTIONS] [COMPONENTS...]
 
 # System audit
@@ -896,22 +896,22 @@ def calculate_agent_limit(resources: ResourceSnapshot) -> int:
     """Calculate max concurrent agents based on available resources."""
     # CPU gate: Leave 30% CPU for system
     cpu_limit = int((resources.cpu_count * 0.7) / 0.026)  # 26ms CPU/agent
-    
+
     # Memory gate: Leave 4GB for system
     mem_limit = int((resources.mem_available_mb - 4096) / 40)  # 40MB/agent
-    
+
     # FD gate: Leave 1024 FDs for system
     fd_limit = int((resources.fd_limit - 1024) / 30)  # 30 FDs/agent
-    
+
     # I/O gate: Leave 20% I/O bandwidth
     io_limit = 300  # Conservative estimate
-    
+
     # Network gate: Leave 20% network
     net_limit = 300  # Conservative estimate
-    
+
     # Take minimum of all gates
     limit = min(cpu_limit, mem_limit, fd_limit, io_limit, net_limit)
-    
+
     # Apply hysteresis: Don't reduce limit immediately on spike
     return max(limit, current_limit * 0.9)  # 10% hysteresis
 ```
@@ -1682,23 +1682,23 @@ L3: File System Cache (OS-level)
 ```
 class SyncComponent(ABC):
     """Base class for sync components."""
-    
+
     @abstractmethod
     def sync(self, force: bool = False) -> SyncResult:
         """Sync component state."""
         pass
-    
+
     @abstractmethod
     def check_sync_needed(self) -> bool:
         """Check if sync is needed."""
         pass
-    
+
     @property
     @abstractmethod
     def name(self) -> str:
         """Component name."""
         pass
-    
+
     @property
     @abstractmethod
     def dependencies(self) -> list[str]:
@@ -1707,12 +1707,12 @@ class SyncComponent(ABC):
 
 class UpdateComponent(ABC):
     """Base class for update components."""
-    
+
     @abstractmethod
     def update(self, check: bool = False) -> UpdateResult:
         """Update component."""
         pass
-    
+
     @abstractmethod
     def check_update_available(self) -> bool:
         """Check if update is available."""
@@ -1720,18 +1720,18 @@ class UpdateComponent(ABC):
 
 class AuditPlugin(ABC):
     """Base class for audit plugins."""
-    
+
     @abstractmethod
     def audit(self) -> AuditResult:
         """Run audit."""
         pass
-    
+
     @property
     @abstractmethod
     def audit_type(self) -> str:
         """Audit type name."""
         pass
-    
+
     @property
     @abstractmethod
     def severity(self) -> str:
@@ -1763,11 +1763,11 @@ from thegent.sync import SyncComponent, SyncResult
 class MySyncComponent(SyncComponent):
     name = "my-component"
     dependencies = ["rules", "prompts"]
-    
+
     def sync(self, force: bool = False) -> SyncResult:
         # Implementation
         return SyncResult(success=True, changes=[])
-    
+
     def check_sync_needed(self) -> bool:
         # Implementation
         return True
@@ -1781,7 +1781,7 @@ from thegent.audit import AuditPlugin, AuditResult
 class MyAuditPlugin(AuditPlugin):
     audit_type = "my-audit"
     severity = "medium"
-    
+
     def audit(self) -> AuditResult:
         # Implementation
         return AuditResult(issues=[], fixed=0)
@@ -2352,29 +2352,29 @@ class SyncResult:
 
 class SyncComponent(ABC):
     """Base class for sync components."""
-    
+
     @property
     @abstractmethod
     def name(self) -> str:
         """Component name."""
         pass
-    
+
     @property
     @abstractmethod
     def dependencies(self) -> list[str]:
         """Component dependencies."""
         pass
-    
+
     @abstractmethod
     def sync(self, force: bool = False) -> SyncResult:
         """Sync component state."""
         pass
-    
+
     @abstractmethod
     def check_sync_needed(self) -> bool:
         """Check if sync is needed."""
         pass
-    
+
     def get_resource_requirements(self) -> dict:
         """Get resource requirements for this component."""
         return {
@@ -2397,25 +2397,25 @@ class ResourceGate:
     current: int
     limit: int
     threshold: float = 0.9  # 90% threshold
-    
+
     def check(self) -> bool:
         """Check if gate allows operation."""
         return self.current < int(self.limit * self.threshold)
-    
+
     def acquire(self) -> bool:
         """Acquire resource (non-blocking)."""
         if self.check():
             self.current += 1
             return True
         return False
-    
+
     def release(self):
         """Release resource."""
         self.current = max(0, self.current - 1)
 
 class ResourceGatekeeper:
     """Manages resource gates for sync/update/audit operations."""
-    
+
     def __init__(self):
         self.gates = {
             "cpu": ResourceGate("cpu", 0, 8),  # 8 cores available
@@ -2423,7 +2423,7 @@ class ResourceGatekeeper:
             "fd": ResourceGate("fd", 0, 9216),  # 9216 FDs available
             "io": ResourceGate("io", 0, 100),  # 100 I/O ops/sec
         }
-    
+
     def acquire_resources(self, requirements: dict) -> bool:
         """Acquire resources (all-or-nothing)."""
         # Try to acquire all resources
@@ -2440,7 +2440,7 @@ class ResourceGatekeeper:
                 gate.current += amount
                 acquired.append((gate, amount))
         return True
-    
+
     def release_resources(self, requirements: dict):
         """Release resources."""
         for gate_name, amount in requirements.items():
@@ -2460,7 +2460,7 @@ T = TypeVar('T')
 
 class Batcher(Generic[T]):
     """Intelligent batching for operations."""
-    
+
     def __init__(
         self,
         batch_func: Callable[[list[T]], None],
@@ -2472,27 +2472,27 @@ class Batcher(Generic[T]):
         self.max_wait_ms = max_wait_ms
         self.queue: deque[T] = deque()
         self.last_batch_time = time.time()
-    
+
     def add(self, item: T):
         """Add item to batch."""
         self.queue.append(item)
-        
+
         # Check if we should flush
         now = time.time()
         elapsed_ms = (now - self.last_batch_time) * 1000
-        
+
         if len(self.queue) >= self.max_batch_size or elapsed_ms >= self.max_wait_ms:
             self.flush()
-    
+
     def flush(self):
         """Flush current batch."""
         if not self.queue:
             return
-        
+
         batch = list(self.queue)
         self.queue.clear()
         self.last_batch_time = time.time()
-        
+
         # Execute batch
         self.batch_func(batch)
 ```
@@ -2509,13 +2509,13 @@ T = TypeVar('T')
 
 class MultiLevelCache:
     """Multi-level cache (L1: in-memory, L2: shared memory, L3: file system)."""
-    
+
     def __init__(self, cache_dir: Path):
         self.cache_dir = cache_dir
         self.l1_cache: dict[str, tuple[float, Any]] = {}  # key -> (timestamp, value)
         self.l2_shm: Optional[mmap.mmap] = None
         self.l2_size = 10 * 1024 * 1024  # 10MB
-    
+
     def get(self, key: str) -> Optional[T]:
         """Get value from cache (try L1, then L2, then L3)."""
         # Try L1
@@ -2523,23 +2523,23 @@ class MultiLevelCache:
             timestamp, value = self.l1_cache[key]
             if time.time() - timestamp < 60:  # 60s TTL
                 return value
-        
+
         # Try L2 (shared memory)
         # ... implementation ...
-        
+
         # Try L3 (file system)
         # ... implementation ...
-        
+
         return None
-    
+
     def set(self, key: str, value: T):
         """Set value in cache (set in all levels)."""
         # Set L1
         self.l1_cache[key] = (time.time(), value)
-        
+
         # Set L2 (shared memory)
         # ... implementation ...
-        
+
         # Set L3 (file system)
         # ... implementation ...
 ```
@@ -2554,16 +2554,16 @@ import signal
 
 class OptimizedProcessPool:
     """Optimized process pool with CPU affinity and resource management."""
-    
+
     def __init__(self, size: int, cpu_affinity: Optional[list[int]] = None):
         self.size = size
         self.cpu_affinity = cpu_affinity or list(range(multiprocessing.cpu_count()))
         self.executor: Optional[ProcessPoolExecutor] = None
-    
+
     def start(self):
         """Start process pool with CPU affinity."""
         ctx = multiprocessing.get_context("spawn")
-        
+
         # Set CPU affinity for workers
         def init_worker():
             if self.cpu_affinity:
@@ -2571,13 +2571,13 @@ class OptimizedProcessPool:
                     os.sched_setaffinity(0, self.cpu_affinity)
                 except (OSError, AttributeError):
                     pass  # Fallback if not supported
-        
+
         self.executor = ProcessPoolExecutor(
             max_workers=self.size,
             mp_context=ctx,
             initializer=init_worker,
         )
-    
+
     def execute(self, func, *args, **kwargs):
         """Execute function in pool."""
         return self.executor.submit(func, *args, **kwargs)
@@ -3203,28 +3203,28 @@ class WorkStreamItemVersion:
 ```
 class ResearchSyncComponent(SyncComponent):
     """Sync component for research items."""
-    
+
     name = "research"
     dependencies = []
-    
+
     def sync(self, force: bool = False) -> SyncResult:
         """Sync research items from docs/research/."""
         changes = []
-        
+
         # Scan research directory
         research_dir = Path("docs/research")
         for doc_file in research_dir.glob("*.md"):
             # Extract items from research document
             items = self._extract_items(doc_file)
-            
+
             # Merge into work stream
             for item in items:
                 merged = self._merge_item(item)
                 if merged:
                     changes.append(f"Added/updated {item.id}")
-        
+
         return SyncResult(success=True, changes=changes)
-    
+
     def check_sync_needed(self) -> bool:
         """Check if research sync is needed."""
         # Check if any research docs modified since last sync
@@ -3241,14 +3241,14 @@ class ResearchSyncComponent(SyncComponent):
 ```
 class ImplementationSyncComponent(SyncComponent):
     """Sync component for implementation items."""
-    
+
     name = "implementation"
     dependencies = ["research"]
-    
+
     def sync(self, force: bool = False) -> SyncResult:
         """Sync implementation items."""
         changes = []
-        
+
         # Track implementation progress
         impl_items = self._get_impl_items()
         for item in impl_items:
@@ -3257,7 +3257,7 @@ class ImplementationSyncComponent(SyncComponent):
             if status != item.status:
                 self._update_item_status(item.id, status)
                 changes.append(f"Updated {item.id} status to {status}")
-        
+
         return SyncResult(success=True, changes=changes)
 ```
 
@@ -3266,24 +3266,24 @@ class ImplementationSyncComponent(SyncComponent):
 ```
 class WorkPackageSyncComponent(SyncComponent):
     """Sync component for work package items."""
-    
+
     name = "work-packages"
     dependencies = []
-    
+
     def sync(self, force: bool = False) -> SyncResult:
         """Sync work package items from 02-UNIFIED-WBS.md."""
         changes = []
-        
+
         # Parse WBS document
         wbs_file = Path("docs/plans/02-UNIFIED-WBS.md")
         work_packages = self._parse_wbs(wbs_file)
-        
+
         # Merge into work stream
         for wp in work_packages:
             merged = self._merge_work_package(wp)
             if merged:
                 changes.append(f"Added/updated {wp.id}")
-        
+
         return SyncResult(success=True, changes=changes)
 ```
 
@@ -3294,11 +3294,11 @@ class WorkPackageSyncComponent(SyncComponent):
 ```
 class ResearchUpdateComponent(UpdateComponent):
     """Update component for research items."""
-    
+
     def update(self, check: bool = False) -> UpdateResult:
         """Update research items."""
         updates = []
-        
+
         # Check for research document updates
         research_items = self._get_research_items()
         for item in research_items:
@@ -3310,7 +3310,7 @@ class ResearchUpdateComponent(UpdateComponent):
                     if not check:
                         self._update_item_version(item.id, current_version)
                     updates.append(f"Update {item.id} to version {current_version}")
-        
+
         return UpdateResult(updates=updates, applied=len(updates) if not check else 0)
 ```
 
@@ -3319,11 +3319,11 @@ class ResearchUpdateComponent(UpdateComponent):
 ```
 class ImplementationUpdateComponent(UpdateComponent):
     """Update component for implementation items."""
-    
+
     def update(self, check: bool = False) -> UpdateResult:
         """Update implementation items."""
         updates = []
-        
+
         # Check for implementation updates
         impl_items = self._get_impl_items()
         for item in impl_items:
@@ -3333,7 +3333,7 @@ class ImplementationUpdateComponent(UpdateComponent):
                 if not check:
                     self._refresh_item(item.id)
                 updates.append(f"Refresh {item.id} (dependencies updated)")
-        
+
         return UpdateResult(updates=updates, applied=len(updates) if not check else 0)
 ```
 
@@ -3352,14 +3352,14 @@ class ImplementationUpdateComponent(UpdateComponent):
 ```
 class ResearchAuditPlugin(AuditPlugin):
     """Audit plugin for research items."""
-    
+
     audit_type = "research"
     severity = "medium"
-    
+
     def audit(self) -> AuditResult:
         """Audit research items."""
         issues = []
-        
+
         # Check research completeness
         research_items = self._get_research_items()
         for item in research_items:
@@ -3371,7 +3371,7 @@ class ResearchAuditPlugin(AuditPlugin):
                     severity="high",
                     message=f"Source document missing: {item.source}",
                 ))
-            
+
             # Check if research needs expansion
             if self._needs_expansion(item):
                 issues.append(AuditIssue(
@@ -3379,7 +3379,7 @@ class ResearchAuditPlugin(AuditPlugin):
                     severity="medium",
                     message=f"Research item needs expansion",
                 ))
-        
+
         return AuditResult(issues=issues, fixed=0)
 ```
 
@@ -3388,14 +3388,14 @@ class ResearchAuditPlugin(AuditPlugin):
 ```
 class ImplementationAuditPlugin(AuditPlugin):
     """Audit plugin for implementation items."""
-    
+
     audit_type = "implementation"
     severity = "high"
-    
+
     def audit(self) -> AuditResult:
         """Audit implementation items."""
         issues = []
-        
+
         # Check implementation completeness
         impl_items = self._get_impl_items()
         for item in impl_items:
@@ -3406,11 +3406,11 @@ class ImplementationAuditPlugin(AuditPlugin):
                     severity="high",
                     message=f"Implementation marked complete but no code found",
                 ))
-            
+
             # Check implementation quality
             quality_issues = self._check_quality(item)
             issues.extend(quality_issues)
-        
+
         return AuditResult(issues=issues, fixed=0)
 ```
 

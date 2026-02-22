@@ -8,7 +8,7 @@ For now pareto seems fine to stsrt off, we'll discuss advancing it later.
 
 A couple notes.
 
-We will structure with 3 key pillars and both soft and hard constraint / optimization 
+We will structure with 3 key pillars and both soft and hard constraint / optimization
 
 Speed (conciseness needs to become a factor too, effectively average session time turns tok len so on)
 
@@ -22,7 +22,7 @@ We have baseline hard constraints then optimize in order after all are met
 I have subscriptions some with dynamically changing usage, others simply require complex scraping and math to gauage to a blended mtok.
 Theres also providers who give seasonal changes e.g. 2x usage and other items as well as rotating free or cheap models and other similar complex factors.
 
-Models and providers will be provided via structured elicitation let's assume, and some logic for budgeting over a month is given such that say a sub can be swapped with no sub, chealer/more exp or diff sub and other budgeting effectively trading commodity/resources to best optimize while at the per call level we perform a Complex per role pareto, e.g. Basic roles such as fast and.high as well..as specialized r.g. Doc writer 
+Models and providers will be provided via structured elicitation let's assume, and some logic for budgeting over a month is given such that say a sub can be swapped with no sub, chealer/more exp or diff sub and other budgeting effectively trading commodity/resources to best optimize while at the per call level we perform a Complex per role pareto, e.g. Basic roles such as fast and.high as well..as specialized r.g. Doc writer
 
 ChatGPT said:
 Here’s a solid “Pareto-first” router design that won’t paint you into a corner when you later add bandits, learned predictors, seasonal pricing, and subscription arbitrage.
@@ -205,11 +205,11 @@ benchmarks.csv (raw scores)
 If you paste your first-pass roles (even messy) and the list of providers/models you expect, I’ll write the exact schemas + a reference routing function (language of your choice: Go, Python, TS).
 
 You said:
-Do extensive deep research 
+Do extensive deep research
 
 Feb 2026 SOTA
 
-Assume . monthly budget is 600 
+Assume . monthly budget is 600
 
 ChatGPT said:
 To help with deep research on state-of-the-art (SOTA) LLM model routing systems as of February 2026, could you clarify a few points:
@@ -228,7 +228,7 @@ Do you want benchmark-based quality comparisons per model or per provider-plan-b
 Let me know and I’ll begin the research right after.
 
 You said:
-Mix of both, self host via let's say gpu.rentsl is OK given it makes sense etc, 
+Mix of both, self host via let's say gpu.rentsl is OK given it makes sense etc,
 
 We use glm moonshot qwen gemini Claude code codex cursor copilot minimax and a variety of others as subscriptions atm w/openrouter and vercel ai gateway for general api access.
 
@@ -344,18 +344,18 @@ p50/p95 latency, error rate, timeout rate
 your per-role success metrics (tests pass, user re-asks, etc.)
 2.2 Where to scrape each category
 OpenRouter
-They explicitly provide a Models API intended to expose “the most important information about all LLMs” as soon as confirmed. 
-You can also query your key status/credits via GET /api/v1/key. 
+They explicitly provide a Models API intended to expose “the most important information about all LLMs” as soon as confirmed.
+You can also query your key status/credits via GET /api/v1/key.
 Vercel AI Gateway
-Has first-class Usage & Billing endpoints, including a generation lookup API that returns usage data, costs, and metadata for a request. 
-Pricing is “pay-as-you-go with no markups.” 
-Observability logs model usage/spend/metrics. 
+Has first-class Usage & Billing endpoints, including a generation lookup API that returns usage data, costs, and metadata for a request.
+Pricing is “pay-as-you-go with no markups.”
+Observability logs model usage/spend/metrics.
 Direct providers
 Usually: pricing pages, quotas, and rate-limits are in docs; actual usage is in billing dashboards or per-request usage metadata. (You’ll end up scraping + supplementing with your own metering.)
 Self-host
 You control everything: model weights metadata + hardware inventory + measured throughput.
 Gateway-level tooling
-LiteLLM Proxy is basically built for this: unified OpenAI-format API, cost tracking, routing strategies, logging. 
+LiteLLM Proxy is basically built for this: unified OpenAI-format API, cost tracking, routing strategies, logging.
 If you don’t already have Helicone-style logging, LiteLLM can be your “data plane” fast.
 3) The hard part: subscriptions and “blended $/mtok”
 You need one universal function:
@@ -383,7 +383,7 @@ tokens in/out (from response usage when available; else estimate)
 wall-clock latency; streaming TTFT if possible
 error classification (provider 5xx, rate limit, tool failure, schema failure)
 cache hit/miss stats
-Vercel AI Gateway supports retrieving generation usage/cost metadata (so you can backfill and reconcile). 
+Vercel AI Gateway supports retrieving generation usage/cost metadata (so you can backfill and reconcile).
 5) Building your indices (Speed / Cost / Quality) from scraped + observed data
 5.1 Speed index
 Speed isn’t just latency. You explicitly care about conciseness (session time = turns × tokens × latency).
@@ -429,18 +429,18 @@ This gives stable behavior and avoids weird flips.
 Even if you pick one offer, you need a fallback order:
 next best in the Pareto set
 then “safe” fallback (high adherence model) if schema/tooling failed
-and circuit-break providers that are erroring (LiteLLM supports routing strategies and rate-limit-aware routing patterns) 
-OpenRouter itself does provider/GPU fallback when it sees 5xx or rate-limit. 
+and circuit-break providers that are erroring (LiteLLM supports routing strategies and rate-limit-aware routing patterns)
+OpenRouter itself does provider/GPU fallback when it sees 5xx or rate-limit.
 Still: you want your own fallback logic because you’re optimizing your own objectives.
 7) Research-backed direction for “advanced later”
 If/when you go beyond rules/Pareto:
-Preference-aligned routing (learn router from preference data / outcomes) is now a well-trodden approach (RouteLLM, etc.). 
-Jan 2026 introduced LLMRouterBench explicitly framing routing as performance–cost–latency Pareto optimization and benchmarking routers in that space. 
+Preference-aligned routing (learn router from preference data / outcomes) is now a well-trodden approach (RouteLLM, etc.).
+Jan 2026 introduced LLMRouterBench explicitly framing routing as performance–cost–latency Pareto optimization and benchmarking routers in that space.
 Translation: your Pareto-first design is aligned with the state of the art, and you can later swap the scoring/prediction parts for learned routers without rewriting the system.
 8) Concrete architecture that won’t collapse
 Data plane
 Single gateway for all calls (pick one):
-LiteLLM Proxy if you want OSS + deep spend/routing knobs 
+LiteLLM Proxy if you want OSS + deep spend/routing knobs
 or your own thin gateway if you already have Vercel AI Gateway + OpenRouter
 Control plane (the brain)
 Offer Registry (canonical offers + capabilities)
@@ -459,9 +459,9 @@ enforce per-call caps (worst-case token estimate × effectiveCost)
 shadow pricing becomes more aggressive as you approach burn limits
 if you exceed a daily budget, router flips to “degraded mode” (cheap/self-host offers only)
 If you want, I’ll write you a canonical schema (JSON/YAML) + the exact ingestion adapters you need for:
-OpenRouter models + key status endpoints 
-Vercel AI Gateway generation lookup + usage 
-LiteLLM spend tracking + router strategies 
+OpenRouter models + key status endpoints
+Vercel AI Gateway generation lookup + usage
+LiteLLM spend tracking + router strategies
 …and the Pareto router function that consumes those tables and outputs offerId + fallbackChain.
 
 You said:
@@ -1526,11 +1526,11 @@ GLM Max 80$ Plan
 Gemini \ Antigravity Free plans via google AI premium 20\mo
 
 
-Kilo Code, Roo Code, Opencode Zen, Openrouter,  kimi  qwen, (these are that im aware of ) have promotional, exclusive, or free seasonal \ preview models, so I can't list what models but we would evaluate at this times and include in our systems, roo\kilo\opencode are harnesses whose api we use in our own modified codex cli harness. 
+Kilo Code, Roo Code, Opencode Zen, Openrouter,  kimi  qwen, (these are that im aware of ) have promotional, exclusive, or free seasonal \ preview models, so I can't list what models but we would evaluate at this times and include in our systems, roo\kilo\opencode are harnesses whose api we use in our own modified codex cli harness.
 
 Of all of these currently:
 
-Gemini 3 pro, 3 flash 
+Gemini 3 pro, 3 flash
 GLM-5, 5-code
 Claude 4.6 Sonnet, OPus, 4.5 Haiku
 GPT 5.3 Coex (med+) 5.3 codex spark (med+)
@@ -1538,11 +1538,11 @@ Minimax m2.5
 Kimi k2.5
 Deepseek v3.2
 qwen3.5 variants
-Ne models 
+Ne models
 
 Gpt 4.1, gpt 5 mini offered as 0x usage via copilot (!!!) this is one of the only true unlimited use models we have
 
-All of the above we have a program already that can authenticate and map oa. Proper api for our codex harness to consume, so we view them as equal to the same as an oepnAI compatible provider. 
+All of the above we have a program already that can authenticate and map oa. Proper api for our codex harness to consume, so we view them as equal to the same as an oepnAI compatible provider.
 
 
 
@@ -1824,7 +1824,7 @@ Up to 1,500 premium requests per month (additional at $0.04 USD each)
 Priority access to advanced AI capabilities
 Ideal for AI power users and developers who want cutting-edge tools
 
-Glm plan is 3x usage compared to CC on paper. 
+Glm plan is 3x usage compared to CC on paper.
 
 
 ChatGPT said:
@@ -2287,7 +2287,7 @@ the exact EconomicsSnapshot builder logic for Copilot units + fixed token bucket
 plus a worked routing example where Copilot units are low mid-month and the router shifts load to Codex/Claude Max automatically.
 
 You said:
-Compile to unified PRD + Phased WBS\DAG and Technical ALD\ADR docket 
+Compile to unified PRD + Phased WBS\DAG and Technical ALD\ADR docket
 
 ChatGPT said:
 Good. Now we formalize this properly.
@@ -2560,7 +2560,7 @@ Or produce a 30-day simulated spend evolution under real workloads
 Or produce a risk analysis (failure modes + mitigation)
 
 You said:
-cerebras offers very fast models, NVIDIA NIM offers step 3.5 fast and also good, Morph and some competitors offer niche small task (e.g. file edit\write) models at 3000+ tok\s research how they can fit in 
+cerebras offers very fast models, NVIDIA NIM offers step 3.5 fast and also good, Morph and some competitors offer niche small task (e.g. file edit\write) models at 3000+ tok\s research how they can fit in
 
 ChatGPT said:
 Here’s how Cerebras, NVIDIA NIM (Nemotron/LLM acceleration), and high-throughput specialist models like the 3 000 + tokens/sec offerings can fit into your Helios Router system—structured so you can place them into your catalog, indices, and routing pipelines with minimal guesswork.
@@ -2730,7 +2730,7 @@ All of these can be folded into your LLM Routing system as specialized offers wi
 If you want, I can also give you concrete cost modeling guidelines for self-hosted NIM/Cerebras (e.g., tokens/sec → effective $/MTok) so you can simulate Helios Router spend precisely with these new options.
 
 You said:
-Do proper research plz 
+Do proper research plz
 
 ChatGPT said:
 
@@ -2746,7 +2746,7 @@ TTFT (time to first token)
 ITL (inter-token latency)
 Output tokens/sec (streaming speed after first token)
 Aggregate throughput under concurrency (tokens/sec across many requests)
-NVIDIA’s own benchmarking primer explicitly calls out TTFT, end-to-end latency, ITL, tokens/sec, requests/sec as separate metrics, and emphasizes that input/output length distributions matter for prefill vs generation. 
+NVIDIA’s own benchmarking primer explicitly calls out TTFT, end-to-end latency, ITL, tokens/sec, requests/sec as separate metrics, and emphasizes that input/output length distributions matter for prefill vs generation.
 Router implication: don’t store one “toks_per_sec”. Store a profile:
 
 ttft_p50/p95
@@ -2759,24 +2759,24 @@ Cerebras’ docs for Llama 3.1 8B list:
 ~2200 tokens/sec
 $0.10 / 1M tokens input
 $0.10 / 1M tokens output
-free tier and developer tier rate-limit info. 
+free tier and developer tier rate-limit info.
 Their press release (Aug 27, 2024) claims:
 1,800 tok/s for Llama 3.1 8B and 450 tok/s for 70B
 pay-as-you-go pricing starting at $0.10/M (8B) and $0.60/M (70B)
-and cites Artificial Analysis verification of speeds and “quality evaluation results in line with native 16-bit precision”. 
+and cites Artificial Analysis verification of speeds and “quality evaluation results in line with native 16-bit precision”.
 2.2 Cerebras “Code” subscriptions are daily-token-capped, not unlimited
 Cerebras Code FAQ states:
 Code is a subscription access to high-speed code generation LLMs (powered by Qwen3-Coder) and runs “at up to 2,000 tokens/sec”
 Code Pro ($50/mo): 24M tokens/day, 1,000,000 TPM, 50 RPM
 Code Max ($200/mo): 120M tokens/day, 1,500,000 TPM, 120 RPM
 and it explains queue time / utilization variance and burst/RPS causing 429s.
-Their pricing page also warns preview models can be discontinued at short notice (important for your “volatility” risk field). 
+Their pricing page also warns preview models can be discontinued at short notice (important for your “volatility” risk field).
 2.3 Cerebras also runs very-high-throughput frontier-ish open models
 Cerebras blog: OpenAI’s gpt-oss-120B “available on Cerebras Cloud” with:
 3000 tokens/sec
 $0.25/M input, $0.69/M output
 128k context
-MoE architecture details. 
+MoE architecture details.
 Router implication: Cerebras gives you:
 Pay-per-token offers (clean economics)
 Subscription daily-bucket offers (need pacing)
@@ -2784,25 +2784,25 @@ Speed that can dominate speed index for long outputs
 Queue-time and burst limits you must model (or you’ll route into 429 storms)
 3) NVIDIA NIM: what it is, what “fast” means here, and how Step 3.5 fits
 3.1 NIM is primarily an optimized deployment layer (self-host/hybrid), not “one API”
-NVIDIA NIM microservices are “prebuilt, optimized inference microservices” that expose standard APIs and can run on Kubernetes across NVIDIA GPU infra. 
+NVIDIA NIM microservices are “prebuilt, optimized inference microservices” that expose standard APIs and can run on Kubernetes across NVIDIA GPU infra.
 On the NIM microservices page they show a concrete example:
 
 Llama 3.1 8B instruct on 1× H100 SXM with 200 concurrent requests
 NIM ON: throughput 1201 tokens/s, ITL 32ms
-NIM OFF: throughput 613 tokens/s, ITL 37ms 
+NIM OFF: throughput 613 tokens/s, ITL 37ms
 That throughput number is under concurrency; it’s a system throughput datapoint, not necessarily “one user sees 1201 tok/s”.
 3.2 Step 3.5 Flash (StepFun) on NVIDIA build/NIM: fast-ish, but not 3000 tok/s
 The NVIDIA model card for step-3.5-flash says:
 MoE LLM by StepFun
 196.81B total params, ~11B active per token
-“real-time responsiveness with 100–300 tok/s throughput (peaking at 350 tok/s for coding tasks)” 
+“real-time responsiveness with 100–300 tok/s throughput (peaking at 350 tok/s for coding tasks)”
 So: yes, “fast” compared to many frontier reasoning models — but it’s in the hundreds, not thousands.
 3.3 NIM can be extremely fast on the right hardware (example: DeepSeek-R1)
-NVIDIA’s blog says DeepSeek-R1 NIM microservice can run on an HGX H200 system (8× H200) “at up to 3,872 tokens per second.” 
+NVIDIA’s blog says DeepSeek-R1 NIM microservice can run on an HGX H200 system (8× H200) “at up to 3,872 tokens per second.”
 Again, this is a system-level number (and depends heavily on batching/concurrency); you should treat it as “upper bound / throughput class” until you measure per-request TTFT/ITL in your own harness.
 3.4 Pricing / availability reality
-build.nvidia.com advertises “Free serverless APIs for development” (so: great for your “promo/free” ingestion bucket). 
-NVIDIA forum staff: model rate limits vary and are not published; you can see your max rate limit in the UI. 
+build.nvidia.com advertises “Free serverless APIs for development” (so: great for your “promo/free” ingestion bucket).
+NVIDIA forum staff: model rate limits vary and are not published; you can see your max rate limit in the UI.
 NVIDIA docs: downloadable NIM is free for research/dev/testing; production requires NVIDIA AI Enterprise starting at $4500 per GPU per year (or “~$1 per GPU per hour” in cloud).
 Router implication: treat NIM as two categories of offers:
 NIM Serverless (build.nvidia.com): “volatile free/dev” plan; unknown limits; high variance; use telemetry gating.
@@ -2813,18 +2813,18 @@ Morph’s OpenRouter page describes it as a specialized code-patching/apply mode
 “high-accuracy apply model” ~4,500 tokens/sec with 98% accuracy
 “fastest apply model” ~10,500 tokens/sec with 96% accuracy
 requires a strict prompt format (<instruction>…</instruction><code>…</code><update>…</update>)
-shows token pricing (e.g. $0.80/M input, $1.20/M output for v3 fast). 
+shows token pricing (e.g. $0.80/M input, $1.20/M output for v3 fast).
 Fly.io’s writeup repeats:
 Apply API processes over 4,500 tokens/sec
 ~98% accuracy in ~6 seconds per file
-and compares to slower/brittle search-replace approaches. 
+and compares to slower/brittle search-replace approaches.
 AWS case study claims:
 Morph achieved over 10,000 tokens/sec per request
 “15,000-token multifile refactor in under 400 ms”
-single-file edits under 1 second. 
+single-file edits under 1 second.
 4.2 Competitor: Relace “Apply 3”
-OpenRouter’s Relace page: “apply updates … at 10,000 tokens/sec on average” and similar prompt format requirement. 
-Relace’s own engineering blog explains how they push speed (FP8 conversion + speculative decoding discussion). 
+OpenRouter’s Relace page: “apply updates … at 10,000 tokens/sec on average” and similar prompt format requirement.
+Relace’s own engineering blog explains how they push speed (FP8 conversion + speculative decoding discussion).
 
 Router implication: Morph/Relace are “fast apply” stages that:
 
@@ -2839,7 +2839,7 @@ interactive coding where you want low ITL / high output speed
 agentic workflows that do many calls and benefit from low latency
 Risks you must model:
 queue time / utilization and burst/RPS causing 429s (they explicitly warn about this).
-subscriptions are daily-capped (24M/day, 120M/day) — if you hit the cap you hard-fail until reset. 
+subscriptions are daily-capped (24M/day, 120M/day) — if you hit the cap you hard-fail until reset.
 Catalog design: Cerebras offers should include:
 tokensPerDayCap, tpmCap, rpmCap, rpsCap
 queueTime_p95 (from telemetry; because it matters a lot)
@@ -2850,8 +2850,8 @@ deploying mid/high-tier open models with better throughput/ITL than stock deploy
 “burst capacity” on GPU rentals (H200/B200 etc.)
 dev/test usage via free serverless endpoints
 Risks you must model:
-build.nvidia.com limits are opaque and variable (don’t route critical traffic there unless you’ve measured). 
-production economics can include AI Enterprise licensing (irrelevant for hobby; very relevant for enterprise). 
+build.nvidia.com limits are opaque and variable (don’t route critical traffic there unless you’ve measured).
+production economics can include AI Enterprise licensing (irrelevant for hobby; very relevant for enterprise).
 Step 3.5 Flash specifically: treat it as a “fast-ish reasoning MoE model” with throughput on the order of 100–300 tok/s (peak 350 in coding) — good, but not in the Cerebras/Morph class.
 C) Morph / Relace = “Apply stage” offers
 Use for:
@@ -2892,13 +2892,13 @@ code_small_transform (small fast models; also apply-models can serve)
 This is why Morph/Relace “fit”: they remove full-file regeneration from your loop and cut time/cost massively (and the vendor claims are backed by at least one AWS case study).
 7) What changes in your indices (specific, implementable)
 7.1 Speed index: add TTFT + ITL explicitly
-Use NVIDIA’s metric definitions as your standard. 
+Use NVIDIA’s metric definitions as your standard.
 For each offer+role you store:
 
 ttft_p95_ms
 itl_p95_ms
 tps_stream_p50 (derived from ITL or measured)
-queue_ms_p95 (important for Cerebras Code during peak) 
+queue_ms_p95 (important for Cerebras Code during peak)
 Then role-dependent speed score:
 For interactive tasks:
 speed = 0.5*ttft_p95 + 0.5*(expected_out_tokens * itl_p95)
@@ -2907,9 +2907,9 @@ speed = ttft_p95 + expected_out_tokens / tps_stream_p50
 For apply_patch tasks:
 use end-to-end ms/file (don’t pretend it’s like chat):
 speed = p95_apply_ms_per_file
-(you’ll measure; vendor claims are guidance). 
+(you’ll measure; vendor claims are guidance).
 7.2 Cost index: treat each provider’s metering honestly
-Cerebras pay-per-token: straightforward (they publish per-token pricing for models like Llama 3.1 8B). 
+Cerebras pay-per-token: straightforward (they publish per-token pricing for models like Llama 3.1 8B).
 Cerebras Code Pro/Max: daily bucket (24M/day, 120M/day) + TPM/RPM caps.
 Model as daily_quota_bucket not “monthly tokens”.
 NIM serverless dev: treat as volatile_free with unknown limits; rely on telemetry.
@@ -2924,16 +2924,16 @@ Morph/Relace quality is “merge correctness”; treat it as its own axis for co
 8) How to ingest/scrape them into your offer catalog (practical)
 Cerebras
 Best sources:
-inference-docs.cerebras.ai model pages contain speed, pricing, rate limits in structured HTML (easy scrape). 
+inference-docs.cerebras.ai model pages contain speed, pricing, rate limits in structured HTML (easy scrape).
 Support FAQ contains plan limits, plus queue-time and burst/429 guidance.
-Pricing page for plan tiers + “preview discontinuation” warning. 
-Blogs for special models (e.g. gpt-oss-120B speed and price). 
+Pricing page for plan tiers + “preview discontinuation” warning.
+Blogs for special models (e.g. gpt-oss-120B speed and price).
 NVIDIA NIM
 Best sources:
-NIM microservices page for baseline performance examples (throughput/ITL). 
+NIM microservices page for baseline performance examples (throughput/ITL).
 build.nvidia.com model cards for each model’s characteristics (Step 3.5 throughput).
-NIM docs for licensing/pricing in production and dev/test. 
-NVIDIA forums for “limits not published / rate limits vary”. 
+NIM docs for licensing/pricing in production and dev/test.
+NVIDIA forums for “limits not published / rate limits vary”.
 Morph / Relace
 Best sources:
 OpenRouter model pages already expose:
@@ -2941,7 +2941,7 @@ prompt format constraints
 pricing
 claimed tokens/sec
 Morph’s AWS case study for high-cred “real world” performance claims.
-Relace engineering blog for technical background (optional). 
+Relace engineering blog for technical background (optional).
 9) Net recommendation (how to actually route with these)
 Use Cerebras when:
 role is code_scaffold_fast / code_simple / “bulk code output”
@@ -2950,11 +2950,11 @@ you want cheap token rates for specific models (e.g. Llama 3.1 8B pricing)
 Use NIM when:
 you can self-host on rentals and want predictable throughput
 you want to deploy specific models (including Step 3.5 Flash) and control the stack
-you need large-concurrency throughput at good ITL (NIM ON example) 
+you need large-concurrency throughput at good ITL (NIM ON example)
 Use Morph/Relace when:
 your agent produces edit snippets and you need a fast, correct merge step
 you want to make expensive reasoning models “cheap” by shrinking their output
-you can enforce the required prompt format (hard constraint) 
+you can enforce the required prompt format (hard constraint)
 If you want, I’ll fold this back into your unified PRD/ALD/ADR set as a “Speed Stack” addendum
 Specifically:
 new roles (apply_patch, scaffold_fast)
@@ -2972,30 +2972,30 @@ Thought for 12m 23s
 
 Answer now
 Below is a merge-ready addendum that plugs Cerebras (Inference + Code subscriptions), NVIDIA NIM (serverless + self-host), Step 3.5 Flash, DeepSeek‑R1 NIM, and fast “apply/patch” models (Morph/Relace) into your unified PRD + phased WBS/DAG + Technical ALD + ADR docket.
-I’m going to be blunt about the “3000+ tok/s” claims: they can be real, but they’re often system throughput under concurrency, not “what a single user sees.” NVIDIA’s own benchmarking docs make this distinction explicit (TTFT, ITL, throughput). 
+I’m going to be blunt about the “3000+ tok/s” claims: they can be real, but they’re often system throughput under concurrency, not “what a single user sees.” NVIDIA’s own benchmarking docs make this distinction explicit (TTFT, ITL, throughput).
 
 A. What changes in the system
 1) Add a “Speed Stack” class of offers
 These providers/models are valuable primarily because they optimize TTFT/ITL and throughput, not necessarily peak reasoning.
 Cerebras Inference: e.g., Llama 3.1 8B listed at ~2200 tokens/sec and $0.10/M input/output.
-Cerebras Code subscription: daily token caps + TPM/RPM caps (Code Max: 120M tokens/day, 1.5M TPM, 120 RPM). 
-NVIDIA NIM: a deployment/optimization layer; NVIDIA publishes examples like 1201 tokens/s throughput and ITL 32ms (Llama 3.1 8B instruct, 1× H100 SXM, 200 concurrent requests) with NIM ON. 
-Step 3.5 Flash (on NVIDIA): advertised at 100–300 tok/s, peak 350 tok/s for single-stream coding tasks. 
+Cerebras Code subscription: daily token caps + TPM/RPM caps (Code Max: 120M tokens/day, 1.5M TPM, 120 RPM).
+NVIDIA NIM: a deployment/optimization layer; NVIDIA publishes examples like 1201 tokens/s throughput and ITL 32ms (Llama 3.1 8B instruct, 1× H100 SXM, 200 concurrent requests) with NIM ON.
+Step 3.5 Flash (on NVIDIA): advertised at 100–300 tok/s, peak 350 tok/s for single-stream coding tasks.
 DeepSeek‑R1 NIM: NVIDIA claims up to 3872 tokens/sec on a single HGX H200 system.
 2) Add an “Apply/Patch stage” class of roles and offers
 Morph/Relace are not general reasoning models — they are file merge / patch-application engines that can run at ~10k tok/s and require a strict prompt structure.
-Morph “fast apply”: ~10,500 tok/s, ~96% accuracy, strict <instruction><code><update> prompt format. 
-AWS case study for Morph: “over 10,000 tokens/sec per request” and “15,000-token multifile refactor under 400ms.” 
-Relace Apply 3: “apply updates… at 10,000 tokens/sec on average” and similar apply-focused semantics. 
+Morph “fast apply”: ~10,500 tok/s, ~96% accuracy, strict <instruction><code><update> prompt format.
+AWS case study for Morph: “over 10,000 tokens/sec per request” and “15,000-token multifile refactor under 400ms.”
+Relace Apply 3: “apply updates… at 10,000 tokens/sec on average” and similar apply-focused semantics.
 B. PRD patch
 B1) Add to PRD “Optimization Axes” — Speed definition (replace current Speed section)
 CHANGE: Speed Index must be profile-based (TTFT + ITL + throughput), not single ‘toks/sec’.
-Why: NVIDIA’s benchmarking guidance separates TTFT and inter-token latency (ITL/TPOT) and treats throughput as a distinct measure. 
+Why: NVIDIA’s benchmarking guidance separates TTFT and inter-token latency (ITL/TPOT) and treats throughput as a distinct measure.
 
 Replace Speed Index definition with:
 Speed Profile (per offer, per role):
 ttft_p50, ttft_p95
-itl_p50, itl_p95 (aka time-per-output-token / TPOT) 
+itl_p50, itl_p95 (aka time-per-output-token / TPOT)
 tps_stream_p50/p95 (derived or measured)
 throughput_tokens_s@concurrency (system throughput under a reference concurrency)
 queue_ms_p95 (important for subscription services that queue during utilization spikes)
@@ -3023,22 +3023,22 @@ B3) Add to PRD “Provider classes”
 ADD: Provider/Offer classes
 Ultra-fast token metered (Cerebras Inference: published tok/s and token pricing)
 Ultra-fast daily bucket subscription (Cerebras Code: RPM/TPM/tokens/day caps)
-Optimized self-host stack (NVIDIA NIM containers; cost derived from GPU rent + throughput) 
-Serverless dev endpoints / volatile free (build.nvidia.com: “Free serverless APIs for development”, but limits not published and vary per model) 
+Optimized self-host stack (NVIDIA NIM containers; cost derived from GPU rent + throughput)
+Serverless dev endpoints / volatile free (build.nvidia.com: “Free serverless APIs for development”, but limits not published and vary per model)
 Apply/Patch specialist (Morph/Relace: prompt-format constrained, very high tok/s)
 C. Phased WBS + DAG patch
 C1) Add Phase: “Speed Stack integration” (between Telemetry and Router Core)
 Phase X — Speed Stack Integration (Cerebras + NIM + Apply models)
 Deliverables
 Cerebras adapters:
-Inference model/pricing ingestion (token metered) 
-Code plan ingestion (daily caps, RPM/TPM) 
+Inference model/pricing ingestion (token metered)
+Code plan ingestion (daily caps, RPM/TPM)
 NVIDIA adapters:
-NIM serverless (build.nvidia.com) as volatile_free offers 
-NIM self-host offers (cost from compute) 
+NIM serverless (build.nvidia.com) as volatile_free offers
+NIM self-host offers (cost from compute)
 Step 3.5 Flash offer ingestion (known throughput band 100–300 tok/s)
 Apply model adapters:
-Morph / Relace ingestion (pricing + prompt constraints) 
+Morph / Relace ingestion (pricing + prompt constraints)
 Telemetry upgrades:
 capture TTFT + ITL + queue time in logs (NVIDIA defines TTFT/ITL as core metrics)
 New role DAG execution:
@@ -3062,16 +3062,16 @@ vendor_itl_ms / vendor_ttft_ms (if available)
 measuredSpeedProfile (from telemetry)
 ttft_p95_ms, itl_p95_ms, tps_stream_p50, queue_p95_ms
 quotaModel (required for Cerebras Code)
-tokensPerDayCap, tokensPerMinCap, requestsPerMinCap 
+tokensPerDayCap, tokensPerMinCap, requestsPerMinCap
 volatilityRisk (required for preview/serverless dev endpoints)
 because build.nvidia.com “free serverless APIs for development” can have changing limits
 promptContract (required for apply models)
 contractType: apply_v1
 requiredFormat: "<instruction><code><update>"
-maxContextTokens (Relace lists 256k context on OpenRouter) 
+maxContextTokens (Relace lists 256k context on OpenRouter)
 D2) Economics Engine delta
 D2.1 Cerebras Code = daily quota bucket (not monthly bucket)
-Cerebras Code Pro/Max have explicit tokens/day and TPM/RPM caps. 
+Cerebras Code Pro/Max have explicit tokens/day and TPM/RPM caps.
 Plan type:
 
 daily_quota_bucket
@@ -3084,9 +3084,9 @@ expected_remaining_today = tokensPerDayCap * remaining_day_fraction
 day_shadow = 1 / max(remaining_today / expected_remaining_today, ε)
 effective_cost = base_cost * day_shadow * monthly_budget_shadow
 Also:
-Add rate-limit penalty if you’re near TPM/RPM; Cerebras explicitly lists those caps and notes limits can change. 
+Add rate-limit penalty if you’re near TPM/RPM; Cerebras explicitly lists those caps and notes limits can change.
 D2.2 NVIDIA build.nvidia.com serverless = volatile free plan
-It’s advertised as “Free serverless APIs for development.” 
+It’s advertised as “Free serverless APIs for development.”
 NVIDIA staff explicitly says “rate limits vary” and “we do not publish those.”
 So treat:
 plan.type = volatile_free
@@ -3098,7 +3098,7 @@ Use measured throughput and rental cost:
 effective_$per_token = ($/hour) / (tokens_per_hour_realized)
 Where:
 tokens_per_hour_realized = measured aggregate tokens/sec at your reference concurrency × 3600.
-NIM ON vs OFF example provides a sanity check that throughput can nearly 2× and ITL improves in some configs. 
+NIM ON vs OFF example provides a sanity check that throughput can nearly 2× and ITL improves in some configs.
 D3) Telemetry pipeline delta: add TTFT/ITL capture
 ADD: telemetry event fields:
 ttft_ms
@@ -3140,11 +3140,11 @@ ASCII: Patch-based coding workflow
 ┌──────────────────────────┐
 │ Escalate: code_reasoner  │
 └──────────────────────────┘
-This is how you exploit 10k tok/s apply throughput without turning the whole system into “apply model roulette.” Morph/Relace are great at merging; they’re not your planner. 
+This is how you exploit 10k tok/s apply throughput without turning the whole system into “apply model roulette.” Morph/Relace are great at merging; they’re not your planner.
 E. ADR docket additions (new ADRs)
 ADR-008: Replace single “tokens/sec” with TTFT + ITL + throughput profile
 Decision: Speed Index uses TTFT and ITL explicitly; throughput is tracked separately.
-Rationale: NVIDIA benchmarking guidance treats TTFT and ITL as fundamental metrics, not interchangeable with tokens/sec. 
+Rationale: NVIDIA benchmarking guidance treats TTFT and ITL as fundamental metrics, not interchangeable with tokens/sec.
 Status: Accepted.
 ADR-009: Add Patch/Apply stage as first-class routing role
 Decision: Introduce code_apply_patch role for apply-focused models (Morph/Relace).
@@ -3152,35 +3152,35 @@ Rationale: These models require strict prompt contracts and provide specialized 
 Status: Accepted.
 ADR-010: Model Cerebras Code as a daily-quota bucket plan
 Decision: Treat Cerebras Code subscription as daily-cap + TPM/RPM constraints.
-Rationale: Code Pro/Max are documented with tokens/day and TPM/RPM caps; monthly token assumptions are wrong. 
+Rationale: Code Pro/Max are documented with tokens/day and TPM/RPM caps; monthly token assumptions are wrong.
 Status: Accepted.
 ADR-011: Treat NVIDIA build.nvidia.com as “volatile free” with limits-discovery
 Decision: Serverless NIM endpoints are classified as volatile; enforce telemetry-gated canary and dynamic throttling penalties.
-Rationale: NVIDIA staff states per-model rate limits vary and are not published; build advertises free serverless APIs for development. 
+Rationale: NVIDIA staff states per-model rate limits vary and are not published; build advertises free serverless APIs for development.
 Status: Accepted.
 ADR-012: Store vendor speed claims as priors; routing uses measured telemetry
 Decision: Vendor-stated tok/s numbers are “speed hints”; router decisions use measured TTFT/ITL/TPS after burn-in.
-Rationale: Throughput numbers may be system-level and configuration-dependent (e.g., NIM performance examples include concurrency and hardware). 
+Rationale: Throughput numbers may be system-level and configuration-dependent (e.g., NIM performance examples include concurrency and hardware).
 Status: Accepted.
 F. Catalog examples (how these appear as offers)
 F1) Cerebras Inference (token metered, ultra-fast)
-published ~2200 tok/s and $0.10/M in/out for Llama 3.1 8B. 
+published ~2200 tok/s and $0.10/M in/out for Llama 3.1 8B.
 Offer class: ultra_fast_token_metered
 F2) Cerebras Code Max (subscription, daily cap)
-Code Max: 120M tokens/day, 1.5M TPM, 120 RPM. 
+Code Max: 120M tokens/day, 1.5M TPM, 120 RPM.
 Offer class: ultra_fast_daily_bucket
 F3) NVIDIA NIM serverless (volatile free)
 build: “Free serverless APIs for development,” but limits vary and aren’t published.
 Offer class: volatile_free
 F4) Step 3.5 Flash
-100–300 tok/s, peak 350 for coding tasks. 
+100–300 tok/s, peak 350 for coding tasks.
 Offer class: fast_reasoning
 F5) DeepSeek‑R1 NIM microservice
-up to 3872 tokens/sec on HGX H200 (vendor claim). 
+up to 3872 tokens/sec on HGX H200 (vendor claim).
 Offer class: ultra_fast_system_throughput (must measure per-request TTFT/ITL yourself)
 F6) Morph / Relace Apply
-Morph: ~10,500 tok/s (fast) and ~4,500 tok/s (high-accuracy large), strict apply prompt contract. 
-Relace Apply 3: ~10,000 tok/s average. 
+Morph: ~10,500 tok/s (fast) and ~4,500 tok/s (high-accuracy large), strict apply prompt contract.
+Relace Apply 3: ~10,000 tok/s average.
 Offer class: apply_patch
 G. Practical routing rules (so this doesn’t become a mess)
 Rule 1 — Apply models never enter the same candidate set as reasoners
@@ -3192,7 +3192,7 @@ Because tokens/day resets matter more than monthly pacing; you’ll want a per-d
 Rule 3 — NVIDIA serverless endpoints should be canary-only until telemetry stabilizes
 Limits vary and aren’t published; treat as volatile with aggressive throttling penalties.
 Rule 4 — Step 3.5 Flash is “fast-ish”, not a 3000 tok/s class model
-If someone’s telling you “Step 3.5 does 3000 tok/s” they’re mixing categories. The model card itself states 100–300 tok/s typical. 
+If someone’s telling you “Step 3.5 does 3000 tok/s” they’re mixing categories. The model card itself states 100–300 tok/s typical.
 If you want, I can now output a single consolidated “v1.1 Unified Doc” with these patches applied inline (instead of patch notes), but the above is already structured so you can merge section-by-section cleanly.
 
 You said:
@@ -3241,8 +3241,8 @@ Budget envelope configurable; default:
 Variable spend cap: $600/month (PAYG + overages + GPU rentals)
 Fixed subscriptions: tracked separately (or optionally included if you want a hard total cap)
 Copilot semantics:
-Premium requests are deducted based on model multipliers, and some models (e.g., GPT‑5 mini, GPT‑4.1, GPT‑4o) are “included” and don’t consume premium requests on paid plans. 
-GitHub documents that models have premium request multipliers and that multipliers can change. 
+Premium requests are deducted based on model multipliers, and some models (e.g., GPT‑5 mini, GPT‑4.1, GPT‑4o) are “included” and don’t consume premium requests on paid plans.
+GitHub documents that models have premium request multipliers and that multipliers can change.
 1.5 Users / journeys
 Primary user: your internal harness / IDE agent runtime (Codex CLI harness variants).
 Secondary user: you (admin) managing providers, plans, budgets, and incident response.
@@ -3274,13 +3274,13 @@ Support plan types:
 payg_token
 fixed_bucket_tokens (Claude Max / Codex / GLM prior; learned EUC)
 daily_quota_bucket (Cerebras Code: tokens/day + TPM/RPM + RPS burst)
-weighted_unit_bucket (Copilot multipliers + included 0× models) 
+weighted_unit_bucket (Copilot multipliers + included 0× models)
 prompt_rate_limited (Minimax-style)
-volatile_free (NVIDIA serverless NIM “free serverless APIs for development”, rate limits not published/variable) 
+volatile_free (NVIDIA serverless NIM “free serverless APIs for development”, rate limits not published/variable)
 compute_metered (NIM self-host on rentals)
 FR-3 Speed index uses TTFT+ITL
 Speed is computed from measured latency profile; vendor “tok/s” claims are priors only.
-NVIDIA defines TTFT and ITL/TPOT and treats them as fundamental metrics. 
+NVIDIA defines TTFT and ITL/TPOT and treats them as fundamental metrics.
 FR-4 Quality index stable under missing benchmarks
 normalize per benchmark
 family/global shrinkage imputation for missing
@@ -3312,13 +3312,13 @@ Stability: reduce 429/5xx-induced retries and tool/schema failures
 You route to:
 offerId = provider + model + plan + region (+ mode)
 This is required because:
-Copilot uses multipliers and included 0× models 
-Cerebras Code has daily caps + TPM/RPM + RPS burst behavior 
-NVIDIA serverless NIM limits vary and aren’t published 
+Copilot uses multipliers and included 0× models
+Cerebras Code has daily caps + TPM/RPM + RPS burst behavior
+NVIDIA serverless NIM limits vary and aren’t published
 2.2 Speed index (v1.1)
 Store a speed profile, not one number. Per offer+role, maintain:
 ttft_p95_ms
-itl_p95_ms (aka TPOT) 
+itl_p95_ms (aka TPOT)
 tps_stream_p50
 queue_p95_ms (important for queued services)
 optional tps_agg@concurrency (system throughput)
@@ -3329,12 +3329,12 @@ speed = queue_p95_ms + ttft_p95_ms + E[out_tokens]/tps_stream_p50
 Apply/Patch:
 speed = apply_ms_p95_per_file
 Why this matters:
-NIM performance numbers often depend on concurrency; NVIDIA shows throughput and ITL under 200 concurrent requests on H100. 
+NIM performance numbers often depend on concurrency; NVIDIA shows throughput and ITL under 200 concurrent requests on H100.
 Step 3.5 Flash is “fast-ish” (~100–300 tok/s, peak 350), not a 3000 tok/s class model.
 2.3 Cost index (v1.1)
 You compute effective_cost_usd(request, offer) using plan semantics + shadow pricing.
 A) PAYG token-metered
-cost = Tin*p_in + Tout*p_out Example: Cerebras publishes low token pricing for specific models (e.g., Llama 3.1 8B at $0.10/M in/out, with ~2200 tok/s listed on their pricing page). 
+cost = Tin*p_in + Tout*p_out Example: Cerebras publishes low token pricing for specific models (e.g., Llama 3.1 8B at $0.10/M in/out, with ~2200 tok/s listed on their pricing page).
 B) Fixed bucket tokens (Claude/Codex/GLM-style)
 Compute EUC (effective unit cost) and update from logs:
 EUC ≈ monthly_fee / tokens_covered_est
@@ -3359,14 +3359,14 @@ volatility/availability risk (they can be reclassified)
 quality thresholds
 mild floor cost only for tie-breaking (optional)
 E) Volatile free (NVIDIA serverless NIM)
-NVIDIA build.nvidia.com: “Free serverless APIs for development.” 
+NVIDIA build.nvidia.com: “Free serverless APIs for development.”
 NVIDIA staff: per-model rate limits vary and aren’t published. So:
 set cost near-zero
 but apply strong volatility penalty and throttle penalty from observed 429/queue
 F) Compute-metered (self-host NIM)
 Compute:
 $/token = ($/hour) / (measured_tokens_per_hour_at_ref_concurrency)
-NVIDIA claims NIM can materially improve throughput and ITL in published examples (NIM ON vs OFF). 
+NVIDIA claims NIM can materially improve throughput and ITL in published examples (NIM ON vs OFF).
 2.4 Quality index (v1.1)
 You will have spotty benchmark coverage. The system must not collapse.
 Offline quality (benchmarks you input)
@@ -3443,7 +3443,7 @@ errors (429/5xx/timeout/schema)
 provider/offerId
 role
 queue time if inferable
-NVIDIA’s benchmarking framework treats TTFT/ITL as core metrics. 
+NVIDIA’s benchmarking framework treats TTFT/ITL as core metrics.
 Pipeline C — Economics snapshot
 updates plan remaining (premium units remaining, daily tokens remaining, etc.)
 recomputes shadow prices (budget + plan pacing)
@@ -3470,22 +3470,22 @@ This is how Morph/Relace fit without doing dumb “replace all code with apply m
 ┌──────────────────────────┐
 │ code_reasoner (stronger)  │
 └──────────────────────────┘
-Morph and Relace are explicitly “apply/patch” models with strict input formats and high apply throughput. 
+Morph and Relace are explicitly “apply/patch” models with strict input formats and high apply throughput.
 AWS cites Morph achieving 10k tokens/sec per request and very low latency for large refactors.
 3.5 Provider-specific integration notes (what changes in the catalog)
 Cerebras
-Token-metered inference offers: easy cost modeling and speed priors (pricing pages list tokens/sec + $/M token). 
-Cerebras Code subscription offers: must be modeled as daily_quota_bucket (24M/day Pro, 120M/day Max; plus TPM/RPM and RPS burst). 
-Preview models can be discontinued (volatility flag). 
+Token-metered inference offers: easy cost modeling and speed priors (pricing pages list tokens/sec + $/M token).
+Cerebras Code subscription offers: must be modeled as daily_quota_bucket (24M/day Pro, 120M/day Max; plus TPM/RPM and RPS burst).
+Preview models can be discontinued (volatility flag).
 GPT‑OSS‑120B on Cerebras: “up to 3,000 tokens/sec” and published $/M in/out.
 NVIDIA NIM
 Two offer classes:
-Serverless build.nvidia.com offers: “Free serverless APIs for development” but limits vary and aren’t published → volatile_free + telemetry gating. 
-Self-host NIM offers: compute-metered; cost derived from GPU rentals and measured throughput. NIM performance examples include throughput and ITL values. 
+Serverless build.nvidia.com offers: “Free serverless APIs for development” but limits vary and aren’t published → volatile_free + telemetry gating.
+Self-host NIM offers: compute-metered; cost derived from GPU rentals and measured throughput. NIM performance examples include throughput and ITL values.
 Step 3.5 Flash:
-throughput 100–300 tok/s (peak 350); treat as “fast-ish” not ultra-fast. 
+throughput 100–300 tok/s (peak 350); treat as “fast-ish” not ultra-fast.
 DeepSeek‑R1 NIM:
-NVIDIA claims up to 3,872 tokens/sec on HGX H200; treat as system-level prior until you measure TTFT/ITL in your own harness. 
+NVIDIA claims up to 3,872 tokens/sec on HGX H200; treat as system-level prior until you measure TTFT/ITL in your own harness.
 Morph / Relace
 Add as apply_patch offers only; they should not enter general reasoning candidate sets.
 3.6 Example catalog (trimmed, offer-first)
@@ -3610,14 +3610,14 @@ code_reasoner -> code_apply_patch -> validate -> (pass|escalate)
 5) ADR docket (v1.1)
 ADR-001 Offer-first routing
 Decision: Route to offerId (provider+model+plan), not model.
-Why: plan semantics and limits materially change feasibility and economics (Copilot multipliers, Cerebras daily caps, NVIDIA unpublished limits). 
+Why: plan semantics and limits materially change feasibility and economics (Copilot multipliers, Cerebras daily caps, NVIDIA unpublished limits).
 Status: Accepted.
 ADR-002 Pareto frontier + lexicographic tie-break
 Decision: Hard constraints → Pareto prune → role-specific lexicographic selection.
 Why: avoids brittle scalar weights; keeps behavior stable.
 Status: Accepted.
 ADR-003 Copilot = weighted unit bucket + 0× included models
-Decision: Treat Copilot premium usage as multiplier-weighted units; included models consume 0 units on paid plans per GitHub docs. 
+Decision: Treat Copilot premium usage as multiplier-weighted units; included models consume 0 units on paid plans per GitHub docs.
 Status: Accepted.
 ADR-004 Speed profile uses TTFT+ITL (not “tok/s”)
 Decision: Store TTFT/ITL and separate system throughput; compute role-specific speed.
@@ -3632,22 +3632,18 @@ Why: “Free serverless APIs for development” + limits vary and aren’t publi
 Status: Accepted.
 ADR-007 Apply/Patch models are separate role + DAG stage
 Decision: Morph/Relace are only candidates for code_apply_patch and are used via Reason→Apply pipeline.
-Why: they require strict prompt contracts and are specialized for merging edits at very high throughput. 
+Why: they require strict prompt contracts and are specialized for merging edits at very high throughput.
 Status: Accepted.
 ADR-008 Vendor speed claims are priors; measured telemetry wins
 Decision: tok/s marketing numbers seed priors; routing uses observed TTFT/ITL and failure rates.
-Why: many speed numbers are hardware/concurrency dependent (see NIM performance examples). 
+Why: many speed numbers are hardware/concurrency dependent (see NIM performance examples).
 Status: Accepted.
 6) “Tell it like it is” notes (so you don’t build the wrong thing)
-Step 3.5 Flash is not a 3000 tok/s model. Its own model card pegs it in the ~100–300 tok/s range (peak 350). 
-NIM “tokens/sec” claims are often throughput under concurrency. You must track TTFT/ITL and measure in your harness, or you’ll misroute. 
-Cerebras Code will 429 you if you burst. Their FAQ explicitly calls out RPS burst behavior and that limits can change. 
+Step 3.5 Flash is not a 3000 tok/s model. Its own model card pegs it in the ~100–300 tok/s range (peak 350).
+NIM “tokens/sec” claims are often throughput under concurrency. You must track TTFT/ITL and measure in your harness, or you’ll misroute.
+Cerebras Code will 429 you if you burst. Their FAQ explicitly calls out RPS burst behavior and that limits can change.
 Morph/Relace only pay off if you stop rewriting full files with a reasoner model. If you don’t implement the patch DAG, you’re leaving most of the value on the table.
 If you want the next concrete artifact, I can output a single JSON Schema set (Offer/Plan/Snapshots/TelemetryEvent) plus a reference implementation pseudocode for:
 the Copilot weighted-unit cost calculator
 the Cerebras daily quota shadow
 Pareto frontier pruning (O(N²) baseline + faster option)
-
-
-
-

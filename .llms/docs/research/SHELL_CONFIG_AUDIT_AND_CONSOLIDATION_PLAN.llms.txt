@@ -6,8 +6,8 @@ Source: docs/research/SHELL_CONFIG_AUDIT_AND_CONSOLIDATION_PLAN.md
 
 # Shell Configuration Audit and Consolidation Plan
 
-**Purpose:** Audit all shell config variations, consolidate to canonical configs, research optimal comprehensive setup.  
-**Date:** 2026-02-17  
+**Purpose:** Audit all shell config variations, consolidate to canonical configs, research optimal comprehensive setup.
+**Date:** 2026-02-17
 **Status:** Audit Complete, Consolidation Plan Ready
 
 ---
@@ -352,7 +352,7 @@ class ShellConfig:
     use_zsh_autosuggestions: bool = True
     use_fzf: bool = True
     enable_protection: bool = True
-    
+
     def generate_zshenv(self) -> str:
         """Generate .zshenv content."""
         lines = [
@@ -360,7 +360,7 @@ class ShellConfig:
             "# DO NOT EDIT MANUALLY",
             "",
         ]
-        
+
         if self.is_agent:
             lines.extend([
                 "# Agent mode: skip heavy init",
@@ -373,9 +373,9 @@ class ShellConfig:
                 "# User mode: full initialization",
                 "",
             ])
-        
+
         return "\n".join(lines)
-    
+
     def generate_zshrc(self) -> str:
         """Generate .zshrc content."""
         lines = [
@@ -383,27 +383,27 @@ class ShellConfig:
             "# DO NOT EDIT MANUALLY",
             "",
         ]
-        
+
         if self.use_starship:
             lines.append('eval "$(starship init zsh)"')
-        
+
         if self.use_zsh_autosuggestions:
             lines.append('source ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh')
-        
+
         if self.use_fzf:
             lines.append('source ~/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh')
-        
+
         if self.enable_protection:
             lines.append('source ~/.zsh/safeguards.zsh')
-        
+
         return "\n".join(lines)
 
 def main():
     config = ShellConfig(is_agent=False)
-    
+
     zshenv = config.generate_zshenv()
     zshrc = config.generate_zshrc()
-    
+
     print("Generated .zshenv:")
     print(zshenv)
     print("\nGenerated .zshrc:")
@@ -423,7 +423,7 @@ if __name__ == "__main__":
 _thegent_fork_guard() {
   local current_procs=$(ps aux | grep -c "[zsh|python|bash]")
   local max_procs=200
-  
+
   if (( current_procs > max_procs )); then
     echo "⚠️  Warning: High process count ($current_procs). Consider pruning."
   fi
@@ -447,7 +447,7 @@ precmd_functions+=(_thegent_fork_guard)
 
 ## 6. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

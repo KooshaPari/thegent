@@ -214,4 +214,3 @@ set_active(self: Any, pane_id: str)
 Set the active pane.
 
 ---
-

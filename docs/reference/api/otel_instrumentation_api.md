@@ -21,4 +21,3 @@ record_usage(span: trace.Span, input_tokens: int, output_tokens: int)
 Record token usage on an active span.
 
 ---
-

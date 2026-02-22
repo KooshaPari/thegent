@@ -260,7 +260,7 @@ This enables filtering by maturity (e.g. "show only exploit+ items for implement
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

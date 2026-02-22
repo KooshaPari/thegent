@@ -285,4 +285,3 @@ Track a single LLM call cost.
 **Returns**: The created CostEntry
 
 ---
-

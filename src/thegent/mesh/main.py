@@ -5,6 +5,7 @@ from pathlib import Path
 import typer
 
 from thegent.mesh.mesh import MeshManager
+from thegent.mesh.agent_patterns import run_detection
 from thegent.mesh.observability import mesh_status_cmd
 
 app = typer.Typer(help="Mesh: Local agent mesh coordination (init, status, discover).")
@@ -30,7 +31,11 @@ def init(mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path t
 
 @app.command("discover")
 def discover(
-    patterns: str = typer.Option("claude,aider,cursor", help="Comma-separated agent process patterns"),
+    patterns: str | None = typer.Option(
+        None,
+        "--patterns",
+        help="Comma-separated regex patterns (optional; defaults to agents.conf)",
+    ),
     mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path to mesh root"),
 ):
     """Discover active agents and register them."""
@@ -38,8 +43,12 @@ def discover(
 
     root = mesh_root or Path(ThegentSettings().harness_root)
     mesh = MeshManager(root)
-    pattern_list = [p.strip() for p in patterns.split(",")]
-    agents = mesh.discover_agents(pattern_list)
+    if patterns is None:
+        discovered = run_detection()
+        agents = [{"pid": a["pid"], "name": a["agent"]} for a in discovered]
+    else:
+        pattern_list = [p.strip() for p in patterns.split(",")]
+        agents = mesh.discover_agents(pattern_list)
     for _a in agents:
         pass
 

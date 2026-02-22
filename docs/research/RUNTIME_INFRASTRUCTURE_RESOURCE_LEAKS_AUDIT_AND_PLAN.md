@@ -1,10 +1,10 @@
 # Runtime Infrastructure Resource Leaks & Optimization Audit & Plan
 
-**Date:** 2026-02-17  
-**Status:** Critical - Runtime issues increasing in frequency  
+**Date:** 2026-02-17
+**Status:** Critical - Runtime issues increasing in frequency
 **Issue:** Resource leaks and optimization problems causing `BlockingIOError: [Errno 35] Resource temporarily unavailable`
 
-**Last Updated:** 2026-02-17  
+**Last Updated:** 2026-02-17
 **Immediate Fixes Applied:** ✅ Critical file descriptor leak fixed, process registry created
 
 ---
@@ -258,16 +258,16 @@ class ProcessHandle:
     started_at: float = field(default_factory=time.time)
     cleanup_on_exit: bool = True
     timeout: Optional[float] = None
-    
+
     def is_alive(self) -> bool:
         """Check if process is still running."""
         return self.proc.poll() is None
-    
+
     def terminate(self, timeout: float = 5.0) -> bool:
         """Terminate process gracefully."""
         if not self.is_alive():
             return True
-        
+
         try:
             self.proc.terminate()
             self.proc.wait(timeout=timeout)
@@ -286,33 +286,33 @@ class ProcessHandle:
 
 class ProcessRegistry:
     """Registry for tracking subprocesses with automatic cleanup."""
-    
+
     def __init__(self):
         self._processes: dict[int, ProcessHandle] = {}
         self._lock = threading.Lock()
         self._cleanup_registered = False
         self._register_cleanup()
-    
+
     def _register_cleanup(self):
         """Register cleanup handlers."""
         if self._cleanup_registered:
             return
-        
+
         # Register atexit handler
         atexit.register(self.cleanup_all)
-        
+
         # Register signal handlers
         signal.signal(signal.SIGTERM, self._signal_handler)
         signal.signal(signal.SIGINT, self._signal_handler)
-        
+
         self._cleanup_registered = True
-    
+
     def _signal_handler(self, signum, frame):
         """Handle termination signals."""
         logging.info(f"Received signal {signum}, cleaning up processes...")
         self.cleanup_all()
         raise SystemExit(1)
-    
+
     def register(
         self,
         proc: subprocess.Popen,
@@ -329,7 +329,7 @@ class ProcessRegistry:
                 name=name,
                 cleanup_on_exit=False,
             )
-        
+
         handle = ProcessHandle(
             pid=proc.pid,
             proc=proc,
@@ -337,61 +337,61 @@ class ProcessRegistry:
             cleanup_on_exit=cleanup_on_exit,
             timeout=timeout,
         )
-        
+
         with self._lock:
             self._processes[proc.pid] = handle
-        
+
         logging.debug(f"Registered process {proc.pid} ({name})")
         return handle
-    
+
     def unregister(self, pid: int) -> Optional[ProcessHandle]:
         """Unregister a process."""
         with self._lock:
             return self._processes.pop(pid, None)
-    
+
     def get(self, pid: int) -> Optional[ProcessHandle]:
         """Get process handle by PID."""
         with self._lock:
             return self._processes.get(pid)
-    
+
     def list_alive(self) -> list[ProcessHandle]:
         """List all alive processes."""
         with self._lock:
             return [h for h in self._processes.values() if h.is_alive()]
-    
+
     def cleanup_all(self, timeout: float = 10.0) -> int:
         """Clean up all registered processes."""
         with self._lock:
             processes = list(self._processes.values())
-        
+
         cleaned = 0
         for handle in processes:
             if handle.cleanup_on_exit and handle.is_alive():
                 if handle.terminate(timeout=timeout):
                     cleaned += 1
                     self.unregister(handle.pid)
-        
+
         logging.info(f"Cleaned up {cleaned} processes")
         return cleaned
-    
+
     def cleanup_orphaned(self) -> int:
         """Clean up processes that have died but weren't unregistered."""
         with self._lock:
             processes = list(self._processes.values())
-        
+
         cleaned = 0
         for handle in processes:
             if not handle.is_alive():
                 self.unregister(handle.pid)
                 cleaned += 1
-        
+
         return cleaned
-    
+
     def get_stats(self) -> dict:
         """Get registry statistics."""
         with self._lock:
             processes = list(self._processes.values())
-        
+
         alive = [h for h in processes if h.is_alive()]
         return {
             "total": len(processes),
@@ -442,15 +442,15 @@ from thegent.infra.process_registry import ProcessHandle, get_registry
 
 class SubprocessManager:
     """Manager for subprocess lifecycle with resource tracking."""
-    
+
     MAX_CONCURRENT_PROCESSES = 50
     MAX_PROCESS_UPTIME = 3600  # 1 hour
-    
+
     def __init__(self):
         self.registry = get_registry()
         self._active_count = 0
         self._lock = threading.Lock()
-    
+
     @contextlib.contextmanager
     def popen(
         self,
@@ -466,30 +466,30 @@ class SubprocessManager:
                     f"Maximum concurrent processes ({self.MAX_CONCURRENT_PROCESSES}) exceeded"
                 )
             self._active_count += 1
-        
+
         proc: Optional[subprocess.Popen] = None
         handle: Optional[ProcessHandle] = None
-        
+
         try:
             # Ensure stdout/stderr are handled
             if "stdout" not in kwargs:
                 kwargs["stdout"] = subprocess.PIPE
             if "stderr" not in kwargs:
                 kwargs["stderr"] = subprocess.PIPE
-            
+
             proc = subprocess.Popen(args, **kwargs)
             handle = self.registry.register(
                 proc=proc,
                 name=name,
                 cleanup_on_exit=True,
             )
-            
+
             yield proc
-            
+
         finally:
             with self._lock:
                 self._active_count -= 1
-            
+
             # Cleanup
             if proc is not None:
                 # Drain stdout/stderr to prevent blocking
@@ -503,7 +503,7 @@ class SubprocessManager:
                         proc.stderr.close()
                     except Exception:
                         pass
-                
+
                 # Wait for process or terminate
                 if proc.poll() is None:
                     try:
@@ -515,10 +515,10 @@ class SubprocessManager:
                         except subprocess.TimeoutExpired:
                             proc.kill()
                             proc.wait()
-            
+
             if handle:
                 self.registry.unregister(handle.pid)
-    
+
     def run(
         self,
         args: list[str],
@@ -587,7 +587,7 @@ class ResourceStats:
     memory_mb: float
     cpu_percent: float
     timestamp: float
-    
+
     def is_critical(self) -> bool:
         """Check if resource usage is critical."""
         return (
@@ -599,29 +599,29 @@ class ResourceStats:
 
 class ResourceMonitor:
     """Monitor system resources and detect leaks."""
-    
+
     def __init__(self, check_interval: float = 60.0):
         self.check_interval = check_interval
         self._running = False
         self._thread: Optional[threading.Thread] = None
         self._stats_history: list[ResourceStats] = []
         self._max_history = 100
-    
+
     def start(self):
         """Start monitoring thread."""
         if self._running:
             return
-        
+
         self._running = True
         self._thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self._thread.start()
-    
+
     def stop(self):
         """Stop monitoring thread."""
         self._running = False
         if self._thread:
             self._thread.join(timeout=5.0)
-    
+
     def _monitor_loop(self):
         """Monitoring loop."""
         while self._running:
@@ -630,7 +630,7 @@ class ResourceMonitor:
                 self._stats_history.append(stats)
                 if len(self._stats_history) > self._max_history:
                     self._stats_history.pop(0)
-                
+
                 if stats.is_critical():
                     logging.warning(
                         f"Critical resource usage detected: "
@@ -638,47 +638,47 @@ class ResourceMonitor:
                         f"Processes: {stats.process_count}, "
                         f"Memory: {stats.memory_mb:.1f}MB"
                     )
-                
+
             except Exception as e:
                 logging.error(f"Error in resource monitor: {e}")
-            
+
             time.sleep(self.check_interval)
-    
+
     def get_stats(self) -> ResourceStats:
         """Get current resource statistics."""
         process = psutil.Process()
-        
+
         # File descriptors
         try:
             fd_count = len(process.open_files()) + len(process.connections())
         except (psutil.AccessDenied, AttributeError):
             fd_count = 0
-        
+
         try:
             fd_limit = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
         except Exception:
             fd_limit = 1024
-        
+
         fd_usage_percent = (fd_count / fd_limit * 100) if fd_limit > 0 else 0
-        
+
         # Process count
         try:
             process_count = len(psutil.pids())
         except Exception:
             process_count = 0
-        
+
         # Memory
         try:
             memory_mb = process.memory_info().rss / 1024 / 1024
         except Exception:
             memory_mb = 0
-        
+
         # CPU
         try:
             cpu_percent = process.cpu_percent(interval=0.1)
         except Exception:
             cpu_percent = 0
-        
+
         return ResourceStats(
             fd_count=fd_count,
             fd_limit=fd_limit,
@@ -688,33 +688,33 @@ class ResourceMonitor:
             cpu_percent=cpu_percent,
             timestamp=time.time(),
         )
-    
+
     def get_history(self) -> list[ResourceStats]:
         """Get resource usage history."""
         return self._stats_history.copy()
-    
+
     def detect_leak(self) -> Optional[str]:
         """Detect potential resource leaks from history."""
         if len(self._stats_history) < 10:
             return None
-        
+
         recent = self._stats_history[-10:]
-        
+
         # Check for increasing FD count
         fd_trend = [s.fd_count for s in recent]
         if all(fd_trend[i] < fd_trend[i+1] for i in range(len(fd_trend)-1)):
             return "File descriptor leak detected (increasing trend)"
-        
+
         # Check for increasing process count
         proc_trend = [s.process_count for s in recent]
         if all(proc_trend[i] < proc_trend[i+1] for i in range(len(proc_trend)-1)):
             return "Process leak detected (increasing trend)"
-        
+
         # Check for increasing memory
         mem_trend = [s.memory_mb for s in recent]
         if all(mem_trend[i] < mem_trend[i+1] for i in range(len(mem_trend)-1)):
             return "Memory leak detected (increasing trend)"
-        
+
         return None
 
 
@@ -798,54 +798,54 @@ from typing import Optional
 
 class ResourceLimits:
     """Manage and enforce resource limits."""
-    
+
     DEFAULT_FD_LIMIT = 1024
     DEFAULT_PROCESS_LIMIT = 100
-    
+
     def __init__(self):
         self._original_limits = {}
         self._set_limits()
-    
+
     def _set_limits(self):
         """Set resource limits."""
         try:
             # File descriptors
             soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
             self._original_limits["nofile"] = (soft, hard)
-            
+
             # Set higher limit if possible
             new_soft = min(4096, hard)
             if new_soft > soft:
                 resource.setrlimit(resource.RLIMIT_NOFILE, (new_soft, hard))
                 logging.info(f"Set FD limit to {new_soft}")
-            
+
             # Process count
             soft, hard = resource.getrlimit(resource.RLIMIT_NPROC)
             self._original_limits["nproc"] = (soft, hard)
-            
+
             # Set higher limit if possible
             new_soft = min(200, hard)
             if new_soft > soft:
                 resource.setrlimit(resource.RLIMIT_NPROC, (new_soft, hard))
                 logging.info(f"Set process limit to {new_soft}")
-                
+
         except (OSError, ValueError) as e:
             logging.warning(f"Could not set resource limits: {e}")
-    
+
     def get_fd_limit(self) -> int:
         """Get current FD limit."""
         try:
             return resource.getrlimit(resource.RLIMIT_NOFILE)[0]
         except Exception:
             return self.DEFAULT_FD_LIMIT
-    
+
     def get_process_limit(self) -> int:
         """Get current process limit."""
         try:
             return resource.getrlimit(resource.RLIMIT_NPROC)[0]
         except Exception:
             return self.DEFAULT_PROCESS_LIMIT
-    
+
     def restore_limits(self):
         """Restore original limits."""
         for limit_name, (soft, hard) in self._original_limits.items():
@@ -887,11 +887,11 @@ def initialize_runtime_infrastructure():
     cleaned = registry.cleanup_orphaned()
     if cleaned > 0:
         logging.info(f"Cleaned up {cleaned} orphaned processes on startup")
-    
+
     # Start resource monitoring
     monitor = get_resource_monitor()
     monitor.start()
-    
+
     # Set resource limits
     from thegent.infra.resource_limits import get_resource_limits
     limits = get_resource_limits()
@@ -987,19 +987,19 @@ def test_no_fd_leak():
     """Test that file descriptors don't leak."""
     monitor = get_resource_monitor()
     initial_stats = monitor.get_stats()
-    
+
     manager = get_subprocess_manager()
-    
+
     # Create many processes
     for i in range(100):
         with manager.popen(["sleep", "0.1"], name=f"test-{i}"):
             pass
-    
+
     # Wait for cleanup
     time.sleep(1.0)
-    
+
     final_stats = monitor.get_stats()
-    
+
     # FD count should not increase significantly
     assert final_stats.fd_count <= initial_stats.fd_count + 10
 
@@ -1008,19 +1008,19 @@ def test_no_process_leak():
     """Test that processes don't leak."""
     registry = get_registry()
     initial_count = len(registry.list_alive())
-    
+
     manager = get_subprocess_manager()
-    
+
     # Create many processes
     for i in range(50):
         with manager.popen(["sleep", "0.1"], name=f"test-{i}"):
             pass
-    
+
     # Wait for cleanup
     time.sleep(1.0)
-    
+
     final_count = len(registry.list_alive())
-    
+
     # Process count should return to initial
     assert final_count == initial_count
 
@@ -1029,18 +1029,18 @@ def test_cleanup_on_error():
     """Test that cleanup happens on errors."""
     registry = get_registry()
     initial_count = len(registry.list_alive())
-    
+
     manager = get_subprocess_manager()
-    
+
     try:
         with manager.popen(["false"], name="test-error"):
             raise RuntimeError("Test error")
     except RuntimeError:
         pass
-    
+
     # Wait for cleanup
     time.sleep(0.5)
-    
+
     final_count = len(registry.list_alive())
     assert final_count == initial_count
 ```
@@ -1053,7 +1053,7 @@ def test_cleanup_on_error():
 def test_concurrent_process_limit():
     """Test that concurrent process limit is enforced."""
     manager = get_subprocess_manager()
-    
+
     processes = []
     try:
         # Try to exceed limit
@@ -1082,17 +1082,17 @@ def test_concurrent_process_limit():
 def test_cliproxy_lifecycle():
     """Test cliproxy process lifecycle."""
     from thegent.agents.cliproxy_manager import ensure_proxy_running
-    
+
     # Start proxy
     url = ensure_proxy_running(settings)
-    
+
     # Check it's tracked
     registry = get_registry()
     assert len(registry.list_alive()) > 0
-    
+
     # Cleanup
     registry.cleanup_all()
-    
+
     # Verify cleanup
     assert len(registry.list_alive()) == 0
 ```
@@ -1135,29 +1135,29 @@ def check_runtime_health() -> dict:
     monitor = get_resource_monitor()
     stats = monitor.get_stats()
     registry = get_registry()
-    
+
     health = {
         "status": "healthy",
         "issues": [],
         "stats": stats.__dict__,
         "processes": registry.get_stats(),
     }
-    
+
     # Check for critical issues
     if stats.is_critical():
         health["status"] = "critical"
         health["issues"].append("Resource usage critical")
-    
+
     leak = monitor.detect_leak()
     if leak:
         health["status"] = "warning"
         health["issues"].append(leak)
-    
+
     # Check for orphaned processes
     orphaned = registry.cleanup_orphaned()
     if orphaned > 0:
         health["issues"].append(f"{orphaned} orphaned processes cleaned up")
-    
+
     return health
 ```
 

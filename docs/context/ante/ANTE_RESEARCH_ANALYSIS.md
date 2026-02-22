@@ -1,7 +1,7 @@
 # ANTE by Antigma Labs: Comprehensive Technical Research
 
-**Status**: Access-Restricted Documentation | Community-Driven Intelligence  
-**Last Updated**: 2026-02-20  
+**Status**: Access-Restricted Documentation | Community-Driven Intelligence
+**Last Updated**: 2026-02-20
 **Research Scope**: Architecture, capabilities, performance, and technical patterns
 
 ---
@@ -46,7 +46,7 @@ Main Agent (Ante CLI)
     ├── Route & Decompose
     ├── Spawn Subagent(s)
     │   ├── Subagent Type 1 (explore)
-    │   ├── Subagent Type 2 (analyze) 
+    │   ├── Subagent Type 2 (analyze)
     │   ├── Subagent Type N (execute)
     │   └── [Concurrent or Sequential]
     ├── Context Sharing (hierarchical)
@@ -349,7 +349,7 @@ Server::builder(StdioTransport)
 
 ### 4.1 Terminal-Bench Benchmark Results
 
-**Benchmark Suite**: Terminal-Bench Core v0.1.1  
+**Benchmark Suite**: Terminal-Bench Core v0.1.1
 **Task Categories**: Complex terminal-based challenges
 
 **Recorded Ante Submissions**:
@@ -362,7 +362,7 @@ Server::builder(StdioTransport)
      - blind-maze-explorer-algorithm.hard (complex algorithms)
      - build-initramfs-qemu (system-level task)
      - build-linux-kernel-qemu (intensive computation)
-   
+
    - **Sample Result (blind-maze-explorer-5x5)**:
      - Status: Attempted
      - Task Creation: PASSED (map file created)
@@ -670,6 +670,6 @@ The framework's approach to subagent orchestration, context optimization, and to
 
 ---
 
-**Research Conducted**: 2026-02-20  
-**Confidence Level**: High (with caveats on access-restricted areas)  
+**Research Conducted**: 2026-02-20
+**Confidence Level**: High (with caveats on access-restricted areas)
 **Completeness**: ~75% based on available public information

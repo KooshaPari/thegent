@@ -1,7 +1,7 @@
 # Session Research Complete — Comprehensive Deep-Dive
 
 > **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
-> **Related**: 
+> **Related**:
 > - [Supermemory Integration Plan](../plans/2026-02-16-supermemory-integration-plan.md)
 > - [Unified WBS](../plans/02-UNIFIED-WBS.md)
 > - [Work Stream](../reference/WORK_STREAM.md)
@@ -106,7 +106,7 @@ from thegent.orchestration.memory import MemoryProvider, ContinuityPacket
 
 class SupermemoryProvider(MemoryProvider):
     """Supermemory.ai provider for L3/L4 memory."""
-    
+
     def __init__(self, api_key: str, project_id: str):
         self.api_key = api_key
         self.project_id = project_id
@@ -114,7 +114,7 @@ class SupermemoryProvider(MemoryProvider):
             "x-sm-project": project_id,
             "Authorization": f"Bearer {api_key}"
         })
-    
+
     async def store_conversation(
         self,
         agent_id: str,
@@ -131,7 +131,7 @@ class SupermemoryProvider(MemoryProvider):
                 "metadata": {"project": self.project_id}
             }
         )
-        
+
         # Store relationships if provided
         if relationships:
             await self.mcp_client.call_tool(
@@ -141,9 +141,9 @@ class SupermemoryProvider(MemoryProvider):
                     "relationships": relationships
                 }
             )
-        
+
         return conv_id
-    
+
     async def search_past_decisions(
         self,
         query: str,
@@ -160,7 +160,7 @@ class SupermemoryProvider(MemoryProvider):
                 "project": self.project_id
             }
         )
-    
+
     async def store_artifact(
         self,
         artifact: dict,
@@ -178,7 +178,7 @@ class SupermemoryProvider(MemoryProvider):
                 }
             }
         )
-    
+
     async def generate_continuity_packet(
         self,
         agent_id: str,
@@ -191,7 +191,7 @@ class SupermemoryProvider(MemoryProvider):
             agent_id=agent_id,
             limit=50
         )
-        
+
         # Build continuity packet
         return ContinuityPacket(
             agent_id=agent_id,
@@ -376,7 +376,7 @@ class RoutingDecision:
 
 class ParetoRouter:
     """Pareto routing with hysteresis."""
-    
+
     def __init__(
         self,
         low_risk_threshold: float = 0.8,
@@ -388,32 +388,32 @@ class ParetoRouter:
         self.hysteresis_window = hysteresis_window
         self.normal_concurrency = normal_concurrency
         self.protective_concurrency = protective_concurrency
-        
+
         # Hysteresis state
         self.scale_mode_transitions: dict[str, datetime] = {}
         self.current_scale_mode = ScaleMode.NORMAL
-    
+
     def route_task(self, task: dict) -> RoutingDecision:
         """Route task based on Pareto principle."""
         # Assess risk
         risk_level = self._assess_risk(task)
-        
+
         # Determine route
         if risk_level == RiskLevel.LOW:
             route = "lifecycle"
         else:
             route = "thegent"
-        
+
         # Determine scale mode with hysteresis
         scale_mode = self._determine_scale_mode_with_hysteresis(task)
-        
+
         # Get concurrency limit
         concurrency_limit = (
             self.normal_concurrency
             if scale_mode == ScaleMode.NORMAL
             else self.protective_concurrency
         )
-        
+
         return RoutingDecision(
             route=route,
             risk_level=risk_level,
@@ -421,33 +421,33 @@ class ParetoRouter:
             concurrency_limit=concurrency_limit,
             reason=self._generate_reason(task, risk_level, scale_mode)
         )
-    
+
     def _assess_risk(self, task: dict) -> RiskLevel:
         """Assess task risk level."""
         risk_score = 0.0
-        
+
         # Complexity factor
         if task.get("complexity", "low") == "high":
             risk_score += 0.3
-        
+
         # Impact factor
         impact = task.get("impact", "low")
         if impact == "high":
             risk_score += 0.4
         elif impact == "medium":
             risk_score += 0.2
-        
+
         # Confidence factor
         confidence = task.get("confidence", 1.0)
         risk_score += (1.0 - confidence) * 0.3
-        
+
         # Security factor
         if task.get("security_sensitive", False):
             risk_score += 0.2
-        
+
         # Classify
         return RiskLevel.HIGH if risk_score > (1.0 - self.low_risk_threshold) else RiskLevel.LOW
-    
+
     def _determine_scale_mode_with_hysteresis(
         self,
         task: dict
@@ -459,14 +459,14 @@ class ParetoRouter:
             task.get("security_sensitive", False) or
             self._has_recent_failures()
         )
-        
+
         current_time = datetime.now()
         transition_key = f"{self.current_scale_mode.value}_to_{ScaleMode.PROTECTIVE.value}"
-        
+
         if should_protect:
             # Check if we recently switched modes
             last_transition = self.scale_mode_transitions.get(transition_key)
-            
+
             if last_transition is None or \
                (current_time - last_transition) > self.hysteresis_window:
                 # Safe to switch
@@ -477,22 +477,22 @@ class ParetoRouter:
             # Check if we should switch back to normal
             transition_key = f"{ScaleMode.PROTECTIVE.value}_to_{ScaleMode.NORMAL.value}"
             last_transition = self.scale_mode_transitions.get(transition_key)
-            
+
             if self.current_scale_mode == ScaleMode.PROTECTIVE:
                 if last_transition is None or \
                    (current_time - last_transition) > self.hysteresis_window:
                     # Safe to switch back
                     self.current_scale_mode = ScaleMode.NORMAL
                     self.scale_mode_transitions[transition_key] = current_time
-        
+
         return self.current_scale_mode
-    
+
     def _has_recent_failures(self) -> bool:
         """Check if there have been recent failures."""
         # Implementation: Check failure rate in last 5 minutes
         # Return True if failure rate > threshold
         return False  # Placeholder
-    
+
     def _generate_reason(
         self,
         task: dict,
@@ -501,15 +501,15 @@ class ParetoRouter:
     ) -> str:
         """Generate human-readable routing reason."""
         reasons = []
-        
+
         if risk_level == RiskLevel.LOW:
             reasons.append("Low risk task")
         else:
             reasons.append("High risk task")
-        
+
         if scale_mode == ScaleMode.PROTECTIVE:
             reasons.append("Protective mode (recent failures or high impact)")
-        
+
         return "; ".join(reasons)
 ```
 
@@ -685,7 +685,7 @@ class TaskValue:
 
 class CostAwareRouter:
     """Route tasks based on cost-value optimization."""
-    
+
     def __init__(
         self,
         reliability_weight: float = 0.4,
@@ -695,10 +695,10 @@ class CostAwareRouter:
         self.reliability_weight = reliability_weight
         self.latency_weight = latency_weight
         self.cost_weight = cost_weight
-        
+
         # Provider registry
         self.providers: dict[str, dict] = {}
-    
+
     def register_provider(
         self,
         provider_id: str,
@@ -712,7 +712,7 @@ class CostAwareRouter:
             "latency_ms": avg_latency_ms,
             "cost_per_token": cost_per_token
         }
-    
+
     def select_provider(
         self,
         task_value: TaskValue,
@@ -721,7 +721,7 @@ class CostAwareRouter:
         """Select best provider based on cost-value optimization."""
         # Calculate weights based on task priority
         weights = self._calculate_weights(task_value)
-        
+
         # Score all providers
         scores = []
         for provider_id, provider_data in self.providers.items():
@@ -729,13 +729,13 @@ class CostAwareRouter:
             if required_reliability and \
                provider_data["reliability"] < required_reliability:
                 continue
-            
+
             score = self._calculate_score(
                 provider_data,
                 weights,
                 task_value
             )
-            
+
             scores.append(ProviderScore(
                 provider_id=provider_id,
                 reliability=provider_data["reliability"],
@@ -743,14 +743,14 @@ class CostAwareRouter:
                 cost_per_token=provider_data["cost_per_token"],
                 overall_score=score
             ))
-        
+
         if not scores:
             raise ValueError("No suitable provider found")
-        
+
         # Select provider with highest score
         best = max(scores, key=lambda s: s.overall_score)
         return best.provider_id
-    
+
     def _calculate_weights(self, task_value: TaskValue) -> dict:
         """Calculate weights based on task priority and value."""
         base_weights = {
@@ -758,7 +758,7 @@ class CostAwareRouter:
             "latency": self.latency_weight,
             "cost": self.cost_weight
         }
-        
+
         # Adjust weights based on priority
         if task_value.priority == TaskPriority.CRITICAL:
             # Prioritize reliability and latency
@@ -774,14 +774,14 @@ class CostAwareRouter:
             base_weights["reliability"] *= 0.8
             base_weights["latency"] *= 0.8
             base_weights["cost"] *= 1.5
-        
+
         # Adjust for time sensitivity
         if task_value.time_sensitivity > 0.7:
             base_weights["latency"] *= 1.3
             base_weights["cost"] *= 0.8
-        
+
         return base_weights
-    
+
     def _calculate_score(
         self,
         provider_data: dict,
@@ -791,20 +791,20 @@ class CostAwareRouter:
         """Calculate overall provider score."""
         # Normalize values
         reliability_score = provider_data["reliability"] * weights["reliability"]
-        
+
         # Latency: lower is better (inverse)
         max_latency = 5000  # 5 seconds
         latency_score = (1.0 - (provider_data["latency_ms"] / max_latency)) * weights["latency"]
-        
+
         # Cost: lower is better (inverse)
         max_cost = 0.01  # $0.01 per token
         cost_score = (1.0 - (provider_data["cost_per_token"] / max_cost)) * weights["cost"]
-        
+
         # Value multiplier: higher value tasks can afford higher costs
         value_multiplier = 1.0 + (task_value.estimated_value * 0.5)
-        
+
         overall = (reliability_score + latency_score + cost_score) * value_multiplier
-        
+
         return overall
 ```
 
@@ -1004,7 +1004,7 @@ class MAIFArtifact:
     metadata: dict = None
     signature: dict = None
     hash_chain: dict = None
-    
+
     def __post_init__(self):
         if self.input is None:
             self.input = {}
@@ -1016,7 +1016,7 @@ class MAIFArtifact:
             self.timestamp = datetime.utcnow().isoformat() + "Z"
         if self.artifact_id == "":
             self.artifact_id = self._generate_id()
-    
+
     def _generate_id(self) -> str:
         """Generate unique artifact ID."""
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
@@ -1024,99 +1024,99 @@ class MAIFArtifact:
             f"{self.agent_id}{self.timestamp}".encode()
         ).hexdigest()[:6]
         return f"maif_{timestamp}_{random_suffix}"
-    
+
     def sign(self, private_key: ed25519.Ed25519PrivateKey):
         """Sign artifact with private key."""
         # Serialize artifact (without signature)
         artifact_dict = asdict(self)
         artifact_dict.pop("signature", None)
         artifact_json = json.dumps(artifact_dict, sort_keys=True)
-        
+
         # Sign
         signature_bytes = private_key.sign(artifact_json.encode())
-        
+
         # Get public key
         public_key = private_key.public_key()
         public_key_bytes = public_key.public_bytes(
             encoding=serialization.Encoding.Raw,
             format=serialization.PublicFormat.Raw
         )
-        
+
         # Store signature
         self.signature = {
             "algorithm": "ed25519",
             "public_key": public_key_bytes.hex(),
             "signature": signature_bytes.hex()
         }
-    
+
     def verify(self) -> bool:
         """Verify artifact signature."""
         if not self.signature:
             return False
-        
+
         try:
             # Reconstruct public key
             public_key_bytes = bytes.fromhex(self.signature["public_key"])
             public_key = ed25519.Ed25519PublicKey.from_public_bytes(public_key_bytes)
-            
+
             # Serialize artifact (without signature)
             artifact_dict = asdict(self)
             artifact_dict.pop("signature", None)
             artifact_json = json.dumps(artifact_dict, sort_keys=True)
-            
+
             # Verify signature
             signature_bytes = bytes.fromhex(self.signature["signature"])
             public_key.verify(signature_bytes, artifact_json.encode())
-            
+
             return True
         except Exception:
             return False
-    
+
     def add_to_hash_chain(self, previous_hash: Optional[str] = None):
         """Add artifact to hash chain."""
         # Calculate current hash
         artifact_dict = asdict(self)
         artifact_dict.pop("hash_chain", None)
         artifact_json = json.dumps(artifact_dict, sort_keys=True)
-        
+
         if previous_hash:
             content_to_hash = artifact_json + previous_hash
         else:
             content_to_hash = artifact_json
-        
+
         current_hash = hashlib.sha256(content_to_hash.encode()).hexdigest()
-        
+
         # Store hash chain
         self.hash_chain = {
             "previous_hash": previous_hash or "",
             "current_hash": current_hash
         }
-    
+
     def verify_hash_chain(self, previous_hash: Optional[str] = None) -> bool:
         """Verify hash chain integrity."""
         if not self.hash_chain:
             return False
-        
+
         # Recalculate hash
         artifact_dict = asdict(self)
         artifact_dict.pop("hash_chain", None)
         artifact_json = json.dumps(artifact_dict, sort_keys=True)
-        
+
         if previous_hash:
             content_to_hash = artifact_json + previous_hash
         else:
             content_to_hash = artifact_json
-        
+
         expected_hash = hashlib.sha256(content_to_hash.encode()).hexdigest()
-        
+
         # Verify
         return self.hash_chain["current_hash"] == expected_hash and \
                self.hash_chain["previous_hash"] == (previous_hash or "")
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary."""
         return asdict(self)
-    
+
     def to_json(self) -> str:
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), indent=2)
@@ -1131,50 +1131,50 @@ from thegent.orchestration.context import SupermemoryProvider
 
 class MAIFStorage:
     """Storage for MAIF artifacts."""
-    
+
     def __init__(self, supermemory_provider: SupermemoryProvider):
         self.supermemory = supermemory_provider
         self.last_hash: Optional[str] = None
-    
+
     async def store(self, artifact: MAIFArtifact) -> str:
         """Store MAIF artifact in L4."""
         # Add to hash chain
         artifact.add_to_hash_chain(self.last_hash)
-        
+
         # Store in Supermemory L4
         artifact_id = await self.supermemory.store_artifact(
             artifact.to_dict(),
             artifact.hash_chain["current_hash"]
         )
-        
+
         # Update last hash
         self.last_hash = artifact.hash_chain["current_hash"]
-        
+
         return artifact_id
-    
+
     async def retrieve(self, artifact_id: str) -> Optional[MAIFArtifact]:
         """Retrieve MAIF artifact from L4."""
         artifact_dict = await self.supermemory.retrieve_artifact(artifact_id)
         if not artifact_dict:
             return None
-        
+
         # Reconstruct artifact
         artifact = MAIFArtifact(**artifact_dict)
         return artifact
-    
+
     async def verify_chain(self, artifact_id: str) -> bool:
         """Verify hash chain integrity."""
         artifact = await self.retrieve(artifact_id)
         if not artifact:
             return False
-        
+
         # Get previous artifact
         previous_hash = artifact.hash_chain.get("previous_hash")
         if previous_hash:
             # Would need to retrieve previous artifact to verify
             # For now, just verify current artifact
             pass
-        
+
         return artifact.verify_hash_chain(previous_hash)
 ```
 
@@ -1325,11 +1325,11 @@ class SimulationResult:
 
 class SimulationEngine:
     """Engine for simulating alternative decisions."""
-    
+
     def __init__(self, supermemory_provider: SupermemoryProvider):
         self.supermemory = supermemory_provider
         self.sandbox_manager = SandboxManager()
-    
+
     async def simulate_alternative(
         self,
         decision_id: str,
@@ -1341,13 +1341,13 @@ class SimulationEngine:
         original_decision = await self._retrieve_decision(decision_id)
         if not original_decision:
             raise ValueError(f"Decision {decision_id} not found")
-        
+
         # Create sandbox
         sandbox = await self.sandbox_manager.create_sandbox(
             original_decision.input_state,
             config=sandbox_config
         )
-        
+
         try:
             # Execute alternative action in sandbox
             alternative_outcome = await self._execute_in_sandbox(
@@ -1355,20 +1355,20 @@ class SimulationEngine:
                 alternative_action,
                 original_decision.context
             )
-            
+
             # Compare outcomes
             differences = self._compare_outcomes(
                 original_decision.output_state,
                 alternative_outcome
             )
-            
+
             # Calculate confidence
             confidence = self._calculate_confidence(
                 original_decision,
                 alternative_outcome,
                 differences
             )
-            
+
             return SimulationResult(
                 original_outcome=original_decision.output_state,
                 alternative_outcome=alternative_outcome,
@@ -1383,7 +1383,7 @@ class SimulationEngine:
         finally:
             # Cleanup sandbox
             await self.sandbox_manager.destroy_sandbox(sandbox.id)
-    
+
     async def _retrieve_decision(self, decision_id: str) -> Optional[dict]:
         """Retrieve decision context from L3."""
         # Search Supermemory L3 for decision
@@ -1391,12 +1391,12 @@ class SimulationEngine:
             f"decision_id:{decision_id}",
             limit=1
         )
-        
+
         if not results:
             return None
-        
+
         return results[0]
-    
+
     async def _execute_in_sandbox(
         self,
         sandbox: Sandbox,
@@ -1406,12 +1406,12 @@ class SimulationEngine:
         """Execute action in sandboxed environment."""
         # Apply action to sandbox state
         await sandbox.apply_action(action)
-        
+
         # Execute decision logic with context
         outcome = await sandbox.execute_decision_logic(context)
-        
+
         return outcome
-    
+
     def _compare_outcomes(
         self,
         original: dict,
@@ -1419,14 +1419,14 @@ class SimulationEngine:
     ) -> list[dict]:
         """Compare original and alternative outcomes."""
         differences = []
-        
+
         # Compare keys
         all_keys = set(original.keys()) | set(alternative.keys())
-        
+
         for key in all_keys:
             original_val = original.get(key)
             alternative_val = alternative.get(key)
-            
+
             if original_val != alternative_val:
                 differences.append({
                     "key": key,
@@ -1434,9 +1434,9 @@ class SimulationEngine:
                     "alternative": alternative_val,
                     "type": self._get_difference_type(original_val, alternative_val)
                 })
-        
+
         return differences
-    
+
     def _get_difference_type(self, original: Any, alternative: Any) -> str:
         """Classify difference type."""
         if isinstance(original, dict) and isinstance(alternative, dict):
@@ -1447,7 +1447,7 @@ class SimulationEngine:
             return "type_change"
         else:
             return "value_change"
-    
+
     def _calculate_confidence(
         self,
         original_decision: dict,
@@ -1457,18 +1457,18 @@ class SimulationEngine:
         """Calculate confidence in simulation result."""
         # Base confidence
         confidence = 0.8
-        
+
         # Reduce confidence for large differences
         if len(differences) > 10:
             confidence -= 0.2
         elif len(differences) > 5:
             confidence -= 0.1
-        
+
         # Reduce confidence for type changes
         type_changes = sum(1 for d in differences if d["type"] == "type_change")
         if type_changes > 0:
             confidence -= 0.1 * type_changes
-        
+
         # Ensure confidence is in valid range
         return max(0.0, min(1.0, confidence))
 ```
@@ -1492,10 +1492,10 @@ class Sandbox:
 
 class SandboxManager:
     """Manages sandboxed execution environments."""
-    
+
     def __init__(self):
         self.sandboxes: Dict[str, Sandbox] = {}
-    
+
     async def create_sandbox(
         self,
         input_state: dict,
@@ -1503,54 +1503,54 @@ class SandboxManager:
     ) -> Sandbox:
         """Create new sandbox with cloned state."""
         sandbox_id = str(uuid.uuid4())
-        
+
         # Deep clone input state
         cloned_state = self._deep_clone(input_state)
-        
+
         sandbox = Sandbox(
             id=sandbox_id,
             input_state=input_state,
             current_state=cloned_state,
             created_at=datetime.utcnow()
         )
-        
+
         self.sandboxes[sandbox_id] = sandbox
-        
+
         # Apply sandbox configuration
         if config:
             await self._apply_config(sandbox, config)
-        
+
         return sandbox
-    
+
     async def destroy_sandbox(self, sandbox_id: str):
         """Destroy sandbox and cleanup resources."""
         if sandbox_id in self.sandboxes:
             # Cleanup resources
             await self._cleanup_resources(sandbox_id)
-            
+
             # Remove from registry
             del self.sandboxes[sandbox_id]
-    
+
     def _deep_clone(self, obj: dict) -> dict:
         """Deep clone dictionary."""
         import copy
         return copy.deepcopy(obj)
-    
+
     async def _apply_config(self, sandbox: Sandbox, config: dict):
         """Apply sandbox configuration."""
         # Apply resource limits
         if "cpu_limit" in config:
             # Set CPU limit
             pass
-        
+
         if "memory_limit" in config:
             # Set memory limit
             pass
-        
+
         if "network_isolated" in config:
             # Isolate network
             pass
-    
+
     async def _cleanup_resources(self, sandbox_id: str):
         """Cleanup sandbox resources."""
         # Cleanup files, processes, etc.
@@ -1670,7 +1670,7 @@ Each concept is ready for implementation with clear guidance, code examples, and
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -535,4 +535,3 @@ upsert_canonical_item(self: Any, item_id: str, title: str, source: str, source_s
 Upsert a work item into the canonical PM store.
 
 ---
-

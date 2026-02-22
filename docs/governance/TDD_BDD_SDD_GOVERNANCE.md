@@ -1,7 +1,7 @@
 # TDD/BDD/SDD Governance for Agent-Only Environment
 
-**Date**: 2026-02-19  
-**Status**: 🎯 CRITICAL - Agent-Only Testing Requirements  
+**Date**: 2026-02-19
+**Status**: 🎯 CRITICAL - Agent-Only Testing Requirements
 **Coverage Target**: **100%** (not 80%)
 
 ---
@@ -328,6 +328,6 @@ def test_agent_execution_successful():
 
 ---
 
-**Status**: 🎯 CRITICAL - Agent-Only Environment  
-**Coverage Target**: **100%** (not 80%)  
+**Status**: 🎯 CRITICAL - Agent-Only Environment
+**Coverage Target**: **100%** (not 80%)
 **Governance**: TDD/BDD/SDD aligned

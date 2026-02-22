@@ -33,4 +33,3 @@ schedule(self: Any, task: dict[(str, Any)], gravity_field: dict[(str, float)])
 Schedule task considering gravity.
 
 ---
-

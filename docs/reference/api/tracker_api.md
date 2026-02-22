@@ -147,4 +147,3 @@ to_dict(self: Any)
 Convert entry to dictionary.
 
 ---
-

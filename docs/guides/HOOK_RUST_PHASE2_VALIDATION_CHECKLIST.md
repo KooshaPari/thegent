@@ -552,4 +552,3 @@ Once Phase 2 completes successfully:
 Review this checklist. Once all pre-requisites are met, Phase 2 is ready to start.
 
 Contact: Lead Phase 2 with the plan, monitoring, and rollback procedures documented above.
-

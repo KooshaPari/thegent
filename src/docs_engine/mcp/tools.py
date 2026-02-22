@@ -25,7 +25,7 @@ def _db_path() -> Path:
     return Path(os.environ.get("DOCS_ENGINE_DB", "docs/.docs-engine.db"))
 
 
-def register_tools(mcp) -> None:  # noqa: ANN001 -- mcp is a FastMCP instance; type stub varies by version
+def register_tools(mcp):  # noqa: ANN001 -- mcp is a FastMCP instance; type stub varies by version
     """Register all thegent_doc_* tools on the FastMCP server instance."""
 
     def doc_new(doc_type: str, title: str) -> str:
@@ -71,3 +71,12 @@ def register_tools(mcp) -> None:  # noqa: ANN001 -- mcp is a FastMCP instance; t
     mcp.tool("thegent_doc_sidebar")(doc_sidebar)
     mcp.tool("thegent_doc_semantic")(doc_semantic)
     mcp.tool("thegent_doc_changelog")(doc_changelog)
+    return (
+        doc_new,
+        doc_search,
+        doc_list,
+        doc_export,
+        doc_sidebar,
+        doc_semantic,
+        doc_changelog,
+    )

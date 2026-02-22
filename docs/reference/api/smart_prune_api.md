@@ -149,4 +149,3 @@ smart_prune_main(force: bool, reprompt: bool)
 Entry point for smart pruning.
 
 ---
-

@@ -94,4 +94,3 @@ verify_signature(data: dict[(str, Any)], signature: str, secret_key: str)
 Verify the provenance signature of an artifact.
 
 ---
-

@@ -1,7 +1,7 @@
 # ChatGPT Pareto Router Deep Research — Part 4: Project Catalog & Ground Truths
 
-**Source**: chatgpt3.md, chatgpt4.md  
-**Date**: 2026-02-18  
+**Source**: chatgpt3.md, chatgpt4.md
+**Date**: 2026-02-18
 **Scope**: Project-specific subscriptions, Copilot schema, catalog examples, worked routing examples
 
 ---

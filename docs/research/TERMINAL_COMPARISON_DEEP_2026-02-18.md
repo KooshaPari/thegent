@@ -902,7 +902,7 @@ listen_on unix:/tmp/mykitty
 - **Warp**: AI features (but conflicts with separate agents, subscription model)
 - **Windows Terminal**: Good Windows alternative (can approximate Ghostty UI)
 
-**Key Takeaway**: 
+**Key Takeaway**:
 - GPU acceleration is essential for modern terminal workloads
 - Native UI components provide better UX than custom-drawn alternatives
 - Terminal-first design enables better integration with CLI agents

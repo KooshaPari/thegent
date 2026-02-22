@@ -159,4 +159,3 @@ Find all links in a markdown file.
 **Returns**: List of link dictionaries with url, line, type
 
 ---
-

@@ -313,7 +313,7 @@ def infer_reasoning_depth(prompt: str) -> int:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

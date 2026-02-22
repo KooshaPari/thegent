@@ -1,6 +1,6 @@
 # LSP Auto-Install Test and Enhancements
 
-**Date**: 2026-02-18  
+**Date**: 2026-02-18
 **Status**: ✅ Complete
 
 ## Summary
@@ -98,7 +98,7 @@ $ thegent lsp list --all
 ```bash
 $ thegent lsp auto-setup
 ```
-✅ **Success**: 
+✅ **Success**:
 - Detected 7/8 servers installed (Rust failed - rustup not installed)
 - Auto-configured Ghostty shell integration
 - Shows comprehensive status table

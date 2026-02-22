@@ -49,7 +49,7 @@ run_python() {
 # TypeScript checks
 run_typescript() {
   echo "--- TypeScript Quality ---"
-  
+
   # JS execution helper (Bun > Node)
   _js_run() {
     if command -v bun >/dev/null 2>&1; then

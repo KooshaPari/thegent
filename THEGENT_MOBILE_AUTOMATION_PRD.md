@@ -428,14 +428,14 @@ interface MCPModule {
     getScreen: () => Promise<ScreenState>;
     getAccessibilityTree: () => Promise<AccessibilityTree>;
   };
-  
+
   // Resources
   resources: {
     'screen.png': ScreenCapture;
     'tree.json': AccessibilityTree;
     'state.json': DeviceState;
   };
-  
+
   // Prompts
   prompts: {
     'automate-login': AutomationPrompt;
@@ -599,17 +599,17 @@ result = await client.call_tool("safeInteraction", {
 class MobileAgent:
     def __init__(self, mcp_server: str):
         self.mcp = Client(mcp_server)
-    
+
     async def execute_task(self, task: str):
         # Get current state
         tree = await self.mcp.get_resource("tree.json")
-        
+
         # Plan action
         action = self.plan_action(task, tree)
-        
+
         # Execute with collision checking
         result = await self.mcp.call_tool("safeInteraction", action)
-        
+
         return result
 ```
 

@@ -146,4 +146,3 @@ validate_transition(self: Any, from_state: str, to_state: str)
 Validate if a state transition is allowed (WP-1004).
 
 ---
-

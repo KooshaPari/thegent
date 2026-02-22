@@ -6,8 +6,8 @@ Source: docs/research/ENV_MIGRATION_STATUS.md
 
 # Environment Variable Migration Status
 
-**Date**: 2026-02-19  
-**Status**: ✅ In Progress  
+**Date**: 2026-02-19
+**Status**: ✅ In Progress
 **Goal**: Migrate from `os.environ`/`os.getenv` to `ThegentSettings` for better configuration management
 
 ---
@@ -71,7 +71,7 @@ All `THGENT_*` environment variables should be migrated to `ThegentSettings`:
 - **Todo**: Investigate droid execution path
 
 ### 2. Type Error Outside Venv
-- **Status**: ⏳ Pending Investigation  
+- **Status**: ⏳ Pending Investigation
 - **Description**: thegent gives type issue when run outside thegent dir/venv
 - **Note**: Installation verified - works from /tmp
 - **Todo**: Check type checking configuration

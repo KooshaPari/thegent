@@ -33,7 +33,7 @@ sequenceDiagram
     participant User
     participant Agent
     participant Router
-    
+
     User->>Agent: Request
     Agent->>Router: Route
     Router-->>Agent: Response

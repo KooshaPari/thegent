@@ -42,16 +42,16 @@ enum Commands {
 
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
-    
+
     match cli.command {
         Commands::XmlTags { tags, case_sensitive } => {
             let mut input = String::new();
             io::stdin().read_to_string(&mut input)?;
-            
+
             let allowed: Option<Vec<&str>> = tags.as_ref().map(|t| {
                 t.split(',').map(|s| s.trim()).collect()
             });
-            
+
             // Simple XML tag extraction (inline to avoid lib dependency)
             let result = extract_xml_tags_simple(&input, allowed.as_deref(), case_sensitive);
             println!("{}", serde_json::to_string_pretty(&result)?);
@@ -78,7 +78,7 @@ fn main() -> io::Result<()> {
             println!("{}", serde_json::to_string_pretty(&results)?);
         }
     }
-    
+
     Ok(())
 }
 
@@ -88,13 +88,13 @@ fn extract_xml_tags_simple(text: &str, allowed_tags: Option<&[&str]>, case_sensi
     let re = Regex::new(r"<([A-Za-z0-9_\-]+)>").unwrap();
     let mut tags = serde_json::Map::new();
     let mut search_start = 0;
-    
+
     while let Some(cap) = re.captures(&text[search_start..]) {
         let key = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         let open_full = cap.get(0).unwrap();
         let content_start = search_start + open_full.end();
         let closing = format!("</{}>", key);
-        
+
         if let Some(close_pos) = text[content_start..].find(&closing) {
             let val = text[content_start..content_start + close_pos].trim();
             let include = match allowed_tags {
@@ -136,12 +136,12 @@ fn strip_noise_simple(text: &str, profile: &str) -> String {
         (Regex::new(r"^Total duration \(API\):").ok(), "plain"),
         (Regex::new(r"^Usage by model:").ok(), "plain"),
     ];
-    
+
     text.lines()
         .filter(|line| {
             let trimmed = line.trim();
             if trimmed.is_empty() { return true; }
-            
+
             for (re, pat_profile) in &patterns {
                 if let Some(regex) = re {
                     let matches_profile = match *pat_profile {

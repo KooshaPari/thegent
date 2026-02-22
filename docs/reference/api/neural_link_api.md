@@ -33,4 +33,3 @@ offload(self: Any, cognitive_load: float)
 Offload cognitive load.
 
 ---
-

@@ -6,9 +6,9 @@ Source: docs/research/CLIENT_SIDE_PACKAGE_DESIGN_RESEARCH.md
 
 # Client-Side Software Package Design & Deployment Research
 
-**Date:** 2026-02-17  
-**Status:** Research Complete  
-**Purpose:** Enhance production packaging plans with industry best practices  
+**Date:** 2026-02-17
+**Status:** Research Complete
+**Purpose:** Enhance production packaging plans with industry best practices
 **Related:** [PRODUCTION_PACKAGING_POLISH_OPTIMIZATION_AUDIT_AND_PLAN.md](PRODUCTION_PACKAGING_POLISH_OPTIMIZATION_AUDIT_AND_PLAN.md)
 
 ---
@@ -96,12 +96,12 @@ def get_hooks_dir() -> Path:
                 return Path(str(hooks_pkg))
     except (ImportError, TypeError):
         pass
-    
+
     # Fallback to dev repo
     dev_hooks = Path(__file__).parent.parent.parent / "hooks"
     if dev_hooks.exists():
         return dev_hooks
-    
+
     # Fallback to user config
     return get_config_dir() / "hooks"
 
@@ -114,7 +114,7 @@ def get_templates_dir() -> Path:
                 return Path(str(templates_pkg))
     except (ImportError, TypeError):
         pass
-    
+
     # Fallback chain...
     return get_config_dir() / "templates"
 ```
@@ -213,25 +213,25 @@ class Thegent < Formula
   url "https://files.pythonhosted.org/packages/.../thegent-0.1.0.tar.gz"
   sha256 "..."
   license "MIT"
-  
+
   depends_on "python@3.12"
   depends_on "rust" => :build
-  
+
   # Platform-specific dependencies
   on_macos do
     depends_on "python-tk"
   end
-  
+
   on_linux do
     depends_on "dbus"
     depends_on "at-spi2-core"
   end
-  
+
   def install
     system "pip3", "install", "--prefix=#{prefix}", "."
     bin.install_symlink libexec/"bin/thegent"
   end
-  
+
   test do
     system "#{bin}/thegent", "--version"
   end
@@ -251,12 +251,12 @@ end
 ```
 {
   description = "thegent - Agentic orchestration platform";
-  
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
-  
+
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
@@ -267,17 +267,17 @@ end
           pname = "thegent";
           version = "0.1.0";
           src = ./.;
-          
+
           propagatedBuildInputs = with pkgs.python3Packages; [
             httpx typer rich pydantic
           ];
-          
+
           nativeBuildInputs = with pkgs; [
             rustPlatform.cargoBuildHook
             rustPlatform.rust.cargo
             rustPlatform.rust.rustc
           ];
-          
+
           # Install hooks, templates, scripts
           postInstall = ''
             mkdir -p $out/share/thegent
@@ -442,7 +442,7 @@ def check_for_updates() -> Optional[str]:
     """Check for available updates."""
     try:
         current_version = get_version()
-        
+
         # Check PyPI for latest version
         result = subprocess.run(
             ["pip", "index", "versions", "thegent"],
@@ -450,13 +450,13 @@ def check_for_updates() -> Optional[str]:
             text=True,
             check=True
         )
-        
+
         # Parse latest version
         latest_version = parse_latest_version(result.stdout)
-        
+
         if version.parse(latest_version) > version.parse(current_version):
             return latest_version
-        
+
         return None
     except Exception:
         return None
@@ -480,13 +480,13 @@ class UpdateChecker:
         self.check_interval = check_interval
         self.thread = None
         self.running = False
-    
+
     def start(self) -> None:
         """Start background checking."""
         self.running = True
         self.thread = threading.Thread(target=self._check_loop, daemon=True)
         self.thread.start()
-    
+
     def _check_loop(self) -> None:
         """Background check loop."""
         while self.running:
@@ -506,14 +506,14 @@ from thegent.platform import detect_platform, Platform
 def get_update_command() -> str:
     """Get update command for current package manager."""
     plat = detect_platform()
-    
+
     if plat == Platform.MACOS:
         # Check if installed via Homebrew
         if _installed_via_homebrew():
             return "brew upgrade thegent"
         else:
             return "pip install --upgrade thegent"
-    
+
     elif plat == Platform.LINUX:
         # Check if installed via apt/yum
         if _installed_via_apt():
@@ -522,14 +522,14 @@ def get_update_command() -> str:
             return "sudo yum update thegent"
         else:
             return "pip install --upgrade thegent"
-    
+
     elif plat == Platform.WINDOWS:
         # Check if installed via winget
         if _installed_via_winget():
             return "winget upgrade thegent"
         else:
             return "pip install --upgrade thegent"
-    
+
     return "pip install --upgrade thegent"
 ```
 
@@ -563,7 +563,7 @@ def is_compatible(current: str, required: str) -> bool:
     try:
         current_ver = version.parse(current)
         required_ver = version.parse(required)
-        
+
         # Check if current >= required
         return current_ver >= required_ver
     except version.InvalidVersion:
@@ -677,11 +677,11 @@ from thegent.platform import detect_platform
 def run_first_run_wizard() -> None:
     """Run first-run setup wizard."""
     console.print("[bold cyan]Welcome to thegent![/bold cyan]\n")
-    
+
     # Detect platform
     plat = detect_platform()
     console.print(f"[green]✓[/green] Detected platform: {plat.value}\n")
-    
+
     # Check prerequisites
     console.print("[cyan]Checking prerequisites...[/cyan]")
     missing = check_prerequisites()
@@ -689,18 +689,18 @@ def run_first_run_wizard() -> None:
         console.print(f"[yellow]Missing: {', '.join(missing)}[/yellow]")
         if Confirm.ask("Install missing prerequisites?"):
             install_prerequisites(missing)
-    
+
     # Configure providers
     console.print("\n[cyan]Configure AI providers:[/cyan]")
     providers = ["anthropic", "openai", "google"]
     for provider in providers:
         if Confirm.ask(f"Configure {provider}?", default=False):
             configure_provider(provider)
-    
+
     # Post-installation setup
     console.print("\n[cyan]Running post-installation setup...[/cyan]")
     subprocess.run(["thegent", "install", "--target", "all"], check=True)
-    
+
     console.print("\n[bold green]🎉 Setup complete![/bold green]")
     console.print("\n[cyan]Next steps:[/cyan]")
     console.print("  1. Start MCP server: [green]thegent serve[/green]")
@@ -730,12 +730,12 @@ def install_with_progress() -> None:
         TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
     ) as progress:
         task = progress.add_task("Installing...", total=100)
-        
+
         # Simulate installation steps
         for step in installation_steps:
             progress.update(task, advance=10, description=f"Installing {step}...")
             install_step(step)
-        
+
         progress.update(task, completed=100, description="Complete!")
 ```
 
@@ -758,7 +758,7 @@ class ThegentError(Exception):
     def __init__(self, message: str, remediation: Optional[str] = None):
         super().__init__(message)
         self.remediation = remediation or self._get_default_remediation()
-    
+
     def _get_default_remediation(self) -> str:
         """Get default remediation based on platform."""
         plat = detect_platform().value
@@ -842,28 +842,28 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.12']
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Install build dependencies
         run: |
           pip install build twine
           if [ "$RUNNER_OS" == "Windows" ]; then
             # Windows-specific setup
           fi
-      
+
       - name: Build wheel
         run: python -m build --wheel
-      
+
       - name: Build sdist
         run: python -m build --sdist
-      
+
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
@@ -947,17 +947,17 @@ def test_installation() -> None:
     subprocess.run([
         sys.executable, "-m", "venv", "test_env"
     ], check=True)
-    
+
     # Install package
     subprocess.run([
         "test_env/bin/pip", "install", "."
     ], check=True)
-    
+
     # Test import
     subprocess.run([
         "test_env/bin/python", "-c", "import thegent; print(thegent.__version__)"
     ], check=True)
-    
+
     # Test CLI
     subprocess.run([
         "test_env/bin/thegent", "--version"
@@ -1571,10 +1571,10 @@ jobs:
             cibw-platform: macos
           - os: windows-latest
             cibw-platform: windows
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.0
         env:
@@ -1592,21 +1592,21 @@ env:
   # Build selection
   CIBW_BUILD_SKIP: "cp38-*"  # Skip Python 3.8
   CIBW_ARCHS: "x86_64 arm64"  # Specific architectures
-  
+
   # Build customization
   CIBW_BEFORE_BUILD: "pip install build-requirements.txt"
   CIBW_BEFORE_TEST: "pip install test-requirements.txt"
   CIBW_TEST_COMMAND: "pytest {project}/tests"
   CIBW_TEST_REQUIRES: "pytest pytest-cov"
-  
+
   # Environment variables
   CIBW_ENVIRONMENT: "VAR1=value1 VAR2=value2"
   CIBW_ENVIRONMENT_PASS_LINUX: "CC CXX"
-  
+
   # Repair commands
   CIBW_REPAIR_WHEEL_COMMAND_LINUX: "auditwheel repair -w {dest_dir} {wheel}"
   CIBW_REPAIR_WHEEL_COMMAND_MACOS: "delocate-wheel -w {dest_dir} {wheel}"
-  
+
   # Manylinux images
   CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
   CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
@@ -1829,11 +1829,11 @@ def test_installation():
         # Create virtual environment
         venv = Path(tmpdir) / "venv"
         subprocess.run([sys.executable, "-m", "venv", str(venv)], check=True)
-        
+
         # Install package
         pip = venv / "bin" / "pip"
         subprocess.run([str(pip), "install", "."], check=True)
-        
+
         # Test import
         python = venv / "bin" / "python"
         result = subprocess.run(
@@ -1851,11 +1851,11 @@ def test_installation():
 def test_package_resources():
     """Test package resources are accessible."""
     from importlib import resources
-    
+
     # Test hooks directory
     hooks = resources.files("thegent") / "hooks"
     assert hooks.exists() or hooks.is_dir()
-    
+
     # Test templates directory
     templates = resources.files("thegent") / "templates"
     assert templates.exists() or templates.is_dir()
@@ -1900,16 +1900,16 @@ jobs:
       matrix:
         os: [ubuntu-20.04, macos-12, windows-2022]
         python-version: ['3.10', '3.11', '3.12']
-    
+
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: wheels
-      
+
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - run: |
           pip install wheels/*$(echo ${{ matrix.os }} | tr '[:upper:]' '[:lower:]')*.whl
           pytest tests/
@@ -2719,7 +2719,7 @@ def __getattr__(name: str):
 def main():
     """CLI entry point with deferred imports."""
     import sys
-    
+
     # Only import heavy modules when needed
     if "--help" in sys.argv or len(sys.argv) == 1:
         from thegent.cli.help import show_help
@@ -2761,7 +2761,7 @@ def get_platform_info() -> Dict[str, Any]:
 class PlatformInfo:
     """Platform information with memory optimization."""
     __slots__ = ("platform", "architecture", "paths")
-    
+
     def __init__(
         self,
         platform: Platform,
@@ -2881,17 +2881,17 @@ jobs:
         with:
           repository: Homebrew/homebrew-core
           token: ${{ secrets.HOMEBREW_TOKEN }}
-      
+
       - name: Update formula
         run: |
           # Extract version and SHA256 from release
           VERSION="${{ github.event.release.tag_name }}"
           SHA256=$(curl -sL https://pypi.org/pypi/thegent/json | jq -r ".releases[\"$VERSION\"][0].digests.sha256")
-          
+
           # Update formula
           sed -i "s/version \".*\"/version \"$VERSION\"/" Formula/thegent.rb
           sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" Formula/thegent.rb
-      
+
       - name: Create PR
         uses: peter-evans/create-pull-request@v5
         with:
@@ -2922,20 +2922,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Build canary
         run: |
           VERSION=$(git describe --tags --always)
           python -m build --wheel
           # Tag as canary
           mv dist/thegent-*.whl dist/thegent-${VERSION}-canary.whl
-      
+
       - name: Publish to test PyPI
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
         run: twine upload --repository testpypi dist/*canary*.whl
-      
+
       - name: Notify canary users
         run: |
           # Notify beta testers
@@ -2978,7 +2978,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Cache pip packages
         uses: actions/cache@v4
         with:
@@ -2986,7 +2986,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Cache build artifacts
         uses: actions/cache@v4
         with:
@@ -3622,10 +3622,10 @@ from thegent.platform import detect_platform, Platform
 def TestOneInput(data):
     """Fuzz platform detection."""
     fdp = atheris.FuzzedDataProvider(data)
-    
+
     # Generate random platform strings
     platform_str = fdp.ConsumeUnicodeNoSurrogates(100)
-    
+
     try:
         # Test platform detection with random input
         result = detect_platform()
@@ -3842,7 +3842,7 @@ def distribute_all_channels(version: str):
         [c for c in DISTRIBUTION_CHANNELS.items() if c[1]["enabled"]],
         key=lambda x: x[1]["priority"]
     )
-    
+
     for channel_name, config in channels:
         print(f"Distributing to {channel_name}...")
         subprocess.run(config["command"], shell=True, check=True)
@@ -3968,10 +3968,10 @@ class ThegentError(Exception):
     message: str
     details: Optional[Dict[str, Any]] = None
     cause: Optional[Exception] = None
-    
+
     def __str__(self) -> str:
         return f"[{self.code.value}] {self.message}"
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert error to dictionary."""
         return {
@@ -4089,20 +4089,20 @@ ERROR_MESSAGES = {
 def format_user_error(error: ThegentError) -> str:
     """Format error for user display."""
     config = ERROR_MESSAGES.get(error.code, {})
-    
+
     lines = [
         f"❌ {config.get('title', 'Error')}",
         f"\n{config.get('message', error.message)}",
     ]
-    
+
     if suggestions := config.get("suggestions"):
         lines.append("\n💡 Suggestions:")
         for suggestion in suggestions:
             lines.append(f"  • {suggestion}")
-    
+
     if help_url := config.get("help_url"):
         lines.append(f"\n📖 More help: {help_url}")
-    
+
     return "\n".join(lines)
 ```
 
@@ -4132,7 +4132,7 @@ import os
 
 class ConfigManager:
     """Manages hierarchical configuration."""
-    
+
     CONFIG_SOURCES = [
         "defaults",      # Built-in defaults
         "system",        # System-wide config
@@ -4141,17 +4141,17 @@ class ConfigManager:
         "environment",   # Environment variables
         "cli",           # Command-line arguments
     ]
-    
+
     def __init__(self):
         self.config: Dict[str, Any] = {}
         self._load_all()
-    
+
     def _load_all(self):
         """Load configuration from all sources."""
         for source in self.CONFIG_SOURCES:
             config = self._load_source(source)
             self.config = self._merge_config(self.config, config)
-    
+
     def _load_source(self, source: str) -> Dict[str, Any]:
         """Load configuration from specific source."""
         if source == "defaults":
@@ -4165,19 +4165,19 @@ class ConfigManager:
         elif source == "environment":
             return self._load_environment()
         return {}
-    
+
     def _load_file(self, path: Path) -> Dict[str, Any]:
         """Load configuration from file."""
         if not path.exists():
             return {}
-        
+
         with open(path) as f:
             if path.suffix == ".json":
                 return json.load(f)
             elif path.suffix in (".yaml", ".yml"):
                 return yaml.safe_load(f)
         return {}
-    
+
     def _load_environment(self) -> Dict[str, Any]:
         """Load configuration from environment variables."""
         config = {}
@@ -4186,7 +4186,7 @@ class ConfigManager:
                 key = key[7:].lower().replace("_", ".")
                 config[key] = value
         return config
-    
+
     def _merge_config(self, base: Dict, override: Dict) -> Dict:
         """Merge configuration dictionaries."""
         result = base.copy()
@@ -4218,27 +4218,27 @@ from pathlib import Path
 
 class ConfigSchema(BaseModel):
     """Configuration schema."""
-    
+
     platform: Optional[str] = Field(None, description="Platform override")
     config_dir: Optional[Path] = Field(None, description="Configuration directory")
     log_level: str = Field("INFO", description="Logging level")
     mcp_port: int = Field(3847, ge=1024, le=65535, description="MCP server port")
     hooks_enabled: bool = Field(True, description="Enable hooks")
     hooks_dir: Optional[Path] = Field(None, description="Hooks directory")
-    
+
     @validator("log_level")
     def validate_log_level(cls, v):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:
             raise ValueError(f"log_level must be one of {valid_levels}")
         return v.upper()
-    
+
     @validator("config_dir", "hooks_dir")
     def validate_path_exists(cls, v):
         if v and not v.exists():
             raise ValueError(f"Path does not exist: {v}")
         return v
-    
+
     class Config:
         extra = "forbid"  # Reject unknown fields
 

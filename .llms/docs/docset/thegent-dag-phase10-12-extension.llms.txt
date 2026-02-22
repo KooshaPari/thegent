@@ -6,8 +6,8 @@ Source: docs/docset/thegent-dag-phase10-12-extension.md
 
 # Thegent DAG Extension — Phases 10 to 12
 
-**Status:** Draft  
-**Date:** 2026-02-15  
+**Status:** Draft
+**Date:** 2026-02-15
 **Purpose:** Extend DAG and control graph for interface convergence, adaptive resilience, and enterprise hardening.
 
 ## 1) Node set and flow
@@ -59,7 +59,7 @@ flowchart TD
 ## 3) Failure and recovery paths
 
 - From `N10003` if dispatch mismatch:
-  - `N10003-R1` (dispatch_conflict) → `N10003-R1A` (log dispatch_reason) → `N10003-R1B` (owner_review) → `N10003-R1C` (fallback_to_stable_registry)  
+  - `N10003-R1` (dispatch_conflict) → `N10003-R1A` (log dispatch_reason) → `N10003-R1B` (owner_review) → `N10003-R1C` (fallback_to_stable_registry)
 
 - From `N11001` if control instability detected:
   - `N11001-R2` (oscillation_detected) → `N11001-R2A` (pause_auto_adjust) → `N11001-R2B` (notify_ops) → `N11001-R2C` (manual_policy_override)

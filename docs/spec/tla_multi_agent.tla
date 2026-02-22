@@ -3,26 +3,26 @@ EXTENDS Integers, Sequences, FiniteSets
 
 (*
   WP-18001: TLA+ Specification for Multi-Agent Orchestration.
-  Model safety properties: 
+  Model safety properties:
   - No two agents can hold an exclusive lock on the same resource.
   - All tasks must eventually reach a terminal state (Success/Failure).
 *)
 
 CONSTANTS Agents, Tasks, MaxDepth
 
-VARIABLES 
+VARIABLES
     task_status,    \* TaskID -> {"pending", "running", "completed", "failed"}
     agent_locks,    \* AgentID -> Set of TaskIDs
     fork_depth      \* TaskID -> 0..MaxDepth
 
 Vars == <<task_status, agent_locks, fork_depth>>
 
-TypeOK == 
+TypeOK ==
     /\ task_status \in [Tasks -> {"pending", "running", "completed", "failed"}]
     /\ agent_locks \in [Agents -> SUBSET Tasks]
     /\ fork_depth \in [Tasks -> 0..MaxDepth]
 
-Init == 
+Init ==
     /\ task_status = [t \in Tasks |-> "pending"]
     /\ agent_locks = [a \in Agents |-> {}]
     /\ fork_depth = [t \in Tasks |-> 0]
@@ -65,7 +65,7 @@ ForkTask(a, t, t_child) ==
 (***************************************************************************)
 
 (* Safety: No two agents hold the same task lock *)
-MutualExclusion == 
+MutualExclusion ==
     \forall a1, a2 \in Agents : a1 /= a2 => agent_locks[a1] \cap agent_locks[a2] = {}
 
 (* Safety: Fork depth never exceeds MaxDepth *)

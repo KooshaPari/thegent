@@ -71,4 +71,3 @@ verify(self: Any, proof: FormalEthicalProof)
 Verify the integrity and validity of the ethical proof.
 
 ---
-

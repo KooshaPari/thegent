@@ -95,4 +95,3 @@ Generate Mermaid diagram.
 **Returns**: Mermaid diagram code
 
 ---
-

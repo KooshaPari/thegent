@@ -19,14 +19,14 @@ const tabs = ref<Tab[]>(props.tabs || [])
 const activeTabId = ref<string>('0')
 
 // Generate storage key based on route if not provided
-const storageKey = computed(() => 
+const storageKey = computed(() =>
   props.storageKey || `content-tabs-${route.path}`
 )
 
 // Load persisted tab from localStorage
 function loadPersistedTab() {
   if (typeof window === 'undefined') return
-  
+
   try {
     const saved = localStorage.getItem(storageKey.value)
     if (saved && tabs.value.find(t => t.id === saved)) {
@@ -40,7 +40,7 @@ function loadPersistedTab() {
 // Save active tab to localStorage
 function persistTab(tabId: string) {
   if (typeof window === 'undefined') return
-  
+
   try {
     localStorage.setItem(storageKey.value, tabId)
   } catch (e) {
@@ -63,12 +63,12 @@ onMounted(() => {
       }
     })
   }
-  
+
   // Set first tab as active if none selected
   if (tabs.value.length > 0 && !tabs.value.find(t => t.id === activeTabId.value)) {
     activeTabId.value = tabs.value[0].id
   }
-  
+
   // Load persisted tab after tabs are available
   loadPersistedTab()
 })
@@ -80,7 +80,7 @@ const activeTab = computed(() => {
 function setActiveTab(tabId: string) {
   activeTabId.value = tabId
   persistTab(tabId)
-  
+
   // Focus management for accessibility
   const button = document.querySelector(`[data-tab-button="${tabId}"]`) as HTMLElement
   if (button) {
@@ -95,9 +95,9 @@ watch(() => route.path, () => {
 
 function handleKeydown(event: KeyboardEvent, tabId: string) {
   if (tabs.value.length <= 1) return
-  
+
   const currentIndex = tabs.value.findIndex(t => t.id === activeTabId.value)
-  
+
   if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
     event.preventDefault()
     const nextIndex = (currentIndex + 1) % tabs.value.length
@@ -311,7 +311,7 @@ function handleKeydown(event: KeyboardEvent, tabId: string) {
     font-size: var(--vp-font-size-xs);
     min-height: 40px;
   }
-  
+
   .tab-panel {
     padding: var(--vp-spacing-3);
   }

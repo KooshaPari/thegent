@@ -129,4 +129,3 @@ Generate edit link for a file.
 **Returns**: GitHub edit URL
 
 ---
-

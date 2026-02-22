@@ -29,7 +29,7 @@ def test_install_agent_accelerators_writes_roid_and_codex_shims(tmp_path: Path) 
 
     codex_script = codex.read_text(encoding="utf-8")
     # Allow either bash routing or Rust shim
-    assert ("dex|clode" in codex_script or "Rust shim" in codex_script)
+    assert ("exec thegent dex \"$@\"" in codex_script or "Rust shim" in codex_script)
 
     # Check other shims exist and have reasonable content
     for shim, harness, cmd in [

@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 Issue Board Import Notes
 
-**Status:** Practical integration guide  
-**Date:** 2026-02-15  
+**Status:** Practical integration guide
+**Date:** 2026-02-15
 **Scope:** How to import `thegent-phase10-12-issue-board-seed.json` into issue tooling.
 
 ## 1) Scope of this seed
@@ -123,4 +123,3 @@ Minimal pseudo-payload template for each ticket:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

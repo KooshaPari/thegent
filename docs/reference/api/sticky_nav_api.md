@@ -86,4 +86,3 @@ Render HTML structure with sticky navigation.
 **Returns**: HTML string
 
 ---
-

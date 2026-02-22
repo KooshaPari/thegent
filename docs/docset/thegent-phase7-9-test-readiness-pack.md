@@ -1,7 +1,7 @@
 # Thegent Phase 7–9 Test and Readiness Pack
 
-**Status:** Draft  
-**Date:** 2026-02-15  
+**Status:** Draft
+**Date:** 2026-02-15
 **Scope:** Concrete test matrix and evidence checklist for PRD phases 7–9.
 
 ## 1) Test philosophy for Phase 7–9
@@ -145,4 +145,3 @@ The test pack remains compatible with the existing chunking approach:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

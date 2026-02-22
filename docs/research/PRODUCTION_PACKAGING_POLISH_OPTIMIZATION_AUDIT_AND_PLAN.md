@@ -1,8 +1,8 @@
 # Production Packaging, Polish & Optimization Audit + Plan
 ## Cross-Platform Production Readiness (Windows/macOS/Linux)
 
-**Date:** 2026-02-17  
-**Status:** Comprehensive Cross-Platform Audit Complete, Implementation Plan Ready  
+**Date:** 2026-02-17
+**Status:** Comprehensive Cross-Platform Audit Complete, Implementation Plan Ready
 **Priority:** P0 (Production Readiness)
 
 ---
@@ -88,7 +88,7 @@ class Platform(Enum):
 def detect_platform() -> Platform:
     """Detect current platform."""
     system = platform.system().lower()
-    
+
     # WSL2 detection
     if system == "linux":
         if os.path.exists("/proc/version"):
@@ -96,13 +96,13 @@ def detect_platform() -> Platform:
                 if "microsoft" in f.read().lower() or "wsl" in f.read().lower():
                     return Platform.WSL2
         return Platform.LINUX
-    
+
     if system == "darwin":
         return Platform.MACOS
-    
+
     if system == "windows":
         return Platform.WINDOWS
-    
+
     return Platform.UNKNOWN
 
 def get_platform_name() -> str:
@@ -140,7 +140,7 @@ def get_preferred_shell(
 ) -> str:
     """Get preferred shell for context on current platform."""
     plat = detect_platform()
-    
+
     if plat == Platform.WINDOWS:
         if context == "os_admin":
             return "pwsh"
@@ -149,7 +149,7 @@ def get_preferred_shell(
         if context in ("hooks", "agent"):
             # Prefer WSL2 bash if available
             return "wsl-bash" if _wsl_available() else "pwsh"
-    
+
     return "bash"
 
 def _wsl_available() -> bool:
@@ -354,7 +354,7 @@ jobs:
         };
         python = pkgs.python312;
         pythonPackages = python.pkgs;
-        
+
         # Build Rust extensions
         rustExtensions = pkgs.buildRustPackage {
           pname = "thegent-rust-extensions";
@@ -366,18 +366,18 @@ jobs:
             python
           ];
         };
-        
+
         # Python package
         thegent = pythonPackages.buildPythonPackage {
           pname = "thegent";
           version = "0.1.0";
           src = ./.;
           format = "pyproject";
-          
+
           buildInputs = with pythonPackages; [
             hatchling
           ];
-          
+
           propagatedBuildInputs = with pythonPackages; [
             httpx
             typer
@@ -401,14 +401,14 @@ jobs:
           ] ++ pkgs.lib.optionals (system == "x86_64-darwin" || system == "aarch64-darwin") [
             pythonPackages.py-applescript
           ];
-          
+
           postInstall = ''
             # Install hooks/templates to share/thegent
             mkdir -p $out/share/thegent
             cp -r hooks $out/share/thegent/
             cp -r templates $out/share/thegent/
             cp -r scripts $out/share/thegent/
-            
+
             # Install Rust extensions
             cp -r ${rustExtensions}/lib/* $out/lib/python*/site-packages/
           '';
@@ -417,7 +417,7 @@ jobs:
       {
         packages.default = thegent;
         packages.thegent = thegent;
-        
+
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             python
@@ -433,18 +433,18 @@ jobs:
             tmux
             rust-bin.stable.latest.default
           ];
-          
+
           shellHook = ''
             # Virtualenv setup
             if [ ! -d .venv ]; then
               uv venv
             fi
             source .venv/bin/activate
-            
+
             # Environment variables
             export PYTHONPATH=$PYTHONPATH:$(pwd)/src
             export PATH=$PATH:$(pwd)/.venv/bin:$HOME/.local/bin
-            
+
             echo "=== thegent dev environment ==="
             echo "Platform: ${system}"
             echo "Python: $(python --version)"
@@ -469,28 +469,28 @@ class Thegent < Formula
   url "https://github.com/router-for-me/thegent/archive/v0.1.0.tar.gz"
   sha256 "..."
   license "MIT"
-  
+
   depends_on "python@3.12"
   depends_on "rust" => :build
-  
+
   # Platform-specific dependencies
   on_macos do
     depends_on "python-tk"  # For macOS-specific features
   end
-  
+
   on_linux do
     depends_on "dbus"       # For Linux AT-SPI
     depends_on "at-spi2-core"
   end
-  
+
   def install
     # Install Python package
     system "pip3", "install", "--prefix=#{prefix}", "."
-    
+
     # Install hooks/templates
     system "#{bin}/thegent", "install", "--target", "all", "--force"
   end
-  
+
   test do
     system "#{bin}/thegent", "--version"
     system "#{bin}/thegent", "doctor"
@@ -529,7 +529,7 @@ def build_installer():
         "--add-data=scripts;scripts",
         "src/thegent/main.py"
     ], check=True)
-    
+
     # 2. Create Inno Setup installer
     subprocess.run([
         "iscc",
@@ -719,7 +719,7 @@ from thegent.platform import detect_platform, Platform
 def get_config_dir() -> Path:
     """Get platform-specific config directory (XDG/AppData/Library)."""
     plat = detect_platform()
-    
+
     if plat == Platform.WINDOWS:
         # Windows: %APPDATA%\thegent
         appdata = os.environ.get("APPDATA")
@@ -727,11 +727,11 @@ def get_config_dir() -> Path:
             return Path(appdata) / "thegent"
         # Fallback: %USERPROFILE%\AppData\Roaming\thegent
         return Path.home() / "AppData" / "Roaming" / "thegent"
-    
+
     elif plat == Platform.MACOS:
         # macOS: ~/Library/Application Support/thegent
         return Path.home() / "Library" / "Application Support" / "thegent"
-    
+
     else:  # Linux, WSL2
         # Linux: XDG_CONFIG_HOME/thegent or ~/.config/thegent
         xdg_config = os.environ.get("XDG_CONFIG_HOME")
@@ -742,18 +742,18 @@ def get_config_dir() -> Path:
 def get_cache_dir() -> Path:
     """Get platform-specific cache directory."""
     plat = detect_platform()
-    
+
     if plat == Platform.WINDOWS:
         # Windows: %LOCALAPPDATA%\thegent\cache
         localappdata = os.environ.get("LOCALAPPDATA")
         if localappdata:
             return Path(localappdata) / "thegent" / "cache"
         return Path.home() / "AppData" / "Local" / "thegent" / "cache"
-    
+
     elif plat == Platform.MACOS:
         # macOS: ~/Library/Caches/thegent
         return Path.home() / "Library" / "Caches" / "thegent"
-    
+
     else:  # Linux, WSL2
         # Linux: XDG_CACHE_HOME/thegent or ~/.cache/thegent
         xdg_cache = os.environ.get("XDG_CACHE_HOME")
@@ -764,18 +764,18 @@ def get_cache_dir() -> Path:
 def get_data_dir() -> Path:
     """Get platform-specific data directory."""
     plat = detect_platform()
-    
+
     if plat == Platform.WINDOWS:
         # Windows: %LOCALAPPDATA%\thegent
         localappdata = os.environ.get("LOCALAPPDATA")
         if localappdata:
             return Path(localappdata) / "thegent"
         return Path.home() / "AppData" / "Local" / "thegent"
-    
+
     elif plat == Platform.MACOS:
         # macOS: ~/Library/Application Support/thegent/data
         return Path.home() / "Library" / "Application Support" / "thegent" / "data"
-    
+
     else:  # Linux, WSL2
         # Linux: XDG_DATA_HOME/thegent or ~/.local/share/thegent
         xdg_data = os.environ.get("XDG_DATA_HOME")
@@ -786,14 +786,14 @@ def get_data_dir() -> Path:
 def get_bin_dir() -> Path:
     """Get platform-specific binary directory."""
     plat = detect_platform()
-    
+
     if plat == Platform.WINDOWS:
         # Windows: %LOCALAPPDATA%\thegent\bin or %USERPROFILE%\.local\bin
         localappdata = os.environ.get("LOCALAPPDATA")
         if localappdata:
             return Path(localappdata) / "thegent" / "bin"
         return Path.home() / ".local" / "bin"
-    
+
     else:  # macOS, Linux, WSL2
         # Unix: ~/.local/bin
         return Path.home() / ".local" / "bin"
@@ -801,15 +801,15 @@ def get_bin_dir() -> Path:
 def get_log_dir() -> Path:
     """Get platform-specific log directory."""
     plat = detect_platform()
-    
+
     if plat == Platform.WINDOWS:
         # Windows: %LOCALAPPDATA%\thegent\logs
         return get_cache_dir().parent / "logs"
-    
+
     elif plat == Platform.MACOS:
         # macOS: ~/Library/Logs/thegent
         return Path.home() / "Library" / "Logs" / "thegent"
-    
+
     else:  # Linux, WSL2
         # Linux: ~/.local/share/thegent/logs
         return get_data_dir() / "logs"
@@ -841,18 +841,18 @@ def migrate_paths() -> None:
     # Old locations
     old_config = Path.home() / ".thegent"
     old_cache = Path.home() / ".cache" / "thegent"
-    
+
     # New locations
     new_config = get_config_dir()
     new_cache = get_cache_dir()
     new_data = get_data_dir()
-    
+
     # Migrate config
     if old_config.exists() and not new_config.exists():
         new_config.mkdir(parents=True, exist_ok=True)
         shutil.copytree(old_config, new_config, dirs_exist_ok=True)
         console.print(f"[green]Migrated config from {old_config} to {new_config}[/green]")
-    
+
     # Migrate cache
     if old_cache.exists() and not new_cache.exists():
         new_cache.mkdir(parents=True, exist_ok=True)
@@ -896,28 +896,28 @@ def _is_dev_mode() -> bool:
         return True
     elif mode == "installed":
         return False
-    
+
     # Auto-detect: check if package is in site-packages
     import thegent
     pkg_path = Path(thegent.__file__).resolve().parent
-    
+
     # Check site-packages (works on all platforms)
     try:
         site_packages = [Path(p) for p in site.getsitepackages()]
         if sys.platform == "win32":
             # Windows: also check user site-packages
             site_packages.append(Path(site.getusersitepackages()))
-        
+
         if any(pkg_path.is_relative_to(sp) for sp in site_packages):
             return False
     except Exception:
         pass
-    
+
     # Check for dev repo markers
     for parent in [pkg_path.parent, pkg_path.parent.parent, pkg_path.parent.parent.parent]:
         if (parent / "pyproject.toml").exists() and (parent / "src" / "thegent").exists():
             return True
-    
+
     # Fallback: assume installed (safer for production)
     return False
 
@@ -925,7 +925,7 @@ def _get_thegent_root() -> Optional[Path]:
     """Get thegent root directory (dev repo) or None if installed."""
     if not _is_dev_mode():
         return None
-    
+
     import thegent
     pkg_path = Path(thegent.__file__).resolve().parent
     for parent in [pkg_path.parent, pkg_path.parent.parent, pkg_path.parent.parent.parent]:
@@ -953,26 +953,26 @@ def get_hooks_dir() -> Path:
     hooks_dir_env = os.environ.get("THGENT_HOOKS_DIR")
     if hooks_dir_env:
         return Path(hooks_dir_env).expanduser().resolve()
-    
+
     # 2. User config (installed mode)
     user_hooks = get_config_dir() / "hooks"
     if user_hooks.exists():
         return user_hooks
-    
+
     # 3. Package data (installed mode)
     try:
         with importlib.resources.path("thegent", "hooks") as hooks_path:
             return Path(hooks_path)
     except (ModuleNotFoundError, TypeError, FileNotFoundError):
         pass
-    
+
     # 4. Dev repo (dev mode)
     dev_root = _get_thegent_root()
     if dev_root:
         dev_hooks = dev_root / "hooks"
         if dev_hooks.exists():
             return dev_hooks
-    
+
     # 5. Fallback: create user config directory
     user_hooks.mkdir(parents=True, exist_ok=True)
     return user_hooks
@@ -1007,12 +1007,12 @@ class ThegentError(Exception):
         self.remediation = remediation or self._get_platform_remediation(platform_hint)
         self.exit_code = exit_code
         super().__init__(message)
-    
+
     def _get_platform_remediation(self, hints: dict[str, str] | None) -> str:
         """Get platform-specific remediation hint."""
         if not hints:
             return "See documentation for platform-specific instructions"
-        
+
         plat = detect_platform()
         return hints.get(plat.value, hints.get("default", "See documentation"))
 ```
@@ -1148,16 +1148,16 @@ def first_run_wizard_macos() -> None:
     """macOS-specific first-run wizard."""
     console.print("[bold cyan]Welcome to thegent![/bold cyan]")
     console.print("macOS detected. Setting up...")
-    
+
     # Check Homebrew
     if not shutil.which("brew"):
         console.print("[yellow]Homebrew not found. Install from https://brew.sh[/yellow]")
-    
+
     # Check Xcode Command Line Tools
     if not Path("/Library/Developer/CommandLineTools").exists():
         console.print("[yellow]Xcode Command Line Tools not installed.[/yellow]")
         console.print("Run: xcode-select --install")
-    
+
     # Setup continues...
 ```
 
@@ -1167,7 +1167,7 @@ def first_run_wizard_linux() -> None:
     """Linux-specific first-run wizard."""
     console.print("[bold cyan]Welcome to thegent![/bold cyan]")
     console.print("Linux detected. Setting up...")
-    
+
     # Check package manager
     if shutil.which("apt"):
         console.print("[green]apt detected[/green]")
@@ -1175,11 +1175,11 @@ def first_run_wizard_linux() -> None:
         console.print("[green]yum detected[/green]")
     elif shutil.which("dnf"):
         console.print("[green]dnf detected[/green]")
-    
+
     # Check XDG directories
     if not os.environ.get("XDG_CONFIG_HOME"):
         console.print("[dim]XDG_CONFIG_HOME not set, using ~/.config[/dim]")
-    
+
     # Setup continues...
 ```
 
@@ -1189,7 +1189,7 @@ def first_run_wizard_windows() -> None:
     """Windows-specific first-run wizard."""
     console.print("[bold cyan]Welcome to thegent![/bold cyan]")
     console.print("Windows detected. Setting up...")
-    
+
     # Check PowerShell version
     try:
         result = subprocess.run(
@@ -1203,7 +1203,7 @@ def first_run_wizard_windows() -> None:
             console.print("[yellow]PowerShell not found. Install from https://aka.ms/powershell[/yellow]")
     except Exception:
         console.print("[yellow]PowerShell not found[/yellow]")
-    
+
     # Check WSL2
     try:
         result = subprocess.run(
@@ -1217,7 +1217,7 @@ def first_run_wizard_windows() -> None:
             console.print("[dim]WSL2 not available (optional)[/dim]")
     except Exception:
         console.print("[dim]WSL2 not available (optional)[/dim]")
-    
+
     # Setup continues...
 ```
 
@@ -1233,11 +1233,11 @@ def run(
 ):
     """
     Run an agent task.
-    
+
     Examples:
         thegent run "Fix the bug in login.py"
         thegent run "Add tests" --agent codex
-    
+
     Platform Notes:
         macOS: Uses zsh/bash for agent execution
         Linux: Uses bash for agent execution
@@ -1583,7 +1583,7 @@ jobs:
         with:
           name: thegent.deb
           path: ../thegent_*.deb
-  
+
   build-rpm:
     runs-on: centos-stream-8
     steps:
@@ -1620,19 +1620,19 @@ from thegent.platform import detect_platform, Platform
 def get_secret_storage():
     """Get platform-specific secret storage."""
     plat = detect_platform()
-    
+
     if plat == Platform.MACOS:
         from thegent.security.macos_secrets import MacOSKeychain
         return MacOSKeychain()
-    
+
     elif plat == Platform.LINUX:
         from thegent.security.linux_secrets import LinuxKeyring
         return LinuxKeyring()
-    
+
     elif plat == Platform.WINDOWS:
         from thegent.security.windows_secrets import WindowsCredentialManager
         return WindowsCredentialManager()
-    
+
     else:
         # Fallback: encrypted file
         from thegent.security.file_secrets import FileSecretStore
@@ -1663,7 +1663,7 @@ def setup_logging(level: str = "INFO") -> None:
     log_dir = get_log_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "thegent.log"
-    
+
     # Configure logging (works on all platforms)
     logging.basicConfig(
         level=getattr(logging, level.upper()),
@@ -1688,18 +1688,18 @@ def setup_logging(level: str = "INFO") -> None:
 def upgrade() -> None:
     """Upgrade thegent to latest version (cross-platform)."""
     plat = detect_platform()
-    
+
     if plat == Platform.MACOS:
         # Check Homebrew
         if shutil.which("brew"):
             console.print("[cyan]Upgrading via Homebrew...[/cyan]")
             subprocess.run(["brew", "upgrade", "thegent"], check=True)
             return
-        
+
         # Fallback: pip
         console.print("[cyan]Upgrading via pip...[/cyan]")
         subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "thegent"], check=True)
-    
+
     elif plat == Platform.LINUX:
         # Check package manager
         if shutil.which("apt"):
@@ -1711,20 +1711,20 @@ def upgrade() -> None:
             console.print("[cyan]Upgrading via yum...[/cyan]")
             subprocess.run(["sudo", "yum", "update", "thegent"], check=True)
             return
-        
+
         # Fallback: pip
         subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "thegent"], check=True)
-    
+
     elif plat == Platform.WINDOWS:
         # Check winget
         if shutil.which("winget"):
             console.print("[cyan]Upgrading via winget...[/cyan]")
             subprocess.run(["winget", "upgrade", "router-for-me.thegent"], check=True)
             return
-        
+
         # Fallback: pip
         subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "thegent"], check=True)
-    
+
     console.print("[green]Upgrade complete![/green]")
 ```
 
@@ -1978,7 +1978,7 @@ def resolve_case_sensitive_path(path: Path) -> Path:
     """Resolve path with case sensitivity check (macOS)."""
     if not is_macos():
         return path
-    
+
     # On macOS, check actual case of path components
     resolved = Path("/")
     for part in path.parts[1:]:
@@ -1992,7 +1992,7 @@ def resolve_case_sensitive_path(path: Path) -> Path:
                 resolved = parent / part
         else:
             resolved = parent / part
-    
+
     return resolved
 ```
 
@@ -2220,7 +2220,7 @@ def load_config() -> dict:
     plat = detect_platform()
     config_dir = get_config_dir()
     config_file = config_dir / "config.yaml"
-    
+
     # Load config
     if config_file.exists():
         import yaml
@@ -2228,7 +2228,7 @@ def load_config() -> dict:
             config = yaml.safe_load(f)
     else:
         config = {}
-    
+
     # Set platform-specific defaults
     config.setdefault("platform", plat.value)
     config.setdefault("paths", {
@@ -2236,7 +2236,7 @@ def load_config() -> dict:
         "cache": str(get_cache_dir()),
         "data": str(get_data_dir()),
     })
-    
+
     return config
 ```
 
@@ -2249,7 +2249,7 @@ from thegent.platform import detect_platform, Platform
 def install_service() -> bool:
     """Install thegent as system service (platform-aware)."""
     plat = detect_platform()
-    
+
     if plat == Platform.MACOS:
         return _install_launchd_service()
     elif plat == Platform.LINUX:
@@ -2465,7 +2465,7 @@ class PlatformPathResolver:
     """Concrete platform-aware path resolver."""
     def __init__(self, platform: str):
         self.platform = platform
-    
+
     def get_config_dir(self) -> Path:
         """Get config directory based on platform."""
         if self.platform == "windows":
@@ -2474,14 +2474,14 @@ class PlatformPathResolver:
             return Path.home() / "Library" / "Application Support" / "thegent"
         else:
             return Path.home() / ".config" / "thegent"
-    
+
     # ... other methods ...
 
 class ThegentApp:
     """Main application with injected dependencies."""
     def __init__(self, path_resolver: PathResolver):
         self.path_resolver = path_resolver
-    
+
     def get_config_path(self) -> Path:
         """Get config path using injected resolver."""
         return self.path_resolver.get_config_dir() / "config.yaml"
@@ -2545,7 +2545,7 @@ class WSLBashExecutor(ShellExecutor):
             text=True,
             check=False
         )
-    
+
     def _convert_to_wsl_path(self, path: Path) -> str:
         """Convert Windows path to WSL path."""
         result = subprocess.run(
@@ -2580,17 +2580,17 @@ class ServiceManager(ABC):
     def install(self, service_name: str, command: str) -> bool:
         """Install service."""
         pass
-    
+
     @abstractmethod
     def start(self, service_name: str) -> bool:
         """Start service."""
         pass
-    
+
     @abstractmethod
     def stop(self, service_name: str) -> bool:
         """Stop service."""
         pass
-    
+
     @abstractmethod
     def uninstall(self, service_name: str) -> bool:
         """Uninstall service."""
@@ -2604,21 +2604,21 @@ class LaunchdServiceManager(ServiceManager):
         plist_path.write_text(plist_content)
         subprocess.run(["launchctl", "load", str(plist_path)], check=True)
         return True
-    
+
     def start(self, service_name: str) -> bool:
         subprocess.run(["launchctl", "start", service_name], check=True)
         return True
-    
+
     def stop(self, service_name: str) -> bool:
         subprocess.run(["launchctl", "stop", service_name], check=True)
         return True
-    
+
     def uninstall(self, service_name: str) -> bool:
         plist_path = Path.home() / "Library" / "LaunchAgents" / f"{service_name}.plist"
         subprocess.run(["launchctl", "unload", str(plist_path)], check=True)
         plist_path.unlink()
         return True
-    
+
     def _generate_plist(self, service_name: str, command: str) -> str:
         """Generate launchd plist content."""
         return f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -2648,15 +2648,15 @@ class SystemdServiceManager(ServiceManager):
         subprocess.run(["sudo", "systemctl", "daemon-reload"], check=True)
         subprocess.run(["sudo", "systemctl", "enable", service_name], check=True)
         return True
-    
+
     def start(self, service_name: str) -> bool:
         subprocess.run(["sudo", "systemctl", "start", service_name], check=True)
         return True
-    
+
     def stop(self, service_name: str) -> bool:
         subprocess.run(["sudo", "systemctl", "stop", service_name], check=True)
         return True
-    
+
     def uninstall(self, service_name: str) -> bool:
         subprocess.run(["sudo", "systemctl", "stop", service_name], check=False)
         subprocess.run(["sudo", "systemctl", "disable", service_name], check=False)
@@ -2664,7 +2664,7 @@ class SystemdServiceManager(ServiceManager):
         subprocess.run(["sudo", "rm", str(service_path)], check=True)
         subprocess.run(["sudo", "systemctl", "daemon-reload"], check=True)
         return True
-    
+
     def _generate_service_file(self, service_name: str, command: str) -> str:
         """Generate systemd service file content."""
         return f"""[Unit]
@@ -2691,15 +2691,15 @@ class TaskSchedulerServiceManager(ServiceManager):
             "/F"
         ], check=True)
         return True
-    
+
     def start(self, service_name: str) -> bool:
         subprocess.run(["schtasks", "/Run", "/TN", service_name], check=True)
         return True
-    
+
     def stop(self, service_name: str) -> bool:
         subprocess.run(["schtasks", "/End", "/TN", service_name], check=True)
         return True
-    
+
     def uninstall(self, service_name: str) -> bool:
         subprocess.run(["schtasks", "/Delete", "/TN", service_name, "/F"], check=True)
         return True
@@ -2741,17 +2741,17 @@ class ConfigWatcher:
         self.config_dir = config_dir
         self.observers: List[ConfigObserver] = []
         self.file_observer = watchdog.observers.Observer()
-    
+
     def add_observer(self, observer: ConfigObserver) -> None:
         """Add config observer."""
         self.observers.append(observer)
-    
+
     def start(self) -> None:
         """Start watching config directory."""
         handler = ConfigFileHandler(self.observers)
         self.file_observer.schedule(handler, str(self.config_dir), recursive=False)
         self.file_observer.start()
-    
+
     def stop(self) -> None:
         """Stop watching."""
         self.file_observer.stop()
@@ -2761,7 +2761,7 @@ class ConfigFileHandler(watchdog.events.FileSystemEventHandler):
     """Handle config file changes."""
     def __init__(self, observers: List[ConfigObserver]):
         self.observers = observers
-    
+
     def on_modified(self, event: watchdog.events.FileSystemEvent) -> None:
         """Handle file modification."""
         if event.is_directory:
@@ -2807,7 +2807,7 @@ def retry_with_backoff(
     """Retry function with exponential backoff."""
     attempt = 0
     delay = base_delay
-    
+
     while attempt < max_attempts:
         try:
             return func()
@@ -2815,13 +2815,13 @@ def retry_with_backoff(
             attempt += 1
             if attempt >= max_attempts:
                 raise
-            
+
             # Exponential backoff with jitter
             jitter = random.uniform(0, delay * 0.1)
             sleep_time = min(delay + jitter, max_delay)
             time.sleep(sleep_time)
             delay *= 2
-    
+
     raise RuntimeError("Retry exhausted")
 
 # Platform-aware retry
@@ -2868,7 +2868,7 @@ class CircuitBreaker:
         self.failure_count = 0
         self.last_failure_time: Optional[float] = None
         self.state = CircuitState.CLOSED
-    
+
     def call(self, func: Callable[[], T]) -> T:
         """Call function with circuit breaker protection."""
         if self.state == CircuitState.OPEN:
@@ -2876,7 +2876,7 @@ class CircuitBreaker:
                 self.state = CircuitState.HALF_OPEN
             else:
                 raise RuntimeError("Circuit breaker is OPEN")
-        
+
         try:
             result = func()
             self._on_success()
@@ -2884,17 +2884,17 @@ class CircuitBreaker:
         except self.expected_exception as e:
             self._on_failure()
             raise
-    
+
     def _on_success(self) -> None:
         """Handle successful call."""
         self.failure_count = 0
         self.state = CircuitState.CLOSED
-    
+
     def _on_failure(self) -> None:
         """Handle failed call."""
         self.failure_count += 1
         self.last_failure_time = time.time()
-        
+
         if self.failure_count >= self.failure_threshold:
             self.state = CircuitState.OPEN
 
@@ -2986,52 +2986,52 @@ class MultiLevelCache:
             maxsize=memory_size,
             ttl=memory_ttl
         )
-        
+
         # Level 2: Disk cache (fast, persistent)
         self.disk_dir = disk_dir or Path.home() / ".cache" / "thegent" / "cache"
         self.disk_dir.mkdir(parents=True, exist_ok=True)
         self.disk_ttl = disk_ttl
-    
+
     def get(self, key: str) -> Optional[T]:
         """Get value from cache (check all levels)."""
         # Level 1: Memory
         if key in self.memory_cache:
             return self.memory_cache[key]
-        
+
         # Level 2: Disk
         disk_value = self._get_from_disk(key)
         if disk_value is not None:
             # Promote to memory cache
             self.memory_cache[key] = disk_value
             return disk_value
-        
+
         return None
-    
+
     def set(self, key: str, value: T) -> None:
         """Set value in cache (all levels)."""
         # Level 1: Memory
         self.memory_cache[key] = value
-        
+
         # Level 2: Disk
         self._set_to_disk(key, value)
-    
+
     def _get_from_disk(self, key: str) -> Optional[T]:
         """Get value from disk cache."""
         cache_file = self.disk_dir / f"{self._hash_key(key)}.cache"
         if not cache_file.exists():
             return None
-        
+
         # Check TTL
         if cache_file.stat().st_mtime + self.disk_ttl < time.time():
             cache_file.unlink()
             return None
-        
+
         try:
             with open(cache_file, "rb") as f:
                 return pickle.load(f)
         except Exception:
             return None
-    
+
     def _set_to_disk(self, key: str, value: T) -> None:
         """Set value to disk cache."""
         cache_file = self.disk_dir / f"{self._hash_key(key)}.cache"
@@ -3040,7 +3040,7 @@ class MultiLevelCache:
                 pickle.dump(value, f)
         except Exception:
             pass
-    
+
     def _hash_key(self, key: str) -> str:
         """Hash cache key."""
         return hashlib.sha256(key.encode()).hexdigest()
@@ -3068,17 +3068,17 @@ class CacheInvalidator:
     def __init__(self):
         self.invalidation_rules: List[Callable[[str], bool]] = []
         self.watched_paths: Set[Path] = set()
-    
+
     def add_rule(self, rule: Callable[[str], bool]) -> None:
         """Add invalidation rule."""
         self.invalidation_rules.append(rule)
-    
+
     def invalidate_on_file_change(self, path: Path) -> None:
         """Invalidate cache when file changes."""
         self.watched_paths.add(path)
         # Use watchdog to watch file
         # When file changes, invalidate matching cache entries
-    
+
     def invalidate(self, key_pattern: str) -> None:
         """Invalidate cache entries matching pattern."""
         keys_to_remove = [
@@ -3116,10 +3116,10 @@ def setup_structured_logging(level: str = "INFO") -> None:
     plat = detect_platform()
     log_dir = get_log_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Platform-specific log file
     log_file = log_dir / f"thegent-{plat.value}.log"
-    
+
     # Configure structlog
     structlog.configure(
         processors=[
@@ -3137,7 +3137,7 @@ def setup_structured_logging(level: str = "INFO") -> None:
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=True,
     )
-    
+
     # Add file handler
     handler = logging.FileHandler(log_file)
     handler.setFormatter(logging.Formatter(
@@ -3156,7 +3156,7 @@ def run_agent(agent: str, prompt: str) -> dict:
         prompt_length=len(prompt),
         platform=detect_platform().value
     )
-    
+
     try:
         result = _execute_agent(agent, prompt)
         logger.info(
@@ -3196,7 +3196,7 @@ def setup_tracing() -> None:
         "service.version": __version__,
         "platform": detect_platform().value,
     })
-    
+
     provider = TracerProvider(resource=resource)
     processor = BatchSpanProcessor(ConsoleSpanExporter())
     provider.add_span_processor(processor)
@@ -3253,12 +3253,12 @@ class SecretStore(ABC):
     def store(self, key: str, value: str) -> None:
         """Store secret."""
         pass
-    
+
     @abstractmethod
     def retrieve(self, key: str) -> Optional[str]:
         """Retrieve secret."""
         pass
-    
+
     @abstractmethod
     def delete(self, key: str) -> None:
         """Delete secret."""
@@ -3274,7 +3274,7 @@ class MacOSKeychainStore(SecretStore):
             "-w", value,
             "-U"
         ], check=True)
-    
+
     def retrieve(self, key: str) -> Optional[str]:
         try:
             result = subprocess.run(
@@ -3286,7 +3286,7 @@ class MacOSKeychainStore(SecretStore):
             return result.stdout.strip()
         except subprocess.CalledProcessError:
             return None
-    
+
     def delete(self, key: str) -> None:
         subprocess.run([
             "security", "delete-generic-password",
@@ -3299,14 +3299,14 @@ class LinuxKeyringStore(SecretStore):
     def store(self, key: str, value: str) -> None:
         import keyring
         keyring.set_password("thegent", key, value)
-    
+
     def retrieve(self, key: str) -> Optional[str]:
         import keyring
         try:
             return keyring.get_password("thegent", key)
         except Exception:
             return None
-    
+
     def delete(self, key: str) -> None:
         import keyring
         try:
@@ -3325,7 +3325,7 @@ class WindowsCredentialStore(SecretStore):
             "CredentialBlob": value.encode(),
             "Persist": win32cred.CRED_PERSIST_LOCAL_MACHINE
         }, 0)
-    
+
     def retrieve(self, key: str) -> Optional[str]:
         import win32cred
         try:
@@ -3333,7 +3333,7 @@ class WindowsCredentialStore(SecretStore):
             return cred["CredentialBlob"].decode()
         except Exception:
             return None
-    
+
     def delete(self, key: str) -> None:
         import win32cred
         try:
@@ -3366,18 +3366,18 @@ from thegent.platform import detect_platform
 def validate_path(path: str) -> Path:
     """Validate and sanitize path (platform-aware)."""
     plat = detect_platform()
-    
+
     # Basic validation
     if not path or not path.strip():
         raise ValueError("Path cannot be empty")
-    
+
     # Platform-specific validation
     if plat == "windows":
         # Windows: Check for invalid characters
         invalid_chars = r'[<>:"|?*]'
         if re.search(invalid_chars, path):
             raise ValueError(f"Path contains invalid characters: {path}")
-        
+
         # Check for reserved names
         reserved_names = {"CON", "PRN", "AUX", "NUL"} | {
             f"COM{i}" for i in range(1, 10)
@@ -3388,23 +3388,23 @@ def validate_path(path: str) -> Path:
         # Unix: Check for null bytes
         if "\x00" in path:
             raise ValueError("Path contains null byte")
-    
+
     # Resolve path
     resolved = Path(path).expanduser().resolve()
-    
+
     # Check length (Windows has 260 char limit unless long paths enabled)
     if plat == "windows" and len(str(resolved)) > 260:
         raise ValueError(f"Path too long: {len(str(resolved))} characters")
-    
+
     return resolved
 
 def sanitize_command(command: str) -> str:
     """Sanitize shell command (platform-aware)."""
     plat = detect_platform()
-    
+
     # Remove null bytes
     command = command.replace("\x00", "")
-    
+
     # Platform-specific sanitization
     if plat == "windows":
         # Windows: Remove PowerShell injection attempts
@@ -3425,7 +3425,7 @@ def sanitize_command(command: str) -> str:
         ]
         for pattern in dangerous_patterns:
             command = re.sub(pattern, "", command)
-    
+
     return command.strip()
 ```
 
@@ -3450,14 +3450,14 @@ class LazyProxy:
         self._factory = factory
         self._value: Optional[T] = None
         self._loaded = False
-    
+
     def __getattr__(self, name: str):
         """Lazy load on attribute access."""
         if not self._loaded:
             self._value = self._factory()
             self._loaded = True
         return getattr(self._value, name)
-    
+
     def __call__(self, *args, **kwargs):
         """Lazy load on call."""
         if not self._loaded:
@@ -3493,12 +3493,12 @@ class AsyncExecutor:
     """Async executor for I/O operations."""
     def __init__(self, max_workers: int = 10):
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
-    
+
     async def run_async(self, func: Callable[[], T]) -> T:
         """Run function asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.executor, func)
-    
+
     async def run_parallel(self, funcs: List[Callable[[], T]]) -> List[T]:
         """Run multiple functions in parallel."""
         tasks = [self.run_async(func) for func in funcs]
@@ -3545,7 +3545,7 @@ def temp_config_dir(tmp_path, mock_platform):
         config_dir = tmp_path / "Library" / "Application Support" / "thegent"
     else:
         config_dir = tmp_path / ".config" / "thegent"
-    
+
     config_dir.mkdir(parents=True, exist_ok=True)
     return config_dir
 
@@ -3576,7 +3576,7 @@ def isolated_environment():
         env["THGENT_CONFIG_DIR"] = str(Path(tmpdir) / "config")
         env["THGENT_CACHE_DIR"] = str(Path(tmpdir) / "cache")
         env["THGENT_DATA_DIR"] = str(Path(tmpdir) / "data")
-        
+
         yield env
 
 def run_thegent_command(command: List[str], env: dict = None) -> subprocess.CompletedProcess:
@@ -3617,7 +3617,7 @@ def generate_interactive_docs():
     docs_dir = Path("docs")
     examples_dir = docs_dir / "examples"
     examples_dir.mkdir(exist_ok=True)
-    
+
     # Generate platform-specific examples
     for platform in ["macos", "linux", "windows"]:
         example_file = examples_dir / f"quickstart-{platform}.md"
@@ -3914,21 +3914,21 @@ class ConfigManager:
         self.platform = detect_platform().value
         self._config: Dict[str, Any] = {}
         self._load_config()
-    
+
     def _load_config(self) -> None:
         """Load configuration with hierarchy."""
         # 1. Default config (package data)
         default_config = self._load_default_config()
-        
+
         # 2. Platform-specific defaults
         platform_config = self._load_platform_config()
-        
+
         # 3. User config
         user_config = self._load_user_config()
-        
+
         # 4. Environment overrides
         env_config = self._load_env_config()
-        
+
         # Merge (later overrides earlier)
         self._config = {
             **default_config,
@@ -3936,7 +3936,7 @@ class ConfigManager:
             **user_config,
             **env_config,
         }
-    
+
     def _load_default_config(self) -> Dict[str, Any]:
         """Load default configuration."""
         try:
@@ -3945,7 +3945,7 @@ class ConfigManager:
                     return yaml.safe_load(f) or {}
         except Exception:
             return {}
-    
+
     def _load_platform_config(self) -> Dict[str, Any]:
         """Load platform-specific defaults."""
         platform_config_file = self.config_dir / f"config.{self.platform}.yaml"
@@ -3953,7 +3953,7 @@ class ConfigManager:
             with open(platform_config_file) as f:
                 return yaml.safe_load(f) or {}
         return {}
-    
+
     def _load_user_config(self) -> Dict[str, Any]:
         """Load user configuration."""
         user_config_file = self.config_dir / "config.yaml"
@@ -3961,7 +3961,7 @@ class ConfigManager:
             with open(user_config_file) as f:
                 return yaml.safe_load(f) or {}
         return {}
-    
+
     def _load_env_config(self) -> Dict[str, Any]:
         """Load environment variable overrides."""
         config = {}
@@ -3974,7 +3974,7 @@ class ConfigManager:
                     current = current.setdefault(part, {})
                 current[parts[-1]] = value
         return config
-    
+
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value."""
         keys = key.split(".")
@@ -3987,7 +3987,7 @@ class ConfigManager:
             else:
                 return default
         return value
-    
+
     def set(self, key: str, value: Any) -> None:
         """Set configuration value."""
         keys = key.split(".")
@@ -3995,7 +3995,7 @@ class ConfigManager:
         for k in keys[:-1]:
             current = current.setdefault(k, {})
         current[keys[-1]] = value
-    
+
     def save(self) -> None:
         """Save user configuration."""
         user_config_file = self.config_dir / "config.yaml"
@@ -4016,7 +4016,7 @@ from thegent.platform import detect_platform
 class PlatformConfig(BaseModel):
     """Platform-specific configuration."""
     platform: str = Field(default_factory=lambda: detect_platform().value)
-    
+
     @field_validator("platform")
     @classmethod
     def validate_platform(cls, v: str) -> str:
@@ -4031,13 +4031,13 @@ class PathConfig(BaseModel):
     config_dir: Path
     cache_dir: Path
     data_dir: Path
-    
+
     @field_validator("config_dir", "cache_dir", "data_dir")
     @classmethod
     def validate_paths(cls, v: Path, info) -> Path:
         """Validate paths."""
         plat = detect_platform()
-        
+
         # Platform-specific validation
         if plat == "windows":
             # Windows: Check length
@@ -4047,7 +4047,7 @@ class PathConfig(BaseModel):
             # Unix: Check for null bytes
             if "\x00" in str(v):
                 raise ValueError("Path contains null byte")
-        
+
         # Ensure directory exists
         v.mkdir(parents=True, exist_ok=True)
         return v
@@ -4058,7 +4058,7 @@ class ThegentConfig(BaseModel):
     paths: PathConfig
     providers: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     hooks: Dict[str, bool] = Field(default_factory=dict)
-    
+
     @field_validator("providers")
     @classmethod
     def validate_providers(cls, v: Dict) -> Dict:
@@ -4105,9 +4105,9 @@ async def detailed_health_check():
         "providers": _check_providers(),
         "mcp_server": _check_mcp_server(),
     }
-    
+
     all_healthy = all(check["status"] == "healthy" for check in checks.values())
-    
+
     return JSONResponse(
         status_code=status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE,
         content={
@@ -4257,7 +4257,7 @@ def show_help_advanced():
     table.add_column("Command", style="cyan")
     table.add_column("Description", style="green")
     table.add_column("Platform", style="yellow")
-    
+
     commands = [
         ("thegent install --target hooks", "Install hooks", "All"),
         ("thegent mcp service install", "Install as service", "macOS/Linux/Windows"),
@@ -4265,10 +4265,10 @@ def show_help_advanced():
         ("thegent config set key value", "Set config value", "All"),
         ("thegent upgrade", "Upgrade thegent", "All"),
     ]
-    
+
     for cmd, desc, plat in commands:
         table.add_row(cmd, desc, plat)
-    
+
     console.print(table)
 ```
 
@@ -4281,7 +4281,7 @@ def show_help_advanced():
 def get_contextual_help(context: str) -> str:
     """Get contextual help based on current state."""
     plat = detect_platform().value
-    
+
     if context == "first_run":
         return f"""
 [bold cyan]Welcome to thegent![/bold cyan]
@@ -4299,7 +4299,7 @@ Since this is your first run on {plat}, let's set things up:
 
 Need help? Run: thegent help
 """
-    
+
     elif context == "provider_not_configured":
         return f"""
 [bold yellow]Provider not configured[/bold yellow]
@@ -4312,7 +4312,7 @@ Available providers: anthropic, openai, google, moonshot
 
 For more help: thegent cliproxy help
 """
-    
+
     elif context == "mcp_not_running":
         return f"""
 [bold yellow]MCP server not running[/bold yellow]
@@ -4327,7 +4327,7 @@ Or install as a service ({plat}):
 
 For more help: thegent serve --help
 """
-    
+
     return "Run 'thegent help' for more information"
 ```
 
@@ -4484,14 +4484,14 @@ def build_offline_package(output_dir: Path) -> None:
         "-d", str(output_dir / "wheels"),
         "-r", "requirements.txt"
     ], check=True)
-    
+
     # 2. Build thegent wheel
     subprocess.run([
         "python", "-m", "build",
         "--wheel",
         "--outdir", str(output_dir / "wheels")
     ], check=True)
-    
+
     # 3. Create installation script
     install_script = output_dir / "install-offline.sh"
     install_script.write_text(f"""#!/bin/bash
@@ -4555,14 +4555,14 @@ class SharedStateBackend:
     """Shared state backend for HA deployments."""
     def __init__(self, redis_url: str):
         self.redis = redis.from_url(redis_url)
-    
+
     def get_session(self, session_id: str) -> Optional[dict]:
         """Get session from shared backend."""
         data = self.redis.get(f"thegent:session:{session_id}")
         if data:
             return json.loads(data)
         return None
-    
+
     def set_session(self, session_id: str, data: dict) -> None:
         """Set session in shared backend."""
         self.redis.setex(
@@ -4614,7 +4614,7 @@ class DiagnosticSystem:
     def __init__(self):
         self.checks: List[Callable[[], DiagnosticResult]] = []
         self._register_checks()
-    
+
     def _register_checks(self) -> None:
         """Register diagnostic checks."""
         self.checks.extend([
@@ -4625,7 +4625,7 @@ class DiagnosticSystem:
             self._check_network_connectivity,
             self._check_disk_space,
         ])
-    
+
     def run_diagnostics(self) -> List[DiagnosticResult]:
         """Run all diagnostic checks."""
         results = []
@@ -4642,7 +4642,7 @@ class DiagnosticSystem:
                     platform=detect_platform().value
                 ))
         return results
-    
+
     def _check_platform_detection(self) -> DiagnosticResult:
         """Check platform detection."""
         try:
@@ -4662,7 +4662,7 @@ class DiagnosticSystem:
                 remediation="Set THGENT_PLATFORM environment variable",
                 platform="unknown"
             )
-    
+
     def _check_path_resolution(self) -> DiagnosticResult:
         """Check path resolution."""
         try:
@@ -4670,7 +4670,7 @@ class DiagnosticSystem:
             config_dir = get_config_dir()
             cache_dir = get_cache_dir()
             data_dir = get_data_dir()
-            
+
             # Check if directories are writable
             for name, path in [("config", config_dir), ("cache", cache_dir), ("data", data_dir)]:
                 if not path.exists():
@@ -4683,7 +4683,7 @@ class DiagnosticSystem:
                         remediation=self._get_permission_remediation(name, path),
                         platform=detect_platform().value
                     )
-            
+
             return DiagnosticResult(
                 name="path_resolution",
                 level=DiagnosticLevel.INFO,
@@ -4699,7 +4699,7 @@ class DiagnosticSystem:
                 remediation="Check platform detection and environment variables",
                 platform=detect_platform().value
             )
-    
+
     def _get_permission_remediation(self, name: str, path: Path) -> str:
         """Get platform-specific permission remediation."""
         plat = detect_platform()
@@ -4710,22 +4710,22 @@ class DiagnosticSystem:
         elif plat == Platform.WINDOWS:
             return "Run PowerShell as Administrator or check folder permissions"
         return f"Check permissions for {path}"
-    
+
     def _check_permissions(self) -> DiagnosticResult:
         """Check file permissions."""
         # Implementation
         pass
-    
+
     def _check_dependencies(self) -> DiagnosticResult:
         """Check required dependencies."""
         # Implementation
         pass
-    
+
     def _check_network_connectivity(self) -> DiagnosticResult:
         """Check network connectivity."""
         # Implementation
         pass
-    
+
     def _check_disk_space(self) -> DiagnosticResult:
         """Check disk space."""
         # Implementation
@@ -4753,7 +4753,7 @@ from datetime import datetime
 def generate_issue_report() -> dict:
     """Generate comprehensive issue report."""
     plat = detect_platform()
-    
+
     report = {
         "timestamp": datetime.now().isoformat(),
         "platform": {
@@ -4774,7 +4774,7 @@ def generate_issue_report() -> dict:
         "diagnostics": [r.__dict__ for r in diagnostics.run_diagnostics()],
         "logs": _collect_recent_logs(),
     }
-    
+
     return report
 
 def save_issue_report(report: dict, output_path: Path) -> None:
@@ -4816,11 +4816,11 @@ def run_setup_wizard() -> None:
         "Let's set up your environment...",
         title="Setup Wizard"
     ))
-    
+
     # Step 1: Platform detection
     plat = detect_platform()
     console.print(f"[green]✓[/green] Platform detected: {plat.value}")
-    
+
     # Step 2: Check dependencies
     console.print("\n[cyan]Checking dependencies...[/cyan]")
     missing_deps = _check_dependencies()
@@ -4828,19 +4828,19 @@ def run_setup_wizard() -> None:
         console.print(f"[yellow]Missing dependencies: {', '.join(missing_deps)}[/yellow]")
         if Confirm.ask("Install missing dependencies?"):
             _install_dependencies(missing_deps)
-    
+
     # Step 3: Configure providers
     console.print("\n[cyan]Configuring providers...[/cyan]")
     providers = Prompt.ask(
         "Which providers would you like to configure? (comma-separated)",
         default="anthropic,openai"
     ).split(",")
-    
+
     for provider in providers:
         provider = provider.strip()
         if Confirm.ask(f"Configure {provider}?"):
             subprocess.run(["thegent", "cliproxy", "login", provider], check=True)
-    
+
     # Step 4: Install components
     console.print("\n[cyan]Installing components...[/cyan]")
     targets = Prompt.ask(
@@ -4848,7 +4848,7 @@ def run_setup_wizard() -> None:
         default="all"
     )
     subprocess.run(["thegent", "install", "--target", targets], check=True)
-    
+
     # Step 5: Verify setup
     console.print("\n[cyan]Verifying setup...[/cyan]")
     result = subprocess.run(["thegent", "doctor"], capture_output=True, text=True)
@@ -4857,7 +4857,7 @@ def run_setup_wizard() -> None:
     else:
         console.print("[yellow]⚠ Setup completed with warnings[/yellow]")
         console.print(result.stdout)
-    
+
     # Step 6: Next steps
     console.print("\n[bold cyan]Next Steps:[/bold cyan]")
     console.print("  1. Start MCP server: [green]thegent serve[/green]")
@@ -4901,13 +4901,13 @@ def run_guided_tour() -> None:
             command='thegent run "Hello, world!" --agent codex',
         ),
     ]
-    
+
     console.print("[bold cyan]thegent Guided Tour[/bold cyan]\n")
-    
+
     for i, step in enumerate(steps, 1):
         console.print(f"\n[bold]Step {i}: {step.title}[/bold]")
         console.print(f"[dim]{step.description}[/dim]")
-        
+
         if Confirm.ask(f"Run: [green]{step.command}[/green]?"):
             result = subprocess.run(
                 step.command.split(),
@@ -4915,13 +4915,13 @@ def run_guided_tour() -> None:
                 text=True
             )
             console.print(result.stdout)
-            
+
             if step.expected_output and step.expected_output in result.stdout:
                 console.print("[green]✓ Expected output found![/green]")
-        
+
         if not Confirm.ask("Continue to next step?", default=True):
             break
-    
+
     console.print("\n[green]Tour complete![/green]")
 ```
 
@@ -4945,19 +4945,19 @@ def profile_operation(operation_name: str):
     """Profile an operation."""
     profiler = cProfile.Profile()
     profiler.enable()
-    
+
     try:
         yield
     finally:
         profiler.disable()
-        
+
         # Save profile
         profile_dir = get_cache_dir() / "profiles"
         profile_dir.mkdir(parents=True, exist_ok=True)
         profile_file = profile_dir / f"{operation_name}-{datetime.now().isoformat()}.prof"
-        
+
         profiler.dump_stats(str(profile_file))
-        
+
         # Print summary
         stats = pstats.Stats(profiler)
         stats.sort_stats("cumulative")
@@ -4983,19 +4983,19 @@ class ResourceTracker:
     def __init__(self):
         self.start_time = time.time()
         self.start_memory = psutil.Process().memory_info().rss
-    
+
     def get_usage(self) -> Dict[str, float]:
         """Get current resource usage."""
         process = psutil.Process()
         memory_info = process.memory_info()
-        
+
         return {
             "cpu_percent": process.cpu_percent(interval=0.1),
             "memory_mb": memory_info.rss / 1024 / 1024,
             "memory_percent": process.memory_percent(),
             "duration_seconds": time.time() - self.start_time,
         }
-    
+
     def log_usage(self, operation: str) -> None:
         """Log resource usage for operation."""
         usage = self.get_usage()
@@ -5043,10 +5043,10 @@ def load_environment_config() -> dict:
     """Load environment-specific configuration."""
     env = get_environment()
     config_dir = get_config_dir()
-    
+
     # Load base config
     base_config = load_config()
-    
+
     # Load environment-specific overrides
     env_config_file = config_dir / f"config.{env.value}.yaml"
     if env_config_file.exists():
@@ -5054,7 +5054,7 @@ def load_environment_config() -> dict:
         with open(env_config_file) as f:
             env_config = yaml.safe_load(f) or {}
         base_config.update(env_config)
-    
+
     return base_config
 ```
 
@@ -5071,32 +5071,32 @@ class FeatureFlags:
     def __init__(self):
         self.flags: Dict[str, bool] = {}
         self._load_flags()
-    
+
     def _load_flags(self) -> None:
         """Load feature flags from config."""
         config = load_config()
         self.flags = config.get("feature_flags", {})
-        
+
         # Override with environment variables
         for key, value in os.environ.items():
             if key.startswith("THGENT_FEATURE_"):
                 flag_name = key[15:].lower()
                 self.flags[flag_name] = value.lower() in ("true", "1", "yes")
-    
+
     def is_enabled(self, flag: str, default: bool = False) -> bool:
         """Check if feature flag is enabled."""
         return self.flags.get(flag, default)
-    
+
     def enable(self, flag: str) -> None:
         """Enable feature flag."""
         self.flags[flag] = True
         self._save_flags()
-    
+
     def disable(self, flag: str) -> None:
         """Disable feature flag."""
         self.flags[flag] = False
         self._save_flags()
-    
+
     def _save_flags(self) -> None:
         """Save feature flags to config."""
         config = load_config()
@@ -5139,20 +5139,20 @@ class QualityGateSystem:
     def __init__(self):
         self.gates: List[QualityGate] = []
         self._register_gates()
-    
+
     def _register_gates(self) -> None:
         """Register quality gates."""
         plat = detect_platform().value
-        
+
         # Platform-specific thresholds
         thresholds = {
             "macos": {"coverage": 80.0, "performance": 100.0},
             "linux": {"coverage": 80.0, "performance": 100.0},
             "windows": {"coverage": 75.0, "performance": 150.0},  # More lenient
         }
-        
+
         platform_thresholds = thresholds.get(plat, thresholds["linux"])
-        
+
         self.gates.extend([
             QualityGate(
                 name="test_coverage",
@@ -5169,15 +5169,15 @@ class QualityGateSystem:
                 passed=False
             ),
         ])
-    
+
     def check_all_gates(self) -> tuple[bool, List[QualityGate]]:
         """Check all quality gates."""
         for gate in self.gates:
             gate.passed = gate.current_value <= gate.threshold
-        
+
         all_passed = all(gate.passed for gate in self.gates)
         return all_passed, self.gates
-    
+
     def _get_coverage(self) -> float:
         """Get test coverage percentage."""
         # Run coverage and parse
@@ -5189,7 +5189,7 @@ class QualityGateSystem:
         # Parse coverage from output
         # ...
         return 85.0  # Placeholder
-    
+
     def _get_startup_time(self) -> float:
         """Get startup time in milliseconds."""
         import time
@@ -5222,7 +5222,7 @@ class QualityMonitor:
     def __init__(self):
         self.metrics_file = get_data_dir() / "quality" / "metrics.jsonl"
         self.metrics_file.parent.mkdir(parents=True, exist_ok=True)
-    
+
     def record_metric(self, metric_name: str, value: float, tags: Dict[str, str] = None) -> None:
         """Record quality metric."""
         entry = {
@@ -5232,15 +5232,15 @@ class QualityMonitor:
             "tags": tags or {},
             "platform": detect_platform().value,
         }
-        
+
         with open(self.metrics_file, "a") as f:
             f.write(json.dumps(entry) + "\n")
-    
+
     def get_metric_trend(self, metric_name: str, days: int = 7) -> List[float]:
         """Get metric trend over time."""
         cutoff = datetime.now() - timedelta(days=days)
         values = []
-        
+
         with open(self.metrics_file) as f:
             for line in f:
                 entry = json.loads(line)
@@ -5248,15 +5248,15 @@ class QualityMonitor:
                     entry_time = datetime.fromisoformat(entry["timestamp"])
                     if entry_time >= cutoff:
                         values.append(entry["value"])
-        
+
         return values
-    
+
     def check_regression(self, metric_name: str, threshold: float) -> bool:
         """Check if metric has regressed."""
         trend = self.get_metric_trend(metric_name)
         if len(trend) < 2:
             return False
-        
+
         recent_avg = sum(trend[-7:]) / len(trend[-7:])
         return recent_avg > threshold
 
@@ -5287,7 +5287,7 @@ from pathlib import Path
 
 class E2ETestScenarios:
     """E2E test scenarios."""
-    
+
     @pytest.mark.e2e
     @pytest.mark.parametrize("platform", ["macos", "linux", "windows"])
     def test_complete_installation_flow(self, platform, tmp_path):
@@ -5296,57 +5296,57 @@ class E2ETestScenarios:
             # 1. Install
             result = run_thegent_command(["install", "--target", "all"])
             assert result.returncode == 0
-            
+
             # 2. Verify installation
             result = run_thegent_command(["doctor"])
             assert result.returncode == 0
-            
+
             # 3. Configure provider
             result = run_thegent_command(["cliproxy", "login", "anthropic"])
             assert result.returncode == 0
-            
+
             # 4. Start MCP server
             result = run_thegent_command(["serve"], background=True)
             assert result.returncode == 0
-            
+
             # 5. Run agent
             result = run_thegent_command(["run", "Hello, world!"])
             assert result.returncode == 0
-    
+
     @pytest.mark.e2e
     def test_upgrade_flow(self, tmp_path):
         """Test upgrade flow."""
         # 1. Install old version
         install_version("0.1.0")
-        
+
         # 2. Create config
         create_test_config()
-        
+
         # 3. Upgrade
         upgrade_version("0.2.0")
-        
+
         # 4. Verify config migrated
         assert config_migrated()
-        
+
         # 5. Verify functionality
         result = run_thegent_command(["doctor"])
         assert result.returncode == 0
-    
+
     @pytest.mark.e2e
     def test_rollback_flow(self, tmp_path):
         """Test rollback flow."""
         # 1. Install version
         install_version("0.2.0")
-        
+
         # 2. Create backup
         backup_path = backup_manager.create_backup()
-        
+
         # 3. Make changes
         modify_config()
-        
+
         # 4. Rollback
         backup_manager.restore_backup(backup_path)
-        
+
         # 5. Verify rollback
         assert config_restored()
 ```
@@ -5362,7 +5362,7 @@ import time
 
 class ChaosTests:
     """Chaos engineering tests."""
-    
+
     def test_network_failure_recovery(self):
         """Test recovery from network failures."""
         # Simulate network failure
@@ -5373,11 +5373,11 @@ class ChaosTests:
                 assert False, "Should have failed"
             except ConnectionError:
                 pass
-        
+
         # Verify recovery
         result = fetch_provider_config("anthropic")
         assert result is not None
-    
+
     def test_disk_failure_recovery(self):
         """Test recovery from disk failures."""
         # Simulate disk full
@@ -5387,19 +5387,19 @@ class ChaosTests:
                 assert False, "Should have failed"
             except IOError:
                 pass
-        
+
         # Verify recovery
         save_config(config)
         assert config_saved()
-    
+
     def test_process_crash_recovery(self):
         """Test recovery from process crashes."""
         # Start process
         process = start_mcp_server()
-        
+
         # Crash process
         process.kill()
-        
+
         # Verify auto-restart
         time.sleep(2)
         assert mcp_server_running()
@@ -5440,16 +5440,16 @@ class UsageAnalytics:
         self.analytics_file = get_data_dir() / "analytics" / "usage.jsonl"
         self.analytics_file.parent.mkdir(parents=True, exist_ok=True)
         self.opt_out = self._check_opt_out()
-    
+
     def _check_opt_out(self) -> bool:
         """Check if user opted out."""
         return os.environ.get("THGENT_ANALYTICS_OPT_OUT", "false").lower() == "true"
-    
+
     def track_command(self, command: str, duration: float, success: bool) -> None:
         """Track command usage."""
         if self.opt_out:
             return
-        
+
         entry = {
             "timestamp": datetime.now().isoformat(),
             "command_hash": self._hash_command(command),
@@ -5458,11 +5458,11 @@ class UsageAnalytics:
             "platform": detect_platform().value,
             "version": __version__,
         }
-        
+
         # No PII, only aggregated data
         with open(self.analytics_file, "a") as f:
             f.write(json.dumps(entry) + "\n")
-    
+
     def _hash_command(self, command: str) -> str:
         """Hash command (privacy-preserving)."""
         # Remove arguments, keep only command structure
@@ -5471,9 +5471,9 @@ class UsageAnalytics:
             base_command = parts[0]
         else:
             base_command = command
-        
+
         return hashlib.sha256(base_command.encode()).hexdigest()[:8]
-    
+
     def get_usage_stats(self) -> Dict[str, Any]:
         """Get aggregated usage statistics."""
         stats = {
@@ -5483,16 +5483,16 @@ class UsageAnalytics:
             "platform_distribution": {},
             "command_distribution": {},
         }
-        
+
         if not self.analytics_file.exists():
             return stats
-        
+
         commands = []
         successes = 0
         durations = []
         platforms = {}
         commands_count = {}
-        
+
         with open(self.analytics_file) as f:
             for line in f:
                 entry = json.loads(line)
@@ -5502,14 +5502,14 @@ class UsageAnalytics:
                 durations.append(entry["duration_ms"])
                 platforms[entry["platform"]] = platforms.get(entry["platform"], 0) + 1
                 commands_count[entry["command_hash"]] = commands_count.get(entry["command_hash"], 0) + 1
-        
+
         if commands:
             stats["total_commands"] = len(commands)
             stats["success_rate"] = successes / len(commands)
             stats["average_duration_ms"] = sum(durations) / len(durations)
             stats["platform_distribution"] = platforms
             stats["command_distribution"] = commands_count
-        
+
         return stats
 
 # Usage
@@ -5538,17 +5538,17 @@ class PerformanceBenchmark:
     def __init__(self):
         self.benchmark_file = get_data_dir() / "benchmarks" / "performance.jsonl"
         self.benchmark_file.parent.mkdir(parents=True, exist_ok=True)
-    
+
     def benchmark_operation(self, operation_name: str, operation: Callable, iterations: int = 10) -> Dict[str, float]:
         """Benchmark operation."""
         times = []
-        
+
         for i in range(iterations):
             start = time.time()
             operation()
             duration = time.time() - start
             times.append(duration)
-        
+
         stats = {
             "operation": operation_name,
             "iterations": iterations,
@@ -5560,17 +5560,17 @@ class PerformanceBenchmark:
             "platform": detect_platform().value,
             "timestamp": datetime.now().isoformat(),
         }
-        
+
         # Save benchmark
         with open(self.benchmark_file, "a") as f:
             f.write(json.dumps(stats) + "\n")
-        
+
         return stats
-    
+
     def compare_platforms(self, operation_name: str) -> Dict[str, Dict[str, float]]:
         """Compare performance across platforms."""
         platforms = {}
-        
+
         with open(self.benchmark_file) as f:
             for line in f:
                 entry = json.loads(line)
@@ -5579,7 +5579,7 @@ class PerformanceBenchmark:
                     if platform not in platforms:
                         platforms[platform] = []
                     platforms[platform].append(entry["mean_ms"])
-        
+
         # Calculate averages
         comparison = {}
         for platform, values in platforms.items():
@@ -5587,7 +5587,7 @@ class PerformanceBenchmark:
                 "mean_ms": statistics.mean(values),
                 "median_ms": statistics.median(values),
             }
-        
+
         return comparison
 
 # Usage
@@ -5621,48 +5621,48 @@ class TroubleshootingGuideGenerator:
     def __init__(self):
         self.error_patterns: Dict[str, Dict] = {}
         self._load_error_patterns()
-    
+
     def _load_error_patterns(self) -> None:
         """Load error patterns from logs and code."""
         # Scan logs for common errors
         log_dir = get_log_dir()
         for log_file in log_dir.glob("*.log"):
             self._extract_errors_from_log(log_file)
-        
+
         # Scan code for error definitions
         self._extract_errors_from_code()
-    
+
     def _extract_errors_from_log(self, log_file: Path) -> None:
         """Extract error patterns from log file."""
         # Parse log file for error patterns
         # ...
         pass
-    
+
     def _extract_errors_from_code(self) -> None:
         """Extract error definitions from code."""
         # Scan source code for exception definitions
         # ...
         pass
-    
+
     def generate_guide(self) -> str:
         """Generate troubleshooting guide."""
         lines = ["# Troubleshooting Guide", ""]
-        
+
         # Group by platform
         for platform in ["macos", "linux", "windows"]:
             lines.append(f"## {platform.title()}", "")
-            
+
             platform_errors = [
                 (error, info) for error, info in self.error_patterns.items()
                 if info.get("platform") == platform or info.get("platform") == "all"
             ]
-            
+
             for error, info in platform_errors:
                 lines.append(f"### {error}", "")
                 lines.append(f"**Symptom:** {info.get('symptom', 'Unknown')}", "")
                 lines.append(f"**Solution:** {info.get('solution', 'See documentation')}", "")
                 lines.append("")
-        
+
         return "\n".join(lines)
 ```
 
@@ -5706,7 +5706,7 @@ async def api_explorer():
 async def openapi_spec():
     """OpenAPI specification."""
     from fastapi.openapi.utils import get_openapi
-    
+
     return get_openapi(
         title="thegent API",
         version=__version__,
@@ -5734,49 +5734,49 @@ class BlueGreenDeployment:
         self.install_dir = get_data_dir() / "installations"
         self.install_dir.mkdir(parents=True, exist_ok=True)
         self.current_version_file = self.install_dir / "current_version"
-    
+
     def deploy_new_version(self, version: str, package_path: Path) -> bool:
         """Deploy new version (green)."""
         green_dir = self.install_dir / f"green-{version}"
-        
+
         # Install to green directory
         self._install_to_directory(package_path, green_dir)
-        
+
         # Verify green installation
         if not self._verify_installation(green_dir):
             shutil.rmtree(green_dir)
             return False
-        
+
         # Switch to green (atomic)
         self._switch_to_green(version)
-        
+
         # Cleanup old blue
         self._cleanup_blue()
-        
+
         return True
-    
+
     def _switch_to_green(self, version: str) -> None:
         """Switch to green version (atomic)."""
         # Update symlink or PATH
         green_dir = self.install_dir / f"green-{version}"
         bin_dir = get_bin_dir()
-        
+
         # Create symlink to green
         thegent_symlink = bin_dir / "thegent"
         if thegent_symlink.exists():
             thegent_symlink.unlink()
         thegent_symlink.symlink_to(green_dir / "bin" / "thegent")
-        
+
         # Update current version
         self.current_version_file.write_text(version)
-    
+
     def _cleanup_blue(self) -> None:
         """Cleanup old blue installation."""
         current_version = self.current_version_file.read_text().strip()
         blue_dir = self.install_dir / f"blue-{current_version}"
         if blue_dir.exists():
             shutil.rmtree(blue_dir)
-    
+
     def rollback(self) -> bool:
         """Rollback to previous version."""
         # Switch back to blue
@@ -5799,20 +5799,20 @@ class CanaryDeployment:
         self.canary_percentage = 0.0  # 0-100
         self.canary_version: Optional[str] = None
         self.stable_version: Optional[str] = None
-    
+
     def set_canary_percentage(self, percentage: float) -> None:
         """Set canary deployment percentage."""
         self.canary_percentage = max(0.0, min(100.0, percentage))
-    
+
     def deploy_canary(self, version: str) -> None:
         """Deploy canary version."""
         self.canary_version = version
-    
+
     def should_use_canary(self, user_id: Optional[str] = None) -> bool:
         """Determine if user should use canary version."""
         if not self.canary_version:
             return False
-        
+
         # Deterministic based on user_id or random
         if user_id:
             hash_value = int(hashlib.md5(user_id.encode()).hexdigest(), 16)
@@ -5820,7 +5820,7 @@ class CanaryDeployment:
             return user_percentage <= self.canary_percentage
         else:
             return random.random() * 100 <= self.canary_percentage
-    
+
     def get_version_for_user(self, user_id: Optional[str] = None) -> str:
         """Get version for user (canary or stable)."""
         if self.should_use_canary(user_id):
@@ -5850,7 +5850,7 @@ class RealTimeDashboard:
     def __init__(self):
         self.metrics_history: Dict[str, List[float]] = {}
         self.update_interval = 1.0  # seconds
-    
+
     def render(self) -> Layout:
         """Render dashboard."""
         layout = Layout()
@@ -5860,7 +5860,7 @@ class RealTimeDashboard:
             Layout(name="graphs", size=15),
             Layout(name="footer", size=3)
         )
-        
+
         # Header
         layout["header"].update(Panel(
             f"[bold cyan]thegent Real-Time Dashboard[/bold cyan] | "
@@ -5868,52 +5868,52 @@ class RealTimeDashboard:
             f"Uptime: {self._get_uptime()}",
             border_style="cyan"
         ))
-        
+
         # Metrics table
         metrics_table = self._build_metrics_table()
         layout["metrics"].update(Panel(metrics_table, title="Current Metrics"))
-        
+
         # Graphs
         graphs = self._build_graphs()
         layout["graphs"].update(Panel(graphs, title="Metrics Over Time"))
-        
+
         # Footer
         layout["footer"].update(Panel(
             "[dim]Press Ctrl+C to exit[/dim]",
             border_style="dim"
         ))
-        
+
         return layout
-    
+
     def _build_metrics_table(self) -> Table:
         """Build metrics table."""
         table = Table()
         table.add_column("Metric", style="cyan")
         table.add_column("Value", style="green")
         table.add_column("Trend", style="yellow")
-        
+
         # Get current metrics
         metrics = self._collect_metrics()
-        
+
         for name, value in metrics.items():
             trend = self._get_trend(name)
             table.add_row(name, f"{value:.2f}", trend)
-        
+
         return table
-    
+
     def _build_graphs(self) -> str:
         """Build ASCII graphs."""
         graphs = []
-        
+
         for metric_name, values in self.metrics_history.items():
             if len(values) > 1:
                 graph = Graph()
                 for i, value in enumerate(values[-20:]):  # Last 20 values
                     graph.add_series([value])
                 graphs.append(f"{metric_name}:\n{graph}")
-        
+
         return "\n\n".join(graphs) if graphs else "No data yet"
-    
+
     def _collect_metrics(self) -> Dict[str, float]:
         """Collect current metrics."""
         return {
@@ -5921,23 +5921,23 @@ class RealTimeDashboard:
             "cache_hit_rate": self._calculate_cache_hit_rate(),
             "average_duration_ms": self._calculate_average_duration(),
         }
-    
+
     def _get_trend(self, metric_name: str) -> str:
         """Get trend indicator."""
         values = self.metrics_history.get(metric_name, [])
         if len(values) < 2:
             return "—"
-        
+
         recent = values[-1]
         previous = values[-2]
-        
+
         if recent > previous:
             return "↑"
         elif recent < previous:
             return "↓"
         else:
             return "→"
-    
+
     def run(self) -> None:
         """Run dashboard."""
         with Live(self.render(), refresh_per_second=1) as live:
@@ -5951,7 +5951,7 @@ class RealTimeDashboard:
                     # Keep only last 100 values
                     if len(self.metrics_history[name]) > 100:
                         self.metrics_history[name] = self.metrics_history[name][-100:]
-                
+
                 live.update(self.render())
                 time.sleep(self.update_interval)
 
@@ -5986,7 +5986,7 @@ class ProactiveErrorDetector:
     def __init__(self):
         self.checks: List[Callable[[], List[PotentialIssue]]] = []
         self._register_checks()
-    
+
     def _register_checks(self) -> None:
         """Register proactive checks."""
         self.checks.extend([
@@ -5996,7 +5996,7 @@ class ProactiveErrorDetector:
             self._check_config_validity,
             self._check_dependency_versions,
         ])
-    
+
     def detect_issues(self) -> List[PotentialIssue]:
         """Detect potential issues."""
         all_issues = []
@@ -6007,14 +6007,14 @@ class ProactiveErrorDetector:
             except Exception as e:
                 logger.warning(f"Proactive check failed: {e}")
         return all_issues
-    
+
     def _check_disk_space(self) -> List[PotentialIssue]:
         """Check disk space."""
         issues = []
         cache_dir = get_cache_dir()
         stat = shutil.disk_usage(cache_dir)
         free_gb = stat.free / (1024 ** 3)
-        
+
         if free_gb < 1.0:
             issues.append(PotentialIssue(
                 severity="high",
@@ -6022,15 +6022,15 @@ class ProactiveErrorDetector:
                 description=f"Low disk space: {free_gb:.2f}GB free",
                 remediation="Free up disk space or run: thegent cache cleanup"
             ))
-        
+
         return issues
-    
+
     def _check_memory_usage(self) -> List[PotentialIssue]:
         """Check memory usage."""
         issues = []
         process = psutil.Process()
         memory_percent = process.memory_percent()
-        
+
         if memory_percent > 80.0:
             issues.append(PotentialIssue(
                 severity="medium",
@@ -6038,9 +6038,9 @@ class ProactiveErrorDetector:
                 description=f"High memory usage: {memory_percent:.1f}%",
                 remediation="Restart thegent or check for memory leaks"
             ))
-        
+
         return issues
-    
+
     def _check_network_connectivity(self) -> List[PotentialIssue]:
         """Check network connectivity."""
         issues = []
@@ -6052,14 +6052,14 @@ class ProactiveErrorDetector:
                 description="MCP server not running",
                 remediation="Run: thegent serve"
             ))
-        
+
         return issues
-    
+
     def _check_config_validity(self) -> List[PotentialIssue]:
         """Check configuration validity."""
         issues = []
         config = load_config()
-        
+
         # Check for deprecated settings
         if "api_keys" in config:
             issues.append(PotentialIssue(
@@ -6068,9 +6068,9 @@ class ProactiveErrorDetector:
                 description="Deprecated 'api_keys' setting found",
                 remediation="Migrate to OAuth: thegent cliproxy login <provider>"
             ))
-        
+
         return issues
-    
+
     def _check_dependency_versions(self) -> List[PotentialIssue]:
         """Check dependency versions."""
         issues = []
@@ -6107,40 +6107,40 @@ class PredictiveFailureDetector:
             "disk_usage": 95.0,
             "error_rate": 10.0,
         }
-    
+
     def predict_failure(self, metric_name: str, hours_ahead: int = 1) -> tuple[bool, float]:
         """Predict if failure will occur."""
         values = self.metrics_history.get(metric_name, [])
-        
+
         if len(values) < 10:
             return False, 0.0
-        
+
         # Simple linear regression
         X = np.array(range(len(values))).reshape(-1, 1)
         y = np.array(values)
-        
+
         model = LinearRegression()
         model.fit(X, y)
-        
+
         # Predict future value
         future_x = len(values) + hours_ahead
         predicted_value = model.predict([[future_x]])[0]
-        
+
         threshold = self.failure_thresholds.get(metric_name, 100.0)
         will_fail = predicted_value >= threshold
-        
+
         return will_fail, predicted_value
-    
+
     def add_metric_value(self, metric_name: str, value: float) -> None:
         """Add metric value to history."""
         if metric_name not in self.metrics_history:
             self.metrics_history[metric_name] = []
         self.metrics_history[metric_name].append(value)
-        
+
         # Keep only last 1000 values
         if len(self.metrics_history[metric_name]) > 1000:
             self.metrics_history[metric_name] = self.metrics_history[metric_name][-1000:]
-        
+
         # Check for predicted failure
         will_fail, predicted_value = self.predict_failure(metric_name)
         if will_fail:
@@ -6180,22 +6180,22 @@ class UserPreferenceLearner:
         self.preferences: Dict[str, Any] = {}
         self.usage_patterns: Dict[str, List[str]] = defaultdict(list)
         self._load_preferences()
-    
+
     def _load_preferences(self) -> None:
         """Load learned preferences."""
         if self.preferences_file.exists():
             with open(self.preferences_file) as f:
                 self.preferences = json.load(f)
-    
+
     def learn_from_usage(self, command: str, context: Dict[str, Any]) -> None:
         """Learn from user usage."""
         # Extract patterns
         agent = context.get("agent", "default")
         time_of_day = datetime.now().hour
-        
+
         # Track usage patterns
         self.usage_patterns[agent].append(command)
-        
+
         # Learn preferences
         if agent not in self.preferences:
             self.preferences[agent] = {
@@ -6203,40 +6203,40 @@ class UserPreferenceLearner:
                 "common_tasks": [],
                 "time_preferences": {},
             }
-        
+
         # Update preferences
         self._update_preferences(agent, command, time_of_day)
         self._save_preferences()
-    
+
     def _update_preferences(self, agent: str, command: str, time_of_day: int) -> None:
         """Update preferences based on usage."""
         # Analyze patterns
         patterns = self.usage_patterns[agent]
-        
+
         # Most common tasks
         from collections import Counter
         task_counter = Counter(patterns)
         common_tasks = [task for task, count in task_counter.most_common(5)]
-        
+
         self.preferences[agent]["common_tasks"] = common_tasks
-        
+
         # Time preferences
         time_key = "morning" if time_of_day < 12 else "afternoon" if time_of_day < 18 else "evening"
         self.preferences[agent]["time_preferences"][time_key] = \
             self.preferences[agent]["time_preferences"].get(time_key, 0) + 1
-    
+
     def get_suggestions(self, context: Dict[str, Any]) -> List[str]:
         """Get personalized suggestions."""
         agent = context.get("agent", "default")
         time_of_day = datetime.now().hour
-        
+
         suggestions = []
-        
+
         # Suggest common tasks
         if agent in self.preferences:
             common_tasks = self.preferences[agent].get("common_tasks", [])
             suggestions.extend(common_tasks[:3])
-        
+
         # Suggest based on time
         time_key = "morning" if time_of_day < 12 else "afternoon" if time_of_day < 18 else "evening"
         if agent in self.preferences:
@@ -6244,9 +6244,9 @@ class UserPreferenceLearner:
             if time_key in time_prefs and time_prefs[time_key] > 5:
                 # User frequently uses this agent at this time
                 suggestions.append(f"thegent run --agent {agent}")
-        
+
         return suggestions
-    
+
     def _save_preferences(self) -> None:
         """Save learned preferences."""
         with open(self.preferences_file, "w") as f:
@@ -6288,7 +6288,7 @@ class AdaptiveUX:
         self.expertise_file.parent.mkdir(parents=True, exist_ok=True)
         self.expertise_levels: Dict[str, UserExpertise] = {}
         self._load_expertise()
-    
+
     def _load_expertise(self) -> None:
         """Load user expertise levels."""
         if self.expertise_file.exists():
@@ -6297,12 +6297,12 @@ class AdaptiveUX:
                 self.expertise_levels = {
                     k: UserExpertise(v) for k, v in data.items()
                 }
-    
+
     def detect_expertise(self, command: str) -> UserExpertise:
         """Detect user expertise from command."""
         # Analyze command complexity
         complexity_score = self._calculate_complexity(command)
-        
+
         if complexity_score < 2:
             return UserExpertise.BEGINNER
         elif complexity_score < 5:
@@ -6311,29 +6311,29 @@ class AdaptiveUX:
             return UserExpertise.ADVANCED
         else:
             return UserExpertise.EXPERT
-    
+
     def _calculate_complexity(self, command: str) -> int:
         """Calculate command complexity."""
         score = 0
-        
+
         # Count flags
         score += command.count("--")
-        
+
         # Count pipes/chains
         score += command.count("|")
         score += command.count("&&")
         score += command.count(";")
-        
+
         # Count nested structures
         score += command.count("(")
         score += command.count("[")
-        
+
         return score
-    
+
     def adapt_output(self, command: str, output: str) -> str:
         """Adapt output based on expertise."""
         expertise = self.detect_expertise(command)
-        
+
         if expertise == UserExpertise.BEGINNER:
             # Add explanations
             return self._add_explanations(output)
@@ -6343,14 +6343,14 @@ class AdaptiveUX:
         elif expertise in (UserExpertise.ADVANCED, UserExpertise.EXPERT):
             # Show concise output
             return self._make_concise(output)
-        
+
         return output
-    
+
     def _add_explanations(self, output: str) -> str:
         """Add explanations for beginners."""
         # Add helpful context
         return f"{output}\n\n[dim]Tip: Run 'thegent help' for more information[/dim]"
-    
+
     def _make_concise(self, output: str) -> str:
         """Make output more concise for experts."""
         # Remove verbose messages
@@ -6392,7 +6392,7 @@ class ResourcePool(Generic[T]):
         self.pool: Queue[T] = Queue(maxsize=max_size)
         self.lock = threading.Lock()
         self.created_count = 0
-    
+
     def acquire(self) -> T:
         """Acquire resource from pool."""
         try:
@@ -6407,15 +6407,15 @@ class ResourcePool(Generic[T]):
                 else:
                     # Wait for resource to be released
                     return self.pool.get()
-    
+
     def release(self, resource: T) -> None:
         """Release resource back to pool."""
         self.pool.put(resource)
-    
+
     def __enter__(self):
         """Context manager entry."""
         return self.acquire()
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.release(self)
@@ -6446,11 +6446,11 @@ class ResourceCleanup:
     def __init__(self):
         self.cleanup_handlers: List[Callable[[], None]] = []
         atexit.register(self.cleanup_all)
-    
+
     def register_cleanup(self, handler: Callable[[], None]) -> None:
         """Register cleanup handler."""
         self.cleanup_handlers.append(handler)
-    
+
     def cleanup_all(self) -> None:
         """Run all cleanup handlers."""
         for handler in reversed(self.cleanup_handlers):
@@ -6458,7 +6458,7 @@ class ResourceCleanup:
                 handler()
             except Exception as e:
                 logger.error(f"Cleanup handler failed: {e}")
-    
+
     def cleanup_temp_files(self) -> None:
         """Cleanup temporary files."""
         temp_dir = get_temp_dir()
@@ -6472,19 +6472,19 @@ class ResourceCleanup:
                             file.unlink()
                 except Exception as e:
                     logger.warning(f"Failed to cleanup {file}: {e}")
-    
+
     def cleanup_old_sessions(self) -> None:
         """Cleanup old sessions."""
         sessions_dir = get_data_dir() / "sessions"
         if not sessions_dir.exists():
             return
-        
+
         cutoff = datetime.now() - timedelta(days=7)
-        
+
         for session_dir in sessions_dir.iterdir():
             if not session_dir.is_dir():
                 continue
-            
+
             state_file = session_dir / "state.json"
             if state_file.exists():
                 mtime = datetime.fromtimestamp(state_file.stat().st_mtime)
@@ -6559,7 +6559,7 @@ print(f"Platform: {detect_platform().value}")
         <br>
         <button onclick="runCode()">Run</button>
         <pre id="output"></pre>
-        
+
         <script>
             let pyodide;
             async function main() {
@@ -6571,7 +6571,7 @@ print(f"Platform: {detect_platform().value}")
                 `);
             }
             main();
-            
+
             function runCode() {
                 const code = document.getElementById("code").value;
                 try {
@@ -6627,7 +6627,7 @@ class ManageDevkitIntegration:
         self.manage_config_path = self._find_manage_config()
         self.manage_config: Dict = {}
         self._load_manage_config()
-    
+
     def _find_manage_config(self) -> Optional[Path]:
         """Find manage devkit configuration."""
         # Common locations
@@ -6636,62 +6636,62 @@ class ManageDevkitIntegration:
             Path.home() / ".config" / "manage" / "config.yaml",
             Path("/etc/manage/config.yaml"),
         ]
-        
+
         for path in possible_paths:
             if path.exists():
                 return path
-        
+
         return None
-    
+
     def _load_manage_config(self) -> None:
         """Load manage devkit configuration."""
         if not self.manage_config_path:
             return
-        
+
         import yaml
         with open(self.manage_config_path) as f:
             self.manage_config = yaml.safe_load(f) or {}
-    
+
     def integrate_paths(self) -> None:
         """Integrate thegent paths with manage devkit."""
         if "paths" not in self.manage_config:
             self.manage_config["paths"] = {}
-        
+
         # Share config directory if manage uses similar structure
         if "config_dir" in self.manage_config.get("paths", {}):
             manage_config_dir = Path(self.manage_config["paths"]["config_dir"])
             thegent_config_dir = get_config_dir()
-            
+
             # Create symlink or merge
             if manage_config_dir.exists():
                 # Create shared config structure
                 shared_config = manage_config_dir / "thegent"
                 shared_config.mkdir(exist_ok=True)
-                
+
                 # Symlink thegent config
                 if not (shared_config / "config.yaml").exists():
                     (shared_config / "config.yaml").symlink_to(
                         thegent_config_dir / "config.yaml"
                     )
-    
+
     def integrate_tools(self) -> None:
         """Integrate thegent tools with manage devkit."""
         manage_bin_dir = Path(self.manage_config.get("bin_dir", "~/.manage/bin"))
         manage_bin_dir = manage_bin_dir.expanduser()
         manage_bin_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Create thegent symlink in manage bin
         thegent_bin = get_bin_dir() / "thegent"
         manage_thegent = manage_bin_dir / "thegent"
-        
+
         if thegent_bin.exists() and not manage_thegent.exists():
             manage_thegent.symlink_to(thegent_bin)
-    
+
     def register_with_manage(self) -> None:
         """Register thegent with manage devkit."""
         if "tools" not in self.manage_config:
             self.manage_config["tools"] = []
-        
+
         thegent_entry = {
             "name": "thegent",
             "version": __version__,
@@ -6699,22 +6699,22 @@ class ManageDevkitIntegration:
             "config_path": str(get_config_dir()),
             "platform": detect_platform().value,
         }
-        
+
         # Check if already registered
         existing = [
             t for t in self.manage_config["tools"]
             if t.get("name") == "thegent"
         ]
-        
+
         if not existing:
             self.manage_config["tools"].append(thegent_entry)
             self._save_manage_config()
-    
+
     def _save_manage_config(self) -> None:
         """Save manage devkit configuration."""
         if not self.manage_config_path:
             return
-        
+
         import yaml
         with open(self.manage_config_path, "w") as f:
             yaml.dump(self.manage_config, f, default_flow_style=False)
@@ -6743,52 +6743,52 @@ class WorkStreamIntegration:
         self.work_stream_file = Path("docs/reference/WORK_STREAM.md")
         self.work_stream_data: Dict = {}
         self._load_work_stream()
-    
+
     def _load_work_stream(self) -> None:
         """Load work stream data."""
         if not self.work_stream_file.exists():
             return
-        
+
         # Parse WORK_STREAM.md
         content = self.work_stream_file.read_text()
-        
+
         # Extract sections
         self.work_stream_data = {
             "pending": self._extract_section(content, "PENDING"),
             "claimed": self._extract_section(content, "CLAIMED"),
             "completed": self._extract_section(content, "COMPLETED"),
         }
-    
+
     def _extract_section(self, content: str, section: str) -> List[Dict]:
         """Extract section from WORK_STREAM.md."""
         # Parse markdown table
         # ...
         return []
-    
+
     def claim_work_item(self, item_id: str, agent_id: str) -> bool:
         """Claim work item from work stream."""
         # Move from PENDING to CLAIMED
         # ...
         return True
-    
+
     def complete_work_item(self, item_id: str, agent_id: str) -> bool:
         """Complete work item."""
         # Move from CLAIMED to COMPLETED
         # ...
         return True
-    
+
     def get_next_item(self) -> Optional[Dict]:
         """Get next actionable item from work stream."""
         pending = self.work_stream_data.get("pending", [])
         claimed = self.work_stream_data.get("claimed", [])
-        
+
         # Filter out claimed items
         available = [item for item in pending if item["id"] not in [c["id"] for c in claimed]]
-        
+
         if available:
             # Return highest priority
             return sorted(available, key=lambda x: x.get("priority", 0), reverse=True)[0]
-        
+
         return None
 ```
 
@@ -6811,38 +6811,38 @@ class PlanSystemIntegration:
         self.plan_status: Dict = {}
         self._load_plan()
         self._load_plan_status()
-    
+
     def _load_plan(self) -> None:
         """Load PLAN.md."""
         if not self.plan_file.exists():
             return
-        
+
         content = self.plan_file.read_text()
         # Parse plan structure
         # Extract phases, tasks, dependencies
         # ...
-    
+
     def _load_plan_status(self) -> None:
         """Load plan status."""
         if not self.plan_status_file.exists():
             return
-        
+
         content = self.plan_status_file.read_text()
         # Parse status table
         # ...
-    
+
     def update_task_status(self, task_id: str, status: str) -> None:
         """Update task status in plan."""
         # Update PLAN_STATUS.md
         # ...
         pass
-    
+
     def get_tasks_for_phase(self, phase: str) -> List[Dict]:
         """Get tasks for specific phase."""
         # Filter tasks by phase
         # ...
         return []
-    
+
     def get_blocked_tasks(self) -> List[Dict]:
         """Get tasks blocked by incomplete dependencies."""
         # Find tasks with incomplete dependencies
@@ -6875,7 +6875,7 @@ class UnifiedConfigManager:
         ]
         self.unified_config: Dict[str, Any] = {}
         self._load_unified_config()
-    
+
     def _load_unified_config(self) -> None:
         """Load configuration from all sources."""
         for system_name, config_path in self.config_sources:
@@ -6887,29 +6887,29 @@ class UnifiedConfigManager:
                     config = self._parse_markdown_config(config_path)
                 else:
                     continue
-                
+
                 self.unified_config[system_name] = config
-    
+
     def _parse_markdown_config(self, path: Path) -> Dict:
         """Parse configuration from markdown."""
         # Extract configuration from markdown tables
         # ...
         return {}
-    
+
     def get_unified_setting(self, key: str, system: Optional[str] = None) -> Any:
         """Get setting from unified config."""
         if system:
             return self.unified_config.get(system, {}).get(key)
-        
+
         # Check all systems (priority order)
         for system_name in ["thegent", "manage", "workstream", "plan"]:
             if system_name in self.unified_config:
                 value = self.unified_config[system_name].get(key)
                 if value is not None:
                     return value
-        
+
         return None
-    
+
     def sync_configs(self) -> None:
         """Synchronize configurations across systems."""
         # Ensure consistency
@@ -6931,11 +6931,11 @@ class HarmonizedPathManager:
     def __init__(self):
         self.path_mappings: Dict[str, Dict[str, Path]] = {}
         self._build_path_mappings()
-    
+
     def _build_path_mappings(self) -> None:
         """Build path mappings for all systems."""
         plat = detect_platform()
-        
+
         # Base directories
         if plat == Platform.MACOS:
             base_config = Path.home() / "Library" / "Application Support"
@@ -6949,7 +6949,7 @@ class HarmonizedPathManager:
             base_config = Path(os.environ.get("APPDATA", ""))
             base_cache = Path(os.environ.get("LOCALAPPDATA", "")) / "cache"
             base_data = Path(os.environ.get("LOCALAPPDATA", ""))
-        
+
         # Harmonized paths
         self.path_mappings = {
             "thegent": {
@@ -6968,11 +6968,11 @@ class HarmonizedPathManager:
                 "data": base_data / "workstream",
             },
         }
-    
+
     def get_harmonized_path(self, system: str, path_type: str) -> Path:
         """Get harmonized path for system."""
         return self.path_mappings.get(system, {}).get(path_type)
-    
+
     def create_shared_structure(self) -> None:
         """Create shared directory structure."""
         # Create common parent directories
@@ -7007,7 +7007,7 @@ class ConsistencyChecker:
     def __init__(self):
         self.rules: List[ConsistencyRule] = []
         self._register_rules()
-    
+
     def _register_rules(self) -> None:
         """Register consistency rules."""
         # Version consistency
@@ -7018,7 +7018,7 @@ class ConsistencyChecker:
             actual_value=self._get_package_version(),
             severity="critical"
         ))
-        
+
         # Path consistency
         self.rules.append(ConsistencyRule(
             component="paths",
@@ -7027,7 +7027,7 @@ class ConsistencyChecker:
             actual_value=self._get_path_platform(),
             severity="high"
         ))
-        
+
         # Config consistency
         self.rules.append(ConsistencyRule(
             component="config",
@@ -7036,7 +7036,7 @@ class ConsistencyChecker:
             actual_value=self._get_provider_auth_method(),
             severity="high"
         ))
-    
+
     def check_all(self) -> List[ConsistencyRule]:
         """Check all consistency rules."""
         violations = []
@@ -7044,26 +7044,26 @@ class ConsistencyChecker:
             if rule.expected_value != rule.actual_value:
                 violations.append(rule)
         return violations
-    
+
     def _get_package_version(self) -> str:
         """Get package version."""
         return __version__
-    
+
     def _get_path_platform(self) -> str:
         """Get platform from paths."""
         # Check if paths match detected platform
         return detect_platform().value
-    
+
     def _get_provider_auth_method(self) -> str:
         """Get provider authentication method."""
         config = load_config()
         providers = config.get("providers", {})
-        
+
         # Check if any provider uses API keys (should be OAuth only)
         for provider, provider_config in providers.items():
             if "api_key" in provider_config:
                 return "api_key"
-        
+
         return "oauth_only"
 
 # Usage
@@ -7100,15 +7100,15 @@ class ConfigAPI(HarmoniousAPI):
     def get(self, key: str) -> Any:
         """Get config value."""
         return config_manager.get(key)
-    
+
     def set(self, key: str, value: Any) -> None:
         """Set config value."""
         config_manager.set(key, value)
-    
+
     def delete(self, key: str) -> None:
         """Delete config value."""
         config_manager.delete(key)
-    
+
     def list(self) -> List[str]:
         """List config keys."""
         return config_manager.list_keys()
@@ -7118,15 +7118,15 @@ class StateAPI(HarmoniousAPI):
     def get(self, key: str) -> Any:
         """Get state value."""
         return state_manager.get(key)
-    
+
     def set(self, key: str, value: Any) -> None:
         """Set state value."""
         state_manager.set(key, value)
-    
+
     def delete(self, key: str) -> None:
         """Delete state value."""
         state_manager.delete(key)
-    
+
     def list(self) -> List[str]:
         """List state keys."""
         return state_manager.list_keys()
@@ -7149,7 +7149,7 @@ from pathlib import Path
 
 class CrossSystemIntegrationTests:
     """Test integration with other systems."""
-    
+
     @pytest.mark.integration
     def test_manage_devkit_integration(self, tmp_path):
         """Test integration with manage devkit."""
@@ -7161,17 +7161,17 @@ paths:
   config_dir: ~/.manage/config
 tools: []
 """)
-        
+
         # Integrate thegent
         integration = ManageDevkitIntegration()
         integration.integrate_paths()
         integration.integrate_tools()
         integration.register_with_manage()
-        
+
         # Verify integration
         assert (tmp_path / ".manage" / "bin" / "thegent").exists()
         assert "thegent" in [t["name"] for t in integration.manage_config.get("tools", [])]
-    
+
     @pytest.mark.integration
     def test_work_stream_integration(self, tmp_path):
         """Test integration with work stream."""
@@ -7184,14 +7184,14 @@ tools: []
 |----|-------------|----------|
 | WS-001 | Test task | High |
 """)
-        
+
         # Integrate
         integration = WorkStreamIntegration()
         next_item = integration.get_next_item()
-        
+
         assert next_item is not None
         assert next_item["id"] == "WS-001"
-    
+
     @pytest.mark.integration
     def test_plan_system_integration(self, tmp_path):
         """Test integration with plan system."""
@@ -7203,11 +7203,11 @@ tools: []
 - [ ] Task 1.1: Setup platform detection
 - [ ] Task 1.2: Implement path resolution
 """)
-        
+
         # Integrate
         integration = PlanSystemIntegration()
         tasks = integration.get_tasks_for_phase("Phase 1")
-        
+
         assert len(tasks) > 0
 ```
 
@@ -7225,28 +7225,28 @@ def test_complete_system_workflow():
     """Test complete system workflow."""
     # 1. Install thegent
     install_thegent()
-    
+
     # 2. Integrate with manage devkit
     manage_integration = ManageDevkitIntegration()
     manage_integration.integrate_paths()
-    
+
     # 3. Integrate with work stream
     work_stream_integration = WorkStreamIntegration()
     work_item = work_stream_integration.get_next_item()
-    
+
     # 4. Claim work item
     work_stream_integration.claim_work_item(work_item["id"], "test-agent")
-    
+
     # 5. Execute work
     result = execute_work(work_item)
-    
+
     # 6. Complete work item
     work_stream_integration.complete_work_item(work_item["id"], "test-agent")
-    
+
     # 7. Update plan status
     plan_integration = PlanSystemIntegration()
     plan_integration.update_task_status(work_item["task_id"], "completed")
-    
+
     # Verify everything is consistent
     assert work_item_completed(work_item["id"])
     assert plan_updated(work_item["task_id"])
@@ -7272,35 +7272,35 @@ class DocumentationCrossReference:
     def __init__(self):
         self.references: Dict[str, List[str]] = {}
         self._build_reference_index()
-    
+
     def _build_reference_index(self) -> None:
         """Build cross-reference index."""
         docs_dir = Path("docs")
-        
+
         for doc_file in docs_dir.rglob("*.md"):
             content = doc_file.read_text()
             relative_path = doc_file.relative_to(docs_dir)
-            
+
             # Extract references
             references = self._extract_references(content)
             self.references[str(relative_path)] = references
-    
+
     def _extract_references(self, content: str) -> List[str]:
         """Extract references from content."""
         references = []
-        
+
         # Markdown links
         link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
         for match in re.finditer(link_pattern, content):
             references.append(match.group(2))
-        
+
         # Explicit references
         ref_pattern = r'See:\s*([^\s]+)'
         for match in re.finditer(ref_pattern, content):
             references.append(match.group(1))
-        
+
         return references
-    
+
     def get_referrers(self, doc_path: str) -> List[str]:
         """Get documents that reference this document."""
         referrers = []
@@ -7308,20 +7308,20 @@ class DocumentationCrossReference:
             if doc_path in refs or doc_path in [r.split("#")[0] for r in refs]:
                 referrers.append(doc)
         return referrers
-    
+
     def validate_references(self) -> List[str]:
         """Validate all references."""
         broken_refs = []
-        
+
         for doc, refs in self.references.items():
             for ref in refs:
                 # Resolve reference
                 ref_path = self._resolve_reference(ref)
                 if not ref_path.exists():
                     broken_refs.append(f"{doc} -> {ref}")
-        
+
         return broken_refs
-    
+
     def _resolve_reference(self, ref: str) -> Path:
         """Resolve reference to file path."""
         # Handle different reference formats
@@ -7356,24 +7356,24 @@ class DocumentationPipeline:
     def __init__(self):
         self.docs_dir = Path("docs")
         self.dist_dir = Path("docs-dist")
-    
+
     def generate_all(self) -> None:
         """Generate all documentation."""
         # 1. Generate API docs
         self.generate_api_docs()
-        
+
         # 2. Generate platform-specific guides
         self.generate_platform_guides()
-        
+
         # 3. Generate troubleshooting guides
         self.generate_troubleshooting_guides()
-        
+
         # 4. Build VitePress site
         self.build_vitepress_site()
-        
+
         # 5. Validate documentation
         self.validate_documentation()
-    
+
     def generate_api_docs(self) -> None:
         """Generate API documentation."""
         subprocess.run([
@@ -7382,33 +7382,33 @@ class DocumentationPipeline:
             "docs/api",
             "docs-dist/api"
         ], check=True)
-    
+
     def generate_platform_guides(self) -> None:
         """Generate platform-specific guides."""
         for platform in ["macos", "linux", "windows"]:
             guide_content = self._generate_platform_guide(platform)
             guide_file = self.docs_dir / "user-guide" / "installation" / f"{platform}.md"
             guide_file.write_text(guide_content)
-    
+
     def generate_troubleshooting_guides(self) -> None:
         """Generate troubleshooting guides."""
         generator = TroubleshootingGuideGenerator()
         guide_content = generator.generate_guide()
         guide_file = self.docs_dir / "user-guide" / "troubleshooting" / "index.md"
         guide_file.write_text(guide_content)
-    
+
     def build_vitepress_site(self) -> None:
         """Build VitePress documentation site."""
         subprocess.run([
             "pnpm", "docs:build"
         ], check=True)
-    
+
     def validate_documentation(self) -> None:
         """Validate documentation."""
         # Check for broken links
         cross_ref = DocumentationCrossReference()
         broken = cross_ref.validate_references()
-        
+
         if broken:
             raise ValueError(f"Broken references found: {broken}")
 
@@ -7443,7 +7443,7 @@ class DesignLanguage:
     def __init__(self):
         self.tokens: Dict[str, DesignToken] = {}
         self._register_tokens()
-    
+
     def _register_tokens(self) -> None:
         """Register design tokens."""
         # Colors
@@ -7462,21 +7462,21 @@ class DesignLanguage:
             value="#FF9800",
             category="color"
         )
-        
+
         # Spacing
         self.tokens["spacing.unit"] = DesignToken(
             name="spacing.unit",
             value=4,
             category="spacing"
         )
-        
+
         # Typography
         self.tokens["font.mono"] = DesignToken(
             name="font.mono",
             value="'Courier New', monospace",
             category="typography"
         )
-        
+
         # Platform-specific tokens
         plat = detect_platform()
         if plat == Platform.MACOS:
@@ -7500,13 +7500,13 @@ class DesignLanguage:
                 category="typography",
                 platform="linux"
             )
-    
+
     def get_token(self, name: str, platform: Optional[str] = None) -> Any:
         """Get design token value."""
         token = self.tokens.get(name)
         if not token:
             return None
-        
+
         # Platform-specific override
         if platform and token.platform and token.platform != platform:
             # Look for platform-specific version
@@ -7514,14 +7514,14 @@ class DesignLanguage:
             platform_token = self.tokens.get(platform_token_name)
             if platform_token:
                 return platform_token.value
-        
+
         return token.value
-    
+
     def apply_to_cli(self) -> None:
         """Apply design language to CLI."""
         # Configure Rich console with design tokens
         from rich.console import Console
-        
+
         console = Console(
             style=self.get_token("color.primary"),
             # Apply other design tokens
@@ -7555,21 +7555,21 @@ class NamingConvention:
             "function": r'^[a-z][a-z0-9_]*$',  # snake_case
             "class": r'^[A-Z][A-Za-z0-9]*$',  # PascalCase
         }
-    
+
     def validate(self, name: str, convention_type: str) -> bool:
         """Validate name against convention."""
         pattern = self.conventions.get(convention_type)
         if not pattern:
             return True
-        
+
         return bool(re.match(pattern, name))
-    
+
     def suggest_name(self, name: str, convention_type: str) -> str:
         """Suggest name following convention."""
         pattern = self.conventions.get(convention_type)
         if not pattern:
             return name
-        
+
         # Convert to convention
         if convention_type == "command":
             # Convert to kebab-case
@@ -7584,7 +7584,7 @@ class NamingConvention:
             # Convert to PascalCase
             parts = re.split(r'[-_]', name)
             return ''.join(p.capitalize() for p in parts)
-        
+
         return name
 
 # Usage
@@ -7626,7 +7626,7 @@ class DevelopmentWorkflow:
     def __init__(self):
         self.steps: List[WorkflowStep] = []
         self._define_workflow()
-    
+
     def _define_workflow(self) -> None:
         """Define complete workflow."""
         self.steps = [
@@ -7673,7 +7673,7 @@ class DevelopmentWorkflow:
                 dependencies=["test", "document"]
             ),
         ]
-    
+
     def execute_workflow(self, start_from: Optional[str] = None) -> None:
         """Execute workflow."""
         # Find starting point
@@ -7683,35 +7683,35 @@ class DevelopmentWorkflow:
                 if step.name == start_from:
                     start_index = i
                     break
-        
+
         # Execute steps
         for i in range(start_index, len(self.steps)):
             step = self.steps[i]
-            
+
             # Check dependencies
             if step.dependencies:
                 for dep in step.dependencies:
                     dep_step = next(s for s in self.steps if s.name == dep)
                     if not self._is_completed(dep_step):
                         raise RuntimeError(f"Dependency {dep} not completed")
-            
+
             # Execute step
             console.print(f"[cyan]Executing: {step.name}[/cyan]")
             console.print(f"[dim]{step.description}[/dim]")
-            
+
             result = subprocess.run(step.command.split(), check=False)
             if result.returncode != 0:
                 raise RuntimeError(f"Workflow step {step.name} failed")
-            
+
             # Mark as completed
             self._mark_completed(step)
-    
+
     def _is_completed(self, step: WorkflowStep) -> bool:
         """Check if step is completed."""
         # Check work stream or plan status
         # ...
         return False
-    
+
     def _mark_completed(self, step: WorkflowStep) -> None:
         """Mark step as completed."""
         # Update work stream or plan status
@@ -7736,7 +7736,7 @@ class QAWorkflow:
     def __init__(self):
         self.checks: List[Callable[[], bool]] = []
         self._register_checks()
-    
+
     def _register_checks(self) -> None:
         """Register QA checks."""
         self.checks.extend([
@@ -7747,35 +7747,35 @@ class QAWorkflow:
             self._check_security,
             self._check_documentation,
         ])
-    
+
     def run_all_checks(self) -> tuple[bool, List[str]]:
         """Run all QA checks."""
         failures = []
-        
+
         for check in self.checks:
             try:
                 if not check():
                     failures.append(check.__name__)
             except Exception as e:
                 failures.append(f"{check.__name__}: {e}")
-        
+
         return len(failures) == 0, failures
-    
+
     def _check_lint(self) -> bool:
         """Check linting."""
         result = subprocess.run(["ruff", "check", "src"], check=False)
         return result.returncode == 0
-    
+
     def _check_types(self) -> bool:
         """Check types."""
         result = subprocess.run(["basedpyright", "src"], check=False)
         return result.returncode == 0
-    
+
     def _check_tests(self) -> bool:
         """Check tests."""
         result = subprocess.run(["pytest"], check=False)
         return result.returncode == 0
-    
+
     def _check_coverage(self) -> bool:
         """Check coverage."""
         result = subprocess.run([
@@ -7784,13 +7784,13 @@ class QAWorkflow:
         # Parse coverage
         # ...
         return True
-    
+
     def _check_security(self) -> bool:
         """Check security."""
         # Run security scans
         # ...
         return True
-    
+
     def _check_documentation(self) -> bool:
         """Check documentation."""
         # Validate documentation
@@ -7831,24 +7831,24 @@ class ProgressiveComplexity:
     """Progressive complexity system."""
     def __init__(self):
         self.user_level = self._detect_user_level()
-    
+
     def _detect_user_level(self) -> ComplexityLevel:
         """Detect user complexity level."""
         # Analyze command history
         history = CommandHistory()
         recent_commands = history.get_history(limit=50)
-        
+
         if not recent_commands:
             return ComplexityLevel.SIMPLE
-        
+
         # Calculate complexity score
         complexity_score = 0
         for entry in recent_commands:
             command = entry["command"]
             complexity_score += self._calculate_command_complexity(command)
-        
+
         avg_complexity = complexity_score / len(recent_commands)
-        
+
         if avg_complexity < 2:
             return ComplexityLevel.SIMPLE
         elif avg_complexity < 5:
@@ -7857,7 +7857,7 @@ class ProgressiveComplexity:
             return ComplexityLevel.ADVANCED
         else:
             return ComplexityLevel.EXPERT
-    
+
     def _calculate_command_complexity(self, command: str) -> int:
         """Calculate command complexity."""
         score = 0
@@ -7866,17 +7866,17 @@ class ProgressiveComplexity:
         score += command.count("&&")  # Chains
         score += len(command.split()) - 1  # Arguments
         return score
-    
+
     def adapt_command_suggestions(self, partial: str) -> List[str]:
         """Adapt command suggestions based on complexity level."""
         suggester = CommandSuggester()
         suggestions = suggester.suggest(partial)
-        
+
         # Filter by complexity level
         filtered = []
         for suggestion in suggestions:
             complexity = self._calculate_command_complexity(suggestion)
-            
+
             if self.user_level == ComplexityLevel.SIMPLE:
                 if complexity < 3:
                     filtered.append(suggestion)
@@ -7888,9 +7888,9 @@ class ProgressiveComplexity:
                     filtered.append(suggestion)
             else:  # EXPERT
                 filtered.append(suggestion)
-        
+
         return filtered
-    
+
     def adapt_output(self, output: str) -> str:
         """Adapt output based on complexity level."""
         if self.user_level == ComplexityLevel.SIMPLE:
@@ -7905,16 +7905,16 @@ class ProgressiveComplexity:
         else:  # EXPERT
             # Minimal output
             return self._make_minimal(output)
-    
+
     def _add_explanations(self, output: str) -> str:
         """Add explanations."""
         return f"{output}\n\n[dim]💡 Tip: Run 'thegent help' for more information[/dim]"
-    
+
     def _make_concise(self, output: str) -> str:
         """Make concise."""
         lines = output.splitlines()
         return "\n".join(line for line in lines if not line.startswith("[dim]"))
-    
+
     def _make_minimal(self, output: str) -> str:
         """Make minimal."""
         # Extract only essential information
@@ -7979,23 +7979,23 @@ Or install as a service:
 Run: [green]thegent serve --help[/green]
 """,
         }
-    
+
     def format_error(self, error_type: str, **kwargs) -> str:
         """Format error message."""
         template = self.error_templates.get(error_type)
         if not template:
             return f"Error: {error_type}"
-        
+
         return template.format(**kwargs)
-    
+
     def format_with_context(self, error: Exception, context: Dict) -> str:
         """Format error with context."""
         # Detect error type
         error_type = type(error).__name__
-        
+
         # Get platform-specific help
         plat = detect_platform().value
-        
+
         # Format with context
         if error_type == "ProviderError":
             return self.format_error(
@@ -8007,7 +8007,7 @@ Run: [green]thegent serve --help[/green]
                 "mcp_not_running",
                 url=context.get("url", "http://localhost:3847")
             )
-        
+
         # Generic error
         return f"""
 [bold red]❌ Error: {error_type}[/bold red]
@@ -8045,11 +8045,11 @@ except ProviderError as e:
 def onboard_new_developer():
     """Complete onboarding workflow."""
     console.print("[bold cyan]Welcome! Let's get you set up...[/bold cyan]\n")
-    
+
     # Step 1: Detect platform
     plat = detect_platform()
     console.print(f"[green]✓[/green] Platform: {plat.value}\n")
-    
+
     # Step 2: Check prerequisites
     console.print("[cyan]Checking prerequisites...[/cyan]")
     missing = check_prerequisites()
@@ -8057,25 +8057,25 @@ def onboard_new_developer():
         console.print(f"[yellow]Missing: {', '.join(missing)}[/yellow]")
         install_prerequisites(missing)
     console.print("[green]✓[/green] Prerequisites met\n")
-    
+
     # Step 3: Install thegent
     console.print("[cyan]Installing thegent...[/cyan]")
     install_method = suggest_install_method(plat)
     install_via_method(install_method)
     console.print("[green]✓[/green] Installation complete\n")
-    
+
     # Step 4: Post-installation
     console.print("[cyan]Running post-installation setup...[/cyan]")
     subprocess.run(["thegent", "install", "--target", "all"], check=True)
     console.print("[green]✓[/green] Setup complete\n")
-    
+
     # Step 5: Configure providers
     console.print("[cyan]Configuring providers...[/cyan]")
     providers = ["anthropic", "openai"]
     for provider in providers:
         if Confirm.ask(f"Configure {provider}?"):
             subprocess.run(["thegent", "cliproxy", "login", provider], check=True)
-    
+
     # Step 6: Verify
     console.print("\n[cyan]Verifying installation...[/cyan]")
     result = subprocess.run(["thegent", "doctor"], capture_output=True, text=True)
@@ -8084,11 +8084,11 @@ def onboard_new_developer():
     else:
         console.print("[yellow]⚠ Some checks failed[/yellow]")
         console.print(result.stdout)
-    
+
     # Step 7: Guided tour
     if Confirm.ask("\nTake a guided tour?", default=True):
         run_guided_tour()
-    
+
     console.print("\n[bold green]🎉 Setup complete![/bold green]")
     console.print("\n[cyan]Next steps:[/cyan]")
     console.print("  1. Start MCP server: [green]thegent serve[/green]")
@@ -8103,7 +8103,7 @@ def onboard_new_developer():
 def deploy_to_production(environment: str = "production"):
     """Deploy to production environment."""
     console.print(f"[bold cyan]Deploying to {environment}...[/bold cyan]\n")
-    
+
     # Step 1: Pre-deployment checks
     console.print("[cyan]Running pre-deployment checks...[/cyan]")
     qa = QAWorkflow()
@@ -8114,18 +8114,18 @@ def deploy_to_production(environment: str = "production"):
             console.print(f"  • {failure}")
         raise RuntimeError("Pre-deployment checks failed")
     console.print("[green]✓[/green] All checks passing\n")
-    
+
     # Step 2: Create backup
     console.print("[cyan]Creating backup...[/cyan]")
     backup_manager = BackupManager()
     backup_path = backup_manager.create_backup(f"pre-{environment}-deploy")
     console.print(f"[green]✓[/green] Backup created: {backup_path}\n")
-    
+
     # Step 3: Build packages
     console.print("[cyan]Building packages...[/cyan]")
     build_all_packages()
     console.print("[green]✓[/green] Packages built\n")
-    
+
     # Step 4: Deploy (blue-green)
     console.print("[cyan]Deploying...[/cyan]")
     deployment = BlueGreenDeployment()
@@ -8137,12 +8137,12 @@ def deploy_to_production(environment: str = "production"):
         deployment.rollback()
         raise RuntimeError("Deployment failed")
     console.print("[green]✓[/green] Deployment successful\n")
-    
+
     # Step 5: Verify deployment
     console.print("[cyan]Verifying deployment...[/cyan]")
     verify_deployment()
     console.print("[green]✓[/green] Deployment verified\n")
-    
+
     # Step 6: Health check
     console.print("[cyan]Running health checks...[/cyan]")
     health_checks = run_health_checks()
@@ -8150,7 +8150,7 @@ def deploy_to_production(environment: str = "production"):
         console.print("[yellow]⚠ Some health checks failed[/yellow]")
     else:
         console.print("[green]✓[/green] All health checks passing\n")
-    
+
     console.print(f"[bold green]🎉 Successfully deployed to {environment}![/bold green]")
 ```
 
@@ -8412,7 +8412,7 @@ from typing import Optional
 
 def get_hooks_dir() -> Path:
     """Get hooks directory with comprehensive fallback chain.
-    
+
     Fallback order:
     1. Package data (installed mode)
     2. Dev repository (development mode)
@@ -8429,32 +8429,32 @@ def get_hooks_dir() -> Path:
                     return hooks_path
     except (ImportError, TypeError, AttributeError):
         pass
-    
+
     # 2. Fallback to dev repo
     dev_hooks = _find_dev_repo() / "hooks"
     if dev_hooks.exists():
         return dev_hooks
-    
+
     # 3. Fallback to user config
     user_hooks = get_config_dir() / "hooks"
     user_hooks.mkdir(parents=True, exist_ok=True)
-    
+
     # 4. Environment variable override
     env_override = os.environ.get("THGENT_HOOKS_DIR")
     if env_override:
         return Path(env_override).expanduser()
-    
+
     return user_hooks
 
 def _find_dev_repo() -> Path:
     """Find development repository root."""
     current = Path(__file__).resolve()
-    
+
     # Walk up to find repo root
     for parent in current.parents:
         if (parent / "pyproject.toml").exists() and (parent / "hooks").exists():
             return parent
-    
+
     # Fallback to current file's parent
     return current.parent.parent.parent
 ```
@@ -8495,13 +8495,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      
+
       - name: Build wheel
         run: |
           pip install maturin
@@ -8521,34 +8521,34 @@ class Thegent < Formula
   url "https://files.pythonhosted.org/packages/.../thegent-0.1.0.tar.gz"
   sha256 "..."
   license "MIT"
-  
+
   depends_on "python@3.12"
   depends_on "rust" => :build
-  
+
   # Platform-specific dependencies
   on_macos do
     depends_on "python-tk"
   end
-  
+
   on_linux do
     depends_on "dbus"
     depends_on "at-spi2-core"
   end
-  
+
   def install
     # Use pip install with --prefix
     system "pip3", "install", "--prefix=#{prefix}", "--no-deps", "."
-    
+
     # Install dependencies
     system "pip3", "install", "--prefix=#{prefix}", "-r", "requirements.txt"
-    
+
     # Install hooks, templates, scripts
     (share/"thegent").install Dir["hooks", "templates", "scripts"]
-    
+
     # Create symlink
     bin.install_symlink libexec/"bin/thegent"
   end
-  
+
   test do
     system "#{bin}/thegent", "--version"
     system "#{bin}/thegent", "doctor"
@@ -8565,13 +8565,13 @@ end
 ```nix
 {
   description = "thegent - Agentic orchestration platform";
-  
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
   };
-  
+
   outputs = { self, nixpkgs, flake-utils, rust-overlay }:
     flake-utils.lib.eachDefaultSystem (system:
       let
@@ -8579,16 +8579,16 @@ end
           inherit system;
           overlays = [ rust-overlay.overlays.default ];
         };
-        
+
         python = pkgs.python312;
-        
+
         thegent = python.pkgs.buildPythonPackage {
           pname = "thegent";
           version = "0.1.0";
           src = ./.;
-          
+
           format = "pyproject";
-          
+
           propagatedBuildInputs = with python.pkgs; [
             httpx typer rich pydantic
             pydantic-settings python-dotenv
@@ -8596,7 +8596,7 @@ end
             uvicorn opentelemetry-api opentelemetry-sdk
             litellm tomlkit cachetools orjson watchdog
           ];
-          
+
           nativeBuildInputs = with pkgs; [
             rustPlatform.cargoBuildHook
             rustPlatform.rust.cargo
@@ -8604,7 +8604,7 @@ end
             python.pkgs.setuptools
             python.pkgs.wheel
           ];
-          
+
           # Install hooks, templates, scripts
           postInstall = ''
             mkdir -p $out/share/thegent
@@ -8612,7 +8612,7 @@ end
             cp -r templates $out/share/thegent/
             cp -r scripts $out/share/thegent/
           '';
-          
+
           checkPhase = ''
             ${python.interpreter} -m pytest tests/
           '';
@@ -8620,12 +8620,12 @@ end
       in
       {
         packages.default = thegent;
-        
+
         apps.default = {
           type = "app";
           program = "${thegent}/bin/thegent";
         };
-        
+
         devShells.default = pkgs.mkShell {
           buildInputs = [
             thegent
@@ -8654,22 +8654,22 @@ end
   <Identity Name="Thegent"
             Version="0.1.0.0"
             Publisher="CN=Your Name, O=Your Org" />
-  
+
   <Properties>
     <DisplayName>thegent</DisplayName>
     <PublisherDisplayName>Your Org</PublisherDisplayName>
     <Description>Agentic orchestration & governance platform</Description>
     <Logo>Assets\Logo.png</Logo>
   </Properties>
-  
+
   <Resources>
     <Resource Language="en-us" />
   </Resources>
-  
+
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
   </Dependencies>
-  
+
   <Applications>
     <Application Id="thegent" Executable="thegent.exe">
       <uap:VisualElements DisplayName="thegent"
@@ -8746,48 +8746,48 @@ from thegent.platform import detect_platform, Platform
 
 class UpdateChecker:
     """Check for available updates."""
-    
+
     def __init__(self):
         self.platform = detect_platform()
         self.install_method = self._detect_install_method()
-    
+
     def _detect_install_method(self) -> str:
         """Detect how thegent was installed."""
         # Check for Homebrew
         if self._installed_via_homebrew():
             return "homebrew"
-        
+
         # Check for Nix
         if self._installed_via_nix():
             return "nix"
-        
+
         # Check for system package manager
         if self.platform == Platform.LINUX:
             if self._installed_via_apt():
                 return "apt"
             elif self._installed_via_yum():
                 return "yum"
-        
+
         if self.platform == Platform.WINDOWS:
             if self._installed_via_winget():
                 return "winget"
-        
+
         # Default to pip
         return "pip"
-    
+
     def check_for_updates(self) -> Optional[str]:
         """Check for available updates."""
         try:
             current_version = self._get_current_version()
             latest_version = self._get_latest_version()
-            
+
             if version.parse(latest_version) > version.parse(current_version):
                 return latest_version
-            
+
             return None
         except Exception:
             return None
-    
+
     def get_update_command(self) -> str:
         """Get update command for current installation method."""
         commands = {
@@ -8798,24 +8798,24 @@ class UpdateChecker:
             "winget": "winget upgrade thegent",
             "pip": "pip install --upgrade thegent",
         }
-        
+
         return commands.get(self.install_method, "pip install --upgrade thegent")
-    
+
     def _get_current_version(self) -> str:
         """Get current installed version."""
         from thegent import __version__
         return __version__
-    
+
     def _get_latest_version(self) -> str:
         """Get latest version from PyPI."""
         import json
         import urllib.request
-        
+
         url = "https://pypi.org/pypi/thegent/json"
         with urllib.request.urlopen(url) as response:
             data = json.loads(response.read())
             return data["info"]["version"]
-    
+
     def _installed_via_homebrew(self) -> bool:
         """Check if installed via Homebrew."""
         try:
@@ -8827,7 +8827,7 @@ class UpdateChecker:
             return result.returncode == 0
         except Exception:
             return False
-    
+
     def _installed_via_nix(self) -> bool:
         """Check if installed via Nix."""
         nix_store = os.environ.get("NIX_STORE")
@@ -8843,7 +8843,7 @@ class UpdateChecker:
             except Exception:
                 pass
         return False
-    
+
     def _installed_via_apt(self) -> bool:
         """Check if installed via apt."""
         try:
@@ -8855,7 +8855,7 @@ class UpdateChecker:
             return result.returncode == 0
         except Exception:
             return False
-    
+
     def _installed_via_yum(self) -> bool:
         """Check if installed via yum."""
         try:
@@ -8867,7 +8867,7 @@ class UpdateChecker:
             return result.returncode == 0
         except Exception:
             return False
-    
+
     def _installed_via_winget(self) -> bool:
         """Check if installed via winget."""
         try:
@@ -8950,13 +8950,13 @@ console = Console()
 def run_first_run_wizard() -> None:
     """Run comprehensive first-run setup wizard."""
     console.print("[bold cyan]Welcome to thegent![/bold cyan]\n")
-    
+
     # Step 1: Platform detection
     plat = detect_platform()
     console.print(f"[green]✓[/green] Platform: {plat.value}")
     arch = get_architecture()
     console.print(f"[green]✓[/green] Architecture: {arch}\n")
-    
+
     # Step 2: Prerequisites check
     console.print("[cyan]Checking prerequisites...[/cyan]")
     missing = check_prerequisites()
@@ -8965,10 +8965,10 @@ def run_first_run_wizard() -> None:
         if Confirm.ask("Install missing prerequisites?", default=True):
             install_prerequisites(missing)
     console.print("[green]✓[/green] Prerequisites met\n")
-    
+
     # Step 3: System integration
     console.print("[cyan]Checking system integrations...[/cyan]")
-    
+
     # Manage devkit integration
     manage = ManageDevkitIntegration()
     if manage.manage_config_path:
@@ -8977,7 +8977,7 @@ def run_first_run_wizard() -> None:
             manage.integrate_tools()
             manage.register_with_manage()
             console.print("[green]✓[/green] Integrated with manage devkit")
-    
+
     # Step 4: Provider configuration
     console.print("\n[cyan]Configure AI providers:[/cyan]")
     providers = ["anthropic", "openai", "google"]
@@ -8986,15 +8986,15 @@ def run_first_run_wizard() -> None:
         if Confirm.ask(f"Configure {provider}?", default=False):
             configure_provider(provider)
             configured.append(provider)
-    
+
     if configured:
         console.print(f"[green]✓[/green] Configured: {', '.join(configured)}")
-    
+
     # Step 5: Post-installation
     console.print("\n[cyan]Running post-installation setup...[/cyan]")
     subprocess.run(["thegent", "install", "--target", "all"], check=True)
     console.print("[green]✓[/green] Setup complete\n")
-    
+
     # Step 6: Verification
     console.print("[cyan]Verifying installation...[/cyan]")
     result = subprocess.run(["thegent", "doctor"], capture_output=True, text=True)
@@ -9003,11 +9003,11 @@ def run_first_run_wizard() -> None:
     else:
         console.print("[yellow]⚠ Some checks failed[/yellow]")
         console.print(result.stdout)
-    
+
     # Step 7: Guided tour
     if Confirm.ask("\nTake a guided tour?", default=True):
         run_guided_tour()
-    
+
     console.print("\n[bold green]🎉 Setup complete![/bold green]")
     console.print("\n[cyan]Next steps:[/cyan]")
     console.print("  1. Start MCP server: [green]thegent serve[/green]")
@@ -9156,49 +9156,49 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.12']
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Needed for version detection
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Install build dependencies
         run: |
           python -m pip install --upgrade pip
           pip install build twine hatch-vcs
-      
+
       - name: Build wheel
         run: python -m build --wheel
-      
+
       - name: Build sdist
         run: python -m build --sdist
-      
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist-${{ matrix.os }}
           path: dist/*
-  
+
   publish-pypi:
     needs: build-wheels
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
           pattern: dist-*
           merge-multiple: true
-      
+
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
@@ -9206,19 +9206,19 @@ jobs:
         run: |
           pip install twine
           twine upload dist/*
-  
+
   update-homebrew:
     needs: publish-pypi
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.HOMEBREW_TOKEN }}
           repository: Homebrew/homebrew-core
           path: homebrew-core
-      
+
       - name: Update Homebrew formula
         run: |
           cd homebrew-core
@@ -9469,7 +9469,7 @@ jobs:
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

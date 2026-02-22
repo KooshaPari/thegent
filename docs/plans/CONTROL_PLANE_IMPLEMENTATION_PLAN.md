@@ -1,8 +1,8 @@
 # Control Plane — Implementation Plan
 
-> **Status**: Implementation Plan  
-> **Date**: 2026-02-18  
-> **Design**: [CONTROL_PLANE_DESIGN.md](./CONTROL_PLANE_DESIGN.md)  
+> **Status**: Implementation Plan
+> **Date**: 2026-02-18
+> **Design**: [CONTROL_PLANE_DESIGN.md](./CONTROL_PLANE_DESIGN.md)
 > **Scope**: Phased implementation, cross-platform (Win/Linux/macOS/WSL)
 
 ---

@@ -16,4 +16,3 @@ Check if JetBrains MCP server is available.
 **Returns**: True if the JetBrains MCP server is running and accessible
 
 ---
-

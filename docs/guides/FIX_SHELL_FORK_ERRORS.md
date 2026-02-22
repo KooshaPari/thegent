@@ -1,6 +1,6 @@
 # Fix Shell Fork Errors: Quick Guide
 
-> **Status**: Quick Fix Guide | **Date**: 2026-02-16  
+> **Status**: Quick Fix Guide | **Date**: 2026-02-16
 > **Purpose**: Immediate fixes for fork exhaustion and permission errors
 
 ---
@@ -86,7 +86,7 @@ find ~/.codex -type f | head -5
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

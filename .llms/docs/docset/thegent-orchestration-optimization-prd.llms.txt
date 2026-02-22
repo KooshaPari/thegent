@@ -6,9 +6,9 @@ Source: docs/docset/thegent-orchestration-optimization-prd.md
 
 # Thegent Orchestration Optimization & Expansion PRD (Living Document)
 
-**Status:** Draft (incremental)  
-**Owner:** Thegent team  
-**Last updated:** 2026-02-14  
+**Status:** Draft (incremental)
+**Owner:** Thegent team
+**Last updated:** 2026-02-14
 **Scope:** `thegent` codebase optimization and orchestration hardening
 
 ## 0) Working Notes
@@ -70,32 +70,32 @@ Teams using `thegent` at scale face:
 
 ### 6.1 Planes
 
-- **Control plane**  
+- **Control plane**
   - unifies `run`, `bg`, `dag`, `status`, `logs`, `wait`, `stop` around one request envelope.
 
-- **Planner plane**  
+- **Planner plane**
   - DAG parser/normalizer/validator
   - cycle detection and orphan/dependency checks
   - wave generation and critical path estimation
 
-- **Scheduler plane**  
+- **Scheduler plane**
   - dependency-aware queue
   - worker and agent pool caps
-- **Delegation plane**  
+- **Delegation plane**
   - model/agent selection policy
   - fallback chains + alias resolution
-- **Execution plane**  
+- **Execution plane**
   - adapter around existing runner invocation
   - streaming output capture and cancellation propagation
-- **Resilience plane**  
+- **Resilience plane**
   - bounded retries
   - poison-pill isolation and dead-letter path
-- **State plane**  
+- **State plane**
   - durable orchestration state store
   - event journal + snapshotting
-- **Observability plane**  
+- **Observability plane**
   - structured events, status summaries, timeline/ETA
-- **Governance plane**  
+- **Governance plane**
   - policy enforcement, redaction, allow/deny checks
 
 ### 6.2 Core Domain Entities
@@ -267,9 +267,9 @@ Teams using `thegent` at scale face:
 
 ## 12) Milestone Plan (Suggested)
 
-- Milestone 1: Foundation + Planner (Phase 0 + 1)  
-- Milestone 2: Core Execution + Delegation (Phase 2 + 3)  
-- Milestone 3: Reliability + Recovery (Phase 4)  
+- Milestone 1: Foundation + Planner (Phase 0 + 1)
+- Milestone 2: Core Execution + Delegation (Phase 2 + 3)
+- Milestone 3: Reliability + Recovery (Phase 4)
 - Milestone 4: UX + Governance + rollout (Phase 5 + 6)
 
 ## 13) Appendix: Quick wins identified in this iteration

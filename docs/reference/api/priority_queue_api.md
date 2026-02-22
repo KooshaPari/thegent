@@ -384,4 +384,3 @@ qsize(self: Any)
 Return the approximate number of items in the queue.
 
 ---
-

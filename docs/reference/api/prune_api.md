@@ -53,4 +53,3 @@ show_interactive_prune_menu(pid: int, cmd: str, tty: str, pane: Any)
 Show a tmux menu for interactive pruning with context.
 
 ---
-

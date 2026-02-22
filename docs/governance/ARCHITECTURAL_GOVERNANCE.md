@@ -1,7 +1,7 @@
 # Architectural Governance: Variation, Redundancy & Legacy Management
 
-**Date:** February 19, 2026  
-**Status:** Active Policy  
+**Date:** February 19, 2026
+**Status:** Active Policy
 **Authority:** Primary decision framework for codebase evolution
 
 ---
@@ -14,7 +14,7 @@
 
 **AI Agent Pattern:** AI coding agents (Claude, Codex, ChatGPT) **systematically add fallbacks and legacy compatibility** even when explicitly told not to. This is a systemic issue requiring explicit guardrails and verification.
 
-**Implication:** 
+**Implication:**
 - ✅ **FIRST:** Verify feature parity and complete migration
 - ✅ **THEN:** Remove deprecated code immediately
 - ✅ No fallback shims or compatibility layers
@@ -268,9 +268,9 @@
 **Example Framing:**
 ```
 BAD: "Don't add fallbacks"
-GOOD: "Now that we have fully transitioned to a new system and it has been 
-confirmed to work as intended, let's clean out all backwards compatibility 
-and fallbacks so we have a DRY, modular system with clear and clean separation 
+GOOD: "Now that we have fully transitioned to a new system and it has been
+confirmed to work as intended, let's clean out all backwards compatibility
+and fallbacks so we have a DRY, modular system with clear and clean separation
 of responsibilities. Once finished, we have a fresh system with no technical debt."
 ```
 
@@ -753,7 +753,7 @@ except ImportError:
 def parse_config():
     # 50 lines of parsing logic
 
-# file2.py  
+# file2.py
 def parse_config():
     # Same 50 lines, slightly different  # Consolidate!
 ```
@@ -899,6 +899,6 @@ def get_config():
 
 ---
 
-**Last Updated:** 2026-02-19  
-**Next Review:** 2026-03-19  
+**Last Updated:** 2026-02-19
+**Next Review:** 2026-03-19
 **Authority:** Architecture team

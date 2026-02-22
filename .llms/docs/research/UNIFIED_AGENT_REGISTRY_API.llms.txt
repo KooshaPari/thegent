@@ -6,7 +6,7 @@ Source: docs/research/UNIFIED_AGENT_REGISTRY_API.md
 
 # Unified Agent Registry API — Design Specification
 
-> **Status**: 🎯 **API DESIGN** | **Date**: 2026-02-18  
+> **Status**: 🎯 **API DESIGN** | **Date**: 2026-02-18
 > **Purpose**: Design specification for a unified agent registry API that consolidates agent management across the kush ecosystem
 
 ---
@@ -172,36 +172,36 @@ class Agent(BaseModel):
     name: str
     description: Optional[str] = None
     version: str = "1.0.0"
-    
+
     # Capabilities
     capabilities: List[AgentCapability] = Field(default_factory=list)
     tools: List[str] = Field(default_factory=list)
     models: List[str] = Field(default_factory=list, description="Supported LLM models")
-    
+
     # Configuration
     system_prompt: Optional[str] = None
     temperature: float = 0.7
     max_tokens: Optional[int] = None
-    
+
     # Project assignments
     projects: List[ProjectAssignment] = Field(default_factory=list)
-    
+
     # Collaboration
     collaboration_rules: CollaborationRule = Field(default_factory=CollaborationRule)
-    
+
     # Availability
     availability: Availability = Field(default_factory=Availability)
-    
+
     # State
     status: AgentStatus = AgentStatus.INACTIVE
     current_project: Optional[str] = None
     last_active: Optional[datetime] = None
-    
+
     # Performance
     metrics: PerformanceMetrics = Field(default_factory=lambda: PerformanceMetrics(
         last_updated=datetime.now()
     ))
-    
+
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.now)

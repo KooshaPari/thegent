@@ -141,4 +141,3 @@ Returns True if every record's hash is correct and prev_hash links
 form an unbroken chain. Returns False on any inconsistency.
 
 ---
-

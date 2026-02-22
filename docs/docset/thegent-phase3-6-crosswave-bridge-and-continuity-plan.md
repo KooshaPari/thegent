@@ -1,7 +1,7 @@
 # Thegent Phase 3–6 Cross-Wave Bridge and Continuity Plan
 
-**Status:** Strategic-operational bridge artifact  
-**Date:** 2026-02-15  
+**Status:** Strategic-operational bridge artifact
+**Date:** 2026-02-15
 **Scope:** Converts phases 3–6 outputs into a stable bridge for phases 7–12 without semantic breakage.
 
 ## 1) Purpose
@@ -357,4 +357,3 @@ If criteria fail:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

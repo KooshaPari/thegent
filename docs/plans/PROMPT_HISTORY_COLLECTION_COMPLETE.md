@@ -1,7 +1,7 @@
 # Prompt History Collection & Audit System Complete Guide
 
 > **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
-> **Related**: 
+> **Related**:
 > - [Prompt History Collection Plan](./PROMPT_HISTORY_COLLECTION_AND_AUDIT_SYSTEM.md)
 > - [Work Stream](../reference/WORK_STREAM.md)
 
@@ -135,16 +135,16 @@ from datetime import datetime
 
 class PromptCollector:
     """Collect prompts from various sources."""
-    
+
     def __init__(self, storage_path: Path):
         self.storage_path = storage_path
         self.storage_path.mkdir(parents=True, exist_ok=True)
         self.observer = Observer()
-    
+
     def collect_from_cursor(self, since: Optional[datetime] = None) -> List[Dict]:
         """Collect prompts from Cursor."""
         prompts = []
-        
+
         # Cursor SQLite database
         cursor_db = Path.home() / "Library/Application Support/Cursor/User/globalStorage/cursor.chat/chat.db"
         if cursor_db.exists():
@@ -155,7 +155,7 @@ class PromptCollector:
                 WHERE timestamp > ?
                 ORDER BY timestamp
             """, (since.timestamp() if since else 0,))
-            
+
             for row in cursor.fetchall():
                 prompts.append({
                     "id": f"cursor_{row[0]}",
@@ -164,15 +164,15 @@ class PromptCollector:
                     "prompt": {"text": row[2]},
                     "response": {"text": row[3]} if row[3] else None,
                 })
-            
+
             conn.close()
-        
+
         return prompts
-    
+
     def collect_from_codex(self, since: Optional[datetime] = None) -> List[Dict]:
         """Collect prompts from Codex."""
         prompts = []
-        
+
         # Codex JSONL files
         codex_dir = Path.home() / "Library/Application Support/Codex/sessions"
         if codex_dir.exists():
@@ -183,7 +183,7 @@ class PromptCollector:
                         prompt_time = datetime.fromisoformat(data["timestamp"])
                         if since and prompt_time < since:
                             continue
-                        
+
                         prompts.append({
                             "id": f"codex_{data['id']}",
                             "timestamp": data["timestamp"],
@@ -191,13 +191,13 @@ class PromptCollector:
                             "prompt": {"text": data["prompt"]},
                             "response": {"text": data.get("response")},
                         })
-        
+
         return prompts
-    
+
     def collect_from_claude(self, since: Optional[datetime] = None) -> List[Dict]:
         """Collect prompts from Claude Code."""
         prompts = []
-        
+
         # Claude Code JSONL files
         claude_dir = Path.home() / ".claude/sessions"
         if claude_dir.exists():
@@ -208,7 +208,7 @@ class PromptCollector:
                         prompt_time = datetime.fromisoformat(data["timestamp"])
                         if since and prompt_time < since:
                             continue
-                        
+
                         prompts.append({
                             "id": f"claude_{data['id']}",
                             "timestamp": data["timestamp"],
@@ -216,9 +216,9 @@ class PromptCollector:
                             "prompt": {"text": data["prompt"]},
                             "response": {"text": data.get("response")},
                         })
-        
+
         return prompts
-    
+
     def collect_all(self, since: Optional[datetime] = None) -> List[Dict]:
         """Collect prompts from all sources."""
         all_prompts = []
@@ -226,7 +226,7 @@ class PromptCollector:
         all_prompts.extend(self.collect_from_codex(since))
         all_prompts.extend(self.collect_from_claude(since))
         return all_prompts
-    
+
     def save_prompts(self, prompts: List[Dict]) -> None:
         """Save prompts to JSONL file."""
         prompts_file = self.storage_path / "prompts.jsonl"
@@ -240,15 +240,15 @@ class PromptCollector:
 ```python
 class PromptWatcher(FileSystemEventHandler):
     """Watch for new prompts and collect automatically."""
-    
+
     def __init__(self, collector: PromptCollector):
         self.collector = collector
-    
+
     def on_created(self, event):
         """Handle file creation."""
         if event.is_directory:
             return
-        
+
         # Check if it's a prompt file
         if "cursor" in str(event.src_path) or "codex" in str(event.src_path) or "claude" in str(event.src_path):
             # Collect new prompts
@@ -321,10 +321,10 @@ def commit_prompts(prompts_path: Path, prompts: List[Dict]) -> None:
         subprocess.run(["git", "init"], cwd=prompts_path)
         subprocess.run(["git", "config", "user.name", "thegent"], cwd=prompts_path)
         subprocess.run(["git", "config", "user.email", "thegent@local"], cwd=prompts_path)
-    
+
     # Add prompts
     subprocess.run(["git", "add", "prompts.jsonl"], cwd=prompts_path)
-    
+
     # Commit
     commit_msg = f"chore(prompts): collect {len(prompts)} prompts from {', '.join(set(p['source'] for p in prompts))}"
     subprocess.run(["git", "commit", "-m", commit_msg], cwd=prompts_path)
@@ -343,7 +343,7 @@ from typing import List, Dict
 def extract_todos(text: str) -> List[Dict]:
     """Extract todos from prompt/response text."""
     todos = []
-    
+
     # Markdown checkboxes
     for match in re.finditer(r'- \[([ x])\] (.+)', text):
         todos.append({
@@ -351,7 +351,7 @@ def extract_todos(text: str) -> List[Dict]:
             "completed": match.group(1) == "x",
             "source": "markdown"
         })
-    
+
     # TODO comments
     for match in re.finditer(r'TODO:\s*(.+)', text, re.IGNORECASE):
         todos.append({
@@ -359,7 +359,7 @@ def extract_todos(text: str) -> List[Dict]:
             "completed": False,
             "source": "comment"
         })
-    
+
     return todos
 ```
 
@@ -369,7 +369,7 @@ def extract_todos(text: str) -> List[Dict]:
 def extract_plans(text: str) -> List[Dict]:
     """Extract plans from prompt/response text."""
     plans = []
-    
+
     # Markdown plan sections
     plan_pattern = r'##\s*Plan\s*\n(.*?)(?=##|\Z)'
     for match in re.finditer(plan_pattern, text, re.DOTALL):
@@ -378,7 +378,7 @@ def extract_plans(text: str) -> List[Dict]:
             "format": "markdown",
             "source": "prompt"
         })
-    
+
     return plans
 ```
 
@@ -397,13 +397,13 @@ async def thegent_prompt_collect(
 ) -> str:
     """Collect prompts from specified sources."""
     collector = PromptCollector(Path(".thegent/prompts"))
-    
+
     since_dt = datetime.fromisoformat(since) if since else None
     prompts = collector.collect_all(since=since_dt)
-    
+
     collector.save_prompts(prompts)
     commit_prompts(collector.storage_path, prompts)
-    
+
     return f"Collected {len(prompts)} prompts"
 ```
 
@@ -418,26 +418,26 @@ async def thegent_prompt_search(
     """Search prompts by query."""
     prompts_file = Path(".thegent/prompts/prompts.jsonl")
     results = []
-    
+
     with open(prompts_file) as f:
         for line in f:
             prompt = json.loads(line)
-            
+
             # Filter by source
             if source and prompt["source"] != source:
                 continue
-            
+
             # Filter by date
             if since:
                 prompt_time = datetime.fromisoformat(prompt["timestamp"])
                 since_dt = datetime.fromisoformat(since)
                 if prompt_time < since_dt:
                     continue
-            
+
             # Search in text
             if query.lower() in prompt["prompt"]["text"].lower():
                 results.append(prompt)
-    
+
     return results
 ```
 
@@ -453,15 +453,15 @@ def prompts_collect(
 ):
     """Collect prompts from sources."""
     collector = PromptCollector(Path(".thegent/prompts"))
-    
+
     since_dt = datetime.fromisoformat(since) if since else None
     prompts = collector.collect_all(since=since_dt)
-    
+
     collector.save_prompts(prompts)
-    
+
     if git_commit:
         commit_prompts(collector.storage_path, prompts)
-    
+
     typer.echo(f"Collected {len(prompts)} prompts")
 ```
 

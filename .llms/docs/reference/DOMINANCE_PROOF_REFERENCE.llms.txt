@@ -6,7 +6,7 @@ Source: docs/reference/DOMINANCE_PROOF_REFERENCE.md
 
 # Dominance Proof Reference
 
-**Purpose**: Rigorous mathematical proofs that specific models are dominated  
+**Purpose**: Rigorous mathematical proofs that specific models are dominated
 **Audience**: For verifying model selection decisions
 
 ---
@@ -294,7 +294,7 @@ HIGH_COMPLEX  80%            Mission-critical (medical, financial, legal)
 Models failing floors:
   Codex 5.3:      56.8% < 60% ✗ REJECTED (below FAST floor)
   Codex-Spark:    ~50% < 60% ✗ REJECTED (below FAST floor)
-  
+
 Models meeting all floors:
   GPT-4o mini:    70% ≥ 60%, ≥ 70% ✓ (meets FAST, NORMAL, marginal COMPLEX)
   MiniMax:        80.2% ≥ all floors ✓ (meets all)
@@ -342,8 +342,8 @@ Codex 5.3        $1.25    56.8%     $0.02199         N/A (fails floor)
 
 ---
 
-**Document Version**: 1.0  
-**Verified**: 2026-02-15  
+**Document Version**: 1.0
+**Verified**: 2026-02-15
 **Method**: Dominance proof via dimension-by-dimension comparison
 
 ---
@@ -356,7 +356,7 @@ Codex 5.3        $1.25    56.8%     $0.02199         N/A (fails floor)
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -56,7 +56,7 @@ _thegent_cache_l1_set() {
 _thegent_cache_l2_get() {
   local key="$1"
   local cache_file="$THEGENT_CACHE_L2_DIR/${key}.cache"
-  
+
   # Check if cache exists and is valid (< 1 hour old)
   if [[ -f "$cache_file" ]]; then
     local cache_age
@@ -64,7 +64,7 @@ _thegent_cache_l2_get() {
     local current_time
     current_time=$(date +%s)
     local age=$((current_time - cache_age))
-    
+
     if [[ $age -lt 3600 ]]; then
       cat "$cache_file"
       return 0
@@ -82,7 +82,7 @@ _thegent_cache_l2_set() {
 
 _thegent_cache_get() {
   local key="$1"
-  
+
   # Try L1 first
   local value
   value="$(_thegent_cache_l1_get "$key")"
@@ -90,7 +90,7 @@ _thegent_cache_get() {
     echo "$value"
     return 0
   fi
-  
+
   # Try L2
   if value="$(_thegent_cache_l2_get "$key")"; then
     # Populate L1 for next time
@@ -98,14 +98,14 @@ _thegent_cache_get() {
     echo "$value"
     return 0
   fi
-  
+
   return 1
 }
 
 _thegent_cache_set() {
   local key="$1"
   local value="$2"
-  
+
   # Set in both levels
   _thegent_cache_l1_set "$key" "$value"
   _thegent_cache_l2_set "$key" "$value"
@@ -116,7 +116,7 @@ _thegent_cache_set() {
 if [[ "$THEGENT_INSTANT_PROMPT_ENABLED" == "1" && -n "${ZSH_VERSION:-}" ]]; then
   # Check if instant prompt cache exists
   typeset -g THEGENT_INSTANT_PROMPT_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/thegent/instant-prompt-${(%):-%n}.zsh"
-  
+
   if [[ -r "$THEGENT_INSTANT_PROMPT_CACHE" ]]; then
     # Load cached instant prompt
     source "$THEGENT_INSTANT_PROMPT_CACHE"
@@ -186,7 +186,7 @@ _thegent_load_full_prompt() {
   # Load full prompt configuration
   # This would typically load your actual prompt theme
   export THEGENT_PROMPT_LOADED=1
-  
+
   # If using powerlevel10k or similar, it will handle prompt
   # Otherwise, set a reasonable default
   if [[ -z "${POWERLEVEL9K_MODE:-}" ]]; then
@@ -270,14 +270,14 @@ if [[ "$THEGENT_ASYNC_LOADING_ENABLED" == "1" ]]; then
       "$load_func" "${load_args[@]}" 2>/dev/null || true
     fi
   }
-  
+
   # Trigger-load: Create function that loads plugin on first call
   _thegent_trigger_load() {
     local trigger_cmd="$1"
     local load_func="$2"
     shift 2
     local load_args=("$@")
-    
+
     # Create wrapper function
     eval "$trigger_cmd() {
       if [[ -z \"\${THEGENT_LOADED_${trigger_cmd}:-}\" ]]; then
@@ -298,52 +298,52 @@ _thegent_circuit_breaker_open() {
   local service="$1"
   local threshold="${2:-5}"
   local cooldown="${3:-60}"
-  
+
   local failure_file="$THEGENT_CIRCUIT_BREAKER_DIR/${service}.failures"
   local state_file="$THEGENT_CIRCUIT_BREAKER_DIR/${service}.state"
-  
+
   mkdir -p "$THEGENT_CIRCUIT_BREAKER_DIR" 2>/dev/null || true
-  
+
   # Count failures
   local failures=0
   if [[ -f "$failure_file" ]]; then
     failures=$(cat "$failure_file")
   fi
-  
+
   failures=$((failures + 1))
   echo "$failures" > "$failure_file"
-  
+
   # Open circuit if threshold exceeded
   if [[ $failures -ge $threshold ]]; then
     echo "open:$(date +%s)" > "$state_file"
     return 1
   fi
-  
+
   return 0
 }
 
 _thegent_circuit_breaker_is_open() {
   local service="$1"
   local cooldown="${2:-60}"
-  
+
   local state_file="$THEGENT_CIRCUIT_BREAKER_DIR/${service}.state"
-  
+
   if [[ ! -f "$state_file" ]]; then
     return 1  # Circuit closed
   fi
-  
+
   local state
   state=$(cat "$state_file")
   if [[ "$state" != "open:"* ]]; then
     return 1  # Circuit closed
   fi
-  
+
   # Check cooldown
   local open_time="${state#open:}"
   local current_time
   current_time=$(date +%s)
   local elapsed=$((current_time - open_time))
-  
+
   if [[ $elapsed -lt $cooldown ]]; then
     return 0  # Circuit open
   else
@@ -366,13 +366,13 @@ _thegent_safe_exec() {
   local args=("$@")
   local max_retries="${THEGENT_MAX_RETRIES:-3}"
   local retry_delay="${THEGENT_RETRY_DELAY:-1}"
-  
+
   # Check circuit breaker
   if _thegent_circuit_breaker_is_open "$cmd"; then
     echo "thegent: Circuit breaker open for $cmd, using fallback" >&2
     return 1
   fi
-  
+
   # Retry logic with exponential backoff
   local attempt=0
   while [[ $attempt -lt $max_retries ]]; do
@@ -381,13 +381,13 @@ _thegent_safe_exec() {
       _thegent_circuit_breaker_reset "$cmd"
       return 0
     fi
-    
+
     attempt=$((attempt + 1))
     if [[ $attempt -lt $max_retries ]]; then
       sleep $((retry_delay * attempt))
     fi
   done
-  
+
   # All retries failed, open circuit breaker
   _thegent_circuit_breaker_open "$cmd"
   return 1
@@ -398,7 +398,7 @@ _thegent_safe_exec() {
 _thegent_predictive_preload() {
   # Load frequently used tools in background
   local common_tools=("git" "rg" "fd" "fzf")
-  
+
   for tool in "${common_tools[@]}"; do
     if command -v "$tool" >/dev/null 2>&1; then
       # Preload tool detection into cache
@@ -411,22 +411,22 @@ _thegent_predictive_preload() {
 if [[ "$THEGENT_METRICS_ENABLED" == "1" ]]; then
   typeset -gA THEGENT_METRICS
   typeset -g THEGENT_METRICS_FILE="$THEGENT_ADVANCED_CACHE_DIR/metrics/stats"
-  
+
   _thegent_metrics_record() {
     local metric="$1"
     local value="${2:-1}"
-    
+
     THEGENT_METRICS[$metric]=$((${THEGENT_METRICS[$metric]:-0} + value))
-    
+
     # Persist to file
     echo "$metric:$value" >> "$THEGENT_METRICS_FILE" 2>/dev/null || true
   }
-  
+
   _thegent_metrics_get() {
     local metric="$1"
     echo "${THEGENT_METRICS[$metric]:-0}"
   }
-  
+
   _thegent_metrics_report() {
     echo "=== thegent Metrics Report ==="
     for metric in "${(@k)THEGENT_METRICS}"; do

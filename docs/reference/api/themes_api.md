@@ -353,4 +353,3 @@ to_textual_theme(self: Any)
 Convert to Textual Theme.
 
 ---
-

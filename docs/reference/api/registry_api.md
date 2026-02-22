@@ -239,4 +239,3 @@ should_rollback(self: Any, canary_id: str)
 Determine if a canary model should be rolled back to baseline.
 
 ---
-

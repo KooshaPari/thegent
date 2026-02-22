@@ -259,4 +259,3 @@ switch_layout(self: Any, name: str)
 Switch to a layout (returns the state for application).
 
 ---
-

@@ -43,4 +43,3 @@ Raised when tenant allocation fails.
 **Method Resolution Order**: `TenantAllocationError -> IsolationError`
 
 ---
-

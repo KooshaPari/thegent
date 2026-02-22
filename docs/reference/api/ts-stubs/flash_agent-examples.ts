@@ -11,4 +11,3 @@ const flashagentconfig = new FlashAgentConfig();
 
 // Create a FlashAgentResult instance
 const flashagentresult = new FlashAgentResult();
-

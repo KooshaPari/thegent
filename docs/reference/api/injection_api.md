@@ -137,4 +137,3 @@ update_agent_md(self: Any, mesh_state: dict)
 Render AGENT.md from template with current mesh state (SCLI-P9.4).
 
 ---
-

@@ -78,4 +78,3 @@ Run shell command using fastest available shell.
 **Returns**: CompletedProcess result
 
 ---
-

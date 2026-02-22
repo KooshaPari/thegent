@@ -8,4 +8,3 @@ A unified terminal user interface combining multiple output streams,
 agent status, and interactive controls using Textual.
 
 ---
-

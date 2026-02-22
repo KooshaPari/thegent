@@ -1,6 +1,6 @@
 # Plan Incorporate Research & Enhancement Plan
 
-**Date**: 2026-02-18  
+**Date**: 2026-02-18
 **Goal**: Enhance `plan incorporate` command with task validation
 
 ---
@@ -71,20 +71,20 @@ From documentation (`CLAUDE.md:600`):
 ```python
 def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str, Any]:
     """Merge fragments from 02-UNIFIED-WBS into WORK_STREAM.md.
-    
+
     Scans sources:
     - docs/plans/02-UNIFIED-WBS.md
     - docs/plans/*.md
     - docs/research/*.md
     - docs/docset/*.md
-    
+
     Extracts work items and merges into WORK_STREAM.md BACKLOG.
     Preserves CLAIMED and COMPLETED sections.
-    
+
     Args:
         cd: Working directory (default: current directory)
         dry_run: If True, show what would be merged without writing
-    
+
     Returns:
         dict with keys: merged (int), sources (list), error (str, optional)
     """
@@ -106,7 +106,7 @@ validation_errors = []
 
 if tasks_dir.exists() and tasks_dir.is_dir():
     from thegent.task import validate_task_file
-    
+
     task_files = list(tasks_dir.glob("*.md"))
     for task_file in task_files:
         try:
@@ -182,7 +182,7 @@ return {
 if not dry_run and len(items_to_merge) > 0:
     try:
         from thegent.task import WorkStreamSync
-        
+
         if work_stream_path.exists() and tasks_dir.exists():
             sync = WorkStreamSync(work_stream_path, tasks_dir)
             sync_result = sync.update_work_stream_from_tasks()
@@ -206,7 +206,7 @@ def _extract_items_from_wbs(wbs_path: Path) -> list[dict[str, Any]]:
     """Extract work items from 02-UNIFIED-WBS.md."""
     items = []
     text = wbs_path.read_text(encoding="utf-8")
-    
+
     # Parse markdown table
     # Format: | WP-XXXX | Title | Status | Priority | Depends |
     # Extract rows where Status != DONE
@@ -219,7 +219,7 @@ def _extract_items_from_wbs(wbs_path: Path) -> list[dict[str, Any]]:
                 status = parts[3]
                 priority = parts[4] if len(parts) > 4 else "P2"
                 depends = parts[5].split(",") if len(parts) > 5 and parts[5] else []
-                
+
                 if status.upper() != "DONE":
                     items.append({
                         "id": item_id,
@@ -229,7 +229,7 @@ def _extract_items_from_wbs(wbs_path: Path) -> list[dict[str, Any]]:
                         "depends": [d.strip() for d in depends if d.strip()],
                         "source": "02-UNIFIED-WBS.md",
                     })
-    
+
     return items
 ```
 
@@ -248,7 +248,7 @@ def _extract_items_from_research(research_path: Path) -> list[dict[str, Any]]:
     """Extract work items from research markdown files."""
     items = []
     text = research_path.read_text(encoding="utf-8")
-    
+
     # Look for TODO, WP-, FR- references
     # Create research-{slug} IDs
     # Similar parsing logic
@@ -262,13 +262,13 @@ def _merge_items_to_work_stream(work_stream_path: Path, items: list[dict[str, An
     if not work_stream_path.exists():
         # Create WORK_STREAM.md if it doesn't exist
         _create_work_stream(work_stream_path)
-    
+
     text = work_stream_path.read_text(encoding="utf-8")
     lines = text.splitlines()
     new_lines = []
     in_backlog = False
     backlog_start_idx = None
-    
+
     # Find BACKLOG section
     for i, line in enumerate(lines):
         if line.strip().startswith("## BACKLOG") or line.strip().startswith("## PENDING"):
@@ -280,7 +280,7 @@ def _merge_items_to_work_stream(work_stream_path: Path, items: list[dict[str, An
                 new_lines.append("| ID | Title | Source | Priority | Depends |")
                 new_lines.append("|----|-------|--------|----------|---------|")
             continue
-        
+
         if in_backlog and line.strip().startswith("##"):
             # End of BACKLOG section, insert items
             for item in items:
@@ -292,9 +292,9 @@ def _merge_items_to_work_stream(work_stream_path: Path, items: list[dict[str, An
             in_backlog = False
             new_lines.append(line)
             continue
-        
+
         new_lines.append(line)
-    
+
     # If BACKLOG section not found, add it at the end
     if in_backlog:
         for item in items:
@@ -315,7 +315,7 @@ def _merge_items_to_work_stream(work_stream_path: Path, items: list[dict[str, An
                 f"| {item['id']} | {item['title']} | {item.get('source', '')} | "
                 f"{item.get('priority', 'P2')} | {depends_str} |"
             )
-    
+
     work_stream_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
 ```
 
@@ -391,5 +391,5 @@ def _merge_items_to_work_stream(work_stream_path: Path, items: list[dict[str, An
 
 ---
 
-**Status**: Ready for Implementation  
+**Status**: Ready for Implementation
 **Priority**: Medium (part of Phase 4)

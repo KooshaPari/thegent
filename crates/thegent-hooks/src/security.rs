@@ -133,8 +133,8 @@ impl SecurityScanner {
     fn parse_severity(sev: &str) -> Severity {
         match sev.to_uppercase().as_str() {
             "CRITICAL" => Severity::Critical,
-            "ERROR" | "ERROR" => Severity::Error,
-            "WARNING" => Severity::Warning,
+            "ERROR" => Severity::Error,
+            "WARNING" | "WARN" => Severity::Warning,
             _ => Severity::Info,
         }
     }

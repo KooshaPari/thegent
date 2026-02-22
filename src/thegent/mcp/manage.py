@@ -14,6 +14,7 @@ from thegent.infra import run_subprocess_optimized
 
 # MCP server URL (HTTP transport)
 DEFAULT_MCP_URL = "http://127.0.0.1:3847/mcp"
+MCP_SERVER_KEYS: tuple[str, ...] = ("thegent", "codex_apps")
 
 # Client config paths (config dir or file)
 MCP_CLIENT_PATHS: dict[str, list[Path]] = {
@@ -27,6 +28,7 @@ MCP_CLIENT_PATHS: dict[str, list[Path]] = {
     "codex": [
         Path.home() / ".codex" / "mcp.json",
         Path.home() / ".config" / "codex" / "mcp.json",
+        Path.home() / ".codex" / "config.json",
     ],
     "claude-desktop": [
         Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json",
@@ -60,6 +62,45 @@ def _ensure_mcp_servers(config: dict[str, Any]) -> dict[str, Any]:
     return config
 
 
+def _set_compatible_mcp_servers(config: dict[str, Any], url: str) -> dict[str, Any]:
+    """Write canonical and compatibility MCP server aliases."""
+    config = _ensure_mcp_servers(config)
+
+    # Preserve existing settings if present while still ensuring both compatibility aliases exist.
+    mcp_servers = config["mcpServers"]
+    reference_entry: dict[str, Any] | None = None
+    for name in MCP_SERVER_KEYS:
+        candidate = mcp_servers.get(name)
+        if isinstance(candidate, dict):
+            reference_entry = candidate
+            break
+
+    # Use the first discovered alias URL as source of truth when available.
+    existing_url = url
+    for name in MCP_SERVER_KEYS:
+        candidate = mcp_servers.get(name)
+        if not isinstance(candidate, dict):
+            continue
+        candidate_url = candidate.get("url")
+        if isinstance(candidate_url, str) and candidate_url:
+            existing_url = candidate_url
+            break
+
+    # Start from a stable remote template and overlay existing fields where present.
+    base = dict(_remote_config(existing_url))
+    if reference_entry:
+        base.update(reference_entry)
+
+    for name in MCP_SERVER_KEYS:
+        existing = mcp_servers.get(name)
+        merged = dict(base)
+        if isinstance(existing, dict):
+            merged.update(existing)
+        merged.setdefault("url", existing_url)
+        mcp_servers[name] = merged
+    return config
+
+
 def install_to_cursor(
     url: str = DEFAULT_MCP_URL,
     workspace: Path | None = None,
@@ -68,8 +109,7 @@ def install_to_cursor(
     config_path = workspace.resolve() / ".cursor" / "mcp.json" if workspace else Path.home() / ".cursor" / "mcp.json"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
-    config = _ensure_mcp_servers(config)
-    config["mcpServers"]["thegent"] = _remote_config(url)
+    config = _set_compatible_mcp_servers(config, url=url)
     config_path.write_text(json.dumps(config, indent=2))
     return True
 
@@ -78,21 +118,23 @@ def install_to_claude_code(url: str = DEFAULT_MCP_URL) -> bool:
     """Add thegent to Claude Code config (~/.claude.json)."""
     config_path = Path.home() / ".claude.json"
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {}
-    if "mcpServers" not in config:
-        config["mcpServers"] = {}
-    config["mcpServers"]["thegent"] = _remote_config(url)
+    config = _set_compatible_mcp_servers(config, url=url)
     config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
 def install_to_codex(url: str = DEFAULT_MCP_URL) -> bool:
     """Add thegent to Codex MCP config."""
-    config_path = Path.home() / ".codex" / "mcp.json"
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
-    config = _ensure_mcp_servers(config)
-    config["mcpServers"]["thegent"] = _remote_config(url)
-    config_path.write_text(json.dumps(config, indent=2))
+    config_paths = [
+        Path.home() / ".codex" / "mcp.json",
+        Path.home() / ".codex" / "config.json",
+        Path.home() / ".config" / "codex" / "mcp.json",
+    ]
+    for config_path in config_paths:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
+        config = _set_compatible_mcp_servers(config, url=url)
+        config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -102,9 +144,7 @@ def install_to_claude_desktop(url: str = DEFAULT_MCP_URL) -> bool:
     if not config_path.parent.exists():
         return False
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {}
-    if "mcpServers" not in config:
-        config["mcpServers"] = {}
-    config["mcpServers"]["thegent"] = _remote_config(url)
+    config = _set_compatible_mcp_servers(config, url=url)
     config_path.write_text(json.dumps(config, indent=2))
     return True
 
@@ -115,8 +155,7 @@ def install_to_droid(url: str, workspace: Path | None = None) -> bool:
     config_path = base / ".factory" / "mcp.json"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
-    config = _ensure_mcp_servers(config)
-    config["mcpServers"]["thegent"] = _remote_config(url)
+    config = _set_compatible_mcp_servers(config, url=url)
     config_path.write_text(json.dumps(config, indent=2))
     return True
 
@@ -388,7 +427,34 @@ def serve_delegate_or_run(settings) -> tuple[bool, str]:
 
 # --- Known failing MCP servers ---
 
-FAILING_MCP_SERVERS: frozenset[str] = frozenset({"codex_apps", "playwright"})
+FAILING_MCP_SERVERS: frozenset[str] = frozenset({"playwright"})
+
+
+def _resolve_client_paths(
+    client: str,
+    workspace: Path | None = None,
+) -> list[Path]:
+    """Resolve possible MCP config paths for a client.
+
+    Returns all known candidate paths, with workspace paths first.
+    """
+    normalized_client = client.strip().lower()
+    resolved_workspace = workspace.resolve() if workspace else None
+
+    if normalized_client == "cursor":
+        return (
+            ([resolved_workspace / ".cursor" / "mcp.json"] if resolved_workspace else [])
+            + [Path.home() / ".cursor" / "mcp.json"]
+        )
+    if normalized_client == "droid":
+        return [(resolved_workspace or Path.cwd()) / ".factory" / "mcp.json"]
+    if normalized_client == "claude-code":
+        return [Path.home() / ".claude.json"]
+    if normalized_client == "codex":
+        return MCP_CLIENT_PATHS["codex"]
+    if normalized_client == "claude-desktop":
+        return [Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"]
+    return []
 
 
 # --- Server removal helpers ---
@@ -401,32 +467,31 @@ def remove_servers_from_client(
 ) -> tuple[bool, str]:
     """Remove named MCP servers from a client's config. Returns (success, message)."""
     try:
-        if client == "cursor":
-            config_path = (
-                workspace.resolve() / ".cursor" / "mcp.json" if workspace else Path.home() / ".cursor" / "mcp.json"
-            )
-        elif client == "claude-code":
-            config_path = Path.home() / ".claude.json"
-        elif client == "codex":
-            config_path = Path.home() / ".codex" / "config.json"
-        elif client == "claude-desktop":
-            config_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
-        else:
+        config_paths = _resolve_client_paths(client=client, workspace=workspace)
+        if not config_paths:
             return False, f"Unknown client: {client}"
 
-        if not config_path.exists():
-            return True, "No matching servers found"
+        total_removed = 0
+        touched = 0
+        normalized_client = client.strip().lower()
+        for config_path in config_paths:
+            if not config_path.exists():
+                continue
+            config: dict[str, Any] = json.loads(config_path.read_text())
+            mcp_servers = config.get("mcpServers", {})
+            pre_count = len(mcp_servers)
+            for name in server_names:
+                if name in mcp_servers:
+                    del mcp_servers[name]
+            if len(mcp_servers) != pre_count:
+                touched += 1
+                total_removed += pre_count - len(mcp_servers)
+                config["mcpServers"] = mcp_servers
+                config_path.write_text(json.dumps(config, indent=2))
 
-        config: dict[str, Any] = json.loads(config_path.read_text())
-        mcp_servers: dict[str, Any] = config.get("mcpServers", {})
-        removed = 0
-        for name in server_names:
-            if name in mcp_servers:
-                del mcp_servers[name]
-                removed += 1
-        config["mcpServers"] = mcp_servers
-        config_path.write_text(json.dumps(config, indent=2))
-        return True, f"Removed {removed} servers from {client}"
+        if total_removed == 0:
+            return True, f"No matching servers found for {normalized_client}"
+        return True, f"Removed {total_removed} server(s) from {normalized_client} ({touched} file(s) updated)"
     except FileNotFoundError:
         return True, "No matching servers found"
     except Exception as e:
@@ -441,35 +506,23 @@ def migrate_to_unimount(
     mcp_url: str,
     workspace: Path | None = None,
 ) -> tuple[bool, str]:
-    """Replace ALL MCP server entries with a single thegent entry at mcp_url. Returns (success, message)."""
+    """Ensure uni-mount MCP keys are set while keeping existing MCP entries. Returns (success, message)."""
     try:
-        if client == "cursor":
-            config_path = (
-                workspace.resolve() / ".cursor" / "mcp.json" if workspace else Path.home() / ".cursor" / "mcp.json"
-            )
-            config_path.parent.mkdir(parents=True, exist_ok=True)
-            config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {}
-            config["mcpServers"] = {"thegent": {"url": mcp_url}}
-            config_path.write_text(json.dumps(config, indent=2))
-        elif client == "claude-code":
-            config_path = Path.home() / ".claude.json"
-            config = json.loads(config_path.read_text()) if config_path.exists() else {}
-            config["mcpServers"] = {"thegent": {"url": mcp_url}}
-            config_path.write_text(json.dumps(config, indent=2))
-        elif client == "codex":
-            config_path = Path.home() / ".codex" / "config.json"
-            config_path.parent.mkdir(parents=True, exist_ok=True)
-            config = json.loads(config_path.read_text()) if config_path.exists() else {}
-            config["mcpServers"] = {"thegent": {"command": "uvx", "args": ["thegent", "serve"]}}
-            config_path.write_text(json.dumps(config, indent=2))
-        elif client == "claude-desktop":
-            config_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
-            config = json.loads(config_path.read_text()) if config_path.exists() else {}
-            config["mcpServers"] = {"thegent": {"url": mcp_url}}
-            config_path.write_text(json.dumps(config, indent=2))
-        else:
+        config_paths = _resolve_client_paths(client=client, workspace=workspace)
+        if not config_paths:
             return False, f"Unknown client: {client}"
-        return True, f"Migrated {client} to uni-mount"
+
+        normalized_client = client.strip().lower()
+        for config_path in config_paths:
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config = json.loads(config_path.read_text()) if config_path.exists() else {}
+            mcp_servers = config.get("mcpServers")
+            if not isinstance(mcp_servers, dict):
+                mcp_servers = {}
+            config["mcpServers"] = mcp_servers
+            config = _set_compatible_mcp_servers(config, url=mcp_url)
+            config_path.write_text(json.dumps(config, indent=2))
+        return True, f"Migrated {normalized_client} to uni-mount"
     except Exception as e:
         return False, str(e)
 

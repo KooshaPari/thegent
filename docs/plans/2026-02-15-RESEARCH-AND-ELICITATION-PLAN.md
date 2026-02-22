@@ -1,7 +1,7 @@
 # Research and Elicitation Plan — 2026-02-15
 
-**Purpose:** Synthesize best items from tooling audit, lifecycle design, and WBS; elicit rich questions for prioritization.  
-**Status:** Active (expanded)  
+**Purpose:** Synthesize best items from tooling audit, lifecycle design, and WBS; elicit rich questions for prioritization.
+**Status:** Active (expanded)
 **Scope:** Tooling, optimization, lifecycle/checker, observability, intuitive design, holistic engineering, harmonious integration
 
 ---

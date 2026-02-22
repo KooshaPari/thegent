@@ -107,4 +107,3 @@ Scan for research documents.
 **Returns**: List of research document paths
 
 ---
-

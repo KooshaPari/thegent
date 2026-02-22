@@ -705,4 +705,3 @@ Write text to the output widget.
 - `timestamp`: Whether to prepend timestamp
 
 ---
-

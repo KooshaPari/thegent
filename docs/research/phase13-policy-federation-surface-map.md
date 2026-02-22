@@ -1,8 +1,8 @@
 # Phase 13: Policy Federation Surface Map
 
-> **Purpose:** Map architectural surfaces for single-tenant → multi-org policy federation.  
-> **Depends:** —  
-> **Acceptance:** FederatedPolicyEngine, namespace model (org.project.env), storage/API surfaces documented.  
+> **Purpose:** Map architectural surfaces for single-tenant → multi-org policy federation.
+> **Depends:** —
+> **Acceptance:** FederatedPolicyEngine, namespace model (org.project.env), storage/API surfaces documented.
 > **WORK_STREAM ID:** phase13-policy-federation
 
 ## 1. Overview
@@ -23,7 +23,7 @@ This document maps the architectural surfaces affected by the transition from si
 - **Migration**: Tools to move existing single-tenant policies into the `default` namespace.
 
 ### 2.4 API/CLI Surface
-- **Commands**: 
+- **Commands**:
   - `thegent govern federation list`
   - `thegent govern federation join <namespace>`
   - `thegent govern federation leave <namespace>`
@@ -60,7 +60,7 @@ class PolicyNamespace:
     org: str
     project: Optional[str] = None
     environment: Optional[str] = None
-    
+
     def to_string(self) -> str:
         """Convert to namespace string."""
         parts = [self.org]
@@ -69,7 +69,7 @@ class PolicyNamespace:
         if self.environment:
             parts.append(self.environment)
         return ".".join(parts)
-    
+
     def get_parents(self) -> list[str]:
         """Get parent namespace hierarchy."""
         parents = []
@@ -85,10 +85,10 @@ class PolicyNamespace:
 ```python
 class PolicyConflictResolver:
     """Resolves conflicts between federated policies."""
-    
+
     def resolve(self, policies: list[dict], namespace: str) -> dict:
         """Resolve conflicts using precedence rules.
-        
+
         Precedence: project > org > default
         """
         # Sort by namespace depth (deeper = higher precedence)
@@ -97,12 +97,12 @@ class PolicyConflictResolver:
             key=lambda p: len(p['namespace'].split('.')),
             reverse=True
         )
-        
+
         # Merge policies with precedence
         resolved = {}
         for policy in sorted_policies:
             resolved.update(policy['rules'])
-        
+
         return resolved
 ```
 
@@ -140,7 +140,7 @@ class PolicyConflictResolver:
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

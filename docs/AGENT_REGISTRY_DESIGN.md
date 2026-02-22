@@ -1,7 +1,7 @@
 # Agent Registry & Interactive Session Management — Holistic Design
 
-> **Status**: Implemented (Phases P0-P5 complete)  
-> **Scope**: Unified agent registry, session lifecycle, interaction modes, UX, security, observability  
+> **Status**: Implemented (Phases P0-P5 complete)
+> **Scope**: Unified agent registry, session lifecycle, interaction modes, UX, security, observability
 > **Related**: [AGENT_REGISTRY_RESEARCH.md](./AGENT_REGISTRY_RESEARCH.md) (research, IPC, prior art)
 
 ---
@@ -116,30 +116,30 @@ AgentRecord:
   id: string                    # Unique, stable (e.g. session_id or correlation_id)
   source: enum                   # thegent-run | thegent-droid | thegent-subagent | ide-managed | user-spawned | discovered | mcp-proxy
   interactivity: enum            # pty | tmux | headless-logs | headless-holdpty | read-only
-  
+
   # Identity
   agent_name: string             # claude, codex, copilot, etc.
   model: string | null
   owner: string                  # owner tag (user@host, etc.)
   cwd: string
   started_at: datetime
-  
+
   # Process
   pid: int | null
   ppid: int | null
   status: enum                   # running | paused | exited | failed | unknown
-  
+
   # Attachment
   attach_target: object | null   # tmux pane, holdpty session, etc.
   message_endpoint: string | null # fifo path, socket path, or "tmux:{pane}"
-  
+
   # Paths (thegent-managed only)
   meta_path: string | null
   stdout_path: string | null
   stderr_path: string | null
   chat_path: string | null
   messages_path: string | null
-  
+
   # Metadata
   prompt_preview: string
   run_id: string | null
@@ -539,23 +539,23 @@ agent_registry:
 ## 14. Decision Records
 
 ### DR-1: File-first messaging
-**Decision**: Use file-based message queue as default; FIFO as opt-in enhancement.  
+**Decision**: Use file-based message queue as default; FIFO as opt-in enhancement.
 **Rationale**: Works everywhere; no special setup; easy to debug. FIFO adds complexity and platform considerations.
 
 ### DR-2: Single-writer for attach
-**Decision**: Only one interactive attach at a time per session.  
+**Decision**: Only one interactive attach at a time per session.
 **Rationale**: Avoids conflicting input; matches tmux/holdpty semantics.
 
 ### DR-3: Owner-scoped by default
-**Decision**: List and actions are owner-scoped unless `--all` or admin.  
+**Decision**: List and actions are owner-scoped unless `--all` or admin.
 **Rationale**: Privacy; least privilege; multi-tenant safety.
 
 ### DR-4: holdpty as optional wrapper
-**Decision**: holdpty is an opt-in launch wrapper, not required.  
+**Decision**: holdpty is an opt-in launch wrapper, not required.
 **Rationale**: External dependency; not all users need attach for headless.
 
 ### DR-5: Ghostty not a mux
-**Decision**: No Ghostty-specific attach API; use tmux/holdpty inside Ghostty.  
+**Decision**: No Ghostty-specific attach API; use tmux/holdpty inside Ghostty.
 **Rationale**: Ghostty is a terminal emulator; it does not provide session multiplexing.
 
 ---

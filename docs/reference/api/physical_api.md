@@ -84,4 +84,3 @@ send_command(self: Any, device_id: str, command: str, params: dict[(str, Any)])
 WP-40001: Send an actuation command to a physical device.
 
 ---
-

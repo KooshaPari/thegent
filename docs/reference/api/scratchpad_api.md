@@ -132,4 +132,3 @@ set_metadata(self: Any, key: str, value: str)
 Set metadata for the current draft (e.g., task_id).
 
 ---
-

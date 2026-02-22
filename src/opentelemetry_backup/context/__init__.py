@@ -4,7 +4,7 @@ FastMCP imports opentelemetry.context.Context; this provides a compatible
 placeholder when using the project's vendored trace/sdk stubs.
 """
 
-from typing import Any, Optional, Union
+from typing import Any
 
 
 class Context:

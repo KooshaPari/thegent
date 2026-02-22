@@ -42,4 +42,3 @@ Wrap an error in an ActionableError.
 **Returns**: ActionableError instance
 
 ---
-

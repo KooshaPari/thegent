@@ -187,4 +187,3 @@ no violations were detected.
 - `OSError`: If the file cannot be read.
 
 ---
-

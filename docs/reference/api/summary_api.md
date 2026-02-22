@@ -55,4 +55,3 @@ summary_impl(period: str, project_path: Any, summarize: bool, agent: str)
 FR-X09: Unified summary and audit log across runs, chats, and commits.
 
 ---
-

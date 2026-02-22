@@ -302,4 +302,3 @@ Run ``ruff check --output-format json`` and return diagnostics.
 - `ValueError`: If the JSON output from ruff cannot be parsed.
 
 ---
-

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import json
 import time
 from collections.abc import Callable
@@ -15,6 +16,8 @@ from thegent.agents import get_fallback_agents, list_agent_names, list_droid_nam
 from thegent.agents.registry import AGENT_LABELS
 from thegent.config import ThegentSettings
 from thegent.execution import RunRegistry
+
+_log = logging.getLogger(__name__)
 
 
 def resume_impl(
@@ -286,8 +289,8 @@ def list_models_impl(
             for p in providers:
                 result[p] = scraped.get(p, fallbacks.get(p, []))
             return result
-        except Exception:
-            pass
+        except Exception as exc:
+            _log.debug("Falling back to default model aliases: %s", exc)
     for p in providers:
         result[p] = fallbacks.get(p, [])
     return result

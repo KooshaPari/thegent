@@ -52,7 +52,7 @@ Test files must be named based on the **concern** they test, not the level.
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made
@@ -91,7 +91,7 @@ def mock_http_client():
 def test_external_service_call(mock_http_client):
     """Test that uses mocked HTTP client."""
     from mymodule import service
-    
+
     result = service.call_external("https://api.example.com")
     assert result == {"status": "ok"}
     mock_http_client.return_value.get.assert_called_once_with(
@@ -122,7 +122,7 @@ async def test_async_operation():
 async def test_async_with_timeout():
     """Test async with timeout."""
     from async_timeout import timeout
-    
+
     try:
         async with timeout(5):
             result = await long_operation()
@@ -163,7 +163,7 @@ from factory import Factory, Faker
 class UserFactory(Factory):
     class Meta:
         model = dict
-    
+
     name = Faker("name")
     email = Faker("email")
     role = "user"
@@ -251,14 +251,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      
+
       - name: Install dependencies
         run: |
           pip install -e ".[test]"
-      
+
       - name: Run tests
         run: pytest -xvs
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
@@ -269,7 +269,7 @@ jobs:
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

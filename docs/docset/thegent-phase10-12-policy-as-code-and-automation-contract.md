@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 Policy-as-Code and Automation Contract
 
-**Status:** Execution-ready design artifact  
-**Date:** 2026-02-15  
+**Status:** Execution-ready design artifact
+**Date:** 2026-02-15
 **Scope:** Unifies phase gates, hard-stop handling, board transitions, and drift remediation into deterministic policy with machine-enforced contracts.
 
 ## 1) Purpose
@@ -380,4 +380,3 @@ Run these queries after each gate boundary:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

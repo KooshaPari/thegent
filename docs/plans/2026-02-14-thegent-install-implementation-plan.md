@@ -53,38 +53,38 @@ def temp_target_dir(tmp_path):
 
 def test_get_source_dest_mapping_returns_correct_paths(temp_gent_source):
     from thegent.install import get_source_dest_mapping
-    
+
     mapping = get_source_dest_mapping(temp_gent_source, "claude")
-    
+
     assert "skills" in mapping
     assert "hooks" in mapping
 
 def test_smart_copy_skips_user_modified_file(temp_gent_source, temp_target_dir):
     from thegent.install import smart_copy_file
-    
+
     target_dir = temp_target_dir / "skills"
     target_dir.mkdir(parents=True)
     target_file = target_dir / "test-skill" / "SKILL.md"
     target_file.parent.mkdir(parents=True)
     target_file.write_text("# User modified version")
-    
+
     # Make target newer than source
     import time
     time.sleep(0.1)
     source_file = temp_gent_source / "skills" / "test-skill" / "SKILL.md"
-    
+
     result = smart_copy_file(source_file, target_file, verbose=False)
-    
+
     assert result == "skipped"
 
 def test_smart_copy_copies_when_source_newer(temp_gent_source, temp_target_dir):
     from thegent.install import smart_copy_file
-    
+
     source_file = temp_gent_source / "skills" / "test-skill" / "SKILL.md"
     target_file = temp_target_dir / "skills" / "test-skill" / "SKILL.md"
-    
+
     result = smart_copy_file(source_file, target_file, verbose=False)
-    
+
     assert result == "copied"
     assert target_file.read_text() == "# Test Skill"
 ```
@@ -155,7 +155,7 @@ def get_source_dest_mapping(thegent_root: Path, target: Target) -> dict[Path, Pa
     """Get mapping of source paths to destination paths."""
     mapping = {}
     home = get_home_dir()
-    
+
     if target in ("claude", "both"):
         claude_dir = home / ".claude"
         for src_rel, dest_rel in CLAUDE_MAPPING.items():
@@ -163,20 +163,20 @@ def get_source_dest_mapping(thegent_root: Path, target: Target) -> dict[Path, Pa
             dest = claude_dir / dest_rel
             if src.exists():
                 mapping[src] = dest
-        
+
         # Root level files
         for fname in ROOT_FILES:
             src = thegent_root / fname
             dest = home / ".claude" / fname
             if src.exists():
                 mapping[src] = dest
-        
+
         # .claude/plugins
         plugins_src = thegent_root / ".claude" / "plugins"
         plugins_dest = home / ".claude" / "plugins"
         if plugins_src.exists():
             mapping[plugins_src] = plugins_dest
-    
+
     if target in ("factory", "both"):
         factory_dir = home / ".factory"
         for src_rel, dest_rel in FACTORY_MAPPING.items():
@@ -184,7 +184,7 @@ def get_source_dest_mapping(thegent_root: Path, target: Target) -> dict[Path, Pa
             dest = factory_dir / dest_rel
             if src.exists():
                 mapping[src] = dest
-    
+
     return mapping
 
 
@@ -197,25 +197,25 @@ def should_exclude(path: Path) -> bool:
 def smart_copy_file(src: Path, dst: Path, verbose: bool = False) -> str:
     """
     Smart copy: only copy if source is newer or target doesn't exist.
-    
+
     Returns: "copied" | "skipped" | "conflict"
     """
     if not src.exists():
         return "skipped"
-    
+
     # Ensure destination directory exists
     dst.parent.mkdir(parents=True, exist_ok=True)
-    
+
     if not dst.exists():
         shutil.copy2(src, dst)
         if verbose:
             print(f"  Copied: {dst}")
         return "copied"
-    
+
     # Both exist - compare modification times
     src_mtime = src.stat().st_mtime
     dst_mtime = dst.stat().st_mtime
-    
+
     if dst_mtime > src_mtime:
         # Target is newer - user modified, skip
         if verbose:
@@ -232,10 +232,10 @@ def smart_copy_file(src: Path, dst: Path, verbose: bool = False) -> str:
 def create_symlink(src: Path, dst: Path, verbose: bool = False) -> str:
     """Create symlink from dst to src."""
     dst.parent.mkdir(parents=True, exist_ok=True)
-    
+
     if dst.exists() or dst.is_symlink():
         dst.unlink()
-    
+
     dst.symlink_to(src)
     if verbose:
         print(f"  Symlinked: {dst} -> {src}")
@@ -250,23 +250,23 @@ def run_install(
 ) -> dict:
     """
     Run the installation/synchronization.
-    
+
     Args:
         target: "claude", "factory", or "both"
         mode: "smart", "editable", or "force"
         dry_run: If True, only show what would happen
         verbose: If True, show detailed progress
-    
+
     Returns:
         Dict with counts: {copied, skipped, conflicts, errors}
     """
     # Get thegent root (parent of src/)
     thegent_root = Path(__file__).parent.parent.resolve()
-    
+
     mapping = get_source_dest_mapping(thegent_root, target)
-    
+
     counts = {"copied": 0, "skipped": 0, "conflicts": 0, "errors": 0}
-    
+
     for src, dst in mapping.items():
         try:
             if src.is_dir():
@@ -274,19 +274,19 @@ def run_install(
                 for src_file in src.rglob("*"):
                     if should_exclude(src_file):
                         continue
-                    
+
                     rel_path = src_file.relative_to(src)
                     dst_file = dst / rel_path
-                    
+
                     if dry_run:
                         print(f"Would process: {dst_file}")
                         continue
-                    
+
                     if mode == "editable":
                         result = create_symlink(src_file, dst_file, verbose)
                     else:
                         result = smart_copy_file(src_file, dst_file, verbose)
-                    
+
                     if result == "copied":
                         counts["copied"] += 1
                     elif result == "skipped":
@@ -298,23 +298,23 @@ def run_install(
                 if dry_run:
                     print(f"Would process: {dst}")
                     continue
-                
+
                 if mode == "editable":
                     result = create_symlink(src, dst, verbose)
                 else:
                     result = smart_copy_file(src, dst, verbose)
-                
+
                 if result == "copied":
                     counts["copied"] += 1
                 elif result == "skipped":
                     counts["skipped"] += 1
                 elif result == "conflict":
                     counts["conflicts"] += 1
-                    
+
         except Exception as e:
             counts["errors"] += 1
             print(f"Error processing {src} -> {dst}: {e}")
-    
+
     return counts
 ```
 
@@ -376,23 +376,23 @@ Add this to cli.py (find the appropriate place with existing @click.group):
 def install_cmd(target, editable, force, dry_run, verbose):
     """Install and synchronize Claude Code configuration to ~/.claude and ~/.factory."""
     from thegent.install import run_install
-    
+
     mode = "editable" if editable else ("force" if force else "smart")
-    
+
     click.echo(f"=== thegent install ===")
     click.echo(f"Target: {target}")
     click.echo(f"Mode: {mode}")
     if dry_run:
         click.echo("Dry run: no changes will be made")
     click.echo()
-    
+
     counts = run_install(
         target=target,
         mode=mode,
         dry_run=dry_run,
         verbose=verbose,
     )
-    
+
     click.echo()
     click.echo("Results:")
     click.echo(f"  Copied:    {counts['copied']}")
@@ -438,25 +438,25 @@ git commit -m "feat: add 'thegent install' CLI command"
 def test_backup_creates_timestamped_backup(temp_gent_source, tmp_path, monkeypatch):
     """When user has modified file, backup source version."""
     from thegent.install import smart_copy_with_backup
-    
+
     # Setup target with newer modification time
     target_dir = tmp_path / "target"
     target_dir.mkdir()
     target_file = target_dir / "test.txt"
     target_file.write_text("user version")
-    
+
     # Make target appear older to test copy behavior
     import time
     time.sleep(0.1)
-    
+
     source_file = temp_gent_source / "test.txt"
     source_file.write_text("source version")
-    
+
     # Patch backup dir
     backup_base = tmp_path / "backups"
-    
+
     result = smart_copy_with_backup(source_file, target_file, backup_base, verbose=False)
-    
+
     # Should copy since source is newer
     assert result == "copied"
     assert target_file.read_text() == "source version"
@@ -470,17 +470,17 @@ Add to install.py:
 def backup_source(src: Path, backup_dir: Path, verbose: bool = False) -> Path:
     """Backup source file to timestamped backup directory."""
     from datetime import datetime
-    
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_subdir = backup_dir / timestamp
     backup_subdir.mkdir(parents=True, exist_ok=True)
-    
+
     dst = backup_subdir / src.name
     shutil.copy2(src, dst)
-    
+
     if verbose:
         print(f"  Backed up: {src} -> {dst}")
-    
+
     return dst
 
 
@@ -490,16 +490,16 @@ def smart_copy_with_backup(
     """Smart copy with backup on conflict."""
     if not src.exists():
         return "skipped"
-    
+
     dst.parent.mkdir(parents=True, exist_ok=True)
-    
+
     if not dst.exists():
         shutil.copy2(src, dst)
         return "copied"
-    
+
     src_mtime = src.stat().st_mtime
     dst_mtime = dst.stat().st_mtime
-    
+
     if dst_mtime > src_mtime:
         # User modified - backup source, keep target
         backup_source(src, backup_dir, verbose)
@@ -584,4 +584,3 @@ thegent install --editable --verbose
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

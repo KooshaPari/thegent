@@ -6,8 +6,8 @@ Source: docs/research/DIRENV_HANG_FORK_GUARD_FIX_2026-02-18.md
 
 # direnv Hang & Fork Guard Error Fix
 
-**Date**: 2026-02-18  
-**Issue**: `ent_fork_guard:2: no matches found: (faster)` + direnv hang  
+**Date**: 2026-02-18
+**Issue**: `ent_fork_guard:2: no matches found: (faster)` + direnv hang
 **Status**: ✅ Fixed
 
 ---
@@ -56,7 +56,7 @@ Source: docs/research/DIRENV_HANG_FORK_GUARD_FIX_2026-02-18.md
 _thegent_fork_guard() {
   # Skip fork guard during direnv evaluation to prevent hangs
   [[ -n "${DIRENV_IN_ENVRC:-}" ]] && return 0
-  
+
   # ... rest of function ...
 }
 ```
@@ -99,7 +99,7 @@ fi
 _setup_venv() {
   # Fast path: check if venv already activated
   [[ -n "${VIRTUAL_ENV:-}" ]] && return 0
-  
+
   # ... activation code ...
 }
 ```

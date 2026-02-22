@@ -3,6 +3,7 @@ Integration tests for document queue system.
 """
 
 import json
+import logging
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -23,6 +24,7 @@ from thegent.agents.document.processor import (
     extract_headings,
     extract_links,
     extract_metadata,
+    extract_frontmatter,
 )
 
 
@@ -134,6 +136,60 @@ def test_document_processor(sample_md_file):
     assert result.status.value == "completed"
     assert "hash" in result.metadata
     assert "line_count" in result.metadata
+
+
+def test_extract_frontmatter(tmp_path: Path) -> None:
+    """Frontmatter extraction parses valid YAML metadata blocks."""
+
+    file_with_frontmatter = tmp_path / "with_frontmatter.md"
+    file_with_frontmatter.write_text(
+        """---
+title: Test Doc
+tags:
+  - test
+---
+
+# Body
+""",
+        encoding="utf-8",
+    )
+
+    assert extract_frontmatter(file_with_frontmatter) == {
+        "frontmatter": {
+            "title": "Test Doc",
+            "tags": ["test"],
+        }
+    }
+
+
+def test_extract_frontmatter_missing_block(tmp_path: Path) -> None:
+    """Files without frontmatter return an empty metadata payload."""
+
+    plain_file = tmp_path / "plain.md"
+    plain_file.write_text("# Title\n\nNo frontmatter here", encoding="utf-8")
+
+    assert extract_frontmatter(plain_file) == {}
+
+
+def test_extract_frontmatter_invalid_yaml(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    """Malformed YAML frontmatter is handled and logged before returning an empty dict."""
+
+    bad_file = tmp_path / "bad_frontmatter.md"
+    bad_file.write_text(
+        """---
+: invalid: yaml:
+---
+
+body
+""",
+        encoding="utf-8",
+    )
+
+    with caplog.at_level(logging.DEBUG, logger="thegent.agents.document.processor"):
+        result = extract_frontmatter(bad_file)
+
+    assert result == {}
+    assert any("Failed to parse YAML frontmatter" in record.message for record in caplog.records)
 
 
 def test_document_analyzer(sample_md_file):

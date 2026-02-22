@@ -1,6 +1,6 @@
 # Prompt History Collection & Audit System: Comprehensive Plan
 
-> **Status**: Research & Design Plan | **Version**: 1.0 | **Date**: 2026-02-16  
+> **Status**: Research & Design Plan | **Version**: 1.0 | **Date**: 2026-02-16
 > **Purpose**: Standardize prompt collection from Cursor/Codex/Claude, integrate with thegent MCP/CLI, add git-backed audit logs, collect todos/artifacts
 
 ---
@@ -939,4 +939,3 @@ This plan provides a comprehensive system for collecting, storing, and searching
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

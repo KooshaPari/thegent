@@ -91,6 +91,10 @@ def is_protected_process(name: str) -> bool:
     return base in PROTECTED_PROCESS_NAMES or any(p in base for p in PROTECTED_PROCESS_NAMES)
 
 
+# Backward-compatible alias for tests/importers expecting the old private helper name.
+_is_protected_process = is_protected_process
+
+
 @dataclass
 class SessionSnapshot:
     """Snapshot of a session's state for idle detection."""

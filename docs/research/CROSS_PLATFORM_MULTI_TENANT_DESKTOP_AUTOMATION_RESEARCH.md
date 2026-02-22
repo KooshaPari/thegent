@@ -2,9 +2,9 @@
 
 **Purpose:** Research and architect Windows/Linux/macOS support, agent-user isolation patterns, multi-tenant concurrent usage, and desktop automation integration (ARMs, AppleScript, UI Automation).
 
-**Date:** 2026-02-16  
-**Status:** Research & Planning | **P3 Polish**: Summary table, cross-links, next actions added  
-**Related:** 
+**Date:** 2026-02-16
+**Status:** Research & Planning | **P3 Polish**: Summary table, cross-links, next actions added
+**Related:**
 - [CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md](./CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md) - Consolidated comprehensive guide
 - [SANDBOXING_DESIGN.md](../plans/SANDBOXING_DESIGN.md) - Sandboxing architecture
 - [MULTI_PLATFORM_PARITY_MASTER_PLAN.md](../plans/MULTI_PLATFORM_PARITY_MASTER_PLAN.md) - Platform parity plan
@@ -108,7 +108,7 @@ class SystemUser:
     username: str
     shell: str
     groups: list[str]
-    
+
 class AgentUser(SystemUser):
     """Agent-specific user model."""
     agent_id: str
@@ -171,7 +171,7 @@ class AgentUserPool:
     """Manages a pool of pre-created OS users for agents."""
     pool_size: int = 10
     users: list[SystemUser]
-    
+
     def acquire(self, agent_id: str) -> SystemUser:
         """Assign a user from the pool to an agent."""
         # Round-robin or least-used
@@ -199,7 +199,7 @@ class AgentUserPool:
 ```python
 class AgentRunner:
     isolation_mode: Literal["subuser", "osuser", "docker"] = "subuser"
-    
+
     def run(self, ...):
         if self.isolation_mode == "osuser":
             user = self.user_pool.acquire(self.agent_id)
@@ -250,7 +250,7 @@ class MultiTenantEditLease:
     file: Path
     expires_at: datetime
     mode: Literal["read", "write", "exclusive"]
-    
+
     def acquire(self, tenant_id: str, mode: str) -> bool:
         """Acquire lease if no conflicting tenant."""
         conflicts = self._find_conflicts(tenant_id, mode)
@@ -275,7 +275,7 @@ class MultiTenantEditLease:
 ```python
 class DesktopAutomationCoordinator:
     """Coordinates UI automation to avoid user conflicts."""
-    
+
     def request_automation(self, agent_id: str) -> bool:
         """Request UI automation lock."""
         if self._user_active():
@@ -284,7 +284,7 @@ class DesktopAutomationCoordinator:
             return False  # Another agent is automating
         self._acquire_lock(agent_id)
         return True
-    
+
     def _user_active(self) -> bool:
         """Detect if user is actively using desktop."""
         # macOS: Check last input time via IOKit
@@ -310,12 +310,12 @@ class TenantAwareConcurrencyController:
     max_user_processes: int = 5
     max_agent_processes: int = 10
     max_total_processes: int = 15
-    
+
     def acquire(self, tenant_id: str) -> bool:
         user_count = self._count_processes("user")
         agent_count = self._count_processes("agent-*")
         total = user_count + agent_count
-        
+
         if tenant_id == "user":
             return user_count < self.max_user_processes and total < self.max_total_processes
         else:
@@ -455,17 +455,17 @@ from typing import Optional
 
 class DesktopAutomationProvider(ABC):
     """Abstract base for desktop automation."""
-    
+
     @abstractmethod
     def click(self, element: UIElement) -> bool:
         """Click a UI element."""
         pass
-    
+
     @abstractmethod
     def type_text(self, element: UIElement, text: str) -> bool:
         """Type text into an element."""
         pass
-    
+
     @abstractmethod
     def find_element(self, selector: str) -> Optional[UIElement]:
         """Find UI element by selector."""
@@ -988,24 +988,24 @@ desktop_automation:
 
 ### 13.1 Predictive User Activity Detection
 
-**Current:** Reactive (check if user is active now)  
+**Current:** Reactive (check if user is active now)
 **Enhancement:** Predictive (learn user patterns, predict idle windows)
 
 **Implementation:**
 ```python
 class PredictiveUserActivityDetector:
     """Learn user activity patterns and predict idle windows."""
-    
+
     def __init__(self):
         self.activity_history: list[tuple[datetime, bool]] = []
         self.patterns: dict[str, float] = {}  # hour_of_day -> idle_probability
-    
+
     def predict_idle_window(self, duration_minutes: int) -> Optional[datetime]:
         """Predict next idle window of at least duration_minutes."""
         # Analyze historical patterns
         # Return predicted start time
         pass
-    
+
     def record_activity(self, timestamp: datetime, active: bool):
         """Record user activity for pattern learning."""
         self.activity_history.append((timestamp, active))
@@ -1021,7 +1021,7 @@ class PredictiveUserActivityDetector:
 ```python
 class AutomationQueue:
     """Priority queue for desktop automation requests."""
-    
+
     def enqueue(
         self,
         agent_id: str,
@@ -1031,7 +1031,7 @@ class AutomationQueue:
     ) -> str:
         """Enqueue automation request."""
         pass
-    
+
     def execute_next(self) -> bool:
         """Execute highest-priority request if user is idle."""
         if not self._is_user_idle():
@@ -1049,7 +1049,7 @@ class AutomationQueue:
 ```python
 class PreemptibleAutomation:
     """Automation that can be paused and resumed."""
-    
+
     def execute(self, action: AutomationAction) -> AutomationResult:
         """Execute with checkpointing."""
         checkpoint = self._create_checkpoint(action)
@@ -1072,7 +1072,7 @@ class PreemptibleAutomation:
 ```python
 class AutomationRegistry:
     """Shared registry for agent automation coordination."""
-    
+
     def claim_automation(
         self,
         agent_id: str,
@@ -1085,7 +1085,7 @@ class AutomationRegistry:
             return False
         self._register_claim(agent_id, scope, duration)
         return True
-    
+
     def release_automation(self, agent_id: str, scope: AutomationScope):
         """Release automation claim."""
         self._unregister_claim(agent_id, scope)
@@ -1127,12 +1127,12 @@ def execute_with_validation(action: AutomationAction) -> AutomationResult:
     """Validate UI state before and after automation."""
     pre_state = capture_ui_state(action.scope)
     validate_preconditions(pre_state, action)
-    
+
     result = provider.execute(action)
-    
+
     post_state = capture_ui_state(action.scope)
     validate_postconditions(post_state, action, result)
-    
+
     return result
 ```
 
@@ -1184,11 +1184,11 @@ def execute_with_rollback(action: AutomationAction) -> AutomationResult:
 ```python
 class OptimizedAutomationProvider:
     """Provider with performance optimizations."""
-    
+
     def __init__(self):
         self.element_cache: dict[str, UIElement] = {}
         self.screenshot_cache: dict[str, bytes] = {}
-    
+
     def find_element_cached(self, selector: str) -> Optional[UIElement]:
         """Find element with caching."""
         if selector in self.element_cache:
@@ -1228,22 +1228,22 @@ class OptimizedAutomationProvider:
 ```python
 class LoadAwareAutomationCoordinator:
     """Coordinate automation based on system load."""
-    
+
     def request_automation(self, agent_id: str) -> bool:
         """Request automation, respecting load limits."""
         # Check concurrency controller
         if not concurrency_controller.acquire(tenant_id=agent_id):
             return False
-        
+
         # Check user activity
         if user_activity_detector.is_user_active():
             return False
-        
+
         # Check system load
         snapshot = sample_resources()
         if snapshot.load_1m / snapshot.cpu_count > 2.0:
             return False  # System overloaded
-        
+
         return True
 ```
 
@@ -1306,15 +1306,15 @@ with tracer.start_as_current_span("desktop_automation.click") as span:
 ```python
 class AutomationDebugger:
     """Debug tools for desktop automation."""
-    
+
     def record_automation(self, action: AutomationAction) -> AutomationRecording:
         """Record automation for replay."""
         pass
-    
+
     def replay_automation(self, recording: AutomationRecording) -> AutomationResult:
         """Replay recorded automation."""
         pass
-    
+
     def inspect_ui_state(self, scope: AutomationScope) -> UIState:
         """Capture and return UI state for inspection."""
         pass
@@ -1343,7 +1343,7 @@ class AutomationDebugger:
 ```python
 class PermissionManager:
     """Manage desktop automation permissions."""
-    
+
     def check_permissions(self) -> dict[str, bool]:
         """Check current permission status."""
         return {
@@ -1352,7 +1352,7 @@ class PermissionManager:
             "windows_uia": self._check_windows_uia(),
             "linux_atspi": self._check_linux_atspi(),
         }
-    
+
     def request_permissions(self) -> dict[str, bool]:
         """Request missing permissions."""
         # Open system preferences/security settings
@@ -1389,24 +1389,24 @@ class PermissionManager:
 ```python
 class AutomationSandbox:
     """Sandbox for desktop automation."""
-    
+
     def __init__(self, policy: AutomationPolicy):
         self.policy = policy
-    
+
     def validate_action(self, action: AutomationAction) -> bool:
         """Validate action against sandbox policy."""
         # Check app allowlist
         if action.app not in self.policy.allowed_apps:
             return False
-        
+
         # Check action type
         if action.type in self.policy.blocked_actions:
             return False
-        
+
         # Check region
         if not self.policy.is_region_allowed(action.region):
             return False
-        
+
         return True
 ```
 
@@ -1651,7 +1651,7 @@ tm.broadcast({
 ```python
 class DesktopAutomationCostTracker:
     """Track costs for desktop automation actions."""
-    
+
     def track_action(
         self,
         action: AutomationAction,
@@ -1661,15 +1661,15 @@ class DesktopAutomationCostTracker:
         """Track automation action cost."""
         # Base cost: time-based (opportunity cost)
         base_cost = duration_ms / 1000.0 * COST_PER_SECOND
-        
+
         # Resource cost: CPU/memory usage
         resource_cost = self._estimate_resource_cost(action)
-        
+
         # Failure cost: retry overhead
         failure_cost = 0.0
         if not success:
             failure_cost = self._estimate_retry_cost(action)
-        
+
         total_cost = base_cost + resource_cost + failure_cost
         self._log_cost(action, total_cost)
         return total_cost
@@ -1686,7 +1686,7 @@ class DesktopAutomationCostTracker:
 ```python
 class AutomationRateLimiter:
     """Rate limiting for desktop automation."""
-    
+
     def __init__(self):
         # Per-agent rate limits
         self.agent_buckets: dict[str, TokenBucket] = {}
@@ -1695,20 +1695,20 @@ class AutomationRateLimiter:
             capacity=100,  # 100 actions per minute
             refill_per_sec=100.0 / 60.0
         )
-    
+
     def acquire(self, agent_id: str, action_type: str) -> bool:
         """Acquire rate limit token for automation."""
         # Check global limit
         if not self.global_bucket.acquire():
             return False
-        
+
         # Check per-agent limit
         if agent_id not in self.agent_buckets:
             self.agent_buckets[agent_id] = TokenBucket(
                 capacity=20,  # 20 actions per minute per agent
                 refill_per_sec=20.0 / 60.0
             )
-        
+
         return self.agent_buckets[agent_id].acquire()
 ```
 
@@ -1730,12 +1730,12 @@ desktop_automation:
 ```python
 class CostAggregator:
     # ... existing methods ...
-    
+
     def get_automation_mtd(self) -> float:
         """Get Month-to-Date desktop automation cost."""
         # Sum automation costs from ledger
         pass
-    
+
     def check_automation_budget(self) -> bool:
         """Check if automation budget is available."""
         mtd = self.get_automation_mtd()
@@ -1750,7 +1750,7 @@ if action_type == "desktop_automation":
     automation_cost = cost_estimator.estimate_automation(action)
     automation_budget = getattr(settings, "desktop_automation_budget_mtd", 10.0)
     automation_mtd = aggregator.get_automation_mtd()
-    
+
     if automation_mtd + automation_cost > automation_budget:
         return "deny", f"Desktop automation budget exceeded"
 ```
@@ -1785,7 +1785,7 @@ if action_type == "desktop_automation":
 ```python
 class AutomationMetrics:
     """Performance metrics for desktop automation."""
-    
+
     def record_action(
         self,
         action_type: str,
@@ -1799,7 +1799,7 @@ class AutomationMetrics:
             action=action_type,
             platform=platform
         ).observe(duration_ms / 1000.0)
-        
+
         # Success rate counter
         if success:
             self.success_counter.labels(
@@ -1819,14 +1819,14 @@ with tracer.start_as_current_span("desktop_automation.click") as span:
     span.set_attribute("automation.action", "click")
     span.set_attribute("automation.platform", "macos")
     span.set_attribute("automation.selector", selector)
-    
+
     start_time = time.time()
     result = provider.click(element)
     duration_ms = (time.time() - start_time) * 1000
-    
+
     span.set_attribute("automation.duration_ms", duration_ms)
     span.set_attribute("automation.success", result.success)
-    
+
     if not result.success:
         span.set_status(Status(StatusCode.ERROR, result.error))
 ```
@@ -1866,30 +1866,30 @@ with tracer.start_as_current_span("desktop_automation.click") as span:
 ```python
 class AutomationInputValidator:
     """Validate automation inputs for security."""
-    
+
     def validate_selector(self, selector: str) -> bool:
         """Validate element selector."""
         # Block XPath injection attempts
         if any(char in selector for char in ["'", '"', "\\", ";", "|"]):
             return False
-        
+
         # Block script injection
         if "javascript:" in selector.lower() or "onclick" in selector.lower():
             return False
-        
+
         return True
-    
+
     def validate_text(self, text: str) -> bool:
         """Validate text input."""
         # Block shell command injection
         dangerous_chars = [";", "|", "&", "`", "$", "(", ")"]
         if any(char in text for char in dangerous_chars):
             return False
-        
+
         # Block script injection
         if any(tag in text.lower() for tag in ["<script", "javascript:", "onerror"]):
             return False
-        
+
         return True
 ```
 
@@ -1897,18 +1897,18 @@ class AutomationInputValidator:
 ```python
 class ScreenshotRedactor:
     """Redact sensitive data from screenshots."""
-    
+
     def redact(self, screenshot: bytes, regions: list[dict]) -> bytes:
         """Redact specified regions from screenshot."""
         # Convert to PIL Image
         img = Image.open(io.BytesIO(screenshot))
-        
+
         # Redact regions (password fields, personal info)
         for region in regions:
             x, y, w, h = region["x"], region["y"], region["w"], region["h"]
             # Black out region
             img.paste((0, 0, 0), (x, y, x+w, y+h))
-        
+
         # Convert back to bytes
         output = io.BytesIO()
         img.save(output, format="PNG")
@@ -1919,13 +1919,13 @@ class ScreenshotRedactor:
 ```python
 class AppVerifier:
     """Verify app identity before automation."""
-    
+
     def verify_app(self, app_name: str, window_title: str) -> bool:
         """Verify app is legitimate."""
         # Check app signature (macOS)
         if platform.system() == "Darwin":
             return self._verify_macos_app_signature(app_name)
-        
+
         # Check window title matches expected pattern
         expected_patterns = self._get_allowed_patterns(app_name)
         return any(re.match(p, window_title) for p in expected_patterns)
@@ -1937,7 +1937,7 @@ class AppVerifier:
 ```python
 class AutomationAuditLogger:
     """Audit logging for desktop automation."""
-    
+
     def log_action(
         self,
         agent_id: str,
@@ -1957,11 +1957,11 @@ class AutomationAuditLogger:
             "platform": platform.system(),
             "user": os.getlogin(),
         }
-        
+
         # Encrypt screenshots if sensitive
         if self._is_sensitive(action):
             audit_entry["screenshot_encrypted"] = True
-        
+
         self._write_audit_log(audit_entry)
 ```
 
@@ -2111,7 +2111,7 @@ User: Chrome Tab 3 (Active development)
 ```python
 class DesktopAutomationFeatureFlags:
     """Feature flags for desktop automation."""
-    
+
     def is_enabled(self, feature: str, user_id: str) -> bool:
         """Check if feature is enabled for user."""
         flags = {
@@ -2216,12 +2216,12 @@ class AutomationResult:
 
 class DesktopAutomationProvider(ABC):
     """Abstract base for desktop automation."""
-    
+
     @abstractmethod
     def click(self, element: UIElement, timeout_ms: float = 5000.0) -> AutomationResult:
         """Click a UI element."""
         pass
-    
+
     @abstractmethod
     def type_text(
         self,
@@ -2231,7 +2231,7 @@ class DesktopAutomationProvider(ABC):
     ) -> AutomationResult:
         """Type text into an element."""
         pass
-    
+
     @abstractmethod
     def find_element(
         self,
@@ -2240,7 +2240,7 @@ class DesktopAutomationProvider(ABC):
     ) -> Optional[UIElement]:
         """Find UI element by selector."""
         pass
-    
+
     @abstractmethod
     def screenshot(
         self,
@@ -2248,7 +2248,7 @@ class DesktopAutomationProvider(ABC):
     ) -> bytes:
         """Take screenshot of desktop or region."""
         pass
-    
+
     @abstractmethod
     def wait_for_user_idle(
         self,
@@ -2257,12 +2257,12 @@ class DesktopAutomationProvider(ABC):
     ) -> bool:
         """Wait until user is idle."""
         pass
-    
+
     @abstractmethod
     def get_active_window(self) -> Optional[UIElement]:
         """Get currently active window."""
         pass
-    
+
     @abstractmethod
     def list_windows(self, app_name: Optional[str] = None) -> list[UIElement]:
         """List all windows (optionally filtered by app)."""
@@ -2399,7 +2399,7 @@ class DesktopAutomationProvider(ABC):
 ```python
 class AutomationTokenBucket(TokenBucket):
     """Token bucket specifically for desktop automation."""
-    
+
     def __init__(
         self,
         capacity: int = 100,  # 100 actions per minute
@@ -2414,7 +2414,7 @@ class AutomationTokenBucket(TokenBucket):
             "screenshot": 5,  # Very expensive
             "find_element": 1,
         }
-    
+
     def acquire_for_action(self, action_type: str) -> bool:
         """Acquire tokens weighted by action type."""
         weight = self.action_weights.get(action_type, 1)
@@ -2427,10 +2427,10 @@ class AutomationTokenBucket(TokenBucket):
 ```python
 class AutomationRetryBudget(RetryBudgetPerMinute):
     """Retry budget for desktop automation failures."""
-    
+
     def __init__(self, cap: int = 20):
         super().__init__(cap=cap)
-    
+
     def record_automation_retry(self, action_type: str) -> bool:
         """Record automation retry attempt."""
         return self.acquire()
@@ -2442,20 +2442,20 @@ class AutomationRetryBudget(RetryBudgetPerMinute):
 def click_with_retry(self, element: UIElement, max_retries: int = 3) -> AutomationResult:
     """Click with retry budget enforcement."""
     retry_budget = get_automation_retry_budget()
-    
+
     for attempt in range(max_retries):
         if not retry_budget.record_automation_retry("click"):
             return AutomationResult(
                 success=False,
                 error="Retry budget exhausted"
             )
-        
+
         result = self.click(element)
         if result.success:
             return result
-        
+
         time.sleep(0.5 * (2 ** attempt))  # Exponential backoff
-    
+
     return AutomationResult(success=False, error="Max retries exceeded")
 ```
 
@@ -2475,16 +2475,16 @@ def click_with_retry(self, element: UIElement, max_retries: int = 3) -> Automati
 ```python
 class AutomationCostModel:
     """Cost model for desktop automation."""
-    
+
     BASE_COSTS = {
         "click": 0.0001,  # $0.0001 per click
         "type_text": 0.0002,  # $0.0002 per type
         "screenshot": 0.001,  # $0.001 per screenshot
         "find_element": 0.0005,  # $0.0005 per find
     }
-    
+
     RESOURCE_COST_PER_SECOND = 0.00001  # $0.00001 per second
-    
+
     def estimate_cost(
         self,
         action: AutomationAction,
@@ -2494,12 +2494,12 @@ class AutomationCostModel:
         """Estimate automation cost."""
         base = self.BASE_COSTS.get(action.type, 0.001)
         resource = (duration_ms / 1000.0) * self.RESOURCE_COST_PER_SECOND
-        
+
         # Failure overhead (retry cost)
         failure_overhead = 0.0
         if not success:
             failure_overhead = base * 0.5  # 50% of base for retry
-        
+
         return base + resource + failure_overhead
 ```
 
@@ -2509,7 +2509,7 @@ class AutomationCostModel:
 ```python
 class CostAggregator:
     # ... existing methods ...
-    
+
     def check_automation_budget(
         self,
         estimated_cost: float
@@ -2521,17 +2521,17 @@ class CostAggregator:
             "desktop_automation_budget_mtd",
             10.0
         )
-        
+
         if automation_mtd + estimated_cost > automation_budget:
             return False, f"Automation budget exceeded (${automation_mtd:.2f} + ${estimated_cost:.4f} > ${automation_budget:.2f})"
-        
+
         utilization = (automation_mtd + estimated_cost) / automation_budget
-        
+
         if utilization >= 0.95:
             return True, "WARNING: Automation budget at 95%"
         elif utilization >= 0.80:
             return True, "WARNING: Automation budget at 80%"
-        
+
         return True, "OK"
 ```
 
@@ -2545,11 +2545,11 @@ if run.mode == "desktop_automation":
         duration_ms=run.estimated_duration_ms,
         success=True  # Assume success for estimation
     )
-    
+
     allowed, reason = aggregator.check_automation_budget(estimated_cost)
     if not allowed:
         return "deny", reason
-    
+
     if "WARNING" in reason:
         return "warn", reason
 ```
@@ -2670,7 +2670,7 @@ def get_uia_element(selector: str) -> Optional[IUIAutomationElement]:
         "{ff48dba4-60ef-4201-aa87-5415e0d5c8e3}",
         interface=IUIAutomation
     )
-    
+
     root = automation.GetRootElement()
     condition = automation.CreatePropertyCondition(
         UIA_NamePropertyId, selector
@@ -2704,14 +2704,14 @@ import pyatspi
 def get_atspi_element(selector: str) -> Optional[pyatspi.Accessible]:
     """Get element via AT-SPI."""
     desktop = pyatspi.Registry.getDesktop(0)
-    
+
     # Traverse accessibility tree
     for app in desktop:
         for window in app:
             for component in window:
                 if component.name == selector:
                     return component
-    
+
     return None
 ```
 
@@ -2740,22 +2740,22 @@ def get_dbus_element(selector: str) -> Optional[Any]:
 ```python
 class MockAutomationProvider(DesktopAutomationProvider):
     """Mock provider for unit tests."""
-    
+
     def __init__(self):
         self.actions: list[AutomationAction] = []
         self.elements: dict[str, UIElement] = {}
         self.results: dict[str, AutomationResult] = {}
-    
+
     def click(self, element: UIElement, timeout_ms: float = 5000.0) -> AutomationResult:
         """Mock click."""
         action = AutomationAction(type="click", selector=element.selector)
         self.actions.append(action)
         return self.results.get("click", AutomationResult(success=True))
-    
+
     def add_element(self, selector: str, element: UIElement):
         """Add mock element."""
         self.elements[selector] = element
-    
+
     def set_result(self, action_type: str, result: AutomationResult):
         """Set mock result."""
         self.results[action_type] = result
@@ -2769,7 +2769,7 @@ def test_click_success():
     element = UIElement(selector="button", name="Save", role="button", bounds={})
     provider.add_element("button", element)
     provider.set_result("click", AutomationResult(success=True))
-    
+
     result = provider.click(element)
     assert result.success
     assert len(provider.actions) == 1
@@ -2794,15 +2794,15 @@ def test_element_not_found():
 def test_macos_click_real():
     """Test real macOS click (requires Accessibility permission)."""
     provider = macOSAutomationProvider()
-    
+
     # Open TextEdit
     subprocess.run(["open", "-a", "TextEdit"])
     time.sleep(2)
-    
+
     # Find "New Document" button
     element = provider.find_element("New Document")
     assert element is not None
-    
+
     # Click it
     result = provider.click(element)
     assert result.success
@@ -2822,7 +2822,7 @@ def test_find_element_properties(selector: str, timeout: float):
     """Property-based test for element finding."""
     provider = get_provider()
     result = provider.find_element(selector, timeout_ms=timeout * 1000)
-    
+
     # Properties:
     # - Result is either None or valid UIElement
     # - If result is not None, element.selector matches
@@ -2842,7 +2842,7 @@ def test_find_element_properties(selector: str, timeout: float):
 ```python
 class DesktopAutomationFlags:
     """Feature flags for desktop automation rollout."""
-    
+
     FLAGS = {
         "desktop_automation_enabled": {
             "default": False,
@@ -2885,19 +2885,19 @@ def get_provider() -> Optional[DesktopAutomationProvider]:
             return LinuxAutomationProvider()
     except Exception as e:
         _log.warning("Native provider unavailable: %s", e)
-    
+
     # Fallback to CUA if available
     try:
         return CUAAutomationProvider()
     except Exception:
         pass
-    
+
     # Fallback to image-based (pyautogui)
     try:
         return ImageBasedAutomationProvider()
     except Exception:
         pass
-    
+
     # No automation available
     return None
 ```
@@ -3123,11 +3123,11 @@ def click_with_atomic_check(self, element: UIElement) -> AutomationResult:
         current_element = self.find_element(element.selector)
         if not current_element:
             return AutomationResult(success=False, error="Element disappeared")
-        
+
         # Check if already in desired state
         if self._is_already_clicked(current_element):
             return AutomationResult(success=True, skipped=True)
-        
+
         # Execute click
         return self._provider.click(current_element)
 ```
@@ -3149,18 +3149,18 @@ Agent: Finds element → Window minimized by user → Click fails
 def click_with_window_check(self, element: UIElement) -> AutomationResult:
     """Click with window state check."""
     window = self.get_window_for_element(element)
-    
+
     # Check window state
     if window.is_minimized():
         # Restore window
         window.restore()
         time.sleep(0.5)  # Wait for restore
-    
+
     if window.is_hidden():
         # Bring to front
         window.bring_to_front()
         time.sleep(0.5)
-    
+
     # Execute click
     return self._provider.click(element)
 ```
@@ -3184,12 +3184,12 @@ def click_with_stability_check(self, selector: str) -> AutomationResult:
     # Wait for UI to stabilize
     if not self.wait_for_ui_stable(timeout_ms=2000):
         return AutomationResult(success=False, error="UI not stable")
-    
+
     # Find element (fresh lookup)
     element = self.find_element(selector)
     if not element:
         return AutomationResult(success=False, error="Element not found")
-    
+
     # Execute click
     return self._provider.click(element)
 ```
@@ -3217,7 +3217,7 @@ def click_with_permission_check(self, element: UIElement) -> AutomationResult:
             success=False,
             error="Permissions revoked. Please grant accessibility permissions."
         )
-    
+
     return self._provider.click(element)
 ```
 
@@ -3244,7 +3244,7 @@ def click_with_connection_check(self, element: UIElement) -> AutomationResult:
                 success=False,
                 error="Connection lost. Please check network."
             )
-    
+
     return self._provider.click(element)
 ```
 
@@ -3260,11 +3260,11 @@ def click_with_connection_check(self, element: UIElement) -> AutomationResult:
 ```python
 class PredictiveUserActivityDetector:
     """Predict user activity based on historical patterns."""
-    
+
     def __init__(self):
         self.activity_history: list[dict] = []
         self.patterns: dict = {}
-    
+
     def record_activity(self, timestamp: float, activity_type: str):
         """Record user activity."""
         self.activity_history.append({
@@ -3272,7 +3272,7 @@ class PredictiveUserActivityDetector:
             "type": activity_type
         })
         self._update_patterns()
-    
+
     def predict_next_activity(self) -> float | None:
         """Predict when user will be active next."""
         # Analyze patterns (e.g., user active every 30 min)
@@ -3281,7 +3281,7 @@ class PredictiveUserActivityDetector:
             predicted = last_activity + self.patterns["interval"]
             return predicted
         return None
-    
+
     def should_pause_automation(self) -> bool:
         """Determine if automation should pause based on prediction."""
         predicted = self.predict_next_activity()
@@ -3302,7 +3302,7 @@ from queue import PriorityQueue
 
 class PriorityAutomationQueue:
     """Priority queue for automation actions."""
-    
+
     def __init__(self):
         self.queue = PriorityQueue()
         self.priorities = {
@@ -3311,19 +3311,19 @@ class PriorityAutomationQueue:
             "normal": 2,
             "low": 3
         }
-    
+
     def enqueue(self, action: AutomationAction, priority: str = "normal"):
         """Enqueue action with priority."""
         priority_value = self.priorities.get(priority, 2)
         self.queue.put((priority_value, time.time(), action))
-    
+
     def dequeue(self) -> AutomationAction | None:
         """Dequeue highest priority action."""
         if self.queue.empty():
             return None
         _, _, action = self.queue.get()
         return action
-    
+
     def preempt(self, high_priority_action: AutomationAction):
         """Preempt current action with high-priority action."""
         # Pause current action
@@ -3342,10 +3342,10 @@ from thegent.orchestration.swarm_consensus import SwarmConsensus
 
 class ConsensusConflictResolver:
     """Resolve conflicts using swarm consensus."""
-    
+
     def __init__(self, conflict_id: str):
         self.consensus = SwarmConsensus(conflict_id, threshold=0.67)
-    
+
     def resolve_conflict(
         self,
         agents: list[str],
@@ -3359,7 +3359,7 @@ class ConsensusConflictResolver:
                 "confidence": self._calculate_confidence(proposal)
             }
             self.consensus.record_vote(agent_id, vote, self._sign(agent_id))
-        
+
         # Evaluate consensus
         reached, result = self.consensus.evaluate_consensus(len(agents))
         if reached:
@@ -3379,39 +3379,39 @@ class ConsensusConflictResolver:
 ```python
 class SmartElementCache:
     """Element cache with smart invalidation."""
-    
+
     def __init__(self, ttl_seconds: int = 30):
         self.cache: dict[str, tuple[UIElement, float, str]] = {}
         self.ttl = ttl_seconds
         self.invalidation_triggers: set[str] = set()
-    
+
     def get(self, selector: str, current_tree_hash: str) -> UIElement | None:
         """Get element from cache."""
         if selector in self.cache:
             element, cached_at, cached_hash = self.cache[selector]
-            
+
             # Check TTL
             if time.time() - cached_at > self.ttl:
                 del self.cache[selector]
                 return None
-            
+
             # Check tree hash (tree changed = invalidate)
             if cached_hash != current_tree_hash:
                 del self.cache[selector]
                 return None
-            
+
             # Validate element still exists
             if element.is_valid():
                 return element
             else:
                 del self.cache[selector]
-        
+
         return None
-    
+
     def put(self, selector: str, element: UIElement, tree_hash: str):
         """Put element in cache."""
         self.cache[selector] = (element, time.time(), tree_hash)
-    
+
     def invalidate_on_event(self, event: str):
         """Invalidate cache on UI event."""
         if event in self.invalidation_triggers:
@@ -3426,11 +3426,11 @@ class SmartElementCache:
 ```python
 class LazyElementFinder:
     """Lazy element finding with memoization."""
-    
+
     def __init__(self, provider: DesktopAutomationProvider):
         self.provider = provider
         self.memo: dict[str, UIElement | None] = {}
-    
+
     def find_element_lazy(self, selector: str) -> LazyElement:
         """Return lazy element that finds on access."""
         return LazyElement(
@@ -3438,30 +3438,30 @@ class LazyElementFinder:
             finder=self._find_when_needed,
             memo=self.memo
         )
-    
+
     def _find_when_needed(self, selector: str) -> UIElement | None:
         """Find element when actually needed."""
         if selector in self.memo:
             return self.memo[selector]
-        
+
         element = self.provider.find_element(selector)
         self.memo[selector] = element
         return element
 
 class LazyElement:
     """Lazy element that finds on access."""
-    
+
     def __init__(self, selector: str, finder: callable, memo: dict):
         self.selector = selector
         self._finder = finder
         self._memo = memo
         self._element: UIElement | None = None
-    
+
     def _ensure_found(self):
         """Ensure element is found."""
         if self._element is None:
             self._element = self._finder(self.selector)
-    
+
     def click(self):
         """Click element (finds if needed)."""
         self._ensure_found()
@@ -3478,7 +3478,7 @@ class LazyElement:
 ```python
 class BatchOptimizer:
     """Optimize batch automation operations."""
-    
+
     def optimize_batch(self, actions: list[AutomationAction]) -> list[AutomationAction]:
         """Optimize batch by grouping and ordering."""
         # Group by operation type
@@ -3487,7 +3487,7 @@ class BatchOptimizer:
             if action.type not in groups:
                 groups[action.type] = []
             groups[action.type].append(action)
-        
+
         # Optimize each group
         optimized = []
         for action_type, group_actions in groups.items():
@@ -3499,9 +3499,9 @@ class BatchOptimizer:
                 optimized.extend(self._batch_text_input(group_actions))
             else:
                 optimized.extend(group_actions)
-        
+
         return optimized
-    
+
     def _order_by_proximity(self, clicks: list[AutomationAction]) -> list[AutomationAction]:
         """Order clicks by proximity to minimize mouse movement."""
         # Get element positions
@@ -3610,11 +3610,11 @@ cat .thegent/sessions/*/automation_audit_*.jsonl | jq '.'
 ```python
 class MultiMonitorAutomationCoordinator:
     """Coordinate automation across multiple monitors."""
-    
+
     def __init__(self):
         self.displays = self._detect_displays()
         self.coordinators: dict[int, DesktopAutomationCoordinator] = {}
-    
+
     def automate_on_display(
         self,
         display_id: int,
@@ -3625,10 +3625,10 @@ class MultiMonitorAutomationCoordinator:
             self.coordinators[display_id] = DesktopAutomationCoordinator(
                 display_id=display_id
             )
-        
+
         coordinator = self.coordinators[display_id]
         return coordinator.execute(action)
-    
+
     def automate_all_displays(
         self,
         action: AutomationAction
@@ -3656,13 +3656,13 @@ class MultiMonitorAutomationCoordinator:
 ```python
 class HeadlessAutomationProvider(DesktopAutomationProvider):
     """Automation provider for headless environments."""
-    
+
     def __init__(self):
         # Start virtual display
         self.virtual_display = self._start_virtual_display()
         # Use image-based automation
         self.image_provider = ImageBasedAutomationProvider()
-    
+
     def click(self, element: UIElement, timeout_ms: float = 5000.0) -> AutomationResult:
         """Click using image-based automation."""
         # Take screenshot
@@ -3685,28 +3685,28 @@ class HeadlessAutomationProvider(DesktopAutomationProvider):
 ```python
 class CrossAppAutomationWorkflow:
     """Automation workflow across multiple applications."""
-    
+
     def __init__(self):
         self.app_coordinators: dict[str, AppAutomationCoordinator] = {}
         self.workflow_state: dict = {}
-    
+
     def execute_workflow(self, workflow: list[WorkflowStep]) -> WorkflowResult:
         """Execute workflow across apps."""
         for step in workflow:
             app_name = step.app_name
-            
+
             # Get app coordinator
             if app_name not in self.app_coordinators:
                 self.app_coordinators[app_name] = AppAutomationCoordinator(app_name)
-            
+
             coordinator = self.app_coordinators[app_name]
-            
+
             # Execute step
             result = coordinator.execute(step.action)
-            
+
             # Update workflow state
             self.workflow_state[step.id] = result
-            
+
             # Check for failures
             if not result.success:
                 return WorkflowResult(
@@ -3714,7 +3714,7 @@ class CrossAppAutomationWorkflow:
                     failed_step=step.id,
                     error=result.error
                 )
-        
+
         return WorkflowResult(success=True, state=self.workflow_state)
 ```
 
@@ -3730,11 +3730,11 @@ class CrossAppAutomationWorkflow:
 ```python
 class ZeroTrustAutomationProvider(DesktopAutomationProvider):
     """Zero-trust automation with verification."""
-    
+
     def __init__(self):
         self.verifier = AutomationVerifier()
         self.auditor = AutomationAuditor()
-    
+
     def click(self, element: UIElement, timeout_ms: float = 5000.0) -> AutomationResult:
         """Click with zero-trust verification."""
         # Verify element legitimacy
@@ -3747,7 +3747,7 @@ class ZeroTrustAutomationProvider(DesktopAutomationProvider):
                 success=False,
                 error="Element verification failed"
             )
-        
+
         # Verify app legitimacy
         app = self.get_app_for_element(element)
         if not self.verifier.verify_app(app):
@@ -3759,11 +3759,11 @@ class ZeroTrustAutomationProvider(DesktopAutomationProvider):
                 success=False,
                 error="App verification failed"
             )
-        
+
         # Execute with audit
         result = self._provider.click(element)
         self.auditor.log_action("click", element, result)
-        
+
         return result
 ```
 
@@ -3775,11 +3775,11 @@ class ZeroTrustAutomationProvider(DesktopAutomationProvider):
 ```python
 class SandboxedAutomationProvider(DesktopAutomationProvider):
     """Automation provider with sandboxing."""
-    
+
     def __init__(self, sandbox_config: SandboxConfig):
         self.sandbox = self._create_sandbox(sandbox_config)
         self.provider = DesktopAutomationProvider()
-    
+
     def click(self, element: UIElement, timeout_ms: float = 5000.0) -> AutomationResult:
         """Click in sandboxed environment."""
         # Verify element is in allowed scope
@@ -3788,11 +3788,11 @@ class SandboxedAutomationProvider(DesktopAutomationProvider):
                 success=False,
                 error="Element outside sandbox scope"
             )
-        
+
         # Execute in sandbox
         with self.sandbox.isolate():
             result = self.provider.click(element, timeout_ms)
-        
+
         return result
 ```
 
@@ -3844,7 +3844,7 @@ class SandboxedAutomationProvider(DesktopAutomationProvider):
 ```yaml
 alert: AutomationFailureSpike
 expr: |
-  rate(desktop_automation_actions_total{success="false"}[5m]) > 
+  rate(desktop_automation_actions_total{success="false"}[5m]) >
   rate(desktop_automation_actions_total{success="false"}[1h]) * 2
 for: 5m
 annotations:
@@ -3888,11 +3888,11 @@ annotations:
 ```python
 class RecordReplayAutomationProvider(DesktopAutomationProvider):
     """Provider with record/replay capability."""
-    
+
     def __init__(self, mode: str = "record"):
         self.mode = mode
         self.recording: list[dict] = []
-    
+
     def click(self, element: UIElement, timeout_ms: float = 5000.0) -> AutomationResult:
         """Click with record/replay."""
         if self.mode == "record":
@@ -3907,7 +3907,7 @@ class RecordReplayAutomationProvider(DesktopAutomationProvider):
             # Record result
             self.recording[-1]["result"] = result.to_dict()
             return result
-        
+
         elif self.mode == "replay":
             # Replay recorded action
             action = self.recording.pop(0)
@@ -3931,14 +3931,14 @@ def test_automation_properties(selector: str, timeout: float, platform: str):
     """Property-based test for automation."""
     provider = get_provider(platform)
     result = provider.find_element(selector, timeout_ms=timeout * 1000)
-    
+
     # Properties:
     # 1. Result is None or valid UIElement
     assert result is None or isinstance(result, UIElement)
-    
+
     # 2. Timeout is respected
     # (Cannot test directly, but can verify timeout handling)
-    
+
     # 3. Selector format is preserved
     if result:
         assert selector in result.selector or selector in result.name
@@ -4040,7 +4040,7 @@ raise AutomationError(
 
 ## 51. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Worker Droid
 
 ### Changes Made

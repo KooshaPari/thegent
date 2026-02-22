@@ -1,6 +1,6 @@
 # TUI Compositor Comparison Research
 
-**Research Date:** 2026-02-17  
+**Research Date:** 2026-02-17
 **Scope:** Terminal UI frameworks and compositors for building terminal user interfaces
 
 ---
@@ -75,11 +75,11 @@ class MyApp(App):
         color: white;
     }
     """
-    
+
     def compose(self) -> ComposeResult:
         yield Static("Welcome!", classes="header")
         yield Button("Click Me", id="btn")
-    
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.notify("Button clicked!")
 
@@ -339,15 +339,15 @@ cargo add ratatui
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2026-02-17  
+**Document Version:** 1.0
+**Last Updated:** 2026-02-17
 **Research:** TUI Compositor Framework Comparison
 
 ---
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

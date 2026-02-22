@@ -1,7 +1,7 @@
 # State-Aware Orchestration Design
 
-**Status:** Design  
-**Date:** 2026-02-14  
+**Status:** Design
+**Date:** 2026-02-14
 **Scope:** State persistence, interruption/resume, continuity packets (G-KD-03)
 
 ---

@@ -500,4 +500,3 @@ to_textual_css(self: Any)
 Convert to Textual CSS margin.
 
 ---
-

@@ -91,4 +91,3 @@ Generate JSON report.
 **Returns**: Path to report file
 
 ---
-

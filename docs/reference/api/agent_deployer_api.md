@@ -186,4 +186,3 @@ verify_task(self: Any, task: Any, execution: Any, pre_scan: Any) -> Any
 ```
 
 ---
-

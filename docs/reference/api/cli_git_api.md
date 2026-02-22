@@ -114,4 +114,3 @@ status(agent_id: str, project_root: Path, short: bool)
 Show status: combines private index (staged) and worktree (modified).
 
 ---
-

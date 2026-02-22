@@ -182,6 +182,9 @@ hooks:
     description: "Prune stale caches (.shadow-*, .git-cache, temp worktrees >7d) and abort quality gate if disk >90% (WL-006)"
 
 
+post-commit:
+  - post-commit-worklog.sh
+
 # File patterns for change detection
 patterns:
   test_files:

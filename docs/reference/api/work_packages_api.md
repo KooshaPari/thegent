@@ -32,4 +32,3 @@ List all registered work packages.
 **Returns**: List of work package IDs
 
 ---
-

@@ -1,7 +1,7 @@
 # Hook Runtime Rust Migration Complete Guide
 
 > **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
-> **Related**: 
+> **Related**:
 > - [Hook Runtime Rust Design](./HOOK_RUNTIME_RUST_DESIGN.md)
 > - [Hook Rust Migration Complete](../research/HOOK_RUST_MIGRATION_COMPLETE.md)
 > - [Full Shell to Rust Where Beneficial](./FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md)
@@ -134,20 +134,20 @@ use std::io;
 fn init_subcommand() -> Result<(), Error> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
-    
+
     let json: Value = serde_json::from_str(&input)?;
-    
+
     let cwd = Path::new(json["cwd"].as_str().unwrap());
     let project_dir = resolve_project_dir(cwd)?;
-    
+
     // Build env
     let env = build_env(&json, &project_dir)?;
-    
+
     // Output env
     for (key, value) in env {
         println!("{}={}", key, value);
     }
-    
+
     Ok(())
 }
 ```
@@ -167,16 +167,16 @@ use blake3;
 fn cache_key_subcommand(hook_name: &str, extra: Option<&str>) -> Result<String, Error> {
     let head_sha = get_head_sha()?;
     let changed_files = get_changed_files()?;
-    
+
     let mut hasher = blake3::Hasher::new();
     hasher.update(hook_name.as_bytes());
     hasher.update(head_sha.as_bytes());
     hasher.update(changed_files.join("\n").as_bytes());
-    
+
     if let Some(extra) = extra {
         hasher.update(extra.as_bytes());
     }
-    
+
     let hash = hasher.finalize();
     Ok(hex::encode(hash.as_bytes()))
 }
@@ -202,31 +202,31 @@ fn git_subcommand(args: Vec<String>) -> Result<(String, i32), Error> {
             .args(&args[1..])
             .exec()
     }
-    
+
     // Check if read-only
     if is_read_only(&args) {
         // Check cache
         if let Some(cached) = get_git_cache(&args)? {
             return Ok((cached.output, cached.exit_code));
         }
-        
+
         // Execute git
         let result = execute_git(&args)?;
-        
+
         // Cache result
         set_git_cache(&args, &result)?;
-        
+
         Ok((result.output, result.exit_code))
     } else {
         // Write operation: wait for lock
         wait_for_git_lock()?;
-        
+
         // Execute git
         let result = execute_git(&args)?;
-        
+
         // Invalidate cache
         invalidate_git_cache()?;
-        
+
         Ok((result.output, result.exit_code))
     }
 }
@@ -251,28 +251,28 @@ fn changed_files_subcommand() -> Result<Vec<String>, Error> {
     if shared_file.exists() && is_fresh(&shared_file)? {
         return Ok(read_lines(&shared_file)?);
     }
-    
+
     // Compute changed files
     let mut changed = Vec::new();
-    
+
     // Git diff --name-only HEAD
     let diff_output = execute_git(&["diff", "--name-only", "HEAD"])?;
     changed.extend(diff_output.output.lines().map(|s| s.to_string()));
-    
+
     // Git ls-files --others --exclude-standard
     let untracked_output = execute_git(&["ls-files", "--others", "--exclude-standard"])?;
     changed.extend(untracked_output.output.lines().map(|s| s.to_string()));
-    
+
     // Filter (node_modules, .git, etc.)
     changed.retain(|path| !should_exclude(path));
-    
+
     // Sort and dedupe
     changed.sort();
     changed.dedup();
-    
+
     // Write to shared file
     write_lines(&shared_file, &changed)?;
-    
+
     Ok(changed)
 }
 ```
@@ -288,10 +288,10 @@ use serde_yaml;
 fn config_get_subcommand(key: &str) -> Result<String, Error> {
     let config_path = find_hook_config()?;
     let config: Value = serde_yaml::from_str(&fs::read_to_string(&config_path)?)?;
-    
+
     // Navigate key path (e.g., "hooks.quality-gate.enabled")
     let value = navigate_config(&config, key)?;
-    
+
     Ok(value.to_string())
 }
 ```
@@ -357,37 +357,37 @@ impl GitManager {
         let cache_dir = get_cache_dir()?;
         Ok(Self { repo, cache_dir })
     }
-    
+
     pub fn execute(&self, args: Vec<String>) -> Result<(String, i32), Error> {
         // Agent passthrough logic
         if self.is_agent_passthrough(&args) {
             return self.exec_agent(&args);
         }
-        
+
         // Read-only: check cache
         if self.is_read_only(&args) {
             if let Some(cached) = self.get_cache(&args)? {
                 return Ok((cached.output, cached.exit_code));
             }
-            
+
             // Execute via gix or git
             let result = self.execute_git(&args)?;
             self.set_cache(&args, &result)?;
             return Ok((result.output, result.exit_code));
         }
-        
+
         // Write: wait for lock
         self.wait_for_lock()?;
-        
+
         // Execute git
         let result = self.execute_git(&args)?;
-        
+
         // Invalidate cache
         self.invalidate_cache()?;
-        
+
         Ok((result.output, result.exit_code))
     }
-    
+
     fn execute_git(&self, args: &[String]) -> Result<GitResult, Error> {
         // Use gix for read-only operations
         if self.is_read_only(args) {
@@ -411,14 +411,14 @@ impl GitManager {
             self.execute_git_command(args)
         }
     }
-    
+
     fn wait_for_lock(&self) -> Result<(), Error> {
         let lock_file = self.repo.path().join("index.lock");
-        
+
         // Wait for lock with timeout
         let timeout = Duration::from_secs(30);
         let start = Instant::now();
-        
+
         while lock_file.exists() {
             if start.elapsed() > timeout {
                 // Check if lock is stale
@@ -431,7 +431,7 @@ impl GitManager {
             }
             thread::sleep(Duration::from_millis(100));
         }
-        
+
         Ok(())
     }
 }
@@ -525,13 +525,13 @@ impl GitManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_cache_key() {
         let key = cache_key_subcommand("test-hook", None).unwrap();
         assert_eq!(key.len(), 64);  // blake3 hex
     }
-    
+
     #[test]
     fn test_git_cached() {
         let manager = GitManager::new(Path::new(".")).unwrap();

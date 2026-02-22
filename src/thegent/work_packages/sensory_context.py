@@ -4,7 +4,9 @@ Provides audio and video processing capabilities for agent context awareness.
 Supports transcription, feature extraction, and frame analysis.
 """
 
+import io
 import logging
+import tempfile
 from dataclasses import dataclass
 from typing import Any
 
@@ -65,18 +67,43 @@ class SensoryContextBridge:
         Returns:
             Dictionary containing transcript, features, and metadata
         """
-        logger.info(f"Processing audio data ({len(audio_data)} bytes, format: {format})")
+        logger.info("Processing audio data (%s bytes, format: %s)", len(audio_data), format)
 
-        # TODO: Integrate with actual audio processing library
-        # Options: whisper (OpenAI), speech_recognition, vosk
-        # For now, return structured response with placeholders
+        transcript = ""
+        if processor := self._audio_processors.get(format):
+            if hasattr(processor, "process"):
+                result = processor.process(audio_data, format=format, language=language)
+                if isinstance(result, dict):
+                    transcript = str(result.get("transcript", ""))
+                elif isinstance(result, str):
+                    transcript = result
+
+        duration = 0.0
+        sample_rate = 0
+        channels = 0
+        if format.lower() == "wav":
+            import wave
+
+            with wave.open(io.BytesIO(audio_data), "rb") as wav:
+                sample_rate = wav.getframerate()
+                channels = wav.getnchannels()
+                frames = wav.getnframes()
+                duration = frames / float(sample_rate) if sample_rate else 0.0
+        else:
+            msg = f"Unsupported audio format for built-in parser: {format}. Register a custom processor."
+            raise ValueError(msg)
+
+        sentiment = self._simple_sentiment(transcript) if transcript else None
+        keywords = self._extract_keywords(transcript) if transcript else None
 
         features = AudioFeatures(
-            transcript="",  # TODO: Implement transcription
-            duration=0.0,  # TODO: Calculate from audio data
-            sample_rate=16000,  # TODO: Detect from audio data
-            channels=1,  # TODO: Detect from audio data
+            transcript=transcript,
+            duration=duration,
+            sample_rate=sample_rate,
+            channels=channels,
             language=language,
+            sentiment=sentiment,
+            keywords=keywords,
         )
 
         return {
@@ -113,23 +140,56 @@ class SensoryContextBridge:
         Returns:
             Dictionary containing frames, features, and metadata
         """
-        logger.info(f"Processing video data ({len(video_data)} bytes, format: {format})")
-
-        # TODO: Integrate with actual video processing library
-        # Options: opencv-python, moviepy, ffmpeg-python
-        # For now, return structured response with placeholders
-
-        features = VideoFeatures(
-            frame_count=0,  # TODO: Calculate from video data
-            fps=30.0,  # TODO: Detect from video data
-            resolution=(1920, 1080),  # TODO: Detect from video data
-            duration=0.0,  # TODO: Calculate from video data
-        )
+        logger.info("Processing video data (%s bytes, format: %s)", len(video_data), format)
+        try:
+            import cv2  # type: ignore[import-not-found]
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError("opencv-python is required for built-in video processing") from exc
 
         frames: list[dict[str, Any]] = []
-        if extract_frames:
-            # TODO: Extract frames at specified interval
-            frames = []
+        with tempfile.NamedTemporaryFile(suffix=f".{format}", delete=True) as tmp:
+            tmp.write(video_data)
+            tmp.flush()
+
+            capture = cv2.VideoCapture(tmp.name)
+            if not capture.isOpened():
+                raise ValueError(f"Unable to decode video bytes as {format}")
+
+            frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+            fps = float(capture.get(cv2.CAP_PROP_FPS) or 0.0)
+            width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH) or 0)
+            height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT) or 0)
+            duration = (frame_count / fps) if fps > 0 else 0.0
+
+            if extract_frames:
+                interval_frames = max(1, int(frame_interval * fps)) if fps > 0 else 1
+                index = 0
+                while True:
+                    ok, frame = capture.read()
+                    if not ok:
+                        break
+                    if index % interval_frames == 0:
+                        frames.append(
+                            {
+                                "index": index,
+                                "timestamp_s": (index / fps) if fps > 0 else 0.0,
+                                "shape": tuple(frame.shape),
+                                "mean_luma": float(frame.mean()),
+                            }
+                        )
+                    index += 1
+
+            capture.release()
+
+        features = VideoFeatures(
+            frame_count=frame_count,
+            fps=fps,
+            resolution=(width, height),
+            duration=duration,
+            scenes=[],
+            objects=[],
+            text_overlays=[],
+        )
 
         return {
             "frames": frames,
@@ -168,3 +228,32 @@ class SensoryContextBridge:
         """
         self._video_processors[name] = processor
         logger.info(f"Registered video processor: {name}")
+
+    @staticmethod
+    def _extract_keywords(text: str) -> list[str]:
+        words = [w.strip(".,!?;:()[]{}").lower() for w in text.split()]
+        words = [w for w in words if len(w) >= 4]
+        counts: dict[str, int] = {}
+        for word in words:
+            counts[word] = counts.get(word, 0) + 1
+        ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+        return [w for w, _ in ranked[:5]]
+
+    @staticmethod
+    def _simple_sentiment(text: str) -> dict[str, float]:
+        positive = {"good", "great", "excellent", "happy", "love", "success"}
+        negative = {"bad", "poor", "terrible", "sad", "fail", "failure", "error"}
+        words = [w.strip(".,!?;:()[]{}").lower() for w in text.split()]
+        if not words:
+            return {"positive": 0.0, "negative": 0.0, "neutral": 1.0}
+        pos = sum(1 for w in words if w in positive)
+        neg = sum(1 for w in words if w in negative)
+        total = len(words)
+        positive_score = pos / total
+        negative_score = neg / total
+        neutral_score = max(0.0, 1.0 - positive_score - negative_score)
+        return {
+            "positive": round(positive_score, 4),
+            "negative": round(negative_score, 4),
+            "neutral": round(neutral_score, 4),
+        }

@@ -329,4 +329,3 @@ Change the current layout.
 - `layout`: New :class:`Layout` value.
 
 ---
-

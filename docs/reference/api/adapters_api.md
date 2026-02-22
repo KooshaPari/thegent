@@ -171,4 +171,3 @@ register_adapter(provider: str, adapter: OutputAdapter)
 Register an output adapter for a provider.
 
 ---
-

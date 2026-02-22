@@ -23,4 +23,3 @@ resolve_model_for_backend(model: str)
 Map Codex/provider-specific model ID to CLIProxy backend model ID.
 
 ---
-

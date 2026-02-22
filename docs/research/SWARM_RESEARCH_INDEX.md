@@ -1,7 +1,7 @@
 # Swarm & Resource Optimization — Research Index
 
-> **Purpose**: Master index for all swarm, process, resource, and resilience research. Use this to navigate the full research corpus.  
-> **Status**: Index | **Date**: 2026-02-16  
+> **Purpose**: Master index for all swarm, process, resource, and resilience research. Use this to navigate the full research corpus.
+> **Status**: Index | **Date**: 2026-02-16
 > **Sprawl**: Linked docs are full research (no fragment sprawl pending). Catalog of fragments/seeds: [RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md).
 
 ---
@@ -112,7 +112,7 @@ SWARM_PROCESS_AUTOMATION_DEEP_RESEARCH
 
 ## 6. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

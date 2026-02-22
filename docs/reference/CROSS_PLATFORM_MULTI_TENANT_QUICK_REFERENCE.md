@@ -2,10 +2,10 @@
 
 **Purpose:** Quick reference for Windows/Linux/macOS support, agent-user isolation, multi-tenant coordination, and desktop automation.
 
-**Date:** 2026-02-16  
-**Status:** Reference (Polished & Extended)  
-**Last Updated:** 2026-02-16  
-**Related:** 
+**Date:** 2026-02-16
+**Status:** Reference (Polished & Extended)
+**Last Updated:** 2026-02-16
+**Related:**
 - `docs/research/CROSS_PLATFORM_MULTI_TENANT_DESKTOP_AUTOMATION_RESEARCH.md` (Main research)
 - `docs/plans/CROSS_PLATFORM_MULTI_TENANT_IMPLEMENTATION_PLAN.md` (Implementation plan)
 - `docs/research/CROSS_PLATFORM_INTEGRATION_GUIDE.md` (Integration guide)
@@ -80,7 +80,7 @@
 
 ### Agent-User Model: Hybrid (Sub-User + Optional OS Users)
 
-**Default:** Sub-user model (fast, no permissions required)  
+**Default:** Sub-user model (fast, no permissions required)
 **Opt-in:** OS user model (true isolation, requires admin/root)
 
 ```python
@@ -499,21 +499,21 @@ cat .thegent/sessions/*/automation_errors.log
 
 ### Issue: Desktop automation fails with "Accessibility permission denied"
 
-**Solution:** 
+**Solution:**
 - macOS: Grant Accessibility permission in System Preferences
 - Windows: Run as Administrator or grant UIA Access
 - Linux: Ensure AT-SPI service is running
 
 ### Issue: Agent conflicts with user input
 
-**Solution:** 
+**Solution:**
 - Enable user activity detection: `check_user_activity: true`
 - Increase idle threshold: `idle_threshold_seconds: 10.0`
 - Use coordination locks: Agents wait for user idle
 
 ### Issue: Too many processes spawned
 
-**Solution:** 
+**Solution:**
 - Adjust limits: `max_user_processes`, `max_agent_processes`, `max_total_processes`
 - Use concurrency controller: `thegent run --max-processes 5`
 
@@ -570,7 +570,7 @@ src/thegent/mcp_server.py        # MCP tools registration
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

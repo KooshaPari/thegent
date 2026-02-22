@@ -1,7 +1,7 @@
 # Thegent Phase 3-6 Closure Validator Runtime CLI and Adapter Playbook
 
-**Status:** Execution blueprint  
-**Date:** 2026-02-15  
+**Status:** Execution blueprint
+**Date:** 2026-02-15
 **Scope:** Convert the phase 3-6 validator contracts into runnable CLI commands, policy execution paths, and tracker connectors.
 
 ## 1) Purpose
@@ -613,4 +613,3 @@ Retention default:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

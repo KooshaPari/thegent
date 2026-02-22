@@ -298,7 +298,7 @@ python scripts/anti_pattern_detector.py src/
 
 ## 14. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -1,7 +1,7 @@
 # Git Index.Lock & True Multi-Tenancy — Phased Implementation WBS
 
-**Date:** 2026-02-18  
-**Status:** Implementation Ready  
+**Date:** 2026-02-18
+**Status:** Implementation Ready
 **Extends:** [GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md](../research/GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md)
 
 ---
@@ -16,7 +16,7 @@
 | **Phase 4** | Agent system user layout | 2 days | 8–10h | P1 |
 | **Phase 5** | Gitoxide (gix) integration | 3–5 days | 16–24h | P2 |
 
-**Total Effort:** ~44–62 agent-hours  
+**Total Effort:** ~44–62 agent-hours
 **Architectural principle:** True multi-tenancy (shared repo, many agents) is primary; worktrees optional.
 
 ---

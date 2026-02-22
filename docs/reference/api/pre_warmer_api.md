@@ -360,4 +360,3 @@ Must not raise; exceptions are caught and logged.
 False if *load_fn* raised or returned None.
 
 ---
-

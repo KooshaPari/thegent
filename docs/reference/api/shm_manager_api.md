@@ -177,4 +177,3 @@ update_router_metrics(self: Any, lifecycle_inc: int, thegent_inc: int, changes_i
 ```
 
 ---
-

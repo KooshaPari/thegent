@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase3-6-closure-acceptance-pack-template.md
 
 # Thegent Phase 3–6 Closure Acceptance Pack Template
 
-**Status:** Operational template  
-**Date:** 2026-02-15  
+**Status:** Operational template
+**Date:** 2026-02-15
 **Scope:** Standardized closure package for phase 3–6 WPs to produce deterministic handoff into later waves.
 
 ## 1) Pack header

@@ -223,4 +223,3 @@ Silently ignores a missing file (idempotent).
 - `task_id`: The task ID returned by :py:meth:`enqueue`.
 
 ---
-

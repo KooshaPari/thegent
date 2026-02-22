@@ -597,7 +597,7 @@ docs/docset/
 
 **Index version:** v5 (unified crosslinked docset)
 
-**v4 additions:** PATTERNS.md (1952 lines, 114 patterns), RISKS_AND_ANTIPATTERNS.md (815 lines, 15 anti-patterns + 32 risks), IMPLEMENTATION_STATUS.md (503 lines, 72 WP tracker), OPTIMIZATION_POLISH_ADDENDUM.md (581 lines, 73 optimization items), FASTMCP_INTEGRATION.md (1024 lines).  
+**v4 additions:** PATTERNS.md (1952 lines, 114 patterns), RISKS_AND_ANTIPATTERNS.md (815 lines, 15 anti-patterns + 32 risks), IMPLEMENTATION_STATUS.md (503 lines, 72 WP tracker), OPTIMIZATION_POLISH_ADDENDUM.md (581 lines, 73 optimization items), FASTMCP_INTEGRATION.md (1024 lines).
 **v5 additions:** E2E plans, remaining-gap deep dives, Phase 10–12 implementation issue/launch/queue artifacts, policy-as-code automation contract, orchestrator tooling stack, crosswave continuity bridge, phase-3–6 closure acceptance schema/template, closure validator automation package, closure validator schema/event/runtime CLI+adapter contracts, phase-13+ proposal. Total docset: 48 files, 48 root doc entries.
 **Docset created:** 2026-02-14
 **Last updated:** 2026-02-15
@@ -631,4 +631,3 @@ Start with the navigation tips in §7, then dive into the documents that match y
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

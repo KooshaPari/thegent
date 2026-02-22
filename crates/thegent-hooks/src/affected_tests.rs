@@ -61,8 +61,8 @@ impl ImportAnalyzer {
 
     /// Parse Python imports
     fn parse_python(&mut self, content: &str) -> Result<()> {
-        // Match: import x, from x import y
-        let import_re = Regex::new(r"(?:from\s+([\w\.]+)\s+)?import\s+([\w\.\*,\s]+)")?;
+        // Match: import x, from x import y (stop at newline to avoid consuming multiple lines)
+        let import_re = Regex::new(r"(?:from\s+([\w\.]+)\s+)?import\s+([^\n]+)")?;
 
         for cap in import_re.captures_iter(content) {
             if let Some(module) = cap.get(1) {
@@ -84,9 +84,9 @@ impl ImportAnalyzer {
 
     /// Parse TypeScript/JavaScript imports
     fn parse_typescript(&mut self, content: &str) -> Result<()> {
-        // Match: import { x } from "y", import x from "y"
+        // Match: import { x } from "y", import x from "y", import * as x from "y"
         let import_re = Regex::new(
-            r#"import\s+(?:[\w\{\}\s,]+\s+)?from\s+['"]([\w\./\-@]+)['"]"#,
+            r#"import\s+(?:[\w\{\}\s,*]+\s+)?from\s+['"]([^'"]+)['"]"#,
         )?;
 
         for cap in import_re.captures_iter(content) {

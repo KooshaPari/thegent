@@ -31,10 +31,10 @@
    ```bash
    # Remove mise if installed
    brew uninstall mise  # or nix profile remove mise
-   
+
    # Test installation
    thegent install --system-deps
-   
+
    # Verify
    mise --version
    grep "mise activate" ~/.zshenv ~/.zshrc

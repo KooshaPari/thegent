@@ -1,7 +1,7 @@
 # Remaining Gaps — Full Depth Analysis
 
-**Date:** 2026-02-14  
-**Source:** `thegent-gaps-and-discovery-2026-02-14.md`  
+**Date:** 2026-02-14
+**Source:** `thegent-gaps-and-discovery-2026-02-14.md`
 **Purpose:** Deep-dive analysis of all remaining gaps: what exists, what's missing, implementation options, and acceptance criteria.
 
 ---

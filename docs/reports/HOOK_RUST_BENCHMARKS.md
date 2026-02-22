@@ -1013,4 +1013,3 @@ See `benchmarks/results/latest/report.md` for visualizations.
 **Next run**: Monthly or per Phase 2 release
 **Benchmark script**: `scripts/benchmark-comprehensive.sh`
 **Results location**: `benchmarks/results/latest/`
-

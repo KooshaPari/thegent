@@ -112,4 +112,3 @@ None are critical; fd/git_cached gains overwhelm these minor costs.
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

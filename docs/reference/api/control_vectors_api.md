@@ -64,4 +64,3 @@ prepare_environment(self: Any, workspace_path: Path)
 Proactively modify the physical environment to steer behavior (e.g. mock tools).
 
 ---
-

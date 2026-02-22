@@ -2257,7 +2257,7 @@ gate_scc_metrics() {
   local name="scc-metrics"
   local report="$VERIFY_DIR/scc-metrics-gate.json"
   local fail_closed="${QA_SCC_FAIL_CLOSED:-false}"
-  
+
   if ! command -v scc >/dev/null 2>&1; then
     write_na_report "$report" "$name"
     _gate_na "$name" "scc not installed"
@@ -2267,7 +2267,7 @@ gate_scc_metrics() {
   # Run scc on PROJECT_DIR
   local scc_out
   scc_out=$(scc --exclude-dir node_modules,target,dist,.venv,crates/target --format json "${PROJECT_DIR:-.}" 2>/dev/null)
-  
+
   if [[ -z "$scc_out" ]]; then
     _gate_fail "$name" "scc failed to produce output" "false"
     return 0
@@ -2478,7 +2478,7 @@ main() {
   echo "  Pass: $_gate_pass_count"
   echo "  N/A:  $_gate_na_count"
   echo "  Fail: $_gate_fail_count (fail-closed: $_gate_failures)"
-  
+
   # Only show failures; keep N/A and Pass hidden unless explicitly requested or if everything is N/A
   if [[ -n "$_gate_summary" ]]; then
     if [[ "$_gate_fail_count" -gt 0 ]]; then
@@ -2486,7 +2486,7 @@ main() {
         echo "Failures:"
         echo "$_gate_summary" | grep "FAIL:" || true
     fi
-    
+
     if [[ "$_gate_pass_count" -eq 0 && "$_gate_fail_count" -eq 0 ]]; then
         echo ""
         echo "All gates N/A"

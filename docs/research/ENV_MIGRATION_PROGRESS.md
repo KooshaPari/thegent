@@ -1,7 +1,7 @@
 # Environment Variable Migration Progress
 
-**Date**: 2026-02-19  
-**Status**: ✅ In Progress  
+**Date**: 2026-02-19
+**Status**: ✅ In Progress
 **Goal**: Migrate THGENT_* environment variables to ThegentSettings
 
 ---
@@ -88,5 +88,5 @@ reload = settings.reload
 
 ---
 
-**Last Updated**: 2026-02-19  
+**Last Updated**: 2026-02-19
 **Next**: Continue monitoring for any remaining THGENT_* env var usage

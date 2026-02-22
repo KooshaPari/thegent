@@ -61,8 +61,11 @@ class MultiLevelCache:
         self._l2: diskcache.Cache | None = None
         if l2_dir is not None and _DISKCACHE_AVAILABLE:
             l2_path = Path(l2_dir)
-            l2_path.mkdir(parents=True, exist_ok=True)
-            self._l2 = diskcache.Cache(str(l2_path))
+            try:
+                l2_path.mkdir(parents=True, exist_ok=True)
+                self._l2 = diskcache.Cache(str(l2_path))
+            except Exception:
+                self._l2 = None
 
     # ------------------------------------------------------------------
     # Public API

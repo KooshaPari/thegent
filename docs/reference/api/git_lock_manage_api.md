@@ -48,4 +48,3 @@ run_lock_cleanup(paths: Any, max_age: int, dry_run: bool)
 Remove stale .git/index.lock files. Returns (removed_count, skipped_count).
 
 ---
-

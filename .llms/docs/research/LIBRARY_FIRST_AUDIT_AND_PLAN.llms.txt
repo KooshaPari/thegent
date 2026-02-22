@@ -245,7 +245,7 @@ Full checklist and capability→preferred-source matrix: [LIBRARY_REPLACEMENT_AU
 
 ## 9. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Worker Droid
 
 ### Changes Made

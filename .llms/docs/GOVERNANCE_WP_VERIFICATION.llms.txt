@@ -6,8 +6,8 @@ Source: docs/GOVERNANCE_WP_VERIFICATION.md
 
 # Governance WP Implementation Verification (G-GP-01–09)
 
-**Purpose:** Verify WP-3001–WP-3008 implementation status against research recommendations.  
-**Date:** 2026-02-14  
+**Purpose:** Verify WP-3001–WP-3008 implementation status against research recommendations.
+**Date:** 2026-02-14
 **Source:** GOVERNANCE_POLICY_AUDIT_RESEARCH.md
 
 ---

@@ -61,4 +61,3 @@ trigger_rollback(self: Any, reason: str)
 Trigger an emergency rollback to the last stable state.
 
 ---
-

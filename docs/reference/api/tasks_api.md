@@ -25,4 +25,3 @@ get_role_prompt(role: TaskRole)
 Get the system prompt for a given role.
 
 ---
-

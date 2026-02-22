@@ -117,7 +117,7 @@ CommanderAI offers:
 
 **Workflow Pattern:**
 ```
-Ghostty (terminal) 
+Ghostty (terminal)
   ├── Worktree 1 (feature branch)
   │   └── Claude Code agent (isolated context)
   ├── Worktree 2 (bug fix)

@@ -9,4 +9,3 @@ export declare class EvidenceEvent extends BaseModel {
 
 export declare class PolicyEvent extends BaseModel {
 }
-

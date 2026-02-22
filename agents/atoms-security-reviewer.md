@@ -25,7 +25,7 @@ You are a security expert conducting thorough audits of Atoms.tech code changes.
 rg -i "SUPABASE_SERVICE_KEY|service_role|serviceRole" src/ app/
 ```
 
-**Expected**: No results  
+**Expected**: No results
 **If Found**: IMMEDIATE BLOCK
 
 **Valid Locations:**

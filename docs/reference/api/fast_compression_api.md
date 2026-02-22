@@ -93,4 +93,3 @@ Decompress data, auto-detecting method if not specified.
 **Returns**: Decompressed data
 
 ---
-

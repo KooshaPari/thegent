@@ -1,8 +1,8 @@
 # 12 — Cycleloop Loops & Checker Agent Design
 
-**Purpose:** Design agent controls for soft/hard Cycleloop loops, checker-agent pattern, preset prompt routing, LLM fallback, and human takeover.  
-**Date:** 2026-02-16  
-**Status:** Design proposal  
+**Purpose:** Design agent controls for soft/hard Cycleloop loops, checker-agent pattern, preset prompt routing, LLM fallback, and human takeover.
+**Date:** 2026-02-16
+**Status:** Design proposal
 **Scope:** Agent orchestration, HITL, observability overhaul
 
 > Cross-ref: [00-MASTER-INDEX](./00-MASTER-INDEX.md) | [05-ARCH](./05-ARCHITECTURE.md) | [10-DISPATCH](./10-SUBAGENT-DISPATCH.md)

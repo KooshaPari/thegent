@@ -95,7 +95,7 @@ class Executor:
         if not self.enable_isolation:
             # Fall back to subprocess.run()
             return subprocess.run(...)
-        
+
         # Isolated execution
         ctx = self.isolation_provider.allocate_tenant(tenant_id, agent_id)
         try:

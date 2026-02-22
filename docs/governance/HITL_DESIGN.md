@@ -1,8 +1,8 @@
 # HITL (Human-in-the-Loop) Design (G-GP-05)
 
-**Purpose:** Design checkpoint-based HITL, escalation path, and policy-driven approval.  
-**Date:** 2026-02-14  
-**Status:** Design  
+**Purpose:** Design checkpoint-based HITL, escalation path, and policy-driven approval.
+**Date:** 2026-02-14
+**Status:** Design
 **Source:** GOVERNANCE_POLICY_AUDIT_RESEARCH, WP-3008, 4004
 
 ---
@@ -36,7 +36,7 @@ Run execution
 Run end
 ```
 
-**EscalationQueue:** `list_pending(past_sla_only)` — already exists in cli_impl.  
+**EscalationQueue:** `list_pending(past_sla_only)` — already exists in cli_impl.
 **HITL gate:** New — block run completion until human approves or rejects.
 
 ---

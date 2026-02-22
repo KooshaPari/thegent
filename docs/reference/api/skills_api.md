@@ -31,4 +31,3 @@ skills_validate(name: str)
 Validate a skill and show any errors or warnings.
 
 ---
-

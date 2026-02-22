@@ -4,4 +4,3 @@
 export declare class IntegrationBot {
   constructor(platform: string, webhook_url: string);
 }
-

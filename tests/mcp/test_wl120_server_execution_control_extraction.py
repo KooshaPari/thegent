@@ -248,4 +248,3 @@ def test_server_source_wires_execution_and_control_loader_rebinds() -> None:
         "thegent_continuity_snapshot",
     ):
         assert f"{name}," in source
-

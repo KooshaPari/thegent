@@ -264,7 +264,7 @@ comm -23 /tmp/eslint-rules.txt /tmp/oxlint-rules.txt  # In eslint but not oxlint
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

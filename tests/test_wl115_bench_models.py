@@ -29,4 +29,3 @@ def test_bench_record_round_trip_dict() -> None:
 def test_bench_record_from_dict_requires_schema_fields() -> None:
     with pytest.raises(ValueError, match="Missing benchmark fields"):
         BenchRecord.from_dict({"suite": "code-gen"})
-

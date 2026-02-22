@@ -38,4 +38,3 @@ Records allow/deny/warn with reason and policy gate id.
 **Inherits from**: `BaseModel`
 
 ---
-

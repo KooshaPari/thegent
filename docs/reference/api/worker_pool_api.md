@@ -85,4 +85,3 @@ stop(self: Any)
 Shut down the pool.
 
 ---
-

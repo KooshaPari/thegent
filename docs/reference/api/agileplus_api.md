@@ -191,4 +191,3 @@ state(self: Any)
 Current cycle state.
 
 ---
-

@@ -1,7 +1,7 @@
 # Thegent Phase 11 Sprint Playbook (Bundles C and D)
 
-**Status:** Operational playbook for Bundle C + Bundle D  
-**Date:** 2026-02-15  
+**Status:** Operational playbook for Bundle C + Bundle D
+**Date:** 2026-02-15
 **Scope:** Execution sequence for control baseline (adaptive loops) and adaptation governance.
 
 ## 1) Bundle C objective (WP-11001 to WP-11005)
@@ -226,4 +226,3 @@
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

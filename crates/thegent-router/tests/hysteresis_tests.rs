@@ -36,7 +36,7 @@ fn test_hysteresis_band_prevents_oscillation() {
 fn test_hysteresis_max_dwell_forces_reevaluation() {
     let hyst = HysteresisManager::new();
     let past = Instant::now() - Duration::from_secs(2000); // > max_dwell (1800s)
-    
+
     // In hysteresis band but max dwell expired
     let can_switch = hyst.should_switch(
         RoutingMode::Lifecycle,
@@ -52,7 +52,7 @@ fn test_hysteresis_max_dwell_forces_reevaluation() {
 fn test_hysteresis_large_risk_change_overrides_dwell() {
     let hyst = HysteresisManager::new();
     let now = Instant::now();
-    
+
     // In band, dwell active, but large risk change
     let can_switch = hyst.should_switch(
         RoutingMode::Lifecycle,
@@ -73,7 +73,7 @@ fn test_hysteresis_steady_state_no_switches() {
 
     // Simulate steady state with small oscillations in band
     let risk_scores = vec![0.495, 0.505, 0.498, 0.502, 0.499];
-    
+
     for risk in risk_scores {
         if hyst.should_switch(
             RoutingMode::Lifecycle,
@@ -94,7 +94,7 @@ fn test_hysteresis_steady_state_no_switches() {
 fn test_hysteresis_dwell_time_enforcement() {
     let hyst = HysteresisManager::new();
     let now = Instant::now();
-    
+
     // Just switched, dwell active
     let can_switch_1 = hyst.should_switch(
         RoutingMode::Lifecycle,
@@ -120,11 +120,11 @@ fn test_hysteresis_dwell_time_enforcement() {
 fn test_hysteresis_band_boundary_precision() {
     let hyst = HysteresisManager::new();
     let threshold = 0.5;
-    
+
     // Test exact band boundaries
     let lower = threshold - hyst.band_width;
     let upper = threshold + hyst.band_width;
-    
+
     assert!(hyst.in_hysteresis_band(lower, threshold));
     assert!(hyst.in_hysteresis_band(upper, threshold));
     assert!(!hyst.in_hysteresis_band(lower - 0.001, threshold));
@@ -139,9 +139,9 @@ fn test_hysteresis_custom_parameters() {
         Duration::from_secs(600),
         0.10,
     );
-    
+
     let threshold = 0.5;
-    
+
     // Narrower band means less tolerance
     assert!(narrow_band.in_hysteresis_band(0.47, threshold));
     assert!(!narrow_band.in_hysteresis_band(0.44, threshold)); // Outside narrow band
@@ -152,7 +152,7 @@ fn test_hysteresis_multiple_switches() {
     let hyst = HysteresisManager::new();
     let mut last_time = Instant::now();
     let threshold = 0.5;
-    
+
     // Switch 1: far below threshold
     let can_switch_1 = hyst.should_switch(
         RoutingMode::Lifecycle,
@@ -163,7 +163,7 @@ fn test_hysteresis_multiple_switches() {
     );
     assert!(can_switch_1);
     last_time = Instant::now();
-    
+
     // Switch 2: in dwell, don't switch back yet
     let can_switch_2 = hyst.should_switch(
         RoutingMode::TheGent,

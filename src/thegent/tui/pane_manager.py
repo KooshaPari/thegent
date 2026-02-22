@@ -291,10 +291,13 @@ class PaneManager:
             return {}
 
         if node.is_leaf():
+            cwd_value = "."
+            if node.pane and getattr(node.pane, "config", None) and node.pane.config.cwd:
+                cwd_value = str(node.pane.config.cwd)
             return {
                 "type": "pane",
                 "id": node.id,
-                "working_dir": ".",  # TODO: Store actual working dir from pane
+                "working_dir": cwd_value,
             }
 
         return {
@@ -314,7 +317,9 @@ class PaneManager:
 
             config = TerminalConfig(cwd=data.get("working_dir", "."))  # type: ignore
             pane = TerminalPane(config=config)
-            return PaneNode(id=data.get("id", str(uuid.uuid4())[:8]), pane=pane)
+            pane_id = data.get("id", str(uuid.uuid4())[:8])
+            self._pane_map[pane_id] = pane
+            return PaneNode(id=pane_id, pane=pane)
 
         # Recursively deserialize children
         left = self._deserialize_tree(data.get("left", {}))

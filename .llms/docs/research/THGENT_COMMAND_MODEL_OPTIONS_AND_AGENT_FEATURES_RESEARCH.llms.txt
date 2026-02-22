@@ -8,8 +8,8 @@ Source: docs/research/THGENT_COMMAND_MODEL_OPTIONS_AND_AGENT_FEATURES_RESEARCH.m
 
 **Purpose**: Comprehensive research and documentation of thegent CLI commands, model options, routing features, and agent capabilities for proper agent usage.
 
-**Date**: 2026-02-17  
-**Status**: Research Complete, Documentation Updates Pending  
+**Date**: 2026-02-17
+**Status**: Research Complete, Documentation Updates Pending
 **Priority**: P1
 
 ---

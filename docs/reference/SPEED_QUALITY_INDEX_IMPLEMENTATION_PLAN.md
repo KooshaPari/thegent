@@ -1,7 +1,7 @@
 # Speed & Quality Index Implementation Plan
 
-**Date**: 2026-02-16  
-**Status**: Implemented + Extended (2026-02-16)  
+**Date**: 2026-02-16
+**Status**: Implemented + Extended (2026-02-16)
 **Related**: `cost_values.py`, `speed_values.py`, `quality_values.py`, `PARETO_FRONTIER_TERMINAL_BENCH_2_0.md`, `catalog.py`, `selector.py`
 
 ---
@@ -569,7 +569,7 @@ To add a new benchmark: extend `benchmarks.json` with a new key (e.g. `"gpqa"`) 
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

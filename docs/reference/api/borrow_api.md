@@ -312,4 +312,3 @@ Performs a simple HTTP GET to the ``/health`` endpoint.
 **Returns**: True if the server responds with status 200, False otherwise.
 
 ---
-

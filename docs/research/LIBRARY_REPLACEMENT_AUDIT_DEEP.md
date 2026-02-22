@@ -1,9 +1,9 @@
 # Library Replacement Audit — Deep & Wide
 
-> **Purpose**: Comprehensive audit of custom implementations that could be replaced with libraries or library + thin wrapper. Extends [LIBRARY_FIRST_AUDIT_AND_PLAN.md](./LIBRARY_FIRST_AUDIT_AND_PLAN.md). **Includes proposed new libraries**, **replacements of existing libs**, and **polish / intuitiveness / robustness / extensibility / enhancements**.  
-> **Status**: Deep Audit Complete (Extended) | **Date**: 2026-02-16 | **Updated**: 2026-02-17  
-> **P3 Polish**: Summary table, cross-links, next actions added  
-> **Note**: This document has been consolidated into [LIBRARY_REPLACEMENT_CONSOLIDATED.md](./LIBRARY_REPLACEMENT_CONSOLIDATED.md) - see consolidated version for implementation plan  
+> **Purpose**: Comprehensive audit of custom implementations that could be replaced with libraries or library + thin wrapper. Extends [LIBRARY_FIRST_AUDIT_AND_PLAN.md](./LIBRARY_FIRST_AUDIT_AND_PLAN.md). **Includes proposed new libraries**, **replacements of existing libs**, and **polish / intuitiveness / robustness / extensibility / enhancements**.
+> **Status**: Deep Audit Complete (Extended) | **Date**: 2026-02-16 | **Updated**: 2026-02-17
+> **P3 Polish**: Summary table, cross-links, next actions added
+> **Note**: This document has been consolidated into [LIBRARY_REPLACEMENT_CONSOLIDATED.md](./LIBRARY_REPLACEMENT_CONSOLIDATED.md) - see consolidated version for implementation plan
 > **Related**:
 - [LIBRARY_REPLACEMENT_CONSOLIDATED.md](./LIBRARY_REPLACEMENT_CONSOLIDATED.md) - Consolidated migration plan (recommended)
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream
@@ -217,7 +217,7 @@
 - **Parsing**: `defusedxml` (secure), `xml.etree.ElementTree` (stdlib) — for full XML; current use case is intentionally permissive
 - **Repair**: No standard lib for "repair malformed XML from LLM". Options: `lxml` with `recover=True`, or keep custom for domain-specific repair
 
-**Recommendation**: 
+**Recommendation**:
 - For parsing: If we need stricter validation, use `defusedxml`. Current regex extractor is domain-specific (agent outputs); keep or wrap in a small module.
 - For repair: Evaluate `lxml.etree.fromstring(text, parser=etree.XMLParser(recover=True))` — may be overkill. Document as "intentionally custom for LLM output repair."
 
@@ -297,7 +297,7 @@
 
 **Current**: `hashlib.sha256`, `hashlib.md5` (cache.py ETag) throughout.
 
-**Recommendation**: 
+**Recommendation**:
 - stdlib hashlib is fine.
 - Unify: Replace `hashlib.md5` in `tools/cache.py` with `sha256` for consistency (md5 is cryptographically weak; for ETag it's acceptable but sha256 is preferred).
 
@@ -860,22 +860,22 @@ if not USE_NEW_LIBRARY:
 
 ### 48.1 Before Adding Custom Impl — Checklist
 
-1. **Existing thegent native (Rust/BKM)?**  
+1. **Existing thegent native (Rust/BKM)?**
    thegent-parser, thegent-crypto, thegent-git, thegent-resources, thegent-hooks, thegent-shims, thegent-discovery, thegent-watcher, hook-dispatcher. If the capability exists there, call it (PyO3, subprocess JSON, or CLI).
 
-2. **Python stdlib sufficient?**  
+2. **Python stdlib sufficient?**
    json, hashlib, subprocess, pathlib, sqlite3, graphlib, argparse, logging. Prefer stdlib over a new dependency when it’s fit for purpose.
 
-3. **Already in pyproject.toml?**  
+3. **Already in pyproject.toml?**
    pydantic, httpx, tenacity, rich, typer, orjson, etc. Reuse before adding another lib.
 
-4. **Mature library (PyPI / crates.io)?**  
+4. **Mature library (PyPI / crates.io)?**
    See §1 (Replacements), §46 (Proposed New Dependencies). Prefer library + thin wrapper over full custom (LIBRARY_FIRST_AUDIT_AND_PLAN).
 
-5. **Shell vs Rust?**  
+5. **Shell vs Rust?**
    If the logic lives in hooks or install shims, consider thegent-hooks or thegent-shims instead of more shell (FULL_SHELL_TO_RUST §2–§5).
 
-6. **Document exception.**  
+6. **Document exception.**
    If custom code is still added, add a short comment: “No suitable lib/crate; see LIBRARY_FIRST_AUDIT / FULL_SHELL_TO_RUST.”
 
 ### 48.2 Consolidation Matrix (Capability → Preferred Source)
@@ -907,7 +907,7 @@ if not USE_NEW_LIBRARY:
 
 ## 50. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

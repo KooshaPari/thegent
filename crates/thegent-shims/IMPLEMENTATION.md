@@ -152,4 +152,3 @@ cargo test --test integration_tests
 2. Phase 2: Update hook dispatchers to prefer Rust over shell
 3. Phase 3: Deprecate shell wrappers, full Rust-only
 4. Phase 4: Extend to additional commands (node, npm, python)
-

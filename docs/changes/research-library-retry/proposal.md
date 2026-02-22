@@ -79,10 +79,10 @@ src/thegent/resilience/
 
 ## Timeline
 
-**Phase 1 (Research & Design)**: 1 phase  
-**Phase 2 (Implementation)**: Core library + strategies  
-**Phase 3 (Integration)**: Migrate 3 service + docs  
-**Phase 4 (Validation)**: Test + review  
+**Phase 1 (Research & Design)**: 1 phase
+**Phase 2 (Implementation)**: Core library + strategies
+**Phase 3 (Integration)**: Migrate 3 service + docs
+**Phase 4 (Validation)**: Test + review
 
 Estimated: 2–3 agent work blocks (~20–30 min wall clock for autonomous agents).
 

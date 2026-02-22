@@ -1,7 +1,7 @@
 # OpenRouter-Style Routing + CLIProxyAPIPlus Integration
 
-**Status:** Design  
-**Date:** 2026-02-15  
+**Status:** Design
+**Date:** 2026-02-15
 **Scope:** Model-first routing with measured cost/throughput/latency; Bifrost vs LiteLLM; CLIProxyAPIPlus responsibilities.
 
 ---

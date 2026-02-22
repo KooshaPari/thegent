@@ -613,4 +613,3 @@ unload_plugin(self: Any, name: str)
 Unload a plugin.
 
 ---
-

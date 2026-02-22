@@ -83,7 +83,7 @@ if command -v thegent >/dev/null 2>&1; then
     # Log what's triggering the prune
     echo "THEGENT PRUNE: Auto-prune hook triggered (attempt $_attempt/3)" >&2
     echo "THEGENT PRUNE: Reason: orphan count=$_count, cc-status=$_cc_count, available_mb=$_available_mb" >&2
-    
+
     if thegent mcp prune --force 2>&1; then
       _prune_rc=0
       echo "THEGENT PRUNE: Successfully pruned processes" >&2

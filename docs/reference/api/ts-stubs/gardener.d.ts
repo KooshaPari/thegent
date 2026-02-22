@@ -4,4 +4,3 @@
 export declare class Gardener {
   constructor(project_root: string);
 }
-

@@ -5,4 +5,3 @@ import { Tool } from "./tools";
 
 // Create a Tool instance
 const tool = new Tool();
-

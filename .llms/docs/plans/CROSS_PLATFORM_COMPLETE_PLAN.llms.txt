@@ -7,7 +7,7 @@ Source: docs/plans/CROSS_PLATFORM_COMPLETE_PLAN.md
 # Cross-Platform Multi-Tenant Desktop Automation Complete Plan
 
 > **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
-> **Related**: 
+> **Related**:
 > - [Cross-Platform Research Complete](../research/CROSS_PLATFORM_RESEARCH_COMPLETE.md)
 > - [Cross-Platform Complete Guide](../guides/CROSS_PLATFORM_COMPLETE.md)
 > - [Cross-Platform Multi-Tenant Implementation Plan](./CROSS_PLATFORM_MULTI_TENANT_IMPLEMENTATION_PLAN.md)
@@ -96,17 +96,17 @@ class SystemUser:
     home: Path
     shell: str
     groups: Set[str]
-    
+
     @classmethod
     def from_current(cls) -> "SystemUser":
         """Detect current user."""
         import os
         import pwd
         import grp
-        
+
         pw = pwd.getpwuid(os.getuid())
         groups = {g.gr_name for g in grp.getgrall() if pw.pw_name in g.gr_mem}
-        
+
         return cls(
             uid=pw.pw_uid,
             gid=pw.pw_gid,
@@ -115,7 +115,7 @@ class SystemUser:
             shell=pw.pw_shell,
             groups=groups,
         )
-    
+
     def to_dict(self) -> dict:
         """Serialize to dict."""
         return {
@@ -126,7 +126,7 @@ class SystemUser:
             "shell": self.shell,
             "groups": list(self.groups),
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "SystemUser":
         """Deserialize from dict."""
@@ -156,9 +156,9 @@ from pathlib import Path
 def create_os_user(username: str, base_path: Path) -> SystemUser:
     """Create OS user for agent isolation."""
     import platform
-    
+
     system = platform.system()
-    
+
     if system == "Darwin":  # macOS
         # Use dscl
         subprocess.run([
@@ -168,12 +168,12 @@ def create_os_user(username: str, base_path: Path) -> SystemUser:
             "UniqueID", str(_get_next_uid()),
             "PrimaryGroupID", "20",  # staff
         ], check=True)
-        
+
         # Create home directory
         home = base_path / username
         home.mkdir(parents=True, exist_ok=True)
         subprocess.run(["chown", f"{username}:staff", str(home)], check=True)
-    
+
     elif system == "Linux":
         # Use useradd
         subprocess.run([
@@ -184,15 +184,15 @@ def create_os_user(username: str, base_path: Path) -> SystemUser:
             "-m",  # create home
             username,
         ], check=True)
-    
+
     return SystemUser.from_username(username)
 
 def delete_os_user(username: str) -> None:
     """Delete OS user."""
     import platform
-    
+
     system = platform.system()
-    
+
     if system == "Darwin":
         subprocess.run(["dscl", ".", "-delete", f"/Users/{username}"], check=True)
     elif system == "Linux":
@@ -205,28 +205,28 @@ def delete_os_user(username: str) -> None:
 def create_os_user_windows(username: str, base_path: Path) -> SystemUser:
     """Create OS user on Windows."""
     import subprocess
-    
+
     # Use PowerShell New-LocalUser
     ps_script = f"""
     $password = ConvertTo-SecureString -String "TempPass123!" -AsPlainText -Force
     New-LocalUser -Name "{username}" -Password $password -Description "thegent Agent" -AccountNeverExpires
     """
-    
+
     subprocess.run([
         "powershell", "-Command", ps_script
     ], check=True)
-    
+
     # Create home directory
     home = base_path / username
     home.mkdir(parents=True, exist_ok=True)
-    
+
     # Set permissions via icacls
     subprocess.run([
         "icacls", str(home),
         "/grant", f"{username}:(OI)(CI)F",
         "/inheritance:r",
     ], check=True)
-    
+
     return SystemUser.from_username(username)
 ```
 
@@ -238,7 +238,7 @@ from threading import Lock
 
 class AgentUserPool:
     """Pool of agent users for isolation."""
-    
+
     def __init__(self, pool_size: int, base_path: Path):
         self.pool_size = pool_size
         self.base_path = base_path
@@ -246,7 +246,7 @@ class AgentUserPool:
         self.usage: dict[str, int] = {}  # username -> usage count
         self.lock = Lock()
         self._create_pool()
-    
+
     def _create_pool(self) -> None:
         """Pre-create OS users."""
         for i in range(self.pool_size):
@@ -258,7 +258,7 @@ class AgentUserPool:
             except Exception as e:
                 # Log error, continue
                 pass
-    
+
     def acquire(self, agent_id: str) -> SystemUser:
         """Acquire user from pool (round-robin or least-used)."""
         with self.lock:
@@ -266,7 +266,7 @@ class AgentUserPool:
             least_used = min(self.users, key=lambda u: self.usage.get(u.username, 0))
             self.usage[least_used.username] = self.usage.get(least_used.username, 0) + 1
             return least_used
-    
+
     def release(self, user: SystemUser) -> None:
         """Release user back to pool."""
         with self.lock:
@@ -296,11 +296,11 @@ class EditLease:
 
 class TenantAwareLeaseManager:
     """Lease manager with tenant awareness."""
-    
+
     def __init__(self):
         self.leases: dict[Path, EditLease] = {}
         self.lock = Lock()
-    
+
     def acquire(
         self,
         file_path: Path,
@@ -310,7 +310,7 @@ class TenantAwareLeaseManager:
         """Acquire lease, checking tenant conflicts."""
         with self.lock:
             existing = self.leases.get(file_path)
-            
+
             if existing is None:
                 # No existing lease, acquire
                 self.leases[file_path] = EditLease(
@@ -321,7 +321,7 @@ class TenantAwareLeaseManager:
                     expires_at=datetime.now() + timedelta(minutes=5),
                 )
                 return True
-            
+
             # Check conflicts
             if lease_type == "read":
                 # Multiple readers OK
@@ -329,7 +329,7 @@ class TenantAwareLeaseManager:
                     return True
                 # Reader can't acquire if writer exists
                 return False
-            
+
             elif lease_type == "write":
                 # Writer needs exclusive access
                 if existing.lease_type == "write":
@@ -348,9 +348,9 @@ class TenantAwareLeaseManager:
                     return False
                 # Writer can't acquire if reader exists
                 return False
-            
+
             return False
-    
+
     def release_by_tenant(self, tenant_id: str) -> None:
         """Release all leases for tenant."""
         with self.lock:
@@ -369,7 +369,7 @@ from abc import ABC, abstractmethod
 
 class UserActivityDetector(ABC):
     """Abstract base for user activity detection."""
-    
+
     @abstractmethod
     def is_user_active(self, threshold_seconds: float) -> bool:
         """Check if user is active within threshold."""
@@ -377,15 +377,15 @@ class UserActivityDetector(ABC):
 
 class macOSUserActivityDetector(UserActivityDetector):
     """macOS user activity detection via CoreGraphics."""
-    
+
     def is_user_active(self, threshold_seconds: float) -> bool:
         """Check macOS user activity."""
         try:
             from AppKit import NSEvent
-            
+
             last_keyboard = NSEvent.lastEventTimeIntervalSinceNow()
             last_mouse = NSEvent.lastMouseEventTimeIntervalSinceNow()
-            
+
             last_activity = min(abs(last_keyboard), abs(last_mouse))
             return last_activity < threshold_seconds
         except ImportError:
@@ -394,7 +394,7 @@ class macOSUserActivityDetector(UserActivityDetector):
 
 class LinuxUserActivityDetector(UserActivityDetector):
     """Linux user activity detection."""
-    
+
     def is_user_active(self, threshold_seconds: float) -> bool:
         """Check Linux user activity."""
         # Try X11 first
@@ -409,7 +409,7 @@ class LinuxUserActivityDetector(UserActivityDetector):
             return idle_seconds < threshold_seconds
         except (FileNotFoundError, ValueError):
             pass
-        
+
         # Try systemd
         try:
             import subprocess
@@ -422,33 +422,33 @@ class LinuxUserActivityDetector(UserActivityDetector):
             return True  # Simplified
         except FileNotFoundError:
             pass
-        
+
         # Fallback: assume active
         return True
 
 class WindowsUserActivityDetector(UserActivityDetector):
     """Windows user activity detection."""
-    
+
     def is_user_active(self, threshold_seconds: float) -> bool:
         """Check Windows user activity."""
         try:
             import ctypes
             from ctypes import wintypes
-            
+
             class LASTINPUTINFO(ctypes.Structure):
                 _fields_ = [
                     ("cbSize", ctypes.c_uint),
                     ("dwTime", wintypes.DWORD),
                 ]
-            
+
             lii = LASTINPUTINFO()
             lii.cbSize = ctypes.sizeof(LASTINPUTINFO)
             ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lii))
-            
+
             current_time = ctypes.windll.kernel32.GetTickCount()
             idle_ms = current_time - lii.dwTime
             idle_seconds = idle_ms / 1000.0
-            
+
             return idle_seconds < threshold_seconds
         except Exception:
             # Fallback: assume active
@@ -463,43 +463,43 @@ from typing import Optional
 
 class DesktopAutomationCoordinator:
     """Coordinate desktop automation access."""
-    
+
     def __init__(self, activity_detector: UserActivityDetector):
         self.activity_detector = activity_detector
         self._active_automation: Optional[str] = None  # agent_id
         self._lock = Lock()
-    
+
     def request_automation(self, agent_id: str, idle_threshold: float = 5.0) -> bool:
         """Request automation access."""
         with self._lock:
             # Check user activity
             if not self.activity_detector.is_user_active(idle_threshold):
                 return False  # User is active, deny automation
-            
+
             # Check existing automation
             if self._active_automation is not None:
                 return False  # Another agent has automation
-            
+
             # Acquire automation
             self._active_automation = agent_id
             return True
-    
+
     def release_automation(self, agent_id: str) -> None:
         """Release automation access."""
         with self._lock:
             if self._active_automation == agent_id:
                 self._active_automation = None
-    
+
     def wait_for_user_idle(self, idle_seconds: float, timeout: float = 60.0) -> bool:
         """Wait for user to be idle."""
         import time
         start = time.time()
-        
+
         while time.time() - start < timeout:
             if self.activity_detector.is_user_active(idle_seconds):
                 return True
             time.sleep(1.0)
-        
+
         return False
 ```
 
@@ -524,27 +524,27 @@ class UIElement:
 
 class DesktopAutomationProvider(ABC):
     """Abstract desktop automation provider."""
-    
+
     @abstractmethod
     def click(self, element: UIElement) -> bool:
         """Click element."""
         pass
-    
+
     @abstractmethod
     def type_text(self, element: UIElement, text: str) -> bool:
         """Type text into element."""
         pass
-    
+
     @abstractmethod
     def find_element(self, selector: str, timeout: float = 5.0) -> Optional[UIElement]:
         """Find element by selector."""
         pass
-    
+
     @abstractmethod
     def screenshot(self, region: Optional[dict] = None) -> bytes:
         """Take screenshot."""
         pass
-    
+
     @abstractmethod
     def wait_for_idle(self, seconds: float) -> bool:
         """Wait for UI to be idle."""
@@ -553,9 +553,9 @@ class DesktopAutomationProvider(ABC):
 def get_provider() -> DesktopAutomationProvider:
     """Get platform-specific provider."""
     import platform
-    
+
     system = platform.system()
-    
+
     if system == "Darwin":
         from thegent.infra.desktop_automation.macos import macOSAutomationProvider
         return macOSAutomationProvider()
@@ -577,7 +577,7 @@ from typing import Optional
 
 class macOSAutomationProvider(DesktopAutomationProvider):
     """macOS automation via AppleScript."""
-    
+
     def click(self, element: UIElement) -> bool:
         """Click element via AppleScript."""
         script = f'''
@@ -587,7 +587,7 @@ class macOSAutomationProvider(DesktopAutomationProvider):
             end tell
         end tell
         '''
-        
+
         try:
             subprocess.run(
                 ["osascript", "-e", script],
@@ -597,7 +597,7 @@ class macOSAutomationProvider(DesktopAutomationProvider):
             return True
         except subprocess.CalledProcessError:
             return False
-    
+
     def type_text(self, element: UIElement, text: str) -> bool:
         """Type text via AppleScript."""
         script = f'''
@@ -607,7 +607,7 @@ class macOSAutomationProvider(DesktopAutomationProvider):
             end tell
         end tell
         '''
-        
+
         try:
             subprocess.run(
                 ["osascript", "-e", script],
@@ -617,7 +617,7 @@ class macOSAutomationProvider(DesktopAutomationProvider):
             return True
         except subprocess.CalledProcessError:
             return False
-    
+
     def find_element(self, selector: str, timeout: float = 5.0) -> Optional[UIElement]:
         """Find element via AppleScript."""
         script = f'''
@@ -630,7 +630,7 @@ class macOSAutomationProvider(DesktopAutomationProvider):
             end try
         end tell
         '''
-        
+
         try:
             result = subprocess.run(
                 ["osascript", "-e", script],
@@ -648,16 +648,16 @@ class macOSAutomationProvider(DesktopAutomationProvider):
                 )
         except subprocess.CalledProcessError:
             pass
-        
+
         return None
-    
+
     def screenshot(self, region: Optional[dict] = None) -> bytes:
         """Take screenshot via screencapture."""
         import tempfile
-        
+
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
             temp_path = f.name
-        
+
         try:
             if region:
                 subprocess.run([
@@ -667,13 +667,13 @@ class macOSAutomationProvider(DesktopAutomationProvider):
                 ], check=True)
             else:
                 subprocess.run(["screencapture", temp_path], check=True)
-            
+
             with open(temp_path, "rb") as f:
                 return f.read()
         finally:
             import os
             os.unlink(temp_path)
-    
+
     def wait_for_idle(self, seconds: float) -> bool:
         """Wait for UI to be idle."""
         import time
@@ -692,11 +692,11 @@ except ImportError:
 
 class WindowsAutomationProvider(DesktopAutomationProvider):
     """Windows automation via UI Automation."""
-    
+
     def __init__(self):
         if not PYWINAUTO_AVAILABLE:
             raise ImportError("pywinauto not available")
-    
+
     def click(self, element: UIElement) -> bool:
         """Click element via UIA."""
         try:
@@ -706,7 +706,7 @@ class WindowsAutomationProvider(DesktopAutomationProvider):
             return True
         except Exception:
             return False
-    
+
     def type_text(self, element: UIElement, text: str) -> bool:
         """Type text via UIA."""
         try:
@@ -716,17 +716,17 @@ class WindowsAutomationProvider(DesktopAutomationProvider):
             return True
         except Exception:
             return False
-    
+
     def find_element(self, selector: str, timeout: float = 5.0) -> Optional[UIElement]:
         """Find element via UIA."""
         # Simplified - would parse selector
         return None
-    
+
     def screenshot(self, region: Optional[dict] = None) -> bytes:
         """Take screenshot via PIL."""
         try:
             from PIL import ImageGrab
-            
+
             if region:
                 bbox = (
                     region["x"],
@@ -737,14 +737,14 @@ class WindowsAutomationProvider(DesktopAutomationProvider):
                 img = ImageGrab.grab(bbox=bbox)
             else:
                 img = ImageGrab.grab()
-            
+
             import io
             buf = io.BytesIO()
             img.save(buf, format="PNG")
             return buf.getvalue()
         except Exception:
             return b""
-    
+
     def wait_for_idle(self, seconds: float) -> bool:
         """Wait for UI to be idle."""
         import time
@@ -763,11 +763,11 @@ except ImportError:
 
 class LinuxAutomationProvider(DesktopAutomationProvider):
     """Linux automation via AT-SPI."""
-    
+
     def __init__(self):
         if not PYATSPI_AVAILABLE:
             raise ImportError("pyatspi not available")
-    
+
     def click(self, element: UIElement) -> bool:
         """Click element via AT-SPI."""
         try:
@@ -776,7 +776,7 @@ class LinuxAutomationProvider(DesktopAutomationProvider):
             return True
         except Exception:
             return False
-    
+
     def type_text(self, element: UIElement, text: str) -> bool:
         """Type text via AT-SPI."""
         try:
@@ -784,17 +784,17 @@ class LinuxAutomationProvider(DesktopAutomationProvider):
             return True
         except Exception:
             return False
-    
+
     def find_element(self, selector: str, timeout: float = 5.0) -> Optional[UIElement]:
         """Find element via AT-SPI."""
         # Traverse accessibility tree
         return None
-    
+
     def screenshot(self, region: Optional[dict] = None) -> bytes:
         """Take screenshot via mss."""
         try:
             import mss
-            
+
             with mss.mss() as sct:
                 if region:
                     monitor = {
@@ -805,12 +805,12 @@ class LinuxAutomationProvider(DesktopAutomationProvider):
                     }
                 else:
                     monitor = sct.monitors[1]  # Primary monitor
-                
+
                 img = sct.grab(monitor)
                 return mss.tools.to_png(img.rgb, img.size)
         except Exception:
             return b""
-    
+
     def wait_for_idle(self, seconds: float) -> bool:
         """Wait for UI to be idle."""
         import time
@@ -836,11 +836,11 @@ async def thegent_desktop_click(
 ) -> str:
     """Click UI element."""
     provider = get_provider()
-    
+
     element = provider.find_element(selector)
     if not element:
         return f"Element not found: {selector}"
-    
+
     if provider.click(element):
         return f"Clicked: {element.name}"
     else:
@@ -854,11 +854,11 @@ async def thegent_desktop_type(
 ) -> str:
     """Type text into UI element."""
     provider = get_provider()
-    
+
     element = provider.find_element(selector)
     if not element:
         return f"Element not found: {selector}"
-    
+
     if provider.type_text(element, text):
         return f"Typed into: {element.name}"
     else:
@@ -871,7 +871,7 @@ async def thegent_desktop_find_element(
 ) -> dict:
     """Find UI element."""
     provider = get_provider()
-    
+
     element = provider.find_element(selector, timeout=timeout)
     if element:
         return {
@@ -890,9 +890,9 @@ async def thegent_desktop_screenshot(
 ) -> str:
     """Take screenshot."""
     provider = get_provider()
-    
+
     image_data = provider.screenshot(region=region)
-    
+
     # Save to file or return base64
     import base64
     return base64.b64encode(image_data).decode("utf-8")
@@ -926,11 +926,11 @@ def get_preferred_shell(platform: str, context: str) -> str:
 ```
 class AgentRunner:
     """Agent runner with isolation support."""
-    
+
     def __init__(self, isolation_mode: str = "subuser"):
         self.isolation_mode = isolation_mode
         self.user_pool = AgentUserPool(pool_size=10, base_path=Path("/var/lib/thegent/agents"))
-    
+
     def run(self, agent_id: str, command: str) -> subprocess.CompletedProcess:
         """Run agent with isolation."""
         if self.isolation_mode == "osuser":
@@ -943,13 +943,13 @@ class AgentRunner:
             return subprocess.run(command, shell=True)
         else:
             return subprocess.run(command, shell=True)
-    
+
     def _run_as_user(self, user: SystemUser, command: str) -> subprocess.CompletedProcess:
         """Run command as specific user."""
         import platform
-        
+
         system = platform.system()
-        
+
         if system == "Darwin" or system == "Linux":
             return subprocess.run(
                 ["su", "-", user.username, "-c", command],

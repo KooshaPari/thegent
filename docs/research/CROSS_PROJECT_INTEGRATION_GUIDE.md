@@ -1,6 +1,6 @@
 # Cross-Project Integration Guide — Kush Ecosystem
 
-> **Status**: 🔗 **INTEGRATION GUIDE** | **Date**: 2026-02-18  
+> **Status**: 🔗 **INTEGRATION GUIDE** | **Date**: 2026-02-18
 > **Purpose**: Comprehensive guide for integrating projects across the kush ecosystem
 
 ---
@@ -92,28 +92,28 @@ from pathlib import Path
 
 def analyze_project(project_path: Path):
     """Analyze project using multiple CLI tools."""
-    
+
     # 1. Code analysis with bloc
     bloc_result = subprocess.run(
         ["bloc", str(project_path), "--health"],
         capture_output=True,
         text=True
     )
-    
+
     # 2. Requirements traceability with trace
     trace_result = subprocess.run(
         ["trace", "analyze", str(project_path)],
         capture_output=True,
         text=True
     )
-    
+
     # 3. Usage tracking with usage
     usage_result = subprocess.run(
         ["usage", "status", "--project", str(project_path)],
         capture_output=True,
         text=True
     )
-    
+
     return {
         "code_analysis": bloc_result.stdout,
         "requirements": trace_result.stdout,
@@ -180,7 +180,7 @@ async def review_code_handler():
         task="Review code in current workspace",
         sub_agents=["code-review", "testing"]
     )
-    
+
     # Voice response
     await voice.speak(f"Code review complete: {result.summary}")
 ```
@@ -203,21 +203,21 @@ class UnifiedProjectManager:
         self.requirements = RequirementsManager(project_id)
         self.entities = EntityManager(project_id)
         self.tasks = TaskManager(project_id)
-    
+
     async def create_feature(self, feature_spec: dict):
         # 1. Create requirement
         req = await self.requirements.create(feature_spec)
-        
+
         # 2. Create entity
         entity = await self.entities.create({
             "type": "feature",
             "requirement_id": req.id,
             **feature_spec
         })
-        
+
         # 3. Create tasks
         tasks = await self.tasks.create_from_requirement(req.id)
-        
+
         return {
             "requirement": req,
             "entity": entity,
@@ -238,7 +238,7 @@ from usage import UsageTracker
 class CrossProjectUsageTracker:
     def __init__(self):
         self.tracker = UsageTracker()
-    
+
     async def track_thegent_usage(self, session_id: str):
         """Track thegent usage."""
         await self.tracker.track(
@@ -246,7 +246,7 @@ class CrossProjectUsageTracker:
             session_id=session_id,
             project="thegent"
         )
-    
+
     async def track_plangent_usage(self, task_id: str):
         """Track plangent usage."""
         await self.tracker.track(
@@ -254,7 +254,7 @@ class CrossProjectUsageTracker:
             session_id=task_id,
             project="plangent"
         )
-    
+
     async def get_cross_project_summary(self):
         """Get usage summary across all projects."""
         return await self.tracker.summary(
@@ -276,51 +276,51 @@ from abc import ABC, abstractmethod
 
 class IntegrationHub:
     """Central hub for cross-project integration."""
-    
+
     def __init__(self):
         self.agents: Dict[str, Any] = {}
         self.mcp_servers: Dict[str, Any] = {}
         self.cli_tools: Dict[str, Any] = {}
         self.services: Dict[str, Any] = {}
-    
+
     def register_agent(self, name: str, agent: Any):
         """Register an agent."""
         self.agents[name] = agent
-    
+
     def register_mcp_server(self, name: str, server: Any):
         """Register an MCP server."""
         self.mcp_servers[name] = server
-    
+
     def register_cli_tool(self, name: str, tool: Any):
         """Register a CLI tool."""
         self.cli_tools[name] = tool
-    
+
     async def execute_cross_project_task(self, task: dict):
         """Execute task across multiple projects."""
         # 1. Route to appropriate agent
         agent = self._select_agent(task)
-        
+
         # 2. Get required tools
         tools = self._get_tools(task)
-        
+
         # 3. Execute with tools
         result = await agent.execute(task, tools)
-        
+
         # 4. Track usage
         await self._track_usage(task, result)
-        
+
         return result
-    
+
     def _select_agent(self, task: dict) -> Any:
         """Select best agent for task."""
         # Implementation
         pass
-    
+
     def _get_tools(self, task: dict) -> list:
         """Get required tools for task."""
         # Implementation
         pass
-    
+
     async def _track_usage(self, task: dict, result: Any):
         """Track usage across projects."""
         # Implementation
@@ -337,33 +337,33 @@ from typing import Protocol
 
 class ServiceProtocol(Protocol):
     """Protocol for services in the mesh."""
-    
+
     async def call(self, method: str, **kwargs) -> Any:
         """Call a service method."""
         ...
-    
+
     async def health_check(self) -> bool:
         """Check service health."""
         ...
 
 class ServiceMesh:
     """Service mesh for cross-project communication."""
-    
+
     def __init__(self):
         self.services: Dict[str, ServiceProtocol] = {}
-    
+
     def register_service(self, name: str, service: ServiceProtocol):
         """Register a service."""
         self.services[name] = service
-    
+
     async def call_service(self, service_name: str, method: str, **kwargs):
         """Call a service method."""
         if service_name not in self.services:
             raise ValueError(f"Service not found: {service_name}")
-        
+
         service = self.services[service_name]
         return await service.call(method, **kwargs)
-    
+
     async def health_check_all(self) -> Dict[str, bool]:
         """Check health of all services."""
         results = {}
@@ -388,7 +388,7 @@ from trace import RequirementsManager
 
 class IntegratedWorkflow:
     """Complete integrated workflow."""
-    
+
     def __init__(self):
         # Initialize components
         self.orchestrator = AgentOrchestrator()
@@ -396,26 +396,26 @@ class IntegratedWorkflow:
         self.morph_mcp = MorphServer()
         self.usage_tracker = UsageTracker()
         self.requirements = RequirementsManager()
-    
+
     async def execute_feature_request(self, request: dict):
         """Execute a complete feature request workflow."""
-        
+
         # 1. Create requirement
         req = await self.requirements.create(request)
-        
+
         # 2. Research using morph
         research = await self.morph_mcp.call_tool(
             "web_search",
             query=request["description"]
         )
-        
+
         # 3. Create entity in atoms-mcp-prod
         entity = await self.atoms_mcp.call_tool(
             "create_entity",
             type="feature",
             data={**request, "research": research}
         )
-        
+
         # 4. Execute with thegent
         result = await self.orchestrator.execute_task(
             agent_id="feature-agent",
@@ -426,14 +426,14 @@ class IntegratedWorkflow:
                 "research": research
             }
         )
-        
+
         # 5. Track usage
         await self.usage_tracker.track(
             provider="thegent",
             project="feature-implementation",
             tokens=result.tokens_used
         )
-        
+
         return {
             "requirement": req,
             "entity": entity,
@@ -452,18 +452,18 @@ from pathlib import Path
 
 async def comprehensive_analysis(project_path: Path):
     """Comprehensive project analysis using multiple tools."""
-    
+
     results = {}
-    
+
     # Parallel execution
     tasks = [
         run_bloc(project_path),
         run_trace(project_path),
         run_usage_status(project_path)
     ]
-    
+
     bloc_result, trace_result, usage_result = await asyncio.gather(*tasks)
-    
+
     return {
         "code_analysis": bloc_result,
         "requirements": trace_result,
@@ -511,28 +511,28 @@ from typing import Dict, Any
 
 class UnifiedConfig(BaseSettings):
     """Unified configuration for kush ecosystem."""
-    
+
     # Agent orchestration
     thegent_api_url: str = "http://localhost:8000"
     plangent_config: Dict[str, Any] = {}
     kimaki_config: Dict[str, Any] = {}
-    
+
     # MCP servers
     atoms_mcp_url: str = "http://localhost:8001"
     morph_mcp_url: str = "http://localhost:8002"
-    
+
     # CLI tools
     bloc_path: str = "bloc"
     trace_path: str = "trace"
     usage_path: str = "usage"
-    
+
     # Infrastructure
     pheno_sdk_config: Dict[str, Any] = {}
-    
+
     # Storage
     database_url: str = "postgresql://localhost/kush"
     redis_url: str = "redis://localhost:6379"
-    
+
     class Config:
         env_file = ".env"
         env_prefix = "KUSH_"
@@ -607,14 +607,14 @@ from integrated_workflow import IntegratedWorkflow
 async def test_integrated_workflow():
     """Test integrated workflow."""
     workflow = IntegratedWorkflow()
-    
+
     request = {
         "title": "Test Feature",
         "description": "Test description"
     }
-    
+
     result = await workflow.execute_feature_request(request)
-    
+
     assert result["requirement"] is not None
     assert result["entity"] is not None
     assert result["result"] is not None
@@ -638,25 +638,25 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/kush
       - REDIS_URL=redis://redis:6379
-  
+
   atoms-mcp:
     build: ./atoms-mcp-prod
     ports:
       - "8001:8001"
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/kush
-  
+
   morph:
     build: ./morph
     ports:
       - "8002:8002"
-  
+
   db:
     image: postgres:15
     environment:
       - POSTGRES_DB=kush
       - POSTGRES_PASSWORD=password
-  
+
   redis:
     image: redis:7
 ```
@@ -680,7 +680,7 @@ async def monitored_integration():
     with tracer.start_as_current_span("thegent_call"):
         # Call thegent
         pass
-    
+
     with tracer.start_as_current_span("mcp_call"):
         # Call MCP server
         pass

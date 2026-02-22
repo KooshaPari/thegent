@@ -18,4 +18,3 @@ In dev mode (THGENT_DEV=1 or running from git), looks in the project root.
 When installed, uses importlib.resources.
 
 ---
-

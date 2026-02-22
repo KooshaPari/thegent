@@ -79,4 +79,3 @@ resolve_dilemma(self: Any, result: ArbitrationResult)
 Apply the human decision to a pending dilemma.
 
 ---
-

@@ -68,4 +68,3 @@ Ensure LSP server is installed, auto-installing if needed.
 **Returns**: True if server is available, False otherwise
 
 ---
-

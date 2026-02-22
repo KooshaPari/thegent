@@ -233,7 +233,7 @@ harvest-idea-seeds.sh already pulls from `~/.cursor/projects/*/agent-transcripts
 | **Context Engine** | Live codebase understanding | Architecture, deps, history | MCP: Context Engine MCP |
 | **Context Engine MCP** | MCP server | Expose context to tools | thegent: add augment MCP to config |
 | **Intent** | Orchestration workspace | Specs, worktrees, multi-agent | thegent team + Intent integration |
-| **IDE agents** | VS Code, JetBrains | Native IDE integration | N/A (IDE-only) | 
+| **IDE agents** | VS Code, JetBrains | Native IDE integration | N/A (IDE-only) |
 | **Code Review** | PR review agent | — | — |
 
 ### 8.2 Augment Integration
@@ -319,7 +319,7 @@ codex exec - --cd /path --model X --json --skip-git-repo-check
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

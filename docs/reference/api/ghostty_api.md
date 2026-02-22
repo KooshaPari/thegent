@@ -275,4 +275,3 @@ Write the theme setting to the Ghostty config file.
 **Returns**: True on success; False if the write failed.
 
 ---
-

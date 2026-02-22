@@ -1,7 +1,7 @@
 # Runtime Infrastructure Solutions: Executive Summary
 
-**Date:** 2026-02-17  
-**Status:** Research Complete - Ready for Implementation  
+**Date:** 2026-02-17
+**Status:** Research Complete - Ready for Implementation
 **Purpose:** Quick reference for existing solutions audit and integration recommendations
 
 ---
@@ -161,20 +161,20 @@ class ResourceStats:
 class ResourceMonitor:
     def get_stats(self) -> ResourceStats:
         process = psutil.Process()
-        
+
         # Use psutil for FD tracking
         try:
             fd_count = process.num_fds() if hasattr(process, "num_fds") else 0
             fd_count += len(process.open_files()) + len(process.connections())
         except (psutil.AccessDenied, AttributeError):
             fd_count = 0
-        
+
         # Use psutil for memory
         memory_mb = process.memory_info().rss / 1024 / 1024
-        
+
         # Use psutil for CPU
         cpu_percent = process.cpu_percent(interval=0.1)
-        
+
         # ... rest of implementation
 ```
 
@@ -197,18 +197,18 @@ class ProcessRegistry:
         try:
             proc = psutil.Process(pid)
             children = proc.children(recursive=True)
-            
+
             # Use psutil.wait_procs for efficient cleanup
             gone, alive = psutil.wait_procs(children, timeout=timeout)
-            
+
             # Kill remaining
             for child in alive:
                 child.kill()
-            
+
             # Terminate parent
             proc.terminate()
             proc.wait(timeout=timeout)
-            
+
             return len(gone) + len(alive) + 1
         except psutil.NoSuchProcess:
             return 0
@@ -224,12 +224,12 @@ from thegent.infra.subprocess_manager import get_subprocess_manager
 class TestSubprocessLeaks(MemoryLeakTestCase):
     def test_subprocess_manager_no_leak(self):
         manager = get_subprocess_manager()
-        
+
         def create_processes():
             for i in range(10):
                 with manager.popen(["sleep", "0.1"], name=f"test-{i}"):
                     pass
-        
+
         self.execute(
             create_processes,
             times=50,

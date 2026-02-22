@@ -63,4 +63,3 @@ verify_artifact(artifact: MAIFArtifact, public_key: rsa.RSAPublicKey)
 Verify artifact signature.
 
 ---
-

@@ -34,4 +34,3 @@ __init__(self: Any, mesh_root: Any)
 **Inherits from**: `Enum`
 
 ---
-

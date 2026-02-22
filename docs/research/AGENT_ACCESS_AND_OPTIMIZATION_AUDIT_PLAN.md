@@ -1,6 +1,6 @@
 # Agent Access and Optimization — Audit and Plan
 
-> **Purpose**: Audit file reads, web search/scrape, other accesses; research kilo, roo, OpenCode, batch edits; propose optimizations and enhanced baseline strategy.  
+> **Purpose**: Audit file reads, web search/scrape, other accesses; research kilo, roo, OpenCode, batch edits; propose optimizations and enhanced baseline strategy.
 > **Status**: Research + Plan | **Date**: 2026-02-16
 
 ---
@@ -267,7 +267,7 @@ Layer 3 (Shell fallback) → fd, rg
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

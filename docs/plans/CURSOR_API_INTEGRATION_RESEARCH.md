@@ -1,7 +1,7 @@
 # Cursor API Integration Research & Plan
 
-**Status:** Implemented (thegent + cliproxyapi-plusplus); unified plan: [CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md](./CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md)  
-**Date:** 2026-02-14  
+**Status:** Implemented (thegent + cliproxyapi-plusplus); unified plan: [CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md](./CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md)
+**Date:** 2026-02-14
 **Scope:** Evaluate 4 Cursor-related repos for thegent integration
 
 ## Implementation Summary (2026-02-14)

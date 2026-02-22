@@ -83,4 +83,3 @@ record_usage(self: Any, team_id: str, resource: str, amount: float)
 Record resource usage for a team.
 
 ---
-

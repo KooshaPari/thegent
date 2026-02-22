@@ -140,4 +140,3 @@ get_mtd_total(self: Any)
 Sum cost_usd for all runs this month. G-GP-06 Phase 4.
 
 ---
-

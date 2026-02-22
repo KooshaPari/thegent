@@ -53,4 +53,3 @@ should_terminate_early(elapsed_ms: float, timeout_ms: int, other_results: list[A
 Determine if a speculative execution should terminate early.
 
 ---
-

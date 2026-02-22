@@ -416,4 +416,3 @@ render(self: Any)
 Render status bar content.
 
 ---
-

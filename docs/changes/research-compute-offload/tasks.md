@@ -5,11 +5,11 @@ status: in_progress
 
 # Implementation Tasks: Mac ↔ PC Compute Offload
 
-**Document Version:** 1.0  
-**Change ID:** research-compute-offload  
-**Date:** 2026-02-18  
-**Status:** WIP  
-**Total Effort**: ~15 agent-days  
+**Document Version:** 1.0
+**Change ID:** research-compute-offload
+**Date:** 2026-02-18
+**Status:** WIP
+**Total Effort**: ~15 agent-days
 
 ---
 
@@ -344,9 +344,9 @@ T1.3 (Design)
   ├─→ T2.2 (Capability Resolver) ─→ T2.6 (Remote Executor) ─→ T2.8
   │
   └─→ T2.5 (Bridge Protocol) ─→ T2.6 (Remote Executor) ─→ T2.7 (Client) ─→ T2.8
-  
+
 T2.1-T2.8 (all) ─→ T2.9 (Unit Tests) ─→ T3.1 (E2E Validation) ─→ T3.2 (Runbook)
-  
+
 T3.1, T3.2 ─→ T3.3 (Findings) ─→ T4.1 (Presentation)
 
 T2.1-T2.9, T3.3 ─→ T3.4 (Code Quality) ─→ T4.2 (Handoff)

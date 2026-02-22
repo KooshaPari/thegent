@@ -906,7 +906,7 @@ If daily_burn_rate <= 0: days_until_budget_exhausted = infinite (or capped at 30
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -1,8 +1,8 @@
 # Caching, Indexing & Pre-warming: Deep Research & Strategies
 
-> **Status**: Comprehensive Research | **Version**: 1.0 | **Date**: 2026-02-16 | **Updated**: 2026-02-17  
-> **Purpose**: Deep dive into caching, indexing, and pre-warming strategies, libraries, and solutions for CLI tool acceleration  
-> **P3 Polish**: Summary table, cross-links, next actions added  
+> **Status**: Comprehensive Research | **Version**: 1.0 | **Date**: 2026-02-16 | **Updated**: 2026-02-17
+> **Purpose**: Deep dive into caching, indexing, and pre-warming strategies, libraries, and solutions for CLI tool acceleration
+> **P3 Polish**: Summary table, cross-links, next actions added
 > **Related**:
 - [LIBRARY_REPLACEMENT_CONSOLIDATED.md](./LIBRARY_REPLACEMENT_CONSOLIDATED.md) - Library replacement plan
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream
@@ -149,16 +149,16 @@ func getCacheKey(tool string, args []string) string {
 func getCacheKey(tool string, args []string) string {
     // Normalize: sort args, strip whitespace
     normalizedArgs := normalizeArgs(args)
-    
+
     // Include relevant env vars (e.g., LANG, TZ)
     envHash := hashEnvVars([]string{"LANG", "TZ", "HOME"})
-    
+
     // Include tool version (for invalidation)
     toolVersion := getToolVersion(tool)
-    
+
     // Include cwd
     cwd, _ := os.Getwd()
-    
+
     data := fmt.Sprintf("%s:%s:%s:%s:%s", tool, toolVersion, normalizedArgs, envHash, cwd)
     hash := md5.Sum([]byte(data))
     return hex.EncodeToString(hash[:])
@@ -377,7 +377,7 @@ elif last_command == "git status":
 - Parallel directory traversal
 
 **Performance**: 5-100x faster than grep
-**Lessons**: 
+**Lessons**:
 - Regex compilation is expensive → cache compiled patterns
 - SIMD provides massive speedups for literal searches
 - Memory-mapping eliminates I/O overhead for large files
@@ -563,7 +563,7 @@ dirs.par_iter()
 fn calculate_frecency(score: u32, last_access: SystemTime) -> f64 {
     let age = SystemTime::now().duration_since(last_access).unwrap();
     let hours = age.as_secs_f64() / 3600.0;
-    
+
     let multiplier = if hours < 1.0 {
         4.0
     } else if hours < 24.0 {
@@ -573,7 +573,7 @@ fn calculate_frecency(score: u32, last_access: SystemTime) -> f64 {
     } else {
         0.25
     };
-    
+
     score as f64 * multiplier
 }
 ```
@@ -924,7 +924,7 @@ The recommended path forward is a phased approach, starting with high-ROI improv
 
 ## 15. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Worker Droid
 
 ### Changes Made

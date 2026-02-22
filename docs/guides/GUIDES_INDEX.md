@@ -12,7 +12,7 @@
 | **Cross-Platform** | [CROSS_PLATFORM_*.md](./CROSS_PLATFORM_QUICK_START.md) | macOS/Windows/Linux guides |
 | **Debugging** | [AGENT_DEBUGGING_AND_REMEDIATION_GUIDE.md](./AGENT_DEBUGGING_AND_REMEDIATION_GUIDE.md) | Issue resolution |
 | **Shell** | [SHELL_*.md](./SHELL_ENVIRONMENT_MANAGEMENT.md) | Shell configuration and fixes |
-| **Testing** | [TESTING.md](./TESTING.md) | Test strategies and patterns |
+| **Testing** | [PR_TEST_IMPACT_REDUCTION.md](./PR_TEST_IMPACT_REDUCTION.md), [TESTING.md](./TESTING.md) | PR test-impact reduction and broader testing patterns |
 
 ---
 
@@ -47,6 +47,7 @@
 | [PHASE_7_9_GUIDE.md](./PHASE_7_9_GUIDE.md) | Phases | Updated |
 | [PROMPTS_TOOLING.md](./PROMPTS_TOOLING.md) | Development | Updated |
 | [PROVIDER_SETUP_GUIDE.md](./PROVIDER_SETUP_GUIDE.md) | Configuration | Updated |
+| [PR_TEST_IMPACT_REDUCTION.md](./PR_TEST_IMPACT_REDUCTION.md) | Testing | Updated |
 | [RUNTIME_OPTIMIZATION.md](./RUNTIME_OPTIMIZATION.md) | Performance | Updated |
 | [SHELL_ADVANCED_FEATURES.md](./SHELL_ADVANCED_FEATURES.md) | Shell | Updated |
 | [SHELL_CORRUPTION_FIX_COMPLETE.md](./SHELL_CORRUPTION_FIX_COMPLETE.md) | Shell | Updated |
@@ -77,7 +78,7 @@
 
 ## Extension Summary
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made
@@ -98,7 +99,7 @@
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

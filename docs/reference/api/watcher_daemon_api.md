@@ -339,4 +339,3 @@ Idempotent: safe to call multiple times.  All registered watches are
 removed before stopping.
 
 ---
-

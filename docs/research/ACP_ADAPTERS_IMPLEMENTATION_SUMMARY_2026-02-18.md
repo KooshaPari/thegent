@@ -1,7 +1,7 @@
 # ACP Adapters Implementation Summary
 
-**Date**: 2026-02-18  
-**Status**: Initial Implementation Complete  
+**Date**: 2026-02-18
+**Status**: Initial Implementation Complete
 **Next Steps**: Testing & Integration
 
 ---

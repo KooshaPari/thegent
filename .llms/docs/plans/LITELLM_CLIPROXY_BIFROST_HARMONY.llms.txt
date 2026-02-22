@@ -6,8 +6,8 @@ Source: docs/plans/LITELLM_CLIPROXY_BIFROST_HARMONY.md
 
 # LiteLLM + CLIProxyAPIPlus + Bifrost Harmony
 
-**Status:** Design  
-**Date:** 2026-02-15  
+**Status:** Design
+**Date:** 2026-02-15
 **Scope:** Make LiteLLM, CLIProxyAPIPlus (and optionally Bifrost) work harmoniously for model routing and provider load balancing.
 
 **See also:** [CATALOG_CLIPROXY_FORK_ALIGNMENT.md](./CATALOG_CLIPROXY_FORK_ALIGNMENT.md) — catalog providers vs fork capabilities (nim, kilo, etc.).
@@ -67,7 +67,7 @@ Source: docs/plans/LITELLM_CLIPROXY_BIFROST_HARMONY.md
 - CLIProxyAPIPlus handles model select → provider routing
 - Factory config (`~/.factory/config.json`) credentials copied into cliproxy config
 
-**Pros:** Minimal change, fork already exists  
+**Pros:** Minimal change, fork already exists
 **Cons:** CLIProxyAPIPlus has its own provider model; LiteLLM remains separate
 
 ---
@@ -82,7 +82,7 @@ Claude Code → LiteLLM Proxy (e.g. 4000) → CLIProxyAPIPlus (8317) or direct p
 - CLIProxyAPIPlus: OAuth providers (antigravity, iflow, kiro), openai-compatibility (minimax, zai)
 - LiteLLM config routes `minimax/*` → `http://127.0.0.1:8317/v1`, `openrouter/*` → OpenRouter, etc.
 
-**Pros:** LiteLLM fallback chains, unified config  
+**Pros:** LiteLLM fallback chains, unified config
 **Cons:** Two proxies, config sync complexity
 
 ---
@@ -93,7 +93,7 @@ Claude Code → LiteLLM Proxy (e.g. 4000) → CLIProxyAPIPlus (8317) or direct p
 - Extension: bridge to CLIProxyAPIPlus or LiteLLM
 - thegent configures Bifrost as proxy; Bifrost extensions handle provider routing
 
-**Pros:** Extensible, single Go binary  
+**Pros:** Extensible, single Go binary
 **Cons:** Bifrost integration TBD; may need new extension
 
 ---

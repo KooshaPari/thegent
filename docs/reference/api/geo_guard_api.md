@@ -79,4 +79,3 @@ validate_location(self: Any, data_id: str, category: str, region: str)
 Verify if data of a given category can reside in the specified region.
 
 ---
-

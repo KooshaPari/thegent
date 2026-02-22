@@ -1,7 +1,7 @@
 # Memory Optimization — Long-Term Plan
 
-> **Purpose**: Long-term optimizations for memory issues in multi-agent, multi-session local swarms.  
-> **Status**: Plan | **Date**: 2026-02-16  
+> **Purpose**: Long-term optimizations for memory issues in multi-agent, multi-session local swarms.
+> **Status**: Plan | **Date**: 2026-02-16
 > **Context**: Investigation found redundant Node tooling (LSP triplet per session), cc-status bloat, and Spotlight thrashing.
 
 ---
@@ -253,7 +253,7 @@ THGENT_SPOTLIGHT_EXCLUDE_ON_SETUP=1     # Run spotlight-exclude during setup
 
 ## EXTENSION_SUMMARY
 
-**Extended on**: 2026-02-17  
+**Extended on**: 2026-02-17
 **Extensions added**: Implementation roadmap (§7)
 
 | Section | Added Content |

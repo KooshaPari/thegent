@@ -1,7 +1,7 @@
 # Codex CLI + CLIProxy Configuration Audit and Plan
 
-**Date**: 2026-02-18  
-**Scope**: Fix Codex CLI 404 on `/v1/responses`, model metadata warning, and correct cliproxy API handling  
+**Date**: 2026-02-18
+**Scope**: Fix Codex CLI 404 on `/v1/responses`, model metadata warning, and correct cliproxy API handling
 **Context**: User running OpenAI Codex v0.103.0 with `gemini-3-flash medium`, baseUrl `http://localhost:8317`
 
 ---
@@ -42,7 +42,7 @@
 
 ### 1.4 Codex Version
 
-**Observed**: Codex v0.103.0  
+**Observed**: Codex v0.103.0
 **MiniMax reference**: Recommends `@openai/codex@0.57.0` due to compatibility issues with newer versions.
 
 **Implication**: Codex 0.103+ may use Responses API by default; 0.57.0 can use `wire_api = "chat"` (Chat Completions). If 0.103+ always uses Responses API, the adapter is required.

@@ -12,6 +12,7 @@ from thegent.clode_main import default_clode
 from thegent.dex_main import _DEX_BYPASS_FLAG
 from thegent.dex_main import _MODEL_ALIAS as _DEX_MODEL_ALIAS
 from thegent.dex_main import default_dex
+from thegent.fanta_main import _MODEL_ALIAS as _FANTA_MODEL_ALIAS
 from thegent.fanta_main import app as fanta_app
 from thegent.roid_main import _MODEL_ALIAS as _ROID_MODEL_ALIAS
 from thegent.roid_main import default_roid
@@ -26,7 +27,7 @@ runner = CliRunner()
         ("dex", _DEX_MODEL_ALIAS),
         ("roid", _ROID_MODEL_ALIAS),
         ("anen", _ANEN_MODEL_ALIAS),
-        ("fanta", _ANEN_MODEL_ALIAS),
+        ("fanta", _FANTA_MODEL_ALIAS),
     ],
 )
 def test_codex_tier_aliases_are_consistent_across_harnesses(harness: str, model_alias_map: dict[str, str]) -> None:
@@ -64,7 +65,7 @@ def test_default_anen_callback_uses_flash_path() -> None:
 
 
 def test_default_fanta_entrypoint_uses_flash_path() -> None:
-    with patch("thegent.anen_main._run_anen_with_alias") as run_with_alias:
+    with patch("thegent.fanta_main._run_anen_with_alias") as run_with_alias:
         result = runner.invoke(fanta_app, [])
     assert result.exit_code == 0
     run_with_alias.assert_called_once_with("flash", [])

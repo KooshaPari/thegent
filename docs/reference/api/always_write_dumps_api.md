@@ -79,4 +79,3 @@ List all conversation dumps.
 **Returns**: List of paths to dump files
 
 ---
-

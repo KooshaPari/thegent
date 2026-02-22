@@ -81,4 +81,3 @@ should_compress(self: Any, current_tokens: int, max_tokens: int)
 True if current token usage exceeds threshold.
 
 ---
-

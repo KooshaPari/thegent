@@ -173,4 +173,3 @@ resolve_conflict(self: Any, proposals: list[ACLMessage])
 Find the optimal proposal using utility scores.
 
 ---
-

@@ -124,7 +124,7 @@ platforms:
   requires_container: false
   requires_gpu: false
   requires_network: true
-  
+
 fallback_strategy:
   unavailable_tools:
     rg: grep  # if rg unavailable, use grep instead
@@ -142,11 +142,11 @@ def matches_constraints(
     """Check if platform satisfies task constraints"""
     errors = []
     warnings = []
-    
+
     # Check OS
     if caps.os_type not in constraints.supported:
         errors.append(f"OS {caps.os_type} not supported")
-    
+
     # Check tools
     for tool in constraints.required_tools:
         if tool not in caps.tools or not caps.tools[tool].available:
@@ -154,14 +154,14 @@ def matches_constraints(
                 warnings.append(f"Tool {tool} unavailable, using fallback")
             else:
                 errors.append(f"Required tool {tool} not found")
-    
+
     # Check memory
     if caps.available_memory_mb < constraints.min_memory_mb:
         if constraints.degraded_mode:
             warnings.append(f"Memory low, degrading to {constraints.degraded_mode}")
         else:
             errors.append(f"Insufficient memory: {caps.available_memory_mb}MB < {constraints.min_memory_mb}MB")
-    
+
     return MatchResult(
         matches=len(errors) == 0,
         errors=errors,
@@ -183,51 +183,51 @@ class PlatformDispatcher:
         available_executors: List[ExecutorInfo]
     ) -> DispatchDecision:
         """Select best-fit executor for task"""
-        
+
         candidates = []
-        
+
         for executor in available_executors:
             caps = self.registry.get_capabilities(executor.platform_id)
             match = matches_constraints(caps, task.platform_constraints)
-            
+
             if not match.errors:
                 score = self._score_executor(executor, caps, task)
                 candidates.append((executor, score, match.warnings))
-        
+
         if not candidates:
             return DispatchDecision(
                 success=False,
                 reason="No compatible executor found",
                 diagnostics=self._suggest_fixes(task, available_executors)
             )
-        
+
         # Sort by score: full match > fallback available > degraded
         best_executor, score, warnings = max(candidates, key=lambda x: x[1])
-        
+
         return DispatchDecision(
             success=True,
             executor=best_executor,
             warnings=warnings,
             fallback_strategy=match.fallback_applied
         )
-    
+
     def _score_executor(self, executor, caps, task) -> float:
         """Score: 100 = perfect, 50 = fallback, 0 = degraded"""
         score = 100.0
-        
+
         # Penalize fallbacks
         if executor.has_fallbacks:
             score -= 30
-        
+
         # Penalize degraded mode
         if executor.in_degraded_mode:
             score -= 40
-        
+
         # Bonus for excess capacity
         excess_memory = caps.available_memory_mb - task.platform_constraints.min_memory_mb
         if excess_memory > 1024:
             score += 10
-        
+
         return score
 ```
 
@@ -256,23 +256,23 @@ def execute_with_fallback(
     fallback_strategy: FallbackStrategy
 ) -> ExecutionResult:
     """Execute task with fallback handling"""
-    
+
     try:
         # Attempt execution with requested tools
         return executor.execute(task)
-    
+
     except ToolNotFoundError as e:
         tool_name = e.tool
         if tool_name in fallback_strategy.unavailable_tools:
             substitute = fallback_strategy.unavailable_tools[tool_name]
             logging.warning(f"Tool {tool_name} not found, using {substitute}")
-            
+
             # Inject substitute and retry
             modified_task = task.replace_tool(tool_name, substitute)
             return executor.execute(modified_task)
         else:
             raise
-    
+
     except InsufficientResourceError as e:
         if fallback_strategy.degraded_mode:
             logging.warning(f"Degrading to {fallback_strategy.degraded_mode}")

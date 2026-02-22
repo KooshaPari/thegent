@@ -94,7 +94,7 @@ Start MCP + proxy via process-compose. Returns (success, message).
 migrate_to_unimount(client: str, mcp_url: str, workspace: Any)
 ```
 
-Replace ALL MCP server entries with a single thegent entry at mcp_url. Returns (success, message).
+Preserve existing MCP entries and ensure `thegent`/`codex_apps` map to `mcp_url`. Returns (success, message).
 
 ---
 
@@ -194,4 +194,3 @@ Stop thegent MCP service.
 Remove launchd service.
 
 ---
-

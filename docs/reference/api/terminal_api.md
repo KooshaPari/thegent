@@ -47,4 +47,3 @@ send_to_tmux_pane(pane_id: str, text: str, enter: bool)
 Send keys to pane.
 
 ---
-

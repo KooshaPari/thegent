@@ -1,7 +1,7 @@
 # Rollback Reserve Plan
 
-**Program:** thegent Orchestration Optimization  
-**Date:** 2026-02-15  
+**Program:** thegent Orchestration Optimization
+**Date:** 2026-02-15
 **Owner:** Site Reliability Engineering Lead
 
 ## 1) Purpose

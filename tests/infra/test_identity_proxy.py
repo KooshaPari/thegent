@@ -18,11 +18,25 @@ import pytest
 
 from thegent.infra.identity_proxy import SSHIdentityProxy
 
+# Counter for unique socket names within a test run
+_socket_counter = 0
+
+
+def _get_unique_socket_path(name: str) -> Path:
+    """Generate a unique, short socket path in /tmp to avoid AF_UNIX path length limits.
+
+    macOS has a limit of ~104 characters for Unix socket paths. Using /tmp ensures
+    paths are short enough while still being unique per test.
+    """
+    global _socket_counter
+    _socket_counter += 1
+    return Path(f"/tmp/ssh-test-{os.getpid()}-{_socket_counter}-{name}.sock")
+
 
 @pytest.fixture
-def proxy_socket_path(tmp_path: Path) -> Path:
+def proxy_socket_path() -> Path:
     """Return a temporary socket path for the proxy."""
-    return tmp_path / "ssh-proxy.sock"
+    return _get_unique_socket_path("proxy")
 
 
 @pytest.fixture
@@ -32,9 +46,9 @@ def proxy(proxy_socket_path: Path) -> SSHIdentityProxy:
 
 
 @pytest.fixture
-def mock_host_socket(tmp_path: Path) -> Path:
+def mock_host_socket() -> Path:
     """Create a mock host SSH auth socket path."""
-    return tmp_path / "mock-ssh-agent.sock"
+    return _get_unique_socket_path("host")
 
 
 @pytest.fixture
@@ -76,11 +90,11 @@ class TestSSHIdentityProxyLifecycle:
     """Tests for start/stop lifecycle."""
 
     def test_start_creates_socket_directory(
-        self, tmp_path: Path, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch
+        self, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Verify start creates parent directories for socket."""
-        # Use a nested path that doesn't exist yet
-        socket_path = tmp_path / "nested" / "deep" / "proxy.sock"
+        # Use a nested path that doesn't exist yet (but keep it short for AF_UNIX limit)
+        socket_path = Path(f"/tmp/ssh-test-{os.getpid()}-nested/proxy.sock")
         monkeypatch.setenv("SSH_AUTH_SOCK", str(mock_host_socket))
         proxy = SSHIdentityProxy(socket_path)
 
@@ -358,10 +372,11 @@ class TestSSHIdentityProxyEdgeCases:
         assert proxy_with_env._running is False
 
     def test_socket_path_with_spaces(
-        self, tmp_path: Path, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch
+        self, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Verify socket path with spaces works."""
-        socket_path = tmp_path / "path with spaces" / "proxy.sock"
+        # Use a short path with spaces (in /tmp to stay under AF_UNIX path limit)
+        socket_path = Path(f"/tmp/ssh-test-{os.getpid()}-with spaces/proxy.sock")
         monkeypatch.setenv("SSH_AUTH_SOCK", str(mock_host_socket))
         proxy = SSHIdentityProxy(socket_path)
         proxy.start()
@@ -369,10 +384,11 @@ class TestSSHIdentityProxyEdgeCases:
         proxy.stop()
 
     def test_socket_path_deep_hierarchy(
-        self, tmp_path: Path, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch
+        self, mock_host_socket: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Verify deep directory hierarchy is created."""
-        socket_path = tmp_path / "a" / "b" / "c" / "d" / "proxy.sock"
+        # Use a deep but short path (in /tmp to stay under AF_UNIX path limit)
+        socket_path = Path(f"/tmp/ssh-{os.getpid()}/a/b/proxy.sock")
         monkeypatch.setenv("SSH_AUTH_SOCK", str(mock_host_socket))
         proxy = SSHIdentityProxy(socket_path)
         proxy.start()

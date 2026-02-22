@@ -331,4 +331,3 @@ toggle_sidebar(self: Any)
 Toggle sidebar visibility.
 
 ---
-

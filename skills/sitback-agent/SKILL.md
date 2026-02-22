@@ -312,7 +312,7 @@ thegent_queue(action="done", item_id="abc-123")
 
 ### Supported Harnesses (integrated under agent/run/plan/govern)
 - `cursor` — Cursor IDE agent
-- `codex` — Codex CLI agent  
+- `codex` — Codex CLI agent
 - `claude` — Claude CLI agent
 - `ante` — Ante agent
 - `droid` — Droid agent

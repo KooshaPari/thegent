@@ -29,6 +29,13 @@ from thegent.cli.commands.cli_tooling import (  # noqa: F401
     roadmap_cmd,
 )
 
+# WL-136 compatibility aliases expected by tooling-routing contract tests.
+_tooling_audit_verify_cmd = audit_verify_cmd
+_tooling_benchmark_cmd = benchmark_cmd
+_tooling_deep_research_cmd = deep_research_cmd
+_tooling_drift_monitor_cmd = drift_monitor_cmd
+_tooling_roadmap_cmd = roadmap_cmd
+
 __all__ = [
     "audit_verify_cmd",
     "benchmark_cmd",

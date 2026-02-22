@@ -1,9 +1,9 @@
 # Research Proposal: Rust Hooks Implementation Phase 1
 
-**Date**: 2026-02-18  
-**Phase**: Research & Design  
-**Status**: Proposed  
-**Duration**: 1 week  
+**Date**: 2026-02-18
+**Phase**: Research & Design
+**Status**: Proposed
+**Duration**: 1 week
 
 ## Executive Summary
 
@@ -289,8 +289,8 @@ strace -c bash hooks/quality-gate.sh
 
 ## Resource Requirements
 
-**Team**: 1 Rust engineer (familiar with governance domain)  
-**Infrastructure**: 
+**Team**: 1 Rust engineer (familiar with governance domain)
+**Infrastructure**:
 - macOS, Linux CI, WSL environment for testing
 - No additional hardware required
 
@@ -337,11 +337,11 @@ strace -c bash hooks/quality-gate.sh
 | task-completion-verifier.sh | 100 | TaskCompleted (rare) | Low | Phase 3 |
 | **Remaining 9** | ~1200 | Mixed | Low-Med | Phase 2-3 |
 
-**Total LoC**: ~2500 Bash  
+**Total LoC**: ~2500 Bash
 **Estimated Rust equivalent**: ~1200 LoC (50% reduction via type system + stdlib)
 
 ---
 
-**Status**: Ready for review and approval  
-**Version**: 1.0  
+**Status**: Ready for review and approval
+**Version**: 1.0
 **Author**: [AI Research Team]

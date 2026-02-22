@@ -253,4 +253,3 @@ sync_policies(self: Any, peer_id: str)
 Sync governance policies from a peer organization.
 
 ---
-

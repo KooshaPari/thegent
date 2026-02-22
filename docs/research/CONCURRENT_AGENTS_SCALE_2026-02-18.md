@@ -2,9 +2,9 @@
 
 ## Scale Event
 
-**From**: 5 concurrent agents  
-**To**: 10 concurrent agents  
-**Date**: 2026-02-18  
+**From**: 5 concurrent agents
+**To**: 10 concurrent agents
+**Date**: 2026-02-18
 **Reason**: User request to scale capacity
 
 ---

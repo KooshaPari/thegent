@@ -43,4 +43,3 @@ get_shell_executable(shell_type: ShellType)
 Get the full path to the shell executable.
 
 ---
-

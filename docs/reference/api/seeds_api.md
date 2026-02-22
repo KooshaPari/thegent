@@ -75,4 +75,3 @@ Update seed metadata.
 **Returns**: Updated seed or error
 
 ---
-

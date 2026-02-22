@@ -2,7 +2,6 @@
 
 # @trace FR-DOCS-013
 """
-from pathlib import Path
 from docs_engine.hub.generator import HubGenerator
 
 

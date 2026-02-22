@@ -1,11 +1,11 @@
 # Track D Closeout — WL-131 (Python -> Rust Migration Batch A)
 
-Date: 2026-02-21  
+Date: 2026-02-21
 Agent: codex (Track D closeout)
 
 ## Scope Closed
 
-Primary work stream: `WL-131`  
+Primary work stream: `WL-131`
 Goal: complete remaining migration slices with parity tests/docs and update work stream status.
 
 ### Implemented migration slices

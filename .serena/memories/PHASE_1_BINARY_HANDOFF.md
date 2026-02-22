@@ -56,7 +56,7 @@ All types in `crates/thegent-hooks/src/types.rs`:
 # Input: JSON stdin
 { "project_dir": "/path", "changed_files": [...], "coverage_pct": 85.5, ... }
 
-# Execution: 
+# Execution:
 # 1. Load governance rules from .thegent/governance.yaml
 # 2. Parse stdin → EvaluationContext
 # 3. engine.evaluate(context) → Vec<PolicyOutcome>
@@ -142,7 +142,7 @@ policies:
     condition: "coverage >= 80"
     severity: error
     enabled: true
-    
+
   - id: lint-errors
     type: quality
     condition: "lint_errors == 0"
@@ -264,6 +264,6 @@ Deliverables:
 
 ---
 
-**Owner**: Rust Engineer  
-**Duration**: ~16h (2-day sprint)  
+**Owner**: Rust Engineer
+**Duration**: ~16h (2-day sprint)
 **Blockers**: None (library ready)

@@ -72,4 +72,3 @@ verify_proof(self: Any, proof: ZKProof, known_commitment: str)
 Verify a ZK proof against a known commitment.
 
 ---
-

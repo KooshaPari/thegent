@@ -93,4 +93,3 @@ Verify evolution of a list of allowed XML tags.
 Removing a tag is breaking; adding is an evolution.
 
 ---
-

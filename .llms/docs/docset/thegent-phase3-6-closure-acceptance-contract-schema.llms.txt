@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase3-6-closure-acceptance-contract-schema.md
 
 # Thegent Phase 3–6 Closure Acceptance Contract Schema
 
-**Status:** Operational specification  
-**Date:** 2026-02-15  
+**Status:** Operational specification
+**Date:** 2026-02-15
 **Scope:** Formal schema and validation contract for closing Phase 3–6 work packages before enabling later phase transitions.
 
 ## 1) Purpose

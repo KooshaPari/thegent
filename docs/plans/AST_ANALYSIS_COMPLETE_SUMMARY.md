@@ -198,4 +198,3 @@ For **both codebases** to pass quality gates:
 - `/docs/plans/AST_ANALYSIS_COMPLETE_SUMMARY.md` — This summary
 
 All analysis complete and ready for implementation planning.
-

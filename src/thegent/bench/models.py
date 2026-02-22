@@ -103,4 +103,3 @@ class BenchRecord:
             run_id=run_id,
             ts_utc=stamp,
         )
-

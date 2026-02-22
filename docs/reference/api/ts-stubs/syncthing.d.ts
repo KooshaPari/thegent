@@ -16,4 +16,3 @@ export declare class SyncthingFolder {
 export declare class SyncthingManager {
   constructor(config: any);
 }
-

@@ -137,4 +137,3 @@ Acceptance checks:
 1. Finish CI/CD workflow consolidation and docs pipeline hardening.
 2. Add release workflow scaffolding with artifact manifest + checksum.
 3. Draft `thegent domain map` command spec and CLI UX contract.
-

@@ -13,7 +13,7 @@ Location: `crates/thegent-shims/`
 - `src/lib.rs` - Module exports
 - `src/main.rs` - CLI dispatcher (legacy)
 - `src/git.rs` - Git wrapper (509K binary)
-- `src/grep.rs` - Grep wrapper (493K binary)  
+- `src/grep.rs` - Grep wrapper (493K binary)
 - `src/find.rs` - Find wrapper (477K binary)
 - `src/agent.rs` - Agent launcher (509K binary)
 - `src/cache.rs` - TTL caching module

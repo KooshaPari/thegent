@@ -61,4 +61,3 @@ update_score(self: Any, provider_id: str, latency_s: float, success: bool)
 Update provider score based on a new result.
 
 ---
-

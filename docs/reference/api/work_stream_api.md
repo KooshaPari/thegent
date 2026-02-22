@@ -61,4 +61,3 @@ complete(self: Any, item_id: str, agent_id: str)
 Mark an item as complete across all files.
 
 ---
-

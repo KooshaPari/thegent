@@ -159,7 +159,7 @@ def govern_health_trend(
     top_blocked: int = typer.Option(25, "--top-blocked", help="Top N blocked rows to include"),
     limit: int = typer.Option(20, "--limit", help="Maximum snapshots to analyze"),
     format: str = typer.Option("rich", "--format", "-f", help="Output format: rich|json|md"),
-    output: str | None = typer.Option(None, "--output", "-o", help="Export to file"),
+    output: str | None = typer.Option(None, "--output", help="Export to file"),
     export_format: str | None = typer.Option(None, "--export-format", help="Export format override"),
     overwrite: bool = typer.Option(False, "--overwrite", help="Overwrite existing export file"),
 ) -> None:

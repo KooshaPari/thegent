@@ -150,7 +150,7 @@ Cursor chat history is stored in app state; export manually when thegent cannot 
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

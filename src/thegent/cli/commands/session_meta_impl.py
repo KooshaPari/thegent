@@ -264,13 +264,13 @@ def _resolve_session_status(payload: dict[str, Any], rc_path: Path, running: boo
     if exit_code is not None:
         return f"exited:{int(exit_code)}"
 
-    if rc_path.exists():
-        try:
-            rc_raw = rc_path.read_text(encoding="utf-8").strip()
-            if rc_raw:
-                return f"exited:{int(rc_raw)}"
-        except (OSError, ValueError):
-            pass
+        if rc_path.exists():
+            try:
+                rc_raw = rc_path.read_text(encoding="utf-8").strip()
+                if rc_raw:
+                    return f"exited:{int(rc_raw)}"
+            except (OSError, ValueError) as exc:
+                _log.warning("Failed to read exit code from rc path %s: %s", rc_path, exc)
     return "exited"
 
 
@@ -303,8 +303,8 @@ def _run_background_session_observer(
             start_dt = datetime.fromisoformat(started)
             duration = datetime.now(UTC) - start_dt
             payload["duration_seconds"] = round(duration.total_seconds(), 3)
-        except Exception:
-            pass
+        except Exception as exc:
+            _log.warning("Failed to compute session duration for %s: %s", path, exc)
     _save_session_meta(path, payload)
     if rc_path:
         with contextlib.suppress(OSError):

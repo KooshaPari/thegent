@@ -1,6 +1,6 @@
 # MCP Tool Retry Policy
 
-> **Purpose**: Document retry behavior for MCP tools and provider API calls.  
+> **Purpose**: Document retry behavior for MCP tools and provider API calls.
 > **Related**: [ADVANCED_STRATEGIES_AND_RESILIENCE_RESEARCH](../research/ADVANCED_STRATEGIES_AND_RESILIENCE_RESEARCH.md), [TENACITY_RETRY_AUDIT_PLAN](../research/TENACITY_RETRY_AUDIT_PLAN.md)
 
 ---
@@ -49,7 +49,7 @@ MCP tools invoked by clients (Cursor, Claude Code) are executed by thegent's MCP
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

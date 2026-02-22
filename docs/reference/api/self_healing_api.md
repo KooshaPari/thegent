@@ -117,4 +117,3 @@ record_result(self: Any, result: RunResult)
 Record a run result and prune old history.
 
 ---
-

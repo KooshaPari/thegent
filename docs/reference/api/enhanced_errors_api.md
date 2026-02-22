@@ -154,4 +154,3 @@ format_error_with_context(error: Exception, context: Any)
 Format and display an error with rich context.
 
 ---
-

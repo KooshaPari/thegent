@@ -1,6 +1,6 @@
 # Architectural Governance Summary
 
-**Status:** Active  
+**Status:** Active
 **Scope:** Mandatory harness contract gates for merge readiness
 
 ## Core Rule

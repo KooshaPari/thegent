@@ -132,7 +132,7 @@ To test the integration:
 # Test setup command
 thegent setup --system-deps --dry-run
 
-# Test install command  
+# Test install command
 thegent install --system-deps --dry-run
 
 # Verify parameters are available

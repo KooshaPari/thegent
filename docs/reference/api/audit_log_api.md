@@ -168,4 +168,3 @@ path(self: Any) -> Path
 ```
 
 ---
-

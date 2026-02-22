@@ -61,4 +61,3 @@ query(self: Any, query_text: str)
 Query the knowledge graph for relevant entities and relations.
 
 ---
-

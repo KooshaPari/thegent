@@ -165,4 +165,3 @@ Yield every JSON object in *path* without loading the file fully.
 malformed lines are silently skipped.
 
 ---
-

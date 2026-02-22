@@ -109,4 +109,3 @@ Register a compliance check for a stage.
 - `check`: Compliance check name
 
 ---
-

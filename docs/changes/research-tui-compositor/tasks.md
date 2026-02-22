@@ -5,9 +5,9 @@ status: in_progress
 
 # TUI Compositor — Implementation Tasks
 
-**Date**: 2026-02-18  
-**Status**: Task Breakdown  
-**Version**: 1.0  
+**Date**: 2026-02-18
+**Status**: Task Breakdown
+**Version**: 1.0
 
 ---
 
@@ -19,7 +19,7 @@ Basic Textual app with menubar, statusbar, and single terminal pane.
 ### Tasks
 
 #### P1.1: Project Setup & Dependencies
-**Depends on**: None  
+**Depends on**: None
 **Effort**: 1-2 hours
 
 - [ ] Create new module: `thegent/src/thegent/ui/compositor/`
@@ -42,7 +42,7 @@ Basic Textual app with menubar, statusbar, and single terminal pane.
 ---
 
 #### P1.2: CompositApp Skeleton
-**Depends on**: P1.1  
+**Depends on**: P1.1
 **Effort**: 2-3 hours
 
 - [ ] Implement `CompositApp` class (Textual.App)
@@ -59,7 +59,7 @@ class CompositApp(App):
         ("ctrl+n", "new_pane", "New Pane"),
         ("ctrl+q", "quit", "Quit"),
     ]
-    
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(id="main-pane-container")
@@ -80,7 +80,7 @@ class CompositApp(App):
 ---
 
 #### P1.3: TerminalPane Widget
-**Depends on**: P1.1  
+**Depends on**: P1.1
 **Effort**: 3-4 hours
 
 - [ ] Implement `TerminalPane` class
@@ -96,7 +96,7 @@ class TerminalPane(Static):
         super().__init__()
         self.pane_id = pane_id
         self.working_dir = working_dir
-    
+
     def spawn_shell(self, shell: str = "/bin/bash") -> None:
         # Allocate PTY, fork shell
         pass
@@ -118,7 +118,7 @@ class TerminalPane(Static):
 ---
 
 #### P1.4: Basic Integration & Single-Pane Demo
-**Depends on**: P1.2, P1.3  
+**Depends on**: P1.2, P1.3
 **Effort**: 2-3 hours
 
 - [ ] Connect `CompositApp` to `TerminalPane`
@@ -178,7 +178,7 @@ Implement pane splitting, merging, layout management, and session persistence.
 ### Tasks
 
 #### P2.1: PaneManager Foundation
-**Depends on**: P1.4  
+**Depends on**: P1.4
 **Effort**: 3-4 hours
 
 - [ ] Implement `PaneNode` data structure
@@ -193,11 +193,11 @@ class PaneManager:
     def split_pane(self, direction: str) -> TerminalPane:
         # Split current pane, create new pane
         pass
-    
+
     def close_pane(self) -> None:
         # Close current pane, rebalance layout
         pass
-    
+
     def focus_next(self) -> None:
         # Rotate focus to next pane
         pass
@@ -218,7 +218,7 @@ class PaneManager:
 ---
 
 #### P2.2: UI Integration for Pane Operations
-**Depends on**: P2.1, P1.4  
+**Depends on**: P2.1, P1.4
 **Effort**: 2-3 hours
 
 - [ ] Integrate `PaneManager` into `CompositApp`
@@ -241,7 +241,7 @@ class PaneManager:
 ---
 
 #### P2.3: Layout Serialization
-**Depends on**: P2.1  
+**Depends on**: P2.1
 **Effort**: 2-3 hours
 
 - [ ] Implement `PaneManager.save_layout()` (tree → dict)
@@ -273,7 +273,7 @@ def restore_layout(self, layout_data: dict) -> None:
 ---
 
 #### P2.4: Session Persistence
-**Depends on**: P2.3  
+**Depends on**: P2.3
 **Effort**: 2-3 hours
 
 - [ ] Implement `SessionState` class
@@ -296,7 +296,7 @@ def restore_layout(self, layout_data: dict) -> None:
 ---
 
 #### P2.5: Layout Management UI
-**Depends on**: P2.4  
+**Depends on**: P2.4
 **Effort**: 2-3 hours
 
 - [ ] Add `action_save_layout(name)` to save custom layouts
@@ -358,7 +358,7 @@ Add floating windows, plugin system, themes, and optional web export.
 ### Tasks
 
 #### P3.1: Floating Windows & Dialogs
-**Depends on**: P2.5  
+**Depends on**: P2.5
 **Effort**: 3-4 hours
 
 - [ ] Implement `FloatingWindow` widget
@@ -380,7 +380,7 @@ Add floating windows, plugin system, themes, and optional web export.
 ---
 
 #### P3.2: Theme Support
-**Depends on**: P1.2  
+**Depends on**: P1.2
 **Effort**: 2-3 hours
 
 - [ ] Add theme configuration (light/dark)
@@ -402,7 +402,7 @@ Add floating windows, plugin system, themes, and optional web export.
 ---
 
 #### P3.3: Real-Time Process Monitoring (Optional)
-**Depends on**: P1.3  
+**Depends on**: P1.3
 **Effort**: 2-3 hours
 
 - [ ] Add CPU/memory usage tracking per pane
@@ -422,7 +422,7 @@ Add floating windows, plugin system, themes, and optional web export.
 ---
 
 #### P3.4: Web Export (Optional)
-**Depends on**: P3.1  
+**Depends on**: P3.1
 **Effort**: 2-3 hours
 
 - [ ] Set up `textual serve` integration
@@ -556,4 +556,3 @@ Add to `WORK_STREAM.md`:
 - **Research**: [../../research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md](../../research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md) § 2
 - **Textual Docs**: https://textual.textualize.io/
 - **Related Plan**: [../../plans/UNIFIED_SYSTEM_APPLICATION_PLAN.md](../../plans/UNIFIED_SYSTEM_APPLICATION_PLAN.md)
-

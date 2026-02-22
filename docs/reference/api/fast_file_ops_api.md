@@ -272,4 +272,3 @@ remove_path(path: Any, recursive: bool)
 Remove file or directory.
 
 ---
-

@@ -1013,7 +1013,7 @@ CREATE INDEX idx_run_registry_month ON run_registry(STRFTIME('%Y-%m', ended_at_u
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

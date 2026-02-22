@@ -11,4 +11,3 @@
 Simple TUI to explore and take over sessions.
 
 ---
-

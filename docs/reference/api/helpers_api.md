@@ -153,4 +153,3 @@ Safely write a file with error handling and optional OCC version check.
 **Returns**: True if successful, False otherwise
 
 ---
-

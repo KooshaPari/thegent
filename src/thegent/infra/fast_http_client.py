@@ -13,7 +13,7 @@ Performance improvements:
 """
 
 import logging
-from typing import Any
+from typing import Any, Literal, cast
 
 import tenacity
 
@@ -24,6 +24,8 @@ CURL_CFFI_AVAILABLE = True
 HTTPX_AVAILABLE = True
 
 _log = logging.getLogger(__name__)
+
+_CurlMethod = Literal["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE"]
 
 
 # Standard retry policy using tenacity (FR-LIB-001)
@@ -110,7 +112,7 @@ class FastHTTPClient:
         def _execute():
             if self._backend == "curl_cffi":
                 impersonate = kwargs.pop("impersonate", self.impersonate)
-                return curl_cffi.request(method, url, impersonate=impersonate, **kwargs)
+                return curl_cffi.request(cast(_CurlMethod, method), url, impersonate=impersonate, **kwargs)
             if self._backend == "httpx":
                 return (
                     self._client.request(method, url, **kwargs)

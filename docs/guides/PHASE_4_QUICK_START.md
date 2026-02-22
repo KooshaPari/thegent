@@ -205,7 +205,7 @@ _accel_main ts-all <files>          # Run both checks
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

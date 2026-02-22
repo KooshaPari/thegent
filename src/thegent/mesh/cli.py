@@ -9,6 +9,7 @@ from rich.table import Table
 
 from thegent.config import ThegentSettings
 from thegent.mesh.mesh import MeshManager
+from thegent.mesh.agent_patterns import run_detection
 
 app = typer.Typer(help="Agent Mesh Coordination commands")
 console = Console()
@@ -44,6 +45,7 @@ def queue_enqueue(
 
 @queue_app.command("dequeue")
 def queue_dequeue(
+    agent_id: str | None = typer.Option(None, "--agent-id", help="Optional owner ID for claimed task"),
     mesh_root: str | None = typer.Option(None, "--mesh-root", help="Path to mesh root"),
     ack: bool = typer.Option(False, "--ack", help="Immediately acknowledge/remove the task"),
 ) -> None:
@@ -56,7 +58,7 @@ def queue_dequeue(
     root = Path(mesh_root) if mesh_root else Path(settings.harness_root)
     queue = MaildirQueue(root / "queue")
 
-    envelope = queue.dequeue()
+    envelope = queue.dequeue(owner=agent_id)
     if not envelope:
         console.print("[yellow]Queue is empty.[/yellow]")
         return
@@ -233,7 +235,11 @@ def _load_mesh_manifest(table: Table, manifest: Path) -> None:
 
 @app.command("discover")
 def discover(
-    patterns: str = typer.Option("claude,aider,cursor", help="Comma-separated patterns"),
+    patterns: str | None = typer.Option(
+        None,
+        "--patterns",
+        help="Comma-separated regex patterns (optional; defaults to agents.conf)",
+    ),
     mesh_root: str | None = typer.Option(None, "--mesh-root", help="Path to mesh root"),
     register: bool = typer.Option(True, "--register/--no-register", help="Register discovered agents"),
 ) -> None:
@@ -244,10 +250,14 @@ def discover(
     root = Path(mesh_root) if mesh_root else Path(settings.harness_root)
     manager = MeshManager(mesh_root=root)
 
-    pattern_list = [p.strip() for p in patterns.split(",")]
-    console.print(f"Scanning for agents matching: {', '.join(pattern_list)}...")
-
-    agents = manager.discover_agents(pattern_list)
+    if patterns is None:
+        console.print("Scanning agents using agents.conf patterns...")
+        detected = run_detection()
+        agents = [{"pid": a["pid"], "name": a["agent"]} for a in detected]
+    else:
+        pattern_list = [p.strip() for p in patterns.split(",")]
+        console.print(f"Scanning for agents matching: {', '.join(pattern_list)}...")
+        agents = manager.discover_agents(pattern_list)
 
     if not agents:
         console.print("[yellow]No agents discovered.[/yellow]")

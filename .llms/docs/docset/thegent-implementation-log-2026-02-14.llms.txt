@@ -1890,7 +1890,7 @@ Scope: Runtime output parsing hardening + model contract normalization
   - Updated `src/thegent/cli.py`:
     - `bg_cmd()`: Now accepts `lane` and `correlation_id`; registers start with `RunRegistry`.
     - `run_cmd()`: Now accepts `lane`.
-    - `dag_run_cmd()`: 
+    - `dag_run_cmd()`:
       - Added support for `max_parallel` (enforced via `status=running` check).
       - Added `priority` sorting (higher priority tasks run first).
       - Added support for `routing` and `lane` columns in DAG markdown table.
@@ -1913,7 +1913,7 @@ The orchestration engine is now aware of task dependencies and priority, with su
   - Updated `src/thegent/execution.py`: Added `confidence` and `arbitration` fields to `RunMeta`.
   - Updated `src/thegent/cli.py`:
     - `DagDocument`: Added default `quorum` and `confidence` columns.
-    - `dag_run_cmd()`: 
+    - `dag_run_cmd()`:
       - Implemented parallel **Quorum** support: if `quorum=N` is set, spawns N background sessions.
       - Supports multi-agent quorum if `agent` is a comma-separated list.
       - Implemented **Confidence-aware routing**: if `confidence < min_confidence` (default 0.85), automatically upgrades to a 2-agent quorum (leader/follower) for verification.
@@ -1932,7 +1932,7 @@ Phase 1 (Core Routing and Deterministic Execution) is now complete. Thegent can 
 ### Completed
 
 - Implemented full **Phase 2: Reliability and Recovery Hardening** (WP-2004, WP-2005, WP-2006, WP-2007, WP-2008):
-  - **Failure Taxonomy (WP-2005)**: 
+  - **Failure Taxonomy (WP-2005)**:
     - Added `error_class` to `RunMeta` and `RunRegistry`.
     - `run_impl` now classifies failures into `timeout`, `usage_limit`, or `api_error` for better audit clustering.
   - **Evidence Linting (WP-2007)**:
@@ -1971,7 +1971,7 @@ Phase 3 is complete. Thegent now operates within a secure governance envelope. E
 ### Completed
 
 - Implemented **Idempotent execution envelope**, **Deterministic phase transition contracts**, and **Evidence capture** (Phase 1, WP-1003, WP-1004, WP-1005):
-  - Updated `src/thegent/execution.py`: 
+  - Updated `src/thegent/execution.py`:
     - Added `idempotency_token` to `RunMeta`.
     - Added `RunRegistry.find_by_token(token)` to lookup existing runs by token.
   - Updated `src/thegent/cli.py`:

@@ -17,6 +17,9 @@ from thegent.cache.multi_level import _DISKCACHE_AVAILABLE, MultiLevelCache, cac
 if TYPE_CHECKING:
     from pathlib import Path
 
+if not _DISKCACHE_AVAILABLE:
+    pytest.fail("diskcache dependency is required for cache integration tests", pytrace=False)
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -126,7 +129,6 @@ class TestL1TTL:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skipif(not _DISKCACHE_AVAILABLE, reason="diskcache not installed")
 class TestTwoLevel:
     """FR-CACHE-001: Two-level cache (L1 + L2 diskcache) behaviour."""
 

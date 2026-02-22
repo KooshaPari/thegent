@@ -1,7 +1,7 @@
 # Hook Rust Migration Complete — Comprehensive Migration Strategy & Timeline
 
 > **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
-> **Related**: 
+> **Related**:
 > - [Hook Runtime Rust Design](../plans/HOOK_RUNTIME_RUST_DESIGN.md)
 > - [Full Shell to Rust Where Beneficial](../plans/FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md)
 > - [Rust/Go Migration Plan](../migration/RUST_GO_MIGRATION_PLAN.md)
@@ -548,7 +548,7 @@ impl InitConfig {
             stdin_json,
         })
     }
-    
+
     pub fn resolve_project_dir(&mut self, cwd: &str) -> Result<String, Error> {
         // Try git rev-parse --show-toplevel
         if let Ok(output) = Command::new("git")
@@ -564,34 +564,34 @@ impl InitConfig {
                 return Ok(path);
             }
         }
-        
+
         // Fallback: cwd or HOME
         Ok(cwd.to_string())
     }
-    
+
     pub fn build_env(&self) -> HashMap<String, String> {
         let mut env = HashMap::new();
-        
+
         // Extract from JSON
         if let Some(tool_name) = self.stdin_json.get("tool_name").and_then(|v| v.as_str()) {
             env.insert("TOOL_NAME".to_string(), tool_name.to_string());
         }
-        
+
         // Add PROJECT_DIR
         if let Some(ref project_dir) = self.project_dir {
             env.insert("PROJECT_DIR".to_string(), project_dir.clone());
         }
-        
+
         // Add tool detection
         if let Ok(jq_cmd) = self.detect_tool("jq") {
             env.insert("JQ_CMD".to_string(), jq_cmd);
         }
-        
+
         // ... more env vars
-        
+
         env
     }
-    
+
     fn detect_tool(&self, tool: &str) -> Result<String, Error> {
         // Use thegent-tool-detect or command -v
         Ok(format!("/usr/local/bin/{}", tool)) // Placeholder
@@ -617,12 +617,12 @@ pub fn compute_cache_key(
     hasher.update(b"\0");
     hasher.update(head_sha.as_bytes());
     hasher.update(b"\0");
-    
+
     for file in changed_files {
         hasher.update(file.as_bytes());
         hasher.update(b"\0");
     }
-    
+
     let hash = hasher.finalize();
     hex::encode(hash.as_bytes())
 }
@@ -646,19 +646,19 @@ impl CacheManager {
                 let tmp = std::env::var("TMPDIR").unwrap_or_else(|_| "/tmp".to_string());
                 PathBuf::from(tmp).join(format!("claude-hook-cache-{}", std::process::id()))
             });
-        
+
         fs::create_dir_all(&cache_dir)?;
-        
+
         Ok(CacheManager { cache_dir })
     }
-    
+
     pub fn check(&self, key: &str, ttl_seconds: u64) -> bool {
         let cache_file = self.cache_dir.join(format!("{}.out", key));
-        
+
         if !cache_file.exists() {
             return false;
         }
-        
+
         // Check TTL
         if let Ok(metadata) = fs::metadata(&cache_file) {
             if let Ok(modified) = metadata.modified() {
@@ -670,35 +670,35 @@ impl CacheManager {
                 }
             }
         }
-        
+
         false
     }
-    
+
     pub fn read(&self, key: &str) -> Result<(String, i32), Error> {
         let stdout_file = self.cache_dir.join(format!("{}.out", key));
         let rc_file = self.cache_dir.join(format!("{}.rc", key));
-        
+
         let stdout = fs::read_to_string(&stdout_file)?;
         let rc = fs::read_to_string(&rc_file)?
             .trim()
             .parse::<i32>()?;
-        
+
         Ok((stdout, rc))
     }
-    
+
     pub fn write(&self, key: &str, stdout: &str, rc: i32) -> Result<(), Error> {
         let stdout_file = self.cache_dir.join(format!("{}.out", key));
         let rc_file = self.cache_dir.join(format!("{}.rc", key));
-        
+
         // Atomic write
         let tmp_stdout = format!("{}.tmp", stdout_file.display());
         fs::write(&tmp_stdout, stdout)?;
         fs::rename(&tmp_stdout, &stdout_file)?;
-        
+
         let tmp_rc = format!("{}.tmp", rc_file.display());
         fs::write(&tmp_rc, format!("{}", rc))?;
         fs::rename(&tmp_rc, &rc_file)?;
-        
+
         Ok(())
     }
 }
@@ -725,69 +725,69 @@ impl GitManager {
                 return self.passthrough_agent(first_arg, &args[1..]);
             }
         }
-        
+
         // Check if read-only command
         if self.is_read_only(&args) {
             return self.execute_cached(&args);
         }
-        
+
         // Write command: wait for lock, then execute
         self.wait_for_lock()?;
         let result = self.execute_git(&args)?;
         self.invalidate_cache();
         Ok(result)
     }
-    
+
     fn is_read_only(&self, args: &[String]) -> bool {
         matches!(
             args.first().map(|s| s.as_str()),
             Some("diff") | Some("status") | Some("rev-parse") | Some("ls-files") | Some("log")
         )
     }
-    
+
     fn execute_cached(&self, args: &[String]) -> Result<(String, i32), Error> {
         // Compute cache key
         let cache_key = self.compute_cache_key(args)?;
-        
+
         // Check cache
         let cache_manager = CacheManager::new()?;
         if cache_manager.check(&cache_key, 3600) {
             return cache_manager.read(&cache_key);
         }
-        
+
         // Cache miss: execute git
         let result = self.execute_git(args)?;
-        
+
         // Store in cache
         cache_manager.write(&cache_key, &result.0, result.1)?;
-        
+
         Ok(result)
     }
-    
+
     fn execute_git(&self, args: &[String]) -> Result<(String, i32), Error> {
         let output = Command::new("git")
             .args(args)
             .output()?;
-        
+
         let stdout = String::from_utf8(output.stdout)?;
         let rc = output.status.code().unwrap_or(1);
-        
+
         Ok((stdout, rc))
     }
-    
+
     fn wait_for_lock(&self) -> Result<(), Error> {
         let lock_file = PathBuf::from(".git/index.lock");
-        
+
         if !lock_file.exists() {
             return Ok(());
         }
-        
+
         // Wait up to 30 seconds
         for _ in 0..30 {
             if !lock_file.exists() {
                 return Ok(());
             }
-            
+
             // Check if stale (older than 5 minutes)
             if let Ok(metadata) = std::fs::metadata(&lock_file) {
                 if let Ok(modified) = metadata.modified() {
@@ -799,10 +799,10 @@ impl GitManager {
                     }
                 }
             }
-            
+
             std::thread::sleep(std::time::Duration::from_secs(1));
         }
-        
+
         Err(Error::LockTimeout)
     }
 }
@@ -970,7 +970,7 @@ impl GitManager {
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

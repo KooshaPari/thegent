@@ -1,7 +1,7 @@
 # Environment Variable Sanitization Fixes
 
-> **Date**: 2026-02-18  
-> **Issue**: `rg` (ripgrep) was failing with "grep config error: unknown encoding" due to problematic environment variables  
+> **Date**: 2026-02-18
+> **Issue**: `rg` (ripgrep) was failing with "grep config error: unknown encoding" due to problematic environment variables
 > **Status**: Fixed
 
 ## Problem

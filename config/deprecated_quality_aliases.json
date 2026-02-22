@@ -1,6 +1,5 @@
 {
   "deprecated_aliases": [
-    "quality:full",
     "quality-a",
     "quality-a-r",
     "quality-a-h",
@@ -14,7 +13,6 @@
     "quality-fix-a-d-h"
   ],
   "replacement_suggestions": {
-    "quality:full": "quality",
     "quality-a": "quality",
     "quality-a-r": "quality:dag:hard",
     "quality-a-h": "quality:dag:hard",

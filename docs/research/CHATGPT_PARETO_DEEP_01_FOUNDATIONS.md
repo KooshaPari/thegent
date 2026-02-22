@@ -1,7 +1,7 @@
 # ChatGPT Pareto Router Deep Research — Part 1: Foundations
 
-**Source**: chatgpt3.md, chatgpt4.md (ChatGPT conversation transcripts)  
-**Date**: 2026-02-18  
+**Source**: chatgpt3.md, chatgpt4.md (ChatGPT conversation transcripts)
+**Date**: 2026-02-18
 **Scope**: Core Pareto design, Offer abstraction, PRD/ALD foundations, design philosophy
 
 ---
@@ -52,12 +52,12 @@ Anything failing gets removed before optimization.
 
 Compute objective vector for each remaining offer:
 
-- **Speed objective**: (latency_pred_ms, output_tokens_pred, turns_pred)  
+- **Speed objective**: (latency_pred_ms, output_tokens_pred, turns_pred)
   Collapse to: `session_time = latency + k*output_tokens + m*turns`
 - **Cost objective**: effective_cost_pred (includes cache + subscription shadow price)
 - **Quality objective**: -quality_pred (since we minimize)
 
-**Pareto set** = non-dominated offers.  
+**Pareto set** = non-dominated offers.
 **A dominates B** iff: speed_A ≤ speed_B AND cost_A ≤ cost_B AND quality_A ≥ quality_B, with at least one strictly better.
 
 ### 1.6 Lexicographic Selection

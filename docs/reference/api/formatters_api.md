@@ -47,4 +47,3 @@ Format log record.
 **Returns**: Formatted log string
 
 ---
-

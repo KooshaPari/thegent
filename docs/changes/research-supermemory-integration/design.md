@@ -1,7 +1,7 @@
 # Supermemory Integration Design
 
-**Status**: Ready for Implementation  
-**Date**: 2026-02-18  
+**Status**: Ready for Implementation
+**Date**: 2026-02-18
 **Architecture**: Event-driven, layered caching with cloud fallback
 
 ---
@@ -89,18 +89,18 @@ impl SupermemoryClient {
         entity: &str,
         relationships: Vec<Relationship>,
     ) -> Result<String>;
-    
+
     pub async fn query_knowledge(
         &self,
         query: &str,
         limit: usize,
     ) -> Result<Vec<KnowledgeNode>>;
-    
+
     pub async fn store_document(
         &self,
         artifact: &MAIFArtifact,
     ) -> Result<String>;
-    
+
     pub async fn retrieve_document(
         &self,
         doc_id: &str,
@@ -129,19 +129,19 @@ class MemoryManager:
             project_id=config.project_id,
         )
         self.health_monitor = HealthMonitor()
-    
+
     async def get_knowledge(self, query: str) -> List[KnowledgeNode]:
         """Layered read: L1 → L2 → L3"""
         # Try L1
         if key in self.l1_cache:
             return self.l1_cache[key]
-        
+
         # Try L2
         if self.l2_cache.exists(key):
             data = self.l2_cache.get(key)
             self.l1_cache[key] = data
             return data
-        
+
         # Try L3
         try:
             data = await self.l3_client.query_knowledge(query)
@@ -151,15 +151,15 @@ class MemoryManager:
         except Exception as e:
             self.health_monitor.record_failure("L3_query", e)
             raise
-    
+
     async def store_artifact(self, artifact: MAIFArtifact) -> str:
         """Store to L4 with L2 backup"""
         # Store in L4
         doc_id = await self.l3_client.store_document(artifact)
-        
+
         # Backup to L2
         self.l2_cache.set(f"artifact:{doc_id}", artifact)
-        
+
         return doc_id
 ```
 
@@ -195,9 +195,9 @@ impl MAIFArtifact {
         output: &[u8],
         previous_hash: Option<String>,
     ) -> Self;
-    
+
     pub fn verify(&self, previous_hash: &str) -> bool;
-    
+
     pub fn compute_hash(&self) -> String;
 }
 ```
@@ -223,7 +223,7 @@ class SimulationReplay:
     def __init__(self, memory: MemoryManager, artifacts: MAIFStorage):
         self.memory = memory
         self.artifacts = artifacts
-    
+
     async def replay_decision(
         self,
         session_id: str,
@@ -234,16 +234,16 @@ class SimulationReplay:
         context = await self.memory.get_knowledge(
             f"session:{session_id} decision:{decision_id}"
         )
-        
+
         # Retrieve artifacts from L4
         artifacts = await self.artifacts.get_artifacts(session_id)
-        
+
         # Reconstruct environment
         env = self._reconstruct_environment(context, artifacts)
-        
+
         # Replay
         result = await self._execute_deterministic(env, artifacts)
-        
+
         return ReplayResult(
             original=artifacts[-1],
             replayed=result,
@@ -329,7 +329,7 @@ class IMemoryManager(Protocol):
     ) -> List[KnowledgeNode]:
         """Query knowledge graph (L3 with layered fallback)"""
         ...
-    
+
     async def store_knowledge(
         self,
         entity: str,
@@ -337,11 +337,11 @@ class IMemoryManager(Protocol):
     ) -> str:
         """Store to L3 knowledge graph"""
         ...
-    
+
     async def get_artifact(self, doc_id: str) -> MAIFArtifact:
         """Retrieve artifact from L4 (with L2 fallback)"""
         ...
-    
+
     async def store_artifact(
         self,
         artifact: MAIFArtifact,
@@ -363,14 +363,14 @@ class IMAIFStorage(Protocol):
     ) -> MAIFArtifact:
         """Create and sign artifact"""
         ...
-    
+
     async def verify_chain(
         self,
         artifacts: List[MAIFArtifact],
     ) -> bool:
         """Verify hash chain integrity"""
         ...
-    
+
     async def store(self, artifact: MAIFArtifact) -> str:
         """Store to L4 (Supermemory Documents API)"""
         ...
@@ -385,12 +385,12 @@ class IMAIFStorage(Protocol):
 ```python
 class CircuitBreaker:
     STATES = ["CLOSED", "OPEN", "HALF_OPEN"]
-    
+
     def __init__(self, failure_threshold: int = 3):
         self.state = "CLOSED"
         self.failure_count = 0
         self.last_failure_time = None
-    
+
     async def call(self, func, *args, **kwargs):
         if self.state == "OPEN":
             # Check timeout (30 seconds)
@@ -398,7 +398,7 @@ class CircuitBreaker:
                 self.state = "HALF_OPEN"
             else:
                 raise CircuitBreakerOpen("Circuit breaker is open")
-        
+
         try:
             result = await func(*args, **kwargs)
             if self.state == "HALF_OPEN":
@@ -419,7 +419,7 @@ class CircuitBreaker:
 class RetryPolicy:
     def __init__(self, max_retries: int = 3):
         self.max_retries = max_retries
-    
+
     async def call_with_retry(self, func, *args, **kwargs):
         for attempt in range(self.max_retries):
             try:
@@ -488,23 +488,23 @@ class TestMemoryManager:
     async def test_l1_hit(self):
         """L1 cache hit returns immediately"""
         ...
-    
+
     async def test_l2_fallback(self):
         """L2 fallback when L1 miss"""
         ...
-    
+
     async def test_l3_query(self):
         """L3 query returns knowledge nodes"""
         ...
-    
+
     async def test_circuit_breaker_open(self):
         """Circuit breaker opens after threshold"""
         ...
-    
+
     async def test_artifact_signature(self):
         """Artifacts signed correctly"""
         ...
-    
+
     async def test_hash_chain_verify(self):
         """Hash chain verification works"""
         ...
@@ -520,15 +520,15 @@ class TestSupermemoryIntegration:
     async def test_end_to_end_artifact_storage(self):
         """Create, sign, store, retrieve artifact"""
         ...
-    
+
     async def test_fallback_on_l3_failure(self):
         """Fallback to L2 when L3 fails"""
         ...
-    
+
     async def test_deterministic_replay(self):
         """Replay decision with same output"""
         ...
-    
+
     async def test_multi_tenant_isolation(self):
         """Projects isolated from each other"""
         ...
@@ -542,11 +542,11 @@ class TestPerformance:
     async def test_l1_latency(self):
         """L1 hits under 1ms"""
         ...
-    
+
     async def test_l3_throughput(self):
         """L3 queries 1000+ req/s"""
         ...
-    
+
     async def test_batch_storage(self):
         """Batch artifact storage meets SLO"""
         ...
@@ -618,5 +618,5 @@ MEMORY_CB_TIMEOUT_SEC=30
 
 ---
 
-**Design Review**: Pending  
+**Design Review**: Pending
 **Last Updated**: 2026-02-18

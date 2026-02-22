@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from agent_roles.spec import AgentRoleSpec
+from agent_roles.spec import AgentRoleSpec
 
 _TEMPLATE = """\
 ---

@@ -21,7 +21,7 @@ How Ante approaches evaluation, and why we chose Terminal Bench as our primary b
 Eval
 Evaluation is the backbone of building a reliable AI agent. We were practicing the same principles Anthropic later laid out in Demystifying Evals for AI Agents before they published it.
 Most of the magic comes from the model — but the agent harness is the critical conduit between human and AI.
-We evaluate the agent and how well it channels the model’s power — not the model itself. 
+We evaluate the agent and how well it channels the model’s power — not the model itself.
 Which is why we chose Terminal Bench and its real-world complex task environment.
 ​
 
@@ -56,6 +56,3 @@ Assistant
 
 
 Responses are generated using AI and may contain mistakes.
-
-
-

@@ -6,8 +6,8 @@ Source: docs/changes/research-library-retry/README.md
 
 # Retry Library Initiative (2026-02-18)
 
-**Status**: 📋 Proposal Phase  
-**Priority**: HIGH (library-first governance)  
+**Status**: 📋 Proposal Phase
+**Priority**: HIGH (library-first governance)
 **Owner**: [Assign to implementation agent]
 
 ## Quick Links

@@ -84,7 +84,7 @@ app = typer.Typer()
 def list():
     """List all available teammates."""
     from thegent.agents.registry import AGENT_REGISTRY
-    
+
     print("\n📋 Available Teammates:\n")
     for agent_id, agent_def in AGENT_REGISTRY.items():
         if agent_def.get("type") == "teammate":
@@ -100,20 +100,20 @@ def delegate(
     """Delegate task to a teammate."""
     from thegent.agents.runner import AgentRunner
     import tempfile
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         if context:
             ctx_file = Path(tmpdir) / "context.md"
             ctx_file.write_text(f"# Context from {context}\n\n{context.read_text()}")
-        
+
         runner = AgentRunner(
             agent_id=teammate,
             task_prompt=task,
             work_dir=Path(tmpdir)
         )
-        
+
         result = runner.run()
-        
+
         if result.success:
             print(f"\n✅ Teammate {teammate} completed: {result.summary}")
         else:
@@ -124,13 +124,13 @@ def delegate(
 def status():
     """Show status of all teammate runs."""
     from thegent.orchestration.state import get_active_runs
-    
+
     runs = get_active_runs()
     print("\n📊 Active Teammate Runs:\n")
     if not runs:
         print("  No active runs")
         return
-    
+
     for run in runs:
         print(f"  • {run.id}: {run.status} ({run.teammate})")
 ```
@@ -161,7 +161,7 @@ class Handoff:
     state: HandoffState = HandoffState.PENDING
     confidence: float = 1.0
     result: Optional[str] = None
-    
+
     def to_xml(self) -> str:
         return f"""<Handoff>
     <From>{self.from_agent}</From>
@@ -173,10 +173,10 @@ class Handoff:
 
 class HandoffProtocol:
     """Manage handoffs between teammates."""
-    
+
     def __init__(self):
         self.pending_handoffs: list[Handoff] = []
-    
+
     def create_handoff(
         self,
         from_agent: str,
@@ -193,7 +193,7 @@ class HandoffProtocol:
         )
         self.pending_handoffs.append(handoff)
         return handoff
-    
+
     def complete_handoff(self, handoff_id: int, result: str):
         """Mark handoff as completed."""
         if 0 <= handoff_id < len(self.pending_handoffs):
@@ -206,7 +206,7 @@ class HandoffProtocol:
 
 ## 6. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made
@@ -236,7 +236,7 @@ class HandoffProtocol:
 
 ## 7. Agent Hierarchy Integration
 
-**Extended on:** 2026-02-18  
+**Extended on:** 2026-02-18
 **Extended by:** Agent Hierarchy System
 
 ### Integration with Hierarchy System

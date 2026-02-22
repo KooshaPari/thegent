@@ -2,9 +2,9 @@
 
 **Purpose:** Comprehensive index of all research documents, sections, and key findings.
 
-**Date:** 2026-02-16  
-**Status:** Index  
-**Last Updated:** 2026-02-17  
+**Date:** 2026-02-16
+**Status:** Index
+**Last Updated:** 2026-02-17
 **Sprawl:** Cross-platform docs are full research. Fragment/seed catalog: [RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md).
 
 ---
@@ -379,7 +379,7 @@
 
 ## 6. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -169,8 +169,8 @@ class TestParseDagFull:
 class TestValidateDag:
     """Tests for _validate_dag validation."""
 
-    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda x: x)
-    @patch("thegent.cli.commands.impl.list_agent_names", return_value=["claude", "gemini", "codex"])
+    @patch("thegent.cli.commands.dag_impl.resolve_agent", side_effect=lambda x: x)
+    @patch("thegent.cli.commands.dag_impl.list_agent_names", return_value=["claude", "gemini", "codex"])
     def test_valid_dag_no_errors(self, mock_list, mock_resolve, tmp_path) -> None:
         # @trace FR-CLI-155
         dag_file = _write_dag(tmp_path, DAG_CONTENT)
@@ -178,8 +178,8 @@ class TestValidateDag:
         errors = _validate_dag(doc)
         assert errors == []
 
-    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda x: x)
-    @patch("thegent.cli.commands.impl.list_agent_names", return_value=["claude"])
+    @patch("thegent.cli.commands.dag_impl.resolve_agent", side_effect=lambda x: x)
+    @patch("thegent.cli.commands.dag_impl.list_agent_names", return_value=["claude"])
     def test_invalid_agent(self, mock_list, mock_resolve, tmp_path) -> None:
         # @trace FR-CLI-156
         content = """\
@@ -194,8 +194,8 @@ class TestValidateDag:
         errors = _validate_dag(doc)
         assert any("Unknown agent" in e for e in errors)
 
-    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda x: x)
-    @patch("thegent.cli.commands.impl.list_agent_names", return_value=["claude"])
+    @patch("thegent.cli.commands.dag_impl.resolve_agent", side_effect=lambda x: x)
+    @patch("thegent.cli.commands.dag_impl.list_agent_names", return_value=["claude"])
     def test_duplicate_task_ids(self, mock_list, mock_resolve, tmp_path) -> None:
         # @trace FR-CLI-157
         content = """\
@@ -211,8 +211,8 @@ class TestValidateDag:
         errors = _validate_dag(doc)
         assert any("Duplicate task ID" in e for e in errors)
 
-    @patch("thegent.cli.commands.impl.resolve_agent", side_effect=lambda x: x)
-    @patch("thegent.cli.commands.impl.list_agent_names", return_value=["claude"])
+    @patch("thegent.cli.commands.dag_impl.resolve_agent", side_effect=lambda x: x)
+    @patch("thegent.cli.commands.dag_impl.list_agent_names", return_value=["claude"])
     def test_done_task_missing_evidence(self, mock_list, mock_resolve, tmp_path) -> None:
         # @trace FR-CLI-158
         content = """\

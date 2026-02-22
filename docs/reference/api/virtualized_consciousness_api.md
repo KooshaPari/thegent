@@ -33,4 +33,3 @@ virtualize(self: Any, consciousness_state: dict[(str, Any)])
 Virtualize consciousness state.
 
 ---
-

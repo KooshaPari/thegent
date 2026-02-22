@@ -1,7 +1,7 @@
 # Cross-Platform Desktop Automation — Complete Guide
 
 > **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
-> **Related**: 
+> **Related**:
 > - [Cross-Platform Research Complete](../research/CROSS_PLATFORM_RESEARCH_COMPLETE.md)
 > - [Cross-Platform Multi-Tenant Implementation Plan](../plans/CROSS_PLATFORM_MULTI_TENANT_IMPLEMENTATION_PLAN.md)
 > - [Cross-Platform Master Index](../CROSS_PLATFORM_MASTER_INDEX.md)
@@ -185,7 +185,7 @@ from thegent.infra.desktop_automation import get_provider, Coordinator
 def automate_task(agent_id: str):
     provider = get_provider()
     coordinator = Coordinator(provider)
-    
+
     # Request lock
     if coordinator.request_lock(agent_id, "button[name='Save']"):
         element = provider.find_element("button[name='Save']")
@@ -349,7 +349,7 @@ def fill_form(provider, form_data: dict):
         if element:
             provider.type_text(element, value)
             provider.wait_for_idle(timeout=1.0)
-    
+
     # Submit form
     submit_button = provider.find_element("button[name='Submit']")
     if submit_button:
@@ -365,17 +365,17 @@ def automate_workflow(provider, steps: list):
         element = provider.find_element(step['selector'])
         if not element:
             raise ValueError(f"Element not found: {step['selector']}")
-        
+
         if step['action'] == 'click':
             result = provider.click(element)
         elif step['action'] == 'type':
             result = provider.type_text(element, step['text'])
         else:
             raise ValueError(f"Unknown action: {step['action']}")
-        
+
         if not result.success:
             raise RuntimeError(f"Step failed: {result.error}")
-        
+
         # Wait between steps
         provider.wait_for_idle(timeout=2.0)
 ```
@@ -394,11 +394,11 @@ def click_with_retry(provider, selector: str):
     element = provider.find_element(selector)
     if not element:
         raise ValueError(f"Element not found: {selector}")
-    
+
     result = provider.click(element)
     if not result.success:
         raise RuntimeError(f"Click failed: {result.error}")
-    
+
     return result
 ```
 
@@ -408,10 +408,10 @@ def click_with_retry(provider, selector: str):
 def take_screenshot_and_analyze(provider, region: dict = None):
     """Take screenshot and analyze UI state."""
     screenshot = provider.screenshot(region=region)
-    
+
     # Analyze screenshot (using OCR or image analysis)
     # This is platform-specific and may require additional libraries
-    
+
     return screenshot
 ```
 
@@ -423,7 +423,7 @@ def manage_window(provider, window_name: str, action: str):
     window = provider.find_element(f"window[name='{window_name}']")
     if not window:
         raise ValueError(f"Window not found: {window_name}")
-    
+
     if action == 'focus':
         provider.focus(window)
     elif action == 'minimize':
@@ -447,7 +447,7 @@ def automate_across_apps(provider, apps: list):
         if app:
             provider.focus(app)
             provider.wait_for_idle(timeout=2.0)
-        
+
         # Execute actions
         for action in actions:
             element = provider.find_element(action['selector'])
@@ -497,11 +497,11 @@ def optimized_automation(provider, selectors: list):
         element = provider.find_element(selector)
         if element:
             elements[selector] = element
-    
+
     # Batch operations
     for selector, element in elements.items():
         provider.click(element)
-    
+
     # Wait once at the end
     provider.wait_for_idle(timeout=2.0)
 ```
@@ -536,7 +536,7 @@ class UIElement:
     bounds: dict[str, int]  # x, y, width, height
     attributes: dict[str, str]
     platform_specific: dict[str, any] = None
-    
+
     def is_valid(self) -> bool:
         """Check if element is still valid."""
         # Platform-specific validation
@@ -564,27 +564,27 @@ class AutomationResult:
 
 class DesktopAutomationProvider(ABC):
     """Base class for desktop automation providers."""
-    
+
     @abstractmethod
     def find_element(self, selector: str, timeout: float = 5.0) -> Optional[UIElement]:
         """Find a UI element by selector."""
         pass
-    
+
     @abstractmethod
     def click(self, element: UIElement) -> AutomationResult:
         """Click an element."""
         pass
-    
+
     @abstractmethod
     def type_text(self, element: UIElement, text: str) -> AutomationResult:
         """Type text into an element."""
         pass
-    
+
     @abstractmethod
     def screenshot(self, region: dict[str, int] | None = None) -> bytes:
         """Take a screenshot."""
         pass
-    
+
     @abstractmethod
     def wait_for_idle(self, timeout: float = 5.0) -> bool:
         """Wait for UI to become idle."""
@@ -604,12 +604,12 @@ import json
 
 class MacOSAutomationProvider(DesktopAutomationProvider):
     """macOS provider using AppleScript."""
-    
+
     def find_element(self, selector: str, timeout: float = 5.0) -> Optional[UIElement]:
         """Find element using AppleScript."""
         # Parse selector and build AppleScript query
         script = self._build_find_script(selector)
-        
+
         try:
             result = subprocess.run(
                 ["osascript", "-e", script],
@@ -617,7 +617,7 @@ class MacOSAutomationProvider(DesktopAutomationProvider):
                 text=True,
                 timeout=timeout
             )
-            
+
             if result.returncode == 0:
                 data = json.loads(result.stdout)
                 return UIElement(
@@ -630,28 +630,28 @@ class MacOSAutomationProvider(DesktopAutomationProvider):
                 )
         except Exception as e:
             _log.error(f"Error finding element: {e}")
-        
+
         return None
-    
+
     def click(self, element: UIElement) -> AutomationResult:
         """Click element using AppleScript."""
         start_time = time.time()
-        
+
         script = f'''
         tell application "System Events"
             click {element.platform_specific['applescript_data']['reference']}
         end tell
         '''
-        
+
         try:
             result = subprocess.run(
                 ["osascript", "-e", script],
                 capture_output=True,
                 timeout=5.0
             )
-            
+
             duration_ms = (time.time() - start_time) * 1000
-            
+
             if result.returncode == 0:
                 return AutomationResult(
                     success=True,
@@ -669,7 +669,7 @@ class MacOSAutomationProvider(DesktopAutomationProvider):
                 error=str(e),
                 duration_ms=(time.time() - start_time) * 1000
             )
-    
+
     def _build_find_script(self, selector: str) -> str:
         """Build AppleScript query from selector."""
         # Parse selector and build AppleScript
@@ -694,7 +694,7 @@ from .base import DesktopAutomationProvider
 def get_provider() -> DesktopAutomationProvider:
     """Get platform-specific provider."""
     system = platform.system()
-    
+
     if system == "Darwin":
         from .macos import MacOSAutomationProvider
         return MacOSAutomationProvider()
@@ -714,8 +714,8 @@ def get_provider() -> DesktopAutomationProvider:
 
 ### 6.1 macOS
 
-**API**: AppleScript / Apple Events  
-**Library**: `py-applescript`  
+**API**: AppleScript / Apple Events
+**Library**: `py-applescript`
 **Permissions**: Accessibility, Screen Recording
 
 **Example**:
@@ -729,8 +729,8 @@ provider.click(element)
 
 ### 6.2 Windows
 
-**API**: UI Automation (UIA)  
-**Library**: `pywinauto`, `uiautomation`  
+**API**: UI Automation (UIA)
+**Library**: `pywinauto`, `uiautomation`
 **Permissions**: Administrator or Group Policy
 
 **Example**:
@@ -744,8 +744,8 @@ provider.click(element)
 
 ### 6.3 Linux
 
-**API**: AT-SPI  
-**Library**: `pyatspi`, `dogtail`  
+**API**: AT-SPI
+**Library**: `pyatspi`, `dogtail`
 **Permissions**: Usually granted by default
 
 **Example**:
@@ -858,7 +858,7 @@ provider.click(element)
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

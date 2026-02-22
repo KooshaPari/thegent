@@ -34,8 +34,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 ## Category 1: Research Fragments → Complete Research Docs
 
 ### 1.1 Session Research Fragments
-**File**: `docs/research/SESSION_RESEARCH_FRAGMENTS.md`  
-**Status**: Fragment (5 concepts, needs expansion)  
+**File**: `docs/research/SESSION_RESEARCH_FRAGMENTS.md`
+**Status**: Fragment (5 concepts, needs expansion)
 **TODO**:
 - [ ] Expand each concept (Supermemory, Pareto Routing, Economic Governance, MAIF, Simulation) into full research doc
 - [ ] Add implementation details, code examples, integration points
@@ -48,8 +48,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 **Target**: `docs/research/SESSION_RESEARCH_COMPLETE.md` + individual concept docs
 
 ### 1.2 Conversation Dump
-**File**: `docs/research/CONVERSATION_DUMP_2026-02-16.md`  
-**Status**: Fragment (multiple sessions, needs structure)  
+**File**: `docs/research/CONVERSATION_DUMP_2026-02-16.md`
+**Status**: Fragment (multiple sessions, needs structure)
 **TODO**:
 - [ ] Organize by topic/feature area
 - [ ] Extract actionable items into plans
@@ -63,13 +63,13 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 **Target**: `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md` + extracted plans
 
 ### 1.3 Cross-Platform Research Fragments
-**Files**: 
+**Files**:
 - `docs/research/CROSS_PLATFORM_GAPS_AND_EXTENSIONS_RESEARCH.md`
 - `docs/research/CROSS_PLATFORM_EXTENSIONS_WIDER_DEEPER_OPTIMIZATION.md`
 - `docs/research/CROSS_PLATFORM_RESEARCH_SUMMARY.md`
 - `docs/research/CROSS_PLATFORM_RESEARCH_INDEX.md`
 
-**Status**: Multiple fragments, needs consolidation  
+**Status**: Multiple fragments, needs consolidation
 **TODO**:
 - [ ] Consolidate into single comprehensive research doc
 - [ ] Expand each platform (macOS, Linux, Windows, WSL) with deep dives
@@ -83,8 +83,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 **Target**: `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md` + platform-specific guides
 
 ### 1.4 Hook Rust Migration Research
-**File**: `docs/research/HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS.md`  
-**Status**: Synthesis, needs expansion  
+**File**: `docs/research/HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS.md`
+**Status**: Synthesis, needs expansion
 **TODO**:
 - [ ] Expand migration strategy with detailed steps
 - [ ] Add performance comparison (shell vs Rust)
@@ -103,7 +103,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/research/LIBRARY_REPLACEMENT_AUDIT_DEEP.md`
 - `docs/research/LIBRARY_REPLACEMENT_PHASE_DWBS.md`
 
-**Status**: Multiple audits, needs consolidation  
+**Status**: Multiple audits, needs consolidation
 **TODO**:
 - [ ] Consolidate into single comprehensive audit
 - [ ] Expand each library replacement with rationale
@@ -122,7 +122,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/research/OPENCLAW_AGENTZERO_AS_MAIN_AGENT_RESEARCH.md`
 - `docs/research/OPENCLAW_CLAWHUB_AGENTZERO_USE_CASES.md`
 
-**Status**: Multiple fragments, needs consolidation  
+**Status**: Multiple fragments, needs consolidation
 **TODO**:
 - [ ] Consolidate into single comprehensive research doc
 - [ ] Expand each platform with deep dive
@@ -148,7 +148,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/research/FASTMCP_SPEC_DEEP_DIVE.md`
 - `docs/research/MCP_FULL_PARITY_AND_FASTMCP_AUDIT.md`
 
-**Status**: Many fragments, needs consolidation  
+**Status**: Many fragments, needs consolidation
 **TODO**:
 - [ ] Consolidate into single comprehensive FastMCP guide
 - [ ] Expand each component (middleware, storage, telemetry, etc.)
@@ -167,7 +167,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/research/SWARM_OPTIMIZATION_SCHEDULING_DEEP_RESEARCH.md`
 - `docs/research/SWARM_PROCESS_AUTOMATION_DEEP_RESEARCH.md`
 
-**Status**: Fragments, needs expansion  
+**Status**: Fragments, needs expansion
 **TODO**:
 - [ ] Expand swarm architecture
 - [ ] Add scheduling algorithms deep dive
@@ -180,8 +180,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 **Target**: `docs/research/SWARM_COMPLETE.md`
 
 ### 1.9 Caching/Indexing/Prewarming Research
-**File**: `docs/research/CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md`  
-**Status**: Deep research, needs practical expansion  
+**File**: `docs/research/CACHING_INDEXING_PREWARMING_DEEP_RESEARCH.md`
+**Status**: Deep research, needs practical expansion
 **TODO**:
 - [ ] Add implementation patterns
 - [ ] Add code examples
@@ -194,8 +194,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 **Target**: `docs/research/CACHING_COMPLETE.md`
 
 ### 1.10 System Resources Research
-**File**: `docs/research/SYSTEM_RESOURCES_FD_CPU_DEEP_RESEARCH.md`  
-**Status**: Deep research, needs practical expansion  
+**File**: `docs/research/SYSTEM_RESOURCES_FD_CPU_DEEP_RESEARCH.md`
+**Status**: Deep research, needs practical expansion
 **TODO**:
 - [ ] Add resource management patterns
 - [ ] Add monitoring strategies
@@ -211,8 +211,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 ## Category 2: Seed Files → Complete Plans/Docs
 
 ### 2.1 Idea Seeds
-**Files**: `docs/research/idea-seeds/seed_*.md`  
-**Status**: Raw seeds, need development  
+**Files**: `docs/research/idea-seeds/seed_*.md`
+**Status**: Raw seeds, need development
 **TODO**:
 - [ ] Review each seed for viability
 - [ ] Expand viable seeds into full research/plan docs
@@ -225,8 +225,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 **Target**: Individual plan/research docs per viable seed
 
 ### 2.2 Prompt History Collection System
-**File**: `docs/plans/PROMPT_HISTORY_COLLECTION_AND_AUDIT_SYSTEM.md`  
-**Status**: Plan exists, needs expansion  
+**File**: `docs/plans/PROMPT_HISTORY_COLLECTION_AND_AUDIT_SYSTEM.md`
+**Status**: Plan exists, needs expansion
 **TODO**:
 - [ ] Expand implementation details
 - [ ] Add code examples
@@ -244,8 +244,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 ## Category 3: Incomplete Plans → Complete Plans
 
 ### 3.1 Unified System Application Plan
-**File**: `docs/plans/UNIFIED_SYSTEM_APPLICATION_PLAN.md`  
-**Status**: Draft, needs completion  
+**File**: `docs/plans/UNIFIED_SYSTEM_APPLICATION_PLAN.md`
+**Status**: Draft, needs completion
 **TODO**:
 - [ ] Complete architecture design
 - [ ] Add implementation timeline
@@ -265,7 +265,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/plans/SHELL_ENVIRONMENT_ADVANCED_ENHANCEMENT_PLAN.md`
 - `docs/plans/SHELL_ENVIRONMENT_ADVANCED_IMPLEMENTATION_SUMMARY.md`
 
-**Status**: Multiple plans, needs consolidation  
+**Status**: Multiple plans, needs consolidation
 **TODO**:
 - [ ] Consolidate into single comprehensive plan
 - [ ] Add implementation timeline
@@ -281,7 +281,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/plans/CROSS_PLATFORM_MULTI_TENANT_IMPLEMENTATION_PLAN.md`
 - `docs/plans/HYBRID_ENV_IMPLEMENTATION_PLAN.md`
 
-**Status**: Plans exist, need expansion  
+**Status**: Plans exist, need expansion
 **TODO**:
 - [ ] Expand implementation details
 - [ ] Add platform-specific guides
@@ -293,8 +293,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 **Target**: Complete implementation guides
 
 ### 3.4 Process Optimization Plan
-**File**: `docs/plans/PROCESS_OPTIMIZATION_PLAN.md`  
-**Status**: Plan exists, needs expansion  
+**File**: `docs/plans/PROCESS_OPTIMIZATION_PLAN.md`
+**Status**: Plan exists, needs expansion
 **TODO**:
 - [ ] Expand optimization strategies
 - [ ] Add code examples
@@ -306,8 +306,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 **Target**: Complete optimization guide
 
 ### 3.5 Hook Runtime Rust Design
-**File**: `docs/plans/HOOK_RUNTIME_RUST_DESIGN.md`  
-**Status**: Design exists, needs expansion  
+**File**: `docs/plans/HOOK_RUNTIME_RUST_DESIGN.md`
+**Status**: Design exists, needs expansion
 **TODO**:
 - [ ] Expand architecture details
 - [ ] Add code examples
@@ -330,7 +330,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/guides/SHELL_ADVANCED_FEATURES.md`
 - `docs/guides/SHELL_ENVIRONMENT_COMPLETE.md`
 
-**Status**: Multiple guides, needs consolidation  
+**Status**: Multiple guides, needs consolidation
 **TODO**:
 - [ ] Consolidate into single comprehensive guide
 - [ ] Remove duplication
@@ -350,7 +350,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/guides/CROSS_PLATFORM_ROADMAP.md`
 - `docs/guides/CROSS_PLATFORM_IMPLEMENTATION_TEMPLATES.md`
 
-**Status**: Multiple guides, needs consolidation  
+**Status**: Multiple guides, needs consolidation
 **TODO**:
 - [ ] Consolidate into single comprehensive guide
 - [ ] Add unified navigation
@@ -361,8 +361,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 **Target**: `docs/guides/CROSS_PLATFORM_COMPLETE_GUIDE.md`
 
 ### 4.3 Migration Guides Consolidation
-**Files**: `docs/migration/*.md` (multiple files)  
-**Status**: Multiple guides, needs consolidation  
+**Files**: `docs/migration/*.md` (multiple files)
+**Status**: Multiple guides, needs consolidation
 **TODO**:
 - [ ] Consolidate into single comprehensive migration guide
 - [ ] Add unified navigation
@@ -382,7 +382,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/reference/CROSS_PLATFORM_API_REFERENCE.md`
 - `docs/reference/CROSS_PLATFORM_MULTI_TENANT_QUICK_REFERENCE.md`
 
-**Status**: References exist, need expansion  
+**Status**: References exist, need expansion
 **TODO**:
 - [ ] Expand API documentation
 - [ ] Add code examples
@@ -394,8 +394,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 **Target**: Complete API reference
 
 ### 5.2 Architecture References
-**Files**: `docs/architecture/*.md`  
-**Status**: Architecture docs exist, need expansion  
+**Files**: `docs/architecture/*.md`
+**Status**: Architecture docs exist, need expansion
 **TODO**:
 - [ ] Expand architecture details
 - [ ] Add diagrams
@@ -417,7 +417,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/research/PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md`
 - `docs/research/AGENT_ACCESS_AND_OPTIMIZATION_AUDIT_PLAN.md`
 
-**Status**: Audits exist, need expansion  
+**Status**: Audits exist, need expansion
 **TODO**:
 - [ ] Expand audit findings
 - [ ] Add remediation plans
@@ -433,8 +433,8 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 ## Category 7: Specialized Research → Complete Research
 
 ### 7.1 Advanced Storage/Workflow Research
-**File**: `docs/research/ADVANCED_STORAGE_WORKFLOW_AI_SYSTEMS_DEEP_COMPARISON.md`  
-**Status**: Deep comparison, needs practical expansion  
+**File**: `docs/research/ADVANCED_STORAGE_WORKFLOW_AI_SYSTEMS_DEEP_COMPARISON.md`
+**Status**: Deep comparison, needs practical expansion
 **TODO**:
 - [ ] Add implementation recommendations
 - [ ] Add integration strategies
@@ -451,7 +451,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/research/GOVERNANCE_POLICY_AUDIT_RESEARCH.md`
 - `docs/research/PROACTIVE_GOVERNANCE_EVOLUTION_PLAN.md`
 
-**Status**: Fragments, needs consolidation  
+**Status**: Fragments, needs consolidation
 **TODO**:
 - [ ] Consolidate governance research
 - [ ] Expand policy framework
@@ -468,7 +468,7 @@ This TODO tracks the expansion of fragmented research documents, seed files, and
 - `docs/research/PLAN_USAGE_AND_BUDGET_RESEARCH.md`
 - `docs/research/QWEN3.5_PLUS_OPENROUTER_PARETO_RESEARCH.md`
 
-**Status**: Fragments, needs consolidation  
+**Status**: Fragments, needs consolidation
 **TODO**:
 - [ ] Consolidate cost research
 - [ ] Add cost optimization strategies

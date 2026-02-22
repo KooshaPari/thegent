@@ -1,6 +1,6 @@
 # Hybrid Mac/Windows Environment Implementation Plan
 
-**Status:** Planning | **Date:** 2026-02-16  
+**Status:** Planning | **Date:** 2026-02-16
 **Related:** [Architecture Document](../architecture/HYBRID_MAC_WIN_DEV_ENVIRONMENT.md)
 
 ---
@@ -801,6 +801,6 @@ ssh developer@windows-pc-tailscale "cd D:/kush/thegent && task build"  # Windows
 
 ---
 
-**Document Version:** 1.1  
-**Last Updated:** 2026-02-17  
+**Document Version:** 1.1
+**Last Updated:** 2026-02-17
 **Extension:** Configuration Examples, Cross-References, Extension Summary

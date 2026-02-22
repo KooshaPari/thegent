@@ -6,7 +6,7 @@ Source: docs/research/IMPLEMENTATION_ROADMAP.md
 
 # Implementation Roadmap - LiteLLM Harness Integration
 
-**Date**: 2026-02-18  
+**Date**: 2026-02-18
 **Status**: Planning Complete - Ready for Implementation
 
 ---
@@ -72,7 +72,7 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
     messages = _responses_input_to_messages(input_items)
     if not messages:
         messages = [{"role": "user", "content": ""}]
-    
+
     return {
         "model": body.get("model", ""),
         "messages": messages,
@@ -90,7 +90,7 @@ def _chat_completions_to_responses(chunk: dict[str, Any]) -> dict[str, Any] | No
     content = delta.get("content", "")
     if not content:
         return None  # Skip empty chunks
-    
+
     return {
         "type": "response.output_item.added",
         "item": {
@@ -105,27 +105,27 @@ async def handle_responses_request(request: Request) -> Response:
     try:
         body = await request.body()
         data = json.loads(body) if body else {}
-        
+
         # Translate Responses API → Chat Completions
         chat_request = _responses_to_chat_completions(data)
         model = chat_request["model"]
         stream = chat_request.get("stream", False)
-        
+
         # Get LiteLLM Router
         router = get_litellm_router()
-        
+
         if stream:
             return await handle_responses_stream(request, chat_request, router)
         else:
             # Non-streaming request
             from litellm import completion
-            
+
             response = completion(
                 model=model,
                 messages=chat_request["messages"],
                 **{k: v for k, v in chat_request.items() if k not in ("model", "messages", "stream")}
             )
-            
+
             # Translate response back to Responses API format
             content = response.choices[0].message.content if response.choices else ""
             responses_data = {
@@ -137,13 +137,13 @@ async def handle_responses_request(request: Request) -> Response:
                     }
                 ]
             }
-            
+
             return Response(
                 content=json.dumps(responses_data),
                 status_code=200,
                 headers={"Content-Type": "application/json"},
             )
-            
+
     except Exception as e:
         _log.error("Error handling Responses API request: %s", e, exc_info=True)
         return Response(
@@ -157,12 +157,12 @@ async def handle_responses_stream(
 ) -> StreamingResponse:
     """Handle Responses API streaming request via LiteLLM Router."""
     from litellm import acompletion
-    
+
     async def stream():
         try:
             model = chat_request["model"]
             messages = chat_request["messages"]
-            
+
             async for chunk in router.acompletion(
                 model=model,
                 messages=messages,
@@ -173,14 +173,14 @@ async def handle_responses_stream(
                 responses_event = _chat_completions_to_responses(chunk.model_dump() if hasattr(chunk, 'model_dump') else chunk)
                 if responses_event:
                     yield f"data: {json.dumps(responses_event)}\n\n"
-            
+
             # Send completion event
             yield "data: {\"type\": \"response.completed\"}\n\n"
-            
+
         except Exception as e:
             _log.error("Error in Responses API stream: %s", e, exc_info=True)
             yield f"data: {{\"error\": {{\"message\": \"{str(e)}\"}}}}\n\n"
-    
+
     return StreamingResponse(
         stream(),
         status_code=200,
@@ -194,21 +194,21 @@ async def handle_responses_stream(
 async def handle_responses_websocket(websocket: WebSocket) -> None:
     """Handle Responses API WebSocket request via LiteLLM Router."""
     import asyncio
-    
+
     await websocket.accept()
-    
+
     try:
         # Receive request
         data = await asyncio.wait_for(websocket.receive_json(), timeout=30.0)
-        
+
         # Translate to Chat Completions
         chat_request = _responses_to_chat_completions(data)
         model = chat_request["model"]
         messages = chat_request["messages"]
-        
+
         # Get router
         router = get_litellm_router()
-        
+
         # Stream response
         async for chunk in router.acompletion(
             model=model,
@@ -219,10 +219,10 @@ async def handle_responses_websocket(websocket: WebSocket) -> None:
             responses_event = _chat_completions_to_responses(chunk.model_dump() if hasattr(chunk, 'model_dump') else chunk)
             if responses_event:
                 await websocket.send_json(responses_event)
-        
+
         # Send completion event
         await websocket.send_json({"type": "response.completed"})
-        
+
     except Exception as e:
         _log.error("Error in Responses API WebSocket: %s", e, exc_info=True)
         await websocket.send_json({"error": {"message": str(e)}})
@@ -256,16 +256,16 @@ async def proxy_handler(request: Request) -> Response:
     """Proxy /v1/* to backend. Transform /v1/responses to /v1/chat/completions."""
     backend = getattr(request.app.state, "backend_url", "http://127.0.0.1:8318/v1")
     path = request.url.path or "/v1/models"
-    
+
     # Check if LiteLLM Router should be used
     use_litellm = os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1"
-    
+
     if _log.isEnabledFor(logging.DEBUG) or __debug__:
         _log.debug("adapter request: %s %s (litellm=%s)", request.method, path, use_litellm)
-    
+
     if not path.startswith("/v1/"):
         return Response("Not Found", status_code=404)
-    
+
     # Route Responses API to LiteLLM Router if enabled
     if use_litellm and path == "/v1/responses" and request.method == "POST":
         try:
@@ -275,7 +275,7 @@ async def proxy_handler(request: Request) -> Response:
             _log.error("LiteLLM Router handler failed: %s", e, exc_info=True)
             # Fallback to CLIProxyAPIPlus
             pass
-    
+
     backend_path = _backend_path(backend, path)
     # ... rest of existing code ...
 ```
@@ -285,10 +285,10 @@ async def proxy_handler(request: Request) -> Response:
 async def websocket_responses_handler(websocket: Any) -> None:
     """Bridge WebSocket /v1/responses to HTTP streaming. Buffers SSE by line."""
     import asyncio
-    
+
     # Check if LiteLLM Router should be used
     use_litellm = os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1"
-    
+
     if use_litellm:
         try:
             from thegent.routing.litellm_responses_handler import handle_responses_websocket
@@ -298,7 +298,7 @@ async def websocket_responses_handler(websocket: Any) -> None:
             _log.error("LiteLLM Router WebSocket handler failed: %s", e, exc_info=True)
             # Fallback to CLIProxyAPIPlus
             pass
-    
+
     # Existing CLIProxyAPIPlus WebSocket handling...
     ...
 ```
@@ -325,7 +325,7 @@ _router_lock = threading.Lock()
 def get_litellm_router_instance(policy: str | None = None) -> Router:
     """Get or create LiteLLM Router instance (singleton)."""
     global _router_instance
-    
+
     with _router_lock:
         if _router_instance is None:
             _router_instance = get_litellm_router(policy)
@@ -437,13 +437,13 @@ def run(
     run_id: str | None = None,
 ) -> RunResult:
     model = agent_model or self._model
-    
+
     # Use LiteLLM Router if enabled
     if self._use_litellm_router:
         return self._run_via_litellm_router(
             prompt, cwd, mode, timeout, model, use_stream, live_output, on_stdout, on_stderr
         )
-    
+
     # Existing CLIProxyAPIPlus path...
     ...
 ```
@@ -467,15 +467,15 @@ def _run_via_litellm_router(
         from thegent.routing.litellm_router import get_litellm_router
         from litellm import acompletion
         import asyncio
-        
+
         router = get_litellm_router()
-        
+
         messages = [{"role": "user", "content": prompt}]
-        
+
         if use_stream:
             # Streaming response
             output_parts = []
-            
+
             async def stream_response():
                 async for chunk in router.acompletion(
                     model=model,
@@ -490,12 +490,12 @@ def _run_via_litellm_router(
                             content = delta.content or ""
                     elif isinstance(chunk, dict):
                         content = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
-                    
+
                     if content:
                         output_parts.append(content)
                         if live_output and on_stdout:
                             on_stdout(content)
-            
+
             asyncio.run(stream_response())
             stdout = "".join(output_parts)
         else:
@@ -507,21 +507,21 @@ def _run_via_litellm_router(
                     timeout=timeout,
                 )
             )
-            
+
             if hasattr(response, 'choices') and response.choices:
                 stdout = response.choices[0].message.content or ""
             elif isinstance(response, dict):
                 stdout = response.get("choices", [{}])[0].get("message", {}).get("content", "")
             else:
                 stdout = str(response)
-        
+
         return RunResult(
             exit_code=0,
             stdout=stdout,
             stderr="",
             timed_out=False,
         )
-        
+
     except Exception as e:
         logger.error(f"LiteLLM Router execution failed: {e}", exc_info=True)
         return RunResult(
@@ -633,7 +633,7 @@ def run(...) -> RunResult:
         litellm_model = self._map_droid_model_to_litellm(self._model)
         # Continue with droid exec but pointing to LiteLLM Router
         ...
-    
+
     # Existing droid exec path...
     ...
 ```
@@ -694,13 +694,13 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
     cwd = _resolve_cwd(cd)
     if cwd is None:
         cwd = Path.cwd()
-    
+
     # NEW: Validate task files before incorporation
     tasks_dir = cwd / "tasks"
     if tasks_dir.exists() and tasks_dir.is_dir():
         validation_errors = []
         task_files = list(tasks_dir.glob("*.md"))
-        
+
         for task_file in task_files:
             try:
                 result = validate_task_file(task_file)
@@ -714,17 +714,17 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
                     "file": str(task_file),
                     "errors": [f"Validation failed: {e}"],
                 })
-        
+
         if validation_errors:
             return {
                 "error": "Task validation failed",
                 "validation_errors": validation_errors,
                 "merged": 0,
             }
-    
+
     # Existing incorporation logic...
     result = _existing_incorporate_logic(cwd, dry_run)
-    
+
     # NEW: Auto-sync to WORK_STREAM.md after successful incorporation
     if not dry_run and result.get("merged", 0) > 0:
         try:
@@ -736,7 +736,7 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
         except Exception as e:
             _log.warning("Failed to sync tasks to WORK_STREAM.md: %s", e)
             result["sync_warning"] = str(e)
-    
+
     return result
 ```
 
@@ -800,5 +800,5 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
 
 ---
 
-**Status**: Ready for Implementation  
+**Status**: Ready for Implementation
 **Next Step**: Begin Phase 1, Step 1.1 (Create `litellm_responses_handler.py`)

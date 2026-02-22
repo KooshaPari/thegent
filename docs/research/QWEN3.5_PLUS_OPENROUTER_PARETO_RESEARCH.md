@@ -2,8 +2,8 @@
 
 **Purpose:** Research Qwen3.5 Plus 02-15 via OpenRouter and add to Pareto frontier given QwenCode free limits.
 
-**Date:** 2026-02-16  
-**Status:** Implemented  
+**Date:** 2026-02-16
+**Status:** Implemented
 **Model URL:** https://openrouter.ai/qwen/qwen3.5-plus-02-15
 
 ---
@@ -127,7 +127,7 @@ OpenRouter aggregates provider pricing. Typical Qwen Plus tier:
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

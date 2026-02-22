@@ -1,15 +1,15 @@
 # Comprehensive Non-Canonical Audit and Consolidation Plan
 
-**Purpose:** Audit ALL non-canonical variations across thegent, heliosShield, kush directories. Identify naming explosions and consolidate to canonical configs.  
-**Date:** 2026-02-17  
+**Purpose:** Audit ALL non-canonical variations across thegent, heliosShield, kush directories. Identify naming explosions and consolidate to canonical configs.
+**Date:** 2026-02-17
 **Status:** Audit Complete, Consolidation Plan Ready
 
 ---
 
 ## 1. Executive Summary
 
-**Problem:** Naming explosion with variations (optimized, minimal, dev, prod, test, etc.) when goal is to evolve/enhance the main canonical.  
-**Goal:** Single canonical config per domain, variations only for legitimate use cases (user vs agent, platform-specific, etc.).  
+**Problem:** Naming explosion with variations (optimized, minimal, dev, prod, test, etc.) when goal is to evolve/enhance the main canonical.
+**Goal:** Single canonical config per domain, variations only for legitimate use cases (user vs agent, platform-specific, etc.).
 **Principle:** Maximal, holistic, comprehensive, and optimal form — not minimal.
 
 ---
@@ -480,7 +480,7 @@ def find_non_canonical_files(root: Path) -> list[tuple[Path, str]]:
 def main():
     root = Path(__file__).parent.parent
     violations = find_non_canonical_files(root)
-    
+
     if violations:
         print("❌ Non-canonical files found:")
         for path, pattern in violations:
@@ -584,7 +584,7 @@ repos:
 
 ## 12. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

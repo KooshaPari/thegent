@@ -1,6 +1,6 @@
 # TheGent Master AX (Agent Experience) & Unified Performance Spec (v2.0)
 
-**Status**: 🏆 **GRAND UNIFIED SPECIFICATION** | **Date**: 2026-02-19  
+**Status**: 🏆 **GRAND UNIFIED SPECIFICATION** | **Date**: 2026-02-19
 **Purpose**: The single source of truth for the most advanced high-performance tooling, infrastructure, and agent experience (AX) strategies in the ecosystem. This document harmonizes all previous audits and adds 100+ new mission-critical primitives.
 
 ---
@@ -32,7 +32,7 @@
 *(Full list 51-100 available in [PERFORMANCE_AND_QOL_MANIFEST_2026.md](./PERFORMANCE_AND_QOL_MANIFEST_2026.md))*
 
 ### 1.4 Runtime & Package Migration (Strategy)
-51. **Pip-to-UV Migration**: Global `pip install` is DEPRECATED. All Python tools MUST be installed via `uv tool install`. 
+51. **Pip-to-UV Migration**: Global `pip install` is DEPRECATED. All Python tools MUST be installed via `uv tool install`.
 52. **NPM-to-Bun Migration**: Node.js/NPM is secondary. Core workflows and scripts MUST use `bun run` and `bun install`.
 53. **Mise as Source-of-Truth**: All language runtimes (Python, Node, Rust, Go) MUST be managed by `mise`.
 54. **Isolated Tooling (uvx/pkgx)**: Ad-hoc commands should use `uvx` or `pkgx` to avoid environment pollution.

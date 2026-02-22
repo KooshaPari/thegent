@@ -43,4 +43,3 @@ check_access(self: Any, persona: str, operation: str, lane: str)
 Verify if a persona can perform a specific operation in a specific lane.
 
 ---
-

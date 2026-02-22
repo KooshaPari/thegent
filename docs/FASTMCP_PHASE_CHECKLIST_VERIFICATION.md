@@ -1,6 +1,6 @@
 # FastMCP Phase Checklist Verification (G-FM-06)
 
-**Purpose:** Verify §14.11 Phase checklist items for thegent MCP server.  
+**Purpose:** Verify §14.11 Phase checklist items for thegent MCP server.
 **Date:** 2026-02-14
 
 ---

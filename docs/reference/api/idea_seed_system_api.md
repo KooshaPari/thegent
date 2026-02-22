@@ -125,4 +125,3 @@ Store an idea seed.
 **Returns**: Path to stored seed file
 
 ---
-

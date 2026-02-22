@@ -486,7 +486,7 @@ Exploration        "Find", "Search", "Locate"    explore
                    "What files", "Where is"
 
 Analysis           "Explain", "Analyze"          analyze
-                   "Compare", "Identify"         
+                   "Compare", "Identify"
                    Multiple file references
 
 Implementation     "Add", "Fix", "Implement"      execute
@@ -607,7 +607,7 @@ Parser Output       Structured results from validation tests
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-02-20  
-**Ante Version**: v0.1.0  
+**Document Version**: 1.0
+**Last Updated**: 2026-02-20
+**Ante Version**: v0.1.0
 **Status**: Research Complete

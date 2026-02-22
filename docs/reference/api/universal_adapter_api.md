@@ -73,4 +73,3 @@ validate_tool_schema(operation: Operation, payload: dict[(str, Any)])
 WP-9005: Validate tool call payload against operation-specific schema.
 
 ---
-

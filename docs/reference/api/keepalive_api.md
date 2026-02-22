@@ -127,4 +127,3 @@ Safe to call multiple times.  Waits up to 1 second for the thread
 to exit cleanly before returning.
 
 ---
-

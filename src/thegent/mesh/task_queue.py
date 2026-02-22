@@ -39,7 +39,8 @@ class MaildirQueue:
             "payload":    <any JSON-serialisable value>,
             "priority":   <int, 0-9; lower = higher priority>,
             "created_at": <unix timestamp float>,
-            "attempts":   <int>
+            "attempts":   <int>,
+            "owner":      <agent id, optional>
         }
     """
 
@@ -95,7 +96,7 @@ class MaildirQueue:
         _log.debug("enqueue task=%s priority=%d", task_id, priority)
         return task_id
 
-    def dequeue(self) -> dict[str, Any] | None:
+    def dequeue(self, owner: str | None = None) -> dict[str, Any] | None:
         """Claim the highest-priority task from ``new/``.
 
         Moves the chosen file from ``new/`` to ``cur/`` atomically.
@@ -104,6 +105,9 @@ class MaildirQueue:
         Priority ordering: tasks with a lower ``priority`` value (e.g. 0)
         are returned before higher values.  Ties are broken by
         ``created_at`` (oldest first, FIFO within the same priority).
+
+        Args:
+            owner: Optional agent identifier to associate with the claimed task.
 
         Returns:
             The task envelope dict, or ``None`` if the queue is empty.
@@ -131,6 +135,8 @@ class MaildirQueue:
             # just informational; a crash between rename and this write is
             # acceptable — the field may stay at its previous value).
             envelope["attempts"] += 1
+            if owner is not None:
+                envelope["owner"] = owner
             cur_path.write_text(json.dumps(envelope), encoding="utf-8")
 
             _log.debug("dequeue task=%s (attempt %d)", task_id, envelope["attempts"])
@@ -181,6 +187,30 @@ class MaildirQueue:
             List of task envelope dicts, unsorted.
         """
         return self._list_envelopes(self._new) + self._list_envelopes(self._cur)
+
+    def reclaim_owner(self, owner: str) -> int:
+        """Move all tasks in ``cur/`` owned by *owner* back to ``new/``."""
+        reclaimed = 0
+        for entry in self._cur.iterdir():
+            if not entry.is_file():
+                continue
+
+            try:
+                data = json.loads(entry.read_text(encoding="utf-8"))
+            except (FileNotFoundError, json.JSONDecodeError):
+                continue
+
+            if data.get("owner") != owner:
+                continue
+
+            new_path = self._new / entry.name
+            try:
+                entry.rename(new_path)
+            except FileNotFoundError:
+                continue
+            reclaimed += 1
+
+        return reclaimed
 
     # ------------------------------------------------------------------
     # Internal helpers

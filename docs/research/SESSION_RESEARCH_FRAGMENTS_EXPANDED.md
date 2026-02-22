@@ -1,7 +1,7 @@
 # Session Research Fragments — Complete Expansion
 
-> **Status**: Complete | **Version**: 2.0 | **Date**: 2026-02-17  
-> **Source**: Expanded from [SESSION_RESEARCH_FRAGMENTS.md](./SESSION_RESEARCH_FRAGMENTS.md)  
+> **Status**: Complete | **Version**: 2.0 | **Date**: 2026-02-17
+> **Source**: Expanded from [SESSION_RESEARCH_FRAGMENTS.md](./SESSION_RESEARCH_FRAGMENTS.md)
 > **Purpose**: Comprehensive research on 5 key concepts with full breadth, depth, and implementation guidance
 
 ---
@@ -26,8 +26,8 @@
 
 **Concept**: Cloud-scale RAG + Knowledge Graph as the L3/L4 memory provider for thegent's agent orchestration system.
 
-**Work Item**: WP-5001-SM  
-**Priority**: High  
+**Work Item**: WP-5001-SM
+**Priority**: High
 **Status**: Research Complete, Implementation Pending
 
 ### 1.2 Architecture
@@ -115,7 +115,7 @@ class MemoryManager:
             mcp_url="https://mcp.supermemory.ai/mcp",
             project_id=os.getenv("SM_PROJECT_ID"),
         )
-    
+
     async def store_swarm_context(self, session_id: str, context: dict):
         """Store swarm relationships in L3 Knowledge Graph"""
         relationships = self._extract_relationships(context)
@@ -123,7 +123,7 @@ class MemoryManager:
             entity=f"session:{session_id}",
             relationships=relationships,
         )
-    
+
     async def store_maif_artifact(self, artifact: MAIFArtifact):
         """Store signed artifact in L4 Documents API"""
         await self.l3.store_document(artifact)
@@ -140,19 +140,19 @@ class MemoryManager:
 
 ### 1.5 Failure Modes & Mitigation
 
-**Failure Mode**: Supermemory API unavailable  
-**Mitigation**: 
+**Failure Mode**: Supermemory API unavailable
+**Mitigation**:
 - Fallback to local L2 cache
 - Queue writes for retry
 - Circuit breaker (fail after 3 consecutive failures)
 
-**Failure Mode**: Rate limiting  
+**Failure Mode**: Rate limiting
 **Mitigation**:
 - Exponential backoff
 - Request batching
 - Priority queuing
 
-**Failure Mode**: Data corruption  
+**Failure Mode**: Data corruption
 **Mitigation**:
 - Hash verification on read
 - Immutable L4 storage
@@ -193,8 +193,8 @@ class MemoryManager:
 
 **Concept**: Route 80% of low-risk tasks to efficient "Lifecycle" loop; 20% high-risk to "The Gent" (Plan/Operator/Reviewer) with hysteresis to prevent thrashing.
 
-**Work Items**: WP-1004, WP-5001  
-**Priority**: High  
+**Work Items**: WP-1004, WP-5001
+**Priority**: High
 **Status**: Research Complete, Implementation Pending
 
 ### 2.2 Routing Strategy
@@ -243,7 +243,7 @@ pub struct ParetoRouter {
 impl ParetoRouter {
     pub fn route(&mut self, task: &Task) -> Route {
         let risk_score = self.calculate_risk(task);
-        
+
         // Check if we're in hysteresis band
         if self.in_hysteresis_band(risk_score) {
             // Stay in current mode if within dwell time
@@ -253,23 +253,23 @@ impl ParetoRouter {
                 }
             }
         }
-        
+
         // Determine new route
         let new_mode = if risk_score < self.low_risk_threshold {
             RoutingMode::Lifecycle
         } else {
             RoutingMode::TheGent
         };
-        
+
         // Switch if mode changed
         if new_mode != self.current_mode {
             self.current_mode = new_mode;
             self.last_switch = Some(Instant::now());
         }
-        
+
         self.current_mode.route()
     }
-    
+
     fn in_hysteresis_band(&self, score: f64) -> bool {
         score >= self.low_risk_threshold && score <= self.high_risk_threshold
     }
@@ -288,13 +288,13 @@ impl ParetoRouter {
 
 ### 2.5 Failure Modes & Mitigation
 
-**Failure Mode**: Risk calculation fails  
+**Failure Mode**: Risk calculation fails
 **Mitigation**: Default to The Gent loop (safe route)
 
-**Failure Mode**: Hysteresis causes stuck tasks  
+**Failure Mode**: Hysteresis causes stuck tasks
 **Mitigation**: Maximum dwell time (30 minutes), then force re-evaluation
 
-**Failure Mode**: Incorrect routing  
+**Failure Mode**: Incorrect routing
 **Mitigation**: Manual override, routing audit logs
 
 ### 2.6 Edge Cases
@@ -329,8 +329,8 @@ impl ParetoRouter {
 
 **Concept**: Agent decisions weighted by cost-to-value ratio, using provider scoring (reliability, latency, cost).
 
-**Work Item**: WP-5003  
-**Priority**: High  
+**Work Item**: WP-5003
+**Priority**: High
 **Status**: Research Complete, Implementation Pending
 
 ### 3.2 Cost-Aware Routing
@@ -357,7 +357,7 @@ score = (reliability * 0.4) + (latency_score * 0.2) + (cost_score * 0.4)
 class CostAwareRouter:
     def __init__(self):
         self.providers = self._load_provider_scores()
-    
+
     def select_provider(self, task: Task) -> Provider:
         """Select provider based on cost-to-value ratio"""
         value = self._estimate_value(task)
@@ -365,16 +365,16 @@ class CostAwareRouter:
             provider: self._estimate_cost(provider, task)
             for provider in self.providers
         }
-        
+
         # Calculate cost-to-value ratio
         ratios = {
             provider: cost / value
             for provider, cost in cost_estimates.items()
         }
-        
+
         # Select provider with best ratio (lowest cost per unit value)
         return min(ratios.items(), key=lambda x: x[1])[0]
-    
+
     def _estimate_value(self, task: Task) -> float:
         """Estimate value of task completion"""
         # Factors: complexity, business impact, user priority
@@ -383,7 +383,7 @@ class CostAwareRouter:
             task.business_impact * 0.5 +
             task.user_priority * 0.2
         )
-    
+
     def _estimate_cost(self, provider: Provider, task: Task) -> float:
         """Estimate cost of task execution"""
         tokens = self._estimate_tokens(task)
@@ -411,13 +411,13 @@ class CostAwareRouter:
 
 ### 3.5 Failure Modes & Mitigation
 
-**Failure Mode**: Cost estimation inaccurate  
+**Failure Mode**: Cost estimation inaccurate
 **Mitigation**: Learning from actual costs, periodic recalibration
 
-**Failure Mode**: Provider unavailable  
+**Failure Mode**: Provider unavailable
 **Mitigation**: Fallback to next-best provider
 
-**Failure Mode**: Value estimation wrong  
+**Failure Mode**: Value estimation wrong
 **Mitigation**: User feedback loop, manual override
 
 ### 3.6 Edge Cases
@@ -452,8 +452,8 @@ class CostAwareRouter:
 
 **Concept**: Signed artifacts for every significant agent action, stored in Supermemory L4 with hash chains for verification.
 
-**Work Item**: WP-3002  
-**Priority**: High  
+**Work Item**: WP-3002
+**Priority**: High
 **Status**: Research Complete, Implementation Pending
 
 ### 4.2 Artifact Structure
@@ -499,13 +499,13 @@ impl MAIFArtifact {
         let input_hash = Self::hash(input);
         let output_hash = Self::hash(output);
         let prev_hash = previous_hash.unwrap_or_default();
-        
+
         let mut hasher = Sha256::new();
         hasher.update(&input_hash);
         hasher.update(&output_hash);
         hasher.update(prev_hash.as_bytes());
         let artifact_hash = format!("{:x}", hasher.finalize());
-        
+
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             timestamp: SystemTime::now()
@@ -522,14 +522,14 @@ impl MAIFArtifact {
             metadata: serde_json::json!({}),
         }
     }
-    
+
     pub fn verify(&self, previous_hash: &str) -> bool {
         let mut hasher = Sha256::new();
         hasher.update(self.input_hash.as_bytes());
         hasher.update(self.output_hash.as_bytes());
         hasher.update(previous_hash.as_bytes());
         let computed_hash = format!("{:x}", hasher.finalize());
-        
+
         self.previous_hash == previous_hash &&
         Self::verify_signature(&computed_hash, &self.signature)
     }
@@ -547,17 +547,17 @@ class MAIFStorage:
     def __init__(self):
         self.client = SupermemoryClient()
         self.hash_chain: dict[str, str] = {}  # session_id -> last_hash
-    
+
     async def store_artifact(self, artifact: MAIFArtifact):
         """Store artifact in Supermemory L4"""
         # Verify hash chain
         last_hash = self.hash_chain.get(artifact.session_id, "")
         if not artifact.verify(last_hash):
             raise ValueError("Hash chain verification failed")
-        
+
         # Store in L4
         await self.client.store_document(artifact)
-        
+
         # Update hash chain
         self.hash_chain[artifact.session_id] = artifact.previous_hash
 ```
@@ -585,13 +585,13 @@ class MAIFStorage:
 
 ### 4.6 Failure Modes & Mitigation
 
-**Failure Mode**: Hash chain broken  
+**Failure Mode**: Hash chain broken
 **Mitigation**: Alert, quarantine session, manual review
 
-**Failure Mode**: Storage failure  
+**Failure Mode**: Storage failure
 **Mitigation**: Local queue, retry with exponential backoff
 
-**Failure Mode**: Signature verification fails  
+**Failure Mode**: Signature verification fails
 **Mitigation**: Reject artifact, alert security team
 
 ### 4.7 Edge Cases
@@ -627,8 +627,8 @@ class MAIFStorage:
 
 **Concept**: Deterministic replay of past decisions using Supermemory L3 to retrieve past decision context.
 
-**Work Item**: WP-4007  
-**Priority**: Medium  
+**Work Item**: WP-4007
+**Priority**: Medium
 **Status**: Research Complete, Implementation Pending
 
 ### 5.2 Replay Architecture
@@ -643,7 +643,7 @@ class SimulationReplay:
     def __init__(self):
         self.memory = SupermemoryClient()
         self.artifacts = MAIFStorage()
-    
+
     async def replay_decision(
         self,
         session_id: str,
@@ -654,19 +654,19 @@ class SimulationReplay:
         context = await self.memory.query_knowledge(
             f"session:{session_id} decision:{decision_id}"
         )
-        
+
         # Retrieve artifacts from L4
         artifacts = await self.artifacts.get_artifacts(
             session_id=session_id,
             decision_id=decision_id,
         )
-        
+
         # Reconstruct decision environment
         env = self._reconstruct_environment(context, artifacts)
-        
+
         # Replay decision
         result = await self._replay(env, artifacts)
-        
+
         return ReplayResult(
             original=artifacts[-1],
             replayed=result,
@@ -706,13 +706,13 @@ class SimulationReplay:
 
 ### 5.6 Failure Modes & Mitigation
 
-**Failure Mode**: Context missing  
+**Failure Mode**: Context missing
 **Mitigation**: Partial replay, fallback to artifacts only
 
-**Failure Mode**: Non-deterministic behavior  
+**Failure Mode**: Non-deterministic behavior
 **Mitigation**: Alert, mark as non-replayable
 
-**Failure Mode**: Replay mismatch  
+**Failure Mode**: Replay mismatch
 **Mitigation**: Detailed diff, root cause analysis
 
 ### 5.7 Edge Cases
@@ -888,14 +888,14 @@ Add to [WORK_STREAM.md](../reference/WORK_STREAM.md) BACKLOG:
 
 ---
 
-**Status**: Complete expansion ready for implementation  
+**Status**: Complete expansion ready for implementation
 **Next Steps**: Add BACKLOG items to WORK_STREAM, begin Phase 1 implementation
 
 ---
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

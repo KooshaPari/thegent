@@ -6,8 +6,8 @@ Source: docs/research/FASTMCP_MIDDLEWARE.md
 
 # FastMCP Middleware
 
-**Source:** gofastmcp.com/servers/middleware  
-**Date:** 2026-02-14  
+**Source:** gofastmcp.com/servers/middleware
+**Date:** 2026-02-14
 **Purpose:** Extract add_middleware order, ResponseCachingMiddleware, RateLimitingMiddleware, on_call_tool hook for thegent_run.
 
 ---
@@ -232,19 +232,19 @@ from fastmcp.server.middleware import Middleware, MiddlewareContext
 
 class CircuitBreakerMiddleware(Middleware):
     """Prevent cascade failures with circuit breaker pattern."""
-    
+
     def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 60):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failure_count = {}
         self.circuit_open = {}
-    
+
     async def on_call_tool(self, context: MiddlewareContext, call_next):
         tool_name = context.message.name
-        
+
         if self._is_circuit_open(tool_name):
             raise ServiceUnavailableError(f"Circuit open for {tool_name}")
-        
+
         try:
             result = await call_next(context)
             self._record_success(tool_name)
@@ -252,20 +252,20 @@ class CircuitBreakerMiddleware(Middleware):
         except Exception as e:
             self._record_failure(tool_name)
             raise
-    
+
     def _is_circuit_open(self, tool_name: str) -> bool:
         return self.circuit_open.get(tool_name, False)
-    
+
     def _record_success(self, tool_name: str):
         self.failure_count[tool_name] = 0
-    
+
     def _record_failure(self, tool_name: str):
         self.failure_count[tool_name] = self.failure_count.get(tool_name, 0) + 1
         if self.failure_count[tool_name] >= self.failure_threshold:
             self.circuit_open[tool_name] = True
             # Schedule recovery
             asyncio.create_task(self._open_circuit(tool_name))
-    
+
     async def _open_circuit(self, tool_name: str):
         await asyncio.sleep(self.recovery_timeout)
         self.circuit_open[tool_name] = False
@@ -285,15 +285,15 @@ import time
 
 class MetricsMiddleware(Middleware):
     """Collect execution metrics for observability."""
-    
+
     def __init__(self, metrics_handler: callable):
         self.metrics = {}
         self.metrics_handler = metrics_handler
-    
+
     async def on_call_tool(self, context: MiddlewareContext, call_next):
         tool_name = context.message.name
         start_time = time.perf_counter()
-        
+
         try:
             result = await call_next(context)
             duration = time.perf_counter() - start_time
@@ -303,7 +303,7 @@ class MetricsMiddleware(Middleware):
             duration = time.perf_counter() - start_time
             self._record_metrics(tool_name, duration, success=False)
             raise
-    
+
     def _record_metrics(self, tool_name: str, duration: float, success: bool):
         key = f"tool:{tool_name}"
         if key not in self.metrics:

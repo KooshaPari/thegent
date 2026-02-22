@@ -228,6 +228,7 @@ def run_impl_core(
     migrator = MigrationController()
     requested_version = contract_version or CONTRACT_SCHEMA_VERSION
     mig_res = migrator.evaluate_version("csm", requested_version)
+    contract_deprecation_warning: str | None = None
 
     if not mig_res["allowed"]:
         return {
@@ -238,7 +239,10 @@ def run_impl_core(
 
     if mig_res["status"] == "deprecated":
         # We allow it but should log/warn (CLI will print it via run_cmd if we pass it)
-        pass
+        contract_deprecation_warning = (
+            f"Contract version '{requested_version}' is deprecated: {mig_res.get('reason', 'no reason provided')}"
+        )
+        _log.warning(contract_deprecation_warning)
 
     # ConfigProvider: resolve config (Phase 1: EnvConfigProvider; Phase 2+: CP when URL set)
     _config: dict[str, Any] | None = None
@@ -262,8 +266,8 @@ def run_impl_core(
         try:
             _min_claude = float(_min_claude)
             effective_timeout = max(float(effective_timeout), _min_claude)
-        except (TypeError, ValueError):
-            pass
+        except (TypeError, ValueError) as exc:
+            _log.debug("Invalid claude timeout override '%s'; using existing timeout: %s", _min_claude, exc)
 
     prompt = _inject_time_constraint(prompt, int(effective_timeout), summary_mode=not full)
 
@@ -314,8 +318,8 @@ def run_impl_core(
                     "exit_code": 1,
                     "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
                 }
-        except Exception:
-            pass
+        except Exception as exc:
+            _log.debug("Input guardrail check failed; continuing without guardrail result: %s", exc)
 
     # Concurrency control (WP-5001): Advanced resource-based dynamic limits
     from thegent.execution import ConcurrencyController
@@ -880,8 +884,8 @@ def run_impl_core(
                 model=run_meta.model,
                 prompt_length=len(run_meta.prompt or ""),
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            _log.debug("Failed to estimate run cost: %s", exc)
     registry.register_end(
         run_id=run_meta.run_id,
         exit_code=exit_code,
@@ -932,8 +936,8 @@ def run_impl_core(
         try:
             artifact = auditor.generate_maif_artifact(run_meta, output=result.stdout if result else None)
             auditor.persist_maif_artifact(settings.session_dir, artifact)
-        except Exception:
-            pass
+        except Exception as exc:
+            _log.warning("Failed to generate/persist MAIF artifact: %s", exc)
 
     if not result:
         return {
@@ -967,6 +971,8 @@ def run_impl_core(
     if csm and norm_res:
         payload["csm"] = csm.to_dict()
         payload["normalization_confidence"] = norm_res.confidence
+    if contract_deprecation_warning:
+        payload["contract_warning"] = contract_deprecation_warning
 
     if include_contract:
         payload["route_contract"] = route_contract

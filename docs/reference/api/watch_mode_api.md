@@ -61,4 +61,3 @@ stop(self: Any)
 Stop documentation watcher.
 
 ---
-

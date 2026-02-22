@@ -63,4 +63,3 @@ write_entries(self: Any, entries: list[dict])
 Write entries to the locked file (truncate + rewrite). Call only while holding the lock.
 
 ---
-

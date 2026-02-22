@@ -17,7 +17,7 @@
     "blocked_count_delta": 0,
     "blocked_ratio_delta": 0.0
   },
-  "delta_summary_json": "{\"blocked_count_delta\": 0, \"blocked_ratio_delta\": 
+  "delta_summary_json": "{\"blocked_count_delta\": 0, \"blocked_ratio_delta\":
 0.0}",
   "generated_at_utc": "2026-02-15T06:11:24.340615+00:00",
   "latest": {
@@ -30,7 +30,7 @@
     "pass": true,
     "payload_signature": {
       "algorithm": "sha256",
-      "value": 
+      "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
     },
     "payload_type": "session_contract_health_report",
@@ -53,7 +53,7 @@
   "latest_captured_at_utc": "2026-02-15T06:10:14.070664+00:00",
   "latest_issue_types_count": 0,
   "latest_issue_types_csv": "",
-  "latest_issue_types_hash": 
+  "latest_issue_types_hash":
 "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "latest_issue_types_json": "[]",
   "latest_pass": true,
@@ -69,7 +69,7 @@
     "pass": true,
     "payload_signature": {
       "algorithm": "sha256",
-      "value": 
+      "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
     },
     "payload_type": "session_contract_health_report",
@@ -103,8 +103,8 @@
     "strict": false,
     "top_blocked": 25
   },
-  "scope_key_json": "{\"all\": false, \"owner\": \"kooshapari:thegent\", 
-\"payload_type\": \"session_contract_health_report\", \"policy_profile\": 
+  "scope_key_json": "{\"all\": false, \"owner\": \"kooshapari:thegent\",
+\"payload_type\": \"session_contract_health_report\", \"policy_profile\":
 \"custom\", \"strict\": false, \"top_blocked\": 25}",
   "scope_min_healthy_ratio": null,
   "scope_owner": "kooshapari:thegent",
@@ -113,36 +113,36 @@
   "scope_strict": false,
   "scope_top_blocked": 25,
   "snapshot_count": 20,
-  "snapshot_density_hash": 
+  "snapshot_density_hash":
 "729a52a968a8372536d02a1d1c41c4c7e83c9ae2d52db5bda743e0199059beac",
   "snapshot_density_per_hour": 43.504532,
-  "snapshot_freshness_hash": 
+  "snapshot_freshness_hash":
 "ff5a1ae012afa5d4c889c50ad427aaf545d31a4fac04ffc1c4d03d403ba4250a",
   "snapshot_freshness_seconds": 70,
   "snapshot_health_volatility": 0.0,
-  "snapshot_health_volatility_hash": 
+  "snapshot_health_volatility_hash":
 "8aed642bf5118b9d3c859bd4be35ecac75b6e873cce34e7b6f554b06f75550d7",
-  "snapshot_ids_csv": "2026-02-15T06:10:14.070664+00:00, 
-2026-02-15T06:09:56.039943+00:00, 2026-02-15T06:09:48.555703+00:00, 
-2026-02-15T06:09:44.367269+00:00, 2026-02-15T06:09:42.101453+00:00, 
-2026-02-15T06:08:37.421662+00:00, 2026-02-15T06:08:37.370350+00:00, 
-2026-02-15T05:46:45.669951+00:00, 2026-02-15T05:46:40.296565+00:00, 
-2026-02-15T05:46:37.447925+00:00, 2026-02-15T05:46:36.264193+00:00, 
-2026-02-15T05:46:35.976125+00:00, 2026-02-15T05:45:52.977983+00:00, 
-2026-02-15T05:45:52.907714+00:00, 2026-02-15T05:43:20.705404+00:00, 
-2026-02-15T05:43:14.644466+00:00, 2026-02-15T05:43:13.506406+00:00, 
-2026-02-15T05:43:12.897606+00:00, 2026-02-15T05:43:12.707780+00:00, 
+  "snapshot_ids_csv": "2026-02-15T06:10:14.070664+00:00,
+2026-02-15T06:09:56.039943+00:00, 2026-02-15T06:09:48.555703+00:00,
+2026-02-15T06:09:44.367269+00:00, 2026-02-15T06:09:42.101453+00:00,
+2026-02-15T06:08:37.421662+00:00, 2026-02-15T06:08:37.370350+00:00,
+2026-02-15T05:46:45.669951+00:00, 2026-02-15T05:46:40.296565+00:00,
+2026-02-15T05:46:37.447925+00:00, 2026-02-15T05:46:36.264193+00:00,
+2026-02-15T05:46:35.976125+00:00, 2026-02-15T05:45:52.977983+00:00,
+2026-02-15T05:45:52.907714+00:00, 2026-02-15T05:43:20.705404+00:00,
+2026-02-15T05:43:14.644466+00:00, 2026-02-15T05:43:13.506406+00:00,
+2026-02-15T05:43:12.897606+00:00, 2026-02-15T05:43:12.707780+00:00,
 2026-02-15T05:42:38.310893+00:00",
-  "snapshot_ids_hash": 
+  "snapshot_ids_hash":
 "fc6571143dc401b2bd421a70ecc43fcd40e251b91bb7e35a7f6aa09802440077",
-  "snapshot_interval_hash": 
+  "snapshot_interval_hash":
 "434c9b5ae514646bbd91b50032ca579efec8f22bf0b4aac12e65997c418e0dd6",
   "snapshot_interval_seconds_avg": 86,
   "snapshot_issue_churn_count": 0,
-  "snapshot_issue_churn_hash": 
+  "snapshot_issue_churn_hash":
 "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
   "snapshot_retention_max_lines": 5000,
-  "snapshot_window_hash": 
+  "snapshot_window_hash":
 "b368537ed2fe65023ec2b77740725a878cbfff387e82cee58e058c55c993f548",
   "snapshot_window_seconds": 1655,
   "snapshots": [
@@ -156,7 +156,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -184,7 +184,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -212,7 +212,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -240,7 +240,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -268,7 +268,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "003ac5304a0c60074af9cc1f9f1813ee5e19a6e7e565352582a59ca3454af158"
       },
       "payload_type": "session_contract_health_report",
@@ -296,7 +296,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -324,7 +324,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -352,7 +352,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -380,7 +380,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -408,7 +408,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -436,7 +436,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -464,7 +464,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "003ac5304a0c60074af9cc1f9f1813ee5e19a6e7e565352582a59ca3454af158"
       },
       "payload_type": "session_contract_health_report",
@@ -492,7 +492,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -520,7 +520,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -548,7 +548,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -576,7 +576,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -604,7 +604,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -632,7 +632,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",
@@ -660,7 +660,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "003ac5304a0c60074af9cc1f9f1813ee5e19a6e7e565352582a59ca3454af158"
       },
       "payload_type": "session_contract_health_report",
@@ -688,7 +688,7 @@
       "pass": true,
       "payload_signature": {
         "algorithm": "sha256",
-        "value": 
+        "value":
 "b063e701c6fb6af165b34262f39c7d1c9961451821ef95d50f09510507308104"
       },
       "payload_type": "session_contract_health_report",

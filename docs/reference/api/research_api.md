@@ -40,4 +40,3 @@ Perform a search on Reddit.
 Uses PRAW if credentials are provided, otherwise falls back to DDG site:reddit.com.
 
 ---
-

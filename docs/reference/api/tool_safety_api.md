@@ -72,4 +72,3 @@ check_pre_flight(self: Any, proposed_chain: list[str])
 Pre-flight check for a proposed tool chain.
 
 ---
-

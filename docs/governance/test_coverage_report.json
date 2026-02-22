@@ -1,2774 +1,1519 @@
 {
   "summary": {
-    "total_commands": 306,
-    "commands_with_e2e_tests": 306,
-    "commands_without_e2e_tests": 0,
-    "coverage_percent": 100.0,
-    "total_cli_functions": 149
+    "total_commands": 226,
+    "commands_with_e2e_tests": 220,
+    "commands_without_e2e_tests": 6,
+    "coverage_percent": 97.35,
+    "total_cli_functions": 3
   },
   "commands": {
-    "thegent doctor": {
-      "command": "doctor",
-      "function": "doctor_cmd",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 3,
-      "tests": [
-        "test_doctor_help_exits_zero",
-        "test_doctor_exits_zero",
-        "test_doctor_produces_output"
-      ]
-    },
-    "thegent upgrade": {
-      "command": "upgrade",
-      "function": "upgrade_cmd",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_upgrade_help"
-      ]
-    },
-    "thegent research deep": {
-      "command": "deep",
-      "function": "deep_research",
-      "app": "research_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_research_deep_help"
-      ]
-    },
-    "thegent team create": {
-      "command": "create",
-      "function": "team_create",
-      "app": "team_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_team_create_help"
-      ]
-    },
-    "thegent team add-task": {
-      "command": "add-task",
-      "function": "team_task_add",
-      "app": "team_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_team_add_task_help"
-      ]
-    },
-    "thegent team list-tasks": {
-      "command": "list-tasks",
-      "function": "team_task_list",
-      "app": "team_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_team_list_tasks_help"
-      ]
-    },
-    "thegent project register": {
-      "command": "register",
-      "function": "project_register",
-      "app": "project_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_project_register_help"
-      ]
-    },
-    "thegent project list": {
-      "command": "list",
-      "function": "project_list",
-      "app": "project_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_project_list_help"
-      ]
-    },
-    "thegent forensics snapshot": {
-      "command": "snapshot",
-      "function": "forensics_snapshot",
-      "app": "forensics_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_forensics_snapshot_help"
-      ]
-    },
-    "thegent finance dashboard": {
-      "command": "dashboard",
-      "function": "finance_dashboard",
-      "app": "finance_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_finance_dashboard_help"
-      ]
-    },
-    "thegent govern configure": {
-      "command": "configure",
-      "function": "govern_configure",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_configure_help"
-      ]
-    },
-    "thegent orchestrate run-diff": {
-      "command": "run-diff",
-      "function": "run_diff",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_run_diff_help"
-      ]
-    },
-    "thegent orchestrate trace-replay": {
-      "command": "trace-replay",
-      "function": "trace_replay",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_trace_replay_help"
-      ]
-    },
-    "thegent deferral list": {
-      "command": "list",
-      "function": "deferral_list",
-      "app": "deferral_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_deferral_list_help"
-      ]
-    },
-    "thegent workstream query": {
-      "command": "query",
-      "function": "workstream_query",
-      "app": "workstream_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_workstream_query_help"
-      ]
-    },
-    "thegent workstream stats": {
-      "command": "stats",
-      "function": "workstream_stats",
-      "app": "workstream_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_workstream_stats_help"
-      ]
-    },
-    "thegent workstream dashboard": {
-      "command": "dashboard",
-      "function": "workstream_dashboard",
-      "app": "workstream_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_workstream_dashboard_help"
-      ]
-    },
-    "thegent workstream launch": {
-      "command": "launch",
-      "function": "workstream_launch",
-      "app": "workstream_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_workstream_launch_help"
-      ]
-    },
-    "thegent deferral resume": {
-      "command": "resume",
-      "function": "deferral_resume",
-      "app": "deferral_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_deferral_resume_help"
-      ]
-    },
-    "thegent teammates list": {
-      "command": "list",
-      "function": "teammates_list",
-      "app": "teammates_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_teammates_list_help"
-      ]
-    },
-    "thegent teammates delegate": {
-      "command": "delegate",
-      "function": "teammates_delegate",
-      "app": "teammates_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_teammates_delegate_help"
-      ]
-    },
-    "thegent teammates status": {
-      "command": "status",
-      "function": "teammates_status",
-      "app": "teammates_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_teammates_status_help"
-      ]
-    },
-    "thegent hierarchy show": {
-      "command": "show",
-      "function": "hierarchy_show",
-      "app": "hierarchy_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_hierarchy_show_help"
-      ]
-    },
-    "thegent hierarchy tree": {
-      "command": "tree",
-      "function": "hierarchy_tree",
-      "app": "hierarchy_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_hierarchy_tree_help"
-      ]
-    },
-    "thegent hierarchy relationships": {
-      "command": "relationships",
-      "function": "hierarchy_relationships",
-      "app": "hierarchy_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_hierarchy_relationships_help"
-      ]
-    },
-    "thegent teams create": {
-      "command": "create",
-      "function": "teams_create",
-      "app": "teams_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_scenario_team_creation"
-      ]
-    },
-    "thegent teams list": {
-      "command": "list",
-      "function": "teams_list",
-      "app": "teams_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_teams_list_help"
-      ]
-    },
-    "thegent teams show": {
-      "command": "show",
-      "function": "teams_show",
-      "app": "teams_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_teams_show_help"
-      ]
-    },
-    "thegent teams add-member": {
-      "command": "add-member",
-      "function": "teams_add_member",
-      "app": "teams_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_teams_add_member_help"
-      ]
-    },
-    "thegent teams remove-member": {
-      "command": "remove-member",
-      "function": "teams_remove_member",
-      "app": "teams_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_teams_remove_member_help"
-      ]
-    },
-    "thegent crew create": {
-      "command": "create",
-      "function": "crew_create",
-      "app": "crew_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_crew_create_help"
-      ]
-    },
-    "thegent crew add-agent": {
-      "command": "add-agent",
-      "function": "crew_add_agent",
-      "app": "crew_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_crew_add_agent_help"
-      ]
-    },
-    "thegent crew add-task": {
-      "command": "add-task",
-      "function": "crew_add_task",
-      "app": "crew_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_crew_add_task_help"
-      ]
-    },
-    "thegent crew execute": {
-      "command": "execute",
-      "function": "crew_execute",
-      "app": "crew_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_crew_execute_help"
-      ]
-    },
-    "thegent crew list": {
-      "command": "list",
-      "function": "crew_list",
-      "app": "crew_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_crew_list_help"
-      ]
-    },
-    "thegent crew show": {
-      "command": "show",
-      "function": "crew_show",
-      "app": "crew_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_crew_show_help"
-      ]
-    },
-    "thegent crew status": {
-      "command": "status",
-      "function": "crew_status",
-      "app": "crew_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_crew_status_help"
-      ]
-    },
-    "thegent compliance export": {
-      "command": "export",
-      "function": "compliance_export",
-      "app": "compliance_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_compliance_export_help"
-      ]
-    },
-    "thegent compliance siem-test": {
-      "command": "siem-test",
-      "function": "compliance_siem_test",
-      "app": "compliance_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_compliance_siem_test_help"
-      ]
-    },
-    "thegent compliance plugin-check": {
-      "command": "plugin-check",
-      "function": "compliance_plugin_check",
-      "app": "compliance_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_compliance_plugin_check_help"
-      ]
-    },
-    "thegent compliance redact": {
-      "command": "redact",
-      "function": "compliance_redact",
-      "app": "compliance_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_compliance_redact_help"
-      ]
-    },
-    "thegent compliance ledger-verify": {
-      "command": "ledger-verify",
-      "function": "ledger_verify",
-      "app": "compliance_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_compliance_ledger_verify_help"
-      ]
-    },
-    "thegent trust status": {
-      "command": "status",
-      "function": "govern_trust_status",
-      "app": "trust_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_trust_status_help"
-      ]
-    },
-    "thegent signatures list": {
-      "command": "list",
-      "function": "govern_signatures_list",
-      "app": "signatures_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_signatures_list_help"
-      ]
-    },
-    "thegent signatures verify": {
-      "command": "verify",
-      "function": "govern_signatures_verify",
-      "app": "signatures_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_signatures_verify_help"
-      ]
-    },
-    "thegent learning list": {
-      "command": "list",
-      "function": "learning_list",
-      "app": "learning_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_learning_list_help"
-      ]
-    },
-    "thegent learning promote": {
-      "command": "promote",
-      "function": "learning_promote",
-      "app": "learning_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_learning_promote_help"
-      ]
-    },
-    "thegent learning rollback": {
-      "command": "rollback",
-      "function": "learning_rollback",
-      "app": "learning_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_learning_rollback_help"
-      ]
-    },
-    "thegent federation list": {
-      "command": "list",
-      "function": "federation_list",
-      "app": "federation_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_federation_list_help"
-      ]
-    },
-    "thegent federation status": {
-      "command": "status",
-      "function": "federation_status",
-      "app": "federation_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_federation_status_help"
-      ]
-    },
-    "thegent config check": {
-      "command": "check",
-      "function": "config_check",
-      "app": "config_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_config_check_help"
-      ]
-    },
-    "thegent config concurrency": {
-      "command": "concurrency",
-      "function": "config_concurrency",
-      "app": "config_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_config_concurrency_help"
-      ]
-    },
-    "thegent go health": {
-      "command": "health",
-      "function": "go_health",
-      "app": "go_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_go_health_help"
-      ]
-    },
-    "thegent go status": {
-      "command": "status",
-      "function": "go_status",
-      "app": "go_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_go_status_help"
-      ]
-    },
-    "thegent go cycle": {
-      "command": "cycle",
-      "function": "go_cycle",
-      "app": "go_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_go_cycle_help"
-      ]
-    },
-    "thegent go watch": {
-      "command": "watch",
-      "function": "go_watch",
-      "app": "go_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_go_watch_help"
-      ]
-    },
-    "thegent orchestrate loop": {
-      "command": "loop",
-      "function": "loop",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_loop_help"
-      ]
-    },
-    "thegent orchestrate loop-send": {
-      "command": "loop-send",
-      "function": "loop_send",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_loop_send_help"
-      ]
-    },
-    "thegent orchestrate loop-stop": {
-      "command": "loop-stop",
-      "function": "loop_stop",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_loop_stop_help"
-      ]
-    },
-    "thegent run": {
-      "command": "run",
-      "function": "run",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 4,
-      "tests": [
-        "test_run_help_exits_zero",
-        "test_run_help_shows_required_parameters",
-        "test_scenario_successful_execution",
-        "test_run_help_exits_zero"
-      ]
-    },
-    "thegent orchestrate run": {
-      "command": "run",
-      "function": "run",
-      "app": "orchestrate_app",
+    "thegent setup": {
+      "command": "setup",
+      "function": "setup_app_command",
+      "app": "setup",
       "has_e2e_test": true,
       "test_count": 2,
       "tests": [
-        "test_orchestrate_run_help_exits_zero",
-        "test_orchestrate_run_help_exits_zero"
+        "test_setup_short_help_exits_zero",
+        "test_setup_help_exits_zero"
       ]
     },
-    "thegent summarize": {
-      "command": "summarize",
-      "function": "summarize",
-      "app": "app",
+    "thegent do": {
+      "command": "do",
+      "function": "quick_do",
+      "app": "do",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_summarize_help"
-      ]
-    },
-    "thegent research": {
-      "command": "research",
-      "function": "research",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_research_help_exits_zero"
+        "test_do_help_exits_zero"
       ]
     },
     "thegent review": {
       "command": "review",
-      "function": "review",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_review_help"
-      ]
-    },
-    "thegent explain": {
-      "command": "explain",
-      "function": "explain_run",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_explain_help"
-      ]
-    },
-    "thegent fix": {
-      "command": "fix",
-      "function": "fix",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_fix_help"
-      ]
-    },
-    "thegent code": {
-      "command": "code",
-      "function": "code",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_code_help"
-      ]
-    },
-    "thegent free": {
-      "command": "free",
-      "function": "free",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_free_help"
-      ]
-    },
-    "thegent route": {
-      "command": "route",
-      "function": "terminal_route",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_route_help"
-      ]
-    },
-    "thegent orchestrate route": {
-      "command": "route",
-      "function": "terminal_route",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_route_help"
-      ]
-    },
-    "thegent bg": {
-      "command": "bg",
-      "function": "bg",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 3,
-      "tests": [
-        "test_bg_help_exits_zero",
-        "test_bg_help_shows_parameters",
-        "test_bg_help_exits_zero"
-      ]
-    },
-    "thegent orchestrate bg": {
-      "command": "bg",
-      "function": "bg",
-      "app": "orchestrate_app",
+      "function": "review_cmd",
+      "app": "review",
       "has_e2e_test": true,
       "test_count": 2,
       "tests": [
-        "test_orchestrate_bg_help_exits_zero",
-        "test_orchestrate_bg_help_exits_zero"
-      ]
-    },
-    "thegent history list": {
-      "command": "list",
-      "function": "history_list",
-      "app": "history_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_history_list_help_exits_zero"
-      ]
-    },
-    "thegent observe history": {
-      "command": "history",
-      "function": "history_list",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_history_help_exits_zero"
-      ]
-    },
-    "thegent history events": {
-      "command": "events",
-      "function": "history_events",
-      "app": "history_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_history_events_help_exits_zero"
-      ]
-    },
-    "thegent history verify": {
-      "command": "verify",
-      "function": "history_audit_verify",
-      "app": "history_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_history_verify_exits_zero",
-        "test_history_verify_help_exits_zero"
-      ]
-    },
-    "thegent govern verify": {
-      "command": "verify",
-      "function": "history_audit_verify",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 3,
-      "tests": [
-        "test_govern_verify_help",
-        "test_govern_verify_help_exits_zero",
-        "test_govern_verify_exits_zero"
-      ]
-    },
-    "thegent inbox list": {
-      "command": "list",
-      "function": "inbox_list",
-      "app": "inbox_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_inbox_list_help"
-      ]
-    },
-    "thegent observe inbox": {
-      "command": "inbox",
-      "function": "inbox_list",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_inbox_help"
-      ]
-    },
-    "thegent inbox wait": {
-      "command": "wait",
-      "function": "inbox_wait",
-      "app": "inbox_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_inbox_wait_help"
-      ]
-    },
-    "thegent queue list": {
-      "command": "list",
-      "function": "queue_list",
-      "app": "queue_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_queue_list_sub_help"
-      ]
-    },
-    "thegent rules sync": {
-      "command": "sync",
-      "function": "rules_sync",
-      "app": "rules_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_rules_sync_sub_help"
-      ]
-    },
-    "thegent policy show": {
-      "command": "show",
-      "function": "policy_show",
-      "app": "policy_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_policy_show_exits_zero",
-        "test_policy_show_help_exits_zero"
-      ]
-    },
-    "thegent govern show-policy": {
-      "command": "show-policy",
-      "function": "policy_show",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_govern_show_policy_help_exits_zero",
-        "test_govern_show_policy_exits_zero"
-      ]
-    },
-    "thegent policy check": {
-      "command": "check",
-      "function": "policy_check",
-      "app": "policy_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_policy_check_help"
-      ]
-    },
-    "thegent govern check-policy": {
-      "command": "check-policy",
-      "function": "policy_check",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_check_policy_help"
-      ]
-    },
-    "thegent policy purge": {
-      "command": "purge",
-      "function": "policy_purge",
-      "app": "policy_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_policy_purge_help"
-      ]
-    },
-    "thegent govern purge-history": {
-      "command": "purge-history",
-      "function": "policy_purge",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_purge_history_help"
-      ]
-    },
-    "thegent escalate add": {
-      "command": "add",
-      "function": "govern_escalate_add",
-      "app": "escalate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_escalate_add_help"
-      ]
-    },
-    "thegent escalate list": {
-      "command": "list",
-      "function": "govern_escalate_list",
-      "app": "escalate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_escalate_list_help"
-      ]
-    },
-    "thegent escalate resolve": {
-      "command": "resolve",
-      "function": "govern_escalate_resolve",
-      "app": "escalate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_escalate_resolve_help"
-      ]
-    },
-    "thegent escalate approve": {
-      "command": "approve",
-      "function": "govern_escalate_approve",
-      "app": "escalate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_escalate_approve_help"
-      ]
-    },
-    "thegent interruption list": {
-      "command": "list",
-      "function": "govern_interruption_list",
-      "app": "interruption_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_interruption_list_help"
-      ]
-    },
-    "thegent interruption snooze": {
-      "command": "snooze",
-      "function": "govern_interruption_snooze",
-      "app": "interruption_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_interruption_snooze_help"
-      ]
-    },
-    "thegent govern calibrate": {
-      "command": "calibrate",
-      "function": "govern_calibrate",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_calibrate_help"
-      ]
-    },
-    "thegent govern cost": {
-      "command": "cost",
-      "function": "govern_cost",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_cost_help"
-      ]
-    },
-    "thegent guardrails check": {
-      "command": "check",
-      "function": "govern_guardrails_check",
-      "app": "guardrails_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_guardrails_check_help"
-      ]
-    },
-    "thegent guardrails show": {
-      "command": "show",
-      "function": "govern_guardrails_show",
-      "app": "guardrails_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_guardrails_show_help"
-      ]
-    },
-    "thegent govern sweep": {
-      "command": "sweep",
-      "function": "govern_sweep",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_sweep_help"
-      ]
-    },
-    "thegent govern purge": {
-      "command": "purge",
-      "function": "govern_purge",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_purge_help"
-      ]
-    },
-    "thegent govern data-protection": {
-      "command": "data-protection",
-      "function": "govern_data_protection",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_data_protection_exits_zero"
-      ]
-    },
-    "thegent govern compliance-report": {
-      "command": "compliance-report",
-      "function": "govern_compliance_report",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_compliance_report_help"
-      ]
-    },
-    "thegent govern contracts": {
-      "command": "contracts",
-      "function": "govern_contracts",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_govern_contracts_help_exits_zero",
-        "test_govern_contracts_exits_zero"
-      ]
-    },
-    "thegent govern conformance": {
-      "command": "conformance",
-      "function": "govern_conformance",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 3,
-      "tests": [
-        "test_govern_conformance_help_exits_zero",
-        "test_govern_conformance_exits_zero",
-        "test_govern_conformance_check_drift_exits_zero"
-      ]
-    },
-    "thegent govern migration": {
-      "command": "migration",
-      "function": "govern_migration",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_migration_help_exits_zero"
-      ]
-    },
-    "thegent govern hook-watcher": {
-      "command": "hook-watcher",
-      "function": "govern_hook_watcher",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_hook_watcher_help"
-      ]
-    },
-    "thegent observe summary": {
-      "command": "summary",
-      "function": "observe_summary",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_summary_help"
-      ]
-    },
-    "thegent observe kpis": {
-      "command": "kpis",
-      "function": "observe_kpis",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_kpis_help"
-      ]
-    },
-    "thegent observe drift": {
-      "command": "drift",
-      "function": "observe_drift",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_drift_help_exits_zero"
-      ]
-    },
-    "thegent observe dlq": {
-      "command": "dlq",
-      "function": "observe_dlq",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_dlq_help"
-      ]
-    },
-    "thegent observe load-status": {
-      "command": "load-status",
-      "function": "observe_load_status",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_load_status_help"
-      ]
-    },
-    "thegent observe cost-status": {
-      "command": "cost-status",
-      "function": "observe_cost_status",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_cost_status_help"
-      ]
-    },
-    "thegent observe usage": {
-      "command": "usage",
-      "function": "observe_usage",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_usage_help"
-      ]
-    },
-    "thegent observe traffic": {
-      "command": "traffic",
-      "function": "observe_traffic",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_traffic_help"
-      ]
-    },
-    "thegent observe drift-monitor": {
-      "command": "drift-monitor",
-      "function": "observe_drift_monitor",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_drift_monitor_help"
-      ]
-    },
-    "thegent observe trend": {
-      "command": "trend",
-      "function": "observe_trend",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_trend_help_exits_zero"
-      ]
-    },
-    "thegent cockpit": {
-      "command": "cockpit",
-      "function": "cockpit",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_cockpit_exits_zero",
-        "test_cockpit_help_exits_zero"
-      ]
-    },
-    "thegent observe cockpit": {
-      "command": "cockpit",
-      "function": "cockpit",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_observe_cockpit_help_exits_zero",
-        "test_observe_cockpit_exits_zero"
-      ]
-    },
-    "thegent sitback-dashboard": {
-      "command": "sitback-dashboard",
-      "function": "sitback_dashboard",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_sitback_dashboard_help"
-      ]
-    },
-    "thegent observe sitback-dashboard": {
-      "command": "sitback-dashboard",
-      "function": "sitback_dashboard",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_sitback_dashboard_help"
-      ]
-    },
-    "thegent feedback": {
-      "command": "feedback",
-      "function": "feedback",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_feedback_help_exits_zero"
-      ]
-    },
-    "thegent govern feedback": {
-      "command": "feedback",
-      "function": "feedback",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_feedback_help_exits_zero"
-      ]
-    },
-    "thegent archive": {
-      "command": "archive",
-      "function": "archive",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_archive_help",
-        "test_archive_help_exits_zero"
-      ]
-    },
-    "thegent observe archive": {
-      "command": "archive",
-      "function": "archive",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_archive_help_exits_zero"
-      ]
-    },
-    "thegent operations": {
-      "command": "operations",
-      "function": "operations",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 3,
-      "tests": [
-        "test_operations_exits_zero",
-        "test_operations_exits_zero",
-        "test_operations_help_exits_zero"
-      ]
-    },
-    "thegent modes": {
-      "command": "modes",
-      "function": "modes",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_modes_exits_zero"
-      ]
-    },
-    "thegent benchmark": {
-      "command": "benchmark",
-      "function": "benchmark",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_benchmark_exits_zero",
-        "test_benchmark_help_exits_zero"
-      ]
-    },
-    "thegent observe benchmark": {
-      "command": "benchmark",
-      "function": "benchmark",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_observe_benchmark_help_exits_zero",
-        "test_observe_benchmark_exits_zero"
-      ]
-    },
-    "thegent closure-pack": {
-      "command": "closure-pack",
-      "function": "closure_pack",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_closure_pack_help",
-        "test_closure_pack_help_exits_zero"
-      ]
-    },
-    "thegent govern closure-pack": {
-      "command": "closure-pack",
-      "function": "closure_pack",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_govern_closure_pack_help_exits_zero",
-        "test_govern_closure_pack_help_exits_zero"
-      ]
-    },
-    "thegent govern roadmap": {
-      "command": "roadmap",
-      "function": "govern_roadmap",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_roadmap_help"
-      ]
-    },
-    "thegent govern self-heal-tests": {
-      "command": "self-heal-tests",
-      "function": "govern_self_heal_tests",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_self_heal_tests_help"
-      ]
-    },
-    "thegent govern negotiate": {
-      "command": "negotiate",
-      "function": "govern_negotiate",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_negotiate_help"
-      ]
-    },
-    "thegent govern trend-analysis": {
-      "command": "trend-analysis",
-      "function": "govern_trend_analysis",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_trend_analysis_help"
-      ]
-    },
-    "thegent govern release-pack": {
-      "command": "release-pack",
-      "function": "govern_release_pack",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_release_pack_help"
-      ]
-    },
-    "thegent history-legacy": {
-      "command": "history-legacy",
-      "function": "history_legacy",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_history_legacy_help_exits_zero"
-      ]
-    },
-    "thegent ps": {
-      "command": "ps",
-      "function": "ps",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 4,
-      "tests": [
-        "test_ps_exits_zero_with_empty_sessions",
-        "test_ps_all_exits_zero",
-        "test_ps_include_contract_exits_zero",
-        "test_ps_help_exits_zero"
-      ]
-    },
-    "thegent orchestrate ps": {
-      "command": "ps",
-      "function": "ps",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_orchestrate_ps_help_exits_zero",
-        "test_orchestrate_ps_exits_zero"
-      ]
-    },
-    "thegent recover status": {
-      "command": "status",
-      "function": "recover_status",
-      "app": "recover_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_recover_status_help"
-      ]
-    },
-    "thegent status": {
-      "command": "status",
-      "function": "status",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 3,
-      "tests": [
-        "test_status_help_exits_zero",
-        "test_status_exits_zero",
-        "test_status_help_exits_zero"
-      ]
-    },
-    "thegent orchestrate status": {
-      "command": "status",
-      "function": "status",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_status_help"
-      ]
-    },
-    "thegent observe status": {
-      "command": "status",
-      "function": "status",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_status_help_exits_zero"
-      ]
-    },
-    "thegent orchestrate explain": {
-      "command": "explain",
-      "function": "explain_run",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_explain_help"
-      ]
-    },
-    "thegent orchestrate fallbacks": {
-      "command": "fallbacks",
-      "function": "orchestrate_fallbacks",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_fallbacks_help"
-      ]
-    },
-    "thegent orchestrate handoff": {
-      "command": "handoff",
-      "function": "orchestrate_handoff",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_handoff_help"
-      ]
-    },
-    "thegent orchestrate handoff-confirm": {
-      "command": "handoff-confirm",
-      "function": "orchestrate_handoff_confirm",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_handoff_confirm_help"
-      ]
-    },
-    "thegent orchestrate handoff-list": {
-      "command": "handoff-list",
-      "function": "orchestrate_handoff_list",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_handoff_list_help"
-      ]
-    },
-    "thegent orchestrate handoff-show": {
-      "command": "handoff-show",
-      "function": "orchestrate_handoff_show",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_handoff_show_help"
-      ]
-    },
-    "thegent orchestrate replay": {
-      "command": "replay",
-      "function": "orchestrate_replay",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_replay_help"
-      ]
-    },
-    "thegent orchestrate watchdog": {
-      "command": "watchdog",
-      "function": "orchestrate_watchdog",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_watchdog_help"
-      ]
-    },
-    "thegent orchestrate inspect": {
-      "command": "inspect",
-      "function": "inspect",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_inspect_help_exits_zero"
-      ]
-    },
-    "thegent observe inspect": {
-      "command": "inspect",
-      "function": "inspect",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_inspect_help_exits_zero"
-      ]
-    },
-    "thegent inspect": {
-      "command": "inspect",
-      "function": "inspect",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_inspect_help_exits_zero"
-      ]
-    },
-    "thegent session-contracts": {
-      "command": "session-contracts",
-      "function": "session_contracts",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 6,
-      "tests": [
-        "test_session_contracts_exits_zero_with_empty",
-        "test_session_contracts_missing_only_exits_zero",
-        "test_session_contracts_summary_only_exits_zero",
-        "test_session_contracts_strict_exits_zero",
-        "test_session_contracts_all_exits_zero",
-        "test_session_contracts_help_exits_zero"
-      ]
-    },
-    "thegent govern session-contracts": {
-      "command": "session-contracts",
-      "function": "session_contracts",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_govern_session_contracts_help_exits_zero",
-        "test_govern_session_contracts_exits_zero"
-      ]
-    },
-    "thegent session-contract-health-gate": {
-      "command": "session-contract-health-gate",
-      "function": "session_contract_health_gate",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 4,
-      "tests": [
-        "test_health_gate_exits_zero_with_empty_sessions",
-        "test_gate_all_exits_zero",
-        "test_gate_strict_exits_zero",
-        "test_session_contract_health_gate_help_exits_zero"
-      ]
-    },
-    "thegent govern health-gate": {
-      "command": "health-gate",
-      "function": "session_contract_health_gate",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_govern_health_gate_help_exits_zero",
-        "test_govern_health_gate_exits_zero"
-      ]
-    },
-    "thegent session-contract-health-report": {
-      "command": "session-contract-health-report",
-      "function": "session_contract_health_report",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 4,
-      "tests": [
-        "test_health_report_exits_zero_with_empty_sessions",
-        "test_report_all_exits_zero",
-        "test_report_strict_exits_zero",
-        "test_session_contract_health_report_help_exits_zero"
-      ]
-    },
-    "thegent govern health-report": {
-      "command": "health-report",
-      "function": "session_contract_health_report",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_govern_health_report_help_exits_zero",
-        "test_govern_health_report_exits_zero"
-      ]
-    },
-    "thegent session-contract-health-trend": {
-      "command": "session-contract-health-trend",
-      "function": "session_contract_health_trend",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 4,
-      "tests": [
-        "test_health_trend_exits_zero_with_empty_snapshots",
-        "test_health_trend_all_exits_zero",
-        "test_health_trend_strict_exits_zero",
-        "test_session_contract_health_trend_help_exits_zero"
-      ]
-    },
-    "thegent govern health-trend": {
-      "command": "health-trend",
-      "function": "session_contract_health_trend",
-      "app": "govern_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_govern_health_trend_help_exits_zero"
-      ]
-    },
-    "thegent logs": {
-      "command": "logs",
-      "function": "logs",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 3,
-      "tests": [
-        "test_logs_help_exits_zero",
-        "test_logs_without_session_id_shows_usage",
-        "test_logs_help_exits_zero"
-      ]
-    },
-    "thegent orchestrate logs": {
-      "command": "logs",
-      "function": "logs",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_logs_help_exits_zero"
-      ]
-    },
-    "thegent observe logs": {
-      "command": "logs",
-      "function": "logs",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_logs_help_exits_zero"
-      ]
-    },
-    "thegent takeover": {
-      "command": "takeover",
-      "function": "takeover",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_takeover_help"
-      ]
-    },
-    "thegent orchestrate takeover": {
-      "command": "takeover",
-      "function": "takeover",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_takeover_help"
-      ]
-    },
-    "thegent explorer": {
-      "command": "explorer",
-      "function": "terminal_explorer",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_explorer_help"
-      ]
-    },
-    "thegent observe explorer": {
-      "command": "explorer",
-      "function": "terminal_explorer",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_explorer_help"
-      ]
-    },
-    "thegent wait": {
-      "command": "wait",
-      "function": "wait",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_wait_help_exits_zero"
-      ]
-    },
-    "thegent orchestrate wait": {
-      "command": "wait",
-      "function": "wait",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_wait_help_exits_zero"
-      ]
-    },
-    "thegent observe wait": {
-      "command": "wait",
-      "function": "wait",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_wait_help_exits_zero"
-      ]
-    },
-    "thegent wait-next": {
-      "command": "wait-next",
-      "function": "wait_next",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_wait_next_help"
-      ]
-    },
-    "thegent orchestrate wait-next": {
-      "command": "wait-next",
-      "function": "wait_next",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_wait_next_help"
-      ]
-    },
-    "thegent stop": {
-      "command": "stop",
-      "function": "stop",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_stop_help_exits_zero"
-      ]
-    },
-    "thegent orchestrate stop": {
-      "command": "stop",
-      "function": "stop",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_stop_help_exits_zero"
-      ]
-    },
-    "thegent recover stop": {
-      "command": "stop",
-      "function": "stop",
-      "app": "recover_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_recover_stop_help_exits_zero"
-      ]
-    },
-    "thegent pause": {
-      "command": "pause",
-      "function": "pause",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_pause_help"
-      ]
-    },
-    "thegent orchestrate pause": {
-      "command": "pause",
-      "function": "pause",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_pause_help"
+        "test_review_help",
+        "test_review_help_exits_zero"
       ]
     },
     "thegent resume": {
       "command": "resume",
-      "function": "resume",
-      "app": "app",
+      "function": "resume_top_level",
+      "app": "resume",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 2,
       "tests": [
-        "test_resume_help"
+        "test_resume_help",
+        "test_resume_help_exits_zero"
       ]
     },
-    "thegent orchestrate resume": {
-      "command": "resume",
-      "function": "resume",
-      "app": "orchestrate_app",
+    "thegent fork": {
+      "command": "fork",
+      "function": "fork_top_level",
+      "app": "fork",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_orchestrate_resume_help"
+        "test_fork_help_exits_zero"
       ]
     },
-    "thegent retry": {
-      "command": "retry",
-      "function": "retry",
-      "app": "app",
+    "thegent rollback": {
+      "command": "rollback",
+      "function": "rollback_top_level",
+      "app": "rollback",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_retry_help"
+        "test_rollback_help_exits_zero"
       ]
     },
-    "thegent orchestrate retry": {
-      "command": "retry",
-      "function": "retry",
-      "app": "orchestrate_app",
+    "thegent ps": {
+      "command": "ps",
+      "function": "quick_ps",
+      "app": "ps",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 2,
       "tests": [
-        "test_orchestrate_retry_help"
+        "test_ps_help_exits_zero",
+        "test_ps_help_exits_zero"
       ]
     },
     "thegent list-agents": {
       "command": "list-agents",
-      "function": "list_agents",
-      "app": "app",
+      "function": "list_agents_cmd_wrapper",
+      "app": "list-agents",
       "has_e2e_test": true,
       "test_count": 4,
       "tests": [
+        "test_list_agents_help_exits_zero",
         "test_list_agents_exits_zero",
-        "test_list_agents_contains_gemini",
-        "test_list_agents_contains_all_expected",
+        "test_list_agents_help_exits_zero",
         "test_list_agents_help_exits_zero"
-      ]
-    },
-    "thegent agents retry": {
-      "command": "retry",
-      "function": "agents_retry",
-      "app": "agents_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_agents_retry_help"
-      ]
-    },
-    "thegent agents list": {
-      "command": "list",
-      "function": "agents_list",
-      "app": "agents_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_agents_list_help"
       ]
     },
     "thegent list-droids": {
       "command": "list-droids",
-      "function": "list_droids",
-      "app": "app",
+      "function": "list_droids_cmd_wrapper",
+      "app": "list-droids",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 3,
       "tests": [
+        "test_list_droids_help_exits_zero",
+        "test_list_droids_help_exits_zero",
         "test_list_droids_help_exits_zero"
       ]
     },
-    "thegent list-models": {
-      "command": "list-models",
-      "function": "list_models",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 6,
-      "tests": [
-        "test_list_models_exits_zero",
-        "test_list_models_contains_gemini",
-        "test_list_models_include_contract_exits_zero",
-        "test_list_models_include_contract_output_has_schema",
-        "test_list_models_by_model_exits_zero",
-        "test_list_models_help_exits_zero"
-      ]
-    },
-    "thegent resolve-model-route": {
-      "command": "resolve-model-route",
-      "function": "resolve_model_route",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_resolve_model_route_help_exits_zero"
-      ]
-    },
-    "thegent route-probe": {
-      "command": "route-probe",
-      "function": "route_probe",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_route_probe_help"
-      ]
-    },
-    "thegent models metrics": {
-      "command": "metrics",
-      "function": "models_metrics",
-      "app": "models_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_models_metrics_help"
-      ]
-    },
-    "thegent models cost-values": {
-      "command": "cost-values",
-      "function": "models_cost_values",
-      "app": "models_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_models_cost_values_help"
-      ]
-    },
-    "thegent models speed-index": {
-      "command": "speed-index",
-      "function": "models_speed_index",
-      "app": "models_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_models_speed_index_help"
-      ]
-    },
-    "thegent models quality-index": {
-      "command": "quality-index",
-      "function": "models_quality_index",
-      "app": "models_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_models_quality_index_help"
-      ]
-    },
-    "thegent models refresh": {
-      "command": "refresh",
-      "function": "models_refresh",
-      "app": "models_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_models_refresh_exits_zero",
-        "test_models_refresh_help_exits_zero"
-      ]
-    },
-    "thegent models contract": {
-      "command": "contract",
-      "function": "models_contract",
-      "app": "models_app",
-      "has_e2e_test": true,
-      "test_count": 3,
-      "tests": [
-        "test_models_contract_exits_zero",
-        "test_models_contract_output_has_schema_version",
-        "test_models_contract_help_exits_zero"
-      ]
-    },
-    "thegent cliproxy ensure-config": {
-      "command": "ensure-config",
-      "function": "cliproxy_ensure_config",
-      "app": "cliproxy_app",
+    "thegent session-contract-health-gate": {
+      "command": "session-contract-health-gate",
+      "function": "session_health_gate_wrapper",
+      "app": "session-contract-health-gate",
       "has_e2e_test": true,
       "test_count": 4,
       "tests": [
-        "test_cliproxy_ensure_config_help",
-        "test_cliproxy_ensure_config_exits_zero",
-        "test_cliproxy_ensure_config_exits_zero",
-        "test_cliproxy_ensure_config_help_exits_zero"
+        "test_session_contract_health_gate_help_exits_zero",
+        "test_session_contract_health_gate_help_exits_zero",
+        "test_session_contract_health_gate_help_contains_usage",
+        "test_session_contract_health_gate_help_exits_zero"
       ]
     },
-    "thegent cliproxy start": {
-      "command": "start",
-      "function": "cliproxy_start",
-      "app": "cliproxy_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_cliproxy_start_help"
-      ]
-    },
-    "thegent cliproxy stop": {
-      "command": "stop",
-      "function": "cliproxy_stop",
-      "app": "cliproxy_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_cliproxy_stop_help"
-      ]
-    },
-    "thegent cliproxy models-setup": {
-      "command": "models-setup",
-      "function": "cliproxy_models_setup",
-      "app": "cliproxy_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_cliproxy_models_setup_help"
-      ]
-    },
-    "thegent cliproxy restart": {
-      "command": "restart",
-      "function": "cliproxy_restart",
-      "app": "cliproxy_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_cliproxy_restart_help"
-      ]
-    },
-    "thegent cliproxy service": {
-      "command": "service",
-      "function": "cliproxy_service",
-      "app": "cliproxy_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_cliproxy_service_help"
-      ]
-    },
-    "thegent cliproxy login": {
-      "command": "login",
-      "function": "cliproxy_login",
-      "app": "cliproxy_app",
+    "thegent session-contract-health-report": {
+      "command": "session-contract-health-report",
+      "function": "session_health_report_wrapper",
+      "app": "session-contract-health-report",
       "has_e2e_test": true,
       "test_count": 3,
       "tests": [
-        "test_cliproxy_login_help",
-        "test_cliproxy_login_help_exits_zero",
-        "test_cliproxy_login_help_exits_zero"
+        "test_session_contract_health_report_help_exits_zero",
+        "test_session_contract_health_report_help_exits_zero",
+        "test_session_contract_health_report_help_exits_zero"
       ]
     },
-    "thegent config show": {
-      "command": "show",
-      "function": "config_show",
-      "app": "config_app",
+    "thegent session-contract-health-trend": {
+      "command": "session-contract-health-trend",
+      "function": "session_health_trend_wrapper",
+      "app": "session-contract-health-trend",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_config_show_help"
+        "test_session_contract_health_trend_help_exits_zero"
       ]
     },
-    "thegent config set": {
-      "command": "set",
-      "function": "config_set",
-      "app": "config_app",
+    "thegent domain-map": {
+      "command": "domain-map",
+      "function": "domain_map_compat",
+      "app": "domain-map",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_config_set_help"
+        "test_domain_map_help_exits_zero"
       ]
     },
-    "thegent control_plane serve": {
-      "command": "serve",
-      "function": "control_plane_serve",
-      "app": "control_plane_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_control_plane_serve_help"
-      ]
-    },
-    "thegent control_plane start": {
-      "command": "start",
-      "function": "control_plane_start",
-      "app": "control_plane_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_control_plane_start_help"
-      ]
-    },
-    "thegent control_plane stop": {
-      "command": "stop",
-      "function": "control_plane_stop",
-      "app": "control_plane_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_control_plane_stop_help"
-      ]
-    },
-    "thegent control_plane status": {
-      "command": "status",
-      "function": "control_plane_status",
-      "app": "control_plane_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_control_plane_status_help"
-      ]
-    },
-    "thegent login": {
-      "command": "login",
-      "function": "login",
-      "app": "app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_login_help_exits_zero"
-      ]
-    },
-    "thegent orchestrate login": {
-      "command": "login",
-      "function": "login",
-      "app": "orchestrate_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_orchestrate_login_help_exits_zero"
-      ]
-    },
-    "thegent dag list": {
-      "command": "list",
-      "function": "dag_list",
-      "app": "dag_app",
+    "thegent help": {
+      "command": "help",
+      "function": "help_cmd",
+      "app": "help",
       "has_e2e_test": true,
       "test_count": 2,
       "tests": [
-        "test_dag_list_ambiguous_cwd_exits_one",
-        "test_dag_list_help_exits_zero"
+        "test_help_help_exits_zero",
+        "test_help_help_exits_zero"
       ]
     },
-    "thegent plan list": {
+    "thegent agent-server": {
+      "command": "agent-server",
+      "function": "agent_server_cmd",
+      "app": "agent-server",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_agent_server_help_exits_zero"
+      ]
+    },
+    "thegent sitback": {
+      "command": "sitback",
+      "function": "sitback_cmd",
+      "app": "sitback",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_sitback_help_exits_zero",
+        "test_sitback_help_exits_zero"
+      ]
+    },
+    "thegent compositor": {
+      "command": "compositor",
+      "function": "compositor_cmd",
+      "app": "compositor",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_compositor_help_exits_zero",
+        "test_compositor_help_exits_zero"
+      ]
+    },
+    "thegent roid": {
+      "command": "roid",
+      "function": "roid_cmd",
+      "app": "roid",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_roid_help_exits_zero",
+        "test_roid_help_exits_zero"
+      ]
+    },
+    "thegent run": {
+      "command": "run",
+      "function": "<group>",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 7,
+      "tests": [
+        "test_run_help_exits_zero",
+        "test_run_help_exits_zero",
+        "test_run_help_shows_required_parameters",
+        "test_run_help_exits_zero",
+        "test_run_help_contains_usage",
+        "test_run_help_exits_zero",
+        "test_scenario_successful_execution"
+      ]
+    },
+    "thegent run agent": {
+      "command": "agent",
+      "function": "run_agent",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_agent_help_exits_zero"
+      ]
+    },
+    "thegent run free": {
+      "command": "free",
+      "function": "run_free",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_free_help_exits_zero"
+      ]
+    },
+    "thegent run history": {
+      "command": "history",
+      "function": "run_history",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_history_help_exits_zero"
+      ]
+    },
+    "thegent run logs": {
+      "command": "logs",
+      "function": "run_logs",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_logs_help_exits_zero"
+      ]
+    },
+    "thegent run ps": {
+      "command": "ps",
+      "function": "run_ps",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_ps_help_exits_zero"
+      ]
+    },
+    "thegent run stop": {
+      "command": "stop",
+      "function": "run_stop",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_stop_help_exits_zero"
+      ]
+    },
+    "thegent run resume": {
+      "command": "resume",
+      "function": "run_resume",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_resume_help_exits_zero"
+      ]
+    },
+    "thegent run fork": {
+      "command": "fork",
+      "function": "run_fork",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_fork_help_exits_zero"
+      ]
+    },
+    "thegent run rollback": {
+      "command": "rollback",
+      "function": "run_rollback",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_rollback_help_exits_zero"
+      ]
+    },
+    "thegent run attach": {
+      "command": "attach",
+      "function": "run_attach",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_attach_help_exits_zero"
+      ]
+    },
+    "thegent run send": {
+      "command": "send",
+      "function": "run_send",
+      "app": "run",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_run_send_help_exits_zero"
+      ]
+    },
+    "thegent bench": {
+      "command": "bench",
+      "function": "<group>",
+      "app": "bench",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_bench_help_exits_zero"
+      ]
+    },
+    "thegent bench run": {
+      "command": "run",
+      "function": "bench_run",
+      "app": "bench",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_bench_run_help_exits_zero"
+      ]
+    },
+    "thegent bench compare": {
+      "command": "compare",
+      "function": "bench_compare",
+      "app": "bench",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_bench_compare_help_exits_zero"
+      ]
+    },
+    "thegent sync": {
+      "command": "sync",
+      "function": "<group>",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_sync_help_exits_zero",
+        "test_sync_help"
+      ]
+    },
+    "thegent sync all": {
+      "command": "all",
+      "function": "sync_all",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_sync_all_help",
+        "test_sync_all_help_exits_zero"
+      ]
+    },
+    "thegent sync work-stream": {
+      "command": "work-stream",
+      "function": "sync_work_stream_full",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sync_work_stream_help"
+      ]
+    },
+    "thegent sync rules": {
+      "command": "rules",
+      "function": "sync_rules",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_sync_rules_help_exits_zero",
+        "test_sync_rules_help_exits_zero"
+      ]
+    },
+    "thegent sync research": {
+      "command": "research",
+      "function": "sync_research",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sync_research_help_exits_zero"
+      ]
+    },
+    "thegent sync dag": {
+      "command": "dag",
+      "function": "sync_dag",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_sync_dag_help_exits_zero",
+        "test_sync_dag_help_exits_zero"
+      ]
+    },
+    "thegent sync work": {
+      "command": "work",
+      "function": "sync_work",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sync_work_help_exits_zero"
+      ]
+    },
+    "thegent sync catalog": {
+      "command": "catalog",
+      "function": "sync_catalog",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sync_catalog_help_exits_zero"
+      ]
+    },
+    "thegent sync update": {
+      "command": "update",
+      "function": "sync_update",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sync_update_help_exits_zero"
+      ]
+    },
+    "thegent sync status": {
+      "command": "status",
+      "function": "sync_status",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_sync_status_help_exits_zero",
+        "test_sync_status_help_exits_zero"
+      ]
+    },
+    "thegent sync push": {
+      "command": "push",
+      "function": "sync_push",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sync_push_help_exits_zero"
+      ]
+    },
+    "thegent sync pull": {
+      "command": "pull",
+      "function": "sync_pull",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sync_pull_help_exits_zero"
+      ]
+    },
+    "thegent sync reset": {
+      "command": "reset",
+      "function": "sync_reset",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sync_reset_help_exits_zero"
+      ]
+    },
+    "thegent sync models": {
+      "command": "models",
+      "function": "<group>",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_sync_models_help_exits_zero",
+        "test_sync_models_help_exits_zero"
+      ]
+    },
+    "thegent sync models tui": {
+      "command": "tui",
+      "function": "models_tui",
+      "app": "sync",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sync_models_tui_help_exits_zero"
+      ]
+    },
+    "thegent sync models list": {
       "command": "list",
-      "function": "dag_list",
-      "app": "plan_app",
+      "function": "models_list",
+      "app": "sync",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_plan_list_help_exits_zero"
+        "test_sync_models_list_help_exits_zero"
       ]
     },
-    "thegent plan incorporate": {
-      "command": "incorporate",
-      "function": "plan_incorporate",
-      "app": "plan_app",
+    "thegent skill": {
+      "command": "skill",
+      "function": "<group>",
+      "app": "skill",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_plan_incorporate_help"
+        "test_skill_help_exits_zero"
       ]
     },
-    "thegent plan do-next": {
-      "command": "do-next",
-      "function": "plan_do_next",
-      "app": "plan_app",
+    "thegent skill list": {
+      "command": "list",
+      "function": "skills_list",
+      "app": "skill",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_plan_do_next_help"
+        "test_skill_list_help_exits_zero"
       ]
     },
-    "thegent plan get-next": {
-      "command": "get-next",
-      "function": "plan_get_next",
-      "app": "plan_app",
+    "thegent skill show": {
+      "command": "show",
+      "function": "skills_show",
+      "app": "skill",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_plan_get_next_help"
+        "test_skill_show_help_exits_zero"
       ]
     },
-    "thegent plan loop": {
-      "command": "loop",
-      "function": "plan_loop",
-      "app": "plan_app",
+    "thegent skill validate": {
+      "command": "validate",
+      "function": "skills_validate",
+      "app": "skill",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_plan_loop_help"
+        "test_skill_validate_help_exits_zero"
       ]
     },
-    "thegent plan spawn-next": {
-      "command": "spawn-next",
-      "function": "plan_spawn_next",
-      "app": "plan_app",
+    "thegent skill select": {
+      "command": "select",
+      "function": "skills_select",
+      "app": "skill",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_plan_spawn_next_help"
+        "test_skill_select_help_exits_zero"
       ]
     },
-    "thegent plan progress": {
-      "command": "progress",
-      "function": "plan_progress",
-      "app": "plan_app",
+    "thegent audit": {
+      "command": "audit",
+      "function": "<group>",
+      "app": "audit",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 2,
       "tests": [
-        "test_plan_progress_help"
+        "test_audit_help_exits_zero",
+        "test_audit_help_exits_zero"
       ]
     },
-    "thegent plan wait-next": {
-      "command": "wait-next",
-      "function": "plan_wait_next",
-      "app": "plan_app",
+    "thegent audit all": {
+      "command": "all",
+      "function": "audit_all",
+      "app": "audit",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_plan_wait_next_help"
+        "test_audit_all_help_exits_zero"
       ]
     },
-    "thegent plan claim": {
-      "command": "claim",
-      "function": "plan_claim",
-      "app": "plan_app",
+    "thegent audit doctor": {
+      "command": "doctor",
+      "function": "audit_doctor",
+      "app": "audit",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_plan_claim_help"
+        "test_audit_doctor_help_exits_zero"
       ]
     },
-    "thegent plan complete": {
-      "command": "complete",
-      "function": "plan_complete",
-      "app": "plan_app",
+    "thegent audit plan": {
+      "command": "plan",
+      "function": "audit_plan",
+      "app": "audit",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_plan_complete_help"
+        "test_audit_plan_help_exits_zero"
+      ]
+    },
+    "thegent audit security": {
+      "command": "security",
+      "function": "audit_security",
+      "app": "audit",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_audit_security_help_exits_zero"
+      ]
+    },
+    "thegent audit sweep": {
+      "command": "sweep",
+      "function": "audit_sweep",
+      "app": "audit",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_audit_sweep_help_exits_zero"
+      ]
+    },
+    "thegent audit registry": {
+      "command": "registry",
+      "function": "audit_registry",
+      "app": "audit",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_audit_registry_help_exits_zero"
+      ]
+    },
+    "thegent audit fatigue": {
+      "command": "fatigue",
+      "function": "audit_fatigue",
+      "app": "audit",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_audit_fatigue_help_exits_zero"
+      ]
+    },
+    "thegent audit costs": {
+      "command": "costs",
+      "function": "audit_costs",
+      "app": "audit",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_audit_costs_help_exits_zero"
+      ]
+    },
+    "thegent audit journal": {
+      "command": "journal",
+      "function": "audit_journal",
+      "app": "audit",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_audit_journal_help_exits_zero"
+      ]
+    },
+    "thegent plan": {
+      "command": "plan",
+      "function": "<group>",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 6,
+      "tests": [
+        "test_plan_help_exits_zero",
+        "test_plan_help_exits_zero",
+        "test_plan_help_contains_usage",
+        "test_plan_help_exits_zero",
+        "test_plan_help_exits_zero",
+        "test_plan_help_exits_zero"
+      ]
+    },
+    "thegent plan next": {
+      "command": "next",
+      "function": "plan_next",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_plan_next_help_exits_zero",
+        "test_plan_next_help_exits_zero"
+      ]
+    },
+    "thegent plan status": {
+      "command": "status",
+      "function": "plan_status",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 3,
+      "tests": [
+        "test_plan_status_help_exits_zero",
+        "test_plan_status_help",
+        "test_plan_status_help_exits_zero"
+      ]
+    },
+    "thegent plan add": {
+      "command": "add",
+      "function": "plan_add",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_plan_add_help_exits_zero",
+        "test_plan_add_help_exits_zero"
+      ]
+    },
+    "thegent plan remove": {
+      "command": "remove",
+      "function": "plan_remove",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_plan_remove_help_exits_zero",
+        "test_plan_remove_help_exits_zero"
+      ]
+    },
+    "thegent plan roadmap": {
+      "command": "roadmap",
+      "function": "plan_roadmap",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_plan_roadmap_help_exits_zero"
+      ]
+    },
+    "thegent plan work": {
+      "command": "work",
+      "function": "plan_work_stream",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_plan_work_help_exits_zero"
       ]
     },
     "thegent plan analyze": {
       "command": "analyze",
       "function": "plan_analyze",
-      "app": "plan_app",
+      "app": "plan",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
         "test_plan_analyze_help_exits_zero"
       ]
     },
-    "thegent dag validate": {
-      "command": "validate",
-      "function": "dag_validate",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_validate_help_exits_zero"
-      ]
-    },
-    "thegent plan validate": {
-      "command": "validate",
-      "function": "dag_validate",
-      "app": "plan_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_plan_validate_help_exits_zero"
-      ]
-    },
-    "thegent dag add": {
-      "command": "add",
-      "function": "dag_add",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_add_help_exits_zero"
-      ]
-    },
-    "thegent plan add": {
-      "command": "add",
-      "function": "dag_add",
-      "app": "plan_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_plan_add_help_exits_zero"
-      ]
-    },
-    "thegent dag update": {
-      "command": "update",
-      "function": "dag_update",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_update_help_exits_zero"
-      ]
-    },
-    "thegent plan update": {
-      "command": "update",
-      "function": "dag_update",
-      "app": "plan_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_plan_update_help_exits_zero"
-      ]
-    },
-    "thegent dag remove": {
-      "command": "remove",
-      "function": "dag_remove",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_remove_help_exits_zero"
-      ]
-    },
-    "thegent plan remove": {
-      "command": "remove",
-      "function": "dag_remove",
-      "app": "plan_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_plan_remove_help_exits_zero"
-      ]
-    },
-    "thegent dag cancel": {
-      "command": "cancel",
-      "function": "dag_cancel",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_cancel_help_exits_zero"
-      ]
-    },
-    "thegent plan cancel": {
-      "command": "cancel",
-      "function": "dag_cancel",
-      "app": "plan_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_plan_cancel_help_exits_zero"
-      ]
-    },
-    "thegent dag ready": {
-      "command": "ready",
-      "function": "dag_ready",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_ready_help_exits_zero"
-      ]
-    },
-    "thegent plan ready": {
-      "command": "ready",
-      "function": "dag_ready",
-      "app": "plan_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_plan_ready_help"
-      ]
-    },
-    "thegent dag run": {
-      "command": "run",
-      "function": "dag_run",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_run_help_exits_zero"
-      ]
-    },
-    "thegent plan run": {
-      "command": "run",
-      "function": "dag_run",
-      "app": "plan_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_plan_run_help_exits_zero"
-      ]
-    },
-    "thegent dag status": {
-      "command": "status",
-      "function": "dag_status",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_status_help_exits_zero"
-      ]
-    },
-    "thegent plan status": {
-      "command": "status",
-      "function": "dag_status",
-      "app": "plan_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_plan_status_help"
-      ]
-    },
-    "thegent dag sync": {
-      "command": "sync",
-      "function": "dag_sync",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_sync_help_exits_zero"
-      ]
-    },
-    "thegent plan sync": {
-      "command": "sync",
-      "function": "dag_sync",
-      "app": "plan_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_plan_sync_help_exits_zero"
-      ]
-    },
-    "thegent dag wait-next": {
-      "command": "wait-next",
-      "function": "dag_wait_next",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_wait_next_help"
-      ]
-    },
-    "thegent dag reconcile": {
-      "command": "reconcile",
-      "function": "dag_reconcile",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_reconcile_help"
-      ]
-    },
-    "thegent recover reconcile": {
-      "command": "reconcile",
-      "function": "dag_reconcile",
-      "app": "recover_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_recover_reconcile_help_exits_zero"
-      ]
-    },
-    "thegent dag checkpoint": {
-      "command": "checkpoint",
-      "function": "dag_checkpoint",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_checkpoint_help_exits_zero"
-      ]
-    },
     "thegent plan checkpoint": {
       "command": "checkpoint",
-      "function": "dag_checkpoint",
-      "app": "plan_app",
+      "function": "plan_checkpoint",
+      "app": "plan",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
         "test_plan_checkpoint_help_exits_zero"
       ]
     },
-    "thegent dag rollback": {
-      "command": "rollback",
-      "function": "dag_rollback",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_rollback_help_exits_zero"
-      ]
-    },
     "thegent plan rollback": {
       "command": "rollback",
-      "function": "dag_rollback",
-      "app": "plan_app",
+      "function": "plan_rollback",
+      "app": "plan",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
         "test_plan_rollback_help_exits_zero"
       ]
     },
-    "thegent recover rollback": {
-      "command": "rollback",
-      "function": "dag_rollback",
-      "app": "recover_app",
+    "thegent plan incorporate": {
+      "command": "incorporate",
+      "function": "plan_incorporate",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_plan_incorporate_help",
+        "test_plan_incorporate_help"
+      ]
+    },
+    "thegent plan claim": {
+      "command": "claim",
+      "function": "plan_claim",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_plan_claim_help",
+        "test_plan_claim_help"
+      ]
+    },
+    "thegent plan complete": {
+      "command": "complete",
+      "function": "plan_complete",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_plan_complete_help",
+        "test_plan_complete_help"
+      ]
+    },
+    "thegent plan verify-workstream": {
+      "command": "verify-workstream",
+      "function": "plan_verify_workstream",
+      "app": "plan",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_recover_rollback_help_exits_zero"
+        "test_plan_verify_workstream_help"
       ]
     },
-    "thegent dag checkpoints": {
-      "command": "checkpoints",
-      "function": "dag_checkpoints",
-      "app": "dag_app",
+    "thegent plan progress": {
+      "command": "progress",
+      "function": "plan_progress",
+      "app": "plan",
+      "has_e2e_test": true,
+      "test_count": 3,
+      "tests": [
+        "test_plan_progress_help",
+        "test_plan_progress_help",
+        "test_plan_progress_help_exits_zero"
+      ]
+    },
+    "thegent plan sessions": {
+      "command": "sessions",
+      "function": "plan_sessions",
+      "app": "plan",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_dag_checkpoints_help_exits_zero"
+        "test_plan_sessions_help"
       ]
     },
-    "thegent plan checkpoints": {
-      "command": "checkpoints",
-      "function": "dag_checkpoints",
-      "app": "plan_app",
+    "thegent plan harness-status": {
+      "command": "harness-status",
+      "function": "plan_harness_status",
+      "app": "plan",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_plan_checkpoints_help"
+        "test_plan_harness_status_help"
       ]
     },
-    "thegent dag recover": {
-      "command": "recover",
-      "function": "dag_recover",
-      "app": "dag_app",
+    "thegent queue": {
+      "command": "queue",
+      "function": "<group>",
+      "app": "queue",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_queue_help_exits_zero",
+        "test_queue_help_exits_zero"
+      ]
+    },
+    "thegent queue add": {
+      "command": "add",
+      "function": "queue_add",
+      "app": "queue",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_dag_recover_help_exits_zero"
+        "test_queue_add_help_exits_zero"
       ]
     },
-    "thegent recover dag-recover": {
-      "command": "dag-recover",
-      "function": "dag_recover",
-      "app": "recover_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_recover_dag_recover_help"
-      ]
-    },
-    "thegent dag probe": {
-      "command": "probe",
-      "function": "dag_probe",
-      "app": "dag_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_dag_probe_help_exits_zero"
-      ]
-    },
-    "thegent plan probe": {
-      "command": "probe",
-      "function": "dag_probe",
-      "app": "plan_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_plan_probe_help"
-      ]
-    },
-    "thegent observe probe": {
-      "command": "probe",
-      "function": "dag_probe",
-      "app": "observe_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_observe_probe_help_exits_zero"
-      ]
-    },
-    "thegent lock_cleanup service": {
-      "command": "service",
-      "function": "git_lock_cleanup_service",
-      "app": "lock_cleanup_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_lock_cleanup_service_help"
-      ]
-    },
-    "thegent acp server": {
-      "command": "server",
-      "function": "acp_server_cmd",
-      "app": "acp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_acp_server_help"
-      ]
-    },
-    "thegent acp client": {
-      "command": "client",
-      "function": "acp_client_cmd",
-      "app": "acp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_acp_client_help"
-      ]
-    },
-    "thegent lsp install": {
-      "command": "install",
-      "function": "lsp_install",
-      "app": "lsp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_lsp_install_help"
-      ]
-    },
-    "thegent lsp start": {
-      "command": "start",
-      "function": "lsp_start",
-      "app": "lsp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_lsp_start_help"
-      ]
-    },
-    "thegent lsp stop": {
-      "command": "stop",
-      "function": "lsp_stop",
-      "app": "lsp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_lsp_stop_help"
-      ]
-    },
-    "thegent lsp serena-backend": {
-      "command": "serena-backend",
-      "function": "lsp_serena_backend",
-      "app": "lsp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_lsp_serena_backend_help"
-      ]
-    },
-    "thegent lsp serena-jetbrains-setup": {
-      "command": "serena-jetbrains-setup",
-      "function": "lsp_serena_jetbrains_setup",
-      "app": "lsp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_lsp_serena_jetbrains_setup_help"
-      ]
-    },
-    "thegent lsp auto-setup": {
-      "command": "auto-setup",
-      "function": "lsp_auto_setup",
-      "app": "lsp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_lsp_auto_setup_help"
-      ]
-    },
-    "thegent lsp list": {
+    "thegent queue list": {
       "command": "list",
-      "function": "lsp_list",
-      "app": "lsp_app",
+      "function": "queue_list",
+      "app": "queue",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 2,
       "tests": [
-        "test_lsp_list_help"
+        "test_queue_list_help_exits_zero",
+        "test_queue_list_sub_help"
       ]
     },
-    "thegent lsp format": {
-      "command": "format",
-      "function": "lsp_format",
-      "app": "lsp_app",
+    "thegent queue next": {
+      "command": "next",
+      "function": "queue_next",
+      "app": "queue",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_lsp_format_help"
+        "test_queue_next_help_exits_zero"
       ]
     },
-    "thegent lsp inspect": {
-      "command": "inspect",
-      "function": "lsp_inspect",
-      "app": "lsp_app",
+    "thegent queue done": {
+      "command": "done",
+      "function": "queue_done",
+      "app": "queue",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_lsp_inspect_help"
+        "test_queue_done_help_exits_zero"
       ]
     },
-    "thegent mgmt ensure-proxy": {
-      "command": "ensure-proxy",
-      "function": "mgmt_ensure_proxy",
-      "app": "mgmt_app",
+    "thegent queue tui": {
+      "command": "tui",
+      "function": "queue_tui",
+      "app": "queue",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_mgmt_ensure_proxy_help"
+        "test_queue_tui_help_exits_zero"
       ]
     },
-    "thegent mgmt verify-codex-cliproxy": {
-      "command": "verify-codex-cliproxy",
-      "function": "mgmt_verify_codex_cliproxy",
-      "app": "mgmt_app",
+    "thegent rules": {
+      "command": "rules",
+      "function": "<group>",
+      "app": "rules",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_mgmt_verify_codex_cliproxy_help"
+        "test_rules_help_exits_zero"
+      ]
+    },
+    "thegent rules sync": {
+      "command": "sync",
+      "function": "rules_sync",
+      "app": "rules",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_rules_sync_help_exits_zero",
+        "test_rules_sync_sub_help"
+      ]
+    },
+    "thegent team": {
+      "command": "team",
+      "function": "<group>",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_team_help_exits_zero",
+        "test_team_help_exits_zero"
+      ]
+    },
+    "thegent team create": {
+      "command": "create",
+      "function": "team_create",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_team_create_help_exits_zero",
+        "test_team_create_help"
+      ]
+    },
+    "thegent team list": {
+      "command": "list",
+      "function": "team_list",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_team_list_help_exits_zero"
+      ]
+    },
+    "thegent team hierarchy": {
+      "command": "hierarchy",
+      "function": "team_hierarchy",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_team_hierarchy_help_exits_zero"
+      ]
+    },
+    "thegent team crew": {
+      "command": "crew",
+      "function": "team_crew",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_team_crew_help_exits_zero"
+      ]
+    },
+    "thegent team delegate": {
+      "command": "delegate",
+      "function": "team_delegate",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_team_delegate_help_exits_zero"
+      ]
+    },
+    "thegent team status": {
+      "command": "status",
+      "function": "team_status",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_team_status_help_exits_zero"
+      ]
+    },
+    "thegent team teammates": {
+      "command": "teammates",
+      "function": "<group>",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_team_teammates_help_exits_zero",
+        "test_team_teammates_help_exits_zero"
+      ]
+    },
+    "thegent team teammates list": {
+      "command": "list",
+      "function": "teammates_list",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_team_teammates_list_help_exits_zero"
+      ]
+    },
+    "thegent team teammates delegate": {
+      "command": "delegate",
+      "function": "teammates_delegate",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_team_teammates_delegate_help_exits_zero"
+      ]
+    },
+    "thegent team teammates status": {
+      "command": "status",
+      "function": "teammates_status",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_team_teammates_status_help_exits_zero"
+      ]
+    },
+    "thegent team teammates show": {
+      "command": "show",
+      "function": "teammates_show",
+      "app": "team",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_team_teammates_show_help_exits_zero"
+      ]
+    },
+    "thegent domain": {
+      "command": "domain",
+      "function": "<group>",
+      "app": "domain",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_domain_help_exits_zero"
+      ]
+    },
+    "thegent domain map": {
+      "command": "map",
+      "function": "domain_map",
+      "app": "domain",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_domain_map_help_exits_zero"
+      ]
+    },
+    "thegent govern": {
+      "command": "govern",
+      "function": "<group>",
+      "app": "govern",
+      "has_e2e_test": true,
+      "test_count": 3,
+      "tests": [
+        "test_govern_help_exits_zero",
+        "test_govern_help_exits_zero",
+        "test_govern_help_exits_zero"
+      ]
+    },
+    "thegent govern approve": {
+      "command": "approve",
+      "function": "govern_approve",
+      "app": "govern",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_govern_approve_help_exits_zero"
+      ]
+    },
+    "thegent govern reject": {
+      "command": "reject",
+      "function": "govern_reject",
+      "app": "govern",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_govern_reject_help_exits_zero"
+      ]
+    },
+    "thegent govern vet": {
+      "command": "vet",
+      "function": "govern_vet",
+      "app": "govern",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_govern_vet_help_exits_zero"
+      ]
+    },
+    "thegent govern register-host": {
+      "command": "register-host",
+      "function": "govern_register_host",
+      "app": "govern",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_govern_register_host_help_exits_zero"
+      ]
+    },
+    "thegent govern resolve-config": {
+      "command": "resolve-config",
+      "function": "govern_resolve_config",
+      "app": "govern",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_govern_resolve_config_help_exits_zero"
+      ]
+    },
+    "thegent govern negotiate": {
+      "command": "negotiate",
+      "function": "govern_negotiate",
+      "app": "govern",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_govern_negotiate_help_exits_zero",
+        "test_govern_negotiate_help"
+      ]
+    },
+    "thegent govern session-contract-health-trend": {
+      "command": "session-contract-health-trend",
+      "function": "govern_health_trend",
+      "app": "govern",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_govern_session_contract_health_trend_help_exits_zero"
+      ]
+    },
+    "thegent sys": {
+      "command": "sys",
+      "function": "<group>",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_help_exits_zero"
+      ]
+    },
+    "thegent sys mcp": {
+      "command": "mcp",
+      "function": "sys_mcp",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_mcp_help_exits_zero"
+      ]
+    },
+    "thegent sys lsp": {
+      "command": "lsp",
+      "function": "sys_lsp",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_lsp_help_exits_zero"
+      ]
+    },
+    "thegent sys cp": {
+      "command": "cp",
+      "function": "sys_cp",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_cp_help_exits_zero"
+      ]
+    },
+    "thegent sys session": {
+      "command": "session",
+      "function": "sys_session",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_session_help_exits_zero"
+      ]
+    },
+    "thegent sys config": {
+      "command": "config",
+      "function": "sys_config",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_config_help_exits_zero"
+      ]
+    },
+    "thegent sys terminal": {
+      "command": "terminal",
+      "function": "sys_terminal",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_terminal_help_exits_zero"
+      ]
+    },
+    "thegent sys shadow": {
+      "command": "shadow",
+      "function": "sys_shadow",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_shadow_help_exits_zero"
+      ]
+    },
+    "thegent sys setup": {
+      "command": "setup",
+      "function": "setup_app_callback",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_setup_help_exits_zero"
+      ]
+    },
+    "thegent sys setup project": {
+      "command": "project",
+      "function": "<group>",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 3,
+      "tests": [
+        "test_sys_setup_project_help_exits_zero",
+        "test_sys_setup_project_help_exits_zero",
+        "test_sys_setup_project_help_exits_zero"
+      ]
+    },
+    "thegent sys setup project brownfield": {
+      "command": "brownfield",
+      "function": "setup_project_brownfield",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_setup_project_brownfield_help_exits_zero"
+      ]
+    },
+    "thegent sys setup project greenfield": {
+      "command": "greenfield",
+      "function": "setup_project_greenfield",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_setup_project_greenfield_help_exits_zero"
+      ]
+    },
+    "thegent sys setup project ag-dd": {
+      "command": "ag-dd",
+      "function": "setup_project_brownfield_agdd",
+      "app": "sys",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sys setup project none": {
+      "command": "none",
+      "function": "setup_project_brownfield_none",
+      "app": "sys",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sys setup project migrate": {
+      "command": "migrate",
+      "function": "project_migrate",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_setup_project_migrate_help_exits_zero"
+      ]
+    },
+    "thegent sys setup project init": {
+      "command": "init",
+      "function": "project_init",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_setup_project_init_help_exits_zero"
+      ]
+    },
+    "thegent sys setup project scaffold": {
+      "command": "scaffold",
+      "function": "project_scaffold",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_setup_project_scaffold_help_exits_zero"
+      ]
+    },
+    "thegent sys setup project scaffold-profiles": {
+      "command": "scaffold-profiles",
+      "function": "project_scaffold_profiles",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_setup_project_scaffold_profiles_help_exits_zero"
+      ]
+    },
+    "thegent sys setup project list": {
+      "command": "list",
+      "function": "project_list",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_setup_project_list_help_exits_zero"
+      ]
+    },
+    "thegent sys setup project show": {
+      "command": "show",
+      "function": "project_show",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_setup_project_show_help_exits_zero"
+      ]
+    },
+    "thegent sys setup project doctor": {
+      "command": "doctor",
+      "function": "project_doctor",
+      "app": "sys",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_sys_setup_project_doctor_help_exits_zero"
+      ]
+    },
+    "thegent project": {
+      "command": "project",
+      "function": "<group>",
+      "app": "project",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_help_exits_zero"
+      ]
+    },
+    "thegent project brownfield": {
+      "command": "brownfield",
+      "function": "setup_project_brownfield",
+      "app": "project",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_brownfield_help_exits_zero"
+      ]
+    },
+    "thegent project greenfield": {
+      "command": "greenfield",
+      "function": "setup_project_greenfield",
+      "app": "project",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_greenfield_help_exits_zero"
+      ]
+    },
+    "thegent project ag-dd": {
+      "command": "ag-dd",
+      "function": "setup_project_brownfield_agdd",
+      "app": "project",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent project none": {
+      "command": "none",
+      "function": "setup_project_brownfield_none",
+      "app": "project",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent project migrate": {
+      "command": "migrate",
+      "function": "project_migrate",
+      "app": "project",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_migrate_help_exits_zero"
+      ]
+    },
+    "thegent project init": {
+      "command": "init",
+      "function": "project_init",
+      "app": "project",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_init_help_exits_zero"
+      ]
+    },
+    "thegent project scaffold": {
+      "command": "scaffold",
+      "function": "project_scaffold",
+      "app": "project",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_scaffold_help_exits_zero"
+      ]
+    },
+    "thegent project scaffold-profiles": {
+      "command": "scaffold-profiles",
+      "function": "project_scaffold_profiles",
+      "app": "project",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_project_scaffold_profiles_help_exits_zero",
+        "test_project_scaffold_profiles_help_exits_zero"
+      ]
+    },
+    "thegent project list": {
+      "command": "list",
+      "function": "project_list",
+      "app": "project",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_list_help"
+      ]
+    },
+    "thegent project show": {
+      "command": "show",
+      "function": "project_show",
+      "app": "project",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_show_help_exits_zero"
+      ]
+    },
+    "thegent project doctor": {
+      "command": "doctor",
+      "function": "project_doctor",
+      "app": "project",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_doctor_help_exits_zero"
+      ]
+    },
+    "thegent mcp": {
+      "command": "mcp",
+      "function": "<group>",
+      "app": "mcp",
+      "has_e2e_test": true,
+      "test_count": 4,
+      "tests": [
+        "test_mcp_help_exits_zero",
+        "test_mcp_help_exits_zero",
+        "test_mcp_help_exits_zero",
+        "test_mcp_help_exits_zero"
       ]
     },
     "thegent mcp install": {
       "command": "install",
       "function": "mcp_install",
-      "app": "mcp_app",
+      "app": "mcp",
       "has_e2e_test": true,
       "test_count": 2,
       "tests": [
@@ -2776,368 +1521,849 @@
         "test_mcp_install_help_exits_zero"
       ]
     },
-    "thegent mcp introspect": {
-      "command": "introspect",
-      "function": "mcp_introspect",
-      "app": "mcp_app",
+    "thegent mcp up": {
+      "command": "up",
+      "function": "mcp_up_cmd",
+      "app": "mcp",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
+        "test_mcp_up_help_exits_zero"
+      ]
+    },
+    "thegent mcp down": {
+      "command": "down",
+      "function": "mcp_down_cmd",
+      "app": "mcp",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_mcp_down_help_exits_zero"
+      ]
+    },
+    "thegent mcp restart": {
+      "command": "restart",
+      "function": "mcp_restart_cmd",
+      "app": "mcp",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_mcp_restart_help",
+        "test_mcp_restart_help_exits_zero"
+      ]
+    },
+    "thegent mcp status": {
+      "command": "status",
+      "function": "mcp_status",
+      "app": "mcp",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_mcp_status_help_exits_zero",
+        "test_mcp_status_help_exits_zero"
+      ]
+    },
+    "thegent mcp service": {
+      "command": "service",
+      "function": "mcp_service",
+      "app": "mcp",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_mcp_service_help_exits_zero"
+      ]
+    },
+    "thegent mcp fix": {
+      "command": "fix",
+      "function": "mcp_fix",
+      "app": "mcp",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_mcp_fix_help",
+        "test_mcp_fix_help_exits_zero"
+      ]
+    },
+    "thegent mcp migrate-unimount": {
+      "command": "migrate-unimount",
+      "function": "mcp_migrate_unimount",
+      "app": "mcp",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_mcp_migrate_unimount_help",
+        "test_mcp_migrate_unimount_help_exits_zero"
+      ]
+    },
+    "thegent mcp prune": {
+      "command": "prune",
+      "function": "mcp_prune_cmd",
+      "app": "mcp",
+      "has_e2e_test": true,
+      "test_count": 3,
+      "tests": [
+        "test_mcp_prune_help_exits_zero",
+        "test_mcp_prune_help",
+        "test_mcp_prune_help_exits_zero"
+      ]
+    },
+    "thegent mcp prune-periodic": {
+      "command": "prune-periodic",
+      "function": "mcp_prune_periodic",
+      "app": "mcp",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_mcp_prune_periodic_help_exits_zero",
+        "test_mcp_prune_periodic_help"
+      ]
+    },
+    "thegent mcp introspect": {
+      "command": "introspect",
+      "function": "mcp_introspect",
+      "app": "mcp",
+      "has_e2e_test": true,
+      "test_count": 3,
+      "tests": [
+        "test_mcp_introspect_help_exits_zero",
+        "test_mcp_introspect_help_exits_zero",
         "test_mcp_introspect_help"
       ]
     },
     "thegent mcp spotlight-exclude": {
       "command": "spotlight-exclude",
       "function": "mcp_spotlight_exclude",
-      "app": "mcp_app",
+      "app": "mcp",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 2,
       "tests": [
+        "test_mcp_spotlight_exclude_help_exits_zero",
         "test_mcp_spotlight_exclude_help"
       ]
     },
-    "thegent mcp prune": {
-      "command": "prune",
-      "function": "mcp_prune",
-      "app": "mcp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_mcp_prune_help"
-      ]
-    },
-    "thegent mcp prune-periodic": {
-      "command": "prune-periodic",
-      "function": "mcp_prune_periodic",
-      "app": "mcp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_mcp_prune_periodic_help"
-      ]
-    },
-    "thegent mcp fix": {
-      "command": "fix",
-      "function": "mcp_fix",
-      "app": "mcp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_mcp_fix_help"
-      ]
-    },
-    "thegent mcp migrate-unimount": {
-      "command": "migrate-unimount",
-      "function": "mcp_migrate_unimount",
-      "app": "mcp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_mcp_migrate_unimount_help"
-      ]
-    },
-    "thegent mcp up": {
-      "command": "up",
-      "function": "mcp_up_cmd",
-      "app": "mcp_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_mcp_up_help_exits_zero",
-        "test_mcp_up_help_exits_zero"
-      ]
-    },
-    "thegent memory add": {
-      "command": "add",
-      "function": "memory_add_cmd",
-      "app": "memory_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_memory_add_help"
-      ]
-    },
-    "thegent memory remember": {
-      "command": "remember",
-      "function": "memory_remember",
-      "app": "memory_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_memory_remember_help"
-      ]
-    },
-    "thegent memory issue": {
-      "command": "issue",
-      "function": "memory_issue",
-      "app": "memory_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_memory_issue_help"
-      ]
-    },
-    "thegent memory rule": {
-      "command": "rule",
-      "function": "memory_rule",
-      "app": "memory_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_memory_rule_help"
-      ]
-    },
-    "thegent memory scrape": {
-      "command": "scrape",
-      "function": "memory_scrape_cmd",
-      "app": "memory_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_memory_scrape_help"
-      ]
-    },
-    "thegent memory synthesize": {
-      "command": "synthesize",
-      "function": "memory_synthesize_cmd",
-      "app": "memory_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_memory_synthesize_help"
-      ]
-    },
-    "thegent memory garden": {
-      "command": "garden",
-      "function": "memory_garden_cmd",
-      "app": "memory_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_memory_garden_help"
-      ]
-    },
-    "thegent mcp restart": {
-      "command": "restart",
-      "function": "mcp_restart_cmd",
-      "app": "mcp_app",
-      "has_e2e_test": true,
-      "test_count": 1,
-      "tests": [
-        "test_mcp_restart_help"
-      ]
-    },
-    "thegent mcp service": {
-      "command": "service",
-      "function": "mcp_service",
-      "app": "mcp_app",
-      "has_e2e_test": true,
-      "test_count": 2,
-      "tests": [
-        "test_mcp_service_help_exits_zero",
-        "test_mcp_service_help_exits_zero"
-      ]
-    },
-    "thegent mcp-stdio": {
+    "thegent mcp mcp-stdio": {
       "command": "mcp-stdio",
       "function": "mcp_stdio",
-      "app": "app",
+      "app": "mcp",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 2,
       "tests": [
-        "test_mcp_stdio_help"
+        "test_mcp_mcp_stdio_help_exits_zero",
+        "test_mcp_stdio_help_exits_zero"
       ]
     },
-    "thegent serve": {
-      "command": "serve",
-      "function": "serve",
-      "app": "app",
+    "thegent isolation": {
+      "command": "isolation",
+      "function": "<group>",
+      "app": "isolation",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_serve_help_exits_zero"
+        "test_isolation_help_exits_zero"
+      ]
+    },
+    "thegent isolation check": {
+      "command": "check",
+      "function": "isolation_check",
+      "app": "isolation",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_isolation_check_help_exits_zero"
+      ]
+    },
+    "thegent isolation share-run": {
+      "command": "share-run",
+      "function": "isolation_share_run",
+      "app": "isolation",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_isolation_share_run_help_exits_zero"
+      ]
+    },
+    "thegent mesh": {
+      "command": "mesh",
+      "function": "<group>",
+      "app": "mesh",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_mesh_help_exits_zero"
+      ]
+    },
+    "thegent mesh status": {
+      "command": "status",
+      "function": "status",
+      "app": "mesh",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_mesh_status_help_exits_zero"
+      ]
+    },
+    "thegent mesh init": {
+      "command": "init",
+      "function": "init",
+      "app": "mesh",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_mesh_init_help_exits_zero"
+      ]
+    },
+    "thegent mesh discover": {
+      "command": "discover",
+      "function": "discover",
+      "app": "mesh",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_mesh_discover_help_exits_zero"
       ]
     },
     "thegent install": {
       "command": "install",
-      "function": "install_cmd",
-      "app": "app",
+      "function": "install_callback",
+      "app": "install",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 3,
       "tests": [
-        "test_install_help"
+        "test_install_help_exits_zero",
+        "test_install_help",
+        "test_install_help_exits_zero"
       ]
     },
-    "thegent provider": {
-      "command": "provider",
-      "function": "provider_cmd",
-      "app": "app",
+    "thegent install project": {
+      "command": "project",
+      "function": "install_project_cmd",
+      "app": "install",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_provider_help"
+        "test_install_project_help_exits_zero"
       ]
     },
-    "thegent uninstall-system-deps": {
-      "command": "uninstall-system-deps",
-      "function": "uninstall_system_deps_cmd",
-      "app": "app",
+    "thegent install project brownfield": {
+      "command": "brownfield",
+      "function": "install_project_brownfield",
+      "app": "install",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_uninstall_system_deps_help"
+        "test_install_project_brownfield_help_exits_zero"
       ]
     },
-    "thegent restore-backup": {
-      "command": "restore-backup",
-      "function": "restore_backup_cmd",
-      "app": "app",
+    "thegent install project ag-dd": {
+      "command": "ag-dd",
+      "function": "install_project_brownfield_agdd",
+      "app": "install",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent install project none": {
+      "command": "none",
+      "function": "install_project_none",
+      "app": "install",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent git": {
+      "command": "git",
+      "function": "_git_dependency_missing",
+      "app": "git",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 2,
       "tests": [
-        "test_restore_backup_help"
+        "test_git_short_help_exits_zero",
+        "test_git_help_exits_zero"
       ]
     },
-    "thegent models-setup": {
-      "command": "models-setup",
-      "function": "models_setup_cmd",
-      "app": "app",
+    "thegent registry": {
+      "command": "registry",
+      "function": "<group>",
+      "app": "registry",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 4,
       "tests": [
-        "test_models_setup_help"
+        "test_registry_help_exits_zero",
+        "test_registry_help_exits_zero",
+        "test_registry_help_exits_zero",
+        "test_registry_help_exits_zero"
       ]
     },
-    "thegent add-provider": {
-      "command": "add-provider",
-      "function": "add_provider_cmd",
-      "app": "app",
+    "thegent registry recommend": {
+      "command": "recommend",
+      "function": "registry_recommend",
+      "app": "registry",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 2,
       "tests": [
-        "test_add_provider_help"
+        "test_registry_recommend_help_exits_zero",
+        "test_registry_recommend_help_exits_zero"
       ]
     },
-    "thegent list-providers": {
-      "command": "list-providers",
-      "function": "list_providers_cmd",
-      "app": "app",
+    "thegent registry doctor": {
+      "command": "doctor",
+      "function": "registry_doctor",
+      "app": "registry",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_list_providers_help"
+        "test_registry_doctor_help_exits_zero"
       ]
     },
-    "thegent validate-provider": {
-      "command": "validate-provider",
-      "function": "validate_provider_cmd",
-      "app": "app",
+    "thegent registry list": {
+      "command": "list",
+      "function": "registry_list",
+      "app": "registry",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_validate_provider_help"
+        "test_registry_list_help_exits_zero"
       ]
     },
-    "thegent add-api-key": {
-      "command": "add-api-key",
-      "function": "add_api_key_cmd",
-      "app": "app",
+    "thegent routing": {
+      "command": "routing",
+      "function": "<group>",
+      "app": "routing",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 3,
       "tests": [
-        "test_add_api_key_help"
+        "test_routing_help_exits_zero",
+        "test_routing_help_exits_zero",
+        "test_routing_help_exits_zero"
       ]
     },
-    "thegent discover-models": {
-      "command": "discover-models",
-      "function": "discover_models_cmd",
-      "app": "app",
+    "thegent routing status": {
+      "command": "status",
+      "function": "routing_status",
+      "app": "routing",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_discover_models_help"
+        "test_routing_status_help_exits_zero"
       ]
     },
-    "thegent list-model-indices": {
-      "command": "list-model-indices",
-      "function": "list_model_indices_cmd",
-      "app": "app",
+    "thegent routing harvest": {
+      "command": "harvest",
+      "function": "routing_harvest",
+      "app": "routing",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_list_model_indices_help"
+        "test_routing_harvest_help_exits_zero"
       ]
     },
-    "thegent search-models": {
-      "command": "search-models",
-      "function": "search_models_cmd",
-      "app": "app",
+    "thegent routing reset": {
+      "command": "reset",
+      "function": "routing_reset",
+      "app": "routing",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_search_models_help"
+        "test_routing_reset_help_exits_zero"
       ]
     },
-    "thegent fuzzy-search": {
-      "command": "fuzzy-search",
-      "function": "fuzzy_search_cmd",
-      "app": "app",
+    "thegent routing pareto": {
+      "command": "pareto",
+      "function": "<group>",
+      "app": "routing",
       "has_e2e_test": true,
-      "test_count": 1,
+      "test_count": 2,
       "tests": [
-        "test_fuzzy_search_help"
+        "test_routing_pareto_help_exits_zero",
+        "test_routing_pareto_help_exits_zero"
       ]
     },
-    "thegent search-modalities": {
-      "command": "search-modalities",
-      "function": "search_modalities_cmd",
-      "app": "app",
+    "thegent routing pareto status": {
+      "command": "status",
+      "function": "router_status",
+      "app": "routing",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_search_modalities_help"
+        "test_routing_pareto_status_help_exits_zero"
       ]
     },
-    "thegent show-modalities": {
-      "command": "show-modalities",
-      "function": "show_modalities_cmd",
-      "app": "app",
+    "thegent routing pareto config": {
+      "command": "config",
+      "function": "router_config",
+      "app": "routing",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_show_modalities_help"
+        "test_routing_pareto_config_help_exits_zero"
       ]
     },
-    "thegent add-benchmark": {
-      "command": "add-benchmark",
-      "function": "add_benchmark_cmd",
-      "app": "app",
+    "thegent routing pareto verify": {
+      "command": "verify",
+      "function": "router_verify",
+      "app": "routing",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_add_benchmark_help"
+        "test_routing_pareto_verify_help_exits_zero"
       ]
     },
-    "thegent add-modality": {
-      "command": "add-modality",
-      "function": "add_modality_cmd",
-      "app": "app",
+    "thegent scaffold": {
+      "command": "scaffold",
+      "function": "<group>",
+      "app": "scaffold",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_add_modality_help"
+        "test_scaffold_help_exits_zero"
       ]
     },
-    "thegent leaderboard": {
-      "command": "leaderboard",
-      "function": "leaderboard_cmd",
-      "app": "app",
+    "thegent scaffold greenfield": {
+      "command": "greenfield",
+      "function": "scaffold_greenfield",
+      "app": "scaffold",
       "has_e2e_test": true,
       "test_count": 1,
       "tests": [
-        "test_leaderboard_help"
+        "test_scaffold_greenfield_help_exits_zero"
+      ]
+    },
+    "thegent scaffold brownfield": {
+      "command": "brownfield",
+      "function": "scaffold_brownfield",
+      "app": "scaffold",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_scaffold_brownfield_help_exits_zero"
+      ]
+    },
+    "thegent scaffold ag-dd": {
+      "command": "ag-dd",
+      "function": "scaffold_brownfield_agdd",
+      "app": "scaffold",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_scaffold_ag_dd_help_exits_zero"
+      ]
+    },
+    "thegent scaffold none": {
+      "command": "none",
+      "function": "scaffold_brownfield_none",
+      "app": "scaffold",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_project_scaffold_none_help_exits_zero"
+      ]
+    },
+    "thegent enterprise": {
+      "command": "enterprise",
+      "function": "<group>",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 4,
+      "tests": [
+        "test_enterprise_help_exits_zero",
+        "test_enterprise_help_exits_zero",
+        "test_enterprise_help_exits_zero",
+        "test_enterprise_help_exits_zero"
+      ]
+    },
+    "thegent enterprise compliance": {
+      "command": "compliance",
+      "function": "<group>",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_enterprise_compliance_help_exits_zero",
+        "test_enterprise_compliance_help_exits_zero"
+      ]
+    },
+    "thegent enterprise compliance audit-export": {
+      "command": "audit-export",
+      "function": "compliance_audit_export",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_compliance_audit_export_help_exits_zero"
+      ]
+    },
+    "thegent enterprise compliance evidence": {
+      "command": "evidence",
+      "function": "<group>",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_compliance_evidence_help_exits_zero"
+      ]
+    },
+    "thegent enterprise compliance evidence list": {
+      "command": "list",
+      "function": "evidence_list",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_compliance_evidence_list_help_exits_zero"
+      ]
+    },
+    "thegent enterprise compliance evidence purge": {
+      "command": "purge",
+      "function": "evidence_purge",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_compliance_evidence_purge_help_exits_zero"
+      ]
+    },
+    "thegent enterprise gdpr": {
+      "command": "gdpr",
+      "function": "<group>",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_enterprise_gdpr_help_exits_zero",
+        "test_enterprise_gdpr_help_exits_zero"
+      ]
+    },
+    "thegent enterprise gdpr purge": {
+      "command": "purge",
+      "function": "gdpr_purge",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_gdpr_purge_help_exits_zero"
+      ]
+    },
+    "thegent enterprise org": {
+      "command": "org",
+      "function": "<group>",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_org_help_exits_zero"
+      ]
+    },
+    "thegent enterprise org list": {
+      "command": "list",
+      "function": "org_list_cmd",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_org_list_help_exits_zero"
+      ]
+    },
+    "thegent enterprise org create": {
+      "command": "create",
+      "function": "org_create_cmd",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_org_create_help_exits_zero"
+      ]
+    },
+    "thegent enterprise org show": {
+      "command": "show",
+      "function": "org_show_cmd",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_org_show_help_exits_zero"
+      ]
+    },
+    "thegent enterprise keys": {
+      "command": "keys",
+      "function": "<group>",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_keys_help_exits_zero"
+      ]
+    },
+    "thegent enterprise keys status": {
+      "command": "status",
+      "function": "keys_status",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_keys_status_help_exits_zero"
+      ]
+    },
+    "thegent enterprise keys rotate": {
+      "command": "rotate",
+      "function": "keys_rotate",
+      "app": "enterprise",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_enterprise_keys_rotate_help_exits_zero"
+      ]
+    },
+    "thegent memory": {
+      "command": "memory",
+      "function": "<group>",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 5,
+      "tests": [
+        "test_memory_help_exits_zero",
+        "test_memory_help_exits_zero",
+        "test_memory_help_exits_zero",
+        "test_memory_help_exits_zero",
+        "test_memory_help_exits_zero"
+      ]
+    },
+    "thegent memory garden": {
+      "command": "garden",
+      "function": "memory_garden",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 3,
+      "tests": [
+        "test_memory_garden_help",
+        "test_memory_garden_help_exits_zero",
+        "test_memory_garden_help_exits_zero"
+      ]
+    },
+    "thegent memory snapshot": {
+      "command": "snapshot",
+      "function": "<group>",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_memory_snapshot_help_exits_zero",
+        "test_memory_snapshot_help_exits_zero"
+      ]
+    },
+    "thegent memory snapshot list": {
+      "command": "list",
+      "function": "memory_snapshot_list",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_snapshot_list_help_exits_zero"
+      ]
+    },
+    "thegent memory snapshot index": {
+      "command": "index",
+      "function": "memory_snapshot_index",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_snapshot_index_help_exits_zero"
+      ]
+    },
+    "thegent memory snapshot export": {
+      "command": "export",
+      "function": "memory_snapshot_export",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_snapshot_export_help_exits_zero"
+      ]
+    },
+    "thegent memory snapshot prune": {
+      "command": "prune",
+      "function": "memory_snapshot_prune",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_snapshot_prune_help_exits_zero"
+      ]
+    },
+    "thegent memory snapshot meta": {
+      "command": "meta",
+      "function": "memory_snapshot_meta",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_snapshot_meta_help_exits_zero"
+      ]
+    },
+    "thegent memory snapshot daily-index": {
+      "command": "daily-index",
+      "function": "memory_snapshot_daily_index",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_snapshot_daily_index_help_exits_zero"
+      ]
+    },
+    "thegent memory snapshot daily-export": {
+      "command": "daily-export",
+      "function": "memory_snapshot_daily_export",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_snapshot_daily_export_help_exits_zero"
+      ]
+    },
+    "thegent memory snapshot daily-totals": {
+      "command": "daily-totals",
+      "function": "memory_snapshot_daily_totals",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_snapshot_daily_totals_help_exits_zero"
+      ]
+    },
+    "thegent memory dump": {
+      "command": "dump",
+      "function": "<group>",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 2,
+      "tests": [
+        "test_memory_dump_help_exits_zero",
+        "test_memory_dump_help_exits_zero"
+      ]
+    },
+    "thegent memory dump index": {
+      "command": "index",
+      "function": "memory_dump_index",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_dump_index_help_exits_zero"
+      ]
+    },
+    "thegent memory dump latest": {
+      "command": "latest",
+      "function": "memory_dump_latest",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_dump_latest_help_exits_zero"
+      ]
+    },
+    "thegent memory dump categories": {
+      "command": "categories",
+      "function": "memory_dump_categories",
+      "app": "memory",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_memory_dump_categories_help_exits_zero"
+      ]
+    },
+    "thegent session": {
+      "command": "session",
+      "function": "<group>",
+      "app": "session",
+      "has_e2e_test": true,
+      "test_count": 3,
+      "tests": [
+        "test_session_help_exits_zero",
+        "test_session_help_exits_zero",
+        "test_session_help_exits_zero"
+      ]
+    },
+    "thegent session resume": {
+      "command": "resume",
+      "function": "session_resume",
+      "app": "session",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_session_resume_help_exits_zero"
+      ]
+    },
+    "thegent session list": {
+      "command": "list",
+      "function": "session_list",
+      "app": "session",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_session_list_help_exits_zero"
+      ]
+    },
+    "thegent orchestrate": {
+      "command": "orchestrate",
+      "function": "<group>",
+      "app": "orchestrate",
+      "has_e2e_test": true,
+      "test_count": 3,
+      "tests": [
+        "test_orchestrate_help_exits_zero",
+        "test_orchestrate_help_exits_zero",
+        "test_orchestrate_help_exits_zero"
+      ]
+    },
+    "thegent orchestrate plan": {
+      "command": "plan",
+      "function": "plan_cmd",
+      "app": "orchestrate",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_orchestrate_plan_help_exits_zero"
+      ]
+    },
+    "thegent orchestrate run": {
+      "command": "run",
+      "function": "run_cmd",
+      "app": "orchestrate",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_orchestrate_run_help_exits_zero"
+      ]
+    },
+    "thegent observe": {
+      "command": "observe",
+      "function": "<group>",
+      "app": "observe",
+      "has_e2e_test": true,
+      "test_count": 3,
+      "tests": [
+        "test_observe_help_exits_zero",
+        "test_observe_help_exits_zero",
+        "test_observe_help_exits_zero"
+      ]
+    },
+    "thegent observe compositor": {
+      "command": "compositor",
+      "function": "observe_compositor_cmd",
+      "app": "observe",
+      "has_e2e_test": true,
+      "test_count": 1,
+      "tests": [
+        "test_observe_compositor_help_exits_zero"
       ]
     }
   },
-  "missing_tests": []
+  "missing_tests": [
+    "thegent sys setup project ag-dd",
+    "thegent sys setup project none",
+    "thegent project ag-dd",
+    "thegent project none",
+    "thegent install project ag-dd",
+    "thegent install project none"
+  ]
 }

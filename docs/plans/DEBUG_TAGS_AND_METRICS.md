@@ -1,7 +1,7 @@
 # Debug Tags and Metrics (Transient Response Tags)
 
-**Status:** Design  
-**Date:** 2026-02-15  
+**Status:** Design
+**Date:** 2026-02-15
 **Scope:** Transient tags around responses (model, provider, latency, tps) so the user can tell which model produced output; `--debug` flag to trigger on CLIProxy API or LiteLLM router.
 
 ---

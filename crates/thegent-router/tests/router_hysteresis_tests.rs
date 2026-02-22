@@ -6,16 +6,16 @@ use thegent_router::{ParetoRouter, RiskFactors, ComplexityLevel, RoutingMode};
 fn test_router_with_hysteresis_single_session() {
     let router = ParetoRouter::new();
     let session_id = "test-session-1";
-    
+
     // Route simple task
     let simple = RiskFactors::new(ComplexityLevel::Simple);
     let decision1 = router.route_with_session(session_id, &simple);
     assert_eq!(decision1.mode, RoutingMode::Lifecycle);
-    
+
     // Route another simple task - should stay in Lifecycle
     let decision2 = router.route_with_session(session_id, &simple);
     assert_eq!(decision2.mode, RoutingMode::Lifecycle);
-    
+
     let metrics = router.get_metrics();
     assert_eq!(metrics.hysteresis_activations, 0); // No switches
 }
@@ -24,7 +24,7 @@ fn test_router_with_hysteresis_single_session() {
 fn test_router_with_hysteresis_mode_switch() {
     let router = ParetoRouter::new();
     let session_id = "test-session-2";
-    
+
     let simple = RiskFactors::new(ComplexityLevel::Simple);
     let very_complex = RiskFactors {
         complexity: ComplexityLevel::VeryComplex,
@@ -33,15 +33,15 @@ fn test_router_with_hysteresis_mode_switch() {
         security_sensitive: true,
         max_cost_cents: 10_000,
     };
-    
+
     // Route simple task
     let decision1 = router.route_with_session(session_id, &simple);
     assert_eq!(decision1.mode, RoutingMode::Lifecycle);
-    
+
     // Route very complex task - should switch
     let decision2 = router.route_with_session(session_id, &very_complex);
     assert_eq!(decision2.mode, RoutingMode::TheGent);
-    
+
     // Track hysteresis activation
     let metrics = router.get_metrics();
     assert!(metrics.hysteresis_activations > 0);
@@ -50,7 +50,7 @@ fn test_router_with_hysteresis_mode_switch() {
 #[test]
 fn test_router_multi_session_isolation() {
     let router = ParetoRouter::new();
-    
+
     let simple = RiskFactors::new(ComplexityLevel::Simple);
     let moderate = RiskFactors {
         complexity: ComplexityLevel::Moderate,
@@ -59,17 +59,17 @@ fn test_router_multi_session_isolation() {
         security_sensitive: false,
         max_cost_cents: 10_000,
     };
-    
+
     // Session 1: route simple
     let decision1 = router.route_with_session("session-1", &simple);
     assert_eq!(decision1.mode, RoutingMode::Lifecycle);
-    
+
     // Session 2: route moderate (may switch or stay depending on thresholds)
     let _decision2 = router.route_with_session("session-2", &moderate);
-    
+
     // Session 1: route moderate again - should maintain session state
     let _decision3 = router.route_with_session("session-1", &moderate);
-    
+
     // Both sessions should have independent state
     let metrics = router.get_metrics();
     assert_eq!(metrics.total_decisions, 3);
@@ -79,7 +79,7 @@ fn test_router_multi_session_isolation() {
 fn test_router_hysteresis_prevents_rapid_switching() {
     let router = ParetoRouter::new();
     let session_id = "test-session-3";
-    
+
     // Create tasks that oscillate around threshold
     let mut tasks = Vec::new();
     for i in 0..10 {
@@ -92,10 +92,10 @@ fn test_router_hysteresis_prevents_rapid_switching() {
             max_cost_cents: 10_000,
         });
     }
-    
+
     let mut switch_count = 0;
     let mut last_mode = None;
-    
+
     for task in &tasks {
         let decision = router.route_with_session(session_id, task);
         if let Some(prev_mode) = last_mode {
@@ -105,7 +105,7 @@ fn test_router_hysteresis_prevents_rapid_switching() {
         }
         last_mode = Some(decision.mode);
     }
-    
+
     // Should have limited switches due to hysteresis
     assert!(switch_count < 5); // Expect fewer than 5 switches
 }
@@ -113,14 +113,14 @@ fn test_router_hysteresis_prevents_rapid_switching() {
 #[test]
 fn test_router_lifecycle_percentage_with_hysteresis() {
     let router = ParetoRouter::new();
-    
+
     let simple = RiskFactors::new(ComplexityLevel::Simple);
-    
+
     // Route 100 simple tasks
     for i in 0..100 {
         router.route_with_session(&format!("session-{}", i), &simple);
     }
-    
+
     let percentage = router.lifecycle_percentage();
     // Should be 100% for all simple tasks
     assert!(percentage > 99.0 && percentage <= 100.0);
@@ -129,7 +129,7 @@ fn test_router_lifecycle_percentage_with_hysteresis() {
 #[test]
 fn test_router_metrics_tracking_with_hysteresis() {
     let router = ParetoRouter::new();
-    
+
     let simple = RiskFactors::new(ComplexityLevel::Simple);
     let very_complex = RiskFactors {
         complexity: ComplexityLevel::VeryComplex,
@@ -138,12 +138,12 @@ fn test_router_metrics_tracking_with_hysteresis() {
         security_sensitive: true,
         max_cost_cents: 10_000,
     };
-    
+
     // Route some tasks
     router.route_with_session("s1", &simple);
     router.route_with_session("s2", &very_complex);
     router.route_with_session("s3", &simple);
-    
+
     let metrics = router.get_metrics();
     assert_eq!(metrics.total_decisions, 3);
     assert_eq!(metrics.lifecycle_count, 2);
@@ -154,7 +154,7 @@ fn test_router_metrics_tracking_with_hysteresis() {
 fn test_router_hysteresis_band_prevents_middle_oscillation() {
     let router = ParetoRouter::new();
     let session_id = "test-session-band";
-    
+
     // Create a task with risk right in the middle (between thresholds)
     let middle = RiskFactors {
         complexity: ComplexityLevel::Moderate,
@@ -163,14 +163,14 @@ fn test_router_hysteresis_band_prevents_middle_oscillation() {
         security_sensitive: false,
         max_cost_cents: 10_000,
     };
-    
+
     // Route multiple times - should not oscillate
     let mut modes = Vec::new();
     for _ in 0..5 {
         let decision = router.route_with_session(session_id, &middle);
         modes.push(decision.mode);
     }
-    
+
     // All modes should be the same (no oscillation in middle band)
     let first_mode = modes[0];
     for mode in modes {
@@ -181,15 +181,15 @@ fn test_router_hysteresis_band_prevents_middle_oscillation() {
 #[test]
 fn test_router_independent_session_metrics() {
     let router = ParetoRouter::new();
-    
+
     let simple = RiskFactors::new(ComplexityLevel::Simple);
-    
+
     // Route through different sessions
     for i in 0..10 {
         let session_id = format!("isolated-session-{}", i);
         router.route_with_session(&session_id, &simple);
     }
-    
+
     let metrics = router.get_metrics();
     assert_eq!(metrics.total_decisions, 10);
     assert_eq!(metrics.lifecycle_count, 10);
@@ -200,13 +200,13 @@ fn test_router_independent_session_metrics() {
 fn test_router_rationale_includes_hysteresis_info() {
     let router = ParetoRouter::new();
     let session_id = "test-rationale";
-    
+
     let simple = RiskFactors::new(ComplexityLevel::Simple);
     let decision = router.route_with_session(session_id, &simple);
-    
+
     // Rationale should include hysteresis information
     assert!(
-        decision.rationale.contains("Lifecycle") 
+        decision.rationale.contains("Lifecycle")
         || decision.rationale.contains("hysteresis")
     );
 }
@@ -214,7 +214,7 @@ fn test_router_rationale_includes_hysteresis_info() {
 #[test]
 fn test_router_80_20_split_target_with_hysteresis() {
     let router = ParetoRouter::new();
-    
+
     let simple = RiskFactors::new(ComplexityLevel::Simple);
     let complex = RiskFactors {
         complexity: ComplexityLevel::VeryComplex,
@@ -223,7 +223,7 @@ fn test_router_80_20_split_target_with_hysteresis() {
         security_sensitive: true,
         max_cost_cents: 10_000,
     };
-    
+
     // Route 1000 tasks: 800 simple (Lifecycle), 200 complex (TheGent)
     for i in 0..1000 {
         let session_id = format!("session-{}", i);
@@ -233,10 +233,10 @@ fn test_router_80_20_split_target_with_hysteresis() {
             router.route_with_session(&session_id, &complex);
         }
     }
-    
+
     let metrics = router.get_metrics();
     let lifecycle_pct = (metrics.lifecycle_count as f64 / metrics.total_decisions as f64) * 100.0;
-    
+
     // Should be close to 80%
     assert!(lifecycle_pct > 75.0 && lifecycle_pct < 85.0);
 }

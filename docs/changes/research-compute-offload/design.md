@@ -1,10 +1,10 @@
 # Design: Mac ↔ PC Compute Offload Architecture
 
-**Document Version:** 1.0  
-**Change ID:** research-compute-offload  
-**Date:** 2026-02-18  
-**Status:** Design  
-**Phase:** Research & Prototype  
+**Document Version:** 1.0
+**Change ID:** research-compute-offload
+**Date:** 2026-02-18
+**Status:** Design
+**Phase:** Research & Prototype
 
 ---
 
@@ -55,7 +55,7 @@ To "maximally engineer" this system, we are adding the following dimensions:
 *   **Artifact-Aware Sync**: Excludes `node_modules`, `.venv`, and `target/` to minimize network transit.
 
 ### 2.2 Remote Shadow Workspace Manager (RSWM) [DEPTH]
-*   **Isolation Levels**: 
+*   **Isolation Levels**:
     *   *Level 1 (Process)*: High speed, uses standard worktree isolation.
     *   *Level 2 (Containerized)*: Spawns a Docker container mapped to the worktree for OS-level parity (e.g., running Linux tests from a Mac client).
 *   **Lifespan Management**: Auto-prunes worktrees after task completion or heartbeat loss.
@@ -109,27 +109,27 @@ class Environment(BaseModel):
     arch: str  # "arm64", "x86_64"
     hostname: str  # FQDN or IP
     base_url: str  # "http://192.168.1.100:9000" for remote executor
-    
+
     # Resource profile
     cpu_cores: int
     memory_gb: float
     storage_gb: float
-    
+
     # Cost profile ($/minute)
     cost_per_minute: float
-    
+
     # Capabilities
     capabilities: Set[str]  # {"git", "python-3.12", "node-20", "swift", ...}
-    
+
     # Network
     network_latency_ms: float  # Approximate RTT
     bandwidth_mbps: float
-    
+
     # Health
     is_online: bool
     last_health_check: datetime
     availability_percentage: float  # SLA %
-    
+
     # Metadata
     region: str  # "local", "us-west", "eu-central"
     created_at: datetime
@@ -147,28 +147,28 @@ class CapabilityProfile(BaseModel):
     databases: Set[str]  # {"postgres", "mysql", "mongodb"}
     cloud_tools: Set[str]  # {"aws-cli", "gcloud", "az"}
     dev_frameworks: Set[str]  # {"xcode", "visual-studio", "vscode"}
-    
+
 class ComputeCatalog(BaseModel):
     """Registry of all available environments"""
     environments: Dict[str, Environment]  # env_id -> Environment
-    
+
     @classmethod
     def load(cls, path: Path) -> "ComputeCatalog":
         """Load from JSON/YAML file"""
         pass
-    
+
     def save(self, path: Path):
         """Save to JSON file"""
         pass
-    
+
     def register_environment(self, env: Environment):
         """Register a new environment"""
         self.environments[env.env_id] = env
-    
+
     def find_by_hostname(self, hostname: str) -> Optional[Environment]:
         """Find environment by hostname"""
         pass
-    
+
     def get_online_environments(self) -> List[Environment]:
         """Filter to online environments"""
         return [e for e in self.environments.values() if e.is_online]
@@ -237,31 +237,31 @@ class ComputeCatalog(BaseModel):
 ```python
 class CapabilityResolver:
     """Probe local machine for capabilities"""
-    
+
     @staticmethod
     def probe() -> CapabilityProfile:
         """Detect installed tools, languages, runtimes in this environment"""
         profile = CapabilityProfile()
-        
+
         # Detect languages
         profile.languages.add("python") if _has_python() else None
         profile.languages.add("node") if _has_node() else None
         # ... etc
-        
+
         # Detect runtimes
         if _has_python():
             profile.runtimes.add(f"python-{_get_python_version()}")
-        
+
         # Detect build tools
         profile.build_tools.add("make") if _has_make() else None
-        
+
         return profile
-    
+
     @staticmethod
     def _has_python() -> bool:
         """Check if Python is available"""
         return shutil.which("python3") is not None
-    
+
     @staticmethod
     def _get_python_version() -> str:
         """Get Python version"""
@@ -274,13 +274,13 @@ class CapabilityCache:
         self.ttl = ttl_seconds
         self.profile: Optional[CapabilityProfile] = None
         self.cached_at: Optional[datetime] = None
-    
+
     def get(self) -> CapabilityProfile:
         """Get cached or re-probe if expired"""
         now = datetime.utcnow()
         if self.profile and self.cached_at and (now - self.cached_at).total_seconds() < self.ttl:
             return self.profile
-        
+
         self.profile = CapabilityResolver.probe()
         self.cached_at = now
         return self.profile
@@ -311,61 +311,61 @@ catalog.register_environment(env_entry)
 ```python
 class WorkloadClassifier:
     """Classify workload by platform suitability"""
-    
+
     def classify(self, prompt: str, code: Optional[str] = None) -> "Classification":
         """Analyze prompt and code to infer requirements"""
-        
+
         classification = Classification(
             required_capabilities=set(),
             preferred_os=None,  # None=flexible, "macos", "linux", "windows"
             suitable_environments=[],
             confidence=0.0,
         )
-        
+
         # Heuristic 1: Language Detection
         for lang in ["python", "node", "rust", "go", "swift", "java", "c++"]:
             if self._mentions_language(prompt, lang) or self._detect_code_language(code) == lang:
                 classification.required_capabilities.add(lang)
-        
+
         # Heuristic 2: Framework Detection
         if "xcode" in prompt.lower() or "swift" in prompt.lower():
             classification.required_capabilities.add("xcode")
             classification.preferred_os = "macos"
-        
+
         if "visual-studio" in prompt.lower() or ".net" in prompt.lower():
             classification.required_capabilities.add("visual-studio")
             classification.preferred_os = "windows"
-        
+
         # Heuristic 3: Tool Detection
         if "docker" in prompt.lower():
             classification.required_capabilities.add("docker")
-        
+
         if "cargo" in prompt.lower():
             classification.required_capabilities.add("cargo")
-        
+
         # Heuristic 4: OS-Specific Commands
         if "brew install" in prompt.lower():
             classification.preferred_os = "macos"
-        
+
         if "apt install" in prompt.lower() or "yum install" in prompt.lower():
             classification.preferred_os = "linux"
-        
+
         if "choco install" in prompt.lower():
             classification.preferred_os = "windows"
-        
+
         # Compute suitability for each environment in catalog
         catalog = ComputeCatalog.load(CATALOG_PATH)
         for env in catalog.environments.values():
             suitability = self._compute_suitability(env, classification)
             classification.suitable_environments.append((env.env_id, suitability))
-        
+
         # Confidence: fraction of required capabilities available in best match
         if classification.suitable_environments:
             best_env_id, best_score = max(classification.suitable_environments, key=lambda x: x[1])
             classification.confidence = best_score
-        
+
         return classification
-    
+
     def _mentions_language(self, prompt: str, lang: str) -> bool:
         """Check if prompt mentions a language"""
         keywords = {
@@ -375,23 +375,23 @@ class WorkloadClassifier:
             # ... etc
         }
         return any(kw in prompt.lower() for kw in keywords.get(lang, []))
-    
+
     def _compute_suitability(self, env: Environment, classification: "Classification") -> float:
         """Score environment suitability (0.0-1.0)"""
         if not classification.required_capabilities:
             return 1.0  # Flexible workload; any env is fine
-        
+
         matched = len(classification.required_capabilities & env.capabilities)
         total = len(classification.required_capabilities)
         base_score = matched / total if total > 0 else 1.0
-        
+
         # Prefer matching OS if specified
         if classification.preferred_os:
             if env.os == classification.preferred_os:
                 base_score *= 1.05  # 5% boost
             else:
                 base_score *= 0.5  # 50% penalty
-        
+
         return min(1.0, base_score)
 
 class Classification(BaseModel):
@@ -420,24 +420,24 @@ class RoutingPolicy(Enum):
 
 class OffloadRouter:
     """Route workload to best target environment"""
-    
+
     def __init__(self, policy: RoutingPolicy = RoutingPolicy.COST_OPTIMAL):
         self.policy = policy
         self.catalog = ComputeCatalog.load(CATALOG_PATH)
-    
+
     def route(self, classification: "Classification") -> Optional["Route"]:
         """Select target environment for this workload"""
-        
+
         # Filter to suitable environments
         suitable = [
             (env_id, score)
             for env_id, score in classification.suitable_environments
             if score > 0.5  # Min 50% suitability
         ]
-        
+
         if not suitable:
             return None  # No suitable environment
-        
+
         # Apply routing policy
         if self.policy == RoutingPolicy.COST_OPTIMAL:
             return self._select_cost_optimal(suitable)
@@ -449,9 +449,9 @@ class OffloadRouter:
             return self._select_availability_optimal(suitable)
         elif self.policy == RoutingPolicy.PARETO:
             return self._select_pareto_optimal(suitable)
-        
+
         return None
-    
+
     def _select_cost_optimal(self, suitable: List[Tuple[str, float]]) -> "Route":
         """Select cheapest suitable environment"""
         env_id, _ = min(suitable, key=lambda x: self._cost_score(x[0]))
@@ -462,7 +462,7 @@ class OffloadRouter:
             base_url=env.base_url,
             reason=f"Cost optimal: ${env.cost_per_minute:.4f}/min",
         )
-    
+
     def _select_latency_optimal(self, suitable: List[Tuple[str, float]]) -> "Route":
         """Select fastest suitable environment"""
         env_id, _ = min(suitable, key=lambda x: self._latency_score(x[0]))
@@ -473,12 +473,12 @@ class OffloadRouter:
             base_url=env.base_url,
             reason=f"Latency optimal: {env.network_latency_ms:.1f}ms RTT",
         )
-    
+
     def _cost_score(self, env_id: str) -> float:
         """Cost score (lower is better)"""
         env = self.catalog.environments[env_id]
         return env.cost_per_minute
-    
+
     def _latency_score(self, env_id: str) -> float:
         """Latency score (lower is better)"""
         env = self.catalog.environments[env_id]
@@ -503,22 +503,22 @@ class ExecutionRequest(BaseModel):
     """Request to offload task execution"""
     request_id: str  # UUID
     timestamp: datetime
-    
+
     # Execution context
     prompt: str
     cwd: str  # Working directory (relative to executor home)
     env_vars: Dict[str, str]  # Environment variables to inject
     timeout_seconds: int  # Execution timeout
-    
+
     # Origin
     origin_hostname: str
     origin_agent: str  # e.g., "claude-sonnet"
     origin_mode: str  # e.g., "write", "read-only"
-    
+
     # Policy
     cost_cap_usd: Optional[float] = None
     dry_run: bool = False  # Don't actually execute; validate only
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -540,20 +540,20 @@ class ExecutionResponse(BaseModel):
     """Response from remote executor"""
     request_id: str  # Echo request_id
     timestamp: datetime
-    
+
     # Execution result
     exit_code: int
     stdout: str
     stderr: str
-    
+
     # Metadata
     execution_time_seconds: float
     executor_hostname: str
-    
+
     # Cost
     cost_usd: float
     tokens_used: Optional[int] = None
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -602,16 +602,16 @@ Content-Type: application/json
 ```python
 class RemoteExecutor:
     """HTTP server for executing offloaded tasks"""
-    
+
     def __init__(self, host: str = "0.0.0.0", port: int = 9000):
         self.host = host
         self.port = port
         self.app = self._build_app()
-    
+
     def _build_app(self) -> FastAPI:
         """Build FastAPI app"""
         app = FastAPI(title="RemoteExecutor")
-        
+
         @app.post("/v1/offload/execute")
         async def execute(request: ExecutionRequest) -> ExecutionResponse:
             """Execute an offloaded task"""
@@ -621,7 +621,7 @@ class RemoteExecutor:
                     cost = self._estimate_cost(request)
                     if cost > request.cost_cap_usd:
                         raise CostCapExceeded(f"Estimated {cost} > cap {request.cost_cap_usd}")
-                
+
                 # Dry run: validate only
                 if request.dry_run:
                     return ExecutionResponse(
@@ -634,10 +634,10 @@ class RemoteExecutor:
                         executor_hostname=socket.gethostname(),
                         cost_usd=0.0,
                     )
-                
+
                 # Execute in sandbox
                 result = await self._execute_in_sandbox(request)
-                
+
                 return ExecutionResponse(
                     request_id=request.request_id,
                     timestamp=datetime.utcnow(),
@@ -649,7 +649,7 @@ class RemoteExecutor:
                     cost_usd=result.cost_usd,
                     tokens_used=result.tokens_used,
                 )
-            
+
             except Exception as e:
                 return ExecutionResponse(
                     request_id=request.request_id,
@@ -661,32 +661,32 @@ class RemoteExecutor:
                     executor_hostname=socket.gethostname(),
                     cost_usd=0.0,
                 )
-        
+
         @app.get("/v1/health")
         async def health() -> dict:
             """Health check"""
             return {"status": "ok", "hostname": socket.gethostname()}
-        
+
         return app
-    
+
     async def _execute_in_sandbox(self, request: ExecutionRequest) -> "ExecutionResult":
         """Execute request in isolated sandbox"""
         # For prototype: OS-level process isolation (no containers)
         # Future: Docker/Podman container with security context
-        
+
         import subprocess
         import time
-        
+
         start_time = time.time()
-        
+
         try:
             # Prepare environment
             env = os.environ.copy()
             env.update(request.env_vars)
-            
+
             # Expand cwd
             cwd = os.path.expanduser(request.cwd)
-            
+
             # Invoke agent (delegate to installed agent, e.g., "claude" CLI)
             result = subprocess.run(
                 ["thegent", "run", request.prompt],
@@ -696,9 +696,9 @@ class RemoteExecutor:
                 text=True,
                 timeout=request.timeout_seconds,
             )
-            
+
             execution_time = time.time() - start_time
-            
+
             return ExecutionResult(
                 exit_code=result.returncode,
                 stdout=result.stdout,
@@ -707,7 +707,7 @@ class RemoteExecutor:
                 cost_usd=self._compute_cost(execution_time),
                 tokens_used=self._estimate_tokens(result.stdout, result.stderr),
             )
-        
+
         except subprocess.TimeoutExpired:
             execution_time = time.time() - start_time
             return ExecutionResult(
@@ -718,18 +718,18 @@ class RemoteExecutor:
                 cost_usd=self._compute_cost(execution_time),
                 tokens_used=None,
             )
-    
+
     def _compute_cost(self, execution_time_seconds: float) -> float:
         """Compute execution cost based on time"""
         # Placeholder: $0.001 per minute
         return (execution_time_seconds / 60.0) * 0.001
-    
+
     def _estimate_tokens(self, stdout: str, stderr: str) -> int:
         """Estimate token usage from output"""
         # Placeholder: ~4 chars per token
         output = stdout + stderr
         return len(output) // 4
-    
+
     def run(self):
         """Start the server"""
         import uvicorn
@@ -754,30 +754,30 @@ class ExecutionResult(BaseModel):
 ```python
 class OffloadClient:
     """Client for invoking remote executor"""
-    
+
     def __init__(self, base_url: str, auth_token: Optional[str] = None):
         self.base_url = base_url
         self.auth_token = auth_token
         self.http_client = httpx.AsyncClient()
-    
+
     async def execute(self, request: ExecutionRequest) -> ExecutionResponse:
         """Send execution request to remote executor"""
         headers = {}
         if self.auth_token:
             headers["Authorization"] = f"Bearer {self.auth_token}"
-        
+
         response = await self.http_client.post(
             f"{self.base_url}/v1/offload/execute",
             json=request.dict(),
             headers=headers,
             timeout=60.0,
         )
-        
+
         if response.status_code != 200:
             raise OffloadError(f"Execution failed: {response.status_code} {response.text}")
-        
+
         return ExecutionResponse(**response.json())
-    
+
     async def health_check(self) -> bool:
         """Check if remote executor is alive"""
         try:
@@ -823,7 +823,7 @@ Offload decisions should respect governance policies:
 # In OffloadRouter.route()
 def route(self, classification: "Classification") -> Optional["Route"]:
     # ... select candidate environments ...
-    
+
     # Evaluate against policy
     policy_result = self.policy_engine.evaluate(
         operation_type="OFFLOAD",
@@ -831,10 +831,10 @@ def route(self, classification: "Classification") -> Optional["Route"]:
         cost_estimate=self._estimate_cost(candidate_env),
         agent_name=self.origin_agent,
     )
-    
+
     if not policy_result.allow:
         raise OffloadNotAllowed(f"Policy: {policy_result.reason}")
-    
+
     return route
 ```
 
@@ -994,12 +994,12 @@ def run_with_offload_fallback(self, prompt: str) -> RunResult:
         route = self.router.route(classification)
         if not route:
             raise NoSuitableEnvironment("No suitable offload target")
-        
+
         client = OffloadClient(route.base_url, self.auth_token)
         response = await client.execute(ExecutionRequest(...))
-        
+
         return self._adapt_response(response)
-    
+
     except (OffloadNotAllowed, OffloadError, NoSuitableEnvironment, TimeoutError) as e:
         logger.warning(f"Offload failed: {e}; falling back to local execution")
         return self._execute_locally(prompt)

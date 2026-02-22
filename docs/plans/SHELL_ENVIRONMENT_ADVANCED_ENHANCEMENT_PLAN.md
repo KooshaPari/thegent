@@ -241,4 +241,3 @@ This plan extends the existing shell environment system with advanced optimizati
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

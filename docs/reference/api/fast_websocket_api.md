@@ -136,4 +136,3 @@ websocket_connect_sync(url: str)
 Create and connect WebSocket synchronously.
 
 ---
-

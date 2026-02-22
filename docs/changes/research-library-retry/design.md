@@ -51,20 +51,20 @@
 ```python
 class RetryConfig(BaseSettings):
     """Configuration for retry behavior."""
-    
+
     strategy: str = "default"  # "http", "db", "agent", "default"
     max_attempts: int = 5
     max_delay_seconds: float = 60.0
     exponential_base: float = 2.0
     jitter: bool = True
-    
+
     # Timeout (for stop_after_delay)
     total_timeout_seconds: float | None = None
-    
+
     # Observability
     emit_metrics: bool = True
     emit_traces: bool = True
-    
+
     model_config = SettingsConfigDict(env_prefix="RETRY_")
 ```
 
@@ -250,7 +250,7 @@ def execute_query(query):
 ### Backoff Strategy
 - **Function**: `wait_random_exponential(multiplier=1, max=60)`
 - **Formula**: `min(2^attempt + random(0, 1), 60)`
-- **Example**: 
+- **Example**:
   - Attempt 1: ~1s + jitter
   - Attempt 2: ~2s + jitter
   - Attempt 3: ~4s + jitter

@@ -119,4 +119,3 @@ Print a formatted error message with an optional remediation hint.
 - `console`: A Rich console object (optional).
 
 ---
-

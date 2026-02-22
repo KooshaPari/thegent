@@ -1,7 +1,7 @@
 # CLAUDE Instruction Architecture Research (DX/AX/UX)
 
-**Date:** 2026-02-21  
-**Status:** Active  
+**Date:** 2026-02-21
+**Status:** Active
 **Scope:** Standardize global vs project instruction architecture with high readability and maintainability.
 
 ---
@@ -63,4 +63,3 @@ Define a clean instruction architecture that:
 2. Governance summary and polyglot matrix reference the same architecture model.
 3. One research + one plan + one report/worklog doc exists for this upgrade.
 4. Work stream has a completed item entry with a new incremental ID.
-

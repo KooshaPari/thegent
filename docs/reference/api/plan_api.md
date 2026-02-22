@@ -169,4 +169,3 @@ Examples::
     thegent plan sprint list --json
 
 ---
-

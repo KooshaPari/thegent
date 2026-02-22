@@ -258,12 +258,12 @@ build:rust:
 - name: Build Rust crates
   run: |
     cargo build --release --manifest-path crates/Cargo.toml
-    
+
 - name: Install PyO3 extensions
   run: |
     uv pip install crates/thegent-crypto
     uv pip install crates/thegent-parser
-    
+
 - name: Test native backmatter
   env:
     THGENT_USE_NATIVE_RESOURCES: 1
@@ -468,20 +468,20 @@ def test_native_parser_fallback():
 def test_parser_performance():
     """Benchmark native vs Python parser."""
     text = "<TASK>" * 1000 + "content" + "</TASK>" * 1000
-    
+
     # Python
     start = time.perf_counter()
     for _ in range(100):
         extract_tags(text)  # Python fallback
     python_time = time.perf_counter() - start
-    
+
     # Native
     os.environ["THGENT_USE_NATIVE_PARSER"] = "1"
     start = time.perf_counter()
     for _ in range(100):
         extract_tags(text)  # Native
     native_time = time.perf_counter() - start
-    
+
     assert native_time < python_time / 5  # At least 5x faster
 ```
 

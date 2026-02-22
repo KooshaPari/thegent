@@ -5,4 +5,3 @@ import { IntegrationBot } from "./slack";
 
 // Create a IntegrationBot instance
 const integrationbot = new IntegrationBot("example_platform", "example_webhook_url");
-

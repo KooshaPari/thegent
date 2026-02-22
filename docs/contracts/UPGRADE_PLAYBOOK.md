@@ -1,7 +1,7 @@
 # Contract Upgrade Playbook
 
-**Status:** Authoritative  
-**Date:** 2026-02-14  
+**Status:** Authoritative
+**Date:** 2026-02-14
 **Scope:** Contract version upgrades, canary rollout, dual mode, rollback (G-RV-08)
 
 ---

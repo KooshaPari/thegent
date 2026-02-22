@@ -1,6 +1,6 @@
 # AGENTS.md / CLAUDE.md Content Parity Verification
 
-**Date:** February 19, 2026  
+**Date:** February 19, 2026
 **Status:** ✅ **PARITY VERIFIED**
 
 ---
@@ -94,5 +94,5 @@ diff -u <(sed -n '/FORBIDDEN: Fallbacks/,/^---$/p' AGENTS.md) <(sed -n '/FORBIDD
 
 ---
 
-**Last Verified:** 2026-02-19  
+**Last Verified:** 2026-02-19
 **Next Review:** When critical rules are updated

@@ -1,6 +1,6 @@
 # VitePress Rich Documentation — Usage Guide
 
-> **Purpose**: Developer guide for using VitePress rich documentation features  
+> **Purpose**: Developer guide for using VitePress rich documentation features
 > **Date**: 2026-02-17
 
 ---
@@ -47,13 +47,13 @@ Interactive code playgrounds for tryable code examples.
 
 **Usage**:
 ```vue
-<CodePlayground 
-  lang="python" 
+<CodePlayground
+  lang="python"
   title="Example"
   code="from thegent import Agent
 agent = Agent('codex')
 result = agent.run('Hello world')
-print(result)" 
+print(result)"
 />
 ```
 
@@ -77,10 +77,10 @@ Display demo GIFs in documentation.
 
 **Usage**:
 ```vue
-<DemoGif 
-  src="cli-demo.gif" 
-  alt="CLI Demo" 
-  caption="Running thegent commands" 
+<DemoGif
+  src="cli-demo.gif"
+  alt="CLI Demo"
+  caption="Running thegent commands"
 />
 ```
 
@@ -258,7 +258,7 @@ Display breadcrumb navigation.
 <Breadcrumb />
 
 <!-- Or with custom items -->
-<Breadcrumb 
+<Breadcrumb
   :items="[
     { text: 'Home', link: '/' },
     { text: 'Guides', link: '/guides/' },
@@ -475,7 +475,7 @@ Add to CI/CD pipeline:
 - name: Generate Documentation
   run: |
     python3 scripts/vitepress-agent-workflow.py --skip-demos
-    
+
 - name: Build Documentation
   run: |
     bun run docs:build

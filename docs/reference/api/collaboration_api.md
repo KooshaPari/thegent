@@ -61,4 +61,3 @@ recruit_participants(self: Any, needed_capabilities: list[str])
 Recruit external agents based on capabilities (including P2P).
 
 ---
-

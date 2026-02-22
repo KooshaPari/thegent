@@ -182,7 +182,7 @@ System APIs (sysinfo, walkdir, git2) - Cross-platform
 
 ---
 
-**Status**: Production-ready  
+**Status**: Production-ready
 **Next Step**: Build and deploy Rust extensions
 
 
@@ -191,4 +191,3 @@ System APIs (sysinfo, walkdir, git2) - Cross-platform
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

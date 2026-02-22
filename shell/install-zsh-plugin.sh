@@ -21,14 +21,14 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
 # Check prerequisites
 check_prereqs() {
   log_info "Checking prerequisites..."
-  
+
   # Check zsh
   if [[ -z "$(command -v zsh)" ]]; then
     log_error "zsh not found. Please install zsh first."
     exit 1
   fi
   log_info "  ✓ zsh: $(zsh --version)"
-  
+
   # Check thegent
   if [[ -z "$(command -v thegent)" ]]; then
     log_warn "thegent not found in PATH. Some features may not work."
@@ -36,7 +36,7 @@ check_prereqs() {
   else
     log_info "  ✓ thegent: $(thegent --version 2>/dev/null || echo 'found')"
   fi
-  
+
   # Check starship
   if [[ -z "$(command -v starship)" ]]; then
     log_warn "starship not found. Starship module will not work."
@@ -49,10 +49,10 @@ check_prereqs() {
 # Create plugin directory
 setup_plugin() {
   log_info "Setting up zsh plugin..."
-  
+
   # Create plugin directory
   mkdir -p "${HOME}/.zsh"
-  
+
   # Symlink or copy plugin
   if [[ -L "${TARGET_DIR}" ]]; then
     log_info "  Removing existing symlink..."
@@ -61,11 +61,11 @@ setup_plugin() {
     log_info "  Removing existing directory..."
     rm -rf "${TARGET_DIR}"
   fi
-  
+
   # Create symlink
   ln -s "${SCRIPT_DIR}/zsh-thegent-integration" "${TARGET_DIR}"
   log_info "  ✓ Plugin installed to: ${TARGET_DIR}"
-  
+
   # Add to .zshrc if not present
   add_to_zshrc
 }
@@ -74,14 +74,14 @@ add_to_zshrc() {
   local zshrc="${HOME}/.zshrc"
   local plugin_line="# thegent plugin
 source \"\${HOME}/.zsh/${PLUGIN_NAME}/thegent.plugin.zsh\""
-  
+
   if [[ -f "$zshrc" ]]; then
     if grep -q "thegent.plugin.zsh" "$zshrc"; then
       log_info "  ✓ Plugin already in .zshrc"
       return
     fi
   fi
-  
+
   echo "" >> "$zshrc"
   echo "$plugin_line" >> "$zshrc"
   log_info "  ✓ Added plugin to .zshrc"
@@ -90,18 +90,18 @@ source \"\${HOME}/.zsh/${PLUGIN_NAME}/thegent.plugin.zsh\""
 # Setup starship module
 setup_starship() {
   log_info "Setting up Starship module..."
-  
+
   # Create starship config directory
   mkdir -p "${STARSHIP_DIR}/modules"
-  
+
   # Copy starship module
   local module_source="${SCRIPT_DIR}/starship/thegent.py"
   local module_target="${STARSHIP_DIR}/modules/thegent.py"
-  
+
   if [[ -f "$module_source" ]]; then
     cp "$module_source" "$module_target"
     log_info "  ✓ Starship module installed to: ${module_target}"
-    
+
     # Add to starship.toml if exists
     add_to_starship_config
   else
@@ -111,7 +111,7 @@ setup_starship() {
 
 add_to_starship_config() {
   local starship_config="${STARSHIP_DIR}/config.toml"
-  
+
   # Default config if file doesn't exist
   local thegent_config='
 # thegent integration
@@ -123,13 +123,13 @@ disabled = false
 show_work_stream = true
 show_lsp = true
 '
-  
+
   if [[ -f "$starship_config" ]]; then
     if grep -q "^\[thegent\]" "$starship_config"; then
       log_info "  ✓ thegent config already in starship.toml"
       return
     fi
-    
+
     echo "$thegent_config" >> "$starship_config"
     log_info "  ✓ Added thegent to starship.toml"
   else
@@ -184,16 +184,16 @@ main() {
   log_info "  Source: ${SCRIPT_DIR}"
   log_info "  Target: ${TARGET_DIR}"
   echo ""
-  
+
   check_prereqs
   echo ""
-  
+
   setup_plugin
   echo ""
-  
+
   setup_starship
   echo ""
-  
+
   print_summary
 }
 

@@ -33,4 +33,3 @@ schedule(self: Any, task: dict[(str, Any)], regions: list[str])
 Schedule task in optimal region.
 
 ---
-

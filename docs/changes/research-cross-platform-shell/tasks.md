@@ -1,17 +1,17 @@
 # Cross-Platform Shell Strategy Implementation Tasks
 
-**Date**: 2026-02-18  
-**Status**: Task Breakdown  
-**Related Documents**: [proposal.md](./proposal.md), [design.md](./design.md)  
+**Date**: 2026-02-18
+**Status**: Task Breakdown
+**Related Documents**: [proposal.md](./proposal.md), [design.md](./design.md)
 
 ---
 
 ## Overview
 
-**Objective**: Implement dual-shell support (POSIX + PowerShell) for thegent  
-**Timeline**: 6 weeks (Phases 1–3)  
-**Estimated Effort**: 120–160 engineering hours  
-**Delivery Cadence**: Weekly milestones with verification gates  
+**Objective**: Implement dual-shell support (POSIX + PowerShell) for thegent
+**Timeline**: 6 weeks (Phases 1–3)
+**Estimated Effort**: 120–160 engineering hours
+**Delivery Cadence**: Weekly milestones with verification gates
 
 ---
 
@@ -21,21 +21,21 @@
 
 ### Task 1.1: Design & Review Shell-Agnostic Dispatcher
 
-**Description**: Design Rust binary that routes hooks to appropriate shell runner  
+**Description**: Design Rust binary that routes hooks to appropriate shell runner
 **Acceptance Criteria**:
 - [ ] Dispatcher design document finalized (ADR-CROSS_PLATFORM_SHELL.md)
 - [ ] Shell detection logic specified (environment checks, fallback strategy)
 - [ ] Error handling patterns defined (timeout, missing hooks, failures)
 - [ ] Design reviewed and approved by team lead
 
-**Estimated Effort**: 8 hours  
-**Type**: Design  
-**Owner**: Architecture team  
+**Estimated Effort**: 8 hours
+**Type**: Design
+**Owner**: Architecture team
 **Depends On**: Nothing
 
 ### Task 1.2: Implement Rust Dispatcher Binary
 
-**Description**: Build shell-agnostic dispatcher (Rust); compile and test locally  
+**Description**: Build shell-agnostic dispatcher (Rust); compile and test locally
 **Acceptance Criteria**:
 - [ ] Rust project scaffolded (`hooks/hook-dispatcher/Cargo.toml`)
 - [ ] Shell detection implemented (returns Shell::POSIX or Shell::PowerShell)
@@ -45,9 +45,9 @@
 - [ ] Unit tests pass (70% coverage min)
 - [ ] `task hooks:bin` builds successfully
 
-**Estimated Effort**: 16 hours  
-**Type**: Implementation  
-**Owner**: Backend team  
+**Estimated Effort**: 16 hours
+**Type**: Implementation
+**Owner**: Backend team
 **Depends On**: 1.1
 
 **Definition of Done**:
@@ -59,7 +59,7 @@ cargo clippy --all-targets
 
 ### Task 1.3: Create PowerShell Library Module
 
-**Description**: Implement PowerShell library functions (equivalent to bash_lib.sh)  
+**Description**: Implement PowerShell library functions (equivalent to bash_lib.sh)
 **Files**:
 - `hooks/lib/pwsh_lib/pwsh_lib.psd1` (manifest)
 - `hooks/lib/pwsh_lib/pwsh_lib.psm1` (module)
@@ -82,9 +82,9 @@ cargo clippy --all-targets
 - [ ] Functions have help documentation (`Get-Help`)
 - [ ] Module tests pass (Pester suite, 70% coverage min)
 
-**Estimated Effort**: 12 hours  
-**Type**: Implementation  
-**Owner**: PowerShell specialist  
+**Estimated Effort**: 12 hours
+**Type**: Implementation
+**Owner**: PowerShell specialist
 **Depends On**: Nothing
 
 **Testing**:
@@ -95,7 +95,7 @@ Invoke-Pester -Path "tests/shell/test_pwsh_lib.ps1" -Verbose
 
 ### Task 1.4: Refactor Existing bash_lib.sh
 
-**Description**: Update POSIX library to match PowerShell library interface  
+**Description**: Update POSIX library to match PowerShell library interface
 **Changes**:
 - [ ] Review current `hooks/lib/bash_lib.sh`
 - [ ] Ensure consistent function naming with pwsh_lib
@@ -109,9 +109,9 @@ Invoke-Pester -Path "tests/shell/test_pwsh_lib.ps1" -Verbose
 - [ ] ShellCheck passes with no warnings
 - [ ] Documentation complete (inline + README)
 
-**Estimated Effort**: 8 hours  
-**Type**: Refactoring  
-**Owner**: Backend team  
+**Estimated Effort**: 8 hours
+**Type**: Refactoring
+**Owner**: Backend team
 **Depends On**: 1.3
 
 **Testing**:
@@ -122,7 +122,7 @@ bash -n hooks/lib/bash_lib.sh
 
 ### Task 1.5: Set Up Cross-Platform Test Infrastructure
 
-**Description**: Establish testing framework for both shells (BATS + Pester)  
+**Description**: Establish testing framework for both shells (BATS + Pester)
 **Setup**:
 - [ ] Install BATS-Core (for bash tests)
 - [ ] Install Pester (for PowerShell tests)
@@ -136,9 +136,9 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] CI/CD matrix includes linux-bash, macos-bash, windows-pwsh
 - [ ] Coverage reporting integrated (70% min for shell code)
 
-**Estimated Effort**: 12 hours  
-**Type**: Infrastructure  
-**Owner**: DevOps/QA team  
+**Estimated Effort**: 12 hours
+**Type**: Infrastructure
+**Owner**: DevOps/QA team
 **Depends On**: 1.2, 1.3
 
 **Files**:
@@ -151,7 +151,7 @@ bash -n hooks/lib/bash_lib.sh
 
 ### Task 1.6: Write Contributor Guide
 
-**Description**: Document cross-platform shell patterns for contributors  
+**Description**: Document cross-platform shell patterns for contributors
 **Content**:
 - [ ] Pattern examples (error handling, path resolution, env vars)
 - [ ] Checklist for new hooks (both shells required)
@@ -166,9 +166,9 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] Examples provided for all pattern categories
 - [ ] Checklist can be used by contributors as-is
 
-**Estimated Effort**: 6 hours  
-**Type**: Documentation  
-**Owner**: Technical writer  
+**Estimated Effort**: 6 hours
+**Type**: Documentation
+**Owner**: Technical writer
 **Depends On**: 1.1–1.4
 
 ---
@@ -179,7 +179,7 @@ bash -n hooks/lib/bash_lib.sh
 
 ### Task 2.1: Integrate Dispatcher into Hook Pipeline
 
-**Description**: Wire dispatcher into existing hook system; update hook invocation  
+**Description**: Wire dispatcher into existing hook system; update hook invocation
 **Changes**:
 - [ ] Update hook-dispatcher.sh to use Rust binary
 - [ ] Pass hook name, event, context to dispatcher
@@ -193,14 +193,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] Error cases handled gracefully (missing hook, timeout)
 - [ ] Logs written to `~/.thegent/logs/hooks.log`
 
-**Estimated Effort**: 10 hours  
-**Type**: Integration  
-**Owner**: Backend team  
+**Estimated Effort**: 10 hours
+**Type**: Integration
+**Owner**: Backend team
 **Depends On**: 1.2
 
 ### Task 2.2: Create PowerShell CLI Shim
 
-**Description**: Implement PowerShell entry point script  
+**Description**: Implement PowerShell entry point script
 **File**: `scripts/thegent.ps1`
 
 **Features**:
@@ -214,14 +214,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] Arguments passed through correctly
 - [ ] Exit codes propagated
 
-**Estimated Effort**: 4 hours  
-**Type**: Implementation  
-**Owner**: PowerShell specialist  
+**Estimated Effort**: 4 hours
+**Type**: Implementation
+**Owner**: PowerShell specialist
 **Depends On**: Nothing
 
 ### Task 2.3: Create POSIX CLI Shim
 
-**Description**: Update/verify POSIX entry point script  
+**Description**: Update/verify POSIX entry point script
 **File**: `scripts/thegent.sh`
 
 **Features**:
@@ -235,14 +235,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] Arguments passed through correctly
 - [ ] ShellCheck passes
 
-**Estimated Effort**: 2 hours  
-**Type**: Implementation  
-**Owner**: Backend team  
+**Estimated Effort**: 2 hours
+**Type**: Implementation
+**Owner**: Backend team
 **Depends On**: Nothing
 
 ### Task 2.4: Implement Shim Installation Script
 
-**Description**: Create installation script for CLI entry points  
+**Description**: Create installation script for CLI entry points
 **File**: `scripts/install-shims.sh`
 
 **Behavior**:
@@ -257,14 +257,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] `which thegent` or `Get-Command thegent` works after installation
 - [ ] Uninstall script provided (`scripts/uninstall-shims.sh`)
 
-**Estimated Effort**: 6 hours  
-**Type**: Implementation  
-**Owner**: DevOps team  
+**Estimated Effort**: 6 hours
+**Type**: Implementation
+**Owner**: DevOps team
 **Depends On**: 2.2, 2.3
 
 ### Task 2.5: POSIX Shell Profile Integration
 
-**Description**: Create initialization for bash/zsh  
+**Description**: Create initialization for bash/zsh
 **Files**:
 - `scripts/init-posix.sh`
 - `scripts/init-posix-completions.sh` (optional)
@@ -281,14 +281,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] PATH contains ~/.local/bin after init
 - [ ] thegent command available in new shell session
 
-**Estimated Effort**: 8 hours  
-**Type**: Implementation  
-**Owner**: Backend team  
+**Estimated Effort**: 8 hours
+**Type**: Implementation
+**Owner**: Backend team
 **Depends On**: 2.4
 
 ### Task 2.6: PowerShell Profile Integration
 
-**Description**: Create initialization for PowerShell  
+**Description**: Create initialization for PowerShell
 **Files**:
 - `scripts/init-pwsh.ps1`
 - `scripts/init-pwsh-completions.ps1` (optional)
@@ -305,14 +305,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] PATH contains ~/.local/bin after init
 - [ ] thegent function available in new PowerShell session
 
-**Estimated Effort**: 8 hours  
-**Type**: Implementation  
-**Owner**: PowerShell specialist  
+**Estimated Effort**: 8 hours
+**Type**: Implementation
+**Owner**: PowerShell specialist
 **Depends On**: 2.4
 
 ### Task 2.7: Migrate Existing Hooks to Common Library
 
-**Description**: Update critical hooks to use common library functions  
+**Description**: Update critical hooks to use common library functions
 **Target Hooks** (Phase 2):
 - [ ] `hooks/qa-check.sh` → `hooks/qa-check.sh` (refactored)
 - [ ] `hooks/qa-check.ps1` (new PowerShell version)
@@ -325,14 +325,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] PowerShell versions work (new test)
 - [ ] No lint warnings (ShellCheck, PSScriptAnalyzer)
 
-**Estimated Effort**: 10 hours  
-**Type**: Refactoring  
-**Owner**: Backend team  
+**Estimated Effort**: 10 hours
+**Type**: Refactoring
+**Owner**: Backend team
 **Depends On**: 1.4, 1.6
 
 ### Task 2.8: Integration Test Suite
 
-**Description**: Write comprehensive cross-platform integration tests  
+**Description**: Write comprehensive cross-platform integration tests
 **Files**: `tests/integration/test_cross_platform.sh`
 
 **Test Cases**:
@@ -348,9 +348,9 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] Tests run in CI matrix
 - [ ] Coverage ≥80% for critical paths
 
-**Estimated Effort**: 12 hours  
-**Type**: QA  
-**Owner**: QA team  
+**Estimated Effort**: 12 hours
+**Type**: QA
+**Owner**: QA team
 **Depends On**: 2.1–2.7
 
 ---
@@ -361,7 +361,7 @@ bash -n hooks/lib/bash_lib.sh
 
 ### Task 3.1: Performance Benchmarking
 
-**Description**: Measure and optimize hook execution latency  
+**Description**: Measure and optimize hook execution latency
 **Metrics**:
 - [ ] Hook dispatcher startup time (target: <5ms)
 - [ ] POSIX hook execution time
@@ -373,14 +373,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] No regression vs. baseline (existing hooks)
 - [ ] Benchmark report generated (`docs/reference/CROSS_PLATFORM_PERFORMANCE.md`)
 
-**Estimated Effort**: 8 hours  
-**Type**: Performance  
-**Owner**: Performance team  
+**Estimated Effort**: 8 hours
+**Type**: Performance
+**Owner**: Performance team
 **Depends On**: 2.1–2.8
 
 ### Task 3.2: Security Audit
 
-**Description**: Review shell scripts for security vulnerabilities  
+**Description**: Review shell scripts for security vulnerabilities
 **Checks**:
 - [ ] Command injection risks (validate user input)
 - [ ] Path traversal risks (normalize paths)
@@ -394,14 +394,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] Security audit report generated
 - [ ] POSIX and PowerShell scripts equally secure
 
-**Estimated Effort**: 10 hours  
-**Type**: Security  
-**Owner**: Security team  
+**Estimated Effort**: 10 hours
+**Type**: Security
+**Owner**: Security team
 **Depends On**: 2.7
 
 ### Task 3.3: Comprehensive Documentation
 
-**Description**: Create user-facing documentation  
+**Description**: Create user-facing documentation
 **Documents**:
 - [ ] Installation guide (platform-specific)
 - [ ] Shell setup guide (bash, zsh, PowerShell)
@@ -421,14 +421,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] Troubleshooting covers common issues
 - [ ] Documentation reviewed by tech writer
 
-**Estimated Effort**: 12 hours  
-**Type**: Documentation  
-**Owner**: Technical writer  
+**Estimated Effort**: 12 hours
+**Type**: Documentation
+**Owner**: Technical writer
 **Depends On**: 2.7, 3.1
 
 ### Task 3.4: Windows-Specific Testing
 
-**Description**: Validate on native Windows (PowerShell, not WSL)  
+**Description**: Validate on native Windows (PowerShell, not WSL)
 **Test Plan**:
 - [ ] Run full test suite on Windows 10/11
 - [ ] Verify dispatcher on native PowerShell
@@ -440,14 +440,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] No WSL dependency (pure PowerShell)
 - [ ] Performance meets targets
 
-**Estimated Effort**: 8 hours  
-**Type**: QA  
-**Owner**: QA team (Windows specialist)  
+**Estimated Effort**: 8 hours
+**Type**: QA
+**Owner**: QA team (Windows specialist)
 **Depends On**: 2.1–2.8
 
 ### Task 3.5: CI/CD Pipeline Expansion
 
-**Description**: Expand GitHub Actions to include Windows runners  
+**Description**: Expand GitHub Actions to include Windows runners
 **Changes**:
 - [ ] Add windows-latest runner to matrix
 - [ ] Ensure PowerShell-specific tests run on Windows
@@ -459,14 +459,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] All tests pass on all platforms
 - [ ] Pipeline completes in reasonable time (<20 min)
 
-**Estimated Effort**: 6 hours  
-**Type**: Infrastructure  
-**Owner**: DevOps team  
+**Estimated Effort**: 6 hours
+**Type**: Infrastructure
+**Owner**: DevOps team
 **Depends On**: 1.5
 
 ### Task 3.6: Backward Compatibility Verification
 
-**Description**: Ensure no breaking changes to existing users  
+**Description**: Ensure no breaking changes to existing users
 **Test Plan**:
 - [ ] Existing POSIX users unaffected (no required changes)
 - [ ] Existing hooks work without modification
@@ -477,14 +477,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] No required changes for existing users
 - [ ] PowerShell is purely additive (opt-in)
 
-**Estimated Effort**: 4 hours  
-**Type**: QA  
-**Owner**: QA team  
+**Estimated Effort**: 4 hours
+**Type**: QA
+**Owner**: QA team
 **Depends On**: 2.1–3.5
 
 ### Task 3.7: Launch & Cutover Planning
 
-**Description**: Plan and execute release  
+**Description**: Plan and execute release
 **Checklist**:
 - [ ] Release notes prepared
 - [ ] Migration guide for Windows users
@@ -497,14 +497,14 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] Migration guide clear and tested
 - [ ] Support plan covers expected issues
 
-**Estimated Effort**: 6 hours  
-**Type**: Planning  
-**Owner**: Product team  
+**Estimated Effort**: 6 hours
+**Type**: Planning
+**Owner**: Product team
 **Depends On**: 3.1–3.6
 
 ### Task 3.8: Post-Launch Monitoring
 
-**Description**: Monitor adoption and issues in first month  
+**Description**: Monitor adoption and issues in first month
 **Metrics**:
 - [ ] Windows user adoption rate
 - [ ] Issue reports (platform-specific)
@@ -516,9 +516,9 @@ bash -n hooks/lib/bash_lib.sh
 - [ ] Performance meets targets
 - [ ] User satisfaction >90%
 
-**Estimated Effort**: 8 hours (ongoing, first month)  
-**Type**: Operations  
-**Owner**: Support team  
+**Estimated Effort**: 8 hours (ongoing, first month)
+**Type**: Operations
+**Owner**: Support team
 **Depends On**: 3.7
 
 ---

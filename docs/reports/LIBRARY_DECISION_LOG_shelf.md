@@ -59,7 +59,7 @@
 - Cons: Doesn't handle semantic dedup natively
 - Decision: Keep custom for now, but abstract strategy interface for v2 migration
 
-**Recommendation:** 
+**Recommendation:**
 1. Extract abstract `CacheStrategy` interface
 2. Implement `CacheToolsLRUStrategy`, `CacheToolsTTLStrategy`
 3. Plan v2 refactor when semantic caching maturity increases

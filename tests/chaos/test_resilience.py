@@ -11,6 +11,8 @@ from tests.chaos.engine import ChaosEngine
 from thegent.agents.loop_controller import LifecycleLoopController
 from thegent.config import ThegentSettings
 
+pytestmark = pytest.mark.chaos
+
 
 @pytest.fixture
 def mock_settings(tmp_path):

@@ -132,4 +132,3 @@ Save session state to disk.
 **Returns**: True if successful, False otherwise
 
 ---
-

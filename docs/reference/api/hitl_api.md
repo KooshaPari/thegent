@@ -81,4 +81,3 @@ request_approval(self: Any, request_id: str, action: str, context: dict[(str, An
 Issue an approval request and return its ID.
 
 ---
-

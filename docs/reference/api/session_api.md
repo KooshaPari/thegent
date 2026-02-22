@@ -289,4 +289,3 @@ update_session(self: Any, session_id: str)
 Update session fields.
 
 ---
-

@@ -254,4 +254,3 @@ write_record(self: Any, record: Any)
 Append a record to the trace file.
 
 ---
-

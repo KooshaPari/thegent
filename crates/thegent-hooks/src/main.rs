@@ -287,12 +287,12 @@ fn cmd_dispatch() {
     rt.block_on(async {
         let mut input_buffer = Vec::new();
         io::stdin().read_to_end(&mut input_buffer).unwrap_or(0);
-        
+
         let hooks_dir = env::current_exe()
             .ok()
             .and_then(|p| p.parent().map(|p| p.to_path_buf()))
             .unwrap_or_else(|| PathBuf::from("."));
-            
+
         let mut actual_hooks_dir = hooks_dir.clone();
         if !actual_hooks_dir.join("quality-gate.sh").exists() {
             if let Ok(project_dir) = env::var("PROJECT_DIR") {
@@ -309,7 +309,7 @@ fn cmd_dispatch() {
                 }
             }
         }
-        
+
         eprintln!("DEBUG: Dispatching from hooks directory: {}", actual_hooks_dir.display());
 
         let stop_hooks = vec![
@@ -329,34 +329,27 @@ fn cmd_dispatch() {
 
         let mut futures = Vec::new();
         for (hook_file, subcommand) in stop_hooks {
-            let hook_path = actual_hooks_dir.join(hook_file);
-            
             let input = input_buffer.clone();
             let subcommand = subcommand.to_string();
-            
+
             futures.push(tokio::spawn(async move {
-                let mut cmd = if !hook_path.exists() {
-                    let mut c = TokioCommand::new(env::current_exe().unwrap_or_else(|_| PathBuf::from("thegent-hooks")));
-                    c.arg(subcommand);
-                    c
-                } else {
-                    let mut c = TokioCommand::new("bash");
-                    c.arg(&hook_path);
-                    c
-                };
-                
+                let mut cmd = TokioCommand::new(
+                    env::current_exe().unwrap_or_else(|_| PathBuf::from("thegent-hooks"))
+                );
+                cmd.arg(subcommand);
+
                 cmd.stdin(Stdio::piped())
                     .stdout(Stdio::piped())
                     .stderr(Stdio::piped());
-                
+
                 let mut child = cmd.spawn().expect("Failed to spawn hook");
-                
+
                 if let Some(mut stdin) = child.stdin.take() {
                     let _ = stdin.write_all(&input).await;
                 }
-                
+
                 let output = tokio::time::timeout(Duration::from_secs(60), child.wait_with_output()).await;
-                
+
                 match output {
                     Ok(Ok(out)) => (hook_file.to_string(), out),
                     _ => (hook_file.to_string(), std::process::Output {
@@ -370,12 +363,12 @@ fn cmd_dispatch() {
 
         let results = join_all(futures).await;
         let mut max_rc = 0;
-        
+
         for res in results {
             if let Ok((_name, output)) = res {
                 let rc = output.status.code().unwrap_or(1);
                 if rc > max_rc { max_rc = rc; }
-                
+
                 if !output.stdout.is_empty() {
                     let _ = io::stdout().write_all(&output.stdout);
                 }
@@ -384,7 +377,7 @@ fn cmd_dispatch() {
                 }
             }
         }
-        
+
         exit(max_rc);
     });
 }
@@ -395,21 +388,21 @@ fn cmd_security_pipeline() {
         let mut input_buffer = Vec::new();
         let _ = io::stdin().read_to_end(&mut input_buffer);
         let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-        
+
         let project_dir = input.get("project_dir")
             .and_then(|v| v.as_str())
             .map(PathBuf::from)
             .unwrap_or_else(|| env::current_dir().unwrap_or_default());
 
         println!("==> Security Pipeline (Rust Native)");
-        
+
         let mut futures = Vec::new();
-        
+
         let proj_dir_clone = project_dir.clone();
         futures.push(tokio::spawn(async move {
             let mut findings = Vec::new();
             let mut count = 0;
-            
+
             let secret_patterns = [
                 r#"(?i)(api[_-]?key|apikey)\s*[:=]\s*['\"][^'\" ]{8,}"#,
                 r#"(?i)(secret|password|passwd|pwd)\s*[:=]\s*['\"][^'\" ]{8,}"#,
@@ -418,17 +411,17 @@ fn cmd_security_pipeline() {
                 r"ghp_[a-zA-Z0-9]{36}",
                 r"sk-[a-zA-Z0-9]{20,}",
             ];
-            
+
             let mut compiled_regs = Vec::new();
             for p in &secret_patterns {
                 if let Ok(re) = Regex::new(p) { compiled_regs.push(re); }
             }
-            
+
             let walker = WalkBuilder::new(&proj_dir_clone)
                 .hidden(false)
                 .git_ignore(true)
                 .build();
-                
+
             for result in walker {
                 if let Ok(entry) = result {
                     if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
@@ -445,7 +438,7 @@ fn cmd_security_pipeline() {
                     }
                 }
             }
-            
+
             ("Layer 1 - Secrets".to_string(), count, findings)
         }));
 
@@ -453,10 +446,10 @@ fn cmd_security_pipeline() {
         futures.push(tokio::spawn(async move {
             let mut findings = Vec::new();
             let mut count = 0;
-            
+
             let mut cmd = TokioCommand::new("bandit");
             cmd.arg("-r").arg(&proj_dir_clone2).arg("-q").arg("-f").arg("txt");
-            
+
             if let Ok(output) = cmd.output().await {
                 if !output.status.success() {
                     let out_str = String::from_utf8_lossy(&output.stdout);
@@ -466,13 +459,13 @@ fn cmd_security_pipeline() {
                     }
                 }
             }
-            
+
             ("Layer 2 - SAST".to_string(), count, findings)
         }));
 
         let results = join_all(futures).await;
         let mut total_findings = 0;
-        
+
         for res in results {
             if let Ok((name, count, findings)) = res {
                 total_findings += count;
@@ -484,7 +477,7 @@ fn cmd_security_pipeline() {
                 }
             }
         }
-        
+
         println!("==> Security Pipeline: DONE ({} total findings)", total_findings);
         exit(0);
     });
@@ -494,19 +487,19 @@ fn cmd_complexity_ratchet() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let project_dir = input.get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
 
     println!("==> Complexity Ratchet (Rust Native)");
-    
+
     let walker = WalkBuilder::new(&project_dir)
         .hidden(false)
         .git_ignore(true)
         .build();
-        
+
     let mut total_files = 0;
     let mut max_cyc = 0;
     let mut max_file = String::new();
@@ -528,7 +521,7 @@ fn cmd_complexity_ratchet() {
             }
         }
     }
-    
+
     println!("  Analyzed {} files", total_files);
     if max_cyc > 0 {
         println!("  Max Complexity: {} ({})", max_cyc, max_file);
@@ -543,22 +536,22 @@ fn cmd_cache_key() {
         eprintln!("Usage: thegent-hooks cache-key <hook_name> [changed_files...]");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let changed_files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
-    
+
     let head_sha = if let Ok(input) = read_input() {
         input.get("head_sha").and_then(|v| v.as_str()).unwrap_or("").to_string()
     } else {
         String::new()
     };
-    
+
     let mut content = format!("{}:{}", hook_name, head_sha);
     if !changed_files.is_empty() {
         content.push(':');
         content.push_str(&changed_files.join(","));
     }
-    
+
     println!("{}", compute_blake3_hash(&content));
 }
 
@@ -580,11 +573,11 @@ fn cmd_cache_check() {
         eprintln!("Usage: thegent-hooks cache-check <key> [ttl_seconds]");
         exit(1);
     }
-    
+
     let key = &args[2];
     let ttl: u64 = args.get(3).and_then(|v| v.parse().ok()).unwrap_or(DEFAULT_TTL_SECS);
     let cache_path = get_cache_path(key);
-    
+
     if is_cache_fresh(&cache_path, ttl) { exit(0); } else { exit(1); }
 }
 
@@ -594,10 +587,10 @@ fn cmd_cache_read() {
         eprintln!("Usage: thegent-hooks cache-read <key>");
         exit(1);
     }
-    
+
     let key = &args[2];
     let cache_path = get_cache_path(key);
-    
+
     match fs::read_to_string(&cache_path) {
         Ok(content) => println!("{}", content),
         Err(e) => {
@@ -613,11 +606,11 @@ fn cmd_cache_write() {
         eprintln!("Usage: thegent-hooks cache-write <key> <rc> <output_json>");
         exit(1);
     }
-    
+
     let key = &args[2];
     let output = &args[4];
     let cache_path = get_cache_path(key);
-    
+
     if let Err(e) = fs::write(&cache_path, output) {
         eprintln!("Cache write error: {}", e);
         exit(1);
@@ -633,10 +626,10 @@ fn cmd_git_overhauled(git_args: Vec<String>) {
         let _ = Command::new("git").status();
         return;
     }
-    
+
     let command = &git_args[0];
     let actual_git_args: Vec<String> = git_args[1..].to_vec();
-    
+
     if matches!(command.as_str(), "add" | "commit" | "status" | "merge" | "diff" | "log") {
         let mut thegent_args = vec!["git".to_string(), command.clone()];
         thegent_args.extend(actual_git_args.clone());
@@ -670,7 +663,7 @@ fn cmd_git_overhauled(git_args: Vec<String>) {
 
 fn cmd_changed_files() {
     let output = Command::new("thegent-git").args(&["status"]).output();
-    
+
     match output {
         Ok(out) => {
             if let Ok(v) = serde_json::from_slice::<Value>(&out.stdout) {
@@ -709,17 +702,17 @@ fn cmd_breaker_check() {
         eprintln!("Usage: thegent-hooks breaker-check <hook_name> [threshold] [cooldown_secs]");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let threshold: u32 = args.get(3).and_then(|v| v.parse().ok()).unwrap_or(3);
     let cooldown_secs: i64 = args.get(4).and_then(|v| v.parse().ok()).unwrap_or(300);
-    
+
     let breaker_path = get_breaker_path(hook_name);
     if !breaker_path.exists() {
         println!("closed");
         exit(0);
     }
-    
+
     if let Ok(content) = fs::read_to_string(&breaker_path) {
         if let Ok(state) = serde_json::from_str::<BreakerState>(&content) {
             if state.failures >= threshold {
@@ -737,7 +730,7 @@ fn cmd_breaker_check() {
             }
         }
     }
-    
+
     println!("closed");
     exit(0);
 }
@@ -748,10 +741,10 @@ fn cmd_breaker_record() {
         eprintln!("Usage: thegent-hooks breaker-record <hook_name>");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let breaker_path = get_breaker_path(hook_name);
-    
+
     let mut state = if breaker_path.exists() {
         fs::read_to_string(&breaker_path)
             .ok()
@@ -760,11 +753,11 @@ fn cmd_breaker_record() {
     } else {
         BreakerState { failures: 0, last_failure: None, status: "closed".to_string() }
     };
-    
+
     state.failures += 1;
     state.last_failure = Some(Utc::now());
     state.status = "open".to_string();
-    
+
     if let Ok(content) = serde_json::to_string(&state) {
         let _ = fs::write(&breaker_path, content);
     }
@@ -776,7 +769,7 @@ fn cmd_breaker_reset() {
         eprintln!("Usage: thegent-hooks breaker-reset <hook_name>");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let breaker_path = get_breaker_path(hook_name);
     if breaker_path.exists() {
@@ -790,13 +783,13 @@ fn cmd_debounce() {
         eprintln!("Usage: thegent-hooks debounce <hook_name> [files...]");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
-    
+
     let debounce_path = ensure_cache_dir().join(format!("debounce-{}.json", hook_name));
     let now = Utc::now();
-    
+
     let mut state = if debounce_path.exists() {
         fs::read_to_string(&debounce_path)
             .ok()
@@ -805,13 +798,13 @@ fn cmd_debounce() {
     } else {
         DebounceState { last_run: now - chrono::Duration::hours(24), pending_files: Vec::new() }
     };
-    
+
     for file in files {
         if !state.pending_files.contains(&file) {
             state.pending_files.push(file);
         }
     }
-    
+
     let elapsed = now.signed_duration_since(state.last_run).num_seconds();
     if elapsed >= 1 {
         state.last_run = now;
@@ -840,23 +833,23 @@ fn cmd_incremental_check() {
         eprintln!("Usage: thegent-hooks incremental-check <hook_name> [files...]");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
-    
+
     let manifest_path = get_manifest_path(hook_name);
     if !manifest_path.exists() {
         println!("[]");
         exit(0);
     }
-    
+
     let content = fs::read_to_string(&manifest_path).unwrap_or_else(|_| "{}".to_string());
     let old_manifest: Manifest = serde_json::from_str(&content).unwrap_or_else(|_| Manifest {
         hook_name: hook_name.to_string(),
         files: Vec::new(),
         timestamp: Utc::now(),
     });
-    
+
     let mut changed = Vec::new();
     for file_path in files {
         let path = PathBuf::from(&file_path);
@@ -864,18 +857,18 @@ fn cmd_incremental_check() {
             changed.push(file_path);
             continue;
         }
-        
+
         let new_hash = compute_file_hash(&path).unwrap_or_else(|_| "error".to_string());
         let old_hash = old_manifest.files.iter()
             .find(|f| f.path == file_path)
             .map(|f| f.hash.as_str())
             .unwrap_or("");
-            
+
         if new_hash != old_hash {
             changed.push(file_path);
         }
     }
-    
+
     println!("{}", serde_json::to_string(&changed).unwrap_or_else(|_| "[]".to_string()));
 }
 
@@ -885,16 +878,16 @@ fn cmd_incremental_record() {
         eprintln!("Usage: thegent-hooks incremental-record <hook_name> [files...]");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
-    
+
     let mut manifest = Manifest {
         hook_name: hook_name.to_string(),
         files: Vec::new(),
         timestamp: Utc::now(),
     };
-    
+
     for file_path in files {
         let path = PathBuf::from(&file_path);
         if path.exists() {
@@ -902,7 +895,7 @@ fn cmd_incremental_record() {
             manifest.files.push(FileManifest { path: file_path, hash });
         }
     }
-    
+
     if let Ok(content) = serde_json::to_string(&manifest) {
         let _ = fs::write(get_manifest_path(hook_name), content);
     }
@@ -914,7 +907,7 @@ fn cmd_file_hash() {
         eprintln!("Usage: thegent-hooks file-hash <file_path>");
         exit(1);
     }
-    
+
     let path = PathBuf::from(&args[2]);
     match compute_file_hash(&path) {
         Ok(hash) => println!("{}", hash),
@@ -929,33 +922,33 @@ fn cmd_stop_reconcile() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let project_dir = input.get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
-        
+
     let change_log_path = project_dir.join(".claude/session-changes.log");
     if !change_log_path.exists() { return; }
-    
+
     let content = fs::read_to_string(&change_log_path).unwrap_or_default();
     let mut code_files = Vec::new();
     let mut tracker_files = Vec::new();
-    
+
     for line in content.lines() {
         let parts: Vec<&str> = line.split('|').collect();
         if parts.len() < 3 { continue; }
         let fpath_str = parts[2];
         let fpath = Path::new(fpath_str);
-        
+
         let relative_path = if fpath.is_absolute() {
             fpath.strip_prefix(&project_dir).unwrap_or(fpath).to_string_lossy().to_string()
         } else {
             fpath_str.to_string()
         };
-        
+
         if relative_path.contains("node_modules") || relative_path.contains(".git") || relative_path.contains("target") { continue; }
-        
+
         let ext = fpath.extension().and_then(|e| e.to_str()).unwrap_or("");
         if matches!(ext, "py" | "rs" | "go" | "ts" | "js" | "tsx" | "jsx" | "sh" | "bash" | "c" | "h" | "conf") {
             code_files.push(relative_path);
@@ -963,17 +956,17 @@ fn cmd_stop_reconcile() {
             tracker_files.push(relative_path);
         }
     }
-    
+
     code_files.sort();
     code_files.dedup();
     tracker_files.sort();
     tracker_files.dedup();
-    
+
     if code_files.is_empty() {
         let _ = fs::remove_file(&change_log_path);
         return;
     }
-    
+
     let mut feedback = String::new();
     if !code_files.is_empty() && tracker_files.is_empty() {
         feedback.push_str(&format!("SESSION RECONCILIATION: {} code file(s) changed but no tracker docs updated.\n", code_files.len()));
@@ -984,7 +977,7 @@ fn cmd_stop_reconcile() {
         feedback.push_str("  - docs/reference/PLAN_STATUS.md (task progress)\n");
         feedback.push_str("  - docs/reference/CODE_ENTITY_MAP.md (if new functions added)\n");
     }
-    
+
     let map_file_path = project_dir.join("docs/reference/CODE_ENTITY_MAP.md");
     if map_file_path.exists() {
         if let Ok(map_content) = fs::read_to_string(&map_file_path) {
@@ -996,7 +989,7 @@ fn cmd_stop_reconcile() {
             }
         }
     }
-    
+
     let _ = fs::remove_file(&change_log_path);
     if !feedback.is_empty() { println!("{}", feedback); }
 }
@@ -1005,15 +998,15 @@ fn cmd_teammate_reconcile() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let session_id = input.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
     let exit_code = input.get("exit_code").and_then(|v| v.as_i64()).unwrap_or(0);
-    
+
     if !session_id.starts_with("DEL-") { exit(0); }
-    
+
     let status = if exit_code == 0 { "completed" } else { "failed" };
     let summary = if exit_code == 0 { "Completed successfully" } else { &format!("Failed with exit code {}", exit_code) };
-    
+
     let script = format!(r#"
 from thegent.governance.teammates import TeammateManager
 from thegent.config import ThegentSettings
@@ -1039,25 +1032,25 @@ fn cmd_agileplus_cycle() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let project_dir = input.get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
 
     println!("==> AgilePlus Governance Cycle (Rust Native)");
-    
+
     let mut backlog_issues = 0;
     let mut wip_issues = 0;
     let mut velocity_issues = 0;
-    
+
     let backlog_file = project_dir.join(".thegent/backlog.md");
     if backlog_file.exists() {
         if let Ok(content) = fs::read_to_string(&backlog_file) {
             let open_count = content.lines().filter(|l| l.trim().starts_with("- [ ]") || l.trim().starts_with("* [ ]")).count();
             let stale_re = Regex::new(r"updated.*[3-9][0-9] days|updated.*[1-9][0-9]{2,}").unwrap();
             let stale_count = content.lines().filter(|l| stale_re.is_match(l)).count();
-            
+
             println!("  Backlog: {} open items, {} stale", open_count, stale_count);
             if stale_count > 5 {
                 println!("    WARN: {} items haven't been updated in 30+ days", stale_count);
@@ -1067,7 +1060,7 @@ fn cmd_agileplus_cycle() {
     } else {
         println!("  Backlog: no backlog.md found");
     }
-    
+
     let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
     let wip_state_file = PathBuf::from(&home).join(".claude/wip-state.json");
     if wip_state_file.exists() {
@@ -1083,7 +1076,7 @@ fn cmd_agileplus_cycle() {
             }
         }
     }
-    
+
     let agileplus_state_file = PathBuf::from(&home).join(".claude/agileplus-state.json");
     let mut last_velocity = 0;
     let mut avg_velocity = 0;
@@ -1092,7 +1085,7 @@ fn cmd_agileplus_cycle() {
             if let Ok(state_json) = serde_json::from_str::<Value>(&content) {
                 last_velocity = state_json.get("last_velocity").and_then(|v| v.as_u64()).unwrap_or(0);
                 avg_velocity = state_json.get("avg_velocity").and_then(|v| v.as_u64()).unwrap_or(0);
-                
+
                 if last_velocity > 0 && avg_velocity > 0 {
                     let change_pct = ((last_velocity as i64 - avg_velocity as i64) * 100) / avg_velocity as i64;
                     println!("  Velocity: {} (avg: {}, change: {}%)", last_velocity, avg_velocity, change_pct);
@@ -1104,7 +1097,7 @@ fn cmd_agileplus_cycle() {
             }
         }
     }
-    
+
     let change_log = project_dir.join(".claude/session-changes.log");
     let mut session_contrib = 0;
     if change_log.exists() {
@@ -1112,26 +1105,26 @@ fn cmd_agileplus_cycle() {
             session_contrib = content.lines().filter(|l| l.contains("created") || l.contains("modified")).count() as u64;
         }
     }
-    
+
     let new_avg = if avg_velocity > 0 { (avg_velocity + session_contrib) / 2 } else { session_contrib };
     let new_state = json!({
         "last_velocity": session_contrib,
         "avg_velocity": new_avg,
         "last_updated": Utc::now().to_rfc3339()
     });
-    
+
     if let Ok(json_str) = serde_json::to_string_pretty(&new_state) {
         let _ = fs::create_dir_all(agileplus_state_file.parent().unwrap());
         let _ = fs::write(&agileplus_state_file, json_str);
     }
-    
+
     let total_issues = backlog_issues + wip_issues + velocity_issues;
     if total_issues > 0 {
         println!("  AGILEPLUS: {} governance issue(s) found", total_issues);
     } else {
         println!("  AGILEPLUS: governance cycle complete (no issues)");
     }
-    
+
     let results_file = project_dir.join(".claude/verification/agileplus-cycle.json");
     let results = json!({
         "timestamp": Utc::now().to_rfc3339(),
@@ -1144,7 +1137,7 @@ fn cmd_agileplus_cycle() {
         let _ = fs::create_dir_all(results_file.parent().unwrap());
         let _ = fs::write(&results_file, json_str);
     }
-    
+
     println!("==> AgilePlus: OK");
     exit(0);
 }
@@ -1153,30 +1146,30 @@ fn cmd_friction_detect() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let tool_name = input.get("tool_name").and_then(|v| v.as_str()).unwrap_or("");
     let project_dir = input.get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
-        
+
     let friction_detector = project_dir.join("scripts/friction_detector.py");
     if !friction_detector.exists() { exit(0); }
-    
+
     // NATIVE FRICTION DETECTION (RUST)
     // We'll complement the Python detector with some high-performance Rust-based checks
-    
+
     if tool_name == "Execute" {
         let command = input.get("tool_input").and_then(|v| v.as_str()).unwrap_or("");
         if command.is_empty() { exit(0); }
-        
+
         // Native check: cd && pattern
         if command.contains("cd ") && command.contains(" && ") {
             println!("FRICTION DETECTED in command:");
             println!("  [P1] UX: verbosity - Commands requiring 'cd &&' instead of working from any directory");
             println!("  Solution: CLI should handle working directory internally");
         }
-        
+
         // Native check: stderr redirection
         if command.contains("2>&1") {
             println!("FRICTION DETECTED in command:");
@@ -1199,7 +1192,7 @@ fn cmd_friction_detect() {
                         let cat = f.get("category").and_then(|v| v.as_str()).unwrap_or("?");
                         let t = f.get("type").and_then(|v| v.as_str()).unwrap_or("?");
                         let desc = f.get("description").and_then(|v| v.as_str()).unwrap_or("?");
-                        
+
                         // Avoid duplicates with native checks
                         if t == "verbosity" && desc.contains("cd &&") { continue; }
                         if t == "error_handling" && desc.contains("2>&1") { continue; }
@@ -1224,7 +1217,7 @@ fn cmd_friction_detect() {
                     for f in arr {
                         let loc = f.get("location").and_then(|v| v.as_str()).unwrap_or("0");
                         let line = loc.split(':').last().unwrap_or("0");
-                        println!("  [{}] {}: {} - {} (line {})", 
+                        println!("  [{}] {}: {} - {} (line {})",
                             f.get("priority").and_then(|v| v.as_str()).unwrap_or("?"),
                             f.get("category").and_then(|v| v.as_str()).unwrap_or("?").to_uppercase(),
                             f.get("type").and_then(|v| v.as_str()).unwrap_or("?"),
@@ -1245,7 +1238,7 @@ fn cmd_notify() {
     let mut severity = "info".to_string();
     let mut title = "thegent".to_string();
     let mut message = String::new();
-    
+
     let mut i = 2;
     while i < args.len() {
         match args[i].as_str() {
@@ -1256,20 +1249,20 @@ fn cmd_notify() {
             _ => i += 1,
         }
     }
-    
+
     if env::var("THGENT_NOTIFY_ENABLE").unwrap_or_else(|_| "1".to_string()) == "0" { exit(0); }
-    
+
     #[cfg(target_os = "macos")]
     {
         let script = format!("display notification \"{}\" with title \"{}\"", message, title);
         let _ = Command::new("osascript").arg("-e").arg(script).spawn();
-        
+
         let voice_mode = env::var("THGENT_NOTIFY_VOICE_MODE").unwrap_or_else(|_| "errors".to_string());
         if voice_mode == "all" || (voice_mode == "errors" && (severity == "error" || severity == "critical")) {
             let _ = Command::new("say").arg("-v").arg("Samantha").arg(format!("{} - {}", title, message)).spawn();
         }
     }
-    
+
     eprintln!("NOTIFY [{}] {} - {}", event, title, message);
     exit(0);
 }
@@ -1278,28 +1271,28 @@ fn cmd_task_completed() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let team_id = input.get("team_id").and_then(|v| v.as_str()).unwrap_or("");
     let task_id = input.get("task_id").and_then(|v| v.as_str()).unwrap_or("");
     let result = input.get("result").and_then(|v| v.as_str()).unwrap_or("");
-    
+
     if team_id.is_empty() || task_id.is_empty() {
         eprintln!("TASK-COMPLETED: Missing TEAM_ID or TASK_ID, skipping.");
         exit(0);
     }
-    
+
     let script = format!(
         "from thegent.team.coordination import TeamCoordinator; from pathlib import Path; tc = TeamCoordinator(Path('.')); tc.handle_task_completed('{}', '{}', '{}')",
         team_id, task_id, result
     );
     let _ = Command::new("python3").arg("-c").arg(script).status();
-    
+
     println!("TASK-COMPLETED: Task {} updated in team {}", task_id, team_id);
-    
+
     let _ = Command::new("thegent-hooks")
         .args(["notify", "--event", "taskcompleted", "--severity", "info", "--title", "Task Completed", "--message", &format!("team={} task={} completed", team_id, task_id)])
         .spawn();
-        
+
     exit(0);
 }
 
@@ -1321,14 +1314,14 @@ fn cmd_harvest() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let project_dir = input.get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
-        
+
     let home = env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
-    
+
     // 1. Pending Queue
     let mut queue_file = project_dir.join(".claude/pending-queue.jsonl");
     let mut handoff_file = project_dir.join("docs/research/pending-handoff.md");
@@ -1336,7 +1329,7 @@ fn cmd_harvest() {
         queue_file = PathBuf::from(&home).join(".claude/pending-queue.jsonl");
         handoff_file = PathBuf::from(&home).join(".claude/pending-handoff.md");
     }
-    
+
     if queue_file.exists() && fs::metadata(&queue_file).map(|m| m.len()).unwrap_or(0) > 0 {
         if let Ok(content) = fs::read_to_string(&queue_file) {
             let mut count = 0;
@@ -1356,13 +1349,13 @@ fn cmd_harvest() {
             println!("Pending queue: flushed {} item(s) to {}", count, handoff_file.display());
         }
     }
-    
+
     // 2. Idea Seeds (simplified, can call external script if needed)
     let harvest_script = project_dir.join("scripts/harvest-idea-seeds.sh");
     if harvest_script.exists() {
         let _ = Command::new("zsh").arg(harvest_script).status();
     }
-    
+
     exit(0);
 }
 
@@ -1370,10 +1363,10 @@ fn cmd_teammate_idle() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let stdout = input.get("stdout").and_then(|v| v.as_str()).unwrap_or("");
     if stdout.is_empty() { exit(0); }
-    
+
     let script = format!(
         "from thegent.team.coordination import TeamCoordinator; from pathlib import Path; import sys; tc = TeamCoordinator(Path('.')); print('true' if tc.detect_idle(sys.stdin.read()) else 'false')"
     );
@@ -1384,14 +1377,14 @@ fn cmd_teammate_idle() {
         .stdout(Stdio::piped())
         .spawn()
         .expect("failed to spawn python");
-        
+
     if let Some(mut stdin) = child.stdin.take() {
         let _ = stdin.write_all(stdout.as_bytes());
     }
-    
+
     let output = child.wait_with_output().expect("failed to wait on python");
     let idle = String::from_utf8_lossy(&output.stdout).trim() == "true";
-    
+
     if idle {
         let _ = Command::new("thegent-hooks")
             .args(["notify", "--event", "teammateidle", "--severity", "warning", "--title", "Teammate Idle", "--message", "A teammate appears idle and may need follow-up input."])
@@ -1399,7 +1392,7 @@ fn cmd_teammate_idle() {
         eprintln!("TEAMMATE-IDLE: Teammate is idle, requesting feedback.");
         exit(2);
     }
-    
+
     exit(0);
 }
 
@@ -1407,16 +1400,16 @@ fn cmd_pre_compact() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let project_dir = input.get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
-        
+
     let home = env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
     let stamp_file = PathBuf::from(&home).join(".claude/.pre-compact-stamp");
     let now_epoch = chrono::Utc::now().timestamp();
-    
+
     // 1. Debounce
     if let Ok(last_stamp) = fs::read_to_string(&stamp_file) {
         if let Ok(last_epoch) = last_stamp.trim().parse::<i64>() {
@@ -1426,18 +1419,18 @@ fn cmd_pre_compact() {
             }
         }
     }
-    
+
     // 2. Gather State
     let change_log = project_dir.join(".claude/session-changes.log");
     let change_count = if let Ok(metadata) = fs::metadata(&change_log) {
         let size = metadata.len();
         if size > 0 { (size / 80).max(1) } else { 0 }
     } else { 0 };
-    
+
     let qg_present = PathBuf::from(&home).join(".claude/.quality-gate-result.json").exists();
     let tr_present = PathBuf::from(&home).join(".claude/.async-test-results.json").exists();
     let sv_present = PathBuf::from(&home).join(".claude/.spec-verification.json").exists();
-    
+
     // Git State
     let mut branch = "unknown".to_string();
     let mut head = "unknown".to_string();
@@ -1454,7 +1447,7 @@ fn cmd_pre_compact() {
             head = head_line[..8.min(head_line.len())].to_string();
         }
     }
-    
+
     // 3. Write Snapshot
     let snapshot_file = PathBuf::from(&home).join(".claude/.pre-compact-state.json");
     let snapshot = json!({
@@ -1469,7 +1462,7 @@ fn cmd_pre_compact() {
     });
     let _ = fs::write(&snapshot_file, serde_json::to_string(&snapshot).unwrap());
     let _ = fs::write(&stamp_file, now_epoch.to_string());
-    
+
     // 4. Auto-Checkpoint (Auto-Checkpoint logic merged here)
     if git_head_path.exists() {
         let checkpoint_file = project_dir.join(".claude/last-checkpoint");
@@ -1482,10 +1475,10 @@ fn cmd_pre_compact() {
         let _ = fs::write(&checkpoint_file, serde_json::to_string(&checkpoint).unwrap());
         println!("AUTO_CHECKPOINT: HEAD={} branch={} changes=true", head, branch);
     }
-    
+
     println!("Quality state snapshot saved for context preservation");
     println!("  Session changes: {} | Git: {} @ {}", change_count, branch, head);
-    
+
     exit(0);
 }
 
@@ -1494,7 +1487,7 @@ fn cmd_subagent_gate() {
     let action = args.get(2).map(|s| s.as_str()).unwrap_or("");
     let home = env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
     let starts_file = PathBuf::from(home).join(".claude/.subagent-starts");
-    
+
     if action == "start" {
         if let Ok(mut f) = fs::OpenOptions::new().create(true).append(true).open(&starts_file) {
             let _ = writeln!(f, "{}", chrono::Utc::now().timestamp());
@@ -1513,7 +1506,7 @@ fn cmd_subagent_gate() {
         }
         println!("Subagent quality gate: {}s elapsed (lint deferred to Stop)", elapsed);
     }
-    
+
     exit(0);
 }
 
@@ -1521,21 +1514,21 @@ fn cmd_prompt_submit_guard() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let prompt_text = input.get("tool_input").and_then(|ti| ti.get("prompt").or_else(|| ti.get("content")))
         .or_else(|| input.get("content"))
         .and_then(|v| v.as_str())
         .unwrap_or("");
-        
+
     if prompt_text.is_empty() { exit(0); }
-    
+
     let project_dir = input.get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
-        
+
     let prompt_lower = prompt_text.to_lowercase();
-    
+
     // 1. $block
     if prompt_text.contains("$block") {
         println!("\n--- Blocked (requires approval) ---");
@@ -1543,13 +1536,13 @@ fn cmd_prompt_submit_guard() {
         println!("  thegent govern escalate resolve block-{}", chrono::Utc::now().timestamp());
         exit(1);
     }
-    
+
     // 2. $defer / $pending
     if prompt_text.contains("$defer") || prompt_text.contains("$pending") {
         let queue_file = project_dir.join(".claude/pending-queue.jsonl");
         let _ = fs::create_dir_all(queue_file.parent().unwrap());
         if let Ok(mut f) = fs::OpenOptions::new().create(true).append(true).open(&queue_file) {
-            let _ = writeln!(f, "{{\"ts\":\"{}\",\"prompt\":{},\"project\":\"{}\"}}", 
+            let _ = writeln!(f, "{{\"ts\":\"{}\",\"prompt\":{},\"project\":\"{}\"}}",
                 chrono::Utc::now().to_rfc3339(),
                 serde_json::to_string(prompt_text).unwrap(),
                 project_dir.display());
@@ -1557,19 +1550,19 @@ fn cmd_prompt_submit_guard() {
         println!("\n--- Queued for session stop ---");
         exit(1);
     }
-    
+
     // 3. Antipatterns
     let mut found = Vec::new();
     let test_patterns = ["skip tests", "skip the tests", "don't write tests", "no tests", "dont write tests", "without tests"];
     for p in &test_patterns { if prompt_lower.contains(p) { found.push(format!("test-skipping: \"{}\"", p)); break; } }
-    
+
     if !found.is_empty() {
         println!("QA Governance Reminder: Quality enforcement is active.");
         println!("  Detected patterns:");
         for f in found { println!("    - {}", f); }
         println!("  Consider:\n    - Tests are required for all new code (TDD mandate)\n    - Suppressions require inline justification\n    - All linters must pass");
     }
-    
+
     // 4. Workflow Triggers
     let idea_patterns = ["idea", "research", "explore", "figure out", "add feature", "build", "implement", "design", "create", "task", "feature", "investigate"];
     for p in &idea_patterns {
@@ -1582,7 +1575,7 @@ fn cmd_prompt_submit_guard() {
             break;
         }
     }
-    
+
     // 5. Continuous Work Instruction
     println!("\n--- Continuous Work Instruction (Always Active) ---");
     println!("CRITICAL: When idle or between tasks, ALWAYS:");
@@ -1591,7 +1584,7 @@ fn cmd_prompt_submit_guard() {
     println!("3. Use 'thegent plan wait-next' to block until work ready (keeps session alive)");
     println!("4. Use 'thegent plan loop' for continuous autonomous work");
     println!("5. NEVER terminate chat - always check for next work item");
-    
+
     // 6. $idea save
     if prompt_text.contains("$idea") {
         let seeds_dir = project_dir.join("docs/research/idea-seeds");
@@ -1600,7 +1593,7 @@ fn cmd_prompt_submit_guard() {
         let _ = fs::write(&seed_file, format!("---\nsaved_at: {}\nsource: UserPromptSubmit\n---\n\n{}", chrono::Utc::now().to_rfc3339(), prompt_text));
         println!("\n--- Idea seed saved ---\nSaved to: {}", seed_file.display());
     }
-    
+
     exit(0);
 }
 
@@ -1608,12 +1601,12 @@ fn cmd_spec_preflight() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let project_dir = input.get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
-        
+
     let has_commits = project_dir.join(".git/HEAD").exists();
     let mut has_src = false;
     for d in &["src", "lib", "app", "cli"] {
@@ -1627,9 +1620,9 @@ fn cmd_spec_preflight() {
             }
         }
     }
-    
+
     if !has_commits && !has_src { exit(0); }
-    
+
     let spec_docs = vec!["PRD.md", "ADR.md", "FUNCTIONAL_REQUIREMENTS.md", "PLAN.md", "USER_JOURNEYS.md"];
     let mut spec_present = Vec::new();
     let mut spec_missing = Vec::new();
@@ -1637,7 +1630,7 @@ fn cmd_spec_preflight() {
         if project_dir.join(d).exists() { spec_present.push(*d); }
         else { spec_missing.push(*d); }
     }
-    
+
     let trackers = vec!["PRD_TRACKER.md", "ADR_STATUS.md", "FR_TRACKER.md", "PLAN_STATUS.md", "JOURNEY_VALIDATION.md", "CODE_ENTITY_MAP.md"];
     let mut track_present = Vec::new();
     let mut track_missing = Vec::new();
@@ -1645,9 +1638,9 @@ fn cmd_spec_preflight() {
         if project_dir.join("docs/reference").join(t).exists() { track_present.push(*t); }
         else { track_missing.push(*t); }
     }
-    
+
     let project_type = if !has_commits && spec_present.is_empty() { "Greenfield" } else { "Brownfield" };
-    
+
     println!("PROJECT STATE: {}", project_type);
     if spec_present.len() == 5 {
         println!("SPEC DOCS: All present (PRD, ADR, FR, PLAN, UJ)");
@@ -1657,7 +1650,7 @@ fn cmd_spec_preflight() {
         println!("SPEC DOCS PRESENT: {}", spec_present.join(","));
         println!("SPEC DOCS MISSING: {}", spec_missing.join(","));
     }
-    
+
     if project_type == "Brownfield" || !spec_present.is_empty() {
         if track_present.len() == 6 {
             println!("TRACKERS: All present");
@@ -1668,11 +1661,11 @@ fn cmd_spec_preflight() {
             println!("TRACKERS MISSING: {}", track_missing.join(","));
         }
     }
-    
+
     if project_type == "Greenfield" && spec_present.is_empty() {
         println!("SUGGESTION: This project has no specification documentation. When appropriate, offer to generate PRD, ADR, FR, PLAN, and USER_JOURNEYS using templates from ~/.claude/templates/");
     }
-    
+
     exit(0);
 }
 
@@ -1680,24 +1673,24 @@ fn cmd_antipattern_detect() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
-    
+
     let file_path_str = input.get("file_path").and_then(|v| v.as_str()).unwrap_or("");
     if file_path_str.is_empty() { exit(0); }
-    
+
     let path = Path::new(file_path_str);
     let basename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-    
+
     let v2_re = Regex::new(r"(?i)(_v[0-9]+\.|_new\.|_old\.|_backup\.|_copy\.|_orig\.|\.bak$)").unwrap();
     if v2_re.is_match(basename) {
         println!(r#"{{"decision":"block","reason":"File '{}' uses a v2/new/old/backup naming pattern. Refactor the original file instead of creating duplicates. See CLAUDE.md: 'Extend, Never Duplicate'."}}"#, basename);
         exit(2);
     }
-    
+
     if !path.exists() && input.get("tool_name").and_then(|v| v.as_str()).unwrap_or("") != "Write" { exit(0); }
     if ext != "py" && ext != "ts" && ext != "js" && ext != "tsx" && ext != "jsx" { exit(0); }
     if basename.starts_with("test_") || basename.contains("_test.") || basename.contains("conftest.py") || file_path_str.contains("/tests/") || file_path_str.contains("/test/") { exit(0); }
-    
+
     let content = if let Some(new_str) = input.get("tool_new_string").and_then(|v| v.as_str()) {
         new_str.to_string()
     } else if let Some(cont) = input.get("tool_content").and_then(|v| v.as_str()) {
@@ -1705,39 +1698,39 @@ fn cmd_antipattern_detect() {
     } else {
         fs::read_to_string(path).unwrap_or_default()
     };
-    
+
     if content.is_empty() { exit(0); }
     let mut warnings = Vec::new();
-    
+
     let retry_re = Regex::new(r"(?i)(while\s+.*retry|for\s+.*in\s+range.*retry|max_retries|retry_count|num_retries|sleep.*retry|except.*retry)").unwrap();
     if retry_re.is_match(&content) && !content.contains("tenacity") {
         warnings.push("ANTIPATTERN: Custom retry logic detected. Use tenacity (already in deps) instead of manual retry loops.");
     }
-    
+
     let log_re = Regex::new(r"(?m)^\s*(import logging|from logging import|logging\.getLogger)").unwrap();
     if log_re.is_match(&content) {
         warnings.push("ANTIPATTERN: Using stdlib logging. Prefer structlog for structured logging (see CLAUDE.md library preferences).");
     }
-    
+
     let argparse_re = Regex::new(r"(?m)^\s*(import argparse|from argparse import)").unwrap();
     if argparse_re.is_match(&content) {
         warnings.push("ANTIPATTERN: Using argparse. Use typer (already in deps) for CLI argument parsing.");
     }
-    
+
     if !basename.contains("settings") && !basename.contains("config") {
         let env_re = Regex::new(r"(os\.environ\[|os\.environ\.get\(|os\.getenv\()").unwrap();
         if env_re.find_iter(&content).count() >= 3 {
             warnings.push("ANTIPATTERN: Multiple os.environ/os.getenv calls. Use pydantic-settings (already in deps) for config management.");
         }
     }
-    
+
     if !basename.contains("settings") && !basename.contains("config") && !basename.contains("constants") {
         let provider_re = Regex::new(r#"(provider\s*=\s*["'](openai|anthropic|google|azure|cohere|mistral|groq)["']|model\s*=\s*["'](gpt-4|gpt-3|claude|gemini|llama)["'])"#).unwrap();
         if provider_re.is_match(&content) {
             warnings.push("ANTIPATTERN: Hardcoded provider/model strings. Use ProviderRegistry pattern and config-driven provider selection.");
         }
     }
-    
+
     if !matches!(basename, "__main__.py" | "main.py" | "cli.py") && !basename.contains("_cli.py") {
         let print_re = Regex::new(r"(?m)^\s*print\(").unwrap();
         if print_re.is_match(&content) && !content.contains("typer") && !content.contains("click") && !content.contains("rich") {
@@ -1746,19 +1739,19 @@ fn cmd_antipattern_detect() {
             }
         }
     }
-    
+
     let requests_re = Regex::new(r"(?m)^\s*(import requests|from requests import|requests\.(get|post|put|delete|patch)\()").unwrap();
     let urllib_re = Regex::new(r"(?m)^\s*(import urllib|from urllib import|urllib\.request\.)").unwrap();
     let http_re = Regex::new(r"(?i)class\s+\w*(Http|HTTP|Api|API)(Client|Wrapper|Session|Handler)\b").unwrap();
     if requests_re.is_match(&content) { warnings.push("ANTIPATTERN: Using 'requests' library. Prefer httpx (async-capable, modern)."); }
     if urllib_re.is_match(&content) { warnings.push("ANTIPATTERN: Using urllib. Prefer httpx for HTTP requests."); }
     if http_re.is_match(&content) && !content.contains("httpx") { warnings.push("ANTIPATTERN: Custom HTTP client class detected. Use httpx directly (see CLAUDE.md library preferences)."); }
-    
+
     let valid_re = Regex::new(r#"(?i)isinstance\(.*,\s*(str|int|float|dict|list)\)|if\s+not\s+isinstance|raise\s+(TypeError|ValueError)\(\s*f?['"](Expected|Invalid|Must be)"#).unwrap();
     if valid_re.find_iter(&content).count() >= 4 {
         warnings.push("ANTIPATTERN: Extensive manual type validation checks. Use pydantic models (already in deps) for data validation.");
     }
-    
+
     if ext == "py" {
         let method_re = Regex::new(r"(?m)^\s+def\s+").unwrap();
         let class_re = Regex::new(r"(?m)^\s*class\s+").unwrap();
@@ -1768,7 +1761,7 @@ fn cmd_antipattern_detect() {
             warnings.push("ANTIPATTERN: Potential God class (too many methods). Decompose into smaller classes with single responsibilities.");
         }
     }
-    
+
     if !warnings.is_empty() {
         println!("AGENT ANTI-PATTERNS [{}]: {} issue(s) detected", basename, warnings.len());
         for w in warnings { println!("  - {}", w); }
@@ -4210,8 +4203,8 @@ fn cmd_tool(name: &str) {
             let cache_dir = format!("/tmp/thegent-cache/uv/{}", tenant_id);
             fs::create_dir_all(&cache_dir).ok();
             cmd.env("UV_CACHE_DIR", cache_dir);
-            if !is_agent_session { 
-                cmd.env("UV_COLOR", "always"); 
+            if !is_agent_session {
+                cmd.env("UV_COLOR", "always");
                 cmd.env("UV_SHOW_PROGRESS", "always");
             }
         },
@@ -4227,8 +4220,8 @@ fn cmd_tool(name: &str) {
             let cache_dir = format!("/tmp/thegent-cache/cargo/{}", tenant_id);
             fs::create_dir_all(&cache_dir).ok();
             cmd.env("CARGO_HOME", cache_dir);
-            if !is_agent_session { 
-                cmd.env("CARGO_TERM_COLOR", "always"); 
+            if !is_agent_session {
+                cmd.env("CARGO_TERM_COLOR", "always");
                 cmd.env("CARGO_INCREMENTAL", "1");
             }
         },
@@ -4292,7 +4285,7 @@ fn cmd_mise_setup() {
     fs::create_dir_all(&shims_dir).ok();
 
     let pkgs = vec![
-        "git", "uv", "npm", "pnpm", "bun", "yarn", "pip", "pip3", "poetry", 
+        "git", "uv", "npm", "pnpm", "bun", "yarn", "pip", "pip3", "poetry",
         "cargo", "go", "ruff", "pytest", "sed", "cp", "mv", "rm",
         "jq", "grep", "find", "pgrep", "wc", "date", "tr", "ls", "rg", "fd",
         "cat", "du", "df", "ps", "top", "diff", "curl"
@@ -4311,7 +4304,7 @@ fn cmd_mise_setup() {
 
     println!("[env]");
     println!("PATH = \"{}/shims:${{PATH}}\"", hooks_bin.parent().unwrap().display());
-    
+
     // QOL: Aliases for humans
     if !is_agent() {
         println!("alias g='git'");
@@ -4320,7 +4313,7 @@ fn cmd_mise_setup() {
         println!("alias gl='git log --oneline --graph --decorate'");
         println!("alias tf='thegent free'");
         println!("alias tr='thegent run'");
-        
+
         // Modern tool aliases
         println!("alias ls='eza --icons --git --group-directories-first'");
         println!("alias cat='bat'");
@@ -4349,8 +4342,8 @@ fn main() {
     let exe_name = PathBuf::from(&args[0]);
     let stem = exe_name.file_stem().and_then(|s| s.to_str()).unwrap_or("");
     let shim_pkgs = vec![
-        "git", "uv", "npm", "pnpm", "bun", "yarn", "pip", "pip3", "poetry", 
-        "cargo", "go", "ruff", "pytest", "sed", "cp", "mv", "rm", 
+        "git", "uv", "npm", "pnpm", "bun", "yarn", "pip", "pip3", "poetry",
+        "cargo", "go", "ruff", "pytest", "sed", "cp", "mv", "rm",
         "jq", "grep", "find", "pgrep", "wc", "date", "tr", "ls", "rg", "fd",
         "cat", "du", "df", "ps", "top", "diff", "curl"
     ];

@@ -57,4 +57,3 @@ Get URL for shared MCP server (system-wide by default).
 Starts server if not running.
 
 ---
-

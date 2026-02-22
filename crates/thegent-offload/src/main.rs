@@ -95,7 +95,7 @@ async fn main() -> Result<()> {
             let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port))
                 .await
                 .context("Failed to bind to address")?;
-            
+
             axum::serve(listener, app).await.context("Server error")?;
         }
         Commands::Run { worker_url, prompt, token, cwd, timeout } => {
@@ -145,10 +145,10 @@ async fn execute_handler(
 ) -> Json<ExecutionResponse> {
     let task_id = payload.id;
     info!("Received execution request: {}", task_id);
-    
+
     // For now, simple synchronous-looking mock execution
     // In production, spawn a background task and return 202 Accepted
-    
+
     let mut tasks = state.active_tasks.lock().await;
     tasks.insert(task_id, ExecutionStatus::Running);
     drop(tasks);
@@ -158,7 +158,7 @@ async fn execute_handler(
 
     let mut tasks = state.active_tasks.lock().await;
     tasks.insert(task_id, ExecutionStatus::Completed);
-    
+
     Json(ExecutionResponse {
         request_id: task_id,
         status: ExecutionStatus::Completed,
@@ -188,7 +188,7 @@ async fn run_client(
 ) -> Result<()> {
     let client = reqwest::Client::new();
     let request_id = Uuid::new_v4();
-    
+
     let req = ExecutionRequest {
         id: request_id,
         timestamp: Utc::now(),
@@ -210,7 +210,7 @@ async fn run_client(
     }
 
     let res = builder.send().await.context("Failed to send request to worker")?;
-    
+
     if !res.status().is_success() {
         let err_text = res.text().await?;
         error!("Worker returned error: {}", err_text);
@@ -218,7 +218,7 @@ async fn run_client(
     }
 
     let response: ExecutionResponse = res.json().await.context("Failed to parse worker response")?;
-    
+
     info!("Task {} finished with status: {:?}", request_id, response.status);
     if let Some(stdout) = response.stdout {
         println!("--- STDOUT ---\n{}", stdout);

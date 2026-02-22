@@ -6,8 +6,8 @@ Source: docs/enterprise/SECURITY_COMPLIANCE_SIGNOFF.md
 
 # Security and Compliance Signoff Package
 
-**Version:** 1.0  
-**Status:** PROVISIONAL  
+**Version:** 1.0
+**Status:** PROVISIONAL
 **Date:** 2026-02-14
 
 ## 1. Executive Summary

@@ -76,7 +76,7 @@ To prevent "thrashing" (rapidly spawning/killing agents), the `thegent` Adaptive
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

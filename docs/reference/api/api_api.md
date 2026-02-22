@@ -74,4 +74,3 @@ Get information about an artifact type.
 **Returns**: Type information or None if not found
 
 ---
-

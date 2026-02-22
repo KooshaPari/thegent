@@ -1,7 +1,7 @@
 # Conversation Dump — 2026-02-16
 
-**Purpose:** Persist research, plans, and decisions from agent conversations so we can pick up later without hallucination.  
-**Source:** Cursor/Claude conversation(s)  
+**Purpose:** Persist research, plans, and decisions from agent conversations so we can pick up later without hallucination.
+**Source:** Cursor/Claude conversation(s)
 **Date:** 2026-02-16
 
 ---
@@ -181,7 +181,7 @@ Is prior research on linking desktop PC via compute offloading still present?
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

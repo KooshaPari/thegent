@@ -75,4 +75,3 @@ thegent config wizard --config .env.production
 ```
 
 ---
-

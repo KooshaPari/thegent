@@ -9,7 +9,7 @@
 ### 1. Droid Cmd Hang Fix
 - **File**: `src/thegent/agents/droid.py`
 - **Issue**: Subprocess calls were hanging without proper timeout handling
-- **Fix**: 
+- **Fix**:
   - Migrated `DroidRunner.run()` to use `run_subprocess_optimized()` for better timeout handling
   - Added explicit `TimeoutExpired` exception handling for CodexRunner and CustomRunner
   - Improved stdout/stderr decoding for cross-platform compatibility
@@ -84,7 +84,7 @@ Created `src/thegent/py.typed` marker file to indicate thegent is a typed packag
 proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
 stdout = proc.stdout
 
-# After  
+# After
 proc = run_subprocess_optimized(cmd, capture_output=True, timeout=10)
 stdout_text = proc.stdout if isinstance(proc.stdout, str) else proc.stdout.decode("utf-8", errors="replace")
 ```
@@ -136,5 +136,5 @@ python3 -m py_compile src/thegent/agents/droid.py src/thegent/agents/direct_agen
 
 ---
 
-**Status**: ✅ All critical issues resolved  
+**Status**: ✅ All critical issues resolved
 **Date**: 2026-02-19

@@ -35,4 +35,3 @@ audit_log(project: Annotated[(str, Any)], limit: Annotated[(Any, Any)])
 Show audit log entries for a project.
 
 ---
-

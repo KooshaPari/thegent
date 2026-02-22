@@ -134,4 +134,3 @@ to_dict(self: Any)
 Serialize to a JSON-safe dict.
 
 ---
-

@@ -8,12 +8,12 @@ MESH_SESSION_PREFIX="${MESH_SESSION_PREFIX:-mesh-}"
 mesh_session::create() {
     local agent_id="$1"
     local session_name="${MESH_SESSION_PREFIX}${agent_id}"
-    
+
     if tmux has-session -t "$session_name" 2>/dev/null; then
         # Session already exists
         return 0
     fi
-    
+
     tmux new-session -d -s "$session_name"
     return $?
 }

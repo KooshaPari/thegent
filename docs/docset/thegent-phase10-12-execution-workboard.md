@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 Execution Workboard (Chunk 4)
 
-**Status:** Full-depth operational workboard draft  
-**Date:** 2026-02-15  
+**Status:** Full-depth operational workboard draft
+**Date:** 2026-02-15
 **Scope:** Practical execution governance for implementing and stabilizing Bundle B–F, including board structure, gate gates, and rollback-runbook steps.
 
 ## 1) Why this exists
@@ -278,4 +278,3 @@ For each block of 2–3 WPs:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

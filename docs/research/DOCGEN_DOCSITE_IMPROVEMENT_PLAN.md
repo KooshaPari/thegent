@@ -1,6 +1,6 @@
 # Documentation Generation & Site System — Comprehensive Improvement Plan
 
-> **Status**: Implementation Plan | **Date**: 2026-02-18  
+> **Status**: Implementation Plan | **Date**: 2026-02-18
 > **Purpose**: Detailed improvement plan with optimizations, feature enhancements, and implementation roadmap
 
 ---
@@ -27,7 +27,7 @@ This plan outlines comprehensive improvements to the documentation generation an
 
 ### 1.1 Navigation Tabs
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Navigation tabs for top-level sections
 
 **Implementation**:
@@ -54,14 +54,14 @@ export default defineConfig({
 - [ ] Ensure `activeMatch` patterns are correct
 - [ ] Test tab highlighting
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 1 hour
 
 ---
 
 ### 1.2 Sticky Navigation
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Sticky sidebar and header
 
 **Implementation**:
@@ -84,14 +84,14 @@ export default defineConfig({
 - [ ] Test on mobile devices
 - [ ] Ensure proper scroll behavior
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 2 hours
 
 ---
 
 ### 1.3 Navigation Sections
 
-**Current**: ⚠️ Basic sidebar structure  
+**Current**: ⚠️ Basic sidebar structure
 **Target**: ✅ Grouped sections with collapsible subsections
 
 **Implementation**:
@@ -123,14 +123,14 @@ export const sidebar = {
 - [ ] Add `collapsed` property support
 - [ ] Update sidebar generation logic
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 3 hours
 
 ---
 
 ### 1.4 Breadcrumbs Enhancement
 
-**Current**: ✅ Basic breadcrumbs  
+**Current**: ✅ Basic breadcrumbs
 **Target**: ✅ Enhanced breadcrumbs with icons
 
 **Implementation**:
@@ -153,7 +153,7 @@ export const sidebar = {
 - [ ] Integrate with VitePress router
 - [ ] Add to theme
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 2 hours
 
 ---
@@ -162,7 +162,7 @@ export const sidebar = {
 
 ### 2.1 Algolia Search Integration
 
-**Current**: ✅ Local search only  
+**Current**: ✅ Local search only
 **Target**: ✅ Algolia search with suggestions
 
 **Implementation**:
@@ -210,7 +210,7 @@ export default defineConfig({
 - [ ] Test search functionality
 - [ ] Set up indexing workflow
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 4 hours
 
 **Alternative**: Orama Search (open-source, self-hosted)
@@ -219,7 +219,7 @@ export default defineConfig({
 
 ### 2.2 Search Suggestions & Highlighting
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Search suggestions and result highlighting
 
 **Implementation**:
@@ -231,7 +231,7 @@ export default defineConfig({
 - [ ] Test suggestion accuracy
 - [ ] Optimize search index
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 2 hours (with Algolia)
 
 ---
@@ -240,7 +240,7 @@ export default defineConfig({
 
 ### 3.1 Content Tabs
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Tabbed content blocks
 
 **Implementation**:
@@ -298,14 +298,14 @@ const activeTab = ref(0)
 - [ ] Document usage
 - [ ] Add to examples
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 4 hours
 
 ---
 
 ### 3.2 Code Annotation
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Line-by-line code annotations
 
 **Implementation**:
@@ -334,14 +334,14 @@ const activeTab = ref(0)
 - [ ] Add CSS for annotations
 - [ ] Document usage
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 6 hours
 
 ---
 
 ### 3.3 Tooltips
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Tooltip support for terms
 
 **Implementation**:
@@ -366,14 +366,14 @@ const activeTab = ref(0)
 - [ ] Register in theme
 - [ ] Document usage
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 3 hours
 
 ---
 
 ### 3.4 Math Support (KaTeX)
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Math equations with KaTeX
 
 **Implementation**:
@@ -411,14 +411,14 @@ $$
 - [ ] Test math rendering
 - [ ] Document usage
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 2 hours
 
 ---
 
 ### 3.5 Emoji Support
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Emoji support in markdown
 
 **Implementation**:
@@ -450,7 +450,7 @@ export default defineConfig({
 - [ ] Test emoji rendering
 - [ ] Document usage
 
-**Priority**: P3  
+**Priority**: P3
 **Effort**: 1 hour
 
 ---
@@ -459,7 +459,7 @@ export default defineConfig({
 
 ### 4.1 Enhanced Python API Generator
 
-**Current**: ⚠️ Basic AST-based extraction  
+**Current**: ⚠️ Basic AST-based extraction
 **Target**: ✅ mkdocstrings-like functionality
 
 **Improvements**:
@@ -495,12 +495,12 @@ def parse_google_docstring(docstring: str) -> Dict:
         'raises': {},
         'examples': []
     }
-    
+
     # Parse description
     lines = docstring.split('\n')
     description_lines = []
     current_section = 'description'
-    
+
     for line in lines:
         if line.strip().startswith('Args:'):
             current_section = 'args'
@@ -514,7 +514,7 @@ def parse_google_docstring(docstring: str) -> Dict:
             if current_section == 'description':
                 description_lines.append(line)
             # ... parse other sections
-    
+
     sections['description'] = '\n'.join(description_lines).strip()
     return sections
 ```
@@ -526,14 +526,14 @@ def parse_google_docstring(docstring: str) -> Dict:
 - [ ] Generate better markdown output
 - [ ] Add cross-references
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 8 hours
 
 ---
 
 ### 4.2 TypeScript/JavaScript API Generator
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Extract JSDoc and generate API docs
 
 **Implementation**:
@@ -547,11 +547,11 @@ def extract_jsdoc(file_path: Path) -> Dict:
     """Extract JSDoc comments from TypeScript/JavaScript file."""
     with open(file_path) as f:
         content = f.read()
-    
+
     # Pattern for JSDoc comments
     jsdoc_pattern = r'/\*\*\s*\n((?:\s*\*.*\n)*?)\s*\*/'
     matches = re.findall(jsdoc_pattern, content)
-    
+
     docs = {}
     for match in matches:
         # Parse JSDoc content
@@ -559,7 +559,7 @@ def extract_jsdoc(file_path: Path) -> Dict:
         description = []
         params = {}
         returns = None
-        
+
         for line in lines:
             if line.startswith('@param'):
                 # Parse @param {type} name description
@@ -573,11 +573,11 @@ def extract_jsdoc(file_path: Path) -> Dict:
                 returns = line.replace('@returns', '').strip()
             else:
                 description.append(line)
-        
+
         docs['description'] = '\n'.join(description).strip()
         docs['params'] = params
         docs['returns'] = returns
-    
+
     return docs
 ```
 
@@ -588,14 +588,14 @@ def extract_jsdoc(file_path: Path) -> Dict:
 - [ ] Generate markdown docs
 - [ ] Integrate with workflow
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 6 hours
 
 ---
 
 ### 4.3 OpenAPI/Swagger Integration
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Render OpenAPI specs as interactive docs
 
 **Implementation**:
@@ -625,7 +625,7 @@ const props = defineProps<{
 - [ ] Generate from code (if possible)
 - [ ] Document usage
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 4 hours
 
 ---
@@ -634,7 +634,7 @@ const props = defineProps<{
 
 ### 5.1 Code Splitting Optimization
 
-**Current**: ⚠️ Basic Vite code splitting  
+**Current**: ⚠️ Basic Vite code splitting
 **Target**: ✅ Optimized chunks for faster loads
 
 **Implementation**:
@@ -670,14 +670,14 @@ export default defineConfig({
 - [ ] Test load performance
 - [ ] Optimize Mermaid bundle
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 3 hours
 
 ---
 
 ### 5.2 Image Optimization
 
-**Current**: ⚠️ Basic image handling  
+**Current**: ⚠️ Basic image handling
 **Target**: ✅ WebP/AVIF with lazy loading
 
 **Implementation**:
@@ -708,14 +708,14 @@ export default defineConfig({
 - [ ] Convert existing images
 - [ ] Test performance
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 4 hours
 
 ---
 
 ### 5.3 Font Optimization
 
-**Current**: ⚠️ Default fonts  
+**Current**: ⚠️ Default fonts
 **Target**: ✅ Subset fonts, preload, font-display
 
 **Implementation**:
@@ -739,14 +739,14 @@ export default defineConfig({
 - [ ] Configure font-display
 - [ ] Test font loading
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 2 hours
 
 ---
 
 ### 5.4 Search Index Optimization
 
-**Current**: ⚠️ Full-text search index  
+**Current**: ⚠️ Full-text search index
 **Target**: ✅ Optimized, compressed index
 
 **Implementation**:
@@ -762,7 +762,7 @@ export default defineConfig({
 - [ ] Add lazy loading
 - [ ] Test search performance
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 4 hours
 
 ---
@@ -771,7 +771,7 @@ export default defineConfig({
 
 ### 6.1 Edit-on-GitHub Links
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Edit links on every page
 
 **Implementation**:
@@ -792,14 +792,14 @@ export default defineConfig({
 - [ ] Test link generation
 - [ ] Add to theme
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 1 hour
 
 ---
 
 ### 6.2 Last Updated Dates
 
-**Current**: ✅ `lastUpdated: true` configured  
+**Current**: ✅ `lastUpdated: true` configured
 **Target**: ✅ Enhanced with git info
 
 **Implementation**:
@@ -823,14 +823,14 @@ export default defineConfig({
 - [ ] Configure plugin
 - [ ] Test date display
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 1 hour
 
 ---
 
 ### 6.3 Versioning Support
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Version switcher
 
 **Implementation**:
@@ -855,14 +855,14 @@ export default defineConfig({
 - [ ] Set up versioned builds
 - [ ] Document versioning workflow
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 6 hours
 
 ---
 
 ### 6.4 Analytics Integration
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Google Analytics / Plausible
 
 **Implementation**:
@@ -882,7 +882,7 @@ export default defineConfig({
 - [ ] Test event tracking
 - [ ] Consider Plausible alternative
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 2 hours
 
 ---
@@ -891,7 +891,7 @@ export default defineConfig({
 
 ### 7.1 Parallel Generation
 
-**Current**: ⚠️ Sequential generation  
+**Current**: ⚠️ Sequential generation
 **Target**: ✅ Parallel generation for speed
 
 **Implementation**:
@@ -917,14 +917,14 @@ async def generate_parallel():
 - [ ] Add progress tracking
 - [ ] Test parallel generation
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 4 hours
 
 ---
 
 ### 7.2 Incremental Generation
 
-**Current**: ⚠️ Full regeneration  
+**Current**: ⚠️ Full regeneration
 **Target**: ✅ Only regenerate changed files
 
 **Implementation**:
@@ -939,12 +939,12 @@ def get_file_hash(file_path: Path) -> str:
 def should_regenerate(file_path: Path, cache_dir: Path) -> bool:
     cache_file = cache_dir / f"{file_path.stem}.hash"
     current_hash = get_file_hash(file_path)
-    
+
     if cache_file.exists():
         cached_hash = cache_file.read_text()
         if cached_hash == current_hash:
             return False
-    
+
     cache_file.write_text(current_hash)
     return True
 ```
@@ -956,14 +956,14 @@ def should_regenerate(file_path: Path, cache_dir: Path) -> bool:
 - [ ] Skip unchanged files
 - [ ] Test incremental generation
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 6 hours
 
 ---
 
 ### 7.3 Watch Mode
 
-**Current**: ⚠️ Manual regeneration  
+**Current**: ⚠️ Manual regeneration
 **Target**: ✅ Auto-regenerate on file changes
 
 **Implementation**:
@@ -991,7 +991,7 @@ observer.start()
 - [ ] Test watch mode
 - [ ] Document usage
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 4 hours
 
 ---
@@ -1000,7 +1000,7 @@ observer.start()
 
 ### 8.1 Link Checking
 
-**Current**: ⚠️ Basic dead link check  
+**Current**: ⚠️ Basic dead link check
 **Target**: ✅ Comprehensive link validation
 
 **Implementation**:
@@ -1013,7 +1013,7 @@ import re
 def check_links(md_file: Path):
     content = md_file.read_text()
     links = re.findall(r'\[.*?\]\((.*?)\)', content)
-    
+
     for link in links:
         if link.startswith('http'):
             try:
@@ -1030,14 +1030,14 @@ def check_links(md_file: Path):
 - [ ] Test link validation
 - [ ] Fix broken links
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: 3 hours
 
 ---
 
 ### 8.2 Code Example Validation
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Validate code examples
 
 **Implementation**:
@@ -1049,7 +1049,7 @@ import re
 def validate_python_examples(md_file: Path):
     content = md_file.read_text()
     code_blocks = re.findall(r'```python\n(.*?)```', content, re.DOTALL)
-    
+
     for code in code_blocks:
         try:
             ast.parse(code)
@@ -1063,14 +1063,14 @@ def validate_python_examples(md_file: Path):
 - [ ] Add to CI/CD
 - [ ] Fix invalid examples
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 4 hours
 
 ---
 
 ### 8.3 Accessibility Testing
 
-**Current**: ❌ Not implemented  
+**Current**: ❌ Not implemented
 **Target**: ✅ Accessibility compliance
 
 **Implementation**:
@@ -1093,7 +1093,7 @@ npm install -D @axe-core/cli
 - [ ] Fix accessibility issues
 - [ ] Add to CI/CD
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: 4 hours
 
 ---
@@ -1102,7 +1102,7 @@ npm install -D @axe-core/cli
 
 ### Phase 1: Quick Wins (Week 1)
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: ~15 hours
 
 - [ ] Navigation tabs
@@ -1114,7 +1114,7 @@ npm install -D @axe-core/cli
 
 ### Phase 2: Search & Navigation (Week 2)
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: ~12 hours
 
 - [ ] Algolia search integration
@@ -1124,7 +1124,7 @@ npm install -D @axe-core/cli
 
 ### Phase 3: API Documentation (Weeks 3-4)
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: ~20 hours
 
 - [ ] Enhanced Python API generator
@@ -1134,7 +1134,7 @@ npm install -D @axe-core/cli
 
 ### Phase 4: Performance (Week 5)
 
-**Priority**: P1  
+**Priority**: P1
 **Effort**: ~12 hours
 
 - [ ] Code splitting optimization
@@ -1144,7 +1144,7 @@ npm install -D @axe-core/cli
 
 ### Phase 5: Developer Experience (Week 6)
 
-**Priority**: P2  
+**Priority**: P2
 **Effort**: ~10 hours
 
 - [ ] Last updated dates
@@ -1154,7 +1154,7 @@ npm install -D @axe-core/cli
 
 ### Phase 6: Quality & Testing (Week 7)
 
-**Priority**: P1-P2  
+**Priority**: P1-P2
 **Effort**: ~12 hours
 
 - [ ] Link checking

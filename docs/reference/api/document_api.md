@@ -8,4 +8,3 @@ Provides document scanning, queue management, and processing capabilities
 for markdown files across multiple locations and time periods.
 
 ---
-

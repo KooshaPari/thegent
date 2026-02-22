@@ -5,10 +5,10 @@ status: in_progress
 
 # WBS: Rust Hooks Phase 1 - Research & PoC
 
-**Phase**: Phase 1 (1 week)  
-**Start**: Week of 2026-02-18  
-**End**: Week of 2026-02-25  
-**Status**: Proposed  
+**Phase**: Phase 1 (1 week)
+**Start**: Week of 2026-02-18
+**End**: Week of 2026-02-25
+**Status**: Proposed
 **Total Effort**: ~40 hours (1 FTE × 1 week)
 
 ---
@@ -32,7 +32,7 @@ status: in_progress
 #### 1.0.2 — Set Up Development Environment
 - **Objective**: Prepare Rust build, testing, and CI
 - **Input**: Project templates, Cargo.toml patterns
-- **Output**: 
+- **Output**:
   - New Cargo workspace: `thegent-hooks/`
   - Local builds working (macOS, Ubuntu in Docker)
   - GitHub Actions CI skeleton
@@ -52,7 +52,7 @@ status: in_progress
 #### 1.1.1 — Extract & Design Common Types
 - **Objective**: Define shared data types used across all components
 - **Input**: Existing hook script implementations, QA config samples
-- **Output**: 
+- **Output**:
   - `src/types.rs` (PolicyRule, QualityMetrics, SecurityFinding, etc.)
   - `src/error.rs` (HookError enum)
   - `src/config.rs` (load YAML/JSON configs)
@@ -68,7 +68,7 @@ status: in_progress
 #### 1.1.2 — Implement PolicyEngine
 - **Objective**: Build governance rule loader and evaluator
 - **Input**: Design spec (§1.1 in design.md), existing governance.yaml samples
-- **Output**: 
+- **Output**:
   - `src/policy/engine.rs` (~150 LOC)
   - `src/policy/types.rs` (PolicyRule, PolicyOutcome)
   - 10+ unit tests
@@ -84,7 +84,7 @@ status: in_progress
 #### 1.1.3 — Implement CostCalculator
 - **Objective**: Build token-to-cost estimation engine
 - **Input**: Pricing data (Claude, Gemini, GPT), model list
-- **Output**: 
+- **Output**:
   - `src/cost/calculator.rs` (~100 LOC)
   - `src/cost/providers.rs` (hardcoded pricing + loading from config)
   - 5+ unit tests
@@ -100,7 +100,7 @@ status: in_progress
 #### 1.1.4 — Implement QualityEvaluator (Core)
 - **Objective**: Parse lint output (ruff, oxlint) and aggregate metrics
 - **Input**: Sample ruff/oxlint JSON outputs, coverage.py format
-- **Output**: 
+- **Output**:
   - `src/quality/evaluator.rs` (~120 LOC)
   - JSON parser for ruff, oxlint, coverage
   - 8+ unit tests
@@ -120,7 +120,7 @@ status: in_progress
 #### 1.2.1 — Create quality-gate Binary Skeleton
 - **Objective**: Set up Rust binary that matches Bash interface
 - **Input**: Bash quality-gate.sh script, design spec
-- **Output**: 
+- **Output**:
   - New binary crate: `thegent-hooks-quality-gate/`
   - `main.rs` with stdin/stdout/exit code handling
   - Signature matches existing Bash hook
@@ -135,11 +135,11 @@ status: in_progress
 
 #### 1.2.2 — Implement quality-gate Logic
 - **Objective**: Rewrite Bash quality-gate.sh as Rust using library
-- **Input**: 
+- **Input**:
   - Bash script (~300 LOC)
   - PolicyEngine, QualityEvaluator
   - Test cases from existing Bash implementation
-- **Output**: 
+- **Output**:
   - `quality-gate/src/main.rs` (~150 LOC, 50% reduction)
   - Calls PolicyEngine + QualityEvaluator
   - All error cases mapped to Bash equivalents
@@ -154,10 +154,10 @@ status: in_progress
 
 #### 1.2.3 — Write Integration Tests
 - **Objective**: Verify quality-gate works end-to-end
-- **Input**: 
+- **Input**:
   - Sample project directories (pass/fail scenarios)
   - Existing Bash test cases
-- **Output**: 
+- **Output**:
   - `tests/integration_tests.rs` (~200 LOC, 10+ tests)
   - Test fixtures (temp projects with known coverage, lint)
 - **Duration**: 3h
@@ -170,11 +170,11 @@ status: in_progress
 
 #### 1.2.4 — Benchmark & Compare
 - **Objective**: Measure Rust vs Bash latency, memory, CPU
-- **Input**: 
+- **Input**:
   - Baseline Bash quality-gate.sh timing
   - Rust binary
   - Benchmark harness (run each 10×)
-- **Output**: 
+- **Output**:
   - Benchmark report (latency, memory, CPU %)
   - Detailed timing breakdown
   - Statistical analysis (mean, stddev)
@@ -193,10 +193,10 @@ status: in_progress
 
 #### 1.3.1 — Implement SecurityScanner
 - **Objective**: Build secret detection + SAST integration layer
-- **Input**: 
+- **Input**:
   - Security patterns (from dispatcher main.rs)
   - SAST rule templates (semgrep, bandit)
-- **Output**: 
+- **Output**:
   - `src/security/scanner.rs` (~150 LOC)
   - Regex-based secret detection
   - SAST rule loader (JSON format)
@@ -212,10 +212,10 @@ status: in_progress
 
 #### 1.3.2 — Create security-pipeline Binary
 - **Objective**: PoC security-pipeline hook in Rust
-- **Input**: 
+- **Input**:
   - Bash security-pipeline.sh (~250 LOC)
   - SecurityScanner
-- **Output**: 
+- **Output**:
   - `thegent-hooks-security-pipeline/src/main.rs` (~120 LOC)
   - Calls SecurityScanner
   - Returns 0/1 + findings on stderr
@@ -229,10 +229,10 @@ status: in_progress
 
 #### 1.3.3 — Cross-Platform Testing (Security)
 - **Objective**: Verify security-pipeline on all platforms
-- **Input**: 
+- **Input**:
   - Test project with known secrets
   - Platform-specific environments
-- **Output**: 
+- **Output**:
   - Test results for macOS, Linux, WSL
   - Platform compatibility report
 - **Duration**: 2h
@@ -250,11 +250,11 @@ status: in_progress
 
 #### 1.4.1 — Write Technical Specification
 - **Objective**: Document architecture, decisions, trade-offs
-- **Input**: 
+- **Input**:
   - Design doc (design.md)
   - PoC learnings from 1.1-1.3
   - Benchmark results
-- **Output**: 
+- **Output**:
   - `technical-specification.md` (10-15 pages)
   - Architecture decisions explained
   - Integration paths documented
@@ -270,11 +270,11 @@ status: in_progress
 
 #### 1.4.2 — Create Implementation Guide
 - **Objective**: Document how to write new Rust hooks
-- **Input**: 
+- **Input**:
   - quality-gate PoC code
   - security-pipeline PoC code
   - Testing patterns
-- **Output**: 
+- **Output**:
   - `implementation-guide.md` (10-15 pages)
   - Step-by-step guide for new hooks
   - Code patterns and templates
@@ -290,11 +290,11 @@ status: in_progress
 
 #### 1.4.3 — Phase 2 Roadmap & Review
 - **Objective**: Plan next phase, document decisions
-- **Input**: 
+- **Input**:
   - Phase 1 completion checklist
   - Hook inventory (9 remaining)
   - Performance analysis
-- **Output**: 
+- **Output**:
   - `phase-2-roadmap.md` (3-5 pages)
   - Prioritized hook rewrite list
   - Resource estimate
@@ -315,10 +315,10 @@ status: in_progress
 
 #### 1.5.1 — Code Review & QA
 - **Objective**: Final quality gate before delivery
-- **Input**: 
+- **Input**:
   - All Phase 1 deliverables (code, tests, docs)
   - Governance checklist
-- **Output**: 
+- **Output**:
   - Code review complete
   - All tests passing (CI green)
   - Documentation reviewed
@@ -334,9 +334,9 @@ status: in_progress
 
 #### 1.5.2 — Deliver & Handoff
 - **Objective**: Prepare phase 1 output for team
-- **Input**: 
+- **Input**:
   - Technical spec, implementation guide, PoC code
-- **Output**: 
+- **Output**:
   - Phase 1 delivery package (GitHub repo)
   - Meeting: Present findings to governance team
   - Decision: Proceed to Phase 2 or iterate
@@ -456,6 +456,6 @@ status: in_progress
 
 ---
 
-**Status**: Ready for execution  
-**Version**: 1.0  
+**Status**: Ready for execution
+**Version**: 1.0
 **Last Updated**: 2026-02-18

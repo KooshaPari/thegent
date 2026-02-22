@@ -1,7 +1,7 @@
 # FastMCP Icons and UX Hints (G-FM-04)
 
-**Purpose:** Icon and UX hint mapping for MCP tools; wire when FastMCP supports.  
-**Date:** 2026-02-14  
+**Purpose:** Icon and UX hint mapping for MCP tools; wire when FastMCP supports.
+**Date:** 2026-02-14
 **Source:** THGENT_FASTMCP_IMPLEMENTATION_PLAN §14.8
 
 ---

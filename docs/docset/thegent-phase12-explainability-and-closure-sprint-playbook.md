@@ -1,7 +1,7 @@
 # Thegent Phase 12 Sprint Playbook (Bundles E and F)
 
-**Status:** Operational playbook for Bundle E + Bundle F  
-**Date:** 2026-02-15  
+**Status:** Operational playbook for Bundle E + Bundle F
+**Date:** 2026-02-15
 **Scope:** Execution sequence for explainability, replay safety, persona policies, and closure packaging.
 
 ## 1) Bundle E objective (WP-12001 to WP-12006)
@@ -182,4 +182,3 @@
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

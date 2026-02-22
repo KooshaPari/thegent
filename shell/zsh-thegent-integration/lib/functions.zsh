@@ -10,7 +10,7 @@
 tg() {
   local cmd="${1:-}"
   shift || true
-  
+
   case "$cmd" in
     run)
       thegent run "$@"
@@ -96,20 +96,20 @@ Key bindings:
 #   tgf src/main.py "Explain this file"
 tgf() {
   local file="${1:-}"
-  
+
   if [[ -z "$file" ]]; then
     print -r -- "Usage: tgf <file> [prompt]" >&2
     return 1
   fi
-  
+
   if [[ ! -e "$file" ]]; then
     print -r -- "tgf: no such file: $file" >&2
     return 1
   fi
-  
+
   local prompt="${2:-Analyze and explain this file}"
   local abs_file="${file:A}"
-  
+
   thegent run "$prompt on $abs_file"
 }
 
@@ -119,12 +119,12 @@ tgf() {
 tgw() {
   local watch_path="${1:-.}"
   local session_id=""
-  
+
   if [[ ! -d "$watch_path" ]]; then
     print -r -- "tgw: not a directory: $watch_path" >&2
     return 1
   fi
-  
+
   # Check for fswatch/entr
   local watcher=""
   if command -v fswatch >/dev/null 2>&1; then
@@ -136,9 +136,9 @@ tgw() {
     print -r -- "Install: brew install fswatch  # or: brew install entr" >&2
     return 1
   fi
-  
+
   print -r -- "[thegent] Watching $watch_path for changes..."
-  
+
   case "$watcher" in
     fswatch)
       fswatch -r "$watch_path" | while read -r changed; do
@@ -160,13 +160,13 @@ tgw() {
 #   tgs list
 tgs() {
   local skill="${1:-}"
-  
+
   if [[ -z "$skill" ]]; then
     # List available skills
     thegent skills list
     return $?
   fi
-  
+
   shift || true
   thegent run --skill "$skill" "$@"
 }
@@ -176,13 +176,13 @@ tgs() {
 # Short for: tg run "<prompt>"
 tgp() {
   local prompt="$*"
-  
+
   if [[ -z "$prompt" ]]; then
     print -r -- "Usage: tgp <prompt>" >&2
     print -r -- "Example: tgp Analyze this codebase" >&2
     return 1
   fi
-  
+
   thegent run "$prompt"
 }
 
@@ -192,12 +192,12 @@ tgwho() {
   local agent_id="${AGENT_ID:-}"
   local session_id="${THEGENT_SESSION_ID:-}"
   local work_dir="${THEGENT_WORK_DIR:-$(pwd)}"
-  
+
   print -r -- "thegent context:"
   print -r -- "  Agent ID: ${agent_id:-<none>}"
   print -r -- "  Session: ${session_id:-<none>}"
   print -r -- "  Work dir: $work_dir"
-  
+
   if command -v thegent >/dev/null 2>&1; then
     local status
     status=$(thegent ps 2>/dev/null | head -20)
@@ -213,7 +213,7 @@ tgwho() {
 # Display current work stream items
 tgwork() {
   local stream_file="${THEGENT_WORK_STREAM:-$HOME/thegent/docs/reference/WORK_STREAM.md}"
-  
+
   if [[ -f "$stream_file" ]]; then
     print -r -- "Work stream from: $stream_file"
     print -r -- ""
@@ -237,7 +237,7 @@ tgnext() {
 # --- tgmcp: Quick MCP commands ---
 tgmcp() {
   local cmd="${1:-status}"
-  
+
   case "$cmd" in
     up)
       thegent mcp up "$@"
@@ -262,7 +262,7 @@ tgmcp() {
 tglog() {
   local lines="${1:-50}"
   local log_file="${THEGENT_LOG_FILE:-$HOME/.thegent/logs/thegent.log}"
-  
+
   if [[ -f "$log_file" ]]; then
     tail -n "$lines" "$log_file"
   else
@@ -279,7 +279,7 @@ tglog() {
 # --- tgstatus: Quick status check ---
 tgstatus() {
   echo "=== thegent Status ==="
-  
+
   # Check if thegent is available
   if command -v thegent >/dev/null 2>&1; then
     echo "✓ thegent: available"
@@ -287,7 +287,7 @@ tgstatus() {
   else
     echo "✗ thegent: NOT FOUND in PATH"
   fi
-  
+
   # Check MCP server
   if command -v thegent >/dev/null 2>&1; then
     local mcp_status
@@ -299,7 +299,7 @@ tgstatus() {
       echo "  Run: thegent mcp up"
     fi
   fi
-  
+
   # Show active sessions
   if command -v thegent >/dev/null 2>&1; then
     local sessions
@@ -310,7 +310,7 @@ tgstatus() {
       echo "$sessions" | head -10
     fi
   fi
-  
+
   echo ""
   echo "Variables:"
   echo "  THEGENT_WORK_STREAM=$THEGENT_WORK_STREAM"
@@ -322,7 +322,7 @@ tgstatus() {
 tgdoc() {
   local topic="${1:-}"
   local docs_dir="$HOME/thegent/docs"
-  
+
   if [[ -d "$docs_dir" ]]; then
     if [[ -z "$topic" ]]; then
       ls "$docs_dir"

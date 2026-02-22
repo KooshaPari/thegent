@@ -61,23 +61,23 @@ impl DiscoveryManager {
                 let cmd_lower = cmd.to_lowercase();
                 let name_lower = name.to_lowercase();
                 let memory_kb: u64 = parts[parts.len()-2].parse().unwrap_or(0);
-                
+
                 // Parse CPU time (format: MM:SS or HH:MM:SS)
                 let cpu_time_str = parts[parts.len()-1];
                 let cpu_usage = Self::parse_cpu_time_to_percent(cpu_time_str);
 
-                let agent_name: Option<String> = if cmd_lower.contains("cursor-agent") 
-                    || cmd_lower.contains("cursor agent") 
+                let agent_name: Option<String> = if cmd_lower.contains("cursor-agent")
+                    || cmd_lower.contains("cursor agent")
                     || (cmd_lower.contains("cursor") && cmd.contains("--resume=")) {
                     Some("cursor-agent".to_string())
-                } else if cmd_lower.contains("claude-code") 
-                    || cmd_lower.contains("claude code") 
-                    || cmd_lower.contains("clode") 
-                    || name_lower.starts_with("claude") 
+                } else if cmd_lower.contains("claude-code")
+                    || cmd_lower.contains("claude code")
+                    || cmd_lower.contains("clode")
+                    || name_lower.starts_with("claude")
                     || name_lower.starts_with("clode") {
                     Some("claude-code".to_string())
-                } else if name_lower == "codex" 
-                    || cmd_lower.contains("codex") 
+                } else if name_lower == "codex"
+                    || cmd_lower.contains("codex")
                     || cmd_lower.contains("dex") {
                     Some("codex".to_string())
                 } else {
@@ -91,9 +91,9 @@ impl DiscoveryManager {
                             session_id = Some(m.as_str().to_string());
                         }
                     }
-                    
+
                     let cwd = Self::get_cwd_for_pid(pid).unwrap_or_else(|| String::from("unknown"));
-                    
+
                     agents.push(DiscoveredAgent {
                         pid,
                         ppid,
@@ -127,8 +127,8 @@ impl DiscoveryManager {
             },
             _ => parts[0].parse().unwrap_or(0),
         };
-        
-        // Rough estimate: if process has been running for N seconds, 
+
+        // Rough estimate: if process has been running for N seconds,
         // and we're sampling, this is just a placeholder
         (seconds as f32 * 0.01).min(100.0)
     }
@@ -137,7 +137,7 @@ impl DiscoveryManager {
         let lsof_output = Command::new("lsof")
             .args(&["-p", &pid.to_string(), "-d", "cwd", "-t"])
             .output();
-        
+
         if let Ok(output) = lsof_output {
             if let Ok(output_str) = String::from_utf8(output.stdout) {
                 let path = output_str.trim();
@@ -151,12 +151,12 @@ impl DiscoveryManager {
 
     pub fn get_system_info(&self) -> HashMap<String, f64> {
         let mut info = HashMap::new();
-        
+
         // Get CPU count
         let sysctl_output = Command::new("sysctl")
             .args(&["hw.ncpu", "hw.memsize"])
             .output();
-        
+
         if let Ok(output) = sysctl_output {
             if let Ok(output_str) = String::from_utf8(output.stdout) {
                 for line in output_str.lines() {
@@ -177,7 +177,7 @@ impl DiscoveryManager {
                 }
             }
         }
-        
+
         info
     }
 }
@@ -210,4 +210,74 @@ fn thegent_discovery(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyDiscoveryManager>()?;
     m.add_class::<DiscoveredAgent>()?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_discovery_manager_creation() {
+        let manager = DiscoveryManager::new();
+        // Verify regex is compiled correctly by checking it can match
+        assert!(manager.resume_re.is_match("--resume=abc123-def456"));
+    }
+
+    #[test]
+    fn test_resume_regex_matches() {
+        let re = Regex::new(r"--resume=([a-f0-9\-]+)").unwrap();
+
+        // Valid session IDs
+        assert!(re.is_match("codex --resume=abc123"));
+        assert!(re.is_match("cursor-agent --resume=a1b2c3d4-e5f6-7890-abcd-ef1234567890"));
+
+        // Extract session ID
+        let caps = re.captures("claude --resume=deadbeef-1234").unwrap();
+        assert_eq!(caps.get(1).map(|m| m.as_str()), Some("deadbeef-1234"));
+    }
+
+    #[test]
+    fn test_resume_regex_no_match() {
+        let re = Regex::new(r"--resume=([a-f0-9\-]+)").unwrap();
+
+        // Should not match invalid patterns
+        assert!(!re.is_match("codex --resume="));
+        assert!(!re.is_match("codex"));
+        assert!(!re.is_match("--resume=XYZ"));  // Invalid hex chars
+    }
+
+    #[test]
+    fn test_discovered_agent_defaults() {
+        let agent = DiscoveredAgent {
+            pid: 12345,
+            ppid: 1,
+            name: "test-agent".to_string(),
+            cmd: "/usr/bin/test".to_string(),
+            cwd: "/home/user".to_string(),
+            session_id: None,
+            memory_kb: 1024,
+            cpu_usage: 0.5,
+        };
+
+        assert_eq!(agent.pid, 12345);
+        assert_eq!(agent.ppid, 1);
+        assert_eq!(agent.name, "test-agent");
+        assert!(agent.session_id.is_none());
+    }
+
+    #[test]
+    fn test_discovered_agent_with_session() {
+        let agent = DiscoveredAgent {
+            pid: 54321,
+            ppid: 1000,
+            name: "claude-code".to_string(),
+            cmd: "claude --resume=abc123".to_string(),
+            cwd: "/workspace".to_string(),
+            session_id: Some("abc123".to_string()),
+            memory_kb: 2048,
+            cpu_usage: 1.5,
+        };
+
+        assert_eq!(agent.session_id, Some("abc123".to_string()));
+    }
 }

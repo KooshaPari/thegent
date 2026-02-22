@@ -194,7 +194,7 @@ All touchpoints should share one **conceptual model** even if storage is split:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

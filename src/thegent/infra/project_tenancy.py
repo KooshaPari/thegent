@@ -114,6 +114,75 @@ class ProjectTenancy:
         self._save_registry(payload)
         return record
 
+    def sync_project(
+        self,
+        *,
+        path: Path | str,
+        name: str | None = None,
+        tenant_id: str | None = None,
+        template: str | None = None,
+        template_version: str | None = None,
+    ) -> TenancyProject:
+        """Update selected tenancy fields for an existing project record."""
+        normalized_path = self._normalize_project_path(path)
+        payload = self._load_registry()
+
+        target_index = None
+        for index, project in enumerate(payload.projects):
+            if project.path == normalized_path:
+                target_index = index
+                break
+
+        if target_index is None:
+            raise KeyError(f"Project is not registered for tenancy: {normalized_path}")
+
+        current = payload.projects[target_index]
+        updated_data = current.model_dump()
+        if name is not None:
+            updated_data["name"] = name
+        if tenant_id is not None:
+            updated_data["tenant_id"] = tenant_id
+        if template is not None:
+            updated_data["template"] = template
+        if template_version is not None:
+            updated_data["template_version"] = template_version
+
+        updates = {
+            "name": updated_data["name"].strip(),
+            "tenant_id": updated_data["tenant_id"].strip(),
+            "template": updated_data["template"].strip(),
+            "template_version": updated_data["template_version"].strip(),
+        }
+        if not updates["name"] or not updates["tenant_id"] or not updates["template"] or not updates["template_version"]:
+            raise ValueError("Cannot sync project with blank name/tenant/template/template_version.")
+
+        conflict = self._find_conflict(
+            payload.projects,
+            project_id=current.project_id,
+            name=updates["name"],
+            tenant_id=updates["tenant_id"],
+            path=normalized_path,
+            ignore_project_id=current.project_id,
+        )
+        if conflict is not None:
+            raise ValueError(conflict)
+
+        updated_record = TenancyProject(
+            project_id=current.project_id,
+            name=updates["name"],
+            tenant_id=updates["tenant_id"],
+            path=normalized_path,
+            product_id=current.product_id,
+            template=updates["template"],
+            template_version=updates["template_version"],
+            created_at=current.created_at,
+            updated_at=_utc_now(),
+        )
+
+        payload.projects[target_index] = updated_record
+        self._save_registry(payload)
+        return updated_record
+
     def list_projects(self) -> list[TenancyProject]:
         payload = self._load_registry()
         return sorted(payload.projects, key=lambda record: record.created_at)
@@ -235,8 +304,11 @@ class ProjectTenancy:
         name: str,
         tenant_id: str,
         path: str,
+        ignore_project_id: str | None = None,
     ) -> str | None:
         for record in projects:
+            if ignore_project_id is not None and record.project_id == ignore_project_id:
+                continue
             if record.project_id == project_id:
                 return f"project_id conflict: {project_id}"
             if record.path == path:
@@ -304,6 +376,24 @@ def init_project(
         template=template,
         template_version=template_version,
         project_id=project_id,
+    )
+
+
+def sync_project(
+    *,
+    path: Path | str,
+    name: str | None = None,
+    tenant_id: str | None = None,
+    template: str | None = None,
+    template_version: str | None = None,
+) -> TenancyProject:
+    """Update an existing project record."""
+    return _DEFAULT_TENANCY.sync_project(
+        path=path,
+        name=name,
+        tenant_id=tenant_id,
+        template=template,
+        template_version=template_version,
     )
 
 

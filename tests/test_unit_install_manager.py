@@ -970,6 +970,37 @@ class TestRunInstall:
         assert isinstance(result, dict)
         # update_config should have been called for .claude.json
         assert mock_update_config.called
+        called_keys = [call.args[1] for call in mock_update_config.call_args_list]
+        assert "mcpServers.thegent" in called_keys
+        assert "mcpServers.codex_apps" in called_keys
+
+    @patch("thegent.install.InstallManager.install_file")
+    @patch("thegent.install.InstallManager.update_config", return_value=True)
+    @patch("thegent.install.get_home_dir")
+    @patch("thegent.install.get_backup_dir")
+    @patch("thegent.install.get_manifest_path")
+    def test_run_install_codex_writes_compatibility_mcp_keys(
+        self,
+        mock_manifest_path,
+        mock_backup_dir,
+        mock_home,
+        mock_update_config,
+        mock_install_file,
+        tmp_path,
+    ) -> None:
+        # @trace FR-INST-051
+        """Codex target writes both thegent and codex_apps MCP entries."""
+        manifest_file = tmp_path / "manifest.json"
+        mock_manifest_path.return_value = manifest_file
+        mock_backup_dir.return_value = tmp_path / "backups"
+        mock_home.return_value = tmp_path
+
+        result = run_install(target="codex", mode="smart", dry_run=False)
+
+        assert isinstance(result, dict)
+        called_keys = [call.args[1] for call in mock_update_config.call_args_list]
+        assert "mcpServers.thegent" in called_keys
+        assert "mcpServers.codex_apps" in called_keys
 
     @patch("thegent.install.InstallManager.install_file")
     @patch("thegent.install.InstallManager.update_config", return_value=True)

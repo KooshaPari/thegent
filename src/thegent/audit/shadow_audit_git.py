@@ -65,10 +65,21 @@ _SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 
 def _scrub_secrets(content: str) -> str:
     """Replace detected secrets with redaction placeholders."""
-    result = content
-    for kind, pattern in _SECRET_PATTERNS:
-        result = pattern.sub(f"<REDACTED_{kind.upper()}>", result)
-    return result
+    if not isinstance(content, str):
+        log.warning(
+            "GitJournal._scrub_secrets received non-string content of type %s; coercing to string",
+            type(content).__name__,
+        )
+        content = str(content)
+
+    try:
+        result = content
+        for kind, pattern in _SECRET_PATTERNS:
+            result = pattern.sub(f"<REDACTED_{kind.upper()}>", result)
+        return result
+    except Exception as e:
+        log.error("GitJournal._scrub_secrets failed, returning original content: %s", e)
+        return content
 
 
 # ---------------------------------------------------------------------------
@@ -353,8 +364,8 @@ class GitJournal:
             result = self._run_git("config", "--local", "--get", "remote.origin.push")
             if self.AUDIT_REF_PREFIX in result:
                 return  # Already configured
-        except Exception:
-            pass
+        except Exception as e:
+            log.debug("GitJournal._configure_push_exclusion: config check failed: %s", e)
 
         # Configure to exclude audit refs from push
         # Using negative refspec to exclude
@@ -886,8 +897,8 @@ class GitJournalEnhanced(GitJournal):
                 self._watcher = "watchman"
                 log.info("GitJournal: watchman initialized for %s", self.repo_root)
                 return
-        except FileNotFoundError:
-            pass
+        except FileNotFoundError as e:
+            log.debug("GitJournal._init_watcher: watchman binary not available: %s", e)
 
         try:
             # Try fswatch as fallback
@@ -900,8 +911,8 @@ class GitJournalEnhanced(GitJournal):
                 self._watcher = "fswatch"
                 log.info("GitJournal: fswatch available")
                 return
-        except FileNotFoundError:
-            pass
+        except FileNotFoundError as e:
+            log.debug("GitJournal._init_watcher: fswatch binary not available: %s", e)
 
         # Try FSMonitor (Git 2.37+)
         try:
@@ -915,8 +926,8 @@ class GitJournalEnhanced(GitJournal):
                 self._watcher = "fsmonitor"
                 log.info("GitJournal: FSMonitor daemon started")
                 return
-        except Exception:
-            pass
+        except Exception as e:
+            log.debug("GitJournal._init_watcher: fsmonitor initialization failed: %s", e)
 
         log.warning("GitJournal: no file watcher available")
         self._watcher = None

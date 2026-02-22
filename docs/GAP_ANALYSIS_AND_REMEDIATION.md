@@ -1,7 +1,7 @@
 # Thegent Gap Analysis & Remediation Plan
 
-**Date:** 2026-02-14  
-**Scope:** All plan files, research files, and docset; optional→required; optimizations/polishes; discovery  
+**Date:** 2026-02-14
+**Scope:** All plan files, research files, and docset; optional→required; optimizations/polishes; discovery
 **Principle:** Treat all "optional" items as required; complete all optimizations and polishes including discovery.
 
 ---

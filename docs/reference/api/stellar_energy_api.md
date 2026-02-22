@@ -33,4 +33,3 @@ harvest(self: Any, location: dict[(str, float)])
 Harvest stellar energy.
 
 ---
-

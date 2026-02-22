@@ -120,4 +120,3 @@ get_trace_file_size(self: Any)
 Get current trace file size in bytes.
 
 ---
-

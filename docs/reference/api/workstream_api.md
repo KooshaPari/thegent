@@ -119,4 +119,3 @@ Read all items from BACKLOG section.
 **Returns**: List of backlog items with id, title, priority, depends
 
 ---
-

@@ -10,4 +10,3 @@ export declare class RuntimeTask {
 
 export declare class RuntimeType extends Enum {
 }
-

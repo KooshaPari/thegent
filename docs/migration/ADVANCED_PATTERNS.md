@@ -117,10 +117,10 @@ async fn detect_all_tools() -> HashMap<String, String> {
     let futures: Vec<_> = TOOLS.iter()
         .map(|tool| detect_tool_async(tool))
         .collect();
-    
+
     let results = futures::future::join_all(futures).await;
     let duration = start.elapsed();
-    
+
     eprintln!("Detected {} tools in {:?}", results.len(), duration);
     results.into_iter().collect()
 }
@@ -184,7 +184,7 @@ where
     F: FnMut() -> Result<T, E>,
 {
     let mut delay = Duration::from_millis(100);
-    
+
     for attempt in 0..max_retries {
         match f() {
             Ok(result) => return Ok(result),
@@ -195,7 +195,7 @@ where
             Err(e) => return Err(e),
         }
     }
-    
+
     unreachable!()
 }
 ```
@@ -263,13 +263,13 @@ use thegent_tool_detect::ToolDetector;
 
 fn bench_tool_detection(c: &mut Criterion) {
     let detector = ToolDetector::new();
-    
+
     c.bench_function("detect_all_tools", |b| {
         b.iter(|| {
             black_box(detector.detect_all());
         });
     });
-    
+
     c.bench_function("detect_cached", |b| {
         detector.detect_all(); // Warm cache
         b.iter(|| {
@@ -382,7 +382,7 @@ use tracing::{info, warn, error, instrument};
 pub fn detect_tools(&self) -> HashMap<String, String> {
     let start = Instant::now();
     info!("Starting tool detection");
-    
+
     match self.scan_tools() {
         Ok(tools) => {
             let duration = start.elapsed();
@@ -491,15 +491,15 @@ pub fn validate_tool_name(name: &str) -> Result<(), ValidationError> {
     if name.is_empty() {
         return Err(ValidationError::Empty);
     }
-    
+
     if name.len() > 255 {
         return Err(ValidationError::TooLong);
     }
-    
+
     if name.contains('/') || name.contains('\\') {
         return Err(ValidationError::InvalidCharacter);
     }
-    
+
     Ok(())
 }
 ```
@@ -511,13 +511,13 @@ use std::path::{Path, PathBuf};
 
 pub fn sanitize_path(path: &Path) -> Result<PathBuf, SecurityError> {
     let canonical = path.canonicalize()?;
-    
+
     // Ensure path is within allowed directory
     let allowed = PathBuf::from("/usr/bin");
     if !canonical.starts_with(&allowed) {
         return Err(SecurityError::PathTraversal);
     }
-    
+
     Ok(canonical)
 }
 ```
@@ -538,17 +538,17 @@ impl RateLimiter {
     pub fn check(&mut self, key: &str) -> bool {
         let now = Instant::now();
         let window_start = now - self.window;
-        
+
         let requests = self.requests
             .entry(key.to_string())
             .or_insert_with(Vec::new);
-        
+
         requests.retain(|&time| time > window_start);
-        
+
         if requests.len() >= self.max_requests {
             return false;
         }
-        
+
         requests.push(now);
         true
     }
@@ -578,7 +578,7 @@ mod tests {
         let cache = MultiLevelCache::new(10, Duration::from_secs(1));
         cache.insert("key".to_string(), "value".to_string());
         assert_eq!(cache.get(&"key".to_string()), Some("value".to_string()));
-        
+
         std::thread::sleep(Duration::from_secs(2));
         assert_eq!(cache.get(&"key".to_string()), None);
     }

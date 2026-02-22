@@ -122,4 +122,3 @@ get_agent_trust(self: Any, agent_name: str)
 Return trust level for an agent.
 
 ---
-

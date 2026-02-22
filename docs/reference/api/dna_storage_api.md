@@ -84,4 +84,3 @@ estimate_stability(self: Any, dna_sequence: str)
 Estimate the longevity of the storage (thousands of years).
 
 ---
-

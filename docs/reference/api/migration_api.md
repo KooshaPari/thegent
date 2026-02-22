@@ -128,4 +128,3 @@ should_use_new_version(self: Any, run_id: str)
 Determine if a run should use the target migration version based on canary.
 
 ---
-

@@ -1,7 +1,7 @@
 # Web Research Audit: Agent Hierarchy & Multi-Agent Frameworks
 
-> **Date**: 2026-02-18  
-> **Status**: In Progress  
+> **Date**: 2026-02-18
+> **Status**: In Progress
 > **Scope**: Industry frameworks, academic research, production systems
 
 ---

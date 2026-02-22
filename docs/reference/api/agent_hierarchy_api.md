@@ -801,4 +801,3 @@ Validate before registering a new agent.
 **Returns**: Tuple of (is_valid, error_message)
 
 ---
-

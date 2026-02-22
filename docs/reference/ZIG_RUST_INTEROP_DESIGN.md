@@ -1,8 +1,8 @@
 # Zig-Rust C ABI Interop Design
 
-> **Status**: POC implemented  
-> **Date**: 2026-02-19  
-> **Crate**: `crates/thegent-zmx-interop`  
+> **Status**: POC implemented
+> **Date**: 2026-02-19
+> **Crate**: `crates/thegent-zmx-interop`
 > **Research basis**: `docs/research/ZIG_RUST_ECOSYSTEM_RESEARCH_2026-02-19.md`
 
 ---

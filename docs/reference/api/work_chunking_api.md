@@ -35,4 +35,3 @@ Compute optimal chunk size and parallelism.
 Returns (chunk_size, num_chunks).
 
 ---
-

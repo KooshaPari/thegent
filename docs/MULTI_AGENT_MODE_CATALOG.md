@@ -1,7 +1,7 @@
 # Multi-Agent Orchestration Mode Catalog
 
-**Status:** Authoritative  
-**Date:** 2026-02-14  
+**Status:** Authoritative
+**Date:** 2026-02-14
 **Scope:** sequential_delegation, parallel_consensus, review_loop (G-KD-04)
 
 ---
@@ -63,4 +63,3 @@ Formalizes multi-agent orchestration patterns as supported modes per Kush docs D
 
 - [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index
-

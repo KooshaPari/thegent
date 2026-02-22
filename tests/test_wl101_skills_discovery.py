@@ -389,6 +389,15 @@ class TestAgentRunnerActivateSkill:
             with pytest.raises(KeyError):
                 runner.activate_skill("no-skill")
 
+    def test_run_raises_type_error_with_actionable_message(self) -> None:
+        # @trace WL-3000
+        runner = AgentRunner()
+        with pytest.raises(
+            TypeError,
+            match="is abstract and must be implemented by a concrete AgentRunner subclass",
+        ):
+            runner.run("do work", cwd=None, mode="read", timeout=10)
+
     def test_activate_skill_stores_content_in_activated_skills(self, tmp_path: Path) -> None:
         runner = AgentRunner()
         manifest = SkillManifest(name="MySkill", instructions="Do the thing.")

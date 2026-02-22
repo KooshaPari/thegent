@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase12-explainability-and-closure-sprint-playbook.m
 
 # Thegent Phase 12 Sprint Playbook (Bundles E and F)
 
-**Status:** Operational playbook for Bundle E + Bundle F  
-**Date:** 2026-02-15  
+**Status:** Operational playbook for Bundle E + Bundle F
+**Date:** 2026-02-15
 **Scope:** Execution sequence for explainability, replay safety, persona policies, and closure packaging.
 
 ## 1) Bundle E objective (WP-12001 to WP-12006)

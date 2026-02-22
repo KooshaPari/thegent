@@ -1,7 +1,7 @@
 # Agent-Only Test Strategy & Governance
 
-**Date**: 2026-02-19  
-**Status**: 🎯 CRITICAL - Agent-Only Environment  
+**Date**: 2026-02-19
+**Status**: 🎯 CRITICAL - Agent-Only Environment
 **Coverage Target**: **100% of all user journeys** (not just 80%)
 
 ---
@@ -317,6 +317,6 @@ Feature: Agent Execution
 
 ---
 
-**Status**: 🎯 CRITICAL - Agent-Only Environment  
-**Coverage Target**: **100%** (not 80%)  
+**Status**: 🎯 CRITICAL - Agent-Only Environment
+**Coverage Target**: **100%** (not 80%)
 **Governance**: TDD/BDD/SDD aligned

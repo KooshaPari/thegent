@@ -41,7 +41,7 @@ class Session:
 @dataclass
 class Task:
     id: str
-    session_id: str  
+    session_id: str
     status: TaskStatus
     result: Any
     error: str | None

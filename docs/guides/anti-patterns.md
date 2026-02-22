@@ -291,7 +291,7 @@ def scan_file(path: Path) -> List[Tuple[int, str, str]]:
         content = path.read_text()
     except (UnicodeDecodeError, FileNotFoundError):
         return []
-    
+
     findings = []
     for pattern_id, pattern, fix in ANTI_PATTERNS:
         matches = list(re.finditer(pattern, content, re.MULTILINE))
@@ -303,7 +303,7 @@ def scan_file(path: Path) -> List[Tuple[int, str, str]]:
 def main():
     import sys
     path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.cwd()
-    
+
     if path.is_file():
         findings = scan_file(path)
         for line_no, pattern_id, fix in findings:
@@ -319,7 +319,7 @@ def main():
 
 ## 10. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

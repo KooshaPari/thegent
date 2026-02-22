@@ -773,4 +773,3 @@ Complete a work item (move from CLAIMED to COMPLETED in WORK_STREAM.md).
 ## wrapped_run
 
 ---
-

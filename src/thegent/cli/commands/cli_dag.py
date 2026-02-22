@@ -94,7 +94,7 @@ def dag_list_cmd(cd: Path | None = None, format: str | None = None) -> None:
     if not dag_path.exists():
         console.print(f"[red]DAG session not found: {dag_path}[/red]")
         raise typer.Exit(1)
-    _frontmatter, tasks = _parse_dag_session(dag_path)
+    _frontmatter, tasks = _parse_dag_session(dag_path)  # pyright: ignore[reportUnusedVariable]
     settings = ThegentSettings()
     fmt = (format or settings.output_format or "rich").lower()
     if not tasks:
@@ -353,7 +353,7 @@ def dag_ready_cmd(cd: Path | None = None, format: str | None = None) -> None:
         console.print(tbl)
 
 
-def dag_reconcile_cmd(cd: Path | None = None) -> None:
+def dag_reconcile_cmd(cd: Path | None = None) -> None:  # pyright: ignore[reportUnusedFunction] -- typer callback
     """Reconcile DAG state with reality (clean up stuck 'running' tasks)."""
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -387,8 +387,9 @@ def dag_reconcile_cmd(cd: Path | None = None) -> None:
                 if status == "running":
                     any_alive = True
                     break
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:
+                console.print(f"[yellow]Could not resolve session status for '{sid}': {exc}[/yellow]")
+                continue
 
         if not any_alive:
             t["status"] = "pending"

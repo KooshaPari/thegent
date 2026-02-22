@@ -113,23 +113,23 @@ const config = defineConfig({
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
-      { 
-        text: 'Architecture', 
+      {
+        text: 'Architecture',
         link: '/ARCHITECTURE_LAYERS.md',
         activeMatch: '/architecture/'
       },
-      { 
-        text: 'Guides', 
+      {
+        text: 'Guides',
         link: '/guides/',
         activeMatch: '/guides/'
       },
-      { 
-        text: 'Reference', 
+      {
+        text: 'Reference',
         link: '/reference/',
         activeMatch: '/reference/'
       },
-      { 
-        text: 'Technical Specs', 
+      {
+        text: 'Technical Specs',
         link: '/SPECS_INDEX.md',
         activeMatch: '/specs/'
       },
@@ -142,9 +142,9 @@ const config = defineConfig({
       ? {
           provider: 'algolia',
           options: {
-            appId: algoliaAppId,
-            apiKey: algoliaApiKey,
-            indexName: algoliaIndexName,
+            appId: algoliaAppId as string,
+            apiKey: algoliaApiKey as string,
+            indexName: algoliaIndexName as string,
           },
         }
       : { provider: 'local' },

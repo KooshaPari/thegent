@@ -244,6 +244,26 @@ def roid_doctor(
     sys.exit(0 if success else 1)
 
 
+@app.command("config")
+def roid_config(
+    legacy: bool = typer.Option(
+        False,
+        "--legacy",
+        help="Use legacy provider form instead of the interactive TUI translation layer.",
+    ),
+) -> None:
+    """Open interactive config manager (translation layer for existing config backends)."""
+    if legacy:
+        from thegent.provider_model_manager import run_provider_form
+
+        run_provider_form()
+        return
+
+    from thegent.ux.models_providers_tui import run_models_providers_tui
+
+    run_models_providers_tui()
+
+
 @app.command("install-links")
 def install_links(
     bin_dir: Path = typer.Option(

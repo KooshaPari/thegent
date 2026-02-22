@@ -14,4 +14,3 @@ export declare class ACPResult {
 
 export declare class ACPServerUnreachableError extends Exception {
 }
-

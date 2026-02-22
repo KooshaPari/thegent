@@ -255,4 +255,3 @@ No new bottlenecks introduced. Graceful fallbacks protect against edge cases.
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

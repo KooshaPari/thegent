@@ -111,7 +111,7 @@ onUnmounted(() => {
     width: 44px;
     height: 44px;
   }
-  
+
   .back-to-top svg {
     width: 20px;
     height: 20px;

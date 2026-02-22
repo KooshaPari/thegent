@@ -72,4 +72,3 @@ validate_change(self: Any, principle_id: str, new_description: str)
 Validate if a proposed change violates a Value-Lock.
 
 ---
-

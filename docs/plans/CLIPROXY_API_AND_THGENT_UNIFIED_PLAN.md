@@ -1,7 +1,7 @@
 # CLIProxyAPI & Thegent Work Plan – Unified Phased WBS
 
-**Status:** Complete (Phases 3–6 implemented 2026-02-14; Roo/Kilo model registration + thegent agents 2026-02-14)  
-**Date:** 2026-02-14  
+**Status:** Complete (Phases 3–6 implemented 2026-02-14; Roo/Kilo model registration + thegent agents 2026-02-14)
+**Date:** 2026-02-14
 **Scope:** Cursor, MiniMax, Roo, Kilo – equal parity with native providers (Kiro, Gemini, Claude, Codex)
 
 **Sources:** Merged from `NEW_PROVIDERS_AUTH_RESEARCH.md`, `CURSOR_API_INTEGRATION_RESEARCH.md`, and phased WBS plans.

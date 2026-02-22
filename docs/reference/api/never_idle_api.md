@@ -241,4 +241,3 @@ Stop the never-idle loop.
 Stop the global never-idle loop.
 
 ---
-

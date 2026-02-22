@@ -1,6 +1,6 @@
 # Polyglot Governance Speed Spec
 
-**Date:** 2026-02-20  
+**Date:** 2026-02-20
 **Purpose:** Formal speed-first execution model for all governance gates/checkers across code + non-code surfaces.
 
 ---

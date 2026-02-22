@@ -95,6 +95,7 @@ def _dex_global_callback(
         False,
         "-f",
         "--force-yolo",
+        "--force",
         help="Force YOLO mode: skip permissions, disable sandbox and approvals",
     ),
     native: bool = typer.Option(
@@ -112,7 +113,9 @@ def _dex_global_callback(
         settings = _get_settings()
         settings.dex_force_yolo = True
     if native:
-        passthrough = [arg for arg in sys.argv[1:] if arg not in {"--native", "--force-yolo", "-f"}]
+        passthrough = [arg for arg in sys.argv[1:] if arg not in {"--native", "--force-yolo", "--force", "-f"}]
+        if force and "--force-yolo" not in passthrough:
+            passthrough = ["--force-yolo", *passthrough]
         _exec_native_codex(passthrough)
 
 
@@ -464,6 +467,7 @@ def default_dex(
         False,
         "-f",
         "--force-yolo",
+        "--force",
         help="Force YOLO mode: skip permissions, disable sandbox and approvals",
     ),
     native: bool = typer.Option(
@@ -513,6 +517,7 @@ def default_dex(
 def dex_composer(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         help="Bypass Codex approval prompts (default: True)",
     ),
@@ -564,6 +569,7 @@ def dex_composer(
 def dex_max(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -604,6 +610,7 @@ def dex_max(
 def dex_glm(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -696,6 +703,7 @@ def _run_codex_interactive_with_opts(
 def dex_haiku(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -736,6 +744,7 @@ def dex_haiku(
 def dex_opus(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -776,6 +785,7 @@ def dex_opus(
 def dex_sonnet(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -816,6 +826,7 @@ def dex_sonnet(
 def dex_ultra(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -856,6 +867,7 @@ def dex_ultra(
 def dex_flash(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -896,6 +908,7 @@ def dex_flash(
 def dex_high(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -936,6 +949,7 @@ def dex_high(
 def dex_xhigh(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -976,6 +990,7 @@ def dex_xhigh(
 def dex_mini(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -1016,6 +1031,7 @@ def dex_mini(
 def dex_free(
     dangerously_bypass: bool = typer.Option(
         True,
+        "--force",
         "--dangerously-bypass-approvals-and-sandbox",
         "--yolo",
         help="Bypass approvals and sandbox (default: True)",
@@ -1246,6 +1262,26 @@ def dex_doctor(
 
     success = run_doctor(fix=fix, dry_run=dry_run)
     sys.exit(0 if success else 1)
+
+
+@app.command("config")
+def dex_config(
+    legacy: bool = typer.Option(
+        False,
+        "--legacy",
+        help="Use legacy provider form instead of the interactive TUI translation layer.",
+    ),
+) -> None:
+    """Open interactive config manager (translation layer for existing config backends)."""
+    if legacy:
+        from thegent.provider_model_manager import run_provider_form
+
+        run_provider_form()
+        return
+
+    from thegent.ux.models_providers_tui import run_models_providers_tui
+
+    run_models_providers_tui()
 
 
 @app.command("install-links")

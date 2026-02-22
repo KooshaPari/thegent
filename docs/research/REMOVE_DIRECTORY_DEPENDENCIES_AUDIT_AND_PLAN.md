@@ -1,7 +1,7 @@
 # Remove Directory Dependencies — Production Installation Optimization
 
-**Date:** 2026-02-17  
-**Status:** Research Complete, Plan Ready  
+**Date:** 2026-02-17
+**Status:** Research Complete, Plan Ready
 **Priority:** P1 (DX/AX/UX Optimization)
 
 ---
@@ -264,7 +264,7 @@ from typing import Optional
 
 def _is_dev_mode() -> bool:
     """Detect if running from dev repo vs installed package.
-    
+
     Returns:
         True if dev mode (repo), False if installed (site-packages)
     """
@@ -274,21 +274,21 @@ def _is_dev_mode() -> bool:
         return True
     elif mode == "installed":
         return False
-    
+
     # Auto-detect: check if package is in site-packages
     import thegent
     pkg_path = Path(thegent.__file__).resolve().parent
-    
+
     # Check site-packages
     site_packages = [Path(p) for p in site.getsitepackages()]
     if any(pkg_path.is_relative_to(sp) for sp in site_packages):
         return False
-    
+
     # Check for dev repo markers
     for parent in [pkg_path.parent, pkg_path.parent.parent, pkg_path.parent.parent.parent]:
         if (parent / "pyproject.toml").exists() and (parent / "src" / "thegent").exists():
             return True
-    
+
     # Fallback: assume installed (safer)
     return False
 
@@ -296,7 +296,7 @@ def _get_thegent_root() -> Optional[Path]:
     """Get thegent root directory (dev repo) or None if installed."""
     if not _is_dev_mode():
         return None
-    
+
     import thegent
     pkg_path = Path(thegent.__file__).resolve().parent
     for parent in [pkg_path.parent, pkg_path.parent.parent, pkg_path.parent.parent.parent]:
@@ -350,13 +350,13 @@ fn resolve_hooks_dir() -> PathBuf {
     if let Ok(dir) = env::var("HOOKS_DIR") {
         return PathBuf::from(dir);
     }
-    
+
     // 2. User config directory (installed mode)
     let user_hooks = get_user_config_dir().join("hooks");
     if user_hooks.exists() {
         return user_hooks;
     }
-    
+
     // 3. Dev repo detection (dev mode)
     if let Ok(exe) = env::current_exe() {
         let mut dir = exe.parent().map(|p| p.to_path_buf());
@@ -371,7 +371,7 @@ fn resolve_hooks_dir() -> PathBuf {
             }
         }
     }
-    
+
     // 4. Fallback: ~/.claude/hooks/ (legacy)
     let home = env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
     PathBuf::from(format!("{home}/.claude/hooks"))
@@ -439,7 +439,7 @@ site-packages/thegent/
 {
   packages.default = pkgs.python3Packages.buildPythonPackage {
     # ... existing config ...
-    
+
     # Include hooks/templates as package data
     postInstall = ''
       mkdir -p $out/share/thegent
@@ -510,22 +510,22 @@ def _get_hooks_dir() -> Path:
     # 1. Explicit override
     if "THGENT_HOOKS_DIR" in os.environ:
         return Path(os.environ["THGENT_HOOKS_DIR"])
-    
+
     # 2. Manage devkit (if available)
     manage_hooks = Path.home() / ".manage" / "hooks"
     if manage_hooks.exists():
         return manage_hooks
-    
+
     # 3. User config (installed)
     user_hooks = _get_user_config_dir() / "hooks"
     if user_hooks.exists():
         return user_hooks
-    
+
     # 4. Dev repo (dev mode)
     dev_root = _get_thegent_root()
     if dev_root:
         return dev_root / "hooks"
-    
+
     # 5. Fallback
     return _get_user_config_dir() / "hooks"
 ```
@@ -584,7 +584,7 @@ def _get_hooks_dir() -> Path:
 | **Phase 3** | Remove CWD dependencies | 3-4h | Medium | P1 |
 | **Phase 4** | Manage devkit integration | 2-3h | Low | P2 |
 
-**Total Effort:** 11-16 hours  
+**Total Effort:** 11-16 hours
 **Total Risk:** Low-Medium (with fallbacks)
 
 ---
@@ -635,7 +635,7 @@ def _get_hooks_dir() -> Path:
 
 **Goal:** Make thegent work seamlessly in both dev and installed modes, with integration for "manage" devkit system.
 
-**Approach:** 
+**Approach:**
 1. Detect dev vs installed mode
 2. Use user directories for installed mode
 3. Remove CWD dependencies
@@ -657,7 +657,7 @@ def _get_hooks_dir() -> Path:
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

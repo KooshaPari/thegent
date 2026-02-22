@@ -114,4 +114,3 @@ get_summary(self: Any)
 Return a summary of gardening status.
 
 ---
-

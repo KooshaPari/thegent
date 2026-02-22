@@ -2,7 +2,6 @@
 
 # @trace FR-DOCS-007
 """
-from pathlib import Path
 from docs_engine.sidebar.generator import SidebarGenerator
 
 

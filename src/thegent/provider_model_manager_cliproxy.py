@@ -42,4 +42,3 @@ def get_api_key_from_compat(compat: list[dict[str, Any]], name: str) -> str | No
                 return entries[0].get("api-key")
             return None
     return None
-

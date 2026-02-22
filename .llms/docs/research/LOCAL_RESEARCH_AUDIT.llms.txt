@@ -6,8 +6,8 @@ Source: docs/research/LOCAL_RESEARCH_AUDIT.md
 
 # Local Research Audit: Agent Hierarchy & Multi-Agent Systems
 
-> **Date**: 2026-02-18  
-> **Status**: Comprehensive Audit Complete  
+> **Date**: 2026-02-18
+> **Status**: Comprehensive Audit Complete
 > **Scope**: All local codebase research on agent hierarchies, teams, and multi-agent coordination
 
 ---
@@ -76,11 +76,11 @@ def execute_hierarchical(self):
         0 if "manager" in a.role.lower() or "lead" in a.role.lower() else 1,
         a.role
     ))
-    
+
     # Assign priority tasks to managers
     manager_agents = [a for a in sorted_agents if "manager" in a.role.lower()]
     worker_agents = [a for a in sorted_agents if a not in manager_agents]
-    
+
     # Assign tasks hierarchically
     priority_tasks = tasks[:len(manager_agents)]
     regular_tasks = tasks[len(manager_agents):]
@@ -301,14 +301,14 @@ interface AgentRegistration {
   systemPrompt: string
   voice: string
   expertise: string[]
-  
+
   // Project assignments
   projects: Array<{
     projectId: string
     role: 'primary' | 'secondary' | 'consultant'
     permissions: string[]
   }>
-  
+
   // Collaboration rules
   collaborationRules: {
     canInitiateWith: string[]

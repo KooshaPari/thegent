@@ -181,4 +181,3 @@ is_cached(self: Any, root: Path)
 Return True if a valid (non-expired) index exists for *root*.
 
 ---
-

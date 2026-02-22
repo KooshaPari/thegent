@@ -1,6 +1,6 @@
 # Economic Governance Framework
 
-> **Status**: Research Complete | **Version**: 1.0 | **Date**: 2026-02-18  
+> **Status**: Research Complete | **Version**: 1.0 | **Date**: 2026-02-18
 > **Priority**: P1 | **Depends**: WP-5003
 
 ## Overview
@@ -42,11 +42,11 @@ class Budget:
     start_date: datetime
     end_date: datetime
     renews: bool
-    
+
     @property
     def remaining(self) -> float:
         return self.amount - self.spent
-    
+
     @property
     def utilization(self) -> float:
         return self.spent / self.amount
@@ -65,7 +65,7 @@ class CostMeter:
     def __init__(self):
         self.current_costs: Dict[str, float] = {}
         self.cost_history: List[Dict] = []
-    
+
     async def record_cost(
         self,
         project_id: str,
@@ -77,7 +77,7 @@ class CostMeter:
         """Record cost for a single request."""
         key = f"{project_id}:{model}"
         self.current_costs[key] = self.current_costs.get(key, 0)) + cost
-        
+
         self.cost_history.append({
             "timestamp": datetime.utcnow().isoformat(),
             "project_id": project_id,
@@ -86,7 +86,7 @@ class CostMeter:
             "output_tokens": output_tokens,
             "cost": cost
         })
-    
+
     def get_project_cost(self, project_id: str) -> float:
         """Get total cost for a project."""
         return sum(
@@ -126,21 +126,21 @@ class BudgetAwareRouter:
     ):
         self.budget_manager = budget_manager
         self.router = router
-    
+
     def route(self, request: Request) -> RoutingDecision:
         # Check budget first
         budget_status = self.budget_manager.check_budget(
             request.project_id,
             request.requested_model
         )
-        
+
         if not budget_status.can_proceed:
             # Fall back to cheaper model or reject
             return self._route_to_budget(budget_status, request)
-        
+
         # Normal routing with budget awareness
         return self.router.route(request)
-    
+
     def _route_to_budget(
         self,
         budget_status: BudgetStatus,
@@ -148,7 +148,7 @@ class BudgetAwareRouter:
     ) -> RoutingDecision:
         """Route to cheapest available model."""
         available = [
-            m for m in ALL_MODELS 
+            m for m in ALL_MODELS
             if m.cost <= budget_status.remaining_budget
         ]
         return min(available, key=lambda m: m.cost)
@@ -177,7 +177,7 @@ class OverageHandler:
 ```python
 class EconomicGovernance:
     """Main interface for economic governance."""
-    
+
     async def check_budget(
         self,
         project_id: str,
@@ -185,7 +185,7 @@ class EconomicGovernance:
     ) -> BudgetStatus:
         """Check if request can proceed within budget."""
         pass
-    
+
     async def record_cost(
         self,
         project_id: str,
@@ -195,14 +195,14 @@ class EconomicGovernance:
     ):
         """Record cost for a request."""
         pass
-    
+
     async def get_remaining_budget(
         self,
         project_id: str
     ) -> float:
         """Get remaining budget for a project."""
         pass
-    
+
     async def allocate_budget(
         self,
         project_id: str,
@@ -211,7 +211,7 @@ class EconomicGovernance:
     ) -> Budget:
         """Allocate new budget."""
         pass
-    
+
     async def get_cost_report(
         self,
         project_id: str,
@@ -226,7 +226,7 @@ class EconomicGovernance:
 
 **EXTENSION_SUMMARY**
 
-**Extended on:** 2026-02-18  
+**Extended on:** 2026-02-18
 **Extended by:** Claude Code
 
 ### Changes Made

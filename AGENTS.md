@@ -21,7 +21,7 @@ killall cursor-agent
 # FORBIDDEN - Killing any agent process
 kill -9 <pid>  # where PID is cursor-agent, thegent, claude, codex, droid, etc.
 
-# FORBIDDEN - Killing shell/terminal processes  
+# FORBIDDEN - Killing shell/terminal processes
 kill -9 <pid>  # where PID is bash, zsh, sh, ghostty, terminal, iterm, etc.
 ```
 
@@ -82,9 +82,9 @@ The following processes are PROTECTED and MUST NEVER be killed:
 When removing code, frame it positively:
 ```
 BAD: "Don't add fallbacks"
-GOOD: "Now that we have fully transitioned to a new system and it has been 
-confirmed to work as intended, let's clean out all backwards compatibility 
-and fallbacks so we have a DRY, modular system with clear and clean separation 
+GOOD: "Now that we have fully transitioned to a new system and it has been
+confirmed to work as intended, let's clean out all backwards compatibility
+and fallbacks so we have a DRY, modular system with clear and clean separation
 of responsibilities. Once finished, we have a fresh system with no technical debt."
 ```
 
@@ -1013,6 +1013,28 @@ When the user says **"do all"** or assigns work to multiple agents:
 4. **Update progress**: When done, move items from CLAIMED to COMPLETED and update source file (e.g. `02-UNIFIED-WBS.md`) status to DONE
 
 **Preferred**: Use `WORK_STREAM.md` — single file for all work types. `WBS_AGENT_PROGRESS.md` remains for backward compatibility with WBS-only "do all" flows.
+
+### Codex 70-Task Sprint Protocol (7 Lanes x 10 Tasks)
+
+When the user asks Codex to run a large sprint in this shape, follow this protocol by default:
+
+1. **Lane model**: Run `7` concurrent lanes total — `6` child agents + Codex lane.
+2. **Task count**: Each lane owns exactly `10` tasks (`70` total).
+3. **Ownership**: One lane = one owned task bundle/file set. No overlapping edits.
+4. **Continuous DAG spawning**: Do not wait for all lanes in a batch; as soon as one lane finishes, spawn/reassign the next ready DAG node.
+5. **Verification contract**:
+   - lane-local verification per lane task bundle,
+   - one aggregate verification command over all `70` tasks before reporting complete.
+6. **Reporting**: Report lane IDs, owned tasks, per-lane result, and aggregate result.
+
+### WBS Structuring for 7x10 Sprints
+
+For WBS/WORK_STREAM entries, structure sprint tasks as individually DAG-linked units:
+
+- **ID format**: `S<SPRINT>-L<LANE>-T<TASK>` (example: `S12-L4-T07`)
+- **Fields required**: `description`, `depends_on[]`, `owner_lane`, `status`, `verification_cmd`
+- **DAG rule**: Dependencies are task-level (not batch-level), so downstream tasks can start immediately when predecessors pass.
+- **Claiming rule**: Each lane only claims unclaimed `S*-L*-T*` rows assigned to that lane.
 
 ### Where to Add New Functionality
 

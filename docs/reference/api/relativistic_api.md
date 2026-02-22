@@ -90,4 +90,3 @@ sync_timestamp(self: Any, peer_id: str, remote_ts: float)
 Convert a remote timestamp to the local base node's time frame.
 
 ---
-

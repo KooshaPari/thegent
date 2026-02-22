@@ -220,27 +220,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      
+
       - name: Install dependencies
         run: |
           pip install -e ".[tasks]"
-      
+
       - name: Run tests
         run: pytest tests/test_unit_mcp_tools.py -v
-      
+
       - name: Lint
         run: ruff check src/thegent/mcp_tools_modes.py
-      
+
       - name: Build Docker image
         run: |
           docker build -t ${{ env.REGISTRY }}/thegent-mcp:${{ github.sha }} .
           docker push ${{ env.REGISTRY }}/thegent-mcp:${{ github.sha }}
-      
+
       - name: Deploy to environment
         run: |
           kubectl set image deployment/thegent-mcp \
@@ -388,6 +388,6 @@ spec:
 
 ---
 
-**Document Version:** 1.1  
-**Last Extended:** 2026-02-17  
+**Document Version:** 1.1
+**Last Extended:** 2026-02-17
 **Extension Author:** Worker Droid

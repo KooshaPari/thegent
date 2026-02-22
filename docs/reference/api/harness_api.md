@@ -43,4 +43,3 @@ Create agent_executor callback that uses thegent's codex/cc/droid harness.
 **Returns**: Callable (agent_id, prompt, context) -> ExecutionResult
 
 ---
-

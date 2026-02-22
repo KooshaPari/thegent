@@ -612,7 +612,7 @@ Most CLI functions lack return type hints (best practice: add `-> None`)
 ```
 Core Gates:
 - quality               (main comprehensive gate)
-- quality:strict-full  (all checks, strict mode)
+- quality  (all checks, strict mode)
 - quality:list-check   (preview which checks would run)
 - quality:fix:runner   (auto-fix broken checks)
 
@@ -851,4 +851,3 @@ Complexity Gates:
 - **Agent 6+**: Apply template/quality audit findings to remaining kush projects (4sgm, morph, craph, bloc, tokenledger, crun)
 - **Future Work**: Implement P0 gaps (Go CI, Rust Taskfile, process-compose canonical)
 - **Documentation**: Formalize hook governance for external users
-

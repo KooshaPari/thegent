@@ -33,4 +33,3 @@ simulate(self: Any, action: dict[(str, Any)])
 Simulate impact of an action.
 
 ---
-

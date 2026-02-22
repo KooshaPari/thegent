@@ -134,4 +134,3 @@ thegent dex --help
 
 - `ThegentSettings.cliproxy_backend_url` (str | None): For proxy backend setup
 - `ThegentSettings.cliproxy_adapter` (bool): Already exists; set to True globally if needed
-

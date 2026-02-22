@@ -1,7 +1,7 @@
 # Thegent Phase 3–6 Closure Validation Event and Waiver Contract v1
 
-**Status:** Enforced automation contract  
-**Date:** 2026-02-15  
+**Status:** Enforced automation contract
+**Date:** 2026-02-15
 **Scope:** Event schema for validation, waiver, and override behavior in phase 3–6 closure automation.
 
 ## 1) Purpose
@@ -234,4 +234,3 @@ If missing:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

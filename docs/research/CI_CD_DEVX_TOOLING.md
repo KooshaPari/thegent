@@ -1007,36 +1007,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: |
           pip install ruff pre-commit
           npm ci
-      
+
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
-      
+
       - name: Run ruff linter
         run: ruff check .
-      
+
       - name: Run ruff formatter check
         run: ruff format --check .
-      
+
       - name: Run type checking (Python)
         run: pyright src/ || true
-      
+
       - name: Run type checking (TypeScript)
         run: npx tsc --noEmit
 
@@ -1054,41 +1054,41 @@ jobs:
           - os: ubuntu-latest
             python-version: '3.11'
             coverage: true
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install Python dependencies
         run: |
           pip install -e .
           pip install pytest pytest-cov
-      
+
       - name: Install Node dependencies
         run: npm ci
-      
+
       - name: Run Python tests
         run: pytest tests/ --cov=src --cov-report=xml
         if: matrix.python-version != '3.10'
-      
+
       - name: Run Python tests (3.10)
         run: pytest tests/ --ignore=tests/test_type_heavy.py
         if: matrix.python-version == '3.10'
-      
+
       - name: Run Node.js tests
         run: npm test
-      
+
       - name: Upload coverage
         if: matrix.coverage
         uses: codecov/codecov-action@v4
@@ -1105,26 +1105,26 @@ jobs:
     needs: unit-tests
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -e .[test]
           pip install pytest-asyncio httpx
-      
+
       - name: Start MCP server
         run: |
           python -m thegent serve &
           sleep 5
-      
+
       - name: Run integration tests
         run: pytest tests/integration/ -v
-      
+
       - name: Collect logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -1139,18 +1139,18 @@ jobs:
     needs: integration-tests
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: python, typescript
           queries: security-extended
-      
+
       - name: Run gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Run dependency audit
         uses: actions/github-script@v7
         with:
@@ -1169,23 +1169,23 @@ jobs:
     needs: security-scan
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install and build
         run: |
           pip install -e .
           npm run build
-      
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -1219,18 +1219,18 @@ jobs:
     name: Execute on ${{ github.event.inputs.host }}
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      
+
       - name: Sync to remote
         run: |
           rsync -avz --delete \
@@ -1239,21 +1239,21 @@ jobs:
             --exclude='dist' \
             --exclude='.git' \
             ./ "developer@${{ github.event.inputs.host }}:D:/kush/"
-      
+
       - name: Execute command
         run: |
           ssh "developer@${{ github.event.inputs.host }}" << 'EOF'
             cd D:/kush
             ${{ github.event.inputs.command }}
           EOF
-      
+
       - name: Sync back artifacts
         if: always()
         run: |
           rsync -avz \
             "developer@${{ github.event.inputs.host }}:D:/kush/dist/" \
             ./dist/
-      
+
       - name: Upload artifacts
         if: success()
         uses: actions/upload-artifact@v4
@@ -1286,27 +1286,27 @@ jobs:
           # Skip macOS with Python 3.12 (not yet available)
           - os: macos-latest
             python-version: '3.12'
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      
+
       - name: Setup uv
         uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
-      
+
       - name: Install dependencies
         run: uv pip install -e .[dev]
-      
+
       - name: Run tests
         run: pytest tests/ -v --tb=short
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
@@ -1326,10 +1326,10 @@ jobs:
             task: 'task test-windows'
           - runner: macos-latest
             task: 'task test-macos'
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run platform-specific task
         run: ${{ matrix.task }}
 ```
@@ -1353,14 +1353,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run pip-compile
         uses: app-actions/tools@v1
         with:
           cmd: |
             pip install pip-tools
             pip-compile --output-file=requirements.txt pyproject.toml --upgrade
-      
+
       - name: Create PR if updates available
         uses: peter-evans/create-pull-request@v6
         with:
@@ -1368,7 +1368,7 @@ jobs:
           commit-message: 'chore: Update dependencies'
           body: 'Automated dependency updates'
           branch: dependency-updates
-      
+
       - name: Report updates
         if: steps.cpr.outputs.pull-request-number
         run: |
@@ -1384,7 +1384,7 @@ jobs:
         uses: c-hive/gha-remove-artifacts@v1
         with:
           age: '7 days'
-      
+
       - name: Delete old runs
         uses: matiev-dev/delete-workflow-runs@v1
         with:
@@ -1397,12 +1397,12 @@ jobs:
     steps:
       - name: Check GitHub Actions
         run: curl -s -o /dev/null -w "%{http_code}" https://api.github.com/repos/${{ github.repository }}/actions
-      
+
       - name: Check external services
         run: |
           curl -s -o /dev/null -w "%{http_code}" https://pypi.org/pypi/thegent/json || echo "PyPI check failed"
           curl -s -o /dev/null -w "%{http_code}" https://npmjs.com/package/thegent || echo "NPM check failed"
-      
+
       - name: Report health
         uses: slackapi/slack-github-action@v1.25.0
         with:
@@ -1466,15 +1466,15 @@ jobs:
 
 ---
 
-**Document Version:** 1.1  
-**Last Updated:** 2026-02-17  
+**Document Version:** 1.1
+**Last Updated:** 2026-02-17
 **Extension:** Pipeline Examples, Cross-References, Extension Summary
 
 ---
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

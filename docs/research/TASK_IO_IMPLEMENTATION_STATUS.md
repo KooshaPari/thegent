@@ -1,7 +1,7 @@
 # TASK I/O System Implementation Status
 
-**Status**: Phase 1 - Schema & Tooling (In Progress)  
-**Started**: 2026-02-18  
+**Status**: Phase 1 - Schema & Tooling (In Progress)
+**Started**: 2026-02-18
 **Last Updated**: 2026-02-18
 
 ---

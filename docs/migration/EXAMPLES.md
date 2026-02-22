@@ -234,10 +234,10 @@ from thegent_path_resolve import resolve_binary
 class ToolManager:
     def __init__(self):
         self.tools = detect_tools()
-    
+
     def get_tool(self, name: str) -> str:
         return self.tools.get(name, name)  # Fallback to name
-    
+
     def resolve(self, name: str) -> str | None:
         return resolve_binary(name)
 ```
@@ -248,4 +248,3 @@ class ToolManager:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

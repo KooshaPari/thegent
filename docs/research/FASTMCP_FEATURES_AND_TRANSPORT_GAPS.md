@@ -238,12 +238,12 @@ from typing import AsyncIterator
 
 class FallbackProgressReporter:
     """Progress reporter that works without client support."""
-    
+
     def __init__(self, ctx: Context):
         self.ctx = ctx
         self._total = 0
         self._current = 0
-    
+
     async def report(
         self,
         current: int,
@@ -320,6 +320,6 @@ async def track_progress(
 
 ---
 
-**Document Version:** 1.1  
-**Last Extended:** 2026-02-17  
+**Document Version:** 1.1
+**Last Extended:** 2026-02-17
 **Extension Author:** Worker Droid

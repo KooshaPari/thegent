@@ -9,4 +9,3 @@ export declare class FlashAgentConfig {
 
 export declare class FlashAgentResult {
 }
-

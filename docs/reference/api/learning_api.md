@@ -93,4 +93,3 @@ Determine if pattern should be skipped.
 **Returns**: True if should skip
 
 ---
-

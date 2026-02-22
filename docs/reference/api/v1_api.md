@@ -74,4 +74,3 @@ to_dict(self: Any)
 Serialize to dict for JSON/transport.
 
 ---
-

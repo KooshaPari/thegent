@@ -31,6 +31,34 @@ def test_extract_reasoning_effort_from_flat_key() -> None:
 
 
 @pytest.mark.requirement("FR-REQEXT-040")
+def test_extract_reasoning_effort_from_variant_key() -> None:
+    """Variant parameter is used by OpenWork/Cursor for codex models."""
+    body = {"variant": "high"}
+    assert extract_reasoning_effort(body) == ReasoningEffort.HIGH
+
+
+@pytest.mark.requirement("FR-REQEXT-040")
+def test_extract_reasoning_effort_from_variant_low() -> None:
+    """Variant parameter supports low/medium/high values."""
+    body = {"variant": "low"}
+    assert extract_reasoning_effort(body) == ReasoningEffort.LOW
+
+
+@pytest.mark.requirement("FR-REQEXT-040")
+def test_extract_reasoning_effort_invalid_variant() -> None:
+    """Invalid variant values return None."""
+    body = {"variant": "invalid"}
+    assert extract_reasoning_effort(body) is None
+
+
+@pytest.mark.requirement("FR-REQEXT-040")
+def test_extract_reasoning_effort_priority() -> None:
+    """reasoning_effort takes priority over variant."""
+    body = {"reasoning_effort": "low", "variant": "high"}
+    assert extract_reasoning_effort(body) == ReasoningEffort.LOW
+
+
+@pytest.mark.requirement("FR-REQEXT-040")
 def test_extract_reasoning_effort_missing() -> None:
     body = {"model": "gpt-4o"}
     assert extract_reasoning_effort(body) is None
@@ -100,6 +128,25 @@ def test_apply_reasoning_for_provider_openai() -> None:
     body = {"model": "gpt-4o", "reasoning": {"effort": "low"}}
     result = apply_reasoning_for_provider(body, "openai")
     assert result["reasoning_effort"] == "low"
+    assert "reasoning" not in result
+
+
+@pytest.mark.requirement("FR-REQEXT-040")
+def test_apply_reasoning_for_provider_codex() -> None:
+    """Codex uses OpenAI-compatible API, should apply reasoning_effort."""
+    body = {"model": "gpt-5.3-codex", "variant": "high"}
+    result = apply_reasoning_for_provider(body, "codex")
+    assert result["reasoning_effort"] == "high"
+    assert "reasoning" not in result
+    assert "variant" not in result
+
+
+@pytest.mark.requirement("FR-REQEXT-040")
+def test_apply_reasoning_for_provider_codex_with_reasoning() -> None:
+    """Codex provider handles reasoning object correctly."""
+    body = {"model": "gpt-5.3-codex", "reasoning": {"effort": "medium"}}
+    result = apply_reasoning_for_provider(body, "codex")
+    assert result["reasoning_effort"] == "medium"
     assert "reasoning" not in result
 
 

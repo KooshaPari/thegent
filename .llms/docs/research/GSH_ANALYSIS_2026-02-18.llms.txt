@@ -6,8 +6,8 @@ Source: docs/research/GSH_ANALYSIS_2026-02-18.md
 
 # gsh Analysis: Generative Shell for Agentic Development
 
-**Date**: 2026-02-18  
-**Project**: [atinylittleshell/gsh](https://github.com/atinylittleshell/gsh)  
+**Date**: 2026-02-18
+**Project**: [atinylittleshell/gsh](https://github.com/atinylittleshell/gsh)
 **Status**: Early development (v1.0+), ~377 stars, actively developed
 
 ---
@@ -71,7 +71,7 @@ gsh> # look at my unstaged changes and write test cases for them
 - Use custom MCP servers
 - Maintain conversation context across turns
 
-**Comparison to thegent**: 
+**Comparison to thegent**:
 - **thegent**: Agents run via `thegent run/bg` commands, separate from shell
 - **gsh**: Agents are native shell primitives, no separate command needed
 

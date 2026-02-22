@@ -89,4 +89,3 @@ Check if operation should be debounced.
 **Returns**: True if should proceed, False if debounced
 
 ---
-

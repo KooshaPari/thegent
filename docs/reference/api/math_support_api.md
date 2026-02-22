@@ -115,4 +115,3 @@ Render KaTeX script tags.
 **Returns**: HTML script tags
 
 ---
-

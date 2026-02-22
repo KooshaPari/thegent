@@ -236,4 +236,3 @@ process_file(self: Any, filepath: str)
 Process a single file.
 
 ---
-

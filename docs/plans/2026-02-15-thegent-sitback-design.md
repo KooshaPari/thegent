@@ -1,7 +1,7 @@
 # thegent sitback — Design & Implementation Plan
 
-**Date:** 2026-02-15  
-**Status:** Draft  
+**Date:** 2026-02-15
+**Status:** Draft
 **Scope:** `thegent sitback` command, startup protocol, skill system, dashboard UX, MCP integration
 
 ---
@@ -51,27 +51,27 @@ flowchart TB
     subgraph User
         U[User runs thegent sitback]
     end
-    
+
     subgraph SitbackCommand
         C[thegent sitback --agent minimax]
         C --> E[Set THGENT_SITBACK=1]
         C --> S[Ensure sitback-agent skill]
         C --> L[Launch thegent clode minimax]
     end
-    
+
     subgraph ClaudeCode
         CC[Claude Code process]
         CC --> SP[Startup prompt / skill]
         SP --> D[Dashboard: cockpit + terminal list + ps]
         D --> R[Ready for instructions]
     end
-    
+
     subgraph thegent
         MCP[MCP Server]
         CLI[CLI Commands]
         SK[Skill: sitback-agent]
     end
-    
+
     U --> C
     L --> CC
     CC --> MCP
@@ -391,4 +391,3 @@ Sitback assumes MCP server is running (`thegent serve` or `thegent mcp up`). If 
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

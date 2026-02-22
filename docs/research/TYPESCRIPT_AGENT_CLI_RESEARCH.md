@@ -1,6 +1,6 @@
 # Comprehensive Research: Mux & TypeScript-Based Agent CLIs
 
-**Research Date:** February 20, 2026  
+**Research Date:** February 20, 2026
 **Focus Areas:** Architecture, subagent support, context management, streaming, performance, type safety, error handling
 
 ---
@@ -20,10 +20,10 @@ This document provides an in-depth analysis of **Mux** and **15+ TypeScript/Node
 ## Part 1: Mux Deep Dive
 
 ### Overview
-**Repository:** https://github.com/coder/mux  
-**Language:** TypeScript/Go (frontend/backend)  
-**License:** Not specified in repository  
-**Stars:** Under active development (verification required)  
+**Repository:** https://github.com/coder/mux
+**Language:** TypeScript/Go (frontend/backend)
+**License:** Not specified in repository
+**Stars:** Under active development (verification required)
 **Purpose:** Desktop & browser application for **parallel agentic development** - coordinate multiple AI agents working simultaneously on coding tasks.
 
 ### Architecture
@@ -105,30 +105,30 @@ Each workspace runs independently with its own context window, enabling true par
 - No SDK documented for programmatic control
 
 ### Key Strengths
-✅ **True parallel agent execution** with isolated contexts  
-✅ **Git-native** divergence management  
-✅ **Multiple execution backends** (local, SSH, worktrees)  
-✅ **Familiar interface patterns** (Plan/Exec from Claude Code)  
-✅ **Cost visibility** per workspace  
-✅ **Multi-model support** including local LLMs  
+✅ **True parallel agent execution** with isolated contexts
+✅ **Git-native** divergence management
+✅ **Multiple execution backends** (local, SSH, worktrees)
+✅ **Familiar interface patterns** (Plan/Exec from Claude Code)
+✅ **Cost visibility** per workspace
+✅ **Multi-model support** including local LLMs
 
 ### Key Limitations
-❌ **Desktop/browser only** - not a CLI tool in traditional sense  
-❌ **Limited orchestration patterns** - no explicit subagent support  
-❌ **Context management opaque** - no API for manual control  
-❌ **No public performance benchmarks**  
-❌ **No published SDK for external integration**  
-❌ **Early-stage documentation** - many implementation details unclear  
+❌ **Desktop/browser only** - not a CLI tool in traditional sense
+❌ **Limited orchestration patterns** - no explicit subagent support
+❌ **Context management opaque** - no API for manual control
+❌ **No public performance benchmarks**
+❌ **No published SDK for external integration**
+❌ **Early-stage documentation** - many implementation details unclear
 
 ---
 
 ## Part 2: TypeScript/Node.js Agent Frameworks Comparison
 
 ### 1. Vercel AI SDK
-**Repository:** https://github.com/vercel/ai  
-**Language:** TypeScript (100%)  
-**License:** MIT/ISC  
-**Stars:** 12k+  
+**Repository:** https://github.com/vercel/ai
+**Language:** TypeScript (100%)
+**License:** MIT/ISC
+**Stars:** 12k+
 **Documentation:** https://ai-sdk.dev/
 
 #### Architecture
@@ -206,29 +206,29 @@ const subagentTool = tool({
 - Memory providers (external services) introduce 100-500ms overhead
 
 #### Key Strengths
-✅ **Provider-agnostic abstraction** - true portability  
-✅ **Powerful subagent pattern** with context isolation  
-✅ **Streaming-first design** - excellent UX  
-✅ **Memory flexibility** - three implementation tiers  
-✅ **Strong type safety** via Zod integration  
-✅ **Minimal overhead** - lightweight framework  
-✅ **Next.js/React ecosystem integration**  
+✅ **Provider-agnostic abstraction** - true portability
+✅ **Powerful subagent pattern** with context isolation
+✅ **Streaming-first design** - excellent UX
+✅ **Memory flexibility** - three implementation tiers
+✅ **Strong type safety** via Zod integration
+✅ **Minimal overhead** - lightweight framework
+✅ **Next.js/React ecosystem integration**
 
 #### Key Limitations
-❌ **No built-in orchestration** beyond tool chaining  
-❌ **Stateless between calls** - requires external memory  
-❌ **Limited error recovery** - no automatic retries  
-❌ **Subagent performance opaque** - hard to track costs/tokens  
-❌ **No built-in observability** (LangSmith integration required)  
+❌ **No built-in orchestration** beyond tool chaining
+❌ **Stateless between calls** - requires external memory
+❌ **Limited error recovery** - no automatic retries
+❌ **Subagent performance opaque** - hard to track costs/tokens
+❌ **No built-in observability** (LangSmith integration required)
 
 ---
 
 ### 2. Bee Agent Framework
-**Repository:** https://github.com/i-am-bee/bee-agent-framework  
-**Language:** TypeScript (95%+)  
-**License:** Apache 2.0  
-**Stars:** 3.1k+  
-**Status:** Active development  
+**Repository:** https://github.com/i-am-bee/bee-agent-framework
+**Language:** TypeScript (95%+)
+**License:** Apache 2.0
+**Stars:** 3.1k+
+**Status:** Active development
 **Documentation:** https://github.com/i-am-bee/bee-agent-framework/wiki
 
 #### Architecture
@@ -288,26 +288,26 @@ const subagentTool = tool({
 - **Automatic state serialization** for recovery
 
 #### Key Strengths
-✅ **Comprehensive feature set** - everything included  
-✅ **Multi-agent workflows** built-in  
-✅ **Linux Foundation backing** - credibility & community  
-✅ **MCP protocol support** - ecosystem extensibility  
-✅ **Memory and caching optimization**  
-✅ **Active development** with 583 contributors  
-✅ **Deployment-ready** (Serve module)  
+✅ **Comprehensive feature set** - everything included
+✅ **Multi-agent workflows** built-in
+✅ **Linux Foundation backing** - credibility & community
+✅ **MCP protocol support** - ecosystem extensibility
+✅ **Memory and caching optimization**
+✅ **Active development** with 583 contributors
+✅ **Deployment-ready** (Serve module)
 
 #### Key Limitations
-❌ **Heavyweight framework** - steeper learning curve  
-❌ **Less provider-agnostic** than Vercel AI SDK  
-❌ **Fewer real-world examples** than competitors  
-❌ **Observability requires manual integration**  
+❌ **Heavyweight framework** - steeper learning curve
+❌ **Less provider-agnostic** than Vercel AI SDK
+❌ **Fewer real-world examples** than competitors
+❌ **Observability requires manual integration**
 
 ---
 
 ### 3. OpenAI Swarm
-**Repository:** https://github.com/openai/swarm  
-**Language:** Python (2025 version; TypeScript versions exist in ecosystem)  
-**License:** MIT  
+**Repository:** https://github.com/openai/swarm
+**Language:** Python (2025 version; TypeScript versions exist in ecosystem)
+**License:** MIT
 **Purpose:** Lightweight, stateless agent orchestration pattern library
 
 #### Architecture
@@ -374,28 +374,28 @@ client.run(
 - No formal schema validation mentioned
 
 #### Key Strengths
-✅ **Minimal complexity** - easy to understand  
-✅ **Flexible handoff pattern** - natural agent transitions  
-✅ **Stateless design** - easy to scale and reason about  
-✅ **Context variable simplicity** - approachable state management  
-✅ **No server state** - runs entirely on client  
-✅ **OpenAI official backing**  
+✅ **Minimal complexity** - easy to understand
+✅ **Flexible handoff pattern** - natural agent transitions
+✅ **Stateless design** - easy to scale and reason about
+✅ **Context variable simplicity** - approachable state management
+✅ **No server state** - runs entirely on client
+✅ **OpenAI official backing**
 
 #### Key Limitations
-❌ **Python-first** - ecosystem-driven TypeScript versions may vary  
-❌ **No built-in memory** - manual implementation required  
-❌ **No streaming** - waiting for full response required  
-❌ **Limited error recovery** - basic patterns only  
-❌ **No observability** - manual logging required  
+❌ **Python-first** - ecosystem-driven TypeScript versions may vary
+❌ **No built-in memory** - manual implementation required
+❌ **No streaming** - waiting for full response required
+❌ **Limited error recovery** - basic patterns only
+❌ **No observability** - manual logging required
 
 **TypeScript Implementations:** Community-driven ports exist but lack official support
 
 ---
 
 ### 4. Anthropic SDK (TypeScript)
-**Repository:** https://github.com/anthropics/anthropic-sdk-ts  
-**Language:** TypeScript (100%)  
-**License:** MIT  
+**Repository:** https://github.com/anthropics/anthropic-sdk-ts
+**Language:** TypeScript (100%)
+**License:** MIT
 **Documentation:** https://docs.anthropic.com
 
 #### Architecture
@@ -454,28 +454,28 @@ const tool = Anthropic.beta.BetaToolUseBlock({
 **Benchmarks:** Not formally published
 
 #### Key Strengths
-✅ **Deep Claude integration** - bleeding-edge features first  
-✅ **Tool use pattern** - native to Claude  
-✅ **Streaming support** via SSE  
-✅ **Token counting** for context management  
-✅ **Batch API** for parallelization  
-✅ **Strong type safety** throughout  
-✅ **Official Anthropic backing**  
+✅ **Deep Claude integration** - bleeding-edge features first
+✅ **Tool use pattern** - native to Claude
+✅ **Streaming support** via SSE
+✅ **Token counting** for context management
+✅ **Batch API** for parallelization
+✅ **Strong type safety** throughout
+✅ **Official Anthropic backing**
 
 #### Key Limitations
-❌ **Claude-only** - no provider abstraction  
-❌ **Lower-level abstraction** than Vercel AI SDK  
-❌ **No built-in orchestration** beyond tool chaining  
-❌ **Limited memory patterns** compared to Vercel AI SDK  
-❌ **Message batches less documented** than other features  
+❌ **Claude-only** - no provider abstraction
+❌ **Lower-level abstraction** than Vercel AI SDK
+❌ **No built-in orchestration** beyond tool chaining
+❌ **Limited memory patterns** compared to Vercel AI SDK
+❌ **Message batches less documented** than other features
 
 ---
 
 ### 5. LangChain.js
-**Repository:** https://github.com/langchain-ai/langchainjs  
-**Language:** TypeScript (100%)  
-**License:** MIT  
-**Stars:** 10k+  
+**Repository:** https://github.com/langchain-ai/langchainjs
+**Language:** TypeScript (100%)
+**License:** MIT
+**Stars:** 10k+
 **Documentation:** https://docs.langchain.com/oss/javascript/langchain
 
 #### Architecture
@@ -537,27 +537,27 @@ const tool = Anthropic.beta.BetaToolUseBlock({
 **Benchmarks:** Not formally published
 
 #### Key Strengths
-✅ **LangGraph foundation** - durable execution  
-✅ **Provider-agnostic** - true flexibility  
-✅ **Deep Agents** production-ready  
-✅ **Composition model** - build complex systems  
-✅ **LangSmith integration** - observability  
-✅ **Mature ecosystem** - many examples  
+✅ **LangGraph foundation** - durable execution
+✅ **Provider-agnostic** - true flexibility
+✅ **Deep Agents** production-ready
+✅ **Composition model** - build complex systems
+✅ **LangSmith integration** - observability
+✅ **Mature ecosystem** - many examples
 
 #### Key Limitations
-❌ **Steeper learning curve** - more components to understand  
-❌ **Less streaming-optimized** than Vercel AI SDK  
-❌ **Memory patterns less elegant** than Vercel AI SDK  
-❌ **Observability requires external tool** (LangSmith)  
+❌ **Steeper learning curve** - more components to understand
+❌ **Less streaming-optimized** than Vercel AI SDK
+❌ **Memory patterns less elegant** than Vercel AI SDK
+❌ **Observability requires external tool** (LangSmith)
 
 ---
 
 ### 6. Eliza (elizaOS)
-**Repository:** https://github.com/elizaOS/eliza  
-**Language:** TypeScript (100%)  
-**License:** MIT  
-**Stars:** 17.6k+  
-**Contributors:** 583  
+**Repository:** https://github.com/elizaOS/eliza
+**Language:** TypeScript (100%)
+**License:** MIT
+**Stars:** 17.6k+
+**Contributors:** 583
 **Documentation:** Official & community examples
 
 #### Architecture
@@ -619,26 +619,26 @@ const tool = Anthropic.beta.BetaToolUseBlock({
 - Plugin type safety optional (implementation dependent)
 
 #### Key Strengths
-✅ **Most comprehensive** - everything included  
-✅ **Multi-channel deployment** - reach users everywhere  
-✅ **Large community** - 583 contributors  
-✅ **Active development** - 17.6k stars  
-✅ **Professional dashboard** - production-ready UI  
-✅ **Plugin ecosystem** - highly extensible  
-✅ **MIT licensed** - commercial-friendly  
+✅ **Most comprehensive** - everything included
+✅ **Multi-channel deployment** - reach users everywhere
+✅ **Large community** - 583 contributors
+✅ **Active development** - 17.6k stars
+✅ **Professional dashboard** - production-ready UI
+✅ **Plugin ecosystem** - highly extensible
+✅ **MIT licensed** - commercial-friendly
 
 #### Key Limitations
-❌ **Heavyweight** - steeper learning curve  
-❌ **Broader scope** than pure agent orchestration  
-❌ **Performance benchmarks lacking**  
-❌ **Channel-specific features** may add complexity  
+❌ **Heavyweight** - steeper learning curve
+❌ **Broader scope** than pure agent orchestration
+❌ **Performance benchmarks lacking**
+❌ **Channel-specific features** may add complexity
 
 ---
 
 ### 7. Rivet
-**Repository:** https://github.com/Ironclad/rivet  
-**Language:** TypeScript  
-**License:** Unknown (commercial product)  
+**Repository:** https://github.com/Ironclad/rivet
+**Language:** TypeScript
+**License:** Unknown (commercial product)
 **Documentation:** Visual editor + TypeScript library docs
 
 #### Architecture
@@ -698,27 +698,27 @@ const tool = Anthropic.beta.BetaToolUseBlock({
 - Graph structure validation
 
 #### Key Strengths
-✅ **Visual development** - non-developers can build  
-✅ **TypeScript integration** - flexible deployment  
-✅ **Low barrier to entry** - visual editor intuitive  
-✅ **Prompt engineering focus** - excellent for iteration  
-✅ **Production embedding** - not just prototyping  
-✅ **Multiple LLM providers** - not locked in  
+✅ **Visual development** - non-developers can build
+✅ **TypeScript integration** - flexible deployment
+✅ **Low barrier to entry** - visual editor intuitive
+✅ **Prompt engineering focus** - excellent for iteration
+✅ **Production embedding** - not just prototyping
+✅ **Multiple LLM providers** - not locked in
 
 #### Key Limitations
-❌ **Less mature than competitors** - smaller ecosystem  
-❌ **Commercial product** - licensing unclear  
-❌ **Limited multi-agent orchestration** - not designed for it  
-❌ **Performance characteristics opaque**  
-❌ **Learning curve** - visual paradigm unfamiliar to some  
+❌ **Less mature than competitors** - smaller ecosystem
+❌ **Commercial product** - licensing unclear
+❌ **Limited multi-agent orchestration** - not designed for it
+❌ **Performance characteristics opaque**
+❌ **Learning curve** - visual paradigm unfamiliar to some
 
 ---
 
 ### 8. Dify
-**Repository:** https://github.com/langgenius/dify  
-**Language:** TypeScript 50.8%, Python 42.8%  
-**License:** Apache 2.0  
-**Stars:** 30k+  
+**Repository:** https://github.com/langgenius/dify
+**Language:** TypeScript 50.8%, Python 42.8%
+**License:** Apache 2.0
+**Stars:** 30k+
 **Documentation:** Official + visual builder
 
 #### Architecture
@@ -781,27 +781,27 @@ const tool = Anthropic.beta.BetaToolUseBlock({
 - Visual builder abstracts complexity
 
 #### Key Strengths
-✅ **Visual workflow builder** - low-code accessibility  
-✅ **50+ built-in tools** - comprehensive toolkit  
-✅ **100+ LLM models** - maximum flexibility  
-✅ **RAG built-in** - document handling integrated  
-✅ **BaaS model** - no infrastructure management  
-✅ **REST APIs** - language-agnostic integration  
-✅ **Apache 2.0** - open source, commercial-friendly  
-✅ **Large community** - 30k stars  
+✅ **Visual workflow builder** - low-code accessibility
+✅ **50+ built-in tools** - comprehensive toolkit
+✅ **100+ LLM models** - maximum flexibility
+✅ **RAG built-in** - document handling integrated
+✅ **BaaS model** - no infrastructure management
+✅ **REST APIs** - language-agnostic integration
+✅ **Apache 2.0** - open source, commercial-friendly
+✅ **Large community** - 30k stars
 
 #### Key Limitations
-❌ **Steeper learning curve** - many features  
-❌ **Performance benchmarks lacking**  
-❌ **Less agent-specific** than pure agent frameworks  
-❌ **Visual builder may not suit advanced users**  
+❌ **Steeper learning curve** - many features
+❌ **Performance benchmarks lacking**
+❌ **Less agent-specific** than pure agent frameworks
+❌ **Visual builder may not suit advanced users**
 
 ---
 
 ### 9. AgentKit (Coinbase)
-**Repository:** https://github.com/coinbase/agentkit  
-**Language:** TypeScript  
-**License:** Apache 2.0  
+**Repository:** https://github.com/coinbase/agentkit
+**Language:** TypeScript
+**License:** Apache 2.0
 **Purpose:** Framework-agnostic crypto wallet toolkit for agents
 
 #### Architecture
@@ -879,27 +879,27 @@ const agent = new MyFrameworkAgent({
 - Wallet state validation
 
 #### Key Strengths
-✅ **Framework agnostic** - works with anything  
-✅ **50+ on-chain actions** - comprehensive crypto support  
-✅ **Multiple wallet providers** - not locked to one  
-✅ **Deep Coinbase integration** - authoritative crypto support  
-✅ **MCP native support** - standards-aligned  
-✅ **Apache 2.0** - commercial-friendly  
+✅ **Framework agnostic** - works with anything
+✅ **50+ on-chain actions** - comprehensive crypto support
+✅ **Multiple wallet providers** - not locked to one
+✅ **Deep Coinbase integration** - authoritative crypto support
+✅ **MCP native support** - standards-aligned
+✅ **Apache 2.0** - commercial-friendly
 
 #### Key Limitations
-❌ **Not an orchestration framework** - requires separate tool  
-❌ **Crypto-specific** - not for general agents  
-❌ **Blockchain latency** inherent to crypto  
-❌ **Limited non-crypto integrations**  
+❌ **Not an orchestration framework** - requires separate tool
+❌ **Crypto-specific** - not for general agents
+❌ **Blockchain latency** inherent to crypto
+❌ **Limited non-crypto integrations**
 
 **Best For:** Agents that need crypto/blockchain capabilities within existing framework
 
 ---
 
 ### 10. AutoGPT
-**Repository:** https://github.com/Significant-Gravitas/Auto-GPT  
-**Language:** TypeScript 32.9%, Python majority  
-**License:** MIT  
+**Repository:** https://github.com/Significant-Gravitas/Auto-GPT
+**Language:** TypeScript 32.9%, Python majority
+**License:** MIT
 **Stars:** 170k+ (JavaScript/TypeScript portion)
 
 #### Architecture
@@ -969,27 +969,27 @@ const agent = new MyFrameworkAgent({
 - Visual builder abstracts implementation
 
 #### Key Strengths
-✅ **Visual agent builder** - low-code accessibility  
-✅ **Pre-built agents** - marketplace of templates  
-✅ **Agent Protocol standard** - cross-platform  
-✅ **Deployment included** - server provided  
-✅ **MIT licensed** - commercial-friendly  
-✅ **Large community** - 170k stars  
-✅ **Modern DevOps** - Docker, Node.js  
+✅ **Visual agent builder** - low-code accessibility
+✅ **Pre-built agents** - marketplace of templates
+✅ **Agent Protocol standard** - cross-platform
+✅ **Deployment included** - server provided
+✅ **MIT licensed** - commercial-friendly
+✅ **Large community** - 170k stars
+✅ **Modern DevOps** - Docker, Node.js
 
 #### Key Limitations
-❌ **Less matured than alternatives** - newer platform  
-❌ **Performance benchmarks lacking**  
-❌ **TypeScript only in frontend** - backend is Python  
-❌ **Learning curve** - many features to master  
-❌ **Less focus on context optimization** than agent frameworks  
+❌ **Less matured than alternatives** - newer platform
+❌ **Performance benchmarks lacking**
+❌ **TypeScript only in frontend** - backend is Python
+❌ **Learning curve** - many features to master
+❌ **Less focus on context optimization** than agent frameworks
 
 ---
 
 ### 11. Nango (API Integration)
-**Repository:** https://github.com/NangoHQ/nango  
-**Language:** TypeScript 95.5%  
-**License:** Apache 2.0  
+**Repository:** https://github.com/NangoHQ/nango
+**Language:** TypeScript 95.5%
+**License:** Apache 2.0
 **Purpose:** API integration abstraction layer (not orchestration, but useful for agents)
 
 #### Architecture
@@ -1059,27 +1059,27 @@ const agent = new MyFrameworkAgent({
 - Error reporting and visibility
 
 #### Key Strengths
-✅ **600+ API integration** - comprehensive coverage  
-✅ **Code-based approach** - maximum flexibility  
-✅ **OAuth abstraction** - authentication simplified  
-✅ **Observable by default** - debugging easier  
-✅ **Self-hosted option** - full control  
-✅ **Apache 2.0** - commercial-friendly  
+✅ **600+ API integration** - comprehensive coverage
+✅ **Code-based approach** - maximum flexibility
+✅ **OAuth abstraction** - authentication simplified
+✅ **Observable by default** - debugging easier
+✅ **Self-hosted option** - full control
+✅ **Apache 2.0** - commercial-friendly
 
 #### Key Limitations
-❌ **Not orchestration framework** - integration layer only  
-❌ **Requires API key management** - operational overhead  
-❌ **Performance benchmarks lacking**  
-❌ **Learning curve for custom functions**  
+❌ **Not orchestration framework** - integration layer only
+❌ **Requires API key management** - operational overhead
+❌ **Performance benchmarks lacking**
+❌ **Learning curve for custom functions**
 
 **Best For:** Agents needing external API access with simplified credential management
 
 ---
 
 ### 12. Inkeep Agents
-**Repository:** https://github.com/inkeep/inkeep-js  
-**Language:** TypeScript  
-**License:** Proprietary/Commercial  
+**Repository:** https://github.com/inkeep/inkeep-js
+**Language:** TypeScript
+**License:** Proprietary/Commercial
 **Purpose:** No-code & TypeScript SDK for multi-agent systems
 
 #### Architecture
@@ -1135,24 +1135,24 @@ const agent = new MyFrameworkAgent({
 **Benchmarks:** Not formally published
 
 #### Key Strengths
-✅ **No-code and code options** - accessibility + power  
-✅ **Multi-agent workflows** - collaboration built-in  
-✅ **Knowledge base integration** - context enhancement  
-✅ **TypeScript SDK** - programmatic control  
+✅ **No-code and code options** - accessibility + power
+✅ **Multi-agent workflows** - collaboration built-in
+✅ **Knowledge base integration** - context enhancement
+✅ **TypeScript SDK** - programmatic control
 
 #### Key Limitations
-❌ **Commercial/proprietary** - not fully open source  
-❌ **Limited public information** - less community  
-❌ **Performance benchmarks lacking**  
-❌ **Documentation less comprehensive** than open source alternatives  
+❌ **Commercial/proprietary** - not fully open source
+❌ **Limited public information** - less community
+❌ **Performance benchmarks lacking**
+❌ **Documentation less comprehensive** than open source alternatives
 
 ---
 
 ### 13. CopilotKit
-**Repository:** https://github.com/CopilotKit/CopilotKit  
-**Language:** TypeScript/JavaScript  
-**License:** ISC/MIT  
-**Stars:** 28.9k+  
+**Repository:** https://github.com/CopilotKit/CopilotKit
+**Language:** TypeScript/JavaScript
+**License:** ISC/MIT
+**Stars:** 28.9k+
 **Purpose:** Frontend framework for agents & generative UI
 
 #### Architecture
@@ -1206,26 +1206,26 @@ const agent = new MyFrameworkAgent({
 - Retry capabilities
 
 #### Key Strengths
-✅ **UI-first framework** - unique positioning  
-✅ **React integration** - largest ecosystem  
-✅ **Streaming support** - responsive UI  
-✅ **Large community** - 28.9k stars  
-✅ **Well-documented** - good examples  
+✅ **UI-first framework** - unique positioning
+✅ **React integration** - largest ecosystem
+✅ **Streaming support** - responsive UI
+✅ **Large community** - 28.9k stars
+✅ **Well-documented** - good examples
 
 #### Key Limitations
-❌ **Not orchestration** - frontend layer only  
-❌ **Requires separate backend** - incomplete solution  
-❌ **UI-specific** - not for non-UI applications  
-❌ **Less mature than full frameworks** for pure agent logic  
+❌ **Not orchestration** - frontend layer only
+❌ **Requires separate backend** - incomplete solution
+❌ **UI-specific** - not for non-UI applications
+❌ **Less mature than full frameworks** for pure agent logic
 
 **Best For:** Building user interfaces for agent-powered applications
 
 ---
 
 ### 14. Better Agents
-**Repository:** https://github.com/betterlabs/better-agents  
-**Language:** Python & TypeScript  
-**License:** MIT  
+**Repository:** https://github.com/betterlabs/better-agents
+**Language:** Python & TypeScript
+**License:** MIT
 **Purpose:** Standards framework for building agents
 
 #### Architecture
@@ -1258,25 +1258,25 @@ const agent = new MyFrameworkAgent({
 - TypeScript-specific benefits
 
 #### Key Strengths
-✅ **Standards-based** - avoid vendor lock-in  
-✅ **Multi-language** - Python & TypeScript  
-✅ **Community-driven** - open governance  
-✅ **Interoperability** - cross-language agents  
+✅ **Standards-based** - avoid vendor lock-in
+✅ **Multi-language** - Python & TypeScript
+✅ **Community-driven** - open governance
+✅ **Interoperability** - cross-language agents
 
 #### Key Limitations
-❌ **Early-stage** - less mature than established frameworks  
-❌ **Limited adoption** - smaller ecosystem  
-❌ **Performance benchmarks lacking**  
-❌ **Less documentation** than major frameworks  
+❌ **Early-stage** - less mature than established frameworks
+❌ **Limited adoption** - smaller ecosystem
+❌ **Performance benchmarks lacking**
+❌ **Less documentation** than major frameworks
 
 **Best For:** Organizations standardizing agent development across teams
 
 ---
 
 ### 15. Promptfoo
-**Repository:** https://github.com/promptfoo/promptfoo  
-**Language:** TypeScript 96.7%  
-**License:** MIT  
+**Repository:** https://github.com/promptfoo/promptfoo
+**Language:** TypeScript 96.7%
+**License:** MIT
 **Purpose:** Testing and evaluation tool for LLM applications
 
 #### Architecture
@@ -1357,18 +1357,18 @@ const agent = new MyFrameworkAgent({
 - Detailed error reporting
 
 #### Key Strengths
-✅ **100% local execution** - privacy-first  
-✅ **Multi-model testing** - vendor independence  
-✅ **Security-focused** - red teaming built-in  
-✅ **CI/CD integration** - automation ready  
-✅ **MIT licensed** - commercial-friendly  
-✅ **TypeScript native** - good tooling  
+✅ **100% local execution** - privacy-first
+✅ **Multi-model testing** - vendor independence
+✅ **Security-focused** - red teaming built-in
+✅ **CI/CD integration** - automation ready
+✅ **MIT licensed** - commercial-friendly
+✅ **TypeScript native** - good tooling
 
 #### Key Limitations
-❌ **Testing tool only** - not orchestration  
-❌ **Requires separate agent framework** - incomplete solution  
-❌ **Learning curve** - many evaluation patterns  
-❌ **Performance benchmarks lacking** for the tool itself  
+❌ **Testing tool only** - not orchestration
+❌ **Requires separate agent framework** - incomplete solution
+❌ **Learning curve** - many evaluation patterns
+❌ **Performance benchmarks lacking** for the tool itself
 
 **Best For:** Validating agent quality and security before deployment
 
@@ -1421,7 +1421,7 @@ const subagentTool = tool({
 - Result compressed before returning to parent
 - Parallelizable via Promise.all
 
-**Pros:** Simple, context isolation, scalable  
+**Pros:** Simple, context isolation, scalable
 **Cons:** No parent-child state sharing, limited coordination
 
 ---
@@ -1442,7 +1442,7 @@ def handle_escalation(context_variables):
 - Peer-to-peer agent networks
 - Stateless between calls
 
-**Pros:** Flexible, natural agent transitions, scalable  
+**Pros:** Flexible, natural agent transitions, scalable
 **Cons:** Manual state management, no hierarchy
 
 ---
@@ -1468,7 +1468,7 @@ const workflow = new Workflow({
 - Shared state between agents
 - Parallel step execution
 
-**Pros:** Declarative, clear data flow, parallel execution  
+**Pros:** Declarative, clear data flow, parallel execution
 **Cons:** More complex setup, less flexible
 
 ---
@@ -1490,7 +1490,7 @@ class AgentRuntime {
 - Isolated state per agent
 - Event-driven execution
 
-**Pros:** Highly scalable, fault-isolated, natural concurrency  
+**Pros:** Highly scalable, fault-isolated, natural concurrency
 **Cons:** Complex debugging, async complexity
 
 ---
@@ -1695,7 +1695,7 @@ stream.on("message", (message) => {
 let buffer = ""
 for await (const token of textStream) {
   buffer += token
-  
+
   if (buffer.match(/[.!?]\s/)) {
     // Display sentence-level chunks
     console.log(buffer)
@@ -1747,7 +1747,7 @@ async function callWithRetry(fn, maxRetries = 3) {
       return await fn()
     } catch (error) {
       if (attempt === maxRetries - 1) throw error
-      
+
       // Exponential backoff
       const delay = Math.pow(2, attempt) * 1000
       await new Promise(resolve => setTimeout(resolve, delay))
@@ -1770,13 +1770,13 @@ class CircuitBreaker {
   private lastFailTime = 0
   private threshold = 5
   private timeout = 60000 // 1 minute
-  
+
   async call(fn) {
-    if (this.failures > this.threshold && 
+    if (this.failures > this.threshold &&
         Date.now() - this.lastFailTime < this.timeout) {
       throw new Error("Circuit breaker open")
     }
-    
+
     try {
       const result = await fn()
       this.failures = 0 // Reset on success
@@ -1805,7 +1805,7 @@ const tool = tool({
     // Try primary approach
     const primaryResult = await tryPrimary(params)
     if (primaryResult) return primaryResult
-    
+
     // Fallback to simpler approach
     const fallbackResult = await tryFallback(params)
     return fallbackResult || { incomplete: true }
@@ -2033,7 +2033,7 @@ The TypeScript agent CLI landscape is **diverse and rapidly evolving**:
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** February 20, 2026  
-**Research Scope:** TypeScript/Node.js agent CLIs and frameworks  
+**Document Version:** 1.0
+**Last Updated:** February 20, 2026
+**Research Scope:** TypeScript/Node.js agent CLIs and frameworks
 **Total Frameworks Analyzed:** 15+ including Mux

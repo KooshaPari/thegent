@@ -58,7 +58,7 @@ This document covers: Desktop (Windows/macOS/Linux), Mobile (iOS/Android), Weara
 ### The "Full" Goal
 Achieve feature parity across all platforms with options for:
 1. **Real Hardware** - Physical devices
-2. **Simulators/Emulators** - OS-provided virtual environments  
+2. **Simulators/Emulators** - OS-provided virtual environments
 3. **Virtual Machines** - Third-party virtualization
 
 ### Linux (Wayland) - Achieving Full Support
@@ -323,7 +323,7 @@ pip install mobile-mcp
 # Example Maestro flow
 - launchApp: com.example.app
 - tapOn: "Login"
-- inputText: 
+- inputText:
     id: "email"
     text: "test@example.com"
 - tapOn: "Submit"
@@ -398,21 +398,21 @@ action = client.tap(element_id="login_button")
 # thegent mobile automation integration
 class MobileAgentInterface:
     """Unified interface using Mobile MCP."""
-    
+
     def __init__(self, platform: str, device: str = "auto"):
         self.platform = platform
         self.mcp = MobileMCP(platform=platform, device=device)
-    
+
     def get_screen_state(self) -> AccessibilityTree:
         """Get current screen accessibility tree."""
         return self.mcp.get_tree()
-    
+
     def safe_interact(self, action: Interaction) -> Result:
         """Execute action with collision avoidance."""
         # Check if user is interacting
         if self.detect_user_interaction():
             return Result(blocked=True)
-        
+
         # Execute via MCP
         return self.mcp.execute(action)
 ```
@@ -424,12 +424,12 @@ class MobileAgentInterface:
 ```python
 class UnifiedAgentInterface:
     """Unified interface for all platforms and environments."""
-    
+
     def __init__(self, platform: str, environment: str = "auto"):
         self.platform = platform
         self.environment = environment
         self._init_backend()
-    
+
     def _init_backend(self):
         if self.platform == "ios":
             self.backend = IOSBackend(self.environment)  # auto-detects real/simulator
@@ -438,12 +438,12 @@ class UnifiedAgentInterface:
         elif self.platform == "windows":
             self.backend = WindowsBackend()
         # ... etc
-    
+
     # All platforms share this API
     def get_interaction_state(self) -> UserInteractionState:
         """Get current user interaction state - works everywhere."""
         return self.backend.get_user_interaction_state()
-    
+
     def safe_agent_action(self, action: AgentAction) -> ActionResult:
         """Execute action with collision avoidance."""
         if self.backend.check_collision(action.target):
@@ -492,7 +492,7 @@ class UnifiedAgentInterface:
 
 #### 1. MouseMux (Windows)
 - **What**: Multi-cursor on Windows desktop
-- **Features**: 
+- **Features**:
   - Multiple mice = multiple cursors
   - Device customization per cursor
   - Keyboard pairing
@@ -689,11 +689,11 @@ impl WindowsCursor {
         unsafe { GetCursorPos(&mut point) };
         (point.x, point.y)
     }
-    
+
     pub fn set_position(x: i32, y: i32) {
         unsafe { SetCursorPos(x, y) }
     }
-    
+
     pub fn is_user_clicking() -> bool {
         // Check left mouse button
         unsafe { (GetAsyncKeyState(0x01) & 0x8000) != 0 }
@@ -716,7 +716,7 @@ impl MacOSCursor {
         let event = CGEvent::new(None).unwrap();
         (event.location().x as i32, event.location().y as i32)
     }
-    
+
     pub fn set_position(x: i32, y: i32) {
         let mut event = CGEvent::new_location(core_graphics::geometry::CGPoint::new(x as f64, y as i32));
         event.post_tap(CGEventTapLocation::HIDSystemState);
@@ -741,7 +741,7 @@ impl LinuxCursor {
         // Parse output: "x:100 y:200 screen:0"
         // ...
     }
-    
+
     pub fn set_position(x: i32, y: i32) {
         std::process::Command::new("xdotool")
             .args(["mousemove", &x.to_string(), &y.to_string()])
@@ -774,20 +774,20 @@ impl CollisionDetector {
             user_cursor_pos: Arc::new(Mutex::new((0, 0))),
         }
     }
-    
+
     pub fn check(&self, target: (i32, i32)) -> CollisionState {
         let user_pos = *self.user_cursor_pos.lock().unwrap();
         let dx = target.0 - user_pos.0;
         let dy = target.1 - user_pos.1;
         let distance = ((dx * dx + dy * dy) as f64).sqrt() as u32;
-        
+
         if distance < self.config.safe_zone_radius {
             CollisionState::Collision
         } else {
             CollisionState::Safe
         }
     }
-    
+
     pub fn wait_for_clear(&self, target: (i32, i32)) -> bool {
         // Wait for user cursor to move away
         // Timeout after configurable duration
@@ -817,7 +817,7 @@ impl Overlay {
         // Render agent cursor indicator
         // Show progress/status
     }
-    
+
     pub fn hide(&mut self) {
         // Hide overlay window
     }
@@ -845,38 +845,38 @@ class AgentState(Enum):
 
 class CursorManager:
     """Main cursor manager for desktop agent."""
-    
+
     def __init__(
         self,
         safe_zone_radius: int = 100,
         enable_overlay: bool = True,
     ):
         ...
-    
+
     def get_user_cursor_position(self) -> Tuple[int, int]:
         """Get current user cursor position."""
         ...
-    
+
     def is_user_clicking(self) -> bool:
         """Check if user is currently clicking."""
         ...
-    
+
     def check_collision(self, x: int, y: int) -> bool:
         """Check if position collides with user cursor safe zone."""
         ...
-    
+
     def set_agent_state(self, state: AgentState, message: str = ""):
         """Update agent state displayed in overlay."""
         ...
-    
+
     def move_agent_cursor(self, x: int, y: int) -> bool:
         """Move agent cursor to position (returns False if collision)."""
         ...
-    
+
     def click_at(self, x: int, y: int, button: str = "left") -> bool:
         """Click at position, respecting collision detection."""
         ...
-    
+
     def wait_for_user_idle(self, timeout_ms: int = 5000) -> bool:
         """Wait for user to stop interacting."""
         ...

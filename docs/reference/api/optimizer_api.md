@@ -90,4 +90,3 @@ record_run(self: Any, version_id: str, result: RunResult, tokens: int, cost: flo
 Record the outcome of a prompt version's execution.
 
 ---
-

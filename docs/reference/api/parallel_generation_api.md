@@ -98,4 +98,3 @@ Generate documentation in parallel.
 **Returns**: List of generation results
 
 ---
-

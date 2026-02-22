@@ -106,4 +106,3 @@ async def test_mtsp_03_task_worker_pool():
         finally:
             pool.stop()
             await pool_task
-

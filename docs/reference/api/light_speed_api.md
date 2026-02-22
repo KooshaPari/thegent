@@ -33,4 +33,3 @@ plan(self: Any, distance: float, data_size: int)
 Plan compensation for light-speed delay.
 
 ---
-

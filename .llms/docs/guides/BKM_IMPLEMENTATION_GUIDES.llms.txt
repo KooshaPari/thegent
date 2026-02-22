@@ -29,8 +29,8 @@ Source: docs/guides/BKM_IMPLEMENTATION_GUIDES.md
 
 ## BKM-01: thegent-resources
 
-**Status**: ✅ Done  
-**Language**: Rust (PyO3 + Binary)  
+**Status**: ✅ Done
+**Language**: Rust (PyO3 + Binary)
 **ROI**: 50x speedup (eliminates 2-3 subprocess spawns)
 
 ### Implementation Steps
@@ -155,8 +155,8 @@ print(sample_resources())
 
 ## BKM-02: thegent-parser
 
-**Status**: ✅ Done  
-**Language**: Rust (PyO3)  
+**Status**: ✅ Done
+**Language**: Rust (PyO3)
 **ROI**: 10x speedup (precompiled regex, zero-copy)
 
 ### Implementation Steps
@@ -227,8 +227,8 @@ print(extract_tags('<TASK>test</TASK>'))
 
 ## BKM-03: thegent-crypto
 
-**Status**: ✅ Done  
-**Language**: Rust (PyO3)  
+**Status**: ✅ Done
+**Language**: Rust (PyO3)
 **ROI**: 5x speedup (constant-time comparison, optimized HMAC)
 
 ### Implementation Steps
@@ -279,7 +279,7 @@ def sign_artifact(artifact: dict, secret_key: str) -> str:
 
 ## BKM-04: load_based_limits Integration
 
-**Status**: ✅ Done  
+**Status**: ✅ Done
 **Language**: Python wrapper (uses BKM-01)
 
 ### Implementation Steps
@@ -299,8 +299,8 @@ def sample_resources() -> ResourceSnapshot:
 
 ## BKM-05: State-SHM
 
-**Status**: ⏳ Pending  
-**Language**: Rust (Shared Memory)  
+**Status**: ⏳ Pending
+**Language**: Rust (Shared Memory)
 **ROI**: Cross-process atomicity, zero-copy state sharing
 
 ### Implementation Steps
@@ -398,8 +398,8 @@ class CircuitBreakerRegistry:
 
 ## BKM-06: thegent-git
 
-**Status**: ⏳ Pending  
-**Language**: Rust (PyO3 with gitoxide)  
+**Status**: ⏳ Pending
+**Language**: Rust (PyO3 with gitoxide)
 **ROI**: 5-20x faster than git subprocesses
 
 ### Implementation Steps
@@ -452,18 +452,18 @@ pub struct DiffStats {
 fn get_git_metadata(repo_path: &str) -> PyResult<GitMetadata> {
     let repo = open(repo_path)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{}", e)))?;
-    
+
     let head = repo.head_id()
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{}", e)))?
         .to_string();
-    
+
     let branch = repo.head_name()
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{}", e)))?
         .to_string();
-    
+
     // Get status and diff stats
     // ...
-    
+
     Ok(GitMetadata {
         head,
         branch,
@@ -509,8 +509,8 @@ def _get_git_branch(self, root: Path) -> str:
 
 ## BKM-08: thegent-discovery
 
-**Status**: ⏳ Pending  
-**Language**: Rust (Standalone Binary)  
+**Status**: ⏳ Pending
+**Language**: Rust (Standalone Binary)
 **ROI**: Consolidates multiple subprocess spawns
 
 ### Implementation Steps
@@ -555,13 +555,13 @@ struct DiscoveredAgent {
 fn main() {
     let mut system = System::new_all();
     system.refresh_all();
-    
+
     let mut agents = Vec::new();
-    
+
     for (pid, process) in system.processes() {
         let exe = process.exe().unwrap_or_default();
         let name = exe.file_name().unwrap_or_default().to_string_lossy();
-        
+
         // Detect agent processes (cursor-agent, claude-code, etc.)
         if name.contains("cursor-agent") || name.contains("claude-code") {
             agents.push(DiscoveredAgent {
@@ -573,7 +573,7 @@ fn main() {
             });
         }
     }
-    
+
     println!("{}", serde_json::to_string(&agents).unwrap());
 }
 ```
@@ -607,8 +607,8 @@ def _discover_agents_native() -> list[DiscoveredAgent]:
 
 ## BKM-10: JSONL Streaming
 
-**Status**: ⏳ Pending  
-**Language**: Rust (PyO3 with streaming API)  
+**Status**: ⏳ Pending
+**Language**: Rust (PyO3 with streaming API)
 **ROI**: Zero-copy streaming, 10x faster
 
 ### Implementation Steps
@@ -638,8 +638,8 @@ fn parse_jsonl_stream(stream: &[u8]) -> PyResult<Vec<PyObject>> {
 
 ## BKM-11: Native Governance Scanner
 
-**Status**: ⏳ Pending  
-**Language**: Rust (Extend hook-dispatcher)  
+**Status**: ⏳ Pending
+**Language**: Rust (Extend hook-dispatcher)
 **ROI**: Eliminates Python scanner.py spawns
 
 ### Implementation Steps
@@ -733,20 +733,20 @@ def test_native_fallback():
 def test_parser_performance():
     """Benchmark native vs Python parser."""
     text = "<TASK>" * 1000 + "content" + "</TASK>" * 1000
-    
+
     # Python
     start = time.perf_counter()
     for _ in range(100):
         extract_tags(text)  # Python fallback
     python_time = time.perf_counter() - start
-    
+
     # Native
     os.environ["THGENT_USE_NATIVE_PARSER"] = "1"
     start = time.perf_counter()
     for _ in range(100):
         extract_tags(text)  # Native
     native_time = time.perf_counter() - start
-    
+
     assert native_time < python_time / 5  # At least 5x faster
 ```
 
@@ -782,7 +782,7 @@ uv run pytest tests/test_native_backmatter.py
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

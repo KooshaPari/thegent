@@ -111,4 +111,3 @@ get_band(score: float)
 Return the appropriate HealthBand for a numeric score (0-100).
 
 ---
-

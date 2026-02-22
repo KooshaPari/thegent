@@ -30,7 +30,7 @@ mesh_scanner::detect_agent_type() {
             return 0
         fi
     done
-    
+
     # Generic check for Python agents
     if [[ "$cmdline" == *"python"* ]] && [[ "$cmdline" == *"agent"* ]]; then
         echo "python-agent"
@@ -71,12 +71,12 @@ mesh_scanner::scan() {
     echo "Scanning for agents..."
     local agents=()
     mapfile -t agents < <(mesh_scanner::scan_all)
-    
+
     if [[ ${#agents[@]} -eq 0 || -z "${agents[0]}" ]]; then
         echo "  No agents found"
         return 1
     fi
-    
+
     echo "  Found ${#agents[@]} agent(s):"
     for agent in "${agents[@]}"; do
         local pid="${agent%%:*}"
@@ -115,10 +115,10 @@ mesh_scanner::generate_manifest() {
     local pid="$1"
     local agent_type="$2"
     local workdir=$(mesh_scanner::get_workdir "$pid")
-    
+
     local manifest_file="$MESH_HOME/agents/agent-${pid}.yaml"
     mkdir -p "$MESH_HOME/agents"
-    
+
     {
         echo "id: agent-${pid}"
         echo "type: ${agent_type}"
@@ -127,7 +127,7 @@ mesh_scanner::generate_manifest() {
         echo "working_directory: ${workdir}"
         echo "status: running"
     } > "$manifest_file"
-    
+
     echo "$manifest_file"
 }
 
@@ -145,29 +145,29 @@ mesh_scanner::touch_heartbeat() {
 mesh_scanner::check_heartbeats() {
     local now=$(date +%s)
     local stale=()
-    
+
     for hb in "$MESH_HOME"/heartbeats/agent-*; do
         [[ -f "$hb" ]] || continue
-        
+
         local mtime
         if [[ "$OSTYPE" == "darwin"* ]]; then
             mtime=$(stat -f %m "$hb" 2>/dev/null || echo 0)
         else
             mtime=$(stat -c %Y "$hb" 2>/dev/null || echo 0)
         fi
-        
+
         local age=$((now - mtime))
         if [[ "$age" -gt "$MESH_HEARTBEAT_THRESHOLD" ]]; then
             local pid=$(basename "$hb" | sed 's/agent-//')
             stale+=("$pid")
         fi
     done
-    
+
     if [[ ${#stale[@]} -gt 0 ]]; then
         echo "Stale agents: ${stale[*]}"
         return 1
     fi
-    
+
     echo "All heartbeats fresh"
     return 0
 }
@@ -176,17 +176,17 @@ mesh_scanner::cleanup_stale() {
     local stale_threshold=$((MESH_HEARTBEAT_THRESHOLD * 2))
     local now=$(date +%s)
     local cleaned=0
-    
+
     for hb in "$MESH_HOME"/heartbeats/agent-*; do
         [[ -f "$hb" ]] || continue
-        
+
         local mtime
         if [[ "$OSTYPE" == "darwin"* ]]; then
             mtime=$(stat -f %m "$hb" 2>/dev/null || echo 0)
         else
             mtime=$(stat -c %Y "$hb" 2>/dev/null || echo 0)
         fi
-        
+
         local age=$((now - mtime))
         if [[ "$age" -gt "$stale_threshold" ]]; then
             local pid=$(basename "$hb" | sed 's/agent-//')
@@ -195,7 +195,7 @@ mesh_scanner::cleanup_stale() {
             cleaned=$((cleaned + 1))
         fi
     done
-    
+
     echo "Cleaned $stale_threshold+ second stale agents: $cleaned"
 }
 
@@ -205,26 +205,26 @@ mesh_scanner::cleanup_stale() {
 
 mesh_scanner::daemon() {
     echo "Starting scanner daemon (interval: ${MESH_SCANNER_INTERVAL}s)..."
-    
+
     while true; do
         while read -r agent; do
             [[ -z "$agent" ]] && continue
             local pid="${agent%%:*}"
             local type="${agent#*:}"
-            
+
             # Check if already registered
             if [[ ! -f "$MESH_HOME/agents/agent-${pid}.yaml" ]]; then
                 echo "[$(date '+%H:%M:%S')] Detected new agent: $type (PID $pid)"
                 mesh_scanner::generate_manifest "$pid" "$type"
             fi
-            
+
             # Touch heartbeat
             mesh_scanner::touch_heartbeat "$pid"
         done < <(mesh_scanner::scan_all)
-        
+
         # Check for stale agents
         mesh_scanner::check_heartbeats >/dev/null 2>&1 || true
-        
+
         sleep "$MESH_SCANNER_INTERVAL"
     done
 }
@@ -235,17 +235,17 @@ mesh_scanner::daemon() {
 
 mesh_scanner::list() {
     echo "Registered agents:"
-    
+
     for manifest in "$MESH_HOME"/agents/agent-*.yaml; do
         [[ -f "$manifest" ]] || continue
-        
+
         local pid=$(basename "$manifest" .yaml | sed 's/agent-//')
         local type=$(grep '^type: ' "$manifest" | cut -d: -f2 | tr -d ' ')
         local status=$(grep '^status: ' "$manifest" | cut -d: -f2 | tr -d ' ')
-        
+
         echo "  - PID $pid: $type ($status)"
     done
-    
+
     if [[ ! -d "$MESH_HOME/agents" ]] || [[ -z "$(ls -A "$MESH_HOME/agents" 2>/dev/null)" ]]; then
         echo "  (no agents registered)"
     fi
@@ -257,15 +257,15 @@ mesh_scanner::status() {
     echo "  Scan interval: ${MESH_SCANNER_INTERVAL}s"
     echo "  Heartbeat threshold: ${MESH_HEARTBEAT_THRESHOLD}s"
     echo ""
-    
+
     mesh_scanner::list
     echo ""
-    
+
     echo "Heartbeat Status:"
     local total fresh
     total=$(find "$MESH_HOME/heartbeats" -name "agent-*" -type f 2>/dev/null | wc -l)
     fresh=$(mesh_scanner::check_heartbeats 2>&1 | grep -c "fresh" || echo 0)
-    
+
     echo "  Total: $total"
     echo "  Fresh: $fresh"
 }

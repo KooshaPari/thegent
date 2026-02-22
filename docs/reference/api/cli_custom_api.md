@@ -31,4 +31,3 @@ scratchpad_cmd(action: str, content: Any)
 Manage the AI command drafting scratchpad.
 
 ---
-

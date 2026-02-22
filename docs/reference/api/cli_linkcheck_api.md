@@ -15,4 +15,3 @@ check_links(path: str, pattern: str, verbose: bool)
 Check links in markdown files.
 
 ---
-

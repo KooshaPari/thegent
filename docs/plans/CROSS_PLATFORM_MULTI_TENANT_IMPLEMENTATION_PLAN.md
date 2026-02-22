@@ -2,8 +2,8 @@
 
 **Purpose:** Phased WBS for implementing Windows/Linux/macOS support, agent-user isolation, multi-tenant coordination, and desktop automation.
 
-**Date:** 2026-02-16  
-**Status:** Planning  
+**Date:** 2026-02-16
+**Status:** Planning
 **Related:** CROSS_PLATFORM_MULTI_TENANT_DESKTOP_AUTOMATION_RESEARCH.md
 
 ---
@@ -11,8 +11,8 @@
 ## Phased Work Breakdown Structure
 
 ### Phase 1: User Isolation Foundation
-**Goal:** Implement hybrid user model (sub-user + optional OS users)  
-**Duration:** 2 weeks  
+**Goal:** Implement hybrid user model (sub-user + optional OS users)
+**Duration:** 2 weeks
 **Effort:** 15-25 tool calls, 2-3 parallel subagents, ~8-12 min
 
 #### P1.1: SystemUser Abstraction
@@ -31,7 +31,7 @@
   - [ ] Test AgentUser capabilities
   - [ ] Test platform detection
 
-**Depends on:** None  
+**Depends on:** None
 **Deliverable:** `src/thegent/infra/user_isolation.py` + tests
 
 #### P1.2: OS User Creation (macOS/Linux)
@@ -48,7 +48,7 @@
   - [ ] Test user deletion
   - [ ] Test error cases
 
-**Depends on:** P1.1  
+**Depends on:** P1.1
 **Deliverable:** `src/thegent/infra/os_user_manager.py` + tests
 
 #### P1.3: OS User Creation (Windows)
@@ -64,7 +64,7 @@
   - [ ] Test user creation (requires admin, skip in CI)
   - [ ] Test user deletion
 
-**Depends on:** P1.2  
+**Depends on:** P1.2
 **Deliverable:** Windows support in `os_user_manager.py` + tests
 
 #### P1.4: AgentUserPool
@@ -82,7 +82,7 @@
   - [ ] Test overflow handling
   - [ ] Test cleanup
 
-**Depends on:** P1.2, P1.3  
+**Depends on:** P1.2, P1.3
 **Deliverable:** `src/thegent/infra/user_pool.py` + tests
 
 #### P1.5: AgentRunner Integration
@@ -102,7 +102,7 @@
   - [ ] Test osuser mode (requires root/admin, skip in CI)
   - [ ] Test user switching
 
-**Depends on:** P1.1, P1.4  
+**Depends on:** P1.1, P1.4
 **Deliverable:** Updated `AgentRunner` + tests
 
 #### P1.6: Configuration
@@ -125,7 +125,7 @@
 - [ ] Environment variable: `THGENT_ISOLATION_MODE=osuser`
 - [ ] Documentation: `docs/guides/USER_ISOLATION.md`
 
-**Depends on:** P1.5  
+**Depends on:** P1.5
 **Deliverable:** Configuration + docs
 
 #### P1.7: Shell Strategy (POSIX + pwsh)
@@ -137,15 +137,15 @@
 - [ ] Create `docs/reference/POSIX_PWSH_SHELL_STRATEGY.md` (shell selection matrix, config)
 - [ ] Unit tests: `tests/test_shell_detection.py`
 
-**Depends on:** P1.1  
-**Deliverable:** Shell detection + docs  
+**Depends on:** P1.1
+**Deliverable:** Shell detection + docs
 **Reference:** [CROSS_PLATFORM_GAPS_AND_EXTENSIONS_RESEARCH.md](../research/CROSS_PLATFORM_GAPS_AND_EXTENSIONS_RESEARCH.md) §2
 
 ---
 
 ### Phase 2: Multi-Tenant Coordination
-**Goal:** Add conflict detection and resolution  
-**Duration:** 2 weeks  
+**Goal:** Add conflict detection and resolution
+**Duration:** 2 weeks
 **Effort:** 20-30 tool calls, 3-4 parallel subagents, ~12-18 min
 
 #### P2.1: Tenant-Aware Edit Lease Manager
@@ -163,7 +163,7 @@
   - [ ] Test agent-agent conflicts
   - [ ] Test multi-reader
 
-**Depends on:** None (extends existing)  
+**Depends on:** None (extends existing)
 **Deliverable:** Updated `edit_lease.py` + tests
 
 #### P2.2: User Activity Detection
@@ -183,7 +183,7 @@
   - [ ] Mock platform APIs
   - [ ] Test threshold logic
 
-**Depends on:** None  
+**Depends on:** None
 **Deliverable:** `src/thegent/infra/user_activity.py` + tests
 
 #### P2.3: Desktop Automation Coordinator
@@ -203,7 +203,7 @@
   - [ ] Test lock acquisition/release
   - [ ] Test timeout
 
-**Depends on:** P2.2  
+**Depends on:** P2.2
 **Deliverable:** `src/thegent/infra/desktop_coordinator.py` + tests
 
 #### P2.4: Tenant-Aware Concurrency Controller
@@ -224,7 +224,7 @@
   - [ ] Test agent limit enforcement
   - [ ] Test total limit enforcement
 
-**Depends on:** None (extends existing)  
+**Depends on:** None (extends existing)
 **Deliverable:** Updated `concurrency_controller.py` + tests
 
 #### P2.5: Conflict Resolver
@@ -243,7 +243,7 @@
   - [ ] Test FIFO policy
   - [ ] Test logging
 
-**Depends on:** P2.1, P2.3  
+**Depends on:** P2.1, P2.3
 **Deliverable:** `src/thegent/infra/conflict_resolver.py` + tests
 
 #### P2.6: Configuration & Integration
@@ -264,7 +264,7 @@
 - [ ] Add CLI flags: `--max-user-processes`, `--max-agent-processes`
 - [ ] Documentation: `docs/guides/MULTI_TENANT_COORDINATION.md`
 
-**Depends on:** P2.1-P2.5  
+**Depends on:** P2.1-P2.5
 **Deliverable:** Configuration + integration + docs
 
 #### P2.7: Hook Dispatcher Shell (Windows)
@@ -273,15 +273,15 @@
 - [ ] Add `hooks/lib/pwsh_adapters.ps1` for Windows-native hook logic (optional)
 - [ ] Document: hooks call `pwsh -File` for Windows-specific blocks when needed
 
-**Depends on:** P1.7  
-**Deliverable:** Hook dispatcher uses shell detection on Windows  
+**Depends on:** P1.7
+**Deliverable:** Hook dispatcher uses shell detection on Windows
 **Reference:** [POSIX_PWSH_SHELL_STRATEGY.md](../reference/POSIX_PWSH_SHELL_STRATEGY.md)
 
 ---
 
 ### Phase 3: Desktop Automation Primitives
-**Goal:** Implement platform-specific desktop automation  
-**Duration:** 3 weeks  
+**Goal:** Implement platform-specific desktop automation
+**Duration:** 3 weeks
 **Effort:** 30-45 tool calls, 4-5 parallel subagents, ~18-25 min
 
 #### P3.1: Desktop Automation Abstraction
@@ -300,7 +300,7 @@
   - [ ] Test abstract interface
   - [ ] Test factory
 
-**Depends on:** None  
+**Depends on:** None
 **Deliverable:** `src/thegent/infra/desktop_automation/base.py` + tests
 
 #### P3.2: macOS Provider (AppleScript)
@@ -319,7 +319,7 @@
   - [ ] Mock AppleScript execution
   - [ ] Test error cases
 
-**Depends on:** P3.1  
+**Depends on:** P3.1
 **Deliverable:** `src/thegent/infra/desktop_automation/macos.py` + tests
 
 #### P3.3: Windows Provider (UI Automation)
@@ -339,7 +339,7 @@
   - [ ] Mock UIA elements
   - [ ] Test error cases
 
-**Depends on:** P3.1  
+**Depends on:** P3.1
 **Deliverable:** `src/thegent/infra/desktop_automation/windows.py` + tests
 
 #### P3.4: Linux Provider (AT-SPI)
@@ -359,7 +359,7 @@
   - [ ] Mock AT-SPI elements
   - [ ] Test error cases
 
-**Depends on:** P3.1  
+**Depends on:** P3.1
 **Deliverable:** `src/thegent/infra/desktop_automation/linux.py` + tests
 
 #### P3.5: Cross-Platform Testing
@@ -371,7 +371,7 @@
 - [ ] Test performance (click latency, screenshot speed)
 - [ ] Add CI/CD setup (skip on platforms without permissions)
 
-**Depends on:** P3.2, P3.3, P3.4  
+**Depends on:** P3.2, P3.3, P3.4
 **Deliverable:** Integration tests + CI setup
 
 #### P3.6: Documentation & Examples
@@ -387,14 +387,14 @@
   - [ ] `pywinauto` (Windows, optional)
   - [ ] `pyatspi` (Linux, optional)
 
-**Depends on:** P3.1-P3.5  
+**Depends on:** P3.1-P3.5
 **Deliverable:** Documentation + examples
 
 ---
 
 ### Phase 4: MCP Integration
-**Goal:** Expose desktop automation via MCP  
-**Duration:** 1 week  
+**Goal:** Expose desktop automation via MCP
+**Duration:** 1 week
 **Effort:** 15-20 tool calls, 2-3 parallel subagents, ~8-12 min
 
 #### P4.1: MCP Tools Registration
@@ -410,22 +410,22 @@
           return {"success": False, "error": "Element not found"}
       success = provider.click(element)
       return {"success": success}
-  
+
   @mcp.tool()
   def desktop_automation_type(selector: str, text: str, wait_timeout: float = 5.0) -> dict:
       """Type text into a UI element."""
       # Similar implementation
-  
+
   @mcp.tool()
   def desktop_automation_find(selector: str, timeout: float = 5.0) -> dict:
       """Find UI element by selector."""
       # Similar implementation
-  
+
   @mcp.tool()
   def desktop_automation_screenshot(region: Optional[dict] = None) -> dict:
       """Take screenshot."""
       # Similar implementation
-  
+
   @mcp.tool()
   def desktop_automation_wait_for_user_idle(idle_seconds: float = 5.0) -> dict:
       """Wait until user is idle."""
@@ -435,7 +435,7 @@
 - [ ] Add error handling and logging
 - [ ] Unit tests: `tests/test_mcp_desktop_automation.py`
 
-**Depends on:** P3.1-P3.4, P2.3  
+**Depends on:** P3.1-P3.4, P2.3
 **Deliverable:** MCP tools + tests
 
 #### P4.2: MCP Resources
@@ -446,7 +446,7 @@
 - [ ] Update MCP server to serve these resources
 - [ ] Unit tests: `tests/test_mcp_desktop_resources.py`
 
-**Depends on:** P4.1  
+**Depends on:** P4.1
 **Deliverable:** MCP resources + tests
 
 #### P4.3: Example Workflows
@@ -456,14 +456,14 @@
 - [ ] Example: Multi-step automation workflow
 - [ ] Documentation: `docs/guides/MCP_DESKTOP_AUTOMATION.md`
 
-**Depends on:** P4.1, P4.2  
+**Depends on:** P4.1, P4.2
 **Deliverable:** Examples + docs
 
 ---
 
 ### Phase 5: Testing & Polish
-**Goal:** Cross-platform testing and documentation  
-**Duration:** 1 week  
+**Goal:** Cross-platform testing and documentation
+**Duration:** 1 week
 **Effort:** 20-30 tool calls, 3-4 parallel subagents, ~12-18 min
 
 #### P5.1: Cross-Platform Testing
@@ -474,7 +474,7 @@
 - [ ] Performance benchmarking
 - [ ] Fix platform-specific bugs
 
-**Depends on:** P1-P4  
+**Depends on:** P1-P4
 **Deliverable:** Test results + bug fixes
 
 #### P5.2: Documentation Updates
@@ -484,7 +484,7 @@
 - [ ] Create troubleshooting guide: `docs/guides/TROUBLESHOOTING.md`
 - [ ] Update API documentation
 
-**Depends on:** P5.1  
+**Depends on:** P5.1
 **Deliverable:** Updated documentation
 
 #### P5.3: Release Preparation
@@ -493,15 +493,15 @@
 - [ ] CI/CD pipeline updates (Windows/Linux runners)
 - [ ] Package distribution (Windows wheels, Linux packages)
 
-**Depends on:** P5.1, P5.2  
+**Depends on:** P5.1, P5.2
 **Deliverable:** Release-ready code
 
 ---
 
 ### Phase 6: Remote Compute
-**Goal:** `thegent run --remote` for cross-host execution (Mac→Windows, etc.)  
-**Duration:** 1 week  
-**Effort:** 15-25 tool calls, 2-3 parallel subagents, ~8-12 min  
+**Goal:** `thegent run --remote` for cross-host execution (Mac→Windows, etc.)
+**Duration:** 1 week
+**Effort:** 15-25 tool calls, 2-3 parallel subagents, ~8-12 min
 **Extends:** [REMOTE_COMPUTE_IMPLEMENTATION_DETAIL.md](./REMOTE_COMPUTE_IMPLEMENTATION_DETAIL.md), HYBRID_ENV Phase 4
 
 #### P6.1: Remote Host Configuration
@@ -510,7 +510,7 @@
 - [ ] Path mapping: resolve local path to remote path per host config
 - [ ] Unit tests: `tests/test_remote_hosts.py`
 
-**Depends on:** None  
+**Depends on:** None
 **Deliverable:** Remote host config + validation
 
 #### P6.2: Remote Execution
@@ -520,22 +520,22 @@
 - [ ] Stream output back to client
 - [ ] Unit tests: `tests/test_remote_execution.py`
 
-**Depends on:** P6.1  
+**Depends on:** P6.1
 **Deliverable:** Remote run/ps/logs/stop/wait
 
 #### P6.3: Documentation
 - [ ] Document in `docs/guides/HYBRID_ENV_QUICK_START.md` and CLI help
 - [ ] Add remote_hosts.yaml example to docs
 
-**Depends on:** P6.2  
+**Depends on:** P6.2
 **Deliverable:** Docs + examples
 
 ---
 
 ### Phase 7: OS-Level Agent Primitives
-**Goal:** Resource containment and agents-as-OS-principals (cgroups, Job Objects, systemd scope)  
-**Duration:** 1-2 weeks  
-**Effort:** 20-35 tool calls, 3-4 parallel subagents, ~12-18 min  
+**Goal:** Resource containment and agents-as-OS-principals (cgroups, Job Objects, systemd scope)
+**Duration:** 1-2 weeks
+**Effort:** 20-35 tool calls, 3-4 parallel subagents, ~12-18 min
 **Extends:** [AGENT_OS_PRINCIPALS_DEPTH.md](../reference/AGENT_OS_PRINCIPALS_DEPTH.md), CROSS_PLATFORM_GAPS_AND_EXTENSIONS_RESEARCH §4-5
 
 #### P7.1: Linux systemd Scope
@@ -544,7 +544,7 @@
 - [ ] Config: `resource_limits.memory_mb`, `resource_limits.cpu_percent`
 - [ ] Unit tests: `tests/test_systemd_scope.py` (mock or skip if no systemd)
 
-**Depends on:** P1.5 (AgentRunner Integration)  
+**Depends on:** P1.5 (AgentRunner Integration)
 **Deliverable:** Linux resource containment via systemd
 
 #### P7.2: Windows Job Objects
@@ -553,14 +553,14 @@
 - [ ] Use ctypes or pywin32; fallback to sub-user if unavailable
 - [ ] Unit tests: `tests/test_windows_job_objects.py` (Windows only)
 
-**Depends on:** P1.5  
+**Depends on:** P1.5
 **Deliverable:** Windows resource containment via Job Objects
 
 #### P7.3: macOS Resource Limits (Optional)
 - [ ] Document launchd per-agent option (future)
 - [ ] Add `resource_limits` config schema for parity; no implementation yet
 
-**Depends on:** P1.6  
+**Depends on:** P1.6
 **Deliverable:** Config schema + docs
 
 #### P7.4: Integration and Docs
@@ -568,15 +568,15 @@
 - [ ] Update `docs/reference/AGENT_OS_PRINCIPALS_DEPTH.md` with implementation status
 - [ ] Add troubleshooting for "systemd not found", "Job Object failed"
 
-**Depends on:** P7.1, P7.2  
+**Depends on:** P7.1, P7.2
 **Deliverable:** Integrated resource containment + docs
 
 ---
 
 ### Phase 8: Polish, Optimization & Extensions
-**Goal:** Wider scope, deeper failure handling, UX polish, optimization  
-**Duration:** 2-3 weeks  
-**Effort:** 35-50 tool calls, 4-5 parallel subagents, ~18-25 min  
+**Goal:** Wider scope, deeper failure handling, UX polish, optimization
+**Duration:** 2-3 weeks
+**Effort:** 35-50 tool calls, 4-5 parallel subagents, ~18-25 min
 **Extends:** [CROSS_PLATFORM_EXTENSIONS_WIDER_DEEPER_OPTIMIZATION.md](../research/CROSS_PLATFORM_EXTENSIONS_WIDER_DEEPER_OPTIMIZATION.md)
 
 #### P8.1: Error Taxonomy & Structured Errors
@@ -585,7 +585,7 @@
 - [ ] Create `docs/reference/ERROR_CODES.md`
 - [ ] Wire into desktop automation, remote, hooks
 
-**Depends on:** P5.1  
+**Depends on:** P5.1
 **Deliverable:** Error codes + ERROR_CODES.md
 
 #### P8.2: Diagnostic Commands
@@ -594,7 +594,7 @@
 - [ ] Add `thegent diagnose element SEL` (find attempt, tree snippet)
 - [ ] Add `thegent diagnose shell` (shell selection for all contexts)
 
-**Depends on:** P5.1, P6.2  
+**Depends on:** P5.1, P6.2
 **Deliverable:** `thegent diagnose` subcommands
 
 #### P8.3: Troubleshooting Runbooks
@@ -603,7 +603,7 @@
 - [ ] Create `docs/guides/TROUBLESHOOTING_HOOKS.md`
 - [ ] Cross-link from error messages
 
-**Depends on:** P8.1  
+**Depends on:** P8.1
 **Deliverable:** Runbooks + cross-links
 
 #### P8.4: Circuit Breaker & Retry
@@ -612,7 +612,7 @@
 - [ ] Implement retry/fallback chains (automation, remote, element find)
 - [ ] Integrate with existing retry system (WP-2002)
 
-**Depends on:** P3.5, P6.2  
+**Depends on:** P3.5, P6.2
 **Deliverable:** Circuit breaker + retry chains
 
 #### P8.5: Optimization
@@ -621,7 +621,7 @@
 - [ ] Element cache TTL + event-based invalidation
 - [ ] OTel spans + trace_id propagation for automation/remote
 
-**Depends on:** P6.2, P3.5  
+**Depends on:** P6.2, P3.5
 **Deliverable:** Pooling, warmup, OTel
 
 #### P8.6: Headless & Edge Cases
@@ -630,7 +630,7 @@
 - [ ] Create `docs/guides/HEADLESS_AND_CI.md`
 - [ ] Multi-monitor, high-DPI, locked-screen detection (optional)
 
-**Depends on:** P1.5, P2.2  
+**Depends on:** P1.5, P2.2
 **Deliverable:** Headless mode + docs
 
 #### P8.7: WSL2 & Platform Extensions
@@ -638,7 +638,7 @@
 - [ ] Document FreeBSD as unsupported; add platform detection
 - [ ] Wayland notes in Linux provider docs
 
-**Depends on:** P1.7, P3.3, P6.1  
+**Depends on:** P1.7, P3.3, P6.1
 **Deliverable:** WSL2 support + platform docs
 
 ---

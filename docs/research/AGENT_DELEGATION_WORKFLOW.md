@@ -1,7 +1,7 @@
 # Agent Delegation Workflow
 
-**Date:** 2026-02-17  
-**Status:** Setup in Progress  
+**Date:** 2026-02-17
+**Status:** Setup in Progress
 **Purpose:** Document the workflow for using thegent CLI agents for parallel task completion
 
 ---

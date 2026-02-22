@@ -37,7 +37,7 @@ if [ -d "$DEMO_SRC/web" ] && [ "$(ls -A "$DEMO_SRC/web")" ]; then
          echo "  - Running Playwright (Python)..."
          pytest "$DEMO_SRC/web"
     fi
-    
+
     # Optional: Convert videos to GIFs if ffmpeg is available
     if command -v ffmpeg >/dev/null 2>&1; then
         echo "🎞️ Converting Playwright videos to GIFs..."

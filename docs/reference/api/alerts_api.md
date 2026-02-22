@@ -69,4 +69,3 @@ record_alert(self: Any, kind: InterruptionKind)
 Record an alert and return True if it should be suppressed due to fatigue.
 
 ---
-

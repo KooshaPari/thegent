@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
+import time
 from pathlib import Path
 
+import pytest
 from thegent.mesh.git import GitParallelismManager
 
 
@@ -53,6 +56,87 @@ def test_wait_for_index_lock_times_out(tmp_path: Path) -> None:
     lock_file = tmp_path / ".git" / "index.lock"
     lock_file.write_text("")
     assert manager.wait_for_index_lock(timeout_s=0.2, poll_s=0.05) is False
+
+
+def test_wait_for_index_lock_removes_stale_lock(tmp_path: Path) -> None:
+    _init_git_repo(tmp_path)
+    manager = GitParallelismManager(tmp_path, "agent-7")
+    lock_file = tmp_path / ".git" / "index.lock"
+    lock_file.write_text("")
+
+    stale_time = time.time() - 120
+    os.utime(lock_file, (stale_time, stale_time))
+
+    assert (
+        manager.wait_for_index_lock(timeout_s=0.2, poll_s=0.05, stale_after_s=60.0, allow_stale_cleanup=True)
+        is True
+    )
+    assert not lock_file.exists()
+
+
+def test_wait_for_index_lock_respects_open_lock_holder(tmp_path: Path, monkeypatch) -> None:
+    _init_git_repo(tmp_path)
+    manager = GitParallelismManager(tmp_path, "agent-8")
+    lock_file = tmp_path / ".git" / "index.lock"
+    lock_file.write_text("")
+    monkeypatch.setattr(manager, "_has_open_lock_holder", lambda _path: True)
+
+    stale_time = time.time() - 120
+    os.utime(lock_file, (stale_time, stale_time))
+
+    assert (
+        manager.wait_for_index_lock(timeout_s=0.2, poll_s=0.05, stale_after_s=60.0, allow_stale_cleanup=True)
+        is False
+    )
+    assert lock_file.exists()
+
+
+def test_index_lock_status_absent(tmp_path: Path) -> None:
+    _init_git_repo(tmp_path)
+    manager = GitParallelismManager(tmp_path, "agent-9")
+    assert manager.index_lock_status() == {
+        "exists": False,
+        "path": str(tmp_path / ".git" / "index.lock"),
+        "age_seconds": None,
+        "stale_after_seconds": 90.0,
+        "is_stale": False,
+        "open_holder_detected": False,
+    }
+
+
+def test_index_lock_status_stale_and_open_state(tmp_path: Path, monkeypatch) -> None:
+    _init_git_repo(tmp_path)
+    manager = GitParallelismManager(tmp_path, "agent-9")
+    lock_file = tmp_path / ".git" / "index.lock"
+    lock_file.write_text("")
+    stale_time = time.time() - 120
+    os.utime(lock_file, (stale_time, stale_time))
+    monkeypatch.setattr(manager, "_has_open_lock_holder", lambda _path: True)
+
+    status = manager.index_lock_status(stale_after_s=60.0)
+    assert status["exists"] is True
+    assert status["path"] == str(lock_file)
+    assert status["stale_after_seconds"] == 60.0
+    assert status["is_stale"] is False
+    assert status["open_holder_detected"] is True
+    assert status["age_seconds"] == pytest.approx(time.time() - stale_time, rel=1e-2)
+
+
+def test_index_lock_status_stale_and_no_open_holder(tmp_path: Path) -> None:
+    _init_git_repo(tmp_path)
+    manager = GitParallelismManager(tmp_path, "agent-9")
+    lock_file = tmp_path / ".git" / "index.lock"
+    lock_file.write_text("")
+    stale_time = time.time() - 120
+    os.utime(lock_file, (stale_time, stale_time))
+
+    status = manager.index_lock_status(stale_after_s=60.0)
+    assert status["exists"] is True
+    assert status["path"] == str(lock_file)
+    assert status["stale_after_seconds"] == 60.0
+    assert status["is_stale"] is True
+    assert status["open_holder_detected"] is False
+    assert status["age_seconds"] == pytest.approx(time.time() - stale_time, rel=1e-2)
 
 
 def test_changed_files_between_returns_list(tmp_path: Path) -> None:

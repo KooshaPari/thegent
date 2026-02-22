@@ -70,4 +70,3 @@ delete_user(self: Any, username: str, delete_home: bool)
 Remove a system user.
 
 ---
-

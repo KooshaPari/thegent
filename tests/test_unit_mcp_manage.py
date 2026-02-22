@@ -13,6 +13,7 @@ from thegent.mcp.manage import (
     _ensure_mcp_servers,
     _get_mcp_url,
     _remote_config,
+    migrate_to_unimount,
     install_to_claude_code,
     install_to_client,
     install_to_codex,
@@ -120,6 +121,7 @@ class TestInstallToCursor:
         assert config_path.exists()
         data = json.loads(config_path.read_text())
         assert data["mcpServers"]["thegent"]["url"] == "http://test:1234/mcp"
+        assert data["mcpServers"]["codex_apps"]["url"] == "http://test:1234/mcp"
 
     def test_merges_with_existing_config(self, tmp_path: Path) -> None:
         # @trace FR-MCP-003
@@ -134,6 +136,7 @@ class TestInstallToCursor:
         data = json.loads((cursor_dir / "mcp.json").read_text())
         assert "other-server" in data["mcpServers"]
         assert "thegent" in data["mcpServers"]
+        assert "codex_apps" in data["mcpServers"]
 
     def test_creates_parent_dirs(self, tmp_path: Path) -> None:
         # @trace FR-MCP-003
@@ -158,6 +161,7 @@ class TestInstallToCodex:
         assert config_path.exists()
         data = json.loads(config_path.read_text())
         assert "thegent" in data["mcpServers"]
+        assert "codex_apps" in data["mcpServers"]
 
 
 @pytest.mark.unit
@@ -201,6 +205,36 @@ class TestInstallToClaudeCode:
         assert "existing" in data["mcpServers"]
         assert "thegent" in data["mcpServers"]
         assert data["other_key"] == 42
+
+
+# ---------------------------------------------------------------------------
+# migrate_to_unimount
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestMigrateToUnimount:
+    """Tests for migrate_to_unimount."""
+
+    def test_preserves_other_servers(self, tmp_path: Path) -> None:
+        """Migration updates only thegent aliases and preserves existing MCP entries."""
+        existing = {"mcpServers": {"other-server": {"url": "http://old"}, "legacy": {"url": "http://legacy"}}, "other_key": 7}
+        codex_dir = tmp_path / ".codex"
+        codex_dir.mkdir(parents=True, exist_ok=True)
+        (codex_dir / "mcp.json").write_text(json.dumps(existing))
+
+        with patch("thegent.mcp.manage.Path.home", return_value=tmp_path):
+            ok, msg = migrate_to_unimount(client="codex", mcp_url="http://127.0.0.1:3847/mcp")
+
+        assert ok is True
+        assert "migrated" in msg.lower()
+
+        data = json.loads((codex_dir / "mcp.json").read_text())
+        assert "other-server" in data["mcpServers"]
+        assert "legacy" in data["mcpServers"]
+        assert data["mcpServers"]["thegent"]["url"] == "http://127.0.0.1:3847/mcp"
+        assert data["mcpServers"]["codex_apps"]["url"] == "http://127.0.0.1:3847/mcp"
+        assert data["other_key"] == 7
 
 
 # ---------------------------------------------------------------------------

@@ -188,7 +188,7 @@ hook_init() {
     _hook_runtime_apply_exports "$payload"
     return 0
   fi
-  
+
   echo "HOOK_INIT: Rust runtime failed and fallbacks are disabled" >&2
   return 1
 }
@@ -253,7 +253,7 @@ tool_available() {
     echo "${_TOOL_CACHE[$tool]}"
     return
   fi
-  
+
   # Use Rust runtime for robust existence check
   local result
   result=$(hook_rust_runtime_invoke pkg exists "$tool" 2>/dev/null)
@@ -583,16 +583,16 @@ export HOOK_CACHE_TTL="${HOOK_CACHE_TTL:-600}"
 hook_should_run() {
     local hook_name="${1:-unknown}" pattern="${2:-}"
     local changed_files
-    
+
     # Get changed files from Rust runtime (JSON format)
     changed_files="$(hook_rust_runtime_invoke changed-files 2>/dev/null)"
-    
+
     # If no changes detected or error, run hook for safety
     [[ -z "$changed_files" || "$changed_files" == "[]" ]] && return 0
-    
+
     # If no pattern specified, run for any change
     [[ -z "$pattern" ]] && return 0
-    
+
     # Check if any changed file matches the pattern
     # Extract strings from JSON array and grep
     echo "$changed_files" | tr -d '[]"' | tr ',' '\n' | grep -qE "$pattern"

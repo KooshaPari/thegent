@@ -33,4 +33,3 @@ merge(self: Any, timelines: list[dict[(str, Any)]])
 Merge multiple timelines.
 
 ---
-

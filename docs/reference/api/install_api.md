@@ -465,4 +465,3 @@ verify_mise_installation(console: Any, settings: ThegentSettings | None)
 Verify mise installation and configuration. Returns (success, messages).
 
 ---
-

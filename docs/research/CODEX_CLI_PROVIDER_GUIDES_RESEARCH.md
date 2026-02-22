@@ -1,6 +1,6 @@
 # Codex CLI Provider Guides Research
 
-**Date**: 2026-02-18  
+**Date**: 2026-02-18
 **Scope**: MiniMax and GLM Codex CLI integration guides
 
 ---

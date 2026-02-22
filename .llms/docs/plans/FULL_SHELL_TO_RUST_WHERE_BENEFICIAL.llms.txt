@@ -6,9 +6,9 @@ Source: docs/plans/FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md
 
 # Full Shell → Rust Where Beneficial
 
-**Purpose:** Single plan for migrating all shell usage to Rust where benefit (performance, correctness, multi-tenant, DX) outweighs cost. Keep shell only where it stays beneficial (thin wrappers, one-off scripts, user-editable). **Also covers:** Py–Rust/Go frontmatter/backmatter (BKM), existing Py/TS/Go items, value-to-port candidates, and lib-audit anti-sprawl to avoid custom impl sprawl.  
-**Status:** Plan  
-**Supersedes/extends:** RUST_GO_MIGRATION_PLAN, HOOK_RUNTIME_RUST_DESIGN, PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN, LIBRARY_FIRST_AUDIT_AND_PLAN, LIBRARY_REPLACEMENT_AUDIT_DEEP  
+**Purpose:** Single plan for migrating all shell usage to Rust where benefit (performance, correctness, multi-tenant, DX) outweighs cost. Keep shell only where it stays beneficial (thin wrappers, one-off scripts, user-editable). **Also covers:** Py–Rust/Go frontmatter/backmatter (BKM), existing Py/TS/Go items, value-to-port candidates, and lib-audit anti-sprawl to avoid custom impl sprawl.
+**Status:** Plan
+**Supersedes/extends:** RUST_GO_MIGRATION_PLAN, HOOK_RUNTIME_RUST_DESIGN, PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN, LIBRARY_FIRST_AUDIT_AND_PLAN, LIBRARY_REPLACEMENT_AUDIT_DEEP
 **Date:** 2026-02-17
 
 ---

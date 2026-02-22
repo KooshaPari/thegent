@@ -38,4 +38,3 @@ Return all entries for an operation type.
 Return operations grouped by type for CLI/MCP.
 
 ---
-

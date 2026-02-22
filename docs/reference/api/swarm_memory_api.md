@@ -44,4 +44,3 @@ consolidate(self: Any, peer_memories: list[dict[(str, Any)]])
 Consolidate peer memories with local memory.
 
 ---
-

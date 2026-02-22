@@ -1,7 +1,7 @@
 # DAG Node-to-Service Contract Checklist
 
-**Status:** Baseline  
-**Date:** 2026-02-14  
+**Status:** Baseline
+**Date:** 2026-02-14
 **Source:** `docs/docset/thegent-dag-final.md`
 
 ---

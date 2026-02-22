@@ -199,4 +199,3 @@ share(self: Any, proposal_id: str)
 Phase 3: SHARE (ADR-013). Finalize the proposal after drafting period.
 
 ---
-

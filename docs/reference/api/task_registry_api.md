@@ -208,4 +208,3 @@ update_progress(self: Any, task_id: str, progress: float, total: Any, message: s
 Update progress metadata for an in-flight task (called from within the task).
 
 ---
-

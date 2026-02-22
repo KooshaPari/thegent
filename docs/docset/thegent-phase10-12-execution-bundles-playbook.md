@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 Execution Bundles Playbook
 
-**Status:** Full-depth execution draft (Chunk 2)  
-**Date:** 2026-02-15  
+**Status:** Full-depth execution draft (Chunk 2)
+**Date:** 2026-02-15
 **Scope:** Phase 10 to 12 issue queue execution in chunked bundles, with explicit lock dependencies, artifact contracts, and fallback controls.
 
 ## 0) Purpose
@@ -61,7 +61,7 @@ Each bundle must write:
 
 ## 3) Bundle B — Trust and conformance (WP-10004 to WP-10010)
 
-**Bundle ID:** `phase10_bundle_b`  
+**Bundle ID:** `phase10_bundle_b`
 **Owner:** Security, Platform, Governance, Docs
 
 ### 3.1 Scope
@@ -119,7 +119,7 @@ Each bundle must write:
 
 ## 4) Bundle C — Predictive control baseline (WP-11001 to WP-11005)
 
-**Bundle ID:** `phase11_bundle_c`  
+**Bundle ID:** `phase11_bundle_c`
 **Owner:** SRE, Core Runtime, Product, QA
 
 ### 4.1 Scope
@@ -182,7 +182,7 @@ Each bundle must write:
 
 ## 5) Bundle D — Controlled adaptation and governance hardening (WP-11006 to WP-11010)
 
-**Bundle ID:** `phase11_bundle_d`  
+**Bundle ID:** `phase11_bundle_d`
 **Owner:** Orchestration, Product, Security
 
 ### 5.1 Scope
@@ -230,7 +230,7 @@ Each bundle must write:
 
 ## 6) Bundle E — Explainability and replay hardening (WP-12001 to WP-12006)
 
-**Bundle ID:** `phase12_bundle_e`  
+**Bundle ID:** `phase12_bundle_e`
 **Owner:** Product, UX, Core Runtime, Compliance
 
 ### 6.1 Scope
@@ -273,7 +273,7 @@ Each bundle must write:
 
 ## 7) Bundle F — Persona, packaging, closure (WP-12007 to WP-12010)
 
-**Bundle ID:** `phase12_bundle_f`  
+**Bundle ID:** `phase12_bundle_f`
 **Owner:** Product, Security, Documentation, Program Lead
 
 ### 7.1 Scope
@@ -356,4 +356,3 @@ If resuming this chunked plan in sequence:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

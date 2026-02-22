@@ -65,7 +65,7 @@ def cached_load(path: str) -> dict:
     """Load JSON with file-based caching."""
     if path in cache:
         return cache[path]
-    
+
     data = json.loads(Path(path).read_text())
     cache[path] = data
     return data
@@ -105,7 +105,7 @@ from watchdog.events import FileSystemEventHandler
 class ChangeHandler(FileSystemEventHandler):
     def __init__(self, callback):
         self.callback = callback
-    
+
     def on_modified(self, event):
         if not event.is_directory:
             self.callback(event.src_path)
@@ -174,9 +174,9 @@ def analyze(
     """Analyze code at path."""
     if verbose:
         typer.echo(f"Analyzing {path}...")
-    
+
     results = analyze_path(path)
-    
+
     if output:
         output.write_text(json.dumps(results, indent=2))
         typer.echo(f"Results written to {output}")
@@ -201,11 +201,11 @@ class Plugin(Protocol):
 def discover_plugins() -> dict[str, Plugin]:
     """Discover plugins via entry points."""
     plugins = {}
-    
+
     for ep in entry_points(group="thegent.plugins"):
         plugin = ep.load()
         plugins[ep.name] = plugin
-    
+
     return plugins
 
 def load_plugins() -> None:
@@ -236,7 +236,7 @@ class TaskQueue:
         ]
         for w in self.workers:
             w.start()
-    
+
     def _worker(self):
         while True:
             try:
@@ -249,7 +249,7 @@ class TaskQueue:
             except Exception as e:
                 # Log error
                 pass
-    
+
     def add(self, task: Callable, callback: Callable[[Any], None] = None):
         """Add task to queue."""
         self.queue.put((task, callback))
@@ -259,7 +259,7 @@ class TaskQueue:
 
 ## 9. Extension Summary
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Patterns Added
@@ -286,7 +286,7 @@ class TaskQueue:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

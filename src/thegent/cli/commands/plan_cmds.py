@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -46,6 +47,8 @@ from thegent.cli.commands._cli_shared import (
     dag_run_impl,
     dag_sync_impl,
 )
+
+_log = logging.getLogger(__name__)
 
 from thegent.cli.commands.run_cmds import bg_cmd
 from thegent.cli.commands.session_cmds import history_cmd
@@ -312,8 +315,8 @@ def dag_reconcile_cmd(cd: Path | None = None) -> None:
                 if status == "running":
                     any_alive = True
                     break
-            except Exception:
-                pass
+            except Exception as exc:
+                _log.debug("Failed to resolve session status for %s: %s", sid, exc)
 
         if not any_alive:
             t["status"] = "pending"

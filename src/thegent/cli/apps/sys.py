@@ -37,7 +37,7 @@ def setup_app_callback(ctx: typer.Context) -> None:
 
 @app.command("mcp", help="Manage Model Context Protocol (MCP) servers.")
 def sys_mcp(
-    action: str = typer.Argument(..., help="Action (list|add|remove|prune)"),
+    action: str = typer.Argument(..., help="Action (list|add|remove|prune|fix|migrate|migrate-unimount)"),
     server: str | None = typer.Option(None, "--server", "-s", help="Server name"),
     command: str | None = typer.Option(None, "--command", "-c", help="Command to run the server"),
     force: bool = typer.Option(False, "--force", "-f", help="Skip interactive prompts for prune"),
@@ -49,13 +49,17 @@ def sys_mcp(
     from thegent.mcp.manage import (
         _get_mcp_url,
         install_to_client,
+        migrate_to_unimount,
         remove_servers_from_client,
+        FAILING_MCP_SERVERS,
         service_status,
     )
     from thegent.orchestration.pruning.prune import mcp_prune
 
     settings = ThegentSettings()
     normalized = action.strip().lower()
+    requested_clients = [part.strip().lower() for part in (server or "").split(",") if part.strip()]
+    clients = requested_clients if requested_clients else ["cursor", "claude-code", "codex", "claude-desktop", "droid"]
 
     if normalized == "prune":
         mcp_prune(
@@ -74,6 +78,26 @@ def sys_mcp(
         console.print(f"Scope: {scope}")
         console.print(f"Status: {msg}")
         console.print(f"URL: {_get_mcp_url(settings)}")
+        return
+
+    if normalized == "fix":
+        if "all" in clients:
+            clients = ["cursor", "claude-code", "codex", "claude-desktop", "droid"]
+        for client in clients:
+            ok, msg = remove_servers_from_client(client=client, server_names=sorted(FAILING_MCP_SERVERS), workspace=Path.cwd())
+            if not ok:
+                console.print(f"[red]{msg}[/red]")
+                raise typer.Exit(1)
+            console.print(f"[green]{msg}[/green]")
+        return
+
+    if normalized in {"migrate", "migrate-unimount"}:
+        for client in clients:
+            ok, msg = migrate_to_unimount(client=client, mcp_url=_get_mcp_url(settings), workspace=Path.cwd())
+            if not ok:
+                console.print(f"[red]{msg}[/red]")
+                raise typer.Exit(1)
+            console.print(f"[green]{msg}[/green]")
         return
 
     if normalized == "add":
@@ -99,7 +123,9 @@ def sys_mcp(
         console.print(f"[green]{msg}[/green]")
         return
 
-    raise typer.BadParameter(f"Unknown action '{action}'. Expected: list|add|remove|prune")
+    raise typer.BadParameter(
+        f"Unknown action '{action}'. Expected: list|add|remove|prune|fix|migrate|migrate-unimount"
+    )
 
 
 @app.command("lsp", help="Manage Language Server Protocol (LSP) processes.")

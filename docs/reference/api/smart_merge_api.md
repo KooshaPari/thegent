@@ -103,4 +103,3 @@ resolve_imports(self: Any, content: str, lang: str)
 Automatically resolve import union conflicts.
 
 ---
-

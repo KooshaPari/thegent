@@ -1,14 +1,14 @@
 # Discovery Surface (G-DS)
 
-**Purpose:** Document all discovery endpoints (CLI + MCP) for schema versions, contracts, and capabilities.  
-**Date:** 2026-02-14  
+**Purpose:** Document all discovery endpoints (CLI + MCP) for schema versions, contracts, and capabilities.
+**Date:** 2026-02-14
 **Scope:** G-DS-01 through G-DS-05
 
 ---
 
 ## 1. Single Source for Schema Versions: thegent://meta
 
-**Endpoint:** MCP resource `thegent://meta`  
+**Endpoint:** MCP resource `thegent://meta`
 **Implementation:** `get_server_meta_impl()` in `cli_impl.py`
 
 | Field | Description |

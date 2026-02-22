@@ -104,4 +104,3 @@ display_runtime_status(data: dict[(str, Any)])
 Display runtime status and hardware context in a formatted table.
 
 ---
-

@@ -6,30 +6,30 @@ This page demonstrates the CodePlayground component for interactive code example
 
 ## Python Example
 
-<CodePlayground 
-  lang="python" 
+<CodePlayground
+  lang="python"
   title="Agent Example"
-  code="from thegent import Agent\n\nagent = Agent('codex')\nresult = agent.run('Hello world')\nprint(result)" 
+  code="from thegent import Agent\n\nagent = Agent('codex')\nresult = agent.run('Hello world')\nprint(result)"
 />
 
 ---
 
 ## Bash Example
 
-<CodePlayground 
-  lang="bash" 
+<CodePlayground
+  lang="bash"
   title="CLI Example"
-  code="thegent run codex 'Fix this bug'\nthegent list agents\nthegent status" 
+  code="thegent run codex 'Fix this bug'\nthegent list agents\nthegent status"
 />
 
 ---
 
 ## JavaScript Example
 
-<CodePlayground 
-  lang="javascript" 
+<CodePlayground
+  lang="javascript"
   title="API Example"
-  code="const agent = new Agent('codex');\nconst result = await agent.run('Hello world');\nconsole.log(result);" 
+  code="const agent = new Agent('codex');\nconst result = await agent.run('Hello world');\nconsole.log(result);"
 />
 
 ---

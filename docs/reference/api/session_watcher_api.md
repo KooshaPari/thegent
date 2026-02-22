@@ -136,4 +136,3 @@ Stop watching for events.
 ## watch_loop
 
 ---
-

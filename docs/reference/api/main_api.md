@@ -1398,7 +1398,7 @@ Stop MCP + proxy (process-compose).
 mcp_fix(client: str, workspace: Any)
 ```
 
-Remove failing MCP servers (codex_apps, playwright) that cause 'MCP startup incomplete'.
+Remove failing MCP servers (`playwright`) that cause 'MCP startup incomplete'.
 
 Use thegent's bundled mounts instead. Run 'thegent mcp up' before using.
 
@@ -1432,7 +1432,7 @@ Checks parent chain for true orphans; does NOT assume leak. Use before prune.
 mcp_migrate_unimount(client: str, url: Any, workspace: Any)
 ```
 
-Migrate to uni-mount: replace ALL MCP entries with thegent only. Fixes codex_apps/playwright handshake errors.
+Migrate to uni-mount: keep existing MCP entries and ensure `thegent` + `codex_apps` use the uni-mount URL. Use this to normalize legacy and partially-migrated projects.
 
 Thegent mounts playwright, serena, octocode — one URL, all tools. Run 'thegent mcp up' before using.
 
@@ -2478,4 +2478,3 @@ Execute SQL query on workstream database.
 Get workstream statistics.
 
 ---
-

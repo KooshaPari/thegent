@@ -13,7 +13,7 @@ Added explicit security rules to prevent agents from killing other agent process
 ## Files Updated
 
 1. **`AGENTS.md`** - Added security section at the top
-2. **`.cursor/rules/thegent.mdc`** - Added security section at the top  
+2. **`.cursor/rules/thegent.mdc`** - Added security section at the top
 3. **`CLAUDE.md`** - Added security section at the top
 
 ## Rules Added

@@ -42,7 +42,7 @@
   - [ ] Type hints on all functions (return types: TTLCache, LRUCache, LFUCache)
   - [ ] No external imports except `cachetools` and stdlib
   - [ ] Module is importable: `from src.lib.project_cache import get_cache_ttl`
-- **Test**: 
+- **Test**:
   - [ ] Unit test: `tests/test_project_cache.py` with basic instantiation tests
 - **Blockers**: Task 1.2
 - **Depends On**: Task 1.2

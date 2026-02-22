@@ -33,4 +33,3 @@ allocate(self: Any, resources: dict[(str, Any)], layers: int)
 Allocate resources across layers.
 
 ---
-

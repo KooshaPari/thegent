@@ -270,8 +270,8 @@ def status_impl(
         if isinstance(exit_code, str):
             try:
                 return int(exit_code.strip())
-            except ValueError:
-                pass
+            except ValueError as exc:
+                _log.debug("Failed to parse exit_code '%s' for session status: %s", exit_code, exc)
         if rc_path.exists():
             try:
                 raw = rc_path.read_text(encoding="utf-8").strip()

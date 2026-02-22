@@ -97,4 +97,3 @@ synthesize(self: Any)
 Generate a markdown report of the current garden state.
 
 ---
-

@@ -8,13 +8,13 @@ locations:
     recursive: true
     max_depth: null
     excludes: []
-  
+
   kooshapari:
     path: "~/kooshapari"
     recursive: false
     max_depth: 3
     excludes: []
-  
+
   temp-PRODVERCEL:
     path: "~/temp-PRODVERCEL"
     recursive: true
@@ -52,10 +52,10 @@ processing:
     - "extract_metadata"
     - "compute_file_hash"
     - "count_lines"
-  
+
   # Batch processing size
   batch_size: 100
-  
+
   # Enable document analysis
   analyze: true
 
@@ -63,6 +63,6 @@ processing:
 analysis:
   # Maximum keywords to extract
   max_keywords: 10
-  
+
   # Reading speed (words per minute)
   reading_speed: 200

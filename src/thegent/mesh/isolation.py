@@ -9,13 +9,13 @@ from pathlib import Path
 class ResourceIsolation:
     """Resource isolation for agents (SCLI-P8.1–P8.3, FR-ISOL-001, FR-ISOL-003)."""
 
-    def __init__(self, mesh_root: Path, project_root: Path, agent_id: str) -> None:
+    def __init__(self, mesh_root: Path, agent_id: str, project_root: Path | None = None) -> None:
         self.mesh_root = mesh_root
-        self.project_root = project_root
+        self.project_root = project_root if project_root is not None else mesh_root
         self.agent_id = agent_id
         self.agent_tmp = mesh_root / "tmp" / agent_id
         self.port_registry = mesh_root / "ports.json"
-        self.work_dir = project_root / ".mesh" / "worktrees" / f"agent-{agent_id}"
+        self.work_dir = self.project_root / ".mesh" / "worktrees" / f"agent-{agent_id}"
 
     def allocate_tmpdir(self) -> Path:
         """Allocate private TMPDIR for the agent (SCLI-P8.1, FR-ISOL-003)."""

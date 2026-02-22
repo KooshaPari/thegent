@@ -23,9 +23,9 @@ Source: docs/changes/research-simulation-replay/proposal.md
 - Audit trail for compliance and forensics
 - Foundation for simulation-based optimization
 
-**Priority**: Medium–High (Phase 7–9 research block)  
-**Status**: Research complete, design ready  
-**Work Item**: WP-6001, WP-5001  
+**Priority**: Medium–High (Phase 7–9 research block)
+**Status**: Research complete, design ready
+**Work Item**: WP-6001, WP-5001
 **Related**: [Session Research Fragments](../../research/SESSION_RESEARCH_FRAGMENTS_EXPANDED.md), [Phase 7–9 WBS](../docset/thegent-wbs-phase7-9.md)
 
 ---
@@ -208,7 +208,7 @@ class DiffReport:
     deterministic_changes: List[DeterministicChange]
     non_deterministic_changes: List[NonDeterministicChange]
     summary: str  # "100% match" | "2 divergences (deterministic)"
-    
+
 @dataclass
 class DeterministicChange:
     tool_name: str
@@ -216,7 +216,7 @@ class DeterministicChange:
     original_output: str
     replayed_output: str
     reason: str  # "config change" | "model upgrade"
-    
+
 @dataclass
 class NonDeterministicChange:
     tool_name: str
@@ -404,7 +404,7 @@ class NonDeterministicChange:
 1. **Design Review**: Validate trace schema and replay semantics
 2. **Prototype**: Implement Phase 1–2 (Foundation + Replay) in isolated branch
 3. **Integration**: Wire into agent execution pipeline
-4. **Testing**: 
+4. **Testing**:
    - Replay 100+ production traces
    - Validate output consistency
    - Measure overhead
@@ -422,6 +422,6 @@ class NonDeterministicChange:
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-02-18  
+**Document Version**: 1.0
+**Last Updated**: 2026-02-18
 **Status**: Ready for design review

@@ -6,8 +6,8 @@ Source: docs/research/HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md
 
 # Hook Runtime Rust Migration — Complete Expansion
 
-> **Status**: Complete | **Version**: 2.0 | **Date**: 2026-02-17  
-> **Source**: Expanded from [HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS.md](./HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS.md)  
+> **Status**: Complete | **Version**: 2.0 | **Date**: 2026-02-17
+> **Source**: Expanded from [HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS.md](./HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS.md)
 > **Purpose**: Comprehensive migration strategy with detailed steps, performance comparisons, timeline, rollback strategies, and implementation guidance
 
 ---
@@ -402,11 +402,11 @@ fi
 pub fn quality_gate(hook_input: HookInput) -> HookResult {
     let changed_files = changed_files(&hook_input.project_dir)?;
     let tests = find_tests(&changed_files)?;
-    
+
     if tests.is_empty() {
         return HookResult::warning("No tests found");
     }
-    
+
     run_tests(&tests)?;
     HookResult::success()
 }
@@ -479,18 +479,18 @@ hooks:
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_cache_key_generation() {
         let key = generate_cache_key("test-hook", "abc123", &["file1.rs"]);
         assert_eq!(key.len(), 64); // blake3 hash length
     }
-    
+
     #[test]
     fn test_cache_check_hit() {
         // Setup cache
         write_cache("test-key", "test-data");
-        
+
         // Test cache check
         assert!(cache_check("test-key").is_ok());
     }
@@ -564,24 +564,24 @@ impl InitCommand {
             io::stdin().read_to_string(&mut buffer)?;
             serde_json::from_str(&buffer)?
         };
-        
+
         let hook_name = input["hook_name"].as_str().unwrap_or("unknown");
         let project_dir = input["project_dir"].as_str().unwrap_or(".");
-        
+
         // Detect tools
         let tools = thegent_tool_detect::ToolDetector::new().detect_all();
-        
+
         // Resolve paths
         let resolver = thegent_path_resolve::PathResolver::new();
         let project_path = resolver.resolve("thegent")?;
-        
+
         // Output environment variables
         println!("export HOOK_NAME={}", hook_name);
         println!("export PROJECT_DIR={}", project_dir);
         println!("export JQ_CMD={}", tools.get("jq").unwrap_or(&"jq".to_string()));
         println!("export RG_CMD={}", tools.get("rg").unwrap_or(&"rg".to_string()));
         println!("export FD_CMD={}", tools.get("fd").unwrap_or(&"fd".to_string()));
-        
+
         Ok(())
     }
 }
@@ -609,15 +609,15 @@ impl CacheKeyCommand {
         hasher.update(b"\0");
         hasher.update(self.head_sha.as_bytes());
         hasher.update(b"\0");
-        
+
         for file in &self.changed_files {
             hasher.update(file.as_bytes());
             hasher.update(b"\0");
         }
-        
+
         let hash = hasher.finalize();
         println!("{}", hash.to_hex());
-        
+
         Ok(())
     }
 }
@@ -641,33 +641,33 @@ pub struct GitCommand {
 impl GitCommand {
     pub fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         let cache_key = self.cache_key()?;
-        
+
         // Check cache
         if let Some(cached) = self.check_cache(&cache_key)? {
             print!("{}", cached);
             return Ok(());
         }
-        
+
         // Execute git command
         let output = Command::new("git")
             .args(&self.args)
             .output()?;
-        
+
         if output.status.success() {
             let stdout = String::from_utf8(output.stdout)?;
-            
+
             // Write to cache
             self.write_cache(&cache_key, &stdout)?;
-            
+
             print!("{}", stdout);
         } else {
             eprintln!("{}", String::from_utf8_lossy(&output.stderr));
             std::process::exit(output.status.code().unwrap_or(1));
         }
-        
+
         Ok(())
     }
-    
+
     fn cache_key(&self) -> Result<String, Box<dyn std::error::Error>> {
         // Generate cache key from git command + args
         let mut hasher = blake3::Hasher::new();
@@ -677,7 +677,7 @@ impl GitCommand {
         }
         Ok(hasher.finalize().to_hex())
     }
-    
+
     fn check_cache(&self, key: &str) -> Result<Option<String>, Box<dyn std::error::Error>> {
         // Check cache with TTL (5 minutes)
         let cache_file = self.cache_file(key);
@@ -685,19 +685,19 @@ impl GitCommand {
             let metadata = cache_file.metadata()?;
             let age = SystemTime::now()
                 .duration_since(metadata.modified()?)?;
-            
+
             if age < Duration::from_secs(300) {
                 return Ok(Some(std::fs::read_to_string(&cache_file)?));
             }
         }
         Ok(None)
     }
-    
+
     fn write_cache(&self, key: &str, data: &str) -> Result<(), Box<dyn std::error::Error>> {
         std::fs::write(self.cache_file(key), data)?;
         Ok(())
     }
-    
+
     fn cache_file(&self, key: &str) -> std::path::PathBuf {
         std::path::PathBuf::from(format!(".thegent/cache/git/{}.txt", key))
     }
@@ -818,7 +818,7 @@ Add to [WORK_STREAM.md](../reference/WORK_STREAM.md) BACKLOG:
 
 ---
 
-**Status**: Complete expansion ready for implementation  
+**Status**: Complete expansion ready for implementation
 **Next Steps**: Add BACKLOG items to WORK_STREAM, begin Phase 1 implementation
 
 ---

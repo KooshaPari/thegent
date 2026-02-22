@@ -6,8 +6,8 @@ Source: docs/docset/thegent-dag-phase7-9-extension.md
 
 # thegent DAG Extension — Phases 7, 8, 9
 
-**Status:** Draft  
-**Date:** 2026-02-15  
+**Status:** Draft
+**Date:** 2026-02-15
 **Purpose:** Add explicit execution nodes for contract convergence, predictive reliability, and operation productization.
 
 ## 1) Added node set

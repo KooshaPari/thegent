@@ -42,7 +42,8 @@ def test_zig_abi_contract_has_version_field(zig_abi_contract: dict):
 
 def test_zig_abi_contract_version_non_empty(zig_abi_contract: dict):
     version = zig_abi_contract.get("version", "")
-    assert version and version.strip(), "Contract 'version' must be non-empty"
+    assert version, "Contract 'version' must be present and non-empty"
+    assert version.strip(), "Contract 'version' must be non-empty"
 
 
 def test_zig_abi_contract_version_is_semver(zig_abi_contract: dict):

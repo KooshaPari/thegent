@@ -1,20 +1,20 @@
 # Comprehensive AI Agent CLI Tools Research (2025-2026)
 ## 15-20 Additional Tools Not in Original Leaderboards
 
-**Research Date:** February 2026  
-**Total Projects Identified:** 20+ emerging AI agent CLI tools  
+**Research Date:** February 2026
+**Total Projects Identified:** 20+ emerging AI agent CLI tools
 **Search Sources:** GitHub API, Tech Blogs, HN, PyPI, NPM, Academic Papers
 
 ---
 
 ## 1. SUPERPOWERS
-**Organization:** obra  
-**Repository:** https://github.com/obra/superpowers  
-**Language:** Shell / Cross-platform CLI  
-**Stars:** 55,809 ⭐  
-**Latest Update:** 2026-02-20  
+**Organization:** obra
+**Repository:** https://github.com/obra/superpowers
+**Language:** Shell / Cross-platform CLI
+**Stars:** 55,809 ⭐
+**Latest Update:** 2026-02-20
 
-**Description:**  
+**Description:**
 An agentic skills framework & software development methodology that works. Focuses on providing a structured approach to building and managing AI agent capabilities with reproducible results.
 
 **Tech Stack:**
@@ -28,8 +28,8 @@ An agentic skills framework & software development methodology that works. Focus
 - Software engineering focused
 - Reproducible agent behavior
 
-**Subagent Support:** Yes - hierarchical skills framework  
-**Context Window:** Not explicitly documented (varies by backing LLM)  
+**Subagent Support:** Yes - hierarchical skills framework
+**Context Window:** Not explicitly documented (varies by backing LLM)
 **Unique Differentiators:** Emphasis on reusable skills framework rather than ad-hoc prompting; production-proven methodology
 
 **Performance Characteristics:**
@@ -42,13 +42,13 @@ An agentic skills framework & software development methodology that works. Focus
 ---
 
 ## 2. KLAVIS AI
-**Organization:** Klavis-AI  
-**Repository:** https://github.com/Klavis-AI/klavis  
-**Language:** Python  
-**Stars:** 5,640 ⭐  
-**Backing:** Y Combinator (X25 batch)  
+**Organization:** Klavis-AI
+**Repository:** https://github.com/Klavis-AI/klavis
+**Language:** Python
+**Stars:** 5,640 ⭐
+**Backing:** Y Combinator (X25 batch)
 
-**Description:**  
+**Description:**
 MCP integration platform that lets AI agents use tools reliably at scale. Handles OAuth2, API authentication, and complex tool orchestration with built-in reliability mechanisms.
 
 **Tech Stack:**
@@ -64,8 +64,8 @@ MCP integration platform that lets AI agents use tools reliably at scale. Handle
 - Multi-platform integration
 - Tool reliability at scale
 
-**Subagent Support:** Yes - MCP-based protocol enables multi-agent collaboration  
-**Context Window:** Adaptive based on backing LLM (8K-200K+)  
+**Subagent Support:** Yes - MCP-based protocol enables multi-agent collaboration
+**Context Window:** Adaptive based on backing LLM (8K-200K+)
 **Unique Differentiators:** First-class MCP support; enterprise authentication; production reliability focus
 
 **Performance Characteristics:**
@@ -78,12 +78,12 @@ MCP integration platform that lets AI agents use tools reliably at scale. Handle
 ---
 
 ## 3. SERENA
-**Organization:** oraios  
-**Repository:** https://github.com/oraios/serena  
-**Language:** Python  
-**Stars:** 20,408 ⭐  
+**Organization:** oraios
+**Repository:** https://github.com/oraios/serena
+**Language:** Python
+**Stars:** 20,408 ⭐
 
-**Description:**  
+**Description:**
 A powerful coding agent toolkit providing semantic retrieval and editing capabilities. Available as MCP server and other integrations for IDE and CLI environments.
 
 **Tech Stack:**
@@ -98,8 +98,8 @@ A powerful coding agent toolkit providing semantic retrieval and editing capabil
 - Multi-file awareness
 - IDE and CLI integration
 
-**Subagent Support:** Yes - MCP server enables integration with other agents  
-**Context Window:** Up to 200K (with Claude models)  
+**Subagent Support:** Yes - MCP server enables integration with other agents
+**Context Window:** Up to 200K (with Claude models)
 **Unique Differentiators:** Specialized for code semantic understanding; dual IDE/CLI interface; production-proven in Cursor integration
 
 **Performance Characteristics:**
@@ -110,12 +110,12 @@ A powerful coding agent toolkit providing semantic retrieval and editing capabil
 ---
 
 ## 4. HEXSTRIKE AI
-**Organization:** 0x4m4  
-**Repository:** https://github.com/0x4m4/hexstrike-ai  
-**Language:** Python  
-**Stars:** 6,979 ⭐  
+**Organization:** 0x4m4
+**Repository:** https://github.com/0x4m4/hexstrike-ai
+**Language:** Python
+**Stars:** 6,979 ⭐
 
-**Description:**  
+**Description:**
 Advanced MCP server for cybersecurity automation. Enables AI agents to autonomously run 150+ security tools for pentesting, vulnerability discovery, bug bounty automation, and security research.
 
 **Tech Stack:**
@@ -132,8 +132,8 @@ Advanced MCP server for cybersecurity automation. Enables AI agents to autonomou
 - Offensive security research
 - Real-time threat analysis
 
-**Subagent Support:** Yes - MCP enables multi-agent security operations  
-**Context Window:** Varies by model (optimized for Claude 100K+)  
+**Subagent Support:** Yes - MCP enables multi-agent security operations
+**Context Window:** Varies by model (optimized for Claude 100K+)
 **Unique Differentiators:** Largest integrated security tool set; production pentesting ready; real-world offensive capabilities
 
 **Performance Characteristics:**
@@ -146,12 +146,12 @@ Advanced MCP server for cybersecurity automation. Enables AI agents to autonomou
 ---
 
 ## 5. PYSPUR
-**Organization:** PySpur-Dev  
-**Repository:** https://github.com/PySpur-Dev/pyspur  
-**Language:** TypeScript  
-**Stars:** 5,676 ⭐  
+**Organization:** PySpur-Dev
+**Repository:** https://github.com/PySpur-Dev/pyspur
+**Language:** TypeScript
+**Stars:** 5,676 ⭐
 
-**Description:**  
+**Description:**
 A visual playground for agentic workflows. Enables iteration over agents 10x faster with graphical workflow design, real-time debugging, and performance profiling.
 
 **Tech Stack:**
@@ -168,8 +168,8 @@ A visual playground for agentic workflows. Enables iteration over agents 10x fas
 - Agent testing framework
 - Export to code
 
-**Subagent Support:** Yes - visual multi-agent orchestration  
-**Context Window:** Adaptive (displays token usage in real-time)  
+**Subagent Support:** Yes - visual multi-agent orchestration
+**Context Window:** Adaptive (displays token usage in real-time)
 **Unique Differentiators:** First visual agent IDE; 10x iteration speed claim; integrated testing and profiling
 
 **Performance Characteristics:**
@@ -180,12 +180,12 @@ A visual playground for agentic workflows. Enables iteration over agents 10x fas
 ---
 
 ## 6. AGENTGATEWAY
-**Organization:** agentgateway  
-**Repository:** https://github.com/agentgateway/agentgateway  
-**Language:** Rust  
-**Stars:** 1,772 ⭐  
+**Organization:** agentgateway
+**Repository:** https://github.com/agentgateway/agentgateway
+**Language:** Rust
+**Stars:** 1,772 ⭐
 
-**Description:**  
+**Description:**
 Next-generation agentic proxy for AI agents and MCP servers. Provides intelligent routing, load balancing, and failover for agent infrastructure at scale.
 
 **Tech Stack:**
@@ -202,8 +202,8 @@ Next-generation agentic proxy for AI agents and MCP servers. Provides intelligen
 - Observability/logging
 - Multi-backend support
 
-**Subagent Support:** Yes - proxy for multi-agent systems  
-**Context Window:** Transparent pass-through (no modification)  
+**Subagent Support:** Yes - proxy for multi-agent systems
+**Context Window:** Transparent pass-through (no modification)
 **Unique Differentiators:** High-performance Rust implementation; enterprise-grade proxy features; infrastructure-as-code ready
 
 **Performance Characteristics:**
@@ -216,12 +216,12 @@ Next-generation agentic proxy for AI agents and MCP servers. Provides intelligen
 ---
 
 ## 7. OCTOTOOLS
-**Organization:** octotools  
-**Repository:** https://github.com/octotools/octotools  
-**Language:** Python  
-**Stars:** 1,415 ⭐  
+**Organization:** octotools
+**Repository:** https://github.com/octotools/octotools
+**Language:** Python
+**Stars:** 1,415 ⭐
 
-**Description:**  
+**Description:**
 An agentic framework with extensible tools for complex reasoning. Designed for building multi-step reasoning workflows with custom tool integration.
 
 **Tech Stack:**
@@ -238,8 +238,8 @@ An agentic framework with extensible tools for complex reasoning. Designed for b
 - Memory management
 - Result caching
 
-**Subagent Support:** Yes - hierarchical reasoning agents  
-**Context Window:** Configurable per workflow (default 8K-100K)  
+**Subagent Support:** Yes - hierarchical reasoning agents
+**Context Window:** Configurable per workflow (default 8K-100K)
 **Unique Differentiators:** Emphasis on extensibility; simplified tool abstraction; rapid tool prototyping
 
 **Performance Characteristics:**
@@ -252,12 +252,12 @@ An agentic framework with extensible tools for complex reasoning. Designed for b
 ---
 
 ## 8. MCP-USE
-**Organization:** mcp-use  
-**Repository:** https://github.com/mcp-use/mcp-use  
-**Language:** TypeScript  
-**Stars:** 9,206 ⭐  
+**Organization:** mcp-use
+**Repository:** https://github.com/mcp-use/mcp-use
+**Language:** TypeScript
+**Stars:** 9,206 ⭐
 
-**Description:**  
+**Description:**
 The fullstack MCP framework to develop MCP Apps for ChatGPT/Claude and MCP Servers for AI Agents. Provides unified abstraction for building agent integrations.
 
 **Tech Stack:**
@@ -274,8 +274,8 @@ The fullstack MCP framework to develop MCP Apps for ChatGPT/Claude and MCP Serve
 - TypeScript full-type support
 - Hot reload development
 
-**Subagent Support:** Yes - native MCP support enables multi-agent ecosystems  
-**Context Window:** Up to 200K (with supported models)  
+**Subagent Support:** Yes - native MCP support enables multi-agent ecosystems
+**Context Window:** Up to 200K (with supported models)
 **Unique Differentiators:** Fullstack approach; unified abstraction; excellent TypeScript support; fastest MCP development
 
 **Performance Characteristics:**
@@ -288,12 +288,12 @@ The fullstack MCP framework to develop MCP Apps for ChatGPT/Claude and MCP Serve
 ---
 
 ## 9. TRADING AGENTS
-**Organization:** TauricResearch  
-**Repository:** https://github.com/TauricResearch/TradingAgents  
-**Language:** Python  
-**Stars:** 30,232 ⭐  
+**Organization:** TauricResearch
+**Repository:** https://github.com/TauricResearch/TradingAgents
+**Language:** Python
+**Stars:** 30,232 ⭐
 
-**Description:**  
+**Description:**
 Multi-agent LLM financial trading framework. Enables AI agents to perform market analysis, risk assessment, and automated trading with real money.
 
 **Tech Stack:**
@@ -311,8 +311,8 @@ Multi-agent LLM financial trading framework. Enables AI agents to perform market
 - Backtesting framework
 - Live trading support
 
-**Subagent Support:** Yes - specialized agents for different market functions  
-**Context Window:** 8K-100K (varies by model)  
+**Subagent Support:** Yes - specialized agents for different market functions
+**Context Window:** 8K-100K (varies by model)
 **Unique Differentiators:** Production trading ready; largest star count in finance domain; proven real-money trading
 
 **Performance Characteristics:**
@@ -327,12 +327,12 @@ Multi-agent LLM financial trading framework. Enables AI agents to perform market
 ---
 
 ## 10. HEURIST AGENT FRAMEWORK
-**Organization:** heurist-network  
-**Repository:** https://github.com/heurist-network/heurist-agent-framework  
-**Language:** Python  
-**Stars:** 775 ⭐  
+**Organization:** heurist-network
+**Repository:** https://github.com/heurist-network/heurist-agent-framework
+**Language:** Python
+**Stars:** 775 ⭐
 
-**Description:**  
+**Description:**
 A flexible multi-interface AI agent framework for building agents with reasoning, tool use, memory, deep research, blockchain interaction, MCP, and agents-as-a-service.
 
 **Tech Stack:**
@@ -352,8 +352,8 @@ A flexible multi-interface AI agent framework for building agents with reasoning
 - MCP server generation
 - Agents-as-a-Service (AaaS) ready
 
-**Subagent Support:** Yes - native multi-agent composition  
-**Context Window:** Up to 200K (with large context models)  
+**Subagent Support:** Yes - native multi-agent composition
+**Context Window:** Up to 200K (with large context models)
 **Unique Differentiators:** Blockchain-native agents; built-in AaaS capabilities; enterprise feature set; reasoning specialization
 
 **Performance Characteristics:**
@@ -366,12 +366,12 @@ A flexible multi-interface AI agent framework for building agents with reasoning
 ---
 
 ## 11. SANDBOX (Agent Infrastructure)
-**Organization:** agent-infra  
-**Repository:** https://github.com/agent-infra/sandbox  
-**Language:** Python  
-**Stars:** 2,569 ⭐  
+**Organization:** agent-infra
+**Repository:** https://github.com/agent-infra/sandbox
+**Language:** Python
+**Stars:** 2,569 ⭐
 
-**Description:**  
+**Description:**
 All-in-One Sandbox for AI Agents combining Browser, Shell, File, MCP, and VSCode Server in a single Docker container. Production-ready agent execution environment.
 
 **Tech Stack:**
@@ -390,8 +390,8 @@ All-in-One Sandbox for AI Agents combining Browser, Shell, File, MCP, and VSCode
 - Network isolation
 - Resource limiting
 
-**Subagent Support:** Yes - MCP server included  
-**Context Window:** Not limited (environment is external)  
+**Subagent Support:** Yes - MCP server included
+**Context Window:** Not limited (environment is external)
 **Unique Differentiators:** All-in-one Docker package; easiest agent deployment; production container ready; complete tool suite
 
 **Performance Characteristics:**
@@ -404,13 +404,13 @@ All-in-One Sandbox for AI Agents combining Browser, Shell, File, MCP, and VSCode
 ---
 
 ## 12. MEDAX
-**Organization:** bowang-lab  
-**Repository:** https://github.com/bowang-lab/MedRAX  
-**Language:** Python  
-**Stars:** 1,105 ⭐  
-**Academic:** ICML 2025 Conference Paper  
+**Organization:** bowang-lab
+**Repository:** https://github.com/bowang-lab/MedRAX
+**Language:** Python
+**Stars:** 1,105 ⭐
+**Academic:** ICML 2025 Conference Paper
 
-**Description:**  
+**Description:**
 Medical Reasoning Agent for Chest X-ray (MedRAX). Specialized agent for medical image analysis with multi-step reasoning for diagnostic support.
 
 **Tech Stack:**
@@ -427,8 +427,8 @@ Medical Reasoning Agent for Chest X-ray (MedRAX). Specialized agent for medical 
 - Clinical decision support
 - Explainable outputs
 
-**Subagent Support:** Modular design supports composition  
-**Context Window:** 8K-100K  
+**Subagent Support:** Modular design supports composition
+**Context Window:** 8K-100K
 **Unique Differentiators:** ICML-published research; medical-specific optimization; explainability focus; diagnostic accuracy benchmarks
 
 **Performance Characteristics:**
@@ -443,12 +443,12 @@ Medical Reasoning Agent for Chest X-ray (MedRAX). Specialized agent for medical 
 ---
 
 ## 13. AGENTS-FROM-SCRATCH
-**Organization:** pguso  
-**Repository:** https://github.com/pguso/agents-from-scratch  
-**Language:** Python  
-**Stars:** 439 ⭐  
+**Organization:** pguso
+**Repository:** https://github.com/pguso/agents-from-scratch
+**Language:** Python
+**Stars:** 439 ⭐
 
-**Description:**  
+**Description:**
 Build AI agents from first principles using a local LLM - no frameworks, no cloud APIs, no hidden reasoning. Educational and practical framework for agent development.
 
 **Tech Stack:**
@@ -466,8 +466,8 @@ Build AI agents from first principles using a local LLM - no frameworks, no clou
 - Memory management examples
 - Step-by-step tutorials
 
-**Subagent Support:** Yes - modular agent composition  
-**Context Window:** Limited by local model (typically 2K-32K)  
+**Subagent Support:** Yes - modular agent composition
+**Context Window:** Limited by local model (typically 2K-32K)
 **Unique Differentiators:** Privacy-first (no cloud); transparent/educational; minimal dependencies; perfect for learning agent architecture
 
 **Performance Characteristics:**
@@ -480,12 +480,12 @@ Build AI agents from first principles using a local LLM - no frameworks, no clou
 ---
 
 ## 14. SE-AGENT (Self-Evolution Agent)
-**Organization:** JARVIS-Xs  
-**Repository:** https://github.com/JARVIS-Xs/SE-Agent  
-**Language:** Python  
-**Stars:** 233 ⭐  
+**Organization:** JARVIS-Xs
+**Repository:** https://github.com/JARVIS-Xs/SE-Agent
+**Language:** Python
+**Stars:** 233 ⭐
 
-**Description:**  
+**Description:**
 SE-Agent is a self-evolution framework for LLM code agents. Enables trajectory-level evolution with revision, recombination, and refinement for software engineering tasks. Achieves SOTA on SWE-bench Verified.
 
 **Tech Stack:**
@@ -503,8 +503,8 @@ SE-Agent is a self-evolution framework for LLM code agents. Enables trajectory-l
 - Local optima escape
 - Benchmark testing
 
-**Subagent Support:** Hierarchical evolution agents  
-**Context Window:** 8K-200K  
+**Subagent Support:** Hierarchical evolution agents
+**Context Window:** 8K-200K
 **Unique Differentiators:** Self-evolution approach; SOTA SWE-bench performance; novel reasoning escape technique
 
 **Performance Characteristics:**
@@ -519,12 +519,12 @@ SE-Agent is a self-evolution framework for LLM code agents. Enables trajectory-l
 ---
 
 ## 15. OPEN-AGENTRL
-**Organization:** Gen-Verse  
-**Repository:** https://github.com/Gen-Verse/Open-AgentRL  
-**Language:** Python  
-**Stars:** 277 ⭐  
+**Organization:** Gen-Verse
+**Repository:** https://github.com/Gen-Verse/Open-AgentRL
+**Language:** Python
+**Stars:** 277 ⭐
 
-**Description:**  
+**Description:**
 An open-source reinforcement learning framework for training LLM-based agents. Supports GRPO, PPO, RLHF with multi-turn reasoning, tool use, and distributed training.
 
 **Tech Stack:**
@@ -543,8 +543,8 @@ An open-source reinforcement learning framework for training LLM-based agents. S
 - Trajectory sampling
 - Efficient training pipelines
 
-**Subagent Support:** Training for multi-agent coordination  
-**Context Window:** Model-dependent (up to 200K)  
+**Subagent Support:** Training for multi-agent coordination
+**Context Window:** Model-dependent (up to 200K)
 **Unique Differentiators:** Open-source RL training; cutting-edge GRPO algorithm; distributed-ready; research framework
 
 **Performance Characteristics:**
@@ -557,12 +557,12 @@ An open-source reinforcement learning framework for training LLM-based agents. S
 ---
 
 ## 16. DOCKER COMPOSE-FOR-AGENTS
-**Organization:** Docker  
-**Repository:** https://github.com/docker/compose-for-agents  
-**Language:** TypeScript  
-**Stars:** 843 ⭐  
+**Organization:** Docker
+**Repository:** https://github.com/docker/compose-for-agents
+**Language:** TypeScript
+**Stars:** 843 ⭐
 
-**Description:**  
+**Description:**
 Official Docker tool for composing and orchestrating AI agent workloads. Native integration with Docker Compose for agent containerization and multi-agent systems.
 
 **Tech Stack:**
@@ -581,8 +581,8 @@ Official Docker tool for composing and orchestrating AI agent workloads. Native 
 - Health checks
 - Resource limiting
 
-**Subagent Support:** Yes - native Docker Compose support  
-**Context Window:** Not limited (container external)  
+**Subagent Support:** Yes - native Docker Compose support
+**Context Window:** Not limited (container external)
 **Unique Differentiators:** Official Docker product; seamless Docker integration; production-proven; enterprise support
 
 **Performance Characteristics:**
@@ -595,12 +595,12 @@ Official Docker tool for composing and orchestrating AI agent workloads. Native 
 ---
 
 ## 17. TRPC-AGENT-GO
-**Organization:** trpc-group  
-**Repository:** https://github.com/trpc-group/trpc-agent-go  
-**Language:** Go  
-**Stars:** 884 ⭐  
+**Organization:** trpc-group
+**Repository:** https://github.com/trpc-group/trpc-agent-go
+**Language:** Go
+**Stars:** 884 ⭐
 
-**Description:**  
+**Description:**
 High-performance agent framework written in Go. Enterprise-grade agent infrastructure with built-in RPC, tracing, and observability.
 
 **Tech Stack:**
@@ -620,8 +620,8 @@ High-performance agent framework written in Go. Enterprise-grade agent infrastru
 - Observability built-in
 - Enterprise features
 
-**Subagent Support:** Yes - RPC-based multi-agent  
-**Context Window:** Configurable  
+**Subagent Support:** Yes - RPC-based multi-agent
+**Context Window:** Configurable
 **Unique Differentiators:** Go performance; enterprise observability; tRPC integration; production infrastructure ready
 
 **Performance Characteristics:**
@@ -635,12 +635,12 @@ High-performance agent framework written in Go. Enterprise-grade agent infrastru
 ---
 
 ## 18. AGENTS-AT-SCALE-ARK
-**Organization:** McKinsey  
-**Repository:** https://github.com/mckinsey/agents-at-scale-ark  
-**Language:** TypeScript  
-**Stars:** 335 ⭐  
+**Organization:** McKinsey
+**Repository:** https://github.com/mckinsey/agents-at-scale-ark
+**Language:** TypeScript
+**Stars:** 335 ⭐
 
-**Description:**  
+**Description:**
 McKinsey's enterprise agent framework designed for scaling agents in production environments. Focus on governance, observability, and business alignment.
 
 **Tech Stack:**
@@ -659,8 +659,8 @@ McKinsey's enterprise agent framework designed for scaling agents in production 
 - SLA management
 - Cost tracking
 
-**Subagent Support:** Yes - hierarchical business process agents  
-**Context Window:** Varies (optimized for enterprise context)  
+**Subagent Support:** Yes - hierarchical business process agents
+**Context Window:** Varies (optimized for enterprise context)
 **Unique Differentiators:** McKinsey enterprise expertise; governance-first design; business alignment; compliance ready
 
 **Performance Characteristics:**
@@ -673,12 +673,12 @@ McKinsey's enterprise agent framework designed for scaling agents in production 
 ---
 
 ## 19. AGENTIC-RADAR
-**Organization:** splx-ai  
-**Repository:** https://github.com/splx-ai/agentic-radar  
-**Language:** Python  
-**Stars:** 914 ⭐  
+**Organization:** splx-ai
+**Repository:** https://github.com/splx-ai/agentic-radar
+**Language:** Python
+**Stars:** 914 ⭐
 
-**Description:**  
+**Description:**
 Security-focused agent monitoring and anomaly detection system. Provides real-time monitoring of agent behavior and security threat detection.
 
 **Tech Stack:**
@@ -698,8 +698,8 @@ Security-focused agent monitoring and anomaly detection system. Provides real-ti
 - Compliance reporting
 - Forensic analysis
 
-**Subagent Support:** Monitors multi-agent systems  
-**Context Window:** N/A (monitoring tool)  
+**Subagent Support:** Monitors multi-agent systems
+**Context Window:** N/A (monitoring tool)
 **Unique Differentiators:** First agent security monitoring tool; anomaly detection focus; compliance reporting; forensic capabilities
 
 **Performance Characteristics:**
@@ -712,12 +712,12 @@ Security-focused agent monitoring and anomaly detection system. Provides real-ti
 ---
 
 ## 20. VERL-TOOL
-**Organization:** TIGER-AI-Lab  
-**Repository:** https://github.com/TIGER-AI-Lab/verl-tool  
-**Language:** Python  
-**Stars:** 874 ⭐  
+**Organization:** TIGER-AI-Lab
+**Repository:** https://github.com/TIGER-AI-Lab/verl-tool
+**Language:** Python
+**Stars:** 874 ⭐
 
-**Description:**  
+**Description:**
 Versatile agent reinforcement learning toolkit. Research-oriented framework for agent training with advanced reasoning and planning capabilities.
 
 **Tech Stack:**
@@ -737,8 +737,8 @@ Versatile agent reinforcement learning toolkit. Research-oriented framework for 
 - Trajectory analysis
 - Benchmark integration
 
-**Subagent Support:** Hierarchical reasoning agents  
-**Context Window:** 8K-200K (research optimization)  
+**Subagent Support:** Hierarchical reasoning agents
+**Context Window:** 8K-200K (research optimization)
 **Unique Differentiators:** Advanced reasoning focus; VERL algorithm; research-optimized; curriculum learning support
 
 **Performance Characteristics:**
@@ -751,12 +751,12 @@ Versatile agent reinforcement learning toolkit. Research-oriented framework for 
 ---
 
 ## 21. NONO (Security-focused Agent)
-**Organization:** always-further  
-**Repository:** https://github.com/always-further/nono  
-**Language:** Rust  
-**Stars:** 483 ⭐  
+**Organization:** always-further
+**Repository:** https://github.com/always-further/nono
+**Language:** Rust
+**Stars:** 483 ⭐
 
-**Description:**  
+**Description:**
 Lightweight, high-performance agent framework written in Rust. Optimized for security-sensitive applications and edge deployment.
 
 **Tech Stack:**
@@ -775,8 +775,8 @@ Lightweight, high-performance agent framework written in Rust. Optimized for sec
 - Edge-compatible
 - Secure-by-default design
 
-**Subagent Support:** Yes - async agent coordination  
-**Context Window:** Configurable (memory-constrained friendly)  
+**Subagent Support:** Yes - async agent coordination
+**Context Window:** Configurable (memory-constrained friendly)
 **Unique Differentiators:** Rust safety guarantees; single binary deployment; edge-ready; memory-efficient
 
 **Performance Characteristics:**
@@ -876,4 +876,3 @@ HexStrike AI (150+ security tools), Agentic-Radar (monitoring), and Nono (secure
 - **Data Freshness:** February 2026
 - **Updates Recommended:** Quarterly (2-3 new agents monthly)
 - **Last Validated:** 2026-02-20
-

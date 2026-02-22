@@ -114,4 +114,3 @@ is_available(self: Any)
 Check if Mojo is installed and available.
 
 ---
-

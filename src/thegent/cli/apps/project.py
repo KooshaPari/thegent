@@ -8,12 +8,14 @@ from __future__ import annotations
 import json
 import subprocess
 import tempfile
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
 import typer
 from rich.console import Console
 from rich.table import Table
+from thegent.install_constants import VALID_TARGETS
 
 console = Console()
 
@@ -34,6 +36,499 @@ install_project_app = typer.Typer(
     help="Install Thegent runtime assets into a registered project directory.",
     no_args_is_help=True,
 )
+
+
+install_app = typer.Typer(
+    help="Install user/system assets and project runtime assets.",
+)
+install_app.add_typer(install_project_app, name="project", help="Install Thegent runtime assets into a project.")
+
+
+scaffold_app = typer.Typer(
+    help="Project scaffolding: greenfield bootstrap and brownfield migration.",
+    no_args_is_help=True,
+)
+
+
+def _normalize_install_target(raw_target: str) -> str:
+    """Normalize legacy install target aliases."""
+    return (raw_target or "all").strip().lower()
+
+
+def _normalize_install_scope(raw_scope: str) -> str:
+    """Normalize user/system install scope argument."""
+    scope = (raw_scope or "user").strip().lower()
+    if scope not in {"user", "system", "both"}:
+        raise ValueError(f"Invalid scope: {scope!r}. Valid values: user, system, both")
+    return scope
+
+
+@install_app.callback(invoke_without_command=True)
+def install_callback(
+    ctx: typer.Context,
+    target: str = typer.Option(
+        "all",
+        "--target",
+        "-t",
+        help="User-scope install target: all, codex, droid, cursor, harness, shell, etc. or system.",
+    ),
+    mode: str = typer.Option(
+        "smart",
+        "--mode",
+        "-m",
+        help="Install mode: smart, overwrite, skip, undo",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would change without writing files"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Print detailed install output"),
+    url: str | None = typer.Option(None, "--url", help="MCP URL override"),
+    install_service: bool = typer.Option(False, "--install-service", help="Install service hooks where supported"),
+    system: bool = typer.Option(False, "--system", help="Install system-wide assets under /opt/thegent"),
+    system_prefix: str | None = typer.Option(None, "--system-prefix", help="System install prefix (default: /opt/thegent)"),
+    scope: str = typer.Option("user", "--scope", help="Install scope: user, system, or both."),
+    setup: bool = typer.Option(False, "--setup", help="Run the setup wizard after install."),
+) -> None:
+    """Install user/system runtime assets and optionally launch the setup wizard."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    try:
+        from thegent.install import run_install, run_install_system
+    except ImportError as exc:
+        console.print(f"[red]Install subsystem unavailable: {exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    selected_target = _normalize_install_target(target)
+    try:
+        selected_scope = _normalize_install_scope(scope)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    if system:
+        selected_scope = "system" if selected_scope == "user" else "both"
+
+    if selected_target == "system":
+        selected_target = "all"
+
+    if selected_scope == "both":
+        if selected_target == "user":
+            selected_target = "all"
+        if selected_target not in VALID_TARGETS:
+            console.print(f"[red]Invalid target: {selected_target!r}. Run with --target all or a valid target.")
+            raise typer.Exit(1)
+
+        both_result = run_install(
+            target=selected_target,
+            mode=mode,
+            dry_run=dry_run,
+            verbose=verbose,
+            url=url,
+            install_service=install_service,
+        )
+        if both_result.get("errors"):
+            raise typer.Exit(1)
+
+    elif selected_scope == "user":
+        if selected_target == "user":
+            selected_target = "all"
+        if selected_target == "both":
+            selected_target = "all"
+        if selected_target not in VALID_TARGETS:
+            console.print(f"[red]Invalid target: {selected_target!r}. Run with --target all or a valid target.")
+            raise typer.Exit(1)
+
+        run_install_result = run_install(
+            target=selected_target,
+            mode=mode,
+            dry_run=dry_run,
+            verbose=verbose,
+            url=url,
+            install_service=install_service,
+        )
+
+        if run_install_result.get("errors"):
+            raise typer.Exit(1)
+
+    if selected_scope in {"system", "both"}:
+        from pathlib import Path as _Path
+
+        prefix = _Path(system_prefix or "/opt/thegent")
+        system_result = run_install_system(prefix=prefix, dry_run=dry_run, verbose=verbose)
+        if system_result.get("errors"):
+            raise typer.Exit(1)
+
+    if setup:
+        from thegent.cli.commands.model_cmds import setup_cmd
+
+        setup_cmd(wizard=True)
+
+
+@scaffold_app.command("greenfield", help="Create a new project from initialize-project presets.")
+def scaffold_greenfield(
+    destination: Annotated[str | None, typer.Argument(help="Destination directory for generated project scaffold")] = None,
+    profile: Annotated[str, typer.Option("--profile", "-p", help="Preset profile name")] = "cli_tool",
+    name: Annotated[str, typer.Option("--name", help="Project name (defaults to destination name)")] = "",
+    description: Annotated[str, typer.Option("--description", "-d", help="Project description")] = "",
+    language: Annotated[str, typer.Option("--language", "-l", help="Primary language")] = "python",
+    register: Annotated[bool, typer.Option("--register", help="Register scaffolded project tenancy")] = False,
+    install_runtime: Annotated[
+        bool,
+        typer.Option(
+            "--install-runtime",
+            help="Install Thegent runtime assets after scaffold (requires --register, skipped for --dry-run)",
+        ),
+    ] = False,
+    tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override (with --register)")] = "",
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview scaffold payload without running Copier")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Top-level greenfield alias for `thegent sys setup project scaffold`."""
+    if not destination:
+        console.print("[yellow]Usage: thegent project greenfield <destination>[/yellow]")
+        return
+    project_scaffold(
+        destination=destination,
+        profile=profile,
+        name=name,
+        description=description,
+        language=language,
+        register=register,
+        install_runtime=install_runtime,
+        tenant=tenant,
+        dry_run=dry_run,
+        json_output=json_output,
+    )
+
+
+@scaffold_app.command("brownfield", help="Adopt an existing project into the Thegent tenant/runtime model.")
+def scaffold_brownfield(
+    project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
+    name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
+    tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
+    template: Annotated[
+        str,
+        typer.Option(
+            "--template",
+            help="Template adoption mode: auto|ag-dd|none (default auto). auto infers from existing metadata.",
+        ),
+    ] = "auto",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Install/apply mode for template assets: smart|overwrite|skip."),
+    ] = "smart",
+    reconcile: Annotated[
+        bool,
+        typer.Option("--reconcile/--no-reconcile", help="Synchronize registry template metadata with detected state."),
+    ] = True,
+    register: Annotated[
+        bool,
+        typer.Option("--register", help="Register the project before migration if it is not already registered."),
+    ] = True,
+    install_runtime: Annotated[
+        bool,
+        typer.Option("--install-runtime", "--runtime", help="Run Thegent runtime asset install/update."),
+    ] = True,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing changes.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Top-level brownfield alias for `thegent sys setup project migrate`."""
+    if not project:
+        console.print("[yellow]Usage: thegent project brownfield <project>[/yellow]")
+        return
+    project_migrate(
+        project=project,
+        name=name,
+        tenant=tenant,
+        template=template,
+        mode=mode,
+        reconcile=reconcile,
+        register=register,
+        install_runtime=install_runtime,
+        dry_run=dry_run,
+        json_output=json_output,
+    )
+
+
+@scaffold_app.command("ag-dd", help="Brownfield alias to migrate an existing project as AG-DD template mode.")
+def scaffold_brownfield_agdd(
+    project: Annotated[
+        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
+    ] = None,
+    name: Annotated[
+        str,
+        typer.Option("--name", "-n", help="Project name (defaults to directory name)."),
+    ] = "",
+    tenant: Annotated[
+        str,
+        typer.Option("--tenant", "-t", help="Tenant ID override."),
+    ] = "",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Install/apply mode for template assets: smart|overwrite|skip."),
+    ] = "smart",
+    reconcile: Annotated[
+        bool,
+        typer.Option("--reconcile/--no-reconcile", help="Synchronize registry metadata with detected state."),
+    ] = True,
+    register: Annotated[
+        bool,
+        typer.Option("--register", help="Register the project before migration if it is not already registered."),
+    ] = True,
+    install_runtime: Annotated[
+        bool,
+        typer.Option("--install-runtime", "--runtime", help="Run Thegent runtime asset install/update."),
+    ] = True,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing changes.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Brownfield variant that fixes template mode to AG-DD."""
+    if not project:
+        console.print("[yellow]Usage: thegent project ag-dd <project>[/yellow]")
+        return
+    scaffold_brownfield(
+        project=project,
+        name=name,
+        tenant=tenant,
+        template="ag-dd",
+        mode=mode,
+        reconcile=reconcile,
+        register=register,
+        install_runtime=install_runtime,
+        dry_run=dry_run,
+        json_output=json_output,
+    )
+
+
+@scaffold_app.command("none", help="Brownfield alias to migrate an existing project without template overlay.")
+def scaffold_brownfield_none(
+    project: Annotated[
+        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
+    ] = None,
+    name: Annotated[
+        str,
+        typer.Option("--name", "-n", help="Project name (defaults to directory name)."),
+    ] = "",
+    tenant: Annotated[
+        str,
+        typer.Option("--tenant", "-t", help="Tenant ID override."),
+    ] = "",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Install/apply mode for template assets: smart|overwrite|skip."),
+    ] = "smart",
+    reconcile: Annotated[
+        bool,
+        typer.Option("--reconcile/--no-reconcile", help="Synchronize registry metadata with detected state."),
+    ] = True,
+    register: Annotated[
+        bool,
+        typer.Option("--register", help="Register the project before migration if it is not already registered."),
+    ] = True,
+    install_runtime: Annotated[
+        bool,
+        typer.Option("--install-runtime", "--runtime", help="Run Thegent runtime asset install/update."),
+    ] = True,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing changes.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Brownfield variant that fixes template mode to none."""
+    if not project:
+        console.print("[yellow]Usage: thegent project none <project>[/yellow]")
+        return
+    scaffold_brownfield(
+        project=project,
+        name=name,
+        tenant=tenant,
+        template="none",
+        mode=mode,
+        reconcile=reconcile,
+        register=register,
+        install_runtime=install_runtime,
+        dry_run=dry_run,
+        json_output=json_output,
+    )
+
+
+@setup_project_app.command("brownfield", help="Top-level brownfield migration alias for project setup workflows.")
+def setup_project_brownfield(
+    project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
+    name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
+    tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
+    template: Annotated[
+        str,
+        typer.Option(
+            "--template",
+            help="Template adoption mode: auto|ag-dd|none (default auto). auto infers from existing metadata.",
+        ),
+    ] = "auto",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Install/apply mode for template assets: smart|overwrite|skip."),
+    ] = "smart",
+    reconcile: Annotated[
+        bool,
+        typer.Option("--reconcile/--no-reconcile", help="Synchronize registry metadata with detected state."),
+    ] = True,
+    register: Annotated[
+        bool,
+        typer.Option("--register", help="Register the project before migration if it is not already registered."),
+    ] = True,
+    install_runtime: Annotated[
+        bool,
+        typer.Option("--install-runtime", "--runtime", help="Run Thegent runtime asset install/update."),
+    ] = True,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing changes.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Top-level brownfield alias for `thegent setup project migrate`."""
+    if not project:
+        console.print("[yellow]Usage: thegent sys setup project brownfield <project>[/yellow]")
+        return
+    project_migrate(
+        project=project,
+        name=name,
+        tenant=tenant,
+        template=template,
+        mode=mode,
+        reconcile=reconcile,
+        register=register,
+        install_runtime=install_runtime,
+        dry_run=dry_run,
+        json_output=json_output,
+    )
+
+
+@setup_project_app.command("greenfield", help="Top-level greenfield scaffold alias for project setup workflows.")
+def setup_project_greenfield(
+    destination: Annotated[
+        str | None, typer.Argument(help="Destination directory for generated project scaffold")
+    ] = None,
+    profile: Annotated[
+        str,
+        typer.Option(
+            "--profile",
+            help="Preset profile: cli_tool|service_api|event_worker|web_app|library_sdk",
+        ),
+    ] = "service_api",
+    name: Annotated[str, typer.Option("--name", help="Project name (defaults to destination name)")] = "",
+    description: Annotated[str, typer.Option("--description", "-d", help="Project description")] = "",
+    language: Annotated[str, typer.Option("--language", "-l", help="Primary language")] = "python",
+    register: Annotated[bool, typer.Option("--register", help="Register scaffolded project tenancy")] = False,
+    install_runtime: Annotated[
+        bool,
+        typer.Option(
+            "--install-runtime",
+            help="Install Thegent runtime assets after scaffold (requires --register, skipped for --dry-run)",
+        ),
+    ] = False,
+    tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override (with --register)")] = "",
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview scaffold payload without running Copier")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Top-level greenfield alias for `thegent setup project scaffold`."""
+    if not destination:
+        console.print("[yellow]Usage: thegent sys setup project greenfield <destination>[/yellow]")
+        return
+    project_scaffold(
+        destination=destination,
+        profile=profile,
+        name=name,
+        description=description,
+        language=language,
+        register=register,
+        install_runtime=install_runtime,
+        tenant=tenant,
+        dry_run=dry_run,
+        json_output=json_output,
+    )
+
+
+@setup_project_app.command("ag-dd", help="Top-level brownfield variant forcing AG-DD template mode.")
+def setup_project_brownfield_agdd(
+    project: Annotated[
+        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
+    ] = None,
+    name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
+    tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Install/apply mode for template assets: smart|overwrite|skip."),
+    ] = "smart",
+    reconcile: Annotated[
+        bool,
+        typer.Option("--reconcile/--no-reconcile", help="Synchronize registry metadata with detected state."),
+    ] = True,
+    register: Annotated[
+        bool,
+        typer.Option("--register", help="Register the project before migration if it is not already registered."),
+    ] = True,
+    install_runtime: Annotated[
+        bool,
+        typer.Option("--install-runtime", "--runtime", help="Run Thegent runtime asset install/update."),
+    ] = True,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing changes.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Top-level brownfield variant that fixes template mode to AG-DD."""
+    if not project:
+        console.print("[yellow]Usage: thegent sys setup project ag-dd <project>[/yellow]")
+        return
+    setup_project_brownfield(
+        project=project,
+        name=name,
+        tenant=tenant,
+        template="ag-dd",
+        mode=mode,
+        reconcile=reconcile,
+        register=register,
+        install_runtime=install_runtime,
+        dry_run=dry_run,
+        json_output=json_output,
+    )
+
+
+@setup_project_app.command("none", help="Top-level brownfield variant forcing no template overlay.")
+def setup_project_brownfield_none(
+    project: Annotated[
+        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
+    ] = None,
+    name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
+    tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Install/apply mode for template assets: smart|overwrite|skip."),
+    ] = "smart",
+    reconcile: Annotated[
+        bool,
+        typer.Option("--reconcile/--no-reconcile", help="Synchronize registry metadata with detected state."),
+    ] = True,
+    register: Annotated[
+        bool,
+        typer.Option("--register", help="Register the project before migration if it is not already registered."),
+    ] = True,
+    install_runtime: Annotated[
+        bool,
+        typer.Option("--install-runtime", "--runtime", help="Run Thegent runtime asset install/update."),
+    ] = True,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing changes.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Top-level brownfield variant that fixes template mode to none."""
+    if not project:
+        console.print("[yellow]Usage: thegent sys setup project none <project>[/yellow]")
+        return
+    setup_project_brownfield(
+        project=project,
+        name=name,
+        tenant=tenant,
+        template="none",
+        mode=mode,
+        reconcile=reconcile,
+        register=register,
+        install_runtime=install_runtime,
+        dry_run=dry_run,
+        json_output=json_output,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +596,9 @@ _SCAFFOLD_PROFILES: dict[str, dict[str, object]] = {
 }
 
 
+_DEFAULT_TEMPLATE_VERSION = "1.0.0"
+
+
 def _build_scaffold_data(profile: str, name: str, description: str, language: str) -> dict[str, object]:
     """Return Copier data-file payload for a scaffold preset profile."""
     if profile not in _SCAFFOLD_PROFILES:
@@ -119,9 +617,384 @@ def _build_scaffold_data(profile: str, name: str, description: str, language: st
     }
 
 
+def _read_templates_lock_state(project_path: Path) -> tuple[str, str] | None:
+    """Read existing ``.thegent/templates.lock`` metadata if present and valid."""
+    lock_path = project_path / ".thegent" / "templates.lock"
+    if not lock_path.exists():
+        return None
+    raw = lock_path.read_text(encoding="utf-8")
+    data = json.loads(raw)
+    if not isinstance(data, dict):
+        raise ValueError(f"Invalid templates.lock format (expected object): {lock_path}")
+    template = data.get("template")
+    version = data.get("version")
+    if not isinstance(template, str) or not template:
+        return None
+    if not isinstance(version, str):
+        version = _DEFAULT_TEMPLATE_VERSION
+    return template.strip(), version.strip() or _DEFAULT_TEMPLATE_VERSION
+
+
+def _agents_md_looks_thematic(path: Path) -> bool:
+    """Conservative AGENTS.md marker check used only when lock markers are absent."""
+    agents_md = path / "AGENTS.md"
+    if not agents_md.exists():
+        return False
+    try:
+        text = agents_md.read_text(encoding="utf-8").lower()
+    except OSError:
+        return False
+    return "thegent" in text and "migration" in text
+
+
+def _resolve_migration_template(
+    requested_template: str,
+    project_path: Path,
+    fallback_template: str | None = None,
+    *,
+    ignore_lock_errors: bool = False,
+) -> str:
+    """Resolve requested template mode for migration flow."""
+    requested = requested_template.strip().lower()
+    if requested == "auto":
+        try:
+            lock_state = _read_templates_lock_state(project_path)
+        except ValueError:
+            if ignore_lock_errors:
+                return fallback_template or "none"
+            raise
+        if lock_state:
+            return lock_state[0]
+
+        thegent_dir = project_path / ".thegent"
+        existing_markers = [
+            thegent_dir / "config.yaml",
+            thegent_dir / "ownership.json",
+            thegent_dir / "templates.lock",
+        ]
+        if _agents_md_looks_thematic(project_path):
+            existing_markers.append(project_path / "AGENTS.md")
+        if any(marker.exists() for marker in existing_markers):
+            return "ag-dd"
+        return fallback_template or "none"
+
+    if requested in {"ag-dd", "none"}:
+        return requested
+
+    raise ValueError("template must be one of: auto, ag-dd, none")
+
+
+def _resolve_migration_mode(requested_mode: str) -> str:
+    """Validate migration install mode."""
+    mode = requested_mode.strip().lower()
+    if mode not in {"smart", "overwrite", "skip"}:
+        raise ValueError("mode must be one of: smart, overwrite, skip")
+    return mode
+
+
+def _project_migrate_snapshot(project_path: Path) -> dict[str, object]:
+    """Collect lightweight project state for migration diagnostics."""
+    thegent_dir = project_path / ".thegent"
+    return {
+        "project_path": str(project_path),
+        "exists": project_path.exists(),
+        "is_dir": project_path.is_dir(),
+        "has_git": (project_path / ".git").is_dir(),
+        "has_thegent_dir": thegent_dir.is_dir(),
+        "has_thegent_config": (thegent_dir / "config.yaml").exists(),
+        "has_ownership": (thegent_dir / "ownership.json").exists(),
+        "has_templates_lock": (thegent_dir / "templates.lock").exists(),
+        "has_agdd_agents_md": (project_path / "AGENTS.md").exists(),
+    }
+
+
 def _scaffold_profile_names() -> list[str]:
     """Sorted list of supported scaffold presets."""
     return sorted(_SCAFFOLD_PROFILES)
+
+
+@setup_project_app.command("migrate", help="Convert or reconcile an existing repo into the thegent tenant/runtime model.")
+def project_migrate(
+    project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
+    name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
+    tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
+    template: Annotated[
+        str,
+        typer.Option(
+            "--template",
+            help="Template adoption mode: auto|ag-dd|none (default auto). auto infers from existing metadata.",
+        ),
+    ] = "auto",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Install/apply mode for template assets: smart|overwrite|skip."),
+    ] = "smart",
+    reconcile: Annotated[
+        bool,
+        typer.Option("--reconcile/--no-reconcile", help="Synchronize registry template metadata with detected state."),
+    ] = True,
+    register: Annotated[
+        bool,
+        typer.Option("--register", help="Register the project before migration if it is not already registered."),
+    ] = True,
+    install_runtime: Annotated[
+        bool,
+        typer.Option("--install-runtime", "--runtime", help="Run Thegent runtime asset install/update."),
+    ] = True,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing changes.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Migrate a brownfield/new partial project and align it with registry and runtime assets."""
+    if not project:
+        console.print("[yellow]Usage: thegent project migrate <project>[/yellow]")
+        return
+    import thegent.infra.project_tenancy as pt_module
+
+    project_path = Path(project).expanduser().resolve()
+    if not project_path.exists() or not project_path.is_dir():
+        console.print(f"[red]Error: project path is not a directory: {project_path}[/red]")
+        raise typer.Exit(1)
+
+    try:
+        resolved_mode = _resolve_migration_mode(mode)
+        resolved_template = _resolve_migration_template(template, project_path, ignore_lock_errors=True)
+    except Exception as exc:
+        console.print(f"[red]Error: {exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    tenancy = pt_module._DEFAULT_TENANCY
+    existing = tenancy.get_project(path=project_path)
+    warnings: list[str] = []
+
+    try:
+        lock_state = _read_templates_lock_state(project_path)
+    except ValueError as exc:
+        warnings.append(f"templates.lock parse warning: {exc}")
+        lock_state = None
+    detected_template = lock_state[0] if lock_state else resolved_template
+    if existing:
+        template_version = existing.template_version
+        if template == "auto" and existing.template != "none":
+            resolved_template = existing.template
+        elif template == "auto":
+            if detected_template in {"ag-dd", "none"}:
+                resolved_template = detected_template
+    else:
+        template_version = lock_state[1] if lock_state else _DEFAULT_TEMPLATE_VERSION
+
+    reconcile_updates: dict[str, str] = {}
+    if existing and template == "auto":
+        if existing.template == "none" and detected_template != existing.template:
+            reconcile_updates["template"] = detected_template
+        elif existing.template != "ag-dd" and detected_template == "ag-dd":
+            reconcile_updates["template"] = detected_template
+        if lock_state and lock_state[1] != existing.template_version:
+            reconcile_updates["template_version"] = lock_state[1]
+        if existing.name == project_path.name and name and name != existing.name:
+            reconcile_updates["name"] = name.strip()
+        if existing.tenant_id == _slug(project_path.name) and tenant and tenant.strip() != existing.tenant_id:
+            reconcile_updates["tenant_id"] = tenant.strip()
+    else:
+        if existing and lock_state and lock_state[1] != existing.template_version:
+            reconcile_updates["template_version"] = lock_state[1]
+        if template != "auto" and template != existing.template:
+            reconcile_updates["template"] = template
+
+    registration: dict[str, object] = {}
+    if existing is None:
+        if not register:
+            console.print(
+                f"[red]Error: project is not registered. Use --register to adopt this brownfield project[/red]",
+            )
+            raise typer.Exit(1)
+        project_name = name.strip() or project_path.name
+        tenant_id = tenant.strip() or _slug(project_name)
+        if dry_run:
+            conflict = False
+            try:
+                name_record = tenancy.get_project(name=project_name)
+            except ValueError as exc:
+                warnings.append(f"Conflict on name: {exc}")
+                name_record = None
+                conflict = True
+            if name_record is not None and name_record.path != str(project_path):
+                warnings.append(f"Conflict on name: {name_record.path}")
+                conflict = True
+            try:
+                tenant_record = tenancy.get_project(tenant_id=tenant_id)
+            except ValueError as exc:
+                warnings.append(f"Conflict on tenant: {exc}")
+                tenant_record = None
+                conflict = True
+            if tenant_record is not None:
+                warnings.append(f"Conflict on tenant: {tenant_record.tenant_id}")
+                conflict = True
+            if conflict:
+                for warning in warnings:
+                    console.print(f"[yellow]Warning:[/yellow] {warning}")
+                raise typer.Exit(1)
+            registration.update(
+                {
+                    "status": "adopted (dry-run)",
+                    "project_id": "pending",
+                    "tenant_id": tenant_id,
+                    "name": project_name,
+                },
+            )
+            existing = None
+        else:
+            try:
+                record = tenancy.init_project(
+                    name=project_name,
+                    tenant_id=tenant_id,
+                    path=project_path,
+                    template=resolved_template,
+                    template_version=template_version,
+                )
+            except Exception as exc:
+                console.print(f"[red]Error: cannot register project: {exc}[/red]")
+                raise typer.Exit(1) from exc
+            existing = record
+            registration.update(
+                {
+                    "status": "adopted",
+                    "project_id": record.project_id,
+                    "tenant_id": record.tenant_id,
+                    "name": record.name,
+                },
+            )
+    else:
+        if name and name != existing.name:
+            console.print(
+                f"[yellow]Info: project name {name!r} differs from registry name {existing.name!r}; keeping registry record[/yellow]"
+            )
+        if tenant and tenant.strip() != existing.tenant_id:
+            console.print(
+                f"[yellow]Info: tenant override {tenant!r} differs from registry tenant {existing.tenant_id!r}; keeping registry record[/yellow]"
+            )
+        registration.update(
+            {
+                "status": "already_registered",
+                "project_id": existing.project_id,
+                "tenant_id": existing.tenant_id,
+                "name": existing.name,
+            },
+        )
+        if reconcile_updates:
+            if dry_run:
+                registration["planned_reconcile"] = True
+                registration["reconcile_changes"] = reconcile_updates
+            elif reconcile:
+                try:
+                    existing = tenancy.sync_project(path=project_path, **reconcile_updates)
+                except Exception as exc:
+                    console.print(f"[red]Error: cannot reconcile existing project: {exc}[/red]")
+                    raise typer.Exit(1) from exc
+                registration.update(
+                    {
+                        "status": "reconciled",
+                        "project_id": existing.project_id,
+                        "tenant_id": existing.tenant_id,
+                        "name": existing.name,
+                    }
+                )
+                warnings.append("Registry metadata reconciled from detected project state.")
+
+    runtime_result: dict[str, object] = {
+        "project_selector": str(project_path),
+        "template": resolved_template,
+        "mode": resolved_mode,
+        "installed": [],
+        "skipped": [],
+        "errors": [],
+        "status": "not_run",
+    }
+    if install_runtime and not (dry_run and existing is None):
+        from thegent.install import run_install_project
+
+        try:
+            runtime_result = run_install_project(
+                project_selector=str(project_path),
+                template=resolved_template,
+                mode=resolved_mode,
+                dry_run=dry_run,
+                registry_path=tenancy._registry_path,  # noqa: SLF001
+            )
+            runtime_result["status"] = "applied" if not dry_run else "dry_run"
+        except Exception as exc:
+            console.print(f"[red]Error: runtime migration failed: {exc}[/red]")
+            raise typer.Exit(1) from exc
+    elif install_runtime and dry_run and existing is None:
+        runtime_result["status"] = "deferred"
+        runtime_result["notes"] = ["Dry-run for unregistered project: runtime install is planned after registration."]
+
+    snapshot = _project_migrate_snapshot(project_path)
+    snapshot["detected_template"] = detected_template
+    snapshot["target_template"] = resolved_template
+    snapshot["mode"] = resolved_mode
+    snapshot["registry_template"] = existing.template if existing else resolved_template
+    snapshot["template_version"] = template_version
+    snapshot["warnings"] = warnings
+    snapshot["lock_state"] = "valid" if lock_state else ("invalid" if warnings else "absent")
+
+    if json_output:
+        payload = {
+            "project": {
+                "name": existing.name if existing else name.strip() or project_path.name,
+                "tenant_id": existing.tenant_id if existing else (tenant.strip() or _slug(name.strip() or project_path.name)),
+                "path": str(project_path),
+                "registered": existing is not None,
+            },
+            "registration": registration,
+            "runtime": runtime_result,
+            "snapshot": snapshot,
+        }
+        typer.echo(json.dumps(payload, indent=2))
+        raise typer.Exit(0 if not runtime_result.get("errors") else 1)
+
+    baseline_label = (
+        "adopted"
+        if registration.get("status") in {"adopted", "adopted (dry-run)"}
+        else "reconciled"
+    )
+    console.print(f"[green]Migration baseline: {baseline_label}[/green]")
+    console.print(f"  path: {project_path}")
+    if existing:
+        console.print(f"  project: {existing.name}")
+        console.print(f"  tenant : {existing.tenant_id}")
+        console.print(f"  template: {existing.template} (v{existing.template_version})")
+    else:
+        console.print(f"  project: {name or project_path.name}")
+        console.print(f"  tenant: {tenant or _slug(name or project_path.name)}")
+    console.print(f"  detected_template: {detected_template}")
+    console.print(f"  target_template: {resolved_template}")
+    console.print(f"  mode: {resolved_mode}")
+    console.print(f"  install_runtime: {install_runtime}")
+    if registration.get("status") == "adopted (dry-run)":
+        console.print("[yellow]Dry-run mode: project registration is planned but not persisted.[/yellow]")
+    if warnings:
+        for warning in warnings:
+            console.print(f"[yellow]Warning:[/yellow] {warning}")
+    if install_runtime and runtime_result:
+        installed = list(cast(Iterable[object], runtime_result.get("installed", [])))
+        skipped = list(cast(Iterable[object], runtime_result.get("skipped", [])))
+        errors = list(cast(Iterable[object], runtime_result.get("errors", [])))
+        for note in cast(Iterable[object], runtime_result.get("notes", [])):
+            console.print(f"  [yellow]runtime note:[/yellow] {note}")
+        if dry_run:
+            console.print("[yellow]Dry-run mode for runtime migration enabled[/yellow]")
+        if installed:
+            console.print(f"  runtime: installed {len(installed)} file(s)")
+        if skipped:
+            console.print(f"  runtime: skipped {len(skipped)} file(s)")
+        if errors:
+            for err in errors:
+                console.print(f"  [red]runtime error:[/red] {err}")
+    if not snapshot["has_thegent_dir"]:
+        console.print("[yellow]Tip: .thegent dir missing before migration; runtime install will create it when --install-runtime is enabled.[/yellow]")
+
+    if runtime_result.get("errors"):
+        raise typer.Exit(1)
 
 
 # ---------------------------------------------------------------------------
@@ -199,8 +1072,8 @@ def project_init(
 @setup_project_app.command("scaffold", help="Bootstrap a new project from initialize-project presets.")
 def project_scaffold(
     destination: Annotated[
-        str, typer.Argument(help="Destination directory for generated project scaffold")
-    ],
+        str | None, typer.Argument(help="Destination directory for generated project scaffold")
+    ] = None,
     profile: Annotated[
         str,
         typer.Option(
@@ -224,6 +1097,9 @@ def project_scaffold(
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
 ) -> None:
     """Run Copier with a curated profile preset and deterministic defaults."""
+    if destination is None:
+        console.print("[yellow]Usage: thegent project scaffold <destination>[/yellow]")
+        return
     dest_path = Path(destination).expanduser().resolve()
     if dest_path.exists() and any(dest_path.iterdir()):
         console.print(f"[red]Error: destination is not empty: {dest_path}[/red]")
@@ -665,8 +1541,9 @@ def project_doctor(
 # ---------------------------------------------------------------------------
 
 
-@install_project_app.command("project", help="Install Thegent runtime assets into a registered project.")
+@install_project_app.callback(invoke_without_command=True)
 def install_project_cmd(
+    ctx: typer.Context,
     project: Annotated[
         str,
         typer.Option("--project", "-p", help="Project name, tenant_id, or path (default: cwd)"),
@@ -677,6 +1554,9 @@ def install_project_cmd(
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
 ) -> None:
     """Install .thegent/config.yaml, ownership.json, and templates.lock into a project."""
+    if ctx.invoked_subcommand is not None:
+        return
+
     import thegent.infra.project_tenancy as pt_module
     from thegent.install import run_install_project
 
@@ -718,3 +1598,142 @@ def install_project_cmd(
         for err in errors:
             console.print(f"  [red]error:[/red] {err}")
         raise typer.Exit(1)
+
+
+@install_project_app.command("brownfield", help="Adopt and install an unregistered or partial brownfield project.")
+def install_project_brownfield(
+    project: Annotated[
+        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
+    ] = None,
+    name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
+    tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
+    template: Annotated[
+        str,
+        typer.Option(
+            "--template",
+            help="Template adoption mode: auto|ag-dd|none (default auto). auto infers from existing metadata.",
+        ),
+    ] = "auto",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Install/apply mode for template assets: smart|overwrite|skip."),
+    ] = "smart",
+    reconcile: Annotated[
+        bool,
+        typer.Option("--reconcile/--no-reconcile", help="Synchronize registry metadata with detected state."),
+    ] = True,
+    register: Annotated[
+        bool,
+        typer.Option("--register", help="Register the project before migration if it is not already registered."),
+    ] = True,
+    install_runtime: Annotated[
+        bool,
+        typer.Option("--install-runtime", "--runtime", help="Run Thegent runtime asset install/update."),
+    ] = True,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing changes.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Brownfield install entrypoint that includes migration + runtime install."""
+    if not project:
+        console.print("[yellow]Usage: thegent install project brownfield <project>[/yellow]")
+        return
+    project_migrate(
+        project=project,
+        name=name,
+        tenant=tenant,
+        template=template,
+        mode=mode,
+        reconcile=reconcile,
+        register=register,
+        install_runtime=install_runtime,
+        dry_run=dry_run,
+        json_output=json_output,
+    )
+
+
+@install_project_app.command("ag-dd", help="Adopt and install a project using AG-DD brownfield template mode.")
+def install_project_brownfield_agdd(
+    project: Annotated[
+        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
+    ] = None,
+    name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
+    tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Install/apply mode for template assets: smart|overwrite|skip."),
+    ] = "smart",
+    reconcile: Annotated[
+        bool,
+        typer.Option("--reconcile/--no-reconcile", help="Synchronize registry metadata with detected state."),
+    ] = True,
+    register: Annotated[
+        bool,
+        typer.Option("--register", help="Register the project before migration if it is not already registered."),
+    ] = True,
+    install_runtime: Annotated[
+        bool,
+        typer.Option("--install-runtime", "--runtime", help="Run Thegent runtime asset install/update."),
+    ] = True,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing changes.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Brownfield install variant that fixes template mode to AG-DD."""
+    if not project:
+        console.print("[yellow]Usage: thegent install project ag-dd <project>[/yellow]")
+        return
+    install_project_brownfield(
+        project=project,
+        name=name,
+        tenant=tenant,
+        template="ag-dd",
+        mode=mode,
+        reconcile=reconcile,
+        register=register,
+        install_runtime=install_runtime,
+        dry_run=dry_run,
+        json_output=json_output,
+    )
+
+
+@install_project_app.command("none", help="Adopt and install a project without template overlay.")
+def install_project_none(
+    project: Annotated[
+        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
+    ] = None,
+    name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
+    tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="Install/apply mode for template assets: smart|overwrite|skip."),
+    ] = "smart",
+    reconcile: Annotated[
+        bool,
+        typer.Option("--reconcile/--no-reconcile", help="Synchronize registry metadata with detected state."),
+    ] = True,
+    register: Annotated[
+        bool,
+        typer.Option("--register", help="Register the project before migration if it is not already registered."),
+    ] = True,
+    install_runtime: Annotated[
+        bool,
+        typer.Option("--install-runtime", "--runtime", help="Run Thegent runtime asset install/update."),
+    ] = True,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing changes.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
+) -> None:
+    """Brownfield install variant that fixes template mode to none."""
+    if not project:
+        console.print("[yellow]Usage: thegent install project none <project>[/yellow]")
+        return
+    install_project_brownfield(
+        project=project,
+        name=name,
+        tenant=tenant,
+        template="none",
+        mode=mode,
+        reconcile=reconcile,
+        register=register,
+        install_runtime=install_runtime,
+        dry_run=dry_run,
+        json_output=json_output,
+    )

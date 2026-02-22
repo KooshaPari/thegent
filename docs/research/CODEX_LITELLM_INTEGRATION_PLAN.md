@@ -1,6 +1,6 @@
 # Codex CLI + LiteLLM Integration Plan
 
-**Date**: 2026-02-18  
+**Date**: 2026-02-18
 **Goal**: Fix codex CLI harnesses to work with LiteLLM as front matter over OAI+Anth compatible provider services, eliminating need for codex-proxy.
 
 ---
@@ -53,13 +53,13 @@ Codex CLI → LiteLLM Router (with Responses API adapter) → Individual Provide
 # In cliproxy_adapter.py
 async def proxy_handler(request: Request) -> Response:
     backend = getattr(request.app.state, "backend_url", None)
-    
+
     # Option: Use LiteLLM Router instead of CLIProxyAPIPlus
     use_litellm = os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1"
-    
+
     if use_litellm and path == "/v1/responses":
         return await _handle_responses_via_litellm(request)
-    
+
     # Fallback to CLIProxyAPIPlus
     ...
 ```

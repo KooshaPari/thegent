@@ -7,6 +7,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from thegent.audit.shadow_audit_git import GitJournalEnhanced
+
 console = Console()
 app = typer.Typer(help="Audit system health, security, and planning risk.")
 
@@ -92,6 +94,7 @@ def audit_journal(
     batch_size: int = typer.Option(10, "--batch", "-b", help="Batch size for commits"),
     enhanced: bool = typer.Option(True, "--enhanced/--basic", help="Use enhanced journal"),
     stream: bool = typer.Option(False, "--stream", help="Enable Kafka event streaming"),
+    follow: bool = typer.Option(False, "--follow", help="Keep watch command attached until interrupted."),
     bootstrap_servers: str = typer.Option("localhost:9092", "--kafka-servers", help="Kafka bootstrap servers"),
     topic: str = typer.Option("thegent-audit-events", "--kafka-topic", help="Kafka topic for events"),
 ):
@@ -120,7 +123,7 @@ def audit_journal(
     repo_path = Path(path).resolve()
 
     # Always use GitJournalEnhanced since enhanced=True by default
-    from thegent.audit.shadow_audit_git import GitJournalEnhanced as JournalClass
+    JournalClass = GitJournalEnhanced
 
     if action == "list":
         sessions = JournalClass.list_sessions(repo_path)
@@ -198,7 +201,7 @@ def audit_journal(
             )
 
     elif action == "prune":
-        pruned = JournalClass.prune_old_sessions(repo_path, max_age_days=max_age)
+        pruned = JournalClass.prune_old_sessions(repo_path, max_age)
         console.print(f"[green]Pruned {pruned} old audit sessions[/green]")
 
     elif action == "show":
@@ -226,9 +229,7 @@ def audit_journal(
             session_id = f"watch-{uuid.uuid4().hex[:8]}"
             console.print(f"[cyan]Creating watch session: {session_id}[/cyan]")
 
-        from thegent.audit.shadow_audit_git import GitJournalEnhanced
-
-        journal = GitJournalEnhanced(
+        journal = JournalClass(
             repo_path,
             session_id,
             enable_watching=True,
@@ -245,6 +246,10 @@ def audit_journal(
 
         if stats["watcher"]:
             journal.start_watching()
+            if not follow:
+                console.print("[green]Watcher started in detached mode.[/green]")
+                console.print("[dim]Re-run with --follow to keep this command attached.[/dim]")
+                return
             console.print("[green]Watching for changes (Ctrl+C to stop)...[/green]")
             try:
                 import time
@@ -263,9 +268,7 @@ def audit_journal(
             console.print("[red]Error: --session required for attest[/red]")
             raise typer.Exit(1)
 
-        from thegent.audit.shadow_audit_git import GitJournalEnhanced
-
-        journal = GitJournalEnhanced(repo_path, session_id, enable_attestation=True)
+        journal = JournalClass(repo_path, session_id, enable_attestation=True)
         attestations = journal.get_attestations()
 
         if not attestations:
@@ -294,9 +297,7 @@ def audit_journal(
             console.print("[red]Error: --session required for stats[/red]")
             raise typer.Exit(1)
 
-        from thegent.audit.shadow_audit_git import GitJournalEnhanced
-
-        journal = GitJournalEnhanced(repo_path, session_id)
+        journal = JournalClass(repo_path, session_id)
         stats = journal.get_performance_stats()
 
         table = Table(title=f"Journal Stats: {session_id}")

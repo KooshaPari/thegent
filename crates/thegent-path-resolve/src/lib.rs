@@ -6,11 +6,11 @@ use which::{which, which_in};
 use pyo3::prelude::*;
 
 /// Fast PATH resolution with skip directory support
-/// 
+///
 /// # Example
 /// ```
 /// use thegent_path_resolve::PathResolver;
-/// 
+///
 /// let resolver = PathResolver::new();
 /// if let Some(path) = resolver.resolve("codex") {
 ///     println!("Found codex at: {}", path);
@@ -36,9 +36,9 @@ impl PathResolver {
     }
 
     /// Resolve a binary name to its full path
-    /// 
+    ///
     /// Returns `None` if not found or if in skip directory.
-    /// 
+    ///
     /// # Example
     /// ```
     /// let resolver = PathResolver::new();
@@ -65,7 +65,7 @@ impl PathResolver {
     }
 
     /// Resolve multiple binaries at once (more efficient than multiple calls)
-    /// 
+    ///
     /// # Example
     /// ```
     /// let resolver = PathResolver::new();
@@ -105,11 +105,11 @@ impl Default for PathResolver {
 }
 
 /// Convenience function for simple use cases
-/// 
+///
 /// # Example
 /// ```
 /// use thegent_path_resolve::resolve_binary;
-/// 
+///
 /// if let Some(path) = resolve_binary("codex") {
 ///     println!("Found codex at: {}", path);
 /// }

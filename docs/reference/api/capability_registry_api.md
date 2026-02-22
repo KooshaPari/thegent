@@ -109,4 +109,3 @@ register(self: Any, cap: Capability)
 Register a new capability.
 
 ---
-

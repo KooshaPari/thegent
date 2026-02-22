@@ -193,4 +193,3 @@ def plan_harness_status(
         console.print("[cyan]Available Actions:[/cyan]")
         for a in status["actions"]:
             console.print(f"  - {a}")
-

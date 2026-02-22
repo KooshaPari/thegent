@@ -331,12 +331,12 @@ build:rust:
 - name: Build Rust crates
   run: |
     cargo build --release --manifest-path crates/Cargo.toml
-    
+
 - name: Install PyO3 extensions
   run: |
     uv pip install crates/thegent-crypto
     uv pip install crates/thegent-parser
-    
+
 - name: Test native backmatter
   env:
     THGENT_USE_NATIVE_RESOURCES: 1
@@ -424,7 +424,7 @@ For each new integration:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

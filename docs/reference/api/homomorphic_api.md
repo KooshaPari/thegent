@@ -84,4 +84,3 @@ encrypt_context(self: Any, data: str)
 Encrypt context data into an FHE ciphertext.
 
 ---
-

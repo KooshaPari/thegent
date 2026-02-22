@@ -1,7 +1,7 @@
 # Contract Authority
 
-**Status:** Authoritative  
-**Date:** 2026-02-14  
+**Status:** Authoritative
+**Date:** 2026-02-14
 **Scope:** Structured output contracts for thegent orchestration
 
 ---

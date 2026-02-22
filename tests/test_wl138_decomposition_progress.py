@@ -10,13 +10,34 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def _wl138_command() -> list[str]:
+    return [
+        "cargo",
+        "run",
+        "-q",
+        "--manifest-path",
+        "crates/Cargo.toml",
+        "-p",
+        "thegent-utils",
+        "--bin",
+        "wl138-decomposition-progress",
+        "--",
+    ]
+
+
 def test_wl138_progress_script_emits_json(tmp_path: Path) -> None:
     repo_root = _repo_root()
-    script = repo_root / "scripts" / "wl138_decomposition_progress.py"
     output = tmp_path / "progress.json"
 
     result = subprocess.run(
-        [sys.executable, str(script), "--output", str(output), "--skip-execution-gates"],
+        [
+            *_wl138_command(),
+            "--output",
+            str(output),
+            "--skip-execution-gates",
+            "--repo-root",
+            str(repo_root),
+        ],
         cwd=repo_root,
         capture_output=True,
         text=True,
@@ -34,7 +55,8 @@ def test_wl138_progress_script_emits_json(tmp_path: Path) -> None:
     runtime_matrix_checkpoint = next(
         item for item in payload["checkpoints"] if item["checkpoint_id"] == "runtime-matrix-artifacts"
     )
-    matrix_paths = [check["path"] for check in runtime_matrix_checkpoint["checks"]]
+    matrix_paths = [check["path"] for check in runtime_matrix_checkpoint["checks"]
+    ]
     assert "contracts/runtime/runtime-modularization-matrix.json" in matrix_paths
 
     rust_checkpoint = next(item for item in payload["checkpoints"] if item["checkpoint_id"] == "rust-hook-splits")
@@ -42,28 +64,56 @@ def test_wl138_progress_script_emits_json(tmp_path: Path) -> None:
     assert rust_checkpoint["execution_gates"][0]["status"] == "skipped"
 
 
-def test_build_progress_fails_checkpoint_when_execution_gate_fails() -> None:
+def test_build_progress_fails_checkpoint_when_execution_gate_fails(tmp_path: Path) -> None:
     repo_root = _repo_root()
-    script = repo_root / "scripts" / "wl138_decomposition_progress.py"
-    namespace: dict[str, object] = {"__file__": str(script)}
-    exec(script.read_text(encoding="utf-8"), namespace)
+    single_checkpoint = tmp_path / "checkpoint.json"
+    output = tmp_path / "single_checkpoint_result.json"
+    python_bin = sys.executable
 
-    checkpoint = {
-        "checkpoint_id": "fake-checkpoint",
-        "description": "fake",
-        "paths": ["README.md"],
-        "execution_gates": [
+    single_checkpoint.write_text(
+        json.dumps(
             {
-                "gate_id": "failing-gate",
-                "description": "fails",
-                "command": [sys.executable, "-c", "raise SystemExit(7)"],
+                "checkpoint_id": "fake-checkpoint",
+                "description": "fake",
+                "paths": ["README.md"],
+                "execution_gates": [
+                    {
+                        "gate_id": "failing-gate",
+                        "description": "fails",
+                        "command": [
+                            python_bin,
+                            "-c",
+                            "raise SystemExit(7)",
+                        ],
+                    }
+                ],
             }
-        ],
-    }
+        ),
+        encoding="utf-8",
+    )
 
-    result = namespace["_checkpoint_result"](repo_root, checkpoint, skip_execution_gates=False)
-    assert result["evaluation"]["paths_complete"] is True
-    assert result["evaluation"]["execution_gates_complete"] is False
-    assert result["complete"] is False
-    assert result["execution_gates"][0]["status"] == "fail"
-    assert result["execution_gates"][0]["exit_code"] == 7
+    result = subprocess.run(
+        [
+            *_wl138_command(),
+            "--checkpoint",
+            str(single_checkpoint),
+            "--output",
+            str(output),
+            "--repo-root",
+            str(repo_root),
+            "--python-bin",
+            python_bin,
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    result_payload = json.loads(output.read_text(encoding="utf-8"))
+    assert result_payload["evaluation"]["paths_complete"] is True
+    assert result_payload["evaluation"]["execution_gates_complete"] is False
+    assert result_payload["complete"] is False
+    assert result_payload["execution_gates"][0]["status"] == "fail"
+    assert result_payload["execution_gates"][0]["exit_code"] == 7

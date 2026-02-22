@@ -546,13 +546,13 @@ Parallel execution    ✓✓       ?        ?         ?
 **High-Impact Optimizations** (80/20 principle):
 1. Selective file reading (50 lines context vs. full file)
    - Savings: 30-50%
-   
+
 2. Operation batching (parallel tool calls)
    - Savings: 10-20%
-   
+
 3. Context compression on long conversations
    - Savings: 40-60%
-   
+
 4. Auto-memory utilization
    - Savings: 50-70% on repeated analysis
 
@@ -593,11 +593,11 @@ Model Progression:
 Claude 4-Sonnet (current baseline)
   ├─ Task success rate: 30-40%
   └─ Avg task duration: 10-15 min
-  
+
 Claude 4.5 (benchmarked)
   ├─ Projected success: 40-50%
   └─ Projected duration: 8-12 min
-  
+
 Claude 5 (speculative)
   ├─ Projected success: 60-70%
   └─ Projected duration: 5-10 min

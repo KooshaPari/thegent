@@ -8,9 +8,9 @@ Source: docs/research/CONCURRENT_AGENTS_SCALE_2026-02-18.md
 
 ## Scale Event
 
-**From**: 5 concurrent agents  
-**To**: 10 concurrent agents  
-**Date**: 2026-02-18  
+**From**: 5 concurrent agents
+**To**: 10 concurrent agents
+**Date**: 2026-02-18
 **Reason**: User request to scale capacity
 
 ---

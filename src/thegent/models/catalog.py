@@ -166,7 +166,6 @@ def filter_models_for_provider(provider: str, models: list[str]) -> list[str]:
 
 
 # OPT-019: Cache for normalized model IDs (frequently called)
-from thegent.infra import get_cache
 _NORMALIZE_CACHE = get_cache(l1_size=200, l2_size=1000, l3_path=None, default_ttl=3600)
 _USE_NORMALIZE_CACHE = _NORMALIZE_CACHE is not None
 

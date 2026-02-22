@@ -72,7 +72,7 @@ class MAIFArtifactGenerator:
     def __init__(self, signer: SigningKey):
         self.signer = signer
         self.last_hash: dict[str, str] = {}  # session_id -> last_artifact_hash
-    
+
     def create_artifact(
         self,
         action_type: ActionType,
@@ -84,7 +84,7 @@ class MAIFArtifactGenerator:
     ) -> MAIFArtifact:
         """Create a signed MAIF artifact with hash chain."""
         prev_hash = self.last_hash.get(session_id, "")
-        
+
         artifact = MAIFArtifact(
             id=uuid.uuid4().hex,
             timestamp=int(time.time()),
@@ -96,19 +96,19 @@ class MAIFArtifactGenerator:
             previous_hash=prev_hash,
             metadata=metadata or {},
         )
-        
+
         # Sign the artifact
         artifact_bytes = self._serialize(artifact)
         artifact.signature = self.signer.sign(artifact_bytes).hex()
-        
+
         # Update hash chain
         self.last_hash[session_id] = self._hash(artifact_bytes)
-        
+
         return artifact
-    
+
     def _hash(self, data: bytes) -> str:
         return hashlib.sha256(data).hexdigest()
-    
+
     def _serialize(self, artifact: MAIFArtifact) -> bytes:
         # Deterministic serialization for hashing
         return json.dumps(
@@ -128,14 +128,14 @@ class MAIFArtifactGenerator:
 class HashChainValidator:
     def __init__(self):
         self.chain_heads: dict[str, str] = {}  # session_id -> latest_artifact_hash
-    
+
     def verify_chain(
         self,
         artifacts: list[MAIFArtifact],
     ) -> tuple[bool, str]:
         """Verify integrity of artifact chain."""
         session_id = artifacts[0].session_id
-        
+
         for i, artifact in enumerate(artifacts):
             # Check previous hash matches
             if i == 0:
@@ -144,35 +144,35 @@ class HashChainValidator:
                 expected_prev = self._hash(
                     self._serialize(artifacts[i - 1])
                 )
-            
+
             if artifact.previous_hash != expected_prev:
                 return False, f"Artifact {i}: hash chain broken"
-            
+
             # Verify signature
             if not self._verify_signature(artifact):
                 return False, f"Artifact {i}: signature invalid"
-        
+
         # Update chain head
         self.chain_heads[session_id] = self._hash(
             self._serialize(artifacts[-1])
         )
-        
+
         return True, "OK"
-    
+
     def _verify_signature(self, artifact: MAIFArtifact) -> bool:
         """Verify artifact signature."""
         artifact_copy = artifact.model_copy()
         artifact_copy.signature = ""
-        
+
         message = self._serialize(artifact_copy)
         signature_bytes = bytes.fromhex(artifact.signature)
-        
+
         # Verify with public key
         return self._public_key.verify(message, signature_bytes)
-    
+
     def _hash(self, data: bytes) -> str:
         return hashlib.sha256(data).hexdigest()
-    
+
     def _serialize(self, artifact: MAIFArtifact) -> bytes:
         return json.dumps(
             artifact.model_dump(exclude={"signature"}),
@@ -192,7 +192,7 @@ class MAIFStorage:
     def __init__(self, supermemory_client: SupermemoryClient):
         self.client = supermemory_client
         self.local_cache = {}  # Fallback cache
-    
+
     async def store(self, artifact: MAIFArtifact) -> str:
         """Store artifact in L4 with fallback to local cache."""
         try:
@@ -213,7 +213,7 @@ class MAIFStorage:
             local_id = artifact.id
             self.local_cache[local_id] = artifact
             return local_id
-    
+
     async def retrieve(\n        self,\n        artifact_id: str,\n    ) -> MAIFArtifact | None:\n        \"\"\"Retrieve artifact from L4 or fallback cache.\"\"\"\n        try:\n            # Try L4 first\n            doc = await self.client.get_document(artifact_id)\n            return MAIFArtifact.model_validate(doc)\n        except Exception:\n            # Fallback to local cache\n            return self.local_cache.get(artifact_id)\n    \n    async def retrieve_by_session(\n        self,\n        session_id: str,\n    ) -> list[MAIFArtifact]:\n        \"\"\"Retrieve all artifacts for a session.\"\"\"\n        try:\n            docs = await self.client.query(\n                f\"session_id:{session_id}\",\n                limit=10000,\n            )\n            return [\n                MAIFArtifact.model_validate(doc)\n                for doc in docs\n            ]\n        except Exception:\n            # Fallback to local cache filtering\n            return [\n                a for a in self.local_cache.values()\n                if a.session_id == session_id\n            ]\n```
 
 ### 2.4 Action Hooks
@@ -235,7 +235,7 @@ ARTIFACT_GENERATOR="${CLAUDE_PLUGIN_ROOT}/thegent_maif_gen"
 main() {
     local tool_name="$1"
     local tool_result="$2"
-    
+
     case "$tool_name" in
         Write)
             create_artifact "FileOperation" "write" "$tool_result"
@@ -256,7 +256,7 @@ create_artifact() {
     local action_type="$1"
     local operation="$2"
     local result="$3"
-    
+
     python3 "$ARTIFACT_GENERATOR" \\
         --action-type "$action_type" \\
         --operation "$operation" \\
@@ -301,15 +301,15 @@ class MAIFArtifact(BaseModel):
     action_type: ActionType
     agent_id: str
     session_id: str
-    
+
     input_hash: str  # SHA-256 hex
     output_hash: str  # SHA-256 hex
-    
+
     signature: str  # Hex-encoded RSA-2048 signature
     previous_hash: str  # Hash of previous artifact
-    
+
     metadata: dict = {}
-    
+
     class Config:
         json_schema_extra = {
             "examples": [
@@ -369,10 +369,10 @@ async def create_artifact(
     artifact = generator.create_artifact(
         action_type, agent_id, session_id, input_data, output_data, metadata
     )
-    
+
     storage = MAIFStorage(supermemory_client)
     await storage.store(artifact)
-    
+
     return artifact
 ```
 
@@ -385,10 +385,10 @@ async def verify_artifact_chain(
     """Verify artifact chain for a session. Returns (is_valid, errors)."""
     storage = MAIFStorage(supermemory_client)
     artifacts = await storage.retrieve_by_session(session_id)
-    
+
     validator = HashChainValidator()
     is_valid, message = validator.verify_chain(artifacts)
-    
+
     errors = [] if is_valid else [message]
     return is_valid, errors
 ```
@@ -405,7 +405,7 @@ async def query_artifacts(
 ) -> list[MAIFArtifact]:
     """Query artifacts by filters."""
     storage = MAIFStorage(supermemory_client)
-    
+
     # Build query (Supermemory syntax)
     filters = []
     if session_id:
@@ -416,7 +416,7 @@ async def query_artifacts(
         filters.append(f"timestamp>={timestamp_start}")
     if timestamp_end:
         filters.append(f"timestamp<={timestamp_end}")
-    
+
     query = " AND ".join(filters)
     return await storage.retrieve_by_query(query, limit)
 ```

@@ -1,7 +1,7 @@
 # ChatGPT Pareto Router Deep Research — Master Index
 
-**Source**: chatgpt3.md, chatgpt4.md (full conversation transcripts)  
-**Date**: 2026-02-18  
+**Source**: chatgpt3.md, chatgpt4.md (full conversation transcripts)
+**Date**: 2026-02-18
 **Purpose**: Index for the 7-part deep research series extracted from ChatGPT conversations
 
 ---

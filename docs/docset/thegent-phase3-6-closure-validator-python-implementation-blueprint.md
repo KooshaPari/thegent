@@ -1,7 +1,7 @@
 # Thegent Phase 3–6 Closure Validator Python Implementation Blueprint
 
-**Status:** Implementation blueprint  
-**Date:** 2026-02-15  
+**Status:** Implementation blueprint
+**Date:** 2026-02-15
 **Scope:** Concrete Python module design, interfaces, and failure semantics for runnable closure-validator execution.
 
 ## 1) Purpose
@@ -561,4 +561,3 @@ Chunk F:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

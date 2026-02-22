@@ -43,4 +43,3 @@ compile_package(self: Any, version: str)
 Compile all required documents and generate checksums.
 
 ---
-

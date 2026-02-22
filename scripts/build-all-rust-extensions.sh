@@ -20,7 +20,7 @@ echo ""
 check_prereq() {
     local cmd=$1
     local install_cmd=$2
-    
+
     if ! command -v "$cmd" &>/dev/null; then
         echo -e "${YELLOW}📦 Installing $cmd...${NC}"
         eval "$install_cmd" || {
@@ -55,21 +55,21 @@ FAILED=0
 
 for ext in "${EXTENSIONS[@]}"; do
     EXT_DIR="$CRATES_DIR/$ext"
-    
+
     if [[ ! -d "$EXT_DIR" ]]; then
         echo -e "${YELLOW}⚠️  Skipping $ext (directory not found)${NC}"
         continue
     fi
-    
+
     echo -e "${BLUE}📦 Building $ext...${NC}"
     cd "$EXT_DIR"
-    
+
     # Check if it has Python bindings
     if [[ -f "pyproject.toml" ]] || grep -q "pyo3" Cargo.toml 2>/dev/null; then
         echo -e "   ${BLUE}Building Python extension...${NC}"
         if maturin develop --release --features python 2>&1 | tee "/tmp/maturin-$ext.log" | grep -E "(Compiling|Finished|error|warning)" | tail -20; then
             echo -e "   ${GREEN}✅ $ext built successfully${NC}"
-            
+
             # Verify import
             if "$PYTHON" -c "import ${ext//-/_}" 2>/dev/null; then
                 echo -e "   ${GREEN}✅ $ext import verified${NC}"

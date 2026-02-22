@@ -1,7 +1,7 @@
 # Thegent-Shims (Rust) Implementation Documentation
 
-> **WORK_STREAM ID:** scratch-thegent-shims  
-> **Priority:** P1  
+> **WORK_STREAM ID:** scratch-thegent-shims
+> **Priority:** P1
 > **Status:** ✅ Documentation Complete (Implementation in progress by other agents)
 
 ## Summary

@@ -129,4 +129,3 @@ update_details(self: Any, session: dict[(str, Any)]) -> None
 ```
 
 ---
-

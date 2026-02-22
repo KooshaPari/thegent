@@ -89,4 +89,3 @@ simulate_impact(self: Any, fork_id: str)
 WP-38002: Analyze the impact of a specific fork.
 
 ---
-

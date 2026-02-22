@@ -1,7 +1,7 @@
 # Always Write Conversation Dumps - Implementation Status
 
-> **WORK_STREAM ID:** research-always-write-dumps  
-> **Priority:** P2  
+> **WORK_STREAM ID:** research-always-write-dumps
+> **Priority:** P2
 > **Status:** ✅ Complete
 
 ## Summary

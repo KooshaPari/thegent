@@ -28,13 +28,13 @@ async function run() {
   output.value = ''
   showOutput.value = false
   outputCollapsed.value = false
-  
+
   try {
     // Simulate execution with timeout handling
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Execution timeout')), 10000)
     )
-    
+
     const executionPromise = new Promise(resolve => {
       setTimeout(() => {
         if (props.lang === 'python' || !props.lang) {
@@ -44,11 +44,11 @@ async function run() {
         }
       }, 500)
     })
-    
+
     const result = await Promise.race([executionPromise, timeoutPromise])
     output.value = String(result)
     showOutput.value = true
-    
+
     if (toast) {
       toast.success('Code executed successfully')
     }
@@ -56,7 +56,7 @@ async function run() {
     const errorMessage = e instanceof Error ? e.message : String(e)
     error.value = errorMessage
     showOutput.value = true
-    
+
     if (toast) {
       toast.error(`Execution failed: ${errorMessage}`)
     }
@@ -95,7 +95,7 @@ function handleKeydown(event: KeyboardEvent) {
       run()
     }
   }
-  
+
   // Ctrl+C to copy (only if not in input)
   if ((event.ctrlKey || event.metaKey) && event.key === 'c' && !(event.target instanceof HTMLInputElement)) {
     // Allow default copy behavior
@@ -148,11 +148,11 @@ onUnmounted(() => {
         </button>
       </div>
     </div>
-    
+
     <div class="code-container">
       <pre><code>{{ code }}</code></pre>
     </div>
-    
+
     <Transition name="output">
       <div v-if="showOutput && (output || error)" class="output-section">
         <button
@@ -430,25 +430,25 @@ onUnmounted(() => {
     flex-wrap: wrap;
     gap: var(--vp-spacing-2);
   }
-  
+
   .header-left {
     width: 100%;
   }
-  
+
   .header-right {
     width: 100%;
     justify-content: flex-end;
   }
-  
+
   .playground-title {
     font-size: var(--vp-font-size-xs);
   }
-  
+
   .action-button {
     padding: var(--vp-spacing-1) var(--vp-spacing-2);
     font-size: var(--vp-font-size-xs);
   }
-  
+
   .button-text {
     display: none;
   }

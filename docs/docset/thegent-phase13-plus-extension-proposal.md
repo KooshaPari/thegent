@@ -122,4 +122,3 @@ The proposal below defines explicit extension boundaries to convert Phase 13+ in
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

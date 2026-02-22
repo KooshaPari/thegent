@@ -5,4 +5,3 @@
 Thegent - Unified agent orchestration CLI.
 
 ---
-

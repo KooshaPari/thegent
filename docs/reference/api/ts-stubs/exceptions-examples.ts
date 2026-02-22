@@ -14,4 +14,3 @@ const leaseconflicterror = new LeaseConflictError();
 
 // Create a TenantAllocationError instance
 const tenantallocationerror = new TenantAllocationError();
-

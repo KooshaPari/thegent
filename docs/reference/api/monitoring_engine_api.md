@@ -111,4 +111,3 @@ Record a metric.
 - `tags`: Optional tags
 
 ---
-

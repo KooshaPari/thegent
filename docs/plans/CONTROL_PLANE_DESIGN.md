@@ -1,8 +1,8 @@
 # thegent Control Plane — Robust Design (Extreme Depth)
 
-> **Status**: Design Draft  
-> **Date**: 2026-02-18  
-> **Scope**: Multi-tenant config service, process architecture, CLI/MCP interaction, harmonization with existing plans  
+> **Status**: Design Draft
+> **Date**: 2026-02-18
+> **Scope**: Multi-tenant config service, process architecture, CLI/MCP interaction, harmonization with existing plans
 > **Research**: DDG + local docs; harmonized with Agent Registry, Compute Offload, CROSS_PLATFORM_MULTI_TENANT
 
 ---

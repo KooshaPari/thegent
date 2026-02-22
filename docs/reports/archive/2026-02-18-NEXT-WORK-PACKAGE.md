@@ -1,7 +1,7 @@
 # Next Work Package: Robustness Hardening
 
-**Date:** 2026-02-18  
-**Priority:** P0-P1  
+**Date:** 2026-02-18
+**Priority:** P0-P1
 **Status:** Ready to Start
 
 ---

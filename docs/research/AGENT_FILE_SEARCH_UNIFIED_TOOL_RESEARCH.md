@@ -1,6 +1,6 @@
 # Agent File Search — Unified Tool Research
 
-> **Purpose**: Research a single/better tool for agents (Claude Code, Cursor, Codex) to replace ls, rg, grep as individual commands.  
+> **Purpose**: Research a single/better tool for agents (Claude Code, Cursor, Codex) to replace ls, rg, grep as individual commands.
 > **Status**: Research | **Date**: 2026-02-16
 
 ---
@@ -37,7 +37,7 @@ Agents run `ls -l`, `grep`, `rg` as separate shell commands. Each has different 
 | Find files by name | `fd pattern` | `fd "test_" -e py` |
 | Search file content | `rg pattern` | `rg "def main" --type py` |
 
-**Pros**: Both respect .gitignore; fd has -E for extra exclusions; fast; OSS; cross-platform.  
+**Pros**: Both respect .gitignore; fd has -E for extra exclusions; fast; OSS; cross-platform.
 **Cons**: Two tools; agents must learn both.
 
 ### 3.2 MCP Tool: thegent_files (Single Unified Tool)
@@ -51,7 +51,7 @@ thegent_files(mode="list"|"search", path=".", depth=1, pattern=None, exclude=Non
 - **mode=list**: List files (fd). `path`, `depth`, `type` (f|d), `exclude` (default: node_modules, .venv, .git, dist, build).
 - **mode=search**: Search content (rg). `pattern`, `path`, `type`, `exclude`.
 
-**Pros**: Single tool; built-in exclusions; same behavior across platforms; no shell dependency.  
+**Pros**: Single tool; built-in exclusions; same behavior across platforms; no shell dependency.
 **Cons**: Requires MCP; doesn't help when agent uses raw shell.
 
 ### 3.3 IDE-Native Tools (Cursor, Claude Code)
@@ -206,7 +206,7 @@ rg "TODO" -g "!node_modules" -g "!.venv"
 
 ## EXTENSION_SUMMARY
 
-**Extended on**: 2026-02-17  
+**Extended on**: 2026-02-17
 **Extensions added**: Tool comparison matrix (§7), Implementation checklist (§8)
 
 | Section | Added Content |

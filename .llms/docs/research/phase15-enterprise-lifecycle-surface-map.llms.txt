@@ -6,9 +6,9 @@ Source: docs/research/phase15-enterprise-lifecycle-surface-map.md
 
 # Phase 15: Enterprise Lifecycle and Compliance Surface Map
 
-> **Purpose:** Map architectural surfaces for enterprise compliance, SOC/SIEM, ledger, certification export.  
-> **Depends:** Governance WP-300x, phase14.  
-> **Acceptance:** Egress, forensic ledger, compliance, privacy surfaces documented.  
+> **Purpose:** Map architectural surfaces for enterprise compliance, SOC/SIEM, ledger, certification export.
+> **Depends:** Governance WP-300x, phase14.
+> **Acceptance:** Egress, forensic ledger, compliance, privacy surfaces documented.
 > **WORK_STREAM ID:** phase15-enterprise-lifecycle
 
 ## 1. Overview
@@ -50,12 +50,12 @@ logger = logging.getLogger(__name__)
 
 class SIEMExporter:
     """Exports events to SIEM/SOC endpoints."""
-    
+
     def __init__(self, endpoint: str, timeout: float = 5.0):
         self.endpoint = endpoint
         self.timeout = timeout
         self.client = httpx.Client(timeout=timeout)
-    
+
     def emit(self, event: dict[str, Any]) -> bool:
         """Emit normalized event to SIEM endpoint."""
         try:
@@ -70,7 +70,7 @@ class SIEMExporter:
         except Exception as e:
             logger.error(f"Failed to emit event to SIEM: {e}")
             return False
-    
+
     def _normalize_event(self, event: dict[str, Any]) -> dict[str, Any]:
         """Normalize event to SIEM format."""
         return {
@@ -103,7 +103,7 @@ class LedgerEntry:
     data: dict[str, Any]
     previous_hash: str | None = None
     hash: str | None = None
-    
+
     def compute_hash(self) -> str:
         """Compute hash for this entry."""
         content = json.dumps({
@@ -117,17 +117,17 @@ class LedgerEntry:
 
 class Ledger:
     """Immutable, hash-chained ledger for forensic analysis."""
-    
+
     def __init__(self, storage_path: Path):
         self.storage_path = storage_path
         self.storage_path.mkdir(parents=True, exist_ok=True)
         self.entries_file = storage_path / "ledger.jsonl"
         self._load_entries()
-    
+
     def add(self, event_type: str, data: dict[str, Any]) -> LedgerEntry:
         """Add entry to ledger."""
         previous_hash = self._get_last_hash()
-        
+
         entry = LedgerEntry(
             entry_id=str(uuid.uuid4()),
             timestamp=datetime.now(UTC),
@@ -135,16 +135,16 @@ class Ledger:
             data=data,
             previous_hash=previous_hash
         )
-        
+
         entry.hash = entry.compute_hash()
-        
+
         # Append to ledger file
         with open(self.entries_file, "a") as f:
             f.write(json.dumps(asdict(entry)) + "\n")
-        
+
         self.entries.append(entry)
         return entry
-    
+
     def verify_chain(self) -> bool:
         """Verify hash chain integrity."""
         for i, entry in enumerate(self.entries):
@@ -165,11 +165,11 @@ from thegent.governance.escalation import EscalationQueue
 
 class ComplianceExporter:
     """Exports compliance evidence bundles."""
-    
+
     def __init__(self, ledger: Ledger, escalation_queue: EscalationQueue):
         self.ledger = ledger
         self.escalation_queue = escalation_queue
-    
+
     def generate_evidence_bundle(
         self,
         profile: ComplianceProfile,
@@ -182,13 +182,13 @@ class ComplianceExporter:
             start_date=start_date,
             end_date=end_date
         )
-        
+
         # Collect escalation queue items
         escalations = self.escalation_queue.list_pending(
             start_date=start_date,
             end_date=end_date
         )
-        
+
         # Generate bundle
         bundle = {
             "profile": profile.profile.value,
@@ -199,11 +199,11 @@ class ComplianceExporter:
             "policy_logs": escalations,
             "hash_chain": self.ledger.verify_chain()
         }
-        
+
         # Sign bundle (for SOC 2, US-SEC)
         if profile.profile in [ComplianceProfile.US_SEC, ComplianceProfile.SOX]:
             bundle["signature"] = self._sign_bundle(bundle)
-        
+
         return bundle
 ```
 
@@ -216,7 +216,7 @@ from typing import Any
 
 class PIIRedactor:
     """Redacts PII and secrets from output."""
-    
+
     # Patterns for common PII
     PATTERNS = {
         "email": r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
@@ -225,14 +225,14 @@ class PIIRedactor:
         "api_key": r'sk-[a-zA-Z0-9]{32,}',
         "token": r'[a-zA-Z0-9_-]{32,}',
     }
-    
+
     def redact(self, text: str, mode: str = "support") -> str:
         """Redact PII and secrets from text."""
         redacted = text
-        
+
         for pattern_name, pattern in self.PATTERNS.items():
             redacted = re.sub(pattern, "[REDACTED]", redacted)
-        
+
         return redacted
 ```
 
@@ -255,7 +255,7 @@ class PIIRedactor:
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -236,7 +236,7 @@ Three sub-agents, independently optimized:
 
 ### 15.3 Best Practices
 1. **Front-load critical info** - Put important context at start
-2. **Use dedicated files** - CLAUDE.md, AGENTS.md for persistence  
+2. **Use dedicated files** - CLAUDE.md, AGENTS.md for persistence
 3. **Monitor token %** - Stop at 70-80% before auto-compact
 4. **Split sessions** - Separate contexts for separate tasks
 5. **Manual checkpoints** - Save progress before compact
@@ -351,7 +351,7 @@ Long session → Identify episodes → Summarize each → Store → Inject summa
 ### 11.3 Multi-Scale Memory
 ```
 Current: Working memory (full context)
-Recent: Session buffer (summarized)  
+Recent: Session buffer (summarized)
 Historical: Episodic DB (indexed)
 ```
 

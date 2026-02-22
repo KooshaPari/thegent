@@ -6,8 +6,8 @@ Source: docs/research/FRICTION_AUTOMATION_SOLUTION.md
 
 # Friction Detection Automation - Complete Solution
 
-> **Date**: 2026-02-18  
-> **Status**: ✅ Implemented and Active  
+> **Date**: 2026-02-18
+> **Status**: ✅ Implemented and Active
 > **Purpose**: Ensure automatic detection and resolution of UX/DX/AX friction
 
 ---
@@ -33,7 +33,7 @@ Agents were not automatically detecting and fixing CLI/UX friction patterns (lik
 
 **Patterns Detected**:
 - ✅ `cd &&` → CLI should work from any directory
-- ✅ `2>&1` → CLI should handle stderr automatically  
+- ✅ `2>&1` → CLI should handle stderr automatically
 - ✅ `head -n` → CLI should have `--limit` option
 - ✅ `grep -v` → CLI should filter noise automatically
 - ✅ Bash loops wrapping commands → CLI should have native loop support

@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase10-12-issue-board-import-notes.md
 
 # Thegent Phase 10–12 Issue Board Import Notes
 
-**Status:** Practical integration guide  
-**Date:** 2026-02-15  
+**Status:** Practical integration guide
+**Date:** 2026-02-15
 **Scope:** How to import `thegent-phase10-12-issue-board-seed.json` into issue tooling.
 
 ## 1) Scope of this seed

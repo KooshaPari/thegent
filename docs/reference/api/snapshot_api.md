@@ -61,4 +61,3 @@ capture_pre_run(self: Any, run_id: str, project_root: Path)
 Capture state before a run.
 
 ---
-

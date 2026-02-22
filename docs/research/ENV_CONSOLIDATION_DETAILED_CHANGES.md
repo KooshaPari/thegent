@@ -384,4 +384,3 @@ run_install(target="all", mode="smart", settings=settings)
 - **Before**: Tests must set os.environ (fragile)
 - **After**: Tests can mock settings object (robust)
 - **Test Improvement**: Easier to test, fewer side effects
-

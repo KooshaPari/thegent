@@ -1,7 +1,7 @@
 # Provider Adapter Contracts (G-RV-05)
 
-**Purpose:** Document output contracts for copilot, gemini, codex, and claude adapters.  
-**Date:** 2026-02-14  
+**Purpose:** Document output contracts for copilot, gemini, codex, and claude adapters.
+**Date:** 2026-02-14
 **Scope:** WBS-X5 Provider Adapter Layer
 
 ---

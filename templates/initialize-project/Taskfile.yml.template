@@ -21,6 +21,26 @@ tasks:
       - task --list
     silent: true
 
+  hooks:install:
+    desc: "Install git hooks (pre-commit, pre-push, commit-msg)"
+    cmds:
+      - uv run pre-commit install
+      - uv run pre-commit install --hook-type pre-push
+      - uv run pre-commit install --hook-type commit-msg
+
+  hooks:run:
+    desc: "Run full local pre-commit checks"
+    cmds:
+      - uv run pre-commit run --all-files
+      - echo "Pre-commit parity check completed"
+
+  ci:local:
+    desc: "Run local CI-like checks (pre-commit + fast tests)."
+    cmds:
+      - task: hooks:run
+      - task: test:collect:baseline
+      - task: test:fast-lane
+
 {% if language == "python" %}
   # -- Development --
 

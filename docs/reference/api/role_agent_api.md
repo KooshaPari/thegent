@@ -39,4 +39,3 @@ run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int) -> RunResult
 ```
 
 ---
-

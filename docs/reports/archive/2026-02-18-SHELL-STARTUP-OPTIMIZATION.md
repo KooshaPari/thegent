@@ -1,6 +1,6 @@
 # Shell Startup Optimization Report
-**Date:** 2026-02-18  
-**Issue:** Shell startup too slow (3.77s, target <50ms)  
+**Date:** 2026-02-18
+**Issue:** Shell startup too slow (3.77s, target <50ms)
 **Root Cause:** direnv being invoked even when mise is active
 
 ## Problem Analysis
@@ -25,7 +25,7 @@
 ### 3. Files Modified
 
 - `thegent/shell/.zshenv` - Skip direnv hook when mise is active
-- `thegent/shell/.zshrc` - Skip direnv auto-allow when mise is active  
+- `thegent/shell/.zshrc` - Skip direnv auto-allow when mise is active
 - `thegent/shell/.zsh_optimization.zsh` - Skip direnv lazy loading when mise is active
 - `thegent/.envrc` - Enhanced early exit checks
 
@@ -51,5 +51,5 @@
 
 ---
 
-**Report Generated:** 2026-02-18  
+**Report Generated:** 2026-02-18
 **Status:** Complete

@@ -1,7 +1,7 @@
 # FastMCP Deployment Guide (G-FM-01 Phase 5)
 
-**Status:** Authoritative  
-**Date:** 2026-02-14  
+**Status:** Authoritative
+**Date:** 2026-02-14
 **Scope:** Production readiness — auth, stateless, Redis, session state, deployment
 
 ---

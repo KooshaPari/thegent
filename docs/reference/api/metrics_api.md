@@ -369,4 +369,3 @@ Save metrics for a provider to JSON file.
 **Returns**: Path to saved file or None if storage not configured
 
 ---
-

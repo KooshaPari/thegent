@@ -1,7 +1,7 @@
 # New Providers Auth Research & Plan
 
-**Status:** Research (superseded by [CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md](./CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md))  
-**Date:** 2026-02-14  
+**Status:** Research (superseded by [CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md](./CLIPROXY_API_AND_THGENT_UNIFIED_PLAN.md))
+**Date:** 2026-02-14
 **Scope:** Cursor, MiniMax, Roo, Kilo – auth patterns and CLIProxyAPIPlus integration
 
 **Principle:** All providers have equal parity with native ones (Kiro, Gemini, Claude, Codex): dedicated config blocks, OAuth/token-file, refresh.

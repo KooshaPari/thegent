@@ -25,4 +25,3 @@ WP-4009: Human-as-a-Tool (HaaT).
 Pauses execution and waits for human input via the Cockpit or CLI.
 
 ---
-

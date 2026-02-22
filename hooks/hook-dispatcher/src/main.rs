@@ -1165,7 +1165,7 @@ fn run_doc_location_guard(_env_map: &HashMap<String, String>) -> i32 {
 
 fn run_session_cleanup(env_map: &HashMap<String, String>) -> i32 {
     let project_dir = env_map.get("PROJECT_DIR").map(|s| s.as_str()).unwrap_or(".");
-    
+
     let change_log = format!("{}/.claude/session-changes.log", project_dir);
     let qa_state = format!("{}/.claude/qa-state.json", project_dir);
 
@@ -1268,7 +1268,7 @@ fn run_governance_scan(project_dir: &str) -> i32 {
     // MTSP-08: Native 8-dimension scan (Rust implementation)
     let project_path = Path::new(project_dir);
     let mut violation_count = 0;
-    
+
     println!("--- MTSP-08: Rust Governance Scan ---");
 
     // 1. Doc Disorganization
@@ -1755,9 +1755,9 @@ fn run_hook_with_idle_timeout(
 
     let shell_type = get_preferred_shell();
     let shell_exe = get_shell_executable(shell_type);
-    
+
     let mut cmd = Command::new(&shell_exe);
-    
+
     match shell_type {
         ShellType::Pwsh | ShellType::Powershell => {
             cmd.args(["-NoProfile", "-NonInteractive", "-File", &script.to_string_lossy()]);
@@ -1963,22 +1963,22 @@ fn run_hook(
             "harvest-pending-queue.sh" => "harvest",
             _ => unreachable!(),
         };
-        
+
         let mut cmd = Command::new(env_map.get("THEGENT_HOOKS_BIN").map(|s| s.as_str()).unwrap_or("thegent-hooks"));
         cmd.arg(tool);
         for arg in extra_args {
             cmd.arg(arg);
         }
-        
+
         let stdin_file = match fs::File::open(temp_path) {
             Ok(f) => f,
             Err(e) => return HookResult { name: hook_name.into(), rc: 1, stdout: String::new(), stderr: format!("failed to open temp file: {e}") },
         };
-        
+
         cmd.stdin(Stdio::from(stdin_file)).stdout(Stdio::piped()).stderr(Stdio::piped());
         for (k, v) in env_map { cmd.env(k, v); }
         if let Some(project_dir) = env_map.get("PROJECT_DIR") { cmd.current_dir(project_dir); }
-        
+
         let output = cmd.output().unwrap();
         return HookResult {
             name: hook_name.into(),
@@ -2012,9 +2012,9 @@ fn run_hook(
 
     let shell_type = get_preferred_shell();
     let shell_exe = get_shell_executable(shell_type);
-    
+
     let mut cmd = Command::new(&shell_exe);
-    
+
     match shell_type {
         ShellType::Pwsh | ShellType::Powershell => {
             cmd.args(["-NoProfile", "-NonInteractive", "-File", &script.to_string_lossy()]);
@@ -2561,7 +2561,7 @@ fn main() -> ExitCode {
         // -----------------------------------------------------------------
         Mode::Pretool => {
             let tool_name = input.tool_name.as_deref().unwrap_or("");
-            
+
             // Native pre-tool checks
             if tool_name == "Write" {
                 let rc = run_doc_location_guard(&env_map);

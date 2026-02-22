@@ -184,7 +184,8 @@ def monitor_impl(interval: float = 2.0) -> None:
                 time.sleep(interval)
                 live.update(generate_monitor_layout())
         except KeyboardInterrupt:
-            pass
+            _log.info("Monitor session stopped by user.")
+            return
 
 
 def isolation_check_impl(mode: str = "sub-user") -> None:

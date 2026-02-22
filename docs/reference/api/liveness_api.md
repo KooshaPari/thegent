@@ -72,4 +72,3 @@ record_step(self: Any, step_type: str, state: dict[(str, Any)])
 Record a step in the agent loop for liveness analysis.
 
 ---
-

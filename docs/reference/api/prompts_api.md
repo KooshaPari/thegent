@@ -67,4 +67,3 @@ route_subtasks(self: Any, sub_tasks: list[dict[(str, Any)]])
 Assign appropriate agents to sub-tasks based on content.
 
 ---
-

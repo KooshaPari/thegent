@@ -136,4 +136,3 @@ Reset hash chain for a session.
 - `session_id`: Session identifier.
 
 ---
-

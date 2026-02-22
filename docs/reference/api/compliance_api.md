@@ -173,4 +173,3 @@ record_action(self: Any, action: str, context: dict[str, Any], profile: Complian
 Record an action in the audit trail.
 
 ---
-

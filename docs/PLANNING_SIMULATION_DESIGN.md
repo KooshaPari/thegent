@@ -1,7 +1,7 @@
 # Planning Simulation Design (G-CA-04)
 
-**Status:** Design  
-**Date:** 2026-02-14  
+**Status:** Design
+**Date:** 2026-02-14
 **Scope:** PERT overlays, resource contention simulation, continuity risk scoring
 
 ---

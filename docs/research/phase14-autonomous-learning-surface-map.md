@@ -1,8 +1,8 @@
 # Phase 14: Autonomous Learning and Cost Sensing Surface Map
 
-> **Purpose:** Map surfaces for autonomous learning and cost-aware optimization.  
-> **Depends:** WP-5003, learning pipeline.  
-> **Acceptance:** Surface map documented; integration points listed.  
+> **Purpose:** Map surfaces for autonomous learning and cost-aware optimization.
+> **Depends:** WP-5003, learning pipeline.
+> **Acceptance:** Surface map documented; integration points listed.
 > **WORK_STREAM ID:** phase14-autonomous-learning
 
 ## 1. Overview
@@ -44,7 +44,7 @@ class ObjectiveProfile:
     latency_weight: float = 0.3
     quality_weight: float = 0.5
     spend_weight: float = 0.2
-    
+
     def score(self, latency: float, quality: float, cost: float) -> float:
         """Calculate weighted score for model selection."""
         return (
@@ -73,14 +73,14 @@ class CandidateModel:
     status: ModelStatus
     success_rate: float
     cost_delta: float  # Relative to baseline
-    
+
 class LearningRegistry:
     """Tracks canary model performance and promotion."""
-    
+
     def register_canary(self, model_id: str, baseline_id: str) -> None:
         """Register a canary model for testing."""
         ...
-    
+
     def evaluate_promotion(self, model_id: str) -> bool:
         """Evaluate if canary should be promoted."""
         ...
@@ -94,14 +94,14 @@ from thegent.governance.slo import SLORegulator
 
 class CostSensing:
     """Provides cost-based feedback loops."""
-    
+
     def __init__(self, slo_regulator: SLORegulator):
         self.slo = slo_regulator
-    
+
     def check_cost_cap(self, action_cost: float, cap: float) -> bool:
         """Check if action exceeds cost cap."""
         return action_cost <= cap
-    
+
     def get_cost_feedback(self, model_id: str) -> dict:
         """Get cost feedback for learning system."""
         ...
@@ -115,7 +115,7 @@ from thegent.governance.hitl import HITLManager
 
 class LearningHITL:
     """Mandatory review for autonomous model promotions."""
-    
+
     def request_promotion(self, model_id: str) -> bool:
         """Request promotion approval (WP-14003)."""
         hitl = HITLManager()
@@ -144,7 +144,7 @@ class LearningHITL:
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

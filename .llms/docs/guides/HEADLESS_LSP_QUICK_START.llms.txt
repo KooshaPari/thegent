@@ -6,7 +6,7 @@ Source: docs/guides/HEADLESS_LSP_QUICK_START.md
 
 # Headless LSP Quick Start Guide
 
-**Date**: 2026-02-18  
+**Date**: 2026-02-18
 **Purpose**: Quick guide for using headless LSP infrastructure
 
 ---
@@ -140,7 +140,7 @@ apt-get install clangd
 
 ### Issue: "IntelliJ IDEA not found"
 
-**Solution**: 
+**Solution**:
 1. Ensure IntelliJ IDEA Ultimate is installed
 2. Add `idea` to PATH, or
 3. Specify path: `JetBrainsCLI(ide_path=Path("/path/to/idea"))`

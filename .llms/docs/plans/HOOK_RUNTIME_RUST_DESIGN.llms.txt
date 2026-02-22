@@ -6,9 +6,9 @@ Source: docs/plans/HOOK_RUNTIME_RUST_DESIGN.md
 
 # Hook Runtime: Full Rust Migration Design (Deep & Wide)
 
-**Status:** Design  
-**Scope:** Replace `hooks/lib/common.sh` and its sourced layers with a Rust binary + library.  
-**Goals:** Performance, DX, AX, UX; effort and risk accepted.  
+**Status:** Design
+**Scope:** Replace `hooks/lib/common.sh` and its sourced layers with a Rust binary + library.
+**Goals:** Performance, DX, AX, UX; effort and risk accepted.
 **See also:** [FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md](./FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md) for full shell inventory and phased migration.
 
 ---
@@ -168,20 +168,20 @@ Include all of: INPUT, CWD, SESSION_ID, TOOL_NAME, FILE_PATH, STOP_ACTIVE, PROJE
 
 ### 4.3 Cache Key
 
-Input: hook name, optional extra key material.  
-Internal: resolve HEAD_SHA and changed files list (from git or env); compute hash(hook_name, head_sha, changed_files[, extra]).  
+Input: hook name, optional extra key material.
+Internal: resolve HEAD_SHA and changed files list (from git or env); compute hash(hook_name, head_sha, changed_files[, extra]).
 Output: stable string key (e.g. hex) for cache file names.
 
 ### 4.4 Git Cached
 
-Input: argv (e.g. `diff --name-only HEAD`).  
-Behavior: if read-only command and cache hit (keyed by cwd + argv + HEAD + config mtime), return cached stdout and exit code; else run git (or gix), store result, return.  
+Input: argv (e.g. `diff --name-only HEAD`).
+Behavior: if read-only command and cache hit (keyed by cwd + argv + HEAD + config mtime), return cached stdout and exit code; else run git (or gix), store result, return.
 Output: stdout of git; exit code = git exit code.
 
 ### 4.5 Changed Files
 
-Input: project dir (and optional env CHANGED_FILES).  
-Behavior: if shared file exists and fresh, return its contents; else compute `git diff --name-only HEAD` + `git ls-files --others --exclude-standard`, filter (node_modules, .git, …), sort -u, write to shared, return.  
+Input: project dir (and optional env CHANGED_FILES).
+Behavior: if shared file exists and fresh, return its contents; else compute `git diff --name-only HEAD` + `git ls-files --others --exclude-standard`, filter (node_modules, .git, …), sort -u, write to shared, return.
 Output: one path per line.
 
 ---

@@ -134,4 +134,3 @@ Stop thegent MCP service.
 Remove launchd service.
 
 ---
-

@@ -28,24 +28,24 @@
   --vp-c-brand: #646cff;
   --vp-c-brand-light: #747bff;
   --vp-c-brand-dark: #535bf2;
-  
+
   /* Status Colors */
   --vp-c-success: #10b981;
   --vp-c-success-soft: #d1fae5;
   --vp-c-success-dark: #059669;
-  
+
   --vp-c-warning: #f59e0b;
   --vp-c-warning-soft: #fef3c7;
   --vp-c-warning-dark: #d97706;
-  
+
   --vp-c-error: #ef4444;
   --vp-c-error-soft: #fee2e2;
   --vp-c-error-dark: #dc2626;
-  
+
   --vp-c-info: #3b82f6;
   --vp-c-info-soft: #dbeafe;
   --vp-c-info-dark: #2563eb;
-  
+
   /* Typography Scale */
   --vp-font-size-xs: 0.75rem;    /* 12px */
   --vp-font-size-sm: 0.875rem;    /* 14px */
@@ -55,18 +55,18 @@
   --vp-font-size-2xl: 1.5rem;     /* 24px */
   --vp-font-size-3xl: 1.875rem;   /* 30px */
   --vp-font-size-4xl: 2.25rem;    /* 36px */
-  
+
   /* Line Heights */
   --vp-line-height-tight: 1.25;
   --vp-line-height-normal: 1.5;
   --vp-line-height-relaxed: 1.75;
-  
+
   /* Font Weights */
   --vp-font-weight-normal: 400;
   --vp-font-weight-medium: 500;
   --vp-font-weight-semibold: 600;
   --vp-font-weight-bold: 700;
-  
+
   /* Spacing Scale (8px base) */
   --vp-spacing-1: 0.25rem;   /* 4px */
   --vp-spacing-2: 0.5rem;    /* 8px */
@@ -78,33 +78,33 @@
   --vp-spacing-10: 2.5rem;    /* 40px */
   --vp-spacing-12: 3rem;      /* 48px */
   --vp-spacing-16: 4rem;      /* 64px */
-  
+
   /* Animation Timing */
   --vp-transition-fast: 150ms;
   --vp-transition-base: 200ms;
   --vp-transition-slow: 300ms;
   --vp-transition-slower: 500ms;
-  
+
   /* Easing Functions */
   --vp-ease-in: cubic-bezier(0.4, 0, 1, 1);
   --vp-ease-out: cubic-bezier(0, 0, 0.2, 1);
   --vp-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   /* Motion Duration (respects prefers-reduced-motion) */
   --vp-motion-duration: 200ms;
-  
+
   /* Border Radius */
   --vp-radius-sm: 4px;
   --vp-radius-md: 8px;
   --vp-radius-lg: 12px;
   --vp-radius-xl: 16px;
-  
+
   /* Shadows */
   --vp-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --vp-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --vp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --vp-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  
+
   /* Z-Index Scale */
   --vp-z-dropdown: 1000;
   --vp-z-sticky: 1020;
@@ -121,7 +121,7 @@
   --vp-c-warning-soft: rgba(245, 158, 11, 0.15);
   --vp-c-error-soft: rgba(239, 68, 68, 0.15);
   --vp-c-info-soft: rgba(59, 130, 246, 0.15);
-  
+
   --vp-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --vp-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
   --vp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
@@ -133,7 +133,7 @@
   :root {
     --vp-motion-duration: 0ms;
   }
-  
+
   *,
   *::before,
   *::after {

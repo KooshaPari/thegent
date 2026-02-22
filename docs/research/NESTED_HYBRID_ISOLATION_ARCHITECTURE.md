@@ -1,7 +1,7 @@
 # Research: Nested & Hybrid Isolation Architecture (L1/L2)
 
-**Date**: 2026-02-19  
-**Status**: Research & Design  
+**Date**: 2026-02-19
+**Status**: Research & Design
 **Focus**: Deep-dive into L1 (OS User) and L2 (Sub-user) nesting, hybrid isolation, and minimal-overhead sandboxing.
 
 ---

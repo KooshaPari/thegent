@@ -2,8 +2,8 @@
 
 **Purpose**: Complete reference guide for thegent CLI commands, options, and usage patterns.
 
-**Date**: 2026-02-17  
-**Status**: Complete  
+**Date**: 2026-02-17
+**Status**: Complete
 **Audience**: Agents, Developers, Users
 
 ---

@@ -1122,4 +1122,3 @@ Total time: 4.2s
 ---
 
 **Next Step**: Create detailed implementation plan in `docs/plans/AGENT_HIERARCHY_IMPLEMENTATION_PLAN.md`
-

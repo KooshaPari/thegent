@@ -33,4 +33,3 @@ sync(self: Any, human_state: dict[(str, Any)], agent_state: dict[(str, Any)])
 Synchronize human and agent consciousness.
 
 ---
-

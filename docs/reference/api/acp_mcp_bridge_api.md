@@ -148,4 +148,3 @@ to_dict(self: Any)
 Serialise to a plain dict suitable for JSON transport.
 
 ---
-

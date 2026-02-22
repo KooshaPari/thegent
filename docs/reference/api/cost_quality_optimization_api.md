@@ -115,4 +115,3 @@ Route request to optimal model.
 **Returns**: Selected model ID
 
 ---
-

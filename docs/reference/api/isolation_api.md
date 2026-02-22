@@ -125,4 +125,3 @@ record_telemetry(self: Any, tenant_id: str, session_id: str, data: dict[(str, An
 Record telemetry for a tenant's session.
 
 ---
-

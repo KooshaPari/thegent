@@ -31,4 +31,3 @@ update_research_queue(results: dict[(str, Any)], queue_file: Path)
 Update the research queue with new agslag findings.
 
 ---
-

@@ -1,7 +1,7 @@
 # Thegent Phase 7–9 Next-Wave PRD (Post-Closure Optimization)
 
-**Status:** Draft for immediate implementation conversion  
-**Date:** 2026-02-15  
+**Status:** Draft for immediate implementation conversion
+**Date:** 2026-02-15
 **Scope:** Phase 7–9 execution architecture after launch readiness (closure complete)
 
 This document extends the existing PRD with the next three waves:
@@ -236,4 +236,3 @@ Each chunk can be scheduled independently with acceptance checks and merge gates
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

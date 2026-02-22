@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 PRD↔WBS Finalization Cross-Map
 
-**Status:** Finalization draft for implementation transfer  
-**Date:** 2026-02-15  
+**Status:** Finalization draft for implementation transfer
+**Date:** 2026-02-15
 **Scope:** Cross-reference finalization map for PRD FR/NFR to WBS WP and execution artifacts, plus remaining delta tasks.
 
 ## 1) Purpose
@@ -112,4 +112,3 @@ After each WP moves to `Done`, update:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

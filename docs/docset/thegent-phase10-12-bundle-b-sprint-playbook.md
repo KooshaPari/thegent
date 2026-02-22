@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 Bundle B Sprint Playbook
 
-**Status:** Operational playbook (Bundle B focus)  
-**Date:** 2026-02-15  
+**Status:** Operational playbook (Bundle B focus)
+**Date:** 2026-02-15
 **Scope:** Concrete execution plan for `phase10_bundle_b` with per-day tasks, checklists, PR template, and failure handling.
 
 ## 0) Bundle B objective
@@ -187,4 +187,3 @@ If only partial WPs are green by Day 10:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

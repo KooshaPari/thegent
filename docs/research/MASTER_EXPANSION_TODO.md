@@ -1,6 +1,6 @@
 # Master Expansion TODO — Complete Documentation Sprawl
 
-> **Status**: Active | **Version**: 2.0 | **Date**: 2026-02-17  
+> **Status**: Active | **Version**: 2.0 | **Date**: 2026-02-17
 > **Purpose**: Comprehensive todo list for expanding all fragmented/seed/research docs into complete, optimized, production-ready documentation
 
 ---
@@ -20,18 +20,18 @@ Each doc must be expanded to meet:
 ## Priority 0: Critical Fragments (In Progress)
 
 ### ✅ SESSION_RESEARCH_FRAGMENTS.md
-**Status**: ✅ Expanded  
-**Output**: [SESSION_RESEARCH_FRAGMENTS_EXPANDED.md](./SESSION_RESEARCH_FRAGMENTS_EXPANDED.md)  
+**Status**: ✅ Expanded
+**Output**: [SESSION_RESEARCH_FRAGMENTS_EXPANDED.md](./SESSION_RESEARCH_FRAGMENTS_EXPANDED.md)
 **Work Items**: 5 BACKLOG items added
 
 ### ✅ CONVERSATION_DUMP_2026-02-16.md
-**Status**: ✅ Expanded  
-**Output**: [CONVERSATION_DUMP_2026-02-16_EXPANDED.md](./CONVERSATION_DUMP_2026-02-16_EXPANDED.md)  
+**Status**: ✅ Expanded
+**Output**: [CONVERSATION_DUMP_2026-02-16_EXPANDED.md](./CONVERSATION_DUMP_2026-02-16_EXPANDED.md)
 **Work Items**: 4 BACKLOG items extracted
 
 ### ✅ idea-seeds/*.md (4 files)
-**Status**: ✅ Expanded  
-**Output**: [IDEA_SEED_EXPANSION_COMPLETE.md](./idea-seeds/IDEA_SEED_EXPANSION_COMPLETE.md)  
+**Status**: ✅ Expanded
+**Output**: [IDEA_SEED_EXPANSION_COMPLETE.md](./idea-seeds/IDEA_SEED_EXPANSION_COMPLETE.md)
 **Work Items**: 1 BACKLOG item (3 duplicates merged)
 
 ---
@@ -61,7 +61,7 @@ Each doc must be expanded to meet:
 
 ### 2. HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS.md
 
-**Status**: Synthesis, needs expansion  
+**Status**: Synthesis, needs expansion
 **TODO**:
 - [ ] Expand migration strategy with detailed steps
 - [ ] Add performance comparison (shell vs Rust)
@@ -303,14 +303,14 @@ Each doc must be expanded to meet:
 
 ---
 
-**Status**: Active expansion in progress  
+**Status**: Active expansion in progress
 **Last Updated**: 2026-02-17
 
 ---
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

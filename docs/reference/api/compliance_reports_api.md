@@ -93,4 +93,3 @@ Generate compliance report.
 **Returns**: Report content as string
 
 ---
-

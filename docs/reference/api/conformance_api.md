@@ -31,4 +31,3 @@ and include drift_issues in the report (drift alarm).
 **Returns**: Report dict with total, passed, failed, results, and optionally drift_issues.
 
 ---
-

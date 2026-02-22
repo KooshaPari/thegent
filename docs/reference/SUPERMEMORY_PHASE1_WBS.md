@@ -1,8 +1,8 @@
 # Supermemory Phase 1: Detailed Work Breakdown Structure
 
-**Status**: ACTIVE  
-**Timeline**: 3 days (Feb 18-20, 2026)  
-**Effort**: ~15-20 person-days across 3 parallel tracks  
+**Status**: ACTIVE
+**Timeline**: 3 days (Feb 18-20, 2026)
+**Effort**: ~15-20 person-days across 3 parallel tracks
 **Goal**: Authentication + Client SDK + Cache Infrastructure ready for Phase 2
 
 ---
@@ -30,8 +30,8 @@ Phase 1 establishes the **foundation** for Supermemory.ai integration across the
 - Add all required dependencies
 - Define error handling types
 
-**Inputs**: None  
-**Outputs**: 
+**Inputs**: None
+**Outputs**:
 - `crates/supermemory-rs/Cargo.toml` (complete)
 - `crates/supermemory-rs/src/error.rs`
 - `crates/supermemory-rs/src/lib.rs` (empty, public API skeleton)
@@ -66,7 +66,7 @@ anyhow = "1.0"
 - Load credentials from environment / file
 - Define auth headers and project scoping
 
-**Inputs**: P1.1.1  
+**Inputs**: P1.1.1
 **Outputs**:
 - `crates/supermemory-rs/src/auth.rs`
 - `crates/supermemory-rs/tests/auth_tests.rs`
@@ -100,7 +100,7 @@ pub struct Config { api_key: String, base_url: String, project: Option<String> }
 - Add retry logic (exponential backoff)
 - Handle serialization/deserialization
 
-**Inputs**: P1.1.1, P1.1.2  
+**Inputs**: P1.1.1, P1.1.2
 **Outputs**:
 - `crates/supermemory-rs/src/client.rs`
 - `crates/supermemory-rs/tests/client_tests.rs`
@@ -139,7 +139,7 @@ impl SupermemoryClient {
 - Define Conversation, Message, Metadata models
 - Support continuity packets
 
-**Inputs**: P1.1.1-3  
+**Inputs**: P1.1.1-3
 **Outputs**:
 - `crates/supermemory-rs/src/api/conversations.rs`
 - `crates/supermemory-rs/src/models/conversation.rs`
@@ -196,7 +196,7 @@ pub async fn get_continuity_packet(&self, session_id: &str) -> Result<Continuity
 - Support MAIF artifact signatures
 - Handle large document uploads
 
-**Inputs**: P1.1.1-4  
+**Inputs**: P1.1.1-4
 **Outputs**:
 - `crates/supermemory-rs/src/api/documents.rs`
 - `crates/supermemory-rs/src/models/document.rs`
@@ -246,7 +246,7 @@ pub async fn sign_artifact(&self, document_id: &str) -> Result<Artifact>
 - Comprehensive test suite
 - Examples and API documentation
 
-**Inputs**: P1.1.1-5  
+**Inputs**: P1.1.1-5
 **Outputs**:
 - `crates/supermemory-rs/tests/` (complete)
 - `crates/supermemory-rs/examples/basic_usage.rs`
@@ -297,7 +297,7 @@ async fn main() {
 - Support TTL, eviction, persistence
 - Enable provider switching (Redis ↔ FileCache)
 
-**Inputs**: None  
+**Inputs**: None
 **Outputs**:
 - `src/thegent/memory/cache_provider.py`
 - `src/thegent/memory/models/cache_item.py`
@@ -339,7 +339,7 @@ class CacheItem:
 - Connection pooling, cluster support
 - Health checks and graceful degradation
 
-**Inputs**: P1.2.1  
+**Inputs**: P1.2.1
 **Outputs**:
 - `src/thegent/memory/redis_provider.py`
 - `src/thegent/memory/tests/test_redis_provider.py`
@@ -350,16 +350,16 @@ class RedisProvider(CacheProvider):
   def __init__(self, url: str = "redis://localhost:6379", pool_size: int = 10):
     self.pool = redis.ConnectionPool(url)
     self.client = redis.Redis(connection_pool=self.pool)
-  
+
   async def get(self, key: str) -> Optional[Any]:
     value = await self.client.get(key)
     if value:
       await self.client.incr(f"{key}:hits")
     return json.loads(value) if value else None
-  
+
   async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
     await self.client.set(key, json.dumps(value), ex=ttl)
-  
+
   async def health_check(self) -> bool:
     try:
       await self.client.ping()
@@ -386,7 +386,7 @@ class RedisProvider(CacheProvider):
 - JSONL for fast append + indexing for random access
 - Rotation and cleanup
 
-**Inputs**: P1.2.1  
+**Inputs**: P1.2.1
 **Outputs**:
 - `src/thegent/memory/file_cache_provider.py`
 - `src/thegent/memory/tests/test_file_cache_provider.py`
@@ -404,19 +404,19 @@ class FileCacheProvider(CacheProvider):
     self.cache_dir = Path(cache_dir).expanduser()
     self.cache_file = self.cache_dir / "cache.jsonl"
     self.index_file = self.cache_dir / "cache.index"
-  
+
   async def get(self, key: str) -> Optional[Any]:
     # Read index, seek to offset, deserialize
     offset = self._read_index(key)
     if not offset:
       return None
     return self._read_at_offset(offset)
-  
+
   async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
     # Append to JSONL, update index
     offset = self._append_to_cache(key, value, ttl)
     self._update_index(key, offset)
-  
+
   async def evict_expired(self) -> int:
     # Scan JSONL, remove expired items, rewrite
     return self._rewrite_cache()
@@ -440,7 +440,7 @@ class FileCacheProvider(CacheProvider):
 - Continuity packet creation
 - Cache coherence
 
-**Inputs**: P1.2.1-3  
+**Inputs**: P1.2.1-3
 **Outputs**:
 - `src/thegent/memory/context_manager.py`
 - `src/thegent/memory/tests/test_context_manager.py`
@@ -451,28 +451,28 @@ class ContextManager:
   def __init__(self, l1_provider: CacheProvider, l2_provider: CacheProvider):
     self.l1 = l1_provider  # In-memory or fast local
     self.l2 = l2_provider  # Redis or FileCache fallback
-  
+
   async def get(self, key: str, tier: Tier = Tier.L2) -> Optional[Any]:
     # Try L1 first
     value = await self.l1.get(key)
     if value:
       return value
-    
+
     # Try L2
     if tier >= Tier.L2:
       value = await self.l2.get(key)
       if value:
         await self.l1.set(key, value)  # Promote to L1
         return value
-    
+
     # Tier.L3 would call Supermemory (future)
     return None
-  
+
   async def set(self, key: str, value: Any, tier: Tier = Tier.L2) -> None:
     await self.l1.set(key, value)
     if tier >= Tier.L2:
       await self.l2.set(key, value)
-  
+
   async def create_continuity_packet(self, session_id: str) -> ContinuityPacket:
     # Collect context from L1+L2, create packet
     context = await self.l1.get(f"session:{session_id}:context") or []
@@ -504,7 +504,7 @@ class Tier(Enum):
 - Performance benchmarks (throughput, latency, memory)
 - Failure scenarios (Redis down, disk full, etc.)
 
-**Inputs**: P1.2.1-4  
+**Inputs**: P1.2.1-4
 **Outputs**:
 - `src/thegent/memory/tests/test_*.py` (complete)
 - `src/thegent/memory/benchmarks/cache_benchmarks.py`
@@ -526,7 +526,7 @@ async def bench_get_throughput(provider: CacheProvider):
 
 async def bench_latency_p99(provider: CacheProvider):
   # Measure: P99 latency should be <5ms
-  
+
 async def bench_memory_usage(provider: CacheProvider):
   # Store 100MB, measure resident memory
   # FileCache should use <150MB
@@ -559,7 +559,7 @@ async def bench_memory_usage(provider: CacheProvider):
 - Environment variable overrides
 - Validation and defaults
 
-**Inputs**: None  
+**Inputs**: None
 **Outputs**:
 - `config/supermemory_config.yaml` (template)
 - `src/thegent/config/supermemory.py`
@@ -574,7 +574,7 @@ supermemory:
   project: null  # Optional project scoping
   timeout: 30
   max_retries: 3
-  
+
 cache:
   l1_provider: memory  # or redis, file
   l2_provider: redis   # or file
@@ -597,17 +597,17 @@ class SupermemoryConfig:
   project: Optional[str] = None
   timeout: int = 30
   max_retries: int = 3
-  
+
   @classmethod
   def from_file(cls, path: str = "config/supermemory_config.yaml") -> "SupermemoryConfig":
     # Load YAML, override with env vars
     pass
-  
+
   @classmethod
   def from_env(cls) -> "SupermemoryConfig":
     # Load from environment only
     pass
-  
+
   def validate(self) -> bool:
     # Check required fields, valid URLs, API key format
     pass
@@ -630,7 +630,7 @@ class SupermemoryConfig:
 - Store credentials securely
 - Support API key paste or OAuth (future)
 
-**Inputs**: P1.3.1  
+**Inputs**: P1.3.1
 **Outputs**:
 - `src/thegent/cli/commands/auth.py` (updated)
 - `src/thegent/cli/commands/tests/test_auth_supermemory.py`
@@ -642,18 +642,18 @@ async def login(service: str = typer.Argument(..., help="Service to log in to"))
   if service == "supermemory":
     typer.echo("Enter your Supermemory API key (sm_...): ", nl=False)
     key = getpass.getpass("")
-    
+
     # Validate key format
     if not key.startswith("sm_"):
       typer.echo("Error: Invalid API key format", err=True)
       raise typer.Exit(1)
-    
+
     # Store securely in ~/.sm/config
     config_dir = Path.home() / ".sm"
     config_dir.mkdir(exist_ok=True)
     config_file = config_dir / "config"
     config_file.write_text(f"api_key={key}\n", mode=0o600)
-    
+
     typer.echo("✓ Logged in to Supermemory")
 ```
 
@@ -674,7 +674,7 @@ async def login(service: str = typer.Argument(..., help="Service to log in to"))
 - Make tools available to agents
 - Document tool list
 
-**Inputs**: P1.3.1-2  
+**Inputs**: P1.3.1-2
 **Outputs**:
 - `config/mcp_servers.json` (updated)
 - `src/thegent/mcp/supermemory_tools.py`
@@ -727,7 +727,7 @@ async def supermemory_add_message(conversation_id: str, role: str, content: str)
 - Configuration reference
 - Troubleshooting
 
-**Inputs**: P1.3.1-3  
+**Inputs**: P1.3.1-3
 **Outputs**:
 - `docs/guides/SUPERMEMORY_SETUP.md`
 - `docs/reference/SUPERMEMORY_API_REFERENCE.md`
@@ -758,7 +758,7 @@ async def supermemory_add_message(conversation_id: str, role: str, content: str)
 - Diagnose auth failures, network issues
 - Provide recovery procedures
 
-**Inputs**: P1.3.1-4  
+**Inputs**: P1.3.1-4
 **Outputs**:
 - `src/thegent/cli/commands/doctor.py` (updated)
 - `src/thegent/health/supermemory_health.py`
@@ -768,7 +768,7 @@ async def supermemory_add_message(conversation_id: str, role: str, content: str)
 @app.command()
 async def doctor():
   """Check system health"""
-  
+
   checks = [
     ("Supermemory API Key", check_sm_api_key),
     ("Supermemory Connectivity", check_sm_connectivity),
@@ -776,7 +776,7 @@ async def doctor():
     ("FileCache Writeable", check_file_cache),
     ("MCP Tools Registered", check_mcp_tools),
   ]
-  
+
   for check_name, check_fn in checks:
     result = await check_fn()
     status = "✓" if result.passed else "✗"

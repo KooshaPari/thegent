@@ -5,4 +5,3 @@ import { ModelMetadata } from "./models_meta";
 
 // Create a ModelMetadata instance
 const modelmetadata = new ModelMetadata();
-

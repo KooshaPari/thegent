@@ -201,7 +201,7 @@ impl ParetoRouter {
     /// multiple routing decisions.
     pub fn route_with_session(&self, session_id: &str, factors: &RiskFactors) -> RoutingDecision {
         let risk_score = self.risk_calculator.calculate(factors);
-        
+
         let mut session_states = self.session_states.lock().unwrap();
         let session_state = session_states.entry(session_id.to_string())
             .or_insert_with(|| SessionState {
