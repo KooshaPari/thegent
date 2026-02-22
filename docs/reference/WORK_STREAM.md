@@ -2450,7 +2450,7 @@ Add confidential-mode reports with minimized metadata exposure.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-314] Connector Latency Chaos Mode
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** testing, chaos
 **Effort:** M
@@ -2461,7 +2461,7 @@ Inject synthetic connector latency for resilience validation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-315] Governance Sign-Off Template
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** governance, docs
 **Effort:** S
@@ -2505,7 +2505,7 @@ Add pluggable alert routing hooks (webhook/email/event bus).
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-319] Symptom-to-Fix Docs Matrix
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** docs, support
 **Effort:** S
