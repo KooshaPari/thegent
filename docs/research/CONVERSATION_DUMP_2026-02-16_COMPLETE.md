@@ -768,3 +768,17 @@ None currently
 - Execute CF-02: start Compute Offloading Phase 1 by implementing SSH setup and remote run scaffolding.
 - Execute CF-03: start TUI compositor build kickoff with Textual plus Zellij/tmux integration.
 - Run a post-implementation closure pass to clear reopen risk and update carry-forward states.
+
+## Closure Evidence Ledger
+
+- Document closure state captured on 2026-02-17 in `## 8. EXTENSION_SUMMARY` and aligned with `*Status: Complete*`.
+- Residual scope explicitly bounded to CF-01, CF-02, and CF-03 in `## Carry-Forward Tickets`.
+- Reopen triggers concretely defined in `## Reopen Conditions` to prevent ambiguous ownership drift.
+- Verification anchor paths consolidated in `## Verification Artifacts Index` for fast audit and trace replay.
+
+## Handoff Checklist
+
+- Confirm owner assignment for CF-01, CF-02, and CF-03 in `WORK_STREAM.md` before next execution cycle.
+- Validate referenced files and links from `## See Also` and `## 12. Cross-References` are still reachable.
+- Execute first pending carry-forward item and immediately update its state in `## Carry-Forward Tickets`.
+- Re-run closure pass after first carry-forward completion and clear or tighten `## Reopen Conditions` accordingly.

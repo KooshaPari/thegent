@@ -811,3 +811,15 @@ Add to [WORK_STREAM.md](../reference/WORK_STREAM.md) BACKLOG:
 - Verify research snapshots older than 90 days: `find thegent/docs/research/archive -type f -mtime +90 -print`
 - Verify latest archive copy timestamp: `ls -lhtr thegent/docs/research/archive | tail -n 5`
 - Verify retained verification transcripts: `find thegent/artifacts/verify -type f -name 'quality-*.log' -print | sort`
+
+## Archive Rotation Policy
+
+- Rotate monthly archive copy on the first business day: `mkdir -p thegent/docs/research/archive && cp -f thegent/docs/research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md thegent/docs/research/archive/CONVERSATION_DUMP_2026-02-16_EXPANDED-$(date +%Y-%m).md`
+- Keep last 6 monthly rotations only: `ls -1t thegent/docs/research/archive/CONVERSATION_DUMP_2026-02-16_EXPANDED-*.md | tail -n +7 | xargs -r rm -f`
+- Verify newest rotation exists after copy: `ls -1t thegent/docs/research/archive/CONVERSATION_DUMP_2026-02-16_EXPANDED-*.md | head -n 1`
+
+## Staleness Detection Commands
+
+- Detect archive files older than 180 days: `find thegent/docs/research/archive -type f -name 'CONVERSATION_DUMP_2026-02-16_EXPANDED-*.md' -mtime +180 -print`
+- Detect unchanged primary dump older than 30 days: `find thegent/docs/research -maxdepth 1 -type f -name 'CONVERSATION_DUMP_2026-02-16_EXPANDED.md' -mtime +30 -print`
+- Detect missing current-month rotation: `test -f "thegent/docs/research/archive/CONVERSATION_DUMP_2026-02-16_EXPANDED-$(date +%Y-%m).md" || echo "missing current-month rotation"`

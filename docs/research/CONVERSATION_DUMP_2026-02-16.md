@@ -234,3 +234,17 @@ Is prior research on linking desktop PC via compute offloading still present?
 - Treat unresolved contradictions as open incidents until one canonical source is validated and tagged.
 - Reject closure if any P0/P1 item lacks both an owner and a verifiable artifact.
 - Require one final reconciliation pass confirming `WORK_STREAM` state matches repository reality.
+
+## Priority Exception Rules
+
+- Allow a lower-priority task to preempt only for active data-loss, security exposure, or irreversible-state risk.
+- Require named approver, explicit exception reason, and expiration checkpoint before any sequence override.
+- Time-box exception work to recovery stabilization scope; defer all opportunistic improvements.
+- Re-enter canonical priority order immediately after the exception gate is cleared and logged.
+
+## Recovery Verification Gate
+
+- No recovery item closes without one deterministic command, expected outcome, and observed result.
+- Verification evidence must include timestamp, operator, and target surface (runtime, docs, or backlog).
+- If verification fails, reopen item at prior priority with updated next action and owner.
+- Final gate passes only when repo state, `WORK_STREAM`, and recorded evidence are mutually consistent.

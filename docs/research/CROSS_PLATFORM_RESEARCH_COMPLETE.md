@@ -913,3 +913,19 @@ class RemoteExecutor:
 - Require explicit capability checks (shell, permissions, display/session) before task start.
 - Maintain per-platform retry/backoff defaults; do not share one global timeout profile.
 - Roll out in phases: shell + isolation, then desktop automation, then remote orchestration.
+
+## Platform Readiness Checklist
+
+- Verify parity gates pass on macOS, Linux, and Windows runners in the same release window.
+- Confirm host-only desktop automation capability checks block WSL2 and headless-missing sessions.
+- Validate per-OS credential, permission, and session-isolation controls before rollout promotion.
+- Require green smoke tests for shell execution, remote transport, and artifact collection per platform.
+- Publish a single cross-platform release report with pass/fail evidence and rollback trigger states.
+
+## Cutover Guardrails
+
+- Use staged rollout with explicit hold points: canary, limited production, then full production.
+- Freeze feature flags on cutover day; permit only rollback and incident-mitigation changes.
+- Enforce SLO-based automatic rollback on sustained error-rate, timeout, or isolation-policy breach.
+- Keep platform-specific runbooks and on-call escalation paths active until two stable release cycles pass.
+- Block expansion to new tenant cohorts until prior cohort health metrics remain stable for 24 hours.

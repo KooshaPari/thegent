@@ -910,7 +910,7 @@ class TestHealthGateImpl:
     @patch("thegent.cli.commands.session_health_impl.session_contract_audit_impl")
     @patch("thegent.cli.commands.session_health_impl._load_previous_health_snapshot", return_value=None)
     @patch("thegent.cli.commands.session_health_impl._append_health_snapshot")
-    def test_gate_fail(self, mock_append, mock_prev, mock_audit) -> None:
+    def test_gate_fail(self, mock_append, _mock_prev, mock_audit) -> None:
         # @trace FR-CLI-187
         mock_audit.return_value = {
             "summary": {"total": 4, "health": {"healthy": 2, "warning": 0, "error": 2, "missing": 0}},
@@ -965,7 +965,7 @@ class TestHealthTrendImpl:
 
     @patch("thegent.cli.commands.session_health_report_impl._health_snapshot_log_path")
     @patch("thegent.cli.commands.session_health_report_impl._health_snapshot_max_lines", return_value=5000)
-    def test_trend_empty_snapshots(self, mock_max, mock_path, tmp_path) -> None:
+    def test_trend_empty_snapshots(self, _mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-188
         snap_path = tmp_path / "snapshots.jsonl"
         mock_path.return_value = snap_path
@@ -981,7 +981,7 @@ class TestHealthTrendImpl:
 
     @patch("thegent.cli.commands.session_health_report_impl._health_snapshot_log_path")
     @patch("thegent.cli.commands.session_health_report_impl._health_snapshot_max_lines", return_value=5000)
-    def test_trend_reads_existing_snapshots(self, mock_max, mock_path, tmp_path) -> None:
+    def test_trend_reads_existing_snapshots(self, _mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-189
         snap_path = tmp_path / "snapshots.jsonl"
         scope_key = {
@@ -1083,7 +1083,7 @@ class TestCompactHealthSnapshotLog:
 
     @patch("thegent.cli.commands.impl._health_snapshot_log_path")
     @patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=3)
-    def test_compacts_when_over_limit(self, mock_max, mock_path, tmp_path) -> None:
+    def test_compacts_when_over_limit(self, _mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-194
         snap_path = tmp_path / "snapshots.jsonl"
         lines = [f'{{"line": {i}}}' for i in range(10)]
@@ -1097,7 +1097,7 @@ class TestCompactHealthSnapshotLog:
 
     @patch("thegent.cli.commands.impl._health_snapshot_log_path")
     @patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=100)
-    def test_no_compact_when_under_limit(self, mock_max, mock_path, tmp_path) -> None:
+    def test_no_compact_when_under_limit(self, _mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-195
         snap_path = tmp_path / "snapshots.jsonl"
         lines = [f'{{"line": {i}}}' for i in range(5)]
@@ -1222,7 +1222,7 @@ class TestCockpitCmd:
     @patch("thegent.execution.CircuitBreakerRegistry")
     @patch("thegent.execution.CheckpointRegistry")
     @patch("thegent.cli.commands.impl.ps_impl")
-    def test_cockpit_output(self, mock_ps, mock_ckpt_cls, mock_cb_cls, mock_rr_cls, mock_settings) -> None:
+    def test_cockpit_output(self, mock_ps, mock_ckpt_cls, mock_cb_cls, mock_rr_cls, _mock_settings) -> None:
         # @trace FR-CLI-152
         mock_ps.return_value = [
             {"session_id": "s1", "status": "running"},
@@ -1256,7 +1256,7 @@ class TestFeedbackCmd:
 
     @patch("thegent.cli.commands.session_cmds.ThegentSettings")
     @patch("thegent.cli.commands.session_cmds.RunRegistry")
-    def test_feedback_recording(self, mock_rr_cls, mock_settings) -> None:
+    def test_feedback_recording(self, mock_rr_cls, _mock_settings) -> None:
         # @trace FR-CLI-153
         mock_rr = MagicMock()
         mock_rr_cls.return_value = mock_rr
@@ -1269,7 +1269,7 @@ class TestFeedbackCmd:
 
     @patch("thegent.cli.commands.session_cmds.ThegentSettings")
     @patch("thegent.cli.commands.session_cmds.RunRegistry")
-    def test_feedback_no_note(self, mock_rr_cls, mock_settings) -> None:
+    def test_feedback_no_note(self, mock_rr_cls, _mock_settings) -> None:
         # @trace FR-CLI-154
         mock_rr = MagicMock()
         mock_rr_cls.return_value = mock_rr
@@ -1689,7 +1689,7 @@ class TestDagHelpers:
         assert "contract_version" in doc.table_headers
 
     @patch("thegent.cli.commands.impl._resolve_cwd", return_value=None)
-    def test_dag_path_returns_none_for_ambiguous_cwd(self, mock_cwd) -> None:
+    def test_dag_path_returns_none_for_ambiguous_cwd(self, _mock_cwd) -> None:
         # @trace FR-CLI-188
         cwd, dp = _dag_path(None)
         assert cwd is None

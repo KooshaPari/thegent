@@ -362,8 +362,6 @@ def sync_autopilot(
         "--interval",
         "-i",
         help="Cycle interval in seconds (default: 300).",
-        min=10,
-        max=3600,
     ),
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Report actions without executing."),
     output_format: str = typer.Option(
@@ -392,6 +390,9 @@ def sync_autopilot(
 
     # Load config from environment
     config = load_autosync_config_from_env()
+
+    if interval < 10 or interval > 3600:
+        raise typer.BadParameter("interval must be between 10 and 3600 seconds", param_hint="--interval")
 
     # Override config with CLI options
     if interval != 300:
