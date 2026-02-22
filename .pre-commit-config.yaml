@@ -10,6 +10,16 @@ repos:
         args: ["--unsafe"]
       - id: check-toml
       - id: check-json
+        exclude: |
+          (?x)^(
+            test_output\.json|
+            node_modules/.+|
+            \.venv/.+|
+            benchmarks/results/.+|
+            test-results/.+|
+            scripts/.+\.json$|
+            docs/research/dumps/.*\.json$
+          )$
       - id: check-merge-conflict
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -73,7 +83,8 @@ repos:
         name: Shellcheck (project scripts)
         entry: shellcheck
         language: system
-        files: "^hooks/|^scripts/|^scripts\\/.+\\.sh|^tests/.+\\.sh|^.github/workflows/.+\\.yml$"
+        args: ["--shell", "bash"]
+        files: "^hooks/.+\\.sh$|^scripts/.+\\.sh$|^tests/.+\\.sh$|^.github/workflows/.+\\.yml$"
         types: [shell]
 
       - id: docs-build

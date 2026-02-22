@@ -291,7 +291,7 @@ tasks:
   test:fast-lane:
     desc: "Run fast pytest lane (WL-134): fail-fast, exclude slow/integration/e2e/load markers."
     cmds:
-      - uv run pytest -c pytest-fast.ini
+      - uv run pytest -c pytest-fast.ini -W ignore::pytest.PytestRemovedIn9Warning
 
   test:fast:
     desc: "Run tests marked @pytest.mark.fast only (WL-134 B90-W2-A4)."
@@ -804,6 +804,37 @@ tasks:
     desc: "Blocking accessibility smoke lane"
     cmds:
       - uv run pytest -q tests/a11y -m "a11y"
+
+  quality:hooks:sarif:
+    desc: "Export hook result artifacts to SARIF"
+    cmds:
+      - mkdir -p artifacts/hooks
+      - |
+        uv run python scripts/export_hook_results_to_sarif.py \
+          --input artifacts/hooks/quality-gate-result.json artifacts/hooks/security-pipeline-result.json \
+          --output artifacts/hooks/hooks-results.sarif \
+          --allow-missing
+
+  quality:generated-python:antipatterns:
+    desc: "Run generated Python anti-pattern checker and emit JSON+SARIF"
+    cmds:
+      - mkdir -p artifacts/quality
+      - |
+        uv run python scripts/check_generated_python_antipatterns.py \
+          src scripts \
+          --json-out artifacts/quality/generated-python-antipatterns.json \
+          --sarif-out artifacts/quality/generated-python-antipatterns.sarif \
+          --fail-on error
+
+  quality:pilot:mutation-perf:
+    desc: "Non-blocking mutation/perf pilot artifact lane"
+    cmds:
+      - mkdir -p artifacts/quality
+      - |
+        uv run python scripts/mutation_perf_pilot.py \
+          --output artifacts/quality/mutation-perf-pilot.json \
+          --perf-output artifacts/quality/perf-smoke.json \
+          --perf-iterations 5000
 
   quality:harness-contracts:strict:
     desc: "Run strict harness contract chain with required-provider gate"

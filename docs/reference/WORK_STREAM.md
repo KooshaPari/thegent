@@ -3660,7 +3660,7 @@ Add config for explicit WL ID exclusions from sync apply cycles.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
 ### [WL-190] Strict Mapping Mode
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** governance, sync
 **Effort:** S
@@ -3669,6 +3669,8 @@ Add config for explicit WL ID exclusions from sync apply cycles.
 Add strict mode that fails loudly on unknown remote states or unmapped field values.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/strict_mapping.py` with `StrictMappingError`, `StrictMappingConfig`, and `StrictMappingValidator`. Tests: `tests/test_wl190_strict_mapping.py` (14 tests, all passing).
 
 ### [WL-191] Connector Mapping Cache
 **Status:** BACKLOG
@@ -3682,7 +3684,7 @@ Cache GitHub field IDs and Linear state mappings to avoid repetitive discovery c
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
 ### [WL-192] Startup Scope/Reachability Validation
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** diagnostics, startup
 **Effort:** S
@@ -3691,6 +3693,8 @@ Cache GitHub field IDs and Linear state mappings to avoid repetitive discovery c
 Add startup checks for auth scopes, endpoint reachability, and required project metadata.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/startup_validation.py` with `StartupValidationResult` and `StartupValidator`. Tests: `tests/test_wl192_startup_validation.py` (12 tests, all passing).
 
 ### [WL-193] Per-Connector Timeout Controls
 **Status:** BACKLOG
@@ -3715,7 +3719,7 @@ Add per-connector circuit breakers to isolate repeated failures without silent d
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
 ### [WL-195] Reflection Decision Event Log
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** observability, audit
 **Effort:** S
@@ -3724,6 +3728,8 @@ Add per-connector circuit breakers to isolate repeated failures without silent d
 Log every reflection decision with before/after values and connector provenance.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/reflection_event_log.py` with `ReflectionDecision` and `ReflectionEventLog` (persists to JSONL). Tests: `tests/test_wl195_reflection_event_log.py` (14 tests, all passing).
 
 ### [WL-196] Prometheus Metrics Export
 **Status:** BACKLOG
@@ -3770,7 +3776,7 @@ Document operational patterns for running autosync across multiple project roots
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
 ### [WL-200] Autosync Release/Migration Checklist
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** release, docs
 **Effort:** S
@@ -3779,6 +3785,8 @@ Document operational patterns for running autosync across multiple project roots
 Publish enablement and migration checklist for adopting autosync in existing repos.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `docs/guides/AUTOSYNC_ENABLEMENT_CHECKLIST.md` (comprehensive guide with prerequisites, enablement, migration, rollback, verification, and troubleshooting). Module: `src/thegent/integrations/autosync_checklist.py` with checklist and verification functions. Tests: `tests/test_wl200_autosync_checklist.py` (14 tests, all passing).
 
 ### [WL-162] GitHub Field Update Parity
 **Status:** BACKLOG

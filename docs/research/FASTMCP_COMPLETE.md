@@ -896,3 +896,109 @@ class DebugMiddleware(Middleware):
 - Implementation templates
 - Configuration examples
 - Best practices
+
+## FastMCP Deployment Gates
+
+| Gate | Pass Criteria | Verification Command | Blocker if Fails |
+| --- | --- | --- | --- |
+| Interface parity | Required tools, resources, and prompts are discoverable | `python -m pytest tests/mcp/test_parity.py -q` | Missing protocol surface |
+| Contract stability | Core tool schemas unchanged or migration documented | `python -m pytest tests/mcp/test_tool_contracts.py -q` | Breaking client integrations |
+| Transport health | SSE/HTTP endpoint answers MCP initialize/list calls | `curl -fsS http://localhost:8000/mcp/health` | Server not reachable |
+| Security baseline | Auth, CORS, and rate limits enabled in production config | `python -m pytest tests/mcp/test_security_config.py -q` | Unsafe external exposure |
+| Observability | Structured logs and error counters emitted per request | `python -m pytest tests/mcp/test_observability.py -q` | Blind incident response |
+
+- Deploy only when all five gates pass in the same CI run.
+- Require rollback artifact (`last-known-good` image/tag) before promoting to production.
+- Freeze deploy if error-rate canary exceeds `2%` for `10` consecutive minutes.
+
+## FastMCP Incident Triage
+
+- **1) Classify impact**: mark `SEV-1` for total tool outage, `SEV-2` for partial degradation, `SEV-3` for single-tool faults.
+- **2) Confirm blast radius**: check failed methods (`initialize`, `list_tools`, `call_tool`) and affected clients.
+- **3) Stabilize first**: rollback to last-known-good release if initialization failure persists beyond `5` minutes.
+- **4) Isolate layer**: verify transport (network/ingress), then auth/config, then tool runtime exceptions.
+- **5) Capture evidence**: save request IDs, error signatures, deploy SHA, and first-failure timestamp.
+- **6) Recover safely**: canary patched build to `10%` traffic for `15` minutes before full restore.
+- **7) Close out**: publish incident note with root cause, mitigation, and one preventive action with owner/date.
+
+| Signal | Immediate Action | Escalation Trigger |
+| --- | --- | --- |
+| `initialize` failures >20% | Roll back and restart MCP service | Continues >5 minutes after rollback |
+| `call_tool` timeout p95 >15s | Reduce concurrency and disable heavy tools | Two consecutive 5-minute windows breached |
+| Auth failures spike | Rotate credentials and validate issuer/audience | Any production tenant fully blocked |
+| Error budget burn >10%/hour | Halt deploys and open incident channel | Burn persists for 30 minutes |
+
+## Tool Registration Checklist
+
+- Confirm each tool has a stable name, description, and explicit input schema.
+- Fail startup if duplicate tool names or missing required schema fields are detected.
+- Verify registration order is deterministic and `list_tools` output is identical across restarts.
+- Run a startup smoke call for every registered tool and block deploy on any failure.
+- Record tool version/hash in logs to correlate runtime failures with registry changes.
+
+## Runtime Failure Modes
+
+- **Tool timeout**: long-running handler exceeds request deadline and returns transport timeout.
+- **Schema mismatch**: runtime payload violates declared schema and is rejected before execution.
+- **Registration drift**: expected tool is absent or renamed, causing client lookup failures.
+- **Dependency outage**: downstream API/database failure propagates as tool execution errors.
+- **Concurrency saturation**: worker pool exhaustion leads to queue growth and elevated p95 latency.
+
+## Observability Hooks
+
+- Emit `request_id`, `tool_name`, `tenant`, `status_code`, and latency in every request log line.
+- Increment counters for `initialize`, `list_tools`, and `call_tool` success/failure paths; alert on missing metric streams.
+- Record p50/p95/p99 latency and timeout counts per tool every minute, with a deploy SHA tag.
+- Capture structured error events with exception class, normalized message, and first-seen timestamp.
+- Add a `health/ready` probe that verifies tool registry load and one lightweight tool invocation.
+
+## Rollout Abort Conditions
+
+- Abort canary if `initialize` error rate exceeds `1%` for `5` consecutive minutes.
+- Abort rollout if any tenant has `call_tool` failure rate above `3%` in two back-to-back windows.
+- Abort immediately on schema/contract mismatch detected between server `list_tools` and pinned client manifest.
+- Abort if p95 `call_tool` latency regresses by `>50%` versus pre-rollout baseline for `10` minutes.
+- Abort if error budget burn exceeds `15%` per hour after rollout start; roll back to last-known-good artifact.
+
+## Transport Health Checks
+
+- Verify liveness and readiness before protocol checks: `curl -fsS http://localhost:8000/health && curl -fsS http://localhost:8000/ready`.
+- Confirm MCP transport endpoint responds: `curl -i http://localhost:8000/mcp/health`.
+- Smoke-test initialize/list path via tests: `python -m pytest tests/mcp/test_transport_health.py -q`.
+- Watch transport errors in real time during canary: `rg -n "initialize|list_tools|timeout|connection reset" logs/mcp*.log`.
+
+## Registration Drift Checks
+
+- Snapshot current registry output: `curl -fsS http://localhost:8000/mcp/list_tools | jq -S . > /tmp/list_tools.current.json`.
+- Diff against pinned manifest: `diff -u config/mcp/list_tools.manifest.json /tmp/list_tools.current.json`.
+- Detect duplicate or missing tool names fast: `jq -r '.tools[].name' /tmp/list_tools.current.json | sort | uniq -cd`.
+- Enforce drift guard in CI: `python -m pytest tests/mcp/test_registration_drift.py -q`.
+
+## Tool Timeout Budgeting
+
+- Set hard per-call timeout defaults in config and commit them: `rg -n "timeout|deadline" config/`.
+- Fail fast on regressions with timeout-focused tests: `python -m pytest tests/mcp -k timeout -q`.
+- Track live timeout pressure during canary: `rg -n "timeout|deadline exceeded" logs/mcp*.log | tail -n 50`.
+- Recalculate per-tool budget weekly from p95 latency and enforce in CI docs/checklists.
+
+## Operator Recovery Steps
+
+- Declare incident scope and freeze deploys: `echo "SEV-2 MCP degradation"`.
+- Verify transport and registry quickly: `curl -fsS http://localhost:8000/ready && curl -fsS http://localhost:8000/mcp/list_tools | jq '.tools|length'`.
+- Roll back to last-known-good artifact if initialize/call failures persist for 5 minutes.
+- Restart service and confirm recovery path: `systemctl restart thegent-mcp && python -m pytest tests/mcp/test_transport_health.py -q`.
+- Capture closure evidence for postmortem: `date -u && git rev-parse HEAD && rg -n "error|timeout" logs/mcp*.log | tail -n 100`.
+
+## Handler Reliability Checks
+
+- Run focused handler tests before deploy: `python -m pytest tests/mcp -k "handler and (success or timeout or schema)" -q`.
+- Smoke-test each critical tool path manually: `python -m pytest tests/mcp/test_tool_smoke.py -q`.
+- Fail release on fresh handler exceptions: `rg -n "Unhandled|Traceback|handler failed" logs/mcp*.log | tail -n 50`.
+- Re-verify after restart to catch warmup issues: `systemctl restart thegent-mcp && python -m pytest tests/mcp/test_tool_smoke.py -q`.
+
+## Runtime Escalation Path
+
+- **T+0–5 min**: On-call operator triages, freezes deploys, and captures failing request IDs.
+- **T+5–10 min**: Service owner joins; roll back to last-known-good if error rate remains elevated.
+- **T+10–20 min**: Platform/SRE joins for infra checks; run `curl -fsS http://localhost:8000/ready` and transport smoke tests.
+- **T+20+ min**: Escalate to incident commander, open status comms, and assign owner/date for corrective action.

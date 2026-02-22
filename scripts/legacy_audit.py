@@ -171,11 +171,11 @@ def find_rust_dependencies():
     """Find all Rust dependencies"""
     deps = defaultdict(set)
     base_path = Path("/Users/kooshapari/temp-PRODVERCEL/485/kush")
-    
+
     for cargo_file in base_path.rglob("Cargo.toml"):
         if ".venv" in str(cargo_file) or "venv" in str(cargo_file):
             continue
-        
+
         try:
             content = cargo_file.read_text()
             # Extract dependencies
@@ -190,18 +190,18 @@ def find_rust_dependencies():
                         deps[dep_name].add((str(cargo_file.relative_to(base_path)), matches[0]))
         except Exception as e:
             print(f"Error reading {cargo_file}: {e}")
-    
+
     return deps
 
 def find_go_dependencies():
     """Find all Go dependencies"""
     deps = defaultdict(set)
     base_path = Path("/Users/kooshapari/temp-PRODVERCEL/485/kush")
-    
+
     for go_mod in base_path.rglob("go.mod"):
         if ".venv" in str(go_mod) or "venv" in str(go_mod):
             continue
-        
+
         try:
             content = go_mod.read_text()
             for dep_name in LEGACY_ALTERNATIVES["go"].keys():
@@ -212,18 +212,18 @@ def find_go_dependencies():
                         deps[dep_name].add((str(go_mod.relative_to(base_path)), match[1]))
         except Exception as e:
             print(f"Error reading {go_mod}: {e}")
-    
+
     return deps
 
 def find_python_dependencies():
     """Find all Python dependencies"""
     deps = defaultdict(set)
     base_path = Path("/Users/kooshapari/temp-PRODVERCEL/485/kush")
-    
+
     for pyproject in base_path.rglob("pyproject.toml"):
         if ".venv" in str(pyproject) or "venv" in str(pyproject):
             continue
-        
+
         try:
             content = pyproject.read_text()
             for dep_name in LEGACY_ALTERNATIVES["python"].keys():
@@ -237,24 +237,24 @@ def find_python_dependencies():
                         deps[dep_name].add((str(pyproject.relative_to(base_path)), matches[0] if matches else "present"))
         except Exception as e:
             print(f"Error reading {pyproject}: {e}")
-    
+
     return deps
 
 def generate_report():
     """Generate comprehensive audit report"""
     print("🔍 Deep Legacy Dependency Audit")
     print("=" * 80)
-    
+
     rust_deps = find_rust_dependencies()
     go_deps = find_go_dependencies()
     python_deps = find_python_dependencies()
-    
+
     report = {
         "rust": {},
         "go": {},
         "python": {}
     }
-    
+
     # Rust audit
     print("\n📦 RUST DEPENDENCIES")
     print("-" * 80)
@@ -276,7 +276,7 @@ def generate_report():
             print(f"   Reason: {alt['reason']}")
             print(f"   Effort: {alt['effort']}")
             print(f"   Benefit: {alt['benefit']}")
-    
+
     # Go audit
     print("\n📦 GO DEPENDENCIES")
     print("-" * 80)
@@ -298,7 +298,7 @@ def generate_report():
             print(f"   Reason: {alt['reason']}")
             print(f"   Effort: {alt['effort']}")
             print(f"   Benefit: {alt['benefit']}")
-    
+
     # Python audit
     print("\n📦 PYTHON DEPENDENCIES")
     print("-" * 80)
@@ -320,12 +320,12 @@ def generate_report():
             print(f"   Reason: {alt['reason']}")
             print(f"   Effort: {alt['effort']}")
             print(f"   Benefit: {alt['benefit']}")
-    
+
     # Save report
     report_path = Path("/Users/kooshapari/temp-PRODVERCEL/485/kush/LEGACY_AUDIT_REPORT.json")
     report_path.write_text(json.dumps(report, indent=2))
     print(f"\n✅ Report saved to: {report_path}")
-    
+
     # Summary
     print("\n📊 SUMMARY")
     print("-" * 80)
@@ -334,12 +334,12 @@ def generate_report():
         for dep, info in deps.items():
             if info["priority"] == "HIGH":
                 high_priority.append((lang, dep, info))
-    
+
     if high_priority:
         print(f"\n🚨 HIGH PRIORITY ({len(high_priority)}):")
         for lang, dep, info in high_priority:
             print(f"   [{lang.upper()}] {dep} → {info['alternative']}")
-    
+
     return report
 
 if __name__ == "__main__":

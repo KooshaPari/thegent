@@ -43,6 +43,8 @@ _GUARDRAIL_EXCLUDE_SEGMENTS = {
     ".venv",
     "coverage",
     "build",
+    ".shadow",
+    ".worktrees",
 }
 
 
@@ -55,7 +57,7 @@ def _matches_collection_guardrails(raw_path: Path) -> bool:
     path_str = path.as_posix()
 
     for segment in path.parts:
-        if segment in _GUARDRAIL_EXCLUDE_SEGMENTS:
+        if segment in _GUARDRAIL_EXCLUDE_SEGMENTS or segment.startswith(".shadow-"):
             return True
 
     if re.search(r"(^|/)dist/", path_str) is not None:

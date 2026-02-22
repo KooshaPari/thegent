@@ -907,3 +907,129 @@ if value is None:
 ### Practical Additions
 - Planning templates
 - Roadmap configurations
+
+## Replacement Decision Heuristics
+
+| Check | Replace When | Keep/Defer When |
+|---|---|---|
+| Proven adoption | Active maintainer + broad production use | Sparse maintenance or unclear roadmap |
+| API fit | Covers ≥80% of current use with simpler code | Requires heavy adapters or behavior changes |
+| Reliability | Better error model, retries, or determinism | New failure modes without mitigation |
+| Performance | Measurable latency/memory improvement | No material gain in representative benchmarks |
+| Operability | Better observability, docs, and debug tooling | Harder to monitor or troubleshoot |
+| Security/compliance | Recent releases and known CVE response process | Unclear update cadence or policy conflicts |
+
+## Rollback Readiness Criteria
+
+- [ ] Previous implementation is retained behind a feature flag or reversible switch.
+- [ ] Data/config migration is idempotent and has a tested reverse path.
+- [ ] Baseline metrics and acceptance thresholds are recorded pre-cutover.
+- [ ] Canary + full rollback runbook exists with owner, commands, and timing.
+- [ ] Backward-compatibility tests pass for old/new paths on critical workflows.
+- [ ] Rollback drill executed in non-prod with recovery time within target SLA.
+
+## Compatibility Audit Steps
+
+- [ ] Inventory touched modules and public APIs for the replacement.
+- [ ] Run old/new behavioral parity tests on critical paths.
+- [ ] Validate config/env defaults and migration compatibility.
+- [ ] Verify wire/data contract compatibility (schema, serialization, headers).
+- [ ] Execute canary comparison and confirm error/latency regressions are within threshold.
+- [ ] Record findings, owner sign-off, and rollback trigger conditions.
+
+## Deprecation Exit Criteria
+
+| Criterion | Evidence Required | Gate |
+|---|---|---|
+| Zero runtime dependency on legacy library | Dependency graph + runtime import scan | Must pass |
+| Migration completed for in-scope callsites | PR/file checklist with reviewer approval | Must pass |
+| Compatibility + regression coverage green | CI suite + parity test report | Must pass |
+| Operational readiness confirmed | Dashboards, alerts, runbook links | Must pass |
+| Legacy path disabled/removed safely | Feature flag state or removal PR | Must pass |
+
+## Replacement Ownership Model
+
+| Area | Primary Owner | Backup Owner | Required Artifact |
+|---|---|---|---|
+| Discovery + selection | Service maintainer | Platform lead | Decision record with alternatives |
+| Migration implementation | Feature team lead | Module reviewer | PR checklist of migrated callsites |
+| Runtime validation | SRE/on-call owner | QA lead | Canary report + rollback trigger |
+| Final deprecation/removal | Repo maintainer | Release manager | Removal PR + release note |
+
+Ownership checklist:
+- [ ] Assign one primary and one backup owner before implementation starts.
+- [ ] Link owners to a single tracking issue and migration checklist.
+- [ ] Require explicit sign-off from runtime validation owner before cutover.
+- [ ] Require explicit sign-off from repo maintainer before legacy removal.
+
+## Upgrade Window Policy
+
+| Upgrade Type | Target Window | Max Freeze Exception | Approval Needed |
+|---|---|---|---|
+| Patch (bug/security) | ≤14 days from release | 7 days | Service maintainer |
+| Minor (features) | ≤45 days from release | 21 days | Service + platform leads |
+| Major (breaking) | Planned quarterly window | 45 days | Engineering manager + SRE |
+
+Window execution checklist:
+- [ ] Define window start/end dates and affected services in advance.
+- [ ] Complete compatibility and rollback checks before window opens.
+- [ ] Block non-urgent dependency changes during an active major window.
+- [ ] Record exception reason, approver, and new due date for any freeze extension.
+
+## Version Pinning Policy
+
+| Package Class | Pin Rule | Update Cadence | Exception Path |
+|---|---|---|---|
+| Runtime-critical libraries | Exact version (`x.y.z`) | Monthly review; immediate for security patches | Platform lead + service owner approval |
+| Build/test/tooling libraries | Minor-range (`^x.y.0`) | Bi-weekly review | Repo maintainer approval |
+| Transitive high-risk dependencies | Lockfile-resolved exact | With every lockfile refresh | Security owner approval |
+
+Pinning checklist:
+- [ ] Record current pinned version and rationale in migration issue.
+- [ ] Link changelog/release notes for target upgrade before bumping.
+- [ ] Run compatibility + rollback criteria before widening any pin.
+- [ ] Update lockfile in isolated PR with owner sign-off.
+
+## Migration Sign-Off Checklist
+
+| Sign-Off Area | Required Evidence | Signer |
+|---|---|---|
+| Functional parity | Critical-path parity tests pass | Feature owner |
+| Operational safety | Canary metrics within agreed thresholds | SRE/on-call owner |
+| Rollback readiness | Rollback drill/runbook verified | Service maintainer |
+| Compliance/security | Dependency scan and policy checks pass | Security/platform owner |
+
+Final gate checklist:
+- [ ] All required evidence links are attached to the migration tracking issue.
+- [ ] All signers have approved in writing before production cutover.
+- [ ] Cutover timestamp, owner, and rollback trigger are documented.
+- [ ] Legacy dependency removal/deprecation ticket is created with due date.
+
+## Dependency Freeze Window
+
+| Window Stage | Required Duration | Change Rule | Owner Approval |
+|---|---|---|---|
+| Pre-cutover freeze | 3 business days | Only migration-critical dependency changes allowed | Service owner |
+| Cutover freeze | 24 hours before + 24 hours after cutover | No dependency changes allowed outside rollback | Service owner + SRE |
+| Post-cutover stabilization | 5 business days | Patch-only changes with incident link | Service owner |
+
+Freeze checklist:
+- [ ] Freeze start/end timestamps are posted in the migration issue.
+- [ ] Blocked repositories/paths are listed with escalation contact.
+- [ ] Emergency exception template includes reason, risk, and rollback step.
+- [ ] Freeze exit review confirms no untracked dependency changes landed.
+
+## Replacement Acceptance Criteria
+
+| Acceptance Area | Pass Condition | Required Evidence |
+|---|---|---|
+| Functional parity | 100% of defined parity scenarios pass | Parity test report link |
+| Reliability | Error rate and p95 latency stay within agreed thresholds | Canary dashboard snapshot |
+| Operability | Runbook tested and rollback executes within target time | Drill output + runbook revision |
+| Security/compliance | Dependency and policy scans return no blocking findings | CI/security report link |
+
+Acceptance checklist:
+- [ ] All acceptance areas are marked pass with linked evidence.
+- [ ] Primary owner and SRE both approve production readiness.
+- [ ] Legacy library usage scan returns zero in-scope references.
+- [ ] Decommission/removal ticket is created with owner and due date.

@@ -204,7 +204,7 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
 
     async def capture_screen(self, desktop_id: str) -> ScreenFrame:
         """Capture screen using X11 or Xvfb.
-        
+
         Uses xwd or ffmpeg for capture.
         Target: <50ms
         """
@@ -259,7 +259,7 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
 
     async def inject_input(self, desktop_id: str, event: InputEvent) -> bool:
         """Inject input using xdotool (<5ms).
-        
+
         xdotool is very fast for X11 input injection.
         """
         start = time.perf_counter()

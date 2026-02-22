@@ -897,4 +897,3 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 **Blocked by:** none
 **Source:** [thegent/src/thegent/orchestration/execution/worker_pool.py:70]
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
-

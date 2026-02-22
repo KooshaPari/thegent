@@ -933,3 +933,89 @@ print(f"Indexed files: {cursor.fetchone()[0]}")
 ### Practical Additions
 - Planning templates
 - Roadmap configurations
+
+## Cache Invalidation Guardrails
+
+- Invalidate on write-path changes: when parser, chunking, embedding model, or serialization format changes.
+- Use versioned cache keys (`<artifact>:<version>:<content_hash>`) and bump `version` for any incompatible change.
+- Evict by scope first (namespace/prefix) before full purge to avoid cold-starting unrelated workloads.
+- Enforce TTL for volatile entries and require explicit manual invalidation for long-lived derived artifacts.
+- Run invalidation as an idempotent step in deploy/rollout scripts and log key count removed.
+
+## Cache Verification Commands
+
+```bash
+# 1) Confirm key counts before/after invalidation
+python -m thegent.cache stats
+
+# 2) Dry-run invalidation scope (no delete)
+python -m thegent.cache invalidate --scope embeddings --dry-run
+
+# 3) Execute scoped invalidation
+python -m thegent.cache invalidate --scope embeddings
+
+# 4) Rebuild and verify warm paths
+python -m thegent.prewarm run && python -m thegent.cache stats
+
+# 5) Spot-check cache hit behavior in logs
+THEGENT_CACHE_DEBUG=1 python -m thegent.cli query "test prompt"
+```
+
+## Cache Miss Escalation Path
+
+- **Trigger:** Escalate when hit rate is <80% for 15 minutes or p95 lookup latency is >2x baseline.
+- **Step 1 (On-call, 0-10 min):** Run `python -m thegent.cache stats` and confirm affected scopes/keys.
+- **Step 2 (Infra, 10-20 min):** Run scoped warmup `python -m thegent.prewarm run --scope <scope>`; avoid global purge unless corruption is confirmed.
+- **Step 3 (Owner, 20-30 min):** If unresolved, invalidate only impacted namespace and re-run warmup; attach before/after stats to incident log.
+- **Step 4 (Leadership, 30+ min):** Declare degraded mode, route high-cost queries to fallback path, and open postmortem task for root-cause fix.
+
+## Cache Warmup Schedule
+
+- **Deploy-time:** Execute `python -m thegent.prewarm run` immediately after each production deploy.
+- **Hourly:** Warm top query/index scopes at `:05` to reduce peak-time cold misses.
+- **Daily (02:00 UTC):** Full prewarm for embeddings + index metadata.
+- **Weekly (Sunday 03:00 UTC):** Run full warmup + `python -m thegent.cache stats` snapshot and archive metrics.
+- **After invalidation:** Run targeted warmup for invalidated scope within 5 minutes of completion.
+
+## Cache Coherency Signals
+
+- **Version parity:** `cache_key_version`, embed model version, and chunking version must match between writer and reader paths.
+- **Read-after-write lag:** p95 delay from successful write to first cache-visible read should stay under 2 minutes.
+- **Hash drift:** identical source inputs should produce identical artifact hashes across consecutive runs.
+- **Staleness ratio:** stale-read events should remain below 1% of total cache reads per 15-minute window.
+- **Scope integrity:** invalidations must only affect intended namespace/prefix; no cross-scope key drops.
+
+## Invalidation Audit Commands
+
+```bash
+# 1) Baseline current cache footprint
+python -m thegent.cache stats
+
+# 2) Preview what would be removed for a scope
+python -m thegent.cache invalidate --scope index --dry-run
+
+# 3) Execute invalidation and capture post-state
+python -m thegent.cache invalidate --scope index && python -m thegent.cache stats
+
+# 4) Verify warmed keys repopulate after invalidation
+python -m thegent.prewarm run --scope index && python -m thegent.cache stats
+
+# 5) Emit debug traces for invalidation/read coherence checks
+THEGENT_CACHE_DEBUG=1 python -m thegent.cli query "cache audit probe"
+```
+
+## Cache Drift Indicators
+
+- Hit rate drops >10 points from 7-day baseline for the same scope and traffic mix.
+- Identical input produces different artifact hash across two consecutive rebuilds.
+- Reader sees key-version mismatch (`cache_key_version`) against current writer version.
+- Stale-read alerts exceed 1% in any 15-minute window after a successful write.
+- Warmup completes but p95 lookup latency stays >2x baseline for 10+ minutes.
+
+## Rebuild Trigger Checklist
+
+- Confirm drift with `python -m thegent.cache stats` and one controlled probe query.
+- Verify version mismatch (model/chunking/serialization/key version) in logs/config.
+- Run scoped invalidation first: `python -m thegent.cache invalidate --scope <scope>`.
+- Execute scoped rebuild: `python -m thegent.prewarm run --scope <scope>`.
+- Recheck hit rate, stale-read ratio, and p95 latency; escalate only if still out of SLO.

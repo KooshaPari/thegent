@@ -103,6 +103,33 @@ fn get_cache_path(key: &str) -> PathBuf {
     ensure_cache_dir().join(key)
 }
 
+fn write_hook_result_report(env_key: &str, fallback_rel: &str, project_dir: &Path, result: &Value) {
+    let output_path = env::var(env_key)
+        .ok()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| project_dir.join(fallback_rel));
+
+    if let Some(parent) = output_path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    match serde_json::to_string_pretty(result) {
+        Ok(body) => {
+            if let Err(err) = fs::write(&output_path, body) {
+                eprintln!(
+                    "[WARN] {}: failed writing {}: {}",
+                    env_key,
+                    output_path.display(),
+                    err
+                );
+            }
+        }
+        Err(err) => {
+            eprintln!("[WARN] {}: failed serializing report: {}", env_key, err);
+        }
+    }
+}
+
 fn cmd_quality_gate() {
     // Hard wall-clock deadline: must finish within 4s or exit 0 with warning.
     // This prevents Stop hooks from blocking indefinitely.
@@ -174,6 +201,26 @@ fn cmd_quality_gate() {
         if py_files.is_empty() && js_files.is_empty() {
             println!("[SKIP] No Python/JS/TS source files changed — quality gate not needed");
             println!("==> Quality Gate: PASSED (no changed source files)");
+            write_hook_result_report(
+                "THEGENT_QUALITY_GATE_RESULT_JSON",
+                ".claude/.quality-gate-result.json",
+                &project_dir,
+                &json!({
+                    "schema_version": "thegent-hooks-result/v1",
+                    "hook": "quality-gate",
+                    "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                    "status": "skipped",
+                    "exit_code": 0,
+                    "summary": {
+                        "reason": "no_changed_source_files",
+                        "changed_files": changed_files.len(),
+                        "python_files": py_files.len(),
+                        "js_ts_files": js_files.len(),
+                        "duration_ms": gate_start.elapsed().as_millis() as u64
+                    },
+                    "checks": []
+                }),
+            );
             return;
         }
 
@@ -181,6 +228,26 @@ fn cmd_quality_gate() {
         if gate_start.elapsed().as_secs() >= GATE_DEADLINE_SECS {
             eprintln!("[WARN] quality-gate: deadline exceeded before linting started, exiting 0");
             println!("==> Quality Gate: SKIPPED (deadline)");
+            write_hook_result_report(
+                "THEGENT_QUALITY_GATE_RESULT_JSON",
+                ".claude/.quality-gate-result.json",
+                &project_dir,
+                &json!({
+                    "schema_version": "thegent-hooks-result/v1",
+                    "hook": "quality-gate",
+                    "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                    "status": "advisory",
+                    "exit_code": 0,
+                    "summary": {
+                        "reason": "deadline_exceeded_pre_lint",
+                        "changed_files": changed_files.len(),
+                        "python_files": py_files.len(),
+                        "js_ts_files": js_files.len(),
+                        "duration_ms": gate_start.elapsed().as_millis() as u64
+                    },
+                    "checks": []
+                }),
+            );
             return;
         }
 
@@ -240,6 +307,7 @@ fn cmd_quality_gate() {
 
         let results = join_all(futures).await;
         let mut all_ok = true;
+        let mut checks: Vec<Value> = Vec::new();
 
         for res in results {
             if let Ok((name, maybe_output)) = res {
@@ -247,6 +315,10 @@ fn cmd_quality_gate() {
                     Some(output) => {
                         if !output.status.success() {
                             all_ok = false;
+                            checks.push(json!({
+                                "name": name,
+                                "status": "failed"
+                            }));
                             println!("[FAILED] {}", name);
                             // Only print first 40 lines to keep output bounded
                             let stdout_str = String::from_utf8_lossy(&output.stdout);
@@ -254,10 +326,18 @@ fn cmd_quality_gate() {
                                 println!("  {}", line);
                             }
                         } else {
+                            checks.push(json!({
+                                "name": name,
+                                "status": "passed"
+                            }));
                             println!("[OK] {}", name);
                         }
                     }
                     None => {
+                        checks.push(json!({
+                            "name": name,
+                            "status": "skipped"
+                        }));
                         println!("[SKIP] {} (timeout or not found)", name);
                     }
                 }
@@ -269,14 +349,72 @@ fn cmd_quality_gate() {
             eprintln!("[WARN] quality-gate: completed after deadline ({}s elapsed), treating as advisory",
                 gate_start.elapsed().as_secs());
             println!("==> Quality Gate: ADVISORY (deadline exceeded)");
+            write_hook_result_report(
+                "THEGENT_QUALITY_GATE_RESULT_JSON",
+                ".claude/.quality-gate-result.json",
+                &project_dir,
+                &json!({
+                    "schema_version": "thegent-hooks-result/v1",
+                    "hook": "quality-gate",
+                    "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                    "status": "advisory",
+                    "exit_code": 0,
+                    "summary": {
+                        "reason": "deadline_exceeded_post_lint",
+                        "changed_files": changed_files.len(),
+                        "python_files": py_files.len(),
+                        "js_ts_files": js_files.len(),
+                        "duration_ms": gate_start.elapsed().as_millis() as u64
+                    },
+                    "checks": checks
+                }),
+            );
             return;
         }
 
         if all_ok {
             println!("==> Quality Gate: PASSED");
+            write_hook_result_report(
+                "THEGENT_QUALITY_GATE_RESULT_JSON",
+                ".claude/.quality-gate-result.json",
+                &project_dir,
+                &json!({
+                    "schema_version": "thegent-hooks-result/v1",
+                    "hook": "quality-gate",
+                    "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                    "status": "passed",
+                    "exit_code": 0,
+                    "summary": {
+                        "changed_files": changed_files.len(),
+                        "python_files": py_files.len(),
+                        "js_ts_files": js_files.len(),
+                        "duration_ms": gate_start.elapsed().as_millis() as u64
+                    },
+                    "checks": checks
+                }),
+            );
             exit(0);
         } else {
             println!("==> Quality Gate: FAILED");
+            write_hook_result_report(
+                "THEGENT_QUALITY_GATE_RESULT_JSON",
+                ".claude/.quality-gate-result.json",
+                &project_dir,
+                &json!({
+                    "schema_version": "thegent-hooks-result/v1",
+                    "hook": "quality-gate",
+                    "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                    "status": "failed",
+                    "exit_code": 1,
+                    "summary": {
+                        "changed_files": changed_files.len(),
+                        "python_files": py_files.len(),
+                        "js_ts_files": js_files.len(),
+                        "duration_ms": gate_start.elapsed().as_millis() as u64
+                    },
+                    "checks": checks
+                }),
+            );
             exit(1);
         }
     });
@@ -383,6 +521,7 @@ fn cmd_dispatch() {
 }
 
 fn cmd_security_pipeline() {
+    let sec_start = std::time::Instant::now();
     let rt = Runtime::new().unwrap();
     rt.block_on(async {
         let mut input_buffer = Vec::new();
@@ -465,20 +604,48 @@ fn cmd_security_pipeline() {
 
         let results = join_all(futures).await;
         let mut total_findings = 0;
+        let mut checks: Vec<Value> = Vec::new();
 
         for res in results {
             if let Ok((name, count, findings)) = res {
                 total_findings += count;
                 if count > 0 {
+                    checks.push(json!({
+                        "name": name,
+                        "status": "warn",
+                        "findings": count
+                    }));
                     println!("{}: WARN ({} findings)", name, count);
                     for f in findings { println!("  {}", f); }
                 } else {
+                    checks.push(json!({
+                        "name": name,
+                        "status": "passed",
+                        "findings": count
+                    }));
                     println!("{}: PASS", name);
                 }
             }
         }
 
         println!("==> Security Pipeline: DONE ({} total findings)", total_findings);
+        write_hook_result_report(
+            "THEGENT_SECURITY_PIPELINE_RESULT_JSON",
+            ".claude/.security-pipeline-result.json",
+            &project_dir,
+            &json!({
+                "schema_version": "thegent-hooks-result/v1",
+                "hook": "security-pipeline",
+                "generated_at": Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                "status": "done",
+                "exit_code": 0,
+                "summary": {
+                    "total_findings": total_findings,
+                    "duration_ms": sec_start.elapsed().as_millis() as u64
+                },
+                "checks": checks
+            }),
+        );
         exit(0);
     });
 }

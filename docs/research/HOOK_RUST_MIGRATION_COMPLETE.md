@@ -986,3 +986,62 @@ impl GitManager {
 - Implementation templates
 - Configuration examples
 - Best practices
+
+## Rust Migration Readiness Checklist
+
+- Ensure `thegent-hooks` binary is built and on PATH for all target environments.
+- Confirm every hook entrypoint resolves to Rust runtime with no shell-only dependency.
+- Run a full hook matrix (start, prompt-submit, pre/post-tool, stop) and verify zero regressions.
+- Validate parity for env handling, exit codes, and hook output contracts against baseline logs.
+- Keep a tagged rollback point and tested restore command ready before production cutover.
+
+## Hook Cutover Safety Checks
+
+- Enable staged rollout (dev → staging → prod) with explicit go/no-go at each stage.
+- Compare hook latency and failure rate to baseline; block cutover on regressions.
+- Verify telemetry coverage (hook name, duration, exit status, error surface) is complete.
+- Execute rollback drill in staging and confirm recovery time and behavior.
+- Freeze non-migration hook changes during cutover window to reduce confounding risk.
+
+## Migration Rollback Drills
+
+- Pre-stage rollback artifact (`thegent-hooks` previous known-good build) and verify checksum before cutover.
+- Simulate failed cutover in staging: force hook runtime switch back, restart hook host, and replay hook matrix.
+- Time recovery from fault detect → stable hooks; require recovery within agreed SLO before production go-live.
+- Record exact rollback command sequence and on-call owner in cutover runbook.
+
+## Post-Cutover Validation
+
+- Run full production hook matrix on canary repos; compare outputs and exit codes with pre-cutover baseline.
+- Verify p95 hook latency, error rate, and cache hit rate for 60 minutes remain within migration targets.
+- Confirm telemetry ingestion for all hook phases and alert routing to on-call.
+- Perform one real rollback/roll-forward rehearsal in production window and capture lessons learned.
+
+## Cutover Rehearsal Matrix
+
+- Rehearse `dev`, `staging`, and `prod-canary` in order; require explicit sign-off before moving forward.
+- Execute hook suite (`start`, `prompt-submit`, `pre-tool`, `post-tool`, `stop`) with baseline diff checks each stage.
+- Enforce cutover gate: no stage advances if failure rate >0.5% or p95 latency exceeds baseline by >20%.
+- Time rollback rehearsal end-to-end; require recovery to known-good runtime within 5 minutes.
+
+## Regression Containment Rules
+
+- Freeze non-migration hook changes during cutover and validation windows.
+- Auto-revert to last known-good Rust binary on any repeated hook crash or contract mismatch (2+ events in 10 minutes).
+- Block further rollout when telemetry is missing for hook name, exit code, or duration fields.
+- Keep canary scope capped until 60 minutes of stable metrics are observed after each promotion.
+
+## Hook Readiness Signals
+
+- `thegent-hooks --version` matches approved release in all environments.
+- Hook matrix (`start`, `prompt-submit`, `pre-tool`, `post-tool`, `stop`) passes with baseline parity.
+- p95 hook latency and error rate stay within cutover thresholds for 60 minutes.
+- Required telemetry fields (hook, duration, exit status, error) are complete and alerting.
+
+## Rust Hook Failure Playbook
+
+- Detect and classify: crash, timeout, contract mismatch, or telemetry loss.
+- Contain fast: pause rollout and pin to canary scope only.
+- Recover: switch to last known-good Rust build; if needed, execute shell fallback.
+- Verify: rerun hook matrix plus parity checks before resuming promotions.
+- Close out: log incident timeline, root cause, and hardening actions in runbook.

@@ -12,8 +12,6 @@ from typing import Any
 class DuplicateBoardIdError(Exception):
     """Raised when a duplicate board ID is registered."""
 
-    pass
-
 
 @dataclass
 class BoardIdUniquenessPolicy:

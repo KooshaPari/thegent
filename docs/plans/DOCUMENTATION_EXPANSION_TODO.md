@@ -596,6 +596,97 @@ All MD docs will be:
 - [x] Added `Platform Readiness Checklist` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
 - [x] Added `Cutover Guardrails` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
 
+### Wave 11 — Completed (10 items)
+
+- [x] Added `FastMCP Deployment Gates` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `FastMCP Incident Triage` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Rust Migration Readiness Checklist` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Hook Cutover Safety Checks` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Replacement Decision Heuristics` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Rollback Readiness Criteria` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Lane Assignment Rules` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Swarm Completion Signals` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Resource Pressure Thresholds` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+- [x] Added `Recovery Command Set` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+
+### Wave 12 — Completed (10 items)
+
+- [x] Added `Platform Selection Criteria` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Adoption Sequence` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Cache Invalidation Guardrails` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Cache Verification Commands` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Platform Risk Register` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Dependency Cut Points` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Tool Registration Checklist` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Runtime Failure Modes` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Compatibility Audit Steps` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Deprecation Exit Criteria` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+
+### Wave 13 — Completed (10 items)
+
+- [x] Added `Migration Rollback Drills` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Post-Cutover Validation` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Swarm Bottleneck Indicators` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Lane Rebalancing Triggers` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Resource Alert Matrix` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+- [x] Added `Stabilization Workflow` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+- [x] Added `Platform Capability Baseline` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Integration Cost Bands` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Cache Miss Escalation Path` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Cache Warmup Schedule` section in `docs/research/CACHING_COMPLETE.md`.
+
+### Wave 14 — Completed (10 items)
+
+- [x] Added `Observability Hooks` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Rollout Abort Conditions` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Replacement Ownership Model` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Upgrade Window Policy` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Platform Test Matrix` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Degradation Boundary Rules` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Vendor Lock-In Signals` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Exit Strategy Checklist` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Capacity Planning Cadence` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+- [x] Added `Emergency Throttle Commands` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+
+### Wave 15 — Completed (10 items)
+
+- [x] Added `Cache Coherency Signals` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Invalidation Audit Commands` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Transport Health Checks` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Registration Drift Checks` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Concurrency Ceiling Rules` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Completion Handoff Protocol` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Baseline Capture Routine` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+- [x] Added `Resource Regression Triggers` section in `docs/research/SYSTEM_RESOURCES_COMPLETE.md`.
+- [x] Added `Platform Onboarding Checklist` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Decommission Procedure` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+
+### Wave 16 — Completed (10 items)
+
+- [x] Added `Tool Timeout Budgeting` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Operator Recovery Steps` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Version Pinning Policy` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Migration Sign-Off Checklist` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Cutover Rehearsal Matrix` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Regression Containment Rules` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Environment Parity Checks` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Release Blocking Conditions` section in `docs/research/CROSS_PLATFORM_RESEARCH_COMPLETE.md`.
+- [x] Added `Task Dependency Gate` section in `docs/research/SWARM_COMPLETE.md`.
+- [x] Added `Wave Shutdown Criteria` section in `docs/research/SWARM_COMPLETE.md`.
+
+### Wave 17 — Completed (10 items)
+
+- [x] Added `Cache Drift Indicators` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Rebuild Trigger Checklist` section in `docs/research/CACHING_COMPLETE.md`.
+- [x] Added `Handler Reliability Checks` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Runtime Escalation Path` section in `docs/research/FASTMCP_COMPLETE.md`.
+- [x] Added `Dependency Freeze Window` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Replacement Acceptance Criteria` section in `docs/research/LIBRARY_REPLACEMENT_COMPLETE.md`.
+- [x] Added `Hook Readiness Signals` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Rust Hook Failure Playbook` section in `docs/research/HOOK_RUST_MIGRATION_COMPLETE.md`.
+- [x] Added `Platform SLA Expectations` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+- [x] Added `Portability Verification Steps` section in `docs/research/AGENT_PLATFORMS_COMPLETE.md`.
+
 ---
 
 *This TODO will be updated as expansion progresses.*

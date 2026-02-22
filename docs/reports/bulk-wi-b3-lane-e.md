@@ -897,4 +897,3 @@ Narrow this broad exception handling to explicit expected failures and add regre
 **Blocked by:** none
 **Source:** [thegent/src/thegent/mesh/git_parallelism.py:55]
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
-

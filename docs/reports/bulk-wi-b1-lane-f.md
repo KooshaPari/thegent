@@ -179,7 +179,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3520] lib line 95 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -188,7 +188,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3521] lib line 111 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -197,7 +197,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3522] lib line 122 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -206,7 +206,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3523] lib line 134 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -215,7 +215,7 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-3524] lib line 142 backlog marker
-**Status:** OPEN
+**Status:** DONE
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -897,4 +897,3 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 **Blocked by:** none
 **Source:** [thegent/scripts/build_homebrew.sh:15]
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
-

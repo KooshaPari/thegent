@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://thegent.dev/schemas/thegent-hooks-quality-gate-input-v1.schema.json",
+  "title": "thegent-hooks quality-gate input v1",
+  "type": "object",
+  "required": [
+    "thresholds"
+  ],
+  "properties": {
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "rule_type",
+          "condition",
+          "severity",
+          "enabled"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "rule_type": {
+            "type": "string",
+            "enum": ["cost", "quality", "security", "spec"]
+          },
+          "condition": { "type": "string", "minLength": 1 },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warning", "error", "critical"]
+          },
+          "enabled": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "context": {
+      "type": "object"
+    },
+    "quality": {
+      "type": "object",
+      "required": [
+        "coverage_percent",
+        "lint_issues",
+        "lint_errors",
+        "lint_warnings",
+        "cyclomatic_complexity",
+        "cognitive_complexity",
+        "function_max_lines"
+      ],
+      "properties": {
+        "coverage_percent": { "type": "number" },
+        "lint_issues": { "type": "integer", "minimum": 0 },
+        "lint_errors": { "type": "integer", "minimum": 0 },
+        "lint_warnings": { "type": "integer", "minimum": 0 },
+        "cyclomatic_complexity": { "type": "integer", "minimum": 0 },
+        "cognitive_complexity": { "type": "integer", "minimum": 0 },
+        "function_max_lines": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "thresholds": {
+      "type": "object",
+      "required": [
+        "min_coverage",
+        "max_lint_errors",
+        "max_cyclomatic_complexity",
+        "max_cognitive_complexity",
+        "max_function_lines"
+      ],
+      "properties": {
+        "min_coverage": { "type": "number" },
+        "max_lint_errors": { "type": "integer", "minimum": 0 },
+        "max_cyclomatic_complexity": { "type": "integer", "minimum": 0 },
+        "max_cognitive_complexity": { "type": "integer", "minimum": 0 },
+        "max_function_lines": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

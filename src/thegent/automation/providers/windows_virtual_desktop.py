@@ -168,7 +168,7 @@ class WindowsVirtualDesktopProvider(VirtualDesktopProvider):
 
     async def capture_screen(self, desktop_id: str) -> ScreenFrame:
         """Capture screen using Windows APIs.
-        
+
         Uses GDI as fallback, DXGI preferred for performance.
         Target: <30ms capture time
         """
@@ -250,7 +250,7 @@ $graphics.Dispose()
 
     async def inject_input(self, desktop_id: str, event: InputEvent) -> bool:
         """Inject input using SendInput (fast, <5ms).
-        
+
         SendInput is the fastest way to inject input on Windows.
         """
         start = time.perf_counter()

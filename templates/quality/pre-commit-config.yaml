@@ -34,7 +34,8 @@ repos:
     hooks:
       - id: suppression-blocker
         name: Block new lint suppressions
-        entry: bash -c 'git diff --cached --diff-filter=ACM -U0 | grep -E "^\+" | grep -cE "(# noqa|# type: ignore|// eslint-disable|@ts-ignore|//nolint|#\[allow\()" && echo "ERROR: New lint suppressions detected. Fix the code instead." && exit 1 || exit 0'
+        entry: |
+          bash -c 'git diff --cached --diff-filter=ACM -U0 | grep -E "^\+" | grep -cE "(# noqa|# type: ignore|// eslint-disable|@ts-ignore|//nolint|#\[allow\()" && echo "ERROR: New lint suppressions detected. Fix the code instead." && exit 1 || exit 0'
         language: system
         types: [text]
         stages: [pre-commit]

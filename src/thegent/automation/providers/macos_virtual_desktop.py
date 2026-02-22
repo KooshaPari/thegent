@@ -62,7 +62,7 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
 
     async def create_desktop(self, config: DesktopConfig) -> str:
         """Create a virtual session on macOS.
-        
+
         On macOS, we don't have traditional virtual desktops in the same way.
         Instead, we create a managed session that can run applications.
         """
@@ -97,7 +97,7 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
 
     async def capture_screen(self, desktop_id: str) -> ScreenFrame:
         """Capture screen using screencapture command.
-        
+
         Target: <30ms with native APIs
         """
         start = time.perf_counter()
@@ -144,7 +144,7 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
 
     async def inject_input(self, desktop_id: str, event: InputEvent) -> bool:
         """Inject input using CGEvent (<3ms).
-        
+
         Uses Python to call Carbon APIs for fastest input.
         """
         start = time.perf_counter()
