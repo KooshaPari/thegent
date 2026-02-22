@@ -26581,6 +26581,43 @@ Publish quick-start docs for unattended board reflection setup and verification 
   - Status: ✅ DONE (in thegent routing/reasoning_transform.py)
   - Bundle: cliproxy_routing
 
+---
+
+## CLIProxyAPI Bug Fixes - Priority Queue
+
+### Phase 1: Tool Translation Bugs
+
+| WL ID | GitHub | Title | Status |
+|-------|--------|-------|--------|
+| CLIP-BUG-01 | #1671 | Cannot use Claude Models in Codex CLI (type:custom tool) | TODO |
+| CLIP-BUG-02 | #1533 | 400 Invalid Argument with claude-opus-4-6-thinking | TODO |
+| CLIP-BUG-03 | #1513 | Nullable type arrays cause 400 error | TODO |
+| CLIP-BUG-04 | #1424 | Claude→Gemini translation fails (JSON Schema) | TODO |
+| CLIP-BUG-05 | #1477 | metadata fields in contents[] causing Gemini rejection | TODO |
+
+### Phase 2: Streaming Bugs
+
+| WL ID | GitHub | Title | Status |
+|-------|--------|-------|--------|
+| CLIP-BUG-06 | #1085 | Streaming [DONE] marker not emitting completion | TODO |
+| CLIP-BUG-07 | #796 | Stream usage merged with finish_reason | TODO |
+
+### Phase 3: OAuth/Auth Bugs
+
+| WL ID | GitHub | Title | Status |
+|-------|--------|-------|--------|
+| CLIP-BUG-08 | #1658 | Qwen OAuth fails | TODO |
+| CLIP-BUG-09 | #1584 | Invalid thinking block signature (provider switch) | TODO |
+| CLIP-BUG-10 | #178 | thought_signature forwarded to Gemini (Base64 error) | TODO |
+
+### All Other Bugs
+See: docs/docset/CLIPROXY_BUGS_FULL.md
+
+### References
+- Full data: docs/docset/cliproxy-github-issues.json
+- Issue board: docs/docset/CLIProxyAPI_ISSUE_BOARD.md
+
+
 ### Medium Priority
 
 - [ ] **CLIPROXY-005**: Model support expansion (~40 issues)
