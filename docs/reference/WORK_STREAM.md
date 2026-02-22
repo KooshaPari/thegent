@@ -2329,7 +2329,7 @@ Schedule periodic compliance evidence snapshots from sync artifacts.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-303] Pipeline Stage Percentiles
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** observability, perf
 **Effort:** S
@@ -2362,7 +2362,7 @@ Alert when connector capabilities diverge from required sync features.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-306] Runtime Connector Toggle Controls
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** ops, runtime
 **Effort:** S
@@ -2373,7 +2373,7 @@ Allow dynamic connector enable/disable without restarting services.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-307] WL ID Reservation Allocator
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** planning, governance
 **Effort:** S
@@ -2428,7 +2428,7 @@ Version state/priority mapping tables with migration-safe upgrades.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-312] Policy Checksum Drift Detection
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** policy, integrity
 **Effort:** S
