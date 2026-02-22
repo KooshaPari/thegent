@@ -12,6 +12,8 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+_INVALID_PARTITION_SIZE = "partition_size must be >= 1"
+
 
 @dataclass
 class SyncPartition:
@@ -41,9 +43,11 @@ class RangePartitionedSync:
 
         Raises:
             ValueError: If partition_size < 1.
+
         """
         if partition_size < 1:
-            raise ValueError("partition_size must be >= 1")
+            msg = _INVALID_PARTITION_SIZE
+            raise ValueError(msg)
 
         if not wl_ids:
             logger.debug("Partition called with empty wl_ids")
@@ -61,9 +65,9 @@ class RangePartitionedSync:
 
             partition = SyncPartition(start=start, end=end, items=items)
             partitions.append(partition)
-            logger.debug(f"Created partition: start={start}, end={end}, items={len(items)}")
+            logger.debug("Created partition: start=%s, end=%s, items=%s", start, end, len(items))
 
-        logger.debug(f"Partitioned {len(sorted_ids)} IDs into {len(partitions)} partitions")
+        logger.debug("Partitioned %s IDs into %s partitions", len(sorted_ids), len(partitions))
         return partitions
 
     def items_in_range(self, start: int, end: int, wl_ids: list[int]) -> list[int]:
@@ -76,7 +80,8 @@ class RangePartitionedSync:
 
         Returns:
             List of IDs from wl_ids that fall within [start, end].
+
         """
         result = [wl_id for wl_id in wl_ids if start <= wl_id <= end]
-        logger.debug(f"items_in_range({start}, {end}): found {len(result)} items")
+        logger.debug("items_in_range(%s, %s): found %s items", start, end, len(result))
         return result
