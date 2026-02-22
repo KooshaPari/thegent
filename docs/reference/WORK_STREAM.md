@@ -3660,7 +3660,7 @@ Add dry-run output showing exact local and remote field deltas before apply.
 **Implementation:** `src/thegent/integrations/dry_run_diff.py` with `FieldDiff`, `DryRunDiff` dataclasses and `DryRunRenderer` class (compute_diff, render_text, render_batch). Tests: `tests/integrations/test_wl186_dry_run_diff.py` (19 tests).
 
 ### [WL-187] External Write Batching
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** performance, sync
 **Effort:** M
@@ -3670,8 +3670,10 @@ Batch connector writes to reduce API churn and stabilize long-running loops.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/external_write_batcher.py` with `WriteRequest` and `ExternalWriteBatcher`. Tests: `tests/test_wl187_external_write_batcher.py` (14 tests, all passing).
+
 ### [WL-188] WL-Range Partitioned Sync
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** scalability, sync
 **Effort:** S
@@ -3681,8 +3683,10 @@ Support range-limited sync execution by WL ID interval for safer phased rollouts
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/range_partitioned_sync.py` with `SyncPartition` and `RangePartitionedSync`. Tests: `tests/test_wl188_range_partitioned_sync.py` (16 tests, all passing).
+
 ### [WL-189] WL Ignore List
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** config, sync
 **Effort:** S
@@ -3691,6 +3695,8 @@ Support range-limited sync execution by WL ID interval for safer phased rollouts
 Add config for explicit WL ID exclusions from sync apply cycles.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/wl_ignore_list.py` with `WLIgnoreList` class. Tests: `tests/test_wl189_wl_ignore_list.py` (18 tests, all passing).
 
 ### [WL-190] Strict Mapping Mode
 **Status:** COMPLETED
@@ -3730,7 +3736,7 @@ Add startup checks for auth scopes, endpoint reachability, and required project 
 **Implementation:** `src/thegent/integrations/startup_validation.py` with `StartupValidationResult` and `StartupValidator`. Tests: `tests/test_wl192_startup_validation.py` (12 tests, all passing).
 
 ### [WL-193] Per-Connector Timeout Controls
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** reliability, config
 **Effort:** S
@@ -3739,6 +3745,8 @@ Add startup checks for auth scopes, endpoint reachability, and required project 
 Expose separate timeout controls for GitHub and Linear operations.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/connector_timeout.py` with `ConnectorTimeoutConfig` and `ConnectorTimeoutRegistry`. Tests: `tests/test_wl193_connector_timeout.py` (16 tests, all passing).
 
 ### [WL-194] Connector Circuit Breakers
 **Status:** BACKLOG
@@ -3798,7 +3806,7 @@ Create e2e replay fixtures for full local->remote->local reflection cycles.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
 ### [WL-199] Multi-Project Tenancy Autosync Docs
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** docs, tenancy
 **Effort:** S
@@ -3807,6 +3815,8 @@ Create e2e replay fixtures for full local->remote->local reflection cycles.
 Document operational patterns for running autosync across multiple project roots.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/multi_project_tenancy_docs.py` with `TenancyDocEntry` dataclass and `MultiProjectTenancyDocs` class for managing multi-project documentation. Provides `register()`, `get()`, and `render_markdown()` methods. Tests: `tests/test_wl199_multi_project_tenancy_docs.py` (11 tests, all passing).
 
 ### [WL-200] Autosync Release/Migration Checklist
 **Status:** COMPLETED
@@ -3822,7 +3832,7 @@ Publish enablement and migration checklist for adopting autosync in existing rep
 **Implementation:** `docs/guides/AUTOSYNC_ENABLEMENT_CHECKLIST.md` (comprehensive guide with prerequisites, enablement, migration, rollback, verification, and troubleshooting). Module: `src/thegent/integrations/autosync_checklist.py` with checklist and verification functions. Tests: `tests/test_wl200_autosync_checklist.py` (14 tests, all passing).
 
 ### [WL-162] GitHub Field Update Parity
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** github, sync
 **Effort:** M
@@ -3831,6 +3841,8 @@ Publish enablement and migration checklist for adopting autosync in existing rep
 Push status and priority updates to GitHub Project fields instead of only draft item body text.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/github_field_parity.py` with `FieldParityReport` dataclass and `GitHubFieldParityChecker` class. Provides `check()`, `check_all()`, and `out_of_parity()` methods for field parity validation. Tests: `tests/test_wl162_github_field_parity.py` (15 tests, all passing).
 
 ### [WL-163] GitHub Pull Reflection Audit Trail
 **Status:** COMPLETED
@@ -3879,7 +3891,7 @@ Persist a local dedup/index cache to enforce idempotent external writes across c
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-167] Remote Archive/Delete Policy
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** sync, lifecycle
 **Effort:** S
@@ -3889,8 +3901,10 @@ Define and implement reflection policy for archived/deleted remote items.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/remote_archive_policy.py` with `ArchiveAction` enum (ARCHIVE, DELETE, SKIP) and `RemoteArchivePolicy` class. Provides `set_policy()`, `get_action()`, and `apply()` methods for per-connector lifecycle management. Tests: `tests/test_wl167_remote_archive_policy.py` (14 tests, all passing).
+
 ### [WL-168] Sync Scope Filters
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** ux, sync
 **Effort:** S
@@ -3899,6 +3913,8 @@ Define and implement reflection policy for archived/deleted remote items.
 Add selective sync filters by area, status, priority, and WL prefix ranges.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/sync_scope_filter.py` with `SyncScopeFilter` class supporting include/exclude patterns via substring matching. Provides `matches()` and `filter()` methods for scope validation. Tests: `tests/test_wl168_sync_scope_filter.py` (15 tests, all passing).
 
 ### [WL-169] API Rate-Limit Backoff Controls
 **Status:** BACKLOG
