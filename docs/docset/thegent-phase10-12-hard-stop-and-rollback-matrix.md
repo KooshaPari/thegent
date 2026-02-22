@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 Hard-Stop, Rollback, and Stability Matrix
 
-**Status:** Finalized operational safety matrix  
-**Date:** 2026-02-15  
+**Status:** Finalized operational safety matrix
+**Date:** 2026-02-15
 **Scope:** All work in Bundle B–F with explicit hard-stop levels, auto-response, and closure recovery.
 
 This matrix is intended for immediate use during execution. It expands the existing kill-switch definitions in:
@@ -173,4 +173,3 @@ Record each event in `artifacts/phaseX/hard_stop_events.ndjson` (one JSON object
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

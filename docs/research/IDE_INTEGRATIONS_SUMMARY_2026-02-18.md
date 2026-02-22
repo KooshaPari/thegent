@@ -1,6 +1,6 @@
 # IDE Integrations Summary
 
-**Date**: 2026-02-18  
+**Date**: 2026-02-18
 **Status**: Research Complete, Implementation Ready
 
 ---
@@ -9,20 +9,20 @@
 
 ### 1. Serena (oraios/serena) ✅ Already Integrated
 
-**Status**: Integrated via MCP mount  
-**JetBrains Plugin**: Available but not yet integrated  
+**Status**: Integrated via MCP mount
+**JetBrains Plugin**: Available but not yet integrated
 **Opportunity**: Add JetBrains plugin support as alternative backend
 
 ### 2. Serenade (serenadeai/serenade) ❌ Not Integrated
 
-**Status**: Voice coding tool, different from Serena  
-**JetBrains Plugin**: Available  
+**Status**: Voice coding tool, different from Serena
+**JetBrains Plugin**: Available
 **Priority**: Low (niche use case)
 
 ### 3. Ghostty ⚠️ Terminal, Not IDE Integration
 
-**Status**: Terminal emulator with shell integration  
-**IDE Integration**: Not applicable (terminal tool)  
+**Status**: Terminal emulator with shell integration
+**IDE Integration**: Not applicable (terminal tool)
 **Opportunity**: Use for agent terminal workflows
 
 ---
@@ -55,7 +55,7 @@
    ```bash
    # Auto-detect (default)
    THGENT_SERENA_BACKEND=auto thegent serve
-   
+
    # Force JetBrains plugin
    THGENT_SERENA_BACKEND=jetbrains thegent serve
    ```

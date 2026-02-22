@@ -52,4 +52,3 @@ guardrails_from_settings(settings: Any)
 Build InputGuardrails from ThegentSettings.
 
 ---
-

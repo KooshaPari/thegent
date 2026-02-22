@@ -72,7 +72,7 @@ impl MAIFArtifact {
         data.insert("timestamp", Value::String(self.timestamp.to_rfc3339()));
         data.insert("agent_id", Value::String(self.agent_id.clone()));
         data.insert("session_id", Value::String(self.session_id.clone()));
-        
+
         if let Some(ref cot) = self.chain_of_thought {
             data.insert("chain_of_thought", Value::String(cot.clone()));
         }
@@ -98,11 +98,11 @@ impl MAIFArtifact {
         let signature_str = self.signature.as_ref().ok_or_else(|| MAIFError::Signature("No signature found".to_string()))?;
         let signature_bytes = general_purpose::STANDARD.decode(signature_str)?;
         let canonical_data = self.get_canonical_data()?;
-        
+
         let verifying_key = VerifyingKey::<Sha256>::new(public_key.clone());
         let signature = rsa::pkcs1v15::Signature::try_from(signature_bytes.as_slice())
             .map_err(|e| MAIFError::Signature(format!("Invalid signature format: {}", e)))?;
-            
+
         verifying_key.verify(canonical_data.as_bytes(), &signature)
             .map(|_| true)
             .or(Ok(false))
@@ -149,14 +149,14 @@ mod tests {
     fn test_artifact_creation() {
         let mut payload = BTreeMap::new();
         payload.insert("test_key".to_string(), json!("test_value"));
-        
+
         let artifact = MAIFArtifact::new(
             "test_action".to_string(),
             payload,
             "test_agent".to_string(),
             "test_session".to_string(),
         );
-        
+
         assert_eq!(artifact.action_type, "test_action");
         assert_eq!(artifact.agent_id, "test_agent");
         assert_eq!(artifact.session_id, "test_session");
@@ -166,23 +166,23 @@ mod tests {
     #[test]
     fn test_artifact_signing_and_verification() -> Result<(), MAIFError> {
         let (private_key, public_key) = generate_key_pair(2048)?;
-        
+
         let mut payload = BTreeMap::new();
         payload.insert("test_key".to_string(), json!("test_value"));
-        
+
         let mut artifact = MAIFArtifact::new(
             "test_action".to_string(),
             payload,
             "test_agent".to_string(),
             "test_session".to_string(),
         );
-        
+
         artifact.sign(&private_key)?;
         assert!(artifact.signature.is_some());
-        
+
         let verified = artifact.verify(&public_key)?;
         assert!(verified);
-        
+
         Ok(())
     }
 
@@ -190,23 +190,23 @@ mod tests {
     fn test_invalid_signature() -> Result<(), MAIFError> {
         let (private_key, public_key) = generate_key_pair(2048)?;
         let (_other_private, other_public) = generate_key_pair(2048)?;
-        
+
         let mut payload = BTreeMap::new();
         payload.insert("test_key".to_string(), json!("test_value"));
-        
+
         let mut artifact = MAIFArtifact::new(
             "test_action".to_string(),
             payload,
             "test_agent".to_string(),
             "test_session".to_string(),
         );
-        
+
         artifact.sign(&private_key)?;
-        
+
         // Verification with wrong public key should fail
         let verified = artifact.verify(&other_public)?;
         assert!(!verified);
-        
+
         Ok(())
     }
 }

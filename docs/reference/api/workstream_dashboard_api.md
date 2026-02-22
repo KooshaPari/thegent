@@ -453,4 +453,3 @@ update_xp(self: Any, xp_data: list[dict[(str, Any)]])
 Update XP table.
 
 ---
-

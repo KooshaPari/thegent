@@ -64,4 +64,3 @@ Creates parent directories as needed.
 - `pairs`: List of (path, content) tuples.
 
 ---
-

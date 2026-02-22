@@ -45,12 +45,12 @@ api_key = get_secret("openai_api_key")  # Reads OPENAI_API_KEY
 
 ## Features
 
-✅ **Command Validation**: Blocks dangerous commands  
-✅ **Rate Limiting**: Prevents resource exhaustion  
-✅ **Token Optimization**: Reduces LLM costs by 50-80%  
-✅ **Secret Management**: Environment variable-based secrets  
-✅ **Input Sanitization**: Prevents injection attacks  
-✅ **Invariant Enforcement**: System safety guarantees  
+✅ **Command Validation**: Blocks dangerous commands
+✅ **Rate Limiting**: Prevents resource exhaustion
+✅ **Token Optimization**: Reduces LLM costs by 50-80%
+✅ **Secret Management**: Environment variable-based secrets
+✅ **Input Sanitization**: Prevents injection attacks
+✅ **Invariant Enforcement**: System safety guarantees
 
 ## Configuration
 

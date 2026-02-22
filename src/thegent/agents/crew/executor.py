@@ -227,7 +227,10 @@ class AgentAssigner:
         Returns:
             Map of task_id -> agent_id
         """
-        raise NotImplementedError
+        raise TypeError(
+            f"{self.__class__.__name__}.assign() is abstract and must be implemented by"
+            " a concrete AgentAssigner subclass"
+        )
 
 
 class RoundRobinAssigner(AgentAssigner):

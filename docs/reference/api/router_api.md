@@ -113,4 +113,3 @@ mark_started(self: Any, task_id: str)
 Mark a task as running.
 
 ---
-

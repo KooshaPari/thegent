@@ -139,10 +139,6 @@ class PaneManager:
 
         return True
 
-        logger.info(f"Closing pane {self.current_pane_id}")
-        # TODO: Implement tree manipulation in P2.1
-        return False
-
     def focus_next(self) -> bool:
         """Focus the next pane in rotation.
 
@@ -169,10 +165,6 @@ class PaneManager:
         except StopIteration:
             logger.warning(f"Current pane {self.current_pane_id} not found in leaves")
             return False
-
-        logger.info(f"Focusing next pane from {self.current_pane_id}")
-        # TODO: Implement tree traversal in P2.1
-        return False
 
     def save_layout(self) -> dict:
         """Serialize the pane tree to a dict.
@@ -211,9 +203,6 @@ class PaneManager:
         except Exception as e:
             logger.error(f"Error restoring layout: {e}", exc_info=True)
             return False
-
-        # TODO: Implement deserialization in P2.3
-        return False
 
     def _find_node(self, node: PaneNode | None, pane_id: str) -> PaneNode | None:
         """Find a node by pane_id in the tree."""

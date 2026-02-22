@@ -280,7 +280,7 @@ All others (Haiku, Sonnet, Gemini, etc.) are dominated
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

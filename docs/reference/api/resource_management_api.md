@@ -292,4 +292,3 @@ update(self: Any, value: float)
 Update distribution with a new value.
 
 ---
-

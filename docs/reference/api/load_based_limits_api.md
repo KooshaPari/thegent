@@ -117,4 +117,3 @@ Uses thegent-resources Rust binary when THGENT_USE_NATIVE_RESOURCES=1;
 otherwise falls back to Python (lsof/vm_stat on macOS, /proc on Linux).
 
 ---
-

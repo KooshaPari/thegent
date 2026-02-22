@@ -1,8 +1,8 @@
 # OPA Integration Design (G-GP-01)
 
-**Purpose:** Design Open Policy Agent (OPA) integration for declarative policy decisions.  
-**Date:** 2026-02-14  
-**Status:** Design  
+**Purpose:** Design Open Policy Agent (OPA) integration for declarative policy decisions.
+**Date:** 2026-02-14
+**Status:** Design
 **Source:** GOVERNANCE_POLICY_AUDIT_RESEARCH, WP-3001
 
 ---

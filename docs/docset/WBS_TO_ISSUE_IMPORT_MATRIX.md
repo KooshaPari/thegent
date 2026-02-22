@@ -1,7 +1,7 @@
 # WBS-to-Issue Import Matrix
 
-**Status:** Baseline  
-**Date:** 2026-02-15  
+**Status:** Baseline
+**Date:** 2026-02-15
 **Source:** `docs/docset/thegent-wbs-final.md`
 
 ---
@@ -218,4 +218,3 @@ Maps work packages from the final WBS to issue/ticket identifiers for execution 
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

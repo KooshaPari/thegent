@@ -97,4 +97,3 @@ redact_text(self: Any, text: str)
 Apply all redaction patterns to the provided text.
 
 ---
-

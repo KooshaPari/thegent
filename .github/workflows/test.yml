@@ -18,6 +18,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -25,15 +27,100 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-      shell: bash
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: "latest"
+
+    - name: Setup Task
+      uses: arduino/setup-task@v2
 
     - name: Install dependencies
       run: uv sync --all-extras --dev
       shell: bash
 
-    - name: Run tests
-      run: uv run pytest tests -m "unit"
+    - name: Build PR changed file list
+      if: github.event_name == 'pull_request'
+      run: |
+        mkdir -p artifacts/pytest/requirements
+        git fetch origin "${GITHUB_BASE_REF}" --depth=1
+        git diff --name-only "origin/${GITHUB_BASE_REF}...${GITHUB_SHA}" > artifacts/pytest/requirements/changed-files.txt
       shell: bash
+
+    - name: Run preflight baseline checks
+      run: |
+        task ci:preflight
+      shell: bash
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+        PYTEST_PR_CHANGED_FILE_LIST: artifacts/pytest/requirements/changed-files.txt
+        PR_BASE_REF: ${{ github.base_ref }}
+
+    - name: Run PR-style pytest gate
+      run: |
+        if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+          task test:pr-gate
+        else
+          task test:collect:fast-gate
+          task test:fast-lane
+        fi
+      shell: bash
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+        PYTEST_PR_CHANGED_FILE_LIST: artifacts/pytest/requirements/changed-files.txt
+        PR_BASE_REF: ${{ github.base_ref }}
+
+    - name: Print pytest health alerts
+      if: always()
+      run: |
+        python - <<'PY'
+        import json
+        import pathlib
+        import sys
+
+        artifact = pathlib.Path("artifacts/pytest/health/pr-gate.json")
+        if not artifact.exists():
+            print("No pytest health artifact found for this job.")
+            sys.exit(0)
+
+        payload = json.loads(artifact.read_text(encoding="utf-8"))
+        alerts = payload.get("alerts", [])
+        status = payload.get("overall_status", "unknown")
+        score = payload.get("overall_health_score", "N/A")
+        print(f"Pytest health status: {status} (score: {score})")
+        for alert in alerts:
+            prefix = alert.get("severity", "info").upper()
+            code = alert.get("code", "unknown")
+            title = alert.get("title", "No title")
+            details = alert.get("details", "")
+            action = alert.get("recommended_action", "")
+            print(f"{prefix} {code}: {title}")
+            print(f"  {details}")
+            print(f"  Action: {action}")
+        if status == "failed":
+            raise SystemExit(1)
+        PY
+      shell: bash
+
+    - name: Run coverage CI gate
+      run: task coverage:ci
+      shell: bash
+
+    - name: Upload pytest artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: pytest-metrics-${{ matrix.os }}-${{ matrix.python-version }}
+        path: |
+          artifacts/pytest/
+          .pytest_cache/
+        retention-days: 14
+
+    - name: Upload pytest health dashboard
+      if: always() && hashFiles('artifacts/pytest/health/pr-gate.json') != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: pytest-health-${{ matrix.os }}-${{ matrix.python-version }}
+        path: |
+          artifacts/pytest/health/pr-gate.json
+          artifacts/pytest/health/pr-gate.md
+        retention-days: 14

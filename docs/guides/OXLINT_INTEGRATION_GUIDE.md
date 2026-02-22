@@ -356,7 +356,7 @@ If oxlint integration causes issues:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made
@@ -419,7 +419,7 @@ bash hooks/lib/linting-accelerator.sh --test
 
 ## 11. Extension Summary
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

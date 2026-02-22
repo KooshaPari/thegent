@@ -214,4 +214,3 @@ let temp_file = format!("{}.tmp", self.cache_file.to_string_lossy());
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

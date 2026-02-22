@@ -117,4 +117,3 @@ update_activity(self: Any, path: Path)
 Update last active timestamp for a project.
 
 ---
-

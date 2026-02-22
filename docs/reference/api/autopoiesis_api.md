@@ -72,4 +72,3 @@ deploy_persona(self: Any, synthesis: SynthesisResult)
 Deploy the synthesized persona into the live registry.
 
 ---
-

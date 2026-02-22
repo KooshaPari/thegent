@@ -1,7 +1,7 @@
 # Deep Research Protocol (DRP)
 
-**Version:** 1.0  
-**Status:** Implementation Ready  
+**Version:** 1.0
+**Status:** Implementation Ready
 **Scope:** Systematic research across Reddit, Google, GitHub, ArXiv, and other domains.
 
 ---

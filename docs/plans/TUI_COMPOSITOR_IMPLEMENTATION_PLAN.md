@@ -1,8 +1,8 @@
 # TUI Compositor Implementation Plan
 
-**Date:** 2026-02-17  
-**Status:** In Progress  
-**Priority:** P1  
+**Date:** 2026-02-17
+**Status:** In Progress
+**Priority:** P1
 **Source:** [CONVERSATION_DUMP_2026-02-16_EXPANDED.md](../research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md)
 
 ---

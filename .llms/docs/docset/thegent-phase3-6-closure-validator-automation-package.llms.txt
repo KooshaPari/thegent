@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase3-6-closure-validator-automation-package.md
 
 # Thegent Phase 3–6 Closure Validator Automation Package
 
-**Status:** Execution package  
-**Date:** 2026-02-15  
+**Status:** Execution package
+**Date:** 2026-02-15
 **Scope:** Operational CI + hook-based automation for enforcing phase-3–6 closure acceptance contracts.
 
 ## 1) Purpose

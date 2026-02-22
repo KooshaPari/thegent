@@ -71,4 +71,3 @@ write_file(item: tuple[(Path, str)]) -> None
 ```
 
 ---
-

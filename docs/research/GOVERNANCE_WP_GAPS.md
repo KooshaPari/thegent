@@ -1,7 +1,7 @@
 # Governance WP Gaps — Implementation Notes
 
-**Date:** 2026-02-14  
-**Source:** `thegent-gaps-and-discovery-2026-02-14.md`, `GOVERNANCE_WP_VERIFICATION.md`  
+**Date:** 2026-02-14
+**Source:** `thegent-gaps-and-discovery-2026-02-14.md`, `GOVERNANCE_WP_VERIFICATION.md`
 **Purpose:** Document remaining governance work package gaps with implementation options.
 
 ---
@@ -118,7 +118,7 @@ Remaining optional/deferred gaps that can be added as work items when prioritize
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

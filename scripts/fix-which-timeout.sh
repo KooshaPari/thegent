@@ -27,14 +27,14 @@ cat > "$WRAPPER_FILE" << 'WRAPPER_EOF'
 which() {
     # Set flag to skip wrapper functions during PATH resolution
     export _RESOLVING_PATH=1
-    
+
     # Use system which directly
     command which "$@"
     local exit_code=$?
-    
+
     # Unset flag
     unset _RESOLVING_PATH
-    
+
     return $exit_code
 }
 

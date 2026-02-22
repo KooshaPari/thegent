@@ -3,4 +3,3 @@
 
 export declare class ModelMetadata {
 }
-

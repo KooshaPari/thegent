@@ -2,7 +2,7 @@
 
 **Purpose**: Central index for all model selection, Pareto frontier, and routing documentation
 
-**Status**: Complete reference set  
+**Status**: Complete reference set
 **Last Updated**: 2026-02-15
 
 ---
@@ -11,7 +11,7 @@
 
 ### GLM-5 (92.7% AIME, $2.60/M)
 
-**Status**: OFF frontier  
+**Status**: OFF frontier
 **Why**: Dominated by MiniMax on cost-value (3.3x more expensive) for general tasks, and by Opus on reasoning reliability (Opus 85% AIME vs GLM-5 92.7%, but Opus more reliable for mixed code+reasoning)
 
 **Location**: See `/docs/reference/PARETO_FRONTIER_COMPLETE_ANALYSIS.md` → "GLM-5 (92.7% AIME) — Why Not Selected?"
@@ -20,7 +20,7 @@
 
 ### Claude Opus 4.6 (80.8% SWE-Bench, $17.50/M)
 
-**Status**: ON frontier, but RESERVED for mission-critical only  
+**Status**: ON frontier, but RESERVED for mission-critical only
 **Why**: Best quality (80.8%), but costs 22x more than MiniMax for only 0.6% improvement. Reserved for HIGH_COMPLEX tier when quality is absolute requirement (not preference)
 
 **Location**: See `/docs/reference/PARETO_FRONTIER_COMPLETE_ANALYSIS.md` → "Claude Opus 4.6 — Why Reserved for Premium Only?"
@@ -31,7 +31,7 @@
 
 ### Claude Sonnet 4.5 (77.2% SWE-Bench, $10.50/M)
 
-**Status**: OFF frontier  
+**Status**: OFF frontier
 **Why**: Dominated by MiniMax on both quality (80.2% > 77.2%) and cost ($0.79 < $10.50). MiniMax is 13.3x cheaper for higher quality.
 
 **Location**: See `/docs/reference/PARETO_FRONTIER_COMPLETE_ANALYSIS.md` → "Claude Sonnet 4.5 — Why Dominated?"
@@ -40,7 +40,7 @@
 
 ### Gemini 3 Flash (78% SWE-Bench, 218 tok/s, $1.50/M)
 
-**Status**: OFF frontier (quality-cost), but available as speed fallback  
+**Status**: OFF frontier (quality-cost), but available as speed fallback
 **Why**: Dominated by MiniMax on cost-quality (80.2% > 78%, $0.79 < $1.50). But ultra-fast (218 tok/s) makes it acceptable fallback for <300ms latency SLA.
 
 **Location**: See `/docs/reference/PARETO_FRONTIER_COMPLETE_ANALYSIS.md` → "Gemini 3 Flash — Why Off Frontier Despite Speed?"
@@ -51,7 +51,7 @@
 
 ### GPT-5.3-Codex (56.8% SWE-Bench, $1.25/M) & Codex-Spark (~50%, ~$1.00/M)
 
-**Status**: REJECTED  
+**Status**: REJECTED
 **Why**: Both fail quality floor (60% minimum). Also dominated by GPT-4o mini: 70% quality, $0.375/M beats Codex on BOTH quality and cost.
 
 **Location**: See `/docs/reference/PARETO_FRONTIER_COMPLETE_ANALYSIS.md` → "GPT-5.3-Codex & GPT-5.3-Codex-Spark — Why Rejected?"
@@ -62,7 +62,7 @@
 
 ### Gemini 2.5 Pro (75% SWE-Bench, $4.07/M, multi-modal)
 
-**Status**: OFF frontier (quality-cost), but available for image tasks  
+**Status**: OFF frontier (quality-cost), but available for image tasks
 **Why**: Dominated by MiniMax on cost-quality (80.2% > 75%, $0.79 < $4.07). But multi-modal capability makes it acceptable for image+text input.
 
 **Location**: See `/docs/reference/PARETO_FRONTIER_COMPLETE_ANALYSIS.md` → "Gemini 2.5 Pro — Why Dominated?"
@@ -74,8 +74,8 @@
 ## Documentation Organization
 
 ### Document 1: Complete Pareto Frontier Analysis
-**File**: `PARETO_FRONTIER_COMPLETE_ANALYSIS.md`  
-**Length**: ~1500 lines  
+**File**: `PARETO_FRONTIER_COMPLETE_ANALYSIS.md`
+**Length**: ~1500 lines
 **Audience**: Detailed explanation seekers
 
 **Contents**:
@@ -92,8 +92,8 @@
 ---
 
 ### Document 2: Model Routing Decision Tree
-**File**: `MODEL_ROUTING_DECISION_TREE.md`  
-**Length**: ~1000 lines  
+**File**: `MODEL_ROUTING_DECISION_TREE.md`
+**Length**: ~1000 lines
 **Audience**: Implementers, programmatic selection
 
 **Contents**:
@@ -115,8 +115,8 @@
 ---
 
 ### Document 3: Pareto Frontier Quick Reference
-**File**: `PARETO_FRONTIER_QUICK_REFERENCE.md`  
-**Length**: ~400 lines  
+**File**: `PARETO_FRONTIER_QUICK_REFERENCE.md`
+**Length**: ~400 lines
 **Audience**: Quick lookup, managers, decision makers
 
 **Contents**:
@@ -135,8 +135,8 @@
 ---
 
 ### Document 4: Dominance Proof Reference
-**File**: `DOMINANCE_PROOF_REFERENCE.md`  
-**Length**: ~600 lines  
+**File**: `DOMINANCE_PROOF_REFERENCE.md`
+**Length**: ~600 lines
 **Audience**: Verification, quality assurance, academic rigor
 
 **Contents**:
@@ -196,7 +196,7 @@
 ### Pareto Frontier
 Set of solutions where no solution dominates another on all dimensions. A model is ON the frontier if no other model beats it on 2+ dimensions simultaneously.
 
-**Example**: 
+**Example**:
 - MiniMax (80.2% quality, $0.79/M) is on frontier
 - Sonnet (77.2% quality, $10.50/M) is OFF frontier (MiniMax beats it on quality AND cost)
 
@@ -354,7 +354,7 @@ Latency SLA compliance:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

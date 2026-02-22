@@ -61,4 +61,3 @@ run_curl(url: str, user_agent: str)
 Run curl with a specific user agent and return the output.
 
 ---
-

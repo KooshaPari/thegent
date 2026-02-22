@@ -7,7 +7,7 @@
 
 ## 1. Executive Summary
 
-Current CLI interactions in `thegent` are technically sound but suffer from **verbosity friction** and **conceptual misalignment**. Specifically, service management (`control-plane serve`) is exposed as a low-level primitive rather than a high-level orchestration action. 
+Current CLI interactions in `thegent` are technically sound but suffer from **verbosity friction** and **conceptual misalignment**. Specifically, service management (`control-plane serve`) is exposed as a low-level primitive rather than a high-level orchestration action.
 
 This plan proposes moving towards a **"Single Entry Point"** UX where `thegent up` handles the complex stack, while simplifying command structures for both humans and agents (AX).
 

@@ -75,4 +75,3 @@ Scan directory structure.
 **Returns**: Structure dictionary
 
 ---
-

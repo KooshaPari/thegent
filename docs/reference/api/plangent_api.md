@@ -464,4 +464,3 @@ Each row has keys: ``id``, ``title``, ``source``, ``priority``,
 **Returns**: List of dicts, one per node.
 
 ---
-

@@ -18,4 +18,3 @@ Displays active slot counts, total runs, and average elapsed time for
 each owner (agent/user/project) tracked by the ConcurrencyController.
 
 ---
-

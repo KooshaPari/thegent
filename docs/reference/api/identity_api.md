@@ -97,4 +97,3 @@ verify(self: Any, data: str, signature: str)
 Verify signature with agent's public key (mocked).
 
 ---
-

@@ -111,8 +111,8 @@ def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt")
             try:
                 subprocess.run(["tmux", "send-keys", "-t", tmux_pane, message, "C-m"], check=False)
                 sent_via.append("tmux")
-            except Exception:
-                pass
+            except Exception as exc:
+                _log.warning("TMUX send failed for session %s: %s", session_id, exc)
 
     fifo_path = meta_path.parent / f"{session_id}.in"
     if fifo_path.exists():
@@ -121,8 +121,8 @@ def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt")
             with os.fdopen(fd, "w") as f:
                 f.write(message + "\n")
             sent_via.append("fifo")
-        except OSError:
-            pass
+        except OSError as exc:
+            _log.warning("FIFO send failed for session %s: %s", session_id, exc)
 
     return True, f"Message queued/sent via {', '.join(sent_via)}."
 

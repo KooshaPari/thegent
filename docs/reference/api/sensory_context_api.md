@@ -175,4 +175,3 @@ Register a custom video processor.
 - `processor`: Processor instance with process() method
 
 ---
-

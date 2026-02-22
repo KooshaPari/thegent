@@ -348,4 +348,3 @@ After refactoring, verify:
 - [ ] Cognitive complexity < 15 per function
 - [ ] All tests pass (no regressions)
 - [ ] Type coverage > 90%
-

@@ -1,7 +1,7 @@
 # Auto-Install & Auto-Setup Implementation Summary
 
-**Date**: 2026-02-18  
-**Status**: Complete  
+**Date**: 2026-02-18
+**Status**: Complete
 **Philosophy**: Instructions as last resort; auto-install/auto-configure everything possible
 
 ---
@@ -238,11 +238,11 @@ def ensure_lsp_server_installed(language: str, auto_install: bool = True) -> boo
     # 1. Check if already installed
     if check_command_available(check_cmd):
         return True
-    
+
     # 2. Auto-install if enabled
     if auto_install:
         return auto_install_lsp_server(language, auto_confirm=True)
-    
+
     # 3. Return False (will show instructions)
     return False
 ```
@@ -255,7 +255,7 @@ def ensure_lsp_server_installed(language: str, auto_install: bool = True) -> boo
 @lifespan
 async def thegent_lifespan(mcp_app: FastMCP):
     # ... other startup ...
-    
+
     # Auto-initialize IDE integrations
     try:
         auto_init_on_startup()

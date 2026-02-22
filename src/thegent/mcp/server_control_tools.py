@@ -190,4 +190,3 @@ def register_control_tools(
         thegent_resume,
         thegent_continuity_snapshot,
     )
-

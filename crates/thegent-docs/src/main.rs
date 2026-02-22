@@ -165,7 +165,7 @@ fn extract_command(file: &PathBuf) -> Result<()> {
     }
 
     let has_fm = doc.frontmatter.is_some();
-    if let Some(title) = extract_title(&format!("{}\n{}", 
+    if let Some(title) = extract_title(&format!("{}\n{}",
         if has_fm { "---\n---\n" } else { "" },
         doc.body
     )) {

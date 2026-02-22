@@ -1,7 +1,7 @@
 # ACP Adapters for thegent: Design & Implementation Plan
 
-**Date**: 2026-02-18  
-**Status**: Design Phase  
+**Date**: 2026-02-18
+**Status**: Design Phase
 **Goal**: Enable thegent agents to communicate via ACP (Agent Client Protocol) for interoperability with ACP-compatible clients (gsh, Zed, etc.)
 
 ---
@@ -116,22 +116,22 @@ from thegent.agents.base import AgentRunner, RunResult
 
 class ACPServerAdapter:
     """Exposes thegent agents via ACP protocol."""
-    
+
     def __init__(self):
         self.agents: dict[str, AgentRunner] = {}
         self._load_agents()
-    
+
     def _load_agents(self):
         """Load available thegent agents."""
         # Load from agents/ registry
         # Map agent names to AgentRunner instances
         pass
-    
+
     async def handle_request(self, request: dict[str, Any]) -> dict[str, Any]:
         """Handle ACP JSON-RPC request."""
         method = request.get("method")
         params = request.get("params", {})
-        
+
         if method == "initialize":
             return await self._handle_initialize(params)
         elif method == "agent/spawn":
@@ -142,17 +142,17 @@ class ACPServerAdapter:
             return await self._handle_stop(params)
         else:
             return {"error": {"code": -32601, "message": "Method not found"}}
-    
+
     async def _handle_spawn(self, params: dict[str, Any]) -> dict[str, Any]:
         """Spawn a thegent agent via ACP."""
         agent_name = params.get("agent")
         prompt = params.get("prompt", "")
         cwd = params.get("cwd")
-        
+
         runner = get_runner(agent_name, default_model="")
         if not runner:
             return {"error": {"code": -32602, "message": f"Agent '{agent_name}' not found"}}
-        
+
         # Run agent
         result = runner.run(
             prompt=prompt,
@@ -161,7 +161,7 @@ class ACPServerAdapter:
             timeout=3600,
             use_stream=True,
         )
-        
+
         # Convert RunResult to ACP response
         return {
             "result": {
@@ -171,7 +171,7 @@ class ACPServerAdapter:
                 "exit_code": result.exit_code,
             }
         }
-    
+
     async def run_stdio(self):
         """Run ACP server over stdio (for local agents)."""
         while True:
@@ -180,7 +180,7 @@ class ACPServerAdapter:
             )
             if not line:
                 break
-            
+
             request = json.loads(line.strip())
             response = await self.handle_request(request)
             print(json.dumps(response), flush=True)
@@ -248,12 +248,12 @@ from thegent.agents.base import AgentRunner, RunResult
 
 class ACPClientAdapter(AgentRunner):
     """AgentRunner implementation that spawns ACP agents."""
-    
+
     def __init__(self, acp_command: list[str], agent_name: str = "acp-agent"):
         self.acp_command = acp_command
         self.agent_name = agent_name
         self.process: subprocess.Popen | None = None
-    
+
     def run(
         self,
         prompt: str,
@@ -276,7 +276,7 @@ class ACPClientAdapter(AgentRunner):
             text=True,
             cwd=str(cwd) if cwd else None,
         )
-        
+
         # Send initialize request
         init_request = {
             "jsonrpc": "2.0",
@@ -288,7 +288,7 @@ class ACPClientAdapter(AgentRunner):
         }
         self.process.stdin.write(json.dumps(init_request) + "\n")
         self.process.stdin.flush()
-        
+
         # Send spawn request
         spawn_request = {
             "jsonrpc": "2.0",
@@ -301,11 +301,11 @@ class ACPClientAdapter(AgentRunner):
         }
         self.process.stdin.write(json.dumps(spawn_request) + "\n")
         self.process.stdin.flush()
-        
+
         # Read responses
         stdout_lines = []
         stderr_lines = []
-        
+
         try:
             # Read stdout (ACP responses)
             for line in self.process.stdout:
@@ -316,13 +316,13 @@ class ACPClientAdapter(AgentRunner):
                         stdout_lines.append(result["stdout"])
                     if "stderr" in result:
                         stderr_lines.append(result["stderr"])
-            
+
             # Wait for process
             exit_code = self.process.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             self.process.kill()
             exit_code = 1
-        
+
         return RunResult(
             exit_code=exit_code,
             stdout="\n".join(stdout_lines),
@@ -369,16 +369,16 @@ from thegent.mcp_server import mcp_app  # FastMCP app
 
 class MCPACPBridge:
     """Translates MCP tools/resources to ACP agent capabilities."""
-    
+
     def __init__(self, mcp_app):
         self.mcp_app = mcp_app
-    
+
     def mcp_tool_to_acp_capability(self, tool_name: str) -> dict[str, Any]:
         """Convert MCP tool to ACP agent capability."""
         # Query MCP server for tool definition
         # Return ACP-compatible capability description
         pass
-    
+
     def acp_request_to_mcp_call(self, acp_request: dict[str, Any]) -> dict[str, Any]:
         """Convert ACP request to MCP tool call."""
         # Extract tool name and params from ACP request

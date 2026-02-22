@@ -6,8 +6,8 @@ Source: docs/docset/thegent-wbs-phase7-9.md
 
 # Thegent WBS — Phase 7 to Phase 9 (Next-Wave Execution)
 
-**Status:** Draft  
-**Date:** 2026-02-15  
+**Status:** Draft
+**Date:** 2026-02-15
 **Scope:** Contract hardening, predictive reliability, autonomous operations, and ecosystem extension.
 
 ## 0) Meta constraints

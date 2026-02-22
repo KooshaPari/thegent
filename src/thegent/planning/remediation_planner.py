@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 else:
     Path = str  # runtime-only placeholder for type checkers
-from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from pydantic import BaseModel, Field

@@ -137,4 +137,3 @@ merge_files(self: Any, base: Path, ours: Path, theirs: Path, output: Path)
 Attempt an AST-aware merge using Mergiraf or standard git merge-file.
 
 ---
-

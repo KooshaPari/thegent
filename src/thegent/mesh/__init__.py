@@ -61,4 +61,3 @@ __all__ = [
     "make_smart_merger",
     "merge_files",
 ]
-

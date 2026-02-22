@@ -25,16 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.content-tabs-wrapper').forEach(wrapper => {
     const headers = wrapper.querySelectorAll('.tab-header')
     const bodies = wrapper.querySelectorAll('.tab-body')
-    
+
     if (headers.length === 0) return
-    
+
     headers.forEach(header => {
       header.addEventListener('click', () => {
         const tabId = header.getAttribute('data-tab')
-        
+
         headers.forEach(h => h.classList.remove('active'))
         header.classList.add('active')
-        
+
         bodies.forEach(body => {
           if (body.getAttribute('data-tab') === tabId) {
             body.style.display = 'block'
@@ -43,10 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         })
       })
-      
+
       header.addEventListener('keydown', (e) => {
         const currentIndex = Array.from(headers).indexOf(header)
-        
+
         if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
           e.preventDefault()
           const nextIndex = (currentIndex + 1) % headers.length
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 export default {
   extends: DefaultTheme,
   Layout,
-  enhanceApp({ app }) {
+  enhanceApp({ app }: { app: import('vue').App }) {
     app.component('Callout', Callout)
     app.component('DemoGif', DemoGif)
     app.component('CodePlayground', CodePlayground)

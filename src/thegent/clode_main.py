@@ -1087,6 +1087,12 @@ def clode_max(
         None, "--output-format", help="Output format when --print: text, json, stream-json"
     ),
     continue_session: bool = typer.Option(False, "--continue", "-c", help="Continue most recent conversation"),
+    force: bool = typer.Option(
+        True,
+        "--force",
+        "--dangerously-skip-permissions",
+        help="Pass through to Claude Code: skip permission prompts (default: True)",
+    ),
     prompt: str | None = typer.Argument(None, help="Startup prompt"),
 ) -> None:
     """MiniMax-M2.5 balanced across minimax and kilo."""
@@ -1626,6 +1632,26 @@ def clode_doctor(
 
     success = run_doctor(fix=fix, dry_run=dry_run)
     sys.exit(0 if success else 1)
+
+
+@app.command("config")
+def clode_config(
+    legacy: bool = typer.Option(
+        False,
+        "--legacy",
+        help="Use legacy provider form instead of the interactive TUI translation layer.",
+    ),
+) -> None:
+    """Open interactive config manager (translation layer for existing config backends)."""
+    if legacy:
+        from thegent.provider_model_manager import run_provider_form
+
+        run_provider_form()
+        return
+
+    from thegent.ux.models_providers_tui import run_models_providers_tui
+
+    run_models_providers_tui()
 
 
 @app.command("install-links")

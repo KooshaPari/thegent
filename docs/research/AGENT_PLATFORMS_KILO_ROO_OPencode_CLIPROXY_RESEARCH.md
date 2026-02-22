@@ -1,6 +1,6 @@
 # Agent Platforms: kilo, roo, OpenCode, Zen + CLIProxyAPI — Research
 
-> **Purpose**: Correct kilo/roo/OpenCode as OSS platforms with CLI tools and search; research augment, codex, amp, claude code, cursor agent; add OpenCode Zen + CLIProxyAPI integration plan.  
+> **Purpose**: Correct kilo/roo/OpenCode as OSS platforms with CLI tools and search; research augment, codex, amp, claude code, cursor agent; add OpenCode Zen + CLIProxyAPI integration plan.
 > **Status**: Research | **Date**: 2026-02-16
 
 ---
@@ -189,7 +189,7 @@ The prior audit stated "kilo and roo are AI proxy providers" — **corrected**: 
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

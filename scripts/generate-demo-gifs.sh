@@ -28,10 +28,10 @@ fi
 # Playwright browser recordings
 if [ -d "recordings" ]; then
   echo "🌐 Processing Playwright browser recordings..."
-  
+
   # Install browsers if needed (minimal, just chromium for demos)
   npx playwright install chromium --with-deps 2>/dev/null || true
-  
+
   for script in recordings/*.spec.ts; do
     if [ -f "$script" ]; then
       name=$(basename "$script" .spec.ts)

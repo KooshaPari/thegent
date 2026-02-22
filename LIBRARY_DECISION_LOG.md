@@ -1,7 +1,7 @@
 # Thegent Library Decision Log
 
-**Date:** 2026-02-21  
-**Auditor:** Agent 1 - thegent Core Audit  
+**Date:** 2026-02-21
+**Auditor:** Agent 1 - thegent Core Audit
 
 ---
 
@@ -19,11 +19,11 @@ All critical functionality uses standard Python libraries as primary implementat
 
 ### DR-001: Retry & Backoff Strategy
 
-**Date:** Pre-2025 (implied from code maturity)  
-**Decision:** Use `tenacity` for all retry logic  
+**Date:** Pre-2025 (implied from code maturity)
+**Decision:** Use `tenacity` for all retry logic
 **Status:** ✅ **IMPLEMENTED AND ACTIVE**
 
-**Library:** `tenacity>=9.0.0`  
+**Library:** `tenacity>=9.0.0`
 **Custom Code:** `src/thegent/retry_utils/helpers.py` (32 lines)
 
 **Rationale:**
@@ -62,11 +62,11 @@ def my_function():
 
 ### DR-002: In-Memory Caching (TTL/LRU)
 
-**Date:** Pre-2025 (implied from codebase age)  
-**Decision:** Use `cachetools` for all in-memory TTL and LRU caching  
+**Date:** Pre-2025 (implied from codebase age)
+**Decision:** Use `cachetools` for all in-memory TTL and LRU caching
 **Status:** ✅ **IMPLEMENTED AND ACTIVE**
 
-**Library:** `cachetools>=5.5.2`  
+**Library:** `cachetools>=5.5.2`
 **Custom Code:** None (direct usage only)
 
 **Rationale:**
@@ -108,11 +108,11 @@ cache[key] = value
 
 ### DR-003: Persistent Disk Caching
 
-**Date:** Post-2024 (implied from code patterns)  
-**Decision:** Use `diskcache` for optional L2 disk persistence  
+**Date:** Post-2024 (implied from code patterns)
+**Decision:** Use `diskcache` for optional L2 disk persistence
 **Status:** ✅ **IMPLEMENTED WITH GRACEFUL FALLBACK**
 
-**Library:** `diskcache>=5.6.3` (optional, fails gracefully if absent)  
+**Library:** `diskcache>=5.6.3` (optional, fails gracefully if absent)
 **Custom Code:** Minimal (orchestration only, no custom persistence logic)
 
 **Rationale:**
@@ -151,11 +151,11 @@ else:
 
 ### DR-004: Sliding-Window Rate Limiting
 
-**Date:** 2024-2025 (based on GW-22 reference)  
-**Decision:** Implement custom sliding-window rate limiter (no viable library)  
+**Date:** 2024-2025 (based on GW-22 reference)
+**Decision:** Implement custom sliding-window rate limiter (no viable library)
 **Status:** ✅ **JUSTIFIED CUSTOM IMPLEMENTATION**
 
-**Library:** None available (no standard sliding-window with multi-key atomicity)  
+**Library:** None available (no standard sliding-window with multi-key atomicity)
 **Custom Code:** `src/thegent/routing/rate_limiter.py` (~280 lines)
 
 **Rationale:**
@@ -193,11 +193,11 @@ else:
 
 ### DR-005: Circuit Breaking
 
-**Date:** 2024 (based on WP-2001 reference)  
-**Decision:** Wrap `pybreaker` for provider-scoped circuit breaking  
+**Date:** 2024 (based on WP-2001 reference)
+**Decision:** Wrap `pybreaker` for provider-scoped circuit breaking
 **Status:** ✅ **LIBRARY WRAPPER WITH DOMAIN ADDITIONS**
 
-**Library:** `pybreaker>=1.2.0`  
+**Library:** `pybreaker>=1.2.0`
 **Custom Code:** `src/thegent/routing/circuit_breaker.py` (~250 lines)
 
 **Rationale:**
@@ -234,11 +234,11 @@ routing/circuit_breaker.py:24 (pybreaker wrapper)
 
 ### DR-006: File Watching — Dual-Backend Strategy
 
-**Date:** 2024-2025 (based on performance optimization)  
-**Decision:** Implement dual-backend watcher (watchfiles primary, watchdog fallback)  
+**Date:** 2024-2025 (based on performance optimization)
+**Decision:** Implement dual-backend watcher (watchfiles primary, watchdog fallback)
 **Status:** ✅ **LIBRARY ABSTRACTION FOR PERFORMANCE**
 
-**Libraries:** `watchfiles>=1.0.4` (primary), `watchdog>=6.0.0` (fallback)  
+**Libraries:** `watchfiles>=1.0.4` (primary), `watchdog>=6.0.0` (fallback)
 **Custom Code:** `src/thegent/infra/fast_file_watcher.py` (~100 lines)
 
 **Rationale:**
@@ -268,11 +268,11 @@ watcher.watch(callback=my_callback)
 
 ### DR-007: Multi-Tenant File Watcher Daemon
 
-**Date:** 2024-2025 (based on BKM-09 reference)  
-**Decision:** Build daemon around `watchdog.Observer` for multi-tenant watching  
+**Date:** 2024-2025 (based on BKM-09 reference)
+**Decision:** Build daemon around `watchdog.Observer` for multi-tenant watching
 **Status:** ✅ **LIBRARY ORCHESTRATION WITH DOMAIN SEMANTICS**
 
-**Library:** `watchdog>=6.0.0`  
+**Library:** `watchdog>=6.0.0`
 **Custom Code:** `src/thegent/native/watcher_daemon.py` (~350 lines)
 
 **Rationale:**
@@ -309,8 +309,8 @@ if _SHM_ENABLED:
 
 ### DR-008: Exact-Match Response Caching (LLM)
 
-**File:** `src/thegent/routing/cache.py`  
-**Lines:** ~250  
+**File:** `src/thegent/routing/cache.py`
+**Lines:** ~250
 **Status:** ✅ **JUSTIFIED CUSTOM LAYER**
 
 **Components:**
@@ -334,8 +334,8 @@ if _SHM_ENABLED:
 
 ### DR-009: Semantic Response Caching (Vector Similarity)
 
-**File:** `src/thegent/routing/semantic_cache.py`  
-**Lines:** ~280  
+**File:** `src/thegent/routing/semantic_cache.py`
+**Lines:** ~280
 **Status:** ✅ **JUSTIFIED CUSTOM IMPLEMENTATION**
 
 **Components:**
@@ -365,8 +365,8 @@ if _SHM_ENABLED:
 
 ### DR-010: Generic Two-Level Cache (Multi-Level)
 
-**File:** `src/thegent/cache/multi_level.py`  
-**Lines:** ~150  
+**File:** `src/thegent/cache/multi_level.py`
+**Lines:** ~150
 **Status:** ⚠️ **COMPLIANT BUT DUPLICATED**
 
 **Components:**
@@ -391,8 +391,8 @@ if _SHM_ENABLED:
 
 ### DR-011: Multi-Tier Cache (L1/L2/L3)
 
-**File:** `src/thegent/infra/fast_cache.py`  
-**Lines:** ~150  
+**File:** `src/thegent/infra/fast_cache.py`
+**Lines:** ~150
 **Status:** ⚠️ **COMPLIANT BUT DUPLICATED**
 
 **Components:**
@@ -476,8 +476,8 @@ if _SHM_ENABLED:
 
 ## Library First Compliance Summary
 
-**Total Custom Implementations:** 6  
-**Justified (No Library Alternative):** 2 (rate limiter, semantic cache)  
+**Total Custom Implementations:** 6
+**Justified (No Library Alternative):** 2 (rate limiter, semantic cache)
 **Library Wrappers (Domain Semantics):** 4 (circuit breaker, watcher, caches)
 
 **Compliance:** ✅ **100%** — All custom code either wraps libraries or fills genuine gaps.

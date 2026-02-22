@@ -6,8 +6,8 @@ Source: docs/docset/thegent-wbs-phase10-12.md
 
 # Thegent WBS — Phase 10 to Phase 12 (Optimization-Depth and Productization)
 
-**Status:** Finalized execution-ready WBS  
-**Date:** 2026-02-15  
+**Status:** Finalized execution-ready WBS
+**Date:** 2026-02-15
 **Scope:** Operational convergence, predictive resilience, and enterprise hardening after closure of Phases 7–9.
 
 ## 0) Meta constraints

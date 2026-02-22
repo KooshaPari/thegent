@@ -17,4 +17,3 @@ const syncthingfolder = new SyncthingFolder();
 
 // Create a SyncthingManager instance
 const syncthingmanager = new SyncthingManager(undefined as unknown as any);
-

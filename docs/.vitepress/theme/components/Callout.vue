@@ -225,12 +225,12 @@ const displayTitle = props.title || labels[props.type]
     padding: var(--vp-spacing-3);
     margin: var(--vp-spacing-4) 0;
   }
-  
+
   .callout-header,
   .callout-toggle {
     font-size: var(--vp-font-size-xs);
   }
-  
+
   .callout-icon {
     font-size: var(--vp-font-size-base);
   }

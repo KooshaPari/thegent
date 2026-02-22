@@ -1,6 +1,6 @@
 # Cross-Project Feature Borrowing Plan
 
-> **Status**: 📋 **IMPLEMENTATION PLAN** | **Date**: 2026-02-18  
+> **Status**: 📋 **IMPLEMENTATION PLAN** | **Date**: 2026-02-18
 > **Purpose**: Detailed plan for borrowing and adapting features across kush ecosystem projects
 
 ---

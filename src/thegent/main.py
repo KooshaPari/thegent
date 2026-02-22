@@ -9,12 +9,46 @@ import typer
 from thegent.cli.apps.main import app
 from thegent.cli.apps.sync import app as sync_app
 from thegent.clode_main import sitback_cmd
+from thegent.ux.compositor import run_compositor_tui
 
 __all__ = ["app", "sync_app", "_install_agent_accelerators"]
 
 
 # Expose sitback on the top-level app (`thegent sitback ...`) in addition to harness-local entry points.
 app.command("sitback", help="Start Sitback harness (claude/codex/droid/antigma).")(sitback_cmd)
+
+observe_app = typer.Typer(help="Observe dashboards and summaries.")
+app.add_typer(observe_app, name="observe", help="Observe views and monitors.")
+
+
+@app.command("compositor", help="Render the terminal compositor dashboard.")
+def compositor_cmd(
+    layout: str = typer.Option("balanced", "--layout", help="Layout preset: balanced|stacked"),
+    include_non_claude: bool = typer.Option(False, "--include-non-claude", help="Include non-claude tmux panes"),
+    once: bool = typer.Option(False, "--once", help="Render one frame and exit"),
+    refresh: float = typer.Option(1.0, "--refresh", min=0.1, help="Refresh interval in seconds"),
+) -> None:
+    run_compositor_tui(
+        layout_name=layout,
+        include_non_claude=include_non_claude,
+        once=once,
+        refresh_interval=refresh,
+    )
+
+
+@observe_app.command("compositor", help="Observe the terminal compositor (alias for top-level compositor).")
+def observe_compositor_cmd(
+    layout: str = typer.Option("balanced", "--layout", help="Layout preset: balanced|stacked"),
+    include_non_claude: bool = typer.Option(False, "--include-non-claude", help="Include non-claude tmux panes"),
+    once: bool = typer.Option(False, "--once", help="Render one frame and exit"),
+    refresh: float = typer.Option(1.0, "--refresh", min=0.1, help="Refresh interval in seconds"),
+) -> None:
+    run_compositor_tui(
+        layout_name=layout,
+        include_non_claude=include_non_claude,
+        once=once,
+        refresh_interval=refresh,
+    )
 
 
 @app.command("roid", help="Factory Droid-backed interactive harness.")
@@ -33,7 +67,7 @@ def roid_cmd(
 
 
 _SHIM_SCRIPTS: dict[str, str] = {
-    "codex": ('#!/usr/bin/env bash\n# thegent accelerator: routes to dex|clode harness\nexec thegent dex|clode "$@"\n'),
+    "codex": ('#!/usr/bin/env bash\n# thegent accelerator: routes to dex harness\nexec thegent dex "$@"\n'),
     "roid": ('#!/usr/bin/env bash\nexport THGENT_HARNESS="droid"\nexec thegent roid "$@"\n'),
     "dex": ('#!/usr/bin/env bash\nexport THGENT_HARNESS="codex"\nexec thegent dex "$@"\n'),
     "clode": ('#!/usr/bin/env bash\nexport THGENT_HARNESS="claude"\nexec thegent clode "$@"\n'),

@@ -1,6 +1,6 @@
 # Comprehensive LiteLLM Harness Integration Plan
 
-**Date**: 2026-02-18  
+**Date**: 2026-02-18
 **Goal**: Fix and optimize CLI harnesses (Codex, Claude Code, Factory Droid) to work with LiteLLM Router as unified front matter over OAI+Anth compatible provider services, eliminating need for codex-proxy and simplifying architecture.
 
 **Reference**: [codex-proxy](https://github.com/cornellsh/codex-proxy), [LiteLLM Router](https://docs.litellm.ai/docs/routing)
@@ -169,15 +169,15 @@ async def handle_responses_request(request: Request) -> Response:
     """Handle Responses API request via LiteLLM Router."""
     body = await request.body()
     data = json.loads(body)
-    
+
     # Translate Responses API → Chat Completions
     messages = _responses_input_to_messages(data.get("input", []))
     model = data.get("model", "")
     stream = data.get("stream", False)
-    
+
     # Get LiteLLM Router instance
     router = get_litellm_router()
-    
+
     # Call router
     if stream:
         return await _stream_via_router(router, model, messages)
@@ -550,7 +550,7 @@ router_config = RouterConfig(
 
 ---
 
-**Status**: Ready for implementation  
-**Priority**: High  
-**Estimated Effort**: 3-4 weeks  
+**Status**: Ready for implementation
+**Priority**: High
+**Estimated Effort**: 3-4 weeks
 **Dependencies**: LiteLLM library, Redis (optional, for caching)

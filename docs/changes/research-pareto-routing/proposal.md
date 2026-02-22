@@ -6,15 +6,15 @@
 
 **Why**: Current monolithic task handling lacks cost efficiency and risk differentiation. A Pareto-based approach routes 80% of tasks through fast, low-cost automated execution while reserving complex tasks for thorough planning and review. Hysteresis prevents oscillation when task risk hovers near the routing threshold.
 
-**Impact**: 
+**Impact**:
 - 30-50% cost savings on routine tasks
-- Faster turnaround for low-complexity work  
+- Faster turnaround for low-complexity work
 - Higher quality for high-risk decisions
 - Stable routing without oscillation
 
-**Priority**: High  
-**Status**: Research complete, implementation pending  
-**Work Item**: WP-1004, WP-5001  
+**Priority**: High
+**Status**: Research complete, implementation pending
+**Work Item**: WP-1004, WP-5001
 **Related**: [SESSION_RESEARCH_FRAGMENTS_EXPANDED.md](../../research/SESSION_RESEARCH_FRAGMENTS_EXPANDED.md) §2
 
 ---
@@ -266,6 +266,6 @@ Task → Risk Assessment → Hysteresis Check → Route Selection
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-02-18  
+**Document Version**: 1.0
+**Last Updated**: 2026-02-18
 **Status**: Approved for design phase

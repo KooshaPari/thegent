@@ -10,7 +10,7 @@ Retire deprecated quality aliases while preserving one canonical quality entrypo
 
 ## Deprecated Alias Set (Current)
 
-1. `quality:full` (alias to `quality`)
+1. Legacy full-mode entrypoint is retired in favor of `task quality`.
 2. `quality-a`, `quality-a-r`, `quality-a-h`
 3. `quality-a-d`, `quality-a-d-h`
 4. `quality-fix`, `quality-fix-d`, `quality-fix-a`, `quality-fix-a-d`, `quality-fix-a-h`, `quality-fix-a-d-h`
@@ -36,7 +36,7 @@ Retire deprecated quality aliases while preserving one canonical quality entrypo
 ## Validation Commands
 
 1. `task quality:dag:dry-run`
-2. `rg -n "quality-a|quality-fix-a|quality:full" docs scripts Taskfile.yml`
+2. `rg -n "quality-a|quality-fix-a|deprecated_quality_aliases" docs scripts Taskfile.yml`
 3. `thegent --help`
 4. `pytest -q tests/e2e/test_plan_commands.py`
 

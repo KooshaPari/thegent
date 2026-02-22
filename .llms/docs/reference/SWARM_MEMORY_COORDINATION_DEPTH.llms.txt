@@ -235,7 +235,7 @@ When multiple agents propose different solutions:
 
 ## EXTENSION_SUMMARY
 
-**Extended on**: 2026-02-17  
+**Extended on**: 2026-02-17
 **Extensions added**: Memory sharing patterns (§5)
 
 | Section | Added Content |

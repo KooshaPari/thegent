@@ -1,6 +1,6 @@
 # UX Improver Agent
 
-> **Purpose**: Continuously improve User Experience by making outputs clearer, more actionable, and reducing cognitive load  
+> **Purpose**: Continuously improve User Experience by making outputs clearer, more actionable, and reducing cognitive load
 > **Activation**: Auto-triggered when UX friction is detected, or manually via `thegent improve ux`
 
 ---

@@ -2,8 +2,8 @@
 
 **Purpose:** Practical recipes and code examples for common desktop automation tasks.
 
-**Date:** 2026-02-16  
-**Status:** Developer Guide  
+**Date:** 2026-02-16
+**Status:** Developer Guide
 **Related:** CROSS_PLATFORM_MULTI_TENANT_DESKTOP_AUTOMATION_RESEARCH.md
 
 ---
@@ -92,22 +92,22 @@ def fill_form(provider, form_data: dict) -> bool:
         if not element:
             print(f"Field {field_name} not found")
             return False
-        
+
         # Type value
         result = provider.type_text(element, str(value))
         if not result.success:
             print(f"Failed to type {field_name}: {result.error}")
             return False
-        
+
         # Small delay between fields
         time.sleep(0.2)
-    
+
     # Submit form
     submit_button = provider.find_element("button[type='submit']")
     if submit_button:
         result = provider.click(submit_button)
         return result.success
-    
+
     return False
 
 # Usage
@@ -129,20 +129,20 @@ def fill_form_with_validation(provider, form_data: dict) -> bool:
         element = provider.find_element(f"text_field[name='{field_name}']")
         if not element:
             return False
-        
+
         # Clear field first
         # (Platform-specific: select all + delete)
-        
+
         # Type value
         result = provider.type_text(element, str(value))
         if not result.success:
             return False
-        
+
         # Validate (check if value was set correctly)
         # (Platform-specific: read field value)
-        
+
         time.sleep(0.2)
-    
+
     return True
 ```
 
@@ -159,13 +159,13 @@ from thegent.infra.desktop_automation.base import AutomationAction
 
 class AutomationWorkflow:
     """Multi-step automation workflow with checkpointing."""
-    
+
     def __init__(self, checkpoint_registry: CheckpointRegistry, provider):
         self.checkpoint_registry = checkpoint_registry
         self.provider = provider
         self.steps: list[dict] = []
         self.current_step = 0
-    
+
     def add_step(self, action: AutomationAction, description: str):
         """Add workflow step."""
         self.steps.append({
@@ -173,11 +173,11 @@ class AutomationWorkflow:
             "description": description,
             "completed": False
         })
-    
+
     def execute_step(self, step_index: int) -> bool:
         """Execute single step."""
         step = self.steps[step_index]
-        
+
         # Execute action
         if step["action"].type == "click":
             element = self.provider.find_element(step["action"].selector)
@@ -185,7 +185,7 @@ class AutomationWorkflow:
                 result = self.provider.click(element)
                 step["completed"] = result.success
                 return result.success
-        
+
         elif step["action"].type == "type_text":
             element = self.provider.find_element(step["action"].selector)
             if element:
@@ -195,15 +195,15 @@ class AutomationWorkflow:
                 )
                 step["completed"] = result.success
                 return result.success
-        
+
         return False
-    
+
     def execute_all(self) -> bool:
         """Execute all steps with checkpointing."""
         for i, step in enumerate(self.steps):
             if step["completed"]:
                 continue  # Skip already completed steps
-            
+
             # Execute step
             success = self.execute_step(i)
             if not success:
@@ -217,7 +217,7 @@ class AutomationWorkflow:
                     owner="automation-workflow"
                 )
                 return False
-            
+
             # Create checkpoint after each step
             self.checkpoint_registry.create_checkpoint(
                 reason=f"Step {i} completed: {step['description']}",
@@ -227,20 +227,20 @@ class AutomationWorkflow:
                 }),
                 owner="automation-workflow"
             )
-        
+
         return True
-    
+
     def resume_from_checkpoint(self, checkpoint_id: str) -> bool:
         """Resume workflow from checkpoint."""
         checkpoint = self.checkpoint_registry.get_checkpoint(checkpoint_id)
         if not checkpoint:
             return False
-        
+
         # Restore state
         state = json.loads(checkpoint["dag_content"])
         self.steps = state["steps"]
         self.current_step = state["current_step"]
-        
+
         # Resume execution
         return self.execute_all()
 
@@ -294,12 +294,12 @@ def click_with_retry(provider, selector: str, timeout_ms: float = 5000.0) -> Aut
     element = provider.find_element(selector, timeout_ms)
     if not element:
         raise ElementNotFoundError(f"Element not found: {selector}")
-    
+
     # Click element
     result = provider.click(element, timeout_ms)
     if not result.success:
         raise ClickFailedError(f"Click failed: {result.error}")
-    
+
     return result
 
 # Usage
@@ -317,7 +317,7 @@ from thegent.agents.resilience import ToolCircuitBreaker
 
 class ResilientAutomationProvider:
     """Automation provider with circuit breaker."""
-    
+
     def __init__(self, provider):
         self.provider = provider
         self.circuit_breaker = ToolCircuitBreaker(
@@ -325,7 +325,7 @@ class ResilientAutomationProvider:
             threshold=5,
             window_s=300
         )
-    
+
     def click(self, element: UIElement, timeout_ms: float = 5000.0) -> AutomationResult:
         """Click with circuit breaker."""
         if self.circuit_breaker.is_open():
@@ -333,17 +333,17 @@ class ResilientAutomationProvider:
                 success=False,
                 error="Circuit breaker is open"
             )
-        
+
         try:
             result = self.provider.click(element, timeout_ms)
-            
+
             if result.success:
                 self.circuit_breaker.record_success()
             else:
                 self.circuit_breaker.record_failure()
-            
+
             return result
-            
+
         except Exception as e:
             self.circuit_breaker.record_failure()
             raise
@@ -363,10 +363,10 @@ def take_and_analyze_screenshot(provider, region: dict | None = None) -> dict:
     """Take screenshot and analyze."""
     # Take screenshot
     screenshot_bytes = provider.screenshot(region)
-    
+
     # Convert to PIL Image
     img = Image.open(io.BytesIO(screenshot_bytes))
-    
+
     # Analyze
     analysis = {
         "width": img.width,
@@ -375,12 +375,12 @@ def take_and_analyze_screenshot(provider, region: dict | None = None) -> dict:
         "mode": img.mode,
         "size_bytes": len(screenshot_bytes)
     }
-    
+
     # Optional: OCR analysis
     # from pytesseract import image_to_string
     # text = image_to_string(img)
     # analysis["text"] = text
-    
+
     return analysis
 
 # Usage
@@ -394,18 +394,18 @@ print(f"Screenshot: {analysis['width']}x{analysis['height']}")
 def compare_screenshots(provider, baseline_path: Path, current_path: Path) -> dict:
     """Compare two screenshots."""
     from PIL import Image, ImageChops
-    
+
     baseline = Image.open(baseline_path)
     current = Image.open(current_path)
-    
+
     # Compare
     diff = ImageChops.difference(baseline, current)
-    
+
     # Calculate difference
     diff_pixels = sum(1 for pixel in diff.getdata() if pixel != (0, 0, 0))
     total_pixels = baseline.width * baseline.height
     diff_percent = (diff_pixels / total_pixels) * 100
-    
+
     return {
         "different": diff_pixels > 0,
         "diff_pixels": diff_pixels,
@@ -425,18 +425,18 @@ def switch_to_app(provider, app_name: str) -> bool:
     """Switch to application window."""
     # List windows
     windows = provider.list_windows(app_name=app_name)
-    
+
     if not windows:
         return False
-    
+
     # Get first window (or find specific window)
     window = windows[0]
-    
+
     # Bring to front (platform-specific)
     # macOS: AppleScript "activate"
     # Windows: SetForegroundWindow
     # Linux: X11/Wayland focus
-    
+
     return True
 
 # Usage
@@ -449,13 +449,13 @@ switch_to_app(provider, "TextEdit")
 def wait_for_window(provider, app_name: str, timeout_ms: float = 10000.0) -> bool:
     """Wait for application window to appear."""
     deadline = time.time() + (timeout_ms / 1000.0)
-    
+
     while time.time() < deadline:
         windows = provider.list_windows(app_name=app_name)
         if windows:
             return True
         time.sleep(0.5)
-    
+
     return False
 
 # Usage
@@ -474,20 +474,20 @@ else:
 ```python
 class CrossAppAutomation:
     """Automate workflow across multiple applications."""
-    
+
     def __init__(self, provider):
         self.provider = provider
         self.app_states: dict[str, dict] = {}
-    
+
     def automate_app(self, app_name: str, actions: list[AutomationAction]) -> bool:
         """Automate actions in specific app."""
         # Switch to app
         if not self.switch_to_app(app_name):
             return False
-        
+
         # Wait for app to be ready
         time.sleep(1.0)
-        
+
         # Execute actions
         for action in actions:
             if action.type == "click":
@@ -496,21 +496,21 @@ class CrossAppAutomation:
                     result = self.provider.click(element)
                     if not result.success:
                         return False
-            
+
             elif action.type == "type_text":
                 element = self.provider.find_element(action.selector)
                 if element:
                     result = self.provider.type_text(element, action.text)
                     if not result.success:
                         return False
-        
+
         return True
-    
+
     def switch_to_app(self, app_name: str) -> bool:
         """Switch to application."""
         windows = self.provider.list_windows(app_name=app_name)
         return len(windows) > 0
-    
+
     def execute_workflow(self, workflow: dict[str, list[AutomationAction]]) -> bool:
         """Execute workflow across apps."""
         for app_name, actions in workflow.items():
@@ -544,18 +544,18 @@ def conditional_automation(provider, condition_selector: str, action: Automation
     """Execute action only if condition is met."""
     # Check condition (element exists)
     condition_element = provider.find_element(condition_selector)
-    
+
     if not condition_element:
         print(f"Condition not met: {condition_selector} not found")
         return False
-    
+
     # Execute action
     if action.type == "click":
         target_element = provider.find_element(action.selector)
         if target_element:
             result = provider.click(target_element)
             return result.success
-    
+
     return False
 
 # Usage
@@ -577,13 +577,13 @@ def wait_for_condition(
 ) -> bool:
     """Wait for element to appear."""
     deadline = time.time() + (timeout_ms / 1000.0)
-    
+
     while time.time() < deadline:
         element = provider.find_element(selector, timeout_ms=check_interval_ms)
         if element:
             return True
         time.sleep(check_interval_ms / 1000.0)
-    
+
     return False
 
 # Usage
@@ -602,19 +602,19 @@ if wait_for_condition(provider, "button[name='Save']", timeout_ms=10000):
 def batch_clicks(provider, selectors: list[str]) -> list[AutomationResult]:
     """Execute multiple clicks in batch."""
     results = []
-    
+
     # Find all elements first
     elements = []
     for selector in selectors:
         element = provider.find_element(selector)
         if element:
             elements.append((selector, element))
-    
+
     # Execute clicks
     for selector, element in elements:
         result = provider.click(element)
         results.append(result)
-    
+
     return results
 
 # Usage
@@ -639,16 +639,16 @@ def optimized_batch_clicks(provider, selectors: list[str]) -> list[AutomationRes
         element = provider.find_element(selector)
         if element:
             elements.append((element.bounds["x"], element.bounds["y"], element))
-    
+
     # Sort by proximity (nearest neighbor)
     elements.sort(key=lambda e: (e[0], e[1]))
-    
+
     # Execute clicks
     results = []
     for x, y, element in elements:
         result = provider.click(element)
         results.append(result)
-    
+
     return results
 ```
 
@@ -661,16 +661,16 @@ def optimized_batch_clicks(provider, selectors: list[str]) -> list[AutomationRes
 ```python
 class CachedAutomationProvider:
     """Provider with element caching."""
-    
+
     def __init__(self, provider):
         self.provider = provider
         self.cache: dict[str, tuple[UIElement, float]] = {}
         self.cache_ttl = 30.0
-    
+
     def find_element_cached(self, selector: str) -> UIElement | None:
         """Find element with caching."""
         now = time.time()
-        
+
         # Check cache
         if selector in self.cache:
             element, cached_at = self.cache[selector]
@@ -679,12 +679,12 @@ class CachedAutomationProvider:
                     return element
                 else:
                     del self.cache[selector]
-        
+
         # Cache miss
         element = self.provider.find_element(selector)
         if element:
             self.cache[selector] = (element, now)
-        
+
         return element
 
 # Usage
@@ -706,11 +706,11 @@ async def parallel_automation(provider, actions: list[AutomationAction]) -> list
             if element:
                 return provider.click(element)
         return AutomationResult(success=False, error="Unknown action")
-    
+
     # Execute in parallel
     tasks = [execute_action(action) for action in actions]
     results = await asyncio.gather(*tasks)
-    
+
     return results
 
 # Usage
@@ -744,24 +744,24 @@ class AutomationState(Enum):
 @dataclass
 class AutomationStateMachine:
     """State machine for automation workflow."""
-    
+
     state: AutomationState = AutomationState.IDLE
     current_action: AutomationAction | None = None
     results: list[AutomationResult] = None
-    
+
     def transition(self, new_state: AutomationState):
         """Transition to new state."""
         self.state = new_state
-    
+
     def execute(self, provider, action: AutomationAction) -> AutomationResult:
         """Execute action with state machine."""
         self.transition(AutomationState.FINDING)
         element = provider.find_element(action.selector)
-        
+
         if not element:
             self.transition(AutomationState.ERROR)
             return AutomationResult(success=False, error="Element not found")
-        
+
         if action.type == "click":
             self.transition(AutomationState.CLICKING)
             result = provider.click(element)
@@ -771,12 +771,12 @@ class AutomationStateMachine:
         else:
             self.transition(AutomationState.ERROR)
             return AutomationResult(success=False, error="Unknown action type")
-        
+
         if result.success:
             self.transition(AutomationState.COMPLETE)
         else:
             self.transition(AutomationState.ERROR)
-        
+
         return result
 ```
 
@@ -790,30 +790,30 @@ tracer = trace.get_tracer("thegent.desktop_automation")
 
 class ObservableAutomationProvider(DesktopAutomationProvider):
     """Provider with OpenTelemetry instrumentation."""
-    
+
     def click(self, element: UIElement, timeout_ms: float = 5000.0) -> AutomationResult:
         """Click with OTel tracing."""
         with tracer.start_as_current_span("desktop_automation.click") as span:
             span.set_attribute("automation.action", "click")
             span.set_attribute("automation.selector", element.selector)
             span.set_attribute("automation.platform", self.platform)
-            
+
             start_time = time.time()
-            
+
             try:
                 result = self._provider.click(element, timeout_ms)
                 duration_ms = (time.time() - start_time) * 1000
-                
+
                 span.set_attribute("automation.success", result.success)
                 span.set_attribute("automation.duration_ms", duration_ms)
-                
+
                 if result.success:
                     span.set_status(Status(StatusCode.OK))
                 else:
                     span.set_status(Status(StatusCode.ERROR, result.error))
-                
+
                 return result
-                
+
             except Exception as e:
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
@@ -892,7 +892,7 @@ else:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

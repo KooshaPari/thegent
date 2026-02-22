@@ -70,7 +70,7 @@ thegent takeover <session_id>       # Attach to the tmux session
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

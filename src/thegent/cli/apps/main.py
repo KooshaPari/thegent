@@ -32,12 +32,31 @@ from thegent.cli.apps import (
     run,
     session,
     skills,
+    mcp,
     sync,
     sys,
     team,
 )
-from thegent.cli.apps.project import install_project_app
+from thegent.cli.apps.project import install_app, scaffold_app
+from thegent.cli.apps.project import setup_project_app
 from thegent.mesh.main import app as mesh_app
+from thegent.cli.commands import model_cmds
+
+try:
+    from thegent.cli.commands.cli_git import app as git_app
+except ImportError as exc:
+    if "thegent-git" not in str(exc):
+        raise
+
+    git_app = typer.Typer(help="Git Coordination (install thegent-git to enable full git workflows).")
+
+    @git_app.callback(invoke_without_command=True)
+    def _git_dependency_missing(ctx: typer.Context) -> None:  # pyright: ignore[reportUnusedFunction] -- typer callback
+        """Fail fast when git integration dependency is unavailable."""
+        if ctx.invoked_subcommand is not None:
+            return
+        console.print("[red]Git coordination unavailable: install thegent-git dependency.[/red]")
+        raise typer.Exit(1)
 
 app.add_typer(run.app, name="run", help="Execution: Agent tasks, background runs, and history.")
 app.add_typer(bench.app, name="bench", help="Benchmark: run benchmark suites and persist result rows.")
@@ -51,15 +70,23 @@ app.add_typer(team.app, name="team", help="Swarm: Coordination, teammates, and h
 app.add_typer(domain.app, name="domain", help="Domain: mapping and tunnel advisor workflows (WL-124).")
 app.add_typer(govern.app, name="govern", help="Governance: approval/rejection and escalation decisions.")
 app.add_typer(sys.app, name="sys", help="System: Setup, MCP, LSP, and configuration.")
+app.add_typer(
+    setup_project_app,
+    name="project",
+    help="Project tenancy commands (alias for `thegent sys setup project`).",
+)
+app.add_typer(mcp.app, name="mcp", help="MCP: install, service, migration, and cleanup helpers.")
 app.add_typer(isolation.app, name="isolation", help="Isolation: Multi-tenancy, L1/L2 nesting, and SHM.")
 app.add_typer(mesh_app, name="mesh", help="Mesh: Local agent coordination, status, and discovery.")
-app.add_typer(install_project_app, name="install", help="Install: Thegent runtime assets into registered projects.")
+app.add_typer(install_app, name="install", help="Install user/system assets and project runtime installation.")
+app.add_typer(git_app, name="git", help="Coordinated git workflows for multi-agent development.")
 app.add_typer(
     registry.app, name="registry", help="Registry: Agent capability index, recommendations, and health (WL-034)."
 )
 app.add_typer(
     routing.app, name="routing", help="Routing: LiteLLM, Pareto router, and model-first routing control (WL-012)."
 )
+app.add_typer(scaffold_app, name="scaffold", help="Project scaffolding and brownfield migration entrypoints.")
 app.add_typer(
     enterprise.app, name="enterprise", help="Enterprise: compliance, GDPR, org hierarchy, key rotation (WL-051)."
 )
@@ -70,6 +97,54 @@ app.add_typer(
     name="orchestrate",
     help="Orchestrate: sub-agent goal decomposition and execution (WL-088).",
 )
+
+
+@app.command("setup", help="Run setup wizard and provider/install bootstrap.")
+def setup_app_command(
+    api_key: str | None = typer.Option(None, "--api-key", "-k", help="NVIDIA NIM API key"),
+    model: str | None = typer.Option(None, "--model", "-m", help="NVIDIA NIM model (default: z-ai/glm-5)"),
+    openrouter_key: str | None = typer.Option(None, "--openrouter-key", help="OpenRouter API key"),
+    kilo_key: str | None = typer.Option(None, "--kilo-key", help="Kilo.ai API key"),
+    zai_key: str | None = typer.Option(None, "--zai-key", help="Z.AI (Zhipu) API key"),
+    minimax_key: str | None = typer.Option(None, "--minimax-key", help="MiniMax API key"),
+    wizard: bool = typer.Option(True, "--wizard/--no-wizard", help="Run interactive setup wizard"),
+    links: bool = typer.Option(True, "--links/--no-links", help="Install claudeglm/claudemax shortcuts"),
+    hooks: bool = typer.Option(
+        False, "--hooks/--no-hooks", help="Install git hooks (pre-commit, pre-push) into .git/hooks"
+    ),
+    skills: bool = typer.Option(
+        False, "--skills/--no-skills", help="Sync thegent-skills template to ~/.claude, ~/.cursor, project"
+    ),
+    harness: bool = typer.Option(False, "--harness/--no-harness", help="Install/update heliosShield harness"),
+    full: bool = typer.Option(
+        False,
+        "--full",
+        "-f",
+        help="Full setup: install -t all, install-shims, lock-cleanup service, MCP service, and harness",
+    ),
+    agents: str | None = typer.Option(
+        None,
+        "--agents",
+        "-a",
+        help="Comma-separated agents to configure (e.g. claude,codex,cursor). Skips others in wizard.",
+    ),
+) -> None:
+    """Legacy compatibility wrapper for setup flow."""
+    model_cmds.setup_cmd(
+        api_key=api_key or "",
+        model=model or "",
+        openrouter_key=openrouter_key or "",
+        kilo_key=kilo_key or "",
+        zai_key=zai_key or "",
+        minimax_key=minimax_key or "",
+        wizard=wizard,
+        links=links,
+        hooks=hooks,
+        skills=skills,
+        harness=harness,
+        full=full,
+        agents=agents or "",
+    )
 
 
 # Top-level Shortcuts
@@ -321,34 +396,6 @@ def session_health_trend_wrapper(
         output=output_path,
         export_format=export_format,
         overwrite=overwrite,
-    )
-
-
-@app.command("install", help="Compatibility install command (legacy alias).")
-def install_compat(
-    target: str = typer.Option(
-        "all", "--target", "-t", help="Install target (all, codex, droid, cursor, harness, etc.)"
-    ),
-    mode: str = typer.Option("smart", "--mode", "-m", help="Install mode: smart, overwrite, skip, undo"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would change without writing files"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Print detailed install output"),
-    url: str | None = typer.Option(None, "--url", help="MCP URL override"),
-    install_service: bool = typer.Option(False, "--install-service", help="Install service hooks where supported"),
-) -> None:
-    """Run installer flows previously exposed as `thegent install`."""
-    try:
-        from thegent.install import run_install
-    except ImportError as exc:
-        console.print(f"[red]Install subsystem unavailable: {exc}[/red]")
-        raise typer.Exit(1) from exc
-
-    run_install(
-        target=target,
-        mode=mode,
-        dry_run=dry_run,
-        verbose=verbose,
-        url=url,
-        install_service=install_service,
     )
 
 

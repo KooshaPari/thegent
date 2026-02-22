@@ -57,4 +57,3 @@ Get config value.
 **Returns**: Config value
 
 ---
-

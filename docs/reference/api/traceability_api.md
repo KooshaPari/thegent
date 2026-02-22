@@ -72,4 +72,3 @@ generate_markdown_report(self: Any, report: TraceabilityReport)
 Format the traceability report as Markdown.
 
 ---
-

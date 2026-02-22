@@ -191,4 +191,3 @@ stop_server(self: Any, language: str)
 Stop LSP server for language.
 
 ---
-

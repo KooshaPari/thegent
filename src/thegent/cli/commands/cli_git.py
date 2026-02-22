@@ -14,6 +14,7 @@ import typer
 from rich.console import Console
 
 from thegent.mesh.git import GitParallelismManager
+from thegent.mesh.git_parallelism import WorktreePool
 from thegent.native.git_native import GitNative
 
 app = typer.Typer(
@@ -25,12 +26,174 @@ console = Console()
 logger = logging.getLogger(__name__)
 
 
+def _build_worktree_pool(
+    project_root: Path,
+    target_branch: str,
+    pool_root: Path | None,
+) -> WorktreePool:
+    return WorktreePool(
+        project_root=project_root,
+        target_branch=target_branch,
+        pool_root=pool_root,
+    )
+
+
+def _worktree_agents(pool: WorktreePool) -> list[tuple[str, str]]:
+    """Return active worktree rows as (agent_id, branch)."""
+    return sorted((agent_id, f"agent/{agent_id}") for agent_id in pool.active_agents())
+
+
 def get_agent_id() -> str:
     """Return the current agent ID from settings or default."""
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
     return settings.agent_id
+
+
+worktree_app = typer.Typer(help="Manage agent worktree pool lifecycle for multi-agent git coordination.")
+app.add_typer(worktree_app, name="worktree", help="Worktree pool management for coordinated agents.")
+
+
+@worktree_app.command("status")
+def worktree_status(
+    project_root: Path = typer.Option(Path.cwd(), "--root", "-r", help="Project root directory"),
+    target_branch: str = typer.Option("HEAD", "--target-branch", "-t", help="Target branch for release merges"),
+    pool_root: Path | None = typer.Option(None, "--pool-root", help="Override default pool root"),
+    json_output: bool = typer.Option(False, "--json", help="Output status as JSON"),
+):
+    """Show active worktree leases in the pool."""
+    pool = _build_worktree_pool(project_root, target_branch=target_branch, pool_root=pool_root)
+    agents = _worktree_agents(pool)
+    if json_output:
+        if not agents:
+            console.print("[]")
+            return
+        payload = [
+            {"agent_id": agent_id, "branch": branch}
+            for agent_id, branch in agents
+        ]
+        import json
+
+        console.print(json.dumps(payload, indent=2))
+        return
+
+    if not agents:
+        console.print("[yellow]No active pooled worktrees.[/yellow]")
+        return
+    console.print(f"[cyan]Active pooled agents ({len(agents)}):[/cyan]")
+    for agent_id, branch in agents:
+        console.print(f"  - {agent_id} -> {branch}")
+
+
+@worktree_app.command("list")
+def worktree_list(
+    project_root: Path = typer.Option(Path.cwd(), "--root", "-r", help="Project root directory"),
+    target_branch: str = typer.Option("HEAD", "--target-branch", "-t", help="Target branch for release merges"),
+    pool_root: Path | None = typer.Option(None, "--pool-root", help="Override default pool root"),
+    json_output: bool = typer.Option(False, "--json", help="Output list as JSON"),
+) -> None:
+    """List active worktree agents and their dedicated branch names."""
+    pool = _build_worktree_pool(project_root, target_branch=target_branch, pool_root=pool_root)
+    agents = _worktree_agents(pool)
+    if json_output:
+        payload = [
+            {"agent_id": agent_id, "branch": branch}
+            for agent_id, branch in agents
+        ]
+        import json
+
+        console.print(json.dumps(payload, indent=2))
+        return
+    if not agents:
+        console.print("[yellow]No active pooled worktrees.[/yellow]")
+        return
+    console.print("[cyan]Active pooled worktrees:[/cyan]")
+    for agent_id, branch in agents:
+        console.print(f"  - agent: {agent_id}")
+        console.print(f"    branch: {branch}")
+        console.print(f"    target: {target_branch}")
+
+
+@worktree_app.command("claim")
+def worktree_claim(
+    agent_id: str = typer.Argument(..., help="Agent ID to claim a worktree"),
+    project_root: Path = typer.Option(Path.cwd(), "--root", "-r", help="Project root directory"),
+    target_branch: str = typer.Option("HEAD", "--target-branch", "-t", help="Target branch for release merges"),
+    pool_root: Path | None = typer.Option(None, "--pool-root", help="Override default pool root"),
+    json_output: bool = typer.Option(False, "--json", help="Output acquisition as JSON"),
+):
+    """Alias for acquire, matching coordination-focused terminology."""
+    worktree_acquire(
+        agent_id=agent_id,
+        project_root=project_root,
+        target_branch=target_branch,
+        pool_root=pool_root,
+        json_output=json_output,
+    )
+
+
+@worktree_app.command("acquire")
+def worktree_acquire(
+    agent_id: str = typer.Argument(..., help="Agent ID to lease a worktree"),
+    project_root: Path = typer.Option(Path.cwd(), "--root", "-r", help="Project root directory"),
+    target_branch: str = typer.Option("HEAD", "--target-branch", "-t", help="Target branch for release merges"),
+    pool_root: Path | None = typer.Option(None, "--pool-root", help="Override default pool root"),
+    json_output: bool = typer.Option(False, "--json", help="Output acquisition as JSON"),
+):
+    """Acquire a pooled worktree for an agent."""
+    pool = _build_worktree_pool(project_root, target_branch=target_branch, pool_root=pool_root)
+    try:
+        ctx = pool.acquire_worktree(agent_id)
+    except RuntimeError as exc:
+        console.print(f"[red]Failed to acquire worktree for {agent_id}: {exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    if json_output:
+        import json
+
+        console.print(
+            json.dumps(
+                {
+                    "agent_id": agent_id,
+                    "path": str(ctx.path),
+                    "branch": ctx.branch,
+                },
+                indent=2,
+            )
+        )
+        return
+
+    console.print(f"[green]Acquired worktree for {agent_id}[/green]")
+    console.print(f"path={ctx.path}")
+    console.print(f"branch={ctx.branch}")
+
+
+@worktree_app.command("release")
+def worktree_release(
+    agent_id: str = typer.Argument(..., help="Agent ID to release"),
+    project_root: Path = typer.Option(Path.cwd(), "--root", "-r", help="Project root directory"),
+    target_branch: str = typer.Option("HEAD", "--target-branch", "-t", help="Target branch for release merges"),
+    pool_root: Path | None = typer.Option(None, "--pool-root", help="Override default pool root"),
+):
+    """Release a pooled worktree and merge changes back to target branch."""
+    pool = _build_worktree_pool(project_root, target_branch=target_branch, pool_root=pool_root)
+    if not pool.release_worktree(agent_id):
+        console.print(f"[yellow]No active worktree for agent {agent_id}[/yellow]")
+        raise typer.Exit(1)
+    console.print(f"[green]Released worktree for {agent_id}[/green]")
+
+
+@worktree_app.command("cleanup-stale")
+def worktree_cleanup_stale(
+    project_root: Path = typer.Option(Path.cwd(), "--root", "-r", help="Project root directory"),
+    target_branch: str = typer.Option("HEAD", "--target-branch", "-t", help="Target branch for release merges"),
+    pool_root: Path | None = typer.Option(None, "--pool-root", help="Override default pool root"),
+):
+    """Remove stale entries from the worktree pool state."""
+    pool = _build_worktree_pool(project_root, target_branch=target_branch, pool_root=pool_root)
+    removed = pool.cleanup_stale()
+    console.print(f"[green]Removed {removed} stale pool entry(ies).[/green]")
 
 
 def run_system_git(args: list[str]) -> None:
@@ -98,6 +261,39 @@ def status(
     console.print(status_text)
 
 
+@app.command("lock-status")
+def lock_status(
+    project_root: Path = typer.Option(Path.cwd(), "--root", "-r", help="Project root directory"),
+    stale_after_s: float = typer.Option(
+        90.0,
+        "--stale-after",
+        help="Lock age in seconds for stale classification.",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output status as JSON"),
+):
+    """Inspect current `.git/index.lock` state."""
+    manager = GitParallelismManager(project_root, get_agent_id())
+    status_payload = manager.index_lock_status(stale_after_s=stale_after_s)
+    if json_output:
+        import json
+
+        console.print(json.dumps(status_payload, indent=2))
+        return
+
+    if not status_payload["exists"]:
+        console.print("[green]No index.lock present.[/green]")
+        return
+
+    age = status_payload["age_seconds"]
+    age_text = f"{age:.2f}s" if isinstance(age, float) else "unknown"
+    stale_text = "STALE" if status_payload["is_stale"] else "FRESH"
+    holder_text = "active" if status_payload["open_holder_detected"] else "idle"
+    console.print(f"index.lock: {status_payload['path']}")
+    console.print(f"age: {age_text}")
+    console.print(f"status: {stale_text} (threshold {status_payload['stale_after_seconds']}s)")
+    console.print(f"holder: {holder_text}")
+
+
 @app.command("add")
 def add(
     files: list[str] = typer.Argument(..., help="Files to add to private index"),
@@ -120,13 +316,28 @@ def commit(
     agent_id: str = typer.Option(None, "--agent", "-a", help="Agent ID"),
     ref: str = typer.Option("HEAD", "--ref", help="Reference to update"),
     project_root: Path = typer.Option(Path.cwd(), "--root", "-r", help="Project root directory"),
+    lock_timeout: float = typer.Option(8.0, "--lock-timeout", help="Seconds to wait for index lock"),
+    stale_after_s: float = typer.Option(
+        90.0,
+        "--stale-after",
+        help="Lock age in seconds before stale cleanup is attempted (negative to disable age gate).",
+    ),
+    allow_stale_cleanup: bool = typer.Option(
+        True,
+        "--allow-stale-cleanup/--no-allow-stale-cleanup",
+        help="Enable automatic stale .git/index.lock cleanup.",
+    ),
 ):
     """Create a commit from private index and update ref using atomic CAS."""
     aid = agent_id or get_agent_id()
     manager = GitParallelismManager(project_root, aid)
 
     # Multi-tenant guard: do not spin forever on shared index lock.
-    if not manager.wait_for_index_lock(timeout_s=8.0):
+    if not manager.wait_for_index_lock(
+        timeout_s=lock_timeout,
+        stale_after_s=stale_after_s,
+        allow_stale_cleanup=allow_stale_cleanup,
+    ):
         ours = manager.staged_files()
         queue_file = manager.queue_commit_conflict(
             ref=ref,

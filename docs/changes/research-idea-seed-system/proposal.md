@@ -1,7 +1,7 @@
 # Research-Idea-Seed-System: Proposal
 
-> **Status**: Approved | **Priority**: P1 | **Date**: 2026-02-16  
-> **Work Item**: `research-idea-seed-system`  
+> **Status**: Approved | **Priority**: P1 | **Date**: 2026-02-16
+> **Work Item**: `research-idea-seed-system`
 > **Source**: Idea seed expansion from Cursor sessions (2026-02-16)
 
 ---
@@ -335,6 +335,6 @@ Implement an **Idea Seed Detection & Storage System** that:
 
 ---
 
-**Document Status**: Approved  
-**Last Updated**: 2026-02-16  
+**Document Status**: Approved
+**Last Updated**: 2026-02-16
 **Next Phase**: Design & Implementation Plan

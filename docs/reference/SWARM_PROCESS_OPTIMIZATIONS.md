@@ -224,7 +224,7 @@ For **MCP tool retry policy** (when we retry, circuit breaker, backoff), see:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

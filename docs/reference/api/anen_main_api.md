@@ -133,4 +133,3 @@ install_links(bin_dir: Path, force: bool)
 Install/update fanta/antigma -&gt; thegent-shims under ~/.local/bin.
 
 ---
-

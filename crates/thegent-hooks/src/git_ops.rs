@@ -222,9 +222,9 @@ impl GitOps {
 
     /// Check if command is read-only (can be cached)
     fn is_read_only(&self, cmd: &str) -> bool {
-        matches!(cmd, 
-            "diff" | "status" | "ls-files" | "rev-parse" | "log" | "show" | 
-            "name-rev" | "symbolic-ref" | "branch" | "tag" | "remote" | 
+        matches!(cmd,
+            "diff" | "status" | "ls-files" | "rev-parse" | "log" | "show" |
+            "name-rev" | "symbolic-ref" | "branch" | "tag" | "remote" |
             "config" | "ls-tree" | "cat-file" | "describe"
         )
     }

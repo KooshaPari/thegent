@@ -1,7 +1,7 @@
 # Remaining Gaps — Full Depth Analysis
 
-**Date:** 2026-02-14 (updated)  
-**Source:** `thegent-gaps-and-discovery-2026-02-14.md`, `GOVERNANCE_WP_GAPS.md`  
+**Date:** 2026-02-14 (updated)
+**Source:** `thegent-gaps-and-discovery-2026-02-14.md`, `GOVERNANCE_WP_GAPS.md`
 **Purpose:** Comprehensive analysis of all remaining gaps with implementation options, acceptance criteria, and current state.
 
 ---

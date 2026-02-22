@@ -1,8 +1,8 @@
 # Sandboxing Design (G-GP-08)
 
-**Purpose:** Design agent sandbox isolation for trust boundary enforcement.  
-**Date:** 2026-02-14  
-**Status:** Design  
+**Purpose:** Design agent sandbox isolation for trust boundary enforcement.
+**Date:** 2026-02-14
+**Status:** Design
 **Source:** GOVERNANCE_POLICY_AUDIT_RESEARCH, WP-3007, FR-014
 
 ---

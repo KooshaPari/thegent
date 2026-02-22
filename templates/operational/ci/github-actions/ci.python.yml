@@ -19,7 +19,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
       - name: Install dependencies
         run: uv sync
       - name: Run ruff
@@ -36,7 +38,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
       - name: Install dependencies
         run: uv sync
       - name: Run tests
@@ -57,7 +61,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
       - name: Install dependencies
         run: uv sync
       - name: Run bandit

@@ -1,7 +1,7 @@
 # Thegent Phase 3–6 Closure Acceptance Contract Schema
 
-**Status:** Operational specification  
-**Date:** 2026-02-15  
+**Status:** Operational specification
+**Date:** 2026-02-15
 **Scope:** Formal schema and validation contract for closing Phase 3–6 work packages before enabling later phase transitions.
 
 ## 1) Purpose
@@ -292,4 +292,3 @@ If exit criteria fail:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

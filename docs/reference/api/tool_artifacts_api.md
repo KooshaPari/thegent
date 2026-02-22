@@ -118,4 +118,3 @@ Create MCP call artifact.
 **Returns**: MCPCallArtifact instance
 
 ---
-

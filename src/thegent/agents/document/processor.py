@@ -5,11 +5,16 @@ Processes markdown files from the queue, applying transformations,
 analysis, and categorization.
 """
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+
+
+logger = logging.getLogger(__name__)
 
 
 class ProcessingStatus(Enum):
@@ -160,18 +165,30 @@ def extract_frontmatter(filepath: Path) -> dict[str, Any]:
     """Extract YAML frontmatter from markdown file."""
     try:
         content = filepath.read_text(encoding="utf-8")
-        if content.startswith("---"):
-            parts = content.split("---", 2)
-            if len(parts) >= 3:
-                import yaml
+        if not content.startswith("---"):
+            return {}
 
-                try:
-                    frontmatter = yaml.safe_load(parts[1])
-                    return {"frontmatter": frontmatter} if frontmatter else {}
-                except Exception:
-                    return {}
-    except Exception:
-        pass
+        parts = content.split("---", 2)
+        if len(parts) < 3:
+            return {}
+
+        import yaml
+
+        try:
+            frontmatter = yaml.safe_load(parts[1])
+        except yaml.YAMLError as exc:
+            logger.debug("Failed to parse YAML frontmatter for %s: %s", filepath, exc)
+            return {}
+
+        if not isinstance(frontmatter, dict):
+            logger.debug("Ignoring non-dictionary frontmatter in %s", filepath)
+            return {}
+
+        return {"frontmatter": frontmatter} if frontmatter else {}
+    except OSError as exc:
+        logger.warning("Failed to read markdown for frontmatter extraction: %s", filepath, exc_info=exc)
+    except Exception as exc:
+        logger.debug("Frontmatter extraction failed for %s: %s", filepath, exc)
     return {}
 
 

@@ -6,7 +6,7 @@ Source: docs/research/VITEPRESS_RICH_DOCUMENTATION_IMPLEMENTATION_PLAN.md
 
 # VitePress Rich Documentation — Implementation Plan
 
-> **Status**: Implementation Plan | **Date**: 2026-02-17  
+> **Status**: Implementation Plan | **Date**: 2026-02-17
 > **Purpose**: Complete implementation plan for rich, interactive VitePress documentation with diagrams, tryable code, GIFs, and agent workflows
 
 ---
@@ -96,17 +96,17 @@ async function run() {
   running.value = true
   error.value = ''
   output.value = ''
-  
+
   try {
     const res = await fetch(props.endpoint || '/api/execute', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        lang: props.lang || 'python', 
-        code: props.code 
+      body: JSON.stringify({
+        lang: props.lang || 'python',
+        code: props.code
       })
     })
-    
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     output.value = await res.text()
   } catch (e) {
@@ -121,8 +121,8 @@ async function run() {
   <div class="code-playground">
     <div class="code-playground-header">
       <span class="lang-badge">{{ lang || 'python' }}</span>
-      <button 
-        @click="run" 
+      <button
+        @click="run"
         :disabled="running"
         class="run-button"
       >
@@ -283,7 +283,7 @@ def extract_docstrings(module_path: Path) -> Dict:
     """Extract docstrings from Python module"""
     with open(module_path) as f:
         tree = ast.parse(f.read())
-    
+
     docs = {}
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
@@ -296,14 +296,14 @@ def extract_docstrings(module_path: Path) -> Dict:
 def generate_markdown(docs: Dict, module_name: str) -> str:
     """Generate Markdown API docs"""
     md = f"# {module_name} API Reference\n\n"
-    
+
     for name, info in docs.items():
         md += f"## {name}\n\n"
         if info['docstring']:
             md += f"{info['docstring']}\n\n"
         if info['signature']:
             md += f"```python\n{name}{info['signature']}\n```\n\n"
-    
+
     return md
 
 # Agent workflow: Run on code changes, update VitePress pages
@@ -324,7 +324,7 @@ def analyze_dependencies(module_path: Path) -> Dict[str, Set[str]]:
     """Analyze module dependencies"""
     with open(module_path) as f:
         tree = ast.parse(f.read())
-    
+
     imports = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -332,18 +332,18 @@ def analyze_dependencies(module_path: Path) -> Dict[str, Set[str]]:
         elif isinstance(node, ast.ImportFrom):
             if node.module:
                 imports.add(node.module)
-    
+
     return {module_path.stem: imports}
 
 def generate_mermaid(deps: Dict[str, Set[str]]) -> str:
     """Generate Mermaid dependency graph"""
     mermaid = "```mermaid\ngraph TD\n"
-    
+
     for module, imports in deps.items():
         for imp in imports:
             if imp.startswith('thegent'):
                 mermaid += f"  {module} --> {imp.replace('.', '_')}\n"
-    
+
     mermaid += "```\n"
     return mermaid
 
@@ -374,14 +374,14 @@ def extract_commands(app) -> List[Dict]:
 def generate_playgrounds(commands: List[Dict]) -> str:
     """Generate CodePlayground components"""
     md = "# CLI Examples\n\n"
-    
+
     for cmd in commands:
         md += f"## {cmd['name']}\n\n"
         md += f"{cmd['help']}\n\n"
         md += f"<CodePlayground lang='bash' code='thegent {cmd['name']} "
         md += " ".join(f"--{p} VALUE" for p in cmd['params'])
         md += "' />\n\n"
-    
+
     return md
 
 # Agent workflow: Run on CLI changes, update examples
@@ -401,14 +401,14 @@ import re
 def find_demo_scripts(docs_dir: Path) -> List[Path]:
     """Find demo scripts in documentation"""
     demos = []
-    
+
     for md_file in docs_dir.rglob("*.md"):
         content = md_file.read_text()
-        
+
         # Find code blocks marked as demos
         if re.search(r'```(python|bash|sh).*demo', content, re.IGNORECASE):
             demos.append(md_file)
-    
+
     return demos
 
 def generate_gif(script_path: Path, output_dir: Path):
@@ -570,7 +570,7 @@ export default {
 
 ### Workflow: Auto-Populate VitePress
 
-**Trigger**: On code/doc changes  
+**Trigger**: On code/doc changes
 **Steps**:
 1. Extract docstrings → API docs
 2. Analyze code structure → Architecture diagrams
@@ -590,19 +590,19 @@ import subprocess
 def main():
     docs_dir = Path('docs')
     vitepress_dir = docs_dir / '.vitepress'
-    
+
     # 1. Generate API docs
     subprocess.run(['python', 'scripts/generate-api-docs.py'])
-    
+
     # 2. Generate architecture diagrams
     subprocess.run(['python', 'scripts/generate-architecture-diagrams.py'])
-    
+
     # 3. Generate CLI examples
     subprocess.run(['python', 'scripts/generate-cli-examples.py'])
-    
+
     # 4. Generate demo GIFs
     subprocess.run(['bash', 'scripts/generate-demo-gifs.sh'])
-    
+
     # 5. Rebuild VitePress
     subprocess.run(['npm', 'run', 'docs:build'])
 

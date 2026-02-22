@@ -31,4 +31,3 @@ is_orphan_by_ppid(pid: int, parent_map: dict[(int, int)], cmd_map: dict[(int, st
 True if process has no Cursor/Claude/Codex in parent chain (true orphan).
 
 ---
-

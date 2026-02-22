@@ -6,8 +6,8 @@ Source: docs/plans/CATALOG_CLIPROXY_FORK_ALIGNMENT.md
 
 # Catalog ↔ CLIProxyAPIPlus Fork Alignment
 
-**Status:** Reference  
-**Date:** 2026-02-15  
+**Status:** Reference
+**Date:** 2026-02-15
 **Context:** Model-first routing (task_router → catalog.resolve_route) returns `(provider, model_alias)`. The execution layer uses CLIProxyAPIPlus fork at `../CLIProxyAPIPlus-fork/`. This doc aligns catalog providers with fork capabilities.
 
 ---

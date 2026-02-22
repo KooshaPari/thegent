@@ -1,5 +1,6 @@
 """Tests for virtual desktop automation module."""
 
+import platform
 import pytest
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -226,6 +227,22 @@ class TestVirtualDesktopManager:
         session = await manager.get_session("non-existent")
 
         assert session is None
+
+    @pytest.mark.asyncio
+    async def test_manager_uses_unsupported_platform_fallback(self, monkeypatch: pytest.MonkeyPatch):
+        """Unsupported platforms should use a concrete fallback provider."""
+        monkeypatch.setattr(platform, "system", lambda: "Plan9")
+        manager = VirtualDesktopManager()
+
+        assert manager._provider.name == "unsupported:plan9"
+        session = await manager.create_session("agent-fallback")
+
+        frame = await session.capture()
+        assert frame.width == 1920
+        assert frame.height == 1080
+        assert frame.size_bytes == 1920 * 1080 * 4
+        assert await session.inject(InputEvent(event_type="mouse_move", x=10, y=10))
+        assert not await session.inject(InputEvent(event_type="unknown", x=10, y=10))
 
 
 def test_get_desktop_manager_singleton():

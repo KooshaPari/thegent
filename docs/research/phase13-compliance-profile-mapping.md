@@ -1,8 +1,8 @@
 # Phase 13: Compliance Profile Mapping
 
-> **Purpose:** Map policy variants to legal/audit jurisdictions (WP-13002).  
-> **Depends:** WP-13002.  
-> **Acceptance:** Profile definitions (EU-AI-ACT, US-SEC, SOX, GDPR) documented; mandatory controls listed.  
+> **Purpose:** Map policy variants to legal/audit jurisdictions (WP-13002).
+> **Depends:** WP-13002.
+> **Acceptance:** Profile definitions (EU-AI-ACT, US-SEC, SOX, GDPR) documented; mandatory controls listed.
 > **WORK_STREAM ID:** phase13-compliance-profile
 
 ## 1. Jurisdiction Support
@@ -47,7 +47,7 @@ class ComplianceProfile:
     profile: ComplianceProfile
     jurisdiction: str
     controls: list[ComplianceControl]
-    
+
     def get_mandatory_controls(self) -> list[ComplianceControl]:
         """Get all mandatory controls."""
         return [c for c in self.controls if c.mandatory]
@@ -156,24 +156,24 @@ GDPR_PROFILE = ComplianceProfile(
 ```python
 class ComplianceEnforcer:
     """Enforces compliance controls based on active profile."""
-    
+
     def __init__(self, profile: ComplianceProfile):
         self.profile = profile
         self.controls = {c.id: c for c in profile.controls}
-    
+
     def check_control(self, control_id: str, context: dict) -> bool:
         """Check if a control is satisfied."""
         control = self.controls.get(control_id)
         if not control:
             return False
-        
+
         if control.enforcement == "automatic":
             return self._check_automatic(control, context)
         elif control.enforcement == "manual":
             return self._check_manual(control, context)
         else:
             return True  # Audit-only controls
-    
+
     def enforce_mandatory(self, action: str, context: dict) -> bool:
         """Enforce all mandatory controls for an action."""
         for control in self.profile.get_mandatory_controls():
@@ -187,7 +187,7 @@ class ComplianceEnforcer:
 ```python
 class ComplianceAuditTrail:
     """Maintains audit trail for compliance verification."""
-    
+
     def record_action(self, action: str, context: dict, profile: ComplianceProfile):
         """Record an action in the audit trail."""
         entry = {
@@ -197,12 +197,12 @@ class ComplianceAuditTrail:
             "profile": profile.profile.value,
             "controls_checked": [c.id for c in profile.get_mandatory_controls()]
         }
-        
+
         # Hash chain for US-SEC compliance
         if profile.profile == ComplianceProfile.US_SEC:
             entry["hash"] = self._compute_hash(entry)
             entry["previous_hash"] = self._get_last_hash()
-        
+
         self._store_entry(entry)
 ```
 
@@ -226,7 +226,7 @@ class ComplianceAuditTrail:
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

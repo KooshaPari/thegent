@@ -87,4 +87,3 @@ synthesize_to_markdown(self: Any)
 Helper to generate a summary for an agent to incorporate.
 
 ---
-

@@ -112,4 +112,3 @@ Create branching point artifact.
 **Returns**: BranchingPointArtifact instance
 
 ---
-

@@ -79,4 +79,3 @@ has_permission(self: Any, role: Role, permission: Permission)
 Check if a role has a specific permission.
 
 ---
-

@@ -18,15 +18,15 @@ const breadcrumbs = computed(() => {
   if (props.items && props.items.length > 0) {
     return props.items
   }
-  
+
   // Auto-generate from route
   const path = route.path
   const parts = path.split('/').filter(Boolean)
-  
+
   const items: BreadcrumbItem[] = [
     { text: 'Home', link: '/' }
   ]
-  
+
   let currentPath = ''
   parts.forEach((part, index) => {
     currentPath += `/${part}`
@@ -39,7 +39,7 @@ const breadcrumbs = computed(() => {
       link: isLast ? undefined : currentPath
     })
   })
-  
+
   return items
 })
 
@@ -136,7 +136,7 @@ const separator = computed(() => props.separator || '/')
   .breadcrumb-list {
     font-size: var(--vp-font-size-xs);
   }
-  
+
   .breadcrumb-link {
     padding: var(--vp-spacing-1);
   }

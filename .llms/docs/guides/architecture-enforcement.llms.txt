@@ -225,7 +225,7 @@ Both can run in the same project. `tach` is more granular; import-linter is more
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made
@@ -318,11 +318,11 @@ class User:
     email: str = ""
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = datetime.utcnow()
-    
+
     def activate(self):
         """Business logic stays in domain."""
         self.updated_at = datetime.utcnow()
-    
+
     def can_delete(self) -> bool:
         """Logic that could be tested in isolation."""
         return self.created_at < datetime.utcnow() - timedelta(days=30)
@@ -344,7 +344,7 @@ class UserService:
     """Application service - orchestrates domain objects."""
     def __init__(self, repo: UserRepository):
         self.repo = repo
-    
+
     def create_user(self, name: str, email: str) -> User:
         """Use case - coordinates domain logic."""
         user = User(name=name, email=email)
@@ -361,10 +361,10 @@ from application.services.user_service import UserRepository
 
 class SQLAlchemyUserRepository(UserRepository):
     """Infrastructure adapter - implements domain interface."""
-    
+
     def __init__(self, session):
         self.session = session
-    
+
     def save(self, user: User) -> None:
         """Implements the protocol."""
         orm_user = UserOrm(
@@ -373,7 +373,7 @@ class SQLAlchemyUserRepository(UserRepository):
             email=user.email
         )
         self.session.add(orm_user)
-    
+
     def find_by_id(self, user_id: str) -> User:
         orm_user = self.session.query(UserOrm).filter_by(id=user_id).first()
         if orm_user:
@@ -443,7 +443,7 @@ import-linter --output-format dot > architecture.dot
 
 ## 10. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

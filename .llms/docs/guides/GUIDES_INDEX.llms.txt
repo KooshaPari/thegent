@@ -83,7 +83,7 @@ Source: docs/guides/GUIDES_INDEX.md
 
 ## Extension Summary
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made
@@ -103,7 +103,7 @@ Source: docs/guides/GUIDES_INDEX.md
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

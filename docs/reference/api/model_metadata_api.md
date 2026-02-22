@@ -45,4 +45,3 @@ Check if model has metadata available.
 **Returns**: True if metadata exists, False otherwise
 
 ---
-

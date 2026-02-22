@@ -45,10 +45,10 @@ Web demos are defined in `docs/demos/web/`. The `generate_demos.sh` script will 
 Use the `<DemoGif />` component to embed a generated GIF in your VitePress pages:
 
 ```vue
-<DemoGif 
-  src="cli-demo.gif" 
-  alt="CLI usage demo" 
-  caption="Basic usage of thegent CLI" 
+<DemoGif
+  src="cli-demo.gif"
+  alt="CLI usage demo"
+  caption="Basic usage of thegent CLI"
 />
 ```
 
@@ -74,7 +74,7 @@ The component automatically looks for the file in `docs/public/assets/demos/`.
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

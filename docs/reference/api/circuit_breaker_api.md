@@ -37,4 +37,3 @@ trip(session_dir: Path, target: str, category: str)
 Record a failure; may open the circuit.
 
 ---
-

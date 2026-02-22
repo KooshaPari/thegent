@@ -77,4 +77,3 @@ Generate HTML for version switcher.
 **Returns**: Version switcher HTML content
 
 ---
-

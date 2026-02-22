@@ -7,7 +7,7 @@ Source: docs/research/SYSTEM_RESOURCES_COMPLETE.md
 # System Resources Complete Practical Guide
 
 > **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
-> **Related**: 
+> **Related**:
 > - [System Resources FD CPU Deep Research](./SYSTEM_RESOURCES_FD_CPU_DEEP_RESEARCH.md)
 > - [Swarm Complete](./SWARM_COMPLETE.md)
 > - [Process Optimization Plan](../plans/PROCESS_OPTIMIZATION_PLAN.md)
@@ -80,19 +80,19 @@ class ResourceSnapshot:
 def sample_resources() -> ResourceSnapshot:
     """Sample system resources (cross-platform)."""
     system = platform.system()
-    
+
     # FD sampling
     fd_used, fd_limit = _get_fd_usage(system)
-    
+
     # Memory sampling
     mem_available_mb = _get_memory_available_mb(system)
-    
+
     # Load average
     load_1m, load_5m, load_15m = os.getloadavg()
-    
+
     # CPU count
     cpu_count = os.cpu_count() or 1
-    
+
     return ResourceSnapshot(
         fd_used=fd_used,
         fd_limit=fd_limit,
@@ -111,12 +111,12 @@ def _get_fd_usage(system: str) -> Tuple[int, int]:
             fd_count = len(os.listdir("/proc/self/fd"))
         except OSError:
             fd_count = 0
-        
+
         # Get limit
         import resource
         soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
         return fd_count, soft
-    
+
     elif system == "Darwin":  # macOS
         # macOS: lsof (expensive, cache result)
         try:
@@ -133,12 +133,12 @@ def _get_fd_usage(system: str) -> Tuple[int, int]:
             ])
         except (subprocess.TimeoutExpired, FileNotFoundError):
             fd_count = 0
-        
+
         # Get limit
         import resource
         soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
         return fd_count, soft
-    
+
     else:
         # Windows or unknown
         import resource
@@ -157,7 +157,7 @@ def _get_memory_available_mb(system: str) -> int:
                         return kb // 1024
         except OSError:
             return 0
-    
+
     elif system == "Darwin":  # macOS
         # macOS: vm_stat
         try:
@@ -171,7 +171,7 @@ def _get_memory_available_mb(system: str) -> int:
             pages_free = 0
             pages_inactive = 0
             page_size = 4096  # Default page size
-            
+
             for line in result.stdout.splitlines():
                 if "Pages free" in line:
                     pages_free = int(line.split()[-1].rstrip("."))
@@ -179,12 +179,12 @@ def _get_memory_available_mb(system: str) -> int:
                     pages_inactive = int(line.split()[-1].rstrip("."))
                 elif "page size" in line.lower():
                     page_size = int(line.split()[-1])
-            
+
             available_bytes = (pages_free + pages_inactive) * page_size
             return available_bytes // (1024 * 1024)
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return 0
-    
+
     else:
         # Windows or unknown
         return 0
@@ -199,20 +199,20 @@ from typing import Dict
 
 class CachedResourceSampler:
     """Resource sampler with caching for expensive operations."""
-    
+
     def __init__(self, cache_ttl: float = 5.0):
         self.cache_ttl = cache_ttl
         self._cache: Dict[str, Tuple[float, any]] = {}
-    
+
     def sample(self, resource: str) -> any:
         """Sample resource with caching."""
         now = time()
-        
+
         if resource in self._cache:
             cached_time, cached_value = self._cache[resource]
             if now - cached_time < self.cache_ttl:
                 return cached_value
-        
+
         # Sample resource
         if resource == "fd":
             value = _get_fd_usage(platform.system())
@@ -222,7 +222,7 @@ class CachedResourceSampler:
             value = os.getloadavg()
         else:
             raise ValueError(f"Unknown resource: {resource}")
-        
+
         # Cache result
         self._cache[resource] = (now, value)
         return value
@@ -252,7 +252,7 @@ class ProcessMetrics:
 def get_process_metrics(pid: int) -> Optional[ProcessMetrics]:
     """Get metrics for a specific process."""
     system = platform.system()
-    
+
     if system == "Linux":
         return _get_process_metrics_linux(pid)
     elif system == "Darwin":
@@ -272,15 +272,15 @@ def _get_process_metrics_linux(pid: int) -> Optional[ProcessMetrics]:
                     rss_kb = int(line.split()[1])
                 elif line.startswith("Threads:"):
                     threads = int(line.split()[1])
-        
+
         rss_mb = rss_kb / 1024
-        
+
         # FD count
         try:
             fd_count = len(os.listdir(f"/proc/{pid}/fd"))
         except OSError:
             fd_count = 0
-        
+
         # CPU % and name from ps
         result = subprocess.run(
             ["ps", "-o", "%cpu,comm", "-p", str(pid)],
@@ -290,13 +290,13 @@ def _get_process_metrics_linux(pid: int) -> Optional[ProcessMetrics]:
         lines = result.stdout.strip().splitlines()
         if len(lines) < 2:
             return None
-        
+
         cpu_percent = float(lines[1].split()[0])
         name = lines[1].split()[1] if len(lines[1].split()) > 1 else "unknown"
-        
+
         # Port count (simplified)
         port_count = _count_ports_linux(pid)
-        
+
         return ProcessMetrics(
             pid=pid,
             name=name,
@@ -321,14 +321,14 @@ def _get_process_metrics_macos(pid: int) -> Optional[ProcessMetrics]:
         lines = result.stdout.strip().splitlines()
         if len(lines) < 1:
             return None
-        
+
         parts = lines[0].split()
         rss_kb = int(parts[0])
         cpu_percent = float(parts[1])
         name = parts[2] if len(parts) > 2 else "unknown"
-        
+
         rss_mb = rss_kb / 1024
-        
+
         # Thread count
         result = subprocess.run(
             ["ps", "-M", "-p", str(pid)],
@@ -336,7 +336,7 @@ def _get_process_metrics_macos(pid: int) -> Optional[ProcessMetrics]:
             text=True,
         )
         thread_count = max(0, len(result.stdout.splitlines()) - 1)
-        
+
         # FD count (expensive)
         try:
             result = subprocess.run(
@@ -351,10 +351,10 @@ def _get_process_metrics_macos(pid: int) -> Optional[ProcessMetrics]:
             ])
         except (subprocess.TimeoutExpired, FileNotFoundError):
             fd_count = 0
-        
+
         # Port count
         port_count = _count_ports_macos(pid)
-        
+
         return ProcessMetrics(
             pid=pid,
             name=name,
@@ -408,7 +408,7 @@ def get_all_process_metrics(pids: list[int]) -> list[ProcessMetrics]:
 def get_top_processes_by_rss(n: int = 20) -> list[ProcessMetrics]:
     """Get top N processes by RSS."""
     system = platform.system()
-    
+
     if system == "Linux":
         result = subprocess.run(
             ["ps", "-eo", "pid,rss,%cpu,comm", "--sort=-rss"],
@@ -423,10 +423,10 @@ def get_top_processes_by_rss(n: int = 20) -> list[ProcessMetrics]:
         )
     else:
         return []
-    
+
     lines = result.stdout.strip().splitlines()[1:]  # Skip header
     top_pids = [int(line.split()[0]) for line in lines[:n]]
-    
+
     return get_all_process_metrics(top_pids)
 ```
 
@@ -451,21 +451,21 @@ class LimitGateConfig:
 def check_gates(snapshot: ResourceSnapshot, config: LimitGateConfig) -> Tuple[bool, list[str]]:
     """Check if resource gates allow execution."""
     violations = []
-    
+
     # FD gate
     fd_utilization = snapshot.fd_used / snapshot.fd_limit if snapshot.fd_limit > 0 else 0
     if fd_utilization >= config.fd_threshold:
         violations.append(f"FD utilization {fd_utilization:.2%} >= {config.fd_threshold:.2%}")
-    
+
     # Memory gate
     if snapshot.mem_available_mb < config.memory_threshold_mb:
         violations.append(f"Memory {snapshot.mem_available_mb} MB < {config.memory_threshold_mb} MB")
-    
+
     # Load gate
     load_per_cpu = snapshot.load_1m / snapshot.cpu_count
     if load_per_cpu >= config.load_per_cpu_max:
         violations.append(f"Load per CPU {load_per_cpu:.2f} >= {config.load_per_cpu_max:.2f}")
-    
+
     return len(violations) == 0, violations
 ```
 
@@ -481,15 +481,15 @@ def compute_dynamic_limit(
     """Compute dynamic concurrency limit from resource snapshot."""
     # CPU-based slots
     cpu_slots = min(max_slots, snapshot.cpu_count * 2)
-    
+
     # FD-based slots
     fd_headroom = snapshot.fd_limit - snapshot.fd_used
     fd_slots = max(0, fd_headroom // 50)  # 50 FDs per slot
-    
+
     # Memory-based slots
     mem_headroom = snapshot.mem_available_mb - config.memory_threshold_mb
     mem_slots = max(0, mem_headroom // 128)  # 128 MB per slot
-    
+
     # Load-based slots (scale down as load approaches threshold)
     load_per_cpu = snapshot.load_1m / snapshot.cpu_count
     if load_per_cpu >= config.load_per_cpu_max:
@@ -497,10 +497,10 @@ def compute_dynamic_limit(
     else:
         load_factor = 1.0 - (load_per_cpu / config.load_per_cpu_max)
         load_slots = int(cpu_slots * load_factor)
-    
+
     # Effective limit is minimum of all constraints
     effective_limit = min(cpu_slots, fd_slots, mem_slots, load_slots)
-    
+
     # Clamp to min/max
     return max(min_slots, min(max_slots, effective_limit))
 ```
@@ -519,7 +519,7 @@ def prioritize_processes_for_prune(
 ) -> list[int]:
     """Prioritize processes for pruning based on resource usage."""
     metrics = get_all_process_metrics(pids)
-    
+
     if sort_by == "rss":
         metrics.sort(key=lambda m: m.rss_mb, reverse=(order == "desc"))
     elif sort_by == "fd":
@@ -528,7 +528,7 @@ def prioritize_processes_for_prune(
         metrics.sort(key=lambda m: m.cpu_percent, reverse=(order == "desc"))
     else:
         return pids  # No sorting
-    
+
     return [m.pid for m in metrics]
 
 def prune_orphans_rss_aware(
@@ -538,24 +538,24 @@ def prune_orphans_rss_aware(
     """Prune orphan processes, prioritizing by RSS."""
     # Find orphan processes
     orphans = find_orphan_processes()
-    
+
     if len(orphans) <= threshold:
         return 0
-    
+
     # Prioritize by RSS
     prioritized = prioritize_processes_for_prune(orphans, sort_by=sort_by)
-    
+
     # Kill top N processes
     to_kill = prioritized[:len(orphans) - threshold]
     killed = 0
-    
+
     for pid in to_kill:
         try:
             os.kill(pid, signal.SIGTERM)
             killed += 1
         except (OSError, ProcessLookupError):
             pass
-    
+
     return killed
 ```
 

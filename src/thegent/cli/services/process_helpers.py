@@ -13,4 +13,3 @@ def is_pid_running(pid: int) -> bool:
         return True
     except OSError:
         return False
-

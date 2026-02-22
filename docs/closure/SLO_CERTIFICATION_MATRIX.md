@@ -1,7 +1,7 @@
 # SLO Certification Matrix
 
-**Program:** thegent Orchestration Optimization  
-**Date:** 2026-02-15  
+**Program:** thegent Orchestration Optimization
+**Date:** 2026-02-15
 **Owner:** Reliability Lead
 
 ## 1) Target definitions

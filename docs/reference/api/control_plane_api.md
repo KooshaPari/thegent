@@ -5,4 +5,3 @@
 Control plane: config service for multi-tenant thegent.
 
 ---
-

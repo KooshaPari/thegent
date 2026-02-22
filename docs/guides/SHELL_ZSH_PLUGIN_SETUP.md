@@ -1,6 +1,6 @@
 # Shell & Zsh Plugin Setup — Long-Term Fix
 
-**Purpose:** Proper, enterprise-grade zsh setup with fnm/mise (nvm replacement), fzf-tab, and optional plugins. No random removal; install what you need.  
+**Purpose:** Proper, enterprise-grade zsh setup with fnm/mise (nvm replacement), fzf-tab, and optional plugins. No random removal; install what you need.
 **Audience:** Enthusiast dev users; DX/AX/UX optimized.
 
 ---
@@ -255,7 +255,7 @@ If you have a backup of your previous 150KB bundle:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

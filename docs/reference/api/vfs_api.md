@@ -72,4 +72,3 @@ create_home_dir(self: Any, target_dir: Path, tenant_id: str)
 Create a home directory for a tenant using the most efficient method.
 
 ---
-

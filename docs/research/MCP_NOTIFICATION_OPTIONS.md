@@ -1,6 +1,6 @@
 # MCP and Client Features for Session Notifications
 
-**Date:** 2026-02-15  
+**Date:** 2026-02-15
 **Context:** Sitback Agent has no push notifications; hooks run in IDE context and don't notify the agent. Session updates go to `run_registry.jsonl`; the agent must poll. This doc explores MCP elicitation, Tasks, and client features to create proper notification systems.
 
 ---
@@ -125,7 +125,7 @@
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -20,7 +20,7 @@ impl Executor {
     pub async fn execute(&self, req: ExecutionRequest) -> Result<ExecutionResponse> {
         let start_time = std::time::Instant::now();
         let task_id = req.id;
-        
+
         info!("Executing task {} in {}", task_id, req.cwd);
 
         let work_dir = match req.options.isolation_level {
@@ -58,7 +58,7 @@ impl Executor {
         }
 
         let output = cmd.output().await.context("Failed to execute thegent")?;
-        
+
         let duration = start_time.elapsed().as_millis() as u64;
 
         // Cleanup worktree if needed
@@ -79,10 +79,10 @@ impl Executor {
 
     async fn setup_worktree(&self, req: &ExecutionRequest) -> Result<PathBuf> {
         let worktree_path = self.base_dir.join(format!("shadow-{}", req.id));
-        
+
         // 1. git worktree add <path> <commit>
         let commit = req.sync_state.as_ref().map(|s| s.base_commit.as_str()).unwrap_or("HEAD");
-        
+
         let output = Command::new("git")
             .arg("worktree")
             .arg("add")
@@ -105,13 +105,13 @@ impl Executor {
                 patch_cmd.arg("apply")
                          .current_dir(&worktree_path)
                          .stdin(Stdio::piped());
-                
+
                 let mut child = patch_cmd.spawn()?;
                 let mut stdin = child.stdin.take().unwrap();
                 use tokio::io::AsyncWriteExt;
                 stdin.write_all(patch.as_bytes()).await?;
                 drop(stdin);
-                
+
                 let patch_output = child.wait().await?;
                 if !patch_output.success() {
                     error!("Failed to apply patch to worktree");

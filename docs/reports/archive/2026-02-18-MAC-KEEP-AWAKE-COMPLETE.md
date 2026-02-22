@@ -1,7 +1,7 @@
 # Mac Keep-Awake (Caffeinate) Wrapper - Completion Report
 
-**Date:** 2026-02-18  
-**Work Package:** Mac Keep-Awake Implementation  
+**Date:** 2026-02-18
+**Work Package:** Mac Keep-Awake Implementation
 **Status:** ✅ VERIFIED COMPLETE
 
 ---

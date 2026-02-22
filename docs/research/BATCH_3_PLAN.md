@@ -1,6 +1,6 @@
 # Batch 3 Optimizations - Planning
 
-**Status**: Planning  
+**Status**: Planning
 **Priority**: Medium-Low
 
 ---
@@ -71,5 +71,5 @@ Batch 3 focuses on additional optimizations and utility improvements that provid
 
 ## Status
 
-**Batch 3**: Planning phase  
+**Batch 3**: Planning phase
 **Next**: Implement async subprocess and multi-tier caching

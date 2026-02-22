@@ -1,8 +1,8 @@
 # GitJournal Enhancement Plan
 
-**Date:** 2026-02-20  
-**Status:** Research Complete, Enhancement Plan Ready  
-**Priority:** P1 (Audit Trail & Performance)  
+**Date:** 2026-02-20
+**Status:** Research Complete, Enhancement Plan Ready
+**Priority:** P1 (Audit Trail & Performance)
 **WBS:** wp-71002-shadow-git (related)
 
 ---
@@ -177,12 +177,12 @@ from gix::hash::Kind as HashKind
 
 class GitJournalGix:
     """High-performance GitJournal using gix library."""
-    
+
     def __init__(self, repo_root: Path, session_id: str):
         self.repo = Repository.open(repo_root)
         self.session_id = session_id
         self.audit_ref = f"refs/audit/{session_id}"
-        
+
     def _hash_object(self, content: bytes) -> ObjectId:
         """Store content in git object database using gix."""
         # Direct object write, no subprocess
@@ -191,7 +191,7 @@ class GitJournalGix:
             gix::hash::Kind::Sha256,  # Use SHA-256
         )
         return oid
-    
+
     def _create_tree(self, entries: dict[str, ObjectId]) -> ObjectId:
         """Create tree object using gix."""
         tree_entries = [
@@ -204,7 +204,7 @@ class GitJournalGix:
             for path, oid in entries.items()
         ]
         return self.repo.object_database().write_tree(tree_entries)
-    
+
     def _create_commit(self, tree_oid: ObjectId, message: str, parent: Option<ObjectId>) -> ObjectId:
         """Create commit using gix."""
         commit = gix::commit::Info::new(
@@ -239,12 +239,12 @@ from typing import Callable, Optional
 
 class FileWatcher:
     """Real-time file change detection using watchman."""
-    
+
     def __init__(self, repo_root: Path):
         self.repo_root = repo_root
         self._process: Optional[subprocess.Popen] = None
         self._callbacks: list[Callable[[str, str], None]] = []
-        
+
     def start(self) -> None:
         """Start watching for file changes."""
         # Initialize watchman subscription
@@ -254,16 +254,16 @@ class FileWatcher:
         )
         # Subscribe to changes
         self._process = subprocess.Popen(
-            ["watchman", "subscribe", str(self.repo_root), "audit-changes", 
+            ["watchman", "subscribe", str(self.repo_root), "audit-changes",
              "--fields", "name,type", "-e", "M", "-e", "A", "-e", "D"],
             stdout=subprocess.PIPE,
             text=True,
         )
-        
+
     def on_change(self, callback: Callable[[str, str], None]) -> None:
         """Register callback for file changes."""
         self._callbacks.append(callback)
-        
+
     def _dispatch_events(self) -> None:
         """Dispatch watchman events to callbacks."""
         if not self._process:
@@ -283,14 +283,14 @@ class FileWatcher:
 ```python
 class GitJournalRealtime(GitJournal):
     """GitJournal with real-time file change detection."""
-    
+
     def __init__(self, repo_root: Path, session_id: str, watch: bool = True):
         super().__init__(repo_root, session_id)
         if watch:
             self.watcher = FileWatcher(repo_root)
             self.watcher.start()
             self.watcher.on_change(self._on_file_change)
-            
+
     def _on_file_change(self, path: str, action: str) -> None:
         """Handle real-time file change."""
         if action == "D":
@@ -300,7 +300,7 @@ class GitJournalRealtime(GitJournal):
             full_path = self.repo_root / path
             content = full_path.read_bytes() if full_path.exists() else None
             action_type = "created" if action == "A" else "modified"
-            
+
         self.record_file_change(path, content, action=action_type)
 ```
 
@@ -320,10 +320,10 @@ from thegent.governance.native_secret_scan import scan_secrets, SecretMatch
 
 class GitJournalSecure(GitJournal):
     """GitJournal with enhanced secret scanning."""
-    
+
     def __init__(self, repo_root: Path, session_id: str):
         super().__init__(repo_root, session_id)
-        
+
     def _scrub_secrets(self, content: str) -> str:
         """Use native secret scanner for comprehensive detection."""
         matches = scan_secrets(content)
@@ -344,7 +344,7 @@ from pathlib import Path
 
 class AttestationEntry:
     """Cryptographically attested audit entry."""
-    
+
     def __init__(
         self,
         commit_sha: str,
@@ -356,7 +356,7 @@ class AttestationEntry:
         self.content_hash = content_hash
         self.timestamp = timestamp
         self.attestations = attestations
-        
+
     def to_ attestation_bundle(self) -> dict:
         """Create attestation bundle for transparency log."""
         return {
@@ -370,18 +370,18 @@ class AttestationEntry:
 
 class GitJournalAttested(GitJournal):
     """GitJournal with cryptographic attestation."""
-    
+
     def __init__(self, repo_root: Path, session_id: str):
         super().__init__(repo_root, session_id)
         self._attestations: list[AttestationEntry] = []
-        
+
     def _attest_commit(self, commit_sha: str, content: bytes) -> AttestationEntry:
         """Create attestation for a commit using Sigstore."""
         import hashlib
-        
+
         content_hash = hashlib.sha256(content).hexdigest()
         timestamp = datetime.now(UTC).isoformat()
-        
+
         # In production, use Sigstore for actual attestation
         # This is a placeholder showing the pattern
         attestation = {
@@ -392,7 +392,7 @@ class GitJournalAttested(GitJournal):
             # Signature would come from Sigstore/cosign in production
             "signature": f"attested-{commit_sha[:8]}",
         }
-        
+
         entry = AttestationEntry(
             commit_sha=commit_sha,
             content_hash=content_hash,
@@ -401,7 +401,7 @@ class GitJournalAttested(GitJournal):
         )
         self._attestations.append(entry)
         return entry
-        
+
     def record_file_change(self, file_path: Path, content: Optional[bytes], **kwargs) -> str:
         """Record change with attestation."""
         commit_sha = super().record_file_change(file_path, content, **kwargs)
@@ -420,7 +420,7 @@ import json
 
 class AuditEvent:
     """Audit event for streaming."""
-    
+
     def __init__(
         self,
         event_type: str,
@@ -436,13 +436,13 @@ class AuditEvent:
         self.action = action
         self.commit_sha = commit_sha
         self.timestamp = timestamp
-        
+
     def to_dict(self) -> dict:
         return self.__dict__
 
 class GitJournalStreaming(GitJournal):
     """GitJournal with event streaming for audit updates."""
-    
+
     def __init__(
         self,
         repo_root: Path,
@@ -461,11 +461,11 @@ class GitJournalStreaming(GitJournal):
                 )
             except Exception:
                 pass  # Graceful degradation if Kafka unavailable
-                
+
     def record_file_change(self, file_path: Path, content: Optional[bytes], **kwargs) -> str:
         """Record change and stream event."""
         commit_sha = super().record_file_change(file_path, content, **kwargs)
-        
+
         if self._producer:
             event = AuditEvent(
                 event_type="file_change",
@@ -476,9 +476,9 @@ class GitJournalStreaming(GitJournal):
                 timestamp=datetime.now(UTC).isoformat(),
             )
             self._producer.send(self.topic, event.to_dict())
-            
+
         return commit_sha
-        
+
     def _stream_snapshot_event(self, commit_sha: str, file_count: int) -> None:
         """Stream snapshot event."""
         if not self._producer:
@@ -610,7 +610,7 @@ async def git_journal_create_session(
     track_secrets: bool = True,
 ):
     """Create a new git journal session."""
-    
+
 @server.tool()
 async def git_journal_record_change(
     repo_path: str,
@@ -620,7 +620,7 @@ async def git_journal_record_change(
     action: str = "modified",
 ):
     """Record a file change in the journal."""
-    
+
 # ... more tools
 ```
 
@@ -684,16 +684,16 @@ journal = GitJournal(repo_root=Path.cwd(), session_id="my-session")
 ```python
 class UnifiedAudit:
     """Combined audit view from ShadowAuditGit and GitJournal."""
-    
+
     def __init__(self, db_path: Path, repo_root: Path):
         self.shadow = ShadowAuditGit(db_path)
         self.journal = GitJournal(repo_root, session_id="unified")
-        
+
     def get_full_audit_trail(self, project_id: str) -> list[dict]:
         """Get complete audit trail from both sources."""
         commits = self.shadow.get_audit_log(project_id)
         journal_entries = self.journal.get_audit_log()
-        
+
         # Merge and sort by timestamp
         combined = [
             {"source": "commit", **c.model_dump()} for c in commits
@@ -744,20 +744,20 @@ thegent audit journal snapshot --session "$SESSION_ID" --path "$REPO_ROOT"
 ```python
 class GitJournalBatched(GitJournal):
     """GitJournal with batched commits for high-frequency changes."""
-    
+
     def __init__(self, repo_root: Path, session_id: str, batch_size: int = 10):
         super().__init__(repo_root, session_id)
         self.batch_size = batch_size
         self._pending_changes: list[tuple[Path, Optional[bytes], str]] = []
-        
-    def record_file_change(self, file_path: Path, content: Optional[bytes], 
+
+    def record_file_change(self, file_path: Path, content: Optional[bytes],
                           action: str = "modified") -> str:
         self._pending_changes.append((file_path, content, action))
-        
+
         if len(self._pending_changes) >= self.batch_size:
             return self._flush_batch()
         return ""
-        
+
     def _flush_batch(self) -> str:
         """Commit all pending changes in a single tree."""
         # Build complete tree from pending changes
@@ -770,11 +770,11 @@ class GitJournalBatched(GitJournal):
 ```python
 class GitJournalCached(GitJournal):
     """GitJournal with object caching."""
-    
+
     def __init__(self, repo_root: Path, session_id: str):
         super().__init__(repo_root, session_id)
         self._blob_cache: dict[bytes, str] = {}  # content -> sha
-        
+
     def _hash_object(self, content: bytes) -> str:
         if content in self._blob_cache:
             return self._blob_cache[content]
@@ -819,17 +819,17 @@ The native secret scanner (BKM-11) provides comprehensive detection:
 ```python
 class AttestationConfig:
     """Configuration for cryptographic attestation."""
-    
+
     # Use SHA-256 for stronger hashing
     hash_algorithm: str = "sha256"
-    
+
     # Sign commits with GPG key
     gpg_sign: bool = True
     gpg_key_id: Optional[str] = None
-    
+
     # Submit to transparency log (Sigstore)
     transparency_log: bool = True
-    
+
     # Attestation expiry
     attestation_ttl_days: int = 365
 ```
@@ -839,10 +839,10 @@ class AttestationConfig:
 ```python
 class GitJournalACL:
     """Access control for GitJournal operations."""
-    
+
     def __init__(self, allowed_sessions: set[str]):
         self.allowed_sessions = allowed_sessions
-        
+
     def check_permission(self, session_id: str, operation: str) -> bool:
         """Check if session has permission for operation."""
         if session_id not in self.allowed_sessions:
@@ -856,20 +856,20 @@ class GitJournalACL:
 ```python
 class IntegrityVerifier:
     """Verify audit log integrity."""
-    
+
     def __init__(self, repo_root: Path):
         self.repo_root = repo_root
-        
+
     def verify_chain(self, session_id: str) -> bool:
         """Verify commit chain integrity."""
         result = subprocess.run(
-            ["git", "fsck", "--no-progress", 
+            ["git", "fsck", "--no-progress",
              f"refs/audit/{session_id}"],
             cwd=self.repo_root,
             capture_output=True,
         )
         return result.returncode == 0
-        
+
     def compute_merkle_root(self, session_id: str) -> str:
         """Compute Merkle root of all commits in session."""
         # Use git cat-file to build Merkle tree
@@ -964,5 +964,5 @@ The phased implementation allows for incremental value delivery while maintainin
 
 ---
 
-*Document Status: Enhancement Plan Ready*  
+*Document Status: Enhancement Plan Ready*
 *Last Updated: 2026-02-20*

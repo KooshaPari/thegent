@@ -1,7 +1,7 @@
 # Security and Compliance Signoff Package
 
-**Version:** 1.0  
-**Status:** PROVISIONAL  
+**Version:** 1.0
+**Status:** PROVISIONAL
 **Date:** 2026-02-14
 
 ## 1. Executive Summary
@@ -52,4 +52,3 @@ Thegent orchestration layer provides a unified control plane for agent execution
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

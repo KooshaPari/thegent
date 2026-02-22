@@ -152,4 +152,3 @@ validate_browser(cls: Any, v: str)
 Validate browser is one of the supported types.
 
 ---
-

@@ -229,6 +229,28 @@ class TestProjectTenancyRegistry:
                 template="none",
             )
 
+    def test_sync_project_updates_template_metadata(self, tenancy, tmp_project: Path) -> None:
+        tenancy.init_project(
+            name="sync-me",
+            tenant_id="sync-me",
+            path=tmp_project,
+            template="none",
+            template_version="1.0.0",
+        )
+
+        updated = tenancy.sync_project(
+            path=tmp_project,
+            template="ag-dd",
+            template_version="2.0.0",
+        )
+
+        assert updated.template == "ag-dd"
+        assert updated.template_version == "2.0.0"
+        refreshed = tenancy.get_project(path=tmp_project)
+        assert refreshed is not None
+        assert refreshed.template == "ag-dd"
+        assert refreshed.template_version == "2.0.0"
+
     def test_missing_path_raises(self, tenancy) -> None:
         with pytest.raises(FileNotFoundError):
             tenancy.init_project(
@@ -966,6 +988,193 @@ class TestSetupProjectDoctorCli:
         payload = json.loads(result.output)
         assert isinstance(payload, list)
         assert payload[0]["project"] == "dr-json"
+
+
+@pytest.mark.requirement("FR-TEN-001")
+class TestSetupProjectMigrateCli:
+    """CLI tests for `thegent sys setup project migrate`."""
+
+    def test_migrate_dry_run_adopt_does_not_write_registry(
+        self, cli_runner: CliRunner, project_cli, tmp_path: Path, monkeypatch
+    ) -> None:
+        proj = tmp_path / "migrate-dry-run"
+        proj.mkdir()
+        fresh = _patch_tenancy(monkeypatch, tmp_path / "reg.json")
+        monkeypatch.setattr(
+            "thegent.install.run_install_project",
+            lambda *_, **__: {
+                "project_selector": str(proj),
+                "template": "none",
+                "installed": [],
+                "skipped": [],
+                "errors": [],
+                "status": "deferred",
+            },
+        )
+
+        result = cli_runner.invoke(
+            project_cli,
+            ["migrate", str(proj), "--dry-run", "--register", "--json"],
+        )
+        assert result.exit_code == 0, result.output
+        payload = json.loads(result.output)
+        assert payload["registration"]["status"] == "adopted (dry-run)"
+        assert payload["runtime"]["status"] == "deferred"
+        assert fresh.get_project(path=proj) is None
+
+    def test_migrate_rejects_conflicting_name_on_dry_run(
+        self, cli_runner: CliRunner, project_cli, tmp_path: Path, monkeypatch
+    ) -> None:
+        existing = tmp_path / "existing"
+        existing.mkdir()
+        new_project = tmp_path / "new-project"
+        new_project.mkdir()
+        fresh = _patch_tenancy(monkeypatch, tmp_path / "reg.json")
+        fresh.init_project(
+            name="conflict-name",
+            tenant_id="existing-tenant",
+            path=existing,
+            template="none",
+        )
+
+        result = cli_runner.invoke(
+            project_cli,
+            [
+                "migrate",
+                str(new_project),
+                "--name",
+                "conflict-name",
+                "--dry-run",
+                "--register",
+            ],
+        )
+        assert result.exit_code != 0
+        assert "Conflict on name" in result.output
+        assert fresh.get_project(name="conflict-name", path=existing) is not None
+
+    def test_migrate_invalid_lock_is_warning_only(
+        self, cli_runner: CliRunner, project_cli, tmp_path: Path, monkeypatch
+    ) -> None:
+        proj = tmp_path / "existing-project"
+        proj.mkdir()
+        fresh = _patch_tenancy(monkeypatch, tmp_path / "reg.json")
+        record = fresh.init_project(name="existing-project", tenant_id="existing-project", path=proj, template="ag-dd")
+        (proj / ".thegent").mkdir(exist_ok=True)
+        (proj / ".thegent" / "templates.lock").write_text("{", encoding="utf-8")
+
+        captured: dict[str, object] = {}
+
+        def _fake_install(
+            project_selector: str | None = None,
+            template: str = "none",
+            mode: str = "smart",
+            dry_run: bool = False,
+            registry_path: Path | None = None,
+        ) -> dict[str, object]:
+            captured["project_selector"] = project_selector
+            return {
+                "project_selector": str(project_selector),
+                "template": template,
+                "mode": mode,
+                "installed": [],
+                "skipped": [],
+                "errors": [],
+                "status": "applied",
+            }
+
+        monkeypatch.setattr("thegent.install.run_install_project", _fake_install)
+
+        result = cli_runner.invoke(
+            project_cli,
+            ["migrate", str(proj), "--template", "auto", "--json"],
+        )
+        assert result.exit_code == 0, result.output
+        payload = json.loads(result.output)
+        assert payload["snapshot"]["lock_state"] == "invalid"
+        assert payload["snapshot"]["registry_template"] == record.template
+        assert captured["project_selector"] == str(proj)
+
+    def test_migrate_reconciles_existing_template_built_project(
+        self, cli_runner: CliRunner, project_cli, tmp_path: Path, monkeypatch
+    ) -> None:
+        proj = tmp_path / "existing-built"
+        proj.mkdir()
+        fresh = _patch_tenancy(monkeypatch, tmp_path / "reg.json")
+        fresh.init_project(
+            name="existing-built",
+            tenant_id="existing-built",
+            path=proj,
+            template="none",
+            template_version="1.0.0",
+        )
+        thegent_dir = proj / ".thegent"
+        thegent_dir.mkdir()
+        (thegent_dir / "templates.lock").write_text(
+            json.dumps({"template": "ag-dd", "version": "1.1.0"}), encoding="utf-8"
+        )
+
+        calls: dict[str, object] = {}
+
+        def _fake_install(
+            project_selector: str | None = None,
+            template: str = "none",
+            mode: str = "smart",
+            dry_run: bool = False,
+            registry_path: Path | None = None,
+        ) -> dict[str, object]:
+            calls["template"] = template
+            calls["mode"] = mode
+            calls["dry_run"] = dry_run
+            calls["registry_path"] = registry_path
+            return {
+                "project_selector": str(project_selector),
+                "template": template,
+                "installed": [],
+                "skipped": [],
+                "errors": [],
+                "status": "applied" if not dry_run else "dry_run",
+            }
+
+        monkeypatch.setattr("thegent.install.run_install_project", _fake_install)
+
+        result = cli_runner.invoke(project_cli, ["migrate", str(proj), "--json"])
+        assert result.exit_code == 0, result.output
+        payload = json.loads(result.output)
+
+        assert payload["registration"]["status"] == "reconciled"
+        assert calls["template"] == "ag-dd"
+        updated = fresh.get_project(path=proj)
+        assert updated is not None
+        assert updated.template == "ag-dd"
+        assert updated.template_version == "1.1.0"
+
+    def test_migrate_dry_run_keeps_registry_updates_planned(self, cli_runner: CliRunner, project_cli, tmp_path: Path, monkeypatch) -> None:
+        proj = tmp_path / "existing-built-dry"
+        proj.mkdir()
+        fresh = _patch_tenancy(monkeypatch, tmp_path / "reg.json")
+        fresh.init_project(
+            name="existing-built-dry",
+            tenant_id="existing-built-dry",
+            path=proj,
+            template="none",
+            template_version="1.0.0",
+        )
+        thegent_dir = proj / ".thegent"
+        thegent_dir.mkdir()
+        (thegent_dir / "templates.lock").write_text(
+            json.dumps({"template": "ag-dd", "version": "1.2.0"}), encoding="utf-8"
+        )
+
+        result = cli_runner.invoke(project_cli, ["migrate", str(proj), "--dry-run", "--json"])
+        assert result.exit_code == 0, result.output
+        payload = json.loads(result.output)
+        assert payload["registration"]["status"] == "already_registered"
+        assert payload["registration"]["planned_reconcile"] is True
+        assert payload["registration"]["reconcile_changes"]["template"] == "ag-dd"
+        recorded = fresh.get_project(path=proj)
+        assert recorded is not None
+        assert recorded.template == "none"
+        assert recorded.template_version == "1.0.0"
 
 
 @pytest.mark.requirement("FR-TEN-001")

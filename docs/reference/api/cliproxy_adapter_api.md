@@ -28,4 +28,3 @@ get_model_metadata(_: Any)
 ```
 
 ---
-

@@ -86,4 +86,3 @@ TOOL_ICONS: dict[str, str] = {
     "thegent_events_replay": "≡",
     "thegent_macos_run_script": "⌘",
 }
-

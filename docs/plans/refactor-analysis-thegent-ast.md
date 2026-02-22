@@ -1,8 +1,8 @@
 # AST Analysis: thegent Agents/Hooks/CLI Redundancy & Consolidation
 
-**Date**: 2026-02-21  
-**Agent**: code analysis agent  
-**Status**: CRITICAL FINDINGS - Consolidation Required  
+**Date**: 2026-02-21
+**Agent**: code analysis agent
+**Status**: CRITICAL FINDINGS - Consolidation Required
 **Priority**: HIGH
 
 ---
@@ -43,7 +43,7 @@ Agents: qa-verification-lead, quality-gatekeeper, quality-agent
 Lines: 3-4 per agent definition
 
 qa-verification-lead: "Confirms zen-mcp-server validation evidence before promotion"
-quality-gatekeeper: "Enforces zen-mcp-server phase exits with documented evidence"  
+quality-gatekeeper: "Enforces zen-mcp-server phase exits with documented evidence"
 quality-agent: "Specialized agent for fixing code quality issues (lint, types, tests, style)"
 
 ISSUE: quality-gatekeeper and qa-verification-lead are semantic duplicates.
@@ -287,7 +287,7 @@ hooks/lib/common.sh exists but:
   - No clear contract/interface documented
   - Missing utility functions that are duplicated across hooks
 
-ACTION: 
+ACTION:
   1. Document hooks/lib/ contract in README
   2. Add to all gardener-*.sh: source "${BASH_SOURCE[0]%/*}/../lib/common.sh"
   3. Extract duplicated functions into lib/
@@ -380,9 +380,9 @@ cli/commands/ (3 files) - DRY refactoring
 
 ## Sign-Off
 
-**Analysis Date**: 2026-02-21  
-**Analyzer**: code analysis agent  
-**Reviewer**: (pending)  
+**Analysis Date**: 2026-02-21
+**Analyzer**: code analysis agent
+**Reviewer**: (pending)
 **Status**: Ready for consolidation planning
 
 Next: Submit to team-lead for prioritization and assignment to refactoring agents.

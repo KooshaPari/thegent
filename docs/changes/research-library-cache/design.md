@@ -45,13 +45,13 @@ def get_cache_lfu(maxsize: int) -> LFUCache:
 def cached_method(cache_or_factory, key=None, ttl=None, policy='lru'):
     """
     Decorator for caching method results.
-    
+
     Args:
         cache_or_factory: Cache instance or factory function
         key: Key function (default: use all args/kwargs)
         ttl: TTL in seconds (only if cache supports it)
         policy: Cache policy ('lru', 'lfu', 'ttl')
-    
+
     Returns: Decorated function with caching
     """
     # Thin layer over @cachetools.cached
@@ -59,7 +59,7 @@ def cached_method(cache_or_factory, key=None, ttl=None, policy='lru'):
         cache = cache_or_factory()
     else:
         cache = cache_or_factory
-    
+
     return cached(cache=cache, key=key)
 ```
 
@@ -85,7 +85,7 @@ from cachetools import cached
 
 class DataManager:
     _cache = get_cache_lru(maxsize=50)
-    
+
     @cached(cache=_cache)
     def get_item(self, item_id: str):
         return self._fetch_item(item_id)

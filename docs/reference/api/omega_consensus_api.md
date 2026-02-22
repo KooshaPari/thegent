@@ -121,4 +121,3 @@ propose_state(self: Any, proposer_id: str, state: Any, metadata: dict[(str, Any)
 Propose a new final state for the project.
 
 ---
-

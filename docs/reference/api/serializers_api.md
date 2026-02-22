@@ -79,4 +79,3 @@ Serialize to JSON.
 **Returns**: JSON string
 
 ---
-

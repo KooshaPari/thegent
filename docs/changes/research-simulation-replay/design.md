@@ -53,7 +53,7 @@ class ToolCallRecord:
     status: str = "success"  # success | error | timeout
     error_msg: Optional[str] = None
     timestamp: str = ""
-    
+
     def to_json_line(self) -> str:
         return json.dumps(asdict(self))
 
@@ -82,7 +82,7 @@ class SessionRecord:
 
 class TraceRecorder:
     """Records execution traces to JSONL format."""
-    
+
     def __init__(self, session_id: str, trace_dir: Optional[Path] = None):
         self.session_id = session_id
         self.trace_dir = trace_dir or Path.home() / ".thegent" / "traces"
@@ -92,18 +92,18 @@ class TraceRecorder:
         self._write_queue = asyncio.Queue()
         self._running = False
         self._compression = zstd.ZstdCompressor()
-        
+
     async def start(self):
         """Start async recording."""
         self._running = True
         asyncio.create_task(self._write_worker())
-        
+
     async def stop(self):
         """Stop recording and flush."""
         self._running = False
         await self._write_queue.join()
         await self._compress_trace()
-        
+
     async def record_tool_call(
         self,
         tool_name: str,
@@ -132,7 +132,7 @@ class TraceRecorder:
         )
         self.call_index += 1
         await self._write_queue.put(record.to_json_line())
-        
+
     async def record_decision(
         self,
         decision_type: str,
@@ -148,7 +148,7 @@ class TraceRecorder:
             timestamp=datetime.utcnow().isoformat(),
         )
         await self._write_queue.put(json.dumps(asdict(record)))
-        
+
     async def record_session(self, task_id: str, model: str, provider: str, config: Dict):
         """Record session start."""
         record = SessionRecord(
@@ -161,7 +161,7 @@ class TraceRecorder:
             start_time=datetime.utcnow().isoformat(),
         )
         await self._write_queue.put(json.dumps(asdict(record)))
-        
+
     def _redact(self, tool_name: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Redact sensitive data from inputs."""
         redacted = inputs.copy()
@@ -171,12 +171,12 @@ class TraceRecorder:
             if key in redacted:
                 redacted[key] = "***REDACTED***"
         return redacted
-        
+
     def _truncate(self, result: Any, max_size: int = 10_000) -> Any:
         """Truncate large results."""
         result_str = json.dumps(result)[:max_size]
         return json.loads(result_str)
-        
+
     async def _write_worker(self):
         """Async writer worker."""
         with open(self.trace_file, 'a') as f:
@@ -187,7 +187,7 @@ class TraceRecorder:
                     self._write_queue.task_done()
                 except asyncio.TimeoutError:
                     continue
-                    
+
     async def _compress_trace(self):
         """Compress trace file after recording."""
         # Gzip for now; can upgrade to zstd for better compression
@@ -230,7 +230,7 @@ from dataclasses import dataclass
 class ExecutionContext:
     trace_records: List[Dict[str, Any]]
     record_index: int = 0
-    
+
     def next_record(self) -> Optional[Dict[str, Any]]:
         if self.record_index < len(self.trace_records):
             record = self.trace_records[self.record_index]
@@ -240,7 +240,7 @@ class ExecutionContext:
 
 class ReplayEngine:
     """Re-executes workflows with mocked tool calls."""
-    
+
     def __init__(self, trace_file: Path, fallback_mode: str = "mock"):
         """
         Args:
@@ -250,7 +250,7 @@ class ReplayEngine:
         self.trace_file = trace_file
         self.fallback_mode = fallback_mode
         self.context = self._load_trace(trace_file)
-        
+
     def _load_trace(self, trace_file: Path) -> ExecutionContext:
         """Load trace from JSONL file."""
         records = []
@@ -259,14 +259,14 @@ class ReplayEngine:
                 if line.strip():
                     records.append(json.loads(line))
         return ExecutionContext(trace_records=records)
-        
+
     async def replay(self, workflow_fn, *args, **kwargs) -> Dict[str, Any]:
         """Re-execute workflow with mocked tool calls."""
         # Inject mocks into execution context
         original_tool_executor = self._get_tool_executor()
         mocked_executor = self._create_mock_executor()
         self._set_tool_executor(mocked_executor)
-        
+
         try:
             result = await workflow_fn(*args, **kwargs)
             return {
@@ -282,7 +282,7 @@ class ReplayEngine:
             }
         finally:
             self._set_tool_executor(original_tool_executor)
-            
+
     def _create_mock_executor(self):
         """Create mock tool executor that returns traced results."""
         def mock_executor(tool_name: str, inputs: Dict[str, Any]) -> Any:
@@ -290,7 +290,7 @@ class ReplayEngine:
             if record and record.get("type") == "tool_call":
                 if record.get("tool_name") == tool_name:
                     return record.get("result")
-            
+
             # Fallback behavior
             if self.fallback_mode == "mock":
                 return self._get_default_result(tool_name)
@@ -301,9 +301,9 @@ class ReplayEngine:
                 return self._execute_live(tool_name, inputs)
             else:  # error
                 raise RuntimeError(f"Trace mismatch for {tool_name}")
-                
+
         return mock_executor
-        
+
     def _get_default_result(self, tool_name: str) -> Any:
         """Return sensible default based on tool type."""
         defaults = {
@@ -313,7 +313,7 @@ class ReplayEngine:
             "llm_call": "Mock response",
         }
         return defaults.get(tool_name, None)
-        
+
     def _execute_live(self, tool_name: str, inputs: Dict[str, Any]) -> Any:
         """Execute tool live (fallback)."""
         # Delegate to real tool execution
@@ -335,11 +335,11 @@ import hashlib
 
 class LLMCallMocker:
     """Mocks LLM calls from trace data."""
-    
+
     def __init__(self, trace_context):
         self.trace_context = trace_context
         self.call_cache = {}
-        
+
     def mock_llm_call(
         self,
         model: str,
@@ -350,20 +350,20 @@ class LLMCallMocker:
         """Mock LLM call by returning traced response."""
         # Hash the call signature for lookup
         call_hash = self._hash_call(model, prompt, temperature)
-        
+
         # Look up in trace
         record = self._find_trace_record(model, prompt)
         if record:
             return record.get("result", "")
-            
+
         # Fallback
         return f"[MOCK] Model={model}, Tokens={max_tokens}"
-        
+
     def _hash_call(self, model: str, prompt: str, temperature: float) -> str:
         """Hash LLM call for matching."""
         key = f"{model}:{prompt}:{temperature}"
         return hashlib.sha256(key.encode()).hexdigest()[:8]
-        
+
     def _find_trace_record(self, model: str, prompt_prefix: str) -> Optional[Dict]:
         """Find matching trace record for LLM call."""
         for record in self.trace_context.trace_records:
@@ -404,23 +404,23 @@ class Difference:
 
 class DiffAnalyzer:
     """Compares original and replayed executions."""
-    
+
     def __init__(self, original_trace_file: str, replayed_trace_file: str):
         self.original_records = self._load_trace(original_trace_file)
         self.replayed_records = self._load_trace(replayed_trace_file)
-        
+
     def analyze(self) -> Dict[str, Any]:
         """Analyze differences."""
         differences = []
         matching = 0
-        
+
         for i, (orig, repl) in enumerate(zip(self.original_records, self.replayed_records)):
             if self._records_equal(orig, repl):
                 matching += 1
             else:
                 diff = self._classify_difference(orig, repl, i)
                 differences.append(diff)
-                
+
         return {
             "total_calls": len(self.original_records),
             "matching": matching,
@@ -428,17 +428,17 @@ class DiffAnalyzer:
             "differences": differences,
             "summary": self._generate_summary(differences),
         }
-        
+
     def _records_equal(self, rec1: Dict, rec2: Dict) -> bool:
         """Check if records are equal."""
         # Compare results, ignoring metadata
         return (rec1.get("tool_name") == rec2.get("tool_name") and
                 rec1.get("result") == rec2.get("result"))
-                
+
     def _classify_difference(self, orig: Dict, repl: Dict, index: int) -> Difference:
         """Classify difference as deterministic or non-deterministic."""
         tool_name = orig.get("tool_name", "unknown")
-        
+
         # Deterministic changes: model upgrade, config change
         if self._is_config_change(orig, repl):
             change_type = ChangeType.DETERMINISTIC
@@ -447,7 +447,7 @@ class DiffAnalyzer:
         else:
             change_type = ChangeType.NON_DETERMINISTIC
             reason = "Unexpected output divergence (logic bug or flaky code)"
-            
+
         return Difference(
             tool_name=tool_name,
             call_index=index,
@@ -456,27 +456,27 @@ class DiffAnalyzer:
             change_type=change_type,
             reason=reason,
         )
-        
+
     def _is_config_change(self, orig: Dict, repl: Dict) -> bool:
         """Detect if difference is due to config change."""
         # Check for model, provider, or routing changes
         model_changed = orig.get("model") != repl.get("model")
         provider_changed = orig.get("provider") != repl.get("provider")
         return model_changed or provider_changed
-        
+
     def _generate_summary(self, differences: List[Difference]) -> str:
         """Generate human-readable summary."""
         if not differences:
             return "100% match - no divergences"
-            
+
         deterministic = sum(1 for d in differences if d.change_type == ChangeType.DETERMINISTIC)
         non_deterministic = len(differences) - deterministic
-        
+
         if non_deterministic == 0:
             return f"All {deterministic} divergences are deterministic (expected)"
         else:
             return f"{non_deterministic} non-deterministic divergences detected - review needed"
-            
+
     def _load_trace(self, trace_file: str) -> List[Dict]:
         """Load trace from file."""
         records = []
@@ -503,10 +503,10 @@ import copy
 
 class TraceVariator:
     """Modifies traces parametrically for simulation."""
-    
+
     def __init__(self, base_trace_file: Path):
         self.base_trace = self._load_trace(base_trace_file)
-        
+
     def vary_model(self, new_model: str) -> List[Dict]:
         """Create variation with different model."""
         varied = copy.deepcopy(self.base_trace)
@@ -517,7 +517,7 @@ class TraceVariator:
                 # Simulate different token counts for new model
                 record["tokens_used"] = int(record.get("tokens_used", 0) * 0.8)
         return varied
-        
+
     def vary_routing(self, new_policy: str) -> List[Dict]:
         """Create variation with different routing policy."""
         varied = copy.deepcopy(self.base_trace)
@@ -526,7 +526,7 @@ class TraceVariator:
                 record["choice"] = new_policy
                 record["reasoning"] = f"Routing policy changed to: {new_policy}"
         return varied
-        
+
     def vary_config(self, config_changes: Dict[str, Any]) -> List[Dict]:
         """Create variation with config changes."""
         varied = copy.deepcopy(self.base_trace)
@@ -534,25 +534,25 @@ class TraceVariator:
             if record.get("type") == "session":
                 record["config"].update(config_changes)
         return varied
-        
+
     def batch_vary(
         self,
         parameter_grid: Dict[str, List[Any]]
     ) -> List[tuple[str, List[Dict]]]:
         """Create multiple variations from parameter grid."""
         variations = []
-        
+
         # Example: vary over models and routing policies
         for model in parameter_grid.get("models", []):
             for policy in parameter_grid.get("routing_policies", []):
                 trace = self.vary_model(model)
                 trace = self._apply_routing(trace, policy)
-                
+
                 variant_name = f"model={model}_routing={policy}"
                 variations.append((variant_name, trace))
-                
+
         return variations
-        
+
     def _load_trace(self, trace_file: Path) -> List[Dict]:
         """Load trace from file."""
         records = []
@@ -630,7 +630,7 @@ Inject TraceRecorder at execution layer:
 async def execute_with_trace(workflow_fn, session_id):
     recorder = TraceRecorder(session_id)
     await recorder.start()
-    
+
     try:
         result = await workflow_fn()
         return result
@@ -649,7 +649,7 @@ async def execute_tool(tool_name, inputs):
     try:
         result = await tool_impl(tool_name, inputs)
         duration = time.time() - start_time
-        
+
         await recorder.record_tool_call(
             tool_name=tool_name,
             inputs=inputs,
@@ -673,7 +673,7 @@ Integrate DiffAnalyzer for regression detection:
 if model_upgrade_detected():
     original_trace = get_baseline_trace()
     replayed_trace = replay_with_new_model()
-    
+
     diff_report = DiffAnalyzer(original_trace, replayed_trace).analyze()
     if diff_report["non_deterministic"] > 0:
         raise QualityGateFailure(f"Regressions detected: {diff_report['summary']}")
@@ -705,7 +705,7 @@ trace:
   enabled: true
   async_recording: true
   trace_dir: ~/.thegent/traces
-  
+
   # Redaction policy
   redact:
     - api_key
@@ -713,19 +713,19 @@ trace:
     - token
     - secret
     - user_email
-    
+
   # Retention
   ttl_days: 7
   max_storage_gb: 10
   compression: zstd  # zstd | gzip
-  
+
   # Sampling (record 1 in N traces)
   sample_rate: 1.0
-  
+
 replay:
   fallback_mode: mock  # mock | live | error
   validate_traces: true
-  
+
 variator:
   models:
     - claude-opus-4.6
@@ -777,6 +777,6 @@ variator:
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-02-18  
+**Document Version**: 1.0
+**Last Updated**: 2026-02-18
 **Status**: Ready for implementation

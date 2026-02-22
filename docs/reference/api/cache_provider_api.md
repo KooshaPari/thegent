@@ -72,4 +72,3 @@ ttl_remaining(self: Any)
 Get remaining TTL in seconds, or None if no expiry.
 
 ---
-

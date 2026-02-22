@@ -1229,5 +1229,3 @@ class TestDagReadyWithDeps:
         result = runner.invoke(app, ["dag", "ready", "--cd", str(project)])
         assert result.exit_code == 0
         assert "T2" in result.stdout
-
-

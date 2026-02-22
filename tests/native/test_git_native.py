@@ -30,8 +30,9 @@ _RUST_EXTENSIONS = (
 _originals: dict[str, object] = {}
 for _ext in _RUST_EXTENSIONS:
     _originals[_ext] = sys.modules.get(_ext)
-    if _ext not in sys.modules:
-        sys.modules[_ext] = MagicMock()
+    # Always force mocks for deterministic unit behavior, even when native
+    # extensions are installed in the active environment.
+    sys.modules[_ext] = MagicMock()
 
 # Configure realistic defaults for thegent_git
 _GIT_MOCK: MagicMock = sys.modules["thegent_git"]  # type: ignore[assignment]

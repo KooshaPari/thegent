@@ -170,4 +170,3 @@ grep -r "os\.environ\|os\.getenv" src/ --include="*.py" | grep -v "__pycache__"
 - [ ] No regressions in pytest (all tests pass)
 - [ ] No regressions in CLI (thegent commands work normally)
 - [ ] Grep for `os.environ` in src/ returns 0 results (except validators)
-

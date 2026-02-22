@@ -55,4 +55,3 @@ Get queue depth for device.
 **Returns**: Queue depth
 
 ---
-

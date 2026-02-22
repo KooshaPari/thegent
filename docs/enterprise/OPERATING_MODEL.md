@@ -1,7 +1,7 @@
 # Program Operating Model and Ownership Map
 
-**Scope:** thegent orchestration platform  
-**Date:** 2026-02-14  
+**Scope:** thegent orchestration platform
+**Date:** 2026-02-14
 **Related:** WP-0005, `docs/RUNBOOK.md`, `docs/research/GOVERNANCE_WP_GAPS.md`
 
 ---

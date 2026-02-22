@@ -308,6 +308,13 @@ class TestIsNativeAvailable:
         assert is_native_available() == (_mod._native_module is not None)
 
 
+if os.environ.get("THGENT_ENFORCE_NATIVE_SHM_TESTS", "0") == "1" and not is_native_available():
+    pytest.fail(
+        "THGENT_ENFORCE_NATIVE_SHM_TESTS=1 but thegent_shm native extension is unavailable",
+        pytrace=False,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Native path smoke test (skipped if extension unavailable)
 # ---------------------------------------------------------------------------

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
+import re
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -12,11 +14,16 @@ from typing import Any
 import psutil
 import yaml
 
+from thegent.mesh.task_queue import MaildirQueue
+
 _log = logging.getLogger(__name__)
 
 
 class MeshManager:
     """Core mesh initialization and process detection for agent coordination."""
+
+    HEARTBEAT_INTERVAL_SECONDS = 5
+    STALE_THRESHOLD_SECONDS = 15
 
     def __init__(self, mesh_root: Path = Path("/tmp/agent-mesh")) -> None:
         self.mesh_root = mesh_root
@@ -36,7 +43,7 @@ class MeshManager:
         """Check if a process matches patterns. Returns process info or None."""
         try:
             cmdline = " ".join(proc.info["cmdline"] or [])
-            if any(p in cmdline.lower() for p in patterns):
+            if any(re.search(pattern, cmdline, flags=re.IGNORECASE) for pattern in patterns):
                 return {
                     "pid": proc.info["pid"],
                     "name": proc.info["name"],
@@ -67,9 +74,23 @@ class MeshManager:
         hb_file = self.agents_dir / f"{agent_id}.heartbeat"
         hb_file.touch()
 
-    def cleanup_stale(self, threshold: int = 15) -> None:
+    def start_heartbeat_loop(self, agent_id: str, stop_event: threading.Event | None = None) -> threading.Event:
+        """Start a background heartbeat loop for *agent_id* (5 seconds by default)."""
+        if stop_event is None:
+            stop_event = threading.Event()
+
+        def _run() -> None:
+            while not stop_event.is_set():
+                self.heartbeat(agent_id)
+                stop_event.wait(self.HEARTBEAT_INTERVAL_SECONDS)
+
+        threading.Thread(target=_run, daemon=True).start()
+        return stop_event
+
+    def cleanup_stale(self, threshold: int = STALE_THRESHOLD_SECONDS) -> int:
         """Cleanup agents whose heartbeats are older than threshold."""
         now = time.time()
+        reclaimed = 0
         for hb in self.agents_dir.glob("*.heartbeat"):
             if now - hb.stat().st_mtime > threshold:
                 agent_id = hb.stem
@@ -78,6 +99,13 @@ class MeshManager:
                 manifest = self.agents_dir / f"{agent_id}.yaml"
                 if manifest.exists():
                     manifest.unlink()
+                reclaimed += self._reclaim_tasks(agent_id)
+        return reclaimed
+
+    def _reclaim_tasks(self, agent_id: str) -> int:
+        """Reclaim in-flight tasks currently owned by a stale agent."""
+        queue = MaildirQueue(self.queue_dir)
+        return queue.reclaim_owner(agent_id)
 
 
 class MeshIPC:

@@ -21,4 +21,3 @@ run_hook(hook_path: Path, input_data: Any, timeout: int)
 Run a hook script using the preferred shell.
 
 ---
-

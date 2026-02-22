@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase3-6-closure-validator-python-implementation-blu
 
 # Thegent Phase 3–6 Closure Validator Python Implementation Blueprint
 
-**Status:** Implementation blueprint  
-**Date:** 2026-02-15  
+**Status:** Implementation blueprint
+**Date:** 2026-02-15
 **Scope:** Concrete Python module design, interfaces, and failure semantics for runnable closure-validator execution.
 
 ## 1) Purpose

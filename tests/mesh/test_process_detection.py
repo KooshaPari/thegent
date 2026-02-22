@@ -10,6 +10,7 @@ Covers:
 from __future__ import annotations
 
 import time
+import os
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
@@ -18,6 +19,7 @@ import yaml
 
 from thegent.mesh.mesh import MeshManager
 from thegent.mesh.process_detection import detect_agents, get_processes
+from thegent.mesh.task_queue import MaildirQueue
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -370,3 +372,36 @@ class TestStaleCleanup:
         # Should not raise
         mgr.cleanup_stale(threshold=15)
         assert not hb_path.exists()
+
+    # @trace TGNT-P12.4
+    def test_cleanup_reclaims_stale_agent_tasks(self, tmp_path: Path) -> None:
+        """cleanup_stale moves in-flight tasks owned by stale agents back to new/."""
+        mesh_root = tmp_path / "mesh"
+        mgr = MeshManager(mesh_root=mesh_root)
+        queue = MaildirQueue(mesh_root / "queue")
+
+        queue.enqueue({"work": "stale-agent-task"})
+        stale_task = queue.dequeue(owner="stale-agent")
+        assert stale_task is not None
+
+        queue.enqueue({"work": "other-agent-task"})
+        active_task = queue.dequeue(owner="active-agent")
+        assert active_task is not None
+
+        mgr.register_agent("stale-agent", {"type": "claude", "pid": 123})
+        mgr.register_agent("active-agent", {"type": "claude", "pid": 456})
+        mgr.heartbeat("stale-agent")
+        mgr.heartbeat("active-agent")
+
+        stale_hb = mgr.agents_dir / "stale-agent.heartbeat"
+        active_hb = mgr.agents_dir / "active-agent.heartbeat"
+        old_time = time.time() - 30
+        os.utime(stale_hb, (old_time, old_time))
+        fresh_time = time.time()
+        os.utime(active_hb, (fresh_time, fresh_time))
+
+        reclaimed = mgr.cleanup_stale(threshold=15)
+        assert reclaimed == 1
+        assert (queue._new / stale_task["id"]).exists()
+        assert not (queue._cur / stale_task["id"]).exists()
+        assert (queue._cur / active_task["id"]).exists()

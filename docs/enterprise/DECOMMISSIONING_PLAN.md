@@ -1,7 +1,7 @@
 # Decommissioning and Sunset Plan
 
-**Scope:** Temporary controls and legacy adapters in thegent  
-**Date:** 2026-02-14  
+**Scope:** Temporary controls and legacy adapters in thegent
+**Date:** 2026-02-14
 **Related:** WP-6006, `docs/RUNBOOK.md` §5
 
 ## 1. Overview

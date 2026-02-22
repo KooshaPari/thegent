@@ -80,7 +80,7 @@ class MeshCache:
         """Invalidate cache entries affected by file changes (SCLI-P7.2)."""
         # In this implementation, we assume keys might be hashes of file paths
         count = 0
-        file_hash = hashlib.sha256(file_path.encode()).hexdigest()
+        file_hash = hashlib.md5(file_path.encode()).hexdigest()
         for cache_file in self.cache_dir.glob(f"*{file_hash}*"):
             cache_file.unlink()
             count += 1

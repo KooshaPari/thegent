@@ -31,4 +31,3 @@ With Phase 15 complete, thegent has surpassed its original 12-phase mission and 
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

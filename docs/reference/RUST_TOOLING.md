@@ -69,7 +69,7 @@ Run `brew bundle` from the project root to install ripgrep, fd, jaq, procs (and 
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

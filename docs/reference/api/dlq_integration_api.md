@@ -51,4 +51,3 @@ Process escalation queue with DLQ fallback.
 - `max_retries`: Maximum retry attempts
 
 ---
-

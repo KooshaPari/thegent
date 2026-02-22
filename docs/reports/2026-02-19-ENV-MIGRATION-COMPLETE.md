@@ -8,8 +8,8 @@
 
 ### ✅ **All Configuration Variables Migrated**
 
-**Total Files Migrated:** 40+ files  
-**Total Settings Added:** 25+ new settings  
+**Total Files Migrated:** 40+ files
+**Total Settings Added:** 25+ new settings
 **Remaining:** Only runtime values (THGENT_SESSION_ID, THGENT_RUN_ID, THGENT_TESTING) and subprocess env copies
 
 ---

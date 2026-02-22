@@ -13,4 +13,3 @@ List all available LSP servers with installation status.
 **Returns**: Dict mapping language to server info with 'installed' status
 
 ---
-

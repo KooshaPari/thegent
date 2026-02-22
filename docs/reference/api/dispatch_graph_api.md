@@ -67,4 +67,3 @@ Resolve the operation to a dispatch path.
 **Returns**: Dict with 'dispatch_path', 'resolved_command', 'status'.
 
 ---
-

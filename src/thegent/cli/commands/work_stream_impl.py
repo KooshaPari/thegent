@@ -17,6 +17,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from thegent.cli.services import pre_work_gate_helpers
 from thegent.cli.services import work_stream_orchestration
 
 
@@ -27,6 +28,57 @@ from thegent.cli.services import work_stream_orchestration
 # ---------------------------------------------------------------------------
 
 _log = __import__("logging").getLogger(__name__)
+
+
+def _pre_work_gate_defaults() -> dict[str, Any]:
+    """Wrapper for pre-work gate defaults helper."""
+    return pre_work_gate_helpers.pre_work_gate_defaults()
+
+
+def _pre_work_gate_thresholds(project_dir: Path) -> tuple[dict[str, Any], str]:
+    """Wrapper for pre-work gate thresholds helper."""
+    return pre_work_gate_helpers.pre_work_gate_thresholds(project_dir)
+
+
+def _evidence_age_minutes(path: Path) -> int:
+    """Wrapper for evidence-age helper."""
+    return pre_work_gate_helpers.evidence_age_minutes(path)
+
+
+def _pre_work_governance_block_payload(
+    *,
+    project_dir: Path,
+    thresholds: dict[str, Any],
+    violations: list[dict[str, Any]],
+    config_source: str,
+) -> dict[str, Any]:
+    """Wrapper for governance block payload helper."""
+    return pre_work_gate_helpers.pre_work_governance_block_payload(
+        project_dir=project_dir,
+        thresholds=thresholds,
+        violations=violations,
+        config_source=config_source,
+    )
+
+
+def _enforce_pre_work_hard_gate(project_dir: Path) -> dict[str, Any] | None:
+    """Wrapper for pre-work hard gate helper."""
+    return pre_work_gate_helpers.enforce_pre_work_hard_gate(project_dir)
+
+
+def _validate_task_and_record_errors(tf: Path, validation_errors: list[dict[str, Any]]) -> None:
+    """Wrapper for orchestration validation helper."""
+    return work_stream_orchestration._validate_task_and_record_errors(tf, validation_errors)
+
+
+_PRE_WORK_WRAPPER_EXPORTS = (
+    _pre_work_gate_defaults,
+    _pre_work_gate_thresholds,
+    _evidence_age_minutes,
+    _pre_work_governance_block_payload,
+    _enforce_pre_work_hard_gate,
+    _validate_task_and_record_errors,
+)
 
 
 def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:

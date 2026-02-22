@@ -1,6 +1,6 @@
 # MD Documentation Normalization Guide
 
-> **Status**: Complete | **Date**: 2026-02-17  
+> **Status**: Complete | **Date**: 2026-02-17
 > **Purpose**: Guide for normalizing all MD docs with frontmatter, cross-links, and "See also" sections
 
 ---
@@ -25,7 +25,7 @@ purpose: Brief purpose statement
 ```markdown
 # Document Title
 
-> **Status**: Complete | **Date**: YYYY-MM-DD  
+> **Status**: Complete | **Date**: YYYY-MM-DD
 > **Purpose**: Brief purpose statement
 ```
 
@@ -127,7 +127,7 @@ purpose: Brief purpose statement
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

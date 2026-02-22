@@ -1,7 +1,7 @@
 # Tenacity vs Custom Retry — Audit & Plan
 
-> **Purpose**: Audit custom retry/backoff implementations and plan migration to tenacity where appropriate.  
-> **Status**: Implemented | **Date**: 2026-02-16  
+> **Purpose**: Audit custom retry/backoff implementations and plan migration to tenacity where appropriate.
+> **Status**: Implemented | **Date**: 2026-02-16
 > **Related**: [ADVANCED_STRATEGIES_AND_RESILIENCE_RESEARCH](./ADVANCED_STRATEGIES_AND_RESILIENCE_RESEARCH.md), [docs/guides/anti-patterns.md](../guides/anti-patterns.md)
 
 ---
@@ -219,7 +219,7 @@ wait=tenacity.wait_random_exponential(multiplier=1, min=2, max=10)
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Worker Droid
 
 ### Changes Made

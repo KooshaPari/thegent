@@ -1,8 +1,8 @@
 # Retention Policy Design (G-GP-07)
 
-**Purpose:** Design retention by domain, tier transitions, and compliance evidence.  
-**Date:** 2026-02-14  
-**Status:** Design  
+**Purpose:** Design retention by domain, tier transitions, and compliance evidence.
+**Date:** 2026-02-14
+**Status:** Design
 **Source:** GOVERNANCE_POLICY_AUDIT_RESEARCH, WP-3006, 6002
 
 ---

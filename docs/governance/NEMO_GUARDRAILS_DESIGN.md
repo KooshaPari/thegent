@@ -1,8 +1,8 @@
 # NeMo Guardrails Design (G-GP-02)
 
-**Purpose:** Design input guardrails (NeMo-style) before OPA policy checks.  
-**Date:** 2026-02-14  
-**Status:** Design  
+**Purpose:** Design input guardrails (NeMo-style) before OPA policy checks.
+**Date:** 2026-02-14
+**Status:** Design
 **Source:** GOVERNANCE_POLICY_AUDIT_RESEARCH
 
 ---

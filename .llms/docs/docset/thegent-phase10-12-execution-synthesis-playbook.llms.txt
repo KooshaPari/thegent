@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase10-12-execution-synthesis-playbook.md
 
 # Thegent Phase 10–12 Execution Synthesis Playbook
 
-**Status:** Finalized integration playbook  
-**Date:** 2026-02-15  
+**Status:** Finalized integration playbook
+**Date:** 2026-02-15
 **Scope:** End-to-end operational synthesis across WBS, DAG, PRD, tickets, tests, and evidence for phases 10–12.
 
 This playbook is the “single source of execution truth” linking:

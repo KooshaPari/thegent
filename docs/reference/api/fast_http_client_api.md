@@ -253,4 +253,3 @@ OPT-004: Uses persistent client for connection reuse.
 **Returns**: Response object
 
 ---
-

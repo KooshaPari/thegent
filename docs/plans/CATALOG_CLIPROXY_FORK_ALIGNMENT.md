@@ -1,7 +1,7 @@
 # Catalog ↔ CLIProxyAPIPlus Fork Alignment
 
-**Status:** Reference  
-**Date:** 2026-02-15  
+**Status:** Reference
+**Date:** 2026-02-15
 **Context:** Model-first routing (task_router → catalog.resolve_route) returns `(provider, model_alias)`. The execution layer uses cliproxyapi-plusplus at `../cliproxyapi-plusplus/`. This doc aligns catalog providers with fork capabilities.
 
 ---
@@ -104,4 +104,3 @@ Provider definitions from internal JSON (`cliproxy_data/provider_definitions.jso
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

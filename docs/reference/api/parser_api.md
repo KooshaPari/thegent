@@ -150,4 +150,3 @@ Parse YAML frontmatter from markdown content.
 - `ValueError`: If frontmatter is invalid or missing
 
 ---
-

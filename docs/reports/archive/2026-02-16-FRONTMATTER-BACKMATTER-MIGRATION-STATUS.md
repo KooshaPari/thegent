@@ -1,13 +1,13 @@
 # Frontmatter/Backmatter Migration Status — Reality Check
 
-> **Date**: 2026-02-16  
+> **Date**: 2026-02-16
 > **Purpose**: Verify Python frontmatter + Rust/Zig/Nim/Go backmatter migration status; reconcile plan "complete" claims with actual codebase state.
 
 ---
 
 ## Executive Summary
 
-**Plan says**: Phase 1 complete (BKM-01–04), Phase 2–3 pending.  
+**Plan says**: Phase 1 complete (BKM-01–04), Phase 2–3 pending.
 **Reality**: Phase 1 is **partially complete**. BKM-02 (thegent-parser) integration is **missing** in Python; BKM-06 (thegent-git) is **partially done** (snapshot.py uses it). Several legacy patterns (subprocess, lsof, os.environ, shell) remain across 35+ files.
 
 ---

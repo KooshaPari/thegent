@@ -70,3 +70,7 @@ def dispatch_post_agent_run_hook(
     if proc.returncode != 0:
         detail = (proc.stderr or "").strip() or (proc.stdout or "").strip() or f"exit_code={proc.returncode}"
         raise RuntimeError(f"hook-dispatcher postagentrun failed: {detail}")
+
+
+# Backward-compatible alias for historical import path used by tests/callers.
+_dispatch_post_agent_run_hook = dispatch_post_agent_run_hook

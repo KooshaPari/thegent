@@ -92,4 +92,3 @@ wrap_tool(self: Any, tool_id: str)
 Wrap a discovered tool into a standard execution function.
 
 ---
-

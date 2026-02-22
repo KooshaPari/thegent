@@ -32,7 +32,7 @@ _thegent_evalcache() {
   local cmd="$1"
   shift
   local args="$*"
-  
+
   # Generate cache key (hash of command + args)
   local cache_key
   if command -v md5 >/dev/null 2>&1; then
@@ -45,10 +45,10 @@ _thegent_evalcache() {
     # Fallback: use command name + first 8 chars of args hash
     cache_key="$(echo -n "$cmd $args" | od -A n -t x1 | tr -d ' \n' | cut -c1-16)"
   fi
-  
+
   local cache_file="$THEGENT_EVAL_CACHE_DIR/${cache_key}.zsh"
   local cache_meta="$THEGENT_EVAL_CACHE_DIR/${cache_key}.meta"
-  
+
   # Check if cache is valid (exists and not stale)
   if [[ -f "$cache_file" && -f "$cache_meta" ]]; then
     local cache_age cmd_hash
@@ -57,7 +57,7 @@ _thegent_evalcache() {
     local current_time
     current_time=$(date +%s)
     local age=$((current_time - cache_age))
-    
+
     # Cache valid if < 1 hour old and command hash matches
     if [[ $age -lt 3600 && "$cmd_hash" == "$(command -v "$cmd" 2>/dev/null || echo '')" ]]; then
       # Source cached output
@@ -65,13 +65,13 @@ _thegent_evalcache() {
       return 0
     fi
   fi
-  
+
   # Cache miss or stale: run command and cache output
   if ! command -v "$cmd" >/dev/null 2>&1; then
     # Command not found, gracefully degrade
     return 127
   fi
-  
+
   local output
   output="$("$cmd" "$@" 2>/dev/null)"
   if [[ -n "$output" ]]; then
@@ -98,27 +98,27 @@ _thegent_lazy_load() {
   local trigger_cmds="$3"  # Space-separated list of commands that trigger loading
   shift 3
   local init_args="$*"
-  
+
   # Check if already loaded (use indirect variable expansion for zsh compatibility)
   local loaded_var="THEGENT_LAZY_LOADED_${tool_name}"
   # Use eval to safely check indirect variable
   if eval "[[ -n \"\${${loaded_var}:-}\" ]]"; then
     return 0
   fi
-  
+
   # Create wrapper functions for trigger commands
   # Only wrap if command doesn't already exist as a function (avoid conflicts)
   for trigger in $trigger_cmds; do
     local trigger_type
     trigger_type="$(type "$trigger" 2>/dev/null || echo 'not found')"
-    
+
     # Only wrap if it's not already a function (or if it's an alias we want to override)
     if [[ "$trigger_type" != *"function"* ]] || [[ "$trigger_type" == *"alias"* ]]; then
       # Store original if it exists
       if command -v "$trigger" >/dev/null 2>&1; then
         eval "_thegent_orig_${trigger}() { command $trigger \"\$@\"; }"
       fi
-      
+
       # Create lazy-loading wrapper (use indirect expansion for zsh compatibility)
       eval "$trigger() {
         # Load the tool on first use
@@ -143,7 +143,7 @@ _thegent_lazy_load() {
 _thegent_parallel_load() {
   local func_name="$1"
   shift
-  
+
   # Run in background if interactive shell
   if [[ -n "${PS1:-}" ]]; then
     ($func_name "$@" >/dev/null 2>&1) &
@@ -157,13 +157,13 @@ _thegent_parallel_load() {
 typeset -gA THEGENT_TOOL_CACHE
 _thegent_has_tool() {
   local tool="$1"
-  
+
   # Check cache first
   if [[ -n "${THEGENT_TOOL_CACHE[$tool]:-}" ]]; then
     [[ "${THEGENT_TOOL_CACHE[$tool]}" == "1" ]]
     return $?
   fi
-  
+
   # Check if tool exists
   if command -v "$tool" >/dev/null 2>&1; then
     THEGENT_TOOL_CACHE[$tool]=1
@@ -211,34 +211,34 @@ fi
 if [[ -n "${PS1:-}" && -z "${AGENT_ID:-}" ]]; then
   # direnv REMOVED - fully migrated to mise (direnv was 3-4s slower)
   # mise handles all environment management now
-  
+
   # Version managers (lazy load - expensive, often unused)
   # These are loaded on first command use, not at startup
   # NOTE: mise (formerly rtx) is now the primary version manager (see ~/.zshenv)
   # Legacy tools below are DISABLED - mise handles all version management
   # To re-enable: uncomment the sections below and remove MISE_ENV checks
   # See: LEGACY_TOOLS_MIGRATION.md for migration guide
-  
+
   # rbenv (Ruby version manager) - DISABLED (using mise)
   # if _thegent_has_tool rbenv && [[ -z "${MISE_ENV:-}" ]]; then
   #   _thegent_lazy_load rbenv "rbenv" "rbenv ruby bundle gem rake" "init" "-"
   # fi
-  
+
   # jenv (Java version manager) - DISABLED (using mise)
   # if _thegent_has_tool jenv && [[ -z "${MISE_ENV:-}" ]]; then
   #   _thegent_lazy_load jenv "jenv" "jenv java javac mvn gradle" "init" "-"
   # fi
-  
+
   # pyenv (Python version manager) - DISABLED (using mise)
   # if _thegent_has_tool pyenv && [[ -z "${MISE_ENV:-}" ]]; then
   #   _thegent_lazy_load pyenv "pyenv" "pyenv python pip pytest" "init" "-"
   # fi
-  
+
   # nodenv (Node version manager) - DISABLED (using mise)
   # if _thegent_has_tool nodenv && [[ -z "${MISE_ENV:-}" ]]; then
   #   _thegent_lazy_load nodenv "nodenv" "nodenv node npm npx" "init" "-"
   # fi
-  
+
   # nvm (Node version manager - special handling) - REMOVED (fully migrated to mise)
   # mise handles all Node.js version management now
   # See: LEGACY_TOOLS_MIGRATION.md for migration guide
@@ -251,7 +251,7 @@ export THEGENT_SHELL_OPTIMIZATION_LOADED=1
 _thegent_cleanup_optimization() {
   # Kill fork guard if running
   [[ -n "${THEGENT_FORK_GUARD_PID:-}" ]] && kill "$THEGENT_FORK_GUARD_PID" 2>/dev/null || true
-  
+
   # Clear old cache files (> 7 days)
   find "$THEGENT_EVAL_CACHE_DIR" -name "*.zsh" -mtime +7 -delete 2>/dev/null || true
   find "$THEGENT_EVAL_CACHE_DIR" -name "*.meta" -mtime +7 -delete 2>/dev/null || true

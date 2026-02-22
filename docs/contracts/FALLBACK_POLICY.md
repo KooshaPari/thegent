@@ -1,7 +1,7 @@
 # Fallback Control Plane
 
-**Status:** Authoritative  
-**Date:** 2026-02-14  
+**Status:** Authoritative
+**Date:** 2026-02-14
 **Scope:** Normalization fallback policy for MCP and CLI
 
 ---

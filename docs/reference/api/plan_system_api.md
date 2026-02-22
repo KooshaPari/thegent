@@ -122,4 +122,3 @@ Updates both PLAN.md (if task is in plan) and PLAN_STATUS.md.
 - `status`: New status (e.g., "completed", "in_progress", "pending")
 
 ---
-

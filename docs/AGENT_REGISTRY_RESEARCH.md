@@ -1,6 +1,6 @@
 # Agent Registry & Interactive Session Management — Research & Plan
 
-> **Design spec**: [AGENT_REGISTRY_DESIGN.md](./AGENT_REGISTRY_DESIGN.md) — holistic design, harmonization with work stream/gardener/lifecycle, data model, security, UX, roadmap.  
+> **Design spec**: [AGENT_REGISTRY_DESIGN.md](./AGENT_REGISTRY_DESIGN.md) — holistic design, harmonization with work stream/gardener/lifecycle, data model, security, UX, roadmap.
 > **Adjacent**: [UNIFIED_WORK_STREAM_DESIGN.md](./reference/UNIFIED_WORK_STREAM_DESIGN.md), [GARDENER_ARCHITECTURE.md](./reference/GARDENER_ARCHITECTURE.md), [LIBRARY_FIRST_AUDIT_AND_PLAN.md](./research/LIBRARY_FIRST_AUDIT_AND_PLAN.md)
 
 ## Goal

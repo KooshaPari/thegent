@@ -1,7 +1,7 @@
 # Thegent Phase 3–6 Closure Validator Implementation Blueprint
 
-**Status:** Engineering blueprint  
-**Date:** 2026-02-15  
+**Status:** Engineering blueprint
+**Date:** 2026-02-15
 **Scope:** Concrete implementation plan for turning the validator contract into runnable code, commands, and CI integrations.
 
 ## 1) Purpose
@@ -410,4 +410,3 @@ This blueprint is complete when:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

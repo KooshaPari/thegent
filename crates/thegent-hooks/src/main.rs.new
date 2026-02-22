@@ -159,7 +159,7 @@ fn compute_file_hash(path: &Path) -> io::Result<String> {
 
 fn cmd_init() {
     let input = read_input().unwrap_or_else(|_| Value::Null);
-    
+
     let project_dir = input.get("project_dir")
         .and_then(|v| v.as_str())
         .unwrap_or(".");
@@ -175,7 +175,7 @@ fn cmd_init() {
     let hook_name = input.get("hook_name")
         .and_then(|v| v.as_str())
         .unwrap_or("");
-    
+
     // Print environment variables for shell sourcing
     println!("export PROJECT_DIR={}", project_dir);
     println!("export CWD={}", cwd);
@@ -191,14 +191,14 @@ fn cmd_cache_key() {
         eprintln!("Usage: thegent-hooks cache-key <hook_name> [changed_files...]");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let changed_files: Vec<String> = if args.len() > 3 {
         args[3..].to_vec()
     } else {
         Vec::new()
     };
-    
+
     // Get head SHA if not provided via stdin
     let head_sha = if let Ok(input) = read_input() {
         input.get("head_sha")
@@ -208,14 +208,14 @@ fn cmd_cache_key() {
     } else {
         String::new()
     };
-    
+
     // Build cache key content
     let mut content = format!("{}:{}", hook_name, head_sha);
     if !changed_files.is_empty() {
         content.push(':');
         content.push_str(&changed_files.join(","));
     }
-    
+
     println!("{}", compute_blake3_hash(&content));
 }
 
@@ -223,7 +223,7 @@ fn is_cache_fresh(cache_path: &PathBuf, ttl_secs: u64) -> bool {
     if !cache_path.exists() {
         return false;
     }
-    
+
     if let Ok(metadata) = fs::metadata(cache_path) {
         if let Ok(modified) = metadata.modified() {
             if let Ok(elapsed) = modified.elapsed() {
@@ -240,14 +240,14 @@ fn cmd_cache_check() {
         eprintln!("Usage: thegent-hooks cache-check <key> [ttl_seconds]");
         exit(1);
     }
-    
+
     let key = &args[2];
     let ttl: u64 = args.get(3)
         .and_then(|v| v.parse().ok())
         .unwrap_or(DEFAULT_TTL_SECS);
-    
+
     let cache_path = get_cache_path(key);
-    
+
     if is_cache_fresh(&cache_path, ttl) {
         exit(0); // Cache hit
     } else {
@@ -261,10 +261,10 @@ fn cmd_cache_read() {
         eprintln!("Usage: thegent-hooks cache-read <key>");
         exit(1);
     }
-    
+
     let key = &args[2];
     let cache_path = get_cache_path(key);
-    
+
     match fs::read_to_string(&cache_path) {
         Ok(content) => {
             println!("{}", content);
@@ -282,13 +282,13 @@ fn cmd_cache_write() {
         eprintln!("Usage: thegent-hooks cache-write <key> <rc> <output_json>");
         exit(1);
     }
-    
+
     let key = &args[2];
     let _rc = &args[3];
     let output = &args[4];
-    
+
     let cache_path = get_cache_path(key);
-    
+
     if let Err(e) = fs::write(&cache_path, output) {
         eprintln!("Cache write error: {}", e);
         exit(1);
@@ -302,10 +302,10 @@ fn cmd_git() {
         eprintln!("Commands: status, diff, rev-parse, ls-files, log, etc.");
         exit(1);
     }
-    
+
     let command = &args[2];
     let git_args: Vec<&str> = args.iter().skip(3).map(|s| s.as_str()).collect();
-    
+
     // Agent passthrough
     if matches!(command.as_str(), "codex" | "copilot" | "dex" | "claude" | "cursor") {
         let status = Command::new(command)
@@ -314,25 +314,25 @@ fn cmd_git() {
             .expect("Failed to execute agent");
         exit(status.code().unwrap_or(0));
     }
-    
+
     match command.as_str() {
         "status" | "diff" | "rev-parse" | "ls-files" | "log" | "show" => {
             // Read-only path: check cache
             let cache_key = compute_blake3_hash(&format!("git:{}:{}", command, git_args.join(" ")));
             let cache_path = get_cache_path(&format!("git-{}.cache", cache_key));
-            
+
             if is_cache_fresh(&cache_path, DEFAULT_TTL_SECS) {
                 if let Ok(content) = fs::read_to_string(&cache_path) {
                     print!("{}", content);
                     return;
                 }
             }
-            
+
             let output = Command::new("git")
                 .args([command]).args(&git_args)
                 .output()
                 .expect("Failed to execute git");
-            
+
             if output.status.success() {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 let _ = fs::write(&cache_path, stdout.as_ref());
@@ -363,7 +363,7 @@ fn cmd_git() {
                 std::thread::sleep(Duration::from_millis(500));
                 retries += 1;
             }
-            
+
             let status = Command::new("git")
                 .args([command]).args(&git_args)
                 .status()
@@ -383,33 +383,33 @@ fn cmd_git() {
 fn cmd_changed_files() {
     let args: Vec<String> = env::args().collect();
     let range = args.get(2).map(|s| s.as_str()).unwrap_or("HEAD~1..HEAD");
-    
+
     let output = Command::new("git")
         .args(&["diff", "--name-only", range])
         .output()
         .expect("Failed to execute git diff");
-    
+
     let mut files: Vec<String> = String::from_utf8_lossy(&output.stdout)
         .lines()
         .map(|s| s.to_string())
         .filter(|s| !s.is_empty())
         .collect();
-        
+
     // Also include untracked files
     let untracked = Command::new("git")
         .args(&["ls-files", "--others", "--exclude-standard"])
         .output()
         .expect("Failed to execute git ls-files");
-        
+
     for line in String::from_utf8_lossy(&untracked.stdout).lines() {
         if !line.is_empty() {
             files.push(line.to_string());
         }
     }
-    
+
     files.sort();
     files.dedup();
-    
+
     println!("{}", serde_json::to_string(&files).unwrap_or_else(|_| "[]".to_string()));
 }
 
@@ -423,17 +423,17 @@ fn cmd_breaker_check() {
         eprintln!("Usage: thegent-hooks breaker-check <hook_name> [threshold] [cooldown_secs]");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let threshold: u32 = args.get(3).and_then(|v| v.parse().ok()).unwrap_or(3);
     let cooldown_secs: i64 = args.get(4).and_then(|v| v.parse().ok()).unwrap_or(300);
-    
+
     let breaker_path = get_breaker_path(hook_name);
     if !breaker_path.exists() {
         println!("closed");
         exit(0);
     }
-    
+
     if let Ok(content) = fs::read_to_string(&breaker_path) {
         if let Ok(state) = serde_json::from_str::<BreakerState>(&content) {
             if state.failures >= threshold {
@@ -451,7 +451,7 @@ fn cmd_breaker_check() {
             }
         }
     }
-    
+
     println!("closed");
     exit(0);
 }
@@ -462,10 +462,10 @@ fn cmd_breaker_record() {
         eprintln!("Usage: thegent-hooks breaker-record <hook_name>");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let breaker_path = get_breaker_path(hook_name);
-    
+
     let mut state = if breaker_path.exists() {
         fs::read_to_string(&breaker_path)
             .ok()
@@ -474,11 +474,11 @@ fn cmd_breaker_record() {
     } else {
         BreakerState { failures: 0, last_failure: None, status: "closed".to_string() }
     };
-    
+
     state.failures += 1;
     state.last_failure = Some(Utc::now());
     state.status = "open".to_string();
-    
+
     if let Ok(content) = serde_json::to_string(&state) {
         let _ = fs::write(&breaker_path, content);
     }
@@ -490,7 +490,7 @@ fn cmd_breaker_reset() {
         eprintln!("Usage: thegent-hooks breaker-reset <hook_name>");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let breaker_path = get_breaker_path(hook_name);
     if breaker_path.exists() {
@@ -504,13 +504,13 @@ fn cmd_debounce() {
         eprintln!("Usage: thegent-hooks debounce <hook_name> [files...]");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
-    
+
     let debounce_path = ensure_cache_dir().join(format!("debounce-{}.json", hook_name));
     let now = Utc::now();
-    
+
     let mut state = if debounce_path.exists() {
         fs::read_to_string(&debounce_path)
             .ok()
@@ -519,13 +519,13 @@ fn cmd_debounce() {
     } else {
         DebounceState { last_run: now - chrono::Duration::hours(24), pending_files: Vec::new() }
     };
-    
+
     for file in files {
         if !state.pending_files.contains(&file) {
             state.pending_files.push(file);
         }
     }
-    
+
     let elapsed = now.signed_duration_since(state.last_run).num_seconds();
     if elapsed >= 1 {
         state.last_run = now;
@@ -554,23 +554,23 @@ fn cmd_incremental_check() {
         eprintln!("Usage: thegent-hooks incremental-check <hook_name> [files...]");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
-    
+
     let manifest_path = get_manifest_path(hook_name);
     if !manifest_path.exists() {
         println!("[]");
         exit(0);
     }
-    
+
     let content = fs::read_to_string(&manifest_path).unwrap_or_else(|_| "{}".to_string());
     let old_manifest: Manifest = serde_json::from_str(&content).unwrap_or_else(|_| Manifest {
         hook_name: hook_name.to_string(),
         files: Vec::new(),
         timestamp: Utc::now(),
     });
-    
+
     let mut changed = Vec::new();
     for file_path in files {
         let path = PathBuf::from(&file_path);
@@ -578,18 +578,18 @@ fn cmd_incremental_check() {
             changed.push(file_path);
             continue;
         }
-        
+
         let new_hash = compute_file_hash(&path).unwrap_or_else(|_| "error".to_string());
         let old_hash = old_manifest.files.iter()
             .find(|f| f.path == file_path)
             .map(|f| f.hash.as_str())
             .unwrap_or("");
-            
+
         if new_hash != old_hash {
             changed.push(file_path);
         }
     }
-    
+
     println!("{}", serde_json::to_string(&changed).unwrap_or_else(|_| "[]".to_string()));
 }
 
@@ -599,16 +599,16 @@ fn cmd_incremental_record() {
         eprintln!("Usage: thegent-hooks incremental-record <hook_name> [files...]");
         exit(1);
     }
-    
+
     let hook_name = &args[2];
     let files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
-    
+
     let mut manifest = Manifest {
         hook_name: hook_name.to_string(),
         files: Vec::new(),
         timestamp: Utc::now(),
     };
-    
+
     for file_path in files {
         let path = PathBuf::from(&file_path);
         if path.exists() {
@@ -616,7 +616,7 @@ fn cmd_incremental_record() {
             manifest.files.push(FileManifest { path: file_path, hash });
         }
     }
-    
+
     if let Ok(content) = serde_json::to_string(&manifest) {
         let _ = fs::write(get_manifest_path(hook_name), content);
     }
@@ -628,7 +628,7 @@ fn cmd_file_hash() {
         eprintln!("Usage: thegent-hooks file-hash <file_path>");
         exit(1);
     }
-    
+
     let path = PathBuf::from(&args[2]);
     match compute_file_hash(&path) {
         Ok(hash) => println!("{}", hash),
@@ -645,7 +645,7 @@ fn cmd_config_get() {
         eprintln!("Usage: thegent-hooks config-get <key_path>");
         exit(1);
     }
-    
+
     let key_path = &args[2];
     let config_paths = vec![
         PathBuf::from(".thegent/config.json"),
@@ -653,7 +653,7 @@ fn cmd_config_get() {
         PathBuf::from("pyproject.toml"),
         PathBuf::from("thegent.json"),
     ];
-    
+
     for config_path in config_paths {
         if config_path.exists() {
             if let Ok(content) = fs::read_to_string(&config_path) {
@@ -677,18 +677,18 @@ fn cmd_config_get() {
             }
         }
     }
-    
+
     println!("null");
 }
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() < 2 {
         print_help();
         return;
     }
-    
+
     match args[1].as_str() {
         "version" | "--version" | "-V" => print_version(),
         "help" | "--help" | "-h" => print_help(),

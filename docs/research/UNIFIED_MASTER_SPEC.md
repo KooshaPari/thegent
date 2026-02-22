@@ -1,7 +1,7 @@
 # TheGent Unified Master Specification: Tooling, Infra & AX (v1.0)
 
-**Date**: 2026-02-19  
-**Status**: Living Specification / Unified AX Docset  
+**Date**: 2026-02-19
+**Status**: Living Specification / Unified AX Docset
 **Purpose**: A single source of truth for the most advanced high-performance tooling and infrastructure in the thegent ecosystem. This document harmonizes all prior audits and proposes 100+ new mission-critical items.
 
 ---

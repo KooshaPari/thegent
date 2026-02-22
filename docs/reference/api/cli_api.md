@@ -115,4 +115,3 @@ validate(task_id: Any, task_file: Any, all: bool, tasks_dir: Path)
 Validate task file(s).
 
 ---
-

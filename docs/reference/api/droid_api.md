@@ -109,4 +109,3 @@ run(self: Any, prompt: str, cwd: Any, mode: str, timeout: int)
 Run droid via custom CLI. Prompt sent via stdin; expects --model and --cd support.
 
 ---
-

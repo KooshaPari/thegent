@@ -46,14 +46,14 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 for fragment_info in "${FRAGMENTS[@]}"; do
     IFS=':' read -r fragment priority <<< "$fragment_info"
     fragment_path="$DOCS_DIR/$fragment"
-    
+
     if [[ ! -f "$fragment_path" ]]; then
         echo -e "${YELLOW}⚠️  Skipping $fragment (not found)${NC}"
         continue
     fi
-    
+
     echo -e "${BLUE}📄 Expanding: $fragment${NC}"
-    
+
     if [[ -n "$FLASH_CMD" ]]; then
         echo "   Using flash agent: $FLASH_CMD"
         # Use flash agent to expand
@@ -62,7 +62,7 @@ for fragment_info in "${FRAGMENTS[@]}"; do
     else
         echo -e "${YELLOW}   ⚠️  Manual expansion required${NC}"
     fi
-    
+
     echo ""
 done
 
@@ -71,12 +71,12 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 for index in "${INDEXES[@]}"; do
     index_path="$DOCS_DIR/$index"
-    
+
     if [[ ! -f "$index_path" ]]; then
         echo -e "${YELLOW}⚠️  Skipping $index (not found)${NC}"
         continue
     fi
-    
+
     echo -e "${BLUE}📑 Updating: $index${NC}"
     echo "   Add sprawl-status column and links"
     echo ""

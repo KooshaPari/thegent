@@ -242,9 +242,9 @@ OpenCode will route requests through CLIProxy to your configured providers (mini
 
 You can now use OpenCode and Zen directly from thegent:
 
-1. `thegent run opencode "summarize this repo"`  
+1. `thegent run opencode "summarize this repo"`
    Uses the `opencode` CLI (`opencode run ...`) as a direct harness.
-2. `thegent run zen "implement X"`  
+2. `thegent run zen "implement X"`
    Uses Zen OpenAI-compatible API via Codex client path.
 
 Zen env vars:
@@ -273,7 +273,7 @@ export ZEN_API_KEY="<your-zen-key>"        # recognized as fallback
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made
@@ -357,7 +357,7 @@ thegent cliproxy login claude
 
 ## 14. Extension Summary
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

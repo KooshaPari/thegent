@@ -245,4 +245,3 @@ are left untouched.
 - `OSError`: If the config directory cannot be created or written.
 
 ---
-

@@ -71,4 +71,3 @@ verify_tool(self: Any, tool_id: str, tool_code: str)
 Verify that a tool's code matches its registered proofs.
 
 ---
-

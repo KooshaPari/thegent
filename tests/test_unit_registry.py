@@ -28,9 +28,12 @@ class TestListAgentNames:
             "antigravity",
             "minimax",
             "glm",
+            "zen",
+            "summarizer",
             "cliproxy",
             "roo",
             "kilo",
+            "opencode",
         }
         assert set(names) == expected
         assert len(names) == len(expected)
@@ -77,10 +80,10 @@ class TestGetRunner:
 
     def test_returns_direct_runner_for_gemini(self) -> None:
         # @trace FR-AGT-007
-        """Returns DirectAgentRunner for gemini (native CLI)."""
+        """Returns CodexProxyRunner for gemini (proxy path)."""
         runner = get_runner("gemini")
         assert runner is not None
-        assert isinstance(runner, DirectAgentRunner)
+        assert isinstance(runner, CodexProxyRunner)
         assert runner.agent_name == "gemini"
 
     def test_cursor_label_resolves_to_cursor_agent(self) -> None:
@@ -109,6 +112,7 @@ class TestGetRunner:
         # @trace FR-AGT-007
         """Every list_agent_names entry has a runner."""
         proxy_agents = {"antigravity", "minimax", "glm", "cliproxy", "roo", "kilo"}
+        proxy_agents.update({"gemini", "codex", "copilot", "claude", "zen", "summarizer"})
         cursor_api_agents = {"cursor-api"}
         for name in list_agent_names():
             runner = get_runner(name)
@@ -126,6 +130,20 @@ class TestGetRunner:
         runner = get_runner("cursor-api")
         assert runner is not None
         assert isinstance(runner, CursorApiRunner)
+
+    def test_raises_runtime_error_when_teammate_runner_fails(self, monkeypatch) -> None:
+        """Unexpected teammate errors fail loudly via RuntimeError."""
+        # @trace WL-3008
+
+        class _CrashyTeammateRunner:
+            def __init__(self, teammate_id: str) -> None:
+                raise RuntimeError("teammate backend failure")
+
+        import thegent.agents.teammate_runner as teammate_runner_module
+
+        monkeypatch.setattr(teammate_runner_module, "TeammateRunner", _CrashyTeammateRunner)
+        with pytest.raises(RuntimeError, match="Failed to create teammate runner"):
+            get_runner("custom-teammate")
 
 
 @pytest.mark.unit

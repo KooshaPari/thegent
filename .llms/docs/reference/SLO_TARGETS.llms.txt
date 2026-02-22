@@ -6,7 +6,7 @@ Source: docs/reference/SLO_TARGETS.md
 
 # MCP Tool SLO Targets (G-OP-08)
 
-**Purpose:** Aspirational latency targets for thegent MCP tools. Not enforced; use for monitoring and runbook guidance.  
+**Purpose:** Aspirational latency targets for thegent MCP tools. Not enforced; use for monitoring and runbook guidance.
 **Source:** FASTMCP_OPTIMIZATION_AUDIT.md §5
 
 ---
@@ -47,7 +47,7 @@ Source: docs/reference/SLO_TARGETS.md
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

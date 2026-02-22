@@ -1,7 +1,7 @@
 # Agent Hierarchy and Team Structure
 
-> **Date**: 2026-02-18  
-> **Status**: Research-Validated Design  
+> **Date**: 2026-02-18
+> **Status**: Research-Validated Design
 > **Purpose**: Define agent role hierarchy, parent-child relationships, and team mappings
 
 ---
@@ -115,13 +115,13 @@ Each agent maintains explicit parent-child relationships:
 @dataclass
 class AgentRelationship:
     """Parent-child relationship between agents."""
-    
+
     parent_id: str  # Parent agent run ID
     child_id: str   # Child agent run ID
     relationship_type: str  # "direct", "team", "cross-team"
     created_at: datetime
     status: str  # "active", "completed", "failed"
-    
+
     # Delegation context
     task_id: Optional[str] = None
     delegation_prompt: Optional[str] = None
@@ -187,23 +187,23 @@ Cross-Team Relationships:
 @dataclass
 class AgentTeam:
     """A team of agents working together."""
-    
+
     team_id: str
     name: str
     description: str
-    
+
     # Team composition
     lead_id: str  # Team lead agent ID
     members: list[str]  # Specialist agent IDs
-    
+
     # Team boundaries
     team_type: str  # "functional", "project", "ad-hoc"
     boundaries: dict[str, Any]  # Access control, resource limits
-    
+
     # Team coordination
     coordination_mode: str  # "hierarchical", "collaborative", "swarm"
     communication_channels: list[str]  # How team communicates
-    
+
     # Metadata
     created_at: datetime
     status: str  # "active", "paused", "completed"
@@ -343,17 +343,17 @@ class CoordinationMode(Enum):
 @dataclass
 class AgentNode:
     """Represents an agent in the hierarchy."""
-    
+
     agent_id: str
     run_id: str
     role: AgentRole
     team_id: Optional[str] = None
-    
+
     # Relationships
     parent_id: Optional[str] = None
     children_ids: List[str] = field(default_factory=list)
     team_member_ids: List[str] = field(default_factory=list)
-    
+
     # Metadata
     created_at: datetime = field(default_factory=datetime.now)
     status: str = "active"
@@ -361,14 +361,14 @@ class AgentNode:
 @dataclass
 class AgentRelationship:
     """Parent-child relationship between agents."""
-    
+
     relationship_id: str
     parent_id: str
     child_id: str
     relationship_type: RelationshipType
     created_at: datetime = field(default_factory=datetime.now)
     status: str = "active"
-    
+
     # Delegation context
     task_id: Optional[str] = None
     delegation_prompt: Optional[str] = None
@@ -377,21 +377,21 @@ class AgentRelationship:
 @dataclass
 class AgentTeam:
     """A team of agents working together."""
-    
+
     team_id: str
     name: str
     description: str
-    
+
     # Team composition
     lead_id: str
     members: List[str] = field(default_factory=list)
-    
+
     # Team configuration
     team_type: TeamType
     coordination_mode: CoordinationMode
     boundaries: Dict[str, Any] = field(default_factory=dict)
     communication_channels: List[str] = field(default_factory=list)
-    
+
     # Metadata
     created_at: datetime = field(default_factory=datetime.now)
     status: str = "active"
@@ -402,14 +402,14 @@ class AgentTeam:
 ```python
 class AgentHierarchyManager:
     """Manages agent hierarchy, relationships, and teams."""
-    
+
     def __init__(self, storage_path: Path):
         self.storage_path = storage_path
         self._agents: Dict[str, AgentNode] = {}
         self._relationships: Dict[str, AgentRelationship] = {}
         self._teams: Dict[str, AgentTeam] = {}
         self._load()
-    
+
     def register_agent(
         self,
         agent_id: str,
@@ -427,13 +427,13 @@ class AgentHierarchyManager:
             team_id=team_id
         )
         self._agents[run_id] = node
-        
+
         # Update parent's children list
         if parent_id:
             parent = self._agents.get(parent_id)
             if parent:
                 parent.children_ids.append(run_id)
-        
+
         # Update team membership
         if team_id:
             team = self._teams.get(team_id)
@@ -442,10 +442,10 @@ class AgentHierarchyManager:
                     team.lead_id = run_id
                 else:
                     team.members.append(run_id)
-        
+
         self._save()
         return node
-    
+
     def create_relationship(
         self,
         parent_id: str,
@@ -467,7 +467,7 @@ class AgentHierarchyManager:
         self._relationships[rel_id] = relationship
         self._save()
         return relationship
-    
+
     def create_team(
         self,
         team_id: str,
@@ -489,45 +489,45 @@ class AgentHierarchyManager:
         self._teams[team_id] = team
         self._save()
         return team
-    
+
     def get_team_members(self, team_id: str) -> List[AgentNode]:
         """Get all members of a team."""
         team = self._teams.get(team_id)
         if not team:
             return []
-        
+
         members = []
         if team.lead_id:
             lead = self._agents.get(team.lead_id)
             if lead:
                 members.append(lead)
-        
+
         for member_id in team.members:
             member = self._agents.get(member_id)
             if member:
                 members.append(member)
-        
+
         return members
-    
+
     def get_children(self, parent_id: str) -> List[AgentNode]:
         """Get all direct children of an agent."""
         parent = self._agents.get(parent_id)
         if not parent:
             return []
-        
+
         children = []
         for child_id in parent.children_ids:
             child = self._agents.get(child_id)
             if child:
                 children.append(child)
-        
+
         return children
-    
+
     def get_ancestors(self, agent_id: str) -> List[AgentNode]:
         """Get all ancestors of an agent (parent chain)."""
         ancestors = []
         current = self._agents.get(agent_id)
-        
+
         while current and current.parent_id:
             parent = self._agents.get(current.parent_id)
             if parent:
@@ -535,9 +535,9 @@ class AgentHierarchyManager:
                 current = parent
             else:
                 break
-        
+
         return ancestors
-    
+
     def can_delegate(
         self,
         from_agent_id: str,
@@ -547,29 +547,29 @@ class AgentHierarchyManager:
         """Check if agent can delegate to another agent."""
         from_agent = self._agents.get(from_agent_id)
         to_agent = self._agents.get(from_agent_id)
-        
+
         if not from_agent or not to_agent:
             return False
-        
+
         # Executive can delegate to anyone
         if from_agent.role == AgentRole.EXECUTIVE:
             return True
-        
+
         # Team leads can delegate to team members
         if from_agent.role == AgentRole.TEAM_LEAD:
             if to_agent.team_id == from_agent.team_id:
                 return True
-        
+
         # Cross-team delegation requires approval
         if from_agent.team_id != to_agent.team_id:
             # Check if cross-team collaboration is allowed
             return task_context.get("allow_cross_team", False)
-        
+
         # Specialists can delegate to peers or lower-level agents
         if from_agent.role == AgentRole.SPECIALIST:
             if to_agent.role == AgentRole.SPECIALIST:
                 return True
-        
+
         return False
 ```
 
@@ -578,10 +578,10 @@ class AgentHierarchyManager:
 ```python
 class TeamCoordinator:
     """Coordinates team activities and cross-team collaboration."""
-    
+
     def __init__(self, hierarchy_manager: AgentHierarchyManager):
         self.hierarchy = hierarchy_manager
-    
+
     def delegate_within_team(
         self,
         from_agent_id: str,
@@ -592,13 +592,13 @@ class TeamCoordinator:
         """Delegate task within same team."""
         from_agent = self.hierarchy._agents.get(from_agent_id)
         to_agent = self.hierarchy._agents.get(to_agent_id)
-        
+
         if not from_agent or not to_agent:
             raise ValueError("Agent not found")
-        
+
         if from_agent.team_id != to_agent.team_id:
             raise ValueError("Agents not in same team")
-        
+
         # Create delegation
         relationship = self.hierarchy.create_relationship(
             parent_id=from_agent_id,
@@ -606,9 +606,9 @@ class TeamCoordinator:
             relationship_type=RelationshipType.TEAM_MEMBERSHIP,
             delegation_prompt=task
         )
-        
+
         return relationship
-    
+
     def delegate_cross_team(
         self,
         from_agent_id: str,
@@ -620,18 +620,18 @@ class TeamCoordinator:
         """Delegate task across teams (requires coordination)."""
         from_agent = self.hierarchy._agents.get(from_agent_id)
         to_agent = self.hierarchy._agents.get(to_agent_id)
-        
+
         if not from_agent or not to_agent:
             raise ValueError("Agent not found")
-        
+
         if from_agent.team_id == to_agent.team_id:
             raise ValueError("Agents in same team, use delegate_within_team")
-        
+
         # Cross-team delegation requires team lead or orchestrator approval
         if not mediator_id:
             # Use orchestrator as default mediator
             mediator_id = self._find_orchestrator()
-        
+
         # Create cross-team relationship
         relationship = self.hierarchy.create_relationship(
             parent_id=from_agent_id,
@@ -644,7 +644,7 @@ class TeamCoordinator:
                 **context
             }
         )
-        
+
         return relationship
 ```
 
@@ -661,13 +661,13 @@ The existing `TeammateManager` will be extended to support hierarchy:
 
 class TeammateManager:
     """Manages discovery and delegation for the teammate swarm."""
-    
+
     def __init__(self, storage_path: Path, hierarchy_manager: Optional[AgentHierarchyManager] = None):
         self.storage_path = storage_path
         self.hierarchy = hierarchy_manager or AgentHierarchyManager(storage_path / "hierarchy.json")
         self._delegations: dict[str, DelegationRequest] = {}
         self._load()
-    
+
     def delegate(
         self,
         teammate_id: str,
@@ -678,7 +678,7 @@ class TeammateManager:
     ) -> DelegationRequest:
         """WP-16002: Delegate a task to a teammate with hierarchy support."""
         req_id = f"DEL-{uuid.uuid4().hex[:8]}"
-        
+
         # Register child agent in hierarchy
         child_node = self.hierarchy.register_agent(
             agent_id=teammate_id,
@@ -687,7 +687,7 @@ class TeammateManager:
             parent_id=parent_run_id,
             team_id=team_id
         )
-        
+
         # Create relationship
         relationship = self.hierarchy.create_relationship(
             parent_id=parent_run_id,
@@ -695,7 +695,7 @@ class TeammateManager:
             relationship_type=relationship_type,
             delegation_prompt=prompt
         )
-        
+
         # Create delegation request
         request = DelegationRequest(
             id=req_id,
@@ -706,9 +706,9 @@ class TeammateManager:
         )
         self._delegations[req_id] = request
         self._save()
-        
+
         return request
-    
+
     def create_team(
         self,
         team_id: str,
@@ -894,7 +894,7 @@ This design has been validated through comprehensive research:
 - **Claude Code Teams**: Team lead coordination, peer-to-peer messaging
 - **Google A2A Protocol**: Agent Cards, task lifecycle, JSON-RPC
 
-**See**: 
+**See**:
 - [LOCAL_RESEARCH_AUDIT.md](./LOCAL_RESEARCH_AUDIT.md) - Complete local codebase audit
 - [WEB_RESEARCH_AUDIT.md](./WEB_RESEARCH_AUDIT.md) - Framework and production system analysis
 - [RESEARCH_SYNTHESIS.md](./RESEARCH_SYNTHESIS.md) - Comprehensive synthesis and validation

@@ -161,7 +161,7 @@ pub fn audit_markdown(path: &Path) -> Result<AuditResult, DocsError> {
         .map_err(|e| DocsError::ReadError(e))?;
 
     let (frontmatter, body) = parse_markdown(&content)?;
-    let full_content = format!("{}{}", 
+    let full_content = format!("{}{}",
         if let Some(ref fm) = frontmatter {
             format!("---\n{}\n---\n", serde_yaml::to_string(fm).map_err(|e| DocsError::YamlError(e))?)
         } else {
@@ -182,7 +182,7 @@ pub fn audit_markdown(path: &Path) -> Result<AuditResult, DocsError> {
 /// Find all markdown files in directory
 pub fn find_markdown_files(dir: &Path) -> Result<Vec<PathBuf>> {
     let mut files = Vec::new();
-    
+
     for entry in walkdir::WalkDir::new(dir)
         .into_iter()
         .filter_map(|e| e.ok())

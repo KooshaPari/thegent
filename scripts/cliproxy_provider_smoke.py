@@ -80,12 +80,29 @@ def _run_matrix(base_url: str, api_key: str, input_text: str) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     for provider, model_id in sorted(selected.items()):
         try:
+            request_body: dict[str, Any] = {"model": model_id, "input": input_text}
             r = httpx.post(
                 f"{base_url.rstrip('/')}/responses",
                 headers={**headers, "content-type": "application/json"},
-                json={"model": model_id, "input": input_text},
+                json=request_body,
                 timeout=60,
             )
+            # Some providers behind /v1/responses still enforce messages payloads.
+            if (
+                provider.lower() == "anthropic"
+                and r.status_code == 400
+                and "messages: at least one message is required" in r.text
+            ):
+                r = httpx.post(
+                    f"{base_url.rstrip('/')}/responses",
+                    headers={**headers, "content-type": "application/json"},
+                    json={
+                        "model": model_id,
+                        "messages": [{"role": "user", "content": input_text}],
+                        "max_tokens": 16,
+                    },
+                    timeout=60,
+                )
             detail = ""
             if r.status_code != 200:
                 detail = r.text.replace("\n", " ")[:180]
@@ -113,6 +130,37 @@ def _run_matrix(base_url: str, api_key: str, input_text: str) -> dict[str, Any]:
     return {"provider_count": len(rows), "passed": passed, "failed": len(rows) - passed, "rows": rows}
 
 
+def _normalize_required_providers(values: list[str]) -> list[str]:
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for raw in values:
+        for piece in raw.split(","):
+            provider = piece.strip().lower()
+            if not provider or provider in seen:
+                continue
+            seen.add(provider)
+            normalized.append(provider)
+    return normalized
+
+
+def _evaluate_required_provider_gate(result: dict[str, Any], required_providers: list[str]) -> dict[str, Any]:
+    rows = result.get("rows", [])
+    row_by_provider = {}
+    for row in rows:
+        provider = str(row.get("provider", "")).strip().lower()
+        if provider and provider not in row_by_provider:
+            row_by_provider[provider] = row
+
+    missing = [provider for provider in required_providers if provider not in row_by_provider]
+    failed = [
+        provider
+        for provider in required_providers
+        if provider in row_by_provider and not bool(row_by_provider[provider].get("ok"))
+    ]
+    passed = [provider for provider in required_providers if provider not in missing and provider not in failed]
+    return {"required": required_providers, "missing": missing, "failed": failed, "passed": passed}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run CLIProxy provider smoke matrix with proxy preflight.")
     parser.add_argument("--base-url", default="http://127.0.0.1:8317/v1")
@@ -125,7 +173,19 @@ def main() -> int:
     parser.add_argument("--startup-timeout", type=int, default=8)
     parser.add_argument("--input", default="reply with exactly: ok")
     parser.add_argument("--strict", action="store_true", help="Exit non-zero when any provider probe fails.")
+    parser.add_argument(
+        "--required-provider",
+        action="append",
+        default=[],
+        help="Required provider name(s); repeat or pass comma-separated values.",
+    )
+    parser.add_argument(
+        "--strict-required-providers",
+        action="store_true",
+        help="Exit non-zero when any required provider is missing or its probe fails.",
+    )
     args = parser.parse_args()
+    required_providers = _normalize_required_providers(args.required_provider)
 
     started_proc: subprocess.Popen[bytes] | None = None
     if not _reachable(args.base_url, args.api_key):
@@ -137,9 +197,15 @@ def main() -> int:
 
     try:
         result = _run_matrix(args.base_url, args.api_key, args.input)
+        if required_providers:
+            result["required_provider_gate"] = _evaluate_required_provider_gate(result, required_providers)
         print(json.dumps(result, indent=2))
         if args.strict and result["failed"] > 0:
             return 1
+        if args.strict_required_providers and required_providers:
+            gate = result["required_provider_gate"]
+            if gate["missing"] or gate["failed"]:
+                return 1
         return 0
     finally:
         if started_proc is not None and started_proc.poll() is None:

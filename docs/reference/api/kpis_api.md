@@ -61,4 +61,3 @@ render_summary(self: Any)
 Render a text-based KPI summary.
 
 ---
-

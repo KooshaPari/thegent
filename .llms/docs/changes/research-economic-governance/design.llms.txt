@@ -6,9 +6,9 @@ Source: docs/changes/research-economic-governance/design.md
 
 # Economic Governance Technical Design
 
-**Status**: Design Phase  
-**Work Item**: WP-5003  
-**Design Date**: 2026-02-18  
+**Status**: Design Phase
+**Work Item**: WP-5003
+**Design Date**: 2026-02-18
 **Architect**: thegent team
 
 ---
@@ -72,12 +72,12 @@ class ProviderScore:
 
 class ProviderScorer(ABC):
     """Abstract scorer for extensibility"""
-    
+
     @abstractmethod
     def score(self, metrics: ProviderMetrics) -> ProviderScore:
         """Compute score from metrics"""
         pass
-    
+
     @abstractmethod
     def normalize(self, raw_value: float, metric_type: str) -> float:
         """Normalize metric to 0-10 scale"""
@@ -85,28 +85,28 @@ class ProviderScorer(ABC):
 
 class DefaultProviderScorer(ProviderScorer):
     """Standard provider scorer with configurable weights"""
-    
+
     # Weights (sum to 1.0)
     RELIABILITY_WEIGHT = 0.4
     LATENCY_WEIGHT = 0.2
     COST_WEIGHT = 0.4
-    
+
     # Normalization baselines
     BASELINE_LATENCY_MS = 250  # 250ms = score 5
     BASELINE_COST_PER_1M = 0.15  # $0.15/1M = score 5
-    
+
     def score(self, metrics: ProviderMetrics) -> ProviderScore:
         """Compute composite score"""
         reliability_score = metrics.reliability * 10
         latency_score = self._normalize_latency(metrics.latency_p99)
         cost_score = self._normalize_cost(metrics.cost_per_1m_tokens)
-        
+
         composite = (
             reliability_score * self.RELIABILITY_WEIGHT +
             latency_score * self.LATENCY_WEIGHT +
             cost_score * self.COST_WEIGHT
         )
-        
+
         return ProviderScore(
             provider_id=metrics.provider_id,
             reliability_score=reliability_score,
@@ -115,13 +115,13 @@ class DefaultProviderScorer(ProviderScorer):
             composite_score=composite,
             timestamp=time.time(),
         )
-    
+
     def _normalize_latency(self, latency_ms: float) -> float:
         """Lower latency = higher score"""
         ratio = latency_ms / self.BASELINE_LATENCY_MS
         # Inverse relationship: score = 10 / (1 + ratio)
         return 10.0 / (1.0 + (ratio - 1.0) * 0.5)
-    
+
     def _normalize_cost(self, cost: float) -> float:
         """Lower cost = higher score"""
         ratio = cost / self.BASELINE_COST_PER_1M
@@ -156,25 +156,25 @@ class ProviderConfig:
 
 class ProviderRegistry:
     """Centralized provider configuration"""
-    
+
     _registry: Dict[str, ProviderConfig] = {}
     _scorer: ProviderScorer = DefaultProviderScorer()
-    
+
     @classmethod
     def register(cls, config: ProviderConfig):
         """Register a provider"""
         cls._registry[config.provider_id] = config
-    
+
     @classmethod
     def get(cls, provider_id: str) -> Optional[ProviderConfig]:
         """Get provider config"""
         return cls._registry.get(provider_id)
-    
+
     @classmethod
     def list_providers(cls) -> List[ProviderConfig]:
         """List all providers"""
         return list(cls._registry.values())
-    
+
     @classmethod
     def get_fallback_order(cls, provider_id: str) -> List[str]:
         """Get fallback chain for provider"""
@@ -260,26 +260,26 @@ class TaskValue:
 
 class ValueEstimator:
     """Estimate task value for cost-to-value routing"""
-    
+
     # Weights for value components
     COMPLEXITY_WEIGHT = 0.3
     BUSINESS_IMPACT_WEIGHT = 0.5
     PRIORITY_WEIGHT = 0.2
-    
+
     def estimate(self, task) -> TaskValue:
         """Estimate value of task"""
         complexity = self._estimate_complexity(task)
         business_impact = self._estimate_business_impact(task)
         user_priority = self._estimate_user_priority(task)
-        
+
         value = (
             complexity * self.COMPLEXITY_WEIGHT +
             business_impact * self.BUSINESS_IMPACT_WEIGHT +
             user_priority * self.PRIORITY_WEIGHT
         )
-        
+
         confidence = self._estimate_confidence(task)
-        
+
         return TaskValue(
             complexity=complexity,
             business_impact=business_impact,
@@ -287,13 +287,13 @@ class ValueEstimator:
             estimated_value=value,
             confidence=confidence,
         )
-    
+
     def _estimate_complexity(self, task) -> float:
         """Estimate task complexity (1-10)"""
         # Factors: lines of code, number of files, dependencies, etc.
         if hasattr(task, 'complexity_hint'):
             return task.complexity_hint
-        
+
         # Default: analyze task type
         task_type = task.get('type', 'unknown')
         return {
@@ -302,13 +302,13 @@ class ValueEstimator:
             'feature_addition': 7,
             'system_design': 10,
         }.get(task_type, 5)
-    
+
     def _estimate_business_impact(self, task) -> float:
         """Estimate business impact (0-10)"""
         # Factors: user-facing, revenue impact, compliance, etc.
         if hasattr(task, 'business_impact'):
             return task.business_impact
-        
+
         business_category = task.get('business_category', 'internal')
         return {
             'internal': 2,
@@ -317,18 +317,18 @@ class ValueEstimator:
             'compliance': 9,
             'security': 10,
         }.get(business_category, 2)
-    
+
     def _estimate_user_priority(self, task) -> float:
         """Estimate user priority (1-10)"""
         if hasattr(task, 'priority'):
             return task.priority
-        
+
         return 1  # Standard priority by default
-    
+
     def _estimate_confidence(self, task) -> float:
         """Estimate confidence in value estimate (0-1)"""
         # Higher confidence for standard task types with explicit hints
-        if (hasattr(task, 'complexity_hint') and 
+        if (hasattr(task, 'complexity_hint') and
             hasattr(task, 'business_impact')):
             return 0.9
         return 0.6  # Lower confidence for inferred values
@@ -367,7 +367,7 @@ class CostEstimate:
 
 class CostEstimator:
     """Estimate task cost for given provider"""
-    
+
     # Token estimation multipliers by task type
     TOKEN_ESTIMATES = {
         'trivial_fix': (100, 50),           # (input, output)
@@ -375,7 +375,7 @@ class CostEstimator:
         'feature_addition': (1000, 500),
         'system_design': (2000, 1000),
     }
-    
+
     def estimate(
         self,
         task,
@@ -386,41 +386,41 @@ class CostEstimator:
         provider_config = ProviderRegistry.get(provider_id)
         if not provider_config:
             raise ValueError(f"Unknown provider: {provider_id}")
-        
+
         # Estimate tokens
         token_estimate = self._estimate_tokens(task)
-        
+
         # Calculate cost
         cost_usd = (
             token_estimate.total_tokens / 1_000_000 *
             provider_config.cost_per_1m_tokens
         )
-        
+
         return CostEstimate(
             provider_id=provider_id,
             token_estimate=token_estimate,
             cost_usd=cost_usd,
             confidence=token_estimate.confidence,
         )
-    
+
     def _estimate_tokens(self, task) -> TokenEstimate:
         """Estimate token usage"""
         task_type = task.get('type', 'unknown')
-        
+
         if task_type in self.TOKEN_ESTIMATES:
             input_est, output_est = self.TOKEN_ESTIMATES[task_type]
         else:
             # Default estimate
             input_est, output_est = 500, 250
-        
+
         # Adjust based on task size hints
         if hasattr(task, 'size_multiplier'):
             input_est *= task.size_multiplier
             output_est *= task.size_multiplier
-        
+
         total = input_est + output_est
         confidence = 0.75  # Moderate confidence in estimate
-        
+
         return TokenEstimate(
             input_tokens=input_est,
             output_tokens=output_est,
@@ -459,7 +459,7 @@ class RoutingDecision:
 
 class CostAwareRouter:
     """Route tasks to providers based on cost-to-value ratio"""
-    
+
     def __init__(
         self,
         value_estimator: Optional[ValueEstimator] = None,
@@ -471,16 +471,16 @@ class CostAwareRouter:
         self.scorer = scorer or DefaultProviderScorer()
         self.logger = logging.getLogger(__name__)
         self._decision_log: List[RoutingDecision] = []
-    
+
     def route(self, task) -> RoutingDecision:
         """Select best provider for task"""
         try:
             # Estimate task value
             value_estimate = self.value_estimator.estimate(task)
-            
+
             # Get candidate providers
             candidates = ProviderRegistry.list_providers()
-            
+
             # Estimate cost for each provider
             cost_estimates = {}
             for provider in candidates:
@@ -489,14 +489,14 @@ class CostAwareRouter:
                     cost_estimates[provider.provider_id] = cost_est
                 except Exception as e:
                     self.logger.warning(f"Failed to estimate cost for {provider.provider_id}: {e}")
-            
+
             # Calculate cost-to-value ratios
             ratios = {}
             for provider_id, cost_est in cost_estimates.items():
                 if value_estimate.estimated_value > 0:
                     ratio = cost_est.cost_usd / value_estimate.estimated_value
                     ratios[provider_id] = ratio
-            
+
             # Select provider with best (lowest) ratio
             if ratios:
                 selected_provider = min(ratios.items(), key=lambda x: x[1])[0]
@@ -505,10 +505,10 @@ class CostAwareRouter:
                 # Fallback: select highest-scoring provider
                 selected_provider = self._select_by_score(candidates)
                 best_ratio = float('inf')
-            
+
             # Get fallback chain
             fallback_chain = ProviderRegistry.get_fallback_order(selected_provider)
-            
+
             # Create decision record
             decision = RoutingDecision(
                 selected_provider=selected_provider,
@@ -522,19 +522,19 @@ class CostAwareRouter:
                 ),
                 timestamp=time.time(),
             )
-            
+
             # Log decision
             self._decision_log.append(decision)
             self.logger.info(f"Routing decision: {selected_provider} (ratio={best_ratio:.4f})")
-            
+
             return decision
-        
+
         except Exception as e:
             self.logger.error(f"Routing error: {e}")
             # Fallback: highest-scoring provider
             candidates = ProviderRegistry.list_providers()
             selected_provider = self._select_by_score(candidates)
-            
+
             return RoutingDecision(
                 selected_provider=selected_provider,
                 candidate_providers=[p.provider_id for p in candidates],
@@ -545,23 +545,23 @@ class CostAwareRouter:
                 decision_rationale=f"Fallback due to error: {e}",
                 timestamp=time.time(),
             )
-    
+
     def _select_by_score(self, providers: List[ProviderConfig]) -> str:
         """Select highest-scoring provider"""
         best_score = -1
         best_provider = None
-        
+
         for provider in providers:
             # Fetch recent metrics (from Supermemory L3)
             metrics = self._get_provider_metrics(provider.provider_id)
             score = self.scorer.score(metrics)
-            
+
             if score.composite_score > best_score:
                 best_score = score.composite_score
                 best_provider = provider.provider_id
-        
+
         return best_provider or providers[0].provider_id
-    
+
     def _get_provider_metrics(self, provider_id: str) -> ProviderMetrics:
         """Get recent metrics for provider (from Supermemory L3)"""
         # TODO: Integrate with Supermemory L3
@@ -574,7 +574,7 @@ class CostAwareRouter:
             last_updated=time.time(),
             sample_size=1000,
         )
-    
+
     def _build_rationale(
         self,
         selected: str,
@@ -584,14 +584,14 @@ class CostAwareRouter:
         """Build human-readable rationale"""
         if not ratios:
             return "Selected by score (cost estimation unavailable)"
-        
+
         ratio = ratios[selected]
         return (
             f"Selected {selected} with cost-to-value ratio {ratio:.4f}. "
             f"Task value: {value.estimated_value:.2f}, "
             f"Confidence: {value.confidence:.1%}"
         )
-    
+
     def get_decision_log(self) -> List[RoutingDecision]:
         """Get routing decision audit trail"""
         return self._decision_log.copy()
@@ -703,7 +703,7 @@ async def execute_with_fallback(
 ) -> Result:
     """Execute task with fallback chain"""
     providers_to_try = [decision.selected_provider] + decision.fallback_chain
-    
+
     for provider_id in providers_to_try:
         try:
             result = await execute_on_provider(provider_id, task)
@@ -717,7 +717,7 @@ async def execute_with_fallback(
         except Exception as e:
             logger.error(f"Provider {provider_id} error: {e}")
             continue
-    
+
     # All providers failed
     raise AllProvidersFailedError(f"All providers failed for task: {task}")
 ```

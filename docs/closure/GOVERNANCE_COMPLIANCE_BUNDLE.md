@@ -1,7 +1,7 @@
 # Governance & Compliance Bundle
 
-**Program:** thegent Orchestration Optimization  
-**Date:** 2026-02-15  
+**Program:** thegent Orchestration Optimization
+**Date:** 2026-02-15
 **Owner:** Compliance Lead
 
 ## 1. Scope

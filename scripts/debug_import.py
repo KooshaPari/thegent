@@ -9,4 +9,3 @@ except ImportError as e:
     pass
 except AttributeError:
     import thegent
-

@@ -1,8 +1,8 @@
 # Governance Compliance Reports Research
 
-> **WORK_STREAM ID:** research-governance-compliance-reports  
-> **Priority:** P2  
-> **Depends:** WP-3006, research-phase13-compliance-profiles  
+> **WORK_STREAM ID:** research-governance-compliance-reports
+> **Priority:** P2
+> **Depends:** WP-3006, research-phase13-compliance-profiles
 > **Status:** ✅ Research Complete
 
 ## Summary
@@ -86,10 +86,10 @@ class ComplianceReport:
 
 class ComplianceReportGenerator:
     """Generates compliance reports."""
-    
+
     def __init__(self, profile: ComplianceProfile):
         self.profile = profile
-    
+
     def generate_report(
         self,
         start_date: datetime,
@@ -98,13 +98,13 @@ class ComplianceReportGenerator:
         """Generate compliance report for date range."""
         # Collect evidence
         evidence = self._collect_evidence(start_date, end_date)
-        
+
         # Analyze compliance
         violations = self._analyze_compliance(evidence)
-        
+
         # Generate summary
         summary = self._generate_summary(violations, evidence)
-        
+
         # Create report
         report = ComplianceReport(
             profile=self.profile,
@@ -115,13 +115,13 @@ class ComplianceReportGenerator:
             violations=violations,
             evidence=evidence
         )
-        
+
         # Sign report (for SOC 2, US-SEC)
         if self.profile.profile in [ComplianceProfile.US_SEC, ComplianceProfile.SOX]:
             report.signature = self._sign_report(report)
-        
+
         return report
-    
+
     def _collect_evidence(
         self,
         start_date: datetime,
@@ -130,35 +130,35 @@ class ComplianceReportGenerator:
         """Collect compliance evidence for date range."""
         from thegent.governance.ledger import Ledger
         from thegent.governance.escalation import EscalationQueue
-        
+
         ledger = Ledger()
         escalation_queue = EscalationQueue()
-        
+
         evidence = []
-        
+
         # Collect ledger entries
         ledger_entries = ledger.query(
             start_date=start_date,
             end_date=end_date
         )
         evidence.extend(ledger_entries)
-        
+
         # Collect escalation queue items
         escalations = escalation_queue.list_pending(
             start_date=start_date,
             end_date=end_date
         )
         evidence.extend(escalations)
-        
+
         return evidence
-    
+
     def _analyze_compliance(
         self,
         evidence: list[dict]
     ) -> list[dict]:
         """Analyze evidence for compliance violations."""
         violations = []
-        
+
         for control in self.profile.get_mandatory_controls():
             if not self._check_control_compliance(control, evidence):
                 violations.append({
@@ -167,9 +167,9 @@ class ComplianceReportGenerator:
                     "severity": "high" if control.mandatory else "medium",
                     "description": f"Control {control.id} not satisfied"
                 })
-        
+
         return violations
-    
+
     def _generate_summary(
         self,
         violations: list[dict],
@@ -196,14 +196,14 @@ from thegent.governance.compliance import ComplianceProfile
 
 class ScheduledReportRunner:
     """Runs scheduled compliance reports."""
-    
+
     def __init__(self):
         self.scheduler = BackgroundScheduler()
         self.generators = {
             profile: ComplianceReportGenerator(profile)
             for profile in ComplianceProfile
         }
-    
+
     def schedule_reports(self) -> None:
         """Schedule all compliance reports."""
         # Daily reports for critical profiles
@@ -214,7 +214,7 @@ class ScheduledReportRunner:
             minute=0,
             args=[ComplianceProfile.US_SEC]
         )
-        
+
         # Weekly reports for standard profiles
         self.scheduler.add_job(
             self._generate_weekly_report,
@@ -224,7 +224,7 @@ class ScheduledReportRunner:
             minute=0,
             args=[ComplianceProfile.GDPR]
         )
-        
+
         # Monthly reports for all profiles
         self.scheduler.add_job(
             self._generate_monthly_report,
@@ -233,21 +233,21 @@ class ScheduledReportRunner:
             hour=0,
             minute=0
         )
-    
+
     def _generate_daily_report(self, profile: ComplianceProfile) -> None:
         """Generate daily report."""
         generator = self.generators[profile]
         end_date = datetime.now(UTC)
         start_date = end_date - timedelta(days=1)
-        
+
         report = generator.generate_report(start_date, end_date)
         self._distribute_report(report)
-    
+
     def _distribute_report(self, report: ComplianceReport) -> None:
         """Distribute report to stakeholders."""
         # Save to file system
         self._save_report(report)
-        
+
         # Send via email/webhook if configured
         if self._should_notify(report):
             self._send_notification(report)
@@ -261,35 +261,35 @@ from fastapi.responses import HTMLResponse
 
 class ComplianceDashboard:
     """Real-time compliance dashboard."""
-    
+
     def __init__(self):
         self.app = FastAPI()
         self.generator = ComplianceReportGenerator(ComplianceProfile.US_SEC)
         self._setup_routes()
-    
+
     def _setup_routes(self) -> None:
         """Setup dashboard routes."""
-        
+
         @self.app.get("/", response_class=HTMLResponse)
         async def dashboard():
             """Main dashboard view."""
             # Get real-time compliance status
             status = self._get_realtime_status()
             return self._render_dashboard(status)
-        
+
         @self.app.get("/api/compliance/status")
         async def compliance_status():
             """API endpoint for compliance status."""
             return self._get_realtime_status()
-    
+
     def _get_realtime_status(self) -> dict:
         """Get real-time compliance status."""
         # Get last 24 hours
         end_date = datetime.now(UTC)
         start_date = end_date - timedelta(hours=24)
-        
+
         report = self.generator.generate_report(start_date, end_date)
-        
+
         return {
             "compliance_percentage": report.summary["compliance_percentage"],
             "violations": len(report.violations),

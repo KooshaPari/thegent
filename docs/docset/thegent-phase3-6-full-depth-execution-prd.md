@@ -128,11 +128,11 @@ Deliver policy-led deterministic control of critical operations with auditable e
 
 ### 2.5 Phase 3 risks + controls
 
-- **Risk:** Policy engine false negatives.  
+- **Risk:** Policy engine false negatives.
   **Control:** Canary policy mode + dry-run simulation before hard enablement.
-- **Risk:** Override abuse by high-privileged tokens.  
+- **Risk:** Override abuse by high-privileged tokens.
   **Control:** Reason taxonomy + approver signature + mandatory expiry.
-- **Risk:** Audit trail tampering.  
+- **Risk:** Audit trail tampering.
   **Control:** Hash chaining + strict write-once + periodic integrity check.
 
 ---
@@ -1266,8 +1266,8 @@ If any gate fails:
 
 ## 18) Next action
 
-If you want the next chunk, request:  
-`continue next`  
+If you want the next chunk, request:
+`continue next`
 and I will generate **cross-phase closure QA pack** (test names, ownership table, and document-by-document verification checklist) to make this execution-ready as a near-final PRD-to-implementation cut.
 
 ---
@@ -1418,4 +1418,3 @@ and I will output concrete skeletons for each `docs/closure/*.md` and `artifacts
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

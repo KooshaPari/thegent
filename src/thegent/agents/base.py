@@ -79,7 +79,10 @@ class AgentRunner:
         image_paths: list[str] | None = None,
     ) -> RunResult:
         """Run the agent with the given prompt and options."""
-        raise NotImplementedError
+        raise TypeError(
+            f"{self.__class__.__name__}.run() is abstract and must be implemented by"
+            " a concrete AgentRunner subclass"
+        )
 
     def activate_skill(self, name: str) -> str:
         """Activate a skill by name, loading its instructions into the runner.

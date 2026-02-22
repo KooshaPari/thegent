@@ -48,7 +48,7 @@ fn main() -> anyhow::Result<()> {
             Ok(event) => {
                 for path in event.paths {
                     let path_str = path.to_string_lossy().to_string();
-                    
+
                     // Simple exclude check
                     let mut excluded = false;
                     for pattern in &args.exclude {

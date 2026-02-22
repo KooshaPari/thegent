@@ -21,4 +21,3 @@ Detect current platform.
 **Returns**: Platform enum value (MACOS, LINUX, WINDOWS, WSL2, or UNKNOWN)
 
 ---
-

@@ -160,20 +160,20 @@ impl QualityEvaluator {
     pub fn measure_complexity(path: &std::path::Path) -> Result<QualityMetrics, HookError> {
         let content = std::fs::read_to_string(path)
             .map_err(|e| HookError::IoError(format!("Failed to read {}: {}", path.display(), e)))?;
-        
+
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-        
+
         let mut cyc = 0;
         let mut cog = 0;
         let mut max_nest = 0;
         let mut line_count = 0;
         let mut current_nest = 0;
-        
+
         for line in content.lines() {
             line_count += 1;
             let trimmed = line.trim();
             if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with("//") { continue; }
-            
+
             // Simplified nesting and complexity proxies
             match ext {
                 "py" => {
@@ -181,8 +181,8 @@ impl QualityEvaluator {
                     let indent = line.len() - line.trim_start().len();
                     let level = indent / 4;
                     if level > max_nest { max_nest = level; }
-                    
-                    if trimmed.contains("if ") || trimmed.contains("elif ") || trimmed.contains("for ") || 
+
+                    if trimmed.contains("if ") || trimmed.contains("elif ") || trimmed.contains("for ") ||
                        trimmed.contains("while ") || trimmed.contains("except ") || trimmed.contains("with ") {
                         cyc += 1;
                         cog += 1 + level;
@@ -202,8 +202,8 @@ impl QualityEvaluator {
                             if current_nest > 0 { current_nest -= 1; }
                         }
                     }
-                    
-                    if trimmed.contains("if ") || trimmed.contains("else if") || trimmed.contains("for ") || 
+
+                    if trimmed.contains("if ") || trimmed.contains("else if") || trimmed.contains("for ") ||
                        trimmed.contains("while ") || trimmed.contains("switch ") || trimmed.contains("case ") ||
                        trimmed.contains("catch ") {
                         cyc += 1;
@@ -217,7 +217,7 @@ impl QualityEvaluator {
                 _ => {}
             }
         }
-        
+
         Ok(QualityMetrics {
             coverage_percent: 0.0,
             lint_issues: 0,

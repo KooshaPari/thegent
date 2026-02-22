@@ -1,9 +1,9 @@
 # Python Frontmatter + Native Backmatter: Research Audit & Plan
 
-> **Status**: Production | **Version**: 2.0 | **Generated**: 2026-02-15 | **Updated**: 2026-02-17  
-> **Goal**: Audit thegent codebase for hybrid architecture—Python as frontmatter (interfaces, orchestration) with C++/Rust/Go backmatter binaries and Python FFI bindings.  
-> **Phase 1 Status**: ✅ Complete (BKM-01, BKM-02, BKM-03, BKM-04)  
-> **P3 Polish**: Summary table, cross-links, next actions added  
+> **Status**: Production | **Version**: 2.0 | **Generated**: 2026-02-15 | **Updated**: 2026-02-17
+> **Goal**: Audit thegent codebase for hybrid architecture—Python as frontmatter (interfaces, orchestration) with C++/Rust/Go backmatter binaries and Python FFI bindings.
+> **Phase 1 Status**: ✅ Complete (BKM-01, BKM-02, BKM-03, BKM-04)
+> **P3 Polish**: Summary table, cross-links, next actions added
 > **See also:** [FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md](../plans/FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md) §7 (BKM summary + integration), §8–§9 (Py/TS/Go + value to port), §10 (lib audits + anti-sprawl).
 
 ---
@@ -411,7 +411,7 @@ If PyO3 extension fails to build (no Rust toolchain), Python implementations rem
 
 #### BKM-01: `thegent-resources` (FD/memory/load sampling)
 - **Recommended**: **Rust (PyO3)** or **Go (subprocess JSON)**
-- **Rationale**: 
+- **Rationale**:
   - Highest ROI (eliminates 2–3 spawns per check)
   - Rust: `sysinfo` crate provides cross-platform resource sampling
   - Go: `gopsutil` is mature; subprocess JSON acceptable for infrequent calls
@@ -688,7 +688,7 @@ tags = extract_xml_tags("<TASK>foo</TASK>", ["TASK"])
 # thegent_parser_cy.pyx
 cdef class XMLParser:
     cdef list allowed_tags
-    
+
     def extract_tags(self, str text):
         cdef list tags = []
         # Optimized regex/parsing
@@ -1043,7 +1043,7 @@ except Exception as e:
 
 ## 16. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Worker Droid
 
 ### Changes Made

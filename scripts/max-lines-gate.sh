@@ -6,14 +6,20 @@ MAX_LINES=${MAX_LINES:-2500}
 WARN_LINES=${WARN_LINES:-2000}
 SCOPE=${MAX_LINES_SCOPE:-changed}
 IMPL=${THEGENT_MAX_LINES_IMPL:-rust}
+EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-}
 
 run_rust() {
+  set -- --max-lines "$MAX_LINES" --warn-lines "$WARN_LINES" --scope "$SCOPE"
+  if [ -n "$EXCLUDE_PREFIXES" ]; then
+    set -- "$@" --exclude-prefixes "$EXCLUDE_PREFIXES"
+  fi
+
   if command -v max_lines >/dev/null 2>&1; then
-    exec max_lines --max-lines "$MAX_LINES" --warn-lines "$WARN_LINES" --scope "$SCOPE"
+    exec max_lines "$@"
   fi
   if command -v cargo >/dev/null 2>&1; then
     exec cargo run --quiet --manifest-path "$ROOT_DIR/crates/thegent-utils/Cargo.toml" --bin max_lines -- \
-      --max-lines "$MAX_LINES" --warn-lines "$WARN_LINES" --scope "$SCOPE"
+      "$@"
   fi
   echo "MAX_LINES_GATE FAIL: Rust implementation unavailable (need max_lines or cargo)" >&2
   exit 2

@@ -177,6 +177,18 @@ def test_clode_max_and_glm_aliases_forward_expected_token() -> None:
         assert run_interactive.call_args.kwargs["model_override"] == "anthropic/claude-sonnet-4-20250514"
 
 
+def test_clode_max_accepts_force_aliases() -> None:
+    with patch("thegent.clode_main._run_claude_interactive") as run_interactive:
+        result = runner.invoke(app, ["max", "--force"])
+        assert result.exit_code == 0
+        assert run_interactive.call_count == 1
+
+    with patch("thegent.clode_main._run_claude_interactive") as run_interactive:
+        result = runner.invoke(app, ["max", "--dangerously-skip-permissions"])
+        assert result.exit_code == 0
+        assert run_interactive.call_count == 1
+
+
 def test_clode_provider_default_to_interactive() -> None:
     with (
         patch("thegent.clode_main._get_claude_env", return_value={"ANTHROPIC_MODEL": "glm-5"}),
@@ -720,3 +732,17 @@ def test_run_claude_interactive_missing_binary_errors() -> None:
     ):
         with pytest.raises(typer.Exit):
             _run_claude_interactive("nim")
+
+
+def test_clode_config_launches_tui_translation_layer() -> None:
+    with patch("thegent.ux.models_providers_tui.run_models_providers_tui") as run_tui:
+        result = runner.invoke(app, ["config"])
+    assert result.exit_code == 0
+    run_tui.assert_called_once_with()
+
+
+def test_clode_config_legacy_uses_provider_form() -> None:
+    with patch("thegent.provider_model_manager.run_provider_form") as run_legacy:
+        result = runner.invoke(app, ["config", "--legacy"])
+    assert result.exit_code == 0
+    run_legacy.assert_called_once_with()

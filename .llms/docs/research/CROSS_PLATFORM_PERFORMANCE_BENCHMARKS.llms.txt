@@ -8,8 +8,8 @@ Source: docs/research/CROSS_PLATFORM_PERFORMANCE_BENCHMARKS.md
 
 **Purpose:** Detailed performance benchmarks, SLAs, and optimization targets for cross-platform desktop automation.
 
-**Date:** 2026-02-16  
-**Status:** Research  
+**Date:** 2026-02-16
+**Status:** Research
 **Related:** CROSS_PLATFORM_MULTI_TENANT_DESKTOP_AUTOMATION_RESEARCH.md
 
 ---
@@ -157,15 +157,15 @@ Source: docs/research/CROSS_PLATFORM_PERFORMANCE_BENCHMARKS.md
 ```
 class CachedElementProvider:
     """Provider with element caching."""
-    
+
     def __init__(self, ttl_seconds: int = 30):
         self.cache: dict[str, tuple[UIElement, float]] = {}
         self.ttl = ttl_seconds
-    
+
     def find_element_cached(self, selector: str) -> Optional[UIElement]:
         """Find element with caching."""
         now = time.time()
-        
+
         # Check cache
         if selector in self.cache:
             element, cached_at = self.cache[selector]
@@ -175,12 +175,12 @@ class CachedElementProvider:
                     return element
                 else:
                     del self.cache[selector]
-        
+
         # Cache miss: find element
         element = self._find_element(selector)
         if element:
             self.cache[selector] = (element, now)
-        
+
         return element
 ```
 
@@ -204,22 +204,22 @@ class CachedElementProvider:
 ```
 class IncrementalScreenshotProvider:
     """Provider with incremental screenshot support."""
-    
+
     def __init__(self):
         self.last_screenshot: Image.Image | None = None
-    
+
     def screenshot_incremental(self, region: dict | None = None) -> bytes:
         """Take incremental screenshot (only changed regions)."""
         current = self._capture_screenshot(region)
-        
+
         if self.last_screenshot is None:
             self.last_screenshot = current
             return self._image_to_bytes(current)
-        
+
         # Compare and return only changed regions
         diff = self._compute_diff(self.last_screenshot, current)
         self.last_screenshot = current
-        
+
         return self._image_to_bytes(diff)
 ```
 
@@ -264,20 +264,20 @@ async def execute_parallel(actions: list[AutomationAction]) -> list[AutomationRe
 ```
 class BatchAutomationProvider:
     """Provider with batch operation support."""
-    
+
     def execute_batch(self, actions: list[AutomationAction]) -> list[AutomationResult]:
         """Execute actions in optimized batch."""
         # Group by operation type
         clicks = [a for a in actions if a.type == "click"]
         types = [a for a in actions if a.type == "type_text"]
-        
+
         # Execute batches
         results = []
         if clicks:
             results.extend(self._batch_clicks(clicks))
         if types:
             results.extend(self._batch_types(types))
-        
+
         return results
 ```
 
@@ -335,17 +335,17 @@ groups:
     rules:
       - alert: AutomationLatencyHigh
         expr: |
-          histogram_quantile(0.95, 
+          histogram_quantile(0.95,
             desktop_automation_latency_seconds_bucket{action_type="click"}
           ) > 0.15
         for: 5m
         annotations:
           summary: "Click latency p95 > 150ms"
-      
+
       - alert: AutomationSuccessRateLow
         expr: |
-          rate(desktop_automation_success_total[5m]) / 
-          (rate(desktop_automation_success_total[5m]) + 
+          rate(desktop_automation_success_total[5m]) /
+          (rate(desktop_automation_success_total[5m]) +
            rate(desktop_automation_failure_total[5m])) < 0.90
         for: 5m
         annotations:
@@ -453,14 +453,14 @@ def benchmark_macos_click():
     """Benchmark macOS click performance."""
     provider = macOSAutomationProvider()
     latencies = []
-    
+
     for _ in range(100):
         start = time.time()
         element = provider.find_element("button[name='Save']")
         if element:
             result = provider.click(element)
             latencies.append((time.time() - start) * 1000)
-    
+
     print(f"Click latency: p50={np.percentile(latencies, 50):.1f}ms, "
           f"p95={np.percentile(latencies, 95):.1f}ms, "
           f"p99={np.percentile(latencies, 99):.1f}ms")
@@ -472,18 +472,18 @@ def benchmark_all_platforms():
     """Benchmark all platforms."""
     platforms = ["darwin", "windows", "linux"]
     results = {}
-    
+
     for platform_name in platforms:
         if platform.system().lower() != platform_name:
             continue
-        
+
         provider = get_provider(platform_name)
         results[platform_name] = {
             "click": benchmark_click(provider),
             "type_text": benchmark_type_text(provider),
             "screenshot": benchmark_screenshot(provider),
         }
-    
+
     return results
 ```
 
@@ -511,7 +511,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-    
+
     steps:
       - uses: actions/checkout@v3
       - name: Run benchmarks
@@ -519,7 +519,7 @@ jobs:
           python -m pytest tests/benchmarks/ \
             --benchmark-only \
             --benchmark-json=benchmark-${{ matrix.os }}.json
-      
+
       - name: Compare with baseline
         run: |
           python scripts/compare_benchmarks.py \
@@ -532,12 +532,12 @@ jobs:
 def detect_regression(baseline: dict, current: dict, threshold: float = 0.2):
     """Detect performance regressions."""
     regressions = []
-    
+
     for metric, baseline_value in baseline.items():
         current_value = current.get(metric)
         if current_value is None:
             continue
-        
+
         regression_pct = (current_value - baseline_value) / baseline_value
         if regression_pct > threshold:
             regressions.append({
@@ -546,7 +546,7 @@ def detect_regression(baseline: dict, current: dict, threshold: float = 0.2):
                 "current": current_value,
                 "regression_pct": regression_pct * 100
             })
-    
+
     return regressions
 ```
 
@@ -639,12 +639,12 @@ def profile_automation():
     """Profile automation performance."""
     profiler = cProfile.Profile()
     profiler.enable()
-    
+
     # Run automation
     provider = get_provider()
     for _ in range(100):
         provider.click(element)
-    
+
     profiler.disable()
     stats = pstats.Stats(profiler)
     stats.sort_stats('cumulative')

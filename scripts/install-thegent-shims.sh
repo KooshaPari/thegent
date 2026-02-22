@@ -43,7 +43,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Resolve binary path - look in various locations
 resolve_binary_path() {
     local binary_path=""
-    
+
     # Check if running from workspace (development)
     if [[ -f "${SCRIPT_DIR}/../crates/target/release/${BINARY_NAME}" ]]; then
         binary_path="${SCRIPT_DIR}/../crates/target/release/${BINARY_NAME}"
@@ -62,7 +62,7 @@ resolve_binary_path() {
     elif [[ -f "/usr/local/bin/${BINARY_NAME}" ]]; then
         binary_path="/usr/local/bin/${BINARY_NAME}"
     fi
-    
+
     echo "$binary_path"
 }
 
@@ -70,17 +70,17 @@ resolve_binary_path() {
 find_or_build_binary() {
     local binary_path
     binary_path=$(resolve_binary_path)
-    
+
     if [[ -n "$binary_path" ]]; then
         # Use stderr for info messages to avoid capturing in variable
         echo -e "${GREEN}Found existing binary: ${binary_path}${NC}" >&2
         echo "$binary_path"
         return 0
     fi
-    
+
     # Try to build if not found
     echo -e "${YELLOW}Binary not found. Attempting to build...${NC}" >&2
-    
+
     # Check if we're in a git repository with thegent-shims
     if [[ -f "${SCRIPT_DIR}/../crates/thegent-shims/Cargo.toml" ]]; then
         local build_dir="${SCRIPT_DIR}/../crates/thegent-shims"
@@ -94,7 +94,7 @@ find_or_build_binary() {
             return 1
         fi
     fi
-    
+
     echo -e "${RED}Could not find or build thegent-shims binary.${NC}"
     return 1
 }
@@ -103,10 +103,10 @@ find_or_build_binary() {
 create_symlinks() {
     local binary_path="$1"
     local link
-    
+
     # Ensure install directory exists
     mkdir -p "$INSTALL_DIR"
-    
+
     # Create the main binary symlink first
     echo -e "${GREEN}Installing ${BINARY_NAME} to ${INSTALL_DIR}/${BINARY_NAME}${NC}"
     ln -sf "$binary_path" "${INSTALL_DIR}/${BINARY_NAME}"
@@ -136,7 +136,7 @@ check_path_collisions() {
 main() {
     echo -e "${GREEN}=== thegent-shims Installation ===${NC}"
     echo ""
-    
+
     # Check if INSTALL_DIR is in PATH
     if [[ ":$PATH:" != *":${INSTALL_DIR}:"* ]]; then
         echo -e "${YELLOW}Warning: ${INSTALL_DIR} is not in your PATH.${NC}"
@@ -145,18 +145,18 @@ main() {
         echo "    export PATH=\"\${HOME}/.local/bin:\${PATH}\""
         echo ""
     fi
-    
+
     # Find or build binary
     local binary_path
     if ! binary_path=$(find_or_build_binary); then
         echo -e "${RED}Failed to find or build thegent-shims${NC}"
         exit 1
     fi
-    
+
     # Create symlinks
     create_symlinks "$binary_path"
     check_path_collisions
-    
+
     echo ""
     echo -e "${GREEN}=== Installation Complete ===${NC}"
     echo ""

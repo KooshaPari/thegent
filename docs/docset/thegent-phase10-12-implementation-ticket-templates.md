@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 Implementation Ticket Templates (Chunk 3)
 
-**Status:** Operational draft for immediate Jira/Linear/issue migration  
-**Date:** 2026-02-15  
+**Status:** Operational draft for immediate Jira/Linear/issue migration
+**Date:** 2026-02-15
 **Scope:** Standardized ticket schema for Phase 10–12 bundles, including dependencies, evidence, and rollout gates.
 
 ## 1) Canonical ticket format
@@ -408,4 +408,3 @@ For each ticket, ensure the import row in `WBS_TO_ISSUE_IMPORT_MATRIX.md` is upd
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

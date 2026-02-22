@@ -136,4 +136,3 @@ sort_tasks(cls: Any, tasks: list[dict[(str, Any)]])
 Sort tasks by lane priority (asc) then by creation time (asc).
 
 ---
-

@@ -1,6 +1,7 @@
 """RouterManager with multi-runtime optimized backends."""
 
 import logging
+import importlib
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -11,24 +12,41 @@ from .router_logic import PurePythonRouter, RouteMetrics, RoutingStrategy
 
 logger = logging.getLogger(__name__)
 
-# Register implementations in the dispatcher
-try:
-    import thegent_router
+_NATIVE_IMPORTER = importlib.import_module
 
-    from thegent.config import get_settings
 
-    settings = get_settings()
-    router = thegent_router.PyParetoRouter.with_full_config(
-        low_threshold=0.35,  # These could also be exposed if needed
-        high_threshold=0.65,
-        hysteresis_band=settings.router_hysteresis_band,
-        hysteresis_dwell_s=settings.router_hysteresis_dwell,
-        hysteresis_max_dwell_s=settings.router_hysteresis_max_dwell,
-        hysteresis_override=settings.router_hysteresis_override,
-    )
-    router_dispatcher.register("native", router)
-except ImportError:
-    pass
+def _register_native_router() -> None:
+    """Register the native router implementation when available."""
+
+    try:
+        thegent_router = _NATIVE_IMPORTER("thegent_router")
+        from thegent.config import get_settings
+
+        settings = get_settings()
+        router = thegent_router.PyParetoRouter.with_full_config(
+            low_threshold=0.35,  # These could also be exposed if needed
+            high_threshold=0.65,
+            hysteresis_band=settings.router_hysteresis_band,
+            hysteresis_dwell_s=settings.router_hysteresis_dwell,
+            hysteresis_max_dwell_s=settings.router_hysteresis_max_dwell,
+            hysteresis_override=settings.router_hysteresis_override,
+        )
+        router_dispatcher.register("native", router)
+    except ImportError as exc:
+        logger.info(
+            "Native router extension unavailable; using PurePython fallback (%s)",
+            exc,
+            exc_info=True,
+        )
+    except AttributeError as exc:
+        logger.warning(
+            "Native router API mismatch while constructing native implementation; using PurePython fallback",
+            exc_info=True,
+            extra={"error": str(exc)},
+        )
+
+
+_register_native_router()
 
 router_dispatcher.register("pypy", PurePythonRouter())
 router_dispatcher.register("python", PurePythonRouter())

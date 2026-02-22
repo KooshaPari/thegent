@@ -337,11 +337,11 @@ def run_impl(mode: str, prompt: str, **kwargs) -> RunResult:
         elif action == "idea":
             save_idea(prompt)
             return RunResult(exit_code=0, stdout="Idea saved.", stderr="")
-    
+
     # Execute normally
     runner = get_runner(mode)
     result = runner.run(prompt, **kwargs)
-    
+
     # Harvest on exit
     harvest_pending_queue()
     return result

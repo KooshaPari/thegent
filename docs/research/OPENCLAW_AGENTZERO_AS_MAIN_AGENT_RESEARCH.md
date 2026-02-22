@@ -2,8 +2,8 @@
 
 **Purpose:** Evaluate OpenClaw or Agent Zero as thegent's primary agent runtime so that chatting with sessions and advanced sitback (dashboard, never-idle, gardening) becomes easier and more robust.
 
-**Date:** 2026-02-16  
-**Status:** Research  
+**Date:** 2026-02-16
+**Status:** Research
 **Related:** `docs/plans/2026-02-15-thegent-sitback-design.md`, `docs/research/OPENCLAW_CLAWHUB_AGENTZERO_USE_CASES.md`
 
 ---
@@ -356,7 +356,7 @@ Both runtimes could support:
 
 ## EXTENSION_SUMMARY
 
-**Extended on**: 2026-02-17  
+**Extended on**: 2026-02-17
 **Extensions added**: Use case diagrams (§6)
 
 | Section | Added Content |

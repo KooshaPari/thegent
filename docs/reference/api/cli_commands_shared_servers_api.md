@@ -35,4 +35,3 @@ shared_status(project_root: str)
 Show status of shared servers.
 
 ---
-

@@ -1,8 +1,8 @@
 # Cost Governance Design (G-GP-06)
 
-**Purpose:** Design per-run cost tracking and budget governance.  
-**Date:** 2026-02-14  
-**Status:** Design  
+**Purpose:** Design per-run cost tracking and budget governance.
+**Date:** 2026-02-14
+**Status:** Design
 **Source:** GOVERNANCE_POLICY_AUDIT_RESEARCH, WP-5003
 
 ---

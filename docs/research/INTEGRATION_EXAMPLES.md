@@ -1,6 +1,6 @@
 # Integration Examples — Kush Ecosystem
 
-> **Status**: 💡 **EXAMPLES** | **Date**: 2026-02-18  
+> **Status**: 💡 **EXAMPLES** | **Date**: 2026-02-18
 > **Purpose**: Practical code examples for integrating projects across the kush ecosystem
 
 ---
@@ -64,7 +64,7 @@ async def analyze_project(path: Path):
     bloc_result = await run_command(["bloc", str(path), "--health"])
     trace_result = await run_command(["trace", "analyze", str(path)])
     usage_result = await run_command(["usage", "status", "--project", str(path)])
-    
+
     return {
         "code": bloc_result,
         "requirements": trace_result,
@@ -88,7 +88,7 @@ class UnifiedPM:
         self.req = RequirementsManager(project_id)
         self.entities = EntityManager(project_id)
         self.tasks = TaskManager(project_id)
-    
+
     async def create_feature(self, spec: dict):
         req = await self.req.create(spec)
         entity = await self.entities.create({"type": "feature", **spec})

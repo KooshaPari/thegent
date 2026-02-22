@@ -116,4 +116,3 @@ Verify artifact signature.
 **Returns**: True if signature is valid
 
 ---
-

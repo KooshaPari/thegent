@@ -269,15 +269,26 @@ def _merge_with_git_merge_file(
     try:
         tmp_path.write_bytes(ours.read_bytes())
 
+        output_dir = output.parent
+        if base.parent == output_dir:
+            base_arg = base.name
+        else:
+            base_arg = str(base)
+        if theirs.parent == output_dir:
+            theirs_arg = theirs.name
+        else:
+            theirs_arg = str(theirs)
+
         result = subprocess.run(
             [
                 "git",
                 "merge-file",
                 "--diff3",
-                str(tmp_path),
-                str(base),
-                str(theirs),
+                tmp_path.name,
+                base_arg,
+                theirs_arg,
             ],
+            cwd=str(output_dir),
             capture_output=True,
             text=True,
             check=False,

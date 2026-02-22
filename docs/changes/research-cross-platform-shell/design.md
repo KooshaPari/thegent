@@ -1,8 +1,8 @@
 # Cross-Platform Shell Strategy Design
 
-**Date**: 2026-02-18  
-**Status**: Design  
-**Related Proposal**: [proposal.md](./proposal.md)  
+**Date**: 2026-02-18
+**Status**: Design
+**Related Proposal**: [proposal.md](./proposal.md)
 
 ---
 
@@ -118,16 +118,16 @@ fn dispatch(hook_name: &str, event: &str, context: &Dict) -> Result<()> {
         Shell::POSIX => format!("hooks/{}.sh", hook_name),
         Shell::PowerShell => format!("hooks/{}.ps1", hook_name),
     };
-    
+
     if !Path::new(&hook_file).exists() {
         return Err(format!("Hook not found: {}", hook_file));
     }
-    
+
     let runner = match shell {
         Shell::POSIX => PosixRunner::new(),
         Shell::PowerShell => PowerShellRunner::new(),
     };
-    
+
     runner.execute(&hook_file, context)
 }
 ```
@@ -145,7 +145,7 @@ fn dispatch(hook_name: &str, event: &str, context: &Dict) -> Result<()> {
 
 ### 2. POSIX Hook Runner
 
-**Language**: Bash  
+**Language**: Bash
 **Location**: `hooks/lib/bash_lib.sh`
 
 **Responsibilities**:
@@ -178,7 +178,7 @@ log_info "QA check passed"
 
 ### 3. PowerShell Hook Runner
 
-**Language**: PowerShell 7+  
+**Language**: PowerShell 7+
 **Location**: `hooks/lib/pwsh_lib.ps1`
 
 **Responsibilities**:

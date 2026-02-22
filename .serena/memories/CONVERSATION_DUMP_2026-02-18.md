@@ -1,7 +1,7 @@
 # Conversation Dump: Phase 2 (Hysteresis) Implementation
-**Date**: 2026-02-18  
-**Project**: thegent / research-pareto-routing  
-**Phase**: Phase 2 - Hysteresis Damping Logic  
+**Date**: 2026-02-18
+**Project**: thegent / research-pareto-routing
+**Phase**: Phase 2 - Hysteresis Damping Logic
 **Status**: ✅ COMPLETE (78/78 tests passing)
 
 ---
@@ -26,7 +26,7 @@ Three interconnected tasks:
 ### P2.1: Hysteresis Manager (180+ lines)
 **File**: `crates/thegent-router/src/hysteresis.rs`
 
-**Core Concept**: 
+**Core Concept**:
 Hysteresis damping prevents rapid route oscillation by:
 - Using a **hysteresis band** (±15% around routing threshold)
 - Enforcing **dwell time** (300s minimum between switches)
@@ -267,7 +267,7 @@ let past_time = Instant::now() - Duration::from_secs(400);
 **Solution**: Rewrote test with explicit state manipulation:
 ```rust
 // Create custom HysteresisManager with testable durations
-let mut manager = HysteresisManager::with_config(0.5, 0.15, 
+let mut manager = HysteresisManager::with_config(0.5, 0.15,
     Duration::from_secs(60),    // dwell_time: 60s (not 300s)
     Duration::from_secs(120),   // max_dwell: 120s (not 1800s)
     0.20
@@ -315,7 +315,7 @@ let mut state = SessionState {
 **Solution**: Rewrote test to verify actual oscillation prevention:
 ```rust
 // NEW TEST: Verify oscillation PREVENTION within dwell period
-let mut manager = HysteresisManager::with_config(0.5, 0.15, 
+let mut manager = HysteresisManager::with_config(0.5, 0.15,
     Duration::from_secs(60),  // dwell_time
     Duration::from_secs(300), // max_dwell
     0.20

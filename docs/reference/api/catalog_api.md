@@ -158,4 +158,3 @@ to_contract_view(use_scraped: bool, provider_filter: Any, use_cache: bool)
 Return catalog with schema metadata and route details for structured consumers.
 
 ---
-

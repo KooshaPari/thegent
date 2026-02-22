@@ -1,6 +1,6 @@
 # Git Shim Starship Optimization — Fix for 8+ Minute Prompt Delays
 
-**Date:** 2026-02-17  
+**Date:** 2026-02-17
 **Issue:** Starship prompt taking 8m 47s+ due to git shim resolving real git binary on every invocation.
 
 ---
@@ -101,7 +101,7 @@ fi
    ```bash
    # First call (cache miss) - may take 100-200ms
    time git --version
-   
+
    # Subsequent calls (cache hit) - should be <10ms
    time git --version
    ```
@@ -138,7 +138,7 @@ fi
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

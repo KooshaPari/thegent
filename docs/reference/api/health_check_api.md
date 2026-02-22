@@ -77,4 +77,3 @@ Run all health checks.
 **Returns**: Health check results
 
 ---
-

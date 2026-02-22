@@ -101,7 +101,7 @@ Authoritative model lists from official provider docs. Use for catalog alignment
 
 ## NVIDIA NIM / Build
 
-**Model catalog:** [build.nvidia.com/models](https://build.nvidia.com/models)  
+**Model catalog:** [build.nvidia.com/models](https://build.nvidia.com/models)
 **API reference:** [docs.api.nvidia.com/nim/reference](https://docs.api.nvidia.com/nim/reference/models-1)
 
 NIM microservices provide foundation models via OpenAI-compatible APIs. Categories: LLM, Retrieval, Visual, Multimodal, Healthcare, Route Optimization, Climate Simulation.
@@ -146,7 +146,7 @@ When adding or updating catalog routes:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

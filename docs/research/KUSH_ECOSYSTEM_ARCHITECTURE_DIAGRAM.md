@@ -1,6 +1,6 @@
 # Kush Ecosystem — Architecture Diagram
 
-> **Status**: 🏗️ **ARCHITECTURE DIAGRAM** | **Date**: 2026-02-18  
+> **Status**: 🏗️ **ARCHITECTURE DIAGRAM** | **Date**: 2026-02-18
 > **Purpose**: Visual representation of the kush ecosystem architecture, relationships, and data flows
 
 ---
@@ -73,14 +73,14 @@ graph TB
     CLI --> TRACE
     CLI --> USAGE
     CLI --> DPHI
-    
+
     WEB --> JOBHUNTER
     WEB --> KNOWLEDGEBASE
     WEB --> AGENTAPI
     WEB --> DPHI
-    
+
     VOICE --> KIMAKI
-    
+
     GUI --> heliosShield
     GUI --> USAGE
 
@@ -88,33 +88,33 @@ graph TB
     THEGENT --> ZEN_MCP
     THEGENT --> MORPH
     THEGENT --> TASK_TOOL
-    
+
     PLANGENT --> ATOMS_MCP
     PLANGENT --> TASK_TOOL
-    
+
     KIMAKI --> ATOMS_MCP
     KIMAKI --> TASK_TOOL
-    
+
     SMOLGENTS --> ATOMS_MCP
     CRUN --> ATOMS_MCP
-    
+
     heliosShield --> PHENO_SDK
     BLOC --> PHENO_SDK
     CRUN --> PHENO_SDK
     USAGE --> PHENO_SDK
-    
+
     SMARTCP --> ATOMS_MCP
     SMARTCP --> ZEN_MCP
     SMARTCP --> MORPH
     SMARTCP --> TASK_TOOL
-    
+
     ATOMS_MCP --> DATABASES
     ATOMS_MCP --> STORAGE
     ATOMS_MCP --> APIS
-    
+
     TASK_TOOL --> LLM_PROVIDERS
     TASK2 --> LLM_PROVIDERS
-    
+
     TRACE --> DATABASES
     JOBHUNTER --> DATABASES
     KNOWLEDGEBASE --> STORAGE
@@ -215,7 +215,7 @@ graph TB
 
     subgraph "Orchestration Layer"
         ROOT_ORCH[Root Orchestrator<br/>thegent, plangent]
-        
+
         subgraph "Specialized Orchestrators"
             VOICE_ORCH[Voice Orchestrator<br/>kimaki]
             DELEG_ORCH[Delegation Orchestrator<br/>smolgents]
@@ -520,26 +520,26 @@ graph LR
     B -->|CLI| C[CLI Handler]
     B -->|Voice| D[Voice Handler]
     B -->|Web| E[Web Handler]
-    
+
     C --> F[Orchestrator]
     D --> F
     E --> F
-    
+
     F --> G{Agent Selection}
     G -->|Specialized| H[Specialized Agent]
     G -->|General| I[General Agent]
-    
+
     H --> J[Tool Selection]
     I --> J
-    
+
     J -->|MCP| K[MCP Server]
     J -->|CLI| L[CLI Tool]
     J -->|Custom| M[Custom Tool]
-    
+
     K --> N[Execute Tool]
     L --> N
     M --> N
-    
+
     N --> O[Process Result]
     O --> P[Update State]
     P --> Q[Return Response]
@@ -577,13 +577,13 @@ graph TB
 
     DEV_ENV --> GITHUB
     DEV_TOOLS --> GITHUB
-    
+
     GITHUB --> TESTS
     TESTS --> BUILD
-    
+
     BUILD --> STAGING
     STAGING --> STAGING_DB
-    
+
     STAGING --> PROD
     PROD --> PROD_DB
     PROD --> MONITORING

@@ -10,6 +10,7 @@ Provides:
 """
 
 import logging
+import os
 import re
 from dataclasses import dataclass
 from datetime import UTC
@@ -236,7 +237,7 @@ class SeedDetector:
         return tags[:3]  # Limit to 3 tags
 
     def _classify_with_llm(self, text: str, source: SeedSource) -> Seed | None:
-        """Classify text as seed using LLM (stub for future implementation).
+        """Classify text as seed using Anthropic API when configured.
 
         Args:
             text: Input text
@@ -245,9 +246,77 @@ class SeedDetector:
         Returns:
             Seed object if LLM classifies as seed, None otherwise
         """
-        # TODO: Implement LLM classification using Claude/Anthropic API
-        # For now, return None
-        return None
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            _log.debug("SeedDetector(use_llm=True): ANTHROPIC_API_KEY missing; skipping LLM classification")
+            return None
+
+        import json
+
+        import httpx
+
+        model = os.environ.get("THGENT_SEED_DETECTOR_MODEL", "claude-3-5-haiku-latest")
+        system = (
+            "You classify whether input text is a software idea seed. "
+            "Respond ONLY JSON: {\"is_seed\": bool, \"confidence\": float, \"tags\": [str]}."
+        )
+        user = (
+            "Classify this text:\n\n"
+            f"{text[:4000]}\n\n"
+            "Return strict JSON with keys is_seed, confidence (0..1), tags."
+        )
+
+        headers = {
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }
+        payload = {
+            "model": model,
+            "max_tokens": 256,
+            "temperature": 0,
+            "system": system,
+            "messages": [{"role": "user", "content": user}],
+        }
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.post("https://api.anthropic.com/v1/messages", headers=headers, json=payload)
+                response.raise_for_status()
+                body = response.json()
+        except Exception as exc:  # noqa: BLE001
+            _log.warning("SeedDetector LLM classification failed: %s", exc)
+            return None
+
+        text_chunks: list[str] = []
+        for item in body.get("content", []):
+            if isinstance(item, dict) and item.get("type") == "text":
+                text_chunks.append(str(item.get("text", "")))
+        if not text_chunks:
+            return None
+        raw = "".join(text_chunks).strip()
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            _log.warning("SeedDetector LLM returned non-JSON payload")
+            return None
+
+        if not isinstance(parsed, dict) or not parsed.get("is_seed"):
+            return None
+
+        confidence = float(parsed.get("confidence", SeedConfidence.LOW.value))
+        confidence = min(1.0, max(0.0, confidence))
+        tags = parsed.get("tags")
+        normalized_tags = [str(t) for t in tags][:3] if isinstance(tags, list) else []
+
+        seed = self._create_seed(
+            text=text,
+            source=source,
+            confidence=SeedConfidence.LOW if confidence < SeedConfidence.MEDIUM.value else SeedConfidence.MEDIUM,
+            detection_method="llm_classifier",
+        )
+        seed.confidence = confidence
+        seed.tags = normalized_tags or self._extract_tags(text)
+        return seed
 
     @staticmethod
     def extract_flags(text: str) -> dict[str, bool]:

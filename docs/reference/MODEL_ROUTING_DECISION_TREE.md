@@ -1,7 +1,7 @@
 # Model Routing Decision Tree
 
-**Date**: 2026-02-15  
-**Version**: 1.0  
+**Date**: 2026-02-15
+**Version**: 1.0
 **Purpose**: Programmatic model selection based on task constraints
 
 ---
@@ -50,15 +50,15 @@ def select_model(
     Select optimal model based on constraints.
     Returns: model_id (string)
     """
-    
+
     # ═══════════════════════════════════════════════════════════════
     # PHASE 1: Check absolute constraints
     # ═══════════════════════════════════════════════════════════════
-    
+
     # Quality floor check
     if quality_threshold < 60:
         return ERROR("quality_threshold < 60% is unacceptable")
-    
+
     # Mission-critical lock: only Opus acceptable
     if mission_critical:
         # Opus cost: $17.50/M, avg 10K+ tokens per call
@@ -67,22 +67,22 @@ def select_model(
             return WARN(f"Opus costs {opus_cost_cents}¢ > budget {budget_cents}¢") \
                    and use_fallback("minimax-m2.5")
         return "claude-opus-4.6"
-    
+
     # ═══════════════════════════════════════════════════════════════
     # PHASE 2: Calculate actual costs for frontier models
     # ═══════════════════════════════════════════════════════════════
-    
+
     gpt4o_mini_cost_cents = (0.375 / 1_000_000) * input_tokens * 100
     minimax_cost_cents = (0.79 / 1_000_000) * input_tokens * 100
     opus_cost_cents = (17.50 / 1_000_000) * input_tokens * 100
     sonnet_cost_cents = (10.50 / 1_000_000) * input_tokens * 100
     gemini_flash_cost_cents = (1.50 / 1_000_000) * input_tokens * 100
     glm5_cost_cents = (2.60 / 1_000_000) * input_tokens * 100
-    
+
     # ═══════════════════════════════════════════════════════════════
     # PHASE 3: Speed-critical path (latency SLA)
     # ═══════════════════════════════════════════════════════════════
-    
+
     if latency_sla_ms < 300:
         # Need ultra-fast model (>180 tok/s)
         # Gemini Flash: 218 tok/s → 4.6s for 1K tokens
@@ -94,7 +94,7 @@ def select_model(
         # No other model achieves <300ms SLA well
         return WARN("No model achieves <300ms SLA within budget") \
                and use_best_effort("gemini-3-flash")
-    
+
     if latency_sla_ms < 500:
         # Need fast model (>100 tok/s)
         # Gemini Flash preferred for latency, MiniMax as fallback
@@ -103,22 +103,22 @@ def select_model(
         if minimax_cost_cents <= budget_cents:
             return "minimax-m2.5"
         return "gpt-4o-mini"
-    
+
     # ═══════════════════════════════════════════════════════════════
     # PHASE 4: Cost-critical path (budget constraint)
     # ═══════════════════════════════════════════════════════════════
-    
+
     if budget_cents < 0.02:  # less than $0.0002/call
         # Ultimate budget minimum: GPT-4o mini
         if gpt4o_mini_cost_cents <= budget_cents:
             return "gpt-4o-mini"
         return WARN("Budget too low even for GPT-4o mini") \
                and use_fallback("gpt-4o-mini")
-    
+
     # ═══════════════════════════════════════════════════════════════
     # PHASE 5: Quality-critical path (reasoning or domain-specific)
     # ═══════════════════════════════════════════════════════════════
-    
+
     if reasoning_heavy and quality_threshold > 80:
         # Reasoning-heavy tasks: prefer GLM-5 or Opus
         # GLM-5: 92.7% AIME (best reasoning)
@@ -140,7 +140,7 @@ def select_model(
             return "claude-opus-4.6"
         # All reasoning specialists over budget: use MiniMax
         return "minimax-m2.5"
-    
+
     if multi_modal_required:
         # Image + text: Gemini 2.5 Pro is best, but dominated by MiniMax for text
         # Routing: use Gemini 2.5 Pro ONLY if:
@@ -151,15 +151,15 @@ def select_model(
             return "gemini-2.5-pro"  # Only multi-modal specialist
         # Image-less fallback: MiniMax
         return "minimax-m2.5"
-    
+
     # ═══════════════════════════════════════════════════════════════
     # PHASE 6: Default path (standard tasks)
     # ═══════════════════════════════════════════════════════════════
-    
+
     # MiniMax is best for 95% of tasks (80.2% quality, $0.79/M)
     if minimax_cost_cents <= budget_cents:
         return "minimax-m2.5"
-    
+
     # If MiniMax over budget: try cheaper models
     if gpt4o_mini_cost_cents <= budget_cents:
         # Quality drops to 70%, but acceptable fallback
@@ -168,7 +168,7 @@ def select_model(
         else:
             return WARN(f"Quality drop: MiniMax 80.2% → GPT-4o mini 70%") \
                    and use_fallback("gpt-4o-mini")
-    
+
     # All models over budget: hard error
     return ERROR(f"All models exceed budget {budget_cents}¢")
 ```
@@ -470,8 +470,8 @@ This decision tree is designed to be **programmatically executable**. Pseudo-cod
 
 ---
 
-**Document Status**: Reference; suitable for implementation  
-**Last Updated**: 2026-02-15  
+**Document Status**: Reference; suitable for implementation
+**Last Updated**: 2026-02-15
 **Next Review**: When new models released or benchmarks updated
 
 
@@ -487,7 +487,7 @@ This decision tree is designed to be **programmatically executable**. Pseudo-cod
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

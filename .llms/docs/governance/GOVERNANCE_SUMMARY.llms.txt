@@ -6,8 +6,8 @@ Source: docs/governance/GOVERNANCE_SUMMARY.md
 
 # Architectural Governance Summary
 
-**Date:** February 19, 2026  
-**Status:** Active  
+**Date:** February 19, 2026
+**Status:** Active
 **Purpose:** Quick overview of governance framework
 
 ---

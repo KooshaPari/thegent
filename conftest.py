@@ -1,7 +1,9 @@
 """Pytest configuration for thegent."""
 
 import os
+import re
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -27,6 +29,63 @@ if _PARENT_PATH in sys.path:
 _SRC_PATH_STR = str(_SRC_PATH)
 if _SRC_PATH_STR not in sys.path:
     sys.path.insert(0, _SRC_PATH_STR)
+
+
+_GUARDRAIL_EXCLUDE_SEGMENTS = {
+    "templates",
+    "archive",
+    "docs",
+    "contracts",
+    "scripts",
+    "node_modules",
+    "benchmarks",
+    "crates",
+    ".venv",
+    "coverage",
+    "build",
+}
+
+
+def _as_path(value: os.PathLike[str] | str) -> Path:
+    return Path(str(value)).resolve()
+
+
+def _matches_collection_guardrails(raw_path: Path) -> bool:
+    path = _as_path(raw_path)
+    path_str = path.as_posix()
+
+    for segment in path.parts:
+        if segment in _GUARDRAIL_EXCLUDE_SEGMENTS:
+            return True
+
+    if re.search(r"(^|/)dist/", path_str) is not None:
+        return True
+    if re.search(r"(^|/)build/", path_str) is not None:
+        return True
+
+    return False
+
+
+def _collection_item_key(item: pytest.Item) -> tuple[str, int, str]:
+    return (str(item.location[0]), item.location[1], item.location[2])
+
+
+def pytest_ignore_collect(path: Path, config: pytest.Config) -> bool:
+    """Skip non-runtime trees before pytest recurses into them."""
+    return _matches_collection_guardrails(path)
+
+
+def _sort_collection_items(items: list[pytest.Item]) -> None:
+    items.sort(key=_collection_item_key)
+
+
+def pytest_collection_modifyitems(
+    session: pytest.Session,
+    config: pytest.Config,
+    items: list[pytest.Item],
+) -> None:
+    # Ensure deterministic execution order and stable sharding input across reruns.
+    _sort_collection_items(items)
 
 
 @pytest.fixture(autouse=True)

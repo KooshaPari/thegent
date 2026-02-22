@@ -21,6 +21,9 @@ import pytest
 
 from thegent.cache.multi_level import _DISKCACHE_AVAILABLE, MultiLevelCache
 
+if not _DISKCACHE_AVAILABLE:
+    pytest.fail("diskcache dependency is required for diskcache migration tests", pytrace=False)
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -50,7 +53,6 @@ class TestMultiLevelCacheL2DirProperty:
         cache = MultiLevelCache(l1_maxsize=4, l1_ttl=60)
         assert cache.l2_dir is None
 
-    @pytest.mark.skipif(not _DISKCACHE_AVAILABLE, reason="diskcache not installed")
     def test_l2_dir_returns_path_when_l2_enabled(self, tmp_path: Path) -> None:
         # @trace FR-CACHE-002
         cache = _make_cache(tmp_path)
@@ -60,7 +62,6 @@ class TestMultiLevelCacheL2DirProperty:
         finally:
             cache.close()
 
-    @pytest.mark.skipif(not _DISKCACHE_AVAILABLE, reason="diskcache not installed")
     def test_l2_dir_matches_configured_path(self, tmp_path: Path) -> None:
         # @trace FR-CACHE-002
         l2_path = tmp_path / "specific-cache"
@@ -71,7 +72,6 @@ class TestMultiLevelCacheL2DirProperty:
         finally:
             cache.close()
 
-    @pytest.mark.skipif(not _DISKCACHE_AVAILABLE, reason="diskcache not installed")
     def test_l2_dir_directory_exists_after_init(self, tmp_path: Path) -> None:
         # @trace FR-CACHE-002
         cache = _make_cache(tmp_path)

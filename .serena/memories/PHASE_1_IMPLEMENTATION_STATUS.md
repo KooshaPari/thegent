@@ -1,8 +1,8 @@
 # Phase 1 Implementation Status - Research Hook Rust
 
-**Date**: 2026-02-18  
-**Phase**: Phase 1 (Research & PoC)  
-**Status**: In Progress  
+**Date**: 2026-02-18
+**Phase**: Phase 1 (Research & PoC)
+**Status**: In Progress
 
 ## Completion Summary
 
@@ -16,20 +16,20 @@
 - **1.1.1** ✅ Common Types: `src/types.rs` fully implemented
   - PolicyRule, RuleType, Severity, QualityMetrics, SecurityFinding, CostEstimate, LintIssue, HookConfig, QualityThresholds, SecurityRule, HookError
   - All types support serde serialization
-  
+
 - **1.1.2** ✅ PolicyEngine: `src/policy.rs` fully implemented (~200 LOC)
   - PolicyEngine struct with rule evaluation
   - Supports Cost, Quality, Security, Spec rule types
   - DashMap caching for policy results
   - Condition parsing: "key op value" format (e.g., "cost < 10.0")
   - 8+ unit tests with 85%+ coverage
-  
+
 - **1.1.3** ✅ CostCalculator: `src/cost.rs` fully implemented (~120 LOC)
   - Hardcoded pricing for 6+ models (Claude, GPT, Gemini)
   - Supports custom model pricing via `add_model_pricing()`
   - Cost-to-value ratio calculation
   - 5+ unit tests verifying ±5% accuracy against pricing
-  
+
 - **1.1.4** ✅ QualityEvaluator: `src/quality.rs` fully implemented (~130 LOC)
   - Parse ruff JSON output → LintIssue structs
   - Parse oxlint JSON output → LintIssue structs
@@ -51,7 +51,7 @@
 - **1.2.1** ❌ Not Started: Need to create `thegent-hooks-quality-gate` binary crate
   - OR: Can use `src/main.rs` as single-binary approach
   - Decision needed: Per-binary crates vs. single binary with subcommands
-  
+
 - **1.2.2-1.2.4** ❌ Not Started: quality-gate implementation
   - Need stdin/stdout JSON interface
   - Integrate PolicyEngine + QualityEvaluator

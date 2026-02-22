@@ -37,7 +37,7 @@ echo "Installing runtime-dispatch symlinks to $BIN_DIR..."
 
 for tool in "${TOOLS[@]}"; do
     link_path="$BIN_DIR/$tool"
-    
+
     # Backup existing binary if it's not already our symlink
     if [ -L "$link_path" ]; then
         current_target=$(readlink "$link_path")
@@ -46,12 +46,12 @@ for tool in "${TOOLS[@]}"; do
             continue
         fi
     fi
-    
+
     if [ -f "$link_path" ] && [ ! -L "$link_path" ]; then
         echo "  ⚠ Backing up existing $tool to ${link_path}.backup"
         mv "$link_path" "${link_path}.backup"
     fi
-    
+
     echo "  → Linking $tool -> runtime-dispatch"
     ln -sf "$BINARY" "$link_path"
 done

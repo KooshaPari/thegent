@@ -72,4 +72,3 @@ The **Gardener** and **Incorporator** agents will use Supermemory to:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

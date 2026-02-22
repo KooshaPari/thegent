@@ -1,6 +1,6 @@
 # Chat Session Wait Pattern
 
-**Date:** 2026-02-17  
+**Date:** 2026-02-17
 **Issue:** Chat sessions terminating instead of waiting for next notification
 
 ---

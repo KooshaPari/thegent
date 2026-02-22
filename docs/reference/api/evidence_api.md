@@ -84,4 +84,3 @@ verify_evidence_hash(self: Any, run_id: str, phase: str, expected_hash: str)
 Verify stored evidence hash matches expected. Returns True if valid.
 
 ---
-

@@ -6,7 +6,7 @@ Source: docs/architecture/ENHANCEMENT_SUMMARY.md
 
 # Enhancement Summary: Polish, QoL, Robustness & Optimal AX/DX/UX
 
-**Date**: 2026-02-19  
+**Date**: 2026-02-19
 **Status**: Phase 1 Complete
 
 ---
@@ -149,12 +149,12 @@ from thegent.infra.multi_runtime_diagnostics import check_all_runtimes, display_
 
 def run_doctor(fix: bool = False, runtime: bool = False) -> bool:
     # ... existing checks ...
-    
+
     if runtime:
         console.print("\n[bold cyan]Multi-Runtime Diagnostics[/bold cyan]")
         statuses = check_all_runtimes()
         display_runtime_status(statuses)
-    
+
     # ... rest of doctor logic ...
 ```
 

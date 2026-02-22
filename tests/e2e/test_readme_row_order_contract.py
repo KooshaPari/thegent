@@ -145,6 +145,65 @@ def test_governance_rows_follow_strict_expected_order() -> None:
     assert mismatch is None, mismatch
 
 
+def test_governance_block_row_count_matches_expected_order_length() -> None:
+    actual = _actual_governance_goal_order()
+    assert len(actual) == len(EXPECTED_GOVERNANCE_ROW_ORDER), (
+        "README governance block row count must equal EXPECTED_GOVERNANCE_ROW_ORDER length: "
+        f"actual={len(actual)} expected={len(EXPECTED_GOVERNANCE_ROW_ORDER)}"
+    )
+
+
+def test_every_governance_row_command_starts_with_pytest_q() -> None:
+    command_by_goal = {goal: command for goal, command in _command_table_rows()}
+
+    for goal in EXPECTED_GOVERNANCE_ROW_ORDER:
+        assert goal in command_by_goal, f"README governance row is missing from command table: '{goal}'"
+        snippet = command_by_goal[goal].strip().strip("`").strip()
+        assert snippet.startswith("pytest -q"), (
+            f"README governance row '{goal}' command must start with `pytest -q`: {snippet}"
+        )
+
+
+def test_governance_rows_have_strictly_increasing_table_indices() -> None:
+    all_goals = _command_table_goal_rows()
+    governance_positions = [index for index, goal in enumerate(all_goals) if goal in EXPECTED_GOVERNANCE_ROW_ORDER]
+    assert governance_positions == sorted(governance_positions), (
+        "README governance rows must preserve table order with strictly increasing indices: "
+        f"{governance_positions}"
+    )
+    assert len(governance_positions) == len(set(governance_positions)), (
+        "README governance rows must not share table positions: "
+        f"{governance_positions}"
+    )
+
+
+def test_each_expected_governance_goal_maps_to_exactly_one_command_cell_occurrence() -> None:
+    rows = _command_table_rows()
+    occurrences_by_goal = {
+        goal: sum(1 for row_goal, _ in rows if row_goal == goal)
+        for goal in EXPECTED_GOVERNANCE_ROW_ORDER
+    }
+    mismatches = {goal: count for goal, count in occurrences_by_goal.items() if count != 1}
+    assert not mismatches, (
+        "Each expected governance goal must map to exactly one command cell occurrence in README table: "
+        f"{mismatches}"
+    )
+
+
+def test_full_bundle_row_is_last_direct_governance_row_in_table_order() -> None:
+    goals = _command_table_goal_rows()
+    direct_governance_goals = [
+        goal
+        for goal in goals
+        if goal in EXPECTED_GOVERNANCE_ROW_ORDER and "(direct)" in goal
+    ]
+    assert direct_governance_goals, "README command table must include direct governance rows."
+    assert direct_governance_goals[-1] == "Full e2e governance unit bundle (direct)", (
+        "Full bundle governance row must remain the last direct governance row in table order: "
+        f"{direct_governance_goals}"
+    )
+
+
 def test_governance_rows_form_one_contiguous_block_in_table() -> None:
     all_goals = _command_table_goal_rows()
     positions: list[int] = []
@@ -320,10 +379,84 @@ def test_alias_governance_trio_direct_paths_follow_canonical_increasing_order() 
     )
 
 
+def test_alias_governance_trio_goals_are_contiguous_in_table_positions() -> None:
+    goals = _command_table_goal_rows()
+    alias_goals = (
+        "Alias rewrite contract unit (direct)",
+        "Alias rewrite real-app contract unit (direct)",
+        "Alias unsupported rationale contract (direct)",
+    )
+    positions: list[int] = []
+
+    for goal in alias_goals:
+        assert goal in goals, f"README governance row is missing from command table: '{goal}'"
+        positions.append(goals.index(goal))
+
+    contiguous_positions = list(range(min(positions), max(positions) + 1))
+    assert positions == contiguous_positions, (
+        "README alias governance trio goals must be contiguous in command table position: "
+        f"{list(zip(alias_goals, positions, strict=False))}"
+    )
+
+
+def test_governance_block_has_no_duplicate_command_cells() -> None:
+    rows = _command_table_rows()
+    governance_commands: dict[str, list[str]] = {}
+
+    for goal, command in rows:
+        if goal not in EXPECTED_GOVERNANCE_ROW_ORDER:
+            continue
+        normalized_command = command.strip()
+        governance_commands.setdefault(normalized_command, []).append(goal)
+
+    duplicates = sorted(
+        (command, goals)
+        for command, goals in governance_commands.items()
+        if len(goals) > 1
+    )
+    assert not duplicates, (
+        "README governance block must not contain duplicate command cells across goals: "
+        f"{duplicates}"
+    )
+
+
 def test_expected_governance_row_order_labels_are_unique() -> None:
     duplicates = sorted({goal for goal in EXPECTED_GOVERNANCE_ROW_ORDER if EXPECTED_GOVERNANCE_ROW_ORDER.count(goal) > 1})
     assert not duplicates, (
         "EXPECTED_GOVERNANCE_ROW_ORDER must not contain duplicate goal labels: "
+        + ", ".join(duplicates)
+    )
+
+
+def test_suite_direct_multi_path_rows_keep_stable_path_ordering_by_basename() -> None:
+    rows = _command_table_rows()
+    multi_path_direct_rows: list[tuple[str, list[str]]] = []
+
+    for goal, command in rows:
+        if goal not in EXPECTED_GOVERNANCE_ROW_ORDER or "(direct)" not in goal:
+            continue
+        paths = _referenced_e2e_test_paths(command)
+        if len(paths) > 1:
+            multi_path_direct_rows.append((goal, paths))
+
+    assert multi_path_direct_rows, "README governance command table must include at least one multi-path direct row."
+
+    out_of_order = [
+        (goal, paths)
+        for goal, paths in multi_path_direct_rows
+        if paths != sorted(paths, key=lambda path: (Path(path).name, path))
+    ]
+    assert not out_of_order, (
+        "README suite direct rows with multiple paths must keep stable basename ordering: "
+        f"{out_of_order}"
+    )
+
+
+def test_governance_goal_labels_are_unique_case_insensitively() -> None:
+    lowered_labels = [goal.lower() for goal in EXPECTED_GOVERNANCE_ROW_ORDER]
+    duplicates = sorted({label for label in lowered_labels if lowered_labels.count(label) > 1})
+    assert not duplicates, (
+        "EXPECTED_GOVERNANCE_ROW_ORDER must not contain case-insensitive duplicate goal labels: "
         + ", ".join(duplicates)
     )
 

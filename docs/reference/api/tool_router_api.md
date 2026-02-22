@@ -116,4 +116,3 @@ save_registry(self: Any)
 Persist current tool registry to the filesystem.
 
 ---
-

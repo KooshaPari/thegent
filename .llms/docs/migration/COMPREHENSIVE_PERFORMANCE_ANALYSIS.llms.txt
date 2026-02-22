@@ -445,22 +445,22 @@ fn thegent_tool_detect(_py: Python, m: &PyModule) -> PyResult<()> {
 #[pyfunction]
 fn detect_tools() -> PyResult<HashMap<String, String>> {
     let mut tools = HashMap::new();
-    
+
     // Check cache first
     if let Ok(cached) = load_tool_cache() {
         return Ok(cached);
     }
-    
+
     // Detect tools (single scan)
     tools.insert("jq".to_string(), detect_jq());
     tools.insert("rg".to_string(), detect_rg());
     tools.insert("fd".to_string(), detect_fd());
     tools.insert("timeout".to_string(), detect_timeout());
     tools.insert("hash".to_string(), detect_hash());
-    
+
     // Cache results
     save_tool_cache(&tools)?;
-    
+
     Ok(tools)
 }
 ```
@@ -487,10 +487,10 @@ fn detect_tools() -> PyResult<HashMap<String, String>> {
 #[pyfunction]
 fn resolve_binary(name: &str, skip_dirs: Vec<String>) -> PyResult<Option<String>> {
     use which::which;
-    
+
     // Build safe PATH (exclude skip_dirs)
     let safe_path = build_safe_path(skip_dirs)?;
-    
+
     // Use which crate (fast, native)
     match which::which_in(name, Some(safe_path)) {
         Ok(path) => Ok(Some(path.to_string_lossy().to_string())),
@@ -531,7 +531,7 @@ struct HookDispatcher {
 impl HookDispatcher {
     fn dispatch(&self, hook_type: &str, event: Value) -> Result<Vec<HookResult>> {
         let hooks = self.find_hooks(hook_type)?;
-        
+
         if self.parallel {
             // Parallel execution
             hooks.par_iter()
@@ -544,7 +544,7 @@ impl HookDispatcher {
                 .collect()
         }
     }
-    
+
     fn execute_hook(&self, hook: &Hook, event: &Value) -> HookResult {
         // Execute hook with timeout
         // Return structured result
@@ -583,11 +583,11 @@ pub fn find_files(
     file_type: Option<FileType>,
 ) -> Vec<PathBuf> {
     let mut builder = WalkBuilder::new(root);
-    
+
     if let Some(depth) = max_depth {
         builder.max_depth(Some(depth));
     }
-    
+
     builder.build_parallel()
         .run(|| {
             Box::new(|entry| {
@@ -728,7 +728,7 @@ fi
 ### 8.1 Compatibility Risks
 
 **Risk**: Breaking existing functionality
-**Mitigation**: 
+**Mitigation**:
 - Gradual migration with fallbacks
 - Extensive testing
 - Feature flags for new implementations

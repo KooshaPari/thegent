@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase3-6-crosswave-bridge-and-continuity-plan.md
 
 # Thegent Phase 3–6 Cross-Wave Bridge and Continuity Plan
 
-**Status:** Strategic-operational bridge artifact  
-**Date:** 2026-02-15  
+**Status:** Strategic-operational bridge artifact
+**Date:** 2026-02-15
 **Scope:** Converts phases 3–6 outputs into a stable bridge for phases 7–12 without semantic breakage.
 
 ## 1) Purpose

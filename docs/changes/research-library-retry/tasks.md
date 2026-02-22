@@ -3,9 +3,9 @@
 ## Phase 1: Core Retry Library
 
 ### T1.1: Set Up Module Structure & Configuration
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: —  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: —
 
 **Deliverables**:
 - [ ] Create `src/thegent/resilience/__init__.py` with public API exports
@@ -25,9 +25,9 @@
 ---
 
 ### T1.2: Implement Sync & Async Decorators
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T1.1  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T1.1
 
 **Deliverables**:
 - [ ] Implement `@retry()` decorator for sync functions
@@ -56,9 +56,9 @@
 ---
 
 ### T1.3: Implement Pre-Built Strategies
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T1.1  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T1.1
 
 **Deliverables**:
 - [ ] Create `src/thegent/resilience/strategies.py`
@@ -84,9 +84,9 @@
 ---
 
 ### T1.4: Integrate OpenTelemetry Observability
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T1.2  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T1.2
 
 **Deliverables**:
 - [ ] Create `src/thegent/resilience/observability.py`
@@ -115,9 +115,9 @@
 ## Phase 2: Testing & Documentation
 
 ### T2.1: Comprehensive Unit Tests
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T1.4  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T1.4
 
 **Deliverables**:
 - [ ] Create `tests/resilience/test_retry.py`
@@ -153,9 +153,9 @@ tests/resilience/
 ---
 
 ### T2.2: Integration Tests (3 Services)
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T1.4  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T1.4
 
 **Deliverables**:
 - [ ] Test retry with real httpx client (mock server for 5xx errors)
@@ -180,9 +180,9 @@ tests/resilience/
 ---
 
 ### T2.3: Usage Documentation & Examples
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T2.1  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T2.1
 
 **Deliverables**:
 - [ ] Create `docs/guides/RETRY_LIBRARY_GUIDE.md` (quick start, API reference)
@@ -213,9 +213,9 @@ tests/resilience/
 ---
 
 ### T2.4: Update Project Documentation
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T2.3  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T2.3
 
 **Deliverables**:
 - [ ] Update `docs/research/LIBRARY_FIRST_AUDIT_AND_PLAN.md` to reference retry library
@@ -233,9 +233,9 @@ tests/resilience/
 ## Phase 3: Integration & Migration
 
 ### T3.1: Migrate HTTP Client
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T2.1  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T2.1
 
 **Deliverables**:
 - [ ] Identify current HTTP retry patterns in codebase (search for "retry" or backoff logic)
@@ -260,9 +260,9 @@ tests/resilience/
 ---
 
 ### T3.2: Migrate Agent Service Calls
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T2.1  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T2.1
 
 **Deliverables**:
 - [ ] Identify agent service call patterns (run_agent, call_agent, etc.)
@@ -285,9 +285,9 @@ tests/resilience/
 ---
 
 ### T3.3: Migrate Database Operations (Optional)
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T2.1  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T2.1
 
 **Deliverables**:
 - [ ] Identify database retry patterns (if any)
@@ -305,9 +305,9 @@ tests/resilience/
 ## Phase 4: Validation & Closure
 
 ### T4.1: Performance Benchmarking
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T3.1  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T3.1
 
 **Deliverables**:
 - [ ] Run performance benchmarks (nominal path, no retry scenario)
@@ -326,9 +326,9 @@ tests/resilience/
 ---
 
 ### T4.2: Code Review & QA
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T2.1, T3.3  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T2.1, T3.3
 
 **Deliverables**:
 - [ ] All code passes ruff lint (strict mode)
@@ -348,9 +348,9 @@ tests/resilience/
 ---
 
 ### T4.3: Adoption Verification
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T3.2  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T3.2
 
 **Deliverables**:
 - [ ] Document adoption by 3+ services (HTTP, Agent, optionally DB)
@@ -371,9 +371,9 @@ tests/resilience/
 ---
 
 ### T4.4: Documentation Finalization
-**Status**: PENDING  
-**Owner**: TBD  
-**Depends On**: T4.3  
+**Status**: PENDING
+**Owner**: TBD
+**Depends On**: T4.3
 
 **Deliverables**:
 - [ ] Finalize usage guide (`docs/guides/RETRY_LIBRARY_GUIDE.md`)

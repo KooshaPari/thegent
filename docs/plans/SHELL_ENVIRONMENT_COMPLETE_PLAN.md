@@ -1,7 +1,7 @@
 # Shell Environment Complete Plan
 
 > **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
-> **Related**: 
+> **Related**:
 > - [Shell Environment Complete Guide](../guides/SHELL_ENVIRONMENT_COMPLETE.md)
 > - [Shell Environment Optimization Plan](./SHELL_ENVIRONMENT_OPTIMIZATION_PLAN.md)
 > - [Shell Environment Advanced Enhancement Plan](./SHELL_ENVIRONMENT_ADVANCED_ENHANCEMENT_PLAN.md)
@@ -64,7 +64,7 @@ _thegent_lazy_load() {
     local init_cmd=$2
     local trigger_cmd=$3
     local init_args=$4
-    
+
     # Create wrapper function
     eval "${trigger_cmd}() {
         unfunction ${trigger_cmd}
@@ -92,7 +92,7 @@ _thegent_evalcache() {
     local args=$2
     local cache_key=$(echo "${cmd} ${args}" | shasum | cut -d' ' -f1)
     local cache_file="${THEGENT_CACHE_DIR}/eval-cache/${cache_key}"
-    
+
     if [[ -f "${cache_file}" ]] && [[ $(stat -f "%m" "${cache_file}" 2>/dev/null || stat -c "%Y" "${cache_file}") -gt $(date -r -1h +%s 2>/dev/null || echo 0) ]]; then
         source "${cache_file}"
     else
@@ -244,7 +244,7 @@ if [[ -z "$THEGENT_INSTANT_PROMPT_DISABLED" ]]; then
         # Fallback minimal prompt
         PS1='%n@%m %1~ %# '
     fi
-    
+
     # Load full prompt in background
     (_thegent_load_full_prompt) &
 fi
@@ -261,7 +261,7 @@ fi
 _thegent_async_load() {
     local plugin=$1
     local wait_condition=$2
-    
+
     if [[ "${wait_condition}" == "0" ]]; then
         # Load immediately in background
         (source "${plugin}") &
@@ -314,7 +314,7 @@ _thegent_circuit_breaker_open() {
     local failures=$(cat "${failures_file}" 2>/dev/null || echo "0")
     failures=$((failures + 1))
     echo "${failures}" > "${failures_file}"
-    
+
     if [[ ${failures} -ge 3 ]]; then
         echo "Circuit breaker opened for ${service}" >&2
         return 1

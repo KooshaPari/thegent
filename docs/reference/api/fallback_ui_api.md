@@ -57,4 +57,3 @@ get_recommendations(self: Any, failure_kind: str)
 Return recommended fallback options based on failure type.
 
 ---
-

@@ -57,4 +57,3 @@ Predict cost for an action.
 **Returns**: Predicted cost in USD
 
 ---
-

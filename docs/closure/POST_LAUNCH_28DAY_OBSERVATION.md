@@ -1,8 +1,8 @@
 # Post-Launch 28-Day Observation Plan
 
-**Program:** thegent Orchestration Optimization  
-**Start date:** 2026-02-16  
-**End date:** 2026-03-15  
+**Program:** thegent Orchestration Optimization
+**Start date:** 2026-02-16
+**End date:** 2026-03-15
 **Owner:** Operations Lead
 
 ## 1) Objective

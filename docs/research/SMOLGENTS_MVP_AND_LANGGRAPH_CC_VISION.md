@@ -1,7 +1,7 @@
 # SmolGents Deep Research: MVP Use Case & LangGraph-over-CC Vision
 
-> **Date**: 2026-02-18  
-> **Status**: Research  
+> **Date**: 2026-02-18
+> **Status**: Research
 > **Purpose**: Deep dive on smolgents for MVP; long-term alignment with LangGraph layered over Claude Code
 
 ---

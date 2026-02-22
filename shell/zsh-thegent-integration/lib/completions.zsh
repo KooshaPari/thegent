@@ -30,7 +30,7 @@ _tg() {
     'doc:Open thegent docs'
     'help:Show help'
   )
-  
+
   _describe 'command' commands
 }
 
@@ -54,7 +54,7 @@ _thegent_run() {
     '--model-first[Model-first mode]'
     '--failover[Allow failover]'
   )
-  
+
   _arguments -s -A '-*' "$opts" '1:prompt: '
 }
 
@@ -74,7 +74,7 @@ _thegent_free() {
     '--skill+[Skill name]:skill:'
     '--model-first[Model-first mode]'
   )
-  
+
   _arguments -s -A '-*' "$opts" '1:prompt: '
 }
 
@@ -91,7 +91,7 @@ _thegent_bg() {
     '-d[Debug mode]'
     '--skill+[Skill name]:skill:'
   )
-  
+
   _arguments -s -A '-*' "$opts" '1:prompt: '
 }
 
@@ -106,7 +106,7 @@ _thegent_skills() {
     'add:Add a new skill'
     'remove:Remove a skill'
   )
-  
+
   _describe 'command' commands
 }
 
@@ -122,7 +122,7 @@ _thegent_hooks() {
     'disable:Disable a hook'
     'status:Show hook status'
   )
-  
+
   _describe 'command' commands
 }
 
@@ -140,7 +140,7 @@ _thegent_lsp() {
     'install:Install LSP server'
     'uninstall:Uninstall LSP server'
   )
-  
+
   _describe 'command' commands
 }
 
@@ -158,7 +158,7 @@ _thegent_mcp() {
     'list:List available MCP tools'
     'serve:Start MCP server (alias for up)'
   )
-  
+
   _describe 'command' commands
 }
 
@@ -177,7 +177,7 @@ _thegent_plan() {
     'wait-next:Wait for next item'
     'incorporate:Incorporate plan fragments'
   )
-  
+
   _describe 'command' commands
 }
 
@@ -204,7 +204,7 @@ _thegent() {
     'version:Show version'
     'help:Show help'
   )
-  
+
   _describe 'command' commands
 }
 
@@ -228,7 +228,7 @@ _tgs() {
     'research:Research agent'
     'general-purpose:General purpose agent'
   )
-  
+
   _describe 'skill' skills
 }
 
@@ -244,7 +244,7 @@ _tgmcp() {
     'prune:Cleanup processes'
     'restart:Restart server'
   )
-  
+
   _describe 'command' commands
 }
 

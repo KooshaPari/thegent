@@ -12,4 +12,3 @@ export declare class LeaseConflictError extends IsolationError {
 
 export declare class TenantAllocationError extends IsolationError {
 }
-

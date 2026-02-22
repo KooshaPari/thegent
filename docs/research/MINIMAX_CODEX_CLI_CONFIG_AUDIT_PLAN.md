@@ -1,7 +1,7 @@
 # MiniMax Codex CLI Custom Model Configuration Audit & Plan
 
-**Date**: 2026-02-18  
-**Priority**: P1  
+**Date**: 2026-02-18
+**Priority**: P1
 **Status**: In Progress
 
 ---

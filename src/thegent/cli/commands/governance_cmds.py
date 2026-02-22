@@ -1143,7 +1143,8 @@ def discovery_parse_cmd(
         if register:
             # If PPID is not given, we use current PID as a placeholder
             # but ideally the user should provide the PPID of the agent.
-            target_ppid = ppid or os.getpid()
+            # If PPID is not given, we use the current shell's parent PID for best effort attribution.
+            target_ppid = ppid or os.getppid()
             register_discovered_agent(
                 pid=0,
                 ppid=target_ppid,

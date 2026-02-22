@@ -1,7 +1,7 @@
 # FastMCP Graceful Shutdown (G-OP-10)
 
-**Purpose:** Design and document graceful shutdown for MCP server.  
-**Date:** 2026-02-14  
+**Purpose:** Design and document graceful shutdown for MCP server.
+**Date:** 2026-02-14
 **Scope:** G-OP-10
 
 ---

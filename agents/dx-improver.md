@@ -1,6 +1,6 @@
 # DX Improver Agent
 
-> **Purpose**: Continuously improve Developer Experience by identifying and fixing friction points  
+> **Purpose**: Continuously improve Developer Experience by identifying and fixing friction points
 > **Activation**: Auto-triggered when DX friction is detected, or manually via `thegent improve dx`
 
 ---

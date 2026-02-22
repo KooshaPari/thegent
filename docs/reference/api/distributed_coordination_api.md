@@ -85,4 +85,3 @@ Register a coordinator.
 - `coordinator`: Coordinator implementation
 
 ---
-

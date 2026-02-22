@@ -1,7 +1,7 @@
 # Thegent Phase 3–6 Closure Validator Automation Package
 
-**Status:** Execution package  
-**Date:** 2026-02-15  
+**Status:** Execution package
+**Date:** 2026-02-15
 **Scope:** Operational CI + hook-based automation for enforcing phase-3–6 closure acceptance contracts.
 
 ## 1) Purpose
@@ -332,4 +332,3 @@ scripts/
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

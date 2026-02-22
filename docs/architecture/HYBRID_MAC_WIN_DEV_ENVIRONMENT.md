@@ -1,6 +1,6 @@
 # Hybrid Mac/Windows Development Environment Architecture
 
-**Status:** Architecture & Planning | **Date:** 2026-02-16  
+**Status:** Architecture & Planning | **Date:** 2026-02-16
 **Goal:** Cloud-based bi-directional sync of all work projects between Mac (access/client) and Windows 11 PC (compute/storage base)
 
 ---
@@ -857,7 +857,7 @@ kush/
         <user>admin</user>
         <password>$2$hash...</password>
     </gui>
-    
+
     <options>
         <autoUpgradeIntervalH>12</autoUpgradeIntervalH>
         <globalEnabled>true</globalEnabled>
@@ -896,12 +896,12 @@ kush/
             <ignoreMask></ignoreMask>
             <paused>false</paused>
             <autoNormalize>true</autoNormalize>
-            
+
             <versioning>
                 <type>simple</type>
                 <param key="keep">30</param>
             </versioning>
-            
+
             <ignore>
                 <pattern>.stignore</pattern>
                 <pattern>.stversions/**</pattern>
@@ -1153,7 +1153,7 @@ profiles:
 memory=32GB
 processors=8
 swap=16GB
-kernelCommandLine = "init=/init root=..." 
+kernelCommandLine = "init=/init root=..."
 
 [network]
 hostname=wsl-dev
@@ -1212,7 +1212,7 @@ appendWindowsPath = true
 platform_detection() {
     case "$(uname -s)" in
         Darwin*)    echo "macos" ;;
-        Linux*)     
+        Linux*)
             if [ -f /proc/version ] && grep -q Microsoft /proc/version; then
                 echo "wsl"
             else
@@ -1362,6 +1362,6 @@ echo "Mac → Windows: $(cat ~/.local/state/syncthing/connections.json 2>/dev/nu
 
 ---
 
-**Document Version:** 1.1  
-**Last Updated:** 2026-02-17  
+**Document Version:** 1.1
+**Last Updated:** 2026-02-17
 **Extension:** Configuration Examples, Cross-References, Extension Summary

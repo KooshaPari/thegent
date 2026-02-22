@@ -1,7 +1,7 @@
 # Conversation Dump 2026-02-16 — Complete Expansion
 
-> **Status**: Complete | **Version**: 2.0 | **Date**: 2026-02-17  
-> **Source**: Expanded from [CONVERSATION_DUMP_2026-02-16.md](./CONVERSATION_DUMP_2026-02-16.md)  
+> **Status**: Complete | **Version**: 2.0 | **Date**: 2026-02-17
+> **Source**: Expanded from [CONVERSATION_DUMP_2026-02-16.md](./CONVERSATION_DUMP_2026-02-16.md)
 > **Purpose**: Structured extraction of work items, decisions, and follow-up actions from agent conversations
 
 ---
@@ -227,7 +227,7 @@ def _install_agent_accelerators(self):
 
 **Concept**: Link Mac (client) with Windows 11 PC (compute base) for heavy compute tasks.
 
-**Status**: Architecture complete, implementation pending  
+**Status**: Architecture complete, implementation pending
 **Priority**: Medium
 
 ### 3.2 Architecture
@@ -304,7 +304,7 @@ class ComputeOffloader:
                 sync_dir="/kush",
             ),
         }
-    
+
     async def offload_task(
         self,
         remote: str,
@@ -313,16 +313,16 @@ class ComputeOffloader:
     ) -> TaskResult:
         """Offload task to remote compute base"""
         host = self.remote_hosts[remote]
-        
+
         # Sync files first
         await self.sync_files(host)
-        
+
         # Execute command remotely
         result = await host.execute(command, agent)
-        
+
         # Sync results back
         await self.sync_results(host)
-        
+
         return result
 ```
 
@@ -337,13 +337,13 @@ class ComputeOffloader:
 
 ### 3.5 Failure Modes & Mitigation
 
-**Failure Mode**: Network unavailable  
+**Failure Mode**: Network unavailable
 **Mitigation**: Queue tasks, retry when online
 
-**Failure Mode**: Sync conflicts  
+**Failure Mode**: Sync conflicts
 **Mitigation**: Conflict resolution UI, manual merge
 
-**Failure Mode**: Remote host down  
+**Failure Mode**: Remote host down
 **Mitigation**: Fallback to local execution, alert user
 
 ### 3.6 Edge Cases
@@ -370,7 +370,7 @@ class ComputeOffloader:
 
 **User Request**: Configure system to detect and save exact idea prompts when `$idea` flag is present.
 
-**Status**: Research complete, implementation pending  
+**Status**: Research complete, implementation pending
 **Priority**: High
 
 ### 4.2 Requirements
@@ -491,7 +491,7 @@ class IdeaDetector:
             CursorSource(),
         ]
         self.storage = IdeaStorage()
-    
+
     def detect_ideas(self, text: str) -> list[Idea]:
         """Detect $idea flags in text"""
         ideas = []
@@ -504,7 +504,7 @@ class IdeaDetector:
                 timestamp=datetime.now(),
             ))
         return ideas
-    
+
     def watch_sessions(self):
         """Watch session directories for changes"""
         for source in self.sources:
@@ -524,7 +524,7 @@ class ClaudeCodeParser:
         """Parse Claude Code session file"""
         with open(session_file) as f:
             data = json.load(f)
-        
+
         messages = []
         for msg in data.get("messages", []):
             if msg["role"] == "user":
@@ -542,7 +542,7 @@ class CodexParser:
         """Parse Codex session file"""
         with open(session_file) as f:
             data = json.load(f)
-        
+
         messages = []
         for msg in data.get("messages", []):
             if msg["type"] == "user" and "$idea" in msg["text"]:
@@ -558,13 +558,13 @@ class CursorParser:
         """Parse Cursor SQLite database"""
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute("""
-            SELECT content, timestamp 
-            FROM messages 
+            SELECT content, timestamp
+            FROM messages
             WHERE role = 'user' AND content LIKE '%$idea%'
         """)
-        
+
         messages = []
         for row in cursor.fetchall():
             messages.append(Message(
@@ -572,7 +572,7 @@ class CursorParser:
                 content=row[0],
                 timestamp=row[1],
             ))
-        
+
         return messages
 ```
 
@@ -585,16 +585,16 @@ class IdeaStorage:
     def __init__(self):
         self.storage_dir = Path("docs/research/idea-seeds")
         self.storage_dir.mkdir(parents=True, exist_ok=True)
-    
+
     def save_idea(self, idea: Idea):
         """Save idea to seed file"""
         timestamp = idea.timestamp.strftime("%Y%m%dT%H%M%SZ")
         session_id = idea.session_id or "unknown"
         filename = f"seed_{timestamp}_{session_id}_{hash(idea.text) % 1000}.md"
-        
+
         filepath = self.storage_dir / filename
         filepath.write_text(self._format_idea(idea))
-    
+
     def _format_idea(self, idea: Idea) -> str:
         """Format idea as markdown"""
         return f"""---
@@ -619,7 +619,7 @@ class SessionMonitor:
     def __init__(self):
         self.check_interval = timedelta(hours=1)
         self.retention_days = 14
-    
+
     async def monitor_sessions(self):
         """Monitor sessions and extract ideas before cleanup"""
         while True:
@@ -632,7 +632,7 @@ class SessionMonitor:
                         ideas = self.extract_ideas(session)
                         for idea in ideas:
                             self.storage.save_idea(idea)
-            
+
             await asyncio.sleep(self.check_interval.total_seconds())
 ```
 
@@ -647,13 +647,13 @@ class SessionMonitor:
 
 ### 4.8 Failure Modes & Mitigation
 
-**Failure Mode**: Session format changed  
+**Failure Mode**: Session format changed
 **Mitigation**: Version detection, fallback parsers
 
-**Failure Mode**: Storage full  
+**Failure Mode**: Storage full
 **Mitigation**: Rotation, compression, archival
 
-**Failure Mode**: Watcher fails  
+**Failure Mode**: Watcher fails
 **Mitigation**: Periodic scan fallback
 
 ### 4.9 Related Work Items
@@ -755,14 +755,14 @@ Add to [WORK_STREAM.md](../reference/WORK_STREAM.md) BACKLOG:
 
 ---
 
-**Status**: Complete expansion ready for implementation  
+**Status**: Complete expansion ready for implementation
 **Next Steps**: Add BACKLOG items, create implementation plans, begin development
 
 ---
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

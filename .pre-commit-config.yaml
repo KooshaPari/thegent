@@ -22,9 +22,9 @@ repos:
 
   # --- Python lint + format (Gate 2) ---
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.6
+    rev: v0.10.0
     hooks:
-      - id: ruff-check
+      - id: ruff
         args: ["--fix"]
       - id: ruff-format
 
@@ -68,6 +68,13 @@ repos:
         language: system
         pass_filenames: false
         types: [python]
+
+      - id: shellcheck
+        name: Shellcheck (project scripts)
+        entry: shellcheck
+        language: system
+        files: "^hooks/|^scripts/|^scripts\\/.+\\.sh|^tests/.+\\.sh|^.github/workflows/.+\\.yml$"
+        types: [shell]
 
       - id: docs-build
         name: Build VitePress Docsite

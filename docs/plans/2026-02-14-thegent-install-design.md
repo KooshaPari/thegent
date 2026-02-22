@@ -103,7 +103,7 @@ Core function: `run_install(targets, mode, dry_run, verbose)`
 3. `create_symlink(src, dst, verbose)` → status
    - Creates symlink, handles existing files
 
-4. `backup_source(src, backup_dir)` 
+4. `backup_source(src, backup_dir)`
    - Copies source to timestamped backup dir
 
 5. `run_dry_run(mapping, verbose)` → list
@@ -164,4 +164,3 @@ Run with --verbose for details
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

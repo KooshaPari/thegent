@@ -6,8 +6,8 @@ Source: docs/research/HEADLESS_LSP_IMPLEMENTATION_SUMMARY_2026-02-18.md
 
 # Headless LSP Implementation Summary
 
-**Date**: 2026-02-18  
-**Status**: Core Implementation Complete  
+**Date**: 2026-02-18
+**Status**: Core Implementation Complete
 **Next Steps**: Testing & JetBrains Gateway Integration
 
 ---

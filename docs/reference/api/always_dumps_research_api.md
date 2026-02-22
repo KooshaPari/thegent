@@ -55,4 +55,3 @@ Test writing a dump.
 **Returns**: Path to written dump
 
 ---
-

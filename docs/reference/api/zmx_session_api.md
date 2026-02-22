@@ -362,4 +362,3 @@ Calls: ``zmx send-keys &lt;session_name&gt; &lt;text&gt;``
 **Returns**: True on success, False on failure (including zmx unavailable).
 
 ---
-

@@ -6,8 +6,8 @@ Source: docs/research/LITELLM_HARNESS_MASTER_PLAN.md
 
 # LiteLLM Harness Integration - Master Plan & Research
 
-**Date**: 2026-02-18  
-**Status**: Planning Complete - Ready for Implementation  
+**Date**: 2026-02-18
+**Status**: Planning Complete - Ready for Implementation
 **Goal**: Unify Codex CLI, Claude Code, and Factory Droid harnesses through LiteLLM Router
 
 ---
@@ -31,7 +31,7 @@ Source: docs/research/LITELLM_HARNESS_MASTER_PLAN.md
 
 Currently, three different CLI harnesses (Codex CLI, Claude Code, Factory Droid) use fragmented routing mechanisms:
 - Codex CLI → `cliproxy_adapter.py` → CLIProxyAPIPlus → Providers
-- Claude Code → `CodexProxyRunner` → CLIProxyAPIPlus → Providers  
+- Claude Code → `CodexProxyRunner` → CLIProxyAPIPlus → Providers
 - Factory Droid → Factory API → Providers
 
 **Issues**:
@@ -307,11 +307,11 @@ def _chat_completions_to_responses(chunk: dict) -> dict | None
 ```
 async def proxy_handler(request: Request) -> Response:
     use_litellm = os.environ.get("THGENT_USE_LITELLM_ROUTER", "0") == "1"
-    
+
     if use_litellm and path == "/v1/responses":
         from thegent.routing.litellm_responses_handler import handle_responses_request
         return await handle_responses_request(request)
-    
+
     # Fallback to CLIProxyAPIPlus
     ...
 ```
@@ -580,7 +580,7 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
                 text_parts = [c.get("text", "") for c in content if c.get("type") == "text"]
                 content = "".join(text_parts)
             messages.append({"role": role, "content": content})
-    
+
     return {
         "model": body.get("model", ""),
         "messages": messages,
@@ -601,7 +601,7 @@ def _chat_completions_to_responses(chunk: dict[str, Any]) -> dict[str, Any] | No
     content = delta.get("content", "")
     if not content:
         return None  # Skip empty chunks
-    
+
     return {
         "type": "response.output_item.added",
         "item": {
@@ -692,9 +692,9 @@ def test_responses_to_chat_completions():
         ],
         "stream": True
     }
-    
+
     chat_body = _responses_to_chat_completions(responses_body)
-    
+
     assert chat_body["model"] == "gpt-5-mini"
     assert chat_body["messages"] == [{"role": "user", "content": "Hello"}]
     assert chat_body["stream"] is True
@@ -704,9 +704,9 @@ def test_chat_completions_to_responses():
     chat_chunk = {
         "choices": [{"delta": {"content": "Hello"}}]
     }
-    
+
     responses_event = _chat_completions_to_responses(chat_chunk)
-    
+
     assert responses_event["type"] == "response.output_item.added"
     assert responses_event["item"]["content"][0]["text"] == "Hello"
 ```
@@ -717,12 +717,12 @@ def test_chat_completions_to_responses():
 async def test_litellm_router_integration():
     """Test LiteLLM Router integration."""
     router = get_litellm_router()
-    
+
     response = await router.acompletion(
         model="gpt-5-mini",
         messages=[{"role": "user", "content": "Hello"}]
     )
-    
+
     assert response.choices[0].message.content is not None
 ```
 
@@ -769,16 +769,16 @@ async def test_multi_harness_routing():
     """Test routing consistency across all harnesses."""
     # Same prompt through all three harnesses
     prompt = "Hello, world!"
-    
+
     # Codex CLI
     codex_result = await codex_cli_execute(prompt, model="gpt-5-mini")
-    
+
     # Claude Code
     claude_result = await claude_code_execute(prompt, model="flash")
-    
+
     # Factory Droid
     droid_result = await droid_execute(prompt, model="GLM-4.6 [Z.AI]")
-    
+
     # All should route through LiteLLM Router
     assert all_used_litellm_router(codex_result, claude_result, droid_result)
 ```
@@ -964,7 +964,7 @@ use_litellm_router: bool = False  # Feature flag
 
 ---
 
-**Status**: Planning Complete  
-**Ready for**: Implementation  
-**Estimated Effort**: 3-4 weeks  
+**Status**: Planning Complete
+**Ready for**: Implementation
+**Estimated Effort**: 3-4 weeks
 **Priority**: High

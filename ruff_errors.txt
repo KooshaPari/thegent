@@ -2298,7 +2298,7 @@
      [1m[94m|[0m
 [1m[94m4335 |[0m         if "cursor-agent" in cmd_lower or "cursor agent" in cmd_lower or "thegent" in cmd_lower:
 [1m[94m4336 |[0m             continue
-[1m[94m4337 |[0m         
+[1m[94m4337 |[0m
      [1m[94m|[0m [1m[91m^^^^^^^^[0m
 [1m[94m4338 |[0m         # If we have a specific parent PID, only include its children
 [1m[94m4339 |[0m         if parent_pid:
@@ -3586,7 +3586,7 @@
    [1m[94m|[0m
 [1m[94m86 |[0m             self.project_root / "docs" / "dumps",
 [1m[94m87 |[0m         ]
-[1m[94m88 |[0m         
+[1m[94m88 |[0m
    [1m[94m|[0m [1m[91m^^^^^^^^[0m
 [1m[94m89 |[0m         for ddir in doc_dirs:
 [1m[94m90 |[0m             if not ddir.exists():
@@ -3598,7 +3598,7 @@
    [1m[94m|[0m
 [1m[94m90 |[0m             if not ddir.exists():
 [1m[94m91 |[0m                 continue
-[1m[94m92 |[0m             
+[1m[94m92 |[0m
    [1m[94m|[0m [1m[91m^^^^^^^^^^^^[0m
 [1m[94m93 |[0m             for f in ddir.glob("*.md"):
 [1m[94m94 |[0m                 if f.stat().st_mtime > session_start_time:
@@ -3610,7 +3610,7 @@
     [1m[94m|[0m
 [1m[94m109 |[0m             r"^>$", # Claude Code prompt return
 [1m[94m110 |[0m         ]
-[1m[94m111 |[0m         
+[1m[94m111 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^[0m
 [1m[94m112 |[0m         last_chunk = output[-1000:]
 [1m[94m113 |[0m         for marker in markers:
@@ -3647,7 +3647,7 @@
    [1m[94m-->[0m src/thegent/orchestration/smart_prune.py:131:1
     [1m[94m|[0m
 [1m[94m130 |[0m         now = time.time()
-[1m[94m131 |[0m         
+[1m[94m131 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^[0m
 [1m[94m132 |[0m         # Cursor terminal directory detection
 [1m[94m133 |[0m         cursor_term_dir = Path("/Users/kooshapari/.cursor/projects/Users-kooshapari-temp-PRODVERCEL-485-kush-thegent/terminals")
@@ -3659,7 +3659,7 @@
     [1m[94m|[0m
 [1m[94m132 |[0m         # Cursor terminal directory detection
 [1m[94m133 |[0m         cursor_term_dir = Path("/Users/kooshapari/.cursor/projects/Users-kooshapari-temp-PRODVERCEL-485-kush-thegent/terminals")
-[1m[94m134 |[0m         
+[1m[94m134 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^[0m
 [1m[94m135 |[0m         # Filter to only running sessions
 [1m[94m136 |[0m         active_sessions = [s for s in sessions if s.get("status") == "running"]
@@ -3671,7 +3671,7 @@
     [1m[94m|[0m
 [1m[94m135 |[0m         # Filter to only running sessions
 [1m[94m136 |[0m         active_sessions = [s for s in sessions if s.get("status") == "running"]
-[1m[94m137 |[0m         
+[1m[94m137 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^[0m
 [1m[94m138 |[0m         for sess in active_sessions:
 [1m[94m139 |[0m             sid = sess["id"]
@@ -3683,7 +3683,7 @@
     [1m[94m|[0m
 [1m[94m139 |[0m             sid = sess["id"]
 [1m[94m140 |[0m             pid = sess.get("pid")
-[1m[94m141 |[0m             
+[1m[94m141 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^^^^^[0m
 [1m[94m142 |[0m             # Map to tmux pane
 [1m[94m143 |[0m             pane = None
@@ -3695,7 +3695,7 @@
     [1m[94m|[0m
 [1m[94m148 |[0m                         pane = p
 [1m[94m149 |[0m                         break
-[1m[94m150 |[0m             
+[1m[94m150 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^^^^^[0m
 [1m[94m151 |[0m             output = ""
 [1m[94m152 |[0m             if pane:
@@ -3712,7 +3712,7 @@
 [1m[94m160 |[0m [1m[91m|[0m                     except:
 [1m[94m161 |[0m [1m[91m|[0m                         pass
     [1m[94m|[0m [1m[91m|____________________________^[0m
-[1m[94m162 |[0m               
+[1m[94m162 |[0m
 [1m[94m163 |[0m               if not output:
     [1m[94m|[0m
 [1m[96mhelp[0m: [1mReplace `try`-`except`-`pass` with `with contextlib.suppress(BaseException): ...`[0m
@@ -3722,7 +3722,7 @@
     [1m[94m|[0m
 [1m[94m160 |[0m                     except:
 [1m[94m161 |[0m                         pass
-[1m[94m162 |[0m             
+[1m[94m162 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^^^^^[0m
 [1m[94m163 |[0m             if not output:
 [1m[94m164 |[0m                 results["kept"] += 1
@@ -3734,7 +3734,7 @@
     [1m[94m|[0m
 [1m[94m170 |[0m                 snap = SessionSnapshot(session_id=sid, last_output=output, last_check_time=now)
 [1m[94m171 |[0m                 self.snapshots[sid] = snap
-[1m[94m172 |[0m             
+[1m[94m172 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^^^^^[0m
 [1m[94m173 |[0m             # 1. Idle Detection
 [1m[94m174 |[0m             if output == snap.last_output:
@@ -3746,7 +3746,7 @@
     [1m[94m|[0m
 [1m[94m177 |[0m                 snap.idle_count = 0
 [1m[94m178 |[0m                 snap.last_output = output
-[1m[94m179 |[0m             
+[1m[94m179 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^^^^^[0m
 [1m[94m180 |[0m             snap.last_check_time = now
 [1m[94m181 |[0m             is_idle = snap.idle_count >= 2 # 2 consecutive unchanged outputs (assuming 30s interval)
@@ -3758,7 +3758,7 @@
     [1m[94m|[0m
 [1m[94m180 |[0m             snap.last_check_time = now
 [1m[94m181 |[0m             is_idle = snap.idle_count >= 2 # 2 consecutive unchanged outputs (assuming 30s interval)
-[1m[94m182 |[0m             
+[1m[94m182 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^^^^^[0m
 [1m[94m183 |[0m             # 2. Completion Detection
 [1m[94m184 |[0m             is_complete = self.detect_completion(output)
@@ -3770,7 +3770,7 @@
     [1m[94m|[0m
 [1m[94m184 |[0m             is_complete = self.detect_completion(output)
 [1m[94m185 |[0m             snap.complete_signal_detected = is_complete
-[1m[94m186 |[0m             
+[1m[94m186 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^^^^^[0m
 [1m[94m187 |[0m             # 3. Docs Verification
 [1m[94m188 |[0m             # Best effort start time from session data, fallback to 1h ago
@@ -3782,7 +3782,7 @@
     [1m[94m|[0m
 [1m[94m197 |[0m             else:
 [1m[94m198 |[0m                 st = now - 3600
-[1m[94m199 |[0m                 
+[1m[94m199 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^^^^^^^^^[0m
 [1m[94m200 |[0m             docs_written = self.check_docs_written(st)
 [1m[94m201 |[0m             snap.docs_verified = docs_written
@@ -3794,7 +3794,7 @@
     [1m[94m|[0m
 [1m[94m200 |[0m             docs_written = self.check_docs_written(st)
 [1m[94m201 |[0m             snap.docs_verified = docs_written
-[1m[94m202 |[0m             
+[1m[94m202 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^^^^^[0m
 [1m[94m203 |[0m             # Decision Matrix
 [1m[94m204 |[0m             if is_idle and is_complete:
@@ -3806,7 +3806,7 @@
     [1m[94m|[0m
 [1m[94m216 |[0m                     if pane:
 [1m[94m217 |[0m                         sent = send_to_tmux_pane(pane.pane_id, msg)
-[1m[94m218 |[0m                     
+[1m[94m218 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^^^^^^^^^^^^^[0m
 [1m[94m219 |[0m                     if not sent and self.settings.platform == "darwin":
 [1m[94m220 |[0m                         # Fallback: macOS Desktop Automation (AppleScript)
@@ -3830,7 +3830,7 @@
     [1m[94m|[0m
 [1m[94m263 |[0m             # Fallback to global orphan prune
 [1m[94m264 |[0m             mcp_prune(force=True)
-[1m[94m265 |[0m         
+[1m[94m265 |[0m
     [1m[94m|[0m [1m[91m^^^^^^^^[0m
 [1m[94m266 |[0m         # If it's a thegent-managed session, we can stop it properly
 [1m[94m267 |[0m         if session.get("source") == "thegent-run":

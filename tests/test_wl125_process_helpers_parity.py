@@ -16,4 +16,3 @@ def test_wl125_is_pid_running_wrapper_delegates(monkeypatch) -> None:
 
     assert running is True
     assert captured["pid"] == 4242
-

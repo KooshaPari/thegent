@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase10-12-policy-as-code-and-automation-contract.md
 
 # Thegent Phase 10–12 Policy-as-Code and Automation Contract
 
-**Status:** Execution-ready design artifact  
-**Date:** 2026-02-15  
+**Status:** Execution-ready design artifact
+**Date:** 2026-02-15
 **Scope:** Unifies phase gates, hard-stop handling, board transitions, and drift remediation into deterministic policy with machine-enforced contracts.
 
 ## 1) Purpose

@@ -1105,6 +1105,16 @@ def _get_mcp_config(url: str, client: str = "generic") -> dict[str, Any]:
     }
 
 
+def _update_compatible_mcp_servers(
+    mgr: "InstallManager",
+    config_path: Path,
+    mcp_cfg: dict[str, Any],
+) -> None:
+    """Write canonical and compatibility MCP keys to the same MCP config."""
+    mgr.update_config(config_path, "mcpServers.thegent", mcp_cfg)
+    mgr.update_config(config_path, "mcpServers.codex_apps", mcp_cfg)
+
+
 def run_wizard(url: str | None = None) -> None:
     """Interactive installation wizard using rich."""
     console = Console()
@@ -1519,7 +1529,7 @@ def run_install(
                     counts[key] = counts.get(key, 0) + 1
 
             # MCP to ~/.claude.json
-            mgr.update_config(home / ".claude.json", "mcpServers.thegent", mcp_cfg)
+            _update_compatible_mcp_servers(mgr, home / ".claude.json", mcp_cfg)
 
         elif t == "claude-desktop":
             if platform.system() == "Darwin":
@@ -1534,7 +1544,7 @@ def run_install(
                 p = home / ".config" / "Claude" / "claude_desktop_config.json"
 
             if p.parent.exists():
-                mgr.update_config(p, "mcpServers.thegent", mcp_cfg)
+                _update_compatible_mcp_servers(mgr, p, mcp_cfg)
 
         elif t == "cursor":
             # Files to ~/.cursor/
@@ -1548,12 +1558,17 @@ def run_install(
                     counts[key] = counts.get(key, 0) + 1
 
             # Workspace level
-            mgr.update_config(Path.cwd() / ".cursor" / "mcp.json", "mcpServers.thegent", mcp_cfg)
+            _update_compatible_mcp_servers(mgr, Path.cwd() / ".cursor" / "mcp.json", mcp_cfg)
             # Global level
-            mgr.update_config(home / ".cursor" / "mcp.json", "mcpServers.thegent", mcp_cfg)
+            _update_compatible_mcp_servers(mgr, home / ".cursor" / "mcp.json", mcp_cfg)
 
         elif t == "codex":
-            mgr.update_config(home / ".codex" / "mcp.json", "mcpServers.thegent", mcp_cfg)
+            for codex_path in [
+                home / ".codex" / "mcp.json",
+                home / ".config" / "codex" / "mcp.json",
+                home / ".codex" / "config.json",
+            ]:
+                _update_compatible_mcp_servers(mgr, codex_path, mcp_cfg)
 
         elif t == "droid":
             # Files to ~/.factory/
@@ -1567,7 +1582,7 @@ def run_install(
                     counts[key] = counts.get(key, 0) + 1
 
             # MCP to .factory/mcp.json in CWD
-            mgr.update_config(Path.cwd() / ".factory" / "mcp.json", "mcpServers.thegent", mcp_cfg)
+            _update_compatible_mcp_servers(mgr, Path.cwd() / ".factory" / "mcp.json", mcp_cfg)
 
         elif t == "envrc":
             # ~/.envrc: guarded direnv config to prevent FUNCNEST recursion in home
@@ -1595,13 +1610,22 @@ def run_install(
                                 res = mgr.install_file(src, dst, install_mode)
                                 key = res.value if hasattr(res, "value") else str(res)
                                 counts[key] = counts.get(key, 0) + 1
-                        mgr.update_config(
-                            home / ".claude.json", "mcpServers.thegent", _get_mcp_config(mcp_url, client="claude-code")
+                        _update_compatible_mcp_servers(
+                            mgr,
+                            home / ".claude.json",
+                            _get_mcp_config(mcp_url, client="claude-code"),
                         )
                     elif ht == "codex":
-                        mgr.update_config(
-                            home / ".codex" / "mcp.json", "mcpServers.thegent", _get_mcp_config(mcp_url, client="codex")
-                        )
+                        for codex_path in [
+                            home / ".codex" / "mcp.json",
+                            home / ".config" / "codex" / "mcp.json",
+                            home / ".codex" / "config.json",
+                        ]:
+                            _update_compatible_mcp_servers(
+                                mgr,
+                                codex_path,
+                                _get_mcp_config(mcp_url, client="codex"),
+                            )
                     elif ht == "droid":
                         factory_dir = home / ".factory"
                         for src_rel, dst_rel in FACTORY_FILES.items():
@@ -1611,9 +1635,9 @@ def run_install(
                                 res = mgr.install_file(src, dst, install_mode)
                                 key = res.value if hasattr(res, "value") else str(res)
                                 counts[key] = counts.get(key, 0) + 1
-                        mgr.update_config(
+                        _update_compatible_mcp_servers(
+                            mgr,
                             Path.cwd() / ".factory" / "mcp.json",
-                            "mcpServers.thegent",
                             _get_mcp_config(mcp_url, client="droid"),
                         )
                     elif ht == "cursor":
@@ -1625,14 +1649,14 @@ def run_install(
                                 res = mgr.install_file(src, dst, install_mode)
                                 key = res.value if hasattr(res, "value") else str(res)
                                 counts[key] = counts.get(key, 0) + 1
-                        mgr.update_config(
+                        _update_compatible_mcp_servers(
+                            mgr,
                             Path.cwd() / ".cursor" / "mcp.json",
-                            "mcpServers.thegent",
                             _get_mcp_config(mcp_url, client="cursor"),
                         )
-                        mgr.update_config(
+                        _update_compatible_mcp_servers(
+                            mgr,
                             home / ".cursor" / "mcp.json",
-                            "mcpServers.thegent",
                             _get_mcp_config(mcp_url, client="cursor"),
                         )
 

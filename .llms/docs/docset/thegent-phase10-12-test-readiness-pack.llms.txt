@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase10-12-test-readiness-pack.md
 
 # Thegent Phase 10–12 Test and Readiness Pack
 
-**Status:** Finalized test and readiness pack  
-**Date:** 2026-02-15  
+**Status:** Finalized test and readiness pack
+**Date:** 2026-02-15
 **Scope:** Test matrix and gate evidence for Phases 10–12.
 
 This pack is the test companion to:

@@ -392,26 +392,26 @@ def claim_idempotent(queue_path, agent_id, item_id=None):
     """Claim with idempotency - safe to retry."""
     with file_lock(queue_path):
         queue = read_queue(queue_path)
-        
+
         # Find item (by ID or first queued)
         item = find_item(queue, item_id) if item_id else find_first_queued(queue)
-        
+
         if not item:
             return None
-        
+
         # Check if already claimed by this agent (idempotent)
         if item.status == "in_progress" and item.claimed_by == agent_id:
             return item  # Already claimed, return existing
-        
+
         if item.status == "in_progress" and item.claimed_by != agent_id:
             return None  # Claimed by another agent
-        
+
         # Claim it
         item.status = "in_progress"
         item.claimed_by = agent_id
         item.claimed_at = now()
         item.lease_expires_at = now() + LEASE_DURATION
-        
+
         write_queue(queue_path, queue)
         return item
 ```
@@ -474,15 +474,15 @@ def claim_idempotent(queue_path, agent_id, item_id=None):
 
 ---
 
-**Document Version:** 1.1  
-**Last Updated:** 2026-02-17  
+**Document Version:** 1.1
+**Last Updated:** 2026-02-17
 **Extension:** Queue Design Patterns, Cross-References, Extension Summary
 
 ---
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

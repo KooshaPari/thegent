@@ -17,7 +17,7 @@
 ### **Remaining os.environ Usage: Acceptable**
 - ✅ **Runtime values preserved** (intentionally):
   - `THGENT_SESSION_ID` - Runtime session identifier
-  - `THGENT_RUN_ID` - Runtime run identifier  
+  - `THGENT_RUN_ID` - Runtime run identifier
   - `THGENT_TESTING` - Runtime testing flag
   - `THGENT_ZMX_BINARY` - Runtime binary discovery
   - `THGENT_DEBUG`, `THGENT_LOG_LEVEL` - Runtime debug flags
@@ -40,7 +40,7 @@
 | `zmx_session.py` | `ZmxSessionConfig.from_env()` | ✅ Has `from_settings()` | Keep deprecated method |
 | `macos_sandbox.py` | `MacOSSandbox.from_env()` | ⚠️ Still uses `os.environ` | **Needs migration** |
 
-**Recommendation:** 
+**Recommendation:**
 - ✅ `RedisConfig` and `ZmxSessionConfig` are fine (deprecated but call `from_settings()`)
 - ⚠️ `MacOSSandbox.from_env()` should be migrated to use settings
 
@@ -80,7 +80,7 @@
 #### **1.1 Migrate MacOSSandbox.from_env()** ⚠️
 - **File:** `src/thegent/security/macos_sandbox.py`
 - **Current:** Uses `os.environ.get("THGENT_SANDBOX_LEVEL")`
-- **Action:** 
+- **Action:**
   - Add `sandbox_level` to `ThegentSettings` (if not exists)
   - Update `MacOSSandbox.from_env()` to use `from_settings()`
   - Keep deprecated `from_env()` for backwards compatibility

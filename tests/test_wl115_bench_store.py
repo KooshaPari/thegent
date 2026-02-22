@@ -38,4 +38,3 @@ def test_append_and_load_bench_records(tmp_path: Path) -> None:
 def test_load_bench_records_missing_file_is_empty(tmp_path: Path) -> None:
     missing = tmp_path / "missing.jsonl"
     assert load_bench_records(path=missing) == []
-

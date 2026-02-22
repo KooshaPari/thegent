@@ -1,7 +1,7 @@
 # FastMCP Optimization & Polish Audit (G-OP-04–G-OP-10)
 
-**Purpose:** Audit tool descriptions, parameter docs, error messages, ToolResult shape, SLO targets, health route, graceful shutdown.  
-**Date:** 2026-02-14  
+**Purpose:** Audit tool descriptions, parameter docs, error messages, ToolResult shape, SLO targets, health route, graceful shutdown.
+**Date:** 2026-02-14
 **Scope:** G-OP-04 through G-OP-10
 
 ---

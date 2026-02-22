@@ -169,6 +169,14 @@
   - `docs/CLEANUP_SUMMARY.md:1`
   - Includes root markdown consolidation and standards.
 
+### Task 81–85 Execution Addendum
+
+- Task-81: cross-repo KB now created at `docs/contracts/ATOMS_CLEAN_DEPLOY_KNOWLEDGE_BASE.md`.
+- Task-82: canonical clean/deploy guidance for `atoms-mcp-prod` and `atomsAgent` documented there.
+- Task-83: env discovery contract normalized in the KB with precedence and hard-fail expectations.
+- Task-84: pytest health aggregation command and contract now documented in `docs/contracts/TEST_HEALTH_DASHBOARD.md`.
+- Task-85: CI alert surface + dedicated health artifact upload added to `.github/workflows/ci.yml` and `.github/workflows/test.yml`.
+
 ## Observed Cross-Repo Pattern
 - `atoms-mcp-prod` appears Vercel-first with optional Cloud Run tooling.
 - `atomsAgent` appears Cloud Run-first but contains multiple deploy surfaces (Cloud Run CLI + Pulumi command + SST scripts/docs).
@@ -312,3 +320,138 @@ P1:
 - Continue grounding implementation choices in official pytest docs and maintained plugins.
 - Targeted research source set includes marker governance, config enforcement, hooks, cache behavior, xdist limitations, and maintained selection/sharding plugins.
 
+
+## Part I: 100-Item Execution Plan (6 Agents + Owner)
+
+### Tasks 1-15 (Owner: agent-1 / strategy + baseline)
+
+1. Build a shared execution charter with scope, priority, lane policy, and rollback rules. | Owner: agent-1 | Acceptance: single markdown doc links each task to an objective and failure policy.
+2. Confirm all task owners and handoff format; lock PR/owner matrix in the plan. | Owner: agent-1 | Acceptance: no unowned tasks in plan ranges 1-100.
+3. Capture a reproducible suite baseline snapshot (`collect-only`, full/fast/nightly selections, wall time) and save it to artifacts. | Owner: agent-1 | Acceptance: baseline file includes timestamp, counts, command hash, runner metadata.
+4. Export raw suite topology (`test file`, `nodeid`, marker, path) from current tree for migration planning. | Owner: agent-1 | Acceptance: topology export succeeds on clean checkout without custom env.
+5. Define target success metrics for collection, PR fast lane, and nightly lane with explicit thresholds. | Owner: agent-1 | Acceptance: thresholds added to docs and used as CI checks.
+6. Define canonical requirement schema and ID normalization rules in one place. | Owner: agent-1 | Acceptance: source of truth file contains FR and story ID regex, examples, and migration examples.
+7. Define a 100-task execution contract and milestone cadence (P0/P1/P2 gates). | Owner: agent-1 | Acceptance: contract is accepted in report with named milestones.
+8. Baseline and record current CI runtime, queue, and failure-mode profile for one representative run. | Owner: agent-1 | Acceptance: baseline file includes fail classes and per-lane timing.
+9. Inventory all non-runtime / template-heavy discovery paths and classify required vs optional. | Owner: agent-1 | Acceptance: generated classification list includes owners and pruning policy per path.
+10. Design change-risk matrix for each proposed config/lane adjustment. | Owner: agent-1 | Acceptance: each change includes rollback owner and expected risk score.
+11. Define artifact retention policy for all new CI artifacts. | Owner: agent-1 | Acceptance: retention windows, naming pattern, and cleanup policy committed.
+12. Standardize lane command templates and parameter placeholders in Taskfile and docs. | Owner: agent-1 | Acceptance: one command source can run PR fast, nightly, and deep lanes from same template.
+13. Draft runbook for “collection fails / fast lane too big / artifact missing” incidents. | Owner: agent-1 | Acceptance: runbook covers triage steps and required owner escalation.
+14. Set acceptance gate order: collection → traceability → schedule → optimization experiments → rollout. | Owner: agent-1 | Acceptance: CI checks reflect this order without race conditions.
+15. Publish the final planning packet and freeze task numbering against report. | Owner: agent-1 | Acceptance: final plan section references all tasks 1-100.
+
+### Tasks 16-30 (Owner: agent-2 / stabilization + gates)
+
+16. P0 Collection Error Quarantine | Owner: agent-2 | Owner: agent-2 | Success criteria: Native collection entry points in `tests/native/` are fixed or deterministically skipped and `python -m pytest --collect-only -q` reports 0 errors locally and in CI.
+17. P0 Optional Dependency Guards for Collection | Owner: agent-2 | Success criteria: optional binaries/plugins missing do not fail collection; tests are skip-guarded with explicit reasons.
+18. P0 “collect-only” Error Gate in CI | Owner: agent-2 | Success criteria: CI runs `--collect-only` and fails on any collection error with log artifact.
+19. P0 Collection Baseline Freeze | Owner: agent-2 | Success criteria: node-count and file-level error baseline is compared each run, >15% regression blocks reliability lane.
+20. P0 Marker Registration Completeness | Owner: agent-2 | Success criteria: strict marker and required plugin checks fail unknown/invalid markers.
+21. P0 Template-Tree Pruning Rule | Owner: agent-2 | Success criteria: default lane skips template-heavy trees and non-template collection shrinks by at least 70%.
+22. P0 Lane Topology Enforcement | Owner: agent-2 | Success criteria: PR and nightly collection selectors are truly separate with no template bleed in fast lane.
+23. P0 Fast-Lane Correctness Gate | Owner: agent-2 | Success criteria: fast-lane collection remains below 10% of full suite and is stable for two consecutive runs.
+24. P0 Marker Taxonomy Correction | Owner: agent-2 | Success criteria: heavy tests are fully reclassified into runtime categories and validator confirms no misclassified leftovers.
+25. P0 Collection Reliability Telemetry | Owner: agent-2 | Success criteria: collection timing + error telemetry is emitted and trend alerts on >10% regression.
+26. P0 CI Gate for Collection Exit Codes | Owner: agent-2 | Success criteria: collection exit codes are mandatory checks and no soft-fail paths in PR lane.
+27. P0 xdist Scope Control | Owner: agent-2 | Success criteria: xdist is only used on eligible workloads and rejected by gate when undocumented.
+28. P0 Collection Skiplist Contract | Owner: agent-2 | Success criteria: stable skiplist file exists and CI validates format with drift error.
+29. P0 Collection Timeout Controls | Owner: agent-2 | Success criteria: collection timeout guard fails fast and returns stack/context artifact.
+30. P0 CI Orchestration for PR vs Nightly Gates | Owner: agent-2 | Success criteria: PR and nightly reliability gates run with branch-aware policy and clear failure reasons.
+
+### Tasks 31-44 (Owner: agent-3 / FR linkage)
+
+31. Add `@pytest.mark.requirement` and FR alias markers to suites missing traceability metadata. | Owner: agent-3 | Success criteria: target perf-related suites have mandatory requirement/story marker coverage.
+32. Map user-story IDs to FR IDs in test decorators. | Owner: agent-3 | Success criteria: deterministic mapping from story marker to FR IDs with no orphan story markers.
+33. Add auto-discovery of FR/user-story markers in extractor CLI. | Owner: agent-3 | Success criteria: extractor produces complete FR-story pair list for collected tests.
+34. Normalize marker parsing across test types for extractor consistency. | Owner: agent-3 | Success criteria: parser handles `pytest` markers, `conftest`, and inline markers consistently.
+35. Generate enriched `traceability_links.json` artifacts. | Owner: agent-3 | Success criteria: output includes source, type, FR/story IDs, file path, node id and relation.
+36. Generate human-readable `LINK_INDEX.md`. | Owner: agent-3 | Success criteria: FR-to-test matrix with counts is generated each run.
+37. Generate FR-level coverage report for pytest. | Owner: agent-3 | Success criteria: mapped vs unmapped FR list is emitted with gap highlighting.
+38. Add validation for extractor schema and broken references. | Owner: agent-3 | Success criteria: CI fails on invalid references or schema.
+39. Add extractor output diffing and changelog artifact. | Owner: agent-3 | Success criteria: added/removed links are diffed and included in CI summary.
+40. Establish FR coverage floor for pytest optimization domain. | Owner: agent-3 | Success criteria: minimum 70% baseline, 85% target FR traceability coverage.
+41. Link performance tests to optimization FRs/stories. | Owner: agent-3 | Success criteria: all new perf tests carry FR/story markers and appear in artifacts.
+42. Link test-only artifacts to FRs. | Owner: agent-3 | Success criteria: slow/integration markers include FR linkage.
+43. Add extractor command in CI/CD. | Owner: agent-3 | Success criteria: extractor runs in CI and publishes artifacts.
+44. Document maintenance workflow for marker and artifact refresh. | Owner: agent-3 | Success criteria: clear PR flow exists from marker add → regenerate → validate → merge.
+
+### Tasks 45-58 (Owner: agent-4 / DAG + scheduler)
+
+45. Pytest Graph Contract v1 | Owner: agent-4 | Success criteria: deterministic graph schema defined and validated.
+46. Dependency Annotation Extraction | Owner: agent-4 | Success criteria: dependency markers and known dependencies are extracted into graph edges.
+47. Fixture-Scoped Dependency Resolver | Owner: agent-4 | Success criteria: fixture-derived edges are deterministic and validated.
+48. DAG Validation and Cycle Guardrail | Owner: agent-4 | Success criteria: cyclic graphs and orphan edges fail clearly with cycle path.
+49. Topological Batch Planner | Owner: agent-4 | Success criteria: stable batches are produced and reproduce the same order under same input.
+50. Dependency-Aware Readiness Engine | Owner: agent-4 | Success criteria: nodes run only when predecessor constraints are satisfied.
+51. Lane Model Specification | Owner: agent-4 | Success criteria: typed lane contracts exist with priority and policy controls.
+52. Lane Scheduler Core | Owner: agent-4 | Success criteria: scheduler maps ready nodes to lanes honoring caps.
+53. Capacity + Backpressure Controller | Owner: agent-4 | Success criteria: concurrency caps and backpressure behavior prevent saturation.
+54. Anti-Starvation Fairness Policy | Owner: agent-4 | Success criteria: non-critical tasks make progress under continuous critical load.
+55. Retry and Skip Propagation Policy | Owner: agent-4 | Success criteria: dependency behavior for fail/skip/retry is explicit and deterministic.
+56. DAG Execution Engine with Checkpointing | Owner: agent-4 | Success criteria: reruns resume from last committed wave safely.
+57. Telemetry and Lane Analytics | Owner: agent-4 | Success criteria: wave wait time, utilization, and dependency-wait metrics are exported.
+58. 100-Item Optimization Validation | Owner: agent-4 | Success criteria: benchmark runbook demonstrates correctness and improved wall-clock for the DAG flow.
+
+### Tasks 59-72 (Owner: agent-5 / perf controls + sharding)
+
+59. Centralized marker registry and ownership model. | Owner: agent-5 | Success criteria: allowed markers are codified with owners and migration notes.
+60. Marker consistency CI enforcement. | Owner: agent-5 | Success criteria: CI blocks unregistered markers.
+61. Deprecate duplicate/legacy markers. | Owner: agent-5 | Success criteria: deprecated marker usage reduced by >90% with compatibility notes.
+62. Standardize marker naming and semantics policy. | Owner: agent-5 | Success criteria: naming policy published and adopted by new tests.
+63. Build baseline xdist performance baseline. | Owner: agent-5 | Success criteria: baseline runtime/utilization metrics captured before policy changes.
+64. Define and publish xdist policy matrix. | Owner: agent-5 | Success criteria: documented decision matrix for suite class and worker profile.
+65. Implement adaptive xdist worker routing. | Owner: agent-5 | Success criteria: CPU-bound tests parallelized, stateful tests serialized.
+66. Add xdist failure-mode safeguards. | Owner: agent-5 | Success criteria: worker crash/retry policy and artifacts are deterministic.
+67. Launch testmon pilot scope and success gate. | Owner: agent-5 | Success criteria: targeted pilot with measured hit-rate and false-negative watch.
+68. Provision testmon cache infra and storage policy. | Owner: agent-5 | Success criteria: versioned, documented cache and retention.
+69. Evaluate testmon selection quality and fallback behavior. | Owner: agent-5 | Success criteria: comparison report versus full suite with clear miss-rate risk.
+70. Design sharding strategy and API contract. | Owner: agent-5 | Success criteria: shard contract includes shard count formula and assignment schema.
+71. Implement deterministic time-aware shard assignment. | Owner: agent-5 | Success criteria: stable mapping with <2% runtime variance across reruns.
+72. Unify cache flows across xdist/testmon/sharding. | Owner: agent-5 | Success criteria: single orchestrated cache flow with invalidation strategy.
+
+### Tasks 73-86 (Owner: agent-6 / cross-repo + observability)
+
+73. Refine Pytest Collection Baseline | Owner: agent-6 | Success criteria: collect-only runs report 0 errors and baseline telemetry emitted.
+74. Tighten Default Discovery Scope | Owner: agent-6 | Success criteria: template and non-runtime trees are excluded by default and fast node count reduced by ≥20%.
+75. Introduce Collection Guardrails Hook | Owner: agent-6 | Success criteria: deterministic skip behavior with low cross-run variance.
+76. Rebalance Marker Taxonomy and Strictness | Owner: agent-6 | Success criteria: strict marker mode enforced and fast lane consistently under 1000 nodes.
+77. Implement PR/CI Lane Split Strategy | Owner: agent-6 | Success criteria: separate lanes with budgets and failure triage are documented.
+78. Emit Core Pytest Performance Metrics | Owner: agent-6 | Success criteria: JSON and markdown summaries emitted every run.
+79. Add FR/Requirement Traceability Extractor | Owner: agent-6 | Success criteria: artifacts include requirement->tests and uncovered requirements.
+80. Enforce Requirement Mapping Gate on PR Changes | Owner: agent-6 | Success criteria: PRs fail when test changes miss required markers with explicit exceptions syntax.
+81. Create Cross-Repo Atoms Clean/Deploy Knowledge Base | Owner: agent-6 | Success criteria: knowledge base summarizes Vercel/Cloud Run path differences and env coupling.
+82. Document Canonical Clean/Deploy Path in thegent | Owner: agent-6 | Success criteria: one canonical path doc with deprecated paths flagged.
+83. Institutionalize Env-Discovery Contract | Owner: agent-6 | Success criteria: explicit contract for clean/deploy env requirements with hard-fail checks.
+84. Stand Up Pytest Observability Plumbing | Owner: agent-6 | Success criteria: metrics export supports local verification and CI artifact output.
+85. Add CI Dashboard/Alert Surface for Test Health | Owner: agent-6 | Success criteria: alert thresholds and breach runbook exist for collection/misfire/lane regressions.
+86. Publish 14-Day Optimization Feedback Loop | Owner: agent-6 | Success criteria: recurring feedback task updates owners/priority and closes completed milestones.
+
+### Tasks 87-100 (Owner: Codex / execution sequencing + hardening)
+
+87. Build a PR-only targeted run profile and wire to local helper task alias. | Owner: Codex | Success criteria: PR contributors can run the same gate locally with documented command.
+88. Add changelist-aware selector to run only touched/related suites in PR mode. | Owner: Codex | Success criteria: changed files map to test selection with safe fallback to fast lane.
+89. Add anti-flake run profile (`--reruns` + `--maxfail`) with explicit opt-in lane. | Owner: Codex | Success criteria: dedicated flake lane has deterministic thresholds and failure visibility.
+90. Publish a minimal “how to reduce suite impact” guide for developers. | Owner: Codex | Success criteria: guide includes marker best practices and cost-aware test writing.
+91. Add `trace` comment harvesting in extractor as secondary evidence source. | Owner: Codex | Success criteria: optional source emits `@trace` to FR mapping warnings and confidence score.
+92. Add migration helper script to list untagged heavy tests over threshold. | Owner: Codex | Success criteria: script reports tests exceeding configured duration and missing FR markers.
+93. Add PR template updates to require artifact links and FR mapping evidence. | Owner: Codex | Success criteria: PR lint check validates template fields for test-only touch points.
+94. Add explicit benchmark jobs for `tests/routing` and one heavy e2e module with/without xdist. | Owner: Codex | Success criteria: job history stores comparable baseline with confidence intervals.
+95. Add nightly job to run collect-only on template path separately. | Owner: Codex | Success criteria: template regressions are detected without slowing PR lanes.
+96. Add contract test for requirement extractor CLI schema stability. | Owner: Codex | Success criteria: schema contract test fails on breaking change.
+97. Define promotion criteria for making optional lanes required. | Owner: Codex | Success criteria: criteria includes stability threshold, max flake ratio, and acceptable fail budget.
+98. Build a one-page dependency DAG/FR mapping diagram from extractor output. | Owner: Codex | Success criteria: generated diagram is committed and updated in each nightly.
+99. Set quarterly cleanup routine to remove deprecated markers and stale traceability debt. | Owner: Codex | Success criteria: scheduled cleanup issue created when stale debt window breaches threshold.
+100. Produce final “go-live” handoff brief and handoff checklist. | Owner: Codex | Success criteria: checklist includes config gates, rollback steps, and on-call ownership.
+
+### Task 96-100 Execution Evidence
+
+- 96: added contract stability test coverage for `requirements-map` payload keys in `tests/test_wl137_pr_mode_and_flake_lane.py`.
+- 97: added promotion criteria assertions for stability threshold, flake ratio, fail budget, and optional-lane readiness in `tests/test_wl137_pr_mode_and_flake_lane.py`.
+- 98: added FR map truncation test and diagram command coverage plus Taskfile/guide updates for diagram refresh in `tests/test_wl137_pr_mode_and_flake_lane.py` and `Taskfile.yml`.
+- 99: added quarterly traceability cleanup task and issue contract test coverage in `Taskfile.yml` and `tests/test_wl137_pr_mode_and_flake_lane.py`.
+- 100: added go-live handoff report at `docs/reports/2026-02-22-pytest-go-live-handoff.md` and contract/guide updates for rollout checks.
+
+See operational Wave-1 execution tracker in `thegent/docs/reports/2026-02-22-pytest-wave-1-runbook.md`.
+
+Wave-1 execution tracker: `thegent/docs/reports/2026-02-22-pytest-wave-1-progress.md`.

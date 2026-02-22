@@ -2,8 +2,8 @@
 
 **Purpose**: Identify and document sync/update/audit components needed for first batch of work stream items.
 
-**Date**: 2026-02-17  
-**Batch**: 1 of N  
+**Date**: 2026-02-17
+**Batch**: 1 of N
 **Items**: 10 items (research-tui-compositor through research-library-watchdog)
 
 ---
@@ -12,9 +12,9 @@
 
 ### 1. research-tui-compositor (P1, no deps)
 
-**Title**: TUI Compositor Implementation  
-**Source**: CONVERSATION_DUMP_2026-02-16_EXPANDED.md  
-**Priority**: P1  
+**Title**: TUI Compositor Implementation
+**Source**: CONVERSATION_DUMP_2026-02-16_EXPANDED.md
+**Priority**: P1
 **Dependencies**: None
 
 **Sync Component Needed**:
@@ -33,9 +33,9 @@
 
 ### 2. research-cross-platform-isolation (P1, no deps)
 
-**Title**: User isolation implementation (Hybrid model)  
-**Source**: CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md  
-**Priority**: P1  
+**Title**: User isolation implementation (Hybrid model)
+**Source**: CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md
+**Priority**: P1
 **Dependencies**: None
 
 **Sync Component Needed**:
@@ -54,9 +54,9 @@
 
 ### 3. research-cross-platform-shell (P1, no deps)
 
-**Title**: POSIX + PowerShell dual-shell strategy  
-**Source**: CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md  
-**Priority**: P1  
+**Title**: POSIX + PowerShell dual-shell strategy
+**Source**: CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md
+**Priority**: P1
 **Dependencies**: None
 
 **Sync Component Needed**:
@@ -75,9 +75,9 @@
 
 ### 4. research-hook-rust-phase1 (P1, no deps)
 
-**Title**: Build thegent-hooks binary with core subcommands  
-**Source**: HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md  
-**Priority**: P1  
+**Title**: Build thegent-hooks binary with core subcommands
+**Source**: HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS_EXPANDED.md
+**Priority**: P1
 **Dependencies**: None
 
 **Sync Component Needed**:
@@ -96,9 +96,9 @@
 
 ### 5. research-library-http (P1, no deps)
 
-**Title**: Replace urllib with httpx (7 files)  
-**Source**: LIBRARY_REPLACEMENT_CONSOLIDATED.md  
-**Priority**: P1  
+**Title**: Replace urllib with httpx (7 files)
+**Source**: LIBRARY_REPLACEMENT_CONSOLIDATED.md
+**Priority**: P1
 **Dependencies**: None
 
 **Sync Component Needed**:
@@ -117,9 +117,9 @@
 
 ### 6. research-library-retry (P1, no deps)
 
-**Title**: Migrate manual retry loops to tenacity (4 files)  
-**Source**: LIBRARY_REPLACEMENT_CONSOLIDATED.md  
-**Priority**: P1  
+**Title**: Migrate manual retry loops to tenacity (4 files)
+**Source**: LIBRARY_REPLACEMENT_CONSOLIDATED.md
+**Priority**: P1
 **Dependencies**: None
 
 **Sync Component Needed**:
@@ -138,9 +138,9 @@
 
 ### 7. research-library-watchdog (P1, no deps)
 
-**Title**: Replace polling with watchdog (1 file)  
-**Source**: LIBRARY_REPLACEMENT_CONSOLIDATED.md  
-**Priority**: P1  
+**Title**: Replace polling with watchdog (1 file)
+**Source**: LIBRARY_REPLACEMENT_CONSOLIDATED.md
+**Priority**: P1
 **Dependencies**: None
 
 **Sync Component Needed**:
@@ -159,8 +159,8 @@
 
 ## Summary
 
-**Total Items**: 7 items requiring sync/update/audit components  
-**Priority**: All P1  
+**Total Items**: 7 items requiring sync/update/audit components
+**Priority**: All P1
 **Dependencies**: All have no dependencies (ready to work on)
 
 **Next Steps**:

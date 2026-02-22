@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from pathlib import Path
 import re
 import shlex
@@ -625,3 +626,135 @@ def test_readme_command_snippet_test_paths_exist() -> None:
         "README command snippets reference missing test files: "
         + ", ".join(missing_paths)
     )
+
+
+def test_governance_related_goal_labels_are_printable_ascii() -> None:
+    for goal, _command_cell in _command_table_rows(_readme_text()):
+        if "governance" not in goal.lower() and "(direct)" not in goal:
+            continue
+        assert goal.isascii() and goal.isprintable(), (
+            f"Governance-related goal labels must be printable ASCII: {goal!r}"
+        )
+
+
+def test_governance_related_goal_labels_have_no_surrounding_whitespace() -> None:
+    for goal, _command_cell in _command_table_rows(_readme_text()):
+        if "governance" not in goal.lower() and "(direct)" not in goal:
+            continue
+        assert goal == goal.strip(), (
+            f"Governance-related goal labels must not include outer whitespace: {goal!r}"
+        )
+
+
+def test_governance_related_rows_include_tests_e2e_paths() -> None:
+    for goal, command_cell in _command_table_rows(_readme_text()):
+        if "(direct)" not in goal:
+            continue
+        if not (command_cell.startswith("`") and command_cell.endswith("`")):
+            continue
+        tokens = shlex.split(command_cell[1:-1].strip())
+        path_tokens = [token for token in tokens if token.startswith("tests/e2e/") and token.endswith(".py")]
+        assert path_tokens, (
+            f"Governance-related row '{goal}' must include tests/e2e/*.py path tokens"
+        )
+
+
+def test_fast_governance_non_path_tokens_are_not_duplicated_after_prefix() -> None:
+    rows = _command_table_rows(_readme_text())
+    fast_row = [command_cell for goal, command_cell in rows if goal == "Fast governance checks"]
+    assert fast_row, "README command table must include 'Fast governance checks' row"
+
+    tokens = shlex.split(fast_row[0][1:-1].strip())
+    assert tokens[:2] == ["pytest", "-q"], "Fast governance checks row must start with `pytest -q`"
+    non_path_tokens = [token for token in tokens[2:] if not (token.startswith("tests/e2e/") and token.endswith(".py"))]
+    duplicates = [token for token, count in Counter(non_path_tokens).items() if count > 1]
+    assert not duplicates, (
+        "Fast governance checks row must not repeat non-path tokens after `pytest -q`: "
+        + ", ".join(duplicates)
+    )
+
+
+def test_full_bundle_has_more_test_paths_than_fast_governance_row() -> None:
+    rows = _command_table_rows(_readme_text())
+    fast_row = [command_cell for goal, command_cell in rows if goal == "Fast governance checks"]
+    full_row = [command_cell for goal, command_cell in rows if goal == "Full e2e governance unit bundle (direct)"]
+    assert fast_row and full_row, "README command table must include both fast and full governance rows"
+
+    fast_paths = [
+        token
+        for token in shlex.split(fast_row[0][1:-1].strip())
+        if token.startswith("tests/e2e/test_") and token.endswith(".py")
+    ]
+    full_paths = [
+        token
+        for token in shlex.split(full_row[0][1:-1].strip())
+        if token.startswith("tests/e2e/test_") and token.endswith(".py")
+    ]
+    assert len(full_paths) > len(fast_paths), (
+        "Full governance bundle row must contain more tests/e2e/test_*.py paths than fast governance row"
+    )
+
+
+def test_governance_goal_labels_follow_stable_capitalization_policy() -> None:
+    rows = _command_table_rows(_readme_text())
+    governance_goals = [goal for goal, _command_cell in rows if "governance" in goal.lower()]
+    assert governance_goals, "README command table should include governance-related goal labels"
+
+    allowed_lowercase_tokens = {
+        "and",
+        "artifact",
+        "bundle",
+        "checks",
+        "collect-only",
+        "contracts",
+        "direct",
+        "e2e",
+        "equality",
+        "governance",
+        "health",
+        "import",
+        "inventory",
+        "marker",
+        "module",
+        "pairing",
+        "rewrite",
+        "runner",
+        "set",
+        "smoke",
+        "split",
+        "sync",
+        "tests",
+        "unit",
+    }
+
+    for goal in governance_goals:
+        for raw_token in goal.replace("(", " ").replace(")", " ").split():
+            token = raw_token.strip(",.:;").lower()
+            if not token or token.isdigit():
+                continue
+            if raw_token.isupper():
+                continue
+            if token in allowed_lowercase_tokens:
+                continue
+            assert raw_token[0].isupper(), (
+                "Governance goal labels must use stable capitalization: significant words should be "
+                f"capitalized unless explicitly allowed lowercase; offending token {raw_token!r} in {goal!r}"
+            )
+
+
+def test_command_table_parser_ignores_escaped_pipe_backtick_edge_rows_and_keeps_core_rows() -> None:
+    markdown = """
+| Goal | Command |
+| --- | --- |
+| Fast governance checks | `pytest -q tests/e2e/test_split_hygiene.py` |
+| Escaped \\| pipe edge row | `pytest -q tests/e2e/test_readme_e2e_commands.py` |
+| Escaped backtick edge row | `pytest -q tests/e2e/test_cli_alias_rewrite_contract.py \\`
+| Governance sync contracts (direct) | `pytest -q tests/e2e/test_governance_sync_contracts.py` |
+"""
+    rows = _command_table_rows(markdown)
+
+    goals = [goal for goal, _command_cell in rows]
+    assert "Fast governance checks" in goals
+    assert "Governance sync contracts (direct)" in goals
+    assert "Escaped \\| pipe edge row" not in goals
+    assert "Escaped backtick edge row" not in goals

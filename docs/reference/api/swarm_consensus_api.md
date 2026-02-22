@@ -92,4 +92,3 @@ record_vote(self: Any, agent_id: str, vote: Any, signature: str)
 Record a vote from an agent in the swarm.
 
 ---
-

@@ -52,13 +52,13 @@ use thegent_tool_detect::ToolDetector;
 
 fn bench_tool_detection(c: &mut Criterion) {
     let detector = ToolDetector::new();
-    
+
     c.bench_function("detect_all_tools", |b| {
         b.iter(|| {
             black_box(detector.detect_all());
         });
     });
-    
+
     c.bench_function("detect_cached", |b| {
         detector.detect_all(); // Warm cache
         b.iter(|| {
@@ -314,4 +314,3 @@ pub fn check_regression(current: Duration, baseline: Duration) -> bool {
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

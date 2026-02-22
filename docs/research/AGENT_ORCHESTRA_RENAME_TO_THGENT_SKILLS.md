@@ -1,7 +1,7 @@
 # Agent Orchestra → Thegent Skills Rename
 
-**Date**: 2026-02-17  
-**Status**: In Progress  
+**Date**: 2026-02-17
+**Status**: In Progress
 **Issue**: Installation error `[Errno 21] Is a directory: '/Users/kooshapari/.cursor/skills-cursor/agent-orchestra'`
 
 ---

@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 Drift Reconciliation Playbook
 
-**Status:** Operational hardening artifact  
-**Date:** 2026-02-15  
+**Status:** Operational hardening artifact
+**Date:** 2026-02-15
 **Scope:** Detecting and correcting inconsistencies among PRD, WBS, DAG, tracker, and evidence artifacts before or during gates.
 
 ## 1) Why this exists
@@ -269,4 +269,3 @@ If any class remains unresolved, do not promote gate stage.
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

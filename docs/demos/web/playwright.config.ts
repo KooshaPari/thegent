@@ -20,7 +20,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'on',
   },
-  
+
   projects: [
     {
       name: 'chromium',

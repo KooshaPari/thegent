@@ -49,4 +49,3 @@ GOVERNANCE-GATES FAIL: [regression-spiral-guard]: policy_band=red pressure_score
     assert "| remediation_directive | interrupt_red |" in md
     assert "Governance fail-closed signals detected." in md
     assert "GOVERNANCE-GATES FAIL" in md
-

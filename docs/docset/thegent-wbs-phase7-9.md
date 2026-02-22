@@ -1,7 +1,7 @@
 # Thegent WBS — Phase 7 to Phase 9 (Next-Wave Execution)
 
-**Status:** Draft  
-**Date:** 2026-02-15  
+**Status:** Draft
+**Date:** 2026-02-15
 **Scope:** Contract hardening, predictive reliability, autonomous operations, and ecosystem extension.
 
 ## 0) Meta constraints
@@ -121,4 +121,3 @@
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

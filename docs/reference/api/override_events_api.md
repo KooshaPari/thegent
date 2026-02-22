@@ -306,4 +306,3 @@ Remove an override from monitoring (e.g. if manually revoked).
 - `override_id`: The override to remove.
 
 ---
-

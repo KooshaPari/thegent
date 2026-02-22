@@ -2,8 +2,8 @@
 
 **Purpose**: Research and design improvements to the TASK I/O system to make it readable and parseable for agents, machines, users, AND developers.
 
-**Status**: Research & Planning Phase  
-**Created**: 2026-02-18  
+**Status**: Research & Planning Phase
+**Created**: 2026-02-18
 **Priority**: P1
 
 ---
@@ -36,13 +36,13 @@ Task Input:
     **Source:** DOCGEN_DOCSITE_IMPROVEMENT_PLAN.md
     **Priority:** P1
     **Depends:** None
-    
+
     ### Implementation Details
     ...
-    
+
     ### Steps to Complete
     1. Create or modify...
-    
+
     ### Deliverables
     - StickyHeader.vue component
     ...
@@ -52,9 +52,9 @@ Task Input:
 ```
 Task Output:
   <think>...</think>
-  
+
   I have successfully implemented...
-  
+
   **Files Created:**
   1. /docs/.vitepress/theme/components/StickyHeader.vue
   ...
@@ -1213,25 +1213,25 @@ from typing import Dict, Any, Tuple
 
 def parse_yaml_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
     """Parse YAML frontmatter from markdown content.
-    
+
     Returns:
         Tuple of (frontmatter_dict, markdown_body)
     """
     # Match YAML frontmatter (--- ... ---)
     pattern = r'^---\s*\n(.*?)\n---\s*\n(.*)$'
     match = re.match(pattern, content, re.DOTALL)
-    
+
     if not match:
         # Try without trailing newline
         pattern = r'^---\s*\n(.*?)\n---\s*(.*)$'
         match = re.match(pattern, content, re.DOTALL)
-    
+
     if not match:
         raise ValueError("No YAML frontmatter found")
-    
+
     yaml_content = match.group(1)
     markdown_body = match.group(2)
-    
+
     try:
         frontmatter = yaml.safe_load(yaml_content)
         if not isinstance(frontmatter, dict):
@@ -1242,14 +1242,14 @@ def parse_yaml_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
 
 def extract_markdown_sections(body: str) -> Dict[str, str]:
     """Extract markdown sections by header.
-    
+
     Returns:
         Dict mapping section names to content
     """
     sections = {}
     current_section = None
     current_content = []
-    
+
     for line in body.split('\n'):
         if line.startswith('## '):
             if current_section:
@@ -1259,10 +1259,10 @@ def extract_markdown_sections(body: str) -> Dict[str, str]:
         else:
             if current_section:
                 current_content.append(line)
-    
+
     if current_section:
         sections[current_section] = '\n'.join(current_content).strip()
-    
+
     return sections
 ```
 
@@ -1271,49 +1271,49 @@ def extract_markdown_sections(body: str) -> Dict[str, str]:
 ```python
 def parse_legacy_task(content: str) -> Dict[str, Any]:
     """Parse legacy task format (backward compatibility).
-    
+
     Handles formats like:
     - TASK (worker: "description")
     - Task Input: ... Prompt: ...
     """
     task = {}
-    
+
     # Extract TASK header
     task_match = re.search(r'TASK\s*\(([^:]+):\s*"([^"]+)"\)', content)
     if task_match:
         task['subagent_type'] = task_match.group(1).strip()
         task['description'] = task_match.group(2).strip()
-    
+
     # Extract Task Input section
     input_match = re.search(r'Task Input:\s*\n(.*?)(?=Task Output:|$)', content, re.DOTALL)
     if input_match:
         input_content = input_match.group(1)
-        
+
         # Extract Subagent Type
         subagent_match = re.search(r'Subagent Type:\s*(.+)', input_content)
         if subagent_match:
             task['subagent_type'] = subagent_match.group(1).strip()
-        
+
         # Extract Prompt section
         prompt_match = re.search(r'Prompt:\s*\n(.*)', input_content, re.DOTALL)
         if prompt_match:
             prompt_content = prompt_match.group(1)
-            
+
             # Extract ID
             id_match = re.search(r'\*\*ID:\*\*\s*(.+)', prompt_content)
             if id_match:
                 task['id'] = id_match.group(1).strip()
-            
+
             # Extract Title
             title_match = re.search(r'\*\*Title:\*\*\s*(.+)', prompt_content)
             if title_match:
                 task['title'] = title_match.group(1).strip()
-            
+
             # Extract Priority
             priority_match = re.search(r'\*\*Priority:\*\*\s*(P[123])', prompt_content)
             if priority_match:
                 task['priority'] = priority_match.group(1)
-            
+
             # Extract Depends
             depends_match = re.search(r'\*\*Depends:\*\*\s*(.+)', prompt_content)
             if depends_match:
@@ -1322,12 +1322,12 @@ def parse_legacy_task(content: str) -> Dict[str, Any]:
                     task['depends'] = []
                 else:
                     task['depends'] = [d.strip() for d in depends_str.split(',')]
-            
+
             # Extract Implementation Details
             impl_match = re.search(r'### Implementation Details\s*\n(.*?)(?=###|$)', prompt_content, re.DOTALL)
             if impl_match:
                 task['implementation_details'] = impl_match.group(1).strip()
-            
+
             # Extract Steps
             steps_match = re.search(r'### Steps to Complete\s*\n(.*?)(?=###|$)', prompt_content, re.DOTALL)
             if steps_match:
@@ -1341,7 +1341,7 @@ def parse_legacy_task(content: str) -> Dict[str, Any]:
                             'description': step_match.group(2).strip()
                         })
                 task['steps'] = steps
-            
+
             # Extract Deliverables
             deliverables_match = re.search(r'### Deliverables\s*\n(.*?)(?=###|$)', prompt_content, re.DOTALL)
             if deliverables_match:
@@ -1351,7 +1351,7 @@ def parse_legacy_task(content: str) -> Dict[str, Any]:
                     if line.strip().startswith('- '):
                         deliverables.append(line.strip()[2:])
                 task['deliverables'] = deliverables
-    
+
     return task
 ```
 
@@ -1360,14 +1360,14 @@ def parse_legacy_task(content: str) -> Dict[str, Any]:
 ```python
 def detect_task_format(content: str) -> str:
     """Auto-detect task format.
-    
+
     Returns:
         'yaml_frontmatter', 'legacy', 'json', or 'unknown'
     """
     # Check for YAML frontmatter
     if re.match(r'^---\s*\n', content):
         return 'yaml_frontmatter'
-    
+
     # Check for JSON
     if content.strip().startswith('{'):
         try:
@@ -1375,11 +1375,11 @@ def detect_task_format(content: str) -> str:
             return 'json'
         except:
             pass
-    
+
     # Check for legacy format
     if re.search(r'TASK\s*\(', content) or re.search(r'Task Input:', content):
         return 'legacy'
-    
+
     return 'unknown'
 ```
 
@@ -1397,25 +1397,25 @@ TASK_ID_MAX_LENGTH = 100
 def validate_task_id(task_id: str) -> List[str]:
     """Validate task ID format and return list of errors."""
     errors = []
-    
+
     if not task_id:
         errors.append("Task ID is required")
         return errors
-    
+
     if len(task_id) < TASK_ID_MIN_LENGTH:
         errors.append(f"Task ID must be at least {TASK_ID_MIN_LENGTH} characters")
-    
+
     if len(task_id) > TASK_ID_MAX_LENGTH:
         errors.append(f"Task ID must be at most {TASK_ID_MAX_LENGTH} characters")
-    
+
     if not TASK_ID_PATTERN.match(task_id):
         errors.append("Task ID must be lowercase alphanumeric with hyphens only")
-    
+
     # Reserved IDs
     reserved = ['new', 'all', 'list', 'create', 'update', 'delete']
     if task_id.lower() in reserved:
         errors.append(f"Task ID '{task_id}' is reserved")
-    
+
     return errors
 ```
 
@@ -1424,7 +1424,7 @@ def validate_task_id(task_id: str) -> List[str]:
 ```python
 def validate_dependencies(task: Dict[str, Any], all_tasks: List[Dict[str, Any]]) -> List[str]:
     """Validate task dependencies.
-    
+
     Checks:
     - Dependencies exist
     - No circular dependencies
@@ -1433,22 +1433,22 @@ def validate_dependencies(task: Dict[str, Any], all_tasks: List[Dict[str, Any]])
     errors = []
     task_id = task.get('id')
     depends = task.get('depends', [])
-    
+
     if not task_id:
         return errors
-    
+
     # Get all task IDs
     all_task_ids = {t.get('id') for t in all_tasks if t.get('id')}
-    
+
     # Check self-reference
     if task_id in depends:
         errors.append(f"Task '{task_id}' cannot depend on itself")
-    
+
     # Check existence
     for dep_id in depends:
         if dep_id not in all_task_ids:
             errors.append(f"Dependency '{dep_id}' does not exist")
-    
+
     # Check circular dependencies
     visited = set()
     def check_circular(current_id: str, path: List[str]) -> bool:
@@ -1464,10 +1464,10 @@ def validate_dependencies(task: Dict[str, Any], all_tasks: List[Dict[str, Any]])
             if check_circular(dep_id, path + [current_id]):
                 return True
         return False
-    
+
     if check_circular(task_id, []):
         errors.append(f"Circular dependency detected for task '{task_id}'")
-    
+
     return errors
 ```
 
@@ -1480,10 +1480,10 @@ PRIORITY_WEIGHTS = {'P1': 3, 'P2': 2, 'P3': 1}
 def validate_priority(priority: str) -> List[str]:
     """Validate priority value."""
     errors = []
-    
+
     if priority not in VALID_PRIORITIES:
         errors.append(f"Priority must be one of {VALID_PRIORITIES}, got '{priority}'")
-    
+
     return errors
 
 def compare_priorities(p1: str, p2: str) -> int:
@@ -1617,7 +1617,7 @@ def generate_task_from_workstream(row: Dict[str, str]) -> str:
     priority = row['Priority']
     depends_str = row.get('Depends', '-')
     depends = [d.strip() for d in depends_str.split(',') if d.strip() and d.strip() != '-']
-    
+
     yaml_frontmatter = f"""---
 id: {task_id}
 title: {title}
@@ -1672,10 +1672,10 @@ jobs:
       - run: |
           # Validate all task files
           thegent task validate tasks/
-          
+
           # Check for circular dependencies
           thegent task validate --check-deps tasks/
-          
+
           # Validate WORK_STREAM.md consistency
           thegent task validate --workstream docs/reference/WORK_STREAM.md
 ```
@@ -1692,7 +1692,7 @@ from thegent.task.validator import validate_task_file
 def main():
     """Validate changed task files."""
     errors = []
-    
+
     # Get staged files
     import subprocess
     result = subprocess.run(
@@ -1700,10 +1700,10 @@ def main():
         capture_output=True,
         text=True
     )
-    
+
     staged_files = result.stdout.strip().split('\n')
     task_files = [f for f in staged_files if f.startswith('tasks/') and f.endswith('.md')]
-    
+
     for task_file in task_files:
         try:
             result = validate_task_file(Path(task_file))
@@ -1711,13 +1711,13 @@ def main():
                 errors.extend(result.errors)
         except Exception as e:
             errors.append(f"{task_file}: {e}")
-    
+
     if errors:
         print("Task validation failed:")
         for error in errors:
             print(f"  - {error}")
         sys.exit(1)
-    
+
     print("All task files valid ✓")
     return 0
 
@@ -1828,7 +1828,7 @@ if __name__ == '__main__':
 def sanitize_task_input(task: Dict[str, Any]) -> Dict[str, Any]:
     """Sanitize task input to prevent injection attacks."""
     sanitized = {}
-    
+
     # Sanitize strings
     for key, value in task.items():
         if isinstance(value, str):
@@ -1844,7 +1844,7 @@ def sanitize_task_input(task: Dict[str, Any]) -> Dict[str, Any]:
             sanitized[key] = sanitize_task_input(value)
         else:
             sanitized[key] = value
-    
+
     return sanitized
 ```
 
@@ -1948,19 +1948,19 @@ def test_task_lifecycle():
     # 1. Create task
     task_file = Path('tasks/test-task.md')
     task_file.write_text(generate_task_template('worker'))
-    
+
     # 2. Validate
     result = validate_task_file(task_file)
     assert result.valid
-    
+
     # 3. Parse
     task = parse_task_file(task_file)
     assert task['id'] == 'test-task'
-    
+
     # 4. Convert
     json_task = convert_to_json(task)
     assert json_task['id'] == 'test-task'
-    
+
     # 5. Execute (mock)
     output = execute_task(task)
     assert output['status'] == 'completed'
@@ -2002,10 +2002,10 @@ def migrate_task_file(source_path: Path, output_path: Path, dry_run: bool = Fals
     """Migrate task file from old format to new format."""
     content = source_path.read_text()
     format_type = detect_task_format(content)
-    
+
     if format_type == 'yaml_frontmatter':
         return MigrationResult(skipped=True, reason="Already in new format")
-    
+
     # Parse old format
     if format_type == 'legacy':
         task = parse_legacy_task(content)
@@ -2013,19 +2013,19 @@ def migrate_task_file(source_path: Path, output_path: Path, dry_run: bool = Fals
         task = json.loads(content)
     else:
         return MigrationResult(error="Unknown format")
-    
+
     # Convert to new format
     new_content = convert_to_yaml_frontmatter(task)
-    
+
     if dry_run:
         return MigrationResult(
             preview=new_content,
             changes=calculate_changes(content, new_content)
         )
-    
+
     # Write new format
     output_path.write_text(new_content)
-    
+
     return MigrationResult(
         success=True,
         source_format=format_type,
@@ -2040,20 +2040,20 @@ def migrate_task_file(source_path: Path, output_path: Path, dry_run: bool = Fals
 def migrate_directory(source_dir: Path, output_dir: Path, dry_run: bool = False) -> MigrationReport:
     """Migrate all task files in a directory."""
     report = MigrationReport()
-    
+
     task_files = list(source_dir.glob('*.md')) + list(source_dir.glob('*.json'))
-    
+
     for task_file in task_files:
         output_file = output_dir / task_file.name
         if task_file.suffix == '.json':
             output_file = output_dir / (task_file.stem + '.md')
-        
+
         try:
             result = migrate_task_file(task_file, output_file, dry_run)
             report.add_result(task_file, result)
         except Exception as e:
             report.add_error(task_file, str(e))
-    
+
     return report
 ```
 
@@ -2259,13 +2259,13 @@ class SemanticError(TaskParseError):
 def parse_task_with_recovery(file_path: Path) -> Tuple[Optional[Dict], List[str]]:
     """Parse task with error recovery."""
     errors = []
-    
+
     try:
         content = file_path.read_text()
     except Exception as e:
         errors.append(f"Failed to read file: {e}")
         return None, errors
-    
+
     try:
         task = parse_task(content)
     except FormatError as e:
@@ -2283,7 +2283,7 @@ def parse_task_with_recovery(file_path: Path) -> Tuple[Optional[Dict], List[str]
     except SemanticError as e:
         errors.append(f"Semantic error: {e}")
         return task, errors
-    
+
     return task, errors
 ```
 
@@ -2298,14 +2298,14 @@ class ValidationError:
     message: str
     code: str
     path: List[str]  # JSON path to error
-    
+
 @dataclass
 class ValidationResult:
     """Task validation result."""
     valid: bool
     errors: List[ValidationError]
     warnings: List[ValidationError]
-    
+
     def format_errors(self) -> str:
         """Format errors for display."""
         lines = []
@@ -2404,7 +2404,7 @@ def visualize_dependencies(graph: Dict[str, List[str]], output_path: Path):
     for task_id, deps in graph.items():
         for dep in deps:
             lines.append(f'  {dep} --> {task_id}')
-    
+
     diagram = '\n'.join(lines)
     output_path.write_text(f'```mermaid\n{diagram}\n```')
 ```
@@ -2415,7 +2415,7 @@ def visualize_dependencies(graph: Dict[str, List[str]], output_path: Path):
 ```python
 def search_tasks(tasks: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
     """Search tasks using simple query language.
-    
+
     Examples:
     - "priority:P1" - Filter by priority
     - "tag:vitepress" - Filter by tag
@@ -2424,11 +2424,11 @@ def search_tasks(tasks: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]
     """
     filters = parse_query(query)
     results = []
-    
+
     for task in tasks:
         if matches_filters(task, filters):
             results.append(task)
-    
+
     return results
 ```
 
@@ -2531,23 +2531,23 @@ def parse_workstream_table(content: str) -> List[Dict[str, str]]:
     """Parse WORK_STREAM.md table."""
     lines = content.split('\n')
     tasks = []
-    
+
     # Find table start
     header_line = None
     for i, line in enumerate(lines):
         if '| ID |' in line and 'Title |' in line:
             header_line = i
             break
-    
+
     if header_line is None:
         return tasks
-    
+
     # Parse header
     headers = [h.strip() for h in lines[header_line].split('|')[1:-1]]
-    
+
     # Skip separator line
     data_start = header_line + 2
-    
+
     # Parse rows
     for line in lines[data_start:]:
         if not line.strip() or not line.startswith('|'):
@@ -2556,7 +2556,7 @@ def parse_workstream_table(content: str) -> List[Dict[str, str]]:
         if len(values) == len(headers):
             task = dict(zip(headers, values))
             tasks.append(task)
-    
+
     return tasks
 ```
 
@@ -2568,13 +2568,13 @@ def sync_task_with_workstream(task_file: Path, workstream_file: Path):
     """Sync task file with WORK_STREAM.md."""
     # Read task
     task = parse_task_file(task_file)
-    
+
     # Read workstream
     workstream_tasks = parse_workstream_table(workstream_file.read_text())
-    
+
     # Find matching entry
     matching_entry = next((t for t in workstream_tasks if t['ID'] == task['id']), None)
-    
+
     if matching_entry:
         # Update workstream entry from task
         matching_entry['Status'] = get_task_status(task_file)
@@ -2596,7 +2596,7 @@ def sync_task_with_workstream(task_file: Path, workstream_file: Path):
             'Completed': ''
         }
         workstream_tasks.append(new_entry)
-    
+
     # Write updated workstream
     write_workstream_table(workstream_file, workstream_tasks)
 ```
@@ -3002,9 +3002,9 @@ def validate_cmd(
 ):
     """Validate a task file."""
     from thegent.task.validator import validate_task_file
-    
+
     result = validate_task_file(file, schema_path=schema, check_dependencies=check_deps)
-    
+
     if result.valid:
         typer.echo(f"✓ Task '{file}' is valid")
         return 0
@@ -3022,15 +3022,15 @@ def convert_cmd(
 ):
     """Convert task between formats."""
     from thegent.task.converter import convert_task_file
-    
+
     result = convert_task_file(file, target_format=format)
-    
+
     if output:
         output.write_text(result)
         typer.echo(f"Converted '{file}' to '{output}'")
     else:
         typer.echo(result)
-    
+
     return 0
 
 # ... other commands
@@ -3472,7 +3472,7 @@ body:
     validations:
       required: true
       pattern: "^[a-z0-9-]+$"
-  
+
   - type: textarea
     id: description
     attributes:
@@ -3481,7 +3481,7 @@ body:
       placeholder: "Describe what needs to be done..."
     validations:
       required: true
-  
+
   - type: dropdown
     id: priority
     attributes:
@@ -3492,7 +3492,7 @@ body:
         - P3 - Medium
     validations:
       required: true
-  
+
   - type: checkboxes
     id: deliverables
     attributes:
@@ -3836,14 +3836,14 @@ class Task(BaseModel):
     steps: List[TaskStep] = Field(default_factory=list)
     deliverables: List[str] = Field(default_factory=list)
     acceptance_criteria: List[str] = Field(default_factory=list)
-    
+
     @validator('depends')
     def validate_depends(cls, v):
         for dep_id in v:
             if not re.match(r'^[a-z0-9-]+$', dep_id):
                 raise ValueError(f"Invalid dependency ID format: {dep_id}")
         return v
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -3975,9 +3975,9 @@ body:
     attributes:
       value: |
         ## Task Information
-        
+
         Please provide the following information to create a new task.
-  
+
   - type: input
     id: task_id
     attributes:
@@ -3987,7 +3987,7 @@ body:
     validations:
       required: true
       pattern: "^[a-z0-9-]+$"
-  
+
   - type: textarea
     id: title
     attributes:
@@ -3996,7 +3996,7 @@ body:
       placeholder: "Implement feature X"
     validations:
       required: true
-  
+
   - type: dropdown
     id: priority
     attributes:
@@ -4008,7 +4008,7 @@ body:
         - P3 - Medium (nice to have)
     validations:
       required: true
-  
+
   - type: checkboxes
     id: subagent_type
     attributes:
@@ -4021,7 +4021,7 @@ body:
         - label: Reviewer (review tasks)
     validations:
       required: true
-  
+
   - type: textarea
     id: description
     attributes:
@@ -4030,28 +4030,28 @@ body:
       placeholder: "Describe what needs to be done..."
     validations:
       required: true
-  
+
   - type: textarea
     id: implementation_details
     attributes:
       label: Implementation Details
       description: Technical details and approach
       placeholder: "Add implementation guidance..."
-  
+
   - type: textarea
     id: steps
     attributes:
       label: Steps to Complete
       description: Step-by-step instructions (numbered list)
       placeholder: "1. First step\n2. Second step\n..."
-  
+
   - type: textarea
     id: deliverables
     attributes:
       label: Deliverables
       description: Expected outputs (bullet list)
       placeholder: "- Deliverable 1\n- Deliverable 2\n..."
-  
+
   - type: input
     id: depends
     attributes:
@@ -4285,7 +4285,7 @@ body:
 
 **Rationale Based on Research:**
 
-1. **Industry Adoption**: 
+1. **Industry Adoption**:
    - Used by Jekyll, Hugo, VitePress (already in thegent stack)
    - GitHub Pages supports it natively
    - Familiar to developers
@@ -4470,13 +4470,13 @@ Task Input:
     **Source:** DOCGEN_DOCSITE_IMPROVEMENT_PLAN.md
     **Priority:** P1
     **Depends:** None
-    
+
     ### Implementation Details
     ...
-    
+
     ### Steps to Complete
     1. Create or modify...
-    
+
     ### Deliverables
     - StickyHeader.vue component
     ...
@@ -4509,27 +4509,27 @@ Task Input:
 def migrate_legacy_to_yaml_frontmatter(content: str) -> str:
     """Migrate legacy format to YAML frontmatter."""
     task = {}
-    
+
     # Extract subagent type
     subagent_match = re.search(r'TASK\s*\(([^:]+):', content)
     if subagent_match:
         task['subagent_type'] = subagent_match.group(1).strip()
-    
+
     # Extract ID
     id_match = re.search(r'\*\*ID:\*\*\s*(.+)', content)
     if id_match:
         task['id'] = id_match.group(1).strip()
-    
+
     # Extract Title
     title_match = re.search(r'\*\*Title:\*\*\s*(.+)', content)
     if title_match:
         task['title'] = title_match.group(1).strip()
-    
+
     # Extract Priority
     priority_match = re.search(r'\*\*Priority:\*\*\s*(P[123])', content)
     if priority_match:
         task['priority'] = priority_match.group(1)
-    
+
     # Extract Depends
     depends_match = re.search(r'\*\*Depends:\*\*\s*(.+)', content)
     if depends_match:
@@ -4538,12 +4538,12 @@ def migrate_legacy_to_yaml_frontmatter(content: str) -> str:
             task['depends'] = []
         else:
             task['depends'] = [d.strip() for d in depends_str.split(',')]
-    
+
     # Extract Implementation Details
     impl_match = re.search(r'### Implementation Details\s*\n(.*?)(?=###|$)', content, re.DOTALL)
     if impl_match:
         task['implementation_details'] = impl_match.group(1).strip()
-    
+
     # Extract Steps
     steps_match = re.search(r'### Steps to Complete\s*\n(.*?)(?=###|$)', content, re.DOTALL)
     if steps_match:
@@ -4557,7 +4557,7 @@ def migrate_legacy_to_yaml_frontmatter(content: str) -> str:
                     'description': step_match.group(2).strip()
                 })
         task['steps'] = steps
-    
+
     # Extract Deliverables
     deliverables_match = re.search(r'### Deliverables\s*\n(.*?)(?=###|$)', content, re.DOTALL)
     if deliverables_match:
@@ -4567,10 +4567,10 @@ def migrate_legacy_to_yaml_frontmatter(content: str) -> str:
             if line.strip().startswith('- '):
                 deliverables.append(line.strip()[2:])
         task['deliverables'] = deliverables
-    
+
     # Convert to YAML frontmatter
     yaml_frontmatter = yaml.dump(task, default_flow_style=False, sort_keys=False)
-    
+
     # Extract markdown body (everything after Prompt:)
     prompt_match = re.search(r'Prompt:\s*\n(.*)', content, re.DOTALL)
     if prompt_match:
@@ -4581,7 +4581,7 @@ def migrate_legacy_to_yaml_frontmatter(content: str) -> str:
         body = re.sub(r'### Deliverables.*?(?=###|$)', '', body, flags=re.DOTALL)
     else:
         body = ""
-    
+
     return f"---\n{yaml_frontmatter}---\n\n{body}"
 ```
 
@@ -4600,7 +4600,7 @@ def migrate_legacy_to_yaml_frontmatter(content: str) -> str:
            self.file_path = file_path
            self._frontmatter = None
            self._body = None
-       
+
        @property
        def frontmatter(self):
            if self._frontmatter is None:
@@ -4608,7 +4608,7 @@ def migrate_legacy_to_yaml_frontmatter(content: str) -> str:
                    self.file_path.read_text()
                )
            return self._frontmatter
-       
+
        @property
        def body(self):
            if self._body is None:
@@ -4622,7 +4622,7 @@ def migrate_legacy_to_yaml_frontmatter(content: str) -> str:
    ```python
    from functools import lru_cache
    from pathlib import Path
-   
+
    @lru_cache(maxsize=1000)
    def parse_task_cached(file_path: str):
        return parse_task_file(Path(file_path))
@@ -4631,7 +4631,7 @@ def migrate_legacy_to_yaml_frontmatter(content: str) -> str:
 3. **Parallel Parsing**:
    ```python
    from concurrent.futures import ThreadPoolExecutor
-   
+
    def parse_tasks_parallel(task_files: List[Path], workers: int = 4):
        with ThreadPoolExecutor(max_workers=workers) as executor:
            return list(executor.map(parse_task_file, task_files))
@@ -4642,9 +4642,9 @@ def migrate_legacy_to_yaml_frontmatter(content: str) -> str:
 1. **Schema Caching**:
    ```python
    from jsonschema import Draft202012Validator
-   
+
    _schema_cache = {}
-   
+
    def get_validator(schema_path: Path):
        if schema_path not in _schema_cache:
            schema = json.loads(schema_path.read_text())
@@ -4696,7 +4696,7 @@ def safe_yaml_load(content: str):
     dangerous_tags = ['!!python', '!!js', '!!ruby']
     for tag in dangerous_tags:
         content = content.replace(tag, '')
-    
+
     # Use safe_load instead of load
     return yaml.safe_load(content)
 ```
@@ -4738,17 +4738,17 @@ class TaskVisibility(str, Enum):
 def can_agent_access_task(task: Dict, agent_id: str) -> bool:
     """Check if agent can access task."""
     visibility = task.get('visibility', 'public')
-    
+
     if visibility == 'public':
         return True
-    
+
     if visibility == 'private':
         return task.get('metadata', {}).get('assignee') == agent_id
-    
+
     if visibility == 'restricted':
         allowed_agents = task.get('allowed_agents', [])
         return agent_id in allowed_agents
-    
+
     return False
 ```
 
@@ -4863,23 +4863,23 @@ depends: []
 ## Implementation Details
 Test implementation
 """)
-    
+
     # 2. Parse
     task = parse_task_file(task_file)
     assert task['id'] == 'test-task'
-    
+
     # 3. Validate
     result = validate_task(task)
     assert result.valid
-    
+
     # 4. Convert to JSON
     json_task = convert_to_json(task)
     assert json_task['id'] == 'test-task'
-    
+
     # 5. Convert back to YAML
     yaml_task = convert_to_yaml_frontmatter(json_task)
     assert 'id: test-task' in yaml_task
-    
+
     # 6. Parse again (round-trip)
     task2 = parse_yaml_frontmatter(yaml_task)[0]
     assert task2['id'] == task['id']
@@ -4916,9 +4916,9 @@ def test_task_validation_properties(task_id, priority, depends):
         'priority': priority,
         'depends': depends
     }
-    
+
     result = validate_task(task)
-    
+
     # Should either be valid or have specific error types
     if result.valid:
         assert task['id'] == task_id
@@ -5244,31 +5244,31 @@ from typing import Dict, Any, Tuple, Optional
 
 def parse_yaml_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
     """Parse YAML frontmatter from markdown content.
-    
+
     Args:
         content: Markdown content with YAML frontmatter
-        
+
     Returns:
         Tuple of (frontmatter_dict, markdown_body)
-        
+
     Raises:
         ValueError: If frontmatter is invalid or missing
     """
     # Match YAML frontmatter (--- ... ---)
     pattern = r'^---\s*\n(.*?)\n---\s*\n(.*)$'
     match = re.match(pattern, content, re.DOTALL)
-    
+
     if not match:
         # Try without trailing newline
         pattern = r'^---\s*\n(.*?)\n---\s*(.*)$'
         match = re.match(pattern, content, re.DOTALL)
-    
+
     if not match:
         raise ValueError("No YAML frontmatter found")
-    
+
     yaml_content = match.group(1)
     markdown_body = match.group(2)
-    
+
     try:
         frontmatter = yaml.safe_load(yaml_content)
         if not isinstance(frontmatter, dict):
@@ -5279,19 +5279,19 @@ def parse_yaml_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
 
 def parse_task_file(file_path: Path) -> Dict[str, Any]:
     """Parse a task file (auto-detects format).
-    
+
     Args:
         file_path: Path to task file
-        
+
     Returns:
         Parsed task dictionary
-        
+
     Raises:
         ValueError: If file cannot be parsed
     """
     content = file_path.read_text(encoding='utf-8')
     format_type = detect_task_format(content)
-    
+
     if format_type == 'yaml_frontmatter':
         frontmatter, body = parse_yaml_frontmatter(content)
         # Extract markdown sections
@@ -5324,7 +5324,7 @@ def extract_markdown_sections(body: str) -> Dict[str, str]:
     sections = {}
     current_section = None
     current_content = []
-    
+
     for line in body.split('\n'):
         if line.startswith('## '):
             if current_section:
@@ -5334,52 +5334,52 @@ def extract_markdown_sections(body: str) -> Dict[str, str]:
         else:
             if current_section:
                 current_content.append(line)
-    
+
     if current_section:
         sections[current_section] = '\n'.join(current_content).strip()
-    
+
     return sections
 
 def parse_legacy_task(content: str) -> Dict[str, Any]:
     """Parse legacy task format (backward compatibility)."""
     task = {}
-    
+
     # Extract TASK header
     task_match = re.search(r'TASK\s*\(([^:]+):\s*"([^"]+)"\)', content)
     if task_match:
         task['subagent_type'] = task_match.group(1).strip()
         task['description'] = task_match.group(2).strip()
-    
+
     # Extract Task Input section
     input_match = re.search(r'Task Input:\s*\n(.*?)(?=Task Output:|$)', content, re.DOTALL)
     if input_match:
         input_content = input_match.group(1)
-        
+
         # Extract Subagent Type
         subagent_match = re.search(r'Subagent Type:\s*(.+)', input_content)
         if subagent_match:
             task['subagent_type'] = subagent_match.group(1).strip()
-        
+
         # Extract Prompt section
         prompt_match = re.search(r'Prompt:\s*\n(.*)', input_content, re.DOTALL)
         if prompt_match:
             prompt_content = prompt_match.group(1)
-            
+
             # Extract ID
             id_match = re.search(r'\*\*ID:\*\*\s*(.+)', prompt_content)
             if id_match:
                 task['id'] = id_match.group(1).strip()
-            
+
             # Extract Title
             title_match = re.search(r'\*\*Title:\*\*\s*(.+)', prompt_content)
             if title_match:
                 task['title'] = title_match.group(1).strip()
-            
+
             # Extract Priority
             priority_match = re.search(r'\*\*Priority:\*\*\s*(P[123])', prompt_content)
             if priority_match:
                 task['priority'] = priority_match.group(1)
-            
+
             # Extract Depends
             depends_match = re.search(r'\*\*Depends:\*\*\s*(.+)', prompt_content)
             if depends_match:
@@ -5388,12 +5388,12 @@ def parse_legacy_task(content: str) -> Dict[str, Any]:
                     task['depends'] = []
                 else:
                     task['depends'] = [d.strip() for d in depends_str.split(',')]
-            
+
             # Extract Implementation Details
             impl_match = re.search(r'### Implementation Details\s*\n(.*?)(?=###|$)', prompt_content, re.DOTALL)
             if impl_match:
                 task['implementation_details'] = impl_match.group(1).strip()
-            
+
             # Extract Steps
             steps_match = re.search(r'### Steps to Complete\s*\n(.*?)(?=###|$)', prompt_content, re.DOTALL)
             if steps_match:
@@ -5407,7 +5407,7 @@ def parse_legacy_task(content: str) -> Dict[str, Any]:
                             'description': step_match.group(2).strip()
                         })
                 task['steps'] = steps
-            
+
             # Extract Deliverables
             deliverables_match = re.search(r'### Deliverables\s*\n(.*?)(?=###|$)', prompt_content, re.DOTALL)
             if deliverables_match:
@@ -5417,7 +5417,7 @@ def parse_legacy_task(content: str) -> Dict[str, Any]:
                     if line.strip().startswith('- '):
                         deliverables.append(line.strip()[2:])
                 task['deliverables'] = deliverables
-    
+
     return task
 ```
 
@@ -5445,7 +5445,7 @@ class ValidationResult:
     valid: bool
     errors: List[ValidationError]
     warnings: List[ValidationError]
-    
+
     def format_errors(self) -> str:
         """Format errors for display."""
         lines = []
@@ -5456,20 +5456,20 @@ class ValidationResult:
 
 class TaskValidator:
     """Task validator using JSON Schema."""
-    
+
     def __init__(self, schema_path: Optional[Path] = None):
         """Initialize validator with schema."""
         if schema_path is None:
             schema_path = Path(__file__).parent.parent.parent / 'schemas' / 'task-input.schema.json'
-        
+
         self.schema = json.loads(schema_path.read_text())
         self.validator = Draft202012Validator(self.schema)
-    
+
     def validate(self, task: Dict[str, Any]) -> ValidationResult:
         """Validate a task dictionary."""
         errors = []
         warnings = []
-        
+
         # Schema validation
         for error in self.validator.iter_errors(task):
             errors.append(ValidationError(
@@ -5478,21 +5478,21 @@ class TaskValidator:
                 code=error.validator,
                 path=list(error.path)
             ))
-        
+
         # Custom validation
         custom_errors = self._validate_custom(task)
         errors.extend(custom_errors)
-        
+
         return ValidationResult(
             valid=len(errors) == 0,
             errors=errors,
             warnings=warnings
         )
-    
+
     def validate_file(self, file_path: Path) -> ValidationResult:
         """Validate a task file."""
         from thegent.task.parser import parse_task_file
-        
+
         try:
             task = parse_task_file(file_path)
             return self.validate(task)
@@ -5507,11 +5507,11 @@ class TaskValidator:
                 )],
                 warnings=[]
             )
-    
+
     def _validate_custom(self, task: Dict[str, Any]) -> List[ValidationError]:
         """Custom validation rules."""
         errors = []
-        
+
         # Validate task ID format
         task_id = task.get('id', '')
         if task_id and not re.match(r'^[a-z0-9-]+$', task_id):
@@ -5521,10 +5521,10 @@ class TaskValidator:
                 code='invalid_format',
                 path=['id']
             ))
-        
+
         # Validate dependencies exist (if we have access to all tasks)
         # This would require additional context
-        
+
         return errors
 ```
 
@@ -5639,7 +5639,7 @@ class TaskSettings(BaseSettings):
         env_prefix="THGENT_TASK_",
         env_file=".env",
     )
-    
+
     task_dir: Path = Field(
         default_factory=lambda: Path("tasks"),
         description="Directory for task files"
@@ -5682,9 +5682,9 @@ def plan_do_next_impl(
 ) -> dict[str, Any]:
     """Get next work items with validation."""
     from thegent.task import parse_task_file, validate_task_file
-    
+
     items = do_next_impl(cd=cd, limit=limit)
-    
+
     if validate:
         validated_items = []
         for item in items["next_items"]:
@@ -5699,14 +5699,14 @@ def plan_do_next_impl(
             else:
                 # Legacy format - parse from WORK_STREAM.md
                 validated_items.append(item)
-        
+
         items["next_items"] = validated_items
         items["validation_results"] = {
             "total": len(items["next_items"]),
             "valid": len(validated_items),
             "invalid": len(items["next_items"]) - len(validated_items),
         }
-    
+
     return items
 ```
 
@@ -5719,10 +5719,10 @@ def plan_incorporate_impl(
 ) -> dict[str, Any]:
     """Incorporate tasks with validation."""
     from thegent.task import parse_task_file, validate_task_file, migrate_task_file
-    
+
     # Scan sources
     sources = scan_task_sources(cd)
-    
+
     # Parse and validate
     tasks = []
     errors = []
@@ -5733,7 +5733,7 @@ def plan_incorporate_impl(
                 task = migrate_task_file(source_path)
             else:
                 task = parse_task_file(source_path)
-            
+
             if validate:
                 result = validate_task_file(source_path)
                 if not result.valid:
@@ -5742,18 +5742,18 @@ def plan_incorporate_impl(
                         "errors": result.errors,
                     })
                     continue
-            
+
             tasks.append(task)
         except Exception as e:
             errors.append({
                 "source": str(source_path),
                 "error": str(e),
             })
-    
+
     # Merge into WORK_STREAM.md
     if not dry_run:
         merge_tasks_into_workstream(tasks, cd)
-    
+
     return {
         "tasks_found": len(tasks),
         "tasks_merged": len(tasks) if not dry_run else 0,
@@ -5786,21 +5786,21 @@ def execute_task_with_metadata(
 ) -> dict[str, Any]:
     """Execute a task with full metadata tracking."""
     from thegent.task import parse_task_file, validate_task_file
-    
+
     # Find and parse task
     task_file = find_task_file(task_id)
     if not task_file:
         raise ValueError(f"Task file not found: {task_id}")
-    
+
     task = parse_task_file(task_file)
     result = validate_task_file(task_file)
-    
+
     if not result.valid:
         raise ValueError(f"Task validation failed: {result.errors}")
-    
+
     # Build prompt from task
     prompt = build_agent_prompt(task)
-    
+
     # Execute with thegent
     run_result = thegent_run_impl(
         agent=agent,
@@ -5808,17 +5808,17 @@ def execute_task_with_metadata(
         model=model,
         **kwargs,
     )
-    
+
     # Link execution to task
     run_meta = RunMeta(
         **run_result,
         task_id=task_id,
         task_metadata=task.model_dump(),
     )
-    
+
     # Update WORK_STREAM.md
     update_task_status(task_id, status="completed")
-    
+
     return {
         "run_id": run_meta.run_id,
         "task_id": task_id,
@@ -5841,7 +5841,7 @@ def session_with_task(
     """Start a session for a specific task."""
     # Parse task
     task = parse_task_file(find_task_file(task_id))
-    
+
     # Create session with task context
     session_id = bg_impl(
         agent=agent,
@@ -5850,10 +5850,10 @@ def session_with_task(
         task_metadata=task.model_dump(),
         **kwargs,
     )
-    
+
     # Update WORK_STREAM.md - claim task
     claim_task(task_id, session_id=session_id, agent=agent)
-    
+
     return {
         "session_id": session_id,
         "task_id": task_id,
@@ -5977,19 +5977,19 @@ def migrate_task_cmd(
 ) -> None:
     """Migrate tasks from legacy to new format."""
     from thegent.task import migrate_task_file, migrate_directory
-    
+
     if all:
         # Migrate all tasks in WORK_STREAM.md
         tasks_dir = Path("tasks")
         if not tasks_dir.exists():
             tasks_dir.mkdir()
-        
+
         migrated = migrate_directory(
             source_dir=Path("docs/reference"),
             target_dir=tasks_dir,
             dry_run=dry_run,
         )
-        
+
         console.print(f"[green]Migrated {migrated['count']} tasks[/green]")
         if migrated["errors"]:
             console.print(f"[yellow]Warnings: {len(migrated['errors'])}[/yellow]")
@@ -5999,7 +5999,7 @@ def migrate_task_cmd(
         if not task_file:
             console.print(f"[red]Task not found: {task_id}[/red]")
             return
-        
+
         result = migrate_task_file(task_file, dry_run=dry_run)
         if result["success"]:
             console.print(f"[green]Migrated: {task_id}[/green]")
@@ -6018,7 +6018,7 @@ def migrate_task_cmd(
 def parse_task_auto(content: str, file_path: Path) -> dict[str, Any]:
     """Auto-detect format and parse."""
     format_type = detect_task_format(content)
-    
+
     if format_type == "yaml_frontmatter":
         return parse_yaml_frontmatter(content)
     elif format_type == "legacy":
@@ -6276,7 +6276,7 @@ def test_workstream_integration(tmp_path):
 |----|-------|--------|----------|---------|
 | test-task | Test Task | test.md | P1 | - |
 """)
-    
+
     # Create task file
     task_file = tmp_path / "tasks" / "test-task.md"
     task_file.parent.mkdir()
@@ -6286,7 +6286,7 @@ title: Test Task
 priority: P1
 ---
 """)
-    
+
     # Test do_next_impl
     items = do_next_impl(cd=tmp_path, limit=1)
     assert len(items["next_items"]) == 1
@@ -6301,19 +6301,19 @@ def test_full_task_lifecycle(tmp_path):
     """Test complete task lifecycle."""
     # 1. Create task
     task_file = create_task_file(tmp_path, "test-task")
-    
+
     # 2. Validate
     result = validate_task_file(task_file)
     assert result.valid
-    
+
     # 3. Incorporate into WORK_STREAM.md
     incorporate_result = plan_incorporate_impl(cd=tmp_path)
     assert incorporate_result["tasks_merged"] == 1
-    
+
     # 4. Get next
     items = do_next_impl(cd=tmp_path, limit=1)
     assert len(items["next_items"]) == 1
-    
+
     # 5. Execute (mock)
     task_id = items["next_items"][0]["id"]
     execution_result = execute_task_with_metadata(
@@ -6321,7 +6321,7 @@ def test_full_task_lifecycle(tmp_path):
         agent="worker",
     )
     assert execution_result["status"] == "completed"
-    
+
     # 6. Verify WORK_STREAM.md updated
     workstream = tmp_path / "docs" / "reference" / "WORK_STREAM.md"
     content = workstream.read_text()
@@ -6386,11 +6386,11 @@ class TaskError:
 
 class TaskParser:
     """Robust task parser with comprehensive error handling."""
-    
+
     def parse_with_recovery(self, content: str, file_path: Path) -> tuple[dict, list[TaskError]]:
         """Parse task with error recovery."""
         errors = []
-        
+
         # Try YAML frontmatter first
         try:
             frontmatter, body = parse_yaml_frontmatter(content)
@@ -6403,7 +6403,7 @@ class TaskParser:
                 recoverable=True,
                 suggestion="Trying legacy format parser",
             ))
-        
+
         # Fallback to legacy parser
         try:
             task = parse_legacy_task(content)
@@ -6423,12 +6423,12 @@ class TaskParser:
                 recoverable=False,
             ))
             raise TaskParseError(f"Failed to parse task: {file_path}", errors)
-    
+
     def validate_with_partial(self, task: dict) -> tuple[bool, list[TaskError]]:
         """Validate task, collecting all errors (not stopping at first)."""
         errors = []
         validator = TaskValidator()
-        
+
         # Collect all validation errors
         for error in validator.iter_errors(task):
             errors.append(TaskError(
@@ -6439,16 +6439,16 @@ class TaskParser:
                 recoverable=self._is_recoverable(error),
                 suggestion=self._suggest_fix(error),
             ))
-        
+
         # Classify errors
         critical_errors = [e for e in errors if e.severity == ErrorSeverity.CRITICAL]
         if critical_errors:
             return False, errors
-        
+
         # Allow partial validation (warnings only)
         warnings = [e for e in errors if e.severity == ErrorSeverity.LOW]
         return len(errors) == len(warnings), errors
-    
+
     def _classify_severity(self, error) -> ErrorSeverity:
         """Classify error severity."""
         if error.validator in ["required", "type"]:
@@ -6456,11 +6456,11 @@ class TaskParser:
         if error.validator in ["pattern", "format"]:
             return ErrorSeverity.MEDIUM
         return ErrorSeverity.LOW
-    
+
     def _is_recoverable(self, error) -> bool:
         """Determine if error is recoverable."""
         return error.validator not in ["required", "type"]
-    
+
     def _suggest_fix(self, error) -> Optional[str]:
         """Suggest fix for error."""
         suggestions = {
@@ -6481,20 +6481,20 @@ class TaskParser:
        """Parse task file with edge case handling."""
        if not file_path.exists():
            raise FileNotFoundError(f"Task file not found: {file_path}")
-       
+
        content = file_path.read_text(encoding="utf-8")
-       
+
        # Handle empty file
        if not content.strip():
            raise ValueError("Task file is empty")
-       
+
        # Handle BOM
        if content.startswith("\ufeff"):
            content = content[1:]
-       
+
        # Handle mixed line endings
        content = content.replace("\r\n", "\n").replace("\r", "\n")
-       
+
        return parse_with_recovery(content, file_path)
    ```
 
@@ -6504,10 +6504,10 @@ class TaskParser:
        """Validate dependencies, detecting cycles."""
        errors = []
        task_ids = {task["id"] for task in tasks}
-       
+
        # Build dependency graph
        graph = {task["id"]: set(task.get("depends", [])) for task in tasks}
-       
+
        # Check for missing dependencies
        for task_id, deps in graph.items():
            missing = deps - task_ids
@@ -6518,22 +6518,22 @@ class TaskParser:
                    severity=ErrorSeverity.HIGH,
                    field="depends",
                ))
-       
+
        # Detect cycles using DFS
        def has_cycle(node: str, visited: set, rec_stack: set) -> bool:
            visited.add(node)
            rec_stack.add(node)
-           
+
            for dep in graph.get(node, []):
                if dep not in visited:
                    if has_cycle(dep, visited, rec_stack):
                        return True
                elif dep in rec_stack:
                    return True
-           
+
            rec_stack.remove(node)
            return False
-       
+
        visited = set()
        for task_id in graph:
            if task_id not in visited:
@@ -6544,7 +6544,7 @@ class TaskParser:
                        severity=ErrorSeverity.CRITICAL,
                        field="depends",
                    ))
-       
+
        return errors
    ```
 
@@ -6552,14 +6552,14 @@ class TaskParser:
    ```python
    import fcntl
    from pathlib import Path
-   
+
    class TaskFileLock:
        """File locking for concurrent access."""
-       
+
        def __init__(self, file_path: Path):
            self.file_path = file_path
            self.lock_path = file_path.with_suffix(file_path.suffix + ".lock")
-       
+
        def __enter__(self):
            """Acquire lock."""
            self.lock_file = self.lock_path.open("w")
@@ -6568,7 +6568,7 @@ class TaskParser:
            except BlockingIOError:
                raise TaskLockError(f"Task file locked: {self.file_path}")
            return self
-       
+
        def __exit__(self, exc_type, exc_val, exc_tb):
            """Release lock."""
            if self.lock_file:
@@ -6582,17 +6582,17 @@ class TaskParser:
    def parse_large_task_file(file_path: Path, max_size_mb: int = 10) -> dict:
        """Parse task file with size limits."""
        size_mb = file_path.stat().st_size / (1024 * 1024)
-       
+
        if size_mb > max_size_mb:
            raise ValueError(
                f"Task file too large: {size_mb:.1f}MB (max: {max_size_mb}MB). "
                "Consider splitting into multiple tasks."
            )
-       
+
        # Stream parsing for very large files
        if size_mb > 5:
            return parse_streaming(file_path)
-       
+
        return parse_task_file(file_path)
    ```
 
@@ -6616,7 +6616,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 
 class RobustTaskManager:
     """Task manager with comprehensive failure recovery."""
-    
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
@@ -6625,7 +6625,7 @@ class RobustTaskManager:
     def load_task_with_retry(self, task_id: str) -> dict:
         """Load task with retry on I/O errors."""
         task_file = find_task_file(task_id)
-        
+
         try:
             return parse_task_file_robust(task_file)
         except FileNotFoundError:
@@ -6637,15 +6637,15 @@ class RobustTaskManager:
         except Exception as e:
             # Log error and attempt recovery
             _log.error(f"Failed to load task {task_id}: {e}")
-            
+
             # Try cache if available
             cached = self._load_from_cache(task_id)
             if cached:
                 _log.warning(f"Using cached version of {task_id}")
                 return cached
-            
+
             raise
-    
+
     def _find_alternative_paths(self, task_id: str) -> list[Path]:
         """Find alternative file paths for a task."""
         base_paths = [
@@ -6653,9 +6653,9 @@ class RobustTaskManager:
             Path("docs/tasks"),
             Path("docs/reference/tasks"),
         ]
-        
+
         return [base / f"{task_id}.md" for base in base_paths]
-    
+
     def _load_from_cache(self, task_id: str) -> Optional[dict]:
         """Load task from cache if available."""
         cache_path = Path(f".cache/tasks/{task_id}.json")
@@ -6679,32 +6679,32 @@ class RobustTaskManager:
    ```python
    class LazyTask:
        """Lazy-loading task wrapper."""
-       
+
        def __init__(self, file_path: Path):
            self.file_path = file_path
            self._frontmatter = None
            self._body = None
            self._parsed = False
-       
+
        @property
        def frontmatter(self) -> dict:
            """Lazy-load frontmatter."""
            if self._frontmatter is None:
                self._load()
            return self._frontmatter
-       
+
        @property
        def body(self) -> str:
            """Lazy-load body."""
            if self._body is None:
                self._load()
            return self._body
-       
+
        def _load(self):
            """Load task file once."""
            if self._parsed:
                return
-           
+
            content = self.file_path.read_text(encoding="utf-8")
            self._frontmatter, self._body = parse_yaml_frontmatter(content)
            self._parsed = True
@@ -6715,40 +6715,40 @@ class RobustTaskManager:
    from functools import lru_cache
    from pathlib import Path
    import hashlib
-   
+
    class TaskCache:
        """LRU cache for parsed tasks."""
-       
+
        def __init__(self, max_size: int = 1000):
            self._cache: dict[str, tuple[dict, float]] = {}
            self.max_size = max_size
-       
+
        def get(self, file_path: Path) -> Optional[dict]:
            """Get cached task."""
            cache_key = self._cache_key(file_path)
-           
+
            if cache_key in self._cache:
                task, mtime = self._cache[cache_key]
-               
+
                # Check if file modified
                if file_path.stat().st_mtime == mtime:
                    return task
                else:
                    # File changed, remove from cache
                    del self._cache[cache_key]
-           
+
            return None
-       
+
        def set(self, file_path: Path, task: dict):
            """Cache task."""
            if len(self._cache) >= self.max_size:
                # Remove oldest entry (simple FIFO)
                oldest_key = next(iter(self._cache))
                del self._cache[oldest_key]
-           
+
            cache_key = self._cache_key(file_path)
            self._cache[cache_key] = (task, file_path.stat().st_mtime)
-       
+
        def _cache_key(self, file_path: Path) -> str:
            """Generate cache key."""
            return hashlib.sha256(str(file_path.resolve()).encode()).hexdigest()
@@ -6758,7 +6758,7 @@ class RobustTaskManager:
    ```python
    from concurrent.futures import ThreadPoolExecutor, as_completed
    from typing import Iterator
-   
+
    def parse_tasks_parallel(
        task_files: list[Path],
        workers: int = 4,
@@ -6766,14 +6766,14 @@ class RobustTaskManager:
    ) -> Iterator[tuple[Path, dict, Optional[Exception]]]:
        """Parse multiple tasks in parallel."""
        cache = TaskCache() if use_cache else None
-       
+
        with ThreadPoolExecutor(max_workers=workers) as executor:
            # Submit all tasks
            futures = {
                executor.submit(parse_task_file_cached, f, cache): f
                for f in task_files
            }
-           
+
            # Yield results as they complete
            for future in as_completed(futures):
                file_path = futures[future]
@@ -6782,19 +6782,19 @@ class RobustTaskManager:
                    yield (file_path, task, None)
                except Exception as e:
                    yield (file_path, {}, e)
-   
+
    def parse_task_file_cached(file_path: Path, cache: Optional[TaskCache]) -> dict:
        """Parse task file with caching."""
        if cache:
            cached = cache.get(file_path)
            if cached:
                return cached
-       
+
        task = parse_task_file(file_path)
-       
+
        if cache:
            cache.set(file_path, task)
-       
+
        return task
    ```
 
@@ -6806,17 +6806,17 @@ class RobustTaskManager:
    ```python
    from jsonschema import Draft202012Validator
    import json
-   
+
    _schema_cache: dict[str, Draft202012Validator] = {}
-   
+
    def get_validator(schema_path: Path) -> Draft202012Validator:
        """Get cached validator."""
        cache_key = str(schema_path.resolve())
-       
+
        if cache_key not in _schema_cache:
            schema = json.loads(schema_path.read_text())
            _schema_cache[cache_key] = Draft202012Validator(schema)
-       
+
        return _schema_cache[cache_key]
    ```
 
@@ -6830,7 +6830,7 @@ class RobustTaskManager:
        """Fast validation with early exit option."""
        validator = Draft202012Validator(schema)
        errors = []
-       
+
        for error in validator.iter_errors(task):
            errors.append(TaskError(
                code=error.validator,
@@ -6838,10 +6838,10 @@ class RobustTaskManager:
                severity=ErrorSeverity.MEDIUM,
                field=".".join(str(p) for p in error.path),
            ))
-           
+
            if stop_on_first_error:
                break
-       
+
        return errors
    ```
 
@@ -6855,13 +6855,13 @@ class RobustTaskManager:
        """Validate only specified fields."""
        if fields_to_validate is None:
            fields_to_validate = list(task.keys())
-       
+
        validator = Draft202012Validator(schema)
        errors = []
-       
+
        for error in validator.iter_errors(task):
            error_field = ".".join(str(p) for p in error.path)
-           
+
            # Only validate requested fields
            if any(field in error_field for field in fields_to_validate):
                errors.append(TaskError(
@@ -6870,7 +6870,7 @@ class RobustTaskManager:
                    severity=ErrorSeverity.MEDIUM,
                    field=error_field,
                ))
-       
+
        return errors
    ```
 
@@ -6882,34 +6882,34 @@ class RobustTaskManager:
    ```python
    from collections import defaultdict
    from typing import Set
-   
+
    class TaskIndex:
        """In-memory index for fast task queries."""
-       
+
        def __init__(self):
            self.by_id: dict[str, dict] = {}
            self.by_priority: defaultdict[str, Set[str]] = defaultdict(set)
            self.by_tag: defaultdict[str, Set[str]] = defaultdict(set)
            self.by_subagent: defaultdict[str, Set[str]] = defaultdict(set)
            self.by_status: defaultdict[str, Set[str]] = defaultdict(set)
-       
+
        def add(self, task: dict):
            """Add task to index."""
            task_id = task["id"]
            self.by_id[task_id] = task
-           
+
            # Index by priority
            priority = task.get("priority", "P2")
            self.by_priority[priority].add(task_id)
-           
+
            # Index by tags
            for tag in task.get("metadata", {}).get("tags", []):
                self.by_tag[tag].add(task_id)
-           
+
            # Index by subagent type
            subagent = task.get("subagent_type", "worker")
            self.by_subagent[subagent].add(task_id)
-       
+
        def query(
            self,
            priority: Optional[str] = None,
@@ -6918,32 +6918,32 @@ class RobustTaskManager:
        ) -> list[dict]:
            """Query tasks using index."""
            result_ids: Optional[Set[str]] = None
-           
+
            if priority:
                if result_ids is None:
                    result_ids = self.by_priority[priority].copy()
                else:
                    result_ids &= self.by_priority[priority]
-           
+
            if tags:
                tag_ids = set()
                for tag in tags:
                    tag_ids |= self.by_tag[tag]
-               
+
                if result_ids is None:
                    result_ids = tag_ids
                else:
                    result_ids &= tag_ids
-           
+
            if subagent_type:
                if result_ids is None:
                    result_ids = self.by_subagent[subagent_type].copy()
                else:
                    result_ids &= self.by_subagent[subagent_type]
-           
+
            if result_ids is None:
                result_ids = set(self.by_id.keys())
-           
+
            return [self.by_id[task_id] for task_id in result_ids]
    ```
 
@@ -6956,21 +6956,21 @@ class RobustTaskManager:
    ) -> list[tuple[dict, list[TaskError]]]:
        """Validate tasks in batches."""
        results = []
-       
+
        for i in range(0, len(tasks), batch_size):
            batch = tasks[i:i + batch_size]
-           
+
            # Validate batch in parallel
            with ThreadPoolExecutor(max_workers=4) as executor:
                futures = [
                    executor.submit(validate_task, task, schema)
                    for task in batch
                ]
-               
+
                for task, future in zip(batch, futures):
                    errors = future.result()
                    results.append((task, errors))
-       
+
        return results
    ```
 
@@ -6985,7 +6985,7 @@ class RobustTaskManager:
        frontmatter_lines = []
        in_frontmatter = False
        frontmatter_done = False
-       
+
        with file_path.open("r", encoding="utf-8") as f:
            for line in f:
                if line.strip() == "---":
@@ -6994,25 +6994,25 @@ class RobustTaskManager:
                    else:
                        frontmatter_done = True
                        break
-               
+
                if in_frontmatter and not frontmatter_done:
                    frontmatter_lines.append(line)
-       
+
        # Parse frontmatter
        frontmatter_content = "".join(frontmatter_lines)
        frontmatter = yaml.safe_load(frontmatter_content)
-       
+
        # Read body in chunks if needed
        body_start = f.tell()
        body = file_path.read_text(encoding="utf-8")[body_start:]
-       
+
        return {**frontmatter, "body": body}
    ```
 
 2. **Memory-Mapped Files**
    ```python
    import mmap
-   
+
    def parse_task_mmap(file_path: Path) -> dict:
        """Parse task file using memory mapping."""
        with file_path.open("rb") as f:
@@ -7020,18 +7020,18 @@ class RobustTaskManager:
                # Find frontmatter boundaries
                start = mm.find(b"---")
                end = mm.find(b"---", start + 3)
-               
+
                if start == -1 or end == -1:
                    raise ValueError("Invalid frontmatter")
-               
+
                # Parse frontmatter
                frontmatter_bytes = mm[start + 3:end]
                frontmatter = yaml.safe_load(frontmatter_bytes.decode("utf-8"))
-               
+
                # Body starts after second ---
                body_start = end + 3
                body = mm[body_start:].decode("utf-8")
-               
+
                return {**frontmatter, "body": body}
    ```
 
@@ -7047,7 +7047,7 @@ class RobustTaskManager:
    ```python
    import yaml
    import re
-   
+
    def safe_yaml_load(content: str) -> dict:
        """Safely load YAML with injection prevention."""
        # Remove dangerous YAML tags
@@ -7057,10 +7057,10 @@ class RobustTaskManager:
            r'!!js/',
            r'!!ruby/',
        ]
-       
+
        for pattern in dangerous_tags:
            content = re.sub(pattern, '', content, flags=re.IGNORECASE)
-       
+
        # Use safe_load
        try:
            return yaml.safe_load(content)
@@ -7075,13 +7075,13 @@ class RobustTaskManager:
        # Resolve path
        resolved = (base_dir / path).resolve()
        base_resolved = base_dir.resolve()
-       
+
        # Check if resolved path is within base directory
        try:
            resolved.relative_to(base_resolved)
        except ValueError:
            raise ValueError(f"Path traversal detected: {path}")
-       
+
        return resolved
    ```
 
@@ -7089,7 +7089,7 @@ class RobustTaskManager:
    ```python
    import html
    import re
-   
+
    def sanitize_markdown(content: str) -> str:
        """Sanitize markdown content."""
        # Remove script tags
@@ -7099,7 +7099,7 @@ class RobustTaskManager:
            content,
            flags=re.DOTALL | re.IGNORECASE,
        )
-       
+
        # Remove iframe tags
        content = re.sub(
            r'<iframe[^>]*>.*?</iframe>',
@@ -7107,13 +7107,13 @@ class RobustTaskManager:
            content,
            flags=re.DOTALL | re.IGNORECASE,
        )
-       
+
        # Remove javascript: URLs
        content = re.sub(r'javascript:', '', content, flags=re.IGNORECASE)
-       
+
        # Escape HTML entities
        content = html.escape(content)
-       
+
        return content
    ```
 
@@ -7134,11 +7134,11 @@ class TaskVisibility(str, Enum):
 
 class TaskAccessControl:
     """Access control for tasks."""
-    
+
     def __init__(self):
         self.allowed_agents: dict[str, Set[str]] = {}
         self.permissions: dict[str, dict] = {}
-    
+
     def can_agent_access_task(
         self,
         task: dict,
@@ -7147,23 +7147,23 @@ class TaskAccessControl:
     ) -> bool:
         """Check if agent can access task."""
         visibility = task.get("visibility", TaskVisibility.PUBLIC)
-        
+
         if visibility == TaskVisibility.PUBLIC:
             return True
-        
+
         if visibility == TaskVisibility.PRIVATE:
             assignee = task.get("metadata", {}).get("assignee")
             return assignee == agent_id
-        
+
         if visibility == TaskVisibility.RESTRICTED:
             allowed = task.get("allowed_agents", [])
             return agent_id in allowed or "admin" in agent_roles
-        
+
         if visibility == TaskVisibility.INTERNAL:
             return "internal" in agent_roles
-        
+
         return False
-    
+
     def can_agent_modify_task(
         self,
         task: dict,
@@ -7173,13 +7173,13 @@ class TaskAccessControl:
         """Check if agent can modify task."""
         # Only assignee or admin can modify
         assignee = task.get("metadata", {}).get("assignee")
-        
+
         if assignee == agent_id:
             return True
-        
+
         if "admin" in agent_roles:
             return True
-        
+
         return False
 ```
 
@@ -7194,11 +7194,11 @@ import json
 
 class TaskAuditLogger:
     """Audit logging for task operations."""
-    
+
     def __init__(self, log_dir: Path):
         self.log_dir = log_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
-    
+
     def log_operation(
         self,
         operation: str,
@@ -7214,12 +7214,12 @@ class TaskAuditLogger:
             "agent_id": agent_id,
             "details": details,
         }
-        
+
         log_file = self.log_dir / f"audit_{datetime.now(UTC).date()}.jsonl"
-        
+
         with log_file.open("a", encoding="utf-8") as f:
             f.write(json.dumps(log_entry) + "\n")
-    
+
     def log_create(self, task_id: str, agent_id: str, task: dict):
         """Log task creation."""
         self.log_operation(
@@ -7228,7 +7228,7 @@ class TaskAuditLogger:
             agent_id=agent_id,
             details={"task": task},
         )
-    
+
     def log_modify(self, task_id: str, agent_id: str, changes: dict):
         """Log task modification."""
         self.log_operation(
@@ -7237,7 +7237,7 @@ class TaskAuditLogger:
             agent_id=agent_id,
             details={"changes": changes},
         )
-    
+
     def log_delete(self, task_id: str, agent_id: str):
         """Log task deletion."""
         self.log_operation(
@@ -7272,19 +7272,19 @@ class TaskMetrics:
     validate_time_total: float = 0.0
     query_count: int = 0
     query_time_total: float = 0.0
-    
+
     def parse_time_avg(self) -> float:
         """Average parse time."""
         return self.parse_time_total / max(self.parse_count, 1)
-    
+
     def validate_time_avg(self) -> float:
         """Average validate time."""
         return self.validate_time_total / max(self.validate_count, 1)
-    
+
     def query_time_avg(self) -> float:
         """Average query time."""
         return self.query_time_total / max(self.query_count, 1)
-    
+
     def error_rate(self) -> float:
         """Error rate."""
         total = self.parse_count + self.validate_count
@@ -7293,34 +7293,34 @@ class TaskMetrics:
 
 class TaskMetricsCollector:
     """Collect task operation metrics."""
-    
+
     def __init__(self):
         self.metrics = TaskMetrics()
         self.error_types: Counter[str] = Counter()
-    
+
     def record_parse(self, duration: float, error: Optional[Exception] = None):
         """Record parse operation."""
         self.metrics.parse_count += 1
         self.metrics.parse_time_total += duration
-        
+
         if error:
             self.metrics.parse_errors += 1
             self.error_types[type(error).__name__] += 1
-    
+
     def record_validate(self, duration: float, error: Optional[Exception] = None):
         """Record validate operation."""
         self.metrics.validate_count += 1
         self.metrics.validate_time_total += duration
-        
+
         if error:
             self.metrics.validate_errors += 1
             self.error_types[type(error).__name__] += 1
-    
+
     def record_query(self, duration: float):
         """Record query operation."""
         self.metrics.query_count += 1
         self.metrics.query_time_total += duration
-    
+
     def get_report(self) -> dict:
         """Get metrics report."""
         return {
@@ -7352,11 +7352,11 @@ class TaskMetricsCollector:
 ```python
 class TaskSystemHealth:
     """Health check for task system."""
-    
+
     def __init__(self, task_dir: Path, schema_path: Path):
         self.task_dir = task_dir
         self.schema_path = schema_path
-    
+
     def check_health(self) -> dict:
         """Perform health check."""
         checks = {
@@ -7365,15 +7365,15 @@ class TaskSystemHealth:
             "sample_parsing": self._check_sample_parsing(),
             "sample_validation": self._check_sample_validation(),
         }
-        
+
         all_healthy = all(c["healthy"] for c in checks.values())
-        
+
         return {
             "healthy": all_healthy,
             "checks": checks,
             "timestamp": datetime.now(UTC).isoformat(),
         }
-    
+
     def _check_task_directory(self) -> dict:
         """Check task directory."""
         if not self.task_dir.exists():
@@ -7381,13 +7381,13 @@ class TaskSystemHealth:
                 "healthy": False,
                 "message": f"Task directory not found: {self.task_dir}",
             }
-        
+
         if not self.task_dir.is_dir():
             return {
                 "healthy": False,
                 "message": f"Task directory is not a directory: {self.task_dir}",
             }
-        
+
         # Check writability
         test_file = self.task_dir / ".health_check"
         try:
@@ -7396,13 +7396,13 @@ class TaskSystemHealth:
             writable = True
         except Exception:
             writable = False
-        
+
         return {
             "healthy": True,
             "writable": writable,
             "task_count": len(list(self.task_dir.glob("*.md"))),
         }
-    
+
     def _check_schema_file(self) -> dict:
         """Check schema file."""
         if not self.schema_path.exists():
@@ -7410,7 +7410,7 @@ class TaskSystemHealth:
                 "healthy": False,
                 "message": f"Schema file not found: {self.schema_path}",
             }
-        
+
         try:
             schema = json.loads(self.schema_path.read_text())
             return {
@@ -7422,40 +7422,40 @@ class TaskSystemHealth:
                 "healthy": False,
                 "message": f"Invalid schema file: {e}",
             }
-    
+
     def _check_sample_parsing(self) -> dict:
         """Check sample parsing."""
         sample_tasks = list(self.task_dir.glob("*.md"))[:5]
-        
+
         if not sample_tasks:
             return {
                 "healthy": True,
                 "message": "No tasks to test",
             }
-        
+
         errors = []
         for task_file in sample_tasks:
             try:
                 parse_task_file(task_file)
             except Exception as e:
                 errors.append(f"{task_file.name}: {e}")
-        
+
         return {
             "healthy": len(errors) == 0,
             "tested": len(sample_tasks),
             "errors": errors,
         }
-    
+
     def _check_sample_validation(self) -> dict:
         """Check sample validation."""
         sample_tasks = list(self.task_dir.glob("*.md"))[:5]
-        
+
         if not sample_tasks:
             return {
                 "healthy": True,
                 "message": "No tasks to test",
             }
-        
+
         errors = []
         for task_file in sample_tasks:
             try:
@@ -7465,7 +7465,7 @@ class TaskSystemHealth:
                     errors.append(f"{task_file.name}: {result.errors}")
             except Exception as e:
                 errors.append(f"{task_file.name}: {e}")
-        
+
         return {
             "healthy": len(errors) == 0,
             "tested": len(sample_tasks),
@@ -7511,7 +7511,7 @@ class TaskSystemHealth:
 def generate_vscode_snippets(schema: dict) -> dict:
     """Generate VS Code snippets from schema."""
     snippets = {}
-    
+
     # Generate snippet for task creation
     snippet = {
         "prefix": "task",
@@ -7529,7 +7529,7 @@ def generate_vscode_snippets(schema: dict) -> dict:
         ],
         "description": "Create a new task",
     }
-    
+
     snippets["task"] = snippet
     return snippets
 ```
@@ -7561,7 +7561,7 @@ def task_create(
             type=typer.Choice(["P1", "P2", "P3"]),
             default="P2",
         )
-    
+
     # Create task file
     task = {
         "id": id,
@@ -7570,11 +7570,11 @@ def task_create(
         "priority": priority,
         "depends": [],
     }
-    
+
     task_file = create_task_file(task)
-    
+
     typer.echo(f"Created task: {task_file}")
-    
+
     # Open in editor
     if typer.confirm("Open in editor?"):
         typer.launch(str(task_file))
@@ -7646,7 +7646,7 @@ class CircuitState(str, Enum):
 
 class CircuitBreaker:
     """Circuit breaker for task operations."""
-    
+
     def __init__(
         self,
         failure_threshold: int = 5,
@@ -7656,12 +7656,12 @@ class CircuitBreaker:
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.success_threshold = success_threshold
-        
+
         self.state = CircuitState.CLOSED
         self.failure_count = 0
         self.success_count = 0
         self.last_failure_time: Optional[datetime] = None
-    
+
     def call(self, func, *args, **kwargs):
         """Call function with circuit breaker protection."""
         if self.state == CircuitState.OPEN:
@@ -7670,7 +7670,7 @@ class CircuitBreaker:
                 self.success_count = 0
             else:
                 raise CircuitBreakerOpenError("Circuit breaker is OPEN")
-        
+
         try:
             result = func(*args, **kwargs)
             self._on_success()
@@ -7678,7 +7678,7 @@ class CircuitBreaker:
         except Exception as e:
             self._on_failure()
             raise
-    
+
     def _on_success(self):
         """Handle successful call."""
         if self.state == CircuitState.HALF_OPEN:
@@ -7688,20 +7688,20 @@ class CircuitBreaker:
                 self.failure_count = 0
         else:
             self.failure_count = 0
-    
+
     def _on_failure(self):
         """Handle failed call."""
         self.failure_count += 1
         self.last_failure_time = datetime.now(UTC)
-        
+
         if self.failure_count >= self.failure_threshold:
             self.state = CircuitState.OPEN
-    
+
     def _should_attempt_reset(self) -> bool:
         """Check if should attempt reset."""
         if self.last_failure_time is None:
             return True
-        
+
         return datetime.now(UTC) - self.last_failure_time >= self.timeout
 ```
 
@@ -7746,19 +7746,19 @@ def validate_task_with_retry(task: dict) -> ValidationResult:
 ```python
 class TaskManagerWithFallback:
     """Task manager with graceful degradation."""
-    
+
     def __init__(self):
         self.primary_parser = YAMLFrontmatterParser()
         self.fallback_parser = LegacyParser()
         self.cache = TaskCache()
-    
+
     def get_task(self, task_id: str) -> dict:
         """Get task with fallback strategies."""
         # Try cache first
         cached = self.cache.get(task_id)
         if cached:
             return cached
-        
+
         # Try primary parser
         try:
             task_file = find_task_file(task_id)
@@ -7767,7 +7767,7 @@ class TaskManagerWithFallback:
             return task
         except Exception as e:
             _log.warning(f"Primary parser failed for {task_id}: {e}")
-        
+
         # Try fallback parser
         try:
             task = self.fallback_parser.parse(task_file)
@@ -7775,7 +7775,7 @@ class TaskManagerWithFallback:
             return task
         except Exception as e:
             _log.error(f"Fallback parser failed for {task_id}: {e}")
-        
+
         # Last resort: return minimal task
         _log.warning(f"Returning minimal task for {task_id}")
         return {
@@ -7807,20 +7807,20 @@ console = Console()
 def display_task_table(tasks: list[dict]):
     """Display tasks in a rich table."""
     table = Table(title="Tasks")
-    
+
     table.add_column("ID", style="cyan")
     table.add_column("Title", style="magenta")
     table.add_column("Priority", style="yellow")
     table.add_column("Status", style="green")
     table.add_column("Subagent", style="blue")
-    
+
     for task in tasks:
         priority_style = {
             "P1": "bold red",
             "P2": "yellow",
             "P3": "dim",
         }.get(task.get("priority", "P2"), "white")
-        
+
         table.add_row(
             task["id"],
             task["title"],
@@ -7828,7 +7828,7 @@ def display_task_table(tasks: list[dict]):
             task.get("status", "pending"),
             task.get("subagent_type", "worker"),
         )
-    
+
     console.print(table)
 
 def display_task_details(task: dict):
@@ -7840,7 +7840,7 @@ def display_task_details(task: dict):
 [bold]Subagent:[/bold] {task.get('subagent_type', 'worker')}
 [bold]Dependencies:[/bold] {', '.join(task.get('depends', [])) or 'None'}
 """
-    
+
     panel = Panel(content, title=f"Task: {task['id']}", border_style="blue")
     console.print(panel)
 
@@ -7850,17 +7850,17 @@ def display_validation_results(result: ValidationResult):
         console.print("[green]✓ Task is valid[/green]")
     else:
         console.print("[red]✗ Task validation failed[/red]")
-        
+
         error_table = Table(title="Validation Errors")
         error_table.add_column("Field", style="cyan")
         error_table.add_column("Error", style="red")
-        
+
         for error in result.errors:
             error_table.add_row(
                 error.field or "root",
                 error.message,
             )
-        
+
         console.print(error_table)
 ```
 
@@ -7877,7 +7877,7 @@ def migrate_tasks_with_progress(task_files: list[Path]):
         console=console,
     ) as progress:
         task = progress.add_task("Migrating tasks...", total=len(task_files))
-        
+
         for task_file in task_files:
             try:
                 migrate_task_file(task_file)
@@ -7898,22 +7898,22 @@ from rich.syntax import Syntax
 def create_task_interactive():
     """Create task interactively."""
     console.print("[bold blue]Create New Task[/bold blue]")
-    
+
     task_id = Prompt.ask("Task ID", default="")
     title = Prompt.ask("Title", default="")
-    
+
     subagent_type = Prompt.ask(
         "Subagent Type",
         choices=["worker", "flash", "researcher", "reviewer"],
         default="worker",
     )
-    
+
     priority = Prompt.ask(
         "Priority",
         choices=["P1", "P2", "P3"],
         default="P2",
     )
-    
+
     # Show preview
     task_yaml = f"""---
 id: {task_id}
@@ -7923,10 +7923,10 @@ priority: {priority}
 depends: []
 ---
 """
-    
+
     syntax = Syntax(task_yaml, "yaml", theme="monokai")
     console.print(syntax)
-    
+
     if Confirm.ask("Create this task?"):
         create_task_file({
             "id": task_id,

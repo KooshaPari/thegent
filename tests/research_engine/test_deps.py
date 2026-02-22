@@ -3,11 +3,15 @@
 import importlib
 import pytest
 
-@pytest.mark.parametrize("mod", [
-    "apscheduler",
-    "feedparser",
-    "arxiv",
-    "scholarly",
-])
+
+@pytest.mark.parametrize(
+    "mod",
+    [
+        "apscheduler",
+        "feedparser",
+        "arxiv",
+        "scholarly",
+    ],
+)
 def test_dep_importable(mod: str) -> None:
     importlib.import_module(mod)

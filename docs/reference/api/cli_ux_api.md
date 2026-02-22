@@ -134,4 +134,3 @@ Suggest similar commands for a typo.
 **Returns**: List of suggested commands, sorted by similarity
 
 ---
-

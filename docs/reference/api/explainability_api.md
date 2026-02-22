@@ -96,4 +96,3 @@ render_all(self: Any, decision_id: str)
 Render a progressive disclosure view of the explanation.
 
 ---
-

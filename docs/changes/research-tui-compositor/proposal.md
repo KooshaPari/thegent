@@ -1,9 +1,9 @@
 # TUI Compositor Implementation Proposal
 
-**Date**: 2026-02-18  
-**Source**: [CONVERSATION_DUMP_2026-02-16_EXPANDED.md](../../research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md) § 2  
-**Status**: Proposed  
-**Priority**: P1  
+**Date**: 2026-02-18
+**Source**: [CONVERSATION_DUMP_2026-02-16_EXPANDED.md](../../research/CONVERSATION_DUMP_2026-02-16_EXPANDED.md) § 2
+**Status**: Proposed
+**Priority**: P1
 
 ---
 
@@ -142,27 +142,27 @@ Implement a **TUI Compositor** (terminal user interface compositor and multiplex
 ## Design Decisions
 
 ### D1: Framework Choice
-**Decision**: Use **Textual** for TUI framework  
-**Rationale**: Python stack alignment, CSS styling, rich widgets, active community  
-**Alternatives Rejected**: Ratatui (requires Rust), Bubble Tea (Go-only)  
+**Decision**: Use **Textual** for TUI framework
+**Rationale**: Python stack alignment, CSS styling, rich widgets, active community
+**Alternatives Rejected**: Ratatui (requires Rust), Bubble Tea (Go-only)
 **Tradeoff**: Textual may be slightly slower than Rust alternatives, but alignment with thegent stack outweighs performance cost
 
 ### D2: Terminal Pane Implementation
-**Decision**: Use **Textual TerminalWidget** for embedded terminals  
-**Rationale**: Native Textual support, PTY integration, no external process needed  
-**Alternatives Rejected**: Zellij as compositor (more complex), tmux subprocess (harder to integrate)  
+**Decision**: Use **Textual TerminalWidget** for embedded terminals
+**Rationale**: Native Textual support, PTY integration, no external process needed
+**Alternatives Rejected**: Zellij as compositor (more complex), tmux subprocess (harder to integrate)
 **Tradeoff**: Embedded approach requires more development, but offers better integration
 
 ### D3: Layout Persistence
-**Decision**: Save layouts to **YAML files** in `~/.config/thegent/layouts/`  
-**Rationale**: Human-readable, version-control friendly, easy to template  
-**Alternatives Rejected**: JSON (more verbose), binary (not human-readable)  
+**Decision**: Save layouts to **YAML files** in `~/.config/thegent/layouts/`
+**Rationale**: Human-readable, version-control friendly, easy to template
+**Alternatives Rejected**: JSON (more verbose), binary (not human-readable)
 **Tradeoff**: YAML is slightly slower to parse, but benefits outweigh
 
 ### D4: Session Model
-**Decision**: Use **hierarchical session tree** (workspace → pane group → pane)  
-**Rationale**: Matches tmux/Zellij concepts, supports complex layouts  
-**Alternatives Rejected**: Flat session list (less flexible)  
+**Decision**: Use **hierarchical session tree** (workspace → pane group → pane)
+**Rationale**: Matches tmux/Zellij concepts, supports complex layouts
+**Alternatives Rejected**: Flat session list (less flexible)
 **Tradeoff**: More complex state management, but more powerful
 
 ---

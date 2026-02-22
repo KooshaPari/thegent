@@ -84,4 +84,3 @@ verify_alignment_drift(self: Any, self_improvement_rate: float)
 Monitor for dangerous recursive improvement speed.
 
 ---
-

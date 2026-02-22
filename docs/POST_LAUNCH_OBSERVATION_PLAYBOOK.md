@@ -1,7 +1,7 @@
 # Post-Launch Observation Playbook
 
-**Scope:** thegent orchestration platform  
-**Date:** 2026-02-14  
+**Scope:** thegent orchestration platform
+**Date:** 2026-02-14
 **Related:** WP-6007, `docs/RUNBOOK.md` §4, `docs/enterprise/OPERATING_MODEL.md`
 
 ---

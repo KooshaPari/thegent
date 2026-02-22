@@ -1,7 +1,7 @@
 # Agent Hierarchy Implementation - Phase 1 Complete
 
-> **WORK_STREAM ID:** research-agent-hierarchy-implementation  
-> **Status:** ✅ Phase 1 Complete  
+> **WORK_STREAM ID:** research-agent-hierarchy-implementation
+> **Status:** ✅ Phase 1 Complete
 > **Date:** 2026-02-19
 
 ## Summary

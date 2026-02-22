@@ -13,7 +13,6 @@ Performance improvements:
 """
 
 import asyncio
-from asyncio import subprocess
 import os
 import subprocess
 import sys

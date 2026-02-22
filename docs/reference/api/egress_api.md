@@ -65,4 +65,3 @@ push_event(self: Any, event: EgressEvent)
 Push an event to the external SIEM endpoint via HTTP POST.
 
 ---
-

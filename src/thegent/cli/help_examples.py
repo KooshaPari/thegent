@@ -93,6 +93,8 @@ def show_help_examples(command: str) -> None:
         matches = [k for k in COMMAND_EXAMPLES if key in k or k in key]
         if matches:
             key = matches[0]
+            if key != command.lower().strip():
+                console.print(f"[dim]Using fuzzy help examples for '{key}'.[/dim]")
             examples = COMMAND_EXAMPLES[key]
         else:
             available = ", ".join(sorted(COMMAND_EXAMPLES))

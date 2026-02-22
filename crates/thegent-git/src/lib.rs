@@ -153,15 +153,15 @@ pub fn get_status(py: Python<'_>, path: Option<String>) -> PyResult<PyObject> {
 pub fn add_files(path: Option<String>, files: Option<Vec<String>>) -> PyResult<bool> {
     let p = path.unwrap_or_else(|| ".".to_string());
     let files = files.unwrap_or_default();
-    
+
     if files.is_empty() {
         return Ok(true);
     }
-    
+
     let mut cmd = Command::new("git");
     cmd.arg("-C").arg(&p).arg("add").arg("--");
     cmd.args(&files);
-    
+
     match cmd.output() {
         Ok(output) => Ok(output.status.success()),
         Err(_) => Ok(false),
@@ -170,17 +170,17 @@ pub fn add_files(path: Option<String>, files: Option<Vec<String>>) -> PyResult<b
 
 /// Get ref hash (git rev-parse equivalent)
 #[pyfunction]
-#[pyo3(signature = (path=None, ref_))]
-pub fn rev_parse(path: Option<String>, ref_: String) -> PyResult<Option<String>> {
+#[pyo3(signature = (ref_, path=None))]
+pub fn rev_parse(ref_: String, path: Option<String>) -> PyResult<Option<String>> {
     let p = path.unwrap_or_else(|| ".".to_string());
-    
+
     let output = Command::new("git")
         .arg("-C")
         .arg(&p)
         .arg("rev-parse")
         .arg(&ref_)
         .output();
-    
+
     match output {
         Ok(out) if out.status.success() => {
             Ok(Some(String::from_utf8_lossy(&out.stdout).trim().to_string()))
@@ -191,10 +191,10 @@ pub fn rev_parse(path: Option<String>, ref_: String) -> PyResult<Option<String>>
 
 /// Get diff stat (git diff --stat equivalent)
 #[pyfunction]
-#[pyo3(signature = (path=None, ref_))]
-pub fn diff_stat(path: Option<String>, ref_: String) -> PyResult<String> {
+#[pyo3(signature = (ref_, path=None))]
+pub fn diff_stat(ref_: String, path: Option<String>) -> PyResult<String> {
     let p = path.unwrap_or_else(|| ".".to_string());
-    
+
     let output = Command::new("git")
         .arg("-C")
         .arg(&p)
@@ -202,7 +202,7 @@ pub fn diff_stat(path: Option<String>, ref_: String) -> PyResult<String> {
         .arg("--stat")
         .arg(&ref_)
         .output();
-    
+
     match output {
         Ok(out) => Ok(String::from_utf8_lossy(&out.stdout).trim().to_string()),
         Err(e) => Ok(format!("error: {}", e)),
@@ -211,25 +211,25 @@ pub fn diff_stat(path: Option<String>, ref_: String) -> PyResult<String> {
 
 /// Create commit (git commit-tree equivalent)
 #[pyfunction]
-#[pyo3(signature = (path=None, tree_hash, message, parents))]
+#[pyo3(signature = (tree_hash, message, parents, path=None))]
 pub fn create_commit(
-    path: Option<String>,
     tree_hash: String,
     message: String,
     parents: Vec<String>,
+    path: Option<String>,
 ) -> PyResult<Option<String>> {
     let p = path.unwrap_or_else(|| ".".to_string());
-    
+
     let mut cmd = Command::new("git");
     cmd.arg("-C").arg(&p).arg("commit-tree");
     cmd.arg(&tree_hash);
-    
+
     for parent in &parents {
         cmd.arg("-p").arg(parent);
     }
-    
+
     cmd.arg("-m").arg(&message);
-    
+
     match cmd.output() {
         Ok(output) if output.status.success() => {
             Ok(Some(String::from_utf8_lossy(&output.stdout).trim().to_string()))
@@ -240,10 +240,10 @@ pub fn create_commit(
 
 /// Update ref (git update-ref equivalent)
 #[pyfunction]
-#[pyo3(signature = (path=None, ref_, new_hash))]
-pub fn update_ref(path: Option<String>, ref_: String, new_hash: String) -> PyResult<bool> {
+#[pyo3(signature = (ref_, new_hash, path=None))]
+pub fn update_ref(ref_: String, new_hash: String, path: Option<String>) -> PyResult<bool> {
     let p = path.unwrap_or_else(|| ".".to_string());
-    
+
     let output = Command::new("git")
         .arg("-C")
         .arg(&p)
@@ -251,7 +251,7 @@ pub fn update_ref(path: Option<String>, ref_: String, new_hash: String) -> PyRes
         .arg(&ref_)
         .arg(&new_hash)
         .output();
-    
+
     match output {
         Ok(out) => Ok(out.status.success()),
         Err(_) => Ok(false),
@@ -260,10 +260,10 @@ pub fn update_ref(path: Option<String>, ref_: String, new_hash: String) -> PyRes
 
 /// Get merge-base (git merge-base equivalent)
 #[pyfunction]
-#[pyo3(signature = (path=None, commit1, commit2))]
-pub fn merge_base(path: Option<String>, commit1: String, commit2: String) -> PyResult<Option<String>> {
+#[pyo3(signature = (commit1, commit2, path=None))]
+pub fn merge_base(commit1: String, commit2: String, path: Option<String>) -> PyResult<Option<String>> {
     let p = path.unwrap_or_else(|| ".".to_string());
-    
+
     let output = Command::new("git")
         .arg("-C")
         .arg(&p)
@@ -271,7 +271,7 @@ pub fn merge_base(path: Option<String>, commit1: String, commit2: String) -> PyR
         .arg(&commit1)
         .arg(&commit2)
         .output();
-    
+
     match output {
         Ok(out) if out.status.success() => {
             Ok(Some(String::from_utf8_lossy(&out.stdout).trim().to_string()))
@@ -503,4 +503,3 @@ mod tests {
         }).expect("get_status failed");
     }
 }
-

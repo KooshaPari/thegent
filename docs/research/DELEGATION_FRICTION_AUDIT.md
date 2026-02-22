@@ -1,6 +1,6 @@
 # Delegation Friction Audit
 
-**Date:** 2026-02-17  
+**Date:** 2026-02-17
 **Context:** Identifying friction in agent delegation workflow
 
 ---
@@ -9,7 +9,7 @@
 
 ### Issue
 **Problem:** `TypeError: run_impl() got an unexpected keyword argument 'live'`
-**Impact:** 
+**Impact:**
 - Delegation completely broken
 - Cannot use `thegent free` command
 - Blocks all agent workflow
@@ -22,7 +22,7 @@
 
 ### Issue
 **Problem:** Cannot easily see if agents are running, completed, or failed
-**Impact:** 
+**Impact:**
 - Unclear if delegation worked
 - Hard to monitor parallel work
 - No feedback on agent status

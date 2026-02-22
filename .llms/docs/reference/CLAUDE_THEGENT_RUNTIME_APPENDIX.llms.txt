@@ -139,7 +139,7 @@ When the user says **"do all"** or assigns work to multiple agents:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

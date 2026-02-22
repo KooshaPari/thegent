@@ -1,7 +1,7 @@
 # Headless LSP Setup with JetBrains Integration
 
-**Date**: 2026-02-18  
-**Status**: Design Phase  
+**Date**: 2026-02-18
+**Status**: Design Phase
 **Goal**: Full headless LSP infrastructure with JetBrains IDE Ultimate integration
 
 ---
@@ -141,7 +141,7 @@ LSP_SERVERS = {
 
 class HeadlessLSPServer:
     """Manages a single LSP server process."""
-    
+
     def __init__(self, language: str, config: Dict[str, Any]):
         self.language = language
         self.config = config
@@ -149,19 +149,19 @@ class HeadlessLSPServer:
         self.pid: Optional[int] = None
         self.started_at: Optional[float] = None
         self.clients: List[str] = []  # Client IDs
-    
+
     def start(self) -> bool:
         """Start LSP server process."""
         command = self.config['command']
         args = self.config.get('args', [])
-        
+
         # Check if command exists
         import shutil
         cmd_path = shutil.which(command)
         if not cmd_path:
             logger.error(f"LSP server '{command}' not found. Install: {self.config.get('install', 'N/A')}")
             return False
-        
+
         try:
             self.process = subprocess.Popen(
                 [cmd_path] + args,
@@ -177,7 +177,7 @@ class HeadlessLSPServer:
         except Exception as e:
             logger.error(f"Failed to start LSP server {self.language}: {e}")
             return False
-    
+
     def stop(self) -> None:
         """Stop LSP server process."""
         if self.process:
@@ -188,7 +188,7 @@ class HeadlessLSPServer:
                 self.process.kill()
             self.process = None
             self.pid = None
-    
+
     def is_running(self) -> bool:
         """Check if server is running."""
         if not self.process:
@@ -198,13 +198,13 @@ class HeadlessLSPServer:
 
 class HeadlessLSPManager:
     """Manages multiple LSP servers in headless mode."""
-    
+
     def __init__(self, cache_dir: Optional[Path] = None):
         self.cache_dir = cache_dir or (Path.home() / ".cache" / "thegent" / "lsp")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.servers: Dict[str, HeadlessLSPServer] = {}
         self.lockfile = self.cache_dir / "manager.lock"
-    
+
     def ensure_server(self, language: str) -> Optional[HeadlessLSPServer]:
         """Ensure LSP server is running for language."""
         # Check if already running
@@ -215,34 +215,34 @@ class HeadlessLSPManager:
             else:
                 # Clean up dead server
                 del self.servers[language]
-        
+
         # Start new server
         config = LSP_SERVERS.get(language)
         if not config:
             logger.error(f"Unknown language: {language}")
             return None
-        
+
         server = HeadlessLSPServer(language, config)
         if server.start():
             self.servers[language] = server
             self._save_state()
             return server
         return None
-    
+
     def stop_server(self, language: str) -> None:
         """Stop LSP server for language."""
         if language in self.servers:
             self.servers[language].stop()
             del self.servers[language]
             self._save_state()
-    
+
     def stop_all(self) -> None:
         """Stop all LSP servers."""
         for server in self.servers.values():
             server.stop()
         self.servers.clear()
         self._save_state()
-    
+
     def list_servers(self) -> Dict[str, Dict[str, Any]]:
         """List all running servers."""
         return {
@@ -254,7 +254,7 @@ class HeadlessLSPManager:
             }
             for lang, server in self.servers.items()
         }
-    
+
     def _save_state(self) -> None:
         """Save manager state to lockfile."""
         state = {
@@ -292,26 +292,26 @@ from typing import Optional, Dict, Any
 
 class JetBrainsCLI:
     """Wrapper for JetBrains IDE CLI tools."""
-    
+
     def __init__(self, ide_path: Optional[Path] = None):
         """Initialize JetBrains CLI wrapper.
-        
+
         Args:
             ide_path: Path to IntelliJ IDEA executable (e.g., /Applications/IntelliJ IDEA.app/Contents/MacOS/idea)
                      If None, tries to find in PATH or common locations.
         """
         self.ide_path = self._find_ide(ide_path)
-    
+
     def _find_ide(self, provided_path: Optional[Path]) -> Optional[Path]:
         """Find IntelliJ IDEA executable."""
         if provided_path and provided_path.exists():
             return provided_path
-        
+
         # Check PATH
         idea_cmd = shutil.which('idea')
         if idea_cmd:
             return Path(idea_cmd)
-        
+
         # Check common macOS locations
         macos_paths = [
             Path('/Applications/IntelliJ IDEA.app/Contents/MacOS/idea'),
@@ -320,7 +320,7 @@ class JetBrainsCLI:
         for path in macos_paths:
             if path.exists():
                 return path
-        
+
         # Check Linux locations
         linux_paths = [
             Path('/opt/idea/bin/idea.sh'),
@@ -329,27 +329,27 @@ class JetBrainsCLI:
         for path in linux_paths:
             if path.exists():
                 return path
-        
+
         return None
-    
+
     def format(self, files: list[Path], project_root: Optional[Path] = None) -> Dict[str, Any]:
         """Format files using IntelliJ IDEA formatter.
-        
+
         Args:
             files: List of files to format
             project_root: Project root directory (optional)
-        
+
         Returns:
             Dict with 'success', 'stdout', 'stderr'
         """
         if not self.ide_path:
             return {'success': False, 'error': 'IntelliJ IDEA not found'}
-        
+
         cmd = [str(self.ide_path), 'format']
         if project_root:
             cmd.extend(['--project', str(project_root)])
         cmd.extend([str(f) for f in files])
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -365,24 +365,24 @@ class JetBrainsCLI:
             }
         except Exception as e:
             return {'success': False, 'error': str(e)}
-    
+
     def inspect(self, project_root: Path, profile: Optional[str] = None) -> Dict[str, Any]:
         """Run code inspections using IntelliJ IDEA.
-        
+
         Args:
             project_root: Project root directory
             profile: Inspection profile name (optional)
-        
+
         Returns:
             Dict with inspection results
         """
         if not self.ide_path:
             return {'success': False, 'error': 'IntelliJ IDEA not found'}
-        
+
         cmd = [str(self.ide_path), 'inspect', str(project_root)]
         if profile:
             cmd.extend(['--profile', profile])
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -398,22 +398,22 @@ class JetBrainsCLI:
             }
         except Exception as e:
             return {'success': False, 'error': str(e)}
-    
+
     def diff(self, file1: Path, file2: Path) -> Dict[str, Any]:
         """Show diff between two files.
-        
+
         Args:
             file1: First file
             file2: Second file
-        
+
         Returns:
             Dict with diff output
         """
         if not self.ide_path:
             return {'success': False, 'error': 'IntelliJ IDEA not found'}
-        
+
         cmd = [str(self.ide_path), 'diff', str(file1), str(file2)]
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -429,22 +429,22 @@ class JetBrainsCLI:
             }
         except Exception as e:
             return {'success': False, 'error': str(e)}
-    
+
     def merge(self, file1: Path, file2: Path, base: Path, output: Path) -> Dict[str, Any]:
         """Merge two files with base.
-        
+
         Args:
             file1: First file
             file2: Second file
             base: Base file
             output: Output file
-        
+
         Returns:
             Dict with merge result
         """
         if not self.ide_path:
             return {'success': False, 'error': 'IntelliJ IDEA not found'}
-        
+
         cmd = [
             str(self.ide_path),
             'merge',
@@ -453,7 +453,7 @@ class JetBrainsCLI:
             str(base),
             str(output),
         ]
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -493,21 +493,21 @@ from typing import Optional, Dict, Any
 
 class JetBrainsGateway:
     """Manages JetBrains Gateway for headless backend access."""
-    
+
     def __init__(self, gateway_path: Optional[Path] = None):
         """Initialize JetBrains Gateway wrapper.
-        
+
         Args:
             gateway_path: Path to JetBrains Gateway executable
         """
         self.gateway_path = self._find_gateway(gateway_path)
         self.backend_process: Optional[subprocess.Popen] = None
-    
+
     def _find_gateway(self, provided_path: Optional[Path]) -> Optional[Path]:
         """Find JetBrains Gateway executable."""
         if provided_path and provided_path.exists():
             return provided_path
-        
+
         # Check common locations
         macos_paths = [
             Path('/Applications/JetBrains Gateway.app/Contents/MacOS/gateway'),
@@ -516,9 +516,9 @@ class JetBrainsGateway:
         for path in macos_paths:
             if path.exists():
                 return path
-        
+
         return None
-    
+
     def start_backend(
         self,
         project_root: Path,
@@ -526,32 +526,32 @@ class JetBrainsGateway:
         ssh_host: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Start headless backend IDE.
-        
+
         Args:
             project_root: Project root directory
             ide_version: IDE version (e.g., "2024.1", "latest")
             ssh_host: SSH host for remote backend (optional, local if None)
-        
+
         Returns:
             Dict with backend connection info
         """
         if not self.gateway_path:
             return {'success': False, 'error': 'JetBrains Gateway not found'}
-        
+
         # For local backend, we can use Gateway CLI
         # For remote, we'd use SSH connection
         # This is a simplified version - full implementation would handle SSH
-        
+
         cmd = [
             str(self.gateway_path),
             'start',
             '--project', str(project_root),
             '--ide', ide_version,
         ]
-        
+
         if ssh_host:
             cmd.extend(['--host', ssh_host])
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -559,7 +559,7 @@ class JetBrainsGateway:
                 text=True,
                 timeout=120,
             )
-            
+
             if result.returncode == 0:
                 # Parse connection info from output
                 # Gateway returns connection details
@@ -592,10 +592,10 @@ def lsp_start(
 ):
     """Start headless LSP server for language."""
     from thegent.lsp.headless_manager import HeadlessLSPManager
-    
+
     manager = HeadlessLSPManager()
     server = manager.ensure_server(language)
-    
+
     if server:
         console.print(f"[green]Started LSP server: {language} (PID: {server.pid})[/green]")
     else:
@@ -608,7 +608,7 @@ def lsp_stop(
 ):
     """Stop LSP server for language."""
     from thegent.lsp.headless_manager import HeadlessLSPManager
-    
+
     manager = HeadlessLSPManager()
     manager.stop_server(language)
     console.print(f"[green]Stopped LSP server: {language}[/green]")
@@ -618,21 +618,21 @@ def lsp_list():
     """List all running LSP servers."""
     from thegent.lsp.headless_manager import HeadlessLSPManager
     from rich.table import Table
-    
+
     manager = HeadlessLSPManager()
     servers = manager.list_servers()
-    
+
     table = Table(title="Running LSP Servers")
     table.add_column("Language", style="cyan")
     table.add_column("PID", style="green")
     table.add_column("Status", style="yellow")
     table.add_column("Uptime", style="white")
-    
+
     for lang, info in servers.items():
         status = "✅ Running" if info['running'] else "❌ Stopped"
         uptime = f"{int(time.time() - info['started_at'])}s" if info['started_at'] else "N/A"
         table.add_row(lang, str(info['pid']), status, uptime)
-    
+
     console.print(table)
 
 @lsp_app.command("format")
@@ -642,10 +642,10 @@ def lsp_format(
 ):
     """Format files using JetBrains formatter."""
     from thegent.lsp.jetbrains_cli import JetBrainsCLI
-    
+
     cli = JetBrainsCLI()
     result = cli.format(files, project)
-    
+
     if result['success']:
         console.print("[green]Files formatted successfully[/green]")
     else:
@@ -659,10 +659,10 @@ def lsp_inspect(
 ):
     """Run code inspections using JetBrains."""
     from thegent.lsp.jetbrains_cli import JetBrainsCLI
-    
+
     cli = JetBrainsCLI()
     result = cli.inspect(project, profile)
-    
+
     if result['success']:
         console.print(result['stdout'])
     else:

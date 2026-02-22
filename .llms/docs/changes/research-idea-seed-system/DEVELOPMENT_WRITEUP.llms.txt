@@ -6,10 +6,10 @@ Source: docs/changes/research-idea-seed-system/DEVELOPMENT_WRITEUP.md
 
 # Research-Idea-Seed-System: Integrated Development Writeup
 
-> **Status**: Ready for Implementation | **Date**: 2026-02-16  
-> **Work Item**: `research-idea-seed-system`  
-> **Duration**: 4 weeks (26.5 days estimated effort)  
-> **Priority**: P1  
+> **Status**: Ready for Implementation | **Date**: 2026-02-16
+> **Work Item**: `research-idea-seed-system`
+> **Duration**: 4 weeks (26.5 days estimated effort)
+> **Priority**: P1
 
 ---
 
@@ -862,7 +862,7 @@ The **Idea Seed Detection & Storage System** is a focused, high-value feature th
 
 ---
 
-**Document Status**: Ready for Implementation  
-**Last Updated**: 2026-02-16  
-**Next Phase**: Phase 1 Implementation (Project Setup → Detection → Storage)  
+**Document Status**: Ready for Implementation
+**Last Updated**: 2026-02-16
+**Next Phase**: Phase 1 Implementation (Project Setup → Detection → Storage)
 **Target Completion**: 2026-03-16 (4 weeks)

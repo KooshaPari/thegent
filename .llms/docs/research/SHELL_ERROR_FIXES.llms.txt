@@ -6,7 +6,7 @@ Source: docs/research/SHELL_ERROR_FIXES.md
 
 # Shell Error Fixes — zsh Bad Substitution
 
-> **Status**: Fixed | **Date**: 2026-02-17  
+> **Status**: Fixed | **Date**: 2026-02-17
 > **Purpose**: Document fixes for zsh shell initialization errors
 
 ---

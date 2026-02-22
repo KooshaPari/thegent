@@ -45,7 +45,7 @@ enum ShimCommand {
     },
     /// agent: Agent invocation shim
     Agent {
-        /// Agent name (codex, copilot, dex, claude, cursor, clode, roid, droid, fanta, cline, roocode, opencode)
+        /// Agent name (codex, dex, claude, cursor, clode, roid, droid, fanta, cline, roocode)
         name: String,
         /// Arguments to pass to the agent
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
@@ -117,13 +117,13 @@ fn first_available(candidates: &[&str]) -> Option<PathBuf> {
 /// Run git with thegent integration
 fn run_git(args: &[String]) -> ExitCode {
     let git_path = resolve_binary("git");
-    
+
     match git_path {
         Some(path) => {
             // Inject thegent context if available
             let mut cmd = safe_command(path.to_str().unwrap_or("git"));
             cmd.args(args);
-            
+
             // Preserve relevant environment variables for thegent
             if let Ok(project_dir) = env::var("PROJECT_DIR") {
                 cmd.env("PROJECT_DIR", &project_dir);
@@ -136,7 +136,7 @@ fn run_git(args: &[String]) -> ExitCode {
                 eprintln!("thegent-shims: failed to execute git: {}", e);
                 std::process::exit(1);
             });
-            
+
             let code = status.code().unwrap_or(1);
             ExitCode::from(code as u8)
         }
@@ -151,13 +151,13 @@ fn run_git(args: &[String]) -> ExitCode {
 fn run_grep(args: &[String]) -> ExitCode {
     // Prefer ripgrep, fall back to grep
     let rg_path = first_available(&["rg", "grep", "ggrep", "agrep"]);
-    
+
     match rg_path {
         Some(path) => {
             let cmd_name = path.file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("grep");
-            
+
             // For rg, pass args directly; for grep, may need adjustment
             let final_args: Vec<String> = if cmd_name == "rg" {
                 // translate -E (extended regex) to nothing as rg is always extended
@@ -172,15 +172,15 @@ fn run_grep(args: &[String]) -> ExitCode {
                 new_args.extend(args.iter().cloned());
                 new_args
             };
-            
+
             let mut cmd = safe_command(path.to_str().unwrap_or(cmd_name));
             cmd.args(&final_args);
-            
+
             let status = cmd.status().unwrap_or_else(|e| {
                 eprintln!("thegent-shims: failed to execute {}: {}", cmd_name, e);
                 std::process::exit(1);
             });
-            
+
             let code = status.code().unwrap_or(1);
             ExitCode::from(code as u8)
         }
@@ -195,18 +195,18 @@ fn run_grep(args: &[String]) -> ExitCode {
 fn run_find(args: &[String]) -> ExitCode {
     // Prefer fd, fall back to find
     let fd_path = first_available(&["fd", "fdfind", "find"]);
-    
+
     match fd_path {
         Some(path) => {
             let cmd_name = path.file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("find");
-            
+
             if cmd_name == "fd" || cmd_name == "fdfind" {
                 // fd has different argument structure
                 // Convert common find flags to fd equivalents
                 let fd_args = args.to_vec();
-                
+
                 // fd defaults to hidden=false, follow=false
                 // Common conversions: -name -> (positional), -type f -> -t f
                 let mut final_args: Vec<String> = Vec::new();
@@ -229,27 +229,27 @@ fn run_find(args: &[String]) -> ExitCode {
                         i += 1;
                     }
                 }
-                
+
                 let mut cmd = safe_command(path.to_str().unwrap_or(cmd_name));
                 cmd.args(&final_args);
-                
+
                 let status = cmd.status().unwrap_or_else(|e| {
                     eprintln!("thegent-shims: failed to execute fd: {}", e);
                     std::process::exit(1);
                 });
-                
+
                 let code = status.code().unwrap_or(1);
                 ExitCode::from(code as u8)
             } else {
                 // Regular find - pass through
                 let mut cmd = safe_command(path.to_str().unwrap_or(cmd_name));
                 cmd.args(args);
-                
+
                 let status = cmd.status().unwrap_or_else(|e| {
                     eprintln!("thegent-shims: failed to execute find: {}", e);
                     std::process::exit(1);
                 });
-                
+
                 let code = status.code().unwrap_or(1);
                 ExitCode::from(code as u8)
             }
@@ -299,9 +299,7 @@ fn resolve_agent(name: &str) -> Option<PathBuf> {
         "fanta" => &["ante"],
         "cline" => &["cline", "cursor-agent", "cursor"],
         "roocode" => &["roocode", "roo", "cursor-agent", "cursor"],
-        "opencode" => &["opencode"],
         "cursor" => &["cursor-agent", "cursor"],
-        "copilot" => &["copilot"],
         "claude" => &["claude"],
         "codex" => &["codex"],
         _ => &[name],
@@ -489,13 +487,27 @@ fn split_native_flag(args: &[String]) -> (bool, Vec<String>) {
 }
 
 fn split_force_flag(args: &[String]) -> (bool, Vec<String>) {
-    let force_mode = args.iter().any(|a| a == "--force" || a == "-f");
+    let force_mode = args.iter().any(|a| a == "--force" || a == "-f" || a.starts_with("--force="));
     let filtered = args
         .iter()
-        .filter(|a| a.as_str() != "--force" && a.as_str() != "-f")
+        .filter(|a| a.as_str() != "--force" && a.as_str() != "-f" && !a.starts_with("--force="))
         .cloned()
         .collect();
     (force_mode, filtered)
+}
+
+fn inject_native_force_alias(name: &str, args: &[String], force_mode: bool) -> Vec<String> {
+    if name != "dex" || !force_mode {
+        return args.to_vec();
+    }
+
+    if args.iter().any(|a| a == "--force-yolo") {
+        return args.to_vec();
+    }
+
+    let mut out = args.to_vec();
+    out.insert(0, "--force-yolo".to_string());
+    out
 }
 
 fn dex_proxy_env_defaults() -> (Option<String>, Option<String>) {
@@ -515,6 +527,13 @@ fn dex_proxy_env_defaults() -> (Option<String>, Option<String>) {
     };
 
     (default_base, default_key)
+}
+
+fn should_inject_proxy_env_defaults(name: &str) -> bool {
+    matches!(
+        name,
+        "dex" | "clode" | "claude" | "codex" | "roid" | "droid" | "fanta"
+    )
 }
 
 fn inject_force_alias(name: &str, args: &[String], force_mode: bool) -> Vec<String> {
@@ -566,19 +585,19 @@ fn run_agent(name: &str, args: &[String]) -> ExitCode {
 
     // Resolve the agent binary
     let agent_path = resolve_agent(name);
-    
+
     match agent_path {
         Some(path) => {
             let mut cmd = safe_command(path.to_str().unwrap_or(name));
             let passthrough_args: Vec<String> = if native_mode {
-                filtered
+                inject_native_force_alias(name, &filtered, force_mode)
             } else if matches!(name, "dex" | "clode" | "roid" | "droid" | "fanta") {
                 inject_harness_defaults(name, &filtered)
             } else {
                 filtered
             };
             cmd.args(&passthrough_args);
-            
+
             // Preserve thegent environment
             if let Ok(project_dir) = env::var("PROJECT_DIR") {
                 cmd.env("PROJECT_DIR", &project_dir);
@@ -591,7 +610,7 @@ fn run_agent(name: &str, args: &[String]) -> ExitCode {
             cmd.env_remove("MallocStackLogging");
             cmd.env_remove("MallocStackLoggingNoCompact");
             cmd.env_remove("MallocStackLoggingDirectory");
-            if name == "dex" {
+            if should_inject_proxy_env_defaults(name) {
                 let (default_base, default_key) = dex_proxy_env_defaults();
                 if let Some(base) = default_base {
                     cmd.env("OPENAI_BASE_URL", base);
@@ -600,13 +619,13 @@ fn run_agent(name: &str, args: &[String]) -> ExitCode {
                     cmd.env("OPENAI_API_KEY", key);
                 }
             }
-            
+
             // Execute and propagate exit code
             let status = cmd.status().unwrap_or_else(|e| {
                 eprintln!("thegent-shims: failed to execute {}: {}", name, e);
                 std::process::exit(1);
             });
-            
+
             let code = status.code().unwrap_or(1);
             ExitCode::from(code as u8)
         }
@@ -760,12 +779,12 @@ fn run_flock(args: &[String]) -> ExitCode {
         // For now, if it's 'flock -n <fd>', we just skip or try to resolve.
         // If it's a real command, we just execute it.
         // This is a stub to prevent 'command not found' errors.
-        
+
         let mut cmd_idx = 0;
         while cmd_idx < args.len() && (args[cmd_idx].starts_with("-") || args[cmd_idx].chars().all(|c| c.is_digit(10))) {
             cmd_idx += 1;
         }
-        
+
         if cmd_idx < args.len() {
             let mut cmd = StdCommand::new(&args[cmd_idx]);
             cmd.args(&args[cmd_idx+1..]);
@@ -780,7 +799,7 @@ fn main() -> ExitCode {
     // Initialize logger for debugging
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn"))
         .init();
-    
+
     // Phase 2: Support symlink dispatching (e.g. called as 'thegent-git')
     let args: Vec<String> = env::args().collect();
     let program_path = PathBuf::from(&args[0]);
@@ -795,7 +814,6 @@ fn main() -> ExitCode {
         || program_name == "fanta"
         || program_name == "cline"
         || program_name == "roocode"
-        || program_name == "opencode"
     {
         return run_agent(program_name, &args[1..].to_vec());
     } else if program_name == "thegent-git" {
@@ -818,7 +836,7 @@ fn main() -> ExitCode {
         let agent = program_name.strip_prefix("thegent-").unwrap();
         if matches!(
             agent,
-            "codex" | "copilot" | "dex" | "claude" | "cursor" | "clode" | "roid" | "droid" | "fanta" | "cline" | "roocode" | "opencode"
+            "codex" | "dex" | "claude" | "cursor" | "clode" | "roid" | "droid" | "fanta" | "cline" | "roocode"
         ) {
             return run_agent(agent, &args[1..].to_vec());
         }
@@ -868,7 +886,7 @@ fn main() -> ExitCode {
     }
 
     let cli = Cli::parse();
-    
+
     match cli.command {
         ShimCommand::Git { args } => {
             run_git(&args)
@@ -909,7 +927,7 @@ mod tests {
 
     use super::{
         dex_proxy_env_defaults, inject_force_alias, inject_harness_defaults, normalize_harness_command_labels,
-        normalize_harness_exec_legacy_args, split_force_flag, split_native_flag,
+        normalize_harness_exec_legacy_args, split_force_flag, split_native_flag, inject_native_force_alias,
     };
 
     fn v(args: &[&str]) -> Vec<String> {
@@ -938,6 +956,13 @@ mod tests {
     }
 
     #[test]
+    fn split_force_flag_filters_equivalent_force_forms() {
+        let (force, filtered) = split_force_flag(&v(&["--force=true", "resume"]));
+        assert!(force);
+        assert_eq!(filtered, v(&["resume"]));
+    }
+
+    #[test]
     fn split_force_flag_leaves_other_args_when_not_force() {
         let (force, filtered) = split_force_flag(&v(&["resume", "--last"]));
         assert!(!force);
@@ -949,6 +974,19 @@ mod tests {
         let out = inject_force_alias("dex", &v(&["resume"]), true);
         assert_eq!(out[0], "--dangerously-bypass-approvals-and-sandbox");
         assert!(out.contains(&"resume".to_string()));
+    }
+
+    #[test]
+    fn inject_native_force_alias_for_dex_adds_force_yolo() {
+        let out = inject_native_force_alias("dex", &v(&["resume"]), true);
+        assert_eq!(out[0], "--force-yolo");
+        assert!(out.contains(&"resume".to_string()));
+    }
+
+    #[test]
+    fn inject_native_force_alias_for_dex_leaves_force_yolo() {
+        let out = inject_native_force_alias("dex", &v(&["--force-yolo", "resume"]), true);
+        assert_eq!(out, v(&["--force-yolo", "resume"]));
     }
 
     #[test]
@@ -1147,5 +1185,19 @@ mod tests {
             env::remove_var("OPENAI_BASE_URL");
             env::remove_var("OPENAI_API_KEY");
         }
+    }
+
+    #[test]
+    fn should_inject_proxy_env_defaults_for_supported_harnesses() {
+        assert!(should_inject_proxy_env_defaults("dex"));
+        assert!(should_inject_proxy_env_defaults("clode"));
+        assert!(should_inject_proxy_env_defaults("claude"));
+        assert!(should_inject_proxy_env_defaults("codex"));
+        assert!(should_inject_proxy_env_defaults("roid"));
+        assert!(should_inject_proxy_env_defaults("droid"));
+        assert!(should_inject_proxy_env_defaults("fanta"));
+        assert!(!should_inject_proxy_env_defaults("copilot"));
+        assert!(!should_inject_proxy_env_defaults("opencode"));
+        assert!(!should_inject_proxy_env_defaults("cursor"));
     }
 }

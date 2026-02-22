@@ -8,9 +8,9 @@ Source: docs/plans/UNIFIED_SYSTEM_APPLICATION_PLAN.md
 
 **Purpose:** Merge desktop app, tray app, and all thegent installations into a single unified system application with one installer, one tray, and one chat/dashboard surface.
 
-**Date:** 2026-02-16  
-**Status:** Complete  
-**Version:** 1.0  
+**Date:** 2026-02-16
+**Status:** Complete
+**Version:** 1.0
 **Supersedes:** Tray app design, install design, desktop app concept (scattered)
 
 ---
@@ -283,45 +283,45 @@ def unified_install(
     dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be installed"),
 ):
     """Unified installer for thegent system application."""
-    
+
     if dry_run:
         typer.echo("DRY RUN MODE - No changes will be made")
         typer.echo(f"Would install: tray={tray}, mcp={mcp}, cliproxy={cliproxy}, skills={skills}, shims={shims}")
         return
-    
+
     typer.echo("Starting unified installation...")
-    
+
     # Phase 1: Core thegent install
     if skills:
         typer.echo("Phase 1: Installing core thegent components...")
         subprocess.run(["thegent", "install", "--target", "all"], check=True)
-    
+
     # Phase 2: Install shims
     if shims:
         typer.echo("Phase 2: Installing shims...")
         subprocess.run(["thegent", "install-shims"], check=True)
-    
+
     # Phase 3: Build and configure CLIProxy
     if cliproxy:
         typer.echo("Phase 3: Building CLIProxy...")
         subprocess.run(["task", "cliproxy:build"], check=True)
         subprocess.run(["task", "cliproxy:ensure-config"], check=True)
-    
+
     # Phase 4: Configure MCP server
     if mcp:
         typer.echo("Phase 4: Configuring MCP server...")
         _configure_mcp_server()
-    
+
     # Phase 5: Install tray app
     if tray:
         typer.echo("Phase 5: Installing tray app...")
         _install_tray_app()
-    
+
     # Phase 6: Provider authentication
     if providers:
         typer.echo("Phase 6: Setting up provider authentication...")
         _setup_providers()
-    
+
     typer.echo("✅ Unified installation complete!")
     typer.echo("Tray icon should appear in your menu bar.")
     typer.echo("Run 'thegent setup --help' for more options.")
@@ -333,7 +333,7 @@ def _configure_mcp_server():
         "claude-code": Path.home() / ".claude" / "mcp.json",
         "codex": Path.home() / ".codex" / "mcp.json",
     }
-    
+
     mcp_config = {
         "mcpServers": {
             "thegent": {
@@ -343,7 +343,7 @@ def _configure_mcp_server():
             }
         }
     }
-    
+
     for app_name, config_path in mcp_configs.items():
         if config_path.parent.exists():
             config_path.write_text(json.dumps(mcp_config, indent=2))
@@ -353,7 +353,7 @@ def _install_tray_app():
     """Install and register tray app."""
     # Build tray app
     subprocess.run(["task", "tray-app:build"], check=True)
-    
+
     # Register launch agent (macOS) or systemd service (Linux)
     if _is_macos():
         _register_launchd()
@@ -439,34 +439,34 @@ class WindowState:
 
 class MainWindow:
     """Main window with chat, dashboard, and terminal panes."""
-    
+
     def __init__(self):
         self.state = WindowState()
         self.mcp_client = None
         self.terminal_panes = []
-    
+
     def show(self):
         """Show the main window."""
         # Platform-specific implementation
         # Tauri: window.show()
         # SwiftUI: NSWindow.makeKeyAndOrderFront()
         pass
-    
+
     def switch_tab(self, tab: str):
         """Switch to a different tab."""
         self.state.current_tab = tab
         self._update_ui()
-    
+
     def set_project(self, project_path: str):
         """Set the current project."""
         self.state.current_project = project_path
         self._update_ui()
-    
+
     async def send_chat_message(self, message: str):
         """Send a chat message via MCP."""
         if not self.mcp_client:
             self.mcp_client = await self._connect_mcp()
-        
+
         # Use sitback skill for dashboard commands
         if message.startswith("status") or message.startswith("garden"):
             tool = "thegent_sitback_dashboard"
@@ -474,15 +474,15 @@ class MainWindow:
             tool = "thegent_run"
         else:
             tool = "thegent_sitback_dashboard"
-        
+
         result = await self.mcp_client.call_tool(tool, {"query": message})
         return result
-    
+
     def _update_ui(self):
         """Update UI based on current state."""
         # Platform-specific UI update
         pass
-    
+
     async def _connect_mcp(self):
         """Connect to MCP server."""
         # Connect to thegent serve on port 3847
@@ -501,11 +501,11 @@ import asyncio
 
 class ChatTab:
     """Chat tab with sitback dashboard integration."""
-    
+
     def __init__(self, mcp_client):
         self.mcp_client = mcp_client
         self.history = []
-    
+
     async def handle_message(self, message: str) -> dict:
         """Handle a chat message."""
         # Route to appropriate MCP tool
@@ -517,7 +517,7 @@ class ChatTab:
             return await self._run_command(message)
         else:
             return await self._sitback_dashboard(message)
-    
+
     async def _get_status(self) -> dict:
         """Get system status."""
         result = await self.mcp_client.call_tool("thegent_status", {})
@@ -525,7 +525,7 @@ class ChatTab:
             "type": "status",
             "data": result
         }
-    
+
     async def _garden(self) -> dict:
         """Run gardener."""
         result = await self.mcp_client.call_tool("thegent_garden", {})
@@ -533,7 +533,7 @@ class ChatTab:
             "type": "garden",
             "data": result
         }
-    
+
     async def _run_command(self, message: str) -> dict:
         """Run a command."""
         command = message.replace("run", "").strip()
@@ -544,7 +544,7 @@ class ChatTab:
             "type": "run",
             "data": result
         }
-    
+
     async def _sitback_dashboard(self, query: str) -> dict:
         """Get sitback dashboard."""
         result = await self.mcp_client.call_tool("thegent_sitback_dashboard", {
@@ -568,11 +568,11 @@ import subprocess
 
 class TerminalPane:
     """Terminal pane with Zellij/tmux integration."""
-    
+
     def __init__(self, mode: str = "zellij"):
         self.mode = mode  # "zellij" | "tmux" | "embedded"
         self.session_name: Optional[str] = None
-    
+
     def create_session(self, name: str):
         """Create a new terminal session."""
         if self.mode == "zellij":
@@ -580,7 +580,7 @@ class TerminalPane:
         elif self.mode == "tmux":
             subprocess.run(["tmux", "new-session", "-d", "-s", name])
         self.session_name = name
-    
+
     def attach_session(self, name: str):
         """Attach to an existing session."""
         if self.mode == "zellij":
@@ -588,7 +588,7 @@ class TerminalPane:
         elif self.mode == "tmux":
             subprocess.run(["tmux", "attach", "-t", name])
         self.session_name = name
-    
+
     def send_command(self, command: str):
         """Send a command to the terminal session."""
         if self.mode == "tmux" and self.session_name:
@@ -660,11 +660,11 @@ def test_full_installation():
     """Test complete installation flow."""
     # Run unified installer
     subprocess.run(["thegent", "setup"], check=True)
-    
+
     # Verify components installed
     assert Path.home() / ".local" / "bin" / "thegent-tray").exists()
     assert Path.home() / ".cursor" / "mcp.json").exists()
-    
+
     # Verify tray app starts
     process = subprocess.Popen(["thegent-tray"])
     time.sleep(2)

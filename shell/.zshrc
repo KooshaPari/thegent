@@ -49,33 +49,33 @@ if [[ -n "${PS1:-}" ]]; then
         autoload -Uz add-zsh-hook
         # Remove this hook after first run
         add-zsh-hook -d precmd _load_plugins_deferred
-        
+
         # Load plugins synchronously (fast enough after prompt is shown)
         # fzf-tab (load after compinit)
         [[ -f "${HOME}/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh" ]] && \
             source "${HOME}/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh"
-        
+
         # zsh-autosuggestions
         [[ -f "${HOME}/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
             source "${HOME}/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
-        
+
         # fast-syntax-highlighting (load last)
         [[ -f "${HOME}/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh" ]] && \
             source "${HOME}/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
     }
     add-zsh-hook precmd _load_plugins_deferred
-    
+
     # Prompt: starship (cross-shell, fast) - DEFERRED for <50ms startup
     # Defer starship initialization until after first prompt to avoid blocking startup
     # Use minimal prompt initially, then load starship async after prompt appears
     PS1='%n@%m %1~ %# '
-    
+
     _load_starship_deferred() {
         # Ensure add-zsh-hook is available
         autoload -Uz add-zsh-hook
         # Remove this hook after first run
         add-zsh-hook -d precmd _load_starship_deferred
-        
+
         # Load starship synchronously (but after prompt is shown)
         if command -v starship >/dev/null 2>&1; then
             eval "$(starship init zsh 2>/dev/null)"

@@ -5,4 +5,3 @@
 Headless LSP infrastructure for thegent.
 
 ---
-

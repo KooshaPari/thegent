@@ -6,7 +6,7 @@ Source: docs/changes/research-maif-artifacts/README.md
 
 # research-maif-artifacts — MAIF Action Artifacts System
 
-**Status**: Ready for Implementation | **Priority**: High | **Work Item**: WP-3002  
+**Status**: Ready for Implementation | **Priority**: High | **Work Item**: WP-3002
 **Created**: 2026-02-18 | **Synthesized From**: SESSION_RESEARCH_FRAGMENTS_EXPANDED.md § 4
 
 ---

@@ -4,7 +4,7 @@ Formal process for authenticated browser workflows in thegent.
 
 ## Why
 
-Browser auth and task flows must be repeatable and auditable.  
+Browser auth and task flows must be repeatable and auditable.
 Use named journeys rather than ad-hoc browser starts.
 
 ## Commands

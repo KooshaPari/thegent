@@ -626,7 +626,9 @@ def takeover_cmd(session_id: str) -> None:
                     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
                 return
         except Exception:
-            pass
+            console.print(
+                f"[dim]Auto-attach path failed for session '{session_id}'; trying direct attach via tmux discovery output.[/dim]"
+            )
 
         console.print(f"[red]Error: Session '{session_id}' not found in tmux, holdpty, or discovery registry.[/red]")
         return

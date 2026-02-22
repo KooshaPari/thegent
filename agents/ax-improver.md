@@ -1,6 +1,6 @@
 # AX Improver Agent
 
-> **Purpose**: Continuously improve Agent Experience by creating reusable components, patterns, and automation  
+> **Purpose**: Continuously improve Agent Experience by creating reusable components, patterns, and automation
 > **Activation**: Auto-triggered when AX friction is detected, or manually via `thegent improve ax`
 
 ---

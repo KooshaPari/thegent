@@ -1,7 +1,7 @@
 # Conversation Dump — 2026-02-18
 
-**Purpose:** Persist research, plans, and decisions from agent conversations.  
-**Source:** Cursor/Claude conversation  
+**Purpose:** Persist research, plans, and decisions from agent conversations.
+**Source:** Cursor/Claude conversation
 **Date:** 2026-02-18
 
 ---

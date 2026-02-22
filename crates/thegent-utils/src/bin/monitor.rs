@@ -13,7 +13,7 @@ struct Args {
     /// Watch mode: continuously monitor
     #[arg(short, long)]
     watch: bool,
-    
+
     /// Interval in seconds for watch mode
     #[arg(short, long, default_value = "1")]
     interval: u64,
@@ -21,7 +21,7 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    
+
     if args.watch {
         loop {
             print!("\x1B[2J\x1B[1;1H"); // Clear screen
@@ -31,7 +31,7 @@ fn main() -> Result<()> {
     } else {
         monitor_once()?;
     }
-    
+
     Ok(())
 }
 
@@ -95,7 +95,7 @@ fn get_process_count() -> Result<usize> {
     let output = Command::new("ps")
         .arg("aux")
         .output()?;
-    
+
     if output.status.success() {
         let count = String::from_utf8_lossy(&output.stdout)
             .lines()
@@ -108,21 +108,21 @@ fn get_process_count() -> Result<usize> {
 
 fn get_max_processes() -> Option<String> {
     use std::process::Command;
-    
+
     // Try ulimit -u
     let output = Command::new("sh")
         .arg("-c")
         .arg("ulimit -u")
         .output()
         .ok()?;
-    
+
     if output.status.success() {
         let limit = String::from_utf8_lossy(&output.stdout).trim().to_string();
         if !limit.is_empty() && limit != "unlimited" {
             return Some(limit);
         }
     }
-    
+
     None
 }
 
@@ -131,7 +131,7 @@ fn get_fork_failures() -> Option<usize> {
     let output = Command::new("dmesg")
         .output()
         .ok()?;
-    
+
     if output.status.success() {
         let dmesg_output = String::from_utf8_lossy(&output.stdout);
         let count = dmesg_output
@@ -148,14 +148,14 @@ fn get_thegent_processes() -> Result<usize> {
     let output = Command::new("ps")
         .arg("aux")
         .output()?;
-    
+
     if output.status.success() {
         let ps_output = String::from_utf8_lossy(&output.stdout);
         let count = ps_output
             .lines()
             .filter(|line| {
-                line.contains("thegent") || 
-                line.contains("common.sh") || 
+                line.contains("thegent") ||
+                line.contains("common.sh") ||
                 line.contains("hook")
             })
             .count();

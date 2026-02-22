@@ -2,7 +2,7 @@
 
 **Purpose:** Unified strategy for shell selection across macOS, Linux, and Windows (POSIX vs PowerShell).
 
-**Date:** 2026-02-16  
+**Date:** 2026-02-16
 **Extends:** CROSS_PLATFORM_GAPS_AND_EXTENSIONS_RESEARCH.md §2
 
 ---
@@ -81,7 +81,7 @@ shell:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

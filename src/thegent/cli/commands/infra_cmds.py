@@ -489,7 +489,7 @@ def sitback_dashboard_cmd(
         else:
             _render(sitback_dashboard_impl(profile=prof))
     except KeyboardInterrupt:
-        pass
+        console.print("[dim]Sitback dashboard stopped by user.[/dim]")
 
 
 

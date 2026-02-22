@@ -1,7 +1,7 @@
 # Thegent CLI Single Source of Truth Audit
 
-**Date:** 2026-02-14  
-**Scope:** Ensure every capability is reachable via `thegent <subcommand>`; no hidden features only in scripts.  
+**Date:** 2026-02-14
+**Scope:** Ensure every capability is reachable via `thegent <subcommand>`; no hidden features only in scripts.
 **Source:** FastMCP Implementation Plan §4 Phase 1 prerequisite
 
 ---
@@ -77,4 +77,3 @@ python scripts/start_proxy.py
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

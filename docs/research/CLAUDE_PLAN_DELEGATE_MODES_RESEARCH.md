@@ -472,7 +472,7 @@ See **§8** for the full priority list. For Discussion, Research, and Validation
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -33,4 +33,3 @@ Returns: {model_id: {provider: (input_per_1k_usd, output_per_1k_usd)}}
 Uses proxy metrics when reachable; falls back to static values.
 
 ---
-

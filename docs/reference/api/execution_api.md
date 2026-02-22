@@ -1917,4 +1917,3 @@ what_if_branch(self: Any, run_id: str, branch_point_index: int, new_params: dict
 WP-9006/12004: Simulate an alternate outcome with branch governance.
 
 ---
-

@@ -263,4 +263,3 @@ Generated: 2026-02-18
 - Documentation items: 1-3 hours each
 - Developer Experience items: 1-2 hours each
 - Work Packages: 3-6 hours each
-

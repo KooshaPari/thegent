@@ -310,4 +310,3 @@ validate(self: Any, task_metadata: TaskMetadata, registry: RunRegistry | None, m
 Validate task against constraints.
 
 ---
-

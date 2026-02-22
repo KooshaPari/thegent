@@ -61,4 +61,3 @@ record_execution(self: Any, latency_ms: float, success: bool)
 Record an execution metric.
 
 ---
-

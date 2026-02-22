@@ -1,6 +1,6 @@
 # Muxless Agent Session Management — Research Synthesis
 
-> **Status**: Research complete | **Date**: 2026-02-19  
+> **Status**: Research complete | **Date**: 2026-02-19
 > **Purpose**: Tools and architecture for detecting, registering, introspecting, and controlling agent sessions (cursor-agent, droid, claude, codex, etc.) with minimal overhead and maximal control.
 
 ---

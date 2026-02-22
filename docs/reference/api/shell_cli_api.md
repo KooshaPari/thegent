@@ -93,4 +93,3 @@ Reload shell configuration (sources .zshrc).
 Show shell environment status and configuration.
 
 ---
-

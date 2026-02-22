@@ -66,29 +66,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         Commands::Keygen { bits, private_key, public_key } => {
             let (priv_key, pub_key) = generate_key_pair(bits)?;
-            
+
             let priv_pem = priv_key.to_pkcs8_pem(LineEnding::LF)?;
             fs::write(private_key, priv_pem.as_bytes())?;
-            
+
             let pub_pem = pub_key.to_public_key_pem(LineEnding::LF)?;
             fs::write(public_key, pub_pem.as_bytes())?;
-            
+
             println!("Key pair generated successfully.");
         }
         Commands::Create { action, payload, agent, session, key, output } => {
             let payload_map: BTreeMap<String, serde_json::Value> = serde_json::from_str(&payload)?;
             let mut artifact = MAIFArtifact::new(action, payload_map, agent, session);
-            
+
             let priv_key = load_private_key(&key)?;
             artifact.sign(&priv_key)?;
-            
+
             artifact.save_to_file(&output)?;
             println!("Artifact created and signed: {}", output.display());
         }
         Commands::Verify { artifact, key } => {
             let art = MAIFArtifact::load_from_file(&artifact)?;
             let pub_key = load_public_key(&key)?;
-            
+
             if art.verify(&pub_key)? {
                 println!("Verification SUCCESSFUL");
             } else {

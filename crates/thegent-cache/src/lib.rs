@@ -85,7 +85,7 @@ where
             if !entry_ref.is_expired() {
                 // Clone the entire entry first
                 let entry_cloned = (*entry_ref).clone();
-                
+
                 // Promote to L1 using the cloned entry
                 {
                     let mut l1 = self.l1.write().unwrap();
@@ -190,10 +190,10 @@ mod tests {
         cache.set("key1".to_string(), "value1".to_string());
         cache.set("key2".to_string(), "value2".to_string());
         cache.set("key3".to_string(), "value3".to_string());
-        
+
         // key1 should be evicted from L1
         assert_eq!(cache.get(&"key1".to_string()), Some("value1".to_string()));
-        
+
         // All should be in L2
         assert!(cache.len_l2() >= 3);
     }

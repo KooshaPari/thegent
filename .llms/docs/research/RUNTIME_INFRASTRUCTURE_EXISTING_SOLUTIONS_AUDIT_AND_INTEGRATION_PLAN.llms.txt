@@ -6,11 +6,11 @@ Source: docs/research/RUNTIME_INFRASTRUCTURE_EXISTING_SOLUTIONS_AUDIT_AND_INTEGR
 
 # Runtime Infrastructure: Existing Solutions Audit & Integration Plan
 
-**Date:** 2026-02-17  
-**Status:** Research & Integration Planning  
+**Date:** 2026-02-17
+**Status:** Research & Integration Planning
 **Purpose:** Audit existing solutions, identify integration opportunities, and plan adoption of proven libraries
 
-**Last Updated:** 2026-02-17  
+**Last Updated:** 2026-02-17
 **Related:** [RUNTIME_INFRASTRUCTURE_RESOURCE_LEAKS_AUDIT_AND_PLAN.md](RUNTIME_INFRASTRUCTURE_RESOURCE_LEAKS_AUDIT_AND_PLAN.md)
 
 ---
@@ -205,7 +205,7 @@ def check_for_memory_leaks():
         tracemalloc.start()
         gc.collect()
         current_mem_usage = tracemalloc.get_traced_memory()[0]
-        
+
         try:
             yield
         finally:
@@ -696,7 +696,7 @@ def fd_count():
     if fd_path is not None:
         names = os.listdir(fd_path)
         return len(names) - 1  # Subtract listdir's own FD
-    
+
     # Fallback: scan with os.dup()
     count = 0
     for fd in range(MAXFD):
@@ -736,20 +736,20 @@ def runtest_refleak(test_name, test_func, hunt_refleak, quiet):
     """Run a test multiple times, looking for reference leaks."""
     warmups = hunt_refleak.warmups
     runs = hunt_refleak.runs
-    
+
     for i in range(warmups + runs):
         support.gc_collect()
         alloc_before = sys.getallocatedblocks()
         rc_before = sys.gettotalrefcount()
         fd_before = os_helper.fd_count()
-        
+
         result = test_func()
-        
+
         support.gc_collect()
         alloc_after = sys.getallocatedblocks()
         rc_after = sys.gettotalrefcount()
         fd_after = os_helper.fd_count()
-        
+
         # Check for leaks
         if alloc_after > alloc_before or fd_after > fd_before:
             # Leak detected
@@ -806,16 +806,16 @@ def _cleanup():
 def _terminate_pool(cls, taskqueue, inqueue, outqueue, pool, ...):
     # 1. Notify workers to stop
     taskqueue.put(None)
-    
+
     # 2. Terminate workers
     for p in pool:
         if p.exitcode is None:
             p.terminate()
-    
+
     # 3. Wait for workers
     for p in pool:
         p.join()
-    
+
     # 4. Close queues
     inqueue.close()
     outqueue.close()
@@ -840,12 +840,12 @@ def _join_executor_internals(self, broken=False):
     # 1. Shutdown workers
     if not broken:
         self.shutdown_workers()
-    
+
     # 2. Close queues
     self.call_queue.close()
     self.call_queue.join_thread()
     self.thread_wakeup.close()
-    
+
     # 3. Join processes
     for p in self.processes.values():
         if broken:
@@ -899,11 +899,11 @@ class ResourceStats:
 
 class ResourceMonitor:
     """Monitor system resources using psutil."""
-    
+
     def get_stats(self) -> ResourceStats:
         """Get current resource statistics."""
         process = psutil.Process()
-        
+
         # File descriptors (psutil handles cross-platform)
         try:
             fd_count = process.num_fds()  # psutil method
@@ -912,32 +912,32 @@ class ResourceMonitor:
             fd_count = len(open_files) + len(connections)
         except (psutil.AccessDenied, AttributeError):
             fd_count = 0
-        
+
         # FD limit
         try:
             import resource
             fd_limit = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
         except Exception:
             fd_limit = 1024
-        
+
         # Process count
         try:
             process_count = len(psutil.pids())
         except Exception:
             process_count = 0
-        
+
         # Memory (psutil provides RSS directly)
         try:
             memory_mb = process.memory_info().rss / 1024 / 1024
         except Exception:
             memory_mb = 0
-        
+
         # CPU (psutil provides percentage)
         try:
             cpu_percent = process.cpu_percent(interval=0.1)
         except Exception:
             cpu_percent = 0
-        
+
         return ResourceStats(
             fd_count=fd_count,
             fd_limit=fd_limit,
@@ -947,7 +947,7 @@ class ResourceMonitor:
             cpu_percent=cpu_percent,
             timestamp=time.time(),
         )
-    
+
     def get_process_info(self, pid: int) -> Optional[dict]:
         """Get detailed process information."""
         try:
@@ -993,20 +993,20 @@ from thegent.infra.process_registry import ProcessHandle, ProcessRegistry
 
 class ProcessHandle:
     """Enhanced with psutil integration."""
-    
+
     def get_psutil_process(self) -> Optional[psutil.Process]:
         """Get psutil Process object for introspection."""
         try:
             return psutil.Process(self.pid)
         except psutil.NoSuchProcess:
             return None
-    
+
     def get_resource_usage(self) -> Optional[dict]:
         """Get resource usage using psutil."""
         proc = self.get_psutil_process()
         if not proc:
             return None
-        
+
         try:
             return {
                 "memory_mb": proc.memory_info().rss / 1024 / 1024,
@@ -1021,13 +1021,13 @@ class ProcessHandle:
 
 class ProcessRegistry:
     """Enhanced with psutil integration."""
-    
+
     def cleanup_process_tree(self, pid: int, timeout: float = 10.0) -> int:
         """Clean up process and all children using psutil."""
         try:
             proc = psutil.Process(pid)
             children = proc.children(recursive=True)
-            
+
             cleaned = 0
             # Terminate children first
             for child in children:
@@ -1036,10 +1036,10 @@ class ProcessRegistry:
                     cleaned += 1
                 except psutil.NoSuchProcess:
                     pass
-            
+
             # Wait for children
             gone, alive = psutil.wait_procs(children, timeout=timeout)
-            
+
             # Kill any remaining
             for child in alive:
                 try:
@@ -1047,7 +1047,7 @@ class ProcessRegistry:
                     cleaned += 1
                 except psutil.NoSuchProcess:
                     pass
-            
+
             # Terminate parent
             try:
                 proc.terminate()
@@ -1059,7 +1059,7 @@ class ProcessRegistry:
                     proc.wait(timeout=2.0)
                 except psutil.NoSuchProcess:
                     pass
-            
+
             return cleaned
         except psutil.NoSuchProcess:
             return 0
@@ -1096,16 +1096,16 @@ from thegent.infra.subprocess_manager import get_subprocess_manager
 
 class TestSubprocessLeaks(MemoryLeakTestCase):
     """Test for subprocess resource leaks."""
-    
+
     def test_subprocess_manager_no_leak(self):
         """Test that SubprocessManager doesn't leak resources."""
         manager = get_subprocess_manager()
-        
+
         def create_processes():
             for i in range(10):
                 with manager.popen(["sleep", "0.1"], name=f"test-{i}"):
                     pass
-        
+
         # psleak will detect if this leaks
         self.execute(
             create_processes,
@@ -1115,14 +1115,14 @@ class TestSubprocessLeaks(MemoryLeakTestCase):
 
 class TestFileDescriptorLeaks(MemoryLeakTestCase):
     """Test for file descriptor leaks."""
-    
+
     def test_file_operations_no_leak(self):
         """Test that file operations don't leak FDs."""
         def open_files():
             for i in range(100):
                 with open(f"/tmp/test-{i}.txt", "w") as f:
                     f.write("test")
-        
+
         self.execute(
             open_files,
             times=10,
@@ -1164,7 +1164,7 @@ if os.getenv("CHECK_LEAKS") == "1":
         tracemalloc.start()
         gc.collect()
         current_mem_usage = tracemalloc.get_traced_memory()[0]
-        
+
         try:
             yield
         finally:
@@ -1186,28 +1186,28 @@ import pytest
 
 class TestMemoryLeaks:
     """Test for memory leaks using tracemalloc snapshots."""
-    
+
     def test_function_no_memory_leak(self):
         """Test that a function doesn't leak memory."""
         tracemalloc.start()
-        
+
         # Take initial snapshot
         snapshot1 = tracemalloc.take_snapshot()
-        
+
         # Run function multiple times
         for _ in range(100):
             my_function()
-        
+
         # Take final snapshot
         snapshot2 = tracemalloc.take_snapshot()
-        
+
         # Compare snapshots
         top_stats = snapshot2.compare_to(snapshot1, 'lineno')
-        
+
         # Check for significant leaks (>1MB)
         total_leaked = sum(stat.size_diff for stat in top_stats)
         assert total_leaked < 1_000_000, f"Memory leak detected: {total_leaked} bytes"
-        
+
         tracemalloc.stop()
 ```
 
@@ -1275,25 +1275,25 @@ def runtest_refleak(test_func, warmups=3, runs=5):
     for _ in range(warmups):
         test_func()
         gc.collect()
-    
+
     # Measurement runs
     alloc_deltas = []
     fd_deltas = []
-    
+
     for _ in range(runs):
         gc.collect()
         alloc_before = sys.getallocatedblocks()
         fd_before = os_helper.fd_count()
-        
+
         test_func()
-        
+
         gc.collect()
         alloc_after = sys.getallocatedblocks()
         fd_after = os_helper.fd_count()
-        
+
         alloc_deltas.append(alloc_after - alloc_before)
         fd_deltas.append(fd_after - fd_before)
-    
+
     # Check for leaks (all deltas should be <= 0)
     assert all(d <= 0 for d in alloc_deltas), f"Memory leak: {alloc_deltas}"
     assert all(d <= 0 for d in fd_deltas), f"FD leak: {fd_deltas}"
@@ -1323,16 +1323,16 @@ from thegent.infra.subprocess_manager import get_subprocess_manager
 
 class TestSubprocessLeaks(MemoryLeakTestCase):
     """Test for subprocess resource leaks."""
-    
+
     def test_subprocess_manager_no_leak(self):
         """Test that SubprocessManager doesn't leak resources."""
         manager = get_subprocess_manager()
-        
+
         def create_processes():
             for i in range(10):
                 with manager.popen(["sleep", "0.1"], name=f"test-{i}"):
                     pass
-        
+
         # psleak will detect if this leaks
         self.execute(
             create_processes,
@@ -1342,14 +1342,14 @@ class TestSubprocessLeaks(MemoryLeakTestCase):
 
 class TestFileDescriptorLeaks(MemoryLeakTestCase):
     """Test for file descriptor leaks."""
-    
+
     def test_file_operations_no_leak(self):
         """Test that file operations don't leak FDs."""
         def open_files():
             for i in range(100):
                 with open(f"/tmp/test-{i}.txt", "w") as f:
                     f.write("test")
-        
+
         self.execute(
             open_files,
             times=10,
@@ -1486,7 +1486,7 @@ def temp_rlimit(resource_type, limits):
         # Resource not supported on this platform
         yield
         return
-    
+
     try:
         resource.setrlimit(resource_type, limits)
         yield
@@ -1828,20 +1828,20 @@ from typing import Optional, List, Dict
 
 class ProcessHandle:
     """Enhanced with psutil integration."""
-    
+
     def get_psutil_process(self) -> Optional[psutil.Process]:
         """Get psutil Process object for introspection."""
         try:
             return psutil.Process(self.pid)
         except psutil.NoSuchProcess:
             return None
-    
+
     def get_resource_usage(self) -> Optional[Dict]:
         """Get resource usage using psutil."""
         proc = self.get_psutil_process()
         if not proc:
             return None
-        
+
         try:
             return {
                 "memory_mb": proc.memory_info().rss / 1024 / 1024,
@@ -1861,7 +1861,7 @@ class ProcessHandle:
         proc = self.get_psutil_process()
         if not proc:
             return []
-        
+
         try:
             children = proc.children(recursive=recursive)
             return [child.pid for child in children]
@@ -1870,15 +1870,15 @@ class ProcessHandle:
 
 class ProcessRegistry:
     """Enhanced with psutil integration."""
-    
+
     def cleanup_process_tree(self, pid: int, timeout: float = 10.0) -> int:
         """Clean up process and all children using psutil (CPython pattern)."""
         try:
             proc = psutil.Process(pid)
             children = proc.children(recursive=True)
-            
+
             cleaned = 0
-            
+
             # Terminate children first (CPython pattern)
             for child in children:
                 try:
@@ -1886,10 +1886,10 @@ class ProcessRegistry:
                     cleaned += 1
                 except psutil.NoSuchProcess:
                     pass
-            
+
             # Wait for children (CPython pattern)
             gone, alive = psutil.wait_procs(children, timeout=timeout)
-            
+
             # Kill any remaining (CPython pattern)
             for child in alive:
                 try:
@@ -1897,7 +1897,7 @@ class ProcessRegistry:
                     cleaned += 1
                 except psutil.NoSuchProcess:
                     pass
-            
+
             # Terminate parent
             try:
                 proc.terminate()
@@ -1909,7 +1909,7 @@ class ProcessRegistry:
                     proc.wait(timeout=2.0)
                 except psutil.NoSuchProcess:
                     pass
-            
+
             return cleaned
         except psutil.NoSuchProcess:
             return 0
@@ -1947,16 +1947,16 @@ from thegent.infra.resource_monitor import get_resource_monitor
 # psleak tests
 class TestSubprocessLeaks(MemoryLeakTestCase):
     """Test for subprocess resource leaks using psleak."""
-    
+
     def test_subprocess_manager_no_leak(self):
         """Test that SubprocessManager doesn't leak resources."""
         manager = get_subprocess_manager()
-        
+
         def create_processes():
             for i in range(10):
                 with manager.popen(["sleep", "0.1"], name=f"test-{i}"):
                     pass
-        
+
         self.execute(
             create_processes,
             times=50,
@@ -1965,16 +1965,16 @@ class TestSubprocessLeaks(MemoryLeakTestCase):
 
 class TestFileDescriptorLeaks(MemoryLeakTestCase):
     """Test for file descriptor leaks using psleak."""
-    
+
     def test_file_operations_no_leak(self):
         """Test that file operations don't leak FDs."""
         import tempfile
-        
+
         def open_files():
             for i in range(100):
                 with tempfile.NamedTemporaryFile(delete=True) as f:
                     f.write(b"test")
-        
+
         self.execute(
             open_files,
             times=10,
@@ -1983,11 +1983,11 @@ class TestFileDescriptorLeaks(MemoryLeakTestCase):
 
 class TestProcessRegistryLeaks(MemoryLeakTestCase):
     """Test for ProcessRegistry leaks."""
-    
+
     def test_registry_cleanup_no_leak(self):
         """Test that ProcessRegistry cleanup doesn't leak."""
         registry = get_registry()
-        
+
         def create_and_cleanup():
             # Create processes
             handles = []
@@ -1995,10 +1995,10 @@ class TestProcessRegistryLeaks(MemoryLeakTestCase):
                 proc = subprocess.Popen(["sleep", "0.1"])
                 handle = registry.register(proc=proc, name=f"test-{i}")
                 handles.append(handle)
-            
+
             # Cleanup
             registry.cleanup_all()
-        
+
         self.execute(
             create_and_cleanup,
             times=20,
@@ -2008,20 +2008,20 @@ class TestProcessRegistryLeaks(MemoryLeakTestCase):
 # tracemalloc tests
 class TestMemoryLeaksTracemalloc:
     """Test for memory leaks using tracemalloc."""
-    
+
     def test_function_no_memory_leak(self):
         """Test that a function doesn't leak memory."""
         tracemalloc.start()
-        
+
         snapshot1 = tracemalloc.take_snapshot()
-        
+
         # Run function multiple times
         for _ in range(100):
             my_function()
-        
+
         snapshot2 = tracemalloc.take_snapshot()
         top_stats = snapshot2.compare_to(snapshot1, 'lineno')
-        
+
         # Check for significant leaks (>1MB)
         total_leaked = sum(stat.size_diff for stat in top_stats if stat.size_diff > 0)
         assert total_leaked < 1_000_000, f"Memory leak detected: {total_leaked} bytes"
@@ -2029,35 +2029,35 @@ class TestMemoryLeaksTracemalloc:
 # CPython-style reference leak detection
 class TestReferenceLeaks:
     """Test for reference leaks using CPython pattern."""
-    
+
     def test_cpython_style_leak_detection(self):
         """Test using CPython's refleak pattern."""
         warmups = 3
         runs = 5
-        
+
         # Warmup runs
         for _ in range(warmups):
             my_function()
             gc.collect()
-        
+
         # Measurement runs
         alloc_deltas = []
         fd_deltas = []
-        
+
         for _ in range(runs):
             gc.collect()
             alloc_before = sys.getallocatedblocks()
             fd_before = os_helper.fd_count()
-            
+
             my_function()
-            
+
             gc.collect()
             alloc_after = sys.getallocatedblocks()
             fd_after = os_helper.fd_count()
-            
+
             alloc_deltas.append(alloc_after - alloc_before)
             fd_deltas.append(fd_after - fd_before)
-        
+
         # Check for leaks (all deltas should be <= 0)
         assert all(d <= 0 for d in alloc_deltas), f"Memory leak: {alloc_deltas}"
         assert all(d <= 0 for d in fd_deltas), f"FD leak: {fd_deltas}"
@@ -2070,7 +2070,7 @@ def check_for_memory_leaks():
         tracemalloc.start()
         gc.collect()
         current_mem_usage = tracemalloc.get_traced_memory()[0]
-        
+
         try:
             yield
         finally:

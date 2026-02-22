@@ -19,7 +19,7 @@ The basic foundation for Phase 13 (Policy Federation) has been implemented, incl
 - **Policy Engine Integration**: `src/thegent/contracts/policy.py`
 - **CLI Commands**: `src/thegent/main.py`
 - **Tests**: `tests/test_unit_governance_federation.py` (6 tests passing)
-- **Documentation**: 
+- **Documentation**:
   - `docs/research/phase13-policy-federation-surface-map.md`
   - `docs/research/phase13-tenant-boundary-test-matrix.md`
   - `docs/research/phase13-cost-sensitivity-experiment-plan.md`
@@ -37,4 +37,3 @@ The basic foundation for Phase 13 (Policy Federation) has been implemented, incl
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

@@ -1,7 +1,7 @@
 # Closeout Report — Agent F (Track F)
 
-Date: 2026-02-21  
-Repo: `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent`  
+Date: 2026-02-21
+Repo: `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent`
 Primary WLs: `WL-134`, `WL-135`
 
 ## Scope Closed

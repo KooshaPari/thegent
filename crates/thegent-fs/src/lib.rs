@@ -250,7 +250,7 @@ pub fn get_size(path: &Path) -> Result<u64> {
 /// Pattern uses standard glob syntax: `**` for recursive, `*` for any chars.
 pub fn glob_files(pattern: &str) -> Result<Vec<PathBuf>> {
     let mut matches = Vec::new();
-    
+
     for entry in glob::glob(pattern)
         .with_context(|| format!("invalid glob pattern: {}", pattern))?
     {
@@ -259,7 +259,7 @@ pub fn glob_files(pattern: &str) -> Result<Vec<PathBuf>> {
             Err(e) => eprintln!("warning: glob error: {}", e),
         }
     }
-    
+
     Ok(matches)
 }
 

@@ -182,4 +182,3 @@ thegent install --dry-run
 | macOS | SHELL | shell_path | Usually `/bin/zsh` or `/bin/bash` |
 | Windows | APPDATA | appdata_path | Required for Claude config paths |
 | Linux | SHELL | shell_path | Usually `/bin/bash` or `/bin/zsh` |
-

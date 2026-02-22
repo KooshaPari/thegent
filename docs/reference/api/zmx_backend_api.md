@@ -353,4 +353,3 @@ the backend is ``tmux`` or ``none`` (caller uses legacy path).
 # @trace FR-SES-001
 
 ---
-

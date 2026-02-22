@@ -100,4 +100,3 @@ tenant contexts.
 **Returns**: Execution result dict with returncode, stdout, stderr
 
 ---
-

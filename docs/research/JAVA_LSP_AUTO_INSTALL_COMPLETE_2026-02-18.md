@@ -1,6 +1,6 @@
 # Java LSP Auto-Install Complete
 
-**Date**: 2026-02-18  
+**Date**: 2026-02-18
 **Status**: ✅ Complete
 
 ## Summary
@@ -78,7 +78,7 @@ Successfully automated Java LSP (jdtls) installation and verified all LSP server
 ```bash
 $ thegent lsp install
 Installing all missing LSP servers...
-    Installation Results     
+    Installation Results
 ┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
 ┃ Language   ┃ Status       ┃
 ┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩

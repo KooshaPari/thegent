@@ -14,13 +14,13 @@ Instead of each runtime maintaining its own metrics and state, we will use a **M
 struct GlobalState {
     // Provider Health & Quotas
     providers: [ProviderState; 32],
-    
+
     // Circuit Breakers
     circuit_breakers: [AtomicBool; 32],
-    
+
     // Global Token Buckets (Rate Limiting)
     rate_limits: [TokenBucket; 64],
-    
+
     // Real-time Telemetry Ring Buffer
     telemetry_log: RingBuffer<SpanEntry, 1024>,
 }
@@ -79,16 +79,16 @@ graph TD
     ThegentBrain[Python: Thegent] --> SHM
     RustRouter[Rust: thegent-router] --> SHM
     MojoAccel[Mojo: Accelerator] --> SHM
-    
+
     subgraph "Native Layer"
         SHM
         RustRouter
     end
-    
+
     subgraph "Networking Layer"
         GoProxy
     end
-    
+
     subgraph "Logic Layer"
         ThegentBrain
         MojoAccel

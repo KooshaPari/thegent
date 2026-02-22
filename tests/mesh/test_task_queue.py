@@ -129,6 +129,15 @@ class TestDequeue:
         assert result is not None
         assert result["attempts"] == 1
 
+    def test_owner_recorded_when_provided(self, queue: MaildirQueue) -> None:
+        """dequeue() records the optional owner on the returned envelope."""
+        queue.enqueue({"a": 1})
+        result = queue.dequeue(owner="agent-007")
+        assert result is not None
+        assert result["owner"] == "agent-007"
+        cur_task = json.loads((queue._cur / result["id"]).read_text(encoding="utf-8"))
+        assert cur_task["owner"] == "agent-007"
+
     def test_empty_after_single_dequeue(self, queue: MaildirQueue) -> None:
         """A queue with one task is empty after one dequeue()."""
         queue.enqueue({"a": 1})
@@ -301,6 +310,25 @@ class TestListPending:
         pending_ids = {e["id"] for e in queue.list_pending()}
         assert id_new in pending_ids
         assert id_inflight in pending_ids
+
+
+class TestReclaimOwner:
+    """reclaim_owner() returns tasks claimed by a specific agent."""
+
+    def test_reclaim_owner_moves_cur_tasks_to_new(self, queue: MaildirQueue) -> None:
+        """reclaim_owner() moves only matching-owner tasks from cur/ back to new/."""
+        first = queue.enqueue({"a": 1})
+        queue.dequeue(owner="agent-stale")
+        queue.enqueue({"a": 2})
+        result_other = queue.dequeue(owner="agent-active")
+        assert result_other is not None
+
+        reclaimed = queue.reclaim_owner("agent-stale")
+        assert reclaimed == 1
+
+        assert (queue._new / first).exists()
+        assert not (queue._cur / first).exists()
+        assert any(path.name == result_other["id"] for path in queue._cur.iterdir())
 
 
 # ---------------------------------------------------------------------------

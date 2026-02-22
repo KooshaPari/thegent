@@ -1,7 +1,7 @@
 # Governance Override Expired Event - Implementation Status
 
-> **WORK_STREAM ID:** gov-wp-3003-enhance  
-> **Priority:** P3 (Optional Enhancement)  
+> **WORK_STREAM ID:** gov-wp-3003-enhance
+> **Priority:** P3 (Optional Enhancement)
 > **Status:** ✅ Complete
 
 ## Summary

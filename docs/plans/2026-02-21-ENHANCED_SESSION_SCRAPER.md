@@ -96,3 +96,75 @@
 18. Added unit coverage for trigger/tag histogram correctness.
 19. Added unit coverage for index JSON/markdown export.
 20. Recorded execution batch progress for WL-156 indexing pipeline.
+
+## Next-35 Execution Wave (6 Child Agents + Primary) — Completed
+1. Added `since` filter support in snapshot listing API.
+2. Added `prune_snapshots` API with keep-limit semantics.
+3. Added `list_triggers` API for unique trigger discovery.
+4. Added `list_tags` API for frequency-ranked tag discovery.
+5. Enforced fail-open behavior for invalid snapshot records.
+6. Added focused batch test file for scraper wave additions.
+7. Added malformed-json coverage for list/prune behavior.
+8. Added trigger uniqueness coverage.
+9. Added tag frequency ordering coverage.
+10. Added since-filter coverage.
+11. Added dedicated snapshot CLI helper module.
+12. Added helper payload for snapshot list output.
+13. Added helper payload for snapshot index output.
+14. Added helper payload for snapshot export output.
+15. Added helper payload for snapshot prune output.
+16. Added helper payload for trigger/tag metadata output.
+17. Added focused batch test file for helper module.
+18. Added helper list payload shape/count coverage.
+19. Added helper index top-tags cap coverage.
+20. Added helper export payload coverage.
+21. Added helper prune payload coverage.
+22. Added helper trigger/tag payload coverage.
+23. Added JSON companion dump API for runtime dump writer.
+24. Added optional `write_json_companion` toggle to markdown dump writer.
+25. Added `json_companion_path` metadata propagation.
+26. Added recursive JSON dump listing API.
+27. Added focused batch test file for dump-writer wave additions.
+28. Added companion JSON default-write coverage.
+29. Added companion JSON opt-out coverage.
+30. Added markdown metadata json-path coverage.
+31. Added recursive JSON list coverage.
+32. Added snapshot command helpers to `team_cmds` (`list/index/export/prune/meta`).
+33. Integrated helper payload rendering in team command output paths.
+34. Resolved prune malformed-file behavior to satisfy fail-open contract.
+35. Validated combined wave with targeted regression suite (25 passing tests).
+
+## Next-35 Execution Wave 2 (Completed)
+1. Added daily snapshot aggregation API by day (`summarize_snapshots_by_day`).
+2. Added daily snapshot JSON index persistence (`persist_snapshot_daily_index`).
+3. Added daily snapshot markdown rendering/export (`snapshot_daily_index_markdown`, `export_snapshot_daily_index_markdown`).
+4. Added CLI helper payloads for daily index/export and strengthened helper delegation/fallback behavior for list/prune paths.
+5. Added focused batch test coverage for scraper daily APIs and CLI daily helper payloads.
+
+## Next-35 Execution Wave 3 (Completed)
+1. Surfaced snapshot operations under `memory snapshot` CLI app (`list/index/export/prune/meta`).
+2. Surfaced daily snapshot operations under `memory snapshot` (`daily-index`, `daily-export`).
+3. Added snapshot/dump command export coverage in `team_cmds.__all__` for CLI shim visibility.
+4. Hardened snapshot daily helper payload compatibility with `daily` lookup + export alias keys.
+5. Added focused command/help + payload compatibility test coverage for snapshot CLI surfaces.
+
+## Next-35 Execution Wave 4 (Completed)
+1. Added snapshot export JSON-mode support end-to-end from memory app -> team command.
+2. Added daily export format pass-through (`rich|json`) in memory snapshot app.
+3. Improved daily index rich rendering to prefer canonical `snapshots` metric with fallback.
+4. Added daily helper summary totals (`total_prompts`, `total_commands`, `total_files`) and lightweight totals payload API.
+5. Added focused routing/output tests for memory + team snapshot command surfaces.
+
+## Next-35 Execution Wave 5 (Completed)
+1. Added `snapshot_daily_totals_cmd` to team command surface for compact daily metrics output.
+2. Added `memory snapshot daily-totals` app command with rich/json output parity.
+3. Added filter-aware daily helper payload contracts (trigger/tag/since) for index/totals/export.
+4. Added dedicated batch-9 tests for daily helper filter propagation and totals behavior.
+5. Added command routing/export tests for new daily totals and dump categories surfaces.
+
+## Next-35 Execution Wave 6 (Completed)
+1. Added daily filter option plumbing (`trigger/tag/since`) across team commands and memory app daily commands.
+2. Added helper-level filter passthrough for daily index/totals/export payload generation.
+3. Added applied-filter aliases (`applied_filters`) for daily index/totals/export payloads.
+4. Added focused command routing tests for daily filter options at both team and memory layers.
+5. Added batch-10 helper tests for filter alias/propagation behavior.

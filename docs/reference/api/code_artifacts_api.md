@@ -117,4 +117,3 @@ Create file operation artifact.
 **Returns**: FileOperationArtifact instance
 
 ---
-

@@ -458,4 +458,3 @@ tracked entries, all entries are returned.
 **Returns**: List of :class:`FrecencyEntry` sorted by score descending.
 
 ---
-

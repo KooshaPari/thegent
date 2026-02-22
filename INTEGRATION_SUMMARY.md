@@ -12,7 +12,7 @@ thegent/
 │   └── document/
 │       ├── __init__.py              ✅ Module exports
 │       ├── scanner.py               ✅ Markdown file scanner
-│       ├── queue_manager.py         ✅ Queue state management  
+│       ├── queue_manager.py         ✅ Queue state management
 │       ├── processor.py             ✅ Document processing pipeline
 │       └── analyzer.py               ✅ Document analysis
 ├── mcp/

@@ -324,4 +324,3 @@ stop(self: Any)
 Signal the session to stop.
 
 ---
-

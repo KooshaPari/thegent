@@ -22,7 +22,7 @@ export fn process_input(input_ptr: usize, input_len: usize) usize {
 export fn get_capabilities() u32 {
     // Return capability bitmask
     // Bit 0: can_read_memory
-    // Bit 1: can_write_memory  
+    // Bit 1: can_write_memory
     // Bit 2: can_network
     return 0b111;
 }

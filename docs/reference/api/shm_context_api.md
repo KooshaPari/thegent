@@ -139,4 +139,3 @@ write_context(self: Any, data: bytes, offset: int)
 Write context data directly to memory-mapped file.
 
 ---
-

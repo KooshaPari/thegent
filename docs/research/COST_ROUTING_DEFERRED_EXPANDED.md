@@ -1,16 +1,16 @@
 # Cost Routing Deferred — Formal Decision Record
 
-> **Status**: Complete | **Date**: 2026-02-17  
-> **Source**: Expanded from [COST_ROUTING_DEFERRED.md](./COST_ROUTING_DEFERRED.md)  
+> **Status**: Complete | **Date**: 2026-02-17
+> **Source**: Expanded from [COST_ROUTING_DEFERRED.md](./COST_ROUTING_DEFERRED.md)
 > **Purpose**: Formal decision record for cost routing deferral with unblock criteria
 
 ---
 
 ## Executive Summary
 
-**Decision**: Defer cost routing implementation  
-**Rationale**: Current routing sufficient; cost routing requires additional infrastructure  
-**Unblock Criteria**: Defined below  
+**Decision**: Defer cost routing implementation
+**Rationale**: Current routing sufficient; cost routing requires additional infrastructure
+**Unblock Criteria**: Defined below
 **Status**: Documented for future implementation
 
 ---
@@ -135,8 +135,8 @@
 
 ## Monitoring & Review
 
-**Review Schedule**: Quarterly  
-**Next Review**: 2026-05-17  
+**Review Schedule**: Quarterly
+**Next Review**: 2026-05-17
 **Review Criteria**: Check unblock criteria status
 
 **Metrics to Track**:
@@ -175,11 +175,11 @@ from thegent.planning.selector import ObjectiveSelector
 
 class CostRouter:
     """Cost-aware routing for model selection."""
-    
+
     def __init__(self, cost_tracker: CostTracker):
         self.cost_tracker = cost_tracker
         self.selector = ObjectiveSelector()
-    
+
     def select_model(
         self,
         requirements: dict,
@@ -189,16 +189,16 @@ class CostRouter:
         """Select model based on cost and quality requirements."""
         # Get available models with cost estimates
         models = self._get_available_models(requirements)
-        
+
         # Filter by budget
         affordable_models = [
             m for m in models
             if m["estimated_cost"] <= budget
         ]
-        
+
         if not affordable_models:
             raise BudgetExceededError(f"No models within budget: {budget}")
-        
+
         # Select based on objective
         if objective == "cost_quality":
             return self.selector.select_cost_quality(affordable_models)
@@ -244,14 +244,14 @@ class CostRouter:
 
 ---
 
-**Status**: Formal decision record complete  
+**Status**: Formal decision record complete
 **Next Steps**: Monitor unblock criteria, review quarterly
 
 ---
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

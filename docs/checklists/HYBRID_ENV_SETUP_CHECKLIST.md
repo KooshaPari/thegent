@@ -1,6 +1,6 @@
 # Hybrid Mac/Windows Environment Setup Checklist
 
-**Status:** Checklist | **Date:** 2026-02-16  
+**Status:** Checklist | **Date:** 2026-02-16
 **Use this checklist to track setup progress**
 
 ---
@@ -343,19 +343,19 @@
 
 **Issues Encountered:**
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 **Lessons Learned:**
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ---
 
-**Checklist Version:** 1.0  
+**Checklist Version:** 1.0
 **Last Updated:** 2026-02-16
 
 ---

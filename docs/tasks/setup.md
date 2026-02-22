@@ -50,7 +50,7 @@ Runtime policy note:
 
 **Problem**: `brew bundle` fails because Homebrew is not installed.
 
-**Solution**: 
+**Solution**:
 ```bash
 # Install Homebrew first
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"

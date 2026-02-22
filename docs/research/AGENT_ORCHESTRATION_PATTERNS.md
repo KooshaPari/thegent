@@ -73,7 +73,7 @@ class Agent:
     def __init__(self, name: str, specialty: str):
         self.name = name
         self.specialty = specialty
-    
+
     async def analyze(self, query: str) -> str:
         """Simulate agent thinking"""
         await asyncio.sleep(0.1)  # Simulated work
@@ -86,11 +86,11 @@ async def parallel_analysis(query: str) -> List[str]:
         Agent("Bob", "Testing"),
         Agent("Charlie", "Architecture")
     ]
-    
+
     # Fan-out: launch all in parallel
     tasks = [agent.analyze(query) for agent in agents]
     results = await asyncio.gather(*tasks)  # Wait for all
-    
+
     return results
 
 # Usage
@@ -121,7 +121,7 @@ class Task:
     name: str
     func: Callable
     depends_on: Set[str] = None
-    
+
     def __post_init__(self):
         if self.depends_on is None:
             self.depends_on = set()
@@ -130,24 +130,24 @@ class DAGOrchestrator:
     def __init__(self):
         self.tasks: Dict[str, Task] = {}
         self.results: Dict[str, Any] = {}
-    
+
     def add_task(self, task: Task):
         self.tasks[task.name] = task
-    
+
     async def execute(self):
         """Execute DAG respecting dependencies"""
         completed = set()
-        
+
         while len(completed) < len(self.tasks):
             # Find tasks ready to run (all deps completed)
             ready = [
                 name for name, task in self.tasks.items()
                 if name not in completed and task.depends_on <= completed
             ]
-            
+
             if not ready:
                 raise ValueError("Circular dependency detected")
-            
+
             # Run ready tasks in parallel
             tasks = [
                 asyncio.create_task(self._run_task(name))
@@ -155,7 +155,7 @@ class DAGOrchestrator:
             ]
             await asyncio.gather(*tasks)
             completed.update(ready)
-    
+
     async def _run_task(self, name: str):
         task = self.tasks[name]
         print(f"Executing {name}...")
@@ -169,15 +169,15 @@ async def example():
     # analyze    validate
     #   \        /
     #    combine
-    
+
     dag = DAGOrchestrator()
-    
+
     dag.add_task(Task("fetch_data", lambda results: "raw_data"))
     dag.add_task(Task("analyze", lambda results: f"analysis of {results.get('fetch_data')}"))
     dag.add_task(Task("validate", lambda results: f"validation of {results.get('fetch_data')}"))
-    dag.add_task(Task("combine", lambda results: f"combined: {results.get('analyze')} + {results.get('validate')}", 
+    dag.add_task(Task("combine", lambda results: f"combined: {results.get('analyze')} + {results.get('validate')}",
                       depends_on={"analyze", "validate"}))
-    
+
     await dag.execute()
     print(dag.results)
 ```
@@ -205,22 +205,22 @@ class WorkStealingScheduler:
     def __init__(self, num_workers: int = 4):
         self.workers = [deque() for _ in range(num_workers)]
         self.num_workers = num_workers
-    
+
     def enqueue_task(self, task: Callable, worker_id: int = None):
         """
         Enqueue task. If worker_id not specified, use least-loaded worker.
         """
         if worker_id is None:
             # Use load balancing: assign to least-loaded queue
-            worker_id = min(range(self.num_workers), 
+            worker_id = min(range(self.num_workers),
                           key=lambda i: len(self.workers[i]))
-        
+
         self.workers[worker_id].append(task)
-    
+
     async def work_steal_loop(self, worker_id: int):
         """Worker loop with work-stealing capability"""
         my_queue = self.workers[worker_id]
-        
+
         while True:
             # Try to get work from own queue
             if my_queue:
@@ -235,7 +235,7 @@ class WorkStealingScheduler:
                     if other_id != worker_id and len(self.workers[other_id]) > max_load:
                         max_load = len(self.workers[other_id])
                         victim = other_id
-                
+
                 if victim is not None:
                     # Steal half of victim's tasks
                     stolen_count = len(self.workers[victim]) // 2
@@ -250,19 +250,19 @@ class LoadBalancer:
     """Alternative: centralized load balancing with cost awareness"""
     def __init__(self, num_workers: int = 4):
         self.workers = [{"queue": [], "cost": 0} for _ in range(num_workers)]
-    
+
     def enqueue_with_cost(self, task: Callable, estimated_cost: float):
         """Assign to worker with lowest total cost"""
         cheapest = min(range(len(self.workers)),
                       key=lambda i: self.workers[i]["cost"])
         self.workers[cheapest]["queue"].append(task)
         self.workers[cheapest]["cost"] += estimated_cost
-    
+
     def rebalance(self):
         """Periodically rebalance when costs diverge"""
         total_cost = sum(w["cost"] for w in self.workers)
         target_cost = total_cost / len(self.workers)
-        
+
         for worker in self.workers:
             if worker["cost"] > target_cost * 1.5:
                 # This worker is overloaded; mark for migration
@@ -299,13 +299,13 @@ class Event:
 class EventBus:
     def __init__(self):
         self.subscribers: dict[str, List[Callable]] = {}
-    
+
     def subscribe(self, event_type: str, handler: Callable):
         """Subscribe handler to event type"""
         if event_type not in self.subscribers:
             self.subscribers[event_type] = []
         self.subscribers[event_type].append(handler)
-    
+
     async def publish(self, event: Event):
         """Publish event to all subscribers"""
         if event.event_type in self.subscribers:
@@ -323,16 +323,16 @@ class Agent:
         # Subscribe to relevant events
         self.bus.subscribe("data_ready", self.on_data_ready)
         self.bus.subscribe("result", self.on_result)
-    
+
     async def on_data_ready(self, event: Event):
         """Handle incoming data"""
         print(f"{self.name} received data from {event.source}: {event.data}")
         self.state["input"] = event.data
-        
+
         # Process and emit result
         result = f"Processed: {event.data['content']}"
         await self.bus.publish(Event("result", {"result": result}, self.name))
-    
+
     async def on_result(self, event: Event):
         """Handle results from other agents"""
         if event.source != self.name:
@@ -341,13 +341,13 @@ class Agent:
 # Usage
 async def example():
     bus = EventBus()
-    
+
     agents = [
         Agent("DataProcessor", bus),
         Agent("Analyzer", bus),
         Agent("Aggregator", bus)
     ]
-    
+
     # Trigger workflow
     await bus.publish(Event("data_ready", {"content": "raw_input"}, "Source"))
     await asyncio.sleep(0.1)  # Let async tasks complete
@@ -366,25 +366,25 @@ class SharedStateCoordinator:
             "decision": None,
             "locks": {}  # For coordination
         }
-    
+
     def agent1_process(self):
         """Agent 1: fetch and store data"""
         self.state["data"] = "fetched_data"
         print(f"Agent 1: stored data = {self.state['data']}")
-    
+
     def agent2_analyze(self):
         """Agent 2: wait for data, then analyze"""
         while self.state["data"] is None:
             pass  # Spin (bad) - should use Event instead
-        
+
         self.state["analysis"] = f"Analysis of {self.state['data']}"
         print(f"Agent 2: analysis = {self.state['analysis']}")
-    
+
     def agent3_decide(self):
         """Agent 3: wait for analysis, then decide"""
         while self.state["analysis"] is None:
             pass
-        
+
         self.state["decision"] = "Decision based on analysis"
         print(f"Agent 3: decision = {self.state['decision']}")
 ```
@@ -413,24 +413,24 @@ class AgentPool:
         self.pool_size = pool_size
         self.available: asyncio.Queue = asyncio.Queue(maxsize=pool_size)
         self.in_use = 0
-    
+
     async def initialize(self):
         """Create initial agents"""
         for _ in range(self.pool_size):
             agent = await self.factory()
             await self.available.put(agent)
-    
+
     async def acquire(self) -> "Agent":
         """Get an agent from pool (wait if none available)"""
         agent = await self.available.get()
         self.in_use += 1
         return agent
-    
+
     async def release(self, agent: "Agent"):
         """Return agent to pool"""
         self.in_use -= 1
         await self.available.put(agent)
-    
+
     async def context_manager(self):
         """Use with 'async with' for automatic release"""
         agent = await self.acquire()
@@ -444,18 +444,18 @@ class LLMAgent:
     def __init__(self, model: str):
         self.model = model
         self.context = ""  # State to persist
-    
+
     async def reset(self):
         """Reset agent for reuse"""
         self.context = ""
-    
+
     async def process(self, task: str) -> str:
         return f"Result from {self.model}: {task}"
 
 async def example():
     pool = AgentPool(lambda: LLMAgent("gpt-4"), pool_size=4)
     await pool.initialize()
-    
+
     async def worker(task_id: int):
         agent = await pool.acquire()
         try:
@@ -463,7 +463,7 @@ async def example():
             print(result)
         finally:
             await agent.release(agent)
-    
+
     # 20 tasks using only 4 agents
     await asyncio.gather(*[worker(i) for i in range(20)])
 ```
@@ -478,7 +478,7 @@ class DynamicAgentOrchestrator:
         self.agents = []
         self.queue_length = 0
         self.target_utilization = 0.7  # Keep queue/agents ratio
-    
+
     def spawn_agent(self) -> "Agent":
         """Spawn a new agent (up to max)"""
         if len(self.agents) < self.max_agents:
@@ -487,7 +487,7 @@ class DynamicAgentOrchestrator:
             print(f"Spawned agent #{len(self.agents)}")
             return agent
         return None
-    
+
     def reap_agent(self) -> bool:
         """Kill an idle agent (above minimum)"""
         if len(self.agents) > self.min_agents:
@@ -495,19 +495,19 @@ class DynamicAgentOrchestrator:
             print(f"Reaped agent, now {len(self.agents)} agents")
             return True
         return False
-    
+
     async def adjust_pool(self):
         """Monitor and adjust pool size dynamically"""
         while True:
             utilization = self.queue_length / max(len(self.agents), 1)
-            
+
             if utilization > self.target_utilization:
                 # Spawn more agents
                 self.spawn_agent()
             elif utilization < self.target_utilization / 2:
                 # Kill idle agents
                 self.reap_agent()
-            
+
             await asyncio.sleep(5)  # Check every 5 seconds
 ```
 
@@ -533,41 +533,41 @@ class AdaptiveOrchestrator:
     - Hierarchical topology: spawn manager + worker agents
     - Hybrid: mix based on task analysis
     """
-    
+
     @staticmethod
     def analyze_task(task_spec: dict) -> str:
         """Analyze task dependencies to pick topology"""
         dependencies = task_spec.get("dependencies", [])
         num_subtasks = task_spec.get("num_subtasks", 1)
-        
+
         if not dependencies:
             return "parallel"  # No deps → all in parallel
         elif len(dependencies) == 1:
             return "sequential"  # Linear chain
         else:
             return "hierarchical"  # DAG → manager + workers
-    
+
     async def spawn_for_topology(self, topology: str, task: dict) -> list:
         """Spawn agents according to topology"""
         agents = []
-        
+
         if topology == "parallel":
             # Create one agent per independent subtask
             for subtask in task["subtasks"]:
                 agents.append(Agent(subtask))
-        
+
         elif topology == "sequential":
             # Create pipeline of agents, each processes sequentially
             for step in task["steps"]:
                 agents.append(Agent(step, input_queue=agents[-1].output if agents else None))
-        
+
         elif topology == "hierarchical":
             # Create manager + workers for complex DAG
             manager = Agent("manager", orchestrator=self)
             for worker_task in task["parallel_subtasks"]:
                 agents.append(Agent(worker_task, manager=manager))
             agents.insert(0, manager)
-        
+
         return agents
 ```
 
@@ -593,39 +593,39 @@ class SlidingWindowContextManager:
         self.overlap = overlap
         self.context_history = deque()
         self.current_window = ""
-    
+
     def add_content(self, text: str, estimate_tokens: int = None):
         """Add new content and manage sliding window"""
         if estimate_tokens is None:
             estimate_tokens = len(text.split()) // 4  # Rough estimate
-        
+
         # Add to current window
         current_size = len(self.current_window.split()) // 4
-        
+
         if current_size + estimate_tokens > self.max_tokens:
             # Window full - slide forward
             self._slide_window()
-        
+
         self.current_window += text + "\n"
-    
+
     def _slide_window(self):
         """Keep overlap tokens, remove oldest content"""
         lines = self.current_window.split("\n")
-        
+
         # Calculate which lines to keep (overlap)
         overlap_lines = int(self.overlap / 4)  # Rough token-to-line ratio
-        
+
         # Archive oldest lines
         archived = "\n".join(lines[:-overlap_lines])
         self.context_history.append(archived)
-        
+
         # Keep overlap for continuity
         self.current_window = "\n".join(lines[-overlap_lines:])
-    
+
     def get_context(self) -> str:
         """Get current relevant context for LLM"""
         return self.current_window
-    
+
     def retrieve_history(self, query: str) -> str:
         """Retrieve relevant historical context (BM25, semantic search)"""
         # Simplified: could use semantic similarity
@@ -655,22 +655,22 @@ class HierarchicalContextManager:
             1: "",  # Intermediate detail
             2: "",  # Full detail
         }
-    
+
     async def build_hierarchy(self, full_content: str):
         """Build context hierarchy from full content"""
         # Level 2: Full content
         self.levels[2] = full_content
-        
+
         # Level 1: Intermediate (remove examples, keep structure)
         self.levels[1] = self._extract_intermediate(full_content)
-        
+
         # Level 0: Summary (key points only)
         self.levels[0] = await self._summarize(full_content)
-    
+
     def get_context(self, detail_level: int = 2) -> str:
         """Get context at appropriate detail level"""
         return self.levels[detail_level]
-    
+
     def _extract_intermediate(self, content: str) -> str:
         """Remove verbose examples, keep structure"""
         lines = content.split("\n")
@@ -680,14 +680,14 @@ class HierarchicalContextManager:
             if not line.startswith("```") and not line.startswith("Example:")
         ]
         return "\n".join(filtered)
-    
+
     async def _summarize(self, content: str) -> str:
         """Generate summary using LLM or extractive methods"""
         # Simplified: extract first N lines + key sentences
         sentences = content.split(". ")
         summary = ". ".join(sentences[:3]) + "..."
         return summary
-    
+
     def switch_level(self, new_level: int):
         """Dynamically adjust detail as needed"""
         if len(self.get_context(new_level).split()) > self.max_tokens:
@@ -707,7 +707,7 @@ import json
 
 class ContextCompressor:
     """Reduce context size while preserving critical information"""
-    
+
     @staticmethod
     def extractive_compression(text: str, ratio: float = 0.3) -> str:
         """Keep most important sentences"""
@@ -716,21 +716,21 @@ class ContextCompressor:
         # Better: use TF-IDF or LLM scoring
         keep_count = max(1, int(len(sentences) * ratio))
         return ". ".join(sentences[:keep_count])
-    
+
     @staticmethod
     async def abstractive_compression(text: str, target_tokens: int = 256) -> str:
         """Use LLM to generate summary (better quality)"""
         # Pseudo-code: actual LLM call
         summary = await llm.summarize(text, target_tokens=target_tokens)
         return summary
-    
+
     @staticmethod
     def semantic_compression(tokens: List[str], embeddings) -> List[str]:
         """Keep semantically diverse tokens, remove redundant ones"""
         # Iterate: for each new token, if similar to existing, skip
         kept = []
         threshold = 0.85  # Similarity threshold
-        
+
         for token in tokens:
             is_redundant = any(
                 similarity(token, existing) > threshold
@@ -738,9 +738,9 @@ class ContextCompressor:
             )
             if not is_redundant:
                 kept.append(token)
-        
+
         return kept
-    
+
     @staticmethod
     def json_compression(data: dict) -> dict:
         """Compress structured data by removing low-signal fields"""
@@ -765,27 +765,27 @@ compressed = ContextCompressor.extractive_compression(original, ratio=0.2)
 ```python
 class StreamingContextProcessor:
     """Process documents without holding entire context in memory"""
-    
+
     def __init__(self, chunk_size: int = 512, overlap: int = 64):
         self.chunk_size = chunk_size
         self.overlap = overlap
         self.buffer = ""
         self.results = []
-    
+
     async def process_stream(self, stream):
         """Process streaming input chunk by chunk"""
         async for chunk in stream:
             self.buffer += chunk
-            
+
             # When buffer is large enough, process and slide
             while len(self.buffer) >= self.chunk_size:
                 window = self.buffer[:self.chunk_size]
                 result = await self.process_window(window)
                 self.results.append(result)
-                
+
                 # Slide with overlap
                 self.buffer = self.buffer[self.chunk_size - self.overlap:]
-    
+
     async def process_window(self, window: str):
         """Process single window without keeping full context"""
         # Could call LLM on this window
@@ -816,56 +816,56 @@ class ConversationManager:
         self.keep_system = keep_system
         self.system_prompt = ""
         self.messages: List[Message] = []
-    
+
     def add_message(self, role: str, content: str):
         """Add message and auto-truncate if needed"""
         msg = Message(role, content, datetime.now(), len(content.split()))
         self.messages.append(msg)
         self._enforce_window()
-    
+
     def _enforce_window(self):
         """Keep messages within context window"""
         # Always keep system prompt
         base_tokens = len(self.system_prompt.split())
         available = self.max_window_tokens - base_tokens
-        
+
         current = 0
         keep_from = 0
-        
+
         # Iterate from most recent backwards
         for i in range(len(self.messages) - 1, -1, -1):
             current += self.messages[i].tokens
             if current > available:
                 keep_from = i + 1
                 break
-        
+
         # Discard old messages (but log them)
         if keep_from > 0:
             discarded = self.messages[:keep_from]
             print(f"Discarded {len(discarded)} old messages to fit window")
-        
+
         self.messages = self.messages[keep_from:]
-    
+
     def get_context(self) -> List[dict]:
         """Get formatted context for LLM"""
         context = []
-        
+
         if self.keep_system:
             context.append({"role": "system", "content": self.system_prompt})
-        
+
         for msg in self.messages:
             context.append({"role": msg.role, "content": msg.content})
-        
+
         return context
-    
+
     def summarize_old_messages(self, keep_recent: int = 5):
         """Summarize older messages to recover tokens"""
         if len(self.messages) <= keep_recent:
             return
-        
+
         old = self.messages[:-keep_recent]
         summary = f"[Previous conversation summary: Discussed {len(old)} exchanges about ...]"
-        
+
         # Replace old messages with summary
         self.messages = [
             Message("system", summary, old[0].timestamp, len(summary.split())),
@@ -897,14 +897,14 @@ class TokenStreamer:
     def __init__(self, backpressure_threshold: int = 10):
         self.token_queue: asyncio.Queue = asyncio.Queue()
         self.backpressure_threshold = backpressure_threshold
-    
+
     async def stream_tokens(self) -> AsyncGenerator[str, None]:
         """Stream tokens with backpressure handling"""
         while True:
             # Backpressure: slow down producer if queue gets large
             if self.token_queue.qsize() > self.backpressure_threshold:
                 await asyncio.sleep(0.01)
-            
+
             try:
                 token = self.token_queue.get_nowait()
                 yield token
@@ -913,11 +913,11 @@ class TokenStreamer:
                 if self.is_complete:
                     break
                 await asyncio.sleep(0.001)
-    
+
     async def add_token(self, token: str):
         """Producer: add tokens to stream"""
         await self.token_queue.put(token)
-    
+
     # Mock LLM streaming
     async def mock_llm_stream(self):
         """Simulate LLM producing tokens"""
@@ -930,14 +930,14 @@ class TokenStreamer:
 # Usage
 async def example():
     streamer = TokenStreamer()
-    
+
     # Start LLM in background
     llm_task = asyncio.create_task(streamer.mock_llm_stream())
-    
+
     # Consume stream
     async for token in streamer.stream_tokens():
         print(token, end="", flush=True)
-    
+
     await llm_task
     print()
 ```
@@ -966,29 +966,29 @@ class PartialResult:
 
 class PartialResultHandler:
     """Handle streaming results as they arrive"""
-    
+
     def __init__(self, on_partial=None, on_complete=None):
         self.on_partial = on_partial
         self.on_complete = on_complete
         self.accumulated = ""
-    
+
     async def process_chunk(self, chunk: str):
         """Process incoming chunk"""
         self.accumulated += chunk
-        
+
         # Check if we have complete units
         while "\n" in self.accumulated:
             line, self.accumulated = self.accumulated.split("\n", 1)
-            
+
             result = PartialResult(
                 status=ResultStatus.PARTIAL,
                 content=line,
                 confidence=0.8  # Partial confidence lower
             )
-            
+
             if self.on_partial:
                 await self.on_partial(result)
-        
+
         # Emit final result
         if self.is_stream_done:
             result = PartialResult(
@@ -1018,24 +1018,24 @@ handler = PartialResultHandler(on_partial, on_complete)
 ```python
 class BackpressureManager:
     """Prevent memory overflow when producer > consumer"""
-    
+
     def __init__(self, max_buffer: int = 100):
         self.max_buffer = max_buffer
         self.buffer = asyncio.Queue(maxsize=max_buffer)
         self.paused = False
-    
+
     async def produce(self, item):
         """Producer: add item, auto-pause if full"""
         if self.buffer.full():
             self.paused = True
             print("⚠️  Buffer full, pausing producer")
-        
+
         await self.buffer.put(item)
-        
+
         # Signal producer to resume if we drop below threshold
         if self.buffer.qsize() < self.max_buffer * 0.5:
             self.paused = False
-    
+
     async def consume(self):
         """Consumer: pull items, signal producer when ready"""
         while True:
@@ -1047,16 +1047,16 @@ class BackpressureManager:
 async def stream_response(request, handler):
     """HTTP response streaming with backpressure"""
     backpressure = BackpressureManager(max_buffer=50)
-    
+
     # Start producer in background
     producer_task = asyncio.create_task(
         handler.produce_stream(backpressure.produce)
     )
-    
+
     async def response_generator():
         async for item in backpressure.consume():
             yield item + "\n"
-    
+
     return response_generator()
 ```
 
@@ -1069,22 +1069,22 @@ async def stream_response(request, handler):
 ```python
 class IncrementalRenderer:
     """Update output incrementally (web, terminal, etc)"""
-    
+
     def __init__(self, render_fn=None):
         self.render_fn = render_fn or print
         self.buffer = ""
         self.line_num = 0
-    
+
     async def append(self, chunk: str):
         """Append chunk and render lines"""
         self.buffer += chunk
-        
+
         # Render complete lines immediately
         while "\n" in self.buffer:
             line, self.buffer = self.buffer.split("\n", 1)
             self.render_fn(f"{self.line_num}: {line}")
             self.line_num += 1
-    
+
     async def finish(self):
         """Render remaining buffer"""
         if self.buffer:
@@ -1096,10 +1096,10 @@ async def stream_endpoint():
     renderer = IncrementalRenderer(
         render_fn=lambda x: send_to_client(x)
     )
-    
+
     async for chunk in llm.stream_response(user_query):
         await renderer.append(chunk)
-    
+
     await renderer.finish()
     return {"status": "complete"}
 ```
@@ -1123,7 +1123,7 @@ class Progress:
     rate: float = 0.0  # items/sec
     eta_seconds: int = 0
     message: str = ""
-    
+
     def __post_init__(self):
         self.percent = 100 * self.current / self.total if self.total else 0
         if self.rate > 0:
@@ -1137,24 +1137,24 @@ class ProgressTracker:
         self.update_callback = update_callback
         self.start_time = time.time()
         self.last_update = self.start_time
-    
+
     async def update(self, increment: int = 1, message: str = ""):
         """Update progress"""
         self.current += increment
         now = time.time()
-        
+
         # Only update UI every N updates (to avoid thrashing)
         if now - self.last_update > 0.1:  # 100ms updates
             elapsed = now - self.start_time
             rate = self.current / elapsed if elapsed > 0 else 0
-            
+
             progress = Progress(
                 current=self.current,
                 total=self.total,
                 rate=rate,
                 message=message
             )
-            
+
             await self.update_callback(progress)
             self.last_update = now
 
@@ -1164,14 +1164,14 @@ async def process_items(items):
         print(f"\r[{p.percent:3.0f}%] {p.current}/{p.total} "
               f"({p.rate:.1f}/s, ETA: {p.eta_seconds}s) - {p.message}",
               end="", flush=True)
-    
+
     tracker = ProgressTracker(len(items), on_progress)
-    
+
     for i, item in enumerate(items):
         # Process item
         await process(item)
         await tracker.update(1, f"Processing {item.name}")
-    
+
     print()  # Final newline
 ```
 
@@ -1190,38 +1190,38 @@ import json
 
 class ExactMatchCache:
     """Cache responses for identical prompts"""
-    
+
     def __init__(self, max_size: int = 1000):
         self.cache = {}
         self.max_size = max_size
         self.hits = 0
         self.misses = 0
-    
+
     def _key(self, prompt: str, model: str) -> str:
         """Generate cache key"""
         content = f"{model}:{prompt}".encode()
         return hashlib.md5(content).hexdigest()
-    
+
     def get(self, prompt: str, model: str):
         """Retrieve cached response"""
         key = self._key(prompt, model)
         if key in self.cache:
             self.hits += 1
             return self.cache[key]
-        
+
         self.misses += 1
         return None
-    
+
     def set(self, prompt: str, model: str, response: str):
         """Cache response"""
         if len(self.cache) >= self.max_size:
             # LRU eviction
             oldest_key = next(iter(self.cache))
             del self.cache[oldest_key]
-        
+
         key = self._key(prompt, model)
         self.cache[key] = response
-    
+
     def hit_rate(self) -> float:
         total = self.hits + self.misses
         return self.hits / total if total > 0 else 0.0
@@ -1235,33 +1235,33 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 class SemanticCache:
     """Cache based on semantic similarity, not exact match"""
-    
+
     def __init__(self, embedding_model, similarity_threshold: float = 0.85):
         self.embedding_model = embedding_model
         self.threshold = similarity_threshold
         self.cache = {}
         self.embeddings = {}
-    
+
     async def get(self, prompt: str):
         """Find cached response for semantically similar prompt"""
         # Embed query
         query_embedding = await self.embedding_model.embed(prompt)
-        
+
         # Compare to cached prompts
         for cached_prompt, cached_response in self.cache.items():
             cached_embedding = self.embeddings[cached_prompt]
-            
+
             similarity = cosine_similarity(
                 [query_embedding],
                 [cached_embedding]
             )[0][0]
-            
+
             if similarity > self.threshold:
                 print(f"✓ Semantic cache hit (sim={similarity:.3f})")
                 return cached_response
-        
+
         return None
-    
+
     async def set(self, prompt: str, response: str):
         """Cache with embedding"""
         embedding = await self.embedding_model.embed(prompt)
@@ -1283,42 +1283,42 @@ if not result:
 ```python
 class HierarchicalCache:
     """L1 (fast, small) + L2 (slower, large)"""
-    
+
     def __init__(self, l1_size: int = 100, l2_size: int = 10000):
         self.l1 = {}  # In-memory, fast
         self.l2 = {}  # Disk or Redis, slower but larger
         self.l1_size = l1_size
         self.l2_size = l2_size
-    
+
     def get(self, key: str):
         """Check L1, then L2"""
         # Check fast cache first
         if key in self.l1:
             return self.l1[key]
-        
+
         # Check slow cache
         if key in self.l2:
             # Promote to L1
             value = self.l2[key]
             self._promote_to_l1(key, value)
             return value
-        
+
         return None
-    
+
     def set(self, key: str, value: str):
         """Set in L1 (push to L2 if needed)"""
         self.l1[key] = value
-        
+
         # Overflow to L2
         if len(self.l1) > self.l1_size:
             oldest = next(iter(self.l1))
             self.l2[oldest] = self.l1.pop(oldest)
-    
+
     def _promote_to_l1(self, key: str, value):
         """Promote from L2 to L1"""
         self.l1[key] = value
         del self.l2[key]
-        
+
         # Evict from L1 if full
         if len(self.l1) > self.l1_size:
             oldest = next(iter(self.l1))
@@ -1342,12 +1342,12 @@ class HierarchicalCache:
 ```python
 class SpeculativeDecoder:
     """Use smaller, faster model to predict next tokens"""
-    
+
     def __init__(self, main_model, draft_model, num_speculative_tokens: int = 5):
         self.main = main_model
         self.draft = draft_model
         self.num_spec = num_speculative_tokens
-    
+
     async def decode_speculative(self, prompt: str):
         """
         1. Draft model generates N tokens quickly
@@ -1355,30 +1355,30 @@ class SpeculativeDecoder:
         3. If validation fails, discard & re-sample
         """
         context = prompt
-        
+
         while True:
             # Step 1: Draft model generates speculative tokens
             draft_tokens = []
             draft_probs = []
-            
+
             for _ in range(self.num_spec):
                 token, prob = await self.draft.predict_next(context)
                 draft_tokens.append(token)
                 draft_probs.append(prob)
                 context += token
-            
+
             # Step 2: Main model validates all tokens in ONE pass
             main_probs = await self.main.validate_sequence(
                 prompt,
                 draft_tokens
             )
-            
+
             # Step 3: Check if tokens match (high probability in main model)
             matches = sum(
                 1 for draft_p, main_p in zip(draft_probs, main_probs)
                 if abs(draft_p - main_p) < 0.1  # Similar probability
             )
-            
+
             if matches == self.num_spec:
                 # All speculated tokens accepted! Done.
                 yield "".join(draft_tokens)
@@ -1394,12 +1394,12 @@ class SpeculativeDecoder:
 ```python
 class BatchPrefetcher:
     """Prefetch results for likely next queries"""
-    
+
     def __init__(self, llm_model):
         self.model = llm_model
         self.prefetch_queue = asyncio.Queue()
         self.prefetch_cache = {}
-    
+
     async def start_prefetching(self):
         """Background task: prefetch likely queries"""
         while True:
@@ -1409,24 +1409,24 @@ class BatchPrefetcher:
                 self.prefetch_cache[query] = result
             except asyncio.QueueEmpty:
                 await asyncio.sleep(0.01)
-    
+
     async def query(self, user_query: str):
         """User query (hits prefetch cache if lucky)"""
         # Check if prefetched
         if user_query in self.prefetch_cache:
             print("✓ Prefetch hit!")
             return self.prefetch_cache.pop(user_query)
-        
+
         # Otherwise, fetch + prefetch likely next queries
         result = await self.model.query(user_query)
-        
+
         # Predict likely follow-ups and prefetch
         follow_ups = self._predict_follow_ups(user_query, result)
         for query in follow_ups:
             self.prefetch_queue.put_nowait(query)
-        
+
         return result
-    
+
     def _predict_follow_ups(self, query: str, result: str) -> list:
         """Heuristic: predict likely follow-up queries"""
         # Could use: user history, question type, etc.
@@ -1450,13 +1450,13 @@ from typing import List, Coroutine
 
 class DynamicBatcher:
     """Batch requests to reduce LLM API calls"""
-    
+
     def __init__(self, batch_timeout: float = 0.1, max_batch_size: int = 32):
         self.batch_timeout = batch_timeout
         self.max_batch_size = max_batch_size
         self.pending = []
         self.batch_ready = asyncio.Event()
-    
+
     async def add_request(self, request: dict) -> str:
         """Add request to batch"""
         future = asyncio.Future()
@@ -1464,36 +1464,36 @@ class DynamicBatcher:
             "request": request,
             "future": future
         })
-        
+
         # Trigger batch if full
         if len(self.pending) >= self.max_batch_size:
             self.batch_ready.set()
         else:
             # Or wait for timeout
             asyncio.create_task(self._timeout_trigger())
-        
+
         return await future
-    
+
     async def _timeout_trigger(self):
         """Wait for batch timeout, then trigger"""
         await asyncio.sleep(self.batch_timeout)
         if self.pending:
             self.batch_ready.set()
-    
+
     async def process_batches(self):
         """Background: process batches as they're ready"""
         while True:
             await self.batch_ready.wait()
-            
+
             # Process current batch
             batch = self.pending[:]
             self.pending = []
             self.batch_ready.clear()
-            
+
             # Make single API call
             requests = [item["request"] for item in batch]
             results = await llm.batch_query(requests)
-            
+
             # Resolve futures
             for item, result in zip(batch, results):
                 item["future"].set_result(result)
@@ -1530,35 +1530,35 @@ import psutil
 
 class AgentMemoryManager:
     """Optimize garbage collection for long-running agents"""
-    
+
     def __init__(self, memory_threshold_mb: int = 1000):
         self.threshold = memory_threshold_mb * 1024 * 1024
         self.process = psutil.Process()
         self.collections = 0
-    
+
     async def monitor_memory(self):
         """Periodically check and optimize memory"""
         while True:
             rss = self.process.memory_info().rss
-            
+
             if rss > self.threshold:
                 print(f"⚠️  Memory usage: {rss / 1024 / 1024:.0f}MB (threshold: {self.threshold / 1024 / 1024:.0f}MB)")
-                
+
                 # Optimize
                 self._optimize_memory()
-            
+
             await asyncio.sleep(5)  # Check every 5 seconds
-    
+
     def _optimize_memory(self):
         """Perform memory optimization"""
         # Disable GC, collect, re-enable (more efficient)
         gc.disable()
         collected = gc.collect()  # Manual collect
         gc.enable()
-        
+
         self.collections += 1
         print(f"GC collected {collected} objects ({self.collections} total collections)")
-    
+
     async def clear_agent_cache(self, agent):
         """Periodically clear agent internal caches"""
         agent.clear_cache()
@@ -1570,23 +1570,23 @@ class AgentMemoryManager:
 ```python
 class StreamingLLMResponse:
     """Don't load entire response into memory"""
-    
+
     async def stream_large_response(self, query: str):
         """Stream response token by token"""
         async with llm.stream(query) as response:
             async for chunk in response:
                 yield chunk
                 # Don't accumulate in memory!
-    
+
     async def process_with_streaming(self, query: str):
         """Process response chunks as they arrive"""
         token_count = 0
-        
+
         async for token in self.stream_large_response(query):
             # Process token immediately
             await self.handle_token(token)
             token_count += 1
-            
+
             # Yield control periodically
             if token_count % 100 == 0:
                 await asyncio.sleep(0)  # Let event loop run
@@ -1620,50 +1620,50 @@ class AgentEvalResult:
     latency_ms: float
     cost_tokens: int
     reasoning_steps: int
-    
+
     def score(self) -> float:
         """Composite score: accuracy * difficulty - penalty"""
         base = self.accuracy * self.task_difficulty.value
-        
+
         # Penalize slow responses
         latency_penalty = min(0.1, self.latency_ms / 10000)
-        
+
         # Penalize inefficient reasoning
         efficiency_penalty = min(0.1, (self.reasoning_steps - 3) / 10)
-        
+
         return base * (1 - latency_penalty - efficiency_penalty)
 
 class AgentBenchmark:
     """Evaluate agent quality across dimensions"""
-    
+
     def __init__(self, test_suite: list):
         self.tests = test_suite
         self.results = []
-    
+
     async def run_benchmark(self, agent, num_runs: int = 3) -> dict:
         """Run agent against all tests"""
         for test in self.tests:
             for run in range(num_runs):
                 result = await self._run_single_test(agent, test)
                 self.results.append(result)
-        
+
         return self._aggregate_results()
-    
+
     async def _run_single_test(self, agent, test) -> AgentEvalResult:
         """Run single test with metrics"""
         import time
-        
+
         start = time.time()
         start_tokens = agent.token_count()
-        
+
         response = await agent.process(test["query"])
-        
+
         latency = (time.time() - start) * 1000
         tokens_used = agent.token_count() - start_tokens
-        
+
         # Grade response
         accuracy = self._grade_response(response, test["expected"])
-        
+
         return AgentEvalResult(
             task_id=test["id"],
             task_difficulty=test.get("difficulty", TaskDifficulty.MEDIUM),
@@ -1673,7 +1673,7 @@ class AgentBenchmark:
             cost_tokens=tokens_used,
             reasoning_steps=self._count_reasoning_steps(agent),
         )
-    
+
     def _aggregate_results(self) -> dict:
         """Compute aggregate metrics"""
         return {
@@ -1698,7 +1698,7 @@ from typing import List, Tuple
 
 class LatencyAccuracyAnalysis:
     """Find optimal tradeoff between speed and quality"""
-    
+
     @staticmethod
     def pareto_frontier(agents: List[tuple]) -> List[tuple]:
         """
@@ -1707,33 +1707,33 @@ class LatencyAccuracyAnalysis:
         """
         # Sort by latency
         sorted_agents = sorted(agents, key=lambda x: x[1])
-        
+
         frontier = []
         max_accuracy = 0
-        
+
         for name, latency, accuracy in sorted_agents:
             if accuracy >= max_accuracy:
                 frontier.append((name, latency, accuracy))
                 max_accuracy = accuracy
-        
+
         return frontier
-    
+
     @staticmethod
     def plot_tradeoff(agents: List[tuple]):
         """Visualize latency-accuracy tradeoff"""
         names, latencies, accuracies = zip(*agents)
-        
+
         plt.scatter(latencies, accuracies, s=100)
-        
+
         # Highlight Pareto frontier
         frontier = LatencyAccuracyAnalysis.pareto_frontier(agents)
         frontier_names, frontier_lats, frontier_accs = zip(*frontier)
-        
+
         plt.plot(frontier_lats, frontier_accs, 'r--', label='Pareto Frontier')
-        
+
         for name, lat, acc in agents:
             plt.annotate(name, (lat, acc))
-        
+
         plt.xlabel('Latency (ms)')
         plt.ylabel('Accuracy')
         plt.title('Agent Tradeoff Analysis')
@@ -1765,22 +1765,22 @@ class CostMetrics:
     tokens_per_query: int
     accuracy: float
     latency_ms: float
-    
+
     def cost_efficiency_score(self) -> float:
         """Cost per unit of quality"""
         return self.cost_per_query / (self.accuracy + 0.01)
-    
+
     def throughput(self) -> float:
         """Queries per second"""
         return 1000 / self.latency_ms if self.latency_ms > 0 else 0
-    
+
     def cost_per_success(self, success_rate: float) -> float:
         """Cost to get one successful answer"""
         return self.cost_per_query / success_rate
 
 class CostAnalyzer:
     """Compare cost across different strategies"""
-    
+
     @staticmethod
     async def analyze_routing_costs(agents: dict, queries: list):
         """
@@ -1788,24 +1788,24 @@ class CostAnalyzer:
         Returns: Cost analysis for each agent
         """
         results = {}
-        
+
         for agent_name, agent in agents.items():
             total_cost = 0
             total_tokens = 0
             total_accuracy = 0
             total_latency = 0
-            
+
             for query in queries:
                 cost = agent.cost_per_query()
                 tokens = agent.tokens_per_query(query)
                 accuracy = await agent.evaluate(query)
                 latency = await agent.measure_latency(query)
-                
+
                 total_cost += cost
                 total_tokens += tokens
                 total_accuracy += accuracy
                 total_latency += latency
-            
+
             n = len(queries)
             results[agent_name] = CostMetrics(
                 cost_per_query=total_cost / n,
@@ -1813,20 +1813,20 @@ class CostAnalyzer:
                 accuracy=total_accuracy / n,
                 latency_ms=total_latency / n,
             )
-        
+
         return results
-    
+
     @staticmethod
     def recommend_agent(cost_metrics: dict, priority: str = "cost"):
         """Recommend agent based on optimization priority"""
         if priority == "cost":
-            return min(cost_metrics.items(), 
+            return min(cost_metrics.items(),
                       key=lambda x: x[1].cost_efficiency_score())[0]
         elif priority == "accuracy":
-            return max(cost_metrics.items(), 
+            return max(cost_metrics.items(),
                       key=lambda x: x[1].accuracy)[0]
         elif priority == "speed":
-            return max(cost_metrics.items(), 
+            return max(cost_metrics.items(),
                       key=lambda x: x[1].throughput())[0]
 ```
 
@@ -1843,14 +1843,14 @@ from typing import Callable
 
 class ThroughputBenchmark:
     """Measure sustained throughput under load"""
-    
-    async def benchmark(self, 
+
+    async def benchmark(self,
                        query_generator: Callable,
                        duration_seconds: int = 60,
                        max_concurrent: int = 32):
         """
         Benchmark agent throughput
-        
+
         Returns:
             queries_per_second: Sustained rate
             p99_latency: 99th percentile latency
@@ -1858,37 +1858,37 @@ class ThroughputBenchmark:
         semaphore = asyncio.Semaphore(max_concurrent)
         latencies = []
         query_count = 0
-        
+
         start_time = time.time()
-        
+
         async def query_with_limit():
             nonlocal query_count
             async with semaphore:
                 query = query_generator()
-                
+
                 t0 = time.time()
                 result = await self.agent.process(query)
                 latency = (time.time() - t0) * 1000
-                
+
                 latencies.append(latency)
                 query_count += 1
-        
+
         # Launch queries continuously for duration
         tasks = []
         while time.time() - start_time < duration_seconds:
             tasks.append(asyncio.create_task(query_with_limit()))
-            
+
             # Limit task growth
             if len(tasks) > 1000:
                 done, tasks = asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-        
+
         # Wait for all tasks to complete
         await asyncio.gather(*tasks)
-        
+
         elapsed = time.time() - start_time
         qps = query_count / elapsed
         p99_latency = np.percentile(latencies, 99)
-        
+
         return {
             "queries_per_second": qps,
             "total_queries": query_count,
@@ -1916,22 +1916,22 @@ class ABTestResult(Enum):
 
 class ABTester:
     """Compare two agent implementations"""
-    
+
     @staticmethod
-    async def ab_test(agent_a, agent_b, test_cases: list, 
+    async def ab_test(agent_a, agent_b, test_cases: list,
                      significance_level: float = 0.05):
         """
         Run A/B test with statistical significance
         """
         metrics_a = await ABTester._evaluate_agent(agent_a, test_cases)
         metrics_b = await ABTester._evaluate_agent(agent_b, test_cases)
-        
+
         # Accuracy comparison
         t_stat, p_value = stats.ttest_ind(
             metrics_a["accuracies"],
             metrics_b["accuracies"]
         )
-        
+
         if p_value < significance_level:
             if metrics_a["mean_accuracy"] > metrics_b["mean_accuracy"]:
                 winner = ABTestResult.VARIANT_A_BETTER
@@ -1939,7 +1939,7 @@ class ABTester:
                 winner = ABTestResult.VARIANT_B_BETTER
         else:
             winner = ABTestResult.NO_SIGNIFICANT_DIFFERENCE
-        
+
         return {
             "winner": winner,
             "p_value": p_value,
@@ -1952,23 +1952,23 @@ class ABTester:
                 "latency": metrics_b["mean_latency"],
             },
         }
-    
+
     @staticmethod
     async def _evaluate_agent(agent, test_cases: list) -> dict:
         """Evaluate single agent"""
         accuracies = []
         latencies = []
-        
+
         for test in test_cases:
             start = time.time()
             result = await agent.process(test["query"])
             latency = time.time() - start
-            
+
             accuracy = similarity(result, test["expected"])
-            
+
             accuracies.append(accuracy)
             latencies.append(latency)
-        
+
         return {
             "accuracies": accuracies,
             "latencies": latencies,
@@ -2001,8 +2001,8 @@ class AgentProfile:
 class CostBasedRouter:
     def __init__(self, agents: List[AgentProfile]):
         self.agents = agents
-    
-    def route(self, query: str, estimated_tokens: int = 100, 
+
+    def route(self, query: str, estimated_tokens: int = 100,
               required_accuracy: float = 0.9) -> AgentProfile:
         """
         Find cheapest agent that:
@@ -2013,17 +2013,17 @@ class CostBasedRouter:
             agent for agent in self.agents
             if agent.accuracy >= required_accuracy
         ]
-        
+
         if not candidates:
             # Fallback: most accurate agent
             return max(self.agents, key=lambda x: x.accuracy)
-        
+
         # Among qualified agents, pick cheapest
         cheapest = min(
             candidates,
             key=lambda x: x.cost_per_token * estimated_tokens
         )
-        
+
         return cheapest
 
 # Usage
@@ -2053,7 +2053,7 @@ class CapabilityMatcher:
         agents: {"agent_name": {"math", "coding", "writing"}}
         """
         self.agents = agents
-    
+
     def find_specialists(self, required_capabilities: Set[str]) -> List[str]:
         """Find agents with all required capabilities"""
         specialists = [
@@ -2061,16 +2061,16 @@ class CapabilityMatcher:
             if required_capabilities <= capabilities  # Subset check
         ]
         return specialists
-    
+
     def find_best_match(self, required: Set[str]) -> str:
         """Find agent with best capability match"""
         match_scores = {}
-        
+
         for name, capabilities in self.agents.items():
             # Intersection: how many required capabilities does agent have?
             match = len(required & capabilities)
             match_scores[name] = match
-        
+
         return max(match_scores, key=match_scores.get)
 
 # Usage
@@ -2107,12 +2107,12 @@ class LoadBalancer:
         self.agents = agents
         self.active_tasks = {agent: 0 for agent in agents}
         self.recent_latencies = {agent: deque(maxlen=100) for agent in agents}
-    
+
     def select_agent(self) -> str:
         """Pick agent with lowest load"""
         # Consider both current load and recent latency
         scores = {}
-        
+
         for agent in self.agents:
             current_load = self.active_tasks[agent]
             avg_latency = (
@@ -2120,24 +2120,24 @@ class LoadBalancer:
                 if self.recent_latencies[agent]
                 else 0
             )
-            
+
             # Score: lower is better
             scores[agent] = current_load + (avg_latency / 1000)  # Normalize latency
-        
+
         return min(scores, key=scores.get)
-    
+
     async def execute_task(self, task, agent=None):
         """Execute task on selected agent"""
         if agent is None:
             agent = self.select_agent()
-        
+
         self.active_tasks[agent] += 1
-        
+
         try:
             start = time.time()
             result = await self._run_on_agent(agent, task)
             latency = (time.time() - start) * 1000
-            
+
             self.recent_latencies[agent].append(latency)
             return result
         finally:
@@ -2159,25 +2159,25 @@ class SpecialistRouter:
             "reasoning": ReasoningExpertAgent(),
             "general": GeneralAgent(),
         }
-    
+
     async def route(self, query: str) -> str:
         """Classify query and route to specialist"""
-        
+
         # Classify query type
         query_type = await self._classify_query(query)
-        
+
         if query_type in self.specialists:
             agent = self.specialists[query_type]
         else:
             # Multi-specialist for complex queries
             agent = self.specialists["general"]
-        
+
         return await agent.process(query)
-    
+
     async def _classify_query(self, query: str) -> str:
         """Use lightweight classifier (or heuristics)"""
         query_lower = query.lower()
-        
+
         if any(keyword in query_lower for keyword in ["code", "python", "javascript"]):
             return "code"
         elif any(keyword in query_lower for keyword in ["math", "calculate", "equation"]):
@@ -2204,42 +2204,42 @@ class FallbackRouter:
         self.models = models
         self.fallback_order = fallback_order or models
         self.model_status = {model: "available" for model in models}
-    
+
     async def query_with_fallback(self, query: str, required_quality: float = 0.8):
         """
         Try primary model, fallback to others if it fails
         """
-        
+
         for model in self.fallback_order:
             if self.model_status[model] != "available":
                 continue
-            
+
             try:
                 result = await self._query_model(model, query)
-                
+
                 # Check quality
                 quality = self._assess_quality(result)
-                
+
                 if quality >= required_quality:
                     return {
                         "result": result,
                         "model": model,
                         "quality": quality,
                     }
-            
+
             except Exception as e:
                 print(f"Model {model} failed: {e}")
                 self.model_status[model] = "error"
                 # Continue to next fallback
-        
+
         # All models exhausted
         raise RuntimeError("All fallback models failed")
-    
+
     async def _query_model(self, model: str, query: str):
         """Query specific model"""
         # Implementation depends on model provider
         pass
-    
+
     def _assess_quality(self, result: str) -> float:
         """Rate response quality (0-1)"""
         # Heuristic: longer, more detailed responses score higher
@@ -2287,4 +2287,3 @@ class FallbackRouter:
 - Semantic Caching - 60-80% hit rates with similarity matching
 - Speculative Decoding - 2-3x latency reduction
 - Work Stealing - Prevents load imbalance in parallel workloads
-

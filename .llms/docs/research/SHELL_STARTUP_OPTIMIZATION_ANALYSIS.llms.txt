@@ -6,9 +6,9 @@ Source: docs/research/SHELL_STARTUP_OPTIMIZATION_ANALYSIS.md
 
 # Shell Startup Optimization Analysis
 
-**Date:** 2026-02-17  
-**Current Measurement:** 35.74ms (real time)  
-**User Reported:** 654ms  
+**Date:** 2026-02-17
+**Current Measurement:** 35.74ms (real time)
+**User Reported:** 654ms
 **Target:** <=80ms
 
 ---
@@ -69,7 +69,7 @@ Source: docs/research/SHELL_STARTUP_OPTIMIZATION_ANALYSIS.md
 
 ### Priority 2: Optimize direnv Hooks
 **Current:** Multiple hooks calling direnv allow
-**Fix:** 
+**Fix:**
 - Cache allowed directories
 - Only check once per directory
 - Remove precmd hook (only use chpwd)

@@ -6,9 +6,9 @@ Source: docs/research/GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md
 
 # Git index.lock, OS-Level Universalization, and Agent System User Plan
 
-**Date:** 2026-02-18 (expanded 2026-02-18)  
-**Status:** Research Complete, Plan Ready  
-**Extends:** GIT_TOOLING_AUDIT_AND_PLAN.md, DIRENV_FIX_2026-02-18.md, AGENT_OS_PRINCIPALS_DEPTH.md, CROSS_PLATFORM_MULTI_TENANT_QUICK_REFERENCE.md  
+**Date:** 2026-02-18 (expanded 2026-02-18)
+**Status:** Research Complete, Plan Ready
+**Extends:** GIT_TOOLING_AUDIT_AND_PLAN.md, DIRENV_FIX_2026-02-18.md, AGENT_OS_PRINCIPALS_DEPTH.md, CROSS_PLATFORM_MULTI_TENANT_QUICK_REFERENCE.md
 **Implementation WBS:** [GIT_INDEX_LOCK_MULTITENANCY_IMPLEMENTATION_WBS.md](../plans/GIT_INDEX_LOCK_MULTITENANCY_IMPLEMENTATION_WBS.md)
 
 ---
@@ -67,7 +67,7 @@ Source: docs/research/GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md
 2. Wrapper script: Same logic as current shim but uses fixed `THEGENT_GIT_BIN` pointing to real git (e.g. `/opt/homebrew/bin/git` or `/usr/bin/git.bin`).
 3. Rename or move real git to `git.bin`; wrapper invokes `git.bin` after lock handling.
 
-**Pros:** All git invocations (nix, direnv, agents, CI) get lock handling.  
+**Pros:** All git invocations (nix, direnv, agents, CI) get lock handling.
 **Cons:** Requires admin/root; may affect system packages that expect vanilla git.
 
 ### 2.2 Option B: Stale Lock Cleanup Daemon
@@ -85,7 +85,7 @@ Source: docs/research/GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md
 - Install as launchd LaunchAgent (user) or LaunchDaemon (system).
 - Config: `stale_lock_age_seconds`, `scan_paths`.
 
-**Pros:** No PATH changes; works for any git caller.  
+**Pros:** No PATH changes; works for any git caller.
 **Cons:** Reactive (cleanup after failure); small window where lock can block.
 
 ### 2.3 Option C: Nix-Specific Workaround
@@ -96,7 +96,7 @@ Source: docs/research/GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md
 - **direnv:** When `use flake` runs, it inherits direnv's environment. We could `export PATH="$HOME/.local/bin:$PATH"` in `.envrc` before `use flake` — but that brings back the flake evaluation and potential lock contention.
 - **Alternative:** Skip flake in direnv (current fix); run `nix develop` manually. No lock contention in direnv.
 
-**Pros:** No system changes.  
+**Pros:** No system changes.
 **Cons:** Doesn't fix nix when run by other tools (CI, scripts).
 
 ### 2.4 Option D: Gitoxide (gix) for Read-Only
@@ -107,7 +107,7 @@ Source: docs/research/GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN.md
 - **Hooks:** thegent-hooks (Rust) can use `gix` for read-only; avoids subprocess and index.lock for those ops.
 - **Impact:** Reduces lock contention from our own hooks; does not help nix/direnv.
 
-**Pros:** 5–20x faster; less lock contention from thegent.  
+**Pros:** 5–20x faster; less lock contention from thegent.
 **Cons:** Does not solve nix/direnv using canonical git.
 
 ---

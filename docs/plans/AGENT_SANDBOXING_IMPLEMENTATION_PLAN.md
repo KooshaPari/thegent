@@ -1,6 +1,6 @@
 # Agent Sandboxing Implementation Plan
 
-**Status:** Planning | **Date:** 2026-02-16  
+**Status:** Planning | **Date:** 2026-02-16
 **Related:** [Architecture Document](../architecture/AGENT_SANDBOXING_ARCHITECTURE.md)
 
 ---
@@ -528,6 +528,6 @@ This plan breaks down the agent sandboxing implementation into actionable tasks 
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2026-02-16  
+**Document Version:** 1.0
+**Last Updated:** 2026-02-16
 **Status:** Ready for Implementation

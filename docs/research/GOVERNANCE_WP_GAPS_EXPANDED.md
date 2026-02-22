@@ -1,15 +1,15 @@
 # Governance WP Gaps — Expanded & BACKLOG Items
 
-> **Status**: Complete | **Date**: 2026-02-17  
-> **Source**: Expanded from [GOVERNANCE_WP_GAPS.md](./GOVERNANCE_WP_GAPS.md)  
+> **Status**: Complete | **Date**: 2026-02-17
+> **Source**: Expanded from [GOVERNANCE_WP_GAPS.md](./GOVERNANCE_WP_GAPS.md)
 > **Purpose**: Convert gaps into BACKLOG items with options, owners, and implementation guidance
 
 ---
 
 ## Executive Summary
 
-**Total Gaps Analyzed**: 3 major gaps  
-**Status**: Most gaps already implemented (✓ Done)  
+**Total Gaps Analyzed**: 3 major gaps
+**Status**: Most gaps already implemented (✓ Done)
 **Remaining Gaps**: Optional/deferred enhancements
 
 ---
@@ -81,22 +81,22 @@ from thegent.governance.escalation import EscalationPriority
 
 class DLQEscalationIntegration:
     """Integrates DLQ with escalation queue."""
-    
+
     def __init__(self, session_dir: Path):
         self.dlq = DLQManager(session_dir)
         self.escalation_queue = EscalationQueue(session_dir)
         self.max_recovery_attempts = 3
-    
+
     def process_dlq_item(self, run_id: str) -> None:
         """Process DLQ item and escalate if recovery exhausted."""
         items = self.dlq.list_items(run_id=run_id)
-        
+
         if not items:
             return
-        
+
         item = items[0]
         recovery_attempts = item.get("recovery_attempts", 0)
-        
+
         # If recovery exhausted, escalate
         if recovery_attempts >= self.max_recovery_attempts:
             self.escalation_queue.add(
@@ -190,7 +190,7 @@ class DLQEscalationIntegration:
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

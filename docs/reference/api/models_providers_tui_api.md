@@ -16,4 +16,3 @@ Covers:
 Run the Rich TUI for models and providers setup.
 
 ---
-

@@ -234,4 +234,3 @@ Wire harness to crew as agent_executor.
 - `harness_type`: Type of harness to use
 
 ---
-

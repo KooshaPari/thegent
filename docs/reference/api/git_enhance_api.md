@@ -127,4 +127,3 @@ Passthrough git command to agent.
 **Returns**: Execution result
 
 ---
-

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -29,6 +30,8 @@ AGENT_NAMES = [
     "kilo",
     "summarizer",
 ]
+
+_logger = logging.getLogger(__name__)
 
 # Agents with native CLIs - use DirectAgentRunner (no proxy required)
 # Note: gemini, copilot, claude, codex can have issues; use antigravity/minimax/etc via proxy instead
@@ -100,9 +103,11 @@ def get_runner(
 
     try:
         return TeammateRunner(agent_name)
-    except Exception as _e:
-        # print(f"DEBUG: TeammateRunner failed for {agent_name}: {e}")
-        pass
+    except ValueError as exc:
+        _logger.debug("No teammate found for '%s': %s", agent_name, exc)
+        return None
+    except Exception as exc:
+        raise RuntimeError(f"Failed to create teammate runner for '{agent_name}'") from exc
 
     return None
 

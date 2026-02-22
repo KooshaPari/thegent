@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 Issue Board Automation Playbook
 
-**Status:** Finalized implementation-oriented playbook  
-**Date:** 2026-02-15  
+**Status:** Finalized implementation-oriented playbook
+**Date:** 2026-02-15
 **Scope:** Scripted import, state sync, and gate-aware automation for GitHub/Jira/Linear from the phase10-12 seed.
 
 This document turns `thegent-phase10-12-issue-board-seed.json` into operationally synchronized issue flows with minimal manual effort and reproducible mapping.
@@ -92,11 +92,11 @@ All platforms use one normalized body template:
 
 ### 6.1 One-shot import
 
-- `--mode import`  
+- `--mode import`
   Create all tickets and dependencies from seed.
-- `--mode sync`  
+- `--mode sync`
   Update existing tickets only when metadata changed.
-- `--mode dry-run`  
+- `--mode dry-run`
   Parse and validate without writing any changes.
 
 ### 6.2 Recommended CI pipeline
@@ -238,4 +238,3 @@ Automation should verify before gate transitions:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

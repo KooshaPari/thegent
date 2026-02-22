@@ -160,9 +160,11 @@ def _load_observe_summary_snapshots(
             continue
         if rec.get("record_type") != "observe_summary_snapshot":
             continue
-        if rec.get("trend_scope_signature") == scope_signature or rec.get("scope_signature") == scope_signature:
-            pass
-        elif rec.get("scope_key_json") != scope_key_json:
+        if (
+            rec.get("trend_scope_signature") != scope_signature
+            and rec.get("scope_signature") != scope_signature
+            and rec.get("scope_key_json") != scope_key_json
+        ):
             continue
         snapshots.append(rec)
         if len(snapshots) >= limit:
@@ -692,8 +694,8 @@ def _extract_agent_from_line(agents: set[str], line: str) -> None:
         a = data.get("agent")
         if a:
             agents.add(a)
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("Failed to parse run registry line: %s", exc)
 
 
 def _process_run_line(runs: dict[str, dict[str, Any]], line: str, agent: str) -> None:
@@ -711,8 +713,8 @@ def _process_run_line(runs: dict[str, dict[str, Any]], line: str, agent: str) ->
                 runs[rid]["feedback_score"] = data.get("feedback_score")
         elif data.get("agent") == agent:
             runs[rid] = data
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("Failed to process run registry line for %s: %s", agent, exc)
 
 
 def sweep_impl(

@@ -64,7 +64,7 @@ When using minimax or glm: dispatch subagents sparingly. Handle 2–3 tasks dire
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -47,7 +47,7 @@ except ImportError:
     # Standalone fallback
     def read_hook_input():
         return json.load(sys.stdin)
-    
+
     def block_with_reason(reason, hook_event=None):
         output = {"decision": "block", "reason": reason}
         if hook_event:
@@ -57,23 +57,23 @@ except ImportError:
 
 def main():
     data = read_hook_input()
-    
+
     # 1. Check if hook applies
     tool_name = data.get("tool_name")
     if tool_name not in ["Write", "Edit"]:  # Example
         sys.exit(0)
-    
+
     # 2. Extract relevant data
     tool_input = data.get("tool_input", {})
     # ... process tool_input
-    
+
     # 3. Validation logic
     if condition_that_should_block:
         block_with_reason(
             "Clear message explaining why",
             "PreToolUse"  # or appropriate event
         )
-    
+
     # 4. Allow operation (or provide feedback)
     sys.exit(0)
 
@@ -311,13 +311,13 @@ def main():
         data = json.load(sys.stdin)
     except:
         sys.exit(0)
-    
+
     tool_name = data.get("tool_name")
     if tool_name not in ["Write", "Edit"]:
         sys.exit(0)
-    
+
     file_path = data.get("tool_input", {}).get("file_path", "")
-    
+
     # Check file size if exists
     if os.path.exists(file_path):
         size_mb = os.path.getsize(file_path) / (1024 * 1024)
@@ -330,7 +330,7 @@ def main():
             }
             print(json.dumps(output))
             sys.exit(0)
-    
+
     sys.exit(0)
 
 if __name__ == "__main__":

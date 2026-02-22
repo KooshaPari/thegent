@@ -335,4 +335,3 @@ Record a routing request for stats tracking.
 - `is_error`: Whether the request resulted in an error
 
 ---
-

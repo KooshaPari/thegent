@@ -6,8 +6,8 @@ Source: docs/plans/DISTRIBUTED_MODEL_ROUTING_PLAN.md
 
 # Distributed Model Routing Plan
 
-**Status:** Draft  
-**Scope:** (1) Dynamic model scraping, (2) Distributed routing, (3) Provider capability merging  
+**Status:** Draft
+**Scope:** (1) Dynamic model scraping, (2) Distributed routing, (3) Provider capability merging
 **Dependencies:** CLIProxyAPIPlus, Codex CLI, direct CLIs (claude, gemini, copilot, cursor-agent)
 
 ---

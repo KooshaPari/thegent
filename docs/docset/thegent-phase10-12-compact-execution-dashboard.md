@@ -1,7 +1,7 @@
 # Thegent Phase 10–12 Compact Execution Dashboard
 
-**Status:** Operational control artifact  
-**Date:** 2026-02-15  
+**Status:** Operational control artifact
+**Date:** 2026-02-15
 **Scope:** One-pane governance and execution view for Phases 10–12 with a machine-readable schema, scoring model, and action automation.
 
 ## 1) Purpose
@@ -329,4 +329,3 @@ If not, return to the compact dashboard design and enforce stricter schema valid
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

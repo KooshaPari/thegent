@@ -1,6 +1,6 @@
 # Thegent FastMCP Verification Runbook
 
-**Purpose:** Verify MCP server, tools, resources, and prompts per THGENT_FASTMCP_IMPLEMENTATION_PLAN §9.  
+**Purpose:** Verify MCP server, tools, resources, and prompts per THGENT_FASTMCP_IMPLEMENTATION_PLAN §9.
 **Date:** 2026-02-14
 
 ---
@@ -116,4 +116,3 @@
 
 - [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index
-

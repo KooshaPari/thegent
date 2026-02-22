@@ -1,12 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/pyrightconfig.schema.json",
-  "comment": "Pyright/Pylance configuration for thegent project",
-  
   "include": [
     "src",
     "tests"
   ],
-  
+
   "exclude": [
     "**/node_modules",
     "**/__pycache__",
@@ -37,7 +35,7 @@
     "**/.vscode",
     "**/.cursor"
   ],
-  
+
   "ignore": [
     "**/node_modules/**",
     "**/.venv/**",
@@ -45,9 +43,9 @@
     "**/site-packages/**",
     "**/.worktrees/**"
   ],
-  
+
   "typeCheckingMode": "basic",
-  
+
   "reportMissingTypeStubs": false,
   "reportMissingImports": "error",
   "reportMissingModuleSource": false,
@@ -59,10 +57,10 @@
   "reportWildcardImportFromLibrary": false,
   "reportOptionalMemberAccess": false,
   "reportOptionalSubscript": false,
-  
+
   "pythonVersion": "3.12",
   "pythonPlatform": "All",
-  
+
   "executionEnvironments": [
     {
       "root": "src",
@@ -77,8 +75,9 @@
       "extraPaths": ["src"]
     }
   ],
-  
+
   "stubPath": "typings",
   "venvPath": ".",
-  "venv": ".venv"
+  "venv": ".venv",
+  "extraPaths": ["src"]
 }

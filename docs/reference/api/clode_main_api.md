@@ -323,4 +323,3 @@ thegent sitback --tui             # Launch TUI compositor
 ```
 
 ---
-

@@ -49,7 +49,7 @@ thegent install --target user
 - Unwanted directories (node_modules, etc.) in output
 - Performance issues
 
-**Solution**: 
+**Solution**:
 - Detects problematic aliases (containing `--tree`, `-R`, `recursive`)
 - Removes or overrides them
 - Provides safe wrapper that ensures single-level output by default
@@ -276,7 +276,7 @@ If you have existing shell configs:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made
@@ -349,7 +349,7 @@ exec bash  # Switch to bash temporarily
 
 ## 11. Extension Summary
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -17,6 +17,9 @@ vars:
   BASH_SRC: 'scripts'
   BASH_TESTS: 'tests'
   THGENT_LOG_DIR: .process-compose/logs
+  PYTEST_FAST_LANE_BUDGET: 1000
+  PYTEST_PR_LANE_BUDGET: 750
+  PYTEST_PR_CHANGED_FILE_LIST: ''
 
 includes:
   py:
@@ -235,6 +238,18 @@ tasks:
 
   # -- Testing --
 
+  ci:preflight:
+    desc: "Bootstrap CI baseline checks: collect-only, coverage-contract, required-provider smoke."
+    cmds:
+      - uv run pytest --collect-only -q
+      - uv run pytest -q tests/e2e/test_coverage_contract.py
+      - uv run python scripts/cliproxy_provider_smoke.py
+      - |
+        REQUIRED_PROVIDERS="${THGENT_REQUIRED_PROVIDERS:-openai}"
+        uv run python scripts/cliproxy_provider_smoke.py \
+          --required-provider "${REQUIRED_PROVIDERS}" \
+          --strict-required-providers
+
   test:
     desc: "Run all tests"
     cmds:
@@ -255,27 +270,316 @@ tasks:
     cmds:
       - uv run pytest -m fast -q
 
+  ci:local:
+    desc: "Run local CI-like checks (pre-commit + fast collection + fast lane)."
+    cmds:
+      - task: hooks:run
+      - task: test:collect:fast-gate
+      - task: test:fast-lane
+
+  test:collect:baseline:
+    desc: "Generate pytest collect-only baseline artifact (collection count + errors)."
+    cmds:
+      - mkdir -p artifacts/pytest/baseline
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py collect \
+          --lane fast \
+          --label baseline \
+          --marker "unit and not slow and not integration and not e2e and not load and not deep and not chaos and not a11y" \
+          --output artifacts/pytest/baseline/collect.json \
+          --summary artifacts/pytest/baseline/collect.md
+
+  test:collect:wave:
+    desc: "Collect fast-lane node IDs for deterministic wave planning and sharding."
+    cmds:
+      - mkdir -p artifacts/pytest/wave
+      - uv run python scripts/pytest_wave_perf_orchestrator.py collect-tests --marker "not slow and not integration and not e2e and not load" --output artifacts/pytest/wave/collect.json
+
+  test:collect:fast-gate:
+    desc: "Run collection gate with fast-lane selector and fail on collection errors."
+    cmds:
+      - mkdir -p artifacts/pytest/baseline
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py collect \
+          --lane fast \
+          --label fast-gate \
+          --output artifacts/pytest/baseline/fast-gate.json \
+          --summary artifacts/pytest/baseline/fast-gate.md \
+          --budget {{.PYTEST_FAST_LANE_BUDGET}} \
+          --strict
+
+  test:wave:xdist:
+    desc: "Run fast xdist lane with deterministic crash fallback and artifact capture."
+    cmds:
+      - mkdir -p artifacts/pytest/wave
+      - uv run python scripts/pytest_wave_perf_orchestrator.py xdist --marker "not slow and not integration and not e2e and not load" --fallback --output artifacts/pytest/wave/xdist-fast.json
+
+  test:wave:testmon-pilot:
+    desc: "Run pytest-testmon pilot with retention policy and hit-rate gate artifact."
+    cmds:
+      - mkdir -p artifacts/pytest/wave
+      - uv run python scripts/pytest_wave_perf_orchestrator.py testmon-pilot --marker "not slow and not integration and not e2e and not load" --cache-dir "testmon" --cache-ttl-days 14 --baseline-artifact artifacts/pytest/baseline/fast-gate.json --required-hit-rate 0.65 --output artifacts/pytest/wave/testmon-pilot.json
+
+  test:wave:testmon-evaluate:
+    desc: "Evaluate testmon pilot quality against baseline and estimate false-negative risk."
+    cmds:
+      - uv run python scripts/pytest_wave_perf_orchestrator.py testmon-evaluate --pilot-artifact artifacts/pytest/wave/testmon-pilot.json --baseline-artifact artifacts/pytest/baseline/fast-gate.json --required-hit-rate 0.65 --output artifacts/pytest/wave/testmon-evaluation.json
+
+  test:wave:shard-plan:
+    desc: "Build deterministic shard plan artifact from collect-tests output."
+    cmds:
+      - mkdir -p artifacts/pytest/wave
+      - uv run python scripts/pytest_wave_perf_orchestrator.py shard-plan --collect-artifact artifacts/pytest/wave/collect.json --shards 4 --seed wave-66 --output artifacts/pytest/wave/shard-plan.json
+
+  test:trace:scan:
+    desc: "Scan tests for @trace comments and requirement/story marker coverage hints."
+    cmds:
+      - mkdir -p artifacts/pytest/traceability
+      - uv run python scripts/test_pytest_wave_artifacts.py trace-scan --input-dir tests --output artifacts/pytest/traceability/traceability-links.json
+      - uv run python scripts/test_pytest_wave_artifacts.py trace-cleanup --input-dir tests --stale-window-days 90 --output artifacts/pytest/traceability/requirements-debt.json
+
+  test:trace:untagged-heavy:
+    desc: "Detect likely untagged heavy tests needing FR coverage or explicit lane tags."
+    cmds:
+      - mkdir -p artifacts/pytest/traceability
+      - uv run python scripts/test_pytest_wave_artifacts.py heavy-untagged --input-dir tests --output artifacts/pytest/traceability/untagged-heavy-tests.json
+
+  test:trace:untagged-heavy:migration:
+    desc: "Build migration-ready list of untagged heavy tests above LOC threshold."
+    cmds:
+      - mkdir -p artifacts/pytest/traceability
+      - |
+        uv run python scripts/list_untagged_heavy_tests.py \
+          --input artifacts/pytest/traceability/untagged-heavy-tests.json \
+          --output artifacts/pytest/traceability/untagged-heavy-tests-migration.json \
+          --max-count 200
+
+  test:collect:templates:
+    desc: "Run template-tree collect-only for template-only regression detection."
+    cmds:
+      - mkdir -p artifacts/pytest/baseline
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py collect \
+          --lane fast \
+          --label template-collect \
+          --output artifacts/pytest/baseline/template-collect.json \
+          --summary artifacts/pytest/baseline/template-collect.md \
+          --test-path tests/e2e/templates \
+          --strict
+
   test:nightly-lane:
     desc: "Run deep pytest lane (WL-134): slow/integration/e2e/load markers."
     cmds:
-      - uv run pytest -q -m "slow or integration or e2e or load"
+      - uv run pytest -q -m "slow or integration or e2e or load or deep or chaos or a11y" --strict-markers
 
   test:deep:
     desc: "Run deep-marked tests (WL-134): tests tagged @pytest.mark.deep."
     cmds:
-      - uv run pytest -m deep -q --timeout=300
+      - uv run pytest -m deep -q --timeout=300 --strict-markers
 
   test:gate:
     desc: "Run fast lane then deep lane; fail fast on error before deep (WL-134)."
     cmds:
+      - task: test:collect:fast-gate
       - task: test:fast-lane
       - task: test:deep
+
+  test:pr-gate:
+    desc: "Run PR fast gate equivalent (collect, mapping gate, and mapped test run)."
+    cmds:
+      - |
+        mkdir -p artifacts/pytest/collect
+        mkdir -p artifacts/pytest/requirements
+        mkdir -p artifacts/pytest/traceability
+        mkdir -p artifacts/pytest/pr
+        mkdir -p artifacts/pytest/health
+        set +e
+        uv run python scripts/test_pytest_wave_artifacts.py collect \
+          --lane pr \
+          --label pr-collect \
+          --output artifacts/pytest/collect/pr-collect.json \
+          --summary artifacts/pytest/collect/pr-collect.md \
+          --budget {{.PYTEST_PR_LANE_BUDGET}}
+        collect_rc=$?
+        uv run python scripts/test_pytest_wave_artifacts.py requirements-gate \
+          --input-dir tests \
+          --changed-file-list "{{.PYTEST_PR_CHANGED_FILE_LIST}}" \
+          --exceptions artifacts/pytest/requirements/exceptions.json \
+          --fr-tracker docs/reference/FR_TRACKER.md \
+          --output artifacts/pytest/requirements/requirements-gate.json \
+          --summary artifacts/pytest/requirements/requirements-gate.md \
+          --strict
+        req_gate_rc=$?
+        uv run python scripts/test_pytest_wave_artifacts.py requirements-map \
+          --input-dir tests \
+          --fr-tracker docs/reference/FR_TRACKER.md \
+          --output artifacts/pytest/traceability/requirements-map.json \
+          --csv-output artifacts/pytest/traceability/requirements-map.csv \
+          --summary artifacts/pytest/traceability/requirements-map.md
+        req_map_rc=$?
+        uv run python scripts/test_pytest_wave_artifacts.py run-pr-lane \
+          --lane pr \
+          --changed-file-list "{{.PYTEST_PR_CHANGED_FILE_LIST}}" \
+          --config pytest-pr.ini \
+          --output artifacts/pytest/pr/run.json \
+          --summary artifacts/pytest/pr/run-summary.md \
+          --maxfail 1 \
+          --strict
+        run_rc=$?
+        uv run python scripts/test_pytest_wave_artifacts.py health \
+          --collect-artifact artifacts/pytest/collect/pr-collect.json \
+          --requirements-gate-artifact artifacts/pytest/requirements/requirements-gate.json \
+          --pr-run-artifact artifacts/pytest/pr/run.json \
+          --requirements-map-artifact artifacts/pytest/traceability/requirements-map.json \
+          --output artifacts/pytest/health/pr-gate.json \
+          --summary artifacts/pytest/health/pr-gate.md \
+          --strict
+        health_rc=$?
+        if [ "$collect_rc" -ne 0 ] || [ "$req_gate_rc" -ne 0 ] || [ "$req_map_rc" -ne 0 ] || [ "$run_rc" -ne 0 ] || [ "$health_rc" -ne 0 ]; then
+          echo "PR gate failed: collect=$collect_rc requirements-gate=$req_gate_rc requirements-map=$req_map_rc run=$run_rc health=$health_rc"
+          exit 1
+        fi
+
+  test:pr:
+    desc: "Run PR-only targeted profile with changelist-aware selector and fast fallback."
+    cmds:
+      - mkdir -p artifacts/pytest/pr
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py run-pr-lane \
+          --lane pr \
+          --changed-file-list "{{.PYTEST_PR_CHANGED_FILE_LIST}}" \
+          --config pytest-pr.ini \
+          --output artifacts/pytest/pr/run.json \
+          --summary artifacts/pytest/pr/run-summary.md \
+          --maxfail 1 \
+          --strict
+
+  test:pr:targets:
+    desc: "Compute PR-targeted pytest nodes (changed-file selector) and store artifact."
+    cmds:
+      - mkdir -p artifacts/pytest/pr
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py pr-targets \
+          --changed-file-list "{{.PYTEST_PR_CHANGED_FILE_LIST}}" \
+          --output artifacts/pytest/pr/targets.json
+
+  test:requirements:map:
+    desc: "Build FR->tests map for traceability."
+    cmds:
+      - mkdir -p artifacts/pytest/traceability
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py requirements-map \
+          --input-dir tests \
+          --fr-tracker docs/reference/FR_TRACKER.md \
+          --output artifacts/pytest/traceability/requirements-map.json \
+          --csv-output artifacts/pytest/traceability/requirements-map.csv \
+          --summary artifacts/pytest/traceability/requirements-map.md \
+          --diagram-output artifacts/pytest/traceability/requirements-map.mdown
+
+  test:traceability:quarterly-cleanup:
+    desc: "Run quarterly traceability cleanup debt review and issue contract output."
+    cmds:
+      - mkdir -p artifacts/pytest/traceability
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py traceability-cleanup \
+          --input-dir tests \
+          --stale-window-days 90 \
+          --issue-threshold 0 \
+          --issue-output artifacts/pytest/traceability/requirements-cleanup-issue.json \
+          --output artifacts/pytest/traceability/requirements-cleanup.json
+
+  test:requirements:diagram:
+    desc: "Render FR->test DAG from latest requirements map artifact."
+    cmds:
+      - mkdir -p artifacts/pytest/traceability
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py requirements-diagram \
+          --requirements-map artifacts/pytest/traceability/requirements-map.json \
+          --output artifacts/pytest/traceability/requirements-map.diagram.md
+
+  test:requirements:promotion-criteria:
+    desc: "Compute lane promotion readiness criteria and recommendation."
+    cmds:
+      - mkdir -p artifacts/pytest/traceability
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py requirements-promotion-criteria \
+          --requirements-map artifacts/pytest/traceability/requirements-map.json \
+          --requirements-gate artifacts/pytest/requirements/requirements-gate.json \
+          --health artifacts/pytest/health/pr-gate.json \
+          --min-coverage-ratio 0.95 \
+          --max-flake-ratio 0.05 \
+          --acceptable-fail-budget 1 \
+          --output artifacts/pytest/traceability/requirements-promotion-criteria.json
+
+  test:requirements:gate:
+    desc: "Validate changed tests carry explicit requirement markers."
+    cmds:
+      - mkdir -p artifacts/pytest/requirements
+      - mkdir -p artifacts/pytest/traceability
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py requirements-gate \
+          --input-dir tests \
+          --changed-file-list "{{.PYTEST_PR_CHANGED_FILE_LIST}}" \
+          --exceptions artifacts/pytest/requirements/exceptions.json \
+          --fr-tracker docs/reference/FR_TRACKER.md \
+          --output artifacts/pytest/requirements/requirements-gate.json \
+          --summary artifacts/pytest/requirements/requirements-gate.md
+
+  test:health:
+    desc: "Build pytest PR health dashboard artifact from the latest artifact set."
+    cmds:
+      - mkdir -p artifacts/pytest/health
+      - |
+        uv run python scripts/test_pytest_wave_artifacts.py health \
+          --collect-artifact artifacts/pytest/collect/pr-collect.json \
+          --requirements-gate-artifact artifacts/pytest/requirements/requirements-gate.json \
+          --pr-run-artifact artifacts/pytest/pr/run.json \
+          --requirements-map-artifact artifacts/pytest/traceability/requirements-map.json \
+          --output artifacts/pytest/health/pr-gate.json \
+          --summary artifacts/pytest/health/pr-gate.md
+
+  test:anti-flake:
+    desc: "Run PR anti-flake lane with reruns and maxfail (opt-in)."
+    cmds:
+      - uv run pytest -c pytest-pr-flake.ini
+
+  test:flake-lane:
+    desc: "Alias for anti-flake PR lane (reruns + maxfail)."
+    cmds:
+      - task: test:anti-flake
 
   coverage-index:
     desc: "Build coverage_affected_map.json for P7 coverage-based test selection"
     cmds:
       - uv run pytest -q --cov=src --cov-context=test --cov-report= -p no:tach
       - uv run python scripts/build_coverage_affected_map.py
+
+  coverage:clean:
+    desc: "Remove coverage artifacts to prevent stale/deleted-file report failures"
+    cmds:
+      - uv run coverage erase
+      - rm -f .coverage.*
+      - rm -rf htmlcov/
+      - rm -f coverage.xml
+      - rm -f coverage.json
+
+  coverage:run:
+    desc: "Run tests with deterministic coverage collection from a clean state"
+    cmds:
+      - task: coverage:clean
+      - uv run pytest -q --cov=src --cov-context=test --cov-report= -p no:tach
+
+  coverage:report:
+    desc: "Generate terminal and XML coverage reports (fail-fast on threshold/errors)"
+    cmds:
+      - uv run coverage report --show-missing --skip-covered
+      - uv run coverage xml
+
+  coverage:ci:
+    desc: "CI coverage lifecycle: clean -> run -> report"
+    cmds:
+      - task: coverage:run
+      - task: coverage:report
 
   coverage:map:
     desc: "Alias: build coverage→test map for hooks (run periodically for best affected-test selection)"
@@ -310,7 +614,14 @@ tasks:
     desc: "Strict type checking (basedpyright + mypy) - recommended for CI/commit"
     cmds:
       - uv run basedpyright src/
-      - uv run mypy src/
+      - zsh -c 'mkdir -p .claude/verification && uv run mypy src/ > .claude/verification/mypy-current.log 2>&1 || true'
+      - uv run python scripts/mypy_nonregression_gate.py --current-log .claude/verification/mypy-current.log --baseline .claude/verification/mypy-baseline.txt
+
+  lint:mypy-baseline:update:
+    desc: "Refresh mypy non-regression baseline from current source tree"
+    cmds:
+      - zsh -c 'mkdir -p .claude/verification && uv run mypy src/ > .claude/verification/mypy-current.log 2>&1 || true'
+      - uv run python scripts/mypy_nonregression_gate.py --current-log .claude/verification/mypy-current.log --baseline .claude/verification/mypy-baseline.txt --write-baseline
 
   lint:dead-code:
     desc: "Dead code detection (vulture)"
@@ -403,9 +714,11 @@ tasks:
     cmds:
       - task --list | rg -F "quality:sitback-contracts"
       - task --list | rg -F "quality:harness-model-contracts"
+      - task --list | rg -F "quality:providers:required-gate"
       - task --list | rg -F "quality:harness-contracts"
       - task --list | rg -F "quality:harness-contracts:smoke"
       - task --list | rg -F "quality:harness-contracts:quick"
+      - task --list | rg -F "quality:harness-contracts:strict"
       - task --list | rg -F "quality:list-check"
 
   quality:harness-contracts:smoke:
@@ -433,6 +746,88 @@ tasks:
     desc: "Provider smoke matrix with CLIProxy preflight (cheapest-like model per provider)"
     cmds:
       - uv run python scripts/cliproxy_provider_smoke.py
+
+  quality:providers:required-gate:
+    desc: "Strict required-provider gate for CLIProxy provider smoke matrix"
+    cmds:
+      - |
+        REQUIRED_PROVIDERS="${THGENT_REQUIRED_PROVIDERS:-openai}"
+        echo "[provider-required-gate] required providers: ${REQUIRED_PROVIDERS}"
+        uv run python scripts/cliproxy_provider_smoke.py \
+          --required-provider "${REQUIRED_PROVIDERS}" \
+          --strict-required-providers
+
+  quality:security:sast:
+    desc: "Blocking security lane (security test suite)"
+    cmds:
+      - uv run pytest -q tests/security
+
+  quality:perf:benchmark-gate:
+    desc: "Blocking performance smoke lane"
+    cmds:
+      - task: bench:smoke:ci
+
+  quality:chaos:smoke:
+    desc: "Blocking chaos/resilience smoke lane"
+    cmds:
+      - uv run pytest -q tests/chaos -m "chaos"
+
+  quality:a11y:smoke:
+    desc: "Blocking accessibility smoke lane"
+    cmds:
+      - uv run pytest -q tests/a11y -m "a11y"
+
+  quality:harness-contracts:strict:
+    desc: "Run strict harness contract chain with required-provider gate"
+    cmds:
+      - task: quality:harness-contracts:list-check
+      - task: quality:sitback-contracts
+      - task: quality:harness-model-contracts
+      - task: quality:providers:required-gate
+
+  quality:cliproxy-parent:
+    desc: "Optionally run sibling cliproxy project quality gate (parent-dir git repo scan)"
+    cmds:
+      - |
+        if [ "${QUALITY_WITH_PARENT_CLIPROXY:-1}" = "0" ]; then
+          echo "[SKIP] quality:cliproxy-parent (QUALITY_WITH_PARENT_CLIPROXY=0)"
+          exit 0
+        fi
+
+        ROOT="$(git rev-parse --show-toplevel)"
+        PARENT="$(dirname "$ROOT")"
+        FOUND=0
+        RAN=0
+
+        for d in "$PARENT"/*; do
+          [ -d "$d" ] || continue
+          base="$(basename "$d")"
+          case "$base" in
+            *cliproxy*)
+              if ! git -C "$d" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+                continue
+              fi
+              FOUND=1
+              if [ ! -f "$d/Taskfile.yml" ]; then
+                echo "[SKIP] $base (no Taskfile.yml)"
+                continue
+              fi
+              if task -d "$d" --list-all 2>/dev/null | rg -Eq '(^|[[:space:]])quality([[:space:]]|$)'; then
+                echo "[RUN] $base -> task quality"
+                task -d "$d" quality
+                RAN=1
+              else
+                echo "[SKIP] $base (no quality task)"
+              fi
+              ;;
+          esac
+        done
+
+        if [ "$FOUND" -eq 0 ]; then
+          echo "[SKIP] No cliproxy git repo found in parent directory: $PARENT"
+        elif [ "$RAN" -eq 0 ]; then
+          echo "[SKIP] cliproxy repo(s) found but no runnable quality task"
+        fi
 
   quality:runtime-contracts:zig-abi:
     desc: "Run Zig ABI production contract gates (WL-132)."
@@ -464,18 +859,14 @@ tasks:
       - task: quality:deprecated-aliases:strict
       - task: quality:instruction-architecture
       - task: quality:harness-contracts
+      - task: quality:cliproxy-parent
       - task: quality:runtime-contracts
-      - uv run ruff check . --fix || true
-
-  quality:strict-full:
-    desc: "Alias for quality (full strict pipeline)"
-    cmds:
-      - task: quality
       - task: lint:strict
       - task: test
       - task: test:pyramid
       - zsh scripts/traceability-validator.sh
       - zsh scripts/dx-audit.sh
+      - uv run ruff check .
 
   metrics:loc:
     desc: "Collect LOC/complexity metrics for src/thegent/ and write to .quality/loc-metrics.json (WL-135)."
@@ -514,7 +905,7 @@ tasks:
   quality:max-lines:
     desc: "Run max-lines gate via canonical developer task path (WL-122)."
     cmds:
-      - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} sh scripts/max-lines-gate.sh
+      - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} MAX_LINES_EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-.git,node_modules,dist,build,target,.venv,__pycache__,docs/.vitepress/dist,docs-dist,.shadow-,crates/thegent-hooks/src/main.rs,hooks/hook-dispatcher/src/main.rs,hooks/governance-gates.sh} sh scripts/max-lines-gate.sh
 
   quality:rust:pyo3-drift:
     desc: "Fail if Rust crates declare drifted pyo3 versions (includes optional dependencies)."
@@ -568,19 +959,27 @@ tasks:
       - cp hooks/hook-dispatcher/target/release/hook-dispatcher hooks/bin/hook-dispatcher
 
   build:rust:
-    desc: "Build BKM Rust crates (thegent-resources, thegent-crypto, thegent-parser, thegent-shm, thegent-git, thegent-discovery, thegent-watcher, hook-dispatcher)"
+    desc: "Build BKM Rust crates (thegent-resources, thegent-crypto, thegent-parser, thegent-shm, thegent-git, thegent-jsonl, thegent-discovery, thegent-watcher, hook-dispatcher)"
     cmds:
       - cargo build --release -p thegent-resources -p thegent-discovery -p thegent-watcher -p hook-dispatcher --manifest-path crates/Cargo.toml
       - uv pip install crates/thegent-crypto
       - uv pip install crates/thegent-parser
       - uv pip install crates/thegent-shm
       - uv pip install crates/thegent-git
+      - uv pip install crates/thegent-discovery
+      - uv pip install crates/thegent-jsonl
 
   hooks:install:
     desc: "Install pre-commit hooks"
     cmds:
       - uv run pre-commit install
       - uv run pre-commit install --hook-type commit-msg
+      - uv run pre-commit install --hook-type pre-push
+
+  hooks:run:
+    desc: "Run configured pre-commit hooks"
+    cmds:
+      - uv run pre-commit run --all-files
 
   # -- Memory cache (Supermemory integration) --
 
@@ -726,6 +1125,46 @@ tasks:
     desc: "Deterministic benchmark smoke for CI docs/checklist"
     cmds:
       - uv run pytest -q tests/test_wl079_audit_bench.py
+
+  bench:pytest:routing:
+    desc: "Run deterministic pytest benchmark for routing suite (no xdist)."
+    deps: [bench:setup]
+    cmds:
+      - |
+        BENCH_SCOPE=tests.routing \
+          BENCH_TEST_PATH=tests/routing \
+          BENCH_WITH_XDIST=0 \
+          zsh scripts/benchmark-pytest-suite.sh
+
+  bench:pytest:routing-xdist:
+    desc: "Run deterministic pytest benchmark for routing suite with xdist."
+    deps: [bench:setup]
+    cmds:
+      - |
+        BENCH_SCOPE=tests.routing \
+          BENCH_TEST_PATH=tests/routing \
+          BENCH_WITH_XDIST=1 \
+          zsh scripts/benchmark-pytest-suite.sh
+
+  bench:pytest:e2e-heavy:
+    desc: "Run deterministic pytest benchmark for a heavy e2e module (no xdist)."
+    deps: [bench:setup]
+    cmds:
+      - |
+        BENCH_SCOPE=tests.e2e.heavy \
+          BENCH_TEST_PATH=tests/e2e/test_cli_runner_skip_message_contract.py \
+          BENCH_WITH_XDIST=0 \
+          zsh scripts/benchmark-pytest-suite.sh
+
+  bench:pytest:e2e-heavy-xdist:
+    desc: "Run deterministic pytest benchmark for a heavy e2e module with xdist."
+    deps: [bench:setup]
+    cmds:
+      - |
+        BENCH_SCOPE=tests.e2e.heavy_xdist \
+          BENCH_TEST_PATH=tests/e2e/test_cli_runner_skip_message_contract.py \
+          BENCH_WITH_XDIST=1 \
+          zsh scripts/benchmark-pytest-suite.sh
 
   bench:comprehensive:
     desc: "Run comprehensive hook benchmark suite (all scenarios)"

@@ -5,4 +5,3 @@
 OS-level adapters.
 
 ---
-

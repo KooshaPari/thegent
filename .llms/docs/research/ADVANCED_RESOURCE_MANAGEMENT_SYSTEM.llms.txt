@@ -6,7 +6,7 @@ Source: docs/research/ADVANCED_RESOURCE_MANAGEMENT_SYSTEM.md
 
 # Advanced Resource Management System
 
-**Date**: 2026-02-19  
+**Date**: 2026-02-19
 **Status**: Implemented
 
 ## Overview
@@ -86,28 +86,28 @@ print(f"Leak severity: {snapshot.leak_metrics.leak_severity}")
 
 **Harness Profiles** (with statistical distributions):
 
-- **codex**: 
+- **codex**:
   - Memory: 256MB base (min:200, peak:400, p95:350), 128MB/session (min:100, peak:200, p95:170)
   - FD: 20 base (min:15, peak:35, p95:30), 10/session (min:8, peak:18, p95:15)
   - Child processes: 1 base, 0.5/session
   - Threads: 8 base, 4/session
   - Leak rates: 0.5MB/h memory, 0.05 FD/h
 
-- **claude**: 
+- **claude**:
   - Memory: 512MB base (min:400, peak:800, p95:700), 256MB/session (min:200, peak:450, p95:380)
   - FD: 30 base (min:25, peak:50, p95:42), 15/session (min:12, peak:28, p95:23)
   - Child processes: 2 base, 1/session
   - Threads: 12 base, 6/session
   - Leak rates: 1.0MB/h memory, 0.1 FD/h
 
-- **droid**: 
+- **droid**:
   - Memory: 128MB base (min:100, peak:200, p95:170), 64MB/session (min:50, peak:120, p95:95)
   - FD: 15 base (min:10, peak:25, p95:22), 5/session (min:3, peak:12, p95:9)
   - Child processes: 0 base, 0/session
   - Threads: 5 base, 2/session
   - Leak rates: 0.2MB/h memory, 0.02 FD/h
 
-- **cursor-agent**: 
+- **cursor-agent**:
   - Memory: 384MB base (min:300, peak:600, p95:520), 192MB/session (min:150, peak:350, p95:280)
   - FD: 25 base (min:20, peak:45, p95:38), 12/session (min:10, peak:22, p95:18)
   - Child processes: 1 base, 0.5/session
@@ -124,7 +124,7 @@ cursor_card = cards["cursor-agent"]
 
 # Estimate with statistical distributions
 estimated = cursor_card.estimate_resources(
-    session_count=10, 
+    session_count=10,
     isolated=False,
     use_p95=True  # Use p95 for conservative planning
 )

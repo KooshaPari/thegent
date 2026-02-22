@@ -18,6 +18,7 @@ from thegent.agents.crew import (
 from thegent.agents.crew.executor import (
     ExecutionResult,
     HierarchicalAssigner,
+    AgentAssigner,
     RoundRobinAssigner,
     SkillBasedAssigner,
     TaskExecutor,
@@ -244,6 +245,16 @@ class TestAgentAssigner:
         assert assignments[task2.id] == manager.id
         # Later tasks to worker
         assert assignments[task3.id] == worker.id
+
+    def test_agent_assigner_base_raises_type_error(self) -> None:
+        """Test abstract AgentAssigner.assign raises explicit TypeError."""
+        # @trace WL-3005
+        assigner = AgentAssigner()
+        with pytest.raises(
+            TypeError,
+            match="AgentAssigner.assign\\(\\) is abstract and must be implemented by a concrete AgentAssigner subclass",
+        ):
+            assigner.assign([], [])
 
 
 class TestCrewExecutor:

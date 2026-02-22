@@ -481,7 +481,7 @@ WHERE task_category='NORMAL' AND MONTH(started_at)=MONTH(NOW());
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

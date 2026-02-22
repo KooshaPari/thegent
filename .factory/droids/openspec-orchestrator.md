@@ -190,7 +190,7 @@ Phase 1: Research
 - Researching SSE best practices... [WebSearch]
 - Documenting findings... [Write to docs/sessions/]
 
-Phase 2: Specification  
+Phase 2: Specification
 - Creating openspec/changes/add-streaming/
 - Writing complete proposal with 6 requirements
 - Each requirement has 6-8 scenarios

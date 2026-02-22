@@ -5,4 +5,3 @@
 LiteLLM Router Responses API handler for Codex CLI compatibility.
 
 ---
-

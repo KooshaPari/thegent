@@ -183,4 +183,3 @@ save_data(self: Any) -> None
 ```
 
 ---
-

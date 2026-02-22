@@ -1,6 +1,6 @@
 # Pareto Frontier Quick Reference
 
-**Status**: Quick lookup guide  
+**Status**: Quick lookup guide
 **For**: Understanding why specific models are on/off the frontier
 
 ---
@@ -63,7 +63,7 @@ Codex 5.3:    56.8% quality, $1.25/M
 GPT-4o mini DOMINATES:
   ✓ Higher quality (70% > 56.8%)
   ✓ Cheaper ($0.375 < $1.25)
-  
+
 No reason to use Codex.
 ```
 
@@ -245,7 +245,7 @@ THEN:
 
 ---
 
-**Quick Ref Version 1.0**  
+**Quick Ref Version 1.0**
 **Updated**: 2026-02-15
 
 
@@ -261,7 +261,7 @@ THEN:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -95,7 +95,7 @@ Or use emojis in code comments:
 ```python
 def calculate_velocity(distance: float, time: float) -> float:
     """Calculate velocity :rocket:
-    
+
     Uses the formula: $v = \frac{d}{t}$
     """
     return distance / time  # :zap: Fast calculation

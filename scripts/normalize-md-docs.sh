@@ -32,12 +32,12 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 for doc in "${EXPANDED_DOCS[@]}"; do
     doc_path="$DOCS_DIR/$doc"
-    
+
     if [[ ! -f "$doc_path" ]]; then
         echo -e "${YELLOW}⚠️  Skipping $doc (not found)${NC}"
         continue
     fi
-    
+
     # Check if "See also" or "References" section exists
     if grep -qE "^## .*See also|^## .*References|^## .*Related" "$doc_path" 2>/dev/null; then
         echo -e "${GREEN}✅ $doc has See also/References section${NC}"
@@ -60,11 +60,11 @@ SAMPLE_DOCS=(
 
 for doc in "${SAMPLE_DOCS[@]}"; do
     doc_path="$DOCS_DIR/$doc"
-    
+
     if [[ ! -f "$doc_path" ]]; then
         continue
     fi
-    
+
     if head -5 "$doc_path" | grep -qE "^---|^# "; then
         echo -e "${GREEN}✅ $doc has proper structure${NC}"
     else

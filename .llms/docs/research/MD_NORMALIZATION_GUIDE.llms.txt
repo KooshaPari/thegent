@@ -6,7 +6,7 @@ Source: docs/research/MD_NORMALIZATION_GUIDE.md
 
 # MD Documentation Normalization Guide
 
-> **Status**: Complete | **Date**: 2026-02-17  
+> **Status**: Complete | **Date**: 2026-02-17
 > **Purpose**: Guide for normalizing all MD docs with frontmatter, cross-links, and "See also" sections
 
 ---
@@ -31,7 +31,7 @@ purpose: Brief purpose statement
 ```
 # Document Title
 
-> **Status**: Complete | **Date**: YYYY-MM-DD  
+> **Status**: Complete | **Date**: YYYY-MM-DD
 > **Purpose**: Brief purpose statement
 ```
 

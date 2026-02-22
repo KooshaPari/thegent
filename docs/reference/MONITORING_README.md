@@ -208,7 +208,7 @@ GROUP BY DATE(ended_at_utc) ORDER BY date DESC LIMIT 30;
 SELECT task_category, SUM(actual_cost_usd) as mtd_cost,
   CASE WHEN task_category='fast' THEN 50.00 ... END as budget,
   ROUND((SUM(actual_cost_usd) / budget) * 100, 1) as pct_used
-FROM run_registry WHERE event='finish' 
+FROM run_registry WHERE event='finish'
   AND STRFTIME('%Y-%m', ended_at_utc) = STRFTIME('%Y-%m', 'now')
 GROUP BY task_category;
 ```
@@ -216,11 +216,11 @@ GROUP BY task_category;
 ### SLA Attainment
 ```sql
 SELECT task_category,
-  ROUND((COUNT(CASE WHEN duration_s * 1000 <= CASE 
+  ROUND((COUNT(CASE WHEN duration_s * 1000 <= CASE
     WHEN task_category='fast' THEN 1000
-    WHEN task_category='normal' THEN 5000 ... END THEN 1 END) 
+    WHEN task_category='normal' THEN 5000 ... END THEN 1 END)
     / COUNT(*)) * 100, 1) as sla_attainment_pct
-FROM run_registry WHERE event='finish' 
+FROM run_registry WHERE event='finish'
   AND DATE(ended_at_utc) >= DATE('now', '-7 days')
 GROUP BY task_category;
 ```
@@ -407,7 +407,7 @@ docs/reference/
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

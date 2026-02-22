@@ -39,4 +39,3 @@ Get capability metadata for a mode string.
 List all available execution modes.
 
 ---
-

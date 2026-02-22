@@ -188,7 +188,7 @@ System APIs (sysinfo, walkdir, git2) - Cross-platform
 
 ---
 
-**Status**: Production-ready  
+**Status**: Production-ready
 **Next Step**: Build and deploy Rust extensions
 
 ---

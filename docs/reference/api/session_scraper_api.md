@@ -79,4 +79,3 @@ scrape_tmux_prompts(self: Any)
 Scrape likely user prompts from active Claude Code tmux panes.
 
 ---
-

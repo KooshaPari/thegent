@@ -182,4 +182,3 @@ update_status(self: Any, req_id: str, status: str, summary: Any)
 Update the status of a delegation.
 
 ---
-

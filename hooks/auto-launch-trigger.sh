@@ -29,7 +29,7 @@ if str(project_root) not in sys.path:
 try:
     from thegent.planning.auto_launch import AutoLaunchSystem
     from thegent.config import ThegentSettings
-    
+
     settings = ThegentSettings()
     system = AutoLaunchSystem(settings)
     system.handle_completion('$SESSION_ID', $EXIT_CODE)

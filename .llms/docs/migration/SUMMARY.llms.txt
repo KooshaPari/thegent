@@ -90,7 +90,7 @@ time which codex  # Should be <10ms
 
 ---
 
-**Status**: Ready for implementation  
+**Status**: Ready for implementation
 **Next Step**: Build and test Rust extensions
 
 ---

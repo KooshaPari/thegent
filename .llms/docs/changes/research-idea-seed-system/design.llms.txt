@@ -6,8 +6,8 @@ Source: docs/changes/research-idea-seed-system/design.md
 
 # Research-Idea-Seed-System: Design
 
-> **Status**: Complete | **Date**: 2026-02-16  
-> **Document Purpose**: Technical architecture and implementation design  
+> **Status**: Complete | **Date**: 2026-02-16
+> **Document Purpose**: Technical architecture and implementation design
 > **Audience**: Implementers, architects
 
 ---
@@ -231,7 +231,7 @@ def store_idea(idea: IdeaObject, path: str) -> str:
         f.write(json_line)
         f.flush()
         os.fsync(f.fileno())
-    
+
     git_commit(f"idea: {idea.id} {idea.text[:50]}")
     update_indices(idea)
     return idea.id
@@ -257,7 +257,7 @@ Author: thegent <system@thegent.local>
 Date:   Mon Feb 16 14:30:25 2026 +0000
 
     idea: idea_20260216_143022_abc123 Add lazy-loading to DAG compiler
-    
+
     source: session_abc123
     tags: performance, compiler, dax
     confidence: 0.99
@@ -287,7 +287,7 @@ class FullTextIndex:
     def __init__(self):
         self.inverted_index = {}  # word → [idea_ids]
         self.doc_freqs = {}       # word → count
-    
+
     def index_idea(self, idea: IdeaObject):
         """Add idea to full-text index."""
         tokens = tokenize(idea.text.lower())
@@ -295,13 +295,13 @@ class FullTextIndex:
             if token not in stopwords:
                 self.inverted_index.setdefault(token, [])
                 self.inverted_index[token].append(idea.id)
-    
+
     def search(self, query: str) -> List[str]:
         """Search index, return matching idea IDs."""
         tokens = tokenize(query.lower())
         results = self.inverted_index.get(tokens[0], [])
         for token in tokens[1:]:
-            results = [id for id in results 
+            results = [id for id in results
                       if id in self.inverted_index.get(token, [])]
         return results
 ```
@@ -734,7 +734,7 @@ patterns:
   custom_flag:
     pattern: '@ideate:\s*(.+?)(?=@|$)'
     confidence: 0.95
-  
+
   brainstorm:
     pattern: 'brainstorm[ing]*:\s*(.+?)(?:\n|$)'
     confidence: 0.85
@@ -757,6 +757,6 @@ register_detector(detect_ideas)
 
 ---
 
-**Design Document Status**: Complete  
-**Last Updated**: 2026-02-16  
+**Design Document Status**: Complete
+**Last Updated**: 2026-02-16
 **Next Phase**: Implementation Tasks

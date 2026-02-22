@@ -1,6 +1,6 @@
 # Shell Error Fixes — zsh Bad Substitution
 
-> **Status**: Fixed | **Date**: 2026-02-17  
+> **Status**: Fixed | **Date**: 2026-02-17
 > **Purpose**: Document fixes for zsh shell initialization errors
 
 ---
@@ -105,7 +105,7 @@ exec zsh
 
 ## 8. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

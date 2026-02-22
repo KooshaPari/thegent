@@ -429,4 +429,3 @@ write_output(self: Any, text: str)
 Write text to output pane.
 
 ---
-

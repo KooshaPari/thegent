@@ -880,7 +880,7 @@ environment:
 # Output modes
 class OutputFormatter:
     FORMATS = ['json', 'yaml', 'table', 'quiet']
-    
+
     def format(data, format='json', verbose=False):
         if format == 'json':
             return json.dumps(data, indent=2)
@@ -936,21 +936,21 @@ class ProgressIndicator:
         self.total = total
         self.current = 0
         self.stages = []
-    
+
     def add_stage(self, name):
         self.stages.append({'name': name, 'status': 'pending'})
         return self
-    
+
     def start_stage(self, stage_name):
         stage = next(s for s in self.stages if s['name'] == stage_name)
         stage['status'] = 'running'
         self._render()
-    
+
     def complete_stage(self, stage_name, success=True):
         stage = next(s for s in self.stages if s['name'] == stage_name)
         stage['status'] = 'success' if success else 'error'
         self._render()
-    
+
     def _render(self):
         # Update terminal display
         pass
@@ -964,7 +964,7 @@ class SubcommandLoader:
     def __init__(self, command_dir):
         self.command_dir = command_dir
         self.subcommands = {}
-    
+
     def discover(self):
         for filename in os.listdir(self.command_dir):
             if filename.endswith('.py') and not filename.startswith('_'):
@@ -981,23 +981,23 @@ class SubcommandLoader:
 # CLI args > config file > environment > defaults
 class ConfigOverride:
     PRIORITY = ['args', 'config', 'env', 'defaults']
-    
+
     def load(self, args):
         # 1. Load defaults
         self._load_defaults()
-        
+
         # 2. Load from environment
         self._load_env()
-        
+
         # 3. Load from config file
         if os.path.exists(args.config):
             self._load_config(args.config)
-        
+
         # 4. Override with args
         self._apply_args(args)
-        
+
         return self.config
-    
+
     def _load_env(self):
         env_mappings = {
             'THGENT_MODEL': ('model', str),
@@ -1071,15 +1071,15 @@ thegent --print-completion fish | source
 
 ---
 
-**Document Version:** 1.1  
-**Last Updated:** 2026-02-17  
+**Document Version:** 1.1
+**Last Updated:** 2026-02-17
 **Extension:** CLI Design Patterns, Cross-References, Extension Summary
 
 ---
 
 ## 10. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

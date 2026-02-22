@@ -185,4 +185,3 @@ python scripts/start_proxy_with_adapter.py --help
 - `ThegentSettings.debug` (bool, default=False): Debug logging flag (THGENT_DEBUG=1)
 - `ThegentSettings.reload` (bool, default=False): Auto-reload flag (THGENT_RELOAD=1)
 - `ThegentSettings.cliproxy_backend_url` (str | None): Backend URL for proxy (THGENT_CLIPROXY_BACKEND_URL)
-

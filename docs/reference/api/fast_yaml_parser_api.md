@@ -253,4 +253,3 @@ yaml_loads(s: str)
 Load YAML string using fastest available backend.
 
 ---
-

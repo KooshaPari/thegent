@@ -2,8 +2,8 @@
 
 **Purpose:** Advanced patterns, best practices, and architectural considerations for cross-platform desktop automation in multi-tenant agent environments.
 
-**Date:** 2026-02-16  
-**Status:** Research  
+**Date:** 2026-02-16
+**Status:** Research
 **Related:** CROSS_PLATFORM_MULTI_TENANT_DESKTOP_AUTOMATION_RESEARCH.md
 
 ---
@@ -17,7 +17,7 @@
 ```python
 class NamespaceIsolation:
     """Linux namespace-based isolation (PID, mount, network, user)."""
-    
+
     def create_namespace(self, agent_id: str) -> NamespaceContext:
         """Create isolated namespace for agent."""
         # PID namespace: Isolated process tree
@@ -36,7 +36,7 @@ class NamespaceIsolation:
 ```python
 class WindowsSessionIsolation:
     """Windows session-based isolation."""
-    
+
     def create_session(self, agent_id: str) -> SessionContext:
         """Create isolated Windows session."""
         # Create new logon session
@@ -54,7 +54,7 @@ class WindowsSessionIsolation:
 ```python
 class macOSSandboxProfile:
     """macOS sandbox profile for agent isolation."""
-    
+
     def create_profile(self, agent_id: str, capabilities: set[str]) -> SandboxProfile:
         """Create sandbox profile with specific capabilities."""
         # Allow file read/write in specific directories
@@ -76,10 +76,10 @@ class macOSSandboxProfile:
 ```python
 class DistributedAutomationLock:
     """Distributed lock for multi-machine coordination."""
-    
+
     def __init__(self, backend: str = "redis"):
         self.backend = backend  # redis, etcd, consul
-    
+
     def acquire(self, agent_id: str, scope: AutomationScope, ttl: int) -> bool:
         """Acquire distributed lock."""
         # Use Redis SET NX EX for distributed locking
@@ -96,12 +96,12 @@ class DistributedAutomationLock:
 ```python
 class EventDrivenCoordinator:
     """Event-driven automation coordination."""
-    
+
     def __init__(self):
         self.event_bus = EventBus()
         self.event_bus.subscribe("user_activity", self._on_user_activity)
         self.event_bus.subscribe("automation_complete", self._on_automation_complete)
-    
+
     def _on_user_activity(self, event: UserActivityEvent):
         """Handle user activity event."""
         # Pause all active automations
@@ -118,7 +118,7 @@ class EventDrivenCoordinator:
 ```python
 class ConsensusCoordinator:
     """Consensus-based automation coordination."""
-    
+
     def request_automation(self, agent_id: str, action: AutomationAction) -> bool:
         """Request automation via consensus."""
         # Propose automation to other agents
@@ -140,7 +140,7 @@ class ConsensusCoordinator:
 ```python
 class AutomationPipeline:
     """Pipeline for batched automation actions."""
-    
+
     def execute_batch(self, actions: list[AutomationAction]) -> list[AutomationResult]:
         """Execute multiple actions in optimized order."""
         # Group by app (reduce app switching)
@@ -162,14 +162,14 @@ class AutomationPipeline:
 ```python
 class LazyAutomationProvider:
     """Lazy evaluation for automation."""
-    
+
     def __init__(self):
         self.pending_actions: list[AutomationAction] = []
-    
+
     def enqueue(self, action: AutomationAction):
         """Enqueue action for later execution."""
         self.pending_actions.append(action)
-    
+
     def execute_when_idle(self):
         """Execute pending actions when user is idle."""
         if not self._is_user_idle():
@@ -188,7 +188,7 @@ class LazyAutomationProvider:
 ```python
 class AdaptiveTimeoutStrategy:
     """Adaptive timeout based on system conditions."""
-    
+
     def get_timeout(self, base_timeout: float, action_type: str) -> float:
         """Get adaptive timeout for action."""
         # Increase timeout if system load is high
@@ -212,20 +212,20 @@ class AdaptiveTimeoutStrategy:
 ```python
 class AutomationCircuitBreaker:
     """Circuit breaker for automation failures."""
-    
+
     def __init__(self, failure_threshold: int = 5, timeout: int = 60):
         self.failure_count = 0
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.state = "closed"  # closed, open, half_open
-    
+
     def execute(self, action: AutomationAction) -> AutomationResult:
         """Execute with circuit breaker protection."""
         if self.state == "open":
             if time.time() - self.last_failure < self.timeout:
                 raise CircuitBreakerOpenError()
             self.state = "half_open"
-        
+
         try:
             result = self._execute_action(action)
             if self.state == "half_open":
@@ -249,7 +249,7 @@ class AutomationCircuitBreaker:
 ```python
 class ExponentialBackoffRetry:
     """Exponential backoff retry for automation."""
-    
+
     def execute_with_retry(
         self,
         action: AutomationAction,
@@ -276,7 +276,7 @@ class ExponentialBackoffRetry:
 ```python
 class AutomationHealthChecker:
     """Health checker for automation providers."""
-    
+
     def check_health(self, provider: DesktopAutomationProvider) -> HealthStatus:
         """Check provider health."""
         # Test basic operations (screenshot, element find)
@@ -284,7 +284,7 @@ class AutomationHealthChecker:
         # Check permission status
         # Return health status
         pass
-    
+
     def monitor_health(self, interval: int = 60):
         """Continuously monitor health."""
         while True:
@@ -307,18 +307,18 @@ class AutomationHealthChecker:
 ```python
 class LeastPrivilegeAutomation:
     """Automation with least privilege."""
-    
+
     def __init__(self, agent_id: str):
         self.agent_id = agent_id
         self.capabilities = self._determine_capabilities(agent_id)
-    
+
     def _determine_capabilities(self, agent_id: str) -> set[str]:
         """Determine minimal capabilities for agent."""
         # Read agent configuration
         # Determine required capabilities
         # Return minimal set
         pass
-    
+
     def execute(self, action: AutomationAction) -> AutomationResult:
         """Execute only if action requires allowed capabilities."""
         required = action.required_capabilities()
@@ -336,7 +336,7 @@ class LeastPrivilegeAutomation:
 ```python
 class AuditableAutomation:
     """Automation with comprehensive audit trail."""
-    
+
     def execute(self, action: AutomationAction) -> AutomationResult:
         """Execute with audit logging."""
         audit_entry = {
@@ -345,7 +345,7 @@ class AuditableAutomation:
             "action": action.to_dict(),
             "pre_state": self._capture_state(),
         }
-        
+
         try:
             result = self._execute_action(action)
             audit_entry["success"] = True
@@ -357,7 +357,7 @@ class AuditableAutomation:
         finally:
             audit_entry["post_state"] = self._capture_state()
             self._log_audit(audit_entry)
-        
+
         return result
 ```
 
@@ -370,12 +370,12 @@ class AuditableAutomation:
 ```python
 class EncryptedAutomationStorage:
     """Encrypted storage for automation data."""
-    
+
     def store_screenshot(self, screenshot: bytes, metadata: dict) -> str:
         """Store encrypted screenshot."""
         encrypted = self._encrypt(screenshot)
         return self._store(encrypted, metadata)
-    
+
     def retrieve_screenshot(self, id: str) -> bytes:
         """Retrieve and decrypt screenshot."""
         encrypted = self._retrieve(id)
@@ -395,17 +395,17 @@ class EncryptedAutomationStorage:
 ```python
 class MockAutomationProvider(DesktopAutomationProvider):
     """Mock provider for testing."""
-    
+
     def __init__(self):
         self.actions: list[AutomationAction] = []
         self.results: dict[str, AutomationResult] = {}
-    
+
     def click(self, element: UIElement) -> bool:
         """Mock click."""
         action = AutomationAction(type="click", element=element)
         self.actions.append(action)
         return self.results.get("click", AutomationResult(success=True)).success
-    
+
     def assert_action_called(self, action_type: str) -> bool:
         """Assert action was called."""
         return any(a.type == action_type for a in self.actions)
@@ -420,7 +420,7 @@ class MockAutomationProvider(DesktopAutomationProvider):
 ```python
 class AutomationRecorder:
     """Record automation for replay."""
-    
+
     def record(self, action: AutomationAction, result: AutomationResult):
         """Record automation action."""
         self.recordings.append({
@@ -428,7 +428,7 @@ class AutomationRecorder:
             "result": result.to_dict(),
             "timestamp": time.time(),
         })
-    
+
     def replay(self, recording: dict) -> AutomationResult:
         """Replay recorded automation."""
         action = AutomationAction.from_dict(recording["action"])
@@ -452,7 +452,7 @@ def test_find_element_properties(selector: str, timeout: float):
     """Property-based test for element finding."""
     provider = get_provider()
     result = provider.find_element(selector, timeout=timeout)
-    
+
     # Properties:
     # - Result is either None or valid UIElement
     # - If result is not None, element.selector matches
@@ -475,10 +475,10 @@ def test_find_element_properties(selector: str, timeout: float):
 ```python
 class AutomationProviderAdapter:
     """Adapter for different automation providers."""
-    
+
     def __init__(self, provider: DesktopAutomationProvider):
         self.provider = provider
-    
+
     def execute_unified(self, action: UnifiedAction) -> UnifiedResult:
         """Execute using unified interface."""
         # Convert unified action to provider-specific
@@ -497,7 +497,7 @@ class AutomationProviderAdapter:
 ```python
 class ProviderSelectionStrategy:
     """Strategy for selecting automation provider."""
-    
+
     def select_provider(
         self,
         action: AutomationAction,
@@ -521,14 +521,14 @@ class ProviderSelectionStrategy:
 ```python
 class AutomationEventNotifier:
     """Notify observers of automation events."""
-    
+
     def __init__(self):
         self.observers: list[AutomationObserver] = []
-    
+
     def subscribe(self, observer: AutomationObserver):
         """Subscribe observer."""
         self.observers.append(observer)
-    
+
     def notify(self, event: AutomationEvent):
         """Notify all observers."""
         for observer in self.observers:
@@ -581,7 +581,7 @@ class AutomationEventNotifier:
 
 ## 9. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Worker Droid
 
 ### Changes Made

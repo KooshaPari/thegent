@@ -1,7 +1,7 @@
 # Package Replacement Implementation Plan
 
-> **Status**: Ready for Implementation | **Date**: 2026-02-18  
-> **Source**: Consolidated from LIBRARY_REPLACEMENT_COMPLETE.md, LIBRARY_REPLACEMENT_CONSOLIDATED.md, LIBRARY_REPLACEMENT_PHASE_DWBS.md  
+> **Status**: Ready for Implementation | **Date**: 2026-02-18
+> **Source**: Consolidated from LIBRARY_REPLACEMENT_COMPLETE.md, LIBRARY_REPLACEMENT_CONSOLIDATED.md, LIBRARY_REPLACEMENT_PHASE_DWBS.md
 > **Purpose**: Complete implementation guide for all package replacement tasks
 
 ---
@@ -10,8 +10,8 @@
 
 This plan consolidates all package replacement tasks from the library replacement audit into a single, actionable implementation plan. All tasks are prioritized, have clear acceptance criteria, and include migration patterns.
 
-**Total Tasks**: 9 major replacements + 4 enhancements  
-**Total Effort**: ~40-60 hours  
+**Total Tasks**: 9 major replacements + 4 enhancements
+**Total Effort**: ~40-60 hours
 **Priority Breakdown**: P1 (Critical): 3 tasks, P2 (High Value): 6 tasks, P3 (Polish): 4 tasks
 
 ---
@@ -52,8 +52,8 @@ This plan consolidates all package replacement tasks from the library replacemen
 
 ### IMPL-LIB-001: Replace urllib with httpx (P1)
 
-**Priority**: P1 (Critical)  
-**Effort**: 2-3 hours  
+**Priority**: P1 (Critical)
+**Effort**: 2-3 hours
 **Dependencies**: None (httpx already in deps)
 
 #### Files Affected
@@ -117,8 +117,8 @@ except httpx.HTTPStatusError as e:
 
 ### IMPL-LIB-002: Migrate retry to tenacity (P1)
 
-**Priority**: P1 (Critical)  
-**Effort**: 4-6 hours  
+**Priority**: P1 (Critical)
+**Effort**: 4-6 hours
 **Dependencies**: None (tenacity already in deps)
 
 #### Files Affected
@@ -170,8 +170,8 @@ def do_work():
 
 ### IMPL-LIB-003: Replace polling with watchdog (P1)
 
-**Priority**: P1 (Critical)  
-**Effort**: 2-4 hours  
+**Priority**: P1 (Critical)
+**Effort**: 2-4 hours
 **Dependencies**: Add `watchdog>=4.0.0` to dependencies
 
 #### Files Affected
@@ -218,8 +218,8 @@ observer.start()
 
 ### IMPL-LIB-101: Replace custom caching with cachetools (P2)
 
-**Priority**: P2 (High Value)  
-**Effort**: 2-3 hours  
+**Priority**: P2 (High Value)
+**Effort**: 2-3 hours
 **Dependencies**: Add `cachetools>=5.0.0` to dependencies
 
 #### Files Affected
@@ -236,7 +236,7 @@ class CustomCache:
     def __init__(self, ttl=3600):
         self.cache = {}
         self.timestamps = {}
-    
+
     def get(self, key):
         if key in self.cache:
             if time.time() - self.timestamps[key] < self.ttl:
@@ -270,8 +270,8 @@ if value is None:
 
 ### IMPL-LIB-102: Replace circuit breaker with pybreaker (P2)
 
-**Priority**: P2 (High Value)  
-**Effort**: 2-3 hours  
+**Priority**: P2 (High Value)
+**Effort**: 2-3 hours
 **Dependencies**: Add `pybreaker>=1.0.0` to dependencies
 
 #### Files Affected
@@ -285,7 +285,7 @@ class ToolCircuitBreaker:
     def __init__(self):
         self.failures = []
         self.state = "closed"
-    
+
     def call(self, func, *args, **kwargs):
         if self.state == "open":
             raise CircuitBreakerOpen()
@@ -324,8 +324,8 @@ def call_tool():
 
 ### IMPL-LIB-103: Replace PyYAML with ruamel.yaml (P2)
 
-**Priority**: P2 (High Value)  
-**Effort**: 3-4 hours  
+**Priority**: P2 (High Value)
+**Effort**: 3-4 hours
 **Dependencies**: Add `ruamel.yaml>=0.18.0` to dependencies
 
 #### Files Affected
@@ -378,8 +378,8 @@ with open('config.yaml', 'w') as f:
 
 ### IMPL-LIB-104: Replace ANSI stripping with rich (P2)
 
-**Priority**: P2 (High Value)  
-**Effort**: 1 hour  
+**Priority**: P2 (High Value)
+**Effort**: 1 hour
 **Dependencies**: None (rich already in deps)
 
 #### Files Affected
@@ -417,8 +417,8 @@ def strip_ansi(text):
 
 ### IMPL-LIB-105: Replace scrapers cache with diskcache (P2)
 
-**Priority**: P2 (High Value)  
-**Effort**: 1 hour  
+**Priority**: P2 (High Value)
+**Effort**: 1 hour
 **Dependencies**: Add `diskcache>=5.0.0` to dependencies
 
 #### Files Affected
@@ -465,8 +465,8 @@ def _save_cache(key, value, expire=3600):
 
 ### IMPL-LIB-106: Add psutil for resource monitoring (P2)
 
-**Priority**: P2 (High Value)  
-**Effort**: 2-3 hours  
+**Priority**: P2 (High Value)
+**Effort**: 2-3 hours
 **Dependencies**: Add `psutil>=5.9.0` to dependencies
 
 #### Files Affected
@@ -504,8 +504,8 @@ def get_memory_usage():
 
 ### IMPL-LIB-201: Replace md5 with sha256 (P3)
 
-**Priority**: P3 (Quick Win)  
-**Effort**: 0.5 hour  
+**Priority**: P3 (Quick Win)
+**Effort**: 0.5 hour
 **Dependencies**: None
 
 #### Files Affected
@@ -536,8 +536,8 @@ etag = hashlib.sha256(content).hexdigest()
 
 ### IMPL-LIB-202: Consolidate os.environ → ThegentSettings (P3)
 
-**Priority**: P3 (Enhancement)  
-**Effort**: 2-3 hours  
+**Priority**: P3 (Enhancement)
+**Effort**: 2-3 hours
 **Dependencies**: None (pydantic-settings already in deps)
 
 #### Files Affected
@@ -572,8 +572,8 @@ timeout = settings.timeout
 
 ### IMPL-LIB-203: Replace _CWD_CACHE with cachetools (P3)
 
-**Priority**: P3 (Quick Win)  
-**Effort**: 0.5 hour  
+**Priority**: P3 (Quick Win)
+**Effort**: 0.5 hour
 **Dependencies**: cachetools (from IMPL-LIB-101)
 
 #### Files Affected
@@ -616,8 +616,8 @@ def _resolve_cwd(path):
 
 ### IMPL-LIB-204: Add tomlkit to dependencies (P3)
 
-**Priority**: P3 (Quick Win)  
-**Effort**: 0.5 hour  
+**Priority**: P3 (Quick Win)
+**Effort**: 0.5 hour
 **Dependencies**: None
 
 #### Files Affected
@@ -759,5 +759,5 @@ dependencies = [
 
 ---
 
-**Status**: Ready for implementation  
+**Status**: Ready for implementation
 **Last Updated**: 2026-02-18

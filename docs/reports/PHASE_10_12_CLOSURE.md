@@ -14,7 +14,7 @@ As of 2026-02-15, all work packages for Phases 10, 11, and 12 have been implemen
 - [x] **Gate G12**: Replay safety and evidence bundling deterministic.
 
 ## Handoff Summary
-The platform is transitioning from *Deterministic Orchestration* to *Self-Optimizing Agency*. 
+The platform is transitioning from *Deterministic Orchestration* to *Self-Optimizing Agency*.
 
 ### Ongoing Responsibilities:
 1. **Platform SRE**: Monitor `thegent observe traffic` for SLO breaches and miscalibration events.
@@ -33,4 +33,3 @@ Further integration with external policy providers (OPA/OPAL) and expansion of t
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

@@ -37,4 +37,3 @@ Auto-route: classify prompt, then Pareto select (agent, model).
 **Returns**: AutoRouteResult or None if routing fails
 
 ---
-

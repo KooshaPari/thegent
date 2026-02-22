@@ -6,8 +6,8 @@ Source: docs/plans/2026-02-15-thegent-sitback-design.md
 
 # thegent sitback — Design & Implementation Plan
 
-**Date:** 2026-02-15  
-**Status:** Draft  
+**Date:** 2026-02-15
+**Status:** Draft
 **Scope:** `thegent sitback` command, startup protocol, skill system, dashboard UX, MCP integration
 
 ---
@@ -57,27 +57,27 @@ flowchart TB
     subgraph User
         U[User runs thegent sitback]
     end
-    
+
     subgraph SitbackCommand
         C[thegent sitback --agent minimax]
         C --> E[Set THGENT_SITBACK=1]
         C --> S[Ensure sitback-agent skill]
         C --> L[Launch thegent clode minimax]
     end
-    
+
     subgraph ClaudeCode
         CC[Claude Code process]
         CC --> SP[Startup prompt / skill]
         SP --> D[Dashboard: cockpit + terminal list + ps]
         D --> R[Ready for instructions]
     end
-    
+
     subgraph thegent
         MCP[MCP Server]
         CLI[CLI Commands]
         SK[Skill: sitback-agent]
     end
-    
+
     U --> C
     L --> CC
     CC --> MCP

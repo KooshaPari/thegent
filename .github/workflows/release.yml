@@ -27,7 +27,9 @@ jobs:
           python-version: "3.12"
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -48,13 +50,13 @@ jobs:
         run: uv build
 
       - name: Python vulnerability audit (JSON)
-        run: uv run pip-audit --format=json --output dist/pip-audit.json || true
+        run: uv run pip-audit --format=json --output dist/pip-audit.json
 
       - name: Install cargo-audit
         run: cargo install --locked cargo-audit
 
       - name: Rust vulnerability audit (JSON)
-        run: cargo audit --json > dist/cargo-audit.json || true
+        run: cargo audit --json > dist/cargo-audit.json
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0

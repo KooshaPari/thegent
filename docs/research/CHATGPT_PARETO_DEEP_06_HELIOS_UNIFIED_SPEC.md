@@ -1,7 +1,7 @@
 # ChatGPT Pareto Router Deep Research — Part 6: Helios Router v1.1 Unified Spec
 
-**Source**: chatgpt3.md, chatgpt4.md (ChatGPT, 14m+ thought)  
-**Date**: 2026-02-18  
+**Source**: chatgpt3.md, chatgpt4.md (ChatGPT, 14m+ thought)
+**Date**: 2026-02-18
 **Scope**: Full Unified PRD + Phased WBS/DAG + Technical ALD + ADR Docket (v1.1 with Speed Stack)
 
 ---
@@ -143,7 +143,7 @@ Static "pick a model" logic fails because pricing, availability, and speed claim
 
 ### 3.2 Control Plane vs Data Plane
 
-**Data plane (hot path)**: Router API, Execution Gateway, Fallback engine  
+**Data plane (hot path)**: Router API, Execution Gateway, Fallback engine
 **Control plane (slow path)**: Offer Registry, Plan Registry, Economics Engine, Telemetry Aggregator, Quality Engine, Snapshot Builder
 
 ### 3.3 Key Pipelines

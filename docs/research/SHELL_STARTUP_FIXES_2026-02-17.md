@@ -1,7 +1,7 @@
 # Shell Startup Fixes - 2026-02-17
 
-**Current:** 654ms  
-**Target:** <=80ms  
+**Current:** 654ms
+**Target:** <=80ms
 **Gap:** 574ms to optimize
 
 ---

@@ -781,13 +781,13 @@ thegent fix [options]
 
 ---
 
-## `thegent fix`
+## `thegent mcp fix`
 
-**Description**: Remove failing MCP servers (codex_apps, playwright) that cause 'MCP startup incomplete'.
+**Description**: Remove failing MCP servers (`playwright`) that cause 'MCP startup incomplete'.
 
 **Usage**:
 ```bash
-thegent fix [options]
+thegent mcp fix [options]
 ```
 
 **Options**:
@@ -1577,7 +1577,9 @@ thegent metrics [options]
 
 ## `thegent migrate-unimount`
 
-**Description**: Migrate to uni-mount: replace ALL MCP entries with thegent only. Fixes codex_apps/playwright handshake errors.
+**Description**: Migrate to uni-mount: keep existing MCP entries and force `thegent` + `codex_apps` to the active MCP URL. Existing non-thegent tools remain available for mixed tooling flows.
+
+Use this both for existing projects (brownfield) and partially/fully scaffolded new projects after MCP entries are created.
 
 **Usage**:
 ```bash
@@ -2990,4 +2992,3 @@ thegent watchdog [options]
 - `--max-idle` - Parameter
 
 ---
-

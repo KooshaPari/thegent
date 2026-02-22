@@ -64,4 +64,3 @@ correct_drift(self: Any, resource_id: str, target_spec: ResourceSpec)
 Automatically correct detected infrastructure drift.
 
 ---
-

@@ -28,4 +28,3 @@ Ensure LSP servers are installed and ready for specified languages.
 - `languages`: List of languages to ensure (None = all common languages)
 
 ---
-

@@ -239,4 +239,3 @@ watch_session_id(self: Any, value: Any)
 Update session ID display.
 
 ---
-

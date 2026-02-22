@@ -485,4 +485,3 @@ total_xp(self: Any)
 Total accumulated XP.
 
 ---
-

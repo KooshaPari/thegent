@@ -52,4 +52,3 @@ synthesize(self: Any, prompt: str, formal_spec: Any)
 Synthesize a program from a prompt and optional formal spec.
 
 ---
-

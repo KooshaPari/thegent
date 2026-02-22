@@ -6,8 +6,8 @@ Source: docs/research/FRICTION_DETECTOR_ENHANCEMENT.md
 
 # Friction Detector Enhancement - Comprehensive Pattern Detection
 
-> **Date**: 2026-02-18  
-> **Status**: ✅ Enhanced  
+> **Date**: 2026-02-18
+> **Status**: ✅ Enhanced
 > **Purpose**: Robust detection of friction, optimizations, and process inefficiencies
 
 ---
@@ -77,7 +77,7 @@ Expanded friction detector from **7 patterns** to **40+ patterns** covering:
 **Sequential Agent Calls**:
 ```
 thegent free "Task 1"
-thegent free "Task 2"  
+thegent free "Task 2"
 thegent free "Task 3"
 ```
 → **Detected**: Should use `thegent bg` for parallel execution
@@ -143,7 +143,7 @@ python3 scripts/friction_detector.py --file file.py --format json
 
 ## Impact
 
-**Before**: 7 patterns detected  
+**Before**: 7 patterns detected
 **After**: 40+ patterns detected
 
 **Coverage**:

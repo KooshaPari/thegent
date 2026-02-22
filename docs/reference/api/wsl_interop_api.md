@@ -119,4 +119,3 @@ Convert a Windows path to a WSL path.
 Uses fast-path regex if possible, falls back to wslpath.
 
 ---
-

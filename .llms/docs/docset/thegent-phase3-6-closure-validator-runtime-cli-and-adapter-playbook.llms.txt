@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase3-6-closure-validator-runtime-cli-and-adapter-p
 
 # Thegent Phase 3-6 Closure Validator Runtime CLI and Adapter Playbook
 
-**Status:** Execution blueprint  
-**Date:** 2026-02-15  
+**Status:** Execution blueprint
+**Date:** 2026-02-15
 **Scope:** Convert the phase 3-6 validator contracts into runnable CLI commands, policy execution paths, and tracker connectors.
 
 ## 1) Purpose

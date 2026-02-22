@@ -99,14 +99,14 @@ The fixes I've implemented:
 3. **Check Codex/CLIProxyAPI integration**:
    - Ensure Codex is not wrapping commands incorrectly
    - Check Codex MCP config: `~/.codex/mcp.json`
-   - Remove `codex_apps` if present: `thegent mcp fix codex`
+   - Remove failing MCP entries: `thegent mcp fix --client codex`
 
 4. **Nuclear option** (if nothing else works):
    ```bash
    # Backup shell configs
    cp ~/.zshrc ~/.zshrc.backup
    cp ~/.zshenv ~/.zshenv.backup
-   
+
    # Start with minimal config
    zsh -f
    # Then manually source only what you need
@@ -123,14 +123,14 @@ If you see `no such file or directory` for zsh-nvm-x, prompt.zsh, providers/*, z
 ## Related Commands
 
 - `thegent cliproxy ensure-config` - Ensure CLIProxyAPI config exists
-- `thegent mcp fix codex` - Remove problematic MCP servers
+- `thegent mcp fix --client codex` - Remove problematic MCP servers
 - `thegent mcp down` - Stop all MCP services
 - `thegent mcp up` - Start MCP services cleanly
 
 ## Files Changed
 
 - `scripts/start_proxy.py` - Auto-creates fork config if needed
-- `scripts/start_proxy_with_adapter.py` - Auto-creates fork config if needed  
+- `scripts/start_proxy_with_adapter.py` - Auto-creates fork config if needed
 - `scripts/start_proxy_dev.sh` - Auto-creates fork config if needed
 - `scripts/fix_shell_corruption.sh` - Diagnostic script
 
@@ -139,7 +139,7 @@ If you see `no such file or directory` for zsh-nvm-x, prompt.zsh, providers/*, z
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

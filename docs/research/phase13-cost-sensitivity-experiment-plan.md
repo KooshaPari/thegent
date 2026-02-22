@@ -1,8 +1,8 @@
 # Phase 13: Cost Sensitivity Experiment Plan
 
-> **Purpose:** Evaluate impact of policy federation on latency and routing costs.  
-> **Depends:** phase13-policy-federation.  
-> **Acceptance:** Baseline + Experiment A/B defined; metrics (lookup latency, provider accuracy, SLA breach) captured.  
+> **Purpose:** Evaluate impact of policy federation on latency and routing costs.
+> **Depends:** phase13-policy-federation.
+> **Acceptance:** Baseline + Experiment A/B defined; metrics (lookup latency, provider accuracy, SLA breach) captured.
 > **WORK_STREAM ID:** phase13-cost-sensitivity
 
 ## 1. Goal
@@ -76,7 +76,7 @@ The analysis includes:
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

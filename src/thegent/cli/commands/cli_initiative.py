@@ -75,6 +75,7 @@ def initiative_audit_cmd() -> None:
     plan_path = Path("PLAN.md")
     initiatives = parse_plan_initiatives(plan_path)
 
+    docs_path = Path("docs")
     _issues: list[object] = []
 
     # 1. Check for stalled initiatives
@@ -83,9 +84,30 @@ def initiative_audit_cmd() -> None:
 
     # 2. Check for missing deliverables documentation
     for ini in initiatives:
-        if "DONE" in ini.status and ini.deliverables:
-            # Check if deliverables are mentioned in docs/
-            pass
+        if "DONE" in ini.status:
+            deliverables = [d.strip() for d in ini.deliverables.split(",") if d.strip()]
+            if not deliverables:
+                _issues.append(f"Initiative {ini.id} is DONE but has no listed deliverables.")
+                continue
+
+            if not docs_path.exists():
+                _issues.append(f"Initiative {ini.id} deliverables not auditable: docs/ directory missing.")
+                break
+
+            missing: list[str] = []
+            doc_texts: list[str] = []
+            for doc_file in docs_path.rglob("*.md"):
+                try:
+                    doc_texts.append(doc_file.read_text(encoding="utf-8"))
+                except OSError:
+                    continue
+            joined = "\n".join(doc_texts).lower()
+
+            for deliverable in deliverables:
+                if deliverable.lower() not in joined:
+                    missing.append(deliverable)
+            if missing:
+                _issues.append(f"Initiative {ini.id}: missing deliverable references for {', '.join(missing)}.")
 
     if not initiatives:
         console.print("[red]No initiatives found to audit.[/red]")
@@ -94,4 +116,9 @@ def initiative_audit_cmd() -> None:
     console.print(
         Panel(f"Audited {len(initiatives)} initiatives from PLAN.md", title="Initiative Audit", border_style="blue")
     )
-    console.print("[green]All initiatives are consistent with roadmap.[/green]")
+    if _issues:
+        console.print(f"[yellow]Audit found {len(_issues)} roadmap consistency issues.[/yellow]")
+        for issue in _issues:
+            console.print(f"[red]- {issue}[/red]")
+    else:
+        console.print("[green]All initiatives are consistent with roadmap docs coverage.[/green]")

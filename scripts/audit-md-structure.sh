@@ -24,32 +24,32 @@ TOTAL=0
 while IFS= read -r -d '' file; do
     TOTAL=$((TOTAL + 1))
     filename=$(basename "$file")
-    
+
     # Check for frontmatter or H1
     has_frontmatter=false
     has_h1=false
     has_see_also=false
-    
+
     if head -5 "$file" | grep -qE "^---"; then
         has_frontmatter=true
     fi
-    
+
     if head -10 "$file" | grep -qE "^# "; then
         has_h1=true
     fi
-    
+
     if grep -qiE "^## .*See also|^## .*References|^## .*Related" "$file" 2>/dev/null; then
         has_see_also=true
     fi
-    
+
     if [[ "$has_frontmatter" == "false" && "$has_h1" == "false" ]]; then
         MISSING_H1+=("$file")
     fi
-    
+
     if [[ "$has_see_also" == "false" ]]; then
         MISSING_SEE_ALSO+=("$file")
     fi
-    
+
 done < <(find "$DOCS_DIR/research" -name "*.md" -type f -print0)
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

@@ -1,6 +1,6 @@
 # Ultra-Shim Fork Failure Fix: Root Cause Analysis & Solution
 
-> **Status**: Critical Fix Plan | **Version**: 1.0 | **Date**: 2026-02-16  
+> **Status**: Critical Fix Plan | **Version**: 1.0 | **Date**: 2026-02-16
 > **Purpose**: Fix fork exhaustion and permission errors in ultra-shim causing command failures
 
 ---
@@ -73,7 +73,7 @@ func runAndCache(path string, args []string, tool string, originalArgs []string)
 	cmd := exec.Command(path, args...)
 	cmd.Env = os.Environ()
 	output, err := cmd.CombinedOutput()
-	
+
 	if err != nil {
 		// Check if it's a fork/resource error
 		errStr := err.Error()
@@ -92,7 +92,7 @@ func runAndCache(path string, args []string, tool string, originalArgs []string)
 		}
 		os.Exit(1)
 	}
-	
+
 	// Success: cache and output
 	if len(output) > 0 {
 		saveCache(tool, originalArgs, output)
@@ -109,36 +109,36 @@ func runAndCache(path string, args []string, tool string, originalArgs []string)
 ```go
 func tryIndex(dir string, pattern string) bool {
 	if os.Getenv("USE_INDEX") == "0" { return false }
-	
+
 	indexPath := getIndexFile()
 	info, err := os.Stat(indexPath)
 	if err != nil { return false }
-	
+
 	// TTL: 5 minutes for index
 	if time.Since(info.ModTime()).Minutes() > 5 {
 		return false
 	}
-	
+
 	if pattern == "" { return false }
-	
+
 	// Normalize pattern for grep
 	grepPattern := strings.ReplaceAll(pattern, "*", ".*")
-	
+
 	// Use absolute path to real grep (avoid shim interception)
 	grepPath := resolveReal("grep", "")
 	if grepPath == "" {
 		grepPath = "/usr/bin/grep" // Fallback
 	}
-	
+
 	var cmd *exec.Cmd
 	if dir != "." {
 		// Filter by directory
-		cmd = exec.Command("sh", "-c", fmt.Sprintf("%s -E '%s' %s | %s '^%s'", 
+		cmd = exec.Command("sh", "-c", fmt.Sprintf("%s -E '%s' %s | %s '^%s'",
 			grepPath, grepPattern, indexPath, grepPath, dir))
 	} else {
 		cmd = exec.Command(grepPath, "-E", grepPattern, indexPath)
 	}
-	
+
 	output, err := cmd.CombinedOutput()
 	if err == nil && len(output) > 0 {
 		os.Stdout.Write(output)
@@ -159,7 +159,7 @@ func handleFind(args []string, isAgent bool, self string) {
 		execute(resolveReal("find", self), args, self)
 		return
 	}
-	
+
 	// ... rest of handleFind()
 }
 
@@ -169,7 +169,7 @@ func handleCat(args []string, self string) {
 		execute(resolveReal("cat", self), args, self)
 		return
 	}
-	
+
 	// ... rest of handleCat()
 }
 ```
@@ -187,18 +187,18 @@ func resolveReal(name, self string) string {
 		if err != nil {
 			continue
 		}
-		
+
 		// Skip directories
 		if info.IsDir() {
 			continue
 		}
-		
+
 		// Check if executable (not a Python file or other non-executable)
 		mode := info.Mode()
 		if !mode.IsRegular() {
 			continue
 		}
-		
+
 		// Check if executable bit is set (or if it's a script with shebang)
 		if mode&0111 == 0 {
 			// Might be a script - check first line for shebang
@@ -206,12 +206,12 @@ func resolveReal(name, self string) string {
 				continue
 			}
 		}
-		
+
 		// Make sure it's not the shim itself
 		if isSelfBinary(full, self) {
 			continue
 		}
-		
+
 		return full
 	}
 	return ""
@@ -223,7 +223,7 @@ func hasShebang(path string) bool {
 		return false
 	}
 	defer f.Close()
-	
+
 	var firstLine [2]byte
 	if n, _ := f.Read(firstLine[:]); n == 2 && firstLine[0] == '#' && firstLine[1] == '!' {
 		return true
@@ -250,7 +250,7 @@ var (
 
 func executeWithCircuitBreaker(path string, args []string, self string) {
 	circuitMutex.Lock()
-	
+
 	// Check circuit breaker
 	if circuitOpen {
 		if time.Since(lastForkFailure) > 30*time.Second {
@@ -265,43 +265,43 @@ func executeWithCircuitBreaker(path string, args []string, self string) {
 			os.Exit(1)
 		}
 	}
-	
+
 	circuitMutex.Unlock()
-	
+
 	// Try fork
 	cmd := exec.Command(path, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	
+
 	err := cmd.Run()
 	if err != nil {
 		errStr := err.Error()
 		if strings.Contains(errStr, "fork") ||
 		   strings.Contains(errStr, "resource temporarily unavailable") {
-			
+
 			circuitMutex.Lock()
 			forkFailureCount++
 			lastForkFailure = time.Now()
-			
+
 			if forkFailureCount >= 3 {
 				circuitOpen = true
 				os.Setenv("ULTRA_SHIM_FORK_FAILURES", strconv.Itoa(forkFailureCount))
 			}
 			circuitMutex.Unlock()
-			
+
 			// Fall back to direct exec
 			argv := append([]string{filepath.Base(path)}, args...)
 			syscall.Exec(path, argv, os.Environ())
 			os.Exit(1)
 		}
-		
+
 		// Other errors
 		if exitError, ok := err.(*exec.ExitError); ok {
 			os.Exit(exitError.ExitCode())
 		}
 		os.Exit(1)
 	}
-	
+
 	// Success: reset counter
 	circuitMutex.Lock()
 	if forkFailureCount > 0 {
@@ -320,7 +320,7 @@ func execute(path string, args []string, self string) {
 	if path == "" || isSelfBinary(path, self) {
 		os.Exit(127)
 	}
-	
+
 	// For simple commands without caching/indexing, use Exec (no fork)
 	// This is faster and doesn't consume fork resources
 	argv := append([]string{filepath.Base(path)}, args...)
@@ -419,4 +419,3 @@ The root cause is fork exhaustion in `runAndCache()` combined with recursive int
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

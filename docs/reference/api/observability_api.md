@@ -107,4 +107,3 @@ record_metric(self: Any, agent_id: str, name: str, value: float)
 Record a single metric point.
 
 ---
-

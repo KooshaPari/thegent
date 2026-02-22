@@ -12,10 +12,10 @@ Configuration in starship.toml:
   format = "[$symbol($status )($work_stream )($lsp )]($style)"
   style = "bold green"
   disabled = false
-  
+
   # Enable work stream display
   show_work_stream = true
-  
+
   # Enable LSP status
   show_lsp = true
 

@@ -17,11 +17,11 @@ struct ToolCache {
 }
 
 /// Fast, cached tool detection with parallel scanning
-/// 
+///
 /// # Example
 /// ```
 /// use thegent_tool_detect::ToolDetector;
-/// 
+///
 /// let detector = ToolDetector::new();
 /// let tools = detector.detect_all();
 /// println!("Found {} tools", tools.len());
@@ -46,7 +46,7 @@ impl ToolDetector {
     }
 
     /// Detect all tools with automatic caching
-    /// 
+    ///
     /// Returns a map of tool names to their full paths.
     /// Results are cached for 1 hour by default.
     pub fn detect_all(&self) -> HashMap<String, String> {
@@ -67,7 +67,7 @@ impl ToolDetector {
     }
 
     /// Detect a single tool (bypasses cache for fresh results)
-    /// 
+    ///
     /// # Example
     /// ```
     /// let detector = ToolDetector::new();
@@ -77,10 +77,10 @@ impl ToolDetector {
     /// ```
     pub fn detect_one(&self, name: &str) -> Option<String> {
         use which::which;
-        
+
         // Try common aliases/variants
         let candidates = self.get_candidates(name);
-        
+
         for candidate in candidates {
             if let Ok(path) = which(candidate) {
                 return Some(path.to_string_lossy().to_string());
@@ -152,12 +152,12 @@ impl ToolDetector {
         };
 
         let content = serde_json::to_string_pretty(&cache)?;
-        
+
         // Atomic write: write to temp file, then rename (prevents corruption)
         let temp_file = format!("{}.tmp", self.cache_file.to_string_lossy());
         std::fs::write(&temp_file, content)?;
         std::fs::rename(&temp_file, &self.cache_file)?;
-        
+
         Ok(())
     }
 

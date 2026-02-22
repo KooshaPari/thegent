@@ -77,4 +77,3 @@ generate_monthly_report(self: Any)
 Generate a comprehensive monthly compliance report.
 
 ---
-

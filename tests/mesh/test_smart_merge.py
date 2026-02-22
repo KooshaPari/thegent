@@ -6,6 +6,7 @@ heliosShield-smart-merge: SmartMerger class-based API + WorktreePool integration
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 from unittest import mock
@@ -22,6 +23,12 @@ from thegent.mesh.smart_merge import (
     make_smart_merger,
     merge_files,
 )
+
+if os.environ.get("THGENT_ENFORCE_MERGIRAF_TESTS", "0") == "1" and not is_mergiraf_available():
+    pytest.fail(
+        "THGENT_ENFORCE_MERGIRAF_TESTS=1 but mergiraf binary is unavailable",
+        pytrace=False,
+    )
 
 # ---------------------------------------------------------------------------
 # FR-MESH-007: is_mergiraf_available

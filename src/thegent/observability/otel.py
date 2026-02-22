@@ -21,6 +21,7 @@ GenAI semantic convention attributes:
 
 import logging
 import threading
+from importlib import import_module
 from dataclasses import dataclass
 from typing import Any
 
@@ -31,14 +32,16 @@ _log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 try:
-    from opentelemetry import trace as _otel_trace
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-    from opentelemetry.sdk.resources import Resource
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    _otel_trace = import_module("opentelemetry.trace")
+    OTLPSpanExporter = import_module(
+        "opentelemetry.exporter.otlp.proto.grpc.trace_exporter"
+    ).OTLPSpanExporter
+    Resource = import_module("opentelemetry.sdk.resources").Resource
+    TracerProvider = import_module("opentelemetry.sdk.trace").TracerProvider
+    BatchSpanProcessor = import_module("opentelemetry.sdk.trace.export").BatchSpanProcessor
 
     _OTEL_AVAILABLE = True
-except ImportError:
+except Exception:
     _OTEL_AVAILABLE = False
 
 

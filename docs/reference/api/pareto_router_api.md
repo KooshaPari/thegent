@@ -86,4 +86,3 @@ Select offer with full route trace (why offer won). Per Helios spec.
 Uses role from roles.schema.yaml when provided (min_quality, soft_order, output_tokens_multiplier).
 
 ---
-

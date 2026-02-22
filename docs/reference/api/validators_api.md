@@ -77,4 +77,3 @@ Validate URL.
 **Returns**: True if valid
 
 ---
-

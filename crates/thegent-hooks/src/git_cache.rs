@@ -51,7 +51,7 @@ impl GitCache {
         let cache_dir = std::env::var("CLAUDE_HOME")
             .or_else(|_| std::env::var("HOME"))
             .unwrap_or_else(|_| ".".to_string());
-        
+
         let cache_path = PathBuf::from(cache_dir).join(".git-cache");
         let ttl = std::env::var("GIT_CACHE_TTL")
             .ok()
@@ -64,19 +64,19 @@ impl GitCache {
     /// Generate cache key from git command and context
     fn cache_key(&self, cmd: &[String]) -> String {
         let mut hasher = blake3::Hasher::new();
-        
+
         // Include command
         for arg in cmd {
             hasher.update(arg.as_bytes());
             hasher.update(b"|");
         }
-        
+
         // Include session ID if available
         if let Ok(session_id) = std::env::var("SESSION_ID") {
             hasher.update(session_id.as_bytes());
             hasher.update(b"|");
         }
-        
+
         // Include .git/config mtime if available
         if let Ok(repo_root) = self.get_repo_root() {
             let config_path = repo_root.join(".git").join("config");
@@ -88,7 +88,7 @@ impl GitCache {
                 }
             }
         }
-        
+
         let hash = hasher.finalize();
         let hash_bytes = hash.as_bytes();
         // Use first 16 bytes for shorter key (32 hex chars)
@@ -101,15 +101,15 @@ impl GitCache {
     /// Get repository root
     fn get_repo_root(&self) -> Result<PathBuf, GitCacheError> {
         use std::process::Command;
-        
+
         let git_bin = crate::utils::resolve_git_binary()
             .ok_or_else(|| GitCacheError::CacheDir("git not found".to_string()))?;
-        
+
         let output = Command::new(git_bin)
             .arg("rev-parse")
             .arg("--show-toplevel")
             .output()?;
-        
+
         if output.status.success() {
             let root = String::from_utf8_lossy(&output.stdout).trim().to_string();
             Ok(PathBuf::from(root))
@@ -160,7 +160,7 @@ impl GitCache {
     /// Read from cache (memory or disk)
     pub fn get(&self, cmd: &[String]) -> Option<String> {
         let key = self.cache_key(cmd);
-        
+
         // Check memory cache first
         if let Some(cached) = self.memory_cache.get(&key) {
             if self.is_valid(cached.cached_at) {
@@ -169,7 +169,7 @@ impl GitCache {
                 self.memory_cache.remove(&key);
             }
         }
-        
+
         // Check disk cache
         let cache_file = self.cache_dir.join(&key);
         if let Ok(metadata) = fs::metadata(&cache_file) {
@@ -189,7 +189,7 @@ impl GitCache {
                 }
             }
         }
-        
+
         None
     }
 
@@ -200,26 +200,26 @@ impl GitCache {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         // Update memory cache
         self.memory_cache.insert(key.clone(), CachedResult {
             output: output.to_string(),
             cached_at: now,
         });
-        
+
         // Write to disk atomically
         let cache_file = self.cache_dir.join(&key);
         let temp_file = self.cache_dir.join(format!("{}.tmp", key));
         fs::write(&temp_file, output)?;
         fs::rename(&temp_file, &cache_file)?;
-        
+
         Ok(())
     }
 
     /// Invalidate all cache entries
     pub fn invalidate_all(&self) -> Result<(), GitCacheError> {
         self.memory_cache.clear();
-        
+
         if self.cache_dir.exists() {
             for entry in fs::read_dir(&self.cache_dir)? {
                 let entry = entry?;
@@ -229,7 +229,7 @@ impl GitCache {
                 }
             }
         }
-        
+
         Ok(())
     }
 }
@@ -243,15 +243,15 @@ mod tests {
     fn test_git_cache() {
         let temp_dir = TempDir::new().unwrap();
         let cache = GitCache::new(temp_dir.path(), 60).unwrap();
-        
+
         let cmd = vec!["status".to_string(), "--porcelain".to_string()];
-        
+
         // Should be empty initially
         assert!(cache.get(&cmd).is_none());
-        
+
         // Set cache
         cache.set(&cmd, "test output").unwrap();
-        
+
         // Should retrieve from cache
         assert_eq!(cache.get(&cmd), Some("test output".to_string()));
     }

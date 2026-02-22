@@ -47,4 +47,3 @@ select_agent(self: Any, task_description: str, available_agents: list) -> Any
 ```
 
 ---
-

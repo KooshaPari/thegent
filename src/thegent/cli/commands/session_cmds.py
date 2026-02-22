@@ -732,7 +732,15 @@ def inspect_cmd(
         try:
             st = status_impl(session_id=sid, include_contract=include_contract)
             if fmt == "json":
-                pass
+                if include_contract:
+                    console.print_json(data=st)
+                else:
+                    output = {
+                        "session_id": sid,
+                        "status": st,
+                    }
+                    console.print_json(data=output)
+                continue
             else:
                 console.print(st.get("status", ""))
         except Exception as e:
@@ -908,7 +916,7 @@ def session_fork_cmd(
     from_turn: int | None = None,
     new_session_id: str | None = None,
 ) -> None:
-    """WL-106: CLI stub for session fork via SessionManager API."""
+    """Fork a session via SessionManager API."""
     from thegent.session import SessionManager, SessionManagerError
 
     session_id = session_id.strip()
@@ -944,7 +952,7 @@ def session_fork_cmd(
 
 
 def session_rollback_cmd(session_id: str, n_turns: int) -> None:
-    """WL-106: CLI stub for session rollback via SessionManager API."""
+    """Rollback a session via SessionManager API."""
     from thegent.session import SessionManager, SessionManagerError
 
     session_id = session_id.strip()

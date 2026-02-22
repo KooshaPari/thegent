@@ -184,6 +184,7 @@ class TestInstallToCodexExtended:
         data = json.loads((codex_dir / "mcp.json").read_text())
         assert "other-tool" in data["mcpServers"]
         assert "thegent" in data["mcpServers"]
+        assert "codex_apps" in data["mcpServers"]
 
 
 # ---------------------------------------------------------------------------

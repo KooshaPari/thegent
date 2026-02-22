@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import re
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,8 @@ __all__ = [
     "_ensure_dag_file",
     "_validate_dag",
 ]
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -368,7 +371,7 @@ def _get_ready_task_ids(tasks: list[dict[str, str]]) -> list[str]:
     return ready
 
 
-def _resolve_prompt(task_id: str, prompt: str, cwd: Path) -> str:
+def _resolve_prompt(task_id: str, prompt: str, cwd: Path) -> str:  # pyright: ignore[reportUnusedVariable]
     """Resolve prompt: inline string or @.factory/prompts/<id>.md."""
     if prompt.startswith("@"):
         path = cwd / prompt[1:]
@@ -430,7 +433,7 @@ def dag_run_impl(
     task: str | None = None,
     max_parallel: int | None = None,
     lane: str | None = None,
-    check_drift: bool = False,
+    check_drift: bool = False,  # pyright: ignore[reportUnusedVariable]
     contract_version: str | None = None,
 ) -> dict[str, Any]:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
@@ -563,7 +566,7 @@ def dag_status_impl(cd: Path | None = None) -> dict[str, Any]:
     return {"tasks": rows}
 
 
-def rules_sync_impl(cd: Path | None = None, force: bool = False, check: bool = False) -> dict[str, Any]:
+def rules_sync_impl(cd: Path | None = None, force: bool = False, check: bool = False) -> dict[str, Any]:  # pyright: ignore[reportUnusedVariable]
     """Sync rules implementation (WP-9002)."""
     from thegent.rules.sync import RulesSync
 
@@ -625,6 +628,7 @@ def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[s
             pid = int(m.get("pid", 0) or 0)
             running = _is_pid_running(pid)
 
+            rc = 1  # Default to failure; will be overwritten if session succeeded
             if not running:
                 # Read exit code
                 rc = 0
@@ -633,12 +637,13 @@ def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[s
                         rc_raw = p["rc"].read_text(encoding="utf-8").strip()
                         if rc_raw:
                             rc = int(rc_raw)
-                    except (OSError, ValueError):
-                        pass
+                    except (OSError, ValueError) as exc:
+                        _log.warning("Unable to read valid rc for session %s: %s", sid, exc)
+                        rc = 1
 
-                new_status = "done" if rc == 0 else "failed"
-                _dag_update_task(doc, t.get("id", ""), status=new_status)
-                changed = True
+            new_status = "done" if rc == 0 else "failed"
+            _dag_update_task(doc, t.get("id", ""), status=new_status)
+            changed = True
         except Exception:
             # Session not found or error - mark as failed
             _dag_update_task(doc, t.get("id", ""), status="failed")

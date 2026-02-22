@@ -2,8 +2,8 @@
 
 **Purpose:** Full specification for `thegent run --remote` and remote session management. Extends HYBRID_ENV Phase 4.
 
-**Date:** 2026-02-16  
-**Status:** Planning  
+**Date:** 2026-02-16
+**Status:** Planning
 **Extends:** HYBRID_MAC_WIN_DEV_ENVIRONMENT.md, HYBRID_ENV_IMPLEMENTATION_PLAN.md
 
 ---

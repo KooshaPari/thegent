@@ -1,7 +1,7 @@
 # TaskRouter Integration Quick Start
 
-**Target Audience**: Software engineers (2 hours to understand + begin implementation)  
-**Status**: Ready for implementation  
+**Target Audience**: Software engineers (2 hours to understand + begin implementation)
+**Status**: Ready for implementation
 **Last Updated**: 2026-02-15
 
 ---
@@ -10,7 +10,7 @@
 
 This is a **1-page** action checklist for integrating TaskRouter + Pareto routing into thegent. It assumes you've read `INTEGRATION_ARCHITECTURE.md` or can reference it for details.
 
-**Timeline**: 3 weeks (W1: core routing, W2: policy + cost, W3: testing + rollout)  
+**Timeline**: 3 weeks (W1: core routing, W2: policy + cost, W3: testing + rollout)
 **Critical Path**: execution.py → cli_impl.py → routing/task_router.py → tests
 
 ---
@@ -364,7 +364,7 @@ governance/cost.py (per-category tracking)
 tests/* (unit + integration tests)
 ```
 
-**Critical Path**: config.py → routing/task_router.py → cli_impl.py  
+**Critical Path**: config.py → routing/task_router.py → cli_impl.py
 **Must Complete Before Week 2 Starts**: All of Week 1 checklist (actions 1–18)
 
 ---
@@ -471,7 +471,7 @@ git checkout HEAD~1 src/thegent/routing/  # If just routing module broke
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

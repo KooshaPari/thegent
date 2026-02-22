@@ -1,6 +1,6 @@
 # Agent Instructions Template
 
-> **Purpose**: Standard template for all agent instructions with embedded continuous improvement  
+> **Purpose**: Standard template for all agent instructions with embedded continuous improvement
 > **Usage**: Copy this template when creating new agents
 
 ---
@@ -18,7 +18,7 @@ version: v1
 
 # [Agent Name]
 
-> **Purpose**: [Purpose]  
+> **Purpose**: [Purpose]
 > **Activation**: [When/how agent is triggered]
 
 ---

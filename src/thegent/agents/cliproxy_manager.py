@@ -7,6 +7,7 @@ Provider/model definitions from internal JSON (no factory config dependency).
 
 import contextlib
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -22,6 +23,7 @@ from thegent.config import ThegentSettings
 from thegent.infra.fast_subprocess import run_subprocess_optimized
 from thegent.infra.fast_yaml_parser import yaml_load, yaml_dumps
 
+_LOG = logging.getLogger(__name__)
 
 _CLIPROXY_DATA_DIR = Path(__file__).parent / "cliproxy_data"
 
@@ -460,8 +462,8 @@ def _check_path(base: str, path: str) -> bool:
         )
         if resp.is_success:
             return True
-    except Exception:
-        pass
+    except Exception as exc:
+        _LOG.debug("Proxy reachability check failed for %s: %s", f"{base}{path}", exc)
     return False
 
 
@@ -583,8 +585,8 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
         shared_url = get_shared_mcp_url()
         if shared_url and _is_proxy_reachable(shared_url.replace("/mcp", "/v1")):
             return shared_url.replace("/mcp", "/v1")
-    except ImportError:
-        pass  # Fallback to direct proxy
+    except ImportError as exc:
+        _LOG.debug("Shared MCP manager unavailable, continuing with direct proxy startup: %s", exc)
 
     port = settings.cliproxy_port
     use_adapter = settings.cliproxy_adapter
@@ -820,6 +822,7 @@ def run_login_unified(
 
     cfg = PROVIDER_LOGIN_CONFIG[provider_lower]
     if skip_if_configured and _has_provider_credentials(config, provider_lower):
+        _LOG.info("Skipping login for provider=%s since credentials already exist in cliproxy config.", provider_lower)
         return 0  # Already configured
 
     url = cfg.get("url", "")
@@ -835,33 +838,67 @@ def run_login_unified(
         if skip_if_configured:
             # Auto-use if not in force mode (user request: once found shouldnt ask again)
             key = factory_key
+            _LOG.info("Using API key for %s from factory config at %s.", display_name, factory_path)
         else:
             # Force mode: still ask, but before opening browser
-            resp = prompt_fn(f"  Found {display_name} API key in {factory_path}. Use it? [Y/n]: ").strip().lower()
+            try:
+                resp = prompt_fn(f"  Found {display_name} API key in {factory_path}. Use it? [Y/n]: ").strip().lower()
+            except Exception as exc:
+                _LOG.error("Failed to read factory-key confirmation for %s: %s", provider_lower, exc)
+                return 2
             if resp in ("", "y", "yes"):
                 key = factory_key
+                _LOG.info("Using factory API key for %s after confirmation.", display_name)
+            else:
+                _LOG.info("Skipping factory API key for %s after user declined confirmation.", display_name)
 
     if not key:
         # Print instructions
-        for _line in instructions:
-            pass
+        if instructions:
+            _LOG.info("Login instructions for %s:", display_name)
+            for idx, _line in enumerate(instructions, start=1):
+                _LOG.info("%d) %s", idx, _line)
+        else:
+            _LOG.debug("No login instructions configured for %s.", display_name)
         # ONLY open browser if no key found/accepted (user request: opens browser before i press y)
-        with contextlib.suppress(Exception):
-            webbrowser.open(url)
-        key = prompt_fn(f"Enter {display_name} API key (or press Enter to skip): ").strip()
+        try:
+            if url:
+                if not webbrowser.open(url):
+                    _LOG.warning("Browser failed to open login URL for %s: %s", display_name, url)
+            else:
+                _LOG.warning("No login URL configured for %s, proceeding to manual key entry.", display_name)
+        except Exception as exc:
+            _LOG.warning("Could not open browser for %s login URL %s: %s", display_name, url, exc)
+
+        try:
+            key = prompt_fn(f"Enter {display_name} API key (or press Enter to skip): ").strip()
+        except Exception as exc:
+            _LOG.error("Failed to read API key input for %s: %s", display_name, exc)
+            return 2
 
     if not key:
+        _LOG.info("No API key provided for %s; returning skip.", display_name)
         return 1
 
-    _inject_api_key_into_cliproxy(config, provider_lower, key, cfg)
-    config_path.write_text(yaml_dumps(config, default_flow_style=False, sort_keys=False))
+    try:
+        _inject_api_key_into_cliproxy(config, provider_lower, key, cfg)
+        config_path.write_text(yaml_dumps(config, default_flow_style=False, sort_keys=False))
+    except Exception as exc:
+        _LOG.error("Failed to persist API key for %s to %s: %s", display_name, config_path, exc)
+        return 2
 
     # WP-Y13: Auto-restart proxy to "hot-reload" the new API key
     if kill_proxy(settings):
-        with contextlib.suppress(Exception):
+        _LOG.info("Restarting cliproxy after updating API key for %s.", display_name)
+        try:
             base_url = ensure_proxy_running(settings)
-            if base_url:
-                pass
+            _LOG.debug("cliproxy ready at %s", base_url)
+        except Exception as exc:
+            _LOG.error("Failed to restart cliproxy after login for %s: %s", display_name, exc)
+            return 2
+    else:
+        _LOG.info("cliproxy not running; skipping restart for %s.", display_name)
+
     return 0
 
 

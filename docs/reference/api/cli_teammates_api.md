@@ -41,4 +41,3 @@ swarm_status(run_id: str)
 Monitor the status of the teammate swarm (WP-16002).
 
 ---
-

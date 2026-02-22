@@ -145,7 +145,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 GOVERNANCE_DOMAINS = [
-    "retry", "cache", "file_watch", "http", "auth", 
+    "retry", "cache", "file_watch", "http", "auth",
     "logging", "concurrency", "subprocess", "circuit_breaker"
 ]
 
@@ -157,9 +157,9 @@ def check_governance_domains(file_path: Path) -> List[Tuple[str, int]]:
         content = file_path.read_text()
     except (UnicodeDecodeError, FileNotFoundError):
         return []
-    
+
     violations = []
-    
+
     # Check for custom implementations
     patterns = {
         "retry": [r"for\s+\w+\s+in\s+range\s*\(\s*\d+\s*\).*except", r"while.*sleep"],
@@ -167,20 +167,20 @@ def check_governance_domains(file_path: Path) -> List[Tuple[str, int]]:
         "http": [r"urllib\.request", r"requests\.get"],
         "subprocess": [r"subprocess\.Popen.*shell\s*=\s*True"],
     }
-    
+
     for domain, regexes in patterns.items():
         import re
         for i, regex in enumerate(regexes):
             if re.search(regex, content, re.IGNORECASE):
                 violations.append((domain, 0))
                 break
-    
+
     return violations
 
 def run_checkpoint(file_path: Path):
     """Run governance checkpoint on a file."""
     violations = check_governance_domains(file_path)
-    
+
     if violations:
         print(f"\n⚠️  Governance checkpoint triggered for: {file_path}")
         print(f"   Touched domains: {[v[0] for v in violations]}")
@@ -215,7 +215,7 @@ repos:
 
 ## 5. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

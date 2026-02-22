@@ -27,4 +27,3 @@ Get list of running processes with PIDs and command lines.
 Uses /proc on Linux and ps on macOS.
 
 ---
-

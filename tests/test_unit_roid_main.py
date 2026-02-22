@@ -150,3 +150,17 @@ def test_roid_unknown_model_policy_passthrough(
         assert called_cmd[3] == "unknown-model"
     else:
         assert called_cmd[2] == "unknown-model"
+
+
+def test_roid_config_launches_tui_translation_layer() -> None:
+    with patch("thegent.ux.models_providers_tui.run_models_providers_tui") as run_tui:
+        result = runner.invoke(app, ["config"])
+    assert result.exit_code == 0
+    run_tui.assert_called_once_with()
+
+
+def test_roid_config_legacy_uses_provider_form() -> None:
+    with patch("thegent.provider_model_manager.run_provider_form") as run_legacy:
+        result = runner.invoke(app, ["config", "--legacy"])
+    assert result.exit_code == 0
+    run_legacy.assert_called_once_with()

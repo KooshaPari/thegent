@@ -341,4 +341,3 @@ Strip the common directory prefix from a list of paths for display.
 ```
 
 ---
-

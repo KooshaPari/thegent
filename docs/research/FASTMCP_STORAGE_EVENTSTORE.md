@@ -1,7 +1,7 @@
 # FastMCP Storage Backends & EventStore
 
-**Source:** gofastmcp.com/servers/storage-backends, fastmcp/server/event_store  
-**Date:** 2026-02-14  
+**Source:** gofastmcp.com/servers/storage-backends, fastmcp/server/event_store
+**Date:** 2026-02-14
 **Purpose:** Extract RedisStore, DiskStore usage, EventStore(storage=), FernetEncryptionWrapper for thegent MCP server.
 
 ---
@@ -189,13 +189,13 @@ class SessionEvent:
     agent_name: str
     data: dict
     metadata: Optional[dict] = None
-    
+
     def to_dict(self) -> dict:
         return {
             **asdict(self),
             "timestamp": self.timestamp.isoformat()
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "SessionEvent":
         return cls(
@@ -223,28 +223,28 @@ from typing import AsyncIterator
 
 class EventQueryBuilder:
     """Build complex queries for EventStore."""
-    
+
     def __init__(self, event_store: EventStore):
         self.event_store = event_store
         self.filters = {}
         self.limit_count = 100
         self.order_by = "timestamp"
         self.order_dir = "asc"
-    
+
     def filter_by_session(self, session_id: str) -> "EventQueryBuilder":
         self.filters["session_id"] = session_id
         return self
-    
+
     def filter_by_agent(self, agent_name: str) -> "EventQueryBuilder":
         self.filters["agent_name"] = agent_name
         return self
-    
+
     def filter_by_type(self, event_type: str) -> "EventQueryBuilder":
         self.filters["event_type"] = event_type
         return self
-    
+
     def filter_by_timerange(
-        self, 
+        self,
         start: Optional[datetime] = None,
         end: Optional[datetime] = None
     ) -> "EventQueryBuilder":
@@ -253,11 +253,11 @@ class EventQueryBuilder:
         if end:
             self.filters["end_time"] = end
         return self
-    
+
     def limit(self, count: int) -> "EventQueryBuilder":
         self.limit_count = count
         return self
-    
+
     async def execute(self) -> list[SessionEvent]:
         """Execute query and return events."""
         events = await self.event_store.query(**self.filters)
@@ -314,23 +314,23 @@ import hashlib
 
 class ShardedEventStore:
     """Sharded EventStore for horizontal scaling."""
-    
+
     def __init__(self, shard_count: int = 4):
         self.shard_count = shard_count
         self.stores = [
             EventStore(storage=RedisStore(url=f"redis://shard-{i}"))
             for i in range(shard_count)
         ]
-    
+
     def _get_shard(self, session_id: str) -> int:
         """Determine shard for session."""
         hash_value = hashlib.md5(session_id.encode()).hexdigest()
         return int(hash_value[:2], 16) % self.shard_count
-    
+
     async def append_event(self, session_id: str, event: SessionEvent):
         shard = self._get_shard(session_id)
         await self.stores[shard].append(session_id, event)
-    
+
     async def get_events(self, session_id: str) -> list[SessionEvent]:
         shard = self._get_shard(session_id)
         return await self.stores[shard].get(session_id)
@@ -362,6 +362,6 @@ class ShardedEventStore:
 
 ---
 
-**Document Version:** 1.1  
-**Last Extended:** 2026-02-17  
+**Document Version:** 1.1
+**Last Extended:** 2026-02-17
 **Extension Author:** Worker Droid

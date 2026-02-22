@@ -1,10 +1,10 @@
 # Proposal: Mac ↔ PC Compute Offload Research
 
-**Document Version:** 1.0  
-**Change ID:** research-compute-offload  
-**Date:** 2026-02-18  
-**Status:** Proposal  
-**Priority:** P2  
+**Document Version:** 1.0
+**Change ID:** research-compute-offload
+**Date:** 2026-02-18
+**Status:** Proposal
+**Priority:** P2
 
 ---
 

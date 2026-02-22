@@ -518,7 +518,7 @@ async def resilient_agent_execution(
 ) -> ExecutionResult:
     """Execute agent with retry logic."""
     last_error = None
-    
+
     for attempt in range(max_retries):
         try:
             return await execute_agent(agent_name)
@@ -528,7 +528,7 @@ async def resilient_agent_execution(
             last_error = e
             wait_time = backoff_factor ** attempt
             await asyncio.sleep(wait_time)
-    
+
     raise ExecutionError(f"Failed after {max_retries} attempts") from last_error
 ```
 
@@ -569,7 +569,7 @@ class AgentConfigV2(BaseModel):
     retry_count: int = Field(default=3, ge=0, le=10)
     # V2新增字段
     priority: int = Field(default=0, ge=0, le=100)
-    
+
     @classmethod
     def from_v1(cls, v1_config: dict) -> "AgentConfigV2":
         """Migrate from V1 schema."""
@@ -607,6 +607,6 @@ class AgentConfigV2(BaseModel):
 
 ---
 
-**Document Version:** 1.1  
-**Last Extended:** 2026-02-17  
+**Document Version:** 1.1
+**Last Extended:** 2026-02-17
 **Extension Author:** Worker Droid

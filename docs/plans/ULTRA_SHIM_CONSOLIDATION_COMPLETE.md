@@ -1,6 +1,6 @@
 # Runtime Dispatch Consolidation & Fork Fix: Complete
 
-> **Status**: Implementation Complete | **Date**: 2026-02-16  
+> **Status**: Implementation Complete | **Date**: 2026-02-16
 > **Purpose**: Consolidated all shims into unified Rust binary (`runtime-dispatch`) with fork failure fixes
 
 ---
@@ -69,11 +69,11 @@ func runAndCache(...) {
 func runAndCacheSafe(...) {
     // Check circuit breaker
     if circuitOpen { /* fallback to Exec */ }
-    
+
     // Try fork
     cmd := exec.Command(path, args...)
     output, err := cmd.CombinedOutput()
-    
+
     // Detect fork failures
     if isForkError(err) {
         // Update circuit breaker
@@ -224,4 +224,3 @@ The shell wrappers in `hooks/lib/` can remain for backward compatibility, but ne
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

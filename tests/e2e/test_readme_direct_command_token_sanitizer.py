@@ -376,3 +376,199 @@ def test_each_direct_row_command_has_no_duplicate_whitespace_normalized_tokens()
             "README direct-row command must not contain duplicate whitespace-normalized tokens: "
             f"goal={goal!r} duplicates={duplicates!r} command={snippets[0]!r}"
         )
+
+
+def test_non_suite_non_bundle_direct_rows_are_goal_to_single_test_file_bijection() -> None:
+    rows = _direct_rows()
+    assert rows
+
+    goal_to_path: dict[str, str] = {}
+    path_to_goal: dict[str, str] = {}
+    collisions: list[tuple[str, str, str]] = []
+
+    for goal, command_cell in rows:
+        lower_goal = goal.lower()
+        if "suite" in lower_goal or "bundle" in lower_goal:
+            continue
+
+        snippets = re.findall(r"`([^`]+)`", command_cell)
+        assert len(snippets) == 1, (
+            f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
+        )
+        test_paths = [
+            token
+            for token in shlex.split(snippets[0])
+            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+        ]
+        assert len(test_paths) == 1, (
+            f"README non-suite/non-bundle direct row '{goal}' must map to exactly one tests/e2e/test_*.py path: "
+            f"{snippets[0]!r}"
+        )
+
+        path = test_paths[0]
+        goal_to_path[goal] = path
+        prior_goal = path_to_goal.get(path)
+        if prior_goal is None:
+            path_to_goal[path] = goal
+            continue
+        if prior_goal != goal:
+            collisions.append((path, prior_goal, goal))
+
+    assert goal_to_path, "Expected at least one non-suite/non-bundle direct row in README table."
+    assert not collisions, (
+        "README non-suite/non-bundle direct rows must be a 1:1 goal->single-file mapping: "
+        f"{collisions}"
+    )
+
+
+def test_only_suite_or_bundle_direct_rows_may_reference_multiple_test_files() -> None:
+    rows = _direct_rows()
+    assert rows
+
+    for goal, command_cell in rows:
+        snippets = re.findall(r"`([^`]+)`", command_cell)
+        assert len(snippets) == 1, (
+            f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
+        )
+        test_paths = [
+            token
+            for token in shlex.split(snippets[0])
+            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+        ]
+        if len(test_paths) <= 1:
+            continue
+        assert any(keyword in goal.lower() for keyword in ("suite", "bundle")), (
+            "README direct rows may include multiple tests/e2e/test_*.py paths only when the goal label "
+            f"contains 'suite' or 'bundle': goal={goal!r} command={snippets[0]!r}"
+        )
+
+
+def test_suite_direct_rows_do_not_duplicate_path_basenames_across_tokens() -> None:
+    rows = _direct_rows()
+    assert rows
+
+    for goal, command_cell in rows:
+        if "suite" not in goal.lower():
+            continue
+
+        snippets = re.findall(r"`([^`]+)`", command_cell)
+        assert len(snippets) == 1, (
+            f"README suite direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
+        )
+        path_tokens = [
+            token
+            for token in shlex.split(snippets[0])
+            if token.startswith("tests/e2e/") and token.endswith(".py")
+        ]
+        basenames = [Path(token).name for token in path_tokens]
+        duplicates = sorted({name for name in basenames if basenames.count(name) > 1})
+        assert not duplicates, (
+            "README suite direct row must not duplicate tests/e2e/*.py basenames across path tokens: "
+            f"goal={goal!r} duplicates={duplicates!r} command={snippets[0]!r}"
+        )
+
+
+def test_alias_trio_direct_rows_each_have_exactly_one_test_path_token() -> None:
+    rows = _direct_rows()
+    assert rows
+
+    alias_trio_goals = {
+        "Alias rewrite contract unit (direct)",
+        "Alias rewrite real-app contract unit (direct)",
+        "Alias unsupported rationale contract (direct)",
+    }
+
+    direct_map = {goal: command_cell for goal, command_cell in rows}
+    assert alias_trio_goals <= set(direct_map), (
+        "README direct table must include all alias trio direct rows: "
+        f"missing={sorted(alias_trio_goals - set(direct_map))!r}"
+    )
+
+    for goal in sorted(alias_trio_goals):
+        command_cell = direct_map[goal]
+        snippets = re.findall(r"`([^`]+)`", command_cell)
+        assert len(snippets) == 1, (
+            f"README alias direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
+        )
+        test_paths = [
+            token
+            for token in shlex.split(snippets[0])
+            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+        ]
+        assert len(test_paths) == 1, (
+            "README alias trio direct-row command cell must contain exactly one tests/e2e/test_*.py token: "
+            f"goal={goal!r} command={snippets[0]!r}"
+        )
+
+
+def test_direct_rows_have_no_empty_command_snippets() -> None:
+    rows = _direct_rows()
+    assert rows
+
+    for goal, command_cell in rows:
+        snippets = re.findall(r"`([^`]+)`", command_cell)
+        assert len(snippets) == 1, (
+            f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
+        )
+        assert snippets[0].strip(), (
+            f"README direct row '{goal}' command snippet must not be empty or whitespace-only: {command_cell!r}"
+        )
+
+
+def test_direct_rows_have_no_duplicate_test_path_tokens_within_row() -> None:
+    rows = _direct_rows()
+    assert rows
+
+    for goal, command_cell in rows:
+        snippets = re.findall(r"`([^`]+)`", command_cell)
+        assert len(snippets) == 1, (
+            f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
+        )
+        test_paths = [
+            token
+            for token in shlex.split(snippets[0])
+            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+        ]
+        duplicates = sorted({path for path in test_paths if test_paths.count(path) > 1})
+        assert not duplicates, (
+            "README direct row command must not repeat tests/e2e/test_*.py path tokens within the same row: "
+            f"goal={goal!r} duplicates={duplicates!r} command={snippets[0]!r}"
+        )
+
+
+def test_direct_non_bundle_single_file_rows_have_unique_basename_coverage() -> None:
+    rows = _direct_rows()
+    assert rows
+
+    basename_to_goal: dict[str, str] = {}
+    collisions: list[tuple[str, str, str]] = []
+
+    for goal, command_cell in rows:
+        if "bundle" in goal.lower():
+            continue
+
+        snippets = re.findall(r"`([^`]+)`", command_cell)
+        assert len(snippets) == 1, (
+            f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
+        )
+        test_paths = [
+            token
+            for token in shlex.split(snippets[0])
+            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+        ]
+        if len(test_paths) != 1:
+            continue
+
+        basename = Path(test_paths[0]).name
+        prior_goal = basename_to_goal.get(basename)
+        if prior_goal is None:
+            basename_to_goal[basename] = goal
+            continue
+        if prior_goal != goal:
+            collisions.append((basename, prior_goal, goal))
+
+    assert basename_to_goal, "Expected at least one non-bundle direct single-file tests/e2e/test_*.py row."
+    assert not collisions, (
+        "README direct non-bundle single-file rows must have unique tests/e2e/test_*.py basename coverage: "
+        f"{collisions}"
+    )

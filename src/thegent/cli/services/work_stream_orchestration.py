@@ -188,8 +188,8 @@ def spawn_next_impl(
         from thegent.discovery import get_current_agent_id
 
         agent_id = get_current_agent_id() or agent_id
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("Could not resolve current agent id for do-next: %s", exc)
 
     owner = _default_owner_tag(cwd) if cwd else None
     spawned: list[dict[str, Any]] = []

@@ -176,7 +176,7 @@ locations:
     path: "~/kush"
     recursive: true
     max_depth: null
-  
+
   temp-PRODVERCEL:
     path: "~/temp-PRODVERCEL"
     recursive: true
@@ -249,7 +249,7 @@ if next_month:
         result = processor.process_file(filepath)
         if result.status.value == "completed":
             queue_manager.mark_file_processed(filepath)
-    
+
     queue_manager.mark_month_complete(next_month["month"])
 ```
 

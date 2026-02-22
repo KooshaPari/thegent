@@ -6,8 +6,8 @@
 
 ## Parity Verification: [Old Implementation] → [New Implementation]
 
-**Date:** YYYY-MM-DD  
-**Verifier:** [Name]  
+**Date:** YYYY-MM-DD
+**Verifier:** [Name]
 **Status:** ⏳ In Progress / ✅ Complete / ❌ Failed
 
 ---
@@ -130,5 +130,5 @@ def test_parity_old_vs_new():
 
 ---
 
-**Template Version:** 1.0  
+**Template Version:** 1.0
 **Last Updated:** 2026-02-19

@@ -181,4 +181,3 @@ Get coordination status for a team.
 **Returns**: Coordination status dictionary
 
 ---
-

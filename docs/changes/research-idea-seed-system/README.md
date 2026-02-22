@@ -1,7 +1,7 @@
 # Research-Idea-Seed-System: Complete Development Package
 
-> **Status**: Ready for Implementation | **Priority**: P1 | **Date Created**: 2026-02-16  
-> **Work Item**: `research-idea-seed-system`  
+> **Status**: Ready for Implementation | **Priority**: P1 | **Date Created**: 2026-02-16
+> **Work Item**: `research-idea-seed-system`
 > **Expected Duration**: 4 weeks (26.5 days estimated effort)
 
 ---
@@ -198,7 +198,7 @@ A lightweight **Idea Seed Detection & Storage System** that:
 
 **Decision**: Use Python stdlib only (json, pathlib, re, sqlite3, hashlib)
 
-**Rationale**: 
+**Rationale**:
 - Lightweight, self-contained
 - No dependency conflicts
 - Easy to maintain
@@ -251,7 +251,7 @@ A lightweight **Idea Seed Detection & Storage System** that:
 
 ### Existing Systems
 
-1. **Prompt History Collection System** 
+1. **Prompt History Collection System**
    - Broader system collecting all prompts
    - Idea Seed System is a focused subset
    - Can share git infrastructure
@@ -448,7 +448,7 @@ implementation_plan = generate_plan(ideas)
 
 **Without System**: Scrolling through old IDE sessions, searching transcripts manually, giving up and reimplementing from scratch.
 
-**With System**: 
+**With System**:
 ```bash
 $ thegent ideas search "lazy loading"
 # Finds the original idea with full context, timestamp, related topics
@@ -474,7 +474,7 @@ $ thegent ideas export --format markdown --tag performance
 
 **Without System**: Ideas are lost forever.
 
-**With System**: 
+**With System**:
 ```bash
 $ git log .thegent/ideas/
 # Complete history of all ideas they had
@@ -536,7 +536,7 @@ $ thegent ideas export --since 6m
 
 ---
 
-**Document Status**: Ready for Implementation  
-**Last Updated**: 2026-02-16  
-**Next Phase**: Phase 1 Implementation  
+**Document Status**: Ready for Implementation
+**Last Updated**: 2026-02-16
+**Next Phase**: Phase 1 Implementation
 **Estimated Completion**: 2026-03-16 (4 weeks from start)

@@ -1,7 +1,7 @@
 # ChatGPT Pareto Router Deep Research — Part 3: API, Pipelines & User Journeys
 
-**Source**: chatgpt3.md, chatgpt4.md  
-**Date**: 2026-02-18  
+**Source**: chatgpt3.md, chatgpt4.md
+**Date**: 2026-02-18
 **Scope**: User journeys, API processes, data pipelines, execution flow
 
 ---
@@ -10,7 +10,7 @@
 
 ### Journey A — "Route a request" (Hot Path)
 
-**Actor**: App / agent / IDE extension  
+**Actor**: App / agent / IDE extension
 **Goal**: Pick best offer under constraints, execute, log, fallback if needed.
 
 **Flow**:
@@ -26,7 +26,7 @@
 
 ### Journey B — "Add a new provider"
 
-**Actor**: Admin/devops  
+**Actor**: Admin/devops
 **Goal**: Integrate a new provider with minimal effort.
 
 **Flow**:
@@ -39,7 +39,7 @@
 
 ### Journey C — "Subscription changes mid-month"
 
-**Actor**: System + admin  
+**Actor**: System + admin
 **Goal**: Keep effective costs accurate and prevent quota blowups.
 
 **Flow**:
@@ -49,7 +49,7 @@
 
 ### Journey D — "Degraded mode after budget burn"
 
-**Actor**: System  
+**Actor**: System
 **Goal**: Keep service alive within budget.
 
 **Flow**:

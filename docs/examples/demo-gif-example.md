@@ -6,20 +6,20 @@ This page demonstrates how to use the DemoGif component.
 
 ## CLI Demo
 
-<DemoGif 
-  src="cli-demo.gif" 
-  alt="CLI Demo" 
-  caption="Running thegent CLI commands" 
+<DemoGif
+  src="cli-demo.gif"
+  alt="CLI Demo"
+  caption="Running thegent CLI commands"
 />
 
 ---
 
 ## Web Demo
 
-<DemoGif 
-  src="web-demo.gif" 
-  alt="Web Interface Demo" 
-  caption="Using thegent web interface" 
+<DemoGif
+  src="web-demo.gif"
+  alt="Web Interface Demo"
+  caption="Using thegent web interface"
 />
 
 ---
@@ -68,6 +68,6 @@ npx playwright test --gif
 
 ---
 
-**See Also**: 
+**See Also**:
 - [VITEPRESS_USAGE_GUIDE.md](../guides/VITEPRESS_USAGE_GUIDE.md)
 - [AUTOMATED_DEMOS.md](../guides/AUTOMATED_DEMOS.md)

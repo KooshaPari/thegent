@@ -184,4 +184,3 @@ Convenience: return ``{"tool": available}`` dict.
 **Returns**: Mapping of tool name to availability boolean.
 
 ---
-

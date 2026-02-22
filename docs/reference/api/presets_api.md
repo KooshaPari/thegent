@@ -37,4 +37,3 @@ match_preset(text: str)
 Match text against preset trigger keywords.
 
 ---
-

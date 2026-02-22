@@ -1,8 +1,8 @@
 # UNIFIED heliosShield + THEGENT ARCHITECT & PLAN
 
-**Version:** 1.0  
-**Date:** February 2026  
-**Status:** Canonical Unified Merger  
+**Version:** 1.0
+**Date:** February 2026
+**Status:** Canonical Unified Merger
 **Supersedes:** `thegent/docs/plans/05-ARCHITECTURE.md`, `heliosShield/agent-mesh-wbs-plan-v2.md`
 
 ---
@@ -16,7 +16,7 @@ This document establishes the unified codebase for the **Agent Mesh Coordination
 | **thegent (Core)** | **Control Plane & Orchestration** | `thegent/src/thegent/` (Registry, Routing, FastMCP) |
 | **Mesh (Integrated)** | **Mesh Coordination & Harness** | `thegent/src/thegent/mesh/` (IPC, tmux, Discovery) |
 
-**The Unified Vision:**  
+**The Unified Vision:**
 `thegent` provides the high-level orchestration interface, while the integrated `mesh` library provides the low-latency coordination layer for multiple agents working in parallel.
 
 ---

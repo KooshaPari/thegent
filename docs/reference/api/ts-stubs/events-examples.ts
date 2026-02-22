@@ -11,4 +11,3 @@ const evidenceevent = new EvidenceEvent();
 
 // Create a PolicyEvent instance
 const policyevent = new PolicyEvent();
-

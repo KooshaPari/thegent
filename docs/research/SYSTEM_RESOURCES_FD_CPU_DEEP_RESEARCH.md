@@ -1,7 +1,7 @@
 # System Resources (FD, CPU, Threads, Ports) — Full-Depth Research & Plan
 
-> **Purpose**: Full-depth research and plan for FD (file descriptors), CPU, threads, ports, and other system resources relevant to multi-agent swarms.  
-> **Status**: Research | **Date**: 2026-02-16  
+> **Purpose**: Full-depth research and plan for FD (file descriptors), CPU, threads, ports, and other system resources relevant to multi-agent swarms.
+> **Status**: Research | **Date**: 2026-02-16
 > **Related**: [SMART_ROBUST_STRATEGIES_RESEARCH](./SMART_ROBUST_STRATEGIES_RESEARCH.md), [SWARM_PROCESS_AUTOMATION_DEEP_RESEARCH](./SWARM_PROCESS_AUTOMATION_DEEP_RESEARCH.md), [load_based_limits.py](../../src/thegent/orchestration/load_based_limits.py)
 
 ---
@@ -487,7 +487,7 @@ export THGENT_HYSTERESIS_DWELL_TIME_S=15
 
 ## EXTENSION_SUMMARY
 
-**Extended on**: 2026-02-17  
+**Extended on**: 2026-02-17
 **Extensions added**: Performance tuning guide (§14), Quick reference cards (§15)
 
 | Section | Added Content |

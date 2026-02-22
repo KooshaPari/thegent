@@ -45,4 +45,3 @@ send_to_terminal(pane_id: str, text: str)
 Send a command to a terminal pane.
 
 ---
-

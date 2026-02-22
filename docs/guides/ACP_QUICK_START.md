@@ -1,6 +1,6 @@
 # ACP Adapters Quick Start Guide
 
-**Date**: 2026-02-18  
+**Date**: 2026-02-18
 **Purpose**: Quick guide for using ACP adapters with thegent
 
 ---

@@ -255,7 +255,7 @@ mod tests {
         // After dwell expires but before max_dwell, we can switch if we want (condition 2 is false)
         // Condition 4 (large change) is also false since |0.50 - 0.51| = 0.01 < 0.20
         // So we should NOT switch in this middle state (between dwell and max_dwell with no large change)
-        // Actually, looking at the logic: we're in band (cond 1 false), 
+        // Actually, looking at the logic: we're in band (cond 1 false),
         // dwell expired (cond 2 false), max not exceeded (cond 3 false),
         // no large change (cond 4 false), so should_switch returns false
         // This test is checking that between dwell and max_dwell, nothing forces a switch

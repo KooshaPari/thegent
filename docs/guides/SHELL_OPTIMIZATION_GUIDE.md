@@ -26,7 +26,7 @@ thegent shell optimize
 
 **What it does**: Defers loading expensive tools (nvm, rbenv, pyenv, etc.) until first use.
 
-**Benefits**: 
+**Benefits**:
 - Saves 200-800ms on shell startup
 - Only loads tools when actually needed
 - Transparent to user (works automatically)
@@ -263,7 +263,7 @@ fi
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

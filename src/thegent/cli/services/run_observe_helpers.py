@@ -129,9 +129,11 @@ def load_observe_summary_snapshots(
             continue
         if rec.get("record_type") != "observe_summary_snapshot":
             continue
-        if rec.get("trend_scope_signature") == scope_signature or rec.get("scope_signature") == scope_signature:
-            pass
-        elif rec.get("scope_key_json") != scope_key_json:
+        if (
+            rec.get("trend_scope_signature") != scope_signature
+            and rec.get("scope_signature") != scope_signature
+            and rec.get("scope_key_json") != scope_key_json
+        ):
             continue
         snapshots.append(rec)
         if len(snapshots) >= limit:

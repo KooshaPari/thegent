@@ -175,4 +175,3 @@ verify_and_commit(self: Any, path: Path, base_version: str, new_content: bytes)
 Verify version hasn't changed and commit new content.
 
 ---
-

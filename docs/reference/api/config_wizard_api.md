@@ -70,4 +70,3 @@ Run the configuration wizard.
 **Returns**: True if configuration was successful, False otherwise
 
 ---
-

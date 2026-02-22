@@ -242,9 +242,12 @@ class SessionScraper:
         limit: int = 50,
         trigger: str | None = None,
         tag: str | None = None,
+        since: str | None = None,
         root_dir: Path | None = None,
     ) -> list[Path]:
         """List persisted snapshots, newest first, with optional filters."""
+        if limit <= 0:
+            return []
         search_root = root_dir or self.default_snapshot_dir
         if not search_root.exists():
             return []
@@ -258,10 +261,65 @@ class SessionScraper:
                 continue
             if tag and tag not in snapshot.tags:
                 continue
+            if since and snapshot.captured_at < since:
+                continue
             filtered.append(path)
-            if len(filtered) >= max(0, limit):
+            if len(filtered) >= limit:
                 break
         return filtered
+
+    def prune_snapshots(self, max_keep: int = 500, root_dir: Path | None = None) -> int:
+        """Delete oldest snapshot JSON files beyond max_keep and return deleted count."""
+        if max_keep < 0:
+            max_keep = 0
+        valid_paths = self.list_snapshots(limit=10_000_000, root_dir=root_dir)
+        if len(valid_paths) <= max_keep:
+            return 0
+
+        deleted = 0
+        for path in valid_paths[max_keep:]:
+            try:
+                path.unlink()
+                deleted += 1
+            except Exception:
+                continue
+        return deleted
+
+    def list_triggers(self, limit: int = 500, root_dir: Path | None = None) -> list[str]:
+        """Return unique trigger names from newest snapshots in first-seen order."""
+        if limit <= 0:
+            return []
+
+        triggers: list[str] = []
+        seen: set[str] = set()
+        for path in self.list_snapshots(limit=limit, root_dir=root_dir):
+            snapshot = self.load_snapshot(path)
+            if snapshot is None:
+                continue
+            trigger = snapshot.trigger.strip()
+            if not trigger or trigger in seen:
+                continue
+            seen.add(trigger)
+            triggers.append(trigger)
+        return triggers
+
+    def list_tags(self, limit: int = 500, root_dir: Path | None = None) -> list[str]:
+        """Return unique tags from newest snapshots ordered by frequency desc, then name."""
+        if limit <= 0:
+            return []
+
+        tag_counts: dict[str, int] = {}
+        for path in self.list_snapshots(limit=limit, root_dir=root_dir):
+            snapshot = self.load_snapshot(path)
+            if snapshot is None:
+                continue
+            for raw_tag in snapshot.tags:
+                tag = raw_tag.strip()
+                if not tag:
+                    continue
+                tag_counts[tag] = tag_counts.get(tag, 0) + 1
+
+        return [tag for tag, _ in sorted(tag_counts.items(), key=lambda kv: (-kv[1], kv[0]))]
 
     def load_snapshot(self, path: Path) -> SessionSnapshot | None:
         """Load a snapshot JSON file into SessionSnapshot."""
@@ -372,6 +430,96 @@ class SessionScraper:
         target = out_path or (self.default_snapshot_dir / "snapshot-index.json")
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        return target
+
+    @staticmethod
+    def _snapshot_day_key(snapshot: SessionSnapshot, path: Path) -> str:
+        captured_at = snapshot.captured_at.strip()
+        if captured_at:
+            try:
+                captured_dt = datetime.fromisoformat(captured_at.replace("Z", "+00:00"))
+                return captured_dt.date().isoformat()
+            except Exception:
+                if re.fullmatch(r"\d{4}-\d{2}-\d{2}", captured_at[:10]):
+                    return captured_at[:10]
+
+        parent_name = path.parent.name
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", parent_name):
+            return parent_name
+        return "unknown"
+
+    def summarize_snapshots_by_day(self, limit: int = 1000, root_dir: Path | None = None) -> dict[str, dict[str, int]]:
+        """Build per-day totals for snapshots, prompts, commands, and files."""
+        if limit <= 0:
+            return {}
+
+        daily_counts: dict[str, dict[str, int]] = {}
+        for path in self.list_snapshots(limit=limit, root_dir=root_dir):
+            snapshot = self.load_snapshot(path)
+            if snapshot is None:
+                continue
+
+            day = self._snapshot_day_key(snapshot, path)
+            day_counts = daily_counts.setdefault(
+                day,
+                {"snapshots": 0, "prompts": 0, "commands": 0, "files": 0},
+            )
+            day_counts["snapshots"] += 1
+            day_counts["prompts"] += len(snapshot.prompts)
+            day_counts["commands"] += len(snapshot.commands)
+            day_counts["files"] += len(snapshot.files)
+
+        return dict(sorted(daily_counts.items()))
+
+    def persist_snapshot_daily_index(
+        self,
+        limit: int = 1000,
+        out_path: Path | None = None,
+        root_dir: Path | None = None,
+    ) -> Path:
+        """Persist daily snapshot summary index JSON."""
+        summary = self.summarize_snapshots_by_day(limit=limit, root_dir=root_dir)
+        target = out_path or (self.default_snapshot_dir / "snapshot-daily-index.json")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        return target
+
+    @staticmethod
+    def snapshot_daily_index_markdown(summary: dict) -> str:
+        """Render a compact per-day markdown index."""
+        lines = [
+            "# Snapshot Daily Index",
+            "",
+            "- `date | snapshots | prompts | commands | files`",
+        ]
+
+        if not isinstance(summary, dict) or not summary:
+            lines.append("- (none)")
+            return "\n".join(lines) + "\n"
+
+        for day in sorted(summary.keys(), reverse=True):
+            counts = summary.get(day, {})
+            if not isinstance(counts, dict):
+                counts = {}
+            snapshots = int(counts.get("snapshots", 0) or 0)
+            prompts = int(counts.get("prompts", 0) or 0)
+            commands = int(counts.get("commands", 0) or 0)
+            files = int(counts.get("files", 0) or 0)
+            lines.append(f"- `{day} | {snapshots} | {prompts} | {commands} | {files}`")
+
+        return "\n".join(lines) + "\n"
+
+    def export_snapshot_daily_index_markdown(
+        self,
+        limit: int = 1000,
+        out_path: Path | None = None,
+        root_dir: Path | None = None,
+    ) -> Path:
+        """Persist daily snapshot index markdown."""
+        summary = self.summarize_snapshots_by_day(limit=limit, root_dir=root_dir)
+        target = out_path or (self.default_snapshot_dir / "snapshot-daily-index.md")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(self.snapshot_daily_index_markdown(summary), encoding="utf-8")
         return target
 
     @staticmethod

@@ -1,8 +1,8 @@
 # Cross-Platform Shell Strategy Proposal (POSIX + PowerShell)
 
-**Date**: 2026-02-18  
-**Status**: Proposed  
-**Priority**: P1  
+**Date**: 2026-02-18
+**Status**: Proposed
+**Priority**: P1
 
 ---
 
@@ -213,8 +213,8 @@ Validate-FileChanges @files
 ## Key Design Decisions
 
 ### D1: Shell-Agnostic Dispatcher
-**Decision**: Create language-agnostic dispatcher (Rust binary or Python)  
-**Rationale**: Avoid shell-specific logic in dispatcher; keep it neutral and fast  
+**Decision**: Create language-agnostic dispatcher (Rust binary or Python)
+**Rationale**: Avoid shell-specific logic in dispatcher; keep it neutral and fast
 **Alternatives Rejected**:
 - Bash dispatcher with PowerShell fallback (biased toward POSIX)
 - Separate dispatcher binaries (maintainability burden)
@@ -222,8 +222,8 @@ Validate-FileChanges @files
 **Trade-offs**: Adds minimal Rust/Python build step; improves clarity and performance
 
 ### D2: Delegation to Python for Complex Logic
-**Decision**: Push all complex logic into Python; shell is thin wrapper  
-**Rationale**: 
+**Decision**: Push all complex logic into Python; shell is thin wrapper
+**Rationale**:
 - Business logic is easier to test in Python
 - Reduces shell-specific bugs
 - Single source of truth
@@ -235,8 +235,8 @@ Validate-FileChanges @files
 **Trade-offs**: Minor latency (Python startup) offset by code quality and testability
 
 ### D3: Hook File Naming Convention
-**Decision**: Use extensions to indicate shell (`.sh` for POSIX, `.ps1` for PowerShell)  
-**Rationale**: Self-documenting; dispatcher can auto-detect  
+**Decision**: Use extensions to indicate shell (`.sh` for POSIX, `.ps1` for PowerShell)
+**Rationale**: Self-documenting; dispatcher can auto-detect
 **Alternatives Rejected**:
 - Single `.hook` file with shebang (harder to edit)
 - Language detection via content analysis (fragile)
@@ -244,8 +244,8 @@ Validate-FileChanges @files
 **Trade-offs**: Duplicate hook definitions for dual support; mitigated by shared library pattern
 
 ### D4: Initialization Strategy
-**Decision**: Detect shell and source appropriate profile/module at startup  
-**Rationale**: User experience: automatic setup without manual steps  
+**Decision**: Detect shell and source appropriate profile/module at startup
+**Rationale**: User experience: automatic setup without manual steps
 **Alternatives Rejected**:
 - Manual profile editing per shell (error-prone)
 - Single `.shellrc` (doesn't match shell conventions)
@@ -253,8 +253,8 @@ Validate-FileChanges @files
 **Trade-offs**: Requires platform-specific bootstrapping; mitigated by clear documentation
 
 ### D5: Testing Strategy
-**Decision**: Use Docker containers for cross-platform testing (Linux, macOS via Act, Windows via containers)  
-**Rationale**: Reproducible environments; CI/CD integration  
+**Decision**: Use Docker containers for cross-platform testing (Linux, macOS via Act, Windows via containers)
+**Rationale**: Reproducible environments; CI/CD integration
 **Alternatives Rejected**:
 - Manual testing on each platform (doesn't scale)
 - VM snapshots (slow, resource-intensive)

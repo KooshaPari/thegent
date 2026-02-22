@@ -15,7 +15,7 @@ status: in_progress
 
 #### Task 1.1: Core Data Model
 
-**Goal**: Define and implement MAIF artifact structures  
+**Goal**: Define and implement MAIF artifact structures
 **Effort**: 1-2 tool calls
 
 **Subtasks**:
@@ -34,7 +34,7 @@ status: in_progress
 
 #### Task 1.2: Cryptographic Foundation
 
-**Goal**: Set up signing and hashing infrastructure  
+**Goal**: Set up signing and hashing infrastructure
 **Effort**: 1-2 tool calls
 
 **Subtasks**:
@@ -56,7 +56,7 @@ status: in_progress
 
 #### Task 2.1: Artifact Generator
 
-**Goal**: Create MAIF artifacts from actions  
+**Goal**: Create MAIF artifacts from actions
 **Effort**: 2 tool calls
 
 **Subtasks**:
@@ -78,7 +78,7 @@ status: in_progress
 
 #### Task 2.2: Hash Chain Validator
 
-**Goal**: Verify artifact integrity and detect tampering  
+**Goal**: Verify artifact integrity and detect tampering
 **Effort**: 1-2 tool calls
 
 **Subtasks**:
@@ -101,7 +101,7 @@ status: in_progress
 
 #### Task 2.3: L4 Storage Integration
 
-**Goal**: Persist artifacts to Supermemory Documents API  
+**Goal**: Persist artifacts to Supermemory Documents API
 **Effort**: 2 tool calls
 
 **Subtasks**:
@@ -127,7 +127,7 @@ status: in_progress
 
 #### Task 3.1: Action Hooks
 
-**Goal**: Intercept actions and create artifacts  
+**Goal**: Intercept actions and create artifacts
 **Effort**: 1-2 tool calls
 
 **Subtasks**:
@@ -152,7 +152,7 @@ status: in_progress
 
 #### Task 4.1: Public APIs
 
-**Goal**: Expose artifact creation and verification APIs  
+**Goal**: Expose artifact creation and verification APIs
 **Effort**: 1-2 tool calls
 
 **Subtasks**:
@@ -178,7 +178,7 @@ status: in_progress
 
 #### Task 5.1: Integration Tests
 
-**Goal**: Validate end-to-end workflow  
+**Goal**: Validate end-to-end workflow
 **Effort**: 1 tool call
 
 **Subtasks**:
@@ -358,8 +358,8 @@ Before marking WP-3002 complete, verify:
 
 ## Estimated Effort
 
-**Total Tool Calls**: 8-12 (breakdown above by phase)  
-**Estimated Timeline**: 2-3 weeks (parallel work possible)  
+**Total Tool Calls**: 8-12 (breakdown above by phase)
+**Estimated Timeline**: 2-3 weeks (parallel work possible)
 **Blocking Dependencies**: Supermemory L4 API, RSA key setup
 
 ---

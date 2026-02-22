@@ -67,4 +67,3 @@ wrap_with_holdpty(cmd: list[str], session_id: str, socket_path: Path)
 Return a command that runs the original command via holdpty holder.
 
 ---
-

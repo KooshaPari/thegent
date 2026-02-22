@@ -56,4 +56,3 @@ Preferred: **Setup calls the same `run_login_unified`** so both flows are identi
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

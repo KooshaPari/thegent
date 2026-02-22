@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase11-control-and-adaptation-sprint-playbook.md
 
 # Thegent Phase 11 Sprint Playbook (Bundles C and D)
 
-**Status:** Operational playbook for Bundle C + Bundle D  
-**Date:** 2026-02-15  
+**Status:** Operational playbook for Bundle C + Bundle D
+**Date:** 2026-02-15
 **Scope:** Execution sequence for control baseline (adaptive loops) and adaptation governance.
 
 ## 1) Bundle C objective (WP-11001 to WP-11005)

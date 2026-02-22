@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from thegent.anen_main import GEMINI_FLASH_MODEL, _MODEL_ALIAS, default_anen
+from thegent.fanta_main import GEMINI_FLASH_MODEL, _MODEL_ALIAS, default_fanta
 from thegent.fanta_main import app
 
 runner = CliRunner()
@@ -27,7 +27,7 @@ def test_fanta_install_links_writes_symlinks(tmp_path: Path) -> None:
     shims_bin.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
     shims_bin.chmod(0o755)
 
-    with patch("thegent.anen_main.shutil.which", return_value=None):
+    with patch("thegent.fanta_main.shutil.which", return_value=None):
         result = runner.invoke(app, ["install-links", "--bin-dir", str(tmp_path)])
     assert result.exit_code == 0
     normalized_output = _normalized_output(result.output)
@@ -62,8 +62,8 @@ def test_fanta_alias_parity_table(model_alias: str, canonical_model: str) -> Non
     assert _MODEL_ALIAS[model_alias] == canonical_model
 
 
-@patch("thegent.anen_main._resolve_anen_cmd", return_value="anen")
-@patch("thegent.anen_main.subprocess.run")
+@patch("thegent.fanta_main._resolve_anen_cmd", return_value="anen")
+@patch("thegent.fanta_main.subprocess.run")
 def test_fanta_default_routes_to_flash(mock_run: MagicMock, _mock_resolve: MagicMock) -> None:
     mock_run.return_value = _mock_completed(0)
 
@@ -73,8 +73,8 @@ def test_fanta_default_routes_to_flash(mock_run: MagicMock, _mock_resolve: Magic
     mock_run.assert_called_once_with(["anen", "--model", "gemini-3-flash"], check=False)
 
 
-@patch("thegent.anen_main._resolve_anen_cmd", return_value="anen")
-@patch("thegent.anen_main.subprocess.run")
+@patch("thegent.fanta_main._resolve_anen_cmd", return_value="anen")
+@patch("thegent.fanta_main.subprocess.run")
 @pytest.mark.parametrize(
     ("runner_args", "expected_cmd"),
     [
@@ -107,15 +107,15 @@ def test_fanta_high_xhigh_use_expected_canonical_models(
 )
 def test_fanta_default_callback_uses_flash_table_driven(ctx_args: list[str]) -> None:
     ctx = type("Ctx", (), {"invoked_subcommand": None, "args": ctx_args})()
-    with patch("thegent.anen_main._run_anen_with_alias") as run_with_alias:
-        default_anen(ctx)  # type: ignore[arg-type]
+    with patch("thegent.fanta_main._run_anen_with_alias") as run_with_alias:
+        default_fanta(ctx)  # type: ignore[arg-type]
     run_with_alias.assert_called_once_with("flash", ctx_args)
     assert run_with_alias.call_args.args[1] == ctx_args
 
 
 @pytest.mark.parametrize("unknown_model", ["unknown-model", "totally-new-model"])
-@patch("thegent.anen_main._resolve_anen_cmd", return_value="anen")
-@patch("thegent.anen_main.subprocess.run")
+@patch("thegent.fanta_main._resolve_anen_cmd", return_value="anen")
+@patch("thegent.fanta_main.subprocess.run")
 def test_fanta_unknown_model_policy_passthrough_exec(
     mock_run: MagicMock, _mock_resolve: MagicMock, unknown_model: str
 ) -> None:
@@ -128,3 +128,17 @@ def test_fanta_unknown_model_policy_passthrough_exec(
     mock_run.assert_called_once_with(["anen", "exec", "-m", unknown_model, "hello world"], check=False)
     called_cmd = mock_run.call_args.args[0]
     assert called_cmd[3] == unknown_model
+
+
+def test_fanta_config_launches_tui_translation_layer() -> None:
+    with patch("thegent.ux.models_providers_tui.run_models_providers_tui") as run_tui:
+        result = runner.invoke(app, ["config"])
+    assert result.exit_code == 0
+    run_tui.assert_called_once_with()
+
+
+def test_fanta_config_legacy_uses_provider_form() -> None:
+    with patch("thegent.provider_model_manager.run_provider_form") as run_legacy:
+        result = runner.invoke(app, ["config", "--legacy"])
+    assert result.exit_code == 0
+    run_legacy.assert_called_once_with()

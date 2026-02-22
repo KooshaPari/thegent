@@ -4,4 +4,3 @@
 export declare class BlackBoxProxy {
   constructor(agent_cmd: Array<string>, policy_enforcer: any);
 }
-

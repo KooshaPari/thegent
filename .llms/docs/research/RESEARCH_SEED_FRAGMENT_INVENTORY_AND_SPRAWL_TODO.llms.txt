@@ -6,9 +6,9 @@ Source: docs/research/RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md
 
 # Research, Seed & Fragment Inventory — Sprawl Todo & Unified Work Stream
 
-**Purpose:** Find and catalog all local research/seed/fragmented docs; todo: first individually sprawl each to complete breadth/depth (optimize, robustify, practical+intuitive, holistic+harmonious, maximal/optimal); then place into unified work stream; convert all md docs with thegent flash agents as needed.  
-**Status:** Inventory + Todo + Expansion In Progress  
-**Date:** 2026-02-17  
+**Purpose:** Find and catalog all local research/seed/fragmented docs; todo: first individually sprawl each to complete breadth/depth (optimize, robustify, practical+intuitive, holistic+harmonious, maximal/optimal); then place into unified work stream; convert all md docs with thegent flash agents as needed.
+**Status:** Inventory + Todo + Expansion In Progress
+**Date:** 2026-02-17
 **Canonical work stream:** [WORK_STREAM.md](../reference/WORK_STREAM.md) | **Design:** [UNIFIED_WORK_STREAM_DESIGN.md](../reference/UNIFIED_WORK_STREAM_DESIGN.md)
 
 ---

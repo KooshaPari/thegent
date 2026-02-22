@@ -161,4 +161,3 @@ resolve_policies(self: Any, namespace: str)
 Resolve all rules for a namespace, following hierarchy (specific -&gt; parent -&gt; global).
 
 ---
-

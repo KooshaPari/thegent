@@ -113,4 +113,3 @@ Reset circuit breaker.
 - `breaker_id`: Breaker identifier
 
 ---
-

@@ -15,4 +15,3 @@ Key components:
 - Auto router: Gemini Flash classifier + Pareto routing for agent/model="auto"
 
 ---
-

@@ -81,4 +81,3 @@ stop(self: Any)
 Stop the session.
 
 ---
-

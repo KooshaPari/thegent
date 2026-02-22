@@ -45,6 +45,7 @@ This document indexes all technical specifications, PRDs, and architectural docu
 | **Evals** | [specs/evals/README.md](./specs/evals/README.md) | ✅ |
 | **Database** | [specs/database/README.md](./specs/database/README.md) | ✅ |
 | **Versioning** | [specs/versioning/README.md](./specs/versioning/README.md) | ✅ |
+| **Documentation** | [specs/documentation/README.md](./specs/documentation/README.md) | ✅ |
 
 ### Mobile & Desktop Automation
 
@@ -68,7 +69,7 @@ This document indexes all technical specifications, PRDs, and architectural docu
 
 ### 1. Agent Systems (`agents/`)
 - **Purpose**: AI agent execution and management
-- **Key Files**: 
+- **Key Files**:
   - `agents/base.py` - Base agent interface
   - `agents/direct_agents.py` - Direct execution
   - `agents/crew/router.py` - Crew routing
@@ -258,5 +259,6 @@ This document indexes all technical specifications, PRDs, and architectural docu
 ## Version
 
 - **Last Updated**: 2026-02-22
-- **Version**: 1.0
+- **Macro Version**: 2.1.0 (SemVer)
+- **Micro Version**: sess_xxx.001.017
 - **Status**: Living document

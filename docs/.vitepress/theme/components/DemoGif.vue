@@ -35,7 +35,7 @@ onMounted(() => {
   // src is expected to be something like "cli-demo.gif"
   // We prepend the assets path
   fullSrc.value = `/assets/demos/${props.src}`
-  
+
   // If not lazy, load immediately
   if (!props.lazy) {
     preloadImage()
@@ -68,12 +68,12 @@ onMounted(() => {
     const observer = new IntersectionObserver(handleIntersection, {
       rootMargin: '50px'
     })
-    
+
     const container = document.querySelector(`[data-demo-gif="${props.src}"]`)
     if (container) {
       observer.observe(container)
     }
-    
+
     return () => observer.disconnect()
   }
 })
@@ -107,7 +107,7 @@ onErrorCaptured(() => {
         <LoadingSpinner size="md" variant="spinner" />
         <span class="loading-text">Loading demo...</span>
       </div>
-      
+
       <!-- Error State -->
       <div v-else-if="error" class="demo-gif-error">
         <span class="error-icon">⚠️</span>
@@ -120,7 +120,7 @@ onErrorCaptured(() => {
           Retry
         </button>
       </div>
-      
+
       <!-- Image -->
       <Transition name="fade">
         <img
@@ -134,7 +134,7 @@ onErrorCaptured(() => {
           @error="error = true; loading = false"
         />
       </Transition>
-      
+
       <!-- Expand Indicator -->
       <div
         v-if="expandable && imageLoaded && !error"
@@ -154,12 +154,12 @@ onErrorCaptured(() => {
         </svg>
       </div>
     </div>
-    
+
     <!-- Caption -->
     <p v-if="caption && !loading" class="demo-gif-caption">
       {{ caption }}
     </p>
-    
+
     <!-- Expanded Modal -->
     <Transition name="modal">
       <div
@@ -474,32 +474,32 @@ onErrorCaptured(() => {
   .demo-gif-container {
     margin: var(--vp-spacing-6) 0;
   }
-  
+
   .demo-gif-wrapper {
     min-height: 150px;
   }
-  
+
   .demo-gif-wrapper.loading {
     min-height: 200px;
   }
-  
+
   .expand-indicator {
     width: 28px;
     height: 28px;
     top: var(--vp-spacing-1);
     right: var(--vp-spacing-1);
   }
-  
+
   .expand-indicator svg {
     width: 16px;
     height: 16px;
   }
-  
+
   .modal-content {
     max-width: 95vw;
     max-height: 95vh;
   }
-  
+
   .modal-close {
     width: 36px;
     height: 36px;

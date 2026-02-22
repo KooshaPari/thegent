@@ -18,4 +18,3 @@ Follows OS conventions:
 **Returns**: Path to configuration directory (created if needed)
 
 ---
-

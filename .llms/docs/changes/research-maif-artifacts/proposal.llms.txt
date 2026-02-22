@@ -6,7 +6,7 @@ Source: docs/changes/research-maif-artifacts/proposal.md
 
 # Research: MAIF Action Artifacts — Proposal
 
-**Status**: Research Complete | **Priority**: High | **Effort**: 8-12 tool calls  
+**Status**: Research Complete | **Priority**: High | **Effort**: 8-12 tool calls
 **Work Item**: WP-3002 | **Date**: 2026-02-18
 
 ---
@@ -47,19 +47,19 @@ thegent lacks:
 
 ### In-Scope
 
-✅ MAIF artifact structure (signature, hash chain, metadata)  
-✅ Storage in Supermemory L4  
-✅ Hash chain creation and verification  
-✅ Artifact creation hooks (CodeChange, FileOperation, SystemCall, Decision, Error)  
-✅ Basic audit and retrieval APIs  
-✅ Integration with Supermemory L3/L4  
+✅ MAIF artifact structure (signature, hash chain, metadata)
+✅ Storage in Supermemory L4
+✅ Hash chain creation and verification
+✅ Artifact creation hooks (CodeChange, FileOperation, SystemCall, Decision, Error)
+✅ Basic audit and retrieval APIs
+✅ Integration with Supermemory L3/L4
 
 ### Out-of-Scope
 
-❌ Advanced forensics (chain repair, multi-signature, threshold signatures)  
-❌ Replay simulation engine (separate WP-4007)  
-❌ Compliance-specific extensions (GxP, HIPAA audits)  
-❌ Performance optimization for extreme scale (>10M artifacts/day)  
+❌ Advanced forensics (chain repair, multi-signature, threshold signatures)
+❌ Replay simulation engine (separate WP-4007)
+❌ Compliance-specific extensions (GxP, HIPAA audits)
+❌ Performance optimization for extreme scale (>10M artifacts/day)
 
 ---
 

@@ -82,4 +82,3 @@ Returns ParseResult with success, text, error_class for downstream routing.
 Detects truncation (unclosed XML tags), JSON malformation, and empty output.
 
 ---
-

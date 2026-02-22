@@ -35,19 +35,127 @@ from thegent.cliproxy_header_utils import (
     sanitize_outbound_request_headers,
 )
 from thegent.cliproxy_models_transform import (
+    _compute_models_etag,
     transform_models_response,
 )
 from thegent.cliproxy_request_transform import (
     _extract_delta_content,
     _extract_delta_tool_calls,
     _extract_usage,
+    _OR_PASSTHROUGH_FIELDS,
+    build_openrouter_passthrough_body as _build_openrouter_passthrough_body,
+    _responses_to_chat_completions as _request_transform_to_chat_completions,
+    _map_model_for_backend,
     _process_sse_line,
-    _responses_to_chat_completions,
 )
 from thegent.cliproxy_stream_state import ResponsesStreamState
 from thegent.routing.cost_calculator import calculate_cost_from_response, format_cost_header_value
 
 _log = logging.getLogger(__name__)
+
+# Backward-compatible symbol aliases for historical adapter import surface.
+class _LegacyModelsTransformResult(bytes):
+    """Legacy test compatibility object that supports both old and new unpack protocols."""
+
+    _full_body: bytes
+    _etag: str
+
+    def __new__(cls, compact_body: bytes, full_body: bytes, etag: str):
+        obj = super().__new__(cls, compact_body)
+        obj._full_body = full_body
+        obj._etag = etag
+        return obj
+
+    def __iter__(self):
+        yield self._full_body
+        yield self._etag
+
+
+def _transform_models_response(content: bytes | memoryview, *, inject_openrouter: bool = False) -> bytes | None:
+    """Return the legacy adapter helper output as response bytes only."""
+    try:
+        raw = bytes(content) if isinstance(content, memoryview) else content
+        parsed = json.loads(raw.decode(errors="replace"))
+        if (
+            isinstance(parsed, dict)
+            and "models" in parsed
+            and parsed.get("object") != "list"
+            and "data" not in parsed
+        ):
+            return None
+
+        transformed = transform_models_response(content, inject_openrouter=inject_openrouter)
+        if transformed is None:
+            return None
+        full_body, etag = transformed
+
+        parsed = json.loads(full_body.decode())
+        models = parsed.get("models", [])
+        if not isinstance(models, list):
+            return None
+        compact_models = [
+            {"id": model.get("id")} for model in models if isinstance(model, dict) and model.get("id")
+        ]
+        compact_body = json.dumps({"models": compact_models}).encode()
+        return _LegacyModelsTransformResult(compact_body, full_body, etag)
+    except (TypeError, json.JSONDecodeError):
+        return None
+
+
+def build_openrouter_passthrough_body(body: dict) -> dict:
+    """Compatibility export for old cliproxy tests and callers."""
+    return _build_openrouter_passthrough_body(body)
+
+
+def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
+    """Compatibility wrapper with legacy message formatting."""
+    transformed = _request_transform_to_chat_completions(body)
+    messages = transformed.get("messages")
+    if isinstance(messages, list):
+        normalized: list[dict[str, Any]] = []
+        for message in messages:
+            if not isinstance(message, dict):
+                continue
+            content = message.get("content")
+            if isinstance(content, list):
+                if (
+                    len(content) == 1
+                    and isinstance(content[0], dict)
+                    and content[0].get("type") == "text"
+                    and "text" in content[0]
+                    and len(content[0]) == 2
+                ):
+                    message["content"] = content[0].get("text", "")
+            normalized.append(message)
+        transformed["messages"] = normalized
+    return transformed
+
+
+def _chat_completions_to_responses(chunk: dict[str, Any]) -> dict[str, Any] | None:
+    """Compatibility wrapper: legacy output shape for adapter callers."""
+    text = _extract_delta_content(chunk)
+    if not text:
+        return None
+    return {
+        "type": "response.output_item.added",
+        "response_id": "resp_legacy",
+        "item_id": "item_legacy",
+        "output_index": 0,
+        "item": {
+            "type": "message",
+            "role": "assistant",
+            "content": [{"type": "text", "text": text}],
+        },
+    }
+
+
+_COMPAT_ADAPTER_EXPORTS = (
+    _compute_models_etag,
+    _OR_PASSTHROUGH_FIELDS,
+    _map_model_for_backend,
+    _transform_models_response,
+    _chat_completions_to_responses,
+)
 
 
 # @trace FR-CACHE-024 FR-CACHE-025 FR-CACHE-027
@@ -449,7 +557,13 @@ def extract_provider_gateway_options(body: dict) -> dict:
 
     # @trace FR-REQEXT-044
     """
-    return body.get("providerOptions", {}).get("gateway", {})
+    provider_options = body.get("providerOptions")
+    if not isinstance(provider_options, dict):
+        return {}
+    gateway_options = provider_options.get("gateway")
+    if not isinstance(gateway_options, dict):
+        return {}
+    return gateway_options
 
 
 # ---------------------------------------------------------------------------

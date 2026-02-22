@@ -75,7 +75,7 @@ When `THGENT_SITBACK_HARNESS=1`, the built-in harness placeholder shows a "helio
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

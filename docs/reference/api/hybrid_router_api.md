@@ -43,4 +43,3 @@ route_safely(self: Any, task_type: str, prompt: str, start_node: str)
 Route to a model based on both neural capability and symbolic safety.
 
 ---
-

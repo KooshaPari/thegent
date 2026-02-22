@@ -1,8 +1,8 @@
 # Governance Policy Federation Research
 
-> **WORK_STREAM ID:** research-governance-policy-federation  
-> **Priority:** P1  
-> **Depends:** WP-3001, research-phase13-policy-federation  
+> **WORK_STREAM ID:** research-governance-policy-federation
+> **Priority:** P1
+> **Depends:** WP-3001, research-phase13-policy-federation
 > **Status:** ✅ Research Complete
 
 ## Summary
@@ -65,11 +65,11 @@ from thegent.execution import PolicyEngine
 
 class GovernancePolicyFederation:
     """Governance-specific policy federation."""
-    
+
     def __init__(self, federated_engine: FederatedPolicyEngine):
         self.federated_engine = federated_engine
         self.escalation_queue = EscalationQueue()
-    
+
     def evaluate_governance_policy(
         self,
         namespace: str,
@@ -82,7 +82,7 @@ class GovernancePolicyFederation:
             namespace=namespace,
             policy_key=f"governance.{action}"
         )
-        
+
         # Evaluate policy
         if not policy.allow(context):
             # Add to escalation queue if blocked
@@ -92,7 +92,7 @@ class GovernancePolicyFederation:
                 sla_minutes=policy.sla_minutes
             )
             return False
-        
+
         return True
 ```
 
@@ -104,20 +104,20 @@ from typing import Optional
 
 class PolicyCache:
     """TTL-based policy cache for federation."""
-    
+
     def __init__(self, ttl_seconds: int = 300):
         self.cache = TTLCache(maxsize=1000, ttl=ttl_seconds)
-    
+
     def get(self, namespace: str, policy_key: str) -> Optional[dict]:
         """Get cached policy."""
         cache_key = f"{namespace}:{policy_key}"
         return self.cache.get(cache_key)
-    
+
     def set(self, namespace: str, policy_key: str, policy: dict) -> None:
         """Cache policy."""
         cache_key = f"{namespace}:{policy_key}"
         self.cache[cache_key] = policy
-    
+
     def invalidate(self, namespace: str, policy_key: Optional[str] = None) -> None:
         """Invalidate cache for namespace or specific policy."""
         if policy_key:
@@ -140,14 +140,14 @@ from thegent.phases.policy_federation import PolicyConflictResolver
 
 class GovernanceConflictResolver(PolicyConflictResolver):
     """Governance-specific conflict resolution."""
-    
+
     def resolve_governance_conflict(
         self,
         policies: list[dict],
         namespace: str
     ) -> dict:
         """Resolve governance policy conflicts.
-        
+
         Precedence rules:
         1. Project-level overrides org-level
         2. Environment-level overrides project-level
@@ -160,7 +160,7 @@ class GovernanceConflictResolver(PolicyConflictResolver):
             key=lambda p: len(p['namespace'].split('.')),
             reverse=True
         )
-        
+
         resolved = {}
         for policy in sorted_policies:
             # Merge with precedence
@@ -169,9 +169,9 @@ class GovernanceConflictResolver(PolicyConflictResolver):
                     resolved[key] = value
                 elif self._is_more_restrictive(key, value, resolved[key]):
                     resolved[key] = value
-        
+
         return resolved
-    
+
     def _is_more_restrictive(
         self,
         key: str,

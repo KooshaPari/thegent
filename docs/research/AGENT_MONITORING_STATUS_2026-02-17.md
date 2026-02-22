@@ -80,7 +80,7 @@ find src -name "*isolation*" -o -name "*shims*" -o -name "Cargo.toml"
 ## Next Check
 
 **Schedule**: Monitor every 5-10 minutes
-**Focus**: 
+**Focus**:
 1. Dependency additions in `pyproject.toml`
 2. Code changes in target files
 3. New files created

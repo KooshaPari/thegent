@@ -11,4 +11,3 @@ const runtimetask = new RuntimeTask();
 
 // Create a RuntimeType instance
 const runtimetype = new RuntimeType();
-

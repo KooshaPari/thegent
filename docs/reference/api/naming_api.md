@@ -102,4 +102,3 @@ Validate name against convention.
 **Returns**: True if name follows convention, False otherwise
 
 ---
-

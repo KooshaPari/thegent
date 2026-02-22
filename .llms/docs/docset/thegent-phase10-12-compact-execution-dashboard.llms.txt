@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase10-12-compact-execution-dashboard.md
 
 # Thegent Phase 10–12 Compact Execution Dashboard
 
-**Status:** Operational control artifact  
-**Date:** 2026-02-15  
+**Status:** Operational control artifact
+**Date:** 2026-02-15
 **Scope:** One-pane governance and execution view for Phases 10–12 with a machine-readable schema, scoring model, and action automation.
 
 ## 1) Purpose

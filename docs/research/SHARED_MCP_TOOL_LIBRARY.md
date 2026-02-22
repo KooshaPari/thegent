@@ -1,6 +1,6 @@
 # Shared MCP Tool Library — Design Specification
 
-> **Status**: 🛠️ **TOOL LIBRARY DESIGN** | **Date**: 2026-02-18  
+> **Status**: 🛠️ **TOOL LIBRARY DESIGN** | **Date**: 2026-02-18
 > **Purpose**: Design specification for a shared MCP tool library that consolidates common tools across MCP servers in the kush ecosystem
 
 ---
@@ -141,7 +141,7 @@ class ToolOutput(BaseModel):
 
 class BaseMCPTool(ABC):
     """Base class for all MCP tools."""
-    
+
     def __init__(
         self,
         name: str,
@@ -154,17 +154,17 @@ class BaseMCPTool(ABC):
         self.version = version
         self.enabled = enabled
         self.logger = logging.getLogger(f"mcp.tool.{name}")
-    
+
     @abstractmethod
     async def execute(self, input_data: ToolInput) -> ToolOutput:
         """Execute the tool."""
         pass
-    
+
     @abstractmethod
     def validate_input(self, input_data: Dict[str, Any]) -> ToolInput:
         """Validate and parse input."""
         pass
-    
+
     def get_schema(self) -> Dict[str, Any]:
         """Get tool schema for MCP registration."""
         return {
@@ -172,12 +172,12 @@ class BaseMCPTool(ABC):
             "description": self.description,
             "inputSchema": self._get_input_schema()
         }
-    
+
     @abstractmethod
     def _get_input_schema(self) -> Dict[str, Any]:
         """Get JSON schema for input."""
         pass
-    
+
     async def __call__(self, **kwargs) -> Dict[str, Any]:
         """Make tool callable."""
         try:
@@ -217,26 +217,26 @@ class ReadFileOutput(ToolOutput):
 
 class ReadFileTool(BaseMCPTool):
     """Read file tool."""
-    
+
     def __init__(self):
         super().__init__(
             name="read_file",
             description="Read contents of a file"
         )
-    
+
     def validate_input(self, input_data: Dict[str, Any]) -> ReadFileInput:
         return ReadFileInput(**input_data)
-    
+
     async def execute(self, input_data: ReadFileInput) -> ReadFileOutput:
         path = Path(input_data.path)
-        
+
         # Security check
         if not self._is_safe_path(path):
             raise ValueError(f"Unsafe path: {path}")
-        
+
         content = path.read_text(encoding=input_data.encoding)
         stat = path.stat()
-        
+
         return ReadFileOutput(
             success=True,
             result={
@@ -248,7 +248,7 @@ class ReadFileTool(BaseMCPTool):
             size=stat.st_size,
             modified=datetime.fromtimestamp(stat.st_mtime)
         )
-    
+
     def _get_input_schema(self) -> Dict[str, Any]:
         return {
             "type": "object",
@@ -258,7 +258,7 @@ class ReadFileTool(BaseMCPTool):
             },
             "required": ["path"]
         }
-    
+
     def _is_safe_path(self, path: Path) -> bool:
         # Implement path validation logic
         return True
@@ -273,13 +273,13 @@ class WorkspaceStatusInput(ToolInput):
 
 class WorkspaceStatusTool(BaseMCPTool):
     """Get workspace status tool."""
-    
+
     def __init__(self):
         super().__init__(
             name="workspace_status",
             description="Get workspace git status and file changes"
         )
-    
+
     async def execute(self, input_data: WorkspaceStatusInput) -> ToolOutput:
         # Implementation using git operations
         pass
@@ -296,13 +296,13 @@ class LintCodeInput(ToolInput):
 
 class LintCodeTool(BaseMCPTool):
     """Lint code tool."""
-    
+
     def __init__(self):
         super().__init__(
             name="lint_code",
             description="Lint code using appropriate linter"
         )
-    
+
     async def execute(self, input_data: LintCodeInput) -> ToolOutput:
         # Implementation using language-specific linters
         pass
@@ -321,13 +321,13 @@ class WebSearchInput(ToolInput):
 
 class WebSearchTool(BaseMCPTool):
     """Web search tool."""
-    
+
     def __init__(self):
         super().__init__(
             name="web_search",
             description="Search the web for information"
         )
-    
+
     async def execute(self, input_data: WebSearchInput) -> ToolOutput:
         # Implementation using search API
         pass
@@ -347,13 +347,13 @@ class CreateTaskInput(ToolInput):
 
 class CreateTaskTool(BaseMCPTool):
     """Create task tool."""
-    
+
     def __init__(self):
         super().__init__(
             name="create_task",
             description="Create a new task"
         )
-    
+
     async def execute(self, input_data: CreateTaskInput) -> ToolOutput:
         # Implementation
         pass
@@ -472,7 +472,7 @@ from shared_mcp_tools.base import BaseMCPTool, ToolInput, ToolOutput
 
 class CustomTool(BaseMCPTool):
     """Custom tool using shared tools."""
-    
+
     def __init__(self):
         super().__init__(
             name="custom_operation",
@@ -480,18 +480,18 @@ class CustomTool(BaseMCPTool):
         )
         self.read_file = ReadFileTool()
         self.lint_code = LintCodeTool()
-    
+
     async def execute(self, input_data: ToolInput) -> ToolOutput:
         # Read file
         read_result = await self.read_file.execute(
             ReadFileInput(path=input_data.path)
         )
-        
+
         # Lint code
         lint_result = await self.lint_code.execute(
             LintCodeInput(code=read_result.content, language="python")
         )
-        
+
         return ToolOutput(
             success=True,
             result={
@@ -557,7 +557,7 @@ async def test_read_file_success():
     tool = ReadFileTool()
     input_data = ReadFileInput(path="test.txt")
     output = await tool.execute(input_data)
-    
+
     assert output.success is True
     assert output.content is not None
 ```
@@ -569,13 +569,13 @@ async def test_read_file_success():
 async def test_file_operations_integration():
     write_tool = WriteFileTool()
     read_tool = ReadFileTool()
-    
+
     # Write file
     await write_tool.execute(WriteFileInput(
         path="test.txt",
         content="Hello, World!"
     ))
-    
+
     # Read file
     result = await read_tool.execute(ReadFileInput(path="test.txt"))
     assert result.content == "Hello, World!"

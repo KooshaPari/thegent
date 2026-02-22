@@ -23,6 +23,11 @@ class CaptureResult:
     pane_id: str | None = None
 
 
+def _is_tmux_available() -> bool:
+    """Return True when tmux is available on PATH."""
+    return shutil.which("tmux") is not None
+
+
 def _trim_to_n(lines: list[str], n: int) -> list[str]:
     """Trim lines to the last n entries."""
     if n <= 0:
@@ -33,7 +38,7 @@ def _capture_via_tmux(pane_id: str, n: int) -> CaptureResult | None:
 
     Returns None if tmux is unavailable, exits non-zero, or raises OSError.
     """
-    if not shutil.which("tmux"):
+    if not _is_tmux_available():
         return None
     cmd = ["tmux", "capture-pane", "-p", "-S", f"-{n}", "-t", pane_id]
     try:

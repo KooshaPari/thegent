@@ -25,4 +25,3 @@ verify_chain(session_dir: Path)
 Verify hash chain integrity of the run registry.
 
 ---
-

@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase10-12-bundle-b-sprint-playbook.md
 
 # Thegent Phase 10–12 Bundle B Sprint Playbook
 
-**Status:** Operational playbook (Bundle B focus)  
-**Date:** 2026-02-15  
+**Status:** Operational playbook (Bundle B focus)
+**Date:** 2026-02-15
 **Scope:** Concrete execution plan for `phase10_bundle_b` with per-day tasks, checklists, PR template, and failure handling.
 
 ## 0) Bundle B objective

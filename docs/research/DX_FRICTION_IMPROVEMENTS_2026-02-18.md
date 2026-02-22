@@ -1,14 +1,14 @@
 # DX/UX/AX Friction Improvements - 2026-02-18
 
-> **Status**: Active | **Date**: 2026-02-18  
+> **Status**: Active | **Date**: 2026-02-18
 > **Purpose**: Document friction points identified and improvements made to reduce verbosity and complexity
 
 ---
 
 ## Summary
 
-**Friction Points Identified**: 5  
-**Improvements Created**: 3  
+**Friction Points Identified**: 5
+**Improvements Created**: 3
 **Workstream Items Processed**: 1
 
 ---
@@ -19,7 +19,7 @@
 
 **Friction**: Repeatedly running `python3 -c "from thegent.infra import ..."` is verbose
 
-**Impact**: 
+**Impact**:
 - High verbosity in tool calls
 - Repetitive patterns
 - Hard to test multiple imports at once
@@ -206,5 +206,5 @@ python3 scripts/dx_helpers.py workstream 5 P1
 
 ---
 
-**Status**: Active monitoring and improvement  
+**Status**: Active monitoring and improvement
 **Next**: Continue processing workstream items with reduced verbosity

@@ -56,7 +56,7 @@ fn find_with_fd(
     dir: &str,
 ) -> Result<Vec<PathBuf>, FileDiscoveryError> {
     let mut cmd = Command::new("fd");
-    
+
     if let Some(pattern) = pattern {
         cmd.arg(pattern);
     } else {

@@ -71,4 +71,3 @@ Identify critical paths for native Rust hooks.
 **Returns**: List of critical path identifiers
 
 ---
-

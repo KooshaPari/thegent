@@ -2,8 +2,8 @@
 
 **Purpose:** Step-by-step guide for migrating existing code to use desktop automation.
 
-**Date:** 2026-02-16  
-**Status:** Migration Guide  
+**Date:** 2026-02-16
+**Status:** Migration Guide
 **Related:** CROSS_PLATFORM_MULTI_TENANT_DESKTOP_AUTOMATION_RESEARCH.md
 
 ---
@@ -86,10 +86,10 @@ from thegent.infra.desktop_automation.base import AutomationAction
 def automate_task():
     provider = get_provider()
     coordinator = DesktopAutomationCoordinator(state_dir, provider)
-    
+
     scope = AutomationScope(app_name="TextEdit")
     action = AutomationAction(type="click", selector="button")
-    
+
     result = coordinator.execute_with_coordination(
         scope=scope,
         agent_id="my-agent",
@@ -194,11 +194,11 @@ def automate():
     element = provider.find_element("button")
     if not element:
         raise ElementNotFoundError("Button not found")
-    
+
     result = provider.click(element)
     if not result.success:
         raise AutomationError(f"Click failed: {result.error}")
-    
+
     return result
 ```
 
@@ -221,10 +221,10 @@ def automate():
     with tracer.start_as_current_span("automation.click") as span:
         provider = get_provider()
         result = provider.click(element)
-        
+
         span.set_attribute("automation.success", result.success)
         span.set_attribute("automation.duration_ms", result.duration_ms)
-        
+
         return result
 ```
 
@@ -304,13 +304,13 @@ def workflow():
     provider = get_provider()
     coordinator = DesktopAutomationCoordinator(state_dir, provider)
     scope = AutomationScope(app_name="TextEdit")
-    
+
     steps = [
         AutomationAction(type="click", selector="button[name='New']"),
         AutomationAction(type="type_text", selector="text_field", text="Hello"),
         AutomationAction(type="click", selector="button[name='Save']")
     ]
-    
+
     for step in steps:
         result = coordinator.execute_with_coordination(scope, "agent-1", step)
         if not result.success:
@@ -347,7 +347,7 @@ def test_macos_click():
     provider = macOSAutomationProvider()
     element = provider.find_element("button[name='Save']")
     assert element is not None
-    
+
     result = provider.click(element)
     assert result.success
     assert result.duration_ms < 200  # Should be fast
@@ -407,7 +407,7 @@ If migration fails:
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

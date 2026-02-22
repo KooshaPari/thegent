@@ -6,7 +6,7 @@ Source: docs/research/PLAN_USAGE_AND_BUDGET_RESEARCH.md
 
 # Plan Usage and Budget Research
 
-**Date:** 2026-02-16  
+**Date:** 2026-02-16
 **Scope:** Gauging plan usage across providers; provider-specific APIs; Tokscale; session file locations.
 
 ---
@@ -45,7 +45,7 @@ Source: docs/research/PLAN_USAGE_AND_BUDGET_RESEARCH.md
 
 ## 2. Tokscale (Cross-Provider Session Parsing)
 
-**Repo:** [junhoyeo/tokscale](https://github.com/junhoyeo/tokscale)  
+**Repo:** [junhoyeo/tokscale](https://github.com/junhoyeo/tokscale)
 **Install:** `bunx tokscale@latest`
 
 **Supported clients and data locations:**
@@ -191,10 +191,10 @@ from pathlib import Path
 
 class UsageCollector:
     """Collect usage metrics from CLIProxyAPIPlus."""
-    
+
     def __init__(self, proxy_url: str = "http://127.0.0.1:8318"):
         self.proxy_url = proxy_url
-    
+
     def get_provider_metrics(self) -> dict:
         """Get provider metrics from proxy."""
         try:
@@ -204,24 +204,24 @@ class UsageCollector:
         except httpx.RequestError as e:
             print(f"❌ Failed to get metrics: {e}")
             return {}
-    
+
     def format_cost_report(self, metrics: dict) -> str:
         """Format metrics as cost report."""
         lines = [f"\n📊 Usage Report - {datetime.now().isoformat()}\n"]
         lines.append("-" * 50)
-        
+
         for provider, data in metrics.items():
             latency = data.get("latency_p50_ms", 0)
             tps = data.get("tps_1m", 0)
             cost = data.get("cost_per_1k", 0)
             success = data.get("success_rate", 0)
-            
+
             lines.append(f"\n🔹 {provider}:")
             lines.append(f"   Latency (P50): {latency}ms")
             lines.append(f"   Throughput: {tps} req/s")
             lines.append(f"   Cost: ${cost}/1K tokens")
             lines.append(f"   Success Rate: {success*100:.1f}%")
-        
+
         lines.append("\n" + "-" * 50)
         return "\n".join(lines)
 
@@ -250,7 +250,7 @@ echo "📊 Tokscale report saved to ~/.thegent/usage/tokscale_report.md"
 
 ## 7. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

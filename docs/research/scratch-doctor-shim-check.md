@@ -1,7 +1,7 @@
 # Doctor Shim Check Feature - Implementation Status
 
-> **WORK_STREAM ID:** scratch-doctor-shim-check  
-> **Priority:** P2  
+> **WORK_STREAM ID:** scratch-doctor-shim-check
+> **Priority:** P2
 > **Status:** ✅ Complete
 
 ## Summary
@@ -33,11 +33,11 @@ The shim check feature is implemented in `src/thegent/doctor.py`:
 def _check_shim_binaries() -> list[CheckResult]:
     """Check thegent-hooks and thegent-shims (Rust) binary version and availability."""
     results = []
-    
+
     for name in ["thegent-hooks", "thegent-shims"]:
         r = CheckResult(name, "Shim Binaries")
         binary_path = shutil.which(name)
-        
+
         if binary_path:
             # Check version
             try:
@@ -57,9 +57,9 @@ def _check_shim_binaries() -> list[CheckResult]:
             r.status = "warn"
             r.message = f"{name} not found in PATH"
             r.fix_hint = f"Build {name} binary or install via package manager"
-        
+
         results.append(r)
-    
+
     return results
 ```
 
@@ -71,7 +71,7 @@ for shim_name in ["git", "grep", "find", "codex", "copilot"]:
     shim_path = shutil.which(shim_name)
     if shim_path and shim_path.startswith(str(shim_dir)):
         r_shim = CheckResult(f"{shim_name} Shim Details", "Environment")
-        
+
         # Check if it's a shell script shim
         if Path(shim_path).suffix == ".sh" or Path(shim_path).is_file():
             # Read shim to find target binary
@@ -82,7 +82,7 @@ for shim_name in ["git", "grep", "find", "codex", "copilot"]:
                     # ...
             except Exception:
                 pass
-        
+
         # Check target binary availability
         target = _resolve_shim_target(shim_name)
         if target:
@@ -92,7 +92,7 @@ for shim_name in ["git", "grep", "find", "codex", "copilot"]:
         else:
             r_shim.status = "warn"
             r_shim.message = f"{shim_name} shim target not found"
-        
+
         results.append(r_shim)
 ```
 

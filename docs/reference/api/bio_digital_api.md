@@ -33,4 +33,3 @@ calibrate(self: Any, bio_signal: Any, digital_signal: Any)
 Calibrate confidence between bio and digital signals.
 
 ---
-

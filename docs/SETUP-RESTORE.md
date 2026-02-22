@@ -96,6 +96,19 @@ Reload: `cmd+shift+,` (macOS).
 
 **Cause:** Option conflict or wrong tool. With `thegent install`, `-e` is short for `--editable`. If you see this from another command (e.g. codex, copilot), that tool may not support `-e`.
 
+### "No such option: --force" on `dex --native --force`
+
+**Cause:** You are hitting a stale `dex` shim tied to an older CLI surface. The current shim path expects `--force-yolo` for force behavior.
+
+**Fix:**
+```bash
+thegent install-shims --force
+exec zsh  # or open a new terminal
+thegent doctor
+```
+
+If `which dex` does not point at `~/.local/bin/dex`, reload PATH to prioritize `~/.local/bin` and retry.
+
 ### "ps aux" or "ps -ef" hangs 130+ seconds / shell commands very slow
 
 **Cause:** A legacy `~/.local/bin/ps` shim (thegent role accelerator) shadows the system `ps`. When agents or users run `ps aux`, they invoke `thegent ps` (Python CLI for agent sessions) instead of the system process list — which hangs waiting for MCP/API.
@@ -123,4 +136,3 @@ thegent install-shims --force
 
 - [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index
-

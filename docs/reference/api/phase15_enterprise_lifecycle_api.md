@@ -43,4 +43,3 @@ get_research_map(self: Any)
 Get lifecycle research map.
 
 ---
-

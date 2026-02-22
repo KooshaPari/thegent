@@ -1,7 +1,7 @@
 # Thegent WBS — Phase 10 to Phase 12 (Optimization-Depth and Productization)
 
-**Status:** Finalized execution-ready WBS  
-**Date:** 2026-02-15  
+**Status:** Finalized execution-ready WBS
+**Date:** 2026-02-15
 **Scope:** Operational convergence, predictive resilience, and enterprise hardening after closure of Phases 7–9.
 
 ## 0) Meta constraints
@@ -182,4 +182,3 @@
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

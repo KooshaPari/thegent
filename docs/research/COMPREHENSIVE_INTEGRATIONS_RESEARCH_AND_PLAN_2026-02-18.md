@@ -1,7 +1,7 @@
 # Comprehensive Integrations Research & Plan: JetBrains, Hooks, MCP, Skills, Shell, OS
 
-**Date**: 2026-02-18  
-**Status**: Research Complete, Plan Ready  
+**Date**: 2026-02-18
+**Status**: Research Complete, Plan Ready
 **Scope**: JetBrains plugins, hooks/MCP/skills, zsh/shell, OS-level enhancements for AX/UX/DX
 
 ---
@@ -23,8 +23,8 @@ Comprehensive research and integration plan covering:
 ### 1.1 Essential JetBrains Plugins for AI/Agent Development
 
 #### ✅ **MCP Server Plugin** (Official JetBrains)
-**Plugin ID**: 26071  
-**URL**: https://plugins.jetbrains.com/plugin/26071-mcp-server  
+**Plugin ID**: 26071
+**URL**: https://plugins.jetbrains.com/plugin/26071-mcp-server
 **Status**: ⚠️ Not yet integrated
 
 **Features**:
@@ -51,9 +51,9 @@ Comprehensive research and integration plan covering:
 - Auto-configure MCP connection when plugin detected
 
 #### ✅ **MCP Language Service Tools Plugin** (Community)
-**Plugin ID**: 27888  
-**URL**: https://plugins.jetbrains.com/plugin/27888-mcp-language-service-tools  
-**GitHub**: https://github.com/justin1291/mcp-idea-lsp  
+**Plugin ID**: 27888
+**URL**: https://plugins.jetbrains.com/plugin/27888-mcp-language-service-tools
+**GitHub**: https://github.com/justin1291/mcp-idea-lsp
 **Status**: ❌ Not integrated
 
 **Features**:
@@ -74,8 +74,8 @@ Comprehensive research and integration plan covering:
 4. Prefer over Serena LSP backend when available
 
 #### ✅ **Serena JetBrains Plugin** (Already Planned)
-**Plugin ID**: 28946  
-**URL**: https://plugins.jetbrains.com/plugin/28946-serena  
+**Plugin ID**: 28946
+**URL**: https://plugins.jetbrains.com/plugin/28946-serena
 **Status**: ⚠️ Partially integrated (detection only)
 
 **Features**:
@@ -161,7 +161,7 @@ Comprehensive research and integration plan covering:
 # src/thegent/hooks/mcp_exporter.py
 class HookMCPExporter:
     """Export hook events via MCP."""
-    
+
     def register_hook_tool(self, hook_name: str):
         """Register hook as MCP tool."""
         # Agents can trigger hooks via MCP
@@ -698,7 +698,7 @@ class ThegentMenuBar(rumps.App):
             "Settings",
             "Quit"
         ]
-    
+
     @rumps.clicked("Work Stream")
     def work_stream(self, _):
         # Show work stream
@@ -862,13 +862,13 @@ class ThegentSettings(BaseSettings):
         default=8765,
         description="JetBrains MCP Server plugin port"
     )
-    
+
     # MCP Language Service Tools
     jetbrains_lsp_tools_enabled: bool = Field(
         default=True,
         description="Enable MCP Language Service Tools plugin"
     )
-    
+
     # Shell Integration
     shell_integration_enabled: bool = Field(
         default=True,
@@ -878,7 +878,7 @@ class ThegentSettings(BaseSettings):
         default=True,
         description="Show thegent status in prompt"
     )
-    
+
     # OS Integration
     os_integration_enabled: bool = Field(
         default=True,

@@ -14,10 +14,10 @@
 if command -v ulimit >/dev/null 2>&1; then
   # Limit number of processes per user (prevent fork explosions)
   ulimit -u 4096 2>/dev/null || true
-  
+
   # Limit number of open file descriptors
   ulimit -n 1024 2>/dev/null || true
-  
+
   # Limit virtual memory (prevent memory exhaustion)
   ulimit -v 4194304 2>/dev/null || true  # 4GB
 fi
@@ -50,19 +50,19 @@ if ! type ls >/dev/null 2>&1 || [[ "$(type ls 2>/dev/null)" == *"alias"* ]]; the
       /bin/ls "$@"
     }
   fi
-  
+
   # Create safe ls wrapper
   ls() {
     local args=("$@")
     local has_recursive=0
     local has_tree=0
-    
+
     # Check for recursive/tree flags
     for arg in "${args[@]}"; do
       [[ "$arg" == "-R" || "$arg" == "--recursive" || "$arg" == "-r" ]] && has_recursive=1
       [[ "$arg" == "--tree" ]] && has_tree=1
     done
-    
+
     # If recursive/tree not explicitly requested, ensure single-level
     if [[ $has_recursive -eq 0 && $has_tree -eq 0 ]]; then
       # Use original ls with single-level output (bypass aliases)
@@ -104,7 +104,7 @@ if command -v timeout >/dev/null 2>&1 || command -v gtimeout >/dev/null 2>&1; th
       command timeout "$@"
     fi
   }
-  
+
   # Wrap common long-running commands with timeout
   # Note: Only wrap if not already wrapped to avoid recursion
   if [[ "$(type find)" != *"thegent"* ]]; then
@@ -124,12 +124,12 @@ fi
 _thegent_fork_guard() {
   # Skip fork guard during direnv evaluation to prevent hangs
   [[ -n "${DIRENV_IN_ENVRC:-}" ]] && return 0
-  
+
   # Disable extended_glob in this function to avoid "no matches found: (faster)" when
   # trigger vars or comments get misinterpreted as glob patterns
   setopt local_options
   unsetopt extended_glob 2>/dev/null || true
-  
+
   # Use pgrep for pid_count when available, fallback to ps with throttling
   local pid_count=0
   if command -v pgrep >/dev/null 2>&1; then
@@ -167,7 +167,7 @@ if [[ -n "${PS1:-}" && -z "${DIRENV_IN_ENVRC:-}" ]]; then
   _thegent_fork_guard_periodic() {
     # Skip during direnv evaluation
     [[ -n "${DIRENV_IN_ENVRC:-}" ]] && return 0
-    
+
     local current_time
     current_time=$(date +%s 2>/dev/null || echo "0")
     # Only check if > 180 seconds since last check

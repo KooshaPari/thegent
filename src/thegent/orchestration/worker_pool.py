@@ -5,7 +5,6 @@ process-compose to reduce overhead of repeatedly spawning task processes.
 """
 
 import asyncio
-from asyncio import subprocess
 import json
 import logging
 import os

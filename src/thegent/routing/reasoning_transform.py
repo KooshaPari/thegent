@@ -29,7 +29,7 @@ THINKING_BUDGET: dict[ReasoningEffort, int] = {
 def extract_reasoning_effort(body: dict) -> ReasoningEffort | None:
     """Extract reasoning effort from request body.
 
-    Reads body["reasoning"]["effort"] or body["reasoning_effort"].
+    Reads body["reasoning"]["effort"], body["reasoning_effort"], or body["variant"].
     Returns None if not present or invalid.
     """
     # Try nested form first: {"reasoning": {"effort": "high"}}
@@ -47,6 +47,14 @@ def extract_reasoning_effort(body: dict) -> ReasoningEffort | None:
     if flat is not None:
         try:
             return ReasoningEffort(flat)
+        except ValueError:
+            return None
+
+    # Try variant form (used by OpenWork/Cursor for codex models): {"variant": "high"}
+    variant = body.get("variant")
+    if variant is not None:
+        try:
+            return ReasoningEffort(variant)
         except ValueError:
             return None
 
@@ -73,12 +81,13 @@ def apply_openai_reasoning(body: dict, effort: ReasoningEffort) -> dict:
     """Add reasoning_effort to OpenAI request body.
 
     Sets body["reasoning_effort"] = effort.value.
-    Removes "reasoning" key if present.
+    Removes "reasoning" and "variant" keys if present.
     Returns modified copy of body.
     """
     result = dict(body)
     result["reasoning_effort"] = effort.value
     result.pop("reasoning", None)
+    result.pop("variant", None)
     return result
 
 
@@ -101,6 +110,7 @@ def apply_reasoning_for_provider(body: dict, provider: str) -> dict:
     If no reasoning effort in body, returns body unchanged.
     Dispatches to apply_anthropic_reasoning / apply_openai_reasoning / apply_gemini_reasoning
     based on provider prefix matching ("anthropic", "openai", "google", "gemini").
+    For "codex" provider, treats as OpenAI-compatible (uses reasoning_effort).
     Unknown providers: strips "reasoning" key and returns.
     """
     effort = extract_reasoning_effort(body)
@@ -111,7 +121,8 @@ def apply_reasoning_for_provider(body: dict, provider: str) -> dict:
 
     if provider_lower.startswith("anthropic"):
         return apply_anthropic_reasoning(body, effort)
-    if provider_lower.startswith("openai"):
+    if provider_lower.startswith("openai") or provider_lower.startswith("codex"):
+        # Codex uses OpenAI-compatible API, so apply OpenAI reasoning transform
         return apply_openai_reasoning(body, effort)
     if provider_lower.startswith("google") or provider_lower.startswith("gemini"):
         return apply_gemini_reasoning(body, effort)

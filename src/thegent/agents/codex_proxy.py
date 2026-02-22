@@ -87,6 +87,7 @@ _PROXY_MODEL: dict[str, str] = {
     "kilo": "minimax-m2.5",
     "kiro": "claude-haiku-4.5",
     "nim": "step-3.5-flash",
+    "roo": "roo-default",
     "zen": "glm-5",
     "summarizer": "gemini-3-flash",
 }
@@ -363,6 +364,69 @@ def _run_with_retry(
     if result.exit_code != 0 and is_retryable(result):
         raise TransientAgentError(result)
     return result
+
+
+def _parse_jsonl_output(output: str) -> tuple[str, int, int, str]:
+    """Parse JSONL output from Codex. Returns (text, tokens_in, tokens_out, model).
+    
+    Handles:
+    - Simple JSON lines with choices[0].text
+    - Streaming deltas with choices[0].delta.content
+    - Token usage from usage.prompt_tokens and usage.completion_tokens
+    - Model name from model field
+    - Mixed JSON and plain text lines (plain text is included in output)
+    
+    Args:
+        output: JSONL string (multiple JSON objects separated by newlines)
+        
+    Returns:
+        Tuple of (combined_text, prompt_tokens, completion_tokens, model_name)
+        where tokens default to 0 and model defaults to ""
+    """
+    import json
+    
+    text = ""
+    tokens_in = 0
+    tokens_out = 0
+    model = ""
+    
+    if not output:
+        return text, tokens_in, tokens_out, model
+    
+    for line in output.split("\n"):
+        if not line.strip():
+            continue
+        
+        try:
+            data = json.loads(line)
+        except json.JSONDecodeError:
+            # Handle plain text lines (e.g., stderr mixed in)
+            text += line
+            continue
+        
+        # Extract text from choices[0].text or choices[0].delta.content
+        if "choices" in data and len(data["choices"]) > 0:
+            choice = data["choices"][0]
+            if "text" in choice:
+                text += choice["text"]
+            elif "delta" in choice and "content" in choice["delta"]:
+                text += choice["delta"]["content"]
+            elif "message" in choice and "content" in choice["message"]:
+                text += choice["message"]["content"]
+        
+        # Extract token usage (last occurrence wins)
+        if "usage" in data:
+            usage = data["usage"]
+            if "prompt_tokens" in usage:
+                tokens_in = usage["prompt_tokens"]
+            if "completion_tokens" in usage:
+                tokens_out = usage["completion_tokens"]
+        
+        # Extract model name (last occurrence wins)
+        if "model" in data:
+            model = data["model"]
+    
+    return text, tokens_in, tokens_out, model
 
 
 class CodexProxyRunner(AgentRunner):

@@ -1,7 +1,7 @@
 # Agent Sandboxing Architecture: WASM/Containers/VMs (No Docker)
 
-**Status:** Comprehensive Architecture & Design | **Date:** 2026-02-16  
-**Version:** 2.0 (Deep Research & Extended)  
+**Status:** Comprehensive Architecture & Design | **Date:** 2026-02-16
+**Version:** 2.0 (Deep Research & Extended)
 **Goal:** Per-project persistent isolation environments for agents using WASM/containers/VMs without Docker, with seamless native OS fallback
 
 ---
@@ -193,14 +193,14 @@ result = sandbox.run(wasm_binary, function="main", args=[])
 ```python
 class PodmanSandbox:
     """Podman-based container sandbox (rootless, daemonless)."""
-    
+
     def __init__(self, project_path: Path, config: dict):
         self.project_path = project_path
         self.config = config
         self.image = config.get("image", "python:3.12-slim")
         self.container_name = f"agent-{project_path.name}-{uuid.uuid4().hex[:8]}"
         self._verify_podman()
-    
+
     def _verify_podman(self):
         """Verify Podman is installed and rootless mode works."""
         try:
@@ -215,7 +215,7 @@ class PodmanSandbox:
                 raise RuntimeError("Podman must run in rootless mode")
         except FileNotFoundError:
             raise RuntimeError("Podman not installed. Install: https://podman.io/getting-started/installation")
-    
+
     def run(self, command: list[str], env: dict[str, str] | None = None) -> dict:
         """Execute command in Podman container."""
         # Build podman command with security hardening
@@ -238,15 +238,15 @@ class PodmanSandbox:
             "--tmpfs", "/tmp:rw,noexec,nosuid,size=100m",  # Secure tmpfs
             self.image
         ]
-        
+
         # Add environment variables
         if env:
             for k, v in env.items():
                 cmd.extend(["--env", f"{k}={v}"])
-        
+
         # Add command
         cmd.extend(command)
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -255,7 +255,7 @@ class PodmanSandbox:
                 timeout=self.config.get("timeout", 300),
                 check=False  # Don't raise on non-zero exit
             )
-            
+
             return {
                 "status": "success" if result.returncode == 0 else "failed",
                 "exit_code": result.returncode,
@@ -295,7 +295,7 @@ class PodmanSandbox:
 ```python
 class ContainerdSandbox:
     """containerd-based container sandbox (CNCF standard)."""
-    
+
     def run(self, command: list[str]) -> dict:
         """Execute command in containerd container."""
         # containerd uses ctr CLI or gRPC API
@@ -309,7 +309,7 @@ class ContainerdSandbox:
             self.image,
             self.container_name
         ] + command
-        
+
         result = subprocess.run(cmd, capture_output=True, text=True)
         return self._parse_result(result)
 ```
@@ -343,7 +343,7 @@ class ContainerdSandbox:
 ```python
 class GVisorSandbox:
     """gVisor-based sandbox (user-space kernel)."""
-    
+
     def run(self, command: list[str]) -> dict:
         """Execute command in gVisor sandbox."""
         # gVisor uses runsc (runsc = run sandbox container)
@@ -358,7 +358,7 @@ class GVisorSandbox:
             "--bundle", str(self.project_path / ".sandbox" / "container" / "bundle"),
             self.container_name
         ] + command
-        
+
         result = subprocess.run(cmd, capture_output=True, text=True)
         return self._parse_result(result)
 ```
@@ -385,7 +385,7 @@ class GVisorSandbox:
 ```python
 class BubblewrapSandbox:
     """Bubblewrap-based sandbox (lightweight namespace tool)."""
-    
+
     def run(self, command: list[str]) -> dict:
         """Execute command in Bubblewrap sandbox."""
         # Bubblewrap uses bwrap command
@@ -406,7 +406,7 @@ class BubblewrapSandbox:
             "--chdir", "/workspace",
             "bash", "-c", " ".join(command)
         ]
-        
+
         result = subprocess.run(cmd, capture_output=True, text=True)
         return self._parse_result(result)
 ```
@@ -606,19 +606,19 @@ Invoke-Command -VMName "agent-vm" -ScriptBlock {
 ```python
 class FirecrackerSandbox:
     """Firecracker microVM sandbox (AWS Lambda-style)."""
-    
+
     def __init__(self, project_path: Path, config: dict):
         self.project_path = project_path
         self.config = config
         self.vm_image = project_path / ".sandbox" / "vm" / "firecracker-vmlinux"
         self.rootfs = project_path / ".sandbox" / "vm" / "firecracker-rootfs.ext4"
         self.socket = project_path / ".sandbox" / "vm" / "firecracker.sock"
-    
+
     def run(self, command: list[str]) -> dict:
         """Execute command in Firecracker microVM."""
         # Firecracker uses HTTP API over Unix socket
         import requests_unixsocket
-        
+
         # 1. Configure VM
         vm_config = {
             "vcpu_count": self.config.get("cpu_count", 1),
@@ -626,22 +626,22 @@ class FirecrackerSandbox:
             "ht_enabled": False,
             "track_dirty_pages": False
         }
-        
+
         requests_unixsocket.patch()
         session = requests_unixsocket.Session()
-        
+
         # Configure boot source
         boot_source = {
             "kernel_image_path": str(self.vm_image),
             "boot_args": "console=ttyS0 reboot=k panic=1 pci=off",
             "initrd_path": None
         }
-        
+
         session.put(
             f"http+unix://{self.socket}/boot-source",
             json=boot_source
         )
-        
+
         # Configure rootfs
         drives = [{
             "drive_id": "rootfs",
@@ -649,15 +649,15 @@ class FirecrackerSandbox:
             "is_root_device": True,
             "is_read_only": False
         }]
-        
+
         session.put(
             f"http+unix://{self.socket}/drives/rootfs",
             json=drives[0]
         )
-        
+
         # Start VM
         session.put(f"http+unix://{self.socket}/actions", json={"action_type": "InstanceStart"})
-        
+
         # Execute command via vsock or serial console
         result = self._execute_via_vsock(command)
         return result
@@ -828,15 +828,15 @@ Agent Execution Request
 ```python
 class SandboxRouter:
     """Routes agent execution to appropriate isolation tier."""
-    
+
     def __init__(self, project_path: Path):
         self.project_path = project_path
         self.config = self._load_config()
-    
+
     def route(self, agent_code: str, requirements: dict) -> ExecutionResult:
         """Route execution to best available tier."""
         tier = self._select_tier(requirements)
-        
+
         if tier == "wasm":
             return self._execute_wasm(agent_code)
         elif tier == "container":
@@ -847,12 +847,12 @@ class SandboxRouter:
             return self._execute_native(agent_code)
         else:
             raise ValueError(f"Unknown tier: {tier}")
-    
+
     def _select_tier(self, requirements: dict) -> str:
         """Select isolation tier based on requirements and availability."""
         default = self.config.get("default_tier", "wasm")
         fallback = self.config.get("fallback_to_native", True)
-        
+
         # Check tier availability
         if default == "wasm" and self._wasm_available():
             return "wasm"
@@ -860,11 +860,11 @@ class SandboxRouter:
             return "container"
         elif default == "vm" and self._vm_available():
             return "vm"
-        
+
         # Fallback logic
         if fallback:
             return "native"
-        
+
         # Try next available tier
         if self._wasm_available():
             return "wasm"
@@ -872,7 +872,7 @@ class SandboxRouter:
             return "container"
         elif self._vm_available():
             return "vm"
-        
+
         return "native"  # Last resort
 ```
 
@@ -895,13 +895,13 @@ from wasmtime import WasiConfig
 
 class WasmSandbox:
     """WASM-based sandbox using WASI."""
-    
+
     def __init__(self, project_path: Path, config: dict):
         self.project_path = project_path
         self.config = config
         self.engine = Engine(Config())
         self.store = Store(self.engine)
-        
+
         # Configure WASI with capabilities
         wasi_config = WasiConfig()
         wasi_config.preopen_dir(
@@ -912,24 +912,24 @@ class WasmSandbox:
             str(project_path / ".sandbox" / "wasm"),
             "/workspace/output"
         )
-        
+
         # Network capability (if allowed)
         if "network:https:api.example.com" in config.get("capabilities", []):
             wasi_config.inherit_network()
-        
+
         self.store.set_wasi(wasi_config)
-    
+
     def run(self, wasm_binary: bytes, function: str, args: list) -> dict:
         """Execute WASM binary with capabilities."""
         module = Module(self.engine, wasm_binary)
         linker = Linker(self.engine)
         linker.define_wasi()
-        
+
         instance = linker.instantiate(self.store, module)
         func = instance.exports(self.store)[function]
-        
+
         result = func(self.store, *args)
-        
+
         return {
             "status": "success",
             "result": result,
@@ -992,13 +992,13 @@ from pathlib import Path
 
 class PodmanSandbox:
     """Podman-based container sandbox."""
-    
+
     def __init__(self, project_path: Path, config: dict):
         self.project_path = project_path
         self.config = config
         self.image = config.get("image", "python:3.12")
         self.container_name = f"agent-{project_path.name}-{uuid.uuid4().hex[:8]}"
-    
+
     def run(self, command: list[str]) -> dict:
         """Execute command in Podman container."""
         # Build podman command
@@ -1012,14 +1012,14 @@ class PodmanSandbox:
             "--workdir", "/workspace",
             self.image
         ] + command
-        
+
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=self.config.get("timeout", 300)
         )
-        
+
         return {
             "status": "success" if result.returncode == 0 else "failed",
             "exit_code": result.returncode,
@@ -1050,7 +1050,7 @@ import subprocess
 
 class ContainerdSandbox:
     """containerd-based container sandbox."""
-    
+
     def run(self, command: list[str]) -> dict:
         """Execute command in containerd container."""
         cmd = [
@@ -1060,7 +1060,7 @@ class ContainerdSandbox:
             self.image,
             self.container_name
         ] + command
-        
+
         result = subprocess.run(cmd, capture_output=True, text=True)
         return self._parse_result(result)
 ```
@@ -1081,7 +1081,7 @@ runsc --version
 ```python
 class GVisorSandbox:
     """gVisor-based sandbox (user-space kernel)."""
-    
+
     def run(self, command: list[str]) -> dict:
         """Execute command in gVisor sandbox."""
         cmd = [
@@ -1092,7 +1092,7 @@ class GVisorSandbox:
             "run",
             self.container_name
         ] + command
-        
+
         result = subprocess.run(cmd, capture_output=True, text=True)
         return self._parse_result(result)
 ```
@@ -1134,12 +1134,12 @@ qemu-system-x86_64 \
 ```python
 class QemuSandbox:
     """QEMU/KVM-based VM sandbox."""
-    
+
     def __init__(self, project_path: Path, config: dict):
         self.project_path = project_path
         self.config = config
         self.vm_image = project_path / ".sandbox" / "vm" / "agent-vm.qcow2"
-    
+
     def run(self, command: list[str]) -> dict:
         """Execute command in QEMU VM."""
         # Mount project directory as 9p filesystem
@@ -1155,7 +1155,7 @@ class QemuSandbox:
             "-initrd", "initrd.img",
             "-append", "root=/dev/sda1 rw"
         ]
-        
+
         # Execute command via SSH or console
         result = self._execute_via_ssh(command)
         return result
@@ -1179,7 +1179,7 @@ import subprocess
 
 class HyperVSandbox:
     """Hyper-V-based VM sandbox (Windows)."""
-    
+
     def run(self, command: list[str]) -> dict:
         """Execute command in Hyper-V VM."""
         # PowerShell Direct
@@ -1190,13 +1190,13 @@ class HyperVSandbox:
             {' '.join(command)}
         }}
         """
-        
+
         result = subprocess.run(
             ["powershell", "-Command", ps_script],
             capture_output=True,
             text=True
         )
-        
+
         return self._parse_result(result)
 ```
 
@@ -1218,17 +1218,17 @@ class HyperVSandbox:
 ```python
 class NativeSandbox:
     """Native OS execution (no isolation)."""
-    
+
     def __init__(self, project_path: Path, config: dict):
         self.project_path = project_path
         self.config = config
-    
+
     def run(self, command: list[str]) -> dict:
         """Execute command in native OS."""
         # Apply environment restrictions
         env = self._filter_env()
         cwd = self.project_path
-        
+
         result = subprocess.run(
             command,
             cwd=cwd,
@@ -1237,7 +1237,7 @@ class NativeSandbox:
             text=True,
             timeout=self.config.get("timeout", 300)
         )
-        
+
         return {
             "status": "success" if result.returncode == 0 else "failed",
             "exit_code": result.returncode,
@@ -1246,7 +1246,7 @@ class NativeSandbox:
             "tier": "native",
             "warning": "No isolation applied"
         }
-    
+
     def _filter_env(self) -> dict:
         """Filter environment variables for safety."""
         allowed = self.config.get("env_allowlist", ["PATH", "HOME", "LANG"])
@@ -1280,10 +1280,10 @@ thegent sandbox config --default-tier=container
 # src/thegent/agents/sandbox_runner.py
 class SandboxAgentRunner(AgentRunner):
     """Agent runner with sandbox isolation."""
-    
+
     def __init__(self, project_path: Path):
         self.router = SandboxRouter(project_path)
-    
+
     def run(self, prompt: str, cwd: Path, **kwargs) -> RunResult:
         """Run agent with sandbox isolation."""
         # Route to appropriate tier
@@ -1291,7 +1291,7 @@ class SandboxAgentRunner(AgentRunner):
             agent_code=self._prepare_code(prompt),
             requirements=kwargs
         )
-        
+
         return RunResult(
             exit_code=result.get("exit_code", 0),
             stdout=result.get("stdout", ""),
@@ -1309,25 +1309,25 @@ class SandboxAgentRunner(AgentRunner):
 ```python
 class PersistentEnvironment:
     """Manages per-project persistent sandbox environments."""
-    
+
     def __init__(self, project_path: Path):
         self.project_path = project_path
         self.sandbox_dir = project_path / ".sandbox"
         self.config_path = self.sandbox_dir / "config.json"
-    
+
     def init(self, tier: str = "wasm", fallback: bool = True):
         """Initialize persistent environment."""
         self.sandbox_dir.mkdir(exist_ok=True)
-        
+
         config = {
             "default_tier": tier,
             "fallback_to_native": fallback,
             "persistent": True,
             "tiers": self._default_tier_configs()
         }
-        
+
         self.config_path.write_text(json.dumps(config, indent=2))
-    
+
     def ensure_ready(self, tier: str) -> bool:
         """Ensure tier environment is ready."""
         if tier == "wasm":
@@ -1337,7 +1337,7 @@ class PersistentEnvironment:
         elif tier == "vm":
             return self._ensure_vm_image()
         return False
-    
+
     def cleanup(self, tier: str | None = None):
         """Cleanup environment (optional tier-specific)."""
         if tier == "wasm":
@@ -2112,7 +2112,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 
 class SandboxExecutor:
     """Sandbox executor with retry logic."""
-    
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
@@ -2126,7 +2126,7 @@ class SandboxExecutor:
         except SandboxError as e:
             if not e.recoverable:
                 raise  # Don't retry non-recoverable errors
-            
+
             # Log retry attempt
             _log.warning(
                 "Sandbox execution failed, retrying",
@@ -2137,12 +2137,12 @@ class SandboxExecutor:
                     "retry_after": e.retry_after
                 }
             )
-            
+
             if e.retry_after:
                 time.sleep(e.retry_after)
-            
+
             raise  # Retry via tenacity
-    
+
     def _execute(self, command: list[str], tier: str) -> dict:
         """Execute command in sandbox."""
         # Implementation...
@@ -2177,18 +2177,18 @@ vm_breaker = CircuitBreaker(
 
 class SandboxRouter:
     """Sandbox router with circuit breakers."""
-    
+
     @wasm_breaker
     def _execute_wasm(self, command: list[str]) -> dict:
         """Execute in WASM sandbox (protected by circuit breaker)."""
         # If circuit is open, raise CircuitBreakerError
         return self.wasm_sandbox.run(command)
-    
+
     @container_breaker
     def _execute_container(self, command: list[str]) -> dict:
         """Execute in container sandbox (protected by circuit breaker)."""
         return self.container_sandbox.run(command)
-    
+
     @vm_breaker
     def _execute_vm(self, command: list[str]) -> dict:
         """Execute in VM sandbox (protected by circuit breaker)."""
@@ -2202,7 +2202,7 @@ class SandboxRouter:
 ```python
 class SandboxRecovery:
     """Sandbox error recovery strategies."""
-    
+
     def recover(self, error: SandboxError, tier: str) -> Optional[dict]:
         """Attempt to recover from sandbox error."""
         recovery_strategies = {
@@ -2211,13 +2211,13 @@ class SandboxRecovery:
             SandboxErrorType.RUNTIME_UNAVAILABLE: self._recover_runtime_unavailable,
             SandboxErrorType.SECURITY_VIOLATION: self._recover_security_violation,
         }
-        
+
         strategy = recovery_strategies.get(error.error_type)
         if strategy:
             return strategy(error, tier)
-        
+
         return None  # No recovery strategy
-    
+
     def _recover_timeout(self, error: SandboxError, tier: str) -> Optional[dict]:
         """Recover from timeout: try next tier or increase timeout."""
         # Try next tier (WASM → Container → VM → Native)
@@ -2225,36 +2225,36 @@ class SandboxRecovery:
         if next_tier:
             _log.info(f"Timeout in {tier}, trying {next_tier}")
             return self._execute_in_tier(next_tier)
-        
+
         # Or increase timeout and retry
         if tier == "wasm":
             return self._execute_with_increased_timeout(tier, multiplier=2)
-        
+
         return None
-    
+
     def _recover_resource_exhaustion(self, error: SandboxError, tier: str) -> Optional[dict]:
         """Recover from resource exhaustion: try next tier with more resources."""
         next_tier = self._get_next_tier(tier)
         if next_tier:
             _log.info(f"Resource exhaustion in {tier}, trying {next_tier}")
             return self._execute_in_tier(next_tier)
-        
+
         return None
-    
+
     def _recover_runtime_unavailable(self, error: SandboxError, tier: str) -> Optional[dict]:
         """Recover from runtime unavailable: try next tier."""
         next_tier = self._get_next_tier(tier)
         if next_tier:
             _log.info(f"Runtime unavailable in {tier}, trying {next_tier}")
             return self._execute_in_tier(next_tier)
-        
+
         # Fallback to native
         if error.fallback_to_native:
             _log.warning("All sandbox tiers unavailable, falling back to native")
             return self._execute_native()
-        
+
         return None
-    
+
     def _recover_security_violation(self, error: SandboxError, tier: str) -> Optional[dict]:
         """Recover from security violation: escalate to more isolated tier."""
         # Security violations should escalate, not degrade
@@ -2262,7 +2262,7 @@ class SandboxRecovery:
         if more_isolated_tier:
             _log.warning(f"Security violation in {tier}, escalating to {more_isolated_tier}")
             return self._execute_in_tier(more_isolated_tier)
-        
+
         # If already at maximum isolation, fail
         _log.error("Security violation in maximum isolation tier, failing")
         return None
@@ -2344,11 +2344,11 @@ logger = structlog.get_logger()
 
 class SandboxExecutor:
     """Sandbox executor with structured logging."""
-    
+
     def execute(self, command: list[str], tier: str) -> dict:
         """Execute command with structured logging."""
         sandbox_id = str(uuid.uuid4())
-        
+
         logger.info(
             "sandbox_execution_started",
             sandbox_id=sandbox_id,
@@ -2357,14 +2357,14 @@ class SandboxExecutor:
             command=command,
             project_path=str(self.project_path)
         )
-        
+
         start_time = time.time()
-        
+
         try:
             result = self._execute_internal(command, tier)
-            
+
             duration = time.time() - start_time
-            
+
             logger.info(
                 "sandbox_execution_completed",
                 sandbox_id=sandbox_id,
@@ -2374,12 +2374,12 @@ class SandboxExecutor:
                 exit_code=result.get("exit_code"),
                 status="success"
             )
-            
+
             return result
-            
+
         except SandboxError as e:
             duration = time.time() - start_time
-            
+
             logger.error(
                 "sandbox_execution_failed",
                 sandbox_id=sandbox_id,
@@ -2391,7 +2391,7 @@ class SandboxExecutor:
                 recoverable=e.recoverable,
                 status="failed"
             )
-            
+
             raise
 ```
 
@@ -2409,42 +2409,42 @@ tracer = trace.get_tracer(__name__)
 
 class SandboxExecutor:
     """Sandbox executor with distributed tracing."""
-    
+
     @tracer.start_as_current_span("sandbox.execute")
     def execute(self, command: list[str], tier: str) -> dict:
         """Execute command with distributed tracing."""
         span = trace.get_current_span()
-        
+
         span.set_attribute("sandbox.tier", tier)
         span.set_attribute("sandbox.runtime", self.runtime)
         span.set_attribute("sandbox.command", " ".join(command))
         span.set_attribute("sandbox.project_path", str(self.project_path))
-        
+
         start_time = time.time()
-        
+
         try:
             with tracer.start_as_current_span("sandbox.startup"):
                 self._start_sandbox(tier)
-            
+
             with tracer.start_as_current_span("sandbox.execution"):
                 result = self._execute_command(command, tier)
-            
+
             duration = time.time() - start_time
-            
+
             span.set_attribute("sandbox.duration_ms", duration * 1000)
             span.set_attribute("sandbox.exit_code", result.get("exit_code"))
             span.set_status(trace.Status(trace.StatusCode.OK))
-            
+
             return result
-            
+
         except SandboxError as e:
             duration = time.time() - start_time
-            
+
             span.set_attribute("sandbox.duration_ms", duration * 1000)
             span.set_attribute("sandbox.error_type", e.error_type.value)
             span.set_attribute("sandbox.error_message", str(e))
             span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
-            
+
             raise
 ```
 
@@ -2455,7 +2455,7 @@ class SandboxExecutor:
 ```python
 class SandboxHealth:
     """Sandbox health monitoring."""
-    
+
     def check_health(self, tier: str) -> dict:
         """Check sandbox tier health."""
         health = {
@@ -2465,7 +2465,7 @@ class SandboxHealth:
             "last_check": time.time(),
             "issues": []
         }
-        
+
         # Check runtime availability
         if tier == "wasm":
             health["runtime_available"] = self._check_wasm_runtime()
@@ -2473,25 +2473,25 @@ class SandboxHealth:
             health["runtime_available"] = self._check_container_runtime()
         elif tier == "vm":
             health["runtime_available"] = self._check_vm_runtime()
-        
+
         if not health["runtime_available"]:
             health["status"] = "unhealthy"
             health["issues"].append("Runtime not available")
-        
+
         # Check circuit breaker state
         breaker_state = self._get_circuit_breaker_state(tier)
         if breaker_state == "open":
             health["status"] = "unhealthy"
             health["issues"].append("Circuit breaker open")
-        
+
         # Check resource availability
         resources = self._check_resources(tier)
         if not resources["sufficient"]:
             health["status"] = "degraded"
             health["issues"].append(f"Low {resources['resource']}")
-        
+
         return health
-    
+
     def get_health_dashboard(self) -> dict:
         """Get health dashboard for all tiers."""
         return {
@@ -2784,8 +2784,8 @@ thegent run "Execute untrusted code" --sandbox=vm --risk-level=high
 
 ---
 
-**Document Version:** 2.0 (Deep Research & Extended)  
-**Last Updated:** 2026-02-16  
-**Status:** Comprehensive Architecture Ready for Implementation  
-**Total Sections:** 21  
+**Document Version:** 2.0 (Deep Research & Extended)
+**Last Updated:** 2026-02-16
+**Status:** Comprehensive Architecture Ready for Implementation
+**Total Sections:** 21
 **Total Estimated Implementation Time:** ~160 hours (8 weeks)

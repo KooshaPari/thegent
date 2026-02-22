@@ -109,4 +109,3 @@ Register a borrowed tool.
 - `tool`: Tool implementation
 
 ---
-

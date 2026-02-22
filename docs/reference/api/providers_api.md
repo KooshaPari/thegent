@@ -227,4 +227,3 @@ Unregister a provider (for testing).
 - `provider_id`: Provider identifier to remove
 
 ---
-

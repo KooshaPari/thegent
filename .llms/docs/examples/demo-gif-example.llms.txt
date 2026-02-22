@@ -62,6 +62,6 @@ npx playwright test --gif
 
 ---
 
-**See Also**: 
+**See Also**:
 - [VITEPRESS_USAGE_GUIDE.md](../guides/VITEPRESS_USAGE_GUIDE.md)
 - [AUTOMATED_DEMOS.md](../guides/AUTOMATED_DEMOS.md)

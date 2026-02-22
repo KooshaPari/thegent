@@ -259,4 +259,3 @@ Safely write a JSON file.
 **Returns**: True if successful
 
 ---
-

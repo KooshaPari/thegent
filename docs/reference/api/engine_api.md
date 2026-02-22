@@ -68,4 +68,3 @@ Execute an agent task and generate MAIF artifacts.
 **Returns**: RunResult from the agent execution.
 
 ---
-

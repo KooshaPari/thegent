@@ -45,4 +45,3 @@ scan_agents(self: Any) -> list[dict[(str, Any)]]
 ```
 
 ---
-

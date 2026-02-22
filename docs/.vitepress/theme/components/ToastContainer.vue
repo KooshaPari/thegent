@@ -23,9 +23,9 @@ function showToast(message: string, options: Omit<ToastItem, 'id' | 'message'> =
     duration: options.duration ?? 3000,
     persistent: options.persistent ?? false
   }
-  
+
   toasts.value.push(toast)
-  
+
   return id
 }
 
@@ -39,13 +39,13 @@ function removeToast(id: string) {
 // Provide toast functions to child components
 provide('toast', {
   show: showToast,
-  success: (message: string, options?: Omit<ToastItem, 'id' | 'message' | 'type'>) => 
+  success: (message: string, options?: Omit<ToastItem, 'id' | 'message' | 'type'>) =>
     showToast(message, { ...options, type: 'success' }),
-  error: (message: string, options?: Omit<ToastItem, 'id' | 'message' | 'type'>) => 
+  error: (message: string, options?: Omit<ToastItem, 'id' | 'message' | 'type'>) =>
     showToast(message, { ...options, type: 'error' }),
-  warning: (message: string, options?: Omit<ToastItem, 'id' | 'message' | 'type'>) => 
+  warning: (message: string, options?: Omit<ToastItem, 'id' | 'message' | 'type'>) =>
     showToast(message, { ...options, type: 'warning' }),
-  info: (message: string, options?: Omit<ToastItem, 'id' | 'message' | 'type'>) => 
+  info: (message: string, options?: Omit<ToastItem, 'id' | 'message' | 'type'>) =>
     showToast(message, { ...options, type: 'info' })
 })
 </script>

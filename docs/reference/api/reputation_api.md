@@ -112,4 +112,3 @@ submit_rating(self: Any, agent_id: str, reviewer_id: str, task_id: str, rating: 
 Submit a rating for an agent's performance on a task.
 
 ---
-

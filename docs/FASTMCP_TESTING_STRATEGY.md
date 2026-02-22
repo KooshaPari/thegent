@@ -1,7 +1,7 @@
 # FastMCP Testing Strategy (G-FM-05)
 
-**Purpose:** Define unit, contract, integration, chaos, load, and timeout tests per MCP tool.  
-**Date:** 2026-02-14  
+**Purpose:** Define unit, contract, integration, chaos, load, and timeout tests per MCP tool.
+**Date:** 2026-02-14
 **Source:** THGENT_FASTMCP_IMPLEMENTATION_PLAN §14.9
 
 ---

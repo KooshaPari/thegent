@@ -1,6 +1,6 @@
 # Session Scratch Board & Optimization Plan
 
-> **Status:** Aligned with [FULL_SHELL_TO_RUST_WHERE_BENEFICIAL](../plans/FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md). Tool shims consolidated → **thegent-shims** (Rust), not ultra-shim (Go).  
+> **Status:** Aligned with [FULL_SHELL_TO_RUST_WHERE_BENEFICIAL](../plans/FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md). Tool shims consolidated → **thegent-shims** (Rust), not ultra-shim (Go).
 > **Sprawl:** [RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md](../research/RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md)
 
 ---
@@ -74,4 +74,3 @@
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

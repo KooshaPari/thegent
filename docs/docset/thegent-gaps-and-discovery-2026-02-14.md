@@ -1,6 +1,6 @@
 # Thegent Gaps and Discovery Report
 
-**Date:** 2026-02-14  
+**Date:** 2026-02-14
 **Scope:** All plan files, research files, docset artifacts. Identifies gaps to fill, optional→required items, optimizations/polishes not done, and discovery tasks.
 
 ---
@@ -139,22 +139,22 @@
 
 ### Functional Requirements (FR-X01–FR-X08)
 
-- FR-X01: contract version negotiation — not implemented  
-- FR-X02: canonical normalization pipeline — ✓ Done: normalize_output, adapters, XMLOutputAdapter→CSM  
-- FR-X03: incremental parser with recoverable partial-state — ✓ Done: IncrementalXMLParser, get_partial_state  
-- FR-X04: semantic validation with cross-tag invariants — ✓ Done: validate_csm, status/progress/phase invariants    
-- FR-X05: provider adapter conformance tests and drift alarms — ✓ run_conformance_suite, govern conformance --check-drift, ContractTelemetry.detect_drift  
+- FR-X01: contract version negotiation — not implemented
+- FR-X02: canonical normalization pipeline — ✓ Done: normalize_output, adapters, XMLOutputAdapter→CSM
+- FR-X03: incremental parser with recoverable partial-state — ✓ Done: IncrementalXMLParser, get_partial_state
+- FR-X04: semantic validation with cross-tag invariants — ✓ Done: validate_csm, status/progress/phase invariants
+- FR-X05: provider adapter conformance tests and drift alarms — ✓ run_conformance_suite, govern conformance --check-drift, ContractTelemetry.detect_drift
 - FR-X06: policy-governed fallback routing with SLO budgets — ✓ FallbackPolicy, max_fallback_rate, evaluate_fallback
-- FR-X07: dual-read/dual-write migration support — Partial: MigrationController + govern migration; pipeline dual-read/write not wired  
-- FR-X08: observability for parse quality, semantic quality, fallback — ✓ Done: ContractTelemetry in closure_pack (parse quality, fallback rate, adapter confidence, drift vs budget, drift issues)  
+- FR-X07: dual-read/dual-write migration support — Partial: MigrationController + govern migration; pipeline dual-read/write not wired
+- FR-X08: observability for parse quality, semantic quality, fallback — ✓ Done: ContractTelemetry in closure_pack (parse quality, fallback rate, adapter confidence, drift vs budget, drift issues)
 
 ### Prioritized Sequence (from §9)
 
-- **P0:** contract registry + canonical schema + adapter scaffolding  
-- **P1:** incremental parser and structural validation migration  
-- **P2:** semantic validation and fallback control plane  
-- **P3:** conformance test suite and drift alarms  
-- **P4:** migration controller, canary rollout, deprecation  
+- **P0:** contract registry + canonical schema + adapter scaffolding
+- **P1:** incremental parser and structural validation migration
+- **P2:** semantic validation and fallback control plane
+- **P3:** conformance test suite and drift alarms
+- **P4:** migration controller, canary rollout, deprecation
 
 ---
 
@@ -254,17 +254,17 @@
 
 ### Plan Index Completion Definition
 
-- WBS phase exits satisfied and signed off — verify  
-- DAG invariants pass in canary and production — verify  
-- PRD acceptance criteria met — verify  
-- Auditability, rollback, continuity SLAs for two release cycles — verify  
-- Remaining open risks accepted or closed — verify  
+- WBS phase exits satisfied and signed off — verify
+- DAG invariants pass in canary and production — verify
+- PRD acceptance criteria met — verify
+- Auditability, rollback, continuity SLAs for two release cycles — verify
+- Remaining open risks accepted or closed — verify
 
 ### Next Artifacts (from plan index)
 
-- WBS-to-issue import matrix — ✓ `WBS_TO_ISSUE_IMPORT_MATRIX.md`  
-- DAG node-to-service contract checklist — ✓ `DAG_NODE_SERVICE_CONTRACT_CHECKLIST.md`  
-- PRD test plan matrix — ✓ `PRD_TEST_PLAN_MATRIX.md`  
+- WBS-to-issue import matrix — ✓ `WBS_TO_ISSUE_IMPORT_MATRIX.md`
+- DAG node-to-service contract checklist — ✓ `DAG_NODE_SERVICE_CONTRACT_CHECKLIST.md`
+- PRD test plan matrix — ✓ `PRD_TEST_PLAN_MATRIX.md`
 
 ---
 
@@ -302,34 +302,34 @@ thegent bg cursor-agent -d <cwd> "Read gofastmcp.com/servers/sampling and server
 
 1. ~~**Cursor Phase 2**~~ ✓ Done (CLIPROXY fork has cursor: block, synthesizeCursorKeys, PROVIDER_SETUP_GUIDE).
 2. ~~**Contract Registry + Canonical Schema**~~ ✓ Done (contracts/registry.py, csm.py, adapters.py, CONTRACT_AUTHORITY.md).
-3. ~~**Contract authority**~~ ✓ Done: task-tool docs/xml_contract.md aligned with impl (task_graph, snake_case); CONTRACT_AUTHORITY.md references it.  
+3. ~~**Contract authority**~~ ✓ Done: task-tool docs/xml_contract.md aligned with impl (task_graph, snake_case); CONTRACT_AUTHORITY.md references it.
 4. ~~**CLI Single Source of Truth audit**~~ ✓ Done (thegent-cli-single-source-of-truth-audit-2026-02-14.md).
 
 ### P1 (Short-term)
 
-5. **FastMCP verification** (F1–F6): F1, F5, F6, F11 done. F2, F3 require API keys (run `scripts/verify-fastmcp.py --no-skip-api`). F4 manual.  
-6. ~~**FastMCP Phase 2–4 polish** (F7–F12)~~ ✓ F7–F11 verified. F12 deferred.  
-7. ~~**Model scraping adapters** (R1–R2)~~ ✓ gemini/claude/proxy adapters with multi-cmd fallback.  
-8. ~~**Incremental parser + semantic validation** (V3, V4, XA3, XC1)~~ ✓ V3/V4 implemented; XC1 semantic gate blocks promotion.  
-9. ~~**Fallback state machine** (V6, XB1)~~ ✓ FallbackStateMachine, policy, telemetry, bounded retries.  
-10. ~~**Provider adapter conformance** (V5, XA2)~~ ✓ Done: conformance suite, drift alarm, cursor-agent.  
-11. ~~**Universal operation interfaces** (XK1)~~ ✓ Done: orchestrate/govern/recover/observe/plan CLI apps, Operation enum, thegent operations, thegent_list_operations.  
+5. **FastMCP verification** (F1–F6): F1, F5, F6, F11 done. F2, F3 require API keys (run `scripts/verify-fastmcp.py --no-skip-api`). F4 manual.
+6. ~~**FastMCP Phase 2–4 polish** (F7–F12)~~ ✓ F7–F11 verified. F12 deferred.
+7. ~~**Model scraping adapters** (R1–R2)~~ ✓ gemini/claude/proxy adapters with multi-cmd fallback.
+8. ~~**Incremental parser + semantic validation** (V3, V4, XA3, XC1)~~ ✓ V3/V4 implemented; XC1 semantic gate blocks promotion.
+9. ~~**Fallback state machine** (V6, XB1)~~ ✓ FallbackStateMachine, policy, telemetry, bounded retries.
+10. ~~**Provider adapter conformance** (V5, XA2)~~ ✓ Done: conformance suite, drift alarm, cursor-agent.
+11. ~~**Universal operation interfaces** (XK1)~~ ✓ Done: orchestrate/govern/recover/observe/plan CLI apps, Operation enum, thegent operations, thegent_list_operations.
 12. ~~**Phase 6 enterprise** (WP-6002, WP-6004, WP-6006)~~ ✓ Done: closure-pack signoff, RUNBOOK.md, DECOMMISSIONING_PLAN.md.
 
 ### P2 (Medium-term)
 
-13. ~~**FastMCP research tasks** (F22)~~ ✓ Done: FASTMCP_STORAGE_EVENTSTORE.md, FASTMCP_MIDDLEWARE.md, FASTMCP_SAMPLING_TELEMETRY.md.  
-14. ~~**PERT/simulation overlays** (XD1–XD3)~~ ✓ Partial: thegent plan analyze --pert/--resources/--continuity.  
-15. ~~**Fallback observability KPIs** (XB3)~~ ✓ Done: thegent observe kpis.  
-16. ~~**Contract migration controller** (V7)~~ ✓ Partial: MigrationController, govern migration; dual-read/write pipeline deferred.  
-17. ~~**Next artifacts** (plan index)~~ ✓ WBS matrix, DAG contract checklist created; PRD test matrix pending.  
+13. ~~**FastMCP research tasks** (F22)~~ ✓ Done: FASTMCP_STORAGE_EVENTSTORE.md, FASTMCP_MIDDLEWARE.md, FASTMCP_SAMPLING_TELEMETRY.md.
+14. ~~**PERT/simulation overlays** (XD1–XD3)~~ ✓ Partial: thegent plan analyze --pert/--resources/--continuity.
+15. ~~**Fallback observability KPIs** (XB3)~~ ✓ Done: thegent observe kpis.
+16. ~~**Contract migration controller** (V7)~~ ✓ Partial: MigrationController, govern migration; dual-read/write pipeline deferred.
+17. ~~**Next artifacts** (plan index)~~ ✓ WBS matrix, DAG contract checklist created; PRD test matrix pending.
 18. ~~**Multi-agent mode catalog** (XK2)~~ ✓ Done: orchestration_modes.py, thegent modes, thegent_list_modes.
 
 ### Optional→Required (Treat as P1)
 
-- All FastMCP Phase 2–4 items (resources, prompts, elicitation, health).  
-- All design excellence items (§14) where not yet verified.  
-- Governance WP-3003 revalidation, WP-3006 retention, WP-3008 escalation — see GOVERNANCE_WP_GAPS.md.  
+- All FastMCP Phase 2–4 items (resources, prompts, elicitation, health).
+- All design excellence items (§14) where not yet verified.
+- Governance WP-3003 revalidation, WP-3006 retention, WP-3008 escalation — see GOVERNANCE_WP_GAPS.md.
 - ~~Cost-based routing documentation (even if deferred)~~ ✓ COST_ROUTING_DEFERRED.md.
 
 ---

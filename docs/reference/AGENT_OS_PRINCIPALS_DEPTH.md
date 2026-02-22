@@ -2,7 +2,7 @@
 
 **Purpose:** Options for treating agents as first-class OS principals (beyond sub-user and OS user creation). Enterprise and future deployment patterns.
 
-**Date:** 2026-02-16  
+**Date:** 2026-02-16
 **Extends:** CROSS_PLATFORM_GAPS_AND_EXTENSIONS_RESEARCH.md §5, AGENT_IDENTITY_SOVEREIGNTY_DEPTH.md
 
 ---
@@ -86,7 +86,7 @@
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

@@ -96,4 +96,3 @@ python3 -m py_compile src/thegent/mcp_manage.py
 ## Related Settings Fields
 
 - `ThegentSettings.virtual_env` (Path | None): Auto-detected from `VIRTUAL_ENV` env var
-

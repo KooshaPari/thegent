@@ -1,6 +1,6 @@
 # Indexing and Optimization Systems — Reference
 
-> **Purpose**: Central reference for codebase indexing, search, and performance optimizations.  
+> **Purpose**: Central reference for codebase indexing, search, and performance optimizations.
 > **Status**: Reference | **Date**: 2026-02-16
 
 ---
@@ -171,7 +171,7 @@ Both respect `.gitignore`. Add `-E node_modules -E .venv -E dist` for heavy dirs
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

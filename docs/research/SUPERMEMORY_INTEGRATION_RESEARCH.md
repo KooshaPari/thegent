@@ -1,6 +1,6 @@
 # Supermemory.ai Integration Research
 
-> **Status**: Research Complete | **Version**: 1.0 | **Date**: 2026-02-18  
+> **Status**: Research Complete | **Version**: 1.0 | **Date**: 2026-02-18
 > **Priority**: P1 | **Depends**: WP-5001-SM
 
 ## Overview
@@ -73,16 +73,16 @@ from typing import List, Dict, Optional
 
 class SupermemoryClient:
     BASE_URL = "https://mcp.supermemory.ai/mcp"
-    
+
     def __init__(self, api_key: str, project_id: str):
         self.headers = {
             "Authorization": f"Bearer {api_key}",
             "x-sm-project": project_id
         }
-    
+
     async def store_knowledge(
-        self, 
-        entity: str, 
+        self,
+        entity: str,
         relationships: List[Dict]
     ) -> str:
         async with httpx.AsyncClient() as client:
@@ -93,7 +93,7 @@ class SupermemoryClient:
             )
             resp.raise_for_status()
             return resp.json()["id"]
-    
+
     async def query_knowledge(self, query: str) -> List[Dict]:
         async with httpx.AsyncClient() as client:
             resp = await client.post(
@@ -115,7 +115,7 @@ class SupermemoryClient:
 
 **EXTENSION_SUMMARY**
 
-**Extended on:** 2026-02-18  
+**Extended on:** 2026-02-18
 **Extended by:** Claude Code
 
 ### Changes Made

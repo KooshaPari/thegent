@@ -14,4 +14,3 @@ const taskoutput = new TaskOutput();
 
 // Create a TaskSpec instance
 const taskspec = new TaskSpec();
-

@@ -1,8 +1,8 @@
 # Design Document: Rust Hooks Architecture
 
-**Date**: 2026-02-18  
-**Phase**: Phase 1 (Research & PoC)  
-**Status**: Design In Progress  
+**Date**: 2026-02-18
+**Phase**: Phase 1 (Research & PoC)
+**Status**: Design In Progress
 
 ## Architecture Overview
 
@@ -148,9 +148,9 @@ use thegent_hooks::policy::{PolicyEngine, EvaluationContext};
 fn main() -> Result<ExitCode> {
     let engine = PolicyEngine::from_yaml(".claude/governance.yaml")?;
     let context = EvaluationContext::from_env()?;
-    
+
     let outcome = engine.evaluate(&context)?;
-    
+
     if !outcome.passed {
         eprintln!("GOVERNANCE VIOLATIONS:");
         for v in &outcome.violations {
@@ -158,7 +158,7 @@ fn main() -> Result<ExitCode> {
         }
         return Ok(ExitCode::from(1));
     }
-    
+
     Ok(ExitCode::from(0))
 }
 ```
@@ -479,16 +479,16 @@ use thiserror::Error;
 pub enum HookError {
     #[error("policy violation: {0}")]
     PolicyViolation(String),
-    
+
     #[error("config error: {0}")]
     ConfigError(#[from] serde_json::Error),
-    
+
     #[error("io error: {0}")]
     IoError(#[from] std::io::Error),
-    
+
     #[error("regex error: {0}")]
     RegexError(#[from] regex::Error),
-    
+
     #[error("timeout")]
     Timeout,
 }
@@ -515,13 +515,13 @@ mod tests {
 
     #[test]
     fn test_policy_engine_loads_yaml() { }
-    
+
     #[test]
     fn test_cost_calculator_estimates_correctly() { }
-    
+
     #[test]
     fn test_quality_evaluator_parses_ruff_output() { }
-    
+
     #[test]
     fn test_security_scanner_detects_secrets() { }
 }
@@ -567,7 +567,7 @@ fn test_quality_gate_end_to_end_fail_low_coverage() {
 2. **Parallel File Scanning**: Use rayon for multi-threaded analysis
    ```rust
    use rayon::prelude::*;
-   
+
    files.par_iter()
        .flat_map(|f| scan_file(f))
        .collect()
@@ -575,7 +575,7 @@ fn test_quality_gate_end_to_end_fail_low_coverage() {
 
 3. **Caching**: DashMap for inter-hook result sharing
    ```rust
-   static CACHE: Lazy<DashMap<String, PolicyOutcome>> = 
+   static CACHE: Lazy<DashMap<String, PolicyOutcome>> =
        Lazy::new(DashMap::new);
    ```
 
@@ -718,6 +718,6 @@ time ./quality-gate < hook-input.json
 
 ---
 
-**Status**: Design complete, ready for PoC implementation  
-**Version**: 1.0  
+**Status**: Design complete, ready for PoC implementation
+**Version**: 1.0
 **Next**: Begin Phase 1.1 (Governance Library PoC)

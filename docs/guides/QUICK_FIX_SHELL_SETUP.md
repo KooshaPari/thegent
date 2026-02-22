@@ -1,6 +1,6 @@
 # Quick Fix: Shell Setup Issues
 
-**Date:** 2026-02-17  
+**Date:** 2026-02-17
 **Issue:** `thegent` command not found, Node.js not in PATH after `exec zsh`
 
 ---
@@ -129,7 +129,7 @@ After this, everything should work in new terminals.
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

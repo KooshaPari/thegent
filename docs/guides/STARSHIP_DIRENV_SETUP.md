@@ -1,6 +1,6 @@
 # Starship + direnv Setup Complete
 
-**Date:** 2026-02-17  
+**Date:** 2026-02-17
 **Status:** ✅ Configured
 
 ---
@@ -109,7 +109,7 @@ fi
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

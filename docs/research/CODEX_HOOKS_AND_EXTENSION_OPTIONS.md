@@ -215,7 +215,7 @@ def setup_codex_notify():
     codex_config = Path.home() / ".codex" / "config.toml"
     if not codex_config.exists():
         return
-    
+
     handler = str(CODEX_NOTIFY_SCRIPT)
     # Append notify command if not present
     content = codex_config.read_text()
@@ -226,7 +226,7 @@ def setup_codex_notify():
 def handle_notify(payload: dict):
     """Process Codex notification events."""
     event = payload.get("event")
-    
+
     if event == "session_ended":
         # Run harvest, quality gate, queue flush
         _run_session_end_handlers(payload)
@@ -329,7 +329,7 @@ class CodexWrapper:
         self.queue: Queue[str] = Queue()
         self.blocked = False
         self.process: Optional[subprocess.Popen] = None
-    
+
     def start(self):
         """Start Codex as a subprocess we control."""
         self.process = subprocess.Popen(
@@ -343,7 +343,7 @@ class CodexWrapper:
         # Start output reader threads
         threading.Thread(target=self._read_stdout, daemon=True).start()
         threading.Thread(target=self._read_stderr, daemon=True).start()
-    
+
     def send(self, prompt: str):
         """Send prompt to Codex (filtered by our intercept logic)."""
         if self._is_intercepted(prompt):
@@ -351,12 +351,12 @@ class CodexWrapper:
         else:
             self.process.stdin.write(prompt + "\n")
             self.process.stdin.flush()
-    
+
     def _is_intercepted(self, prompt: str) -> bool:
         """Check if prompt contains intercept triggers."""
         triggers = ["$defer", "$block", "$idea", "$handoff"]
         return any(trigger in prompt for trigger in triggers)
-    
+
     def _handle_intercept(self, prompt: str):
         """Handle intercepted prompt."""
         if "$defer" in prompt:
@@ -392,7 +392,7 @@ class CodexWrapper:
 
 ## 10. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

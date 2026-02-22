@@ -26,7 +26,7 @@ Added entries for:
 - `roo-default`: 128000
 
 ### 3. Updated Cost Estimation
-**Files**: 
+**Files**:
 - `src/thegent/governance/cost.py` - Added to `_DEFAULT_PRICING_MTOK`
 - `src/thegent/routing/litellm_router.py` - Added to `_estimate_cost()` cost_per_1k dict
 

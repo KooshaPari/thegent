@@ -47,4 +47,3 @@ Run a research experiment.
 **Returns**: Experiment results
 
 ---
-

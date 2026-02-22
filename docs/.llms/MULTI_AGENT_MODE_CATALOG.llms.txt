@@ -6,8 +6,8 @@ Source: MULTI_AGENT_MODE_CATALOG.md
 
 # Multi-Agent Orchestration Mode Catalog
 
-**Status:** Authoritative  
-**Date:** 2026-02-14  
+**Status:** Authoritative
+**Date:** 2026-02-14
 **Scope:** sequential_delegation, parallel_consensus, review_loop (G-KD-04)
 
 ---

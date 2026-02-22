@@ -57,4 +57,3 @@ decide(self: Any, governance_report: dict[(str, Any, str)], todo_spec: str, wbs_
 Invoke the Checker Agent to make a decision.
 
 ---
-

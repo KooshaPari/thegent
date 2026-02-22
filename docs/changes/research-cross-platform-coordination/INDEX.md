@@ -8,7 +8,7 @@ This research explores how multi-agent systems can coordinate work across hetero
 
 **Problem**: Currently, no mechanism exists for agents on different platforms to safely claim work without race conditions or platform-specific side effects.
 
-**Solution**: 
+**Solution**:
 1. Enhanced `docs/reference/WORK_STREAM.md` format with platform/shell constraints
 2. File locking for atomic claim/complete operations
 3. Cross-platform session bridges for continuity

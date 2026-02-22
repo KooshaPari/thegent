@@ -55,11 +55,11 @@ thegent mcp up
 ### Option 3: Fix Codex MCP Config
 
 ```bash
-# Remove problematic codex_apps
-thegent mcp fix codex
+# Remove problematic MCP server entries
+thegent mcp fix --client codex
 
 # Or migrate to uni-mount (cleanest)
-thegent mcp migrate-unimount codex
+thegent mcp migrate-unimount --client codex
 ```
 
 ## Root Cause
@@ -126,7 +126,7 @@ thegent mcp up
 3. **Check Codex MCP config**:
    ```bash
    cat ~/.codex/mcp.json
-   thegent mcp fix codex
+   thegent mcp fix --client codex
    ```
 
 4. **Nuclear option** - Start with minimal shell:
@@ -158,7 +158,7 @@ The corruption should not recur with these fixes in place.
 
 ## EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

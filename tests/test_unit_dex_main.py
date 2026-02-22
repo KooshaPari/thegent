@@ -139,6 +139,28 @@ def test_dex_max_forwards_bypass_flag() -> None:
         )
 
 
+def test_dex_max_accepts_force_alias() -> None:
+    with patch("thegent.dex_main._run_codex_interactive") as run_interactive:
+        result = runner.invoke(app, ["max", "--force"])
+        assert result.exit_code == 0
+        run_interactive.assert_called_once_with(
+            "max",
+            extra_args=["--search"],
+            dangerously_bypass=True,
+        )
+
+
+def test_dex_max_accepts_legacy_bypass_alias() -> None:
+    with patch("thegent.dex_main._run_codex_interactive") as run_interactive:
+        result = runner.invoke(app, ["max", "--dangerously-bypass-approvals-and-sandbox"])
+        assert result.exit_code == 0
+        run_interactive.assert_called_once_with(
+            "max",
+            extra_args=["--search"],
+            dangerously_bypass=True,
+        )
+
+
 def test_dex_glm_uses_glm_model() -> None:
     with patch("thegent.dex_main._run_codex_interactive") as run_interactive:
         result = runner.invoke(app, ["glm"])
@@ -316,6 +338,16 @@ def test_default_dex_direct_callback_explicit_flags_do_not_trigger_native_exec()
     run_interactive.assert_called_once_with("flash", extra_args=[_DEX_BYPASS_FLAG])
 
 
+def test_default_dex_native_force_includes_force_yolo_for_native_path() -> None:
+    ctx = type("Ctx", (), {"invoked_subcommand": None})()
+    with patch("sys.argv", ["dex", "--native", "--force"]), patch(
+        "thegent.dex_main._exec_native_codex"
+    ) as exec_native, patch("thegent.dex_main._run_codex_interactive"):
+        default_dex(ctx, force=True, native=True)  # type: ignore[arg-type]
+
+    exec_native.assert_called_once_with(["--force-yolo"])
+
+
 @pytest.mark.parametrize("subcommand", ["run", "bg"])
 def test_dex_unknown_model_policy_rejects_for_run_and_bg(subcommand: str) -> None:
     result = runner.invoke(app, [subcommand, "unknown-model", "prompt"])
@@ -352,3 +384,17 @@ def test_run_model_cmd_normalizes_alias_case() -> None:
         _run_model_cmd("CoMp", "hello")
     run_cmd.assert_called_once()
     assert run_cmd.call_args.kwargs["model"] == "composer-1.5"
+
+
+def test_dex_config_launches_tui_translation_layer() -> None:
+    with patch("thegent.ux.models_providers_tui.run_models_providers_tui") as run_tui:
+        result = runner.invoke(app, ["config"])
+    assert result.exit_code == 0
+    run_tui.assert_called_once_with()
+
+
+def test_dex_config_legacy_uses_provider_form() -> None:
+    with patch("thegent.provider_model_manager.run_provider_form") as run_legacy:
+        result = runner.invoke(app, ["config", "--legacy"])
+    assert result.exit_code == 0
+    run_legacy.assert_called_once_with()

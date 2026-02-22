@@ -1,7 +1,7 @@
 # Workstation QOL & Agent-as-User Master Plan
 
-**Date**: 2026-02-19  
-**Status**: Phase 1.5 (Active Optimization)  
+**Date**: 2026-02-19
+**Status**: Phase 1.5 (Active Optimization)
 **Platform Scope**: macOS (Darwin), Linux (inc. WSL2), Windows 11 (Native)
 
 ---

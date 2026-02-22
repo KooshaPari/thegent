@@ -177,4 +177,3 @@ Select the coordination mode based on swarm size and average load.
 **Returns**: The appropriate :class:`CoordinationMode`.
 
 ---
-

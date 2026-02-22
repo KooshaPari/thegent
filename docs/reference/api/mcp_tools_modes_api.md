@@ -229,4 +229,3 @@ Get validation report if one exists. Use after validation phase.
 protocol: optional protocol name to load checklist from.
 
 ---
-

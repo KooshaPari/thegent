@@ -177,7 +177,7 @@ All modules are:
 
 ### Packages (5)
 - `src/thegent/docgen/` - 8 Python modules
-- `src/thegent/research/` - 8 Python modules  
+- `src/thegent/research/` - 8 Python modules
 - `src/thegent/governance/` - 3 Python modules
 - `src/thegent/phases/` - 5 Python modules
 - `src/thegent/work_packages/` - 18 Python modules

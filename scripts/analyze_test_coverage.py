@@ -15,62 +15,63 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+import click
+from typer.main import get_command
+
 PROJECT_ROOT = Path(__file__).parent.parent
 SRC_DIR = PROJECT_ROOT / "src" / "thegent"
 TESTS_DIR = PROJECT_ROOT / "tests"
 MAIN_PY = SRC_DIR / "main.py"
-CLI_PY = SRC_DIR / "cli.py"
+CLI_COMMANDS_PY = SRC_DIR / "cli" / "commands" / "cli.py"
 
 
 def extract_cli_commands_from_main() -> list[dict[str, Any]]:
-    """Extract all CLI commands from main.py."""
-    commands = []
+    """Extract all CLI commands from the real Typer app."""
+    from thegent.main import app
 
-    with open(MAIN_PY) as f:
-        content = f.read()
+    root_cmd = get_command(app)
+    commands: list[dict[str, Any]] = []
 
-    # Find all @app.command, @*_app.command decorators
-    pattern = r'@(\w+_app|app)\.command\(["\']([^"\']+)["\']'
-    matches = re.finditer(pattern, content)
-
-    for match in matches:
-        app_name = match.group(1)
-        cmd_name = match.group(2)
-
-        # Find the function definition after this decorator
-        start_pos = match.end()
-        func_match = re.search(r"def\s+(\w+)\(", content[start_pos : start_pos + 500])
-        if func_match:
-            func_name = func_match.group(1)
+    def walk(prefix: list[str], node: click.core.Command) -> None:
+        if prefix:
+            callback = getattr(node, "callback", None)
+            callback_name = callback.__name__ if callback else "<group>"
+            command_path = " ".join(prefix)
             commands.append(
                 {
-                    "app": app_name,
-                    "command": cmd_name,
-                    "function": func_name,
-                    "full_path": f"thegent {app_name.replace('_app', '')} {cmd_name}"
-                    if app_name != "app"
-                    else f"thegent {cmd_name}",
+                    "app": prefix[0],
+                    "command": prefix[-1],
+                    "function": callback_name,
+                    "full_path": f"thegent {command_path}",
                 }
             )
 
+        if isinstance(node, click.core.Group):
+            for name, child in node.commands.items():
+                if name.startswith("--"):
+                    continue
+                walk(prefix + [name], child)
+            return
+
+        if not isinstance(node, click.core.Group):
+            return
+
+    walk([], root_cmd)
     return commands
 
 
 def extract_cli_functions_from_cli() -> list[str]:
-    """Extract all CLI command functions from cli.py."""
+    """Extract all CLI command functions from the canonical CLI command module."""
     functions = []
 
-    with open(CLI_PY) as f:
-        content = f.read()
+    for path in [MAIN_PY, CLI_COMMANDS_PY]:
+        with open(path) as f:
+            content = f.read()
+        matches = re.finditer(r"^def\s+(\w+_cmd)\(", content, re.MULTILINE)
+        for match in matches:
+            functions.append(match.group(1))
 
-    # Find all functions ending with _cmd
-    pattern = r"^def\s+(\w+_cmd)\("
-    matches = re.finditer(pattern, content, re.MULTILINE)
-
-    for match in matches:
-        functions.append(match.group(1))
-
-    return functions
+    return sorted(set(functions))
 
 
 def find_e2e_tests() -> dict[str, list[str]]:
@@ -92,19 +93,23 @@ def find_e2e_tests() -> dict[str, list[str]]:
         with open(test_file) as f:
             content = f.read()
 
-        # Find test methods
-        # Look for patterns like: runner.invoke(app, ["cmd", "subcmd", ...])
-        pattern = r"runner\.invoke\(app,\s*\[([^\]]+)\]"
+        # Find test methods.
+        # Supports direct list args and nested list expressions in runner.invoke(app, [...]).
+        pattern = re.compile(r"runner\.invoke\(app,\s*(\[[\s\S]*?\])")
         matches = re.finditer(pattern, content)
 
         for match in matches:
-            cmd_args_str = match.group(1)
-            # Parse the list of strings
-            # This handles both "cmd", "subcmd" and 'cmd', 'subcmd'
-            cmd_args = [arg.strip().strip("\"'") for arg in cmd_args_str.split(",")]
+            cmd_args_raw = match.group(1)
+            try:
+                cmd_args = ast.literal_eval(cmd_args_raw)
+            except (ValueError, SyntaxError):
+                continue
+
+            if not isinstance(cmd_args, list):
+                continue
 
             # Remove flags (anything starting with -- or -) to get the base command
-            base_cmd_args = [arg for arg in cmd_args if not arg.startswith("-")]
+            base_cmd_args = [str(arg) for arg in cmd_args if str(arg) and not str(arg).startswith("-")]
 
             if not base_cmd_args:
                 continue

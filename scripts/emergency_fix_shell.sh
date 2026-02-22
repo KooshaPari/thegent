@@ -23,14 +23,14 @@ ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 echo "Step 1: Ensuring CLIProxyAPI config..."
 python3 "$ROOT/scripts/fix_shell_corruption.py" || {
     echo "Failed to run Python fix script, trying manual fix..."
-    
+
     # Manual config creation
     CONFIG_DIR="$HOME/.config/thegent"
     CONFIG_FILE="$CONFIG_DIR/cliproxy-config.yaml"
     AUTH_DIR="$CONFIG_DIR/cliproxy-auth"
-    
+
     mkdir -p "$CONFIG_DIR" "$AUTH_DIR"
-    
+
     if [ ! -f "$CONFIG_FILE" ]; then
         cat > "$CONFIG_FILE" <<EOF
 port: 8317
@@ -38,7 +38,7 @@ auth-dir: $AUTH_DIR
 EOF
         echo "Created config at $CONFIG_FILE"
     fi
-    
+
     # Fix plusplus config if needed
     PLUSPLUS_BIN="$ROOT/../cliproxyapi-plusplus/cli-proxy-api-plus"
     PLUSPLUS_CONFIG="$ROOT/../cliproxyapi-plusplus/config.yaml"

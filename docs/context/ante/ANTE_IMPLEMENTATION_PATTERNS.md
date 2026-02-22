@@ -340,7 +340,7 @@ Selective Grep (50 lines context) → 200 tokens
 Pattern Extraction → 100 tokens
     ↓
 Structured Output → 50 tokens
-    
+
 Compression Ratio: 20:1
 ```
 
@@ -358,7 +358,7 @@ Full Output
 5 Sequential Operations (5 tool calls, 5 responses) = 50 tokens overhead
     ↓
 1 Batch Operation (5 tool calls in parallel, 1 response) = 10 tokens overhead
-    
+
 Savings: 80%
 ```
 
@@ -430,7 +430,7 @@ Sequential:
 Parallel (same request):
   [Tool1, Tool2, Tool3] → 110ms
   = 110ms total
-  
+
 Speedup: 2.7x
 ```
 
@@ -454,7 +454,7 @@ Background Process:
   Output → ~/.ante/bash_output_TIMESTAMP.txt (real-time)
   ↓
   BashOutput(bash_id) polls for updates
-  
+
 Benefit: User sees partial results immediately
 ```
 
@@ -662,10 +662,10 @@ Model Timeline:
 - April 2025: Ante v0.1.0 released
 - Sept 2025: Claude 4-Sonnet benchmarks (baseline)
   └─ Performance: Partial success on tasks
-  
+
 - Oct 2025: Claude 4.5 benchmarks
   └─ Performance: Improvements on complex reasoning
-  
+
 - 2026+: Future models expected
   └─ Projected: Improved task completion rates
 ```

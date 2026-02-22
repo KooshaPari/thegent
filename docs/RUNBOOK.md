@@ -46,4 +46,3 @@ See `docs/POST_LAUNCH_OBSERVATION_PLAYBOOK.md` for severity→SLA mapping and ro
 
 - [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](plans/00-MASTER-INDEX.md) — plan index
-

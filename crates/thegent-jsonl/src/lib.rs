@@ -20,6 +20,7 @@ use std::io::{self, BufRead, BufReader, Read, Stdin};
 use std::path::Path;
 
 use anyhow::Result;
+use pyo3::prelude::*;
 use serde_json::Value;
 
 // ---------------------------------------------------------------------------
@@ -197,6 +198,11 @@ pub fn sample_file(path: &Path, n: usize) -> Result<Vec<Result<Value>>> {
 /// Return up to `n` records from a stream.
 pub fn sample_stream<R: Read>(reader: R, n: usize) -> Vec<Result<Value>> {
     parse_stream(reader).take(n).collect()
+}
+
+#[pymodule]
+fn thegent_jsonl(_m: &Bound<'_, PyModule>) -> PyResult<()> {
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------

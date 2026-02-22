@@ -1,7 +1,7 @@
 # Codex + CLIProxyAPIPlus: Research and Plan
 
-**Date**: 2026-02-16  
-**Status**: Phase 2 Complete  
+**Date**: 2026-02-16
+**Status**: Phase 2 Complete
 **Scope**: Codex Responses API compatibility with CLIProxyAPIPlus (all providers)
 
 **Implementation (2026-02-16):**
@@ -217,7 +217,7 @@ from typing import AsyncGenerator
 
 class ResponsesToChatAdapter:
     """Bridges OpenAI Responses API to Chat Completions."""
-    
+
     async def transform_request(
         self,
         request_body: dict,
@@ -226,7 +226,7 @@ class ResponsesToChatAdapter:
         """Transform Responses API request to Chat Completions."""
         # Extract model from response_format or use default
         model = request_body.get("model", "gpt-4")
-        
+
         # Transform to chat format
         chat_request = {
             "model": model,
@@ -235,9 +235,9 @@ class ResponsesToChatAdapter:
             "temperature": request_body.get("temperature", 1.0),
             "max_tokens": request_body.get("max_tokens"),
         }
-        
+
         return chat_request
-    
+
     async def transform_response(
         self,
         chat_response: dict,
@@ -259,7 +259,7 @@ class ResponsesToChatAdapter:
             }
         }
         return response
-    
+
     def _convert_to_messages(self, request: dict) -> list:
         """Convert Responses API input to Chat messages."""
         # Handle text, input_text, or conversation history
@@ -282,7 +282,7 @@ from starlette.websockets import WebSocket
 
 class ResponsesWebSocketBridge:
     """Bridges WebSocket /v1/responses to HTTP SSE."""
-    
+
     async def handle_websocket(
         self,
         websocket: WebSocket,
@@ -291,7 +291,7 @@ class ResponsesWebSocketBridge:
     ):
         """Handle Codex WebSocket connection and bridge to HTTP stream."""
         await websocket.accept()
-        
+
         try:
             async with httpx.AsyncClient() as client:
                 # Connect to backend as SSE
@@ -309,7 +309,7 @@ class ResponsesWebSocketBridge:
             await websocket.send_text(json.dumps({"error": str(e)}))
         finally:
             await websocket.close()
-    
+
     def _transform_chunk(self, chunk: bytes) -> str:
         """Transform SSE chunk to Responses API format."""
         # Parse Chat Completions chunk
@@ -331,11 +331,11 @@ aliases:
   "codex-MiniMax-M2.5": "minimax-m2.5"
   "codex-MiniMax-M2.1": "minimax-m2.1"
   "codex-MiniMax-M2": "minimax-m2"
-  
+
   # OpenAI (for testing)
   "codex-gpt-4o": "openai/gpt-4o"
   "codex-gpt-4o-mini": "openai/gpt-4o-mini"
-  
+
   # Anthropic
   "codex-claude-sonnet-4": "anthropic/claude-sonnet-4-20250514"
 
@@ -390,11 +390,11 @@ import pytest
 from thegent.cliproxy_adapter import ResponsesToChatAdapter
 
 class TestResponsesToChatAdapter:
-    
+
     def test_model_alias_resolution(self):
         adapter = ResponsesToChatAdapter()
         assert adapter.resolve_alias("codex-MiniMax-M2.5") == "minimax-m2.5"
-    
+
     def test_request_transformation(self):
         adapter = ResponsesToChatAdapter()
         request = {
@@ -405,7 +405,7 @@ class TestResponsesToChatAdapter:
         chat_request = adapter.transform_request(request, "http://localhost:8318/v1")
         assert chat_request["model"] == "minimax-m2.5"
         assert chat_request["messages"] == [{"role": "user", "content": "Hello, world!"}]
-    
+
     def test_response_transformation(self):
         adapter = ResponsesToChatAdapter()
         chat_response = {
@@ -428,7 +428,7 @@ class TestResponsesToChatAdapter:
 
 ## 10. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

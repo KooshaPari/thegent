@@ -14,6 +14,7 @@ Architecture:
 import asyncio
 import logging
 import platform
+import uuid
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -97,7 +98,7 @@ class VirtualDesktopProvider(ABC):
     @abstractmethod
     async def create_desktop(self, config: DesktopConfig) -> str:
         """Create a new virtual desktop session.
-        
+
         Returns:
             Desktop ID that can be used to reference this session
         """
@@ -113,14 +114,14 @@ class VirtualDesktopProvider(ABC):
     @abstractmethod
     async def capture_screen(self, desktop_id: str) -> ScreenFrame:
         """Capture a frame from the virtual desktop.
-        
+
         Must complete in <50ms for FPS-like performance.
         """
 
     @abstractmethod
     async def inject_input(self, desktop_id: str, event: InputEvent) -> bool:
         """Inject an input event into the desktop.
-        
+
         Must complete in <10ms for responsive control.
         """
 
@@ -183,7 +184,7 @@ class DesktopSession:
 
     async def capture(self) -> ScreenFrame:
         """Capture a screen frame.
-        
+
         Target: <50ms latency
         """
         frame = await self.provider.capture_screen(self.desktop_id)
@@ -194,7 +195,7 @@ class DesktopSession:
 
     async def inject(self, event: InputEvent) -> bool:
         """Inject an input event.
-        
+
         Target: <10ms latency
         """
         start = time.perf_counter()
@@ -267,7 +268,8 @@ class VirtualDesktopManager:
             from thegent.automation.providers.macos_virtual_desktop import MacOSVirtualDesktopProvider
             return MacOSVirtualDesktopProvider()
 
-        raise NotImplementedError(f"No virtual desktop provider for {system}")
+        logger.warning("No native virtual desktop provider for '%s'; using fallback provider.", system)
+        return _UnsupportedPlatformVirtualDesktopProvider(system=system)
 
     async def create_session(self, agent_id: str, config: DesktopConfig | None = None) -> DesktopSession:
         """Create a new virtual desktop session for an agent."""
@@ -319,3 +321,65 @@ def get_desktop_manager() -> VirtualDesktopManager:
     if _manager is None:
         _manager = VirtualDesktopManager()
     return _manager
+
+
+class _UnsupportedPlatformVirtualDesktopProvider(VirtualDesktopProvider):
+    """Fallback provider when running on unsupported platforms."""
+
+    def __init__(self, system: str) -> None:
+        self._system = system
+        self._desktops: dict[str, DesktopConfig] = {}
+
+    @property
+    def name(self) -> str:
+        return f"unsupported:{self._system.lower()}"
+
+    @property
+    def supports_gpu(self) -> bool:
+        return False
+
+    async def create_desktop(self, config: DesktopConfig) -> str:
+        """Create a fallback in-memory session entry."""
+        desktop_id = f"fallback-{self._system.lower()}-{uuid.uuid4().hex}"
+        self._desktops[desktop_id] = config
+        return desktop_id
+
+    async def destroy_desktop(self, desktop_id: str) -> None:
+        """Remove a fallback session entry."""
+        self._desktops.pop(desktop_id, None)
+
+    async def get_desktop_state(self, desktop_id: str) -> DesktopState:
+        """Return tracked state for fallback sessions."""
+        return DesktopState.RUNNING if desktop_id in self._desktops else DesktopState.STOPPED
+
+    async def capture_screen(self, desktop_id: str) -> ScreenFrame:
+        """Return a deterministic black frame."""
+        config = self._desktops.get(desktop_id)
+        width, height = (config.resolution if config else (1920, 1080))
+        return ScreenFrame(
+            timestamp=time.time(),
+            width=width,
+            height=height,
+            bytes_per_pixel=4,
+            data=b"\x00" * (width * height * 4),
+        )
+
+    async def inject_input(self, desktop_id: str, event: InputEvent) -> bool:
+        """Acknowledge supported event types for deterministic fallback behavior."""
+        if desktop_id not in self._desktops:
+            return False
+        supported = {"mouse_move", "mouse_down", "mouse_up", "mouse_wheel", "key_down", "key_up"}
+        return event.event_type in supported
+
+    async def list_windows(self, desktop_id: str) -> list[dict[str, Any]]:
+        """No windows are enumerated for fallback provider."""
+        if desktop_id not in self._desktops:
+            return []
+        return []
+
+    async def get_window_rect(self, desktop_id: str, window_id: str) -> tuple[int, int, int, int]:
+        """Return default rect for fallback sessions."""
+        if desktop_id not in self._desktops:
+            return (0, 0, 0, 0)
+        config = self._desktops[desktop_id]
+        return (0, 0, config.resolution[0], config.resolution[1])

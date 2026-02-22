@@ -1,7 +1,7 @@
 # Thegent MCP Service Level Objectives (SLOs)
 
-**Purpose:** Comprehensive SLO documentation for thegent FastMCP server tools.  
-**Status:** WP-D FastMCP Polish - Complete  
+**Purpose:** Comprehensive SLO documentation for thegent FastMCP server tools.
+**Status:** WP-D FastMCP Polish - Complete
 **Last Updated:** 2026-02-18
 
 ---

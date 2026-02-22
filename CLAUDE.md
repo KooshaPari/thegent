@@ -54,7 +54,7 @@ killall cursor-agent
 # FORBIDDEN - Killing any agent process
 kill -9 <pid>  # where PID is cursor-agent, thegent, claude, codex, droid, etc.
 
-# FORBIDDEN - Killing shell/terminal processes  
+# FORBIDDEN - Killing shell/terminal processes
 kill -9 <pid>  # where PID is bash, zsh, sh, ghostty, terminal, iterm, etc.
 ```
 
@@ -115,9 +115,9 @@ The following processes are PROTECTED and MUST NEVER be killed:
 When removing code, frame it positively:
 ```
 BAD: "Don't add fallbacks"
-GOOD: "Now that we have fully transitioned to a new system and it has been 
-confirmed to work as intended, let's clean out all backwards compatibility 
-and fallbacks so we have a DRY, modular system with clear and clean separation 
+GOOD: "Now that we have fully transitioned to a new system and it has been
+confirmed to work as intended, let's clean out all backwards compatibility
+and fallbacks so we have a DRY, modular system with clear and clean separation
 of responsibilities. Once finished, we have a fresh system with no technical debt."
 ```
 

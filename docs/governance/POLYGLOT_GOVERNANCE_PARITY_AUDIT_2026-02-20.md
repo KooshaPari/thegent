@@ -1,7 +1,7 @@
 # Polyglot Governance Parity Audit
 
-**Date:** 2026-02-20  
-**Repo:** `thegent`  
+**Date:** 2026-02-20
+**Repo:** `thegent`
 **Status:** Audit complete, rollout plan defined
 
 ---

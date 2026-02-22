@@ -1,7 +1,7 @@
 # Distributed Model Routing Plan
 
-**Status:** Draft  
-**Scope:** (1) Dynamic model scraping, (2) Distributed routing, (3) Provider capability merging  
+**Status:** Draft
+**Scope:** (1) Dynamic model scraping, (2) Distributed routing, (3) Provider capability merging
 **Dependencies:** CLIProxyAPIPlus, Codex CLI, direct CLIs (claude, gemini, copilot, cursor-agent)
 
 ---
@@ -544,4 +544,3 @@ thegent run "prompt" claude -M sonnet
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

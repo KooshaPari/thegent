@@ -5,8 +5,8 @@ status: in_progress
 
 # Research-Idea-Seed-System: Implementation Tasks
 
-> **Status**: Ready for Implementation | **Date**: 2026-02-16  
-> **Format**: Work Breakdown Structure (WBS)  
+> **Status**: Ready for Implementation | **Date**: 2026-02-16
+> **Format**: Work Breakdown Structure (WBS)
 > **Target**: 4-week implementation (phased delivery)
 
 ---
@@ -91,10 +91,10 @@ class IdeaDetector:
         # 4. Validate schema
         # 5. Check for duplicates
         # 6. Return idea objects
-    
+
     def match_explicit(self, text: str) -> Optional[str]:
         """Match $idea flag pattern."""
-    
+
     def match_implicit(self, text: str) -> List[Tuple[str, float]]:
         """Match implicit patterns with confidence scores."""
 ```
@@ -136,10 +136,10 @@ class IdeaStorage:
         # 3. Fsync for durability
         # 4. Create git commit
         # 5. Return idea ID
-    
+
     def load(self, idea_id: str) -> IdeaObject:
         """Load idea from JSONL."""
-    
+
     def load_all(self) -> List[IdeaObject]:
         """Load all ideas from JSONL."""
 
@@ -659,6 +659,6 @@ class IdeaQuery:
 
 ---
 
-**Task Document Status**: Ready for Implementation  
-**Last Updated**: 2026-02-16  
+**Task Document Status**: Ready for Implementation
+**Last Updated**: 2026-02-16
 **Next Step**: Assign tasks to implementers and begin Phase 1

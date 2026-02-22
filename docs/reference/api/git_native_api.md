@@ -106,4 +106,3 @@ Return working-tree status.
 **Returns** (```{"modified"`): [...], "untracked": [...], "staged": [...]}``
 
 ---
-

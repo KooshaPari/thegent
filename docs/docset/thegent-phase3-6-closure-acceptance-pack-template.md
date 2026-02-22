@@ -1,7 +1,7 @@
 # Thegent Phase 3–6 Closure Acceptance Pack Template
 
-**Status:** Operational template  
-**Date:** 2026-02-15  
+**Status:** Operational template
+**Date:** 2026-02-15
 **Scope:** Standardized closure package for phase 3–6 WPs to produce deterministic handoff into later waves.
 
 ## 1) Pack header
@@ -240,4 +240,3 @@ Phase7 ready: yes
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

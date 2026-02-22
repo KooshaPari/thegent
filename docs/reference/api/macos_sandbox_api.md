@@ -280,4 +280,3 @@ level_from_settings(cls: Any)
 Read sandbox level from ThegentSettings.
 
 ---
-

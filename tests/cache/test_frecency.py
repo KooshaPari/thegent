@@ -23,6 +23,9 @@ from thegent.cache.multi_level import _DISKCACHE_AVAILABLE, MultiLevelCache
 if TYPE_CHECKING:
     from pathlib import Path
 
+if not _DISKCACHE_AVAILABLE:
+    pytest.fail("diskcache dependency is required for frecency persistence tests", pytrace=False)
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -377,7 +380,6 @@ class TestMaxsizeEviction:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skipif(not _DISKCACHE_AVAILABLE, reason="diskcache not installed")
 class TestPersistence:
     """FR-CACHE-002: Frecency data survives via MultiLevelCache persistence."""
 

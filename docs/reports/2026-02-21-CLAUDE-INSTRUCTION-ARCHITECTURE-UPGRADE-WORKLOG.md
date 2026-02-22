@@ -1,7 +1,7 @@
 # CLAUDE Instruction Architecture Upgrade Worklog
 
-**Date:** 2026-02-21  
-**Status:** Completed  
+**Date:** 2026-02-21
+**Status:** Completed
 **Work Item:** WL-139
 
 ---
@@ -45,7 +45,7 @@
 
 1. Added canonical validator: `scripts/check_instruction_architecture.py`.
 2. Added quality gate wiring: `Taskfile.yml` task `quality:instruction-architecture`.
-3. Added strict lane enforcement: `task quality` and `task quality:strict-full` run the instruction check.
+3. Added strict lane enforcement: `task quality` and `task quality` run the instruction check.
 4. Added quality DAG reporting surface: `config/quality-dag.yaml` now contains `instruction-architecture` step.
 
 ---

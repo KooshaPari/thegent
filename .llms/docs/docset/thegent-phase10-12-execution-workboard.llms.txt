@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase10-12-execution-workboard.md
 
 # Thegent Phase 10–12 Execution Workboard (Chunk 4)
 
-**Status:** Full-depth operational workboard draft  
-**Date:** 2026-02-15  
+**Status:** Full-depth operational workboard draft
+**Date:** 2026-02-15
 **Scope:** Practical execution governance for implementing and stabilizing Bundle B–F, including board structure, gate gates, and rollback-runbook steps.
 
 ## 1) Why this exists

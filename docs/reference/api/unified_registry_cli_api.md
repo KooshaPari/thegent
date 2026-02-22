@@ -55,4 +55,3 @@ register_agent(agent_id: str, name: str, capabilities: List[AgentCapability])
 Register a new agent.
 
 ---
-

@@ -101,4 +101,3 @@ validate(self: Any) -> None
 ```
 
 ---
-

@@ -1,7 +1,7 @@
 # Thegent Phase 3–6 Closure Validator Fault Injection and Chaos Tests
 
-**Status:** Test and resilience blueprint  
-**Date:** 2026-02-15  
+**Status:** Test and resilience blueprint
+**Date:** 2026-02-15
 **Scope:** Robustness tests and chaos scenarios for closure validation, event emission, board connectors, and crosswave gating.
 
 ## 1) Purpose
@@ -344,4 +344,3 @@ Report to dashboard as:
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-

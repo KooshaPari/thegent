@@ -7,7 +7,7 @@ set -euo pipefail
 
 src="${1:-}"
 [[ -n "$src" && -f "$src" ]] || {
-  echo '{"open_questions":[],"decisions":[]}' 
+  echo '{"open_questions":[],"decisions":[]}'
   exit 0
 }
 

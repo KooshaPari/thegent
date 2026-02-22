@@ -85,4 +85,3 @@ Parse annotations from code (comments like # @annotation).
 **Returns**: List of annotations
 
 ---
-

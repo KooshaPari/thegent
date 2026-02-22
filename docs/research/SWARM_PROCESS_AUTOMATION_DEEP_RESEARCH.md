@@ -1,7 +1,7 @@
 # Swarm Process Automation — Deep Research & Plan
 
-> **Purpose**: Research and plan for automatic process pruning and long-term optimizations for multi-agent, multi-tenant, multi-project local swarms.  
-> **Status**: Research | **Date**: 2026-02-16  
+> **Purpose**: Research and plan for automatic process pruning and long-term optimizations for multi-agent, multi-tenant, multi-project local swarms.
+> **Status**: Research | **Date**: 2026-02-16
 > **Related**: [PROCESS_OPTIMIZATION_PLAN](../plans/PROCESS_OPTIMIZATION_PLAN.md), [SWARM_PROCESS_OPTIMIZATIONS](../reference/SWARM_PROCESS_OPTIMIZATIONS.md), [SWARM_MEMORY_COORDINATION_DEPTH](../reference/SWARM_MEMORY_COORDINATION_DEPTH.md)
 
 ---
@@ -504,7 +504,7 @@ def _get_memory_mb_macos() -> tuple[float, float]:
 Independent: Session-start warning, Spotlight in setup, Per-project session dir
 ```
 
-**Critical path**: macOS vm_stat → memory-based trigger (enables resource-aware prune).  
+**Critical path**: macOS vm_stat → memory-based trigger (enables resource-aware prune).
 **Parallel**: Orphan-by-ppid, Periodic prune, Audit log.
 
 ---
@@ -1014,7 +1014,7 @@ That document covers:
 
 ## EXTENSION_SUMMARY
 
-**Extended on**: 2026-02-17  
+**Extended on**: 2026-02-17
 **Extensions added**: Coordination flowcharts (§33)
 
 | Section | Added Content |

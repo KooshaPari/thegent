@@ -114,4 +114,3 @@ Caller must terminate proc on shutdown. Skips if proxy already reachable (proc=N
 Uses adapter (Responses API + WebSocket /v1/responses) when THGENT_CLIPROXY_ADAPTER=1.
 
 ---
-

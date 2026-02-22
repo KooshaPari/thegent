@@ -13,4 +13,3 @@ Public API::
     from thegent.agents.smolgents import SmolAgent, Tool, AgentTree
 
 ---
-

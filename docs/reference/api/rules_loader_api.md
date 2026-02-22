@@ -83,4 +83,3 @@ load(self: Any, force: bool)
 Load rules from file if modified or forced.
 
 ---
-

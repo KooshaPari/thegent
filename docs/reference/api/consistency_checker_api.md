@@ -56,4 +56,3 @@ Check all consistency rules.
 **Returns**: List of consistency violations
 
 ---
-

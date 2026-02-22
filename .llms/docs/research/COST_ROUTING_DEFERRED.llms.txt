@@ -6,8 +6,8 @@ Source: docs/research/COST_ROUTING_DEFERRED.md
 
 # Cost-Based Routing — Deferred Scope
 
-**Date:** 2026-02-14  
-**Status:** Documented as deferred (R8, Optional→Required)  
+**Date:** 2026-02-14
+**Status:** Documented as deferred (R8, Optional→Required)
 **Source:** `docs/plans/DISTRIBUTED_MODEL_ROUTING_PLAN.md`, gaps doc R8
 
 ---
@@ -94,31 +94,31 @@ class CostEntry:
 
 class CostTracker:
     """Track and aggregate costs across runs."""
-    
+
     def __init__(self, cost_dir: Path = Path("~/.thegent/costs")):
         self.cost_dir = cost_dir.expanduser()
         self.cost_dir.mkdir(parents=True, exist_ok=True)
         self.current_run: Optional[str] = None
         self.run_entries: list[CostEntry] = []
-    
+
     def start_run(self, run_id: str):
         """Start tracking a new run."""
         self.current_run = run_id
         self.run_entries = []
-    
+
     def record_entry(self, entry: CostEntry):
         """Record a cost entry."""
         self.run_entries.append(entry)
-    
+
     def end_run(self) -> Dict:
         """End run and return aggregated costs."""
         if not self.current_run:
             return {}
-        
+
         total_cost = sum(e.cost_usd for e in self.run_entries)
         total_input = sum(e.input_tokens for e in self.run_entries)
         total_output = sum(e.output_tokens for e in self.run_entries)
-        
+
         summary = {
             "run_id": self.current_run,
             "total_cost_usd": round(total_cost, 6),
@@ -127,7 +127,7 @@ class CostTracker:
             "providers": {},
             "ended_at": datetime.utcnow().isoformat() + "Z"
         }
-        
+
         # Aggregate by provider
         for entry in self.run_entries:
             provider = entry.provider
@@ -142,24 +142,24 @@ class CostTracker:
             p["cost_usd"] += entry.cost_usd
             p["input_tokens"] += entry.input_tokens
             p["output_tokens"] += entry.output_tokens
-            
+
             model = entry.model
             if model not in p["models"]:
                 p["models"][model] = {"cost_usd": 0, "calls": 0}
             p["models"][model]["cost_usd"] += entry.cost_usd
             p["models"][model]["calls"] += 1
-        
+
         # Save to file
         self._save_run_summary(summary)
         self.current_run = None
         self.run_entries = []
         return summary
-    
+
     def _save_run_summary(self, summary: Dict):
         """Save run summary to JSON file."""
         run_file = self.cost_dir / f"{summary['run_id']}.json"
         run_file.write_text(json.dumps(summary, indent=2))
-        
+
         # Append to aggregate
         aggregate_file = self.cost_dir / "aggregate.jsonl"
         with open(aggregate_file, "a") as f:
@@ -191,24 +191,24 @@ class BudgetConfig:
 
 class BudgetAlertSystem:
     """Check budgets and emit alerts."""
-    
+
     def __init__(self, cost_dir: Path, config: Optional[BudgetConfig] = None):
         self.cost_dir = cost_dir
         self.config = config or BudgetConfig()
-    
+
     def check_budget(self, current_cost: float, context: str = "run") -> tuple[str, bool]:
         """
         Check if cost exceeds budget.
         Returns (alert_level, is_blocking).
         """
         limit = getattr(self.config, f"{context}_limit_usd", self.config.run_limit_usd)
-        
+
         if current_cost >= limit:
             return ("BLOCK", True)
         elif current_cost >= limit * self.config.warning_threshold:
             return ("WARN", False)
         return ("OK", False)
-    
+
     def get_hourly_spend(self) -> float:
         """Get total spend in current hour."""
         # Implementation would check aggregate and filter by timestamp
@@ -219,7 +219,7 @@ class BudgetAlertSystem:
 
 ## 5. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

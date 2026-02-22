@@ -35,4 +35,3 @@ list_checkpoints(session_dir: Path, limit: int)
 List recent checkpoints.
 
 ---
-

@@ -6,8 +6,8 @@ Source: docs/research/FASTMCP_SAMPLING_TELEMETRY.md
 
 # FastMCP Sampling & Telemetry
 
-**Source:** gofastmcp.com/servers/sampling, gofastmcp.com/servers/telemetry  
-**Date:** 2026-02-14  
+**Source:** gofastmcp.com/servers/sampling, gofastmcp.com/servers/telemetry
+**Date:** 2026-02-14
 **Purpose:** Extract ctx.sample with result_type, get_tracer(), opentelemetry-instrument for thegent.
 
 ---
@@ -153,7 +153,7 @@ opentelemetry-instrument python -m thegent.main serve --host 127.0.0.1 --port 38
 
 ## 6. EXTENSION_SUMMARY
 
-**Extended on:** 2026-02-17  
+**Extended on:** 2026-02-17
 **Extended by:** Claude Code
 
 ### Changes Made

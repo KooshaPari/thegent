@@ -24,4 +24,4 @@ Gaps:
 
 Deployment Checks:
 
-- <runtime validation or ✅ Not needed> 
+- <runtime validation or ✅ Not needed>

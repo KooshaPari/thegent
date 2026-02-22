@@ -1,7 +1,7 @@
 # Thegent Technology Stack Audit
 
-**Date:** 2026-02-21  
-**Auditor:** Agent 1 - thegent Core Audit  
+**Date:** 2026-02-21
+**Auditor:** Agent 1 - thegent Core Audit
 **Scope:** `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/src/thegent/`
 
 ---
@@ -76,42 +76,42 @@ dependencies = [
 
 **File locations using `tenacity`:**
 
-1. `src/thegent/install_subprocess_utils.py:6`  
+1. `src/thegent/install_subprocess_utils.py:6`
    - Imports: `retry, retry_if_exception_type, stop_after_attempt, wait_random_exponential`
    - Use: subprocess retry with exponential backoff
    - Status: ✅ Thin wrapper compliance
 
-2. `src/thegent/retry_utils/helpers.py:8` (DEDICATED MODULE)  
+2. `src/thegent/retry_utils/helpers.py:8` (DEDICATED MODULE)
    - Imports: `retry, stop_after_attempt, wait_exponential`
    - Use: `RetryHelpers.retry_with_backoff()` — static wrapper
    - Status: ✅ 32-line module, pure tenacity usage, no custom logic
 
-3. `src/thegent/memory/supermemory_client.py:20`  
+3. `src/thegent/memory/supermemory_client.py:20`
    - Imports: Multiple tenacity decorators
    - Use: API client resilience
 
-4. `src/thegent/agents/resilience.py:17` (CRITICAL)  
+4. `src/thegent/agents/resilience.py:17` (CRITICAL)
    - Imports: `retry, retry_if_exception_type, stop_after_attempt, wait_random_exponential`
    - Use: Agent execution retry strategy
    - Status: ✅ 15 lines, no custom retry logic
 
-5. `src/thegent/utils/reusable_helpers.py:10`  
+5. `src/thegent/utils/reusable_helpers.py:10`
    - Imports: `retry, stop_after_attempt, wait_fixed`
    - Use: Utility retry wrapper
 
-6. `src/thegent/mcp/tools/patterns.py:33`  
+6. `src/thegent/mcp/tools/patterns.py:33`
    - Imports: Tenacity retry decorators + `retry_any`, `retry_if_exception_type`
    - Use: LLM pattern tool resilience
 
-7. `src/thegent/cli/commands/impl.py:39`  
+7. `src/thegent/cli/commands/impl.py:39`
    - Imports: `retry, retry_if_exception, stop_after_attempt, wait_random_exponential`
    - Use: CLI command retry
 
-8. `src/thegent/observability/egress.py:9`  
+8. `src/thegent/observability/egress.py:9`
    - Imports: Full tenacity module
    - Use: Observability telemetry resilience
 
-9. `src/thegent/adapters/acp_client.py:22`  
+9. `src/thegent/adapters/acp_client.py:22`
    - Imports: Tenacity decorators
    - Use: Adapter client HTTP resilience
 
@@ -123,51 +123,51 @@ dependencies = [
 
 **File locations using `cachetools`:**
 
-1. `src/thegent/ui/compositor/compositor.py:25`  
+1. `src/thegent/ui/compositor/compositor.py:25`
    - Uses: `TTLCache`
    - Purpose: Compositor state caching with TTL
 
-2. `src/thegent/infra/fast_json_schema.py:17`  
+2. `src/thegent/infra/fast_json_schema.py:17`
    - Uses: `LRUCache`
    - Purpose: JSON schema compilation caching
 
-3. `src/thegent/infra/fast_process_monitor.py:35`  
+3. `src/thegent/infra/fast_process_monitor.py:35`
    - Uses: `TTLCache`
    - Purpose: Process monitoring metrics cache
 
-4. `src/thegent/infra/fast_cache.py:21` (MULTI-TIER)  
+4. `src/thegent/infra/fast_cache.py:21` (MULTI-TIER)
    - Uses: `LRUCache, TTLCache`
    - Purpose: Part of L1/L2 multi-tier cache system (see Section 2)
 
-5. `src/thegent/memory/cache.py:14` (MULTI-TIER)  
+5. `src/thegent/memory/cache.py:14` (MULTI-TIER)
    - Uses: `TTLCache`
    - Purpose: Memory module caching with disk fallback
 
-6. `src/thegent/cache/multi_level.py:29` (MULTI-TIER)  
+6. `src/thegent/cache/multi_level.py:29` (MULTI-TIER)
    - Uses: `TTLCache`
    - Purpose: L1 in-process cache in two-level design
 
-7. `src/thegent/agents/capability_index.py:18`  
+7. `src/thegent/agents/capability_index.py:18`
    - Uses: `TTLCache`
    - Purpose: Agent capability index caching
 
-8. `src/thegent/agents/cursor_api_runner.py:10`  
+8. `src/thegent/agents/cursor_api_runner.py:10`
    - Uses: `TTLCache`
    - Purpose: Cursor API response caching
 
-9. `src/thegent/utils/cache.py:10`  
+9. `src/thegent/utils/cache.py:10`
    - Uses: `TTLCache`
    - Purpose: Utility cache wrapper
 
-10. `src/thegent/mcp/server_elicitation_cache_helpers.py:8`  
+10. `src/thegent/mcp/server_elicitation_cache_helpers.py:8`
     - Uses: `TTLCache`
     - Purpose: MCP elicitation response caching
 
-11. `src/thegent/cli/services/run_session_helpers.py:10`  
+11. `src/thegent/cli/services/run_session_helpers.py:10`
     - Uses: `TTLCache`
     - Purpose: Session run caching
 
-12. `src/thegent/governance/trust.py:11`, `adapter_policy.py:10`, `policy_federation.py:10`, `indexing/file_index.py:16`, `routing/litellm_router.py:23`  
+12. `src/thegent/governance/trust.py:11`, `adapter_policy.py:10`, `policy_federation.py:10`, `indexing/file_index.py:16`, `routing/litellm_router.py:23`
     - Uses: `TTLCache`
     - Purpose: Policy and routing caching
 
@@ -179,23 +179,23 @@ dependencies = [
 
 **File locations using `diskcache`:**
 
-1. `src/thegent/research/library_replacements.py:47`  
+1. `src/thegent/research/library_replacements.py:47`
    - Context: Research file (not production)
    - Use: Example/reference only
 
-2. `src/thegent/infra/fast_cache.py:24` (try/except)  
+2. `src/thegent/infra/fast_cache.py:24` (try/except)
    - Optional import with graceful degradation
    - Purpose: L2 disk cache (disabled if not installed)
 
-3. `src/thegent/memory/cache.py:17` (try/except)  
+3. `src/thegent/memory/cache.py:17` (try/except)
    - Optional import with fallback
    - Purpose: Optional persistent memory cache
 
-4. `src/thegent/cache/multi_level.py:32` (try/except)  
+4. `src/thegent/cache/multi_level.py:32` (try/except)
    - Optional import with graceful fallback
    - Purpose: Optional L2 persistent tier
 
-5. `src/thegent/mcp/storage.py:24`  
+5. `src/thegent/mcp/storage.py:24`
    - Direct import
    - Purpose: MCP tool storage backend
 
@@ -207,24 +207,24 @@ dependencies = [
 
 **File locations:**
 
-1. `src/thegent/infra/fast_file_watcher.py:19-27`  
+1. `src/thegent/infra/fast_file_watcher.py:19-27`
    - Imports: `watchfiles.watch` + `watchdog.events`, `watchdog.observers`
    - Design: **Dual-backend with automatic prioritization**
      - Primary: `watchfiles` (Rust-based, 5-10x faster)
      - Fallback: `watchdog` (cross-platform)
    - Status: ✅ Thin wrapper, both backends are libraries
 
-2. `src/thegent/native/watcher_daemon.py:55-66` (PRODUCTION)  
+2. `src/thegent/native/watcher_daemon.py:55-66` (PRODUCTION)
    - Imports: `watchdog.events`, `watchdog.observers`
    - Design: **Multi-tenant daemon with typed callbacks**
    - Integration: Optional CircuitBreakerShm health tracking
    - Status: ✅ Sophisticated wrapper with domain semantics
 
-3. `src/thegent/mcp/hotreload.py:45`  
+3. `src/thegent/mcp/hotreload.py:45`
    - Conditional import: `watchfiles.watch`
    - Purpose: Hot-reload capability in MCP server
 
-4. `src/thegent/governance/triggers.py:24-30` (try/except)  
+4. `src/thegent/governance/triggers.py:24-30` (try/except)
    - Conditional: `watchfiles.Change, watch` + `watchdog`
    - Purpose: Policy trigger file watching
 
@@ -236,15 +236,15 @@ dependencies = [
 
 **File locations using `pybreaker`:**
 
-1. `src/thegent/agents/resilience.py:16`  
+1. `src/thegent/agents/resilience.py:16`
    - Imports: `STATE_OPEN, CircuitBreaker`
    - Use: Agent resilience pattern
 
-2. `src/thegent/control_plane/client.py:6`  
+2. `src/thegent/control_plane/client.py:6`
    - Imports: `pybreaker` module
    - Use: Control plane client health
 
-3. `src/thegent/routing/circuit_breaker.py:24` (WRAPPER)  
+3. `src/thegent/routing/circuit_breaker.py:24` (WRAPPER)
    - Imports: `pybreaker`
    - Design: **Domain-specific wrapper with provider registry**
    - Classes: `ProviderCircuitBreaker`, `ProviderCircuitBreakerRegistry`
@@ -276,8 +276,8 @@ dependencies = [
 
 ### 2.1 Retry & Backoff
 
-**Location:** `src/thegent/retry_utils/helpers.py`  
-**Lines:** 32  
+**Location:** `src/thegent/retry_utils/helpers.py`
+**Lines:** 32
 **Assessment:** ✅ **COMPLIANT**
 
 ```python
@@ -299,9 +299,9 @@ class RetryHelpers:
 
 ### 2.2 Rate Limiting
 
-**Location:** `src/thegent/routing/rate_limiter.py`  
-**Lines:** ~280  
-**Type:** Custom sliding-window implementation  
+**Location:** `src/thegent/routing/rate_limiter.py`
+**Lines:** ~280
+**Type:** Custom sliding-window implementation
 **Assessment:** ✅ **JUSTIFIED — No Library Available**
 
 **Why custom:** There is no standard Python library for sliding-window rate limiting with:
@@ -320,12 +320,12 @@ class RetryHelpers:
 
 ### 2.3 Circuit Breaker
 
-**Location:** `src/thegent/routing/circuit_breaker.py`  
-**Lines:** ~250  
-**Type:** `pybreaker` wrapper with domain semantics  
+**Location:** `src/thegent/routing/circuit_breaker.py`
+**Lines:** ~250
+**Type:** `pybreaker` wrapper with domain semantics
 **Assessment:** ✅ **JUSTIFIED**
 
-**Library:** Wraps `pybreaker.CircuitBreaker`  
+**Library:** Wraps `pybreaker.CircuitBreaker`
 **Custom additions:**
 - Per-provider registry (singleton pattern)
 - LiteLLM model_list integration (`get_healthy_deployments`, `record_deployment_failure`)
@@ -346,12 +346,12 @@ class RetryHelpers:
 
 #### Level 1: In-Memory Cache Wrappers
 
-**`src/thegent/routing/cache.py` — Exact-Match Response Cache**  
-Lines: ~250  
-Type: Custom wrapper around `cachetools.TTLCache` + `DiskCache`  
+**`src/thegent/routing/cache.py` — Exact-Match Response Cache**
+Lines: ~250
+Type: Custom wrapper around `cachetools.TTLCache` + `DiskCache`
 Assessment: ✅ **JUSTIFIED**
 
-**Purpose:** LLM response caching with exact hash key (model + messages).  
+**Purpose:** LLM response caching with exact hash key (model + messages).
 **Design:**
 - `InMemoryCache`: Wraps `cachetools.TTLCache` with namespace support
 - `DiskCache`: Custom disk storage (JSON files, atomic writes)
@@ -368,12 +368,12 @@ Assessment: ✅ **JUSTIFIED**
 
 ---
 
-**`src/thegent/routing/semantic_cache.py` — Vector Similarity Cache**  
-Lines: ~280  
-Type: Custom embedding-based similarity cache  
+**`src/thegent/routing/semantic_cache.py` — Vector Similarity Cache**
+Lines: ~280
+Type: Custom embedding-based similarity cache
 Assessment: ✅ **JUSTIFIED**
 
-**Purpose:** Cache LLM responses by semantic similarity of prompts.  
+**Purpose:** Cache LLM responses by semantic similarity of prompts.
 **Design:**
 - Computes embedding vectors for prompts
 - Stores response + embedding pairs
@@ -387,12 +387,12 @@ Assessment: ✅ **JUSTIFIED**
 
 ---
 
-**`src/thegent/cache/multi_level.py` — Two-Level Cache**  
-Lines: ~150  
-Type: Wrapper around `cachetools.TTLCache` + `diskcache.Cache`  
+**`src/thegent/cache/multi_level.py` — Two-Level Cache**
+Lines: ~150
+Type: Wrapper around `cachetools.TTLCache` + `diskcache.Cache`
 Assessment: ✅ **COMPLIANT**
 
-**Purpose:** Generic L1 (in-memory) + L2 (disk) cache.  
+**Purpose:** Generic L1 (in-memory) + L2 (disk) cache.
 **Design:**
 - L1: `cachetools.TTLCache` (no custom TTL logic)
 - L2: `diskcache.Cache` (optional, graceful fallback)
@@ -410,9 +410,9 @@ Assessment: ✅ **COMPLIANT**
 
 ---
 
-**`src/thegent/infra/fast_cache.py` — Multi-Tier Cache**  
-Lines: ~150  
-Type: L1 (TTLCache) + L2 (LRUCache) + L3 (diskcache)  
+**`src/thegent/infra/fast_cache.py` — Multi-Tier Cache**
+Lines: ~150
+Type: L1 (TTLCache) + L2 (LRUCache) + L3 (diskcache)
 Assessment: ⚠️ **DUPLICATION RISK**
 
 **Issue:** Very similar to `src/thegent/cache/multi_level.py`.
@@ -426,8 +426,8 @@ Assessment: ⚠️ **DUPLICATION RISK**
 
 #### Level 2: Semantic Cache
 
-**`src/thegent/routing/semantic_cache.py`**  
-Lines: ~280  
+**`src/thegent/routing/semantic_cache.py`**
+Lines: ~280
 Assessment: ✅ **JUSTIFIED — No Library Alternative**
 
 Provides semantic similarity-based response caching. No standard Python library exists for this use case.
@@ -436,9 +436,9 @@ Provides semantic similarity-based response caching. No standard Python library 
 
 ### 2.5 File Watching
 
-**`src/thegent/infra/fast_file_watcher.py`**  
-Lines: ~100  
-Type: Abstraction layer over `watchfiles` + `watchdog`  
+**`src/thegent/infra/fast_file_watcher.py`**
+Lines: ~100
+Type: Abstraction layer over `watchfiles` + `watchdog`
 Assessment: ✅ **JUSTIFIED**
 
 **Why custom:**
@@ -448,9 +448,9 @@ Assessment: ✅ **JUSTIFIED**
 
 ---
 
-**`src/thegent/native/watcher_daemon.py`**  
-Lines: ~350  
-Type: Multi-tenant daemon around `watchdog.Observer`  
+**`src/thegent/native/watcher_daemon.py`**
+Lines: ~350
+Type: Multi-tenant daemon around `watchdog.Observer`
 Assessment: ✅ **JUSTIFIED**
 
 **Why custom:**
@@ -465,7 +465,7 @@ Assessment: ✅ **JUSTIFIED**
 
 ### 2.6 Process Management
 
-**`src/thegent/infra/subprocess_manager.py`**  
+**`src/thegent/infra/subprocess_manager.py`**
 Assessment: ⚠️ **TO BE DETERMINED**
 
 Could not fully read file in this audit. Recommend detailed inspection for custom process management vs. `subprocess` module usage.
@@ -530,14 +530,14 @@ Both are specialized and non-overlapping.
 
 ### 4.1 Governance & Testing
 
-**Code Coverage:** 100% required (agent-only environment, no humans)  
+**Code Coverage:** 100% required (agent-only environment, no humans)
 **Location:** `pyproject.toml:[tool.coverage.report] fail_under = 100`
 
-**Linting:** Strict (ruff -D warnings)  
+**Linting:** Strict (ruff -D warnings)
 **Location:** `pyproject.toml:[tool.ruff.lint]` selects 40+ rule categories
 
-**Test markers:** Requirements traceability  
-**Example:** `@pytest.mark.requirement("FR-ROUTE-013")`  
+**Test markers:** Requirements traceability
+**Example:** `@pytest.mark.requirement("FR-ROUTE-013")`
 **Scope:** WL-xxx, FR-xxx, WP-xxx, BKM-xxx
 
 **Finding:** ✅ **Excellent governance infrastructure** with traceability to functional requirements.
@@ -548,13 +548,13 @@ Both are specialized and non-overlapping.
 
 **Observations from TODO/FIXME scan:**
 
-- `src/thegent/ui/compositor/pane_manager.py:143, 174, 215`  
+- `src/thegent/ui/compositor/pane_manager.py:143, 174, 215`
   - P2.1 / P2.3 phase markers (legitimate technical debt tied to roadmap)
 
-- `src/thegent/work_packages/sensory_context.py:70-131`  
+- `src/thegent/work_packages/sensory_context.py:70-131`
   - Audio/video processing stub (awaiting integration, not a code smell)
 
-- `src/thegent/mcp/server.py:166, 168, 171`  
+- `src/thegent/mcp/server.py:166, 168, 171`
   - Loop/pause/resume features commented as "TODO: Not implemented" (awaiting design)
 
 **Assessment:** TODOs are **milestone-tied, not code debt**. All reference phase numbers (P2.1, etc.) indicating planned phases, not forgotten work.
@@ -566,21 +566,21 @@ Both are specialized and non-overlapping.
 ### 5.1 Identified Gaps
 
 #### Gap 1: No Standard Sliding-Window Rate Limiter
-**Severity:** Low  
-**Impact:** Custom `SlidingWindowRateLimiter` in `routing/rate_limiter.py`  
+**Severity:** Low
+**Impact:** Custom `SlidingWindowRateLimiter` in `routing/rate_limiter.py`
 **Recommendation:** Consider `limits` package (BSD licensed, simple), but current custom implementation is lean and performant. **Status: ACCEPTABLE.**
 
 #### Gap 2: Cache Design Fragmentation
-**Severity:** Medium  
-**Issue:** Three overlapping multi-level cache implementations  
+**Severity:** Medium
+**Issue:** Three overlapping multi-level cache implementations
 **Recommendation:** Consolidate into a single `thegent.cache.core` module with variants:
 - `DualCache(l1_type, l2_type)` — generic two-level
 - `SemanticCache` — similarity-based (keep separate, specialized)
 - Deprecate `fast_cache.py` and `routing/cache.py`, migrate to consolidated module
 
 #### Gap 3: No Built-in Singleflight / Dogpile Lock
-**Severity:** Low  
-**Reference:** `src/thegent/infra/cache_v2.py` mentions `Singleflight()`  
+**Severity:** Low
+**Reference:** `src/thegent/infra/cache_v2.py` mentions `Singleflight()`
 **Recommendation:** Consider `cachetools` + `asyncio.Lock` pattern already in place, or adopt `aiofiles` + `diskcache` for concurrent access safety.
 
 ---
@@ -597,7 +597,7 @@ Both are specialized and non-overlapping.
 
 ## Section 6: TODO/FIXME Summary
 
-**Total TODO/FIXME comments in codebase:** ~25 instances  
+**Total TODO/FIXME comments in codebase:** ~25 instances
 **Classification:**
 - **Legitimate phase-tied work:** 15 (marked as P2.1, P2.3, TGNT-Pxxx)
 - **Research/integration stubs:** 8 (audio/video processing, file watching)
@@ -820,7 +820,7 @@ scholarly.google_scholar_author() → BeautifulSoup scraping → pandas → DOCX
 
 #### Schema
 - Items (requirements/features/tasks)
-- Links (relationships/traceability)  
+- Links (relationships/traceability)
 - Projects (containers)
 - Tests + Coverage (BDD support)
 - Graphs + Graph Nodes (Neo4j explicit storage)

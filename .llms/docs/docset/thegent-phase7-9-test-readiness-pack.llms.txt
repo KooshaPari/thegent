@@ -6,8 +6,8 @@ Source: docs/docset/thegent-phase7-9-test-readiness-pack.md
 
 # Thegent Phase 7–9 Test and Readiness Pack
 
-**Status:** Draft  
-**Date:** 2026-02-15  
+**Status:** Draft
+**Date:** 2026-02-15
 **Scope:** Concrete test matrix and evidence checklist for PRD phases 7–9.
 
 ## 1) Test philosophy for Phase 7–9

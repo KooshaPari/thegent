@@ -72,4 +72,3 @@ OPT-008: Caches results for repeated evaluations (`<50ms` for cached lookups).
 **Returns**: Evaluation result dict with "allowed" and optional "reason"/"trust_level"
 
 ---
-

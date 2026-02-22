@@ -65,4 +65,3 @@ verify_contract(self: Any, contract: PluginContract)
 Verify the signature of a plugin contract.
 
 ---
-

@@ -35,4 +35,3 @@ def load_bench_records(*, path: Path | None = None) -> list[BenchRecord]:
             payload = json.loads(stripped)
             rows.append(BenchRecord.from_dict(payload))
     return rows
-

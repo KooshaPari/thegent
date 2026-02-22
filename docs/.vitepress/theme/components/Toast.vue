@@ -31,7 +31,7 @@ onMounted(() => {
   requestAnimationFrame(() => {
     visible.value = true
   })
-  
+
   // Auto-dismiss if not persistent
   if (!props.persistent && props.duration > 0) {
     timer.value = window.setTimeout(() => {

@@ -41,4 +41,3 @@ create_os_user(self: Any, username: str, home_dir: Any)
 Create a new OS user for agent isolation.
 
 ---
-

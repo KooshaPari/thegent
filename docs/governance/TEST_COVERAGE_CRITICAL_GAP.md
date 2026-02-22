@@ -1,8 +1,8 @@
 # Test Coverage Critical Gap - Agent-Only Environment
 
-**Date**: 2026-02-19  
-**Status**: 🚨 **CRITICAL GAP IDENTIFIED**  
-**Current Coverage**: 21.21% E2E  
+**Date**: 2026-02-19
+**Status**: 🚨 **CRITICAL GAP IDENTIFIED**
+**Current Coverage**: 21.21% E2E
 **Required Coverage**: **100%** (Agent-Only Requirement)
 
 ---
@@ -101,6 +101,12 @@ These commands are used most frequently and MUST have tests:
 ### Priority 3: Remaining Commands (Week 3-4)
 All other 200+ commands
 
+## CI Coverage Gate Status
+
+- CI now includes a dedicated `preflight` job (`collect-only`, coverage contract, and required provider smoke checks).
+- A required `coverage` job in `.github/workflows/ci.yml` runs `task coverage:ci` and blocks downstream integration testing.
+- `scripts/analyze_test_coverage.py` still reports stale command-surface counts and should be refreshed after this infrastructure is stable.
+
 ---
 
 ## 🛠️ Implementation Tools Created
@@ -121,7 +127,7 @@ All other 200+ commands
 - **Usage**: Use as template for new tests
 
 ### 4. Governance Documentation
-- **Files**: 
+- **Files**:
   - `docs/governance/AGENT_ONLY_TEST_STRATEGY.md`
   - `docs/governance/TDD_BDD_SDD_GOVERNANCE.md`
 - **Purpose**: Define test strategy and governance
@@ -196,6 +202,6 @@ fail_under = 100  # REQUIRED for agent-only environment
 
 ---
 
-**Status**: 🚨 **CRITICAL GAP - IMMEDIATE ACTION REQUIRED**  
-**Coverage Target**: **100%** (not 21.21%)  
+**Status**: 🚨 **CRITICAL GAP - IMMEDIATE ACTION REQUIRED**
+**Coverage Target**: **100%** (not 21.21%)
 **Timeline**: 4 weeks to achieve 100% coverage

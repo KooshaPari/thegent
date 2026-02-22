@@ -1,6 +1,6 @@
 # VitePress Phase 1 Implementation — Status
 
-> **Status**: ✅ **IN PROGRESS** | **Date**: 2026-02-17  
+> **Status**: ✅ **IN PROGRESS** | **Date**: 2026-02-17
 > **Purpose**: Track Phase 1 implementation of VitePress rich documentation features
 
 ---
@@ -28,13 +28,13 @@
 
 **Usage**:
 ```vue
-<CodePlayground 
-  lang="python" 
+<CodePlayground
+  lang="python"
   title="Example"
   code="from thegent import Agent
 agent = Agent('codex')
 result = agent.run('Fix this bug')
-print(result)" 
+print(result)"
 />
 ```
 

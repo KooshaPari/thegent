@@ -1,6 +1,6 @@
 # Friction Points Log
 
-> **Purpose**: Continuous log of friction points identified during agent workflows  
+> **Purpose**: Continuous log of friction points identified during agent workflows
 > **Last Updated**: 2026-02-18
 
 ---

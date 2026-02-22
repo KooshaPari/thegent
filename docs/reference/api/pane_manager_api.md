@@ -197,4 +197,3 @@ Split the current pane.
 **Returns**: The new pane node, or None if no current pane
 
 ---
-

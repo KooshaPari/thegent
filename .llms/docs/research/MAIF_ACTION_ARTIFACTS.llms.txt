@@ -6,7 +6,7 @@ Source: docs/research/MAIF_ACTION_ARTIFACTS.md
 
 # MAIF Action Artifacts Research
 
-> **Status**: Research Complete | **Version**: 1.0 | **Date**: 2026-02-18  
+> **Status**: Research Complete | **Version**: 1.0 | **Date**: 2026-02-18
 > **Priority**: P1 | **Depends**: WP-3002
 
 ## Overview
@@ -48,16 +48,16 @@ def generate_signing_key():
         public_exponent=65537,
         key_size=4096
     )
-    
+
     public_key = private_key.public_key()
-    
+
     # Store private key securely (KMS, vault, etc.)
     private_pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.BestAvailableEncryption(b"password")
     )
-    
+
     return private_key, public_key
 ```
 
@@ -81,17 +81,17 @@ def sign_artifact(
         "timestamp": artifact["timestamp"],
         "agent_id": artifact["agent_id"]
     }, sort_keys=True)
-    
+
     # Calculate SHA-256 hash
     message_hash = hashlib.sha256(canonical.encode()).digest()
-    
+
     # Sign with PKCS#1 v1.5 padding
     signature = private_key.sign(
         message_hash,
         padding.PKCS1v15(),
         hashes.SHA256()
     )
-    
+
     return base64.b64encode(signature).decode()
 ```
 
@@ -104,15 +104,15 @@ def verify_artifact(
 ) -> bool:
     """Verify artifact signature."""
     signature = base64.b64decode(artifact["signature"])
-    
+
     canonical = json.dumps({
         "payload": artifact["payload"],
         "timestamp": artifact["timestamp"],
         "agent_id": artifact["agent_id"]
     }, sort_keys=True)
-    
+
     message_hash = hashlib.sha256(canonical.encode()).digest()
-    
+
     try:
         public_key.verify(
             signature,
@@ -138,7 +138,7 @@ class MAIFArtifactStore:
     def __init__(self, db_path: Path):
         self.db_path = db_path
         self._init_db()
-    
+
     def _init_db(self):
         """Initialize SQLite database for artifacts."""
         conn = sqlite3.connect(self.db_path)
@@ -158,7 +158,7 @@ class MAIFArtifactStore:
         """)
         conn.commit()
         conn.close()
-    
+
     def store(self, artifact: dict):
         """Store artifact in local cache."""
         conn = sqlite3.connect(self.db_path)
@@ -178,7 +178,7 @@ class MAIFArtifactStore:
         ))
         conn.commit()
         conn.close()
-    
+
     def get(self, artifact_id: str) -> Optional[dict]:
         """Retrieve artifact by ID."""
         conn = sqlite3.connect(self.db_path)
@@ -187,7 +187,7 @@ class MAIFArtifactStore:
             (artifact_id,)
         ).fetchone()
         conn.close()
-        
+
         if row:
             return dict(zip([c[0] for c in conn.execute("PRAGMA table_info(artifacts)").fetchall()], row))
         return None
@@ -200,7 +200,7 @@ class RemoteProvenanceClient:
     def __init__(self, base_url: str, api_key: str):
         self.base_url = base_url
         self.headers = {"Authorization": f"Bearer {api_key}"}
-    
+
     async def submit_artifact(self, artifact: dict) -> str:
         """Submit artifact to remote server."""
         async with httpx.AsyncClient() as client:
@@ -211,7 +211,7 @@ class RemoteProvenanceClient:
             )
             resp.raise_for_status()
             return resp.json()["artifact_id"]
-    
+
     async def verify_artifact(self, artifact_id: str) -> bool:
         """Verify artifact with remote server."""
         async with httpx.AsyncClient() as client:
@@ -231,7 +231,7 @@ class RemoteProvenanceClient:
 class MAIFHook:
     def __init__(self, artifact_store: MAIFArtifactStore):
         self.store = artifact_store
-    
+
     async def on_mcp_call(self, call: MCPCall):
         """Record MCP call as MAIF artifact."""
         artifact = {
@@ -247,7 +247,7 @@ class MAIFHook:
             "session_id": current_session_id(),
             "chain_of_thought": current_reasoning_trace()
         }
-        
+
         # Sign and store
         artifact["signature"] = sign_artifact(artifact, private_key)
         self.store.store(artifact)
@@ -264,11 +264,11 @@ class MAIFMemoryIntegration:
     ) -> str:
         """Store memory with associated MAIF artifacts."""
         memory_id = await self._store_memory(memory)
-        
+
         # Link artifacts to memory
         for artifact in artifacts:
             await self._link_artifact(memory_id, artifact["artifact_id"])
-        
+
         return memory_id
 ```
 
@@ -279,16 +279,16 @@ class MAIFGovernanceIntegration:
     async def verify_action(self, artifact_id: str) -> VerificationResult:
         """Verify action through governance layer."""
         artifact = await self.store.get(artifact_id)
-        
+
         # Verify signature
         if not verify_artifact(artifact, public_key):
             return VerificationResult.INVALID_SIGNATURE
-        
+
         # Check against governance policies
         policy_result = await self._check_policies(artifact)
         if not policy_result.allowed:
             return VerificationResult.POLICY_VIOLATION
-        
+
         return VerificationResult.VALID
 ```
 
@@ -296,7 +296,7 @@ class MAIFGovernanceIntegration:
 
 **EXTENSION_SUMMARY**
 
-**Extended on:** 2026-02-18  
+**Extended on:** 2026-02-18
 **Extended by:** Claude Code
 
 ### Changes Made

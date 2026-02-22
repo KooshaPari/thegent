@@ -93,4 +93,3 @@ Get list of changed files.
 **Returns**: List of changed files
 
 ---
-

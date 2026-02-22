@@ -1,7 +1,7 @@
 # ChatGPT Pareto Router Deep Research — Part 2: Indices & Economics
 
-**Source**: chatgpt3.md, chatgpt4.md  
-**Date**: 2026-02-18  
+**Source**: chatgpt3.md, chatgpt4.md
+**Date**: 2026-02-18
 **Scope**: Speed/Cost/Quality index formulas, shadow pricing, budget engine, plan types
 
 ---
